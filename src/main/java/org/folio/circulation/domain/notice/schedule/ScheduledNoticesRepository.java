@@ -14,26 +14,25 @@ import org.slf4j.LoggerFactory;
 
 import io.vertx.core.json.JsonObject;
 
-public class ScheduledNoticeRepository {
+public class ScheduledNoticesRepository {
 
-  private static final Logger log = LoggerFactory.getLogger(ScheduledNoticeRepository.class);
+  private static final Logger log = LoggerFactory.getLogger(ScheduledNoticesRepository.class);
 
-  public static ScheduledNoticeRepository using(Clients clients) {
-    return new ScheduledNoticeRepository(
-      clients.scheduledNoticeStorageClient());
+  public static ScheduledNoticesRepository using(Clients clients) {
+    return new ScheduledNoticesRepository(clients.scheduledNoticesStorageClient());
   }
 
-  private final CollectionResourceClient scheduledNoticeStorageClient;
+  private final CollectionResourceClient scheduledNoticesStorageClient;
 
 
-  public ScheduledNoticeRepository(
-    CollectionResourceClient scheduledNoticeStorageClient) {
-    this.scheduledNoticeStorageClient = scheduledNoticeStorageClient;
+  public ScheduledNoticesRepository(
+    CollectionResourceClient scheduledNoticesStorageClient) {
+    this.scheduledNoticesStorageClient = scheduledNoticesStorageClient;
   }
 
   public CompletableFuture<Result<ScheduledNotice>> create(ScheduledNotice scheduledNotice) {
     JsonObject representation = JsonScheduledNoticeMapper.mapToJson(scheduledNotice);
-    return scheduledNoticeStorageClient.post(representation).thenApply(response -> {
+    return scheduledNoticesStorageClient.post(representation).thenApply(response -> {
       if (response.getStatusCode() == 201) {
         return mapFromJson(response.getJson());
       } else {

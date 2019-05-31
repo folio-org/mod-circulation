@@ -176,7 +176,7 @@ public class ResourceClient {
 
   public static ResourceClient forScheduledNotices(OkapiHttpClient client) {
     return new ResourceClient(client, InterfaceUrls::scheduledNoticesUrl,
-      "scheduled notice", "schedulednotices");
+      "scheduled notice", "scheduledNotices");
   }
 
   public static ResourceClient forConfiguration(OkapiHttpClient client) {

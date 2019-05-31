@@ -27,18 +27,18 @@ public class ScheduledNoticeMatchers {
   private static final String FORMAT = "noticeConfig.format";
   private static final String SEND_IN_REAL_TIME = "noticeConfig.sendInRealTime";
 
-  public static Matcher<JsonObject> hasScheduledLoanNoticeProperties(
+  public static Matcher<JsonObject> hasScheduledLoanNotice(
     UUID expectedLoanId, DateTime expectedNextRunTime, String expectedTiming,
     UUID expectedTemplateId, Period expectedRecurringPeriod,
     boolean expectedSendInRealTime) {
 
-    return hasScheduledLoanNoticeProperties(
+    return hasScheduledLoanNotice(
       expectedLoanId, expectedNextRunTime, expectedTiming,
       expectedTemplateId, expectedRecurringPeriod,
       expectedSendInRealTime, "Email");
   }
 
-  public static Matcher<JsonObject> hasScheduledLoanNoticeProperties(
+  public static Matcher<JsonObject> hasScheduledLoanNotice(
     UUID expectedLoanId, DateTime expectedNextRunTime, String expectedTiming,
     UUID expectedTemplateId, Period expectedRecurringPeriod,
     boolean expectedSendInRealTime, String expectedFormat) {
