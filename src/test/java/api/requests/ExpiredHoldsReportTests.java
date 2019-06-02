@@ -120,7 +120,9 @@ public class ExpiredHoldsReportTests extends APITests {
     IndividualResource requestOnTemeraire = requestsClient.create(requestBuilderOnTemeraire);
     loansFixture.checkInByBarcode(temeraire);
     requestsClient.replace(requestOnTemeraire.getId(),
-      requestBuilderOnTemeraire.withStatus(RequestStatus.CLOSED_CANCELLED.getValue()));
+      requestBuilderOnTemeraire.withStatus(RequestStatus.CLOSED_CANCELLED.getValue()).create()
+        .put("awaitingPickupRequestClosedDate", "2018-02-11T14:45:23.000+0000")
+    );
 
     loansFixture.checkOutByBarcode(smallAngryPlanet, usersFixture.james());
     RequestBuilder requestBuilderOnSmallAngryPlanet = new RequestBuilder()
@@ -132,13 +134,59 @@ public class ExpiredHoldsReportTests extends APITests {
     IndividualResource requestOnSmallAngryPlanet = requestsClient.create(requestBuilderOnSmallAngryPlanet);
     loansFixture.checkInByBarcode(smallAngryPlanet);
     requestsClient.replace(requestOnSmallAngryPlanet.getId(),
-      requestBuilderOnSmallAngryPlanet.withStatus(RequestStatus.OPEN_IN_TRANSIT.getValue()));
+      requestBuilderOnSmallAngryPlanet
+        .withStatus(RequestStatus.CLOSED_PICKUP_EXPIRED.getValue()).create()
+        .put("awaitingPickupRequestClosedDate", "2018-02-11T14:45:23.000+0000"));
 
     Response response = ResourceClient.forRequestReport(client).getById(pickupServicePointId);
     assertThat(response.getStatusCode(), is(HTTP_OK));
 
     JsonObject responseJson = response.getJson();
     assertThat(responseJson.getInteger("totalRecords"), is(2));
+  }
+
+  @Test
+  public void oneClosedPickupExpiredRequest()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final InventoryItemResource temeraire = itemsFixture.basedUponTemeraire();
+    final IndividualResource rebecca = usersFixture.rebecca();
+    final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
+
+    loansFixture.checkOutByBarcode(temeraire, usersFixture.charlotte());
+    RequestBuilder requestBuilderOnTemeraire = new RequestBuilder()
+      .open()
+      .hold()
+      .withPickupServicePointId(pickupServicePointId)
+      .forItem(temeraire)
+      .by(usersFixture.steve());
+    IndividualResource requestOnTemeraire = requestsClient.create(requestBuilderOnTemeraire);
+    loansFixture.checkInByBarcode(temeraire);
+    requestsClient.replace(requestOnTemeraire.getId(),
+      requestBuilderOnTemeraire.withStatus(RequestStatus.OPEN_IN_TRANSIT.getValue()));
+
+    loansFixture.checkOutByBarcode(smallAngryPlanet, usersFixture.james());
+    RequestBuilder requestBuilderOnSmallAngryPlanet = new RequestBuilder()
+      .open()
+      .hold()
+      .withPickupServicePointId(pickupServicePointId)
+      .forItem(smallAngryPlanet)
+      .by(rebecca);
+    IndividualResource requestOnSmallAngryPlanet = requestsClient.create(requestBuilderOnSmallAngryPlanet);
+    loansFixture.checkInByBarcode(smallAngryPlanet);
+    requestsClient.replace(requestOnSmallAngryPlanet.getId(),
+      requestBuilderOnSmallAngryPlanet.withStatus(RequestStatus.CLOSED_CANCELLED.getValue()).create()
+        .put("awaitingPickupRequestClosedDate", "2018-02-11T14:45:23.000+0000"));
+
+    Response response = ResourceClient.forRequestReport(client).getById(pickupServicePointId);
+    assertThat(response.getStatusCode(), is(HTTP_OK));
+
+    JsonObject responseJson = response.getJson();
+    assertThat(responseJson.getInteger("totalRecords"), is(1));
   }
 
   @Test

@@ -21,8 +21,10 @@ import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.server.WebContext;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collector;
@@ -30,7 +32,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static org.folio.circulation.domain.ItemStatus.AWAITING_PICKUP;
-import static org.folio.circulation.domain.RequestStatus.OPEN_AWAITING_PICKUP;
+import static org.folio.circulation.domain.RequestStatus.*;
 import static org.folio.circulation.support.CqlQuery.exactMatch;
 import static org.folio.circulation.support.CqlSortBy.descending;
 
@@ -215,11 +217,16 @@ public class RequestExpiredHoldsResource extends Resource {
                                                                                 String servicePointId,
                                                                                 List<String> itemIds) {
     return itemIds.stream()
+      .filter(Objects::nonNull)
       .map(itemId -> {
         final Result<CqlQuery> servicePointQuery = exactMatch(SERVICE_POINT_ID_KEY, servicePointId);
-        final Result<CqlQuery> itemIdQuery = CqlQuery.exactMatch(ITEM_ID_KEY, itemIds.get(0));
+        final Result<CqlQuery> itemIdQuery = CqlQuery.exactMatch(ITEM_ID_KEY, itemId);
+        final Result<CqlQuery> statusQuery = CqlQuery.exactMatchAny(STATUS_KEY,
+          Arrays.asList(CLOSED_PICKUP_EXPIRED.getValue(), CLOSED_CANCELLED.getValue()));
+
         Result<CqlQuery> cqlQueryResult = servicePointQuery
           .combine(itemIdQuery, CqlQuery::and)
+          .combine(statusQuery, CqlQuery::and)
           .map(q -> q.sortBy(descending(REQUEST_CLOSED_DATE_KEY)));
 
         return finRequestsByCqlQuery(client, cqlQueryResult);
