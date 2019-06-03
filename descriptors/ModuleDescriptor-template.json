@@ -695,7 +695,7 @@
           "methods": [
             "POST"
           ],
-          "pathPattern": "/circulation/process-scheduled-notices",
+          "pathPattern": "/circulation/scheduled-notices-processing",
           "modulePermissions": [
             "scheduled-notice-storage.scheduled-notices.collection.get",
             "scheduled-notice-storage.scheduled-notices.item.delete",
@@ -711,7 +711,8 @@
             "inventory-storage.instances.item.get",
             "circulation.rules.loan-policy.get",
             "configuration.entries.collection.get",
-            "patron-notice.post"
+            "patron-notice.post",
+            "users.item.get"
           ],
           "unit": "minute",
           "delay": "5"

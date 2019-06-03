@@ -11,6 +11,8 @@ import org.folio.circulation.support.ResponseWritableResult;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.RouteRegistration;
 import org.folio.circulation.support.http.server.WebContext;
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
 
 import io.vertx.core.http.HttpClient;
 import io.vertx.ext.web.Router;
@@ -25,7 +27,7 @@ public class ScheduledNoticeProcessingResource extends Resource {
   @Override
   public void register(Router router) {
     RouteRegistration routeRegistration = new RouteRegistration(
-      "/circulation/process-scheduled-notices", router);
+      "/circulation/scheduled-notices-processing", router);
 
     routeRegistration.create(this::process);
   }
@@ -41,7 +43,7 @@ public class ScheduledNoticeProcessingResource extends Resource {
     final ScheduledDueDateNoticeHandler dueDateNoticeHandler =
       ScheduledDueDateNoticeHandler.using(clients);
 
-    scheduledNoticesRepository.findScheduledNoticesWithNextRunTimeLessThanNow()
+    scheduledNoticesRepository.findNoticesToSend(DateTime.now(DateTimeZone.UTC), 100)
       .thenApply(r -> r.map(MultipleRecords::getRecords))
       .thenCompose(r -> r.after(dueDateNoticeHandler::handleNotices))
       .thenApply(this::createWritableResult)

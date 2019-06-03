@@ -53,9 +53,15 @@ public class ScheduledNoticesRepository {
     });
   }
 
-  public CompletableFuture<Result<MultipleRecords<ScheduledNotice>>> findScheduledNoticesWithNextRunTimeLessThanNow() {
-    return CqlQuery.lessThan("nextRunTime", DateTime.now(DateTimeZone.UTC))
-      .after(query -> scheduledNoticesStorageClient.getMany(query, 100))
+  public CompletableFuture<Result<MultipleRecords<ScheduledNotice>>> findNoticesToSend(
+    DateTime systemTime, int pageLimit) {
+    return CqlQuery.lessThan("nextRunTime", systemTime.withZone(DateTimeZone.UTC))
+      .after(query -> findBy(query, pageLimit));
+  }
+
+  public CompletableFuture<Result<MultipleRecords<ScheduledNotice>>> findBy(
+    CqlQuery cqlQuery, int pageLimit) {
+    return scheduledNoticesStorageClient.getMany(cqlQuery, pageLimit)
       .thenApply(r -> r.next(response ->
         MultipleRecords.from(response, Function.identity(), "scheduledNotices")))
       .thenApply(r -> r.next(records -> records.map(JsonScheduledNoticeMapper::mapFromJson)));
