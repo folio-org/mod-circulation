@@ -165,6 +165,10 @@ public class InterfaceUrls {
     return APITestContext.viaOkapiModuleUrl("/patron-notice" + subPath);
   }
 
+  static URL scheduledNoticesUrl(String subPath) {
+    return APITestContext.viaOkapiModuleUrl("/scheduled-notice-storage/scheduled-notices" + subPath);
+  }
+
   static URL configurationUrl(String subPath) {
     return APITestContext.viaOkapiModuleUrl("/configurations/entries" + subPath);
   }

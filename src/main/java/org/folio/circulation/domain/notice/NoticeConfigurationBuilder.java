@@ -1,6 +1,7 @@
 package org.folio.circulation.domain.notice;
 
-import org.joda.time.Period;
+
+import org.folio.circulation.domain.policy.Period;
 
 public class NoticeConfigurationBuilder {
 
@@ -11,6 +12,7 @@ public class NoticeConfigurationBuilder {
   private Period timingPeriod;
   private boolean recurring;
   private Period recurringPeriod;
+  private boolean sendInRealTime;
 
   public NoticeConfigurationBuilder setTemplateId(String templateId) {
     this.templateId = templateId;
@@ -47,9 +49,14 @@ public class NoticeConfigurationBuilder {
     return this;
   }
 
+  public NoticeConfigurationBuilder setSendInRealTime(boolean sendInRealTime) {
+    this.sendInRealTime = sendInRealTime;
+    return this;
+  }
+
   public NoticeConfiguration build() {
     return new NoticeConfiguration(
       templateId, noticeFormat, noticeEventType,
-      timing, timingPeriod, recurring, recurringPeriod);
+      timing, timingPeriod, recurring, recurringPeriod, sendInRealTime);
   }
 }

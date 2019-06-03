@@ -3,6 +3,7 @@ package org.folio.circulation.domain;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.support.Result.of;
 import static org.folio.circulation.support.Result.succeeded;
+import static org.folio.circulation.support.ResultBinding.mapResult;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 
 import java.lang.invoke.MethodHandles;
@@ -10,9 +11,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
-import java.util.Objects;
 
 import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.support.Clients;
@@ -75,7 +76,16 @@ public class UserRepository {
 
   public CompletableFuture<Result<MultipleRecords<Loan>>> findUsersForLoans(
     MultipleRecords<Loan> multipleLoans) {
+
     Collection<Loan> loans = multipleLoans.getRecords();
+
+    return getUsersForLoans(loans)
+      .thenApply(r -> r.map(users -> multipleLoans.mapRecords(
+        loan -> loan.withUser(users.getOrDefault(loan.getUserId(), null)))));
+  }
+
+  private CompletableFuture<Result<Map<String, User>>> getUsersForLoans(
+    Collection<Loan> loans) {
 
     final List<String> usersToFetch =
       loans.stream()
@@ -85,27 +95,10 @@ public class UserRepository {
         .distinct()
         .collect(Collectors.toList());
 
-    if (usersToFetch.isEmpty()) {
-      log.info("No users to query for loans");
-      return completedFuture(succeeded(multipleLoans));
-    }
-
     final MultipleRecordFetcher<User> fetcher = createUsersFetcher();
 
     return fetcher.findByIds(usersToFetch)
-      .thenApply(multipleUsersResult -> multipleUsersResult.next(
-        multipleUsers -> {
-          List<Loan> newLoanList = new ArrayList<>();
-          Collection<User> users = multipleUsers.getRecords();
-          for (Loan loan : loans) {
-            Loan newLoan = loan;
-            for (User user : users) {
-              newLoan = newLoan.withUser(user);
-            }
-            newLoanList.add(newLoan);
-          }
-          return succeeded(new MultipleRecords<>(newLoanList, multipleLoans.getTotalRecords()));
-        }));
+      .thenApply(mapResult(users -> users.toMap(User::getId)));
   }
 
   private MultipleRecordFetcher<User> createUsersFetcher() {
@@ -164,7 +157,7 @@ public class UserRepository {
     }
 
     final MultipleRecordFetcher<User> fetcher
-      = new MultipleRecordFetcher<>(usersStorageClient, "users", User::from);
+      = new MultipleRecordFetcher<>(usersStorageClient, USERS_RECORD_PROPERTY, User::from);
 
     return fetcher.findByIds(usersToFetch)
       .thenApply(multipleUsersResult -> multipleUsersResult.next(
@@ -199,6 +192,6 @@ public class UserRepository {
   }
 
   private Result<MultipleRecords<User>> mapResponseToUsers(Response response) {
-    return MultipleRecords.from(response, User::from, "users");
+    return MultipleRecords.from(response, User::from, USERS_RECORD_PROPERTY);
   }
 }

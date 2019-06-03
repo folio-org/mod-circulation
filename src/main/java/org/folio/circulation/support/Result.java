@@ -2,10 +2,14 @@ package org.folio.circulation.support;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
 
+import java.util.Collection;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public interface Result<T> {
 
@@ -56,6 +60,39 @@ public interface Result<T> {
     BiFunction<T, U, V> combiner) {
 
     return firstResult.combine(secondResult, combiner);
+  }
+
+  /**
+   * Combines results from all the lists of results, of all elements succeed.
+   * Otherwise, returns  failure, first failed element takes precedence
+   *
+   * @param results lists of results to combine
+   * @return either failure of the first failed result,
+   * or successful result with values collected to list
+   */
+  @SafeVarargs
+  static <T> Result<List<T>> combineAll(
+    List<Result<T>>... results) {
+
+    return Stream.of(results).flatMap(Collection::stream)
+      .map(r -> r.map(Stream::of))
+      .reduce(of(Stream::empty), Result::combineResultStream)
+      .map(stream -> stream.collect(Collectors.toList()));
+  }
+
+  /**
+   * Combines two result streams, if all of elements succeed.
+   * Otherwise, returns either failure, first failed element takes precedence
+   *
+   * @param firstResult  first result stream
+   * @param secondResult second result stream
+   * @return either failure of the first failed result,
+   * or successful result with values collected to stream
+   */
+  static <T> Result<Stream<T>> combineResultStream(
+    Result<Stream<T>> firstResult, Result<Stream<T>> secondResult) {
+
+    return Result.combine(firstResult, secondResult, Stream::concat);
   }
 
   /**
