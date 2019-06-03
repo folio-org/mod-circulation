@@ -1,6 +1,6 @@
 package api.loans;
 
-import static api.support.matchers.ScheduledNoticeMatchers.hasScheduledLoanNoticeProperties;
+import static api.support.matchers.ScheduledNoticeMatchers.hasScheduledLoanNotice;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 
@@ -15,7 +15,6 @@ import java.util.concurrent.TimeoutException;
 import org.awaitility.Awaitility;
 import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.support.http.client.IndividualResource;
-import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
@@ -97,20 +96,20 @@ public class CheckOutByBarcodeScheduledNoticesTests extends APITests {
 
     Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
-      .until(scheduledNoticeClient::getAll, Matchers.hasSize(3));
+      .until(scheduledNoticesClient::getAll, Matchers.hasSize(3));
 
-    List<JsonObject> scheduledNotices = scheduledNoticeClient.getAll();
-    MatcherAssert.assertThat(scheduledNotices,
+    List<JsonObject> scheduledNotices = scheduledNoticesClient.getAll();
+    assertThat(scheduledNotices,
       hasItems(
-        hasScheduledLoanNoticeProperties(
+        hasScheduledLoanNotice(
           loan.getId(), dueDate.minus(beforePeriod.timePeriod()),
           BEFORE_TIMING, beforeTemplateId,
           beforeRecurringPeriod, true),
-        hasScheduledLoanNoticeProperties(
+        hasScheduledLoanNotice(
           loan.getId(), dueDate,
           UPON_AT_TIMING, uponAtTemplateId,
           null, false),
-        hasScheduledLoanNoticeProperties(
+        hasScheduledLoanNotice(
           loan.getId(), dueDate.plus(afterPeriod.timePeriod()),
           AFTER_TIMING, afterTemplateId,
           afterRecurringPeriod, true)
@@ -167,16 +166,16 @@ public class CheckOutByBarcodeScheduledNoticesTests extends APITests {
 
     Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
-      .until(scheduledNoticeClient::getAll, Matchers.hasSize(2));
+      .until(scheduledNoticesClient::getAll, Matchers.hasSize(2));
 
-    List<JsonObject> scheduledNotices = scheduledNoticeClient.getAll();
-    MatcherAssert.assertThat(scheduledNotices,
+    List<JsonObject> scheduledNotices = scheduledNoticesClient.getAll();
+    assertThat(scheduledNotices,
       hasItems(
-        hasScheduledLoanNoticeProperties(
+        hasScheduledLoanNotice(
           loan.getId(), dueDate.minus(firstBeforePeriod.timePeriod()),
           BEFORE_TIMING, firstBeforeTemplateId,
           null, false),
-        hasScheduledLoanNoticeProperties(
+        hasScheduledLoanNotice(
           loan.getId(), dueDate.minus(secondBeforePeriod.timePeriod()),
           BEFORE_TIMING, secondBeforeTemplateId,
           null, true)
@@ -223,7 +222,7 @@ public class CheckOutByBarcodeScheduledNoticesTests extends APITests {
         .at(UUID.randomUUID()));
 
     TimeUnit.SECONDS.sleep(1);
-    List<JsonObject> scheduledNotices = scheduledNoticeClient.getAll();
+    List<JsonObject> scheduledNotices = scheduledNoticesClient.getAll();
     assertThat("No notices should be scheduled",
       scheduledNotices, Matchers.empty());
   }

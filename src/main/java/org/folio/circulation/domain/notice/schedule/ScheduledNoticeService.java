@@ -19,13 +19,13 @@ import org.joda.time.Period;
 
 public class ScheduledNoticeService {
 
-  private final ScheduledNoticeRepository scheduledNoticeRepository;
+  private final ScheduledNoticesRepository scheduledNoticesRepository;
   private final PatronNoticePolicyRepository noticePolicyRepository;
 
   public ScheduledNoticeService(
-    ScheduledNoticeRepository scheduledNoticeRepository,
+    ScheduledNoticesRepository scheduledNoticesRepository,
     PatronNoticePolicyRepository noticePolicyRepository) {
-    this.scheduledNoticeRepository = scheduledNoticeRepository;
+    this.scheduledNoticesRepository = scheduledNoticesRepository;
     this.noticePolicyRepository = noticePolicyRepository;
   }
 
@@ -48,7 +48,7 @@ public class ScheduledNoticeService {
       .map(c -> createDueDateScheduledNotice(c, loan))
       .collect(Collectors.toList());
 
-    scheduledNotices.forEach(scheduledNoticeRepository::create);
+    scheduledNotices.forEach(scheduledNoticesRepository::create);
     return succeeded(noticePolicy);
   }
 

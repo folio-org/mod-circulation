@@ -11,7 +11,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
 
-import org.apache.commons.collections4.ListUtils;
 import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.support.HttpFailure;
 import org.folio.circulation.support.JsonArrayHelper;
@@ -44,11 +43,8 @@ public class PatronNoticePolicyMapper implements Function<JsonObject, Result<Pat
     List<Result<NoticeConfiguration>> requestNoticeConfigurations =
       JsonArrayHelper.mapToList(representation, REQUEST_NOTICES, this::toNoticeConfiguration);
 
-    Result<List<NoticeConfiguration>> allNoticeConfigurations = Result.combine(
-      Result.combineAll(loanNoticeConfigurations),
-      Result.combineAll(requestNoticeConfigurations), ListUtils::union);
-
-    return allNoticeConfigurations.map(PatronNoticePolicy::new);
+    return Result.combineAll(loanNoticeConfigurations, requestNoticeConfigurations)
+      .map(PatronNoticePolicy::new);
   }
 
 
