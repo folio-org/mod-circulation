@@ -16,18 +16,20 @@ import org.folio.circulation.domain.notice.PatronNoticeService;
 import org.folio.circulation.domain.policy.LoanPolicyRepository;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.Result;
+import org.joda.time.DateTime;
 
 import io.vertx.core.json.JsonObject;
 
 public class ScheduledDueDateNoticeHandler {
 
-  public static ScheduledDueDateNoticeHandler using(Clients clients) {
+  public static ScheduledDueDateNoticeHandler using(Clients clients, DateTime systemTime) {
     return new ScheduledDueDateNoticeHandler(
       new LoanRepository(clients),
       new LoanPolicyRepository(clients),
       new ConfigurationRepository(clients),
       PatronNoticeService.using(clients),
-      ScheduledNoticesRepository.using(clients));
+      ScheduledNoticesRepository.using(clients),
+      systemTime);
   }
 
   private LoanRepository loanRepository;
@@ -35,18 +37,20 @@ public class ScheduledDueDateNoticeHandler {
   private ConfigurationRepository configurationRepository;
   private PatronNoticeService patronNoticeService;
   private ScheduledNoticesRepository scheduledNoticesRepository;
+  private DateTime systemTime;
 
   public ScheduledDueDateNoticeHandler(
     LoanRepository loanRepository, LoanPolicyRepository loanPolicyRepository,
     ConfigurationRepository configurationRepository,
     PatronNoticeService patronNoticeService,
-    ScheduledNoticesRepository scheduledNoticesRepository) {
+    ScheduledNoticesRepository scheduledNoticesRepository, DateTime systemTime) {
 
     this.loanRepository = loanRepository;
     this.loanPolicyRepository = loanPolicyRepository;
     this.configurationRepository = configurationRepository;
     this.patronNoticeService = patronNoticeService;
     this.scheduledNoticesRepository = scheduledNoticesRepository;
+    this.systemTime = systemTime;
   }
 
   public CompletableFuture<Result<Collection<ScheduledNotice>>> handleNotices(Collection<ScheduledNotice> scheduledNotices) {
@@ -98,9 +102,13 @@ public class ScheduledDueDateNoticeHandler {
       return scheduledNoticesRepository.delete(notice);
     }
 
-    ScheduledNotice nextRecurringNotice =
-      notice.withNextRunTime(notice.getNextRunTime()
-        .plus(noticeConfig.getRecurringPeriod().timePeriod()));
+    DateTime recurringNoticeNextRunTime = notice.getNextRunTime()
+      .plus(noticeConfig.getRecurringPeriod().timePeriod());
+    if (recurringNoticeNextRunTime.isBefore(systemTime)) {
+      recurringNoticeNextRunTime =
+        systemTime.plus(noticeConfig.getRecurringPeriod().timePeriod());
+    }
+    ScheduledNotice nextRecurringNotice = notice.withNextRunTime(recurringNoticeNextRunTime);
 
     if (nextRecurringNoticeIsNotRelevant(nextRecurringNotice, loan)) {
       return scheduledNoticesRepository.delete(notice);

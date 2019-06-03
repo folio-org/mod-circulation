@@ -33,6 +33,7 @@ public class ScheduledNoticeProcessingResource extends Resource {
   }
 
   private void process(RoutingContext routingContext) {
+    final DateTime systemTime = DateTime.now(DateTimeZone.UTC);
 
     final WebContext context = new WebContext(routingContext);
     final Clients clients = Clients.create(context, client);
@@ -41,9 +42,9 @@ public class ScheduledNoticeProcessingResource extends Resource {
       ScheduledNoticesRepository.using(clients);
 
     final ScheduledDueDateNoticeHandler dueDateNoticeHandler =
-      ScheduledDueDateNoticeHandler.using(clients);
+      ScheduledDueDateNoticeHandler.using(clients, systemTime);
 
-    scheduledNoticesRepository.findNoticesToSend(DateTime.now(DateTimeZone.UTC), 100)
+    scheduledNoticesRepository.findNoticesToSend(systemTime, 100)
       .thenApply(r -> r.map(MultipleRecords::getRecords))
       .thenCompose(r -> r.after(dueDateNoticeHandler::handleNotices))
       .thenApply(this::createWritableResult)
