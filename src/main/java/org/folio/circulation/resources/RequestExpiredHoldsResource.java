@@ -127,14 +127,14 @@ public class RequestExpiredHoldsResource extends Resource {
 
   private ExpiredHoldsContext fillExpiredHoldsContext(ExpiredHoldsContext initialContext,
                                                       Result<MultipleRecords<Item>> itemRecords) {
-    List<Result<MultipleRecords<Item>>> itemIds = initialContext.getItemIds();
+    List<Result<MultipleRecords<Item>>> itemIds = initialContext.getResultListOfItems();
     itemIds.add(itemRecords);
     int newPageNumber = initialContext.getCurrPageNumber() + 1;
     return new ExpiredHoldsContext(newPageNumber, itemIds);
   }
 
   private CompletableFuture<Result<List<String>>> mapContextToItemIdList(ExpiredHoldsContext expiredHoldsContext) {
-    List<String> itemIds = expiredHoldsContext.getItemIds().stream()
+    List<String> itemIds = expiredHoldsContext.getResultListOfItems().stream()
       .flatMap(records -> records.value().getRecords().stream())
       .filter(item -> StringUtils.isNoneBlank(item.getItemId()))
       .map(Item::getItemId)
