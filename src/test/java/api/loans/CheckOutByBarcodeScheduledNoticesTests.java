@@ -69,6 +69,7 @@ public class CheckOutByBarcodeScheduledNoticesTests extends APITests {
       .recurring(afterRecurringPeriod)
       .sendInRealTime(true)
       .create();
+
     NoticePolicyBuilder noticePolicy = new NoticePolicyBuilder()
       .withName("Policy with due date notices")
       .withLoanNotices(Arrays.asList(
@@ -117,7 +118,7 @@ public class CheckOutByBarcodeScheduledNoticesTests extends APITests {
   }
 
   @Test
-  public void multipleBeforeDueDateNoticesShouldBeScheduledOnCheckout()
+  public void checkOutSchedulesDifferentBeforeDueDateNotices ()
     throws MalformedURLException,
     InterruptedException,
     TimeoutException,
@@ -140,6 +141,7 @@ public class CheckOutByBarcodeScheduledNoticesTests extends APITests {
       .withBeforeTiming(secondBeforePeriod)
       .sendInRealTime(true)
       .create();
+
     NoticePolicyBuilder noticePolicy = new NoticePolicyBuilder()
       .withName("Policy with before due date notices")
       .withLoanNotices(Arrays.asList(
@@ -198,6 +200,7 @@ public class CheckOutByBarcodeScheduledNoticesTests extends APITests {
       .withTemplateId(UUID.randomUUID())
       .withCheckInEvent()
       .create();
+
     NoticePolicyBuilder noticePolicy = new NoticePolicyBuilder()
       .withName("Policy without time-based notices")
       .withLoanNotices(Arrays.asList(
