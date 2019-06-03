@@ -28,26 +28,26 @@ public class ScheduledDueDateNoticeHandler {
       new LoanPolicyRepository(clients),
       new ConfigurationRepository(clients),
       PatronNoticeService.using(clients),
-      ScheduledNoticeRepository.using(clients));
+      ScheduledNoticesRepository.using(clients));
   }
 
   private LoanRepository loanRepository;
   private LoanPolicyRepository loanPolicyRepository;
   private ConfigurationRepository configurationRepository;
   private PatronNoticeService patronNoticeService;
-  private ScheduledNoticeRepository scheduledNoticeRepository;
+  private ScheduledNoticesRepository scheduledNoticesRepository;
 
   public ScheduledDueDateNoticeHandler(
     LoanRepository loanRepository, LoanPolicyRepository loanPolicyRepository,
     ConfigurationRepository configurationRepository,
     PatronNoticeService patronNoticeService,
-    ScheduledNoticeRepository scheduledNoticeRepository) {
+    ScheduledNoticesRepository scheduledNoticesRepository) {
 
     this.loanRepository = loanRepository;
     this.loanPolicyRepository = loanPolicyRepository;
     this.configurationRepository = configurationRepository;
     this.patronNoticeService = patronNoticeService;
-    this.scheduledNoticeRepository = scheduledNoticeRepository;
+    this.scheduledNoticesRepository = scheduledNoticesRepository;
   }
 
   public CompletableFuture<Result<Collection<ScheduledNotice>>> handleNotices(Collection<ScheduledNotice> scheduledNotices) {
@@ -96,7 +96,7 @@ public class ScheduledDueDateNoticeHandler {
     ScheduledNoticeConfig noticeConfig = notice.getNoticeConfig();
 
     if (noticeIsNotRelevant(noticeConfig, loan) || !noticeConfig.isRecurring()) {
-      return scheduledNoticeRepository.delete(notice);
+      return scheduledNoticesRepository.delete(notice);
     }
 
     ScheduledNotice nextRecurringNotice = notice.withNextRunTime(
@@ -104,7 +104,7 @@ public class ScheduledDueDateNoticeHandler {
         .plus(noticeConfig.getRecurringPeriod().timePeriod())
     );
 
-    return scheduledNoticeRepository.update(nextRecurringNotice);
+    return scheduledNoticesRepository.update(nextRecurringNotice);
   }
 
   private boolean noticeIsNotRelevant(ScheduledNoticeConfig noticeConfig, Loan loan) {
