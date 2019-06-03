@@ -146,7 +146,7 @@ public class ExpiredHoldsReportTests extends APITests {
   }
 
   @Test
-  public void oneClosedPickupExpiredRequest()
+  public void testClosedCancelledExpiredRequest()
     throws InterruptedException,
     MalformedURLException,
     TimeoutException,
@@ -183,14 +183,11 @@ public class ExpiredHoldsReportTests extends APITests {
         .put("awaitingPickupRequestClosedDate", "2018-02-11T14:45:23.000+0000"));
 
     Response response = ResourceClient.forRequestReport(client).getById(pickupServicePointId);
-    assertThat(response.getStatusCode(), is(HTTP_OK));
-
-    JsonObject responseJson = response.getJson();
-    assertThat(responseJson.getInteger("totalRecords"), is(1));
+    verifyResponse(smallAngryPlanet, rebecca, response, RequestStatus.CLOSED_CANCELLED);
   }
 
   @Test
-  public void closedPickupExpiredRequest()
+  public void testClosedPickupExpiredRequest()
     throws InterruptedException,
     MalformedURLException,
     TimeoutException,
@@ -221,18 +218,57 @@ public class ExpiredHoldsReportTests extends APITests {
     loansFixture.checkInByBarcode(smallAngryPlanet);
     requestsClient.replace(request.getId(),
       requestBuilderOnItem.withStatus(RequestStatus.CLOSED_PICKUP_EXPIRED.getValue()).create()
-        .put("awaitingPickupRequestClosedDate", "2018-02-11T14:45:23.000+0000"));
+        .put("awaitingPickupRequestClosedDate", "2018-03-11T15:45:23.000+0000"));
 
     Response response = ResourceClient.forRequestReport(client).getById(pickupServicePointId);
-    assertThat(response.getStatusCode(), is(HTTP_OK));
+    verifyResponse(smallAngryPlanet, rebecca, response, RequestStatus.CLOSED_PICKUP_EXPIRED);
+  }
 
-    JsonObject responseJson = response.getJson();
-    assertThat(responseJson.getInteger("totalRecords"), is(1));
+  @Test
+  public void checkThatResponseGetsRequestWithEarlierClosedDate()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
 
-    JsonObject requestJson = responseJson.getJsonArray("requests").getJsonObject(0);
-    assertThat(requestJson.getString("requesterBarcode"), is(rebecca.getBarcode()));
-    assertThat(requestJson.getString("itemBarcode"), is(smallAngryPlanet.getBarcode()));
-    assertThat(requestJson.getString("requestStatus"), is(RequestStatus.CLOSED_PICKUP_EXPIRED.getValue()));
+    final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final IndividualResource rebecca = usersFixture.rebecca();
+    final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
+    final String earlierAwaitingPickupRequestClosedDate = "2019-03-11T15:45:23.000+0000";
+    final String laterAwaitingPickupRequestClosedDateS = "2018-03-11T10:45:00.000+0000";
+
+    loansFixture.checkOutByBarcode(smallAngryPlanet, usersFixture.james());
+
+    // first request
+    RequestBuilder firstRequestBuilderOnItem = new RequestBuilder()
+      .open()
+      .hold()
+      .withPickupServicePointId(pickupServicePointId)
+      .forItem(smallAngryPlanet)
+      .by(rebecca);
+    IndividualResource firstRequest = requestsClient.create(firstRequestBuilderOnItem);
+
+    // second request
+    RequestBuilder secondRequestBuilderOnItem = new RequestBuilder()
+      .open()
+      .hold()
+      .withPickupServicePointId(pickupServicePointId)
+      .forItem(smallAngryPlanet)
+      .by(usersFixture.steve());
+    IndividualResource secondRequest = requestsClient.create(secondRequestBuilderOnItem);
+
+    loansFixture.checkInByBarcode(smallAngryPlanet);
+
+    // change "awaitingPickupRequestClosedDate" for the request to the same item
+    requestsClient.replace(firstRequest.getId(),
+      firstRequestBuilderOnItem.withStatus(RequestStatus.CLOSED_PICKUP_EXPIRED.getValue()).create()
+        .put("awaitingPickupRequestClosedDate", earlierAwaitingPickupRequestClosedDate));
+    requestsClient.replace(secondRequest.getId(),
+      secondRequestBuilderOnItem.withStatus(RequestStatus.CLOSED_CANCELLED.getValue()).create()
+        .put("awaitingPickupRequestClosedDate", laterAwaitingPickupRequestClosedDateS));
+
+    Response response = ResourceClient.forRequestReport(client).getById(pickupServicePointId);
+    verifyResponse(smallAngryPlanet, rebecca, response, RequestStatus.CLOSED_PICKUP_EXPIRED);
   }
 
   @Test
@@ -260,5 +296,20 @@ public class ExpiredHoldsReportTests extends APITests {
 
     JsonObject responseJson = response.getJson();
     assertThat(responseJson.getInteger("totalRecords"), is(0));
+  }
+
+  private void verifyResponse(InventoryItemResource item,
+                              IndividualResource requester,
+                              Response response,
+                              RequestStatus status) {
+    assertThat(response.getStatusCode(), is(HTTP_OK));
+
+    JsonObject responseJson = response.getJson();
+    assertThat(responseJson.getInteger("totalRecords"), is(1));
+
+    JsonObject requestJson = responseJson.getJsonArray("requests").getJsonObject(0);
+    assertThat(requestJson.getString("requesterBarcode"), is(requester.getBarcode()));
+    assertThat(requestJson.getString("itemBarcode"), is(item.getBarcode()));
+    assertThat(requestJson.getString("requestStatus"), is(status.getValue()));
   }
 }
