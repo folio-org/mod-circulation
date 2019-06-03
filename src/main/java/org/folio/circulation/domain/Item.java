@@ -146,6 +146,10 @@ public class Item {
     return getProperty(holdingRepresentation, "callNumber");
   }
 
+  public String getCallNumberFromItemRepresentation() {
+    return getProperty(itemRepresentation, "callNumber");
+  }
+
   public String getCallNumberPrefix() {
     return getProperty(holdingRepresentation, "callNumberPrefix");
   }

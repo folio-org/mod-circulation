@@ -7,6 +7,7 @@ import static org.folio.circulation.support.JsonPropertyWriter.write;
 
 import java.lang.invoke.MethodHandles;
 
+import org.apache.commons.lang3.StringUtils;
 import org.joda.time.format.ISODateTimeFormat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -52,6 +53,11 @@ public class RequestRepresentation {
 
     write(itemSummary, "title", item.getTitle());
     write(itemSummary, "barcode", item.getBarcode());
+
+    String callNumber = item.getCallNumber();
+    write(itemSummary, "callNumber", StringUtils.isBlank(callNumber)
+      ? StringUtils.EMPTY
+      : callNumber);
 
     request.put("item", itemSummary);
   }

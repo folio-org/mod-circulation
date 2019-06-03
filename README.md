@@ -410,7 +410,7 @@ Requests include information from the item, including holdingsRecordId and insta
 
 To create first pass hold expiration report that can be used by staff to clear expired and cancelled holds from the shelf and put them back into circulation.
 Data involved in the formation of the report:
-* Requester name: <lastName>, <firstName>
+* Requester name: lastName, firstName
 * Requester barcode
 * Item title
 * Item barcode
