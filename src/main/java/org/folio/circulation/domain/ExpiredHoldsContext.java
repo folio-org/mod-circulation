@@ -9,9 +9,9 @@ public class ExpiredHoldsContext {
   private final List<Result<MultipleRecords<Item>>> resultListOfItems;
 
   public ExpiredHoldsContext(int currPageNumber,
-                             List<Result<MultipleRecords<Item>>> itemIds) {
+                             List<Result<MultipleRecords<Item>>> resultListOfItems) {
     this.currPageNumber = currPageNumber;
-    this.resultListOfItems = itemIds;
+    this.resultListOfItems = resultListOfItems;
   }
 
   public int getCurrPageNumber() {
