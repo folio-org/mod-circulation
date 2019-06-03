@@ -167,7 +167,7 @@ public class ExpiredHoldsReportTests extends APITests {
     IndividualResource requestOnTemeraire = requestsClient.create(requestBuilderOnTemeraire);
     loansFixture.checkInByBarcode(temeraire);
     requestsClient.replace(requestOnTemeraire.getId(),
-      requestBuilderOnTemeraire.withStatus(RequestStatus.OPEN_IN_TRANSIT.getValue()));
+      requestBuilderOnTemeraire.withStatus(RequestStatus.CLOSED_CANCELLED.getValue()));
 
     loansFixture.checkOutByBarcode(smallAngryPlanet, usersFixture.james());
     RequestBuilder requestBuilderOnSmallAngryPlanet = new RequestBuilder()
@@ -220,7 +220,8 @@ public class ExpiredHoldsReportTests extends APITests {
     IndividualResource request = requestsClient.create(requestBuilderOnItem);
     loansFixture.checkInByBarcode(smallAngryPlanet);
     requestsClient.replace(request.getId(),
-      requestBuilderOnItem.withStatus(RequestStatus.CLOSED_PICKUP_EXPIRED.getValue()));
+      requestBuilderOnItem.withStatus(RequestStatus.CLOSED_PICKUP_EXPIRED.getValue()).create()
+        .put("awaitingPickupRequestClosedDate", "2018-02-11T14:45:23.000+0000"));
 
     Response response = ResourceClient.forRequestReport(client).getById(pickupServicePointId);
     assertThat(response.getStatusCode(), is(HTTP_OK));

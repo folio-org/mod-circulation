@@ -30,6 +30,14 @@ public class CqlQuery {
     return Result.of(() -> new CqlQuery(format("%s==\"%s\"", index, value), none()));
   }
 
+  /**
+   * The expression `comparitorSymbol: '<>' ` for finding a non-empty value
+   * is not supported in the CqlQuery.
+   */
+  public static Result<CqlQuery> exactNotEmpty(String index) {
+    return Result.of(() -> new CqlQuery(format("%s>\"\"", index), none()));
+  }
+
   public static Result<CqlQuery> exactMatchAny(String indexName, Collection<String> values) {
     final List<String> filteredValues = filterNullValues(values);
 

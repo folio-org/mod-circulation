@@ -221,12 +221,14 @@ public class RequestExpiredHoldsResource extends Resource {
       .map(itemId -> {
         final Result<CqlQuery> servicePointQuery = exactMatch(SERVICE_POINT_ID_KEY, servicePointId);
         final Result<CqlQuery> itemIdQuery = CqlQuery.exactMatch(ITEM_ID_KEY, itemId);
+        final Result<CqlQuery> notEmptyDateQuery = CqlQuery.exactNotEmpty(REQUEST_CLOSED_DATE_KEY);
         final Result<CqlQuery> statusQuery = CqlQuery.exactMatchAny(STATUS_KEY,
           Arrays.asList(CLOSED_PICKUP_EXPIRED.getValue(), CLOSED_CANCELLED.getValue()));
 
         Result<CqlQuery> cqlQueryResult = servicePointQuery
           .combine(itemIdQuery, CqlQuery::and)
           .combine(statusQuery, CqlQuery::and)
+          .combine(notEmptyDateQuery, CqlQuery::and)
           .map(q -> q.sortBy(descending(REQUEST_CLOSED_DATE_KEY)));
 
         return finRequestsByCqlQuery(client, cqlQueryResult);
