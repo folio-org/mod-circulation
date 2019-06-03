@@ -406,6 +406,47 @@ Loans include information from the item, including locations, holdingsRecordId a
 
 Requests include information from the item, including holdingsRecordId and instanceId.
 
+#### Expired Holds Report CSV
+
+To create first pass hold expiration report that can be used by staff to clear expired and cancelled holds from the shelf and put them back into circulation.
+Data involved in the formation of the report:
+* Requester name: <lastName>, <firstName>
+* Requester barcode
+* Item title
+* Item barcode
+* Call number
+* Request status
+* Hold shelf expiration date: Date with timestamp
+
+#### Example Request
+
+```
+GET http://{okapi-location}/circulation/requests-report/expired-holds/:{servicePointId}
+```
+
+#### Example Success Response
+
+```
+HTTP/1.1 200 Ok
+content-type: application/json; charset=utf-8
+content-length: 230
+
+{
+  "requests": [
+    {
+      "requesterName": "Koss, Jazlyn",
+      "requesterBarcode": "623317241177726",
+      "itemTitle": "14 cows for America",
+      "itemBarcode": "5860825104574",
+      "callNumber": "65487",
+      "requestStatus": "Closed - Pickup expired",
+      "holdShelfExpirationDate": "2019-06-12T12:26:16.670+0000"
+    }
+  ],
+  "totalRecords": 1
+}
+```
+
 ## Additional Information
 
 Other [modules](https://dev.folio.org/source-code/#server-side).
