@@ -235,7 +235,7 @@ public class ExpiredHoldsReportTests extends APITests {
     final IndividualResource rebecca = usersFixture.rebecca();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
     final String earlierAwaitingPickupRequestClosedDate = "2019-03-11T15:45:23.000+0000";
-    final String laterAwaitingPickupRequestClosedDateS = "2018-03-11T10:45:00.000+0000";
+    final String laterAwaitingPickupRequestClosedDate = "2018-03-11T10:45:00.000+0000";
 
     loansFixture.checkOutByBarcode(smallAngryPlanet, usersFixture.james());
 
@@ -265,7 +265,54 @@ public class ExpiredHoldsReportTests extends APITests {
         .put("awaitingPickupRequestClosedDate", earlierAwaitingPickupRequestClosedDate));
     requestsClient.replace(secondRequest.getId(),
       secondRequestBuilderOnItem.withStatus(RequestStatus.CLOSED_CANCELLED.getValue()).create()
-        .put("awaitingPickupRequestClosedDate", laterAwaitingPickupRequestClosedDateS));
+        .put("awaitingPickupRequestClosedDate", laterAwaitingPickupRequestClosedDate));
+
+    Response response = ResourceClient.forRequestReport(client).getById(pickupServicePointId);
+    verifyResponse(smallAngryPlanet, rebecca, response, RequestStatus.CLOSED_PICKUP_EXPIRED);
+  }
+
+  @Test
+  public void checkWhenPickupRequestClosedDateIsEmptyForExpiredRequest()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final IndividualResource rebecca = usersFixture.rebecca();
+    final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
+    final String awaitingPickupRequestClosedDate = "2019-03-11T15:45:23.000+0000";
+    final String emptyRequestClosedDate = "";
+
+    loansFixture.checkOutByBarcode(smallAngryPlanet, usersFixture.james());
+
+    // first request
+    RequestBuilder firstRequestBuilderOnItem = new RequestBuilder()
+      .open()
+      .hold()
+      .withPickupServicePointId(pickupServicePointId)
+      .forItem(smallAngryPlanet)
+      .by(rebecca);
+    IndividualResource firstRequest = requestsClient.create(firstRequestBuilderOnItem);
+
+    // second request
+    RequestBuilder secondRequestBuilderOnItem = new RequestBuilder()
+      .open()
+      .hold()
+      .withPickupServicePointId(pickupServicePointId)
+      .forItem(smallAngryPlanet)
+      .by(usersFixture.steve());
+    IndividualResource secondRequest = requestsClient.create(secondRequestBuilderOnItem);
+
+    loansFixture.checkInByBarcode(smallAngryPlanet);
+
+    // change "awaitingPickupRequestClosedDate" for the request to the same item
+    requestsClient.replace(firstRequest.getId(),
+      firstRequestBuilderOnItem.withStatus(RequestStatus.CLOSED_PICKUP_EXPIRED.getValue()).create()
+        .put("awaitingPickupRequestClosedDate", awaitingPickupRequestClosedDate));
+    requestsClient.replace(secondRequest.getId(),
+      secondRequestBuilderOnItem.withStatus(RequestStatus.CLOSED_CANCELLED.getValue()).create()
+        .put("awaitingPickupRequestClosedDate", emptyRequestClosedDate));
 
     Response response = ResourceClient.forRequestReport(client).getById(pickupServicePointId);
     verifyResponse(smallAngryPlanet, rebecca, response, RequestStatus.CLOSED_PICKUP_EXPIRED);
