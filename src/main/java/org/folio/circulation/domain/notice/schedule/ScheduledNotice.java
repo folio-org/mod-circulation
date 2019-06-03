@@ -8,15 +8,15 @@ public class ScheduledNotice {
   private final String loanId;
   private final String requestId;
   private final DateTime nextRunTime;
-  private final ScheduledNoticeConfig noticeConfig;
+  private final ScheduledNoticeConfig configuration;
 
   public ScheduledNotice(String id, String loanId, String requestId,
-                         DateTime nextRunTime, ScheduledNoticeConfig noticeConfig) {
+                         DateTime nextRunTime, ScheduledNoticeConfig configuration) {
     this.id = id;
     this.loanId = loanId;
     this.requestId = requestId;
     this.nextRunTime = nextRunTime;
-    this.noticeConfig = noticeConfig;
+    this.configuration = configuration;
   }
 
   public String getId() {
@@ -35,11 +35,11 @@ public class ScheduledNotice {
     return nextRunTime;
   }
 
-  public ScheduledNoticeConfig getNoticeConfig() {
-    return noticeConfig;
+  public ScheduledNoticeConfig getConfiguration() {
+    return configuration;
   }
 
   public ScheduledNotice withNextRunTime(DateTime nextRunTime) {
-    return new ScheduledNotice(id, loanId, requestId, nextRunTime, noticeConfig);
+    return new ScheduledNotice(id, loanId, requestId, nextRunTime, configuration);
   }
 }

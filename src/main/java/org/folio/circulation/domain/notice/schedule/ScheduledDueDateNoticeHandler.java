@@ -16,7 +16,6 @@ import org.folio.circulation.domain.notice.PatronNoticeService;
 import org.folio.circulation.domain.policy.LoanPolicyRepository;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.Result;
-import org.joda.time.DateTime;
 
 import io.vertx.core.json.JsonObject;
 
@@ -70,14 +69,14 @@ public class ScheduledDueDateNoticeHandler {
       .thenApply(r -> r.map(LoanAndRelatedRecords::new))
       .thenCompose(r -> r.after(loanPolicyRepository::lookupLoanPolicy))
       .thenCompose(r -> r.after(configurationRepository::lookupTimeZone))
-      .thenCompose(r -> r.after(records -> sendNotice(records, notice.getNoticeConfig())))
+      .thenCompose(r -> r.after(records -> sendNotice(records, notice)))
       .thenCompose(r -> r.after(relatedRecords -> updateNotice(relatedRecords, notice)));
   }
 
   private CompletableFuture<Result<LoanAndRelatedRecords>> sendNotice(
-    LoanAndRelatedRecords relatedRecords, ScheduledNoticeConfig noticeConfig) {
+    LoanAndRelatedRecords relatedRecords, ScheduledNotice notice) {
 
-    if (noticeIsNotRelevant(noticeConfig, relatedRecords.getLoan())) {
+    if (relatedRecords.getLoan().isClosed()) {
       return completedFuture(succeeded(relatedRecords));
     }
 
@@ -86,36 +85,36 @@ public class ScheduledDueDateNoticeHandler {
       relatedRecords.getLoanPolicy(),
       relatedRecords.getTimeZone());
     return patronNoticeService.acceptScheduledNoticeEvent(
-      noticeConfig, relatedRecords.getUserId(), loanNoticeContext)
+      notice.getConfiguration(), relatedRecords.getUserId(), loanNoticeContext)
       .thenApply(r -> r.map(v -> relatedRecords));
   }
 
   private CompletableFuture<Result<ScheduledNotice>> updateNotice(
     LoanAndRelatedRecords relatedRecords, ScheduledNotice notice) {
     Loan loan = relatedRecords.getLoan();
-    ScheduledNoticeConfig noticeConfig = notice.getNoticeConfig();
+    ScheduledNoticeConfig noticeConfig = notice.getConfiguration();
 
-    if (noticeIsNotRelevant(noticeConfig, loan) || !noticeConfig.isRecurring()) {
+    if (loan.isClosed() || !noticeConfig.isRecurring()) {
       return scheduledNoticesRepository.delete(notice);
     }
 
-    ScheduledNotice nextRecurringNotice = notice.withNextRunTime(
-      notice.getNextRunTime()
-        .plus(noticeConfig.getRecurringPeriod().timePeriod())
-    );
+    ScheduledNotice nextRecurringNotice =
+      notice.withNextRunTime(notice.getNextRunTime()
+        .plus(noticeConfig.getRecurringPeriod().timePeriod()));
+
+    if (nextRecurringNoticeIsNotRelevant(nextRecurringNotice, loan)) {
+      return scheduledNoticesRepository.delete(notice);
+    }
 
     return scheduledNoticesRepository.update(nextRecurringNotice);
   }
 
-  private boolean noticeIsNotRelevant(ScheduledNoticeConfig noticeConfig, Loan loan) {
-    return loan.isClosed() || beforeRecurringNoticeIsNotRelevant(noticeConfig, loan);
-  }
+  private boolean nextRecurringNoticeIsNotRelevant(
+    ScheduledNotice notice, Loan loan) {
+    ScheduledNoticeConfig noticeConfig = notice.getConfiguration();
 
-  private boolean beforeRecurringNoticeIsNotRelevant(
-    ScheduledNoticeConfig noticeConfig, Loan loan) {
-    return
+    return noticeConfig.isRecurring() &&
       noticeConfig.getTiming() == NoticeTiming.BEFORE &&
-        noticeConfig.isRecurring() &&
-        DateTime.now().isAfter(loan.getDueDate());
+      notice.getNextRunTime().isAfter(loan.getDueDate());
   }
 }

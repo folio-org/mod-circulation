@@ -38,7 +38,7 @@ public class ScheduledNoticeProcessingResource extends Resource {
     final Clients clients = Clients.create(context, client);
 
     final ScheduledNoticesRepository scheduledNoticesRepository =
-      new ScheduledNoticesRepository(clients.scheduledNoticesStorageClient());
+      ScheduledNoticesRepository.using(clients);
 
     final ScheduledDueDateNoticeHandler dueDateNoticeHandler =
       ScheduledDueDateNoticeHandler.using(clients);

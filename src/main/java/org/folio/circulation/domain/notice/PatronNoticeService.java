@@ -87,7 +87,7 @@ public class PatronNoticeService {
     JsonObject body = JsonObject.mapFrom(patronNotice);
 
     return patronNoticeClient.post(body).thenApply(response -> {
-      if (response.getStatusCode() == 200) {
+      if (response.getStatusCode() == 200 || response.getStatusCode() == 201) {
         return succeeded(patronNotice);
       } else {
         log.error("Failed to send patron notice. Status: {} Body: {}",

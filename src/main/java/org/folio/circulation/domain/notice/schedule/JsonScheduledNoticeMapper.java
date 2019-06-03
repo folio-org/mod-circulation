@@ -75,7 +75,7 @@ public class JsonScheduledNoticeMapper {
       .put(LOAN_ID, notice.getLoanId())
       .put(REQUEST_ID, notice.getRequestId())
       .put(NEXT_RUN_TIME, notice.getNextRunTime().withZone(DateTimeZone.UTC).toString())
-      .put(NOTICE_CONFIG, mapConfigToJson(notice.getNoticeConfig()));
+      .put(NOTICE_CONFIG, mapConfigToJson(notice.getConfiguration()));
   }
 
   private static JsonObject mapConfigToJson(ScheduledNoticeConfig config) {
