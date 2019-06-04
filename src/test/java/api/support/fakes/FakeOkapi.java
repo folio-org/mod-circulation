@@ -248,6 +248,13 @@ public class FakeOkapi extends AbstractVerticle {
       .create()
       .register(router);
 
+    new FakeStorageModuleBuilder()
+      .withRecordName("scheduled notice")
+      .withCollectionPropertyName("scheduledNotices")
+      .withRootPath("/scheduled-notice-storage/scheduled-notices")
+      .create()
+      .register(router);
+
     server.requestHandler(router::accept)
       .listen(PORT_TO_USE, result -> {
         if (result.succeeded()) {
