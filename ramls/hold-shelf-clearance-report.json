@@ -10,7 +10,7 @@
       "type": "array",
       "items": {
         "type": "object",
-        "$ref": "expired-holds-request.json"
+        "$ref": "hold-shelf-clearance-request.json"
       }
     },
     "totalRecords": {

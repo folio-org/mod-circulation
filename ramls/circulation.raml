@@ -13,7 +13,7 @@ types:
   loans: !include loans.json
   request: !include request.json
   requests: !include requests.json
-  report: !include expired-holds-report.json
+  report: !include hold-shelf-clearance-report.json
   check-in-by-barcode-response: !include check-in-by-barcode-response.json
   error: !include raml-util/schemas/error.schema
   errors: !include raml-util/schemas/errors.schema
@@ -571,9 +571,9 @@ resourceTypes:
         get:
   /requests-report:
     displayName: Expired Holds Report
-    /expired-holds:
+    /hold-shelf-clearance:
       /{servicePointId}:
         type:
           collection-get:
-            exampleCollection: !include examples/expired-holds-report.json
+            exampleCollection: !include examples/hold-shelf-clearance-report.json
             schemaCollection: report
