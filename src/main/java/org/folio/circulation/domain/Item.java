@@ -24,7 +24,6 @@ import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.domain.representations.ItemProperties;
 import org.folio.circulation.support.JsonArrayHelper;
 
@@ -144,12 +143,7 @@ public class Item {
   }
 
   public String getCallNumber() {
-    String propertyName = "callNumber";
-    String callNumber = getProperty(holdingRepresentation, propertyName);
-
-    return StringUtils.isBlank(callNumber)
-      ? getProperty(itemRepresentation, propertyName)
-      : callNumber;
+    return getProperty(holdingRepresentation, "callNumber");
   }
 
   public String getCallNumberPrefix() {
