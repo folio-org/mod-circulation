@@ -421,7 +421,7 @@ Data involved in the formation of the report:
 #### Example Request
 
 ```
-GET http://{okapi-location}/circulation/requests-report/expired-holds/:{servicePointId}
+GET http://{okapi-location}/circulation/requests-report/hold-shelf-clearance/:{servicePointId}
 ```
 
 #### Example Success Response

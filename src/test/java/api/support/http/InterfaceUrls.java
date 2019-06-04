@@ -109,7 +109,7 @@ public class InterfaceUrls {
   }
 
   public static URL requestReportUrl(String servicePointId) {
-    return circulationModuleUrl("/circulation/requests-report/expired-holds/" + servicePointId);
+    return circulationModuleUrl("/circulation/requests-report/hold-shelf-clearance/" + servicePointId);
   }
 
   public static URL requestQueueUrl(UUID itemId) {

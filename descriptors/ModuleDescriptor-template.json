@@ -3,6 +3,31 @@
   "name": "Circulation Module",
   "provides": [
     {
+      "id": "requests-report",
+      "version": "0.1",
+      "handlers": [
+        {
+          "methods": [
+            "GET"
+          ],
+          "pathPattern": "/circulation/requests-report/hold-shelf-clearance/{id}",
+          "permissionsRequired": [
+            "circulation.requests.hold-shelf-clearance-report.get"
+          ],
+          "modulePermissions": [
+            "inventory-storage.items.item.get",
+            "inventory-storage.items.collection.get",
+            "inventory-storage.service-points.collection.get",
+            "inventory-storage.service-points.item.get",
+            "circulation-storage.requests.item.get",
+            "circulation-storage.requests.collection.get",
+            "users.collection.get",
+            "users.item.get"
+          ]
+        }
+      ]
+    },
+    {
       "id": "circulation",
       "version": "7.6",
       "handlers": [
@@ -277,25 +302,6 @@
             "inventory-storage.material-types.item.get",
             "inventory-storage.service-points.collection.get",
             "inventory-storage.service-points.item.get",
-            "users.collection.get",
-            "users.item.get"
-          ]
-        },
-        {
-          "methods": [
-            "GET"
-          ],
-          "pathPattern": "/circulation/requests-report/expired-holds/{id}",
-          "permissionsRequired": [
-            "circulation.requests.expired-holds-report.get"
-          ],
-          "modulePermissions": [
-            "inventory-storage.items.item.get",
-            "inventory-storage.items.collection.get",
-            "inventory-storage.service-points.collection.get",
-            "inventory-storage.service-points.item.get",
-            "circulation-storage.requests.item.get",
-            "circulation-storage.requests.collection.get",
             "users.collection.get",
             "users.item.get"
           ]
@@ -925,9 +931,9 @@
       "description": "get request queue for an item"
     },
     {
-      "permissionName": "circulation.requests.expired-holds-report.get",
-      "displayName": "circulation - request hold expiration report",
-      "description": "get first pass hold expiration report"
+      "permissionName": "circulation.requests.hold-shelf-clearance-report.get",
+      "displayName": "circulation - request hold shelf clearance report CSV",
+      "description": "get first pass hold shelf clearance report"
     },
     {
       "permissionName": "circulation.all",
@@ -961,7 +967,7 @@
         "circulation.requests.item.delete",
         "circulation.requests.collection.delete",
         "circulation.requests.queue.collection.get",
-        "circulation.requests.expired-holds-report.get"
+        "circulation.requests.hold-shelf-clearance-report.get"
       ]
     }
   ],
