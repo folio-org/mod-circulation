@@ -74,6 +74,7 @@ public class CirculationVerticle extends AbstractVerticle {
       "/circulation/rules/notice-policy-all",
         client)
         .register(router);
+
     new ScheduledNoticeProcessingResource(client).register(router);
 
 
