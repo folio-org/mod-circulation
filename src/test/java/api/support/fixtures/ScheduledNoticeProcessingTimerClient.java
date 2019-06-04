@@ -14,8 +14,12 @@ public class ScheduledNoticeProcessingTimerClient {
 
   public void runNoticesProcessing(DateTime mockSystemTime) {
     DateTimeUtils.setCurrentMillisFixed(mockSystemTime.getMillis());
+    runNoticesProcessing();
+    DateTimeUtils.setCurrentMillisSystem();
+  }
+
+  public void runNoticesProcessing() {
     URL url = APITestContext.circulationModuleUrl("/circulation/scheduled-notices-processing");
     post(new JsonObject(), url, 204, "scheduled-notices-processing-request");
-    DateTimeUtils.setCurrentMillisSystem();
   }
 }

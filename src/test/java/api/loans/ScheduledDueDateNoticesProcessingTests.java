@@ -2,12 +2,16 @@ package api.loans;
 
 import static api.support.matchers.PatronNoticeMatcher.hasEmailNoticeProperties;
 import static api.support.matchers.ScheduledNoticeMatchers.hasScheduledLoanNotice;
+import static java.util.Comparator.comparing;
+import static org.folio.circulation.support.JsonPropertyFetcher.getDateTimeProperty;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 
 import java.net.MalformedURLException;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -15,6 +19,8 @@ import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import org.awaitility.Awaitility;
@@ -39,6 +45,9 @@ public class ScheduledDueDateNoticesProcessingTests extends APITests {
   private static final String BEFORE_TIMING = "Before";
   private static final String UPON_AT_TIMING = "Upon At";
   private static final String AFTER_TIMING = "After";
+
+  private static final int SCHEDULED_NOTICES_PROCESSING_LIMIT = 100;
+  public static final String NEXT_RUN_TIME = "nextRunTime";
 
 
   private final UUID beforeTemplateId = UUID.randomUUID();
@@ -310,4 +319,68 @@ public class ScheduledDueDateNoticesProcessingTests extends APITests {
     checkScheduledNotices(null, null, null);
   }
 
+  @Test
+  public void processingTakesNoticesInThePastLimitedAndOrdered()
+    throws MalformedURLException,
+    InterruptedException,
+    TimeoutException,
+    ExecutionException {
+    scheduledNoticesClient.deleteAll();
+    //Close loan to make scheduled notice processing delete them
+    //It helps to check what notices are taken for processing
+    loansFixture.checkInByBarcode(item);
+
+    DateTime systemTime = DateTime.now(DateTimeZone.UTC);
+    int expectedNumberOfUnprocessedNoticesInThePast = 10;
+    int numberOfNoticesInTheFuture = 20;
+
+    List<JsonObject> noticesInThePast = IntStream.iterate(0, i -> i + 1)
+      .boxed()
+      .map(systemTime::minusHours)
+      .map(this::createFakeScheduledNotice)
+      .limit(SCHEDULED_NOTICES_PROCESSING_LIMIT + expectedNumberOfUnprocessedNoticesInThePast)
+      .collect(Collectors.toList());
+
+    List<JsonObject> noticesInTheFuture = IntStream.iterate(0, i -> i + 1)
+      .boxed()
+      .map(systemTime::plusHours)
+      .map(this::createFakeScheduledNotice)
+      .limit(numberOfNoticesInTheFuture)
+      .collect(Collectors.toList());
+
+    List<JsonObject> allScheduledNotices = new ArrayList<>(noticesInThePast);
+    allScheduledNotices.addAll(noticesInTheFuture);
+    for (JsonObject notice : allScheduledNotices) {
+      scheduledNoticesClient.create(notice);
+    }
+
+    scheduledNoticeProcessingTimerClient.runNoticesProcessing();
+    //As loan is closed all processed notices are deleted
+    List<JsonObject> unprocessedScheduledNotices = scheduledNoticesClient.getAll();
+
+    Comparator<JsonObject> nextRunTimeComparator =
+      comparing(json -> getDateTimeProperty(json, NEXT_RUN_TIME));
+    JsonObject[] expectedUnprocessedNoticesInThePast = noticesInThePast.stream()
+      .sorted(nextRunTimeComparator.reversed())
+      .limit(expectedNumberOfUnprocessedNoticesInThePast)
+      .toArray(JsonObject[]::new);
+
+    assertThat(unprocessedScheduledNotices, hasItems(expectedUnprocessedNoticesInThePast));
+    assertThat(unprocessedScheduledNotices, hasItems(noticesInTheFuture.toArray(new JsonObject[0])));
+  }
+
+
+  private JsonObject createFakeScheduledNotice(DateTime nextRunTime) {
+    return new JsonObject()
+      .put("id", UUID.randomUUID().toString())
+      .put("loanId", loan.getId().toString())
+      .put(NEXT_RUN_TIME, nextRunTime.withZone(DateTimeZone.UTC).toString())
+      .put("noticeConfig",
+        new JsonObject()
+          .put("timing", BEFORE_TIMING)
+          .put("templateId", UUID.randomUUID().toString())
+          .put("format", "Email")
+          .put("sendInRealTime", true)
+      );
+  }
 }

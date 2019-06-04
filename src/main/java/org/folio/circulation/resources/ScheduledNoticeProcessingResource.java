@@ -20,6 +20,8 @@ import io.vertx.ext.web.RoutingContext;
 
 public class ScheduledNoticeProcessingResource extends Resource {
 
+  private static final int SCHEDULED_NOTICES_PROCESSING_LIMIT = 100;
+
   public ScheduledNoticeProcessingResource(HttpClient client) {
     super(client);
   }
@@ -44,7 +46,7 @@ public class ScheduledNoticeProcessingResource extends Resource {
     final ScheduledDueDateNoticeHandler dueDateNoticeHandler =
       ScheduledDueDateNoticeHandler.using(clients, systemTime);
 
-    scheduledNoticesRepository.findNoticesToSend(systemTime, 100)
+    scheduledNoticesRepository.findNoticesToSend(systemTime, SCHEDULED_NOTICES_PROCESSING_LIMIT)
       .thenApply(r -> r.map(MultipleRecords::getRecords))
       .thenCompose(r -> r.after(dueDateNoticeHandler::handleNotices))
       .thenApply(this::createWritableResult)

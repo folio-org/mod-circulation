@@ -2,6 +2,7 @@ package org.folio.circulation.domain.notice.schedule;
 
 import static org.folio.circulation.domain.notice.schedule.JsonScheduledNoticeMapper.mapFromJson;
 import static org.folio.circulation.domain.notice.schedule.JsonScheduledNoticeMapper.mapToJson;
+import static org.folio.circulation.support.CqlSortBy.ascending;
 import static org.folio.circulation.support.Result.failed;
 import static org.folio.circulation.support.Result.succeeded;
 
@@ -56,6 +57,7 @@ public class ScheduledNoticesRepository {
   public CompletableFuture<Result<MultipleRecords<ScheduledNotice>>> findNoticesToSend(
     DateTime systemTime, int pageLimit) {
     return CqlQuery.lessThan("nextRunTime", systemTime.withZone(DateTimeZone.UTC))
+      .map(cqlQuery -> cqlQuery.sortBy(ascending("nextRunTime")))
       .after(query -> findBy(query, pageLimit));
   }
 
