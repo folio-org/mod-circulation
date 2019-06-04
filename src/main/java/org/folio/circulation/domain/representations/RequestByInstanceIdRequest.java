@@ -1,8 +1,8 @@
 package org.folio.circulation.domain.representations;
 
-import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.JsonPropertyFetcher.getDateTimeProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getUUIDProperty;
+import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 
 import java.util.UUID;

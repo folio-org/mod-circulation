@@ -1,9 +1,7 @@
 package api.support.builders;
 
-import java.util.List;
 import java.util.UUID;
 
-import org.folio.circulation.domain.Item;
 import org.folio.circulation.support.http.client.IndividualResource;
 
 import io.vertx.core.json.JsonArray;
@@ -42,7 +40,6 @@ public class HoldingBuilder extends JsonBuilder implements Builder {
     put(holdings, "permanentLocationId", permanentLocationId);
     put(holdings, "temporaryLocationId", temporaryLocationId);
     put(holdings, "callNumber", callNumber);
-   // put(holdings, "holdingsItems", toJsonHoldingItems(holdingsItems));
     put(holdings, "holdingsItems", holdingsItems);
 
     return holdings;
@@ -109,15 +106,5 @@ public class HoldingBuilder extends JsonBuilder implements Builder {
       this.callNumber,
       holdingsItems
     );
-  }
-
-  private JsonArray toJsonHoldingItems(List<Item> holdingsItems) {
-    JsonArray holdingsItemJsonArr = new JsonArray();
-    if (holdingsItems != null && !holdingsItems.isEmpty()) {
-      for (Item item : holdingsItems) {
-        holdingsItemJsonArr.add(item.getItem());
-      }
-    }
-    return holdingsItemJsonArr;
   }
 }

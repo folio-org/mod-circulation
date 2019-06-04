@@ -156,7 +156,7 @@ public abstract class APITests {
     = new InstancesFixture(instanceTypesClient, contributorNameTypesClient, client);
 
   protected final HoldingsFixture holdingsFixture
-    = new HoldingsFixture(client, itemsFixture, loanTypesFixture, locationsFixture);
+    = new HoldingsFixture(client);
 
   protected APITests() {
     this(true);

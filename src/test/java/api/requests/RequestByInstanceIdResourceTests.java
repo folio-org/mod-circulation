@@ -14,7 +14,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
 import org.folio.circulation.domain.Item;
-import org.folio.circulation.domain.LocationRepository;
 import org.folio.circulation.domain.RequestType;
 import org.folio.circulation.domain.representations.RequestByInstanceIdRequest;
 import org.folio.circulation.resources.RequestByInstanceIdResource;
@@ -31,11 +30,6 @@ import io.vertx.core.json.JsonObject;
 import javafx.util.Pair;
 
 public class RequestByInstanceIdResourceTests extends APITests {
-
-  @Test
-  public void canGetLocationFutures(){
-    //LocationRepository locationRepository =
-  }
 
   @Test
   public void canTransformInstanceToItemRequests(){

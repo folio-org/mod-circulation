@@ -33,7 +33,6 @@ public class Clients {
   private final CollectionResourceClient patronNoticeClient;
   private final CollectionResourceClient configurationStorageClient;
   private final CollectionResourceClient scheduledNoticesStorageClient;
-  private final CollectionResourceClient inventoryItemsClient;
 
   public static Clients create(WebContext context, HttpClient httpClient) {
     return new Clients(context.createHttpClient(httpClient), context);
@@ -66,7 +65,6 @@ public class Clients {
       patronNoticeClient = createPatronNoticeClient(client, context);
       configurationStorageClient = createConfigurationStorageClient(client, context);
       scheduledNoticesStorageClient = createScheduledNoticesStorageClient(client, context);
-      inventoryItemsClient = createInventoryItemsClient(client, context);
     }
     catch(MalformedURLException e) {
       throw new InvalidOkapiLocationException(context.getOkapiLocation(), e);
@@ -85,10 +83,6 @@ public class Clients {
 
   public CollectionResourceClient itemsStorage() {
     return itemsStorageClient;
-  }
-
-  CollectionResourceClient inventoryItems() {
-    return inventoryItemsClient;
   }
 
   public CollectionResourceClient holdingsStorage() {
@@ -230,14 +224,6 @@ public class Clients {
     throws MalformedURLException {
 
     return getCollectionResourceClient(client, context, "/item-storage/items");
-  }
-
-  private static CollectionResourceClient createInventoryItemsClient(
-    OkapiHttpClient client,
-    WebContext context)
-    throws MalformedURLException {
-
-    return getCollectionResourceClient(client, context, "/inventory/items");
   }
 
   private static CollectionResourceClient createHoldingsStorageClient(
