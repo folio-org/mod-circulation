@@ -12,7 +12,6 @@ import io.vertx.core.json.JsonObject;
 
 public class ScheduledNoticeProcessingTimerClient {
 
-
   public void runNoticesProcessing(DateTime mockSystemTime) {
     DateTimeUtils.setCurrentMillisFixed(mockSystemTime.getMillis());
     URL url = APITestContext.circulationModuleUrl("/circulation/scheduled-notices-processing");

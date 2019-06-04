@@ -1,5 +1,6 @@
 package org.folio.circulation.support;
 
+import static org.folio.circulation.support.CqlQuery.*;
 import static org.folio.circulation.support.CqlQuery.exactMatch;
 import static org.folio.circulation.support.CqlQuery.exactMatchAny;
 import static org.folio.circulation.support.CqlSortBy.ascending;
@@ -9,6 +10,8 @@ import static org.junit.Assert.assertThat;
 
 import java.util.ArrayList;
 
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
 import org.junit.Test;
 
 public class CqlQueryTests {
@@ -84,5 +87,13 @@ public class CqlQueryTests {
 
     assertThat(query.value().asText(),
       is("barcode==\"12345\" sortBy position/sort.ascending"));
+  }
+
+  @Test
+  public void canApplyLessThenOperator() {
+    DateTime dateTime = DateTime.now(DateTimeZone.UTC);
+    Result<CqlQuery> query = lessThan("nextRunTime", dateTime);
+
+    assertThat(query.value().asText(), is(String.format("nextRunTime<\"%s\"", dateTime)));
   }
 }
