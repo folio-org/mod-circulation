@@ -92,6 +92,20 @@ public class ItemsFixture {
     return itemsClient.create(item1);
   }
 
+  public IndividualResource basedUponDunkirkWithCustomHoldingAndLocationAndCheckedOut(UUID holdingsId, UUID locationId)
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    JsonObject item1 = ItemExamples.basedUponDunkirk(UUID.randomUUID(), loanTypesFixture.canCirculate().getId())
+      .forHolding(holdingsId)
+      .checkOut()
+      .withTemporaryLocation(locationId)
+      .create();
+
+    return itemsClient.create(item1);
+  }
   public InventoryItemResource basedUponSmallAngryPlanet()
     throws InterruptedException,
     MalformedURLException,

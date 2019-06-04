@@ -213,6 +213,7 @@ public class LoanRepository {
   }
 
   private static void removeSummaryProperties(JsonObject storageLoan) {
+    storageLoan.remove("borrower");
     storageLoan.remove("item");
     storageLoan.remove("checkinServicePoint");
     storageLoan.remove("checkoutServicePoint");

@@ -93,12 +93,12 @@ public class RequestByInstanceIdResource extends Resource {
     final RequestByInstanceIdRequest requestByInstanceIdRequest =requestByInstanceIdRequestResult.value();
     ItemByInstanceIdFinder finder = new ItemByInstanceIdFinder(clients.holdingsStorage(), clients.itemsStorage());
 
-    String pickupServicePointId = requestByInstanceIdRequest.getPickupServicePointId();
-    final CompletableFuture<Result<Collection<Item>>> items = finder.getItemsByInstanceId(requestByInstanceIdRequest.getInstanceId());
+    String pickupServicePointId = requestByInstanceIdRequest.getPickupServicePointId().toString();
+    final CompletableFuture<Result<Collection<Item>>> items = finder.getItemsByInstanceId(requestByInstanceIdRequest.getInstanceId().toString());
 
     final CompletableFuture<Result<Collection<Item>>> availableItems = items.thenApply(r -> r.next(this::getfilteredAvailableItems));
 
-    availableItems.thenCompose(r -> r.after( collectionResult ->findItemsWithMatchingServicePointId(
+    availableItems.thenCompose(r -> r.after( collectionResult -> findItemsWithMatchingServicePointId(
                                                                   pickupServicePointId, collectionResult, locationRepository)))
       .thenApply( r -> r.next( itemsFound -> instanceToItemRequests(requestByInstanceIdRequest, itemsFound)))
       .thenCompose( r -> r.after( requests -> placeRequests(requests, clients)))
@@ -277,6 +277,8 @@ public class RequestByInstanceIdResource extends Resource {
     RequestType[] types = RequestType.values();
     LinkedList<JsonObject> requests = new LinkedList<>();
 
+    final String defaultFulfilmentPreference = "Hold Shelf";
+
     for (Item item: items) {
       for (RequestType reqType : types) {
         if (reqType != RequestType.NONE) {
@@ -285,8 +287,8 @@ public class RequestByInstanceIdResource extends Resource {
           requestBody.put("itemId", item.getItemId());
           requestBody.put("requestDate", requestByInstanceIdRequest.getRequestDate().toString(ISODateTimeFormat.dateTime()));
           requestBody.put("requesterId", requestByInstanceIdRequest.getRequesterId().toString());
-          requestBody.put("pickupServicePointId", requestByInstanceIdRequest.getPickupServicePointId());
-          requestBody.put("fulfilmentPreference", "Hold Shelf");
+          requestBody.put("pickupServicePointId", requestByInstanceIdRequest.getPickupServicePointId().toString());
+          requestBody.put("fulfilmentPreference", defaultFulfilmentPreference);
           requestBody.put("requestExpirationDate",
             requestByInstanceIdRequest.getRequestExpirationDate().toString(ISODateTimeFormat.dateTime()));
           requestBody.put("requestType", reqType.name());

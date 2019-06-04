@@ -128,7 +128,7 @@ public class InstanceRequestsAPICreationTests extends APITests {
     client.post(InterfaceUrls.requestsUrl("/instances"), requestBody,
       ResponseHandler.any(postCompleted));
 
-    Response postResponse = postCompleted.get(100, TimeUnit.SECONDS);
+    Response postResponse = postCompleted.get(10, TimeUnit.SECONDS);
 
     JsonObject representation = postResponse.getJson();
     validateInstanceRequestResponse(representation,
@@ -137,6 +137,83 @@ public class InstanceRequestsAPICreationTests extends APITests {
       null,  //although we create the items in certain order, this order may not be what the code picks up when query for items by holdings, so there is no point to check for itemId
       RequestType.PAGE);
 
+  }
+
+  @Test
+  public void cannotSuccessfullyPlaceATitleLevelRequestWhenNoCopyIsAvailable()
+    throws InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    MalformedURLException {
+
+    UUID pickupServicePointId = servicePointsFixture.cd1().getId();
+    UUID requesterId = usersFixture.jessica().getId();
+    DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
+    DateTime requestExpirationDate = requestDate.plusDays(30);
+
+    IndividualResource instance = instancesFixture.basedUponDunkirk();
+    IndividualResource holdings = holdingsFixture.defaultWithHoldings(instance.getId());
+
+    //create 3 copies with no location id's assigned.
+    itemsFixture.basedUponDunkirkWithCustomHoldingAndLocationAndCheckedOut(holdings.getId(), null);
+    itemsFixture.basedUponDunkirkWithCustomHoldingAndLocationAndCheckedOut(holdings.getId(), null);
+    itemsFixture.basedUponDunkirkWithCustomHoldingAndLocationAndCheckedOut(holdings.getId(), null);
+
+    JsonObject requestBody = createInstanceRequestObject(instance.getId(), requesterId,
+      pickupServicePointId, requestDate, requestExpirationDate);
+
+    CompletableFuture<Response> postCompleted = new CompletableFuture<>();
+
+    client.post(InterfaceUrls.requestsUrl("/instances"), requestBody,
+      ResponseHandler.any(postCompleted));
+
+    Response postResponse = postCompleted.get(10, TimeUnit.SECONDS);
+    assertEquals(422, postResponse.getStatusCode());
+
+    JsonObject representation = postResponse.getJson();
+    assertEquals("Cannot create request objects when items list is null or empty",  representation.getJsonArray("errors")
+                                                                                                            .getJsonObject(0)
+                                                                                                            .getString("message"));
+
+  }
+
+  @Test
+  public void cannotSuccessfullyPlaceATitleLevelRequestWhenTitleLevelRequestMissingRequiredFields()
+    throws InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    MalformedURLException {
+
+    UUID pickupServicePointId = servicePointsFixture.cd1().getId();
+    UUID requesterId = usersFixture.jessica().getId();
+    DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
+    DateTime requestExpirationDate = requestDate.plusDays(30);
+
+    IndividualResource instance = instancesFixture.basedUponDunkirk();
+    IndividualResource holdings = holdingsFixture.defaultWithHoldings(instance.getId());
+
+    //create 3 copies with no location id's assigned.
+    itemsFixture.basedUponDunkirkWithCustomHoldingAndLocationAndCheckedOut(holdings.getId(), null);
+    itemsFixture.basedUponDunkirkWithCustomHoldingAndLocationAndCheckedOut(holdings.getId(), null);
+    itemsFixture.basedUponDunkirkWithCustomHoldingAndLocationAndCheckedOut(holdings.getId(), null);
+
+    JsonObject requestBody = createInstanceRequestObject(instance.getId(), requesterId,
+      pickupServicePointId, requestDate, requestExpirationDate);
+    requestBody.remove("pickupServicePointId");
+    requestBody.remove("instanceId");
+
+    CompletableFuture<Response> postCompleted = new CompletableFuture<>();
+
+    client.post(InterfaceUrls.requestsUrl("/instances"), requestBody,
+      ResponseHandler.any(postCompleted));
+
+    Response postResponse = postCompleted.get(10, TimeUnit.SECONDS);
+    assertEquals(422, postResponse.getStatusCode());
+
+    JsonObject representation = postResponse.getJson();
+    assertEquals("Request must have an instance id", representation.getJsonArray("errors")
+                                                                            .getJsonObject(0)
+                                                                            .getString("message"));
   }
 
     private void validateInstanceRequestResponse(JsonObject representation,

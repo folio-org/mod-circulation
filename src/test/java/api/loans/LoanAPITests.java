@@ -1498,6 +1498,45 @@ public class LoanAPITests extends APITests {
   }
 
   @Test
+  public void canGetMultipleLoansForDifferentBorrowers()
+    throws InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    MalformedURLException {
+
+    UUID smallAngryPlanetId = itemsFixture.basedUponSmallAngryPlanet().getId();
+    UUID nodId = itemsFixture.basedUponNod().getId();
+
+    UUID checkinServicePointId = servicePointsFixture.cd1().getId();
+    UUID checkinServicePointId2 = servicePointsFixture.cd2().getId();
+
+    final IndividualResource steveUser = usersFixture.steve();
+    final IndividualResource firstLoan = loansClient.createAtSpecificLocation(new LoanBuilder()
+      .withItemId(smallAngryPlanetId)
+      .withCheckinServicePointId(checkinServicePointId)
+      .closed()
+      .withUserId(usersFixture.steve().getId()));
+
+    final IndividualResource jessicaUser = usersFixture.jessica();
+    final IndividualResource secondLoan = loansClient.createAtSpecificLocation(new LoanBuilder()
+      .withItemId(nodId)
+      .closed()
+      .withCheckinServicePointId(checkinServicePointId2)
+      .withUserId(usersFixture.jessica().getId()));
+
+    final List<JsonObject> multipleLoans = loansClient.getAll();
+
+     assertThat("Should have different 'userId' for different loans",
+       multipleLoans.get(0).getString("userId"),
+       not(multipleLoans.get(1).getString("userId")));
+
+    assertThat("Should have two loans",
+      multipleLoans.size(), is(2));
+    loanHasExpectedProperties(firstLoan.getJson(), steveUser);
+    loanHasExpectedProperties(secondLoan.getJson(), jessicaUser);
+  }
+
+  @Test
   public void canDeleteALoan()
     throws InterruptedException,
     MalformedURLException,
