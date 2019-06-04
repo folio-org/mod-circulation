@@ -42,7 +42,7 @@ public class MultipleRecordFetcher<T> {
     }
 
     return exactMatchAny(indexName, idList)
-      .after(query -> client.getMany(query, idList.size()))
+      .after(query -> client.getMany(query, null))
       .thenApply(result -> result.next(this::mapToRecords));
   }
 

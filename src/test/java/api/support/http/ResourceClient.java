@@ -388,6 +388,20 @@ public class ResourceClient {
     return getCompleted.get(500, TimeUnit.SECONDS);
   }
 
+  public Response getByQueryString(String queryString)
+    throws MalformedURLException,
+    InterruptedException,
+    ExecutionException,
+    TimeoutException {
+
+    CompletableFuture<Response> getCompleted = new CompletableFuture<>();
+
+    client.get(urlMaker.combine(String.format("?%s", queryString)),
+      ResponseHandler.any(getCompleted));
+
+    return getCompleted.get(500, TimeUnit.SECONDS);
+  }
+
   public IndividualResource get(IndividualResource record)
     throws MalformedURLException,
     InterruptedException,

@@ -61,12 +61,14 @@ import org.junit.runner.RunWith;
 
 import api.support.APITests;
 import api.support.builders.Address;
+import api.support.builders.InstanceBuilder;
 import api.support.builders.ItemBuilder;
 import api.support.builders.LoanPolicyBuilder;
 import api.support.builders.NoticeConfigurationBuilder;
 import api.support.builders.NoticePolicyBuilder;
 import api.support.builders.RequestBuilder;
 import api.support.builders.UserBuilder;
+import api.support.fixtures.InstancesFixture;
 import api.support.fixtures.ItemsFixture;
 import api.support.fixtures.LoansFixture;
 import api.support.fixtures.NoticeMatchers;

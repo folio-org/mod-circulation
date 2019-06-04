@@ -68,7 +68,10 @@ class RequestFromRepresentationService {
       .thenComposeAsync(r -> r.combineAfter(requestQueueRepository::get,
         RequestAndRelatedRecords::withRequestQueue))
       .thenComposeAsync(r -> r.after(proxyRelationshipValidator::refuseWhenInvalid))
-      .thenApply(servicePointPickupLocationValidator::checkServicePointPickupLocation);
+      .thenApply(servicePointPickupLocationValidator::checkServicePointPickupLocation)
+      .exceptionally(r -> {
+          System.err.println(r.getMessage());
+                          return null; });
   }
 
   private CompletableFuture<Result<User>> getUserForExistingLoan(Request request) {

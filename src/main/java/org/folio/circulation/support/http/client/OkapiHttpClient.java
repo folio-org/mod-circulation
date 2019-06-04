@@ -56,7 +56,7 @@ public class OkapiHttpClient {
 
     addStandardHeaders(request);
 
-    request.setTimeout(5000);
+    request.setTimeout(15000);
 
     request.exceptionHandler(this.exceptionHandler::accept);
 

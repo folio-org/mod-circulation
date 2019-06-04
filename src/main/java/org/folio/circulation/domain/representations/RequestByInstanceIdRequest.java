@@ -29,24 +29,24 @@ public class RequestByInstanceIdRequest {
   private final DateTime requestDate;
   private final UUID requesterId;
   private final UUID proxyUserId;
-  private final UUID instanceId;
+  private final String instanceId;
   private final RequestFulfilmentPreference fulfilmentPreference;
   private final UUID deliveryAddressTypeId;
   private final DateTime requestExpirationDate;
   private final DateTime holdShelfExpirationDate;
-  private final UUID pickupServicePointId;
+  private final String pickupServicePointId;
 
   @SuppressWarnings("squid:S00107")
   private RequestByInstanceIdRequest(
       DateTime requestDate,
       UUID requesterId,
       UUID proxyUserId,
-      UUID instanceId,
+      String instanceId,
       RequestFulfilmentPreference fulfilmentPreference,
       UUID deliveryAddressTypeId,
       DateTime requestExpirationDate,
       DateTime holdShelfExpirationDate,
-      UUID pickupServicePointId) {
+      String pickupServicePointId) {
     this.requestDate = requestDate;
     this.requesterId = requesterId;
     this.proxyUserId = proxyUserId;
@@ -71,7 +71,7 @@ public class RequestByInstanceIdRequest {
       return failedValidation("Request must have a requester id", JSON_FIELD_REQUESTER_ID, null);
     }
 
-    final UUID instanceId = getUUIDProperty(json, JSON_FIELD_INSTANCE_ID);
+    final String instanceId = getProperty(json, JSON_FIELD_INSTANCE_ID);
 
     if (instanceId == null) {
       return failedValidation("Request must have an instance id", JSON_FIELD_INSTANCE_ID, null);
@@ -88,7 +88,7 @@ public class RequestByInstanceIdRequest {
     final UUID deliveryAddressTypeId = getUUIDProperty(json, JSON_FIELD_DELIVERY_ADDRESS_TYPE_ID);
     final DateTime requestExpirationDate = getDateTimeProperty(json, JSON_FIELD_REQUEST_EXPIRATION_DATE);
     final DateTime holdShelfExpirationDate = getDateTimeProperty(json, JSON_FIELD_HOLD_SHELF_EXPIRATION_DATE);
-    final UUID pickupServicePointId = getUUIDProperty(json, JSON_FIELD_PICKUP_SERVICE_POINT_ID);
+    final String pickupServicePointId = getProperty(json, JSON_FIELD_PICKUP_SERVICE_POINT_ID);
 
     return succeeded(new RequestByInstanceIdRequest(requestDate, requesterId, proxyUserId, instanceId,
         fulfilmentPreference, deliveryAddressTypeId, requestExpirationDate, holdShelfExpirationDate,
@@ -107,7 +107,7 @@ public class RequestByInstanceIdRequest {
     return proxyUserId;
   }
 
-  public UUID getInstanceId() {
+  public String getInstanceId() {
     return instanceId;
   }
 
@@ -127,7 +127,7 @@ public class RequestByInstanceIdRequest {
     return holdShelfExpirationDate;
   }
 
-  public UUID getPickupServicePointId() {
+  public String getPickupServicePointId() {
     return pickupServicePointId;
   }
 }
