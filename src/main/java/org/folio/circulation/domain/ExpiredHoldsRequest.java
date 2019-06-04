@@ -34,7 +34,7 @@ public class ExpiredHoldsRequest {
       .put(REQUESTER_BARCODE_KEY, getValue(getValueForJson(requester, BARCODE_KEY)))
       .put(ITEM_TITLE_KEY, getValue(item.getTitle()))
       .put(ITEM_BARCODE_KEY, getValue(item.getBarcode()))
-      .put(CALL_NUMBER_KEY, getValue(item.getCallNumberFromItemRepresentation()))
+      .put(CALL_NUMBER_KEY, getValue(item.getCallNumber()))
       .put(REQUEST_STATUS_KEY, getValue(request.getStatus().getValue()))
       .put(HOLD_SHELF_EXPIRATION_DATE_KEY, DATE_TIME_FORMATTER.print(
         request.getHoldShelfExpirationDate()));
