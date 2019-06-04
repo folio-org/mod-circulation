@@ -17,6 +17,7 @@ import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.RequestType;
 import org.folio.circulation.domain.representations.RequestByInstanceIdRequest;
 import org.folio.circulation.resources.RequestByInstanceIdResource;
+import org.folio.circulation.support.Pair;
 import org.folio.circulation.support.Result;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
@@ -27,7 +28,6 @@ import api.support.APITests;
 import api.support.builders.LocationBuilder;
 import api.support.fixtures.ItemExamples;
 import io.vertx.core.json.JsonObject;
-import javafx.util.Pair;
 
 public class RequestByInstanceIdResourceTests extends APITests {
 
@@ -116,11 +116,11 @@ public class RequestByInstanceIdResourceTests extends APITests {
       .withTemporaryLocation(UUID.fromString(location4.getString("id")))
       .create());
 
-    LinkedList<Pair<String, Item>> locationIdItemMap = new LinkedList<>();
-    locationIdItemMap.add(new Pair<>(item1.getLocationId(), item1));
-    locationIdItemMap.add(new Pair<>(item2.getLocationId(), item2));
-    locationIdItemMap.add(new Pair<>(item3.getLocationId(), item3));
-    locationIdItemMap.add(new Pair<>(item4.getLocationId(), item4));
+    LinkedList<Pair> locationIdItemMap = new LinkedList<>();
+    locationIdItemMap.add(new Pair(item1.getLocationId(), item1));
+    locationIdItemMap.add(new Pair(item2.getLocationId(), item2));
+    locationIdItemMap.add(new Pair(item3.getLocationId(), item3));
+    locationIdItemMap.add(new Pair(item4.getLocationId(), item4));
 
     List<Item> items = RequestByInstanceIdResource.getItemsWithMatchingServicePointIds(locations,locationIdItemMap,pickupServicePointId);
     assertEquals(2, items.size());
@@ -143,11 +143,11 @@ public class RequestByInstanceIdResourceTests extends APITests {
     Item item3 = Item.from(ItemExamples.basedUponSmallAngryPlanet(bookMaterialTypeId, loanTypeId).withTemporaryLocation(UUID.randomUUID()).create());
     Item item4 = Item.from(ItemExamples.basedUponSmallAngryPlanet(bookMaterialTypeId, loanTypeId).withTemporaryLocation(UUID.randomUUID()).create());
 
-    LinkedList<Pair<String, Item>> locationIdItemMap = new LinkedList<>();
-    locationIdItemMap.add(new Pair<>(item1.getLocationId(), item1));
-    locationIdItemMap.add(new Pair<>(item2.getLocationId(), item2));
-    locationIdItemMap.add(new Pair<>(item3.getLocationId(), item3));
-    locationIdItemMap.add(new Pair<>(item4.getLocationId(), item4));
+    LinkedList<Pair> locationIdItemMap = new LinkedList<>();
+    locationIdItemMap.add(new Pair(item1.getLocationId(), item1));
+    locationIdItemMap.add(new Pair(item2.getLocationId(), item2));
+    locationIdItemMap.add(new Pair(item3.getLocationId(), item3));
+    locationIdItemMap.add(new Pair(item4.getLocationId(), item4));
 
     List<Item> matchingItemsList = new LinkedList<>();
     matchingItemsList.add(item4);
@@ -176,11 +176,11 @@ public class RequestByInstanceIdResourceTests extends APITests {
                       .withTemporaryLocation(UUID.randomUUID()).create());
 
     //order added is important so the test deliberately add items in a certain order
-    LinkedList<Pair<String, Item>> locationIdItemMap = new LinkedList<>();
-    locationIdItemMap.add(new Pair<>(item3.getLocationId(), item3));
-    locationIdItemMap.add(new Pair<>(item2.getLocationId(), item2));
-    locationIdItemMap.add(new Pair<>(item4.getLocationId(), item4));
-    locationIdItemMap.add(new Pair<>(item1.getLocationId(), item1));
+    LinkedList<Pair> locationIdItemMap = new LinkedList<>();
+    locationIdItemMap.add(new Pair(item3.getLocationId(), item3));
+    locationIdItemMap.add(new Pair(item2.getLocationId(), item2));
+    locationIdItemMap.add(new Pair(item4.getLocationId(), item4));
+    locationIdItemMap.add(new Pair(item1.getLocationId(), item1));
 
     List<Item> matchingItemsList = new LinkedList<>();
 

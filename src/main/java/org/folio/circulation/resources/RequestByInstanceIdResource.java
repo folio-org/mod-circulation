@@ -37,6 +37,7 @@ import org.folio.circulation.storage.ItemByInstanceIdFinder;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CreatedJsonResponseResult;
 import org.folio.circulation.support.ItemRepository;
+import org.folio.circulation.support.Pair;
 import org.folio.circulation.support.ResponseWritableResult;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.RouteRegistration;
@@ -50,7 +51,6 @@ import io.vertx.core.http.HttpClient;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
-import javafx.util.Pair;
 
 public class RequestByInstanceIdResource extends Resource {
   private UserRepository userRepository;
@@ -163,7 +163,7 @@ public class RequestByInstanceIdResource extends Resource {
   public static CompletableFuture<Result<Collection<Item>>> findItemsWithMatchingServicePointId(String pickupServicePointId,
                                                                                                 Collection<Item> items,
                                                                                                 LocationRepository locationRepository) {
-    LinkedList<Pair<String, Item>>  locationIdItemMap = new LinkedList<>();
+    LinkedList<Pair>  locationIdItemMap = new LinkedList<>();
     return getLocationFutures(items, locationRepository, locationIdItemMap)
       .thenApply(locations -> {
         //Use the matchingLocationIds list to get the items from locationIdItemMap
@@ -182,13 +182,13 @@ public class RequestByInstanceIdResource extends Resource {
    */
   public static CompletableFuture<Collection<Result<JsonObject>>> getLocationFutures(Collection<Item> items,
                                                                                      LocationRepository locationRepository,
-                                                                                     LinkedList<Pair<String, Item>> locationIdItemMap) {
+                                                                                     LinkedList<Pair> locationIdItemMap) {
     //for a given location ID, find all the service points.
     //if there's a matching service point ID, pick that item
     Collection<CompletableFuture<Result<JsonObject>>> locationFutures = new ArrayList<>();
     //Find locations of all items
     for (Item item : items) {
-      Pair<String, Item> kvp = new Pair<>(item.getLocationId(), item);
+      Pair kvp = new Pair(item.getLocationId(), item);
       locationIdItemMap.add(kvp);
       locationFutures.add(
         locationRepository.getLocation(item)
@@ -205,7 +205,7 @@ public class RequestByInstanceIdResource extends Resource {
       .collect(Collectors.toList()));
   }
 
-  public static List<Item> getOrderedAvailableItemsList(List<Item> matchingItemsList, LinkedList<Pair<String, Item>> locationIdItemMap) {
+  public static List<Item> getOrderedAvailableItemsList(List<Item> matchingItemsList, LinkedList<Pair> locationIdItemMap) {
 
     //Compose the final list of Items with the matchingItems (items that has matching service pointID) on top.
     List<Item> finalOrderedList = new LinkedList<>();
@@ -232,7 +232,7 @@ public class RequestByInstanceIdResource extends Resource {
    * @return  A list of items at a location where each has a servicepoint that matches the pickupServicePointId.
    */
   public static List<Item> getItemsWithMatchingServicePointIds(Collection<Result<JsonObject>> locations,
-                                                               LinkedList<Pair<String, Item>> locationIdItemMap,
+                                                               LinkedList<Pair> locationIdItemMap,
                                                                String pickupServicePointId){
     // iterate through all locations to find the location that has a matching service point ID
     List<String> matchingLocationIds = new LinkedList<>();
@@ -258,7 +258,7 @@ public class RequestByInstanceIdResource extends Resource {
     LinkedList<Item> itemsWithMatchingServicePtsId = new LinkedList<>();
     //Use the matchingLocationIds list to get the items from locationIdItemMap
     for (String matchingLocId : matchingLocationIds) {
-      for (Pair<String,Item> locationIdItem : locationIdItemMap) {
+      for (Pair locationIdItem : locationIdItemMap) {
         Item currentItem = locationIdItem.getValue();
         if (matchingLocId.equals(locationIdItem.getKey()) && !itemsWithMatchingServicePtsId.contains(currentItem)){
           itemsWithMatchingServicePtsId.add(currentItem);
