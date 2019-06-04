@@ -1,6 +1,6 @@
 #%RAML 1.0
 title: Circulation
-version: v7.6
+version: v7.5
 protocols: [ HTTP, HTTPS ]
 baseUri: http://localhost:9130
 
@@ -13,7 +13,6 @@ types:
   loans: !include loans.json
   request: !include request.json
   requests: !include requests.json
-  report: !include hold-shelf-clearance-report.json
   check-in-by-barcode-response: !include check-in-by-barcode-response.json
   error: !include raml-util/schemas/error.schema
   errors: !include raml-util/schemas/errors.schema
@@ -569,11 +568,3 @@ resourceTypes:
             exampleCollection: !include examples/request-queue.json
             schemaCollection: requests
         get:
-  /requests-report:
-    displayName: Expired Holds Report
-    /hold-shelf-clearance:
-      /{servicePointId}:
-        type:
-          collection-get:
-            exampleCollection: !include examples/hold-shelf-clearance-report.json
-            schemaCollection: report

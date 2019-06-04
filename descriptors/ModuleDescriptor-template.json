@@ -29,7 +29,7 @@
     },
     {
       "id": "circulation",
-      "version": "7.6",
+      "version": "7.5",
       "handlers": [
         {
           "methods": [
