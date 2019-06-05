@@ -4,7 +4,6 @@ import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
 import static org.folio.circulation.support.JsonPropertyWriter.write;
 
 import java.net.MalformedURLException;
-import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Function;
@@ -83,19 +82,6 @@ public class LocationsFixture {
       locationExamples.thirdFloor());
   }
 
-  public IndividualResource fourthFloor()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
-
-    final LocationExamples locationExamples =
-        getLocationExamplesWithPrimaryServicePoint(servicePointsFixture.cd4().getId());
-
-    return locationRecordCreator.createIfAbsent(
-      locationExamples.fourthFloor(servicePointsFixture.cd4().getId()));
-  }
-
   public IndividualResource secondFloorEconomics()
     throws InterruptedException,
     MalformedURLException,
@@ -150,22 +136,6 @@ public class LocationsFixture {
       businessLibrary().getId(),
       djanoglyLibrary().getId(),
       servicePointsFixture.cd1().getId(),
-      null,
-      null);
-  }
-
-  private LocationExamples getLocationExamplesWithPrimaryServicePoint(UUID servicePointId)
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
-
-    return new LocationExamples(
-      nottinghamUniversity().getId(),
-      jubileeCampus().getId(),
-      businessLibrary().getId(),
-      djanoglyLibrary().getId(),
-      servicePointId,
       null,
       null);
   }
