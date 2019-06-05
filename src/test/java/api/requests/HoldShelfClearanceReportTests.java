@@ -21,6 +21,17 @@ import static org.hamcrest.junit.MatcherAssert.assertThat;
 
 public class HoldShelfClearanceReportTests extends APITests {
 
+  private static final String TOTAL_RECORDS = "totalRecords";
+  private static final String REQUESTS_KEY = "requests";
+  private static final String STATUS_KEY = "status";
+  private static final String REQUESTER_KEY = "requester";
+  private static final String ITEM_KEY = "item";
+  private static final String PERSONAL_KEY = "personal";
+  private static final String BARCODE_KEY = "barcode";
+  private static final String LAST_NAME_KEY = "lastName";
+  private static final String FIRST_NAME_KEY = "firstName";
+  private static final String CLOSED_DATE_KEY = "awaitingPickupRequestClosedDate";
+
   @Test
   public void reportIsEmptyWhenThereAreNoRequests()
     throws InterruptedException,
@@ -34,7 +45,7 @@ public class HoldShelfClearanceReportTests extends APITests {
     assertThat(response.getStatusCode(), is(HTTP_OK));
 
     JsonObject responseJson = response.getJson();
-    assertThat(responseJson.getInteger("totalRecords"), is(0));
+    assertThat(responseJson.getInteger(TOTAL_RECORDS), is(0));
   }
 
   @Test
@@ -59,7 +70,7 @@ public class HoldShelfClearanceReportTests extends APITests {
     assertThat(response.getStatusCode(), is(HTTP_OK));
 
     JsonObject responseJson = response.getJson();
-    assertThat(responseJson.getInteger("totalRecords"), is(0));
+    assertThat(responseJson.getInteger(TOTAL_RECORDS), is(0));
   }
 
   @Test
@@ -95,7 +106,7 @@ public class HoldShelfClearanceReportTests extends APITests {
     assertThat(response.getStatusCode(), is(HTTP_OK));
 
     JsonObject responseJson = response.getJson();
-    assertThat(responseJson.getInteger("totalRecords"), is(0));
+    assertThat(responseJson.getInteger(TOTAL_RECORDS), is(0));
   }
 
   @Test
@@ -121,7 +132,7 @@ public class HoldShelfClearanceReportTests extends APITests {
     loansFixture.checkInByBarcode(temeraire);
     requestsClient.replace(requestOnTemeraire.getId(),
       requestBuilderOnTemeraire.withStatus(RequestStatus.CLOSED_CANCELLED.getValue()).create()
-        .put("awaitingPickupRequestClosedDate", "2018-02-11T14:45:23.000+0000")
+        .put(CLOSED_DATE_KEY, "2018-02-11T14:45:23.000+0000")
     );
 
     loansFixture.checkOutByBarcode(smallAngryPlanet, usersFixture.james());
@@ -136,13 +147,13 @@ public class HoldShelfClearanceReportTests extends APITests {
     requestsClient.replace(requestOnSmallAngryPlanet.getId(),
       requestBuilderOnSmallAngryPlanet
         .withStatus(RequestStatus.CLOSED_PICKUP_EXPIRED.getValue()).create()
-        .put("awaitingPickupRequestClosedDate", "2018-02-11T14:45:23.000+0000"));
+        .put(CLOSED_DATE_KEY, "2018-02-11T14:45:23.000+0000"));
 
     Response response = ResourceClient.forRequestReport(client).getById(pickupServicePointId);
     assertThat(response.getStatusCode(), is(HTTP_OK));
 
     JsonObject responseJson = response.getJson();
-    assertThat(responseJson.getInteger("totalRecords"), is(2));
+    assertThat(responseJson.getInteger(TOTAL_RECORDS), is(2));
   }
 
   @Test
@@ -180,7 +191,7 @@ public class HoldShelfClearanceReportTests extends APITests {
     loansFixture.checkInByBarcode(smallAngryPlanet);
     requestsClient.replace(requestOnSmallAngryPlanet.getId(),
       requestBuilderOnSmallAngryPlanet.withStatus(RequestStatus.CLOSED_CANCELLED.getValue()).create()
-        .put("awaitingPickupRequestClosedDate", "2018-02-11T14:45:23.000+0000"));
+        .put(CLOSED_DATE_KEY, "2018-02-11T14:45:23.000+0000"));
 
     Response response = ResourceClient.forRequestReport(client).getById(pickupServicePointId);
     verifyResponse(smallAngryPlanet, rebecca, response, RequestStatus.CLOSED_CANCELLED);
@@ -218,7 +229,7 @@ public class HoldShelfClearanceReportTests extends APITests {
     loansFixture.checkInByBarcode(smallAngryPlanet);
     requestsClient.replace(request.getId(),
       requestBuilderOnItem.withStatus(RequestStatus.CLOSED_PICKUP_EXPIRED.getValue()).create()
-        .put("awaitingPickupRequestClosedDate", "2018-03-11T15:45:23.000+0000"));
+        .put(CLOSED_DATE_KEY, "2018-03-11T15:45:23.000+0000"));
 
     Response response = ResourceClient.forRequestReport(client).getById(pickupServicePointId);
     verifyResponse(smallAngryPlanet, rebecca, response, RequestStatus.CLOSED_PICKUP_EXPIRED);
@@ -262,10 +273,10 @@ public class HoldShelfClearanceReportTests extends APITests {
     // change "awaitingPickupRequestClosedDate" for the request to the same item
     requestsClient.replace(firstRequest.getId(),
       firstRequestBuilderOnItem.withStatus(RequestStatus.CLOSED_PICKUP_EXPIRED.getValue()).create()
-        .put("awaitingPickupRequestClosedDate", earlierAwaitingPickupRequestClosedDate));
+        .put(CLOSED_DATE_KEY, earlierAwaitingPickupRequestClosedDate));
     requestsClient.replace(secondRequest.getId(),
       secondRequestBuilderOnItem.withStatus(RequestStatus.CLOSED_CANCELLED.getValue()).create()
-        .put("awaitingPickupRequestClosedDate", laterAwaitingPickupRequestClosedDate));
+        .put(CLOSED_DATE_KEY, laterAwaitingPickupRequestClosedDate));
 
     Response response = ResourceClient.forRequestReport(client).getById(pickupServicePointId);
     verifyResponse(smallAngryPlanet, rebecca, response, RequestStatus.CLOSED_PICKUP_EXPIRED);
@@ -309,10 +320,10 @@ public class HoldShelfClearanceReportTests extends APITests {
     // change "awaitingPickupRequestClosedDate" for the request to the same item
     requestsClient.replace(firstRequest.getId(),
       firstRequestBuilderOnItem.withStatus(RequestStatus.CLOSED_PICKUP_EXPIRED.getValue()).create()
-        .put("awaitingPickupRequestClosedDate", awaitingPickupRequestClosedDate));
+        .put(CLOSED_DATE_KEY, awaitingPickupRequestClosedDate));
     requestsClient.replace(secondRequest.getId(),
       secondRequestBuilderOnItem.withStatus(RequestStatus.CLOSED_CANCELLED.getValue()).create()
-        .put("awaitingPickupRequestClosedDate", emptyRequestClosedDate));
+        .put(CLOSED_DATE_KEY, emptyRequestClosedDate));
 
     Response response = ResourceClient.forRequestReport(client).getById(pickupServicePointId);
     verifyResponse(smallAngryPlanet, rebecca, response, RequestStatus.CLOSED_PICKUP_EXPIRED);
@@ -342,7 +353,7 @@ public class HoldShelfClearanceReportTests extends APITests {
     assertThat(response.getStatusCode(), is(HTTP_OK));
 
     JsonObject responseJson = response.getJson();
-    assertThat(responseJson.getInteger("totalRecords"), is(0));
+    assertThat(responseJson.getInteger(TOTAL_RECORDS), is(0));
   }
 
   private void verifyResponse(InventoryItemResource item,
@@ -352,14 +363,20 @@ public class HoldShelfClearanceReportTests extends APITests {
     assertThat(response.getStatusCode(), is(HTTP_OK));
 
     JsonObject responseJson = response.getJson();
-    assertThat(responseJson.getInteger("totalRecords"), is(1));
+    assertThat(responseJson.getInteger(TOTAL_RECORDS), is(1));
 
-    JsonObject requestJson = responseJson.getJsonArray("requests").getJsonObject(0);
-    assertThat(requestJson.getString("requesterBarcode"), is(requester.getBarcode()));
-    assertThat(requestJson.getString("itemBarcode"), is(item.getBarcode()));
+    JsonObject requestJson = responseJson.getJsonArray(REQUESTS_KEY).getJsonObject(0);
+    assertThat(requestJson.getString(STATUS_KEY), is(status.getValue()));
 
+    JsonObject userJson = requestJson.getJsonObject(REQUESTER_KEY);
+    JsonObject requesterPersonalInfo = requester.getJson().getJsonObject(PERSONAL_KEY);
+    assertThat(userJson.getString(BARCODE_KEY), is(requester.getBarcode()));
+    assertThat(userJson.getString(LAST_NAME_KEY), is(requesterPersonalInfo.getString(LAST_NAME_KEY)));
+    assertThat(userJson.getString(FIRST_NAME_KEY), is(requesterPersonalInfo.getString(FIRST_NAME_KEY)));
+
+    JsonObject itemJson = requestJson.getJsonObject(ITEM_KEY);
+    assertThat(itemJson.getString(BARCODE_KEY), is(item.getBarcode()));
 //    String callNumber = item.getHoldingsRecord().getJson().getString("callNumber");
 //    assertThat(requestJson.getString("callNumber"), is(callNumber));
-    assertThat(requestJson.getString("requestStatus"), is(status.getValue()));
   }
 }

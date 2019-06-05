@@ -7,7 +7,6 @@ import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.domain.HoldShelfClearanceContext;
-import org.folio.circulation.domain.HoldShelfClearanceRequest;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.Request;
@@ -254,8 +253,7 @@ public class RequestHoldShelfClearanceResource extends Resource {
   private Result<JsonObject> mapResultToHoldShelfClearanceRequests(Result<List<Request>> requests) {
     return requests.map(r -> {
       JsonArray jsonArray = r.stream()
-        .map(HoldShelfClearanceRequest::new)
-        .map(HoldShelfClearanceRequest::asJson)
+        .map(Request::asJson)
         .collect(Collector.of(JsonArray::new, JsonArray::add, JsonArray::add));
       return new JsonObject()
         .put(REQUESTS_KEY, jsonArray)

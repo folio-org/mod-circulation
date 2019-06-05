@@ -9,7 +9,7 @@ documentation:
     content: <b>API for report generation</b>
 
 types:
-  report: !include hold-shelf-clearance-report.json
+  requests: !include requests.json
   error: !include raml-util/schemas/error.schema
   errors: !include raml-util/schemas/errors.schema
 
@@ -30,5 +30,5 @@ resourceTypes:
       /{servicePointId}:
         type:
           collection-get:
-            exampleCollection: !include examples/hold-shelf-clearance-report.json
-            schemaCollection: report
+            exampleCollection: !include examples/requests.json
+            schemaCollection: requests
