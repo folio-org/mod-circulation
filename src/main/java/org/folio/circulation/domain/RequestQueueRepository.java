@@ -48,6 +48,12 @@ public class RequestQueueRepository {
       .thenApply(r -> r.map(RequestQueue::new));
   }
 
+  public CompletableFuture<Result<RequestQueue>> getByRequestId(String requestId) {
+    return requestRepository.getById(requestId)
+      .thenApply(r -> r.map(Request::getItemId))
+      .thenComposeAsync(r -> r.after(this::get));
+  }
+
   CompletableFuture<Result<RequestQueue>> updateRequestsWithChangedPositions(
     RequestQueue requestQueue) {
 

@@ -198,7 +198,7 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
     return RequestStatus.from(requestRepresentation.getString(STATUS));
   }
 
-  void changeStatus(RequestStatus status) {
+  public void changeStatus(RequestStatus status) {
     //TODO: Check for null status
     status.writeTo(requestRepresentation);
   }
