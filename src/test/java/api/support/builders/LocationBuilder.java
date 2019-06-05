@@ -59,12 +59,12 @@ public class LocationBuilder extends JsonBuilder implements Builder {
     write(representation, "primaryServicePoint", primaryServicePointId);
 
     if(otherServicePointIds != null && !otherServicePointIds.isEmpty()) {
-
       final JsonArray mappedServicePointIds = new JsonArray(otherServicePointIds
-        .stream()
-        .filter(Objects::nonNull)
-        .map(UUID::toString)
-        .collect(Collectors.toList()));
+                                                          .stream()
+                                                          .filter(Objects::nonNull)
+                                                          .map(UUID::toString)
+                                                          .collect(Collectors.toList()));
+
       write(representation, "servicePointIds", mappedServicePointIds);
     }
 

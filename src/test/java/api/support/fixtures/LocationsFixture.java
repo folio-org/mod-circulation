@@ -135,6 +135,7 @@ public class LocationsFixture {
       businessLibrary().getId(),
       djanoglyLibrary().getId(),
       servicePointsFixture.cd1().getId(),
+      null,
       null);
   }
 
@@ -150,7 +151,8 @@ public class LocationsFixture {
       businessLibrary().getId(),
       djanoglyLibrary().getId(),
       servicePointsFixture.cd1().getId(),
-      null);
+      servicePointsFixture.cd2().getId(),
+      servicePointsFixture.cd3().getId());
   }
 
   private IndividualResource djanoglyLibrary()

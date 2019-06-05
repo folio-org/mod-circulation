@@ -24,13 +24,14 @@ public class LocationExamples {
     UUID businessLibraryId,
     UUID djanoglyLibraryId,
     UUID primaryServicePointId,
-    UUID servicePointIds) {
+    UUID... servicePointIds) {
 
     this.nottinghamUniversityId = nottinghamUniversityId;
     this.jubileeCampusId = jubileeCampusId;
     this.businessLibraryId = businessLibraryId;
     this.djanoglyLibraryId = djanoglyLibraryId;
     this.primaryServicePointId = primaryServicePointId;
+
     this.otherServicePointIds = of(servicePointIds)
       .filter(Objects::nonNull)
       .collect(Collectors.toSet());
@@ -88,6 +89,6 @@ public class LocationExamples {
       .forCampus(jubileeCampusId)
       .forLibrary(djanoglyLibraryId)
       .withPrimaryServicePoint(primaryServicePointId)
-        .servedBy(otherServicePointIds);
+      .servedBy(otherServicePointIds);
   }
 }

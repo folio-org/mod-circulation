@@ -41,12 +41,17 @@ public class MultipleRecordFetcher<T> {
       return completedFuture(of(MultipleRecords::empty));
     }
 
-    return exactMatchAny(indexName, idList)
-      .after(query -> client.getMany(query, null))
-      .thenApply(result -> result.next(this::mapToRecords));
+    return findByQuery(exactMatchAny(indexName, idList));
   }
 
   private Result<MultipleRecords<T>> mapToRecords(Response response) {
     return MultipleRecords.from(response, recordMapper, recordsPropertyName);
+  }
+
+  public CompletableFuture<Result<MultipleRecords<T>>> findByQuery(
+    Result<CqlQuery> queryResult) {
+
+    return queryResult.after(query -> client.getMany(query, null))
+      .thenApply(result -> result.next(this::mapToRecords));
   }
 }

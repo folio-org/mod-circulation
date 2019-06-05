@@ -8,7 +8,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.UUID;
 
-import org.apache.commons.collections.map.ListOrderedMap;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.RequestType;
 import org.folio.circulation.domain.representations.RequestByInstanceIdRequest;
@@ -59,64 +58,6 @@ public class RequestByInstanceIdResourceUnitTests {
     }
   }
 
-  @Test
-  public void canGetOrderedAvailableItemsList(){
-
-    UUID bookMaterialTypeId = UUID.randomUUID();
-    UUID loanTypeId = UUID.randomUUID();
-    Item item1 = Item.from(ItemExamples.basedUponSmallAngryPlanet(bookMaterialTypeId, loanTypeId).withTemporaryLocation(UUID.randomUUID()).create());
-    Item item2 = Item.from(ItemExamples.basedUponSmallAngryPlanet(bookMaterialTypeId, loanTypeId).withTemporaryLocation(UUID.randomUUID()).create());
-    Item item3 = Item.from(ItemExamples.basedUponSmallAngryPlanet(bookMaterialTypeId, loanTypeId).withTemporaryLocation(UUID.randomUUID()).create());
-    Item item4 = Item.from(ItemExamples.basedUponSmallAngryPlanet(bookMaterialTypeId, loanTypeId).withTemporaryLocation(UUID.randomUUID()).create());
-
-    ListOrderedMap locationIdItemMap = new ListOrderedMap();
-    locationIdItemMap.put(item1.getLocationId(), item1);
-    locationIdItemMap.put(item2.getLocationId(), item2);
-    locationIdItemMap.put(item3.getLocationId(), item3);
-    locationIdItemMap.put(item4.getLocationId(), item4);
-
-    List<Item> matchingItemsList = new LinkedList<>();
-    matchingItemsList.add(item4);
-    matchingItemsList.add(item1);
-
-    List<Item> ordedItems = RequestByInstanceIdResource.getOrderedAvailableItemsList(matchingItemsList, locationIdItemMap);
-    assertEquals(4, ordedItems.size());
-    assertEquals(item4.getItemId(),ordedItems.get(0).getItemId());
-    assertEquals(item1.getItemId(),ordedItems.get(1).getItemId());
-    assertEquals(item2.getItemId(),ordedItems.get(2).getItemId());
-    assertEquals(item3.getItemId(),ordedItems.get(3).getItemId());
-  }
-
-  @Test
-  public void canGetOrderedAvailableItemsListWithoutMatchingLocations(){
-
-    UUID bookMaterialTypeId = UUID.randomUUID();
-    UUID loanTypeId = UUID.randomUUID();
-    Item item1 = Item.from(ItemExamples.basedUponSmallAngryPlanet(bookMaterialTypeId, loanTypeId)
-      .withTemporaryLocation(UUID.randomUUID()).create());
-    Item item2 = Item.from(ItemExamples.basedUponSmallAngryPlanet(bookMaterialTypeId, loanTypeId)
-      .withTemporaryLocation(UUID.randomUUID()).create());
-    Item item3 = Item.from(ItemExamples.basedUponSmallAngryPlanet(bookMaterialTypeId, loanTypeId)
-      .withTemporaryLocation(UUID.randomUUID()).create());
-    Item item4 = Item.from(ItemExamples.basedUponSmallAngryPlanet(bookMaterialTypeId, loanTypeId)
-      .withTemporaryLocation(UUID.randomUUID()).create());
-
-    //order added is important so the test deliberately add items in a certain order
-    ListOrderedMap locationIdItemMap = new ListOrderedMap();
-    locationIdItemMap.put(item3.getLocationId(), item3);
-    locationIdItemMap.put(item2.getLocationId(), item2);
-    locationIdItemMap.put(item4.getLocationId(), item4);
-    locationIdItemMap.put(item1.getLocationId(), item1);
-
-    List<Item> matchingItemsList = new LinkedList<>();
-
-    List<Item> ordedItems = RequestByInstanceIdResource.getOrderedAvailableItemsList(matchingItemsList, locationIdItemMap);
-    assertEquals(4, ordedItems.size());
-    assertEquals(item3.getItemId(),ordedItems.get(0).getItemId());
-    assertEquals(item2.getItemId(),ordedItems.get(1).getItemId());
-    assertEquals(item4.getItemId(),ordedItems.get(2).getItemId());
-    assertEquals(item1.getItemId(),ordedItems.get(3).getItemId());
-  }
 
   private static List<Item> getItems(int totalItems, UUID loanTypeId){
     LinkedList<Item> items = new LinkedList<>();
