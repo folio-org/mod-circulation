@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
@@ -164,14 +165,16 @@ public class RequestByInstanceIdResource extends Resource {
   }
 
 
-  public static CompletableFuture<Result<Collection<Item>>> findItemsWithMatchingServicePointId(String pickupServicePointId,
-                                                                                                Collection<Item> items,
-                                                                                                LocationRepository locationRepository) {
+  private static CompletableFuture<Result<Collection<Item>>> findItemsWithMatchingServicePointId(String pickupServicePointId,
+                                                                                                 Collection<Item> items,
+                                                                                                 LocationRepository locationRepository) {
+
     LinkedList<Pair>  locationIdItemMap = new LinkedList<>();
+
     return getLocationFutures(items, locationRepository, locationIdItemMap)
       .thenApply(locations -> {
-        //Use the matchingLocationIds list to get the items from locationIdItemMap
-        List<Item> matchingItemsList = getItemsWithMatchingServicePointIds(locations, locationIdItemMap, pickupServicePointId);
+        List<Item> matchingItemsList = getItemsWithMatchingServicePointIds(items, pickupServicePointId);
+
         return succeeded(getOrderedAvailableItemsList(matchingItemsList, locationIdItemMap));
       });
   }
@@ -230,47 +233,15 @@ public class RequestByInstanceIdResource extends Resource {
 
   /**
    * Method that is responsible for identifying items at given location(s) each with servicePointId that matches the pickupServicePointId
-   * @param locations locations list
-   * @param locationIdItemMap a map of locationID and item that's used to reverse-lookup items
+   * @param items set of items to filter
    * @param pickupServicePointId servicePointId to find available items at.
-   * @return  A list of items at a location where each has a servicepoint that matches the pickupServicePointId.
+   * @return  A list of items at a location where each has a service point that matches the pickupServicePointId.
    */
-  public static List<Item> getItemsWithMatchingServicePointIds(Collection<Result<JsonObject>> locations,
-                                                               LinkedList<Pair> locationIdItemMap,
-                                                               String pickupServicePointId){
-    // iterate through all locations to find the location that has a matching service point ID
-    List<String> matchingLocationIds = new LinkedList<>();
+  public static List<Item> getItemsWithMatchingServicePointIds(Collection<Item> items, String pickupServicePointId) {
 
-    for (Result<JsonObject> locationResult : locations) {
-      JsonObject location = locationResult.value();
-      if (location != null) {
-        //each location has multiple service points, so have to get them all
-        List<String> servicePointIds = location.getJsonArray("servicePointIds") != null
-            ? location.getJsonArray("servicePointIds").getList()
-            : null;
-
-        if (servicePointIds != null && !servicePointIds.isEmpty()) {
-          if (servicePointIds.stream()
-            .anyMatch(servicePointId -> servicePointId.equals(pickupServicePointId))) {
-            //found a match and add the location ID to the matching location IDs list, as there could be multiple items available at one location
-            matchingLocationIds.add(location.getString("id"));
-          }
-        }
-      }
-    }
-
-    LinkedList<Item> itemsWithMatchingServicePtsId = new LinkedList<>();
-    //Use the matchingLocationIds list to get the items from locationIdItemMap
-    for (String matchingLocId : matchingLocationIds) {
-      for (Pair locationIdItem : locationIdItemMap) {
-        Item currentItem = locationIdItem.getValue();
-        if (matchingLocId.equals(locationIdItem.getKey()) && !itemsWithMatchingServicePtsId.contains(currentItem)){
-          itemsWithMatchingServicePtsId.add(currentItem);
-        }
-      }
-    }
-
-    return itemsWithMatchingServicePtsId;
+    return items.stream()
+      .filter(item -> item.homeLocationIsServedBy(UUID.fromString(pickupServicePointId)))
+      .collect(Collectors.toList());
   }
 
   public static Result<LinkedList<JsonObject>> instanceToItemRequests(RequestByInstanceIdRequest requestByInstanceIdRequest, Collection<Item> items) {

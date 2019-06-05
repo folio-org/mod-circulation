@@ -1,5 +1,6 @@
 package api.requests;
 
+import static api.support.fixtures.ItemExamples.basedUponSmallAngryPlanet;
 import static java.util.Collections.emptySet;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -28,7 +29,6 @@ import org.junit.Test;
 
 import api.support.APITests;
 import api.support.builders.LocationBuilder;
-import api.support.fixtures.ItemExamples;
 import io.vertx.core.json.JsonObject;
 
 public class RequestByInstanceIdResourceTests extends APITests {
@@ -78,8 +78,6 @@ public class RequestByInstanceIdResourceTests extends APITests {
     String pickupServicePointId = primaryServicePointId.toString();
     UUID institutionId = UUID.randomUUID();
 
-    List<Result<JsonObject>> locations = new ArrayList<>();
-
     HashSet<UUID> servicePoints1 = new HashSet<>();
     servicePoints1.add(secondaryServicePointId);
     JsonObject location1 = getLocationWithServicePoints(servicePoints1, secondaryServicePointId, institutionId);
@@ -98,33 +96,36 @@ public class RequestByInstanceIdResourceTests extends APITests {
     servicePoints4.add(primaryServicePointId);
     JsonObject location4 = getLocationWithServicePoints(servicePoints4, primaryServicePointId, institutionId);
 
-    locations.add(Result.succeeded(location1));
-    locations.add(Result.succeeded(location2));
-    locations.add(Result.succeeded(location3));
-    locations.add(Result.succeeded(location4));
-
     UUID bookMaterialTypeId = UUID.randomUUID();
     UUID loanTypeId = UUID.randomUUID();
-    Item item1 = Item.from(ItemExamples.basedUponSmallAngryPlanet(bookMaterialTypeId, loanTypeId)
+    Item item1 = Item.from(basedUponSmallAngryPlanet(bookMaterialTypeId, loanTypeId)
       .withTemporaryLocation(UUID.fromString(location1.getString("id")))
-      .create());
-    Item item2 = Item.from(ItemExamples.basedUponSmallAngryPlanet(bookMaterialTypeId, loanTypeId)
+      .create())
+      .withLocation(location1);
+
+    Item item2 = Item.from(basedUponSmallAngryPlanet(bookMaterialTypeId, loanTypeId)
       .withTemporaryLocation(UUID.fromString(location2.getString("id")))
-      .create());
-    Item item3 = Item.from(ItemExamples.basedUponSmallAngryPlanet(bookMaterialTypeId, loanTypeId)
+      .create())
+      .withLocation(location2);
+
+    Item item3 = Item.from(basedUponSmallAngryPlanet(bookMaterialTypeId, loanTypeId)
       .withTemporaryLocation(UUID.fromString(location3.getString("id")))
-      .create());
-    Item item4 = Item.from(ItemExamples.basedUponSmallAngryPlanet(bookMaterialTypeId, loanTypeId)
+      .create())
+      .withLocation(location3);
+
+    Item item4 = Item.from(basedUponSmallAngryPlanet(bookMaterialTypeId, loanTypeId)
       .withTemporaryLocation(UUID.fromString(location4.getString("id")))
-      .create());
+      .create())
+      .withLocation(location4);
 
-    LinkedList<Pair> locationIdItemMap = new LinkedList<>();
-    locationIdItemMap.add(new Pair(item1.getLocationId(), item1));
-    locationIdItemMap.add(new Pair(item2.getLocationId(), item2));
-    locationIdItemMap.add(new Pair(item3.getLocationId(), item3));
-    locationIdItemMap.add(new Pair(item4.getLocationId(), item4));
+    final ArrayList<Item> inputItems = new ArrayList<>();
 
-    List<Item> items = RequestByInstanceIdResource.getItemsWithMatchingServicePointIds(locations,locationIdItemMap,pickupServicePointId);
+    inputItems.add(item1);
+    inputItems.add(item2);
+    inputItems.add(item3);
+    inputItems.add(item4);
+
+    List<Item> items = RequestByInstanceIdResource.getItemsWithMatchingServicePointIds(inputItems, pickupServicePointId);
     assertEquals(2, items.size());
     assertEquals(item2.getItem(), items.get(0).getItem());
     assertEquals(item2.getItemId(), items.get(0).getItemId());
@@ -140,10 +141,10 @@ public class RequestByInstanceIdResourceTests extends APITests {
 
     UUID bookMaterialTypeId = UUID.randomUUID();
     UUID loanTypeId = UUID.randomUUID();
-    Item item1 = Item.from(ItemExamples.basedUponSmallAngryPlanet(bookMaterialTypeId, loanTypeId).withTemporaryLocation(UUID.randomUUID()).create());
-    Item item2 = Item.from(ItemExamples.basedUponSmallAngryPlanet(bookMaterialTypeId, loanTypeId).withTemporaryLocation(UUID.randomUUID()).create());
-    Item item3 = Item.from(ItemExamples.basedUponSmallAngryPlanet(bookMaterialTypeId, loanTypeId).withTemporaryLocation(UUID.randomUUID()).create());
-    Item item4 = Item.from(ItemExamples.basedUponSmallAngryPlanet(bookMaterialTypeId, loanTypeId).withTemporaryLocation(UUID.randomUUID()).create());
+    Item item1 = Item.from(basedUponSmallAngryPlanet(bookMaterialTypeId, loanTypeId).withTemporaryLocation(UUID.randomUUID()).create());
+    Item item2 = Item.from(basedUponSmallAngryPlanet(bookMaterialTypeId, loanTypeId).withTemporaryLocation(UUID.randomUUID()).create());
+    Item item3 = Item.from(basedUponSmallAngryPlanet(bookMaterialTypeId, loanTypeId).withTemporaryLocation(UUID.randomUUID()).create());
+    Item item4 = Item.from(basedUponSmallAngryPlanet(bookMaterialTypeId, loanTypeId).withTemporaryLocation(UUID.randomUUID()).create());
 
     LinkedList<Pair> locationIdItemMap = new LinkedList<>();
     locationIdItemMap.add(new Pair(item1.getLocationId(), item1));
@@ -168,13 +169,13 @@ public class RequestByInstanceIdResourceTests extends APITests {
 
     UUID bookMaterialTypeId = UUID.randomUUID();
     UUID loanTypeId = UUID.randomUUID();
-    Item item1 = Item.from(ItemExamples.basedUponSmallAngryPlanet(bookMaterialTypeId, loanTypeId)
+    Item item1 = Item.from(basedUponSmallAngryPlanet(bookMaterialTypeId, loanTypeId)
                       .withTemporaryLocation(UUID.randomUUID()).create());
-    Item item2 = Item.from(ItemExamples.basedUponSmallAngryPlanet(bookMaterialTypeId, loanTypeId)
+    Item item2 = Item.from(basedUponSmallAngryPlanet(bookMaterialTypeId, loanTypeId)
                       .withTemporaryLocation(UUID.randomUUID()).create());
-    Item item3 = Item.from(ItemExamples.basedUponSmallAngryPlanet(bookMaterialTypeId, loanTypeId)
+    Item item3 = Item.from(basedUponSmallAngryPlanet(bookMaterialTypeId, loanTypeId)
                       .withTemporaryLocation(UUID.randomUUID()).create());
-    Item item4 = Item.from(ItemExamples.basedUponSmallAngryPlanet(bookMaterialTypeId, loanTypeId)
+    Item item4 = Item.from(basedUponSmallAngryPlanet(bookMaterialTypeId, loanTypeId)
                       .withTemporaryLocation(UUID.randomUUID()).create());
 
     //order added is important so the test deliberately add items in a certain order
@@ -212,7 +213,7 @@ public class RequestByInstanceIdResourceTests extends APITests {
   private static List<Item> getItems(int totalItems, UUID loanTypeId){
     LinkedList<Item> items = new LinkedList<>();
     for (int i = 0; i< totalItems; i++){
-      JsonObject itemJsonObject = ItemExamples.basedUponSmallAngryPlanet(UUID.randomUUID(), loanTypeId).create();
+      JsonObject itemJsonObject = basedUponSmallAngryPlanet(UUID.randomUUID(), loanTypeId).create();
       items.add(Item.from(itemJsonObject));
     }
     return items;

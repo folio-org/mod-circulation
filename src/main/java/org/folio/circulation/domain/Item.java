@@ -171,7 +171,7 @@ public class Item {
     return locationRepresentation;
   }
 
-  boolean homeLocationIsServedBy(UUID servicePointId) {
+  public boolean homeLocationIsServedBy(UUID servicePointId) {
     //Defensive check just in case primary isn't part of serving set
     return matchesPrimaryServicePoint(servicePointId) ||
       matchesAnyServingServicePoint(servicePointId);
