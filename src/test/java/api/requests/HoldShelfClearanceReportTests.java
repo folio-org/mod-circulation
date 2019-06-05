@@ -31,6 +31,7 @@ public class HoldShelfClearanceReportTests extends APITests {
   private static final String LAST_NAME_KEY = "lastName";
   private static final String FIRST_NAME_KEY = "firstName";
   private static final String CLOSED_DATE_KEY = "awaitingPickupRequestClosedDate";
+  private static final String CALL_NUMBER_KEY = "callNumber";
 
   @Test
   public void reportIsEmptyWhenThereAreNoRequests()
@@ -376,7 +377,7 @@ public class HoldShelfClearanceReportTests extends APITests {
 
     JsonObject itemJson = requestJson.getJsonObject(ITEM_KEY);
     assertThat(itemJson.getString(BARCODE_KEY), is(item.getBarcode()));
-//    String callNumber = item.getHoldingsRecord().getJson().getString("callNumber");
-//    assertThat(requestJson.getString("callNumber"), is(callNumber));
+    String callNumber = item.getHoldingsRecord().getJson().getString(CALL_NUMBER_KEY);
+    assertThat(itemJson.getString(CALL_NUMBER_KEY), is(callNumber));
   }
 }

@@ -10,9 +10,11 @@ import org.folio.circulation.domain.HoldShelfClearanceContext;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.Request;
+import org.folio.circulation.domain.RequestRepresentation;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.CqlQuery;
+import org.folio.circulation.support.ItemRepository;
 import org.folio.circulation.support.OkJsonResponseResult;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.RouteRegistration;
@@ -75,6 +77,7 @@ public class RequestHoldShelfClearanceResource extends Resource {
     final Clients clients = Clients.create(context, client);
 
     final CollectionResourceClient itemsStorageClient = clients.itemsStorage();
+    final ItemRepository itemRepository = new ItemRepository(clients, false, false, false);
     final CollectionResourceClient requestsStorage = clients.requestsStorage();
 
     final String servicePointId = routingContext.request().getParam(SERVICE_POINT_ID_PARAM);
@@ -84,6 +87,7 @@ public class RequestHoldShelfClearanceResource extends Resource {
       .thenComposeAsync(r -> r.after(this::mapItemIdsInBatchItemIds))
       .thenComposeAsync(r -> findExpiredOrCancelledItemsIds(requestsStorage, servicePointId, r.value()))
       .thenComposeAsync(r -> findExpiredOrCancelledRequestByItemIds(requestsStorage, servicePointId, r.value()))
+      .thenApply(r -> fetchItemToRequest(r, itemRepository))
       .thenApply(this::mapResultToHoldShelfClearanceRequests)
       .thenApply(OkJsonResponseResult::from)
       .thenAccept(r -> r.writeTo(routingContext.response()));
@@ -169,8 +173,8 @@ public class RequestHoldShelfClearanceResource extends Resource {
   }
 
   private List<Result<MultipleRecords<Request>>> findAwaitingPickupRequests(CollectionResourceClient client,
-                                                                           String servicePointId,
-                                                                           List<List<String>> batchItemIds) {
+                                                                            String servicePointId,
+                                                                            List<List<String>> batchItemIds) {
     return batchItemIds.stream()
       .map(batch -> {
         final Result<CqlQuery> servicePointQuery = exactMatch(SERVICE_POINT_ID_KEY, servicePointId);
@@ -250,15 +254,27 @@ public class RequestHoldShelfClearanceResource extends Resource {
       .thenApply(result -> result.next(this::mapResponseToRequest));
   }
 
-  private Result<JsonObject> mapResultToHoldShelfClearanceRequests(Result<List<Request>> requests) {
-    return requests.map(r -> {
-      JsonArray jsonArray = r.stream()
-        .map(Request::asJson)
-        .collect(Collector.of(JsonArray::new, JsonArray::add, JsonArray::add));
-      return new JsonObject()
-        .put(REQUESTS_KEY, jsonArray)
-        .put(TOTAL_RECORDS_KEY, r.size());
-    });
+  private Result<JsonObject> mapResultToHoldShelfClearanceRequests(List<Result<Request>> requests) {
+    JsonArray jsonArray = requests.stream()
+      .filter(result -> result.succeeded())
+      .map(result -> new RequestRepresentation().extendedRepresentation(result.value()))
+      .collect(Collector.of(JsonArray::new, JsonArray::add, JsonArray::add));
+    return Result.succeeded(new JsonObject()
+      .put(REQUESTS_KEY, jsonArray)
+      .put(TOTAL_RECORDS_KEY, jsonArray.size()));
+  }
+
+  private List<Result<Request>> fetchItemToRequest(Result<List<Request>> requests,
+                                                   ItemRepository itemRepository) {
+    return requests.value().stream()
+      .map(request -> fetchItem(itemRepository, request))
+      .map(CompletableFuture::join)
+      .collect(Collectors.toList());
+  }
+
+  private CompletableFuture<Result<Request>> fetchItem(ItemRepository itemRepository, Request request) {
+    return CompletableFuture.completedFuture(Result.succeeded(request))
+      .thenComposeAsync(result -> result.combineAfter(itemRepository::fetchFor, Request::withItem));
   }
 
   private Result<MultipleRecords<Item>> mapResponseToItems(Response response) {
