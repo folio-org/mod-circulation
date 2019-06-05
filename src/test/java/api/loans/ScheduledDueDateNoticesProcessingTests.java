@@ -325,10 +325,8 @@ public class ScheduledDueDateNoticesProcessingTests extends APITests {
     InterruptedException,
     TimeoutException,
     ExecutionException {
+    //Clean scheduled notices before this test
     scheduledNoticesClient.deleteAll();
-    //Close loan to make scheduled notice processing delete them
-    //It helps to check what notices are taken for processing
-    loansFixture.checkInByBarcode(item);
 
     DateTime systemTime = DateTime.now(DateTimeZone.UTC);
     int expectedNumberOfUnprocessedNoticesInThePast = 10;
@@ -355,7 +353,6 @@ public class ScheduledDueDateNoticesProcessingTests extends APITests {
     }
 
     scheduledNoticeProcessingTimerClient.runNoticesProcessing();
-    //As loan is closed all processed notices are deleted
     List<JsonObject> unprocessedScheduledNotices = scheduledNoticesClient.getAll();
 
     Comparator<JsonObject> nextRunTimeComparator =
@@ -365,6 +362,8 @@ public class ScheduledDueDateNoticesProcessingTests extends APITests {
       .limit(expectedNumberOfUnprocessedNoticesInThePast)
       .toArray(JsonObject[]::new);
 
+    assertThat(unprocessedScheduledNotices,
+      hasSize(expectedNumberOfUnprocessedNoticesInThePast + numberOfNoticesInTheFuture));
     assertThat(unprocessedScheduledNotices, hasItems(expectedUnprocessedNoticesInThePast));
     assertThat(unprocessedScheduledNotices, hasItems(noticesInTheFuture.toArray(new JsonObject[0])));
   }
