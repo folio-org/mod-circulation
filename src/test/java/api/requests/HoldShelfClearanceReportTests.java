@@ -19,7 +19,7 @@ import static java.net.HttpURLConnection.HTTP_OK;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 
-public class ExpiredHoldsReportTests extends APITests {
+public class HoldShelfClearanceReportTests extends APITests {
 
   @Test
   public void reportIsEmptyWhenThereAreNoRequests()

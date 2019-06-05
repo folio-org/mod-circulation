@@ -5,7 +5,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 
-public class ExpiredHoldsRequest {
+public class HoldShelfClearanceRequest {
 
   private static final String REQUESTER_NAME_KEY = "requesterName";
   private static final String REQUESTER_BARCODE_KEY = "requesterBarcode";
@@ -25,7 +25,7 @@ public class ExpiredHoldsRequest {
 
   private final JsonObject representation;
 
-  public ExpiredHoldsRequest(Request request) {
+  public HoldShelfClearanceRequest(Request request) {
     JsonObject requester = request.getRequesterFromRepresentation();
     Item item = Item.from(request.getItemFromRepresentation());
 

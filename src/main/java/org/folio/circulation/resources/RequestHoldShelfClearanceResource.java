@@ -6,8 +6,8 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import org.apache.commons.lang3.StringUtils;
-import org.folio.circulation.domain.ExpiredHoldsContext;
-import org.folio.circulation.domain.ExpiredHoldsRequest;
+import org.folio.circulation.domain.HoldShelfClearanceContext;
+import org.folio.circulation.domain.HoldShelfClearanceRequest;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.Request;
@@ -36,7 +36,7 @@ import static org.folio.circulation.domain.RequestStatus.*;
 import static org.folio.circulation.support.CqlQuery.exactMatch;
 import static org.folio.circulation.support.CqlSortBy.descending;
 
-public class RequestExpiredHoldsResource extends Resource {
+public class RequestHoldShelfClearanceResource extends Resource {
 
   /**
    * The optimal number of identifiers that will not exceed the permissible length
@@ -60,7 +60,7 @@ public class RequestExpiredHoldsResource extends Resource {
 
   private final String rootPath;
 
-  public RequestExpiredHoldsResource(String rootPath, HttpClient client) {
+  public RequestHoldShelfClearanceResource(String rootPath, HttpClient client) {
     super(client);
     this.rootPath = rootPath;
   }
@@ -85,23 +85,23 @@ public class RequestExpiredHoldsResource extends Resource {
       .thenComposeAsync(r -> r.after(this::mapItemIdsInBatchItemIds))
       .thenComposeAsync(r -> findExpiredOrCancelledItemsIds(requestsStorage, servicePointId, r.value()))
       .thenComposeAsync(r -> findExpiredOrCancelledRequestByItemIds(requestsStorage, servicePointId, r.value()))
-      .thenApply(this::mapResultToExpiredHoldsRequests)
+      .thenApply(this::mapResultToHoldShelfClearanceRequests)
       .thenApply(OkJsonResponseResult::from)
       .thenAccept(r -> r.writeTo(routingContext.response()));
   }
 
-  private CompletableFuture<Result<ExpiredHoldsContext>> findAllAwaitingPickupItems(CollectionResourceClient client) {
-    CompletableFuture<Result<ExpiredHoldsContext>> future = new CompletableFuture<>();
-    ExpiredHoldsContext initialContext = new ExpiredHoldsContext(0, new ArrayList<>());
+  private CompletableFuture<Result<HoldShelfClearanceContext>> findAllAwaitingPickupItems(CollectionResourceClient client) {
+    CompletableFuture<Result<HoldShelfClearanceContext>> future = new CompletableFuture<>();
+    HoldShelfClearanceContext initialContext = new HoldShelfClearanceContext(0, new ArrayList<>());
     fetchNextPage(client, initialContext, future);
     return future;
   }
 
-  private void fetchNextPage(CollectionResourceClient client, ExpiredHoldsContext initialContext,
-                             CompletableFuture<Result<ExpiredHoldsContext>> future) {
+  private void fetchNextPage(CollectionResourceClient client, HoldShelfClearanceContext initialContext,
+                             CompletableFuture<Result<HoldShelfClearanceContext>> future) {
     findAwaitingPickupItemsByQuery(client, initialContext)
       .thenApply(itemRecords -> {
-          ExpiredHoldsContext context = fillExpiredHoldsContext(initialContext, itemRecords);
+          HoldShelfClearanceContext context = fillHoldShelfClearanceContext(initialContext, itemRecords);
           int totalRecords = itemRecords.value().getTotalRecords();
 
           if (totalRecords > context.getPageOffset(PAGE_LIMIT)) {
@@ -116,25 +116,25 @@ public class RequestExpiredHoldsResource extends Resource {
   }
 
   private CompletableFuture<Result<MultipleRecords<Item>>> findAwaitingPickupItemsByQuery(CollectionResourceClient client,
-                                                                                          ExpiredHoldsContext expiredHoldsContext) {
+                                                                                          HoldShelfClearanceContext holdShelfClearanceContext) {
     final Result<CqlQuery> itemStatusQuery = exactMatch(STATUS_NAME_KEY, AWAITING_PICKUP.getValue());
-    int pageOffset = expiredHoldsContext.getCurrPageNumber() * PAGE_LIMIT;
+    int pageOffset = holdShelfClearanceContext.getCurrPageNumber() * PAGE_LIMIT;
 
     return itemStatusQuery
       .after(query -> client.getMany(query, PAGE_LIMIT, pageOffset))
       .thenApply(result -> result.next(this::mapResponseToItems));
   }
 
-  private ExpiredHoldsContext fillExpiredHoldsContext(ExpiredHoldsContext initialContext,
-                                                      Result<MultipleRecords<Item>> itemRecords) {
+  private HoldShelfClearanceContext fillHoldShelfClearanceContext(HoldShelfClearanceContext initialContext,
+                                                                  Result<MultipleRecords<Item>> itemRecords) {
     List<Result<MultipleRecords<Item>>> resultListOfItems = initialContext.getResultListOfItems();
     resultListOfItems.add(itemRecords);
     int newPageNumber = initialContext.getCurrPageNumber() + 1;
-    return new ExpiredHoldsContext(newPageNumber, resultListOfItems);
+    return new HoldShelfClearanceContext(newPageNumber, resultListOfItems);
   }
 
-  private CompletableFuture<Result<List<String>>> mapContextToItemIdList(ExpiredHoldsContext expiredHoldsContext) {
-    List<String> itemIds = expiredHoldsContext.getResultListOfItems().stream()
+  private CompletableFuture<Result<List<String>>> mapContextToItemIdList(HoldShelfClearanceContext holdShelfClearanceContext) {
+    List<String> itemIds = holdShelfClearanceContext.getResultListOfItems().stream()
       .flatMap(records -> records.value().getRecords().stream())
       .filter(item -> StringUtils.isNoneBlank(item.getItemId()))
       .map(Item::getItemId)
@@ -251,11 +251,11 @@ public class RequestExpiredHoldsResource extends Resource {
       .thenApply(result -> result.next(this::mapResponseToRequest));
   }
 
-  private Result<JsonObject> mapResultToExpiredHoldsRequests(Result<List<Request>> requests) {
+  private Result<JsonObject> mapResultToHoldShelfClearanceRequests(Result<List<Request>> requests) {
     return requests.map(r -> {
       JsonArray jsonArray = r.stream()
-        .map(ExpiredHoldsRequest::new)
-        .map(ExpiredHoldsRequest::asJson)
+        .map(HoldShelfClearanceRequest::new)
+        .map(HoldShelfClearanceRequest::asJson)
         .collect(Collector.of(JsonArray::new, JsonArray::add, JsonArray::add));
       return new JsonObject()
         .put(REQUESTS_KEY, jsonArray)

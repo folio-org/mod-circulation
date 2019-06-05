@@ -4,12 +4,12 @@ import org.folio.circulation.support.Result;
 
 import java.util.List;
 
-public class ExpiredHoldsContext {
+public class HoldShelfClearanceContext {
   private final int currPageNumber;
   private final List<Result<MultipleRecords<Item>>> resultListOfItems;
 
-  public ExpiredHoldsContext(int currPageNumber,
-                             List<Result<MultipleRecords<Item>>> resultListOfItems) {
+  public HoldShelfClearanceContext(int currPageNumber,
+                                   List<Result<MultipleRecords<Item>>> resultListOfItems) {
     this.currPageNumber = currPageNumber;
     this.resultListOfItems = resultListOfItems;
   }
