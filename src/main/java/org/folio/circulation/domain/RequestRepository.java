@@ -26,6 +26,7 @@ public class RequestRepository {
   private final LoanRepository loanRepository;
   private final ServicePointRepository servicePointRepository;
   private final PatronGroupRepository patronGroupRepository;
+  private final LibrariesRepository librariesRepository;
   
 
   private RequestRepository(
@@ -35,7 +36,8 @@ public class RequestRepository {
     UserRepository userRepository,
     LoanRepository loanRepository,
     ServicePointRepository servicePointRepository,
-    PatronGroupRepository patronGroupRepository) {
+    PatronGroupRepository patronGroupRepository,
+    LibrariesRepository librariesRepository) {
 
     this.requestsStorageClient = requestsStorageClient;
     this.cancellationReasonStorageClient = cancellationReasonStorageClient;
@@ -44,6 +46,7 @@ public class RequestRepository {
     this.loanRepository = loanRepository;
     this.servicePointRepository = servicePointRepository; 
     this.patronGroupRepository = patronGroupRepository;
+    this.librariesRepository = librariesRepository;
   }
 
   public static RequestRepository using(Clients clients) {
@@ -51,7 +54,8 @@ public class RequestRepository {
       clients.cancellationReasonStorage(),
       new ItemRepository(clients, true, false, true),
       new UserRepository(clients), new LoanRepository(clients),
-      new ServicePointRepository(clients), new PatronGroupRepository(clients));
+      new ServicePointRepository(clients), new PatronGroupRepository(clients),
+      new LibrariesRepository(clients));
   }
 
   public CompletableFuture<Result<MultipleRecords<Request>>> findBy(String query) {
@@ -61,7 +65,8 @@ public class RequestRepository {
       .thenComposeAsync(result -> result.after(loanRepository::findOpenLoansFor))
       .thenComposeAsync(result -> result.after(servicePointRepository::findServicePointsForRequests))
       .thenComposeAsync(result -> result.after(userRepository::findUsersForRequests))
-      .thenComposeAsync(result -> result.after(patronGroupRepository::findPatronGroupsForRequestsUsers));
+      .thenComposeAsync(result -> result.after(patronGroupRepository::findPatronGroupsForRequestsUsers))
+      .thenComposeAsync(result -> result.after(librariesRepository::findLibrariesForRequests));
   }
 
   //TODO: try to consolidate this further with above

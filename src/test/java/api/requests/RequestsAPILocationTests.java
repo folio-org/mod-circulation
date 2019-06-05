@@ -61,6 +61,14 @@ public class RequestsAPILocationTests extends APITests {
       representation.getJsonObject("item").getJsonObject("location").getString("name"),
       is("2nd Floor - Economics"));
 
+    assertThat(
+      representation.getJsonObject("item").getJsonObject("location").getString("code"),
+      is("NU/JC/DL/2FE"));
+
+    assertThat(
+      representation.getJsonObject("item").getJsonObject("location").getString("libraryName"),
+      is("Datalogisk Institut"));
+
     Response fetchedRequestResponse = requestsClient.getById(request.getId());
 
     assertThat(fetchedRequestResponse.getStatusCode(), is(200));
@@ -73,6 +81,14 @@ public class RequestsAPILocationTests extends APITests {
     assertThat(
       fetchedLoan.getJsonObject("item").getJsonObject("location").getString("name"),
       is("2nd Floor - Economics"));
+
+    assertThat(
+      fetchedLoan.getJsonObject("item").getJsonObject("location").getString("code"),
+      is("NU/JC/DL/2FE"));
+
+    assertThat(
+      fetchedLoan.getJsonObject("item").getJsonObject("location").getString("libraryName"),
+      is("Datalogisk Institut"));
   }
 
   @Test
@@ -136,6 +152,14 @@ public class RequestsAPILocationTests extends APITests {
       firstFetchedRequest.getJsonObject("item").getJsonObject("location").getString("name"),
       is("3rd Floor"));
 
+    assertThat(
+      firstFetchedRequest.getJsonObject("item").getJsonObject("location").getString("code"),
+      is("NU/JC/DL/3F"));
+
+    assertThat(
+      firstFetchedRequest.getJsonObject("item").getJsonObject("location").getString("libraryName"),
+      is("Djanogly Learning Resource Centre"));
+
     JsonObject secondFetchedRequest = getRecordById(
       fetchedRequestsResponse, secondRequest.getId()).get();
 
@@ -148,5 +172,13 @@ public class RequestsAPILocationTests extends APITests {
     assertThat(
       secondFetchedRequest.getJsonObject("item").getJsonObject("location").getString("name"),
       is("Display Case, Mezzanine"));
+
+    assertThat(
+      firstFetchedRequest.getJsonObject("item").getJsonObject("location").getString("code"),
+      is("NU/JC/DL/3F"));
+
+    assertThat(
+      firstFetchedRequest.getJsonObject("item").getJsonObject("location").getString("libraryName"),
+      is("Djanogly Learning Resource Centre"));
   }
 }

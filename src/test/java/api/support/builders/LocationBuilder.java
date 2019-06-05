@@ -14,6 +14,7 @@ public class LocationBuilder extends JsonBuilder implements Builder {
 
   private final String name;
   private final String code;
+  private final String libraryName;
   private final UUID institutionId;
   private final UUID campusId;
   private final UUID libraryId;
@@ -21,12 +22,13 @@ public class LocationBuilder extends JsonBuilder implements Builder {
   private final Set<UUID> servingServicePointIds;
 
   public LocationBuilder() {
-    this(null, null, null, null, null, null, new HashSet<>());
+    this(null, null,null, null, null, null, null, new HashSet<>());
   }
 
   private LocationBuilder(
     String name,
     String code,
+    String libraryName,
     UUID institutionId,
     UUID campusId,
     UUID libraryId,
@@ -35,6 +37,7 @@ public class LocationBuilder extends JsonBuilder implements Builder {
 
     this.name = name;
     this.code = code;
+    this.libraryName = libraryName;
     this.institutionId = institutionId;
     this.campusId = campusId;
     this.libraryId = libraryId;
@@ -48,6 +51,7 @@ public class LocationBuilder extends JsonBuilder implements Builder {
 
     write(representation, "name", name);
     write(representation, "code",  code);
+    write(representation, "libraryName", libraryName);
     write(representation, "institutionId", institutionId);
     write(representation, "campusId", campusId);
     write(representation, "libraryId", libraryId);
@@ -67,6 +71,7 @@ public class LocationBuilder extends JsonBuilder implements Builder {
     return new LocationBuilder(
       name,
       this.code,
+      this.libraryName,
       this.institutionId,
       this.campusId,
       this.libraryId,
@@ -78,6 +83,19 @@ public class LocationBuilder extends JsonBuilder implements Builder {
     return new LocationBuilder(
       this.name,
       code,
+      this.libraryName,
+      this.institutionId,
+      this.campusId,
+      this.libraryId,
+      this.primaryServicePointId,
+      this.servingServicePointIds);
+  }
+
+  public LocationBuilder withLibraryName(String libraryName) {
+    return new LocationBuilder(
+      this.name,
+      this.code,
+      libraryName,
       this.institutionId,
       this.campusId,
       this.libraryId,
@@ -89,6 +107,7 @@ public class LocationBuilder extends JsonBuilder implements Builder {
     return new LocationBuilder(
       this.name,
       this.code,
+      this.libraryName,
       institutionId,
       this.campusId,
       this.libraryId,
@@ -100,6 +119,7 @@ public class LocationBuilder extends JsonBuilder implements Builder {
     return new LocationBuilder(
       this.name,
       this.code,
+      this.libraryName,
       this.institutionId,
       campusId,
       this.libraryId,
@@ -111,6 +131,7 @@ public class LocationBuilder extends JsonBuilder implements Builder {
     return new LocationBuilder(
       this.name,
       this.code,
+      this.libraryName,
       this.institutionId,
       this.campusId,
       libraryId,
@@ -122,6 +143,7 @@ public class LocationBuilder extends JsonBuilder implements Builder {
     return new LocationBuilder(
       this.name,
       this.code,
+      this.libraryName,
       this.institutionId,
       this.campusId,
       this.libraryId,
@@ -139,6 +161,7 @@ public class LocationBuilder extends JsonBuilder implements Builder {
     return new LocationBuilder(
       this.name,
       this.code,
+      this.libraryName,
       this.institutionId,
       this.campusId,
       this.libraryId,
