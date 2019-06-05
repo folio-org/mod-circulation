@@ -48,7 +48,8 @@
             "circulation.rules.notice-policy.get",
             "configuration.entries.collection.get",
             "users.collection.get",
-            "inventory-storage.loan-types.item.get"
+            "inventory-storage.loan-types.item.get",
+            "scheduled-notice-storage.scheduled-notices.item.post"
           ]
         },
         {
@@ -91,7 +92,8 @@
             "circulation.rules.notice-policy.get",
             "configuration.entries.collection.get",
             "users.collection.get",
-            "inventory-storage.loan-types.item.get"
+            "inventory-storage.loan-types.item.get",
+            "scheduled-notice-storage.scheduled-notices.item.post"
           ]
         },
         {
@@ -761,6 +763,10 @@
     {
       "id": "loan-types",
       "version": "2.2"
+    },
+    {
+      "id": "scheduled-notice-storage",
+      "version": "0.1"
     }
   ],
   "permissionSets": [

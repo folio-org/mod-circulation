@@ -33,6 +33,7 @@ public class Clients {
   private final CollectionResourceClient patronNoticePolicesStorageClient;
   private final CollectionResourceClient patronNoticeClient;
   private final CollectionResourceClient configurationStorageClient;
+  private final CollectionResourceClient scheduledNoticesStorageClient;
 
   public static Clients create(WebContext context, HttpClient httpClient) {
     return new Clients(context.createHttpClient(httpClient), context);
@@ -65,6 +66,7 @@ public class Clients {
       patronNoticePolicesStorageClient = createPatronNoticePolicesStorageClient(client, context);
       patronNoticeClient = createPatronNoticeClient(client, context);
       configurationStorageClient = createConfigurationStorageClient(client, context);
+      scheduledNoticesStorageClient = createScheduledNoticesStorageClient(client, context);
     }
     catch(MalformedURLException e) {
       throw new InvalidOkapiLocationException(context.getOkapiLocation(), e);
@@ -167,6 +169,10 @@ public class Clients {
 
   public CollectionResourceClient patronNoticeClient() {
     return patronNoticeClient;
+  }
+
+  public CollectionResourceClient scheduledNoticesStorageClient() {
+    return scheduledNoticesStorageClient;
   }
 
   private static CollectionResourceClient getCollectionResourceClient(
@@ -379,5 +385,12 @@ public class Clients {
     WebContext context)
     throws MalformedURLException {
     return getCollectionResourceClient(client, context, "/configurations/entries");
+  }
+
+  private CollectionResourceClient createScheduledNoticesStorageClient(
+    OkapiHttpClient client,
+    WebContext context)
+    throws MalformedURLException {
+    return getCollectionResourceClient(client, context, "/scheduled-notice-storage/scheduled-notices");
   }
 }

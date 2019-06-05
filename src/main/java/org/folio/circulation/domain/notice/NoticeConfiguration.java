@@ -1,27 +1,24 @@
 package org.folio.circulation.domain.notice;
 
-import org.joda.time.Period;
+
+import org.folio.circulation.domain.policy.Period;
 
 public class NoticeConfiguration {
 
-  private String templateId;
+  private final String templateId;
+  private final NoticeFormat noticeFormat;
+  private final NoticeEventType noticeEventType;
+  private final NoticeTiming timing;
+  private final Period timingPeriod;
+  private final boolean recurring;
+  private final Period recurringPeriod;
+  private final boolean sendInRealTime;
 
-  private NoticeFormat noticeFormat;
-
-  private NoticeEventType noticeEventType;
-
-  private NoticeTiming timing;
-
-  private Period timingPeriod;
-
-  private boolean recurring;
-
-  private Period recurringPeriod;
-
-  public NoticeConfiguration(
+  @SuppressWarnings("squid:S00107")
+  NoticeConfiguration(
     String templateId, NoticeFormat noticeFormat, NoticeEventType noticeEventType,
     NoticeTiming timing, Period timingPeriod,
-    boolean recurring, Period recurringPeriod) {
+    boolean recurring, Period recurringPeriod, boolean sendInRealTime) {
 
     this.templateId = templateId;
     this.noticeFormat = noticeFormat;
@@ -30,6 +27,7 @@ public class NoticeConfiguration {
     this.timingPeriod = timingPeriod;
     this.recurring = recurring;
     this.recurringPeriod = recurringPeriod;
+    this.sendInRealTime = sendInRealTime;
   }
 
   public String getTemplateId() {
@@ -60,4 +58,7 @@ public class NoticeConfiguration {
     return recurringPeriod;
   }
 
+  public boolean sendInRealTime() {
+    return sendInRealTime;
+  }
 }
