@@ -76,6 +76,10 @@ public class Item {
     return isInStatus(AWAITING_PICKUP);
   }
 
+  public boolean isAvailable() {
+    return isInStatus(AVAILABLE);
+  }
+
   private boolean isInTransit() {
     return isInStatus(IN_TRANSIT);
   }

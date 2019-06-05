@@ -2,6 +2,7 @@ package org.folio.circulation.resources;
 
 import static org.folio.circulation.domain.representations.RequestProperties.PROXY_USER_ID;
 import static org.folio.circulation.support.Result.failed;
+import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 
@@ -15,7 +16,6 @@ import java.util.stream.Collectors;
 
 import org.folio.circulation.domain.CreateRequestService;
 import org.folio.circulation.domain.Item;
-import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.domain.LoanRepository;
 import org.folio.circulation.domain.LocationRepository;
 import org.folio.circulation.domain.RequestAndRelatedRecords;
@@ -172,7 +172,7 @@ public class RequestByInstanceIdResource extends Resource {
       .thenApply(locations -> {
         //Use the matchingLocationIds list to get the items from locationIdItemMap
         List<Item> matchingItemsList = getItemsWithMatchingServicePointIds(locations, locationIdItemMap, pickupServicePointId);
-        return Result.succeeded(getOrderedAvailableItemsList(matchingItemsList, locationIdItemMap));
+        return succeeded(getOrderedAvailableItemsList(matchingItemsList, locationIdItemMap));
       });
   }
 
@@ -301,7 +301,7 @@ public class RequestByInstanceIdResource extends Resource {
         }
       }
     }
-    return Result.succeeded(requests);
+    return succeeded(requests);
   }
 
   private Result<Collection<Item>> getfilteredAvailableItems(Collection<Item> items) {
@@ -310,9 +310,9 @@ public class RequestByInstanceIdResource extends Resource {
       return failedValidation("Items list is null or empty", "items", "null");
     }
 
-    return Result.succeeded(items.stream()
-                .filter(item -> item.getStatus() == ItemStatus.AVAILABLE)
-                .collect(Collectors.toList()));
+    return succeeded(items.stream()
+      .filter(Item::isAvailable)
+      .collect(Collectors.toList()));
   }
 
   private ProxyRelationshipValidator createProxyRelationshipValidator(
