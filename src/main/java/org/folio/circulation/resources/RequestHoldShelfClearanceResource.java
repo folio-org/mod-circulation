@@ -88,7 +88,7 @@ public class RequestHoldShelfClearanceResource extends Resource {
       .thenComposeAsync(r -> findExpiredOrCancelledItemsIds(requestsStorage, servicePointId, r.value()))
       .thenComposeAsync(r -> findExpiredOrCancelledRequestByItemIds(requestsStorage, servicePointId, r.value()))
       .thenApply(r -> fetchItemToRequest(r, itemRepository))
-      .thenApply(this::mapResultToHoldShelfClearanceRequests)
+      .thenApply(this::mapResultToJson)
       .thenApply(OkJsonResponseResult::from)
       .thenAccept(r -> r.writeTo(routingContext.response()));
   }
@@ -254,22 +254,23 @@ public class RequestHoldShelfClearanceResource extends Resource {
       .thenApply(result -> result.next(this::mapResponseToRequest));
   }
 
-  private Result<JsonObject> mapResultToHoldShelfClearanceRequests(List<Result<Request>> requests) {
-    JsonArray jsonArray = requests.stream()
-      .filter(result -> result.succeeded())
-      .map(result -> new RequestRepresentation().extendedRepresentation(result.value()))
-      .collect(Collector.of(JsonArray::new, JsonArray::add, JsonArray::add));
-    return Result.succeeded(new JsonObject()
-      .put(REQUESTS_KEY, jsonArray)
-      .put(TOTAL_RECORDS_KEY, jsonArray.size()));
-  }
-
-  private List<Result<Request>> fetchItemToRequest(Result<List<Request>> requests,
-                                                   ItemRepository itemRepository) {
-    return requests.value().stream()
+  private Result<List<Result<Request>>> fetchItemToRequest(Result<List<Request>> requests,
+                                                           ItemRepository itemRepository) {
+    return requests.map(r -> r.stream()
       .map(request -> fetchItem(itemRepository, request))
       .map(CompletableFuture::join)
-      .collect(Collectors.toList());
+      .collect(Collectors.toList()));
+  }
+
+  private Result<JsonObject> mapResultToJson(Result<List<Result<Request>>> requests) {
+    return requests
+      .map(resultList ->
+        Result.combineAll(resultList).map(r -> r.stream()
+          .map(result -> new RequestRepresentation().extendedRepresentation(result))
+          .collect(Collector.of(JsonArray::new, JsonArray::add, JsonArray::add))))
+      .next(r -> r.next(jsonArray -> Result.succeeded(new JsonObject()
+        .put(REQUESTS_KEY, jsonArray)
+        .put(TOTAL_RECORDS_KEY, jsonArray.size()))));
   }
 
   private CompletableFuture<Result<Request>> fetchItem(ItemRepository itemRepository, Request request) {
