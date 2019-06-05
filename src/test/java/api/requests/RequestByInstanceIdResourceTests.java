@@ -1,7 +1,7 @@
 package api.requests;
 
-import static api.support.fixtures.ItemExamples.basedUponSmallAngryPlanet;
 import static java.util.Collections.emptySet;
+import static org.folio.circulation.resources.RequestByInstanceIdResource.rankItemsByServingPickupServicePoint;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -20,7 +20,6 @@ import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.RequestType;
 import org.folio.circulation.domain.representations.RequestByInstanceIdRequest;
 import org.folio.circulation.resources.RequestByInstanceIdResource;
-import org.folio.circulation.support.Pair;
 import org.folio.circulation.support.Result;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
@@ -29,13 +28,13 @@ import org.junit.Test;
 
 import api.support.APITests;
 import api.support.builders.LocationBuilder;
+import api.support.fixtures.ItemExamples;
 import io.vertx.core.json.JsonObject;
 
 public class RequestByInstanceIdResourceTests extends APITests {
 
   @Test
-  public void canTransformInstanceToItemRequests(){
-
+  public void canTransformInstanceToItemRequests() {
     UUID loanTypeId = UUID.randomUUID();
     RequestByInstanceIdRequest requestByInstanceIdRequest = RequestByInstanceIdRequest.from(getJsonInstanceRequest()).value();
     List<Item > items = getItems(2, loanTypeId);
@@ -70,8 +69,11 @@ public class RequestByInstanceIdResourceTests extends APITests {
   }
 
   @Test
-  public void canGetItemWithMatchingServicePointIds()
-    throws InterruptedException, MalformedURLException, TimeoutException, ExecutionException {
+  public void canGetOrderedAvailableItemsList()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
 
     UUID primaryServicePointId = servicePointsFixture.cd2().getId();
     UUID secondaryServicePointId = UUID.randomUUID();
@@ -98,104 +100,89 @@ public class RequestByInstanceIdResourceTests extends APITests {
 
     UUID bookMaterialTypeId = UUID.randomUUID();
     UUID loanTypeId = UUID.randomUUID();
-    Item item1 = Item.from(basedUponSmallAngryPlanet(bookMaterialTypeId, loanTypeId)
+
+    Item item1 = Item.from(ItemExamples.basedUponSmallAngryPlanet(bookMaterialTypeId, loanTypeId)
       .withTemporaryLocation(UUID.fromString(location1.getString("id")))
       .create())
       .withLocation(location1);
 
-    Item item2 = Item.from(basedUponSmallAngryPlanet(bookMaterialTypeId, loanTypeId)
+    Item item2 = Item.from(ItemExamples.basedUponSmallAngryPlanet(bookMaterialTypeId, loanTypeId)
       .withTemporaryLocation(UUID.fromString(location2.getString("id")))
       .create())
       .withLocation(location2);
 
-    Item item3 = Item.from(basedUponSmallAngryPlanet(bookMaterialTypeId, loanTypeId)
+    Item item3 = Item.from(ItemExamples.basedUponSmallAngryPlanet(bookMaterialTypeId, loanTypeId)
       .withTemporaryLocation(UUID.fromString(location3.getString("id")))
       .create())
       .withLocation(location3);
 
-    Item item4 = Item.from(basedUponSmallAngryPlanet(bookMaterialTypeId, loanTypeId)
+    Item item4 = Item.from(ItemExamples.basedUponSmallAngryPlanet(bookMaterialTypeId, loanTypeId)
       .withTemporaryLocation(UUID.fromString(location4.getString("id")))
       .create())
       .withLocation(location4);
 
-    final ArrayList<Item> inputItems = new ArrayList<>();
+    final ArrayList<Item> items = new ArrayList<>();
 
-    inputItems.add(item1);
-    inputItems.add(item2);
-    inputItems.add(item3);
-    inputItems.add(item4);
+    items.add(item2);
+    items.add(item3);
+    items.add(item4);
+    items.add(item1);
 
-    List<Item> items = RequestByInstanceIdResource.getItemsWithMatchingServicePointIds(inputItems, pickupServicePointId);
-    assertEquals(2, items.size());
-    assertEquals(item2.getItem(), items.get(0).getItem());
-    assertEquals(item2.getItemId(), items.get(0).getItemId());
-    assertEquals(item2.getLocationId(), items.get(0).getLocationId());
+    List<Item> orderedItems = rankItemsByServingPickupServicePoint(pickupServicePointId, items);
 
-    assertEquals(item4.getItem(), items.get(1).getItem());
-    assertEquals(item4.getItemId(), items.get(1).getItemId());
-    assertEquals(item4.getLocationId(), items.get(1).getLocationId());
+    assertEquals(4, orderedItems.size());
+
+    assertEquals(item2.getItemId(), orderedItems.get(0).getItemId());
+    assertEquals(item4.getItemId(), orderedItems.get(1).getItemId());
+    assertEquals(item3.getItemId(), orderedItems.get(2).getItemId());
+    assertEquals(item1.getItemId(), orderedItems.get(3).getItemId());
   }
 
   @Test
-  public void canGetOrderedAvailableItemsList(){
+  public void canGetOrderedAvailableItemsListWithoutMatchingLocations() {
 
     UUID bookMaterialTypeId = UUID.randomUUID();
+
     UUID loanTypeId = UUID.randomUUID();
-    Item item1 = Item.from(basedUponSmallAngryPlanet(bookMaterialTypeId, loanTypeId).withTemporaryLocation(UUID.randomUUID()).create());
-    Item item2 = Item.from(basedUponSmallAngryPlanet(bookMaterialTypeId, loanTypeId).withTemporaryLocation(UUID.randomUUID()).create());
-    Item item3 = Item.from(basedUponSmallAngryPlanet(bookMaterialTypeId, loanTypeId).withTemporaryLocation(UUID.randomUUID()).create());
-    Item item4 = Item.from(basedUponSmallAngryPlanet(bookMaterialTypeId, loanTypeId).withTemporaryLocation(UUID.randomUUID()).create());
 
-    LinkedList<Pair> locationIdItemMap = new LinkedList<>();
-    locationIdItemMap.add(new Pair(item1.getLocationId(), item1));
-    locationIdItemMap.add(new Pair(item2.getLocationId(), item2));
-    locationIdItemMap.add(new Pair(item3.getLocationId(), item3));
-    locationIdItemMap.add(new Pair(item4.getLocationId(), item4));
+    JsonObject location = getLocationWithServicePoints(emptySet(), null, null);
 
-    List<Item> matchingItemsList = new LinkedList<>();
-    matchingItemsList.add(item4);
-    matchingItemsList.add(item1);
+    Item item1 = Item.from(ItemExamples.basedUponSmallAngryPlanet(bookMaterialTypeId, loanTypeId)
+                      .withTemporaryLocation(UUID.randomUUID()).create())
+      .withLocation(location);
 
-    List<Item> ordedItems = RequestByInstanceIdResource.getOrderedAvailableItemsList(matchingItemsList, locationIdItemMap);
-    assertEquals(4, ordedItems.size());
-    assertEquals(item4.getItemId(),ordedItems.get(0).getItemId());
-    assertEquals(item1.getItemId(),ordedItems.get(1).getItemId());
-    assertEquals(item2.getItemId(),ordedItems.get(2).getItemId());
-    assertEquals(item3.getItemId(),ordedItems.get(3).getItemId());
-  }
+    Item item2 = Item.from(ItemExamples.basedUponSmallAngryPlanet(bookMaterialTypeId, loanTypeId)
+                      .withTemporaryLocation(UUID.randomUUID()).create())
+      .withLocation(location);
 
-  @Test
-  public void canGetOrderedAvailableItemsListWithoutMatchingLocations(){
+    Item item3 = Item.from(ItemExamples.basedUponSmallAngryPlanet(bookMaterialTypeId, loanTypeId)
+                      .withTemporaryLocation(UUID.randomUUID()).create())
+      .withLocation(location);
 
-    UUID bookMaterialTypeId = UUID.randomUUID();
-    UUID loanTypeId = UUID.randomUUID();
-    Item item1 = Item.from(basedUponSmallAngryPlanet(bookMaterialTypeId, loanTypeId)
-                      .withTemporaryLocation(UUID.randomUUID()).create());
-    Item item2 = Item.from(basedUponSmallAngryPlanet(bookMaterialTypeId, loanTypeId)
-                      .withTemporaryLocation(UUID.randomUUID()).create());
-    Item item3 = Item.from(basedUponSmallAngryPlanet(bookMaterialTypeId, loanTypeId)
-                      .withTemporaryLocation(UUID.randomUUID()).create());
-    Item item4 = Item.from(basedUponSmallAngryPlanet(bookMaterialTypeId, loanTypeId)
-                      .withTemporaryLocation(UUID.randomUUID()).create());
+    Item item4 = Item.from(ItemExamples.basedUponSmallAngryPlanet(bookMaterialTypeId, loanTypeId)
+                      .withTemporaryLocation(UUID.randomUUID()).create())
+      .withLocation(location);
 
     //order added is important so the test deliberately add items in a certain order
-    LinkedList<Pair> locationIdItemMap = new LinkedList<>();
-    locationIdItemMap.add(new Pair(item3.getLocationId(), item3));
-    locationIdItemMap.add(new Pair(item2.getLocationId(), item2));
-    locationIdItemMap.add(new Pair(item4.getLocationId(), item4));
-    locationIdItemMap.add(new Pair(item1.getLocationId(), item1));
+    List<Item> items = new ArrayList<>();
 
-    List<Item> matchingItemsList = new LinkedList<>();
+    items.add(item3);
+    items.add(item2);
+    items.add(item4);
+    items.add(item1);
 
-    List<Item> ordedItems = RequestByInstanceIdResource.getOrderedAvailableItemsList(matchingItemsList, locationIdItemMap);
-    assertEquals(4, ordedItems.size());
-    assertEquals(item3.getItemId(),ordedItems.get(0).getItemId());
-    assertEquals(item2.getItemId(),ordedItems.get(1).getItemId());
-    assertEquals(item4.getItemId(),ordedItems.get(2).getItemId());
-    assertEquals(item1.getItemId(),ordedItems.get(3).getItemId());
+    List<Item> orderedItems = rankItemsByServingPickupServicePoint(
+      UUID.randomUUID().toString(), items);
+
+    assertEquals(4, orderedItems.size());
+
+    assertEquals(item3.getItemId(),orderedItems.get(0).getItemId());
+    assertEquals(item2.getItemId(),orderedItems.get(1).getItemId());
+    assertEquals(item4.getItemId(),orderedItems.get(2).getItemId());
+    assertEquals(item1.getItemId(),orderedItems.get(3).getItemId());
   }
 
-  private static JsonObject getJsonInstanceRequest(){
+  private static JsonObject getJsonInstanceRequest() {
     DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
     DateTime requestExpirationDate = requestDate.plusDays(30);
 
@@ -213,18 +200,20 @@ public class RequestByInstanceIdResourceTests extends APITests {
   private static List<Item> getItems(int totalItems, UUID loanTypeId){
     LinkedList<Item> items = new LinkedList<>();
     for (int i = 0; i< totalItems; i++){
-      JsonObject itemJsonObject = basedUponSmallAngryPlanet(UUID.randomUUID(), loanTypeId).create();
+      JsonObject itemJsonObject = ItemExamples.basedUponSmallAngryPlanet(UUID.randomUUID(), loanTypeId).create();
       items.add(Item.from(itemJsonObject));
     }
     return items;
   }
 
   private static JsonObject getLocationWithServicePoints(Set<UUID> servicePoints, UUID primaryServicePointId, UUID locationInstitutionId) {
+
     JsonObject location = new LocationBuilder()
       .forInstitution(locationInstitutionId)
       .withPrimaryServicePoint(primaryServicePointId)
       .servedBy(servicePoints)
       .create();
+
     location.put("id", UUID.randomUUID().toString());
 
     return location;
