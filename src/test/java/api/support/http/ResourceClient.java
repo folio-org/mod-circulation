@@ -235,7 +235,7 @@ public class ResourceClient {
     client.post(urlMaker.combine(""), builder.create(),
       ResponseHandler.any(createCompleted));
 
-    return createCompleted.get(500, TimeUnit.SECONDS);
+    return createCompleted.get(5, TimeUnit.SECONDS);
   }
 
   public IndividualResource create(Builder builder)
@@ -261,7 +261,7 @@ public class ResourceClient {
     client.post(urlMaker.combine(""), request,
       ResponseHandler.json(createCompleted));
 
-    Response response = createCompleted.get(500, TimeUnit.SECONDS);
+    Response response = createCompleted.get(5, TimeUnit.SECONDS);
 
     assertThat(
       String.format("Failed to create %s: %s", resourceName,
@@ -289,7 +289,7 @@ public class ResourceClient {
 
     client.put(location, representation, ResponseHandler.any(createCompleted));
 
-    return createCompleted.get(500, TimeUnit.SECONDS);
+    return createCompleted.get(5, TimeUnit.SECONDS);
   }
 
   public IndividualResource createAtSpecificLocation(Builder builder)
@@ -307,7 +307,7 @@ public class ResourceClient {
 
     client.put(location, representation, ResponseHandler.any(createCompleted));
 
-    Response createResponse = createCompleted.get(500, TimeUnit.SECONDS);
+    Response createResponse = createCompleted.get(5, TimeUnit.SECONDS);
 
     assertThat(
       String.format("Failed to create %s %s: %s", resourceName, id, createResponse.getBody()),
@@ -320,7 +320,7 @@ public class ResourceClient {
 
     client.get(location, ResponseHandler.any(getCompleted));
 
-    Response getResponse = getCompleted.get(500, TimeUnit.SECONDS);
+    Response getResponse = getCompleted.get(5, TimeUnit.SECONDS);
 
     assertThat(
       String.format("Failed to get %s %s: %s", resourceName, id, getResponse.getBody()),
@@ -345,7 +345,7 @@ public class ResourceClient {
     client.put(urlMaker.combine(path), builder.create(),
       ResponseHandler.any(putCompleted));
 
-    return putCompleted.get(500, TimeUnit.SECONDS);
+    return putCompleted.get(5, TimeUnit.SECONDS);
   }
 
   public void replace(UUID id, Builder builder)
@@ -372,7 +372,7 @@ public class ResourceClient {
     client.put(urlMaker.combine(path), request,
       ResponseHandler.any(putCompleted));
 
-    Response putResponse = putCompleted.get(500, TimeUnit.SECONDS);
+    Response putResponse = putCompleted.get(5, TimeUnit.SECONDS);
 
     assertThat(
       String.format("Failed to update %s %s: %s", resourceName, id, putResponse.getBody()),
@@ -390,7 +390,7 @@ public class ResourceClient {
     client.get(urlMaker.combine(String.format("/%s", id)),
       ResponseHandler.any(getCompleted));
 
-    return getCompleted.get(500, TimeUnit.SECONDS);
+    return getCompleted.get(5, TimeUnit.SECONDS);
   }
 
   public Response getByQueryString(String queryString)
@@ -404,7 +404,7 @@ public class ResourceClient {
     client.get(urlMaker.combine(String.format("?%s", queryString)),
       ResponseHandler.any(getCompleted));
 
-    return getCompleted.get(500, TimeUnit.SECONDS);
+    return getCompleted.get(5, TimeUnit.SECONDS);
   }
 
   public IndividualResource get(IndividualResource record)
@@ -428,7 +428,7 @@ public class ResourceClient {
     client.get(urlMaker.combine(String.format("/%s", id)),
       ResponseHandler.any(getCompleted));
 
-    final Response response = getCompleted.get(500, TimeUnit.SECONDS);
+    final Response response = getCompleted.get(5, TimeUnit.SECONDS);
 
     assertThat(
       String.format("Failed to get %s: %s", resourceName, response.getBody()),
@@ -451,7 +451,7 @@ public class ResourceClient {
     client.get(urlMaker.combine(String.format("/%s", resource.getId())),
       ResponseHandler.any(getCompleted));
 
-    return getCompleted.get(500, TimeUnit.SECONDS);
+    return getCompleted.get(5, TimeUnit.SECONDS);
   }
 
   public void delete(UUID id)
@@ -465,7 +465,7 @@ public class ResourceClient {
     client.delete(urlMaker.combine(String.format("/%s", id)),
       ResponseHandler.any(deleteFinished));
 
-    Response response = deleteFinished.get(500, TimeUnit.SECONDS);
+    Response response = deleteFinished.get(5, TimeUnit.SECONDS);
 
     assertThat(String.format(
       "Failed to delete %s %s: %s", resourceName, id, response.getBody()),
@@ -494,7 +494,7 @@ public class ResourceClient {
     client.delete(urlMaker.combine(""),
       ResponseHandler.any(deleteAllFinished));
 
-    Response response = deleteAllFinished.get(500, TimeUnit.SECONDS);
+    Response response = deleteAllFinished.get(5, TimeUnit.SECONDS);
 
     assertThat(String.format(
       "Failed to delete %s: %s", resourceName, response.getBody()),
@@ -517,7 +517,7 @@ public class ResourceClient {
           record.getString("id"))),
           ResponseHandler.any(deleteFinished));
 
-        Response deleteResponse = deleteFinished.get(500, TimeUnit.SECONDS);
+        Response deleteResponse = deleteFinished.get(5, TimeUnit.SECONDS);
 
         assertThat(String.format(
           "Failed to delete %s: %s", resourceName, deleteResponse.getBody()),
@@ -542,7 +542,7 @@ public class ResourceClient {
     client.get(urlMaker.combine(""),
       ResponseHandler.any(getFinished));
 
-    Response response = getFinished.get(500, TimeUnit.SECONDS);
+    Response response = getFinished.get(5, TimeUnit.SECONDS);
 
     assertThat(String.format("Get all records failed: %s", response.getBody()),
       response.getStatusCode(), is(200));
