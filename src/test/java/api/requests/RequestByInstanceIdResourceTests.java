@@ -1,5 +1,6 @@
 package api.requests;
 
+import static java.util.Collections.emptySet;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -9,6 +10,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
@@ -89,7 +91,7 @@ public class RequestByInstanceIdResourceTests extends APITests {
 
     JsonObject location2 = getLocationWithServicePoints(servicePoints2, primaryServicePointId, institutionId);
 
-    JsonObject location3 = getLocationWithServicePoints(null, null, institutionId);
+    JsonObject location3 = getLocationWithServicePoints(emptySet(), null, institutionId);
 
     //Matching item and servicePoints
     HashSet<UUID> servicePoints4 = new HashSet<>();
@@ -216,12 +218,11 @@ public class RequestByInstanceIdResourceTests extends APITests {
     return items;
   }
 
-  private static JsonObject getLocationWithServicePoints(HashSet<UUID> servicePoints, UUID primaryServicePointId,  UUID locationInstitutionId) {
-
+  private static JsonObject getLocationWithServicePoints(Set<UUID> servicePoints, UUID primaryServicePointId, UUID locationInstitutionId) {
     JsonObject location = new LocationBuilder()
       .forInstitution(locationInstitutionId)
       .withPrimaryServicePoint(primaryServicePointId)
-      .withServicePoints(servicePoints)
+      .servedBy(servicePoints)
       .create();
     location.put("id", UUID.randomUUID().toString());
 

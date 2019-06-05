@@ -120,8 +120,7 @@ public class LocationsFixture {
 
     final LocationExamples locationExamples = getLocationMultiServicePointsExamples();
 
-    return locationRecordCreator.createIfAbsent(
-      locationExamples.mainLocation());
+    return locationRecordCreator.createIfAbsent(locationExamples.mainLocation());
   }
 
   private LocationExamples getLocationExamples()
