@@ -6,12 +6,16 @@ import static org.junit.Assert.assertTrue;
 import java.net.MalformedURLException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
+import java.util.stream.Collectors;
 
 import org.apache.commons.collections.map.ListOrderedMap;
 import org.folio.circulation.domain.Item;
@@ -226,5 +230,44 @@ public class RequestByInstanceIdResourceTests extends APITests {
     location.put("id", UUID.randomUUID().toString());
 
     return location;
+  }
+
+  @Test
+  public void canSortMapForItems(){
+
+    Collection<Item> items = getItems(6, UUID.randomUUID());
+    Map<Item, Integer> itemQueueSizeMap = new HashMap<>();
+
+    itemQueueSizeMap.put(((List<Item>) items).get(0), 4);
+    itemQueueSizeMap.put(((List<Item>) items).get(1), 3);
+    itemQueueSizeMap.put(((List<Item>) items).get(2), 7);
+    itemQueueSizeMap.put(((List<Item>) items).get(3), 7);
+    itemQueueSizeMap.put(((List<Item>) items).get(4), 1);
+    itemQueueSizeMap.put(((List<Item>) items).get(5), 8);
+
+    final Map<Item, Integer> sortedItemsMap = RequestByInstanceIdResource.sortMap(itemQueueSizeMap);
+    final List<Integer> sortedValues = sortedItemsMap.values().stream().collect(Collectors.toList());
+    final Item[] sortedKeys = sortedItemsMap.keySet().toArray(new Item[sortedItemsMap.size()]);
+
+    assertEquals(1, sortedValues.get(0).intValue());
+    assertEquals(((List<Item>) items).get(4).getItemId(), sortedKeys[0].getItemId());
+
+    assertEquals(3, sortedValues.get(1).intValue());
+    assertEquals(((List<Item>) items).get(1).getItemId(), sortedKeys[1].getItemId());
+
+    assertEquals(4, sortedValues.get(2).intValue());
+    assertEquals(((List<Item>) items).get(0).getItemId(), sortedKeys[2].getItemId());
+
+    assertEquals(8, sortedValues.get(5).intValue());
+    assertEquals(((List<Item>) items).get(5).getItemId(), sortedKeys[5].getItemId());
+
+    //for the ones that are tied, there isn't a deterministic way to find out which entry will be in front of the other
+    String item2Id = ((List<Item>) items).get(2).getItemId();
+    assertTrue((7 == sortedValues.get(3)) || (7 == sortedValues.get(4)));
+    assertTrue(item2Id.equals(sortedKeys[3].getItemId()) || item2Id.equals(sortedKeys[4].getItemId()));
+
+    String item3Id = ((List<Item>) items).get(3).getItemId();
+    assertTrue((7 == sortedValues.get(3)) || (7 == sortedValues.get(4)));
+    assertTrue(item3Id.equals(sortedKeys[3].getItemId()) || item3Id.equals(sortedKeys[4].getItemId()));
   }
 }

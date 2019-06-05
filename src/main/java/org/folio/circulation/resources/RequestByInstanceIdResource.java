@@ -2,14 +2,19 @@ package org.folio.circulation.resources;
 
 import static org.folio.circulation.domain.representations.RequestProperties.PROXY_USER_ID;
 import static org.folio.circulation.support.Result.failed;
+import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 
 import java.lang.invoke.MethodHandles;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
@@ -21,6 +26,7 @@ import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.domain.LoanRepository;
 import org.folio.circulation.domain.LocationRepository;
 import org.folio.circulation.domain.RequestAndRelatedRecords;
+import org.folio.circulation.domain.RequestQueue;
 import org.folio.circulation.domain.RequestQueueRepository;
 import org.folio.circulation.domain.RequestRepository;
 import org.folio.circulation.domain.RequestRepresentation;
@@ -54,7 +60,7 @@ import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 
 public class RequestByInstanceIdResource extends Resource {
-  private Clients clients;
+  private static Clients clients;
   private final Logger log;
   private static UserRepository userRepository;
   private static LocationRepository locationRepository;
@@ -98,9 +104,10 @@ public class RequestByInstanceIdResource extends Resource {
     final CompletableFuture<Result<Collection<Item>>> items = finder.getItemsByInstanceId(requestByInstanceIdRequest.getInstanceId().toString());
 
     final CompletableFuture<Result<Collection<Item>>> availableItems = items.thenApply(r -> r.next(this::getfilteredAvailableItems));
+    final CompletableFuture<Result<Collection<Item>>> unavailableItems = items.thenApply(r -> r.next(this::getfilteredUnavailableItems));
 
-    availableItems.thenCompose(r -> r.after( collectionResult -> findItemsWithMatchingServicePointId(
-                                                                  pickupServicePointId, collectionResult)))
+    availableItems.thenCompose(r -> r.after( collectionResult -> findItemsWithMatchingServicePointId(pickupServicePointId, collectionResult)))
+                  .thenCompose(r -> r.after( sortedAvailableItems -> getSortedItemsList(unavailableItems, sortedAvailableItems)))
                   .thenApply(r -> r.next( itemsFound -> instanceToItemRequests(requestByInstanceIdRequest, itemsFound)))
                   .thenCompose(r -> r.after( requests -> placeRequests(requests, clients)))
                   .thenApply(r -> r.map(RequestAndRelatedRecords::getRequest))
@@ -160,6 +167,60 @@ public class RequestByInstanceIdResource extends Resource {
         });
   }
 
+
+  private static CompletableFuture<Result<Collection<Item>>> getSortedItemsList(CompletableFuture<Result<Collection<Item>>> unavailableItems, Collection<Item> sortedAvailableItems){
+
+    RequestQueueRepository queueRepository = RequestQueueRepository.using(clients);
+
+    return unavailableItems.thenCompose( r -> r.after( items -> {
+      Map<Item, CompletableFuture<Result<RequestQueue>>> itemRequestQueueMap = new HashMap<>();
+      if (items == null || items.isEmpty()) {
+        return CompletableFuture.completedFuture(succeeded(sortedAvailableItems));
+      }
+
+      for (Item item : items) {
+        itemRequestQueueMap.put(item, queueRepository.getLiteRequestQueues(item.getItemId()));
+      }
+      final Collection<CompletableFuture<Result<RequestQueue>>> requestQueueFutures = itemRequestQueueMap.values();
+
+      //Collect the RequestQueue objects once they come back
+      return CompletableFuture.allOf(requestQueueFutures.toArray(new CompletableFuture[requestQueueFutures.size()]))
+        .thenApply(x -> {
+          Map<Item, Integer> itemQueueSizeMap = new HashMap<>();
+          int queueSize;
+          for (Map.Entry<Item, CompletableFuture<Result<RequestQueue>>> entry : itemRequestQueueMap.entrySet()) {
+
+            queueSize = Integer.MAX_VALUE;  //arbitrarily set the queueSize to something high, in case of failure.
+
+            Result<RequestQueue> requestQueueResult = entry.getValue().join();
+            if (requestQueueResult.succeeded()) {
+              queueSize = requestQueueResult.value().size();
+            }
+            itemQueueSizeMap.put(entry.getKey(), queueSize);
+          }
+
+          //Sort the map
+          Map<Item, Integer> sortedMap = sortMap(itemQueueSizeMap);
+          Set<Item> sortedUnavailableItems = sortedMap.keySet();
+
+          return succeeded(mergeItems(sortedAvailableItems, sortedUnavailableItems));
+        });
+    }));
+
+  }
+
+  public static Collection<Item> mergeItems(Collection<Item> availableItems, Set<Item> unavailableItems){
+      availableItems.addAll(unavailableItems);
+      return availableItems;
+  }
+
+  public static Map<Item, Integer> sortMap(Map<Item,Integer> unsortedItems){
+
+    Set<Map.Entry<Item, Integer>> entries = unsortedItems.entrySet();
+    LinkedHashMap<Item, Integer> sortedMap = entries.stream().sorted(Map.Entry.comparingByValue())
+      .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (e1, e2) -> e1, LinkedHashMap::new));
+    return  sortedMap;
+  }
 
   public static CompletableFuture<Result<Collection<Item>>> findItemsWithMatchingServicePointId(String pickupServicePointId,
                                                                                                 Collection<Item> items) {
@@ -306,6 +367,17 @@ public class RequestByInstanceIdResource extends Resource {
     return Result.succeeded(items.stream()
                 .filter(item -> item.getStatus() == ItemStatus.AVAILABLE)
                 .collect(Collectors.toList()));
+  }
+
+  private Result<Collection<Item>> getfilteredUnavailableItems(Collection<Item> items) {
+
+    if (items == null ||items.isEmpty()) {
+      return failedValidation("Items list is null or empty", "items", "null");
+    }
+
+    return Result.succeeded(items.stream()
+      .filter(item -> item.getStatus() != ItemStatus.AVAILABLE)
+      .collect(Collectors.toList()));
   }
 
   private ProxyRelationshipValidator createProxyRelationshipValidator(
