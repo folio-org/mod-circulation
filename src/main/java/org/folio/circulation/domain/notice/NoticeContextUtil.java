@@ -5,6 +5,7 @@ import java.util.stream.Collectors;
 
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Loan;
+import org.folio.circulation.domain.Location;
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestType;
 import org.folio.circulation.domain.ServicePoint;
@@ -79,6 +80,8 @@ public class NoticeContextUtil {
     String captionsToken = JsonStringArrayHelper.toStream(item.getCopyNumbers())
       .collect(Collectors.joining("; "));
 
+    Location location = item.getLocation();
+
     return new JsonObject()
       .put("title", item.getTitle())
       .put("barcode", item.getBarcode())
@@ -96,7 +99,11 @@ public class NoticeContextUtil {
       .put("loanType", item.getLoanTypeName())
       .put("copy", captionsToken)
       .put("numberOfPieces", item.getNumberOfPieces())
-      .put("descriptionOfPieces", item.getDescriptionOfPieces());
+      .put("descriptionOfPieces", item.getDescriptionOfPieces())
+      .put("effectiveLocationSpecific", location.getName())
+      .put("effectiveLocationLibrary", location.getLibraryName())
+      .put("effectiveLocationCampus", location.getCampusName())
+      .put("effectiveLocationInstitution", location.getInstitutionName());
   }
 
   private static JsonObject createRequestContext(Request request) {

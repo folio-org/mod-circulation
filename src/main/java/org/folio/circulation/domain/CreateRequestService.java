@@ -29,11 +29,13 @@ public class CreateRequestService {
   private final LoanRepository loanRepository;
   private final UpdateLoan updateLoan;
   private final RequestNoticeSender requestNoticeSender;
+  private final LocationRepository locationRepository;
 
   public CreateRequestService(RequestRepository requestRepository, UpdateItem updateItem,
                               UpdateLoanActionHistory updateLoanActionHistory, UpdateLoan updateLoan,
                               RequestPolicyRepository requestPolicyRepository,
-                              LoanRepository loanRepository, RequestNoticeSender requestNoticeSender) {
+                              LoanRepository loanRepository, RequestNoticeSender requestNoticeSender,
+                              LocationRepository locationRepository) {
 
     this.requestRepository = requestRepository;
     this.updateItem = updateItem;
@@ -42,6 +44,7 @@ public class CreateRequestService {
     this.requestPolicyRepository = requestPolicyRepository;
     this.loanRepository = loanRepository;
     this.requestNoticeSender = requestNoticeSender;
+    this.locationRepository = locationRepository;
   }
 
   public CompletableFuture<Result<RequestAndRelatedRecords>> createRequest(
@@ -60,6 +63,7 @@ public class CreateRequestService {
       .thenComposeAsync(r -> r.after(updateLoanActionHistory::onRequestCreation))
       .thenComposeAsync(r -> r.after(updateLoan::onRequestCreation))
       .thenComposeAsync(r -> r.after(requestRepository::create))
+      .thenComposeAsync(r -> r.after(locationRepository::loadLocation))
       .thenApply(r -> r.next(requestNoticeSender::sendNoticeOnRequestCreated));
   }
 

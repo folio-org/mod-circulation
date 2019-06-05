@@ -13,17 +13,20 @@ public class UpdateRequestService {
   private final UpdateRequestQueue updateRequestQueue;
   private final ClosedRequestValidator closedRequestValidator;
   private final RequestNoticeSender requestNoticeSender;
+  private final LocationRepository locationRepository;
 
   public UpdateRequestService(
     RequestRepository requestRepository,
     UpdateRequestQueue updateRequestQueue,
     ClosedRequestValidator closedRequestValidator,
-    RequestNoticeSender requestNoticeSender) {
+    RequestNoticeSender requestNoticeSender,
+    LocationRepository locationRepository) {
 
     this.requestRepository = requestRepository;
     this.updateRequestQueue = updateRequestQueue;
     this.closedRequestValidator = closedRequestValidator;
     this.requestNoticeSender = requestNoticeSender;
+    this.locationRepository = locationRepository;
   }
 
   public CompletableFuture<Result<RequestAndRelatedRecords>> replaceRequest(
@@ -33,6 +36,7 @@ public class UpdateRequestService {
       .thenApply(r -> r.next(this::removeRequestQueuePositionWhenCancelled))
       .thenComposeAsync(r -> r.after(requestRepository::update))
       .thenComposeAsync(r -> r.after(updateRequestQueue::onCancellation))
+      .thenComposeAsync(r -> r.after(locationRepository::loadLocation))
       .thenApply(r -> r.next(requestNoticeSender::sendNoticeOnRequestUpdated));
   }
 

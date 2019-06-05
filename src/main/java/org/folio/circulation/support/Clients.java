@@ -16,6 +16,9 @@ public class Clients {
   private final CollectionResourceClient usersStorageClient;
   private final CollectionResourceClient loansStorageClient;
   private final CollectionResourceClient locationsStorageClient;
+  private final CollectionResourceClient institutionsStorageClient;
+  private final CollectionResourceClient campusesStorageClient;
+  private final CollectionResourceClient librariesStorageClient;
   private final CollectionResourceClient materialTypesStorageClient;
   private final CollectionResourceClient loanTypesStorageClient;
   private final CollectionResourceClient proxiesForClient;
@@ -48,6 +51,9 @@ public class Clients {
       usersStorageClient = createUsersStorageClient(client, context);
       loansStorageClient = createLoansStorageClient(client, context);
       locationsStorageClient = createLocationsStorageClient(client, context);
+      institutionsStorageClient = createInstitutionsStorageClient(client, context);
+      campusesStorageClient = createCampusesStorageClient(client, context);
+      librariesStorageClient = createLibrariesStorageClient(client, context);
       materialTypesStorageClient = createMaterialTypesStorageClient(client, context);
       loanTypesStorageClient = createLoanTypesStorageClient(client, context);
       proxiesForClient = createProxyUsersStorageClient(client, context);
@@ -103,6 +109,18 @@ public class Clients {
 
   public CollectionResourceClient locationsStorage() {
     return locationsStorageClient;
+  }
+
+  public CollectionResourceClient institutionsStorage() {
+    return institutionsStorageClient;
+  }
+
+  public CollectionResourceClient campusesStorage() {
+    return campusesStorageClient;
+  }
+
+  public CollectionResourceClient librariesStorage() {
+    return librariesStorageClient;
   }
 
   public CollectionResourceClient materialTypesStorage() {
@@ -266,6 +284,30 @@ public class Clients {
     throws MalformedURLException {
 
     return getCollectionResourceClient(client, context, "/locations");
+  }
+
+  private static CollectionResourceClient createInstitutionsStorageClient(
+    OkapiHttpClient client,
+    WebContext context)
+    throws MalformedURLException {
+
+    return getCollectionResourceClient(client, context, "/location-units/institutions");
+  }
+
+  private static CollectionResourceClient createCampusesStorageClient(
+    OkapiHttpClient client,
+    WebContext context)
+    throws MalformedURLException {
+
+    return getCollectionResourceClient(client, context, "/location-units/campuses");
+  }
+
+  private static CollectionResourceClient createLibrariesStorageClient(
+    OkapiHttpClient client,
+    WebContext context)
+    throws MalformedURLException {
+
+    return getCollectionResourceClient(client, context, "/location-units/libraries");
   }
 
   private CollectionResourceClient createProxyUsersStorageClient(

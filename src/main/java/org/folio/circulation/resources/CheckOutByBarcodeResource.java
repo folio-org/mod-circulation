@@ -18,6 +18,7 @@ import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.domain.LoanRepository;
 import org.folio.circulation.domain.LoanRepresentation;
+import org.folio.circulation.domain.LocationRepository;
 import org.folio.circulation.domain.RequestQueueRepository;
 import org.folio.circulation.domain.UpdateItem;
 import org.folio.circulation.domain.UpdateRequestQueue;
@@ -28,8 +29,8 @@ import org.folio.circulation.domain.notice.NoticeTiming;
 import org.folio.circulation.domain.notice.PatronNoticeEvent;
 import org.folio.circulation.domain.notice.PatronNoticeEventBuilder;
 import org.folio.circulation.domain.notice.PatronNoticeService;
-import org.folio.circulation.domain.notice.schedule.ScheduledNoticesRepository;
 import org.folio.circulation.domain.notice.schedule.ScheduledNoticeService;
+import org.folio.circulation.domain.notice.schedule.ScheduledNoticesRepository;
 import org.folio.circulation.domain.policy.LoanPolicyRepository;
 import org.folio.circulation.domain.policy.PatronNoticePolicyRepository;
 import org.folio.circulation.domain.representations.LoanProperties;
@@ -106,6 +107,7 @@ public class CheckOutByBarcodeResource extends Resource {
     final ScheduledNoticesRepository scheduledNoticesRepository = ScheduledNoticesRepository.using(clients);
     final ScheduledNoticeService scheduledNoticeService =
       new ScheduledNoticeService(scheduledNoticesRepository, patronNoticePolicyRepository);
+    final LocationRepository locationRepository = LocationRepository.using(clients);
 
     final ProxyRelationshipValidator proxyRelationshipValidator = new ProxyRelationshipValidator(
       clients, () -> singleValidationError(
@@ -160,6 +162,7 @@ public class CheckOutByBarcodeResource extends Resource {
       .thenComposeAsync(r -> r.after(requestQueueUpdate::onCheckOut))
       .thenComposeAsync(r -> r.after(updateItem::onCheckOut))
       .thenComposeAsync(r -> r.after(loanRepository::createLoan))
+      .thenComposeAsync(r -> r.after(locationRepository::loadLocation))
       .thenApply(r -> r.next(records -> sendCheckOutPatronNotice(records, patronNoticeService)))
       .thenApply(r -> r.next(scheduledNoticeService::scheduleNoticesForLoanDueDate))
       .thenApply(r -> r.map(LoanAndRelatedRecords::getLoan))

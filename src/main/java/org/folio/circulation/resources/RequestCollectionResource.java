@@ -6,6 +6,7 @@ import static org.folio.circulation.support.ValidationErrorFailure.singleValidat
 
 import org.folio.circulation.domain.CreateRequestService;
 import org.folio.circulation.domain.LoanRepository;
+import org.folio.circulation.domain.LocationRepository;
 import org.folio.circulation.domain.RequestAndRelatedRecords;
 import org.folio.circulation.domain.RequestQueueRepository;
 import org.folio.circulation.domain.RequestRepository;
@@ -55,7 +56,8 @@ public class RequestCollectionResource extends CollectionResource {
       new UpdateLoanActionHistory(clients),
       new UpdateLoan(clients, loanRepository, new LoanPolicyRepository(clients)),
       new RequestPolicyRepository(clients),
-      loanRepository, requestNoticeSender);
+      loanRepository, requestNoticeSender,
+      LocationRepository.using(clients));
 
     final RequestFromRepresentationService requestFromRepresentationService =
       new RequestFromRepresentationService(
@@ -94,13 +96,15 @@ public class RequestCollectionResource extends CollectionResource {
       new UpdateLoanActionHistory(clients),
       new UpdateLoan(clients, loanRepository, new LoanPolicyRepository(clients)),
       new RequestPolicyRepository(clients),
-      loanRepository, requestNoticeSender);
+      loanRepository, requestNoticeSender,
+      LocationRepository.using(clients));
 
     final UpdateRequestService updateRequestService = new UpdateRequestService(
       requestRepository,
       UpdateRequestQueue.using(clients),
       new ClosedRequestValidator(RequestRepository.using(clients)),
-      requestNoticeSender);
+      requestNoticeSender,
+      LocationRepository.using(clients));
 
     final RequestFromRepresentationService requestFromRepresentationService =
       new RequestFromRepresentationService(

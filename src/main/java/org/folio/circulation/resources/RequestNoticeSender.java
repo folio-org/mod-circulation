@@ -8,6 +8,7 @@ import java.util.Map;
 
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Loan;
+import org.folio.circulation.domain.LocationRepository;
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestAndRelatedRecords;
 import org.folio.circulation.domain.RequestRepository;
@@ -36,15 +37,23 @@ public class RequestNoticeSender {
   }
 
   public static RequestNoticeSender using(Clients clients) {
-    return new RequestNoticeSender(PatronNoticeService.using(clients), RequestRepository.using(clients));
+    return new RequestNoticeSender(
+      PatronNoticeService.using(clients),
+      RequestRepository.using(clients),
+      LocationRepository.using(clients)
+    );
   }
 
   private final PatronNoticeService patronNoticeService;
   private final RequestRepository requestRepository;
+  private final LocationRepository locationRepository;
 
-  public RequestNoticeSender(PatronNoticeService patronNoticeService, RequestRepository requestRepository) {
+  public RequestNoticeSender(PatronNoticeService patronNoticeService,
+                             RequestRepository requestRepository,
+                             LocationRepository locationRepository) {
     this.patronNoticeService = patronNoticeService;
     this.requestRepository = requestRepository;
+    this.locationRepository = locationRepository;
   }
 
 

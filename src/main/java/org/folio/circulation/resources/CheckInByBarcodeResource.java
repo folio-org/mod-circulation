@@ -6,6 +6,7 @@ import static org.folio.circulation.domain.validation.CommonFailures.noItemFound
 import org.folio.circulation.domain.CheckInProcessRecords;
 import org.folio.circulation.domain.LoanCheckInService;
 import org.folio.circulation.domain.LoanRepository;
+import org.folio.circulation.domain.LocationRepository;
 import org.folio.circulation.domain.RequestQueueRepository;
 import org.folio.circulation.domain.ServicePointRepository;
 import org.folio.circulation.domain.UpdateItem;
@@ -18,8 +19,8 @@ import org.folio.circulation.domain.representations.CheckInByBarcodeResponse;
 import org.folio.circulation.storage.ItemByBarcodeInStorageFinder;
 import org.folio.circulation.storage.SingleOpenLoanForItemInStorageFinder;
 import org.folio.circulation.support.Clients;
-import org.folio.circulation.support.Result;
 import org.folio.circulation.support.ItemRepository;
+import org.folio.circulation.support.Result;
 import org.folio.circulation.support.RouteRegistration;
 import org.folio.circulation.support.http.server.WebContext;
 
@@ -50,6 +51,7 @@ public class CheckInByBarcodeResource extends Resource {
     final UserRepository userRepository = new UserRepository(clients);
     final RequestQueueRepository requestQueueRepository = RequestQueueRepository.using(clients);
     final ServicePointRepository servicePointRepository = new ServicePointRepository(clients);
+    final LocationRepository locationRepository = LocationRepository.using(clients);
 
     final LoanCheckInService loanCheckInService = new LoanCheckInService();
 
@@ -91,6 +93,7 @@ public class CheckInByBarcodeResource extends Resource {
         processAdapter::updateRequestQueue, CheckInProcessRecords::withRequestQueue))
       .thenComposeAsync(updateRequestQueueResult -> updateRequestQueueResult.combineAfter(
         processAdapter::updateItem, CheckInProcessRecords::withItem))
+      .thenComposeAsync(r -> r.after(locationRepository::loadLocation))
       .thenApply(handleItemStatus -> handleItemStatus.next(processAdapter::sendItemStatusPatronNotice))
       .thenComposeAsync(updateItemResult -> updateItemResult.combineAfter(
         processAdapter::getDestinationServicePoint, CheckInProcessRecords::withItem))
