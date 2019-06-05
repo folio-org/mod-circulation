@@ -1,7 +1,11 @@
 package api.support.examples;
 
-import java.util.HashSet;
+import static java.util.stream.Stream.of;
+
+import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import api.support.builders.LocationBuilder;
 
@@ -12,8 +16,7 @@ public class LocationExamples {
   private final UUID jubileeCampusId;
   private final UUID businessLibraryId;
   private final UUID primaryServicePointId;
-  private final UUID secondaryServicePointId;
-  private final UUID tertiaryServicePointId;
+  private final Set<UUID> otherServicePointIds;
 
   public LocationExamples(
     UUID nottinghamUniversityId,
@@ -21,16 +24,16 @@ public class LocationExamples {
     UUID businessLibraryId,
     UUID djanoglyLibraryId,
     UUID primaryServicePointId,
-    UUID secondaryServicePointId,
-    UUID tertiaryServicePointId) {
+    UUID servicePointIds) {
 
     this.nottinghamUniversityId = nottinghamUniversityId;
     this.jubileeCampusId = jubileeCampusId;
     this.businessLibraryId = businessLibraryId;
     this.djanoglyLibraryId = djanoglyLibraryId;
     this.primaryServicePointId = primaryServicePointId;
-    this.secondaryServicePointId = secondaryServicePointId;
-    this.tertiaryServicePointId = tertiaryServicePointId;
+    this.otherServicePointIds = of(servicePointIds)
+      .filter(Objects::nonNull)
+      .collect(Collectors.toSet());
   }
 
   public LocationBuilder mezzanineDisplayCase() {
@@ -41,7 +44,7 @@ public class LocationExamples {
       .forCampus(jubileeCampusId)
       .forLibrary(businessLibraryId)
       .withPrimaryServicePoint(primaryServicePointId)
-      .withServicePoints(getServicePointsList());
+      .servedBy(otherServicePointIds);
   }
 
   public LocationBuilder secondFloorEconomics() {
@@ -52,7 +55,7 @@ public class LocationExamples {
       .forCampus(jubileeCampusId)
       .forLibrary(djanoglyLibraryId)
       .withPrimaryServicePoint(primaryServicePointId)
-      .withServicePoints(getServicePointsList());
+      .servedBy(otherServicePointIds);
   }
 
   public LocationBuilder thirdFloor() {
@@ -63,18 +66,7 @@ public class LocationExamples {
       .forCampus(jubileeCampusId)
       .forLibrary(djanoglyLibraryId)
       .withPrimaryServicePoint(primaryServicePointId)
-      .withServicePoints(getServicePointsList());
-  }
-
-  public LocationBuilder fourthFloor(UUID primaryServicePointId) {
-    return new LocationBuilder()
-      .withName("4th Floor")
-      .withCode("NU/JC/DL/3F")
-      .forInstitution(nottinghamUniversityId)
-      .forCampus(jubileeCampusId)
-      .forLibrary(djanoglyLibraryId)
-      .withPrimaryServicePoint(primaryServicePointId)
-      .withServicePoints(getServicePointsList(primaryServicePointId));
+      .servedBy(otherServicePointIds);
   }
 
   public LocationBuilder example() {
@@ -85,7 +77,7 @@ public class LocationExamples {
       .forCampus(jubileeCampusId)
       .forLibrary(djanoglyLibraryId)
       .withPrimaryServicePoint(primaryServicePointId)
-      .withServicePoints(getServicePointsList());
+      .servedBy(otherServicePointIds);
   }
 
   public LocationBuilder mainLocation() {
@@ -96,26 +88,6 @@ public class LocationExamples {
       .forCampus(jubileeCampusId)
       .forLibrary(djanoglyLibraryId)
       .withPrimaryServicePoint(primaryServicePointId)
-      .withServicePoints(getServicePointsList());
-  }
-
-  private HashSet<UUID> getServicePointsList(){
-    HashSet<UUID> servicePoints = new HashSet<>();
-    servicePoints.add(primaryServicePointId);
-    if (secondaryServicePointId != null)
-      servicePoints.add(secondaryServicePointId);
-    if (tertiaryServicePointId != null)
-      servicePoints.add(tertiaryServicePointId);
-
-    return servicePoints;
-  }
-
-  private HashSet<UUID> getServicePointsList(UUID servicePointId){
-    HashSet<UUID> servicePoints = new HashSet<>();
-    servicePoints.add(primaryServicePointId);
-    if (servicePointId != null)
-      servicePoints.add(servicePointId);
-
-    return servicePoints;
+        .servedBy(otherServicePointIds);
   }
 }

@@ -14,6 +14,7 @@ import static org.folio.circulation.domain.representations.RequestProperties.HOL
 import static org.folio.circulation.domain.representations.RequestProperties.NAME;
 import static org.folio.circulation.domain.representations.RequestProperties.POSITION;
 import static org.folio.circulation.domain.representations.RequestProperties.REQUEST_EXPIRATION_DATE;
+import static org.folio.circulation.domain.representations.RequestProperties.REQUEST_TYPE;
 import static org.folio.circulation.domain.representations.RequestProperties.STATUS;
 import static org.folio.circulation.support.JsonPropertyFetcher.getDateTimeProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getIntegerProperty;
@@ -34,8 +35,6 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
   private final User proxy;
   private final Loan loan;
   private final ServicePoint pickupServicePoint;
-
-  public static final String REQUEST_TYPE = "requestType";
 
   private boolean changedPosition = false;
 
@@ -183,7 +182,7 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   public RequestType getRequestType() {
-    return RequestType.from(requestRepresentation.getString(REQUEST_TYPE));
+    return RequestType.from(getProperty(requestRepresentation, REQUEST_TYPE));
   }
 
   Boolean allowedForItem() {

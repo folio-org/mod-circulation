@@ -3,6 +3,7 @@ package api.support.builders;
 import static org.folio.circulation.support.JsonPropertyWriter.write;
 
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -18,7 +19,7 @@ public class LocationBuilder extends JsonBuilder implements Builder {
   private final UUID campusId;
   private final UUID libraryId;
   private final UUID primaryServicePointId;
-  private final Set<UUID> servicePointIds;
+  private final Set<UUID> otherServicePointIds;
 
   public LocationBuilder() {
     this(null, null, null, null, null, null, new HashSet<>());
@@ -31,7 +32,11 @@ public class LocationBuilder extends JsonBuilder implements Builder {
     UUID campusId,
     UUID libraryId,
     UUID primaryServicePointId,
-    Set<UUID> servicePointIds) {
+    Set<UUID> otherServicePointIds) {
+
+    if (otherServicePointIds == null) {
+      otherServicePointIds = new HashSet<>();
+    }
 
     this.name = name;
     this.code = code;
@@ -39,7 +44,7 @@ public class LocationBuilder extends JsonBuilder implements Builder {
     this.campusId = campusId;
     this.libraryId = libraryId;
     this.primaryServicePointId = primaryServicePointId;
-    this.servicePointIds = servicePointIds;
+    this.otherServicePointIds = otherServicePointIds;
   }
 
   @Override
@@ -53,12 +58,13 @@ public class LocationBuilder extends JsonBuilder implements Builder {
     write(representation, "libraryId", libraryId);
     write(representation, "primaryServicePoint", primaryServicePointId);
 
-    if(servicePointIds != null && !servicePointIds.isEmpty()) {
+    if(otherServicePointIds != null && !otherServicePointIds.isEmpty()) {
 
-      final JsonArray mappedServicePointIds = new JsonArray( servicePointIds
-                                                          .stream()
-                                                          .map(svpt -> svpt.toString())
-                                                          .collect(Collectors.toList()));
+      final JsonArray mappedServicePointIds = new JsonArray(otherServicePointIds
+        .stream()
+        .filter(Objects::nonNull)
+        .map(UUID::toString)
+        .collect(Collectors.toList()));
       write(representation, "servicePointIds", mappedServicePointIds);
     }
 
@@ -73,7 +79,7 @@ public class LocationBuilder extends JsonBuilder implements Builder {
       this.campusId,
       this.libraryId,
       this.primaryServicePointId,
-      this.servicePointIds);
+      this.otherServicePointIds);
   }
 
   public LocationBuilder withCode(String code) {
@@ -84,7 +90,7 @@ public class LocationBuilder extends JsonBuilder implements Builder {
       this.campusId,
       this.libraryId,
       this.primaryServicePointId,
-      this.servicePointIds);
+      this.otherServicePointIds);
   }
 
   public LocationBuilder forInstitution(UUID institutionId) {
@@ -95,7 +101,7 @@ public class LocationBuilder extends JsonBuilder implements Builder {
       this.campusId,
       this.libraryId,
       this.primaryServicePointId,
-      this.servicePointIds);
+      this.otherServicePointIds);
   }
 
   public LocationBuilder forCampus(UUID campusId) {
@@ -106,7 +112,7 @@ public class LocationBuilder extends JsonBuilder implements Builder {
       campusId,
       this.libraryId,
       this.primaryServicePointId,
-      this.servicePointIds);
+      this.otherServicePointIds);
   }
 
   public LocationBuilder forLibrary(UUID libraryId) {
@@ -117,7 +123,7 @@ public class LocationBuilder extends JsonBuilder implements Builder {
       this.campusId,
       libraryId,
       this.primaryServicePointId,
-      this.servicePointIds);
+      this.otherServicePointIds);
   }
 
   public LocationBuilder withPrimaryServicePoint(UUID primaryServicePointId) {
@@ -128,27 +134,23 @@ public class LocationBuilder extends JsonBuilder implements Builder {
       this.campusId,
       this.libraryId,
       primaryServicePointId,
-      this.servicePointIds)
+      this.otherServicePointIds)
       .servedBy(primaryServicePointId);
   }
 
   public LocationBuilder servedBy(UUID servicePointId) {
-    final HashSet<UUID> servicePoints
-      = new HashSet<>(servicePointIds);
+    final HashSet<UUID> servicePoints = new HashSet<>(otherServicePointIds);
 
     servicePoints.add(servicePointId);
 
-    return new LocationBuilder(
-      this.name,
-      this.code,
-      this.institutionId,
-      this.campusId,
-      this.libraryId,
-      this.primaryServicePointId,
-      servicePoints);
+    return servedBy(servicePoints);
   }
 
-  public LocationBuilder withServicePoints(HashSet<UUID> servicePoints) {
+  public LocationBuilder servedBy(Set<UUID> servicePoints) {
+    final HashSet<UUID> newServicePointIds = new HashSet<>(this.otherServicePointIds);
+
+    newServicePointIds.addAll(servicePoints);
+
     return new LocationBuilder(
       this.name,
       this.code,
@@ -156,6 +158,6 @@ public class LocationBuilder extends JsonBuilder implements Builder {
       this.campusId,
       this.libraryId,
       this.primaryServicePointId,
-      servicePoints);
+      newServicePointIds);
   }
 }

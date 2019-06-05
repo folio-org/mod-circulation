@@ -120,8 +120,7 @@ public class LocationsFixture {
 
     final LocationExamples locationExamples = getLocationMultiServicePointsExamples();
 
-    return locationRecordCreator.createIfAbsent(
-      locationExamples.mainLocation());
+    return locationRecordCreator.createIfAbsent(locationExamples.mainLocation());
   }
 
   private LocationExamples getLocationExamples()
@@ -136,7 +135,6 @@ public class LocationsFixture {
       businessLibrary().getId(),
       djanoglyLibrary().getId(),
       servicePointsFixture.cd1().getId(),
-      null,
       null);
   }
 
@@ -152,8 +150,7 @@ public class LocationsFixture {
       businessLibrary().getId(),
       djanoglyLibrary().getId(),
       servicePointsFixture.cd1().getId(),
-      servicePointsFixture.cd2().getId(),
-      servicePointsFixture.cd3().getId());
+      null);
   }
 
   private IndividualResource djanoglyLibrary()
