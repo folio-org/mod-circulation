@@ -37,11 +37,10 @@ public class LibrariesRepository {
       return completedFuture(succeeded(multipleRequests));
     }
 
-    final MultipleRecordFetcher<Library> fetcher = createRequestsFetcher();
+    final MultipleRecordFetcher<Library> fetcher = createLibrariesFetcher();
 
     return fetcher.findByIds(librariesToFetch)
-      .thenApply(multipleRequestsResult -> multipleRequestsResult.next(
-        multiRequests -> {
+      .thenApply(r -> r.next(multiRequests -> {
           Map<String, Library> result = multiRequests.getRecords()
             .stream()
             .collect(Collectors.toMap(Library::getId, Function.identity()));
@@ -53,7 +52,7 @@ public class LibrariesRepository {
         }));
   }
 
-  private MultipleRecordFetcher<Library> createRequestsFetcher() {
+  private MultipleRecordFetcher<Library> createLibrariesFetcher() {
     return new MultipleRecordFetcher<>(librariesStorageClient, "loclibs", Library::from);
   }
 }
