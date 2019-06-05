@@ -2,7 +2,7 @@ package org.folio.circulation.resources;
 
 import static org.folio.circulation.domain.representations.RequestProperties.PROXY_USER_ID;
 import static org.folio.circulation.support.Result.failed;
-import static org.folio.circulation.support.Result.ofAsync;
+import static org.folio.circulation.support.Result.of;
 import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
@@ -71,7 +71,6 @@ public class RequestByInstanceIdResource extends Resource {
     routeRegistration.create(this::createInstanceLevelRequests);
   }
 
-
   private void createInstanceLevelRequests(RoutingContext routingContext) {
     final WebContext context = new WebContext(routingContext);
 
@@ -95,13 +94,11 @@ public class RequestByInstanceIdResource extends Resource {
     ItemByInstanceIdFinder finder = new ItemByInstanceIdFinder(clients.holdingsStorage(),
       clients.itemsStorage(), itemRepository);
 
-    String pickupServicePointId = requestByInstanceIdRequest.getPickupServicePointId().toString();
-    final CompletableFuture<Result<Collection<Item>>> items = finder.getItemsByInstanceId(requestByInstanceIdRequest.getInstanceId().toString());
+    UUID pickupServicePointId = requestByInstanceIdRequest.getPickupServicePointId();
 
-    final CompletableFuture<Result<Collection<Item>>> availableItems = items.thenApply(r -> r.next(this::getAvailableItems));
-
-    availableItems.thenCompose(r -> r.after( collectionResult -> findItemsWithMatchingServicePointId(
-                                                                  pickupServicePointId, collectionResult)))
+    finder.getItemsByInstanceId(requestByInstanceIdRequest.getInstanceId())
+      .thenApply(r -> r.next(this::getAvailableItems))
+      .thenApply(r -> r.next(items -> rankItemsByMatchingServicePoint(items, pickupServicePointId)))
       .thenApply( r -> r.next( itemsFound -> instanceToItemRequests(requestByInstanceIdRequest, itemsFound)))
       .thenCompose( r -> r.after( requests -> placeRequests(requests, clients)))
       .thenApply(r -> r.map(RequestAndRelatedRecords::getRequest))
@@ -112,7 +109,6 @@ public class RequestByInstanceIdResource extends Resource {
           log.error("Error processing title-level request", err);
           return null;});
   }
-
 
   private CompletableFuture<Result<RequestAndRelatedRecords>> placeRequests(List<JsonObject> itemRequestRepresentations, Clients clients) {
 
@@ -161,29 +157,26 @@ public class RequestByInstanceIdResource extends Resource {
         });
   }
 
+  public static Result<List<Item>> rankItemsByMatchingServicePoint(
+    Collection<Item> items, UUID pickupServicePointId) {
 
-  public static CompletableFuture<Result<Collection<Item>>> findItemsWithMatchingServicePointId(
-    String pickupServicePointId, Collection<Item> items) {
+    return of(() -> {
+      List<Item> itemsAtLocationServedByPickupPoint = items.stream()
+        .filter(item -> item.homeLocationIsServedBy(pickupServicePointId))
+        .collect(Collectors.toList());
 
-    return ofAsync(() -> rankItemsByServingPickupServicePoint(pickupServicePointId, items));
-  }
+      List<Item> itemsNotAtLocationServedByPickupPoint = items.stream()
+        .filter(item -> !item.homeLocationIsServedBy(pickupServicePointId))
+        .collect(Collectors.toList());
 
-  public static List<Item> rankItemsByServingPickupServicePoint(String pickupServicePointId, Collection<Item> items) {
-    List<Item> itemsAtLocationServedByPickupPoint = items.stream()
-      .filter(item -> item.homeLocationIsServedBy(UUID.fromString(pickupServicePointId)))
-      .collect(Collectors.toList());
+      final ArrayList<Item> rankedItems = new ArrayList<>();
 
-    List<Item> itemsNotAtLocationServedByPickupPoint = items.stream()
-      .filter(item -> !item.homeLocationIsServedBy(UUID.fromString(pickupServicePointId)))
-      .collect(Collectors.toList());
+      //Compose the final list of Items with the matchingItems (items that has matching service pointID) on top.
+      rankedItems.addAll(itemsAtLocationServedByPickupPoint);
+      rankedItems.addAll(itemsNotAtLocationServedByPickupPoint);
 
-    final ArrayList<Item> rankedItems = new ArrayList<>();
-
-    //Compose the final list of Items with the matchingItems (items that has matching service pointID) on top.
-    rankedItems.addAll(itemsAtLocationServedByPickupPoint);
-    rankedItems.addAll(itemsNotAtLocationServedByPickupPoint);
-
-    return rankedItems;
+      return rankedItems;
+    });
   }
 
   public static Result<LinkedList<JsonObject>> instanceToItemRequests(RequestByInstanceIdRequest requestByInstanceIdRequest, Collection<Item> items) {

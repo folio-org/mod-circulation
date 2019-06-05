@@ -1,7 +1,7 @@
 package api.requests;
 
 import static java.util.Collections.emptySet;
-import static org.folio.circulation.resources.RequestByInstanceIdResource.rankItemsByServingPickupServicePoint;
+import static org.folio.circulation.resources.RequestByInstanceIdResource.rankItemsByMatchingServicePoint;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -77,7 +77,7 @@ public class RequestByInstanceIdResourceTests extends APITests {
 
     UUID primaryServicePointId = servicePointsFixture.cd2().getId();
     UUID secondaryServicePointId = UUID.randomUUID();
-    String pickupServicePointId = primaryServicePointId.toString();
+    UUID pickupServicePointId = primaryServicePointId;
     UUID institutionId = UUID.randomUUID();
 
     HashSet<UUID> servicePoints1 = new HashSet<>();
@@ -128,7 +128,8 @@ public class RequestByInstanceIdResourceTests extends APITests {
     items.add(item4);
     items.add(item1);
 
-    List<Item> orderedItems = rankItemsByServingPickupServicePoint(pickupServicePointId, items);
+    List<Item> orderedItems = rankItemsByMatchingServicePoint(
+      items, pickupServicePointId).value();
 
     assertEquals(4, orderedItems.size());
 
@@ -171,8 +172,8 @@ public class RequestByInstanceIdResourceTests extends APITests {
     items.add(item4);
     items.add(item1);
 
-    List<Item> orderedItems = rankItemsByServingPickupServicePoint(
-      UUID.randomUUID().toString(), items);
+    List<Item> orderedItems = rankItemsByMatchingServicePoint(
+      items, UUID.randomUUID()).value();
 
     assertEquals(4, orderedItems.size());
 

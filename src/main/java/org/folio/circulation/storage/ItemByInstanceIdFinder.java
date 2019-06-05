@@ -8,6 +8,7 @@ import static org.folio.circulation.support.ValidationErrorFailure.failedValidat
 
 import java.util.Collection;
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.domain.Item;
@@ -35,12 +36,12 @@ public class ItemByInstanceIdFinder {
     this.itemRepository = itemRepository;
   }
 
-  public CompletableFuture<Result<Collection<Item>>> getItemsByInstanceId(String instanceId) {
+  public CompletableFuture<Result<Collection<Item>>> getItemsByInstanceId(UUID instanceId) {
 
     final MultipleRecordFetcher<JsonObject> fetcher
       = new MultipleRecordFetcher<>(holdingsStorageClient, "holdingsRecords", identity());
 
-    return fetcher.findByQuery(CqlQuery.exactMatch("instanceId", instanceId))
+    return fetcher.findByQuery(CqlQuery.exactMatch("instanceId", instanceId.toString()))
       .thenCompose(this::getItems);
   }
 
