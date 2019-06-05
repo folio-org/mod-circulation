@@ -54,11 +54,8 @@ import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 
 public class RequestByInstanceIdResource extends Resource {
-  private Clients clients;
+
   private final Logger log;
-  private static UserRepository userRepository;
-  private static LocationRepository locationRepository;
-  private static LoanRepository loanRepository;
 
   public RequestByInstanceIdResource(HttpClient client) {
     super(client);
@@ -77,10 +74,8 @@ public class RequestByInstanceIdResource extends Resource {
   void createInstanceLevelRequests(RoutingContext routingContext) {
     final WebContext context = new WebContext(routingContext);
 
-    clients = Clients.create(context, client);
-    locationRepository = new LocationRepository(clients);
-    userRepository = new UserRepository(clients);
-    loanRepository = new LoanRepository(clients);
+    Clients clients = Clients.create(context, client);
+    LoanRepository loanRepository = new LoanRepository(clients);
 
     final Result<RequestByInstanceIdRequest> requestByInstanceIdRequestResult =
       RequestByInstanceIdRequest.from(routingContext.getBodyAsJson());
@@ -100,9 +95,9 @@ public class RequestByInstanceIdResource extends Resource {
     final CompletableFuture<Result<Collection<Item>>> availableItems = items.thenApply(r -> r.next(this::getfilteredAvailableItems));
 
     availableItems.thenCompose(r -> r.after( collectionResult -> findItemsWithMatchingServicePointId(
-                                                                  pickupServicePointId, collectionResult)))
+                                                                  pickupServicePointId, collectionResult, clients)))
                   .thenApply(r -> r.next( itemsFound -> instanceToItemRequests(requestByInstanceIdRequest, itemsFound)))
-                  .thenCompose(r -> r.after( requests -> placeRequests(requests, clients)))
+                  .thenCompose(r -> r.after( requests -> placeRequests(requests, clients, loanRepository)))
                   .thenApply(r -> r.map(RequestAndRelatedRecords::getRequest))
                   .thenApply(r -> r.map(new RequestRepresentation()::extendedRepresentation))
                   .thenApply(CreatedJsonResponseResult::from)
@@ -113,7 +108,7 @@ public class RequestByInstanceIdResource extends Resource {
   }
 
 
-  private CompletableFuture<Result<RequestAndRelatedRecords>> placeRequests(List<JsonObject> itemRequestRepresentations, Clients clients) {
+  private CompletableFuture<Result<RequestAndRelatedRecords>> placeRequests(List<JsonObject> itemRequestRepresentations, Clients clients, LoanRepository loanRepository) {
 
     final RequestNoticeSender requestNoticeSender = RequestNoticeSender.using(clients);
 
@@ -125,15 +120,18 @@ public class RequestByInstanceIdResource extends Resource {
       new RequestPolicyRepository(clients),
       loanRepository, requestNoticeSender);
 
-    return placeRequest(itemRequestRepresentations, 0, createRequestService);
+    return placeRequest(itemRequestRepresentations, 0, createRequestService, clients);
   }
 
   private CompletableFuture<Result<RequestAndRelatedRecords>> placeRequest(List<JsonObject> itemRequests, int startIndex,
-                                                              CreateRequestService createRequestService) {
+                                                              CreateRequestService createRequestService, Clients clients) {
     if (startIndex >= itemRequests.size()) {
       return CompletableFuture.completedFuture(failed(new ServerErrorFailure(
         "Failed to place a request for the title")));
     }
+
+    UserRepository userRepository = new UserRepository(clients);
+    LoanRepository loanRepository = new LoanRepository(clients);
 
     JsonObject currentItemRequest = itemRequests.get(startIndex);
 
@@ -155,16 +153,16 @@ public class RequestByInstanceIdResource extends Resource {
             return CompletableFuture.completedFuture(r);
           } else {
             log.debug("Failed to create request for {}", currentItemRequest.getString("id"));
-            return placeRequest(itemRequests, startIndex +1, createRequestService);
+            return placeRequest(itemRequests, startIndex +1, createRequestService, clients);
           }
         });
   }
 
 
   public static CompletableFuture<Result<Collection<Item>>> findItemsWithMatchingServicePointId(String pickupServicePointId,
-                                                                                                Collection<Item> items) {
+                                                                                                Collection<Item> items, Clients clients) {
     ListOrderedMap locationIdItemMap = new ListOrderedMap();
-    return getLocationFutures(items, locationIdItemMap)
+    return getLocationFutures(items, locationIdItemMap, clients)
       .thenApply(locations -> {
         //Use the matchingLocationIds list to get the items from locationIdItemMap
         List<Item> matchingItemsList = getItemsWithMatchingServicePointIds(locations, locationIdItemMap, pickupServicePointId);
@@ -179,11 +177,15 @@ public class RequestByInstanceIdResource extends Resource {
    * @param locationIdItemMap a simple non-unique KVP map between locationId and Item.
    * @return Futures promising Location results
    */
-  public static CompletableFuture<Collection<Result<JsonObject>>> getLocationFutures(Collection<Item> items,
-                                                                                     ListOrderedMap locationIdItemMap) {
+  private static CompletableFuture<Collection<Result<JsonObject>>> getLocationFutures(Collection<Item> items,
+                                                                                     ListOrderedMap locationIdItemMap,
+                                                                                     Clients clients) {
     //for a given location ID, find all the service points.
     //if there's a matching service point ID, pick that item
     Collection<CompletableFuture<Result<JsonObject>>> locationFutures = new ArrayList<>();
+
+    LocationRepository locationRepository = new LocationRepository(clients);
+
     //Find locations of all items
     for (Item item : items) {
       locationIdItemMap.put(item.getLocationId(), item);
