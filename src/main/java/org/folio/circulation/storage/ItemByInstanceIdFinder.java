@@ -2,6 +2,7 @@ package org.folio.circulation.storage;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.function.Function.identity;
+import static org.folio.circulation.support.CqlQuery.exactMatchAny;
 import static org.folio.circulation.support.JsonKeys.byId;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 
@@ -13,6 +14,7 @@ import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.CqlQuery;
+import org.folio.circulation.support.ItemRepository;
 import org.folio.circulation.support.MultipleRecordFetcher;
 import org.folio.circulation.support.Result;
 
@@ -20,13 +22,17 @@ import io.vertx.core.json.JsonObject;
 
 public class ItemByInstanceIdFinder {
 
-  private CollectionResourceClient holdingsStorageClient;
-  private CollectionResourceClient itemsStorageClient;
+  private final CollectionResourceClient holdingsStorageClient;
+  private final CollectionResourceClient itemsStorageClient;
+  private final ItemRepository itemRepository;
 
   public ItemByInstanceIdFinder(CollectionResourceClient holdingsStorageClient,
-                                CollectionResourceClient itemsStorageClient) {
+                                CollectionResourceClient itemsStorageClient,
+                                ItemRepository itemRepository) {
+
     this.holdingsStorageClient = holdingsStorageClient;
     this.itemsStorageClient = itemsStorageClient;
+    this.itemRepository = itemRepository;
   }
 
   public CompletableFuture<Result<Collection<Item>>> getItemsByInstanceId(String instanceId) {
@@ -49,11 +55,7 @@ public class ItemByInstanceIdFinder {
 
       List<String> holdingsIds = holdingsRecords.toKeys(byId());
 
-      final MultipleRecordFetcher<Item> fetcher
-        = new MultipleRecordFetcher<>(itemsStorageClient, "items", Item::from);
-
-      return fetcher.findByIndexName(holdingsIds, "holdingsRecordId")
-        .thenApply(r -> r.map(MultipleRecords::getRecords));
+      return itemRepository.findByQuery(exactMatchAny("holdingsRecordId", holdingsIds));
     });
   }
 }

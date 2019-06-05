@@ -73,13 +73,14 @@ public class RequestByInstanceIdResource extends Resource {
   }
 
 
-  void createInstanceLevelRequests(RoutingContext routingContext) {
+  private void createInstanceLevelRequests(RoutingContext routingContext) {
     final WebContext context = new WebContext(routingContext);
 
     clients = Clients.create(context, client);
     locationRepository = new LocationRepository(clients);
     userRepository = new UserRepository(clients);
     loanRepository = new LoanRepository(clients);
+    final ItemRepository itemRepository = new ItemRepository(clients, true, true, true);
 
     final Result<RequestByInstanceIdRequest> requestByInstanceIdRequestResult =
       RequestByInstanceIdRequest.from(routingContext.getBodyAsJson());
@@ -90,8 +91,11 @@ public class RequestByInstanceIdResource extends Resource {
       return;
     }
 
-    final RequestByInstanceIdRequest requestByInstanceIdRequest =requestByInstanceIdRequestResult.value();
-    ItemByInstanceIdFinder finder = new ItemByInstanceIdFinder(clients.holdingsStorage(), clients.itemsStorage());
+    final RequestByInstanceIdRequest requestByInstanceIdRequest =
+      requestByInstanceIdRequestResult.value();
+
+    ItemByInstanceIdFinder finder = new ItemByInstanceIdFinder(clients.holdingsStorage(),
+      clients.itemsStorage(), itemRepository);
 
     String pickupServicePointId = requestByInstanceIdRequest.getPickupServicePointId().toString();
     final CompletableFuture<Result<Collection<Item>>> items = finder.getItemsByInstanceId(requestByInstanceIdRequest.getInstanceId().toString());
