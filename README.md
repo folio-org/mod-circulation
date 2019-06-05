@@ -406,9 +406,19 @@ Loans include information from the item, including locations, holdingsRecordId a
 
 Requests include information from the item, including holdingsRecordId and instanceId.
 
-#### Expired Holds Report CSV
+#### Hold shelf clearance report CSV
 
 To create first pass hold expiration report that can be used by staff to clear expired and cancelled holds from the shelf and put them back into circulation.
+Then export a CSV file/report based on this logic:
+* Find all of the items that are `Awaiting pickup`
+* Choose the item’s which either have an empty request queue or request queue doesn't contain request with status `Open - Awaiting pickup`
+* Select the request for each item that expired or was cancelled on the hold shelf most recently (by ranking the closed requests by a date used only for this purpose)
+* Choose only the requests where the `pickup service point` matches the chosen service point
+
+The API for generating a CSV report is based on the presence of the 'awaitingPickupRequestClosedDate' property for the request JSONB.
+Such behavior is required by database trigger for request update in the mod-circulation-storage
+See [CIRCSTORE-127](https://issues.folio.org/browse/CIRCSTORE-127)
+
 Data involved in the formation of the report:
 * Requester name: lastName, firstName
 * Requester barcode
@@ -434,13 +444,26 @@ content-length: 230
 {
   "requests": [
     {
-      "requesterName": "Koss, Jazlyn",
-      "requesterBarcode": "623317241177726",
-      "itemTitle": "14 cows for America",
-      "itemBarcode": "5860825104574",
-      "callNumber": "65487",
-      "requestStatus": "Closed - Pickup expired",
-      "holdShelfExpirationDate": "2019-06-12T12:26:16.670+0000"
+      "id": "f5cec279-0da6-4b44-a3df-f49b0903f325",
+      "requestType": "Hold",
+      "requestDate": "2017-08-05T11:43:23Z",
+      "requesterId": "61d939e4-f2ae-4c53-95d2-224a802fa2a6",
+      "itemId": "3e5d5433-a271-499c-94f4-5f3e4652e537",
+      "fulfilmentPreference": "Delivery",
+      "requestExpirationDate": "2017-08-31T22:25:37Z",
+      "holdShelfExpirationDate": "2017-09-01T22:25:37Z",
+      "position": 1,
+      "item": {
+        "title": "Children of Time",
+        "barcode": "760932543816",
+        "callNumber": "A344JUI"
+      },
+      "requester": {
+        "firstName": "Stephen",
+        "lastName": "Jones",
+        "middleName": "Anthony",
+        "barcode": "567023127436"
+      }
     }
   ],
   "totalRecords": 1
