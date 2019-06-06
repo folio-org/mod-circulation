@@ -1,14 +1,12 @@
 package api.support.fixtures;
 
-import static api.support.RestAssuredClient.post;
+import static api.support.APITestContext.circulationModuleUrl;
+import static api.support.RestAssuredClient.manuallyStartTimedTask;
 
 import java.net.URL;
 
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeUtils;
-
-import api.support.APITestContext;
-import io.vertx.core.json.JsonObject;
 
 public class ScheduledNoticeProcessingClient {
 
@@ -19,7 +17,7 @@ public class ScheduledNoticeProcessingClient {
   }
 
   public void runNoticesProcessing() {
-    URL url = APITestContext.circulationModuleUrl("/circulation/scheduled-notices-processing");
-    post(new JsonObject(), url, 204, "scheduled-notices-processing-request");
+    URL url = circulationModuleUrl("/circulation/scheduled-notices-processing");
+    manuallyStartTimedTask(url, 204, "scheduled-notices-processing-request");
   }
 }
