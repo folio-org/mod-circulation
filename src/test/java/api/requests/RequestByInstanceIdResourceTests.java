@@ -1,5 +1,7 @@
 package api.requests;
 
+import static java.util.Collections.emptySet;
+import static org.folio.circulation.resources.RequestByInstanceIdResource.rankItemsByMatchingServicePoint;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -17,7 +19,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 
-import org.apache.commons.collections.map.ListOrderedMap;
+import org.folio.circulation.domain.InstanceRequestRelatedRecords;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.RequestType;
 import org.folio.circulation.domain.representations.RequestByInstanceIdRequest;
@@ -36,51 +38,16 @@ import io.vertx.core.json.JsonObject;
 public class RequestByInstanceIdResourceTests extends APITests {
 
   @Test
-  public void canTransformInstanceToItemRequests(){
-
-    UUID loanTypeId = UUID.randomUUID();
-    RequestByInstanceIdRequest requestByInstanceIdRequest = RequestByInstanceIdRequest.from(getJsonInstanceRequest()).value();
-    List<Item > items = getItems(2, loanTypeId);
-
-    final Result<LinkedList<JsonObject>> collectionResult = RequestByInstanceIdResource.instanceToItemRequests(requestByInstanceIdRequest, items);
-    assertTrue(collectionResult.succeeded());
-
-    Collection<JsonObject> requestRepresentations = collectionResult.value();
-    assertEquals(6, requestRepresentations.size());
-
-    int i = 0;
-    int j = 0;
-    Item item = items.get(j);
-    for (JsonObject itemRequestJson: requestRepresentations) {
-      assertEquals(item.getItemId(), itemRequestJson.getString("itemId"));
-      if (i == 0)
-        assertEquals(RequestType.HOLD.name(), itemRequestJson.getString("requestType"));
-      if (i == 1)
-        assertEquals(RequestType.RECALL.name(), itemRequestJson.getString("requestType"));
-      if (i == 2)
-        assertEquals(RequestType.PAGE.name(), itemRequestJson.getString("requestType"));
-      i++;
-
-      if (i > 2) {
-        i = 0;
-        j++;
-        if (j < 2) {
-          item = items.get(j);
-        }
-      }
-    }
-  }
-
-  @Test
-  public void canGetItemWithMatchingServicePointIds()
-    throws InterruptedException, MalformedURLException, TimeoutException, ExecutionException {
+  public void canGetOrderedAvailableItemsList()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
 
     UUID primaryServicePointId = servicePointsFixture.cd2().getId();
     UUID secondaryServicePointId = UUID.randomUUID();
-    String pickupServicePointId = primaryServicePointId.toString();
+    UUID pickupServicePointId = primaryServicePointId;
     UUID institutionId = UUID.randomUUID();
-
-    List<Result<JsonObject>> locations = new ArrayList<>();
 
     HashSet<UUID> servicePoints1 = new HashSet<>();
     servicePoints1.add(secondaryServicePointId);
@@ -93,181 +60,123 @@ public class RequestByInstanceIdResourceTests extends APITests {
 
     JsonObject location2 = getLocationWithServicePoints(servicePoints2, primaryServicePointId, institutionId);
 
-    JsonObject location3 = getLocationWithServicePoints(null, null, institutionId);
+    JsonObject location3 = getLocationWithServicePoints(emptySet(), null, institutionId);
 
     //Matching item and servicePoints
     HashSet<UUID> servicePoints4 = new HashSet<>();
     servicePoints4.add(primaryServicePointId);
     JsonObject location4 = getLocationWithServicePoints(servicePoints4, primaryServicePointId, institutionId);
 
-    locations.add(Result.succeeded(location1));
-    locations.add(Result.succeeded(location2));
-    locations.add(Result.succeeded(location3));
-    locations.add(Result.succeeded(location4));
-
     UUID bookMaterialTypeId = UUID.randomUUID();
     UUID loanTypeId = UUID.randomUUID();
+
     Item item1 = Item.from(ItemExamples.basedUponSmallAngryPlanet(bookMaterialTypeId, loanTypeId)
       .withTemporaryLocation(UUID.fromString(location1.getString("id")))
-      .create());
+      .create())
+      .withLocation(location1);
+
     Item item2 = Item.from(ItemExamples.basedUponSmallAngryPlanet(bookMaterialTypeId, loanTypeId)
       .withTemporaryLocation(UUID.fromString(location2.getString("id")))
-      .create());
+      .create())
+      .withLocation(location2);
+
     Item item3 = Item.from(ItemExamples.basedUponSmallAngryPlanet(bookMaterialTypeId, loanTypeId)
       .withTemporaryLocation(UUID.fromString(location3.getString("id")))
-      .create());
+      .create())
+      .withLocation(location3);
+
     Item item4 = Item.from(ItemExamples.basedUponSmallAngryPlanet(bookMaterialTypeId, loanTypeId)
       .withTemporaryLocation(UUID.fromString(location4.getString("id")))
-      .create());
+      .create())
+      .withLocation(location4);
 
-    ListOrderedMap locationIdItemMap = new ListOrderedMap();
-    locationIdItemMap.put(item1.getLocationId(), item1);
-    locationIdItemMap.put(item2.getLocationId(), item2);
-    locationIdItemMap.put(item3.getLocationId(), item3);
-    locationIdItemMap.put(item4.getLocationId(), item4);
+    final ArrayList<Item> items = new ArrayList<>();
 
-    List<Item> items = RequestByInstanceIdResource.getItemsWithMatchingServicePointIds(locations,locationIdItemMap,pickupServicePointId);
-    assertEquals(2, items.size());
-    assertEquals(item2.getItem(), items.get(0).getItem());
-    assertEquals(item2.getItemId(), items.get(0).getItemId());
-    assertEquals(item2.getLocationId(), items.get(0).getLocationId());
+    items.add(item2);
+    items.add(item3);
+    items.add(item4);
+    items.add(item1);
 
-    assertEquals(item4.getItem(), items.get(1).getItem());
-    assertEquals(item4.getItemId(), items.get(1).getItemId());
-    assertEquals(item4.getLocationId(), items.get(1).getLocationId());
+    InstanceRequestRelatedRecords records = new InstanceRequestRelatedRecords();
+    JsonObject requestJson = RequestByInstanceIdResourceUnitTests.getJsonInstanceRequest(pickupServicePointId);
+    Result<RequestByInstanceIdRequest> request = RequestByInstanceIdRequest.from(requestJson);
+
+    records.setUnsortedAvailableItems(items);
+    records.setRequestByInstanceIdRequest(request.value());
+
+    Result<InstanceRequestRelatedRecords> rankResult = rankItemsByMatchingServicePoint(records);
+
+    final List<Item> orderedItems = rankResult.value().getCombineItemsList();
+
+    assertEquals(4, orderedItems.size());
+
+    assertEquals(item2.getItemId(), orderedItems.get(0).getItemId());
+    assertEquals(item4.getItemId(), orderedItems.get(1).getItemId());
+    assertEquals(item3.getItemId(), orderedItems.get(2).getItemId());
+    assertEquals(item1.getItemId(), orderedItems.get(3).getItemId());
   }
 
   @Test
-  public void canGetOrderedAvailableItemsList(){
+  public void canGetOrderedAvailableItemsListWithoutMatchingLocations() {
 
     UUID bookMaterialTypeId = UUID.randomUUID();
+
     UUID loanTypeId = UUID.randomUUID();
-    Item item1 = Item.from(ItemExamples.basedUponSmallAngryPlanet(bookMaterialTypeId, loanTypeId).withTemporaryLocation(UUID.randomUUID()).create());
-    Item item2 = Item.from(ItemExamples.basedUponSmallAngryPlanet(bookMaterialTypeId, loanTypeId).withTemporaryLocation(UUID.randomUUID()).create());
-    Item item3 = Item.from(ItemExamples.basedUponSmallAngryPlanet(bookMaterialTypeId, loanTypeId).withTemporaryLocation(UUID.randomUUID()).create());
-    Item item4 = Item.from(ItemExamples.basedUponSmallAngryPlanet(bookMaterialTypeId, loanTypeId).withTemporaryLocation(UUID.randomUUID()).create());
 
-    ListOrderedMap locationIdItemMap = new ListOrderedMap();
-    locationIdItemMap.put(item1.getLocationId(), item1);
-    locationIdItemMap.put(item2.getLocationId(), item2);
-    locationIdItemMap.put(item3.getLocationId(), item3);
-    locationIdItemMap.put(item4.getLocationId(), item4);
+    JsonObject location = getLocationWithServicePoints(emptySet(), null, null);
 
-    List<Item> matchingItemsList = new LinkedList<>();
-    matchingItemsList.add(item4);
-    matchingItemsList.add(item1);
-
-    List<Item> ordedItems = RequestByInstanceIdResource.getOrderedAvailableItemsList(matchingItemsList, locationIdItemMap);
-    assertEquals(4, ordedItems.size());
-    assertEquals(item4.getItemId(),ordedItems.get(0).getItemId());
-    assertEquals(item1.getItemId(),ordedItems.get(1).getItemId());
-    assertEquals(item2.getItemId(),ordedItems.get(2).getItemId());
-    assertEquals(item3.getItemId(),ordedItems.get(3).getItemId());
-  }
-
-  @Test
-  public void canGetOrderedAvailableItemsListWithoutMatchingLocations(){
-
-    UUID bookMaterialTypeId = UUID.randomUUID();
-    UUID loanTypeId = UUID.randomUUID();
     Item item1 = Item.from(ItemExamples.basedUponSmallAngryPlanet(bookMaterialTypeId, loanTypeId)
-                      .withTemporaryLocation(UUID.randomUUID()).create());
+                      .withTemporaryLocation(UUID.randomUUID()).create())
+      .withLocation(location);
+
     Item item2 = Item.from(ItemExamples.basedUponSmallAngryPlanet(bookMaterialTypeId, loanTypeId)
-                      .withTemporaryLocation(UUID.randomUUID()).create());
+                      .withTemporaryLocation(UUID.randomUUID()).create())
+      .withLocation(location);
+
     Item item3 = Item.from(ItemExamples.basedUponSmallAngryPlanet(bookMaterialTypeId, loanTypeId)
-                      .withTemporaryLocation(UUID.randomUUID()).create());
+                      .withTemporaryLocation(UUID.randomUUID()).create())
+      .withLocation(location);
+
     Item item4 = Item.from(ItemExamples.basedUponSmallAngryPlanet(bookMaterialTypeId, loanTypeId)
-                      .withTemporaryLocation(UUID.randomUUID()).create());
+                      .withTemporaryLocation(UUID.randomUUID()).create())
+      .withLocation(location);
 
     //order added is important so the test deliberately add items in a certain order
-    ListOrderedMap locationIdItemMap = new ListOrderedMap();
-    locationIdItemMap.put(item3.getLocationId(), item3);
-    locationIdItemMap.put(item2.getLocationId(), item2);
-    locationIdItemMap.put(item4.getLocationId(), item4);
-    locationIdItemMap.put(item1.getLocationId(), item1);
+    List<Item> items = new ArrayList<>();
 
-    List<Item> matchingItemsList = new LinkedList<>();
+    items.add(item3);
+    items.add(item2);
+    items.add(item4);
+    items.add(item1);
 
-    List<Item> ordedItems = RequestByInstanceIdResource.getOrderedAvailableItemsList(matchingItemsList, locationIdItemMap);
-    assertEquals(4, ordedItems.size());
-    assertEquals(item3.getItemId(),ordedItems.get(0).getItemId());
-    assertEquals(item2.getItemId(),ordedItems.get(1).getItemId());
-    assertEquals(item4.getItemId(),ordedItems.get(2).getItemId());
-    assertEquals(item1.getItemId(),ordedItems.get(3).getItemId());
+    InstanceRequestRelatedRecords records = new InstanceRequestRelatedRecords();
+    JsonObject requestJson =  RequestByInstanceIdResourceUnitTests.getJsonInstanceRequest(UUID.randomUUID());
+    Result<RequestByInstanceIdRequest> request = RequestByInstanceIdRequest.from(requestJson);
+
+    records.setUnsortedAvailableItems(items);
+    records.setRequestByInstanceIdRequest(request.value());
+
+    Result<InstanceRequestRelatedRecords> rankResult = rankItemsByMatchingServicePoint(records);
+    final List<Item> orderedItems = rankResult.value().getCombineItemsList();
+
+    assertEquals(4, orderedItems.size());
+
+    assertEquals(item3.getItemId(),orderedItems.get(0).getItemId());
+    assertEquals(item2.getItemId(),orderedItems.get(1).getItemId());
+    assertEquals(item4.getItemId(),orderedItems.get(2).getItemId());
+    assertEquals(item1.getItemId(),orderedItems.get(3).getItemId());
   }
 
-  private static JsonObject getJsonInstanceRequest(){
-    DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
-    DateTime requestExpirationDate = requestDate.plusDays(30);
-
-    JsonObject instanceRequest = new JsonObject();
-    instanceRequest.put("instanceId", UUID.randomUUID().toString());
-    instanceRequest.put("requestDate", requestDate.toString(ISODateTimeFormat.dateTime()));
-    instanceRequest.put("requesterId", UUID.randomUUID().toString());
-    instanceRequest.put("pickupServicePointId", UUID.randomUUID().toString());
-    instanceRequest.put("fulfilmentPreference", "Hold Shelf");
-    instanceRequest.put("requestExpirationDate",requestExpirationDate.toString(ISODateTimeFormat.dateTime()));
-
-    return instanceRequest;
-  }
-
-  private static List<Item> getItems(int totalItems, UUID loanTypeId){
-    LinkedList<Item> items = new LinkedList<>();
-    for (int i = 0; i< totalItems; i++){
-      JsonObject itemJsonObject = ItemExamples.basedUponSmallAngryPlanet(UUID.randomUUID(), loanTypeId).create();
-      items.add(Item.from(itemJsonObject));
-    }
-    return items;
-  }
-
-  private static JsonObject getLocationWithServicePoints(HashSet<UUID> servicePoints, UUID primaryServicePointId,  UUID locationInstitutionId) {
+  private static JsonObject getLocationWithServicePoints(Set<UUID> servicePoints, UUID primaryServicePointId, UUID locationInstitutionId) {
 
     JsonObject location = new LocationBuilder()
       .forInstitution(locationInstitutionId)
       .withPrimaryServicePoint(primaryServicePointId)
-      .withServicePoints(servicePoints)
+      .servedBy(servicePoints)
       .create();
+
     location.put("id", UUID.randomUUID().toString());
 
     return location;
-  }
-
-  @Test
-  public void canSortMapForItems(){
-
-    Collection<Item> items = getItems(6, UUID.randomUUID());
-    Map<Item, Integer> itemQueueSizeMap = new HashMap<>();
-
-    itemQueueSizeMap.put(((List<Item>) items).get(0), 4);
-    itemQueueSizeMap.put(((List<Item>) items).get(1), 3);
-    itemQueueSizeMap.put(((List<Item>) items).get(2), 7);
-    itemQueueSizeMap.put(((List<Item>) items).get(3), 7);
-    itemQueueSizeMap.put(((List<Item>) items).get(4), 1);
-    itemQueueSizeMap.put(((List<Item>) items).get(5), 8);
-
-    final Map<Item, Integer> sortedItemsMap = RequestByInstanceIdResource.sortMap(itemQueueSizeMap);
-    final List<Integer> sortedValues = sortedItemsMap.values().stream().collect(Collectors.toList());
-    final Item[] sortedKeys = sortedItemsMap.keySet().toArray(new Item[sortedItemsMap.size()]);
-
-    assertEquals(1, sortedValues.get(0).intValue());
-    assertEquals(((List<Item>) items).get(4).getItemId(), sortedKeys[0].getItemId());
-
-    assertEquals(3, sortedValues.get(1).intValue());
-    assertEquals(((List<Item>) items).get(1).getItemId(), sortedKeys[1].getItemId());
-
-    assertEquals(4, sortedValues.get(2).intValue());
-    assertEquals(((List<Item>) items).get(0).getItemId(), sortedKeys[2].getItemId());
-
-    assertEquals(8, sortedValues.get(5).intValue());
-    assertEquals(((List<Item>) items).get(5).getItemId(), sortedKeys[5].getItemId());
-
-    //for the ones that are tied, there isn't a deterministic way to find out which entry will be in front of the other
-    String item2Id = ((List<Item>) items).get(2).getItemId();
-    assertTrue((7 == sortedValues.get(3)) || (7 == sortedValues.get(4)));
-    assertTrue(item2Id.equals(sortedKeys[3].getItemId()) || item2Id.equals(sortedKeys[4].getItemId()));
-
-    String item3Id = ((List<Item>) items).get(3).getItemId();
-    assertTrue((7 == sortedValues.get(3)) || (7 == sortedValues.get(4)));
-    assertTrue(item3Id.equals(sortedKeys[3].getItemId()) || item3Id.equals(sortedKeys[4].getItemId()));
   }
 }

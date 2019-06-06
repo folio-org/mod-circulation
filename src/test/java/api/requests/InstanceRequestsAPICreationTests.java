@@ -174,7 +174,6 @@ public class InstanceRequestsAPICreationTests extends APITests {
     assertEquals("Cannot create request objects when items list is null or empty",  representation.getJsonArray("errors")
                                                                                                             .getJsonObject(0)
                                                                                                             .getString("message"));
-
   }
 
   @Test

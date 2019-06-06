@@ -4,6 +4,7 @@ import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.function.Function.identity;
 import static org.folio.circulation.support.Result.failed;
 import static org.folio.circulation.support.Result.succeeded;
+import static org.folio.circulation.support.ResultBinding.mapResult;
 
 import java.lang.invoke.MethodHandles;
 import java.util.Collection;
@@ -20,7 +21,10 @@ import org.folio.circulation.domain.ItemRelatedRecord;
 import org.folio.circulation.domain.LocationRepository;
 import org.folio.circulation.domain.MaterialTypeRepository;
 import org.folio.circulation.domain.MultipleRecords;
+import org.folio.circulation.domain.Request;
+import org.folio.circulation.domain.RequestQueueRepository;
 import org.folio.circulation.domain.ServicePointRepository;
+import org.folio.circulation.resources.RequestQueueResource;
 import org.folio.circulation.support.http.client.Response;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,6 +41,7 @@ public class ItemRepository {
   private final LocationRepository locationRepository;
   private final MaterialTypeRepository materialTypeRepository;
   private final ServicePointRepository servicePointRepository;
+  private final RequestQueueRepository requestQueueRepository;
   private final boolean fetchLocation;
   private final boolean fetchMaterialType;
   private final boolean fetchLoanType;
@@ -54,6 +59,7 @@ public class ItemRepository {
       new LocationRepository(clients),
       new MaterialTypeRepository(clients),
       new ServicePointRepository(clients),
+      RequestQueueRepository.using(clients),
       fetchLocation, fetchMaterialType, fetchLoanType);
   }
 
@@ -65,6 +71,7 @@ public class ItemRepository {
     LocationRepository locationRepository,
     MaterialTypeRepository materialTypeRepository,
     ServicePointRepository servicePointRepository,
+    RequestQueueRepository requestQueueRepository,
     boolean fetchLocation,
     boolean fetchMaterialType,
     boolean fetchLoanType) {
@@ -76,6 +83,7 @@ public class ItemRepository {
     this.locationRepository = locationRepository;
     this.materialTypeRepository = materialTypeRepository;
     this.servicePointRepository = servicePointRepository;
+    this.requestQueueRepository = requestQueueRepository;
     this.fetchLocation = fetchLocation;
     this.fetchMaterialType = fetchMaterialType;
     this.fetchLoanType = fetchLoanType;
@@ -199,6 +207,37 @@ public class ItemRepository {
     });
   }
 
+  private CompletableFuture<Result<Collection<Item>>> fetchRequestQueues(
+    Result<Collection<Item>> result){
+
+    /*
+    return result.after(items -> {
+      List<String> itemIds = items.stream()
+        .map(Item::getItemId)
+        .filter(Objects::nonNull)
+        .collect(Collectors.toList());
+
+      final MultipleRecordFetcher<JsonObject> fetcher
+        = new MultipleRecordFetcher<>(holdingsClient, "holdingsRecords", identity());
+
+      return fetcher.findByIds(itemIds)
+        .thenApply(r -> r.map(holdings -> items.stream()
+          .map(item -> item.withHoldingsRecord(
+            findById(item.getHoldingsRecordId(), holdings.getRecords()).orElse(null)))
+          .collect(Collectors.toList())));
+    }); */
+
+    return result.after(items -> {
+
+      items.forEach(item -> {
+        requestQueueRepository.getLiteRequestQueues(item.getItemId())
+          .thenApply(r -> r.next( requestQueue ->
+             succeeded(item.withRequestQueue(requestQueue))));
+      });
+      return CompletableFuture.completedFuture(succeeded(items));
+    });
+  }
+
   private static Optional<JsonObject> findById(
     String id,
     Collection<JsonObject> collection) {
@@ -282,6 +321,19 @@ public class ItemRepository {
       (records, items) -> new MultipleRecords<>(
         matchItemToRecord(records, items, includeItemMap),
         records.getTotalRecords()));
+  }
+
+  public CompletableFuture<Result<Collection<Item>>> findByQuery(Result<CqlQuery> queryResult) {
+    MultipleRecordFetcher<Item> fetcher
+      = new MultipleRecordFetcher<>(itemsClient, "items", Item::from);
+
+    return fetcher.findByQuery(queryResult)
+      .thenApply(mapResult(MultipleRecords::getRecords))
+      .thenComposeAsync(this::fetchHoldingRecords)
+      .thenComposeAsync(this::fetchInstances)
+      .thenComposeAsync(this::fetchLocations)
+      .thenComposeAsync(this::fetchMaterialTypes)
+      .thenComposeAsync(this::fetchRequestQueues);
   }
 
   private CompletableFuture<Result<Collection<Item>>> fetchFor(
