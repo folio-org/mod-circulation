@@ -36,6 +36,7 @@ import api.support.fixtures.PatronGroupsFixture;
 import api.support.fixtures.ProxyRelationshipsFixture;
 import api.support.fixtures.RequestPoliciesFixture;
 import api.support.fixtures.RequestsFixture;
+import api.support.fixtures.ScheduledNoticeProcessingClient;
 import api.support.fixtures.ServicePointsFixture;
 import api.support.fixtures.UsersFixture;
 import api.support.http.InterfaceUrls;
@@ -149,6 +150,9 @@ public abstract class APITests {
 
   protected final RequestsFixture requestsFixture = new RequestsFixture(
     requestsClient, cancellationReasonsFixture, servicePointsFixture);
+
+  protected final ScheduledNoticeProcessingClient scheduledNoticeProcessingClient =
+    new ScheduledNoticeProcessingClient();
 
   protected APITests() {
     this(true);

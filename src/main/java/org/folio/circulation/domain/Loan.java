@@ -165,7 +165,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     }
   }
 
-  boolean isClosed() {
+  public boolean isClosed() {
     return StringUtils.equals(getStatus(), "Closed");
   }
 
