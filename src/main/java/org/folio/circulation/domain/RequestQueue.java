@@ -28,6 +28,11 @@ public class RequestQueue {
     return fulfillableRequests().get(0);
   }
 
+  public Request getLowestPriorityFulfillableRequest() {
+    return fulfillableRequests().get(fulfillableRequests().size() - 1);
+  }
+
+
   public boolean isRequestedByOtherPatron(User requestingUser) {
     if(!hasOutstandingFulfillableRequests()) {
       return false;

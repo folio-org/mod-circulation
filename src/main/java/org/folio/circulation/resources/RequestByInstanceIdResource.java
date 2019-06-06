@@ -10,7 +10,7 @@ import static org.folio.circulation.support.ValidationErrorFailure.singleValidat
 import java.lang.invoke.MethodHandles;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Comparator;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
@@ -246,25 +246,70 @@ public class RequestByInstanceIdResource extends Resource {
     return succeeded(requestRelatedRecords);
   }
 
-
   private static CompletableFuture<Result<InstanceRequestRelatedRecords>> combineWithUnavailableItems(InstanceRequestRelatedRecords records, Clients clients){
 
-    final List<Item> unavailableItems = records.getUnsortedUnavailableItems();
+    RequestQueueRepository queueRepository = RequestQueueRepository.using(clients);
 
-    unavailableItems.sort(Comparator.comparing(
-      s -> s.getRequestQueue().size()
-    ));
+    final Collection<Item> unsortedUnavailableItems = records.getUnsortedUnavailableItems();
 
-    records.setSortedUnavailableItems(unavailableItems);
-    return CompletableFuture.completedFuture(succeeded(records));
+    Map<Item, CompletableFuture<Result<RequestQueue>>> itemRequestQueueMap = new HashMap<>();
+    if (unsortedUnavailableItems == null || unsortedUnavailableItems.isEmpty()) {
+      return CompletableFuture.completedFuture(succeeded(records));
+    }
+
+    for (Item item : unsortedUnavailableItems) {
+      itemRequestQueueMap.put(item, queueRepository.getLiteRequestQueues(item.getItemId()));
+    }
+
+    final Collection<CompletableFuture<Result<RequestQueue>>> requestQueueFutures = itemRequestQueueMap.values();
+
+    //Collect the RequestQueue objects once they come back
+    return CompletableFuture.allOf(requestQueueFutures.toArray(new CompletableFuture[requestQueueFutures.size()]))
+      .thenApply(x -> {
+        Map<Item, RequestQueue> itemQueueSizeMap = new HashMap<>();
+        for (Map.Entry<Item, CompletableFuture<Result<RequestQueue>>> entry : itemRequestQueueMap.entrySet()) {
+          Result<RequestQueue> requestQueueResult = entry.getValue().join();
+          if (requestQueueResult.succeeded()) {
+            itemQueueSizeMap.put(entry.getKey(), requestQueueResult.value());
+          }
+        }
+
+        //Sort the map
+        Map<Item, RequestQueue> sortedMap = sortRequestQueues(itemQueueSizeMap);
+        Set<Item> sortedUnavailableItems = sortedMap.keySet();
+
+        records.setSortedUnavailableItems(new ArrayList<>(sortedUnavailableItems));
+        return succeeded(records);
+      });
   }
 
-  public static Map<Item, Integer> sortMap(Map<Item,Integer> unsortedItems){
+  private static Map<Item, RequestQueue> sortRequestQueues(Map<Item,RequestQueue> unsortedItems){
 
-    Set<Map.Entry<Item, Integer>> entries = unsortedItems.entrySet();
-    return entries.stream().sorted(Map.Entry.comparingByValue())
-      .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (e1, e2) -> e1, LinkedHashMap::new));
+    List<Map.Entry<Item, RequestQueue> > list = new LinkedList<>(unsortedItems.entrySet());
+
+    // Sort the list
+    Collections.sort(list, (q1, q2) -> {
+      RequestQueue queue1 = q1.getValue();
+      RequestQueue queue2 = q2.getValue();
+
+      int result = queue1.size() - queue2.size();
+      if (result == 0) {
+        result = queue1.getLowestPriorityFulfillableRequest()
+          .getRequestExpirationDate()
+          .compareTo(queue2.getLowestPriorityFulfillableRequest().getRequestExpirationDate());
+      }
+      return result;
+    });
+
+    // put data from sorted list to hashmap
+    HashMap<Item, RequestQueue> sortItems = new LinkedHashMap<>();
+    for (Map.Entry<Item, RequestQueue> newEntry : list) {
+      sortItems.put(newEntry.getKey(), newEntry.getValue());
+    }
+
+    return sortItems;
   }
+
 
   private ProxyRelationshipValidator createProxyRelationshipValidator(
     JsonObject representation,

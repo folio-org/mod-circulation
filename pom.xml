@@ -131,11 +131,6 @@
       <version>2.4.0</version>
       <scope>test</scope>
     </dependency>
-    <dependency>
-      <groupId>org.apache.commons</groupId>
-      <artifactId>commons-collections4</artifactId>
-      <version>4.1</version>
-    </dependency>
     <!-- Reinstate if we figure out a way to refer to schema that are compatible
     with other tools, see FOLIO-1213 -->
     <!--<dependency>-->

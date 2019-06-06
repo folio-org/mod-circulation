@@ -39,7 +39,6 @@ public class Item {
   private ServicePoint primaryServicePoint;
   private ServicePoint inTransitDestinationServicePoint;
   private JsonObject loanTypeRepresentation;
-  private RequestQueue requestQueue;
 
   private boolean changed = false;
 
@@ -50,8 +49,7 @@ public class Item {
     JsonObject locationRepresentation,
     JsonObject materialTypeRepresentation,
     ServicePoint servicePoint,
-    JsonObject loanTypeRepresentation,
-    RequestQueue requestQueue) {
+    JsonObject loanTypeRepresentation) {
 
     this.itemRepresentation = itemRepresentation;
     this.holdingRepresentation = holdingRepresentation;
@@ -60,11 +58,10 @@ public class Item {
     this.materialTypeRepresentation = materialTypeRepresentation;
     this.primaryServicePoint = servicePoint;
     this.loanTypeRepresentation = loanTypeRepresentation;
-    this.requestQueue = requestQueue;
   }
 
   public static Item from(JsonObject representation) {
-    return new Item(representation, null, null, null, null, null, null, null);
+    return new Item(representation, null, null, null, null, null, null);
   }
 
   public boolean isCheckedOut() {
@@ -274,10 +271,6 @@ public class Item {
       .collect(Collectors.toList());
   }
 
-  public RequestQueue getRequestQueue() {
-    return requestQueue;
-  }
-
   private ServicePoint getPrimaryServicePoint() {
     return primaryServicePoint;
   }
@@ -373,8 +366,7 @@ public class Item {
       newLocation,
       this.materialTypeRepresentation,
       this.primaryServicePoint,
-      this.loanTypeRepresentation,
-      this.requestQueue);
+      this.loanTypeRepresentation);
   }
 
   public Item withMaterialType(JsonObject newMaterialType) {
@@ -385,8 +377,7 @@ public class Item {
       this.locationRepresentation,
       newMaterialType,
       this.primaryServicePoint,
-      this.loanTypeRepresentation,
-      this.requestQueue);
+      this.loanTypeRepresentation);
   }
 
   public Item withHoldingsRecord(JsonObject newHoldingsRecordRepresentation) {
@@ -397,8 +388,7 @@ public class Item {
       this.locationRepresentation,
       this.materialTypeRepresentation,
       this.primaryServicePoint,
-      this.loanTypeRepresentation,
-      this.requestQueue);
+      this.loanTypeRepresentation);
   }
 
   public Item withInstance(JsonObject newInstanceRepresentation) {
@@ -409,8 +399,7 @@ public class Item {
       this.locationRepresentation,
       this.materialTypeRepresentation,
       this.primaryServicePoint,
-      this.loanTypeRepresentation,
-      this.requestQueue);
+      this.loanTypeRepresentation);
   }
 
   public Item withPrimaryServicePoint(ServicePoint servicePoint) {
@@ -421,8 +410,7 @@ public class Item {
       this.locationRepresentation,
       this.materialTypeRepresentation,
       servicePoint,
-      this.loanTypeRepresentation,
-      this.requestQueue);
+      this.loanTypeRepresentation);
   }
 
   public Item withLoanType(JsonObject newLoanTypeRepresentation) {
@@ -433,19 +421,6 @@ public class Item {
       this.locationRepresentation,
       this.materialTypeRepresentation,
       this.primaryServicePoint,
-      newLoanTypeRepresentation,
-      this.requestQueue);
-  }
-
-  public Item withRequestQueue(RequestQueue requestQueue) {
-    return new Item(
-      this.itemRepresentation,
-      this.holdingRepresentation,
-      this.instanceRepresentation,
-      this.locationRepresentation,
-      this.materialTypeRepresentation,
-      this.primaryServicePoint,
-      this.loanTypeRepresentation,
-      requestQueue);
+      newLoanTypeRepresentation);
   }
 }
