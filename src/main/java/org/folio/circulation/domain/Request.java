@@ -136,8 +136,8 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   public Request withItem(Item newItem) {
-    return new Request(requestRepresentation, cancellationReasonRepresentation, newItem, requester, proxy, loan,
-      pickupServicePoint);
+    return new Request(requestRepresentation, cancellationReasonRepresentation, newItem, requester, proxy,
+      loan == null ? null : loan.withItem(newItem), pickupServicePoint);
   }
 
   public Request withRequester(User newRequester) {
