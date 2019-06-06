@@ -99,10 +99,7 @@ public class RequestByInstanceIdResource extends Resource {
       .thenApply(r -> r.map(RequestAndRelatedRecords::getRequest))
       .thenApply(r -> r.map(new RequestRepresentation()::extendedRepresentation))
       .thenApply(CreatedJsonResponseResult::from)
-      .thenAccept(result -> result.writeTo(routingContext.response()))
-      .exceptionally( err -> {
-          log.error("Error processing title-level request", err);
-          return null;});
+      .thenAccept(result -> result.writeTo(routingContext.response()));
   }
 
   private CompletableFuture<Result<RequestAndRelatedRecords>> placeRequests(List<JsonObject> itemRequestRepresentations,
