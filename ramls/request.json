@@ -120,6 +120,7 @@
         },
         "copyNumbers": {
           "type": "array",
+          "description": "Copy numbers for the item",
           "items": {
             "type": "string"
           }
