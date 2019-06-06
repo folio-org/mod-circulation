@@ -185,33 +185,6 @@ public class InstanceRequestsAPICreationTests extends APITests {
                                                                             .getString("message"));
   }
 
-    private void validateInstanceRequestResponse(JsonObject representation,
-                                                 UUID pickupServicePointId,
-                                                 UUID instanceId,
-                                                 UUID itemId,
-                                                 RequestType expectedRequestType){
-      assertNotNull(representation);
-      assertEquals(pickupServicePointId.toString(), representation.getString("pickupServicePointId"));
-      assertEquals("Circ Desk 1", representation.getJsonObject("pickupServicePoint").getString("name"));
-      assertEquals(instanceId.toString(), representation.getJsonObject("item").getString("instanceId"));
-      assertEquals(expectedRequestType.name(), representation.getString("requestType"));
-      if (itemId != null)
-        assertEquals(itemId.toString(), representation.getString("itemId"));
-    }
-
-    private JsonObject createInstanceRequestObject(UUID instanceId, UUID requesterId, UUID pickupServicePointId,
-                                                   DateTime requestDate, DateTime requestExpirationDate){
-      JsonObject requestBody = new JsonObject();
-      requestBody.put("instanceId", instanceId.toString());
-      requestBody.put("requestDate", requestDate.toString(ISODateTimeFormat.dateTime()));
-      requestBody.put("requesterId", requesterId.toString());
-      requestBody.put("pickupServicePointId", pickupServicePointId.toString());
-      requestBody.put("fulfilmentPreference", "Hold Shelf");
-      requestBody.put("requestExpirationDate", requestExpirationDate.toString(ISODateTimeFormat.dateTime()));
-
-      return requestBody;
-    }
-
   @Test
   public void canSuccessfullyPlaceATitleLevelRequestWhenNoCopyIsAvailable()
     throws InterruptedException,
@@ -411,6 +384,33 @@ public class InstanceRequestsAPICreationTests extends APITests {
     JsonObject representation = postResponse.getJson();
     //Item2 should have been chosen because Jessica already requested item1
     validateInstanceRequestResponse(representation, pickupServicePointId, instance.getId(), item2.getId(), RequestType.HOLD);
+  }
+
+  private void validateInstanceRequestResponse(JsonObject representation,
+                                               UUID pickupServicePointId,
+                                               UUID instanceId,
+                                               UUID itemId,
+                                               RequestType expectedRequestType){
+    assertNotNull(representation);
+    assertEquals(pickupServicePointId.toString(), representation.getString("pickupServicePointId"));
+    assertEquals("Circ Desk 1", representation.getJsonObject("pickupServicePoint").getString("name"));
+    assertEquals(instanceId.toString(), representation.getJsonObject("item").getString("instanceId"));
+    assertEquals(expectedRequestType.name(), representation.getString("requestType"));
+    if (itemId != null)
+      assertEquals(itemId.toString(), representation.getString("itemId"));
+  }
+
+  private JsonObject createInstanceRequestObject(UUID instanceId, UUID requesterId, UUID pickupServicePointId,
+                                                 DateTime requestDate, DateTime requestExpirationDate){
+    JsonObject requestBody = new JsonObject();
+    requestBody.put("instanceId", instanceId.toString());
+    requestBody.put("requestDate", requestDate.toString(ISODateTimeFormat.dateTime()));
+    requestBody.put("requesterId", requesterId.toString());
+    requestBody.put("pickupServicePointId", pickupServicePointId.toString());
+    requestBody.put("fulfilmentPreference", "Hold Shelf");
+    requestBody.put("requestExpirationDate", requestExpirationDate.toString(ISODateTimeFormat.dateTime()));
+
+    return requestBody;
   }
 
   private void placeHoldRequest(IndividualResource item, UUID requestPickupServicePointId,

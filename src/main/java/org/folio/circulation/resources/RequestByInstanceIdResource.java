@@ -49,6 +49,7 @@ import org.folio.circulation.support.ResponseWritableResult;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.RouteRegistration;
 import org.folio.circulation.support.ServerErrorFailure;
+import org.folio.circulation.support.http.server.ServerErrorResponse;
 import org.folio.circulation.support.http.server.WebContext;
 import org.joda.time.format.ISODateTimeFormat;
 import org.slf4j.Logger;
@@ -100,7 +101,7 @@ public class RequestByInstanceIdResource extends Resource {
     requestRelatedRecords.setRequestByInstanceIdRequest(requestByInstanceIdRequest);
 
     finder.getItemsByInstanceId(requestByInstanceIdRequest.getInstanceId())
-      .thenApply(r -> r.next(items -> getSeparatedItemsFromList(items, requestRelatedRecords)))
+      .thenApply(r -> r.next(items -> segregateItemsList(items, requestRelatedRecords)))
       .thenApply(r -> r.next(RequestByInstanceIdResource::rankItemsByMatchingServicePoint))
       .thenCompose(r -> r.after(relatedRecords -> combineWithUnavailableItems(relatedRecords, clients)))
       .thenApply( r -> r.next(RequestByInstanceIdResource::instanceToItemRequests))
@@ -108,7 +109,12 @@ public class RequestByInstanceIdResource extends Resource {
       .thenApply(r -> r.map(RequestAndRelatedRecords::getRequest))
       .thenApply(r -> r.map(new RequestRepresentation()::extendedRepresentation))
       .thenApply(CreatedJsonResponseResult::from)
-      .thenAccept(result -> result.writeTo(routingContext.response()));
+      .thenAccept(result -> result.writeTo(routingContext.response()))
+      .exceptionally( err -> {
+        String reason = "Error processing title-level request";
+        log.error(reason, err);
+        ServerErrorResponse.internalError(routingContext.response(), reason);
+        return null;});
   }
 
   private CompletableFuture<Result<RequestAndRelatedRecords>> placeRequests(List<JsonObject> itemRequestRepresentations,
@@ -223,7 +229,7 @@ public class RequestByInstanceIdResource extends Resource {
     return succeeded(requests);
   }
 
-  private Result<InstanceRequestRelatedRecords> getSeparatedItemsFromList(Collection<Item> items,
+  private Result<InstanceRequestRelatedRecords> segregateItemsList(Collection<Item> items,
                                                                           InstanceRequestRelatedRecords requestRelatedRecords ){
     if (items == null ||items.isEmpty()) {
       return failedValidation("Items list is null or empty", "items", "null");
