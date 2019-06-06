@@ -87,8 +87,7 @@ public class RequestByInstanceIdResource extends Resource {
     final RequestByInstanceIdRequest requestByInstanceIdRequest =
       requestByInstanceIdRequestResult.value();
 
-    final ItemByInstanceIdFinder finder = new ItemByInstanceIdFinder(clients.holdingsStorage(),
-      clients.itemsStorage(), itemRepository);
+    final ItemByInstanceIdFinder finder = new ItemByInstanceIdFinder(clients.holdingsStorage(), itemRepository);
 
     final UUID pickupServicePointId = requestByInstanceIdRequest.getPickupServicePointId();
 
@@ -152,7 +151,7 @@ public class RequestByInstanceIdResource extends Resource {
           if (r.succeeded()) {
             return CompletableFuture.completedFuture(r);
           } else {
-            log.debug("Failed to create request for " + currentItemRequest.getString("id"));
+            log.debug("Failed to create request for {}", currentItemRequest.getString("id"));
             return placeRequest(itemRequests, startIndex +1, createRequestService, clients, loanRepository);
           }
         });
