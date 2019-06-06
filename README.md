@@ -415,7 +415,7 @@ Then export a CSV file/report based on this logic:
 * Select the request for each item that expired or was cancelled on the hold shelf most recently (by ranking the closed requests by a date used only for this purpose)
 * Choose only the requests where the `pickup service point` matches the chosen service point
 
-The API for generating a CSV report is based on the presence of the 'awaitingPickupRequestClosedDate' property for the request JSONB.
+The API for generating a report is based on the presence of the 'awaitingPickupRequestClosedDate' property for the request JSONB.
 Such behavior is required by database trigger for request update in the mod-circulation-storage
 See [CIRCSTORE-127](https://issues.folio.org/browse/CIRCSTORE-127)
 
