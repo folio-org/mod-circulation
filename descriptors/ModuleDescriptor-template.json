@@ -3,14 +3,14 @@
   "name": "Circulation Module",
   "provides": [
     {
-      "id": "requests-report",
+      "id": "requests-reports",
       "version": "0.1",
       "handlers": [
         {
           "methods": [
             "GET"
           ],
-          "pathPattern": "/circulation/requests-report/hold-shelf-clearance/{id}",
+          "pathPattern": "/circulation/requests-reports/hold-shelf-clearance/{id}",
           "permissionsRequired": [
             "circulation.requests.hold-shelf-clearance-report.get"
           ],
@@ -932,8 +932,8 @@
     },
     {
       "permissionName": "circulation.requests.hold-shelf-clearance-report.get",
-      "displayName": "circulation - request hold shelf clearance report CSV",
-      "description": "get first pass hold shelf clearance report"
+      "displayName": "circulation - request hold shelf clearance report",
+      "description": "get all hold shelf clearance requests to generating a report"
     },
     {
       "permissionName": "circulation.all",

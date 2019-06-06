@@ -57,7 +57,7 @@ public class CirculationVerticle extends AbstractVerticle {
     new RequestQueueResource(client).register(router);
     new OverrideRenewalByBarcodeResource(client).register(router);
 
-    new RequestHoldShelfClearanceResource("/circulation/requests-report/hold-shelf-clearance/:servicePointId", client)
+    new RequestHoldShelfClearanceResource("/circulation/requests-reports/hold-shelf-clearance/:servicePointId", client)
       .register(router);
     new CirculationRulesResource("/circulation/rules", client)
       .register(router);
