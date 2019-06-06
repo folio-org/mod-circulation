@@ -408,7 +408,7 @@ Requests include information from the item, including holdingsRecordId and insta
 
 #### Hold shelf clearance report CSV
 
-To create first pass hold expiration report that can be used by staff to clear expired and cancelled holds from the shelf and put them back into circulation.
+To create hold expiration report that can be used by staff to clear expired and cancelled holds from the shelf and put them back into circulation.
 Then generate a report based on this logic:
 * Find all of the items that are `Awaiting pickup`
 * Choose the item’s which either have an empty request queue or request queue doesn't contain request with status `Open - Awaiting pickup`
