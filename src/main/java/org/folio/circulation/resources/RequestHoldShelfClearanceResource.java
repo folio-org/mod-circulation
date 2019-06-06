@@ -185,7 +185,7 @@ public class RequestHoldShelfClearanceResource extends Resource {
           .combine(statusQuery, CqlQuery::and)
           .combine(itemIdsQuery, CqlQuery::and);
 
-        return finRequestsByCqlQuery(client, cqlQueryResult);
+        return findRequestsByCqlQuery(client, cqlQueryResult);
       })
       .map(CompletableFuture::join)
       .collect(Collectors.toList());
@@ -234,7 +234,7 @@ public class RequestHoldShelfClearanceResource extends Resource {
           .combine(notEmptyDateQuery, CqlQuery::and)
           .map(q -> q.sortBy(descending(REQUEST_CLOSED_DATE_KEY)));
 
-        return finRequestsByCqlQuery(client, cqlQueryResult);
+        return findRequestsByCqlQuery(client, cqlQueryResult);
       }).map(CompletableFuture::join)
       .collect(Collectors.toList());
   }
@@ -247,8 +247,8 @@ public class RequestHoldShelfClearanceResource extends Resource {
       .collect(Collectors.toList());
   }
 
-  private CompletableFuture<Result<MultipleRecords<Request>>> finRequestsByCqlQuery(CollectionResourceClient client,
-                                                                                    Result<CqlQuery> cqlQueryResult) {
+  private CompletableFuture<Result<MultipleRecords<Request>>> findRequestsByCqlQuery(CollectionResourceClient client,
+                                                                                     Result<CqlQuery> cqlQueryResult) {
     return cqlQueryResult
       .after(query -> client.getMany(query, PAGE_LIMIT))
       .thenApply(result -> result.next(this::mapResponseToRequest));

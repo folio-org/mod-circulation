@@ -10,17 +10,8 @@ documentation:
 
 types:
   requests: !include requests.json
-  error: !include raml-util/schemas/error.schema
-  errors: !include raml-util/schemas/errors.schema
-
-traits:
-  language: !include raml-util/traits/language.raml
-  pageable: !include raml-util/traits/pageable.raml
-  searchable: !include raml-util/traits/searchable.raml
-  validate: !include raml-util/traits/validation.raml
 
 resourceTypes:
-  collection: !include raml-util/rtypes/collection.raml
   collection-get: !include raml-util/rtypes/collection-get.raml
 
 /circulation:
