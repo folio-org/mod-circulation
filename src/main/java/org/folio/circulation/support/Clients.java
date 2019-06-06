@@ -85,11 +85,11 @@ public class Clients {
     return itemsStorageClient;
   }
 
-  CollectionResourceClient holdingsStorage() {
+  public CollectionResourceClient holdingsStorage() {
     return holdingsStorageClient;
   }
 
-  CollectionResourceClient instancesStorage() {
+  public CollectionResourceClient instancesStorage() {
     return instancesStorageClient;
   }
 

@@ -7,8 +7,8 @@ import java.util.function.Supplier;
 
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.support.HttpFailure;
-import org.folio.circulation.support.Result;
 import org.folio.circulation.support.ItemRepository;
+import org.folio.circulation.support.Result;
 
 public class ItemByIdInStorageFinder {
   private final ItemRepository itemRepository;

@@ -4,7 +4,7 @@
   "provides": [
     {
       "id": "circulation",
-      "version": "7.5",
+      "version": "7.6",
       "handlers": [
         {
           "methods": [
@@ -683,6 +683,43 @@
             "usergroups.collection.get",
             "usergroups.item.get"
           ]
+        },
+        {
+          "methods": [
+            "POST"
+          ],
+          "pathPattern": "/circulation/requests/instances",
+          "permissionsRequired": [
+            "circulation.requests.instances.item.post"
+          ],
+          "modulePermissions": [
+            "circulation-storage.requests.item.post",
+            "inventory-storage.items.item.put",
+            "circulation-storage.requests.collection.get",
+            "circulation-storage.requests.item.get",
+            "circulation-storage.loans.item.put",
+            "circulation-storage.loans.collection.get",
+            "inventory-storage.items.item.get",
+            "inventory-storage.items.collection.get",
+            "inventory-storage.holdings.collection.get",
+            "inventory-storage.holdings.item.get",
+            "inventory-storage.instances.collection.get",
+            "inventory-storage.instances.item.get",
+            "inventory-storage.locations.collection.get",
+            "inventory-storage.locations.item.get",
+            "inventory-storage.service-points.collection.get",
+            "inventory-storage.service-points.item.get",
+            "users.item.get",
+            "users.collection.get",
+            "usergroups.collection.get",
+            "usergroups.item.get",
+            "proxiesfor.collection.get",
+            "circulation.rules.notice-policy.get",
+            "circulation-storage.patron-notice-policies.item.get",
+            "patron-notice.post",
+            "inventory-storage.loan-types.item.get",
+            "calendar.collection.get"
+          ]
         }
       ]
     },
@@ -939,6 +976,11 @@
       "description": "get request queue for an item"
     },
     {
+      "permissionName": "circulation.requests.instances.item.post",
+      "displayName": "circulation - create instance level request",
+      "description": "create a request given an instance"
+    },
+    {
       "permissionName": "circulation.all",
       "displayName": "circulation - all permissions",
       "description": "Entire set of permissions needed to use the circulation",
@@ -969,7 +1011,8 @@
         "circulation.requests.item.put",
         "circulation.requests.item.delete",
         "circulation.requests.collection.delete",
-        "circulation.requests.queue.collection.get"
+        "circulation.requests.queue.collection.get",
+        "circulation.requests.instances.item.post"
       ]
     }
   ],
