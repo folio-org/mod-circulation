@@ -41,13 +41,12 @@ import io.vertx.core.json.JsonObject;
 
 public class ScheduledDueDateNoticesProcessingTests extends APITests {
 
-
   private static final String BEFORE_TIMING = "Before";
   private static final String UPON_AT_TIMING = "Upon At";
   private static final String AFTER_TIMING = "After";
 
   private static final int SCHEDULED_NOTICES_PROCESSING_LIMIT = 100;
-  public static final String NEXT_RUN_TIME = "nextRunTime";
+  private static final String NEXT_RUN_TIME = "nextRunTime";
 
 
   private final UUID beforeTemplateId = UUID.randomUUID();
@@ -90,125 +89,6 @@ public class ScheduledDueDateNoticesProcessingTests extends APITests {
     dueDate = new DateTime(loan.getJson().getString("dueDate"));
 
     assertSetUpIsCorrect();
-  }
-
-
-  private void setUpNoticePolicy()
-    throws MalformedURLException,
-    InterruptedException,
-    TimeoutException,
-    ExecutionException {
-
-    JsonObject beforeDueDateNoticeConfiguration = new NoticeConfigurationBuilder()
-      .withTemplateId(beforeTemplateId)
-      .withDueDateEvent()
-      .withBeforeTiming(beforePeriod)
-      .recurring(beforeRecurringPeriod)
-      .sendInRealTime(true)
-      .create();
-    JsonObject uponAtDueDateNoticeConfiguration = new NoticeConfigurationBuilder()
-      .withTemplateId(uponAtTemplateId)
-      .withDueDateEvent()
-      .withUponAtTiming()
-      .sendInRealTime(true)
-      .create();
-    JsonObject afterDueDateNoticeConfiguration = new NoticeConfigurationBuilder()
-      .withTemplateId(afterTemplateId)
-      .withDueDateEvent()
-      .withAfterTiming(afterPeriod)
-      .recurring(afterRecurringPeriod)
-      .sendInRealTime(true)
-      .create();
-
-    NoticePolicyBuilder noticePolicy = new NoticePolicyBuilder()
-      .withName("Policy with due date notices")
-      .withLoanNotices(Arrays.asList(
-        beforeDueDateNoticeConfiguration,
-        uponAtDueDateNoticeConfiguration,
-        afterDueDateNoticeConfiguration));
-    useLoanPolicyAsFallback(
-      loanPoliciesFixture.canCirculateRolling().getId(),
-      requestPoliciesFixture.allowAllRequestPolicy().getId(),
-      noticePoliciesFixture.create(noticePolicy).getId());
-  }
-
-  private void assertSetUpIsCorrect()
-    throws MalformedURLException,
-    InterruptedException,
-    TimeoutException,
-    ExecutionException {
-
-    Awaitility.await()
-      .atMost(1, TimeUnit.SECONDS)
-      .until(scheduledNoticesClient::getAll, hasSize(3));
-
-    checkScheduledNotices(
-      dueDate.minus(beforePeriod.timePeriod()),
-      dueDate,
-      dueDate.plus(afterPeriod.timePeriod()));
-  }
-
-  private void checkScheduledNotices(
-    DateTime beforeNoticeNextRunTime,
-    DateTime uponAtNoticeNextRunTime,
-    DateTime afterNoticeNextRunTime)
-    throws MalformedURLException,
-    InterruptedException,
-    TimeoutException,
-    ExecutionException {
-
-    int numberOfExpectedScheduledNotices = 0;
-    numberOfExpectedScheduledNotices += beforeNoticeNextRunTime != null ? 1 : 0;
-    numberOfExpectedScheduledNotices += uponAtNoticeNextRunTime != null ? 1 : 0;
-    numberOfExpectedScheduledNotices += afterNoticeNextRunTime != null ? 1 : 0;
-
-    List<JsonObject> scheduledNotices = scheduledNoticesClient.getAll();
-
-    assertThat(scheduledNotices, hasSize(numberOfExpectedScheduledNotices));
-    if (beforeNoticeNextRunTime != null) {
-      assertThat(scheduledNotices, hasItems(
-        hasScheduledLoanNotice(
-          loan.getId(), beforeNoticeNextRunTime,
-          BEFORE_TIMING, beforeTemplateId,
-          beforeRecurringPeriod, true)));
-    }
-    if (uponAtNoticeNextRunTime != null) {
-      assertThat(scheduledNotices, hasItems(
-        hasScheduledLoanNotice(
-          loan.getId(), uponAtNoticeNextRunTime,
-          UPON_AT_TIMING, uponAtTemplateId,
-          null, true)));
-    }
-    if (afterNoticeNextRunTime != null) {
-      assertThat(scheduledNotices, hasItems(
-        hasScheduledLoanNotice(
-          loan.getId(), afterNoticeNextRunTime,
-          AFTER_TIMING, afterTemplateId,
-          afterRecurringPeriod, true)));
-    }
-  }
-
-  @SuppressWarnings("unchecked")
-  private void checkSentNotices(UUID... expectedTemplateIds)
-    throws MalformedURLException,
-    InterruptedException,
-    TimeoutException,
-    ExecutionException {
-
-    Map<String, Matcher<String>> noticeContextMatchers = new HashMap<>();
-    noticeContextMatchers.putAll(NoticeMatchers.getUserContextMatchers(borrower));
-    noticeContextMatchers.putAll(NoticeMatchers.getItemContextMatchers(item));
-    noticeContextMatchers.putAll(NoticeMatchers.getLoanContextMatchers(loan, 0));
-    noticeContextMatchers.putAll(NoticeMatchers.getLoanPolicyContextMatchers(
-      loanPoliciesFixture.canCirculateRolling(), 0));
-
-    Matcher[] matchers = Stream.of(expectedTemplateIds)
-      .map(templateId -> hasEmailNoticeProperties(borrower.getId(), templateId, noticeContextMatchers))
-      .toArray(Matcher[]::new);
-
-    List<JsonObject> sentNotices = patronNoticesClient.getAll();
-    assertThat(sentNotices, hasSize(expectedTemplateIds.length));
-    assertThat(sentNotices, hasItems(matchers));
   }
 
   @Test
@@ -368,6 +248,123 @@ public class ScheduledDueDateNoticesProcessingTests extends APITests {
     assertThat(unprocessedScheduledNotices, hasItems(noticesInTheFuture.toArray(new JsonObject[0])));
   }
 
+  private void setUpNoticePolicy()
+    throws MalformedURLException,
+    InterruptedException,
+    TimeoutException,
+    ExecutionException {
+
+    JsonObject beforeDueDateNoticeConfiguration = new NoticeConfigurationBuilder()
+      .withTemplateId(beforeTemplateId)
+      .withDueDateEvent()
+      .withBeforeTiming(beforePeriod)
+      .recurring(beforeRecurringPeriod)
+      .sendInRealTime(true)
+      .create();
+    JsonObject uponAtDueDateNoticeConfiguration = new NoticeConfigurationBuilder()
+      .withTemplateId(uponAtTemplateId)
+      .withDueDateEvent()
+      .withUponAtTiming()
+      .sendInRealTime(true)
+      .create();
+    JsonObject afterDueDateNoticeConfiguration = new NoticeConfigurationBuilder()
+      .withTemplateId(afterTemplateId)
+      .withDueDateEvent()
+      .withAfterTiming(afterPeriod)
+      .recurring(afterRecurringPeriod)
+      .sendInRealTime(true)
+      .create();
+
+    NoticePolicyBuilder noticePolicy = new NoticePolicyBuilder()
+      .withName("Policy with due date notices")
+      .withLoanNotices(Arrays.asList(
+        beforeDueDateNoticeConfiguration,
+        uponAtDueDateNoticeConfiguration,
+        afterDueDateNoticeConfiguration));
+    useLoanPolicyAsFallback(
+      loanPoliciesFixture.canCirculateRolling().getId(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
+      noticePoliciesFixture.create(noticePolicy).getId());
+  }
+
+  private void assertSetUpIsCorrect()
+    throws MalformedURLException,
+    InterruptedException,
+    TimeoutException,
+    ExecutionException {
+
+    Awaitility.await()
+      .atMost(1, TimeUnit.SECONDS)
+      .until(scheduledNoticesClient::getAll, hasSize(3));
+
+    checkScheduledNotices(
+      dueDate.minus(beforePeriod.timePeriod()),
+      dueDate,
+      dueDate.plus(afterPeriod.timePeriod()));
+  }
+
+  private void checkScheduledNotices(
+    DateTime beforeNoticeNextRunTime,
+    DateTime uponAtNoticeNextRunTime,
+    DateTime afterNoticeNextRunTime)
+    throws MalformedURLException,
+    InterruptedException,
+    TimeoutException,
+    ExecutionException {
+
+    int numberOfExpectedScheduledNotices = 0;
+    numberOfExpectedScheduledNotices += beforeNoticeNextRunTime != null ? 1 : 0;
+    numberOfExpectedScheduledNotices += uponAtNoticeNextRunTime != null ? 1 : 0;
+    numberOfExpectedScheduledNotices += afterNoticeNextRunTime != null ? 1 : 0;
+
+    List<JsonObject> scheduledNotices = scheduledNoticesClient.getAll();
+
+    assertThat(scheduledNotices, hasSize(numberOfExpectedScheduledNotices));
+    if (beforeNoticeNextRunTime != null) {
+      assertThat(scheduledNotices, hasItems(
+        hasScheduledLoanNotice(
+          loan.getId(), beforeNoticeNextRunTime,
+          BEFORE_TIMING, beforeTemplateId,
+          beforeRecurringPeriod, true)));
+    }
+    if (uponAtNoticeNextRunTime != null) {
+      assertThat(scheduledNotices, hasItems(
+        hasScheduledLoanNotice(
+          loan.getId(), uponAtNoticeNextRunTime,
+          UPON_AT_TIMING, uponAtTemplateId,
+          null, true)));
+    }
+    if (afterNoticeNextRunTime != null) {
+      assertThat(scheduledNotices, hasItems(
+        hasScheduledLoanNotice(
+          loan.getId(), afterNoticeNextRunTime,
+          AFTER_TIMING, afterTemplateId,
+          afterRecurringPeriod, true)));
+    }
+  }
+
+  @SuppressWarnings("unchecked")
+  private void checkSentNotices(UUID... expectedTemplateIds)
+    throws MalformedURLException,
+    InterruptedException,
+    TimeoutException,
+    ExecutionException {
+
+    Map<String, Matcher<String>> noticeContextMatchers = new HashMap<>();
+    noticeContextMatchers.putAll(NoticeMatchers.getUserContextMatchers(borrower));
+    noticeContextMatchers.putAll(NoticeMatchers.getItemContextMatchers(item));
+    noticeContextMatchers.putAll(NoticeMatchers.getLoanContextMatchers(loan, 0));
+    noticeContextMatchers.putAll(NoticeMatchers.getLoanPolicyContextMatchers(
+      loanPoliciesFixture.canCirculateRolling(), 0));
+
+    Matcher[] matchers = Stream.of(expectedTemplateIds)
+      .map(templateId -> hasEmailNoticeProperties(borrower.getId(), templateId, noticeContextMatchers))
+      .toArray(Matcher[]::new);
+
+    List<JsonObject> sentNotices = patronNoticesClient.getAll();
+    assertThat(sentNotices, hasSize(expectedTemplateIds.length));
+    assertThat(sentNotices, hasItems(matchers));
+  }
 
   private JsonObject createFakeScheduledNotice(DateTime nextRunTime) {
     return new JsonObject()
