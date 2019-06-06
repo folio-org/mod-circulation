@@ -449,7 +449,7 @@ content-length: 230
       "requestDate": "2017-08-05T11:43:23Z",
       "requesterId": "61d939e4-f2ae-4c53-95d2-224a802fa2a6",
       "itemId": "3e5d5433-a271-499c-94f4-5f3e4652e537",
-      "fulfilmentPreference": "Delivery",
+      "fulfilmentPreference": "Hold Shelf",
       "requestExpirationDate": "2017-08-31T22:25:37Z",
       "holdShelfExpirationDate": "2017-09-01T22:25:37Z",
       "position": 1,
