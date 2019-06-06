@@ -27,8 +27,8 @@ public class RequestRepository {
   private final ServicePointRepository servicePointRepository;
   private final PatronGroupRepository patronGroupRepository;
   private final LibrariesRepository librariesRepository;
-  
 
+  @SuppressWarnings("squid:S00107")
   private RequestRepository(
     CollectionResourceClient requestsStorageClient,
     CollectionResourceClient cancellationReasonStorageClient,

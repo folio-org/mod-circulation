@@ -23,12 +23,4 @@ public class Library {
   public String getName() {
     return getProperty(representation, "name");
   }
-
-  public String getCode() {
-    return getProperty(representation, "code");
-  }
-
-  public String getCampusId() {
-    return getProperty(representation, "campusId");
-  }
 }

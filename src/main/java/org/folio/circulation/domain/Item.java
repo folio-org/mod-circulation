@@ -230,8 +230,8 @@ public class Item {
     }
   }
 
-  public String getLibraryId(){
-    return  getProperty(getLocation(),"libraryId");
+  public String getLibraryId() {
+    return getProperty(getLocation(), "libraryId");
   }
 
   public String getEnumeration() {
