@@ -24,15 +24,12 @@ import io.vertx.core.json.JsonObject;
 public class ItemByInstanceIdFinder {
 
   private final CollectionResourceClient holdingsStorageClient;
-  private final CollectionResourceClient itemsStorageClient;
   private final ItemRepository itemRepository;
 
   public ItemByInstanceIdFinder(CollectionResourceClient holdingsStorageClient,
-                                CollectionResourceClient itemsStorageClient,
                                 ItemRepository itemRepository) {
 
     this.holdingsStorageClient = holdingsStorageClient;
-    this.itemsStorageClient = itemsStorageClient;
     this.itemRepository = itemRepository;
   }
 

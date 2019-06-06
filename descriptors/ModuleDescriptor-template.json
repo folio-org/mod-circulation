@@ -692,7 +692,67 @@
           "permissionsRequired": [
             "circulation.requests.instances.item.post"
           ],
-          "modulePermissions": []
+          "modulePermissions": [
+            "circulation-storage.requests.item.post",
+            "inventory-storage.items.item.put",
+            "circulation-storage.requests.collection.get",
+            "circulation-storage.requests.item.get",
+            "circulation-storage.loans.item.put",
+            "circulation-storage.loans.collection.get",
+            "inventory-storage.items.item.get",
+            "inventory-storage.items.collection.get",
+            "inventory-storage.holdings.collection.get",
+            "inventory-storage.holdings.item.get",
+            "inventory-storage.instances.collection.get",
+            "inventory-storage.instances.item.get",
+            "inventory-storage.locations.collection.get",
+            "inventory-storage.locations.item.get",
+            "inventory-storage.service-points.collection.get",
+            "inventory-storage.service-points.item.get",
+            "users.item.get",
+            "users.collection.get",
+            "usergroups.collection.get",
+            "usergroups.item.get",
+            "proxiesfor.collection.get",
+            "circulation.rules.notice-policy.get",
+            "circulation-storage.patron-notice-policies.item.get",
+            "patron-notice.post",
+            "inventory-storage.loan-types.item.get",
+            "calendar.collection.get"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "_timer",
+      "version": "1.0",
+      "interfaceType": "system",
+      "handlers": [
+        {
+          "methods": [
+            "POST"
+          ],
+          "pathPattern": "/circulation/scheduled-notices-processing",
+          "modulePermissions": [
+            "scheduled-notice-storage.scheduled-notices.collection.get",
+            "scheduled-notice-storage.scheduled-notices.item.delete",
+            "scheduled-notice-storage.scheduled-notices.item.put",
+            "circulation-storage.loans.item.get",
+            "circulation-storage.loan-policies.item.get",
+            "inventory-storage.items.item.get",
+            "inventory-storage.locations.item.get",
+            "inventory-storage.material-types.item.get",
+            "inventory-storage.holdings.item.get",
+            "inventory-storage.loan-types.item.get",
+            "inventory-storage.service-points.item.get",
+            "inventory-storage.instances.item.get",
+            "circulation.rules.loan-policy.get",
+            "configuration.entries.collection.get",
+            "patron-notice.post",
+            "users.item.get"
+          ],
+          "unit": "minute",
+          "delay": "5"
         }
       ]
     }

@@ -525,7 +525,7 @@ public class ResourceClient {
 
     CompletableFuture<Response> getFinished = new CompletableFuture<>();
 
-    client.get(urlMaker.combine(""),
+    client.get(urlMaker.combine("?limit=1000"),
       ResponseHandler.any(getFinished));
 
     Response response = getFinished.get(5, TimeUnit.SECONDS);

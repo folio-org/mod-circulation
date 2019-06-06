@@ -94,8 +94,7 @@ public class RequestByInstanceIdResource extends Resource {
     final RequestByInstanceIdRequest requestByInstanceIdRequest =
       requestByInstanceIdRequestResult.value();
 
-    final ItemByInstanceIdFinder finder = new ItemByInstanceIdFinder(clients.holdingsStorage(),
-      clients.itemsStorage(), itemRepository);
+    final ItemByInstanceIdFinder finder = new ItemByInstanceIdFinder(clients.holdingsStorage(), itemRepository);
 
     final InstanceRequestRelatedRecords requestRelatedRecords = new InstanceRequestRelatedRecords();
     requestRelatedRecords.setRequestByInstanceIdRequest(requestByInstanceIdRequest);
@@ -109,10 +108,7 @@ public class RequestByInstanceIdResource extends Resource {
       .thenApply(r -> r.map(RequestAndRelatedRecords::getRequest))
       .thenApply(r -> r.map(new RequestRepresentation()::extendedRepresentation))
       .thenApply(CreatedJsonResponseResult::from)
-      .thenAccept(result -> result.writeTo(routingContext.response()))
-      .exceptionally( err -> {
-          log.error("Error processing title-level request", err);
-          return null;});
+      .thenAccept(result -> result.writeTo(routingContext.response()));
   }
 
   private CompletableFuture<Result<RequestAndRelatedRecords>> placeRequests(List<JsonObject> itemRequestRepresentations,
@@ -161,7 +157,7 @@ public class RequestByInstanceIdResource extends Resource {
           if (r.succeeded()) {
             return CompletableFuture.completedFuture(r);
           } else {
-            log.debug("Failed to create request for " + currentItemRequest.getString("id"));
+            log.debug("Failed to create request for {}", currentItemRequest.getString("id"));
             return placeRequest(itemRequests, startIndex +1, createRequestService, clients, loanRepository);
           }
         });

@@ -56,6 +56,9 @@ public class JsonScheduledNoticeMapper {
   }
 
   private static Result<Period> getPeriod(JsonObject jsonObject) {
+    if (jsonObject == null) {
+      return succeeded(null);
+    }
     return Period.from(jsonObject,
       () -> getParsingFailure("the loan period is not recognised"),
       interval -> getParsingFailure(format("the interval \"%s\" is not recognised", interval)),
@@ -72,7 +75,7 @@ public class JsonScheduledNoticeMapper {
       .put(LOAN_ID, notice.getLoanId())
       .put(REQUEST_ID, notice.getRequestId())
       .put(NEXT_RUN_TIME, notice.getNextRunTime().withZone(DateTimeZone.UTC).toString())
-      .put(NOTICE_CONFIG, mapConfigToJson(notice.getNoticeConfig()));
+      .put(NOTICE_CONFIG, mapConfigToJson(notice.getConfiguration()));
   }
 
   private static JsonObject mapConfigToJson(ScheduledNoticeConfig config) {
