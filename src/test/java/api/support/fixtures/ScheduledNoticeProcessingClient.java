@@ -10,7 +10,7 @@ import org.joda.time.DateTimeUtils;
 import api.support.APITestContext;
 import io.vertx.core.json.JsonObject;
 
-public class ScheduledNoticeProcessingTimerClient {
+public class ScheduledNoticeProcessingClient {
 
   public void runNoticesProcessing(DateTime mockSystemTime) {
     DateTimeUtils.setCurrentMillisFixed(mockSystemTime.getMillis());

@@ -66,7 +66,7 @@ public class ScheduledNoticesRepository {
     return scheduledNoticesStorageClient.getMany(cqlQuery, pageLimit)
       .thenApply(r -> r.next(response ->
         MultipleRecords.from(response, Function.identity(), "scheduledNotices")))
-      .thenApply(r -> r.next(records -> records.map(JsonScheduledNoticeMapper::mapFromJson)));
+      .thenApply(r -> r.next(records -> records.flatMapRecords(JsonScheduledNoticeMapper::mapFromJson)));
   }
 
   public CompletableFuture<Result<ScheduledNotice>> update(ScheduledNotice scheduledNotice) {

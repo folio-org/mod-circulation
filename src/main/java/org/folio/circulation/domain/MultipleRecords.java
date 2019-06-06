@@ -114,7 +114,7 @@ public class MultipleRecords<T> {
     return totalRecords;
   }
 
-  public <R> Result<MultipleRecords<R>> map(Function<T, Result<R>> mapper) {
+  public <R> Result<MultipleRecords<R>> flatMapRecords(Function<T, Result<R>> mapper) {
     List<Result<R>> mappedRecordsList = records.stream()
       .map(mapper).collect(Collectors.toList());
 
