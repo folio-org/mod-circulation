@@ -81,7 +81,7 @@ public class ScheduledDueDateNoticeHandler {
     LoanAndRelatedRecords relatedRecords, ScheduledNotice notice) {
     Loan loan = relatedRecords.getLoan();
 
-    if (loan.isClosed() || beforeNoticeInNotRelevant(notice, loan)) {
+    if (loan.isClosed() || beforeNoticeIsNotRelevant(notice, loan)) {
       return completedFuture(succeeded(relatedRecords));
     }
 
@@ -118,7 +118,7 @@ public class ScheduledDueDateNoticeHandler {
     return scheduledNoticesRepository.update(nextRecurringNotice);
   }
 
-  private boolean beforeNoticeInNotRelevant(ScheduledNotice notice, Loan loan) {
+  private boolean beforeNoticeIsNotRelevant(ScheduledNotice notice, Loan loan) {
     ScheduledNoticeConfig noticeConfig = notice.getConfiguration();
 
     return noticeConfig.getTiming() == NoticeTiming.BEFORE &&
