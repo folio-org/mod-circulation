@@ -19,6 +19,7 @@ import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -210,21 +211,14 @@ public class ScheduledDueDateNoticesProcessingTests extends APITests {
 
     DateTime systemTime = DateTime.now(DateTimeZone.UTC);
     int expectedNumberOfUnprocessedNoticesInThePast = 10;
+    int numberOfNoticesInThePast =
+      SCHEDULED_NOTICES_PROCESSING_LIMIT + expectedNumberOfUnprocessedNoticesInThePast;
     int numberOfNoticesInTheFuture = 20;
 
-    List<JsonObject> noticesInThePast = IntStream.iterate(0, i -> i + 1)
-      .boxed()
-      .map(systemTime::minusHours)
-      .map(this::createFakeScheduledNotice)
-      .limit(SCHEDULED_NOTICES_PROCESSING_LIMIT + expectedNumberOfUnprocessedNoticesInThePast)
-      .collect(Collectors.toList());
-
-    List<JsonObject> noticesInTheFuture = IntStream.iterate(0, i -> i + 1)
-      .boxed()
-      .map(systemTime::plusHours)
-      .map(this::createFakeScheduledNotice)
-      .limit(numberOfNoticesInTheFuture)
-      .collect(Collectors.toList());
+    List<JsonObject> noticesInThePast =
+      createNoticesOverTime(systemTime::minusHours, numberOfNoticesInThePast);
+    List<JsonObject> noticesInTheFuture =
+      createNoticesOverTime(systemTime::plusHours, numberOfNoticesInTheFuture);
 
     List<JsonObject> allScheduledNotices = new ArrayList<>(noticesInThePast);
     allScheduledNotices.addAll(noticesInTheFuture);
@@ -364,6 +358,17 @@ public class ScheduledDueDateNoticesProcessingTests extends APITests {
     List<JsonObject> sentNotices = patronNoticesClient.getAll();
     assertThat(sentNotices, hasSize(expectedTemplateIds.length));
     assertThat(sentNotices, hasItems(matchers));
+  }
+
+  private List<JsonObject> createNoticesOverTime(
+    Function<Integer, DateTime> timeOffset, int numberOfNotices) {
+
+    return IntStream.iterate(0, i -> i + 1)
+      .boxed()
+      .map(timeOffset)
+      .map(this::createFakeScheduledNotice)
+      .limit(numberOfNotices)
+      .collect(Collectors.toList());
   }
 
   private JsonObject createFakeScheduledNotice(DateTime nextRunTime) {
