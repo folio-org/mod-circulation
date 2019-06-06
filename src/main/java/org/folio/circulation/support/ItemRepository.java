@@ -41,7 +41,6 @@ public class ItemRepository {
   private final LocationRepository locationRepository;
   private final MaterialTypeRepository materialTypeRepository;
   private final ServicePointRepository servicePointRepository;
-  private final RequestRepository requestRepository;
   private final boolean fetchLocation;
   private final boolean fetchMaterialType;
   private final boolean fetchLoanType;
@@ -61,7 +60,6 @@ public class ItemRepository {
       new LocationRepository(clients),
       new MaterialTypeRepository(clients),
       new ServicePointRepository(clients),
-      RequestRepository.using(clients),
       fetchLocation, fetchMaterialType, fetchLoanType);
   }
 
@@ -73,7 +71,6 @@ public class ItemRepository {
     LocationRepository locationRepository,
     MaterialTypeRepository materialTypeRepository,
     ServicePointRepository servicePointRepository,
-    RequestRepository requestRepository,
     boolean fetchLocation,
     boolean fetchMaterialType,
     boolean fetchLoanType) {
@@ -85,7 +82,6 @@ public class ItemRepository {
     this.locationRepository = locationRepository;
     this.materialTypeRepository = materialTypeRepository;
     this.servicePointRepository = servicePointRepository;
-    this.requestRepository = requestRepository;
     this.fetchLocation = fetchLocation;
     this.fetchMaterialType = fetchMaterialType;
     this.fetchLoanType = fetchLoanType;
@@ -135,12 +131,6 @@ public class ItemRepository {
   public CompletableFuture<Result<Item>> fetchById(String itemId) {
     return fetchItem(itemId)
       .thenComposeAsync(this::fetchItemRelatedRecords);
-  }
-
-  public CompletableFuture<Result<Item>> fetchByRequestId(String requestId) {
-    return requestRepository.getById(requestId)
-      .thenApply(r -> r.map(Request::getItemId))
-      .thenComposeAsync(r -> r.after(this::fetchById));
   }
 
   private CompletableFuture<Result<Collection<Item>>> fetchLocations(

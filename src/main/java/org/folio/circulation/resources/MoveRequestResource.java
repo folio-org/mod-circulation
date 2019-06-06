@@ -41,7 +41,6 @@ public class MoveRequestResource extends Resource {
     final String requestId = context.getStringParameter("id", "");
     final String destinationItemId = representation.getString("destinationItemId");
     final String requestStatus = representation.getString("requestStatus");
-
     final Clients clients = Clients.create(context, client);
 
     final ItemRepository itemRepository = new ItemRepository(clients, true, true, true);
@@ -54,12 +53,13 @@ public class MoveRequestResource extends Resource {
 
     completedFuture(succeeded(moveRequestRecords))
       .thenCombineAsync(requestRepository.getById(requestId), this::addRequest)
-      .thenCombineAsync(itemRepository.fetchByRequestId(requestId), this::addOriginalItem)
+      .thenCombineAsync(requestRepository.getItem(requestId), this::addOriginalItem)
       .thenCombineAsync(itemRepository.fetchById(destinationItemId), this::addDestinationItem)
       .thenCombineAsync(requestQueueRepository.getByRequestId(requestId), this::addOriginalQueue)
       .thenCombineAsync(requestQueueRepository.get(destinationItemId), this::addDestinationQueue)
       .thenApply(this::updateRequestItem)
       .thenCombineAsync(completedFuture(succeeded(requestStatus)), this::updateRequestStatus)
+//    Gets the request from MoveRequestRecords
       .thenApply(this::getRequest)
 //    Converts the request to JSON for output
       .thenApply(r -> r.map(new RequestRepresentation()::extendedRepresentation))
