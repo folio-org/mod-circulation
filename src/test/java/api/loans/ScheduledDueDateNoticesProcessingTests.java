@@ -133,7 +133,7 @@ public class ScheduledDueDateNoticesProcessingTests extends APITests {
   }
 
   @Test
-  public void beforeAndUponAtNoticesShouldBeSentWhenProcessingJustAfterDueDate()
+  public void uponAtNoticeShouldBeSentWhenProcessingJustAfterDueDate()
     throws MalformedURLException,
     InterruptedException,
     TimeoutException,
@@ -142,7 +142,7 @@ public class ScheduledDueDateNoticesProcessingTests extends APITests {
     DateTime justAfterDueDateTime = dueDate.plusSeconds(1);
     scheduledNoticeProcessingClient.runNoticesProcessing(justAfterDueDateTime);
 
-    checkSentNotices(beforeTemplateId, uponAtTemplateId);
+    checkSentNotices(uponAtTemplateId);
 
     checkScheduledNotices(
       null,
