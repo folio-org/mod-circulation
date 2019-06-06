@@ -2,6 +2,7 @@ package org.folio.circulation.domain;
 
 import java.lang.invoke.MethodHandles;
 
+import org.folio.circulation.domain.policy.LoanPolicy;
 import org.folio.circulation.domain.representations.ItemSummaryRepresentation;
 import org.folio.circulation.domain.representations.LoanProperties;
 import org.slf4j.Logger;
@@ -34,6 +35,12 @@ public class LoanRepresentation {
       extendedRepresentation.remove(LoanProperties.BORROWER);
     }
 
+    if (loan.getLoanPolicy() != null) {
+      additionalLoanPolicyProperties(extendedRepresentation, loan.getLoanPolicy());
+    }else{
+      extendedRepresentation.remove(LoanProperties.LOAN_POLICY);
+    }
+
     return extendedRepresentation;
   }
 
@@ -54,8 +61,22 @@ public class LoanRepresentation {
 
     return loan;
   }
+
+  private void additionalLoanPolicyProperties(JsonObject loanRepresentation, LoanPolicy loanPolicy) {
+    if (loanPolicy == null) {
+      log.info("Unable to add loan policy properties to loan {}," + " loanPolicy is null", loanRepresentation.getString("id"));
+      return;
+    }
+    JsonObject loanPolicySummary = loanRepresentation.containsKey(LoanProperties.LOAN_POLICY)
+        ? loanRepresentation.getJsonObject(LoanProperties.LOAN_POLICY)
+        : new JsonObject();
+
+    loanPolicySummary.put("loanPolicyName", loanPolicy.getName());
+
+    loanRepresentation.put(LoanProperties.LOAN_POLICY, loanPolicySummary);
+  }
   
-  private static void addAdditionalServicePointProperties(
+  private void addAdditionalServicePointProperties(
     JsonObject loanRepresentation,
     ServicePoint servicePoint,
     String fieldName) {

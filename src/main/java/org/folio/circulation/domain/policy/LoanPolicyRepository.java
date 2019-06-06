@@ -1,5 +1,6 @@
 package org.folio.circulation.domain.policy;
 
+import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.ResultBinding.mapResult;
 
@@ -7,12 +8,16 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
+import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
+import org.folio.circulation.support.FetchSingleRecord;
 import org.folio.circulation.support.MultipleRecordFetcher;
 import org.folio.circulation.support.Result;
 
@@ -21,10 +26,12 @@ import io.vertx.core.json.JsonObject;
 public class LoanPolicyRepository extends CirculationPolicyRepository<LoanPolicy> {
 
   private final CollectionResourceClient fixedDueDateSchedulesStorageClient;
+  private final CollectionResourceClient loanPoliciesClient;
 
   public LoanPolicyRepository(Clients clients) {
     super(clients.circulationLoanRules(), clients.loanPoliciesStorage());
     this.fixedDueDateSchedulesStorageClient = clients.fixedDueDateSchedules();
+    this.loanPoliciesClient = clients.loanPoliciesStorage();
   }
 
   public CompletableFuture<Result<LoanAndRelatedRecords>> lookupLoanPolicy(
@@ -32,6 +39,50 @@ public class LoanPolicyRepository extends CirculationPolicyRepository<LoanPolicy
 
     return lookupPolicy(relatedRecords.getLoan())
       .thenApply(result -> result.map(relatedRecords::withLoanPolicy));
+  }
+
+  public CompletableFuture<Result<Loan>> findPolicyForLoan(Result<Loan> loanResult) {
+    return loanResult.after(loan -> {
+      final LoanPolicy loanPolicy = loan.getLoanPolicy();
+      if (loanPolicy != null) {
+        return completedFuture(loanResult);
+      }
+      return getLoanPolicyByID(loan.getLoanPolicyId())
+              .thenApply(lpResult -> lpResult.map(loan::withLoanPolicy));
+    });
+  }
+
+  private CompletableFuture<Result<LoanPolicy>> getLoanPolicyByID(String loanPolicyId) {
+    return FetchSingleRecord.<LoanPolicy>forRecord("loansPolicy")
+            .using(loanPoliciesClient)
+            .mapTo(LoanPolicy::from)
+            .whenNotFound(succeeded(null))
+            .fetch(loanPolicyId);
+  }
+
+  public CompletableFuture<Result<MultipleRecords<Loan>>> findLoanPoliciesForLoans(MultipleRecords<Loan> multipleLoans) {
+
+    Collection<Loan> loans = multipleLoans.getRecords();
+
+    return getLoanPolicies(loans).thenApply(r -> r
+      .map(loanPolicies -> multipleLoans.mapRecords(loan -> loan.withLoanPolicy(loanPolicies.getOrDefault(loan.getLoanPolicyId(), null)))));
+  }
+
+  private CompletableFuture<Result<Map<String, LoanPolicy>>> getLoanPolicies(Collection<Loan> loans) {
+
+    final Collection<String> loansToFetch = loans.stream()
+            .map(Loan::getLoanPolicyId)
+            .filter(Objects::nonNull)
+            .collect(Collectors.toSet());
+
+    final MultipleRecordFetcher<LoanPolicy> fetcher = createLoanPoliciesFetcher();
+
+    return fetcher.findByIds(loansToFetch)
+      .thenApply(mapResult(r -> r.toMap(LoanPolicy::getId)));
+  }
+
+  private MultipleRecordFetcher<LoanPolicy> createLoanPoliciesFetcher() {
+    return new MultipleRecordFetcher<>(loanPoliciesClient, "loanPolicies", LoanPolicy::from);
   }
 
   @Override

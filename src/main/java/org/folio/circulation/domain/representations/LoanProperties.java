@@ -14,4 +14,5 @@ public class LoanProperties {
   public static final String CHECKOUT_SERVICE_POINT_ID = "checkoutServicePointId";
   public static final String ACTION_COMMENT = "actionComment";
   public static final String BORROWER = "borrower";
+  public static final String LOAN_POLICY = "loanPolicy";
 }

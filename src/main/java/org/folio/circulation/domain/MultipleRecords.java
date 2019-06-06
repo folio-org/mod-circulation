@@ -87,7 +87,7 @@ public class MultipleRecords<T> {
    * @return new multiple records collection with mapped records
    * and same total record count
    */
-   <R> MultipleRecords<R> mapRecords(Function<T, R> mapper) {
+  public <R> MultipleRecords<R> mapRecords(Function<T, R> mapper) {
     return new MultipleRecords<>(
       getRecords().stream().map(mapper).collect(Collectors.toList()),
         getTotalRecords());

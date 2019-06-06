@@ -323,7 +323,7 @@ public class LoanPolicy {
     return loansPolicy.getString("profileId");
   }
 
-  private String getName() {
+  public String getName() {
     return representation.getString("name");
   }
 
