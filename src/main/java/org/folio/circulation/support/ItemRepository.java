@@ -42,7 +42,7 @@ public class ItemRepository {
   private final boolean fetchMaterialType;
   private final boolean fetchLoanType;
 
-  private static final String ITEMS_FIELD = "items";
+  private static final String ITEMS_COLLECTION_PROPERTY_NAME = "items";
 
   public ItemRepository(
     Clients clients,
@@ -215,7 +215,7 @@ public class ItemRepository {
     Collection<String> itemIds) {
 
     final MultipleRecordFetcher<Item> fetcher
-      = new MultipleRecordFetcher<>(itemsClient, ITEMS_FIELD, Item::from);
+      = new MultipleRecordFetcher<>(itemsClient, ITEMS_COLLECTION_PROPERTY_NAME , Item::from);
 
     return fetcher.findByIds(itemIds)
       .thenApply(r -> r.map(MultipleRecords::getRecords));
@@ -238,7 +238,7 @@ public class ItemRepository {
   }
 
   private Result<JsonObject> mapMultipleToResult(Response response) {
-    return MultipleRecords.from(response, identity(), ITEMS_FIELD)
+    return MultipleRecords.from(response, identity(), ITEMS_COLLECTION_PROPERTY_NAME )
       .map(items -> items.getRecords().stream().findFirst().orElse(null));
   }
 
@@ -289,7 +289,7 @@ public class ItemRepository {
 
   public CompletableFuture<Result<Collection<Item>>> findByQuery(Result<CqlQuery> queryResult) {
     MultipleRecordFetcher<Item> fetcher
-      = new MultipleRecordFetcher<>(itemsClient, ITEMS_FIELD, Item::from);
+      = new MultipleRecordFetcher<>(itemsClient, ITEMS_COLLECTION_PROPERTY_NAME , Item::from);
 
     return fetcher.findByQuery(queryResult)
       .thenApply(mapResult(MultipleRecords::getRecords))
