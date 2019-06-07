@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -74,6 +75,13 @@ public class MultipleRecords<T> {
       wrappedRecords, totalRecords));
   }
 
+  public <R> List<R> toKeys(Function<T, R> keyMapper) {
+    return getRecords().stream()
+      .map(keyMapper)
+      .filter(Objects::nonNull)
+      .collect(Collectors.toList());
+  }
+
   public Map<String, T> toMap(Function<T, String> keyMapper) {
     return getRecords().stream().collect(
       Collectors.toMap(keyMapper, identity()));
@@ -91,6 +99,14 @@ public class MultipleRecords<T> {
     return new MultipleRecords<>(
       getRecords().stream().map(mapper).collect(Collectors.toList()),
         getTotalRecords());
+  }
+
+  public <R> Result<MultipleRecords<R>> flatMapRecords(Function<T, Result<R>> mapper) {
+    List<Result<R>> mappedRecordsList = records.stream()
+      .map(mapper).collect(Collectors.toList());
+
+    Result<List<R>> combinedResult = Result.combineAll(mappedRecordsList);
+    return combinedResult.map(list -> new MultipleRecords<>(list, totalRecords));
   }
 
   public JsonObject asJson(
@@ -112,5 +128,9 @@ public class MultipleRecords<T> {
 
   public Integer getTotalRecords() {
     return totalRecords;
+  }
+
+  public boolean isEmpty() {
+    return records.isEmpty();
   }
 }

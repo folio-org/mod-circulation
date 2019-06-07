@@ -4,19 +4,21 @@ import java.lang.invoke.MethodHandles;
 
 import org.folio.circulation.resources.CheckInByBarcodeResource;
 import org.folio.circulation.resources.CheckOutByBarcodeResource;
-import org.folio.circulation.resources.RegularCheckOutStrategy;
 import org.folio.circulation.resources.CirculationRulesResource;
 import org.folio.circulation.resources.LoanCirculationRulesEngineResource;
 import org.folio.circulation.resources.LoanCollectionResource;
 import org.folio.circulation.resources.NoticeCirculationRulesEngineResource;
 import org.folio.circulation.resources.OverrideCheckOutStrategy;
 import org.folio.circulation.resources.OverrideRenewalByBarcodeResource;
+import org.folio.circulation.resources.RegularCheckOutStrategy;
 import org.folio.circulation.resources.RenewByBarcodeResource;
 import org.folio.circulation.resources.RenewByIdResource;
+import org.folio.circulation.resources.RequestByInstanceIdResource;
 import org.folio.circulation.resources.RequestCirculationRulesEngineResource;
 import org.folio.circulation.resources.RequestCollectionResource;
 import org.folio.circulation.resources.RequestHoldShelfClearanceResource;
 import org.folio.circulation.resources.RequestQueueResource;
+import org.folio.circulation.resources.ScheduledNoticeProcessingResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -55,6 +57,7 @@ public class CirculationVerticle extends AbstractVerticle {
     new LoanCollectionResource(client).register(router);
     new RequestCollectionResource(client).register(router);
     new RequestQueueResource(client).register(router);
+    new RequestByInstanceIdResource(client).register(router);
     new OverrideRenewalByBarcodeResource(client).register(router);
 
     new RequestHoldShelfClearanceResource("/circulation/requests-reports/hold-shelf-clearance/:servicePointId", client)
@@ -76,6 +79,9 @@ public class CirculationVerticle extends AbstractVerticle {
       "/circulation/rules/notice-policy-all",
         client)
         .register(router);
+
+    new ScheduledNoticeProcessingResource(client).register(router);
+
 
     server.requestHandler(router::accept)
       .listen(config().getInteger("port"), result -> {

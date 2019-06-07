@@ -31,7 +31,7 @@ class RequestFromRepresentationService {
   private final ServicePointRepository servicePointRepository;
   private final ProxyRelationshipValidator proxyRelationshipValidator;
   private final ServicePointPickupLocationValidator servicePointPickupLocationValidator;
-  
+
 
   RequestFromRepresentationService(
     ItemRepository itemRepository,

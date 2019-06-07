@@ -129,6 +129,10 @@ public class CollectionResourceClient {
   public CompletableFuture<Result<Response>> getMany(
     CqlQuery cqlQuery, Integer pageLimit) {
 
+    if (pageLimit == null) {
+      return getManyNoLimit(cqlQuery);
+    }
+
     return cqlQuery.encode().after(encodedQuery -> {
         final CompletableFuture<Response> future = new CompletableFuture<>();
 
@@ -138,6 +142,19 @@ public class CollectionResourceClient {
 
         return future.thenApply(Result::succeeded);
       });
+  }
+
+  public CompletableFuture<Result<Response>> getManyNoLimit(CqlQuery cqlQuery) {
+
+    return cqlQuery.encode().after(encodedQuery -> {
+      final CompletableFuture<Response> future = new CompletableFuture<>();
+
+      String url = collectionRoot + createQueryString(encodedQuery, null, 0);
+
+      client.get(url, responseConversationHandler(future::complete));
+
+      return future.thenApply(Result::succeeded);
+    });
   }
 
   public CompletableFuture<Result<Response>> getMany(

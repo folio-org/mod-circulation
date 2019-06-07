@@ -4,7 +4,6 @@ import static java.lang.String.format;
 import static java.lang.String.join;
 import static java.lang.String.valueOf;
 import static java.util.stream.Collectors.toList;
-
 import static org.folio.circulation.support.CqlSortBy.none;
 import static org.folio.circulation.support.Result.failed;
 import static org.folio.circulation.support.Result.of;
@@ -48,6 +47,10 @@ public class CqlQuery {
 
     return Result.of(() -> new CqlQuery(
       format("%s==(%s)", indexName, join(" or ", wrapValuesInQuotes(filteredValues))), none()));
+  }
+
+  public static Result<CqlQuery> lessThan(String index, Object value) {
+    return Result.of(() -> new CqlQuery(format("%s<\"%s\"", index, value), none()));
   }
 
   private static List<String> filterNullValues(Collection<String> values) {
