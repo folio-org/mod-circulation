@@ -272,7 +272,9 @@ public class RequestByInstanceIdResource extends Resource {
           }
         }
 
-        if (failedQueuesItemList.size() == requestQueueFutures.size()) {
+        if (failedQueuesItemList.size() == requestQueueFutures.size()
+            && (records.getSortedAvailableItems() == null || records.getSortedAvailableItems().size() == 0)) {
+          //fail the requests when there are no items to make requests from.
           log.error("Failed to find request queues for all items of instanceId {}",
                         unsortedUnavailableItems.get(0).getInstanceId());
           return failed(new ServerErrorFailure("Unable to find an item to place a request"));
@@ -283,7 +285,7 @@ public class RequestByInstanceIdResource extends Resource {
         LinkedList<Item> finalOrdedList = new LinkedList<>();
 
         finalOrdedList.addAll(sortedMap.keySet());
-        //put the items that weren't able to retrieve RequestQueus for on the bottom of the listt
+        //put the items that weren't able to retrieve RequestQueues for on the bottom of the list
         finalOrdedList.addAll(failedQueuesItemList);
 
         records.setSortedUnavailableItems(finalOrdedList);

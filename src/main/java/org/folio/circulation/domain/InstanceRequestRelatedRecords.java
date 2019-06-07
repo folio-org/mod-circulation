@@ -33,6 +33,10 @@ public class InstanceRequestRelatedRecords {
     this.sortedAvailableItems = sortedAvailableItems;
   }
 
+  public List<Item> getSortedAvailableItems() {
+    return sortedAvailableItems;
+  }
+
   public void setSortedUnavailableItems(List<Item> sortedUnavailableItems) {
     this.sortedUnavailableItems = sortedUnavailableItems;
   }
