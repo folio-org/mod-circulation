@@ -1,4 +1,4 @@
-package api.requests;
+package org.folio.circulation.domain.representations;
 
 import static org.junit.Assert.assertTrue;
 
