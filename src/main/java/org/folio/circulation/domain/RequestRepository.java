@@ -74,7 +74,7 @@ public class RequestRepository {
         itemRepository.fetchItemsFor(requests, Request::withItem));
   }
 
-  CompletableFuture<Result<MultipleRecords<Request>>> findByLite(
+  CompletableFuture<Result<MultipleRecords<Request>>> findByWithoutItems(
     CqlQuery query, Integer pageLimit) {
 
     return requestsStorageClient.getMany(query, pageLimit)

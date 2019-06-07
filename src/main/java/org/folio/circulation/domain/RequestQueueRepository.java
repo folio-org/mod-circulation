@@ -48,7 +48,7 @@ public class RequestQueueRepository {
       .thenApply(r -> r.map(RequestQueue::new));
   }
 
-  public CompletableFuture<Result<RequestQueue>> getLiteRequestQueues(String itemId) {
+  public CompletableFuture<Result<RequestQueue>> getRequestQueueWithoutItemLookup(String itemId) {
     final Result<CqlQuery> itemIdQuery = exactMatch("itemId", itemId);
     final Result<CqlQuery> statusQuery = exactMatchAny("status", RequestStatus.openStates());
 
@@ -56,7 +56,7 @@ public class RequestQueueRepository {
 
     return itemIdQuery.combine(statusQuery, CqlQuery::and)
       .map(q -> q.sortBy(ascending("position")))
-      .after(query -> requestRepository.findByLite(query, maximumSupportedRequestQueueSize))
+      .after(query -> requestRepository.findByWithoutItems(query, maximumSupportedRequestQueueSize))
       .thenApply(r -> r.map(MultipleRecords::getRecords))
       .thenApply(r -> r.map(RequestQueue::new));
   }

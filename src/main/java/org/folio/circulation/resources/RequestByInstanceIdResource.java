@@ -8,15 +8,13 @@ import static org.folio.circulation.support.ValidationErrorFailure.failedValidat
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 
 import java.lang.invoke.MethodHandles;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
@@ -111,10 +109,11 @@ public class RequestByInstanceIdResource extends Resource {
       .thenApply(CreatedJsonResponseResult::from)
       .thenAccept(result -> result.writeTo(routingContext.response()))
       .exceptionally( err -> {
-        String reason = "Error processing title-level request";
-        log.error(reason, err);
-        ServerErrorResponse.internalError(routingContext.response(), reason);
-        return null;});
+          String reason = "Error processing title-level request";
+          log.error(reason, err);
+          ServerErrorResponse.internalError(routingContext.response(), reason);
+          return null;
+      });
   }
 
   private CompletableFuture<Result<RequestAndRelatedRecords>> placeRequests(List<JsonObject> itemRequestRepresentations,
@@ -175,19 +174,15 @@ public class RequestByInstanceIdResource extends Resource {
     final UUID pickupServicePointId = record.getRequestByInstanceIdRequest().getPickupServicePointId();
 
     return of(() -> {
-      List<Item> itemsAtLocationServedByPickupPoint = unsortedAvailableItems.stream()
-        .filter(item -> item.homeLocationIsServedBy(pickupServicePointId))
-        .collect(Collectors.toList());
 
-      List<Item> itemsNotAtLocationServedByPickupPoint = unsortedAvailableItems.stream()
-        .filter(item -> !item.homeLocationIsServedBy(pickupServicePointId))
-        .collect(Collectors.toList());
+      Map<Boolean, List<Item>> itemsPartitionedByLocationServedByPickupPoint = unsortedAvailableItems.stream()
+        .collect(Collectors.partitioningBy(i -> i.homeLocationIsServedBy(pickupServicePointId)));
 
-      final ArrayList<Item> rankedItems = new ArrayList<>();
+      final List<Item> rankedItems = new LinkedList<>();
 
       //Compose the final list of Items with the matchingItems (items that has matching service pointID) on top.
-      rankedItems.addAll(itemsAtLocationServedByPickupPoint);
-      rankedItems.addAll(itemsNotAtLocationServedByPickupPoint);
+      rankedItems.addAll(itemsPartitionedByLocationServedByPickupPoint.get(true));
+      rankedItems.addAll(itemsPartitionedByLocationServedByPickupPoint.get(false));
 
       record.setSortedAvailableItems(rankedItems);
 
@@ -198,9 +193,9 @@ public class RequestByInstanceIdResource extends Resource {
   public static Result<LinkedList<JsonObject>> instanceToItemRequests( InstanceRequestRelatedRecords requestRecords) {
 
     final RequestByInstanceIdRequest requestByInstanceIdRequest = requestRecords.getRequestByInstanceIdRequest();
-    final List<Item> combineItems = requestRecords.getCombineItemsList();
+    final List<Item> combinedItems = requestRecords.getCombineItemsList();
 
-    if (combineItems == null || combineItems.isEmpty()) {
+    if (combinedItems == null || combinedItems.isEmpty()) {
       return failedValidation("Cannot create request objects when items list is null or empty", "items", "null");    }
 
     RequestType[] types = RequestType.values();
@@ -208,7 +203,7 @@ public class RequestByInstanceIdResource extends Resource {
 
     final String defaultFulfilmentPreference = "Hold Shelf";
 
-    for (Item item: combineItems) {
+    for (Item item: combinedItems) {
       for (RequestType reqType : types) {
         if (reqType != RequestType.NONE) {
 
@@ -235,20 +230,17 @@ public class RequestByInstanceIdResource extends Resource {
       return failedValidation("Items list is null or empty", "items", "null");
     }
 
-    requestRelatedRecords.setUnsortedAvailableItems(
-      items.stream()
-        .filter(Item::isAvailable)
-        .collect(Collectors.toList()));
+    Map<Boolean, List<Item>> partitions = items.stream()
+      .collect(Collectors.partitioningBy(Item::isAvailable));
 
-    requestRelatedRecords.setUnsortedUnavailableItems(
-      items.stream()
-        .filter(item -> !item.isAvailable())
-        .collect(Collectors.toList()));
+    requestRelatedRecords.setUnsortedAvailableItems(partitions.get(true));
+    requestRelatedRecords.setUnsortedUnavailableItems(partitions.get(false));
 
     return succeeded(requestRelatedRecords);
   }
 
-  private static CompletableFuture<Result<InstanceRequestRelatedRecords>> combineWithUnavailableItems(InstanceRequestRelatedRecords records, Clients clients){
+  private CompletableFuture<Result<InstanceRequestRelatedRecords>> combineWithUnavailableItems(
+                                              InstanceRequestRelatedRecords records, Clients clients){
 
     RequestQueueRepository queueRepository = RequestQueueRepository.using(clients);
 
@@ -260,7 +252,7 @@ public class RequestByInstanceIdResource extends Resource {
     }
 
     for (Item item : unsortedUnavailableItems) {
-      itemRequestQueueMap.put(item, queueRepository.getLiteRequestQueues(item.getItemId()));
+      itemRequestQueueMap.put(item, queueRepository.getRequestQueueWithoutItemLookup(item.getItemId()));
     }
 
     final Collection<CompletableFuture<Result<RequestQueue>>> requestQueueFutures = itemRequestQueueMap.values();
@@ -269,47 +261,54 @@ public class RequestByInstanceIdResource extends Resource {
     return CompletableFuture.allOf(requestQueueFutures.toArray(new CompletableFuture[requestQueueFutures.size()]))
       .thenApply(x -> {
         Map<Item, RequestQueue> itemQueueSizeMap = new HashMap<>();
+        List<Item> failedQueuesItemList = new LinkedList<>(); //to preserve order it was found.
+
         for (Map.Entry<Item, CompletableFuture<Result<RequestQueue>>> entry : itemRequestQueueMap.entrySet()) {
           Result<RequestQueue> requestQueueResult = entry.getValue().join();
           if (requestQueueResult.succeeded()) {
             itemQueueSizeMap.put(entry.getKey(), requestQueueResult.value());
+          } else {
+            failedQueuesItemList.add(entry.getKey());
           }
         }
 
+        if (failedQueuesItemList.size() == requestQueueFutures.size()) {
+          log.error("Failed to find request queues for all items of instanceId {}",
+                        ((List<Item>) unsortedUnavailableItems).get(0).getInstanceId());
+          return failed(new ServerErrorFailure("Unable to find an item to place a request"));
+        }
         //Sort the map
         Map<Item, RequestQueue> sortedMap = sortRequestQueues(itemQueueSizeMap);
-        Set<Item> sortedUnavailableItems = sortedMap.keySet();
 
-        records.setSortedUnavailableItems(new ArrayList<>(sortedUnavailableItems));
+        List<Item> finalOrdedList = new LinkedList<>();
+
+        finalOrdedList.addAll(sortedMap.keySet());
+        finalOrdedList.addAll(failedQueuesItemList);
+
+        records.setSortedUnavailableItems(finalOrdedList);
+
         return succeeded(records);
       });
   }
 
-  private static Map<Item, RequestQueue> sortRequestQueues(Map<Item,RequestQueue> unsortedItems){
+    public static Map<Item, RequestQueue> sortRequestQueues(Map<Item, RequestQueue> unsortedItems) {
 
-    List<Map.Entry<Item, RequestQueue> > list = new LinkedList<>(unsortedItems.entrySet());
-
-    // Sort the list
-    Collections.sort(list, (q1, q2) -> {
-      RequestQueue queue1 = q1.getValue();
-      RequestQueue queue2 = q2.getValue();
-
-      int result = queue1.size() - queue2.size();
-      if (result == 0) {
-        result = queue1.getLowestPriorityFulfillableRequest()
-          .getRequestExpirationDate()
-          .compareTo(queue2.getLowestPriorityFulfillableRequest().getRequestExpirationDate());
-      }
-      return result;
-    });
-
-    // put data from sorted list to hashmap
-    HashMap<Item, RequestQueue> sortItems = new LinkedHashMap<>();
-    for (Map.Entry<Item, RequestQueue> newEntry : list) {
-      sortItems.put(newEntry.getKey(), newEntry.getValue());
+      return unsortedItems
+        .entrySet()
+        .stream()
+        .sorted(compareQueueLengths())
+        .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue,
+          (oldValue, newValue) -> oldValue, (LinkedHashMap::new)));
     }
 
-    return sortItems;
+    private static Comparator<Map.Entry<Item, RequestQueue>> compareQueueLengths() {
+    // Sort the list
+      return (q1, q2) -> {
+        RequestQueue queue1 = q1.getValue();
+        RequestQueue queue2 = q2.getValue();
+
+        return queue1.size() - queue2.size();
+      };
   }
 
 
