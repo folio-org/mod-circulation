@@ -319,7 +319,7 @@ public class InstanceRequestsAPICreationTests extends APITests {
 
     JsonObject representation = postResponse.getJson();
     //Item2 should have been chosen because it has the nearest requestExpirationDate
-    validateInstanceRequestResponse(representation, pickupServicePointId, instance.getId(), item2.getId(), RequestType.HOLD);
+    validateInstanceRequestResponse(representation, pickupServicePointId, instance.getId(), item1.getId(), RequestType.HOLD);
   }
 
   @Test
