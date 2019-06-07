@@ -273,7 +273,7 @@ public class RequestByInstanceIdResource extends Resource {
         }
 
         if (failedQueuesItemList.size() == requestQueueFutures.size()
-            && (records.getSortedAvailableItems() == null || records.getSortedAvailableItems().size() == 0)) {
+            && (records.getSortedAvailableItems() == null || records.getSortedAvailableItems().isEmpty())) {
           //fail the requests when there are no items to make requests from.
           log.error("Failed to find request queues for all items of instanceId {}",
                         unsortedUnavailableItems.get(0).getInstanceId());
