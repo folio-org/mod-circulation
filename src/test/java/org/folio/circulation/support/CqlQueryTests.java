@@ -96,4 +96,12 @@ public class CqlQueryTests {
 
     assertThat(query.value().asText(), is(String.format("nextRunTime<\"%s\"", dateTime)));
   }
+
+  @Test
+  public void canApplyGreaterThenOperator() {
+    DateTime dateTime = DateTime.now(DateTimeZone.UTC);
+    Result<CqlQuery> query = greaterThan("lastTime", dateTime);
+
+    assertThat(query.value().asText(), is(String.format("lastTime>\"%s\"", dateTime)));
+  }
 }

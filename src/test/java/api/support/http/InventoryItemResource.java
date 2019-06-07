@@ -29,4 +29,8 @@ public class InventoryItemResource extends IndividualResource {
   public IndividualResource getInstance() {
     return instance;
   }
+
+  public IndividualResource getHoldingsRecord() {
+    return holdingsRecord;
+  }
 }
