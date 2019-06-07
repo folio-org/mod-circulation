@@ -80,14 +80,14 @@ public class LoanRepository {
     User proxy = newLoanAndRelatedRecords.getLoan().getProxy();
 
     return loansStorageClient.post(storageLoan).thenApply(response -> {
-        if (response.getStatusCode() == 201) {
-          final Loan loanWithPolicy = Loan.from(response.getJson(), newLoanAndRelatedRecords.getLoan().getItem(), user, proxy)
-            .withLoanPolicy(newLoanAndRelatedRecords.getLoanPolicy());
-          return succeeded(newLoanAndRelatedRecords.withLoan(loanWithPolicy));
-        } else {
-          return failed(new ForwardOnFailure(response));
-        }
-      });
+      if (response.getStatusCode() == 201) {
+        return succeeded(
+          newLoanAndRelatedRecords.withLoan(Loan.from(response.getJson(),
+          newLoanAndRelatedRecords.getLoan().getItem(), user, proxy)));
+      } else {
+        return failed(new ForwardOnFailure(response));
+      }
+    });
   }
 
   public CompletableFuture<Result<LoanAndRelatedRecords>> updateLoan(
