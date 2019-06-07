@@ -1,6 +1,5 @@
 package org.folio.circulation.domain;
 
-import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 

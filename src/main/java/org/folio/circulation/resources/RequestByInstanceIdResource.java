@@ -283,6 +283,7 @@ public class RequestByInstanceIdResource extends Resource {
         LinkedList<Item> finalOrdedList = new LinkedList<>();
 
         finalOrdedList.addAll(sortedMap.keySet());
+        //put the items that weren't able to retrieve RequestQueus for on the bottom of the listt
         finalOrdedList.addAll(failedQueuesItemList);
 
         records.setSortedUnavailableItems(finalOrdedList);
@@ -291,25 +292,24 @@ public class RequestByInstanceIdResource extends Resource {
       });
   }
 
-    static Map<Item, RequestQueue> sortRequestQueues(Map<Item, RequestQueue> unsortedItems) {
-      return unsortedItems
-        .entrySet()
-        .stream()
-        .sorted(compareQueueLengths())
-        .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue,
-          (oldValue, newValue) -> oldValue, (LinkedHashMap::new)));
-    }
-
-    private static Comparator<Map.Entry<Item, RequestQueue>> compareQueueLengths() {
-    // Sort the list
-      return (q1, q2) -> {
-        RequestQueue queue1 = q1.getValue();
-        RequestQueue queue2 = q2.getValue();
-
-        return queue1.size() - queue2.size();
-      };
+  private static Map<Item, RequestQueue> sortRequestQueues(Map<Item, RequestQueue> unsortedItems) {
+    return unsortedItems
+      .entrySet()
+      .stream()
+      .sorted(compareQueueLengths())
+      .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue,
+        (oldValue, newValue) -> oldValue, (LinkedHashMap::new)));
   }
 
+  private static Comparator<Map.Entry<Item, RequestQueue>> compareQueueLengths() {
+    // Sort the list
+    return (q1, q2) -> {
+      RequestQueue queue1 = q1.getValue();
+      RequestQueue queue2 = q2.getValue();
+
+      return queue1.size() - queue2.size();
+    };
+  }
 
   private ProxyRelationshipValidator createProxyRelationshipValidator(
     JsonObject representation,
