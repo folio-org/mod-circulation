@@ -42,6 +42,10 @@ public class NoticeMatchers {
     tokenMatchers.put("item.callNumber", notNullValue(String.class));
     tokenMatchers.put("item.materialType", notNullValue(String.class));
     tokenMatchers.put("item.loanType", notNullValue(String.class));
+    tokenMatchers.put("item.effectiveLocationSpecific", notNullValue(String.class));
+    tokenMatchers.put("item.effectiveLocationLibrary", notNullValue(String.class));
+    tokenMatchers.put("item.effectiveLocationCampus", notNullValue(String.class));
+    tokenMatchers.put("item.effectiveLocationInstitution", notNullValue(String.class));
     return tokenMatchers;
   }
 
