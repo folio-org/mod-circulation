@@ -224,7 +224,7 @@ public class RequestHoldShelfClearanceResource extends Resource {
       .map(itemId -> {
         final Result<CqlQuery> servicePointQuery = exactMatch(SERVICE_POINT_ID_KEY, servicePointId);
         final Result<CqlQuery> itemIdQuery = CqlQuery.exactMatch(ITEM_ID_KEY, itemId);
-        final Result<CqlQuery> notEmptyDateQuery = CqlQuery.exactNotEmpty(REQUEST_CLOSED_DATE_KEY);
+        final Result<CqlQuery> notEmptyDateQuery = CqlQuery.greaterThan(REQUEST_CLOSED_DATE_KEY, StringUtils.EMPTY);
         final Result<CqlQuery> statusQuery = CqlQuery.exactMatchAny(STATUS_KEY,
           Arrays.asList(CLOSED_PICKUP_EXPIRED.getValue(), CLOSED_CANCELLED.getValue()));
 
