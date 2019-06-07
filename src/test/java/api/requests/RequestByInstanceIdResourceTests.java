@@ -2,8 +2,8 @@ package api.requests;
 
 import static java.util.Collections.emptySet;
 import static org.folio.circulation.resources.RequestByInstanceIdResource.rankItemsByMatchingServicePoint;
+import static org.folio.circulation.resources.RequestByInstanceIdResourceTests.getJsonInstanceRequest;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
 import java.net.MalformedURLException;
 import java.util.ArrayList;
@@ -89,7 +89,7 @@ public class RequestByInstanceIdResourceTests extends APITests {
     items.add(item1);
 
     InstanceRequestRelatedRecords records = new InstanceRequestRelatedRecords();
-    JsonObject requestJson = org.folio.circulation.resources.RequestByInstanceIdResourceTests.getJsonInstanceRequest(pickupServicePointId);
+    JsonObject requestJson = getJsonInstanceRequest(pickupServicePointId);
     Result<RequestByInstanceIdRequest> request = RequestByInstanceIdRequest.from(requestJson);
 
     records.setUnsortedAvailableItems(items);
@@ -141,7 +141,7 @@ public class RequestByInstanceIdResourceTests extends APITests {
     items.add(item1);
 
     InstanceRequestRelatedRecords records = new InstanceRequestRelatedRecords();
-    JsonObject requestJson =  org.folio.circulation.resources.RequestByInstanceIdResourceTests.getJsonInstanceRequest(UUID.randomUUID());
+    JsonObject requestJson =  getJsonInstanceRequest(UUID.randomUUID());
     Result<RequestByInstanceIdRequest> request = RequestByInstanceIdRequest.from(requestJson);
 
     records.setUnsortedAvailableItems(items);
