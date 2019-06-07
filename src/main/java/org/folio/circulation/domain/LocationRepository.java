@@ -17,17 +17,39 @@ import org.folio.circulation.support.Result;
 import org.folio.circulation.support.SingleRecordFetcher;
 
 public class LocationRepository {
-  private CollectionResourceClient locationsStorageClient;
 
-  public LocationRepository(Clients clients) {
-    locationsStorageClient = clients.locationsStorage();
+  private CollectionResourceClient locationsStorageClient;
+  private CollectionResourceClient institutionsStorageClient;
+  private CollectionResourceClient campusesStorageClient;
+  private CollectionResourceClient librariesStorageClient;
+
+  public LocationRepository(CollectionResourceClient locationsStorageClient,
+                            CollectionResourceClient institutionsStorageClient,
+                            CollectionResourceClient campusesStorageClient,
+                            CollectionResourceClient librariesStorageClient) {
+    this.locationsStorageClient = locationsStorageClient;
+    this.institutionsStorageClient = institutionsStorageClient;
+    this.campusesStorageClient = campusesStorageClient;
+    this.librariesStorageClient = librariesStorageClient;
+  }
+
+  public static LocationRepository using(Clients clients) {
+    return new LocationRepository(
+      clients.locationsStorage(),
+      clients.institutionsStorage(),
+      clients.campusesStorage(),
+      clients.librariesStorage()
+    );
   }
 
   public CompletableFuture<Result<Location>> getLocation(Item item) {
     return SingleRecordFetcher.json(locationsStorageClient, "locations",
       response -> succeeded(null))
       .fetch(item.getLocationId())
-      .thenApply(r -> r.map(Location::from));
+      .thenApply(r -> r.map(Location::from))
+      .thenCompose(r -> r.after(this::loadLibrary))
+      .thenCompose(r -> r.after(this::loadCampus))
+      .thenCompose(r -> r.after(this::loadInstitution));
   }
 
   public CompletableFuture<Result<Map<String, Location>>> getLocations(
@@ -43,5 +65,23 @@ public class LocationRepository {
 
     return fetcher.findByIds(locationIds)
       .thenApply(mapResult(sds -> sds.toMap(Location::getId)));
+  }
+
+  private CompletableFuture<Result<Location>> loadLibrary(Location location) {
+    return SingleRecordFetcher.json(librariesStorageClient, "library", response -> succeeded(null))
+      .fetch(location.getLibraryId())
+      .thenApply(r -> r.map(location::withLibraryRepresentation));
+  }
+
+  private CompletableFuture<Result<Location>> loadCampus(Location location) {
+    return SingleRecordFetcher.json(campusesStorageClient, "campus", response -> succeeded(null))
+      .fetch(location.getCampusId())
+      .thenApply(r -> r.map(location::withCampusRepresentation));
+  }
+
+  private CompletableFuture<Result<Location>> loadInstitution(Location location) {
+    return SingleRecordFetcher.json(institutionsStorageClient, "institution", response -> succeeded(null))
+      .fetch(location.getInstitutionId())
+      .thenApply(r -> r.map(location::withInstitutionRepresentation));
   }
 }

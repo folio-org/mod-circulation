@@ -5,6 +5,7 @@ import java.util.stream.Collectors;
 
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Loan;
+import org.folio.circulation.domain.Location;
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestType;
 import org.folio.circulation.domain.ServicePoint;

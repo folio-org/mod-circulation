@@ -54,7 +54,7 @@ public class ItemRepository {
       clients.holdingsStorage(),
       clients.instancesStorage(),
       clients.loanTypesStorage(),
-      new LocationRepository(clients),
+      LocationRepository.using(clients),
       new MaterialTypeRepository(clients),
       new ServicePointRepository(clients),
       fetchLocation, fetchMaterialType, fetchLoanType);
