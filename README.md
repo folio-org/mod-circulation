@@ -453,6 +453,9 @@ content-length: 230
       "requestExpirationDate": "2017-08-31T22:25:37Z",
       "holdShelfExpirationDate": "2017-09-01T22:25:37Z",
       "position": 1,
+      "status": "Closed - Pickup expired",
+      "pickupServicePointId": "4ae438be-308a-468d-a815-ad109c288f05",
+      "awaitingPickupRequestClosedDate": "2019-03-11T15:45:23.000+0000"
       "item": {
         "title": "Children of Time",
         "barcode": "760932543816",
@@ -463,12 +466,6 @@ content-length: 230
         "lastName": "Jones",
         "middleName": "Anthony",
         "barcode": "567023127436"
-      },
-      "pickupServicePoint" : {
-        "name" : "Circ Desk 1",
-        "code" : "cd1",
-        "discoveryDisplayName" : "Circulation Desk -- Hallway",
-        "pickupLocation" : true
       }
     }
   ],
