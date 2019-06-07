@@ -17,6 +17,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
 import org.folio.circulation.domain.Item;
+import org.folio.circulation.domain.Location;
 import org.folio.circulation.domain.RequestType;
 import org.folio.circulation.domain.representations.RequestByInstanceIdRequest;
 import org.folio.circulation.resources.RequestByInstanceIdResource;
@@ -82,42 +83,42 @@ public class RequestByInstanceIdResourceTests extends APITests {
 
     HashSet<UUID> servicePoints1 = new HashSet<>();
     servicePoints1.add(secondaryServicePointId);
-    JsonObject location1 = getLocationWithServicePoints(servicePoints1, secondaryServicePointId, institutionId);
+    Location location1 = getLocationWithServicePoints(servicePoints1, secondaryServicePointId, institutionId);
 
     //Matching item and servicePoints
     HashSet<UUID> servicePoints2 = new HashSet<>();
     servicePoints2.add(primaryServicePointId);
     servicePoints2.add(secondaryServicePointId);
 
-    JsonObject location2 = getLocationWithServicePoints(servicePoints2, primaryServicePointId, institutionId);
+    Location location2 = getLocationWithServicePoints(servicePoints2, primaryServicePointId, institutionId);
 
-    JsonObject location3 = getLocationWithServicePoints(emptySet(), null, institutionId);
+    Location location3 = getLocationWithServicePoints(emptySet(), null, institutionId);
 
     //Matching item and servicePoints
     HashSet<UUID> servicePoints4 = new HashSet<>();
     servicePoints4.add(primaryServicePointId);
-    JsonObject location4 = getLocationWithServicePoints(servicePoints4, primaryServicePointId, institutionId);
+    Location location4 = getLocationWithServicePoints(servicePoints4, primaryServicePointId, institutionId);
 
     UUID bookMaterialTypeId = UUID.randomUUID();
     UUID loanTypeId = UUID.randomUUID();
 
     Item item1 = Item.from(ItemExamples.basedUponSmallAngryPlanet(bookMaterialTypeId, loanTypeId)
-      .withTemporaryLocation(UUID.fromString(location1.getString("id")))
+      .withTemporaryLocation(UUID.fromString(location1.getId()))
       .create())
       .withLocation(location1);
 
     Item item2 = Item.from(ItemExamples.basedUponSmallAngryPlanet(bookMaterialTypeId, loanTypeId)
-      .withTemporaryLocation(UUID.fromString(location2.getString("id")))
+      .withTemporaryLocation(UUID.fromString(location2.getId()))
       .create())
       .withLocation(location2);
 
     Item item3 = Item.from(ItemExamples.basedUponSmallAngryPlanet(bookMaterialTypeId, loanTypeId)
-      .withTemporaryLocation(UUID.fromString(location3.getString("id")))
+      .withTemporaryLocation(UUID.fromString(location3.getId()))
       .create())
       .withLocation(location3);
 
     Item item4 = Item.from(ItemExamples.basedUponSmallAngryPlanet(bookMaterialTypeId, loanTypeId)
-      .withTemporaryLocation(UUID.fromString(location4.getString("id")))
+      .withTemporaryLocation(UUID.fromString(location4.getId()))
       .create())
       .withLocation(location4);
 
@@ -146,7 +147,7 @@ public class RequestByInstanceIdResourceTests extends APITests {
 
     UUID loanTypeId = UUID.randomUUID();
 
-    JsonObject location = getLocationWithServicePoints(emptySet(), null, null);
+    Location location = getLocationWithServicePoints(emptySet(), null, null);
 
     Item item1 = Item.from(ItemExamples.basedUponSmallAngryPlanet(bookMaterialTypeId, loanTypeId)
                       .withTemporaryLocation(UUID.randomUUID()).create())
@@ -207,7 +208,7 @@ public class RequestByInstanceIdResourceTests extends APITests {
     return items;
   }
 
-  private static JsonObject getLocationWithServicePoints(Set<UUID> servicePoints, UUID primaryServicePointId, UUID locationInstitutionId) {
+  private static Location getLocationWithServicePoints(Set<UUID> servicePoints, UUID primaryServicePointId, UUID locationInstitutionId) {
 
     JsonObject location = new LocationBuilder()
       .forInstitution(locationInstitutionId)
@@ -217,6 +218,6 @@ public class RequestByInstanceIdResourceTests extends APITests {
 
     location.put("id", UUID.randomUUID().toString());
 
-    return location;
+    return Location.from(location);
   }
 }

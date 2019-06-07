@@ -182,11 +182,12 @@ public class Item {
   }
 
   private boolean matchesAnyServingServicePoint(UUID servicePointId) {
-    return location.getServicePointIds()
-      .stream()
-      .map(UUID::fromString)
-      .anyMatch(servingServicePointId ->
-        matchingId(servicePointId, servingServicePointId));
+    return Optional.ofNullable(location)
+      .map(Location::getServicePointIds)
+      .map(ids -> ids.stream()
+        .map(UUID::fromString)
+        .anyMatch(servingServicePointId -> matchingId(servicePointId, servingServicePointId)))
+      .orElse(false);
   }
 
   private boolean matchingId(UUID first, UUID second) {
@@ -194,7 +195,8 @@ public class Item {
   }
 
   public UUID getPrimaryServicePointId() {
-    return Optional.ofNullable(location.getPrimaryServicePoint())
+    return Optional.ofNullable(location)
+      .map(Location::getPrimaryServicePoint)
       .map(UUID::fromString)
       .orElse(null);
   }
