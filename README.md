@@ -406,7 +406,7 @@ Loans include information from the item, including locations, holdingsRecordId a
 
 Requests include information from the item, including holdingsRecordId and instanceId.
 
-#### Hold shelf clearance report CSV
+#### Hold shelf clearance report
 
 To create hold expiration report that can be used by staff to clear expired and cancelled holds from the shelf and put them back into circulation.
 Then generate a report based on this logic:
@@ -463,6 +463,12 @@ content-length: 230
         "lastName": "Jones",
         "middleName": "Anthony",
         "barcode": "567023127436"
+      },
+      "pickupServicePoint" : {
+        "name" : "Circ Desk 1",
+        "code" : "cd1",
+        "discoveryDisplayName" : "Circulation Desk -- Hallway",
+        "pickupLocation" : true
       }
     }
   ],

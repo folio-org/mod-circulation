@@ -17,6 +17,10 @@
           "modulePermissions": [
             "inventory-storage.items.item.get",
             "inventory-storage.items.collection.get",
+            "inventory-storage.holdings.collection.get",
+            "inventory-storage.holdings.item.get",
+            "inventory-storage.instances.collection.get",
+            "inventory-storage.instances.item.get",
             "inventory-storage.service-points.collection.get",
             "inventory-storage.service-points.item.get",
             "circulation-storage.requests.item.get",
