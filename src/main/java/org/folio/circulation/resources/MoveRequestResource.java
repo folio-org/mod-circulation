@@ -15,6 +15,7 @@ import org.folio.circulation.domain.RequestStatus;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CreatedJsonResponseResult;
 import org.folio.circulation.support.ItemRepository;
+import org.folio.circulation.support.OkJsonResponseResult;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.http.server.WebContext;
 
@@ -59,11 +60,12 @@ public class MoveRequestResource extends Resource {
       .thenCombineAsync(requestQueueRepository.get(destinationItemId), this::addDestinationQueue)
       .thenApply(this::updateRequestItem)
       .thenCombineAsync(completedFuture(succeeded(requestStatus)), this::updateRequestStatus)
+      .thenComposeAsync(r -> r.after(requestRepository::update))
 //    Gets the request from MoveRequestRecords
       .thenApply(this::getRequest)
 //    Converts the request to JSON for output
       .thenApply(r -> r.map(new RequestRepresentation()::extendedRepresentation))
-      .thenApply(CreatedJsonResponseResult::from)
+      .thenApply(OkJsonResponseResult::from)
       .thenAccept(result -> result.writeTo(routingContext.response()));
 
     System.out.println("\n\n\ndestinationItemId: " + destinationItemId + "\n\n\n");
@@ -74,6 +76,7 @@ public class MoveRequestResource extends Resource {
     Result<MoveRequestRecords> moveRequestRecords,
     Result<Request> request) {
 
+    System.out.println("\n\n\nadd request  \n\n\n");
     return Result.combine(moveRequestRecords, request,
       MoveRequestRecords::withRequest);
   }
@@ -82,6 +85,7 @@ public class MoveRequestResource extends Resource {
     Result<MoveRequestRecords> moveRequestRecords,
     Result<Item> originalItem) {
 
+    System.out.println("\n\n\naddOritinalItem  \n\n\n");
     return Result.combine(moveRequestRecords, originalItem,
       MoveRequestRecords::withOriginalItem);
   }
@@ -90,6 +94,7 @@ public class MoveRequestResource extends Resource {
     Result<MoveRequestRecords> moveRequestRecords,
     Result<Item> destinationItem) {
 
+    System.out.println("\n\n\nadd destination item  \n\n\n");
     return Result.combine(moveRequestRecords, destinationItem,
       MoveRequestRecords::withDestinationItem);
   }
@@ -98,6 +103,7 @@ public class MoveRequestResource extends Resource {
     Result<MoveRequestRecords> moveRequestRecords,
     Result<RequestQueue> originalQueue) {
 
+    System.out.println("\n\n\nadd original queue  \n\n\n");
     return Result.combine(moveRequestRecords, originalQueue,
         MoveRequestRecords::withOriginalRequestQueue);
   }
@@ -106,6 +112,7 @@ public class MoveRequestResource extends Resource {
     Result<MoveRequestRecords> moveRequestRecords,
     Result<RequestQueue> destinationQueue) {
 
+    System.out.println("\n\n\n add dest queue \n\n\n");
     return Result.combine(moveRequestRecords, destinationQueue,
         MoveRequestRecords::withDestinationRequestQueue);
   }
@@ -113,6 +120,7 @@ public class MoveRequestResource extends Resource {
   private Result<MoveRequestRecords> updateRequestItem(
     Result<MoveRequestRecords> moveRequestRecords) {
 
+    System.out.println("\n\n\nupdate item  \n\n\n");
     Item destinationItem = moveRequestRecords.value().getDestinationItem();
     Request request = moveRequestRecords.value().getRequest();
 
@@ -126,17 +134,22 @@ public class MoveRequestResource extends Resource {
     Result<MoveRequestRecords> moveRequestRecords,
     Result<String> requestStatus) {
 
+    System.out.println("\n\n\n update status \n\n\n");
     Request request = moveRequestRecords.value().getRequest();
+    System.out.println("\n\n\nupdate 1\n\n\n");
     RequestStatus status = RequestStatus.from(requestStatus.value());
+    System.out.println("\n\n\nupdate 2\n\n\n");
     request.changeStatus(status);
+    System.out.println("\n\n\nupdate 3\n\n\n");
 
     Result<Request> updatedRequest = Result.of(() -> request);
-
+    System.out.println("\n\n\nUpdate status return\n\n\n");
     return Result.combine(moveRequestRecords, updatedRequest,
         MoveRequestRecords::withRequest);
   }
 
   private Result<Request> getRequest(Result<MoveRequestRecords> moveRequestRecords) {
+    System.out.println("\n\n\n get request \n\n\n");
     return of(() -> moveRequestRecords.value().getRequest());
   }
 }
