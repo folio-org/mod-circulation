@@ -16,6 +16,7 @@ import org.folio.circulation.resources.RenewByIdResource;
 import org.folio.circulation.resources.RequestByInstanceIdResource;
 import org.folio.circulation.resources.RequestCirculationRulesEngineResource;
 import org.folio.circulation.resources.RequestCollectionResource;
+import org.folio.circulation.resources.RequestHoldShelfClearanceResource;
 import org.folio.circulation.resources.RequestQueueResource;
 import org.folio.circulation.resources.ScheduledNoticeProcessingResource;
 import org.slf4j.Logger;
@@ -59,6 +60,8 @@ public class CirculationVerticle extends AbstractVerticle {
     new RequestByInstanceIdResource(client).register(router);
     new OverrideRenewalByBarcodeResource(client).register(router);
 
+    new RequestHoldShelfClearanceResource("/circulation/requests-reports/hold-shelf-clearance/:servicePointId", client)
+      .register(router);
     new CirculationRulesResource("/circulation/rules", client)
       .register(router);
     new LoanCirculationRulesEngineResource(
