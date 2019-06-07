@@ -89,7 +89,7 @@ public class RequestByInstanceIdResourceTests extends APITests {
     items.add(item1);
 
     InstanceRequestRelatedRecords records = new InstanceRequestRelatedRecords();
-    JsonObject requestJson = RequestByInstanceIdResourceUnitTests.getJsonInstanceRequest(pickupServicePointId);
+    JsonObject requestJson = org.folio.circulation.resources.RequestByInstanceIdResourceTests.getJsonInstanceRequest(pickupServicePointId);
     Result<RequestByInstanceIdRequest> request = RequestByInstanceIdRequest.from(requestJson);
 
     records.setUnsortedAvailableItems(items);
@@ -141,7 +141,7 @@ public class RequestByInstanceIdResourceTests extends APITests {
     items.add(item1);
 
     InstanceRequestRelatedRecords records = new InstanceRequestRelatedRecords();
-    JsonObject requestJson =  RequestByInstanceIdResourceUnitTests.getJsonInstanceRequest(UUID.randomUUID());
+    JsonObject requestJson =  org.folio.circulation.resources.RequestByInstanceIdResourceTests.getJsonInstanceRequest(UUID.randomUUID());
     Result<RequestByInstanceIdRequest> request = RequestByInstanceIdRequest.from(requestJson);
 
     records.setUnsortedAvailableItems(items);

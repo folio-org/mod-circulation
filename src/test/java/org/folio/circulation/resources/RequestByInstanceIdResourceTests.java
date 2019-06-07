@@ -1,18 +1,20 @@
-package api.requests;
+package org.folio.circulation.resources;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import org.folio.circulation.domain.InstanceRequestRelatedRecords;
 import org.folio.circulation.domain.Item;
+import org.folio.circulation.domain.RequestQueue;
 import org.folio.circulation.domain.RequestType;
 import org.folio.circulation.domain.representations.RequestByInstanceIdRequest;
-import org.folio.circulation.resources.RequestByInstanceIdResource;
 import org.folio.circulation.support.Result;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
@@ -22,7 +24,7 @@ import org.junit.Test;
 import api.support.fixtures.ItemExamples;
 import io.vertx.core.json.JsonObject;
 
-public class RequestByInstanceIdResourceUnitTests {
+public class RequestByInstanceIdResourceTests {
   @Test
   public void canTransformInstanceToItemRequests(){
 

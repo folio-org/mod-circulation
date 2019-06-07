@@ -190,7 +190,7 @@ public class RequestByInstanceIdResource extends Resource {
     });
   }
 
-  public static Result<LinkedList<JsonObject>> instanceToItemRequests( InstanceRequestRelatedRecords requestRecords) {
+  static Result<LinkedList<JsonObject>> instanceToItemRequests( InstanceRequestRelatedRecords requestRecords) {
 
     final RequestByInstanceIdRequest requestByInstanceIdRequest = requestRecords.getRequestByInstanceIdRequest();
     final List<Item> combinedItems = requestRecords.getCombineItemsList();
@@ -244,7 +244,7 @@ public class RequestByInstanceIdResource extends Resource {
 
     RequestQueueRepository queueRepository = RequestQueueRepository.using(clients);
 
-    final Collection<Item> unsortedUnavailableItems = records.getUnsortedUnavailableItems();
+    final List<Item> unsortedUnavailableItems = records.getUnsortedUnavailableItems();
 
     Map<Item, CompletableFuture<Result<RequestQueue>>> itemRequestQueueMap = new HashMap<>();
     if (unsortedUnavailableItems == null || unsortedUnavailableItems.isEmpty()) {
@@ -261,7 +261,7 @@ public class RequestByInstanceIdResource extends Resource {
     return CompletableFuture.allOf(requestQueueFutures.toArray(new CompletableFuture[requestQueueFutures.size()]))
       .thenApply(x -> {
         Map<Item, RequestQueue> itemQueueSizeMap = new HashMap<>();
-        List<Item> failedQueuesItemList = new LinkedList<>(); //to preserve order it was found.
+        List<Item> failedQueuesItemList = new LinkedList<>(); //to preserve the order it was found.
 
         for (Map.Entry<Item, CompletableFuture<Result<RequestQueue>>> entry : itemRequestQueueMap.entrySet()) {
           Result<RequestQueue> requestQueueResult = entry.getValue().join();
@@ -274,13 +274,13 @@ public class RequestByInstanceIdResource extends Resource {
 
         if (failedQueuesItemList.size() == requestQueueFutures.size()) {
           log.error("Failed to find request queues for all items of instanceId {}",
-                        ((List<Item>) unsortedUnavailableItems).get(0).getInstanceId());
+                        unsortedUnavailableItems.get(0).getInstanceId());
           return failed(new ServerErrorFailure("Unable to find an item to place a request"));
         }
         //Sort the map
         Map<Item, RequestQueue> sortedMap = sortRequestQueues(itemQueueSizeMap);
 
-        List<Item> finalOrdedList = new LinkedList<>();
+        LinkedList<Item> finalOrdedList = new LinkedList<>();
 
         finalOrdedList.addAll(sortedMap.keySet());
         finalOrdedList.addAll(failedQueuesItemList);
@@ -291,8 +291,7 @@ public class RequestByInstanceIdResource extends Resource {
       });
   }
 
-    public static Map<Item, RequestQueue> sortRequestQueues(Map<Item, RequestQueue> unsortedItems) {
-
+    static Map<Item, RequestQueue> sortRequestQueues(Map<Item, RequestQueue> unsortedItems) {
       return unsortedItems
         .entrySet()
         .stream()

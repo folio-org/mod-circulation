@@ -14,7 +14,7 @@ public class InstanceRequestRelatedRecords {
   private List<Item> sortedUnavailableItems;
   private RequestByInstanceIdRequest requestByInstanceIdRequest;
 
-  public Collection<Item> getUnsortedAvailableItems() {
+  public List<Item> getUnsortedAvailableItems() {
     return unsortedAvailableItems;
   }
 

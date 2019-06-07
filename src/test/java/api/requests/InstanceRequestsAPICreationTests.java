@@ -4,6 +4,7 @@ import static org.hamcrest.core.Is.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import java.net.MalformedURLException;
 import java.util.ArrayList;
@@ -318,8 +319,58 @@ public class InstanceRequestsAPICreationTests extends APITests {
     assertEquals(201, postResponse.getStatusCode());
 
     JsonObject representation = postResponse.getJson();
-    //Item2 should have been chosen because it has the nearest requestExpirationDate
-    validateInstanceRequestResponse(representation, pickupServicePointId, instance.getId(), item1.getId(), RequestType.HOLD);
+
+    assertNotNull(representation);
+    assertEquals(pickupServicePointId.toString(), representation.getString("pickupServicePointId"));
+    assertEquals("Circ Desk 1", representation.getJsonObject("pickupServicePoint").getString("name"));
+    assertEquals(instance.getId().toString(), representation.getJsonObject("item").getString("instanceId"));
+    assertEquals(RequestType.HOLD.name(), representation.getString("requestType"));
+    //here we check the itemID. It could be either of the 2 items because we use Future in the code to get request queues from the repository,
+    //so it's non-deterministic that the futures should come in by a certain order.
+    assertTrue(item1.getId().toString().equals(representation.getString("itemId")) ||
+                        item2.getId().toString().equals(representation.getString("itemId")));
+  }
+
+  @Test
+  public void canSuccessfullyPlaceATitleLevelRequestOnOneLoneUnvailableCopy()
+    throws InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    MalformedURLException {
+
+    UUID pickupServicePointId = servicePointsFixture.cd1().getId();
+
+    DateTime instanceRequestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
+    DateTime instanceRequestDateRequestExpirationDate = instanceRequestDate.plusDays(30);
+
+    LocalDate requestDate = new LocalDate(2017, 7, 22);
+    LocalDate requestExpirationDate1 = requestDate.plusDays(30);
+
+    IndividualResource instance = instancesFixture.basedUponDunkirk();
+    IndividualResource holdings = holdingsFixture.defaultWithHoldings(instance.getId());
+
+    //create 1 copy with no location id's assigned.
+    final IndividualResource item = itemsFixture.basedUponDunkirkWithCustomHoldingAndLocationAndCheckedOut(holdings.getId(), null);
+
+    //Set up request queues. Item1 has requests (1 queued request)
+    placeHoldRequest(item, pickupServicePointId, usersFixture.jessica(), requestExpirationDate1);
+    placeHoldRequest(item, pickupServicePointId, usersFixture.james(), requestExpirationDate1);
+
+    IndividualResource instanceRequester = usersFixture.charlotte();
+
+    JsonObject requestBody = createInstanceRequestObject(instance.getId(), instanceRequester.getId(),
+      pickupServicePointId, instanceRequestDate, instanceRequestDateRequestExpirationDate);
+
+    CompletableFuture<Response> postCompleted = new CompletableFuture<>();
+
+    client.post(InterfaceUrls.requestsUrl("/instances"), requestBody,
+      ResponseHandler.any(postCompleted));
+
+    Response postResponse = postCompleted.get(10, TimeUnit.SECONDS);
+    assertEquals(201, postResponse.getStatusCode());
+
+    JsonObject representation = postResponse.getJson();
+    validateInstanceRequestResponse(representation, pickupServicePointId, instance.getId(), item.getId(), RequestType.HOLD);
   }
 
   @Test
