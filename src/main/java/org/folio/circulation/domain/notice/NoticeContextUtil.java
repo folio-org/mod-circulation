@@ -80,7 +80,7 @@ public class NoticeContextUtil {
     String captionsToken = JsonStringArrayHelper.toStream(item.getCopyNumbers())
       .collect(Collectors.joining("; "));
 
-    Location location = item.getLocation();
+    Optional<Location> location = Optional.ofNullable(item.getLocation());
 
     return new JsonObject()
       .put("title", item.getTitle())
@@ -100,10 +100,10 @@ public class NoticeContextUtil {
       .put("copy", captionsToken)
       .put("numberOfPieces", item.getNumberOfPieces())
       .put("descriptionOfPieces", item.getDescriptionOfPieces())
-      .put("effectiveLocationSpecific", location.getName())
-      .put("effectiveLocationLibrary", location.getLibraryName())
-      .put("effectiveLocationCampus", location.getCampusName())
-      .put("effectiveLocationInstitution", location.getInstitutionName());
+      .put("effectiveLocationSpecific", location.map(Location::getName).orElse(null))
+      .put("effectiveLocationLibrary", location.map(Location::getLibraryName).orElse(null))
+      .put("effectiveLocationCampus", location.map(Location::getCampusName).orElse(null))
+      .put("effectiveLocationInstitution", location.map(Location::getInstitutionName).orElse(null));
   }
 
   private static JsonObject createRequestContext(Request request) {
