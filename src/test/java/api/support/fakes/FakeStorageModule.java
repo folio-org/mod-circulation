@@ -95,7 +95,7 @@ public class FakeStorageModule extends AbstractVerticle {
     router.get(rootPath).handler(this::checkForUnexpectedQueryParameters);
     router.get(rootPath).handler(this::getMany);
 
-    router.delete(rootPath).handler(this::empty);
+    router.delete(rootPath).handler(this::deleteMany);
 
     router.put(rootPath + "/:id").handler(this::checkRequiredProperties);
     router.put(rootPath + "/:id").handler(this::checkDisallowedProperties);
@@ -274,17 +274,27 @@ public class FakeStorageModule extends AbstractVerticle {
     response.end();
   }
 
-  private void empty(RoutingContext routingContext) {
+  private void deleteMany(RoutingContext routingContext) {
     WebContext context = new WebContext(routingContext);
 
-    if(!hasCollectionDelete) {
+    if (!hasCollectionDelete) {
       ClientErrorResponse.notFound(routingContext.response());
       return;
     }
 
-    Map <String, JsonObject> resourcesForTenant = getResourcesForTenant(context);
+    Integer limit = context.getIntegerParameter("limit", 1000);
+    Integer offset = context.getIntegerParameter("offset", 0);
+    String query = context.getStringParameter("query", null);
 
-    resourcesForTenant.clear();
+    Map<String, JsonObject> resourcesForTenant = getResourcesForTenant(context);
+
+    List<JsonObject> filteredItems = new FakeCQLToJSONInterpreter(false)
+      .execute(resourcesForTenant.values(), query);
+
+    filteredItems.stream()
+      .skip(offset)
+      .limit(limit)
+      .forEach(item -> resourcesForTenant.remove(item.getString("id")));
 
     SuccessResponse.noContent(routingContext.response());
   }
