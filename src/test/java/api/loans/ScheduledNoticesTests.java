@@ -16,6 +16,7 @@ import java.util.concurrent.TimeoutException;
 
 import org.awaitility.Awaitility;
 import org.folio.circulation.domain.policy.Period;
+import org.folio.circulation.support.JsonPropertyWriter;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.hamcrest.Matcher;
 import org.hamcrest.Matchers;
@@ -494,6 +495,93 @@ public class ScheduledNoticesTests extends APITests {
         null, false),
       hasScheduledLoanNotice(
         loan.getId(), dueDateAfterRecall.plus(afterPeriod.timePeriod()),
+        AFTER_TIMING, afterTemplateId,
+        afterRecurringPeriod, true)
+    );
+
+    Awaitility.await()
+      .atMost(1, TimeUnit.SECONDS)
+      .until(scheduledNoticesClient::getAll, scheduledNoticesAfterRecallMatcher);
+    assertThat(scheduledNoticesClient.getAll(), hasSize(6));
+  }
+
+  @Test
+  public void noticesShouldBeRescheduledAfterManualDueDateChange()
+    throws MalformedURLException,
+    InterruptedException,
+    TimeoutException,
+    ExecutionException {
+
+    UUID beforeTemplateId = UUID.randomUUID();
+    Period beforePeriod = Period.days(2);
+    Period beforeRecurringPeriod = Period.hours(6);
+
+    UUID uponAtTemplateId = UUID.randomUUID();
+
+    UUID afterTemplateId = UUID.randomUUID();
+    Period afterPeriod = Period.days(3);
+    Period afterRecurringPeriod = Period.hours(4);
+
+    JsonObject beforeDueDateNoticeConfiguration = new NoticeConfigurationBuilder()
+      .withTemplateId(beforeTemplateId)
+      .withDueDateEvent()
+      .withBeforeTiming(beforePeriod)
+      .recurring(beforeRecurringPeriod)
+      .sendInRealTime(true)
+      .create();
+    JsonObject uponAtDueDateNoticeConfiguration = new NoticeConfigurationBuilder()
+      .withTemplateId(uponAtTemplateId)
+      .withDueDateEvent()
+      .withUponAtTiming()
+      .sendInRealTime(false)
+      .create();
+    JsonObject afterDueDateNoticeConfiguration = new NoticeConfigurationBuilder()
+      .withTemplateId(afterTemplateId)
+      .withDueDateEvent()
+      .withAfterTiming(afterPeriod)
+      .recurring(afterRecurringPeriod)
+      .sendInRealTime(true)
+      .create();
+
+    NoticePolicyBuilder noticePolicy = new NoticePolicyBuilder()
+      .withName("Policy with due date notices")
+      .withLoanNotices(Arrays.asList(
+        beforeDueDateNoticeConfiguration,
+        uponAtDueDateNoticeConfiguration,
+        afterDueDateNoticeConfiguration));
+    useLoanPolicyAsFallback(
+      loanPoliciesFixture.canCirculateRolling().getId(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
+      noticePoliciesFixture.create(noticePolicy).getId());
+
+    IndividualResource item = itemsFixture.basedUponSmallAngryPlanet();
+    IndividualResource borrower = usersFixture.steve();
+
+    IndividualResource loan = loansFixture.checkOutByBarcode(item, borrower);
+    loansFixture.checkOutByBarcode(itemsFixture.basedUponNod(), usersFixture.jessica());
+
+    Awaitility.await()
+      .atMost(1, TimeUnit.SECONDS)
+      .until(scheduledNoticesClient::getAll, hasSize(6));
+
+    JsonObject loanJson = loan.getJson();
+    DateTime dueDate = getDateTimeProperty(loanJson, "dueDate");
+
+    DateTime updatedDueDate = dueDate.plusWeeks(2);
+    JsonPropertyWriter.write(loanJson, "dueDate", updatedDueDate);
+    loansClient.replace(loan.getId(), loanJson);
+
+    Matcher<Iterable<JsonObject>> scheduledNoticesAfterRecallMatcher = hasItems(
+      hasScheduledLoanNotice(
+        loan.getId(), updatedDueDate.minus(beforePeriod.timePeriod()),
+        BEFORE_TIMING, beforeTemplateId,
+        beforeRecurringPeriod, true),
+      hasScheduledLoanNotice(
+        loan.getId(), updatedDueDate,
+        UPON_AT_TIMING, uponAtTemplateId,
+        null, false),
+      hasScheduledLoanNotice(
+        loan.getId(), updatedDueDate.plus(afterPeriod.timePeriod()),
         AFTER_TIMING, afterTemplateId,
         afterRecurringPeriod, true)
     );
