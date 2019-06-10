@@ -189,7 +189,6 @@ public class ScheduledNoticesTests extends APITests {
       ));
   }
 
-
   @Test
   public void noNoticesShouldBeScheduledOnCheckOutWhenPolicyDoesNotDefineTimeBasedNotices()
     throws MalformedURLException,
@@ -410,7 +409,6 @@ public class ScheduledNoticesTests extends APITests {
     assertThat(scheduledNoticesClient.getAll(), hasSize(6));
   }
 
-
   @Test
   public void noticesShouldBeRescheduledAfterRecall()
     throws MalformedURLException,
@@ -505,6 +503,4 @@ public class ScheduledNoticesTests extends APITests {
       .until(scheduledNoticesClient::getAll, scheduledNoticesAfterRecallMatcher);
     assertThat(scheduledNoticesClient.getAll(), hasSize(6));
   }
-
-
 }
