@@ -70,8 +70,8 @@ public class MoveRequestRecords {
       this.request,
       this.originalRequestQueue,
       this.destinationRequestQueue,
-      destinationItem,
-      this.destinationItem
+      this.originalItem,
+      destinationItem
     );
   }
 

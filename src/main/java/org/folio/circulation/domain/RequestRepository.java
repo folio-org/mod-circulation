@@ -118,15 +118,11 @@ public class RequestRepository {
 
   //TODO: May need to fetch updated representation of request
   public CompletableFuture<Result<Request>> update(Request request) {
-    System.out.println("n\n\n in update\n\n\n");
     final JsonObject representation = new RequestRepresentation()
       .storedRequest(request);
-    System.out.println("n\n\nabout to put\n\n\n");
     return requestsStorageClient.put(request.getId(), representation)
       .thenApply(response -> {
-        System.out.println("\n\n\nin then apply\n\n\n");
         if(response.getStatusCode() == 204) {
-          System.out.println("\n\n\nupdate sucess\n\n\n");
           return succeeded(request);
         }
         else {
@@ -144,8 +140,7 @@ public class RequestRepository {
   
   public CompletableFuture<Result<MoveRequestRecords>> update(
     MoveRequestRecords moveRequestRecords) {
-    
-    System.out.println("\n\n\n get request \n\n\n");
+
     return update(moveRequestRecords.getRequest())
       .thenApply(r -> r.map(moveRequestRecords::withRequest));
   }

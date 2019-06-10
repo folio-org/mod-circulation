@@ -203,6 +203,11 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
     status.writeTo(requestRepresentation);
   }
 
+  public Request changeItem(Item item) {
+    requestRepresentation.put("itemId", item.getItemId());
+    return this;
+  }
+
   public Item getItem() {
     return item;
   }
