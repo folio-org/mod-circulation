@@ -3,6 +3,35 @@
   "name": "Circulation Module",
   "provides": [
     {
+      "id": "requests-reports",
+      "version": "0.1",
+      "handlers": [
+        {
+          "methods": [
+            "GET"
+          ],
+          "pathPattern": "/circulation/requests-reports/hold-shelf-clearance/{id}",
+          "permissionsRequired": [
+            "circulation.requests.hold-shelf-clearance-report.get"
+          ],
+          "modulePermissions": [
+            "inventory-storage.items.item.get",
+            "inventory-storage.items.collection.get",
+            "inventory-storage.holdings.collection.get",
+            "inventory-storage.holdings.item.get",
+            "inventory-storage.instances.collection.get",
+            "inventory-storage.instances.item.get",
+            "inventory-storage.service-points.collection.get",
+            "inventory-storage.service-points.item.get",
+            "circulation-storage.requests.item.get",
+            "circulation-storage.requests.collection.get",
+            "users.collection.get",
+            "users.item.get"
+          ]
+        }
+      ]
+    },
+    {
       "id": "circulation",
       "version": "7.6",
       "handlers": [
@@ -995,6 +1024,11 @@
       "description": "create a request given an instance"
     },
     {
+      "permissionName": "circulation.requests.hold-shelf-clearance-report.get",
+      "displayName": "circulation - request hold shelf clearance report",
+      "description": "get all hold shelf clearance requests to generating a report"
+    },
+    {
       "permissionName": "circulation.all",
       "displayName": "circulation - all permissions",
       "description": "Entire set of permissions needed to use the circulation",
@@ -1026,7 +1060,8 @@
         "circulation.requests.item.delete",
         "circulation.requests.collection.delete",
         "circulation.requests.queue.collection.get",
-        "circulation.requests.instances.item.post"
+        "circulation.requests.instances.item.post",
+        "circulation.requests.hold-shelf-clearance-report.get"
       ]
     }
   ],

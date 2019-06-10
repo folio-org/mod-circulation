@@ -169,6 +169,20 @@ public class CollectionResourceClient {
     });
   }
 
+  public CompletableFuture<Result<Response>> getMany(
+    CqlQuery cqlQuery, Integer pageLimit, Integer pageOffset) {
+
+    return cqlQuery.encode().after(encodedQuery -> {
+      final CompletableFuture<Response> future = new CompletableFuture<>();
+
+      String url = collectionRoot + createQueryString(encodedQuery, pageLimit, pageOffset);
+
+      client.get(url, responseConversationHandler(future::complete));
+
+      return future.thenApply(Result::succeeded);
+    });
+  }
+
   private static boolean isProvided(String query) {
     return StringUtils.isNotBlank(query);
   }
