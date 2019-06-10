@@ -2,6 +2,7 @@ package api.requests;
 
 import static java.util.Collections.emptySet;
 import static org.folio.circulation.resources.RequestByInstanceIdResource.rankItemsByMatchingServicePoint;
+import static org.folio.circulation.resources.RequestByInstanceIdResourceTests.getJsonInstanceRequest;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -16,6 +17,7 @@ import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
+import org.folio.circulation.domain.InstanceRequestRelatedRecords;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Location;
 import org.folio.circulation.domain.RequestType;
@@ -33,41 +35,6 @@ import api.support.fixtures.ItemExamples;
 import io.vertx.core.json.JsonObject;
 
 public class RequestByInstanceIdResourceTests extends APITests {
-
-  @Test
-  public void canTransformInstanceToItemRequests() {
-    UUID loanTypeId = UUID.randomUUID();
-    RequestByInstanceIdRequest requestByInstanceIdRequest = RequestByInstanceIdRequest.from(getJsonInstanceRequest()).value();
-    List<Item > items = getItems(2, loanTypeId);
-
-    final Result<LinkedList<JsonObject>> collectionResult = RequestByInstanceIdResource.instanceToItemRequests(requestByInstanceIdRequest, items);
-    assertTrue(collectionResult.succeeded());
-
-    Collection<JsonObject> requestRepresentations = collectionResult.value();
-    assertEquals(6, requestRepresentations.size());
-
-    int i = 0;
-    int j = 0;
-    Item item = items.get(j);
-    for (JsonObject itemRequestJson: requestRepresentations) {
-      assertEquals(item.getItemId(), itemRequestJson.getString("itemId"));
-      if (i == 0)
-        assertEquals(RequestType.HOLD.name(), itemRequestJson.getString("requestType"));
-      if (i == 1)
-        assertEquals(RequestType.RECALL.name(), itemRequestJson.getString("requestType"));
-      if (i == 2)
-        assertEquals(RequestType.PAGE.name(), itemRequestJson.getString("requestType"));
-      i++;
-
-      if (i > 2) {
-        i = 0;
-        j++;
-        if (j < 2) {
-          item = items.get(j);
-        }
-      }
-    }
-  }
 
   @Test
   public void canGetOrderedAvailableItemsList()
@@ -129,8 +96,16 @@ public class RequestByInstanceIdResourceTests extends APITests {
     items.add(item4);
     items.add(item1);
 
-    List<Item> orderedItems = rankItemsByMatchingServicePoint(
-      items, pickupServicePointId).value();
+    InstanceRequestRelatedRecords records = new InstanceRequestRelatedRecords();
+    JsonObject requestJson = getJsonInstanceRequest(pickupServicePointId);
+    Result<RequestByInstanceIdRequest> request = RequestByInstanceIdRequest.from(requestJson);
+
+    records.setUnsortedAvailableItems(items);
+    records.setRequestByInstanceIdRequest(request.value());
+
+    Result<InstanceRequestRelatedRecords> rankResult = rankItemsByMatchingServicePoint(records);
+
+    final List<Item> orderedItems = rankResult.value().getCombineItemsList();
 
     assertEquals(4, orderedItems.size());
 
@@ -173,8 +148,15 @@ public class RequestByInstanceIdResourceTests extends APITests {
     items.add(item4);
     items.add(item1);
 
-    List<Item> orderedItems = rankItemsByMatchingServicePoint(
-      items, UUID.randomUUID()).value();
+    InstanceRequestRelatedRecords records = new InstanceRequestRelatedRecords();
+    JsonObject requestJson =  getJsonInstanceRequest(UUID.randomUUID());
+    Result<RequestByInstanceIdRequest> request = RequestByInstanceIdRequest.from(requestJson);
+
+    records.setUnsortedAvailableItems(items);
+    records.setRequestByInstanceIdRequest(request.value());
+
+    Result<InstanceRequestRelatedRecords> rankResult = rankItemsByMatchingServicePoint(records);
+    final List<Item> orderedItems = rankResult.value().getCombineItemsList();
 
     assertEquals(4, orderedItems.size());
 
@@ -182,30 +164,6 @@ public class RequestByInstanceIdResourceTests extends APITests {
     assertEquals(item2.getItemId(),orderedItems.get(1).getItemId());
     assertEquals(item4.getItemId(),orderedItems.get(2).getItemId());
     assertEquals(item1.getItemId(),orderedItems.get(3).getItemId());
-  }
-
-  private static JsonObject getJsonInstanceRequest() {
-    DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
-    DateTime requestExpirationDate = requestDate.plusDays(30);
-
-    JsonObject instanceRequest = new JsonObject();
-    instanceRequest.put("instanceId", UUID.randomUUID().toString());
-    instanceRequest.put("requestDate", requestDate.toString(ISODateTimeFormat.dateTime()));
-    instanceRequest.put("requesterId", UUID.randomUUID().toString());
-    instanceRequest.put("pickupServicePointId", UUID.randomUUID().toString());
-    instanceRequest.put("fulfilmentPreference", "Hold Shelf");
-    instanceRequest.put("requestExpirationDate",requestExpirationDate.toString(ISODateTimeFormat.dateTime()));
-
-    return instanceRequest;
-  }
-
-  private static List<Item> getItems(int totalItems, UUID loanTypeId){
-    LinkedList<Item> items = new LinkedList<>();
-    for (int i = 0; i< totalItems; i++){
-      JsonObject itemJsonObject = ItemExamples.basedUponSmallAngryPlanet(UUID.randomUUID(), loanTypeId).create();
-      items.add(Item.from(itemJsonObject));
-    }
-    return items;
   }
 
   private static Location getLocationWithServicePoints(Set<UUID> servicePoints, UUID primaryServicePointId, UUID locationInstitutionId) {
