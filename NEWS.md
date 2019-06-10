@@ -1,6 +1,6 @@
 ## 16.1.0 2019-06-10
 
-* Introduces creation of requests based upon an instance (CIRC-245, CIRC-265, CIRC-267)
+* Introduces creation of requests based upon an instance (CIRC-245, CIRC-264, CIRC-265, CIRC-267)
 * Includes borrower personal information for loans (CIRC-290, CIRC-335, CIRC-336)
 * Notifies requester for all recall requests, not only those which change due date (CIRC-295)
 * Include additional tokens in patron notices (CIRC-296, CIRC-297)
