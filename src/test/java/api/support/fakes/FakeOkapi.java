@@ -252,6 +252,7 @@ public class FakeOkapi extends AbstractVerticle {
       .withRecordName("scheduled notice")
       .withCollectionPropertyName("scheduledNotices")
       .withRootPath("/scheduled-notice-storage/scheduled-notices")
+      .allowDeleteByQuery()
       .create()
       .register(router);
 

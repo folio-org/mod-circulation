@@ -7,6 +7,7 @@ import org.folio.circulation.domain.LoanRepository;
 import org.folio.circulation.domain.LoanRepresentation;
 import org.folio.circulation.domain.RequestQueueRepository;
 import org.folio.circulation.domain.UserRepository;
+import org.folio.circulation.domain.notice.schedule.ScheduledNoticeService;
 import org.folio.circulation.domain.representations.LoanResponse;
 import org.folio.circulation.storage.SingleOpenLoanByUserAndItemBarcodeFinder;
 import org.folio.circulation.support.Clients;
@@ -45,11 +46,13 @@ public class OverrideRenewalByBarcodeResource extends Resource {
     final SingleOpenLoanByUserAndItemBarcodeFinder loanFinder
       = new SingleOpenLoanByUserAndItemBarcodeFinder(loanRepository,
       itemRepository, userRepository, requestQueueRepository);
+    final ScheduledNoticeService scheduledNoticeService = ScheduledNoticeService.using(clients);
 
     renewalOverrideRequestFrom(routingContext.getBodyAsJson())
       .after(override -> loanFinder.findLoan(override.getItemBarcode(), override.getUserBarcode())
       .thenComposeAsync(r -> r.after(loan -> renewalService.overrideRenewal(loan, override.getDueDate(), override.getComment())))
-      .thenComposeAsync(r -> r.after(loanRepository::updateLoan)))
+      .thenComposeAsync(r -> r.after(loanRepository::updateLoan))
+      .thenComposeAsync(r -> r.after(scheduledNoticeService::rescheduleDueDateNotices)))
       .thenApply(r -> r.map(loanRepresentation::extendedLoan))
       .thenApply(LoanResponse::from)
       .thenAccept(result -> result.writeTo(routingContext.response()));
