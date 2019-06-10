@@ -1,5 +1,6 @@
 package org.folio.circulation.domain.notice.schedule;
 
+import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.support.Result.succeeded;
 
 import java.util.List;
@@ -104,6 +105,9 @@ public class ScheduledNoticeService {
   }
 
   public CompletableFuture<Result<Loan>> rescheduleDueDateNotices(Loan loan) {
+    if (loan.isClosed()) {
+      return completedFuture(succeeded(loan));
+    }
     return scheduledNoticesRepository.deleteByLoanId(loan.getId())
       .thenApply(r -> r.next(v -> scheduleNoticesForLoanDueDate(loan)));
   }
