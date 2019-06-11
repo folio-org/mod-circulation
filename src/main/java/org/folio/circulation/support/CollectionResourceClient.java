@@ -103,6 +103,18 @@ public class CollectionResourceClient {
     return future;
   }
 
+  public CompletableFuture<Result<Response>> deleteMany(CqlQuery cqlQuery) {
+    return cqlQuery.encode().after(encodedQuery -> {
+      final CompletableFuture<Response> future = new CompletableFuture<>();
+
+      String url = collectionRoot + createQueryString(encodedQuery, null, 0);
+
+      client.delete(url, responseConversationHandler(future::complete));
+
+      return future.thenApply(Result::succeeded);
+    });
+  }
+
   /**
    * Make a get request for multiple records using raw query string parameters
    * Should only be used when passing on entire query string from a client request

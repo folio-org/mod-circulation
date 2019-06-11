@@ -215,7 +215,11 @@
             "circulation-storage.request-policies.item.get",
             "circulation-storage.fixed-due-date-schedules.item.get",
             "circulation-storage.fixed-due-date-schedules.collection.get",
-            "calendar.collection.get"
+            "calendar.collection.get",
+            "circulation.rules.notice-policy.get",
+            "circulation-storage.patron-notice-policies.item.get",
+            "scheduled-notice-storage.scheduled-notices.collection.delete",
+            "scheduled-notice-storage.scheduled-notices.item.post"
           ]
         },
         {
@@ -257,7 +261,11 @@
             "circulation-storage.request-policies.item.get",
             "circulation-storage.fixed-due-date-schedules.item.get",
             "circulation-storage.fixed-due-date-schedules.collection.get",
-            "configuration.entries.collection.get"
+            "configuration.entries.collection.get",
+            "circulation.rules.notice-policy.get",
+            "circulation-storage.patron-notice-policies.item.get",
+            "scheduled-notice-storage.scheduled-notices.collection.delete",
+            "scheduled-notice-storage.scheduled-notices.item.post"
           ]
         },
         {
@@ -299,7 +307,11 @@
             "circulation-storage.request-policies.item.get",
             "circulation-storage.fixed-due-date-schedules.item.get",
             "circulation-storage.fixed-due-date-schedules.collection.get",
-            "calendar.collection.get"
+            "calendar.collection.get",
+            "circulation.rules.notice-policy.get",
+            "circulation-storage.patron-notice-policies.item.get",
+            "scheduled-notice-storage.scheduled-notices.collection.delete",
+            "scheduled-notice-storage.scheduled-notices.item.post"
           ]
         },
         {
@@ -446,7 +458,11 @@
             "inventory-storage.material-types.item.get",
             "circulation-storage.loan-policies.item.get",
             "circulation-storage.request-policies.item.get",
-            "circulation-storage.fixed-due-date-schedules.item.get"
+            "circulation-storage.fixed-due-date-schedules.item.get",
+            "circulation.rules.notice-policy.get",
+            "circulation-storage.patron-notice-policies.item.get",
+            "scheduled-notice-storage.scheduled-notices.collection.delete",
+            "scheduled-notice-storage.scheduled-notices.item.post"
           ]
         },
         {
@@ -626,7 +642,9 @@
             "circulation-storage.patron-notice-policies.item.get",
             "patron-notice.post",
             "inventory-storage.loan-types.item.get",
-            "calendar.collection.get"
+            "calendar.collection.get",
+            "scheduled-notice-storage.scheduled-notices.collection.delete",
+            "scheduled-notice-storage.scheduled-notices.item.post"
           ]
         },
         {
@@ -860,7 +878,7 @@
     },
     {
       "id": "request-storage",
-      "version": "3.0"
+      "version": "3.1"
     },
     {
       "id": "users",

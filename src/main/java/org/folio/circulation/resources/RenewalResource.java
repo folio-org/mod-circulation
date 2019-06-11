@@ -10,6 +10,7 @@ import org.folio.circulation.domain.LoanRepository;
 import org.folio.circulation.domain.LoanRepresentation;
 import org.folio.circulation.domain.RequestQueueRepository;
 import org.folio.circulation.domain.UserRepository;
+import org.folio.circulation.domain.notice.schedule.ScheduledNoticeService;
 import org.folio.circulation.domain.policy.LoanPolicyRepository;
 import org.folio.circulation.domain.policy.library.ClosedLibraryStrategyService;
 import org.folio.circulation.domain.representations.LoanResponse;
@@ -57,6 +58,7 @@ public abstract class RenewalResource extends Resource {
     final ConfigurationRepository configurationRepository = new ConfigurationRepository(clients);
     final ClosedLibraryStrategyService strategyService =
       ClosedLibraryStrategyService.using(clients, DateTime.now(DateTimeZone.UTC), true);
+    final ScheduledNoticeService scheduledNoticeService = ScheduledNoticeService.using(clients);
 
 
     //TODO: Validation check for same user should be in the domain service
@@ -73,6 +75,7 @@ public abstract class RenewalResource extends Resource {
       .thenApply(r -> r.next(loanRenewalService::renew))
       .thenComposeAsync(r -> r.after(strategyService::applyClosedLibraryDueDateManagement))
       .thenComposeAsync(r -> r.after(loanRepository::updateLoan))
+      .thenComposeAsync(r -> r.after(scheduledNoticeService::rescheduleDueDateNotices))
       .thenApply(r -> r.map(loanRepresentation::extendedLoan))
       .thenApply(LoanResponse::from)
       .thenAccept(result -> result.writeTo(routingContext.response()));
