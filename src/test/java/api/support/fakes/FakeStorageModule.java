@@ -42,6 +42,7 @@ public class FakeStorageModule extends AbstractVerticle {
   private final String rootPath;
   private final String collectionPropertyName;
   private final boolean hasCollectionDelete;
+  private final boolean hasDeleteByQuery;
   private final Collection<String> requiredProperties;
   private final Map<String, Map<String, JsonObject>> storedResourcesByTenant;
   private final String recordTypeName;
@@ -60,6 +61,7 @@ public class FakeStorageModule extends AbstractVerticle {
     String tenantId,
     Collection<String> requiredProperties,
     boolean hasCollectionDelete,
+    boolean hasDeleteByQuery,
     String recordTypeName,
     Collection<String> uniqueProperties,
     Collection<String> disallowedProperties,
@@ -69,6 +71,7 @@ public class FakeStorageModule extends AbstractVerticle {
     this.collectionPropertyName = collectionPropertyName;
     this.requiredProperties = requiredProperties;
     this.hasCollectionDelete = hasCollectionDelete;
+    this.hasDeleteByQuery = hasDeleteByQuery;
     this.recordTypeName = recordTypeName;
     this.uniqueProperties = uniqueProperties;
     this.disallowedProperties = disallowedProperties;
@@ -95,7 +98,11 @@ public class FakeStorageModule extends AbstractVerticle {
     router.get(rootPath).handler(this::checkForUnexpectedQueryParameters);
     router.get(rootPath).handler(this::getMany);
 
-    router.delete(rootPath).handler(this::empty);
+    if (hasDeleteByQuery) {
+      router.delete(rootPath).handler(this::deleteMany);
+    } else {
+      router.delete(rootPath).handler(this::empty);
+    }
 
     router.put(rootPath + "/:id").handler(this::checkRequiredProperties);
     router.put(rootPath + "/:id").handler(this::checkDisallowedProperties);
@@ -285,6 +292,20 @@ public class FakeStorageModule extends AbstractVerticle {
     Map <String, JsonObject> resourcesForTenant = getResourcesForTenant(context);
 
     resourcesForTenant.clear();
+
+    SuccessResponse.noContent(routingContext.response());
+  }
+
+  private void deleteMany(RoutingContext routingContext) {
+    WebContext context = new WebContext(routingContext);
+
+    String query = context.getStringParameter("query", null);
+
+    Map<String, JsonObject> resourcesForTenant = getResourcesForTenant(context);
+
+    new FakeCQLToJSONInterpreter(false)
+      .execute(resourcesForTenant.values(), query)
+      .forEach(item -> resourcesForTenant.remove(item.getString("id")));
 
     SuccessResponse.noContent(routingContext.response());
   }

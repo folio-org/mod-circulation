@@ -76,6 +76,10 @@ public class Item {
     return isInStatus(AWAITING_PICKUP);
   }
 
+  public boolean isAvailable() {
+    return isInStatus(AVAILABLE);
+  }
+
   private boolean isInTransit() {
     return isInStatus(IN_TRANSIT);
   }
@@ -167,7 +171,7 @@ public class Item {
     return locationRepresentation;
   }
 
-  boolean homeLocationIsServedBy(UUID servicePointId) {
+  public boolean homeLocationIsServedBy(UUID servicePointId) {
     //Defensive check just in case primary isn't part of serving set
     return matchesPrimaryServicePoint(servicePointId) ||
       matchesAnyServingServicePoint(servicePointId);

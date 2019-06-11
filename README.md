@@ -22,6 +22,7 @@ FOLIO compatible circulation capabilities, including loan items from the invento
 
 - Java 8 JDK
 - Maven 3.5.0
+- Drools 7.0.0 (later versions seem to be incompatible with Alpine Linux, used for the Docker container)
 - Implementations of the interfaces described in the [module descriptor](descriptors/ModuleDescriptor-template.json)
 
 ### Optional
@@ -405,6 +406,73 @@ Loans include information from the item, including locations, holdingsRecordId a
 #### Requests
 
 Requests include information from the item, including holdingsRecordId and instanceId.
+
+#### Hold shelf clearance report
+
+To create hold expiration report that can be used by staff to clear expired and cancelled holds from the shelf and put them back into circulation.
+Then generate a report based on this logic:
+* Find all of the items that are `Awaiting pickup`
+* Choose the item’s which either have an empty request queue or request queue doesn't contain request with status `Open - Awaiting pickup`
+* Select the request for each item that expired or was cancelled on the hold shelf most recently (by ranking the closed requests by a date used only for this purpose)
+* Choose only the requests where the `pickup service point` matches the chosen service point
+
+The API for generating a report is based on the presence of the 'awaitingPickupRequestClosedDate' property for the request JSONB.
+Such behavior is required by database trigger for request update in the mod-circulation-storage
+See [CIRCSTORE-127](https://issues.folio.org/browse/CIRCSTORE-127)
+
+Data involved in the formation of the report:
+* Requester name: lastName, firstName
+* Requester barcode
+* Item title
+* Item barcode
+* Call number
+* Request status
+* Hold shelf expiration date: Date with timestamp
+
+#### Example Request
+
+```
+GET http://{okapi-location}/circulation/requests-reports/hold-shelf-clearance/:{servicePointId}
+```
+
+#### Example Success Response
+
+```
+HTTP/1.1 200 Ok
+content-type: application/json; charset=utf-8
+content-length: 230
+
+{
+  "requests": [
+    {
+      "id": "f5cec279-0da6-4b44-a3df-f49b0903f325",
+      "requestType": "Hold",
+      "requestDate": "2017-08-05T11:43:23Z",
+      "requesterId": "61d939e4-f2ae-4c53-95d2-224a802fa2a6",
+      "itemId": "3e5d5433-a271-499c-94f4-5f3e4652e537",
+      "fulfilmentPreference": "Hold Shelf",
+      "requestExpirationDate": "2017-08-31T22:25:37Z",
+      "holdShelfExpirationDate": "2017-09-01T22:25:37Z",
+      "position": 1,
+      "status": "Closed - Pickup expired",
+      "pickupServicePointId": "4ae438be-308a-468d-a815-ad109c288f05",
+      "awaitingPickupRequestClosedDate": "2019-03-11T15:45:23.000+0000"
+      "item": {
+        "title": "Children of Time",
+        "barcode": "760932543816",
+        "callNumber": "A344JUI"
+      },
+      "requester": {
+        "firstName": "Stephen",
+        "lastName": "Jones",
+        "middleName": "Anthony",
+        "barcode": "567023127436"
+      }
+    }
+  ],
+  "totalRecords": 1
+}
+```
 
 ## Additional Information
 
