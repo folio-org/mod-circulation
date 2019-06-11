@@ -216,9 +216,11 @@ public class RequestByInstanceIdResource extends Resource {
           requestBody.put("requesterId", requestByInstanceIdRequest.getRequesterId().toString());
           requestBody.put("pickupServicePointId", requestByInstanceIdRequest.getPickupServicePointId().toString());
           requestBody.put("fulfilmentPreference", defaultFulfilmentPreference);
-          requestBody.put("requestExpirationDate",
-            requestByInstanceIdRequest.getRequestExpirationDate().toString(ISODateTimeFormat.dateTime()));
           requestBody.put("requestType", reqType.name());
+          if (requestByInstanceIdRequest.getRequestExpirationDate() != null) {
+            requestBody.put("requestExpirationDate",
+              requestByInstanceIdRequest.getRequestExpirationDate().toString(ISODateTimeFormat.dateTime()));
+          }
 
           requests.add(requestBody);
         }
