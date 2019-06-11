@@ -37,7 +37,7 @@ public class LoanRepresentation {
 
     if (loan.getLoanPolicy() != null) {
       additionalLoanPolicyProperties(extendedRepresentation, loan.getLoanPolicy());
-    }else{
+    } else {
       extendedRepresentation.remove(LoanProperties.LOAN_POLICY);
     }
 

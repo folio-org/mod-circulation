@@ -80,10 +80,8 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     if (proxy != null) {
       representation.put("proxyUserId", proxy.getId());
     }
-
     if (loanPolicy != null) {
       setLoanPolicyId(loanPolicy.getId());
-      setLoanPolicyName(loanPolicy.getName());
     }
   }
 
@@ -259,17 +257,6 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     if (newLoanPolicyId != null) {
       representation.put("loanPolicyId", newLoanPolicyId);
     }
-  }
-
-  private void setLoanPolicyName(String newLoanPolicyName) {
-
-    JsonObject loanPolicySummary = representation.containsKey(LoanProperties.LOAN_POLICY)
-            ? representation.getJsonObject(LoanProperties.LOAN_POLICY)
-            : new JsonObject();
-
-    loanPolicySummary.put("loanPolicyName", newLoanPolicyName);
-
-    representation.put(LoanProperties.LOAN_POLICY, loanPolicySummary);
   }
 
   public ServicePoint getCheckinServicePoint() {
