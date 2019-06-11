@@ -34,7 +34,7 @@ public class Location {
     return getProperty(representation, "id");
   }
 
-  public List<String> getServicePointIds() {
+  private List<String> getServicePointIds() {
     return JsonPropertyFetcher.getArrayProperty(representation, "servicePointIds")
       .stream()
       .map(String.class::cast)
@@ -57,15 +57,15 @@ public class Location {
     return getProperty(representation, "name");
   }
 
-  public String getLibraryId() {
+  String getLibraryId() {
     return getProperty(representation, "libraryId");
   }
 
-  public String getCampusId() {
+  String getCampusId() {
     return getProperty(representation, "campusId");
   }
 
-  public String getInstitutionId() {
+  String getInstitutionId() {
     return getProperty(representation, "institutionId");
   }
 
@@ -81,15 +81,15 @@ public class Location {
     return getProperty(institutionRepresentation, "name");
   }
 
-  public Location withLibraryRepresentation(JsonObject libraryRepresentation) {
+  Location withLibraryRepresentation(JsonObject libraryRepresentation) {
     return new Location(representation, libraryRepresentation, campusRepresentation, institutionRepresentation);
   }
 
-  public Location withCampusRepresentation(JsonObject campusRepresentation) {
+  Location withCampusRepresentation(JsonObject campusRepresentation) {
     return new Location(representation, libraryRepresentation, campusRepresentation, institutionRepresentation);
   }
 
-  public Location withInstitutionRepresentation(JsonObject institutionRepresentation) {
+  Location withInstitutionRepresentation(JsonObject institutionRepresentation) {
     return new Location(representation, libraryRepresentation, campusRepresentation, institutionRepresentation);
   }
 
