@@ -109,6 +109,41 @@ public class InstanceRequestsAPICreationTests extends APITests {
   }
 
   @Test
+  public void canCreateATitleLevelRequestForOneAvailableCopyWithoutRequestExpirationDate()
+    throws InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    MalformedURLException {
+
+    UUID pickupServicePointId = servicePointsFixture.cd1().getId();
+    UUID requesterId = usersFixture.jessica().getId();
+    DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
+
+    IndividualResource instance = instancesFixture.basedUponDunkirk();
+    IndividualResource holdings = holdingsFixture.defaultWithHoldings(instance.getId());
+
+    final IndividualResource item = itemsFixture.basedUponDunkirkWithCustomHoldingAndLocation(holdings.getId(), null);
+
+    JsonObject requestBody = createInstanceRequestObject(instance.getId(), requesterId,
+      pickupServicePointId, requestDate, null);
+
+    CompletableFuture<Response> postCompleted = new CompletableFuture<>();
+
+    client.post(InterfaceUrls.requestsUrl("/instances"), requestBody,
+      ResponseHandler.any(postCompleted));
+
+    Response postResponse = postCompleted.get(10, TimeUnit.SECONDS);
+
+    JsonObject representation = postResponse.getJson();
+    validateInstanceRequestResponse(representation,
+      pickupServicePointId,
+      instance.getId(),
+      item.getId(),
+      RequestType.PAGE);
+
+  }
+
+  @Test
   public void canCreateATitleLevelRequestForMultipleAvailableItemsWithNoMatchingPickupLocationIds()
     throws InterruptedException,
     ExecutionException,
@@ -445,7 +480,9 @@ public class InstanceRequestsAPICreationTests extends APITests {
     requestBody.put("requesterId", requesterId.toString());
     requestBody.put("pickupServicePointId", pickupServicePointId.toString());
     requestBody.put("fulfilmentPreference", "Hold Shelf");
-    requestBody.put("requestExpirationDate", requestExpirationDate.toString(ISODateTimeFormat.dateTime()));
+    if (requestExpirationDate != null) {
+      requestBody.put("requestExpirationDate", requestExpirationDate.toString(ISODateTimeFormat.dateTime()));
+    }
 
     return requestBody;
   }
