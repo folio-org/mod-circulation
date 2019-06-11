@@ -4,6 +4,7 @@ import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.function.Function.identity;
 import static org.folio.circulation.support.Result.failed;
 import static org.folio.circulation.support.Result.succeeded;
+import static org.folio.circulation.support.ResultBinding.mapResult;
 
 import java.lang.invoke.MethodHandles;
 import java.util.Collection;
@@ -40,6 +41,8 @@ public class ItemRepository {
   private final boolean fetchLocation;
   private final boolean fetchMaterialType;
   private final boolean fetchLoanType;
+
+  private static final String ITEMS_COLLECTION_PROPERTY_NAME = "items";
 
   public ItemRepository(
     Clients clients,
@@ -212,7 +215,7 @@ public class ItemRepository {
     Collection<String> itemIds) {
 
     final MultipleRecordFetcher<Item> fetcher
-      = new MultipleRecordFetcher<>(itemsClient, "items", Item::from);
+      = new MultipleRecordFetcher<>(itemsClient, ITEMS_COLLECTION_PROPERTY_NAME , Item::from);
 
     return fetcher.findByIds(itemIds)
       .thenApply(r -> r.map(MultipleRecords::getRecords));
@@ -235,7 +238,7 @@ public class ItemRepository {
   }
 
   private Result<JsonObject> mapMultipleToResult(Response response) {
-    return MultipleRecords.from(response, identity(), "items")
+    return MultipleRecords.from(response, identity(), ITEMS_COLLECTION_PROPERTY_NAME )
       .map(items -> items.getRecords().stream().findFirst().orElse(null));
   }
 
@@ -282,6 +285,18 @@ public class ItemRepository {
       (records, items) -> new MultipleRecords<>(
         matchItemToRecord(records, items, includeItemMap),
         records.getTotalRecords()));
+  }
+
+  public CompletableFuture<Result<Collection<Item>>> findByQuery(Result<CqlQuery> queryResult) {
+    MultipleRecordFetcher<Item> fetcher
+      = new MultipleRecordFetcher<>(itemsClient, ITEMS_COLLECTION_PROPERTY_NAME , Item::from);
+
+    return fetcher.findByQuery(queryResult)
+      .thenApply(mapResult(MultipleRecords::getRecords))
+      .thenComposeAsync(this::fetchHoldingRecords)
+      .thenComposeAsync(this::fetchInstances)
+      .thenComposeAsync(this::fetchLocations)
+      .thenComposeAsync(this::fetchMaterialTypes);
   }
 
   private CompletableFuture<Result<Collection<Item>>> fetchFor(

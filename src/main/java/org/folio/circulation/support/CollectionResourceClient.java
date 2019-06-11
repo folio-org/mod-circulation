@@ -103,6 +103,18 @@ public class CollectionResourceClient {
     return future;
   }
 
+  public CompletableFuture<Result<Response>> deleteMany(CqlQuery cqlQuery) {
+    return cqlQuery.encode().after(encodedQuery -> {
+      final CompletableFuture<Response> future = new CompletableFuture<>();
+
+      String url = collectionRoot + createQueryString(encodedQuery, null, 0);
+
+      client.delete(url, responseConversationHandler(future::complete));
+
+      return future.thenApply(Result::succeeded);
+    });
+  }
+
   /**
    * Make a get request for multiple records using raw query string parameters
    * Should only be used when passing on entire query string from a client request
@@ -129,6 +141,10 @@ public class CollectionResourceClient {
   public CompletableFuture<Result<Response>> getMany(
     CqlQuery cqlQuery, Integer pageLimit) {
 
+    if (pageLimit == null) {
+      return getManyNoLimit(cqlQuery);
+    }
+
     return cqlQuery.encode().after(encodedQuery -> {
         final CompletableFuture<Response> future = new CompletableFuture<>();
 
@@ -138,6 +154,33 @@ public class CollectionResourceClient {
 
         return future.thenApply(Result::succeeded);
       });
+  }
+
+  public CompletableFuture<Result<Response>> getManyNoLimit(CqlQuery cqlQuery) {
+
+    return cqlQuery.encode().after(encodedQuery -> {
+      final CompletableFuture<Response> future = new CompletableFuture<>();
+
+      String url = collectionRoot + createQueryString(encodedQuery, null, 0);
+
+      client.get(url, responseConversationHandler(future::complete));
+
+      return future.thenApply(Result::succeeded);
+    });
+  }
+
+  public CompletableFuture<Result<Response>> getMany(
+    CqlQuery cqlQuery, Integer pageLimit, Integer pageOffset) {
+
+    return cqlQuery.encode().after(encodedQuery -> {
+      final CompletableFuture<Response> future = new CompletableFuture<>();
+
+      String url = collectionRoot + createQueryString(encodedQuery, pageLimit, pageOffset);
+
+      client.get(url, responseConversationHandler(future::complete));
+
+      return future.thenApply(Result::succeeded);
+    });
   }
 
   private static boolean isProvided(String query) {

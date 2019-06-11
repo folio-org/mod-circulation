@@ -45,7 +45,8 @@ public class HoldingBuilder extends JsonBuilder implements Builder {
       instanceId,
       this.permanentLocationId,
       this.temporaryLocationId,
-      this.callNumber);
+      this.callNumber
+    );
   }
 
   public HoldingBuilder withPermanentLocation(IndividualResource location) {
@@ -57,7 +58,8 @@ public class HoldingBuilder extends JsonBuilder implements Builder {
       this.instanceId,
       locationId,
       this.temporaryLocationId,
-      this.callNumber);
+      this.callNumber
+    );
   }
 
   public HoldingBuilder withNoPermanentLocation() {
@@ -73,7 +75,8 @@ public class HoldingBuilder extends JsonBuilder implements Builder {
       this.instanceId,
       this.permanentLocationId,
       locationId,
-      this.callNumber);
+      this.callNumber
+    );
   }
 
   public HoldingBuilder withNoTemporaryLocation() {

@@ -29,6 +29,8 @@ import org.slf4j.LoggerFactory;
 import api.support.fixtures.AddressTypesFixture;
 import api.support.fixtures.CancellationReasonsFixture;
 import api.support.fixtures.CirculationRulesFixture;
+import api.support.fixtures.HoldingsFixture;
+import api.support.fixtures.InstancesFixture;
 import api.support.fixtures.ItemsFixture;
 import api.support.fixtures.LoanPoliciesFixture;
 import api.support.fixtures.LoanTypesFixture;
@@ -72,7 +74,7 @@ public abstract class APITests {
     = ResourceClient.forProxyRelationships(client);
 
   protected final ResourceClient instancesClient = ResourceClient.forInstances(client);
-  private final ResourceClient holdingsClient = ResourceClient.forHoldings(client);
+  protected final ResourceClient holdingsClient = ResourceClient.forHoldings(client);
   protected final ResourceClient itemsClient = ResourceClient.forItems(client);
 
   protected final ResourceClient loansClient = ResourceClient.forLoans(client);
@@ -154,6 +156,12 @@ public abstract class APITests {
 
   protected final RequestsFixture requestsFixture = new RequestsFixture(
     requestsClient, cancellationReasonsFixture, servicePointsFixture);
+
+  protected final InstancesFixture instancesFixture
+    = new InstancesFixture(instanceTypesClient, contributorNameTypesClient, client);
+
+  protected final HoldingsFixture holdingsFixture
+    = new HoldingsFixture(client);
 
   protected final ScheduledNoticeProcessingClient scheduledNoticeProcessingClient =
     new ScheduledNoticeProcessingClient();
@@ -253,6 +261,7 @@ public abstract class APITests {
     patronGroupsFixture.cleanUp();
 
     cancellationReasonsFixture.cleanUp();
+    instancesFixture.cleanUp();
   }
 
   //Needs to be done each time as some tests manipulate the rules

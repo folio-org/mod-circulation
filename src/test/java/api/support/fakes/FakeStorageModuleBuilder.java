@@ -14,6 +14,7 @@ public class FakeStorageModuleBuilder {
   private final Collection<String> uniqueProperties;
   private final Collection<String> disallowedProperties;
   private final Boolean hasCollectionDelete;
+  private final Boolean hasDeleteByQuery;
   private final String recordName;
   private final Boolean includeChangeMetadata;
 
@@ -27,6 +28,7 @@ public class FakeStorageModuleBuilder {
       true,
       "",
       new ArrayList<>(),
+      false,
       false);
   }
 
@@ -39,6 +41,7 @@ public class FakeStorageModuleBuilder {
     Boolean hasCollectionDelete,
     String recordName,
     Collection<String> uniqueProperties,
+    Boolean hasDeleteByQuery,
     Boolean includeChangeMetadata) {
 
     this.rootPath = rootPath;
@@ -49,12 +52,13 @@ public class FakeStorageModuleBuilder {
     this.hasCollectionDelete = hasCollectionDelete;
     this.recordName = recordName;
     this.uniqueProperties = uniqueProperties;
+    this.hasDeleteByQuery = hasDeleteByQuery;
     this.includeChangeMetadata = includeChangeMetadata;
   }
 
   public FakeStorageModule create() {
     return new FakeStorageModule(rootPath, collectionPropertyName, tenantId,
-      requiredProperties, hasCollectionDelete, recordName, uniqueProperties,
+      requiredProperties, hasCollectionDelete, hasDeleteByQuery, recordName, uniqueProperties,
       disallowedProperties, includeChangeMetadata);
   }
 
@@ -73,6 +77,7 @@ public class FakeStorageModuleBuilder {
       this.hasCollectionDelete,
       this.recordName,
       this.uniqueProperties,
+      this.hasDeleteByQuery,
       this.includeChangeMetadata);
   }
 
@@ -88,6 +93,7 @@ public class FakeStorageModuleBuilder {
       this.hasCollectionDelete,
       this.recordName,
       this.uniqueProperties,
+      this.hasDeleteByQuery,
       this.includeChangeMetadata);
   }
 
@@ -101,6 +107,7 @@ public class FakeStorageModuleBuilder {
       this.hasCollectionDelete,
       recordName,
       this.uniqueProperties,
+      this.hasDeleteByQuery,
       this.includeChangeMetadata);
   }
 
@@ -116,6 +123,7 @@ public class FakeStorageModuleBuilder {
       this.hasCollectionDelete,
       this.recordName,
       this.uniqueProperties,
+      this.hasDeleteByQuery,
       this.includeChangeMetadata);
     }
 
@@ -135,6 +143,7 @@ public class FakeStorageModuleBuilder {
       this.hasCollectionDelete,
       this.recordName,
       uniqueProperties,
+      this.hasDeleteByQuery,
       this.includeChangeMetadata);
   }
 
@@ -154,6 +163,7 @@ public class FakeStorageModuleBuilder {
       this.hasCollectionDelete,
       this.recordName,
       this.uniqueProperties,
+      this.hasDeleteByQuery,
       this.includeChangeMetadata);
   }
 
@@ -171,6 +181,21 @@ public class FakeStorageModuleBuilder {
       false,
       this.recordName,
       this.uniqueProperties,
+      this.hasDeleteByQuery,
+      this.includeChangeMetadata);
+  }
+
+  FakeStorageModuleBuilder allowDeleteByQuery() {
+    return new FakeStorageModuleBuilder(
+      this.rootPath,
+      this.collectionPropertyName,
+      this.tenantId,
+      this.requiredProperties,
+      this.disallowedProperties,
+      this.hasCollectionDelete,
+      this.recordName,
+      this.uniqueProperties,
+      true,
       this.includeChangeMetadata);
   }
 
@@ -184,6 +209,7 @@ public class FakeStorageModuleBuilder {
       this.hasCollectionDelete,
       this.recordName,
       this.uniqueProperties,
+      this.hasDeleteByQuery,
       true);
   }
 }

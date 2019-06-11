@@ -5,11 +5,29 @@ public abstract class CqlSortBy {
     return new AscendingCqlSortBy(index);
   }
 
+  public static CqlSortBy descending(String index) {
+    return new DescendingCqlSortBy(index);
+  }
+
   public static CqlSortBy none() {
     return new NoCqlSortBy();
   }
 
   protected abstract String applyTo(String query);
+
+  private static class DescendingCqlSortBy extends CqlSortBy {
+
+    private final String index;
+
+    private DescendingCqlSortBy(String index) {
+      this.index = index;
+    }
+
+    @Override
+    protected String applyTo(String query) {
+      return String.format("%s sortBy %s/sort.descending ", query, index);
+    }
+  }
 
   private static class AscendingCqlSortBy extends CqlSortBy {
     private final String index;

@@ -26,7 +26,7 @@ public class RequestRepository {
   private final LoanRepository loanRepository;
   private final ServicePointRepository servicePointRepository;
   private final PatronGroupRepository patronGroupRepository;
-  
+
 
   private RequestRepository(
     CollectionResourceClient requestsStorageClient,
@@ -42,7 +42,7 @@ public class RequestRepository {
     this.itemRepository = itemRepository;
     this.userRepository = userRepository;
     this.loanRepository = loanRepository;
-    this.servicePointRepository = servicePointRepository; 
+    this.servicePointRepository = servicePointRepository;
     this.patronGroupRepository = patronGroupRepository;
   }
 
@@ -72,6 +72,13 @@ public class RequestRepository {
       .thenApply(result -> result.next(this::mapResponseToRequests))
       .thenComposeAsync(requests ->
         itemRepository.fetchItemsFor(requests, Request::withItem));
+  }
+
+  CompletableFuture<Result<MultipleRecords<Request>>> findByWithoutItems(
+    CqlQuery query, Integer pageLimit) {
+
+    return requestsStorageClient.getMany(query, pageLimit)
+      .thenApply(result -> result.next(this::mapResponseToRequests));
   }
 
   private Result<MultipleRecords<Request>> mapResponseToRequests(Response response) {
@@ -192,26 +199,26 @@ public class RequestRepository {
     return result.combineAfter(request ->
       getUser(request.getProxyUserId()), Request::withProxy);
   }
-  
+
   private CompletableFuture<Result<Request>> fetchLoan(Result<Request> result) {
     return result.combineAfter(loanRepository::findOpenLoanForRequest, Request::withLoan);
   }
-  
+
   private CompletableFuture<Result<Request>> fetchPickupServicePoint(Result<Request> result) {
     return result.combineAfter(request -> getServicePoint(request.getPickupServicePointId()),
         Request::withPickupServicePoint);
   }
-  
+
   private CompletableFuture<Result<Request>> fetchPatronGroups(Result<Request> result) {
     return patronGroupRepository.findPatronGroupsForSingleRequestUsers(result);
   }
-  
+
   private CompletableFuture<Result<User>> getUser(String proxyUserId) {
     return userRepository.getUser(proxyUserId);
   }
-  
+
   private CompletableFuture<Result<ServicePoint>> getServicePoint(String servicePointId) {
     return servicePointRepository.getServicePointById(servicePointId);
   }
-  
+
 }

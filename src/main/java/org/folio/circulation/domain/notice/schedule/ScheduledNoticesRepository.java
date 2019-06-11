@@ -92,4 +92,19 @@ public class ScheduledNoticesRepository {
         }
       });
   }
+
+  public CompletableFuture<Result<Void>> deleteByLoanId(String loanId) {
+    return CqlQuery.exactMatch("loanId", loanId).after(this::deleteMany);
+  }
+
+  public CompletableFuture<Result<Void>> deleteMany(CqlQuery cqlQuery) {
+    return scheduledNoticesStorageClient.deleteMany(cqlQuery).thenApply(
+      result -> result.next(response -> {
+        if (response.getStatusCode() == 204) {
+          return succeeded(null);
+        } else {
+          return failed(new ForwardOnFailure(response));
+        }
+      }));
+  }
 }

@@ -1,6 +1,11 @@
 package api.support.examples;
 
+import static java.util.stream.Stream.of;
+
+import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import api.support.builders.LocationBuilder;
 
@@ -11,19 +16,25 @@ public class LocationExamples {
   private final UUID jubileeCampusId;
   private final UUID businessLibraryId;
   private final UUID primaryServicePointId;
+  private final Set<UUID> otherServicePointIds;
 
   public LocationExamples(
     UUID nottinghamUniversityId,
     UUID jubileeCampusId,
     UUID businessLibraryId,
     UUID djanoglyLibraryId,
-    UUID primaryServicePointId) {
+    UUID primaryServicePointId,
+    UUID... servicePointIds) {
 
     this.nottinghamUniversityId = nottinghamUniversityId;
     this.jubileeCampusId = jubileeCampusId;
     this.businessLibraryId = businessLibraryId;
     this.djanoglyLibraryId = djanoglyLibraryId;
     this.primaryServicePointId = primaryServicePointId;
+
+    this.otherServicePointIds = of(servicePointIds)
+      .filter(Objects::nonNull)
+      .collect(Collectors.toSet());
   }
 
   public LocationBuilder mezzanineDisplayCase() {
@@ -33,7 +44,8 @@ public class LocationExamples {
       .forInstitution(nottinghamUniversityId)
       .forCampus(jubileeCampusId)
       .forLibrary(businessLibraryId)
-      .withPrimaryServicePoint(primaryServicePointId);
+      .withPrimaryServicePoint(primaryServicePointId)
+      .servedBy(otherServicePointIds);
   }
 
   public LocationBuilder secondFloorEconomics() {
@@ -43,7 +55,8 @@ public class LocationExamples {
       .forInstitution(nottinghamUniversityId)
       .forCampus(jubileeCampusId)
       .forLibrary(djanoglyLibraryId)
-      .withPrimaryServicePoint(primaryServicePointId);
+      .withPrimaryServicePoint(primaryServicePointId)
+      .servedBy(otherServicePointIds);
   }
 
   public LocationBuilder thirdFloor() {
@@ -53,7 +66,8 @@ public class LocationExamples {
       .forInstitution(nottinghamUniversityId)
       .forCampus(jubileeCampusId)
       .forLibrary(djanoglyLibraryId)
-      .withPrimaryServicePoint(primaryServicePointId);
+      .withPrimaryServicePoint(primaryServicePointId)
+      .servedBy(otherServicePointIds);
   }
 
   public LocationBuilder example() {
@@ -63,6 +77,18 @@ public class LocationExamples {
       .forInstitution(nottinghamUniversityId)
       .forCampus(jubileeCampusId)
       .forLibrary(djanoglyLibraryId)
-      .withPrimaryServicePoint(primaryServicePointId);
+      .withPrimaryServicePoint(primaryServicePointId)
+      .servedBy(otherServicePointIds);
+  }
+
+  public LocationBuilder mainLocation() {
+      return new LocationBuilder()
+      .withName("Main")
+      .withCode("NU/JC/DL/3F")
+      .forInstitution(nottinghamUniversityId)
+      .forCampus(jubileeCampusId)
+      .forLibrary(djanoglyLibraryId)
+      .withPrimaryServicePoint(primaryServicePointId)
+      .servedBy(otherServicePointIds);
   }
 }

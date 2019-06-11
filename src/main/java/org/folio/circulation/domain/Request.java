@@ -14,6 +14,7 @@ import static org.folio.circulation.domain.representations.RequestProperties.HOL
 import static org.folio.circulation.domain.representations.RequestProperties.NAME;
 import static org.folio.circulation.domain.representations.RequestProperties.POSITION;
 import static org.folio.circulation.domain.representations.RequestProperties.REQUEST_EXPIRATION_DATE;
+import static org.folio.circulation.domain.representations.RequestProperties.REQUEST_TYPE;
 import static org.folio.circulation.domain.representations.RequestProperties.STATUS;
 import static org.folio.circulation.support.JsonPropertyFetcher.getDateTimeProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getIntegerProperty;
@@ -22,9 +23,10 @@ import static org.folio.circulation.support.JsonPropertyWriter.write;
 
 import java.util.Objects;
 
-import io.vertx.core.json.JsonObject;
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
+
+import io.vertx.core.json.JsonObject;
 
 public class Request implements ItemRelatedRecord, UserRelatedRecord {
   private final JsonObject requestRepresentation;
@@ -34,8 +36,6 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
   private final User proxy;
   private final Loan loan;
   private final ServicePoint pickupServicePoint;
-
-  public static final String REQUEST_TYPE = "requestType";
 
   private boolean changedPosition = false;
 
@@ -183,7 +183,7 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   public RequestType getRequestType() {
-    return RequestType.from(requestRepresentation.getString(REQUEST_TYPE));
+    return RequestType.from(getProperty(requestRepresentation, REQUEST_TYPE));
   }
 
   Boolean allowedForItem() {
@@ -217,6 +217,10 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
 
   public JsonObject getRequesterFromRepresentation() {
     return requestRepresentation.getJsonObject("requester");
+  }
+
+  public JsonObject getItemFromRepresentation() {
+    return requestRepresentation.getJsonObject("item");
   }
 
   public String getRequesterBarcode() {

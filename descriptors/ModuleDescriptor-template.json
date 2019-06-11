@@ -3,8 +3,37 @@
   "name": "Circulation Module",
   "provides": [
     {
+      "id": "requests-reports",
+      "version": "0.1",
+      "handlers": [
+        {
+          "methods": [
+            "GET"
+          ],
+          "pathPattern": "/circulation/requests-reports/hold-shelf-clearance/{id}",
+          "permissionsRequired": [
+            "circulation.requests.hold-shelf-clearance-report.get"
+          ],
+          "modulePermissions": [
+            "inventory-storage.items.item.get",
+            "inventory-storage.items.collection.get",
+            "inventory-storage.holdings.collection.get",
+            "inventory-storage.holdings.item.get",
+            "inventory-storage.instances.collection.get",
+            "inventory-storage.instances.item.get",
+            "inventory-storage.service-points.collection.get",
+            "inventory-storage.service-points.item.get",
+            "circulation-storage.requests.item.get",
+            "circulation-storage.requests.collection.get",
+            "users.collection.get",
+            "users.item.get"
+          ]
+        }
+      ]
+    },
+    {
       "id": "circulation",
-      "version": "7.5",
+      "version": "7.6",
       "handlers": [
         {
           "methods": [
@@ -174,7 +203,11 @@
             "circulation-storage.request-policies.item.get",
             "circulation-storage.fixed-due-date-schedules.item.get",
             "circulation-storage.fixed-due-date-schedules.collection.get",
-            "calendar.collection.get"
+            "calendar.collection.get",
+            "circulation.rules.notice-policy.get",
+            "circulation-storage.patron-notice-policies.item.get",
+            "scheduled-notice-storage.scheduled-notices.collection.delete",
+            "scheduled-notice-storage.scheduled-notices.item.post"
           ]
         },
         {
@@ -213,7 +246,11 @@
             "circulation-storage.request-policies.item.get",
             "circulation-storage.fixed-due-date-schedules.item.get",
             "circulation-storage.fixed-due-date-schedules.collection.get",
-            "configuration.entries.collection.get"
+            "configuration.entries.collection.get",
+            "circulation.rules.notice-policy.get",
+            "circulation-storage.patron-notice-policies.item.get",
+            "scheduled-notice-storage.scheduled-notices.collection.delete",
+            "scheduled-notice-storage.scheduled-notices.item.post"
           ]
         },
         {
@@ -252,7 +289,11 @@
             "circulation-storage.request-policies.item.get",
             "circulation-storage.fixed-due-date-schedules.item.get",
             "circulation-storage.fixed-due-date-schedules.collection.get",
-            "calendar.collection.get"
+            "calendar.collection.get",
+            "circulation.rules.notice-policy.get",
+            "circulation-storage.patron-notice-policies.item.get",
+            "scheduled-notice-storage.scheduled-notices.collection.delete",
+            "scheduled-notice-storage.scheduled-notices.item.post"
           ]
         },
         {
@@ -387,7 +428,11 @@
             "inventory-storage.material-types.item.get",
             "circulation-storage.loan-policies.item.get",
             "circulation-storage.request-policies.item.get",
-            "circulation-storage.fixed-due-date-schedules.item.get"
+            "circulation-storage.fixed-due-date-schedules.item.get",
+            "circulation.rules.notice-policy.get",
+            "circulation-storage.patron-notice-policies.item.get",
+            "scheduled-notice-storage.scheduled-notices.collection.delete",
+            "scheduled-notice-storage.scheduled-notices.item.post"
           ]
         },
         {
@@ -561,7 +606,9 @@
             "circulation-storage.patron-notice-policies.item.get",
             "patron-notice.post",
             "inventory-storage.loan-types.item.get",
-            "calendar.collection.get"
+            "calendar.collection.get",
+            "scheduled-notice-storage.scheduled-notices.collection.delete",
+            "scheduled-notice-storage.scheduled-notices.item.post"
           ]
         },
         {
@@ -683,6 +730,43 @@
             "usergroups.collection.get",
             "usergroups.item.get"
           ]
+        },
+        {
+          "methods": [
+            "POST"
+          ],
+          "pathPattern": "/circulation/requests/instances",
+          "permissionsRequired": [
+            "circulation.requests.instances.item.post"
+          ],
+          "modulePermissions": [
+            "circulation-storage.requests.item.post",
+            "inventory-storage.items.item.put",
+            "circulation-storage.requests.collection.get",
+            "circulation-storage.requests.item.get",
+            "circulation-storage.loans.item.put",
+            "circulation-storage.loans.collection.get",
+            "inventory-storage.items.item.get",
+            "inventory-storage.items.collection.get",
+            "inventory-storage.holdings.collection.get",
+            "inventory-storage.holdings.item.get",
+            "inventory-storage.instances.collection.get",
+            "inventory-storage.instances.item.get",
+            "inventory-storage.locations.collection.get",
+            "inventory-storage.locations.item.get",
+            "inventory-storage.service-points.collection.get",
+            "inventory-storage.service-points.item.get",
+            "users.item.get",
+            "users.collection.get",
+            "usergroups.collection.get",
+            "usergroups.item.get",
+            "proxiesfor.collection.get",
+            "circulation.rules.notice-policy.get",
+            "circulation-storage.patron-notice-policies.item.get",
+            "patron-notice.post",
+            "inventory-storage.loan-types.item.get",
+            "calendar.collection.get"
+          ]
         }
       ]
     },
@@ -743,7 +827,7 @@
     },
     {
       "id": "request-storage",
-      "version": "3.0"
+      "version": "3.1"
     },
     {
       "id": "users",
@@ -939,6 +1023,16 @@
       "description": "get request queue for an item"
     },
     {
+      "permissionName": "circulation.requests.instances.item.post",
+      "displayName": "circulation - create instance level request",
+      "description": "create a request given an instance"
+    },
+    {
+      "permissionName": "circulation.requests.hold-shelf-clearance-report.get",
+      "displayName": "circulation - request hold shelf clearance report",
+      "description": "get all hold shelf clearance requests to generating a report"
+    },
+    {
       "permissionName": "circulation.all",
       "displayName": "circulation - all permissions",
       "description": "Entire set of permissions needed to use the circulation",
@@ -969,7 +1063,9 @@
         "circulation.requests.item.put",
         "circulation.requests.item.delete",
         "circulation.requests.collection.delete",
-        "circulation.requests.queue.collection.get"
+        "circulation.requests.queue.collection.get",
+        "circulation.requests.instances.item.post",
+        "circulation.requests.hold-shelf-clearance-report.get"
       ]
     }
   ],
