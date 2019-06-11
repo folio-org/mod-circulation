@@ -1,5 +1,6 @@
 package org.folio.circulation.domain;
 
+import static org.folio.circulation.support.JsonPropertyFetcher.getArrayProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
 
 import java.util.List;
@@ -7,8 +8,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
-
-import org.folio.circulation.support.JsonPropertyFetcher;
 
 import io.vertx.core.json.JsonObject;
 
@@ -38,7 +37,7 @@ public class Location {
   }
 
   private List<String> getServicePointIds() {
-    return JsonPropertyFetcher.getArrayProperty(representation, "servicePointIds")
+    return getArrayProperty(representation, "servicePointIds")
       .stream()
       .map(String.class::cast)
       .collect(Collectors.toList());
