@@ -53,10 +53,17 @@
       "description": "ID of last policy used in relation to this loan",
       "type": "string"
     },
-    "loanPolicyName": {
+    "loanPolicy": {
+      "description": "Additional information about the loan policy of the item, taken from the loan loanPolicyId",
       "readonly": true,
-      "description": "Name of last policy used in relation to this loan (read only, defined by the server)",
-      "type": "string"
+      "type": "object",
+      "properties": {
+        "loanPolicyName": {
+          "readonly": true,
+          "description": "Name of last policy used in relation to this loan (read only, defined by the server)",
+          "type": "string"
+        }
+      }
     },
     "item": {
       "description": "Additional information about the item",
