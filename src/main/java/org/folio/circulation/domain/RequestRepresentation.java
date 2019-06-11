@@ -64,11 +64,11 @@ public class RequestRepresentation {
     write(itemSummary, "instanceId", item.getInstanceId());
 
 
-    final JsonObject location = item.getLocation();
+    final Location location = item.getLocation();
 
-    if (location != null && location.containsKey("name")) {
+    if (location != null) {
       itemSummary.put("location", new JsonObject()
-        .put("name", location.getString("name")));
+        .put("name", location.getName()));
     }
     request.put("item", itemSummary);
 
