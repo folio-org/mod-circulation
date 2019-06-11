@@ -3,6 +3,7 @@ package org.folio.circulation.domain;
 import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -46,6 +47,12 @@ public class Location {
       .orElse(null);
   }
 
+  public boolean homeLocationIsServedBy(UUID servicePointId) {
+    //Defensive check just in case primary isn't part of serving set
+    return matchesPrimaryServicePoint(servicePointId) ||
+      matchesAnyServingServicePoint(servicePointId);
+  }
+
   public String getName() {
     return getProperty(representation, "name");
   }
@@ -84,5 +91,15 @@ public class Location {
 
   public Location withInstitutionRepresentation(JsonObject institutionRepresentation) {
     return new Location(representation, libraryRepresentation, campusRepresentation, institutionRepresentation);
+  }
+
+  private boolean matchesPrimaryServicePoint(UUID servicePointId) {
+    return Objects.equals(getPrimaryServicePointId(), servicePointId);
+  }
+
+  private boolean matchesAnyServingServicePoint(UUID servicePointId) {
+    return getServicePointIds().stream()
+      .map(UUID::fromString)
+      .anyMatch(id -> Objects.equals(servicePointId, id));
   }
 }

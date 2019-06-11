@@ -19,8 +19,6 @@ import static org.folio.circulation.support.JsonPropertyWriter.write;
 import static org.folio.circulation.support.JsonStringArrayHelper.toStream;
 
 import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -169,30 +167,6 @@ public class Item {
 
   public Location getLocation() {
     return location;
-  }
-
-  public boolean homeLocationIsServedBy(UUID servicePointId) {
-    //Defensive check just in case primary isn't part of serving set
-    return matchesPrimaryServicePoint(servicePointId) ||
-      matchesAnyServingServicePoint(servicePointId);
-  }
-
-  private boolean matchesPrimaryServicePoint(UUID servicePointId) {
-    return matchingId(Optional.ofNullable(location)
-      .map(Location::getPrimaryServicePointId).orElse(null), servicePointId);
-  }
-
-  private boolean matchesAnyServingServicePoint(UUID servicePointId) {
-    return Optional.ofNullable(location)
-      .map(Location::getServicePointIds)
-      .map(ids -> ids.stream()
-        .map(UUID::fromString)
-        .anyMatch(servingServicePointId -> matchingId(servicePointId, servingServicePointId)))
-      .orElse(false);
-  }
-
-  private boolean matchingId(UUID first, UUID second) {
-    return Objects.equals(second, first);
   }
 
   public JsonObject getMaterialType() {
