@@ -37,15 +37,7 @@ public class RequestRepresentation {
       return;
     }
 
-    JsonObject requesterSummary = requester.createUserSummary();
-
-    String patronGroupId = requester.getPatronGroupId();
-
-    if (patronGroupId != null) {
-      requesterSummary.put("patronGroupId", patronGroupId);
-    }
-
-    request.put("requester", requesterSummary);
+    request.put("requester", userSummary(requester));
   }
 
   private static void addAdditionalProxyProperties(JsonObject request, User proxy) {
@@ -55,14 +47,7 @@ public class RequestRepresentation {
       return;
     }
 
-    JsonObject proxySummary = proxy.createUserSummary();
-    request.put("proxy", proxySummary);
-
-    String patronGroupId = proxy.getPatronGroupId();
-    if (patronGroupId != null) {
-      proxySummary.put("patronGroupId", patronGroupId);
-    }
-
+    request.put("proxy", userSummary(proxy));
   }
 
   private static void addAdditionalItemProperties(JsonObject request, Item item) {
@@ -189,5 +174,31 @@ public class RequestRepresentation {
     request.put("pickupServicePoint", spSummary);
   }
 
+  private static JsonObject userSummary(User user) {
+    JsonObject userSummary = new JsonObject();
+
+    write(userSummary, "lastName", user.getLastName());
+    write(userSummary, "firstName", user.getFirstName());
+    write(userSummary, "middleName", user.getMiddleName());
+    write(userSummary, "barcode", user.getBarcode());
+
+    final PatronGroup patronGroup = user.getPatronGroup();
+
+    if (patronGroup != null) {
+      JsonObject patronGroupSummary = new JsonObject();
+      write(patronGroupSummary, "id", patronGroup.getId());
+      write(patronGroupSummary, "group", patronGroup.getGroup());
+      write(patronGroupSummary, "desc", patronGroup.getDesc());
+      userSummary.put("patronGroup", patronGroupSummary);
+    }
+
+    String patronGroupId = user.getPatronGroupId();
+
+    if (patronGroupId != null) {
+      userSummary.put("patronGroupId", patronGroupId);
+    }
+
+    return userSummary;
+  }
 }
 
