@@ -19,7 +19,10 @@ public class Location {
   private final JsonObject campusRepresentation;
   private final JsonObject institutionRepresentation;
 
-  public Location(JsonObject representation, JsonObject libraryRepresentation, JsonObject campusRepresentation, JsonObject institutionRepresentation) {
+  public Location(JsonObject representation,
+                  JsonObject libraryRepresentation,
+                  JsonObject campusRepresentation,
+                  JsonObject institutionRepresentation) {
     this.representation = representation;
     this.libraryRepresentation = libraryRepresentation;
     this.campusRepresentation = campusRepresentation;
