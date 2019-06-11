@@ -15,6 +15,7 @@ import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
@@ -176,7 +177,9 @@ public class RequestByInstanceIdResource extends Resource {
     return of(() -> {
 
       Map<Boolean, List<Item>> itemsPartitionedByLocationServedByPickupPoint = unsortedAvailableItems.stream()
-        .collect(Collectors.partitioningBy(i -> i.homeLocationIsServedBy(pickupServicePointId)));
+        .collect(Collectors.partitioningBy(i -> Optional.ofNullable(i.getLocation())
+          .map(location -> location.homeLocationIsServedBy(pickupServicePointId))
+          .orElse(false)));
 
       final List<Item> rankedItems = new LinkedList<>();
 

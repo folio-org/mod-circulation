@@ -7,6 +7,7 @@ import java.lang.invoke.MethodHandles;
 
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.ServicePoint;
+import org.folio.circulation.domain.Location;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -52,11 +53,11 @@ public class ItemSummaryRepresentation {
         destinationServicePointSummary);
     }
 
-    final JsonObject location = item.getLocation();
+    final Location location = item.getLocation();
 
-    if(location != null && location.containsKey("name")) {
+    if(location != null) {
       itemSummary.put("location", new JsonObject()
-        .put("name", location.getString("name")));
+        .put("name", location.getName()));
     }
 
     final String materialTypeProperty = "materialType";
