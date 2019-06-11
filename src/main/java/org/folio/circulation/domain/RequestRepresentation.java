@@ -57,17 +57,23 @@ public class RequestRepresentation {
   }
 
   private static void addStoredRequesterProperties(JsonObject request, User requester) {
-
     if (requester == null) {
       String msg = "Unable to add requester properties to the request: {}, requester is null.";
       log.info(msg, request.getString("id"));
       return;
     }
-    request.put("requester", requester.createUserSummary());
+
+    JsonObject userSummary = new JsonObject();
+
+    write(userSummary, "lastName", requester.getLastName());
+    write(userSummary, "firstName", requester.getFirstName());
+    write(userSummary, "middleName", requester.getMiddleName());
+    write(userSummary, "barcode", requester.getBarcode());
+
+    request.put("requester", userSummary);
   }
 
   private static void addAdditionalRequesterProperties(JsonObject request, User requester) {
-
     if (requester == null) {
       String msg = "Unable to add requester properties to the request: {}, requester is null.";
       log.info(msg, request.getString("id"));
@@ -77,9 +83,11 @@ public class RequestRepresentation {
     JsonObject requesterSummary = requester.createUserSummary();
 
     String patronGroupId = requester.getPatronGroupId();
+
     if (patronGroupId != null) {
       requesterSummary.put("patronGroupId", patronGroupId);
     }
+
     request.put("requester", requesterSummary);
   }
 
@@ -90,11 +98,17 @@ public class RequestRepresentation {
       return;
     }
 
-    request.put("proxy", proxy.createUserSummary());
+    JsonObject userSummary = new JsonObject();
+
+    write(userSummary, "lastName", proxy.getLastName());
+    write(userSummary, "firstName", proxy.getFirstName());
+    write(userSummary, "middleName", proxy.getMiddleName());
+    write(userSummary, "barcode", proxy.getBarcode());
+
+    request.put("proxy", userSummary);
   }
 
   private static void addAdditionalProxyProperties(JsonObject request, User proxy) {
-
     if (proxy == null) {
       String msg = "Unable to add proxy properties to request {}, proxy object is null";
       log.info(msg, request.getString("id"));
