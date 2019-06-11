@@ -46,14 +46,7 @@ class StoredRequestRepresentation {
       return;
     }
 
-    JsonObject userSummary = new JsonObject();
-
-    write(userSummary, "lastName", requester.getLastName());
-    write(userSummary, "firstName", requester.getFirstName());
-    write(userSummary, "middleName", requester.getMiddleName());
-    write(userSummary, "barcode", requester.getBarcode());
-
-    request.put("requester", userSummary);
+    request.put("requester", storedUserSummary(requester));
   }
 
   private static void addStoredProxyProperties(JsonObject request, User proxy) {
@@ -63,14 +56,17 @@ class StoredRequestRepresentation {
       return;
     }
 
+    request.put("proxy", storedUserSummary(proxy));
+  }
+
+  private static JsonObject storedUserSummary(User user) {
     JsonObject userSummary = new JsonObject();
 
-    write(userSummary, "lastName", proxy.getLastName());
-    write(userSummary, "firstName", proxy.getFirstName());
-    write(userSummary, "middleName", proxy.getMiddleName());
-    write(userSummary, "barcode", proxy.getBarcode());
-
-    request.put("proxy", userSummary);
+    write(userSummary, "lastName", user.getLastName());
+    write(userSummary, "firstName", user.getFirstName());
+    write(userSummary, "middleName", user.getMiddleName());
+    write(userSummary, "barcode", user.getBarcode());
+    return userSummary;
   }
 
   private static void logUnableAddItemToTheRequest(JsonObject request, Item item) {
@@ -86,6 +82,5 @@ class StoredRequestRepresentation {
     }
     requestRepresentation.remove("deliveryAddress");
   }
-
 }
 
