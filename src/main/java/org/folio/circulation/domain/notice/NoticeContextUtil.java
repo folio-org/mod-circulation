@@ -80,9 +80,7 @@ public class NoticeContextUtil {
     String captionsToken = JsonStringArrayHelper.toStream(item.getCopyNumbers())
       .collect(Collectors.joining("; "));
 
-    Optional<Location> location = Optional.ofNullable(item.getLocation());
-
-    return new JsonObject()
+    JsonObject itemContext = new JsonObject()
       .put("title", item.getTitle())
       .put("barcode", item.getBarcode())
       .put("status", item.getStatus().getValue())
@@ -99,11 +97,20 @@ public class NoticeContextUtil {
       .put("loanType", item.getLoanTypeName())
       .put("copy", captionsToken)
       .put("numberOfPieces", item.getNumberOfPieces())
-      .put("descriptionOfPieces", item.getDescriptionOfPieces())
-      .put("effectiveLocationSpecific", location.map(Location::getName).orElse(null))
-      .put("effectiveLocationLibrary", location.map(Location::getLibraryName).orElse(null))
-      .put("effectiveLocationCampus", location.map(Location::getCampusName).orElse(null))
-      .put("effectiveLocationInstitution", location.map(Location::getInstitutionName).orElse(null));
+      .put("descriptionOfPieces", item.getDescriptionOfPieces());
+
+    Location location = item.getLocation();
+
+    if (location != null) {
+      itemContext
+        .put("effectiveLocationSpecific", location.getName())
+        .put("effectiveLocationLibrary", location.getLibraryName())
+        .put("effectiveLocationCampus", location.getCampusName())
+        .put("effectiveLocationInstitution", location.getInstitutionName());
+    }
+
+    return itemContext;
+
   }
 
   private static JsonObject createRequestContext(Request request) {
