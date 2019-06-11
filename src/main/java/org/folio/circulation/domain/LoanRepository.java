@@ -52,7 +52,7 @@ public class LoanRepository {
     Collection<Request> requests = requestQueue.getRequests();
 
     if(!requests.isEmpty()) {
-      /* 
+      /*
         This gets the top request, since UpdateRequestQueue.java#L106 updates the request queue prior to loan creation.
         If that sequesnse changes, the following will need to be updated to requests.stream().skip(1).findFirst().orElse(null)
         and the condition above could do a > 1 comparison. (CIRC-277)
@@ -63,7 +63,7 @@ public class LoanRepository {
         Result<LoanAndRelatedRecords> httpResult = loanPolicy.recall(loanAndRelatedRecords.getLoan())
           .map(loanAndRelatedRecords::withLoan);
         recalledLoanandRelatedRecords = httpResult.value();
-      } 
+      }
     }
 
     LoanAndRelatedRecords newLoanAndRelatedRecords = recalledLoanandRelatedRecords == null ? loanAndRelatedRecords : recalledLoanandRelatedRecords;
@@ -77,7 +77,7 @@ public class LoanRepository {
 
     User user = newLoanAndRelatedRecords.getLoan().getUser();
     User proxy = newLoanAndRelatedRecords.getLoan().getProxy();
-        
+
     return loansStorageClient.post(storageLoan).thenApply(response -> {
       if (response.getStatusCode() == 201) {
         return succeeded(
@@ -128,7 +128,18 @@ public class LoanRepository {
    * failure if more than one open loan for the item found
    */
   public CompletableFuture<Result<Loan>> findOpenLoanForRequest(Request request) {
-    return findOpenLoans(request.getItemId())
+    return findOpenLoanForItem(request.getItem());
+  }
+
+  /**
+   *
+   * @param item the item with ID to fetch the open loan for
+   * @return  success with loan if one found,
+   * success with null if the no open loan is found,
+   * failure if more than one open loan for the item found
+   */
+  public CompletableFuture<Result<Loan>> findOpenLoanForItem(Item item) {
+    return findOpenLoans(item.getItemId())
       .thenApply(loansResult -> loansResult.next(loans -> {
         //TODO: Consider introducing an unknown loan class, instead of null
         if (loans.getTotalRecords() == 0) {
@@ -138,11 +149,11 @@ public class LoanRepository {
           final Optional<Loan> firstLoan = loans.getRecords().stream().findFirst();
 
           return firstLoan
-            .map(loan -> succeeded(Loan.from(loan.asJson(), request.getItem())))
+            .map(loan -> succeeded(Loan.from(loan.asJson(), item)))
             .orElse(null);
         } else {
           return failed(new ServerErrorFailure(
-            String.format("More than one open loan for item %s", request.getItemId())));
+            String.format("More than one open loan for item %s", item.getItemId())));
         }
       }));
   }
@@ -191,7 +202,7 @@ public class LoanRepository {
   private Result<MultipleRecords<Loan>> mapResponseToLoans(Response response) {
     return MultipleRecords.from(response, Loan::from, "loans");
   }
-  
+
   private static JsonObject mapToStorageRepresentation(Loan loan, Item item) {
     JsonObject storageLoan = loan.asJson();
 

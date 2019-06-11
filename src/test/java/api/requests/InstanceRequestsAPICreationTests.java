@@ -7,8 +7,6 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import java.net.MalformedURLException;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -62,7 +60,7 @@ public class InstanceRequestsAPICreationTests extends APITests {
     client.post(InterfaceUrls.requestsUrl("/instances"), requestBody,
       ResponseHandler.any(postCompleted));
 
-    Response postResponse = postCompleted.get(10, TimeUnit.SECONDS);
+    Response postResponse = postCompleted.get(50, TimeUnit.SECONDS);
 
     JsonObject representation = postResponse.getJson();
     validateInstanceRequestResponse(representation,
@@ -421,6 +419,55 @@ public class InstanceRequestsAPICreationTests extends APITests {
     JsonObject representation = postResponse.getJson();
     //Item2 should have been chosen because Jessica already requested item1
     validateInstanceRequestResponse(representation, pickupServicePointId, instance.getId(), item2.getId(), RequestType.HOLD);
+  }
+
+  @Test
+  public void canPlaceRequestWhenAllCopiesAreCheckedOutButNoRequestQueuesForThem()
+    throws InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    MalformedURLException {
+
+    UUID pickupServicePointId = servicePointsFixture.cd1().getId();
+
+    DateTime instanceRequestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
+    DateTime instanceRequestDateRequestExpirationDate = instanceRequestDate.plusDays(30);
+
+    LocalDate requestDate = new LocalDate(2017, 7, 22);
+    LocalDate requestExpirationDate1 = requestDate.plusDays(30);
+    LocalDate requestExpirationDate2 = requestDate.minusDays(30);
+
+    IndividualResource instance = instancesFixture.basedUponDunkirk();
+    IndividualResource holdings = holdingsFixture.defaultWithHoldings(instance.getId());
+
+    //create 2 copies with no location id's assigned.
+    final IndividualResource item1 = itemsFixture.basedUponDunkirkWithCustomHoldingAndLocationAndCheckedOut(holdings.getId(), null);
+    final IndividualResource item2 = itemsFixture.basedUponDunkirkWithCustomHoldingAndLocationAndCheckedOut(holdings.getId(), null);
+
+    IndividualResource instanceRequester = usersFixture.charlotte();
+
+    JsonObject requestBody = createInstanceRequestObject(instance.getId(), instanceRequester.getId(),
+      pickupServicePointId, instanceRequestDate, instanceRequestDateRequestExpirationDate);
+
+    CompletableFuture<Response> postCompleted = new CompletableFuture<>();
+
+    client.post(InterfaceUrls.requestsUrl("/instances"), requestBody,
+      ResponseHandler.any(postCompleted));
+
+    Response postResponse = postCompleted.get(50, TimeUnit.SECONDS);
+    assertEquals(201, postResponse.getStatusCode());
+
+    JsonObject representation = postResponse.getJson();
+
+    assertNotNull(representation);
+    assertEquals(pickupServicePointId.toString(), representation.getString("pickupServicePointId"));
+    assertEquals("Circ Desk 1", representation.getJsonObject("pickupServicePoint").getString("name"));
+    assertEquals(instance.getId().toString(), representation.getJsonObject("item").getString("instanceId"));
+    assertEquals(RequestType.HOLD.name(), representation.getString("requestType"));
+    //here we check the itemID. It could be either of the 2 items because we use Future in the code to get request queues from the repository,
+    //so it's non-deterministic that the futures should come in by a certain order.
+    assertTrue(item1.getId().toString().equals(representation.getString("itemId")) ||
+      item2.getId().toString().equals(representation.getString("itemId")));
   }
 
   private void validateInstanceRequestResponse(JsonObject representation,
