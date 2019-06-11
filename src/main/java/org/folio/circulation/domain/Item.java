@@ -178,7 +178,8 @@ public class Item {
   }
 
   private boolean matchesPrimaryServicePoint(UUID servicePointId) {
-    return matchingId(getPrimaryServicePointId(), servicePointId);
+    return matchingId(Optional.ofNullable(location)
+      .map(Location::getPrimaryServicePointId).orElse(null), servicePointId);
   }
 
   private boolean matchesAnyServingServicePoint(UUID servicePointId) {
@@ -192,13 +193,6 @@ public class Item {
 
   private boolean matchingId(UUID first, UUID second) {
     return Objects.equals(second, first);
-  }
-
-  public UUID getPrimaryServicePointId() {
-    return Optional.ofNullable(location)
-      .map(Location::getPrimaryServicePoint)
-      .map(UUID::fromString)
-      .orElse(null);
   }
 
   public JsonObject getMaterialType() {
@@ -316,7 +310,7 @@ public class Item {
 
   Item inTransitToHome() {
     return changeStatus(IN_TRANSIT)
-      .changeDestination(getPrimaryServicePointId())
+      .changeDestination(location.getPrimaryServicePointId())
       .changeInTransitDestinationServicePoint(getPrimaryServicePoint());
   }
 

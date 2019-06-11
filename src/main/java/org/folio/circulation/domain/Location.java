@@ -1,6 +1,10 @@
 package org.folio.circulation.domain;
 
+import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
+
 import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import org.folio.circulation.support.JsonPropertyFetcher;
@@ -26,7 +30,7 @@ public class Location {
   }
 
   public String getId() {
-    return JsonPropertyFetcher.getProperty(representation, "id");
+    return getProperty(representation, "id");
   }
 
   public List<String> getServicePointIds() {
@@ -36,36 +40,38 @@ public class Location {
       .collect(Collectors.toList());
   }
 
-  public String getPrimaryServicePoint() {
-    return JsonPropertyFetcher.getProperty(representation, "primaryServicePoint");
+  public UUID getPrimaryServicePointId() {
+    return Optional.ofNullable(getProperty(representation, "primaryServicePoint"))
+      .map(UUID::fromString)
+      .orElse(null);
   }
 
   public String getName() {
-    return JsonPropertyFetcher.getProperty(representation, "name");
+    return getProperty(representation, "name");
   }
 
   public String getLibraryId() {
-    return JsonPropertyFetcher.getProperty(representation, "libraryId");
+    return getProperty(representation, "libraryId");
   }
 
   public String getCampusId() {
-    return JsonPropertyFetcher.getProperty(representation, "campusId");
+    return getProperty(representation, "campusId");
   }
 
   public String getInstitutionId() {
-    return JsonPropertyFetcher.getProperty(representation, "institutionId");
+    return getProperty(representation, "institutionId");
   }
 
   public String getLibraryName() {
-    return JsonPropertyFetcher.getProperty(libraryRepresentation, "name");
+    return getProperty(libraryRepresentation, "name");
   }
 
   public String getCampusName() {
-    return JsonPropertyFetcher.getProperty(campusRepresentation, "name");
+    return getProperty(campusRepresentation, "name");
   }
 
   public String getInstitutionName() {
-    return JsonPropertyFetcher.getProperty(institutionRepresentation, "name");
+    return getProperty(institutionRepresentation, "name");
   }
 
   public Location withLibraryRepresentation(JsonObject libraryRepresentation) {

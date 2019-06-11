@@ -94,7 +94,7 @@ public class ItemRepository {
           .thenComposeAsync(itemResult ->
           itemResult.combineAfter(item ->
               servicePointRepository.getServicePointById(
-                item.getPrimaryServicePointId()), Item::withPrimaryServicePoint))
+                item.getLocation().getPrimaryServicePointId()), Item::withPrimaryServicePoint))
       : completedFuture(result);
   }
 
