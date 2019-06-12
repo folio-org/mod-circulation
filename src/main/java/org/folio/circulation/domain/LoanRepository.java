@@ -178,8 +178,7 @@ public class LoanRepository {
 
   //TODO: Check if user not found should result in failure?
   private CompletableFuture<Result<Loan>> fetchUser(Result<Loan> result) {
-    return result.combineAfter(userRepository::getUser,
-      (loan, user) -> Loan.from(loan.asJson(), loan.getItem(), user, null));
+    return result.combineAfter(userRepository::getUser, Loan::withUser);
   }
 
   public CompletableFuture<Result<MultipleRecords<Loan>>> findBy(String query) {

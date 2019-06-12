@@ -83,14 +83,12 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   public static Loan from(JsonObject representation) {
-    return from(representation, null, null, null);
+    return from(representation, null, null, null, null);
   }
 
-  public static Loan from(JsonObject representation, Item item, User user, User proxy) {
-    return from(representation, item, user, proxy, null);
-  }
+  public static Loan from(JsonObject representation, Item item, User user,
+                          User proxy, DateTime oldDueDate) {
 
-  public static Loan from(JsonObject representation, Item item, User user, User proxy, DateTime oldDueDate) {
     defaultStatusAndAction(representation);
     return new Loan(representation, item, user, proxy, null, null, oldDueDate, null);
   }
