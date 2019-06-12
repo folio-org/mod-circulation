@@ -277,6 +277,7 @@ public interface Result<T> {
   }
 
   static <T> ResponseWritableResult<T> failed(HttpFailure cause) {
+
     return new FailedResult<>(cause);
   }
 

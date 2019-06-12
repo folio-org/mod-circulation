@@ -7,6 +7,7 @@ import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 
+import java.lang.invoke.MethodHandles;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -19,6 +20,8 @@ import org.folio.circulation.resources.RequestNoticeSender;
 import org.folio.circulation.support.ResponseWritableResult;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.http.server.ValidationError;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class CreateRequestService {
 
@@ -29,6 +32,7 @@ public class CreateRequestService {
   private final LoanRepository loanRepository;
   private final UpdateLoan updateLoan;
   private final RequestNoticeSender requestNoticeSender;
+  private final Logger log;
 
   public CreateRequestService(RequestRepository requestRepository, UpdateItem updateItem,
                               UpdateLoanActionHistory updateLoanActionHistory, UpdateLoan updateLoan,
@@ -42,10 +46,14 @@ public class CreateRequestService {
     this.requestPolicyRepository = requestPolicyRepository;
     this.loanRepository = loanRepository;
     this.requestNoticeSender = requestNoticeSender;
+
+    log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
   }
 
   public CompletableFuture<Result<RequestAndRelatedRecords>> createRequest(
     RequestAndRelatedRecords requestAndRelatedRecords) {
+
+    log.debug("Begin the request proccess");
 
     return of(() -> requestAndRelatedRecords)
       .next(CreateRequestService::refuseWhenItemDoesNotExist)

@@ -2,6 +2,7 @@ package org.folio.circulation.resources;
 
 import static org.folio.circulation.domain.notice.NoticeContextUtil.createRequestNoticeContext;
 
+import java.lang.invoke.MethodHandles;
 import java.util.Collections;
 import java.util.EnumMap;
 import java.util.Map;
@@ -22,6 +23,8 @@ import org.folio.circulation.domain.notice.PatronNoticeEventBuilder;
 import org.folio.circulation.domain.notice.PatronNoticeService;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.Result;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class RequestNoticeSender {
 
@@ -41,10 +44,12 @@ public class RequestNoticeSender {
 
   private final PatronNoticeService patronNoticeService;
   private final RequestRepository requestRepository;
+  private final Logger log;
 
   public RequestNoticeSender(PatronNoticeService patronNoticeService, RequestRepository requestRepository) {
     this.patronNoticeService = patronNoticeService;
     this.requestRepository = requestRepository;
+    log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
   }
 
 
@@ -79,6 +84,7 @@ public class RequestNoticeSender {
         .build();
       patronNoticeService.acceptNoticeEvent(itemRecalledEvent);
     }
+    log.debug("sendNoticeOnRequestCreated: finished sending notices, ending request process");
     return Result.succeeded(relatedRecords);
   }
 

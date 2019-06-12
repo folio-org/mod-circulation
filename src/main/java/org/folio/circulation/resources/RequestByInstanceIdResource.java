@@ -139,6 +139,7 @@ public class RequestByInstanceIdResource extends Resource {
                                                                            LoanRepository loanRepository) {
     final UserRepository userRepository = new UserRepository(clients);
 
+    log.debug("Inside placeRequest, startIndex={}, itemRequestSize={}", startIndex, itemRequests.size());
     if (startIndex >= itemRequests.size()) {
       return CompletableFuture.completedFuture(failed(new ServerErrorFailure(
         "Failed to place a request for the title")));
@@ -161,9 +162,10 @@ public class RequestByInstanceIdResource extends Resource {
       .thenCompose(r -> r.after(createRequestService::createRequest))
       .thenCompose(r -> {
           if (r.succeeded()) {
+            log.debug("succeeded creating request for item {}", currentItemRequest.getString("id"));
             return CompletableFuture.completedFuture(r);
           } else {
-            log.debug("Failed to create request for {}", currentItemRequest.getString("id"));
+            log.debug("Failed to create request for item {}", currentItemRequest.getString("id"));
             return placeRequest(itemRequests, startIndex +1, createRequestService, clients, loanRepository);
           }
         });
@@ -234,6 +236,8 @@ public class RequestByInstanceIdResource extends Resource {
     if (items == null ||items.isEmpty()) {
       return failedValidation("Items list is null or empty", "items", "null");
     }
+
+    log.debug("segregateItemsList: Found {} items", items.size());
 
     Map<Boolean, List<Item>> partitions = items.stream()
       .collect(Collectors.partitioningBy(Item::isAvailable));

@@ -485,7 +485,7 @@ public class ResourceClient {
     client.delete(urlMaker.combine(""),
       ResponseHandler.any(deleteAllFinished));
 
-    Response response = deleteAllFinished.get(5, TimeUnit.SECONDS);
+    Response response = deleteAllFinished.get(50, TimeUnit.SECONDS);
 
     assertThat(String.format(
       "Failed to delete %s: %s", resourceName, response.getBody()),
