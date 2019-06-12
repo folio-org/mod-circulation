@@ -36,13 +36,13 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   private final User proxy;
   private final DateTime originalDueDate;
 
-  private String checkoutServicePointId;
-  private String checkinServicePointId;
+  private final String checkoutServicePointId;
+  private final String checkinServicePointId;
 
-  private ServicePoint checkoutServicePoint;
-  private ServicePoint checkinServicePoint;
+  private final ServicePoint checkoutServicePoint;
+  private final ServicePoint checkinServicePoint;
 
-  private LoanPolicy loanPolicy;
+  private final LoanPolicy loanPolicy;
 
   public Loan(JsonObject representation) {
     this(representation, null, null, null, null, null, null, null);
