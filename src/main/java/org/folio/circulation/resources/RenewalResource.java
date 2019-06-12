@@ -8,7 +8,7 @@ import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.domain.LoanRenewalService;
 import org.folio.circulation.domain.LoanRepository;
 import org.folio.circulation.domain.LoanRepresentation;
-import org.folio.circulation.domain.RequestQueueRepository;
+import org.folio.circulation.domain.RequestRepository;
 import org.folio.circulation.domain.UserRepository;
 import org.folio.circulation.domain.notice.schedule.ScheduledNoticeService;
 import org.folio.circulation.domain.policy.LoanPolicyRepository;
@@ -50,7 +50,7 @@ public abstract class RenewalResource extends Resource {
     final LoanRepository loanRepository = new LoanRepository(clients);
     final ItemRepository itemRepository = new ItemRepository(clients, true, true, false);
     final UserRepository userRepository = new UserRepository(clients);
-    final RequestQueueRepository requestQueueRepository = RequestQueueRepository.using(clients);
+    final RequestRepository requestRepository = RequestRepository.using(clients);
     final LoanPolicyRepository loanPolicyRepository = new LoanPolicyRepository(clients);
 
     final LoanRepresentation loanRepresentation = new LoanRepresentation();
@@ -67,7 +67,7 @@ public abstract class RenewalResource extends Resource {
       loanRepository,
       itemRepository,
       userRepository,
-      requestQueueRepository);
+      requestRepository);
 
     loan.thenApply(r -> r.map(LoanAndRelatedRecords::new))
       .thenComposeAsync(r -> r.after(configurationRepository::lookupTimeZone))
@@ -86,5 +86,5 @@ public abstract class RenewalResource extends Resource {
     LoanRepository loanRepository,
     ItemRepository itemRepository,
     UserRepository userRepository,
-    RequestQueueRepository requestQueueRepository);
+    RequestRepository requestRepository);
 }

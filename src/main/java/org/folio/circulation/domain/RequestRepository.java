@@ -1,5 +1,6 @@
 package org.folio.circulation.domain;
 
+import static java.lang.String.format;
 import static org.folio.circulation.support.Result.failed;
 import static org.folio.circulation.support.Result.succeeded;
 
@@ -186,6 +187,17 @@ public class RequestRepository {
       .mapTo(request::withCancellationReasonJsonRepresentation)
       .whenNotFound(succeeded(request))
       .fetch(request.getCancellationReasonId());
+  }
+
+  public CompletableFuture<Result<Request>> findRequestOnTheFirstPosition(Item item) {
+
+    String cql = format("query=itemId==\"%s\"", item.getItemId());
+
+    return findBy(cql)
+      .thenApply(r -> r.map(records -> records.getRecords()
+        .stream()
+        .findFirst()
+        .orElse(null)));
   }
 
   //TODO: Check if need to request requester

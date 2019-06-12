@@ -5,7 +5,7 @@ import static org.folio.circulation.resources.OverrideByBarcodeRequest.renewalOv
 import org.folio.circulation.domain.LoanRenewalService;
 import org.folio.circulation.domain.LoanRepository;
 import org.folio.circulation.domain.LoanRepresentation;
-import org.folio.circulation.domain.RequestQueueRepository;
+import org.folio.circulation.domain.RequestRepository;
 import org.folio.circulation.domain.UserRepository;
 import org.folio.circulation.domain.notice.schedule.ScheduledNoticeService;
 import org.folio.circulation.domain.representations.LoanResponse;
@@ -40,12 +40,12 @@ public class OverrideRenewalByBarcodeResource extends Resource {
     final LoanRepository loanRepository = new LoanRepository(clients);
     final ItemRepository itemRepository = new ItemRepository(clients, true, true, false);
     final UserRepository userRepository = new UserRepository(clients);
-    final RequestQueueRepository requestQueueRepository = RequestQueueRepository.using(clients);
+    final RequestRepository requestRepository = RequestRepository.using(clients);
     final LoanRepresentation loanRepresentation = new LoanRepresentation();
     final LoanRenewalService renewalService = LoanRenewalService.using(clients);
     final SingleOpenLoanByUserAndItemBarcodeFinder loanFinder
       = new SingleOpenLoanByUserAndItemBarcodeFinder(loanRepository,
-      itemRepository, userRepository, requestQueueRepository);
+      itemRepository, userRepository, requestRepository);
     final ScheduledNoticeService scheduledNoticeService = ScheduledNoticeService.using(clients);
 
     renewalOverrideRequestFrom(routingContext.getBodyAsJson())
