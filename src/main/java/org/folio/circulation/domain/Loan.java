@@ -80,9 +80,6 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     if (proxy != null) {
       representation.put("proxyUserId", proxy.getId());
     }
-    if (loanPolicy != null) {
-      setLoanPolicyId(loanPolicy.getId());
-    }
   }
 
   public static Loan from(JsonObject representation) {

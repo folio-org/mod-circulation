@@ -207,11 +207,14 @@ public class LoanCollectionResource extends CollectionResource {
     final LoanPolicyRepository loanPolicyRepository = new LoanPolicyRepository(clients);
 
     loanRepository.findBy(routingContext.request().query())
-      .thenComposeAsync(multiLoanRecordsResult -> multiLoanRecordsResult.after(servicePointRepository::findServicePointsForLoans))
-      .thenComposeAsync(multiLoanRecordsResult -> multiLoanRecordsResult.after(userRepository::findUsersForLoans))
-      .thenComposeAsync(multiLoanRecordsResult -> multiLoanRecordsResult.after(loanPolicyRepository::findLoanPoliciesForLoans))
-      .thenApply(multipleLoanRecordsResult -> multipleLoanRecordsResult
-        .map(loans -> loans.asJson(loanRepresentation::extendedLoan, "loans")))
+      .thenCompose(multiLoanRecordsResult ->
+        multiLoanRecordsResult.after(servicePointRepository::findServicePointsForLoans))
+      .thenCompose(multiLoanRecordsResult ->
+        multiLoanRecordsResult.after(userRepository::findUsersForLoans))
+      .thenCompose(multiLoanRecordsResult ->
+        multiLoanRecordsResult.after(loanPolicyRepository::findLoanPoliciesForLoans))
+      .thenApply(multipleLoanRecordsResult -> multipleLoanRecordsResult.map(loans ->
+        loans.asJson(loanRepresentation::extendedLoan, "loans")))
       .thenApply(OkJsonResponseResult::from)
       .thenAccept(result -> result.writeTo(routingContext.response()));
   }

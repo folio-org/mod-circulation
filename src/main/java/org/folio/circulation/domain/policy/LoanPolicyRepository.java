@@ -45,7 +45,7 @@ public class LoanPolicyRepository extends CirculationPolicyRepository<LoanPolicy
   }
 
   private CompletableFuture<Result<LoanPolicy>> getLoanPolicyById(String loanPolicyId) {
-    return FetchSingleRecord.<LoanPolicy>forRecord("loansPolicy")
+    return FetchSingleRecord.<LoanPolicy>forRecord("loan policy")
             .using(policyStorageClient)
             .mapTo(LoanPolicy::from)
             .whenNotFound(succeeded(null))
