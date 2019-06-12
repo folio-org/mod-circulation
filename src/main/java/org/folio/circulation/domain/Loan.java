@@ -7,13 +7,13 @@ import static org.folio.circulation.domain.representations.LoanProperties.RETURN
 import static org.folio.circulation.domain.representations.LoanProperties.STATUS;
 import static org.folio.circulation.domain.representations.LoanProperties.SYSTEM_RETURN_DATE;
 import static org.folio.circulation.domain.representations.LoanProperties.USER_ID;
-import static org.folio.circulation.support.Result.failed;
-import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.JsonPropertyFetcher.getDateTimeProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getIntegerProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getNestedStringProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
 import static org.folio.circulation.support.JsonPropertyWriter.write;
+import static org.folio.circulation.support.Result.failed;
+import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 
 import java.util.Objects;
@@ -44,11 +44,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
 
   private final LoanPolicy loanPolicy;
 
-  public Loan(JsonObject representation) {
-    this(representation, null, null, null, null, null, null, null);
-  }
-
-  public Loan(JsonObject representation, Item item, User user, User proxy,
+  private Loan(JsonObject representation, Item item, User user, User proxy,
               ServicePoint checkinServicePoint, ServicePoint checkoutServicePoint,
               DateTime originalDueDate, LoanPolicy loanPolicy) {
 
