@@ -324,6 +324,7 @@
           ],
           "modulePermissions": [
             "circulation-storage.loans.collection.get",
+            "circulation-storage.loan-policies.item.get",
             "inventory-storage.items.item.get",
             "inventory-storage.items.collection.get",
             "inventory-storage.locations.item.get",
@@ -406,6 +407,7 @@
           ],
           "modulePermissions": [
             "circulation-storage.loans.item.get",
+            "circulation-storage.loan-policies.item.get",
             "inventory-storage.items.item.get",
             "inventory-storage.items.collection.get",
             "inventory-storage.locations.item.get",
