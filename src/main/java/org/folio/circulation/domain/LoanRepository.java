@@ -67,23 +67,23 @@ public class LoanRepository {
       }
     }
 
-    LoanAndRelatedRecords newLoanAndRelatedRecords = recalledLoanandRelatedRecords == null ? loanAndRelatedRecords : recalledLoanandRelatedRecords;
+    LoanAndRelatedRecords newLoanAndRelatedRecords
+      = recalledLoanandRelatedRecords == null
+        ? loanAndRelatedRecords
+        : recalledLoanandRelatedRecords;
 
-    JsonObject storageLoan = mapToStorageRepresentation(
-      newLoanAndRelatedRecords.getLoan(), newLoanAndRelatedRecords.getLoan().getItem());
+    final Loan loan = newLoanAndRelatedRecords.getLoan();
+
+    JsonObject storageLoan = mapToStorageRepresentation(loan, loan.getItem());
 
     if(newLoanAndRelatedRecords.getLoanPolicy() != null) {
       storageLoan.put("loanPolicyId", newLoanAndRelatedRecords.getLoanPolicy().getId());
     }
 
-    User user = newLoanAndRelatedRecords.getLoan().getUser();
-    User proxy = newLoanAndRelatedRecords.getLoan().getProxy();
-
     return loansStorageClient.post(storageLoan).thenApply(response -> {
       if (response.getStatusCode() == 201) {
         return succeeded(
-          newLoanAndRelatedRecords.withLoan(Loan.from(response.getJson(),
-          newLoanAndRelatedRecords.getLoan().getItem(), user, proxy)));
+          newLoanAndRelatedRecords.withLoan(loan.replaceRepresentation(response.getJson())));
       } else {
         return failed(new ForwardOnFailure(response));
       }

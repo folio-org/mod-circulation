@@ -204,6 +204,11 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     return item;
   }
 
+  Loan replaceRepresentation(JsonObject newRepresentation) {
+    return new Loan(newRepresentation, item, user, proxy, checkinServicePoint,
+      checkoutServicePoint, originalDueDate, loanPolicy);
+  }
+
   public Loan withItem(Item item) {
     return new Loan(representation, item, user, proxy, checkinServicePoint,
         checkoutServicePoint, originalDueDate, loanPolicy);
