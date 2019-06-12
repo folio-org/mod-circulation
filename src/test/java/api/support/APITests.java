@@ -81,6 +81,9 @@ public abstract class APITests {
   protected final ResourceClient loansStorageClient
     = ResourceClient.forLoansStorage(client);
 
+  protected final ResourceClient requestsStorageClient
+    = ResourceClient.forRequestsStorage(client);
+
   protected final ResourceClient requestsClient = ResourceClient.forRequests(client);
 
   protected final ResourceClient fixedDueDateScheduleClient

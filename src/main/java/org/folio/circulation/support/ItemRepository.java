@@ -54,7 +54,7 @@ public class ItemRepository {
       clients.holdingsStorage(),
       clients.instancesStorage(),
       clients.loanTypesStorage(),
-      new LocationRepository(clients),
+      LocationRepository.using(clients),
       new MaterialTypeRepository(clients),
       new ServicePointRepository(clients),
       fetchLocation, fetchMaterialType, fetchLoanType);
@@ -94,7 +94,7 @@ public class ItemRepository {
           .thenComposeAsync(itemResult ->
           itemResult.combineAfter(item ->
               servicePointRepository.getServicePointById(
-                item.getPrimaryServicePointId()), Item::withPrimaryServicePoint))
+                item.getLocation().getPrimaryServicePointId()), Item::withPrimaryServicePoint))
       : completedFuture(result);
   }
 
