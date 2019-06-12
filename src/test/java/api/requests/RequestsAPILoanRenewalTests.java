@@ -105,31 +105,6 @@ public class RequestsAPILoanRenewalTests extends APITests {
   }
 
   @Test
-  public void forbidOverrideRenewalLoanByBarcodeWhenFirstRequestInQueueIsRecall() throws InterruptedException, MalformedURLException, TimeoutException, ExecutionException {
-
-    final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
-    final IndividualResource rebecca = usersFixture.rebecca();
-    final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
-
-    loansFixture.checkOutByBarcode(smallAngryPlanet, rebecca);
-
-    requestsClient.create(new RequestBuilder()
-      .recall()
-      .forItem(smallAngryPlanet)
-      .withPickupServicePointId(pickupServicePointId)
-      .by(usersFixture.charlotte()));
-
-    Response response = loansFixture.attemptOverride(
-      smallAngryPlanet,
-      rebecca,
-      "Renewal override",
-      "2018-12-21T13:30:00Z"
-    );
-
-    assertThat(response.getJson(), hasErrorWith(hasMessage(ITEMS_CANNOT_BE_RENEWED_MSG)));
-  }
-
-  @Test
   public void allowOverrideRenewalLoanByBarcodeWhenFirstRequestInQueueIsHold() throws InterruptedException, MalformedURLException, TimeoutException, ExecutionException {
 
     final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();

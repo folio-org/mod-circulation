@@ -14,6 +14,7 @@ import org.folio.circulation.domain.notice.schedule.ScheduledNoticeService;
 import org.folio.circulation.domain.policy.LoanPolicyRepository;
 import org.folio.circulation.domain.policy.library.ClosedLibraryStrategyService;
 import org.folio.circulation.domain.representations.LoanResponse;
+import org.folio.circulation.domain.validation.BlockRenewalValidator;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.ItemRepository;
 import org.folio.circulation.support.Result;
@@ -59,17 +60,18 @@ public abstract class RenewalResource extends Resource {
     final ClosedLibraryStrategyService strategyService =
       ClosedLibraryStrategyService.using(clients, DateTime.now(DateTimeZone.UTC), true);
     final ScheduledNoticeService scheduledNoticeService = ScheduledNoticeService.using(clients);
-
+    final BlockRenewalValidator blockRenewalValidator = new BlockRenewalValidator(requestRepository);
 
     //TODO: Validation check for same user should be in the domain service
 
-    CompletableFuture<Result<Loan>> loan = findLoan(routingContext.getBodyAsJson(),
+    CompletableFuture<Result<Loan>> findLoanResult = findLoan(routingContext.getBodyAsJson(),
       loanRepository,
       itemRepository,
-      userRepository,
-      requestRepository);
+      userRepository);
 
-    loan.thenApply(r -> r.map(LoanAndRelatedRecords::new))
+    findLoanResult
+      .thenCompose(r -> r.after(blockRenewalValidator::refuseWhenFirstRequestIsRecall))
+      .thenApply(r -> r.map(LoanAndRelatedRecords::new))
       .thenComposeAsync(r -> r.after(configurationRepository::lookupTimeZone))
       .thenComposeAsync(r -> r.after(loanPolicyRepository::lookupLoanPolicy))
       .thenApply(r -> r.next(loanRenewalService::renew))
@@ -85,6 +87,5 @@ public abstract class RenewalResource extends Resource {
     JsonObject request,
     LoanRepository loanRepository,
     ItemRepository itemRepository,
-    UserRepository userRepository,
-    RequestRepository requestRepository);
+    UserRepository userRepository);
 }
