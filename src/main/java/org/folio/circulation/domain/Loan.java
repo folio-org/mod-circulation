@@ -49,7 +49,8 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   public Loan(JsonObject representation, Item item, User user, User proxy,
-              ServicePoint checkinServicePoint, ServicePoint checkoutServicePoint, DateTime originalDueDate, LoanPolicy loanPolicy) {
+              ServicePoint checkinServicePoint, ServicePoint checkoutServicePoint,
+              DateTime originalDueDate, LoanPolicy loanPolicy) {
 
     this.representation = representation;
     this.item = item;
@@ -83,14 +84,8 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   public static Loan from(JsonObject representation) {
-    return from(representation, null, null, null, null);
-  }
-
-  public static Loan from(JsonObject representation, Item item, User user,
-                          User proxy, DateTime oldDueDate) {
-
     defaultStatusAndAction(representation);
-    return new Loan(representation, item, user, proxy, null, null, oldDueDate, null);
+    return new Loan(representation, null, null, null, null, null, null, null);
   }
 
   JsonObject asJson() {
@@ -230,12 +225,12 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
       checkoutServicePoint, originalDueDate, loanPolicy);
   }
 
-  public Loan withCheckinServicePoint(ServicePoint newCheckinServicePoint) {
+  Loan withCheckinServicePoint(ServicePoint newCheckinServicePoint) {
     return new Loan(representation, item, user, proxy, newCheckinServicePoint,
       checkoutServicePoint, originalDueDate, loanPolicy);
   }
 
-  public Loan withCheckoutServicePoint(ServicePoint newCheckoutServicePoint) {
+  Loan withCheckoutServicePoint(ServicePoint newCheckoutServicePoint) {
     return new Loan(representation, item, user, proxy, checkinServicePoint,
       newCheckoutServicePoint, originalDueDate, loanPolicy);
   }
@@ -249,8 +244,8 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   public Loan withLoanPolicy(LoanPolicy newloanPolicy) {
-
-    return new Loan(representation, item, user, proxy, checkinServicePoint, checkoutServicePoint, originalDueDate, newloanPolicy);
+    return new Loan(representation, item, user, proxy, checkinServicePoint,
+      checkoutServicePoint, originalDueDate, newloanPolicy);
   }
 
   private void setLoanPolicyId(String newLoanPolicyId) {
@@ -332,10 +327,6 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
 
   public boolean hasDueDateChanged() {
     return !Objects.equals(originalDueDate, getDueDate());
-  }
-
-  public DateTime getOriginalDueDate() {
-    return originalDueDate;
   }
 
   public DateTime getReturnDate() {
