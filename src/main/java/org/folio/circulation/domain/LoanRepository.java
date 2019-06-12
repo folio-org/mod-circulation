@@ -1,5 +1,6 @@
 package org.folio.circulation.domain;
 
+import static java.util.Objects.nonNull;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.support.CqlQuery.exactMatch;
 import static org.folio.circulation.support.CqlQuery.exactMatchAny;
@@ -213,7 +214,8 @@ public class LoanRepository {
 
   private static void updateLastLoanPolicyUsedId(JsonObject storageLoan,
                                                  LoanPolicy loanPolicy) {
-    if(loanPolicy != null) {
+
+    if(nonNull(loanPolicy) && loanPolicy.getId() != null) {
       storageLoan.put("loanPolicyId", loanPolicy.getId());
     }
   }

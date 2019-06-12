@@ -1,7 +1,9 @@
 package org.folio.circulation.domain;
 
+import static java.util.Objects.requireNonNull;
 import static org.folio.circulation.domain.representations.LoanProperties.ACTION_COMMENT;
 import static org.folio.circulation.domain.representations.LoanProperties.CHECKIN_SERVICE_POINT_ID;
+import static org.folio.circulation.domain.representations.LoanProperties.CHECKOUT_SERVICE_POINT_ID;
 import static org.folio.circulation.domain.representations.LoanProperties.DUE_DATE;
 import static org.folio.circulation.domain.representations.LoanProperties.RETURN_DATE;
 import static org.folio.circulation.domain.representations.LoanProperties.STATUS;
@@ -48,6 +50,8 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
               ServicePoint checkinServicePoint, ServicePoint checkoutServicePoint,
               DateTime originalDueDate, LoanPolicy loanPolicy) {
 
+    requireNonNull(loanPolicy, () -> "loanPolicy cannot be null");
+
     this.representation = representation;
     this.item = item;
     this.user = user;
@@ -55,7 +59,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     this.checkinServicePoint = checkinServicePoint;
     this.checkoutServicePoint = checkoutServicePoint;
 
-    this.checkoutServicePointId = getProperty(representation, LoanProperties.CHECKOUT_SERVICE_POINT_ID);
+    this.checkoutServicePointId = getProperty(representation, CHECKOUT_SERVICE_POINT_ID);
     this.checkinServicePointId = getProperty(representation, CHECKIN_SERVICE_POINT_ID);
 
     this.originalDueDate = originalDueDate == null ? getDueDate() : originalDueDate;
@@ -81,7 +85,8 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
 
   public static Loan from(JsonObject representation) {
     defaultStatusAndAction(representation);
-    return new Loan(representation, null, null, null, null, null, null, null);
+    return new Loan(representation, null, null, null, null, null, null,
+      LoanPolicy.unknown(null));
   }
 
   JsonObject asJson() {
@@ -242,6 +247,8 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   public Loan withLoanPolicy(LoanPolicy newloanPolicy) {
+    requireNonNull(newloanPolicy, () -> "newloanPolicy cannot be null");
+
     return new Loan(representation, item, user, proxy, checkinServicePoint,
       checkoutServicePoint, originalDueDate, newloanPolicy);
   }

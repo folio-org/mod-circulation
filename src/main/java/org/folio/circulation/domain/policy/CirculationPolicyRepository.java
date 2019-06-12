@@ -50,7 +50,6 @@ public abstract class CirculationPolicyRepository<T> {
   }
 
   private CompletableFuture<Result<JsonObject>> lookupPolicy(String policyId) {
-
     return SingleRecordFetcher.json(policyStorageClient, "circulation policy",
       response -> failed(
         new ServerErrorFailure(getPolicyNotFoundErrorMessage(policyId))))
