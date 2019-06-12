@@ -34,8 +34,9 @@ public class LoanPolicyRepository extends CirculationPolicyRepository<LoanPolicy
   public CompletableFuture<Result<LoanAndRelatedRecords>> lookupLoanPolicy(
     LoanAndRelatedRecords relatedRecords) {
 
-    return lookupPolicy(relatedRecords.getLoan())
-      .thenApply(result -> result.map(relatedRecords::withLoanPolicy));
+    return Result.of(relatedRecords::getLoan)
+      .combineAfter(this::lookupPolicy, Loan::withLoanPolicy)
+      .thenApply(mapResult(relatedRecords::withLoan));
   }
 
   public CompletableFuture<Result<Loan>> findPolicyForLoan(Result<Loan> loanResult) {

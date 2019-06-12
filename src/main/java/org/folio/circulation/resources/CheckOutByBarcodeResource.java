@@ -216,18 +216,19 @@ public class CheckOutByBarcodeResource extends Resource {
     LoanAndRelatedRecords relatedRecords,
     PatronNoticeService patronNoticeService) {
 
-    JsonObject noticeContext = createLoanNoticeContext(
-      relatedRecords.getLoan(),
-      relatedRecords.getLoanPolicy(),
-      relatedRecords.getTimeZone());
+    final Loan loan = relatedRecords.getLoan();
+
+    JsonObject noticeContext = createLoanNoticeContext(loan,
+      loan.getLoanPolicy(), relatedRecords.getTimeZone());
 
     PatronNoticeEvent noticeEvent = new PatronNoticeEventBuilder()
-      .withItem(relatedRecords.getLoan().getItem())
-      .withUser(relatedRecords.getLoan().getUser())
+      .withItem(loan.getItem())
+      .withUser(loan.getUser())
       .withEventType(NoticeEventType.CHECK_OUT)
       .withTiming(NoticeTiming.UPON_AT)
       .withNoticeContext(noticeContext)
       .build();
+
     patronNoticeService.acceptNoticeEvent(noticeEvent);
     return succeeded(relatedRecords);
   }

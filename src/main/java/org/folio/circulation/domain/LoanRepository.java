@@ -59,9 +59,12 @@ public class LoanRepository {
       */
       Request nextRequestInQueue = requests.stream().findFirst().orElse(null);
       if(nextRequestInQueue != null && nextRequestInQueue.getRequestType() == RequestType.RECALL) {
-        LoanPolicy loanPolicy = loanAndRelatedRecords.getLoanPolicy();
-        Result<LoanAndRelatedRecords> httpResult = loanPolicy.recall(loanAndRelatedRecords.getLoan())
+        final Loan loanToRecall = loanAndRelatedRecords.getLoan();
+        final LoanPolicy loanPolicy = loanToRecall.getLoanPolicy();
+
+        Result<LoanAndRelatedRecords> httpResult = loanPolicy.recall(loanToRecall)
           .map(loanAndRelatedRecords::withLoan);
+
         recalledLoanandRelatedRecords = httpResult.value();
       }
     }

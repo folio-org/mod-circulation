@@ -92,8 +92,10 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     return representation.copy();
   }
 
-  public void changeDueDate(DateTime newDueDate) {
+  public Loan changeDueDate(DateTime newDueDate) {
     write(representation, DUE_DATE, newDueDate);
+
+    return this;
   }
 
   private void changeReturnDate(DateTime returnDate) {

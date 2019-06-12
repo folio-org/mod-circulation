@@ -34,8 +34,8 @@ public class UpdateLoan {
    * Updates the loan due date for the loan associated with this newly created
    * recall request. No modifications are made if the request is not a recall.
    * Depending on loan/request policies, the loan date may not be updated.
-   * 
-   * @param requestAndRelatedRecords request and related records. 
+   *
+   * @param requestAndRelatedRecords request and related records.
    * @return the request and related records with the possibly updated loan.
    */
   CompletableFuture<Result<RequestAndRelatedRecords>> onRequestCreation(
@@ -56,10 +56,12 @@ public class UpdateLoan {
     }
   }
 
+  //TODO: Possibly combine this with LoanRenewalService?
   private Result<LoanAndRelatedRecords> recall(LoanAndRelatedRecords loanAndRelatedRecords) {
-    LoanPolicy loanPolicy = loanAndRelatedRecords.getLoanPolicy();
-    return loanPolicy.recall(loanAndRelatedRecords.getLoan())
+    final Loan loan = loanAndRelatedRecords.getLoan();
+    LoanPolicy loanPolicy = loan.getLoanPolicy();
+
+    return loanPolicy.recall(loan)
         .map(loanAndRelatedRecords::withLoan);
   }
-
 }
