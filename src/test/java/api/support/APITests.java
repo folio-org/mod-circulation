@@ -381,7 +381,7 @@ public abstract class APITests {
     hasProperty("loanPolicyId", loan, "loan", loanPolicy.getId().toString());
     hasProperty("loanPolicy", loan, "loan");
     JsonObject loanPolicyObject = loan.getJsonObject("loanPolicy");
-    hasProperty("loanPolicyName", loanPolicyObject, "loan policy", loanPolicy.getJson().getString("name"));
+    hasProperty("name", loanPolicyObject, "loan policy", loanPolicy.getJson().getString("name"));
   }
 
   protected void hasProperty(String property, JsonObject resource, String type) {

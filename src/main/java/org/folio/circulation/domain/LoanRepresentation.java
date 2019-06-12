@@ -71,7 +71,7 @@ public class LoanRepresentation {
         ? loanRepresentation.getJsonObject(LoanProperties.LOAN_POLICY)
         : new JsonObject();
 
-    loanPolicySummary.put("loanPolicyName", loanPolicy.getName());
+    loanPolicySummary.put("name", loanPolicy.getName());
 
     loanRepresentation.put(LoanProperties.LOAN_POLICY, loanPolicySummary);
   }

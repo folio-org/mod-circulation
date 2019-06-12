@@ -23,7 +23,7 @@
   },
   "loanPolicyId" : "e9af4ba4-6801-4722-be45-d7a49d13564d",
   "loanPolicy": {
-    "loanPolicyName" : "Can Circulate Rolling"
+    "name" : "Can Circulate Rolling"
   },
   "borrower" : {
     "firstName" : "FirstName",
