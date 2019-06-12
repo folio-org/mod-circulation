@@ -75,10 +75,6 @@ public class LoanRepository {
 
     JsonObject storageLoan = mapToStorageRepresentation(loan, loan.getItem());
 
-    if(newLoanAndRelatedRecords.getLoanPolicy() != null) {
-      storageLoan.put("loanPolicyId", newLoanAndRelatedRecords.getLoanPolicy().getId());
-    }
-
     return loansStorageClient.post(storageLoan).thenApply(response -> {
       if (response.getStatusCode() == 201) {
         return succeeded(
@@ -193,6 +189,8 @@ public class LoanRepository {
     removeBorrowerProperties(storageLoan);
     removeLoanPolicyProperties(storageLoan);
 
+    updateLastLoanPolicyUsedId(storageLoan, loan.getLoanPolicy());
+
     return storageLoan;
   }
 
@@ -208,6 +206,13 @@ public class LoanRepository {
     //TODO: Check for null item status
     storageLoan.remove("itemStatus");
     storageLoan.put("itemStatus", item.getStatus().getValue());
+  }
+
+  private static void updateLastLoanPolicyUsedId(JsonObject storageLoan,
+                                                 LoanPolicy loanPolicy) {
+    if(loanPolicy != null) {
+      storageLoan.put("loanPolicyId", loanPolicy.getId());
+    }
   }
 
   private static void removeChangeMetadata(JsonObject storageLoan) {
