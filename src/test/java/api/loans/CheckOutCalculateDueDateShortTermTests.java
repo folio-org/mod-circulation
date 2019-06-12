@@ -146,7 +146,7 @@ public class CheckOutCalculateDueDateShortTermTests extends APITests {
     final UUID checkoutServicePointId = UUID.fromString(servicePointId);
 
     JsonObject loanPolicyEntry = createLoanPolicyEntry(duration, interval);
-    String loanPolicyId = createLoanPolicy(loanPolicyEntry);
+    final IndividualResource loanPolicy = createLoanPolicy(loanPolicyEntry);
 
     DateTimeUtils.setCurrentMillisFixed(loanDate.getMillis());
     final IndividualResource response = loansFixture.checkOutByBarcode(
@@ -159,8 +159,7 @@ public class CheckOutCalculateDueDateShortTermTests extends APITests {
 
     final JsonObject loan = response.getJson();
 
-    assertThat("last loan policy should be stored",
-      loan.getString("loanPolicyId"), is(loanPolicyId));
+    loanHasLoanPolicyProperties(loan, loanPolicy);
 
     DateTime actualDueDate = getThresholdDateTime(DateTime.parse(loan.getString("dueDate")));
     DateTime thresholdDateTime = getThresholdDateTime(expectedDueDate);
@@ -176,7 +175,7 @@ public class CheckOutCalculateDueDateShortTermTests extends APITests {
     return dateTime.withSecondOfMinute(0).withMillisOfSecond(0);
   }
 
-  private String createLoanPolicy(JsonObject loanPolicyEntry)
+  private IndividualResource createLoanPolicy(JsonObject loanPolicyEntry)
     throws InterruptedException,
     MalformedURLException,
     TimeoutException,
@@ -187,7 +186,7 @@ public class CheckOutCalculateDueDateShortTermTests extends APITests {
     UUID noticePolicyId = noticePoliciesFixture.activeNotice().getId();
     useLoanPolicyAsFallback(loanPolicy.getId(), requestPolicyId, noticePolicyId);
 
-    return loanPolicy.getId().toString();
+    return loanPolicy;
   }
 
   /**

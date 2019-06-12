@@ -27,7 +27,7 @@ public abstract class CirculationPolicyRepository<T> {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
   private final CirculationRulesClient circulationRulesClient;
-  private final CollectionResourceClient policyStorageClient;
+  protected final CollectionResourceClient policyStorageClient;
 
   public CirculationPolicyRepository(
     CirculationRulesClient circulationRulesClient,

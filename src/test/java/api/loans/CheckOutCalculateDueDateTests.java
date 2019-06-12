@@ -27,7 +27,6 @@ import static org.folio.circulation.domain.policy.LoanPolicyPeriod.HOURS;
 import static org.folio.circulation.domain.policy.library.ClosedLibraryStrategyUtils.END_OF_A_DAY;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.containsString;
-import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
 
@@ -65,10 +64,8 @@ public class CheckOutCalculateDueDateTests extends APITests {
   private static final String INTERVAL_MINUTES = "Minutes";
 
   private static final String DUE_DATE_KEY = "dueDate";
-  private static final String LOAN_POLICY_ID_KEY = "loanPolicyId";
 
   private static final String ERROR_MESSAGE_DUE_DATE = "due date should be ";
-  private static final String ERROR_MESSAGE_LOAN_POLICY = "last loan policy should be stored";
 
   private static final LocalTime TEST_TIME_MORNING = new LocalTime(10, 0);
   private static final DateTime TEST_DATE =
@@ -92,10 +89,11 @@ public class CheckOutCalculateDueDateTests extends APITests {
     UUID fixedDueDateScheduleId = loanPoliciesFixture
       .createExampleFixedDueDateSchedule().getId();
 
-    String loanPolicyId = createLoanPolicy(
-      createLoanPolicyEntryFixed("Keep the current due date: FIXED",
-        fixedDueDateScheduleId,
-        DueDateManagement.KEEP_THE_CURRENT_DUE_DATE.getValue()));
+    final IndividualResource loanPolicy = createLoanPolicy(
+            createLoanPolicyEntryFixed("Keep the current due date: FIXED",
+                    fixedDueDateScheduleId,
+                    DueDateManagement.KEEP_THE_CURRENT_DUE_DATE.getValue()));
+
 
     final IndividualResource response = loansFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
@@ -106,8 +104,7 @@ public class CheckOutCalculateDueDateTests extends APITests {
 
     final JsonObject loan = response.getJson();
 
-    assertThat(ERROR_MESSAGE_LOAN_POLICY,
-      loan.getString(LOAN_POLICY_ID_KEY), is(loanPolicyId));
+    loanHasLoanPolicyProperties(loan, loanPolicy);
 
     assertThat(ERROR_MESSAGE_DUE_DATE + END_OF_2019_DUE_DATE,
       loan.getString(DUE_DATE_KEY), isEquivalentTo(expectedDateTime));
@@ -127,7 +124,7 @@ public class CheckOutCalculateDueDateTests extends APITests {
     UUID fixedDueDateScheduleId = loanPoliciesFixture
       .createExampleFixedDueDateSchedule().getId();
 
-    String loanPolicyId = createLoanPolicy(
+    IndividualResource loanPolicy = createLoanPolicy(
       createLoanPolicyEntryFixed("Keep the current due date: FIXED",
         fixedDueDateScheduleId,
         DueDateManagement.KEEP_THE_CURRENT_DUE_DATE.getValue()));
@@ -141,8 +138,7 @@ public class CheckOutCalculateDueDateTests extends APITests {
 
     final JsonObject loan = response.getJson();
 
-    assertThat(ERROR_MESSAGE_LOAN_POLICY,
-      loan.getString(LOAN_POLICY_ID_KEY), is(loanPolicyId));
+    loanHasLoanPolicyProperties(loan, loanPolicy);
 
     assertThat(ERROR_MESSAGE_DUE_DATE + END_OF_2019_DUE_DATE,
       loan.getString(DUE_DATE_KEY), isEquivalentTo(END_OF_2019_DUE_DATE));
@@ -167,7 +163,7 @@ public class CheckOutCalculateDueDateTests extends APITests {
     UUID fixedDueDateScheduleId = loanPoliciesFixture
       .createExampleFixedDueDateSchedule().getId();
 
-    String loanPolicyId = createLoanPolicy(
+    IndividualResource loanPolicy = createLoanPolicy(
       createLoanPolicyEntryFixed("Keep the current due date: FIXED",
         fixedDueDateScheduleId,
         DueDateManagement.KEEP_THE_CURRENT_DUE_DATE.getValue()));
@@ -181,8 +177,7 @@ public class CheckOutCalculateDueDateTests extends APITests {
 
     final JsonObject loan = response.getJson();
 
-    assertThat(ERROR_MESSAGE_LOAN_POLICY,
-      loan.getString(LOAN_POLICY_ID_KEY), is(loanPolicyId));
+    loanHasLoanPolicyProperties(loan, loanPolicy);
 
     assertThat(ERROR_MESSAGE_DUE_DATE + END_OF_2019_DUE_DATE,
       loan.getString(DUE_DATE_KEY), isEquivalentTo(END_OF_2019_DUE_DATE));
@@ -207,7 +202,7 @@ public class CheckOutCalculateDueDateTests extends APITests {
     UUID fixedDueDateScheduleId = loanPoliciesFixture
       .createExampleFixedDueDateSchedule().getId();
 
-    String loanPolicyId = createLoanPolicy(
+    IndividualResource loanPolicy = createLoanPolicy(
       createLoanPolicyEntryFixed("MOVE_TO_THE_END_OF_THE_PREVIOUS_OPEN_DAY: FIXED",
         fixedDueDateScheduleId,
         MOVE_TO_THE_END_OF_THE_PREVIOUS_OPEN_DAY.getValue()));
@@ -220,8 +215,7 @@ public class CheckOutCalculateDueDateTests extends APITests {
 
     final JsonObject loan = response.getJson();
 
-    assertThat(ERROR_MESSAGE_LOAN_POLICY,
-      loan.getString(LOAN_POLICY_ID_KEY), is(loanPolicyId));
+    loanHasLoanPolicyProperties(loan, loanPolicy);
 
     DateTime expectedDate =
       WEDNESDAY_DATE.toDateTime(END_OF_A_DAY, DateTimeZone.UTC);
@@ -249,7 +243,7 @@ public class CheckOutCalculateDueDateTests extends APITests {
     UUID fixedDueDateScheduleId = loanPoliciesFixture
       .createExampleFixedDueDateSchedule().getId();
 
-    String loanPolicyId = createLoanPolicy(
+    IndividualResource loanPolicy = createLoanPolicy(
       createLoanPolicyEntryFixed("MOVE_TO_THE_END_OF_THE_PREVIOUS_OPEN_DAY: FIXED",
         fixedDueDateScheduleId,
         MOVE_TO_THE_END_OF_THE_PREVIOUS_OPEN_DAY.getValue()));
@@ -262,8 +256,7 @@ public class CheckOutCalculateDueDateTests extends APITests {
 
     final JsonObject loan = response.getJson();
 
-    assertThat(ERROR_MESSAGE_LOAN_POLICY,
-      loan.getString(LOAN_POLICY_ID_KEY), is(loanPolicyId));
+    loanHasLoanPolicyProperties(loan, loanPolicy);
 
     DateTime expectedDate =
       WEDNESDAY_DATE.toDateTime(END_OF_A_DAY, DateTimeZone.UTC);
@@ -291,7 +284,7 @@ public class CheckOutCalculateDueDateTests extends APITests {
     UUID fixedDueDateScheduleId = loanPoliciesFixture
       .createExampleFixedDueDateSchedule().getId();
 
-    String loanPolicyId = createLoanPolicy(
+    IndividualResource loanPolicy = createLoanPolicy(
       createLoanPolicyEntryFixed("MOVE_TO_THE_END_OF_THE_NEXT_OPEN_DAY: FIXED",
         fixedDueDateScheduleId,
         MOVE_TO_THE_END_OF_THE_NEXT_OPEN_DAY.getValue()));
@@ -304,8 +297,7 @@ public class CheckOutCalculateDueDateTests extends APITests {
 
     final JsonObject loan = response.getJson();
 
-    assertThat(ERROR_MESSAGE_LOAN_POLICY,
-      loan.getString(LOAN_POLICY_ID_KEY), is(loanPolicyId));
+    loanHasLoanPolicyProperties(loan, loanPolicy);
 
     DateTime expectedDate =
       FRIDAY_DATE.toDateTime(END_OF_A_DAY, DateTimeZone.UTC);
@@ -333,7 +325,7 @@ public class CheckOutCalculateDueDateTests extends APITests {
     UUID fixedDueDateScheduleId = loanPoliciesFixture
       .createExampleFixedDueDateSchedule().getId();
 
-    String loanPolicyId = createLoanPolicy(
+    IndividualResource loanPolicy = createLoanPolicy(
       createLoanPolicyEntryFixed("MOVE_TO_THE_END_OF_THE_NEXT_OPEN_DAY: FIXED",
         fixedDueDateScheduleId,
         MOVE_TO_THE_END_OF_THE_NEXT_OPEN_DAY.getValue()));
@@ -346,8 +338,7 @@ public class CheckOutCalculateDueDateTests extends APITests {
 
     final JsonObject loan = response.getJson();
 
-    assertThat(ERROR_MESSAGE_LOAN_POLICY,
-      loan.getString(LOAN_POLICY_ID_KEY), is(loanPolicyId));
+    loanHasLoanPolicyProperties(loan, loanPolicy);
 
     DateTime expectedDate =
       FRIDAY_DATE.toDateTime(END_OF_A_DAY, DateTimeZone.UTC);
@@ -681,7 +672,7 @@ public class CheckOutCalculateDueDateTests extends APITests {
     JsonObject loanPolicyEntry = createLoanPolicyEntry(loanPolicyName, true,
       DueDateManagement.KEEP_THE_CURRENT_DUE_DATE_TIME.getValue(),
       duration, INTERVAL_HOURS);
-    String loanPolicyId = createLoanPolicy(loanPolicyEntry);
+    IndividualResource loanPolicy = createLoanPolicy(loanPolicyEntry);
 
     final IndividualResource response = loansFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
@@ -692,8 +683,7 @@ public class CheckOutCalculateDueDateTests extends APITests {
 
     final JsonObject loan = response.getJson();
 
-    assertThat(ERROR_MESSAGE_LOAN_POLICY,
-      loan.getString(LOAN_POLICY_ID_KEY), is(loanPolicyId));
+    loanHasLoanPolicyProperties(loan, loanPolicy);
 
     assertThat(ERROR_MESSAGE_DUE_DATE + duration,
       loan.getString(DUE_DATE_KEY), isEquivalentTo(loanDate.plusHours(duration)));
@@ -747,7 +737,7 @@ public class CheckOutCalculateDueDateTests extends APITests {
     JsonObject loanPolicyEntry = createLoanPolicyEntry(loanPolicyName, true,
       DueDateManagement.KEEP_THE_CURRENT_DUE_DATE_TIME.getValue(),
       duration, INTERVAL_HOURS);
-    String loanPolicyId = createLoanPolicy(loanPolicyEntry);
+    createLoanPolicy(loanPolicyEntry);
 
     Response response = loansFixture.attemptCheckOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
@@ -773,7 +763,7 @@ public class CheckOutCalculateDueDateTests extends APITests {
     JsonObject loanPolicyEntry = createLoanPolicyEntry(loanPolicyName, true,
       DueDateManagement.KEEP_THE_CURRENT_DUE_DATE_TIME.getValue(),
       duration, INTERVAL_HOURS);
-    String loanPolicyId = createLoanPolicy(loanPolicyEntry);
+    IndividualResource loanPolicy = createLoanPolicy(loanPolicyEntry);
 
     final IndividualResource response = loansFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
@@ -784,8 +774,7 @@ public class CheckOutCalculateDueDateTests extends APITests {
 
     final JsonObject loan = response.getJson();
 
-    assertThat(ERROR_MESSAGE_LOAN_POLICY,
-      loan.getString(LOAN_POLICY_ID_KEY), is(loanPolicyId));
+    loanHasLoanPolicyProperties(loan, loanPolicy);
 
     assertThat(ERROR_MESSAGE_DUE_DATE + duration,
       loan.getString(DUE_DATE_KEY), isEquivalentTo(loanDate.plusHours(duration)));
@@ -803,7 +792,7 @@ public class CheckOutCalculateDueDateTests extends APITests {
 
     JsonObject loanPolicyEntry = createLoanPolicyEntry(dueDateManagement.getValue(), true,
       dueDateManagement.getValue(), duration, interval);
-    String loanPolicyId = createLoanPolicy(loanPolicyEntry);
+    IndividualResource loanPolicy = createLoanPolicy(loanPolicyEntry);
 
     final IndividualResource response = loansFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
@@ -814,8 +803,7 @@ public class CheckOutCalculateDueDateTests extends APITests {
 
     final JsonObject loan = response.getJson();
 
-    assertThat(ERROR_MESSAGE_LOAN_POLICY,
-      loan.getString(LOAN_POLICY_ID_KEY), is(loanPolicyId));
+    loanHasLoanPolicyProperties(loan, loanPolicy);
 
     if (isIncludeTime) {
       checkDateTime(expectedDueDate, loan);
@@ -1045,7 +1033,7 @@ public class CheckOutCalculateDueDateTests extends APITests {
       .create();
   }
 
-  private String createLoanPolicy(JsonObject loanPolicyEntry)
+  private IndividualResource createLoanPolicy(JsonObject loanPolicyEntry)
     throws InterruptedException,
     MalformedURLException,
     TimeoutException,
@@ -1059,6 +1047,6 @@ public class CheckOutCalculateDueDateTests extends APITests {
       noticePoliciesFixture.activeNotice().getId()
     );
 
-    return loanPolicy.getId().toString();
+    return loanPolicy;
   }
 }
