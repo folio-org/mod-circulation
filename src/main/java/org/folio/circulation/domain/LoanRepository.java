@@ -53,7 +53,7 @@ public class LoanRepository {
     Collection<Request> requests = requestQueue.getRequests();
 
     if(!requests.isEmpty()) {
-      /* 
+      /*
         This gets the top request, since UpdateRequestQueue.java#L106 updates the request queue prior to loan creation.
         If that sequesnse changes, the following will need to be updated to requests.stream().skip(1).findFirst().orElse(null)
         and the condition above could do a > 1 comparison. (CIRC-277)
@@ -64,7 +64,7 @@ public class LoanRepository {
         Result<LoanAndRelatedRecords> httpResult = loanPolicy.recall(loanAndRelatedRecords.getLoan())
           .map(loanAndRelatedRecords::withLoan);
         recalledLoanandRelatedRecords = httpResult.value();
-      } 
+      }
     }
 
     LoanAndRelatedRecords newLoanAndRelatedRecords = recalledLoanandRelatedRecords == null ? loanAndRelatedRecords : recalledLoanandRelatedRecords;
@@ -139,8 +139,8 @@ public class LoanRepository {
           final Optional<Loan> firstLoan = loans.getRecords().stream().findFirst();
 
           return firstLoan
-            .map(loan -> succeeded(Loan.from(loan.asJson(), request.getItem())))
-            .orElse(null);
+            .map(loan -> Result.of(() -> loan.withItem(request.getItem())))
+            .orElse(Result.of(() -> null));
         } else {
           return failed(new ServerErrorFailure(
             String.format("More than one open loan for item %s", request.getItemId())));
@@ -192,7 +192,7 @@ public class LoanRepository {
   private Result<MultipleRecords<Loan>> mapResponseToLoans(Response response) {
     return MultipleRecords.from(response, Loan::from, "loans");
   }
-  
+
   private static JsonObject mapToStorageRepresentation(Loan loan, Item item) {
     JsonObject storageLoan = loan.asJson();
 
