@@ -17,6 +17,7 @@ import org.joda.time.DateTime;
 import org.junit.Test;
 
 import api.support.builders.CheckInByBarcodeRequestBuilder;
+import api.support.builders.RequestBuilder;
 import io.vertx.core.json.JsonObject;
 
 public class JsonSchemaValidationTest {
@@ -32,6 +33,22 @@ public class JsonSchemaValidationTest {
       .create();
 
     assertThat(validator.validate(checkInRequest.encode()).succeeded(), is(true));
+  }
+
+  @Test
+  public void canValidateSchemaWithReferences() throws IOException {
+    final JsonSchemaValidator validator = JsonSchemaValidator
+      .fromResource("/request.json");
+
+    final JsonObject request = new RequestBuilder()
+      .hold()
+      .withItemId(UUID.randomUUID())
+      .withRequesterId(UUID.randomUUID())
+      .fulfilToHoldShelf(UUID.randomUUID())
+      .withRequestDate(DateTime.now())
+      .create();
+
+    assertThat(validator.validate(request.encode()).succeeded(), is(true));
   }
 
   @Test

@@ -12,6 +12,7 @@ import java.util.stream.Collectors;
 
 import org.everit.json.schema.Schema;
 import org.everit.json.schema.ValidationException;
+import org.everit.json.schema.loader.SchemaClient;
 import org.everit.json.schema.loader.SchemaLoader;
 import org.folio.circulation.support.BadRequestFailure;
 import org.folio.circulation.support.Result;
@@ -40,7 +41,13 @@ class JsonSchemaValidator {
 
       JSONObject rawSchema = new JSONObject(new JSONTokener(inputStream));
 
-      return SchemaLoader.load(rawSchema);
+      SchemaLoader schemaLoader = SchemaLoader.builder()
+        .schemaClient(SchemaClient.classPathAwareClient())
+        .schemaJson(rawSchema)
+        .resolutionScope("classpath:///") // setting the default resolution scope
+        .build();
+
+      return schemaLoader.load().build();
     }
   }
 
