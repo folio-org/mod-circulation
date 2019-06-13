@@ -1288,6 +1288,72 @@ abstract class RenewalAPITests extends APITests {
     loansFixture.attemptRenewal(422, smallAngryPlanet, jessica);
   }
 
+  @Test
+  public void  canRenewalForCurrentDueDateWhenLoanDateAndDueDatNotFallWithinRangeAlternateDueDateLimited()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    FixedDueDateSchedulesBuilder dueDateLimitSchedule = new FixedDueDateSchedulesBuilder()
+      .withName("Alternate Due Date Limit")
+      .addSchedule(wholeMonth(2019, DateTimeConstants.MARCH))
+      .addSchedule(wholeMonth(2019, DateTimeConstants.MAY));
+
+    DateTime expectedDueDate =
+      new DateTime(2019, DateTimeConstants.MAY, 31, 23, 59, 59)
+        .withZoneRetainFields(DateTimeZone.UTC);
+
+    final UUID dueDateLimitScheduleId = loanPoliciesFixture.createSchedule(
+      dueDateLimitSchedule).getId();
+
+    LoanPolicyBuilder dueDateLimitedPolicy = new LoanPolicyBuilder()
+      .withName("Due Date Limited Rolling Policy")
+      .rolling(Period.months(1))
+      .renewFromCurrentDueDate()
+      .renewWith(Period.months(1), dueDateLimitScheduleId);
+
+    final IndividualResource loanPolicy = loanPoliciesFixture
+      .create(dueDateLimitedPolicy);
+    UUID dueDateLimitedPolicyId = loanPolicy.getId();
+
+    checkRenewalAttempt(expectedDueDate, dueDateLimitedPolicyId);
+  }
+
+  @Test
+  public void  canRenewalForSystemDateWhenLoanDateAndDueDatNotFallWithinRangeAlternateDueDateLimited()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    FixedDueDateSchedulesBuilder dueDateLimitSchedule = new FixedDueDateSchedulesBuilder()
+      .withName("Alternate Due Date Limit")
+      .addSchedule(wholeMonth(2019, DateTimeConstants.MARCH))
+      .addSchedule(todayOnly());
+
+    DateTime expectedDueDate = DateTime.now(DateTimeZone.UTC)
+      .withTimeAtStartOfDay()
+      .withHourOfDay(23)
+      .withMinuteOfHour(59)
+      .withSecondOfMinute(59);
+
+    final UUID dueDateLimitScheduleId = loanPoliciesFixture.createSchedule(
+      dueDateLimitSchedule).getId();
+
+    LoanPolicyBuilder dueDateLimitedPolicy = new LoanPolicyBuilder()
+      .withName("Due Date Limited Rolling Policy")
+      .rolling(Period.months(1))
+      .renewFromSystemDate()
+      .renewWith(Period.months(1), dueDateLimitScheduleId);
+
+    final IndividualResource loanPolicy = loanPoliciesFixture
+      .create(dueDateLimitedPolicy);
+    UUID dueDateLimitedPolicyId = loanPolicy.getId();
+
+    checkRenewalAttempt(expectedDueDate, dueDateLimitedPolicyId);
+  }
+
   private void checkRenewalAttempt(DateTime expectedDueDate, UUID dueDateLimitedPolicyId)
     throws InterruptedException,
     MalformedURLException,
