@@ -317,7 +317,7 @@ public abstract class APITests {
       UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID())),
       ResponseHandler.any(completed));
 
-    Response response = completed.get(50, TimeUnit.SECONDS);
+    Response response = completed.get(5, TimeUnit.SECONDS);
 
     assertThat(String.format(
       "Failed to apply circulation rules: %s", response.getBody()),
