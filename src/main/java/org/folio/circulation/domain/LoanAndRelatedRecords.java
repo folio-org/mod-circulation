@@ -16,7 +16,7 @@ public class LoanAndRelatedRecords implements UserRelatedRecord {
     LoanPolicy loanPolicy,
     DateTimeZone timeZone) {
 
-    this.loan = loan;
+    this.loan = loan.withLoanPolicy(loanPolicy);
     this.requestQueue = requestQueue;
     this.loanPolicy = loanPolicy;
     this.timeZone = timeZone;

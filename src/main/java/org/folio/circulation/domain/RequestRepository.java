@@ -129,8 +129,8 @@ public class RequestRepository {
 
   //TODO: May need to fetch updated representation of request
   public CompletableFuture<Result<Request>> update(Request request) {
-    final JsonObject representation = new RequestRepresentation()
-      .storedRequest(request);
+    final JsonObject representation
+      = new StoredRequestRepresentation().storedRequest(request);
 
     return requestsStorageClient.put(request.getId(), representation)
       .thenApply(response -> {
@@ -155,7 +155,7 @@ public class RequestRepository {
 
     final Request request = requestAndRelatedRecords.getRequest();
 
-    JsonObject representation = new RequestRepresentation()
+    JsonObject representation = new StoredRequestRepresentation()
       .storedRequest(request);
 
     log.debug("RequestRepository.create - POST request representation {}", representation);

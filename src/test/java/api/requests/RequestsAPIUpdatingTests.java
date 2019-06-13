@@ -548,4 +548,74 @@ public class RequestsAPIUpdatingTests extends APITests {
       hasItems(
         hasEmailNoticeProperties(requester.getId(), requestCancellationTemplateId, noticeContextMatchers)));
   }
+
+  @Test
+  public void replacedRequestShouldOnlyIncludeStoredPropertiesInStorage()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    final InventoryItemResource temeraire = itemsFixture.basedUponTemeraire();
+
+    loansFixture.checkOutByBarcode(temeraire);
+
+    final IndividualResource steve = usersFixture.steve();
+    final IndividualResource charlotte = usersFixture.charlotte();
+
+    proxyRelationshipsFixture.currentProxyFor(steve, charlotte);
+
+    DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
+
+    final IndividualResource exampleServicePoint = servicePointsFixture.cd1();
+
+    IndividualResource createdRequest = requestsClient.create(
+      new RequestBuilder()
+        .recall()
+        .withRequestDate(requestDate)
+        .forItem(temeraire)
+        .by(steve)
+        .proxiedBy(charlotte)
+        .fulfilToHoldShelf()
+        .withPickupServicePointId(exampleServicePoint.getId())
+        .withRequestExpiration(new LocalDate(2017, 7, 30))
+        .withHoldShelfExpiration(new LocalDate(2017, 8, 31)));
+
+    requestsClient.replace(createdRequest.getId(), createdRequest.copyJson());
+
+    Response getStorageRequestResponse = requestsStorageClient.getById(createdRequest.getId());
+
+    assertThat(String.format("Failed to get request: %s", getStorageRequestResponse.getBody()),
+      getStorageRequestResponse.getStatusCode(), is(HttpURLConnection.HTTP_OK));
+
+    JsonObject storageRepresentation = getStorageRequestResponse.getJson();
+
+    assertThat("has information taken from requesting user",
+      storageRepresentation.containsKey("requester"), is(true));
+
+    final JsonObject requesterSummary = storageRepresentation.getJsonObject("requester");
+
+    assertThat("last name is taken from requesting user",
+      requesterSummary.getString("lastName"), is("Jones"));
+
+    assertThat("first name is taken from requesting user",
+      requesterSummary.getString("firstName"), is("Steven"));
+
+    assertThat("patron group information should not be stored for requesting user",
+      requesterSummary.containsKey("patronGroup"), is(false));
+
+    assertThat("has information taken from proxying user",
+      storageRepresentation.containsKey("proxy"), is(true));
+
+    final JsonObject proxySummary = storageRepresentation.getJsonObject("proxy");
+
+    assertThat("last name is taken from proxying user",
+      proxySummary.getString("lastName"), is("Broadwell"));
+
+    assertThat("first name is taken from proxying user",
+      proxySummary.getString("firstName"), is("Charlotte"));
+
+    assertThat("patron group information should not be stored for proxying user",
+      proxySummary.containsKey("patronGroup"), is(false));
+  }
 }

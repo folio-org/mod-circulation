@@ -80,7 +80,7 @@ public class InactiveUserValidatorTests {
 
     final Result<LoanAndRelatedRecords> result =
       validator.refuseWhenUserIsInactive(succeeded(new LoanAndRelatedRecords(
-        new Loan(new JsonObject(), null, steve, null, null, null, null))));
+        new Loan(new JsonObject(), null, steve, null, null, null, null, null))));
 
     assertThat(result.failed(), is(true));
     assertThat(result.cause(), instanceOf(ServerErrorFailure.class));

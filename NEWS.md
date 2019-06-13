@@ -1,3 +1,10 @@
+## 16.2.0 2019-06-12
+
+* Processes scheduled patron notices (CIRC-337)
+* Includes location related tokens for patron notices (CIRC-332)
+* Handles missing request expiration date for title level requests (CIRC-345)
+* Does not attempt to store extended requester patron group information (CIRC-342)
+
 ## 16.1.0 2019-06-10
 
 * Introduces creation of requests based upon an instance (CIRC-245, CIRC-264, CIRC-265, CIRC-267)

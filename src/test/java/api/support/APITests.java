@@ -1,6 +1,8 @@
 package api.support;
 
 import static api.support.APITestContext.createClient;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 
@@ -12,6 +14,8 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import io.vertx.core.json.JsonObject;
+import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.OkapiHttpClient;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.client.ResponseHandler;
@@ -76,6 +80,9 @@ public abstract class APITests {
   protected final ResourceClient loansClient = ResourceClient.forLoans(client);
   protected final ResourceClient loansStorageClient
     = ResourceClient.forLoansStorage(client);
+
+  protected final ResourceClient requestsStorageClient
+    = ResourceClient.forRequestsStorage(client);
 
   protected final ResourceClient requestsClient = ResourceClient.forRequests(client);
 
@@ -372,4 +379,31 @@ public abstract class APITests {
     ResourceClient.forCancellationReasons(client).deleteAllIndividually();
   }
 
+
+  protected void loanHasLoanPolicyProperties(JsonObject loan, IndividualResource loanPolicy) {
+    hasProperty("loanPolicyId", loan, "loan", loanPolicy.getId().toString());
+    hasProperty("loanPolicy", loan, "loan");
+    JsonObject loanPolicyObject = loan.getJsonObject("loanPolicy");
+    hasProperty("name", loanPolicyObject, "loan policy", loanPolicy.getJson().getString("name"));
+  }
+
+  protected void hasProperty(String property, JsonObject resource, String type) {
+    assertThat(String.format("%s should have an %s: %s",
+      type, property, resource),
+      resource.containsKey(property), is(true));
+  }
+
+
+  protected void hasProperty(String property, JsonObject resource, String type, Object value) {
+    assertThat(String.format("%s should have an %s: %s",
+      type, property, resource),
+      resource.getMap().get(property), equalTo(value));
+  }
+
+
+  protected void doesNotHaveProperty(String property, JsonObject resource, String type) {
+    assertThat(String.format("%s should NOT have an %s: %s",
+            type, property, resource),
+            resource.getValue(property), is(nullValue()));
+  }
 }

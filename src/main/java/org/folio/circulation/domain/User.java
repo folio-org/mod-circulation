@@ -2,7 +2,6 @@ package org.folio.circulation.domain;
 
 import static org.folio.circulation.support.JsonPropertyFetcher.getNestedStringProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
-import static org.folio.circulation.support.JsonPropertyWriter.write;
 
 import java.util.Objects;
 
@@ -19,18 +18,18 @@ public class User {
   private final JsonObject representation;
 
   public User(JsonObject representation) {
-    this(representation, null);    
+    this(representation, null);
   }
-  
+
   public User(JsonObject representation, PatronGroup patronGroup) {
     this.representation = representation;
     this.patronGroup = patronGroup;
   }
-  
-  public User withPatronGroup(PatronGroup newPatronGroup) {
+
+  User withPatronGroup(PatronGroup newPatronGroup) {
     return new User(representation, newPatronGroup);
   }
-  
+
 
   public boolean canDetermineStatus() {
     return !representation.containsKey("active");
@@ -85,7 +84,7 @@ public class User {
   public String getMiddleName() {
     return getNestedStringProperty(representation, PERSONAL_PROPERTY_NAME, "middleName");
   }
-  
+
   JsonObject getAddressByType(String type) {
     JsonObject personal = representation.getJsonObject(PERSONAL_PROPERTY_NAME);
 
@@ -107,24 +106,8 @@ public class User {
     return null;
   }
 
-  public JsonObject createUserSummary() {
-    //TODO: Extract to visitor based adapter
-    JsonObject userSummary = new JsonObject();
-
-    write(userSummary, "lastName", getLastName());
-    write(userSummary, "firstName", getFirstName());
-    write(userSummary, "middleName", getMiddleName());
-    write(userSummary, "barcode", getBarcode());
-    
-    if(patronGroup != null) {
-      JsonObject patronGroupSummary = new JsonObject();
-      write(patronGroupSummary, "id", patronGroup.getId());
-      write(patronGroupSummary, "group", patronGroup.getGroup());
-      write(patronGroupSummary, "desc", patronGroup.getDesc());
-      userSummary.put("patronGroup", patronGroupSummary);
-    }
-    
-    return userSummary;
+  public PatronGroup getPatronGroup() {
+    return patronGroup;
   }
 
   public String getPersonalName() {
@@ -139,7 +122,7 @@ public class User {
       return getUsername();
     }
   }
-  
+
   public static User from(JsonObject representation) {
     return new User(representation);
   }

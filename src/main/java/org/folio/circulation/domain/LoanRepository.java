@@ -18,6 +18,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.folio.circulation.domain.policy.LoanPolicy;
+import org.folio.circulation.domain.representations.LoanProperties;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.CqlQuery;
@@ -77,7 +78,7 @@ public class LoanRepository {
 
     User user = newLoanAndRelatedRecords.getLoan().getUser();
     User proxy = newLoanAndRelatedRecords.getLoan().getProxy();
-        
+
     return loansStorageClient.post(storageLoan).thenApply(response -> {
       if (response.getStatusCode() == 201) {
         return succeeded(
@@ -198,8 +199,18 @@ public class LoanRepository {
     removeChangeMetadata(storageLoan);
     removeSummaryProperties(storageLoan);
     keepLatestItemStatus(item, storageLoan);
+    removeBorrowerProperties(storageLoan);
+    removeLoanPolicyProperties(storageLoan);
 
     return storageLoan;
+  }
+
+  private static void removeLoanPolicyProperties(JsonObject storageLoan) {
+    storageLoan.remove(LoanProperties.LOAN_POLICY);
+  }
+
+  private static void removeBorrowerProperties(JsonObject storageLoan) {
+    storageLoan.remove(LoanProperties.BORROWER);
   }
 
   private static void keepLatestItemStatus(Item item, JsonObject storageLoan) {

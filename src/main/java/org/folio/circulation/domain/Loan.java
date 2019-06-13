@@ -20,6 +20,7 @@ import java.util.Objects;
 import java.util.UUID;
 
 import org.apache.commons.lang3.StringUtils;
+import org.folio.circulation.domain.policy.LoanPolicy;
 import org.folio.circulation.domain.representations.LoanProperties;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.ServerErrorFailure;
@@ -41,12 +42,14 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   private ServicePoint checkoutServicePoint;
   private ServicePoint checkinServicePoint;
 
+  private LoanPolicy loanPolicy;
+
   public Loan(JsonObject representation) {
-    this(representation, null, null, null, null, null, null);
+    this(representation, null, null, null, null, null, null, null);
   }
 
   public Loan(JsonObject representation, Item item, User user, User proxy,
-              ServicePoint checkinServicePoint, ServicePoint checkoutServicePoint, DateTime originalDueDate) {
+              ServicePoint checkinServicePoint, ServicePoint checkoutServicePoint, DateTime originalDueDate, LoanPolicy loanPolicy) {
 
     this.representation = representation;
     this.item = item;
@@ -59,6 +62,8 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     this.checkinServicePointId = getProperty(representation, CHECKIN_SERVICE_POINT_ID);
 
     this.originalDueDate = originalDueDate == null ? getDueDate() : originalDueDate;
+
+    this.loanPolicy = loanPolicy;
 
     // TODO: Refuse if ID does not match property in representation,
     // and possibly convert isFound to unknown item class
@@ -75,7 +80,6 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     if (proxy != null) {
       representation.put("proxyUserId", proxy.getId());
     }
-
   }
 
   public static Loan from(JsonObject representation) {
@@ -92,7 +96,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
 
   public static Loan from(JsonObject representation, Item item, User user, User proxy, DateTime oldDueDate) {
     defaultStatusAndAction(representation);
-    return new Loan(representation, item, user, proxy, null, null, oldDueDate);
+    return new Loan(representation, item, user, proxy, null, null, oldDueDate, null);
   }
 
   JsonObject asJson() {
@@ -202,7 +206,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
 
   public Loan withItem(Item item) {
     return new Loan(representation, item, user, proxy, checkinServicePoint,
-        checkoutServicePoint, originalDueDate);
+        checkoutServicePoint, originalDueDate, loanPolicy);
   }
 
   public User getUser() {
@@ -211,7 +215,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
 
   public Loan withUser(User newUser) {
     return new Loan(representation, item, newUser, proxy, checkinServicePoint,
-        checkoutServicePoint, originalDueDate);
+        checkoutServicePoint, originalDueDate, loanPolicy);
   }
 
   public User getProxy() {
@@ -220,29 +224,42 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
 
   Loan withProxy(User newProxy) {
     return new Loan(representation, item, user, newProxy, checkinServicePoint,
-      checkoutServicePoint, originalDueDate);
-  }
-  
-  public Loan withCheckinServicePoint(ServicePoint newCheckinServicePoint) {
-    return new Loan(representation, item, user, proxy, newCheckinServicePoint,
-      checkoutServicePoint, originalDueDate);
-  }
-  
-  public Loan withCheckoutServicePoint(ServicePoint newCheckoutServicePoint) {
-    return new Loan(representation, item, user, proxy, checkinServicePoint,
-      newCheckoutServicePoint, originalDueDate);
+      checkoutServicePoint, originalDueDate, loanPolicy);
   }
 
-  private void changeLoanPolicy(String newLoanPolicyId) {
+  public Loan withCheckinServicePoint(ServicePoint newCheckinServicePoint) {
+    return new Loan(representation, item, user, proxy, newCheckinServicePoint,
+      checkoutServicePoint, originalDueDate, loanPolicy);
+  }
+
+  public Loan withCheckoutServicePoint(ServicePoint newCheckoutServicePoint) {
+    return new Loan(representation, item, user, proxy, checkinServicePoint,
+      newCheckoutServicePoint, originalDueDate, loanPolicy);
+  }
+
+  public String getLoanPolicyId() {
+    return representation.getString("loanPolicyId");
+  }
+
+  public LoanPolicy getLoanPolicy() {
+    return loanPolicy;
+  }
+
+  public Loan withLoanPolicy(LoanPolicy newloanPolicy) {
+
+    return new Loan(representation, item, user, proxy, checkinServicePoint, checkoutServicePoint, originalDueDate, newloanPolicy);
+  }
+
+  private void setLoanPolicyId(String newLoanPolicyId) {
     if (newLoanPolicyId != null) {
       representation.put("loanPolicyId", newLoanPolicyId);
     }
   }
-  
+
   public ServicePoint getCheckinServicePoint() {
     return this.checkinServicePoint;
   }
-  
+
   public ServicePoint getCheckoutServicePoint() {
     return this.checkoutServicePoint;
   }
@@ -250,7 +267,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   public Loan renew(DateTime dueDate, String basedUponLoanPolicyId) {
     changeAction("renewed");
     removeActionComment();
-    changeLoanPolicy(basedUponLoanPolicyId);
+    setLoanPolicyId(basedUponLoanPolicyId);
     changeDueDate(dueDate);
     incrementRenewalCount();
 
@@ -261,7 +278,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
                               String basedUponLoanPolicyId,
                               String actionComment) {
     changeAction("renewedThroughOverride");
-    changeLoanPolicy(basedUponLoanPolicyId);
+    setLoanPolicyId(basedUponLoanPolicyId);
     changeDueDate(dueDate);
     incrementRenewalCount();
     changeActionComment(actionComment);
