@@ -14,4 +14,8 @@ public class BadRequestFailure implements HttpFailure {
   public void writeTo(HttpServerResponse response) {
     ClientErrorResponse.badRequest(response, reason);
   }
+
+  public String getReason() {
+    return reason;
+  }
 }

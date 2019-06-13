@@ -359,7 +359,7 @@ public class InstanceRequestsAPICreationTests extends APITests {
     assertEquals(pickupServicePointId.toString(), representation.getString("pickupServicePointId"));
     assertEquals("Circ Desk 1", representation.getJsonObject("pickupServicePoint").getString("name"));
     assertEquals(instance.getId().toString(), representation.getJsonObject("item").getString("instanceId"));
-    assertEquals(RequestType.HOLD.name(), representation.getString("requestType"));
+    assertEquals(RequestType.HOLD.getValue(), representation.getString("requestType"));
     //here we check the itemID. It could be either of the 2 items because we use Future in the code to get request queues from the repository,
     //so it's non-deterministic that the futures should come in by a certain order.
     assertTrue(item1.getId().toString().equals(representation.getString("itemId")) ||
@@ -467,7 +467,7 @@ public class InstanceRequestsAPICreationTests extends APITests {
     assertEquals(pickupServicePointId.toString(), representation.getString("pickupServicePointId"));
     assertEquals("Circ Desk 1", representation.getJsonObject("pickupServicePoint").getString("name"));
     assertEquals(instanceId.toString(), representation.getJsonObject("item").getString("instanceId"));
-    assertEquals(expectedRequestType.name(), representation.getString("requestType"));
+    assertEquals(expectedRequestType.getValue(), representation.getString("requestType"));
     if (itemId != null)
       assertEquals(itemId.toString(), representation.getString("itemId"));
   }

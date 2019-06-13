@@ -27,8 +27,6 @@ public class RequestRepresentation {
     addAdditionalServicePointProperties(requestRepresentation, request.getPickupServicePoint());
     addDeliveryAddress(requestRepresentation, request, request.getRequester());
 
-    log.debug("extendedRepresentation: finished adding extended properties to request");
-
     return requestRepresentation;
   }
 

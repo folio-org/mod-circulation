@@ -12,7 +12,9 @@ import org.folio.circulation.domain.InstanceRequestRelatedRecords;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.RequestType;
 import org.folio.circulation.domain.representations.RequestByInstanceIdRequest;
-import org.folio.circulation.support.Result;
+import org.folio.circulation.support.*;
+import org.folio.circulation.support.http.client.Response;
+import org.folio.circulation.support.http.server.ValidationError;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.format.ISODateTimeFormat;
@@ -45,11 +47,11 @@ public class RequestByInstanceIdResourceTests {
     for (JsonObject itemRequestJson: requestRepresentations) {
       assertEquals(item.getItemId(), itemRequestJson.getString("itemId"));
       if (i == 0)
-        assertEquals(RequestType.HOLD.name(), itemRequestJson.getString("requestType"));
+        assertEquals(RequestType.HOLD.getValue(), itemRequestJson.getString("requestType"));
       if (i == 1)
-        assertEquals(RequestType.RECALL.name(), itemRequestJson.getString("requestType"));
+        assertEquals(RequestType.RECALL.getValue(), itemRequestJson.getString("requestType"));
       if (i == 2)
-        assertEquals(RequestType.PAGE.name(), itemRequestJson.getString("requestType"));
+        assertEquals(RequestType.PAGE.getValue(), itemRequestJson.getString("requestType"));
       i++;
 
       if (i > 2) {
@@ -60,6 +62,28 @@ public class RequestByInstanceIdResourceTests {
         }
       }
     }
+  }
+
+  @Test
+  public void getExpectedErrorMessages() {
+    HttpFailure validationError = ValidationErrorFailure.singleValidationError
+      (new ValidationError("validationError", "someParam", "null"));
+    String errorMessage = RequestByInstanceIdResource.getErrorMessage(validationError);
+    assertTrue(errorMessage.contains("validationError"));
+
+    HttpFailure serverErrorFailure = new ServerErrorFailure("serverError");
+    errorMessage = RequestByInstanceIdResource.getErrorMessage(serverErrorFailure);
+    assertEquals("serverError", errorMessage);
+
+    HttpFailure badRequestFailure = new BadRequestFailure("badRequestFailure");
+    errorMessage = RequestByInstanceIdResource.getErrorMessage(badRequestFailure);
+    assertEquals("badRequestFailure", errorMessage);
+
+    Response fakeResponse = new Response(500, "fakeResponseFailure", "text/javascript");
+
+    HttpFailure forwardOnFailure = new ForwardOnFailure(fakeResponse);
+    errorMessage = RequestByInstanceIdResource.getErrorMessage(forwardOnFailure);
+    assertEquals("fakeResponseFailure", errorMessage);
   }
 
   public static JsonObject getJsonInstanceRequest(UUID pickupServicePointId) {

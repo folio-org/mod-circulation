@@ -8,15 +8,7 @@ import static org.folio.circulation.support.ValidationErrorFailure.failedValidat
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 
 import java.lang.invoke.MethodHandles;
-import java.util.Collection;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
@@ -41,13 +33,7 @@ import org.folio.circulation.domain.representations.RequestByInstanceIdRequest;
 import org.folio.circulation.domain.validation.ProxyRelationshipValidator;
 import org.folio.circulation.domain.validation.ServicePointPickupLocationValidator;
 import org.folio.circulation.storage.ItemByInstanceIdFinder;
-import org.folio.circulation.support.Clients;
-import org.folio.circulation.support.CreatedJsonResponseResult;
-import org.folio.circulation.support.ItemRepository;
-import org.folio.circulation.support.ResponseWritableResult;
-import org.folio.circulation.support.Result;
-import org.folio.circulation.support.RouteRegistration;
-import org.folio.circulation.support.ServerErrorFailure;
+import org.folio.circulation.support.*;
 import org.folio.circulation.support.http.server.ServerErrorResponse;
 import org.folio.circulation.support.http.server.WebContext;
 import org.joda.time.format.ISODateTimeFormat;
@@ -131,18 +117,22 @@ public class RequestByInstanceIdResource extends Resource {
       new RequestPolicyRepository(clients),
       loanRepository, requestNoticeSender);
 
-    return placeRequest(itemRequestRepresentations, 0, createRequestService, clients, loanRepository);
+    return placeRequest(itemRequestRepresentations, 0, createRequestService,
+                        clients, loanRepository, new ArrayList<>());
   }
 
   private CompletableFuture<Result<RequestAndRelatedRecords>> placeRequest(List<JsonObject> itemRequests, int startIndex,
                                                                            CreateRequestService createRequestService, Clients clients,
-                                                                           LoanRepository loanRepository) {
+                                                                           LoanRepository loanRepository, List<String> errors) {
     final UserRepository userRepository = new UserRepository(clients);
 
-    log.debug("Inside placeRequest, startIndex={}, itemRequestSize={}", startIndex, itemRequests.size());
+    log.debug("RequestByInstanceIdResource.placeRequest, startIndex={}, itemRequestSize={}", startIndex, itemRequests.size());
     if (startIndex >= itemRequests.size()) {
+
+      String aggregateFailures = String.format("%n%s", String.join("%n", errors));
+
       return CompletableFuture.completedFuture(failed(new ServerErrorFailure(
-        "Failed to place a request for the title")));
+        "Failed to place a request for the title. Reasons: " + aggregateFailures)));
     }
 
     JsonObject currentItemRequest = itemRequests.get(startIndex);
@@ -162,11 +152,14 @@ public class RequestByInstanceIdResource extends Resource {
       .thenCompose(r -> r.after(createRequestService::createRequest))
       .thenCompose(r -> {
           if (r.succeeded()) {
-            log.debug("succeeded creating request for item {}", currentItemRequest.getString("id"));
+            log.debug("RequestByInstanceIdResource.placeRequest: succeeded creating request for item {}", currentItemRequest.getString("itemId"));
             return CompletableFuture.completedFuture(r);
           } else {
-            log.debug("Failed to create request for item {}", currentItemRequest.getString("id"));
-            return placeRequest(itemRequests, startIndex +1, createRequestService, clients, loanRepository);
+            String reason = getErrorMessage(r.cause());
+            errors.add(reason);
+
+            log.debug("Failed to create request for item {} with reason: ", currentItemRequest.getString("itemId"), reason);
+            return placeRequest(itemRequests, startIndex +1, createRequestService, clients, loanRepository, errors);
           }
         });
   }
@@ -218,7 +211,7 @@ public class RequestByInstanceIdResource extends Resource {
           requestBody.put("requesterId", requestByInstanceIdRequest.getRequesterId().toString());
           requestBody.put("pickupServicePointId", requestByInstanceIdRequest.getPickupServicePointId().toString());
           requestBody.put("fulfilmentPreference", defaultFulfilmentPreference);
-          requestBody.put("requestType", reqType.name());
+          requestBody.put("requestType", reqType.getValue());
           if (requestByInstanceIdRequest.getRequestExpirationDate() != null) {
             requestBody.put("requestExpirationDate",
               requestByInstanceIdRequest.getRequestExpirationDate().toString(ISODateTimeFormat.dateTime()));
@@ -237,7 +230,7 @@ public class RequestByInstanceIdResource extends Resource {
       return failedValidation("Items list is null or empty", "items", "null");
     }
 
-    log.debug("segregateItemsList: Found {} items", items.size());
+    log.debug("RequestByInstanceIdResource.segregateItemsList: Found {} items", items.size());
 
     Map<Boolean, List<Item>> partitions = items.stream()
       .collect(Collectors.partitioningBy(Item::isAvailable));
@@ -329,5 +322,20 @@ public class RequestByInstanceIdResource extends Resource {
     return new ProxyRelationshipValidator(clients, () ->
       singleValidationError("proxyUserId is not valid",
         PROXY_USER_ID, representation.getString(PROXY_USER_ID)));
+  }
+
+  static String getErrorMessage(HttpFailure failure) {
+    String reason = "";
+
+    if (failure instanceof ServerErrorFailure ){
+      reason = ((ServerErrorFailure) failure).reason;
+    } else if (failure instanceof ValidationErrorFailure){
+      reason = failure.toString();
+    } else if (failure instanceof BadRequestFailure){
+      reason = ((BadRequestFailure) failure).getReason();
+    } else if (failure instanceof ForwardOnFailure) {
+      reason = ((ForwardOnFailure) failure).getFailureResponse().getBody();
+    }
+    return reason;
   }
 }

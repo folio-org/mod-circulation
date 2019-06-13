@@ -3,6 +3,7 @@ package org.folio.circulation.domain;
 import static org.folio.circulation.support.Result.failed;
 import static org.folio.circulation.support.Result.succeeded;
 
+import java.lang.invoke.MethodHandles;
 import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.support.Clients;
@@ -17,6 +18,8 @@ import org.folio.circulation.support.SingleRecordMapper;
 import org.folio.circulation.support.http.client.Response;
 
 import io.vertx.core.json.JsonObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class RequestRepository {
   private final CollectionResourceClient requestsStorageClient;
@@ -26,7 +29,7 @@ public class RequestRepository {
   private final LoanRepository loanRepository;
   private final ServicePointRepository servicePointRepository;
   private final PatronGroupRepository patronGroupRepository;
-
+  private final Logger log;
 
   private RequestRepository(
     CollectionResourceClient requestsStorageClient,
@@ -44,6 +47,7 @@ public class RequestRepository {
     this.loanRepository = loanRepository;
     this.servicePointRepository = servicePointRepository;
     this.patronGroupRepository = patronGroupRepository;
+    log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
   }
 
   public static RequestRepository using(Clients clients) {
@@ -154,14 +158,18 @@ public class RequestRepository {
     JsonObject representation = new RequestRepresentation()
       .storedRequest(request);
 
+    log.debug("RequestRepository.create - POST request representation {}", representation);
     return requestsStorageClient.post(representation)
       .thenApply(response -> {
         if (response.getStatusCode() == 201) {
+          log.debug("Succeeded create - POST request representation");
           //Retain all of the previously fetched related records
           return succeeded(requestAndRelatedRecords.withRequest(
             request.withRequestJsonRepresentation(response.getJson())
           ));
         } else {
+          log.debug("Failed to create - POST request representation; Status code = {}; response body = {}",
+                    response.getStatusCode(), response.getBody());
           return failed(new ForwardOnFailure(response));
         }
     });
