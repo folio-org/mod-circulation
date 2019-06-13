@@ -48,6 +48,7 @@ import io.vertx.ext.web.RoutingContext;
 public class RequestByInstanceIdResource extends Resource {
 
   private final Logger log;
+  private static final String ITEM_ID_FIELD = "itemId";
 
   public RequestByInstanceIdResource(HttpClient client) {
     super(client);
@@ -152,13 +153,14 @@ public class RequestByInstanceIdResource extends Resource {
       .thenCompose(r -> r.after(createRequestService::createRequest))
       .thenCompose(r -> {
           if (r.succeeded()) {
-            log.debug("RequestByInstanceIdResource.placeRequest: succeeded creating request for item {}", currentItemRequest.getString("itemId"));
+            log.debug("RequestByInstanceIdResource.placeRequest: succeeded creating request for item {}",
+                currentItemRequest.getString(ITEM_ID_FIELD));
             return CompletableFuture.completedFuture(r);
           } else {
             String reason = getErrorMessage(r.cause());
             errors.add(reason);
 
-            log.debug("Failed to create request for item {} with reason: ", currentItemRequest.getString("itemId"), reason);
+            log.debug("Failed to create request for item {} with reason: {}", currentItemRequest.getString(ITEM_ID_FIELD), reason);
             return placeRequest(itemRequests, startIndex +1, createRequestService, clients, loanRepository, errors);
           }
         });
@@ -206,7 +208,7 @@ public class RequestByInstanceIdResource extends Resource {
         if (reqType != RequestType.NONE) {
 
           JsonObject requestBody = new JsonObject();
-          requestBody.put("itemId", item.getItemId());
+          requestBody.put(ITEM_ID_FIELD, item.getItemId());
           requestBody.put("requestDate", requestByInstanceIdRequest.getRequestDate().toString(ISODateTimeFormat.dateTime()));
           requestBody.put("requesterId", requestByInstanceIdRequest.getRequesterId().toString());
           requestBody.put("pickupServicePointId", requestByInstanceIdRequest.getPickupServicePointId().toString());
