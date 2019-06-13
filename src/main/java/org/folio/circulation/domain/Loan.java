@@ -173,6 +173,10 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     return StringUtils.equals(getStatus(), "Closed");
   }
 
+  public boolean isOpen() {
+    return StringUtils.equals(getStatus(), "Open");
+  }
+
   private String getStatus() {
     return getNestedStringProperty(representation, STATUS, "name");
   }

@@ -343,6 +343,11 @@ public class RequestBuilder extends JsonBuilder implements Builder {
     return withFulfilmentPreference("Hold Shelf");
   }
 
+  public RequestBuilder fulfilToHoldShelf(IndividualResource newPickupServicePoint) {
+    return withFulfilmentPreference("Hold Shelf")
+      .withPickupServicePointId(newPickupServicePoint.getId());
+  }
+
   public RequestBuilder fulfilToHoldShelf(UUID newPickupServicePointId) {
     return withFulfilmentPreference("Hold Shelf")
       .withPickupServicePointId(newPickupServicePointId);

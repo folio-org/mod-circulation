@@ -1,6 +1,7 @@
 package org.folio.circulation.domain;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
+import static org.folio.circulation.support.Result.ofAsync;
 import static org.folio.circulation.support.Result.succeeded;
 
 import java.lang.invoke.MethodHandles;
@@ -41,6 +42,11 @@ public class UpdateRequestQueue {
 
   public CompletableFuture<Result<LoanAndRelatedRecords>> onCheckIn(
     LoanAndRelatedRecords relatedRecords) {
+
+    //Do not attempt check in for open loan
+    if(relatedRecords.getLoan().isOpen()) {
+      return ofAsync(() -> relatedRecords);
+    }
 
     final RequestQueue requestQueue = relatedRecords.getRequestQueue();
 
