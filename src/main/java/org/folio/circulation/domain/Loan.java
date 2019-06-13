@@ -50,7 +50,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
               ServicePoint checkinServicePoint, ServicePoint checkoutServicePoint,
               DateTime originalDueDate, LoanPolicy loanPolicy) {
 
-    requireNonNull(loanPolicy, () -> "loanPolicy cannot be null");
+    requireNonNull(loanPolicy, "loanPolicy cannot be null");
 
     this.representation = representation;
     this.item = item;
@@ -247,7 +247,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   public Loan withLoanPolicy(LoanPolicy newloanPolicy) {
-    requireNonNull(newloanPolicy, () -> "newloanPolicy cannot be null");
+    requireNonNull(newloanPolicy, "newloanPolicy cannot be null");
 
     return new Loan(representation, item, user, proxy, checkinServicePoint,
       checkoutServicePoint, originalDueDate, newloanPolicy);
