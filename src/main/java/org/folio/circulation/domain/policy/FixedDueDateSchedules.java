@@ -14,6 +14,7 @@ import org.folio.circulation.support.http.server.ValidationError;
 import org.joda.time.DateTime;
 
 import io.vertx.core.json.JsonObject;
+import org.joda.time.LocalDate;
 
 public class FixedDueDateSchedules {
   private final List<JsonObject> schedules;
@@ -47,11 +48,19 @@ public class FixedDueDateSchedules {
 
   private Predicate<? super JsonObject> isWithin(DateTime date) {
     return schedule -> {
-      DateTime from = DateTime.parse(schedule.getString("from"));
-      DateTime to = DateTime.parse(schedule.getString("to"));
+      LocalDate from = DateTime.parse(schedule.getString("from")).toLocalDate();
+      LocalDate to = DateTime.parse(schedule.getString("to")).toLocalDate();
 
-      return date.isAfter(from) && date.isBefore(to);
+      return !isDateOutOfRange(from, to, date.toLocalDate());
     };
+  }
+
+  private boolean isDateOutOfRange(
+    LocalDate from,
+    LocalDate to,
+    LocalDate date) {
+
+    return date.isAfter(to) || date.isBefore(from);
   }
 
   private DateTime getDueDate(JsonObject schedule) {

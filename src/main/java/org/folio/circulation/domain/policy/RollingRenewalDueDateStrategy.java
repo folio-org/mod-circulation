@@ -69,7 +69,7 @@ class RollingRenewalDueDateStrategy extends DueDateStrategy {
 
   protected Result<DateTime> calculateDueDate(DateTime from, DateTime loanDate) {
     return renewalDueDate(from)
-      .next(dueDate -> truncateDueDateBySchedule(loanDate, dueDate));
+      .next(dueDate -> truncateDueDateBySchedule(from, loanDate, dueDate));
   }
 
   Result<DateTime> renewalDueDate(DateTime from) {
@@ -80,10 +80,18 @@ class RollingRenewalDueDateStrategy extends DueDateStrategy {
   }
 
   private Result<DateTime> truncateDueDateBySchedule(
+    DateTime from,
     DateTime loanDate,
     DateTime dueDate) {
 
-    return dueDateLimitSchedules.truncateDueDate(dueDate, loanDate,
+    Result<DateTime> dueDateResult = findDueDateFor(loanDate, dueDate);
+    return dueDateResult.failed()
+      ? findDueDateFor(from, dueDate)
+      : dueDateResult;
+  }
+
+  private Result<DateTime> findDueDateFor(DateTime date, DateTime dueDate) {
+    return dueDateLimitSchedules.truncateDueDate(dueDate, date,
       () -> errorForPolicy(NO_APPLICABLE_DUE_DATE_LIMIT_SCHEDULE_MESSAGE));
   }
 }
