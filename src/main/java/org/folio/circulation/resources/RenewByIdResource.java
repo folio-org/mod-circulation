@@ -22,8 +22,8 @@ import io.vertx.core.http.HttpClient;
 import io.vertx.core.json.JsonObject;
 
 public class RenewByIdResource extends RenewalResource {
-  public RenewByIdResource(HttpClient client) {
-    super(client, "/circulation/renew-by-id");
+  public RenewByIdResource(String rootPath, RenewalStrategy renewalStrategy, HttpClient client) {
+    super(rootPath, renewalStrategy, client);
   }
 
   @Override

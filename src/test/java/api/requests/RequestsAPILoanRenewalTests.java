@@ -24,7 +24,7 @@ import api.support.http.InventoryItemResource;
 
 public class RequestsAPILoanRenewalTests extends APITests {
 
-  private static final String ITEMS_CANNOT_BE_RENEWED_MSG = "Items cannot be renewed when there is an active recall request";
+  private static final String ITEMS_CANNOT_BE_RENEWED_MSG = "items cannot be renewed when there is an active recall request";
 
   @Test
   public void forbidRenewalLoanByBarcodeWhenFirstRequestInQueueIsRecall() throws InterruptedException, MalformedURLException, TimeoutException, ExecutionException {
@@ -145,5 +145,93 @@ public class RequestsAPILoanRenewalTests extends APITests {
       "2018-12-21T13:30:00Z");
 
     assertThat(response.getJson().getString("action"), is("renewedThroughOverride"));
+  }
+
+  @Test
+  public void allowRenewalOverrideWhenFirstRequestIsRecall()
+    throws MalformedURLException,
+    InterruptedException,
+    TimeoutException,
+    ExecutionException {
+
+    final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final IndividualResource rebecca = usersFixture.rebecca();
+
+    DateTime loanDueDate = new DateTime(
+      2018, APRIL, 21,
+      11, 21, 43
+    );
+
+    loansFixture.checkOutByBarcode(smallAngryPlanet, rebecca, loanDueDate);
+
+    useLoanPolicyAsFallback(
+      loanPoliciesFixture.canCirculateRolling().getId(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
+      noticePoliciesFixture.activeNotice().getId()
+    );
+
+    requestsClient.create(new RequestBuilder()
+      .recall()
+      .forItem(smallAngryPlanet)
+      .withPickupServicePointId(servicePointsFixture.cd1().getId())
+      .by(usersFixture.charlotte()));
+
+    requestsClient.create(new RequestBuilder()
+      .hold()
+      .forItem(smallAngryPlanet)
+      .withPickupServicePointId(servicePointsFixture.cd1().getId())
+      .by(usersFixture.steve()));
+
+    loansFixture.attemptRenewalById(smallAngryPlanet, rebecca);
+
+    IndividualResource response = loansFixture.overrideRenewalByBarcode(
+      smallAngryPlanet,
+      rebecca,
+      "Renewal override",
+      "2018-12-21T13:30:00Z");
+
+    assertThat(response.getJson().getString("action"), is("renewedThroughOverride"));
+  }
+
+  @Test
+  public void forbidRenewalOverrideWhenFirstRequestIsNotRecall()
+    throws MalformedURLException,
+    InterruptedException,
+    TimeoutException,
+    ExecutionException {
+
+    final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final IndividualResource rebecca = usersFixture.rebecca();
+
+    DateTime loanDueDate = new DateTime(
+      2018, APRIL, 21,
+      11, 21, 43
+    );
+
+    loansFixture.checkOutByBarcode(smallAngryPlanet, rebecca, loanDueDate);
+
+    useLoanPolicyAsFallback(
+      loanPoliciesFixture.canCirculateRolling().getId(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
+      noticePoliciesFixture.activeNotice().getId()
+    );
+
+    requestsClient.create(new RequestBuilder()
+      .hold()
+      .forItem(smallAngryPlanet)
+      .withPickupServicePointId(servicePointsFixture.cd1().getId())
+      .by(usersFixture.steve()));
+
+    requestsClient.create(new RequestBuilder()
+      .recall()
+      .forItem(smallAngryPlanet)
+      .withPickupServicePointId(servicePointsFixture.cd1().getId())
+      .by(usersFixture.charlotte()));
+
+    loansFixture.attemptOverride(
+      smallAngryPlanet,
+      rebecca,
+      "Renewal override",
+      "2018-12-21T13:30:00Z");
   }
 }
