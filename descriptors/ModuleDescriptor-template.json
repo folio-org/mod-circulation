@@ -844,6 +844,8 @@
     },
     {
       "permissionName": "modperms.circulation.requests.hold-shelf-clearance-report.get",
+      "displayName" : "module permissions for one op",
+      "description" : "to reduce X-Okapi-Token size",
       "subPermissions": [
         "inventory-storage.items.item.get",
         "inventory-storage.items.collection.get",
@@ -862,6 +864,8 @@
     },
     {
       "permissionName": "modperms.circulation.check-out-by-barcode.post",
+      "displayName" : "module permissions for one op",
+      "description" : "to reduce X-Okapi-Token size",
       "subPermissions": [
         "circulation-storage.loans.item.post",
         "calendar.collection.get",
@@ -907,6 +911,8 @@
     },
     {
       "permissionName": "modperms.circulation.override-check-out-by-barcode.post",
+      "displayName" : "module permissions for one op",
+      "description" : "to reduce X-Okapi-Token size",
       "subPermissions": [
         "circulation-storage.loans.item.post",
         "circulation-storage.loans.item.get",
@@ -950,6 +956,8 @@
     },
     {
       "permissionName": "modperms.circulation.check-in-by-barcode.post",
+      "displayName" : "module permissions for one op",
+      "description" : "to reduce X-Okapi-Token size",
       "subPermissions": [
         "circulation-storage.loans.item.put",
         "circulation-storage.loans.item.get",
@@ -991,6 +999,8 @@
     },
     {
       "permissionName": "modperms.circulation.renew-by-barcode.post",
+      "displayName" : "module permissions for one op",
+      "description" : "to reduce X-Okapi-Token size",
       "subPermissions": [
         "circulation-storage.loans.item.put",
         "circulation-storage.loans.item.get",
@@ -1033,6 +1043,8 @@
 },
     {
       "permissionName": "modperms.circulation.override-renewal-by-barcode.post",
+      "displayName" : "module permissions for one op",
+      "description" : "to reduce X-Okapi-Token size",
       "subPermissions": [
         "circulation-storage.loans.item.put",
         "circulation-storage.loans.item.get",
@@ -1075,6 +1087,8 @@
     },
     {
       "permissionName": "modperms.circulation.renew-by-id.post",
+      "displayName" : "module permissions for one op",
+      "description" : "to reduce X-Okapi-Token size",
       "subPermissions": [
         "circulation-storage.loans.item.put",
         "circulation-storage.loans.item.get",
@@ -1117,6 +1131,8 @@
     },
     {
       "permissionName": "modperms.circulation.loans.item.post",
+      "displayName" : "module permissions for one op",
+      "description" : "to reduce X-Okapi-Token size",
       "subPermissions": [
         "circulation-storage.loans.item.post",
         "circulation-storage.loans.item.get",
@@ -1154,6 +1170,8 @@
     },
     {
       "permissionName": "modperms.circulation.loans.collection.get",
+      "displayName" : "module permissions for one op",
+      "description" : "to reduce X-Okapi-Token size",
       "subPermissions": [
         "circulation-storage.loans.collection.get",
         "circulation-storage.loan-policies.item.get",
@@ -1180,6 +1198,8 @@
     },
     {
       "permissionName": "modperms.circulation.loans.item.get",
+      "displayName" : "module permissions for one op",
+      "description" : "to reduce X-Okapi-Token size",
       "subPermissions": [
         "circulation-storage.loans.item.get",
         "circulation-storage.loan-policies.item.get",
