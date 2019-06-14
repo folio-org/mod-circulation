@@ -120,6 +120,15 @@ public class UpdateItem {
       .thenApply(itemResult -> itemResult.map(loanAndRelatedRecords::withItem));
   }
 
+  public CompletableFuture<Result<MoveRequestRecords>> onRequestUpdate(
+    MoveRequestRecords moveRequestRecords) {
+
+    System.out.println("\n\n\nitem onRequestUpdate: " + moveRequestRecords.getRequest() + "\n\n\n");
+    return updateItemWhenNotSameStatus(CHECKED_OUT,
+      moveRequestRecords.getRequest().getLoan().getItem())
+      .thenApply(itemResult -> itemResult.map(moveRequestRecords::withItem));
+  }
+
   private CompletableFuture<Result<Item>> updateItemWhenNotSameStatus(
     ItemStatus prospectiveStatus,
     Item item) {

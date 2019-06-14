@@ -54,7 +54,7 @@ public class CheckInByBarcodeResource extends Resource {
     final LoanCheckInService loanCheckInService = new LoanCheckInService();
 
     final UpdateItem updateItem = new UpdateItem(clients);
-    final UpdateRequestQueue requestQueueUpdate = UpdateRequestQueue.using(clients);
+    final UpdateRequestQueue requestQueueUpdate = UpdateRequestQueue.using(clients, null);
 
     final Result<CheckInByBarcodeRequest> checkInRequestResult
       = CheckInByBarcodeRequest.from(routingContext.getBodyAsJson());

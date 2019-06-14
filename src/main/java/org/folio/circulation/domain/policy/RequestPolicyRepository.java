@@ -7,8 +7,10 @@ import java.lang.invoke.MethodHandles;
 import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.domain.Item;
+import org.folio.circulation.domain.MoveRequestRecords;
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestAndRelatedRecords;
+import org.folio.circulation.domain.RequestRepository;
 import org.folio.circulation.domain.User;
 import org.folio.circulation.support.CirculationRulesClient;
 import org.folio.circulation.support.Clients;
@@ -29,10 +31,12 @@ public class RequestPolicyRepository {
 
   private final CirculationRulesClient circulationRequestRulesClient;
   private final CollectionResourceClient requestPoliciesStorageClient;
+  private final RequestRepository requestRepository;
 
   public RequestPolicyRepository(Clients clients) {
     this.circulationRequestRulesClient = clients.circulationRequestRules();
     this.requestPoliciesStorageClient = clients.requestPoliciesStorage();
+    this.requestRepository = RequestRepository.using(clients);
   }
 
   public CompletableFuture<Result<RequestAndRelatedRecords>> lookupRequestPolicy(
@@ -44,6 +48,15 @@ public class RequestPolicyRepository {
       .thenApply(result -> result.map(relatedRecords::withRequestPolicy));
   }
 
+  public CompletableFuture<Result<RequestPolicy>> lookupRequestPolicyByRequestId(
+      String requestId) {
+
+      CompletableFuture<Result<Request>> request
+        = requestRepository.getById(requestId);
+
+      return request.thenComposeAsync(this::lookupRequestPolicy);
+    }
+
   private CompletableFuture<Result<RequestPolicy>> lookupRequestPolicy(
     Item item,
     User user) {
@@ -53,7 +66,11 @@ public class RequestPolicyRepository {
       .thenApply(result -> result.map(RequestPolicy::from));
   }
 
-  private CompletableFuture<Result<JsonObject>> lookupRequestPolicy(
+  private CompletableFuture<Result<RequestPolicy>> lookupRequestPolicy(Result<Request> request) {
+    return lookupRequestPolicy(request.value().getItem(), request.value().getRequester());
+  }
+
+  public CompletableFuture<Result<JsonObject>> lookupRequestPolicy(
     String requestPolicyId) {
 
     return SingleRecordFetcher.json(requestPoliciesStorageClient, "request policy",

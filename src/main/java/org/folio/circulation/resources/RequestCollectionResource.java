@@ -98,7 +98,7 @@ public class RequestCollectionResource extends CollectionResource {
 
     final UpdateRequestService updateRequestService = new UpdateRequestService(
       requestRepository,
-      UpdateRequestQueue.using(clients),
+      UpdateRequestQueue.using(clients, null),
       new ClosedRequestValidator(RequestRepository.using(clients)),
       requestNoticeSender);
 
@@ -144,9 +144,13 @@ public class RequestCollectionResource extends CollectionResource {
     final RequestRepository requestRepository = RequestRepository.using(clients);
 
     final UpdateRequestQueue updateRequestQueue = new UpdateRequestQueue(
+      new LoanRepository(clients),
       RequestQueueRepository.using(clients),
       requestRepository,
-      new ServicePointRepository(clients)
+      new ServicePointRepository(clients),
+      null,
+      null,
+      null
     );
 
     requestRepository.getById(id)

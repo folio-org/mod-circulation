@@ -116,13 +116,13 @@ public class User {
     write(userSummary, "middleName", getMiddleName());
     write(userSummary, "barcode", getBarcode());
     
-    if(patronGroup != null) {
-      JsonObject patronGroupSummary = new JsonObject();
-      write(patronGroupSummary, "id", patronGroup.getId());
-      write(patronGroupSummary, "group", patronGroup.getGroup());
-      write(patronGroupSummary, "desc", patronGroup.getDesc());
-      userSummary.put("patronGroup", patronGroupSummary);
-    }
+//    if(patronGroup != null) {
+//      JsonObject patronGroupSummary = new JsonObject();
+//      write(patronGroupSummary, "id", patronGroup.getId());
+//      write(patronGroupSummary, "group", patronGroup.getGroup());
+//      write(patronGroupSummary, "desc", patronGroup.getDesc());
+//      userSummary.put("patronGroup", patronGroupSummary);
+//    }
     
     return userSummary;
   }

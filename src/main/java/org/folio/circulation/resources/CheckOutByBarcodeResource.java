@@ -136,7 +136,7 @@ public class CheckOutByBarcodeResource extends Resource {
       loanRepository, message -> singleValidationError(message, ITEM_BARCODE, itemBarcode));
 
     final UpdateItem updateItem = new UpdateItem(clients);
-    final UpdateRequestQueue requestQueueUpdate = UpdateRequestQueue.using(clients);
+    final UpdateRequestQueue requestQueueUpdate = UpdateRequestQueue.using(clients, null);
 
     final LoanRepresentation loanRepresentation = new LoanRepresentation();
 

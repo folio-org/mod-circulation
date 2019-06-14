@@ -123,6 +123,7 @@ public class RequestRepository {
     return requestsStorageClient.put(request.getId(), representation)
       .thenApply(response -> {
         if(response.getStatusCode() == 204) {
+          System.out.println("\n\n\nupdate: " + request + "\n\n\n");
           return succeeded(request);
         }
         else {

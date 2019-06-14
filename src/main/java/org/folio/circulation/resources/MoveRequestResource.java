@@ -11,7 +11,9 @@ import org.folio.circulation.domain.RequestQueue;
 import org.folio.circulation.domain.RequestQueueRepository;
 import org.folio.circulation.domain.RequestRepository;
 import org.folio.circulation.domain.RequestRepresentation;
-import org.folio.circulation.domain.RequestStatus;
+import org.folio.circulation.domain.UpdateRequestQueue;
+import org.folio.circulation.domain.policy.RequestPolicy;
+import org.folio.circulation.domain.policy.RequestPolicyRepository;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.ItemRepository;
 import org.folio.circulation.support.OkJsonResponseResult;
@@ -40,26 +42,24 @@ public class MoveRequestResource extends Resource {
 
     final String requestId = context.getStringParameter("id", "");
     final String destinationItemId = representation.getString("destinationItemId");
-    final String requestStatus = representation.getString("requestStatus");
     final Clients clients = Clients.create(context, client);
 
     final ItemRepository itemRepository = new ItemRepository(clients, true, true, true);
     final RequestQueueRepository requestQueueRepository = RequestQueueRepository.using(clients);
     final RequestRepository requestRepository = RequestRepository.using(clients);
+    final RequestPolicyRepository requestPolicyRepository = new RequestPolicyRepository(clients);
 
-
-    final MoveRequestRecords moveRequestRecords =
-      new MoveRequestRecords();
+    final UpdateRequestQueue requestQueueUpdate = UpdateRequestQueue.using(clients, null);
+    final MoveRequestRecords moveRequestRecords = new MoveRequestRecords();
 
     completedFuture(succeeded(moveRequestRecords))
-      .thenCombineAsync(requestRepository.getById(requestId), this::addRequest)
-      .thenCombineAsync(requestRepository.getItem(requestId), this::addOriginalItem)
-      .thenCombineAsync(itemRepository.fetchById(destinationItemId), this::addDestinationItem)
-      .thenCombineAsync(requestQueueRepository.getByRequestId(requestId), this::addOriginalQueue)
-      .thenCombineAsync(requestQueueRepository.get(destinationItemId), this::addDestinationQueue)
-      .thenApply(this::updateRequestItem)
-      .thenCombineAsync(completedFuture(succeeded(requestStatus)), this::updateRequestStatus)
-      .thenComposeAsync(r -> r.after(requestRepository::update))
+      .thenCombine(requestRepository.getById(requestId), this::addRequest)
+      .thenCombine(requestRepository.getItem(requestId), this::addOriginalItem)
+      .thenCombine(itemRepository.fetchById(destinationItemId), this::addDestinationItem)
+      .thenCombine(requestQueueRepository.getByRequestId(requestId), this::addOriginalQueue)
+      .thenCombine(requestQueueRepository.get(destinationItemId), this::addDestinationQueue)
+      .thenCombine(requestPolicyRepository.lookupRequestPolicyByRequestId(requestId), this::addRequestPolicy)
+      .thenComposeAsync(r -> r.after(requestQueueUpdate::onMove))
 //    Gets the request from MoveRequestRecords
       .thenApply(this::getRequest)
 //    Converts the request to JSON for output
@@ -97,7 +97,7 @@ public class MoveRequestResource extends Resource {
     Result<RequestQueue> originalQueue) {
 
     return Result.combine(moveRequestRecords, originalQueue,
-        MoveRequestRecords::withOriginalRequestQueue);
+      MoveRequestRecords::withOriginalRequestQueue);
   }
 
   private Result<MoveRequestRecords> addDestinationQueue(
@@ -105,33 +105,19 @@ public class MoveRequestResource extends Resource {
     Result<RequestQueue> destinationQueue) {
 
     return Result.combine(moveRequestRecords, destinationQueue,
-        MoveRequestRecords::withDestinationRequestQueue);
+      MoveRequestRecords::withDestinationRequestQueue);
   }
 
-  private Result<MoveRequestRecords> updateRequestItem(
-    Result<MoveRequestRecords> moveRequestRecords) {
-
-    Item destinationItem = moveRequestRecords.value().getDestinationItem();
-    Request request = moveRequestRecords.value().getRequest();
-    Result<Request> updatedRequest = Result.of(() -> request.withItem(destinationItem).changeItem(destinationItem));
-    return Result.combine(moveRequestRecords, updatedRequest,
-      MoveRequestRecords::withRequest);
-  }
-
-  private Result<MoveRequestRecords> updateRequestStatus(
+  private Result<MoveRequestRecords> addRequestPolicy(
     Result<MoveRequestRecords> moveRequestRecords,
-    Result<String> requestStatus) {
+    Result<RequestPolicy> requestPolicy) {
 
-    Request request = moveRequestRecords.value().getRequest();
-    RequestStatus status = RequestStatus.from(requestStatus.value());
-    request.changeStatus(status);
-
-    Result<Request> updatedRequest = Result.of(() -> request);
-    return Result.combine(moveRequestRecords, updatedRequest,
-        MoveRequestRecords::withRequest);
+    return Result.combine(moveRequestRecords, requestPolicy,
+      MoveRequestRecords::withRequestPolicy);
   }
 
   private Result<Request> getRequest(Result<MoveRequestRecords> moveRequestRecords) {
+    System.out.println("\n\n\nvalue: " + moveRequestRecords.value() + "\n\n\n");
     return of(() -> moveRequestRecords.value().getRequest());
   }
 }
