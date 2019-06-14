@@ -857,7 +857,8 @@
         "circulation-storage.requests.collection.get",
         "users.collection.get",
         "users.item.get"
-      ]
+      ],
+      "visible": false
     },
     {
       "permissionName": "modperms.circulation.check-out-by-barcode.post",
@@ -901,7 +902,8 @@
         "users.collection.get",
         "inventory-storage.loan-types.item.get",
         "scheduled-notice-storage.scheduled-notices.item.post"
-      ]
+      ],
+      "visible": false
     },
     {
       "permissionName": "modperms.circulation.override-check-out-by-barcode.post",
@@ -943,7 +945,8 @@
         "users.collection.get",
         "inventory-storage.loan-types.item.get",
         "scheduled-notice-storage.scheduled-notices.item.post"
-      ]
+      ],
+      "visible": false
     },
     {
       "permissionName": "modperms.circulation.check-in-by-barcode.post",
@@ -983,7 +986,8 @@
         "patron-notice.post",
         "circulation.rules.notice-policy.get",
         "inventory-storage.loan-types.item.get"
-      ]
+      ],
+      "visible": false
     },
     {
       "permissionName": "modperms.circulation.renew-by-barcode.post",
@@ -1024,8 +1028,9 @@
         "circulation-storage.patron-notice-policies.item.get",
         "scheduled-notice-storage.scheduled-notices.collection.delete",
         "scheduled-notice-storage.scheduled-notices.item.post"
-      ]
-    },
+      ],
+      "visible": false
+},
     {
       "permissionName": "modperms.circulation.override-renewal-by-barcode.post",
       "subPermissions": [
@@ -1065,7 +1070,8 @@
         "circulation-storage.patron-notice-policies.item.get",
         "scheduled-notice-storage.scheduled-notices.collection.delete",
         "scheduled-notice-storage.scheduled-notices.item.post"
-      ]
+      ],
+      "visible": false
     },
     {
       "permissionName": "modperms.circulation.renew-by-id.post",
@@ -1106,7 +1112,8 @@
         "circulation-storage.patron-notice-policies.item.get",
         "scheduled-notice-storage.scheduled-notices.collection.delete",
         "scheduled-notice-storage.scheduled-notices.item.post"
-      ]
+      ],
+      "visible": false
     },
     {
       "permissionName": "modperms.circulation.loans.item.post",
@@ -1142,7 +1149,8 @@
         "circulation-storage.request-policies.item.get",
         "circulation-storage.fixed-due-date-schedules.item.get",
         "circulation-storage.fixed-due-date-schedules.collection.get"
-      ]
+      ],
+      "visible": false
     },
     {
       "permissionName": "modperms.circulation.loans.collection.get",
@@ -1167,7 +1175,8 @@
         "inventory-storage.service-points.item.get",
         "users.collection.get",
         "users.item.get"
-      ]
+      ],
+      "visible": false
     },
     {
       "permissionName": "modperms.circulation.loans.item.get",
@@ -1190,7 +1199,8 @@
         "inventory-storage.material-types.item.get",
         "inventory-storage.service-points.collection.get",
         "inventory-storage.service-points.item.get"
-      ]
+      ],
+      "visible": false
     }
   ],
   "metadata": {
