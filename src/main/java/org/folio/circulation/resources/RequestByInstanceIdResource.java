@@ -111,8 +111,7 @@ public class RequestByInstanceIdResource extends Resource {
       .thenComposeAsync(r -> r.after(relatedRecords -> getLoanItems(relatedRecords, clients)))
      // .thenComposeAsync(r -> r.after(relatedRecords -> getRequestQueues(relatedRecords, clients))
       .thenCombine(getRequestQueues(requestRelatedRecords, clients),
-        (loanResult, queueResult) -> combine(loanResult, queueResult),
-          (loan, queue) -> combineWithUnavailableItems(loan, queue))
+                        this::combineWithUnavailableItems)
       .thenApply( r -> r.next(RequestByInstanceIdResource::instanceToItemRequests))
       .thenCompose( r -> r.after( requests -> placeRequests(requests, clients)))
       .thenApply(r -> r.map(RequestAndRelatedRecords::getRequest))
@@ -241,8 +240,10 @@ public class RequestByInstanceIdResource extends Resource {
     });
   }
 
-  private CompletableFuture<Result<InstanceRequestRelatedRecords>> combineWithUnavailableItems(
-    Map<String, DateTime> itemDueDateMap, Map<Item, Integer> itemRequestQueueSizeMap){
+  private Result<InstanceRequestRelatedRecords> combineWithUnavailableItems(
+    Result<Map<String, DateTime>> itemDueDateMap, Result<Map<Item, Integer>> itemRequestQueueSizeMap){
+
+    if (itemDueDateMap.succeeded() && itemRequestQueueSizeMap.succeeded()) {
 
     final List<Item> unsortedUnavailableItems = records.getUnsortedUnavailableItems();
 
@@ -267,6 +268,7 @@ public class RequestByInstanceIdResource extends Resource {
 
         return succeeded(records);
       });
+    }
   }
 
 
