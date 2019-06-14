@@ -141,24 +141,7 @@
             "circulation.loans.item.get"
           ],
           "modulePermissions": [
-            "circulation-storage.loans.item.get",
-            "circulation-storage.loan-policies.item.get",
-            "circulation-storage.loan-policies.collection.get",
-            "inventory-storage.items.item.get",
-            "inventory-storage.items.collection.get",
-            "inventory-storage.locations.item.get",
-            "inventory-storage.locations.collection.get",
-            "inventory-storage.location-units.institutions.item.get",
-            "inventory-storage.location-units.campuses.item.get",
-            "inventory-storage.location-units.libraries.item.get",
-            "inventory-storage.holdings.collection.get",
-            "inventory-storage.holdings.item.get",
-            "inventory-storage.instances.collection.get",
-            "inventory-storage.instances.item.get",
-            "inventory-storage.material-types.collection.get",
-            "inventory-storage.material-types.item.get",
-            "inventory-storage.service-points.collection.get",
-            "inventory-storage.service-points.item.get"
+            "modperms.circulation.loans.item.get"
           ]
         },
         {
@@ -1184,6 +1167,29 @@
         "inventory-storage.service-points.item.get",
         "users.collection.get",
         "users.item.get"
+      ]
+    },
+    {
+      "permissionName": "modperms.circulation.loans.item.get",
+      "subPermissions": [
+        "circulation-storage.loans.item.get",
+        "circulation-storage.loan-policies.item.get",
+        "circulation-storage.loan-policies.collection.get",
+        "inventory-storage.items.item.get",
+        "inventory-storage.items.collection.get",
+        "inventory-storage.locations.item.get",
+        "inventory-storage.locations.collection.get",
+        "inventory-storage.location-units.institutions.item.get",
+        "inventory-storage.location-units.campuses.item.get",
+        "inventory-storage.location-units.libraries.item.get",
+        "inventory-storage.holdings.collection.get",
+        "inventory-storage.holdings.item.get",
+        "inventory-storage.instances.collection.get",
+        "inventory-storage.instances.item.get",
+        "inventory-storage.material-types.collection.get",
+        "inventory-storage.material-types.item.get",
+        "inventory-storage.service-points.collection.get",
+        "inventory-storage.service-points.item.get"
       ]
     }
   ],
