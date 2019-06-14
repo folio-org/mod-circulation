@@ -11,6 +11,10 @@ public class ForwardOnFailure implements HttpFailure {
     this.failureResponse = failureResponse;
   }
 
+  public Response getFailureResponse() {
+    return failureResponse;
+  }
+
   @Override
   public void writeTo(HttpServerResponse response) {
     ForwardResponse.forward(response, failureResponse);

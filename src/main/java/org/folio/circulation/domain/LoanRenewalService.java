@@ -21,13 +21,18 @@ public class LoanRenewalService {
   }
 
   public Result<LoanAndRelatedRecords> renew(LoanAndRelatedRecords relatedRecords) {
-    LoanPolicy loanPolicy = relatedRecords.getLoanPolicy();
     Loan loan = relatedRecords.getLoan();
-    return loanPolicy.renew(loan, DateTime.now(DateTimeZone.UTC)).map(relatedRecords::withLoan);
+    LoanPolicy loanPolicy = loan.getLoanPolicy();
+
+    return loanPolicy.renew(loan, DateTime.now(DateTimeZone.UTC))
+      .map(relatedRecords::withLoan);
   }
 
-  public CompletableFuture<Result<Loan>> overrideRenewal(Loan loan, DateTime dueDate, String comment) {
+  public CompletableFuture<Result<Loan>> overrideRenewal(Loan loan,
+    DateTime dueDate, String comment) {
+
     return loanPolicyRepository.lookupPolicy(loan)
-      .thenApply(r -> r.next(policy -> policy.overrideRenewal(loan, DateTime.now(DateTimeZone.UTC), dueDate, comment)));
+      .thenApply(r -> r.next(policy -> policy.overrideRenewal(loan,
+        DateTime.now(DateTimeZone.UTC), dueDate, comment)));
   }
 }

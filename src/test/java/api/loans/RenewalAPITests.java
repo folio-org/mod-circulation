@@ -14,7 +14,6 @@ import static api.support.fixtures.CalendarExamples.WEDNESDAY_DATE;
 import static api.support.matchers.ItemStatusCodeMatcher.hasItemStatus;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static api.support.matchers.TextDateTimeMatcher.withinSecondsAfter;
-import static api.support.matchers.UUIDMatcher.is;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static api.support.matchers.ValidationErrorMatchers.hasParameter;
@@ -77,8 +76,9 @@ abstract class RenewalAPITests extends APITests {
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource jessica = usersFixture.jessica();
 
-    final UUID loanId = loansFixture.checkOutByBarcode(smallAngryPlanet, jessica,
-      new DateTime(2018, 4, 21, 11, 21, 43, DateTimeZone.UTC))
+    final IndividualResource loan = loansFixture.checkOutByBarcode(smallAngryPlanet, jessica,
+            new DateTime(2018, 4, 21, 11, 21, 43, DateTimeZone.UTC));
+    final UUID loanId = loan
       .getId();
 
     //TODO: Renewal based upon system date,
@@ -104,9 +104,7 @@ abstract class RenewalAPITests extends APITests {
     assertThat("renewal count should be incremented",
       renewedLoan.getInteger("renewalCount"), is(1));
 
-    assertThat("last loan policy should be stored",
-      renewedLoan.getString("loanPolicyId"),
-      is(loanPoliciesFixture.canCirculateRolling().getId()));
+    loanHasLoanPolicyProperties(renewedLoan, loanPoliciesFixture.canCirculateRolling());
 
     assertThat("due date should be approximately 3 weeks after renewal date, based upon loan policy",
       renewedLoan.getString("dueDate"),
@@ -139,8 +137,9 @@ abstract class RenewalAPITests extends APITests {
       .rolling(Period.months(2))
       .renewFromCurrentDueDate();
 
-    UUID dueDateLimitedPolicyId = loanPoliciesFixture
-      .create(currentDueDateRollingPolicy).getId();
+    final IndividualResource loanPolicy = loanPoliciesFixture
+            .create(currentDueDateRollingPolicy);
+    UUID dueDateLimitedPolicyId = loanPolicy.getId();
 
     useLoanPolicyAsFallback(
       dueDateLimitedPolicyId,
@@ -167,8 +166,7 @@ abstract class RenewalAPITests extends APITests {
     assertThat("renewal count should be incremented",
       renewedLoan.getInteger("renewalCount"), is(1));
 
-    assertThat("last loan policy should be stored",
-      renewedLoan.getString("loanPolicyId"), is(dueDateLimitedPolicyId.toString()));
+    loanHasLoanPolicyProperties(renewedLoan, loanPolicy);
 
     assertThat("due date should be 2 months after initial due date date",
       renewedLoan.getString("dueDate"),
@@ -199,8 +197,8 @@ abstract class RenewalAPITests extends APITests {
       .limitedBySchedule(dueDateLimitScheduleId)
       .renewFromCurrentDueDate();
 
-    UUID dueDateLimitedPolicyId = loanPoliciesFixture
-      .create(dueDateLimitedPolicy).getId();
+    final IndividualResource loanPolicy = loanPoliciesFixture.create(dueDateLimitedPolicy);
+    UUID dueDateLimitedPolicyId = loanPolicy.getId();
 
     useLoanPolicyAsFallback(
       dueDateLimitedPolicyId,
@@ -224,8 +222,7 @@ abstract class RenewalAPITests extends APITests {
 
     final JsonObject loan = response.getJson();
 
-    assertThat("last loan policy should be stored",
-      loan.getString("loanPolicyId"), is(dueDateLimitedPolicyId.toString()));
+    loanHasLoanPolicyProperties(loan, loanPolicy);
 
     assertThat("due date should be limited by schedule",
       loan.getString("dueDate"),
@@ -253,8 +250,9 @@ abstract class RenewalAPITests extends APITests {
       .renewFromCurrentDueDate()
       .renewWith(Period.months(1));
 
-    UUID dueDateLimitedPolicyId = loanPoliciesFixture
-      .create(currentDueDateRollingPolicy).getId();
+    final IndividualResource dueDateLimitedPolicy = loanPoliciesFixture
+            .create(currentDueDateRollingPolicy);
+    UUID dueDateLimitedPolicyId = dueDateLimitedPolicy.getId();
 
     useLoanPolicyAsFallback(
       dueDateLimitedPolicyId,
@@ -281,8 +279,7 @@ abstract class RenewalAPITests extends APITests {
     assertThat("renewal count should be incremented",
       renewedLoan.getInteger("renewalCount"), is(1));
 
-    assertThat("last loan policy should be stored",
-      renewedLoan.getString("loanPolicyId"), is(dueDateLimitedPolicyId.toString()));
+    loanHasLoanPolicyProperties(renewedLoan, dueDateLimitedPolicy);
 
     assertThat("due date should be 2 months after initial due date date",
       renewedLoan.getString("dueDate"),
@@ -313,8 +310,9 @@ abstract class RenewalAPITests extends APITests {
       .renewFromCurrentDueDate()
       .renewWith(Period.days(8), dueDateLimitScheduleId);
 
-    UUID dueDateLimitedPolicyId = loanPoliciesFixture
-      .create(dueDateLimitedPolicy).getId();
+    final IndividualResource loanPolicy = loanPoliciesFixture
+            .create(dueDateLimitedPolicy);
+    UUID dueDateLimitedPolicyId = loanPolicy.getId();
 
     useLoanPolicyAsFallback(
       dueDateLimitedPolicyId,
@@ -338,8 +336,7 @@ abstract class RenewalAPITests extends APITests {
 
     final JsonObject loan = response.getJson();
 
-    assertThat("last loan policy should be stored",
-      loan.getString("loanPolicyId"), is(dueDateLimitedPolicyId.toString()));
+    loanHasLoanPolicyProperties(loan, loanPolicy);
 
     assertThat("due date should be limited by schedule",
       loan.getString("dueDate"),
@@ -367,8 +364,8 @@ abstract class RenewalAPITests extends APITests {
       .renewFromCurrentDueDate()
       .renewWith(Period.days(8));
 
-    UUID dueDateLimitedPolicyId = loanPoliciesFixture
-      .create(dueDateLimitedPolicy).getId();
+    final IndividualResource loanPolicy = loanPoliciesFixture.create(dueDateLimitedPolicy);
+    UUID dueDateLimitedPolicyId = loanPolicy.getId();
 
     useLoanPolicyAsFallback(
       dueDateLimitedPolicyId,
@@ -392,8 +389,7 @@ abstract class RenewalAPITests extends APITests {
 
     final JsonObject loan = response.getJson();
 
-    assertThat("last loan policy should be stored",
-      loan.getString("loanPolicyId"), is(dueDateLimitedPolicyId.toString()));
+    loanHasLoanPolicyProperties(loan, loanPolicy);
 
     assertThat("due date should be limited by schedule",
       loan.getString("dueDate"),
@@ -424,8 +420,8 @@ abstract class RenewalAPITests extends APITests {
       .fixed(fixedDueDateSchedulesId)
       .renewFromSystemDate();
 
-    UUID fixedDueDatePolicyId = loanPoliciesFixture.create(dueDateLimitedPolicy)
-      .getId();
+    final IndividualResource fiexDueDatePolicy = loanPoliciesFixture.create(dueDateLimitedPolicy);
+    UUID fixedDueDatePolicyId = fiexDueDatePolicy.getId();
 
     useLoanPolicyAsFallback(
       fixedDueDatePolicyId,
@@ -449,8 +445,7 @@ abstract class RenewalAPITests extends APITests {
 
     final JsonObject loan = response.getJson();
 
-    assertThat("last loan policy should be stored",
-      loan.getString("loanPolicyId"), is(fixedDueDatePolicyId.toString()));
+    loanHasLoanPolicyProperties(loan, fiexDueDatePolicy);
 
     assertThat("renewal count should be incremented",
       loan.getInteger("renewalCount"), is(1));
@@ -481,8 +476,8 @@ abstract class RenewalAPITests extends APITests {
       .renewFromCurrentDueDate()
       .limitedRenewals(3);
 
-    UUID limitedRenewalsPolicyId = loanPoliciesFixture
-      .create(limitedRenewalsPolicy).getId();
+    final IndividualResource loanPolicy = loanPoliciesFixture.create(limitedRenewalsPolicy);
+    UUID limitedRenewalsPolicyId = loanPolicy.getId();
 
     useLoanPolicyAsFallback(
       limitedRenewalsPolicyId,
@@ -512,8 +507,7 @@ abstract class RenewalAPITests extends APITests {
     assertThat("renewal count should be incremented",
       renewedLoan.getInteger("renewalCount"), is(3));
 
-    assertThat("last loan policy should be stored",
-      renewedLoan.getString("loanPolicyId"), is(limitedRenewalsPolicyId.toString()));
+    loanHasLoanPolicyProperties(renewedLoan, loanPolicy);
 
     assertThat("due date should be 8 days after initial loan date date",
       renewedLoan.getString("dueDate"),
@@ -572,9 +566,7 @@ abstract class RenewalAPITests extends APITests {
     assertThat("renewal count should be incremented",
       renewedLoan.getInteger("renewalCount"), is(1));
 
-    assertThat("last loan policy should be stored",
-      renewedLoan.getString("loanPolicyId"),
-      is(loanPoliciesFixture.canCirculateRolling().getId()));
+    loanHasLoanPolicyProperties(renewedLoan, loanPoliciesFixture.canCirculateRolling());
 
     assertThat("due date should be approximately 3 weeks after renewal date, based upon loan policy",
       renewedLoan.getString("dueDate"),
@@ -606,6 +598,41 @@ abstract class RenewalAPITests extends APITests {
 
     assertThat(response.getBody(), is(String.format(
       "Loan policy %s could not be found, please check circulation rules", unknownLoanPolicyId)));
+  }
+
+  @Test
+  public void canRenewLoanWithAnotherLoanPolicyName()
+          throws InterruptedException,
+          MalformedURLException,
+          TimeoutException,
+          ExecutionException {
+
+    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final IndividualResource jessica = usersFixture.jessica();
+
+    final String policyName = "Limited Renewals Policy";
+    LoanPolicyBuilder limitedRenewalsPolicy = new LoanPolicyBuilder().withName(policyName)
+      .rolling(Period.days(2))
+      .renewFromCurrentDueDate()
+      .limitedRenewals(3);
+
+    final IndividualResource loanPolicyResponse = loanPoliciesFixture.create(limitedRenewalsPolicy);
+    UUID limitedRenewalsPolicyId = loanPolicyResponse.getId();
+
+    IndividualResource loan = loansFixture.checkOutByBarcode(smallAngryPlanet, jessica,
+        new DateTime(2019, 4, 21, 11, 21, 43, DateTimeZone.UTC));
+
+    loanHasLoanPolicyProperties(loan.getJson(), loanPoliciesFixture.canCirculateRolling());
+
+    useLoanPolicyAsFallback(
+            limitedRenewalsPolicyId,
+            requestPoliciesFixture.allowAllRequestPolicy().getId(),
+            noticePoliciesFixture.activeNotice().getId()
+    );
+
+    loan = renew(smallAngryPlanet, jessica);
+
+    loanHasLoanPolicyProperties(loan.getJson(), loanPolicyResponse);
   }
 
   @Test

@@ -86,9 +86,8 @@ public class ScheduledDueDateNoticeHandler {
     }
 
     JsonObject loanNoticeContext = NoticeContextUtil.createLoanNoticeContext(
-      relatedRecords.getLoan(),
-      relatedRecords.getLoanPolicy(),
-      relatedRecords.getTimeZone());
+      loan, loan.getLoanPolicy(), relatedRecords.getTimeZone());
+
     return patronNoticeService.acceptScheduledNoticeEvent(
       notice.getConfiguration(), relatedRecords.getUserId(), loanNoticeContext)
       .thenApply(r -> r.map(v -> relatedRecords));

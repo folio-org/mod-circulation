@@ -26,6 +26,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import api.support.fixtures.ConfigurationExample;
 import org.folio.circulation.domain.representations.LoanProperties;
 import org.folio.circulation.support.JsonArrayHelper;
 import org.folio.circulation.support.http.client.IndividualResource;
@@ -91,9 +92,7 @@ public class LoanAPITests extends APITests {
     assertThat("action is not checkedout",
       loan.getString("action"), is("checkedout"));
 
-    assertThat("last loan policy should be stored",
-      loan.getString("loanPolicyId"),
-      is(loanPoliciesFixture.canCirculateRolling().getId()));
+    loanHasLoanPolicyProperties(loan, loanPoliciesFixture.canCirculateRolling());
 
     assertThat("ID is taken from item",
       loan.getJsonObject("item").getString("id"), is(itemId));
@@ -676,9 +675,7 @@ public class LoanAPITests extends APITests {
     assertThat("action is not checkedout",
       loan.getString("action"), is("checkedout"));
 
-    assertThat("last loan policy should be stored",
-      loan.getString("loanPolicyId"),
-      is(loanPoliciesFixture.canCirculateRolling().getId()));
+    loanHasLoanPolicyProperties(response.getJson(), loanPoliciesFixture.canCirculateRolling());
 
     assertThat("title is taken from item",
       loan.getJsonObject("item").containsKey("title"), is(true));
@@ -812,9 +809,7 @@ public class LoanAPITests extends APITests {
     assertThat("action is not checkedout",
       loan.getString("action"), is("checkedout"));
 
-    assertThat("last loan policy should be stored",
-      loan.getString("loanPolicyId"),
-      is(loanPoliciesFixture.canCirculateRolling().getId()));
+    loanHasLoanPolicyProperties(loan, loanPoliciesFixture.canCirculateRolling());
 
     assertThat("ID is taken from item",
       loan.getJsonObject("item").getString("id"), is(itemId));
@@ -866,6 +861,30 @@ public class LoanAPITests extends APITests {
 
     loanHasExpectedProperties(loan, user);
 
+  }
+
+  @Test
+  public void canGetLoanPolicyPropertiesForMultipleLoans()
+          throws InterruptedException, MalformedURLException, TimeoutException, ExecutionException {
+
+    configClient.create(ConfigurationExample.utcTimezoneConfiguration());
+    IndividualResource item1 = itemsFixture.basedUponSmallAngryPlanet();
+    final InventoryItemResource item2 = itemsFixture.basedUponNod();
+
+    final IndividualResource user1 = usersFixture.jessica();
+    final IndividualResource user2 = usersFixture.steve();
+
+    loansFixture.checkOutByBarcode(item1, user1, new DateTime(2018, 4, 21, 11, 21, 43, DateTimeZone.UTC))
+            .getJson();
+
+    loansFixture.checkOutByBarcode(item2, user2, new DateTime(2018, 4, 21, 11, 21, 43, DateTimeZone.UTC))
+            .getJson();
+
+    final IndividualResource loanPolicy = loanPoliciesFixture.canCirculateRolling();
+
+    List<JsonObject> loans = loansClient.getAll();
+
+    loans.forEach(loanJson -> loanHasLoanPolicyProperties(loanJson, loanPolicy));
   }
 
   @Test
@@ -1044,7 +1063,7 @@ public class LoanAPITests extends APITests {
     hasNoBorrowerProperties(updatedLoan);
   }
   @Test
-  public void multipleClosedLoansHaveNoBorrowerInformtion()
+  public void multipleClosedLoansHaveNoBorrowerInformation()
           throws InterruptedException,
           MalformedURLException,
           TimeoutException,
@@ -1667,8 +1686,10 @@ public class LoanAPITests extends APITests {
 
     List<JsonObject> loanList = getLoans(getResponse.getJson());
 
-    loanList.forEach(this::loanHasCheckinServicePointProperties);
-    loanList.forEach(this::loanHasCheckoutServicePointProperties);
+    loanList.forEach(loanJson -> {
+      loanHasCheckinServicePointProperties(loanJson);
+      loanHasCheckoutServicePointProperties(loanJson);
+    });
 
   }
 
@@ -1729,7 +1750,7 @@ public class LoanAPITests extends APITests {
       loan.containsKey("itemStatus"), is(false));
   }
 
-  private void hasProperty(String property, JsonObject resource, String type, Object value) {
+  protected void hasProperty(String property, JsonObject resource, String type, Object value) {
     assertThat(String.format("%s should have an %s: %s",
       type, property, resource),
       resource.getMap().get(property), equalTo(value));
@@ -1740,13 +1761,13 @@ public class LoanAPITests extends APITests {
     doesNotHaveProperty(LoanProperties.BORROWER, loanJson, "loan");
   }
 
-  private void doesNotHaveProperty(String property, JsonObject resource, String type) {
+  protected void doesNotHaveProperty(String property, JsonObject resource, String type) {
     assertThat(String.format("%s should NOT have an %s: %s",
             type, property, resource),
             resource.getValue(property), is(nullValue()));
   }
 
-  private void hasProperty(String property, JsonObject resource, String type) {
+  protected void hasProperty(String property, JsonObject resource, String type) {
     assertThat(String.format("%s should have an %s: %s",
       type, property, resource),
       resource.containsKey(property), is(true));

@@ -102,9 +102,7 @@ public class CheckOutByBarcodeTests extends APITests {
     assertThat("loan date should be as supplied",
       loan.getString("loanDate"), isEquivalentTo(loanDate));
 
-    assertThat("last loan policy should be stored",
-      loan.getString("loanPolicyId"),
-      is(loanPoliciesFixture.canCirculateRolling().getId()));
+    loanHasLoanPolicyProperties(loan, loanPoliciesFixture.canCirculateRolling());
 
     assertThat("due date should be 3 weeks after loan date, based upon loan policy",
       loan.getString("dueDate"), isEquivalentTo(loanDate.plusWeeks(3)));
@@ -191,9 +189,7 @@ public class CheckOutByBarcodeTests extends APITests {
     assertThat("loan date should be as supplied",
       loan.getString("loanDate"), isEquivalentTo(loanDate));
 
-    assertThat("last loan policy should be stored",
-      loan.getString("loanPolicyId"),
-      is(loanPoliciesFixture.canCirculateFixed().getId()));
+    loanHasLoanPolicyProperties(loan, loanPoliciesFixture.canCirculateFixed());
 
     assertThat("due date should be based upon fixed due date schedule",
       loan.getString("dueDate"),
@@ -219,8 +215,8 @@ public class CheckOutByBarcodeTests extends APITests {
       .rolling(Period.days(30))
       .limitedBySchedule(dueDateLimitScheduleId);
 
-    UUID dueDateLimitedPolicyId = loanPoliciesFixture.create(dueDateLimitedPolicy)
-      .getId();
+    final IndividualResource loanPolicyResource = loanPoliciesFixture.create(dueDateLimitedPolicy);
+    UUID dueDateLimitedPolicyId = loanPolicyResource.getId();
 
     useLoanPolicyAsFallback(
       dueDateLimitedPolicyId,
@@ -245,8 +241,7 @@ public class CheckOutByBarcodeTests extends APITests {
     assertThat("loan date should be as supplied",
       loan.getString("loanDate"), isEquivalentTo(loanDate));
 
-    assertThat("last loan policy should be stored",
-      loan.getString("loanPolicyId"), is(dueDateLimitedPolicyId));
+    loanHasLoanPolicyProperties(loan, loanPolicyResource);
 
     assertThat("due date should be limited by schedule",
       loan.getString("dueDate"),

@@ -211,8 +211,8 @@ public class OverrideRenewByBarcodeTests extends APITests {
       .rolling(Period.days(2))
       .notRenewable();
 
-    UUID nonRenewablePolicyId = loanPoliciesFixture.create(nonRenewablePolicy)
-      .getId();
+    final IndividualResource loanPolicy = loanPoliciesFixture.create(nonRenewablePolicy);
+    UUID nonRenewablePolicyId = loanPolicy.getId();
 
     useLoanPolicyAsFallback(
       nonRenewablePolicyId,
@@ -246,8 +246,9 @@ public class OverrideRenewByBarcodeTests extends APITests {
     assertThat("renewal count should be incremented",
       renewedLoan.getInteger("renewalCount"), is(1));
 
+    //TODO loanpolicyname is not stored, possible bug?
     assertThat("last loan policy should be stored",
-      renewedLoan.getString("loanPolicyId"), is(nonRenewablePolicyId.toString()));
+            renewedLoan.getString("loanPolicyId"), is(nonRenewablePolicyId.toString()));
 
     assertThat("due date should be 2 weeks from now",
       renewedLoan.getString("dueDate"),
@@ -327,7 +328,8 @@ public class OverrideRenewByBarcodeTests extends APITests {
       .fixed(fixedDueDateSchedulesId)
       .renewFromCurrentDueDate();
 
-    UUID dueDateLimitedPolicyId = loanPoliciesFixture.create(currentDueDateRollingPolicy).getId();
+    final IndividualResource loanPolicy = loanPoliciesFixture.create(currentDueDateRollingPolicy);
+    UUID dueDateLimitedPolicyId = loanPolicy.getId();
 
     useLoanPolicyAsFallback(
       dueDateLimitedPolicyId,
@@ -362,8 +364,9 @@ public class OverrideRenewByBarcodeTests extends APITests {
     assertThat("renewal count should be incremented",
       renewedLoan.getInteger("renewalCount"), is(1));
 
+    //TODO loanpolicyname is not stored, possible bug?
     assertThat("last loan policy should be stored",
-      renewedLoan.getString("loanPolicyId"), is(dueDateLimitedPolicyId.toString()));
+            renewedLoan.getString("loanPolicyId"), is(dueDateLimitedPolicyId.toString()));
 
     assertThat("due date should be 2 months from previous due date",
       renewedLoan.getString("dueDate"),
