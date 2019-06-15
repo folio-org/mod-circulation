@@ -1,20 +1,25 @@
 package org.folio.circulation.support.http.client;
 
-import io.vertx.core.Handler;
-import io.vertx.core.http.HttpClient;
-import io.vertx.core.http.HttpClientRequest;
-import io.vertx.core.http.HttpClientResponse;
-import io.vertx.core.json.Json;
-import org.apache.commons.lang.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import static org.folio.circulation.support.http.OkapiHeader.OKAPI_URL;
+import static org.folio.circulation.support.http.OkapiHeader.REQUEST_ID;
+import static org.folio.circulation.support.http.OkapiHeader.TENANT;
+import static org.folio.circulation.support.http.OkapiHeader.TOKEN;
+import static org.folio.circulation.support.http.OkapiHeader.USER_ID;
 
 import java.lang.invoke.MethodHandles;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.function.Consumer;
 
-import static org.folio.circulation.support.http.OkapiHeader.*;
+import org.apache.commons.lang.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import io.vertx.core.Handler;
+import io.vertx.core.http.HttpClient;
+import io.vertx.core.http.HttpClientRequest;
+import io.vertx.core.http.HttpClientResponse;
+import io.vertx.core.json.Json;
 
 public class OkapiHttpClient {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
@@ -125,7 +130,7 @@ public class OkapiHttpClient {
 
     addStandardHeaders(request);
 
-    request.exceptionHandler(this.exceptionHandler::accept);
+    request.exceptionHandler(exceptionHandler::accept);
 
     request.end();
   }

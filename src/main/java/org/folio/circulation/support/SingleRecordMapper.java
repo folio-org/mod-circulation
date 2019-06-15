@@ -66,8 +66,8 @@ public class SingleRecordMapper<T> {
 
     //TODO: Include the request URL here
     final String diagnosticError = String.format(
-      "HTTP request failed, status code: %s, response: \"%s\"",
-      response.getStatusCode(), response.getBody());
+      "HTTP request to \"%s\" failed, status code: %s, response: \"%s\"",
+      response.getFromUrl(), response.getStatusCode(), response.getBody());
 
     return failed(new ServerErrorFailure(diagnosticError));
   }
