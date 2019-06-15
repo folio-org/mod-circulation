@@ -1,6 +1,8 @@
 package api.loans.scenarios;
 
+import static api.support.matchers.ResponseStatusCodeMatcher.hasStatus;
 import static api.support.matchers.UUIDMatcher.is;
+import static org.folio.HttpStatus.HTTP_OK;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.IsNull.notNullValue;
@@ -10,6 +12,8 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
 import org.folio.circulation.support.http.client.IndividualResource;
+import org.folio.circulation.support.http.client.Response;
+import org.hamcrest.junit.MatcherAssert;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.junit.Test;
@@ -113,7 +117,11 @@ public class ServicePointCheckOutTests extends APITests {
     assertThat("item status snapshot in storage is checked out",
       storedLoan.getString("itemStatus"), is("Checked out"));
 
-    final JsonObject storedRequest = requestsClient.getById(request.getId()).getJson();
+    final Response getByIdResponse = requestsClient.getById(request.getId());
+
+    MatcherAssert.assertThat(getByIdResponse, hasStatus(HTTP_OK));
+
+    final JsonObject storedRequest = getByIdResponse.getJson();
 
     assertThat("request status snapshot in storage is closed - filled",
         storedRequest.getString("status"), is("Closed - Filled"));

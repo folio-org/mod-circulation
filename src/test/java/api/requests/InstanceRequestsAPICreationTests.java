@@ -1,5 +1,7 @@
 package api.requests;
 
+import static api.support.matchers.ResponseStatusCodeMatcher.hasStatus;
+import static org.folio.HttpStatus.HTTP_CREATED;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 import static org.junit.Assert.assertEquals;
@@ -7,8 +9,6 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import java.net.MalformedURLException;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -99,13 +99,15 @@ public class InstanceRequestsAPICreationTests extends APITests {
 
     Response postResponse = postCompleted.get(10, TimeUnit.SECONDS);
 
+    assertThat(postResponse, hasStatus(HTTP_CREATED));
+
     JsonObject representation = postResponse.getJson();
+
     validateInstanceRequestResponse(representation,
       pickupServicePointId,
       instance.getId(),
       item.getId(),
       RequestType.PAGE);
-
   }
 
   @Test
@@ -133,6 +135,8 @@ public class InstanceRequestsAPICreationTests extends APITests {
       ResponseHandler.any(postCompleted));
 
     Response postResponse = postCompleted.get(10, TimeUnit.SECONDS);
+
+    assertThat(postResponse, hasStatus(HTTP_CREATED));
 
     JsonObject representation = postResponse.getJson();
     validateInstanceRequestResponse(representation,
@@ -173,7 +177,10 @@ public class InstanceRequestsAPICreationTests extends APITests {
 
     Response postResponse = postCompleted.get(10, TimeUnit.SECONDS);
 
+    assertThat(postResponse, hasStatus(HTTP_CREATED));
+
     JsonObject representation = postResponse.getJson();
+
     validateInstanceRequestResponse(representation,
       pickupServicePointId,
       instance.getId(),
