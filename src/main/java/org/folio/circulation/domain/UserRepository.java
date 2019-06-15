@@ -110,6 +110,10 @@ public class UserRepository {
 
   //TODO: Replace this with validator
   public CompletableFuture<Result<User>> getUserFailOnNotFound(String userId) {
+    if(isNull(userId)) {
+      return completedFuture(failedValidation("user is not found", "userId", userId));
+    }
+
     return FetchSingleRecord.<User>forRecord("user")
       .using(usersStorageClient)
       .mapTo(User::new)
