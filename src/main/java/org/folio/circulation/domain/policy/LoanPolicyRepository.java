@@ -1,5 +1,7 @@
 package org.folio.circulation.domain.policy;
 
+import static java.util.Objects.isNull;
+import static org.folio.circulation.support.Result.ofAsync;
 import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.ResultBinding.mapResult;
 
@@ -45,11 +47,15 @@ public class LoanPolicyRepository extends CirculationPolicyRepository<LoanPolicy
   }
 
   private CompletableFuture<Result<LoanPolicy>> getLoanPolicyById(String loanPolicyId) {
+    if(isNull(loanPolicyId)) {
+      return ofAsync(() -> null);
+    }
+
     return FetchSingleRecord.<LoanPolicy>forRecord("loan policy")
-            .using(policyStorageClient)
-            .mapTo(LoanPolicy::from)
-            .whenNotFound(succeeded(null))
-            .fetch(loanPolicyId);
+      .using(policyStorageClient)
+      .mapTo(LoanPolicy::from)
+      .whenNotFound(succeeded(null))
+      .fetch(loanPolicyId);
   }
 
   public CompletableFuture<Result<MultipleRecords<Loan>>> findLoanPoliciesForLoans(MultipleRecords<Loan> multipleLoans) {
