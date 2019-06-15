@@ -12,6 +12,7 @@ import org.folio.circulation.support.CqlQuery;
 import org.folio.circulation.support.FetchSingleRecord;
 import org.folio.circulation.support.ForwardOnFailure;
 import org.folio.circulation.support.ItemRepository;
+import org.folio.circulation.support.RecordNotFoundFailure;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.SingleRecordFetcher;
 import org.folio.circulation.support.SingleRecordMapper;
@@ -123,7 +124,10 @@ public class RequestRepository {
   }
 
   private CompletableFuture<Result<Request>> fetchRequest(String id) {
-    return new SingleRecordFetcher<>(requestsStorageClient, "request", Request::from)
+    return FetchSingleRecord.<Request>forRecord("request")
+      .using(requestsStorageClient)
+      .mapTo(Request::from)
+      .whenNotFound(failed(new RecordNotFoundFailure("request", id)))
       .fetch(id);
   }
 
