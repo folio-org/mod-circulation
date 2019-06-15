@@ -17,10 +17,10 @@ import org.folio.circulation.support.Result;
 import org.folio.circulation.support.SingleRecordFetcher;
 import org.folio.circulation.support.SingleRecordMapper;
 import org.folio.circulation.support.http.client.Response;
-
-import io.vertx.core.json.JsonObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import io.vertx.core.json.JsonObject;
 
 public class RequestRepository {
   private final CollectionResourceClient requestsStorageClient;
@@ -225,12 +225,11 @@ public class RequestRepository {
     return patronGroupRepository.findPatronGroupsForSingleRequestUsers(result);
   }
 
-  private CompletableFuture<Result<User>> getUser(String proxyUserId) {
-    return userRepository.getUser(proxyUserId);
+  private CompletableFuture<Result<User>> getUser(String userId) {
+    return userRepository.getUser(userId);
   }
 
   private CompletableFuture<Result<ServicePoint>> getServicePoint(String servicePointId) {
     return servicePointRepository.getServicePointById(servicePointId);
   }
-
 }
