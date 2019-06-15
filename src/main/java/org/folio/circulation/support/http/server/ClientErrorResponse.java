@@ -1,14 +1,19 @@
 package org.folio.circulation.support.http.server;
 
-import io.vertx.core.http.HttpServerResponse;
 import org.apache.http.entity.ContentType;
+
+import io.vertx.core.http.HttpServerResponse;
 
 public class ClientErrorResponse {
   private ClientErrorResponse() { }
 
-  public static void notFound(HttpServerResponse response) {
+  public static void notFound(HttpServerResponse response, String text) {
     response.setStatusCode(404);
-    response.end("Not Found");
+    response.end(text);
+  }
+
+  public static void notFound(HttpServerResponse response) {
+    notFound(response, "Not Found");
   }
 
   public static void badRequest(HttpServerResponse response, String reason) {
