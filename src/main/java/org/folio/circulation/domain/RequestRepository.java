@@ -1,6 +1,8 @@
 package org.folio.circulation.domain;
 
+import static java.util.Objects.isNull;
 import static org.folio.circulation.support.Result.failed;
+import static org.folio.circulation.support.Result.ofAsync;
 import static org.folio.circulation.support.Result.succeeded;
 
 import java.lang.invoke.MethodHandles;
@@ -192,8 +194,11 @@ public class RequestRepository {
   }
 
   public CompletableFuture<Result<Request>> loadCancellationReason(Request request) {
+    if(isNull(request) || isNull(request.getCancellationReasonId())) {
+      return ofAsync(() -> null);
+    }
 
-    return FetchSingleRecord.<Request>forRecord("cancellationreason")
+    return FetchSingleRecord.<Request>forRecord("cancellation reason")
       .using(cancellationReasonStorageClient)
       .mapTo(request::withCancellationReasonJsonRepresentation)
       .whenNotFound(succeeded(request))
