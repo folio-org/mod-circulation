@@ -108,7 +108,7 @@ public class FakeStorageModule extends AbstractVerticle {
     router.put(rootPath + "/:id").handler(this::checkDisallowedProperties);
     router.put(rootPath + "/:id").handler(this::replace);
 
-    router.get(rootPath + "/:id").handler(this::get);
+    router.get(rootPath + "/:id").handler(this::getById);
     router.delete(rootPath + "/:id").handler(this::delete);
   }
 
@@ -192,7 +192,7 @@ public class FakeStorageModule extends AbstractVerticle {
     }
   }
 
-  private void get(RoutingContext routingContext) {
+  private void getById(RoutingContext routingContext) {
     WebContext context = new WebContext(routingContext);
 
     String id = routingContext.request().getParam("id");
