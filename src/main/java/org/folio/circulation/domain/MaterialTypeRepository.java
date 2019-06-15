@@ -1,5 +1,6 @@
 package org.folio.circulation.domain;
 
+import static java.util.Objects.isNull;
 import static java.util.function.Function.identity;
 import static org.folio.circulation.support.JsonKeys.byId;
 import static org.folio.circulation.support.Result.succeeded;
@@ -28,9 +29,15 @@ public class MaterialTypeRepository {
   }
 
   public CompletableFuture<Result<JsonObject>> getFor(Item item) {
+    final String materialTypeId = item.getMaterialTypeId();
+
+    if(isNull(materialTypeId)) {
+      return Result.ofAsync(() -> null);
+    }
+
     return SingleRecordFetcher.json(materialTypesStorageClient, "material types",
       response -> succeeded(null))
-      .fetch(item.getMaterialTypeId());
+      .fetch(materialTypeId);
   }
 
   public CompletableFuture<Result<Map<String, JsonObject>>> getMaterialTypes(
