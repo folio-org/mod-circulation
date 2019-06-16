@@ -1789,6 +1789,28 @@ public class RequestsAPICreationTests extends APITests {
     assertThat(finalStatus, is(ItemStatus.PAGED.getValue()));
   }
 
+  @Test
+  public void requestCreationDoesNotFailWhenCirculationRulesReferenceInvalidNoticePolicyId()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    setInvalidNoticePolicyReferenceInRules("some-invalid-policy");
+
+    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final IndividualResource steve = usersFixture.steve();
+
+    requestsFixture.place(new RequestBuilder()
+      .open()
+      .page()
+      .forItem(smallAngryPlanet)
+      .by(steve)
+      .withRequestDate(DateTime.now())
+      .fulfilToHoldShelf()
+      .withPickupServicePointId(servicePointsFixture.cd1().getId()));
+  }
+
   private void mockClockManagerToReturnFixedTime(DateTime dateTime) {
     ClockManager.getClockManager().setClock(
       Clock.fixed(
