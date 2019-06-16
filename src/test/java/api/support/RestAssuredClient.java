@@ -53,8 +53,7 @@ public class RestAssuredClient {
     });
 
     return new Response(response.statusCode(), response.body().print(),
-      response.contentType(),
-      mappedHeaders);
+      response.contentType(), mappedHeaders, null);
   }
 
   public static io.restassured.response.Response manuallyStartTimedTask(

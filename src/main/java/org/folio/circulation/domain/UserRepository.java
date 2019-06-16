@@ -1,7 +1,9 @@
 package org.folio.circulation.domain;
 
+import static java.util.Objects.isNull;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.support.Result.of;
+import static org.folio.circulation.support.Result.ofAsync;
 import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.ResultBinding.mapResult;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
@@ -42,13 +44,18 @@ public class UserRepository {
   }
 
   public CompletableFuture<Result<User>> getProxyUser(UserRelatedRecord userRelatedRecord) {
-    if (userRelatedRecord.getProxyUserId() == null){
+    if (userRelatedRecord.getProxyUserId() == null) {
       return CompletableFuture.completedFuture(succeeded(null));
     }
+
     return getUser(userRelatedRecord.getProxyUserId());
   }
 
   public CompletableFuture<Result<User>> getUser(String userId) {
+    if(isNull(userId)) {
+      return ofAsync(() -> null);
+    }
+
     return FetchSingleRecord.<User>forRecord("user")
       .using(usersStorageClient)
       .mapTo(User::new)
@@ -57,25 +64,18 @@ public class UserRepository {
   }
 
   public CompletableFuture<Result<Loan>> findUserForLoan(Result<Loan> loanResult) {
-    return loanResult.after(loan -> {
-      String userId = loan.getUserId();
-      if (userId == null) {
-        return completedFuture(loanResult);
-      }
-      return getUser(userId)
-        .thenApply(userResult ->
-          userResult.map(user -> {
-            if (user == null) {
-              log.info("No user found for loan {}", loan.getId());
-            } else {
-              log.info("User with username {} found for loan {}",
-                loan.getUser().getUsername(), loan.getId());
-            }
-            return loan.withUser(user);
-          }));
-    });
+    return loanResult.after(loan -> getUser(loan.getUserId())
+      .thenApply(userResult ->
+        userResult.map(user -> {
+          if (isNull(user)) {
+            log.info("No user found for loan {}", loan.getId());
+          } else {
+            log.info("User with username {} found for loan {}",
+              loan.getUser().getUsername(), loan.getId());
+          }
+          return loan.withUser(user);
+        })));
   }
-
 
   public CompletableFuture<Result<MultipleRecords<Loan>>> findUsersForLoans(
     MultipleRecords<Loan> multipleLoans) {
@@ -110,6 +110,10 @@ public class UserRepository {
 
   //TODO: Replace this with validator
   public CompletableFuture<Result<User>> getUserFailOnNotFound(String userId) {
+    if(isNull(userId)) {
+      return completedFuture(failedValidation("user is not found", "userId", userId));
+    }
+
     return FetchSingleRecord.<User>forRecord("user")
       .using(usersStorageClient)
       .mapTo(User::new)

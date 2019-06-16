@@ -2,11 +2,11 @@ package api.requests;
 
 import static api.support.http.InterfaceUrls.requestsUrl;
 import static api.support.matchers.ResponseStatusCodeMatcher.hasStatus;
+import static java.net.HttpURLConnection.HTTP_NO_CONTENT;
 import static org.folio.HttpStatus.HTTP_CREATED;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 
-import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -146,7 +146,7 @@ public class RequestsAPIProxyTests extends APITests {
     CompletableFuture<Response> postCompleted = new CompletableFuture<>();
 
     client.post(requestsUrl(), requestRequest,
-      ResponseHandler.json(postCompleted));
+      ResponseHandler.any(postCompleted));
 
     Response postResponse = postCompleted.get(5, TimeUnit.SECONDS);
 
@@ -180,7 +180,7 @@ public class RequestsAPIProxyTests extends APITests {
     CompletableFuture<Response> postCompleted = new CompletableFuture<>();
 
     client.post(requestsUrl(), requestRequest,
-      ResponseHandler.json(postCompleted));
+      ResponseHandler.any(postCompleted));
 
     Response postResponse = postCompleted.get(5, TimeUnit.SECONDS);
 
@@ -213,7 +213,7 @@ public class RequestsAPIProxyTests extends APITests {
     CompletableFuture<Response> postCompleted = new CompletableFuture<>();
 
     client.post(requestsUrl(), requestRequest,
-      ResponseHandler.json(postCompleted));
+      ResponseHandler.any(postCompleted));
 
     Response postResponse = postCompleted.get(5, TimeUnit.SECONDS);
 
@@ -255,9 +255,11 @@ public class RequestsAPIProxyTests extends APITests {
 
     Response putResponse = putCompleted.get(5, TimeUnit.SECONDS);
 
-    assertThat(putResponse.getStatusCode(), is(HttpURLConnection.HTTP_NO_CONTENT));
+    assertThat(putResponse.getStatusCode(), is(HTTP_NO_CONTENT));
 
-    final JsonObject representation = requestsClient.get(createdRequest).getJson();
+    final IndividualResource fetchedRequest = requestsClient.get(createdRequest);
+
+    final JsonObject representation = fetchedRequest.getJson();
 
     assertThat("has information taken from proxying user",
       representation.containsKey("proxy"), is(true));
