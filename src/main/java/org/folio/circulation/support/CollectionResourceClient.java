@@ -80,8 +80,9 @@ public class CollectionResourceClient {
   public CompletableFuture<Response> get(String id) {
     final CompletableFuture<Response> future = new CompletableFuture<>();
 
-    client.get(individualRecordUrl(id),
-      responseConversationHandler(future::complete));
+    final String url = individualRecordUrl(id);
+
+    client.get(url, responseConversationHandler(url, future::complete));
 
     return future;
   }
@@ -223,15 +224,21 @@ public class CollectionResourceClient {
   }
 
   private Handler<HttpClientResponse> responseConversationHandler(
-    Consumer<Response> responseHandler) {
+    String fromUrl, Consumer<Response> responseHandler) {
 
     return response -> response
-      .bodyHandler(buffer -> responseHandler.accept(Response.from(response, buffer)))
+      .bodyHandler(buffer -> responseHandler.accept(Response.from(response, buffer, fromUrl)))
       .exceptionHandler(ex -> {
         log.error("Unhandled exception in body handler", ex);
         String trace = ExceptionUtils.getStackTrace(ex);
         responseHandler.accept(new Response(500, trace, ContentType.TEXT_PLAIN.toString()));
       });
+  }
+
+  private Handler<HttpClientResponse> responseConversationHandler(
+    Consumer<Response> responseHandler) {
+
+    return responseConversationHandler(null, responseHandler);
   }
 
   private String individualRecordUrl(String id) {

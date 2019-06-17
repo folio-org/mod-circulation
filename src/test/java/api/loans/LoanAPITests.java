@@ -3,6 +3,7 @@ package api.loans;
 import static api.requests.RequestsAPICreationTests.setupMissingItem;
 import static api.support.http.AdditionalHttpStatusCodes.UNPROCESSABLE_ENTITY;
 import static api.support.http.InterfaceUrls.loansUrl;
+import static api.support.matchers.ResponseStatusCodeMatcher.hasStatus;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static api.support.matchers.UUIDMatcher.is;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
@@ -10,8 +11,12 @@ import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static api.support.matchers.ValidationErrorMatchers.hasMessageContaining;
 import static api.support.matchers.ValidationErrorMatchers.hasNullParameter;
 import static api.support.matchers.ValidationErrorMatchers.hasUUIDParameter;
+import static org.folio.HttpStatus.HTTP_VALIDATION_ERROR;
 import static org.hamcrest.CoreMatchers.allOf;
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.greaterThan;
+import static org.hamcrest.Matchers.not;
+import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 
@@ -26,7 +31,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import api.support.fixtures.ConfigurationExample;
 import org.folio.circulation.domain.representations.LoanProperties;
 import org.folio.circulation.support.JsonArrayHelper;
 import org.folio.circulation.support.http.client.IndividualResource;
@@ -41,6 +45,7 @@ import org.junit.Test;
 import api.support.APITests;
 import api.support.builders.ItemBuilder;
 import api.support.builders.LoanBuilder;
+import api.support.fixtures.ConfigurationExample;
 import api.support.http.InterfaceUrls;
 import api.support.http.InventoryItemResource;
 import io.vertx.core.json.JsonArray;
@@ -298,7 +303,7 @@ public class LoanAPITests extends APITests {
         .withLoanDate(loanDate)
         .withDueDate(dueDate)
         .create(),
-      ResponseHandler.json(createCompleted));
+      ResponseHandler.any(createCompleted));
 
     Response response = createCompleted.get(5, TimeUnit.SECONDS);
 
@@ -1130,6 +1135,8 @@ public class LoanAPITests extends APITests {
       ResponseHandler.any(putCompleted));
 
     Response putResponse = putCompleted.get(5, TimeUnit.SECONDS);
+
+    assertThat(putResponse, hasStatus(HTTP_VALIDATION_ERROR));
 
     assertThat(putResponse.getJson(), hasErrorWith(allOf(
       hasMessage("Open loan must have a user ID"),

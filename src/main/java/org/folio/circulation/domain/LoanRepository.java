@@ -23,8 +23,10 @@ import org.folio.circulation.domain.representations.LoanProperties;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.CqlQuery;
+import org.folio.circulation.support.FetchSingleRecord;
 import org.folio.circulation.support.ForwardOnFailure;
 import org.folio.circulation.support.ItemRepository;
+import org.folio.circulation.support.RecordNotFoundFailure;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.ServerErrorFailure;
 import org.folio.circulation.support.SingleRecordFetcher;
@@ -153,8 +155,10 @@ public class LoanRepository {
   }
 
   private CompletableFuture<Result<Loan>> fetchLoan(String id) {
-    return new SingleRecordFetcher<>(
-      loansStorageClient, "loan", Loan::from)
+    return FetchSingleRecord.<Loan>forRecord("loan")
+      .using(loansStorageClient)
+      .mapTo(Loan::from)
+      .whenNotFound(failed(new RecordNotFoundFailure("loan", id)))
       .fetch(id);
   }
 

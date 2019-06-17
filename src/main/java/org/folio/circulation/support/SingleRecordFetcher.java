@@ -1,5 +1,7 @@
 package org.folio.circulation.support;
 
+import static java.lang.String.format;
+import static java.util.Objects.requireNonNull;
 import static java.util.function.Function.identity;
 import static org.folio.circulation.support.Result.failed;
 import static org.folio.circulation.support.Result.succeeded;
@@ -57,6 +59,8 @@ public class SingleRecordFetcher<T> {
 
   public CompletableFuture<Result<T>> fetch(String id) {
     log.info("Fetching {} with ID: {}", recordType, id);
+
+    requireNonNull(id, format("Cannot fetch single %s with null ID", recordType));
 
     return client.get(id)
       .thenApply(mapper::mapFrom)
