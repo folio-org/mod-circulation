@@ -1,6 +1,7 @@
 package org.folio.circulation.domain;
 
 import static java.util.Objects.isNull;
+import static org.folio.circulation.support.ResponseMapping.usingJson;
 import static org.folio.circulation.support.Result.failed;
 import static org.folio.circulation.support.Result.of;
 import static org.folio.circulation.support.Result.ofAsync;
@@ -123,7 +124,7 @@ public class RequestRepository {
 
   private CompletableFuture<Result<Request>> fetchRequest(String id) {
     return createSingleRequestFetcher(new ResponseInterpreter<Request>()
-      .mapJsonOnOk(Request::from)
+      .flatMapOn(200, usingJson(Request::from))
       .flatMapOn(404, response -> failed(new RecordNotFoundFailure("request", id))))
       .fetch(id);
   }

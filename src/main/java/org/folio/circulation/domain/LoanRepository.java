@@ -4,6 +4,7 @@ import static java.util.Objects.nonNull;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.support.CqlQuery.exactMatch;
 import static org.folio.circulation.support.CqlQuery.exactMatchAny;
+import static org.folio.circulation.support.ResponseMapping.usingJson;
 import static org.folio.circulation.support.Result.failed;
 import static org.folio.circulation.support.Result.of;
 import static org.folio.circulation.support.Result.succeeded;
@@ -151,7 +152,7 @@ public class LoanRepository {
   private CompletableFuture<Result<Loan>> refreshLoanRepresentation(Loan loan) {
     return new SingleRecordFetcher<>(loansStorageClient, "loan",
       new ResponseInterpreter<Loan>()
-        .mapJsonOnOk(loan::replaceRepresentation))
+        .flatMapOn(200, usingJson(loan::replaceRepresentation)))
       .fetch(loan.getId());
   }
 
