@@ -27,9 +27,9 @@ public abstract class CirculationPolicyRepository<T> {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
   private final CirculationRulesClient circulationRulesClient;
-  protected final CollectionResourceClient policyStorageClient;
+  final CollectionResourceClient policyStorageClient;
 
-  public CirculationPolicyRepository(
+  CirculationPolicyRepository(
     CirculationRulesClient circulationRulesClient,
     CollectionResourceClient policyStorageClient) {
     this.circulationRulesClient = circulationRulesClient;
@@ -46,22 +46,26 @@ public abstract class CirculationPolicyRepository<T> {
 
     return lookupPolicyId(item, user)
       .thenComposeAsync(r -> r.after(this::lookupPolicy))
-      .thenApply(result -> result.next(this::toPolicy));
+      .thenApply(result -> result.next(this::mapToPolicy));
+  }
+
+  private Result<T> mapToPolicy(JsonObject json) {
+    log.info("Mapping json to policy {}", json.encodePrettily());
+
+    return toPolicy(json);
   }
 
   private CompletableFuture<Result<JsonObject>> lookupPolicy(String policyId) {
+    log.info("Looking up policy with id {}", policyId);
+
     return SingleRecordFetcher.json(policyStorageClient, "circulation policy",
       response -> failed(
         new ServerErrorFailure(getPolicyNotFoundErrorMessage(policyId))))
       .fetch(policyId);
   }
 
-  private CompletableFuture<Result<String>> lookupPolicyId(
-    Item item,
-    User user) {
-
-    CompletableFuture<Result<String>> findLoanPolicyCompleted
-      = new CompletableFuture<>();
+  private CompletableFuture<Result<String>> lookupPolicyId(Item item, User user) {
+    CompletableFuture<Result<String>> findLoanPolicyCompleted = new CompletableFuture<>();
 
     if (item.isNotFound()) {
       return completedFuture(failed(
@@ -95,7 +99,12 @@ public abstract class CirculationPolicyRepository<T> {
         findLoanPolicyCompleted.complete(failed(
           new ForwardOnFailure(response)));
       } else {
+        log.info("Rules response {}", response.getBody());
+
         String policyId = fetchPolicyId(response.getJson());
+
+        log.info("Policy to fetch based upon rules {}", policyId);
+
         findLoanPolicyCompleted.complete(succeeded(policyId));
       }
     });

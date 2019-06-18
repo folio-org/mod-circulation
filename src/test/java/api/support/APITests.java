@@ -14,7 +14,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import io.vertx.core.json.JsonObject;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.OkapiHttpClient;
 import org.folio.circulation.support.http.client.Response;
@@ -47,6 +46,7 @@ import api.support.fixtures.ServicePointsFixture;
 import api.support.fixtures.UsersFixture;
 import api.support.http.InterfaceUrls;
 import api.support.http.ResourceClient;
+import io.vertx.core.json.JsonObject;
 
 public abstract class APITests {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
@@ -296,12 +296,15 @@ public abstract class APITests {
     );
   }
 
-  protected void useLoanPolicyAsFallback(UUID loanPolicyId, UUID requestPolicyId, UUID noticePolicyId)
+  protected void useLoanPolicyAsFallback(UUID loanPolicyId, UUID requestPolicyId,
+                                         UUID noticePolicyId)
     throws InterruptedException,
     ExecutionException,
     TimeoutException {
 
-    circulationRulesFixture.updateCirculationRules(loanPolicyId, requestPolicyId, noticePolicyId);
+    circulationRulesFixture.updateCirculationRules(loanPolicyId, requestPolicyId,
+      noticePolicyId);
+
     warmUpApplyEndpoint();
   }
 
@@ -405,5 +408,30 @@ public abstract class APITests {
     assertThat(String.format("%s should NOT have an %s: %s",
             type, property, resource),
             resource.getValue(property), is(nullValue()));
+  }
+
+  protected void setInvalidLoanPolicyReferenceInRules(String invalidLoanPolicyReference)
+    throws InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    MalformedURLException {
+
+    circulationRulesFixture.updateCirculationRules(
+      circulationRulesFixture.soleFallbackPolicyRule(invalidLoanPolicyReference,
+        requestPoliciesFixture.allowAllRequestPolicy().getId().toString(),
+        noticePoliciesFixture.inactiveNotice().getId().toString()));
+  }
+
+  protected void setInvalidNoticePolicyReferenceInRules(String invalidNoticePolicyReference)
+    throws InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    MalformedURLException {
+
+    circulationRulesFixture.updateCirculationRules(
+      circulationRulesFixture.soleFallbackPolicyRule(
+        loanPoliciesFixture.canCirculateRolling().getId().toString(),
+        requestPoliciesFixture.allowAllRequestPolicy().getId().toString(),
+        invalidNoticePolicyReference));
   }
 }
