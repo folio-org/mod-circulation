@@ -68,7 +68,9 @@ public class RequestRepresentation {
 
     if (location != null) {
       itemSummary.put("location", new JsonObject()
-        .put("name", location.getName()));
+        .put("name", location.getName())
+        .put("libraryName", location.getLibraryName())
+        .put("code",location.getCode()));
     }
     request.put("item", itemSummary);
 
