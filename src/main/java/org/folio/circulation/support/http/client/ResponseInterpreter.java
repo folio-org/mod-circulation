@@ -2,14 +2,19 @@ package org.folio.circulation.support.http.client;
 
 import static org.folio.circulation.support.Result.failed;
 
+import java.lang.invoke.MethodHandles;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
 
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.ServerErrorFailure;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class ResponseInterpreter<T> {
+  private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
+
   private final Map<Integer, Function<Response, Result<T>>> responseMappers;
   private final Function<Response, Result<T>> unexpectedResponseMapper;
 
@@ -37,7 +42,14 @@ public class ResponseInterpreter<T> {
   }
 
   public Result<T> apply(Response response) {
+    if(response == null) {
+      log.warn("Cannot interpret null response");
+      return failed(new ServerErrorFailure("Cannot interpret null response"));
+    }
+
     try {
+      log.info("Response received: {}", response);
+
       final Integer statusCode = response.getStatusCode();
 
       return responseMappers.getOrDefault(statusCode, unexpectedResponseMapper)

@@ -97,6 +97,20 @@ public class ResponseInterpretationTests {
     assertThat(cause.getReason(), containsString("RuntimeException"));
   }
 
+  @Test
+  public void nullResponseShouldFail() {
+    Result<String> result = new ResponseInterpreter<String>()
+      .flatMapOn(200, response -> of(() -> "ok"))
+      .apply(null);
+
+    assertThat(result.succeeded(), is(false));
+    assertThat(result.cause(), instanceOf(ServerErrorFailure.class));
+
+    final ServerErrorFailure cause = (ServerErrorFailure) result.cause();
+
+    assertThat(cause.getReason(), is("Cannot interpret null response"));
+  }
+
   private Response serverError() {
     return new Response(500, "Something went wrong", TEXT_PLAIN.toString(),
       new CaseInsensitiveHeaders(), "http://failing.com");
