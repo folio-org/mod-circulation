@@ -4,19 +4,14 @@ import static java.util.Objects.isNull;
 import static org.folio.circulation.support.Result.failed;
 import static org.folio.circulation.support.Result.of;
 
-import java.lang.invoke.MethodHandles;
 import java.util.function.Function;
 
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.client.ResponseInterpreter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import io.vertx.core.json.JsonObject;
 
 public class SingleRecordMapper<T> {
-  private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
-
   private final Function<JsonObject, T> mapper;
   private final Function<Response, Result<T>> resultOnFailure;
 
@@ -38,19 +33,10 @@ public class SingleRecordMapper<T> {
   }
 
   Result<T> mapFrom(Response response) {
-    if(response != null) {
-      log.info("Response received, status code: {} body: {}",
-        response.getStatusCode(), response.getBody());
-
-      return new ResponseInterpreter<T>()
-        .flatMapOn(200, r -> of(() -> mapper.apply(r.getJson())))
-        .otherwise(resultOnFailure)
-        .apply(response);
-    }
-    else {
-      log.warn("Did not receive response to request");
-      return failed(new ServerErrorFailure("Did not receive response to request"));
-    }
+    return new ResponseInterpreter<T>()
+      .flatMapOn(200, r -> of(() -> mapper.apply(r.getJson())))
+      .otherwise(resultOnFailure)
+      .apply(response);
   }
 
   private static <T> Function<Response, Result<T>> notFoundMapper(Result<T> result) {
