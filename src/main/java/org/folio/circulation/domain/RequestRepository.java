@@ -6,8 +6,8 @@ import static org.folio.circulation.support.Result.failed;
 import static org.folio.circulation.support.Result.of;
 import static org.folio.circulation.support.Result.ofAsync;
 import static org.folio.circulation.support.Result.succeeded;
+import static org.folio.circulation.support.ResultBinding.mapResult;
 
-import java.lang.invoke.MethodHandles;
 import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.support.Clients;
@@ -21,8 +21,6 @@ import org.folio.circulation.support.Result;
 import org.folio.circulation.support.SingleRecordFetcher;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.client.ResponseInterpreter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import io.vertx.core.json.JsonObject;
 
@@ -34,7 +32,6 @@ public class RequestRepository {
   private final LoanRepository loanRepository;
   private final ServicePointRepository servicePointRepository;
   private final PatronGroupRepository patronGroupRepository;
-  private final Logger log;
 
   private RequestRepository(
     CollectionResourceClient requestsStorageClient,
@@ -52,7 +49,6 @@ public class RequestRepository {
     this.loanRepository = loanRepository;
     this.servicePointRepository = servicePointRepository;
     this.patronGroupRepository = patronGroupRepository;
-    log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
   }
 
   public static RequestRepository using(Clients clients) {
@@ -135,14 +131,10 @@ public class RequestRepository {
       = new StoredRequestRepresentation().storedRequest(request);
 
     return requestsStorageClient.put(request.getId(), representation)
-      .thenApply(response -> {
-        if(response.getStatusCode() == 204) {
-          return succeeded(request);
-        }
-        else {
-          return failed(new ForwardOnFailure(response));
-        }
-    });
+      .thenApply(new ResponseInterpreter<Request>()
+        .on(204, of(() -> request))
+        .otherwise(response -> failed(new ForwardOnFailure(response)))
+        ::apply);
   }
 
   public CompletableFuture<Result<RequestAndRelatedRecords>> update(
@@ -160,33 +152,20 @@ public class RequestRepository {
     JsonObject representation = new StoredRequestRepresentation()
       .storedRequest(request);
 
-    log.debug("RequestRepository.create - POST request representation {}", representation);
     return requestsStorageClient.post(representation)
-      .thenApply(response -> {
-        if (response.getStatusCode() == 201) {
-          log.debug("Succeeded create - POST request representation");
-          //Retain all of the previously fetched related records
-          return succeeded(requestAndRelatedRecords.withRequest(
-            request.withRequestJsonRepresentation(response.getJson())
-          ));
-        } else {
-          log.debug("Failed to create - POST request representation; Status code = {}; response body = {}",
-                    response.getStatusCode(), response.getBody());
-          return failed(new ForwardOnFailure(response));
-        }
-    });
+      .thenApply(new ResponseInterpreter<Request>()
+        .flatMapOn(201, usingJson(request::withRequestJsonRepresentation))
+        .otherwise(response -> failed(new ForwardOnFailure(response)))
+        ::apply)
+      .thenApply(mapResult(requestAndRelatedRecords::withRequest));
   }
 
   public CompletableFuture<Result<Request>> delete(Request request) {
     return requestsStorageClient.delete(request.getId())
-      .thenApply(response -> {
-        if(response.getStatusCode() == 204) {
-          return succeeded(request);
-        }
-        else {
-          return failed(new ForwardOnFailure(response));
-        }
-    });
+      .thenApply(new ResponseInterpreter<Request>()
+        .on(204, of(() -> request))
+        .otherwise(response -> failed(new ForwardOnFailure(response)))
+        ::apply);
   }
 
   public CompletableFuture<Result<Request>> loadCancellationReason(Request request) {

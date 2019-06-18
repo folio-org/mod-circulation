@@ -85,7 +85,7 @@ public class Response {
     return headers.get(name);
   }
 
-  public String getFromUrl() {
+  String getFromUrl() {
     return fromUrl;
   }
 
