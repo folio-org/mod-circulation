@@ -12,8 +12,7 @@ import org.folio.circulation.support.http.client.ResponseInterpreter;
 import io.vertx.core.json.JsonObject;
 
 public class SingleRecordMapper<T> {
-  private final Function<JsonObject, T> mapper;
-  private final Function<Response, Result<T>> resultOnFailure;
+  private final ResponseInterpreter<T> interpreter;
 
   static <T> SingleRecordMapper<T> notFound(
     Function<JsonObject, T> mapper, Result<T> notFoundResult) {
@@ -28,15 +27,14 @@ public class SingleRecordMapper<T> {
   public SingleRecordMapper(
     Function<JsonObject, T> mapper,
     Function<Response, Result<T>> onFailure) {
-    this.mapper = mapper;
-    resultOnFailure = onFailure;
+
+    interpreter = new ResponseInterpreter<T>()
+      .flatMapOn(200, r -> of(() -> mapper.apply(r.getJson())))
+      .otherwise(onFailure);
   }
 
   Result<T> mapFrom(Response response) {
-    return new ResponseInterpreter<T>()
-      .flatMapOn(200, r -> of(() -> mapper.apply(r.getJson())))
-      .otherwise(resultOnFailure)
-      .apply(response);
+    return interpreter.apply(response);
   }
 
   private static <T> Function<Response, Result<T>> notFoundMapper(Result<T> result) {
