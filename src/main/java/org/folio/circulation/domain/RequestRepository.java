@@ -2,6 +2,7 @@ package org.folio.circulation.domain;
 
 import static java.util.Objects.isNull;
 import static org.folio.circulation.support.Result.failed;
+import static org.folio.circulation.support.Result.of;
 import static org.folio.circulation.support.Result.ofAsync;
 import static org.folio.circulation.support.Result.succeeded;
 
@@ -19,8 +20,11 @@ import org.folio.circulation.support.Result;
 import org.folio.circulation.support.SingleRecordFetcher;
 import org.folio.circulation.support.SingleRecordMapper;
 import org.folio.circulation.support.http.client.Response;
+import org.folio.circulation.support.http.client.ResponseInterpreter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.sun.org.apache.xpath.internal.operations.Bool;
 
 import io.vertx.core.json.JsonObject;
 
@@ -104,13 +108,9 @@ public class RequestRepository {
 
   private CompletableFuture<Result<Boolean>> exists(String id) {
     return new SingleRecordFetcher<>(requestsStorageClient, "request",
-      new SingleRecordMapper<>(request -> true, response -> {
-        if (response.getStatusCode() == 404) {
-          return succeeded(false);
-        } else {
-          return failed(new ForwardOnFailure(response));
-        }
-      }))
+      new SingleRecordMapper<>(new ResponseInterpreter<Boolean>()
+        .flatMapOn(200, response -> of(() -> true))
+        .flatMapOn(404, response -> of(() -> false))))
       .fetch(id);
   }
 
