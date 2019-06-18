@@ -9,28 +9,38 @@ import java.util.function.Function;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.ServerErrorFailure;
 
-class ResponseInterpreter<T> {
-  private final Map<Integer, Function<Response, Result<T>>> maps = new HashMap<>();
-  private final Function<Response, Result<T>> onUnexpectedResponse;
+public class ResponseInterpreter<T> {
+  private final Map<Integer, Function<Response, Result<T>>> responseMappers;
+  private final Function<Response, Result<T>> unexpectedResponseMapper;
 
-  private ResponseInterpreter(Function<Response, Result<T>> onUnexpectedResponse) {
-    this.onUnexpectedResponse = onUnexpectedResponse;
+  private ResponseInterpreter(Map<Integer, Function<Response, Result<T>>> responseMappers,
+                              Function<Response, Result<T>> unexpectedResponseMapper) {
+
+    this.unexpectedResponseMapper = unexpectedResponseMapper;
+    this.responseMappers = responseMappers;
   }
 
   ResponseInterpreter() {
-    this(ResponseInterpreter::defaultUnexpectedResponseMapper);
+    this(new HashMap<>(), ResponseInterpreter::defaultUnexpectedResponseMapper);
   }
 
   ResponseInterpreter<T> flatMapOn(Integer status, Function<Response, Result<T>> mapper) {
-    maps.put(status, mapper);
-    return this;
+    final HashMap<Integer, Function<Response, Result<T>>> newMappers = new HashMap<>(responseMappers);
+
+    newMappers.put(status, mapper);
+
+    return new ResponseInterpreter<>(newMappers, unexpectedResponseMapper);
+  }
+
+  ResponseInterpreter<T> otherwise(Function<Response, Result<T>> unexpectedResponseMapper) {
+    return new ResponseInterpreter<>(responseMappers, unexpectedResponseMapper);
   }
 
   public Result<T> apply(Response response) {
     try {
       final Integer statusCode = response.getStatusCode();
 
-      return maps.getOrDefault(statusCode, onUnexpectedResponse)
+      return responseMappers.getOrDefault(statusCode, unexpectedResponseMapper)
         .apply(response);
     }
     catch (Exception e) {

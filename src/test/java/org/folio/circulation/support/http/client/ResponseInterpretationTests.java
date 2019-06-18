@@ -57,6 +57,28 @@ public class ResponseInterpretationTests {
   }
 
   @Test
+  public void shouldUseProvidedUnexpectedResponseHandler() {
+    Result<String> result = new ResponseInterpreter<String>()
+      .flatMapOn(200, response -> of(() -> "ok"))
+      .otherwise(response -> of(() -> "unexpected response"))
+      .apply(serverError());
+
+    assertThat(result.succeeded(), is(true));
+    assertThat(result.value(), is("unexpected response"));
+  }
+
+  @Test
+  public void shouldRetainMappingsWhenProvidingUnexpectedResponseHandler() {
+    Result<String> result = new ResponseInterpreter<String>()
+      .flatMapOn(200, response -> of(response::getBody))
+      .otherwise(response -> of(() -> "unexpected response"))
+      .apply(new Response(200, "ok", TEXT_PLAIN.toString()));
+
+    assertThat(result.succeeded(), is(true));
+    assertThat(result.value(), is("ok"));
+  }
+
+  @Test
   public void shouldCaptureErrorWhenMappingFailsAtRuntime() {
     final JsonObject body = new JsonObject()
       .put("foo", "hello")
