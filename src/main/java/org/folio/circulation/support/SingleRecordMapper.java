@@ -14,15 +14,6 @@ import io.vertx.core.json.JsonObject;
 public class SingleRecordMapper<T> {
   private final ResponseInterpreter<T> interpreter;
 
-  static <T> SingleRecordMapper<T> notFound(
-    Function<JsonObject, T> mapper, Result<T> notFoundResult) {
-
-    return new SingleRecordMapper<>(new ResponseInterpreter<T>()
-      .flatMapOn(200, r -> of(() -> mapper.apply(r.getJson())))
-      .flatMapOn(404, r -> notFoundResult)
-      .otherwise(SingleRecordMapper::mapResponseToFailure));
-  }
-
   SingleRecordMapper(Function<JsonObject, T> mapper) {
     this(mapper, (SingleRecordMapper::mapResponseToFailure));
   }
@@ -36,7 +27,7 @@ public class SingleRecordMapper<T> {
       .otherwise(onFailure));
   }
 
-  private SingleRecordMapper(ResponseInterpreter<T> interpreter) {
+  SingleRecordMapper(ResponseInterpreter<T> interpreter) {
     this.interpreter = interpreter;
   }
 
