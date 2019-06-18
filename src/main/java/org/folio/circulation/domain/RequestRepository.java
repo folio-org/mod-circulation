@@ -18,13 +18,10 @@ import org.folio.circulation.support.ItemRepository;
 import org.folio.circulation.support.RecordNotFoundFailure;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.SingleRecordFetcher;
-import org.folio.circulation.support.SingleRecordMapper;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.client.ResponseInterpreter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.sun.org.apache.xpath.internal.operations.Bool;
 
 import io.vertx.core.json.JsonObject;
 
@@ -108,9 +105,9 @@ public class RequestRepository {
 
   private CompletableFuture<Result<Boolean>> exists(String id) {
     return new SingleRecordFetcher<>(requestsStorageClient, "request",
-      new SingleRecordMapper<>(new ResponseInterpreter<Boolean>()
+      new ResponseInterpreter<Boolean>()
         .flatMapOn(200, response -> of(() -> true))
-        .flatMapOn(404, response -> of(() -> false))))
+        .flatMapOn(404, response -> of(() -> false)))
       .fetch(id);
   }
 

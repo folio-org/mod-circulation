@@ -1,6 +1,7 @@
 package org.folio.circulation.support.http.client;
 
 import static org.folio.circulation.support.Result.failed;
+import static org.folio.circulation.support.Result.of;
 
 import java.lang.invoke.MethodHandles;
 import java.util.HashMap;
@@ -11,6 +12,8 @@ import org.folio.circulation.support.Result;
 import org.folio.circulation.support.ServerErrorFailure;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import io.vertx.core.json.JsonObject;
 
 public class ResponseInterpreter<T> {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
@@ -29,15 +32,24 @@ public class ResponseInterpreter<T> {
     this(new HashMap<>(), ResponseInterpreter::defaultUnexpectedResponseMapper);
   }
 
-  public ResponseInterpreter<T> flatMapOn(Integer status, Function<Response, Result<T>> mapper) {
-    final HashMap<Integer, Function<Response, Result<T>>> newMappers = new HashMap<>(responseMappers);
+  public ResponseInterpreter<T> flatMapOn(Integer status,
+                                          Function<Response, Result<T>> mapper) {
+
+    final HashMap<Integer, Function<Response, Result<T>>> newMappers
+      = new HashMap<>(responseMappers);
 
     newMappers.put(status, mapper);
 
     return new ResponseInterpreter<>(newMappers, unexpectedResponseMapper);
   }
 
-  public ResponseInterpreter<T> otherwise(Function<Response, Result<T>> unexpectedResponseMapper) {
+  public ResponseInterpreter<T> mapJsonOnOk(Function<JsonObject, T> mapper) {
+    return flatMapOn(200, response -> of(() -> mapper.apply(response.getJson())));
+  }
+
+  public ResponseInterpreter<T> otherwise(
+    Function<Response, Result<T>> unexpectedResponseMapper) {
+
     return new ResponseInterpreter<>(responseMappers, unexpectedResponseMapper);
   }
 

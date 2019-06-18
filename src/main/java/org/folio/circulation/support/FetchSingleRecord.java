@@ -1,7 +1,5 @@
 package org.folio.circulation.support;
 
-import static org.folio.circulation.support.Result.of;
-
 import java.util.function.Function;
 
 import org.folio.circulation.support.http.client.ResponseInterpreter;
@@ -37,8 +35,8 @@ public class FetchSingleRecord<T> {
 
   public SingleRecordFetcher<T> whenNotFound(Result<T> result) {
     return new SingleRecordFetcher<>(client, recordType,
-      new SingleRecordMapper<>(new ResponseInterpreter<T>()
-        .flatMapOn(200, r -> of(() -> mapper.apply(r.getJson())))
-        .flatMapOn(404, r -> result)));
+      new ResponseInterpreter<T>()
+        .mapJsonOnOk(mapper)
+        .flatMapOn(404, r -> result));
   }
 }

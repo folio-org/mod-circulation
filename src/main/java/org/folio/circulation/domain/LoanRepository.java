@@ -31,6 +31,7 @@ import org.folio.circulation.support.Result;
 import org.folio.circulation.support.ServerErrorFailure;
 import org.folio.circulation.support.SingleRecordFetcher;
 import org.folio.circulation.support.http.client.Response;
+import org.folio.circulation.support.http.client.ResponseInterpreter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -149,7 +150,8 @@ public class LoanRepository {
 
   private CompletableFuture<Result<Loan>> refreshLoanRepresentation(Loan loan) {
     return new SingleRecordFetcher<>(loansStorageClient, "loan",
-      loan::replaceRepresentation)
+      new ResponseInterpreter<Loan>()
+        .mapJsonOnOk(loan::replaceRepresentation))
       .fetch(loan.getId());
   }
 
