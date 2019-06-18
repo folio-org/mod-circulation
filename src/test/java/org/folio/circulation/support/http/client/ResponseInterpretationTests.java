@@ -1,5 +1,6 @@
 package org.folio.circulation.support.http.client;
 
+import static org.apache.http.entity.ContentType.APPLICATION_JSON;
 import static org.apache.http.entity.ContentType.TEXT_PLAIN;
 import static org.folio.circulation.support.Result.of;
 import static org.hamcrest.CoreMatchers.containsString;
@@ -23,10 +24,21 @@ public class ResponseInterpretationTests {
 
     Result<JsonObject> result = new ResponseInterpreter<JsonObject>()
       .flatMapOn(200, response -> of(response::getJson))
-      .apply(new Response(200, body.toString(), ""));
+      .apply(new Response(200, body.toString(), APPLICATION_JSON.toString()));
 
     assertThat(result.succeeded(), is(true));
     assertThat(result.value(), is(body));
+  }
+
+  @Test
+  public void shouldApplyCorrectMapperWhenMultipleDefined() {
+    Result<String> result = new ResponseInterpreter<String>()
+      .flatMapOn(200, response -> of(() -> "incorrect"))
+      .flatMapOn(400, response -> of(() -> "correct"))
+      .apply(new Response(400, "", TEXT_PLAIN.toString()));
+
+    assertThat(result.succeeded(), is(true));
+    assertThat(result.value(), is("correct"));
   }
 
   @Test
