@@ -39,7 +39,7 @@ public class FetchSingleRecord<T> {
 
   public FetchSingleRecord<T> whenNotFound(Result<T> result) {
     return new FetchSingleRecord<>(recordType, client, interpreter
-      .flatMapOn(404, response -> result));
+      .on(404, result));
   }
 
   public CompletableFuture<Result<T>> fetch(String id) {

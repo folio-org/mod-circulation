@@ -1,7 +1,9 @@
 package org.folio.circulation.support.http.client;
 
+import static java.util.function.Function.identity;
 import static org.apache.http.entity.ContentType.APPLICATION_JSON;
 import static org.apache.http.entity.ContentType.TEXT_PLAIN;
+import static org.folio.circulation.support.ResponseMapping.usingJson;
 import static org.folio.circulation.support.Result.of;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.instanceOf;
@@ -23,7 +25,7 @@ public class ResponseInterpretationTests {
       .put("bar", "world");
 
     Result<JsonObject> result = new ResponseInterpreter<JsonObject>()
-      .flatMapOn(200, response -> of(response::getJson))
+      .flatMapOn(200, usingJson(identity()))
       .apply(new Response(200, body.toString(), APPLICATION_JSON.toString()));
 
     assertThat(result.succeeded(), is(true));
@@ -36,6 +38,16 @@ public class ResponseInterpretationTests {
       .flatMapOn(200, response -> of(() -> "incorrect"))
       .flatMapOn(400, response -> of(() -> "correct"))
       .apply(new Response(400, "", TEXT_PLAIN.toString()));
+
+    assertThat(result.succeeded(), is(true));
+    assertThat(result.value(), is("correct"));
+  }
+
+  @Test
+  public void canMapToKnownResult() {
+    Result<String> result = new ResponseInterpreter<String>()
+      .on(200, of(() -> "correct"))
+      .apply(new Response(200, "", TEXT_PLAIN.toString()));
 
     assertThat(result.succeeded(), is(true));
     assertThat(result.value(), is("correct"));

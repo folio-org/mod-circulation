@@ -40,6 +40,10 @@ public class ResponseInterpreter<T> {
     return new ResponseInterpreter<>(newMappers, unexpectedResponseMapper);
   }
 
+  public ResponseInterpreter<T> on(Integer status, Result<T> result) {
+    return flatMapOn(status, response -> result);
+  }
+
   public ResponseInterpreter<T> otherwise(
     Function<Response, Result<T>> unexpectedResponseMapper) {
 

@@ -106,8 +106,8 @@ public class RequestRepository {
 
   private CompletableFuture<Result<Boolean>> exists(String id) {
     return createSingleRequestFetcher(new ResponseInterpreter<Boolean>()
-      .flatMapOn(200, response -> of(() -> true))
-      .flatMapOn(404, response -> of(() -> false)))
+      .on(200, of(() -> true))
+      .on(404, of(() -> false)))
       .fetch(id);
   }
 
@@ -125,7 +125,7 @@ public class RequestRepository {
   private CompletableFuture<Result<Request>> fetchRequest(String id) {
     return createSingleRequestFetcher(new ResponseInterpreter<Request>()
       .flatMapOn(200, usingJson(Request::from))
-      .flatMapOn(404, response -> failed(new RecordNotFoundFailure("request", id))))
+      .on(404, failed(new RecordNotFoundFailure("request", id))))
       .fetch(id);
   }
 
