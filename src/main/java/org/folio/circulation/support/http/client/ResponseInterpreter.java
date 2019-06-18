@@ -27,10 +27,15 @@ class ResponseInterpreter<T> {
   }
 
   public Result<T> apply(Response response) {
+    try {
       final Integer statusCode = response.getStatusCode();
 
-    return maps.getOrDefault(statusCode, onUnexpectedResponse)
-      .apply(response);
+      return maps.getOrDefault(statusCode, onUnexpectedResponse)
+        .apply(response);
+    }
+    catch (Exception e) {
+      return failed(e);
+    }
   }
 
   private static <R> Result<R> defaultUnexpectedResponseMapper(Response response) {

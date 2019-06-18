@@ -2,6 +2,7 @@ package org.folio.circulation.support.http.client;
 
 import static org.apache.http.entity.ContentType.TEXT_PLAIN;
 import static org.folio.circulation.support.Result.of;
+import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
@@ -41,6 +42,25 @@ public class ResponseInterpretationTests {
 
     assertThat(cause.getReason(), is(
       "HTTP request to \"http://failing.com\" failed, status code: 500, response: \"Something went wrong\""));
+  }
+
+  @Test
+  public void shouldCaptureErrorWhenMappingFailsAtRuntime() {
+    final JsonObject body = new JsonObject()
+      .put("foo", "hello")
+      .put("bar", "world");
+
+    Result<JsonObject> result = new ResponseInterpreter<JsonObject>()
+      .flatMapOn(200, response -> { throw new RuntimeException("Not good"); })
+      .apply(new Response(200, body.toString(), ""));
+
+    assertThat(result.succeeded(), is(false));
+    assertThat(result.cause(), instanceOf(ServerErrorFailure.class));
+
+    final ServerErrorFailure cause = (ServerErrorFailure) result.cause();
+
+    assertThat(cause.getReason(), containsString("Not good"));
+    assertThat(cause.getReason(), containsString("RuntimeException"));
   }
 
   private Response serverError() {
