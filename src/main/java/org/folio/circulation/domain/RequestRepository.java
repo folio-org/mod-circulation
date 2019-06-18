@@ -104,10 +104,9 @@ public class RequestRepository {
   }
 
   private CompletableFuture<Result<Boolean>> exists(String id) {
-    return new SingleRecordFetcher<>(requestsStorageClient, "request",
-      new ResponseInterpreter<Boolean>()
-        .flatMapOn(200, response -> of(() -> true))
-        .flatMapOn(404, response -> of(() -> false)))
+    return createSingleRequestFetcher(new ResponseInterpreter<Boolean>()
+      .flatMapOn(200, response -> of(() -> true))
+      .flatMapOn(404, response -> of(() -> false)))
       .fetch(id);
   }
 
@@ -123,10 +122,9 @@ public class RequestRepository {
   }
 
   private CompletableFuture<Result<Request>> fetchRequest(String id) {
-    return FetchSingleRecord.<Request>forRecord("request")
-      .using(requestsStorageClient)
-      .mapTo(Request::from)
-      .whenNotFound(failed(new RecordNotFoundFailure("request", id)))
+    return createSingleRequestFetcher(new ResponseInterpreter<Request>()
+      .mapJsonOnOk(Request::from)
+      .flatMapOn(404, response -> failed(new RecordNotFoundFailure("request", id))))
       .fetch(id);
   }
 
@@ -233,5 +231,11 @@ public class RequestRepository {
 
   private CompletableFuture<Result<ServicePoint>> getServicePoint(String servicePointId) {
     return servicePointRepository.getServicePointById(servicePointId);
+  }
+
+  private <R> SingleRecordFetcher<R> createSingleRequestFetcher(
+    ResponseInterpreter<R> interpreter) {
+
+    return new SingleRecordFetcher<>(requestsStorageClient, "request", interpreter);
   }
 }
