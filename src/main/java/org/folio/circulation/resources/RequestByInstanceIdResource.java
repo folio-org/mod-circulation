@@ -108,10 +108,11 @@ public class RequestByInstanceIdResource extends Resource {
     finder.getItemsByInstanceId(requestByInstanceIdRequest.getInstanceId())
       .thenApply(r -> r.next(items -> segregateItemsList(items, requestRelatedRecords)))
       .thenApply(r -> r.next(RequestByInstanceIdResource::rankItemsByMatchingServicePoint))
-      .thenComposeAsync(r -> r.after(relatedRecords -> getLoanItems(relatedRecords, clients)))
+      .thenCompose(r -> r.after(relatedRecords -> getLoanItems(relatedRecords, clients)))
      // .thenComposeAsync(r -> r.after(relatedRecords -> getRequestQueues(relatedRecords, clients))
       .thenCombine(getRequestQueues(requestRelatedRecords, clients),
-                        this::combineWithUnavailableItems)
+        (itemDueDateMap, itemRequestQueueSizeMap) ->
+          combineWithUnavailableItems(itemDueDateMap, itemRequestQueueSizeMap, requestRelatedRecords))
       .thenApply( r -> r.next(RequestByInstanceIdResource::instanceToItemRequests))
       .thenCompose( r -> r.after( requests -> placeRequests(requests, clients)))
       .thenApply(r -> r.map(RequestAndRelatedRecords::getRequest))
@@ -124,15 +125,6 @@ public class RequestByInstanceIdResource extends Resource {
           ServerErrorResponse.internalError(routingContext.response(), reason);
           return null;
       });
-  }
-
-
-  private void sendAvailableNotice(CheckInProcessRecords records, Request firstRequest) {
-    servicePointRepository.getServicePointForRequest(firstRequest)
-      .thenApply(r -> r.map(firstRequest::withPickupServicePoint))
-      .thenCombine(userRepository.getUserByBarcode(firstRequest.getRequesterBarcode()),
-        (requestResult, userResult) -> Result.combine(requestResult, userResult,
-          (request, user) -> sendAvailableNotice(request, user, records)));
   }
 
   private Result<InstanceRequestRelatedRecords> segregateItemsList(Collection<Item> items,
@@ -175,6 +167,11 @@ public class RequestByInstanceIdResource extends Resource {
   private CompletableFuture<Result<Map<String, DateTime>>> getLoanItems(
     InstanceRequestRelatedRecords instanceRequestPackage, Clients clients) {
 
+    if (instanceRequestPackage.getUnsortedUnavailableItems() == null ||
+        instanceRequestPackage.getUnsortedUnavailableItems().isEmpty()) {
+      return CompletableFuture.completedFuture(succeeded(null));
+    }
+
     LoanRepository loanRepository = new LoanRepository(clients);
     List<CompletableFuture<Result<Loan>>> loanFutures = new ArrayList<>();
 
@@ -183,7 +180,8 @@ public class RequestByInstanceIdResource extends Resource {
       loanFutures.add(loanRepository.findOpenLoanForItem(item));
     }
 
-   return CompletableFuture.allOf(loanFutures.toArray(new CompletableFuture[loanFutures.size()]))
+  // return CompletableFuture.allOf(loanFutures.toArray(new CompletableFuture[loanFutures.size()]))
+     /*
       .thenApply(dd -> {
         Map<String, DateTime> itemDueDateMap = new HashMap<>();
         loanFutures.stream()
@@ -193,10 +191,12 @@ public class RequestByInstanceIdResource extends Resource {
 
         return succeeded(itemDueDateMap);
       });
+*/
 
-    /*
-    CompletableFuture.allOf(loanFutures.toArray(new CompletableFuture[loanFutures.size()]))
+   return CompletableFuture.allOf(loanFutures.toArray(new CompletableFuture[loanFutures.size()]))
       .thenApply(dd -> {
+        Map<String, DateTime> itemDueDateMap = new HashMap<>();
+
         for (CompletableFuture<Result<Loan>> aLoanFuture : loanFutures) {
           Result<Loan> aLoanResult = aLoanFuture.join();
           if (aLoanResult.succeeded()) {
@@ -204,13 +204,17 @@ public class RequestByInstanceIdResource extends Resource {
           }
         }
         instanceRequestPackage.setItemIdDueDateMap(itemDueDateMap);
+        return succeeded(itemDueDateMap);
       });
-
-    */
   }
 
   private CompletableFuture<Result<Map<Item, Integer>>> getRequestQueues(
     InstanceRequestRelatedRecords instanceRequestPackage, Clients clients) {
+
+    if (instanceRequestPackage.getUnsortedUnavailableItems() == null ||
+      instanceRequestPackage.getUnsortedUnavailableItems().isEmpty()) {
+      return CompletableFuture.completedFuture(succeeded(null));
+    }
 
     RequestQueueRepository queueRepository = RequestQueueRepository.using(clients);
     Map<Item, CompletableFuture<Result<RequestQueue>>> itemRequestQueueMap = new HashMap<>();
@@ -241,53 +245,57 @@ public class RequestByInstanceIdResource extends Resource {
   }
 
   private Result<InstanceRequestRelatedRecords> combineWithUnavailableItems(
-    Result<Map<String, DateTime>> itemDueDateMap, Result<Map<Item, Integer>> itemRequestQueueSizeMap){
+    Result<Map<String, DateTime>> itemDueDateMapResult,
+    Result<Map<Item, Integer>> itemRequestQueueSizeMapResult,
+    InstanceRequestRelatedRecords records){
 
-    if (itemDueDateMap.succeeded() && itemRequestQueueSizeMap.succeeded()) {
+    if (itemDueDateMapResult.succeeded() && itemRequestQueueSizeMapResult.succeeded()) {
+      Map<String, DateTime> itemDueDateMap = itemDueDateMapResult.value();
+      Map<Item, Integer> itemQueueSizeMap = itemRequestQueueSizeMapResult.value();
 
-    final List<Item> unsortedUnavailableItems = records.getUnsortedUnavailableItems();
+      if (itemDueDateMap == null && itemQueueSizeMap == null) {
+        return succeeded(records);
+      }
 
-    Map<Item, CompletableFuture<Result<RequestQueue>>> itemRequestQueueMap = new HashMap<>();
+      //Sort the map
+      Map<Item, Integer> sortedMap = sortRequestQueues(itemQueueSizeMap, itemDueDateMap);
 
-    if (unsortedUnavailableItems == null || unsortedUnavailableItems.isEmpty()) {
-      return CompletableFuture.completedFuture(succeeded(records));
-    }
-
-
-
-        //Sort the map
-        Map<Item, RequestQueue> sortedMap = sortRequestQueues(itemQueueSizeMap);
-
-        LinkedList<Item> finalOrdedList = new LinkedList<>();
-
-        finalOrdedList.addAll(sortedMap.keySet());
+      LinkedList<Item> finalOrdedList = new LinkedList<>(sortedMap.keySet());
         //put the items that weren't able to retrieve RequestQueues for on the bottom of the list
-        finalOrdedList.addAll(failedQueuesItemList);
+       // finalOrdedList.addAll(failedQueuesItemList);
 
         records.setSortedUnavailableItems(finalOrdedList);
 
         return succeeded(records);
-      });
-    }
+      }
+    return succeeded(records);
   }
 
 
-  private static Map<Item, RequestQueue> sortRequestQueues(Map<Item, RequestQueue> unsortedItems) {
+  private static Map<Item, Integer> sortRequestQueues(Map<Item, Integer> unsortedItems,
+                                                      Map<String, DateTime> itemDueDateMap ) {
     return unsortedItems
       .entrySet()
       .stream()
-      .sorted(compareQueueLengths())
+      .sorted(compareQueueLengths(itemDueDateMap))
       .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue,
         (oldValue, newValue) -> oldValue, (LinkedHashMap::new)));
   }
 
-  private static Comparator<Map.Entry<Item, RequestQueue>> compareQueueLengths() {
+  private static Comparator<Map.Entry<Item, Integer>> compareQueueLengths( Map<String, DateTime> itemDueDateMap) {
     // Sort the list
-    return (q1, q2) -> {
-      RequestQueue queue1 = q1.getValue();
-      RequestQueue queue2 = q2.getValue();
+    return (q1Size, q2Size) -> {
+      int result = q1Size.getValue() - q2Size.getValue();
 
-      int result = queue1.size() - queue2.size();
+      if (result == 0) {
+        Item q1Item = q1Size.getKey();
+        Item q2Item = q2Size.getKey();
+
+        DateTime q1ItemDueDate = itemDueDateMap.get(q1Item.getItemId());
+        DateTime q2ItemDueDate = itemDueDateMap.get(q2Item.getItemId());
+
+        return q1ItemDueDate.compareTo(q2ItemDueDate);
+      }
       return result;
     };
   }

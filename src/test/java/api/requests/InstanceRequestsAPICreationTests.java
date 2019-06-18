@@ -434,15 +434,15 @@ public class InstanceRequestsAPICreationTests extends APITests {
     DateTime instanceRequestDateRequestExpirationDate = instanceRequestDate.plusDays(30);
 
     LocalDate requestDate = new LocalDate(2017, 7, 22);
-    LocalDate requestExpirationDate1 = requestDate.plusDays(30);
-    LocalDate requestExpirationDate2 = requestDate.minusDays(30);
-
     IndividualResource instance = instancesFixture.basedUponDunkirk();
     IndividualResource holdings = holdingsFixture.defaultWithHoldings(instance.getId());
 
     //create 2 copies with no location id's assigned.
-    final IndividualResource item1 = itemsFixture.basedUponDunkirkWithCustomHoldingAndLocationAndCheckedOut(holdings.getId(), null);
-    final IndividualResource item2 = itemsFixture.basedUponDunkirkWithCustomHoldingAndLocationAndCheckedOut(holdings.getId(), null);
+    final IndividualResource item1 = itemsFixture.basedUponDunkirkWithCustomHoldingAndLocation(holdings.getId(), null);
+    final IndividualResource item2 = itemsFixture.basedUponDunkirkWithCustomHoldingAndLocation(holdings.getId(), null);
+
+    loansFixture.createLoan(item1, usersFixture.james(),  DateTime.now());
+    loansFixture.checkOutByBarcode(item2, usersFixture.rebecca(), DateTime.now().plusDays(5));
 
     IndividualResource instanceRequester = usersFixture.charlotte();
 
