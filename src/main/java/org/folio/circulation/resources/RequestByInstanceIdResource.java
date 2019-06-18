@@ -8,18 +8,16 @@ import static org.folio.circulation.support.ValidationErrorFailure.failedValidat
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 
 import java.lang.invoke.MethodHandles;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 import org.folio.circulation.domain.CreateRequestService;
+import org.folio.circulation.domain.InstanceRequestRelatedRecords;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.LoanRepository;
 import org.folio.circulation.domain.RequestAndRelatedRecords;
+import org.folio.circulation.domain.RequestQueue;
 import org.folio.circulation.domain.RequestQueueRepository;
 import org.folio.circulation.domain.RequestRepository;
 import org.folio.circulation.domain.RequestRepresentation;
@@ -35,13 +33,8 @@ import org.folio.circulation.domain.representations.RequestByInstanceIdRequest;
 import org.folio.circulation.domain.validation.ProxyRelationshipValidator;
 import org.folio.circulation.domain.validation.ServicePointPickupLocationValidator;
 import org.folio.circulation.storage.ItemByInstanceIdFinder;
-import org.folio.circulation.support.Clients;
-import org.folio.circulation.support.CreatedJsonResponseResult;
-import org.folio.circulation.support.ItemRepository;
-import org.folio.circulation.support.ResponseWritableResult;
-import org.folio.circulation.support.Result;
-import org.folio.circulation.support.RouteRegistration;
-import org.folio.circulation.support.ServerErrorFailure;
+import org.folio.circulation.support.*;
+import org.folio.circulation.support.http.server.ServerErrorResponse;
 import org.folio.circulation.support.http.server.WebContext;
 import org.joda.time.format.ISODateTimeFormat;
 import org.slf4j.Logger;
@@ -55,6 +48,7 @@ import io.vertx.ext.web.RoutingContext;
 public class RequestByInstanceIdResource extends Resource {
 
   private final Logger log;
+  private static final String ITEM_ID_FIELD = "itemId";
 
   public RequestByInstanceIdResource(HttpClient client) {
     super(client);
@@ -89,17 +83,25 @@ public class RequestByInstanceIdResource extends Resource {
 
     final ItemByInstanceIdFinder finder = new ItemByInstanceIdFinder(clients.holdingsStorage(), itemRepository);
 
-    final UUID pickupServicePointId = requestByInstanceIdRequest.getPickupServicePointId();
+    final InstanceRequestRelatedRecords requestRelatedRecords = new InstanceRequestRelatedRecords();
+    requestRelatedRecords.setRequestByInstanceIdRequest(requestByInstanceIdRequest);
 
     finder.getItemsByInstanceId(requestByInstanceIdRequest.getInstanceId())
-      .thenApply(r -> r.next(this::getAvailableItems))
-      .thenApply(r -> r.next(items -> rankItemsByMatchingServicePoint(items, pickupServicePointId)))
-      .thenApply( r -> r.next( itemsFound -> instanceToItemRequests(requestByInstanceIdRequest, itemsFound)))
+      .thenApply(r -> r.next(items -> segregateItemsList(items, requestRelatedRecords)))
+      .thenApply(r -> r.next(RequestByInstanceIdResource::rankItemsByMatchingServicePoint))
+      .thenCompose(r -> r.after(relatedRecords -> combineWithUnavailableItems(relatedRecords, clients)))
+      .thenApply( r -> r.next(RequestByInstanceIdResource::instanceToItemRequests))
       .thenCompose( r -> r.after( requests -> placeRequests(requests, clients)))
       .thenApply(r -> r.map(RequestAndRelatedRecords::getRequest))
       .thenApply(r -> r.map(new RequestRepresentation()::extendedRepresentation))
       .thenApply(CreatedJsonResponseResult::from)
-      .thenAccept(result -> result.writeTo(routingContext.response()));
+      .thenAccept(result -> result.writeTo(routingContext.response()))
+      .exceptionally( err -> {
+          String reason = "Error processing title-level request";
+          log.error(reason, err);
+          ServerErrorResponse.internalError(routingContext.response(), reason);
+          return null;
+      });
   }
 
   private CompletableFuture<Result<RequestAndRelatedRecords>> placeRequests(List<JsonObject> itemRequestRepresentations,
@@ -116,17 +118,22 @@ public class RequestByInstanceIdResource extends Resource {
       new RequestPolicyRepository(clients),
       loanRepository, requestNoticeSender);
 
-    return placeRequest(itemRequestRepresentations, 0, createRequestService, clients, loanRepository);
+    return placeRequest(itemRequestRepresentations, 0, createRequestService,
+                        clients, loanRepository, new ArrayList<>());
   }
 
   private CompletableFuture<Result<RequestAndRelatedRecords>> placeRequest(List<JsonObject> itemRequests, int startIndex,
                                                                            CreateRequestService createRequestService, Clients clients,
-                                                                           LoanRepository loanRepository) {
+                                                                           LoanRepository loanRepository, List<String> errors) {
     final UserRepository userRepository = new UserRepository(clients);
 
+    log.debug("RequestByInstanceIdResource.placeRequest, startIndex={}, itemRequestSize={}", startIndex, itemRequests.size());
     if (startIndex >= itemRequests.size()) {
+
+      String aggregateFailures = String.format("%n%s", String.join("%n", errors));
+
       return CompletableFuture.completedFuture(failed(new ServerErrorFailure(
-        "Failed to place a request for the title")));
+        "Failed to place a request for the title. Reasons: " + aggregateFailures)));
     }
 
     JsonObject currentItemRequest = itemRequests.get(startIndex);
@@ -146,38 +153,49 @@ public class RequestByInstanceIdResource extends Resource {
       .thenCompose(r -> r.after(createRequestService::createRequest))
       .thenCompose(r -> {
           if (r.succeeded()) {
+            log.debug("RequestByInstanceIdResource.placeRequest: succeeded creating request for item {}",
+                currentItemRequest.getString(ITEM_ID_FIELD));
             return CompletableFuture.completedFuture(r);
           } else {
-            log.debug("Failed to create request for {}", currentItemRequest.getString("id"));
-            return placeRequest(itemRequests, startIndex +1, createRequestService, clients, loanRepository);
+            String reason = getErrorMessage(r.cause());
+            errors.add(reason);
+
+            log.debug("Failed to create request for item {} with reason: {}", currentItemRequest.getString(ITEM_ID_FIELD), reason);
+            return placeRequest(itemRequests, startIndex +1, createRequestService, clients, loanRepository, errors);
           }
         });
   }
 
-  public static Result<List<Item>> rankItemsByMatchingServicePoint(
-    Collection<Item> items, UUID pickupServicePointId) {
+  public static Result<InstanceRequestRelatedRecords> rankItemsByMatchingServicePoint(InstanceRequestRelatedRecords record) {
+
+    final Collection<Item> unsortedAvailableItems = record.getUnsortedAvailableItems();
+    final UUID pickupServicePointId = record.getRequestByInstanceIdRequest().getPickupServicePointId();
 
     return of(() -> {
-      List<Item> itemsAtLocationServedByPickupPoint = items.stream()
-        .filter(item -> item.homeLocationIsServedBy(pickupServicePointId))
-        .collect(Collectors.toList());
 
-      List<Item> itemsNotAtLocationServedByPickupPoint = items.stream()
-        .filter(item -> !item.homeLocationIsServedBy(pickupServicePointId))
-        .collect(Collectors.toList());
+      Map<Boolean, List<Item>> itemsPartitionedByLocationServedByPickupPoint = unsortedAvailableItems.stream()
+        .collect(Collectors.partitioningBy(i -> Optional.ofNullable(i.getLocation())
+          .map(location -> location.homeLocationIsServedBy(pickupServicePointId))
+          .orElse(false)));
 
-      final ArrayList<Item> rankedItems = new ArrayList<>();
+      final List<Item> rankedItems = new LinkedList<>();
 
       //Compose the final list of Items with the matchingItems (items that has matching service pointID) on top.
-      rankedItems.addAll(itemsAtLocationServedByPickupPoint);
-      rankedItems.addAll(itemsNotAtLocationServedByPickupPoint);
+      rankedItems.addAll(itemsPartitionedByLocationServedByPickupPoint.get(true));
+      rankedItems.addAll(itemsPartitionedByLocationServedByPickupPoint.get(false));
 
-      return rankedItems;
+      record.setSortedAvailableItems(rankedItems);
+
+      return record;
     });
   }
 
-  public static Result<LinkedList<JsonObject>> instanceToItemRequests(RequestByInstanceIdRequest requestByInstanceIdRequest, Collection<Item> items) {
-    if (items == null || items.isEmpty()) {
+  static Result<LinkedList<JsonObject>> instanceToItemRequests( InstanceRequestRelatedRecords requestRecords) {
+
+    final RequestByInstanceIdRequest requestByInstanceIdRequest = requestRecords.getRequestByInstanceIdRequest();
+    final List<Item> combinedItems = requestRecords.getCombineItemsList();
+
+    if (combinedItems == null || combinedItems.isEmpty()) {
       return failedValidation("Cannot create request objects when items list is null or empty", "items", "null");    }
 
     RequestType[] types = RequestType.values();
@@ -185,19 +203,21 @@ public class RequestByInstanceIdResource extends Resource {
 
     final String defaultFulfilmentPreference = "Hold Shelf";
 
-    for (Item item: items) {
+    for (Item item: combinedItems) {
       for (RequestType reqType : types) {
         if (reqType != RequestType.NONE) {
 
           JsonObject requestBody = new JsonObject();
-          requestBody.put("itemId", item.getItemId());
+          requestBody.put(ITEM_ID_FIELD, item.getItemId());
           requestBody.put("requestDate", requestByInstanceIdRequest.getRequestDate().toString(ISODateTimeFormat.dateTime()));
           requestBody.put("requesterId", requestByInstanceIdRequest.getRequesterId().toString());
           requestBody.put("pickupServicePointId", requestByInstanceIdRequest.getPickupServicePointId().toString());
           requestBody.put("fulfilmentPreference", defaultFulfilmentPreference);
-          requestBody.put("requestExpirationDate",
-            requestByInstanceIdRequest.getRequestExpirationDate().toString(ISODateTimeFormat.dateTime()));
-          requestBody.put("requestType", reqType.name());
+          requestBody.put("requestType", reqType.getValue());
+          if (requestByInstanceIdRequest.getRequestExpirationDate() != null) {
+            requestBody.put("requestExpirationDate",
+              requestByInstanceIdRequest.getRequestExpirationDate().toString(ISODateTimeFormat.dateTime()));
+          }
 
           requests.add(requestBody);
         }
@@ -206,14 +226,95 @@ public class RequestByInstanceIdResource extends Resource {
     return succeeded(requests);
   }
 
-  private Result<Collection<Item>> getAvailableItems(Collection<Item> items) {
+  private Result<InstanceRequestRelatedRecords> segregateItemsList(Collection<Item> items,
+                                                                          InstanceRequestRelatedRecords requestRelatedRecords ){
     if (items == null ||items.isEmpty()) {
       return failedValidation("Items list is null or empty", "items", "null");
     }
 
-    return succeeded(items.stream()
-      .filter(Item::isAvailable)
-      .collect(Collectors.toList()));
+    log.debug("RequestByInstanceIdResource.segregateItemsList: Found {} items", items.size());
+
+    Map<Boolean, List<Item>> partitions = items.stream()
+      .collect(Collectors.partitioningBy(Item::isAvailable));
+
+    requestRelatedRecords.setUnsortedAvailableItems(partitions.get(true));
+    requestRelatedRecords.setUnsortedUnavailableItems(partitions.get(false));
+
+    return succeeded(requestRelatedRecords);
+  }
+
+  private CompletableFuture<Result<InstanceRequestRelatedRecords>> combineWithUnavailableItems(
+                                              InstanceRequestRelatedRecords records, Clients clients){
+
+    RequestQueueRepository queueRepository = RequestQueueRepository.using(clients);
+
+    final List<Item> unsortedUnavailableItems = records.getUnsortedUnavailableItems();
+
+    Map<Item, CompletableFuture<Result<RequestQueue>>> itemRequestQueueMap = new HashMap<>();
+    if (unsortedUnavailableItems == null || unsortedUnavailableItems.isEmpty()) {
+      return CompletableFuture.completedFuture(succeeded(records));
+    }
+
+    for (Item item : unsortedUnavailableItems) {
+      itemRequestQueueMap.put(item, queueRepository.getRequestQueueWithoutItemLookup(item.getItemId()));
+    }
+
+    final Collection<CompletableFuture<Result<RequestQueue>>> requestQueueFutures = itemRequestQueueMap.values();
+
+    //Collect the RequestQueue objects once they come back
+    return CompletableFuture.allOf(requestQueueFutures.toArray(new CompletableFuture[requestQueueFutures.size()]))
+      .thenApply(x -> {
+        Map<Item, RequestQueue> itemQueueSizeMap = new HashMap<>();
+        List<Item> failedQueuesItemList = new LinkedList<>(); //to preserve the order it was found.
+
+        for (Map.Entry<Item, CompletableFuture<Result<RequestQueue>>> entry : itemRequestQueueMap.entrySet()) {
+          Result<RequestQueue> requestQueueResult = entry.getValue().join();
+          if (requestQueueResult.succeeded()) {
+            itemQueueSizeMap.put(entry.getKey(), requestQueueResult.value());
+          } else {
+            failedQueuesItemList.add(entry.getKey());
+          }
+        }
+
+        if (failedQueuesItemList.size() == requestQueueFutures.size()
+            && (records.getSortedAvailableItems() == null || records.getSortedAvailableItems().isEmpty())) {
+          //fail the requests when there are no items to make requests from.
+          log.error("Failed to find request queues for all items of instanceId {}",
+                        unsortedUnavailableItems.get(0).getInstanceId());
+          return failed(new ServerErrorFailure("Unable to find an item to place a request"));
+        }
+        //Sort the map
+        Map<Item, RequestQueue> sortedMap = sortRequestQueues(itemQueueSizeMap);
+
+        LinkedList<Item> finalOrdedList = new LinkedList<>();
+
+        finalOrdedList.addAll(sortedMap.keySet());
+        //put the items that weren't able to retrieve RequestQueues for on the bottom of the list
+        finalOrdedList.addAll(failedQueuesItemList);
+
+        records.setSortedUnavailableItems(finalOrdedList);
+
+        return succeeded(records);
+      });
+  }
+
+  private static Map<Item, RequestQueue> sortRequestQueues(Map<Item, RequestQueue> unsortedItems) {
+    return unsortedItems
+      .entrySet()
+      .stream()
+      .sorted(compareQueueLengths())
+      .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue,
+        (oldValue, newValue) -> oldValue, (LinkedHashMap::new)));
+  }
+
+  private static Comparator<Map.Entry<Item, RequestQueue>> compareQueueLengths() {
+    // Sort the list
+    return (q1, q2) -> {
+      RequestQueue queue1 = q1.getValue();
+      RequestQueue queue2 = q2.getValue();
+
+      return queue1.size() - queue2.size();
+    };
   }
 
   private ProxyRelationshipValidator createProxyRelationshipValidator(
@@ -223,5 +324,20 @@ public class RequestByInstanceIdResource extends Resource {
     return new ProxyRelationshipValidator(clients, () ->
       singleValidationError("proxyUserId is not valid",
         PROXY_USER_ID, representation.getString(PROXY_USER_ID)));
+  }
+
+  static String getErrorMessage(HttpFailure failure) {
+    String reason = "";
+
+    if (failure instanceof ServerErrorFailure ){
+      reason = ((ServerErrorFailure) failure).reason;
+    } else if (failure instanceof ValidationErrorFailure){
+      reason = failure.toString();
+    } else if (failure instanceof BadRequestFailure){
+      reason = ((BadRequestFailure) failure).getReason();
+    } else if (failure instanceof ForwardOnFailure) {
+      reason = ((ForwardOnFailure) failure).getFailureResponse().getBody();
+    }
+    return reason;
   }
 }

@@ -333,6 +333,28 @@ public interface Result<T> {
     return next(value -> succeeded(map.apply(value)));
   }
 
+  /**
+   * Map the cause of a failed result to a new result (of the same type)
+   *
+   * Responds with a new result with the outcome of applying the map to the current
+   * failure cause unless current result has succeeded (or the mapping throws an exception)
+   *
+   * @param map function to apply to value of result
+   * @return success when result succeeded and map is applied successfully, failure otherwise
+   */
+  default Result<T> mapFailure(Function<HttpFailure, Result<T>> map) {
+    if(succeeded()) {
+      return Result.of(this::value);
+    }
+
+    try {
+      return map.apply(cause());
+    }
+    catch(Exception e) {
+      return failed(e);
+    }
+  }
+
   default T orElse(T other) {
     return succeeded()
       ? value()

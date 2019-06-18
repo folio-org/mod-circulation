@@ -108,6 +108,10 @@ public class InterfaceUrls {
     return circulationModuleUrl("/circulation/requests" + subPath);
   }
 
+  public static URL requestReportUrl(String servicePointId) {
+    return circulationModuleUrl("/circulation/requests-reports/hold-shelf-clearance/" + servicePointId);
+  }
+
   public static URL requestQueueUrl(UUID itemId) {
     return requestsUrl(String.format("/queue/%s", itemId));
   }

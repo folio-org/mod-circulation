@@ -1,8 +1,10 @@
 package org.folio.circulation.support;
 
+import static java.util.Objects.isNull;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.function.Function.identity;
 import static org.folio.circulation.support.Result.failed;
+import static org.folio.circulation.support.Result.ofAsync;
 import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.ResultBinding.mapResult;
 
@@ -18,13 +20,12 @@ import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.ItemRelatedRecord;
+import org.folio.circulation.domain.Location;
 import org.folio.circulation.domain.LocationRepository;
 import org.folio.circulation.domain.MaterialTypeRepository;
 import org.folio.circulation.domain.MultipleRecords;
-import org.folio.circulation.domain.Request;
-import org.folio.circulation.domain.RequestRepository;
+import org.folio.circulation.domain.ServicePoint;
 import org.folio.circulation.domain.ServicePointRepository;
-import org.folio.circulation.domain.policy.RequestPolicyRepository;
 import org.folio.circulation.support.http.client.Response;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -57,7 +58,7 @@ public class ItemRepository {
       clients.holdingsStorage(),
       clients.instancesStorage(),
       clients.loanTypesStorage(),
-      new LocationRepository(clients),
+      LocationRepository.using(clients),
       new MaterialTypeRepository(clients),
       new ServicePointRepository(clients),
       fetchLocation, fetchMaterialType, fetchLoanType);
@@ -94,11 +95,22 @@ public class ItemRepository {
   private CompletableFuture<Result<Item>> fetchLocation(Result<Item> result) {
     return fetchLocation
       ? result.combineAfter(locationRepository::getLocation, Item::withLocation)
-          .thenComposeAsync(itemResult ->
-          itemResult.combineAfter(item ->
-              servicePointRepository.getServicePointById(
-                item.getPrimaryServicePointId()), Item::withPrimaryServicePoint))
+          .thenComposeAsync(this::fetchPrimaryServicePoint)
       : completedFuture(result);
+  }
+
+  private CompletableFuture<Result<Item>> fetchPrimaryServicePoint(Result<Item> itemResult) {
+    return itemResult.combineAfter(item ->
+      fetchPrimaryServicePoint(item.getLocation()), Item::withPrimaryServicePoint);
+  }
+
+  private CompletableFuture<Result<ServicePoint>> fetchPrimaryServicePoint(Location location) {
+    if(isNull(location) || isNull(location.getPrimaryServicePointId())) {
+      return ofAsync(() -> null);
+    }
+
+    return servicePointRepository.getServicePointById(
+      location.getPrimaryServicePointId());
   }
 
   private CompletableFuture<Result<Item>> fetchMaterialType(Result<Item> result) {

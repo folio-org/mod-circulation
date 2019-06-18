@@ -2,6 +2,7 @@ package org.folio.circulation.resources;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.support.Result.failed;
+import static org.folio.circulation.support.Result.ofAsync;
 import static org.folio.circulation.support.Result.succeeded;
 
 import java.util.concurrent.CompletableFuture;
@@ -73,9 +74,11 @@ class RequestFromRepresentationService {
 
   private CompletableFuture<Result<User>> getUserForExistingLoan(Request request) {
     Loan loan = request.getLoan();
+
     if (loan == null) {
-      return CompletableFuture.completedFuture(succeeded(null));
+      return ofAsync(() -> null);
     }
+
     return userRepository.getUser(loan.getUserId());
   }
 

@@ -5,9 +5,11 @@ import static api.support.builders.ItemBuilder.PAGED;
 import static api.support.builders.RequestBuilder.CLOSED_FILLED;
 import static api.support.builders.RequestBuilder.OPEN_NOT_YET_FILLED;
 import static api.support.matchers.ItemStatusCodeMatcher.hasItemStatus;
+import static api.support.matchers.ResponseStatusCodeMatcher.hasStatus;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static api.support.matchers.ValidationErrorMatchers.hasParameter;
+import static org.folio.HttpStatus.HTTP_OK;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
@@ -46,9 +48,11 @@ public class PageRequestWorkflowTests extends APITests {
 
     loansFixture.checkOutByBarcode(smallAngryPlanet, jessica);
 
-    Response request = requestsClient.getById(requestByJessica.getId());
+    Response getByIdResponse = requestsClient.getById(requestByJessica.getId());
 
-    assertThat(request.getJson().getString("status"), is(CLOSED_FILLED));
+    assertThat(getByIdResponse, hasStatus(HTTP_OK));
+
+    assertThat(getByIdResponse.getJson().getString("status"), is(CLOSED_FILLED));
 
     smallAngryPlanet = itemsClient.get(smallAngryPlanet);
 
@@ -82,9 +86,11 @@ public class PageRequestWorkflowTests extends APITests {
         "because it has been requested by another patron"),
       hasParameter("userBarcode", rebecca.getJson().getString("barcode")))));
 
-    Response request = requestsClient.getById(requestByJessica.getId());
+    Response getByIdResponse = requestsClient.getById(requestByJessica.getId());
 
-    assertThat(request.getJson().getString("status"), is(OPEN_NOT_YET_FILLED));
+    assertThat(getByIdResponse, hasStatus(HTTP_OK));
+
+    assertThat(getByIdResponse.getJson().getString("status"), is(OPEN_NOT_YET_FILLED));
 
     smallAngryPlanet = itemsClient.get(smallAngryPlanet);
 

@@ -1762,6 +1762,55 @@ public class RequestsAPICreationTests extends APITests {
       sentNotices, Matchers.empty());
   }
 
+  @Test
+  public void canCreatePagedRequestWithNullProxyUser()
+    throws InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    MalformedURLException {
+
+    //Set up the item's initial status to be AVAILABLE
+    final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final String itemInitialStatus = smallAngryPlanet.getResponse().getJson().getJsonObject("status").getString("name");
+    assertThat(itemInitialStatus, is(ItemStatus.AVAILABLE.getValue()));
+
+    //Attempt to create a page request on it.  Final expected status is PAGED
+    final IndividualResource servicePoint = servicePointsFixture.cd1();
+    final IndividualResource pagedRequest = requestsClient.create(new RequestBuilder()
+      .page()
+      .forItem(smallAngryPlanet)
+      .withPickupServicePointId(servicePoint.getId())
+      .by(usersFixture.james())
+      .withUserProxyId(null));
+
+    String finalStatus = pagedRequest.getResponse().getJson().getJsonObject("item").getString("status");
+    assertThat(pagedRequest.getJson().getString("requestType"), is(RequestType.PAGE.getValue()));
+    assertThat(pagedRequest.getResponse(), hasStatus(HTTP_CREATED));
+    assertThat(finalStatus, is(ItemStatus.PAGED.getValue()));
+  }
+
+  @Test
+  public void requestCreationDoesNotFailWhenCirculationRulesReferenceInvalidNoticePolicyId()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    setInvalidNoticePolicyReferenceInRules("some-invalid-policy");
+
+    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final IndividualResource steve = usersFixture.steve();
+
+    requestsFixture.place(new RequestBuilder()
+      .open()
+      .page()
+      .forItem(smallAngryPlanet)
+      .by(steve)
+      .withRequestDate(DateTime.now())
+      .fulfilToHoldShelf()
+      .withPickupServicePointId(servicePointsFixture.cd1().getId()));
+  }
+
   private void mockClockManagerToReturnFixedTime(DateTime dateTime) {
     ClockManager.getClockManager().setClock(
       Clock.fixed(

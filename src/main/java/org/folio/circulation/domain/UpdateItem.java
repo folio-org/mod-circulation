@@ -7,6 +7,7 @@ import static org.folio.circulation.support.Result.of;
 import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
@@ -63,7 +64,9 @@ public class UpdateItem {
         return succeeded(item.inTransitToServicePoint(pickUpServicePointId));
       }
     } else {
-      if(item.homeLocationIsServedBy(checkInServicePointId)) {
+      if(Optional.ofNullable(item.getLocation())
+        .map(location -> location.homeLocationIsServedBy(checkInServicePointId))
+        .orElse(false)) {
         return succeeded(item.available());
       }
       else {

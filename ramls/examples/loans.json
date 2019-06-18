@@ -21,7 +21,17 @@
         "name": "Main Library"
       },
       "action": "checkedout",
-      "renewalCount": 1
+      "renewalCount": 1,
+      "loanPolicyId" : "e2af3ba4-6801-4722-be45-d7a49d13564d",
+      "loanPolicy": {
+        "name" : "Can Circulate Rolling"
+      },
+      "borrower" : {
+        "firstName" : "FirstName",
+        "lastName" : "LastName",
+        "middleName" : "MiddleName",
+        "barcode" : "109322966913845"
+      }
     },
     {
       "id": "1d09af65-aeaa-499c-80cb-d52847b75a60",
@@ -42,7 +52,17 @@
       "status": {
         "name": "Closed"
       },
-      "action": "checkedin"
+      "action": "checkedin",
+      "loanPolicyId" : "e2af3ba4-6801-4722-be45-d7a49d13564d",
+      "loanPolicy": {
+        "name" : "Can Circulate Rolling"
+      },
+      "borrower" : {
+        "firstName" : "FirstName",
+        "lastName" : "LastName",
+        "middleName" : "MiddleName",
+        "barcode" : "102322966933845"
+      }
     }
   ],
   "totalRecords": 2

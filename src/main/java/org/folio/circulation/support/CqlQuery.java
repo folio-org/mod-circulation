@@ -41,6 +41,13 @@ public class CqlQuery {
       format("%s==(%s)", indexName, join(" or ", wrapValuesInQuotes(filteredValues))), none()));
   }
 
+  /**
+   * Uses greater than ('>'), as not equals operator ('<>') is not supported in CQL at present
+   */
+  public static Result<CqlQuery> greaterThan(String index, Object value) {
+    return Result.of(() -> new CqlQuery(format("%s>\"%s\"", index, value), none()));
+  }
+
   public static Result<CqlQuery> lessThan(String index, Object value) {
     return Result.of(() -> new CqlQuery(format("%s<\"%s\"", index, value), none()));
   }

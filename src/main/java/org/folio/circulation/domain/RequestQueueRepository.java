@@ -54,6 +54,19 @@ public class RequestQueueRepository {
       .thenComposeAsync(r -> r.after(this::get));
   }
 
+  public CompletableFuture<Result<RequestQueue>> getRequestQueueWithoutItemLookup(String itemId) {
+    final Result<CqlQuery> itemIdQuery = exactMatch("itemId", itemId);
+    final Result<CqlQuery> statusQuery = exactMatchAny("status", RequestStatus.openStates());
+
+    final int maximumSupportedRequestQueueSize = 1000;
+
+    return itemIdQuery.combine(statusQuery, CqlQuery::and)
+      .map(q -> q.sortBy(ascending("position")))
+      .after(query -> requestRepository.findByWithoutItems(query, maximumSupportedRequestQueueSize))
+      .thenApply(r -> r.map(MultipleRecords::getRecords))
+      .thenApply(r -> r.map(RequestQueue::new));
+  }
+
   CompletableFuture<Result<RequestQueue>> updateRequestsWithChangedPositions(
     RequestQueue requestQueue) {
 

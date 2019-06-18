@@ -14,24 +14,33 @@ public class Response {
   private final int statusCode;
   private final String contentType;
   private final CaseInsensitiveHeaders headers;
+  private final String fromUrl;
 
   public Response(int statusCode, String body, String contentType) {
-    this(statusCode, body, contentType, new CaseInsensitiveHeaders());
+    this(statusCode, body, contentType, new CaseInsensitiveHeaders(), null);
   }
 
   public Response(
     int statusCode,
     String body,
     String contentType,
-    CaseInsensitiveHeaders headers) {
+    CaseInsensitiveHeaders headers,
+    String fromUrl) {
 
     this.statusCode = statusCode;
     this.body = body;
     this.contentType = contentType;
     this.headers = headers;
+    this.fromUrl = fromUrl;
   }
 
   public static Response from(HttpClientResponse response, Buffer body) {
+    return from(response, body, null);
+  }
+
+  public static Response from(HttpClientResponse response, Buffer body,
+                              String fromUrl) {
+
     final CaseInsensitiveHeaders headers = new CaseInsensitiveHeaders();
 
     headers.addAll(response.headers());
@@ -39,7 +48,7 @@ public class Response {
     return new Response(response.statusCode(),
       BufferHelper.stringFromBuffer(body),
       convertNullToEmpty(response.getHeader(CONTENT_TYPE)),
-      headers);
+      headers, fromUrl);
   }
 
   public boolean hasBody() {
@@ -73,5 +82,9 @@ public class Response {
 
   String getHeader(String name) {
     return headers.get(name);
+  }
+
+  public String getFromUrl() {
+    return fromUrl;
   }
 }

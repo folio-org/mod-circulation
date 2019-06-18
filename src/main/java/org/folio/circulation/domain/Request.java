@@ -136,8 +136,8 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   public Request withItem(Item newItem) {
-    return new Request(requestRepresentation, cancellationReasonRepresentation, newItem, requester, proxy, loan,
-      pickupServicePoint);
+    return new Request(requestRepresentation,cancellationReasonRepresentation, newItem, requester, proxy,
+      loan == null ? null : loan.withItem(newItem),pickupServicePoint);
   }
 
   public Request withRequester(User newRequester) {
@@ -222,6 +222,10 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
 
   public JsonObject getRequesterFromRepresentation() {
     return requestRepresentation.getJsonObject("requester");
+  }
+
+  public JsonObject getItemFromRepresentation() {
+    return requestRepresentation.getJsonObject("item");
   }
 
   public String getRequesterBarcode() {
