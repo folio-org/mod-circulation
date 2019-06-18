@@ -20,11 +20,11 @@ public class ResponseInterpreter<T> {
     this.responseMappers = responseMappers;
   }
 
-  ResponseInterpreter() {
+  public ResponseInterpreter() {
     this(new HashMap<>(), ResponseInterpreter::defaultUnexpectedResponseMapper);
   }
 
-  ResponseInterpreter<T> flatMapOn(Integer status, Function<Response, Result<T>> mapper) {
+  public ResponseInterpreter<T> flatMapOn(Integer status, Function<Response, Result<T>> mapper) {
     final HashMap<Integer, Function<Response, Result<T>>> newMappers = new HashMap<>(responseMappers);
 
     newMappers.put(status, mapper);
@@ -32,7 +32,7 @@ public class ResponseInterpreter<T> {
     return new ResponseInterpreter<>(newMappers, unexpectedResponseMapper);
   }
 
-  ResponseInterpreter<T> otherwise(Function<Response, Result<T>> unexpectedResponseMapper) {
+  public ResponseInterpreter<T> otherwise(Function<Response, Result<T>> unexpectedResponseMapper) {
     return new ResponseInterpreter<>(responseMappers, unexpectedResponseMapper);
   }
 

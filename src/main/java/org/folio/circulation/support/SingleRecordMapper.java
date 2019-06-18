@@ -2,12 +2,13 @@ package org.folio.circulation.support;
 
 import static java.util.Objects.isNull;
 import static org.folio.circulation.support.Result.failed;
-import static org.folio.circulation.support.Result.succeeded;
+import static org.folio.circulation.support.Result.of;
 
 import java.lang.invoke.MethodHandles;
 import java.util.function.Function;
 
 import org.folio.circulation.support.http.client.Response;
+import org.folio.circulation.support.http.client.ResponseInterpreter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,11 +42,10 @@ public class SingleRecordMapper<T> {
       log.info("Response received, status code: {} body: {}",
         response.getStatusCode(), response.getBody());
 
-      if (response.getStatusCode() == 200) {
-        return succeeded(mapper.apply(response.getJson()));
-      } else {
-        return resultOnFailure.apply(response);
-      }
+      return new ResponseInterpreter<T>()
+        .flatMapOn(200, r -> of(() -> mapper.apply(r.getJson())))
+        .otherwise(resultOnFailure)
+        .apply(response);
     }
     else {
       log.warn("Did not receive response to request");
