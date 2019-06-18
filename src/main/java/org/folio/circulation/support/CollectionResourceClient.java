@@ -223,6 +223,7 @@ public class CollectionResourceClient {
     return query;
   }
 
+  //TODO: Replace with Consumer<Result<Response>>
   private Handler<HttpClientResponse> responseConversationHandler(
     String fromUrl, Consumer<Response> responseHandler) {
 
