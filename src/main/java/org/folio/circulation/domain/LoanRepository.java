@@ -1,5 +1,6 @@
 package org.folio.circulation.domain;
 
+import static java.util.Objects.nonNull;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.support.CqlQuery.exactMatch;
 import static org.folio.circulation.support.CqlQuery.exactMatchAny;
@@ -30,7 +31,6 @@ import org.folio.circulation.support.Result;
 import org.folio.circulation.support.ServerErrorFailure;
 import org.folio.circulation.support.SingleRecordFetcher;
 import org.folio.circulation.support.http.client.Response;
-import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -55,37 +55,36 @@ public class LoanRepository {
     Collection<Request> requests = requestQueue.getRequests();
 
     if(!requests.isEmpty()) {
-      /* 
+      /*
         This gets the top request, since UpdateRequestQueue.java#L106 updates the request queue prior to loan creation.
         If that sequesnse changes, the following will need to be updated to requests.stream().skip(1).findFirst().orElse(null)
         and the condition above could do a > 1 comparison. (CIRC-277)
       */
       Request nextRequestInQueue = requests.stream().findFirst().orElse(null);
       if(nextRequestInQueue != null && nextRequestInQueue.getRequestType() == RequestType.RECALL) {
-        LoanPolicy loanPolicy = loanAndRelatedRecords.getLoanPolicy();
-        Result<LoanAndRelatedRecords> httpResult = loanPolicy.recall(loanAndRelatedRecords.getLoan())
+        final Loan loanToRecall = loanAndRelatedRecords.getLoan();
+        final LoanPolicy loanPolicy = loanToRecall.getLoanPolicy();
+
+        Result<LoanAndRelatedRecords> httpResult = loanPolicy.recall(loanToRecall)
           .map(loanAndRelatedRecords::withLoan);
+
         recalledLoanandRelatedRecords = httpResult.value();
-      } 
+      }
     }
 
-    LoanAndRelatedRecords newLoanAndRelatedRecords = recalledLoanandRelatedRecords == null ? loanAndRelatedRecords : recalledLoanandRelatedRecords;
+    LoanAndRelatedRecords newLoanAndRelatedRecords
+      = recalledLoanandRelatedRecords == null
+        ? loanAndRelatedRecords
+        : recalledLoanandRelatedRecords;
 
-    JsonObject storageLoan = mapToStorageRepresentation(
-      newLoanAndRelatedRecords.getLoan(), newLoanAndRelatedRecords.getLoan().getItem());
+    final Loan loan = newLoanAndRelatedRecords.getLoan();
 
-    if(newLoanAndRelatedRecords.getLoanPolicy() != null) {
-      storageLoan.put("loanPolicyId", newLoanAndRelatedRecords.getLoanPolicy().getId());
-    }
-
-    User user = newLoanAndRelatedRecords.getLoan().getUser();
-    User proxy = newLoanAndRelatedRecords.getLoan().getProxy();
+    JsonObject storageLoan = mapToStorageRepresentation(loan, loan.getItem());
 
     return loansStorageClient.post(storageLoan).thenApply(response -> {
       if (response.getStatusCode() == 201) {
         return succeeded(
-          newLoanAndRelatedRecords.withLoan(Loan.from(response.getJson(),
-          newLoanAndRelatedRecords.getLoan().getItem(), user, proxy)));
+          newLoanAndRelatedRecords.withLoan(loan.replaceRepresentation(response.getJson())));
       } else {
         return failed(new ForwardOnFailure(response));
       }
@@ -118,9 +117,7 @@ public class LoanRepository {
 
     return loansStorageClient.put(loan.getId(), storageLoan)
       .thenApply(mapResponse)
-      .thenComposeAsync(r -> r.after(
-        //Fetch updated loan without having to get the item and the user again
-        l -> fetchLoan(l.getId(), loan.getItem(), loan.getUser(), loan.getOriginalDueDate())));
+      .thenComposeAsync(r -> r.after(this::refreshLoanRepresentation));
   }
 
   /**
@@ -141,8 +138,8 @@ public class LoanRepository {
           final Optional<Loan> firstLoan = loans.getRecords().stream().findFirst();
 
           return firstLoan
-            .map(loan -> succeeded(Loan.from(loan.asJson(), request.getItem())))
-            .orElse(null);
+            .map(loan -> Result.of(() -> loan.withItem(request.getItem())))
+            .orElse(Result.of(() -> null));
         } else {
           return failed(new ServerErrorFailure(
             String.format("More than one open loan for item %s", request.getItemId())));
@@ -165,15 +162,10 @@ public class LoanRepository {
       .fetch(id);
   }
 
-  private CompletableFuture<Result<Loan>> fetchLoan(
-    String id,
-    Item item,
-    User user,
-    DateTime oldDueDate) {
-
+  private CompletableFuture<Result<Loan>> refreshLoanRepresentation(Loan loan) {
     return new SingleRecordFetcher<>(loansStorageClient, "loan",
-      representation -> Loan.from(representation, item, user, null, oldDueDate))
-      .fetch(id);
+      loan::replaceRepresentation)
+      .fetch(loan.getId());
   }
 
   private CompletableFuture<Result<Loan>> fetchItem(Result<Loan> result) {
@@ -182,8 +174,7 @@ public class LoanRepository {
 
   //TODO: Check if user not found should result in failure?
   private CompletableFuture<Result<Loan>> fetchUser(Result<Loan> result) {
-    return result.combineAfter(userRepository::getUser,
-      (loan, user) -> Loan.from(loan.asJson(), loan.getItem(), user, null));
+    return result.combineAfter(userRepository::getUser, Loan::withUser);
   }
 
   public CompletableFuture<Result<MultipleRecords<Loan>>> findBy(String query) {
@@ -196,7 +187,7 @@ public class LoanRepository {
   private Result<MultipleRecords<Loan>> mapResponseToLoans(Response response) {
     return MultipleRecords.from(response, Loan::from, "loans");
   }
-  
+
   private static JsonObject mapToStorageRepresentation(Loan loan, Item item) {
     JsonObject storageLoan = loan.asJson();
 
@@ -205,6 +196,8 @@ public class LoanRepository {
     keepLatestItemStatus(item, storageLoan);
     removeBorrowerProperties(storageLoan);
     removeLoanPolicyProperties(storageLoan);
+
+    updateLastLoanPolicyUsedId(storageLoan, loan.getLoanPolicy());
 
     return storageLoan;
   }
@@ -221,6 +214,14 @@ public class LoanRepository {
     //TODO: Check for null item status
     storageLoan.remove("itemStatus");
     storageLoan.put("itemStatus", item.getStatus().getValue());
+  }
+
+  private static void updateLastLoanPolicyUsedId(JsonObject storageLoan,
+                                                 LoanPolicy loanPolicy) {
+
+    if(nonNull(loanPolicy) && loanPolicy.getId() != null) {
+      storageLoan.put("loanPolicyId", loanPolicy.getId());
+    }
   }
 
   private static void removeChangeMetadata(JsonObject storageLoan) {

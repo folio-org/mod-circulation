@@ -29,7 +29,6 @@ import org.joda.time.DateTime;
 import io.vertx.core.json.JsonObject;
 
 public class LoanPolicy {
-
   private static final String LOANS_POLICY_KEY = "loansPolicy";
   private static final String PERIOD_KEY = "period";
   private static final String RENEWAL_WOULD_NOT_CHANGE_THE_DUE_DATE = "renewal would not change the due date";
@@ -56,6 +55,10 @@ public class LoanPolicy {
 
   public static LoanPolicy from(JsonObject representation) {
     return new LoanPolicy(representation);
+  }
+
+  public static LoanPolicy unknown(String id) {
+    return new UnknownLoanPolicy(id);
   }
 
   //TODO: make this have similar signature to renew
@@ -119,7 +122,7 @@ public class LoanPolicy {
       if (proposedDueDateResult.failed() && isFixed(loansPolicy)) {
         return overrideRenewalForDueDate(loan, overrideDueDate, comment);
       }
-      
+
       if (proposedDueDateResult.failed() && isRolling(loansPolicy)) {
         DueDateStrategy dueDateStrategy = getRollingRenewalOverrideDueDateStrategy(systemDate);
         return processRenewal(dueDateStrategy.calculateDueDate(loan), loan, comment);
@@ -524,5 +527,13 @@ public class LoanPolicy {
     }
 
     return Collections.emptyList();
+  }
+
+  //TODO: Improve this to be a proper null object
+  // requires significant rework of the loan policy interface
+  private static class UnknownLoanPolicy extends LoanPolicy {
+    UnknownLoanPolicy(String id) {
+      super(new JsonObject().put("id", id));
+    }
   }
 }
