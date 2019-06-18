@@ -17,7 +17,10 @@ public class SingleRecordMapper<T> {
   static <T> SingleRecordMapper<T> notFound(
     Function<JsonObject, T> mapper, Result<T> notFoundResult) {
 
-    return new SingleRecordMapper<>(mapper, notFoundMapper(notFoundResult));
+    return new SingleRecordMapper<>(new ResponseInterpreter<T>()
+      .flatMapOn(200, r -> of(() -> mapper.apply(r.getJson())))
+      .flatMapOn(404, r -> notFoundResult)
+      .otherwise(SingleRecordMapper::mapResponseToFailure));
   }
 
   SingleRecordMapper(Function<JsonObject, T> mapper) {
@@ -28,19 +31,17 @@ public class SingleRecordMapper<T> {
     Function<JsonObject, T> mapper,
     Function<Response, Result<T>> onFailure) {
 
-    interpreter = new ResponseInterpreter<T>()
+    this(new ResponseInterpreter<T>()
       .flatMapOn(200, r -> of(() -> mapper.apply(r.getJson())))
-      .otherwise(onFailure);
+      .otherwise(onFailure));
+  }
+
+  private SingleRecordMapper(ResponseInterpreter<T> interpreter) {
+    this.interpreter = interpreter;
   }
 
   Result<T> mapFrom(Response response) {
     return interpreter.apply(response);
-  }
-
-  private static <T> Function<Response, Result<T>> notFoundMapper(Result<T> result) {
-    return response -> response.getStatusCode() == 404
-      ? result
-      : mapResponseToFailure(response);
   }
 
   private static <T> ResponseWritableResult<T> mapResponseToFailure(Response response) {
