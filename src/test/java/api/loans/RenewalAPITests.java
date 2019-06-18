@@ -633,7 +633,6 @@ abstract class RenewalAPITests extends APITests {
     loan = renew(smallAngryPlanet, jessica);
 
     loanHasLoanPolicyProperties(loan.getJson(), loanPolicyResponse);
-
   }
 
   @Test

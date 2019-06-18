@@ -40,8 +40,10 @@ public class RegularCheckOutStrategy implements CheckOutStrategy {
   }
 
   private Result<LoanAndRelatedRecords> refuseWhenItemIsNotLoanable(LoanAndRelatedRecords relatedRecords) {
-    if (relatedRecords.getLoanPolicy().isNotLoanable()) {
-      String itemBarcode = relatedRecords.getLoan().getItem().getBarcode();
+    final Loan loan = relatedRecords.getLoan();
+
+    if (loan.getLoanPolicy().isNotLoanable()) {
+      String itemBarcode = loan.getItem().getBarcode();
       return failed(singleValidationError("Item is not loanable", ITEM_BARCODE, itemBarcode));
     }
     return succeeded(relatedRecords);
@@ -49,11 +51,10 @@ public class RegularCheckOutStrategy implements CheckOutStrategy {
 
   private Result<LoanAndRelatedRecords> calculateDefaultInitialDueDate(LoanAndRelatedRecords loanAndRelatedRecords) {
     Loan loan = loanAndRelatedRecords.getLoan();
-    LoanPolicy loanPolicy = loanAndRelatedRecords.getLoanPolicy();
+    LoanPolicy loanPolicy = loan.getLoanPolicy();
+
     return loanPolicy.calculateInitialDueDate(loan)
-      .map(dueDate -> {
-        loanAndRelatedRecords.getLoan().changeDueDate(dueDate);
-        return loanAndRelatedRecords;
-      });
+      .map(loan::changeDueDate)
+      .map(loanAndRelatedRecords::withLoan);
   }
 }
