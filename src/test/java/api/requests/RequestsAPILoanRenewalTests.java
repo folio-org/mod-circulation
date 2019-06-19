@@ -35,7 +35,7 @@ public class RequestsAPILoanRenewalTests extends APITests {
     loansFixture.checkOutByBarcode(smallAngryPlanet, rebecca);
     UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
-    requestsClient.create(new RequestBuilder()
+    requestsFixture.place(new RequestBuilder()
       .recall()
       .forItem(smallAngryPlanet)
       .withPickupServicePointId(pickupServicePointId)
@@ -54,7 +54,7 @@ public class RequestsAPILoanRenewalTests extends APITests {
 
     loansFixture.checkOutByBarcode(smallAngryPlanet, rebecca);
     UUID pickupServicePointId = servicePointsFixture.cd1().getId();
-    requestsClient.create(new RequestBuilder()
+    requestsFixture.place(new RequestBuilder()
       .hold()
       .forItem(smallAngryPlanet)
       .withPickupServicePointId(pickupServicePointId)
@@ -73,7 +73,7 @@ public class RequestsAPILoanRenewalTests extends APITests {
 
     loansFixture.checkOutByBarcode(smallAngryPlanet, rebecca);
 
-    requestsClient.create(new RequestBuilder()
+    requestsFixture.place(new RequestBuilder()
       .recall()
       .forItem(smallAngryPlanet)
       .withPickupServicePointId(pickupServicePointId)
@@ -92,7 +92,7 @@ public class RequestsAPILoanRenewalTests extends APITests {
 
     loansFixture.checkOutByBarcode(smallAngryPlanet, rebecca);
 
-    requestsClient.create(new RequestBuilder()
+    requestsFixture.place(new RequestBuilder()
       .hold()
       .forItem(smallAngryPlanet)
       .withPickupServicePointId(servicePointsFixture.cd1().getId())
@@ -130,7 +130,7 @@ public class RequestsAPILoanRenewalTests extends APITests {
       noticePoliciesFixture.activeNotice().getId()
     );
 
-    requestsClient.create(new RequestBuilder()
+    requestsFixture.place(new RequestBuilder()
       .hold()
       .forItem(smallAngryPlanet)
       .withPickupServicePointId(servicePointsFixture.cd1().getId())
@@ -170,13 +170,13 @@ public class RequestsAPILoanRenewalTests extends APITests {
       noticePoliciesFixture.activeNotice().getId()
     );
 
-    requestsClient.create(new RequestBuilder()
+    requestsFixture.place(new RequestBuilder()
       .recall()
       .forItem(smallAngryPlanet)
       .withPickupServicePointId(servicePointsFixture.cd1().getId())
       .by(usersFixture.charlotte()));
 
-    requestsClient.create(new RequestBuilder()
+    requestsFixture.place(new RequestBuilder()
       .hold()
       .forItem(smallAngryPlanet)
       .withPickupServicePointId(servicePointsFixture.cd1().getId())
@@ -216,13 +216,13 @@ public class RequestsAPILoanRenewalTests extends APITests {
       noticePoliciesFixture.activeNotice().getId()
     );
 
-    requestsClient.create(new RequestBuilder()
+    requestsFixture.place(new RequestBuilder()
       .hold()
       .forItem(smallAngryPlanet)
       .withPickupServicePointId(servicePointsFixture.cd1().getId())
       .by(usersFixture.steve()));
 
-    requestsClient.create(new RequestBuilder()
+    requestsFixture.place(new RequestBuilder()
       .recall()
       .forItem(smallAngryPlanet)
       .withPickupServicePointId(servicePointsFixture.cd1().getId())
