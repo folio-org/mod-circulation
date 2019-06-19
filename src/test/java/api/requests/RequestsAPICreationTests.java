@@ -1524,7 +1524,7 @@ public class RequestsAPICreationTests extends APITests {
 
     UUID id = UUID.randomUUID();
     UUID pickupServicePointId = servicePointsFixture.cd1().getId();
-    IndividualResource item = itemsFixture.basedUponSmallAngryPlanet();
+    InventoryItemResource item = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource requester = usersFixture.steve();
     DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
     IndividualResource request = requestsFixture.place(new RequestBuilder()
@@ -1547,7 +1547,7 @@ public class RequestsAPICreationTests extends APITests {
 
     Map<String, Matcher<String>> noticeContextMatchers = new HashMap<>();
     noticeContextMatchers.putAll(NoticeMatchers.getUserContextMatchers(requester));
-    noticeContextMatchers.putAll(NoticeMatchers.getItemContextMatchers(item));
+    noticeContextMatchers.putAll(NoticeMatchers.getItemContextMatchers(item, true));
     noticeContextMatchers.putAll(NoticeMatchers.getRequestContextMatchers(request));
     MatcherAssert.assertThat(sentNotices,
       hasItems(
@@ -1581,7 +1581,7 @@ public class RequestsAPICreationTests extends APITests {
 
     UUID id = UUID.randomUUID();
     UUID pickupServicePointId = servicePointsFixture.cd1().getId();
-    IndividualResource item = itemsFixture.basedUponSmallAngryPlanet();
+    InventoryItemResource item = itemsFixture.basedUponSmallAngryPlanet(true,"CN", "Prefix", "Suffix");
     IndividualResource requester = usersFixture.steve();
     DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
 
@@ -1607,7 +1607,7 @@ public class RequestsAPICreationTests extends APITests {
 
     Map<String, Matcher<String>> noticeContextMatchers = new HashMap<>();
     noticeContextMatchers.putAll(NoticeMatchers.getUserContextMatchers(requester));
-    noticeContextMatchers.putAll(NoticeMatchers.getItemContextMatchers(item));
+    noticeContextMatchers.putAll(NoticeMatchers.getItemContextMatchers(item, true));
     noticeContextMatchers.putAll(NoticeMatchers.getRequestContextMatchers(request));
     MatcherAssert.assertThat(sentNotices,
       hasItems(
@@ -1655,7 +1655,7 @@ public class RequestsAPICreationTests extends APITests {
 
     UUID id = UUID.randomUUID();
     UUID pickupServicePointId = servicePointsFixture.cd1().getId();
-    IndividualResource item = itemsFixture.basedUponSmallAngryPlanet();
+    InventoryItemResource item = itemsFixture.basedUponSmallAngryPlanet(false,"ItemCN", "ItemPrefix", "ItemSuffix");
     IndividualResource requester = usersFixture.steve();
     IndividualResource loanOwner = usersFixture.jessica();
 
@@ -1686,12 +1686,12 @@ public class RequestsAPICreationTests extends APITests {
 
     Map<String, Matcher<String>> recallConfirmationContextMatchers = new HashMap<>();
     recallConfirmationContextMatchers.putAll(NoticeMatchers.getUserContextMatchers(requester));
-    recallConfirmationContextMatchers.putAll(NoticeMatchers.getItemContextMatchers(item));
+    recallConfirmationContextMatchers.putAll(NoticeMatchers.getItemContextMatchers(item, false));
     recallConfirmationContextMatchers.putAll(NoticeMatchers.getLoanContextMatchers(loanAfterRecall, 0));
     recallConfirmationContextMatchers.putAll(NoticeMatchers.getRequestContextMatchers(request));
     Map<String, Matcher<String>> recallNotificationContextMatchers = new HashMap<>();
     recallNotificationContextMatchers.putAll(NoticeMatchers.getUserContextMatchers(loanOwner));
-    recallNotificationContextMatchers.putAll(NoticeMatchers.getItemContextMatchers(item));
+    recallNotificationContextMatchers.putAll(NoticeMatchers.getItemContextMatchers(item, false));
     recallNotificationContextMatchers.putAll(NoticeMatchers.getLoanContextMatchers(loanAfterRecall, 0));
     MatcherAssert.assertThat(sentNotices,
       hasItems(

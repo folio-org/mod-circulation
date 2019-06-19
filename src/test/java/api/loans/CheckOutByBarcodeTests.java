@@ -34,6 +34,8 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import api.support.http.InventoryItemResource;
+import org.apache.commons.lang3.StringUtils;
 import org.awaitility.Awaitility;
 import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.support.http.client.IndividualResource;
@@ -572,7 +574,8 @@ public class CheckOutByBarcodeTests extends APITests {
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
       noticePoliciesFixture.create(noticePolicy).getId());
 
-    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    InventoryItemResource smallAngryPlanet = itemsFixture
+      .basedUponSmallAngryPlanet(false, StringUtils.EMPTY, "ItemPrefix", "ItemSuffix");
     final IndividualResource steve = usersFixture.steve();
 
     final DateTime loanDate =
@@ -592,7 +595,7 @@ public class CheckOutByBarcodeTests extends APITests {
 
     Map<String, Matcher<String>> noticeContextMatchers = new HashMap<>();
     noticeContextMatchers.putAll(NoticeMatchers.getUserContextMatchers(steve));
-    noticeContextMatchers.putAll(NoticeMatchers.getItemContextMatchers(smallAngryPlanet));
+    noticeContextMatchers.putAll(NoticeMatchers.getItemContextMatchers(smallAngryPlanet, true));
     noticeContextMatchers.putAll(NoticeMatchers.getLoanContextMatchers(loan, 0));
     noticeContextMatchers.putAll(NoticeMatchers.getLoanPolicyContextMatchers(
       loanPoliciesFixture.canCirculateRolling(), 0));

@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.domain.representations.ItemProperties;
 import org.folio.circulation.support.JsonArrayHelper;
 
@@ -29,6 +30,11 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
 public class Item {
+  private static final String CALL_NUMBER_KEY = "callNumber";
+  private static final String CALL_NUMBER_PREFIX_KEY = "callNumberPrefix";
+  private static final String CALL_NUMBER_SUFFIX_KEY = "callNumberSuffix";
+  private static final String ITEM_REPRESENTATION_PREFIX = "itemLevel%s";
+
   private final JsonObject itemRepresentation;
   private final JsonObject holdingRepresentation;
   private final JsonObject instanceRepresentation;
@@ -145,17 +151,31 @@ public class Item {
   }
 
   public String getCallNumber() {
-    return getProperty(holdingRepresentation, "callNumber");
+    return getEffectiveRepresentationValue(CALL_NUMBER_KEY);
   }
 
   public String getCallNumberPrefix() {
-    return getProperty(holdingRepresentation, "callNumberPrefix");
+    return getEffectiveRepresentationValue(CALL_NUMBER_PREFIX_KEY);
   }
 
   public String getCallNumberSuffix() {
-    return getProperty(holdingRepresentation, "callNumberSuffix");
+    return getEffectiveRepresentationValue(CALL_NUMBER_SUFFIX_KEY);
   }
 
+  private String getEffectiveRepresentationValue(String propertyName) {
+    return hasItemRepresentationCallNumber()
+      ? getItemRepresentationValue(propertyName)
+      : getProperty(holdingRepresentation, propertyName);
+  }
+
+  private boolean hasItemRepresentationCallNumber() {
+    return StringUtils.isNotBlank(getItemRepresentationValue(CALL_NUMBER_KEY));
+  }
+
+  private String getItemRepresentationValue(String propertyName) {
+    return getProperty(itemRepresentation,
+      String.format(ITEM_REPRESENTATION_PREFIX, StringUtils.capitalize(propertyName)));
+  }
 
   public ItemStatus getStatus() {
     return ItemStatus.from(getStatusName());

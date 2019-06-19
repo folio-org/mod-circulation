@@ -11,12 +11,16 @@ import static org.hamcrest.CoreMatchers.notNullValue;
 import java.util.HashMap;
 import java.util.Map;
 
+import api.support.http.InventoryItemResource;
+import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.hamcrest.Matcher;
 
 import io.vertx.core.json.JsonObject;
 
 public class NoticeMatchers {
+
+  private static final String ITEM_REPRESENTATION_PREFIX = "itemLevel%s";
 
   private NoticeMatchers() {
   }
@@ -32,14 +36,20 @@ public class NoticeMatchers {
     return tokenMatchers;
   }
 
-  public static Map<String, Matcher<String>> getItemContextMatchers(IndividualResource itemResource) {
+  public static Map<String, Matcher<String>> getItemContextMatchers(InventoryItemResource itemResource,
+                                                                    boolean applyHoldingRecord) {
     JsonObject item = itemResource.getJson();
+    String callNumber = findRepresentationValue(itemResource, applyHoldingRecord, "callNumber");
+    String callNumberPrefix = findRepresentationValue(itemResource, applyHoldingRecord, "callNumberPrefix");
+    String callNumberSuffix = findRepresentationValue(itemResource, applyHoldingRecord, "callNumberSuffix");
 
     Map<String, Matcher<String>> tokenMatchers = new HashMap<>();
     tokenMatchers.put("item.title", notNullValue(String.class));
     tokenMatchers.put("item.allContributors", notNullValue(String.class));
     tokenMatchers.put("item.barcode", is(item.getString("barcode")));
-    tokenMatchers.put("item.callNumber", notNullValue(String.class));
+    tokenMatchers.put("item.callNumber", is(callNumber));
+    tokenMatchers.put("item.callNumberPrefix", is(callNumberPrefix));
+    tokenMatchers.put("item.callNumberSuffix", is(callNumberSuffix));
     tokenMatchers.put("item.materialType", notNullValue(String.class));
     tokenMatchers.put("item.loanType", notNullValue(String.class));
     tokenMatchers.put("item.effectiveLocationSpecific", notNullValue(String.class));
@@ -47,6 +57,15 @@ public class NoticeMatchers {
     tokenMatchers.put("item.effectiveLocationCampus", notNullValue(String.class));
     tokenMatchers.put("item.effectiveLocationInstitution", notNullValue(String.class));
     return tokenMatchers;
+  }
+
+  private static String findRepresentationValue(InventoryItemResource itemResource,
+                                                boolean applyHoldingRecord,
+                                                String propertyName) {
+    return applyHoldingRecord
+      ? itemResource.getHoldingsRecord().getJson().getString(propertyName)
+      : itemResource.getResponse().getJson()
+      .getString(String.format(ITEM_REPRESENTATION_PREFIX, StringUtils.capitalize(propertyName)));
   }
 
   public static Map<String, Matcher<String>> getLoanContextMatchers(

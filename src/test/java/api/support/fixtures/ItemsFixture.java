@@ -116,6 +116,35 @@ public class ItemsFixture {
   }
 
   public InventoryItemResource basedUponSmallAngryPlanet(
+    boolean applyHoldingRecord,
+    String callNumber,
+    String callNumberPrefix,
+    String callNumberSuffix)
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    HoldingBuilder holdingBuilder = applyHoldingRecord
+      ? applyCallNumberHoldings(callNumber, callNumberPrefix, callNumberSuffix)
+      : thirdFloorHoldings();
+
+    ItemBuilder itemBuilder = applyHoldingRecord
+      ? ItemExamples.basedUponSmallAngryPlanet(materialTypesFixture.book().getId(),
+      loanTypesFixture.canCirculate().getId())
+      : ItemExamples.basedUponSmallAngryPlanet(materialTypesFixture.book().getId(),
+      loanTypesFixture.canCirculate().getId(), callNumber, callNumberPrefix, callNumberSuffix);
+
+    return applyAdditionalProperties(
+      identity(),
+      identity(),
+      InstanceExamples.basedUponSmallAngryPlanet(booksInstanceTypeId(),
+        getPersonalContributorNameTypeId()),
+      holdingBuilder,
+      itemBuilder);
+  }
+
+  public InventoryItemResource basedUponSmallAngryPlanet(
     Function<ItemBuilder, ItemBuilder> additionalItemProperties)
     throws InterruptedException,
     MalformedURLException,
@@ -309,6 +338,23 @@ public class ItemsFixture {
       .withPermanentLocation(locationsFixture.thirdFloor())
       .withNoTemporaryLocation()
       .withCallNumber("123456");
+  }
+
+  private HoldingBuilder applyCallNumberHoldings(
+    String callNumber,
+    String callNumberPrefix,
+    String callNumberSuffix)
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    return new HoldingBuilder()
+      .withPermanentLocation(locationsFixture.thirdFloor())
+      .withNoTemporaryLocation()
+      .withCallNumber(callNumber)
+      .withCallNumberPrefix(callNumberPrefix)
+      .withCallNumberSuffix(callNumberSuffix);
   }
 
   private UUID booksInstanceTypeId()
