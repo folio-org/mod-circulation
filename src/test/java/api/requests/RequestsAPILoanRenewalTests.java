@@ -14,7 +14,6 @@ import java.util.concurrent.TimeoutException;
 
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
-import org.hamcrest.MatcherAssert;
 import org.joda.time.DateTime;
 import org.junit.Test;
 
@@ -179,7 +178,7 @@ public class RequestsAPILoanRenewalTests extends APITests {
       "Renewal override",
       "2018-12-21T13:30:00Z");
 
-    MatcherAssert.assertThat(overrideResponse.getJson(), hasErrorWith(allOf(
+    assertThat(overrideResponse.getJson(), hasErrorWith(allOf(
       hasMessage("Override renewal does not match any of expected cases: " +
         "item is not loanable, " +
         "item is not renewable, " +
