@@ -164,12 +164,6 @@ public class RequestsAPILoanRenewalTests extends APITests {
 
     loansFixture.checkOutByBarcode(smallAngryPlanet, rebecca, loanDueDate);
 
-    useLoanPolicyAsFallback(
-      loanPoliciesFixture.canCirculateRolling().getId(),
-      requestPoliciesFixture.allowAllRequestPolicy().getId(),
-      noticePoliciesFixture.activeNotice().getId()
-    );
-
     requestsFixture.place(new RequestBuilder()
       .recall()
       .forItem(smallAngryPlanet)
@@ -209,12 +203,6 @@ public class RequestsAPILoanRenewalTests extends APITests {
     );
 
     loansFixture.checkOutByBarcode(smallAngryPlanet, rebecca, loanDueDate);
-
-    useLoanPolicyAsFallback(
-      loanPoliciesFixture.canCirculateRolling().getId(),
-      requestPoliciesFixture.allowAllRequestPolicy().getId(),
-      noticePoliciesFixture.activeNotice().getId()
-    );
 
     requestsFixture.place(new RequestBuilder()
       .hold()
