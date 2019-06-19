@@ -77,7 +77,7 @@ public class NoticeContextUtil {
 
     String yearCaptionsToken = String.join("; ", item.getYearCaption());
 
-    String captionsToken = JsonStringArrayHelper.toStream(item.getCopyNumbers())
+    String copyNumbersToken = JsonStringArrayHelper.toStream(item.getCopyNumbers())
       .collect(Collectors.joining("; "));
 
     JsonObject itemContext = new JsonObject()
@@ -95,7 +95,7 @@ public class NoticeContextUtil {
       .put("yearCaption", yearCaptionsToken)
       .put("materialType", item.getMaterialTypeName())
       .put("loanType", item.getLoanTypeName())
-      .put("copy", captionsToken)
+      .put("copy", copyNumbersToken)
       .put("numberOfPieces", item.getNumberOfPieces())
       .put("descriptionOfPieces", item.getDescriptionOfPieces());
 

@@ -11,6 +11,7 @@ import static org.hamcrest.junit.MatcherAssert.assertThat;
 import java.net.MalformedURLException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -78,7 +79,7 @@ public class ScheduledDueDateNoticesProcessingTests extends APITests {
 
     setUpNoticePolicy();
 
-    item = itemsFixture.basedUponSmallAngryPlanet(true,"CN", "Prefix", "Suffix");
+    item = itemsFixture.basedUponSmallAngryPlanet(true,"CN", "Prefix", "Suffix",  Collections.singletonList("CopyNumbers"));
     borrower = usersFixture.steve();
 
     loan = loansFixture.checkOutByBarcode(

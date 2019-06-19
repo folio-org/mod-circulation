@@ -1,5 +1,6 @@
 package api.support.fixtures;
 
+import java.util.List;
 import java.util.UUID;
 
 import api.support.builders.ItemBuilder;
@@ -20,13 +21,15 @@ public class ItemExamples {
     UUID loanTypeId,
     String callNumber,
     String callNumberPrefix,
-    String callNumberSuffix) {
+    String callNumberSuffix,
+    List<String> copyNumbers) {
 
     return new ItemBuilder()
       .withPermanentLoanType(loanTypeId)
       .withMaterialType(bookMaterialTypeId)
       .withBarcode("036000291452")
-      .withCallNumber(callNumber, callNumberPrefix, callNumberSuffix);
+      .withCallNumber(callNumber, callNumberPrefix, callNumberSuffix)
+      .withCopyNumbers(copyNumbers);
   }
 
   static ItemBuilder basedUponNod(

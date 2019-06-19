@@ -25,6 +25,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 
 import java.net.MalformedURLException;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -575,7 +576,8 @@ public class CheckOutByBarcodeTests extends APITests {
       noticePoliciesFixture.create(noticePolicy).getId());
 
     InventoryItemResource smallAngryPlanet = itemsFixture
-      .basedUponSmallAngryPlanet(false, StringUtils.EMPTY, "ItemPrefix", "ItemSuffix");
+      .basedUponSmallAngryPlanet(false, StringUtils.EMPTY, "ItemPrefix", "ItemSuffix",
+        Collections.singletonList(""));
     final IndividualResource steve = usersFixture.steve();
 
     final DateTime loanDate =

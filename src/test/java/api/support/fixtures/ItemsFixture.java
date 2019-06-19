@@ -5,6 +5,7 @@ import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
 import static org.folio.circulation.support.JsonPropertyWriter.write;
 
 import java.net.MalformedURLException;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
@@ -119,21 +120,23 @@ public class ItemsFixture {
     boolean applyHoldingRecord,
     String callNumber,
     String callNumberPrefix,
-    String callNumberSuffix)
+    String callNumberSuffix,
+    List<String> copyNumbers)
     throws InterruptedException,
     MalformedURLException,
     TimeoutException,
     ExecutionException {
 
     HoldingBuilder holdingBuilder = applyHoldingRecord
-      ? applyCallNumberHoldings(callNumber, callNumberPrefix, callNumberSuffix)
+      ? applyCallNumberHoldings(callNumber, callNumberPrefix, callNumberSuffix, copyNumbers)
       : thirdFloorHoldings();
 
+    UUID materialTypeId = materialTypesFixture.book().getId();
+    UUID loanTypesId = loanTypesFixture.canCirculate().getId();
     ItemBuilder itemBuilder = applyHoldingRecord
-      ? ItemExamples.basedUponSmallAngryPlanet(materialTypesFixture.book().getId(),
-      loanTypesFixture.canCirculate().getId())
-      : ItemExamples.basedUponSmallAngryPlanet(materialTypesFixture.book().getId(),
-      loanTypesFixture.canCirculate().getId(), callNumber, callNumberPrefix, callNumberSuffix);
+      ? ItemExamples.basedUponSmallAngryPlanet(materialTypeId, loanTypesId)
+      : ItemExamples.basedUponSmallAngryPlanet(materialTypeId, loanTypesId,
+      callNumber, callNumberPrefix, callNumberSuffix, copyNumbers);
 
     return applyAdditionalProperties(
       identity(),
@@ -343,7 +346,8 @@ public class ItemsFixture {
   private HoldingBuilder applyCallNumberHoldings(
     String callNumber,
     String callNumberPrefix,
-    String callNumberSuffix)
+    String callNumberSuffix,
+    List<String> copyNumbers)
     throws InterruptedException,
     MalformedURLException,
     TimeoutException,
@@ -354,7 +358,8 @@ public class ItemsFixture {
       .withNoTemporaryLocation()
       .withCallNumber(callNumber)
       .withCallNumberPrefix(callNumberPrefix)
-      .withCallNumberSuffix(callNumberSuffix);
+      .withCallNumberSuffix(callNumberSuffix)
+      .withCopyNumbers(copyNumbers);
   }
 
   private UUID booksInstanceTypeId()

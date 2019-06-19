@@ -151,28 +151,28 @@ public class Item {
   }
 
   public String getCallNumber() {
-    return getEffectiveRepresentationValue(CALL_NUMBER_KEY);
+    return getEffectiveCallNumbers(CALL_NUMBER_KEY);
   }
 
   public String getCallNumberPrefix() {
-    return getEffectiveRepresentationValue(CALL_NUMBER_PREFIX_KEY);
+    return getEffectiveCallNumbers(CALL_NUMBER_PREFIX_KEY);
   }
 
   public String getCallNumberSuffix() {
-    return getEffectiveRepresentationValue(CALL_NUMBER_SUFFIX_KEY);
+    return getEffectiveCallNumbers(CALL_NUMBER_SUFFIX_KEY);
   }
 
-  private String getEffectiveRepresentationValue(String propertyName) {
+  private String getEffectiveCallNumbers(String propertyName) {
     return hasItemRepresentationCallNumber()
-      ? getItemRepresentationValue(propertyName)
+      ? getItemRepresentationCallNumbers(propertyName)
       : getProperty(holdingRepresentation, propertyName);
   }
 
   private boolean hasItemRepresentationCallNumber() {
-    return StringUtils.isNotBlank(getItemRepresentationValue(CALL_NUMBER_KEY));
+    return StringUtils.isNotBlank(getItemRepresentationCallNumbers(CALL_NUMBER_KEY));
   }
 
-  private String getItemRepresentationValue(String propertyName) {
+  private String getItemRepresentationCallNumbers(String propertyName) {
     return getProperty(itemRepresentation,
       String.format(ITEM_REPRESENTATION_PREFIX, StringUtils.capitalize(propertyName)));
   }
@@ -198,7 +198,14 @@ public class Item {
   }
 
   public JsonArray getCopyNumbers() {
-    return getArrayProperty(getItem(), "copyNumbers");
+    JsonArray copyNumbers = getArrayProperty(getItem(), "copyNumbers");
+    return getEffectiveCopyNumbers(copyNumbers);
+  }
+
+  private JsonArray getEffectiveCopyNumbers(JsonArray copyNumbers) {
+    return copyNumbers.isEmpty()
+      ? copyNumbers.add(getProperty(holdingRepresentation, "copyNumber"))
+      : copyNumbers;
   }
 
   public String getMaterialTypeId() {

@@ -1,5 +1,6 @@
 package api.support.builders;
 
+import java.util.List;
 import java.util.UUID;
 
 import org.folio.circulation.support.http.client.IndividualResource;
@@ -13,9 +14,10 @@ public class HoldingBuilder extends JsonBuilder implements Builder {
   private final String callNumber;
   private final String callNumberPrefix;
   private final String callNumberSuffix;
+  private final String copyNumber;
 
   public HoldingBuilder() {
-    this(null, null, null, null, null, null);
+    this(null, null, null, null, null, null, null);
   }
 
   private HoldingBuilder(
@@ -24,7 +26,8 @@ public class HoldingBuilder extends JsonBuilder implements Builder {
     UUID temporaryLocationId,
     String callNumber,
     String callNumberPrefix,
-    String callNumberSuffix) {
+    String callNumberSuffix,
+    String copyNumber) {
 
     this.instanceId = instanceId;
     this.permanentLocationId = permanentLocationId;
@@ -32,6 +35,7 @@ public class HoldingBuilder extends JsonBuilder implements Builder {
     this.callNumber = callNumber;
     this.callNumberPrefix = callNumberPrefix;
     this.callNumberSuffix = callNumberSuffix;
+    this.copyNumber = copyNumber;
   }
 
   @Override
@@ -44,6 +48,7 @@ public class HoldingBuilder extends JsonBuilder implements Builder {
     put(holdings, "callNumber", callNumber);
     put(holdings, "callNumberPrefix", callNumberPrefix);
     put(holdings, "callNumberSuffix", callNumberSuffix);
+    put(holdings, "copyNumber", copyNumber);
 
     return holdings;
   }
@@ -55,7 +60,8 @@ public class HoldingBuilder extends JsonBuilder implements Builder {
       this.temporaryLocationId,
       this.callNumber,
       this.callNumberPrefix,
-      this.callNumberSuffix
+      this.callNumberSuffix,
+      this.copyNumber
     );
   }
 
@@ -70,7 +76,8 @@ public class HoldingBuilder extends JsonBuilder implements Builder {
       this.temporaryLocationId,
       this.callNumber,
       this.callNumberPrefix,
-      this.callNumberSuffix
+      this.callNumberSuffix,
+      this.copyNumber
     );
   }
 
@@ -89,7 +96,8 @@ public class HoldingBuilder extends JsonBuilder implements Builder {
       locationId,
       this.callNumber,
       this.callNumberPrefix,
-      this.callNumberSuffix
+      this.callNumberSuffix,
+      this.copyNumber
     );
   }
 
@@ -104,7 +112,8 @@ public class HoldingBuilder extends JsonBuilder implements Builder {
       this.temporaryLocationId,
       callNumber,
       this.callNumberPrefix,
-      this.callNumberSuffix
+      this.callNumberSuffix,
+      this.copyNumber
     );
   }
 
@@ -115,7 +124,8 @@ public class HoldingBuilder extends JsonBuilder implements Builder {
       this.temporaryLocationId,
       this.callNumber,
       callNumberPrefix,
-      this.callNumberSuffix
+      this.callNumberSuffix,
+      this.copyNumber
     );
   }
 
@@ -126,7 +136,20 @@ public class HoldingBuilder extends JsonBuilder implements Builder {
       this.temporaryLocationId,
       this.callNumber,
       this.callNumberPrefix,
-      callNumberSuffix
+      callNumberSuffix,
+      this.copyNumber
+    );
+  }
+
+  public HoldingBuilder withCopyNumbers(List<String> copyNumbers) {
+    return new HoldingBuilder(
+      this.instanceId,
+      this.permanentLocationId,
+      this.temporaryLocationId,
+      this.callNumber,
+      this.callNumberPrefix,
+      this.callNumberSuffix,
+      String.join("; ", copyNumbers)
     );
   }
 }
