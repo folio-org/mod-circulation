@@ -89,7 +89,7 @@ public class ItemRepository {
   }
 
   public CompletableFuture<Result<Item>> fetchFor(ItemRelatedRecord record) {
-    return fetchById(record.getItemId()).thenComposeAsync(this::fetchLocation);
+    return fetchById(record.getItemId());
   }
 
   private CompletableFuture<Result<Item>> fetchLocation(Result<Item> result) {

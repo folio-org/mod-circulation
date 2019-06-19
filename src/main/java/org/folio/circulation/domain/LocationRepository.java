@@ -112,15 +112,10 @@ public class LocationRepository {
   private CompletableFuture<Result<MultipleRecords<Location>>> loadLibrariesForLocations(
           Result<MultipleRecords<Location>> multipleRecordsResult) {
 
-    return multipleRecordsResult.after(locations -> getLibraries(locations.getRecords())
-            .thenApply(r -> r.map(libraries -> locations.getRecords()
-                    .stream()
-                    .map(location -> location.withLibraryRepresentation(
-                            libraries.getOrDefault(location.getLibraryId(),
-                                    null)))
-                    .collect(toList()))))
-            .thenApply(r -> r.map(locations -> new MultipleRecords<>(locations,
-                    locations.size())));
+    return multipleRecordsResult.combineAfter(
+      locations -> getLibraries(locations.getRecords()), (locations, libraries) ->
+        locations.mapRecords(location -> location.withLibraryRepresentation(
+          libraries.getOrDefault(location.getLibraryId(),null))));
 
   }
 

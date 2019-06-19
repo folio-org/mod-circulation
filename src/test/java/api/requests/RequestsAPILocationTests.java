@@ -14,6 +14,8 @@ import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
+
+import static api.support.JsonCollectionAssistant.getRecordById;
 import static api.support.matchers.RequestItemMatcher.hasItemLocationProperties;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
@@ -53,7 +55,9 @@ public class RequestsAPILocationTests extends APITests {
 
     JsonObject createdRequest = request.getJson();
 
-    assertThat(createdRequest, hasItemLocationProperties("Djanogly Learning Resource Centre", "NU/JC/DL/2FE"));
+    assertThat(createdRequest,
+            hasItemLocationProperties("2nd Floor - Economics",
+                    "Djanogly Learning Resource Centre","NU/JC/DL/2FE"));
 
     Response fetchedRequestResponse = requestsClient.getById(request.getId());
 
@@ -64,7 +68,8 @@ public class RequestsAPILocationTests extends APITests {
     assertThat("has item location",
       fetchRequest.getJsonObject("item").containsKey("location"), is(true));
 
-    assertThat(fetchRequest, hasItemLocationProperties("Djanogly Learning Resource Centre", "NU/JC/DL/2FE"));
+    assertThat(fetchRequest, hasItemLocationProperties("2nd Floor - Economics",
+            "Djanogly Learning Resource Centre", "NU/JC/DL/2FE"));
 
   }
 
@@ -88,7 +93,7 @@ public class RequestsAPILocationTests extends APITests {
 
     loansFixture.checkOutByBarcode(smallAngryPlanet, usersFixture.james());
 
-    requestsFixture.place(new RequestBuilder()
+    IndividualResource firstRequest = requestsFixture.place(new RequestBuilder()
       .open()
       .hold()
       .withPickupServicePointId(pickupServicePointId)
@@ -105,7 +110,7 @@ public class RequestsAPILocationTests extends APITests {
 
     loansFixture.checkOutByBarcode(temeraire, usersFixture.jessica());
 
-    requestsFixture.place(new RequestBuilder()
+    IndividualResource secondRequest = requestsFixture.place(new RequestBuilder()
       .open()
       .hold()
       .withPickupServicePointId(pickupServicePointId)
@@ -114,21 +119,19 @@ public class RequestsAPILocationTests extends APITests {
 
     List<JsonObject> fetchedRequestsResponse = requestsClient.getAll();
 
-    JsonObject temeraireRequest =
-      fetchedRequestsResponse.stream().filter(o ->
-        o.getString("itemId").equals(temeraire.getId().toString()))
-        .findFirst().get();
-    fetchedRequestsResponse.remove(temeraireRequest);
+    JsonObject firstFetchedRequest = getRecordById(
+            fetchedRequestsResponse, firstRequest.getId()).get();
 
-    JsonObject smallAngryPlanetRequest = fetchedRequestsResponse.get(0);
+    JsonObject secondFetchedRequest = getRecordById(
+            fetchedRequestsResponse, secondRequest.getId()).get();
 
-    assertThat(temeraireRequest,
-      hasItemLocationProperties("Business Library",
-        "NU/JC/BL/DM"));
+    assertThat(secondFetchedRequest,
+      hasItemLocationProperties("Display Case, Mezzanine",
+              "Business Library","NU/JC/BL/DM"));
 
-    assertThat(smallAngryPlanetRequest,
-      hasItemLocationProperties("Djanogly Learning Resource Centre",
-        "NU/JC/DL/3F"));
+    assertThat(firstFetchedRequest,
+      hasItemLocationProperties("3rd Floor",
+              "Djanogly Learning Resource Centre","NU/JC/DL/3F"));
 
   }
 }

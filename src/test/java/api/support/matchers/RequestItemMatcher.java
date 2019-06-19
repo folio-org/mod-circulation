@@ -13,24 +13,28 @@ import java.util.stream.Collectors;
 public class RequestItemMatcher extends TypeSafeDiagnosingMatcher<JsonObject> {
 
   private static final String LIBRARY_NAME = "libraryName";
-  private final String CODE = "code";
+  private static final String CODE = "code";
+  private static final String NAME = "name";
   private String expectedLibraryName;
   private String expectedLocationCode;
+  private String expectedLocationName;
 
   public static Matcher<JsonObject> hasItemLocationProperties(
-    String libraryName, String locationCode ) {
+    String locationName, String libraryName, String locationCode ) {
 
-    return new RequestItemMatcher(libraryName, locationCode);
+    return new RequestItemMatcher(locationName, libraryName, locationCode);
   }
 
   private RequestItemMatcher(
-    String libraryName, String locationCode) {
+      String locationName, String libraryName, String locationCode) {
     this.expectedLibraryName = libraryName;
     this.expectedLocationCode = locationCode;
+    this.expectedLocationName = locationName;
   }
 
   @Override
-  protected boolean matchesSafely(JsonObject jsonObject, Description mismatchDescription) {
+  protected boolean matchesSafely(JsonObject jsonObject,
+          Description mismatchDescription) {
 
     Map<String, String> notMatchedKeys = new HashMap<>();
 
@@ -47,12 +51,18 @@ public class RequestItemMatcher extends TypeSafeDiagnosingMatcher<JsonObject> {
     }
     String libraryName = location.getString(LIBRARY_NAME);
     String locationCode = location.getString(CODE);
+    String locationName = location.getString(NAME);
+
     if (!Objects.equals(expectedLibraryName, libraryName)) {
       notMatchedKeys.put(LIBRARY_NAME, libraryName);
     }
 
     if (!Objects.equals(expectedLocationCode, locationCode)) {
       notMatchedKeys.put(CODE, locationCode);
+    }
+
+    if (!Objects.equals(expectedLocationName, locationName)) {
+      notMatchedKeys.put(NAME, locationName);
     }
     if (!notMatchedKeys.isEmpty()) {
       String mismatchedKeysDescribing = notMatchedKeys.entrySet().stream()
@@ -69,7 +79,8 @@ public class RequestItemMatcher extends TypeSafeDiagnosingMatcher<JsonObject> {
   public void describeTo(Description description) {
     JsonObject expectedLocation = new JsonObject()
       .put(LIBRARY_NAME, expectedLibraryName)
-      .put(CODE, expectedLocationCode);
+      .put(CODE, expectedLocationCode)
+      .put(NAME, expectedLocationName);
 
     description.appendText("item location : ")
       .appendValue(expectedLocation);
