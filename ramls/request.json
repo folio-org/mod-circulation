@@ -102,7 +102,7 @@
               "description": "The name of the location",
               "readonly": true
             },
-            "LibraryName": {
+            "libraryName": {
               "type": "string",
               "description": "The name of the library of the location",
               "readonly": true
