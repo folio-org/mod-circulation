@@ -1581,7 +1581,7 @@ public class RequestsAPICreationTests extends APITests {
 
     UUID id = UUID.randomUUID();
     UUID pickupServicePointId = servicePointsFixture.cd1().getId();
-    InventoryItemResource item = itemsFixture.basedUponSmallAngryPlanet(true,"CN", "Prefix", "Suffix",
+    InventoryItemResource item = itemsFixture.basedUponSmallAngryPlanet(true, "CN", "Prefix", "Suffix",
       Collections.singletonList("CopyNumbers"));
     IndividualResource requester = usersFixture.steve();
     DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
