@@ -2,6 +2,7 @@ package api.requests;
 
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
+import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 import static org.joda.time.DateTimeConstants.APRIL;
@@ -13,6 +14,7 @@ import java.util.concurrent.TimeoutException;
 
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
+import org.hamcrest.MatcherAssert;
 import org.joda.time.DateTime;
 import org.junit.Test;
 
@@ -171,10 +173,18 @@ public class RequestsAPILoanRenewalTests extends APITests {
       .withPickupServicePointId(servicePointsFixture.cd1().getId())
       .by(usersFixture.charlotte()));
 
-    loansFixture.attemptOverride(
+    Response overrideResponse = loansFixture.attemptOverride(
       smallAngryPlanet,
       rebecca,
       "Renewal override",
       "2018-12-21T13:30:00Z");
+
+    MatcherAssert.assertThat(overrideResponse.getJson(), hasErrorWith(allOf(
+      hasMessage("Override renewal does not match any of expected cases: " +
+        "item is not loanable, " +
+        "item is not renewable, " +
+        "reached number of renewals limit," +
+        "renewal date falls outside of the date ranges in the loan policy, " +
+        "items cannot be renewed when there is an active recall request"))));
   }
 }
