@@ -1656,7 +1656,7 @@ public class RequestsAPICreationTests extends APITests {
 
     UUID id = UUID.randomUUID();
     UUID pickupServicePointId = servicePointsFixture.cd1().getId();
-    InventoryItemResource item = itemsFixture.basedUponSmallAngryPlanet(false,"ItemCN", "ItemPrefix", "ItemSuffix",
+    InventoryItemResource item = itemsFixture.basedUponSmallAngryPlanet(false, "ItemCN", "ItemPrefix", "ItemSuffix",
       Arrays.asList("CopyNumbers", "CopyDetails"));
     IndividualResource requester = usersFixture.steve();
     IndividualResource loanOwner = usersFixture.jessica();
