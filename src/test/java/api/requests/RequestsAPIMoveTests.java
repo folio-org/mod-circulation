@@ -67,9 +67,7 @@ public class RequestsAPIMoveTests extends APITests {
 
     requestByJessica = requestsClient.get(requestByJessica);
 
-    // TODO: this assertion should be done to ensure original request position is preserved
-    // requires changes in MoveRequestService, see comments
-    // assertThat(requestByJessica.getJson().getInteger("position"), is(1));
+    assertThat(requestByJessica.getJson().getInteger("position"), is(1));
     assertThat(requestByJessica.getJson().getString("itemId"), is(smallAngryPlanet.getId().toString()));
     retainsStoredSummaries(requestByJessica);
 

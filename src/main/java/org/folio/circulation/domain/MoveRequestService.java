@@ -47,37 +47,37 @@ public class MoveRequestService {
     RequestAndRelatedRecords requestAndRelatedRecords) {
     return of(() -> requestAndRelatedRecords)
       .next(RequestServiceUtility::refuseWhenItemDoesNotExist)
-      .after(updateRequestQueue::onMoveFrom)
+      .after(this::refuseWhenDestinationItemIsCheckedOutWithNoRecalls)
+      .thenComposeAsync(r -> r.after(updateRequestQueue::onMoveFrom))
       .thenComposeAsync(r -> r.after(this::lookupDestinationItem))
       .thenComposeAsync(r -> r.after(this::lookupDestinationItemRequestQueue))
-      // TODO: perform this validation before changing original queue
-      // requires getting the destination item and request queue
-      // probably should combine the lookups and if passes validation 
-      // update original request queue, apply destination item and request queue,
-      // else fail without change original request queue
-      .thenApply(r -> r.next(MoveRequestService::refuseWhenDestincationItemIsCheckoutWithNoRecalls))
       .thenApply(r -> r.map(MoveRequestService::applyMoveToRepresentation))
       .thenCompose(r -> r.after(this::updateRequest));
   }
 
-  private static Result<RequestAndRelatedRecords> refuseWhenDestincationItemIsCheckoutWithNoRecalls(
+  private CompletableFuture<Result<RequestAndRelatedRecords>> refuseWhenDestinationItemIsCheckedOutWithNoRecalls(
     RequestAndRelatedRecords requestAndRelatedRecords) {
+    
+    final Request request = requestAndRelatedRecords.getRequest();    
+    final RequestType requestType = request.getRequestType();
+    
+    return requestQueueRepository.get(request.getDestinationItemId()).thenApply(rq -> {
+      RequestQueue requestQueue = rq.value();
+      
+      boolean isRecall = requestType.equals(RequestType.RECALL);
 
-    RequestType requestType = requestAndRelatedRecords.getRequest().getRequestType();
-    RequestQueue requestQueue = requestAndRelatedRecords.getRequestQueue();
-
-    boolean isRecall = requestType.equals(RequestType.RECALL);
-
-    boolean hasRecallRequestInQueue = requestQueue.getRequests().stream()
-      .filter(request -> request.getRequestType().equals(RequestType.RECALL))
-      .collect(Collectors.toList()).size() > 0;
-
-    if (isRecall && !hasRecallRequestInQueue) {
-      return failedValidation(format("Cannot move recall request to item which has no recall requests"),
-        REQUEST_TYPE, requestType.getValue());
-    } else {
-      return succeeded(requestAndRelatedRecords);
-    }
+      boolean hasRecallRequestInQueue = requestQueue.getRequests().stream()
+        .filter(req -> req.getRequestType().equals(RequestType.RECALL))
+        .collect(Collectors.toList()).size() > 0;
+      
+      if (isRecall && !hasRecallRequestInQueue) {
+        return failedValidation(format("Cannot move recall request to item which has no recall requests"),
+          REQUEST_TYPE, requestType.getValue());
+      } else {
+        return succeeded(requestAndRelatedRecords);
+      }
+    });
+    
   }
   
   private static RequestAndRelatedRecords applyMoveToRepresentation(
