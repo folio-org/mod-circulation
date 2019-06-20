@@ -29,6 +29,7 @@ public class RequestBuilder extends JsonBuilder implements Builder {
   private final String requestType;
   private final DateTime requestDate;
   private final UUID itemId;
+  private final UUID destinationItemId;
   private final UUID requesterId;
   private final String fulfilmentPreference;
   private final UUID deliveryAddressTypeId;
@@ -46,12 +47,14 @@ public class RequestBuilder extends JsonBuilder implements Builder {
   private final UUID pickupServicePointId;
   private final Tags tags;
 
+  
 
   public RequestBuilder() {
     this(UUID.randomUUID(),
       "Hold",
       new DateTime(2017, 7, 15, 9, 35, 27, DateTimeZone.UTC),
       UUID.randomUUID(),
+      null,
       UUID.randomUUID(),
       "Hold Shelf",
       null,
@@ -75,6 +78,7 @@ public class RequestBuilder extends JsonBuilder implements Builder {
     String requestType,
     DateTime requestDate,
     UUID itemId,
+    UUID destinationItemId,
     UUID requesterId,
     String fulfilmentPreference,
     UUID deliveryAddressTypeId,
@@ -96,6 +100,7 @@ public class RequestBuilder extends JsonBuilder implements Builder {
     this.requestType = requestType;
     this.requestDate = requestDate;
     this.itemId = itemId;
+    this.destinationItemId = destinationItemId;
     this.requesterId = requesterId;
     this.fulfilmentPreference = fulfilmentPreference;
     this.deliveryAddressTypeId = deliveryAddressTypeId;
@@ -122,6 +127,7 @@ public class RequestBuilder extends JsonBuilder implements Builder {
       getProperty(representation, "requestType"),
       getDateTimeProperty(representation, "requestDate"),
       getUUIDProperty(representation, "itemId"),
+      getUUIDProperty(representation, "destinationItemId"),
       getUUIDProperty(representation, "requesterId"),
       getProperty(representation, "fulfilmentPreference"),
       getUUIDProperty(representation, "deliveryAddressTypeId"),
@@ -149,6 +155,7 @@ public class RequestBuilder extends JsonBuilder implements Builder {
     put(request, "requestType", this.requestType);
     put(request, "requestDate", this.requestDate);
     put(request, "itemId", this.itemId);
+    put(request, "destinationItemId", this.destinationItemId);
     put(request, "requesterId", this.requesterId);
     put(request, "fulfilmentPreference", this.fulfilmentPreference);
     put(request, "position", this.position);
@@ -199,6 +206,7 @@ public class RequestBuilder extends JsonBuilder implements Builder {
       this.requestType,
       this.requestDate,
       this.itemId,
+      this.destinationItemId,
       this.requesterId,
       this.fulfilmentPreference,
       this.deliveryAddressTypeId,
@@ -223,6 +231,7 @@ public class RequestBuilder extends JsonBuilder implements Builder {
       this.requestType,
       requestDate,
       this.itemId,
+      this.destinationItemId,
       this.requesterId,
       this.fulfilmentPreference,
       this.deliveryAddressTypeId,
@@ -247,6 +256,7 @@ public class RequestBuilder extends JsonBuilder implements Builder {
       requestType,
       this.requestDate,
       this.itemId,
+      this.destinationItemId,
       this.requesterId,
       this.fulfilmentPreference,
       this.deliveryAddressTypeId,
@@ -283,6 +293,32 @@ public class RequestBuilder extends JsonBuilder implements Builder {
       this.requestType,
       this.requestDate,
       itemId,
+      this.destinationItemId,
+      this.requesterId,
+      this.fulfilmentPreference,
+      this.deliveryAddressTypeId,
+      this.requestExpirationDate,
+      this.holdShelfExpirationDate,
+      this.itemSummary,
+      this.requesterSummary,
+      this.status,
+      this.proxyUserId,
+      this.cancellationReasonId,
+      this.cancelledByUserId,
+      this.cancellationAdditionalInformation,
+      this.cancelledDate,
+      this.position,
+      this.pickupServicePointId,
+      this.tags);
+  }
+  
+  public RequestBuilder withDestinationItemId(UUID destinationItemId) {
+    return new RequestBuilder(
+      this.id,
+      this.requestType,
+      this.requestDate,
+      this.itemId,
+      destinationItemId,
       this.requesterId,
       this.fulfilmentPreference,
       this.deliveryAddressTypeId,
@@ -311,6 +347,7 @@ public class RequestBuilder extends JsonBuilder implements Builder {
       this.requestType,
       this.requestDate,
       this.itemId,
+      this.destinationItemId,
       requesterId,
       this.fulfilmentPreference,
       this.deliveryAddressTypeId,
@@ -359,6 +396,7 @@ public class RequestBuilder extends JsonBuilder implements Builder {
       this.requestType,
       this.requestDate,
       this.itemId,
+      this.destinationItemId,
       this.requesterId,
       fulfilmentPreference,
       this.deliveryAddressTypeId,
@@ -383,6 +421,7 @@ public class RequestBuilder extends JsonBuilder implements Builder {
       this.requestType,
       this.requestDate,
       this.itemId,
+      this.destinationItemId,
       this.requesterId,
       this.fulfilmentPreference,
       this.deliveryAddressTypeId,
@@ -407,6 +446,7 @@ public class RequestBuilder extends JsonBuilder implements Builder {
       this.requestType,
       this.requestDate,
       this.itemId,
+      this.destinationItemId,
       this.requesterId,
       this.fulfilmentPreference,
       this.deliveryAddressTypeId,
@@ -431,6 +471,7 @@ public class RequestBuilder extends JsonBuilder implements Builder {
       this.requestType,
       this.requestDate,
       this.itemId,
+      this.destinationItemId,
       this.requesterId,
       this.fulfilmentPreference,
       deliverAddressType,
@@ -455,6 +496,7 @@ public class RequestBuilder extends JsonBuilder implements Builder {
       this.requestType,
       this.requestDate,
       this.itemId,
+      this.destinationItemId,
       this.requesterId,
       this.fulfilmentPreference,
       this.deliveryAddressTypeId,
@@ -495,6 +537,7 @@ public class RequestBuilder extends JsonBuilder implements Builder {
       this.requestType,
       this.requestDate,
       this.itemId,
+      this.destinationItemId,
       this.requesterId,
       this.fulfilmentPreference,
       this.deliveryAddressTypeId,
@@ -519,6 +562,7 @@ public class RequestBuilder extends JsonBuilder implements Builder {
       this.requestType,
       this.requestDate,
       this.itemId,
+      this.destinationItemId,
       this.requesterId,
       this.fulfilmentPreference,
       this.deliveryAddressTypeId,
@@ -543,6 +587,7 @@ public class RequestBuilder extends JsonBuilder implements Builder {
       this.requestType,
       this.requestDate,
       this.itemId,
+      this.destinationItemId,
       this.requesterId,
       this.fulfilmentPreference,
       this.deliveryAddressTypeId,
@@ -569,6 +614,7 @@ public class RequestBuilder extends JsonBuilder implements Builder {
       this.requestType,
       this.requestDate,
       this.itemId,
+      this.destinationItemId,
       this.requesterId,
       this.fulfilmentPreference,
       this.deliveryAddressTypeId,
@@ -593,6 +639,7 @@ public class RequestBuilder extends JsonBuilder implements Builder {
       this.requestType,
       this.requestDate,
       this.itemId,
+      this.destinationItemId,
       this.requesterId,
       this.fulfilmentPreference,
       this.deliveryAddressTypeId,
@@ -621,6 +668,7 @@ public class RequestBuilder extends JsonBuilder implements Builder {
       this.requestType,
       this.requestDate,
       this.itemId,
+      this.destinationItemId,
       this.requesterId,
       this.fulfilmentPreference,
       this.deliveryAddressTypeId,
@@ -649,6 +697,7 @@ public class RequestBuilder extends JsonBuilder implements Builder {
       this.requestType,
       this.requestDate,
       this.itemId,
+      this.destinationItemId,
       this.requesterId,
       this.fulfilmentPreference,
       this.deliveryAddressTypeId,
@@ -675,6 +724,7 @@ public class RequestBuilder extends JsonBuilder implements Builder {
       this.requestType,
       this.requestDate,
       this.itemId,
+      this.destinationItemId,
       this.requesterId,
       this.fulfilmentPreference,
       this.deliveryAddressTypeId,

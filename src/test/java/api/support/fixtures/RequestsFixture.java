@@ -180,6 +180,15 @@ public class RequestsFixture {
 
     requestsClient.replace(request.getId(), cancelledRequestBySteve);
   }
+  
+  public IndividualResource move(RequestBuilder requestToBuild)
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    return requestsClient.move(requestToBuild);
+  }
 
   public MultipleRecords<JsonObject> getQueueFor(IndividualResource item) {
     //TODO: Replace with better parsing
