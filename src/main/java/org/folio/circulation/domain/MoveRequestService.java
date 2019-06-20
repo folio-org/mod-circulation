@@ -1,11 +1,16 @@
 package org.folio.circulation.domain;
 
+import static java.lang.String.format;
+import static org.folio.circulation.domain.representations.RequestProperties.REQUEST_TYPE;
 import static org.folio.circulation.support.Result.of;
+import static org.folio.circulation.support.Result.succeeded;
+import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 
 import org.folio.circulation.domain.policy.RequestPolicyRepository;
 import org.folio.circulation.support.ItemRepository;
@@ -45,8 +50,34 @@ public class MoveRequestService {
       .after(updateRequestQueue::onMoveFrom)
       .thenComposeAsync(r -> r.after(this::lookupDestinationItem))
       .thenComposeAsync(r -> r.after(this::lookupDestinationItemRequestQueue))
+      // TODO: perform this validation before changing original queue
+      // requires getting the destination item and request queue
+      // probably should combine the lookups and if passes validation 
+      // update original request queue, apply destination item and request queue,
+      // else fail without change original request queue
+      .thenApply(r -> r.next(MoveRequestService::refuseWhenDestincationItemIsCheckoutWithNoRecalls))
       .thenApply(r -> r.map(MoveRequestService::applyMoveToRepresentation))
       .thenCompose(r -> r.after(this::updateRequest));
+  }
+
+  private static Result<RequestAndRelatedRecords> refuseWhenDestincationItemIsCheckoutWithNoRecalls(
+    RequestAndRelatedRecords requestAndRelatedRecords) {
+
+    RequestType requestType = requestAndRelatedRecords.getRequest().getRequestType();
+    RequestQueue requestQueue = requestAndRelatedRecords.getRequestQueue();
+
+    boolean isRecall = requestType.equals(RequestType.RECALL);
+
+    boolean hasRecallRequestInQueue = requestQueue.getRequests().stream()
+      .filter(request -> request.getRequestType().equals(RequestType.RECALL))
+      .collect(Collectors.toList()).size() > 0;
+
+    if (isRecall && !hasRecallRequestInQueue) {
+      return failedValidation(format("Cannot move recall request to item which has no recall requests"),
+        REQUEST_TYPE, requestType.getValue());
+    } else {
+      return succeeded(requestAndRelatedRecords);
+    }
   }
   
   private static RequestAndRelatedRecords applyMoveToRepresentation(
@@ -61,7 +92,7 @@ public class MoveRequestService {
     final Request request = requestAndRelatedRecords.getRequest();
     final String destinationItemId = request.getDestinationItemId();
     return itemRepository.fetchById(destinationItemId)
-        .thenApply(result -> result.map(requestAndRelatedRecords::withItem));
+      .thenApply(result -> result.map(requestAndRelatedRecords::withItem));
   }
   
   private CompletableFuture<Result<RequestAndRelatedRecords>> lookupDestinationItemRequestQueue(
@@ -69,7 +100,7 @@ public class MoveRequestService {
     final Request request = requestAndRelatedRecords.getRequest();
     final String destinationItemId = request.getDestinationItemId();
     return requestQueueRepository.get(destinationItemId)
-        .thenApply(result -> result.map(requestAndRelatedRecords::withRequestQueue));
+      .thenApply(result -> result.map(requestAndRelatedRecords::withRequestQueue));
   }
   
   private CompletableFuture<Result<RequestAndRelatedRecords>> updateRequest(
@@ -86,6 +117,8 @@ public class MoveRequestService {
       .thenComposeAsync(r -> r.after(updateItem::onRequestCreationOrMove))
       .thenComposeAsync(r -> r.after(updateLoanActionHistory::onRequestCreationOrMove))
       .thenComposeAsync(r -> r.after(updateLoan::onRequestCreationOrMove))
+      // TODO: if destination item status is available, change status to paged
+      // write test to make sure
       .thenComposeAsync(r -> r.after(requestRepository::update));
   }
 

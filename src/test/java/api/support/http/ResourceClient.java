@@ -560,6 +560,24 @@ public class ResourceClient {
     return move(builder.create());
   }
   
+  public Response attemptMove(Builder builder)
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    CompletableFuture<Response> moveCompleted = new CompletableFuture<>();
+
+    JsonObject request = builder.create();
+
+    String path = String.format("/%s/move", request.getString("id"));
+
+    client.post(urlMaker.combine(path), request,
+      ResponseHandler.any(moveCompleted));
+
+    return moveCompleted.get(15, TimeUnit.SECONDS);
+  }
+  
   public IndividualResource move(JsonObject request)
     throws MalformedURLException,
     InterruptedException,

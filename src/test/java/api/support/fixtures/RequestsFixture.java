@@ -68,6 +68,23 @@ public class RequestsFixture {
       .withPickupServicePointId(servicePointsFixture.cd1().getId()));
   }
 
+  public IndividualResource placeRecallRequest(
+    IndividualResource item,
+    IndividualResource by,
+    DateTime on)
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    return place(new RequestBuilder()
+      .recall()
+      .withRequestDate(on)
+      .withItemId(item.getId())
+      .withRequesterId(by.getId())
+      .withPickupServicePointId(servicePointsFixture.cd1().getId()));
+  }
+
   public IndividualResource placeDeliveryRequest(
     IndividualResource item,
     IndividualResource by,
@@ -189,6 +206,14 @@ public class RequestsFixture {
 
     return requestsClient.move(requestToBuild);
   }
+  
+  public Response attemptMove(RequestBuilder requestToBuild)
+      throws InterruptedException,
+      MalformedURLException,
+      TimeoutException,
+      ExecutionException {
+      return requestsClient.attemptMove(requestToBuild);
+    }
 
   public MultipleRecords<JsonObject> getQueueFor(IndividualResource item) {
     //TODO: Replace with better parsing
