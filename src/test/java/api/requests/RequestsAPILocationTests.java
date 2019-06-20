@@ -16,7 +16,8 @@ import java.util.concurrent.TimeoutException;
 
 
 import static api.support.JsonCollectionAssistant.getRecordById;
-import static api.support.matchers.RequestItemMatcher.hasItemLocationProperties;
+import static api.support.matchers.RequestItemMatcher.*;
+import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 
@@ -55,9 +56,11 @@ public class RequestsAPILocationTests extends APITests {
 
     JsonObject createdRequest = request.getJson();
 
-    assertThat(createdRequest,
-            hasItemLocationProperties("2nd Floor - Economics",
-                    "Djanogly Learning Resource Centre","NU/JC/DL/2FE"));
+    assertThat(createdRequest, hasItemLocationProperties(allOf(
+      hasLibraryName("Djanogly Learning Resource Centre"),
+      hasLocationName("2nd Floor - Economics"),
+      hasLocationCode("NU/JC/DL/2FE")
+    )));
 
     Response fetchedRequestResponse = requestsClient.getById(request.getId());
 
@@ -68,9 +71,11 @@ public class RequestsAPILocationTests extends APITests {
     assertThat("has item location",
       fetchRequest.getJsonObject("item").containsKey("location"), is(true));
 
-    assertThat(fetchRequest, hasItemLocationProperties("2nd Floor - Economics",
-            "Djanogly Learning Resource Centre", "NU/JC/DL/2FE"));
-
+    assertThat(fetchRequest, hasItemLocationProperties(allOf(
+      hasLibraryName("Djanogly Learning Resource Centre"),
+      hasLocationName("2nd Floor - Economics"),
+      hasLocationCode("NU/JC/DL/2FE")
+    )));
   }
 
   @Test
@@ -125,13 +130,17 @@ public class RequestsAPILocationTests extends APITests {
     JsonObject secondFetchedRequest = getRecordById(
             fetchedRequestsResponse, secondRequest.getId()).get();
 
-    assertThat(secondFetchedRequest,
-      hasItemLocationProperties("Display Case, Mezzanine",
-              "Business Library","NU/JC/BL/DM"));
+    assertThat(firstFetchedRequest, hasItemLocationProperties(allOf(
+      hasLibraryName("Djanogly Learning Resource Centre"),
+      hasLocationName("3rd Floor"),
+      hasLocationCode("NU/JC/DL/3F")
+    )));
 
-    assertThat(firstFetchedRequest,
-      hasItemLocationProperties("3rd Floor",
-              "Djanogly Learning Resource Centre","NU/JC/DL/3F"));
+    assertThat(secondFetchedRequest, hasItemLocationProperties(allOf(
+      hasLibraryName("Business Library"),
+      hasLocationName("Display Case, Mezzanine"),
+      hasLocationCode("NU/JC/BL/DM")
+    )));
 
   }
 }

@@ -4,85 +4,81 @@ import io.vertx.core.json.JsonObject;
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
 import org.hamcrest.TypeSafeDiagnosingMatcher;
+import org.hamcrest.collection.IsMapContaining;
 
-import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
-import java.util.stream.Collectors;
 
-public class RequestItemMatcher extends TypeSafeDiagnosingMatcher<JsonObject> {
+public class RequestItemMatcher extends ValidationErrorMatchers {
 
-  private static final String LIBRARY_NAME = "libraryName";
-  private static final String CODE = "code";
-  private static final String NAME = "name";
-  private String expectedLibraryName;
-  private String expectedLocationCode;
-  private String expectedLocationName;
+  public static TypeSafeDiagnosingMatcher<JsonObject> hasItemLocationProperties(
+    Matcher<Map<String, String>> matcher) {
+    return new TypeSafeDiagnosingMatcher<JsonObject>() {
+      @Override
+      public void describeTo(Description description) {
+        description
+          .appendText("Location which ").appendDescriptionOf(matcher);
+      }
 
-  public static Matcher<JsonObject> hasItemLocationProperties(
-    String locationName, String libraryName, String locationCode ) {
-
-    return new RequestItemMatcher(locationName, libraryName, locationCode);
+      @Override
+      protected boolean matchesSafely(JsonObject representation, Description description) {
+        JsonObject item = representation.getJsonObject("item").getJsonObject("location");
+        Map<String, Object> itemMap = item.getMap();
+        matcher.describeMismatch(itemMap, description);
+        return matcher.matches(itemMap);
+      }
+    };
   }
 
-  private RequestItemMatcher(
-      String locationName, String libraryName, String locationCode) {
-    this.expectedLibraryName = libraryName;
-    this.expectedLocationCode = locationCode;
-    this.expectedLocationName = locationName;
+  public static TypeSafeDiagnosingMatcher<Object> hasLibraryName(String value) {
+    return new TypeSafeDiagnosingMatcher<Object>() {
+      @Override
+      public void describeTo(Description description) {
+        description.appendText("has library name ").appendValue(value);
+      }
+
+      @Override
+      protected boolean matchesSafely(Object map, Description description) {
+        Matcher<Map<? extends String, ? extends String>> matcher = IsMapContaining.hasEntry("libraryName", value);
+        matcher.describeMismatch(map, description);
+        return matcher.matches(map);
+      }
+
+    };
   }
 
-  @Override
-  protected boolean matchesSafely(JsonObject jsonObject,
-          Description mismatchDescription) {
+  public static TypeSafeDiagnosingMatcher<Object> hasLocationCode(String value) {
+    return new TypeSafeDiagnosingMatcher<Object>() {
+      @Override
+      public void describeTo(Description description) {
+        description.appendText("has location code ").appendValue(value);
+      }
 
-    Map<String, String> notMatchedKeys = new HashMap<>();
+      @Override
+      protected boolean matchesSafely(Object map, Description description) {
+        Matcher<Map<? extends String, ? extends String>> matcher = IsMapContaining.hasEntry("code", value);
+        matcher.describeMismatch(map, description);
+        return matcher.matches(map);
+      }
+    };
 
-    JsonObject item = jsonObject.getJsonObject("item");
-    if (item == null) {
-      mismatchDescription.appendText("item is null");
-      return false;
-    }
-
-    JsonObject location = item.getJsonObject("location");
-    if (location == null) {
-      mismatchDescription.appendText("item location is null");
-      return false;
-    }
-    String libraryName = location.getString(LIBRARY_NAME);
-    String locationCode = location.getString(CODE);
-    String locationName = location.getString(NAME);
-
-    if (!Objects.equals(expectedLibraryName, libraryName)) {
-      notMatchedKeys.put(LIBRARY_NAME, libraryName);
-    }
-
-    if (!Objects.equals(expectedLocationCode, locationCode)) {
-      notMatchedKeys.put(CODE, locationCode);
-    }
-
-    if (!Objects.equals(expectedLocationName, locationName)) {
-      notMatchedKeys.put(NAME, locationName);
-    }
-    if (!notMatchedKeys.isEmpty()) {
-      String mismatchedKeysDescribing = notMatchedKeys.entrySet().stream()
-        .map(e -> String.format("%s : %s", e.getKey(), e.getValue()))
-        .collect(Collectors.joining(", "));
-      mismatchDescription.appendText(mismatchedKeysDescribing);
-      return false;
-    }
-
-    return true;
   }
 
-  @Override
-  public void describeTo(Description description) {
-    JsonObject expectedLocation = new JsonObject()
-      .put(LIBRARY_NAME, expectedLibraryName)
-      .put(CODE, expectedLocationCode)
-      .put(NAME, expectedLocationName);
+  public static TypeSafeDiagnosingMatcher<Object> hasLocationName(String value) {
+    return new TypeSafeDiagnosingMatcher<Object>() {
+      @Override
+      public void describeTo(Description description) {
+        description.appendText("has location name ").appendValue(value);
+      }
 
-    description.appendText("item location : ")
-      .appendValue(expectedLocation);
+      @Override
+      protected boolean matchesSafely(Object map, Description description) {
+        Matcher<Map<? extends String, ? extends String>> matcher = IsMapContaining.hasEntry("name", value);
+        matcher.describeMismatch(map, description);
+        return matcher.matches(map);
+      }
+    };
   }
 }
+
+
+
