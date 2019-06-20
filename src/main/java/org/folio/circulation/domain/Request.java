@@ -118,7 +118,7 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   public boolean isClosed() {
-    // Alternatively, check status contains "Closed"
+    //Alternatively, check status contains "Closed"
     return isCancelled() || isFulfilled() || isUnfilled() || isPickupExpired();
   }
 
