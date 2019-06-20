@@ -9,6 +9,7 @@ import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
+import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
@@ -18,13 +19,75 @@ import org.junit.runner.RunWith;
 
 import api.support.APITests;
 import api.support.builders.RequestBuilder;
+import io.vertx.core.json.JsonObject;
 import junitparams.JUnitParamsRunner;
 
 @RunWith(JUnitParamsRunner.class)
 public class RequestsAPIMoveTests extends APITests {
+  
+  @Test
+  public void canMoveAHoldShelfRequestToAnEmptyQueue()
+    throws InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    MalformedURLException {
+
+    UUID pickupServicePointId = servicePointsFixture.cd1().getId();
+
+    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    IndividualResource uponInterestingTimes = itemsFixture.basedUponInterestingTimes();
+    
+    IndividualResource james = usersFixture.james();
+    IndividualResource jessica = usersFixture.jessica();
+    IndividualResource charlotte = usersFixture.charlotte();
+
+    // james checks out basedUponSmallAngryPlanet
+    loansFixture.checkOutByBarcode(smallAngryPlanet, james);
+
+    // charlotte checks out basedUponSmallAngryPlanet
+    loansFixture.checkOutByBarcode(uponInterestingTimes, charlotte);
+
+    // make requests for smallAngryPlanet
+    IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
+      smallAngryPlanet, jessica, new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC));
+
+    // move steve requests from smallAngryPlanet to uponInterestingTimes
+    IndividualResource moveRequest = requestsFixture.move(new RequestBuilder()
+        .withId(requestByJessica.getId())
+        .withDestinationItemId(uponInterestingTimes.getId())
+        .open()
+        .recall()
+        .forItem(smallAngryPlanet)
+        .by(jessica)
+        .withRequestDate(new DateTime(2018, 7, 22, 10, 22, 54, DateTimeZone.UTC))
+        .fulfilToHoldShelf()
+        .withRequestExpiration(new LocalDate(2017, 7, 30))
+        .withHoldShelfExpiration(new LocalDate(2017, 8, 31))
+        .withPickupServicePointId(pickupServicePointId)
+        .withTags(new RequestBuilder.Tags(asList("move", "request", "smallAngryPlanet", "basedUponInterestingTimes"))));
+
+    assertThat("Move request should not retain stored destination item id",
+        moveRequest.getJson().containsKey("destinationItemId"), is(false));
+
+    assertThat("Move request should have correct item id",
+        moveRequest.getJson().getString("itemId"), is(uponInterestingTimes.getId().toString()));
+
+    requestByJessica = requestsClient.get(requestByJessica);
+    assertThat(requestByJessica.getJson().getInteger("position"), is(1));
+    assertThat(requestByJessica.getJson().getString("itemId"), is(uponInterestingTimes.getId().toString()));
+    retainsStoredSummaries(requestByJessica);
+
+    // check item queues are correct size
+    MultipleRecords<JsonObject> smallAngryPlanetQueue = requestsFixture.getQueueFor(smallAngryPlanet);
+    assertThat(smallAngryPlanetQueue.getTotalRecords(), is(0));
+    
+    MultipleRecords<JsonObject> uponInterestingTimesQueue = requestsFixture.getQueueFor(uponInterestingTimes);
+    assertThat(uponInterestingTimesQueue.getTotalRecords(), is(1));
+
+  }
 
   @Test
-  public void canMoveARequest()
+  public void canMoveAHoldShelfRequest()
     throws InterruptedException,
     ExecutionException,
     TimeoutException,
@@ -111,6 +174,13 @@ public class RequestsAPIMoveTests extends APITests {
     assertThat(requestByRebecca.getJson().getInteger("position"), is(3));
     assertThat(requestByRebecca.getJson().getString("itemId"), is(smallAngryPlanet.getId().toString()));
     retainsStoredSummaries(requestByRebecca);
+
+    // check item queues are correct size
+    MultipleRecords<JsonObject> smallAngryPlanetQueue = requestsFixture.getQueueFor(smallAngryPlanet);
+    assertThat(smallAngryPlanetQueue.getTotalRecords(), is(3));
+
+    MultipleRecords<JsonObject> uponInterestingTimesQueue = requestsFixture.getQueueFor(uponInterestingTimes);
+    assertThat(uponInterestingTimesQueue.getTotalRecords(), is(2));
 
   }
   
