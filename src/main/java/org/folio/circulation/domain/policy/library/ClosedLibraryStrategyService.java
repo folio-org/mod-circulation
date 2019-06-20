@@ -2,6 +2,7 @@ package org.folio.circulation.domain.policy.library;
 
 import static org.folio.circulation.domain.policy.library.ClosedLibraryStrategyUtils.determineClosedLibraryStrategy;
 import static org.folio.circulation.support.Result.succeeded;
+import static org.folio.circulation.support.ResultBinding.mapResult;
 
 import java.util.Comparator;
 import java.util.Optional;
@@ -39,14 +40,15 @@ public class ClosedLibraryStrategyService {
   public CompletableFuture<Result<LoanAndRelatedRecords>> applyClosedLibraryDueDateManagement(
     LoanAndRelatedRecords relatedRecords) {
 
-    return applyClosedLibraryDueDateManagement(relatedRecords.getLoan(), relatedRecords.getLoanPolicy(), relatedRecords.getTimeZone())
-      .thenApply(r -> r.map(dateTime -> {
-        relatedRecords.getLoan().changeDueDate(dateTime);
-        return relatedRecords;
-      }));
+    final Loan loan = relatedRecords.getLoan();
+
+    return applyClosedLibraryDueDateManagement(loan, loan.getLoanPolicy(),
+      relatedRecords.getTimeZone())
+      .thenApply(mapResult(loan::changeDueDate))
+      .thenApply(mapResult(relatedRecords::withLoan));
   }
 
-  public CompletableFuture<Result<DateTime>> applyClosedLibraryDueDateManagement(Loan loan, LoanPolicy loanPolicy, DateTimeZone timeZone) {
+  private CompletableFuture<Result<DateTime>> applyClosedLibraryDueDateManagement(Loan loan, LoanPolicy loanPolicy, DateTimeZone timeZone) {
     LocalDate requestedDate = loan.getDueDate().withZone(timeZone).toLocalDate();
     return calendarRepository.lookupOpeningDays(requestedDate, loan.getCheckoutServicePointId())
       .thenApply(r -> r.next(openingDays -> applyStrategy(loan, loanPolicy, openingDays, timeZone)));

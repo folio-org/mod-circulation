@@ -23,7 +23,8 @@ public class CirculationRulesFixture {
     this.client = client;
   }
 
-  public void updateCirculationRules(UUID loanPolicyId, UUID requestPolicyId, UUID noticePolicyId)
+  public void updateCirculationRules(UUID loanPolicyId, UUID requestPolicyId,
+                                     UUID noticePolicyId)
     throws InterruptedException,
     ExecutionException,
     TimeoutException {
@@ -53,7 +54,16 @@ public class CirculationRulesFixture {
       response.getStatusCode(), is(204));
   }
 
-  private String soleFallbackPolicyRule(UUID loanPolicyId, UUID requestPolicyId, UUID noticePolicyId) {
+  private String soleFallbackPolicyRule(UUID loanPolicyId, UUID requestPolicyId,
+                                        UUID noticePolicyId) {
+
+    return soleFallbackPolicyRule(loanPolicyId.toString(), requestPolicyId.toString(),
+      noticePolicyId.toString());
+  }
+
+  public String soleFallbackPolicyRule(String loanPolicyId, String requestPolicyId,
+                                        String noticePolicyId) {
+
     return String.format("priority: t, s, c, b, a, m, g%nfallback-policy: l %s r %s n %s%n",
       loanPolicyId, requestPolicyId, noticePolicyId);
   }

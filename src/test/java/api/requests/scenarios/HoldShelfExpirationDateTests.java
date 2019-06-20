@@ -8,6 +8,8 @@ import static api.support.builders.RequestBuilder.OPEN_AWAITING_PICKUP;
 import static api.support.builders.RequestBuilder.OPEN_IN_TRANSIT;
 import static api.support.builders.RequestBuilder.OPEN_NOT_YET_FILLED;
 import static api.support.matchers.ItemStatusCodeMatcher.hasItemStatus;
+import static api.support.matchers.ResponseStatusCodeMatcher.hasStatus;
+import static org.folio.HttpStatus.HTTP_OK;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.emptyOrNullString;
@@ -24,6 +26,7 @@ import java.util.concurrent.TimeoutException;
 
 import org.folio.circulation.support.ClockManager;
 import org.folio.circulation.support.http.client.IndividualResource;
+import org.folio.circulation.support.http.client.Response;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.format.ISODateTimeFormat;
@@ -118,15 +121,22 @@ public class HoldShelfExpirationDateTests extends APITests{
         .forItem(nod)
         .at(checkInServicePoint.getId()));
 
-    final JsonObject storedRequest = requestsClient.getById(request.getId()).getJson();
+    final Response fetchStoredRequestResponse = requestsClient.getById(request.getId());
+
+    assertThat(fetchStoredRequestResponse, hasStatus(HTTP_OK));
+
+    final JsonObject storedRequest = fetchStoredRequestResponse.getJson();
 
     assertThat("request status snapshot in storage is " + OPEN_AWAITING_PICKUP,
         storedRequest.getString("status"), is(OPEN_AWAITING_PICKUP));
 
     assertThat("request hold shelf expiration date is 30 days in the future",
-        storedRequest.getString("holdShelfExpirationDate"), is(new DateTime(ChronoUnit.DAYS.addTo(ZonedDateTime.now(clock), 30).toInstant().toEpochMilli(), DateTimeZone.UTC).toString(ISODateTimeFormat.dateTime())));
+        storedRequest.getString("holdShelfExpirationDate"), is(
+          new DateTime(ChronoUnit.DAYS.addTo(ZonedDateTime.now(clock), 30)
+            .toInstant().toEpochMilli(), DateTimeZone.UTC).toString(ISODateTimeFormat.dateTime())));
 
     Clock not30Days = Clock.fixed(Instant.EPOCH, ZoneOffset.UTC);
+
     ClockManager.getClockManager().setClock(not30Days);
 
     loansFixture.checkInByBarcode(
@@ -134,13 +144,19 @@ public class HoldShelfExpirationDateTests extends APITests{
           .forItem(nod)
           .at(checkInServicePoint.getId()));
 
-    final JsonObject storedSecondCheckInRequest = requestsClient.getById(request.getId()).getJson();
+    final Response fetchStoredSecondRequestResponse = requestsClient.getById(request.getId());
+
+    assertThat(fetchStoredSecondRequestResponse, hasStatus(HTTP_OK));
+
+    final JsonObject storedSecondCheckInRequest = fetchStoredSecondRequestResponse.getJson();
 
     assertThat("request status snapshot in storage is " + OPEN_AWAITING_PICKUP,
         storedSecondCheckInRequest.getString("status"), is(OPEN_AWAITING_PICKUP));
 
     assertThat("request hold shelf expiration date is 30 days in the future and has not been updated",
-        storedRequest.getString("holdShelfExpirationDate"), is(new DateTime(ChronoUnit.DAYS.addTo(ZonedDateTime.now(clock), 30).toInstant().toEpochMilli(), DateTimeZone.UTC).toString(ISODateTimeFormat.dateTime())));
+        storedRequest.getString("holdShelfExpirationDate"),
+      is(new DateTime(ChronoUnit.DAYS.addTo(ZonedDateTime.now(clock), 30).toInstant()
+        .toEpochMilli(), DateTimeZone.UTC).toString(ISODateTimeFormat.dateTime())));
   }
 
   @Test
@@ -212,7 +228,11 @@ public class HoldShelfExpirationDateTests extends APITests{
         .forItem(nod)
         .at(checkInServicePoint.getId()));
 
-    final JsonObject storedRequest = requestsClient.getById(request.getId()).getJson();
+    final Response getByIdResponse = requestsClient.getById(request.getId());
+
+    assertThat(getByIdResponse, hasStatus(HTTP_OK));
+
+    final JsonObject storedRequest = getByIdResponse.getJson();
 
     assertThat("request status snapshot in storage is " + OPEN_AWAITING_PICKUP,
         storedRequest.getString("status"), is(OPEN_AWAITING_PICKUP));

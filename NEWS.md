@@ -1,8 +1,15 @@
+## 16.3.0 2019-06-17
+
+* Use sets for module permissions to reduce size when included in headers (CIRC-352)
+* Only fetch single record by ID when ID is not null (CIRC-359)
+* Only update request queue when loan is closed (CIRC-351)
+* Uses correct request type for instance level requests (CIRC-344)
+
 ## 16.2.0 2019-06-12
 
 * Processes scheduled patron notices (CIRC-337)
 * Includes location related tokens for patron notices (CIRC-332)
-* Handles missing request expiration date for title level requests (CIRC-345)
+* Handles missing request expiration date for instance level requests (CIRC-345)
 * Does not attempt to store extended requester patron group information (CIRC-342)
 
 ## 16.1.0 2019-06-10

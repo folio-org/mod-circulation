@@ -1,5 +1,6 @@
 package api.support.http;
 
+import static java.net.HttpURLConnection.HTTP_CREATED;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 
@@ -260,21 +261,20 @@ public class ResourceClient {
 
     CompletableFuture<Response> createCompleted = new CompletableFuture<>();
 
-    log.debug("Attempting to create %s record: %s", resourceName,
+    log.debug("Attempting to create {} record: {}", resourceName,
       request.encodePrettily());
 
     client.post(urlMaker.combine(""), request,
-      ResponseHandler.json(createCompleted));
+      ResponseHandler.any(createCompleted));
 
     Response response = createCompleted.get(5, TimeUnit.SECONDS);
 
     assertThat(
       String.format("Failed to create %s: %s", resourceName,
-        response.getBody()), response.getStatusCode(),
-      is(HttpURLConnection.HTTP_CREATED));
+        response.getBody()), response.getStatusCode(), is(HTTP_CREATED));
 
-    log.debug(String.format("Created resource %s: %s", resourceName,
-      response.getJson().encodePrettily()));
+    log.debug("Created resource {}: {}", resourceName,
+      response.getJson().encodePrettily());
 
     return new IndividualResource(response);
   }
