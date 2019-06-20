@@ -6,7 +6,6 @@ import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanRepository;
-import org.folio.circulation.domain.RequestQueueRepository;
 import org.folio.circulation.domain.UserRepository;
 import org.folio.circulation.storage.SingleOpenLoanByUserAndItemBarcodeFinder;
 import org.folio.circulation.support.Result;
@@ -16,8 +15,8 @@ import io.vertx.core.http.HttpClient;
 import io.vertx.core.json.JsonObject;
 
 public class RenewByBarcodeResource extends RenewalResource {
-  public RenewByBarcodeResource(HttpClient client) {
-    super(client, "/circulation/renew-by-barcode");
+  public RenewByBarcodeResource(String rootPath, RenewalStrategy renewalStrategy, HttpClient client) {
+    super(rootPath, renewalStrategy, client);
   }
 
   @Override
@@ -25,12 +24,11 @@ public class RenewByBarcodeResource extends RenewalResource {
     JsonObject request,
     LoanRepository loanRepository,
     ItemRepository itemRepository,
-    UserRepository userRepository,
-    RequestQueueRepository requestQueueRepository) {
+    UserRepository userRepository) {
 
     final SingleOpenLoanByUserAndItemBarcodeFinder finder
       = new SingleOpenLoanByUserAndItemBarcodeFinder(loanRepository,
-      itemRepository, userRepository, requestQueueRepository);
+      itemRepository, userRepository);
 
     return renewalRequestFrom(request).after(renewal ->
       finder.findLoan(renewal.getItemBarcode(), renewal.getUserBarcode()));

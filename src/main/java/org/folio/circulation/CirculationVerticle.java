@@ -9,8 +9,9 @@ import org.folio.circulation.resources.LoanCirculationRulesEngineResource;
 import org.folio.circulation.resources.LoanCollectionResource;
 import org.folio.circulation.resources.NoticeCirculationRulesEngineResource;
 import org.folio.circulation.resources.OverrideCheckOutStrategy;
-import org.folio.circulation.resources.OverrideRenewalByBarcodeResource;
+import org.folio.circulation.resources.OverrideRenewalStrategy;
 import org.folio.circulation.resources.RegularCheckOutStrategy;
+import org.folio.circulation.resources.RegularRenewalStrategy;
 import org.folio.circulation.resources.RenewByBarcodeResource;
 import org.folio.circulation.resources.RenewByIdResource;
 import org.folio.circulation.resources.RequestByInstanceIdResource;
@@ -52,13 +53,18 @@ public class CirculationVerticle extends AbstractVerticle {
     new CheckOutByBarcodeResource("/circulation/override-check-out-by-barcode",
       client, new OverrideCheckOutStrategy()).register(router);
     new CheckInByBarcodeResource(client).register(router);
-    new RenewByBarcodeResource(client).register(router);
-    new RenewByIdResource(client).register(router);
+
+    new RenewByBarcodeResource("/circulation/renew-by-barcode",
+      new RegularRenewalStrategy(), client).register(router);
+    new RenewByIdResource("/circulation/renew-by-id",
+      new RegularRenewalStrategy(), client).register(router);
+    new RenewByBarcodeResource("/circulation/override-renewal-by-barcode",
+      new OverrideRenewalStrategy(), client).register(router);
+
     new LoanCollectionResource(client).register(router);
     new RequestCollectionResource(client).register(router);
     new RequestQueueResource(client).register(router);
     new RequestByInstanceIdResource(client).register(router);
-    new OverrideRenewalByBarcodeResource(client).register(router);
 
     new RequestHoldShelfClearanceResource("/circulation/requests-reports/hold-shelf-clearance/:servicePointId", client)
       .register(router);
