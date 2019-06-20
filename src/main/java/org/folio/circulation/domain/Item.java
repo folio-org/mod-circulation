@@ -7,9 +7,17 @@ import static org.folio.circulation.domain.ItemStatus.IN_TRANSIT;
 import static org.folio.circulation.domain.ItemStatus.MISSING;
 import static org.folio.circulation.domain.representations.InstanceProperties.CONTRIBUTORS;
 import static org.folio.circulation.domain.representations.ItemProperties.IN_TRANSIT_DESTINATION_SERVICE_POINT_ID;
+import static org.folio.circulation.domain.representations.ItemProperties.ITEM_CALL_NUMBER_ID;
+import static org.folio.circulation.domain.representations.ItemProperties.ITEM_CALL_NUMBER_PREFIX_ID;
+import static org.folio.circulation.domain.representations.ItemProperties.ITEM_CALL_NUMBER_SUFFIX_ID;
+import static org.folio.circulation.domain.representations.ItemProperties.ITEM_COPY_NUMBERS_ID;
 import static org.folio.circulation.domain.representations.ItemProperties.PERMANENT_LOCATION_ID;
 import static org.folio.circulation.domain.representations.ItemProperties.TEMPORARY_LOCATION_ID;
 import static org.folio.circulation.domain.representations.ItemProperties.TITLE_PROPERTY;
+import static org.folio.circulation.domain.representations.HoldingsProperties.CALL_NUMBER_ID;
+import static org.folio.circulation.domain.representations.HoldingsProperties.CALL_NUMBER_PREFIX_ID;
+import static org.folio.circulation.domain.representations.HoldingsProperties.CALL_NUMBER_SUFFIX_ID;
+import static org.folio.circulation.domain.representations.HoldingsProperties.COPY_NUMBER_ID;
 import static org.folio.circulation.support.JsonArrayHelper.mapToList;
 import static org.folio.circulation.support.JsonPropertyFetcher.getArrayProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getNestedStringProperty;
@@ -21,6 +29,7 @@ import static org.folio.circulation.support.JsonStringArrayHelper.toStream;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.domain.representations.ItemProperties;
@@ -30,10 +39,6 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
 public class Item {
-  private static final String CALL_NUMBER_KEY = "callNumber";
-  private static final String CALL_NUMBER_PREFIX_KEY = "callNumberPrefix";
-  private static final String CALL_NUMBER_SUFFIX_KEY = "callNumberSuffix";
-  private static final String ITEM_REPRESENTATION_PREFIX = "itemLevel%s";
 
   private final JsonObject itemRepresentation;
   private final JsonObject holdingRepresentation;
@@ -151,30 +156,32 @@ public class Item {
   }
 
   public String getCallNumber() {
-    return getEffectiveCallNumbers(CALL_NUMBER_KEY);
+    return getEffectiveCallNumberValues(CALL_NUMBER_ID);
   }
 
   public String getCallNumberPrefix() {
-    return getEffectiveCallNumbers(CALL_NUMBER_PREFIX_KEY);
+    return getEffectiveCallNumberValues(CALL_NUMBER_PREFIX_ID);
   }
 
   public String getCallNumberSuffix() {
-    return getEffectiveCallNumbers(CALL_NUMBER_SUFFIX_KEY);
+    return getEffectiveCallNumberValues(CALL_NUMBER_SUFFIX_ID);
   }
 
-  private String getEffectiveCallNumbers(String propertyName) {
+  private String getEffectiveCallNumberValues(String propertyName) {
     return hasItemRepresentationCallNumber()
-      ? getItemRepresentationCallNumbers(propertyName)
+      ? getProperty(itemRepresentation, getItemCallNumberValueIdByPropertyName(propertyName))
       : getProperty(holdingRepresentation, propertyName);
   }
 
   private boolean hasItemRepresentationCallNumber() {
-    return StringUtils.isNotBlank(getItemRepresentationCallNumbers(CALL_NUMBER_KEY));
+    return StringUtils.isNotBlank(getProperty(itemRepresentation, ITEM_CALL_NUMBER_ID));
   }
 
-  private String getItemRepresentationCallNumbers(String propertyName) {
-    return getProperty(itemRepresentation,
-      String.format(ITEM_REPRESENTATION_PREFIX, StringUtils.capitalize(propertyName)));
+  private String getItemCallNumberValueIdByPropertyName(String propertyName) {
+    return Stream.of(ITEM_CALL_NUMBER_ID, ITEM_CALL_NUMBER_PREFIX_ID, ITEM_CALL_NUMBER_SUFFIX_ID)
+      .filter(val -> StringUtils.containsIgnoreCase(val, propertyName))
+      .findFirst()
+      .orElse(StringUtils.EMPTY);
   }
 
   public ItemStatus getStatus() {
@@ -198,14 +205,14 @@ public class Item {
   }
 
   public JsonArray getCopyNumbers() {
-    JsonArray copyNumbers = getArrayProperty(getItem(), "copyNumbers");
-    return getEffectiveCopyNumbers(copyNumbers);
+    return getEffectiveCopyNumbers(getArrayProperty(getItem(), ITEM_COPY_NUMBERS_ID));
   }
 
   private JsonArray getEffectiveCopyNumbers(JsonArray copyNumbers) {
-    return copyNumbers.isEmpty()
-      ? copyNumbers.add(getProperty(holdingRepresentation, "copyNumber"))
-      : copyNumbers;
+    if (copyNumbers == null || copyNumbers.isEmpty()) {
+      return new JsonArray().add(getProperty(holdingRepresentation, COPY_NUMBER_ID));
+    }
+    return copyNumbers;
   }
 
   public String getMaterialTypeId() {
