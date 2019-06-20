@@ -570,8 +570,6 @@ public class ResourceClient {
 
     log.debug("Attempting to move {} record: {}", resourceName,
       request.encodePrettily());
-    
-    System.out.println("\n\n\n\n" + urlMaker.combine(String.format("/%s/move", request.getString("id"))) + "\n\n\n\n");
 
     client.post(urlMaker.combine(String.format("/%s/move", request.getString("id"))), request,
       ResponseHandler.any(moveCompleted));
