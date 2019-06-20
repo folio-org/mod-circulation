@@ -5,22 +5,18 @@ import java.util.concurrent.CompletableFuture;
 import org.folio.circulation.domain.ConfigurationRepository;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
-import org.folio.circulation.domain.LoanRenewalService;
 import org.folio.circulation.domain.LoanRepository;
 import org.folio.circulation.domain.LoanRepresentation;
 import org.folio.circulation.domain.RequestQueueRepository;
 import org.folio.circulation.domain.UserRepository;
 import org.folio.circulation.domain.notice.schedule.ScheduledNoticeService;
 import org.folio.circulation.domain.policy.LoanPolicyRepository;
-import org.folio.circulation.domain.policy.library.ClosedLibraryStrategyService;
 import org.folio.circulation.domain.representations.LoanResponse;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.ItemRepository;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.RouteRegistration;
 import org.folio.circulation.support.http.server.WebContext;
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
 
 import io.vertx.core.http.HttpClient;
 import io.vertx.core.json.JsonObject;
@@ -28,11 +24,14 @@ import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 
 public abstract class RenewalResource extends Resource {
-  private final String rootPath;
 
-  RenewalResource(HttpClient client, String rootPath) {
+  private final String rootPath;
+  private final RenewalStrategy renewalStrategy;
+
+  RenewalResource(String rootPath, RenewalStrategy renewalStrategy, HttpClient client) {
     super(client);
     this.rootPath = rootPath;
+    this.renewalStrategy = renewalStrategy;
   }
 
   @Override
@@ -54,26 +53,23 @@ public abstract class RenewalResource extends Resource {
     final LoanPolicyRepository loanPolicyRepository = new LoanPolicyRepository(clients);
 
     final LoanRepresentation loanRepresentation = new LoanRepresentation();
-    final LoanRenewalService loanRenewalService = LoanRenewalService.using(clients);
     final ConfigurationRepository configurationRepository = new ConfigurationRepository(clients);
-    final ClosedLibraryStrategyService strategyService =
-      ClosedLibraryStrategyService.using(clients, DateTime.now(DateTimeZone.UTC), true);
     final ScheduledNoticeService scheduledNoticeService = ScheduledNoticeService.using(clients);
-
 
     //TODO: Validation check for same user should be in the domain service
 
-    CompletableFuture<Result<Loan>> loan = findLoan(routingContext.getBodyAsJson(),
+    JsonObject bodyAsJson = routingContext.getBodyAsJson();
+    CompletableFuture<Result<Loan>> findLoanResult = findLoan(bodyAsJson,
       loanRepository,
       itemRepository,
-      userRepository,
-      requestQueueRepository);
+      userRepository);
 
-    loan.thenApply(r -> r.map(LoanAndRelatedRecords::new))
-      .thenComposeAsync(r -> r.after(configurationRepository::lookupTimeZone))
+    findLoanResult
+      .thenApply(r -> r.map(LoanAndRelatedRecords::new))
       .thenComposeAsync(r -> r.after(loanPolicyRepository::lookupLoanPolicy))
-      .thenApply(r -> r.next(loanRenewalService::renew))
-      .thenComposeAsync(r -> r.after(strategyService::applyClosedLibraryDueDateManagement))
+      .thenComposeAsync(r -> r.after(requestQueueRepository::get))
+      .thenComposeAsync(r -> r.after(configurationRepository::lookupTimeZone))
+      .thenComposeAsync(r -> r.after(records -> renewalStrategy.renew(records, bodyAsJson, clients)))
       .thenComposeAsync(r -> r.after(loanRepository::updateLoan))
       .thenComposeAsync(r -> r.after(scheduledNoticeService::rescheduleDueDateNotices))
       .thenApply(r -> r.map(loanRepresentation::extendedLoan))
@@ -85,6 +81,5 @@ public abstract class RenewalResource extends Resource {
     JsonObject request,
     LoanRepository loanRepository,
     ItemRepository itemRepository,
-    UserRepository userRepository,
-    RequestQueueRepository requestQueueRepository);
+    UserRepository userRepository);
 }

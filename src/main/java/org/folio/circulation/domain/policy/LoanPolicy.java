@@ -109,7 +109,8 @@ public class LoanPolicy {
   }
 
   public Result<Loan> overrideRenewal(Loan loan, DateTime systemDate,
-                                      DateTime overrideDueDate, String comment) {
+                                      DateTime overrideDueDate, String comment,
+                                      boolean hasRecallRequest) {
     try {
       if (isNotLoanable() || isNotRenewable()) {
         return overrideRenewalForDueDate(loan, overrideDueDate, comment);
@@ -130,6 +131,10 @@ public class LoanPolicy {
 
       if (proposedDueDateResult.succeeded() &&
         reachedNumberOfRenewalsLimit(loan) && !unlimitedRenewals()) {
+        return processRenewal(proposedDueDateResult, loan, comment);
+      }
+
+      if (hasRecallRequest) {
         return processRenewal(proposedDueDateResult, loan, comment);
       }
 
@@ -179,8 +184,9 @@ public class LoanPolicy {
     String reason = "Override renewal does not match any of expected cases: " +
       "item is not loanable, " +
       "item is not renewable, " +
-      "reached number of renewals limit or " +
-      "renewal date falls outside of the date ranges in the loan policy";
+      "reached number of renewals limit," +
+      "renewal date falls outside of the date ranges in the loan policy, " +
+      "items cannot be renewed when there is an active recall request";
 
     return errorForPolicy(reason);
   }
