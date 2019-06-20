@@ -15,60 +15,86 @@ import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.domain.policy.RequestPolicy;
 import org.folio.circulation.domain.policy.RequestPolicyRepository;
-import org.folio.circulation.resources.RequestNoticeSender;
+import org.folio.circulation.support.ItemRepository;
 import org.folio.circulation.support.ResponseWritableResult;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.http.server.ValidationError;
 
-public class CreateRequestService {
-
+public class MoveRequestService {
   private final RequestRepository requestRepository;
-  private final UpdateItem updateItem;
-  private final UpdateLoanActionHistory updateLoanActionHistory;
+  private final RequestQueueRepository requestQueueRepository;
   private final RequestPolicyRepository requestPolicyRepository;
   private final LoanRepository loanRepository;
+  private final ItemRepository itemRepository;
+  private final UpdateRequestQueue updateRequestQueue;
+  private final UpdateItem updateItem;
   private final UpdateLoan updateLoan;
-  private final RequestNoticeSender requestNoticeSender;
+  private final UpdateLoanActionHistory updateLoanActionHistory;
 
-  public CreateRequestService(RequestRepository requestRepository, UpdateItem updateItem,
-                              UpdateLoanActionHistory updateLoanActionHistory, UpdateLoan updateLoan,
-                              RequestPolicyRepository requestPolicyRepository,
-                              LoanRepository loanRepository, RequestNoticeSender requestNoticeSender) {
-
+  public MoveRequestService(RequestRepository requestRepository, RequestQueueRepository requestQueueRepository,
+    RequestPolicyRepository requestPolicyRepository, UpdateRequestQueue updateRequestQueue, UpdateItem updateItem,
+    UpdateLoanActionHistory updateLoanActionHistory, UpdateLoan updateLoan, LoanRepository loanRepository,
+    ItemRepository itemRepository) {
     this.requestRepository = requestRepository;
-    this.updateItem = updateItem;
-    this.updateLoanActionHistory = updateLoanActionHistory;
-    this.updateLoan = updateLoan;
+    this.requestQueueRepository = requestQueueRepository;
     this.requestPolicyRepository = requestPolicyRepository;
+    this.updateRequestQueue = updateRequestQueue;
+    this.updateItem = updateItem;
+    this.updateLoan = updateLoan;
+    this.updateLoanActionHistory = updateLoanActionHistory;
     this.loanRepository = loanRepository;
-    this.requestNoticeSender = requestNoticeSender;
+    this.itemRepository = itemRepository;
   }
 
-  public CompletableFuture<Result<RequestAndRelatedRecords>> createRequest(
+  public CompletableFuture<Result<RequestAndRelatedRecords>> moveRequest(
     RequestAndRelatedRecords requestAndRelatedRecords) {
-
     return of(() -> requestAndRelatedRecords)
-      .next(CreateRequestService::refuseWhenItemDoesNotExist)
-      .next(CreateRequestService::refuseWhenInvalidUserAndPatronGroup)
-      .next(CreateRequestService::refuseWhenItemIsNotValid)
-      .next(CreateRequestService::refuseWhenUserHasAlreadyRequestedItem)
+      .next(MoveRequestService::refuseWhenItemDoesNotExist)
+      .after(updateRequestQueue::onMoveFrom)
+      .thenComposeAsync(r -> r.after(this::lookupDestinationItem))
+      .thenComposeAsync(r -> r.after(this::lookupDestinationItemRequestQueue))
+      .thenCompose(r -> r.after(updateRequestQueue::onMoveTo))
+      .thenApply(r -> r.map(MoveRequestService::applyMoveToRepresentation))
+      .thenCompose(r -> r.after(this::updateRequest));
+  }
+  
+  private static RequestAndRelatedRecords applyMoveToRepresentation(
+    RequestAndRelatedRecords requestAndRelatedRecords) {
+    requestAndRelatedRecords.withRequest(
+      requestAndRelatedRecords.getRequest().applyMoveToRepresentation());
+    return requestAndRelatedRecords;
+  }
+
+  private CompletableFuture<Result<RequestAndRelatedRecords>> lookupDestinationItem(
+    RequestAndRelatedRecords requestAndRelatedRecords) {
+    final Request request = requestAndRelatedRecords.getRequest();
+    final String destinationItemId = request.getDestinationItemId();
+    return itemRepository.fetchById(destinationItemId)
+        .thenApply(result -> result.map(requestAndRelatedRecords::withItem));
+  }
+  
+  private CompletableFuture<Result<RequestAndRelatedRecords>> lookupDestinationItemRequestQueue(
+    RequestAndRelatedRecords requestAndRelatedRecords) {
+    final Request request = requestAndRelatedRecords.getRequest();
+    final String destinationItemId = request.getDestinationItemId();
+    return requestQueueRepository.get(destinationItemId)
+        .thenApply(result -> result.map(requestAndRelatedRecords::withRequestQueue));
+  }
+  
+  private CompletableFuture<Result<RequestAndRelatedRecords>> updateRequest(
+    RequestAndRelatedRecords requestAndRelatedRecords) {
+    return of(() -> requestAndRelatedRecords)
+      .next(MoveRequestService::refuseWhenItemDoesNotExist)
+      .next(MoveRequestService::refuseWhenInvalidUserAndPatronGroup)
+      .next(MoveRequestService::refuseWhenItemIsNotValid)
+      .next(MoveRequestService::refuseWhenUserHasAlreadyRequestedItem)
       .after(this::refuseWhenUserHasAlreadyBeenLoanedItem)
       .thenComposeAsync(r -> r.after(requestPolicyRepository::lookupRequestPolicy))
-      .thenApply(r -> r.next(CreateRequestService::refuseWhenRequestCannotBeFulfilled))
-      .thenApply(r -> r.map(CreateRequestService::setRequestQueuePosition))
+      .thenApply(r -> r.next(MoveRequestService::refuseWhenRequestCannotBeFulfilled))
       .thenComposeAsync(r -> r.after(updateItem::onRequestCreationOrMove))
       .thenComposeAsync(r -> r.after(updateLoanActionHistory::onRequestCreationOrMove))
       .thenComposeAsync(r -> r.after(updateLoan::onRequestCreationOrMove))
-      .thenComposeAsync(r -> r.after(requestRepository::create))
-      .thenApply(r -> r.next(requestNoticeSender::sendNoticeOnRequestCreated));
-  }
-
-  private static RequestAndRelatedRecords setRequestQueuePosition(RequestAndRelatedRecords requestAndRelatedRecords) {
-    // TODO: Extract to method to add to queue
-    requestAndRelatedRecords.withRequest(requestAndRelatedRecords.getRequest()
-      .changePosition(requestAndRelatedRecords.getRequestQueue().nextAvailablePosition()));
-
-    return requestAndRelatedRecords;
+      .thenComposeAsync(r -> r.after(requestRepository::update));
   }
 
   private static Result<RequestAndRelatedRecords> refuseWhenItemDoesNotExist(
@@ -133,7 +159,7 @@ public class CreateRequestService {
     }
   }
 
-  public static Result<RequestAndRelatedRecords> refuseWhenUserHasAlreadyRequestedItem(
+  private static Result<RequestAndRelatedRecords> refuseWhenUserHasAlreadyRequestedItem(
     RequestAndRelatedRecords request) {
 
     Optional<Request> requestOptional = request.getRequestQueue().getRequests().stream()

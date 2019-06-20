@@ -6,6 +6,7 @@ import static org.folio.circulation.support.ValidationErrorFailure.singleValidat
 
 import org.folio.circulation.domain.CreateRequestService;
 import org.folio.circulation.domain.LoanRepository;
+import org.folio.circulation.domain.MoveRequestService;
 import org.folio.circulation.domain.RequestAndRelatedRecords;
 import org.folio.circulation.domain.RequestQueueRepository;
 import org.folio.circulation.domain.RequestRepository;
@@ -31,11 +32,21 @@ import org.folio.circulation.support.http.server.WebContext;
 
 import io.vertx.core.http.HttpClient;
 import io.vertx.core.json.JsonObject;
+import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 
 public class RequestCollectionResource extends CollectionResource {
+	
+	private final static String ROOT_PATH = "/circulation/requests"; 
+  
   public RequestCollectionResource(HttpClient client) {
-    super(client, "/circulation/requests");
+    super(client, ROOT_PATH);
+  }
+  
+  @Override
+  public void register(Router router) {
+	  super.register(router);
+	  router.post(String.format("%s/:id/move", ROOT_PATH)).handler(this::move);
   }
 
   void create(RoutingContext routingContext) {
@@ -98,7 +109,7 @@ public class RequestCollectionResource extends CollectionResource {
 
     final UpdateRequestService updateRequestService = new UpdateRequestService(
       requestRepository,
-      UpdateRequestQueue.using(clients, null),
+      UpdateRequestQueue.using(clients),
       new ClosedRequestValidator(RequestRepository.using(clients)),
       requestNoticeSender);
 
@@ -144,13 +155,9 @@ public class RequestCollectionResource extends CollectionResource {
     final RequestRepository requestRepository = RequestRepository.using(clients);
 
     final UpdateRequestQueue updateRequestQueue = new UpdateRequestQueue(
-      new LoanRepository(clients),
       RequestQueueRepository.using(clients),
       requestRepository,
-      new ServicePointRepository(clients),
-      null,
-      null,
-      null
+      new ServicePointRepository(clients)
     );
 
     requestRepository.getById(id)
@@ -180,6 +187,57 @@ public class RequestCollectionResource extends CollectionResource {
 
     clients.requestsStorage().delete()
       .thenApply(NoContentResult::from)
+      .thenAccept(r -> r.writeTo(routingContext.response()));
+  }
+
+  void move(RoutingContext routingContext) {
+    WebContext context = new WebContext(routingContext);
+    Clients clients = Clients.create(context, client);
+
+    JsonObject representation = routingContext.getBodyAsJson();
+
+    write(representation, "id", getRequestId(routingContext));
+
+    final ItemRepository itemRepository = new ItemRepository(clients, true, true, true);
+    final LoanRepository loanRepository = new LoanRepository(clients);
+    final LoanPolicyRepository loanPolicyRepository = new LoanPolicyRepository(clients);
+    final UserRepository userRepository = new UserRepository(clients);
+    final ServicePointRepository servicePointRepository = new ServicePointRepository(clients);
+
+    final RequestQueueRepository requestQueueRepository = RequestQueueRepository.using(clients);
+
+    final ProxyRelationshipValidator proxyRelationshipValidator =
+      createProxyRelationshipValidator(representation, clients);
+    final ServicePointPickupLocationValidator servicePointPickupLocationValidator =
+      new ServicePointPickupLocationValidator();
+
+    final MoveRequestService moveRequestService = new MoveRequestService(
+      RequestRepository.using(clients),
+      requestQueueRepository,
+      new RequestPolicyRepository(clients),
+      UpdateRequestQueue.using(clients),
+      new UpdateItem(clients),
+      new UpdateLoanActionHistory(clients),
+      new UpdateLoan(clients, loanRepository, loanPolicyRepository),
+      loanRepository,
+      itemRepository);
+
+    RequestFromRepresentationService requestFromRepresentationService =
+      new RequestFromRepresentationService(
+      itemRepository,
+      requestQueueRepository,
+      userRepository,
+      loanRepository,
+      servicePointRepository,
+      proxyRelationshipValidator,
+      servicePointPickupLocationValidator
+    );
+
+    requestFromRepresentationService.getRequestFrom(representation)
+      .thenComposeAsync(r -> r.after(moveRequestService::moveRequest))
+      .thenApply(r -> r.map(RequestAndRelatedRecords::getRequest))
+      .thenApply(r -> r.map(new RequestRepresentation()::extendedRepresentation))
+      .thenApply(OkJsonResponseResult::from)
       .thenAccept(r -> r.writeTo(routingContext.response()));
   }
 

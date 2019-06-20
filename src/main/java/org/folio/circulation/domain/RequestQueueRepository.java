@@ -48,12 +48,6 @@ public class RequestQueueRepository {
       .thenApply(r -> r.map(RequestQueue::new));
   }
 
-  public CompletableFuture<Result<RequestQueue>> getByRequestId(String requestId) {
-    return requestRepository.getById(requestId)
-      .thenApply(r -> r.map(Request::getItemId))
-      .thenComposeAsync(r -> r.after(this::get));
-  }
-
   public CompletableFuture<Result<RequestQueue>> getRequestQueueWithoutItemLookup(String itemId) {
     final Result<CqlQuery> itemIdQuery = exactMatch("itemId", itemId);
     final Result<CqlQuery> statusQuery = exactMatchAny("status", RequestStatus.openStates());

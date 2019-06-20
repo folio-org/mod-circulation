@@ -324,6 +324,10 @@
         }
       }
     },
+    "destinationItemId": {
+      "description": "UUID of the item the request should be moved to",
+      "type": "string"
+    },
     "tags": {
       "type": "object",
       "description": "Tags",

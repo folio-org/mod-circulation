@@ -34,10 +34,10 @@ public class UpdateLoanActionHistory {
   }
 
   //Updates the single open loan for the item related to a request
-  CompletableFuture<Result<RequestAndRelatedRecords>> onRequestCreation(
+  CompletableFuture<Result<RequestAndRelatedRecords>> onRequestCreationOrMove(
     RequestAndRelatedRecords requestAndRelatedRecords) {
 
-    String action = requestAndRelatedRecords.getRequest().actionOnCreation();
+    String action = requestAndRelatedRecords.getRequest().actionOnCreationOrMove();
 
     String itemStatus = requestAndRelatedRecords.getRequest().getItem()
       .getStatus().getValue();
@@ -101,72 +101,4 @@ public class UpdateLoanActionHistory {
       return completedFuture(failed(new ServerErrorFailure(failedError)));
     }
   }
-
-  public CompletableFuture<Result<MoveRequestRecords>> onRequestUpdate(
-      MoveRequestRecords moveRequestRecords) {
-
-      String action = moveRequestRecords.getRequest().actionOnCreation();
-
-      String itemStatus = moveRequestRecords.getRequest().getItem()
-        .getStatus().getValue();
-
-      //Do not change any loans if no new status
-      if(StringUtils.isEmpty(action)) {
-        return skip(moveRequestRecords);
-      }
-
-      String itemId = moveRequestRecords.getItemId();
-
-      //TODO: Replace this with CQL Helper and explicit query parameter
-      String queryTemplate = "query=itemId=%s+and+status.name=Open";
-      String query = String.format(queryTemplate, itemId);
-      System.out.println("\n\n\n history onRequestUpdate: " + moveRequestRecords.getRequest() + "\n\n\n");
-      return this.loansStorageClient.getManyWithRawQueryStringParameters(query)
-        .thenComposeAsync(
-          getLoansResponse -> updateLatestLoan(moveRequestRecords, action,
-          itemStatus, itemId, getLoansResponse));
-    }
-
-  private CompletableFuture<Result<MoveRequestRecords>> updateLatestLoan(
-      MoveRequestRecords moveRequestRecords,
-      String action,
-      String itemStatus,
-      String itemId,
-      Response getLoansResponse) {
-
-      if(getLoansResponse.getStatusCode() == 200) {
-        List<JsonObject> loans = JsonArrayHelper.toList(
-          getLoansResponse.getJson().getJsonArray("loans"));
-
-        if(loans.isEmpty()) {
-          log.warn("No open loans found for item {}", itemId);
-          //Only success in the sense that it can't be done, but no
-          //compensating action to take
-          return completedFuture(succeeded(moveRequestRecords));
-        }
-        else if(loans.size() == 1) {
-          JsonObject changedLoan = loans.get(0).copy();
-
-          changedLoan.put("action", action);
-          changedLoan.put("itemStatus", itemStatus);
-
-          return this.loansStorageClient.put(changedLoan.getString("id"), changedLoan)
-            .thenApply(putLoanResponse -> succeeded(moveRequestRecords));
-        }
-        else {
-          String moreThanOneOpenLoanError = String.format(
-            "Received unexpected number (%s) of open loans for item %s",
-            loans.size(), itemId);
-
-          log.error(moreThanOneOpenLoanError);
-          return completedFuture(failed(
-            new ServerErrorFailure(moreThanOneOpenLoanError)));
-        }
-      } else {
-        String failedError = String.format("Could not get open loans for item %s", itemId);
-
-        log.error(failedError);
-        return completedFuture(failed(new ServerErrorFailure(failedError)));
-      }
-    }
 }

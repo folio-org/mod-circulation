@@ -118,7 +118,7 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   public boolean isClosed() {
-    //Alternatively, check status contains "Closed"
+    // Alternatively, check status contains "Closed"
     return isCancelled() || isFulfilled() || isUnfilled() || isPickupExpired();
   }
 
@@ -174,6 +174,14 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
     return requestRepresentation.getString("fulfilmentPreference");
   }
 
+  public String getDestinationItemId() {
+    return requestRepresentation.getString("destinationItemId");
+  }
+
+  public boolean isMoving() {
+    return requestRepresentation.containsKey("destinationItemId");
+  }
+
   public RequestFulfilmentPreference getFulfilmentPreference() {
     return RequestFulfilmentPreference.from(getFulfilmentPreferenceName());
   }
@@ -190,7 +198,7 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
     return RequestTypeItemStatusWhiteList.canCreateRequestForItem(getItem().getStatus(), getRequestType());
   }
 
-  String actionOnCreation() {
+  String actionOnCreationOrMove() {
     return getRequestType().toLoanAction();
   }
 
@@ -203,8 +211,9 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
     status.writeTo(requestRepresentation);
   }
 
-  public Request changeItem(Item item) {
-    requestRepresentation.put("itemId", item.getItemId());
+  Request applyMoveToRepresentation() {
+    requestRepresentation.put("itemId", getDestinationItemId());
+    requestRepresentation.remove("destinationItemId");
     return this;
   }
 

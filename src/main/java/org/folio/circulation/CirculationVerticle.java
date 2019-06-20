@@ -7,7 +7,6 @@ import org.folio.circulation.resources.CheckOutByBarcodeResource;
 import org.folio.circulation.resources.CirculationRulesResource;
 import org.folio.circulation.resources.LoanCirculationRulesEngineResource;
 import org.folio.circulation.resources.LoanCollectionResource;
-import org.folio.circulation.resources.MoveRequestResource;
 import org.folio.circulation.resources.NoticeCirculationRulesEngineResource;
 import org.folio.circulation.resources.OverrideCheckOutStrategy;
 import org.folio.circulation.resources.OverrideRenewalByBarcodeResource;
@@ -60,7 +59,6 @@ public class CirculationVerticle extends AbstractVerticle {
     new RequestQueueResource(client).register(router);
     new RequestByInstanceIdResource(client).register(router);
     new OverrideRenewalByBarcodeResource(client).register(router);
-    new MoveRequestResource(client).register(router);
 
     new RequestHoldShelfClearanceResource("/circulation/requests-reports/hold-shelf-clearance/:servicePointId", client)
       .register(router);

@@ -563,12 +563,12 @@ resourceTypes:
             description: "Not implemented yet"
       /move:
         displayName: Move a Request from one Item to another
-        put:
+        post:
           description: Move Request to specified Item
           body:
             application/json:
-              type: !include move-request-request.json
-              example: !include examples/move-request-request.json
+              type: !include request.json
+              example: !include examples/request.json
           responses:
             204:
               description: "Request has been moved"

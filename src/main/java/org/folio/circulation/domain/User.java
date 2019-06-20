@@ -106,26 +106,6 @@ public class User {
     return null;
   }
 
-//  public JsonObject createUserSummary() {
-//    //TODO: Extract to visitor based adapter
-//    JsonObject userSummary = new JsonObject();
-//
-//    write(userSummary, "lastName", getLastName());
-//    write(userSummary, "firstName", getFirstName());
-//    write(userSummary, "middleName", getMiddleName());
-//    write(userSummary, "barcode", getBarcode());
-    
-//    if(patronGroup != null) {
-//      JsonObject patronGroupSummary = new JsonObject();
-//      write(patronGroupSummary, "id", patronGroup.getId());
-//      write(patronGroupSummary, "group", patronGroup.getGroup());
-//      write(patronGroupSummary, "desc", patronGroup.getDesc());
-//      userSummary.put("patronGroup", patronGroupSummary);
-//    }
-    
-//    return userSummary;
-//  }
-
   public PatronGroup getPatronGroup() {
     return patronGroup;
   }

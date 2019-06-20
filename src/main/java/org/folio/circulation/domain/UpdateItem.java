@@ -106,10 +106,10 @@ public class UpdateItem {
         loan.getItem()));
   }
 
-  CompletableFuture<Result<RequestAndRelatedRecords>> onRequestCreation(
+  CompletableFuture<Result<RequestAndRelatedRecords>> onRequestCreationOrMove(
     RequestAndRelatedRecords requestAndRelatedRecords) {
 
-    return of(() -> itemStatusOnRequestCreation(requestAndRelatedRecords))
+    return of(() -> itemStatusOnRequestCreationOrMove(requestAndRelatedRecords))
       .after(prospectiveStatus -> updateItemWhenNotSameStatus(prospectiveStatus,
           requestAndRelatedRecords.getRequest().getItem()))
       .thenApply(itemResult -> itemResult.map(requestAndRelatedRecords::withItem));
@@ -121,15 +121,6 @@ public class UpdateItem {
     return updateItemWhenNotSameStatus(CHECKED_OUT,
       loanAndRelatedRecords.getLoan().getItem())
       .thenApply(itemResult -> itemResult.map(loanAndRelatedRecords::withItem));
-  }
-
-  public CompletableFuture<Result<MoveRequestRecords>> onRequestUpdate(
-    MoveRequestRecords moveRequestRecords) {
-
-    System.out.println("\n\n\nitem onRequestUpdate: " + moveRequestRecords.getRequest() + "\n\n\n");
-    return updateItemWhenNotSameStatus(CHECKED_OUT,
-      moveRequestRecords.getRequest().getLoan().getItem())
-      .thenApply(itemResult -> itemResult.map(moveRequestRecords::withItem));
   }
 
   private CompletableFuture<Result<Item>> updateItemWhenNotSameStatus(
@@ -170,7 +161,7 @@ public class UpdateItem {
     return completedFuture(succeeded(previousResult));
   }
 
-  private ItemStatus itemStatusOnRequestCreation(
+  private ItemStatus itemStatusOnRequestCreationOrMove(
     RequestAndRelatedRecords requestAndRelatedRecords) {
 
     RequestType type = requestAndRelatedRecords.getRequest().getRequestType();

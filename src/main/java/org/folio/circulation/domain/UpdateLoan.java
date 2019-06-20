@@ -38,7 +38,7 @@ public class UpdateLoan {
    * @param requestAndRelatedRecords request and related records.
    * @return the request and related records with the possibly updated loan.
    */
-  CompletableFuture<Result<RequestAndRelatedRecords>> onRequestCreation(
+  CompletableFuture<Result<RequestAndRelatedRecords>> onRequestCreationOrMove(
       RequestAndRelatedRecords requestAndRelatedRecords) {
     Request request = requestAndRelatedRecords.getRequest();
     Loan loan = request.getLoan();
@@ -63,24 +63,6 @@ public class UpdateLoan {
 
     return loanPolicy.recall(loan)
         .map(loanAndRelatedRecords::withLoan);
-  }
-
-  public CompletableFuture<Result<MoveRequestRecords>> onRequestUpdate(
-    MoveRequestRecords moveRequestRecords) {
-    Request request = moveRequestRecords.getRequest();
-    Loan loan = request.getLoan();
-    if (request.getRequestType() == RequestType.RECALL && loan != null) {
-      return loanRepository.getById(loan.getId())
-          .thenApply(r -> r.map(LoanAndRelatedRecords::new))
-          .thenComposeAsync(r -> r.after(loanPolicyRepository::lookupLoanPolicy))
-          .thenApply(r -> r.next(this::recall))
-          .thenComposeAsync(r -> r.after(closedLibraryStrategyService::applyClosedLibraryDueDateManagement))
-          .thenComposeAsync(r -> r.after(loanRepository::updateLoan))
-          .thenApply(r -> r.map(v -> moveRequestRecords.withRequest(request.withLoan(v.getLoan()))));
-    } else {
-      System.out.println("\n\n\n loan onRequestUpdate: " + moveRequestRecords.getRequest() + "\n\n\n");
-      return completedFuture(succeeded(moveRequestRecords));
-    }
   }
 
 }

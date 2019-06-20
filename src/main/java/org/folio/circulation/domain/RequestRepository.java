@@ -140,7 +140,6 @@ public class RequestRepository {
     return requestsStorageClient.put(request.getId(), representation)
       .thenApply(response -> {
         if(response.getStatusCode() == 204) {
-          System.out.println("\n\n\nupdate: " + request + "\n\n\n");
           return succeeded(request);
         }
         else {
@@ -154,13 +153,6 @@ public class RequestRepository {
 
     return update(requestAndRelatedRecords.getRequest())
       .thenApply(r -> r.map(requestAndRelatedRecords::withRequest));
-  }
-  
-  public CompletableFuture<Result<MoveRequestRecords>> update(
-    MoveRequestRecords moveRequestRecords) {
-
-    return update(moveRequestRecords.getRequest())
-      .thenApply(r -> r.map(moveRequestRecords::withRequest));
   }
 
   public CompletableFuture<Result<RequestAndRelatedRecords>> create(
@@ -245,6 +237,7 @@ public class RequestRepository {
     return servicePointRepository.getServicePointById(servicePointId);
   }
   
+  // NEW
   public CompletableFuture<Result<Item>> getItem(String requestId) {
     return getById(requestId)
       .thenApply(r -> r.map(Request::getItemId))
