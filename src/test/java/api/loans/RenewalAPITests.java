@@ -1182,7 +1182,7 @@ abstract class RenewalAPITests extends APITests {
   }
 
   @Test
-  public void canRenewalForCurrentDueDateWhenLoanDateNotFallWithinRangeDueDateLimit() throws
+  public void canRenewalForCurrentDueDateWhenDueDateFallWithinRangeDueDateLimit() throws
     InterruptedException,
     ExecutionException,
     TimeoutException,
@@ -1213,7 +1213,7 @@ abstract class RenewalAPITests extends APITests {
   }
 
   @Test
-  public void canRenewalForSystemDateWhenLoanDateNotFallWithinRangeDueDateLimit() throws
+  public void canRenewalForSystemDateWhenSystemDateFallWithinRangeDueDateLimit() throws
     InterruptedException,
     ExecutionException,
     TimeoutException,
@@ -1246,7 +1246,7 @@ abstract class RenewalAPITests extends APITests {
   }
 
   @Test
-  public void cannotRenewalForRollingLoanWhenLoanDateAndDueDatNotFallWithinRangeDueDateLimit() throws
+  public void cannotRenewalForRollingLoanWhenDueDatNotFallWithinRangeDueDateLimit() throws
     InterruptedException,
     ExecutionException,
     TimeoutException,
@@ -1288,7 +1288,7 @@ abstract class RenewalAPITests extends APITests {
   }
 
   @Test
-  public void  canRenewalForCurrentDueDateWhenLoanDateAndDueDatNotFallWithinRangeAlternateDueDateLimited()
+  public void  canRenewalForCurrentDueDateWhenDueDatNotFallWithinRangeAlternateDueDateLimited()
     throws InterruptedException,
     MalformedURLException,
     TimeoutException,
@@ -1320,7 +1320,7 @@ abstract class RenewalAPITests extends APITests {
   }
 
   @Test
-  public void  canRenewalForSystemDateWhenLoanDateAndDueDatNotFallWithinRangeAlternateDueDateLimited()
+  public void  canRenewalForSystemDateWhenDueDatNotFallWithinRangeAlternateDueDateLimited()
     throws InterruptedException,
     MalformedURLException,
     TimeoutException,
