@@ -364,7 +364,7 @@
             "circulation-storage.patron-notice-policies.item.get",
             "patron-notice.post",
             "inventory-storage.loan-types.item.get",
-            "calendar.collection.get",
+            "calendar.opening-hours.collection.get",
             "scheduled-notice-storage.scheduled-notices.collection.delete",
             "scheduled-notice-storage.scheduled-notices.item.post"
           ]
@@ -535,7 +535,7 @@
             "circulation-storage.patron-notice-policies.item.get",
             "patron-notice.post",
             "inventory-storage.loan-types.item.get",
-            "calendar.collection.get"
+            "calendar.opening-hours.collection.get"
           ]
         }
       ]
@@ -868,8 +868,7 @@
       "description" : "to reduce X-Okapi-Token size",
       "subPermissions": [
         "circulation-storage.loans.item.post",
-        "calendar.collection.get",
-        "calendar.collection.add",
+        "calendar.opening-hours.collection.get",
         "circulation-storage.loans.item.get",
         "circulation-storage.loans.collection.get",
         "circulation.rules.loan-policy.get",
@@ -1033,7 +1032,7 @@
         "circulation-storage.request-policies.item.get",
         "circulation-storage.fixed-due-date-schedules.item.get",
         "circulation-storage.fixed-due-date-schedules.collection.get",
-        "calendar.collection.get",
+        "calendar.opening-hours.collection.get",
         "circulation.rules.notice-policy.get",
         "circulation-storage.patron-notice-policies.item.get",
         "scheduled-notice-storage.scheduled-notices.collection.delete",
@@ -1121,7 +1120,7 @@
         "circulation-storage.request-policies.item.get",
         "circulation-storage.fixed-due-date-schedules.item.get",
         "circulation-storage.fixed-due-date-schedules.collection.get",
-        "calendar.collection.get",
+        "calendar.opening-hours.collection.get",
         "circulation.rules.notice-policy.get",
         "circulation-storage.patron-notice-policies.item.get",
         "scheduled-notice-storage.scheduled-notices.collection.delete",
