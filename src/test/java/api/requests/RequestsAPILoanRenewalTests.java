@@ -113,12 +113,8 @@ public class RequestsAPILoanRenewalTests extends APITests {
     final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource rebecca = usersFixture.rebecca();
 
-    DateTime loanDueDate = new DateTime(
-      2018, APRIL, 21,
-      11, 21, 43
-    );
-
-    loansFixture.checkOutByBarcode(smallAngryPlanet, rebecca, loanDueDate);
+    DateTime loanDate = new DateTime(2018, APRIL, 21, 11, 21, 43);
+    loansFixture.checkOutByBarcode(smallAngryPlanet, rebecca, loanDate);
 
     requestsFixture.place(new RequestBuilder()
       .recall()
@@ -153,12 +149,8 @@ public class RequestsAPILoanRenewalTests extends APITests {
     final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource rebecca = usersFixture.rebecca();
 
-    DateTime loanDueDate = new DateTime(
-      2018, APRIL, 21,
-      11, 21, 43
-    );
-
-    loansFixture.checkOutByBarcode(smallAngryPlanet, rebecca, loanDueDate);
+    DateTime loanDate = new DateTime(2018, APRIL, 21, 11, 21, 43);
+    loansFixture.checkOutByBarcode(smallAngryPlanet, rebecca, loanDate);
 
     requestsFixture.place(new RequestBuilder()
       .hold()
