@@ -53,7 +53,6 @@ public class MoveRequestService {
       .after(updateRequestQueue::onMoveFrom)
       .thenComposeAsync(r -> r.after(this::lookupDestinationItem))
       .thenComposeAsync(r -> r.after(this::lookupDestinationItemRequestQueue))
-      .thenCompose(r -> r.after(updateRequestQueue::onMoveTo))
       .thenApply(r -> r.map(MoveRequestService::applyMoveToRepresentation))
       .thenCompose(r -> r.after(this::updateRequest));
   }
@@ -91,10 +90,19 @@ public class MoveRequestService {
       .after(this::refuseWhenUserHasAlreadyBeenLoanedItem)
       .thenComposeAsync(r -> r.after(requestPolicyRepository::lookupRequestPolicy))
       .thenApply(r -> r.next(MoveRequestService::refuseWhenRequestCannotBeFulfilled))
+      .thenApply(r -> r.map(MoveRequestService::setRequestQueuePosition))
       .thenComposeAsync(r -> r.after(updateItem::onRequestCreationOrMove))
       .thenComposeAsync(r -> r.after(updateLoanActionHistory::onRequestCreationOrMove))
       .thenComposeAsync(r -> r.after(updateLoan::onRequestCreationOrMove))
       .thenComposeAsync(r -> r.after(requestRepository::update));
+  }
+
+  private static RequestAndRelatedRecords setRequestQueuePosition(RequestAndRelatedRecords requestAndRelatedRecords) {
+    // TODO: Extract to method to add to queue
+    requestAndRelatedRecords.withRequest(requestAndRelatedRecords.getRequest()
+      .changePosition(requestAndRelatedRecords.getRequestQueue().nextAvailablePosition()));
+
+    return requestAndRelatedRecords;
   }
 
   private static Result<RequestAndRelatedRecords> refuseWhenItemDoesNotExist(

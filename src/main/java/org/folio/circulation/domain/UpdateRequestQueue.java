@@ -135,7 +135,7 @@ public class UpdateRequestQueue {
       return completedFuture(succeeded(requestAndRelatedRecords));
     }
   }
-  
+
   CompletableFuture<Result<RequestAndRelatedRecords>> onMoveFrom(
     RequestAndRelatedRecords requestAndRelatedRecords) {
 
@@ -143,33 +143,20 @@ public class UpdateRequestQueue {
     final RequestQueue requestQueue = requestAndRelatedRecords.getRequestQueue();
 
     if(request.isMoving()) {
-      // remove request from request queue
+      final String destinationItemId = request.getDestinationItemId();
+      request.removeDestinationItemId();
       requestQueue.remove(request);
-      return requestQueueRepository.updateRequestsWithChangedPositions(requestQueue)
-        .thenApply(r -> r.map(requestAndRelatedRecords::withRequestQueue));
+      return requestRepository.update(request)
+        .thenComposeAsync(r -> r.after(v ->
+          requestQueueRepository.updateRequestsWithChangedPositions(requestQueue)))
+            .thenApply(r -> r.map(requestAndRelatedRecords::withRequestQueue))
+            .thenApply(r -> r.map(x -> x.withDestination(destinationItemId)));
     }
     else {
       return completedFuture(succeeded(requestAndRelatedRecords));
     }
   }
-  
-  CompletableFuture<Result<RequestAndRelatedRecords>> onMoveTo(
-    RequestAndRelatedRecords requestAndRelatedRecords) {
 
-    final Request request = requestAndRelatedRecords.getRequest();
-    final RequestQueue requestQueue = requestAndRelatedRecords.getRequestQueue();
-
-    if(request.isMoving()) {
-      // remove request from request queue
-      requestQueue.add(request);
-      return requestQueueRepository.updateRequestsWithChangedPositions(requestQueue)
-        .thenApply(r -> r.map(requestAndRelatedRecords::withRequestQueue));
-    }
-    else {
-      return completedFuture(succeeded(requestAndRelatedRecords));
-    }
-  }
-  
   public CompletableFuture<Result<Request>> onDeletion(Request request) {
     return requestQueueRepository.get(request.getItemId())
       .thenApply(r -> r.map(requestQueue -> {

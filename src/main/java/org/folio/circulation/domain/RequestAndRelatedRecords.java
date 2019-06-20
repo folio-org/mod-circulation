@@ -51,6 +51,15 @@ public class RequestAndRelatedRecords implements UserRelatedRecord, ItemRelatedR
     );
   }
 
+  public RequestAndRelatedRecords withDestination(String destinationItemId) {
+    this.request.setDestinationItemId(destinationItemId);
+    return new RequestAndRelatedRecords(
+      this.request,
+      this.requestQueue,
+      this.requestPolicy
+    );
+  }
+
   public Request getRequest() {
     return request;
   }

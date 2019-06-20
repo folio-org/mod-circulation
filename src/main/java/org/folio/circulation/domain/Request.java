@@ -177,6 +177,14 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
   public String getDestinationItemId() {
     return requestRepresentation.getString("destinationItemId");
   }
+  
+  public void setDestinationItemId(String destinationItemIdId) {
+     requestRepresentation.put("destinationItemId", destinationItemIdId);
+  }
+
+  public void removeDestinationItemId() {
+    requestRepresentation.remove("destinationItemId");
+  }
 
   public boolean isMoving() {
     return requestRepresentation.containsKey("destinationItemId");
@@ -210,7 +218,7 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
     //TODO: Check for null status
     status.writeTo(requestRepresentation);
   }
-
+  
   Request applyMoveToRepresentation() {
     requestRepresentation.put("itemId", getDestinationItemId());
     requestRepresentation.remove("destinationItemId");
