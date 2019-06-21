@@ -117,26 +117,12 @@ public class ItemsFixture {
   }
 
   public InventoryItemResource basedUponSmallAngryPlanet(
-    boolean applyHoldingRecord,
-    String callNumber,
-    String callNumberPrefix,
-    String callNumberSuffix,
-    List<String> copyNumbers)
+    ItemBuilder itemBuilder,
+    HoldingBuilder holdingBuilder)
     throws InterruptedException,
     MalformedURLException,
     TimeoutException,
     ExecutionException {
-
-    HoldingBuilder holdingBuilder = applyHoldingRecord
-      ? applyCallNumberHoldings(callNumber, callNumberPrefix, callNumberSuffix, copyNumbers)
-      : thirdFloorHoldings();
-
-    UUID materialTypeId = materialTypesFixture.book().getId();
-    UUID loanTypesId = loanTypesFixture.canCirculate().getId();
-    ItemBuilder itemBuilder = applyHoldingRecord
-      ? ItemExamples.basedUponSmallAngryPlanet(materialTypeId, loanTypesId)
-      : ItemExamples.basedUponSmallAngryPlanet(materialTypeId, loanTypesId,
-      callNumber, callNumberPrefix, callNumberSuffix, copyNumbers);
 
     return applyAdditionalProperties(
       identity(),
@@ -331,7 +317,7 @@ public class ItemsFixture {
     return new InventoryItemResource(item, holding, instance);
   }
 
-  private HoldingBuilder thirdFloorHoldings()
+  public HoldingBuilder thirdFloorHoldings()
     throws InterruptedException,
     MalformedURLException,
     TimeoutException,
@@ -343,7 +329,7 @@ public class ItemsFixture {
       .withCallNumber("123456");
   }
 
-  private HoldingBuilder applyCallNumberHoldings(
+  public HoldingBuilder applyCallNumberHoldings(
     String callNumber,
     String callNumberPrefix,
     String callNumberSuffix,

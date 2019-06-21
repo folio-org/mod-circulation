@@ -25,6 +25,9 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
+import api.support.builders.HoldingBuilder;
+import api.support.builders.ItemBuilder;
+import api.support.fixtures.ItemExamples;
 import api.support.http.InventoryItemResource;
 import org.awaitility.Awaitility;
 import org.folio.circulation.domain.policy.Period;
@@ -79,7 +82,14 @@ public class ScheduledDueDateNoticesProcessingTests extends APITests {
 
     setUpNoticePolicy();
 
-    item = itemsFixture.basedUponSmallAngryPlanet(true,"CN", "Prefix", "Suffix",  Collections.singletonList("CopyNumbers"));
+    ItemBuilder itemBuilder = ItemExamples.basedUponSmallAngryPlanet(materialTypesFixture.book().getId(), loanTypesFixture.canCirculate().getId());
+    HoldingBuilder holdingBuilder = itemsFixture.applyCallNumberHoldings(
+      "CN",
+      "Prefix",
+      "Suffix",
+      Collections.singletonList("CopyNumbers"));
+
+    item = itemsFixture.basedUponSmallAngryPlanet(itemBuilder, holdingBuilder);
     borrower = usersFixture.steve();
 
     loan = loansFixture.checkOutByBarcode(
