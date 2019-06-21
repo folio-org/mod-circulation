@@ -53,15 +53,23 @@ public class MoveRequestService {
       .thenApply(r -> r.map(MoveRequestService::applyMoveToRepresentation))
       .thenApply(r -> r.map(MoveRequestService::pagedRequestIfDestinationItemAvailable))
       .thenCompose(r -> r.after(this::updateRequest))
+      // is there a better way to do this?
       .thenApply(r -> r.map(v -> useOriginalItemAndDestination(requestAndRelatedRecords, originalItem)))
       .thenCompose(r -> r.after(updateRequestQueue::onMoved));
   }
-  
-  private RequestAndRelatedRecords useOriginalItemAndDestination(
-    RequestAndRelatedRecords requestAndRelatedRecords, Item originalItem) {
-    String destinationItemId = requestAndRelatedRecords.getItemId();
-    // NOTE: adding destinationItemId back to indicate moved
-    return requestAndRelatedRecords.withItem(originalItem).withDestination(destinationItemId);
+
+  private CompletableFuture<Result<RequestAndRelatedRecords>> lookupDestinationItem(
+    RequestAndRelatedRecords requestAndRelatedRecords) {
+    final Request request = requestAndRelatedRecords.getRequest();
+    return itemRepository.fetchById(request.getDestinationItemId())
+      .thenApply(result -> result.map(requestAndRelatedRecords::withItem));
+  }
+
+  private CompletableFuture<Result<RequestAndRelatedRecords>> lookupDestinationItemRequestQueue(
+    RequestAndRelatedRecords requestAndRelatedRecords) {
+    final Request request = requestAndRelatedRecords.getRequest();
+    return requestQueueRepository.get(request.getDestinationItemId())
+      .thenApply(result -> result.map(requestAndRelatedRecords::withRequestQueue));
   }
 
   private static RequestAndRelatedRecords applyMoveToRepresentation(
@@ -70,7 +78,7 @@ public class MoveRequestService {
       requestAndRelatedRecords.getRequest().applyMoveToRepresentation());
     return requestAndRelatedRecords;
   }
-  
+
   private static RequestAndRelatedRecords pagedRequestIfDestinationItemAvailable(
     RequestAndRelatedRecords requestAndRelatedRecords) {
     Item item = requestAndRelatedRecords.getRequest().getItem();
@@ -81,20 +89,11 @@ public class MoveRequestService {
     return requestAndRelatedRecords;
   }
 
-  private CompletableFuture<Result<RequestAndRelatedRecords>> lookupDestinationItem(
-    RequestAndRelatedRecords requestAndRelatedRecords) {
-    final Request request = requestAndRelatedRecords.getRequest();
-    final String destinationItemId = request.getDestinationItemId();
-    return itemRepository.fetchById(destinationItemId)
-      .thenApply(result -> result.map(requestAndRelatedRecords::withItem));
-  }
-  
-  private CompletableFuture<Result<RequestAndRelatedRecords>> lookupDestinationItemRequestQueue(
-    RequestAndRelatedRecords requestAndRelatedRecords) {
-    final Request request = requestAndRelatedRecords.getRequest();
-    final String destinationItemId = request.getDestinationItemId();
-    return requestQueueRepository.get(destinationItemId)
-      .thenApply(result -> result.map(requestAndRelatedRecords::withRequestQueue));
+  private RequestAndRelatedRecords useOriginalItemAndDestination(
+    RequestAndRelatedRecords requestAndRelatedRecords, Item originalItem) {
+    String destinationItemId = requestAndRelatedRecords.getItemId();
+    // NOTE: adding destinationItemId back to indicate moved
+    return requestAndRelatedRecords.withItem(originalItem).withDestination(destinationItemId);
   }
   
   private CompletableFuture<Result<RequestAndRelatedRecords>> updateRequest(
@@ -113,27 +112,6 @@ public class MoveRequestService {
       .thenComposeAsync(r -> r.after(updateLoanActionHistory::onRequestCreationOrMove))
       .thenComposeAsync(r -> r.after(updateLoan::onRequestCreationOrMove))
       .thenComposeAsync(r -> r.after(requestRepository::update));
-  }
-
-  private CompletableFuture<Result<RequestAndRelatedRecords>> refuseWhenUserHasAlreadyBeenLoanedItem(
-    RequestAndRelatedRecords requestAndRelatedRecords) {
-
-    final Request request = requestAndRelatedRecords.getRequest();
-
-    return loanRepository.findOpenLoanForRequest(request)
-      .thenApply(loanResult -> loanResult.failWhen(
-        loan -> of(() -> loan != null && loan.getUserId().equals(request.getUserId())),
-        loan -> {
-          Map<String, String> parameters = new HashMap<>();
-          parameters.put("itemId", request.getItemId());
-          parameters.put("userId", request.getUserId());
-          parameters.put("loanId", loan.getId());
-
-          String message = "This requester currently has this item on loan.";
-
-          return singleValidationError(new ValidationError(message, parameters));
-        })
-        .map(loan -> requestAndRelatedRecords));
   }
 
   private static Result<RequestAndRelatedRecords> refuseWhenDestinationItemIsCheckedOutWithNoRecalls(
@@ -155,5 +133,26 @@ public class MoveRequestService {
     } else {
       return succeeded(requestAndRelatedRecords);
     }
+  }
+
+  private CompletableFuture<Result<RequestAndRelatedRecords>> refuseWhenUserHasAlreadyBeenLoanedItem(
+    RequestAndRelatedRecords requestAndRelatedRecords) {
+
+    final Request request = requestAndRelatedRecords.getRequest();
+
+    return loanRepository.findOpenLoanForRequest(request)
+      .thenApply(loanResult -> loanResult.failWhen(
+        loan -> of(() -> loan != null && loan.getUserId().equals(request.getUserId())),
+        loan -> {
+          Map<String, String> parameters = new HashMap<>();
+          parameters.put("itemId", request.getItemId());
+          parameters.put("userId", request.getUserId());
+          parameters.put("loanId", loan.getId());
+
+          String message = "This requester currently has this item on loan.";
+
+          return singleValidationError(new ValidationError(message, parameters));
+        })
+      .map(loan -> requestAndRelatedRecords));
   }
 }
