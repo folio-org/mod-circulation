@@ -9,6 +9,9 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 public class InstanceRequestItemsComparer {
+
+  private InstanceRequestItemsComparer(){}
+
   public static Map<Item, Integer> sortRequestQueues(Map<Item, Integer> itemsQueueLengthUnsortedMap,
                                                      Map<Item, DateTime> itemDueDateMap,
                                                      UUID destinationServicePointId) {
