@@ -1,5 +1,6 @@
 package org.folio.circulation.domain;
 
+import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.domain.representations.RequestProperties.REQUEST_TYPE;
 import static org.folio.circulation.support.Result.of;
 import static org.folio.circulation.support.Result.succeeded;
@@ -44,9 +45,8 @@ public class MoveRequestService {
 
   public CompletableFuture<Result<RequestAndRelatedRecords>> moveRequest(
     RequestAndRelatedRecords requestAndRelatedRecords) {
-    return of(() -> requestAndRelatedRecords)
-      .next(RequestServiceUtility::refuseWhenItemDoesNotExist)
-      .after(this::withDestinationItem)
+    return completedFuture(of(() -> requestAndRelatedRecords))
+      .thenComposeAsync(r -> r.after(this::withDestinationItem))
       .thenComposeAsync(r -> r.after(this::withDestinationItemRequestQueue))
       .thenApply(r -> r.map(MoveRequestService::pagedRequestIfDestinationItemAvailable))
       .thenCompose(r -> r.after(this::updateRequest))
