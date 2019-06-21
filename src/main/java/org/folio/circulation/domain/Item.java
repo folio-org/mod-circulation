@@ -169,7 +169,7 @@ public class Item {
 
   private String getEffectiveCallNumberProperty(String propertyName) {
     return hasItemRepresentationCallNumber()
-      ? getProperty(itemRepresentation, getItemCallNumberValueIdByPropertyName(propertyName))
+      ? getProperty(itemRepresentation, mapToItemCallNumberPropertyName(propertyName))
       : getProperty(holdingRepresentation, propertyName);
   }
 
@@ -177,9 +177,9 @@ public class Item {
     return StringUtils.isNotBlank(getProperty(itemRepresentation, ITEM_CALL_NUMBER_ID));
   }
 
-  private String getItemCallNumberValueIdByPropertyName(String propertyName) {
+  private String mapToItemCallNumberPropertyName(String holdingsPropertyName) {
     return Stream.of(ITEM_CALL_NUMBER_ID, ITEM_CALL_NUMBER_PREFIX_ID, ITEM_CALL_NUMBER_SUFFIX_ID)
-      .filter(val -> StringUtils.containsIgnoreCase(val, propertyName))
+      .filter(val -> StringUtils.containsIgnoreCase(val, holdingsPropertyName))
       .findFirst()
       .orElse(StringUtils.EMPTY);
   }
