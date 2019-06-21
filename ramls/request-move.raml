@@ -1,0 +1,39 @@
+#%RAML 1.0
+title: Circulation
+version: v0.1
+protocols: [ HTTP, HTTPS ]
+baseUri: http://localhost:9130
+
+documentation:
+  - title: Circulation Business Logic API
+    content: <b>API for moving request from one Item to another</b>
+
+types:
+  requests: !include requests.json
+
+traits:
+  language: !include raml-util/traits/language.raml
+
+/circulation:
+  /requests:
+    /{requestId}:
+      /move:
+        displayName: Move a Request from one Item to another
+        post:
+          description: Move Request to specified Item
+          body:
+            application/json:
+              type: !include request-move.json
+              example: !include examples/request-move.json
+          responses:
+            200:
+              description: "Request has been moved"
+              body:
+                application/json:
+                  type: !include request.json
+                  example: !include examples/request.json
+            500:
+              description: "Internal server error"
+              body:
+                text/plain:
+                  example: "Internal server error"
