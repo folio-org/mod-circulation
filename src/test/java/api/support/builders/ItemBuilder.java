@@ -334,6 +334,7 @@ public class ItemBuilder extends JsonBuilder implements Builder {
     String itemLevelCallNumber,
     String itemLevelCallNumberPrefix,
     String itemLevelCallNumberSuffix) {
+
     return new ItemBuilder(
       this.id,
       this.holdingId,

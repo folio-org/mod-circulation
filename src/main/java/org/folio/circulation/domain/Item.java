@@ -156,18 +156,18 @@ public class Item {
   }
 
   public String getCallNumber() {
-    return getEffectiveCallNumberValues(CALL_NUMBER_ID);
+    return getEffectiveCallNumberProperty(CALL_NUMBER_ID);
   }
 
   public String getCallNumberPrefix() {
-    return getEffectiveCallNumberValues(CALL_NUMBER_PREFIX_ID);
+    return getEffectiveCallNumberProperty(CALL_NUMBER_PREFIX_ID);
   }
 
   public String getCallNumberSuffix() {
-    return getEffectiveCallNumberValues(CALL_NUMBER_SUFFIX_ID);
+    return getEffectiveCallNumberProperty(CALL_NUMBER_SUFFIX_ID);
   }
 
-  private String getEffectiveCallNumberValues(String propertyName) {
+  private String getEffectiveCallNumberProperty(String propertyName) {
     return hasItemRepresentationCallNumber()
       ? getProperty(itemRepresentation, getItemCallNumberValueIdByPropertyName(propertyName))
       : getProperty(holdingRepresentation, propertyName);
