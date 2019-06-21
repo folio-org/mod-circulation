@@ -10,6 +10,7 @@ import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
+import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.RequestType;
 import org.folio.circulation.support.http.client.IndividualResource;
@@ -134,6 +135,7 @@ public class RequestsAPIMoveTests extends APITests {
 
     requestByJessica = requestsClient.get(requestByJessica);
     assertThat(requestByJessica.getJson().getString(REQUEST_TYPE), is(RequestType.PAGE.getValue()));
+    assertThat(requestByJessica.getJson().getJsonObject("item").getString("status"), is(ItemStatus.PAGED.getValue()));
     assertThat(requestByJessica.getJson().getInteger("position"), is(1));
     assertThat(requestByJessica.getJson().getString("itemId"), is(uponInterestingTimes.getId().toString()));
     retainsStoredSummaries(requestByJessica);
