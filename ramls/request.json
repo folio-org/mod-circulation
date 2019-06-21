@@ -101,6 +101,16 @@
               "type": "string",
               "description": "The name of the location",
               "readonly": true
+            },
+            "libraryName": {
+              "type": "string",
+              "description": "The name of the library of the location",
+              "readonly": true
+            },
+            "code": {
+              "type": "string",
+              "description": "The location code",
+              "readonly": true
             }
           }
         },

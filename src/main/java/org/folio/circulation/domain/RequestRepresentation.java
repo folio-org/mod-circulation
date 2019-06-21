@@ -67,10 +67,8 @@ public class RequestRepresentation {
     final Location location = item.getLocation();
 
     if (location != null) {
-      itemSummary.put("location", new JsonObject()
-        .put("name", location.getName()));
+      write(itemSummary, "location", locationSummary(location));
     }
-    request.put("item", itemSummary);
 
     JsonArray contributorNames = item.getContributorNames();
     if (contributorNames != null) {
@@ -98,7 +96,14 @@ public class RequestRepresentation {
       itemSummary.put("copyNumbers", copyNumbers);
     }
   }
+  private static JsonObject locationSummary(Location location) {
+    JsonObject locationSummary = new JsonObject();
 
+    write(locationSummary, "name", location.getName());
+    write(locationSummary, "libraryName", location.getLibraryName());
+    write(locationSummary, "code", location.getCode());
+    return locationSummary;
+  }
   private static void logUnableAddItemToTheRequest(JsonObject request, Item item) {
     String reason = isNull(item) ? "null" : "not found";
     String msg = "Unable to add item properties to the request: {}, item is {}";
