@@ -8,7 +8,7 @@ import static org.folio.circulation.support.Result.failed;
 import static org.folio.circulation.support.Result.of;
 import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.ResultBinding.mapResult;
-import static org.folio.circulation.support.http.CommonResponseInterpreters.replaceRecordInterpreter;
+import static org.folio.circulation.support.http.CommonResponseInterpreters.noContentRecordInterpreter;
 import static org.folio.circulation.support.http.ResponseMapping.forwardOnFailure;
 import static org.folio.circulation.support.http.ResponseMapping.usingJson;
 
@@ -83,7 +83,7 @@ public class LoanRepository {
     JsonObject storageLoan = mapToStorageRepresentation(loan, loan.getItem());
 
     return loansStorageClient.put(loan.getId(), storageLoan)
-      .thenApply(replaceRecordInterpreter(loan)::apply)
+      .thenApply(noContentRecordInterpreter(loan)::apply)
       .thenComposeAsync(r -> r.after(this::refreshLoanRepresentation));
   }
 

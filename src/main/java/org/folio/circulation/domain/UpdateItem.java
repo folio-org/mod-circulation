@@ -5,7 +5,7 @@ import static org.folio.circulation.domain.ItemStatus.CHECKED_OUT;
 import static org.folio.circulation.support.Result.of;
 import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
-import static org.folio.circulation.support.http.CommonResponseInterpreters.replaceRecordInterpreter;
+import static org.folio.circulation.support.http.CommonResponseInterpreters.noContentRecordInterpreter;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -138,7 +138,7 @@ public class UpdateItem {
 
   private CompletableFuture<Result<Item>> storeItem(Item item) {
     return itemsStorageClient.put(item.getItemId(), item.getItem())
-      .thenApply(replaceRecordInterpreter(item)::apply);
+      .thenApply(noContentRecordInterpreter(item)::apply);
   }
 
   private CompletableFuture<Result<Boolean>> loanIsClosed(
