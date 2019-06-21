@@ -44,57 +44,52 @@ public class MoveRequestService {
 
   public CompletableFuture<Result<RequestAndRelatedRecords>> moveRequest(
     RequestAndRelatedRecords requestAndRelatedRecords) {
-    final Item originalItem = requestAndRelatedRecords.getRequest().getItem();
     return of(() -> requestAndRelatedRecords)
       .next(RequestServiceUtility::refuseWhenItemDoesNotExist)
-      .after(this::lookupDestinationItem)
-      .thenComposeAsync(r -> r.after(this::lookupDestinationItemRequestQueue))
-      .thenApply(r -> r.map(MoveRequestService::applyMoveToRepresentation))
+      .after(this::withDestinationItem)
+      .thenComposeAsync(r -> r.after(this::withDestinationItemRequestQueue))
       .thenApply(r -> r.map(MoveRequestService::pagedRequestIfDestinationItemAvailable))
       .thenCompose(r -> r.after(this::updateRequest))
-      // is there a better way to do this?
-      .thenApply(r -> r.map(v -> useOriginalItemAndDestination(requestAndRelatedRecords, originalItem)))
-      .thenCompose(r -> r.after(updateRequestQueue::onMoved));
+      .thenComposeAsync(r -> r.after(this::withOriginalItem))
+      .thenComposeAsync(r -> r.after(this::withOriginalItemRequestQueue))
+      .thenCompose(r -> r.after(updateRequestQueue::onMoved))
+      .thenComposeAsync(r -> r.after(this::withDestinationItem))
+      .thenComposeAsync(r -> r.after(this::withDestinationItemRequestQueue));
   }
 
-  private CompletableFuture<Result<RequestAndRelatedRecords>> lookupDestinationItem(
+  private CompletableFuture<Result<RequestAndRelatedRecords>> withDestinationItem(
     RequestAndRelatedRecords requestAndRelatedRecords) {
-    final Request request = requestAndRelatedRecords.getRequest();
-    return itemRepository.fetchById(request.getDestinationItemId())
+    return itemRepository.fetchById(requestAndRelatedRecords.getDestinationItemId())
       .thenApply(result -> result.map(requestAndRelatedRecords::withItem));
   }
 
-  private CompletableFuture<Result<RequestAndRelatedRecords>> lookupDestinationItemRequestQueue(
+  private CompletableFuture<Result<RequestAndRelatedRecords>> withDestinationItemRequestQueue(
     RequestAndRelatedRecords requestAndRelatedRecords) {
-    final Request request = requestAndRelatedRecords.getRequest();
-    return requestQueueRepository.get(request.getDestinationItemId())
+    return requestQueueRepository.get(requestAndRelatedRecords.getDestinationItemId())
       .thenApply(result -> result.map(requestAndRelatedRecords::withRequestQueue));
-  }
-
-  private static RequestAndRelatedRecords applyMoveToRepresentation(
-    RequestAndRelatedRecords requestAndRelatedRecords) {
-    requestAndRelatedRecords.withRequest(
-      requestAndRelatedRecords.getRequest().applyMoveToRepresentation());
-    return requestAndRelatedRecords;
   }
 
   private static RequestAndRelatedRecords pagedRequestIfDestinationItemAvailable(
     RequestAndRelatedRecords requestAndRelatedRecords) {
     Item item = requestAndRelatedRecords.getRequest().getItem();
     if (item.getStatus().equals(ItemStatus.AVAILABLE)) {
-      requestAndRelatedRecords.withRequest(
-        requestAndRelatedRecords.getRequest().changeType(RequestType.PAGE));
+      return requestAndRelatedRecords.withRequestType(RequestType.PAGE);
     }
     return requestAndRelatedRecords;
   }
 
-  private RequestAndRelatedRecords useOriginalItemAndDestination(
-    RequestAndRelatedRecords requestAndRelatedRecords, Item originalItem) {
-    String destinationItemId = requestAndRelatedRecords.getItemId();
-    // NOTE: adding destinationItemId back to indicate moved
-    return requestAndRelatedRecords.withItem(originalItem).withDestination(destinationItemId);
+  private CompletableFuture<Result<RequestAndRelatedRecords>> withOriginalItem(
+    RequestAndRelatedRecords requestAndRelatedRecords) {
+    return itemRepository.fetchById(requestAndRelatedRecords.getOriginalItemId())
+        .thenApply(result -> result.map(requestAndRelatedRecords::withItem));
   }
-  
+
+  private CompletableFuture<Result<RequestAndRelatedRecords>> withOriginalItemRequestQueue(
+    RequestAndRelatedRecords requestAndRelatedRecords) {
+    return requestQueueRepository.get(requestAndRelatedRecords.getOriginalItemId())
+        .thenApply(result -> result.map(requestAndRelatedRecords::withRequestQueue));
+  }
+
   private CompletableFuture<Result<RequestAndRelatedRecords>> updateRequest(
     RequestAndRelatedRecords requestAndRelatedRecords) {
     return of(() -> requestAndRelatedRecords)

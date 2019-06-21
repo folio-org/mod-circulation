@@ -10,7 +10,6 @@ import static org.folio.circulation.domain.RequestStatus.OPEN_IN_TRANSIT;
 import static org.folio.circulation.domain.RequestStatus.OPEN_NOT_YET_FILLED;
 import static org.folio.circulation.domain.representations.RequestProperties.CANCELLATION_ADDITIONAL_INFORMATION;
 import static org.folio.circulation.domain.representations.RequestProperties.CANCELLATION_REASON_ID;
-import static org.folio.circulation.domain.representations.RequestProperties.DESTINATION_ITEM_ID;
 import static org.folio.circulation.domain.representations.RequestProperties.HOLD_SHELF_EXPIRATION_DATE;
 import static org.folio.circulation.domain.representations.RequestProperties.ITEM_ID;
 import static org.folio.circulation.domain.representations.RequestProperties.NAME;
@@ -138,8 +137,12 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   public Request withItem(Item newItem) {
-    return new Request(requestRepresentation,cancellationReasonRepresentation, newItem, requester, proxy,
-      loan == null ? null : loan.withItem(newItem),pickupServicePoint);
+    // NOTE: this is null in RequestsAPIUpdatingTests.replacingAnExistingRequestRemovesItemInformationWhenItemDoesNotExist test 
+    if (newItem.getItemId() != null) {
+      requestRepresentation.put(ITEM_ID, newItem.getItemId());
+    }
+    return new Request(requestRepresentation, cancellationReasonRepresentation, newItem, requester, proxy,
+      loan == null ? null : loan.withItem(newItem), pickupServicePoint);
   }
 
   public Request withRequester(User newRequester) {
@@ -176,22 +179,6 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
     return requestRepresentation.getString("fulfilmentPreference");
   }
 
-  public String getDestinationItemId() {
-    return requestRepresentation.getString(DESTINATION_ITEM_ID);
-  }
-  
-  public void setDestinationItemId(String destinationItemIdId) {
-     requestRepresentation.put(DESTINATION_ITEM_ID, destinationItemIdId);
-  }
-
-  public void removeDestinationItemId() {
-    requestRepresentation.remove(DESTINATION_ITEM_ID);
-  }
-
-  public boolean isMoving() {
-    return requestRepresentation.containsKey(DESTINATION_ITEM_ID);
-  }
-
   public RequestFulfilmentPreference getFulfilmentPreference() {
     return RequestFulfilmentPreference.from(getFulfilmentPreferenceName());
   }
@@ -221,13 +208,7 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
     status.writeTo(requestRepresentation);
   }
 
-  Request applyMoveToRepresentation() {
-    requestRepresentation.put(ITEM_ID, getDestinationItemId());
-    requestRepresentation.remove(DESTINATION_ITEM_ID);
-    return this;
-  }
-
-  Request changeType(RequestType type) {
+  Request withRequestType(RequestType type) {
     requestRepresentation.put(REQUEST_TYPE, type.getValue());
     return this;
   }

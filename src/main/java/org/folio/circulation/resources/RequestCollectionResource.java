@@ -11,6 +11,7 @@ import org.folio.circulation.domain.RequestAndRelatedRecords;
 import org.folio.circulation.domain.RequestQueueRepository;
 import org.folio.circulation.domain.RequestRepository;
 import org.folio.circulation.domain.RequestRepresentation;
+import org.folio.circulation.domain.RequestType;
 import org.folio.circulation.domain.ServicePointRepository;
 import org.folio.circulation.domain.UpdateItem;
 import org.folio.circulation.domain.UpdateLoan;
@@ -103,7 +104,8 @@ public class RequestCollectionResource extends CollectionResource {
       new UpdateLoanActionHistory(clients),
       new UpdateLoan(clients, loanRepository, new LoanPolicyRepository(clients)),
       new RequestPolicyRepository(clients),
-      loanRepository, requestNoticeSender);
+      loanRepository,
+      requestNoticeSender);
 
     final UpdateRequestService updateRequestService = new UpdateRequestService(
       requestRepository,
@@ -194,20 +196,14 @@ public class RequestCollectionResource extends CollectionResource {
 
     JsonObject representation = routingContext.getBodyAsJson();
 
-    write(representation, "id", getRequestId(routingContext));
+    String id = getRequestId(routingContext);
+
+    final RequestRepository requestRepository = RequestRepository.using(clients);
+    final RequestQueueRepository requestQueueRepository = RequestQueueRepository.using(clients);
 
     final ItemRepository itemRepository = new ItemRepository(clients, true, true, true);
     final LoanRepository loanRepository = new LoanRepository(clients);
     final LoanPolicyRepository loanPolicyRepository = new LoanPolicyRepository(clients);
-    final UserRepository userRepository = new UserRepository(clients);
-    final ServicePointRepository servicePointRepository = new ServicePointRepository(clients);
-
-    final RequestQueueRepository requestQueueRepository = RequestQueueRepository.using(clients);
-
-    final ProxyRelationshipValidator proxyRelationshipValidator =
-      createProxyRelationshipValidator(representation, clients);
-    final ServicePointPickupLocationValidator servicePointPickupLocationValidator =
-      new ServicePointPickupLocationValidator();
 
     final MoveRequestService moveRequestService = new MoveRequestService(
       RequestRepository.using(clients),
@@ -220,23 +216,25 @@ public class RequestCollectionResource extends CollectionResource {
       loanRepository,
       itemRepository);
 
-    RequestFromRepresentationService requestFromRepresentationService =
-      new RequestFromRepresentationService(
-      itemRepository,
-      requestQueueRepository,
-      userRepository,
-      loanRepository,
-      servicePointRepository,
-      proxyRelationshipValidator,
-      servicePointPickupLocationValidator
-    );
-
-    requestFromRepresentationService.getRequestFrom(representation)
+    requestRepository.getById(id)
+      .thenApply(r -> r.map(RequestAndRelatedRecords::new))
+      .thenApply(r -> r.map(rr -> asMove(rr, representation)))
       .thenComposeAsync(r -> r.after(moveRequestService::moveRequest))
       .thenApply(r -> r.map(RequestAndRelatedRecords::getRequest))
       .thenApply(r -> r.map(new RequestRepresentation()::extendedRepresentation))
       .thenApply(OkJsonResponseResult::from)
       .thenAccept(r -> r.writeTo(routingContext.response()));
+  }
+  
+  private RequestAndRelatedRecords asMove(RequestAndRelatedRecords requestAndRelatedRecords,
+    JsonObject representation) {
+    String originalItemId = requestAndRelatedRecords.getItemId();    
+    String destinationItemId = representation.getString("destinationItemId");
+    if (representation.containsKey("requestType")) {
+      RequestType requestType = RequestType.from(representation.getString("requestType"));
+      return requestAndRelatedRecords.withRequestType(requestType).asMove(originalItemId, destinationItemId);
+    }
+    return requestAndRelatedRecords.asMove(originalItemId, destinationItemId);
   }
 
   private ProxyRelationshipValidator createProxyRelationshipValidator(

@@ -12,6 +12,7 @@ import org.folio.circulation.support.http.client.Response;
 import org.joda.time.DateTime;
 
 import api.support.RestAssuredClient;
+import api.support.builders.MoveRequestBuilder;
 import api.support.builders.RequestBuilder;
 import api.support.http.InterfaceUrls;
 import api.support.http.ResourceClient;
@@ -198,7 +199,7 @@ public class RequestsFixture {
     requestsClient.replace(request.getId(), cancelledRequestBySteve);
   }
   
-  public IndividualResource move(RequestBuilder requestToBuild)
+  public IndividualResource move(MoveRequestBuilder requestToBuild)
     throws InterruptedException,
     MalformedURLException,
     TimeoutException,
@@ -207,7 +208,7 @@ public class RequestsFixture {
     return requestsClient.move(requestToBuild);
   }
   
-  public Response attemptMove(RequestBuilder requestToBuild)
+  public Response attemptMove(MoveRequestBuilder requestToBuild)
       throws InterruptedException,
       MalformedURLException,
       TimeoutException,

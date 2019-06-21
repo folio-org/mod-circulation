@@ -138,13 +138,10 @@ public class UpdateRequestQueue {
 
   CompletableFuture<Result<RequestAndRelatedRecords>> onMoved(
     RequestAndRelatedRecords requestAndRelatedRecords) {
-
     final Request request = requestAndRelatedRecords.getRequest();
     final RequestQueue requestQueue = requestAndRelatedRecords.getRequestQueue();
-
-    if(request.isMoving() && request.getDestinationItemId().contentEquals(request.getItemId())) {
+    if (requestAndRelatedRecords.getOriginalItemId().contentEquals(request.getItemId())) {
       requestQueue.remove(request);
-      request.removeDestinationItemId();
       return requestQueueRepository.updateRequestsWithChangedPositions(requestQueue)
             .thenApply(r -> r.map(requestAndRelatedRecords::withRequestQueue));
     }

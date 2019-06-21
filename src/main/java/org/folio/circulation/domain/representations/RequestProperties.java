@@ -13,5 +13,4 @@ public class RequestProperties {
   public static final String REQUEST_EXPIRATION_DATE = "requestExpirationDate";
   public static final String CANCELLATION_ADDITIONAL_INFORMATION = "cancellationAdditionalInformation";
   public static final String CANCELLATION_REASON_ID = "cancellationReasonId";
-  public static final String DESTINATION_ITEM_ID = "destinationItemId";
 }
