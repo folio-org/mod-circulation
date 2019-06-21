@@ -108,7 +108,6 @@ public class MoveRequestService {
       .after(this::refuseWhenUserHasAlreadyBeenLoanedItem)
       .thenComposeAsync(r -> r.after(requestPolicyRepository::lookupRequestPolicy))
       .thenApply(r -> r.next(RequestServiceUtility::refuseWhenRequestCannotBeFulfilled))
-      .thenApply(r -> r.next(RequestServiceUtility::refuseWhenRequestCannotBeFulfilled))
       .thenApply(r -> r.map(RequestServiceUtility::setRequestQueuePosition))
       .thenComposeAsync(r -> r.after(updateItem::onRequestCreationOrMove))
       .thenComposeAsync(r -> r.after(updateLoanActionHistory::onRequestCreationOrMove))
