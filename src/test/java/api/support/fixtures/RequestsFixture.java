@@ -204,7 +204,6 @@ public class RequestsFixture {
     MalformedURLException,
     TimeoutException,
     ExecutionException {
-
     return requestsClient.move(requestToBuild);
   }
 

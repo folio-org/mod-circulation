@@ -44,8 +44,8 @@ public class RequestCollectionResource extends CollectionResource {
 
   @Override
   public void register(Router router) {
-	  super.register(router);
-	  router.post("/circulation/requests/:id/move").handler(this::move);
+    super.register(router);
+    router.post("/circulation/requests/:id/move").handler(this::move);
   }
 
   void create(RoutingContext routingContext) {

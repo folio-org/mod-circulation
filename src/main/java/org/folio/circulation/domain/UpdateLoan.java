@@ -64,5 +64,4 @@ public class UpdateLoan {
     return loanPolicy.recall(loan)
         .map(loanAndRelatedRecords::withLoan);
   }
-
 }
