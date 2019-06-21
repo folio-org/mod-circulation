@@ -81,9 +81,6 @@ public class LoanRepository {
 
     JsonObject storageLoan = mapToStorageRepresentation(loan, loan.getItem());
 
-    User user = newLoanAndRelatedRecords.getLoan().getUser();
-    User proxy = newLoanAndRelatedRecords.getLoan().getProxy();
-
     return loansStorageClient.post(storageLoan).thenApply(response -> {
       if (response.getStatusCode() == 201) {
         return succeeded(

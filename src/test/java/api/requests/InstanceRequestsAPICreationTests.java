@@ -5,9 +5,7 @@ import static org.folio.HttpStatus.HTTP_CREATED;
 import static org.folio.circulation.support.JsonPropertyWriter.write;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 import java.net.MalformedURLException;
 import java.util.UUID;
@@ -145,7 +143,7 @@ public class InstanceRequestsAPICreationTests extends APITests {
       instance.getId(),
       item.getId(),
       RequestType.PAGE);
-
+    assertNull(representation.getString("requestExpirationDate"));
   }
 
   @Test

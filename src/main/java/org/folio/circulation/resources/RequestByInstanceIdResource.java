@@ -115,47 +115,6 @@ public class RequestByInstanceIdResource extends Resource {
                       });
   }
 
-  private Result<InstanceRequestRelatedRecords> segregateItemsList(Collection<Item> items,
-                                                                          InstanceRequestRelatedRecords requestRelatedRecords ){
-    if (items == null ||items.isEmpty()) {
-      return failedValidation("Items list is null or empty", "items", "null");
-    }
-
-    log.debug("RequestByInstanceIdResource.segregateItemsList: Found {} items", items.size());
-
-    Map<Boolean, List<Item>> partitions = items.stream()
-      .collect(Collectors.partitioningBy(Item::isAvailable));
-
-    requestRelatedRecords.setUnsortedAvailableItems(partitions.get(true));
-    requestRelatedRecords.setUnsortedUnavailableItems(partitions.get(false));
-
-    return succeeded(requestRelatedRecords);
-  }
-
-  public static Result<InstanceRequestRelatedRecords> rankItemsByMatchingServicePoint(InstanceRequestRelatedRecords record) {
-
-    final Collection<Item> unsortedAvailableItems = record.getUnsortedAvailableItems();
-    final UUID pickupServicePointId = record.getInstanceLevelRequest().getPickupServicePointId();
-
-    return of(() -> {
-
-      Map<Boolean, List<Item>> itemsPartitionedByLocationServedByPickupPoint = unsortedAvailableItems.stream()
-        .collect(Collectors.partitioningBy(i -> Optional.ofNullable(i.getLocation())
-          .map(location -> location.homeLocationIsServedBy(pickupServicePointId))
-          .orElse(false)));
-
-      final List<Item> rankedItems = new LinkedList<>();
-
-      //Compose the final list of Items with the matchingItems (items that has matching service pointID) on top.
-      rankedItems.addAll(itemsPartitionedByLocationServedByPickupPoint.get(true));
-      rankedItems.addAll(itemsPartitionedByLocationServedByPickupPoint.get(false));
-
-      record.setSortedAvailableItems(rankedItems);
-
-      return record;
-    });
-  }
-
   private CompletableFuture<Result<Map<Item, DateTime>>> getLoanItems(
     InstanceRequestRelatedRecords instanceRequestPackage, Clients clients) {
 
@@ -237,75 +196,6 @@ public class RequestByInstanceIdResource extends Resource {
     });
   }
 
-  private Result<InstanceRequestRelatedRecords> combineWithUnavailableItems(
-    Result<Map<Item, DateTime>> itemDueDateMapResult,
-    Result<Map<Item, Integer>> itemRequestQueueSizeMapResult,
-    InstanceRequestRelatedRecords records){
-
-    return of(() -> {
-
-      if (itemDueDateMapResult.succeeded() && itemRequestQueueSizeMapResult.succeeded()) {
-        Map<Item, DateTime> itemDueDateMap = itemDueDateMapResult.value();
-        Map<Item, Integer> itemQueueSizeMap = itemRequestQueueSizeMapResult.value();
-
-        if (itemDueDateMap == null && itemQueueSizeMap == null) {
-          return records;
-        }
-
-        //Sort the map
-        Map<Item, Integer> sortedMap = sortRequestQueues(itemQueueSizeMap, itemDueDateMap,
-                                                      records.getInstanceLevelRequest().getPickupServicePointId());
-
-        LinkedList<Item> finalOrdedList = new LinkedList<>(sortedMap.keySet());
-
-        //put the items that weren't able to retrieve RequestQueues or loans for on the bottom of the list
-        finalOrdedList.addAll(records.getItemsWithoutLoans());
-        finalOrdedList.addAll(records.getItemsWithoutRequests());
-        records.setSortedUnavailableItems(finalOrdedList);
-        return records;
-      }
-      return records;
-    });
-  }
-
-  static Result<LinkedList<JsonObject>> instanceToItemRequests(InstanceRequestRelatedRecords requestRecords) {
-
-    final RequestByInstanceIdRequest requestByInstanceIdRequest = requestRecords.getInstanceLevelRequest();
-    final List<Item> combinedItems = requestRecords.getCombinedSortedItemsList();
-
-    if (combinedItems == null || combinedItems.isEmpty()) {
-      return failedValidation("Cannot create request objects when items list is null or empty", "items", "null");    }
-
-    RequestType[] types = RequestType.values();
-    LinkedList<JsonObject> requests = new LinkedList<>();
-
-    final String defaultFulfilmentPreference = "Hold Shelf";
-
-    for (Item item: combinedItems) {
-      for (RequestType reqType : types) {
-        if (reqType != RequestType.NONE) {
-
-          JsonObject requestBody = new JsonObject();
-
-          write(requestBody,ITEM_ID_FIELD, item.getItemId());
-          write(requestBody,"requestDate",
-            requestByInstanceIdRequest.getRequestDate().toString(ISODateTimeFormat.dateTime()));
-          write(requestBody,"requesterId", requestByInstanceIdRequest.getRequesterId().toString());
-          write(requestBody,"pickupServicePointId",
-            requestByInstanceIdRequest.getPickupServicePointId().toString());
-          write(requestBody,"fulfilmentPreference", defaultFulfilmentPreference);
-          write(requestBody,"requestType", reqType.getValue());
-          if (requestByInstanceIdRequest.getRequestExpirationDate() != null) {
-            write(requestBody, "requestExpirationDate",
-              requestByInstanceIdRequest.getRequestExpirationDate().toString(ISODateTimeFormat.dateTime()));
-          }
-          requests.add(requestBody);
-        }
-      }
-    }
-    return succeeded(requests);
-  }
-
   private CompletableFuture<Result<RequestAndRelatedRecords>> placeRequests(List<JsonObject> itemRequestRepresentations,
                                                                             Clients clients) {
 
@@ -368,6 +258,115 @@ public class RequestByInstanceIdResource extends Resource {
         });
   }
 
+  public static Result<InstanceRequestRelatedRecords> rankItemsByMatchingServicePoint(InstanceRequestRelatedRecords record) {
+
+    final Collection<Item> unsortedAvailableItems = record.getUnsortedAvailableItems();
+    final UUID pickupServicePointId = record.getInstanceLevelRequest().getPickupServicePointId();
+
+    return of(() -> {
+
+      Map<Boolean, List<Item>> itemsPartitionedByLocationServedByPickupPoint = unsortedAvailableItems.stream()
+        .collect(Collectors.partitioningBy(i -> Optional.ofNullable(i.getLocation())
+          .map(location -> location.homeLocationIsServedBy(pickupServicePointId))
+          .orElse(false)));
+
+      final List<Item> rankedItems = new LinkedList<>();
+
+      //Compose the final list of Items with the matchingItems (items that has matching service pointID) on top.
+      rankedItems.addAll(itemsPartitionedByLocationServedByPickupPoint.get(true));
+      rankedItems.addAll(itemsPartitionedByLocationServedByPickupPoint.get(false));
+
+      record.setSortedAvailableItems(rankedItems);
+
+      return record;
+    });
+  }
+
+  static Result<LinkedList<JsonObject>> instanceToItemRequests( InstanceRequestRelatedRecords requestRecords) {
+
+    final RequestByInstanceIdRequest requestByInstanceIdRequest = requestRecords.getInstanceLevelRequest();
+    final List<Item> combinedItems = requestRecords.getCombinedSortedItemsList();
+
+    if (combinedItems == null || combinedItems.isEmpty()) {
+      return failedValidation("Cannot create request objects when items list is null or empty", "items", "null");    }
+
+    RequestType[] types = RequestType.values();
+    LinkedList<JsonObject> requests = new LinkedList<>();
+
+    final String defaultFulfilmentPreference = "Hold Shelf";
+
+    for (Item item: combinedItems) {
+      for (RequestType reqType : types) {
+        if (reqType != RequestType.NONE) {
+
+          JsonObject requestBody = new JsonObject();
+
+          write(requestBody,ITEM_ID_FIELD, item.getItemId());
+          write(requestBody,"requestDate",
+            requestByInstanceIdRequest.getRequestDate().toString(ISODateTimeFormat.dateTime()));
+          write(requestBody,"requesterId", requestByInstanceIdRequest.getRequesterId().toString());
+          write(requestBody,"pickupServicePointId",
+            requestByInstanceIdRequest.getPickupServicePointId().toString());
+          write(requestBody,"fulfilmentPreference", defaultFulfilmentPreference);
+          write(requestBody,"requestType", reqType.getValue());
+          if (requestByInstanceIdRequest.getRequestExpirationDate() != null) {
+            write(requestBody, "requestExpirationDate",
+              requestByInstanceIdRequest.getRequestExpirationDate().toString(ISODateTimeFormat.dateTime()));
+          }
+          requests.add(requestBody);
+        }
+      }
+    }
+    return succeeded(requests);
+  }
+
+  private Result<InstanceRequestRelatedRecords> segregateItemsList(Collection<Item> items,
+                                                                          InstanceRequestRelatedRecords requestRelatedRecords ){
+    if (items == null ||items.isEmpty()) {
+      return failedValidation("Items list is null or empty", "items", "null");
+    }
+
+    log.debug("RequestByInstanceIdResource.segregateItemsList: Found {} items", items.size());
+
+    Map<Boolean, List<Item>> partitions = items.stream()
+      .collect(Collectors.partitioningBy(Item::isAvailable));
+
+    requestRelatedRecords.setUnsortedAvailableItems(partitions.get(true));
+    requestRelatedRecords.setUnsortedUnavailableItems(partitions.get(false));
+
+    return succeeded(requestRelatedRecords);
+  }
+
+  private Result<InstanceRequestRelatedRecords> combineWithUnavailableItems(
+    Result<Map<Item, DateTime>> itemDueDateMapResult,
+    Result<Map<Item, Integer>> itemRequestQueueSizeMapResult,
+    InstanceRequestRelatedRecords records){
+
+    return of(() -> {
+
+      if (itemDueDateMapResult.succeeded() && itemRequestQueueSizeMapResult.succeeded()) {
+        Map<Item, DateTime> itemDueDateMap = itemDueDateMapResult.value();
+        Map<Item, Integer> itemQueueSizeMap = itemRequestQueueSizeMapResult.value();
+
+        if (itemDueDateMap == null && itemQueueSizeMap == null) {
+          return records;
+        }
+
+        //Sort the map
+        Map<Item, Integer> sortedMap = sortRequestQueues(itemQueueSizeMap, itemDueDateMap,
+          records.getInstanceLevelRequest().getPickupServicePointId());
+
+        LinkedList<Item> finalOrdedList = new LinkedList<>(sortedMap.keySet());
+
+        //put the items that it wasn't able to retrieve loans or RequestQueues for on the bottom of the list
+        finalOrdedList.addAll(records.getItemsWithoutLoans());
+        finalOrdedList.addAll(records.getItemsWithoutRequests());
+        records.setSortedUnavailableItems(finalOrdedList);
+        return records;
+      }
+      return records;
+    });
+  }
   private ProxyRelationshipValidator createProxyRelationshipValidator(
     JsonObject representation,
     Clients clients) {

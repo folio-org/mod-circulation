@@ -35,6 +35,10 @@ public class InstanceRequestRelatedRecords {
     this.sortedAvailableItems = sortedAvailableItems;
   }
 
+  public List<Item> getSortedAvailableItems() {
+    return sortedAvailableItems;
+  }
+
   public void setSortedUnavailableItems(List<Item> sortedUnavailableItems) {
     this.sortedUnavailableItems = sortedUnavailableItems;
   }
@@ -58,12 +62,12 @@ public class InstanceRequestRelatedRecords {
     this.instanceLevelRequest = requestByInstanceIdRequest;
   }
 
-  public void setItemsWithoutLoans(List<Item> itemsWithoutLoans) {
-    this.itemsWithoutLoans = itemsWithoutLoans;
-  }
-
   public List<Item> getItemsWithoutLoans() {
     return itemsWithoutLoans;
+  }
+
+  public void setItemsWithoutLoans(List<Item> itemsWithoutLoans) {
+    this.itemsWithoutLoans = itemsWithoutLoans;
   }
 
   public List<Item> getItemsWithoutRequests() {
@@ -72,9 +76,5 @@ public class InstanceRequestRelatedRecords {
 
   public void setItemsWithoutRequests(List<Item> itemsWithoutRequests) {
     this.itemsWithoutRequests = itemsWithoutRequests;
-  }
-
-  public List<Item> getSortedAvailableItems() {
-    return this.sortedAvailableItems;
   }
 }
