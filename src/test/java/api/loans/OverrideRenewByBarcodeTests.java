@@ -144,6 +144,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource jessica = usersFixture.jessica();
+    loansFixture.checkOutByBarcode(smallAngryPlanet, jessica);
 
     final Response response = loansFixture.attemptOverride(smallAngryPlanet,
       jessica, StringUtils.EMPTY, null);
@@ -211,8 +212,8 @@ public class OverrideRenewByBarcodeTests extends APITests {
       .rolling(Period.days(2))
       .notRenewable();
 
-    UUID nonRenewablePolicyId = loanPoliciesFixture.create(nonRenewablePolicy)
-      .getId();
+    final IndividualResource loanPolicy = loanPoliciesFixture.create(nonRenewablePolicy);
+    UUID nonRenewablePolicyId = loanPolicy.getId();
 
     useLoanPolicyAsFallback(
       nonRenewablePolicyId,
@@ -246,8 +247,9 @@ public class OverrideRenewByBarcodeTests extends APITests {
     assertThat("renewal count should be incremented",
       renewedLoan.getInteger("renewalCount"), is(1));
 
+    //TODO loanpolicyname is not stored, possible bug?
     assertThat("last loan policy should be stored",
-      renewedLoan.getString("loanPolicyId"), is(nonRenewablePolicyId.toString()));
+            renewedLoan.getString("loanPolicyId"), is(nonRenewablePolicyId.toString()));
 
     assertThat("due date should be 2 weeks from now",
       renewedLoan.getString("dueDate"),
@@ -327,7 +329,8 @@ public class OverrideRenewByBarcodeTests extends APITests {
       .fixed(fixedDueDateSchedulesId)
       .renewFromCurrentDueDate();
 
-    UUID dueDateLimitedPolicyId = loanPoliciesFixture.create(currentDueDateRollingPolicy).getId();
+    final IndividualResource loanPolicy = loanPoliciesFixture.create(currentDueDateRollingPolicy);
+    UUID dueDateLimitedPolicyId = loanPolicy.getId();
 
     useLoanPolicyAsFallback(
       dueDateLimitedPolicyId,
@@ -362,8 +365,9 @@ public class OverrideRenewByBarcodeTests extends APITests {
     assertThat("renewal count should be incremented",
       renewedLoan.getInteger("renewalCount"), is(1));
 
+    //TODO loanpolicyname is not stored, possible bug?
     assertThat("last loan policy should be stored",
-      renewedLoan.getString("loanPolicyId"), is(dueDateLimitedPolicyId.toString()));
+            renewedLoan.getString("loanPolicyId"), is(dueDateLimitedPolicyId.toString()));
 
     assertThat("due date should be 2 months from previous due date",
       renewedLoan.getString("dueDate"),
@@ -543,8 +547,9 @@ public class OverrideRenewByBarcodeTests extends APITests {
       hasMessage("Override renewal does not match any of expected cases: " +
         "item is not loanable, " +
         "item is not renewable, " +
-        "reached number of renewals limit or " +
-        "renewal date falls outside of the date ranges in the loan policy"))));
+        "reached number of renewals limit," +
+        "renewal date falls outside of the date ranges in the loan policy, " +
+        "items cannot be renewed when there is an active recall request"))));
   }
 
   @Test

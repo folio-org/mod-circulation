@@ -1,5 +1,7 @@
 package api.requests;
 
+import static api.support.matchers.ResponseStatusCodeMatcher.hasStatus;
+import static org.folio.HttpStatus.HTTP_CREATED;
 import static org.folio.circulation.support.JsonPropertyWriter.write;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
@@ -98,6 +100,45 @@ public class InstanceRequestsAPICreationTests extends APITests {
 
     Response postResponse = postCompleted.get(10, TimeUnit.SECONDS);
 
+    assertThat(postResponse, hasStatus(HTTP_CREATED));
+
+    JsonObject representation = postResponse.getJson();
+
+    validateInstanceRequestResponse(representation,
+      pickupServicePointId,
+      instance.getId(),
+      item.getId(),
+      RequestType.PAGE);
+  }
+
+  @Test
+  public void canCreateATitleLevelRequestForOneAvailableCopyWithoutRequestExpirationDate()
+    throws InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    MalformedURLException {
+
+    UUID pickupServicePointId = servicePointsFixture.cd1().getId();
+    UUID requesterId = usersFixture.jessica().getId();
+    DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
+
+    IndividualResource instance = instancesFixture.basedUponDunkirk();
+    IndividualResource holdings = holdingsFixture.defaultWithHoldings(instance.getId());
+
+    final IndividualResource item = itemsFixture.basedUponDunkirkWithCustomHoldingAndLocation(holdings.getId(), null);
+
+    JsonObject requestBody = createInstanceRequestObject(instance.getId(), requesterId,
+      pickupServicePointId, requestDate, null);
+
+    CompletableFuture<Response> postCompleted = new CompletableFuture<>();
+
+    client.post(InterfaceUrls.requestsUrl("/instances"), requestBody,
+      ResponseHandler.any(postCompleted));
+
+    Response postResponse = postCompleted.get(10, TimeUnit.SECONDS);
+
+    assertThat(postResponse, hasStatus(HTTP_CREATED));
+
     JsonObject representation = postResponse.getJson();
     validateInstanceRequestResponse(representation,
       pickupServicePointId,
@@ -137,7 +178,10 @@ public class InstanceRequestsAPICreationTests extends APITests {
 
     Response postResponse = postCompleted.get(10, TimeUnit.SECONDS);
 
+    assertThat(postResponse, hasStatus(HTTP_CREATED));
+
     JsonObject representation = postResponse.getJson();
+
     validateInstanceRequestResponse(representation,
       pickupServicePointId,
       instance.getId(),
@@ -326,9 +370,11 @@ public class InstanceRequestsAPICreationTests extends APITests {
     assertEquals(pickupServicePointId.toString(), representation.getString("pickupServicePointId"));
     assertEquals("Circ Desk 1", representation.getJsonObject("pickupServicePoint").getString("name"));
     assertEquals(instance.getId().toString(), representation.getJsonObject("item").getString("instanceId"));
-    assertEquals(RequestType.HOLD.name(), representation.getString("requestType"));
-    //Item2 should be placed because its due date is earlier than item1's.
-    assertEquals(item2.getId().toString(), representation.getString("itemId"));
+    assertEquals(RequestType.HOLD.getValue(), representation.getString("requestType"));
+    //here we check the itemID. It could be either of the 2 items because we use Future in the code to get request queues from the repository,
+    //so it's non-deterministic that the futures should come in by a certain order.
+    assertTrue(item1.getId().toString().equals(representation.getString("itemId")) ||
+                        item2.getId().toString().equals(representation.getString("itemId")));
   }
 
   @Test
@@ -464,7 +510,7 @@ public class InstanceRequestsAPICreationTests extends APITests {
     assertEquals(pickupServicePointId.toString(), representation.getString("pickupServicePointId"));
     assertEquals("Circ Desk 1", representation.getJsonObject("pickupServicePoint").getString("name"));
     assertEquals(instance.getId().toString(), representation.getJsonObject("item").getString("instanceId"));
-    assertEquals(RequestType.HOLD.name(), representation.getString("requestType"));
+    assertEquals(RequestType.HOLD.getValue(), representation.getString("requestType"));
     assertTrue(item1.getId().toString().equals(representation.getString("itemId")) ||
       item2.getId().toString().equals(representation.getString("itemId")));
   }
@@ -511,7 +557,7 @@ public class InstanceRequestsAPICreationTests extends APITests {
     assertEquals(pickupServicePointId.toString(), representation.getString("pickupServicePointId"));
     assertEquals("Circ Desk 1", representation.getJsonObject("pickupServicePoint").getString("name"));
     assertEquals(instance.getId().toString(), representation.getJsonObject("item").getString("instanceId"));
-    assertEquals(RequestType.HOLD.name(), representation.getString("requestType"));
+    assertEquals(RequestType.HOLD.getValue(), representation.getString("requestType"));
     assertEquals(item2.getId().toString(), representation.getString("itemId"));
   }
 
@@ -565,7 +611,7 @@ public class InstanceRequestsAPICreationTests extends APITests {
     assertEquals(pickupServicePointId.toString(), representation.getString("pickupServicePointId"));
     assertEquals("Circ Desk 1", representation.getJsonObject("pickupServicePoint").getString("name"));
     assertEquals(instance.getId().toString(), representation.getJsonObject("item").getString("instanceId"));
-    assertEquals(RequestType.HOLD.name(), representation.getString("requestType"));
+    assertEquals(RequestType.HOLD.getValue(), representation.getString("requestType"));
     assertEquals(item2.getId().toString(), representation.getString("itemId"));
   }
 
@@ -672,7 +718,7 @@ public class InstanceRequestsAPICreationTests extends APITests {
     assertEquals(pickupServicePointId.toString(), representation.getString("pickupServicePointId"));
     assertEquals("Circ Desk 1", representation.getJsonObject("pickupServicePoint").getString("name"));
     assertEquals(instanceId.toString(), representation.getJsonObject("item").getString("instanceId"));
-    assertEquals(expectedRequestType.name(), representation.getString("requestType"));
+    assertEquals(expectedRequestType.getValue(), representation.getString("requestType"));
     if (itemId != null)
       assertEquals(itemId.toString(), representation.getString("itemId"));
   }
@@ -685,7 +731,9 @@ public class InstanceRequestsAPICreationTests extends APITests {
     write(requestBody,"requesterId", requesterId.toString());
     write(requestBody,"pickupServicePointId", pickupServicePointId.toString());
     write(requestBody,"fulfilmentPreference", "Hold Shelf");
-    write(requestBody,"requestExpirationDate", requestExpirationDate.toString(ISODateTimeFormat.dateTime()));
+    if (requestExpirationDate != null)
+      write(requestBody,"requestExpirationDate",
+        requestExpirationDate.toString(ISODateTimeFormat.dateTime()));
 
     return requestBody;
   }

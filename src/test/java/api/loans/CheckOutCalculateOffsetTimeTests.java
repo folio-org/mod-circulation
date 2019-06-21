@@ -17,7 +17,6 @@ import static api.support.fixtures.CalendarExamples.getLastFakeOpeningDayByServI
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static org.hamcrest.CoreMatchers.allOf;
-import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.joda.time.DateTimeConstants.HOURS_PER_DAY;
 
@@ -404,7 +403,7 @@ public class CheckOutCalculateOffsetTimeTests extends APITests {
 
     JsonObject loanPolicyEntry =
       createLoanPolicyOffsetTimeEntry(duration, INTERVAL_HOURS, offsetDuration, OFFSET_INTERVAL_MINUTES);
-    String loanPolicyId = createLoanPolicy(loanPolicyEntry);
+    createLoanPolicy(loanPolicyEntry);
 
     JsonObject response = loansFixture.attemptCheckOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
@@ -433,7 +432,7 @@ public class CheckOutCalculateOffsetTimeTests extends APITests {
 
     JsonObject loanPolicyEntry =
       createLoanPolicyOffsetTimeEntry(duration, interval, offsetDuration, offsetInterval);
-    String loanPolicyId = createLoanPolicy(loanPolicyEntry);
+    IndividualResource loanPolicy = createLoanPolicy(loanPolicyEntry);
 
     final IndividualResource response = loansFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
@@ -444,8 +443,7 @@ public class CheckOutCalculateOffsetTimeTests extends APITests {
 
     final JsonObject loan = response.getJson();
 
-    assertThat("last loan policy should be stored",
-      loan.getString("loanPolicyId"), is(loanPolicyId));
+    loanHasLoanPolicyProperties(loan, loanPolicy);
 
     DateTime actualDueDate = getThresholdDateTime(DateTime.parse(loan.getString("dueDate")));
     DateTime thresholdDateTime = getThresholdDateTime(expectedDueDate);
@@ -488,7 +486,7 @@ public class CheckOutCalculateOffsetTimeTests extends APITests {
     return new DateTime(dateTime.toString()).withZoneRetainFields(DateTimeZone.UTC);
   }
 
-  private String createLoanPolicy(JsonObject loanPolicyEntry)
+  private IndividualResource createLoanPolicy(JsonObject loanPolicyEntry)
     throws InterruptedException,
     MalformedURLException,
     TimeoutException,
@@ -500,7 +498,7 @@ public class CheckOutCalculateOffsetTimeTests extends APITests {
     UUID noticePolicyId = noticePoliciesFixture.activeNotice().getId();
     useLoanPolicyAsFallback(loanPolicy.getId(), requestPolicyId, noticePolicyId);
 
-    return loanPolicy.getId().toString();
+    return loanPolicy;
   }
 
   /**

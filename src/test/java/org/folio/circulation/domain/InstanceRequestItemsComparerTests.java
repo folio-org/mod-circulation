@@ -241,16 +241,18 @@ public class InstanceRequestItemsComparerTests {
     JsonObject itemRepresentation = new JsonObject();
     itemRepresentation.put("itemid", UUID.randomUUID().toString());
 
-    JsonObject homeLocation = null;
+    Location location = null;
 
     if (withServicePointId != null) {
-      homeLocation = new JsonObject();
+      JsonObject homeLocation = new JsonObject();
       JsonArray servicePointsArray = new JsonArray();
 
       servicePointsArray.add(withServicePointId.toString());
       homeLocation.put("servicePointIds", servicePointsArray);
+
+      location = new Location(homeLocation, null, null, null);
     }
     
-    return new Item(itemRepresentation, null, null, homeLocation, null, null, null);
+    return new Item(itemRepresentation, null, null, location, null, null, null);
   }
 }

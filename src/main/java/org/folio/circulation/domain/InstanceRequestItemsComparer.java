@@ -63,10 +63,15 @@ public class InstanceRequestItemsComparer {
     if (destinationServicePointId == null)
       return 0;
 
-    if (item1.homeLocationIsServedBy(destinationServicePointId))
+    Location item1Location = item1.getLocation();
+    Location item2Location = item2.getLocation();
+
+    if (item1Location != null && item1Location.homeLocationIsServedBy(destinationServicePointId)){
       return -1;
-    else if (item2.homeLocationIsServedBy(destinationServicePointId))
+    }
+    else if (item2Location != null && item2Location.homeLocationIsServedBy(destinationServicePointId)) {
       return 1;
+    }
     return 0;
   }
 }

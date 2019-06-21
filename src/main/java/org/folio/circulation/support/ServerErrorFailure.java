@@ -21,6 +21,10 @@ public class ServerErrorFailure implements HttpFailure {
     ServerErrorResponse.internalError(response, reason);
   }
 
+  public String getReason() {
+    return reason;
+  }
+
   private static String mapToString(Throwable e) {
     final String reason;
 

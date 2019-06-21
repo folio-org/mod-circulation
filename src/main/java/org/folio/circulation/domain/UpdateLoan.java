@@ -5,6 +5,7 @@ import static org.folio.circulation.support.Result.succeeded;
 
 import java.util.concurrent.CompletableFuture;
 
+import org.folio.circulation.domain.notice.schedule.ScheduledNoticeService;
 import org.folio.circulation.domain.policy.LoanPolicy;
 import org.folio.circulation.domain.policy.LoanPolicyRepository;
 import org.folio.circulation.domain.policy.library.ClosedLibraryStrategyService;
@@ -17,6 +18,7 @@ public class UpdateLoan {
   private final ClosedLibraryStrategyService closedLibraryStrategyService;
   private final LoanRepository loanRepository;
   private final LoanPolicyRepository loanPolicyRepository;
+  private final ScheduledNoticeService scheduledNoticeService;
 
   public UpdateLoan(Clients clients,
       LoanRepository loanRepository,
@@ -25,14 +27,15 @@ public class UpdateLoan {
         DateTime.now(DateTimeZone.UTC), false);
     this.loanPolicyRepository = loanPolicyRepository;
     this.loanRepository = loanRepository;
+    this.scheduledNoticeService = ScheduledNoticeService.using(clients);
   }
 
   /**
    * Updates the loan due date for the loan associated with this newly created
    * recall request. No modifications are made if the request is not a recall.
    * Depending on loan/request policies, the loan date may not be updated.
-   * 
-   * @param requestAndRelatedRecords request and related records. 
+   *
+   * @param requestAndRelatedRecords request and related records.
    * @return the request and related records with the possibly updated loan.
    */
   CompletableFuture<Result<RequestAndRelatedRecords>> onRequestCreation(
@@ -46,16 +49,19 @@ public class UpdateLoan {
           .thenApply(r -> r.next(this::recall))
           .thenComposeAsync(r -> r.after(closedLibraryStrategyService::applyClosedLibraryDueDateManagement))
           .thenComposeAsync(r -> r.after(loanRepository::updateLoan))
+          .thenComposeAsync(r -> r.after(scheduledNoticeService::rescheduleDueDateNotices))
           .thenApply(r -> r.map(v -> requestAndRelatedRecords.withRequest(request.withLoan(v.getLoan()))));
     } else {
       return completedFuture(succeeded(requestAndRelatedRecords));
     }
   }
 
+  //TODO: Possibly combine this with LoanRenewalService?
   private Result<LoanAndRelatedRecords> recall(LoanAndRelatedRecords loanAndRelatedRecords) {
-    LoanPolicy loanPolicy = loanAndRelatedRecords.getLoanPolicy();
-    return loanPolicy.recall(loanAndRelatedRecords.getLoan())
+    final Loan loan = loanAndRelatedRecords.getLoan();
+    LoanPolicy loanPolicy = loan.getLoanPolicy();
+
+    return loanPolicy.recall(loan)
         .map(loanAndRelatedRecords::withLoan);
   }
-
 }

@@ -62,11 +62,14 @@ public class OverrideCheckOutStrategy implements CheckOutStrategy {
   }
 
   private Result<LoanAndRelatedRecords> refuseWhenItemIsLoanable(LoanAndRelatedRecords relatedRecords) {
-    if (relatedRecords.getLoanPolicy().isLoanable()) {
-      String itemBarcode = relatedRecords.getLoan().getItem().getBarcode();
+    final Loan loan = relatedRecords.getLoan();
+
+    if (loan.getLoanPolicy().isLoanable()) {
+      String itemBarcode = loan.getItem().getBarcode();
       return failed(singleValidationError(
         "Override is not allowed when item is loanable", ITEM_BARCODE, itemBarcode));
     }
+
     return succeeded(relatedRecords);
   }
 

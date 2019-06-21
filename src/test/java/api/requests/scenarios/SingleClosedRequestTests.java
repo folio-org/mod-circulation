@@ -3,6 +3,8 @@ package api.requests.scenarios;
 import static api.support.builders.ItemBuilder.CHECKED_OUT;
 import static api.support.builders.RequestBuilder.CLOSED_FILLED;
 import static api.support.matchers.ItemStatusCodeMatcher.hasItemStatus;
+import static api.support.matchers.ResponseStatusCodeMatcher.hasStatus;
+import static org.folio.HttpStatus.HTTP_OK;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 
@@ -51,6 +53,8 @@ public class SingleClosedRequestTests extends APITests {
 
     Response request = requestsClient.getById(requestByJessica.getId());
 
+    assertThat(request, hasStatus(HTTP_OK));
+
     assertThat(request.getJson().getString("status"), is(CLOSED_FILLED));
 
     smallAngryPlanet = itemsClient.get(smallAngryPlanet);
@@ -87,9 +91,11 @@ public class SingleClosedRequestTests extends APITests {
 
     loansFixture.checkOutByBarcode(smallAngryPlanet, steve);
 
-    Response request = requestsClient.getById(requestByJessica.getId());
+    Response getByIdResponse = requestsClient.getById(requestByJessica.getId());
 
-    assertThat(request.getJson().getString("status"), is(CLOSED_FILLED));
+    assertThat(getByIdResponse, hasStatus(HTTP_OK));
+
+    assertThat(getByIdResponse.getJson().getString("status"), is(CLOSED_FILLED));
 
     smallAngryPlanet = itemsClient.get(smallAngryPlanet);
 

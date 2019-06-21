@@ -799,7 +799,7 @@ public class RequestsAPIRetrievalTests extends APITests {
 
   }
 
-  private void hasProperty(String property, JsonObject resource, String type) {
+  protected void hasProperty(String property, JsonObject resource, String type) {
     assertThat(format("%s should have %s: %s: is missing outer property",
       type, property, resource),
       resource, notNullValue());

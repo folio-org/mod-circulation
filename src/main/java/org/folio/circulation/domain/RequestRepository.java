@@ -1,8 +1,11 @@
 package org.folio.circulation.domain;
 
+import static java.util.Objects.isNull;
 import static org.folio.circulation.support.Result.failed;
+import static org.folio.circulation.support.Result.ofAsync;
 import static org.folio.circulation.support.Result.succeeded;
 
+import java.lang.invoke.MethodHandles;
 import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.support.Clients;
@@ -11,10 +14,13 @@ import org.folio.circulation.support.CqlQuery;
 import org.folio.circulation.support.FetchSingleRecord;
 import org.folio.circulation.support.ForwardOnFailure;
 import org.folio.circulation.support.ItemRepository;
+import org.folio.circulation.support.RecordNotFoundFailure;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.SingleRecordFetcher;
 import org.folio.circulation.support.SingleRecordMapper;
 import org.folio.circulation.support.http.client.Response;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import io.vertx.core.json.JsonObject;
 
@@ -26,7 +32,7 @@ public class RequestRepository {
   private final LoanRepository loanRepository;
   private final ServicePointRepository servicePointRepository;
   private final PatronGroupRepository patronGroupRepository;
-
+  private final Logger log;
 
   private RequestRepository(
     CollectionResourceClient requestsStorageClient,
@@ -44,6 +50,7 @@ public class RequestRepository {
     this.loanRepository = loanRepository;
     this.servicePointRepository = servicePointRepository;
     this.patronGroupRepository = patronGroupRepository;
+    log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
   }
 
   public static RequestRepository using(Clients clients) {
@@ -119,14 +126,17 @@ public class RequestRepository {
   }
 
   private CompletableFuture<Result<Request>> fetchRequest(String id) {
-    return new SingleRecordFetcher<>(requestsStorageClient, "request", Request::from)
+    return FetchSingleRecord.<Request>forRecord("request")
+      .using(requestsStorageClient)
+      .mapTo(Request::from)
+      .whenNotFound(failed(new RecordNotFoundFailure("request", id)))
       .fetch(id);
   }
 
   //TODO: May need to fetch updated representation of request
   public CompletableFuture<Result<Request>> update(Request request) {
-    final JsonObject representation = new RequestRepresentation()
-      .storedRequest(request);
+    final JsonObject representation
+      = new StoredRequestRepresentation().storedRequest(request);
 
     return requestsStorageClient.put(request.getId(), representation)
       .thenApply(response -> {
@@ -151,17 +161,21 @@ public class RequestRepository {
 
     final Request request = requestAndRelatedRecords.getRequest();
 
-    JsonObject representation = new RequestRepresentation()
+    JsonObject representation = new StoredRequestRepresentation()
       .storedRequest(request);
 
+    log.debug("RequestRepository.create - POST request representation {}", representation);
     return requestsStorageClient.post(representation)
       .thenApply(response -> {
         if (response.getStatusCode() == 201) {
+          log.debug("Succeeded create - POST request representation");
           //Retain all of the previously fetched related records
           return succeeded(requestAndRelatedRecords.withRequest(
             request.withRequestJsonRepresentation(response.getJson())
           ));
         } else {
+          log.debug("Failed to create - POST request representation; Status code = {}; response body = {}",
+                    response.getStatusCode(), response.getBody());
           return failed(new ForwardOnFailure(response));
         }
     });
@@ -180,8 +194,11 @@ public class RequestRepository {
   }
 
   public CompletableFuture<Result<Request>> loadCancellationReason(Request request) {
+    if(isNull(request) || isNull(request.getCancellationReasonId())) {
+      return ofAsync(() -> null);
+    }
 
-    return FetchSingleRecord.<Request>forRecord("cancellationreason")
+    return FetchSingleRecord.<Request>forRecord("cancellation reason")
       .using(cancellationReasonStorageClient)
       .mapTo(request::withCancellationReasonJsonRepresentation)
       .whenNotFound(succeeded(request))
@@ -213,12 +230,11 @@ public class RequestRepository {
     return patronGroupRepository.findPatronGroupsForSingleRequestUsers(result);
   }
 
-  private CompletableFuture<Result<User>> getUser(String proxyUserId) {
-    return userRepository.getUser(proxyUserId);
+  private CompletableFuture<Result<User>> getUser(String userId) {
+    return userRepository.getUser(userId);
   }
 
   private CompletableFuture<Result<ServicePoint>> getServicePoint(String servicePointId) {
     return servicePointRepository.getServicePointById(servicePointId);
   }
-
 }

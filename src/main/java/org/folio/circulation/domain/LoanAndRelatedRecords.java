@@ -1,33 +1,24 @@
 package org.folio.circulation.domain;
 
-import org.folio.circulation.domain.policy.LoanPolicy;
 import org.joda.time.DateTimeZone;
 
 public class LoanAndRelatedRecords implements UserRelatedRecord {
-
   private final Loan loan;
   private final RequestQueue requestQueue;
-  private final LoanPolicy loanPolicy;
   private final DateTimeZone timeZone;
 
-  private LoanAndRelatedRecords(
-    Loan loan,
-    RequestQueue requestQueue,
-    LoanPolicy loanPolicy,
-    DateTimeZone timeZone) {
-
+  private LoanAndRelatedRecords(Loan loan, RequestQueue requestQueue, DateTimeZone timeZone) {
     this.loan = loan;
     this.requestQueue = requestQueue;
-    this.loanPolicy = loanPolicy;
     this.timeZone = timeZone;
   }
 
   public LoanAndRelatedRecords(Loan loan) {
-    this(loan, null, null, DateTimeZone.UTC);
+    this(loan, null, DateTimeZone.UTC);
   }
 
   public LoanAndRelatedRecords withLoan(Loan newLoan) {
-    return new LoanAndRelatedRecords(newLoan, requestQueue, loanPolicy, timeZone);
+    return new LoanAndRelatedRecords(newLoan, requestQueue, timeZone);
   }
 
   public LoanAndRelatedRecords withRequestingUser(User newUser) {
@@ -38,14 +29,9 @@ public class LoanAndRelatedRecords implements UserRelatedRecord {
     return withLoan(loan.withProxy(newProxy));
   }
 
-  public LoanAndRelatedRecords withLoanPolicy(LoanPolicy newLoanPolicy) {
-    return new LoanAndRelatedRecords(loan, requestQueue, newLoanPolicy, timeZone);
-  }
-
   public LoanAndRelatedRecords withRequestQueue(RequestQueue newRequestQueue) {
     return new LoanAndRelatedRecords(loan, newRequestQueue,
-
-      loanPolicy, timeZone);
+      timeZone);
   }
 
   public LoanAndRelatedRecords withItem(Item newItem) {
@@ -53,7 +39,7 @@ public class LoanAndRelatedRecords implements UserRelatedRecord {
   }
 
   LoanAndRelatedRecords withTimeZone(DateTimeZone newTimeZone) {
-    return new LoanAndRelatedRecords(loan, requestQueue, loanPolicy, newTimeZone);
+    return new LoanAndRelatedRecords(loan, requestQueue, newTimeZone);
   }
 
   public Loan getLoan() {
@@ -66,10 +52,6 @@ public class LoanAndRelatedRecords implements UserRelatedRecord {
 
   public User getProxy() {
     return loan.getProxy();
-  }
-
-  public LoanPolicy getLoanPolicy() {
-    return loanPolicy;
   }
 
   public DateTimeZone getTimeZone() {

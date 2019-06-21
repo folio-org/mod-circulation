@@ -52,6 +52,7 @@ import io.vertx.ext.web.RoutingContext;
 public class RequestByInstanceIdResource extends Resource {
 
   private final Logger log;
+  private static final String ITEM_ID_FIELD = "itemId";
 
   public RequestByInstanceIdResource(HttpClient client) {
     super(client);
@@ -120,6 +121,8 @@ public class RequestByInstanceIdResource extends Resource {
       return failedValidation("Items list is null or empty", "items", "null");
     }
 
+    log.debug("RequestByInstanceIdResource.segregateItemsList: Found {} items", items.size());
+
     Map<Boolean, List<Item>> partitions = items.stream()
       .collect(Collectors.partitioningBy(Item::isAvailable));
 
@@ -137,7 +140,9 @@ public class RequestByInstanceIdResource extends Resource {
     return of(() -> {
 
       Map<Boolean, List<Item>> itemsPartitionedByLocationServedByPickupPoint = unsortedAvailableItems.stream()
-        .collect(Collectors.partitioningBy(i -> i.homeLocationIsServedBy(pickupServicePointId)));
+        .collect(Collectors.partitioningBy(i -> Optional.ofNullable(i.getLocation())
+          .map(location -> location.homeLocationIsServedBy(pickupServicePointId))
+          .orElse(false)));
 
       final List<Item> rankedItems = new LinkedList<>();
 
@@ -282,16 +287,18 @@ public class RequestByInstanceIdResource extends Resource {
 
           JsonObject requestBody = new JsonObject();
 
-          write(requestBody,"itemId", item.getItemId());
+          write(requestBody,ITEM_ID_FIELD, item.getItemId());
           write(requestBody,"requestDate",
             requestByInstanceIdRequest.getRequestDate().toString(ISODateTimeFormat.dateTime()));
           write(requestBody,"requesterId", requestByInstanceIdRequest.getRequesterId().toString());
           write(requestBody,"pickupServicePointId",
             requestByInstanceIdRequest.getPickupServicePointId().toString());
           write(requestBody,"fulfilmentPreference", defaultFulfilmentPreference);
-          write(requestBody,"requestType", reqType.name());
-          write(requestBody,"requestExpirationDate",
+          write(requestBody,"requestType", reqType.getValue());
+          if (requestByInstanceIdRequest.getRequestExpirationDate() != null) {
+            write(requestBody, "requestExpirationDate",
               requestByInstanceIdRequest.getRequestExpirationDate().toString(ISODateTimeFormat.dateTime()));
+          }
           requests.add(requestBody);
         }
       }
@@ -313,17 +320,22 @@ public class RequestByInstanceIdResource extends Resource {
       new RequestPolicyRepository(clients),
       loanRepository, requestNoticeSender);
 
-    return placeRequest(itemRequestRepresentations, 0, createRequestService, clients, loanRepository);
+    return placeRequest(itemRequestRepresentations, 0, createRequestService,
+                        clients, loanRepository, new ArrayList<>());
   }
 
   private CompletableFuture<Result<RequestAndRelatedRecords>> placeRequest(List<JsonObject> itemRequests, int startIndex,
                                                                            CreateRequestService createRequestService, Clients clients,
-                                                                           LoanRepository loanRepository) {
+                                                                           LoanRepository loanRepository, List<String> errors) {
     final UserRepository userRepository = new UserRepository(clients);
 
+    log.debug("RequestByInstanceIdResource.placeRequest, startIndex={}, itemRequestSize={}", startIndex, itemRequests.size());
     if (startIndex >= itemRequests.size()) {
+
+      String aggregateFailures = String.format("%n%s", String.join("%n", errors));
+
       return CompletableFuture.completedFuture(failed(new ServerErrorFailure(
-        "Failed to place a request for the title")));
+        "Failed to place a request for the title. Reasons: " + aggregateFailures)));
     }
 
     JsonObject currentItemRequest = itemRequests.get(startIndex);
@@ -342,13 +354,18 @@ public class RequestByInstanceIdResource extends Resource {
     return requestFromRepresentationService.getRequestFrom(currentItemRequest)
       .thenCompose(r -> r.after(createRequestService::createRequest))
       .thenCompose(r -> {
-        if (r.succeeded()) {
-          return CompletableFuture.completedFuture(r);
-        } else {
-          log.debug("Failed to create request for {}", currentItemRequest.getString("id"));
-          return placeRequest(itemRequests, startIndex +1, createRequestService, clients, loanRepository);
-        }
-      });
+          if (r.succeeded()) {
+            log.debug("RequestByInstanceIdResource.placeRequest: succeeded creating request for item {}",
+                currentItemRequest.getString(ITEM_ID_FIELD));
+            return CompletableFuture.completedFuture(r);
+          } else {
+            String reason = getErrorMessage(r.cause());
+            errors.add(reason);
+
+            log.debug("Failed to create request for item {} with reason: {}", currentItemRequest.getString(ITEM_ID_FIELD), reason);
+            return placeRequest(itemRequests, startIndex +1, createRequestService, clients, loanRepository, errors);
+          }
+        });
   }
 
   private ProxyRelationshipValidator createProxyRelationshipValidator(
@@ -358,5 +375,20 @@ public class RequestByInstanceIdResource extends Resource {
     return new ProxyRelationshipValidator(clients, () ->
       singleValidationError("proxyUserId is not valid",
         PROXY_USER_ID, representation.getString(PROXY_USER_ID)));
+  }
+
+  static String getErrorMessage(HttpFailure failure) {
+    String reason = "";
+
+    if (failure instanceof ServerErrorFailure ){
+      reason = ((ServerErrorFailure) failure).reason;
+    } else if (failure instanceof ValidationErrorFailure){
+      reason = failure.toString();
+    } else if (failure instanceof BadRequestFailure){
+      reason = ((BadRequestFailure) failure).getReason();
+    } else if (failure instanceof ForwardOnFailure) {
+      reason = ((ForwardOnFailure) failure).getFailureResponse().getBody();
+    }
+    return reason;
   }
 }

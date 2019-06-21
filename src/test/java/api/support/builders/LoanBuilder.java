@@ -80,7 +80,7 @@ public class LoanBuilder extends JsonBuilder implements Builder {
   }
 
   public Loan asDomainObject() {
-    return new Loan(create());
+    return Loan.from(create());
   }
 
   public LoanBuilder withRandomPastLoanDate() {

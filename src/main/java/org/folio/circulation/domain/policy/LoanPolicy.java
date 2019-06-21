@@ -29,7 +29,6 @@ import org.joda.time.DateTime;
 import io.vertx.core.json.JsonObject;
 
 public class LoanPolicy {
-
   private static final String LOANS_POLICY_KEY = "loansPolicy";
   private static final String PERIOD_KEY = "period";
   private static final String RENEWAL_WOULD_NOT_CHANGE_THE_DUE_DATE = "renewal would not change the due date";
@@ -56,6 +55,10 @@ public class LoanPolicy {
 
   public static LoanPolicy from(JsonObject representation) {
     return new LoanPolicy(representation);
+  }
+
+  public static LoanPolicy unknown(String id) {
+    return new UnknownLoanPolicy(id);
   }
 
   //TODO: make this have similar signature to renew
@@ -106,7 +109,8 @@ public class LoanPolicy {
   }
 
   public Result<Loan> overrideRenewal(Loan loan, DateTime systemDate,
-                                      DateTime overrideDueDate, String comment) {
+                                      DateTime overrideDueDate, String comment,
+                                      boolean hasRecallRequest) {
     try {
       if (isNotLoanable() || isNotRenewable()) {
         return overrideRenewalForDueDate(loan, overrideDueDate, comment);
@@ -119,7 +123,7 @@ public class LoanPolicy {
       if (proposedDueDateResult.failed() && isFixed(loansPolicy)) {
         return overrideRenewalForDueDate(loan, overrideDueDate, comment);
       }
-      
+
       if (proposedDueDateResult.failed() && isRolling(loansPolicy)) {
         DueDateStrategy dueDateStrategy = getRollingRenewalOverrideDueDateStrategy(systemDate);
         return processRenewal(dueDateStrategy.calculateDueDate(loan), loan, comment);
@@ -127,6 +131,10 @@ public class LoanPolicy {
 
       if (proposedDueDateResult.succeeded() &&
         reachedNumberOfRenewalsLimit(loan) && !unlimitedRenewals()) {
+        return processRenewal(proposedDueDateResult, loan, comment);
+      }
+
+      if (hasRecallRequest) {
         return processRenewal(proposedDueDateResult, loan, comment);
       }
 
@@ -176,8 +184,9 @@ public class LoanPolicy {
     String reason = "Override renewal does not match any of expected cases: " +
       "item is not loanable, " +
       "item is not renewable, " +
-      "reached number of renewals limit or " +
-      "renewal date falls outside of the date ranges in the loan policy";
+      "reached number of renewals limit," +
+      "renewal date falls outside of the date ranges in the loan policy, " +
+      "items cannot be renewed when there is an active recall request";
 
     return errorForPolicy(reason);
   }
@@ -323,7 +332,7 @@ public class LoanPolicy {
     return loansPolicy.getString("profileId");
   }
 
-  private String getName() {
+  public String getName() {
     return representation.getString("name");
   }
 
@@ -524,5 +533,13 @@ public class LoanPolicy {
     }
 
     return Collections.emptyList();
+  }
+
+  //TODO: Improve this to be a proper null object
+  // requires significant rework of the loan policy interface
+  private static class UnknownLoanPolicy extends LoanPolicy {
+    UnknownLoanPolicy(String id) {
+      super(new JsonObject().put("id", id));
+    }
   }
 }

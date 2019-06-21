@@ -5,8 +5,6 @@ import static org.hamcrest.junit.MatcherAssert.assertThat;
 
 import java.util.UUID;
 
-import org.folio.circulation.domain.Request;
-import org.folio.circulation.domain.RequestRepresentation;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.LocalDate;
@@ -43,9 +41,10 @@ public class RequestRepresentationTests {
 
   @Test
   public void testStoredRequest() {
-    RequestRepresentation requestRepresentation = new RequestRepresentation();
     Request request = createMockRequest();
-    JsonObject extendedRepresentation = requestRepresentation.extendedRepresentation(request);
+
+    JsonObject extendedRepresentation
+      = new RequestRepresentation().extendedRepresentation(request);
 
     assertThat("Extended representation should have a pickup service point",
       extendedRepresentation.containsKey("pickupServicePoint"), is(true));
@@ -53,8 +52,9 @@ public class RequestRepresentationTests {
     assertThat("Extended representation should have a delivery address",
       extendedRepresentation.containsKey("deliveryAddress"), is(true));
 
-    JsonObject storedRepresentation = requestRepresentation.storedRequest(Request.from(extendedRepresentation));
-  
+    JsonObject storedRepresentation = new StoredRequestRepresentation()
+      .storedRequest(Request.from(extendedRepresentation));
+
     assertThat("Stored representation should not have a delivery address",
       storedRepresentation.containsKey("deliveryAddress"), is(false));
   }

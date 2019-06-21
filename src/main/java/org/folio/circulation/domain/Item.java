@@ -14,13 +14,11 @@ import static org.folio.circulation.support.JsonArrayHelper.mapToList;
 import static org.folio.circulation.support.JsonPropertyFetcher.getArrayProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getNestedStringProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
-import static org.folio.circulation.support.JsonPropertyFetcher.getUUIDProperty;
 import static org.folio.circulation.support.JsonPropertyWriter.remove;
 import static org.folio.circulation.support.JsonPropertyWriter.write;
 import static org.folio.circulation.support.JsonStringArrayHelper.toStream;
 
 import java.util.List;
-import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -34,7 +32,7 @@ public class Item {
   private final JsonObject itemRepresentation;
   private final JsonObject holdingRepresentation;
   private final JsonObject instanceRepresentation;
-  private JsonObject locationRepresentation;
+  private Location location;
   private JsonObject materialTypeRepresentation;
   private ServicePoint primaryServicePoint;
   private ServicePoint inTransitDestinationServicePoint;
@@ -46,7 +44,7 @@ public class Item {
     JsonObject itemRepresentation,
     JsonObject holdingRepresentation,
     JsonObject instanceRepresentation,
-    JsonObject locationRepresentation,
+    Location location,
     JsonObject materialTypeRepresentation,
     ServicePoint servicePoint,
     JsonObject loanTypeRepresentation) {
@@ -54,7 +52,7 @@ public class Item {
     this.itemRepresentation = itemRepresentation;
     this.holdingRepresentation = holdingRepresentation;
     this.instanceRepresentation = instanceRepresentation;
-    this.locationRepresentation = locationRepresentation;
+    this.location = location;
     this.materialTypeRepresentation = materialTypeRepresentation;
     this.primaryServicePoint = servicePoint;
     this.loanTypeRepresentation = loanTypeRepresentation;
@@ -167,33 +165,8 @@ public class Item {
     return getNestedStringProperty(getItem(), "status", "name");
   }
 
-  public JsonObject getLocation() {
-    return locationRepresentation;
-  }
-
-  public boolean homeLocationIsServedBy(UUID servicePointId) {
-    //Defensive check just in case primary isn't part of serving set
-    return matchesPrimaryServicePoint(servicePointId) ||
-      matchesAnyServingServicePoint(servicePointId);
-  }
-
-  private boolean matchesPrimaryServicePoint(UUID servicePointId) {
-    return matchingId(getPrimaryServicePointId(), servicePointId);
-  }
-
-  private boolean matchesAnyServingServicePoint(UUID servicePointId) {
-    return toStream(locationRepresentation, "servicePointIds")
-      .map(UUID::fromString)
-      .anyMatch(servingServicePointId ->
-        matchingId(servicePointId, servingServicePointId));
-  }
-
-  private boolean matchingId(UUID first, UUID second) {
-    return Objects.equals(second, first);
-  }
-
-  public UUID getPrimaryServicePointId() {
-    return getUUIDProperty(getLocation(), "primaryServicePoint");
+  public Location getLocation() {
+    return location;
   }
 
   public JsonObject getMaterialType() {
@@ -311,7 +284,7 @@ public class Item {
 
   Item inTransitToHome() {
     return changeStatus(IN_TRANSIT)
-      .changeDestination(getPrimaryServicePointId())
+      .changeDestination(location.getPrimaryServicePointId())
       .changeInTransitDestinationServicePoint(getPrimaryServicePoint());
   }
 
@@ -358,7 +331,7 @@ public class Item {
     return holdingRepresentation == null;
   }
 
-  public Item withLocation(JsonObject newLocation) {
+  public Item withLocation(Location newLocation) {
     return new Item(
       this.itemRepresentation,
       this.holdingRepresentation,
@@ -374,7 +347,7 @@ public class Item {
       this.itemRepresentation,
       this.holdingRepresentation,
       this.instanceRepresentation,
-      this.locationRepresentation,
+      this.location,
       newMaterialType,
       this.primaryServicePoint,
       this.loanTypeRepresentation);
@@ -385,7 +358,7 @@ public class Item {
       this.itemRepresentation,
       newHoldingsRecordRepresentation,
       this.instanceRepresentation,
-      this.locationRepresentation,
+      this.location,
       this.materialTypeRepresentation,
       this.primaryServicePoint,
       this.loanTypeRepresentation);
@@ -396,7 +369,7 @@ public class Item {
       this.itemRepresentation,
       this.holdingRepresentation,
       newInstanceRepresentation,
-      this.locationRepresentation,
+      this.location,
       this.materialTypeRepresentation,
       this.primaryServicePoint,
       this.loanTypeRepresentation);
@@ -407,7 +380,7 @@ public class Item {
       this.itemRepresentation,
       this.holdingRepresentation,
       this.instanceRepresentation,
-      this.locationRepresentation,
+      this.location,
       this.materialTypeRepresentation,
       servicePoint,
       this.loanTypeRepresentation);
@@ -418,7 +391,7 @@ public class Item {
       this.itemRepresentation,
       this.holdingRepresentation,
       this.instanceRepresentation,
-      this.locationRepresentation,
+      this.location,
       this.materialTypeRepresentation,
       this.primaryServicePoint,
       newLoanTypeRepresentation);
