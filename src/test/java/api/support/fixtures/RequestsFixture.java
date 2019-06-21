@@ -198,7 +198,7 @@ public class RequestsFixture {
 
     requestsClient.replace(request.getId(), cancelledRequestBySteve);
   }
-  
+
   public IndividualResource move(MoveRequestBuilder requestToBuild)
     throws InterruptedException,
     MalformedURLException,
@@ -207,14 +207,14 @@ public class RequestsFixture {
 
     return requestsClient.move(requestToBuild);
   }
-  
+
   public Response attemptMove(MoveRequestBuilder requestToBuild)
-      throws InterruptedException,
-      MalformedURLException,
-      TimeoutException,
-      ExecutionException {
-      return requestsClient.attemptMove(requestToBuild);
-    }
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+    return requestsClient.attemptMove(requestToBuild);
+  }
 
   public MultipleRecords<JsonObject> getQueueFor(IndividualResource item) {
     //TODO: Replace with better parsing

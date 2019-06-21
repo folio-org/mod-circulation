@@ -53,7 +53,7 @@ public class RequestPolicyRepository {
       .thenApply(result -> result.map(RequestPolicy::from));
   }
 
-  public CompletableFuture<Result<JsonObject>> lookupRequestPolicy(
+  private CompletableFuture<Result<JsonObject>> lookupRequestPolicy(
     String requestPolicyId) {
 
     return SingleRecordFetcher.json(requestPoliciesStorageClient, "request policy",

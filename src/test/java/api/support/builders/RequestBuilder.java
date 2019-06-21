@@ -299,30 +299,6 @@ public class RequestBuilder extends JsonBuilder implements Builder {
       this.pickupServicePointId,
       this.tags);
   }
-  
-  public RequestBuilder withDestinationItemId(UUID destinationItemId) {
-    return new RequestBuilder(
-      this.id,
-      this.requestType,
-      this.requestDate,
-      this.itemId,
-      this.requesterId,
-      this.fulfilmentPreference,
-      this.deliveryAddressTypeId,
-      this.requestExpirationDate,
-      this.holdShelfExpirationDate,
-      this.itemSummary,
-      this.requesterSummary,
-      this.status,
-      this.proxyUserId,
-      this.cancellationReasonId,
-      this.cancelledByUserId,
-      this.cancellationAdditionalInformation,
-      this.cancelledDate,
-      this.position,
-      this.pickupServicePointId,
-      this.tags);
-  }
 
   public RequestBuilder forItem(IndividualResource item) {
     return withItemId(item.getId());
