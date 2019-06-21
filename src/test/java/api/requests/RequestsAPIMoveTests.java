@@ -180,7 +180,7 @@ public class RequestsAPIMoveTests extends APITests {
     assertThat("Move request should have correct response status code", response.getStatusCode(), is(422));
     assertThat("Move request should have correct response message",
       response.getJson().getJsonArray("errors").getJsonObject(0).getString("message"),
-      is("Cannot move recall request to item which has no recall requests"));
+      is("Recalls can't be moved to checked out items that have not been previously recalled."));
 
     requestByJessica = requestsClient.get(requestByJessica);
     assertThat(requestByJessica.getJson().getString(REQUEST_TYPE), is(RequestType.RECALL.getValue()));
