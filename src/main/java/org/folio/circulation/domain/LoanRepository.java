@@ -4,10 +4,12 @@ import static java.util.Objects.nonNull;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.support.CqlQuery.exactMatch;
 import static org.folio.circulation.support.CqlQuery.exactMatchAny;
+import static org.folio.circulation.support.ResponseMapping.forwardOnFailure;
 import static org.folio.circulation.support.ResponseMapping.usingJson;
 import static org.folio.circulation.support.Result.failed;
 import static org.folio.circulation.support.Result.of;
 import static org.folio.circulation.support.Result.succeeded;
+import static org.folio.circulation.support.ResultBinding.mapResult;
 
 import java.lang.invoke.MethodHandles;
 import java.util.Collection;
@@ -16,7 +18,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.folio.circulation.domain.policy.LoanPolicy;
@@ -57,21 +58,20 @@ public class LoanRepository {
 
     JsonObject storageLoan = mapToStorageRepresentation(loan, loan.getItem());
 
-    return loansStorageClient.post(storageLoan).thenApply(response -> {
-      if (response.getStatusCode() == 201) {
-        return succeeded(
-          loanAndRelatedRecords.withLoan(loan.replaceRepresentation(response.getJson())));
-      } else {
-        return failed(new ForwardOnFailure(response));
-      }
-    });
+    final ResponseInterpreter<Loan> interpreter = new ResponseInterpreter<Loan>()
+      .flatMapOn(201, usingJson(loan::replaceRepresentation))
+      .otherwise(forwardOnFailure());
+
+    return loansStorageClient.post(storageLoan)
+      .thenApply(interpreter::apply)
+      .thenApply(mapResult(loanAndRelatedRecords::withLoan));
   }
 
   public CompletableFuture<Result<LoanAndRelatedRecords>> updateLoan(
     LoanAndRelatedRecords loanAndRelatedRecords) {
 
     return updateLoan(loanAndRelatedRecords.getLoan())
-      .thenApply(r -> r.map(loanAndRelatedRecords::withLoan));
+      .thenApply(mapResult(loanAndRelatedRecords::withLoan));
   }
 
   public CompletableFuture<Result<Loan>> updateLoan(Loan loan) {
@@ -81,18 +81,11 @@ public class LoanRepository {
 
     JsonObject storageLoan = mapToStorageRepresentation(loan, loan.getItem());
 
-    final Function<Response, Result<Loan>> mapResponse = response -> {
-      if (response.getStatusCode() == 204) {
-        return succeeded(loan);
-      } else {
-        return failed(
-          new ServerErrorFailure(String.format("Failed to update loan (%s:%s)",
-            response.getStatusCode(), response.getBody())));
-      }
-    };
+    final ResponseInterpreter<Loan> interpreter = new ResponseInterpreter<Loan>()
+      .on(204, of(() -> loan));
 
     return loansStorageClient.put(loan.getId(), storageLoan)
-      .thenApply(mapResponse)
+      .thenApply(interpreter::apply)
       .thenComposeAsync(r -> r.after(this::refreshLoanRepresentation));
   }
 

@@ -1,5 +1,6 @@
 package org.folio.circulation.support;
 
+import static org.folio.circulation.support.Result.failed;
 import static org.folio.circulation.support.Result.of;
 
 import java.util.function.Function;
@@ -15,5 +16,9 @@ public class ResponseMapping {
     Function<JsonObject, T> mapper) {
 
     return response -> of(() -> mapper.apply(response.getJson()));
+  }
+
+  public static <T> Function<Response, Result<T>> forwardOnFailure() {
+    return response -> failed(new ForwardOnFailure(response));
   }
 }

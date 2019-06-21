@@ -1,6 +1,7 @@
 package org.folio.circulation.domain;
 
 import static java.util.Objects.isNull;
+import static org.folio.circulation.support.ResponseMapping.forwardOnFailure;
 import static org.folio.circulation.support.ResponseMapping.usingJson;
 import static org.folio.circulation.support.Result.failed;
 import static org.folio.circulation.support.Result.of;
@@ -14,7 +15,6 @@ import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.CqlQuery;
 import org.folio.circulation.support.FetchSingleRecord;
-import org.folio.circulation.support.ForwardOnFailure;
 import org.folio.circulation.support.ItemRepository;
 import org.folio.circulation.support.RecordNotFoundFailure;
 import org.folio.circulation.support.Result;
@@ -133,7 +133,7 @@ public class RequestRepository {
     return requestsStorageClient.put(request.getId(), representation)
       .thenApply(new ResponseInterpreter<Request>()
         .on(204, of(() -> request))
-        .otherwise(response -> failed(new ForwardOnFailure(response)))
+        .otherwise(forwardOnFailure())
         ::apply);
   }
 
@@ -155,7 +155,7 @@ public class RequestRepository {
     return requestsStorageClient.post(representation)
       .thenApply(new ResponseInterpreter<Request>()
         .flatMapOn(201, usingJson(request::withRequestJsonRepresentation))
-        .otherwise(response -> failed(new ForwardOnFailure(response)))
+        .otherwise(forwardOnFailure())
         ::apply)
       .thenApply(mapResult(requestAndRelatedRecords::withRequest));
   }
@@ -164,7 +164,7 @@ public class RequestRepository {
     return requestsStorageClient.delete(request.getId())
       .thenApply(new ResponseInterpreter<Request>()
         .on(204, of(() -> request))
-        .otherwise(response -> failed(new ForwardOnFailure(response)))
+        .otherwise(forwardOnFailure())
         ::apply);
   }
 
