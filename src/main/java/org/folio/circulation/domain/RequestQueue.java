@@ -57,11 +57,6 @@ public class RequestQueue {
       .max(naturalOrder()).orElse(0);
   }
 
-  public void add(Request request) {
-    request.changePosition(this.nextAvailablePosition());
-    requests.add(request);
-  }
-
   public void remove(Request request) {
     requests = removeInCollection(request);
     request.removePosition();
