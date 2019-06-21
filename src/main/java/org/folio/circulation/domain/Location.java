@@ -71,6 +71,10 @@ public class Location {
     return getProperty(representation, "institutionId");
   }
 
+  String getCode() {
+    return getProperty(representation, "code");
+  }
+
   public String getLibraryName() {
     return getProperty(libraryRepresentation, "name");
   }
