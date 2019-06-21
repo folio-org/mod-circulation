@@ -53,11 +53,11 @@ public class MoveRequestService {
       .thenApply(r -> r.map(MoveRequestService::applyMoveToRepresentation))
       .thenApply(r -> r.map(MoveRequestService::pagedRequestIfDestinationItemAvailable))
       .thenCompose(r -> r.after(this::updateRequest))
-      .thenApply(r -> r.map(v -> restoreOriginalItemAndDestination(requestAndRelatedRecords, originalItem)))
+      .thenApply(r -> r.map(v -> useOriginalItemAndDestination(requestAndRelatedRecords, originalItem)))
       .thenCompose(r -> r.after(updateRequestQueue::onMoved));
   }
   
-  private RequestAndRelatedRecords restoreOriginalItemAndDestination(
+  private RequestAndRelatedRecords useOriginalItemAndDestination(
     RequestAndRelatedRecords requestAndRelatedRecords, Item originalItem) {
     String destinationItemId = requestAndRelatedRecords.getItemId();
     // NOTE: adding destinationItemId back to indicate moved
