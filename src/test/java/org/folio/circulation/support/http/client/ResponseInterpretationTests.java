@@ -3,7 +3,7 @@ package org.folio.circulation.support.http.client;
 import static java.util.function.Function.identity;
 import static org.apache.http.entity.ContentType.APPLICATION_JSON;
 import static org.apache.http.entity.ContentType.TEXT_PLAIN;
-import static org.folio.circulation.support.ResponseMapping.usingJson;
+import static org.folio.circulation.support.http.ResponseMapping.usingJson;
 import static org.folio.circulation.support.Result.of;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.instanceOf;

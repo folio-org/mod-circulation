@@ -1,8 +1,8 @@
 package org.folio.circulation.domain;
 
 import static java.util.Objects.isNull;
-import static org.folio.circulation.support.ResponseMapping.forwardOnFailure;
-import static org.folio.circulation.support.ResponseMapping.usingJson;
+import static org.folio.circulation.support.http.ResponseMapping.forwardOnFailure;
+import static org.folio.circulation.support.http.ResponseMapping.usingJson;
 import static org.folio.circulation.support.Result.failed;
 import static org.folio.circulation.support.Result.of;
 import static org.folio.circulation.support.Result.ofAsync;

@@ -1,6 +1,6 @@
 package org.folio.circulation.support;
 
-import static org.folio.circulation.support.ResponseMapping.usingJson;
+import static org.folio.circulation.support.http.ResponseMapping.usingJson;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;

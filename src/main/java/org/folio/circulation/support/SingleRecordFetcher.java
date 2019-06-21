@@ -3,7 +3,7 @@ package org.folio.circulation.support;
 import static java.lang.String.format;
 import static java.util.Objects.requireNonNull;
 import static java.util.function.Function.identity;
-import static org.folio.circulation.support.ResponseMapping.usingJson;
+import static org.folio.circulation.support.http.ResponseMapping.usingJson;
 import static org.folio.circulation.support.Result.failed;
 import static org.folio.circulation.support.Result.succeeded;
 
