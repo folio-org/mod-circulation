@@ -31,7 +31,7 @@ public class RequestByInstanceIdResourceTests {
 
     InstanceRequestRelatedRecords records = new InstanceRequestRelatedRecords();
     records.setSortedAvailableItems(items);
-    records.setRequestByInstanceIdRequest(requestByInstanceIdRequest);
+    records.setInstanceLevelRequest(requestByInstanceIdRequest);
 
     final Result<LinkedList<JsonObject>> collectionResult = RequestByInstanceIdResource.instanceToItemRequests(records);
     assertTrue(collectionResult.succeeded());

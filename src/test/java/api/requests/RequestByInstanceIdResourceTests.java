@@ -37,7 +37,6 @@ public class RequestByInstanceIdResourceTests extends APITests {
 
     UUID primaryServicePointId = servicePointsFixture.cd2().getId();
     UUID secondaryServicePointId = UUID.randomUUID();
-    UUID pickupServicePointId = primaryServicePointId;
     UUID institutionId = UUID.randomUUID();
 
     HashSet<UUID> servicePoints1 = new HashSet<>();
@@ -89,15 +88,15 @@ public class RequestByInstanceIdResourceTests extends APITests {
     items.add(item1);
 
     InstanceRequestRelatedRecords records = new InstanceRequestRelatedRecords();
-    JsonObject requestJson = getJsonInstanceRequest(pickupServicePointId);
+    JsonObject requestJson = getJsonInstanceRequest(primaryServicePointId);
     Result<RequestByInstanceIdRequest> request = RequestByInstanceIdRequest.from(requestJson);
 
     records.setUnsortedAvailableItems(items);
-    records.setRequestByInstanceIdRequest(request.value());
+    records.setInstanceLevelRequest(request.value());
 
     Result<InstanceRequestRelatedRecords> rankResult = rankItemsByMatchingServicePoint(records);
 
-    final List<Item> orderedItems = rankResult.value().getCombineItemsList();
+    final List<Item> orderedItems = rankResult.value().getCombinedSortedItemsList();
 
     assertEquals(4, orderedItems.size());
 
@@ -145,10 +144,10 @@ public class RequestByInstanceIdResourceTests extends APITests {
     Result<RequestByInstanceIdRequest> request = RequestByInstanceIdRequest.from(requestJson);
 
     records.setUnsortedAvailableItems(items);
-    records.setRequestByInstanceIdRequest(request.value());
+    records.setInstanceLevelRequest(request.value());
 
     Result<InstanceRequestRelatedRecords> rankResult = rankItemsByMatchingServicePoint(records);
-    final List<Item> orderedItems = rankResult.value().getCombineItemsList();
+    final List<Item> orderedItems = rankResult.value().getCombinedSortedItemsList();
 
     assertEquals(4, orderedItems.size());
 

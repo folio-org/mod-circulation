@@ -1,5 +1,6 @@
 package api.requests;
 
+import static org.folio.circulation.support.JsonPropertyWriter.write;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 import static org.junit.Assert.assertEquals;
@@ -60,7 +61,7 @@ public class InstanceRequestsAPICreationTests extends APITests {
     client.post(InterfaceUrls.requestsUrl("/instances"), requestBody,
       ResponseHandler.any(postCompleted));
 
-    Response postResponse = postCompleted.get(50, TimeUnit.SECONDS);
+    Response postResponse = postCompleted.get(10, TimeUnit.SECONDS);
 
     JsonObject representation = postResponse.getJson();
     validateInstanceRequestResponse(representation,
@@ -293,8 +294,11 @@ public class InstanceRequestsAPICreationTests extends APITests {
     IndividualResource holdings = holdingsFixture.defaultWithHoldings(instance.getId());
 
     //create 2 copies with no location id's assigned.
-    final IndividualResource item1 = itemsFixture.basedUponDunkirkWithCustomHoldingAndLocationAndCheckedOut(holdings.getId(), null);
-    final IndividualResource item2 = itemsFixture.basedUponDunkirkWithCustomHoldingAndLocationAndCheckedOut(holdings.getId(), null);
+    final IndividualResource item1 = itemsFixture.basedUponDunkirkWithCustomHoldingAndLocation(holdings.getId(), null);
+    final IndividualResource item2 = itemsFixture.basedUponDunkirkWithCustomHoldingAndLocation(holdings.getId(), null);
+
+    loansFixture.createLoan(item1, usersFixture.charlotte(), DateTime.now().plusDays(2));
+    loansFixture.createLoan(item2, usersFixture.charlotte(), DateTime.now());
 
     //Set up request queues. Item1 has requests (1 queued request), Item2 is requests (1 queued), either should be satisfied.
     placeHoldRequest(item1, pickupServicePointId, usersFixture.jessica(), requestExpirationDate1);
@@ -303,7 +307,7 @@ public class InstanceRequestsAPICreationTests extends APITests {
     placeHoldRequest(item2, pickupServicePointId, usersFixture.steve(), requestExpirationDate2);
     placeHoldRequest(item2, pickupServicePointId, usersFixture.rebecca(), requestExpirationDate2);
 
-    IndividualResource instanceRequester = usersFixture.charlotte();
+    IndividualResource instanceRequester = usersFixture.undergradHenry();
 
     JsonObject requestBody = createInstanceRequestObject(instance.getId(), instanceRequester.getId(),
       pickupServicePointId, instanceRequestDate, instanceRequestDateRequestExpirationDate);
@@ -323,10 +327,8 @@ public class InstanceRequestsAPICreationTests extends APITests {
     assertEquals("Circ Desk 1", representation.getJsonObject("pickupServicePoint").getString("name"));
     assertEquals(instance.getId().toString(), representation.getJsonObject("item").getString("instanceId"));
     assertEquals(RequestType.HOLD.name(), representation.getString("requestType"));
-    //here we check the itemID. It could be either of the 2 items because we use Future in the code to get request queues from the repository,
-    //so it's non-deterministic that the futures should come in by a certain order.
-    assertTrue(item1.getId().toString().equals(representation.getString("itemId")) ||
-                        item2.getId().toString().equals(representation.getString("itemId")));
+    //Item2 should be placed because its due date is earlier than item1's.
+    assertEquals(item2.getId().toString(), representation.getString("itemId"));
   }
 
   @Test
@@ -433,7 +435,6 @@ public class InstanceRequestsAPICreationTests extends APITests {
     DateTime instanceRequestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
     DateTime instanceRequestDateRequestExpirationDate = instanceRequestDate.plusDays(30);
 
-    LocalDate requestDate = new LocalDate(2017, 7, 22);
     IndividualResource instance = instancesFixture.basedUponDunkirk();
     IndividualResource holdings = holdingsFixture.defaultWithHoldings(instance.getId());
 
@@ -442,7 +443,7 @@ public class InstanceRequestsAPICreationTests extends APITests {
     final IndividualResource item2 = itemsFixture.basedUponDunkirkWithCustomHoldingAndLocation(holdings.getId(), null);
 
     loansFixture.createLoan(item1, usersFixture.james(),  DateTime.now());
-    loansFixture.checkOutByBarcode(item2, usersFixture.rebecca(), DateTime.now().plusDays(5));
+    loansFixture.createLoan(item2, usersFixture.rebecca(), DateTime.now().plusDays(5));
 
     IndividualResource instanceRequester = usersFixture.charlotte();
 
@@ -454,7 +455,7 @@ public class InstanceRequestsAPICreationTests extends APITests {
     client.post(InterfaceUrls.requestsUrl("/instances"), requestBody,
       ResponseHandler.any(postCompleted));
 
-    Response postResponse = postCompleted.get(50, TimeUnit.SECONDS);
+    Response postResponse = postCompleted.get(10, TimeUnit.SECONDS);
     assertEquals(201, postResponse.getStatusCode());
 
     JsonObject representation = postResponse.getJson();
@@ -464,10 +465,202 @@ public class InstanceRequestsAPICreationTests extends APITests {
     assertEquals("Circ Desk 1", representation.getJsonObject("pickupServicePoint").getString("name"));
     assertEquals(instance.getId().toString(), representation.getJsonObject("item").getString("instanceId"));
     assertEquals(RequestType.HOLD.name(), representation.getString("requestType"));
-    //here we check the itemID. It could be either of the 2 items because we use Future in the code to get request queues from the repository,
-    //so it's non-deterministic that the futures should come in by a certain order.
     assertTrue(item1.getId().toString().equals(representation.getString("itemId")) ||
       item2.getId().toString().equals(representation.getString("itemId")));
+  }
+
+  @Test
+  public void canPlaceRequestOnCheckedoutCopyWithNearestDueDate() throws InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    MalformedURLException {
+
+    UUID pickupServicePointId = servicePointsFixture.cd1().getId();
+
+    DateTime instanceRequestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
+    DateTime instanceRequestDateRequestExpirationDate = instanceRequestDate.plusDays(30);
+
+    IndividualResource instance = instancesFixture.basedUponDunkirk();
+    IndividualResource holdings = holdingsFixture.defaultWithHoldings(instance.getId());
+
+    //create 2 copies with no location id's assigned.
+    final IndividualResource item1 = itemsFixture.basedUponDunkirkWithCustomHoldingAndLocation(holdings.getId(), null);
+    final IndividualResource item2 = itemsFixture.basedUponDunkirkWithCustomHoldingAndLocation(holdings.getId(), null);
+    final IndividualResource item3 = itemsFixture.basedUponDunkirkWithCustomHoldingAndLocation(holdings.getId(), null);
+
+    loansFixture.createLoan(item1, usersFixture.james(),  DateTime.now().plusDays(5));
+    loansFixture.createLoan(item2, usersFixture.rebecca(), DateTime.now().plusDays(3));
+    loansFixture.createLoan(item3, usersFixture.steve(), DateTime.now().plusDays(10));
+
+    IndividualResource instanceRequester = usersFixture.charlotte();
+
+    JsonObject requestBody = createInstanceRequestObject(instance.getId(), instanceRequester.getId(),
+      pickupServicePointId, instanceRequestDate, instanceRequestDateRequestExpirationDate);
+
+    CompletableFuture<Response> postCompleted = new CompletableFuture<>();
+
+    client.post(InterfaceUrls.requestsUrl("/instances"), requestBody,
+      ResponseHandler.any(postCompleted));
+
+    Response postResponse = postCompleted.get(10, TimeUnit.SECONDS);
+    assertEquals(201, postResponse.getStatusCode());
+
+    JsonObject representation = postResponse.getJson();
+
+    assertNotNull(representation);
+    assertEquals(pickupServicePointId.toString(), representation.getString("pickupServicePointId"));
+    assertEquals("Circ Desk 1", representation.getJsonObject("pickupServicePoint").getString("name"));
+    assertEquals(instance.getId().toString(), representation.getJsonObject("item").getString("instanceId"));
+    assertEquals(RequestType.HOLD.name(), representation.getString("requestType"));
+    assertEquals(item2.getId().toString(), representation.getString("itemId"));
+  }
+
+  @Test
+  public void canPlaceRequestOnCheckedoutCopyWithRequestQueuesAndNearestDueDate() throws InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    MalformedURLException {
+
+    UUID pickupServicePointId = servicePointsFixture.cd1().getId();
+
+    DateTime instanceRequestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
+    DateTime instanceRequestDateRequestExpirationDate = instanceRequestDate.plusDays(30);
+    LocalDate requestDate = new LocalDate(2017, 7, 22);
+    LocalDate requestExpirationDate = requestDate.plusDays(30);
+
+    IndividualResource instance = instancesFixture.basedUponDunkirk();
+    IndividualResource holdings = holdingsFixture.defaultWithHoldings(instance.getId());
+
+    //create 2 copies with no location id's assigned.
+    final IndividualResource item1 = itemsFixture.basedUponDunkirkWithCustomHoldingAndLocation(holdings.getId(), null);
+    final IndividualResource item2 = itemsFixture.basedUponDunkirkWithCustomHoldingAndLocation(holdings.getId(), null);
+
+    loansFixture.createLoan(item1, usersFixture.james(),  DateTime.now().plusDays(21));
+    loansFixture.createLoan(item2, usersFixture.rebecca(), DateTime.now().plusDays(5));
+
+    //Set up request queues. Item1 has requests (1 queued request), Item2 is requests (1 queued), either should be satisfied
+    //but only item2 should a request be placed on because its due date is nearest.
+    placeHoldRequest(item1, pickupServicePointId, usersFixture.steve(), requestExpirationDate);
+    placeHoldRequest(item1, pickupServicePointId, usersFixture.jessica(), requestExpirationDate);
+
+    placeHoldRequest(item2, pickupServicePointId, usersFixture.steve(), requestExpirationDate);
+    placeHoldRequest(item2, pickupServicePointId, usersFixture.jessica(), requestExpirationDate);
+
+    IndividualResource instanceRequester = usersFixture.charlotte();
+
+    JsonObject requestBody = createInstanceRequestObject(instance.getId(), instanceRequester.getId(),
+      pickupServicePointId, instanceRequestDate, instanceRequestDateRequestExpirationDate);
+
+    CompletableFuture<Response> postCompleted = new CompletableFuture<>();
+
+    client.post(InterfaceUrls.requestsUrl("/instances"), requestBody,
+      ResponseHandler.any(postCompleted));
+
+    Response postResponse = postCompleted.get(10, TimeUnit.SECONDS);
+    assertEquals(201, postResponse.getStatusCode());
+
+    JsonObject representation = postResponse.getJson();
+
+    assertNotNull(representation);
+    assertEquals(pickupServicePointId.toString(), representation.getString("pickupServicePointId"));
+    assertEquals("Circ Desk 1", representation.getJsonObject("pickupServicePoint").getString("name"));
+    assertEquals(instance.getId().toString(), representation.getJsonObject("item").getString("instanceId"));
+    assertEquals(RequestType.HOLD.name(), representation.getString("requestType"));
+    assertEquals(item2.getId().toString(), representation.getString("itemId"));
+  }
+
+  @Test
+  public void canCreateATitleLevelRequestForAnUnAvailableItemWithAMatchingPickupLocationId()
+    throws InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    MalformedURLException {
+
+    UUID pickupServicePointId = servicePointsFixture.cd1().getId();
+    DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
+    DateTime requestExpirationDate = requestDate.plusDays(30);
+
+    IndividualResource instanceMultipleCopies = instancesFixture.basedUponDunkirk();
+    IndividualResource holdings = holdingsFixture.defaultWithHoldings(instanceMultipleCopies.getId());
+
+    IndividualResource locationsResource = locationsFixture.mainFloor();
+
+    final IndividualResource item1 = itemsFixture.basedUponDunkirkWithCustomHoldingAndLocation(holdings.getId(), null);
+    final IndividualResource item2 = itemsFixture.basedUponDunkirkWithCustomHoldingAndLocation(holdings.getId(), locationsResource.getId());
+    final IndividualResource item3 = itemsFixture.basedUponDunkirkWithCustomHoldingAndLocation(holdings.getId(), null);
+
+    //All of these items are checked out, have the same queue length, and due dates
+    DateTime sameCheckoutDate = DateTime.now();
+    loansFixture.createLoan(item1, usersFixture.steve(), sameCheckoutDate );
+    loansFixture.createLoan(item2, usersFixture.jessica(), sameCheckoutDate );
+    loansFixture.createLoan(item3, usersFixture.james(), sameCheckoutDate );
+
+    //For simplicity and by default, these items' request queue lengths are 0.
+
+    JsonObject requestBody = createInstanceRequestObject(instanceMultipleCopies.getId(),
+                                                        usersFixture.charlotte().getId(),
+                                                        pickupServicePointId,
+                                                        requestDate,
+                                                        requestExpirationDate);
+
+    CompletableFuture<Response> postCompleted = new CompletableFuture<>();
+
+    client.post(InterfaceUrls.requestsUrl("/instances"), requestBody,
+      ResponseHandler.any(postCompleted));
+
+    Response postResponse = postCompleted.get(10, TimeUnit.SECONDS);
+
+    JsonObject representation = postResponse.getJson();
+    validateInstanceRequestResponse(representation,
+      pickupServicePointId,
+      instanceMultipleCopies.getId(),
+      item2.getId(),
+      RequestType.HOLD);
+  }
+
+  @Test
+  public void canCreateATitleLevelRequestForUnavailableItemHavingDueDateVersusOneWithoutLoan()
+    throws InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    MalformedURLException {
+
+    UUID pickupServicePointId = servicePointsFixture.cd1().getId();
+    DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
+    DateTime requestExpirationDate = requestDate.plusDays(30);
+
+    IndividualResource instanceMultipleCopies = instancesFixture.basedUponDunkirk();
+    IndividualResource holdings = holdingsFixture.defaultWithHoldings(instanceMultipleCopies.getId());
+
+    IndividualResource locationsResource = locationsFixture.mainFloor();
+
+    //create two items
+    final IndividualResource item2 = itemsFixture.basedUponDunkirkWithCustomHoldingAndLocation(holdings.getId(), locationsResource.getId());
+    itemsFixture.basedUponDunkirkWithCustomHoldingAndLocationAndStatusInProcess(holdings.getId(), null);
+
+    //For simplicity and by default, these items' request queue lengths are 0.
+    //One item is "Checked out", the other item is  "In process"
+    loansFixture.createLoan(item2, usersFixture.steve(), DateTime.now());
+
+    JsonObject requestBody = createInstanceRequestObject(instanceMultipleCopies.getId(),
+      usersFixture.charlotte().getId(),
+      pickupServicePointId,
+      requestDate,
+      requestExpirationDate);
+
+    CompletableFuture<Response> postCompleted = new CompletableFuture<>();
+
+    client.post(InterfaceUrls.requestsUrl("/instances"), requestBody,
+      ResponseHandler.any(postCompleted));
+
+    Response postResponse = postCompleted.get(10, TimeUnit.SECONDS);
+
+    JsonObject representation = postResponse.getJson();
+    validateInstanceRequestResponse(representation,
+      pickupServicePointId,
+      instanceMultipleCopies.getId(),
+      item2.getId(),
+      RequestType.HOLD);
   }
 
   private void validateInstanceRequestResponse(JsonObject representation,
@@ -487,12 +680,12 @@ public class InstanceRequestsAPICreationTests extends APITests {
   private JsonObject createInstanceRequestObject(UUID instanceId, UUID requesterId, UUID pickupServicePointId,
                                                  DateTime requestDate, DateTime requestExpirationDate){
     JsonObject requestBody = new JsonObject();
-    requestBody.put("instanceId", instanceId.toString());
-    requestBody.put("requestDate", requestDate.toString(ISODateTimeFormat.dateTime()));
-    requestBody.put("requesterId", requesterId.toString());
-    requestBody.put("pickupServicePointId", pickupServicePointId.toString());
-    requestBody.put("fulfilmentPreference", "Hold Shelf");
-    requestBody.put("requestExpirationDate", requestExpirationDate.toString(ISODateTimeFormat.dateTime()));
+    write(requestBody,"instanceId", instanceId.toString());
+    write(requestBody,"requestDate", requestDate.toString(ISODateTimeFormat.dateTime()));
+    write(requestBody,"requesterId", requesterId.toString());
+    write(requestBody,"pickupServicePointId", pickupServicePointId.toString());
+    write(requestBody,"fulfilmentPreference", "Hold Shelf");
+    write(requestBody,"requestExpirationDate", requestExpirationDate.toString(ISODateTimeFormat.dateTime()));
 
     return requestBody;
   }
