@@ -236,12 +236,5 @@ public class RequestRepository {
   private CompletableFuture<Result<ServicePoint>> getServicePoint(String servicePointId) {
     return servicePointRepository.getServicePointById(servicePointId);
   }
-  
-  // NEW
-  public CompletableFuture<Result<Item>> getItem(String requestId) {
-    return getById(requestId)
-      .thenApply(r -> r.map(Request::getItemId))
-      .thenComposeAsync(r -> r.after(itemRepository::fetchById));
-  }
 
 }
