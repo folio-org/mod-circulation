@@ -127,7 +127,7 @@ public class MoveRequestService {
       .collect(Collectors.toList()).isEmpty();
 
     if (isRecall && noRecallRequestsInQueue) {
-      return failedValidation("Cannot move recall request to item which has no recall requests",
+      return failedValidation("Recalls can't be moved to checked out items that have not been previously recalled.",
         REQUEST_TYPE, requestType.getValue());
     } else {
       return succeeded(requestAndRelatedRecords);
