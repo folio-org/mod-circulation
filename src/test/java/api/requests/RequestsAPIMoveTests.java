@@ -1,14 +1,17 @@
 package api.requests;
 
+import static org.folio.circulation.domain.representations.RequestProperties.REQUEST_TYPE;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 
 import java.net.MalformedURLException;
+import java.util.ArrayList;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
 import org.folio.circulation.domain.MultipleRecords;
+import org.folio.circulation.domain.RequestType;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 import org.joda.time.DateTime;
@@ -24,11 +27,125 @@ import junitparams.JUnitParamsRunner;
 @RunWith(JUnitParamsRunner.class)
 public class RequestsAPIMoveTests extends APITests {
 
-  // TODO: write test for UIREQ-269 Scenario 5 request policy denies move
+  @Test
+  public void cannotMoveHoldRequestsWithRequestPolicyNotAllowingHolds()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
 
-  // TODO: write test for UIREQ-269 Scenario 6
+    final String anyNoticePolicy = noticePoliciesFixture.activeNotice().getId().toString();
+    final String anyLoanPolicy = loanPoliciesFixture.canCirculateRolling().getId().toString();
+    final String bookMaterialType = materialTypesFixture.book().getId().toString();
+    final String anyRequestPolicy = requestPoliciesFixture.allowAllRequestPolicy().getId().toString();
 
-  // UIREQ-269 Scenario 8
+    ArrayList<RequestType> allowedRequestTypes = new ArrayList<>();
+    allowedRequestTypes.add(RequestType.RECALL);
+    allowedRequestTypes.add(RequestType.PAGE);
+    final String noHoldRequestPolicy = requestPoliciesFixture.customRequestPolicy(allowedRequestTypes,
+      "All But Hold", "All but Hold request policy").getId().toString();
+
+    //This rule is set up to show that the fallback policy won't be used but the material type rule m is used instead.
+    //The material type rule m allows any patron to place any request but HOLDs on any BOOK, loan or notice types
+    final String rules = String.join("\n",
+      "priority: t, s, c, b, a, m, g",
+      "fallback-policy : l " + anyLoanPolicy + " r " + anyRequestPolicy + " n " + anyNoticePolicy + "\n",
+      "m " + bookMaterialType + ": l " + anyLoanPolicy + " r " + noHoldRequestPolicy +" n " + anyNoticePolicy
+    );
+
+    setRules(rules);
+
+    UUID pickupServicePointId = servicePointsFixture.cd1().getId();
+
+    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    IndividualResource uponInterestingTimes = itemsFixture.basedUponInterestingTimes();
+    
+    IndividualResource james = usersFixture.james();
+    IndividualResource jessica = usersFixture.jessica();
+    IndividualResource charlotte = usersFixture.charlotte();
+
+    loansFixture.checkOutByBarcode(smallAngryPlanet, jessica);
+    
+    loansFixture.checkOutByBarcode(uponInterestingTimes, charlotte);
+
+    IndividualResource requestByJames = requestsFixture.placeRecallRequest(
+      uponInterestingTimes, james, new DateTime(2017, 10, 27, 11, 54, 37, DateTimeZone.UTC));
+
+    // move james' recall request as a hold shelf request from smallAngryPlanet to uponInterestingTimes
+    Response response = requestsFixture.attemptMove(RequestBuilder.from(requestByJames)
+      .hold()
+      .withDestinationItemId(smallAngryPlanet.getId())
+      .fulfilToHoldShelf(pickupServicePointId));
+
+    assertThat("Move request should have correct response status code", response.getStatusCode(), is(422));
+    assertThat("Move request should have correct response message",
+      response.getJson().getJsonArray("errors").getJsonObject(0).getString("message"),
+      is("Hold requests are not allowed for this patron and item combination"));
+
+    requestByJames = requestsClient.get(requestByJames);
+    assertThat(requestByJames.getJson().getString(REQUEST_TYPE), is(RequestType.RECALL.getValue()));
+    assertThat(requestByJames.getJson().getInteger("position"), is(1));
+    assertThat(requestByJames.getJson().getString("itemId"), is(uponInterestingTimes.getId().toString()));
+    retainsStoredSummaries(requestByJames);
+
+    // check item queues are correct size
+    MultipleRecords<JsonObject> smallAngryPlanetQueue = requestsFixture.getQueueFor(smallAngryPlanet);
+    assertThat(smallAngryPlanetQueue.getTotalRecords(), is(0));
+    
+    MultipleRecords<JsonObject> uponInterestingTimesQueue = requestsFixture.getQueueFor(uponInterestingTimes);
+    assertThat(uponInterestingTimesQueue.getTotalRecords(), is(1));
+  }
+
+  @Test
+  public void canMoveAShelfHoldRequestToAnAvailableItem()
+    throws InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    MalformedURLException {
+  
+    UUID pickupServicePointId = servicePointsFixture.cd1().getId();
+
+    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    IndividualResource uponInterestingTimes = itemsFixture.basedUponInterestingTimes();
+    
+    IndividualResource james = usersFixture.james();
+    IndividualResource jessica = usersFixture.jessica();
+
+    // james checks out basedUponSmallAngryPlanet
+    loansFixture.checkOutByBarcode(smallAngryPlanet, james);
+
+    // make requests for smallAngryPlanet
+    IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
+      smallAngryPlanet, jessica, new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC));
+
+    // move jessica's hold shelf request from smallAngryPlanet to uponInterestingTimes
+    IndividualResource moveRequest = requestsFixture.move(RequestBuilder.from(requestByJessica)
+      .withDestinationItemId(uponInterestingTimes.getId())
+      .fulfilToHoldShelf(pickupServicePointId));
+
+    assertThat("Move request should not retain stored destination item id",
+      moveRequest.getJson().containsKey("destinationItemId"), is(false));
+
+    assertThat("Move request should have correct item id",
+      moveRequest.getJson().getString("itemId"), is(uponInterestingTimes.getId().toString()));
+    
+    assertThat("Move request should have correct type",
+        moveRequest.getJson().getString(REQUEST_TYPE), is(RequestType.PAGE.getValue()));
+
+    requestByJessica = requestsClient.get(requestByJessica);
+    assertThat(requestByJessica.getJson().getString(REQUEST_TYPE), is(RequestType.PAGE.getValue()));
+    assertThat(requestByJessica.getJson().getInteger("position"), is(1));
+    assertThat(requestByJessica.getJson().getString("itemId"), is(uponInterestingTimes.getId().toString()));
+    retainsStoredSummaries(requestByJessica);
+
+    // check item queues are correct size
+    MultipleRecords<JsonObject> smallAngryPlanetQueue = requestsFixture.getQueueFor(smallAngryPlanet);
+    assertThat(smallAngryPlanetQueue.getTotalRecords(), is(0));
+    
+    MultipleRecords<JsonObject> uponInterestingTimesQueue = requestsFixture.getQueueFor(uponInterestingTimes);
+    assertThat(uponInterestingTimesQueue.getTotalRecords(), is(1));
+  }
+
   @Test
   public void cannotMoveARecallRequestToAnEmptyQueue()
     throws InterruptedException,
@@ -55,7 +172,7 @@ public class RequestsAPIMoveTests extends APITests {
     IndividualResource requestByJessica = requestsFixture.placeRecallRequest(
       smallAngryPlanet, jessica, new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC));
 
-    // move jessica recall requests from smallAngryPlanet to uponInterestingTimes
+    // move jessica's recall request from smallAngryPlanet to uponInterestingTimes
     Response response = requestsFixture.attemptMove(RequestBuilder.from(requestByJessica)
       .withDestinationItemId(uponInterestingTimes.getId())
       .fulfilToHoldShelf(pickupServicePointId));
@@ -66,7 +183,7 @@ public class RequestsAPIMoveTests extends APITests {
       is("Cannot move recall request to item which has no recall requests"));
 
     requestByJessica = requestsClient.get(requestByJessica);
-
+    assertThat(requestByJessica.getJson().getString(REQUEST_TYPE), is(RequestType.RECALL.getValue()));
     assertThat(requestByJessica.getJson().getInteger("position"), is(1));
     assertThat(requestByJessica.getJson().getString("itemId"), is(smallAngryPlanet.getId().toString()));
     retainsStoredSummaries(requestByJessica);
@@ -77,11 +194,10 @@ public class RequestsAPIMoveTests extends APITests {
     
     MultipleRecords<JsonObject> uponInterestingTimesQueue = requestsFixture.getQueueFor(uponInterestingTimes);
     assertThat(uponInterestingTimesQueue.getTotalRecords(), is(0));
-
   }
 
   @Test
-  public void canMoveARecalRequest()
+  public void canMoveARecallRequest()
     throws InterruptedException,
     ExecutionException,
     TimeoutException,
@@ -121,7 +237,7 @@ public class RequestsAPIMoveTests extends APITests {
     IndividualResource requestByJames = requestsFixture.placeRecallRequest(
       uponInterestingTimes, james, new DateTime(2018, 7, 22, 10, 22, 54, DateTimeZone.UTC));
 
-    // move steve's recall requests from smallAngryPlanet to uponInterestingTimes
+    // move steve's recall request from smallAngryPlanet to uponInterestingTimes
     IndividualResource moveRequest = requestsFixture.move(RequestBuilder.from(requestBySteve)
       .withDestinationItemId(uponInterestingTimes.getId())
       .fulfilToHoldShelf(pickupServicePointId));
@@ -165,9 +281,8 @@ public class RequestsAPIMoveTests extends APITests {
 
     MultipleRecords<JsonObject> uponInterestingTimesQueue = requestsFixture.getQueueFor(uponInterestingTimes);
     assertThat(uponInterestingTimesQueue.getTotalRecords(), is(2));
-
   }
-  
+
   @Test
   public void canMoveAHoldShelfRequestToAnEmptyQueue()
     throws InterruptedException,
@@ -194,7 +309,7 @@ public class RequestsAPIMoveTests extends APITests {
     IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
       smallAngryPlanet, jessica, new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC));
 
-    // move jessica hold shelf requests from smallAngryPlanet to uponInterestingTimes
+    // move jessica's hold shelf request from smallAngryPlanet to uponInterestingTimes
     IndividualResource moveRequest = requestsFixture.move(RequestBuilder.from(requestByJessica)
       .withDestinationItemId(uponInterestingTimes.getId())
       .fulfilToHoldShelf(pickupServicePointId));
@@ -216,7 +331,6 @@ public class RequestsAPIMoveTests extends APITests {
     
     MultipleRecords<JsonObject> uponInterestingTimesQueue = requestsFixture.getQueueFor(uponInterestingTimes);
     assertThat(uponInterestingTimesQueue.getTotalRecords(), is(1));
-
   }
 
   @Test
@@ -260,7 +374,7 @@ public class RequestsAPIMoveTests extends APITests {
     IndividualResource requestByJames = requestsFixture.placeHoldShelfRequest(
       uponInterestingTimes, james, new DateTime(2018, 7, 22, 10, 22, 54, DateTimeZone.UTC));
 
-    // move jessica hold shelf requests from smallAngryPlanet to uponInterestingTimes
+    // move jessica's hold shelf request from smallAngryPlanet to uponInterestingTimes
     IndividualResource moveRequest = requestsFixture.move(RequestBuilder.from(requestByJessica)
       .withDestinationItemId(uponInterestingTimes.getId())
       .fulfilToHoldShelf(pickupServicePointId));
@@ -304,7 +418,6 @@ public class RequestsAPIMoveTests extends APITests {
 
     MultipleRecords<JsonObject> uponInterestingTimesQueue = requestsFixture.getQueueFor(uponInterestingTimes);
     assertThat(uponInterestingTimesQueue.getTotalRecords(), is(2));
-
   }
   
   private void retainsStoredSummaries(IndividualResource request) {
@@ -315,4 +428,11 @@ public class RequestsAPIMoveTests extends APITests {
       request.getJson().containsKey("requester"), is(true));
   }
 
+  private void setRules(String rules) {
+    try {
+      circulationRulesFixture.updateCirculationRules(rules);
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+  }
 }

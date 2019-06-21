@@ -218,10 +218,15 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
     //TODO: Check for null status
     status.writeTo(requestRepresentation);
   }
-  
+
   Request applyMoveToRepresentation() {
     requestRepresentation.put("itemId", getDestinationItemId());
     requestRepresentation.remove("destinationItemId");
+    return this;
+  }
+
+  Request changeType(RequestType type) {
+    requestRepresentation.put(REQUEST_TYPE, type.getValue());
     return this;
   }
 

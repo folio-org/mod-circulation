@@ -45,45 +45,39 @@ public class MoveRequestService {
 
   public CompletableFuture<Result<RequestAndRelatedRecords>> moveRequest(
     RequestAndRelatedRecords requestAndRelatedRecords) {
+    final Item originalItem = requestAndRelatedRecords.getRequest().getItem();
     return of(() -> requestAndRelatedRecords)
       .next(RequestServiceUtility::refuseWhenItemDoesNotExist)
-      .after(this::refuseWhenDestinationItemIsCheckedOutWithNoRecalls)
-      .thenComposeAsync(r -> r.after(updateRequestQueue::onMoveFrom))
-      .thenComposeAsync(r -> r.after(this::lookupDestinationItem))
+      .after(this::lookupDestinationItem)
       .thenComposeAsync(r -> r.after(this::lookupDestinationItemRequestQueue))
       .thenApply(r -> r.map(MoveRequestService::applyMoveToRepresentation))
-      .thenCompose(r -> r.after(this::updateRequest));
-  }
-
-  private CompletableFuture<Result<RequestAndRelatedRecords>> refuseWhenDestinationItemIsCheckedOutWithNoRecalls(
-    RequestAndRelatedRecords requestAndRelatedRecords) {
-    
-    final Request request = requestAndRelatedRecords.getRequest();    
-    final RequestType requestType = request.getRequestType();
-    
-    return requestQueueRepository.get(request.getDestinationItemId()).thenApply(rq -> {
-      RequestQueue requestQueue = rq.value();
-      
-      boolean isRecall = requestType.equals(RequestType.RECALL);
-
-      boolean hasRecallRequestInQueue = requestQueue.getRequests().stream()
-        .filter(req -> req.getRequestType().equals(RequestType.RECALL))
-        .collect(Collectors.toList()).size() > 0;
-      
-      if (isRecall && !hasRecallRequestInQueue) {
-        return failedValidation(format("Cannot move recall request to item which has no recall requests"),
-          REQUEST_TYPE, requestType.getValue());
-      } else {
-        return succeeded(requestAndRelatedRecords);
-      }
-    });
-    
+      .thenApply(r -> r.map(MoveRequestService::pagedRequestIfDestinationItemAvailable))
+      .thenCompose(r -> r.after(this::updateRequest))
+      .thenApply(r -> r.map(v -> setToOriginalItemId(requestAndRelatedRecords, originalItem)))
+      .thenCompose(r -> r.after(updateRequestQueue::onMoved));
   }
   
+  private RequestAndRelatedRecords setToOriginalItemId(
+    RequestAndRelatedRecords requestAndRelatedRecords, Item originalItem) {
+    String destinationItemId = requestAndRelatedRecords.getItemId();
+    // NOTE: adding destinationItemId back to indicate moved
+    return requestAndRelatedRecords.withItem(originalItem).withDestination(destinationItemId);
+  }
+
   private static RequestAndRelatedRecords applyMoveToRepresentation(
     RequestAndRelatedRecords requestAndRelatedRecords) {
     requestAndRelatedRecords.withRequest(
       requestAndRelatedRecords.getRequest().applyMoveToRepresentation());
+    return requestAndRelatedRecords;
+  }
+  
+  private static RequestAndRelatedRecords pagedRequestIfDestinationItemAvailable(
+    RequestAndRelatedRecords requestAndRelatedRecords) {
+    Item item = requestAndRelatedRecords.getRequest().getItem();
+    if (item.getStatus().equals(ItemStatus.AVAILABLE)) {
+      requestAndRelatedRecords.withRequest(
+        requestAndRelatedRecords.getRequest().changeType(RequestType.PAGE));
+    }
     return requestAndRelatedRecords;
   }
 
@@ -110,15 +104,15 @@ public class MoveRequestService {
       .next(RequestServiceUtility::refuseWhenInvalidUserAndPatronGroup)
       .next(RequestServiceUtility::refuseWhenItemIsNotValid)
       .next(RequestServiceUtility::refuseWhenUserHasAlreadyRequestedItem)
+      .next(MoveRequestService::refuseWhenDestinationItemIsCheckedOutWithNoRecalls)
       .after(this::refuseWhenUserHasAlreadyBeenLoanedItem)
       .thenComposeAsync(r -> r.after(requestPolicyRepository::lookupRequestPolicy))
+      .thenApply(r -> r.next(RequestServiceUtility::refuseWhenRequestCannotBeFulfilled))
       .thenApply(r -> r.next(RequestServiceUtility::refuseWhenRequestCannotBeFulfilled))
       .thenApply(r -> r.map(RequestServiceUtility::setRequestQueuePosition))
       .thenComposeAsync(r -> r.after(updateItem::onRequestCreationOrMove))
       .thenComposeAsync(r -> r.after(updateLoanActionHistory::onRequestCreationOrMove))
       .thenComposeAsync(r -> r.after(updateLoan::onRequestCreationOrMove))
-      // TODO: if destination item status is available, change status to paged
-      // write test to make sure
       .thenComposeAsync(r -> r.after(requestRepository::update));
   }
 
@@ -141,5 +135,26 @@ public class MoveRequestService {
           return singleValidationError(new ValidationError(message, parameters));
         })
         .map(loan -> requestAndRelatedRecords));
+  }
+
+  private static Result<RequestAndRelatedRecords> refuseWhenDestinationItemIsCheckedOutWithNoRecalls(
+    RequestAndRelatedRecords requestAndRelatedRecords) {
+
+    final Request request = requestAndRelatedRecords.getRequest();    
+    final RequestQueue requestQueue = requestAndRelatedRecords.getRequestQueue();
+    final RequestType requestType = request.getRequestType();
+
+    boolean isRecall = requestType.equals(RequestType.RECALL);
+
+    boolean hasRecallRequestInQueue = requestQueue.getRequests().stream()
+      .filter(req -> req.getRequestType().equals(RequestType.RECALL))
+      .collect(Collectors.toList()).size() > 0;
+
+    if (isRecall && !hasRecallRequestInQueue) {
+      return failedValidation(format("Cannot move recall request to item which has no recall requests"),
+        REQUEST_TYPE, requestType.getValue());
+    } else {
+      return succeeded(requestAndRelatedRecords);
+    }
   }
 }
