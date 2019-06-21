@@ -4,12 +4,13 @@ import static java.util.Objects.nonNull;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.support.CqlQuery.exactMatch;
 import static org.folio.circulation.support.CqlQuery.exactMatchAny;
-import static org.folio.circulation.support.http.ResponseMapping.forwardOnFailure;
-import static org.folio.circulation.support.http.ResponseMapping.usingJson;
 import static org.folio.circulation.support.Result.failed;
 import static org.folio.circulation.support.Result.of;
 import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.ResultBinding.mapResult;
+import static org.folio.circulation.support.http.CommonResponseInterpreters.replaceRecordInterpreter;
+import static org.folio.circulation.support.http.ResponseMapping.forwardOnFailure;
+import static org.folio.circulation.support.http.ResponseMapping.usingJson;
 
 import java.lang.invoke.MethodHandles;
 import java.util.Collection;
@@ -81,11 +82,8 @@ public class LoanRepository {
 
     JsonObject storageLoan = mapToStorageRepresentation(loan, loan.getItem());
 
-    final ResponseInterpreter<Loan> interpreter = new ResponseInterpreter<Loan>()
-      .on(204, of(() -> loan));
-
     return loansStorageClient.put(loan.getId(), storageLoan)
-      .thenApply(interpreter::apply)
+      .thenApply(replaceRecordInterpreter(loan)::apply)
       .thenComposeAsync(r -> r.after(this::refreshLoanRepresentation));
   }
 
