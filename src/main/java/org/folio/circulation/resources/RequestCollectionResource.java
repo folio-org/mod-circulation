@@ -36,17 +36,15 @@ import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 
 public class RequestCollectionResource extends CollectionResource {
-	
-	private final static String ROOT_PATH = "/circulation/requests"; 
-  
+
   public RequestCollectionResource(HttpClient client) {
-    super(client, ROOT_PATH);
+    super(client, "/circulation/requests");
   }
-  
+
   @Override
   public void register(Router router) {
 	  super.register(router);
-	  router.post(String.format("%s/:id/move", ROOT_PATH)).handler(this::move);
+	  router.post("/circulation/requests/:id/move").handler(this::move);
   }
 
   void create(RoutingContext routingContext) {

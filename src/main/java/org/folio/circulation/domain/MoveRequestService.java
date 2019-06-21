@@ -1,6 +1,5 @@
 package org.folio.circulation.domain;
 
-import static java.lang.String.format;
 import static org.folio.circulation.domain.representations.RequestProperties.REQUEST_TYPE;
 import static org.folio.circulation.support.Result.of;
 import static org.folio.circulation.support.Result.succeeded;
@@ -123,18 +122,20 @@ public class MoveRequestService {
 
     boolean isRecall = requestType.equals(RequestType.RECALL);
 
-    boolean hasRecallRequestInQueue = requestQueue.getRequests().stream()
+    boolean noRecallRequestsInQueue = requestQueue.getRequests().stream()
       .filter(req -> req.getRequestType().equals(RequestType.RECALL))
-      .collect(Collectors.toList()).size() > 0;
+      .collect(Collectors.toList()).isEmpty();
 
-    if (isRecall && !hasRecallRequestInQueue) {
-      return failedValidation(format("Cannot move recall request to item which has no recall requests"),
+    if (isRecall && noRecallRequestsInQueue) {
+      return failedValidation("Cannot move recall request to item which has no recall requests",
         REQUEST_TYPE, requestType.getValue());
     } else {
       return succeeded(requestAndRelatedRecords);
     }
   }
 
+  // NOTE: copied from CreateRequestService
+  // inheritance may be needed to reduce redundancy 
   private CompletableFuture<Result<RequestAndRelatedRecords>> refuseWhenUserHasAlreadyBeenLoanedItem(
     RequestAndRelatedRecords requestAndRelatedRecords) {
 

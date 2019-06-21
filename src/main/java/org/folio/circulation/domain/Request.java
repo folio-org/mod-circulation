@@ -10,7 +10,9 @@ import static org.folio.circulation.domain.RequestStatus.OPEN_IN_TRANSIT;
 import static org.folio.circulation.domain.RequestStatus.OPEN_NOT_YET_FILLED;
 import static org.folio.circulation.domain.representations.RequestProperties.CANCELLATION_ADDITIONAL_INFORMATION;
 import static org.folio.circulation.domain.representations.RequestProperties.CANCELLATION_REASON_ID;
+import static org.folio.circulation.domain.representations.RequestProperties.DESTINATION_ITEM_ID;
 import static org.folio.circulation.domain.representations.RequestProperties.HOLD_SHELF_EXPIRATION_DATE;
+import static org.folio.circulation.domain.representations.RequestProperties.ITEM_ID;
 import static org.folio.circulation.domain.representations.RequestProperties.NAME;
 import static org.folio.circulation.domain.representations.RequestProperties.POSITION;
 import static org.folio.circulation.domain.representations.RequestProperties.REQUEST_EXPIRATION_DATE;
@@ -132,7 +134,7 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
 
   @Override
   public String getItemId() {
-    return requestRepresentation.getString("itemId");
+    return requestRepresentation.getString(ITEM_ID);
   }
 
   public Request withItem(Item newItem) {
@@ -175,19 +177,19 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   public String getDestinationItemId() {
-    return requestRepresentation.getString("destinationItemId");
+    return requestRepresentation.getString(DESTINATION_ITEM_ID);
   }
   
   public void setDestinationItemId(String destinationItemIdId) {
-     requestRepresentation.put("destinationItemId", destinationItemIdId);
+     requestRepresentation.put(DESTINATION_ITEM_ID, destinationItemIdId);
   }
 
   public void removeDestinationItemId() {
-    requestRepresentation.remove("destinationItemId");
+    requestRepresentation.remove(DESTINATION_ITEM_ID);
   }
 
   public boolean isMoving() {
-    return requestRepresentation.containsKey("destinationItemId");
+    return requestRepresentation.containsKey(DESTINATION_ITEM_ID);
   }
 
   public RequestFulfilmentPreference getFulfilmentPreference() {
@@ -220,8 +222,8 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   Request applyMoveToRepresentation() {
-    requestRepresentation.put("itemId", getDestinationItemId());
-    requestRepresentation.remove("destinationItemId");
+    requestRepresentation.put(ITEM_ID, getDestinationItemId());
+    requestRepresentation.remove(DESTINATION_ITEM_ID);
     return this;
   }
 

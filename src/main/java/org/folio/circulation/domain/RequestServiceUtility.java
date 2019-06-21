@@ -17,6 +17,10 @@ import org.folio.circulation.support.Result;
 import org.folio.circulation.support.http.server.ValidationError;
 
 public class RequestServiceUtility {
+
+  private RequestServiceUtility() {
+
+  }
   
   static RequestAndRelatedRecords setRequestQueuePosition(RequestAndRelatedRecords requestAndRelatedRecords) {
     // TODO: Extract to method to add to queue
