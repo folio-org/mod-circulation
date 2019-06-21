@@ -137,6 +137,7 @@ public class RequestRepository {
   public CompletableFuture<Result<Request>> update(Request request) {
     final JsonObject representation
       = new StoredRequestRepresentation().storedRequest(request);
+
     return requestsStorageClient.put(request.getId(), representation)
       .thenApply(response -> {
         if(response.getStatusCode() == 204) {
@@ -236,5 +237,4 @@ public class RequestRepository {
   private CompletableFuture<Result<ServicePoint>> getServicePoint(String servicePointId) {
     return servicePointRepository.getServicePointById(servicePointId);
   }
-
 }
