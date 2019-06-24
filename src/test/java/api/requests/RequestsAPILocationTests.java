@@ -1,8 +1,12 @@
 package api.requests;
 
-import static api.support.JsonCollectionAssistant.getRecordById;
-import static org.hamcrest.core.Is.is;
-import static org.hamcrest.junit.MatcherAssert.assertThat;
+import api.support.APITests;
+import api.support.builders.RequestBuilder;
+import api.support.http.InventoryItemResource;
+import io.vertx.core.json.JsonObject;
+import org.folio.circulation.support.http.client.IndividualResource;
+import org.folio.circulation.support.http.client.Response;
+import org.junit.Test;
 
 import java.net.MalformedURLException;
 import java.util.List;
@@ -10,14 +14,12 @@ import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
-import org.folio.circulation.support.http.client.IndividualResource;
-import org.folio.circulation.support.http.client.Response;
-import org.junit.Test;
 
-import api.support.APITests;
-import api.support.builders.RequestBuilder;
-import api.support.http.InventoryItemResource;
-import io.vertx.core.json.JsonObject;
+import static api.support.JsonCollectionAssistant.getRecordById;
+import static api.support.matchers.RequestItemMatcher.*;
+import static org.hamcrest.CoreMatchers.allOf;
+import static org.hamcrest.core.Is.is;
+import static org.hamcrest.junit.MatcherAssert.assertThat;
 
 public class RequestsAPILocationTests extends APITests {
   @Test
@@ -52,27 +54,28 @@ public class RequestsAPILocationTests extends APITests {
       .forItem(smallAngryPlanet)
       .by(requester));
 
-    JsonObject representation = request.getJson();
+    JsonObject createdRequest = request.getJson();
 
-    assertThat("has item location",
-      representation.getJsonObject("item").containsKey("location"), is(true));
-
-    assertThat(
-      representation.getJsonObject("item").getJsonObject("location").getString("name"),
-      is("2nd Floor - Economics"));
+    assertThat(createdRequest, hasItemLocationProperties(allOf(
+      hasLibraryName("Djanogly Learning Resource Centre"),
+      hasLocationName("2nd Floor - Economics"),
+      hasLocationCode("NU/JC/DL/2FE")
+    )));
 
     Response fetchedRequestResponse = requestsClient.getById(request.getId());
 
     assertThat(fetchedRequestResponse.getStatusCode(), is(200));
 
-    JsonObject fetchedLoan = fetchedRequestResponse.getJson();
+    JsonObject fetchRequest = fetchedRequestResponse.getJson();
 
     assertThat("has item location",
-      fetchedLoan.getJsonObject("item").containsKey("location"), is(true));
+      fetchRequest.getJsonObject("item").containsKey("location"), is(true));
 
-    assertThat(
-      fetchedLoan.getJsonObject("item").getJsonObject("location").getString("name"),
-      is("2nd Floor - Economics"));
+    assertThat(fetchRequest, hasItemLocationProperties(allOf(
+      hasLibraryName("Djanogly Learning Resource Centre"),
+      hasLocationName("2nd Floor - Economics"),
+      hasLocationCode("NU/JC/DL/2FE")
+    )));
   }
 
   @Test
@@ -121,32 +124,23 @@ public class RequestsAPILocationTests extends APITests {
 
     List<JsonObject> fetchedRequestsResponse = requestsClient.getAll();
 
-    assertThat(fetchedRequestsResponse.size(), is(2));
-
     JsonObject firstFetchedRequest = getRecordById(
-      fetchedRequestsResponse, firstRequest.getId()).get();
-
-    assertThat("has item",
-      firstFetchedRequest.containsKey("item"), is(true));
-
-    assertThat("has item location",
-      firstFetchedRequest.getJsonObject("item").containsKey("location"), is(true));
-
-    assertThat(
-      firstFetchedRequest.getJsonObject("item").getJsonObject("location").getString("name"),
-      is("3rd Floor"));
+            fetchedRequestsResponse, firstRequest.getId()).get();
 
     JsonObject secondFetchedRequest = getRecordById(
-      fetchedRequestsResponse, secondRequest.getId()).get();
+            fetchedRequestsResponse, secondRequest.getId()).get();
 
-    assertThat("has item",
-      secondFetchedRequest.containsKey("item"), is(true));
+    assertThat(firstFetchedRequest, hasItemLocationProperties(allOf(
+      hasLibraryName("Djanogly Learning Resource Centre"),
+      hasLocationName("3rd Floor"),
+      hasLocationCode("NU/JC/DL/3F")
+    )));
 
-    assertThat("has item location",
-      secondFetchedRequest.getJsonObject("item").containsKey("location"), is(true));
+    assertThat(secondFetchedRequest, hasItemLocationProperties(allOf(
+      hasLibraryName("Business Library"),
+      hasLocationName("Display Case, Mezzanine"),
+      hasLocationCode("NU/JC/BL/DM")
+    )));
 
-    assertThat(
-      secondFetchedRequest.getJsonObject("item").getJsonObject("location").getString("name"),
-      is("Display Case, Mezzanine"));
   }
 }
