@@ -8,7 +8,16 @@ import static org.folio.circulation.support.ValidationErrorFailure.failedValidat
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 
 import java.lang.invoke.MethodHandles;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
@@ -17,7 +26,6 @@ import org.folio.circulation.domain.InstanceRequestRelatedRecords;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.LoanRepository;
 import org.folio.circulation.domain.RequestAndRelatedRecords;
-import org.folio.circulation.domain.RequestLoanService;
 import org.folio.circulation.domain.RequestQueue;
 import org.folio.circulation.domain.RequestQueueRepository;
 import org.folio.circulation.domain.RequestRepository;
@@ -27,14 +35,26 @@ import org.folio.circulation.domain.ServicePointRepository;
 import org.folio.circulation.domain.UpdateItem;
 import org.folio.circulation.domain.UpdateLoan;
 import org.folio.circulation.domain.UpdateLoanActionHistory;
+import org.folio.circulation.domain.UpdateUponRequest;
 import org.folio.circulation.domain.UserRepository;
 import org.folio.circulation.domain.policy.LoanPolicyRepository;
 import org.folio.circulation.domain.policy.RequestPolicyRepository;
 import org.folio.circulation.domain.representations.RequestByInstanceIdRequest;
 import org.folio.circulation.domain.validation.ProxyRelationshipValidator;
+import org.folio.circulation.domain.validation.RequestLoanValidator;
 import org.folio.circulation.domain.validation.ServicePointPickupLocationValidator;
 import org.folio.circulation.storage.ItemByInstanceIdFinder;
-import org.folio.circulation.support.*;
+import org.folio.circulation.support.BadRequestFailure;
+import org.folio.circulation.support.Clients;
+import org.folio.circulation.support.CreatedJsonResponseResult;
+import org.folio.circulation.support.ForwardOnFailure;
+import org.folio.circulation.support.HttpFailure;
+import org.folio.circulation.support.ItemRepository;
+import org.folio.circulation.support.ResponseWritableResult;
+import org.folio.circulation.support.Result;
+import org.folio.circulation.support.RouteRegistration;
+import org.folio.circulation.support.ServerErrorFailure;
+import org.folio.circulation.support.ValidationErrorFailure;
 import org.folio.circulation.support.http.server.ServerErrorResponse;
 import org.folio.circulation.support.http.server.WebContext;
 import org.joda.time.format.ISODateTimeFormat;
@@ -110,17 +130,18 @@ public class RequestByInstanceIdResource extends Resource {
 
     final RequestNoticeSender requestNoticeSender = RequestNoticeSender.using(clients);
     final LoanRepository loanRepository = new LoanRepository(clients);
+    final LoanPolicyRepository loanPolicyRepository = new LoanPolicyRepository(clients);
     
-    final RequestLoanService requestLoanService = new RequestLoanService(
-        RequestRepository.using(clients),
-        new RequestPolicyRepository(clients),
-        loanRepository,
+    final UpdateUponRequest updateUponRequest = new UpdateUponRequest(
         new UpdateItem(clients),
-        new UpdateLoan(clients, loanRepository, new LoanPolicyRepository(clients)),
+        new UpdateLoan(clients, loanRepository, loanPolicyRepository),
         new UpdateLoanActionHistory(clients));
 
     final CreateRequestService createRequestService = new CreateRequestService(
-        requestLoanService,
+        RequestRepository.using(clients),
+        new RequestPolicyRepository(clients),
+        updateUponRequest,
+        new RequestLoanValidator(loanRepository),
         requestNoticeSender);
 
     return placeRequest(itemRequestRepresentations, 0, createRequestService,

@@ -1,4 +1,4 @@
-package org.folio.circulation.domain;
+package org.folio.circulation.domain.validation;
 
 import static org.folio.circulation.support.Result.of;
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
@@ -7,30 +7,20 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
-import org.folio.circulation.domain.policy.RequestPolicyRepository;
+import org.folio.circulation.domain.LoanRepository;
+import org.folio.circulation.domain.Request;
+import org.folio.circulation.domain.RequestAndRelatedRecords;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.http.server.ValidationError;
 
-public class RequestLoanService {
-  final RequestRepository requestRepository;
-  final RequestPolicyRepository requestPolicyRepository;
-  final LoanRepository loanRepository;
-  final UpdateItem updateItem;
-  final UpdateLoan updateLoan;
-  final UpdateLoanActionHistory updateLoanActionHistory;
+public class RequestLoanValidator {
+  private final LoanRepository loanRepository;
 
-  public RequestLoanService(RequestRepository requestRepository, RequestPolicyRepository requestPolicyRepository,
-      LoanRepository loanRepository, UpdateItem updateItem, UpdateLoan updateLoan,
-      UpdateLoanActionHistory updateLoanActionHistory) {
-    this.requestRepository = requestRepository;
-    this.requestPolicyRepository = requestPolicyRepository;
+  public RequestLoanValidator(LoanRepository loanRepository) {
     this.loanRepository = loanRepository;
-    this.updateItem = updateItem;
-    this.updateLoan = updateLoan;
-    this.updateLoanActionHistory = updateLoanActionHistory;
   }
 
-  CompletableFuture<Result<RequestAndRelatedRecords>> refuseWhenUserHasAlreadyBeenLoanedItem(
+  public CompletableFuture<Result<RequestAndRelatedRecords>> refuseWhenUserHasAlreadyBeenLoanedItem(
       RequestAndRelatedRecords requestAndRelatedRecords) {
 
     final Request request = requestAndRelatedRecords.getRequest();
