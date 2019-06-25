@@ -447,6 +447,7 @@ public class LoanDueDatesAfterRecallTests extends APITests {
       .plusMonths(2)
       .withTime(LocalTime.MIDNIGHT.minusSeconds(1))
       .toString(ISODateTimeFormat.dateTime());
+
     assertThat("due date is not the recall due date (2 months)",
         storedLoan.getString("dueDate"), is(expectedDueDate));
 
