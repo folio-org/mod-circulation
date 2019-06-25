@@ -59,11 +59,13 @@ import org.junit.runner.RunWith;
 import api.support.APITests;
 import api.support.builders.Address;
 import api.support.builders.ItemBuilder;
+import api.support.builders.HoldingBuilder;
 import api.support.builders.LoanPolicyBuilder;
 import api.support.builders.NoticeConfigurationBuilder;
 import api.support.builders.NoticePolicyBuilder;
 import api.support.builders.RequestBuilder;
 import api.support.builders.UserBuilder;
+import api.support.fixtures.ItemExamples;
 import api.support.fixtures.ItemsFixture;
 import api.support.fixtures.LoansFixture;
 import api.support.fixtures.NoticeMatchers;
@@ -1524,7 +1526,7 @@ public class RequestsAPICreationTests extends APITests {
 
     UUID id = UUID.randomUUID();
     UUID pickupServicePointId = servicePointsFixture.cd1().getId();
-    IndividualResource item = itemsFixture.basedUponSmallAngryPlanet();
+    InventoryItemResource item = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource requester = usersFixture.steve();
     DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
     IndividualResource request = requestsFixture.place(new RequestBuilder()
@@ -1547,7 +1549,7 @@ public class RequestsAPICreationTests extends APITests {
 
     Map<String, Matcher<String>> noticeContextMatchers = new HashMap<>();
     noticeContextMatchers.putAll(NoticeMatchers.getUserContextMatchers(requester));
-    noticeContextMatchers.putAll(NoticeMatchers.getItemContextMatchers(item));
+    noticeContextMatchers.putAll(NoticeMatchers.getItemContextMatchers(item, true));
     noticeContextMatchers.putAll(NoticeMatchers.getRequestContextMatchers(request));
     MatcherAssert.assertThat(sentNotices,
       hasItems(
@@ -1581,7 +1583,15 @@ public class RequestsAPICreationTests extends APITests {
 
     UUID id = UUID.randomUUID();
     UUID pickupServicePointId = servicePointsFixture.cd1().getId();
-    IndividualResource item = itemsFixture.basedUponSmallAngryPlanet();
+
+    ItemBuilder itemBuilder = ItemExamples.basedUponSmallAngryPlanet(materialTypesFixture.book().getId(), loanTypesFixture.canCirculate().getId());
+    HoldingBuilder holdingBuilder = itemsFixture.applyCallNumberHoldings(
+      "CN",
+      "Prefix",
+      "Suffix",
+      Collections.singletonList("CopyNumbers"));
+    InventoryItemResource item = itemsFixture.basedUponSmallAngryPlanet(itemBuilder, holdingBuilder);
+
     IndividualResource requester = usersFixture.steve();
     DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
 
@@ -1607,7 +1617,7 @@ public class RequestsAPICreationTests extends APITests {
 
     Map<String, Matcher<String>> noticeContextMatchers = new HashMap<>();
     noticeContextMatchers.putAll(NoticeMatchers.getUserContextMatchers(requester));
-    noticeContextMatchers.putAll(NoticeMatchers.getItemContextMatchers(item));
+    noticeContextMatchers.putAll(NoticeMatchers.getItemContextMatchers(item, true));
     noticeContextMatchers.putAll(NoticeMatchers.getRequestContextMatchers(request));
     MatcherAssert.assertThat(sentNotices,
       hasItems(
@@ -1655,7 +1665,16 @@ public class RequestsAPICreationTests extends APITests {
 
     UUID id = UUID.randomUUID();
     UUID pickupServicePointId = servicePointsFixture.cd1().getId();
-    IndividualResource item = itemsFixture.basedUponSmallAngryPlanet();
+
+    ItemBuilder itemBuilder = ItemExamples.basedUponSmallAngryPlanet(
+      materialTypesFixture.book().getId(),
+      loanTypesFixture.canCirculate().getId(),
+      "ItemCN",
+      "ItemPrefix",
+      "ItemSuffix",
+      Arrays.asList("CopyNumbers", "CopyDetails"));
+
+    InventoryItemResource item = itemsFixture.basedUponSmallAngryPlanet(itemBuilder, itemsFixture.thirdFloorHoldings());
     IndividualResource requester = usersFixture.steve();
     IndividualResource loanOwner = usersFixture.jessica();
 
@@ -1686,12 +1705,12 @@ public class RequestsAPICreationTests extends APITests {
 
     Map<String, Matcher<String>> recallConfirmationContextMatchers = new HashMap<>();
     recallConfirmationContextMatchers.putAll(NoticeMatchers.getUserContextMatchers(requester));
-    recallConfirmationContextMatchers.putAll(NoticeMatchers.getItemContextMatchers(item));
+    recallConfirmationContextMatchers.putAll(NoticeMatchers.getItemContextMatchers(item, false));
     recallConfirmationContextMatchers.putAll(NoticeMatchers.getLoanContextMatchers(loanAfterRecall, 0));
     recallConfirmationContextMatchers.putAll(NoticeMatchers.getRequestContextMatchers(request));
     Map<String, Matcher<String>> recallNotificationContextMatchers = new HashMap<>();
     recallNotificationContextMatchers.putAll(NoticeMatchers.getUserContextMatchers(loanOwner));
-    recallNotificationContextMatchers.putAll(NoticeMatchers.getItemContextMatchers(item));
+    recallNotificationContextMatchers.putAll(NoticeMatchers.getItemContextMatchers(item, false));
     recallNotificationContextMatchers.putAll(NoticeMatchers.getLoanContextMatchers(loanAfterRecall, 0));
     MatcherAssert.assertThat(sentNotices,
       hasItems(
