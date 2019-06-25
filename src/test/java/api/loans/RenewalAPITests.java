@@ -1213,7 +1213,7 @@ abstract class RenewalAPITests extends APITests {
   }
 
   @Test
-  public void canRenewalForSystemDateWhenSystemDateFallWithinRangeDueDateLimit() throws
+  public void canRenewWhenSystemDateFallsWithinLimitingDueDateSchedule() throws
     InterruptedException,
     ExecutionException,
     TimeoutException,
