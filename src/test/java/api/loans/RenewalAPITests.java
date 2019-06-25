@@ -1362,10 +1362,10 @@ abstract class RenewalAPITests extends APITests {
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource jessica = usersFixture.jessica();
 
-    DateTime loanDueDate =
+    DateTime loanDate =
       new DateTime(2019, DateTimeConstants.APRIL, 21, 11, 21, 43);
 
-    loansFixture.checkOutByBarcode(smallAngryPlanet, jessica, loanDueDate);
+    loansFixture.checkOutByBarcode(smallAngryPlanet, jessica, loanDate);
 
     useLoanPolicyAsFallback(
       dueDateLimitedPolicyId,
