@@ -17,6 +17,7 @@ import org.folio.circulation.domain.InstanceRequestRelatedRecords;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.LoanRepository;
 import org.folio.circulation.domain.RequestAndRelatedRecords;
+import org.folio.circulation.domain.RequestLoanService;
 import org.folio.circulation.domain.RequestQueue;
 import org.folio.circulation.domain.RequestQueueRepository;
 import org.folio.circulation.domain.RequestRepository;
@@ -109,14 +110,18 @@ public class RequestByInstanceIdResource extends Resource {
 
     final RequestNoticeSender requestNoticeSender = RequestNoticeSender.using(clients);
     final LoanRepository loanRepository = new LoanRepository(clients);
+    
+    final RequestLoanService requestLoanService = new RequestLoanService(
+        RequestRepository.using(clients),
+        new RequestPolicyRepository(clients),
+        loanRepository,
+        new UpdateItem(clients),
+        new UpdateLoan(clients, loanRepository, new LoanPolicyRepository(clients)),
+        new UpdateLoanActionHistory(clients));
 
     final CreateRequestService createRequestService = new CreateRequestService(
-      RequestRepository.using(clients),
-      new UpdateItem(clients),
-      new UpdateLoanActionHistory(clients),
-      new UpdateLoan(clients, loanRepository, new LoanPolicyRepository(clients)),
-      new RequestPolicyRepository(clients),
-      loanRepository, requestNoticeSender);
+        requestLoanService,
+        requestNoticeSender);
 
     return placeRequest(itemRequestRepresentations, 0, createRequestService,
                         clients, loanRepository, new ArrayList<>());

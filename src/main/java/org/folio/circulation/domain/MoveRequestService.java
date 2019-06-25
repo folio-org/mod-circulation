@@ -5,41 +5,25 @@ import static org.folio.circulation.domain.representations.RequestProperties.REQ
 import static org.folio.circulation.support.Result.of;
 import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
-import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
-import org.folio.circulation.domain.policy.RequestPolicyRepository;
 import org.folio.circulation.support.ItemRepository;
 import org.folio.circulation.support.Result;
-import org.folio.circulation.support.http.server.ValidationError;
 
 public class MoveRequestService {
-  private final RequestRepository requestRepository;
   private final RequestQueueRepository requestQueueRepository;
-  private final RequestPolicyRepository requestPolicyRepository;
-  private final LoanRepository loanRepository;
   private final ItemRepository itemRepository;
   private final UpdateRequestQueue updateRequestQueue;
-  private final UpdateItem updateItem;
-  private final UpdateLoan updateLoan;
-  private final UpdateLoanActionHistory updateLoanActionHistory;
 
-  public MoveRequestService(RequestRepository requestRepository, RequestQueueRepository requestQueueRepository,
-    RequestPolicyRepository requestPolicyRepository, UpdateRequestQueue updateRequestQueue, UpdateItem updateItem,
-    UpdateLoanActionHistory updateLoanActionHistory, UpdateLoan updateLoan, LoanRepository loanRepository,
-    ItemRepository itemRepository) {
-    this.requestRepository = requestRepository;
+  private final RequestLoanService requestLoanService;
+
+  public MoveRequestService(RequestLoanService requestLoanService, RequestQueueRepository requestQueueRepository,
+      UpdateRequestQueue updateRequestQueue, ItemRepository itemRepository) {
+    this.requestLoanService = requestLoanService;
     this.requestQueueRepository = requestQueueRepository;
-    this.requestPolicyRepository = requestPolicyRepository;
     this.updateRequestQueue = updateRequestQueue;
-    this.updateItem = updateItem;
-    this.updateLoan = updateLoan;
-    this.updateLoanActionHistory = updateLoanActionHistory;
-    this.loanRepository = loanRepository;
     this.itemRepository = itemRepository;
   }
 
@@ -98,14 +82,14 @@ public class MoveRequestService {
       .next(RequestServiceUtility::refuseWhenItemIsNotValid)
       .next(RequestServiceUtility::refuseWhenUserHasAlreadyRequestedItem)
       .next(MoveRequestService::refuseWhenDestinationItemIsCheckedOutWithNoRecalls)
-      .after(this::refuseWhenUserHasAlreadyBeenLoanedItem)
-      .thenComposeAsync(r -> r.after(requestPolicyRepository::lookupRequestPolicy))
+      .after(requestLoanService::refuseWhenUserHasAlreadyBeenLoanedItem)
+      .thenComposeAsync(r -> r.after(requestLoanService.requestPolicyRepository::lookupRequestPolicy))
       .thenApply(r -> r.next(RequestServiceUtility::refuseWhenRequestCannotBeFulfilled))
       .thenApply(r -> r.map(RequestServiceUtility::setRequestQueuePosition))
-      .thenComposeAsync(r -> r.after(updateItem::onRequestCreationOrMove))
-      .thenComposeAsync(r -> r.after(updateLoanActionHistory::onRequestCreationOrMove))
-      .thenComposeAsync(r -> r.after(updateLoan::onRequestCreationOrMove))
-      .thenComposeAsync(r -> r.after(requestRepository::update));
+      .thenComposeAsync(r -> r.after(requestLoanService.updateItem::onRequestCreationOrMove))
+      .thenComposeAsync(r -> r.after(requestLoanService.updateLoanActionHistory::onRequestCreationOrMove))
+      .thenComposeAsync(r -> r.after(requestLoanService.updateLoan::onRequestCreationOrMove))
+      .thenComposeAsync(r -> r.after(requestLoanService.requestRepository::update));
   }
 
   private static Result<RequestAndRelatedRecords> refuseWhenDestinationItemIsCheckedOutWithNoRecalls(
@@ -127,28 +111,5 @@ public class MoveRequestService {
     } else {
       return succeeded(requestAndRelatedRecords);
     }
-  }
-
-  // NOTE: copied from CreateRequestService
-  // inheritance may be needed to reduce redundancy 
-  private CompletableFuture<Result<RequestAndRelatedRecords>> refuseWhenUserHasAlreadyBeenLoanedItem(
-    RequestAndRelatedRecords requestAndRelatedRecords) {
-
-    final Request request = requestAndRelatedRecords.getRequest();
-
-    return loanRepository.findOpenLoanForRequest(request)
-      .thenApply(loanResult -> loanResult.failWhen(
-        loan -> of(() -> loan != null && loan.getUserId().equals(request.getUserId())),
-        loan -> {
-          Map<String, String> parameters = new HashMap<>();
-          parameters.put("itemId", request.getItemId());
-          parameters.put("userId", request.getUserId());
-          parameters.put("loanId", loan.getId());
-
-          String message = "This requester currently has this item on loan.";
-
-          return singleValidationError(new ValidationError(message, parameters));
-        })
-      .map(loan -> requestAndRelatedRecords));
   }
 }
