@@ -25,6 +25,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 
 import java.net.MalformedURLException;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -34,6 +35,8 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import api.support.http.InventoryItemResource;
+import org.apache.commons.lang3.StringUtils;
 import org.awaitility.Awaitility;
 import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.support.http.client.IndividualResource;
@@ -50,6 +53,7 @@ import org.junit.Test;
 import api.support.APITestContext;
 import api.support.APITests;
 import api.support.builders.CheckOutByBarcodeRequestBuilder;
+import api.support.builders.ItemBuilder;
 import api.support.builders.FixedDueDateSchedule;
 import api.support.builders.FixedDueDateSchedulesBuilder;
 import api.support.builders.LoanBuilder;
@@ -58,6 +62,7 @@ import api.support.builders.NoticeConfigurationBuilder;
 import api.support.builders.NoticePolicyBuilder;
 import api.support.builders.RequestBuilder;
 import api.support.builders.UserBuilder;
+import api.support.fixtures.ItemExamples;
 import api.support.fixtures.NoticeMatchers;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
@@ -572,7 +577,15 @@ public class CheckOutByBarcodeTests extends APITests {
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
       noticePoliciesFixture.create(noticePolicy).getId());
 
-    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    ItemBuilder itemBuilder = ItemExamples.basedUponSmallAngryPlanet(
+      materialTypesFixture.book().getId(),
+      loanTypesFixture.canCirculate().getId(),
+      StringUtils.EMPTY,
+      "ItemPrefix",
+      "ItemSuffix",
+      Collections.singletonList(""));
+
+    InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet(itemBuilder, itemsFixture.thirdFloorHoldings());
     final IndividualResource steve = usersFixture.steve();
 
     final DateTime loanDate =
@@ -592,7 +605,7 @@ public class CheckOutByBarcodeTests extends APITests {
 
     Map<String, Matcher<String>> noticeContextMatchers = new HashMap<>();
     noticeContextMatchers.putAll(NoticeMatchers.getUserContextMatchers(steve));
-    noticeContextMatchers.putAll(NoticeMatchers.getItemContextMatchers(smallAngryPlanet));
+    noticeContextMatchers.putAll(NoticeMatchers.getItemContextMatchers(smallAngryPlanet, true));
     noticeContextMatchers.putAll(NoticeMatchers.getLoanContextMatchers(loan, 0));
     noticeContextMatchers.putAll(NoticeMatchers.getLoanPolicyContextMatchers(
       loanPoliciesFixture.canCirculateRolling(), 0));
