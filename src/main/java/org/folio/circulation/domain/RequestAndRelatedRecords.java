@@ -6,24 +6,31 @@ public class RequestAndRelatedRecords implements UserRelatedRecord, ItemRelatedR
   private final Request request;
   private final RequestQueue requestQueue;
   private final RequestPolicy requestPolicy;
+  
+  private final MoveRequestRecord moveRequestRecord;
 
   private RequestAndRelatedRecords(
     Request request,
     RequestQueue requestQueue,
-    RequestPolicy requestPolicy) {
+    RequestPolicy requestPolicy,
+    MoveRequestRecord moveRequestRecord) {
 
     this.request = request;
     this.requestQueue = requestQueue;
     this.requestPolicy = requestPolicy;
+    this.moveRequestRecord = moveRequestRecord;
   }
 
   public RequestAndRelatedRecords(Request request) {
-    this(request, null, null);
+    this(request, null, null, null);
   }
 
   public RequestAndRelatedRecords withRequest(Request newRequest) {
-    return new RequestAndRelatedRecords(newRequest.withItem(request.getItem()),
-      this.requestQueue, null
+    return new RequestAndRelatedRecords(
+      newRequest.withItem(request.getItem()),
+      this.requestQueue,
+      null,
+      this.moveRequestRecord
     );
   }
 
@@ -31,7 +38,8 @@ public class RequestAndRelatedRecords implements UserRelatedRecord, ItemRelatedR
     return new RequestAndRelatedRecords(
       this.request,
       this.requestQueue,
-      newRequestPolicy
+      newRequestPolicy,
+      this.moveRequestRecord
     );
   }
 
@@ -39,7 +47,8 @@ public class RequestAndRelatedRecords implements UserRelatedRecord, ItemRelatedR
     return new RequestAndRelatedRecords(
       this.request,
       newRequestQueue,
-      this.requestPolicy
+      this.requestPolicy,
+      this.moveRequestRecord
     );
   }
 
@@ -47,7 +56,26 @@ public class RequestAndRelatedRecords implements UserRelatedRecord, ItemRelatedR
     return new RequestAndRelatedRecords(
       this.request.withItem(newItem),
       this.requestQueue,
-      this.requestPolicy
+      this.requestPolicy,
+      this.moveRequestRecord
+    );
+  }
+  
+  public RequestAndRelatedRecords withRequestType(RequestType newRequestType) {
+    return new RequestAndRelatedRecords(
+      this.request.withRequestType(newRequestType),
+      this.requestQueue,
+      this.requestPolicy,
+      this.moveRequestRecord
+    );
+  }
+
+  public RequestAndRelatedRecords asMove(String originalItemId, String destinationItemId) {
+    return new RequestAndRelatedRecords(
+      this.request,
+      this.requestQueue,
+      this.requestPolicy,
+      MoveRequestRecord.with(originalItemId, destinationItemId)
     );
   }
 
@@ -59,7 +87,15 @@ public class RequestAndRelatedRecords implements UserRelatedRecord, ItemRelatedR
     return requestQueue;
   }
 
-  RequestPolicy getRequestPolicy() {return requestPolicy; }
+  RequestPolicy getRequestPolicy() { return requestPolicy; }
+
+  String getOriginalItemId() {
+    return moveRequestRecord != null ? moveRequestRecord.getOriginalItemId() : null;
+  }
+
+  String getDestinationItemId() {
+    return moveRequestRecord != null ? moveRequestRecord.getDestinationItemId() : null;
+  }
 
   @Override
   public String getUserId() {
