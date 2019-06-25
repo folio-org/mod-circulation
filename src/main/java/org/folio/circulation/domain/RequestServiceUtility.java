@@ -84,7 +84,6 @@ public class RequestServiceUtility {
     // Should it be the userId for both of these failures?
     if (requester == null) {
       return failedValidation("A valid user and patron group are required. User is null", "userId", null);
-
     } else if (requester.getPatronGroupId() == null) {
       return failedValidation("A valid patron group is required. PatronGroup ID is null", "PatronGroupId", null);
     } else {
