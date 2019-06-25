@@ -11,6 +11,7 @@ import static org.hamcrest.junit.MatcherAssert.assertThat;
 import java.net.MalformedURLException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -24,6 +25,10 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
+import api.support.builders.HoldingBuilder;
+import api.support.builders.ItemBuilder;
+import api.support.fixtures.ItemExamples;
+import api.support.http.InventoryItemResource;
 import org.awaitility.Awaitility;
 import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.support.http.client.IndividualResource;
@@ -62,7 +67,7 @@ public class ScheduledDueDateNoticesProcessingTests extends APITests {
 
   private final DateTime loanDate = new DateTime(2018, 3, 18, 11, 43, 54, DateTimeZone.UTC);
 
-  private IndividualResource item;
+  private InventoryItemResource item;
   private IndividualResource borrower;
   private IndividualResource loan;
   private DateTime dueDate;
@@ -77,7 +82,14 @@ public class ScheduledDueDateNoticesProcessingTests extends APITests {
 
     setUpNoticePolicy();
 
-    item = itemsFixture.basedUponSmallAngryPlanet();
+    ItemBuilder itemBuilder = ItemExamples.basedUponSmallAngryPlanet(materialTypesFixture.book().getId(), loanTypesFixture.canCirculate().getId());
+    HoldingBuilder holdingBuilder = itemsFixture.applyCallNumberHoldings(
+      "CN",
+      "Prefix",
+      "Suffix",
+      Collections.singletonList("CopyNumbers"));
+
+    item = itemsFixture.basedUponSmallAngryPlanet(itemBuilder, holdingBuilder);
     borrower = usersFixture.steve();
 
     loan = loansFixture.checkOutByBarcode(
@@ -346,7 +358,7 @@ public class ScheduledDueDateNoticesProcessingTests extends APITests {
 
     Map<String, Matcher<String>> noticeContextMatchers = new HashMap<>();
     noticeContextMatchers.putAll(NoticeMatchers.getUserContextMatchers(borrower));
-    noticeContextMatchers.putAll(NoticeMatchers.getItemContextMatchers(item));
+    noticeContextMatchers.putAll(NoticeMatchers.getItemContextMatchers(item, true));
     noticeContextMatchers.putAll(NoticeMatchers.getLoanContextMatchers(loan, 0));
     noticeContextMatchers.putAll(NoticeMatchers.getLoanPolicyContextMatchers(
       loanPoliciesFixture.canCirculateRolling(), 0));

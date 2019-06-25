@@ -541,7 +541,7 @@ public class RequestsAPIUpdatingTests extends APITests {
 
     Map<String, Matcher<String>> noticeContextMatchers = new HashMap<>();
     noticeContextMatchers.putAll(NoticeMatchers.getUserContextMatchers(requester));
-    noticeContextMatchers.putAll(NoticeMatchers.getItemContextMatchers(temeraire));
+    noticeContextMatchers.putAll(NoticeMatchers.getItemContextMatchers(temeraire, true));
     noticeContextMatchers.putAll(NoticeMatchers.getRequestContextMatchers(updatedRequest));
     noticeContextMatchers.putAll(NoticeMatchers.getCancelledRequestContextMatchers(updatedRequest));
     MatcherAssert.assertThat(sentNotices,
