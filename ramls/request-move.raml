@@ -29,6 +29,18 @@ types:
                 application/json:
                   type: !include request.json
                   example: !include examples/request.json
+            404:
+              description: "Request recourd not found"
+              body:
+                text/plain:
+                  type: error
+                  example: "request record with ID \"f3eb6d07-861a-4b76-9937-2ae12768e5f5\" cannot be found"
+            422:
+              description: "Unable to process request"
+              body:
+                application/json:
+                  type: error
+                  example: !include examples/move-request-error.json
             500:
               description: "Internal server error"
               body:
