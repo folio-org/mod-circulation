@@ -81,7 +81,7 @@ public class MoveRequestService {
       .next(RequestServiceUtility::refuseWhenInvalidUserAndPatronGroup)
       .next(RequestServiceUtility::refuseWhenItemIsNotValid)
       .next(RequestServiceUtility::refuseWhenUserHasAlreadyRequestedItem)
-      .next(MoveRequestService::refuseWhenDestinationItemIsCheckedOutWithNoRecalls)
+      .next(MoveRequestService::refuseWhenMovingRecallRequestToCheckedOutDestinationItemIdWithNoRecalls)
       .after(requestLoanService::refuseWhenUserHasAlreadyBeenLoanedItem)
       .thenComposeAsync(r -> r.after(requestLoanService.requestPolicyRepository::lookupRequestPolicy))
       .thenApply(r -> r.next(RequestServiceUtility::refuseWhenRequestCannotBeFulfilled))
@@ -92,7 +92,7 @@ public class MoveRequestService {
       .thenComposeAsync(r -> r.after(requestLoanService.requestRepository::update));
   }
 
-  private static Result<RequestAndRelatedRecords> refuseWhenDestinationItemIsCheckedOutWithNoRecalls(
+  private static Result<RequestAndRelatedRecords> refuseWhenMovingRecallRequestToCheckedOutDestinationItemIdWithNoRecalls(
     RequestAndRelatedRecords requestAndRelatedRecords) {
 
     final Request request = requestAndRelatedRecords.getRequest();    
