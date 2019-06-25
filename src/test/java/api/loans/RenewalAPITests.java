@@ -1246,7 +1246,7 @@ abstract class RenewalAPITests extends APITests {
   }
 
   @Test
-  public void cannotRenewalForRollingLoanWhenDueDatNotFallWithinRangeDueDateLimit() throws
+  public void cannotRenewWhenCurrentDueDateDoesNotFallWithinLimitingDueDateSchedule() throws
     InterruptedException,
     ExecutionException,
     TimeoutException,
