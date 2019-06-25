@@ -1288,7 +1288,7 @@ abstract class RenewalAPITests extends APITests {
   }
 
   @Test
-  public void  canRenewalForCurrentDueDateWhenDueDatNotFallWithinRangeAlternateDueDateLimited()
+  public void  canRenewFromCurrentDueDateWhenDueDateFallsWithinRangeOfAlternateDueDateLimit()
     throws InterruptedException,
     MalformedURLException,
     TimeoutException,
