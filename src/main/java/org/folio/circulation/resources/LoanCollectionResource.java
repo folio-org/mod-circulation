@@ -14,6 +14,7 @@ import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.domain.LoanRepository;
 import org.folio.circulation.domain.LoanRepresentation;
+import org.folio.circulation.domain.LoanService;
 import org.folio.circulation.domain.RequestQueue;
 import org.folio.circulation.domain.RequestQueueRepository;
 import org.folio.circulation.domain.ServicePointRepository;
@@ -63,6 +64,7 @@ public class LoanCollectionResource extends CollectionResource {
     final UpdateRequestQueue requestQueueUpdate = UpdateRequestQueue.using(clients);
     final UpdateItem updateItem = new UpdateItem(clients);
     final LoanRepository loanRepository = new LoanRepository(clients);
+    final LoanService loanService = new LoanService(clients);
     final LoanPolicyRepository loanPolicyRepository = new LoanPolicyRepository(clients);
 
     final ProxyRelationshipValidator proxyRelationshipValidator =
@@ -104,6 +106,7 @@ public class LoanCollectionResource extends CollectionResource {
       .thenComposeAsync(r -> r.after(loanPolicyRepository::lookupLoanPolicy))
       .thenComposeAsync(r -> r.after(requestQueueUpdate::onCheckOut))
       .thenComposeAsync(r -> r.after(updateItem::onCheckOut))
+      .thenComposeAsync(r -> r.after(loanService::handleRecall))
       .thenComposeAsync(r -> r.after(loanRepository::createLoan))
       .thenApply(r -> r.map(LoanAndRelatedRecords::getLoan))
       .thenApply(r -> r.map(loanRepresentation::extendedLoan))

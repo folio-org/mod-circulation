@@ -25,6 +25,7 @@ import org.folio.circulation.support.http.client.Response;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeConstants;
 import org.joda.time.DateTimeZone;
+import org.joda.time.LocalTime;
 import org.joda.time.format.ISODateTimeFormat;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -414,6 +415,7 @@ public class LoanDueDatesAfterRecallTests extends APITests {
         .rolling(Period.weeks(3))
         .unlimitedRenewals()
         .renewFromSystemDate()
+        .withClosedLibraryDueDateManagement(DueDateManagement.KEEP_THE_CURRENT_DUE_DATE.getValue())
         .withRecallsMinimumGuaranteedLoanPeriod(Period.weeks(2))
         .withRecallsRecallReturnInterval(Period.months(2));
 
@@ -439,7 +441,12 @@ public class LoanDueDatesAfterRecallTests extends APITests {
 
     final JsonObject storedLoan = loansStorageClient.getById(loan.getId()).getJson();
 
-    final String expectedDueDate = ClockManager.getClockManager().getDateTime().plusMonths(2).toString(ISODateTimeFormat.dateTime());
+    final String expectedDueDate = ClockManager
+      .getClockManager()
+      .getDateTime()
+      .plusMonths(2)
+      .withTime(LocalTime.MIDNIGHT.minusSeconds(1))
+      .toString(ISODateTimeFormat.dateTime());
     assertThat("due date is not the recall due date (2 months)",
         storedLoan.getString("dueDate"), is(expectedDueDate));
 
