@@ -140,7 +140,7 @@ public class UpdateRequestQueue {
     RequestAndRelatedRecords requestAndRelatedRecords) {
     final Request request = requestAndRelatedRecords.getRequest();
     final RequestQueue requestQueue = requestAndRelatedRecords.getRequestQueue();
-    if (requestAndRelatedRecords.getOriginalItemId().contentEquals(request.getItemId())) {
+    if (requestAndRelatedRecords.getOriginalItemId().equals(request.getItemId())) {
       requestQueue.remove(request);
       return requestQueueRepository.updateRequestsWithChangedPositions(requestQueue)
             .thenApply(r -> r.map(requestAndRelatedRecords::withRequestQueue));
