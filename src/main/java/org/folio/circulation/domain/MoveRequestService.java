@@ -38,10 +38,12 @@ public class MoveRequestService {
 
   public CompletableFuture<Result<RequestAndRelatedRecords>> moveRequest(
       RequestAndRelatedRecords requestAndRelatedRecords) {
-    return completedFuture(of(() -> requestAndRelatedRecords)).thenComposeAsync(r -> r.after(this::withDestinationItem))
+    return completedFuture(of(() -> requestAndRelatedRecords))
+        .thenComposeAsync(r -> r.after(this::withDestinationItem))
         .thenComposeAsync(r -> r.after(this::withDestinationItemRequestQueue))
         .thenApply(r -> r.map(MoveRequestService::pagedRequestIfDestinationItemAvailable))
-        .thenCompose(r -> r.after(this::updateRequest)).thenComposeAsync(r -> r.after(this::withOriginalItem))
+        .thenCompose(r -> r.after(this::updateRequest))
+        .thenComposeAsync(r -> r.after(this::withOriginalItem))
         .thenComposeAsync(r -> r.after(this::withOriginalItemRequestQueue))
         .thenCompose(r -> r.after(updateRequestQueue::onMoved))
         .thenComposeAsync(r -> r.after(this::withDestinationItem))
