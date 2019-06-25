@@ -29,7 +29,8 @@ public class CreateRequestService {
   public CompletableFuture<Result<RequestAndRelatedRecords>> createRequest(
       RequestAndRelatedRecords requestAndRelatedRecords) {
 
-    return of(() -> requestAndRelatedRecords).next(RequestServiceUtility::refuseWhenItemDoesNotExist)
+    return of(() -> requestAndRelatedRecords)
+        .next(RequestServiceUtility::refuseWhenItemDoesNotExist)
         .next(RequestServiceUtility::refuseWhenInvalidUserAndPatronGroup)
         .next(RequestServiceUtility::refuseWhenItemIsNotValid)
         .next(RequestServiceUtility::refuseWhenUserHasAlreadyRequestedItem)
