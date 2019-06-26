@@ -94,9 +94,12 @@ public class RequestByInstanceIdResource extends Resource {
         finder.getItemsByInstanceId(requestByInstanceIdRequest.getInstanceId())
               .thenApply(r -> r.next(items -> segregateItemsList(items, requestRelatedRecords)));
 
-    CompletableFuture<Result<InstanceRequestRelatedRecords>> sortedAvailableItemsFuture = itemsListsFuture.thenApply(r -> r.next(RequestByInstanceIdResource::rankItemsByMatchingServicePoint));
-    CompletableFuture<Result<Map<Item, DateTime>>> loanItemsFuture = itemsListsFuture.thenCompose(r -> r.after(relatedRecords -> getLoanItems(relatedRecords, clients)));
-    CompletableFuture<Result<Map<Item, Integer>>> requestQueuesFuture = itemsListsFuture.thenCompose(r -> r.after(relatedRecords -> getRequestQueues(relatedRecords, clients)));
+    CompletableFuture<Result<InstanceRequestRelatedRecords>> sortedAvailableItemsFuture =
+        itemsListsFuture.thenApply(r -> r.next(RequestByInstanceIdResource::rankItemsByMatchingServicePoint));
+    CompletableFuture<Result<Map<Item, DateTime>>> loanItemsFuture =
+        itemsListsFuture.thenCompose(r -> r.after(relatedRecords -> getLoanItems(relatedRecords, clients)));
+    CompletableFuture<Result<Map<Item, Integer>>> requestQueuesFuture =
+        itemsListsFuture.thenCompose(r -> r.after(relatedRecords -> getRequestQueues(relatedRecords, clients)));
 
     CompletableFuture.allOf(sortedAvailableItemsFuture, loanItemsFuture, requestQueuesFuture)
                      .thenCompose( x -> CompletableFuture.completedFuture(
