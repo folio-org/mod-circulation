@@ -12,9 +12,7 @@ import static org.folio.circulation.support.ValidationErrorFailure.singleValidat
 import java.lang.invoke.MethodHandles;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Comparator;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -123,8 +121,7 @@ public class RequestByInstanceIdResource extends Resource {
         itemsListsFuture.thenCompose(r -> r.after(relatedRecords -> getRequestQueues(relatedRecords, clients)));
 
     CompletableFuture.allOf(sortedAvailableItemsFuture, loanItemsFuture, requestQueuesFuture)
-                     .thenCompose( x -> CompletableFuture.completedFuture(
-                          combineWithUnavailableItems(loanItemsFuture.join(), requestQueuesFuture.join(), requestRelatedRecords)))
+                     .thenApply( x -> combineWithUnavailableItems(loanItemsFuture.join(), requestQueuesFuture.join(), requestRelatedRecords))
                      .thenApply( r -> r.next(RequestByInstanceIdResource::instanceToItemRequests))
                      .thenCompose( r -> r.after( requests -> placeRequests(requests, clients)))
                      .thenApply(r -> r.map(RequestAndRelatedRecords::getRequest))
@@ -161,7 +158,7 @@ public class RequestByInstanceIdResource extends Resource {
     return CompletableFuture.allOf(loanFutures.toArray(new CompletableFuture[0]))
       .thenApply(dd -> {
         Map<Item, DateTime> itemDueDateMap = new HashMap<>();
-        List<Item> itemsWithoutLoansList = new LinkedList<>(); //to preserve the order it was found.
+        List<Item> itemsWithoutLoansList = new ArrayList<>();
 
         for (Map.Entry<Item, CompletableFuture<Result<Loan>>> entry : itemLoanFuturesMap.entrySet()) {
           Result<Loan> aLoanResult = entry.getValue().join();
@@ -198,7 +195,7 @@ public class RequestByInstanceIdResource extends Resource {
     return CompletableFuture.allOf(requestQueuesFutures.toArray(new CompletableFuture[0]))
       .thenApply(x -> {
         Map<Item, Integer> itemQueueSizeMap = new HashMap<>();
-        List<Item> itemsWithoutRequestQueues = new LinkedList<>(); //to preserve the order it was found.
+        List<Item> itemsWithoutRequestQueues = new ArrayList<>();
 
         for (Map.Entry<Item, CompletableFuture<Result<RequestQueue>>> entry : itemRequestQueueMap.entrySet()) {
           Result<RequestQueue> requestQueueResult = entry.getValue().join();
@@ -330,14 +327,14 @@ public class RequestByInstanceIdResource extends Resource {
 
           JsonObject requestBody = new JsonObject();
 
-          write(requestBody,ITEM_ID_FIELD, item.getItemId());
-          write(requestBody,"requestDate",
+          write(requestBody, ITEM_ID_FIELD, item.getItemId());
+          write(requestBody, "requestDate",
             requestByInstanceIdRequest.getRequestDate().toString(ISODateTimeFormat.dateTime()));
-          write(requestBody,"requesterId", requestByInstanceIdRequest.getRequesterId().toString());
-          write(requestBody,"pickupServicePointId",
+          write(requestBody, "requesterId", requestByInstanceIdRequest.getRequesterId().toString());
+          write(requestBody, "pickupServicePointId",
             requestByInstanceIdRequest.getPickupServicePointId().toString());
-          write(requestBody,"fulfilmentPreference", defaultFulfilmentPreference);
-          write(requestBody,"requestType", reqType.getValue());
+          write(requestBody, "fulfilmentPreference", defaultFulfilmentPreference);
+          write(requestBody, "requestType", reqType.getValue());
           if (requestByInstanceIdRequest.getRequestExpirationDate() != null) {
             write(requestBody, "requestExpirationDate",
               requestByInstanceIdRequest.getRequestExpirationDate().toString(ISODateTimeFormat.dateTime()));
@@ -372,7 +369,6 @@ public class RequestByInstanceIdResource extends Resource {
     InstanceRequestRelatedRecords records){
 
     return of(() -> {
-
       if (itemDueDateMapResult.succeeded() && itemRequestQueueSizeMapResult.succeeded()) {
         Map<Item, DateTime> itemDueDateMap = itemDueDateMapResult.value();
         Map<Item, Integer> itemQueueSizeMap = itemRequestQueueSizeMapResult.value();
@@ -385,13 +381,12 @@ public class RequestByInstanceIdResource extends Resource {
         Map<Item, Integer> sortedMap = sortRequestQueues(itemQueueSizeMap, itemDueDateMap,
           records.getInstanceLevelRequest().getPickupServicePointId());
 
-        LinkedList<Item> finalOrdedList = new LinkedList<>(sortedMap.keySet());
+        ArrayList<Item> finalOrdedList = new ArrayList<>(sortedMap.keySet());
 
         //put the items that it wasn't able to retrieve loans or RequestQueues for on the bottom of the list
         finalOrdedList.addAll(records.getItemsWithoutLoans());
         finalOrdedList.addAll(records.getItemsWithoutRequests());
         records.setSortedUnavailableItems(finalOrdedList);
-        return records;
       }
       return records;
     });

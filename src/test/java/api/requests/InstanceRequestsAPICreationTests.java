@@ -724,13 +724,13 @@ public class InstanceRequestsAPICreationTests extends APITests {
   private JsonObject createInstanceRequestObject(UUID instanceId, UUID requesterId, UUID pickupServicePointId,
                                                  DateTime requestDate, DateTime requestExpirationDate){
     JsonObject requestBody = new JsonObject();
-    write(requestBody,"instanceId", instanceId.toString());
-    write(requestBody,"requestDate", requestDate.toString(ISODateTimeFormat.dateTime()));
-    write(requestBody,"requesterId", requesterId.toString());
-    write(requestBody,"pickupServicePointId", pickupServicePointId.toString());
-    write(requestBody,"fulfilmentPreference", "Hold Shelf");
+    write(requestBody, "instanceId", instanceId.toString());
+    write(requestBody, "requestDate", requestDate.toString(ISODateTimeFormat.dateTime()));
+    write(requestBody, "requesterId", requesterId.toString());
+    write(requestBody, "pickupServicePointId", pickupServicePointId.toString());
+    write(requestBody, "fulfilmentPreference", "Hold Shelf");
     if (requestExpirationDate != null)
-      write(requestBody,"requestExpirationDate",
+      write(requestBody, "requestExpirationDate",
         requestExpirationDate.toString(ISODateTimeFormat.dateTime()));
 
     return requestBody;
