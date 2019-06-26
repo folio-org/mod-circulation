@@ -24,6 +24,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import api.support.http.InventoryItemResource;
 import org.awaitility.Awaitility;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
@@ -348,7 +349,7 @@ public class CheckInByBarcodeTests extends APITests {
     final IndividualResource homeLocation = locationsFixture.basedUponExampleLocation(
       builder -> builder.withPrimaryServicePoint(checkInServicePointId));
 
-    final IndividualResource nod = itemsFixture.basedUponNod(
+    final InventoryItemResource nod = itemsFixture.basedUponNod(
       builder -> builder.withTemporaryLocation(homeLocation.getId()));
 
     loansFixture.checkOutByBarcode(nod, james, loanDate);
@@ -372,7 +373,7 @@ public class CheckInByBarcodeTests extends APITests {
 
     Map<String, Matcher<String>> noticeContextMatchers = new HashMap<>();
     noticeContextMatchers.putAll(NoticeMatchers.getUserContextMatchers(james));
-    noticeContextMatchers.putAll(NoticeMatchers.getItemContextMatchers(nod));
+    noticeContextMatchers.putAll(NoticeMatchers.getItemContextMatchers(nod, true));
     noticeContextMatchers.putAll(NoticeMatchers.getLoanContextMatchers(checkInResponse.getLoan(), 0));
     noticeContextMatchers.put("loan.checkinDate",
       withinSecondsAfter(Seconds.seconds(10), checkInDate));
@@ -428,7 +429,7 @@ public class CheckInByBarcodeTests extends APITests {
 
   @Test
   public void patronNoticeOnCheckInAfterCheckOutAndRequestToItem() throws Exception {
-    IndividualResource item = itemsFixture.basedUponSmallAngryPlanet();
+    InventoryItemResource item = itemsFixture.basedUponSmallAngryPlanet();
 
     loansFixture.checkOutByBarcode(item, usersFixture.jessica());
 
@@ -470,7 +471,7 @@ public class CheckInByBarcodeTests extends APITests {
 
   @Test
   public void patronNoticeOnCheckInAfterRequestToItem() throws Exception {
-    IndividualResource item = itemsFixture.basedUponSmallAngryPlanet();
+    InventoryItemResource item = itemsFixture.basedUponSmallAngryPlanet();
     DateTime requestDate = new DateTime(2019, 5, 5, 10, 22, 54, DateTimeZone.UTC);
     UUID servicePointId = servicePointsFixture.cd1().getId();
     IndividualResource requester = usersFixture.steve();
@@ -510,7 +511,7 @@ public class CheckInByBarcodeTests extends APITests {
 
   private void checkPatronNoticeEvent(
     IndividualResource request, IndividualResource requester,
-    IndividualResource item, UUID expectedTemplateId)
+    InventoryItemResource item, UUID expectedTemplateId)
     throws Exception {
 
     Awaitility.await()
@@ -521,7 +522,7 @@ public class CheckInByBarcodeTests extends APITests {
 
     Map<String, Matcher<String>> noticeContextMatchers = new HashMap<>();
     noticeContextMatchers.putAll(NoticeMatchers.getUserContextMatchers(requester));
-    noticeContextMatchers.putAll(NoticeMatchers.getItemContextMatchers(item));
+    noticeContextMatchers.putAll(NoticeMatchers.getItemContextMatchers(item, true));
     noticeContextMatchers.putAll(NoticeMatchers.getRequestContextMatchers(request));
     MatcherAssert.assertThat(sentNotices,
       hasItems(

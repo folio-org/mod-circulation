@@ -1,6 +1,7 @@
 package api.loans;
 
 import static api.support.builders.FixedDueDateSchedule.forDay;
+import static api.support.builders.FixedDueDateSchedule.todayOnly;
 import static api.support.builders.FixedDueDateSchedule.wholeMonth;
 import static api.support.builders.ItemBuilder.CHECKED_OUT;
 import static api.support.fixtures.CalendarExamples.CASE_FRI_SAT_MON_SERVICE_POINT_ID;
@@ -1178,6 +1179,206 @@ abstract class RenewalAPITests extends APITests {
 
     assertThat("due date should be " + expectedDate,
       renewedLoan.getString("dueDate"), isEquivalentTo(expectedDate));
+  }
+
+  @Test
+  public void canRenewWhenCurrentDueDateFallsWithinLimitingDueDateSchedule() throws
+    InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    MalformedURLException {
+
+    FixedDueDateSchedulesBuilder fixedDueDateSchedules = new FixedDueDateSchedulesBuilder()
+      .withName("Fixed Due Date Schedule")
+      .addSchedule(wholeMonth(2019, DateTimeConstants.MARCH))
+      .addSchedule(wholeMonth(2019, DateTimeConstants.MAY));
+
+    DateTime expectedDueDate =
+      new DateTime(2019, DateTimeConstants.MAY, 31, 23, 59, 59)
+        .withZoneRetainFields(DateTimeZone.UTC);
+
+    final UUID fixedDueDateSchedulesId = loanPoliciesFixture.createSchedule(
+      fixedDueDateSchedules).getId();
+
+    LoanPolicyBuilder currentDueDateRollingPolicy = new LoanPolicyBuilder()
+      .withName("Current Due Date Rolling Policy")
+      .rolling(Period.months(1))
+      .limitedBySchedule(fixedDueDateSchedulesId)
+      .renewFromCurrentDueDate();
+
+    UUID dueDateLimitedPolicyId = loanPoliciesFixture.create(currentDueDateRollingPolicy)
+      .getId();
+
+    checkRenewalAttempt(expectedDueDate, dueDateLimitedPolicyId);
+  }
+
+  @Test
+  public void canRenewWhenSystemDateFallsWithinLimitingDueDateSchedule() throws
+    InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    MalformedURLException {
+
+    FixedDueDateSchedulesBuilder fixedDueDateSchedules = new FixedDueDateSchedulesBuilder()
+      .withName("Fixed Due Date Schedule")
+      .addSchedule(wholeMonth(2019, DateTimeConstants.MARCH))
+      .addSchedule(todayOnly());
+
+    DateTime expectedDueDate = DateTime.now(DateTimeZone.UTC)
+      .withTimeAtStartOfDay()
+      .withHourOfDay(23)
+      .withMinuteOfHour(59)
+      .withSecondOfMinute(59);
+
+    final UUID fixedDueDateSchedulesId = loanPoliciesFixture.createSchedule(
+      fixedDueDateSchedules).getId();
+
+    LoanPolicyBuilder currentDueDateRollingPolicy = new LoanPolicyBuilder()
+      .withName("System Date Rolling Policy")
+      .rolling(Period.months(1))
+      .limitedBySchedule(fixedDueDateSchedulesId)
+      .renewFromSystemDate();
+
+    UUID dueDateLimitedPolicyId = loanPoliciesFixture.create(currentDueDateRollingPolicy)
+      .getId();
+
+    checkRenewalAttempt(expectedDueDate, dueDateLimitedPolicyId);
+  }
+
+  @Test
+  public void cannotRenewWhenCurrentDueDateDoesNotFallWithinLimitingDueDateSchedule() throws
+    InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    MalformedURLException {
+
+    DateTime futureDateTime = DateTime.now(DateTimeZone.UTC).plusMonths(1);
+
+    FixedDueDateSchedulesBuilder fixedDueDateSchedules = new FixedDueDateSchedulesBuilder()
+      .withName("Fixed Due Date Schedule in the Future")
+      .addSchedule(wholeMonth(futureDateTime.getYear(), futureDateTime.getMonthOfYear()));
+
+    final UUID fixedDueDateSchedulesId = loanPoliciesFixture.createSchedule(
+      fixedDueDateSchedules).getId();
+
+    LoanPolicyBuilder currentDueDateRollingPolicy = new LoanPolicyBuilder()
+      .withName("System Date Rolling Policy")
+      .rolling(Period.months(1))
+      .limitedBySchedule(fixedDueDateSchedulesId)
+      .renewFromSystemDate();
+
+    UUID dueDateLimitedPolicyId = loanPoliciesFixture.create(currentDueDateRollingPolicy)
+      .getId();
+
+    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final IndividualResource jessica = usersFixture.jessica();
+
+    DateTime loanDueDate =
+      new DateTime(2019, DateTimeConstants.APRIL, 21, 11, 21, 43);
+
+    loansFixture.checkOutByBarcode(smallAngryPlanet, jessica, loanDueDate);
+
+    useLoanPolicyAsFallback(
+      dueDateLimitedPolicyId,
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
+      noticePoliciesFixture.activeNotice().getId()
+    );
+
+    loansFixture.attemptRenewal(422, smallAngryPlanet, jessica);
+  }
+
+  @Test
+  public void  canRenewFromCurrentDueDateWhenDueDateFallsWithinRangeOfAlternateDueDateLimit()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    FixedDueDateSchedulesBuilder dueDateLimitSchedule = new FixedDueDateSchedulesBuilder()
+      .withName("Alternate Due Date Limit")
+      .addSchedule(wholeMonth(2019, DateTimeConstants.MARCH))
+      .addSchedule(wholeMonth(2019, DateTimeConstants.MAY));
+
+    DateTime expectedDueDate =
+      new DateTime(2019, DateTimeConstants.MAY, 31, 23, 59, 59)
+        .withZoneRetainFields(DateTimeZone.UTC);
+
+    final UUID dueDateLimitScheduleId = loanPoliciesFixture.createSchedule(
+      dueDateLimitSchedule).getId();
+
+    LoanPolicyBuilder dueDateLimitedPolicy = new LoanPolicyBuilder()
+      .withName("Due Date Limited Rolling Policy")
+      .rolling(Period.months(1))
+      .renewFromCurrentDueDate()
+      .renewWith(Period.months(1), dueDateLimitScheduleId);
+
+    final IndividualResource loanPolicy = loanPoliciesFixture
+      .create(dueDateLimitedPolicy);
+    UUID dueDateLimitedPolicyId = loanPolicy.getId();
+
+    checkRenewalAttempt(expectedDueDate, dueDateLimitedPolicyId);
+  }
+
+  @Test
+  public void  canRenewWhenSystemDateFallsWithinAlternateScheduleAndDueDateDoesNot()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    FixedDueDateSchedulesBuilder dueDateLimitSchedule = new FixedDueDateSchedulesBuilder()
+      .withName("Alternate Due Date Limit")
+      .addSchedule(wholeMonth(2019, DateTimeConstants.MARCH))
+      .addSchedule(todayOnly());
+
+    DateTime expectedDueDate = DateTime.now(DateTimeZone.UTC)
+      .withTimeAtStartOfDay()
+      .withHourOfDay(23)
+      .withMinuteOfHour(59)
+      .withSecondOfMinute(59);
+
+    final UUID dueDateLimitScheduleId = loanPoliciesFixture.createSchedule(
+      dueDateLimitSchedule).getId();
+
+    LoanPolicyBuilder dueDateLimitedPolicy = new LoanPolicyBuilder()
+      .withName("Due Date Limited Rolling Policy")
+      .rolling(Period.months(1))
+      .renewFromSystemDate()
+      .renewWith(Period.months(1), dueDateLimitScheduleId);
+
+    final IndividualResource loanPolicy = loanPoliciesFixture
+      .create(dueDateLimitedPolicy);
+    UUID dueDateLimitedPolicyId = loanPolicy.getId();
+
+    checkRenewalAttempt(expectedDueDate, dueDateLimitedPolicyId);
+  }
+
+  private void checkRenewalAttempt(DateTime expectedDueDate, UUID dueDateLimitedPolicyId)
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final IndividualResource jessica = usersFixture.jessica();
+
+    DateTime loanDate =
+      new DateTime(2019, DateTimeConstants.APRIL, 21, 11, 21, 43);
+
+    loansFixture.checkOutByBarcode(smallAngryPlanet, jessica, loanDate);
+
+    useLoanPolicyAsFallback(
+      dueDateLimitedPolicyId,
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
+      noticePoliciesFixture.activeNotice().getId()
+    );
+
+    Response response = loansFixture.attemptRenewal(200, smallAngryPlanet, jessica);
+    assertThat(response.getJson().getString("action"), is("renewed"));
+
+    assertThat("due date should be the end date of the last fixed due date schedule",
+      response.getJson().getString("dueDate"),
+      isEquivalentTo(expectedDueDate));
   }
 
   private Matcher<ValidationError> hasLoanPolicyIdParameter(UUID loanPolicyId) {

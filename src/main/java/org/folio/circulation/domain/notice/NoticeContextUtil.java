@@ -1,7 +1,6 @@
 package org.folio.circulation.domain.notice;
 
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Loan;
@@ -12,11 +11,13 @@ import org.folio.circulation.domain.ServicePoint;
 import org.folio.circulation.domain.User;
 import org.folio.circulation.domain.policy.LoanPolicy;
 import org.folio.circulation.support.JsonArrayHelper;
-import org.folio.circulation.support.JsonStringArrayHelper;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 
 import io.vertx.core.json.JsonObject;
+
+import static java.util.stream.Collectors.joining;
+import static org.folio.circulation.support.JsonStringArrayHelper.toStream;
 
 public class NoticeContextUtil {
 
@@ -73,12 +74,12 @@ public class NoticeContextUtil {
   private static JsonObject createItemContext(Item item) {
     String contributorNamesToken = JsonArrayHelper.toStream(item.getContributorNames())
       .map(o -> o.getString("name"))
-      .collect(Collectors.joining("; "));
+      .collect(joining("; "));
 
     String yearCaptionsToken = String.join("; ", item.getYearCaption());
 
-    String captionsToken = JsonStringArrayHelper.toStream(item.getCopyNumbers())
-      .collect(Collectors.joining("; "));
+    String copyNumbersToken = toStream(item.getCopyNumbers())
+      .collect(joining("; "));
 
     JsonObject itemContext = new JsonObject()
       .put("title", item.getTitle())
@@ -95,7 +96,7 @@ public class NoticeContextUtil {
       .put("yearCaption", yearCaptionsToken)
       .put("materialType", item.getMaterialTypeName())
       .put("loanType", item.getLoanTypeName())
-      .put("copy", captionsToken)
+      .put("copy", copyNumbersToken)
       .put("numberOfPieces", item.getNumberOfPieces())
       .put("descriptionOfPieces", item.getDescriptionOfPieces());
 

@@ -5,6 +5,7 @@ import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
 import static org.folio.circulation.support.JsonPropertyWriter.write;
 
 import java.net.MalformedURLException;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
@@ -127,6 +128,23 @@ public class ItemsFixture {
     ExecutionException {
 
     return basedUponSmallAngryPlanet(identity());
+  }
+
+  public InventoryItemResource basedUponSmallAngryPlanet(
+    ItemBuilder itemBuilder,
+    HoldingBuilder holdingBuilder)
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    return applyAdditionalProperties(
+      identity(),
+      identity(),
+      InstanceExamples.basedUponSmallAngryPlanet(booksInstanceTypeId(),
+        getPersonalContributorNameTypeId()),
+      holdingBuilder,
+      itemBuilder);
   }
 
   public InventoryItemResource basedUponSmallAngryPlanet(
@@ -313,7 +331,7 @@ public class ItemsFixture {
     return new InventoryItemResource(item, holding, instance);
   }
 
-  private HoldingBuilder thirdFloorHoldings()
+  public HoldingBuilder thirdFloorHoldings()
     throws InterruptedException,
     MalformedURLException,
     TimeoutException,
@@ -323,6 +341,25 @@ public class ItemsFixture {
       .withPermanentLocation(locationsFixture.thirdFloor())
       .withNoTemporaryLocation()
       .withCallNumber("123456");
+  }
+
+  public HoldingBuilder applyCallNumberHoldings(
+    String callNumber,
+    String callNumberPrefix,
+    String callNumberSuffix,
+    List<String> copyNumbers)
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    return new HoldingBuilder()
+      .withPermanentLocation(locationsFixture.thirdFloor())
+      .withNoTemporaryLocation()
+      .withCallNumber(callNumber)
+      .withCallNumberPrefix(callNumberPrefix)
+      .withCallNumberSuffix(callNumberSuffix)
+      .withCopyNumbers(copyNumbers);
   }
 
   private UUID booksInstanceTypeId()
