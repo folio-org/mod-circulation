@@ -21,6 +21,24 @@
       ]
     },
     {
+      "id": "request-move",
+      "version": "0.1",
+      "handlers": [
+        {
+          "methods": [
+            "POST"
+          ],
+          "pathPattern": "/circulation/requests/{id}/move",
+          "permissionsRequired": [
+            "circulation.requests.item.move.post"
+          ],
+          "modulePermissions": [
+            "modperms.circulation.requests.item.move.post"
+          ]
+        }
+      ]
+    },
+    {
       "id": "circulation",
       "version": "7.8",
       "handlers": [
@@ -794,6 +812,11 @@
       "description": "delete individual request"
     },
     {
+      "permissionName": "circulation.requests.item.move.post",
+      "displayName": "circulation - move individual requests to another item",
+      "description": "move individual request to another item"
+    },
+    {
       "permissionName": "circulation.requests.queue.collection.get",
       "displayName": "circulation - request queue for an item",
       "description": "get request queue for an item"
@@ -838,6 +861,7 @@
         "circulation.requests.item.post",
         "circulation.requests.item.put",
         "circulation.requests.item.delete",
+        "circulation.requests.item.move.post",
         "circulation.requests.collection.delete",
         "circulation.requests.queue.collection.get",
         "circulation.requests.instances.item.post",
@@ -861,6 +885,44 @@
         "circulation-storage.requests.collection.get",
         "users.collection.get",
         "users.item.get"
+      ],
+      "visible": false
+    },
+    {
+      "permissionName": "modperms.circulation.requests.item.move.post",
+      "displayName" : "module permissions for one op",
+      "description" : "to reduce X-Okapi-Token size",
+      "subPermissions": [
+        "circulation-storage.requests.item.put",
+        "circulation-storage.requests.item.post",
+        "inventory-storage.items.item.put",
+        "circulation-storage.requests.collection.get",
+        "circulation-storage.requests.item.get",
+        "circulation-storage.loans.item.put",
+        "circulation-storage.loans.collection.get",
+        "inventory-storage.items.item.get",
+        "inventory-storage.items.collection.get",
+        "inventory-storage.holdings.collection.get",
+        "inventory-storage.holdings.item.get",
+        "inventory-storage.instances.collection.get",
+        "inventory-storage.instances.item.get",
+        "inventory-storage.locations.collection.get",
+        "inventory-storage.locations.item.get",
+        "inventory-storage.location-units.institutions.item.get",
+        "inventory-storage.location-units.campuses.item.get",
+        "inventory-storage.location-units.libraries.item.get",
+        "inventory-storage.service-points.collection.get",
+        "inventory-storage.service-points.item.get",
+        "users.item.get",
+        "users.collection.get",
+        "usergroups.collection.get",
+        "usergroups.item.get",
+        "proxiesfor.collection.get",
+        "circulation.rules.notice-policy.get",
+        "circulation-storage.patron-notice-policies.item.get",
+        "patron-notice.post",
+        "circulation-storage.cancellation-reasons.item.get",
+        "inventory-storage.loan-types.item.get"
       ],
       "visible": false
     },

@@ -1,6 +1,7 @@
 package api.support.http;
 
 import static java.net.HttpURLConnection.HTTP_CREATED;
+import static java.net.HttpURLConnection.HTTP_OK;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 
@@ -549,6 +550,60 @@ public class ResourceClient {
     return JsonArrayHelper.toList(json
       .getJsonArray(collectionArrayPropertyName));
   }
+  
+  public IndividualResource move(Builder builder)
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    return move(builder.create());
+  }
+  
+  public Response attemptMove(Builder builder)
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    CompletableFuture<Response> moveCompleted = new CompletableFuture<>();
+
+    JsonObject request = builder.create();
+
+    String path = String.format("/%s/move", request.getString("id"));
+
+    client.post(urlMaker.combine(path), request,
+      ResponseHandler.any(moveCompleted));
+
+    return moveCompleted.get(15, TimeUnit.SECONDS);
+  }
+  
+  public IndividualResource move(JsonObject request)
+    throws MalformedURLException,
+    InterruptedException,
+    ExecutionException,
+    TimeoutException {
+
+    CompletableFuture<Response> moveCompleted = new CompletableFuture<>();
+
+    log.debug("Attempting to move {} record: {}", resourceName,
+      request.encodePrettily());
+
+    client.post(urlMaker.combine(String.format("/%s/move", request.getString("id"))), request,
+      ResponseHandler.any(moveCompleted));
+
+    Response response = moveCompleted.get(5, TimeUnit.SECONDS);
+
+    assertThat(
+      String.format("Failed to move %s: %s", resourceName,
+        response.getBody()), response.getStatusCode(), is(HTTP_OK));
+
+    log.debug("Moved resource {}: {}", resourceName,
+      response.getJson().encodePrettily());
+
+    return new IndividualResource(response);
+  }
+
 
   @FunctionalInterface
   public interface UrlMaker {

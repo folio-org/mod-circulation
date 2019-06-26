@@ -46,7 +46,6 @@ public class RequestBuilder extends JsonBuilder implements Builder {
   private final UUID pickupServicePointId;
   private final Tags tags;
 
-
   public RequestBuilder() {
     this(UUID.randomUUID(),
       "Hold",

@@ -27,7 +27,6 @@ public class UpdateRequestQueue {
     RequestQueueRepository requestQueueRepository,
     RequestRepository requestRepository,
     ServicePointRepository servicePointRepository) {
-
     this.requestQueueRepository = requestQueueRepository;
     this.requestRepository = requestRepository;
     this.servicePointRepository = servicePointRepository;
@@ -131,6 +130,20 @@ public class UpdateRequestQueue {
       return requestQueueRepository.updateRequestsWithChangedPositions(
         requestAndRelatedRecords.getRequestQueue())
         .thenApply(r -> r.map(requestAndRelatedRecords::withRequestQueue));
+    }
+    else {
+      return completedFuture(succeeded(requestAndRelatedRecords));
+    }
+  }
+
+  CompletableFuture<Result<RequestAndRelatedRecords>> onMoved(
+    RequestAndRelatedRecords requestAndRelatedRecords) {
+    final Request request = requestAndRelatedRecords.getRequest();
+    final RequestQueue requestQueue = requestAndRelatedRecords.getRequestQueue();
+    if (requestAndRelatedRecords.getOriginalItemId().equals(request.getItemId())) {
+      requestQueue.remove(request);
+      return requestQueueRepository.updateRequestsWithChangedPositions(requestQueue)
+            .thenApply(r -> r.map(requestAndRelatedRecords::withRequestQueue));
     }
     else {
       return completedFuture(succeeded(requestAndRelatedRecords));
