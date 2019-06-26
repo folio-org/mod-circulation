@@ -1,6 +1,6 @@
 package org.folio.circulation.support;
 
-import static org.folio.circulation.support.http.ResponseMapping.usingJson;
+import static org.folio.circulation.support.http.ResponseMapping.mapUsingJson;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
@@ -34,7 +34,7 @@ public class FetchSingleRecord<T> {
 
   public FetchSingleRecord<T> mapTo(Function<JsonObject, T> mapper) {
     return new FetchSingleRecord<>(recordType, client,
-      interpreter.flatMapOn(200, usingJson(mapper)));
+      interpreter.flatMapOn(200, mapUsingJson(mapper)));
   }
 
   public FetchSingleRecord<T> whenNotFound(Result<T> result) {

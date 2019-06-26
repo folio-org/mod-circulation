@@ -10,7 +10,7 @@ import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.ResultBinding.mapResult;
 import static org.folio.circulation.support.http.CommonResponseInterpreters.noContentRecordInterpreter;
 import static org.folio.circulation.support.http.ResponseMapping.forwardOnFailure;
-import static org.folio.circulation.support.http.ResponseMapping.usingJson;
+import static org.folio.circulation.support.http.ResponseMapping.mapUsingJson;
 
 import java.lang.invoke.MethodHandles;
 import java.util.Collection;
@@ -27,7 +27,6 @@ import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.CqlQuery;
 import org.folio.circulation.support.FetchSingleRecord;
-import org.folio.circulation.support.ForwardOnFailure;
 import org.folio.circulation.support.ItemRepository;
 import org.folio.circulation.support.RecordNotFoundFailure;
 import org.folio.circulation.support.Result;
@@ -60,7 +59,7 @@ public class LoanRepository {
     JsonObject storageLoan = mapToStorageRepresentation(loan, loan.getItem());
 
     final ResponseInterpreter<Loan> interpreter = new ResponseInterpreter<Loan>()
-      .flatMapOn(201, usingJson(loan::replaceRepresentation))
+      .flatMapOn(201, mapUsingJson(loan::replaceRepresentation))
       .otherwise(forwardOnFailure());
 
     return loansStorageClient.post(storageLoan)
@@ -143,7 +142,7 @@ public class LoanRepository {
   private CompletableFuture<Result<Loan>> refreshLoanRepresentation(Loan loan) {
     return new SingleRecordFetcher<>(loansStorageClient, "loan",
       new ResponseInterpreter<Loan>()
-        .flatMapOn(200, usingJson(loan::replaceRepresentation)))
+        .flatMapOn(200, mapUsingJson(loan::replaceRepresentation)))
       .fetch(loan.getId());
   }
 

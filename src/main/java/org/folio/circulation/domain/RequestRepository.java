@@ -2,7 +2,7 @@ package org.folio.circulation.domain;
 
 import static java.util.Objects.isNull;
 import static org.folio.circulation.support.http.ResponseMapping.forwardOnFailure;
-import static org.folio.circulation.support.http.ResponseMapping.usingJson;
+import static org.folio.circulation.support.http.ResponseMapping.mapUsingJson;
 import static org.folio.circulation.support.Result.failed;
 import static org.folio.circulation.support.Result.of;
 import static org.folio.circulation.support.Result.ofAsync;
@@ -120,7 +120,7 @@ public class RequestRepository {
 
   private CompletableFuture<Result<Request>> fetchRequest(String id) {
     return createSingleRequestFetcher(new ResponseInterpreter<Request>()
-      .flatMapOn(200, usingJson(Request::from))
+      .flatMapOn(200, mapUsingJson(Request::from))
       .on(404, failed(new RecordNotFoundFailure("request", id))))
       .fetch(id);
   }
@@ -154,7 +154,7 @@ public class RequestRepository {
 
     return requestsStorageClient.post(representation)
       .thenApply(new ResponseInterpreter<Request>()
-        .flatMapOn(201, usingJson(request::withRequestJsonRepresentation))
+        .flatMapOn(201, mapUsingJson(request::withRequestJsonRepresentation))
         .otherwise(forwardOnFailure())
         ::apply)
       .thenApply(mapResult(requestAndRelatedRecords::withRequest));

@@ -3,7 +3,7 @@ package org.folio.circulation.support.http.client;
 import static java.util.function.Function.identity;
 import static org.apache.http.entity.ContentType.APPLICATION_JSON;
 import static org.apache.http.entity.ContentType.TEXT_PLAIN;
-import static org.folio.circulation.support.http.ResponseMapping.usingJson;
+import static org.folio.circulation.support.http.ResponseMapping.mapUsingJson;
 import static org.folio.circulation.support.Result.of;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.instanceOf;
@@ -25,7 +25,7 @@ public class ResponseInterpretationTests {
       .put("bar", "world");
 
     Result<JsonObject> result = new ResponseInterpreter<JsonObject>()
-      .flatMapOn(200, usingJson(identity()))
+      .flatMapOn(200, mapUsingJson(identity()))
       .apply(new Response(200, body.toString(), APPLICATION_JSON.toString()));
 
     assertThat(result.succeeded(), is(true));

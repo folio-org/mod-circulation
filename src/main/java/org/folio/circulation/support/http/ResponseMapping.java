@@ -14,10 +14,16 @@ import io.vertx.core.json.JsonObject;
 public class ResponseMapping {
   private ResponseMapping() { }
 
-  public static <T> Function<Response, Result<T>> usingJson(
+  public static <T> Function<Response, Result<T>> mapUsingJson(
     Function<JsonObject, T> mapper) {
 
     return response -> of(() -> mapper.apply(response.getJson()));
+  }
+
+  public static <T> Function<Response, Result<T>> flatMapUsingJson(
+    Function<JsonObject, Result<T>> mapper) {
+
+    return response -> mapper.apply(response.getJson());
   }
 
   public static <T> Function<Response, Result<T>> forwardOnFailure() {
