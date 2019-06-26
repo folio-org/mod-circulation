@@ -22,7 +22,7 @@ public class LoanService {
       DateTime.now(DateTimeZone.UTC), false);
   }
 
-  public CompletableFuture<Result<LoanAndRelatedRecords>> handleRecall(
+  public CompletableFuture<Result<LoanAndRelatedRecords>> truncateLoanWhenItemRecalled(
     LoanAndRelatedRecords records) {
     RequestQueue requestQueue = records.getRequestQueue();
     Collection<Request> requests = requestQueue.getRequests();

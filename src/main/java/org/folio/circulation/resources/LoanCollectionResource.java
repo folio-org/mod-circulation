@@ -106,7 +106,7 @@ public class LoanCollectionResource extends CollectionResource {
       .thenComposeAsync(r -> r.after(loanPolicyRepository::lookupLoanPolicy))
       .thenComposeAsync(r -> r.after(requestQueueUpdate::onCheckOut))
       .thenComposeAsync(r -> r.after(updateItem::onCheckOut))
-      .thenComposeAsync(r -> r.after(loanService::handleRecall))
+      .thenComposeAsync(r -> r.after(loanService::truncateLoanWhenItemRecalled))
       .thenComposeAsync(r -> r.after(loanRepository::createLoan))
       .thenApply(r -> r.map(LoanAndRelatedRecords::getLoan))
       .thenApply(r -> r.map(loanRepresentation::extendedLoan))
