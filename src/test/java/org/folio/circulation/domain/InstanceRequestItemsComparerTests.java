@@ -5,7 +5,10 @@ import io.vertx.core.json.JsonObject;
 import org.joda.time.DateTime;
 import org.junit.Test;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.UUID;
 
 import static org.folio.circulation.domain.InstanceRequestItemsComparer.sortRequestQueues;
 import static org.junit.Assert.assertEquals;
