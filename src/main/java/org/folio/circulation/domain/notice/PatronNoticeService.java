@@ -10,19 +10,13 @@ import org.folio.circulation.domain.policy.PatronNoticePolicyRepository;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.Result;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import io.vertx.core.json.JsonObject;
 
 public class PatronNoticeService {
-
-  private static final Logger log = LoggerFactory.getLogger(PatronNoticeService.class);
-
   public static PatronNoticeService using(Clients clients) {
     return new PatronNoticeService(new PatronNoticePolicyRepository(clients), clients);
   }
-
 
   private PatronNoticePolicyRepository noticePolicyRepository;
   private CollectionResourceClient patronNoticeClient;
