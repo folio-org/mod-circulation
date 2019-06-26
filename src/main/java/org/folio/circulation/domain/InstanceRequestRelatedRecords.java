@@ -11,7 +11,9 @@ public class InstanceRequestRelatedRecords {
   private List<Item> unsortedUnavailableItems;
   private List<Item> sortedAvailableItems;
   private List<Item> sortedUnavailableItems;
-  private RequestByInstanceIdRequest requestByInstanceIdRequest;
+  private List<Item> itemsWithoutLoans;
+  private List<Item> itemsWithoutRequests;
+  private RequestByInstanceIdRequest instanceLevelRequest;
 
   public List<Item> getUnsortedAvailableItems() {
     return unsortedAvailableItems;
@@ -41,7 +43,7 @@ public class InstanceRequestRelatedRecords {
     this.sortedUnavailableItems = sortedUnavailableItems;
   }
 
-  public List<Item> getCombineItemsList() {
+  public List<Item> getCombinedSortedItemsList() {
     List<Item> combinedItemsList = new LinkedList<>();
 
     if (sortedAvailableItems != null)
@@ -52,11 +54,27 @@ public class InstanceRequestRelatedRecords {
     return combinedItemsList;
   }
 
-  public RequestByInstanceIdRequest getRequestByInstanceIdRequest() {
-    return requestByInstanceIdRequest;
+  public RequestByInstanceIdRequest getInstanceLevelRequest() {
+    return instanceLevelRequest;
   }
 
-  public void setRequestByInstanceIdRequest(RequestByInstanceIdRequest requestByInstanceIdRequest) {
-    this.requestByInstanceIdRequest = requestByInstanceIdRequest;
+  public void setInstanceLevelRequest(RequestByInstanceIdRequest requestByInstanceIdRequest) {
+    this.instanceLevelRequest = requestByInstanceIdRequest;
+  }
+
+  public List<Item> getItemsWithoutLoans() {
+    return itemsWithoutLoans;
+  }
+
+  public void setItemsWithoutLoans(List<Item> itemsWithoutLoans) {
+    this.itemsWithoutLoans = itemsWithoutLoans;
+  }
+
+  public List<Item> getItemsWithoutRequests() {
+    return itemsWithoutRequests;
+  }
+
+  public void setItemsWithoutRequests(List<Item> itemsWithoutRequests) {
+    this.itemsWithoutRequests = itemsWithoutRequests;
   }
 }

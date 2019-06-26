@@ -102,7 +102,18 @@ public class LoanRepository {
    * failure if more than one open loan for the item found
    */
   public CompletableFuture<Result<Loan>> findOpenLoanForRequest(Request request) {
-    return findOpenLoans(request.getItemId())
+    return findOpenLoanForItem(request.getItem());
+  }
+
+  /**
+   *
+   * @param item the item with ID to fetch the open loan for
+   * @return  success with loan if one found,
+   * success with null if the no open loan is found,
+   * failure if more than one open loan for the item found
+   */
+  public CompletableFuture<Result<Loan>> findOpenLoanForItem(Item item) {
+    return findOpenLoans(item.getItemId())
       .thenApply(loansResult -> loansResult.next(loans -> {
         //TODO: Consider introducing an unknown loan class, instead of null
         if (loans.getTotalRecords() == 0) {
@@ -112,11 +123,11 @@ public class LoanRepository {
           final Optional<Loan> firstLoan = loans.getRecords().stream().findFirst();
 
           return firstLoan
-            .map(loan -> Result.of(() -> loan.withItem(request.getItem())))
+            .map(loan -> Result.of(() -> loan.withItem(item)))
             .orElse(Result.of(() -> null));
         } else {
           return failed(new ServerErrorFailure(
-            String.format("More than one open loan for item %s", request.getItemId())));
+            String.format("More than one open loan for item %s", item.getItemId())));
         }
       }));
   }
