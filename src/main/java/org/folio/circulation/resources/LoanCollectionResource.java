@@ -9,18 +9,7 @@ import static org.folio.circulation.support.ValidationErrorFailure.singleValidat
 
 import java.util.concurrent.CompletableFuture;
 
-import org.folio.circulation.domain.Item;
-import org.folio.circulation.domain.Loan;
-import org.folio.circulation.domain.LoanAndRelatedRecords;
-import org.folio.circulation.domain.LoanRepository;
-import org.folio.circulation.domain.LoanRepresentation;
-import org.folio.circulation.domain.RequestQueue;
-import org.folio.circulation.domain.RequestQueueRepository;
-import org.folio.circulation.domain.ServicePointRepository;
-import org.folio.circulation.domain.UpdateItem;
-import org.folio.circulation.domain.UpdateRequestQueue;
-import org.folio.circulation.domain.User;
-import org.folio.circulation.domain.UserRepository;
+import org.folio.circulation.domain.*;
 import org.folio.circulation.domain.notice.schedule.ScheduledNoticeService;
 import org.folio.circulation.domain.policy.LoanPolicyRepository;
 import org.folio.circulation.domain.validation.AlreadyCheckedOutValidator;
@@ -173,10 +162,12 @@ public class LoanCollectionResource extends CollectionResource {
     final LoanRepresentation loanRepresentation = new LoanRepresentation();
     final UserRepository userRepository = new UserRepository(clients);
     final LoanPolicyRepository loanPolicyRepository = new LoanPolicyRepository(clients);
+    final AccountRepository accountRepository = new AccountRepository(clients);
 
     String id = routingContext.request().getParam("id");
 
     loanRepository.getById(id)
+      .thenComposeAsync(accountRepository::findAccountsForLoan)
       .thenComposeAsync(servicePointRepository::findServicePointsForLoan)
       .thenComposeAsync(userRepository::findUserForLoan)
       .thenComposeAsync(loanPolicyRepository::findPolicyForLoan)
@@ -205,8 +196,11 @@ public class LoanCollectionResource extends CollectionResource {
     final LoanRepresentation loanRepresentation = new LoanRepresentation();
     final UserRepository userRepository = new UserRepository(clients);
     final LoanPolicyRepository loanPolicyRepository = new LoanPolicyRepository(clients);
+    final AccountRepository accountRepository = new AccountRepository(clients);
 
     loanRepository.findBy(routingContext.request().query())
+      .thenCompose(multiLoanRecordsResult ->
+        multiLoanRecordsResult.after(accountRepository::findAccountsForLoans))
       .thenCompose(multiLoanRecordsResult ->
         multiLoanRecordsResult.after(servicePointRepository::findServicePointsForLoans))
       .thenCompose(multiLoanRecordsResult ->
