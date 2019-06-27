@@ -1,8 +1,10 @@
 package api.requests;
 
 import static api.support.matchers.ResponseStatusCodeMatcher.hasStatus;
+import static api.support.matchers.ValidationErrorMatchers.*;
 import static org.folio.HttpStatus.HTTP_CREATED;
 import static org.folio.circulation.support.JsonPropertyWriter.write;
+import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 import static org.junit.Assert.*;
@@ -31,6 +33,8 @@ import api.support.http.InterfaceUrls;
 import io.vertx.core.json.JsonObject;
 
 public class InstanceRequestsAPICreationTests extends APITests {
+
+  private static int REQUEST_TIMEOUT = 10;
 
   @Test
   public void canCreateATitleLevelRequestForMultipleAvailableItemsAndAMatchingPickupLocationId()
@@ -61,7 +65,7 @@ public class InstanceRequestsAPICreationTests extends APITests {
     client.post(InterfaceUrls.requestsUrl("/instances"), requestBody,
       ResponseHandler.any(postCompleted));
 
-    Response postResponse = postCompleted.get(10, TimeUnit.SECONDS);
+    Response postResponse = postCompleted.get(REQUEST_TIMEOUT, TimeUnit.SECONDS);
 
     JsonObject representation = postResponse.getJson();
     validateInstanceRequestResponse(representation,
@@ -96,7 +100,7 @@ public class InstanceRequestsAPICreationTests extends APITests {
     client.post(InterfaceUrls.requestsUrl("/instances"), requestBody,
       ResponseHandler.any(postCompleted));
 
-    Response postResponse = postCompleted.get(10, TimeUnit.SECONDS);
+    Response postResponse = postCompleted.get(REQUEST_TIMEOUT, TimeUnit.SECONDS);
 
     assertThat(postResponse, hasStatus(HTTP_CREATED));
 
@@ -133,7 +137,7 @@ public class InstanceRequestsAPICreationTests extends APITests {
     client.post(InterfaceUrls.requestsUrl("/instances"), requestBody,
       ResponseHandler.any(postCompleted));
 
-    Response postResponse = postCompleted.get(10, TimeUnit.SECONDS);
+    Response postResponse = postCompleted.get(REQUEST_TIMEOUT, TimeUnit.SECONDS);
 
     assertThat(postResponse, hasStatus(HTTP_CREATED));
 
@@ -174,7 +178,7 @@ public class InstanceRequestsAPICreationTests extends APITests {
     client.post(InterfaceUrls.requestsUrl("/instances"), requestBody,
       ResponseHandler.any(postCompleted));
 
-    Response postResponse = postCompleted.get(10, TimeUnit.SECONDS);
+    Response postResponse = postCompleted.get(REQUEST_TIMEOUT, TimeUnit.SECONDS);
 
     assertThat(postResponse, hasStatus(HTTP_CREATED));
 
@@ -218,13 +222,12 @@ public class InstanceRequestsAPICreationTests extends APITests {
     client.post(InterfaceUrls.requestsUrl("/instances"), requestBody,
       ResponseHandler.any(postCompleted));
 
-    Response postResponse = postCompleted.get(10, TimeUnit.SECONDS);
+    Response postResponse = postCompleted.get(REQUEST_TIMEOUT, TimeUnit.SECONDS);
     assertEquals(422, postResponse.getStatusCode());
 
-    JsonObject representation = postResponse.getJson();
-    assertEquals("Request must have an instance id", representation.getJsonArray("errors")
-                                                                            .getJsonObject(0)
-                                                                            .getString("message"));
+    assertThat(postResponse.getJson(), hasErrorWith(allOf(
+      hasMessage("Request must have an instance id"),
+      hasParameter("instanceId", null))));
   }
 
   @Test
@@ -265,7 +268,7 @@ public class InstanceRequestsAPICreationTests extends APITests {
     client.post(InterfaceUrls.requestsUrl("/instances"), requestBody,
       ResponseHandler.any(postCompleted));
 
-    Response postResponse = postCompleted.get(10, TimeUnit.SECONDS);
+    Response postResponse = postCompleted.get(REQUEST_TIMEOUT, TimeUnit.SECONDS);
     assertEquals(201, postResponse.getStatusCode());
 
 
@@ -309,7 +312,7 @@ public class InstanceRequestsAPICreationTests extends APITests {
     client.post(InterfaceUrls.requestsUrl("/instances"), requestBody,
       ResponseHandler.any(postCompleted));
 
-    Response postResponse = postCompleted.get(10, TimeUnit.SECONDS);
+    Response postResponse = postCompleted.get(REQUEST_TIMEOUT, TimeUnit.SECONDS);
     assertEquals(201, postResponse.getStatusCode());
 
     JsonObject representation = postResponse.getJson();
@@ -359,7 +362,7 @@ public class InstanceRequestsAPICreationTests extends APITests {
     client.post(InterfaceUrls.requestsUrl("/instances"), requestBody,
       ResponseHandler.any(postCompleted));
 
-    Response postResponse = postCompleted.get(10, TimeUnit.SECONDS);
+    Response postResponse = postCompleted.get(REQUEST_TIMEOUT, TimeUnit.SECONDS);
     assertEquals(201, postResponse.getStatusCode());
 
     JsonObject representation = postResponse.getJson();
@@ -410,7 +413,7 @@ public class InstanceRequestsAPICreationTests extends APITests {
     client.post(InterfaceUrls.requestsUrl("/instances"), requestBody,
       ResponseHandler.any(postCompleted));
 
-    Response postResponse = postCompleted.get(10, TimeUnit.SECONDS);
+    Response postResponse = postCompleted.get(REQUEST_TIMEOUT, TimeUnit.SECONDS);
     assertEquals(201, postResponse.getStatusCode());
 
     JsonObject representation = postResponse.getJson();
@@ -424,7 +427,7 @@ public class InstanceRequestsAPICreationTests extends APITests {
     TimeoutException,
     MalformedURLException {
 
-    //The scenario we're checking is if a user has already made a request on an available iemm, hasn't picked it up, but then
+    //The scenario we're checking is if a user has already checked out an iemm, but then
     //goes back to place an instance level request. The system will find this item and rejects the request for the user, so the user
     //could be given a successful request on an unavailable item instead, if there is any.
     UUID pickupServicePointId = servicePointsFixture.cd1().getId();
@@ -433,7 +436,6 @@ public class InstanceRequestsAPICreationTests extends APITests {
     DateTime instanceRequestDateRequestExpirationDate = instanceRequestDate.plusDays(30);
 
     LocalDate requestDate = new LocalDate(2017, 7, 22);
-    LocalDate requestExpirationDate1 = requestDate.plusDays(30);
     LocalDate requestExpirationDate2 = requestDate.minusDays(30);
 
     IndividualResource instance = instancesFixture.basedUponDunkirk();
@@ -443,8 +445,8 @@ public class InstanceRequestsAPICreationTests extends APITests {
     final IndividualResource item1 = itemsFixture.basedUponDunkirkWithCustomHoldingAndLocation(holdings.getId(), null);
     final IndividualResource item2 = itemsFixture.basedUponDunkirkWithCustomHoldingAndLocationAndCheckedOut(holdings.getId(), null);
 
-    //Set up request queues. Item1 has requests (1 queued request), Item2 is requests (1 queued), either could be satisfied.
-    placePagedRequest(item1, pickupServicePointId, usersFixture.jessica(), requestExpirationDate1);
+    //Set up request queues. Item1 has requests (1 queued request), Item2 has requests (1 queued), either could be satisfied.
+    loansFixture.createLoan(item1, usersFixture.jessica());
 
     placeHoldRequest(item2, pickupServicePointId, usersFixture.steve(), requestExpirationDate2);
     placeHoldRequest(item2, pickupServicePointId, usersFixture.rebecca(), requestExpirationDate2);
@@ -459,7 +461,7 @@ public class InstanceRequestsAPICreationTests extends APITests {
     client.post(InterfaceUrls.requestsUrl("/instances"), requestBody,
       ResponseHandler.any(postCompleted));
 
-    Response postResponse = postCompleted.get(10, TimeUnit.SECONDS);
+    Response postResponse = postCompleted.get(REQUEST_TIMEOUT, TimeUnit.SECONDS);
     assertEquals(201, postResponse.getStatusCode());
 
     JsonObject representation = postResponse.getJson();
@@ -499,7 +501,7 @@ public class InstanceRequestsAPICreationTests extends APITests {
     client.post(InterfaceUrls.requestsUrl("/instances"), requestBody,
       ResponseHandler.any(postCompleted));
 
-    Response postResponse = postCompleted.get(10, TimeUnit.SECONDS);
+    Response postResponse = postCompleted.get(REQUEST_TIMEOUT, TimeUnit.SECONDS);
     assertEquals(201, postResponse.getStatusCode());
 
     JsonObject representation = postResponse.getJson();
@@ -546,7 +548,7 @@ public class InstanceRequestsAPICreationTests extends APITests {
     client.post(InterfaceUrls.requestsUrl("/instances"), requestBody,
       ResponseHandler.any(postCompleted));
 
-    Response postResponse = postCompleted.get(10, TimeUnit.SECONDS);
+    Response postResponse = postCompleted.get(REQUEST_TIMEOUT, TimeUnit.SECONDS);
     assertEquals(201, postResponse.getStatusCode());
 
     JsonObject representation = postResponse.getJson();
@@ -600,7 +602,7 @@ public class InstanceRequestsAPICreationTests extends APITests {
     client.post(InterfaceUrls.requestsUrl("/instances"), requestBody,
       ResponseHandler.any(postCompleted));
 
-    Response postResponse = postCompleted.get(10, TimeUnit.SECONDS);
+    Response postResponse = postCompleted.get(REQUEST_TIMEOUT, TimeUnit.SECONDS);
     assertEquals(201, postResponse.getStatusCode());
 
     JsonObject representation = postResponse.getJson();
@@ -652,7 +654,7 @@ public class InstanceRequestsAPICreationTests extends APITests {
     client.post(InterfaceUrls.requestsUrl("/instances"), requestBody,
       ResponseHandler.any(postCompleted));
 
-    Response postResponse = postCompleted.get(10, TimeUnit.SECONDS);
+    Response postResponse = postCompleted.get(REQUEST_TIMEOUT, TimeUnit.SECONDS);
 
     JsonObject representation = postResponse.getJson();
     validateInstanceRequestResponse(representation,
@@ -697,7 +699,7 @@ public class InstanceRequestsAPICreationTests extends APITests {
     client.post(InterfaceUrls.requestsUrl("/instances"), requestBody,
       ResponseHandler.any(postCompleted));
 
-    Response postResponse = postCompleted.get(10, TimeUnit.SECONDS);
+    Response postResponse = postCompleted.get(REQUEST_TIMEOUT, TimeUnit.SECONDS);
 
     JsonObject representation = postResponse.getJson();
     validateInstanceRequestResponse(representation,
@@ -705,6 +707,51 @@ public class InstanceRequestsAPICreationTests extends APITests {
       instanceMultipleCopies.getId(),
       item2.getId(),
       RequestType.HOLD);
+  }
+
+  @Test
+  public void cannotCreateATitleLevelRequestBecausePreviouslyRequestedACopy()
+    throws InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    MalformedURLException {
+
+    UUID pickupServicePointId = servicePointsFixture.cd1().getId();
+    DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
+    DateTime requestExpirationDate = requestDate.plusDays(30);
+
+    IndividualResource instanceMultipleCopies = instancesFixture.basedUponDunkirk();
+    IndividualResource holdings = holdingsFixture.defaultWithHoldings(instanceMultipleCopies.getId());
+
+    IndividualResource locationsResource = locationsFixture.mainFloor();
+
+    //create three items
+    itemsFixture.basedUponDunkirkWithCustomHoldingAndLocation(holdings.getId(), locationsResource.getId());
+    final IndividualResource item1 = itemsFixture.basedUponDunkirkWithCustomHoldingAndLocation(holdings.getId(), null);
+    itemsFixture.basedUponDunkirkWithCustomHoldingAndLocation(holdings.getId(), null);
+
+    requestsClient.create(new RequestBuilder()
+      .page()
+      .forItem(item1)
+      .withPickupServicePointId(pickupServicePointId)
+      .by(usersFixture.jessica()));
+
+    JsonObject requestBody = createInstanceRequestObject(instanceMultipleCopies.getId(),
+      usersFixture.jessica().getId(),
+      pickupServicePointId,
+      requestDate,
+      requestExpirationDate);
+
+    CompletableFuture<Response> postCompleted = new CompletableFuture<>();
+
+    client.post(InterfaceUrls.requestsUrl("/instances"), requestBody,
+      ResponseHandler.any(postCompleted));
+
+    Response postResponse = postCompleted.get(REQUEST_TIMEOUT, TimeUnit.SECONDS);
+    assertEquals(422, postResponse.getStatusCode());
+    assertThat(postResponse.getJson(), hasErrorWith(allOf(
+      hasMessage("This requester already has an open request for a copy of this title"),
+      hasParameter("itemId", item1.getId().toString()))));
   }
 
   private void validateInstanceRequestResponse(JsonObject representation,
