@@ -50,41 +50,15 @@ public class LoanRepository {
 
   public CompletableFuture<Result<LoanAndRelatedRecords>> createLoan(
     LoanAndRelatedRecords loanAndRelatedRecords) {
-    LoanAndRelatedRecords recalledLoanandRelatedRecords = null;
-    RequestQueue requestQueue = loanAndRelatedRecords.getRequestQueue();
-    Collection<Request> requests = requestQueue.getRequests();
 
-    if(!requests.isEmpty()) {
-      /*
-        This gets the top request, since UpdateRequestQueue.java#L106 updates the request queue prior to loan creation.
-        If that sequesnse changes, the following will need to be updated to requests.stream().skip(1).findFirst().orElse(null)
-        and the condition above could do a > 1 comparison. (CIRC-277)
-      */
-      Request nextRequestInQueue = requests.stream().findFirst().orElse(null);
-      if(nextRequestInQueue != null && nextRequestInQueue.getRequestType() == RequestType.RECALL) {
-        final Loan loanToRecall = loanAndRelatedRecords.getLoan();
-        final LoanPolicy loanPolicy = loanToRecall.getLoanPolicy();
-
-        Result<LoanAndRelatedRecords> httpResult = loanPolicy.recall(loanToRecall)
-          .map(loanAndRelatedRecords::withLoan);
-
-        recalledLoanandRelatedRecords = httpResult.value();
-      }
-    }
-
-    LoanAndRelatedRecords newLoanAndRelatedRecords
-      = recalledLoanandRelatedRecords == null
-        ? loanAndRelatedRecords
-        : recalledLoanandRelatedRecords;
-
-    final Loan loan = newLoanAndRelatedRecords.getLoan();
+    final Loan loan = loanAndRelatedRecords.getLoan();
 
     JsonObject storageLoan = mapToStorageRepresentation(loan, loan.getItem());
 
     return loansStorageClient.post(storageLoan).thenApply(response -> {
       if (response.getStatusCode() == 201) {
         return succeeded(
-          newLoanAndRelatedRecords.withLoan(loan.replaceRepresentation(response.getJson())));
+          loanAndRelatedRecords.withLoan(loan.replaceRepresentation(response.getJson())));
       } else {
         return failed(new ForwardOnFailure(response));
       }
