@@ -202,7 +202,7 @@ public class RequestByInstanceIdResource extends Resource {
           && (instanceRequestPackage.getSortedAvailableItems() == null || instanceRequestPackage.getSortedAvailableItems().isEmpty())) {
           //fail the requests when there are no items to make requests from.
           log.error("Failed to find request queues for all items of instanceId {}",
-            instanceRequestPackage.getInstanceLevelRequest().getInstanceId().toString());
+            instanceRequestPackage.getInstanceLevelRequest().getInstanceId());
           return failed(new ServerErrorFailure("Unable to find an item to place a request"));
         }
         instanceRequestPackage.setItemsWithoutRequests(itemsWithoutRequestQueues);
