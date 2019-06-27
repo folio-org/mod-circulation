@@ -1,7 +1,9 @@
 package org.folio.circulation.resources;
 
 import static org.folio.circulation.domain.InstanceRequestItemsComparer.sortRequestQueues;
-import static org.folio.circulation.domain.representations.RequestProperties.*;
+import static org.folio.circulation.domain.representations.RequestProperties.ITEM_ID;
+import static org.folio.circulation.domain.representations.RequestProperties.PROXY_USER_ID;
+import static org.folio.circulation.domain.representations.RequestProperties.REQUESTER_ID;
 import static org.folio.circulation.support.JsonPropertyWriter.write;
 import static org.folio.circulation.support.Result.failed;
 import static org.folio.circulation.support.Result.of;
@@ -22,7 +24,24 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
-import org.folio.circulation.domain.*;
+import org.folio.circulation.domain.CreateRequestService;
+import org.folio.circulation.domain.InstanceRequestRelatedRecords;
+import org.folio.circulation.domain.Item;
+import org.folio.circulation.domain.Loan;
+import org.folio.circulation.domain.LoanRepository;
+import org.folio.circulation.domain.Request;
+import org.folio.circulation.domain.RequestAndRelatedRecords;
+import org.folio.circulation.domain.RequestQueue;
+import org.folio.circulation.domain.RequestQueueRepository;
+import org.folio.circulation.domain.RequestRepository;
+import org.folio.circulation.domain.RequestRepresentation;
+import org.folio.circulation.domain.RequestType;
+import org.folio.circulation.domain.ServicePointRepository;
+import org.folio.circulation.domain.UpdateItem;
+import org.folio.circulation.domain.UpdateLoan;
+import org.folio.circulation.domain.UpdateLoanActionHistory;
+import org.folio.circulation.domain.UpdateUponRequest;
+import org.folio.circulation.domain.UserRepository;
 import org.folio.circulation.domain.policy.LoanPolicyRepository;
 import org.folio.circulation.domain.policy.RequestPolicyRepository;
 import org.folio.circulation.domain.representations.RequestByInstanceIdRequest;
