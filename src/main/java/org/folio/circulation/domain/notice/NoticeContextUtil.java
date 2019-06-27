@@ -1,5 +1,8 @@
 package org.folio.circulation.domain.notice;
 
+import static java.util.stream.Collectors.joining;
+import static org.folio.circulation.support.JsonStringArrayHelper.toStream;
+
 import java.util.Optional;
 
 import org.folio.circulation.domain.Item;
@@ -15,9 +18,6 @@ import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 
 import io.vertx.core.json.JsonObject;
-
-import static java.util.stream.Collectors.joining;
-import static org.folio.circulation.support.JsonStringArrayHelper.toStream;
 
 public class NoticeContextUtil {
 
@@ -149,7 +149,7 @@ public class NoticeContextUtil {
 
     JsonObject loanContext = new JsonObject();
     loanContext.put("initialBorrowDate", loan.getLoanDate().withZone(timeZone).toString());
-    loanContext.put("numberOfRenewalsTaken", loan.getRenewalCount());
+    loanContext.put("numberOfRenewalsTaken", Integer.toString(loan.getRenewalCount()));
     loanContext.put("dueDate", loan.getDueDate().withZone(timeZone).toString());
 
     if (loan.getReturnDate() != null) {
@@ -162,8 +162,11 @@ public class NoticeContextUtil {
       } else {
         int renewalLimit = loanPolicy.getRenewalLimit();
         int renewalsRemaining = renewalLimit - loan.getRenewalCount();
-        loanContext.put("numberOfRenewalsAllowed", renewalLimit);
-        loanContext.put("numberOfRenewalsRemaining", renewalsRemaining);
+        if (renewalsRemaining < 0) {
+          renewalsRemaining = 0;
+        }
+        loanContext.put("numberOfRenewalsAllowed", Integer.toString(renewalLimit));
+        loanContext.put("numberOfRenewalsRemaining", Integer.toString(renewalsRemaining));
       }
     }
 
