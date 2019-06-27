@@ -24,7 +24,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import api.support.http.InventoryItemResource;
 import org.awaitility.Awaitility;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
@@ -44,6 +43,7 @@ import api.support.builders.NoticeConfigurationBuilder;
 import api.support.builders.NoticePolicyBuilder;
 import api.support.builders.RequestBuilder;
 import api.support.fixtures.NoticeMatchers;
+import api.support.http.InventoryItemResource;
 import io.vertx.core.json.JsonObject;
 
 public class CheckInByBarcodeTests extends APITests {
@@ -374,7 +374,7 @@ public class CheckInByBarcodeTests extends APITests {
     Map<String, Matcher<String>> noticeContextMatchers = new HashMap<>();
     noticeContextMatchers.putAll(NoticeMatchers.getUserContextMatchers(james));
     noticeContextMatchers.putAll(NoticeMatchers.getItemContextMatchers(nod, true));
-    noticeContextMatchers.putAll(NoticeMatchers.getLoanContextMatchers(checkInResponse.getLoan(), 0));
+    noticeContextMatchers.putAll(NoticeMatchers.getLoanContextMatchers(checkInResponse.getLoan()));
     noticeContextMatchers.put("loan.checkinDate",
       withinSecondsAfter(Seconds.seconds(10), checkInDate));
     MatcherAssert.assertThat(sentNotices,

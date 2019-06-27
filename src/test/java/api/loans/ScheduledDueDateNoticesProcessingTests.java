@@ -25,10 +25,6 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-import api.support.builders.HoldingBuilder;
-import api.support.builders.ItemBuilder;
-import api.support.fixtures.ItemExamples;
-import api.support.http.InventoryItemResource;
 import org.awaitility.Awaitility;
 import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.support.http.client.IndividualResource;
@@ -40,9 +36,13 @@ import org.junit.Test;
 
 import api.support.APITests;
 import api.support.builders.CheckOutByBarcodeRequestBuilder;
+import api.support.builders.HoldingBuilder;
+import api.support.builders.ItemBuilder;
 import api.support.builders.NoticeConfigurationBuilder;
 import api.support.builders.NoticePolicyBuilder;
+import api.support.fixtures.ItemExamples;
 import api.support.fixtures.NoticeMatchers;
+import api.support.http.InventoryItemResource;
 import io.vertx.core.json.JsonObject;
 
 public class ScheduledDueDateNoticesProcessingTests extends APITests {
@@ -359,7 +359,7 @@ public class ScheduledDueDateNoticesProcessingTests extends APITests {
     Map<String, Matcher<String>> noticeContextMatchers = new HashMap<>();
     noticeContextMatchers.putAll(NoticeMatchers.getUserContextMatchers(borrower));
     noticeContextMatchers.putAll(NoticeMatchers.getItemContextMatchers(item, true));
-    noticeContextMatchers.putAll(NoticeMatchers.getLoanContextMatchers(loan, 0));
+    noticeContextMatchers.putAll(NoticeMatchers.getLoanContextMatchers(loan));
     noticeContextMatchers.putAll(NoticeMatchers.getLoanPolicyContextMatchers(
       loanPoliciesFixture.canCirculateRolling(), 0));
 

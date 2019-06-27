@@ -4,34 +4,52 @@ import static api.support.builders.FixedDueDateSchedule.forDay;
 import static api.support.builders.FixedDueDateSchedule.wholeMonth;
 import static api.support.builders.ItemBuilder.CHECKED_OUT;
 import static api.support.matchers.ItemStatusCodeMatcher.hasItemStatus;
+import static api.support.matchers.PatronNoticeMatcher.hasEmailNoticeProperties;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static api.support.matchers.ValidationErrorMatchers.hasParameter;
 import static org.hamcrest.CoreMatchers.allOf;
+import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 import java.net.MalformedURLException;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import org.apache.commons.lang3.StringUtils;
+import org.awaitility.Awaitility;
 import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.server.ValidationError;
 import org.hamcrest.Matcher;
+import org.hamcrest.MatcherAssert;
+import org.hamcrest.Matchers;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeConstants;
 import org.joda.time.DateTimeZone;
 import org.junit.Test;
 
 import api.support.APITests;
+import api.support.builders.CheckOutByBarcodeRequestBuilder;
 import api.support.builders.FixedDueDateSchedulesBuilder;
+import api.support.builders.ItemBuilder;
 import api.support.builders.LoanPolicyBuilder;
+import api.support.builders.NoticeConfigurationBuilder;
+import api.support.builders.NoticePolicyBuilder;
+import api.support.fixtures.ItemExamples;
+import api.support.fixtures.NoticeMatchers;
+import api.support.http.InventoryItemResource;
 import io.vertx.core.json.JsonObject;
 
 public class OverrideRenewByBarcodeTests extends APITests {
@@ -724,6 +742,80 @@ public class OverrideRenewByBarcodeTests extends APITests {
         OVERRIDE_COMMENT, newDueDate.toString());
 
     assertThat(response.getJson(), hasErrorWith(hasRenewalWouldNotChangeDueDateMessage()));
+  }
+
+  @Test
+  public void renewalNoticeIsSentWhenPolicyDefinesRenewalNoticeConfiguration()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    UUID renewalTemplateId = UUID.randomUUID();
+    JsonObject renewalNoticeConfiguration = new NoticeConfigurationBuilder()
+      .withTemplateId(renewalTemplateId)
+      .withRenewalEvent()
+      .create();
+    JsonObject checkInNoticeConfiguration = new NoticeConfigurationBuilder()
+      .withTemplateId(UUID.randomUUID())
+      .withCheckInEvent()
+      .create();
+
+    IndividualResource noticePolicy = noticePoliciesFixture.create(
+      new NoticePolicyBuilder()
+        .withName("Policy with renewal notice")
+        .withLoanNotices(Arrays.asList(renewalNoticeConfiguration, checkInNoticeConfiguration)));
+
+    IndividualResource nonRenewablePolicy = loanPoliciesFixture.create(
+      new LoanPolicyBuilder()
+        .withName("Non Renewable Policy")
+        .rolling(Period.days(2))
+        .notRenewable());
+
+    useLoanPolicyAsFallback(
+      nonRenewablePolicy.getId(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
+      noticePolicy.getId());
+
+    ItemBuilder itemBuilder = ItemExamples.basedUponSmallAngryPlanet(
+      materialTypesFixture.book().getId(),
+      loanTypesFixture.canCirculate().getId(),
+      StringUtils.EMPTY,
+      "ItemPrefix",
+      "ItemSuffix",
+      Collections.singletonList(""));
+
+    InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet(itemBuilder, itemsFixture.thirdFloorHoldings());
+    final IndividualResource steve = usersFixture.steve();
+
+    final DateTime loanDate =
+      new DateTime(2018, 3, 18, 11, 43, 54, DateTimeZone.UTC);
+
+    loansFixture.checkOutByBarcode(
+      new CheckOutByBarcodeRequestBuilder()
+        .forItem(smallAngryPlanet)
+        .to(steve)
+        .on(loanDate)
+        .at(UUID.randomUUID()));
+
+    IndividualResource loanAfterRenewal =
+      loansFixture.overrideRenewalByBarcode(smallAngryPlanet, steve,
+        OVERRIDE_COMMENT, loanDate.plusDays(4).toString());
+
+    Awaitility.await()
+      .atMost(1, TimeUnit.SECONDS)
+      .until(patronNoticesClient::getAll, Matchers.hasSize(1));
+    List<JsonObject> sentNotices = patronNoticesClient.getAll();
+
+    Map<String, Matcher<String>> noticeContextMatchers = new HashMap<>();
+    noticeContextMatchers.putAll(NoticeMatchers.getUserContextMatchers(steve));
+    noticeContextMatchers.putAll(NoticeMatchers.getItemContextMatchers(smallAngryPlanet, true));
+    noticeContextMatchers.putAll(NoticeMatchers.getLoanContextMatchers(loanAfterRenewal));
+    noticeContextMatchers.putAll(NoticeMatchers.getLoanPolicyContextMatchers(
+      nonRenewablePolicy, 1));
+    MatcherAssert.assertThat(sentNotices,
+      hasItems(
+        hasEmailNoticeProperties(steve.getId(), renewalTemplateId, noticeContextMatchers)));
   }
 
   private Matcher<ValidationError> hasUserRelatedParameter(IndividualResource user) {

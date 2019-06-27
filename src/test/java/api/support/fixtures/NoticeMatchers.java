@@ -12,12 +12,12 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import api.support.http.InventoryItemResource;
-import io.vertx.core.json.JsonArray;
 import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.hamcrest.Matcher;
 
+import api.support.http.InventoryItemResource;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
 public class NoticeMatchers {
@@ -95,17 +95,18 @@ public class NoticeMatchers {
   }
 
   public static Map<String, Matcher<String>> getLoanContextMatchers(
-    IndividualResource loanResource, int renewalsCount) {
-    return getLoanContextMatchers(loanResource.getJson(), renewalsCount);
+    IndividualResource loanResource) {
+    return getLoanContextMatchers(loanResource.getJson());
   }
 
   public static Map<String, Matcher<String>> getLoanContextMatchers(
-    JsonObject loan, int renewalsCount) {
+    JsonObject loan) {
 
+    Integer renewalCount = getIntegerProperty(loan, "renewalCount", 0);
     Map<String, Matcher<String>> tokenMatchers = new HashMap<>();
     tokenMatchers.put("loan.initialBorrowDate",
       isEquivalentTo(getDateTimeProperty(loan, "loanDate")));
-    tokenMatchers.put("loan.numberOfRenewalsTaken", is(Integer.toString(renewalsCount)));
+    tokenMatchers.put("loan.numberOfRenewalsTaken", is(Integer.toString(renewalCount)));
     tokenMatchers.put("loan.dueDate",
       isEquivalentTo(getDateTimeProperty(loan, "dueDate")));
     return tokenMatchers;
@@ -124,6 +125,9 @@ public class NoticeMatchers {
     } else {
       int renewalLimit = getIntegerProperty(renewalsPolicy, "numberAllowed", 0);
       int renewalsRemaining = renewalLimit - renewalsCount;
+      if (renewalsRemaining < 0) {
+        renewalsRemaining = 0;
+      }
       tokenMatchers.put("loan.numberOfRenewalsAllowed", is(Integer.toString(renewalLimit)));
       tokenMatchers.put("loan.numberOfRenewalsRemaining", is(Integer.toString(renewalsRemaining)));
     }
