@@ -710,7 +710,7 @@ public class InstanceRequestsAPICreationTests extends APITests {
   }
 
   @Test
-  public void cannotCreateATitleLevelRequestBecausePreviouslyRequestedACopy()
+  public void cannotCreateATitleLevelRequestForAPreviouslyRequestedCopy()
     throws InterruptedException,
     ExecutionException,
     TimeoutException,
@@ -750,8 +750,72 @@ public class InstanceRequestsAPICreationTests extends APITests {
     Response postResponse = postCompleted.get(REQUEST_TIMEOUT, TimeUnit.SECONDS);
     assertEquals(422, postResponse.getStatusCode());
     assertThat(postResponse.getJson(), hasErrorWith(allOf(
-      hasMessage("This requester already has an open request for a copy of this title (instance)"),
+      hasMessage("This requester already has an open request for an item of this instance"),
       hasParameter("itemId", item1.getId().toString()))));
+  }
+
+  @Test
+  public void cannotCreateATitleLevelRequestForAnInstanceWithoutCopies()
+    throws InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    MalformedURLException {
+
+    UUID pickupServicePointId = servicePointsFixture.cd1().getId();
+    DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
+    DateTime requestExpirationDate = requestDate.plusDays(30);
+
+    IndividualResource instanceMultipleCopies = instancesFixture.basedUponDunkirk();
+    holdingsFixture.defaultWithHoldings(instanceMultipleCopies.getId());
+    ;
+
+    JsonObject requestBody = createInstanceRequestObject(instanceMultipleCopies.getId(),
+      usersFixture.jessica().getId(),
+      pickupServicePointId,
+      requestDate,
+      requestExpirationDate);
+
+    CompletableFuture<Response> postCompleted = new CompletableFuture<>();
+
+    client.post(InterfaceUrls.requestsUrl("/instances"), requestBody,
+      ResponseHandler.any(postCompleted));
+
+    Response postResponse = postCompleted.get(REQUEST_TIMEOUT, TimeUnit.SECONDS);
+    assertEquals(422, postResponse.getStatusCode());
+    assertThat(postResponse.getJson(), hasErrorWith(allOf(
+      hasMessage("There are no items for this instance"),
+      hasParameter("items", "empty"))));
+  }
+
+  @Test
+  public void cannotCreateATitleLevelRequestForAnInstanceWithoutHoldings()
+    throws InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    MalformedURLException {
+
+    UUID pickupServicePointId = servicePointsFixture.cd1().getId();
+    DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
+    DateTime requestExpirationDate = requestDate.plusDays(30);
+
+    IndividualResource instanceMultipleCopies = instancesFixture.basedUponDunkirk();
+
+    JsonObject requestBody = createInstanceRequestObject(instanceMultipleCopies.getId(),
+      usersFixture.jessica().getId(),
+      pickupServicePointId,
+      requestDate,
+      requestExpirationDate);
+
+    CompletableFuture<Response> postCompleted = new CompletableFuture<>();
+
+    client.post(InterfaceUrls.requestsUrl("/instances"), requestBody,
+      ResponseHandler.any(postCompleted));
+
+    Response postResponse = postCompleted.get(REQUEST_TIMEOUT, TimeUnit.SECONDS);
+    assertEquals(422, postResponse.getStatusCode());
+    assertThat(postResponse.getJson(), hasErrorWith(allOf(
+      hasMessage("There are no holdings for this instance"),
+      hasParameter("holdingsRecords", "null"))));
   }
 
   private void validateInstanceRequestResponse(JsonObject representation,

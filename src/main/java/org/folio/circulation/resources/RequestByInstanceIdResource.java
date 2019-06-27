@@ -114,6 +114,7 @@ public class RequestByInstanceIdResource extends Resource {
     requestRelatedRecords.setInstanceLevelRequest(requestByInstanceIdRequest);
 
     finder.getItemsByInstanceId(requestByInstanceIdRequest.getInstanceId())
+          .thenApply(r -> r.next(items -> validateItems(items)))
           .thenCompose(r -> r.after(items -> getRequestQueues(items, requestRelatedRecords, clients)))
           .thenApply(r -> r.next(items -> validateRequester(items, requestRelatedRecords)))
           .thenApply(r -> r.next(items -> segregateItemsList(items, requestRelatedRecords)))
@@ -127,7 +128,7 @@ public class RequestByInstanceIdResource extends Resource {
           .thenApply(CreatedJsonResponseResult::from)
           .thenAccept(result -> result.writeTo(routingContext.response()))
           .exceptionally( err -> {
-             String reason = "Error processing title-level request";
+             String reason = "Error processing instance-level request";
              log.error(reason, err);
              ServerErrorResponse.internalError(routingContext.response(), reason);
              return null;
@@ -245,7 +246,7 @@ public class RequestByInstanceIdResource extends Resource {
       String aggregateFailures = String.format("%n%s", String.join("%n", errors));
 
       return CompletableFuture.completedFuture(failed(new ServerErrorFailure(
-        "Failed to place a request for the title. Reasons: " + aggregateFailures)));
+        "Failed to place a request for the instance. Reasons: " + aggregateFailures)));
     }
 
     JsonObject currentItemRequest = itemRequests.get(startIndex);
@@ -409,12 +410,19 @@ public class RequestByInstanceIdResource extends Resource {
             parameters.put(REQUESTER_ID, requesterId);
             parameters.put(ITEM_ID, matchingRequest.get().getItemId());
             parameters.put("instanceId", requestPackage.getInstanceLevelRequest().getInstanceId().toString());
-            String message = "This requester already has an open request for a copy of this title (instance)";
+            String message = "This requester already has an open request for an item of this instance";
             return failedValidation(new ValidationError(message, parameters));
           }
         }
       }
     return of(itemRequestQueueMap::keySet);
+  }
+
+  private Result<Collection<Item>> validateItems(Collection<Item> items) {
+    if (items == null || items.isEmpty()) {
+      return failedValidation("There are no items for this instance", "items", "empty");
+    }
+    return succeeded(items);
   }
 
   private ProxyRelationshipValidator createProxyRelationshipValidator(
