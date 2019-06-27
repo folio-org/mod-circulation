@@ -14,6 +14,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import api.support.fixtures.*;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.OkapiHttpClient;
 import org.folio.circulation.support.http.client.Response;
@@ -25,25 +26,6 @@ import org.junit.BeforeClass;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import api.support.fixtures.AddressTypesFixture;
-import api.support.fixtures.CancellationReasonsFixture;
-import api.support.fixtures.CirculationRulesFixture;
-import api.support.fixtures.HoldingsFixture;
-import api.support.fixtures.InstancesFixture;
-import api.support.fixtures.ItemsFixture;
-import api.support.fixtures.LoanPoliciesFixture;
-import api.support.fixtures.LoanTypesFixture;
-import api.support.fixtures.LoansFixture;
-import api.support.fixtures.LocationsFixture;
-import api.support.fixtures.MaterialTypesFixture;
-import api.support.fixtures.NoticePoliciesFixture;
-import api.support.fixtures.PatronGroupsFixture;
-import api.support.fixtures.ProxyRelationshipsFixture;
-import api.support.fixtures.RequestPoliciesFixture;
-import api.support.fixtures.RequestsFixture;
-import api.support.fixtures.ScheduledNoticeProcessingClient;
-import api.support.fixtures.ServicePointsFixture;
-import api.support.fixtures.UsersFixture;
 import api.support.http.InterfaceUrls;
 import api.support.http.ResourceClient;
 import io.vertx.core.json.JsonObject;
@@ -78,6 +60,8 @@ public abstract class APITests {
   protected final ResourceClient itemsClient = ResourceClient.forItems(client);
 
   protected final ResourceClient loansClient = ResourceClient.forLoans(client);
+  protected final ResourceClient accountsClient = ResourceClient.forAccounts(client);
+
   protected final ResourceClient loansStorageClient
     = ResourceClient.forLoansStorage(client);
 
@@ -344,6 +328,8 @@ public abstract class APITests {
     ResourceClient.forInstances(cleanupClient).deleteAll();
 
     ResourceClient.forUsers(cleanupClient).deleteAllIndividually();
+
+    ResourceClient.forAccounts(cleanupClient).deleteAll();
   }
 
   private static void deleteAllRecords()
@@ -382,6 +368,9 @@ public abstract class APITests {
     ResourceClient.forCancellationReasons(client).deleteAllIndividually();
   }
 
+  protected void loanHasFeeFinesProperties(JsonObject loan, double remainingAmount) {
+    hasProperty("feefine", loan, "loan", remainingAmount);
+  }
 
   protected void loanHasLoanPolicyProperties(JsonObject loan, IndividualResource loanPolicy) {
     hasProperty("loanPolicyId", loan, "loan", loanPolicy.getId().toString());

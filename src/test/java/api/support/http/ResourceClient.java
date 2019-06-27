@@ -65,6 +65,11 @@ public class ResourceClient {
       "loans");
   }
 
+  public static ResourceClient forAccounts(OkapiHttpClient client) {
+    return new ResourceClient(client, InterfaceUrls::accountsUrl,
+      "accounts");
+  }
+
   public static ResourceClient forLoanPolicies(OkapiHttpClient client) {
     return new ResourceClient(client, InterfaceUrls::loanPoliciesStorageUrl,
       "loan policies", "loanPolicies");
@@ -533,7 +538,7 @@ public class ResourceClient {
     client.get(urlMaker.combine("?limit=1000"),
       ResponseHandler.any(getFinished));
 
-    Response response = getFinished.get(5, TimeUnit.SECONDS);
+    Response response = getFinished.get(500, TimeUnit.SECONDS);
 
     assertThat(String.format("Get all records failed: %s", response.getBody()),
       response.getStatusCode(), is(200));
