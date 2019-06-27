@@ -427,7 +427,7 @@ public class InstanceRequestsAPICreationTests extends APITests {
     TimeoutException,
     MalformedURLException {
 
-    //The scenario we're checking is if a user has already checked out an iemm, but then
+    //The scenario we're checking is if a user has already checked out an item, but then
     //goes back to place an instance level request. The system will find this item and rejects the request for the user, so the user
     //could be given a successful request on an unavailable item instead, if there is any.
     UUID pickupServicePointId = servicePointsFixture.cd1().getId();
@@ -750,7 +750,7 @@ public class InstanceRequestsAPICreationTests extends APITests {
     Response postResponse = postCompleted.get(REQUEST_TIMEOUT, TimeUnit.SECONDS);
     assertEquals(422, postResponse.getStatusCode());
     assertThat(postResponse.getJson(), hasErrorWith(allOf(
-      hasMessage("This requester already has an open request for a copy of this title"),
+      hasMessage("This requester already has an open request for a copy of this title (instance)"),
       hasParameter("itemId", item1.getId().toString()))));
   }
 

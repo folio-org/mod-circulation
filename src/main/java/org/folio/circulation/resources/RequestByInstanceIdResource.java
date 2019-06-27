@@ -1,7 +1,7 @@
 package org.folio.circulation.resources;
 
 import static org.folio.circulation.domain.InstanceRequestItemsComparer.sortRequestQueues;
-import static org.folio.circulation.domain.representations.RequestProperties.PROXY_USER_ID;
+import static org.folio.circulation.domain.representations.RequestProperties.*;
 import static org.folio.circulation.support.JsonPropertyWriter.write;
 import static org.folio.circulation.support.Result.failed;
 import static org.folio.circulation.support.Result.of;
@@ -22,24 +22,7 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
-import org.folio.circulation.domain.CreateRequestService;
-import org.folio.circulation.domain.InstanceRequestRelatedRecords;
-import org.folio.circulation.domain.Item;
-import org.folio.circulation.domain.Loan;
-import org.folio.circulation.domain.LoanRepository;
-import org.folio.circulation.domain.Request;
-import org.folio.circulation.domain.RequestAndRelatedRecords;
-import org.folio.circulation.domain.RequestQueue;
-import org.folio.circulation.domain.RequestQueueRepository;
-import org.folio.circulation.domain.RequestRepository;
-import org.folio.circulation.domain.RequestRepresentation;
-import org.folio.circulation.domain.RequestType;
-import org.folio.circulation.domain.ServicePointRepository;
-import org.folio.circulation.domain.UpdateItem;
-import org.folio.circulation.domain.UpdateLoan;
-import org.folio.circulation.domain.UpdateLoanActionHistory;
-import org.folio.circulation.domain.UpdateUponRequest;
-import org.folio.circulation.domain.UserRepository;
+import org.folio.circulation.domain.*;
 import org.folio.circulation.domain.policy.LoanPolicyRepository;
 import org.folio.circulation.domain.policy.RequestPolicyRepository;
 import org.folio.circulation.domain.representations.RequestByInstanceIdRequest;
@@ -74,8 +57,6 @@ import io.vertx.ext.web.RoutingContext;
 public class RequestByInstanceIdResource extends Resource {
 
   private final Logger log;
-  private static final String ITEM_ID_FIELD = "itemId";
-  private static final String REQUESTER_ID_FIELD = "requesterId";
 
   public RequestByInstanceIdResource(HttpClient client) {
     super(client);
@@ -114,8 +95,8 @@ public class RequestByInstanceIdResource extends Resource {
     requestRelatedRecords.setInstanceLevelRequest(requestByInstanceIdRequest);
 
     finder.getItemsByInstanceId(requestByInstanceIdRequest.getInstanceId())
-          .thenCompose(r -> r.after(items -> getRequestQueues(items,requestRelatedRecords, clients)))
-          .thenApply(r -> r.next(items -> validateRequester(items, requestByInstanceIdRequest.getRequesterId())))
+          .thenCompose(r -> r.after(items -> getRequestQueues(items, requestRelatedRecords, clients)))
+          .thenApply(r -> r.next(items -> validateRequester(items, requestRelatedRecords)))
           .thenApply(r -> r.next(items -> segregateItemsList(items, requestRelatedRecords)))
           .thenApply(r -> r.next(RequestByInstanceIdResource::rankItemsByMatchingServicePoint))
           .thenCompose(r -> r.after(relatedRecords -> getLoanItems(relatedRecords, clients)))
@@ -202,7 +183,7 @@ public class RequestByInstanceIdResource extends Resource {
           && (instanceRequestPackage.getSortedAvailableItems() == null || instanceRequestPackage.getSortedAvailableItems().isEmpty())) {
           //fail the requests when there are no items to make requests from.
           log.error("Failed to find request queues for all items of instanceId {}",
-            items.toArray(new Item[0])[0].getInstanceId());
+            instanceRequestPackage.getInstanceLevelRequest().getInstanceId().toString());
           return failed(new ServerErrorFailure("Unable to find an item to place a request"));
         }
         instanceRequestPackage.setItemsWithoutRequests(itemsWithoutRequestQueues);
@@ -266,13 +247,13 @@ public class RequestByInstanceIdResource extends Resource {
       .thenCompose(r -> {
           if (r.succeeded()) {
             log.debug("RequestByInstanceIdResource.placeRequest: succeeded creating request for item {}",
-                currentItemRequest.getString(ITEM_ID_FIELD));
+                currentItemRequest.getString(ITEM_ID));
             return CompletableFuture.completedFuture(r);
           } else {
             String reason = getErrorMessage(r.cause());
             errors.add(reason);
 
-            log.debug("Failed to create request for item {} with reason: {}", currentItemRequest.getString(ITEM_ID_FIELD), reason);
+            log.debug("Failed to create request for item {} with reason: {}", currentItemRequest.getString(ITEM_ID), reason);
             return placeRequest(itemRequests, startIndex +1, createRequestService, clients, loanRepository, errors);
           }
         });
@@ -321,10 +302,10 @@ public class RequestByInstanceIdResource extends Resource {
 
           JsonObject requestBody = new JsonObject();
 
-          write(requestBody, ITEM_ID_FIELD, item.getItemId());
+          write(requestBody, ITEM_ID, item.getItemId());
           write(requestBody, "requestDate",
             requestByInstanceIdRequest.getRequestDate().toString(ISODateTimeFormat.dateTime()));
-          write(requestBody, REQUESTER_ID_FIELD, requestByInstanceIdRequest.getRequesterId().toString());
+          write(requestBody, REQUESTER_ID, requestByInstanceIdRequest.getRequesterId().toString());
           write(requestBody, "pickupServicePointId",
             requestByInstanceIdRequest.getPickupServicePointId().toString());
           write(requestBody, "fulfilmentPreference", defaultFulfilmentPreference);
@@ -392,22 +373,24 @@ public class RequestByInstanceIdResource extends Resource {
     });
   }
 
-  private Result<Collection<Item>> validateRequester(Map<Item, RequestQueue> itemRequestQueueMap, UUID requesterId) {
+  private Result<Collection<Item>> validateRequester(Map<Item, RequestQueue> itemRequestQueueMap, InstanceRequestRelatedRecords requestPackage) {
     if (!itemRequestQueueMap.isEmpty()) {
       Collection<RequestQueue> requestQueues = itemRequestQueueMap.values();
+      String requesterId = requestPackage.getInstanceLevelRequest().getRequesterId().toString();
+
       for (RequestQueue queue : requestQueues) {
         final Optional<Request> matchingRequest = queue.getRequests()
           .stream()
           .filter(request -> request.isOpen()
-                           && Objects.equals(request.asJson().getString(REQUESTER_ID_FIELD),
-                                             requesterId.toString())
+                           && Objects.equals(request.getUserId(), requesterId)
           ).findFirst();
 
         if (matchingRequest.isPresent()) {
             Map<String, String> parameters = new HashMap<>();
-            parameters.put(REQUESTER_ID_FIELD, requesterId.toString());
-            parameters.put(ITEM_ID_FIELD, matchingRequest.get().asJson().getString(ITEM_ID_FIELD));
-            String message = "This requester already has an open request for a copy of this title";
+            parameters.put(REQUESTER_ID, requesterId);
+            parameters.put(ITEM_ID, matchingRequest.get().getItemId());
+            parameters.put("instanceId", requestPackage.getInstanceLevelRequest().getInstanceId().toString());
+            String message = "This requester already has an open request for a copy of this title (instance)";
             return failedValidation(new ValidationError(message, parameters));
           }
         }
