@@ -1197,7 +1197,8 @@
         "inventory-storage.service-points.item.get",
         "users.collection.get",
         "users.item.get",
-        "inventory-storage.locations.collection.get"
+        "inventory-storage.locations.collection.get",
+        "accounts.collection.get"
       ],
       "visible": false
     },
@@ -1223,7 +1224,8 @@
         "inventory-storage.material-types.collection.get",
         "inventory-storage.material-types.item.get",
         "inventory-storage.service-points.collection.get",
-        "inventory-storage.service-points.item.get"
+        "inventory-storage.service-points.item.get",
+        "accounts.collection.get"
       ],
       "visible": false
     }

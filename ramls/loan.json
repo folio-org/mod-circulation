@@ -253,6 +253,11 @@
         }
       }
     },
+    "feefine": {
+      "description": "Fee/Fine for user (read only, defined by the server)",
+      "type": "number",
+      "readonly" : true
+    },
     "metadata": {
       "description": "Metadata about creation and changes to loan, provided by the server (client should not provide)",
       "type": "object",
