@@ -1,7 +1,9 @@
 package org.folio.circulation.domain;
 
+import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
 import org.folio.circulation.domain.representations.RequestByInstanceIdRequest;
 
@@ -13,7 +15,9 @@ public class InstanceRequestRelatedRecords {
   private List<Item> sortedUnavailableItems;
   private List<Item> itemsWithoutLoans;
   private List<Item> itemsWithoutRequests;
+  private Collection<Item> allUnsortedItems;
   private RequestByInstanceIdRequest instanceLevelRequest;
+  private Map<Item, RequestQueue> itemRequestQueueMap;
 
   public List<Item> getUnsortedAvailableItems() {
     return unsortedAvailableItems;
@@ -76,5 +80,21 @@ public class InstanceRequestRelatedRecords {
 
   public void setItemsWithoutRequests(List<Item> itemsWithoutRequests) {
     this.itemsWithoutRequests = itemsWithoutRequests;
+  }
+
+  public Map<Item, RequestQueue> getItemRequestQueueMap() {
+    return itemRequestQueueMap;
+  }
+
+  public void setItemRequestQueueMap(Map<Item, RequestQueue> itemRequestQueueMap) {
+    this.itemRequestQueueMap = itemRequestQueueMap;
+  }
+
+  public Collection<Item> getAllUnsortedItems() {
+    return allUnsortedItems;
+  }
+
+  public void setAllUnsortedItems(Collection<Item> allUnsortedItems) {
+    this.allUnsortedItems = allUnsortedItems;
   }
 }
