@@ -114,10 +114,10 @@ public class RequestByInstanceIdResource extends Resource {
     requestRelatedRecords.setInstanceLevelRequest(requestByInstanceIdRequest);
 
     finder.getItemsByInstanceId(requestByInstanceIdRequest.getInstanceId())
-          .thenApply(r -> r.next(items -> validateItems(items)))
+          .thenApply(r -> r.next(this::validateItems))
           .thenCompose(r -> r.after(items -> getRequestQueues(items, requestRelatedRecords, clients)))
           .thenApply(r -> r.next(items -> validateRequester(items, requestRelatedRecords)))
-          .thenApply(r -> r.next(items -> segregateItemsList(items, requestRelatedRecords)))
+          .thenApply(r -> r.next(items -> segregateItemsList(requestRelatedRecords)))
           .thenApply(r -> r.next(RequestByInstanceIdResource::rankItemsByMatchingServicePoint))
           .thenCompose(r -> r.after(relatedRecords -> getLoanItems(relatedRecords, clients)))
           .thenApply( r -> r.next(loanItems -> combineWithUnavailableItems(loanItems, requestRelatedRecords)))
@@ -178,6 +178,8 @@ public class RequestByInstanceIdResource extends Resource {
 
     RequestQueueRepository queueRepository = RequestQueueRepository.using(clients);
     Map<Item, CompletableFuture<Result<RequestQueue>>> itemRequestQueueMap = new HashMap<>();
+
+    instanceRequestPackage.setAllUnsortedItems(items);
 
     for (Item item : items) {
       itemRequestQueueMap.put(item, queueRepository.getRequestQueueWithoutItemLookup(item.getItemId()));
@@ -279,7 +281,7 @@ public class RequestByInstanceIdResource extends Resource {
         });
   }
 
-  public static Result<InstanceRequestRelatedRecords> rankItemsByMatchingServicePoint(InstanceRequestRelatedRecords record) {
+  public static Result<InstanceRequestRelatedRecords> rankItemsByMatchingServicePoint( InstanceRequestRelatedRecords record) {
 
     final Collection<Item> unsortedAvailableItems = record.getUnsortedAvailableItems();
     final UUID pickupServicePointId = record.getInstanceLevelRequest().getPickupServicePointId();
@@ -341,11 +343,9 @@ public class RequestByInstanceIdResource extends Resource {
     return succeeded(requests);
   }
 
-  private Result<InstanceRequestRelatedRecords> segregateItemsList(Collection<Item> items,
-                                                                   InstanceRequestRelatedRecords requestRelatedRecords ){
-    if (items == null ||items.isEmpty()) {
-      return failedValidation("Items list is null or empty", "items", "null");
-    }
+  private Result<InstanceRequestRelatedRecords> segregateItemsList( InstanceRequestRelatedRecords requestRelatedRecords ){
+
+    Collection<Item> items = requestRelatedRecords.getAllUnsortedItems();
 
     log.debug("RequestByInstanceIdResource.segregateItemsList: Found {} items", items.size());
 

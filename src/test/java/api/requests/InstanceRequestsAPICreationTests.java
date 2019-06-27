@@ -767,7 +767,6 @@ public class InstanceRequestsAPICreationTests extends APITests {
 
     IndividualResource instanceMultipleCopies = instancesFixture.basedUponDunkirk();
     holdingsFixture.defaultWithHoldings(instanceMultipleCopies.getId());
-    ;
 
     JsonObject requestBody = createInstanceRequestObject(instanceMultipleCopies.getId(),
       usersFixture.jessica().getId(),
