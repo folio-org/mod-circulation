@@ -51,7 +51,7 @@ public class ResponseInterpreter<T> {
   }
 
   public Result<T> apply(Response response) {
-    if(response == null) {
+    if (response == null) {
       log.warn("Cannot interpret null response");
       return failed(new ServerErrorFailure("Cannot interpret null response"));
     }
