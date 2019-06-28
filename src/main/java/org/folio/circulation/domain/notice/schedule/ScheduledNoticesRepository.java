@@ -42,8 +42,7 @@ public class ScheduledNoticesRepository {
       .flatMapOn(201, flatMapUsingJson(JsonScheduledNoticeMapper::mapFromJson));
 
     return scheduledNoticesStorageClient.post(representation)
-      .thenApply(interpreter
-        ::apply);
+      .thenApply(interpreter::apply);
   }
 
   public CompletableFuture<Result<MultipleRecords<ScheduledNotice>>> findNoticesToSend(
@@ -70,9 +69,12 @@ public class ScheduledNoticesRepository {
   }
 
   public CompletableFuture<Result<ScheduledNotice>> delete(ScheduledNotice scheduledNotice) {
+    final ResponseInterpreter<ScheduledNotice> interpreter
+      = noContentRecordInterpreter(scheduledNotice)
+      .otherwise(forwardOnFailure());
+
     return scheduledNoticesStorageClient.delete(scheduledNotice.getId())
-      .thenApply(noContentRecordInterpreter(scheduledNotice)
-        .otherwise(forwardOnFailure())::apply);
+      .thenApply(interpreter::apply);
   }
 
   CompletableFuture<Result<Response>> deleteByLoanId(String loanId) {

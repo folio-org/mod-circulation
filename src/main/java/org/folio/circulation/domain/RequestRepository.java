@@ -1,13 +1,13 @@
 package org.folio.circulation.domain;
 
 import static java.util.Objects.isNull;
-import static org.folio.circulation.support.http.ResponseMapping.forwardOnFailure;
-import static org.folio.circulation.support.http.ResponseMapping.mapUsingJson;
 import static org.folio.circulation.support.Result.failed;
 import static org.folio.circulation.support.Result.of;
 import static org.folio.circulation.support.Result.ofAsync;
 import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.ResultBinding.mapResult;
+import static org.folio.circulation.support.http.ResponseMapping.forwardOnFailure;
+import static org.folio.circulation.support.http.ResponseMapping.mapUsingJson;
 
 import java.util.concurrent.CompletableFuture;
 
@@ -130,11 +130,12 @@ public class RequestRepository {
     final JsonObject representation
       = new StoredRequestRepresentation().storedRequest(request);
 
+    final ResponseInterpreter<Request> interpreter = new ResponseInterpreter<Request>()
+      .on(204, of(() -> request))
+      .otherwise(forwardOnFailure());
+
     return requestsStorageClient.put(request.getId(), representation)
-      .thenApply(new ResponseInterpreter<Request>()
-        .on(204, of(() -> request))
-        .otherwise(forwardOnFailure())
-        ::apply);
+      .thenApply(interpreter::apply);
   }
 
   public CompletableFuture<Result<RequestAndRelatedRecords>> update(
@@ -152,20 +153,22 @@ public class RequestRepository {
     JsonObject representation = new StoredRequestRepresentation()
       .storedRequest(request);
 
+    final ResponseInterpreter<Request> interpreter = new ResponseInterpreter<Request>()
+      .flatMapOn(201, mapUsingJson(request::withRequestJsonRepresentation))
+      .otherwise(forwardOnFailure());
+
     return requestsStorageClient.post(representation)
-      .thenApply(new ResponseInterpreter<Request>()
-        .flatMapOn(201, mapUsingJson(request::withRequestJsonRepresentation))
-        .otherwise(forwardOnFailure())
-        ::apply)
+      .thenApply(interpreter::apply)
       .thenApply(mapResult(requestAndRelatedRecords::withRequest));
   }
 
   public CompletableFuture<Result<Request>> delete(Request request) {
+    final ResponseInterpreter<Request> interpreter = new ResponseInterpreter<Request>()
+      .on(204, of(() -> request))
+      .otherwise(forwardOnFailure());
+
     return requestsStorageClient.delete(request.getId())
-      .thenApply(new ResponseInterpreter<Request>()
-        .on(204, of(() -> request))
-        .otherwise(forwardOnFailure())
-        ::apply);
+      .thenApply(interpreter::apply);
   }
 
   public CompletableFuture<Result<Request>> loadCancellationReason(Request request) {
