@@ -1,6 +1,7 @@
 package api.support.fixtures;
 
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
+import static java.lang.Math.max;
 import static org.folio.circulation.support.JsonPropertyFetcher.getBooleanProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getDateTimeProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getIntegerProperty;
@@ -124,10 +125,7 @@ public class NoticeMatchers {
       tokenMatchers.put("loan.numberOfRenewalsRemaining", is("unlimited"));
     } else {
       int renewalLimit = getIntegerProperty(renewalsPolicy, "numberAllowed", 0);
-      int renewalsRemaining = renewalLimit - renewalsCount;
-      if (renewalsRemaining < 0) {
-        renewalsRemaining = 0;
-      }
+      int renewalsRemaining = max(renewalLimit - renewalsCount, 0);
       tokenMatchers.put("loan.numberOfRenewalsAllowed", is(Integer.toString(renewalLimit)));
       tokenMatchers.put("loan.numberOfRenewalsRemaining", is(Integer.toString(renewalsRemaining)));
     }

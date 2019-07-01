@@ -1,5 +1,6 @@
 package org.folio.circulation.domain.notice;
 
+import static java.lang.Math.max;
 import static java.util.stream.Collectors.joining;
 import static org.folio.circulation.support.JsonStringArrayHelper.toStream;
 
@@ -161,10 +162,7 @@ public class NoticeContextUtil {
         loanContext.put("numberOfRenewalsRemaining", UNLIMITED);
       } else {
         int renewalLimit = loanPolicy.getRenewalLimit();
-        int renewalsRemaining = renewalLimit - loan.getRenewalCount();
-        if (renewalsRemaining < 0) {
-          renewalsRemaining = 0;
-        }
+        int renewalsRemaining = max(renewalLimit - loan.getRenewalCount(), 0);
         loanContext.put("numberOfRenewalsAllowed", Integer.toString(renewalLimit));
         loanContext.put("numberOfRenewalsRemaining", Integer.toString(renewalsRemaining));
       }
