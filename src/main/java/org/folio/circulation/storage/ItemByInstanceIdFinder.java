@@ -48,7 +48,7 @@ public class ItemByInstanceIdFinder {
     return holdingsRecordsResult.after(holdingsRecords -> {
       if (holdingsRecords == null || holdingsRecords.isEmpty()) {
         return completedFuture(failedValidation(
-          "holdingsRecords is null or empty", "holdingsRecords", "null"));
+          "There are no holdings for this instance", "holdingsRecords", "null"));
       }
 
       List<String> holdingsIds = holdingsRecords.toKeys(byId());
