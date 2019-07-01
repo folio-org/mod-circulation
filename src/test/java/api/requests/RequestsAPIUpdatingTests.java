@@ -8,6 +8,8 @@ import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static api.support.matchers.ValidationErrorMatchers.hasUUIDParameter;
 import static org.folio.HttpStatus.HTTP_VALIDATION_ERROR;
+import static org.folio.circulation.domain.representations.RequestProperties.CANCELLATION_REASON_NAME;
+import static org.folio.circulation.domain.representations.RequestProperties.CANCELLATION_REASON_PUBLIC_DESCRIPTION;
 import static org.folio.circulation.support.JsonPropertyWriter.write;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.hasItems;
@@ -493,7 +495,7 @@ public class RequestsAPIUpdatingTests extends APITests {
   }
 
   @Test
-  public void requestCancellationNoticeIsSentWhenPolicyDefinesCancelledRequestNoticeConfiguration()
+  public void cancellationReasonPublicDescriptionIsUsedAsReasonForCancellationToken()
     throws InterruptedException,
     MalformedURLException,
     TimeoutException,
@@ -527,9 +529,10 @@ public class RequestsAPIUpdatingTests extends APITests {
         .withRequestExpiration(new LocalDate(2017, 7, 30))
         .withHoldShelfExpiration(new LocalDate(2017, 8, 31)));
 
+    final IndividualResource itemNotAvailable = cancellationReasonsFixture.itemNotAvailable();
     JsonObject updatedRequest = RequestBuilder.from(createdRequest)
       .cancelled()
-      .withCancellationReasonId(cancellationReasonsFixture.courseReserves().getId())
+      .withCancellationReasonId(itemNotAvailable.getId())
       .withCancellationAdditionalInformation("Cancellation info")
       .create();
     requestsClient.replace(createdRequest.getId(), updatedRequest);
@@ -544,6 +547,68 @@ public class RequestsAPIUpdatingTests extends APITests {
     noticeContextMatchers.putAll(NoticeMatchers.getItemContextMatchers(temeraire, true));
     noticeContextMatchers.putAll(NoticeMatchers.getRequestContextMatchers(updatedRequest));
     noticeContextMatchers.putAll(NoticeMatchers.getCancelledRequestContextMatchers(updatedRequest));
+    noticeContextMatchers.put("request.reasonForCancellation",
+      is(itemNotAvailable.getJson().getString(CANCELLATION_REASON_PUBLIC_DESCRIPTION)));
+    MatcherAssert.assertThat(sentNotices,
+      hasItems(
+        hasEmailNoticeProperties(requester.getId(), requestCancellationTemplateId, noticeContextMatchers)));
+  }
+
+  @Test
+  public void cancellationReasonNameIsUsedAsReasonForCancellationTokenWhenPublicDescriptionIsNotPresent()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    UUID requestCancellationTemplateId = UUID.randomUUID();
+    JsonObject requestCancellationConfiguration = new NoticeConfigurationBuilder()
+      .withTemplateId(requestCancellationTemplateId)
+      .withEventType(REQUEST_CANCELLATION)
+      .create();
+    NoticePolicyBuilder noticePolicy = new NoticePolicyBuilder()
+      .withName("Policy with request cancellation notice")
+      .withLoanNotices(Collections.singletonList(requestCancellationConfiguration));
+    useLoanPolicyAsFallback(
+      loanPoliciesFixture.canCirculateRolling().getId(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
+      noticePoliciesFixture.create(noticePolicy).getId());
+
+    final InventoryItemResource temeraire = itemsFixture.basedUponTemeraire();
+    final IndividualResource requester = usersFixture.steve();
+    DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
+    final IndividualResource exampleServicePoint = servicePointsFixture.cd1();
+    IndividualResource createdRequest = requestsClient.create(
+      new RequestBuilder()
+        .page()
+        .withRequestDate(requestDate)
+        .forItem(temeraire)
+        .by(requester)
+        .fulfilToHoldShelf()
+        .withPickupServicePointId(exampleServicePoint.getId())
+        .withRequestExpiration(new LocalDate(2017, 7, 30))
+        .withHoldShelfExpiration(new LocalDate(2017, 8, 31)));
+
+    final IndividualResource courseReserves = cancellationReasonsFixture.courseReserves();
+    JsonObject updatedRequest = RequestBuilder.from(createdRequest)
+      .cancelled()
+      .withCancellationReasonId(courseReserves.getId())
+      .withCancellationAdditionalInformation("Cancellation info")
+      .create();
+    requestsClient.replace(createdRequest.getId(), updatedRequest);
+
+    Awaitility.await()
+      .atMost(1, TimeUnit.SECONDS)
+      .until(patronNoticesClient::getAll, Matchers.hasSize(1));
+    List<JsonObject> sentNotices = patronNoticesClient.getAll();
+
+    Map<String, Matcher<String>> noticeContextMatchers = new HashMap<>();
+    noticeContextMatchers.putAll(NoticeMatchers.getUserContextMatchers(requester));
+    noticeContextMatchers.putAll(NoticeMatchers.getItemContextMatchers(temeraire, true));
+    noticeContextMatchers.putAll(NoticeMatchers.getRequestContextMatchers(updatedRequest));
+    noticeContextMatchers.putAll(NoticeMatchers.getCancelledRequestContextMatchers(updatedRequest));
+    noticeContextMatchers.put("request.reasonForCancellation",
+      is(courseReserves.getJson().getString(CANCELLATION_REASON_NAME)));
     MatcherAssert.assertThat(sentNotices,
       hasItems(
         hasEmailNoticeProperties(requester.getId(), requestCancellationTemplateId, noticeContextMatchers)));
