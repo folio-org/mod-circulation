@@ -154,7 +154,7 @@ public class NoticeMatchers {
     Map<String, Matcher<String>> tokenMatchers = new HashMap<>();
     tokenMatchers.put("request.additionalInfo",
       is(request.getString("cancellationAdditionalInformation")));
-    tokenMatchers.put("request.cancellationReason", notNullValue(String.class));
+    tokenMatchers.put("request.reasonForCancellation", notNullValue(String.class));
     return tokenMatchers;
   }
 
