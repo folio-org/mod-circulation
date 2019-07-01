@@ -12,6 +12,7 @@ import org.folio.circulation.support.http.client.Response;
 import org.joda.time.DateTime;
 
 import api.support.RestAssuredClient;
+import api.support.builders.MoveRequestBuilder;
 import api.support.builders.RequestBuilder;
 import api.support.http.InterfaceUrls;
 import api.support.http.ResourceClient;
@@ -64,6 +65,23 @@ public class RequestsFixture {
       .fulfilToHoldShelf()
       .withItemId(item.getId())
       .withRequestDate(on)
+      .withRequesterId(by.getId())
+      .withPickupServicePointId(servicePointsFixture.cd1().getId()));
+  }
+
+  public IndividualResource placeRecallRequest(
+    IndividualResource item,
+    IndividualResource by,
+    DateTime on)
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    return place(new RequestBuilder()
+      .recall()
+      .withRequestDate(on)
+      .withItemId(item.getId())
       .withRequesterId(by.getId())
       .withPickupServicePointId(servicePointsFixture.cd1().getId()));
   }
@@ -179,6 +197,22 @@ public class RequestsFixture {
       .withCancellationReasonId(courseReservesCancellationReason.getId());
 
     requestsClient.replace(request.getId(), cancelledRequestBySteve);
+  }
+
+  public IndividualResource move(MoveRequestBuilder requestToBuild)
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+    return requestsClient.move(requestToBuild);
+  }
+
+  public Response attemptMove(MoveRequestBuilder requestToBuild)
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+    return requestsClient.attemptMove(requestToBuild);
   }
 
   public MultipleRecords<JsonObject> getQueueFor(IndividualResource item) {

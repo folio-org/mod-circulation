@@ -11,6 +11,7 @@ import static org.folio.circulation.domain.RequestStatus.OPEN_NOT_YET_FILLED;
 import static org.folio.circulation.domain.representations.RequestProperties.CANCELLATION_ADDITIONAL_INFORMATION;
 import static org.folio.circulation.domain.representations.RequestProperties.CANCELLATION_REASON_ID;
 import static org.folio.circulation.domain.representations.RequestProperties.HOLD_SHELF_EXPIRATION_DATE;
+import static org.folio.circulation.domain.representations.RequestProperties.ITEM_ID;
 import static org.folio.circulation.domain.representations.RequestProperties.NAME;
 import static org.folio.circulation.domain.representations.RequestProperties.POSITION;
 import static org.folio.circulation.domain.representations.RequestProperties.REQUEST_EXPIRATION_DATE;
@@ -132,12 +133,16 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
 
   @Override
   public String getItemId() {
-    return requestRepresentation.getString("itemId");
+    return requestRepresentation.getString(ITEM_ID);
   }
 
   public Request withItem(Item newItem) {
-    return new Request(requestRepresentation,cancellationReasonRepresentation, newItem, requester, proxy,
-      loan == null ? null : loan.withItem(newItem),pickupServicePoint);
+    // NOTE: this is null in RequestsAPIUpdatingTests.replacingAnExistingRequestRemovesItemInformationWhenItemDoesNotExist test 
+    if (newItem.getItemId() != null) {
+      requestRepresentation.put(ITEM_ID, newItem.getItemId());
+    }
+    return new Request(requestRepresentation, cancellationReasonRepresentation, newItem, requester, proxy,
+      loan == null ? null : loan.withItem(newItem), pickupServicePoint);
   }
 
   public Request withRequester(User newRequester) {
@@ -190,7 +195,7 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
     return RequestTypeItemStatusWhiteList.canCreateRequestForItem(getItem().getStatus(), getRequestType());
   }
 
-  String actionOnCreation() {
+  String actionOnCreationOrMove() {
     return getRequestType().toLoanAction();
   }
 
@@ -201,6 +206,11 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
   void changeStatus(RequestStatus status) {
     //TODO: Check for null status
     status.writeTo(requestRepresentation);
+  }
+
+  Request withRequestType(RequestType type) {
+    requestRepresentation.put(REQUEST_TYPE, type.getValue());
+    return this;
   }
 
   public Item getItem() {

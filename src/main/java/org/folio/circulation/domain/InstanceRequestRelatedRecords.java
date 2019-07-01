@@ -1,7 +1,9 @@
 package org.folio.circulation.domain;
 
+import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
 import org.folio.circulation.domain.representations.RequestByInstanceIdRequest;
 
@@ -11,7 +13,11 @@ public class InstanceRequestRelatedRecords {
   private List<Item> unsortedUnavailableItems;
   private List<Item> sortedAvailableItems;
   private List<Item> sortedUnavailableItems;
-  private RequestByInstanceIdRequest requestByInstanceIdRequest;
+  private List<Item> itemsWithoutLoans;
+  private List<Item> itemsWithoutRequests;
+  private Collection<Item> allUnsortedItems;
+  private RequestByInstanceIdRequest instanceLevelRequest;
+  private Map<Item, RequestQueue> itemRequestQueueMap;
 
   public List<Item> getUnsortedAvailableItems() {
     return unsortedAvailableItems;
@@ -41,7 +47,7 @@ public class InstanceRequestRelatedRecords {
     this.sortedUnavailableItems = sortedUnavailableItems;
   }
 
-  public List<Item> getCombineItemsList() {
+  public List<Item> getCombinedSortedItemsList() {
     List<Item> combinedItemsList = new LinkedList<>();
 
     if (sortedAvailableItems != null)
@@ -52,11 +58,43 @@ public class InstanceRequestRelatedRecords {
     return combinedItemsList;
   }
 
-  public RequestByInstanceIdRequest getRequestByInstanceIdRequest() {
-    return requestByInstanceIdRequest;
+  public RequestByInstanceIdRequest getInstanceLevelRequest() {
+    return instanceLevelRequest;
   }
 
-  public void setRequestByInstanceIdRequest(RequestByInstanceIdRequest requestByInstanceIdRequest) {
-    this.requestByInstanceIdRequest = requestByInstanceIdRequest;
+  public void setInstanceLevelRequest(RequestByInstanceIdRequest requestByInstanceIdRequest) {
+    this.instanceLevelRequest = requestByInstanceIdRequest;
+  }
+
+  public List<Item> getItemsWithoutLoans() {
+    return itemsWithoutLoans;
+  }
+
+  public void setItemsWithoutLoans(List<Item> itemsWithoutLoans) {
+    this.itemsWithoutLoans = itemsWithoutLoans;
+  }
+
+  public List<Item> getItemsWithoutRequests() {
+    return itemsWithoutRequests;
+  }
+
+  public void setItemsWithoutRequests(List<Item> itemsWithoutRequests) {
+    this.itemsWithoutRequests = itemsWithoutRequests;
+  }
+
+  public Map<Item, RequestQueue> getItemRequestQueueMap() {
+    return itemRequestQueueMap;
+  }
+
+  public void setItemRequestQueueMap(Map<Item, RequestQueue> itemRequestQueueMap) {
+    this.itemRequestQueueMap = itemRequestQueueMap;
+  }
+
+  public Collection<Item> getAllUnsortedItems() {
+    return allUnsortedItems;
+  }
+
+  public void setAllUnsortedItems(Collection<Item> allUnsortedItems) {
+    this.allUnsortedItems = allUnsortedItems;
   }
 }

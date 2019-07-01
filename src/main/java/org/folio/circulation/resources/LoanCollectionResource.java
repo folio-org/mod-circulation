@@ -9,6 +9,19 @@ import static org.folio.circulation.support.ValidationErrorFailure.singleValidat
 
 import java.util.concurrent.CompletableFuture;
 
+import org.folio.circulation.domain.Item;
+import org.folio.circulation.domain.Loan;
+import org.folio.circulation.domain.LoanAndRelatedRecords;
+import org.folio.circulation.domain.LoanRepository;
+import org.folio.circulation.domain.LoanRepresentation;
+import org.folio.circulation.domain.LoanService;
+import org.folio.circulation.domain.RequestQueue;
+import org.folio.circulation.domain.RequestQueueRepository;
+import org.folio.circulation.domain.ServicePointRepository;
+import org.folio.circulation.domain.UpdateItem;
+import org.folio.circulation.domain.UpdateRequestQueue;
+import org.folio.circulation.domain.User;
+import org.folio.circulation.domain.UserRepository;
 import org.folio.circulation.domain.*;
 import org.folio.circulation.domain.notice.schedule.ScheduledNoticeService;
 import org.folio.circulation.domain.policy.LoanPolicyRepository;
@@ -52,6 +65,7 @@ public class LoanCollectionResource extends CollectionResource {
     final UpdateRequestQueue requestQueueUpdate = UpdateRequestQueue.using(clients);
     final UpdateItem updateItem = new UpdateItem(clients);
     final LoanRepository loanRepository = new LoanRepository(clients);
+    final LoanService loanService = new LoanService(clients);
     final LoanPolicyRepository loanPolicyRepository = new LoanPolicyRepository(clients);
 
     final ProxyRelationshipValidator proxyRelationshipValidator =
@@ -93,6 +107,7 @@ public class LoanCollectionResource extends CollectionResource {
       .thenComposeAsync(r -> r.after(loanPolicyRepository::lookupLoanPolicy))
       .thenComposeAsync(r -> r.after(requestQueueUpdate::onCheckOut))
       .thenComposeAsync(r -> r.after(updateItem::onCheckOut))
+      .thenComposeAsync(r -> r.after(loanService::truncateLoanWhenItemRecalled))
       .thenComposeAsync(r -> r.after(loanRepository::createLoan))
       .thenApply(r -> r.map(LoanAndRelatedRecords::getLoan))
       .thenApply(r -> r.map(loanRepresentation::extendedLoan))

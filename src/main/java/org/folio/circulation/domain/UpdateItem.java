@@ -106,10 +106,10 @@ public class UpdateItem {
         loan.getItem()));
   }
 
-  CompletableFuture<Result<RequestAndRelatedRecords>> onRequestCreation(
+  CompletableFuture<Result<RequestAndRelatedRecords>> onRequestCreationOrMove(
     RequestAndRelatedRecords requestAndRelatedRecords) {
 
-    return of(() -> itemStatusOnRequestCreation(requestAndRelatedRecords))
+    return of(() -> itemStatusOnRequestCreationOrMove(requestAndRelatedRecords))
       .after(prospectiveStatus -> updateItemWhenNotSameStatus(prospectiveStatus,
           requestAndRelatedRecords.getRequest().getItem()))
       .thenApply(itemResult -> itemResult.map(requestAndRelatedRecords::withItem));
@@ -161,7 +161,7 @@ public class UpdateItem {
     return completedFuture(succeeded(previousResult));
   }
 
-  private ItemStatus itemStatusOnRequestCreation(
+  private ItemStatus itemStatusOnRequestCreationOrMove(
     RequestAndRelatedRecords requestAndRelatedRecords) {
 
     RequestType type = requestAndRelatedRecords.getRequest().getRequestType();

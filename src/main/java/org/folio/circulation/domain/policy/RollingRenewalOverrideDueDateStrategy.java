@@ -7,7 +7,7 @@ import org.joda.time.DateTime;
 import java.util.function.Function;
 
 /**
- * Overrides {@link #calculateDueDate(DateTime, DateTime)} in {@link RollingRenewalDueDateStrategy}
+ * Overrides {@link #calculateDueDate(DateTime)} in {@link RollingRenewalDueDateStrategy}
  * to skip due date truncating
  */
 class RollingRenewalOverrideDueDateStrategy extends RollingRenewalDueDateStrategy {
@@ -20,7 +20,7 @@ class RollingRenewalOverrideDueDateStrategy extends RollingRenewalDueDateStrateg
   }
 
   @Override
-  protected Result<DateTime> calculateDueDate(DateTime from, DateTime loanDate) {
+  protected Result<DateTime> calculateDueDate(DateTime from) {
     return super.renewalDueDate(from);
   }
 }
