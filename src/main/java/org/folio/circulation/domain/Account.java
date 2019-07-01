@@ -13,30 +13,24 @@ public class Account {
     this.representation = representation;
   }
 
-  public String getId(){
-    return getProperty(representation,"id");
+  public String getId() {
+    return getProperty(representation, "id");
   }
 
-  public String getLoanId(){
-    return getProperty(representation,"loanId");
+  public String getLoanId() {
+    return getProperty(representation, "loanId");
   }
 
-  public Double getRemainingFeeFineAmount(){
+  public Double getRemainingFeeFineAmount() {
     return representation.getDouble("remaining");
   }
 
-  public String getStatus(){
-    return getNestedStringProperty(representation,"status","name");
+  public String getStatus() {
+    return getNestedStringProperty(representation, "status", "name");
   }
 
   public static Account from(JsonObject representation) {
     return new Account(representation);
   }
 
-  @Override
-  public String toString() {
-    return "Account{" +
-      "representation=" + representation +
-      '}';
-  }
 }
