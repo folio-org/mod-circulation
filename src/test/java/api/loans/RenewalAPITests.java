@@ -1431,12 +1431,14 @@ abstract class RenewalAPITests extends APITests {
       .until(patronNoticesClient::getAll, Matchers.hasSize(1));
     List<JsonObject> sentNotices = patronNoticesClient.getAll();
 
+    int expectedRenewalLimit = 3;
+    int expectedRenewalsRemaining = 2;
     Map<String, Matcher<String>> noticeContextMatchers = new HashMap<>();
     noticeContextMatchers.putAll(NoticeMatchers.getUserContextMatchers(steve));
     noticeContextMatchers.putAll(NoticeMatchers.getItemContextMatchers(smallAngryPlanet, true));
     noticeContextMatchers.putAll(NoticeMatchers.getLoanContextMatchers(loanAfterRenewal));
     noticeContextMatchers.putAll(NoticeMatchers.getLoanPolicyContextMatchers(
-      loanPolicyWithLimitedRenewals, 1));
+      expectedRenewalLimit, expectedRenewalsRemaining));
     MatcherAssert.assertThat(sentNotices,
       hasItems(
         hasEmailNoticeProperties(steve.getId(), renewalTemplateId, noticeContextMatchers)));

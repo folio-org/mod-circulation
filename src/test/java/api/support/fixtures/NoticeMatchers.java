@@ -1,8 +1,6 @@
 package api.support.fixtures;
 
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
-import static java.lang.Math.max;
-import static org.folio.circulation.support.JsonPropertyFetcher.getBooleanProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getDateTimeProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getIntegerProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getObjectProperty;
@@ -113,22 +111,21 @@ public class NoticeMatchers {
     return tokenMatchers;
   }
 
-  public static Map<String, Matcher<String>> getLoanPolicyContextMatchers(
-    IndividualResource loanPolicyResource, int renewalsCount) {
-    JsonObject loanPolicy = loanPolicyResource.getJson();
-    JsonObject renewalsPolicy = loanPolicy.getJsonObject("renewalsPolicy");
-    boolean unlimitedRenewals = getBooleanProperty(renewalsPolicy, "unlimited");
+  public static Map<String, Matcher<String>> getLoanPolicyContextMatchersForUnlimitedRenewals() {
+    return getLoanPolicyContextMatchers("unlimited", "unlimited");
+  }
 
+  public static Map<String, Matcher<String>> getLoanPolicyContextMatchers(
+    int renewalLimit, int renewalsRemaining) {
+    return getLoanPolicyContextMatchers(
+      Integer.toString(renewalLimit), Integer.toString(renewalsRemaining));
+  }
+
+  private static Map<String, Matcher<String>> getLoanPolicyContextMatchers(
+    String renewalLimit, String renewalsRemaining) {
     Map<String, Matcher<String>> tokenMatchers = new HashMap<>();
-    if (unlimitedRenewals) {
-      tokenMatchers.put("loan.numberOfRenewalsAllowed", is("unlimited"));
-      tokenMatchers.put("loan.numberOfRenewalsRemaining", is("unlimited"));
-    } else {
-      int renewalLimit = getIntegerProperty(renewalsPolicy, "numberAllowed", 0);
-      int renewalsRemaining = max(renewalLimit - renewalsCount, 0);
-      tokenMatchers.put("loan.numberOfRenewalsAllowed", is(Integer.toString(renewalLimit)));
-      tokenMatchers.put("loan.numberOfRenewalsRemaining", is(Integer.toString(renewalsRemaining)));
-    }
+    tokenMatchers.put("loan.numberOfRenewalsAllowed", is(renewalLimit));
+    tokenMatchers.put("loan.numberOfRenewalsRemaining", is(renewalsRemaining));
 
     return tokenMatchers;
   }

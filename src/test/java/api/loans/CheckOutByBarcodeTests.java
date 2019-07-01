@@ -607,8 +607,7 @@ public class CheckOutByBarcodeTests extends APITests {
     noticeContextMatchers.putAll(NoticeMatchers.getUserContextMatchers(steve));
     noticeContextMatchers.putAll(NoticeMatchers.getItemContextMatchers(smallAngryPlanet, true));
     noticeContextMatchers.putAll(NoticeMatchers.getLoanContextMatchers(loan));
-    noticeContextMatchers.putAll(NoticeMatchers.getLoanPolicyContextMatchers(
-      loanPoliciesFixture.canCirculateRolling(), 0));
+    noticeContextMatchers.putAll(NoticeMatchers.getLoanPolicyContextMatchersForUnlimitedRenewals());
     MatcherAssert.assertThat(sentNotices,
       hasItems(
         hasEmailNoticeProperties(steve.getId(), checkOutTemplateId, noticeContextMatchers)));

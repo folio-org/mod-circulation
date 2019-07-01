@@ -360,8 +360,7 @@ public class ScheduledDueDateNoticesProcessingTests extends APITests {
     noticeContextMatchers.putAll(NoticeMatchers.getUserContextMatchers(borrower));
     noticeContextMatchers.putAll(NoticeMatchers.getItemContextMatchers(item, true));
     noticeContextMatchers.putAll(NoticeMatchers.getLoanContextMatchers(loan));
-    noticeContextMatchers.putAll(NoticeMatchers.getLoanPolicyContextMatchers(
-      loanPoliciesFixture.canCirculateRolling(), 0));
+    noticeContextMatchers.putAll(NoticeMatchers.getLoanPolicyContextMatchersForUnlimitedRenewals());
 
     Matcher[] matchers = Stream.of(expectedTemplateIds)
       .map(templateId -> hasEmailNoticeProperties(borrower.getId(), templateId, noticeContextMatchers))
