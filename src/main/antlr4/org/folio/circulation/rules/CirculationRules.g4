@@ -160,7 +160,7 @@ policy : POLICY_TYPE
           )
        ;
 
-CRITERIUM_LETTER: [tabcsmg];
+CRITERIUM_LETTER: [tmg];
 
 // More specific rules need to appear first to prevent a
 // general rule from swallowing a token.

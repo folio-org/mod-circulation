@@ -182,17 +182,17 @@ public class Text2Drools extends CirculationRulesBaseListener {
   @Override
   public void exitSevenCriteriumLetters(SevenCriteriumLettersContext letters) {
     int size = letters.CRITERIUM_LETTER().size();
-    if (size != 7) {
+    if (size != 3) {
       Token token = letters.getStart();
-      String message = size < 7 ? "7 letters expected, found only " + size
-                                : "Only 7 letters expected, found " + size;
+      String message = size < 3 ? "3 letters expected, found only " + size
+                                : "Only 3 letters expected, found " + size;
       throw new CirculationRulesException(message,
           token.getLine(), token.getCharPositionInLine() + 1);
     }
 
-    for (int i=0; i<7; i++) {
+    for (int i=0; i<3; i++) {
       String letter = letters.CRITERIUM_LETTER(i).getText();
-      if (criteriumPriority.put(letter, 7 - i) != null) {
+      if (criteriumPriority.put(letter, 3 - i) != null) {
         Token token = letters.CRITERIUM_LETTER(i).getSymbol();
         throw new CirculationRulesException("Duplicate letter " + letter,
             token.getLine(), token.getCharPositionInLine() + 1);
@@ -444,14 +444,10 @@ public class Text2Drools extends CirculationRulesBaseListener {
   private static String criteriumTypeClassname(String letter) {
     switch (letter) {
     case "t": return "LoanType";
-    case "a": return "CampusLocation";
-    case "b": return "BranchLocation";
-    case "c": return "CollectionLocation";
-    case "s": return "ShelvingLocation";
     case "m": return "ItemType";
     case "g": return "PatronGroup";
     default:  throw new IllegalArgumentException(
-        "Expected criterium type t, a, b, c, s, m or g but found: " + letter);
+        "Expected criterium type t, m or g but found: " + letter);
     }
   }
 
