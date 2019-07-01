@@ -134,7 +134,9 @@ public class NoticeContextUtil {
       .map(Request::getCancellationAdditionalInformation)
       .ifPresent(value -> requestContext.put("additionalInfo", value));
     optionalRequest
-      .map(Request::getCancellationReasonName)
+      .map(Request::getCancellationReasonPublicDescription)
+      .map(Optional::of)
+      .orElse(optionalRequest.map(Request::getCancellationReasonName))
       .ifPresent(value -> requestContext.put("reasonForCancellation", value));
 
     return requestContext;
