@@ -253,10 +253,16 @@
         }
       }
     },
-    "feefine": {
-      "description": "Total remaining amount due on fees and fines for this loan (read only, defined by the server)",
-      "type": "number",
-      "readonly" : true
+    "feesAndFines": {
+      "description": "Fees and fines associated with loans",
+      "type": "object",
+      "properties": {
+        "amountRemainingToPay": {
+          "type": "number",
+          "description": "Total remaining amount due on fees and fines for the loan (read only, defined by the server)",
+          "readonly" : true
+        }
+      }
     },
     "metadata": {
       "description": "Metadata about creation and changes to loan, provided by the server (client should not provide)",

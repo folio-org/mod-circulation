@@ -73,7 +73,11 @@ public class LoanRepresentation {
     double remainingFeesFines = accounts.stream().
       map(Account::getRemainingFeeFineAmount).reduce(Double::sum).orElse(0d);
 
-    write(loanRepresentation, "feefine", remainingFeesFines);
+    JsonObject feesAndFinesSummary = loanRepresentation.containsKey(LoanProperties.FEESANDFINES)
+      ? loanRepresentation.getJsonObject(LoanProperties.FEESANDFINES)
+      : new JsonObject();
+    write(feesAndFinesSummary, "amountRemainingToPay", remainingFeesFines);
+    write(loanRepresentation, LoanProperties.FEESANDFINES, feesAndFinesSummary);
   }
 
   private void additionalLoanPolicyProperties(JsonObject loanRepresentation, LoanPolicy loanPolicy) {

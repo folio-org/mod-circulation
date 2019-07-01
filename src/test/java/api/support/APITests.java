@@ -369,7 +369,8 @@ public abstract class APITests {
   }
 
   protected void loanHasFeeFinesProperties(JsonObject loan, double remainingAmount) {
-    hasProperty("feefine", loan, "loan", remainingAmount);
+    hasProperty("amountRemainingToPay", loan.getJsonObject("feesAndFines"),
+      "loan", remainingAmount);
   }
 
   protected void loanHasLoanPolicyProperties(JsonObject loan, IndividualResource loanPolicy) {
