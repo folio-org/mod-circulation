@@ -1,5 +1,8 @@
 package org.folio.circulation.resources;
 
+import static org.folio.circulation.domain.notice.NoticeContextUtil.createLoanNoticeContext;
+import static org.folio.circulation.support.Result.succeeded;
+
 import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.domain.ConfigurationRepository;
@@ -9,6 +12,11 @@ import org.folio.circulation.domain.LoanRepository;
 import org.folio.circulation.domain.LoanRepresentation;
 import org.folio.circulation.domain.RequestQueueRepository;
 import org.folio.circulation.domain.UserRepository;
+import org.folio.circulation.domain.notice.NoticeEventType;
+import org.folio.circulation.domain.notice.NoticeTiming;
+import org.folio.circulation.domain.notice.PatronNoticeEvent;
+import org.folio.circulation.domain.notice.PatronNoticeEventBuilder;
+import org.folio.circulation.domain.notice.PatronNoticeService;
 import org.folio.circulation.domain.notice.schedule.ScheduledNoticeService;
 import org.folio.circulation.domain.policy.LoanPolicyRepository;
 import org.folio.circulation.domain.representations.LoanResponse;
@@ -47,7 +55,7 @@ public abstract class RenewalResource extends Resource {
     final Clients clients = Clients.create(context, client);
 
     final LoanRepository loanRepository = new LoanRepository(clients);
-    final ItemRepository itemRepository = new ItemRepository(clients, true, true, false);
+    final ItemRepository itemRepository = new ItemRepository(clients, true, true, true);
     final UserRepository userRepository = new UserRepository(clients);
     final RequestQueueRepository requestQueueRepository = RequestQueueRepository.using(clients);
     final LoanPolicyRepository loanPolicyRepository = new LoanPolicyRepository(clients);
@@ -55,6 +63,8 @@ public abstract class RenewalResource extends Resource {
     final LoanRepresentation loanRepresentation = new LoanRepresentation();
     final ConfigurationRepository configurationRepository = new ConfigurationRepository(clients);
     final ScheduledNoticeService scheduledNoticeService = ScheduledNoticeService.using(clients);
+
+    final PatronNoticeService patronNoticeService = PatronNoticeService.using(clients);
 
     //TODO: Validation check for same user should be in the domain service
 
@@ -72,9 +82,31 @@ public abstract class RenewalResource extends Resource {
       .thenComposeAsync(r -> r.after(records -> renewalStrategy.renew(records, bodyAsJson, clients)))
       .thenComposeAsync(r -> r.after(loanRepository::updateLoan))
       .thenComposeAsync(r -> r.after(scheduledNoticeService::rescheduleDueDateNotices))
+      .thenApply(r -> r.next(records -> sendRenewalPatronNotice(records, patronNoticeService)))
       .thenApply(r -> r.map(loanRepresentation::extendedLoan))
       .thenApply(LoanResponse::from)
       .thenAccept(result -> result.writeTo(routingContext.response()));
+  }
+
+  private Result<LoanAndRelatedRecords> sendRenewalPatronNotice(
+    LoanAndRelatedRecords relatedRecords,
+    PatronNoticeService patronNoticeService) {
+
+    final Loan loan = relatedRecords.getLoan();
+
+    JsonObject noticeContext = createLoanNoticeContext(loan,
+      loan.getLoanPolicy(), relatedRecords.getTimeZone());
+
+    PatronNoticeEvent noticeEvent = new PatronNoticeEventBuilder()
+      .withItem(loan.getItem())
+      .withUser(loan.getUser())
+      .withEventType(NoticeEventType.RENEWED)
+      .withTiming(NoticeTiming.UPON_AT)
+      .withNoticeContext(noticeContext)
+      .build();
+
+    patronNoticeService.acceptNoticeEvent(noticeEvent);
+    return succeeded(relatedRecords);
   }
 
   protected abstract CompletableFuture<Result<Loan>> findLoan(

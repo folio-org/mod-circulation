@@ -1088,6 +1088,7 @@
         "inventory-storage.material-types.collection.get",
         "inventory-storage.service-points.collection.get",
         "inventory-storage.service-points.item.get",
+        "inventory-storage.loan-types.item.get",
         "users.item.get",
         "users.collection.get",
         "proxiesfor.collection.get",
@@ -1101,7 +1102,8 @@
         "circulation.rules.notice-policy.get",
         "circulation-storage.patron-notice-policies.item.get",
         "scheduled-notice-storage.scheduled-notices.collection.delete",
-        "scheduled-notice-storage.scheduled-notices.item.post"
+        "scheduled-notice-storage.scheduled-notices.item.post",
+        "patron-notice.post"
       ],
       "visible": false
 },
@@ -1133,6 +1135,7 @@
         "inventory-storage.material-types.collection.get",
         "inventory-storage.service-points.collection.get",
         "inventory-storage.service-points.item.get",
+        "inventory-storage.loan-types.item.get",
         "users.item.get",
         "users.collection.get",
         "proxiesfor.collection.get",
@@ -1145,7 +1148,8 @@
         "circulation.rules.notice-policy.get",
         "circulation-storage.patron-notice-policies.item.get",
         "scheduled-notice-storage.scheduled-notices.collection.delete",
-        "scheduled-notice-storage.scheduled-notices.item.post"
+        "scheduled-notice-storage.scheduled-notices.item.post",
+        "patron-notice.post"
       ],
       "visible": false
     },
@@ -1177,6 +1181,7 @@
         "inventory-storage.material-types.collection.get",
         "inventory-storage.service-points.collection.get",
         "inventory-storage.service-points.item.get",
+        "inventory-storage.loan-types.item.get",
         "users.item.get",
         "users.collection.get",
         "proxiesfor.collection.get",
@@ -1190,7 +1195,8 @@
         "circulation.rules.notice-policy.get",
         "circulation-storage.patron-notice-policies.item.get",
         "scheduled-notice-storage.scheduled-notices.collection.delete",
-        "scheduled-notice-storage.scheduled-notices.item.post"
+        "scheduled-notice-storage.scheduled-notices.item.post",
+        "patron-notice.post"
       ],
       "visible": false
     },
