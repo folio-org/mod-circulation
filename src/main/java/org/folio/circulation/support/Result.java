@@ -12,6 +12,8 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.folio.circulation.support.results.CommonFailures;
+
 public interface Result<T> {
 
   /**
@@ -25,7 +27,7 @@ public interface Result<T> {
     try {
       return succeeded(supplier.get());
     } catch (Exception e) {
-      return failed(e);
+      return failedDueToServerError(e);
     }
   }
 
@@ -281,10 +283,6 @@ public interface Result<T> {
     return new FailedResult<>(cause);
   }
 
-  static <T> Result<T> failed(Throwable e) {
-    return failedDueToServerError(e);
-  }
-
   default <R> CompletableFuture<Result<R>> after(
     Function<T, CompletableFuture<Result<R>>> action) {
 
@@ -294,7 +292,7 @@ public interface Result<T> {
 
     try {
       return action.apply(value())
-        .exceptionally(Result::failed);
+        .exceptionally(CommonFailures::failedDueToServerError);
     } catch (Exception e) {
       return completedFuture(failed(new ServerErrorFailure(e)));
     }
@@ -317,7 +315,7 @@ public interface Result<T> {
     try {
       return action.apply(value());
     } catch (Exception e) {
-      return failed(e);
+      return failedDueToServerError(e);
     }
   }
 
@@ -352,7 +350,7 @@ public interface Result<T> {
       return map.apply(cause());
     }
     catch(Exception e) {
-      return failed(e);
+      return failedDueToServerError(e);
     }
   }
 
