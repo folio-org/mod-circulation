@@ -33,7 +33,6 @@ import org.awaitility.Awaitility;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 import org.hamcrest.Matcher;
-import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
@@ -549,7 +548,7 @@ public class RequestsAPIUpdatingTests extends APITests {
     noticeContextMatchers.putAll(NoticeMatchers.getCancelledRequestContextMatchers(updatedRequest));
     noticeContextMatchers.put("request.reasonForCancellation",
       is(itemNotAvailable.getJson().getString(CANCELLATION_REASON_PUBLIC_DESCRIPTION)));
-    MatcherAssert.assertThat(sentNotices,
+    assertThat(sentNotices,
       hasItems(
         hasEmailNoticeProperties(requester.getId(), requestCancellationTemplateId, noticeContextMatchers)));
   }
@@ -609,7 +608,7 @@ public class RequestsAPIUpdatingTests extends APITests {
     noticeContextMatchers.putAll(NoticeMatchers.getCancelledRequestContextMatchers(updatedRequest));
     noticeContextMatchers.put("request.reasonForCancellation",
       is(courseReserves.getJson().getString(CANCELLATION_REASON_NAME)));
-    MatcherAssert.assertThat(sentNotices,
+    assertThat(sentNotices,
       hasItems(
         hasEmailNoticeProperties(requester.getId(), requestCancellationTemplateId, noticeContextMatchers)));
   }
