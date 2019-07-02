@@ -294,7 +294,7 @@ public interface Result<T> {
       return action.apply(value())
         .exceptionally(CommonFailures::failedDueToServerError);
     } catch (Exception e) {
-      return completedFuture(failed(new ServerErrorFailure(e)));
+      return completedFuture(failedDueToServerError(e));
     }
   }
 

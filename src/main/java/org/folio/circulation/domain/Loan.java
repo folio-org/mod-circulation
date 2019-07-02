@@ -17,6 +17,7 @@ import static org.folio.circulation.support.JsonPropertyWriter.write;
 import static org.folio.circulation.support.Result.failed;
 import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
+import static org.folio.circulation.support.results.CommonFailures.failedDueToServerError;
 
 import java.util.Objects;
 import java.util.UUID;
@@ -129,7 +130,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
 
   public Result<Void> isValidStatus() {
     if (!representation.containsKey(STATUS)) {
-      return failed(new ServerErrorFailure("Loan does not have a status"));
+      return failedDueToServerError("Loan does not have a status");
     }
 
     switch (getStatus()) {

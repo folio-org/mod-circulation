@@ -9,6 +9,7 @@ import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
 import static org.folio.circulation.support.Result.failed;
 import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
+import static org.folio.circulation.support.results.CommonFailures.failedDueToServerError;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -104,7 +105,7 @@ public class LoanPolicy {
       }
     }
     catch(Exception e) {
-      return failed(new ServerErrorFailure(e));
+      return failedDueToServerError(e);
     }
   }
 
@@ -141,7 +142,7 @@ public class LoanPolicy {
       return failedValidation(errorForNotMatchingOverrideCases());
 
     } catch (Exception e) {
-      return failed(new ServerErrorFailure(e));
+      return failedDueToServerError(e);
     }
   }
 
