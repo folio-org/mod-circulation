@@ -7,7 +7,7 @@ public enum NoticeEventType {
 
   CHECK_IN("Check in"),
   CHECK_OUT("Check out"),
-  RENEW("Renew"),
+  RENEWED("Renewed"),
   DUE_DATE("Due date"),
 
   PAGING_REQUEST("Paging request"),

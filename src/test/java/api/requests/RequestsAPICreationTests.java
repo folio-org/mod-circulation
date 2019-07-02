@@ -1706,12 +1706,12 @@ public class RequestsAPICreationTests extends APITests {
     Map<String, Matcher<String>> recallConfirmationContextMatchers = new HashMap<>();
     recallConfirmationContextMatchers.putAll(NoticeMatchers.getUserContextMatchers(requester));
     recallConfirmationContextMatchers.putAll(NoticeMatchers.getItemContextMatchers(item, false));
-    recallConfirmationContextMatchers.putAll(NoticeMatchers.getLoanContextMatchers(loanAfterRecall, 0));
+    recallConfirmationContextMatchers.putAll(NoticeMatchers.getLoanContextMatchers(loanAfterRecall));
     recallConfirmationContextMatchers.putAll(NoticeMatchers.getRequestContextMatchers(request));
     Map<String, Matcher<String>> recallNotificationContextMatchers = new HashMap<>();
     recallNotificationContextMatchers.putAll(NoticeMatchers.getUserContextMatchers(loanOwner));
     recallNotificationContextMatchers.putAll(NoticeMatchers.getItemContextMatchers(item, false));
-    recallNotificationContextMatchers.putAll(NoticeMatchers.getLoanContextMatchers(loanAfterRecall, 0));
+    recallNotificationContextMatchers.putAll(NoticeMatchers.getLoanContextMatchers(loanAfterRecall));
     MatcherAssert.assertThat(sentNotices,
       hasItems(
         hasEmailNoticeProperties(requester.getId(), recallConfirmationTemplateId,
