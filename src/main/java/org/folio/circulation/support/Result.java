@@ -1,6 +1,7 @@
 package org.folio.circulation.support;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
+import static org.folio.circulation.support.results.CommonFailures.failedDueToServerError;
 
 import java.util.Collection;
 import java.util.List;
@@ -281,7 +282,7 @@ public interface Result<T> {
   }
 
   static <T> Result<T> failed(Throwable e) {
-    return failed(new ServerErrorFailure(e));
+    return failedDueToServerError(e);
   }
 
   default <R> CompletableFuture<Result<R>> after(

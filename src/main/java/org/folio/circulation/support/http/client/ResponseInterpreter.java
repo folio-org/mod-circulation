@@ -1,6 +1,6 @@
 package org.folio.circulation.support.http.client;
 
-import static org.folio.circulation.support.Result.failed;
+import static org.folio.circulation.support.results.CommonFailures.failedDueToServerError;
 
 import java.lang.invoke.MethodHandles;
 import java.util.HashMap;
@@ -8,7 +8,6 @@ import java.util.Map;
 import java.util.function.Function;
 
 import org.folio.circulation.support.Result;
-import org.folio.circulation.support.ServerErrorFailure;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -53,7 +52,7 @@ public class ResponseInterpreter<T> {
   public Result<T> apply(Response response) {
     if (response == null) {
       log.warn("Cannot interpret null response");
-      return failed(new ServerErrorFailure("Cannot interpret null response"));
+      return failedDueToServerError("Cannot interpret null response");
     }
 
     try {
@@ -65,7 +64,7 @@ public class ResponseInterpreter<T> {
         .apply(response);
     }
     catch (Exception e) {
-      return failed(e);
+      return failedDueToServerError(e);
     }
   }
 
@@ -74,6 +73,6 @@ public class ResponseInterpreter<T> {
       "HTTP request to \"%s\" failed, status code: %s, response: \"%s\"",
       response.getFromUrl(), response.getStatusCode(), response.getBody());
 
-    return failed(new ServerErrorFailure(diagnosticError));
+    return failedDueToServerError(diagnosticError);
   }
 }
