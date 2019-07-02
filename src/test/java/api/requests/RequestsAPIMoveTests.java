@@ -2,9 +2,12 @@ package api.requests;
 
 import static org.folio.circulation.domain.representations.RequestProperties.REQUEST_TYPE;
 import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.junit.MatcherAssert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 import java.net.MalformedURLException;
+import java.time.Clock;
+import java.time.Instant;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
@@ -12,10 +15,13 @@ import java.util.concurrent.TimeoutException;
 import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.RequestType;
+import org.folio.circulation.support.ClockManager;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
+import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -26,6 +32,18 @@ import junitparams.JUnitParamsRunner;
 
 @RunWith(JUnitParamsRunner.class)
 public class RequestsAPIMoveTests extends APITests {
+  private static Clock clock;
+
+  @BeforeClass
+  public static void setUpBeforeClass() throws Exception {
+    clock = Clock.fixed(Instant.now(), ZoneOffset.UTC);
+  }
+
+  @Before
+  public void setUp() throws Exception {
+    // reset the clock before each test (just in case)
+    ClockManager.getClockManager().setClock(clock);
+  }
 
   @Test
   public void cannotMoveRecallRequestsWithRequestPolicyNotAllowingHolds()
@@ -66,11 +84,11 @@ public class RequestsAPIMoveTests extends APITests {
     
     loansFixture.checkOutByBarcode(uponInterestingTimes, charlotte);
     
-    IndividualResource requestByCharlotte = requestsFixture.placeRecallRequest(
-      smallAngryPlanet, charlotte, new DateTime(2017, 10, 27, 11, 54, 37, DateTimeZone.UTC));
+    IndividualResource requestByCharlotte = requestsFixture.placeHoldShelfRequest(
+      smallAngryPlanet, charlotte, DateTime.now(DateTimeZone.UTC).minusHours(2), RequestType.RECALL.getValue());
 
-    IndividualResource requestByJames = requestsFixture.placeRecallRequest(
-      uponInterestingTimes, james, new DateTime(2017, 10, 27, 11, 54, 37, DateTimeZone.UTC));
+    IndividualResource requestByJames = requestsFixture.placeHoldShelfRequest(
+      uponInterestingTimes, james, DateTime.now(DateTimeZone.UTC).minusHours(1), RequestType.RECALL.getValue());
 
     // move james' recall request as a hold shelf request from smallAngryPlanet to uponInterestingTimes
     Response response = requestsFixture.attemptMove(new MoveRequestBuilder(
@@ -122,7 +140,7 @@ public class RequestsAPIMoveTests extends APITests {
 
     // make requests for smallAngryPlanet
     IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
-      smallAngryPlanet, jessica, new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC));
+      smallAngryPlanet, jessica, DateTime.now(DateTimeZone.UTC));
 
     // move jessica's hold shelf request from smallAngryPlanet to uponInterestingTimes
     IndividualResource moveRequest = requestsFixture.move(new MoveRequestBuilder(
@@ -153,56 +171,6 @@ public class RequestsAPIMoveTests extends APITests {
   }
 
   @Test
-  public void cannotMoveARecallRequestToAnEmptyQueue()
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException,
-    MalformedURLException {
-  
-    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
-    IndividualResource uponInterestingTimes = itemsFixture.basedUponInterestingTimes();
-    
-    IndividualResource james = usersFixture.james();
-    IndividualResource jessica = usersFixture.jessica();
-    IndividualResource charlotte = usersFixture.charlotte();
-
-    // james checks out basedUponSmallAngryPlanet
-    loansFixture.checkOutByBarcode(smallAngryPlanet, james);
-
-    // charlotte checks out basedUponSmallAngryPlanet
-    loansFixture.checkOutByBarcode(uponInterestingTimes, charlotte);
-
-    // make recall requests for smallAngryPlanet
-    IndividualResource requestByJessica = requestsFixture.placeRecallRequest(
-      smallAngryPlanet, jessica, new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC));
-
-    // move jessica's recall request from smallAngryPlanet to uponInterestingTimes
-    Response response = requestsFixture.attemptMove(new MoveRequestBuilder(
-      requestByJessica.getId(),
-      uponInterestingTimes.getId(),
-      null
-    ));
-
-    assertThat("Move request should have correct response status code", response.getStatusCode(), is(422));
-    assertThat("Move request should have correct response message",
-      response.getJson().getJsonArray("errors").getJsonObject(0).getString("message"),
-      is("Recalls can't be moved to checked out items that have not been previously recalled."));
-
-    requestByJessica = requestsClient.get(requestByJessica);
-    assertThat(requestByJessica.getJson().getString(REQUEST_TYPE), is(RequestType.RECALL.getValue()));
-    assertThat(requestByJessica.getJson().getInteger("position"), is(1));
-    assertThat(requestByJessica.getJson().getString("itemId"), is(smallAngryPlanet.getId().toString()));
-    retainsStoredSummaries(requestByJessica);
-
-    // check item queues are correct size
-    MultipleRecords<JsonObject> smallAngryPlanetQueue = requestsFixture.getQueueFor(smallAngryPlanet);
-    assertThat(smallAngryPlanetQueue.getTotalRecords(), is(1));
-    
-    MultipleRecords<JsonObject> uponInterestingTimesQueue = requestsFixture.getQueueFor(uponInterestingTimes);
-    assertThat(uponInterestingTimesQueue.getTotalRecords(), is(0));
-  }
-
-  @Test
   public void canMoveARecallRequest()
     throws InterruptedException,
     ExecutionException,
@@ -226,20 +194,20 @@ public class RequestsAPIMoveTests extends APITests {
 
     // make requests for smallAngryPlanet
     IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
-      smallAngryPlanet, jessica, new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC));
+      smallAngryPlanet, jessica, DateTime.now(DateTimeZone.UTC).minusHours(5));
 
-    IndividualResource requestBySteve = requestsFixture.placeRecallRequest(
-      smallAngryPlanet, steve, new DateTime(2017, 10, 27, 11, 54, 37, DateTimeZone.UTC));
+    IndividualResource requestBySteve = requestsFixture.placeHoldShelfRequest(
+      smallAngryPlanet, steve, DateTime.now(DateTimeZone.UTC).minusHours(4), RequestType.RECALL.getValue());
 
     IndividualResource requestByCharlotte = requestsFixture.placeHoldShelfRequest(
-      smallAngryPlanet, charlotte, new DateTime(2018, 1, 10, 15, 34, 21, DateTimeZone.UTC));
+      smallAngryPlanet, charlotte, DateTime.now(DateTimeZone.UTC).minusHours(3));
 
-    IndividualResource requestByRebecca = requestsFixture.placeRecallRequest(
-      smallAngryPlanet, rebecca, new DateTime(2018, 2, 4, 7, 4, 53, DateTimeZone.UTC));
+    IndividualResource requestByRebecca = requestsFixture.placeHoldShelfRequest(
+      smallAngryPlanet, rebecca, DateTime.now(DateTimeZone.UTC).minusHours(2), RequestType.RECALL.getValue());
 
     // make requests for uponInterestingTimes
-    IndividualResource requestByJames = requestsFixture.placeRecallRequest(
-      uponInterestingTimes, james, new DateTime(2018, 7, 22, 10, 22, 54, DateTimeZone.UTC));
+    IndividualResource requestByJames = requestsFixture.placeHoldShelfRequest(
+      uponInterestingTimes, james, DateTime.now(DateTimeZone.UTC).minusHours(1), RequestType.RECALL.getValue());
 
     // move steve's recall request from smallAngryPlanet to uponInterestingTimes
     IndividualResource moveRequest = requestsFixture.move(new MoveRequestBuilder(
@@ -308,7 +276,7 @@ public class RequestsAPIMoveTests extends APITests {
 
     // make requests for smallAngryPlanet
     IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
-      smallAngryPlanet, jessica, new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC));
+      smallAngryPlanet, jessica, DateTime.now(DateTimeZone.UTC));
 
     // move jessica's hold shelf request from smallAngryPlanet to uponInterestingTimes
     IndividualResource moveRequest = requestsFixture.move(new MoveRequestBuilder(
@@ -357,20 +325,20 @@ public class RequestsAPIMoveTests extends APITests {
 
     // make requests for smallAngryPlanet
     IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
-      smallAngryPlanet, jessica, new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC));
+      smallAngryPlanet, jessica, DateTime.now(DateTimeZone.UTC).minusHours(5));
 
     IndividualResource requestBySteve = requestsFixture.placeHoldShelfRequest(
-      smallAngryPlanet, steve, new DateTime(2017, 10, 27, 11, 54, 37, DateTimeZone.UTC));
+      smallAngryPlanet, steve, DateTime.now(DateTimeZone.UTC).minusHours(4));
 
     IndividualResource requestByCharlotte = requestsFixture.placeHoldShelfRequest(
-      smallAngryPlanet, charlotte, new DateTime(2018, 1, 10, 15, 34, 21, DateTimeZone.UTC));
+      smallAngryPlanet, charlotte, DateTime.now(DateTimeZone.UTC).minusHours(3));
 
     IndividualResource requestByRebecca = requestsFixture.placeHoldShelfRequest(
-      smallAngryPlanet, rebecca, new DateTime(2018, 2, 4, 7, 4, 53, DateTimeZone.UTC));
+      smallAngryPlanet, rebecca, DateTime.now(DateTimeZone.UTC).minusHours(2));
 
     // make requests for uponInterestingTimes
     IndividualResource requestByJames = requestsFixture.placeHoldShelfRequest(
-      uponInterestingTimes, james, new DateTime(2018, 7, 22, 10, 22, 54, DateTimeZone.UTC));
+      uponInterestingTimes, james, DateTime.now(DateTimeZone.UTC).minusHours(1));
 
     // move jessica's hold shelf request from smallAngryPlanet to uponInterestingTimes
     IndividualResource moveRequest = requestsFixture.move(new MoveRequestBuilder(
@@ -441,20 +409,20 @@ public class RequestsAPIMoveTests extends APITests {
 
     // make requests for smallAngryPlanet
     IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
-      smallAngryPlanet, jessica, new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC));
+      smallAngryPlanet, jessica, DateTime.now(DateTimeZone.UTC));
 
-    IndividualResource requestBySteve = requestsFixture.placeRecallRequest(
-      smallAngryPlanet, steve, new DateTime(2017, 10, 27, 11, 54, 37, DateTimeZone.UTC));
+    IndividualResource requestBySteve = requestsFixture.placeHoldShelfRequest(
+      smallAngryPlanet, steve, DateTime.now(DateTimeZone.UTC).minusHours(4), RequestType.RECALL.getValue());
 
     IndividualResource requestByCharlotte = requestsFixture.placeHoldShelfRequest(
-      smallAngryPlanet, charlotte, new DateTime(2018, 1, 10, 15, 34, 21, DateTimeZone.UTC));
+      smallAngryPlanet, charlotte, DateTime.now(DateTimeZone.UTC).minusHours(3));
 
-    IndividualResource requestByRebecca = requestsFixture.placeRecallRequest(
-      smallAngryPlanet, rebecca, new DateTime(2018, 2, 4, 7, 4, 53, DateTimeZone.UTC));
+    IndividualResource requestByRebecca = requestsFixture.placeHoldShelfRequest(
+      smallAngryPlanet, rebecca, DateTime.now(DateTimeZone.UTC).minusHours(2), RequestType.RECALL.getValue());
 
     // make requests for uponInterestingTimes
-    IndividualResource requestByJames = requestsFixture.placeRecallRequest(
-      uponInterestingTimes, james, new DateTime(2018, 7, 22, 10, 22, 54, DateTimeZone.UTC));
+    IndividualResource requestByJames = requestsFixture.placeHoldShelfRequest(
+      uponInterestingTimes, james, DateTime.now(DateTimeZone.UTC).minusHours(1), RequestType.RECALL.getValue());
 
     // move rebecca's recall request from smallAngryPlanet to uponInterestingTimes
     IndividualResource moveRequest = requestsFixture.move(new MoveRequestBuilder(
@@ -466,7 +434,7 @@ public class RequestsAPIMoveTests extends APITests {
     assertThat("Move request should have correct item id",
       moveRequest.getJson().getString("itemId"), is(uponInterestingTimes.getId().toString()));
     
-    assertThat("Move request should have correct item id",
+    assertThat("Move request should have correct type",
         moveRequest.getJson().getString("requestType"), is(RequestType.HOLD.getValue()));
 
     // check positioning on smallAngryPlanet
@@ -504,7 +472,7 @@ public class RequestsAPIMoveTests extends APITests {
     MultipleRecords<JsonObject> uponInterestingTimesQueue = requestsFixture.getQueueFor(uponInterestingTimes);
     assertThat(uponInterestingTimesQueue.getTotalRecords(), is(2));
   }
-  
+
   private void retainsStoredSummaries(IndividualResource request) {
     assertThat("Updated request in queue should retain stored item summary",
       request.getJson().containsKey("item"), is(true));

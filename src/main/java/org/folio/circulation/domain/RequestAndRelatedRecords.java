@@ -60,6 +60,15 @@ public class RequestAndRelatedRecords implements UserRelatedRecord, ItemRelatedR
       this.moveRequestRecord
     );
   }
+
+  public RequestAndRelatedRecords withLoan(Loan newLoan) {
+    return new RequestAndRelatedRecords(
+      this.request.withLoan(newLoan),
+      this.requestQueue,
+      this.requestPolicy,
+      this.moveRequestRecord
+    );
+  }
   
   public RequestAndRelatedRecords withRequestType(RequestType newRequestType) {
     return new RequestAndRelatedRecords(
@@ -90,11 +99,15 @@ public class RequestAndRelatedRecords implements UserRelatedRecord, ItemRelatedR
   RequestPolicy getRequestPolicy() { return requestPolicy; }
 
   String getOriginalItemId() {
-    return moveRequestRecord != null ? moveRequestRecord.getOriginalItemId() : null;
+    return isMoveRequest() ? moveRequestRecord.getOriginalItemId() : null;
   }
 
   String getDestinationItemId() {
-    return moveRequestRecord != null ? moveRequestRecord.getDestinationItemId() : null;
+    return isMoveRequest() ? moveRequestRecord.getDestinationItemId() : null;
+  }
+
+  public boolean isMoveRequest() {
+    return moveRequestRecord != null;
   }
 
   @Override

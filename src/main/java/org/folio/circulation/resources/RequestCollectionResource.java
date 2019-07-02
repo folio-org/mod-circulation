@@ -226,9 +226,11 @@ public class RequestCollectionResource extends CollectionResource {
         requestQueueRepository,
         new RequestPolicyRepository(clients),
         itemRepository,
+        loanRepository,
         UpdateRequestQueue.using(clients),
         updateUponRequest,
-        new RequestLoanValidator(loanRepository));
+        new RequestLoanValidator(loanRepository),
+        RequestNoticeSender.using(clients));
 
     requestRepository.getById(id)
       .thenApply(r -> r.map(RequestAndRelatedRecords::new))

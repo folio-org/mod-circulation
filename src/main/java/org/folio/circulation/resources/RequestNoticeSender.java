@@ -47,24 +47,25 @@ public class RequestNoticeSender {
     this.requestRepository = requestRepository;
   }
 
-
-  public Result<RequestAndRelatedRecords> sendNoticeOnRequestCreated(
+  public Result<RequestAndRelatedRecords> sendNoticeOnRequestCreatedOrMoved(
     RequestAndRelatedRecords relatedRecords) {
 
     Request request = relatedRecords.getRequest();
-    Item item = request.getItem();
-    User requester = request.getRequester();
-    NoticeEventType eventType =
-      requestTypeToEventMap.getOrDefault(request.getRequestType(), NoticeEventType.UNKNOWN);
 
-    PatronNoticeEvent requestCreatedEvent = new PatronNoticeEventBuilder()
-      .withItem(item)
-      .withUser(requester)
-      .withEventType(eventType)
-      .withTiming(NoticeTiming.UPON_AT)
-      .withNoticeContext(createRequestNoticeContext(request))
-      .build();
-    patronNoticeService.acceptNoticeEvent(requestCreatedEvent);
+    if (!relatedRecords.isMoveRequest()) {
+      Item item = request.getItem();
+      User requester = request.getRequester();
+      NoticeEventType eventType =
+        requestTypeToEventMap.getOrDefault(request.getRequestType(), NoticeEventType.UNKNOWN);
+      PatronNoticeEvent requestCreatedEvent = new PatronNoticeEventBuilder()
+        .withItem(item)
+        .withUser(requester)
+        .withEventType(eventType)
+        .withTiming(NoticeTiming.UPON_AT)
+        .withNoticeContext(createRequestNoticeContext(request))
+        .build();
+      patronNoticeService.acceptNoticeEvent(requestCreatedEvent);
+    }
 
     Loan loan = request.getLoan();
     if (request.getRequestType() == RequestType.RECALL &&
@@ -81,7 +82,6 @@ public class RequestNoticeSender {
     }
     return Result.succeeded(relatedRecords);
   }
-
 
   public Result<RequestAndRelatedRecords> sendNoticeOnRequestUpdated(
     RequestAndRelatedRecords relatedRecords) {
