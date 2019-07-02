@@ -5,8 +5,8 @@ import static java.lang.String.join;
 import static java.lang.String.valueOf;
 import static java.util.stream.Collectors.toList;
 import static org.folio.circulation.support.CqlSortBy.none;
-import static org.folio.circulation.support.Result.failed;
 import static org.folio.circulation.support.Result.of;
+import static org.folio.circulation.support.results.CommonFailures.failedDueToServerError;
 
 import java.lang.invoke.MethodHandles;
 import java.net.URLEncoder;
@@ -33,8 +33,8 @@ public class CqlQuery {
     final List<String> filteredValues = filterNullValues(values);
 
     if(filteredValues.isEmpty()) {
-      return failed(new ServerErrorFailure(
-        format("Cannot generate CQL query using index %s matching no values", indexName)));
+      return failedDueToServerError(
+        format("Cannot generate CQL query using index %s matching no values", indexName));
     }
 
     return Result.of(() -> new CqlQuery(

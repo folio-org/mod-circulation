@@ -1,8 +1,8 @@
 package org.folio.circulation.domain;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
-import static org.folio.circulation.support.Result.failed;
 import static org.folio.circulation.support.Result.succeeded;
+import static org.folio.circulation.support.results.CommonFailures.failedDueToServerError;
 
 import java.lang.invoke.MethodHandles;
 import java.util.List;
@@ -11,9 +11,8 @@ import java.util.concurrent.CompletableFuture;
 import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
-import org.folio.circulation.support.Result;
 import org.folio.circulation.support.JsonArrayHelper;
-import org.folio.circulation.support.ServerErrorFailure;
+import org.folio.circulation.support.Result;
 import org.folio.circulation.support.http.client.Response;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -91,14 +90,13 @@ public class UpdateLoanActionHistory {
           loans.size(), itemId);
 
         log.error(moreThanOneOpenLoanError);
-        return completedFuture(failed(
-          new ServerErrorFailure(moreThanOneOpenLoanError)));
+        return completedFuture(failedDueToServerError(moreThanOneOpenLoanError));
       }
     } else {
       String failedError = String.format("Could not get open loans for item %s", itemId);
 
       log.error(failedError);
-      return completedFuture(failed(new ServerErrorFailure(failedError)));
+      return completedFuture(failedDueToServerError(failedError));
     }
   }
 }

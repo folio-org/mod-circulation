@@ -1,5 +1,6 @@
 package org.folio.circulation.domain;
 
+import static java.lang.String.format;
 import static java.util.Objects.nonNull;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.support.CqlQuery.exactMatch;
@@ -11,6 +12,7 @@ import static org.folio.circulation.support.ResultBinding.mapResult;
 import static org.folio.circulation.support.http.CommonResponseInterpreters.noContentRecordInterpreter;
 import static org.folio.circulation.support.http.ResponseMapping.forwardOnFailure;
 import static org.folio.circulation.support.http.ResponseMapping.mapUsingJson;
+import static org.folio.circulation.support.results.CommonFailures.failedDueToServerError;
 
 import java.lang.invoke.MethodHandles;
 import java.util.Collection;
@@ -30,10 +32,10 @@ import org.folio.circulation.support.FetchSingleRecord;
 import org.folio.circulation.support.ItemRepository;
 import org.folio.circulation.support.RecordNotFoundFailure;
 import org.folio.circulation.support.Result;
-import org.folio.circulation.support.ServerErrorFailure;
 import org.folio.circulation.support.SingleRecordFetcher;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.client.ResponseInterpreter;
+import org.folio.circulation.support.results.CommonFailures;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -118,8 +120,8 @@ public class LoanRepository {
             .map(loan -> Result.of(() -> loan.withItem(item)))
             .orElse(Result.of(() -> null));
         } else {
-          return failed(new ServerErrorFailure(
-            String.format("More than one open loan for item %s", item.getItemId())));
+          return failedDueToServerError(format(
+            "More than one open loan for item %s", item.getItemId()));
         }
       }));
   }
@@ -128,7 +130,7 @@ public class LoanRepository {
     return fetchLoan(id)
       .thenComposeAsync(this::fetchItem)
       .thenComposeAsync(this::fetchUser)
-      .exceptionally(e -> failed(new ServerErrorFailure(e)));
+      .exceptionally(CommonFailures::failedDueToServerError);
   }
 
   private CompletableFuture<Result<Loan>> fetchLoan(String id) {
