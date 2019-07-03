@@ -38,8 +38,10 @@ public class CheckInByBarcodeResponse {
     write(checkInResponseBody, "loan",
       loanRepresentation.extendedLoan(records.getLoan()));
 
-    write(checkInResponseBody, "item",
-      itemRepresentation.createItemSummary(records.getItem()));
+    JsonObject itemSummary = itemRepresentation.createItemSummary(records.getItem());
+
+    write(itemSummary, "returnDate", records.getCheckInRequest().getCheckInDate());
+    write(checkInResponseBody, "item", itemSummary);
 
     return new OkJsonResponseResult(checkInResponseBody);
   }

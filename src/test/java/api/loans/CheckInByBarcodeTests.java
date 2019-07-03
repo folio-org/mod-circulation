@@ -69,10 +69,11 @@ public class CheckInByBarcodeTests extends APITests {
 
     DateTime expectedSystemReturnDate = DateTime.now(DateTimeZone.UTC);
 
+    DateTime checkInDate = new DateTime(2018, 3, 5, 14, 23, 41, DateTimeZone.UTC);
     final CheckInByBarcodeResponse checkInResponse = loansFixture.checkInByBarcode(
       new CheckInByBarcodeRequestBuilder()
         .forItem(nod)
-        .on(new DateTime(2018, 3, 5, 14 ,23, 41, DateTimeZone.UTC))
+        .on(checkInDate)
         .at(checkInServicePointId));
 
     JsonObject loanRepresentation = checkInResponse.getLoan();
@@ -81,6 +82,9 @@ public class CheckInByBarcodeTests extends APITests {
       loanRepresentation, notNullValue());
 
     assertThat(loanRepresentation.getString("userId"), is(james.getId().toString()));
+
+    hasProperty("returnDate",
+      checkInResponse.getItem(), "item", checkInDate.toString());
 
     assertThat("Should have return date",
       loanRepresentation.getString("returnDate"), is("2018-03-05T14:23:41.000Z"));
@@ -247,8 +251,9 @@ public class CheckInByBarcodeTests extends APITests {
     final IndividualResource nod = itemsFixture.basedUponNod(
       builder -> builder.withTemporaryLocation(homeLocation.getId()));
 
+    DateTime checkInDate = new DateTime(2018, 3, 5, 14, 23, 41, DateTimeZone.UTC);
     final CheckInByBarcodeResponse checkInResponse = loansFixture.checkInByBarcode(
-      nod, new DateTime(2018, 3, 5, 14, 23, 41, DateTimeZone.UTC),
+      nod, checkInDate,
       checkInServicePointId);
 
     assertThat("Response should not include a loan",
@@ -258,6 +263,9 @@ public class CheckInByBarcodeTests extends APITests {
       checkInResponse.getJson().containsKey("item"), is(true));
 
     final JsonObject itemFromResponse = checkInResponse.getItem();
+
+    hasProperty("returnDate",
+      itemFromResponse, "item", checkInDate.toString());
 
     assertThat("ID should be included for item",
       itemFromResponse.getString("id"), is(nod.getId()));

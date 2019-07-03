@@ -96,6 +96,11 @@
               "type": "string"
             }
           }
+        },
+        "returnDate": {
+          "description": "Date and time when the item was returned",
+          "type": "string",
+          "format": "date-time"
         }
       },
       "additionalProperties": false
