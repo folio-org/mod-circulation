@@ -42,7 +42,9 @@
         "Open - Awaiting pickup",
         "Open - In transit",
         "Closed - Filled",
-        "Closed - Cancelled"
+        "Closed - Cancelled",
+        "Closed - Unfilled",
+        "Closed - Pickup expired"
       ]
     },
     "cancellationReasonId": {
