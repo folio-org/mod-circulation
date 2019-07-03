@@ -64,7 +64,7 @@ public class CirculationRulesFixture {
   public String soleFallbackPolicyRule(String loanPolicyId, String requestPolicyId,
                                         String noticePolicyId) {
 
-    return String.format("priority: t, s, c, b, a, m, g%nfallback-policy: l %s r %s n %s%n",
+    return String.format("priority: t, m, g%nfallback-policy: l %s r %s n %s%n",
       loanPolicyId, requestPolicyId, noticePolicyId);
   }
 }

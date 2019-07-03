@@ -129,18 +129,18 @@ public class CirculationRulesEngineAPITests extends APITests {
   private Policy np1 = new Policy("662cb440-c66b-46ba-b70f-7ebff4026644");
   private Policy np2 = new Policy("b6bcddac-7c6c-4b29-a6fe-4627ef78c782");
 
-  private String rulesFallback =  "priority: t, s, c, b, a, m, g\nfallback-policy: l " + lp6 + " r " + rp1 + " n " + np1;
-  private String rulesFallback2 = "priority: t, s, c, b, a, m, g\nfallback-policy: l " + lp7 + " r " + rp2 + " n " + np2;
+  private String rulesFallback =  "priority: t, m, g\nfallback-policy: l " + lp6 + " r " + rp1 + " n " + np1;
+  private String rulesFallback2 = "priority: t, m, g\nfallback-policy: l " + lp7 + " r " + rp2 + " n " + np2;
 
   private String rules1 = String.join("\n",
-      "priority: t, s, c, b, a, m, g",
+      "priority: t, m, g",
       "fallback-policy: l " + lp2 + " r " + rp1 + " n " + np1,
       "m " + m2 + ": l " + lp3 + " r " + rp1 + " n " + np1,
       "    g " + g2 + ": l " + lp4 + " r " + rp1 + " n " + np1
       );
 
   private String rules2 = String.join("\n",
-      "priority: t, s, c, b, a, m, g",
+      "priority: t, m, g",
       "fallback-policy: l " + lp6 + " r " + rp1 + " n " + np1,
       "m " + m1 + ": l " + lp1 + " r " + rp1 + " n " + np1,
       "m " + m1 + " + t " + t1 + " : l " + lp2 + " r " + rp1 + " n " + np1,

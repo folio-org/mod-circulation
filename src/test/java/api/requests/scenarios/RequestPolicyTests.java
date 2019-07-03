@@ -54,7 +54,7 @@ public class RequestPolicyTests extends APITests {
     //This rule is set up to show that the fallback policy won't be used but the patronGroup policy g is used instead.
     //The patronGroup policy allows undergraduate students to place a request on any material type, loan or notice type.
     final String rules = String.join("\n",
-      "priority: t, s, c, b, a, m, g",
+      "priority: t, m, g",
       "fallback-policy : l " + anyLoanPolicy + " r " + anyRequestPolicy + " n " + anyNoticePolicy + "\n",
       "g " + undergradPatronGroup + ": l " + anyLoanPolicy + " r " + recallRequestPolicy +" n " + anyNoticePolicy
     );
@@ -101,7 +101,7 @@ public class RequestPolicyTests extends APITests {
     //The patronGroup policy allows undergraduate students to place a request on any material type, loan or notice type, on any request type
     //except for RECALL
     final String rules = String.join("\n",
-      "priority: t, s, c, b, a, m, g",
+      "priority: t, m, g",
       "fallback-policy : l " + anyLoanPolicy + " r " + anyRequestPolicy + " n " + anyNoticePolicy + "\n",
       "g " + undergradPatronGroupPolicy + ": l " + anyLoanPolicy + " r " + noRecallRequestPolicy +" n " + anyNoticePolicy
     );
@@ -140,7 +140,7 @@ public class RequestPolicyTests extends APITests {
     //This rule is set up to show that the fallback policy won't be used but the material policy m is used instead.
     //The materialType policy allows any patron to place a request on a library item of BOOK material type, any loan and notice types.
     final String rule = String.join("\n",
-      "priority: t, s, c, b, a, m, g",
+      "priority: t, m, g",
       "fallback-policy : l " + anyLoanPolicy + " r " + anyRequestPolicy + " n " + anyNoticePolicy + "\n",
       "m " + bookMaterialType + ": l " + anyLoanPolicy + " r " + holdRequestPolicy +" n " + anyNoticePolicy
     );
@@ -186,7 +186,7 @@ public class RequestPolicyTests extends APITests {
     //This rule is set up to show that the fallback policy won't be used but the material type rule m is used instead.
     //The material type rule m allows any patron to place any request but HOLDs on any BOOK, loan or notice types
     final String rules = String.join("\n",
-      "priority: t, s, c, b, a, m, g",
+      "priority: t, m, g",
       "fallback-policy : l " + anyLoanPolicy + " r " + anyRequestPolicy + " n " + anyNoticePolicy + "\n",
       "m " + bookMaterialType + ": l " + anyLoanPolicy + " r " + noHoldRequestPolicy +" n " + anyNoticePolicy
     );
@@ -221,7 +221,7 @@ public class RequestPolicyTests extends APITests {
     final String pageRequestPolicy = requestPoliciesFixture.pageRequestPolicy().getId().toString();
 
     final String rules = String.join("\n",
-      "priority: t, s, c, b, a, m, g",
+      "priority: t, m, g",
       "fallback-policy : l " + nonCirculatingLoanTypePolicy + " r " + pageRequestPolicy + " n " + anyNoticePolicy
     );
 
@@ -260,7 +260,7 @@ public class RequestPolicyTests extends APITests {
       "All But Page", "All but Page request policy").getId().toString();
 
     final String rules =
-      "priority: t, s, c, b, a, m, g " +
+      "priority: t, m, g " +
       "fallback-policy : l " + nonCirculatingLoanTypePolicy + " r " + noPageRequestPolicy + " n " + anyNoticePolicy;
 
     setRules(rules);
@@ -294,7 +294,7 @@ public class RequestPolicyTests extends APITests {
 
     //This rule is set up to show that the fallback policy will be used instead of the undergrad patronGroup policy.
     final String rules = String.join("\n",
-      "priority: t, s, c, b, a, m, g",
+      "priority: t, m, g",
       "fallback-policy : l " + anyLoanPolicy + " r " + anyRequestPolicy + " n " + anyNoticePolicy + "\n",
       "g " + undergradPatronGroup + ": l " + anyLoanPolicy + " r " + recallRequestPolicy +" n " + anyNoticePolicy
     );

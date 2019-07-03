@@ -48,7 +48,7 @@ public class RequestsAPIMoveTests extends APITests {
     //This rule is set up to show that the fallback policy won't be used but the material type rule m is used instead.
     //The material type rule m allows any patron to place any request but HOLDs on any BOOK, loan or notice types
     final String rules = String.join("\n",
-      "priority: t, s, c, b, a, m, g",
+      "priority: t, m, g",
       "fallback-policy : l " + anyLoanPolicy + " r " + anyRequestPolicy + " n " + anyNoticePolicy + "\n",
       "m " + bookMaterialType + ": l " + anyLoanPolicy + " r " + noHoldRequestPolicy +" n " + anyNoticePolicy
     );

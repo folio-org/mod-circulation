@@ -90,7 +90,7 @@ public class LoanAPIPolicyTests extends APITests {
     final UUID canCirculate = loanTypesFixture.canCirculate().getId();
 
     String rules = String.join("\n",
-      "priority: t, s, c, b, a, m, g",
+      "priority: t, m, g",
       "fallback-policy: l " + lpFallback + " r " + rpFallback + " n " + npFallback,
       "m " + videoRecording + " + g " + group1 + " : l " + lp1 + " r " + rp1 + " n " + np1,
       "m " + book + " + t " + canCirculate + " : l " + lp2 + " r " + rp2 + " n " + np2,

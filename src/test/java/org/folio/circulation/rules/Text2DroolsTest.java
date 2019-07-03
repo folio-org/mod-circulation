@@ -37,7 +37,7 @@ public class Text2DroolsTest {
   }
 
   private String test1 = String.join("\n",
-      "priority: t, s, c, b, a, m, g",
+      "priority: t, m, g",
       "fallback-policy: l no-loan r no-hold n basic-notice",
       "m book cd dvd: l policy-a r request-1 n notice-1",
       "m newspaper + g all: l policy-c r request-2 n notice-2",
@@ -202,32 +202,32 @@ public class Text2DroolsTest {
   }
 
   @Test
-  public void reject6CriteriumTypes() {
+  public void reject2CriteriumTypes() {
     try {
-      Text2Drools.convert("priority: t g m a b c\nfallback-policy: l no-loan r no-hold n basic-notice");
+      Text2Drools.convert("priority: t g\nfallback-policy: l no-loan r no-hold n basic-notice");
       fail();
     } catch (CirculationRulesException e) {
-      assertThat(e, matches("7 letters expected, found only 6", 1, 11));
+      assertThat(e, matches("3 letters expected, found only 2", 1, 11));
     }
   }
 
   @Test
-  public void reject8CriteriumTypes() {
+  public void reject4CriteriumTypes() {
     try {
-      Text2Drools.convert("priority: t g m a b c s s\nfallback-policy: l no-loan r no-hold n basic-notice");
+      Text2Drools.convert("priority: t g m m\nfallback-policy: l no-loan r no-hold n basic-notice");
       fail();
     } catch (CirculationRulesException e) {
-      assertThat(e, matches("Only 7 letters expected, found 8", 1, 11));
+      assertThat(e, matches("Only 3 letters expected, found 4", 1, 11));
     }
   }
 
   @Test
   public void duplicateCriteriumType() {
     try {
-      Text2Drools.convert("priority: t g m a b s s\nfallback-policy: l no-loan r no-hold n basic-notice r no-hold n basic-notice");
+      Text2Drools.convert("priority: t m m\nfallback-policy: l no-loan r no-hold n basic-notice r no-hold n basic-notice");
       fail();
     } catch (CirculationRulesException e) {
-      assertThat(e, matches("Duplicate letter s", 1, 23));
+      assertThat(e, matches("Duplicate letter m", 1, 15));
     }
   }
 
@@ -259,7 +259,7 @@ public class Text2DroolsTest {
   @Test
   public void threePriorities() {
     Drools drools = new Drools(Text2Drools.convert(String.join("\n",
-        "priority: criterium(t, s, c, b, a, m, g), number-of-criteria, first-line",
+        "priority: criterium(t, m, g), number-of-criteria, first-line",
         "fallback-policy: l no-loan r no-hold n basic-notice",
         "m book: l policy-a r no-hold n basic-notice",
         "g student: l policy-b r no-hold n basic-notice",
@@ -326,9 +326,9 @@ public class Text2DroolsTest {
     Drools drools = new Drools(Text2Drools.convert(String.join("\n",
         "priority:last-line",
         "fallback-policy:l no-loan r no-hold n basic-notice",
-        "s new:l policy-a r no-hold n basic-notice")));
+        "t new:l policy-a r no-hold n basic-notice")));
     assertThat(drools.loanPolicy(params("dvd", "regular", "student", "shelf")), is("no-loan"));
-    assertThat(drools.loanPolicy(params("dvd", "regular", "student", "new"  )), is("policy-a"));
+    assertThat(drools.loanPolicy(params("dvd", "regular", "student", "new"  )), is("no-loan"));
   }
 
   @Test
@@ -336,9 +336,9 @@ public class Text2DroolsTest {
     Drools drools = new Drools(Text2Drools.convert(String.join("\n",
         "priority   :   last-line",
         "fallback-policy   :   l no-loan r no-hold n basic-notice",
-        "s new   :   l policy-a r no-hold n basic-notice")));
+        "t new   :   l policy-a r no-hold n basic-notice")));
     assertThat(drools.loanPolicy(params("dvd", "regular", "student", "shelf")), is("no-loan"));
-    assertThat(drools.loanPolicy(params("dvd", "regular", "student", "new"  )), is("policy-a"));
+    assertThat(drools.loanPolicy(params("dvd", "regular", "student", "new"  )), is("no-loan"));
   }
 
   @Test
@@ -361,12 +361,8 @@ public class Text2DroolsTest {
     Drools drools = new Drools(Text2Drools.convert(String.join("\n",
         "priority: last-line",
         "fallback-policy: l no-loan r no-hold n basic-notice",
-        "s new: l policy-a r no-hold n basic-notice",
-        "m book: l policy-b r no-hold n basic-notice",
-        "a new: l policy-c r no-hold n basic-notice",
-        "b new: l policy-d r no-hold n basic-notice",
-        "c new: l policy-e r no-hold n basic-notice")));
-    assertThat(drools.loanPolicy(params("dvd",  "regular", "student",  "new")),   is("policy-a"));
+        "m book: l policy-b r no-hold n basic-notice")));
+    assertThat(drools.loanPolicy(params("dvd",  "regular", "student",  "new")),   is("no-loan"));
     assertThat(drools.loanPolicy(params("book", "regular", "student",  "new")),   is("policy-b"));
     assertThat(drools.loanPolicy(params("book", "regular", "student",  "shelf")), is("policy-b"));
   }
@@ -374,15 +370,11 @@ public class Text2DroolsTest {
   @Test
   public void shelvingLocationDefaultPriority() {
     Drools drools = new Drools(Text2Drools.convert(String.join("\n",
-        "priority: t, s, c, b, a, m, g",
+        "priority: t, m, g",
         "fallback-policy: l no-loan r no-hold n basic-notice",
-        "s new: l policy-new r no-hold n basic-notice",
         "t special-items: l policy-special r no-hold n basic-notice",
-        "m book: l policy-book r no-hold n basic-notice",
-        "s stacks: l policy-stacks r no-hold n basic-notice")));
-    assertThat(drools.loanPolicy(params("book", "regular",       "student", "new")),         is("policy-new"));
+        "m book: l policy-book r no-hold n basic-notice")));
     assertThat(drools.loanPolicy(params("book", "regular",       "student", "open-stacks")), is("policy-book"));
-    assertThat(drools.loanPolicy(params("book", "regular",       "student", "stacks")),      is("policy-stacks"));
     assertThat(drools.loanPolicy(params("book", "special-items", "student", "new")),         is("policy-special"));
     assertThat(drools.loanPolicy(params("book", "special-items", "student", "stacks")),      is("policy-special"));
     assertThat(drools.loanPolicy(params("book", "special-items", "student", "open-stacks")), is("policy-special"));
