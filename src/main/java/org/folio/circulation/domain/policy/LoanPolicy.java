@@ -122,8 +122,7 @@ public class LoanPolicy {
         return overrideRenewalForDueDate(loan, overrideDueDate, comment);
       }
 
-      if (proposedDueDateResult.succeeded() &&
-        reachedNumberOfRenewalsLimit(loan) && !unlimitedRenewals()) {
+      if (numberOfRenewalsMatchLimit(loan)) {
         return processRenewal(proposedDueDateResult, loan, comment);
       }
 
@@ -189,7 +188,7 @@ public class LoanPolicy {
   }
 
   private void errorWhenReachedRenewalLimit(Loan loan, List<ValidationError> errors) {
-    if(!unlimitedRenewals() && reachedNumberOfRenewalsLimit(loan)) {
+    if (numberOfRenewalsMatchLimit(loan)) {
       errors.add(errorForPolicy("loan at maximum renewal number"));
     }
   }
@@ -207,6 +206,10 @@ public class LoanPolicy {
   private boolean isSameOrBefore(Loan loan, DateTime proposedDueDate) {
     return proposedDueDate.isEqual(loan.getDueDate())
       || proposedDueDate.isBefore(loan.getDueDate());
+  }
+
+  private boolean numberOfRenewalsMatchLimit(Loan loan) {
+    return reachedNumberOfRenewalsLimit(loan) && !unlimitedRenewals();
   }
 
   private boolean reachedNumberOfRenewalsLimit(Loan loan) {
