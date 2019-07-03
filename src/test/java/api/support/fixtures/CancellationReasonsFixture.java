@@ -38,7 +38,25 @@ public class CancellationReasonsFixture {
     return createReason("Course Reserves", "Item needed for course reserves");
   }
 
+  public IndividualResource itemNotAvailable()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    return createReason("Item Not Available", "Item is no longer available", "Item is no longer available");
+  }
+
   private IndividualResource createReason(String name, String description)
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    return createReason(name, description, null);
+  }
+
+  private IndividualResource createReason(String name, String description, String publicDescription)
     throws InterruptedException,
     MalformedURLException,
     TimeoutException,
@@ -48,6 +66,7 @@ public class CancellationReasonsFixture {
 
     write(reason, "name", name);
     write(reason, "description", description);
+    write(reason, "publicDescription", publicDescription);
 
     return cancellationReasonsRecordCreator.createIfAbsent(reason);
   }
