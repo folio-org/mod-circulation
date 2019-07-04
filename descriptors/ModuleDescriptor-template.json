@@ -678,6 +678,10 @@
     {
       "id": "scheduled-notice-storage",
       "version": "0.1"
+    },
+    {
+      "id": "feesfines",
+      "version": "15.0"
     }
   ],
   "permissionSets": [
