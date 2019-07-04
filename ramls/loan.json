@@ -262,7 +262,8 @@
           "description": "Total remaining amount due on fees and fines for the loan (read only, defined by the server)",
           "readonly" : true
         }
-      }
+      },
+      "additionalProperties": false
     },
     "metadata": {
       "description": "Metadata about creation and changes to loan, provided by the server (client should not provide)",
