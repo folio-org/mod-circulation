@@ -1,14 +1,16 @@
 package org.folio.circulation.domain;
 
-import java.lang.invoke.MethodHandles;
-
+import io.vertx.core.json.JsonObject;
 import org.folio.circulation.domain.policy.LoanPolicy;
 import org.folio.circulation.domain.representations.ItemSummaryRepresentation;
 import org.folio.circulation.domain.representations.LoanProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.vertx.core.json.JsonObject;
+import java.lang.invoke.MethodHandles;
+import java.util.Collection;
+
+import static org.folio.circulation.support.JsonPropertyWriter.write;
 
 public class LoanRepresentation {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
@@ -41,6 +43,8 @@ public class LoanRepresentation {
       extendedRepresentation.remove(LoanProperties.LOAN_POLICY);
     }
 
+    additionalAccountProperties(extendedRepresentation, loan.getAccounts());
+
     return extendedRepresentation;
   }
 
@@ -60,6 +64,20 @@ public class LoanRepresentation {
     }
 
     return loan;
+  }
+
+  private void additionalAccountProperties(JsonObject loanRepresentation, Collection<Account> accounts) {
+    if (accounts == null) {
+      return;
+    }
+    double remainingFeesFines = accounts.stream().
+      map(Account::getRemainingFeeFineAmount).reduce(Double::sum).orElse(0d);
+
+    JsonObject feesAndFinesSummary = loanRepresentation.containsKey(LoanProperties.FEESANDFINES)
+      ? loanRepresentation.getJsonObject(LoanProperties.FEESANDFINES)
+      : new JsonObject();
+    write(feesAndFinesSummary, "amountRemainingToPay", remainingFeesFines);
+    write(loanRepresentation, LoanProperties.FEESANDFINES, feesAndFinesSummary);
   }
 
   private void additionalLoanPolicyProperties(JsonObject loanRepresentation, LoanPolicy loanPolicy) {
