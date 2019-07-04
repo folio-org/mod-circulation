@@ -22,6 +22,7 @@ import org.folio.circulation.domain.UpdateItem;
 import org.folio.circulation.domain.UpdateRequestQueue;
 import org.folio.circulation.domain.User;
 import org.folio.circulation.domain.UserRepository;
+import org.folio.circulation.domain.*;
 import org.folio.circulation.domain.notice.schedule.ScheduledNoticeService;
 import org.folio.circulation.domain.policy.LoanPolicyRepository;
 import org.folio.circulation.domain.validation.AlreadyCheckedOutValidator;
@@ -176,10 +177,12 @@ public class LoanCollectionResource extends CollectionResource {
     final LoanRepresentation loanRepresentation = new LoanRepresentation();
     final UserRepository userRepository = new UserRepository(clients);
     final LoanPolicyRepository loanPolicyRepository = new LoanPolicyRepository(clients);
+    final AccountRepository accountRepository = new AccountRepository(clients);
 
     String id = routingContext.request().getParam("id");
 
     loanRepository.getById(id)
+      .thenComposeAsync(accountRepository::findAccountsForLoan)
       .thenComposeAsync(servicePointRepository::findServicePointsForLoan)
       .thenComposeAsync(userRepository::findUserForLoan)
       .thenComposeAsync(loanPolicyRepository::findPolicyForLoan)
@@ -208,8 +211,11 @@ public class LoanCollectionResource extends CollectionResource {
     final LoanRepresentation loanRepresentation = new LoanRepresentation();
     final UserRepository userRepository = new UserRepository(clients);
     final LoanPolicyRepository loanPolicyRepository = new LoanPolicyRepository(clients);
+    final AccountRepository accountRepository = new AccountRepository(clients);
 
     loanRepository.findBy(routingContext.request().query())
+      .thenCompose(multiLoanRecordsResult ->
+        multiLoanRecordsResult.after(accountRepository::findAccountsForLoans))
       .thenCompose(multiLoanRecordsResult ->
         multiLoanRecordsResult.after(servicePointRepository::findServicePointsForLoans))
       .thenCompose(multiLoanRecordsResult ->
