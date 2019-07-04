@@ -148,6 +148,10 @@ public class InterfaceUrls {
     return circulationModuleUrl("/circulation/loans" + subPath);
   }
 
+  public static URL accountsUrl(String subPath) {
+    return APITestContext.viaOkapiModuleUrl("/accounts" + subPath);
+  }
+
   public static URL circulationRulesUrl() {
     return circulationRulesUrl("");
   }

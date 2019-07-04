@@ -25,6 +25,14 @@ public class JsonPropertyWriter {
   public static void write(
     JsonObject to,
     String propertyName,
+    Double value) {
+      to.put(propertyName, value);
+    }
+
+
+  public static void write(
+    JsonObject to,
+    String propertyName,
     JsonArray value) {
 
     if(value != null && !value.isEmpty()) {

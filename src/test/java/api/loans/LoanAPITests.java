@@ -1,6 +1,7 @@
 package api.loans;
 
 import static api.requests.RequestsAPICreationTests.setupMissingItem;
+import static api.support.JsonCollectionAssistant.getRecordById;
 import static api.support.http.AdditionalHttpStatusCodes.UNPROCESSABLE_ENTITY;
 import static api.support.http.InterfaceUrls.loansUrl;
 import static api.support.matchers.ResponseStatusCodeMatcher.hasStatus;
@@ -31,6 +32,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import api.support.builders.AccountBuilder;
 import org.folio.circulation.domain.representations.LoanProperties;
 import org.folio.circulation.support.JsonArrayHelper;
 import org.folio.circulation.support.http.client.IndividualResource;
@@ -164,6 +166,144 @@ public class LoanAPITests extends APITests {
       is("Checked out"));
 
     loanHasExpectedProperties(loan, user);
+
+  }
+
+  @Test
+  public void canGetLoanWithoutOpenFeesFines()
+    throws InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    MalformedURLException {
+
+    UUID id = UUID.randomUUID();
+
+    UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
+
+    IndividualResource user = usersFixture.charlotte();
+    UUID userId = user.getId();
+
+    DateTime loanDate = new DateTime(2017, 2, 27, 10, 23, 43, DateTimeZone.UTC);
+    DateTime dueDate = new DateTime(2017, 3, 29, 10, 23, 43, DateTimeZone.UTC);
+
+    IndividualResource response = loansClient.create(new LoanBuilder()
+      .withId(id)
+      .open()
+      .withUserId(userId)
+      .withItemId(itemId)
+      .withLoanDate(loanDate)
+      .withDueDate(dueDate));
+
+    accountsClient.create(new AccountBuilder()
+      .feeFineStatusOpen()
+      .withLoan(response)
+      .feeFineStatusClosed()
+      .withRemainingFeeFine(150)
+    );
+
+    JsonObject loan = loansClient.get(id).getJson();
+
+    loanHasFeeFinesProperties(loan, 0);
+  }
+
+
+  @Test
+  public void canGetMultipleFeesFinesForSingleLoan()
+    throws InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    MalformedURLException {
+
+    UUID id = UUID.randomUUID();
+
+    UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
+
+    IndividualResource user = usersFixture.charlotte();
+    UUID userId = user.getId();
+
+    DateTime loanDate = new DateTime(2017, 2, 27, 10, 23, 43, DateTimeZone.UTC);
+    DateTime dueDate = new DateTime(2017, 3, 29, 10, 23, 43, DateTimeZone.UTC);
+
+    IndividualResource response = loansClient.create(new LoanBuilder()
+      .withId(id)
+      .open()
+      .withUserId(userId)
+      .withItemId(itemId)
+      .withLoanDate(loanDate)
+      .withDueDate(dueDate));
+
+    accountsClient.create(new AccountBuilder()
+      .feeFineStatusOpen()
+      .withLoan(response)
+      .withRemainingFeeFine(150)
+    );
+
+    JsonObject loan = loansClient.get(id).getJson();
+
+    loanHasFeeFinesProperties(loan, 150d);
+
+    accountsClient.create(new AccountBuilder()
+      .feeFineStatusOpen()
+      .withLoan(response)
+      .withRemainingFeeFine(150)
+    );
+
+    loan = loansClient.get(id).getJson();
+
+    loanHasFeeFinesProperties(loan, 300d);
+  }
+
+  @Test
+  public void canGetMultipleFeesFinesForMultipleLoans()
+    throws InterruptedException, MalformedURLException, TimeoutException, ExecutionException {
+
+    configClient.create(ConfigurationExample.utcTimezoneConfiguration());
+    IndividualResource item1 = itemsFixture.basedUponSmallAngryPlanet();
+    final InventoryItemResource item2 = itemsFixture.basedUponNod();
+
+    final IndividualResource user1 = usersFixture.jessica();
+    final IndividualResource user2 = usersFixture.steve();
+
+    IndividualResource loan1 = loansFixture.checkOutByBarcode(
+      item1, user1, new DateTime(2018, 4, 21, 11, 21, 43,
+        DateTimeZone.UTC));
+
+    IndividualResource loan2 = loansFixture.checkOutByBarcode(
+      item2, user2, new DateTime(2018, 4, 21, 11, 21, 43,
+        DateTimeZone.UTC));
+
+
+    accountsClient.create(new AccountBuilder()
+      .feeFineStatusOpen()
+      .withLoan(loan1)
+      .withRemainingFeeFine(100)
+    );
+
+    accountsClient.create(new AccountBuilder()
+      .feeFineStatusOpen()
+      .withLoan(loan1)
+      .withRemainingFeeFine(100)
+    );
+
+    accountsClient.create(new AccountBuilder()
+      .feeFineStatusOpen()
+      .withLoan(loan2)
+      .withRemainingFeeFine(99)
+    );
+
+    accountsClient.create(new AccountBuilder()
+      .feeFineStatusOpen()
+      .withLoan(loan2)
+      .withRemainingFeeFine(1000)
+    );
+
+    List<JsonObject> loans = loansClient.getAll();
+
+    JsonObject fetchedLoan1 = getRecordById(loans, loan1.getId()).get();
+    JsonObject fetchedLoan2 = getRecordById(loans, loan2.getId()).get();
+
+    loanHasFeeFinesProperties(fetchedLoan1, 200);
+    loanHasFeeFinesProperties(fetchedLoan2, 1099);
 
   }
 

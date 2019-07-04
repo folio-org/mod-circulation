@@ -66,6 +66,11 @@ public class ResourceClient {
       "loans");
   }
 
+  public static ResourceClient forAccounts(OkapiHttpClient client) {
+    return new ResourceClient(client, InterfaceUrls::accountsUrl,
+      "accounts");
+  }
+
   public static ResourceClient forLoanPolicies(OkapiHttpClient client) {
     return new ResourceClient(client, InterfaceUrls::loanPoliciesStorageUrl,
       "loan policies", "loanPolicies");
