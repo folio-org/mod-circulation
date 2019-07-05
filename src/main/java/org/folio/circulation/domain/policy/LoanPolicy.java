@@ -119,19 +119,11 @@ public class LoanPolicy {
       final Result<DateTime> proposedDueDateResult =
         determineStrategy(true, systemDate).calculateDueDate(loan);
 
-      final JsonObject loansPolicy = getLoansPolicy();
-
-      if (proposedDueDateResult.failed() && isFixed(loansPolicy)) {
+      if (proposedDueDateResult.failed()) {
         return overrideRenewalForDueDate(loan, overrideDueDate, comment);
       }
 
-      if (proposedDueDateResult.failed() && isRolling(loansPolicy)) {
-        DueDateStrategy dueDateStrategy = getRollingRenewalOverrideDueDateStrategy(systemDate);
-        return processRenewal(dueDateStrategy.calculateDueDate(loan), loan, comment);
-      }
-
-      if (proposedDueDateResult.succeeded() &&
-        reachedNumberOfRenewalsLimit(loan) && !unlimitedRenewals()) {
+      if (hasReachedRenewalLimit(loan)) {
         return processRenewal(proposedDueDateResult, loan, comment);
       }
 
@@ -167,14 +159,6 @@ public class LoanPolicy {
     return succeeded(loan.overrideRenewal(overrideDueDate, getId(), comment));
   }
 
-  private DueDateStrategy getRollingRenewalOverrideDueDateStrategy(DateTime systemDate) {
-    final JsonObject loansPolicy = getLoansPolicy();
-    final JsonObject renewalsPolicy = getRenewalsPolicy();
-    return new RollingRenewalOverrideDueDateStrategy(getId(), getName(),
-      systemDate, getRenewFrom(), getRenewalPeriod(loansPolicy, renewalsPolicy),
-      getRenewalDueDateLimitSchedules(), this::errorForPolicy);
-  }
-
   private ValidationError errorForDueDate() {
     return new ValidationError(
       "New due date must be specified when due date calculation fails",
@@ -205,7 +189,7 @@ public class LoanPolicy {
   }
 
   private void errorWhenReachedRenewalLimit(Loan loan, List<ValidationError> errors) {
-    if(!unlimitedRenewals() && reachedNumberOfRenewalsLimit(loan)) {
+    if (hasReachedRenewalLimit(loan)) {
       errors.add(errorForPolicy("loan at maximum renewal number"));
     }
   }
@@ -223,6 +207,10 @@ public class LoanPolicy {
   private boolean isSameOrBefore(Loan loan, DateTime proposedDueDate) {
     return proposedDueDate.isEqual(loan.getDueDate())
       || proposedDueDate.isBefore(loan.getDueDate());
+  }
+
+  private boolean hasReachedRenewalLimit(Loan loan) {
+    return reachedNumberOfRenewalsLimit(loan) && !unlimitedRenewals();
   }
 
   private boolean reachedNumberOfRenewalsLimit(Loan loan) {
