@@ -601,7 +601,7 @@
   "requires": [
     {
       "id": "loan-storage",
-      "version": "5.3"
+      "version": "5.3 6.0"
     },
     {
       "id": "circulation-rules-storage",
