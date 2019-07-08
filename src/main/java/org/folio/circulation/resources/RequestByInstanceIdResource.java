@@ -10,6 +10,7 @@ import static org.folio.circulation.support.Result.of;
 import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
+import static org.folio.circulation.support.results.CommonFailures.failedDueToServerError;
 
 import java.lang.invoke.MethodHandles;
 import java.util.ArrayList;
@@ -206,7 +207,7 @@ public class RequestByInstanceIdResource extends Resource {
           //fail the requests when there are no items to make requests from.
           log.error("Failed to find request queues for all items of instanceId {}",
             instanceRequestPackage.getInstanceLevelRequest().getInstanceId());
-          return failed(new ServerErrorFailure("Unable to find an item to place a request"));
+          return failedDueToServerError("Unable to find an item to place a request");
         }
         instanceRequestPackage.setItemsWithoutRequests(itemsWithoutRequestQueues);
         instanceRequestPackage.setItemRequestQueueMap(itemQueueMap);
@@ -220,7 +221,7 @@ public class RequestByInstanceIdResource extends Resource {
     final RequestNoticeSender requestNoticeSender = RequestNoticeSender.using(clients);
     final LoanRepository loanRepository = new LoanRepository(clients);
     final LoanPolicyRepository loanPolicyRepository = new LoanPolicyRepository(clients);
-    
+
     final UpdateUponRequest updateUponRequest = new UpdateUponRequest(
         new UpdateItem(clients),
         new UpdateLoan(clients, loanRepository, loanPolicyRepository),
@@ -247,8 +248,8 @@ public class RequestByInstanceIdResource extends Resource {
 
       String aggregateFailures = String.format("%n%s", String.join("%n", errors));
 
-      return CompletableFuture.completedFuture(failed(new ServerErrorFailure(
-        "Failed to place a request for the instance. Reasons: " + aggregateFailures)));
+      return CompletableFuture.completedFuture(failedDueToServerError(
+        "Failed to place a request for the instance. Reasons: " + aggregateFailures));
     }
 
     JsonObject currentItemRequest = itemRequests.get(startIndex);

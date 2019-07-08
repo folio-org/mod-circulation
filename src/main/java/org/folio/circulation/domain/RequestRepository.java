@@ -2,25 +2,25 @@ package org.folio.circulation.domain;
 
 import static java.util.Objects.isNull;
 import static org.folio.circulation.support.Result.failed;
+import static org.folio.circulation.support.Result.of;
 import static org.folio.circulation.support.Result.ofAsync;
 import static org.folio.circulation.support.Result.succeeded;
+import static org.folio.circulation.support.ResultBinding.mapResult;
+import static org.folio.circulation.support.http.ResponseMapping.forwardOnFailure;
+import static org.folio.circulation.support.http.ResponseMapping.mapUsingJson;
 
-import java.lang.invoke.MethodHandles;
 import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.CqlQuery;
 import org.folio.circulation.support.FetchSingleRecord;
-import org.folio.circulation.support.ForwardOnFailure;
 import org.folio.circulation.support.ItemRepository;
 import org.folio.circulation.support.RecordNotFoundFailure;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.SingleRecordFetcher;
-import org.folio.circulation.support.SingleRecordMapper;
 import org.folio.circulation.support.http.client.Response;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.folio.circulation.support.http.client.ResponseInterpreter;
 
 import io.vertx.core.json.JsonObject;
 
@@ -32,7 +32,6 @@ public class RequestRepository {
   private final LoanRepository loanRepository;
   private final ServicePointRepository servicePointRepository;
   private final PatronGroupRepository patronGroupRepository;
-  private final Logger log;
 
   private RequestRepository(
     CollectionResourceClient requestsStorageClient,
@@ -50,7 +49,6 @@ public class RequestRepository {
     this.loanRepository = loanRepository;
     this.servicePointRepository = servicePointRepository;
     this.patronGroupRepository = patronGroupRepository;
-    log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
   }
 
   public static RequestRepository using(Clients clients) {
@@ -103,14 +101,9 @@ public class RequestRepository {
   }
 
   private CompletableFuture<Result<Boolean>> exists(String id) {
-    return new SingleRecordFetcher<>(requestsStorageClient, "request",
-      new SingleRecordMapper<>(request -> true, response -> {
-        if (response.getStatusCode() == 404) {
-          return succeeded(false);
-        } else {
-          return failed(new ForwardOnFailure(response));
-        }
-      }))
+    return createSingleRequestFetcher(new ResponseInterpreter<Boolean>()
+      .on(200, of(() -> true))
+      .on(404, of(() -> false)))
       .fetch(id);
   }
 
@@ -126,10 +119,9 @@ public class RequestRepository {
   }
 
   private CompletableFuture<Result<Request>> fetchRequest(String id) {
-    return FetchSingleRecord.<Request>forRecord("request")
-      .using(requestsStorageClient)
-      .mapTo(Request::from)
-      .whenNotFound(failed(new RecordNotFoundFailure("request", id)))
+    return createSingleRequestFetcher(new ResponseInterpreter<Request>()
+      .flatMapOn(200, mapUsingJson(Request::from))
+      .on(404, failed(new RecordNotFoundFailure("request", id))))
       .fetch(id);
   }
 
@@ -138,15 +130,12 @@ public class RequestRepository {
     final JsonObject representation
       = new StoredRequestRepresentation().storedRequest(request);
 
+    final ResponseInterpreter<Request> interpreter = new ResponseInterpreter<Request>()
+      .on(204, of(() -> request))
+      .otherwise(forwardOnFailure());
+
     return requestsStorageClient.put(request.getId(), representation)
-      .thenApply(response -> {
-        if(response.getStatusCode() == 204) {
-          return succeeded(request);
-        }
-        else {
-          return failed(new ForwardOnFailure(response));
-        }
-    });
+      .thenApply(interpreter::apply);
   }
 
   public CompletableFuture<Result<RequestAndRelatedRecords>> update(
@@ -164,33 +153,22 @@ public class RequestRepository {
     JsonObject representation = new StoredRequestRepresentation()
       .storedRequest(request);
 
-    log.debug("RequestRepository.create - POST request representation {}", representation);
+    final ResponseInterpreter<Request> interpreter = new ResponseInterpreter<Request>()
+      .flatMapOn(201, mapUsingJson(request::withRequestJsonRepresentation))
+      .otherwise(forwardOnFailure());
+
     return requestsStorageClient.post(representation)
-      .thenApply(response -> {
-        if (response.getStatusCode() == 201) {
-          log.debug("Succeeded create - POST request representation");
-          //Retain all of the previously fetched related records
-          return succeeded(requestAndRelatedRecords.withRequest(
-            request.withRequestJsonRepresentation(response.getJson())
-          ));
-        } else {
-          log.debug("Failed to create - POST request representation; Status code = {}; response body = {}",
-                    response.getStatusCode(), response.getBody());
-          return failed(new ForwardOnFailure(response));
-        }
-    });
+      .thenApply(interpreter::apply)
+      .thenApply(mapResult(requestAndRelatedRecords::withRequest));
   }
 
   public CompletableFuture<Result<Request>> delete(Request request) {
+    final ResponseInterpreter<Request> interpreter = new ResponseInterpreter<Request>()
+      .on(204, of(() -> request))
+      .otherwise(forwardOnFailure());
+
     return requestsStorageClient.delete(request.getId())
-      .thenApply(response -> {
-        if(response.getStatusCode() == 204) {
-          return succeeded(request);
-        }
-        else {
-          return failed(new ForwardOnFailure(response));
-        }
-    });
+      .thenApply(interpreter::apply);
   }
 
   public CompletableFuture<Result<Request>> loadCancellationReason(Request request) {
@@ -236,5 +214,11 @@ public class RequestRepository {
 
   private CompletableFuture<Result<ServicePoint>> getServicePoint(String servicePointId) {
     return servicePointRepository.getServicePointById(servicePointId);
+  }
+
+  private <R> SingleRecordFetcher<R> createSingleRequestFetcher(
+    ResponseInterpreter<R> interpreter) {
+
+    return new SingleRecordFetcher<>(requestsStorageClient, "request", interpreter);
   }
 }

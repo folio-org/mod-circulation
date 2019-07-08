@@ -1,6 +1,7 @@
 package org.folio.circulation.support.http.client;
 
 import static io.vertx.core.http.HttpHeaders.CONTENT_TYPE;
+import static java.lang.String.format;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -84,7 +85,14 @@ public class Response {
     return headers.get(name);
   }
 
-  public String getFromUrl() {
+  String getFromUrl() {
     return fromUrl;
+  }
+
+  @Override
+  public String toString() {
+    return format(
+      "Response from \"%s\" status code: %s body: \"%s\", content type: \"%s\"",
+        getFromUrl(), getStatusCode(), getBody(), getContentType());
   }
 }

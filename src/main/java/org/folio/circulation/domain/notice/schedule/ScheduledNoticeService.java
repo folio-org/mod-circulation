@@ -21,7 +21,6 @@ import org.joda.time.DateTime;
 import org.joda.time.Period;
 
 public class ScheduledNoticeService {
-
   public static ScheduledNoticeService using(Clients clients) {
     return new ScheduledNoticeService(
       ScheduledNoticesRepository.using(clients),
@@ -104,7 +103,7 @@ public class ScheduledNoticeService {
       .thenApply(r -> r.map(relatedRecords::withLoan));
   }
 
-  public CompletableFuture<Result<Loan>> rescheduleDueDateNotices(Loan loan) {
+  private CompletableFuture<Result<Loan>> rescheduleDueDateNotices(Loan loan) {
     if (loan.isClosed()) {
       return completedFuture(succeeded(loan));
     }

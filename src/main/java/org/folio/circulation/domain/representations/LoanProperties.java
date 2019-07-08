@@ -15,4 +15,5 @@ public class LoanProperties {
   public static final String ACTION_COMMENT = "actionComment";
   public static final String BORROWER = "borrower";
   public static final String LOAN_POLICY = "loanPolicy";
+  public static final String FEESANDFINES = "feesAndFines";
 }

@@ -1,5 +1,6 @@
 package org.folio.circulation.domain;
 
+import static java.lang.String.format;
 import static java.util.Objects.nonNull;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.support.CqlQuery.exactMatch;
@@ -7,6 +8,11 @@ import static org.folio.circulation.support.CqlQuery.exactMatchAny;
 import static org.folio.circulation.support.Result.failed;
 import static org.folio.circulation.support.Result.of;
 import static org.folio.circulation.support.Result.succeeded;
+import static org.folio.circulation.support.ResultBinding.mapResult;
+import static org.folio.circulation.support.http.CommonResponseInterpreters.noContentRecordInterpreter;
+import static org.folio.circulation.support.http.ResponseMapping.forwardOnFailure;
+import static org.folio.circulation.support.http.ResponseMapping.mapUsingJson;
+import static org.folio.circulation.support.results.CommonFailures.failedDueToServerError;
 
 import java.lang.invoke.MethodHandles;
 import java.util.Collection;
@@ -15,7 +21,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.folio.circulation.domain.policy.LoanPolicy;
@@ -24,13 +29,13 @@ import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.CqlQuery;
 import org.folio.circulation.support.FetchSingleRecord;
-import org.folio.circulation.support.ForwardOnFailure;
 import org.folio.circulation.support.ItemRepository;
 import org.folio.circulation.support.RecordNotFoundFailure;
 import org.folio.circulation.support.Result;
-import org.folio.circulation.support.ServerErrorFailure;
 import org.folio.circulation.support.SingleRecordFetcher;
 import org.folio.circulation.support.http.client.Response;
+import org.folio.circulation.support.http.client.ResponseInterpreter;
+import org.folio.circulation.support.results.CommonFailures;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -55,21 +60,20 @@ public class LoanRepository {
 
     JsonObject storageLoan = mapToStorageRepresentation(loan, loan.getItem());
 
-    return loansStorageClient.post(storageLoan).thenApply(response -> {
-      if (response.getStatusCode() == 201) {
-        return succeeded(
-          loanAndRelatedRecords.withLoan(loan.replaceRepresentation(response.getJson())));
-      } else {
-        return failed(new ForwardOnFailure(response));
-      }
-    });
+    final ResponseInterpreter<Loan> interpreter = new ResponseInterpreter<Loan>()
+      .flatMapOn(201, mapUsingJson(loan::replaceRepresentation))
+      .otherwise(forwardOnFailure());
+
+    return loansStorageClient.post(storageLoan)
+      .thenApply(interpreter::apply)
+      .thenApply(mapResult(loanAndRelatedRecords::withLoan));
   }
 
   public CompletableFuture<Result<LoanAndRelatedRecords>> updateLoan(
     LoanAndRelatedRecords loanAndRelatedRecords) {
 
     return updateLoan(loanAndRelatedRecords.getLoan())
-      .thenApply(r -> r.map(loanAndRelatedRecords::withLoan));
+      .thenApply(mapResult(loanAndRelatedRecords::withLoan));
   }
 
   public CompletableFuture<Result<Loan>> updateLoan(Loan loan) {
@@ -79,18 +83,8 @@ public class LoanRepository {
 
     JsonObject storageLoan = mapToStorageRepresentation(loan, loan.getItem());
 
-    final Function<Response, Result<Loan>> mapResponse = response -> {
-      if (response.getStatusCode() == 204) {
-        return succeeded(loan);
-      } else {
-        return failed(
-          new ServerErrorFailure(String.format("Failed to update loan (%s:%s)",
-            response.getStatusCode(), response.getBody())));
-      }
-    };
-
     return loansStorageClient.put(loan.getId(), storageLoan)
-      .thenApply(mapResponse)
+      .thenApply(noContentRecordInterpreter(loan)::apply)
       .thenComposeAsync(r -> r.after(this::refreshLoanRepresentation));
   }
 
@@ -126,8 +120,8 @@ public class LoanRepository {
             .map(loan -> Result.of(() -> loan.withItem(item)))
             .orElse(Result.of(() -> null));
         } else {
-          return failed(new ServerErrorFailure(
-            String.format("More than one open loan for item %s", item.getItemId())));
+          return failedDueToServerError(format(
+            "More than one open loan for item %s", item.getItemId()));
         }
       }));
   }
@@ -136,7 +130,7 @@ public class LoanRepository {
     return fetchLoan(id)
       .thenComposeAsync(this::fetchItem)
       .thenComposeAsync(this::fetchUser)
-      .exceptionally(e -> failed(new ServerErrorFailure(e)));
+      .exceptionally(CommonFailures::failedDueToServerError);
   }
 
   private CompletableFuture<Result<Loan>> fetchLoan(String id) {
@@ -149,7 +143,8 @@ public class LoanRepository {
 
   private CompletableFuture<Result<Loan>> refreshLoanRepresentation(Loan loan) {
     return new SingleRecordFetcher<>(loansStorageClient, "loan",
-      loan::replaceRepresentation)
+      new ResponseInterpreter<Loan>()
+        .flatMapOn(200, mapUsingJson(loan::replaceRepresentation)))
       .fetch(loan.getId());
   }
 

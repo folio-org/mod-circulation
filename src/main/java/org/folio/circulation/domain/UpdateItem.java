@@ -2,10 +2,10 @@ package org.folio.circulation.domain;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.domain.ItemStatus.CHECKED_OUT;
-import static org.folio.circulation.support.Result.failed;
 import static org.folio.circulation.support.Result.of;
 import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
+import static org.folio.circulation.support.http.CommonResponseInterpreters.noContentRecordInterpreter;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -14,7 +14,6 @@ import java.util.concurrent.CompletableFuture;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.Result;
-import org.folio.circulation.support.ServerErrorFailure;
 
 public class UpdateItem {
 
@@ -139,16 +138,7 @@ public class UpdateItem {
 
   private CompletableFuture<Result<Item>> storeItem(Item item) {
     return itemsStorageClient.put(item.getItemId(), item.getItem())
-      .thenApply(putItemResponse -> {
-        if(putItemResponse.getStatusCode() == 204) {
-          return succeeded(item);
-        }
-        else {
-          return failed(new ServerErrorFailure(
-            String.format("Failed to update item status '%s'",
-              putItemResponse.getBody())));
-        }
-      });
+      .thenApply(noContentRecordInterpreter(item)::apply);
   }
 
   private CompletableFuture<Result<Boolean>> loanIsClosed(

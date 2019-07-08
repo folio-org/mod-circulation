@@ -3,6 +3,7 @@ package org.folio.circulation;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import org.folio.circulation.support.VertxAssistant;
+import org.folio.circulation.support.logging.Logging;
 
 import java.lang.invoke.MethodHandles;
 import java.util.concurrent.CompletableFuture;
