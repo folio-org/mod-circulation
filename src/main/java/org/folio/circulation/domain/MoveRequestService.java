@@ -70,6 +70,6 @@ public class MoveRequestService {
         .thenComposeAsync(r -> r.after(updateUponRequest.updateLoanActionHistory::onRequestCreationOrMove))
         .thenComposeAsync(r -> r.after(updateUponRequest.updateLoan::onRequestCreationOrMove))
         .thenComposeAsync(r -> r.after(requestRepository::update))
-        .thenApply(r -> r.next(requestNoticeSender::sendNoticeOnRequestCreatedOrMoved));
+        .thenApply(r -> r.next(requestNoticeSender::sendNoticeOnRequestMoved));
   }
 }

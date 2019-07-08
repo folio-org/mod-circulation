@@ -42,6 +42,6 @@ public class CreateRequestService {
         .thenComposeAsync(r -> r.after(updateUponRequest.updateLoanActionHistory::onRequestCreationOrMove))
         .thenComposeAsync(r -> r.after(updateUponRequest.updateLoan::onRequestCreationOrMove))
         .thenComposeAsync(r -> r.after(requestRepository::create))
-        .thenApply(r -> r.next(requestNoticeSender::sendNoticeOnRequestCreatedOrMoved));
+        .thenApply(r -> r.next(requestNoticeSender::sendNoticeOnRequestCreated));
   }
 }

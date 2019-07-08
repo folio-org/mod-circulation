@@ -99,15 +99,11 @@ public class RequestAndRelatedRecords implements UserRelatedRecord, ItemRelatedR
   RequestPolicy getRequestPolicy() { return requestPolicy; }
 
   String getOriginalItemId() {
-    return isMoveRequest() ? moveRequestRecord.getOriginalItemId() : null;
+    return moveRequestRecord != null ? moveRequestRecord.getOriginalItemId() : null;
   }
 
   String getDestinationItemId() {
-    return isMoveRequest() ? moveRequestRecord.getDestinationItemId() : null;
-  }
-
-  public boolean isMoveRequest() {
-    return moveRequestRecord != null;
+    return moveRequestRecord != null ? moveRequestRecord.getDestinationItemId() : null;
   }
 
   @Override
