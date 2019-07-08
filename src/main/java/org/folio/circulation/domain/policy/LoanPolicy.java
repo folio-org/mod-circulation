@@ -6,9 +6,9 @@ import static org.folio.circulation.support.JsonPropertyFetcher.getIntegerProper
 import static org.folio.circulation.support.JsonPropertyFetcher.getNestedIntegerProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getNestedStringProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
-import static org.folio.circulation.support.Result.failed;
 import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
+import static org.folio.circulation.support.results.CommonFailures.failedDueToServerError;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -21,7 +21,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.support.ClockManager;
 import org.folio.circulation.support.Result;
-import org.folio.circulation.support.ServerErrorFailure;
 import org.folio.circulation.support.ValidationErrorFailure;
 import org.folio.circulation.support.http.server.ValidationError;
 import org.joda.time.DateTime;
@@ -104,7 +103,7 @@ public class LoanPolicy {
       }
     }
     catch(Exception e) {
-      return failed(new ServerErrorFailure(e));
+      return failedDueToServerError(e);
     }
   }
 
@@ -118,19 +117,11 @@ public class LoanPolicy {
       final Result<DateTime> proposedDueDateResult =
         determineStrategy(true, systemDate).calculateDueDate(loan);
 
-      final JsonObject loansPolicy = getLoansPolicy();
-
-      if (proposedDueDateResult.failed() && isFixed(loansPolicy)) {
+      if (proposedDueDateResult.failed()) {
         return overrideRenewalForDueDate(loan, overrideDueDate, comment);
       }
 
-      if (proposedDueDateResult.failed() && isRolling(loansPolicy)) {
-        DueDateStrategy dueDateStrategy = getRollingRenewalOverrideDueDateStrategy(systemDate);
-        return processRenewal(dueDateStrategy.calculateDueDate(loan), loan, comment);
-      }
-
-      if (proposedDueDateResult.succeeded() &&
-        reachedNumberOfRenewalsLimit(loan) && !unlimitedRenewals()) {
+      if (hasReachedRenewalLimit(loan)) {
         return processRenewal(proposedDueDateResult, loan, comment);
       }
 
@@ -141,7 +132,7 @@ public class LoanPolicy {
       return failedValidation(errorForNotMatchingOverrideCases());
 
     } catch (Exception e) {
-      return failed(new ServerErrorFailure(e));
+      return failedDueToServerError(e);
     }
   }
 
@@ -164,14 +155,6 @@ public class LoanPolicy {
       return failedValidation(errorForDueDate());
     }
     return succeeded(loan.overrideRenewal(overrideDueDate, getId(), comment));
-  }
-
-  private DueDateStrategy getRollingRenewalOverrideDueDateStrategy(DateTime systemDate) {
-    final JsonObject loansPolicy = getLoansPolicy();
-    final JsonObject renewalsPolicy = getRenewalsPolicy();
-    return new RollingRenewalOverrideDueDateStrategy(getId(), getName(),
-      systemDate, getRenewFrom(), getRenewalPeriod(loansPolicy, renewalsPolicy),
-      getRenewalDueDateLimitSchedules(), this::errorForPolicy);
   }
 
   private ValidationError errorForDueDate() {
@@ -204,7 +187,7 @@ public class LoanPolicy {
   }
 
   private void errorWhenReachedRenewalLimit(Loan loan, List<ValidationError> errors) {
-    if(!unlimitedRenewals() && reachedNumberOfRenewalsLimit(loan)) {
+    if (hasReachedRenewalLimit(loan)) {
       errors.add(errorForPolicy("loan at maximum renewal number"));
     }
   }
@@ -222,6 +205,10 @@ public class LoanPolicy {
   private boolean isSameOrBefore(Loan loan, DateTime proposedDueDate) {
     return proposedDueDate.isEqual(loan.getDueDate())
       || proposedDueDate.isBefore(loan.getDueDate());
+  }
+
+  private boolean hasReachedRenewalLimit(Loan loan) {
+    return reachedNumberOfRenewalsLimit(loan) && !unlimitedRenewals();
   }
 
   private boolean reachedNumberOfRenewalsLimit(Loan loan) {

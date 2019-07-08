@@ -1820,7 +1820,7 @@ public class RequestsAPICreationTests extends APITests {
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource steve = usersFixture.steve();
 
-    requestsFixture.place(new RequestBuilder()
+    final IndividualResource createdRequest = requestsFixture.place(new RequestBuilder()
       .open()
       .page()
       .forItem(smallAngryPlanet)
@@ -1828,6 +1828,8 @@ public class RequestsAPICreationTests extends APITests {
       .withRequestDate(DateTime.now())
       .fulfilToHoldShelf()
       .withPickupServicePointId(servicePointsFixture.cd1().getId()));
+
+    assertThat(createdRequest.getResponse(), hasStatus(HTTP_CREATED));
   }
 
   private void mockClockManagerToReturnFixedTime(DateTime dateTime) {

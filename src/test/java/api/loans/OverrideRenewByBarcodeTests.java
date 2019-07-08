@@ -438,11 +438,16 @@ public class OverrideRenewByBarcodeTests extends APITests {
       noticePoliciesFixture.activeNotice().getId()
     );
 
-    loansFixture.attemptRenewal(422, smallAngryPlanet, jessica);
+    Response response = loansFixture.attemptRenewal(422, smallAngryPlanet, jessica);
+
+    assertThat(response.getJson(), hasErrorWith(allOf(
+      hasMessage("renewal date falls outside of date ranges in rolling loan policy"))));
+
+    final DateTime newDueDate = loanDueDate.plusWeeks(3).plusMonths(2);
 
     final JsonObject renewedLoan =
       loansFixture.overrideRenewalByBarcode(smallAngryPlanet, jessica,
-        OVERRIDE_COMMENT, null)
+        OVERRIDE_COMMENT, newDueDate.toString())
         .getJson();
 
     assertThat(renewedLoan.getString("id"), is(loanId.toString()));
@@ -465,10 +470,9 @@ public class OverrideRenewByBarcodeTests extends APITests {
     assertThat("renewal count should be incremented",
       renewedLoan.getInteger("renewalCount"), is(1));
 
-    DateTime expectedDueDate = loanDueDate.plusWeeks(3).plusMonths(2);
     assertThat("due date should be 1st of Feb 2019",
       renewedLoan.getString("dueDate"),
-      isEquivalentTo(expectedDueDate));
+      isEquivalentTo(newDueDate));
   }
 
   @Test

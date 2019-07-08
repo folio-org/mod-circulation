@@ -5,13 +5,13 @@ import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequ
 import static org.folio.circulation.support.Result.failed;
 import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
+import static org.folio.circulation.support.results.CommonFailures.failedDueToServerError;
 
 import java.util.function.Function;
 
 import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.domain.User;
 import org.folio.circulation.support.Result;
-import org.folio.circulation.support.ServerErrorFailure;
 import org.folio.circulation.support.ValidationErrorFailure;
 
 public class InactiveUserValidator {
@@ -58,7 +58,7 @@ public class InactiveUserValidator {
 
         return refuseWhenUserIsInactive(user, records);
       } catch (Exception e) {
-        return failed(new ServerErrorFailure(e));
+        return failedDueToServerError(e);
       }
     });
   }

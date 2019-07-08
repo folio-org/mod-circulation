@@ -3,6 +3,7 @@ package api.support.fakes;
 import static java.lang.String.format;
 import static org.folio.circulation.support.Result.failed;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
+import static org.folio.circulation.support.results.CommonFailures.failedDueToServerError;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -405,8 +406,8 @@ public class FakeStorageModule extends AbstractVerticle {
     final String id = routingContext.request().getParam("id");
 
     return Result.of(() -> UUID.fromString(id))
-      .mapFailure(r -> failed(new ServerErrorFailure(format(
-        "ID parameter \"%s\" is not a valid UUID", id))));
+      .mapFailure(r -> failedDueToServerError(format(
+        "ID parameter \"%s\" is not a valid UUID", id)));
   }
 
   private void checkUniqueProperties(RoutingContext routingContext) {

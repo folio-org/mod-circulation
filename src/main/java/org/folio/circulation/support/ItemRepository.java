@@ -7,6 +7,7 @@ import static org.folio.circulation.support.Result.failed;
 import static org.folio.circulation.support.Result.ofAsync;
 import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.ResultBinding.mapResult;
+import static org.folio.circulation.support.results.CommonFailures.failedDueToServerError;
 
 import java.lang.invoke.MethodHandles;
 import java.util.Collection;
@@ -27,6 +28,7 @@ import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.ServicePoint;
 import org.folio.circulation.domain.ServicePointRepository;
 import org.folio.circulation.support.http.client.Response;
+import org.folio.circulation.support.results.CommonFailures;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -249,7 +251,7 @@ public class ItemRepository {
        .after(query -> itemsClient.getMany(query, 1))
       .thenApply(result -> result.next(this::mapMultipleToResult))
       .thenApply(r -> r.map(Item::from))
-      .exceptionally(e -> failed(new ServerErrorFailure(e)));
+      .exceptionally(CommonFailures::failedDueToServerError);
   }
 
   private Result<JsonObject> mapMultipleToResult(Response response) {

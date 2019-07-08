@@ -1,7 +1,6 @@
 package org.folio.circulation.domain.notice;
 
-import static org.folio.circulation.support.Result.failed;
-import static org.folio.circulation.support.Result.succeeded;
+import static org.folio.circulation.support.http.CommonResponseInterpreters.mapToRecordInterpreter;
 
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -10,21 +9,14 @@ import org.folio.circulation.domain.notice.schedule.ScheduledNoticeConfig;
 import org.folio.circulation.domain.policy.PatronNoticePolicyRepository;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
-import org.folio.circulation.support.ForwardOnFailure;
 import org.folio.circulation.support.Result;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import io.vertx.core.json.JsonObject;
 
 public class PatronNoticeService {
-
-  private static final Logger log = LoggerFactory.getLogger(PatronNoticeService.class);
-
   public static PatronNoticeService using(Clients clients) {
     return new PatronNoticeService(new PatronNoticePolicyRepository(clients), clients);
   }
-
 
   private PatronNoticePolicyRepository noticePolicyRepository;
   private CollectionResourceClient patronNoticeClient;
@@ -86,15 +78,7 @@ public class PatronNoticeService {
   private CompletableFuture<Result<PatronNotice>> sendNotice(PatronNotice patronNotice) {
     JsonObject body = JsonObject.mapFrom(patronNotice);
 
-    return patronNoticeClient.post(body).thenApply(response -> {
-      if (response.getStatusCode() == 200 || response.getStatusCode() == 201) {
-        return succeeded(patronNotice);
-      } else {
-        log.error("Failed to send patron notice. Status: {} Body: {}",
-          response.getStatusCode(),
-          response.getBody());
-        return failed(new ForwardOnFailure(response));
-      }
-    });
+    return patronNoticeClient.post(body)
+      .thenApply(mapToRecordInterpreter(patronNotice, 200, 201)::apply);
   }
 }
