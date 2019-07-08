@@ -20,6 +20,7 @@ import org.folio.circulation.resources.RequestCollectionResource;
 import org.folio.circulation.resources.RequestHoldShelfClearanceResource;
 import org.folio.circulation.resources.RequestQueueResource;
 import org.folio.circulation.resources.ScheduledNoticeProcessingResource;
+import org.folio.circulation.support.logging.Logging;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,7 +44,7 @@ public class CirculationVerticle extends AbstractVerticle {
 
     Router router = Router.router(vertx);
 
-    // bump up the connection pool size from the default value of 5 
+    // bump up the connection pool size from the default value of 5
     HttpClient client = vertx.createHttpClient(new HttpClientOptions().setMaxPoolSize(100));
 
     this.server = vertx.createHttpServer();

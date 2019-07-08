@@ -3,6 +3,7 @@ package org.folio.circulation.domain.policy;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.support.Result.failed;
 import static org.folio.circulation.support.Result.succeeded;
+import static org.folio.circulation.support.results.CommonFailures.failedDueToServerError;
 
 import java.lang.invoke.MethodHandles;
 import java.util.concurrent.CompletableFuture;
@@ -14,7 +15,6 @@ import org.folio.circulation.support.CirculationRulesClient;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.ForwardOnFailure;
 import org.folio.circulation.support.Result;
-import org.folio.circulation.support.ServerErrorFailure;
 import org.folio.circulation.support.SingleRecordFetcher;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.client.ResponseHandler;
@@ -50,7 +50,9 @@ public abstract class CirculationPolicyRepository<T> {
   }
 
   private Result<T> mapToPolicy(JsonObject json) {
-    log.info("Mapping json to policy {}", json.encodePrettily());
+    if (log.isInfoEnabled()) {
+      log.info("Mapping json to policy {}", json.encodePrettily());
+    }
 
     return toPolicy(json);
   }
@@ -59,8 +61,7 @@ public abstract class CirculationPolicyRepository<T> {
     log.info("Looking up policy with id {}", policyId);
 
     return SingleRecordFetcher.json(policyStorageClient, "circulation policy",
-      response -> failed(
-        new ServerErrorFailure(getPolicyNotFoundErrorMessage(policyId))))
+      response -> failedDueToServerError(getPolicyNotFoundErrorMessage(policyId)))
       .fetch(policyId);
   }
 
@@ -68,13 +69,13 @@ public abstract class CirculationPolicyRepository<T> {
     CompletableFuture<Result<String>> findLoanPolicyCompleted = new CompletableFuture<>();
 
     if (item.isNotFound()) {
-      return completedFuture(failed(
-        new ServerErrorFailure("Unable to apply circulation rules for unknown item")));
+      return completedFuture(failedDueToServerError(
+        "Unable to apply circulation rules for unknown item"));
     }
 
     if (item.doesNotHaveHolding()) {
-      return completedFuture(failed(
-        new ServerErrorFailure("Unable to apply circulation rules for unknown holding")));
+      return completedFuture(failedDueToServerError(
+        "Unable to apply circulation rules for unknown holding"));
     }
 
     String loanTypeId = item.determineLoanTypeForItem();
@@ -93,8 +94,8 @@ public abstract class CirculationPolicyRepository<T> {
 
     circulationRulesResponse.thenAcceptAsync(response -> {
       if (response.getStatusCode() == 404) {
-        findLoanPolicyCompleted.complete(failed(
-          new ServerErrorFailure("Unable to apply circulation rules")));
+        findLoanPolicyCompleted.complete(failedDueToServerError(
+          "Unable to apply circulation rules"));
       } else if (response.getStatusCode() != 200) {
         findLoanPolicyCompleted.complete(failed(
           new ForwardOnFailure(response)));

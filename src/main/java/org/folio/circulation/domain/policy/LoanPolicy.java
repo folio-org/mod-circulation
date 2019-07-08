@@ -6,9 +6,9 @@ import static org.folio.circulation.support.JsonPropertyFetcher.getIntegerProper
 import static org.folio.circulation.support.JsonPropertyFetcher.getNestedIntegerProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getNestedStringProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
-import static org.folio.circulation.support.Result.failed;
 import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
+import static org.folio.circulation.support.results.CommonFailures.failedDueToServerError;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -21,7 +21,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.support.ClockManager;
 import org.folio.circulation.support.Result;
-import org.folio.circulation.support.ServerErrorFailure;
 import org.folio.circulation.support.ValidationErrorFailure;
 import org.folio.circulation.support.http.server.ValidationError;
 import org.joda.time.DateTime;
@@ -104,7 +103,7 @@ public class LoanPolicy {
       }
     }
     catch(Exception e) {
-      return failed(new ServerErrorFailure(e));
+      return failedDueToServerError(e);
     }
   }
 
@@ -133,7 +132,7 @@ public class LoanPolicy {
       return failedValidation(errorForNotMatchingOverrideCases());
 
     } catch (Exception e) {
-      return failed(new ServerErrorFailure(e));
+      return failedDueToServerError(e);
     }
   }
 
