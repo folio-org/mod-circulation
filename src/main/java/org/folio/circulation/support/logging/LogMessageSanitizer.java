@@ -18,9 +18,6 @@ public class LogMessageSanitizer {
    * @return a sanitized representation of the parameter value
    */
   public static String sanitizeLogParameter(String parameterValue) {
-    return parameterValue
-      .replace( '\n' , '_')
-      .replace( '\r' , '_' )
-      .replace( '\t' , '_' );
+    return parameterValue.replaceAll("[\n|\r|\t]", "_");
   }
 }
