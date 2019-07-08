@@ -5,6 +5,7 @@ import static java.util.Objects.requireNonNull;
 import static java.util.function.Function.identity;
 import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.http.ResponseMapping.mapUsingJson;
+import static org.folio.circulation.support.logging.LogMessageSanitizer.sanitizeLogParameter;
 
 import java.lang.invoke.MethodHandles;
 import java.util.concurrent.CompletableFuture;
@@ -57,7 +58,7 @@ public class SingleRecordFetcher<T> {
   }
 
   public CompletableFuture<Result<T>> fetch(String id) {
-    log.info("Fetching {} with ID: {}", recordType, id);
+    log.info("Fetching {} with ID: {}", recordType, sanitizeLogParameter(id));
 
     requireNonNull(id, format("Cannot fetch single %s with null ID", recordType));
 
