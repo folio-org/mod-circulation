@@ -9,6 +9,7 @@ import org.folio.circulation.domain.LoanRepository;
 import org.folio.circulation.domain.MoveRequestService;
 import org.folio.circulation.domain.RequestAndRelatedRecords;
 import org.folio.circulation.domain.RequestQueueRepository;
+import org.folio.circulation.domain.MoveRequestProcessAdapter;
 import org.folio.circulation.domain.RequestRepository;
 import org.folio.circulation.domain.RequestRepresentation;
 import org.folio.circulation.domain.RequestType;
@@ -220,15 +221,18 @@ public class RequestCollectionResource extends CollectionResource {
         new UpdateItem(clients),
         new UpdateLoan(clients, loanRepository, loanPolicyRepository),
         new UpdateLoanActionHistory(clients));
+    
+    final MoveRequestProcessAdapter moveRequestProcessAdapter = 
+        new MoveRequestProcessAdapter(itemRepository, loanRepository, requestQueueRepository);
 
     final MoveRequestService moveRequestService = new MoveRequestService(
         RequestRepository.using(clients),
-        requestQueueRepository,
         new RequestPolicyRepository(clients),
-        itemRepository,
         UpdateRequestQueue.using(clients),
         updateUponRequest,
-        new RequestLoanValidator(loanRepository));
+        moveRequestProcessAdapter,
+        new RequestLoanValidator(loanRepository),
+        RequestNoticeSender.using(clients));
 
     requestRepository.getById(id)
       .thenApply(r -> r.map(RequestAndRelatedRecords::new))

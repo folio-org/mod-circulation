@@ -47,16 +47,15 @@ public class RequestNoticeSender {
     this.requestRepository = requestRepository;
   }
 
-
   public Result<RequestAndRelatedRecords> sendNoticeOnRequestCreated(
     RequestAndRelatedRecords relatedRecords) {
 
     Request request = relatedRecords.getRequest();
+
     Item item = request.getItem();
     User requester = request.getRequester();
     NoticeEventType eventType =
       requestTypeToEventMap.getOrDefault(request.getRequestType(), NoticeEventType.UNKNOWN);
-
     PatronNoticeEvent requestCreatedEvent = new PatronNoticeEventBuilder()
       .withItem(item)
       .withUser(requester)
@@ -70,18 +69,24 @@ public class RequestNoticeSender {
     if (request.getRequestType() == RequestType.RECALL &&
       loan != null && loan.hasDueDateChanged()) {
 
-      PatronNoticeEvent itemRecalledEvent = new PatronNoticeEventBuilder()
-        .withItem(loan.getItem())
-        .withUser(loan.getUser())
-        .withEventType(NoticeEventType.RECALL_TO_LOANEE)
-        .withTiming(NoticeTiming.UPON_AT)
-        .withNoticeContext(NoticeContextUtil.createLoanNoticeContext(loan, null))
-        .build();
-      patronNoticeService.acceptNoticeEvent(itemRecalledEvent);
+      sendNoticeOnItemRecalledEvent(loan);
     }
     return Result.succeeded(relatedRecords);
   }
 
+  public Result<RequestAndRelatedRecords> sendNoticeOnRequestMoved(
+    RequestAndRelatedRecords relatedRecords) {
+
+    Request request = relatedRecords.getRequest();
+
+    Loan loan = request.getLoan();
+    if (request.getRequestType() == RequestType.RECALL &&
+      loan != null && loan.hasDueDateChanged()) {
+
+      sendNoticeOnItemRecalledEvent(loan);
+    }
+    return Result.succeeded(relatedRecords);
+  }
 
   public Result<RequestAndRelatedRecords> sendNoticeOnRequestUpdated(
     RequestAndRelatedRecords relatedRecords) {
@@ -107,6 +112,18 @@ public class RequestNoticeSender {
       .build();
     patronNoticeService.acceptNoticeEvent(requestCancelledEvent);
 
+    return Result.succeeded(null);
+  }
+
+  private Result<Void> sendNoticeOnItemRecalledEvent(Loan loan) {
+    PatronNoticeEvent itemRecalledEvent = new PatronNoticeEventBuilder()
+      .withItem(loan.getItem())
+      .withUser(loan.getUser())
+      .withEventType(NoticeEventType.RECALL_TO_LOANEE)
+      .withTiming(NoticeTiming.UPON_AT)
+      .withNoticeContext(NoticeContextUtil.createLoanNoticeContext(loan, null))
+      .build();
+    patronNoticeService.acceptNoticeEvent(itemRecalledEvent);
     return Result.succeeded(null);
   }
 

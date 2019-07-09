@@ -69,23 +69,6 @@ public class RequestsFixture {
       .withPickupServicePointId(servicePointsFixture.cd1().getId()));
   }
 
-  public IndividualResource placeRecallRequest(
-    IndividualResource item,
-    IndividualResource by,
-    DateTime on)
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
-
-    return place(new RequestBuilder()
-      .recall()
-      .withRequestDate(on)
-      .withItemId(item.getId())
-      .withRequesterId(by.getId())
-      .withPickupServicePointId(servicePointsFixture.cd1().getId()));
-  }
-
   public IndividualResource placeDeliveryRequest(
     IndividualResource item,
     IndividualResource by,
