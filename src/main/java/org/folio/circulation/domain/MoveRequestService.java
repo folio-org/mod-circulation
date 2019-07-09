@@ -15,19 +15,19 @@ public class MoveRequestService {
   private final RequestPolicyRepository requestPolicyRepository;
   private final UpdateRequestQueue updateRequestQueue;
   private final UpdateUponRequest updateUponRequest;
-  private final MoveRequestHelper moveRequestHelper;
+  private final MoveRequestProcessAdapter moveRequestProcessAdapter;
   private final RequestLoanValidator requestLoanValidator;
   private final RequestNoticeSender requestNoticeSender;
 
   public MoveRequestService(RequestRepository requestRepository, RequestPolicyRepository requestPolicyRepository,
       UpdateRequestQueue updateRequestQueue, UpdateUponRequest updateUponRequest,
-      MoveRequestHelper moveRequestHelper, RequestLoanValidator requestLoanValidator,
+      MoveRequestProcessAdapter moveRequestHelper, RequestLoanValidator requestLoanValidator,
       RequestNoticeSender requestNoticeSender) {
     this.requestRepository = requestRepository;
     this.requestPolicyRepository = requestPolicyRepository;
     this.updateRequestQueue = updateRequestQueue;
     this.updateUponRequest = updateUponRequest;
-    this.moveRequestHelper = moveRequestHelper;
+    this.moveRequestProcessAdapter = moveRequestHelper;
     this.requestLoanValidator = requestLoanValidator;
     this.requestNoticeSender = requestNoticeSender;
   }
@@ -35,15 +35,15 @@ public class MoveRequestService {
   public CompletableFuture<Result<RequestAndRelatedRecords>> moveRequest(
       RequestAndRelatedRecords requestAndRelatedRecords) {
     return completedFuture(of(() -> requestAndRelatedRecords))
-        .thenComposeAsync(r -> r.after(moveRequestHelper::withDestinationItem))
-        .thenComposeAsync(r -> r.after(moveRequestHelper::withDestinationItemRequestQueue))
+        .thenComposeAsync(r -> r.after(moveRequestProcessAdapter::findDestinationItem))
+        .thenComposeAsync(r -> r.after(moveRequestProcessAdapter::getDestinationRequestQueue))
         .thenApply(r -> r.map(this::pagedRequestIfDestinationItemAvailable))
         .thenCompose(r -> r.after(this::updateRequest))
-        .thenComposeAsync(r -> r.after(moveRequestHelper::withOriginalItem))
-        .thenComposeAsync(r -> r.after(moveRequestHelper::withOriginalItemRequestQueue))
+        .thenComposeAsync(r -> r.after(moveRequestProcessAdapter::findSourceItem))
+        .thenComposeAsync(r -> r.after(moveRequestProcessAdapter::getSourceRequestQueue))
         .thenCompose(r -> r.after(updateRequestQueue::onMoved))
-        .thenComposeAsync(r -> r.after(moveRequestHelper::withDestinationItem))
-        .thenComposeAsync(r -> r.after(moveRequestHelper::withDestinationItemRequestQueue));
+        .thenComposeAsync(r -> r.after(moveRequestProcessAdapter::findDestinationItem))
+        .thenComposeAsync(r -> r.after(moveRequestProcessAdapter::getDestinationRequestQueue));
   }
 
   private RequestAndRelatedRecords pagedRequestIfDestinationItemAvailable(
