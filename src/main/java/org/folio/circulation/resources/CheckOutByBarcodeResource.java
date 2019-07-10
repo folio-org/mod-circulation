@@ -29,8 +29,8 @@ import org.folio.circulation.domain.notice.NoticeTiming;
 import org.folio.circulation.domain.notice.PatronNoticeEvent;
 import org.folio.circulation.domain.notice.PatronNoticeEventBuilder;
 import org.folio.circulation.domain.notice.PatronNoticeService;
-import org.folio.circulation.domain.notice.schedule.ScheduledNoticesRepository;
 import org.folio.circulation.domain.notice.schedule.ScheduledNoticeService;
+import org.folio.circulation.domain.notice.schedule.ScheduledNoticesRepository;
 import org.folio.circulation.domain.policy.LoanPolicyRepository;
 import org.folio.circulation.domain.policy.PatronNoticePolicyRepository;
 import org.folio.circulation.domain.representations.LoanProperties;
@@ -221,8 +221,7 @@ public class CheckOutByBarcodeResource extends Resource {
 
     final Loan loan = relatedRecords.getLoan();
 
-    JsonObject noticeContext = createLoanNoticeContext(loan,
-      loan.getLoanPolicy(), relatedRecords.getTimeZone());
+    JsonObject noticeContext = createLoanNoticeContext(loan);
 
     PatronNoticeEvent noticeEvent = new PatronNoticeEventBuilder()
       .withItem(loan.getItem())

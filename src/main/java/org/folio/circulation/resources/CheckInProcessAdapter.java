@@ -129,7 +129,7 @@ class CheckInProcessAdapter {
       .withUser(records.getLoan().getUser())
       .withEventType(NoticeEventType.CHECK_IN)
       .withTiming(NoticeTiming.UPON_AT)
-      .withNoticeContext(createLoanNoticeContext(records.getLoan(), null))
+      .withNoticeContext(createLoanNoticeContext(records.getLoan()))
       .build();
     patronNoticeService.acceptNoticeEvent(noticeEvent);
     return succeeded(records);
