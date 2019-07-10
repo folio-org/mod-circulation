@@ -3,19 +3,11 @@ package org.folio.circulation.domain;
 import static org.folio.circulation.domain.ItemStatus.AVAILABLE;
 
 import java.util.Collection;
-import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 public class RequestQueue {
-
-  private final static Comparator<Request> REQUEST_DATE_COMPARATOR = new Comparator<Request>() {
-    @Override
-    public int compare(Request req1, Request req2) {
-      return req1.getRequestDate().compareTo(req2.getRequestDate());
-    }
-  };
 
   private Collection<Request> requests;
 
@@ -73,7 +65,10 @@ public class RequestQueue {
 
   private void orderRequests() {
     requests = requests.stream()
-      .sorted(REQUEST_DATE_COMPARATOR)
+      // order by date descending
+      .sorted((req1, req2) -> req1.getRequestDate().compareTo(req2.getRequestDate()))
+      // order by (request status = "Open - In transit" or "Open - Awaiting pickup") first
+      .sorted((req1, req2) -> Boolean.compare(req2.isNotDisplaceable(), req1.isNotDisplaceable()))
       .collect(Collectors.toList());
     final AtomicInteger position = new AtomicInteger(1);
     requests.forEach(req -> req.changePosition(position.getAndIncrement()));

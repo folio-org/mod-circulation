@@ -93,7 +93,11 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   public boolean isOpen() {
-    return isAwaitingPickup() || isNotYetFilled()|| isInTransit();
+    return isAwaitingPickup() || isNotYetFilled() || isInTransit();
+  }
+
+  public boolean isNotDisplaceable() {
+    return isAwaitingPickup() || isInTransit();
   }
 
   private boolean isInTransit(){
