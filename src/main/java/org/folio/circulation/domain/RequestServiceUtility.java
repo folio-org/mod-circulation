@@ -21,12 +21,9 @@ public class RequestServiceUtility {
   private RequestServiceUtility() {
 
   }
-  
-  static RequestAndRelatedRecords setRequestQueuePosition(RequestAndRelatedRecords requestAndRelatedRecords) {
-    // TODO: Extract to method to add to queue
-    requestAndRelatedRecords.withRequest(requestAndRelatedRecords.getRequest()
-      .changePosition(requestAndRelatedRecords.getRequestQueue().nextAvailablePosition()));
 
+  static RequestAndRelatedRecords setRequestQueuePosition(RequestAndRelatedRecords requestAndRelatedRecords) {
+    requestAndRelatedRecords.getRequestQueue().add(requestAndRelatedRecords.getRequest());
     return requestAndRelatedRecords;
   }
 

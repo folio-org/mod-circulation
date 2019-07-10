@@ -1,13 +1,22 @@
 package org.folio.circulation.domain;
 
-import static java.util.Comparator.naturalOrder;
 import static org.folio.circulation.domain.ItemStatus.AVAILABLE;
 
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 public class RequestQueue {
+
+  private final static Comparator<Request> REQUEST_DATE_COMPARATOR = new Comparator<Request>() {
+    @Override
+    public int compare(Request req1, Request req2) {
+      return req1.getRequestDate().compareTo(req2.getRequestDate());
+    }
+  };
+
   private Collection<Request> requests;
 
   RequestQueue(Collection<Request> requests) {
@@ -46,36 +55,28 @@ public class RequestQueue {
       .collect(Collectors.toList());
   }
 
-  Integer nextAvailablePosition() {
-    return highestPosition() + 1;
-  }
-
-  private Integer highestPosition() {
-    return requests.stream()
-      .filter(Request::isOpen)
-      .map(request -> request.asJson().getInteger("position"))
-      .max(naturalOrder()).orElse(0);
+  public void add(Request newRequest) {
+    // NOTE: assumes Collection supports add
+    requests.add(newRequest);
+    orderRequests();
   }
 
   public void remove(Request request) {
-    requests = removeInCollection(request);
-    request.removePosition();
-    removeGapsInPositions();
-  }
-
-  private List<Request> removeInCollection(Request request) {
-    return requests.stream()
+    // NOTE: tests use Arrays.asList which produces a collection which
+    // does not support remove
+    requests = requests.stream()
       .filter(r -> !r.getId().equals(request.getId()))
       .collect(Collectors.toList());
+    request.removePosition();
+    orderRequests();
   }
 
-  private void removeGapsInPositions() {
-    Integer currentPosition = 1;
-
-    for (Request request : requests) {
-      request.changePosition(currentPosition);
-      currentPosition++;
-    }
+  private void orderRequests() {
+    requests = requests.stream()
+      .sorted(REQUEST_DATE_COMPARATOR)
+      .collect(Collectors.toList());
+    final AtomicInteger position = new AtomicInteger(1);
+    requests.forEach(req -> req.changePosition(position.getAndIncrement()));
   }
 
   public Integer size() {

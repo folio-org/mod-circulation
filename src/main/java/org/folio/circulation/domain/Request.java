@@ -9,12 +9,13 @@ import static org.folio.circulation.domain.RequestStatus.OPEN_AWAITING_PICKUP;
 import static org.folio.circulation.domain.RequestStatus.OPEN_IN_TRANSIT;
 import static org.folio.circulation.domain.RequestStatus.OPEN_NOT_YET_FILLED;
 import static org.folio.circulation.domain.representations.RequestProperties.CANCELLATION_ADDITIONAL_INFORMATION;
-import static org.folio.circulation.domain.representations.RequestProperties.CANCELLATION_REASON_PUBLIC_DESCRIPTION;
 import static org.folio.circulation.domain.representations.RequestProperties.CANCELLATION_REASON_ID;
 import static org.folio.circulation.domain.representations.RequestProperties.CANCELLATION_REASON_NAME;
+import static org.folio.circulation.domain.representations.RequestProperties.CANCELLATION_REASON_PUBLIC_DESCRIPTION;
 import static org.folio.circulation.domain.representations.RequestProperties.HOLD_SHELF_EXPIRATION_DATE;
 import static org.folio.circulation.domain.representations.RequestProperties.ITEM_ID;
 import static org.folio.circulation.domain.representations.RequestProperties.POSITION;
+import static org.folio.circulation.domain.representations.RequestProperties.REQUEST_DATE;
 import static org.folio.circulation.domain.representations.RequestProperties.REQUEST_EXPIRATION_DATE;
 import static org.folio.circulation.domain.representations.RequestProperties.REQUEST_TYPE;
 import static org.folio.circulation.domain.representations.RequestProperties.STATUS;
@@ -250,13 +251,11 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
     return pickupServicePoint;
   }
 
-  Request changePosition(Integer newPosition) {
+  void changePosition(Integer newPosition) {
     if (!Objects.equals(getPosition(), newPosition)) {
       write(requestRepresentation, POSITION, newPosition);
       changedPosition = true;
     }
-
-    return this;
   }
 
   void removePosition() {
@@ -289,6 +288,10 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
 
   void removeHoldShelfExpirationDate() {
     requestRepresentation.remove(HOLD_SHELF_EXPIRATION_DATE);
+  }
+  
+  public DateTime getRequestDate() {
+    return getDateTimeProperty(requestRepresentation, REQUEST_DATE);
   }
 
   public DateTime getHoldShelfExpirationDate() {
