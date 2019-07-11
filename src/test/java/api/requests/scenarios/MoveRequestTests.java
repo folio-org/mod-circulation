@@ -387,7 +387,7 @@ public class MoveRequestTests extends APITests {
   }
 
   @Test
-  public void canMoveAHoldShelfRequestReorderingDestinationReuqestQueue()
+  public void canMoveAHoldShelfRequestReorderingDestinationRequestQueue()
     throws InterruptedException,
     ExecutionException,
     TimeoutException,
