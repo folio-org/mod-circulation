@@ -43,6 +43,7 @@ public class MoveRequestService {
         .thenComposeAsync(r -> r.after(moveRequestProcessAdapter::findSourceItem))
         .thenComposeAsync(r -> r.after(moveRequestProcessAdapter::getSourceRequestQueue))
         .thenCompose(r -> r.after(updateRequestQueue::onMovedFrom))
+        .thenCompose(r -> r.after(updateUponRequest.updateItem::onRequestQueueChanged))
         .thenComposeAsync(r -> r.after(moveRequestProcessAdapter::findDestinationItem))
         .thenComposeAsync(r -> r.after(moveRequestProcessAdapter::getDestinationRequestQueue));
   }

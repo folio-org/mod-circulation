@@ -107,8 +107,10 @@ public class RequestCollectionResource extends CollectionResource {
     final LoanPolicyRepository loanPolicyRepository = new LoanPolicyRepository(clients);
     final RequestNoticeSender requestNoticeSender = RequestNoticeSender.using(clients);
 
+    final UpdateItem updateItem = new UpdateItem(clients);
+
     final UpdateUponRequest updateUponRequest = new UpdateUponRequest(
-        new UpdateItem(clients),
+        updateItem,
         new UpdateLoan(clients, loanRepository, loanPolicyRepository),
         new UpdateLoanActionHistory(clients));
 
@@ -123,7 +125,8 @@ public class RequestCollectionResource extends CollectionResource {
         requestRepository,
         UpdateRequestQueue.using(clients),
         new ClosedRequestValidator(RequestRepository.using(clients)),
-        requestNoticeSender);
+        requestNoticeSender,
+        updateItem);
 
     final RequestFromRepresentationService requestFromRepresentationService =
       new RequestFromRepresentationService(

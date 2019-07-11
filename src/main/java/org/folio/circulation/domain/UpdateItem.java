@@ -1,7 +1,9 @@
 package org.folio.circulation.domain;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
+import static org.folio.circulation.domain.ItemStatus.AVAILABLE;
 import static org.folio.circulation.domain.ItemStatus.CHECKED_OUT;
+import static org.folio.circulation.domain.ItemStatus.PAGED;
 import static org.folio.circulation.support.Result.of;
 import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
@@ -114,6 +116,21 @@ public class UpdateItem {
       .thenApply(itemResult -> itemResult.map(requestAndRelatedRecords::withItem));
   }
 
+  CompletableFuture<Result<RequestAndRelatedRecords>> onRequestQueueChanged(
+    RequestAndRelatedRecords requestAndRelatedRecords) {
+
+    RequestQueue requestQueue = requestAndRelatedRecords.getRequestQueue();
+
+    Item item = requestAndRelatedRecords.getRequest().getItem();
+
+    if (item.getStatus().equals(PAGED) && requestQueue.getRequests().isEmpty()) {
+      return updateItemWhenNotSameStatus(AVAILABLE, item)
+        .thenApply(itemResult -> itemResult.map(requestAndRelatedRecords::withItem));
+    }
+
+    return completedFuture(succeeded(requestAndRelatedRecords));
+  }
+
   private CompletableFuture<Result<LoanAndRelatedRecords>> updateItemStatusOnCheckOut(
     LoanAndRelatedRecords loanAndRelatedRecords) {
 
@@ -157,7 +174,7 @@ public class UpdateItem {
     RequestType type = requestAndRelatedRecords.getRequest().getRequestType();
 
     return type == RequestType.PAGE
-      ? ItemStatus.PAGED
+      ? PAGED
       : requestAndRelatedRecords.getRequest().getItem().getStatus();
   }
 
