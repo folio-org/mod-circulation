@@ -1,10 +1,13 @@
 package api.requests.scenarios;
 
+import static api.support.builders.ItemBuilder.AVAILABLE;
+import static api.support.builders.ItemBuilder.PAGED;
 import static api.support.builders.RequestBuilder.OPEN_AWAITING_PICKUP;
+import static api.support.matchers.ItemStatusCodeMatcher.hasItemStatus;
 import static org.folio.circulation.domain.representations.RequestProperties.REQUEST_TYPE;
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.not;
-import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.not;
+import static org.hamcrest.junit.MatcherAssert.assertThat;
 
 import java.net.MalformedURLException;
 import java.time.Clock;
@@ -37,6 +40,7 @@ import api.support.builders.LoanPolicyBuilder;
 import api.support.builders.MoveRequestBuilder;
 import api.support.builders.NoticeConfigurationBuilder;
 import api.support.builders.NoticePolicyBuilder;
+import api.support.builders.RequestBuilder;
 import io.vertx.core.json.JsonObject;
 import junitparams.JUnitParamsRunner;
 
@@ -47,6 +51,7 @@ import junitparams.JUnitParamsRunner;
  *
  * @see <a href="https://issues.folio.org/browse/UIREQ-269">UIREQ-269</a>
  * @see <a href="https://issues.folio.org/browse/CIRC-316">CIRC-316</a>
+ * @see <a href="https://issues.folio.org/browse/CIRC-333">CIRC-333</a>
  * @see <a href="https://issues.folio.org/browse/CIRC-395">CIRC-395</a>
  */
 @RunWith(JUnitParamsRunner.class)
@@ -293,6 +298,45 @@ public class MoveRequestTests extends APITests {
 
     MultipleRecords<JsonObject> uponInterestingTimesQueue = requestsFixture.getQueueFor(uponInterestingTimes);
     assertThat(uponInterestingTimesQueue.getTotalRecords(), is(2));
+  }
+
+  @Test
+  public void canMoveAHoldShelfRequestLeavingEmptyQueueAndItemStatusChange()
+    throws InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    MalformedURLException {
+
+    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    IndividualResource uponInterestingTimes = itemsFixture.basedUponInterestingTimes();
+
+    IndividualResource jessica = usersFixture.jessica();
+    IndividualResource charlotte = usersFixture.charlotte();
+    
+    // charlotte checks out basedUponInterestingTimes
+    loansFixture.checkOutByBarcode(uponInterestingTimes, charlotte);
+
+    // make requests for smallAngryPlanet
+    IndividualResource requestByJessica = requestsFixture.place(new RequestBuilder()
+      .page()
+      .fulfilToHoldShelf()
+      .withItemId(smallAngryPlanet.getId())
+      .withRequestDate(DateTime.now(DateTimeZone.UTC).minusHours(4))
+      .withRequesterId(jessica.getId())
+      .withPickupServicePointId(servicePointsFixture.cd1().getId()));
+
+    smallAngryPlanet = itemsClient.get(smallAngryPlanet);
+    assertThat(smallAngryPlanet, hasItemStatus(PAGED));
+
+    // move jessica's request from smallAngryPlanet to uponInterestingTimes
+    requestsFixture.move(new MoveRequestBuilder(
+        requestByJessica.getId(),
+        uponInterestingTimes.getId(),
+        RequestType.HOLD.getValue()
+    ));
+
+    smallAngryPlanet = itemsClient.get(smallAngryPlanet);
+    assertThat(smallAngryPlanet, hasItemStatus(AVAILABLE));
   }
 
   @Test
