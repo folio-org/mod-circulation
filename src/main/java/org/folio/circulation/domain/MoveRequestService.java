@@ -39,9 +39,10 @@ public class MoveRequestService {
         .thenComposeAsync(r -> r.after(moveRequestProcessAdapter::getDestinationRequestQueue))
         .thenApply(r -> r.map(this::pagedRequestIfDestinationItemAvailable))
         .thenCompose(r -> r.after(this::updateRequest))
+        .thenCompose(r -> r.after(updateRequestQueue::onMovedTo))
         .thenComposeAsync(r -> r.after(moveRequestProcessAdapter::findSourceItem))
         .thenComposeAsync(r -> r.after(moveRequestProcessAdapter::getSourceRequestQueue))
-        .thenCompose(r -> r.after(updateRequestQueue::onMoved))
+        .thenCompose(r -> r.after(updateRequestQueue::onMovedFrom))
         .thenComposeAsync(r -> r.after(moveRequestProcessAdapter::findDestinationItem))
         .thenComposeAsync(r -> r.after(moveRequestProcessAdapter::getDestinationRequestQueue));
   }
@@ -65,7 +66,6 @@ public class MoveRequestService {
         .after(requestLoanValidator::refuseWhenUserHasAlreadyBeenLoanedItem)
         .thenComposeAsync(r -> r.after(requestPolicyRepository::lookupRequestPolicy))
         .thenApply(r -> r.next(RequestServiceUtility::refuseWhenRequestCannotBeFulfilled))
-        .thenApply(r -> r.map(RequestServiceUtility::setRequestQueuePosition))
         .thenComposeAsync(r -> r.after(updateUponRequest.updateItem::onRequestCreationOrMove))
         .thenComposeAsync(r -> r.after(updateUponRequest.updateLoanActionHistory::onRequestCreationOrMove))
         .thenComposeAsync(r -> r.after(updateUponRequest.updateLoan::onRequestCreationOrMove))

@@ -136,12 +136,26 @@ public class UpdateRequestQueue {
     }
   }
 
-  CompletableFuture<Result<RequestAndRelatedRecords>> onMoved(
+  CompletableFuture<Result<RequestAndRelatedRecords>> onMovedFrom(
     RequestAndRelatedRecords requestAndRelatedRecords) {
     final Request request = requestAndRelatedRecords.getRequest();
-    final RequestQueue requestQueue = requestAndRelatedRecords.getRequestQueue();
     if (requestAndRelatedRecords.getSourceItemId().equals(request.getItemId())) {
+      final RequestQueue requestQueue = requestAndRelatedRecords.getRequestQueue();
       requestQueue.remove(request);
+      return requestQueueRepository.updateRequestsWithChangedPositions(requestQueue)
+            .thenApply(r -> r.map(requestAndRelatedRecords::withRequestQueue));
+    }
+    else {
+      return completedFuture(succeeded(requestAndRelatedRecords));
+    }
+  }
+
+  CompletableFuture<Result<RequestAndRelatedRecords>> onMovedTo(
+    RequestAndRelatedRecords requestAndRelatedRecords) {
+    final Request request = requestAndRelatedRecords.getRequest();
+    if (requestAndRelatedRecords.getDestinationItemId().equals(request.getItemId())) {
+      final RequestQueue requestQueue = requestAndRelatedRecords.getRequestQueue();
+      requestQueue.add(request);
       return requestQueueRepository.updateRequestsWithChangedPositions(requestQueue)
             .thenApply(r -> r.map(requestAndRelatedRecords::withRequestQueue));
     }
