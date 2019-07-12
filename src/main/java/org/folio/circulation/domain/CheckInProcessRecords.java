@@ -71,9 +71,9 @@ public class CheckInProcessRecords {
   }
 
   public CheckInProcessRecords withRequestQueue(RequestQueue requestQueue) {
-    Request highestPriorityFulfillableRequest = null;
+    Request firstRequest = null;
     if (requestQueue.hasOutstandingFulfillableRequests()) {
-      highestPriorityFulfillableRequest = requestQueue.getHighestPriorityFulfillableRequest();
+      firstRequest = requestQueue.getHighestPriorityFulfillableRequest();
     }
     return new CheckInProcessRecords(
       this.checkInRequest,
@@ -81,7 +81,7 @@ public class CheckInProcessRecords {
       this.loan,
       requestQueue,
       this.checkInServicePoint,
-      highestPriorityFulfillableRequest);
+      firstRequest);
   }
 
   public CheckInProcessRecords withCheckInServicePoint(ServicePoint checkInServicePoint) {
