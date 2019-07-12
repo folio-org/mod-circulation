@@ -7,6 +7,7 @@ import static org.folio.circulation.support.JsonStringArrayHelper.toStream;
 
 import java.util.Optional;
 
+import org.folio.circulation.domain.CheckInProcessRecords;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.Location;
@@ -20,7 +21,7 @@ import org.joda.time.DateTime;
 
 import io.vertx.core.json.JsonObject;
 
-public class NoticeContextUtil {
+public class TemplateContextUtil {
 
   private static final String USER = "user";
   private static final String ITEM = "item";
@@ -29,7 +30,7 @@ public class NoticeContextUtil {
 
   private static final String UNLIMITED = "unlimited";
 
-  private NoticeContextUtil() {
+  private TemplateContextUtil() {
   }
 
   public static JsonObject createLoanNoticeContext(Loan loan) {
@@ -56,6 +57,32 @@ public class NoticeContextUtil {
       .put(USER, createUserContext(user))
       .put(ITEM, createItemContext(item))
       .put(REQUEST, createRequestContext(request));
+  }
+
+  public static JsonObject createCheckInContext(CheckInProcessRecords records) {
+    JsonObject checkInContext = new JsonObject();
+
+    Item item = records.getItem();
+    if (item != null) {
+      JsonObject itemContext = createItemContext(item);
+      if (item.getInTransitDestinationServicePoint() != null) {
+        itemContext.put("fromServicePoint", records.getCheckInServicePoint().getName());
+        itemContext.put("toServicePoint", item.getInTransitDestinationServicePoint().getName());
+      }
+      checkInContext.put(ITEM, itemContext);
+    }
+
+    Request firstRequest = records.getHighestPriorityFulfillableRequest();
+    if (firstRequest != null) {
+      checkInContext.put(REQUEST, createRequestContext(firstRequest));
+
+      User requester = firstRequest.getRequester();
+      if (requester != null) {
+        checkInContext.put("requester", createUserContext(requester));
+      }
+    }
+
+    return checkInContext;
   }
 
   private static JsonObject createUserContext(User user) {
@@ -113,6 +140,9 @@ public class NoticeContextUtil {
     Optional<Request> optionalRequest = Optional.ofNullable(request);
     JsonObject requestContext = new JsonObject();
 
+    optionalRequest
+      .map(Request::getId)
+      .ifPresent(value -> requestContext.put("requestID", value));
     optionalRequest
       .map(Request::getPickupServicePoint)
       .map(ServicePoint::getName)

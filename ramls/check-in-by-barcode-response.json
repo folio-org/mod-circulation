@@ -99,6 +99,10 @@
         }
       },
       "additionalProperties": false
+    },
+    "staffSlipContext": {
+      "description": "Context for staff slip tokens",
+      "type": "object"
     }
   },
   "additionalProperties": false

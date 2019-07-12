@@ -1,13 +1,14 @@
 package org.folio.circulation.domain.representations;
 
+import static org.folio.circulation.domain.notice.TemplateContextUtil.createCheckInContext;
 import static org.folio.circulation.support.JsonPropertyWriter.write;
 import static org.folio.circulation.support.Result.failed;
 
 import org.folio.circulation.domain.CheckInProcessRecords;
 import org.folio.circulation.domain.LoanRepresentation;
-import org.folio.circulation.support.Result;
 import org.folio.circulation.support.OkJsonResponseResult;
 import org.folio.circulation.support.ResponseWritableResult;
+import org.folio.circulation.support.Result;
 
 import io.vertx.core.json.JsonObject;
 
@@ -40,6 +41,8 @@ public class CheckInByBarcodeResponse {
 
     write(checkInResponseBody, "item",
       itemRepresentation.createItemSummary(records.getItem()));
+
+    write(checkInResponseBody, "context", createCheckInContext(records));
 
     return new OkJsonResponseResult(checkInResponseBody);
   }
