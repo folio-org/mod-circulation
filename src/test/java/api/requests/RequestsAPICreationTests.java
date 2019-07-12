@@ -68,7 +68,7 @@ import api.support.builders.UserBuilder;
 import api.support.fixtures.ItemExamples;
 import api.support.fixtures.ItemsFixture;
 import api.support.fixtures.LoansFixture;
-import api.support.fixtures.NoticeMatchers;
+import api.support.fixtures.TemplateContextMatchers;
 import api.support.fixtures.RequestsFixture;
 import api.support.fixtures.UsersFixture;
 import api.support.http.InventoryItemResource;
@@ -1548,9 +1548,9 @@ public class RequestsAPICreationTests extends APITests {
     List<JsonObject> sentNotices = patronNoticesClient.getAll();
 
     Map<String, Matcher<String>> noticeContextMatchers = new HashMap<>();
-    noticeContextMatchers.putAll(NoticeMatchers.getUserContextMatchers(requester));
-    noticeContextMatchers.putAll(NoticeMatchers.getItemContextMatchers(item, true));
-    noticeContextMatchers.putAll(NoticeMatchers.getRequestContextMatchers(request));
+    noticeContextMatchers.putAll(TemplateContextMatchers.getUserContextMatchers(requester));
+    noticeContextMatchers.putAll(TemplateContextMatchers.getItemContextMatchers(item, true));
+    noticeContextMatchers.putAll(TemplateContextMatchers.getRequestContextMatchers(request));
     MatcherAssert.assertThat(sentNotices,
       hasItems(
         hasEmailNoticeProperties(requester.getId(), pageConfirmationTemplateId, noticeContextMatchers)));
@@ -1616,9 +1616,9 @@ public class RequestsAPICreationTests extends APITests {
     List<JsonObject> sentNotices = patronNoticesClient.getAll();
 
     Map<String, Matcher<String>> noticeContextMatchers = new HashMap<>();
-    noticeContextMatchers.putAll(NoticeMatchers.getUserContextMatchers(requester));
-    noticeContextMatchers.putAll(NoticeMatchers.getItemContextMatchers(item, true));
-    noticeContextMatchers.putAll(NoticeMatchers.getRequestContextMatchers(request));
+    noticeContextMatchers.putAll(TemplateContextMatchers.getUserContextMatchers(requester));
+    noticeContextMatchers.putAll(TemplateContextMatchers.getItemContextMatchers(item, true));
+    noticeContextMatchers.putAll(TemplateContextMatchers.getRequestContextMatchers(request));
     MatcherAssert.assertThat(sentNotices,
       hasItems(
         hasEmailNoticeProperties(requester.getId(), holdConfirmationTemplateId, noticeContextMatchers)));
@@ -1704,14 +1704,14 @@ public class RequestsAPICreationTests extends APITests {
     List<JsonObject> sentNotices = patronNoticesClient.getAll();
 
     Map<String, Matcher<String>> recallConfirmationContextMatchers = new HashMap<>();
-    recallConfirmationContextMatchers.putAll(NoticeMatchers.getUserContextMatchers(requester));
-    recallConfirmationContextMatchers.putAll(NoticeMatchers.getItemContextMatchers(item, false));
-    recallConfirmationContextMatchers.putAll(NoticeMatchers.getLoanContextMatchers(loanAfterRecall));
-    recallConfirmationContextMatchers.putAll(NoticeMatchers.getRequestContextMatchers(request));
+    recallConfirmationContextMatchers.putAll(TemplateContextMatchers.getUserContextMatchers(requester));
+    recallConfirmationContextMatchers.putAll(TemplateContextMatchers.getItemContextMatchers(item, false));
+    recallConfirmationContextMatchers.putAll(TemplateContextMatchers.getLoanContextMatchers(loanAfterRecall));
+    recallConfirmationContextMatchers.putAll(TemplateContextMatchers.getRequestContextMatchers(request));
     Map<String, Matcher<String>> recallNotificationContextMatchers = new HashMap<>();
-    recallNotificationContextMatchers.putAll(NoticeMatchers.getUserContextMatchers(loanOwner));
-    recallNotificationContextMatchers.putAll(NoticeMatchers.getItemContextMatchers(item, false));
-    recallNotificationContextMatchers.putAll(NoticeMatchers.getLoanContextMatchers(loanAfterRecall));
+    recallNotificationContextMatchers.putAll(TemplateContextMatchers.getUserContextMatchers(loanOwner));
+    recallNotificationContextMatchers.putAll(TemplateContextMatchers.getItemContextMatchers(item, false));
+    recallNotificationContextMatchers.putAll(TemplateContextMatchers.getLoanContextMatchers(loanAfterRecall));
     MatcherAssert.assertThat(sentNotices,
       hasItems(
         hasEmailNoticeProperties(requester.getId(), recallConfirmationTemplateId,

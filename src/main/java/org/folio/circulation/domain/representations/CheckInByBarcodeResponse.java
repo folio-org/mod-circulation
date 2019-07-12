@@ -42,7 +42,7 @@ public class CheckInByBarcodeResponse {
     write(checkInResponseBody, "item",
       itemRepresentation.createItemSummary(records.getItem()));
 
-    write(checkInResponseBody, "context", createCheckInContext(records));
+    write(checkInResponseBody, "staffSlipContext", createCheckInContext(records));
 
     return new OkJsonResponseResult(checkInResponseBody);
   }
