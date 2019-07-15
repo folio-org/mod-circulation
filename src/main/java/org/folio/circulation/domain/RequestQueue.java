@@ -2,6 +2,7 @@ package org.folio.circulation.domain;
 
 import static org.folio.circulation.domain.ItemStatus.AVAILABLE;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -48,14 +49,12 @@ public class RequestQueue {
   }
 
   public void add(Request newRequest) {
-    // NOTE: assumes Collection supports add
+    requests = new ArrayList<>(requests);
     requests.add(newRequest);
     orderRequests();
   }
 
   public void remove(Request request) {
-    // NOTE: tests use Arrays.asList which produces a collection which
-    // does not support remove
     requests = requests.stream()
       .filter(r -> !r.getId().equals(request.getId()))
       .collect(Collectors.toList());
