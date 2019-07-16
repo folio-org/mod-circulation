@@ -85,6 +85,8 @@ public class RequestQueue {
   Collection<Request> getRequestsWithChangedPosition() {
     return requests.stream()
       .filter(Request::hasChangedPosition)
+      // order by position descending
+      .sorted((req1, req2) -> req2.getPosition().compareTo(req1.getPosition()))
       .collect(Collectors.toList());
   }
 
