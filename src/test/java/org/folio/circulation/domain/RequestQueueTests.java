@@ -1,6 +1,9 @@
 package org.folio.circulation.domain;
 
 import api.support.builders.RequestBuilder;
+
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
 import org.junit.Test;
 
 import java.util.UUID;
@@ -109,7 +112,7 @@ public class RequestQueueTests {
       thirdRequest.getPosition(), is(2));
 
     assertThat("Second and third requests have changed position",
-      requestQueue.getRequestsWithChangedPosition(), contains(secondRequest, thirdRequest));
+      requestQueue.getRequestsWithChangedPosition(), contains(thirdRequest, secondRequest));
   }
 
   @Test
@@ -153,7 +156,7 @@ public class RequestQueueTests {
       fourthRequest.getPosition(), is(3));
 
     assertThat("Second and third requests have changed position",
-      requestQueue.getRequestsWithChangedPosition(), contains(thirdRequest, fourthRequest));
+      requestQueue.getRequestsWithChangedPosition(), contains(fourthRequest, thirdRequest));
   }
 
   private Request requestAtPosition(UUID itemId, Integer position) {

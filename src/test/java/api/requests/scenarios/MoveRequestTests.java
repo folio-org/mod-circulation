@@ -759,6 +759,8 @@ public class MoveRequestTests extends APITests {
     IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
         uponInterestingTimes, jessica, DateTime.now(DateTimeZone.UTC), RequestType.RECALL.getValue());
 
+    assertThat(patronNoticesClient.getAll().size(), is(0));
+
     // move jessica's recall request from uponInterestingTimes to smallAngryPlanet
     IndividualResource moveRequest = requestsFixture.move(new MoveRequestBuilder(
         requestByJessica.getId(),
@@ -781,10 +783,8 @@ public class MoveRequestTests extends APITests {
     assertThat("due date is not the current date",
         storedLoan.getString("dueDate"), is(expectedDueDate));
 
-    List<JsonObject> patronNotices = patronNoticesClient.getAll();
-
     assertThat("move recall request notice has not been sent",
-        patronNotices.size(), is(2));
+        patronNoticesClient.getAll().size(), is(1));
   }
   
   @Test
@@ -890,6 +890,8 @@ public class MoveRequestTests extends APITests {
     IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
         uponInterestingTimes, jessica, DateTime.now(DateTimeZone.UTC), RequestType.RECALL.getValue());
 
+    assertThat(patronNoticesClient.getAll().size(), is(0));
+
     // move jessica's recall request from uponInterestingTimes to smallAngryPlanet
     IndividualResource moveRequest = requestsFixture.move(new MoveRequestBuilder(
         requestByJessica.getId(),
@@ -913,10 +915,8 @@ public class MoveRequestTests extends APITests {
     assertThat("due date is not the recall due date (2 months)",
         storedLoan.getString("dueDate"), is(expectedDueDate));
 
-    List<JsonObject> patronNotices = patronNoticesClient.getAll();
-
     assertThat("move recall request notice has not been sent",
-        patronNotices.size(), is(2));
+        patronNoticesClient.getAll().size(), is(1));
   }
   
   @Test
@@ -950,7 +950,7 @@ public class MoveRequestTests extends APITests {
       smallAngryPlanet, steve, DateTime.now(DateTimeZone.UTC));
 
     final String originalDueDate = loan.getJson().getString("dueDate");
-    
+
     // charlotte places recall request on smallAngryPlanet
     requestsFixture.placeHoldShelfRequest(
         smallAngryPlanet, charlotte, DateTime.now(DateTimeZone.UTC).minusHours(1), RequestType.RECALL.getValue());
@@ -972,6 +972,8 @@ public class MoveRequestTests extends APITests {
     IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
         uponInterestingTimes, jessica, DateTime.now(DateTimeZone.UTC), RequestType.RECALL.getValue());
 
+    assertThat(patronNoticesClient.getAll().size(), is(1));
+
     // move jessica's recall request from uponInterestingTimes to smallAngryPlanet
     IndividualResource moveRequest = requestsFixture.move(new MoveRequestBuilder(
         requestByJessica.getId(),
@@ -990,10 +992,8 @@ public class MoveRequestTests extends APITests {
     assertThat("due date has changed",
         storedLoan.getString("dueDate"), is(expectedDueDate));
 
-    List<JsonObject> patronNotices = patronNoticesClient.getAll();
-
     assertThat("move recall request unexpectedly sent another patron notice",
-        patronNotices.size(), is(2));
+        patronNoticesClient.getAll().size(), is(2));
   }
 
   private void retainsStoredSummaries(IndividualResource request) {
