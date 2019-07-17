@@ -13,19 +13,16 @@ import org.folio.circulation.support.Result;
 public class MoveRequestService {
   private final RequestRepository requestRepository;
   private final RequestPolicyRepository requestPolicyRepository;
-  private final UpdateRequestQueue updateRequestQueue;
   private final UpdateUponRequest updateUponRequest;
   private final MoveRequestProcessAdapter moveRequestProcessAdapter;
   private final RequestLoanValidator requestLoanValidator;
   private final RequestNoticeSender requestNoticeSender;
 
   public MoveRequestService(RequestRepository requestRepository, RequestPolicyRepository requestPolicyRepository,
-      UpdateRequestQueue updateRequestQueue, UpdateUponRequest updateUponRequest,
-      MoveRequestProcessAdapter moveRequestHelper, RequestLoanValidator requestLoanValidator,
-      RequestNoticeSender requestNoticeSender) {
+      UpdateUponRequest updateUponRequest, MoveRequestProcessAdapter moveRequestHelper,
+      RequestLoanValidator requestLoanValidator, RequestNoticeSender requestNoticeSender) {
     this.requestRepository = requestRepository;
     this.requestPolicyRepository = requestPolicyRepository;
-    this.updateRequestQueue = updateRequestQueue;
     this.updateUponRequest = updateUponRequest;
     this.moveRequestProcessAdapter = moveRequestHelper;
     this.requestLoanValidator = requestLoanValidator;
@@ -38,14 +35,19 @@ public class MoveRequestService {
         .thenComposeAsync(r -> r.after(moveRequestProcessAdapter::findDestinationItem))
         .thenComposeAsync(r -> r.after(moveRequestProcessAdapter::getDestinationRequestQueue))
         .thenApply(r -> r.map(this::pagedRequestIfDestinationItemAvailable))
-        .thenCompose(r -> r.after(this::updateRequest))
-        .thenCompose(r -> r.after(updateRequestQueue::onMovedTo))
+        .thenCompose(r -> r.after(this::validateUpdateRequest))
+        .thenCompose(r -> r.after(updateUponRequest.updateRequestQueue::onMovedTo))
+        .thenComposeAsync(r -> r.after(updateUponRequest.updateItem::onRequestCreationOrMove))
+        .thenComposeAsync(r -> r.after(updateUponRequest.updateLoanActionHistory::onRequestCreationOrMove))
+        .thenComposeAsync(r -> r.after(updateUponRequest.updateLoan::onRequestCreationOrMove))
+        .thenComposeAsync(r -> r.after(requestRepository::update))
         .thenComposeAsync(r -> r.after(moveRequestProcessAdapter::findSourceItem))
         .thenComposeAsync(r -> r.after(moveRequestProcessAdapter::getSourceRequestQueue))
-        .thenCompose(r -> r.after(updateRequestQueue::onMovedFrom))
+        .thenCompose(r -> r.after(updateUponRequest.updateRequestQueue::onMovedFrom))
         .thenCompose(r -> r.after(updateUponRequest.updateItem::onRequestQueueChanged))
         .thenComposeAsync(r -> r.after(moveRequestProcessAdapter::findDestinationItem))
-        .thenComposeAsync(r -> r.after(moveRequestProcessAdapter::getDestinationRequestQueue));
+        .thenComposeAsync(r -> r.after(moveRequestProcessAdapter::getDestinationRequestQueue))
+        .thenApply(r -> r.next(requestNoticeSender::sendNoticeOnRequestMoved));
   }
 
   private RequestAndRelatedRecords pagedRequestIfDestinationItemAvailable(
@@ -57,7 +59,7 @@ public class MoveRequestService {
     return requestAndRelatedRecords;
   }
 
-  private CompletableFuture<Result<RequestAndRelatedRecords>> updateRequest(
+  private CompletableFuture<Result<RequestAndRelatedRecords>> validateUpdateRequest(
       RequestAndRelatedRecords requestAndRelatedRecords) {
     return of(() -> requestAndRelatedRecords)
         .next(RequestServiceUtility::refuseWhenItemDoesNotExist)
@@ -66,11 +68,6 @@ public class MoveRequestService {
         .next(RequestServiceUtility::refuseWhenUserHasAlreadyRequestedItem)
         .after(requestLoanValidator::refuseWhenUserHasAlreadyBeenLoanedItem)
         .thenComposeAsync(r -> r.after(requestPolicyRepository::lookupRequestPolicy))
-        .thenApply(r -> r.next(RequestServiceUtility::refuseWhenRequestCannotBeFulfilled))
-        .thenComposeAsync(r -> r.after(updateUponRequest.updateItem::onRequestCreationOrMove))
-        .thenComposeAsync(r -> r.after(updateUponRequest.updateLoanActionHistory::onRequestCreationOrMove))
-        .thenComposeAsync(r -> r.after(updateUponRequest.updateLoan::onRequestCreationOrMove))
-        .thenComposeAsync(r -> r.after(requestRepository::update))
-        .thenApply(r -> r.next(requestNoticeSender::sendNoticeOnRequestMoved));
+        .thenApply(r -> r.next(RequestServiceUtility::refuseWhenRequestCannotBeFulfilled));
   }
 }
