@@ -127,7 +127,7 @@ public class UpdateRequestQueue {
     RequestAndRelatedRecords requestAndRelatedRecords) {
     final Request request = requestAndRelatedRecords.getRequest();
     final RequestQueue requestQueue = requestAndRelatedRecords.getRequestQueue();
-    requestQueue.add(request);;
+    requestQueue.add(request);
     return requestQueueRepository.updateRequestsWithChangedPositions(requestQueue)
         .thenApply(r -> r.map(requestAndRelatedRecords::withRequestQueue));
   }
