@@ -226,6 +226,11 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
         checkoutServicePoint, originalDueDate, loanPolicy, accounts);
   }
 
+  Loan withPatronGroup(PatronGroup patronGroup){
+    representation.put("patronGroupAtCheckout", patronGroup.getGroup());
+    return this;
+  }
+
   public User getProxy() {
     return proxy;
   }
@@ -277,6 +282,10 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
 
   public ServicePoint getCheckoutServicePoint() {
     return this.checkoutServicePoint;
+  }
+
+  String getPatronGroupIdAtCheckout() {
+    return  getProperty(representation, "patronGroupIdAtCheckout");
   }
 
   public Loan renew(DateTime dueDate, String basedUponLoanPolicyId) {

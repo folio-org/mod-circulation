@@ -1,23 +1,20 @@
 package org.folio.circulation.domain;
 
+import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.support.Result.of;
+import static org.folio.circulation.support.Result.succeeded;
+import static org.folio.circulation.support.ResultBinding.mapResult;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
-import org.folio.circulation.support.Clients;
-import org.folio.circulation.support.CollectionResourceClient;
-import org.folio.circulation.support.MultipleRecordFetcher;
-import org.folio.circulation.support.Result;
+import org.folio.circulation.support.*;
 
-class PatronGroupRepository {
+public class PatronGroupRepository {
   private final CollectionResourceClient patronGroupsStorageClient;
 
-  PatronGroupRepository(Clients clients) {
+  public PatronGroupRepository(Clients clients) {
     patronGroupsStorageClient = clients.patronGroupsStorage();
   }
 
@@ -93,6 +90,68 @@ class PatronGroupRepository {
 
     return user.withPatronGroup(
       groupMap.getOrDefault(user.getPatronGroupId(), null));
+  }
+
+  public CompletableFuture<Result<Loan>> findGroupForLoan(Result<Loan> loanResult) {
+    return loanResult.after(loan ->
+      getPatronGroupById(loan.getPatronGroupIdAtCheckout())
+        .thenApply(result -> result.map(loan::withPatronGroup)));
+  }
+
+  private CompletableFuture<Result<PatronGroup>> getPatronGroupById(String groupId) {
+
+    return FetchSingleRecord.<PatronGroup>forRecord("patron group")
+      .using(patronGroupsStorageClient)
+      .mapTo(PatronGroup::from)
+      .fetch(groupId);
+  }
+
+  public CompletableFuture<Result<LoanAndRelatedRecords>> findPatronGroupForLoanAndRelatedRecords(
+    LoanAndRelatedRecords loanAndRelatedRecords) {
+    final MultipleRecordFetcher<PatronGroup> fetcher = createGroupsFetcher();
+    return fetcher.findByIds(Collections.singleton(loanAndRelatedRecords.getLoan()
+      .getUser().getPatronGroupId()))
+      .thenApply(multiplePatronGroupsResult -> multiplePatronGroupsResult.next(
+        patronGroups -> of(() -> matchGroupToUser(loanAndRelatedRecords, patronGroups))));
+  }
+
+  private LoanAndRelatedRecords matchGroupToUser(
+    LoanAndRelatedRecords loanAndRelatedRecords,
+    MultipleRecords<PatronGroup> patronGroups) {
+
+    final Map<String, PatronGroup> groupMap = patronGroups.toMap(PatronGroup::getId);
+
+   return loanAndRelatedRecords.withLoan(loanAndRelatedRecords.getLoan()
+      .withUser(addGroupToUser(loanAndRelatedRecords.getLoan().getUser(),groupMap)));
+  }
+
+  public CompletableFuture<Result<MultipleRecords<Loan>>> findPatronGroupsByIds(
+    MultipleRecords<Loan> multipleLoans) {
+    Collection<Loan> loans = multipleLoans.getRecords();
+
+    final Collection<String> patronGroupsToFetch =
+      loans.stream()
+        .filter(Objects::nonNull)
+        .map(Loan::getPatronGroupIdAtCheckout)
+        .filter(Objects::nonNull)
+        .collect(Collectors.toSet());
+
+    if(patronGroupsToFetch.isEmpty()){
+      return completedFuture(succeeded(multipleLoans));
+    }
+
+    final MultipleRecordFetcher<PatronGroup> fetcher = createGroupsFetcher();
+
+    return fetcher.findByIds(patronGroupsToFetch)
+      .thenApply(mapResult(groups -> groups.toMap(PatronGroup::getId)))
+      .thenApply(mapResult(groups -> setPatronGroups(loans, groups)))
+      .thenApply(mapResult(collection -> new MultipleRecords<>(collection, multipleLoans.getTotalRecords())));
+  }
+
+  private Collection<Loan> setPatronGroups(Collection<Loan> loans, Map<String, PatronGroup> patronGroups) {
+    return loans.stream()
+      .map(loan -> loan.withPatronGroup(patronGroups.get(loan.getPatronGroupIdAtCheckout())))
+      .collect(Collectors.toList());
   }
 
   private MultipleRecordFetcher<PatronGroup> createGroupsFetcher() {

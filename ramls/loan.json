@@ -253,6 +253,10 @@
         }
       }
     },
+    "patronGroupAtCheckout": {
+      "description": "Patron Group name at checkout",
+      "type": "string"
+    },
     "feesAndFines": {
       "description": "Fees and fines associated with loans",
       "type": "object",

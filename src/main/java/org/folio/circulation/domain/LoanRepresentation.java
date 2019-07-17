@@ -45,6 +45,7 @@ public class LoanRepresentation {
 
     additionalAccountProperties(extendedRepresentation, loan.getAccounts());
 
+    extendedRepresentation.remove(LoanProperties.PATRON_GROUP_ID_AT_CHECKOUT);
     return extendedRepresentation;
   }
 

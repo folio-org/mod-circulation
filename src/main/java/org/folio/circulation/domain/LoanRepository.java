@@ -176,6 +176,7 @@ public class LoanRepository {
     keepLatestItemStatus(item, storageLoan);
     removeBorrowerProperties(storageLoan);
     removeLoanPolicyProperties(storageLoan);
+    keepPatronGroupAtCheckoutProperties(loan, storageLoan);
 
     updateLastLoanPolicyUsedId(storageLoan, loan.getLoanPolicy());
 
@@ -213,6 +214,13 @@ public class LoanRepository {
     storageLoan.remove("item");
     storageLoan.remove("checkinServicePoint");
     storageLoan.remove("checkoutServicePoint");
+  }
+
+  private static void keepPatronGroupAtCheckoutProperties(Loan loan, JsonObject storageLoan) {
+    PatronGroup patronGroup = loan.getUser().getPatronGroup();
+    if (Objects.nonNull(patronGroup)){
+      storageLoan.put("patronGroupIdAtCheckout", patronGroup.getId());
+    }
   }
 
   public CompletableFuture<Result<Boolean>> hasOpenLoan(String itemId) {
