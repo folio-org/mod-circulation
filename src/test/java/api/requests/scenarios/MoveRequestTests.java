@@ -4,6 +4,7 @@ import static api.support.builders.ItemBuilder.AVAILABLE;
 import static api.support.builders.ItemBuilder.PAGED;
 import static api.support.builders.RequestBuilder.OPEN_AWAITING_PICKUP;
 import static api.support.matchers.ItemStatusCodeMatcher.hasItemStatus;
+import static java.util.Collections.singletonList;
 import static org.folio.circulation.domain.representations.RequestProperties.REQUEST_TYPE;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
@@ -14,7 +15,6 @@ import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
@@ -33,7 +33,6 @@ import org.joda.time.format.ISODateTimeFormat;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 
 import api.support.APITests;
 import api.support.builders.LoanPolicyBuilder;
@@ -42,7 +41,6 @@ import api.support.builders.NoticeConfigurationBuilder;
 import api.support.builders.NoticePolicyBuilder;
 import api.support.builders.RequestBuilder;
 import io.vertx.core.json.JsonObject;
-import junitparams.JUnitParamsRunner;
 
 /**
  * Notes:<br>
@@ -54,20 +52,19 @@ import junitparams.JUnitParamsRunner;
  * @see <a href="https://issues.folio.org/browse/CIRC-333">CIRC-333</a>
  * @see <a href="https://issues.folio.org/browse/CIRC-395">CIRC-395</a>
  */
-@RunWith(JUnitParamsRunner.class)
 public class MoveRequestTests extends APITests {
   private static final String RECALL_TO_LOANEE = "Recall loanee";
   private static Clock clock;
-  
+
   private NoticePolicyBuilder noticePolicy;
 
   @BeforeClass
-  public static void setUpBeforeClass() throws Exception {
+  public static void setUpBeforeClass() {
     clock = Clock.fixed(Instant.now(), ZoneOffset.UTC);
   }
 
   @Before
-  public void setUp() throws Exception {
+  public void setUp() {
     // reset the clock before each test (just in case)
     ClockManager.getClockManager().setClock(clock);
   }
@@ -82,8 +79,7 @@ public class MoveRequestTests extends APITests {
 
     noticePolicy = new NoticePolicyBuilder()
       .withName("Policy with recall notice")
-      .withLoanNotices(Arrays.asList(
-        recallToLoaneeConfiguration));
+      .withLoanNotices(singletonList(recallToLoaneeConfiguration));
 
     useLoanPolicyAsFallback(
       loanPoliciesFixture.canCirculateRolling().getId(),
@@ -120,23 +116,23 @@ public class MoveRequestTests extends APITests {
     setRules(rules);
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
-    IndividualResource uponInterestingTimes = itemsFixture.basedUponInterestingTimes();
-    
+    IndividualResource interestingTimes = itemsFixture.basedUponInterestingTimes();
+
     IndividualResource james = usersFixture.james();
     IndividualResource jessica = usersFixture.jessica();
     IndividualResource charlotte = usersFixture.charlotte();
 
     loansFixture.checkOutByBarcode(smallAngryPlanet, jessica);
-    
-    loansFixture.checkOutByBarcode(uponInterestingTimes, charlotte);
-    
+
+    loansFixture.checkOutByBarcode(interestingTimes, charlotte);
+
     IndividualResource requestByCharlotte = requestsFixture.placeHoldShelfRequest(
       smallAngryPlanet, charlotte, DateTime.now(DateTimeZone.UTC).minusHours(2), RequestType.RECALL.getValue());
 
     IndividualResource requestByJames = requestsFixture.placeHoldShelfRequest(
-      uponInterestingTimes, james, DateTime.now(DateTimeZone.UTC).minusHours(1), RequestType.RECALL.getValue());
+      interestingTimes, james, DateTime.now(DateTimeZone.UTC).minusHours(1), RequestType.RECALL.getValue());
 
-    // move james' recall request as a hold shelf request from smallAngryPlanet to uponInterestingTimes
+    // move james' recall request as a hold shelf request from smallAngryPlanet to interestingTimes
     Response response = requestsFixture.attemptMove(new MoveRequestBuilder(
       requestByJames.getId(),
       smallAngryPlanet.getId(),
@@ -157,15 +153,15 @@ public class MoveRequestTests extends APITests {
     requestByJames = requestsClient.get(requestByJames);
     assertThat(requestByJames.getJson().getString(REQUEST_TYPE), is(RequestType.RECALL.getValue()));
     assertThat(requestByJames.getJson().getInteger("position"), is(1));
-    assertThat(requestByJames.getJson().getString("itemId"), is(uponInterestingTimes.getId().toString()));
+    assertThat(requestByJames.getJson().getString("itemId"), is(interestingTimes.getId().toString()));
     retainsStoredSummaries(requestByJames);
 
     // check item queues are correct size
     MultipleRecords<JsonObject> smallAngryPlanetQueue = requestsFixture.getQueueFor(smallAngryPlanet);
     assertThat(smallAngryPlanetQueue.getTotalRecords(), is(1));
-    
-    MultipleRecords<JsonObject> uponInterestingTimesQueue = requestsFixture.getQueueFor(uponInterestingTimes);
-    assertThat(uponInterestingTimesQueue.getTotalRecords(), is(1));
+
+    MultipleRecords<JsonObject> interestingTimesQueue = requestsFixture.getQueueFor(interestingTimes);
+    assertThat(interestingTimesQueue.getTotalRecords(), is(1));
   }
 
   @Test
@@ -176,8 +172,8 @@ public class MoveRequestTests extends APITests {
     MalformedURLException {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
-    IndividualResource uponInterestingTimes = itemsFixture.basedUponInterestingTimes();
-    
+    IndividualResource interestingTimes = itemsFixture.basedUponInterestingTimes();
+
     IndividualResource james = usersFixture.james();
     IndividualResource jessica = usersFixture.jessica();
 
@@ -188,16 +184,16 @@ public class MoveRequestTests extends APITests {
     IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
       smallAngryPlanet, jessica, DateTime.now(DateTimeZone.UTC));
 
-    // move jessica's hold shelf request from smallAngryPlanet to uponInterestingTimes
+    // move jessica's hold shelf request from smallAngryPlanet to interestingTimes
     IndividualResource moveRequest = requestsFixture.move(new MoveRequestBuilder(
       requestByJessica.getId(),
-      uponInterestingTimes.getId(),
+      interestingTimes.getId(),
       null
     ));
 
     assertThat("Move request should have correct item id",
-      moveRequest.getJson().getString("itemId"), is(uponInterestingTimes.getId().toString()));
-    
+      moveRequest.getJson().getString("itemId"), is(interestingTimes.getId().toString()));
+
     assertThat("Move request should have correct type",
         moveRequest.getJson().getString(REQUEST_TYPE), is(RequestType.PAGE.getValue()));
 
@@ -205,15 +201,15 @@ public class MoveRequestTests extends APITests {
     assertThat(requestByJessica.getJson().getString(REQUEST_TYPE), is(RequestType.PAGE.getValue()));
     assertThat(requestByJessica.getJson().getJsonObject("item").getString("status"), is(ItemStatus.PAGED.getValue()));
     assertThat(requestByJessica.getJson().getInteger("position"), is(1));
-    assertThat(requestByJessica.getJson().getString("itemId"), is(uponInterestingTimes.getId().toString()));
+    assertThat(requestByJessica.getJson().getString("itemId"), is(interestingTimes.getId().toString()));
     retainsStoredSummaries(requestByJessica);
 
     // check item queues are correct size
     MultipleRecords<JsonObject> smallAngryPlanetQueue = requestsFixture.getQueueFor(smallAngryPlanet);
     assertThat(smallAngryPlanetQueue.getTotalRecords(), is(0));
-    
-    MultipleRecords<JsonObject> uponInterestingTimesQueue = requestsFixture.getQueueFor(uponInterestingTimes);
-    assertThat(uponInterestingTimesQueue.getTotalRecords(), is(1));
+
+    MultipleRecords<JsonObject> interestingTimesQueue = requestsFixture.getQueueFor(interestingTimes);
+    assertThat(interestingTimesQueue.getTotalRecords(), is(1));
   }
 
   @Test
@@ -224,8 +220,8 @@ public class MoveRequestTests extends APITests {
     MalformedURLException {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
-    IndividualResource uponInterestingTimes = itemsFixture.basedUponInterestingTimes();
-    
+    IndividualResource interestingTimes = itemsFixture.basedUponInterestingTimes();
+
     IndividualResource james = usersFixture.james();
     IndividualResource jessica = usersFixture.jessica();
     IndividualResource steve = usersFixture.steve();
@@ -234,9 +230,9 @@ public class MoveRequestTests extends APITests {
 
     // james checks out basedUponSmallAngryPlanet
     loansFixture.checkOutByBarcode(smallAngryPlanet, james);
-    
-    // charlotte checks out basedUponInterestingTimes
-    loansFixture.checkOutByBarcode(uponInterestingTimes, charlotte);
+
+    // charlotte checks out basedinterestingTimes
+    loansFixture.checkOutByBarcode(interestingTimes, charlotte);
 
     // make requests for smallAngryPlanet
     IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
@@ -251,19 +247,19 @@ public class MoveRequestTests extends APITests {
     IndividualResource requestByRebecca = requestsFixture.placeHoldShelfRequest(
       smallAngryPlanet, rebecca, DateTime.now(DateTimeZone.UTC).minusHours(2), RequestType.RECALL.getValue());
 
-    // make requests for uponInterestingTimes
+    // make requests for interestingTimes
     IndividualResource requestByJames = requestsFixture.placeHoldShelfRequest(
-      uponInterestingTimes, james, DateTime.now(DateTimeZone.UTC).minusHours(4), RequestType.RECALL.getValue());
+      interestingTimes, james, DateTime.now(DateTimeZone.UTC).minusHours(4), RequestType.RECALL.getValue());
 
-    // move steve's recall request from smallAngryPlanet to uponInterestingTimes
+    // move steve's recall request from smallAngryPlanet to interestingTimes
     IndividualResource moveRequest = requestsFixture.move(new MoveRequestBuilder(
         requestBySteve.getId(),
-        uponInterestingTimes.getId(),
+        interestingTimes.getId(),
         null
     ));
 
     assertThat("Move request should have correct item id",
-      moveRequest.getJson().getString("itemId"), is(uponInterestingTimes.getId().toString()));
+      moveRequest.getJson().getString("itemId"), is(interestingTimes.getId().toString()));
 
     // check positioning on smallAngryPlanet
     requestByJessica = requestsClient.get(requestByJessica);
@@ -281,25 +277,25 @@ public class MoveRequestTests extends APITests {
     assertThat(requestByRebecca.getJson().getString("itemId"), is(smallAngryPlanet.getId().toString()));
     retainsStoredSummaries(requestByRebecca);
 
-    // check positioning on uponInterestingTimes
+    // check positioning on interestingTimes
     requestByJames = requestsClient.get(requestByJames);
     assertThat(requestByJames.getJson().getInteger("position"), is(1));
-    assertThat(requestByJames.getJson().getString("itemId"), is(uponInterestingTimes.getId().toString()));
+    assertThat(requestByJames.getJson().getString("itemId"), is(interestingTimes.getId().toString()));
     retainsStoredSummaries(requestByJames);
 
     requestBySteve = requestsClient.get(requestBySteve);
     assertThat(requestBySteve.getJson().getInteger("position"), is(2));
-    assertThat(requestBySteve.getJson().getString("itemId"), is(uponInterestingTimes.getId().toString()));
+    assertThat(requestBySteve.getJson().getString("itemId"), is(interestingTimes.getId().toString()));
     retainsStoredSummaries(requestBySteve);
 
     // check item queues are correct size
     MultipleRecords<JsonObject> smallAngryPlanetQueue = requestsFixture.getQueueFor(smallAngryPlanet);
     assertThat(smallAngryPlanetQueue.getTotalRecords(), is(3));
 
-    MultipleRecords<JsonObject> uponInterestingTimesQueue = requestsFixture.getQueueFor(uponInterestingTimes);
-    assertThat(uponInterestingTimesQueue.getTotalRecords(), is(2));
+    MultipleRecords<JsonObject> interestingTimesQueue = requestsFixture.getQueueFor(interestingTimes);
+    assertThat(interestingTimesQueue.getTotalRecords(), is(2));
   }
-  
+
   @Test
   public void canMoveTwoRequests()
     throws InterruptedException,
@@ -308,7 +304,7 @@ public class MoveRequestTests extends APITests {
     MalformedURLException {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
-    IndividualResource uponInterestingTimes = itemsFixture.basedUponInterestingTimes();
+    IndividualResource interestingTimes = itemsFixture.basedUponInterestingTimes();
 
     IndividualResource james = usersFixture.james();
     IndividualResource jessica = usersFixture.jessica();
@@ -318,8 +314,8 @@ public class MoveRequestTests extends APITests {
     // james checks out basedUponSmallAngryPlanet
     loansFixture.checkOutByBarcode(smallAngryPlanet, james);
 
-    // charlotte checks out basedUponInterestingTimes
-    loansFixture.checkOutByBarcode(uponInterestingTimes, charlotte);
+    // charlotte checks out basedinterestingTimes
+    loansFixture.checkOutByBarcode(interestingTimes, charlotte);
 
     // make requests for smallAngryPlanet
     IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
@@ -339,15 +335,15 @@ public class MoveRequestTests extends APITests {
     assertThat(requestBySteve.getJson().getString("itemId"), is(smallAngryPlanet.getId().toString()));
     retainsStoredSummaries(requestBySteve);
 
-    // move steve's recall request from smallAngryPlanet to uponInterestingTimes
+    // move steve's recall request from smallAngryPlanet to interestingTimes
     IndividualResource firstMoveRequest = requestsFixture.move(new MoveRequestBuilder(
         requestBySteve.getId(),
-        uponInterestingTimes.getId(),
+        interestingTimes.getId(),
         null
     ));
 
     assertThat("Move request should have correct item id",
-        firstMoveRequest.getJson().getString("itemId"), is(uponInterestingTimes.getId().toString()));
+        firstMoveRequest.getJson().getString("itemId"), is(interestingTimes.getId().toString()));
 
     // check positioning after first move
     requestByJessica = requestsClient.get(requestByJessica);
@@ -357,36 +353,36 @@ public class MoveRequestTests extends APITests {
 
     requestBySteve = requestsClient.get(requestBySteve);
     assertThat(requestBySteve.getJson().getInteger("position"), is(1));
-    assertThat(requestBySteve.getJson().getString("itemId"), is(uponInterestingTimes.getId().toString()));
+    assertThat(requestBySteve.getJson().getString("itemId"), is(interestingTimes.getId().toString()));
     retainsStoredSummaries(requestBySteve);
 
-    // move jessica's recall request from smallAngryPlanet to uponInterestingTimes
+    // move jessica's recall request from smallAngryPlanet to interestingTimes
     IndividualResource secondMoveRequest = requestsFixture.move(new MoveRequestBuilder(
         requestByJessica.getId(),
-        uponInterestingTimes.getId(),
+        interestingTimes.getId(),
         null
     ));
 
     assertThat("Move request should have correct item id",
-        secondMoveRequest.getJson().getString("itemId"), is(uponInterestingTimes.getId().toString()));
+        secondMoveRequest.getJson().getString("itemId"), is(interestingTimes.getId().toString()));
 
     // check positioning after second move
     requestByJessica = requestsClient.get(requestByJessica);
     assertThat(requestByJessica.getJson().getInteger("position"), is(1));
-    assertThat(requestByJessica.getJson().getString("itemId"), is(uponInterestingTimes.getId().toString()));
+    assertThat(requestByJessica.getJson().getString("itemId"), is(interestingTimes.getId().toString()));
     retainsStoredSummaries(requestByJessica);
 
     requestBySteve = requestsClient.get(requestBySteve);
     assertThat(requestBySteve.getJson().getInteger("position"), is(2));
-    assertThat(requestBySteve.getJson().getString("itemId"), is(uponInterestingTimes.getId().toString()));
+    assertThat(requestBySteve.getJson().getString("itemId"), is(interestingTimes.getId().toString()));
     retainsStoredSummaries(requestBySteve);
 
     // check item queues are correct size
     MultipleRecords<JsonObject> smallAngryPlanetQueue = requestsFixture.getQueueFor(smallAngryPlanet);
     assertThat(smallAngryPlanetQueue.getTotalRecords(), is(0));
 
-    MultipleRecords<JsonObject> uponInterestingTimesQueue = requestsFixture.getQueueFor(uponInterestingTimes);
-    assertThat(uponInterestingTimesQueue.getTotalRecords(), is(2));
+    MultipleRecords<JsonObject> interestingTimesQueue = requestsFixture.getQueueFor(interestingTimes);
+    assertThat(interestingTimesQueue.getTotalRecords(), is(2));
   }
 
   @Test
@@ -397,13 +393,13 @@ public class MoveRequestTests extends APITests {
     MalformedURLException {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
-    IndividualResource uponInterestingTimes = itemsFixture.basedUponInterestingTimes();
+    IndividualResource interestingTimes = itemsFixture.basedUponInterestingTimes();
 
     IndividualResource jessica = usersFixture.jessica();
     IndividualResource charlotte = usersFixture.charlotte();
-    
-    // charlotte checks out basedUponInterestingTimes
-    loansFixture.checkOutByBarcode(uponInterestingTimes, charlotte);
+
+    // charlotte checks out basedinterestingTimes
+    loansFixture.checkOutByBarcode(interestingTimes, charlotte);
 
     // make requests for smallAngryPlanet
     IndividualResource requestByJessica = requestsFixture.place(new RequestBuilder()
@@ -417,10 +413,10 @@ public class MoveRequestTests extends APITests {
     smallAngryPlanet = itemsClient.get(smallAngryPlanet);
     assertThat(smallAngryPlanet, hasItemStatus(PAGED));
 
-    // move jessica's request from smallAngryPlanet to uponInterestingTimes
+    // move jessica's request from smallAngryPlanet to interestingTimes
     requestsFixture.move(new MoveRequestBuilder(
         requestByJessica.getId(),
-        uponInterestingTimes.getId(),
+        interestingTimes.getId(),
         RequestType.HOLD.getValue()
     ));
 
@@ -436,8 +432,8 @@ public class MoveRequestTests extends APITests {
     MalformedURLException {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
-    IndividualResource uponInterestingTimes = itemsFixture.basedUponInterestingTimes();
-    
+    IndividualResource interestingTimes = itemsFixture.basedUponInterestingTimes();
+
     IndividualResource james = usersFixture.james();
     IndividualResource jessica = usersFixture.jessica();
     IndividualResource charlotte = usersFixture.charlotte();
@@ -446,33 +442,33 @@ public class MoveRequestTests extends APITests {
     loansFixture.checkOutByBarcode(smallAngryPlanet, james);
 
     // charlotte checks out basedUponSmallAngryPlanet
-    loansFixture.checkOutByBarcode(uponInterestingTimes, charlotte);
+    loansFixture.checkOutByBarcode(interestingTimes, charlotte);
 
     // make requests for smallAngryPlanet
     IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
       smallAngryPlanet, jessica, DateTime.now(DateTimeZone.UTC));
 
-    // move jessica's hold shelf request from smallAngryPlanet to uponInterestingTimes
+    // move jessica's hold shelf request from smallAngryPlanet to interestingTimes
     IndividualResource moveRequest = requestsFixture.move(new MoveRequestBuilder(
       requestByJessica.getId(),
-      uponInterestingTimes.getId(),
+      interestingTimes.getId(),
       null
     ));
 
     assertThat("Move request should have correct item id",
-      moveRequest.getJson().getString("itemId"), is(uponInterestingTimes.getId().toString()));
+      moveRequest.getJson().getString("itemId"), is(interestingTimes.getId().toString()));
 
     requestByJessica = requestsClient.get(requestByJessica);
     assertThat(requestByJessica.getJson().getInteger("position"), is(1));
-    assertThat(requestByJessica.getJson().getString("itemId"), is(uponInterestingTimes.getId().toString()));
+    assertThat(requestByJessica.getJson().getString("itemId"), is(interestingTimes.getId().toString()));
     retainsStoredSummaries(requestByJessica);
 
     // check item queues are correct size
     MultipleRecords<JsonObject> smallAngryPlanetQueue = requestsFixture.getQueueFor(smallAngryPlanet);
     assertThat(smallAngryPlanetQueue.getTotalRecords(), is(0));
-    
-    MultipleRecords<JsonObject> uponInterestingTimesQueue = requestsFixture.getQueueFor(uponInterestingTimes);
-    assertThat(uponInterestingTimesQueue.getTotalRecords(), is(1));
+
+    MultipleRecords<JsonObject> interestingTimesQueue = requestsFixture.getQueueFor(interestingTimes);
+    assertThat(interestingTimesQueue.getTotalRecords(), is(1));
   }
 
   @Test
@@ -483,8 +479,8 @@ public class MoveRequestTests extends APITests {
     MalformedURLException {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
-    IndividualResource uponInterestingTimes = itemsFixture.basedUponInterestingTimes();
-    
+    IndividualResource interestingTimes = itemsFixture.basedUponInterestingTimes();
+
     IndividualResource james = usersFixture.james();
     IndividualResource jessica = usersFixture.jessica();
     IndividualResource steve = usersFixture.steve();
@@ -493,9 +489,9 @@ public class MoveRequestTests extends APITests {
 
     // james checks out basedUponSmallAngryPlanet
     loansFixture.checkOutByBarcode(smallAngryPlanet, james);
-    
-    // charlotte checks out basedUponInterestingTimes
-    loansFixture.checkOutByBarcode(uponInterestingTimes, charlotte);
+
+    // charlotte checks out basedinterestingTimes
+    loansFixture.checkOutByBarcode(interestingTimes, charlotte);
 
     // make requests for smallAngryPlanet
     IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
@@ -507,22 +503,22 @@ public class MoveRequestTests extends APITests {
     IndividualResource requestByCharlotte = requestsFixture.placeHoldShelfRequest(
       smallAngryPlanet, charlotte, DateTime.now(DateTimeZone.UTC).minusHours(3));
 
-    // make requests for uponInterestingTimes
+    // make requests for interestingTimes
     IndividualResource requestByRebecca = requestsFixture.placeHoldShelfRequest(
-      uponInterestingTimes, rebecca, DateTime.now(DateTimeZone.UTC).minusHours(5));
+      interestingTimes, rebecca, DateTime.now(DateTimeZone.UTC).minusHours(5));
 
     IndividualResource requestByJames = requestsFixture.placeHoldShelfRequest(
-      uponInterestingTimes, james, DateTime.now(DateTimeZone.UTC).minusHours(1));
+      interestingTimes, james, DateTime.now(DateTimeZone.UTC).minusHours(1));
 
-    // move jessica's hold shelf request from smallAngryPlanet to uponInterestingTimes
+    // move jessica's hold shelf request from smallAngryPlanet to interestingTimes
     IndividualResource moveRequest = requestsFixture.move(new MoveRequestBuilder(
       requestByJessica.getId(),
-      uponInterestingTimes.getId(),
+      interestingTimes.getId(),
       null
     ));
 
     assertThat("Move request should have correct item id",
-      moveRequest.getJson().getString("itemId"), is(uponInterestingTimes.getId().toString()));
+      moveRequest.getJson().getString("itemId"), is(interestingTimes.getId().toString()));
 
     // check positioning on smallAngryPlanet
     requestBySteve = requestsClient.get(requestBySteve);
@@ -535,30 +531,30 @@ public class MoveRequestTests extends APITests {
     assertThat(requestByCharlotte.getJson().getString("itemId"), is(smallAngryPlanet.getId().toString()));
     retainsStoredSummaries(requestByCharlotte);
 
-    // check positioning on uponInterestingTimes
+    // check positioning on interestingTimes
     requestByRebecca = requestsClient.get(requestByRebecca);
     assertThat(requestByRebecca.getJson().getInteger("position"), is(1));
-    assertThat(requestByRebecca.getJson().getString("itemId"), is(uponInterestingTimes.getId().toString()));
+    assertThat(requestByRebecca.getJson().getString("itemId"), is(interestingTimes.getId().toString()));
     retainsStoredSummaries(requestByRebecca);
 
     requestByJessica = requestsClient.get(requestByJessica);
     assertThat(requestByJessica.getJson().getInteger("position"), is(2));
-    assertThat(requestByJessica.getJson().getString("itemId"), is(uponInterestingTimes.getId().toString()));
+    assertThat(requestByJessica.getJson().getString("itemId"), is(interestingTimes.getId().toString()));
     retainsStoredSummaries(requestByJessica);
 
     requestByJames = requestsClient.get(requestByJames);
     assertThat(requestByJames.getJson().getInteger("position"), is(3));
-    assertThat(requestByJames.getJson().getString("itemId"), is(uponInterestingTimes.getId().toString()));
+    assertThat(requestByJames.getJson().getString("itemId"), is(interestingTimes.getId().toString()));
     retainsStoredSummaries(requestByJames);
 
     // check item queues are correct size
     MultipleRecords<JsonObject> smallAngryPlanetQueue = requestsFixture.getQueueFor(smallAngryPlanet);
     assertThat(smallAngryPlanetQueue.getTotalRecords(), is(2));
 
-    MultipleRecords<JsonObject> uponInterestingTimesQueue = requestsFixture.getQueueFor(uponInterestingTimes);
-    assertThat(uponInterestingTimesQueue.getTotalRecords(), is(3));
+    MultipleRecords<JsonObject> interestingTimesQueue = requestsFixture.getQueueFor(interestingTimes);
+    assertThat(interestingTimesQueue.getTotalRecords(), is(3));
   }
-  
+
   @Test
   public void canMoveAHoldShelfRequestPreventDisplacingOpenRequest()
     throws InterruptedException,
@@ -567,8 +563,8 @@ public class MoveRequestTests extends APITests {
     MalformedURLException {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
-    IndividualResource uponInterestingTimes = itemsFixture.basedUponInterestingTimes();
-    
+    IndividualResource interestingTimes = itemsFixture.basedUponInterestingTimes();
+
     IndividualResource james = usersFixture.james();
     IndividualResource jessica = usersFixture.jessica();
     IndividualResource steve = usersFixture.steve();
@@ -577,9 +573,9 @@ public class MoveRequestTests extends APITests {
 
     // james checks out basedUponSmallAngryPlanet
     loansFixture.checkOutByBarcode(smallAngryPlanet, james);
-    
-    // charlotte checks out basedUponInterestingTimes
-    loansFixture.checkOutByBarcode(uponInterestingTimes, charlotte);
+
+    // charlotte checks out basedinterestingTimes
+    loansFixture.checkOutByBarcode(interestingTimes, charlotte);
 
     // make requests for smallAngryPlanet
     IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
@@ -594,21 +590,21 @@ public class MoveRequestTests extends APITests {
     IndividualResource requestByRebecca = requestsFixture.placeHoldShelfRequest(
       smallAngryPlanet, rebecca, DateTime.now(DateTimeZone.UTC).minusHours(2));
 
-    // make requests for uponInterestingTimes
+    // make requests for interestingTimes
     IndividualResource requestByJames = requestsFixture.placeHoldShelfRequest(
-      uponInterestingTimes, james, DateTime.now(DateTimeZone.UTC).minusHours(1));
+      interestingTimes, james, DateTime.now(DateTimeZone.UTC).minusHours(1));
 
-    loansFixture.checkInByBarcode(uponInterestingTimes);
+    loansFixture.checkInByBarcode(interestingTimes);
 
-    // move jessica's hold shelf request from smallAngryPlanet to uponInterestingTimes
+    // move jessica's hold shelf request from smallAngryPlanet to interestingTimes
     IndividualResource moveRequest = requestsFixture.move(new MoveRequestBuilder(
       requestByJessica.getId(),
-      uponInterestingTimes.getId(),
+      interestingTimes.getId(),
       null
     ));
 
     assertThat("Move request should have correct item id",
-      moveRequest.getJson().getString("itemId"), is(uponInterestingTimes.getId().toString()));
+      moveRequest.getJson().getString("itemId"), is(interestingTimes.getId().toString()));
 
     // check positioning on smallAngryPlanet
     requestBySteve = requestsClient.get(requestBySteve);
@@ -626,26 +622,26 @@ public class MoveRequestTests extends APITests {
     assertThat(requestByRebecca.getJson().getString("itemId"), is(smallAngryPlanet.getId().toString()));
     retainsStoredSummaries(requestByRebecca);
 
-    // check positioning on uponInterestingTimes
+    // check positioning on interestingTimes
     requestByJames = requestsClient.get(requestByJames);
     assertThat(requestByJames.getJson().getString("status"), is(OPEN_AWAITING_PICKUP));
     assertThat(requestByJames.getJson().getInteger("position"), is(1));
-    assertThat(requestByJames.getJson().getString("itemId"), is(uponInterestingTimes.getId().toString()));
+    assertThat(requestByJames.getJson().getString("itemId"), is(interestingTimes.getId().toString()));
     retainsStoredSummaries(requestByJames);
 
     requestByJessica = requestsClient.get(requestByJessica);
     assertThat(requestByJessica.getJson().getInteger("position"), is(2));
-    assertThat(requestByJessica.getJson().getString("itemId"), is(uponInterestingTimes.getId().toString()));
+    assertThat(requestByJessica.getJson().getString("itemId"), is(interestingTimes.getId().toString()));
     retainsStoredSummaries(requestByJessica);
 
     // check item queues are correct size
     MultipleRecords<JsonObject> smallAngryPlanetQueue = requestsFixture.getQueueFor(smallAngryPlanet);
     assertThat(smallAngryPlanetQueue.getTotalRecords(), is(3));
 
-    MultipleRecords<JsonObject> uponInterestingTimesQueue = requestsFixture.getQueueFor(uponInterestingTimes);
-    assertThat(uponInterestingTimesQueue.getTotalRecords(), is(2));
+    MultipleRecords<JsonObject> interestingTimesQueue = requestsFixture.getQueueFor(interestingTimes);
+    assertThat(interestingTimesQueue.getTotalRecords(), is(2));
   }
-  
+
   @Test
   public void canMoveARecallRequestAsHoldRequest()
     throws InterruptedException,
@@ -654,8 +650,8 @@ public class MoveRequestTests extends APITests {
     MalformedURLException {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
-    IndividualResource uponInterestingTimes = itemsFixture.basedUponInterestingTimes();
-    
+    IndividualResource interestingTimes = itemsFixture.basedUponInterestingTimes();
+
     IndividualResource james = usersFixture.james();
     IndividualResource jessica = usersFixture.jessica();
     IndividualResource steve = usersFixture.steve();
@@ -664,9 +660,9 @@ public class MoveRequestTests extends APITests {
 
     // james checks out basedUponSmallAngryPlanet
     loansFixture.checkOutByBarcode(smallAngryPlanet, james);
-    
-    // charlotte checks out basedUponInterestingTimes
-    loansFixture.checkOutByBarcode(uponInterestingTimes, charlotte);
+
+    // charlotte checks out basedinterestingTimes
+    loansFixture.checkOutByBarcode(interestingTimes, charlotte);
 
     // make requests for smallAngryPlanet
     IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
@@ -681,20 +677,20 @@ public class MoveRequestTests extends APITests {
     IndividualResource requestByRebecca = requestsFixture.placeHoldShelfRequest(
       smallAngryPlanet, rebecca, DateTime.now(DateTimeZone.UTC).minusHours(1), RequestType.RECALL.getValue());
 
-    // make requests for uponInterestingTimes
+    // make requests for interestingTimes
     IndividualResource requestByJames = requestsFixture.placeHoldShelfRequest(
-      uponInterestingTimes, james, DateTime.now(DateTimeZone.UTC).minusHours(2), RequestType.RECALL.getValue());
+      interestingTimes, james, DateTime.now(DateTimeZone.UTC).minusHours(2), RequestType.RECALL.getValue());
 
-    // move rebecca's recall request from smallAngryPlanet to uponInterestingTimes
+    // move rebecca's recall request from smallAngryPlanet to interestingTimes
     IndividualResource moveRequest = requestsFixture.move(new MoveRequestBuilder(
         requestByRebecca.getId(),
-        uponInterestingTimes.getId(),
+        interestingTimes.getId(),
         RequestType.HOLD.getValue()
     ));
 
     assertThat("Move request should have correct item id",
-      moveRequest.getJson().getString("itemId"), is(uponInterestingTimes.getId().toString()));
-    
+      moveRequest.getJson().getString("itemId"), is(interestingTimes.getId().toString()));
+
     assertThat("Move request should have correct type",
         moveRequest.getJson().getString("requestType"), is(RequestType.HOLD.getValue()));
 
@@ -714,24 +710,24 @@ public class MoveRequestTests extends APITests {
     assertThat(requestByCharlotte.getJson().getString("itemId"), is(smallAngryPlanet.getId().toString()));
     retainsStoredSummaries(requestByCharlotte);
 
-    // check positioning on uponInterestingTimes
+    // check positioning on interestingTimes
     requestByJames = requestsClient.get(requestByJames);
     assertThat(requestByJames.getJson().getInteger("position"), is(1));
-    assertThat(requestByJames.getJson().getString("itemId"), is(uponInterestingTimes.getId().toString()));
+    assertThat(requestByJames.getJson().getString("itemId"), is(interestingTimes.getId().toString()));
     retainsStoredSummaries(requestByJames);
-    
+
     requestByRebecca = requestsClient.get(requestByRebecca);
     assertThat(requestByRebecca.getJson().getString(REQUEST_TYPE), is(RequestType.HOLD.getValue()));
     assertThat(requestByRebecca.getJson().getInteger("position"), is(2));
-    assertThat(requestByRebecca.getJson().getString("itemId"), is(uponInterestingTimes.getId().toString()));
+    assertThat(requestByRebecca.getJson().getString("itemId"), is(interestingTimes.getId().toString()));
     retainsStoredSummaries(requestByRebecca);
 
     // check item queues are correct size
     MultipleRecords<JsonObject> smallAngryPlanetQueue = requestsFixture.getQueueFor(smallAngryPlanet);
     assertThat(smallAngryPlanetQueue.getTotalRecords(), is(3));
 
-    MultipleRecords<JsonObject> uponInterestingTimesQueue = requestsFixture.getQueueFor(uponInterestingTimes);
-    assertThat(uponInterestingTimesQueue.getTotalRecords(), is(2));
+    MultipleRecords<JsonObject> interestingTimesQueue = requestsFixture.getQueueFor(interestingTimes);
+    assertThat(interestingTimesQueue.getTotalRecords(), is(2));
   }
 
   @Test
@@ -741,7 +737,7 @@ public class MoveRequestTests extends APITests {
       TimeoutException,
       MalformedURLException {
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
-    final IndividualResource uponInterestingTimes = itemsFixture.basedUponInterestingTimes();
+    final IndividualResource interestingTimes = itemsFixture.basedUponInterestingTimes();
     final IndividualResource steve = usersFixture.steve();
     final IndividualResource charlotte = usersFixture.charlotte();
     final IndividualResource jessica = usersFixture.jessica();
@@ -752,16 +748,16 @@ public class MoveRequestTests extends APITests {
 
     final String originalDueDate = loan.getJson().getString("dueDate");
 
-    // charlotte checks out uponInterestingTimes
-    loansFixture.checkOutByBarcode(uponInterestingTimes, charlotte);
-    
-    // jessica places recall request on uponInterestingTimes
+    // charlotte checks out interestingTimes
+    loansFixture.checkOutByBarcode(interestingTimes, charlotte);
+
+    // jessica places recall request on interestingTimes
     IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
-        uponInterestingTimes, jessica, DateTime.now(DateTimeZone.UTC), RequestType.RECALL.getValue());
+        interestingTimes, jessica, DateTime.now(DateTimeZone.UTC), RequestType.RECALL.getValue());
 
     assertThat(patronNoticesClient.getAll().size(), is(0));
 
-    // move jessica's recall request from uponInterestingTimes to smallAngryPlanet
+    // move jessica's recall request from interestingTimes to smallAngryPlanet
     IndividualResource moveRequest = requestsFixture.move(new MoveRequestBuilder(
         requestByJessica.getId(),
         smallAngryPlanet.getId(),
@@ -770,7 +766,7 @@ public class MoveRequestTests extends APITests {
 
     assertThat("Move request should have correct item id",
         moveRequest.getJson().getString("itemId"), is(smallAngryPlanet.getId().toString()));
-      
+
     assertThat("Move request should have correct type",
         moveRequest.getJson().getString("requestType"), is(RequestType.RECALL.getValue()));
 
@@ -786,7 +782,7 @@ public class MoveRequestTests extends APITests {
     assertThat("move recall request notice has not been sent",
         patronNoticesClient.getAll().size(), is(1));
   }
-  
+
   @Test
   public void moveRecallRequestWithExistingRecallsAndWithNoPolicyValuesChangesDueDateToSystemDate()
       throws InterruptedException,
@@ -794,7 +790,7 @@ public class MoveRequestTests extends APITests {
       TimeoutException,
       MalformedURLException {
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
-    final IndividualResource uponInterestingTimes = itemsFixture.basedUponInterestingTimes();
+    final IndividualResource interestingTimes = itemsFixture.basedUponInterestingTimes();
     final IndividualResource steve = usersFixture.steve();
     final IndividualResource charlotte = usersFixture.charlotte();
     final IndividualResource jessica = usersFixture.jessica();
@@ -810,7 +806,7 @@ public class MoveRequestTests extends APITests {
         smallAngryPlanet, charlotte, DateTime.now(DateTimeZone.UTC).minusHours(1), RequestType.RECALL.getValue());
 
     JsonObject storedLoan = loansStorageClient.getById(loan.getId()).getJson();
-    
+
     assertThat("due date is the original date",
         storedLoan.getString("dueDate"), not(originalDueDate));
 
@@ -819,14 +815,14 @@ public class MoveRequestTests extends APITests {
         storedLoan.getString("dueDate"), is(expectedDueDate));
 
 
-    // charlotte checks out uponInterestingTimes
-    loansFixture.checkOutByBarcode(uponInterestingTimes, charlotte);
+    // charlotte checks out interestingTimes
+    loansFixture.checkOutByBarcode(interestingTimes, charlotte);
 
-    // jessica places recall request on uponInterestingTimes
+    // jessica places recall request on interestingTimes
     IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
-        uponInterestingTimes, jessica, DateTime.now(DateTimeZone.UTC), RequestType.RECALL.getValue());
+        interestingTimes, jessica, DateTime.now(DateTimeZone.UTC), RequestType.RECALL.getValue());
 
-    // move jessica's recall request from uponInterestingTimes to smallAngryPlanet
+    // move jessica's recall request from interestingTimes to smallAngryPlanet
     IndividualResource moveRequest = requestsFixture.move(new MoveRequestBuilder(
         requestByJessica.getId(),
         smallAngryPlanet.getId(),
@@ -835,7 +831,7 @@ public class MoveRequestTests extends APITests {
 
     assertThat("Move request should have correct item id",
         moveRequest.getJson().getString("itemId"), is(smallAngryPlanet.getId().toString()));
-      
+
     assertThat("Move request should have correct type",
         moveRequest.getJson().getString("requestType"), is(RequestType.RECALL.getValue()));
 
@@ -850,7 +846,7 @@ public class MoveRequestTests extends APITests {
     assertThat("move recall request unexpectedly sent another patron notice",
         patronNotices.size(), is(2));
   }
-  
+
   @Test
   public void moveRecallRequestWithoutExistingRecallsAndWithMGDAndRDValuesChangesDueDateToRD()
       throws InterruptedException,
@@ -858,7 +854,7 @@ public class MoveRequestTests extends APITests {
       TimeoutException,
       MalformedURLException {
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
-    final IndividualResource uponInterestingTimes = itemsFixture.basedUponInterestingTimes();
+    final IndividualResource interestingTimes = itemsFixture.basedUponInterestingTimes();
     final IndividualResource steve = usersFixture.steve();
     final IndividualResource charlotte = usersFixture.charlotte();
     final IndividualResource jessica = usersFixture.jessica();
@@ -883,16 +879,16 @@ public class MoveRequestTests extends APITests {
 
     final String originalDueDate = loan.getJson().getString("dueDate");
 
-    // charlotte checks out uponInterestingTimes
-    loansFixture.checkOutByBarcode(uponInterestingTimes, charlotte);
-    
-    // jessica places recall request on uponInterestingTimes
+    // charlotte checks out interestingTimes
+    loansFixture.checkOutByBarcode(interestingTimes, charlotte);
+
+    // jessica places recall request on interestingTimes
     IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
-        uponInterestingTimes, jessica, DateTime.now(DateTimeZone.UTC), RequestType.RECALL.getValue());
+        interestingTimes, jessica, DateTime.now(DateTimeZone.UTC), RequestType.RECALL.getValue());
 
     assertThat(patronNoticesClient.getAll().size(), is(0));
 
-    // move jessica's recall request from uponInterestingTimes to smallAngryPlanet
+    // move jessica's recall request from interestingTimes to smallAngryPlanet
     IndividualResource moveRequest = requestsFixture.move(new MoveRequestBuilder(
         requestByJessica.getId(),
         smallAngryPlanet.getId(),
@@ -901,7 +897,7 @@ public class MoveRequestTests extends APITests {
 
     assertThat("Move request should have correct item id",
         moveRequest.getJson().getString("itemId"), is(smallAngryPlanet.getId().toString()));
-      
+
     assertThat("Move request should have correct type",
         moveRequest.getJson().getString("requestType"), is(RequestType.RECALL.getValue()));
 
@@ -918,7 +914,7 @@ public class MoveRequestTests extends APITests {
     assertThat("move recall request notice has not been sent",
         patronNoticesClient.getAll().size(), is(1));
   }
-  
+
   @Test
   public void moveRecallRequestWithExistingRecallsAndWithMGDAndRDValuesChangesDueDateToRD()
       throws InterruptedException,
@@ -926,7 +922,7 @@ public class MoveRequestTests extends APITests {
       TimeoutException,
       MalformedURLException {
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
-    final IndividualResource uponInterestingTimes = itemsFixture.basedUponInterestingTimes();
+    final IndividualResource interestingTimes = itemsFixture.basedUponInterestingTimes();
     final IndividualResource steve = usersFixture.steve();
     final IndividualResource charlotte = usersFixture.charlotte();
     final IndividualResource jessica = usersFixture.jessica();
@@ -965,16 +961,16 @@ public class MoveRequestTests extends APITests {
         storedLoan.getString("dueDate"), is(expectedDueDate));
 
 
-    // charlotte checks out uponInterestingTimes
-    loansFixture.checkOutByBarcode(uponInterestingTimes, charlotte);
-    
-    // jessica places recall request on uponInterestingTimes
+    // charlotte checks out interestingTimes
+    loansFixture.checkOutByBarcode(interestingTimes, charlotte);
+
+    // jessica places recall request on interestingTimes
     IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
-        uponInterestingTimes, jessica, DateTime.now(DateTimeZone.UTC), RequestType.RECALL.getValue());
+        interestingTimes, jessica, DateTime.now(DateTimeZone.UTC), RequestType.RECALL.getValue());
 
     assertThat(patronNoticesClient.getAll().size(), is(1));
 
-    // move jessica's recall request from uponInterestingTimes to smallAngryPlanet
+    // move jessica's recall request from interestingTimes to smallAngryPlanet
     IndividualResource moveRequest = requestsFixture.move(new MoveRequestBuilder(
         requestByJessica.getId(),
         smallAngryPlanet.getId(),
@@ -983,7 +979,7 @@ public class MoveRequestTests extends APITests {
 
     assertThat("Move request should have correct item id",
         moveRequest.getJson().getString("itemId"), is(smallAngryPlanet.getId().toString()));
-      
+
     assertThat("Move request should have correct type",
         moveRequest.getJson().getString("requestType"), is(RequestType.RECALL.getValue()));
 
