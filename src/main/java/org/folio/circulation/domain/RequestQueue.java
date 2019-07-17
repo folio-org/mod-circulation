@@ -59,7 +59,6 @@ public class RequestQueue {
       .filter(r -> !r.getId().equals(request.getId()))
       .collect(Collectors.toList());
     request.removePosition();
-    request.freePreviousPosition();
     orderRequests();
   }
 
@@ -91,7 +90,7 @@ public class RequestQueue {
       .collect(Collectors.toList());
   }
 
-  public Boolean positionTaken(Request request) {
+  public Boolean positionPreviouslyTaken(Request request) {
     return requests.stream()
       .anyMatch(r -> !r.getId().equals(request.getId()) &&
           (r.hasPreviousPosition() && r.getPreviousPosition().equals(request.getPosition())));

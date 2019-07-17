@@ -85,7 +85,7 @@ public class RequestQueueRepository {
       Request request = changedRequests.get(index);
 
       while (changedRequests.size() > 1
-          && (positionTaken = requestQueue.positionTaken(request))
+          && (positionTaken = requestQueue.positionPreviouslyTaken(request))
           && index + 1 < changedRequests.size()) {
         request = changedRequests.get(++index);
       }
