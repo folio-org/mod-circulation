@@ -290,7 +290,8 @@ public class FakeOkapi extends AbstractVerticle {
           newOrUpdatedRequest.getString("id")))
         .filter(request -> Objects.equals(request.getString("itemId"),
           newOrUpdatedRequest.getString("itemId")))
-        .filter(request -> Objects.equals(request.getInteger("position"),
+        .filter(request -> newOrUpdatedRequest.getInteger("position") != null && 
+          Objects.equals(request.getInteger("position"),
           newOrUpdatedRequest.getInteger("position")))
         .findAny()
         .map(r -> (Result<Object>) ValidationErrorFailure.failedValidation(

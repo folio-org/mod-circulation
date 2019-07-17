@@ -5,7 +5,6 @@ import static org.folio.circulation.domain.representations.RequestProperties.ITE
 import static org.folio.circulation.domain.representations.RequestProperties.PROXY_USER_ID;
 import static org.folio.circulation.domain.representations.RequestProperties.REQUESTER_ID;
 import static org.folio.circulation.support.JsonPropertyWriter.write;
-import static org.folio.circulation.support.Result.failed;
 import static org.folio.circulation.support.Result.of;
 import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
@@ -41,6 +40,7 @@ import org.folio.circulation.domain.ServicePointRepository;
 import org.folio.circulation.domain.UpdateItem;
 import org.folio.circulation.domain.UpdateLoan;
 import org.folio.circulation.domain.UpdateLoanActionHistory;
+import org.folio.circulation.domain.UpdateRequestQueue;
 import org.folio.circulation.domain.UpdateUponRequest;
 import org.folio.circulation.domain.UserRepository;
 import org.folio.circulation.domain.policy.LoanPolicyRepository;
@@ -225,7 +225,8 @@ public class RequestByInstanceIdResource extends Resource {
     final UpdateUponRequest updateUponRequest = new UpdateUponRequest(
         new UpdateItem(clients),
         new UpdateLoan(clients, loanRepository, loanPolicyRepository),
-        new UpdateLoanActionHistory(clients));
+        new UpdateLoanActionHistory(clients),
+        UpdateRequestQueue.using(clients));
 
     final CreateRequestService createRequestService = new CreateRequestService(
         RequestRepository.using(clients),

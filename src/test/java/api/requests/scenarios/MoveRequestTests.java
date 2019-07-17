@@ -299,6 +299,95 @@ public class MoveRequestTests extends APITests {
     MultipleRecords<JsonObject> uponInterestingTimesQueue = requestsFixture.getQueueFor(uponInterestingTimes);
     assertThat(uponInterestingTimesQueue.getTotalRecords(), is(2));
   }
+  
+  @Test
+  public void canMoveTwoRequests()
+    throws InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    MalformedURLException {
+
+    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    IndividualResource uponInterestingTimes = itemsFixture.basedUponInterestingTimes();
+
+    IndividualResource james = usersFixture.james();
+    IndividualResource jessica = usersFixture.jessica();
+    IndividualResource steve = usersFixture.steve();
+    IndividualResource charlotte = usersFixture.charlotte();
+
+    // james checks out basedUponSmallAngryPlanet
+    loansFixture.checkOutByBarcode(smallAngryPlanet, james);
+
+    // charlotte checks out basedUponInterestingTimes
+    loansFixture.checkOutByBarcode(uponInterestingTimes, charlotte);
+
+    // make requests for smallAngryPlanet
+    IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
+      smallAngryPlanet, jessica, DateTime.now(DateTimeZone.UTC).minusHours(2), RequestType.RECALL.getValue());
+
+    IndividualResource requestBySteve = requestsFixture.placeHoldShelfRequest(
+      smallAngryPlanet, steve, DateTime.now(DateTimeZone.UTC).minusHours(1), RequestType.RECALL.getValue());
+
+    // check positioning on smallAngryPlanet before moves
+    requestByJessica = requestsClient.get(requestByJessica);
+    assertThat(requestByJessica.getJson().getInteger("position"), is(1));
+    assertThat(requestByJessica.getJson().getString("itemId"), is(smallAngryPlanet.getId().toString()));
+    retainsStoredSummaries(requestByJessica);
+
+    requestBySteve = requestsClient.get(requestBySteve);
+    assertThat(requestBySteve.getJson().getInteger("position"), is(2));
+    assertThat(requestBySteve.getJson().getString("itemId"), is(smallAngryPlanet.getId().toString()));
+    retainsStoredSummaries(requestBySteve);
+
+    // move steve's recall request from smallAngryPlanet to uponInterestingTimes
+    IndividualResource firstMoveRequest = requestsFixture.move(new MoveRequestBuilder(
+        requestBySteve.getId(),
+        uponInterestingTimes.getId(),
+        null
+    ));
+
+    assertThat("Move request should have correct item id",
+        firstMoveRequest.getJson().getString("itemId"), is(uponInterestingTimes.getId().toString()));
+
+    // check positioning after first move
+    requestByJessica = requestsClient.get(requestByJessica);
+    assertThat(requestByJessica.getJson().getInteger("position"), is(1));
+    assertThat(requestByJessica.getJson().getString("itemId"), is(smallAngryPlanet.getId().toString()));
+    retainsStoredSummaries(requestByJessica);
+
+    requestBySteve = requestsClient.get(requestBySteve);
+    assertThat(requestBySteve.getJson().getInteger("position"), is(1));
+    assertThat(requestBySteve.getJson().getString("itemId"), is(uponInterestingTimes.getId().toString()));
+    retainsStoredSummaries(requestBySteve);
+
+    // move jessica's recall request from smallAngryPlanet to uponInterestingTimes
+    IndividualResource secondMoveRequest = requestsFixture.move(new MoveRequestBuilder(
+        requestByJessica.getId(),
+        uponInterestingTimes.getId(),
+        null
+    ));
+
+    assertThat("Move request should have correct item id",
+        secondMoveRequest.getJson().getString("itemId"), is(uponInterestingTimes.getId().toString()));
+
+    // check positioning after second move
+    requestByJessica = requestsClient.get(requestByJessica);
+    assertThat(requestByJessica.getJson().getInteger("position"), is(1));
+    assertThat(requestByJessica.getJson().getString("itemId"), is(uponInterestingTimes.getId().toString()));
+    retainsStoredSummaries(requestByJessica);
+
+    requestBySteve = requestsClient.get(requestBySteve);
+    assertThat(requestBySteve.getJson().getInteger("position"), is(2));
+    assertThat(requestBySteve.getJson().getString("itemId"), is(uponInterestingTimes.getId().toString()));
+    retainsStoredSummaries(requestBySteve);
+
+    // check item queues are correct size
+    MultipleRecords<JsonObject> smallAngryPlanetQueue = requestsFixture.getQueueFor(smallAngryPlanet);
+    assertThat(smallAngryPlanetQueue.getTotalRecords(), is(0));
+
+    MultipleRecords<JsonObject> uponInterestingTimesQueue = requestsFixture.getQueueFor(uponInterestingTimes);
+    assertThat(uponInterestingTimesQueue.getTotalRecords(), is(2));
+  }
 
   @Test
   public void canMoveAHoldShelfRequestLeavingEmptyQueueAndItemStatusChange()
@@ -670,6 +759,8 @@ public class MoveRequestTests extends APITests {
     IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
         uponInterestingTimes, jessica, DateTime.now(DateTimeZone.UTC), RequestType.RECALL.getValue());
 
+    assertThat(patronNoticesClient.getAll().size(), is(0));
+
     // move jessica's recall request from uponInterestingTimes to smallAngryPlanet
     IndividualResource moveRequest = requestsFixture.move(new MoveRequestBuilder(
         requestByJessica.getId(),
@@ -692,10 +783,8 @@ public class MoveRequestTests extends APITests {
     assertThat("due date is not the current date",
         storedLoan.getString("dueDate"), is(expectedDueDate));
 
-    List<JsonObject> patronNotices = patronNoticesClient.getAll();
-
     assertThat("move recall request notice has not been sent",
-        patronNotices.size(), is(2));
+        patronNoticesClient.getAll().size(), is(1));
   }
   
   @Test
@@ -801,6 +890,8 @@ public class MoveRequestTests extends APITests {
     IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
         uponInterestingTimes, jessica, DateTime.now(DateTimeZone.UTC), RequestType.RECALL.getValue());
 
+    assertThat(patronNoticesClient.getAll().size(), is(0));
+
     // move jessica's recall request from uponInterestingTimes to smallAngryPlanet
     IndividualResource moveRequest = requestsFixture.move(new MoveRequestBuilder(
         requestByJessica.getId(),
@@ -824,10 +915,8 @@ public class MoveRequestTests extends APITests {
     assertThat("due date is not the recall due date (2 months)",
         storedLoan.getString("dueDate"), is(expectedDueDate));
 
-    List<JsonObject> patronNotices = patronNoticesClient.getAll();
-
     assertThat("move recall request notice has not been sent",
-        patronNotices.size(), is(2));
+        patronNoticesClient.getAll().size(), is(1));
   }
   
   @Test
@@ -861,7 +950,7 @@ public class MoveRequestTests extends APITests {
       smallAngryPlanet, steve, DateTime.now(DateTimeZone.UTC));
 
     final String originalDueDate = loan.getJson().getString("dueDate");
-    
+
     // charlotte places recall request on smallAngryPlanet
     requestsFixture.placeHoldShelfRequest(
         smallAngryPlanet, charlotte, DateTime.now(DateTimeZone.UTC).minusHours(1), RequestType.RECALL.getValue());
@@ -883,6 +972,8 @@ public class MoveRequestTests extends APITests {
     IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
         uponInterestingTimes, jessica, DateTime.now(DateTimeZone.UTC), RequestType.RECALL.getValue());
 
+    assertThat(patronNoticesClient.getAll().size(), is(1));
+
     // move jessica's recall request from uponInterestingTimes to smallAngryPlanet
     IndividualResource moveRequest = requestsFixture.move(new MoveRequestBuilder(
         requestByJessica.getId(),
@@ -901,10 +992,8 @@ public class MoveRequestTests extends APITests {
     assertThat("due date has changed",
         storedLoan.getString("dueDate"), is(expectedDueDate));
 
-    List<JsonObject> patronNotices = patronNoticesClient.getAll();
-
     assertThat("move recall request unexpectedly sent another patron notice",
-        patronNotices.size(), is(2));
+        patronNoticesClient.getAll().size(), is(2));
   }
 
   private void retainsStoredSummaries(IndividualResource request) {

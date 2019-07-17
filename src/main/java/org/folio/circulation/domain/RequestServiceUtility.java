@@ -22,11 +22,6 @@ public class RequestServiceUtility {
 
   }
 
-  static RequestAndRelatedRecords setRequestQueuePosition(RequestAndRelatedRecords requestAndRelatedRecords) {
-    requestAndRelatedRecords.getRequestQueue().add(requestAndRelatedRecords.getRequest());
-    return requestAndRelatedRecords;
-  }
-
   static Result<RequestAndRelatedRecords> refuseWhenItemDoesNotExist(
     RequestAndRelatedRecords requestAndRelatedRecords) {
 
