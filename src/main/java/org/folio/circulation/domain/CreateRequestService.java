@@ -37,11 +37,11 @@ public class CreateRequestService {
         .after(requestLoanValidator::refuseWhenUserHasAlreadyBeenLoanedItem)
         .thenComposeAsync(r -> r.after(requestPolicyRepository::lookupRequestPolicy))
         .thenApply(r -> r.next(RequestServiceUtility::refuseWhenRequestCannotBeFulfilled))
-        .thenApply(r -> r.map(RequestServiceUtility::setRequestQueuePosition))
         .thenComposeAsync(r -> r.after(updateUponRequest.updateItem::onRequestCreationOrMove))
         .thenComposeAsync(r -> r.after(updateUponRequest.updateLoanActionHistory::onRequestCreationOrMove))
         .thenComposeAsync(r -> r.after(updateUponRequest.updateLoan::onRequestCreationOrMove))
         .thenComposeAsync(r -> r.after(requestRepository::create))
+        .thenComposeAsync(r -> r.after(updateUponRequest.updateRequestQueue::onCreate))
         .thenApply(r -> r.next(requestNoticeSender::sendNoticeOnRequestCreated));
   }
 }

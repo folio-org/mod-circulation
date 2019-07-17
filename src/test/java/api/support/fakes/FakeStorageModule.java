@@ -1,7 +1,6 @@
 package api.support.fakes;
 
 import static java.lang.String.format;
-import static org.folio.circulation.support.Result.failed;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 import static org.folio.circulation.support.results.CommonFailures.failedDueToServerError;
 
@@ -15,13 +14,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.support.CreatedJsonResponseResult;
 import org.folio.circulation.support.Result;
-import org.folio.circulation.support.ServerErrorFailure;
 import org.folio.circulation.support.http.server.ClientErrorResponse;
 import org.folio.circulation.support.http.server.SuccessResponse;
 import org.folio.circulation.support.http.server.ValidationError;
@@ -55,6 +54,7 @@ public class FakeStorageModule extends AbstractVerticle {
   private final Collection<String> disallowedProperties;
   private final Boolean includeChangeMetadata;
   private final String changeMetadataPropertyName = "metadata";
+  private final BiFunction<Collection<JsonObject>, JsonObject, Result<Object>> constraint;
 
   public static Stream<String> getQueries() {
     return queries.stream();
@@ -70,7 +70,8 @@ public class FakeStorageModule extends AbstractVerticle {
     String recordTypeName,
     Collection<String> uniqueProperties,
     Collection<String> disallowedProperties,
-    Boolean includeChangeMetadata) {
+    Boolean includeChangeMetadata,
+    BiFunction<Collection<JsonObject>, JsonObject, Result<Object>> constraint) {
 
     this.rootPath = rootPath;
     this.collectionPropertyName = collectionPropertyName;
@@ -80,6 +81,7 @@ public class FakeStorageModule extends AbstractVerticle {
     this.recordTypeName = recordTypeName;
     this.uniqueProperties = uniqueProperties;
     this.disallowedProperties = disallowedProperties;
+    this.constraint = constraint;
     this.includeChangeMetadata = includeChangeMetadata;
 
     storedResourcesByTenant = new HashMap<>();
@@ -118,33 +120,52 @@ public class FakeStorageModule extends AbstractVerticle {
   }
 
   private void create(RoutingContext routingContext) {
+      WebContext context = new WebContext(routingContext);
 
-    WebContext context = new WebContext(routingContext);
+      JsonObject body = getJsonFromBody(routingContext);
 
-    JsonObject body = getJsonFromBody(routingContext);
+      String id = body.getString("id", UUID.randomUUID().toString());
 
-    String id = body.getString("id", UUID.randomUUID().toString());
+      body.put("id", id);
 
-    body.put("id", id);
+      if(includeChangeMetadata) {
+        final String fakeUserId = APITestContext.getUserId();
+        body.put(changeMetadataPropertyName, new JsonObject()
+          .put("createdDate", new DateTime(DateTimeZone.UTC)
+            .toString(ISODateTimeFormat.dateTime()))
+          .put("createdByUserId", fakeUserId)
+          .put("updatedDate", new DateTime(DateTimeZone.UTC)
+            .toString(ISODateTimeFormat.dateTime()))
+          .put("updatedByUserId", fakeUserId));
+      }
 
-    if(includeChangeMetadata) {
-      final String fakeUserId = APITestContext.getUserId();
-      body.put(changeMetadataPropertyName, new JsonObject()
-        .put("createdDate", new DateTime(DateTimeZone.UTC)
-          .toString(ISODateTimeFormat.dateTime()))
-        .put("createdByUserId", fakeUserId)
-        .put("updatedDate", new DateTime(DateTimeZone.UTC)
-          .toString(ISODateTimeFormat.dateTime()))
-        .put("updatedByUserId", fakeUserId));
+      final Map<String, JsonObject> existingRecords = getResourcesForTenant(context);
+
+      if (constraint == null) {
+        existingRecords.put(id, body);
+
+        System.out.println(
+          format("Created %s resource: %s", recordTypeName, id));
+
+        new CreatedJsonResponseResult(body, null)
+          .writeTo(routingContext.response());
+      }
+    else {
+      final Result<Object> checkConstraint = constraint.apply(existingRecords.values(), body);
+
+      if (checkConstraint.succeeded()) {
+        existingRecords.put(id, body);
+
+        System.out.println(
+          format("Created %s resource: %s", recordTypeName, id));
+
+        new CreatedJsonResponseResult(body, null)
+          .writeTo(routingContext.response());
+      }
+      else {
+        checkConstraint.cause().writeTo(routingContext.response());
+      }
     }
-
-    getResourcesForTenant(context).put(id, body);
-
-    System.out.println(
-      format("Created %s resource: %s", recordTypeName, id));
-
-    new CreatedJsonResponseResult(body, null)
-      .writeTo(routingContext.response());
   }
 
   private void replace(RoutingContext routingContext) {
@@ -174,8 +195,21 @@ public class FakeStorageModule extends AbstractVerticle {
         body.put(changeMetadataPropertyName, updatedChangeMetadata);
       }
 
-      resourcesForTenant.replace(id, body);
-      SuccessResponse.noContent(routingContext.response());
+      if (constraint == null) {
+        resourcesForTenant.replace(id, body);
+        SuccessResponse.noContent(routingContext.response());
+      }
+      else {
+        final Result<Object> checkConstraint = constraint.apply(resourcesForTenant.values(), body);
+
+        if (checkConstraint.succeeded()) {
+          resourcesForTenant.replace(id, body);
+          SuccessResponse.noContent(routingContext.response());
+        }
+        else {
+          checkConstraint.cause().writeTo(routingContext.response());
+        }
+      }
     }
     else {
       System.out.println(

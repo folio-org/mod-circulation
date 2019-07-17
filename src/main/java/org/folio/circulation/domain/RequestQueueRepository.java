@@ -6,7 +6,7 @@ import static org.folio.circulation.support.CqlQuery.exactMatchAny;
 import static org.folio.circulation.support.CqlSortBy.ascending;
 import static org.folio.circulation.support.Result.succeeded;
 
-import java.util.Collection;
+import java.util.ArrayList;
 import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.support.Clients;
@@ -64,7 +64,7 @@ public class RequestQueueRepository {
   CompletableFuture<Result<RequestQueue>> updateRequestsWithChangedPositions(
     RequestQueue requestQueue) {
 
-    final Collection<Request> changedRequests = requestQueue.getRequestsWithChangedPosition();
+    final ArrayList<Request> changedRequests = new ArrayList<>(requestQueue.getRequestsWithChangedPosition());
 
     if(changedRequests.isEmpty()) {
       return completedFuture(succeeded(requestQueue));
@@ -77,11 +77,28 @@ public class RequestQueueRepository {
     //Need an initial future to hang off
     CompletableFuture<Result<Request>> requestUpdated = completedFuture(succeeded(null));
 
-    for (Request request : changedRequests) {
-      requestUpdated = requestUpdated.thenComposeAsync(
-        r -> r.after(notUsed -> requestRepository.update(request)));
-    }
+    boolean positionTaken = false;
 
+    while (!changedRequests.isEmpty()) {
+      int index = 0;
+
+      Request request = changedRequests.get(index);
+
+      while (changedRequests.size() > 1
+          && (positionTaken = requestQueue.positionPreviouslyTaken(request))
+          && index + 1 < changedRequests.size()) {
+        request = changedRequests.get(++index);
+      }
+
+      if (!positionTaken) {
+        CompletableFuture<Result<Request>> updateFuture =
+          requestRepository.update(request);
+        requestUpdated = requestUpdated.thenComposeAsync(r ->
+          r.after(notUsed -> updateFuture));
+        request.freePreviousPosition();
+        changedRequests.remove(index);
+      }
+    }
     return requestUpdated.thenApply(r -> r.map(notUsed -> requestQueue));
   }
 }
