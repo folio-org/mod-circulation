@@ -23,6 +23,7 @@ public class JsonScheduledNoticeMapper {
   private static final String LOAN_ID = "loanId";
   private static final String REQUEST_ID = "requestId";
   private static final String NEXT_RUN_TIME = "nextRunTime";
+  private static final String TRIGGERING_EVENT = "nextRunTime";
   private static final String NOTICE_CONFIG = "noticeConfig";
   private static final String TIMING = "timing";
   private static final String RECURRING_PERIOD = "recurringPeriod";
@@ -39,6 +40,7 @@ public class JsonScheduledNoticeMapper {
       .map(b -> b.setLoanId(getProperty(jsonObject, LOAN_ID)))
       .map(b -> b.setRequestId(getProperty(jsonObject, REQUEST_ID)))
       .map(b -> b.setNextRunTime(getDateTimeProperty(jsonObject, NEXT_RUN_TIME)))
+      .map(b -> b.setTriggeringEvent(getProperty(jsonObject, TRIGGERING_EVENT)))
       .combine(mapJsonToConfig(jsonObject.getJsonObject(NOTICE_CONFIG)),
         ScheduledNoticeBuilder::setNoticeConfig)
       .map(ScheduledNoticeBuilder::build);
@@ -74,6 +76,7 @@ public class JsonScheduledNoticeMapper {
       .put(ID, notice.getId())
       .put(LOAN_ID, notice.getLoanId())
       .put(REQUEST_ID, notice.getRequestId())
+      .put(TRIGGERING_EVENT, notice.getTriggeringEvent())
       .put(NEXT_RUN_TIME, notice.getNextRunTime().withZone(DateTimeZone.UTC).toString())
       .put(NOTICE_CONFIG, mapConfigToJson(notice.getConfiguration()));
   }
