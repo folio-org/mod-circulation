@@ -107,28 +107,13 @@ public class UpdateItem {
         loan.getItem()));
   }
 
-  CompletableFuture<Result<RequestAndRelatedRecords>> onRequestCreationOrMove(
+  CompletableFuture<Result<RequestAndRelatedRecords>> onRequestCreateOrUpdate(
     RequestAndRelatedRecords requestAndRelatedRecords) {
 
-    return of(() -> itemStatusOnRequestCreationOrMove(requestAndRelatedRecords))
+    return of(() -> itemStatusOnRequestCreateOrUpdate(requestAndRelatedRecords))
       .after(prospectiveStatus -> updateItemWhenNotSameStatus(prospectiveStatus,
           requestAndRelatedRecords.getRequest().getItem()))
       .thenApply(itemResult -> itemResult.map(requestAndRelatedRecords::withItem));
-  }
-
-  CompletableFuture<Result<RequestAndRelatedRecords>> onRequestQueueChanged(
-    RequestAndRelatedRecords requestAndRelatedRecords) {
-
-    RequestQueue requestQueue = requestAndRelatedRecords.getRequestQueue();
-
-    Item item = requestAndRelatedRecords.getRequest().getItem();
-
-    if (item.getStatus().equals(PAGED) && requestQueue.getRequests().isEmpty()) {
-      return updateItemWhenNotSameStatus(AVAILABLE, item)
-        .thenApply(itemResult -> itemResult.map(requestAndRelatedRecords::withItem));
-    }
-
-    return completedFuture(succeeded(requestAndRelatedRecords));
   }
 
   private CompletableFuture<Result<LoanAndRelatedRecords>> updateItemStatusOnCheckOut(
@@ -168,14 +153,20 @@ public class UpdateItem {
     return completedFuture(succeeded(previousResult));
   }
 
-  private ItemStatus itemStatusOnRequestCreationOrMove(
+  private ItemStatus itemStatusOnRequestCreateOrUpdate(
     RequestAndRelatedRecords requestAndRelatedRecords) {
 
     RequestType type = requestAndRelatedRecords.getRequest().getRequestType();
 
-    return type == RequestType.PAGE
-      ? PAGED
-      : requestAndRelatedRecords.getRequest().getItem().getStatus();
+    RequestQueue requestQueue = requestAndRelatedRecords.getRequestQueue();
+
+    Item item = requestAndRelatedRecords.getRequest().getItem();
+
+    return (item.getStatus().equals(PAGED) && requestQueue.getRequests().isEmpty())
+      ? AVAILABLE
+      : type.equals(RequestType.PAGE)
+        ? PAGED
+        : item.getStatus();
   }
 
   private ItemStatus itemStatusOnLoanUpdate(
