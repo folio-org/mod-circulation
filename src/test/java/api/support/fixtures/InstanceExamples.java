@@ -54,7 +54,7 @@ public class InstanceExamples {
       .withContributor("Nolan, Christopher", personalContributorNameTypeId);
   }
   
-  static InstanceBuilder basedUponOneOfHunderBookInstances(
+  static InstanceBuilder basedUponOneOfHundredBookInstances(
     UUID booksInstanceTypeId,
     UUID personalContributorNameTypeId,
     int index) {
