@@ -230,7 +230,11 @@ public class RequestCollectionResource extends CollectionResource {
         UpdateRequestQueue.using(clients));
     
     final MoveRequestProcessAdapter moveRequestProcessAdapter = 
-        new MoveRequestProcessAdapter(itemRepository, loanRepository, requestQueueRepository);
+        new MoveRequestProcessAdapter(
+          itemRepository,
+          loanRepository,
+          requestRepository,
+          requestQueueRepository);
 
     final MoveRequestService moveRequestService = new MoveRequestService(
         RequestRepository.using(clients),

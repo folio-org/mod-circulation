@@ -70,26 +70,20 @@ public class RequestQueueRepository {
       return completedFuture(succeeded(requestQueue));
     }
 
-    //Chain updating the requests together in sequence
-    //Have to be updated one at a time so as to avoid position clashes
-    //(Which might be a constraint in storage)
-
-    //Need an initial future to hang off
     CompletableFuture<Result<Request>> requestUpdated = completedFuture(succeeded(null));
 
+    int index;
+    Request request;
     boolean positionTaken = false;
 
     while (!changedRequests.isEmpty()) {
-      int index = 0;
-
-      Request request = changedRequests.get(index);
-
+      index = 0;
+      request = changedRequests.get(index);
       while (changedRequests.size() > 1
           && (positionTaken = requestQueue.positionPreviouslyTaken(request))
           && index + 1 < changedRequests.size()) {
         request = changedRequests.get(++index);
       }
-
       if (!positionTaken) {
         CompletableFuture<Result<Request>> updateFuture =
           requestRepository.update(request);

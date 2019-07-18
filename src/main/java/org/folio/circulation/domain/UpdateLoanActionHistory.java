@@ -33,10 +33,10 @@ public class UpdateLoanActionHistory {
   }
 
   //Updates the single open loan for the item related to a request
-  CompletableFuture<Result<RequestAndRelatedRecords>> onRequestCreationOrMove(
+  CompletableFuture<Result<RequestAndRelatedRecords>> onRequestCreateOrUpdate(
     RequestAndRelatedRecords requestAndRelatedRecords) {
 
-    String action = requestAndRelatedRecords.getRequest().actionOnCreationOrMove();
+    String action = requestAndRelatedRecords.getRequest().actionOnCreateOrUpdate();
 
     String itemStatus = requestAndRelatedRecords.getRequest().getItem()
       .getStatus().getValue();
