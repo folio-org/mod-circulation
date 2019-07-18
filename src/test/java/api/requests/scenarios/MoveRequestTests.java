@@ -5,16 +5,12 @@ import static api.support.builders.ItemBuilder.PAGED;
 import static api.support.builders.RequestBuilder.OPEN_AWAITING_PICKUP;
 import static api.support.matchers.ItemStatusCodeMatcher.hasItemStatus;
 import static java.util.Collections.singletonList;
-import static junit.framework.TestCase.assertTrue;
 import static org.folio.circulation.domain.representations.RequestProperties.REQUEST_TYPE;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 
 import java.net.MalformedURLException;
-import java.time.Clock;
-import java.time.Instant;
-import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -25,7 +21,6 @@ import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.RequestStatus;
 import org.folio.circulation.domain.RequestType;
-import org.folio.circulation.domain.RequestTypeItemStatusWhiteList;
 import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.support.ClockManager;
 import org.folio.circulation.support.http.client.IndividualResource;
@@ -34,7 +29,6 @@ import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.format.ISODateTimeFormat;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
 import api.support.APITests;
@@ -57,20 +51,8 @@ import io.vertx.core.json.JsonObject;
  */
 public class MoveRequestTests extends APITests {
   private static final String RECALL_TO_LOANEE = "Recall loanee";
-  private static Clock clock;
 
   private NoticePolicyBuilder noticePolicy;
-
-  @BeforeClass
-  public static void setUpBeforeClass() {
-    clock = Clock.fixed(Instant.now(), ZoneOffset.UTC);
-  }
-
-  @Before
-  public void setUp() {
-    // reset the clock before each test (just in case)
-    ClockManager.getClockManager().setClock(clock);
-  }
 
   @Before
   public void setUpNoticePolicy() throws MalformedURLException, InterruptedException, ExecutionException, TimeoutException {
@@ -395,28 +377,26 @@ public class MoveRequestTests extends APITests {
     TimeoutException,
     MalformedURLException {
 
-    IndividualResource instance = instancesFixture.basedUponDunkirk();
-    IndividualResource holdings = holdingsFixture.defaultWithHoldings(instance.getId());
+    IndividualResource itemCopyA = itemsFixture.basedUponSmallAngryPlanet();
+    IndividualResource itemCopyB = itemsFixture.basedUponSmallAngryPlanet();
 
-    IndividualResource itemCopyA = itemsFixture.basedUponDunkirkWithCustomHoldingAndLocation(holdings.getId(), null);
-    IndividualResource itemCopyB = itemsFixture.basedUponDunkirkWithCustomHoldingAndLocation(holdings.getId(), null);
-
-    IndividualResource james = usersFixture.james();
-    IndividualResource jessica = usersFixture.jessica();
-    IndividualResource steve = usersFixture.steve();
-    IndividualResource charlotte = usersFixture.charlotte();
-    
     assertThat(itemCopyA.getJson().getJsonObject("status").getString("name"), is(ItemStatus.AVAILABLE.getValue()));
     assertThat(itemCopyB.getJson().getJsonObject("status").getString("name"), is(ItemStatus.AVAILABLE.getValue()));
+    
+    IndividualResource james = usersFixture.james();
 
     IndividualResource itemCopyALoan = loansFixture.checkOutByBarcode(itemCopyA, james);
 
-    assertTrue(RequestTypeItemStatusWhiteList.canCreateRequestForItem(ItemStatus.AVAILABLE, RequestType.PAGE));
+    assertThat(itemCopyALoan.getJson().getString("userId"), is(james.getId().toString()));
+    assertThat(itemCopyALoan.getJson().getString("itemId"), is(itemCopyA.getId().toString()));
 
     itemCopyA = itemsClient.get(itemCopyA);
     assertThat(itemCopyA.getJson().getJsonObject("status").getString("name"), is(ItemStatus.CHECKED_OUT.getValue()));
-    
-    // NOTE: this request fails sporadically
+
+    IndividualResource charlotte = usersFixture.charlotte();
+    IndividualResource jessica = usersFixture.jessica();
+    IndividualResource steve = usersFixture.steve();
+
     IndividualResource pageRequestForItemCopyB = requestsFixture.placeHoldShelfRequest(
       itemCopyB, jessica, DateTime.now(DateTimeZone.UTC).minusHours(3), RequestType.PAGE.getValue());
 
