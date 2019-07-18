@@ -1,5 +1,6 @@
 package org.folio.circulation.domain.notice.schedule;
 
+import static java.util.Arrays.asList;
 import static java.util.function.Function.identity;
 import static org.folio.circulation.domain.notice.schedule.JsonScheduledNoticeMapper.mapToJson;
 import static org.folio.circulation.support.CqlSortBy.ascending;
@@ -49,6 +50,15 @@ public class ScheduledNoticesRepository {
     DateTime systemTime, int pageLimit) {
 
     return CqlQuery.lessThan("nextRunTime", systemTime.withZone(DateTimeZone.UTC))
+      .map(cqlQuery -> cqlQuery.sortBy(ascending("nextRunTime")))
+      .after(query -> findBy(query, pageLimit));
+  }
+
+  public CompletableFuture<Result<MultipleRecords<ScheduledNotice>>> findRequestNoticesToSend(
+    DateTime systemTime, int pageLimit) {
+
+    return CqlQuery.lessThan("nextRunTime", systemTime.withZone(DateTimeZone.UTC))
+      .combine(CqlQuery.exactMatchAny("triggeringEvent", asList("Hold request", "Request expiration")), CqlQuery::and)
       .map(cqlQuery -> cqlQuery.sortBy(ascending("nextRunTime")))
       .after(query -> findBy(query, pageLimit));
   }
