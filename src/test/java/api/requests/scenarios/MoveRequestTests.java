@@ -5,6 +5,7 @@ import static api.support.builders.ItemBuilder.PAGED;
 import static api.support.builders.RequestBuilder.OPEN_AWAITING_PICKUP;
 import static api.support.matchers.ItemStatusCodeMatcher.hasItemStatus;
 import static java.util.Collections.singletonList;
+import static junit.framework.TestCase.assertTrue;
 import static org.folio.circulation.domain.representations.RequestProperties.REQUEST_TYPE;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
@@ -24,6 +25,7 @@ import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.RequestStatus;
 import org.folio.circulation.domain.RequestType;
+import org.folio.circulation.domain.RequestTypeItemStatusWhiteList;
 import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.support.ClockManager;
 import org.folio.circulation.support.http.client.IndividualResource;
@@ -403,9 +405,18 @@ public class MoveRequestTests extends APITests {
     IndividualResource jessica = usersFixture.jessica();
     IndividualResource steve = usersFixture.steve();
     IndividualResource charlotte = usersFixture.charlotte();
+    
+    assertThat(itemCopyA.getJson().getJsonObject("status").getString("name"), is(ItemStatus.AVAILABLE.getValue()));
+    assertThat(itemCopyB.getJson().getJsonObject("status").getString("name"), is(ItemStatus.AVAILABLE.getValue()));
 
     IndividualResource itemCopyALoan = loansFixture.checkOutByBarcode(itemCopyA, james);
 
+    assertTrue(RequestTypeItemStatusWhiteList.canCreateRequestForItem(ItemStatus.AVAILABLE, RequestType.PAGE));
+
+    itemCopyA = itemsClient.get(itemCopyA);
+    assertThat(itemCopyA.getJson().getJsonObject("status").getString("name"), is(ItemStatus.CHECKED_OUT.getValue()));
+    
+    // NOTE: this request fails sporadically
     IndividualResource pageRequestForItemCopyB = requestsFixture.placeHoldShelfRequest(
       itemCopyB, jessica, DateTime.now(DateTimeZone.UTC).minusHours(3), RequestType.PAGE.getValue());
 
