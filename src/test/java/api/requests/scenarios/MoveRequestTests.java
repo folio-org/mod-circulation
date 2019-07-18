@@ -22,6 +22,7 @@ import java.util.concurrent.TimeoutException;
 
 import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.domain.MultipleRecords;
+import org.folio.circulation.domain.RequestStatus;
 import org.folio.circulation.domain.RequestType;
 import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.support.ClockManager;
@@ -417,8 +418,13 @@ public class MoveRequestTests extends APITests {
     assertThat(requestsFixture.getQueueFor(itemCopyA).getTotalRecords(), is(1));
     assertThat(requestsFixture.getQueueFor(itemCopyB).getTotalRecords(), is(2));
 
+    assertThat(pageRequestForItemCopyB.getJson().getString("status"), is(RequestStatus.OPEN_NOT_YET_FILLED.getValue()));
     assertThat(pageRequestForItemCopyB.getJson().getJsonObject("item").getString("status"), is(ItemStatus.PAGED.getValue()));
+    
+    assertThat(recallRequestForItemCopyB.getJson().getString("status"), is(RequestStatus.OPEN_NOT_YET_FILLED.getValue()));
     assertThat(recallRequestForItemCopyB.getJson().getJsonObject("item").getString("status"), is(ItemStatus.PAGED.getValue()));
+    
+    assertThat(holdRequestForItemCopyA.getJson().getString("status"), is(RequestStatus.OPEN_NOT_YET_FILLED.getValue()));
     assertThat(holdRequestForItemCopyA.getJson().getJsonObject("item").getString("status"), is(ItemStatus.CHECKED_OUT.getValue()));
 
     IndividualResource moveRecallRequestToItemCopyA = requestsFixture.move(new MoveRequestBuilder(
@@ -431,18 +437,24 @@ public class MoveRequestTests extends APITests {
     assertThat(requestsFixture.getQueueFor(itemCopyB).getTotalRecords(), is(1));
 
     assertThat(moveRecallRequestToItemCopyA.getJson().getString("itemId"), is(itemCopyA.getId().toString()));
+    assertThat(moveRecallRequestToItemCopyA.getJson().getString("requesterId"), is(steve.getId().toString()));
+    assertThat(moveRecallRequestToItemCopyA.getJson().getString("status"), is(RequestStatus.OPEN_NOT_YET_FILLED.getValue()));
     assertThat(moveRecallRequestToItemCopyA.getJson().getJsonObject("item").getString("status"), is(ItemStatus.CHECKED_OUT.getValue()));
     assertThat(moveRecallRequestToItemCopyA.getJson().getInteger("position"), is(1));
     retainsStoredSummaries(moveRecallRequestToItemCopyA);
 
     holdRequestForItemCopyA = requestsClient.get(holdRequestForItemCopyA);
     assertThat(holdRequestForItemCopyA.getJson().getString("itemId"), is(itemCopyA.getId().toString()));
+    assertThat(holdRequestForItemCopyA.getJson().getString("requesterId"), is(charlotte.getId().toString()));
+    assertThat(holdRequestForItemCopyA.getJson().getString("status"), is(RequestStatus.OPEN_NOT_YET_FILLED.getValue()));
     assertThat(holdRequestForItemCopyA.getJson().getJsonObject("item").getString("status"), is(ItemStatus.CHECKED_OUT.getValue()));
     assertThat(holdRequestForItemCopyA.getJson().getInteger("position"), is(2));
     retainsStoredSummaries(holdRequestForItemCopyA);
 
     pageRequestForItemCopyB = requestsClient.get(pageRequestForItemCopyB);
     assertThat(pageRequestForItemCopyB.getJson().getString("itemId"), is(itemCopyB.getId().toString()));
+    assertThat(pageRequestForItemCopyB.getJson().getString("requesterId"), is(jessica.getId().toString()));
+    assertThat(pageRequestForItemCopyB.getJson().getString("status"), is(RequestStatus.OPEN_NOT_YET_FILLED.getValue()));
     assertThat(pageRequestForItemCopyB.getJson().getJsonObject("item").getString("status"), is(ItemStatus.PAGED.getValue()));
     assertThat(pageRequestForItemCopyB.getJson().getInteger("position"), is(1));
     retainsStoredSummaries(pageRequestForItemCopyB);
