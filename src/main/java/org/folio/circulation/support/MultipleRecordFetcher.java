@@ -76,7 +76,7 @@ public class MultipleRecordFetcher<T> {
 
   private CompletableFuture<Result<MultipleRecords<T>>> findByBatchQueries(
       List<Result<CqlQuery>> queries) {
-    // NOTE: query limit is max value to ensure all records are returned, if 
+    // NOTE: query limit is max value to ensure all records are returned
     List<CompletableFuture<MultipleRecords<T>>> results = queries.stream()
         .map(query -> findByQuery(query, Integer.MAX_VALUE)
         .thenApply(result -> result.value()))
