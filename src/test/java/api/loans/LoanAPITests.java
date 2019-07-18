@@ -32,7 +32,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import api.support.builders.AccountBuilder;
 import org.folio.circulation.domain.representations.LoanProperties;
 import org.folio.circulation.support.JsonArrayHelper;
 import org.folio.circulation.support.http.client.IndividualResource;
@@ -45,6 +44,7 @@ import org.joda.time.format.ISODateTimeFormat;
 import org.junit.Test;
 
 import api.support.APITests;
+import api.support.builders.AccountBuilder;
 import api.support.builders.ItemBuilder;
 import api.support.builders.LoanBuilder;
 import api.support.fixtures.ConfigurationExample;
@@ -1108,8 +1108,6 @@ public class LoanAPITests extends APITests {
     TimeoutException,
     ExecutionException {
 
-    DateTime loanDate = new DateTime(2017, 3, 1, 13, 25, 46, DateTimeZone.UTC);
-
     final InventoryItemResource item = itemsFixture.basedUponNod();
 
     IndividualResource loan = loansFixture.createLoan(item, usersFixture.rebecca());
@@ -1838,6 +1836,73 @@ public class LoanAPITests extends APITests {
       loanHasCheckoutServicePointProperties(loanJson);
     });
 
+  }
+  
+  @Test
+  public void canGetPagedLoansWithItemsExceedingDefaultLimit()
+    throws InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    MalformedURLException {
+    int count = 0;
+    for(int i = 0; i < 4; i++) {
+      createLoans(usersFixture.charlotte().getId(), count);
+      createLoans(usersFixture.james().getId(), count);
+      createLoans(usersFixture.jessica().getId(), count);
+      createLoans(usersFixture.rebecca().getId(), count);
+      createLoans(usersFixture.steve().getId(), count);
+    }
+
+    queryLoans(25);
+    queryLoans(50);
+    queryLoans(75);
+    queryLoans(100);
+  }
+
+  private void createLoans(UUID userId, int count) throws MalformedURLException, InterruptedException, TimeoutException, ExecutionException {
+    for(int i = 0; i < 5; i++) {
+      createLoan(userId, itemsFixture.basedUponOneOfHunderBookItems(count++).getId());
+    }
+  }
+
+  private void createLoan(UUID userId, UUID itemId) throws MalformedURLException, InterruptedException, TimeoutException, ExecutionException {
+    DateTime loanDate = new DateTime(2017, 2, 27, 10, 23, 43, DateTimeZone.UTC);
+    DateTime dueDate = new DateTime(2017, 3, 29, 10, 23, 43, DateTimeZone.UTC);
+    UUID checkinServicePointId = servicePointsFixture.cd1().getId();
+    UUID checkoutServicePointId = servicePointsFixture.cd2().getId();
+    UUID loanId = UUID.randomUUID();
+    loansClient.create(new LoanBuilder()
+        .withId(loanId)
+        .open()
+        .withUserId(userId)
+        .withItemId(itemId)
+        .withLoanDate(loanDate)
+        .withDueDate(dueDate)
+        .withCheckinServicePointId(checkinServicePointId)
+        .withCheckoutServicePointId(checkoutServicePointId));
+  }
+
+  private void queryLoans(int limit) throws InterruptedException, ExecutionException, TimeoutException {
+    CompletableFuture<Response> pageCompleted = new CompletableFuture<>();
+
+    client.get(loansUrl() + "?limit=" + limit,
+        ResponseHandler.json(pageCompleted));
+
+    Response pageResponse = pageCompleted.get(10, TimeUnit.SECONDS);
+
+    assertThat(String.format("Failed to get page of loans: %s",
+      pageResponse.getBody()),
+      pageResponse.getStatusCode(), is(200));
+
+    JsonObject page = pageResponse.getJson();
+
+    List<JsonObject> loans = getLoans(page);
+
+    assertThat("Did not have expeded number of loans in page",
+      loans.size(), is(limit));
+
+    loans.forEach(loan ->
+      assertThat("%s loan response does not have item", loan.containsKey("item"), is(true)));
   }
 
   private void loanHasExpectedProperties(JsonObject loan, IndividualResource user) {

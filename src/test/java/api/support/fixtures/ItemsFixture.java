@@ -292,6 +292,20 @@ public class ItemsFixture {
         loanTypesFixture.canCirculate().getId()));
   }
 
+  public InventoryItemResource basedUponOneOfHunderBookItems(int index)
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    return create(
+      InstanceExamples.basedUponOneOfHunderBookInstances(booksInstanceTypeId(),
+        getPersonalContributorNameTypeId(), index),
+      thirdFloorHoldings(),
+      ItemExamples.basedUponDunkirk(materialTypesFixture.videoRecording().getId(),
+        loanTypesFixture.canCirculate().getId()));
+  }
+
   private InventoryItemResource applyAdditionalProperties(
     Function<HoldingBuilder, HoldingBuilder> additionalHoldingsRecordProperties,
     Function<ItemBuilder, ItemBuilder> additionalItemProperties,

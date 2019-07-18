@@ -71,11 +71,8 @@ public class AccountRepository {
         .filter(Objects::nonNull)
         .collect(Collectors.toSet());
 
-    final MultipleRecordFetcher<Account> fetcher = createAccountsFetcher();
-    final Result<CqlQuery> loanIdQuery = exactMatchAny("loanId", accountsToFetch);
-
     return createAccountsFetcher()
-      .findByQuery(accountStatusQuery.combine(loanIdQuery, CqlQuery::and))
+      .findByIndexNameAndQuery(accountsToFetch, "loanId", accountStatusQuery)
       .thenComposeAsync(r -> r.after(multipleRecords -> completedFuture(succeeded(
         multipleRecords.getRecords().stream().collect(
           Collectors.groupingBy(Account::getLoanId))
