@@ -1,6 +1,6 @@
 package org.folio.circulation.resources;
 
-import static org.folio.circulation.domain.notice.NoticeContextUtil.createRequestNoticeContext;
+import static org.folio.circulation.domain.notice.TemplateContextUtil.createRequestNoticeContext;
 
 import java.util.Collections;
 import java.util.EnumMap;
@@ -14,7 +14,7 @@ import org.folio.circulation.domain.RequestRepository;
 import org.folio.circulation.domain.RequestStatus;
 import org.folio.circulation.domain.RequestType;
 import org.folio.circulation.domain.User;
-import org.folio.circulation.domain.notice.NoticeContextUtil;
+import org.folio.circulation.domain.notice.TemplateContextUtil;
 import org.folio.circulation.domain.notice.NoticeEventType;
 import org.folio.circulation.domain.notice.NoticeTiming;
 import org.folio.circulation.domain.notice.PatronNoticeEvent;
@@ -121,7 +121,7 @@ public class RequestNoticeSender {
       .withUser(loan.getUser())
       .withEventType(NoticeEventType.RECALL_TO_LOANEE)
       .withTiming(NoticeTiming.UPON_AT)
-      .withNoticeContext(NoticeContextUtil.createLoanNoticeContext(loan, null))
+      .withNoticeContext(TemplateContextUtil.createLoanNoticeContext(loan))
       .build();
     patronNoticeService.acceptNoticeEvent(itemRecalledEvent);
     return Result.succeeded(null);

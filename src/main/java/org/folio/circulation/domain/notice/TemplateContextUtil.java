@@ -2,10 +2,12 @@ package org.folio.circulation.domain.notice;
 
 import static java.lang.Math.max;
 import static java.util.stream.Collectors.joining;
+import static org.folio.circulation.support.JsonPropertyWriter.write;
 import static org.folio.circulation.support.JsonStringArrayHelper.toStream;
 
 import java.util.Optional;
 
+import org.folio.circulation.domain.CheckInProcessRecords;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.Location;
@@ -16,11 +18,10 @@ import org.folio.circulation.domain.User;
 import org.folio.circulation.domain.policy.LoanPolicy;
 import org.folio.circulation.support.JsonArrayHelper;
 import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
 
 import io.vertx.core.json.JsonObject;
 
-public class NoticeContextUtil {
+public class TemplateContextUtil {
 
   private static final String USER = "user";
   private static final String ITEM = "item";
@@ -29,20 +30,14 @@ public class NoticeContextUtil {
 
   private static final String UNLIMITED = "unlimited";
 
-  private NoticeContextUtil() {
+  private TemplateContextUtil() {
   }
 
-  public static JsonObject createLoanNoticeContext(Loan loan, LoanPolicy loanPolicy) {
-    return createLoanNoticeContext(loan,loanPolicy, DateTimeZone.UTC);
-  }
-
-  public static JsonObject createLoanNoticeContext(
-    Loan loan, LoanPolicy loanPolicy, DateTimeZone timeZone) {
-
+  public static JsonObject createLoanNoticeContext(Loan loan) {
     return new JsonObject()
       .put(USER, createUserContext(loan.getUser()))
       .put(ITEM, createItemContext(loan.getItem()))
-      .put(LOAN, createLoanContext(loan, loanPolicy, timeZone));
+      .put(LOAN, createLoanContext(loan));
   }
 
   public static JsonObject createRequestNoticeContext(Request request) {
@@ -62,6 +57,32 @@ public class NoticeContextUtil {
       .put(USER, createUserContext(user))
       .put(ITEM, createItemContext(item))
       .put(REQUEST, createRequestContext(request));
+  }
+
+  public static JsonObject createCheckInContext(CheckInProcessRecords records) {
+    JsonObject checkInContext = new JsonObject();
+
+    Item item = records.getItem();
+    if (item != null) {
+      JsonObject itemContext = createItemContext(item);
+      if (item.getInTransitDestinationServicePoint() != null) {
+        itemContext.put("fromServicePoint", records.getCheckInServicePoint().getName());
+        itemContext.put("toServicePoint", item.getInTransitDestinationServicePoint().getName());
+      }
+      checkInContext.put(ITEM, itemContext);
+    }
+
+    Request firstRequest = records.getHighestPriorityFulfillableRequest();
+    if (firstRequest != null) {
+      checkInContext.put(REQUEST, createRequestContext(firstRequest));
+
+      User requester = firstRequest.getRequester();
+      if (requester != null) {
+        checkInContext.put("requester", createUserContext(requester));
+      }
+    }
+
+    return checkInContext;
   }
 
   private static JsonObject createUserContext(User user) {
@@ -120,6 +141,9 @@ public class NoticeContextUtil {
     JsonObject requestContext = new JsonObject();
 
     optionalRequest
+      .map(Request::getId)
+      .ifPresent(value -> requestContext.put("requestID", value));
+    optionalRequest
       .map(Request::getPickupServicePoint)
       .map(ServicePoint::getName)
       .ifPresent(value -> requestContext.put("servicePointPickup", value));
@@ -144,20 +168,16 @@ public class NoticeContextUtil {
   }
 
   private static JsonObject createLoanContext(Loan loan) {
-    return createLoanContext(loan, null, DateTimeZone.UTC);
-  }
-
-  private static JsonObject createLoanContext(
-    Loan loan, LoanPolicy loanPolicy, DateTimeZone timeZone) {
-
     JsonObject loanContext = new JsonObject();
-    loanContext.put("initialBorrowDate", loan.getLoanDate().withZone(timeZone).toString());
-    loanContext.put("numberOfRenewalsTaken", Integer.toString(loan.getRenewalCount()));
-    loanContext.put("dueDate", loan.getDueDate().withZone(timeZone).toString());
 
+    write(loanContext, "initialBorrowDate", loan.getLoanDate());
+    write(loanContext, "dueDate", loan.getDueDate());
     if (loan.getReturnDate() != null) {
-      loanContext.put("checkinDate", loan.getReturnDate().toString());
+      write(loanContext, "checkinDate", loan.getReturnDate());
     }
+
+    loanContext.put("numberOfRenewalsTaken", Integer.toString(loan.getRenewalCount()));
+    LoanPolicy loanPolicy = loan.getLoanPolicy();
     if (loanPolicy != null) {
       if (loanPolicy.unlimitedRenewals()) {
         loanContext.put("numberOfRenewalsAllowed", UNLIMITED);
