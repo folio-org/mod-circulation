@@ -202,7 +202,7 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
     return RequestTypeItemStatusWhiteList.canCreateRequestForItem(getItem().getStatus(), getRequestType());
   }
 
-  String actionOnCreationOrMove() {
+  String actionOnCreateOrUpdate() {
     return getRequestType().toLoanAction();
   }
 

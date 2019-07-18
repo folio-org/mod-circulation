@@ -32,22 +32,21 @@ public class MoveRequestService {
   public CompletableFuture<Result<RequestAndRelatedRecords>> moveRequest(
       RequestAndRelatedRecords requestAndRelatedRecords) {
     return completedFuture(of(() -> requestAndRelatedRecords))
-        .thenComposeAsync(r -> r.after(moveRequestProcessAdapter::findDestinationItem))
-        .thenComposeAsync(r -> r.after(moveRequestProcessAdapter::getDestinationRequestQueue))
-        .thenApply(r -> r.map(this::pagedRequestIfDestinationItemAvailable))
-        .thenCompose(r -> r.after(this::validateUpdateRequest))
-        .thenCompose(r -> r.after(updateUponRequest.updateRequestQueue::onMovedTo))
-        .thenComposeAsync(r -> r.after(updateUponRequest.updateItem::onRequestCreationOrMove))
-        .thenComposeAsync(r -> r.after(updateUponRequest.updateLoanActionHistory::onRequestCreationOrMove))
-        .thenComposeAsync(r -> r.after(updateUponRequest.updateLoan::onRequestCreationOrMove))
-        .thenComposeAsync(r -> r.after(requestRepository::update))
-        .thenComposeAsync(r -> r.after(moveRequestProcessAdapter::findSourceItem))
-        .thenComposeAsync(r -> r.after(moveRequestProcessAdapter::getSourceRequestQueue))
-        .thenCompose(r -> r.after(updateUponRequest.updateRequestQueue::onMovedFrom))
-        .thenCompose(r -> r.after(updateUponRequest.updateItem::onRequestQueueChanged))
-        .thenComposeAsync(r -> r.after(moveRequestProcessAdapter::findDestinationItem))
-        .thenComposeAsync(r -> r.after(moveRequestProcessAdapter::getDestinationRequestQueue))
-        .thenApply(r -> r.next(requestNoticeSender::sendNoticeOnRequestMoved));
+      .thenComposeAsync(r -> r.after(moveRequestProcessAdapter::findDestinationItem))
+      .thenComposeAsync(r -> r.after(moveRequestProcessAdapter::getDestinationRequestQueue))
+      .thenApply(r -> r.map(this::pagedRequestIfDestinationItemAvailable))
+      .thenCompose(r -> r.after(this::validateUpdateRequest))
+      .thenCompose(r -> r.after(updateUponRequest.updateRequestQueue::onMovedTo))
+      .thenComposeAsync(r -> r.after(this::updateRelatedObjects))
+      .thenCompose(r -> r.after(requestRepository::update))
+      .thenComposeAsync(r -> r.after(moveRequestProcessAdapter::findSourceItem))
+      .thenComposeAsync(r -> r.after(moveRequestProcessAdapter::getSourceRequestQueue))
+      .thenCompose(r -> r.after(updateUponRequest.updateRequestQueue::onMovedFrom))
+      .thenComposeAsync(r -> r.after(this::updateRelatedObjects))
+      .thenComposeAsync(r -> r.after(moveRequestProcessAdapter::findDestinationItem))
+      .thenComposeAsync(r -> r.after(moveRequestProcessAdapter::getDestinationRequestQueue))
+      .thenComposeAsync(r -> r.after(moveRequestProcessAdapter::getRequest))
+      .thenApply(r -> r.next(requestNoticeSender::sendNoticeOnRequestMoved));
   }
 
   private RequestAndRelatedRecords pagedRequestIfDestinationItemAvailable(
@@ -62,12 +61,19 @@ public class MoveRequestService {
   private CompletableFuture<Result<RequestAndRelatedRecords>> validateUpdateRequest(
       RequestAndRelatedRecords requestAndRelatedRecords) {
     return of(() -> requestAndRelatedRecords)
-        .next(RequestServiceUtility::refuseWhenItemDoesNotExist)
-        .next(RequestServiceUtility::refuseWhenInvalidUserAndPatronGroup)
-        .next(RequestServiceUtility::refuseWhenItemIsNotValid)
-        .next(RequestServiceUtility::refuseWhenUserHasAlreadyRequestedItem)
-        .after(requestLoanValidator::refuseWhenUserHasAlreadyBeenLoanedItem)
-        .thenComposeAsync(r -> r.after(requestPolicyRepository::lookupRequestPolicy))
-        .thenApply(r -> r.next(RequestServiceUtility::refuseWhenRequestCannotBeFulfilled));
+      .next(RequestServiceUtility::refuseWhenItemDoesNotExist)
+      .next(RequestServiceUtility::refuseWhenInvalidUserAndPatronGroup)
+      .next(RequestServiceUtility::refuseWhenItemIsNotValid)
+      .next(RequestServiceUtility::refuseWhenUserHasAlreadyRequestedItem)
+      .after(requestLoanValidator::refuseWhenUserHasAlreadyBeenLoanedItem)
+      .thenComposeAsync(r -> r.after(requestPolicyRepository::lookupRequestPolicy))
+      .thenApply(r -> r.next(RequestServiceUtility::refuseWhenRequestCannotBeFulfilled));
+  }
+
+  private CompletableFuture<Result<RequestAndRelatedRecords>> updateRelatedObjects(
+      RequestAndRelatedRecords requestAndRelatedRecords) {
+    return updateUponRequest.updateItem.onRequestCreateOrUpdate(requestAndRelatedRecords)
+      .thenComposeAsync(r -> r.after(updateUponRequest.updateLoanActionHistory::onRequestCreateOrUpdate))
+      .thenComposeAsync(r -> r.after(updateUponRequest.updateLoan::onRequestCreateOrUpdate));
   }
 }
