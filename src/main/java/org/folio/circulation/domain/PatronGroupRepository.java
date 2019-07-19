@@ -1,8 +1,9 @@
 package org.folio.circulation.domain;
 
+import static java.util.Objects.isNull;
 import static java.util.concurrent.CompletableFuture.completedFuture;
-import static org.folio.circulation.support.Result.of;
-import static org.folio.circulation.support.Result.succeeded;
+import static org.folio.circulation.domain.PatronGroup.unknown;
+import static org.folio.circulation.support.Result.*;
 import static org.folio.circulation.support.ResultBinding.mapResult;
 
 import java.util.*;
@@ -99,10 +100,14 @@ public class PatronGroupRepository {
   }
 
   private CompletableFuture<Result<PatronGroup>> getPatronGroupById(String groupId) {
+    if(isNull(groupId)) {
+      return ofAsync(() -> unknown(null));
+    }
 
     return FetchSingleRecord.<PatronGroup>forRecord("patron group")
       .using(patronGroupsStorageClient)
       .mapTo(PatronGroup::from)
+      .whenNotFound(succeeded(unknown(groupId)))
       .fetch(groupId);
   }
 

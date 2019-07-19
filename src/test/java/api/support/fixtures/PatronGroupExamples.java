@@ -2,6 +2,8 @@ package api.support.fixtures;
 
 import api.support.builders.PatronGroupBuilder;
 
+import java.util.UUID;
+
 class PatronGroupExamples {
   static PatronGroupBuilder regular() {
     return new PatronGroupBuilder("Regular Group", "Regular group");
@@ -21,5 +23,9 @@ class PatronGroupExamples {
 
   static PatronGroupBuilder undergrad(){
     return new PatronGroupBuilder("undergrad", "Undergraduate users");
+  }
+
+  static PatronGroupBuilder staffWithId(UUID id){
+    return new PatronGroupBuilder("staff", "Staff users").withId(id);
   }
 }

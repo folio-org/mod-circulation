@@ -31,6 +31,7 @@ public class APITestContext {
   private static final String USER_ID = "79ff2a8b-d9c3-5b39-ad4a-0a84025ab085";
 
   private static final String TOKEN = "eyJhbGciOiJIUzUxMiJ9eyJzdWIiOiJhZG1pbiIsInVzZXJfaWQiOiI3OWZmMmE4Yi1kOWMzLTViMzktYWQ0YS0wYTg0MDI1YWIwODUiLCJ0ZW5hbnQiOiJ0ZXN0X3RlbmFudCJ9BShwfHcNClt5ZXJ8ImQTMQtAM1sQEnhsfWNmXGsYVDpuaDN3RVQ9";
+  private static final String PATRON_GROUP_ID = "3a60c6ac-a93a-11e9-a2a3-2a2ae2dbcce4";
   public static final DateTime END_OF_2019_DUE_DATE = new DateTime(2019, 12, 31, 23, 59, 59, DateTimeZone.UTC);
 
   private static final String REQUEST_ID = createFakeRequestId();
@@ -53,6 +54,10 @@ public class APITestContext {
 
   public static String getUserId() {
     return USER_ID;
+  }
+
+  public static String getPatronGroupIdAtCheckoutId() {
+    return PATRON_GROUP_ID;
   }
 
   public static int circulationModulePort() {

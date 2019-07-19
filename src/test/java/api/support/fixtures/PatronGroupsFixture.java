@@ -1,6 +1,7 @@
 package api.support.fixtures;
 
 import java.net.MalformedURLException;
+import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
@@ -69,5 +70,14 @@ public class PatronGroupsFixture {
     ExecutionException {
 
     return patronGroupRecordCreator.createIfAbsent(PatronGroupExamples.undergrad());
+  }
+
+  public IndividualResource staffWithId(UUID id)
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    return patronGroupRecordCreator.createIfAbsent(PatronGroupExamples.staffWithId(id));
   }
 }

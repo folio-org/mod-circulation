@@ -217,9 +217,8 @@ public class LoanRepository {
   }
 
   private static void keepPatronGroupAtCheckoutProperties(Loan loan, JsonObject storageLoan) {
-    PatronGroup patronGroup = loan.getUser().getPatronGroup();
-    if (Objects.nonNull(patronGroup)){
-      storageLoan.put("patronGroupIdAtCheckout", patronGroup.getId());
+    if (nonNull(loan.getUser()) && nonNull(loan.getUser().getPatronGroup())){
+      storageLoan.put("patronGroupIdAtCheckout", loan.getUser().getPatronGroup().getId());
     }
   }
 
