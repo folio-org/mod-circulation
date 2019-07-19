@@ -407,7 +407,7 @@ public class MoveRequestTests extends APITests {
     IndividualResource itemCopyALoan = loansFixture.checkOutByBarcode(itemCopyA, james);
 
     IndividualResource pageRequestForItemCopyB = requestsFixture.placeHoldShelfRequest(
-      itemCopyB, steve, DateTime.now(DateTimeZone.UTC).minusHours(3), RequestType.PAGE.getValue());
+      itemCopyB, jessica, DateTime.now(DateTimeZone.UTC).minusHours(3), RequestType.PAGE.getValue());
 
     IndividualResource recallRequestForItemCopyB = requestsFixture.placeHoldShelfRequest(
       itemCopyB, steve, DateTime.now(DateTimeZone.UTC).minusHours(2), RequestType.RECALL.getValue());
