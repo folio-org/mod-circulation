@@ -44,23 +44,23 @@ public class MoveRequestTests extends APITests {
     final IndividualResource secondFloorEconomics = locationsFixture.secondFloorEconomics();
     final IndividualResource mezzanineDisplayCase = locationsFixture.mezzanineDisplayCase();
 
-    IndividualResource itemCopyA = itemsFixture.basedUponTemeraire(
+    final IndividualResource itemCopyA = itemsFixture.basedUponTemeraire(
       holdingBuilder -> holdingBuilder
         .withPermanentLocation(secondFloorEconomics)
         .withNoTemporaryLocation(),
       itemBuilder -> itemBuilder
         .withNoPermanentLocation()
-        .withNoTemporaryLocation());
+        .withNoTemporaryLocation()
+        .withBarcode("10203040506"));
 
-    IndividualResource itemCopyB = itemsFixture.basedUponTemeraire(
+    final IndividualResource itemCopyB = itemsFixture.basedUponTemeraire(
       holdingBuilder -> holdingBuilder
         .withPermanentLocation(mezzanineDisplayCase)
         .withNoTemporaryLocation(),
       itemBuilder -> itemBuilder
         .withNoPermanentLocation()
-        .withNoTemporaryLocation());
-    
-    
+        .withNoTemporaryLocation()
+        .withBarcode("90806050402"));
 
     IndividualResource james = usersFixture.james();
     IndividualResource jessica = usersFixture.jessica();
@@ -73,40 +73,12 @@ public class MoveRequestTests extends APITests {
     IndividualResource itemCopyALoan = loansFixture.checkOutByBarcode(itemCopyA, james, DateTime.now(DateTimeZone.UTC));
     assertThat(itemCopyALoan.getJson().getString("userId"), is(james.getId().toString()));
 
-    // TODO: figure out why this fails sporadically
-    // assertThat(itemCopyALoan.getJson().getString("itemId"), is(itemCopyA.getId().toString()));
+    assertThat(itemCopyALoan.getJson().getString("itemId"), is(itemCopyA.getId().toString()));
 
-    itemCopyA = itemsClient.get(itemCopyA);
+    assertThat(itemsClient.get(itemCopyA).getJson().getJsonObject("status").getString("name"), is(ItemStatus.CHECKED_OUT.getValue()));
 
-    // TODO: figure out why this fails sporadically
-    // assertThat(itemCopyA.getJson().getJsonObject("status").getString("name"), is(ItemStatus.CHECKED_OUT.getValue()));
-
-    // TODO: figure out why this fails sporadically
-    // IndividualResource pageRequestForItemCopyB = requestsFixture.placeHoldShelfRequest(
-    //   itemCopyB, jessica, DateTime.now(DateTimeZone.UTC).minusHours(3), RequestType.PAGE.getValue());
-
-
-
-    // NOTE: setting up an item with a single page request
-    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
-    loansFixture.checkOutByBarcode(smallAngryPlanet, james);
-
-    IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
-      smallAngryPlanet, jessica, DateTime.now(DateTimeZone.UTC));
-
-    IndividualResource pageRequestForItemCopyB = requestsFixture.move(new MoveRequestBuilder(
-      requestByJessica.getId(),
-      itemCopyB.getId(),
-      RequestType.PAGE.getValue()
-    ));
-
-    assertThat(pageRequestForItemCopyB.getJson().getString("itemId"), is(itemCopyB.getId().toString()));
-    assertThat(pageRequestForItemCopyB.getJson().getString(REQUEST_TYPE), is(RequestType.PAGE.getValue()));
-
-    requestByJessica = requestsClient.get(requestByJessica);
-    assertThat(requestByJessica.getJson().getString(REQUEST_TYPE), is(RequestType.PAGE.getValue()));
-
-
+    IndividualResource pageRequestForItemCopyB = requestsFixture.placeHoldShelfRequest(
+      itemCopyB, jessica, DateTime.now(DateTimeZone.UTC).minusHours(3), RequestType.PAGE.getValue());
 
     IndividualResource recallRequestForItemCopyB = requestsFixture.placeHoldShelfRequest(
       itemCopyB, steve, DateTime.now(DateTimeZone.UTC).minusHours(2), RequestType.RECALL.getValue());
@@ -128,8 +100,7 @@ public class MoveRequestTests extends APITests {
 
     IndividualResource moveRecallRequestToItemCopyA = requestsFixture.move(new MoveRequestBuilder(
       recallRequestForItemCopyB.getId(),
-      itemCopyA.getId(),
-      null
+      itemCopyA.getId()
     ));
 
     assertThat(requestsFixture.getQueueFor(itemCopyA).getTotalRecords(), is(2));
@@ -162,11 +133,9 @@ public class MoveRequestTests extends APITests {
     assertThat(itemCopyALoan.getJson().getString("userId"), is(james.getId().toString()));
     assertThat(itemCopyALoan.getJson().getString("itemId"), is(itemCopyA.getId().toString()));
 
-    itemCopyA = itemsClient.get(itemCopyA);
-    assertThat(itemCopyA.getJson().getJsonObject("status").getString("name"), is(ItemStatus.CHECKED_OUT.getValue()));
+    assertThat(itemsClient.get(itemCopyA).getJson().getJsonObject("status").getString("name"), is(ItemStatus.CHECKED_OUT.getValue()));
 
-    itemCopyB = itemsClient.get(itemCopyB);
-    assertThat(itemCopyB.getJson().getJsonObject("status").getString("name"), is(ItemStatus.PAGED.getValue()));
+    assertThat(itemsClient.get(itemCopyB).getJson().getJsonObject("status").getString("name"), is(ItemStatus.PAGED.getValue()));
   }
 
   @Test
@@ -192,8 +161,7 @@ public class MoveRequestTests extends APITests {
     // move jessica's hold shelf request from smallAngryPlanet to interestingTimes
     IndividualResource moveRequest = requestsFixture.move(new MoveRequestBuilder(
       requestByJessica.getId(),
-      interestingTimes.getId(),
-      null
+      interestingTimes.getId()
     ));
 
     assertThat("Move request should have correct item id",
@@ -259,8 +227,7 @@ public class MoveRequestTests extends APITests {
     // move steve's recall request from smallAngryPlanet to interestingTimes
     IndividualResource moveRequest = requestsFixture.move(new MoveRequestBuilder(
       requestBySteve.getId(),
-      interestingTimes.getId(),
-      null
+      interestingTimes.getId()
     ));
 
     assertThat("Move request should have correct item id",
@@ -343,8 +310,7 @@ public class MoveRequestTests extends APITests {
     // move steve's recall request from smallAngryPlanet to interestingTimes
     IndividualResource firstMoveRequest = requestsFixture.move(new MoveRequestBuilder(
       requestBySteve.getId(),
-      interestingTimes.getId(),
-      null
+      interestingTimes.getId()
     ));
 
     assertThat("Move request should have correct item id",
@@ -364,8 +330,7 @@ public class MoveRequestTests extends APITests {
     // move jessica's recall request from smallAngryPlanet to interestingTimes
     IndividualResource secondMoveRequest = requestsFixture.move(new MoveRequestBuilder(
       requestByJessica.getId(),
-      interestingTimes.getId(),
-      null
+      interestingTimes.getId()
     ));
 
     assertThat("Move request should have correct item id",
@@ -456,8 +421,7 @@ public class MoveRequestTests extends APITests {
     // move jessica's hold shelf request from smallAngryPlanet to interestingTimes
     IndividualResource moveRequest = requestsFixture.move(new MoveRequestBuilder(
       requestByJessica.getId(),
-      interestingTimes.getId(),
-      null
+      interestingTimes.getId()
     ));
 
     assertThat("Move request should have correct item id",
@@ -518,8 +482,7 @@ public class MoveRequestTests extends APITests {
     // move jessica's hold shelf request from smallAngryPlanet to interestingTimes
     IndividualResource moveRequest = requestsFixture.move(new MoveRequestBuilder(
       requestByJessica.getId(),
-      interestingTimes.getId(),
-      null
+      interestingTimes.getId()
     ));
 
     assertThat("Move request should have correct item id",
@@ -604,8 +567,7 @@ public class MoveRequestTests extends APITests {
     // move jessica's hold shelf request from smallAngryPlanet to interestingTimes
     IndividualResource moveRequest = requestsFixture.move(new MoveRequestBuilder(
       requestByJessica.getId(),
-      interestingTimes.getId(),
-      null
+      interestingTimes.getId()
     ));
 
     assertThat("Move request should have correct item id",
