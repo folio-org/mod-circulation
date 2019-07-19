@@ -18,8 +18,8 @@ import org.folio.circulation.domain.representations.CheckInByBarcodeResponse;
 import org.folio.circulation.storage.ItemByBarcodeInStorageFinder;
 import org.folio.circulation.storage.SingleOpenLoanForItemInStorageFinder;
 import org.folio.circulation.support.Clients;
-import org.folio.circulation.support.Result;
 import org.folio.circulation.support.ItemRepository;
+import org.folio.circulation.support.Result;
 import org.folio.circulation.support.RouteRegistration;
 import org.folio.circulation.support.http.server.WebContext;
 
@@ -94,6 +94,12 @@ public class CheckInByBarcodeResource extends Resource {
       .thenApply(handleItemStatus -> handleItemStatus.next(processAdapter::sendItemStatusPatronNotice))
       .thenComposeAsync(updateItemResult -> updateItemResult.combineAfter(
         processAdapter::getDestinationServicePoint, CheckInProcessRecords::withItem))
+      .thenComposeAsync(updateItemResult -> updateItemResult.combineAfter(
+        processAdapter::getCheckInServicePoint, CheckInProcessRecords::withCheckInServicePoint))
+      .thenComposeAsync(updateItemResult -> updateItemResult.combineAfter(
+        processAdapter::getPickupServicePoint, CheckInProcessRecords::withHighestPriorityFulfillableRequest))
+      .thenComposeAsync(updateItemResult -> updateItemResult.combineAfter(
+        processAdapter::getRequester, CheckInProcessRecords::withHighestPriorityFulfillableRequest))
       .thenComposeAsync(updateItemResult -> updateItemResult.combineAfter(
         processAdapter::updateLoan, CheckInProcessRecords::withLoan))
       .thenApply(updateItemResult -> updateItemResult.next(processAdapter::sendCheckInPatronNotice))

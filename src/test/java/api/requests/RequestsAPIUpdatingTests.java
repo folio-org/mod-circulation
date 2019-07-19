@@ -44,7 +44,7 @@ import api.support.builders.Address;
 import api.support.builders.NoticeConfigurationBuilder;
 import api.support.builders.NoticePolicyBuilder;
 import api.support.builders.RequestBuilder;
-import api.support.fixtures.NoticeMatchers;
+import api.support.fixtures.TemplateContextMatchers;
 import api.support.http.InventoryItemResource;
 import io.vertx.core.json.JsonObject;
 
@@ -542,10 +542,10 @@ public class RequestsAPIUpdatingTests extends APITests {
     List<JsonObject> sentNotices = patronNoticesClient.getAll();
 
     Map<String, Matcher<String>> noticeContextMatchers = new HashMap<>();
-    noticeContextMatchers.putAll(NoticeMatchers.getUserContextMatchers(requester));
-    noticeContextMatchers.putAll(NoticeMatchers.getItemContextMatchers(temeraire, true));
-    noticeContextMatchers.putAll(NoticeMatchers.getRequestContextMatchers(updatedRequest));
-    noticeContextMatchers.putAll(NoticeMatchers.getCancelledRequestContextMatchers(updatedRequest));
+    noticeContextMatchers.putAll(TemplateContextMatchers.getUserContextMatchers(requester));
+    noticeContextMatchers.putAll(TemplateContextMatchers.getItemContextMatchers(temeraire, true));
+    noticeContextMatchers.putAll(TemplateContextMatchers.getRequestContextMatchers(updatedRequest));
+    noticeContextMatchers.putAll(TemplateContextMatchers.getCancelledRequestContextMatchers(updatedRequest));
     noticeContextMatchers.put("request.reasonForCancellation",
       is(itemNotAvailable.getJson().getString(CANCELLATION_REASON_PUBLIC_DESCRIPTION)));
     assertThat(sentNotices,
@@ -602,10 +602,10 @@ public class RequestsAPIUpdatingTests extends APITests {
     List<JsonObject> sentNotices = patronNoticesClient.getAll();
 
     Map<String, Matcher<String>> noticeContextMatchers = new HashMap<>();
-    noticeContextMatchers.putAll(NoticeMatchers.getUserContextMatchers(requester));
-    noticeContextMatchers.putAll(NoticeMatchers.getItemContextMatchers(temeraire, true));
-    noticeContextMatchers.putAll(NoticeMatchers.getRequestContextMatchers(updatedRequest));
-    noticeContextMatchers.putAll(NoticeMatchers.getCancelledRequestContextMatchers(updatedRequest));
+    noticeContextMatchers.putAll(TemplateContextMatchers.getUserContextMatchers(requester));
+    noticeContextMatchers.putAll(TemplateContextMatchers.getItemContextMatchers(temeraire, true));
+    noticeContextMatchers.putAll(TemplateContextMatchers.getRequestContextMatchers(updatedRequest));
+    noticeContextMatchers.putAll(TemplateContextMatchers.getCancelledRequestContextMatchers(updatedRequest));
     noticeContextMatchers.put("request.reasonForCancellation",
       is(courseReserves.getJson().getString(CANCELLATION_REASON_NAME)));
     assertThat(sentNotices,

@@ -1,5 +1,8 @@
 package api.requests.scenarios;
 
+import static api.support.builders.ItemBuilder.AVAILABLE;
+import static api.support.builders.ItemBuilder.PAGED;
+import static api.support.matchers.ItemStatusCodeMatcher.hasItemStatus;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static api.support.matchers.UUIDMatcher.is;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
@@ -131,5 +134,42 @@ public class ClosedRequestTests extends APITests {
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("Cannot edit a closed request"),
       hasUUIDParameter("id", request.getId()))));
+  }
+
+  @Test
+  public void canCancelARequestLeavingEmptyQueueAndItemStatusChange()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+
+    IndividualResource jessica = usersFixture.jessica();
+
+    // make requests for smallAngryPlanet
+    IndividualResource requestByJessica = requestsFixture.place(new RequestBuilder()
+      .page()
+      .fulfilToHoldShelf()
+      .withItemId(smallAngryPlanet.getId())
+      .withRequestDate(DateTime.now(DateTimeZone.UTC).minusHours(4))
+      .withRequesterId(jessica.getId())
+      .withPickupServicePointId(servicePointsFixture.cd1().getId()));
+
+    smallAngryPlanet = itemsClient.get(smallAngryPlanet);
+    assertThat(smallAngryPlanet, hasItemStatus(PAGED));
+
+    final IndividualResource courseReservesCancellationReason
+      = cancellationReasonsFixture.courseReserves();
+
+    requestsClient.replace(requestByJessica.getId(),
+        RequestBuilder.from(requestByJessica)
+          .cancelled()
+          .withCancellationReasonId(courseReservesCancellationReason.getId())
+          .withCancelledByUserId(jessica.getId())
+          .withCancelledDate(DateTime.now(DateTimeZone.UTC).minusHours(3)));
+
+    smallAngryPlanet = itemsClient.get(smallAngryPlanet);
+    assertThat(smallAngryPlanet, hasItemStatus(AVAILABLE));
   }
 }

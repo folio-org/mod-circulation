@@ -1,7 +1,9 @@
 package org.folio.circulation.domain;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
+import static org.folio.circulation.domain.ItemStatus.AVAILABLE;
 import static org.folio.circulation.domain.ItemStatus.CHECKED_OUT;
+import static org.folio.circulation.domain.ItemStatus.PAGED;
 import static org.folio.circulation.support.Result.of;
 import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
@@ -105,10 +107,10 @@ public class UpdateItem {
         loan.getItem()));
   }
 
-  CompletableFuture<Result<RequestAndRelatedRecords>> onRequestCreationOrMove(
+  CompletableFuture<Result<RequestAndRelatedRecords>> onRequestCreateOrUpdate(
     RequestAndRelatedRecords requestAndRelatedRecords) {
 
-    return of(() -> itemStatusOnRequestCreationOrMove(requestAndRelatedRecords))
+    return of(() -> itemStatusOnRequestCreateOrUpdate(requestAndRelatedRecords))
       .after(prospectiveStatus -> updateItemWhenNotSameStatus(prospectiveStatus,
           requestAndRelatedRecords.getRequest().getItem()))
       .thenApply(itemResult -> itemResult.map(requestAndRelatedRecords::withItem));
@@ -151,14 +153,20 @@ public class UpdateItem {
     return completedFuture(succeeded(previousResult));
   }
 
-  private ItemStatus itemStatusOnRequestCreationOrMove(
+  private ItemStatus itemStatusOnRequestCreateOrUpdate(
     RequestAndRelatedRecords requestAndRelatedRecords) {
 
     RequestType type = requestAndRelatedRecords.getRequest().getRequestType();
 
-    return type == RequestType.PAGE
-      ? ItemStatus.PAGED
-      : requestAndRelatedRecords.getRequest().getItem().getStatus();
+    RequestQueue requestQueue = requestAndRelatedRecords.getRequestQueue();
+
+    Item item = requestAndRelatedRecords.getRequest().getItem();
+
+    return (item.getStatus().equals(PAGED) && requestQueue.getRequests().isEmpty())
+      ? AVAILABLE
+      : type.equals(RequestType.PAGE)
+        ? PAGED
+        : item.getStatus();
   }
 
   private ItemStatus itemStatusOnLoanUpdate(

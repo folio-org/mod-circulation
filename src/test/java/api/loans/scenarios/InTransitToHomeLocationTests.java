@@ -1,5 +1,7 @@
 package api.loans.scenarios;
 
+import static api.support.fixtures.TemplateContextMatchers.getItemContextMatchers;
+import static api.support.fixtures.TemplateContextMatchers.getTransitContextMatchers;
 import static api.support.matchers.UUIDMatcher.is;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -7,10 +9,13 @@ import static org.hamcrest.core.IsNull.notNullValue;
 import static org.hamcrest.core.IsNull.nullValue;
 
 import java.net.MalformedURLException;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
 import org.folio.circulation.support.http.client.IndividualResource;
+import org.hamcrest.Matcher;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.junit.Test;
@@ -18,6 +23,8 @@ import org.junit.Test;
 import api.support.APITests;
 import api.support.CheckInByBarcodeResponse;
 import api.support.builders.CheckInByBarcodeRequestBuilder;
+import api.support.http.InventoryItemResource;
+import api.support.matchers.JsonObjectMatcher;
 import io.vertx.core.json.JsonObject;
 
 public class InTransitToHomeLocationTests extends APITests {
@@ -37,7 +44,7 @@ public class InTransitToHomeLocationTests extends APITests {
 
     final IndividualResource james = usersFixture.james();
 
-    final IndividualResource nod = itemsFixture.basedUponNod(builder ->
+    final InventoryItemResource nod = itemsFixture.basedUponNod(builder ->
       builder.withTemporaryLocation(homeLocation.getId()));
 
     final IndividualResource otherServicePoint = servicePointsFixture.cd2();
@@ -110,6 +117,13 @@ public class InTransitToHomeLocationTests extends APITests {
 
     assertThat("Checkin Service Point Id should be stored",
       storedLoan.getString("checkinServicePointId"), is(otherServicePoint.getId()));
+
+    Map<String, Matcher<String>> staffSlipContextMatchers = new HashMap<>();
+    staffSlipContextMatchers.putAll(getItemContextMatchers(nod, true));
+    staffSlipContextMatchers.putAll(getTransitContextMatchers(otherServicePoint, primaryServicePoint));
+
+    JsonObject staffSlipContext = checkInResponse.getStaffSlipContext();
+    assertThat(staffSlipContext, JsonObjectMatcher.allOfPaths(staffSlipContextMatchers));
   }
 
   @Test

@@ -1,13 +1,15 @@
 package org.folio.circulation.domain;
 
-import static java.util.Comparator.naturalOrder;
 import static org.folio.circulation.domain.ItemStatus.AVAILABLE;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 public class RequestQueue {
+
   private Collection<Request> requests;
 
   RequestQueue(Collection<Request> requests) {
@@ -46,36 +48,29 @@ public class RequestQueue {
       .collect(Collectors.toList());
   }
 
-  Integer nextAvailablePosition() {
-    return highestPosition() + 1;
-  }
-
-  private Integer highestPosition() {
-    return requests.stream()
-      .filter(Request::isOpen)
-      .map(request -> request.asJson().getInteger("position"))
-      .max(naturalOrder()).orElse(0);
+  public void add(Request newRequest) {
+    requests = new ArrayList<>(requests);
+    requests.add(newRequest);
+    orderRequests();
   }
 
   public void remove(Request request) {
-    requests = removeInCollection(request);
-    request.removePosition();
-    removeGapsInPositions();
-  }
-
-  private List<Request> removeInCollection(Request request) {
-    return requests.stream()
+    requests = requests.stream()
       .filter(r -> !r.getId().equals(request.getId()))
       .collect(Collectors.toList());
+    request.removePosition();
+    orderRequests();
   }
 
-  private void removeGapsInPositions() {
-    Integer currentPosition = 1;
-
-    for (Request request : requests) {
-      request.changePosition(currentPosition);
-      currentPosition++;
-    }
+  private void orderRequests() {
+    requests = requests.stream()
+      // order by date descending
+      .sorted((req1, req2) -> req1.getRequestDate().compareTo(req2.getRequestDate()))
+      // order by (request status = "Open - In transit" or "Open - Awaiting pickup") first
+      .sorted((req1, req2) -> Boolean.compare(req2.isNotDisplaceable(), req1.isNotDisplaceable()))
+      .collect(Collectors.toList());
+    final AtomicInteger position = new AtomicInteger(1);
+    requests.forEach(req -> req.changePosition(position.getAndIncrement()));
   }
 
   public Integer size() {
@@ -90,7 +85,15 @@ public class RequestQueue {
   Collection<Request> getRequestsWithChangedPosition() {
     return requests.stream()
       .filter(Request::hasChangedPosition)
+      // order by position descending
+      .sorted((req1, req2) -> req2.getPosition().compareTo(req1.getPosition()))
       .collect(Collectors.toList());
+  }
+
+  public Boolean positionPreviouslyTaken(Request request) {
+    return requests.stream()
+      .anyMatch(r -> !r.getId().equals(request.getId()) &&
+          (r.hasPreviousPosition() && r.getPreviousPosition().equals(request.getPosition())));
   }
 
   //TODO: Encapsulate this better

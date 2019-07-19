@@ -62,7 +62,7 @@ import api.support.builders.NoticePolicyBuilder;
 import api.support.builders.RequestBuilder;
 import api.support.builders.UserBuilder;
 import api.support.fixtures.ItemExamples;
-import api.support.fixtures.NoticeMatchers;
+import api.support.fixtures.TemplateContextMatchers;
 import api.support.http.InventoryItemResource;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
@@ -604,10 +604,10 @@ public class CheckOutByBarcodeTests extends APITests {
     List<JsonObject> sentNotices = patronNoticesClient.getAll();
 
     Map<String, Matcher<String>> noticeContextMatchers = new HashMap<>();
-    noticeContextMatchers.putAll(NoticeMatchers.getUserContextMatchers(steve));
-    noticeContextMatchers.putAll(NoticeMatchers.getItemContextMatchers(smallAngryPlanet, true));
-    noticeContextMatchers.putAll(NoticeMatchers.getLoanContextMatchers(loan));
-    noticeContextMatchers.putAll(NoticeMatchers.getLoanPolicyContextMatchersForUnlimitedRenewals());
+    noticeContextMatchers.putAll(TemplateContextMatchers.getUserContextMatchers(steve));
+    noticeContextMatchers.putAll(TemplateContextMatchers.getItemContextMatchers(smallAngryPlanet, true));
+    noticeContextMatchers.putAll(TemplateContextMatchers.getLoanContextMatchers(loan));
+    noticeContextMatchers.putAll(TemplateContextMatchers.getLoanPolicyContextMatchersForUnlimitedRenewals());
     MatcherAssert.assertThat(sentNotices,
       hasItems(
         hasEmailNoticeProperties(steve.getId(), checkOutTemplateId, noticeContextMatchers)));

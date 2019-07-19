@@ -25,62 +25,6 @@ import io.vertx.core.json.JsonObject;
 //TODO: Maybe move these tests to scenarios which better describe the situation
 public class RequestQueueTests extends APITests {
   @Test
-  public void cancelledRequestShouldBeRemovedFromQueue()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
-
-    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
-    IndividualResource james = usersFixture.james();
-    IndividualResource jessica = usersFixture.jessica();
-    IndividualResource steve = usersFixture.steve();
-    IndividualResource charlotte = usersFixture.charlotte();
-    IndividualResource rebecca = usersFixture.rebecca();
-
-    loansFixture.checkOutByBarcode(smallAngryPlanet, james);
-
-    IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
-      smallAngryPlanet, jessica, new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC));
-
-    IndividualResource requestBySteve = requestsFixture.placeHoldShelfRequest(
-      smallAngryPlanet, steve, new DateTime(2017, 10, 27, 11, 54, 37, DateTimeZone.UTC));
-
-    IndividualResource requestByCharlotte = requestsFixture.placeHoldShelfRequest(
-      smallAngryPlanet, charlotte, new DateTime(2018, 1, 10, 15, 34, 21, DateTimeZone.UTC));
-
-    IndividualResource requestByRebecca = requestsFixture.placeHoldShelfRequest(
-      smallAngryPlanet, rebecca, new DateTime(2018, 2, 4, 7, 4, 53, DateTimeZone.UTC));
-
-    requestsFixture.cancelRequest(requestBySteve);
-
-    requestBySteve = requestsClient.get(requestBySteve);
-
-    assertThat("Should not have a position",
-      requestBySteve.getJson().containsKey("position"), is(false));
-
-    retainsStoredSummaries(requestBySteve);
-
-    requestByJessica = requestsClient.get(requestByJessica);
-
-    assertThat(requestByJessica.getJson().getInteger("position"), is(1));
-
-    retainsStoredSummaries(requestByJessica);
-
-    requestByCharlotte = requestsClient.get(requestByCharlotte);
-
-    assertThat(requestByCharlotte.getJson().getInteger("position"), is(2));
-
-    retainsStoredSummaries(requestByCharlotte);
-
-    requestByRebecca = requestsClient.get(requestByRebecca);
-
-    assertThat(requestByRebecca.getJson().getInteger("position"), is(3));
-
-    retainsStoredSummaries(requestByRebecca);
-  }
-
-  @Test
   public void fulfilledRequestShouldBeRemovedFromQueue()
     throws InterruptedException,
     MalformedURLException,

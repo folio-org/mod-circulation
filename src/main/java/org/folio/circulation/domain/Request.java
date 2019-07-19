@@ -9,12 +9,13 @@ import static org.folio.circulation.domain.RequestStatus.OPEN_AWAITING_PICKUP;
 import static org.folio.circulation.domain.RequestStatus.OPEN_IN_TRANSIT;
 import static org.folio.circulation.domain.RequestStatus.OPEN_NOT_YET_FILLED;
 import static org.folio.circulation.domain.representations.RequestProperties.CANCELLATION_ADDITIONAL_INFORMATION;
-import static org.folio.circulation.domain.representations.RequestProperties.CANCELLATION_REASON_PUBLIC_DESCRIPTION;
 import static org.folio.circulation.domain.representations.RequestProperties.CANCELLATION_REASON_ID;
 import static org.folio.circulation.domain.representations.RequestProperties.CANCELLATION_REASON_NAME;
+import static org.folio.circulation.domain.representations.RequestProperties.CANCELLATION_REASON_PUBLIC_DESCRIPTION;
 import static org.folio.circulation.domain.representations.RequestProperties.HOLD_SHELF_EXPIRATION_DATE;
 import static org.folio.circulation.domain.representations.RequestProperties.ITEM_ID;
 import static org.folio.circulation.domain.representations.RequestProperties.POSITION;
+import static org.folio.circulation.domain.representations.RequestProperties.REQUEST_DATE;
 import static org.folio.circulation.domain.representations.RequestProperties.REQUEST_EXPIRATION_DATE;
 import static org.folio.circulation.domain.representations.RequestProperties.REQUEST_TYPE;
 import static org.folio.circulation.domain.representations.RequestProperties.STATUS;
@@ -40,6 +41,7 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
   private final ServicePoint pickupServicePoint;
 
   private boolean changedPosition = false;
+  private Integer previousPosition;
 
   public Request(
     JsonObject requestRepresentation,
@@ -92,7 +94,11 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   public boolean isOpen() {
-    return isAwaitingPickup() || isNotYetFilled()|| isInTransit();
+    return isAwaitingPickup() || isNotYetFilled() || isInTransit();
+  }
+
+  public boolean isNotDisplaceable() {
+    return isAwaitingPickup() || isInTransit();
   }
 
   private boolean isInTransit(){
@@ -196,7 +202,7 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
     return RequestTypeItemStatusWhiteList.canCreateRequestForItem(getItem().getStatus(), getRequestType());
   }
 
-  String actionOnCreationOrMove() {
+  String actionOnCreateOrUpdate() {
     return getRequestType().toLoanAction();
   }
 
@@ -250,16 +256,17 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
     return pickupServicePoint;
   }
 
-  Request changePosition(Integer newPosition) {
-    if (!Objects.equals(getPosition(), newPosition)) {
+  void changePosition(Integer newPosition) {
+    Integer prevPosition = getPosition();
+    if (!Objects.equals(prevPosition, newPosition)) {
+      previousPosition = prevPosition;
       write(requestRepresentation, POSITION, newPosition);
       changedPosition = true;
     }
-
-    return this;
   }
 
   void removePosition() {
+    previousPosition = getPosition();
     requestRepresentation.remove(POSITION);
     changedPosition = true;
   }
@@ -268,8 +275,24 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
     return getIntegerProperty(requestRepresentation, POSITION, null);
   }
 
+  boolean hasPosition() {
+    return getPosition() != null;
+  }
+
   boolean hasChangedPosition() {
     return changedPosition;
+  }
+
+  Integer getPreviousPosition() {
+    return previousPosition;
+  }
+
+  boolean hasPreviousPosition() {
+    return getPreviousPosition() != null;
+  }
+
+  void freePreviousPosition() {
+    previousPosition = null;
   }
 
   ItemStatus checkedInItemStatus() {
@@ -289,6 +312,10 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
 
   void removeHoldShelfExpirationDate() {
     requestRepresentation.remove(HOLD_SHELF_EXPIRATION_DATE);
+  }
+  
+  public DateTime getRequestDate() {
+    return getDateTimeProperty(requestRepresentation, REQUEST_DATE);
   }
 
   public DateTime getHoldShelfExpirationDate() {

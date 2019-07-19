@@ -123,9 +123,17 @@ public class UpdateRequestQueue {
     }
   }
 
+  CompletableFuture<Result<RequestAndRelatedRecords>> onCreate(
+    RequestAndRelatedRecords requestAndRelatedRecords) {
+    final Request request = requestAndRelatedRecords.getRequest();
+    final RequestQueue requestQueue = requestAndRelatedRecords.getRequestQueue();
+    requestQueue.add(request);
+    return requestQueueRepository.updateRequestsWithChangedPositions(requestQueue)
+        .thenApply(r -> r.map(requestAndRelatedRecords::withRequestQueue));
+  }
+
   CompletableFuture<Result<RequestAndRelatedRecords>> onCancellation(
     RequestAndRelatedRecords requestAndRelatedRecords) {
-
     if(requestAndRelatedRecords.getRequest().isCancelled()) {
       return requestQueueRepository.updateRequestsWithChangedPositions(
         requestAndRelatedRecords.getRequestQueue())
@@ -136,12 +144,28 @@ public class UpdateRequestQueue {
     }
   }
 
-  CompletableFuture<Result<RequestAndRelatedRecords>> onMoved(
+  CompletableFuture<Result<RequestAndRelatedRecords>> onMovedFrom(
     RequestAndRelatedRecords requestAndRelatedRecords) {
     final Request request = requestAndRelatedRecords.getRequest();
-    final RequestQueue requestQueue = requestAndRelatedRecords.getRequestQueue();
-    if (requestAndRelatedRecords.getOriginalItemId().equals(request.getItemId())) {
+    if (requestAndRelatedRecords.getSourceItemId().equals(request.getItemId())) {
+      final RequestQueue requestQueue = requestAndRelatedRecords.getRequestQueue();
       requestQueue.remove(request);
+      return requestQueueRepository.updateRequestsWithChangedPositions(requestQueue)
+            .thenApply(r -> r.map(requestAndRelatedRecords::withRequestQueue));
+    }
+    else {
+      return completedFuture(succeeded(requestAndRelatedRecords));
+    }
+  }
+
+  CompletableFuture<Result<RequestAndRelatedRecords>> onMovedTo(
+    RequestAndRelatedRecords requestAndRelatedRecords) {
+    final Request request = requestAndRelatedRecords.getRequest();
+    if (requestAndRelatedRecords.getDestinationItemId().equals(request.getItemId())) {
+      final RequestQueue requestQueue = requestAndRelatedRecords.getRequestQueue();
+      // NOTE: it is important to remove position when moving request from one queue to another
+      request.removePosition();
+      requestQueue.add(request);
       return requestQueueRepository.updateRequestsWithChangedPositions(requestQueue)
             .thenApply(r -> r.map(requestAndRelatedRecords::withRequestQueue));
     }

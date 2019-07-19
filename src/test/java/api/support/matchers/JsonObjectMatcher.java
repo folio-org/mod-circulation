@@ -1,7 +1,10 @@
 package api.support.matchers;
 
+import static com.jayway.jsonpath.matchers.JsonPathMatchers.hasJsonPath;
+
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.hamcrest.Description;
@@ -24,6 +27,12 @@ public class JsonObjectMatcher extends TypeSafeDiagnosingMatcher<JsonObject> {
     return new JsonObjectMatcher(jsonPathMatchers);
   }
 
+  public static Matcher<JsonObject> allOfPaths(Map<String, Matcher<String>> jsonPathMatchers) {
+    List<Matcher<? super ReadContext>> matchers = jsonPathMatchers.entrySet().stream()
+      .map(e -> hasJsonPath(e.getKey(), e.getValue()))
+      .collect(Collectors.toList());
+    return JsonObjectMatcher.allOfPaths(matchers);
+  }
 
   private final List<Matcher<? super ReadContext>> jsonPathMatchers;
 
