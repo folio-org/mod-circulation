@@ -45,7 +45,6 @@ public class RequestTypeItemStatusWhiteListTests {
     assertFalse(RequestTypeItemStatusWhiteList.canCreateRequestForItem(ItemStatus.ON_ORDER, RequestType.PAGE));
   }
 
-
   @Test
   public void canCreateHoldRequestWhenItemStatusInProcess() {
     assertTrue(RequestTypeItemStatusWhiteList.canCreateRequestForItem(ItemStatus.IN_PROCESS, RequestType.HOLD));
@@ -69,5 +68,10 @@ public class RequestTypeItemStatusWhiteListTests {
   @Test
   public void cannotCreatePagedRequestWhenItemStatusIsNone() {
     assertFalse(RequestTypeItemStatusWhiteList.canCreateRequestForItem(ItemStatus.NONE, RequestType.PAGE));
+  }
+
+  @Test
+  public void canCreatePagedRequestWhenItemStatusIsAvailable() {
+    assertTrue(RequestTypeItemStatusWhiteList.canCreateRequestForItem(ItemStatus.AVAILABLE, RequestType.PAGE));
   }
 }

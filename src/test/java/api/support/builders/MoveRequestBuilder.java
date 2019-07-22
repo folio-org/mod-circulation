@@ -10,6 +10,10 @@ public class MoveRequestBuilder extends JsonBuilder implements Builder {
   private final UUID destinationItemId;
   private final String requestType;
 
+  public MoveRequestBuilder(UUID id, UUID destinationItemId) {
+    this(id, destinationItemId, null);
+  }
+
   public MoveRequestBuilder(UUID id, UUID destinationItemId, String requestType) {
     this.id = id;
     this.destinationItemId = destinationItemId;
