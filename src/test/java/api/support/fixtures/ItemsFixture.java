@@ -30,9 +30,6 @@ public class ItemsFixture {
   private final LocationsFixture locationsFixture;
   private final RecordCreator instanceTypeRecordCreator;
   private final RecordCreator contributorNameTypeRecordCreator;
-  
-  private int index = 0;
-  private int barcode = 0;
 
   public ItemsFixture(
     OkapiHttpClient client,
@@ -293,26 +290,6 @@ public class ItemsFixture {
       thirdFloorHoldings(),
       ItemExamples.basedUponInterestingTimes(materialTypesFixture.book().getId(),
         loanTypesFixture.canCirculate().getId()));
-  }
-
-  public InventoryItemResource basedUponOneOfHundredBookItems()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
-    if (index == 100) {
-      index = 0;
-    }
-    return create(
-      InstanceExamples.basedUponOneOfHundredBookInstances(
-        booksInstanceTypeId(),
-        getPersonalContributorNameTypeId(),
-        index++),
-      thirdFloorHoldings(),
-      ItemExamples.basedOneOfHundred(
-        materialTypesFixture.book().getId(),
-        loanTypesFixture.canCirculate().getId(),
-        ++barcode));
   }
 
   private InventoryItemResource applyAdditionalProperties(

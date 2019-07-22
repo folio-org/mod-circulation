@@ -3,8 +3,6 @@ package api.support.fixtures;
 import java.util.List;
 import java.util.UUID;
 
-import org.apache.commons.lang3.StringUtils;
-
 import api.support.builders.ItemBuilder;
 
 public class ItemExamples {
@@ -81,16 +79,5 @@ public class ItemExamples {
       .withPermanentLoanType(loanTypeId)
       .withMaterialType(videoRecordingMaterialTypeId)
       .withBarcode("70594943205");
-  }
-
-  static ItemBuilder basedOneOfHundred(
-    UUID bookMaterialTypeId,
-    UUID loanTypeId,
-    int index) {
-
-    return new ItemBuilder()
-      .withPermanentLoanType(loanTypeId)
-      .withMaterialType(bookMaterialTypeId)
-      .withBarcode(StringUtils.leftPad(String.valueOf(index), 11, "0"));
   }
 }

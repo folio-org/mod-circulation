@@ -29,11 +29,10 @@ import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import java.util.concurrent.atomic.AtomicInteger;
 
-import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.domain.representations.LoanProperties;
 import org.folio.circulation.support.JsonArrayHelper;
 import org.folio.circulation.support.http.client.IndividualResource;
@@ -1846,24 +1845,52 @@ public class LoanAPITests extends APITests {
       ExecutionException,
       TimeoutException,
       MalformedURLException {
-
-    for(int i = 0; i < 8; i++) {
-      createLoans(usersFixture.charlotte().getId());
-      createLoans(usersFixture.james().getId());
-      createLoans(usersFixture.jessica().getId());
-      createLoans(usersFixture.rebecca().getId());
-      createLoans(usersFixture.steve().getId());
-    }
-
+    createLoans(50);
     queryLoans(50);
+  }
+  
+  @Test
+  public void canGetPagedLoansWithItemsByIdsQueryExceedingLengthLimit()
+      throws InterruptedException,
+      ExecutionException,
+      TimeoutException,
+      MalformedURLException {
+    createLoans(100);
     queryLoans(100);
-    queryLoans(150);
-    queryLoans(200);
   }
 
-  private void createLoans(UUID userId) throws MalformedURLException, InterruptedException, TimeoutException, ExecutionException {
-    for(int i = 0; i < 5; i++) {
-      createLoan(userId, itemsFixture.basedUponOneOfHundredBookItems().getId());
+  private void createLoans(int total) throws MalformedURLException, InterruptedException, TimeoutException, ExecutionException {
+    final IndividualResource mainFloor = locationsFixture.mainFloor();
+    for(int i = 0; i < total; i++) {
+      final IndividualResource item = itemsFixture.basedUponTemeraire(
+        holdingBuilder -> holdingBuilder
+          .withPermanentLocation(mainFloor)
+          .withNoTemporaryLocation(),
+        itemBuilder -> itemBuilder
+          .withNoPermanentLocation()
+          .withNoTemporaryLocation()
+          .withBarcode(randomBarcode()));
+      createLoan(getRandomUserId(), item.getId());
+    }
+  }
+
+  private String randomBarcode() {
+    ThreadLocalRandom random = ThreadLocalRandom.current();
+    return String.valueOf(random.nextLong(10_000_000_000L, 100_000_000_000L));
+  }
+
+  private UUID getRandomUserId()
+      throws MalformedURLException,
+      InterruptedException,
+      TimeoutException,
+      ExecutionException {
+    ThreadLocalRandom random = ThreadLocalRandom.current();
+    switch(random.nextInt(5)) {
+    case 0: return usersFixture.charlotte().getId();
+    case 1: return usersFixture.james().getId();
+    case 2: return usersFixture.jessica().getId();
+    case 3: return usersFixture.rebecca().getId();
+    default: return usersFixture.steve().getId(); 
     }
   }
 
