@@ -59,7 +59,11 @@ public class MoveRequestPolicyTests extends APITests {
   }
 
   @Before
-  public void setUpNoticePolicy() throws MalformedURLException, InterruptedException, ExecutionException, TimeoutException {
+  public void setUpNoticePolicy()
+      throws MalformedURLException,
+      InterruptedException,
+      ExecutionException,
+      TimeoutException {
     UUID recallToLoaneeTemplateId = UUID.randomUUID();
     JsonObject recallToLoaneeConfiguration = new NoticeConfigurationBuilder()
       .withTemplateId(recallToLoaneeTemplateId)
@@ -78,11 +82,10 @@ public class MoveRequestPolicyTests extends APITests {
 
   @Test
   public void cannotMoveRecallRequestsWithRequestPolicyNotAllowingHolds()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
-
+      throws InterruptedException,
+      MalformedURLException,
+      TimeoutException,
+      ExecutionException {
     final String anyNoticePolicy = noticePoliciesFixture.activeNotice().getId().toString();
     final String anyLoanPolicy = loanPoliciesFixture.canCirculateRolling().getId().toString();
     final String bookMaterialType = materialTypesFixture.book().getId().toString();
