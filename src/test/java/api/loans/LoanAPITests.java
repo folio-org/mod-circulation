@@ -32,7 +32,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import api.support.APITestContext;
 import api.support.builders.AccountBuilder;
 import org.folio.circulation.domain.representations.LoanProperties;
 import org.folio.circulation.support.JsonArrayHelper;
@@ -65,9 +64,6 @@ public class LoanAPITests extends APITests {
     UUID id = UUID.randomUUID();
 
     UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
-    String patronGroupAtCheckout = patronGroupsFixture.staffWithId(
-      UUID.fromString(APITestContext.getPatronGroupIdAtCheckoutId()))
-      .getJson().getString("group");
 
     IndividualResource user = usersFixture.charlotte();
     UUID userId = user.getId();
@@ -81,8 +77,7 @@ public class LoanAPITests extends APITests {
       .withUserId(userId)
       .withItemId(itemId)
       .withLoanDate(loanDate)
-      .withDueDate(dueDate)
-      .withPatronGroupAtCheckout(patronGroupAtCheckout));
+      .withDueDate(dueDate));
 
     JsonObject loan = response.getJson();
 
@@ -103,9 +98,6 @@ public class LoanAPITests extends APITests {
 
     assertThat("action is not checkedout",
       loan.getString("action"), is("checkedout"));
-
-    assertThat("patron group at checkout is staff",
-      loan.getString("patronGroupAtCheckout"), is(patronGroupAtCheckout));
 
     loanHasLoanPolicyProperties(loan, loanPoliciesFixture.canCirculateRolling());
 
@@ -327,8 +319,6 @@ public class LoanAPITests extends APITests {
     UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
 
     UUID userId = usersFixture.charlotte().getId();
-    String patronGroupAtCheckout = patronGroupsFixture.staffWithId(UUID.fromString(APITestContext.getPatronGroupIdAtCheckoutId()))
-      .getJson().getString("group");
 
     DateTime loanDate = new DateTime(2017, 2, 27, 10, 23, 43, DateTimeZone.UTC);
     DateTime dueDate = new DateTime(2017, 3, 29, 10, 23, 43, DateTimeZone.UTC);
@@ -339,8 +329,7 @@ public class LoanAPITests extends APITests {
       .withUserId(userId)
       .withItemId(itemId)
       .withLoanDate(loanDate)
-      .withDueDate(dueDate)
-      .withPatronGroupAtCheckout(patronGroupAtCheckout));
+      .withDueDate(dueDate));
 
     JsonObject loan = response.getJson();
 
@@ -406,9 +395,6 @@ public class LoanAPITests extends APITests {
 
     assertThat("should have change metadata",
       loan.containsKey("metadata"), is(true));
-
-    assertThat("patron group at checkout is staff",
-      loan.getString("patronGroupAtCheckout"), is(patronGroupAtCheckout));
 
     JsonObject changeMetadata = loan.getJsonObject("metadata");
 
@@ -819,15 +805,12 @@ public class LoanAPITests extends APITests {
     UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
 
     UUID userId = usersFixture.charlotte().getId();
-    String patronGroupAtCheckout = patronGroupsFixture.staffWithId(UUID.fromString(APITestContext.getPatronGroupIdAtCheckoutId()))
-      .getJson().getString("group");
 
     IndividualResource response = loansClient.create(new LoanBuilder()
       .withId(id)
       .withUserId(userId)
       .withItemId(itemId)
-      .withNoStatus()
-      .withPatronGroupAtCheckout(patronGroupAtCheckout));
+      .withNoStatus());
 
     JsonObject loan = response.getJson();
 
@@ -860,9 +843,6 @@ public class LoanAPITests extends APITests {
     assertThat("item status snapshot in storage is not checked out",
       loansStorageClient.getById(id).getJson().getString("itemStatus"),
       is("Checked out"));
-
-    assertThat("patron group at checkout is staff",
-      loan.getString("patronGroupAtCheckout"), is(patronGroupAtCheckout));
   }
 
   @Test
@@ -878,17 +858,13 @@ public class LoanAPITests extends APITests {
 
     UUID userId = usersFixture.charlotte().getId();
 
-    String patronGroupAtCheckout = patronGroupsFixture.staffWithId(UUID.fromString(APITestContext.getPatronGroupIdAtCheckoutId()))
-      .getJson().getString("group");
-
     IndividualResource response = loansClient.create(new LoanBuilder()
       .withId(id)
       .withUserId(userId)
       .withItemId(itemId)
       .withLoanDate(new DateTime(2017, 2, 27, 10, 23, 43, DateTimeZone.UTC))
       .withReturnDate(new DateTime(2017, 3, 15, 11, 14, 36, DateTimeZone.UTC))
-      .withStatus("Closed")
-      .withPatronGroupAtCheckout(patronGroupAtCheckout));
+      .withStatus("Closed"));
 
     JsonObject loan = response.getJson();
 
@@ -912,9 +888,6 @@ public class LoanAPITests extends APITests {
 
     assertThat("Should not have snapshot of item status, as current status is included",
       loan.containsKey("itemStatus"), is(false));
-
-    assertThat("patron group at checkout is staff",
-      loan.getString("patronGroupAtCheckout"), is(patronGroupAtCheckout));
 
     JsonObject item = itemsClient.getById(itemId).getJson();
 
@@ -941,8 +914,6 @@ public class LoanAPITests extends APITests {
       .getId();
 
     IndividualResource user = usersFixture.charlotte();
-    String patronGroupAtCheckout = patronGroupsFixture.staffWithId(UUID.fromString(APITestContext.getPatronGroupIdAtCheckoutId()))
-      .getJson().getString("group");
     UUID userId = user.getId();
 
     DateTime dueDate = new DateTime(2016, 11, 15, 8, 26, 53, DateTimeZone.UTC);
@@ -953,8 +924,7 @@ public class LoanAPITests extends APITests {
       .withItemId(itemId)
       .withLoanDate(new DateTime(2016, 10, 15, 8, 26, 53, DateTimeZone.UTC))
       .withDueDate(dueDate)
-      .withStatus("Open")
-      .withPatronGroupAtCheckout(patronGroupAtCheckout));
+      .withStatus("Open"));
 
     Response getResponse = loansClient.getById(id);
 
@@ -983,9 +953,6 @@ public class LoanAPITests extends APITests {
 
     assertThat("action is not checkedout",
       loan.getString("action"), is("checkedout"));
-
-    assertThat("patron group at checkout is staff",
-      loan.getString("patronGroupAtCheckout"), is(patronGroupAtCheckout));
 
     loanHasLoanPolicyProperties(loan, loanPoliciesFixture.canCirculateRolling());
 
@@ -1874,42 +1841,101 @@ public class LoanAPITests extends APITests {
   }
 
   @Test
-  public void loanHasPatronGroup()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void canGetLoanWithPatronGroupName() throws InterruptedException, MalformedURLException, TimeoutException, ExecutionException {
+    UUID patronGroupId = patronGroupsFixture.staff().getId();
 
-    UUID id = UUID.randomUUID();
+    JsonObject storageLoan = new JsonObject("{\n" +
+      "    \"id\" : \"c56395a7-59bc-4fda-903e-f6bccafd8569\",\n" +
+      "    \"userId\" : \"513ffb94-dc62-4c06-8fe4-b6a88d90aef0\",\n" +
+      "    \"itemId\" : \"6e1c8601-77fb-4feb-97d3-eeb55e5c3950\",\n" +
+      "    \"loanDate\" : \"2017-03-06T16:04:43.000+02:00\",\n" +
+      "    \"patronGroupIdAtCheckout\": \"" + patronGroupId + "\",\n" +
+      "    \"status\" : {\n" +
+      "      \"name\" : \"Open\"\n" +
+      "    },\n" +
+      "    \"action\" : \"checkedout\",\n" +
+      "    \"metadata\" : {\n" +
+      "      \"createdDate\" : \"2019-07-22T12:20:29.843Z\",\n" +
+      "      \"createdByUserId\" : \"79ff2a8b-d9c3-5b39-ad4a-0a84025ab085\",\n" +
+      "      \"updatedDate\" : \"2019-07-22T12:20:29.843Z\",\n" +
+      "      \"updatedByUserId\" : \"79ff2a8b-d9c3-5b39-ad4a-0a84025ab085\"\n" +
+      "    }\n" +
+      "  }");
 
-    UUID userId = usersFixture.charlotte().getId();
+    loansStorageClient.create(storageLoan);
 
-    UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
-    String patronGroupAtCheckout = patronGroupsFixture.staffWithId(UUID.fromString(APITestContext.getPatronGroupIdAtCheckoutId()))
-      .getJson().getString("group");
+    String loanId = "c56395a7-59bc-4fda-903e-f6bccafd8569";
+    Response getResponse = loansClient.getById(UUID.fromString(loanId));
 
-    DateTime loanDate = new DateTime(2017, 2, 27, 10, 23, 43, DateTimeZone.UTC);
-    DateTime dueDate = new DateTime(2017, 3, 29, 10, 23, 43, DateTimeZone.UTC);
+    assertThat(String.format("Failed to get loan: %s", getResponse.getBody()),
+      getResponse.getStatusCode(), is(HttpURLConnection.HTTP_OK));
 
-    IndividualResource response = loansClient.create(new LoanBuilder()
-      .withId(id)
-      .closed()
-      .withUserId(userId)
-      .withItemId(itemId)
-      .withLoanDate(loanDate)
-      .withDueDate(dueDate)
-      .withPatronGroupAtCheckout(patronGroupAtCheckout));
+    JsonObject loan = getResponse.getJson();
 
-    JsonObject loan = response.getJson();
+    assertThat("id does not match",
+      loan.getString("id"), is(loanId));
 
-    assertThat("id  matched",
-      loan.getString("id"), is(id.toString()));
+    assertThat("patron group name is expected",
+      loan.getString("patronGroupAtCheckout"), is("staff"));
+  }
 
-    assertThat("item id matched",
-      loan.getString("itemId"), is(itemId.toString()));
+  @Test
+  public void canGetMultipleLoanWithPatronGroupName() throws InterruptedException, MalformedURLException, TimeoutException, ExecutionException {
+    UUID staffPatronGroupId = patronGroupsFixture.staff().getId();
 
-    assertThat("patron group at checkout is staff",
-      loan.getString("patronGroupAtCheckout"), is(patronGroupAtCheckout));
+    JsonObject firstStorageLoan = new JsonObject("{\n" +
+      "    \"id\" : \"c56395a7-59bc-4fda-903e-f6bccafd8569\",\n" +
+      "    \"userId\" : \"513ffb94-dc62-4c06-8fe4-b6a88d90aef0\",\n" +
+      "    \"itemId\" : \"6e1c8601-77fb-4feb-97d3-eeb55e5c3950\",\n" +
+      "    \"loanDate\" : \"2017-03-06T16:04:43.000+02:00\",\n" +
+      "    \"patronGroupIdAtCheckout\": \"" + staffPatronGroupId + "\",\n" +
+      "    \"status\" : {\n" +
+      "      \"name\" : \"Open\"\n" +
+      "    },\n" +
+      "    \"action\" : \"checkedout\",\n" +
+      "    \"metadata\" : {\n" +
+      "      \"createdDate\" : \"2019-07-22T12:20:29.843Z\",\n" +
+      "      \"createdByUserId\" : \"79ff2a8b-d9c3-5b39-ad4a-0a84025ab085\",\n" +
+      "      \"updatedDate\" : \"2019-07-22T12:20:29.843Z\",\n" +
+      "      \"updatedByUserId\" : \"79ff2a8b-d9c3-5b39-ad4a-0a84025ab085\"\n" +
+      "    }\n" +
+      "  }");
+
+    loansStorageClient.create(firstStorageLoan);
+
+    UUID regularPatronGroupId = patronGroupsFixture.regular().getId();
+
+    JsonObject  secondStorageLoan = new JsonObject("{\n" +
+      "    \"id\" : \"c56395a7-59bc-4fda-903e-f6bccafd8568\",\n" +
+      "    \"userId\" : \"513ffb94-dc62-4c06-8fe4-b6a88d90aef0\",\n" +
+      "    \"itemId\" : \"6e1c8601-77fb-4feb-97d3-eeb55e5c3950\",\n" +
+      "    \"loanDate\" : \"2017-03-06T16:04:43.000+02:00\",\n" +
+      "    \"patronGroupIdAtCheckout\": \"" + regularPatronGroupId + "\",\n" +
+      "    \"status\" : {\n" +
+      "      \"name\" : \"Open\"\n" +
+      "    },\n" +
+      "    \"action\" : \"checkedout\",\n" +
+      "    \"metadata\" : {\n" +
+      "      \"createdDate\" : \"2019-07-22T12:20:29.843Z\",\n" +
+      "      \"createdByUserId\" : \"79ff2a8b-d9c3-5b39-ad4a-0a84025ab085\",\n" +
+      "      \"updatedDate\" : \"2019-07-22T12:20:29.843Z\",\n" +
+      "      \"updatedByUserId\" : \"79ff2a8b-d9c3-5b39-ad4a-0a84025ab085\"\n" +
+      "    }\n" +
+      "  }");
+
+    loansStorageClient.create(secondStorageLoan);
+
+    final List<JsonObject> multipleLoans = loansClient.getAll();
+
+    assertThat("Should have different 'patronGroupAtCheckout' for different loans",
+      multipleLoans.get(0).getString("patronGroupAtCheckout"),
+      not(multipleLoans.get(1).getString("patronGroupAtCheckout")));
+
+    assertThat("Should have different 'patronGroupAtCheckout' for different loans",
+      multipleLoans.get(0).getString("patronGroupAtCheckout"), is("staff"));
+
+    assertThat("Should have different 'patronGroupAtCheckout' for different loans",
+      multipleLoans.get(1).getString("patronGroupAtCheckout"), is("Regular Group"));
   }
 
   private void loanHasExpectedProperties(JsonObject loan, IndividualResource user) {

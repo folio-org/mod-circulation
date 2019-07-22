@@ -130,15 +130,13 @@ public class FakeStorageModule extends AbstractVerticle {
 
     if(includeChangeMetadata) {
         final String fakeUserId = APITestContext.getUserId();
-        final String fakePatronGroupId = APITestContext.getPatronGroupIdAtCheckoutId();
         body.put(changeMetadataPropertyName, new JsonObject()
           .put("createdDate", new DateTime(DateTimeZone.UTC)
             .toString(ISODateTimeFormat.dateTime()))
           .put("createdByUserId", fakeUserId)
           .put("updatedDate", new DateTime(DateTimeZone.UTC)
             .toString(ISODateTimeFormat.dateTime()))
-          .put("updatedByUserId", fakeUserId))
-          .put("patronGroupIdAtCheckout", fakePatronGroupId);;
+          .put("updatedByUserId", fakeUserId));
       }
 
       final Map<String, JsonObject> existingRecords = getResourcesForTenant(context);

@@ -105,12 +105,6 @@ public class LoanBuilder extends JsonBuilder implements Builder {
         this.patronGroupAtCheckout);
   }
 
-  public LoanBuilder withPatronGroupAtCheckout(String patronGroupAtCheckout){
-    return new LoanBuilder(this.id, this.itemId, this.userId, this.loanDate, this.dueDate, this.status, this.returnDate,
-      this.systemReturnDate, this.action, this.proxyUserId, this.checkoutServicePointId, this.checkinServicePointId,
-      patronGroupAtCheckout);
-  }
-
   public LoanBuilder withNoUserId() {
     return withUserId(null);
   }
