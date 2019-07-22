@@ -1,6 +1,7 @@
 package org.folio.circulation.support;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
+import static org.apache.commons.collections4.ListUtils.partition;
 import static org.folio.circulation.domain.MultipleRecords.empty;
 import static org.folio.circulation.support.CqlQuery.exactMatchAny;
 import static org.folio.circulation.support.Result.of;
@@ -63,15 +64,11 @@ public class MultipleRecordFetcher<T> {
 
   private List<Result<CqlQuery>> buildBatchQueriesByIndexName(
       Collection<String> ids, String indexName) {
-    List<Result<CqlQuery>> queries = new ArrayList<>();
-    List<String> idsList = new ArrayList<>(ids);
-    while (!idsList.isEmpty()) {
-      int currentSize = idsList.size() <= MAX_BATCH_SIZE ? idsList.size() : MAX_BATCH_SIZE;
-      List<String> currentIds = idsList.subList(0, currentSize);
-      queries.add(exactMatchAny(indexName, currentIds));
-      idsList = idsList.subList(currentSize, idsList.size());
-    }
-    return queries;
+
+    return partition(new ArrayList<>(ids), MAX_BATCH_SIZE)
+      .stream()
+      .map(partitionedIds -> exactMatchAny(indexName, partitionedIds))
+      .collect(Collectors.toList());
   }
 
   private CompletableFuture<Result<MultipleRecords<T>>> findByBatchQueries(
