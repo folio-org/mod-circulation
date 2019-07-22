@@ -63,8 +63,7 @@ public class MultipleRecords<T> {
   }
 
   public Map<String, T> toMap(Function<T, String> keyMapper) {
-    return getRecords().stream() 
-      .collect(Collectors.toList()).stream()
+    return getRecords().stream()
       .collect(Collectors.toMap(keyMapper, identity(),
         (record1, record2) -> record1));
   }
