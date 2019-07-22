@@ -80,16 +80,12 @@ public class MultipleRecordFetcher<T> {
     // NOTE: query limit is max value to ensure all records are returned
     List<CompletableFuture<MultipleRecords<T>>> results = queries.stream()
         .map(query -> findByQuery(query, Integer.MAX_VALUE)
-        .thenApply(result -> result.value()))
+        .thenApply(this::getValue))
         .collect(Collectors.toList());
     return CompletableFuture.allOf(results.stream().toArray(CompletableFuture[]::new))
       .thenApply(notUsed -> results.stream()
         .map(records -> (MultipleRecords<T>) records.join())
         .collect(Collectors.collectingAndThen(Collectors.toList(), this::aggregate)));
-  }
-
-  private Result<MultipleRecords<T>> mapToRecords(Response response) {
-    return MultipleRecords.from(response, recordMapper, recordsPropertyName);
   }
 
   public CompletableFuture<Result<MultipleRecords<T>>> findByQuery(
@@ -101,6 +97,14 @@ public class MultipleRecordFetcher<T> {
     Result<CqlQuery> queryResult, Integer limit) {
     return queryResult.after(query -> client.getMany(query, limit))
       .thenApply(result -> result.next(this::mapToRecords));
+  }
+
+  private Result<MultipleRecords<T>> mapToRecords(Response response) {
+    return MultipleRecords.from(response, recordMapper, recordsPropertyName);
+  }
+
+  private MultipleRecords<T> getValue(Result<MultipleRecords<T>> result) {
+    return result.value();
   }
 
   private Result<MultipleRecords<T>> aggregate(List<MultipleRecords<T>> results) {
