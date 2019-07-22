@@ -84,7 +84,7 @@ public class MultipleRecordFetcher<T> {
         .collect(Collectors.toList());
     return CompletableFuture.allOf(results.stream().toArray(CompletableFuture[]::new))
       .thenApply(notUsed -> results.stream()
-        .map(records -> (MultipleRecords<T>) records.join())
+        .map(CompletableFuture::join)
         .collect(Collectors.collectingAndThen(Collectors.toList(), this::aggregate)));
   }
 
