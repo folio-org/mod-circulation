@@ -81,7 +81,7 @@ public abstract class RenewalResource extends Resource {
       .thenComposeAsync(r -> r.after(configurationRepository::lookupTimeZone))
       .thenComposeAsync(r -> r.after(records -> renewalStrategy.renew(records, bodyAsJson, clients)))
       .thenComposeAsync(r -> r.after(loanRepository::updateLoan))
-      .thenComposeAsync(r -> r.after(scheduledNoticeService::rescheduleDueDateNotices))
+      .thenApply(r -> r.next(scheduledNoticeService::rescheduleDueDateNotices))
       .thenApply(r -> r.next(records -> sendRenewalPatronNotice(records, patronNoticeService)))
       .thenApply(r -> r.map(loanRepresentation::extendedLoan))
       .thenApply(LoanResponse::from)

@@ -163,7 +163,7 @@ public class LoanCollectionResource extends CollectionResource {
       // due to snapshot of item status stored with the loan
       // as this is how the loan action history is populated
       .thenComposeAsync(result -> result.after(loanRepository::updateLoan))
-      .thenComposeAsync(r -> r.after(scheduledNoticeService::rescheduleDueDateNotices))
+      .thenApply(r -> r.next(scheduledNoticeService::rescheduleDueDateNotices))
       .thenApply(NoContentResult::from)
       .thenAccept(result -> result.writeTo(routingContext.response()));
   }

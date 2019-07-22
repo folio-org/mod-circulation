@@ -49,7 +49,7 @@ public class UpdateLoan {
           .thenApply(r -> r.next(this::recall))
           .thenComposeAsync(r -> r.after(closedLibraryStrategyService::applyClosedLibraryDueDateManagement))
           .thenComposeAsync(r -> r.after(loanRepository::updateLoan))
-          .thenComposeAsync(r -> r.after(scheduledNoticeService::rescheduleDueDateNotices))
+          .thenApply(r -> r.next(scheduledNoticeService::rescheduleDueDateNotices))
           .thenApply(r -> r.map(v -> requestAndRelatedRecords.withRequest(request.withLoan(v.getLoan()))));
     } else {
       return completedFuture(succeeded(requestAndRelatedRecords));
