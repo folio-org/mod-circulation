@@ -19,7 +19,7 @@ import org.folio.circulation.support.http.client.Response;
 import io.vertx.core.json.JsonObject;
 
 public class MultipleRecordFetcher<T> {
-  private static final int MAX_BATCH_SIZE = 10;
+  private static final int MAX_BATCH_SIZE = 50;
   private final CollectionResourceClient client;
   private final String recordsPropertyName;
   private final Function<JsonObject, T> recordMapper;
