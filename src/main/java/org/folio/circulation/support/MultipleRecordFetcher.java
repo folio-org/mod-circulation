@@ -19,7 +19,7 @@ import org.folio.circulation.support.http.client.Response;
 import io.vertx.core.json.JsonObject;
 
 public class MultipleRecordFetcher<T> {
-  private final static int MAX_BATCH_SIZE = 50;
+  private static final int MAX_BATCH_SIZE = 10;
   private final CollectionResourceClient client;
   private final String recordsPropertyName;
   private final Function<JsonObject, T> recordMapper;
@@ -61,7 +61,7 @@ public class MultipleRecordFetcher<T> {
       andQuery.combine(query, CqlQuery::and))
       .collect(Collectors.toList()));
   }
-  
+
   private List<Result<CqlQuery>> buildBatchQueriesByIndexName(
       Collection<String> ids, String indexName) {
     List<Result<CqlQuery>> queries = new ArrayList<>();
