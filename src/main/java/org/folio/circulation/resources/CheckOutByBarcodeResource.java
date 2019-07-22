@@ -12,7 +12,19 @@ import static org.folio.circulation.support.ValidationErrorFailure.singleValidat
 
 import java.util.UUID;
 
-import org.folio.circulation.domain.*;
+import org.folio.circulation.domain.ConfigurationRepository;
+import org.folio.circulation.domain.Item;
+import org.folio.circulation.domain.Loan;
+import org.folio.circulation.domain.LoanAndRelatedRecords;
+import org.folio.circulation.domain.LoanRepository;
+import org.folio.circulation.domain.LoanRepresentation;
+import org.folio.circulation.domain.LoanService;
+import org.folio.circulation.domain.PatronGroupRepository;
+import org.folio.circulation.domain.RequestQueueRepository;
+import org.folio.circulation.domain.UpdateItem;
+import org.folio.circulation.domain.UpdateRequestQueue;
+import org.folio.circulation.domain.User;
+import org.folio.circulation.domain.UserRepository;
 import org.folio.circulation.domain.notice.NoticeEventType;
 import org.folio.circulation.domain.notice.NoticeTiming;
 import org.folio.circulation.domain.notice.PatronNoticeEvent;

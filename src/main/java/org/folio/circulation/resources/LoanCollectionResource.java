@@ -9,12 +9,14 @@ import static org.folio.circulation.support.ValidationErrorFailure.singleValidat
 
 import java.util.concurrent.CompletableFuture;
 
+import org.folio.circulation.domain.AccountRepository;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.domain.LoanRepository;
 import org.folio.circulation.domain.LoanRepresentation;
 import org.folio.circulation.domain.LoanService;
+import org.folio.circulation.domain.PatronGroupRepository;
 import org.folio.circulation.domain.RequestQueue;
 import org.folio.circulation.domain.RequestQueueRepository;
 import org.folio.circulation.domain.ServicePointRepository;
@@ -22,7 +24,6 @@ import org.folio.circulation.domain.UpdateItem;
 import org.folio.circulation.domain.UpdateRequestQueue;
 import org.folio.circulation.domain.User;
 import org.folio.circulation.domain.UserRepository;
-import org.folio.circulation.domain.*;
 import org.folio.circulation.domain.notice.schedule.ScheduledNoticeService;
 import org.folio.circulation.domain.policy.LoanPolicyRepository;
 import org.folio.circulation.domain.validation.AlreadyCheckedOutValidator;
