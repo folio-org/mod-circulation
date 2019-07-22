@@ -91,6 +91,10 @@ public class ScheduledNoticesRepository {
     return CqlQuery.exactMatch("loanId", loanId).after(this::deleteMany);
   }
 
+  CompletableFuture<Result<Response>> deleteByRequestId(String requestId) {
+    return CqlQuery.exactMatch("requestId", requestId).after(this::deleteMany);
+  }
+
   private CompletableFuture<Result<Response>> deleteMany(CqlQuery cqlQuery) {
     final ResponseInterpreter<Response> interpreter = new ResponseInterpreter<Response>()
       .flatMapOn(204, Result::succeeded)

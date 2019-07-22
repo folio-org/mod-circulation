@@ -143,10 +143,13 @@ public class RequestCollectionResource extends CollectionResource {
         new ServicePointPickupLocationValidator()
       );
 
+    final RequestScheduledNoticeService scheduledNoticeService = RequestScheduledNoticeService.using(clients);
+
     requestFromRepresentationService.getRequestFrom(representation)
       .thenComposeAsync(r -> r.afterWhen(requestRepository::exists,
         updateRequestService::replaceRequest,
         createRequestService::createRequest))
+      .thenApply(r -> r.next(scheduledNoticeService::rescheduleRequestNotices))
       .thenApply(NoContentResult::from)
       .thenAccept(r -> r.writeTo(routingContext.response()));
   }

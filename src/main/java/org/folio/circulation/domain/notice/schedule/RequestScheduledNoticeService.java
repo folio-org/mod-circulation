@@ -44,6 +44,14 @@ public class RequestScheduledNoticeService {
     return succeeded(relatedRecords);
   }
 
+  public Result<RequestAndRelatedRecords> rescheduleRequestNotices(RequestAndRelatedRecords relatedRecords) {
+
+    scheduledNoticesRepository.deleteByRequestId(relatedRecords.getRequest().getId())
+      .thenAccept(r -> r.next(resp -> scheduleRequestNotices(relatedRecords)));
+
+    return succeeded(relatedRecords);
+  }
+
   private Result<PatronNoticePolicy> scheduleRequestNoticesBasedOnPolicy(
     Request request, PatronNoticePolicy noticePolicy) {
 
