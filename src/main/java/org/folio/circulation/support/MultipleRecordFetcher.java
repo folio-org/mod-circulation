@@ -1,15 +1,14 @@
 package org.folio.circulation.support;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
+import static org.folio.circulation.domain.MultipleRecords.empty;
 import static org.folio.circulation.support.CqlQuery.exactMatchAny;
 import static org.folio.circulation.support.Result.of;
-import static org.folio.circulation.support.Result.succeeded;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -78,10 +77,10 @@ public class MultipleRecordFetcher<T> {
   private CompletableFuture<Result<MultipleRecords<T>>> findByBatchQueries(
       List<Result<CqlQuery>> queries) {
     // NOTE: query limit is max value to ensure all records are returned
-    List<CompletableFuture<MultipleRecords<T>>> results = queries.stream()
-        .map(query -> findByQuery(query, Integer.MAX_VALUE)
-        .thenApply(this::getValue))
+    List<CompletableFuture<Result<MultipleRecords<T>>>> results = queries.stream()
+        .map(query -> findByQuery(query, Integer.MAX_VALUE))
         .collect(Collectors.toList());
+
     return CompletableFuture.allOf(results.toArray(new CompletableFuture[0]))
       .thenApply(notUsed -> results.stream()
         .map(CompletableFuture::join)
@@ -103,17 +102,8 @@ public class MultipleRecordFetcher<T> {
     return MultipleRecords.from(response, recordMapper, recordsPropertyName);
   }
 
-  private MultipleRecords<T> getValue(Result<MultipleRecords<T>> result) {
-    return result.value();
-  }
-
-  private Result<MultipleRecords<T>> aggregate(List<MultipleRecords<T>> results) {
-    final AtomicInteger totalRecords = new AtomicInteger(0);
-    final List<T> wrappedRecords = results.stream()
-      .flatMap(r -> {
-        totalRecords.addAndGet(r.getTotalRecords());
-        return r.getRecords().stream();
-      }).collect(Collectors.toList());
-    return succeeded(new MultipleRecords<>(wrappedRecords, totalRecords.get()));
+  private Result<MultipleRecords<T>> aggregate(List<Result<MultipleRecords<T>>> results) {
+    return Result.combineAll(results)
+      .map(records -> records.stream().reduce(empty(), MultipleRecords::combine));
   }
 }
