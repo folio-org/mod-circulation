@@ -183,15 +183,13 @@ public class FakeStorageModule extends AbstractVerticle {
 
       if(includeChangeMetadata) {
         final String fakeUserId = APITestContext.getUserId();
-        final String fakePatronGroupId = APITestContext.getPatronGroupIdAtCheckoutId();
         final JsonObject existingChangeMetadata = resourcesForTenant.get(id)
           .getJsonObject(changeMetadataPropertyName);
 
         final JsonObject updatedChangeMetadata = existingChangeMetadata.copy()
           .put("updatedDate", new DateTime(DateTimeZone.UTC)
             .toString(ISODateTimeFormat.dateTime()))
-          .put("updatedByUserId", fakeUserId)
-          .put("patronGroupIdAtCheckout", fakePatronGroupId);
+          .put("updatedByUserId", fakeUserId);
 
         body.put(changeMetadataPropertyName, updatedChangeMetadata);
       }
@@ -218,15 +216,13 @@ public class FakeStorageModule extends AbstractVerticle {
 
       if(includeChangeMetadata) {
         final String fakeUserId = APITestContext.getUserId();
-        final String fakePatronGroupId = APITestContext.getPatronGroupIdAtCheckoutId();
         body.put(changeMetadataPropertyName, new JsonObject()
           .put("createdDate", new DateTime(DateTimeZone.UTC)
             .toString(ISODateTimeFormat.dateTime()))
           .put("createdByUserId", fakeUserId)
           .put("updatedDate", new DateTime(DateTimeZone.UTC)
             .toString(ISODateTimeFormat.dateTime()))
-          .put("updatedByUserId", fakeUserId))
-          .put("patronGroupIdAtCheckout", fakePatronGroupId);
+          .put("updatedByUserId", fakeUserId));
       }
 
       resourcesForTenant.put(id, body);

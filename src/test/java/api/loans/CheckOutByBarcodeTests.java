@@ -170,9 +170,9 @@ public class CheckOutByBarcodeTests extends APITests {
 
     IndividualResource savedLoan = loansStorageClient.get(response);
 
-    assertThat("patron group id is valid",
-      savedLoan.getJson().getString("patronGroupIdAtCheckout"), is(steve.
-        getJson().getString("patronGroup")));
+    assertThat("Should have specific patron group id",
+      savedLoan.getJson().getString("patronGroupIdAtCheckout"),
+      is(steve.getJson().getString("patronGroup")));
   }
 
   @Test
@@ -209,9 +209,9 @@ public class CheckOutByBarcodeTests extends APITests {
 
     IndividualResource savedLoan = loansStorageClient.get(response);
 
-    assertThat("patron group id is valid",
-      savedLoan.getJson().getString("patronGroupIdAtCheckout"), is(steve.
-        getJson().getString("patronGroup")));
+    assertThat("Should have specific patron group id",
+      savedLoan.getJson().getString("patronGroupIdAtCheckout"),
+      is(steve.getJson().getString("patronGroup")));
   }
 
   @Test
@@ -267,9 +267,9 @@ public class CheckOutByBarcodeTests extends APITests {
 
     IndividualResource savedLoan = loansStorageClient.get(response);
 
-    assertThat("patron group id is valid",
-      savedLoan.getJson().getString("patronGroupIdAtCheckout"), is(steve.
-        getJson().getString("patronGroup")));
+    assertThat("Should have specific patron group id",
+      savedLoan.getJson().getString("patronGroupIdAtCheckout"),
+      is(steve.getJson().getString("patronGroup")));
   }
 
   @Test
@@ -298,9 +298,9 @@ public class CheckOutByBarcodeTests extends APITests {
 
     IndividualResource savedLoan = loansStorageClient.get(response);
 
-    assertThat("patron group id is valid",
-      savedLoan.getJson().getString("patronGroupIdAtCheckout"), is(steve.
-        getJson().getString("patronGroup")));
+    assertThat("Should have specific patron group id",
+      savedLoan.getJson().getString("patronGroupIdAtCheckout"),
+      is(steve.getJson().getString("patronGroup")));
   }
 
   @Test
@@ -329,9 +329,9 @@ public class CheckOutByBarcodeTests extends APITests {
 
     IndividualResource savedLoan = loansStorageClient.get(response);
 
-    assertThat("patron group id is valid",
-      savedLoan.getJson().getString("patronGroupIdAtCheckout"), is(steve.
-        getJson().getString("patronGroup")));
+    assertThat("Should have specific patron group id",
+      savedLoan.getJson().getString("patronGroupIdAtCheckout"),
+      is(steve.getJson().getString("patronGroup")));
   }
 
   @Test
@@ -527,9 +527,9 @@ public class CheckOutByBarcodeTests extends APITests {
 
     IndividualResource savedLoan = loansStorageClient.get(response);
 
-    assertThat("patron group id is valid",
-      savedLoan.getJson().getString("patronGroupIdAtCheckout"), is(james.
-        getJson().getString("patronGroup")));
+    assertThat("Should have specific patron group id",
+      savedLoan.getJson().getString("patronGroupIdAtCheckout"),
+      is(james.getJson().getString("patronGroup")));
   }
 
   @Test
@@ -685,9 +685,9 @@ public class CheckOutByBarcodeTests extends APITests {
 
     IndividualResource savedLoan = loansStorageClient.get(response);
 
-    assertThat("patron group id is valid",
-      savedLoan.getJson().getString("patronGroupIdAtCheckout"), is(steve.
-        getJson().getString("patronGroup")));
+    assertThat("Should have specific patron group id",
+      savedLoan.getJson().getString("patronGroupIdAtCheckout"),
+      is(steve.getJson().getString("patronGroup")));
   }
 
   @Test
@@ -727,9 +727,9 @@ public class CheckOutByBarcodeTests extends APITests {
 
     IndividualResource savedLoan = loansStorageClient.get(response);
 
-    assertThat("patron group id is valid",
-      savedLoan.getJson().getString("patronGroupIdAtCheckout"), is(steve.
-        getJson().getString("patronGroup")));
+    assertThat("Should have specific patron group id",
+      savedLoan.getJson().getString("patronGroupIdAtCheckout"),
+      is(steve.getJson().getString("patronGroup")));
   }
 
   @Test
@@ -777,9 +777,9 @@ public class CheckOutByBarcodeTests extends APITests {
 
     IndividualResource savedLoan = loansStorageClient.get(response);
 
-    assertThat("patron group id is valid",
-      savedLoan.getJson().getString("patronGroupIdAtCheckout"), is(steve.
-        getJson().getString("patronGroup")));
+    assertThat("Should have specific patron group id",
+      savedLoan.getJson().getString("patronGroupIdAtCheckout"),
+      is(steve.getJson().getString("patronGroup")));
   }
 
   @Test
@@ -860,9 +860,9 @@ public class CheckOutByBarcodeTests extends APITests {
 
     IndividualResource savedLoan = loansStorageClient.get(response);
 
-    assertThat("patron group id is valid",
-      savedLoan.getJson().getString("patronGroupIdAtCheckout"), is(jessica.
-        getJson().getString("patronGroup")));
+    assertThat("Should have specific patron group id",
+      savedLoan.getJson().getString("patronGroupIdAtCheckout"),
+      is(jessica.getJson().getString("patronGroup")));
   }
 
   @Test
@@ -901,9 +901,9 @@ public class CheckOutByBarcodeTests extends APITests {
 
     IndividualResource savedLoan = loansStorageClient.get(response);
 
-    assertThat("patron group id is valid",
-      savedLoan.getJson().getString("patronGroupIdAtCheckout"), is(jessica.
-        getJson().getString("patronGroup")));
+    assertThat("Should have specific patron group id",
+      savedLoan.getJson().getString("patronGroupIdAtCheckout"),
+      is(jessica.getJson().getString("patronGroup")));
   }
 
   @Test
@@ -949,9 +949,9 @@ public class CheckOutByBarcodeTests extends APITests {
 
     IndividualResource savedLoan = loansStorageClient.get(response);
 
-    assertThat("patron group id is valid",
-      savedLoan.getJson().getString("patronGroupIdAtCheckout"), is(jessica.
-        getJson().getString("patronGroup")));
+    assertThat("Should have specific patron group id",
+      savedLoan.getJson().getString("patronGroupIdAtCheckout"),
+      is(jessica.getJson().getString("patronGroup")));
   }
 
   @Test

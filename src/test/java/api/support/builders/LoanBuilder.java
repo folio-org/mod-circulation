@@ -27,7 +27,7 @@ public class LoanBuilder extends JsonBuilder implements Builder {
   private final DateTime systemReturnDate;
   private final UUID checkoutServicePointId;
   private final UUID checkinServicePointId;
-  private final String patronGroupAtCheckout;
+  private final UUID patronGroupAtCheckout;
 
   public LoanBuilder() {
     this(UUID.randomUUID(), UUID.randomUUID(), null, new DateTime(2017, 3, 6, 16, 4, 43), null, "Open",
@@ -37,7 +37,7 @@ public class LoanBuilder extends JsonBuilder implements Builder {
   private LoanBuilder(UUID id, UUID itemId, UUID userId, DateTime loanDate,
     DateTime dueDate, String status, DateTime returnDate, DateTime systemReturnDate,
     String action, UUID proxyUserId, UUID checkoutServicePointId,
-    UUID checkinServicePointId, String patronGroupAtCheckout) {
+    UUID checkinServicePointId, UUID patronGroupAtCheckout) {
 
     this.id = id;
     this.itemId = itemId;
@@ -78,7 +78,7 @@ public class LoanBuilder extends JsonBuilder implements Builder {
       put(loanRequest, "systemReturnDate", systemReturnDate);
     }
 
-    put(loanRequest, "patronGroupAtCheckout", patronGroupAtCheckout);
+    put(loanRequest, "patronGroupIdAtCheckout", patronGroupAtCheckout);
 
     return loanRequest;
   }
@@ -103,6 +103,12 @@ public class LoanBuilder extends JsonBuilder implements Builder {
     return new LoanBuilder(this.id, this.itemId, userId, this.loanDate, this.dueDate, this.status, this.returnDate,
         this.systemReturnDate, this.action, this.proxyUserId, this.checkoutServicePointId, this.checkinServicePointId,
         this.patronGroupAtCheckout);
+  }
+
+  public LoanBuilder withPatronGroupAtCheckout(UUID patronGroupAtCheckout){
+    return new LoanBuilder(this.id, this.itemId, this.userId, this.loanDate, this.dueDate, this.status, this.returnDate,
+      this.systemReturnDate, this.action, this.proxyUserId, this.checkoutServicePointId, this.checkinServicePointId,
+      patronGroupAtCheckout);
   }
 
   public LoanBuilder withNoUserId() {
