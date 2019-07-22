@@ -1840,7 +1840,7 @@ public class LoanAPITests extends APITests {
   }
   
   @Test
-  public void canGetPagedLoansWithItemsExceedingDefaultLimit()
+  public void canGetPagedLoansWithMoreItemsThanDefaultPageLimit()
       throws InterruptedException,
       ExecutionException,
       TimeoutException,
@@ -1850,7 +1850,7 @@ public class LoanAPITests extends APITests {
   }
   
   @Test
-  public void canGetPagedLoansWithItemsByIdsQueryExceedingLengthLimit()
+  public void canGetPagedLoansWhenIdQueryWouldExceedQueryStringLengthLimit()
       throws InterruptedException,
       ExecutionException,
       TimeoutException,
