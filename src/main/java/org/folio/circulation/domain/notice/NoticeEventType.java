@@ -16,6 +16,7 @@ public enum NoticeEventType {
   RECALL_TO_LOANEE("Recall loanee"),
   REQUEST_CANCELLATION("Request cancellation"),
   AVAILABLE("Available"),
+  REQUEST_EXPIRATION("Request Expiration"),
   HOLD_EXPIRATION("Hold Expiration"),
   UNKNOWN("Unknown");
 

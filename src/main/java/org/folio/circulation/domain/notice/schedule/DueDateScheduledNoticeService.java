@@ -20,9 +20,9 @@ import org.folio.circulation.support.Result;
 import org.joda.time.DateTime;
 import org.joda.time.Period;
 
-public class ScheduledNoticeService {
-  public static ScheduledNoticeService using(Clients clients) {
-    return new ScheduledNoticeService(
+public class DueDateScheduledNoticeService {
+  public static DueDateScheduledNoticeService using(Clients clients) {
+    return new DueDateScheduledNoticeService(
       ScheduledNoticesRepository.using(clients),
       new PatronNoticePolicyRepository(clients));
   }
@@ -30,7 +30,7 @@ public class ScheduledNoticeService {
   private final ScheduledNoticesRepository scheduledNoticesRepository;
   private final PatronNoticePolicyRepository noticePolicyRepository;
 
-  public ScheduledNoticeService(
+  public DueDateScheduledNoticeService(
     ScheduledNoticesRepository scheduledNoticesRepository,
     PatronNoticePolicyRepository noticePolicyRepository) {
     this.scheduledNoticesRepository = scheduledNoticesRepository;

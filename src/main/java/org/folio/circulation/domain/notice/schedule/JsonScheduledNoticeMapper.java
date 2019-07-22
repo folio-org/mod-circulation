@@ -23,7 +23,7 @@ public class JsonScheduledNoticeMapper {
   private static final String LOAN_ID = "loanId";
   private static final String REQUEST_ID = "requestId";
   private static final String NEXT_RUN_TIME = "nextRunTime";
-  private static final String TRIGGERING_EVENT = "nextRunTime";
+  private static final String TRIGGERING_EVENT = "triggeringEvent";
   private static final String NOTICE_CONFIG = "noticeConfig";
   private static final String TIMING = "timing";
   private static final String RECURRING_PERIOD = "recurringPeriod";

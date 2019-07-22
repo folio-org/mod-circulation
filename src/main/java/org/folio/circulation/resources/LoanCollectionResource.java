@@ -9,6 +9,7 @@ import static org.folio.circulation.support.ValidationErrorFailure.singleValidat
 
 import java.util.concurrent.CompletableFuture;
 
+import org.folio.circulation.domain.AccountRepository;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
@@ -22,8 +23,7 @@ import org.folio.circulation.domain.UpdateItem;
 import org.folio.circulation.domain.UpdateRequestQueue;
 import org.folio.circulation.domain.User;
 import org.folio.circulation.domain.UserRepository;
-import org.folio.circulation.domain.*;
-import org.folio.circulation.domain.notice.schedule.ScheduledNoticeService;
+import org.folio.circulation.domain.notice.schedule.DueDateScheduledNoticeService;
 import org.folio.circulation.domain.policy.LoanPolicyRepository;
 import org.folio.circulation.domain.validation.AlreadyCheckedOutValidator;
 import org.folio.circulation.domain.validation.ItemMissingValidator;
@@ -143,7 +143,7 @@ public class LoanCollectionResource extends CollectionResource {
     final ServicePointLoanLocationValidator spLoanLocationValidator =
         new ServicePointLoanLocationValidator();
 
-    final ScheduledNoticeService scheduledNoticeService = ScheduledNoticeService.using(clients);
+    final DueDateScheduledNoticeService scheduledNoticeService = DueDateScheduledNoticeService.using(clients);
 
     completedFuture(succeeded(new LoanAndRelatedRecords(loan)))
       .thenCompose(larrResult ->
