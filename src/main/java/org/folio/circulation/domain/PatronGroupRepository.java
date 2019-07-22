@@ -1,16 +1,28 @@
 package org.folio.circulation.domain;
 
+import org.folio.circulation.support.Clients;
+import org.folio.circulation.support.CollectionResourceClient;
+import org.folio.circulation.support.FetchSingleRecord;
+import org.folio.circulation.support.MultipleRecordFetcher;
+import org.folio.circulation.support.Result;
+
 import static java.util.Objects.isNull;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.domain.PatronGroup.unknown;
-import static org.folio.circulation.support.Result.*;
+import static org.folio.circulation.support.Result.of;
+import static org.folio.circulation.support.Result.ofAsync;
+import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.ResultBinding.mapResult;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
-import org.folio.circulation.support.*;
 
 public class PatronGroupRepository {
   private final CollectionResourceClient patronGroupsStorageClient;
@@ -94,9 +106,8 @@ public class PatronGroupRepository {
   }
 
   public CompletableFuture<Result<Loan>> findGroupForLoan(Result<Loan> loanResult) {
-    return loanResult.after(loan ->
-      getPatronGroupById(loan.getPatronGroupIdAtCheckout())
-        .thenApply(result -> result.map(loan::withPatronGroup)));
+    return loanResult.combineAfter(loan ->
+      getPatronGroupById(loan.getPatronGroupIdAtCheckout()), Loan::withPatronGroup);
   }
 
   private CompletableFuture<Result<PatronGroup>> getPatronGroupById(String groupId) {

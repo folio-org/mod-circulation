@@ -1,6 +1,7 @@
 package org.folio.circulation.domain;
 
-import static java.util.Objects.*;
+import static java.util.Objects.nonNull;
+import static java.util.Objects.requireNonNull;
 import static org.folio.circulation.domain.representations.LoanProperties.ACTION_COMMENT;
 import static org.folio.circulation.domain.representations.LoanProperties.CHECKIN_SERVICE_POINT_ID;
 import static org.folio.circulation.domain.representations.LoanProperties.CHECKOUT_SERVICE_POINT_ID;
@@ -226,8 +227,8 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
         checkoutServicePoint, originalDueDate, loanPolicy, accounts);
   }
 
-  Loan withPatronGroup(PatronGroup patronGroup){
-    if(nonNull(patronGroup)){
+  Loan withPatronGroup(PatronGroup patronGroup) {
+    if (nonNull(patronGroup)) {
       representation.put("patronGroupAtCheckout", patronGroup.getGroup());
     }
     return this;

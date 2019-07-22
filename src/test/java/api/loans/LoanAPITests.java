@@ -14,7 +14,10 @@ import static api.support.matchers.ValidationErrorMatchers.hasNullParameter;
 import static api.support.matchers.ValidationErrorMatchers.hasUUIDParameter;
 import static org.folio.HttpStatus.HTTP_VALIDATION_ERROR;
 import static org.hamcrest.CoreMatchers.allOf;
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.greaterThan;
+import static org.hamcrest.Matchers.not;
+import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 
@@ -62,7 +65,8 @@ public class LoanAPITests extends APITests {
     UUID id = UUID.randomUUID();
 
     UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
-    String patronGroupAtCheckout = patronGroupsFixture.staffWithId(UUID.fromString(APITestContext.getPatronGroupIdAtCheckoutId()))
+    String patronGroupAtCheckout = patronGroupsFixture.staffWithId(
+      UUID.fromString(APITestContext.getPatronGroupIdAtCheckoutId()))
       .getJson().getString("group");
 
     IndividualResource user = usersFixture.charlotte();
