@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -103,10 +104,12 @@ public class MultipleRecordFetcher<T> {
   }
 
   private Result<MultipleRecords<T>> aggregate(List<MultipleRecords<T>> results) {
-    final Integer totalRecords = results.get(0).getTotalRecords();
+    final AtomicInteger totalRecords = new AtomicInteger(0);
     final List<T> wrappedRecords = results.stream()
-      .flatMap(r -> r.getRecords().stream())
-      .collect(Collectors.toList());
-    return succeeded(new MultipleRecords<>(wrappedRecords, totalRecords));
+      .flatMap(r -> {
+        totalRecords.addAndGet(r.getTotalRecords());
+        return r.getRecords().stream();
+      }).collect(Collectors.toList());
+    return succeeded(new MultipleRecords<>(wrappedRecords, totalRecords.get()));
   }
 }
