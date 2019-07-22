@@ -49,7 +49,7 @@ public class RequestScheduledNoticeService {
 
     noticePolicy.getNoticeConfigurations()
       .stream()
-      .filter(this::isRequestExpirationConfig)
+      .filter(cfg -> requiresNoticeScheduling(cfg, request))
       .map(cfg -> createRequestScheduledNotice(cfg, request))
       .forEach(scheduledNoticesRepository::create);
 
@@ -75,9 +75,14 @@ public class RequestScheduledNoticeService {
     }
   }
 
-  private boolean isRequestExpirationConfig(NoticeConfiguration cfg) {
+  private boolean requiresNoticeScheduling(NoticeConfiguration cfg, Request request) {
     NoticeEventType type = cfg.getNoticeEventType();
-    return type == REQUEST_EXPIRATION || type == HOLD_EXPIRATION;
+
+    if (type == REQUEST_EXPIRATION && request.getRequestExpirationDate() != null) {
+      return true;
+    }
+    return type == HOLD_EXPIRATION && request.getHoldShelfExpirationDate() != null;
+
   }
 
   private ScheduledNotice createRequestScheduledNotice(NoticeConfiguration cfg, Request request) {
