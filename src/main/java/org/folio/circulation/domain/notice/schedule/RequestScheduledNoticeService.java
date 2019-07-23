@@ -36,20 +36,15 @@ public class RequestScheduledNoticeService {
 
 
   public Result<RequestAndRelatedRecords> scheduleRequestNotices(RequestAndRelatedRecords relatedRecords) {
-    Request request = relatedRecords.getRequest();
-
-    noticePolicyRepository.lookupPolicy(request)
-      .thenAccept(r -> r.next(policy -> scheduleRequestNoticesBasedOnPolicy(request, policy)));
-
+    scheduleRequestNotices(relatedRecords.getRequest());
     return succeeded(relatedRecords);
   }
 
-  public Result<RequestAndRelatedRecords> rescheduleRequestNotices(RequestAndRelatedRecords relatedRecords) {
+  public Result<Request> rescheduleRequestNotices(Request request) {
+    scheduledNoticesRepository.deleteByRequestId(request.getId())
+      .thenAccept(r -> r.next(resp -> scheduleRequestNotices(request)));
 
-    scheduledNoticesRepository.deleteByRequestId(relatedRecords.getRequest().getId())
-      .thenAccept(r -> r.next(resp -> scheduleRequestNotices(relatedRecords)));
-
-    return succeeded(relatedRecords);
+    return succeeded(request);
   }
 
   private Result<PatronNoticePolicy> scheduleRequestNoticesBasedOnPolicy(
@@ -111,5 +106,12 @@ public class RequestScheduledNoticeService {
       .setRecurringPeriod(configuration.getRecurringPeriod())
       .setSendInRealTime(configuration.sendInRealTime())
       .build();
+  }
+
+  private Result<Request> scheduleRequestNotices(Request request) {
+    noticePolicyRepository.lookupPolicy(request)
+      .thenApply(r -> r.next(policy -> scheduleRequestNoticesBasedOnPolicy(request, policy)));
+
+    return succeeded(request);
   }
 }

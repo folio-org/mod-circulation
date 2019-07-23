@@ -1,6 +1,7 @@
 package org.folio.circulation.domain;
 
 import static java.util.Objects.isNull;
+import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.support.Result.failed;
 import static org.folio.circulation.support.Result.of;
 import static org.folio.circulation.support.Result.ofAsync;
@@ -11,6 +12,7 @@ import static org.folio.circulation.support.http.ResponseMapping.mapUsingJson;
 
 import java.util.concurrent.CompletableFuture;
 
+import org.folio.circulation.domain.notice.schedule.RequestScheduledNoticeService;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.CqlQuery;
@@ -32,6 +34,7 @@ public class RequestRepository {
   private final LoanRepository loanRepository;
   private final ServicePointRepository servicePointRepository;
   private final PatronGroupRepository patronGroupRepository;
+  private final RequestScheduledNoticeService requestScheduledNoticeService;
 
   private RequestRepository(
     CollectionResourceClient requestsStorageClient,
@@ -40,7 +43,8 @@ public class RequestRepository {
     UserRepository userRepository,
     LoanRepository loanRepository,
     ServicePointRepository servicePointRepository,
-    PatronGroupRepository patronGroupRepository) {
+    PatronGroupRepository patronGroupRepository,
+    RequestScheduledNoticeService requestScheduledNoticeService) {
 
     this.requestsStorageClient = requestsStorageClient;
     this.cancellationReasonStorageClient = cancellationReasonStorageClient;
@@ -49,14 +53,19 @@ public class RequestRepository {
     this.loanRepository = loanRepository;
     this.servicePointRepository = servicePointRepository;
     this.patronGroupRepository = patronGroupRepository;
+    this.requestScheduledNoticeService = requestScheduledNoticeService;
   }
 
   public static RequestRepository using(Clients clients) {
-    return new RequestRepository(clients.requestsStorage(),
+    return new RequestRepository(
+      clients.requestsStorage(),
       clients.cancellationReasonStorage(),
       new ItemRepository(clients, true, false, true),
-      new UserRepository(clients), new LoanRepository(clients),
-      new ServicePointRepository(clients), new PatronGroupRepository(clients));
+      new UserRepository(clients),
+      new LoanRepository(clients),
+      new ServicePointRepository(clients),
+      new PatronGroupRepository(clients),
+      RequestScheduledNoticeService.using(clients));
   }
 
   public CompletableFuture<Result<MultipleRecords<Request>>> findBy(String query) {
@@ -135,7 +144,9 @@ public class RequestRepository {
       .otherwise(forwardOnFailure());
 
     return requestsStorageClient.put(request.getId(), representation)
-      .thenApply(interpreter::apply);
+      .thenApply(interpreter::apply)
+      .thenCompose(this::fetchRequesterIfNotPresented)
+      .thenApply(r -> r.next(requestScheduledNoticeService::rescheduleRequestNotices));
   }
 
   public CompletableFuture<Result<RequestAndRelatedRecords>> update(
@@ -187,6 +198,11 @@ public class RequestRepository {
   private CompletableFuture<Result<Request>> fetchRequester(Result<Request> result) {
     return result.combineAfter(request ->
       getUser(request.getUserId()), Request::withRequester);
+  }
+
+  private CompletableFuture<Result<Request>> fetchRequesterIfNotPresented(Result<Request> result) {
+    return result.after(request -> request.getRequester() == null ?
+      fetchRequester(result) : completedFuture(succeeded(request)));
   }
 
   //TODO: Check if need to request proxy
