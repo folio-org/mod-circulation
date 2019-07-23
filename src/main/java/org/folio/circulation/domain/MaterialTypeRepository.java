@@ -46,6 +46,7 @@ public class MaterialTypeRepository {
     List<String> materialTypeIds = inventoryRecords.stream()
       .map(Item::getMaterialTypeId)
       .filter(StringUtils::isNotBlank)
+      .distinct()
       .collect(Collectors.toList());
 
     final MultipleRecordFetcher<JsonObject> fetcher = new MultipleRecordFetcher<>(

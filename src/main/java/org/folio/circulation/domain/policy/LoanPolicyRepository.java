@@ -74,6 +74,7 @@ public class LoanPolicyRepository extends CirculationPolicyRepository<LoanPolicy
     final Collection<String> loansToFetch = loans.stream()
             .map(Loan::getLoanPolicyId)
             .filter(Objects::nonNull)
+            .distinct()
             .collect(Collectors.toSet());
 
     final MultipleRecordFetcher<LoanPolicy> fetcher = createLoanPoliciesFetcher();

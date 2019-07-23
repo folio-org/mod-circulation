@@ -1,6 +1,7 @@
 package org.folio.circulation.domain;
 
 import static java.util.function.Function.identity;
+import static java.util.stream.Stream.concat;
 import static org.folio.circulation.support.JsonArrayHelper.mapToList;
 import static org.folio.circulation.support.Result.succeeded;
 
@@ -63,8 +64,9 @@ public class MultipleRecords<T> {
   }
 
   public Map<String, T> toMap(Function<T, String> keyMapper) {
-    return getRecords().stream().collect(
-      Collectors.toMap(keyMapper, identity()));
+    return getRecords().stream()
+      .collect(Collectors.toMap(keyMapper, identity(),
+        (record1, record2) -> record1));
   }
 
   /**
@@ -87,6 +89,13 @@ public class MultipleRecords<T> {
 
     Result<List<R>> combinedResult = Result.combineAll(mappedRecordsList);
     return combinedResult.map(list -> new MultipleRecords<>(list, totalRecords));
+  }
+
+  public MultipleRecords<T> combine(MultipleRecords<T> other) {
+    final List<T> allRecords = concat(records.stream(), other.records.stream())
+      .collect(Collectors.toList());
+
+    return new MultipleRecords<>(allRecords, totalRecords + other.totalRecords);
   }
 
   public JsonObject asJson(
