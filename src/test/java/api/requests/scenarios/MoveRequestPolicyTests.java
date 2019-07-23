@@ -18,6 +18,7 @@ import java.util.concurrent.TimeoutException;
 
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.RequestType;
+import org.folio.circulation.domain.notice.NoticeEventType;
 import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.support.ClockManager;
 import org.folio.circulation.support.http.client.IndividualResource;
@@ -42,7 +43,6 @@ import io.vertx.core.json.JsonObject;
  *  RD = Recall due date<br>
  */
 public class MoveRequestPolicyTests extends APITests {
-  private static final String RECALL_TO_LOANEE = "Recall loanee";
   private static Clock clock;
 
   private NoticePolicyBuilder noticePolicy;
@@ -67,7 +67,7 @@ public class MoveRequestPolicyTests extends APITests {
     UUID recallToLoaneeTemplateId = UUID.randomUUID();
     JsonObject recallToLoaneeConfiguration = new NoticeConfigurationBuilder()
       .withTemplateId(recallToLoaneeTemplateId)
-      .withEventType(RECALL_TO_LOANEE)
+      .withEventType(NoticeEventType.RECALL_TO_LOANEE.getRepresentation())
       .create();
 
     noticePolicy = new NoticePolicyBuilder()
@@ -204,7 +204,7 @@ public class MoveRequestPolicyTests extends APITests {
       storedLoan.getString("dueDate"), is(expectedDueDate));
 
     assertThat("move recall request notice has not been sent",
-      patronNoticesClient.getAll().size(), is(1));
+      patronNoticesClient.getAll().size(), is(2));
   }
 
   @Test
@@ -244,6 +244,8 @@ public class MoveRequestPolicyTests extends APITests {
     // jessica places recall request on interestingTimes
     IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
       interestingTimes, jessica, DateTime.now(DateTimeZone.UTC), RequestType.RECALL.getValue());
+    
+    assertThat(patronNoticesClient.getAll().size(), is(1));
 
     // move jessica's recall request from interestingTimes to smallAngryPlanet
     IndividualResource moveRequest = requestsFixture.move(new MoveRequestBuilder(
@@ -333,7 +335,7 @@ public class MoveRequestPolicyTests extends APITests {
       storedLoan.getString("dueDate"), is(expectedDueDate));
 
     assertThat("move recall request notice has not been sent",
-      patronNoticesClient.getAll().size(), is(1));
+      patronNoticesClient.getAll().size(), is(2));
   }
 
   @Test

@@ -39,14 +39,14 @@ public class MoveRequestService {
       .thenCompose(r -> r.after(updateUponRequest.updateRequestQueue::onMovedTo))
       .thenComposeAsync(r -> r.after(this::updateRelatedObjects))
       .thenCompose(r -> r.after(requestRepository::update))
+      .thenApply(r -> r.next(requestNoticeSender::sendNoticeOnRequestMoved))
       .thenComposeAsync(r -> r.after(moveRequestProcessAdapter::findSourceItem))
       .thenComposeAsync(r -> r.after(moveRequestProcessAdapter::getSourceRequestQueue))
       .thenCompose(r -> r.after(updateUponRequest.updateRequestQueue::onMovedFrom))
       .thenComposeAsync(r -> r.after(this::updateRelatedObjects))
       .thenComposeAsync(r -> r.after(moveRequestProcessAdapter::findDestinationItem))
       .thenComposeAsync(r -> r.after(moveRequestProcessAdapter::getDestinationRequestQueue))
-      .thenComposeAsync(r -> r.after(moveRequestProcessAdapter::getRequest))
-      .thenApply(r -> r.next(requestNoticeSender::sendNoticeOnRequestMoved));
+      .thenComposeAsync(r -> r.after(moveRequestProcessAdapter::getRequest));
   }
 
   private RequestAndRelatedRecords pagedRequestIfDestinationItemAvailable(
