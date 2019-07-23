@@ -15,6 +15,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import api.support.fixtures.*;
+import org.folio.circulation.domain.representations.LoanProperties;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.OkapiHttpClient;
 import org.folio.circulation.support.http.client.Response;
@@ -378,6 +379,12 @@ public abstract class APITests {
     hasProperty("loanPolicy", loan, "loan");
     JsonObject loanPolicyObject = loan.getJsonObject("loanPolicy");
     hasProperty("name", loanPolicyObject, "loan policy", loanPolicy.getJson().getString("name"));
+  }
+
+  protected void loanHasPatronGroupProperties(JsonObject loan) {
+    JsonObject loanPolicyObject = loan.getJsonObject(LoanProperties.PATRON_GROUP_AT_CHECKOUT);
+    hasProperty("id", loanPolicyObject, "patron group at checkout");
+    hasProperty("name", loanPolicyObject, "patron group at checkout");
   }
 
   protected void hasProperty(String property, JsonObject resource, String type) {

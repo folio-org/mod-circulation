@@ -1030,6 +1030,8 @@ public class LoanAPITests extends APITests {
     List<JsonObject> loans = loansClient.getAll();
 
     loans.forEach(loanJson -> loanHasLoanPolicyProperties(loanJson, loanPolicy));
+
+    loans.forEach(this::loanHasPatronGroupProperties);
   }
 
   @Test
@@ -1404,6 +1406,8 @@ public class LoanAPITests extends APITests {
 
     firstPageLoans.forEach(loan -> loanHasExpectedProperties(loan, user));
     secondPageLoans.forEach(loan -> loanHasExpectedProperties(loan, user));
+    firstPageLoans.forEach(this::loanHasPatronGroupProperties);
+    secondPageLoans.forEach(this::loanHasPatronGroupProperties);
 
     assertThat(countOfDistinctTitles(firstPageLoans), is(greaterThan(1)));
     assertThat(countOfDistinctTitles(secondPageLoans), is(greaterThan(1)));
@@ -1838,85 +1842,6 @@ public class LoanAPITests extends APITests {
       loanHasCheckoutServicePointProperties(loanJson);
     });
 
-  }
-
-  @Test
-  public void canGetLoanWithPatronGroupName() throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
-    IndividualResource staffPatronGroup = patronGroupsFixture.staff();
-
-    LoanBuilder storageLoanBuilder = new LoanBuilder()
-      .withId(UUID.fromString("c56395a7-59bc-4fda-903e-f6bccafd8569"))
-      .withUserId(UUID.fromString("513ffb94-dc62-4c06-8fe4-b6a88d90aef0"))
-      .withItemId(UUID.fromString("6e1c8601-77fb-4feb-97d3-eeb55e5c3950"))
-      .withLoanDate(DateTime.parse("2017-03-06T16:04:43.000+02:00"))
-      .withPatronGroupAtCheckout(staffPatronGroup.getId())
-      .withStatus("Open");
-
-    JsonObject storageLoan = storageLoanBuilder.create();
-
-    loansStorageClient.create(storageLoan);
-
-    String loanId = "c56395a7-59bc-4fda-903e-f6bccafd8569";
-    Response getResponse = loansClient.getById(UUID.fromString(loanId));
-
-    assertThat(String.format("Failed to get loan: %s", getResponse.getBody()),
-      getResponse.getStatusCode(), is(HttpURLConnection.HTTP_OK));
-
-    JsonObject loan = getResponse.getJson();
-
-    assertThat("id does not match",
-      loan.getString("id"), is(loanId));
-
-    assertThat("Should have specific patron group name",
-      loan.getString("patronGroupAtCheckout"),
-      is(staffPatronGroup.getJson().getValue("group")));
-  }
-
-  @Test
-  public void canGetMultipleLoanWithPatronGroupName() throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
-    IndividualResource staffPatronGroup = patronGroupsFixture.staff();
-
-    LoanBuilder staffLoanBuilder = new LoanBuilder()
-      .withId(UUID.fromString("c56395a7-59bc-4fda-903e-f6bccafd8569"))
-      .withUserId(UUID.fromString("513ffb94-dc62-4c06-8fe4-b6a88d90aef0"))
-      .withItemId(UUID.fromString("6e1c8601-77fb-4feb-97d3-eeb55e5c3950"))
-      .withLoanDate(DateTime.parse("2017-03-06T16:04:43.000+02:00"))
-      .withPatronGroupAtCheckout(staffPatronGroup.getId())
-      .withStatus("Open");
-
-    loansStorageClient.create(staffLoanBuilder.create());
-
-    IndividualResource regularPatronGroup = patronGroupsFixture.regular();
-
-    LoanBuilder regularLoanBuilder = new LoanBuilder()
-      .withId(UUID.fromString("c56395a7-59bc-4fda-903e-f6bccafd8568"))
-      .withUserId(UUID.fromString("513ffb94-dc62-4c06-8fe4-b6a88d90aef0"))
-      .withItemId(UUID.fromString("6e1c8601-77fb-4feb-97d3-eeb55e5c3950"))
-      .withLoanDate(DateTime.parse("2017-03-06T16:04:43.000+02:00"))
-      .withPatronGroupAtCheckout(regularPatronGroup.getId())
-      .withStatus("Open");
-
-    loansStorageClient.create(regularLoanBuilder.create());
-
-    final List<JsonObject> multipleLoans = loansClient.getAll();
-
-    assertThat("Should have different 'patronGroupAtCheckout' for different loans",
-      multipleLoans.get(0).getString("patronGroupAtCheckout"),
-      not(multipleLoans.get(1).getString("patronGroupAtCheckout")));
-
-    assertThat("Should have different 'patronGroupAtCheckout' for different loans",
-      multipleLoans.get(0).getString("patronGroupAtCheckout"),
-      is(staffPatronGroup.getJson().getValue("group")));
-
-    assertThat("Should have different 'patronGroupAtCheckout' for different loans",
-      multipleLoans.get(1).getString("patronGroupAtCheckout"),
-      is(regularPatronGroup.getJson().getValue("group")));
   }
 
   private void loanHasExpectedProperties(JsonObject loan, IndividualResource user) {

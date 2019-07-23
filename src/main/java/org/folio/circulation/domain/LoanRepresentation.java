@@ -1,5 +1,7 @@
 package org.folio.circulation.domain;
 
+import static java.util.Objects.isNull;
+
 import io.vertx.core.json.JsonObject;
 import org.folio.circulation.domain.policy.LoanPolicy;
 import org.folio.circulation.domain.representations.ItemSummaryRepresentation;
@@ -136,5 +138,23 @@ public class LoanRepresentation {
     borrowerSummary.put("barcode", borrower.getBarcode());
 
     loanRepresentation.put(LoanProperties.BORROWER, borrowerSummary);
+
+    additionalPatronGroupProperties(loanRepresentation, borrower.getPatronGroup());
+  }
+
+  private void additionalPatronGroupProperties(JsonObject loanRepresentation, PatronGroup patronGroupAtCheckout) {
+    if (isNull(patronGroupAtCheckout)) {
+      log.info("Unable to add patron group at checkout properties to loan {},"
+        + " patron group is null", loanRepresentation.getString("id"));
+      return;
+    }
+
+    JsonObject patronGroupAtCheckoutSummary = loanRepresentation.containsKey(LoanProperties.PATRON_GROUP_AT_CHECKOUT)
+      ? loanRepresentation.getJsonObject(LoanProperties.PATRON_GROUP_AT_CHECKOUT)
+      : new JsonObject();
+    patronGroupAtCheckoutSummary.put("id", patronGroupAtCheckout.getId());
+    patronGroupAtCheckoutSummary.put("name", patronGroupAtCheckout.getGroup());
+
+    loanRepresentation.put(LoanProperties.PATRON_GROUP_AT_CHECKOUT, patronGroupAtCheckoutSummary);
   }
 }

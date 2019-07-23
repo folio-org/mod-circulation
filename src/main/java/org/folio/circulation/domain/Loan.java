@@ -229,7 +229,9 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
 
   Loan withPatronGroup(PatronGroup patronGroup) {
     if (nonNull(patronGroup)) {
-      representation.put("patronGroupAtCheckout", patronGroup.getGroup());
+      representation.put(LoanProperties.PATRON_GROUP_AT_CHECKOUT, new JsonObject()
+        .put("id", patronGroup.getId())
+        .put("name", patronGroup.getGroup()));
     }
     return this;
   }
