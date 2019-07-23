@@ -1844,6 +1844,71 @@ public class LoanAPITests extends APITests {
 
   }
 
+  @Test
+  public void canGetLoanWithPatronGroupAfterAnonymize() throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    InventoryItemResource item = itemsFixture.basedUponSmallAngryPlanet();
+    IndividualResource jessica = usersFixture.jessica();
+
+    IndividualResource individualResource = loansFixture.checkOutByBarcode(item,
+      jessica, new DateTime(2018, 4, 21, 11, 21, 43, DateTimeZone.UTC));
+
+    JsonObject savedLoan = loansStorageClient.get(individualResource.getId())
+      .getResponse().getJson();
+
+     savedLoan.remove("userId");
+
+     loansStorageClient.replace(individualResource.getId(), savedLoan);
+
+     JsonObject loan = loansClient.get(individualResource.getId()).getJson();
+
+     loanHasPatronGroupProperties(loan);
+  }
+
+  @Test
+  public void canGetMultipleLoansWithPatronGroupAfterAnonymize() throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    InventoryItemResource firstItem = itemsFixture.basedUponSmallAngryPlanet();
+    IndividualResource jessica = usersFixture.jessica();
+    IndividualResource firstLoan = loansFixture.checkOutByBarcode(firstItem,
+      jessica, new DateTime(2018, 4, 21, 11, 21, 43, DateTimeZone.UTC));
+
+
+    InventoryItemResource secondItem = itemsFixture.basedUponNod();
+    IndividualResource steve = usersFixture.steve();
+    IndividualResource secondLoan = loansFixture.checkOutByBarcode(secondItem,
+      steve, new DateTime(2018, 4, 21, 11, 21, 43, DateTimeZone.UTC));
+
+    JsonObject firstSavedLoan = loansStorageClient.get(firstLoan.getId())
+      .getResponse().getJson();
+
+    firstSavedLoan.remove("userId");
+
+    loansStorageClient.replace(firstLoan.getId(), firstSavedLoan);
+
+
+    JsonObject secondSavedLoan = loansStorageClient.get(secondLoan.getId())
+      .getResponse().getJson();
+
+    secondSavedLoan.remove("userId");
+
+    loansStorageClient.replace(secondLoan.getId(), secondSavedLoan);
+
+    List<JsonObject> loans = loansClient.getAll();
+
+    JsonObject fetchedLoan1 = getRecordById(loans, firstLoan.getId()).get();
+    JsonObject fetchedLoan2 = getRecordById(loans, secondLoan.getId()).get();
+
+    loanHasPatronGroupProperties(fetchedLoan1);
+    loanHasPatronGroupProperties(fetchedLoan2);
+  }
+
   private void loanHasExpectedProperties(JsonObject loan, IndividualResource user) {
     loanHasExpectedProperties(loan);
 
