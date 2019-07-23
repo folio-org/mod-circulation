@@ -152,8 +152,8 @@ public class LoanRepresentation {
     JsonObject patronGroupAtCheckoutSummary = loanRepresentation.containsKey(LoanProperties.PATRON_GROUP_AT_CHECKOUT)
       ? loanRepresentation.getJsonObject(LoanProperties.PATRON_GROUP_AT_CHECKOUT)
       : new JsonObject();
-    patronGroupAtCheckoutSummary.put("id", patronGroupAtCheckout.getId());
-    patronGroupAtCheckoutSummary.put("name", patronGroupAtCheckout.getGroup());
+    write(patronGroupAtCheckoutSummary, "id", patronGroupAtCheckout.getId());
+    write(patronGroupAtCheckoutSummary, "name", patronGroupAtCheckout.getGroup());
 
     loanRepresentation.put(LoanProperties.PATRON_GROUP_AT_CHECKOUT, patronGroupAtCheckoutSummary);
   }
