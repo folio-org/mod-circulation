@@ -1,3 +1,21 @@
+## 16.4.0 2019-07-23
+
+* Can override renewals with request related failures (CIRC-311, CIRC-319)
+* Introduces experimental move request API (CIRC-315, CIRC-316, CIRC-333, CIRC-395)
+* Decides upon item for title level requests based upon due date (CIRC-361)
+* Provides template context for staff slips during check in (CIRC-378) 
+* Adds `Closed - Unfilled` and `Closed - Pickup expired` request states (CIRC-350)
+* Includes additional location information for requests (CIRC-331)
+* Includes outstanding fees and fines amount to pay for loans (CIRC-323)
+* Assorted bug fixes (CIRC-305, CIRC-350, CIRC-353, CIRC-356, CIRC-357, CIRC-371, CIRC-390)
+* Provides `circulation 7.10` (CIRC-323, CIRC-350, CIRC-315, CIRC-331)
+* Provides `requests-move 0.2` (CIRC-350)
+* Provides `requests-reports 0.2` (CIRC-350)
+* Requires `calendar 3.0` (CIRC-363, MODCAL-45)
+* Requires `feesfines 15.0` (CIRC-232)
+* Requires `loan-storage 5.3 or 6.0` (CIRC-380)
+* Requires `instance-storage 4.0, 5.0, 6.0 or 7.0` (CIRC-396)
+
 ## 16.3.0 2019-06-17
 
 * Use sets for module permissions to reduce size when included in headers (CIRC-352)
