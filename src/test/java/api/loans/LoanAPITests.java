@@ -1841,7 +1841,10 @@ public class LoanAPITests extends APITests {
   }
 
   @Test
-  public void canGetLoanWithPatronGroupName() throws InterruptedException, MalformedURLException, TimeoutException, ExecutionException {
+  public void canGetLoanWithPatronGroupName() throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
     IndividualResource staffPatronGroup = patronGroupsFixture.staff();
 
     LoanBuilder storageLoanBuilder = new LoanBuilder()
@@ -1873,7 +1876,10 @@ public class LoanAPITests extends APITests {
   }
 
   @Test
-  public void canGetMultipleLoanWithPatronGroupName() throws InterruptedException, MalformedURLException, TimeoutException, ExecutionException {
+  public void canGetMultipleLoanWithPatronGroupName() throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
     IndividualResource staffPatronGroup = patronGroupsFixture.staff();
 
     LoanBuilder staffLoanBuilder = new LoanBuilder()
