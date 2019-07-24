@@ -381,10 +381,11 @@ public abstract class APITests {
     hasProperty("name", loanPolicyObject, "loan policy", loanPolicy.getJson().getString("name"));
   }
 
-  protected void loanHasPatronGroupProperties(JsonObject loan) {
-    JsonObject loanPolicyObject = loan.getJsonObject(LoanProperties.PATRON_GROUP_AT_CHECKOUT);
-    hasProperty("id", loanPolicyObject, "patron group at checkout");
-    hasProperty("name", loanPolicyObject, "patron group at checkout");
+  protected void loanHasPatronGroupProperties(JsonObject loan, String patronGroupValue) {
+    JsonObject patronGroupObject = loan.getJsonObject(LoanProperties.PATRON_GROUP_AT_CHECKOUT);
+    hasProperty("id", patronGroupObject, "patron group at checkout");
+    hasProperty("name", patronGroupObject, "patron group at checkout");
+    hasProperty("name", patronGroupObject, "patron group at checkout", patronGroupValue);
   }
 
   protected void hasProperty(String property, JsonObject resource, String type) {

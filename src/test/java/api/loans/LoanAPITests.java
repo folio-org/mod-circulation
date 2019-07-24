@@ -1031,8 +1031,6 @@ public class LoanAPITests extends APITests {
     List<JsonObject> loans = loansClient.getAll();
 
     loans.forEach(loanJson -> loanHasLoanPolicyProperties(loanJson, loanPolicy));
-
-    loans.forEach(this::loanHasPatronGroupProperties);
   }
 
   @Test
@@ -1405,8 +1403,6 @@ public class LoanAPITests extends APITests {
 
     firstPageLoans.forEach(loan -> loanHasExpectedProperties(loan, user));
     secondPageLoans.forEach(loan -> loanHasExpectedProperties(loan, user));
-    firstPageLoans.forEach(this::loanHasPatronGroupProperties);
-    secondPageLoans.forEach(this::loanHasPatronGroupProperties);
 
     assertThat(countOfDistinctTitles(firstPageLoans), is(greaterThan(1)));
     assertThat(countOfDistinctTitles(secondPageLoans), is(greaterThan(1)));
@@ -1963,7 +1959,7 @@ public class LoanAPITests extends APITests {
 
      JsonObject loan = loansClient.get(individualResource.getId()).getJson();
 
-     loanHasPatronGroupProperties(loan);
+     loanHasPatronGroupProperties(loan, "Regular Group");
   }
 
   @Test
@@ -1979,9 +1975,9 @@ public class LoanAPITests extends APITests {
 
 
     InventoryItemResource secondItem = itemsFixture.basedUponNod();
-    IndividualResource steve = usersFixture.steve();
+    IndividualResource henry = usersFixture.undergradHenry();
     IndividualResource secondLoan = loansFixture.checkOutByBarcode(secondItem,
-      steve, new DateTime(2018, 4, 21, 11, 21, 43, DateTimeZone.UTC));
+      henry, new DateTime(2018, 4, 21, 11, 21, 43, DateTimeZone.UTC));
 
     JsonObject firstSavedLoan = loansStorageClient.get(firstLoan.getId())
       .getResponse().getJson();
@@ -2003,8 +1999,8 @@ public class LoanAPITests extends APITests {
     JsonObject fetchedLoan1 = getRecordById(loans, firstLoan.getId()).get();
     JsonObject fetchedLoan2 = getRecordById(loans, secondLoan.getId()).get();
 
-    loanHasPatronGroupProperties(fetchedLoan1);
-    loanHasPatronGroupProperties(fetchedLoan2);
+    loanHasPatronGroupProperties(fetchedLoan1, "Regular Group");
+    loanHasPatronGroupProperties(fetchedLoan2, "undergrad");
   }
 
   private void loanHasExpectedProperties(JsonObject loan, IndividualResource user) {
