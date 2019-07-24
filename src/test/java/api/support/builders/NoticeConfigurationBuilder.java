@@ -69,6 +69,14 @@ public class NoticeConfigurationBuilder extends JsonBuilder implements Builder {
     return withEventType("Due date");
   }
 
+  public NoticeConfigurationBuilder withRequestExpirationEvent() {
+    return withEventType("Request Expiration");
+  }
+
+  public NoticeConfigurationBuilder withHoldShelfExpirationEvent() {
+    return withEventType("Hold Expiration");
+  }
+
   private NoticeConfigurationBuilder withTiming(String timing, JsonObject timingPeriod) {
     return new NoticeConfigurationBuilder(
       templateId,
