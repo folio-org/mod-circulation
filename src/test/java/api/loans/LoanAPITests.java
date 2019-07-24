@@ -1939,7 +1939,7 @@ public class LoanAPITests extends APITests {
   }
 
   @Test
-  public void canGetLoanWithPatronGroupAfterAnonymize() throws InterruptedException,
+  public void canGetAnonymizedLoan() throws InterruptedException,
     MalformedURLException,
     TimeoutException,
     ExecutionException {
@@ -1963,7 +1963,7 @@ public class LoanAPITests extends APITests {
   }
 
   @Test
-  public void canGetMultipleLoansWithPatronGroupAfterAnonymize() throws InterruptedException,
+  public void canGetMultipleAnonymizedLoans() throws InterruptedException,
     MalformedURLException,
     TimeoutException,
     ExecutionException {

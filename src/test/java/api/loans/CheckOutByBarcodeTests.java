@@ -110,6 +110,8 @@ public class CheckOutByBarcodeTests extends APITests {
 
     loanHasLoanPolicyProperties(loan, loanPoliciesFixture.canCirculateRolling());
 
+    loanHasPatronGroupProperties(loan, "Regular Group");
+
     assertThat("due date should be 3 weeks after loan date, based upon loan policy",
       loan.getString("dueDate"), isEquivalentTo(loanDate.plusWeeks(3)));
 
@@ -167,12 +169,6 @@ public class CheckOutByBarcodeTests extends APITests {
     assertThat("location is taken from holding",
       loan.getJsonObject("item").getJsonObject("location").getString("name"),
       is("3rd Floor"));
-
-    IndividualResource savedLoan = loansStorageClient.get(response);
-
-    assertThat("Should have specific patron group id",
-      savedLoan.getJson().getString("patronGroupIdAtCheckout"),
-      is(steve.getJson().getString("patronGroup")));
   }
 
   @Test
@@ -200,6 +196,8 @@ public class CheckOutByBarcodeTests extends APITests {
 
     assertThat("loan date should be as supplied",
       loan.getString("loanDate"), isEquivalentTo(loanDate));
+
+    loanHasPatronGroupProperties(loan, "Regular Group");
 
     loanHasLoanPolicyProperties(loan, loanPoliciesFixture.canCirculateFixed());
 
@@ -252,6 +250,8 @@ public class CheckOutByBarcodeTests extends APITests {
 
     assertThat("loan date should be as supplied",
       loan.getString("loanDate"), isEquivalentTo(loanDate));
+
+    loanHasPatronGroupProperties(loan, "Regular Group");
 
     loanHasLoanPolicyProperties(loan, loanPolicyResource);
 
