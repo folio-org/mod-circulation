@@ -57,10 +57,14 @@ public class RequestRepository {
   }
 
   public static RequestRepository using(Clients clients) {
+    return using(clients, false);
+  }
+
+  public static RequestRepository using(Clients clients, boolean fetchMaterialType) {
     return new RequestRepository(
       clients.requestsStorage(),
       clients.cancellationReasonStorage(),
-      new ItemRepository(clients, true, false, true),
+      new ItemRepository(clients, true, fetchMaterialType, true),
       new UserRepository(clients),
       new LoanRepository(clients),
       new ServicePointRepository(clients),

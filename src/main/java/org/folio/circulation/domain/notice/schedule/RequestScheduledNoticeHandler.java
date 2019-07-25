@@ -23,7 +23,7 @@ public class RequestScheduledNoticeHandler {
 
   public static RequestScheduledNoticeHandler using(Clients clients) {
     return new RequestScheduledNoticeHandler(
-      RequestRepository.using(clients),
+      RequestRepository.using(clients, true),
       PatronNoticeService.using(clients),
       ScheduledNoticesRepository.using(clients));
   }

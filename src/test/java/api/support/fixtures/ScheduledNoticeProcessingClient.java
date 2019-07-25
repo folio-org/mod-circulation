@@ -20,4 +20,15 @@ public class ScheduledNoticeProcessingClient {
     URL url = circulationModuleUrl("/circulation/scheduled-notices-processing");
     manuallyStartTimedTask(url, 204, "scheduled-notices-processing-request");
   }
+
+  public void runRequestNoticesProcessing(DateTime mockSystemTime) {
+    DateTimeUtils.setCurrentMillisFixed(mockSystemTime.getMillis());
+    runRequestNoticesProcessing();
+    DateTimeUtils.setCurrentMillisSystem();
+  }
+
+  public void runRequestNoticesProcessing() {
+    URL url = circulationModuleUrl("/circulation/request-scheduled-notices-processing");
+    manuallyStartTimedTask(url, 204, "request-scheduled-notices-processing-request");
+  }
 }

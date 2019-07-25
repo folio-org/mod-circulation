@@ -3,11 +3,16 @@ package api.support.matchers;
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
 import org.hamcrest.TypeSafeMatcher;
+import org.hamcrest.core.IsNull;
 import org.joda.time.DateTime;
 import org.joda.time.Seconds;
 
 public class TextDateTimeMatcher {
   public static Matcher<String> isEquivalentTo(DateTime expected) {
+    if (expected == null) {
+      return IsNull.nullValue(String.class);
+    }
+
     return new TypeSafeMatcher<String>() {
       @Override
       public void describeTo(Description description) {

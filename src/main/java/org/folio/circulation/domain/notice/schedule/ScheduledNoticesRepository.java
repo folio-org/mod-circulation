@@ -2,6 +2,8 @@ package org.folio.circulation.domain.notice.schedule;
 
 import static java.util.Arrays.asList;
 import static java.util.function.Function.identity;
+import static org.folio.circulation.domain.notice.NoticeEventType.HOLD_EXPIRATION;
+import static org.folio.circulation.domain.notice.NoticeEventType.REQUEST_EXPIRATION;
 import static org.folio.circulation.domain.notice.schedule.JsonScheduledNoticeMapper.mapToJson;
 import static org.folio.circulation.support.CqlSortBy.ascending;
 import static org.folio.circulation.support.http.CommonResponseInterpreters.noContentRecordInterpreter;
@@ -58,7 +60,8 @@ public class ScheduledNoticesRepository {
     DateTime systemTime, int pageLimit) {
 
     return CqlQuery.lessThan("nextRunTime", systemTime.withZone(DateTimeZone.UTC))
-      .combine(CqlQuery.exactMatchAny("triggeringEvent", asList("Hold request", "Request expiration")), CqlQuery::and)
+      .combine(CqlQuery.exactMatchAny("triggeringEvent",
+        asList(REQUEST_EXPIRATION.getRepresentation(), HOLD_EXPIRATION.getRepresentation())), CqlQuery::and)
       .map(cqlQuery -> cqlQuery.sortBy(ascending("nextRunTime")))
       .after(query -> findBy(query, pageLimit));
   }
