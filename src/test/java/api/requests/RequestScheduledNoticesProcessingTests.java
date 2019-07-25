@@ -34,7 +34,7 @@ import api.support.builders.NoticeConfigurationBuilder;
 import api.support.builders.NoticePolicyBuilder;
 import api.support.builders.RequestBuilder;
 import api.support.fixtures.ItemExamples;
-import api.support.fixtures.NoticeMatchers;
+import api.support.fixtures.TemplateContextMatchers;
 import api.support.http.InventoryItemResource;
 import io.vertx.core.json.JsonObject;
 
@@ -97,7 +97,7 @@ public class RequestScheduledNoticesProcessingTests extends APITests {
     List<JsonObject> notices = patronNoticesClient.getAll();
 
     assertThat(notices, hasSize(1));
-    assertThat(notices.get(0), getNoticeContextMatcher(templateId, request));
+    assertThat(notices.get(0), getTemplateContextMatcher(templateId, request));
   }
 
   @Test
@@ -132,7 +132,7 @@ public class RequestScheduledNoticesProcessingTests extends APITests {
     List<JsonObject> notices = patronNoticesClient.getAll();
 
     assertThat(notices, hasSize(1));
-    assertThat(notices.get(0), getNoticeContextMatcher(templateId, request));
+    assertThat(notices.get(0), getTemplateContextMatcher(templateId, request));
   }
 
   @Test
@@ -176,7 +176,7 @@ public class RequestScheduledNoticesProcessingTests extends APITests {
 
     assertThat(notices, hasSize(1));
     assertThat(nextRunTimeBeforeProcessing, is(nextRunTimeAfterProcessing.minusDays(1)));
-    assertThat(notices.get(0), getNoticeContextMatcher(templateId, request));
+    assertThat(notices.get(0), getTemplateContextMatcher(templateId, request));
   }
 
   @Test
@@ -218,7 +218,7 @@ public class RequestScheduledNoticesProcessingTests extends APITests {
     List<JsonObject> notices = patronNoticesClient.getAll();
 
     assertThat(notices, hasSize(1));
-    assertThat(notices.get(0), getNoticeContextMatcher(templateId, requestsClient.get(request.getId())));
+    assertThat(notices.get(0), getTemplateContextMatcher(templateId, requestsClient.get(request.getId())));
     assertThat(scheduledNoticesClient.getAll(), hasSize(0));
   }
 
@@ -238,12 +238,12 @@ public class RequestScheduledNoticesProcessingTests extends APITests {
       noticePoliciesFixture.create(noticePolicy).getId());
   }
 
-  private Matcher<JsonObject> getNoticeContextMatcher(UUID templateId, IndividualResource request) {
-    Map<String, Matcher<String>> noticeContextMatchers = new HashMap<>();
-    noticeContextMatchers.putAll(NoticeMatchers.getUserContextMatchers(requester));
-    noticeContextMatchers.putAll(NoticeMatchers.getItemContextMatchers(item, true));
-    noticeContextMatchers.putAll(NoticeMatchers.getRequestContextMatchers(request));
+  private Matcher<JsonObject> getTemplateContextMatcher(UUID templateId, IndividualResource request) {
+    Map<String, Matcher<String>> templateContextMatchers = new HashMap<>();
+    templateContextMatchers.putAll(TemplateContextMatchers.getUserContextMatchers(requester));
+    templateContextMatchers.putAll(TemplateContextMatchers.getItemContextMatchers(item, true));
+    templateContextMatchers.putAll(TemplateContextMatchers.getRequestContextMatchers(request));
 
-    return hasEmailNoticeProperties(requester.getId(), templateId, noticeContextMatchers);
+    return hasEmailNoticeProperties(requester.getId(), templateId, templateContextMatchers);
   }
 }

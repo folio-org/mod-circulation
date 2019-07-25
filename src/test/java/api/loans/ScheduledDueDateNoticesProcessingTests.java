@@ -41,7 +41,7 @@ import api.support.builders.ItemBuilder;
 import api.support.builders.NoticeConfigurationBuilder;
 import api.support.builders.NoticePolicyBuilder;
 import api.support.fixtures.ItemExamples;
-import api.support.fixtures.NoticeMatchers;
+import api.support.fixtures.TemplateContextMatchers;
 import api.support.http.InventoryItemResource;
 import io.vertx.core.json.JsonObject;
 
@@ -357,10 +357,10 @@ public class ScheduledDueDateNoticesProcessingTests extends APITests {
     ExecutionException {
 
     Map<String, Matcher<String>> noticeContextMatchers = new HashMap<>();
-    noticeContextMatchers.putAll(NoticeMatchers.getUserContextMatchers(borrower));
-    noticeContextMatchers.putAll(NoticeMatchers.getItemContextMatchers(item, true));
-    noticeContextMatchers.putAll(NoticeMatchers.getLoanContextMatchers(loan));
-    noticeContextMatchers.putAll(NoticeMatchers.getLoanPolicyContextMatchersForUnlimitedRenewals());
+    noticeContextMatchers.putAll(TemplateContextMatchers.getUserContextMatchers(borrower));
+    noticeContextMatchers.putAll(TemplateContextMatchers.getItemContextMatchers(item, true));
+    noticeContextMatchers.putAll(TemplateContextMatchers.getLoanContextMatchers(loan));
+    noticeContextMatchers.putAll(TemplateContextMatchers.getLoanPolicyContextMatchersForUnlimitedRenewals());
 
     Matcher[] matchers = Stream.of(expectedTemplateIds)
       .map(templateId -> hasEmailNoticeProperties(borrower.getId(), templateId, noticeContextMatchers))

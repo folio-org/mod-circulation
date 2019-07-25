@@ -1,8 +1,8 @@
 package org.folio.circulation.resources;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
-import static org.folio.circulation.domain.notice.NoticeContextUtil.createAvailableNoticeContext;
-import static org.folio.circulation.domain.notice.NoticeContextUtil.createLoanNoticeContext;
+import static org.folio.circulation.domain.notice.TemplateContextUtil.createAvailableNoticeContext;
+import static org.folio.circulation.domain.notice.TemplateContextUtil.createLoanNoticeContext;
 import static org.folio.circulation.support.Result.succeeded;
 
 import java.util.Objects;

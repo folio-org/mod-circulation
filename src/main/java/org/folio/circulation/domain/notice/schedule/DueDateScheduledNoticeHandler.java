@@ -10,7 +10,7 @@ import org.folio.circulation.domain.ConfigurationRepository;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.domain.LoanRepository;
-import org.folio.circulation.domain.notice.NoticeContextUtil;
+import org.folio.circulation.domain.notice.TemplateContextUtil;
 import org.folio.circulation.domain.notice.NoticeTiming;
 import org.folio.circulation.domain.notice.PatronNoticeService;
 import org.folio.circulation.domain.policy.LoanPolicyRepository;
@@ -85,7 +85,7 @@ public class DueDateScheduledNoticeHandler {
       return completedFuture(succeeded(relatedRecords));
     }
 
-    JsonObject loanNoticeContext = NoticeContextUtil.createLoanNoticeContext(
+    JsonObject loanNoticeContext = TemplateContextUtil.createLoanNoticeContext(
       loan, loan.getLoanPolicy(), relatedRecords.getTimeZone());
 
     return patronNoticeService.acceptScheduledNoticeEvent(

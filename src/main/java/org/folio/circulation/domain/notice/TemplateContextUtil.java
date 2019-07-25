@@ -20,7 +20,7 @@ import org.joda.time.DateTimeZone;
 
 import io.vertx.core.json.JsonObject;
 
-public class NoticeContextUtil {
+public class TemplateContextUtil {
 
   private static final String USER = "user";
   private static final String ITEM = "item";
@@ -29,7 +29,7 @@ public class NoticeContextUtil {
 
   private static final String UNLIMITED = "unlimited";
 
-  private NoticeContextUtil() {
+  private TemplateContextUtil() {
   }
 
   public static JsonObject createLoanNoticeContext(Loan loan, LoanPolicy loanPolicy) {

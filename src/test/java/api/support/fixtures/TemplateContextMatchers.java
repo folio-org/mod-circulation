@@ -19,11 +19,11 @@ import api.support.http.InventoryItemResource;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
-public class NoticeMatchers {
+public class TemplateContextMatchers {
 
   private static final String ITEM_REPRESENTATION_PREFIX = "itemLevel%s";
 
-  private NoticeMatchers() {
+  private TemplateContextMatchers() {
   }
 
   public static Map<String, Matcher<String>> getUserContextMatchers(IndividualResource userResource) {

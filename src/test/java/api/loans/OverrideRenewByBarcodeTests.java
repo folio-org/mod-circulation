@@ -48,7 +48,7 @@ import api.support.builders.LoanPolicyBuilder;
 import api.support.builders.NoticeConfigurationBuilder;
 import api.support.builders.NoticePolicyBuilder;
 import api.support.fixtures.ItemExamples;
-import api.support.fixtures.NoticeMatchers;
+import api.support.fixtures.TemplateContextMatchers;
 import api.support.http.InventoryItemResource;
 import io.vertx.core.json.JsonObject;
 
@@ -814,10 +814,10 @@ public class OverrideRenewByBarcodeTests extends APITests {
     int expectedRenewalLimit = 0;
     int expectedRenewalsRemaining = 0;
     Map<String, Matcher<String>> noticeContextMatchers = new HashMap<>();
-    noticeContextMatchers.putAll(NoticeMatchers.getUserContextMatchers(steve));
-    noticeContextMatchers.putAll(NoticeMatchers.getItemContextMatchers(smallAngryPlanet, true));
-    noticeContextMatchers.putAll(NoticeMatchers.getLoanContextMatchers(loanAfterRenewal));
-    noticeContextMatchers.putAll(NoticeMatchers.getLoanPolicyContextMatchers(
+    noticeContextMatchers.putAll(TemplateContextMatchers.getUserContextMatchers(steve));
+    noticeContextMatchers.putAll(TemplateContextMatchers.getItemContextMatchers(smallAngryPlanet, true));
+    noticeContextMatchers.putAll(TemplateContextMatchers.getLoanContextMatchers(loanAfterRenewal));
+    noticeContextMatchers.putAll(TemplateContextMatchers.getLoanPolicyContextMatchers(
       expectedRenewalLimit, expectedRenewalsRemaining));
     MatcherAssert.assertThat(sentNotices,
       hasItems(
