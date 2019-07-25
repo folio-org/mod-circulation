@@ -1,13 +1,11 @@
-package api.loans;
+package api.requests;
 
 import static api.support.builders.RequestBuilder.OPEN_NOT_YET_FILLED;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
-import static api.support.matchers.TextDateTimeMatcher.withinSecondsAfter;
-import static java.lang.String.format;
+import static org.folio.circulation.domain.representations.RequestProperties.HOLD_SHELF_EXPIRATION_DATE;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
-import static org.joda.time.Seconds.seconds;
 
 import java.net.MalformedURLException;
 import java.util.Collections;
@@ -318,8 +316,10 @@ public class RequestScheduledNoticesTests extends APITests {
       .withItemBarcode(item.getBarcode())
       .at(pickupServicePoint);
 
-    DateTime checkInDate = DateTime.now(DateTimeZone.UTC);
     loansFixture.checkInByBarcode(at);
+    String holdShelfExpirationDate = requestsClient.get(request)
+      .getJson()
+      .getString(HOLD_SHELF_EXPIRATION_DATE);
 
     Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
@@ -330,30 +330,13 @@ public class RequestScheduledNoticesTests extends APITests {
 
     JsonObject scheduledNotice = scheduledNotices.get(0);
     JsonObject noticeConfig = scheduledNotice.getJsonObject("noticeConfig");
-    JsonObject holdShelfExpiryPeriod = pickupServicePoint.getJson()
-      .getJsonObject("holdShelfExpiryPeriod");
 
     assertThat(scheduledNotice.getString("requestId"), is(request.getId().toString()));
     assertThat(scheduledNotice.getString("triggeringEvent"), is("Hold Expiration"));
-    assertThat(scheduledNotice.getString("nextRunTime"),
-      withinSecondsAfter(seconds(3), addHoldShelfExpiryPeriod(checkInDate, holdShelfExpiryPeriod)));
+    assertThat(scheduledNotice.getString("nextRunTime"), is(holdShelfExpirationDate));
     assertThat(noticeConfig.getString("timing"), is("Upon At"));
     assertThat(noticeConfig.getString("templateId"), is(templateId.toString()));
     assertThat(noticeConfig.getString("format"), is("Email"));
     assertThat(noticeConfig.getBoolean("sendInRealTime"), is(true));
-  }
-
-  private DateTime addHoldShelfExpiryPeriod(DateTime dateTime,
-                                            JsonObject holdShelfExpiryPeriod) {
-
-    int duration = holdShelfExpiryPeriod.getInteger("duration");
-    String intervalId = holdShelfExpiryPeriod.getString("intervalId");
-
-    switch (holdShelfExpiryPeriod.getString("intervalId")) {
-      case "Days":
-        return dateTime.plusDays(duration);
-      default:
-        throw new IllegalStateException(format("Unrecognized interval id {%s}", intervalId));
-    }
   }
 }
