@@ -26,14 +26,22 @@ public class TemplateContextMatchers {
   private TemplateContextMatchers() {
   }
 
+  public static Map<String, Matcher<String>> getRequesterContextMatchers(IndividualResource userResource) {
+    return getUserContextMatchers(userResource, "requester");
+  }
+
   public static Map<String, Matcher<String>> getUserContextMatchers(IndividualResource userResource) {
+    return getUserContextMatchers(userResource, "user");
+  }
+
+  public static Map<String, Matcher<String>> getUserContextMatchers(IndividualResource userResource, String prefix) {
     JsonObject user = userResource.getJson();
     JsonObject personal = getObjectProperty(user, "personal");
 
     Map<String, Matcher<String>> tokenMatchers = new HashMap<>();
-    tokenMatchers.put("user.firstName", is(personal.getString("firstName")));
-    tokenMatchers.put("user.lastName", is(personal.getString("lastName")));
-    tokenMatchers.put("user.barcode", is(user.getString("barcode")));
+    tokenMatchers.put(prefix + ".firstName", is(personal.getString("firstName")));
+    tokenMatchers.put(prefix + ".lastName", is(personal.getString("lastName")));
+    tokenMatchers.put(prefix + ".barcode", is(user.getString("barcode")));
     return tokenMatchers;
   }
 
@@ -155,6 +163,19 @@ public class TemplateContextMatchers {
       is(request.getString("cancellationAdditionalInformation")));
     tokenMatchers.put("request.reasonForCancellation", notNullValue(String.class));
     return tokenMatchers;
+  }
+
+  public static Map<String, Matcher<String>> getTransitContextMatchers(
+    IndividualResource fromServicePoint, IndividualResource toServicePoint) {
+
+    Map<String, Matcher<String>> tokenMatchers = new HashMap<>();
+    tokenMatchers.put("item.fromServicePoint", servicePointNameMatcher(fromServicePoint));
+    tokenMatchers.put("item.toServicePoint", servicePointNameMatcher(toServicePoint));
+    return tokenMatchers;
+  }
+
+  public static Matcher<String> servicePointNameMatcher(IndividualResource servicePoint) {
+    return is(servicePoint.getJson().getString("name"));
   }
 
 }

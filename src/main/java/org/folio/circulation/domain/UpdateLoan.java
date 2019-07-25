@@ -38,7 +38,7 @@ public class UpdateLoan {
    * @param requestAndRelatedRecords request and related records.
    * @return the request and related records with the possibly updated loan.
    */
-  CompletableFuture<Result<RequestAndRelatedRecords>> onRequestCreationOrMove(
+  CompletableFuture<Result<RequestAndRelatedRecords>> onRequestCreateOrUpdate(
       RequestAndRelatedRecords requestAndRelatedRecords) {
     Request request = requestAndRelatedRecords.getRequest();
     Loan loan = request.getLoan();

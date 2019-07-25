@@ -31,5 +31,15 @@
     },
     "action": "checkedout",
     "renewalCount": 0
+  },
+  "staffSlipContext": {
+    "requester": {
+      "firstName": "James",
+      "lastName": "Smith"
+    },
+    "item": {
+      "title": "The Long Way to a Small, Angry Planet",
+      "callNumber": "TK7871.15.F4 S67 1988"
+    }
   }
 }

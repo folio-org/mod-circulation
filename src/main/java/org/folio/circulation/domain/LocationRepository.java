@@ -69,6 +69,7 @@ public class LocationRepository {
     List<String> locationIds = inventoryRecords.stream()
       .map(Item::getLocationId)
       .filter(StringUtils::isNotBlank)
+      .distinct()
       .collect(Collectors.toList());
 
     final MultipleRecordFetcher<Location> fetcher = new MultipleRecordFetcher<>(
@@ -127,6 +128,7 @@ public class LocationRepository {
 
     List<String> libraryIds = locations.stream()
             .map(Location::getLibraryId)
+            .distinct()
             .collect(toList());
 
     return fetcher.findByIds(libraryIds)

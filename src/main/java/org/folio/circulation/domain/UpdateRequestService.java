@@ -37,7 +37,7 @@ public class UpdateRequestService {
       .thenApply(r -> r.next(this::removeRequestQueuePositionWhenCancelled))
       .thenComposeAsync(r -> r.after(requestRepository::update))
       .thenComposeAsync(r -> r.after(updateRequestQueue::onCancellation))
-      .thenComposeAsync(r -> r.after(updateItem::onRequestQueueChanged))
+      .thenComposeAsync(r -> r.after(updateItem::onRequestCreateOrUpdate))
       .thenApply(r -> r.next(requestNoticeSender::sendNoticeOnRequestUpdated));
   }
 

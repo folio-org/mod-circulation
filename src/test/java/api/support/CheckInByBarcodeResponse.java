@@ -19,4 +19,8 @@ public class CheckInByBarcodeResponse extends IndividualResource {
   public JsonObject getItem() {
     return getObjectProperty(getJson(), "item");
   }
+
+  public JsonObject getStaffSlipContext() {
+    return getObjectProperty(getJson(), "staffSlipContext");
+  }
 }

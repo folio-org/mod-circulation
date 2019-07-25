@@ -221,8 +221,7 @@ public class CheckOutByBarcodeResource extends Resource {
 
     final Loan loan = relatedRecords.getLoan();
 
-    JsonObject noticeContext = createLoanNoticeContext(loan,
-      loan.getLoanPolicy(), relatedRecords.getTimeZone());
+    JsonObject noticeContext = createLoanNoticeContext(loan);
 
     PatronNoticeEvent noticeEvent = new PatronNoticeEventBuilder()
       .withItem(loan.getItem())

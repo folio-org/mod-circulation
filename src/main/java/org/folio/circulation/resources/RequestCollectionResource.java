@@ -67,7 +67,8 @@ public class RequestCollectionResource extends CollectionResource {
     final UpdateUponRequest updateUponRequest = new UpdateUponRequest(
         new UpdateItem(clients),
         new UpdateLoan(clients, loanRepository, loanPolicyRepository),
-        new UpdateLoanActionHistory(clients));
+        new UpdateLoanActionHistory(clients),
+        UpdateRequestQueue.using(clients));
 
     final CreateRequestService createRequestService = new CreateRequestService(
         RequestRepository.using(clients),
@@ -107,6 +108,7 @@ public class RequestCollectionResource extends CollectionResource {
     final Clients clients = Clients.create(context, client);
 
     final RequestRepository requestRepository = RequestRepository.using(clients);
+    final UpdateRequestQueue updateRequestQueue = UpdateRequestQueue.using(clients);
     final LoanRepository loanRepository = new LoanRepository(clients);
     final LoanPolicyRepository loanPolicyRepository = new LoanPolicyRepository(clients);
     final RequestNoticeSender requestNoticeSender = RequestNoticeSender.using(clients);
@@ -116,7 +118,8 @@ public class RequestCollectionResource extends CollectionResource {
     final UpdateUponRequest updateUponRequest = new UpdateUponRequest(
         updateItem,
         new UpdateLoan(clients, loanRepository, loanPolicyRepository),
-        new UpdateLoanActionHistory(clients));
+        new UpdateLoanActionHistory(clients),
+        updateRequestQueue);
 
     final CreateRequestService createRequestService = new CreateRequestService(
         RequestRepository.using(clients),
@@ -127,7 +130,7 @@ public class RequestCollectionResource extends CollectionResource {
 
     final UpdateRequestService updateRequestService = new UpdateRequestService(
         requestRepository,
-        UpdateRequestQueue.using(clients),
+        updateRequestQueue,
         new ClosedRequestValidator(RequestRepository.using(clients)),
         requestNoticeSender,
         updateItem);
@@ -227,15 +230,19 @@ public class RequestCollectionResource extends CollectionResource {
     final UpdateUponRequest updateUponRequest = new UpdateUponRequest(
         new UpdateItem(clients),
         new UpdateLoan(clients, loanRepository, loanPolicyRepository),
-        new UpdateLoanActionHistory(clients));
+        new UpdateLoanActionHistory(clients),
+        UpdateRequestQueue.using(clients));
     
     final MoveRequestProcessAdapter moveRequestProcessAdapter = 
-        new MoveRequestProcessAdapter(itemRepository, loanRepository, requestQueueRepository);
+        new MoveRequestProcessAdapter(
+          itemRepository,
+          loanRepository,
+          requestRepository,
+          requestQueueRepository);
 
     final MoveRequestService moveRequestService = new MoveRequestService(
         RequestRepository.using(clients),
         new RequestPolicyRepository(clients),
-        UpdateRequestQueue.using(clients),
         updateUponRequest,
         moveRequestProcessAdapter,
         new RequestLoanValidator(loanRepository),

@@ -41,6 +41,7 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
   private final ServicePoint pickupServicePoint;
 
   private boolean changedPosition = false;
+  private Integer previousPosition;
 
   public Request(
     JsonObject requestRepresentation,
@@ -201,7 +202,7 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
     return RequestTypeItemStatusWhiteList.canCreateRequestForItem(getItem().getStatus(), getRequestType());
   }
 
-  String actionOnCreationOrMove() {
+  String actionOnCreateOrUpdate() {
     return getRequestType().toLoanAction();
   }
 
@@ -256,13 +257,16 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   void changePosition(Integer newPosition) {
-    if (!Objects.equals(getPosition(), newPosition)) {
+    Integer prevPosition = getPosition();
+    if (!Objects.equals(prevPosition, newPosition)) {
+      previousPosition = prevPosition;
       write(requestRepresentation, POSITION, newPosition);
       changedPosition = true;
     }
   }
 
   void removePosition() {
+    previousPosition = getPosition();
     requestRepresentation.remove(POSITION);
     changedPosition = true;
   }
@@ -271,8 +275,24 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
     return getIntegerProperty(requestRepresentation, POSITION, null);
   }
 
+  boolean hasPosition() {
+    return getPosition() != null;
+  }
+
   boolean hasChangedPosition() {
     return changedPosition;
+  }
+
+  Integer getPreviousPosition() {
+    return previousPosition;
+  }
+
+  boolean hasPreviousPosition() {
+    return getPreviousPosition() != null;
+  }
+
+  void freePreviousPosition() {
+    previousPosition = null;
   }
 
   ItemStatus checkedInItemStatus() {

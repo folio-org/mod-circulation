@@ -85,8 +85,7 @@ public class DueDateScheduledNoticeHandler {
       return completedFuture(succeeded(relatedRecords));
     }
 
-    JsonObject loanNoticeContext = TemplateContextUtil.createLoanNoticeContext(
-      loan, loan.getLoanPolicy(), relatedRecords.getTimeZone());
+    JsonObject loanNoticeContext = TemplateContextUtil.createLoanNoticeContext(loan);
 
     return patronNoticeService.acceptScheduledNoticeEvent(
       notice.getConfiguration(), relatedRecords.getUserId(), loanNoticeContext)

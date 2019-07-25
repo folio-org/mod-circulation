@@ -3,11 +3,9 @@ package org.folio.circulation.support;
 import static java.util.Objects.isNull;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.function.Function.identity;
-import static org.folio.circulation.support.Result.failed;
 import static org.folio.circulation.support.Result.ofAsync;
 import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.ResultBinding.mapResult;
-import static org.folio.circulation.support.results.CommonFailures.failedDueToServerError;
 
 import java.lang.invoke.MethodHandles;
 import java.util.Collection;
@@ -186,6 +184,7 @@ public class ItemRepository {
       List<String> instanceIds = items.stream()
         .map(Item::getInstanceId)
         .filter(Objects::nonNull)
+        .distinct()
         .collect(Collectors.toList());
 
       final MultipleRecordFetcher<JsonObject> fetcher
@@ -206,6 +205,7 @@ public class ItemRepository {
       List<String> holdingsIds = items.stream()
         .map(Item::getHoldingsRecordId)
         .filter(Objects::nonNull)
+        .distinct()
         .collect(Collectors.toList());
 
       final MultipleRecordFetcher<JsonObject> fetcher

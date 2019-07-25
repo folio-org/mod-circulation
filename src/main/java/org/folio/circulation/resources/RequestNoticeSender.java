@@ -121,7 +121,7 @@ public class RequestNoticeSender {
       .withUser(loan.getUser())
       .withEventType(NoticeEventType.RECALL_TO_LOANEE)
       .withTiming(NoticeTiming.UPON_AT)
-      .withNoticeContext(TemplateContextUtil.createLoanNoticeContext(loan, null))
+      .withNoticeContext(TemplateContextUtil.createLoanNoticeContext(loan))
       .build();
     patronNoticeService.acceptNoticeEvent(itemRecalledEvent);
     return Result.succeeded(null);

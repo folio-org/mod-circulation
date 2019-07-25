@@ -3,8 +3,12 @@ package api.support.fakes;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.function.BiFunction;
+
+import org.folio.circulation.support.Result;
 
 import api.support.APITestContext;
+import io.vertx.core.json.JsonObject;
 
 public class FakeStorageModuleBuilder {
   private final String rootPath;
@@ -17,6 +21,7 @@ public class FakeStorageModuleBuilder {
   private final Boolean hasDeleteByQuery;
   private final String recordName;
   private final Boolean includeChangeMetadata;
+  private final BiFunction<Collection<JsonObject>, JsonObject, Result<Object>> constraint;
 
   FakeStorageModuleBuilder() {
     this(
@@ -29,7 +34,8 @@ public class FakeStorageModuleBuilder {
       "",
       new ArrayList<>(),
       false,
-      false);
+      false,
+      (c, r) -> Result.succeeded(null));
   }
 
   private FakeStorageModuleBuilder(
@@ -42,7 +48,7 @@ public class FakeStorageModuleBuilder {
     String recordName,
     Collection<String> uniqueProperties,
     Boolean hasDeleteByQuery,
-    Boolean includeChangeMetadata) {
+    Boolean includeChangeMetadata, BiFunction<Collection<JsonObject>, JsonObject, Result<Object>> constraint) {
 
     this.rootPath = rootPath;
     this.collectionPropertyName = collectionPropertyName;
@@ -54,16 +60,16 @@ public class FakeStorageModuleBuilder {
     this.uniqueProperties = uniqueProperties;
     this.hasDeleteByQuery = hasDeleteByQuery;
     this.includeChangeMetadata = includeChangeMetadata;
+    this.constraint = constraint;
   }
 
   public FakeStorageModule create() {
     return new FakeStorageModule(rootPath, collectionPropertyName, tenantId,
       requiredProperties, hasCollectionDelete, hasDeleteByQuery, recordName, uniqueProperties,
-      disallowedProperties, includeChangeMetadata);
+      disallowedProperties, includeChangeMetadata, constraint);
   }
 
   FakeStorageModuleBuilder withRootPath(String rootPath) {
-
     String newCollectionPropertyName = collectionPropertyName == null
       ? rootPath.substring(rootPath.lastIndexOf("/") + 1)
       : collectionPropertyName;
@@ -78,7 +84,8 @@ public class FakeStorageModuleBuilder {
       this.recordName,
       this.uniqueProperties,
       this.hasDeleteByQuery,
-      this.includeChangeMetadata);
+      this.includeChangeMetadata,
+      this.constraint);
   }
 
   FakeStorageModuleBuilder withCollectionPropertyName(
@@ -94,7 +101,8 @@ public class FakeStorageModuleBuilder {
       this.recordName,
       this.uniqueProperties,
       this.hasDeleteByQuery,
-      this.includeChangeMetadata);
+      this.includeChangeMetadata,
+      this.constraint);
   }
 
   FakeStorageModuleBuilder withRecordName(String recordName) {
@@ -108,7 +116,8 @@ public class FakeStorageModuleBuilder {
       recordName,
       this.uniqueProperties,
       this.hasDeleteByQuery,
-      this.includeChangeMetadata);
+      this.includeChangeMetadata,
+      this.constraint);
   }
 
   private FakeStorageModuleBuilder withRequiredProperties(
@@ -124,7 +133,8 @@ public class FakeStorageModuleBuilder {
       this.recordName,
       this.uniqueProperties,
       this.hasDeleteByQuery,
-      this.includeChangeMetadata);
+      this.includeChangeMetadata,
+      this.constraint);
     }
 
   FakeStorageModuleBuilder withRequiredProperties(String... requiredProperties) {
@@ -144,7 +154,8 @@ public class FakeStorageModuleBuilder {
       this.recordName,
       uniqueProperties,
       this.hasDeleteByQuery,
-      this.includeChangeMetadata);
+      this.includeChangeMetadata,
+      this.constraint);
   }
 
   FakeStorageModuleBuilder withUniqueProperties(String... uniqueProperties) {
@@ -164,7 +175,8 @@ public class FakeStorageModuleBuilder {
       this.recordName,
       this.uniqueProperties,
       this.hasDeleteByQuery,
-      this.includeChangeMetadata);
+      this.includeChangeMetadata,
+      this.constraint);
   }
 
   FakeStorageModuleBuilder withDisallowedProperties(String... disallowedProperties) {
@@ -182,7 +194,8 @@ public class FakeStorageModuleBuilder {
       this.recordName,
       this.uniqueProperties,
       this.hasDeleteByQuery,
-      this.includeChangeMetadata);
+      this.includeChangeMetadata,
+      this.constraint);
   }
 
   FakeStorageModuleBuilder allowDeleteByQuery() {
@@ -196,7 +209,8 @@ public class FakeStorageModuleBuilder {
       this.recordName,
       this.uniqueProperties,
       true,
-      this.includeChangeMetadata);
+      this.includeChangeMetadata,
+      this.constraint);
   }
 
   FakeStorageModuleBuilder withChangeMetadata() {
@@ -210,6 +224,24 @@ public class FakeStorageModuleBuilder {
       this.recordName,
       this.uniqueProperties,
       this.hasDeleteByQuery,
-      true);
+      true,
+      this.constraint);
+  }
+
+  FakeStorageModuleBuilder withRecordConstraint(
+    BiFunction<Collection<JsonObject>, JsonObject, Result<Object>> constraint) {
+
+    return new FakeStorageModuleBuilder(
+      this.rootPath,
+      this.collectionPropertyName,
+      this.tenantId,
+      this.requiredProperties,
+      this.disallowedProperties,
+      this.hasCollectionDelete,
+      this.recordName,
+      this.uniqueProperties,
+      this.hasDeleteByQuery,
+      this.includeChangeMetadata,
+      constraint);
   }
 }
