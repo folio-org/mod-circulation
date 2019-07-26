@@ -1973,7 +1973,6 @@ public class LoanAPITests extends APITests {
     IndividualResource firstLoan = loansFixture.checkOutByBarcode(firstItem,
       jessica, new DateTime(2018, 4, 21, 11, 21, 43, DateTimeZone.UTC));
 
-
     InventoryItemResource secondItem = itemsFixture.basedUponNod();
     IndividualResource henry = usersFixture.undergradHenry();
     IndividualResource secondLoan = loansFixture.checkOutByBarcode(secondItem,
@@ -1985,7 +1984,6 @@ public class LoanAPITests extends APITests {
     firstSavedLoan.remove("userId");
 
     loansStorageClient.replace(firstLoan.getId(), firstSavedLoan);
-
 
     JsonObject secondSavedLoan = loansStorageClient.get(secondLoan.getId())
       .getResponse().getJson();

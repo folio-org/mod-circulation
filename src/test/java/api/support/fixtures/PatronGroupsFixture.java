@@ -71,13 +71,4 @@ public class PatronGroupsFixture {
 
     return patronGroupRecordCreator.createIfAbsent(PatronGroupExamples.undergrad());
   }
-
-  public IndividualResource staffWithId(UUID id)
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
-
-    return patronGroupRecordCreator.createIfAbsent(PatronGroupExamples.staffWithId(id));
-  }
 }

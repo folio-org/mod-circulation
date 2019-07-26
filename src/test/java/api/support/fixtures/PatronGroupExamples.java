@@ -24,8 +24,4 @@ class PatronGroupExamples {
  static PatronGroupBuilder undergrad() {
     return new PatronGroupBuilder("undergrad", "Undergraduate users");
   }
-
- static PatronGroupBuilder staffWithId(UUID id) {
-    return new PatronGroupBuilder("staff", "Staff users").withId(id);
-  }
 }
