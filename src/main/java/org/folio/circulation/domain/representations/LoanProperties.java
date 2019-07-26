@@ -16,4 +16,6 @@ public class LoanProperties {
   public static final String BORROWER = "borrower";
   public static final String LOAN_POLICY = "loanPolicy";
   public static final String FEESANDFINES = "feesAndFines";
+  public static final String PATRON_GROUP_ID_AT_CHECKOUT = "patronGroupIdAtCheckout";
+  public static final String PATRON_GROUP_AT_CHECKOUT = "patronGroupAtCheckout";
 }

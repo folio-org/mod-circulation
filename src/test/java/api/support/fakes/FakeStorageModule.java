@@ -128,7 +128,7 @@ public class FakeStorageModule extends AbstractVerticle {
 
       body.put("id", id);
 
-      if(includeChangeMetadata) {
+    if(includeChangeMetadata) {
         final String fakeUserId = APITestContext.getUserId();
         body.put(changeMetadataPropertyName, new JsonObject()
           .put("createdDate", new DateTime(DateTimeZone.UTC)
@@ -183,7 +183,6 @@ public class FakeStorageModule extends AbstractVerticle {
 
       if(includeChangeMetadata) {
         final String fakeUserId = APITestContext.getUserId();
-
         final JsonObject existingChangeMetadata = resourcesForTenant.get(id)
           .getJsonObject(changeMetadataPropertyName);
 
