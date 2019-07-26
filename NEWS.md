@@ -1,3 +1,7 @@
+## 16.5.0 2019-07-24
+
+* Send due date changed notice when moving recall request CIRC-316
+
 ## 16.4.0 2019-07-23
 
 * Can override renewals with request related failures (CIRC-311, CIRC-319)
