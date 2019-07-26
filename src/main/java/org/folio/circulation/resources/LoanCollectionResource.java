@@ -16,6 +16,7 @@ import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.domain.LoanRepository;
 import org.folio.circulation.domain.LoanRepresentation;
 import org.folio.circulation.domain.LoanService;
+import org.folio.circulation.domain.PatronGroupRepository;
 import org.folio.circulation.domain.RequestQueue;
 import org.folio.circulation.domain.RequestQueueRepository;
 import org.folio.circulation.domain.ServicePointRepository;
@@ -178,6 +179,7 @@ public class LoanCollectionResource extends CollectionResource {
     final UserRepository userRepository = new UserRepository(clients);
     final LoanPolicyRepository loanPolicyRepository = new LoanPolicyRepository(clients);
     final AccountRepository accountRepository = new AccountRepository(clients);
+    final PatronGroupRepository patronGroupRepository = new PatronGroupRepository(clients);
 
     String id = routingContext.request().getParam("id");
 
@@ -186,6 +188,7 @@ public class LoanCollectionResource extends CollectionResource {
       .thenComposeAsync(servicePointRepository::findServicePointsForLoan)
       .thenComposeAsync(userRepository::findUserForLoan)
       .thenComposeAsync(loanPolicyRepository::findPolicyForLoan)
+      .thenComposeAsync(patronGroupRepository::findGroupForLoan)
       .thenApply(loanResult -> loanResult.map(loanRepresentation::extendedLoan))
       .thenApply(OkJsonResponseResult::from)
       .thenAccept(result -> result.writeTo(routingContext.response()));
@@ -212,6 +215,7 @@ public class LoanCollectionResource extends CollectionResource {
     final UserRepository userRepository = new UserRepository(clients);
     final LoanPolicyRepository loanPolicyRepository = new LoanPolicyRepository(clients);
     final AccountRepository accountRepository = new AccountRepository(clients);
+    final PatronGroupRepository patronGroupRepository = new PatronGroupRepository(clients);
 
     loanRepository.findBy(routingContext.request().query())
       .thenCompose(multiLoanRecordsResult ->
@@ -222,6 +226,8 @@ public class LoanCollectionResource extends CollectionResource {
         multiLoanRecordsResult.after(userRepository::findUsersForLoans))
       .thenCompose(multiLoanRecordsResult ->
         multiLoanRecordsResult.after(loanPolicyRepository::findLoanPoliciesForLoans))
+      .thenCompose(multiLoanRecordsResult ->
+        multiLoanRecordsResult.after(patronGroupRepository::findPatronGroupsByIds))
       .thenApply(multipleLoanRecordsResult -> multipleLoanRecordsResult.map(loans ->
         loans.asJson(loanRepresentation::extendedLoan, "loans")))
       .thenApply(OkJsonResponseResult::from)

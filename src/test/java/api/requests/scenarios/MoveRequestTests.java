@@ -33,7 +33,7 @@ import io.vertx.core.json.JsonObject;
  * @see <a href="https://issues.folio.org/browse/CIRC-395">CIRC-395</a>
  */
 public class MoveRequestTests extends APITests {
-  
+
   @Test
   public void canMoveRequestFromOneItemCopyToAnother()
     throws InterruptedException,
@@ -91,10 +91,10 @@ public class MoveRequestTests extends APITests {
 
     assertThat(pageRequestForItemCopyB.getJson().getString("status"), is(RequestStatus.OPEN_NOT_YET_FILLED.getValue()));
     assertThat(pageRequestForItemCopyB.getJson().getJsonObject("item").getString("status"), is(ItemStatus.PAGED.getValue()));
-    
+
     assertThat(recallRequestForItemCopyB.getJson().getString("status"), is(RequestStatus.OPEN_NOT_YET_FILLED.getValue()));
     assertThat(recallRequestForItemCopyB.getJson().getJsonObject("item").getString("status"), is(ItemStatus.PAGED.getValue()));
-    
+
     assertThat(holdRequestForItemCopyA.getJson().getString("status"), is(RequestStatus.OPEN_NOT_YET_FILLED.getValue()));
     assertThat(holdRequestForItemCopyA.getJson().getJsonObject("item").getString("status"), is(ItemStatus.CHECKED_OUT.getValue()));
 
@@ -267,7 +267,7 @@ public class MoveRequestTests extends APITests {
     MultipleRecords<JsonObject> interestingTimesQueue = requestsFixture.getQueueFor(interestingTimes);
     assertThat(interestingTimesQueue.getTotalRecords(), is(2));
   }
-  
+
   @Test
   public void canMoveTwoRequests()
     throws InterruptedException,

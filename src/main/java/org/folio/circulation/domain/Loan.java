@@ -1,5 +1,6 @@
 package org.folio.circulation.domain;
 
+import static java.util.Objects.nonNull;
 import static java.util.Objects.requireNonNull;
 import static org.folio.circulation.domain.representations.LoanProperties.ACTION_COMMENT;
 import static org.folio.circulation.domain.representations.LoanProperties.CHECKIN_SERVICE_POINT_ID;
@@ -226,6 +227,18 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
         checkoutServicePoint, originalDueDate, loanPolicy, accounts);
   }
 
+  Loan withPatronGroupAtCheckout(PatronGroup patronGroup) {
+    if (nonNull(patronGroup)) {
+      JsonObject patronGroupAtCheckout = new JsonObject()
+        .put("id", patronGroup.getId())
+        .put("name", patronGroup.getGroup());
+
+      write(representation, LoanProperties.PATRON_GROUP_AT_CHECKOUT,
+        patronGroupAtCheckout);
+    }
+    return this;
+  }
+
   public User getProxy() {
     return proxy;
   }
@@ -277,6 +290,10 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
 
   public ServicePoint getCheckoutServicePoint() {
     return this.checkoutServicePoint;
+  }
+
+  String getPatronGroupIdAtCheckout() {
+    return  getProperty(representation, "patronGroupIdAtCheckout");
   }
 
   public Loan renew(DateTime dueDate, String basedUponLoanPolicyId) {

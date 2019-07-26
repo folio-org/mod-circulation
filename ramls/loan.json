@@ -253,6 +253,23 @@
         }
       }
     },
+    "patronGroupAtCheckout": {
+      "description": "Patron Group at checkout",
+      "type": "object",
+      "properties": {
+        "id": {
+          "description": "Unique ID (generated UUID) of the patron group",
+          "type": "string",
+          "readonly" : true
+        },
+        "name": {
+          "description": "Patron group name",
+          "type": "string",
+          "readonly" : true
+        }
+       },
+      "additionalProperties": false
+    },
     "feesAndFines": {
       "description": "Fees and fines associated with loans",
       "type": "object",

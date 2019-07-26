@@ -19,6 +19,7 @@ import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.domain.LoanRepository;
 import org.folio.circulation.domain.LoanRepresentation;
 import org.folio.circulation.domain.LoanService;
+import org.folio.circulation.domain.PatronGroupRepository;
 import org.folio.circulation.domain.RequestQueueRepository;
 import org.folio.circulation.domain.UpdateItem;
 import org.folio.circulation.domain.UpdateRequestQueue;
@@ -104,6 +105,7 @@ public class CheckOutByBarcodeResource extends Resource {
     final LoanPolicyRepository loanPolicyRepository = new LoanPolicyRepository(clients);
     final PatronNoticePolicyRepository patronNoticePolicyRepository = new PatronNoticePolicyRepository(clients);
     final PatronNoticeService patronNoticeService = new PatronNoticeService(patronNoticePolicyRepository, clients);
+    final PatronGroupRepository patronGroupRepository = new PatronGroupRepository(clients);
     final ConfigurationRepository configurationRepository = new ConfigurationRepository(clients);
     final ScheduledNoticesRepository scheduledNoticesRepository = ScheduledNoticesRepository.using(clients);
     final DueDateScheduledNoticeService scheduledNoticeService =
@@ -162,6 +164,7 @@ public class CheckOutByBarcodeResource extends Resource {
       .thenComposeAsync(r -> r.after(requestQueueUpdate::onCheckOut))
       .thenComposeAsync(r -> r.after(updateItem::onCheckOut))
       .thenComposeAsync(r -> r.after(loanService::truncateLoanWhenItemRecalled))
+      .thenComposeAsync(r -> r.after(patronGroupRepository::findPatronGroupForLoanAndRelatedRecords))
       .thenComposeAsync(r -> r.after(loanRepository::createLoan))
       .thenApply(r -> r.next(records -> sendCheckOutPatronNotice(records, patronNoticeService)))
       .thenApply(r -> r.next(scheduledNoticeService::scheduleNoticesForLoanDueDate))
