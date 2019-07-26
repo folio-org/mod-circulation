@@ -227,7 +227,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
         checkoutServicePoint, originalDueDate, loanPolicy, accounts);
   }
 
-  Loan withPatronGroup(PatronGroup patronGroup) {
+  Loan withPatronGroupAtCheckout(PatronGroup patronGroup) {
     if (nonNull(patronGroup)) {
       JsonObject patronGroupAtCheckout = new JsonObject()
         .put("id", patronGroup.getId())

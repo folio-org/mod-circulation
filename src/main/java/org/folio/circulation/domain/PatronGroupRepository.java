@@ -107,7 +107,7 @@ public class PatronGroupRepository {
 
   public CompletableFuture<Result<Loan>> findGroupForLoan(Result<Loan> loanResult) {
     return loanResult.combineAfter(loan ->
-      getPatronGroupById(loan.getPatronGroupIdAtCheckout()), Loan::withPatronGroup);
+      getPatronGroupById(loan.getPatronGroupIdAtCheckout()), Loan::withPatronGroupAtCheckout);
   }
 
   private CompletableFuture<Result<PatronGroup>> getPatronGroupById(String groupId) {
@@ -166,7 +166,7 @@ public class PatronGroupRepository {
 
   private Collection<Loan> setPatronGroups(Collection<Loan> loans, Map<String, PatronGroup> patronGroups) {
     return loans.stream()
-      .map(loan -> loan.withPatronGroup(patronGroups.get(loan.getPatronGroupIdAtCheckout())))
+      .map(loan -> loan.withPatronGroupAtCheckout(patronGroups.get(loan.getPatronGroupIdAtCheckout())))
       .collect(Collectors.toList());
   }
 
