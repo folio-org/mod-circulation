@@ -5,8 +5,10 @@ import static org.folio.circulation.domain.notice.NoticeEventType.REQUEST_EXPIRA
 import static org.folio.circulation.domain.notice.NoticeTiming.UPON_AT;
 import static org.folio.circulation.support.Result.succeeded;
 
+import java.util.Optional;
 import java.util.UUID;
 
+import org.folio.circulation.domain.CheckInProcessRecords;
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestAndRelatedRecords;
 import org.folio.circulation.domain.notice.NoticeConfiguration;
@@ -40,11 +42,24 @@ public class RequestScheduledNoticeService {
     return succeeded(relatedRecords);
   }
 
-  public Result<Request> rescheduleRequestNotices(Request request) {
+  public Result<RequestAndRelatedRecords> rescheduleRequestNotices(RequestAndRelatedRecords relatedRecords) {
+    Request request = relatedRecords.getRequest();
     scheduledNoticesRepository.deleteByRequestId(request.getId())
       .thenAccept(r -> r.next(resp -> scheduleRequestNotices(request)));
 
-    return succeeded(request);
+    return succeeded(relatedRecords);
+  }
+
+  public Result<CheckInProcessRecords> rescheduleRequestNotices(CheckInProcessRecords records) {
+    Optional.ofNullable(records.getHighestPriorityFulfillableRequest())
+      .ifPresent(this::rescheduleRequestNotices);
+
+    return succeeded(records);
+  }
+
+  private void rescheduleRequestNotices(Request request) {
+    scheduledNoticesRepository.deleteByRequestId(request.getId())
+      .thenAccept(r -> r.next(resp -> scheduleRequestNotices(request)));
   }
 
   private Result<PatronNoticePolicy> scheduleRequestNoticesBasedOnPolicy(
