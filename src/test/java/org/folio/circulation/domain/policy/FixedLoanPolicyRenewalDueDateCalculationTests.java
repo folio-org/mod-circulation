@@ -19,9 +19,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.UUID;
 
+import static api.support.matchers.FailureMatcher.hasNumberOfFailureMessages;
 import static api.support.matchers.FailureMatcher.hasValidationFailure;
 import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.not;
 import static org.junit.Assert.assertThat;
 
 public class FixedLoanPolicyRenewalDueDateCalculationTests {
@@ -50,6 +50,8 @@ public class FixedLoanPolicyRenewalDueDateCalculationTests {
 
     assertThat(result, hasValidationFailure(
       EXPECTED_REASON_DATE_FALLS_OUTSIDE_DATE_RANGES));
+
+    assertThat(result, hasNumberOfFailureMessages(1));
   }
 
   @Test
@@ -75,6 +77,8 @@ public class FixedLoanPolicyRenewalDueDateCalculationTests {
       EXPECTED_REASON_DATE_FALLS_OUTSIDE_DATE_RANGES));
 
     assertThat(result, hasValidationFailure(EXPECTED_REASON_OPEN_RECALL_REQUEST));
+
+    assertThat(result, hasNumberOfFailureMessages(2));
   }
 
   @Test
@@ -99,7 +103,7 @@ public class FixedLoanPolicyRenewalDueDateCalculationTests {
     assertThat(result, hasValidationFailure(
       EXPECTED_REASON_DATE_FALLS_OUTSIDE_DATE_RANGES));
 
-    assertThat(result, not(hasValidationFailure(EXPECTED_REASON_OPEN_RECALL_REQUEST)));
+    assertThat(result, hasNumberOfFailureMessages(1));
   }
 
   @Test
@@ -122,8 +126,6 @@ public class FixedLoanPolicyRenewalDueDateCalculationTests {
 
     assertThat(result.value().getDueDate(), is(new DateTime(2018, 12, 31, 23, 59, 59,
       DateTimeZone.UTC)));
-
-    assertThat(result, not(hasValidationFailure(EXPECTED_REASON_OPEN_RECALL_REQUEST)));
   }
 
   @Test
@@ -242,7 +244,7 @@ public class FixedLoanPolicyRenewalDueDateCalculationTests {
     assertThat(result, hasValidationFailure(
       EXPECTED_REASON_DATE_FALLS_OUTSIDE_DATE_RANGES));
 
-    assertThat(result, not(hasValidationFailure(EXPECTED_REASON_OPEN_RECALL_REQUEST)));
+    assertThat(result, hasNumberOfFailureMessages(1));
   }
 
   @Test
@@ -324,6 +326,7 @@ public class FixedLoanPolicyRenewalDueDateCalculationTests {
     assertThat(result, hasValidationFailure(
       "loan at maximum renewal number"));
 
+    assertThat(result, hasNumberOfFailureMessages(2));
   }
 
   @Test
@@ -362,6 +365,8 @@ public class FixedLoanPolicyRenewalDueDateCalculationTests {
       "loan at maximum renewal number"));
 
     assertThat(result, hasValidationFailure(EXPECTED_REASON_OPEN_RECALL_REQUEST));
+
+    assertThat(result, hasNumberOfFailureMessages(3));
   }
 
   @Test

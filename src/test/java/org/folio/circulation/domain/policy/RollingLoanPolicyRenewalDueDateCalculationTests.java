@@ -21,9 +21,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.UUID;
 
+import static api.support.matchers.FailureMatcher.hasNumberOfFailureMessages;
 import static api.support.matchers.FailureMatcher.hasValidationFailure;
 import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.not;
 import static org.junit.Assert.assertThat;
 
 @RunWith(JUnitParamsRunner.class)
@@ -343,7 +343,7 @@ public class RollingLoanPolicyRenewalDueDateCalculationTests {
     assertThat(result, hasValidationFailure(
       EXPECTED_REASON_DATE_FALLS_OTSIDE_DATE_RANGES));
 
-    assertThat(result, not(hasValidationFailure(EXPECTED_REASON_OPEN_RECALL_REQUEST)));
+    assertThat(result, hasNumberOfFailureMessages(1));
   }
 
   @Test
@@ -394,6 +394,8 @@ public class RollingLoanPolicyRenewalDueDateCalculationTests {
       EXPECTED_REASON_DATE_FALLS_OTSIDE_DATE_RANGES));
 
     assertThat(result, hasValidationFailure(EXPECTED_REASON_OPEN_RECALL_REQUEST));
+
+    assertThat(result, hasNumberOfFailureMessages(2));
   }
 
   @Test
