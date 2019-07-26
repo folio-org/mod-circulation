@@ -88,12 +88,8 @@ public class CirculationVerticle extends AbstractVerticle {
         client)
         .register(router);
 
-    new DueDateScheduledNoticeProcessingResource(
-      "/circulation/scheduled-notices-processing", client, 100)
-      .register(router);
-    new RequestScheduledNoticeProcessingResource(
-      "/circulation/request-scheduled-notices-processing", client, 100)
-      .register(router);
+    new DueDateScheduledNoticeProcessingResource(client).register(router);
+    new RequestScheduledNoticeProcessingResource(client).register(router);
 
     server.requestHandler(router::accept)
       .listen(config().getInteger("port"), result -> {

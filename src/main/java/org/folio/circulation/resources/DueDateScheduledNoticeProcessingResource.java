@@ -16,15 +16,18 @@ import io.vertx.core.http.HttpClient;
 
 public class DueDateScheduledNoticeProcessingResource extends ScheduledNoticeProcessingResource {
 
-  public DueDateScheduledNoticeProcessingResource(String rootPath, HttpClient client, int noticesProcessingLimit) {
-    super(rootPath, client, noticesProcessingLimit);
+  private static final int SCHEDULED_NOTICES_PROCESSING_LIMIT = 100;
+
+  public DueDateScheduledNoticeProcessingResource(HttpClient client) {
+    super("/circulation/scheduled-notices-processing", client);
   }
 
   @Override
   protected CompletableFuture<Result<MultipleRecords<ScheduledNotice>>> findNoticesToSend(
     ScheduledNoticesRepository scheduledNoticesRepository) {
 
-    return scheduledNoticesRepository.findNoticesToSend(DateTime.now(DateTimeZone.UTC), noticesProcessingLimit);
+    return scheduledNoticesRepository.findNoticesToSend(
+      DateTime.now(DateTimeZone.UTC), SCHEDULED_NOTICES_PROCESSING_LIMIT);
   }
 
   @Override

@@ -22,12 +22,10 @@ import io.vertx.ext.web.RoutingContext;
 public abstract class ScheduledNoticeProcessingResource extends Resource {
 
   private String rootPath;
-  int noticesProcessingLimit;
 
-  ScheduledNoticeProcessingResource(String rootPath, HttpClient client, int noticesProcessingLimit) {
+  ScheduledNoticeProcessingResource(String rootPath, HttpClient client) {
     super(client);
     this.rootPath = rootPath;
-    this.noticesProcessingLimit = noticesProcessingLimit;
   }
 
   @Override
