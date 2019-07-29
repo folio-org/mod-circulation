@@ -17,8 +17,8 @@ public class ScheduledNoticeProcessingClient {
   }
 
   public void runNoticesProcessing() {
-    URL url = circulationModuleUrl("/circulation/scheduled-notices-processing");
-    manuallyStartTimedTask(url, 204, "scheduled-notices-processing-request");
+    URL url = circulationModuleUrl("/circulation/due-date-scheduled-notices-processing");
+    manuallyStartTimedTask(url, 204, "due-date-scheduled-notices-processing-request");
   }
 
   public void runRequestNoticesProcessing(DateTime mockSystemTime) {
