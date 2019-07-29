@@ -19,7 +19,7 @@ public class DueDateScheduledNoticeProcessingResource extends ScheduledNoticePro
   private static final int SCHEDULED_NOTICES_PROCESSING_LIMIT = 100;
 
   public DueDateScheduledNoticeProcessingResource(HttpClient client) {
-    super("/circulation/scheduled-notices-processing", client);
+    super("/circulation/due-date-scheduled-notices-processing", client);
   }
 
   @Override
