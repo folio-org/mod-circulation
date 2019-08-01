@@ -171,13 +171,12 @@ public class LoanRepository {
   private static JsonObject mapToStorageRepresentation(Loan loan, Item item) {
     JsonObject storageLoan = loan.asJson();
 
-    keepPatronGroupIdAtCheckoutPropertiesIfLoanUpdated(storageLoan);
+    keepPatronGroupIdAtCheckoutProperties(loan, storageLoan);
     removeChangeMetadata(storageLoan);
     removeSummaryProperties(storageLoan);
     keepLatestItemStatus(item, storageLoan);
     removeBorrowerProperties(storageLoan);
     removeLoanPolicyProperties(storageLoan);
-    keepPatronGroupIdAtCheckoutProperties(loan, storageLoan);
 
     updateLastLoanPolicyUsedId(storageLoan, loan.getLoanPolicy());
 
@@ -222,14 +221,11 @@ public class LoanRepository {
     if (nonNull(loan.getUser()) && nonNull(loan.getUser().getPatronGroup())) {
       storageLoan.put(LoanProperties.PATRON_GROUP_ID_AT_CHECKOUT, loan.getUser().getPatronGroup().getId());
     }
-  }
-
-  private static void keepPatronGroupIdAtCheckoutPropertiesIfLoanUpdated(JsonObject storageLoan) {
     if (storageLoan.containsKey(LoanProperties.PATRON_GROUP_AT_CHECKOUT)){
       storageLoan.put(LoanProperties.PATRON_GROUP_ID_AT_CHECKOUT,
-        storageLoan.getJsonObject(LoanProperties.PATRON_GROUP_AT_CHECKOUT).getValue("id"));
+       storageLoan.getJsonObject(LoanProperties.PATRON_GROUP_AT_CHECKOUT).getValue("id"));
     }
-  }
+ }
 
   public CompletableFuture<Result<Boolean>> hasOpenLoan(String itemId) {
     return findOpenLoans(itemId)
