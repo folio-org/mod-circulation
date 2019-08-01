@@ -35,6 +35,28 @@ public class FailureMatcher {
     };
   }
 
+  public static <T> Matcher<Result<T>> hasNumberOfFailureMessages(int numberFailureMsg) {
+    return new TypeSafeDiagnosingMatcher<Result<T>>() {
+      @Override
+      public void describeTo(Description description) {
+        description.appendText(String.format(
+          "`%s` error messages", numberFailureMsg));
+      }
+
+      @Override
+      protected boolean matchesSafely(Result<T> failedResult, Description description) {
+        if (!failedResult.failed()) {
+          return false;
+        } else if (failedResult.cause() instanceof ValidationErrorFailure) {
+          final ValidationErrorFailure cause = (ValidationErrorFailure) failedResult.cause();
+          return cause.getErrors().size() == numberFailureMsg;
+        } else {
+          return false;
+        }
+      }
+    };
+  }
+
   public static <T> Matcher<Result<T>> isErrorFailureContaining(String expectedReason) {
     return new TypeSafeDiagnosingMatcher<Result<T>>() {
       @Override

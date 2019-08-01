@@ -1,6 +1,7 @@
 package org.folio.circulation.domain.policy;
 
 import static java.lang.String.format;
+import static org.folio.circulation.domain.RequestType.RECALL;
 import static org.folio.circulation.support.JsonPropertyFetcher.getBooleanProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getIntegerProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getNestedIntegerProperty;
@@ -19,6 +20,8 @@ import java.util.Optional;
 
 import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.domain.Loan;
+import org.folio.circulation.domain.Request;
+import org.folio.circulation.domain.RequestQueue;
 import org.folio.circulation.support.ClockManager;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.ValidationErrorFailure;
@@ -65,20 +68,30 @@ public class LoanPolicy {
     return determineStrategy(false, null).calculateDueDate(loan);
   }
 
-  public Result<Loan> renew(Loan loan, DateTime systemDate) {
+  public Result<Loan> renew(Loan loan, DateTime systemDate, RequestQueue requestQueue) {
     //TODO: Create HttpResult wrapper that traps exceptions
     try {
-      if (isNotLoanable()) {
-        return failedValidation(errorForPolicy("item is not loanable"));
+      List<ValidationError> errors = new ArrayList<>();
+
+      Request firstRequest = requestQueue.getRequests().stream()
+        .findFirst().orElse(null);
+
+      if (hasRecallRequest(firstRequest)) {
+        String reason = "items cannot be renewed when there is an active recall request";
+        errors.add(errorForRecallRequest(reason, firstRequest.getId()));
       }
-      if(isNotRenewable()) {
-        return failedValidation(errorForPolicy("loan is not renewable"));
+
+      if (isNotLoanable()) {
+        errors.add(errorForPolicy("item is not loanable"));
+        return failedValidation(errors);
+      }
+      if (isNotRenewable()) {
+        errors.add(errorForPolicy("loan is not renewable"));
+        return failedValidation(errors);
       }
 
       final Result<DateTime> proposedDueDateResult =
         determineStrategy(true, systemDate).calculateDueDate(loan);
-
-      List<ValidationError> errors = new ArrayList<>();
 
       //TODO: Need a more elegent way of combining validation errors
       if(proposedDueDateResult.failed()) {
@@ -360,6 +373,14 @@ public class LoanPolicy {
 
   public boolean isNotLoanable() {
     return !isLoanable();
+  }
+
+  private boolean hasRecallRequest(Request firstRequest) {
+    return firstRequest != null && firstRequest.getRequestType() == RECALL;
+  }
+
+  private ValidationError errorForRecallRequest(String reason, String requestId) {
+    return new ValidationError(reason, "request id", requestId);
   }
 
   public DueDateManagement getDueDateManagement() {

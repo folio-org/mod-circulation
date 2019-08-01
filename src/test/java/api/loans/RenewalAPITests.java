@@ -40,6 +40,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import api.support.builders.RequestBuilder;
 import org.apache.commons.lang3.StringUtils;
 import org.awaitility.Awaitility;
 import org.folio.circulation.domain.policy.DueDateManagement;
@@ -691,6 +692,55 @@ abstract class RenewalAPITests extends APITests {
       hasMessage("loan at maximum renewal number"),
       hasLoanPolicyIdParameter(limitedRenewalsPolicyId),
       hasLoanPolicyNameParameter("Limited Renewals Policy"))));
+  }
+
+  @Test
+  public void multipleRenewalFailuresWhenLoanHasReachedMaximumNumberOfRenewalsAndOpenRecallRequest()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final IndividualResource jessica = usersFixture.jessica();
+
+    LoanPolicyBuilder limitedRenewalsPolicy = new LoanPolicyBuilder()
+      .withName("Limited Renewals Policy")
+      .rolling(Period.days(2))
+      .renewFromCurrentDueDate()
+      .limitedRenewals(3);
+
+    UUID limitedRenewalsPolicyId = loanPoliciesFixture
+      .create(limitedRenewalsPolicy).getId();
+
+    useLoanPolicyAsFallback(
+      limitedRenewalsPolicyId,
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
+      noticePoliciesFixture.activeNotice().getId()
+    );
+
+    loansFixture.checkOutByBarcode(smallAngryPlanet, jessica,
+      new DateTime(2018, 4, 21, 11, 21, 43, DateTimeZone.UTC));
+
+    renew(smallAngryPlanet, jessica);
+    renew(smallAngryPlanet, jessica);
+    renew(smallAngryPlanet, jessica);
+
+    requestsFixture.place(new RequestBuilder()
+      .recall()
+      .forItem(smallAngryPlanet)
+      .withPickupServicePointId(servicePointsFixture.cd1().getId())
+      .by(usersFixture.charlotte()));
+
+    final Response response = attemptRenewal(smallAngryPlanet, jessica);
+
+    assertThat(response.getJson(), hasErrorWith(allOf(
+      hasMessage("loan at maximum renewal number"),
+      hasLoanPolicyIdParameter(limitedRenewalsPolicyId),
+      hasLoanPolicyNameParameter("Limited Renewals Policy"))));
+
+    assertThat(response.getJson(), hasErrorWith(
+      hasMessage("items cannot be renewed when there is an active recall request")));
   }
 
   @Test

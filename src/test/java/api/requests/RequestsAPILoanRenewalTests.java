@@ -12,6 +12,8 @@ import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
+import api.support.builders.LoanPolicyBuilder;
+import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 import org.joda.time.DateTime;
@@ -24,6 +26,8 @@ import api.support.http.InventoryItemResource;
 public class RequestsAPILoanRenewalTests extends APITests {
 
   private static final String ITEMS_CANNOT_BE_RENEWED_MSG = "items cannot be renewed when there is an active recall request";
+  private static final String EXPECTED_REASON_LOAN_IS_NOT_RENEWABLE = "loan is not renewable";
+  private static final String EXPECTED_REASON_LOAN_IS_NOT_LOANABLE = "item is not loanable";
 
   @Test
   public void forbidRenewalLoanByBarcodeWhenFirstRequestInQueueIsRecall() throws InterruptedException, MalformedURLException, TimeoutException, ExecutionException {
@@ -177,5 +181,77 @@ public class RequestsAPILoanRenewalTests extends APITests {
         "reached number of renewals limit," +
         "renewal date falls outside of the date ranges in the loan policy, " +
         "items cannot be renewed when there is an active recall request"))));
+  }
+
+  @Test
+  public void multipleRenewalFailuresWhenItemHasOpenRecallRequestAndLoanIsNotRenewable()
+    throws InterruptedException, MalformedURLException, TimeoutException, ExecutionException {
+
+    final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final IndividualResource rebecca = usersFixture.rebecca();
+    final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
+
+    loansFixture.checkOutByBarcode(smallAngryPlanet, rebecca);
+
+    LoanPolicyBuilder limitedRenewalsPolicy = new LoanPolicyBuilder()
+      .withName("Non Renewable Policy")
+      .rolling(Period.days(2))
+      .notRenewable();
+
+    UUID notRenewablePolicyId = loanPoliciesFixture
+      .create(limitedRenewalsPolicy).getId();
+
+    useLoanPolicyAsFallback(
+      notRenewablePolicyId,
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
+      noticePoliciesFixture.activeNotice().getId()
+    );
+
+    requestsFixture.place(new RequestBuilder()
+      .recall()
+      .forItem(smallAngryPlanet)
+      .withPickupServicePointId(pickupServicePointId)
+      .by(usersFixture.charlotte()));
+
+    Response response = loansFixture.attemptRenewal(smallAngryPlanet, rebecca);
+
+    assertThat(response.getJson(), hasErrorWith(hasMessage(ITEMS_CANNOT_BE_RENEWED_MSG)));
+    assertThat(response.getJson(), hasErrorWith(hasMessage(EXPECTED_REASON_LOAN_IS_NOT_RENEWABLE)));
+  }
+
+  @Test
+  public void multipleRenewalFailuresWhenItemHasOpenRecallRequestAndLoanIsNotLoanable()
+    throws InterruptedException, MalformedURLException, TimeoutException, ExecutionException {
+
+    final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final IndividualResource rebecca = usersFixture.rebecca();
+    final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
+
+    loansFixture.checkOutByBarcode(smallAngryPlanet, rebecca);
+
+    requestsFixture.place(new RequestBuilder()
+      .recall()
+      .forItem(smallAngryPlanet)
+      .withPickupServicePointId(pickupServicePointId)
+      .by(usersFixture.charlotte()));
+
+    LoanPolicyBuilder limitedRenewalsPolicy = new LoanPolicyBuilder()
+      .withName("Non Renewable Policy")
+      .rolling(Period.days(2))
+      .withLoanable(false);
+
+    UUID notRenewablePolicyId = loanPoliciesFixture
+      .create(limitedRenewalsPolicy).getId();
+
+    useLoanPolicyAsFallback(
+      notRenewablePolicyId,
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
+      noticePoliciesFixture.activeNotice().getId()
+    );
+
+    Response response = loansFixture.attemptRenewal(smallAngryPlanet, rebecca);
+
+    assertThat(response.getJson(), hasErrorWith(hasMessage(ITEMS_CANNOT_BE_RENEWED_MSG)));
+    assertThat(response.getJson(), hasErrorWith(hasMessage(EXPECTED_REASON_LOAN_IS_NOT_LOANABLE)));
   }
 }
