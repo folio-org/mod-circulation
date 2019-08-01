@@ -104,7 +104,8 @@ public class FakeOkapi extends AbstractVerticle {
       .withRecordName("loan")
       .withRootPath("/loan-storage/loans")
       .withRequiredProperties("itemId", "loanDate", "action")
-      .withDisallowedProperties("checkinServicePoint", "checkoutServicePoint", "borrower", "item")
+      .withDisallowedProperties("checkinServicePoint", "checkoutServicePoint",
+        "patronGroupAtCheckout", "borrower", "item")
       .withChangeMetadata()
       .create().register(router);
 
@@ -290,7 +291,7 @@ public class FakeOkapi extends AbstractVerticle {
           newOrUpdatedRequest.getString("id")))
         .filter(request -> Objects.equals(request.getString("itemId"),
           newOrUpdatedRequest.getString("itemId")))
-        .filter(request -> newOrUpdatedRequest.getInteger("position") != null && 
+        .filter(request -> newOrUpdatedRequest.getInteger("position") != null &&
           Objects.equals(request.getInteger("position"),
           newOrUpdatedRequest.getInteger("position")))
         .findAny()
