@@ -23,11 +23,11 @@ public class LoanRepresentation {
     }
 
     JsonObject extendedRepresentation = extendedLoan(loan.asJson(), loan.getItem());
-    
+
     if(loan.getCheckinServicePoint() != null) {
       addAdditionalServicePointProperties(extendedRepresentation, loan.getCheckinServicePoint(), "checkinServicePoint");
     }
-    
+
     if(loan.getCheckoutServicePoint() != null) {
       addAdditionalServicePointProperties(extendedRepresentation, loan.getCheckoutServicePoint(), "checkoutServicePoint");
     }
@@ -97,7 +97,7 @@ public class LoanRepresentation {
 
     loanRepresentation.put(LoanProperties.LOAN_POLICY, loanPolicySummary);
   }
-  
+
   private void addAdditionalServicePointProperties(
     JsonObject loanRepresentation,
     ServicePoint servicePoint,
@@ -144,8 +144,6 @@ public class LoanRepresentation {
 
   private void additionalPatronGroupProperties(JsonObject loanRepresentation, PatronGroup patronGroupAtCheckout) {
     if (isNull(patronGroupAtCheckout)) {
-      log.info("Unable to add patron group at checkout properties to loan {},"
-        + " patron group is null", loanRepresentation.getString("id"));
       return;
     }
 

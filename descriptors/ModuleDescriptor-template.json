@@ -1296,6 +1296,7 @@
         "inventory-storage.locations.collection.get",
         "inventory-storage.location-units.institutions.item.get",
         "inventory-storage.location-units.campuses.item.get",
+        "inventory-storage.location-units.libraries.collection.get",
         "inventory-storage.location-units.libraries.item.get",
         "inventory-storage.holdings.collection.get",
         "inventory-storage.holdings.item.get",
