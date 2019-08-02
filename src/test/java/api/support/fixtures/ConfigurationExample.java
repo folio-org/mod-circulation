@@ -7,11 +7,11 @@ import io.vertx.core.json.JsonObject;
 
 public class ConfigurationExample {
 
-  private static final String DEFAULT_TIME_ZONE_MOD_NAME = "ORG";
+  private static final String DEFAULT_TIME_ZONE_MODULE_NAME = "ORG";
   private static final String DEFAULT_TIME_ZONE_CONFIG_NAME = "localeSettings";
   private static final String US_LOCALE = "en-US";
 
-  private static final String DEFAULT_NOTIFICATION_SCHEDULER_MOD_NAME = "NOTIFICATION_SCHEDULER";
+  private static final String DEFAULT_NOTIFICATION_SCHEDULER_MODULE_NAME = "NOTIFICATION_SCHEDULER";
   private static final String DEFAULT_NOTIFICATION_SCHEDULER_CONFIG_NAME = "noticesLimit";
 
   private ConfigurationExample() {
@@ -27,12 +27,12 @@ public class ConfigurationExample {
   }
 
   private static ConfigRecordBuilder getLocaleAndTimeZoneConfiguration(String timezone) {
-    return new ConfigRecordBuilder(DEFAULT_TIME_ZONE_MOD_NAME, DEFAULT_TIME_ZONE_CONFIG_NAME,
+    return new ConfigRecordBuilder(DEFAULT_TIME_ZONE_MODULE_NAME, DEFAULT_TIME_ZONE_CONFIG_NAME,
       combinedTimeZoneConfig(timezone).encodePrettily());
   }
 
   public static ConfigRecordBuilder schedulerNoticesLimitConfiguration(String limit){
-    return new ConfigRecordBuilder(DEFAULT_NOTIFICATION_SCHEDULER_MOD_NAME,
+    return new ConfigRecordBuilder(DEFAULT_NOTIFICATION_SCHEDULER_MODULE_NAME,
       DEFAULT_NOTIFICATION_SCHEDULER_CONFIG_NAME, limit);
   }
 

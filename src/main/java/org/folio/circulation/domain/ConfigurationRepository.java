@@ -1,16 +1,16 @@
 package org.folio.circulation.domain;
 
+import static org.folio.circulation.domain.MultipleRecords.from;
+import static org.folio.circulation.support.CqlQuery.exactMatch;
+
+import java.util.concurrent.CompletableFuture;
+import java.util.function.Function;
+
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.CqlQuery;
 import org.folio.circulation.support.Result;
 import org.joda.time.DateTimeZone;
-
-import java.util.concurrent.CompletableFuture;
-import java.util.function.Function;
-
-import static org.folio.circulation.domain.MultipleRecords.from;
-import static org.folio.circulation.support.CqlQuery.exactMatch;
 
 public class ConfigurationRepository {
 
@@ -34,12 +34,12 @@ public class ConfigurationRepository {
   }
 
   public CompletableFuture<Result<Integer>> lookupSchedulerNoticesProcessingLimit() {
-    Result<CqlQuery> cqlQueryResult = defineCqlQueryResult("NOTIFICATION_SCHEDULER", "noticesLimit");
+    Result<CqlQuery> cqlQueryResult = defineModuleNameAndConfigNameFilter("NOTIFICATION_SCHEDULER", "noticesLimit");
     return lookupConfigurations(cqlQueryResult, applySearchSchedulerNoticesLimit());
   }
 
   private CompletableFuture<Result<DateTimeZone>> findTimeZoneConfiguration() {
-    Result<CqlQuery> cqlQueryResult = defineCqlQueryResult("ORG", "localeSettings");
+    Result<CqlQuery> cqlQueryResult = defineModuleNameAndConfigNameFilter("ORG", "localeSettings");
     return lookupConfigurations(cqlQueryResult, applySearchDateTimeZone());
   }
 
@@ -52,7 +52,7 @@ public class ConfigurationRepository {
       .thenApply(result -> result.map(searchStrategy));
   }
 
-  private Result<CqlQuery> defineCqlQueryResult(String moduleName, String configName) {
+  private Result<CqlQuery> defineModuleNameAndConfigNameFilter(String moduleName, String configName) {
     final Result<CqlQuery> moduleQuery = exactMatch(MODULE_NAME_KEY, moduleName);
     final Result<CqlQuery> configNameQuery = exactMatch(CONFIG_NAME_KEY, configName);
 
