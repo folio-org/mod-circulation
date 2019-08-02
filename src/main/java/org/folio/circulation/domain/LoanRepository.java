@@ -171,12 +171,12 @@ public class LoanRepository {
   private static JsonObject mapToStorageRepresentation(Loan loan, Item item) {
     JsonObject storageLoan = loan.asJson();
 
+    keepPatronGroupIdAtCheckoutProperties(loan, storageLoan);
     removeChangeMetadata(storageLoan);
     removeSummaryProperties(storageLoan);
     keepLatestItemStatus(item, storageLoan);
     removeBorrowerProperties(storageLoan);
     removeLoanPolicyProperties(storageLoan);
-    keepPatronGroupAtCheckoutProperties(loan, storageLoan);
 
     updateLastLoanPolicyUsedId(storageLoan, loan.getLoanPolicy());
 
@@ -210,17 +210,22 @@ public class LoanRepository {
   }
 
   private static void removeSummaryProperties(JsonObject storageLoan) {
-    storageLoan.remove("borrower");
+    storageLoan.remove(LoanProperties.BORROWER);
     storageLoan.remove("item");
     storageLoan.remove("checkinServicePoint");
     storageLoan.remove("checkoutServicePoint");
+    storageLoan.remove(LoanProperties.PATRON_GROUP_AT_CHECKOUT);
   }
 
-  private static void keepPatronGroupAtCheckoutProperties(Loan loan, JsonObject storageLoan) {
+ private static void keepPatronGroupIdAtCheckoutProperties(Loan loan, JsonObject storageLoan) {
     if (nonNull(loan.getUser()) && nonNull(loan.getUser().getPatronGroup())) {
-      storageLoan.put("patronGroupIdAtCheckout", loan.getUser().getPatronGroup().getId());
+      storageLoan.put(LoanProperties.PATRON_GROUP_ID_AT_CHECKOUT, loan.getUser().getPatronGroup().getId());
     }
-  }
+    if (storageLoan.containsKey(LoanProperties.PATRON_GROUP_AT_CHECKOUT)){
+      storageLoan.put(LoanProperties.PATRON_GROUP_ID_AT_CHECKOUT,
+       storageLoan.getJsonObject(LoanProperties.PATRON_GROUP_AT_CHECKOUT).getValue("id"));
+    }
+ }
 
   public CompletableFuture<Result<Boolean>> hasOpenLoan(String itemId) {
     return findOpenLoans(itemId)
