@@ -14,7 +14,7 @@ import static org.folio.circulation.domain.MultipleRecords.from;
 class ConfigurationService {
   private final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
-  private static final int SCHEDULED_NOTICES_PROCESSING_LIMIT = 100;
+  private static final int DEFAULT_SCHEDULED_NOTICES_PROCESSING_LIMIT = 100;
   private static final DateTimeZone DEFAULT_DATE_TIME_ZONE = DateTimeZone.UTC;
   private static final String TIMEZONE_KEY = "timezone";
   private static final String RECORDS_NAME = "configs";
@@ -41,7 +41,7 @@ class ConfigurationService {
     final Integer noticesLimit = configurations.stream()
       .map(this::applySchedulerNoticesLimit)
       .findFirst()
-      .orElse(SCHEDULED_NOTICES_PROCESSING_LIMIT);
+      .orElse(DEFAULT_SCHEDULED_NOTICES_PROCESSING_LIMIT);
 
     log.info("Scheduled notices processing limit: `{}`", noticesLimit);
 
@@ -52,7 +52,7 @@ class ConfigurationService {
     String value = config.getValue();
     return StringUtils.isNumeric(value)
       ? Integer.valueOf(value)
-      : SCHEDULED_NOTICES_PROCESSING_LIMIT;
+      : DEFAULT_SCHEDULED_NOTICES_PROCESSING_LIMIT;
   }
 
   private DateTimeZone applyTimeZone(Configuration config) {
