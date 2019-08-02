@@ -206,13 +206,4 @@ public class RequestsFixture {
       200, "request-queue-request")),
       Function.identity() ,"requests").value();
   }
-
-  public void replace(UUID id, RequestBuilder builder)
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
-
-    requestsClient.replace(id, builder);
-  }
 }

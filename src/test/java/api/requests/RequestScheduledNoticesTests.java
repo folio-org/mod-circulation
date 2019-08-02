@@ -256,7 +256,7 @@ public class RequestScheduledNoticesTests extends APITests {
     assertThat(noticeConfig.getString("format"), is("Email"));
     assertThat(noticeConfig.getBoolean("sendInRealTime"), is(true));
 
-    requestsFixture.replace(request.getId(),requestBuilder.withRequestExpiration(requestExpiration.plusDays(1)));
+    requestsClient.replace(request.getId(), requestBuilder.withRequestExpiration(requestExpiration.plusDays(1)));
 
     Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
