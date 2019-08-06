@@ -697,6 +697,80 @@ public class MoveRequestTests extends APITests {
     assertThat(interestingTimesQueue.getTotalRecords(), is(2));
   }
 
+  @Test
+  public void cannotDisplacePagedRequest()
+      throws MalformedURLException,
+      InterruptedException,
+      TimeoutException,
+      ExecutionException {
+
+      final IndividualResource secondFloorEconomics = locationsFixture.secondFloorEconomics();
+      final IndividualResource mezzanineDisplayCase = locationsFixture.mezzanineDisplayCase();
+
+      final IndividualResource itemCopyA = itemsFixture.basedUponTemeraire(
+        holdingBuilder -> holdingBuilder
+          .withPermanentLocation(secondFloorEconomics)
+          .withNoTemporaryLocation(),
+        itemBuilder -> itemBuilder
+          .withNoPermanentLocation()
+          .withNoTemporaryLocation()
+          .withBarcode("10203040506"));
+
+      final IndividualResource itemCopyB = itemsFixture.basedUponTemeraire(
+        holdingBuilder -> holdingBuilder
+          .withPermanentLocation(mezzanineDisplayCase)
+          .withNoTemporaryLocation(),
+        itemBuilder -> itemBuilder
+          .withNoPermanentLocation()
+          .withNoTemporaryLocation()
+          .withBarcode("90806050402"));
+
+    IndividualResource james = usersFixture.james();
+    IndividualResource steve = usersFixture.steve();
+    IndividualResource jessica = usersFixture.jessica();
+
+    // James Checks out Item Copy A
+    loansFixture.checkOutByBarcode(itemCopyA, james, DateTime.now(DateTimeZone.UTC));
+
+    // Steve requests Item Copy B
+    IndividualResource stevesRequest = requestsFixture.placeHoldShelfRequest(
+      itemCopyA, steve, DateTime.now(DateTimeZone.UTC).minusHours(2), RequestType.RECALL.getValue());
+
+    assertThat(stevesRequest.getJson().getInteger("position"), is(1));
+    assertThat(stevesRequest.getJson().getJsonObject("item").getString("barcode"), is(itemCopyA.getBarcode()));
+    assertThat(stevesRequest.getJson().getJsonObject("item").getString("status"), is(ItemStatus.CHECKED_OUT.getValue()));
+    assertThat(stevesRequest.getJson().getString("status"), is(RequestStatus.OPEN_NOT_YET_FILLED.getValue()));
+
+    // Jessica requests Item Copy B
+    IndividualResource jessicasRequest = requestsFixture.placeHoldShelfRequest(
+      itemCopyB, jessica, DateTime.now(DateTimeZone.UTC).minusHours(1), RequestType.PAGE.getValue());
+
+    // Confirm Jessica's request is first on Item Copy B and is a paged request
+    assertThat(jessicasRequest.getJson().getInteger("position"), is(1));
+    assertThat(jessicasRequest.getJson().getJsonObject("item").getString("barcode"), is(itemCopyB.getBarcode()));
+    assertThat(jessicasRequest.getJson().getJsonObject("item").getString("status"), is(ItemStatus.PAGED.getValue()));
+    assertThat(jessicasRequest.getJson().getString("status"), is(RequestStatus.OPEN_NOT_YET_FILLED.getValue()));
+
+    // Move recallRequestForItemCopyA to Item Copy B
+    requestsFixture.move(new MoveRequestBuilder(
+      stevesRequest.getId(),
+      itemCopyB.getId()
+    ));
+
+    // Confirm Jessica's request is first on Item Copy B and is a paged request
+    jessicasRequest = requestsClient.get(jessicasRequest);
+    assertThat(jessicasRequest.getJson().getInteger("position"), is(1));
+    assertThat(jessicasRequest.getJson().getJsonObject("item").getString("barcode"), is(itemCopyB.getBarcode()));
+    assertThat(jessicasRequest.getJson().getJsonObject("item").getString("status"), is(ItemStatus.PAGED.getValue()));
+
+    // Confirm Steves's request is second on Item Copy B and (is not a paged request (?))
+    stevesRequest = requestsClient.get(stevesRequest);
+    assertThat(stevesRequest.getJson().getInteger("position"), is(2));
+    assertThat(stevesRequest.getJson().getJsonObject("item").getString("barcode"), is(itemCopyB.getBarcode()));
+    assertThat(stevesRequest.getJson().getJsonObject("item").getString("status"), is(ItemStatus.PAGED.getValue()));
+
+  }
+
   private void retainsStoredSummaries(IndividualResource request) {
     assertThat("Updated request in queue should retain stored item summary",
       request.getJson().containsKey("item"), is(true));
