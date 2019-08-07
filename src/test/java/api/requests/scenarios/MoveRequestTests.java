@@ -697,6 +697,7 @@ public class MoveRequestTests extends APITests {
     assertThat(interestingTimesQueue.getTotalRecords(), is(2));
   }
 
+  //This scenerio utilizes two items of the same instance, but the logic in question applies as well for two separate instances.
   @Test
   public void cannotDisplacePagedRequest()
       throws MalformedURLException,
