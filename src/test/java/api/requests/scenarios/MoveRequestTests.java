@@ -732,7 +732,7 @@ public class MoveRequestTests extends APITests {
     // James Checks out Item Copy A
     loansFixture.checkOutByBarcode(itemCopyA, james, DateTime.now(DateTimeZone.UTC));
 
-    // Steve requests Item Copy B
+    // Steve requests Item Copy A
     IndividualResource stevesRequest = requestsFixture.placeHoldShelfRequest(
       itemCopyA, steve, DateTime.now(DateTimeZone.UTC).minusHours(2), RequestType.RECALL.getValue());
 
