@@ -779,4 +779,75 @@ public class MoveRequestTests extends APITests {
     assertThat("Updated request in queue should retain stored requester summary",
       request.getJson().containsKey("requester"), is(true));
   }
+
+  @Test
+  public void checkoutItemStatusDoesNotChangeOnPagedRequest()
+      throws MalformedURLException,
+      InterruptedException,
+      TimeoutException,
+      ExecutionException {
+
+        final IndividualResource secondFloorEconomics = locationsFixture.secondFloorEconomics();
+        final IndividualResource mezzanineDisplayCase = locationsFixture.mezzanineDisplayCase();
+
+        final IndividualResource itemCopyA = itemsFixture.basedUponTemeraire(
+          holdingBuilder -> holdingBuilder
+            .withPermanentLocation(secondFloorEconomics)
+            .withNoTemporaryLocation(),
+          itemBuilder -> itemBuilder
+            .withNoPermanentLocation()
+            .withNoTemporaryLocation()
+            .withBarcode("10203040506"));
+
+        final IndividualResource itemCopyB = itemsFixture.basedUponTemeraire(
+          holdingBuilder -> holdingBuilder
+            .withPermanentLocation(mezzanineDisplayCase)
+            .withNoTemporaryLocation(),
+          itemBuilder -> itemBuilder
+            .withNoPermanentLocation()
+            .withNoTemporaryLocation()
+            .withBarcode("90806050402"));
+
+        assertThat(itemCopyA.getJson().getJsonObject("status").getString("name"), is(ItemStatus.AVAILABLE.getValue()));
+        assertThat(itemCopyB.getJson().getJsonObject("status").getString("name"), is(ItemStatus.AVAILABLE.getValue()));
+
+        IndividualResource james = usersFixture.james(); //cate
+        IndividualResource steve = usersFixture.steve(); //walker
+        IndividualResource jessica = usersFixture.jessica(); //McKenzie
+
+        loansFixture.checkOutByBarcode(itemCopyA, james, DateTime.now(DateTimeZone.UTC));
+
+        assertThat(itemsClient.get(itemCopyA).getJson().getJsonObject("status").getString("name"), is(ItemStatus.CHECKED_OUT.getValue()));
+
+        // Steve requests Item Copy B
+        IndividualResource stevesRequest = requestsFixture.placeHoldShelfRequest(
+          itemCopyB, steve, DateTime.now(DateTimeZone.UTC).minusHours(2), RequestType.PAGE.getValue());
+
+        assertThat(itemsClient.get(itemCopyB).getJson().getJsonObject("status").getString("name"), is(ItemStatus.PAGED.getValue()));
+
+        // Jessica requests Item Copy A
+        IndividualResource jessicasRequest = requestsFixture.placeHoldShelfRequest(
+          itemCopyA, jessica, DateTime.now(DateTimeZone.UTC).minusHours(2), RequestType.RECALL.getValue());
+
+        requestsFixture.move(new MoveRequestBuilder(
+          stevesRequest.getId(),
+          itemCopyA.getId(),
+          RequestType.RECALL.getValue()
+        ));
+
+        // Confirm Steves's request is first and item is AVAILABLE
+        stevesRequest = requestsClient.get(stevesRequest);
+        assertThat(stevesRequest.getJson().getInteger("position"), is(1));
+        assertThat(itemsClient.get(itemCopyB).getJson().getJsonObject("status").getString("name"), is(ItemStatus.AVAILABLE.getValue()));
+
+        requestsFixture.move(new MoveRequestBuilder(
+          jessicasRequest.getId(),
+          itemCopyB.getId()
+        ));
+
+        // Ensure that itemCopyA is still CHECKED_OUT
+        assertThat(itemsClient.get(itemCopyA).getJson().getJsonObject("status").getString("name"), is(ItemStatus.CHECKED_OUT.getValue()));
+
+  }
+
 }

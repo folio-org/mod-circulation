@@ -164,7 +164,7 @@ public class UpdateItem {
 
     return (item.getStatus().equals(PAGED) && requestQueue.getRequests().isEmpty())
       ? AVAILABLE
-      : type.equals(RequestType.PAGE)
+      : (item.getStatus().equals(AVAILABLE) && type.equals(RequestType.PAGE))
         ? PAGED
         : item.getStatus();
   }
