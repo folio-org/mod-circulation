@@ -687,6 +687,10 @@
     {
       "id": "feesfines",
       "version": "15.0"
+    },
+    {
+      "id": "location-units",
+      "version": "1.1"
     }
   ],
   "permissionSets": [
