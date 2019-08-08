@@ -98,14 +98,22 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   public boolean isNotDisplaceable() {
-    return isAwaitingPickup() || isInTransit();
+    return isAwaitingPickup() || isInTransit() || (isItemPaged() && isFirst());
   }
 
-  private boolean isInTransit(){
+  private boolean isItemPaged() {
+    return item != null && item.isPaged();
+  }
+
+  private boolean isFirst() {
+    return hasPosition() && getPosition().equals(1);
+  }
+
+  private boolean isInTransit() {
     return getStatus() == OPEN_IN_TRANSIT;
   }
 
-  private boolean isNotYetFilled(){
+  private boolean isNotYetFilled() {
     return getStatus() == OPEN_NOT_YET_FILLED;
   }
 
