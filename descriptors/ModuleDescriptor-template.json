@@ -372,6 +372,7 @@
             "inventory-storage.location-units.institutions.item.get",
             "inventory-storage.location-units.campuses.item.get",
             "inventory-storage.location-units.libraries.item.get",
+            "inventory-storage.location-units.libraries.collection.get",
             "inventory-storage.service-points.collection.get",
             "inventory-storage.service-points.item.get",
             "users.item.get",
@@ -381,6 +382,9 @@
             "proxiesfor.collection.get",
             "circulation.rules.notice-policy.get",
             "circulation-storage.patron-notice-policies.item.get",
+            "circulation.rules.request-policy.get",
+            "circulation-storage.request-policies.item.get",
+            "circulation-storage.requests.item.put",
             "patron-notice.post",
             "inventory-storage.loan-types.item.get",
             "calendar.opening-hours.collection.get",
@@ -460,6 +464,7 @@
             "inventory-storage.location-units.institutions.item.get",
             "inventory-storage.location-units.campuses.item.get",
             "inventory-storage.location-units.libraries.item.get",
+            "inventory-storage.location-units.libraries.collection.get",
             "inventory-storage.service-points.collection.get",
             "inventory-storage.service-points.item.get",
             "users.item.get",
@@ -682,6 +687,10 @@
     {
       "id": "feesfines",
       "version": "15.0"
+    },
+    {
+      "id": "location-units",
+      "version": "1.1"
     }
   ],
   "permissionSets": [
