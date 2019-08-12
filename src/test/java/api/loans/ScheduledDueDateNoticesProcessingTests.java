@@ -25,6 +25,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
+import api.support.fixtures.ConfigurationExample;
 import org.awaitility.Awaitility;
 import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.support.http.client.IndividualResource;
@@ -252,6 +253,82 @@ public class ScheduledDueDateNoticesProcessingTests extends APITests {
       hasSize(expectedNumberOfUnprocessedNoticesInThePast + numberOfNoticesInTheFuture));
     assertThat(unprocessedScheduledNotices, hasItems(expectedUnprocessedNoticesInThePast));
     assertThat(unprocessedScheduledNotices, hasItems(noticesInTheFuture.toArray(new JsonObject[0])));
+  }
+
+  @Test
+  public void testNumberOfProcessedNoticesWithSchedulerNoticesLimitConfiguration()
+    throws MalformedURLException,
+    InterruptedException,
+    TimeoutException,
+    ExecutionException {
+
+    scheduledNoticesClient.deleteAll();
+
+    int noticesLimitConfig = 200;
+    int numberOfNotices = 300;
+    int expectedNumberOfUnprocessedNotices = numberOfNotices - noticesLimitConfig;
+
+    // create a new configuration
+    configClient.create(ConfigurationExample.schedulerNoticesLimitConfiguration(Integer.toString(noticesLimitConfig)));
+
+    createNotices(numberOfNotices);
+    scheduledNoticeProcessingClient.runNoticesProcessing();
+    List<JsonObject> unprocessedScheduledNotices = scheduledNoticesClient.getAll();
+
+    assertThat(unprocessedScheduledNotices, hasSize(expectedNumberOfUnprocessedNotices));
+  }
+
+  @Test
+  public void testNumberOfProcessedNotificationsWithIncorrectConfiguration()
+    throws MalformedURLException,
+    InterruptedException,
+    TimeoutException,
+    ExecutionException {
+
+    scheduledNoticesClient.deleteAll();
+
+    int numberOfNotices = 259;
+    int expectedNumberOfUnprocessedNotices = numberOfNotices - SCHEDULED_NOTICES_PROCESSING_LIMIT;
+
+    // create a incorrect configuration
+    configClient.create(ConfigurationExample.schedulerNoticesLimitConfiguration("IncorrectVal"));
+
+    createNotices(numberOfNotices);
+    scheduledNoticeProcessingClient.runNoticesProcessing();
+    List<JsonObject> unprocessedScheduledNotices = scheduledNoticesClient.getAll();
+
+    assertThat(unprocessedScheduledNotices, hasSize(expectedNumberOfUnprocessedNotices));
+  }
+
+  @Test
+  public void testDefaultNumberOfProcessedNotices()
+    throws MalformedURLException,
+    InterruptedException,
+    TimeoutException,
+    ExecutionException {
+
+    scheduledNoticesClient.deleteAll();
+
+    int expectedNumberOfUnprocessedNotices = 0;
+
+    createNotices(SCHEDULED_NOTICES_PROCESSING_LIMIT);
+    scheduledNoticeProcessingClient.runNoticesProcessing();
+    List<JsonObject> unprocessedScheduledNotices = scheduledNoticesClient.getAll();
+
+    assertThat(unprocessedScheduledNotices, hasSize(expectedNumberOfUnprocessedNotices));
+  }
+
+  private void createNotices(int numberOfNotices)
+    throws MalformedURLException,
+    InterruptedException,
+    TimeoutException,
+    ExecutionException {
+
+    DateTime systemTime = DateTime.now(DateTimeZone.UTC);
+    List<JsonObject> notices = createNoticesOverTime(systemTime::minusHours, numberOfNotices);
+    for (JsonObject notice : notices) {
+      scheduledNoticesClient.create(notice);
+    }
   }
 
   private void setUpNoticePolicy()

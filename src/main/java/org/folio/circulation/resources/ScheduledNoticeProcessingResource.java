@@ -2,6 +2,7 @@ package org.folio.circulation.resources;
 
 import static org.folio.circulation.support.Result.failed;
 
+import org.folio.circulation.domain.ConfigurationRepository;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.notice.schedule.ScheduledDueDateNoticeHandler;
 import org.folio.circulation.domain.notice.schedule.ScheduledNoticesRepository;
@@ -19,8 +20,6 @@ import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 
 public class ScheduledNoticeProcessingResource extends Resource {
-
-  private static final int SCHEDULED_NOTICES_PROCESSING_LIMIT = 100;
 
   public ScheduledNoticeProcessingResource(HttpClient client) {
     super(client);
@@ -40,13 +39,17 @@ public class ScheduledNoticeProcessingResource extends Resource {
     final WebContext context = new WebContext(routingContext);
     final Clients clients = Clients.create(context, client);
 
+    final ConfigurationRepository configurationRepository =
+      new ConfigurationRepository(clients);
+
     final ScheduledNoticesRepository scheduledNoticesRepository =
       ScheduledNoticesRepository.using(clients);
 
     final ScheduledDueDateNoticeHandler dueDateNoticeHandler =
       ScheduledDueDateNoticeHandler.using(clients, systemTime);
 
-    scheduledNoticesRepository.findNoticesToSend(systemTime, SCHEDULED_NOTICES_PROCESSING_LIMIT)
+    configurationRepository.lookupSchedulerNoticesProcessingLimit()
+      .thenCompose(r -> r.after(limit -> scheduledNoticesRepository.findNoticesToSend(systemTime, limit)))
       .thenApply(r -> r.map(MultipleRecords::getRecords))
       .thenCompose(r -> r.after(dueDateNoticeHandler::handleNotices))
       .thenApply(this::createWritableResult)
