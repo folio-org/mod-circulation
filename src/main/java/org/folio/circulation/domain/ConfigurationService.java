@@ -1,15 +1,16 @@
 package org.folio.circulation.domain;
 
-import io.vertx.core.json.JsonObject;
+import static org.folio.circulation.domain.MultipleRecords.from;
+
+import java.lang.invoke.MethodHandles;
+import java.util.Collection;
+
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTimeZone;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.lang.invoke.MethodHandles;
-import java.util.Collection;
-
-import static org.folio.circulation.domain.MultipleRecords.from;
+import io.vertx.core.json.JsonObject;
 
 class ConfigurationService {
   private final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
