@@ -1,8 +1,10 @@
 package org.folio.circulation.infrastructure.serialization;
 
+import static api.support.matchers.ResultMatchers.succeeded;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static api.support.matchers.ValidationErrorMatchers.hasParameter;
 import static api.support.matchers.ValidationErrorMatchers.isErrorWith;
+import static org.folio.circulation.support.JsonPropertyWriter.write;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.is;
@@ -32,7 +34,7 @@ public class JsonSchemaValidationTest {
       .at(UUID.randomUUID())
       .create();
 
-    assertThat(validator.validate(checkInRequest.encode()).succeeded(), is(true));
+    assertThat(validator.validate(checkInRequest.encode()), succeeded());
   }
 
   @Test
@@ -48,7 +50,39 @@ public class JsonSchemaValidationTest {
       .withRequestDate(DateTime.now())
       .create();
 
-    assertThat(validator.validate(request.encode()).succeeded(), is(true));
+    assertThat(validator.validate(request.encode()), succeeded());
+  }
+
+  @Test
+  public void canValidateStorageSchema() throws IOException {
+    final JsonSchemaValidator validator = JsonSchemaValidator
+      .fromResource("/storage-loan-6-1.json");
+
+    final JsonObject storageLoanRequest = new JsonObject();
+
+    write(storageLoanRequest, "itemId", UUID.randomUUID());
+    write(storageLoanRequest, "userId", UUID.randomUUID());
+    write(storageLoanRequest, "loanDate", DateTime.now());
+    write(storageLoanRequest, "action", "checkedout");
+
+    assertThat(validator.validate(storageLoanRequest.encode()), succeeded());
+  }
+
+  @Test
+  public void validationFailsWhenUnexpectedPropertyIncludedInStorageSchema() throws IOException {
+    final JsonSchemaValidator validator = JsonSchemaValidator
+      .fromResource("/storage-loan-6-1.json");
+
+    final JsonObject storageLoanRequest = new JsonObject()
+      .put("unexpectedProperty", "foo");
+
+    final Result<String> result = validator.validate(storageLoanRequest.encode());
+
+    assertThat(result.succeeded(), is(false));
+
+    assertThat(result.cause(), isErrorWith(allOf(
+      hasMessage("#: extraneous key [unexpectedProperty] is not permitted"),
+      hasParameter(null, null))));
   }
 
   @Test
