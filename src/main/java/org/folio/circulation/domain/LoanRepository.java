@@ -177,6 +177,7 @@ public class LoanRepository {
     keepLatestItemStatus(item, storageLoan);
     removeBorrowerProperties(storageLoan);
     removeLoanPolicyProperties(storageLoan);
+    removeFeesAndFinesProperties(storageLoan);
 
     updateLastLoanPolicyUsedId(storageLoan, loan.getLoanPolicy());
 
@@ -203,6 +204,10 @@ public class LoanRepository {
     if(nonNull(loanPolicy) && loanPolicy.getId() != null) {
       storageLoan.put("loanPolicyId", loanPolicy.getId());
     }
+  }
+
+  private static void removeFeesAndFinesProperties(JsonObject storageLoan) {
+    storageLoan.remove(LoanProperties.FEESANDFINES);
   }
 
   private static void removeChangeMetadata(JsonObject storageLoan) {
