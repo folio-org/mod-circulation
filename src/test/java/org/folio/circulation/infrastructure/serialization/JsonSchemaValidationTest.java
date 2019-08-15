@@ -1,5 +1,6 @@
 package org.folio.circulation.infrastructure.serialization;
 
+import static api.support.fakes.StorageSchema.validatorForStorageLoanSchema;
 import static api.support.matchers.ResultMatchers.succeeded;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static api.support.matchers.ValidationErrorMatchers.hasParameter;
@@ -55,8 +56,7 @@ public class JsonSchemaValidationTest {
 
   @Test
   public void canValidateStorageSchema() throws IOException {
-    final JsonSchemaValidator validator = JsonSchemaValidator
-      .fromResource("/storage-loan-6-1.json");
+    final JsonSchemaValidator validator = validatorForStorageLoanSchema();
 
     final JsonObject storageLoanRequest = new JsonObject();
 
@@ -70,8 +70,7 @@ public class JsonSchemaValidationTest {
 
   @Test
   public void validationFailsWhenUnexpectedPropertyIncludedInStorageSchema() throws IOException {
-    final JsonSchemaValidator validator = JsonSchemaValidator
-      .fromResource("/storage-loan-6-1.json");
+    final JsonSchemaValidator validator = validatorForStorageLoanSchema();
 
     final JsonObject storageLoanRequest = new JsonObject()
       .put("unexpectedProperty", "foo");
