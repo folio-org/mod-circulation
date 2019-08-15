@@ -51,7 +51,7 @@ public class JsonSchemaValidator {
     }
   }
 
-  Result<String> validate(String json) {
+  public Result<String> validate(String json) {
     try {
       schema.validate(new JSONObject(json));
 

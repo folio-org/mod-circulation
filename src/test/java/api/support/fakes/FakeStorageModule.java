@@ -19,6 +19,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang3.StringUtils;
+import org.folio.circulation.infrastructure.serialization.JsonSchemaValidator;
 import org.folio.circulation.support.CreatedJsonResponseResult;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.http.server.ClientErrorResponse;
@@ -55,6 +56,7 @@ public class FakeStorageModule extends AbstractVerticle {
   private final Boolean includeChangeMetadata;
   private final String changeMetadataPropertyName = "metadata";
   private final BiFunction<Collection<JsonObject>, JsonObject, Result<Object>> constraint;
+  private final JsonSchemaValidator recordValidator;
 
   public static Stream<String> getQueries() {
     return queries.stream();
@@ -64,6 +66,7 @@ public class FakeStorageModule extends AbstractVerticle {
     String rootPath,
     String collectionPropertyName,
     String tenantId,
+    JsonSchemaValidator recordValidator,
     Collection<String> requiredProperties,
     boolean hasCollectionDelete,
     boolean hasDeleteByQuery,
@@ -83,6 +86,7 @@ public class FakeStorageModule extends AbstractVerticle {
     this.disallowedProperties = disallowedProperties;
     this.constraint = constraint;
     this.includeChangeMetadata = includeChangeMetadata;
+    this.recordValidator = recordValidator;
 
     storedResourcesByTenant = new HashMap<>();
     storedResourcesByTenant.put(tenantId, new HashMap<>());
@@ -97,6 +101,7 @@ public class FakeStorageModule extends AbstractVerticle {
     router.post(pathTree).handler(BodyHandler.create());
     router.put(pathTree).handler(BodyHandler.create());
 
+    router.post(rootPath).handler(this::checkRepresentationAgainstRecordSchema);
     router.post(rootPath).handler(this::checkRequiredProperties);
     router.post(rootPath).handler(this::checkUniqueProperties);
     router.post(rootPath).handler(this::checkDisallowedProperties);
@@ -111,6 +116,7 @@ public class FakeStorageModule extends AbstractVerticle {
       router.delete(rootPath).handler(this::empty);
     }
 
+    router.put(rootPath + "/:id").handler(this::checkRepresentationAgainstRecordSchema);
     router.put(rootPath + "/:id").handler(this::checkRequiredProperties);
     router.put(rootPath + "/:id").handler(this::checkDisallowedProperties);
     router.put(rootPath + "/:id").handler(this::replace);
@@ -405,6 +411,23 @@ public class FakeStorageModule extends AbstractVerticle {
     if(StringUtils.isBlank(context.getRequestId())) {
       ClientErrorResponse.badRequest(routingContext.response(),
         "Request ID is expected for all requests during tests");
+    }
+    else {
+      routingContext.next();
+    }
+  }
+
+  private void checkRepresentationAgainstRecordSchema(RoutingContext routingContext) {
+    if (recordValidator == null) {
+      routingContext.next();
+      return;
+    }
+
+    final Result<String> validationResult = recordValidator.validate(
+      routingContext.getBodyAsString());
+
+    if (validationResult.failed()) {
+      validationResult.cause().writeTo(routingContext.response());
     }
     else {
       routingContext.next();
