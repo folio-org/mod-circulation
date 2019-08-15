@@ -3,8 +3,11 @@ package org.folio.circulation.domain;
 import static java.lang.String.format;
 import static java.util.Objects.nonNull;
 import static java.util.concurrent.CompletableFuture.completedFuture;
+import static org.folio.circulation.domain.representations.LoanProperties.PATRON_GROUP_AT_CHECKOUT;
+import static org.folio.circulation.domain.representations.LoanProperties.PATRON_GROUP_ID_AT_CHECKOUT;
 import static org.folio.circulation.support.CqlQuery.exactMatch;
 import static org.folio.circulation.support.CqlQuery.exactMatchAny;
+import static org.folio.circulation.support.JsonPropertyWriter.write;
 import static org.folio.circulation.support.Result.failed;
 import static org.folio.circulation.support.Result.of;
 import static org.folio.circulation.support.Result.succeeded;
@@ -219,16 +222,19 @@ public class LoanRepository {
     storageLoan.remove("item");
     storageLoan.remove("checkinServicePoint");
     storageLoan.remove("checkoutServicePoint");
-    storageLoan.remove(LoanProperties.PATRON_GROUP_AT_CHECKOUT);
+    storageLoan.remove(PATRON_GROUP_AT_CHECKOUT);
   }
 
  private static void keepPatronGroupIdAtCheckoutProperties(Loan loan, JsonObject storageLoan) {
     if (nonNull(loan.getUser()) && nonNull(loan.getUser().getPatronGroup())) {
-      storageLoan.put(LoanProperties.PATRON_GROUP_ID_AT_CHECKOUT, loan.getUser().getPatronGroup().getId());
+      write(storageLoan, PATRON_GROUP_ID_AT_CHECKOUT,
+        loan.getUser().getPatronGroup().getId());
     }
-    if (storageLoan.containsKey(LoanProperties.PATRON_GROUP_AT_CHECKOUT)){
-      storageLoan.put(LoanProperties.PATRON_GROUP_ID_AT_CHECKOUT,
-       storageLoan.getJsonObject(LoanProperties.PATRON_GROUP_AT_CHECKOUT).getValue("id"));
+
+    //TODO: Should this really be re-writing the value?
+    if (storageLoan.containsKey(PATRON_GROUP_AT_CHECKOUT)) {
+      write(storageLoan, PATRON_GROUP_ID_AT_CHECKOUT,
+        storageLoan.getJsonObject(PATRON_GROUP_AT_CHECKOUT).getString("id"));
     }
  }
 
