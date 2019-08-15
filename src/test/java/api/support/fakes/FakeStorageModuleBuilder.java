@@ -146,6 +146,11 @@ public class FakeStorageModuleBuilder {
       validator);
   }
 
+  @Deprecated()
+  /**
+   * Deprecated in favour of schema validation
+   * {@link #validateRecordsWith(JsonSchemaValidator) }
+   */
   private FakeStorageModuleBuilder withRequiredProperties(
     Collection<String> requiredProperties) {
 
@@ -162,14 +167,19 @@ public class FakeStorageModuleBuilder {
       this.includeChangeMetadata,
       this.constraint,
       this.recordValidator);
-    }
+  }
 
+  @Deprecated()
+  /**
+   * Deprecated in favour of schema validation
+   * {@link #validateRecordsWith(JsonSchemaValidator) }
+   */
   FakeStorageModuleBuilder withRequiredProperties(String... requiredProperties) {
     return withRequiredProperties(Arrays.asList(requiredProperties));
   }
 
-  private FakeStorageModuleBuilder withUniqueProperties(
-    Collection<String> uniqueProperties) {
+    private FakeStorageModuleBuilder withUniqueProperties(
+      Collection<String> uniqueProperties) {
 
     return new FakeStorageModuleBuilder(
       this.rootPath,
@@ -190,6 +200,11 @@ public class FakeStorageModuleBuilder {
     return withUniqueProperties(Arrays.asList(uniqueProperties));
   }
 
+  @Deprecated()
+  /**
+   * Deprecated in favour of schema validation
+   * {@link #validateRecordsWith(JsonSchemaValidator) }
+   */
   private FakeStorageModuleBuilder withDisallowedProperties(
     Collection<String> disallowedProperties) {
 
@@ -208,6 +223,11 @@ public class FakeStorageModuleBuilder {
       this.recordValidator);
   }
 
+  @Deprecated()
+  /**
+   * Deprecated in favour of schema validation
+   * {@link #validateRecordsWith(JsonSchemaValidator) }
+   */
   FakeStorageModuleBuilder withDisallowedProperties(String... disallowedProperties) {
     return withDisallowedProperties(Arrays.asList(disallowedProperties));
   }

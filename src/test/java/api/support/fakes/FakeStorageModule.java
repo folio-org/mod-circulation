@@ -67,12 +67,12 @@ public class FakeStorageModule extends AbstractVerticle {
     String collectionPropertyName,
     String tenantId,
     JsonSchemaValidator recordValidator,
-    Collection<String> requiredProperties,
+    @Deprecated Collection<String> requiredProperties,
     boolean hasCollectionDelete,
     boolean hasDeleteByQuery,
     String recordTypeName,
     Collection<String> uniqueProperties,
-    Collection<String> disallowedProperties,
+    @Deprecated Collection<String> disallowedProperties,
     Boolean includeChangeMetadata,
     BiFunction<Collection<JsonObject>, JsonObject, Result<Object>> constraint) {
 
