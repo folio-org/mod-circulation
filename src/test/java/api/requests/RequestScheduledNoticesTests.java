@@ -106,7 +106,7 @@ public class RequestScheduledNoticesTests extends APITests {
     JsonObject noticeConfig = scheduledNotice.getJsonObject("noticeConfig");
 
     assertThat(scheduledNotice.getString("requestId"), is(request.getId().toString()));
-    assertThat(scheduledNotice.getString("triggeringEvent"), is("Request Expiration"));
+    assertThat(scheduledNotice.getString("triggeringEvent"), is("Request expiration"));
     assertThat(scheduledNotice.getString("nextRunTime"),
       isEquivalentTo(requestExpiration.toDateTimeAtStartOfDay()));
     assertThat(noticeConfig.getString("timing"), is("Upon At"));
@@ -195,7 +195,7 @@ public class RequestScheduledNoticesTests extends APITests {
     JsonObject noticeConfig = scheduledNotice.getJsonObject("noticeConfig");
 
     assertThat(scheduledNotice.getString("requestId"), is(request.getId().toString()));
-    assertThat(scheduledNotice.getString("triggeringEvent"), is("Request Expiration"));
+    assertThat(scheduledNotice.getString("triggeringEvent"), is("Request expiration"));
     assertThat(scheduledNotice.getString("nextRunTime"),
       isEquivalentTo(requestExpiration.toDateTimeAtStartOfDay().minusDays(3)));
     assertThat(noticeConfig.getString("timing"), is("Before"));
@@ -248,7 +248,7 @@ public class RequestScheduledNoticesTests extends APITests {
     JsonObject noticeConfig = scheduledNotice.getJsonObject("noticeConfig");
 
     assertThat(scheduledNotice.getString("requestId"), is(request.getId().toString()));
-    assertThat(scheduledNotice.getString("triggeringEvent"), is("Request Expiration"));
+    assertThat(scheduledNotice.getString("triggeringEvent"), is("Request expiration"));
     assertThat(scheduledNotice.getString("nextRunTime"),
       isEquivalentTo(requestExpiration.toDateTimeAtStartOfDay()));
     assertThat(noticeConfig.getString("timing"), is("Upon At"));
@@ -269,7 +269,7 @@ public class RequestScheduledNoticesTests extends APITests {
     noticeConfig = scheduledNotice.getJsonObject("noticeConfig");
 
     assertThat(scheduledNotice.getString("requestId"), is(request.getId().toString()));
-    assertThat(scheduledNotice.getString("triggeringEvent"), is("Request Expiration"));
+    assertThat(scheduledNotice.getString("triggeringEvent"), is("Request expiration"));
     assertThat(scheduledNotice.getString("nextRunTime"),
       isEquivalentTo(requestExpiration.toDateTimeAtStartOfDay().plusDays(1)));
     assertThat(noticeConfig.getString("timing"), is("Upon At"));

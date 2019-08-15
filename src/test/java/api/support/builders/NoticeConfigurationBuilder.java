@@ -70,7 +70,7 @@ public class NoticeConfigurationBuilder extends JsonBuilder implements Builder {
   }
 
   public NoticeConfigurationBuilder withRequestExpirationEvent() {
-    return withEventType("Request Expiration");
+    return withEventType("Request expiration");
   }
 
   public NoticeConfigurationBuilder withHoldShelfExpirationEvent() {
