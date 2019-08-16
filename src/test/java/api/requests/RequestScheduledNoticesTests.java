@@ -116,6 +116,41 @@ public class RequestScheduledNoticesTests extends APITests {
   }
 
   @Test
+  public void requestExpirationUponAtNoticeShouldNotBeScheduledWhenCreatedRequestIsNotSetToExpire()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    JsonObject requestNotice = new NoticeConfigurationBuilder()
+      .withTemplateId(templateId)
+      .withRequestExpirationEvent()
+      .withUponAtTiming()
+      .sendInRealTime(true)
+      .create();
+
+    NoticePolicyBuilder noticePolicyBuilder = new NoticePolicyBuilder()
+      .withName("request policy")
+      .withRequestNotices(Collections.singletonList(requestNotice));
+
+    useLoanPolicyAsFallback(
+      loanPoliciesFixture.canCirculateRolling().getId(),
+      requestPoliciesFixture.pageRequestPolicy().getId(),
+      noticePoliciesFixture.create(noticePolicyBuilder).getId());
+
+    requestsFixture.place(new RequestBuilder().page()
+      .forItem(item)
+      .withRequesterId(requester.getId())
+      .withRequestDate(DateTime.now())
+      .withStatus(OPEN_NOT_YET_FILLED)
+      .withPickupServicePoint(pickupServicePoint));
+
+    Awaitility.await()
+      .atMost(1, TimeUnit.SECONDS)
+      .until(scheduledNoticesClient::getAll, hasSize(0));
+  }
+
+  @Test
   public void requestExpirationNoticeShouldNotBeScheduledWhenCreatedRequestDoesNotExpire()
     throws InterruptedException,
     MalformedURLException,

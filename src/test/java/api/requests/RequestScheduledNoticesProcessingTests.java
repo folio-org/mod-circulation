@@ -104,7 +104,45 @@ public class RequestScheduledNoticesProcessingTests extends APITests {
   }
 
   @Test
-  public void beforeRequestExpirationNoticeShouldBeSentAndDeleted()
+  public void uponAtHoldExpirationNoticeShouldBeSentAndDeletedWhenHoldExpirationDateHasPassed()
+    throws MalformedURLException,
+    InterruptedException,
+    TimeoutException,
+    ExecutionException {
+
+    JsonObject noticeConfiguration = new NoticeConfigurationBuilder()
+      .withTemplateId(templateId)
+      .withHoldShelfExpirationEvent()
+      .withUponAtTiming()
+      .sendInRealTime(true)
+      .create();
+    setupNoticePolicyWithRequestNotice(noticeConfiguration);
+
+    requestsFixture.place(new RequestBuilder().page()
+      .forItem(item)
+      .withRequesterId(requester.getId())
+      .withRequestDate(DateTime.now())
+      .withStatus(OPEN_NOT_YET_FILLED)
+      .withPickupServicePoint(pickupServicePoint));
+
+    CheckInByBarcodeRequestBuilder builder = new CheckInByBarcodeRequestBuilder()
+      .forItem(item)
+      .withItemBarcode(item.getBarcode())
+      .at(pickupServicePoint);
+    loansFixture.checkInByBarcode(builder);
+
+    Awaitility.await()
+      .atMost(1, TimeUnit.SECONDS)
+      .until(scheduledNoticesClient::getAll, hasSize(1));
+
+    scheduledNoticeProcessingClient.runRequestNoticesProcessing(
+      LocalDate.now(UTC).plusDays(31).toDateTimeAtStartOfDay());
+
+    assertThat(scheduledNoticesClient.getAll(), hasSize(0));
+  }
+
+  @Test
+  public void beforeRequestExpirationNoticeShouldBeSentAndDeletedWhenIsNotRecurring()
     throws MalformedURLException,
     InterruptedException,
     TimeoutException,
@@ -183,7 +221,7 @@ public class RequestScheduledNoticesProcessingTests extends APITests {
   }
 
   @Test
-  public void beforeHoldExpirationNoticeShouldBeSentAndDeleted()
+  public void beforeHoldExpirationNoticeShouldBeSentAndDeletedWhenIsNotRecurring()
     throws MalformedURLException,
     InterruptedException,
     TimeoutException,
