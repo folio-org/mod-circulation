@@ -67,44 +67,58 @@ public class RequestScheduledNoticeService {
 
     noticePolicy.getNoticeConfigurations()
       .stream()
-      .filter(cfg -> requiresNoticeScheduling(cfg, request))
-      .map(cfg -> createRequestScheduledNotice(cfg, request))
+      .map(cfg -> createRequestScheduledNoticeBasedOnNoticeConfig(cfg, request))
+      .filter(Optional::isPresent)
+      .map(Optional::get)
       .forEach(scheduledNoticesRepository::create);
 
     return succeeded(noticePolicy);
   }
 
-  private DateTime determineNextRunTime(NoticeConfiguration cfg, Request request) {
-    DateTime expirationTime = getExpirationTime(cfg, request);
+  private Optional<ScheduledNotice> createRequestScheduledNoticeBasedOnNoticeConfig(
+    NoticeConfiguration cfg, Request request) {
+    NoticeEventType eventType = cfg.getNoticeEventType();
 
-    return cfg.getTiming() == UPON_AT ? expirationTime :
-      expirationTime.minus(cfg.getTimingPeriod().timePeriod());
-  }
-
-  private DateTime getExpirationTime(NoticeConfiguration cfg, Request request) {
-    switch (cfg.getNoticeEventType()) {
-      case REQUEST_EXPIRATION:
-        return request.getRequestExpirationDate();
-      case HOLD_EXPIRATION:
-        return request.getHoldShelfExpirationDate();
-      default:
-        throw new IllegalStateException();
+    if (eventType == REQUEST_EXPIRATION) {
+      return createRequestExpirationScheduledNotice(request, cfg);
+    } else if (eventType == HOLD_EXPIRATION) {
+      return createHoldExpirationScheduledNotice(request, cfg);
+    } else {
+      throw new IllegalStateException();
     }
   }
 
-  private boolean requiresNoticeScheduling(NoticeConfiguration cfg, Request request) {
-    NoticeEventType type = cfg.getNoticeEventType();
+  private Optional<ScheduledNotice> createRequestExpirationScheduledNotice(
+    Request request, NoticeConfiguration cfg) {
 
-    return type == REQUEST_EXPIRATION && request.getRequestExpirationDate() != null
-      || type == HOLD_EXPIRATION && request.getHoldShelfExpirationDate() != null;
+    return Optional.ofNullable(request.getRequestExpirationDate())
+      .map(expirationDate -> determineNextRunTime(expirationDate, cfg))
+      .map(nextRunTime -> createScheduledNotice(request, nextRunTime, cfg, REQUEST_EXPIRATION));
   }
 
-  private ScheduledNotice createRequestScheduledNotice(NoticeConfiguration cfg, Request request) {
+  private Optional<ScheduledNotice> createHoldExpirationScheduledNotice(
+    Request request, NoticeConfiguration cfg) {
+
+    return Optional.ofNullable(request.getHoldShelfExpirationDate())
+      .map(expirationDate -> determineNextRunTime(expirationDate, cfg))
+      .map(nextRunTime -> createScheduledNotice(request, nextRunTime, cfg, HOLD_EXPIRATION));
+  }
+
+  private DateTime determineNextRunTime(DateTime expirationDate, NoticeConfiguration cfg) {
+    return cfg.getTiming() == UPON_AT ?
+      expirationDate :
+      expirationDate.minus(cfg.getTimingPeriod().timePeriod());
+  }
+
+  private ScheduledNotice createScheduledNotice(Request request,
+                                                DateTime nextRunTime,
+                                                NoticeConfiguration cfg,
+                                                NoticeEventType eventType) {
     return new ScheduledNoticeBuilder()
       .setId(UUID.randomUUID().toString())
       .setRequestId(request.getId())
-      .setTriggeringEvent(cfg.getNoticeEventType().getRepresentation())
-      .setNextRunTime(determineNextRunTime(cfg, request))
+      .setTriggeringEvent(eventType.getRepresentation())
+      .setNextRunTime(nextRunTime)
       .setNoticeConfig(createScheduledNoticeConfig(cfg))
       .build();
   }
