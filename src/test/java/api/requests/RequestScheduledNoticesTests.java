@@ -279,6 +279,66 @@ public class RequestScheduledNoticesTests extends APITests {
   }
 
   @Test
+  public void recurringRequestExpirationNoticeShouldBeDeletedWhenExpirationDateIsRemovedDuringUpdate()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    JsonObject requestNotice = new NoticeConfigurationBuilder()
+      .withTemplateId(templateId)
+      .withRequestExpirationEvent()
+      .withBeforeTiming(Period.days(3))
+      .recurring(Period.days(1))
+      .sendInRealTime(true)
+      .create();
+
+    NoticePolicyBuilder noticePolicyBuilder = new NoticePolicyBuilder()
+      .withName("request policy")
+      .withRequestNotices(Collections.singletonList(requestNotice));
+
+    useLoanPolicyAsFallback(
+      loanPoliciesFixture.canCirculateRolling().getId(),
+      requestPoliciesFixture.pageRequestPolicy().getId(),
+      noticePoliciesFixture.create(noticePolicyBuilder).getId());
+
+    LocalDate requestExpiration = LocalDate.now(DateTimeZone.UTC).plusMonths(3);
+    RequestBuilder requestBuilder = new RequestBuilder().page()
+      .forItem(item)
+      .withRequesterId(requester.getId())
+      .withRequestDate(DateTime.now())
+      .withStatus(OPEN_NOT_YET_FILLED)
+      .withPickupServicePoint(pickupServicePoint)
+      .withRequestExpiration(requestExpiration);
+    IndividualResource request = requestsFixture.place(requestBuilder);
+
+    Awaitility.await()
+      .atMost(1, TimeUnit.SECONDS)
+      .until(scheduledNoticesClient::getAll, hasSize(1));
+
+    List<JsonObject> scheduledNotices = scheduledNoticesClient.getAll();
+    assertThat(scheduledNotices.size(), is(1));
+
+    JsonObject scheduledNotice = scheduledNotices.get(0);
+    JsonObject noticeConfig = scheduledNotice.getJsonObject("noticeConfig");
+
+    assertThat(scheduledNotice.getString("requestId"), is(request.getId().toString()));
+    assertThat(scheduledNotice.getString("triggeringEvent"), is("Request expiration"));
+    assertThat(scheduledNotice.getString("nextRunTime"),
+      isEquivalentTo(requestExpiration.toDateTimeAtStartOfDay().minusDays(3)));
+    assertThat(noticeConfig.getString("timing"), is("Before"));
+    assertThat(noticeConfig.getString("templateId"), is(templateId.toString()));
+    assertThat(noticeConfig.getString("format"), is("Email"));
+    assertThat(noticeConfig.getBoolean("sendInRealTime"), is(true));
+
+    requestsClient.replace(request.getId(), requestBuilder.withRequestExpiration(null));
+
+    Awaitility.await()
+      .atMost(1, TimeUnit.SECONDS)
+      .until(scheduledNoticesClient::getAll, hasSize(0));
+  }
+
+  @Test
   public void holdShelfExpirationNoticeShouldBeScheduledOnCheckIn()
     throws InterruptedException,
     MalformedURLException,
