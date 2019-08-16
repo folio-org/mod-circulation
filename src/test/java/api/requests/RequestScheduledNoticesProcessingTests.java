@@ -69,7 +69,7 @@ public class RequestScheduledNoticesProcessingTests extends APITests {
   }
 
   @Test
-  public void uponAtRequestExpirationNoticeShouldBeSentAndDeleted()
+  public void uponAtRequestExpirationNoticeShouldBeSentAndDeletedWhenRequestExpirationDateHasPassed()
     throws MalformedURLException,
     InterruptedException,
     TimeoutException,
@@ -139,7 +139,7 @@ public class RequestScheduledNoticesProcessingTests extends APITests {
   }
 
   @Test
-  public void beforeRequestExpirationRecurringNoticeShouldBeSentAndUpdated()
+  public void beforeRequestExpirationRecurringNoticeShouldBeSentAndUpdatedWhenFirstThreholdBeforeExpirationHasPassed()
     throws MalformedURLException,
     InterruptedException,
     TimeoutException,

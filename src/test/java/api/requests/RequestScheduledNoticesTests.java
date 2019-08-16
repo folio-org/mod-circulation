@@ -64,7 +64,7 @@ public class RequestScheduledNoticesTests extends APITests {
   }
 
   @Test
-  public void requestExpirationUponAtNoticeShouldBeScheduledOnRequestCreate()
+  public void requestExpirationUponAtNoticeShouldBeScheduledWhenCreatedRequestIsSetToExpire()
     throws InterruptedException,
     MalformedURLException,
     TimeoutException,
@@ -116,7 +116,7 @@ public class RequestScheduledNoticesTests extends APITests {
   }
 
   @Test
-  public void requestExpirationNoticeShouldNotBeScheduledOnRequestCreate()
+  public void requestExpirationNoticeShouldNotBeScheduledWhenCreatedRequestDoesNotExpire()
     throws InterruptedException,
     MalformedURLException,
     TimeoutException,
@@ -153,7 +153,7 @@ public class RequestScheduledNoticesTests extends APITests {
   }
 
   @Test
-  public void requestExpirationBeforeNoticeShouldBeScheduledOnRequestCreate()
+  public void requestExpirationBeforeNoticeShouldBeScheduledWhenCreatedRequestIsSetToExpire()
     throws InterruptedException,
     MalformedURLException,
     TimeoutException,
@@ -205,7 +205,7 @@ public class RequestScheduledNoticesTests extends APITests {
   }
 
   @Test
-  public void requestExpirationUponAtNoticeShouldBeRescheduledOnRequestUpdate()
+  public void requestExpirationUponAtNoticeShouldBeRescheduledWhenUpdatedRequestIsSetToExpire()
     throws InterruptedException,
     MalformedURLException,
     TimeoutException,
