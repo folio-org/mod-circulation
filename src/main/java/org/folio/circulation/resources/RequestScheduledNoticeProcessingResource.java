@@ -16,18 +16,16 @@ import io.vertx.core.http.HttpClient;
 
 public class RequestScheduledNoticeProcessingResource extends ScheduledNoticeProcessingResource {
 
-  private static final int SCHEDULED_NOTICES_PROCESSING_LIMIT = 100;
-
   public RequestScheduledNoticeProcessingResource(HttpClient client) {
     super("/circulation/request-scheduled-notices-processing" ,client);
   }
 
   @Override
   protected CompletableFuture<Result<MultipleRecords<ScheduledNotice>>> findNoticesToSend(
-    ScheduledNoticesRepository scheduledNoticesRepository) {
+    ScheduledNoticesRepository scheduledNoticesRepository, int limit) {
 
     return scheduledNoticesRepository.findRequestNoticesToSend(
-      DateTime.now(DateTimeZone.UTC), SCHEDULED_NOTICES_PROCESSING_LIMIT);
+      DateTime.now(DateTimeZone.UTC), limit);
   }
 
   @Override

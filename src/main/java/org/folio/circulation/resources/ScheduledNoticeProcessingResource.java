@@ -5,6 +5,7 @@ import static org.folio.circulation.support.Result.failed;
 import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
 
+import org.folio.circulation.domain.ConfigurationRepository;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.notice.schedule.ScheduledNotice;
 import org.folio.circulation.domain.notice.schedule.ScheduledNoticesRepository;
@@ -39,10 +40,14 @@ public abstract class ScheduledNoticeProcessingResource extends Resource {
 
     final WebContext context = new WebContext(routingContext);
     final Clients clients = Clients.create(context, client);
+
     final ScheduledNoticesRepository scheduledNoticesRepository =
       ScheduledNoticesRepository.using(clients);
+    final ConfigurationRepository configurationRepository =
+      new ConfigurationRepository(clients);
 
-    findNoticesToSend(scheduledNoticesRepository)
+    configurationRepository.lookupSchedulerNoticesProcessingLimit()
+      .thenCompose(r -> r.after(limit -> findNoticesToSend(scheduledNoticesRepository, limit)))
       .thenApply(r -> r.map(MultipleRecords::getRecords))
       .thenCompose(r -> r.after(notices -> handleNotices(clients, notices)))
       .thenApply(this::createWritableResult)
@@ -50,7 +55,7 @@ public abstract class ScheduledNoticeProcessingResource extends Resource {
   }
 
   protected abstract CompletableFuture<Result<MultipleRecords<ScheduledNotice>>> findNoticesToSend(
-    ScheduledNoticesRepository scheduledNoticesRepository);
+    ScheduledNoticesRepository scheduledNoticesRepository, int limit);
 
   protected abstract CompletableFuture<Result<Collection<ScheduledNotice>>> handleNotices(
     Clients clients, Collection<ScheduledNotice> noticesResult);
