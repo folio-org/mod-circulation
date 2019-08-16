@@ -311,12 +311,14 @@ public class RequestScheduledNoticesTests extends APITests {
       .withRequestExpiration(requestExpiration);
     IndividualResource request = requestsFixture.place(requestBuilder);
 
-    CheckInByBarcodeRequestBuilder at = new CheckInByBarcodeRequestBuilder()
+    CheckInByBarcodeRequestBuilder checkInByBarcodeRequestBuilder =
+      new CheckInByBarcodeRequestBuilder()
       .forItem(item)
       .withItemBarcode(item.getBarcode())
       .at(pickupServicePoint);
 
-    loansFixture.checkInByBarcode(at);
+    loansFixture.checkInByBarcode(checkInByBarcodeRequestBuilder);
+
     String holdShelfExpirationDate = requestsClient.get(request)
       .getJson()
       .getString(HOLD_SHELF_EXPIRATION_DATE);
