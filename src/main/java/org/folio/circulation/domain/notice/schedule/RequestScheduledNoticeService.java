@@ -76,10 +76,9 @@ public class RequestScheduledNoticeService {
 
   private DateTime determineNextRunTime(NoticeConfiguration cfg, Request request) {
     DateTime expirationTime = getExpirationTime(cfg, request);
-    if (cfg.getTiming() == UPON_AT) {
-      return expirationTime;
-    }
-    return expirationTime.minus(cfg.getTimingPeriod().timePeriod());
+
+    return cfg.getTiming() == UPON_AT ? expirationTime :
+      expirationTime.minus(cfg.getTimingPeriod().timePeriod());
   }
 
   private DateTime getExpirationTime(NoticeConfiguration cfg, Request request) {
@@ -96,11 +95,8 @@ public class RequestScheduledNoticeService {
   private boolean requiresNoticeScheduling(NoticeConfiguration cfg, Request request) {
     NoticeEventType type = cfg.getNoticeEventType();
 
-    if (type == REQUEST_EXPIRATION && request.getRequestExpirationDate() != null) {
-      return true;
-    }
-    return type == HOLD_EXPIRATION && request.getHoldShelfExpirationDate() != null;
-
+    return type == REQUEST_EXPIRATION && request.getRequestExpirationDate() != null
+      || type == HOLD_EXPIRATION && request.getHoldShelfExpirationDate() != null;
   }
 
   private ScheduledNotice createRequestScheduledNotice(NoticeConfiguration cfg, Request request) {

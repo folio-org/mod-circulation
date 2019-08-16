@@ -74,8 +74,6 @@ public class RequestScheduledNoticeHandler {
   private CompletableFuture<Result<ScheduledNotice>> updateNotice(
     RequestAndRelatedRecords relatedRecords, ScheduledNotice notice) {
 
-    final DateTime systemTime = DateTime.now(DateTimeZone.UTC);
-
     Request request = relatedRecords.getRequest();
     ScheduledNoticeConfig noticeConfig = notice.getConfiguration();
 
@@ -83,19 +81,23 @@ public class RequestScheduledNoticeHandler {
       return scheduledNoticesRepository.delete(notice);
     }
 
+    ScheduledNotice nextRecurringNotice = getNextRecurringNotice(notice, noticeConfig);
+    return nextRecurringNoticeIsNotRelevant(nextRecurringNotice, request) ?
+      scheduledNoticesRepository.delete(notice) :
+      scheduledNoticesRepository.update(nextRecurringNotice);
+  }
+
+  private ScheduledNotice getNextRecurringNotice(ScheduledNotice notice, ScheduledNoticeConfig noticeConfig) {
+    final DateTime systemTime = DateTime.now(DateTimeZone.UTC);
+
     DateTime recurringNoticeNextRunTime = notice.getNextRunTime()
       .plus(noticeConfig.getRecurringPeriod().timePeriod());
     if (recurringNoticeNextRunTime.isBefore(systemTime)) {
       recurringNoticeNextRunTime =
         systemTime.plus(noticeConfig.getRecurringPeriod().timePeriod());
     }
-    ScheduledNotice nextRecurringNotice = notice.withNextRunTime(recurringNoticeNextRunTime);
 
-    if (nextRecurringNoticeIsNotRelevant(nextRecurringNotice, request)) {
-      return scheduledNoticesRepository.delete(notice);
-    }
-
-    return scheduledNoticesRepository.update(nextRecurringNotice);
+    return notice.withNextRunTime(recurringNoticeNextRunTime);
   }
 
   private boolean nextRecurringNoticeIsNotRelevant(

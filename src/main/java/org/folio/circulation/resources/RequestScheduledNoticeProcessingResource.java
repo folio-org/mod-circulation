@@ -26,17 +26,14 @@ public class RequestScheduledNoticeProcessingResource extends ScheduledNoticePro
   protected CompletableFuture<Result<MultipleRecords<ScheduledNotice>>> findNoticesToSend(
     ScheduledNoticesRepository scheduledNoticesRepository) {
 
-    final DateTime systemTime = DateTime.now(DateTimeZone.UTC);
-    return scheduledNoticesRepository.findRequestNoticesToSend(systemTime, SCHEDULED_NOTICES_PROCESSING_LIMIT);
+    return scheduledNoticesRepository.findRequestNoticesToSend(
+      DateTime.now(DateTimeZone.UTC), SCHEDULED_NOTICES_PROCESSING_LIMIT);
   }
 
   @Override
   protected CompletableFuture<Result<Collection<ScheduledNotice>>> handleNotices(
     Clients clients, Collection<ScheduledNotice> scheduledNotices) {
 
-    final RequestScheduledNoticeHandler requestScheduledNoticeHandler =
-      RequestScheduledNoticeHandler.using(clients);
-
-    return requestScheduledNoticeHandler.handleNotices(scheduledNotices);
+    return RequestScheduledNoticeHandler.using(clients).handleNotices(scheduledNotices);
   }
 }
