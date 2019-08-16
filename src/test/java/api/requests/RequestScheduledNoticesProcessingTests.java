@@ -2,8 +2,11 @@ package api.requests;
 
 import static api.support.builders.RequestBuilder.OPEN_NOT_YET_FILLED;
 import static api.support.matchers.PatronNoticeMatcher.hasEmailNoticeProperties;
+import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static java.util.Collections.singletonList;
+import static org.folio.circulation.support.JsonPropertyFetcher.getDateTimeProperty;
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 import static org.joda.time.DateTimeZone.UTC;
@@ -242,7 +245,9 @@ public class RequestScheduledNoticesProcessingTests extends APITests {
     Map<String, Matcher<String>> templateContextMatchers = new HashMap<>();
     templateContextMatchers.putAll(TemplateContextMatchers.getUserContextMatchers(requester));
     templateContextMatchers.putAll(TemplateContextMatchers.getItemContextMatchers(item, true));
-    templateContextMatchers.putAll(TemplateContextMatchers.getRequestContextMatchers(request));
+    templateContextMatchers.put("request.servicePointPickup", notNullValue(String.class));
+    templateContextMatchers.put("request.requestExpirationDate ",
+      isEquivalentTo(getDateTimeProperty(request.getJson(), "requestExpirationDate")));
 
     return hasEmailNoticeProperties(requester.getId(), templateId, templateContextMatchers);
   }
