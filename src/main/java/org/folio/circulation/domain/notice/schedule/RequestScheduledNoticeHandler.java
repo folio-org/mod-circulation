@@ -1,6 +1,7 @@
 package org.folio.circulation.domain.notice.schedule;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
+import static org.folio.circulation.domain.notice.NoticeTiming.UPON_AT;
 import static org.folio.circulation.support.Result.succeeded;
 
 import java.util.Collection;
@@ -60,7 +61,7 @@ public class RequestScheduledNoticeHandler {
     RequestAndRelatedRecords relatedRecords, ScheduledNotice notice) {
     Request request = relatedRecords.getRequest();
 
-    if (request.isClosed()) {
+    if (notice.getConfiguration().getTiming() == UPON_AT && request.isOpen()) {
       return completedFuture(succeeded(relatedRecords));
     }
 
@@ -76,6 +77,10 @@ public class RequestScheduledNoticeHandler {
 
     Request request = relatedRecords.getRequest();
     ScheduledNoticeConfig noticeConfig = notice.getConfiguration();
+
+    if (noticeConfig.getTiming() == UPON_AT && request.isOpen()) {
+      return completedFuture(succeeded(notice));
+    }
 
     if (request.isClosed() || !noticeConfig.isRecurring()) {
       return scheduledNoticesRepository.delete(notice);
