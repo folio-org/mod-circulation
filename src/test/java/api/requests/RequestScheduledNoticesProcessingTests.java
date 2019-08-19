@@ -96,13 +96,48 @@ public class RequestScheduledNoticesProcessingTests extends APITests {
       .atMost(1, TimeUnit.SECONDS)
       .until(scheduledNoticesClient::getAll, hasSize(1));
 
+    //close request
     requestsClient.replace(request.getId(),
       request.getJson().put("status", "Closed - Unfilled"));
     scheduledNoticeProcessingClient.runRequestNoticesProcessing();
     List<JsonObject> notices = patronNoticesClient.getAll();
 
+    assertThat(scheduledNoticesClient.getAll(), hasSize(0));
     assertThat(notices, hasSize(1));
     assertThat(notices.get(0), getTemplateContextMatcher(templateId, request));
+  }
+
+  @Test
+  public void uponAtRequestExpirationNoticeShouldNotBeSentWhenRequestExpirationDateHasPassedAndRequestIsNotClosed()
+    throws MalformedURLException,
+    InterruptedException,
+    TimeoutException,
+    ExecutionException {
+
+    JsonObject noticeConfiguration = new NoticeConfigurationBuilder()
+      .withTemplateId(templateId)
+      .withRequestExpirationEvent()
+      .withUponAtTiming()
+      .sendInRealTime(true)
+      .create();
+    setupNoticePolicyWithRequestNotice(noticeConfiguration);
+
+    LocalDate requestExpiration = LocalDate.now(UTC).minusDays(1);
+    IndividualResource request = requestsFixture.place(new RequestBuilder().page()
+      .forItem(item)
+      .withRequesterId(requester.getId())
+      .withRequestDate(DateTime.now())
+      .withStatus(OPEN_NOT_YET_FILLED)
+      .withPickupServicePoint(pickupServicePoint)
+      .withRequestExpiration(requestExpiration));
+
+    Awaitility.await()
+      .atMost(1, TimeUnit.SECONDS)
+      .until(scheduledNoticesClient::getAll, hasSize(1));
+
+    scheduledNoticeProcessingClient.runRequestNoticesProcessing();
+
+    assertThat(scheduledNoticesClient.getAll(), hasSize(1));
   }
 
   @Test
@@ -137,12 +172,51 @@ public class RequestScheduledNoticesProcessingTests extends APITests {
       .atMost(1, TimeUnit.SECONDS)
       .until(scheduledNoticesClient::getAll, hasSize(1));
 
+    //close request
     requestsClient.replace(request.getId(),
       request.getJson().put("status", "Closed - Pickup expired"));
     scheduledNoticeProcessingClient.runRequestNoticesProcessing(
       LocalDate.now(UTC).plusDays(31).toDateTimeAtStartOfDay());
 
     assertThat(scheduledNoticesClient.getAll(), hasSize(0));
+  }
+
+  @Test
+  public void uponAtHoldExpirationNoticeShouldNotBeSentWhenHoldExpirationDateHasPassedAndRequestIsNotClosed()
+    throws MalformedURLException,
+    InterruptedException,
+    TimeoutException,
+    ExecutionException {
+
+    JsonObject noticeConfiguration = new NoticeConfigurationBuilder()
+      .withTemplateId(templateId)
+      .withHoldShelfExpirationEvent()
+      .withUponAtTiming()
+      .sendInRealTime(true)
+      .create();
+    setupNoticePolicyWithRequestNotice(noticeConfiguration);
+
+    requestsFixture.place(new RequestBuilder().page()
+      .forItem(item)
+      .withRequesterId(requester.getId())
+      .withRequestDate(DateTime.now())
+      .withStatus(OPEN_NOT_YET_FILLED)
+      .withPickupServicePoint(pickupServicePoint));
+
+    CheckInByBarcodeRequestBuilder builder = new CheckInByBarcodeRequestBuilder()
+      .forItem(item)
+      .withItemBarcode(item.getBarcode())
+      .at(pickupServicePoint);
+    loansFixture.checkInByBarcode(builder);
+
+    Awaitility.await()
+      .atMost(1, TimeUnit.SECONDS)
+      .until(scheduledNoticesClient::getAll, hasSize(1));
+
+    scheduledNoticeProcessingClient.runRequestNoticesProcessing(
+      LocalDate.now(UTC).plusDays(31).toDateTimeAtStartOfDay());
+
+    assertThat(scheduledNoticesClient.getAll(), hasSize(1));
   }
 
   @Test
