@@ -96,6 +96,8 @@ public class RequestScheduledNoticesProcessingTests extends APITests {
       .atMost(1, TimeUnit.SECONDS)
       .until(scheduledNoticesClient::getAll, hasSize(1));
 
+    requestsClient.replace(request.getId(),
+      request.getJson().put("status", "Closed - Unfilled"));
     scheduledNoticeProcessingClient.runRequestNoticesProcessing();
     List<JsonObject> notices = patronNoticesClient.getAll();
 
@@ -118,7 +120,7 @@ public class RequestScheduledNoticesProcessingTests extends APITests {
       .create();
     setupNoticePolicyWithRequestNotice(noticeConfiguration);
 
-    requestsFixture.place(new RequestBuilder().page()
+    IndividualResource request = requestsFixture.place(new RequestBuilder().page()
       .forItem(item)
       .withRequesterId(requester.getId())
       .withRequestDate(DateTime.now())
@@ -135,6 +137,8 @@ public class RequestScheduledNoticesProcessingTests extends APITests {
       .atMost(1, TimeUnit.SECONDS)
       .until(scheduledNoticesClient::getAll, hasSize(1));
 
+    requestsClient.replace(request.getId(),
+      request.getJson().put("status", "Closed - Pickup expired"));
     scheduledNoticeProcessingClient.runRequestNoticesProcessing(
       LocalDate.now(UTC).plusDays(31).toDateTimeAtStartOfDay());
 
