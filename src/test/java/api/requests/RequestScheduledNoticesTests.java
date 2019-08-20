@@ -429,7 +429,7 @@ public class RequestScheduledNoticesTests extends APITests {
     JsonObject noticeConfig = scheduledNotice.getJsonObject("noticeConfig");
 
     assertThat(scheduledNotice.getString("requestId"), is(request.getId().toString()));
-    assertThat(scheduledNotice.getString("triggeringEvent"), is("Hold Expiration"));
+    assertThat(scheduledNotice.getString("triggeringEvent"), is("Hold expiration"));
     assertThat(scheduledNotice.getString("nextRunTime"), is(holdShelfExpirationDate));
     assertThat(noticeConfig.getString("timing"), is("Upon At"));
     assertThat(noticeConfig.getString("templateId"), is(templateId.toString()));

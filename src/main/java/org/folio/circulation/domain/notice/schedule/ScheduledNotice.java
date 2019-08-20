@@ -7,12 +7,16 @@ public class ScheduledNotice {
   private final String id;
   private final String loanId;
   private final String requestId;
-  private final String triggeringEvent;
+  private final TriggeringEvent triggeringEvent;
   private final DateTime nextRunTime;
   private final ScheduledNoticeConfig configuration;
 
-  public ScheduledNotice(String id, String loanId, String requestId, String triggeringEvent,
-                         DateTime nextRunTime, ScheduledNoticeConfig configuration) {
+  public ScheduledNotice(String id,
+                         String loanId,
+                         String requestId,
+                         TriggeringEvent triggeringEvent,
+                         DateTime nextRunTime,
+                         ScheduledNoticeConfig configuration) {
     this.id = id;
     this.loanId = loanId;
     this.requestId = requestId;
@@ -33,7 +37,7 @@ public class ScheduledNotice {
     return requestId;
   }
 
-  public String getTriggeringEvent() {
+  public TriggeringEvent getTriggeringEvent() {
     return triggeringEvent;
   }
 

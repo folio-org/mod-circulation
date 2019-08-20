@@ -1,7 +1,5 @@
 package org.folio.circulation.domain.notice.schedule;
 
-import static org.folio.circulation.domain.notice.NoticeEventType.HOLD_EXPIRATION;
-import static org.folio.circulation.domain.notice.NoticeEventType.REQUEST_EXPIRATION;
 import static org.folio.circulation.domain.notice.NoticeTiming.UPON_AT;
 import static org.folio.circulation.support.Result.succeeded;
 
@@ -79,9 +77,9 @@ public class RequestScheduledNoticeService {
     NoticeConfiguration cfg, Request request) {
     NoticeEventType eventType = cfg.getNoticeEventType();
 
-    if (eventType == REQUEST_EXPIRATION) {
+    if (eventType == NoticeEventType.REQUEST_EXPIRATION) {
       return createRequestExpirationScheduledNotice(request, cfg);
-    } else if (eventType == HOLD_EXPIRATION) {
+    } else if (eventType == NoticeEventType.HOLD_EXPIRATION) {
       return createHoldExpirationScheduledNotice(request, cfg);
     } else {
       throw new IllegalStateException();
@@ -93,7 +91,7 @@ public class RequestScheduledNoticeService {
 
     return Optional.ofNullable(request.getRequestExpirationDate())
       .map(expirationDate -> determineNextRunTime(expirationDate, cfg))
-      .map(nextRunTime -> createScheduledNotice(request, nextRunTime, cfg, REQUEST_EXPIRATION));
+      .map(nextRunTime -> createScheduledNotice(request, nextRunTime, cfg, TriggeringEvent.REQUEST_EXPIRATION));
   }
 
   private Optional<ScheduledNotice> createHoldExpirationScheduledNotice(
@@ -101,7 +99,7 @@ public class RequestScheduledNoticeService {
 
     return Optional.ofNullable(request.getHoldShelfExpirationDate())
       .map(expirationDate -> determineNextRunTime(expirationDate, cfg))
-      .map(nextRunTime -> createScheduledNotice(request, nextRunTime, cfg, HOLD_EXPIRATION));
+      .map(nextRunTime -> createScheduledNotice(request, nextRunTime, cfg, TriggeringEvent.HOLD_EXPIRATION));
   }
 
   private DateTime determineNextRunTime(DateTime expirationDate, NoticeConfiguration cfg) {
@@ -113,11 +111,11 @@ public class RequestScheduledNoticeService {
   private ScheduledNotice createScheduledNotice(Request request,
                                                 DateTime nextRunTime,
                                                 NoticeConfiguration cfg,
-                                                NoticeEventType eventType) {
+                                                TriggeringEvent triggeringEvent) {
     return new ScheduledNoticeBuilder()
       .setId(UUID.randomUUID().toString())
       .setRequestId(request.getId())
-      .setTriggeringEvent(eventType.getRepresentation())
+      .setTriggeringEvent(triggeringEvent)
       .setNextRunTime(nextRunTime)
       .setNoticeConfig(createScheduledNoticeConfig(cfg))
       .build();

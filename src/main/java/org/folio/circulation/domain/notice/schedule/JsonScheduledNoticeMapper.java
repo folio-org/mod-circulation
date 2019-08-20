@@ -1,6 +1,7 @@
 package org.folio.circulation.domain.notice.schedule;
 
 import static java.lang.String.format;
+import static org.folio.circulation.domain.notice.schedule.TriggeringEvent.from;
 import static org.folio.circulation.support.JsonPropertyFetcher.getBooleanProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getDateTimeProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getObjectProperty;
@@ -40,7 +41,7 @@ public class JsonScheduledNoticeMapper {
       .map(b -> b.setLoanId(getProperty(jsonObject, LOAN_ID)))
       .map(b -> b.setRequestId(getProperty(jsonObject, REQUEST_ID)))
       .map(b -> b.setNextRunTime(getDateTimeProperty(jsonObject, NEXT_RUN_TIME)))
-      .map(b -> b.setTriggeringEvent(getProperty(jsonObject, TRIGGERING_EVENT)))
+      .map(b -> b.setTriggeringEvent(from(getProperty(jsonObject, TRIGGERING_EVENT))))
       .combine(mapJsonToConfig(jsonObject.getJsonObject(NOTICE_CONFIG)),
         ScheduledNoticeBuilder::setNoticeConfig)
       .map(ScheduledNoticeBuilder::build);
@@ -76,7 +77,7 @@ public class JsonScheduledNoticeMapper {
       .put(ID, notice.getId())
       .put(LOAN_ID, notice.getLoanId())
       .put(REQUEST_ID, notice.getRequestId())
-      .put(TRIGGERING_EVENT, notice.getTriggeringEvent())
+      .put(TRIGGERING_EVENT, notice.getTriggeringEvent().getRepresentation())
       .put(NEXT_RUN_TIME, notice.getNextRunTime().withZone(DateTimeZone.UTC).toString())
       .put(NOTICE_CONFIG, mapConfigToJson(notice.getConfiguration()));
   }
