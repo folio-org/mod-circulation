@@ -2,9 +2,9 @@ package org.folio.circulation.domain.notice.schedule;
 
 import static java.util.Arrays.asList;
 import static java.util.function.Function.identity;
-import static org.folio.circulation.domain.notice.NoticeEventType.HOLD_EXPIRATION;
-import static org.folio.circulation.domain.notice.NoticeEventType.REQUEST_EXPIRATION;
 import static org.folio.circulation.domain.notice.schedule.JsonScheduledNoticeMapper.mapToJson;
+import static org.folio.circulation.domain.notice.schedule.TriggeringEvent.HOLD_EXPIRATION;
+import static org.folio.circulation.domain.notice.schedule.TriggeringEvent.REQUEST_EXPIRATION;
 import static org.folio.circulation.support.CqlSortBy.ascending;
 import static org.folio.circulation.support.http.CommonResponseInterpreters.noContentRecordInterpreter;
 import static org.folio.circulation.support.http.ResponseMapping.flatMapUsingJson;
