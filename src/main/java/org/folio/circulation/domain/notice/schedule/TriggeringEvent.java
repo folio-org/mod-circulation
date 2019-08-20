@@ -6,7 +6,8 @@ import java.util.Objects;
 public enum  TriggeringEvent {
 
   HOLD_EXPIRATION("Hold expiration"),
-  REQUEST_EXPIRATION("Request expiration");
+  REQUEST_EXPIRATION("Request expiration"),
+  DUE_DATE("Due date");
 
   private String representation;
 

@@ -65,6 +65,7 @@ public class DueDateScheduledNoticeService {
       .setLoanId(loan.getId())
       .setNextRunTime(determineNextRunTime(configuration, loan))
       .setNoticeConfig(createScheduledNoticeConfig(configuration))
+      .setTriggeringEvent(TriggeringEvent.DUE_DATE)
       .build();
   }
 
