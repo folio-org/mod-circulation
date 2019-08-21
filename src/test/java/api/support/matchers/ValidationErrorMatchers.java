@@ -7,12 +7,15 @@ import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasProperty;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import org.folio.circulation.support.HttpFailure;
+import org.folio.circulation.support.ValidationErrorFailure;
 import org.folio.circulation.support.http.server.ValidationError;
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
@@ -42,6 +45,34 @@ public class ValidationErrorMatchers {
     };
   }
 
+  public static TypeSafeDiagnosingMatcher<HttpFailure> isErrorWith(Matcher<ValidationError> matcher) {
+    return new TypeSafeDiagnosingMatcher<HttpFailure>() {
+      @Override
+      public void describeTo(Description description) {
+        description
+          .appendText("Validation error which ").appendDescriptionOf(matcher);
+      }
+
+      @Override
+      protected boolean matchesSafely(HttpFailure failure, Description description) {
+        if(failure instanceof ValidationErrorFailure) {
+          final Matcher<Iterable<? super ValidationError>> iterableMatcher
+            = IsCollectionContaining.hasItem(matcher);
+
+          final Collection<ValidationError> errors = ((ValidationErrorFailure) failure).getErrors();
+
+          iterableMatcher.describeMismatch(errors, description);
+
+          return iterableMatcher.matches(errors);
+        }
+        else {
+          description.appendText("is not a validation error failure");
+          return false;
+        }
+      }
+    };
+  }
+  
   public static TypeSafeDiagnosingMatcher<ValidationError> hasNullParameter(String key) {
     return hasParameter(key, null);
   }
