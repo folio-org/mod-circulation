@@ -19,6 +19,11 @@ import org.slf4j.LoggerFactory;
 
 import io.vertx.core.json.JsonObject;
 
+/**
+ * @deprecated Loan history is now updated within
+ * {@link org.folio.circulation.domain.UpdateLoan#onRequestCreateOrUpdate(RequestAndRelatedRecords)}
+ */
+@Deprecated
 public class UpdateLoanActionHistory {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
