@@ -27,6 +27,7 @@ import org.junit.Test;
 import api.support.APITests;
 import api.support.builders.LoanPolicyBuilder;
 import api.support.builders.OverrideCheckOutByBarcodeRequestBuilder;
+import api.support.builders.RequestBuilder;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
@@ -288,6 +289,38 @@ public class OverrideCheckOutByBarcodeTests extends APITests {
       hasParameter("comment", null))));
   }
 
+  @Test
+  public void cannotCreateRecallRequestAfterOverriddenCheckout()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+
+    IndividualResource steve = usersFixture.steve();
+    IndividualResource charlotte = usersFixture.charlotte();
+
+    setNotLoanablePolicy();
+
+    loansFixture.overrideCheckOutByBarcode(
+      new OverrideCheckOutByBarcodeRequestBuilder()
+        .forItem(smallAngryPlanet)
+        .to(steve)
+        .at(servicePointsFixture.cd1())
+        .on(TEST_LOAN_DATE)
+        .withDueDate(TEST_DUE_DATE)
+        .withComment(TEST_COMMENT));
+
+    final Response placeRequestResponse = requestsFixture.attemptPlace(new RequestBuilder()
+      .recall()
+      .forItem(smallAngryPlanet)
+      .by(charlotte)
+      .fulfilToHoldShelf(servicePointsFixture.cd1()));
+
+    assertThat(placeRequestResponse.getStatusCode(), is(500));
+  }
+
   private void setNotLoanablePolicy()
     throws InterruptedException,
     MalformedURLException,
@@ -296,11 +329,13 @@ public class OverrideCheckOutByBarcodeTests extends APITests {
 
     LoanPolicyBuilder notLoanablePolicy = new LoanPolicyBuilder()
       .withName("Not Loanable Policy")
-      .withLoanable(false);
+      .withLoanable(false)
+      .notRenewable();
+
     useLoanPolicyAsFallback(
       loanPoliciesFixture.create(notLoanablePolicy).getId(),
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
-      noticePoliciesFixture.activeNotice().getId());
+      noticePoliciesFixture.inactiveNotice().getId());
   }
 
 }
