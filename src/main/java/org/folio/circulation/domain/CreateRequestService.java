@@ -38,7 +38,6 @@ public class CreateRequestService {
       .thenComposeAsync(r -> r.after(requestPolicyRepository::lookupRequestPolicy))
       .thenApply(r -> r.next(RequestServiceUtility::refuseWhenRequestCannotBeFulfilled))
       .thenComposeAsync(r -> r.after(updateUponRequest.updateItem::onRequestCreateOrUpdate))
-      .thenComposeAsync(r -> r.after(updateUponRequest.updateLoanActionHistory::onRequestCreateOrUpdate))
       .thenComposeAsync(r -> r.after(updateUponRequest.updateLoan::onRequestCreateOrUpdate))
       .thenComposeAsync(r -> r.after(requestRepository::create))
       .thenComposeAsync(r -> r.after(updateUponRequest.updateRequestQueue::onCreate))
