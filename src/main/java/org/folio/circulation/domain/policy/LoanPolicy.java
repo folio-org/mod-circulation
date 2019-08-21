@@ -5,6 +5,7 @@ import static org.folio.circulation.domain.RequestType.RECALL;
 import static org.folio.circulation.support.JsonPropertyFetcher.getBooleanProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getIntegerProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getNestedIntegerProperty;
+import static org.folio.circulation.support.JsonPropertyFetcher.getNestedObjectProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getNestedStringProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
 import static org.folio.circulation.support.Result.succeeded;
@@ -420,12 +421,13 @@ public class LoanPolicy {
     return LoanPolicyPeriod.getProfileByName(intervalId);
   }
 
-  private int getDuration(String val) {
-    JsonObject loansPolicyObj = representation.getJsonObject(LOANS_POLICY_KEY);
-    JsonObject period = loansPolicyObj.getJsonObject(val);
+  private int getDuration(String propertyName) {
+    JsonObject period = getNestedObjectProperty(representation, LOANS_POLICY_KEY, propertyName);
+
     if (Objects.isNull(period)) {
       return 0;
     }
+
     return period.getInteger("duration");
   }
 

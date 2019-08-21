@@ -290,7 +290,7 @@ public class OverrideCheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void cannotCreateRecallRequestAfterOverriddenCheckout()
+  public void canCreateRecallRequestAfterOverriddenCheckout()
     throws InterruptedException,
     MalformedURLException,
     TimeoutException,
@@ -318,7 +318,7 @@ public class OverrideCheckOutByBarcodeTests extends APITests {
       .by(charlotte)
       .fulfilToHoldShelf(servicePointsFixture.cd1()));
 
-    assertThat(placeRequestResponse.getStatusCode(), is(500));
+    assertThat(placeRequestResponse.getStatusCode(), is(201));
   }
 
   private void setNotLoanablePolicy()
