@@ -1232,21 +1232,25 @@ public class LoanAPITests extends APITests {
             .closed()
             .withCheckinServicePointId(checkinServicePointId2)
             .withUserId(user.getId()));
+
     JsonObject updatedLoanRequest = loan1.copyJson();
+
     updatedLoanRequest.getJsonObject("status").put("name", "Closed");
     updatedLoanRequest.remove("userId");
+
     loansClient.replace(loan1.getId(), updatedLoanRequest);
 
     updatedLoanRequest = loan2.copyJson();
+
     updatedLoanRequest.getJsonObject("status").put("name", "Closed");
     updatedLoanRequest.remove("userId");
+
     loansClient.replace(loan2.getId(), updatedLoanRequest);
 
     List<JsonObject> loans = loansClient.getAll();
 
     loans.forEach(this::hasNoBorrowerProperties);
   }
-
 
   @Test
   public void cannotUpdateAnOpenLoanWithoutAUserId()
@@ -1838,7 +1842,7 @@ public class LoanAPITests extends APITests {
     });
 
   }
-  
+
   @Test
   public void canGetPagedLoansWithMoreItemsThanDefaultPageLimit()
       throws InterruptedException,
@@ -1848,7 +1852,7 @@ public class LoanAPITests extends APITests {
     createLoans(50);
     queryLoans(50);
   }
-  
+
   @Test
   public void canGetPagedLoansWhenIdQueryWouldExceedQueryStringLengthLimit()
       throws InterruptedException,
@@ -1890,7 +1894,7 @@ public class LoanAPITests extends APITests {
     case 1: return usersFixture.james().getId();
     case 2: return usersFixture.jessica().getId();
     case 3: return usersFixture.rebecca().getId();
-    default: return usersFixture.steve().getId(); 
+    default: return usersFixture.steve().getId();
     }
   }
 

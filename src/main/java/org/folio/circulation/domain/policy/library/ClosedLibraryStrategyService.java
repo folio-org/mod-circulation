@@ -57,6 +57,7 @@ public class ClosedLibraryStrategyService {
   private Result<DateTime> applyStrategy(
     Loan loan, LoanPolicy loanPolicy, AdjacentOpeningDays openingDays, DateTimeZone timeZone) {
     DateTime initialDueDate = loan.getDueDate();
+
     ClosedLibraryStrategy strategy = determineClosedLibraryStrategy(loanPolicy, currentDateTime, timeZone);
 
     return strategy.calculateDueDate(initialDueDate, openingDays)

@@ -80,7 +80,7 @@ public class ValidationErrorFailure implements HttpFailure {
 
   @Override
   public String toString() {
-    return String.format("Validation failure:%n%s",
+    return String.format("validation failure:%n%s",
       errors.stream()
         .map(ValidationError::toString)
         .collect(Collectors.joining("%n")));
