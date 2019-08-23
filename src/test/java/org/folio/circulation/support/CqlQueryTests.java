@@ -1,5 +1,7 @@
 package org.folio.circulation.support;
 
+import static org.folio.circulation.support.CqlOrder.asc;
+import static org.folio.circulation.support.CqlOrder.desc;
 import static org.folio.circulation.support.CqlQuery.*;
 import static org.folio.circulation.support.CqlQuery.exactMatch;
 import static org.folio.circulation.support.CqlQuery.exactMatchAny;
@@ -103,5 +105,14 @@ public class CqlQueryTests {
     Result<CqlQuery> query = greaterThan("lastTime", dateTime);
 
     assertThat(query.value().asText(), is(String.format("lastTime>\"%s\"", dateTime)));
+  }
+
+  @Test
+  public void canSortByMultipleIndexes() {
+    Result<CqlQuery> query = exactMatch("barcode", "12345")
+      .map(cqlQuery -> cqlQuery.sortBy(CqlSortBy.sortBy(asc("position"), desc("lastTime"))));
+
+    assertThat(query.value().asText(),
+      is("barcode==\"12345\" sortBy position/sort.ascending lastTime/sort.descending"));
   }
 }
