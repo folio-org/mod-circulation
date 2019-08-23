@@ -30,7 +30,7 @@ import org.folio.circulation.domain.notice.NoticeTiming;
 import org.folio.circulation.domain.notice.PatronNoticeEvent;
 import org.folio.circulation.domain.notice.PatronNoticeEventBuilder;
 import org.folio.circulation.domain.notice.PatronNoticeService;
-import org.folio.circulation.domain.notice.schedule.ScheduledNoticeService;
+import org.folio.circulation.domain.notice.schedule.DueDateScheduledNoticeService;
 import org.folio.circulation.domain.notice.schedule.ScheduledNoticesRepository;
 import org.folio.circulation.domain.policy.LoanPolicyRepository;
 import org.folio.circulation.domain.policy.PatronNoticePolicyRepository;
@@ -108,8 +108,8 @@ public class CheckOutByBarcodeResource extends Resource {
     final PatronGroupRepository patronGroupRepository = new PatronGroupRepository(clients);
     final ConfigurationRepository configurationRepository = new ConfigurationRepository(clients);
     final ScheduledNoticesRepository scheduledNoticesRepository = ScheduledNoticesRepository.using(clients);
-    final ScheduledNoticeService scheduledNoticeService =
-      new ScheduledNoticeService(scheduledNoticesRepository, patronNoticePolicyRepository);
+    final DueDateScheduledNoticeService scheduledNoticeService =
+      new DueDateScheduledNoticeService(scheduledNoticesRepository, patronNoticePolicyRepository);
 
     final ProxyRelationshipValidator proxyRelationshipValidator = new ProxyRelationshipValidator(
       clients, () -> singleValidationError(

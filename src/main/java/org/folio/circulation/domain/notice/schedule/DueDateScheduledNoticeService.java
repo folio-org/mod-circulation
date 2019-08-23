@@ -1,11 +1,9 @@
 package org.folio.circulation.domain.notice.schedule;
 
-import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.support.Result.succeeded;
 
 import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 import org.folio.circulation.domain.Loan;
@@ -20,9 +18,9 @@ import org.folio.circulation.support.Result;
 import org.joda.time.DateTime;
 import org.joda.time.Period;
 
-public class ScheduledNoticeService {
-  public static ScheduledNoticeService using(Clients clients) {
-    return new ScheduledNoticeService(
+public class DueDateScheduledNoticeService {
+  public static DueDateScheduledNoticeService using(Clients clients) {
+    return new DueDateScheduledNoticeService(
       ScheduledNoticesRepository.using(clients),
       new PatronNoticePolicyRepository(clients));
   }
@@ -30,7 +28,7 @@ public class ScheduledNoticeService {
   private final ScheduledNoticesRepository scheduledNoticesRepository;
   private final PatronNoticePolicyRepository noticePolicyRepository;
 
-  public ScheduledNoticeService(
+  public DueDateScheduledNoticeService(
     ScheduledNoticesRepository scheduledNoticesRepository,
     PatronNoticePolicyRepository noticePolicyRepository) {
     this.scheduledNoticesRepository = scheduledNoticesRepository;
@@ -67,6 +65,7 @@ public class ScheduledNoticeService {
       .setLoanId(loan.getId())
       .setNextRunTime(determineNextRunTime(configuration, loan))
       .setNoticeConfig(createScheduledNoticeConfig(configuration))
+      .setTriggeringEvent(TriggeringEvent.DUE_DATE)
       .build();
   }
 
@@ -97,17 +96,15 @@ public class ScheduledNoticeService {
       .build();
   }
 
-  public CompletableFuture<Result<LoanAndRelatedRecords>> rescheduleDueDateNotices(
+  public Result<LoanAndRelatedRecords> rescheduleDueDateNotices(
     LoanAndRelatedRecords relatedRecords) {
-    return rescheduleDueDateNotices(relatedRecords.getLoan())
-      .thenApply(r -> r.map(relatedRecords::withLoan));
-  }
+    Loan loan = relatedRecords.getLoan();
 
-  private CompletableFuture<Result<Loan>> rescheduleDueDateNotices(Loan loan) {
-    if (loan.isClosed()) {
-      return completedFuture(succeeded(loan));
+    if (!loan.isClosed()) {
+      scheduledNoticesRepository.deleteByLoanId(loan.getId())
+        .thenAccept(r -> r.next(v -> scheduleNoticesForLoanDueDate(loan)));
     }
-    return scheduledNoticesRepository.deleteByLoanId(loan.getId())
-      .thenApply(r -> r.next(v -> scheduleNoticesForLoanDueDate(loan)));
+
+    return succeeded(relatedRecords);
   }
 }
