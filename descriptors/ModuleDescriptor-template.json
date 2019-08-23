@@ -623,7 +623,8 @@
             "circulation-storage.requests.item.get",
             "patron-notice.post",
             "users.item.get",
-            "usergroups.collection.get"
+            "usergroups.collection.get",
+            "configuration.entries.collection.get"
           ],
           "unit": "minute",
           "delay": "2"
