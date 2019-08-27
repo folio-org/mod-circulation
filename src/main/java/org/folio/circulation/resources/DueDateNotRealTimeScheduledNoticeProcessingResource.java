@@ -65,7 +65,7 @@ public class DueDateNotRealTimeScheduledNoticeProcessingResource extends Schedul
     List<Pair<ScheduledNoticeGroupDefinition, List<ScheduledNotice>>> noticeGroups =
       orderedGroups.entrySet()
         .stream()
-        .limit(orderedGroups.size() - 1) //Last group is cut off because there can be only the part of it
+        .limit((long) orderedGroups.size() - 1) //Last group is cut off because there can be only the part of it
         .map(e -> Pair.of(e.getKey(), e.getValue()))
         .collect(Collectors.toList());
 
