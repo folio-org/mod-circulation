@@ -62,10 +62,14 @@ public class DueDateNotRealTimeScheduledNoticeProcessingResource extends Schedul
         LinkedHashMap::new,
         Collectors.toList()));
 
+    //Last group is cut off because there can be only a part of it
+    //If there is only one group, it is taken into processing
+    int limit = Math.max(orderedGroups.size() - 1, 1);
+
     List<Pair<ScheduledNoticeGroupDefinition, List<ScheduledNotice>>> noticeGroups =
       orderedGroups.entrySet()
         .stream()
-        .limit((long) orderedGroups.size() - 1) //Last group is cut off because there can be only the part of it
+        .limit(limit)
         .map(e -> Pair.of(e.getKey(), e.getValue()))
         .collect(Collectors.toList());
 
