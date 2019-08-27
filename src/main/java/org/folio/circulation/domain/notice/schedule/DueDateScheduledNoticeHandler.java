@@ -81,7 +81,7 @@ public class DueDateScheduledNoticeHandler {
     LoanAndRelatedRecords relatedRecords, ScheduledNotice notice) {
     Loan loan = relatedRecords.getLoan();
 
-    if (loan.isClosed() || beforeNoticeIsNotRelevant(notice, loan)) {
+    if (noticeIsNotRelevant(notice, loan)) {
       return completedFuture(succeeded(relatedRecords));
     }
 
@@ -92,7 +92,7 @@ public class DueDateScheduledNoticeHandler {
       .thenApply(r -> r.map(v -> relatedRecords));
   }
 
-  private CompletableFuture<Result<ScheduledNotice>> updateNotice(
+  public CompletableFuture<Result<ScheduledNotice>> updateNotice(
     LoanAndRelatedRecords relatedRecords, ScheduledNotice notice) {
     Loan loan = relatedRecords.getLoan();
     ScheduledNoticeConfig noticeConfig = notice.getConfiguration();
@@ -114,6 +114,10 @@ public class DueDateScheduledNoticeHandler {
     }
 
     return scheduledNoticesRepository.update(nextRecurringNotice);
+  }
+
+  public boolean noticeIsNotRelevant(ScheduledNotice notice, Loan loan) {
+    return loan.isClosed() || beforeNoticeIsNotRelevant(notice, loan);
   }
 
   private boolean beforeNoticeIsNotRelevant(ScheduledNotice notice, Loan loan) {

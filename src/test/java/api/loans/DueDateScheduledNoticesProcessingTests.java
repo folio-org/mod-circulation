@@ -25,7 +25,6 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-import api.support.fixtures.ConfigurationExample;
 import org.awaitility.Awaitility;
 import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.support.http.client.IndividualResource;
@@ -41,6 +40,7 @@ import api.support.builders.HoldingBuilder;
 import api.support.builders.ItemBuilder;
 import api.support.builders.NoticeConfigurationBuilder;
 import api.support.builders.NoticePolicyBuilder;
+import api.support.fixtures.ConfigurationExample;
 import api.support.fixtures.ItemExamples;
 import api.support.fixtures.TemplateContextMatchers;
 import api.support.http.InventoryItemResource;
@@ -464,6 +464,7 @@ public class DueDateScheduledNoticesProcessingTests extends APITests {
       .put("id", UUID.randomUUID().toString())
       .put("loanId", loan.getId().toString())
       .put(NEXT_RUN_TIME, nextRunTime.withZone(DateTimeZone.UTC).toString())
+      .put("triggeringEvent", "Due date")
       .put("noticeConfig",
         new JsonObject()
           .put("timing", BEFORE_TIMING)

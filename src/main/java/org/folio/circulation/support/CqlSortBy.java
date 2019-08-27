@@ -1,7 +1,5 @@
 package org.folio.circulation.support;
 
-import static java.util.Collections.singletonList;
-
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -18,19 +16,23 @@ public class CqlSortBy {
   }
 
   public static CqlSortBy sortBy(CqlOrder... orders) {
-    return new CqlSortBy(Arrays.asList(orders));
+    return CqlSortBy.sortBy(Arrays.asList(orders));
+  }
+
+  public static CqlSortBy sortBy(List<CqlOrder> orders) {
+    return new CqlSortBy(orders);
   }
 
   public static CqlSortBy ascending(String index) {
-    return new CqlSortBy(singletonList(CqlOrder.asc(index)));
+    return CqlSortBy.sortBy(CqlOrder.asc(index));
   }
 
   public static CqlSortBy descending(String index) {
-    return new CqlSortBy(singletonList(CqlOrder.desc(index)));
+    return CqlSortBy.sortBy(CqlOrder.desc(index));
   }
 
   public static CqlSortBy none() {
-    return new CqlSortBy(Collections.emptyList());
+    return CqlSortBy.sortBy(Collections.emptyList());
   }
 
   public String applyTo(String query) {

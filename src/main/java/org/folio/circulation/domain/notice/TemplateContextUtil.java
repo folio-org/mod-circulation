@@ -33,6 +33,12 @@ public class TemplateContextUtil {
   private TemplateContextUtil() {
   }
 
+  public static JsonObject createLoanNoticeContextWithoutUser(Loan loan) {
+    return new JsonObject()
+      .put(ITEM, createItemContext(loan.getItem()))
+      .put(LOAN, createLoanContext(loan));
+  }
+
   public static JsonObject createLoanNoticeContext(Loan loan) {
     return new JsonObject()
       .put(USER, createUserContext(loan.getUser()))
@@ -85,7 +91,7 @@ public class TemplateContextUtil {
     return checkInContext;
   }
 
-  private static JsonObject createUserContext(User user) {
+  public static JsonObject createUserContext(User user) {
     return new JsonObject()
       .put("firstName", user.getFirstName())
       .put("lastName", user.getLastName())
