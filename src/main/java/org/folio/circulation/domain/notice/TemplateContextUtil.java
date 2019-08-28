@@ -173,7 +173,7 @@ public class TemplateContextUtil {
     write(loanContext, "initialBorrowDate", loan.getLoanDate());
     write(loanContext, "dueDate", loan.getDueDate());
     if (loan.getReturnDate() != null) {
-      write(loanContext, "checkinDate", loan.getReturnDate());
+      write(loanContext, "checkedInDate", loan.getReturnDate());
     }
 
     loanContext.put("numberOfRenewalsTaken", Integer.toString(loan.getRenewalCount()));
