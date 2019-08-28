@@ -32,7 +32,7 @@ import api.support.builders.NoticePolicyBuilder;
 import api.support.builders.RequestBuilder;
 import io.vertx.core.json.JsonObject;
 
-public class ScheduledNoticesTests extends APITests {
+public class DueDateScheduledNoticesTests extends APITests {
 
   private static final String BEFORE_TIMING = "Before";
   private static final String UPON_AT_TIMING = "Upon At";

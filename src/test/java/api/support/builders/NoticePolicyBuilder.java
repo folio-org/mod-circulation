@@ -13,12 +13,14 @@ public class NoticePolicyBuilder extends JsonBuilder implements Builder {
   private final String description;
   private final boolean active;
   private final List<JsonObject> loanNotices;
+  private final List<JsonObject> requestNotices;
 
   public NoticePolicyBuilder() {
     this(UUID.randomUUID(),
       "Example Notice Policy",
       "An example notice policy",
       false,
+      new ArrayList<>(),
       new ArrayList<>()
     );
 
@@ -29,13 +31,15 @@ public class NoticePolicyBuilder extends JsonBuilder implements Builder {
     String name,
     String description,
     boolean active,
-    List<JsonObject> loanNotices) {
+    List<JsonObject> loanNotices,
+    List<JsonObject> requestNotices) {
 
     this.id = id;
     this.name = name;
     this.description = description;
     this.active = active;
     this.loanNotices = loanNotices;
+    this.requestNotices = requestNotices;
   }
 
   public NoticePolicyBuilder active() {
@@ -44,7 +48,8 @@ public class NoticePolicyBuilder extends JsonBuilder implements Builder {
       this.name,
       this.description,
       true,
-      this.loanNotices);
+      this.loanNotices,
+      this.requestNotices);
   }
 
   public NoticePolicyBuilder withName(String name) {
@@ -53,7 +58,8 @@ public class NoticePolicyBuilder extends JsonBuilder implements Builder {
       name,
       this.description,
       this.active,
-      this.loanNotices);
+      this.loanNotices,
+      this.requestNotices);
   }
 
   public NoticePolicyBuilder withLoanNotices(List<JsonObject> loanNotices) {
@@ -62,7 +68,18 @@ public class NoticePolicyBuilder extends JsonBuilder implements Builder {
       this.name,
       this.description,
       this.active,
-      loanNotices);
+      loanNotices,
+      this.requestNotices);
+  }
+
+  public NoticePolicyBuilder withRequestNotices(List<JsonObject> requestNotices) {
+    return new NoticePolicyBuilder(
+      this.id,
+      this.name,
+      this.description,
+      this.active,
+      this.loanNotices,
+      requestNotices);
   }
 
   @Override
@@ -77,6 +94,7 @@ public class NoticePolicyBuilder extends JsonBuilder implements Builder {
     put(request, "description", this.description);
     put(request, "active", this.active);
     put(request, "loanNotices", new JsonArray(loanNotices));
+    put(request, "requestNotices", new JsonArray(requestNotices));
 
     return request;
   }

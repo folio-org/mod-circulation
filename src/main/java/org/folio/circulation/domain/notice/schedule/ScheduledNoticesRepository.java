@@ -1,7 +1,10 @@
 package org.folio.circulation.domain.notice.schedule;
 
+import static java.util.Arrays.asList;
 import static java.util.function.Function.identity;
 import static org.folio.circulation.domain.notice.schedule.JsonScheduledNoticeMapper.mapToJson;
+import static org.folio.circulation.domain.notice.schedule.TriggeringEvent.HOLD_EXPIRATION;
+import static org.folio.circulation.domain.notice.schedule.TriggeringEvent.REQUEST_EXPIRATION;
 import static org.folio.circulation.support.CqlSortBy.ascending;
 import static org.folio.circulation.support.http.CommonResponseInterpreters.noContentRecordInterpreter;
 import static org.folio.circulation.support.http.ResponseMapping.flatMapUsingJson;
@@ -53,6 +56,16 @@ public class ScheduledNoticesRepository {
       .after(query -> findBy(query, pageLimit));
   }
 
+  public CompletableFuture<Result<MultipleRecords<ScheduledNotice>>> findRequestNoticesToSend(
+    DateTime systemTime, int pageLimit) {
+
+    return CqlQuery.lessThan("nextRunTime", systemTime.withZone(DateTimeZone.UTC))
+      .combine(CqlQuery.exactMatchAny("triggeringEvent",
+        asList(REQUEST_EXPIRATION.getRepresentation(), HOLD_EXPIRATION.getRepresentation())), CqlQuery::and)
+      .map(cqlQuery -> cqlQuery.sortBy(ascending("nextRunTime")))
+      .after(query -> findBy(query, pageLimit));
+  }
+
   private CompletableFuture<Result<MultipleRecords<ScheduledNotice>>> findBy(
     CqlQuery cqlQuery, int pageLimit) {
 
@@ -79,6 +92,10 @@ public class ScheduledNoticesRepository {
 
   CompletableFuture<Result<Response>> deleteByLoanId(String loanId) {
     return CqlQuery.exactMatch("loanId", loanId).after(this::deleteMany);
+  }
+
+  CompletableFuture<Result<Response>> deleteByRequestId(String requestId) {
+    return CqlQuery.exactMatch("requestId", requestId).after(this::deleteMany);
   }
 
   private CompletableFuture<Result<Response>> deleteMany(CqlQuery cqlQuery) {

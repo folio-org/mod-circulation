@@ -17,7 +17,7 @@ import org.folio.circulation.domain.notice.NoticeTiming;
 import org.folio.circulation.domain.notice.PatronNoticeEvent;
 import org.folio.circulation.domain.notice.PatronNoticeEventBuilder;
 import org.folio.circulation.domain.notice.PatronNoticeService;
-import org.folio.circulation.domain.notice.schedule.ScheduledNoticeService;
+import org.folio.circulation.domain.notice.schedule.DueDateScheduledNoticeService;
 import org.folio.circulation.domain.policy.LoanPolicyRepository;
 import org.folio.circulation.domain.representations.LoanResponse;
 import org.folio.circulation.support.Clients;
@@ -62,7 +62,7 @@ public abstract class RenewalResource extends Resource {
 
     final LoanRepresentation loanRepresentation = new LoanRepresentation();
     final ConfigurationRepository configurationRepository = new ConfigurationRepository(clients);
-    final ScheduledNoticeService scheduledNoticeService = ScheduledNoticeService.using(clients);
+    final DueDateScheduledNoticeService scheduledNoticeService = DueDateScheduledNoticeService.using(clients);
 
     final PatronNoticeService patronNoticeService = PatronNoticeService.using(clients);
 
@@ -81,7 +81,7 @@ public abstract class RenewalResource extends Resource {
       .thenComposeAsync(r -> r.after(configurationRepository::lookupTimeZone))
       .thenComposeAsync(r -> r.after(records -> renewalStrategy.renew(records, bodyAsJson, clients)))
       .thenComposeAsync(r -> r.after(loanRepository::updateLoan))
-      .thenComposeAsync(r -> r.after(scheduledNoticeService::rescheduleDueDateNotices))
+      .thenApply(r -> r.next(scheduledNoticeService::rescheduleDueDateNotices))
       .thenApply(r -> r.next(records -> sendRenewalPatronNotice(records, patronNoticeService)))
       .thenApply(r -> r.map(loanRepresentation::extendedLoan))
       .thenApply(LoanResponse::from)

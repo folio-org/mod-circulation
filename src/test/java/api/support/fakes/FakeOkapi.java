@@ -1,5 +1,6 @@
 package api.support.fakes;
 
+import static api.support.fakes.StorageSchema.validatorForStorageLoanSchema;
 import static api.support.fixtures.CalendarExamples.CASE_CALENDAR_IS_EMPTY_SERVICE_POINT_ID;
 import static api.support.fixtures.CalendarExamples.getCalendarById;
 import static api.support.fixtures.LibraryHoursExamples.CASE_CALENDAR_IS_UNAVAILABLE_SERVICE_POINT_ID;
@@ -8,6 +9,7 @@ import static api.support.fixtures.LibraryHoursExamples.CASE_CLOSED_LIBRARY_SERV
 import static api.support.fixtures.LibraryHoursExamples.getLibraryHoursById;
 import static org.folio.circulation.support.results.CommonFailures.failedDueToServerError;
 
+import java.io.IOException;
 import java.lang.invoke.MethodHandles;
 import java.util.Collection;
 import java.util.Objects;
@@ -45,7 +47,7 @@ public class FakeOkapi extends AbstractVerticle {
   }
 
   @Override
-  public void start(Future<Void> startFuture) {
+  public void start(Future<Void> startFuture) throws IOException {
     log.debug("Starting fake loan storage module");
 
     Router router = Router.router(vertx);
@@ -103,9 +105,7 @@ public class FakeOkapi extends AbstractVerticle {
     new FakeStorageModuleBuilder()
       .withRecordName("loan")
       .withRootPath("/loan-storage/loans")
-      .withRequiredProperties("itemId", "loanDate", "action")
-      .withDisallowedProperties("checkinServicePoint", "checkoutServicePoint",
-        "patronGroupAtCheckout", "borrower", "item")
+      .validateRecordsWith(validatorForStorageLoanSchema())
       .withChangeMetadata()
       .create().register(router);
 

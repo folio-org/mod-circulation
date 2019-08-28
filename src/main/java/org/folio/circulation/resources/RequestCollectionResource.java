@@ -6,10 +6,10 @@ import static org.folio.circulation.support.ValidationErrorFailure.singleValidat
 
 import org.folio.circulation.domain.CreateRequestService;
 import org.folio.circulation.domain.LoanRepository;
+import org.folio.circulation.domain.MoveRequestProcessAdapter;
 import org.folio.circulation.domain.MoveRequestService;
 import org.folio.circulation.domain.RequestAndRelatedRecords;
 import org.folio.circulation.domain.RequestQueueRepository;
-import org.folio.circulation.domain.MoveRequestProcessAdapter;
 import org.folio.circulation.domain.RequestRepository;
 import org.folio.circulation.domain.RequestRepresentation;
 import org.folio.circulation.domain.RequestType;
@@ -20,6 +20,7 @@ import org.folio.circulation.domain.UpdateRequestQueue;
 import org.folio.circulation.domain.UpdateRequestService;
 import org.folio.circulation.domain.UpdateUponRequest;
 import org.folio.circulation.domain.UserRepository;
+import org.folio.circulation.domain.notice.schedule.RequestScheduledNoticeService;
 import org.folio.circulation.domain.policy.LoanPolicyRepository;
 import org.folio.circulation.domain.policy.RequestPolicyRepository;
 import org.folio.circulation.domain.validation.ClosedRequestValidator;
@@ -85,8 +86,11 @@ public class RequestCollectionResource extends CollectionResource {
         new ServicePointPickupLocationValidator()
       );
 
+    final RequestScheduledNoticeService scheduledNoticeService = RequestScheduledNoticeService.using(clients);
+
     requestFromRepresentationService.getRequestFrom(representation)
       .thenComposeAsync(r -> r.after(createRequestService::createRequest))
+      .thenApply(r -> r.next(scheduledNoticeService::scheduleRequestNotices))
       .thenApply(r -> r.map(RequestAndRelatedRecords::getRequest))
       .thenApply(r -> r.map(new RequestRepresentation()::extendedRepresentation))
       .thenApply(CreatedJsonResponseResult::from)
@@ -139,10 +143,14 @@ public class RequestCollectionResource extends CollectionResource {
         new ServicePointPickupLocationValidator()
       );
 
+    final RequestScheduledNoticeService requestScheduledNoticeService =
+      RequestScheduledNoticeService.using(clients);
+
     requestFromRepresentationService.getRequestFrom(representation)
       .thenComposeAsync(r -> r.afterWhen(requestRepository::exists,
         updateRequestService::replaceRequest,
         createRequestService::createRequest))
+      .thenApply(r -> r.next(requestScheduledNoticeService::rescheduleRequestNotices))
       .thenApply(NoContentResult::from)
       .thenAccept(r -> r.writeTo(routingContext.response()));
   }

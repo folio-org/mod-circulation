@@ -24,7 +24,7 @@ import org.folio.circulation.domain.UpdateItem;
 import org.folio.circulation.domain.UpdateRequestQueue;
 import org.folio.circulation.domain.User;
 import org.folio.circulation.domain.UserRepository;
-import org.folio.circulation.domain.notice.schedule.ScheduledNoticeService;
+import org.folio.circulation.domain.notice.schedule.DueDateScheduledNoticeService;
 import org.folio.circulation.domain.policy.LoanPolicyRepository;
 import org.folio.circulation.domain.validation.AlreadyCheckedOutValidator;
 import org.folio.circulation.domain.validation.ItemMissingValidator;
@@ -144,7 +144,7 @@ public class LoanCollectionResource extends CollectionResource {
     final ServicePointLoanLocationValidator spLoanLocationValidator =
         new ServicePointLoanLocationValidator();
 
-    final ScheduledNoticeService scheduledNoticeService = ScheduledNoticeService.using(clients);
+    final DueDateScheduledNoticeService scheduledNoticeService = DueDateScheduledNoticeService.using(clients);
 
     completedFuture(succeeded(new LoanAndRelatedRecords(loan)))
       .thenCompose(larrResult ->
@@ -164,7 +164,7 @@ public class LoanCollectionResource extends CollectionResource {
       // due to snapshot of item status stored with the loan
       // as this is how the loan action history is populated
       .thenComposeAsync(result -> result.after(loanRepository::updateLoan))
-      .thenComposeAsync(r -> r.after(scheduledNoticeService::rescheduleDueDateNotices))
+      .thenApply(r -> r.next(scheduledNoticeService::rescheduleDueDateNotices))
       .thenApply(NoContentResult::from)
       .thenAccept(result -> result.writeTo(routingContext.response()));
   }

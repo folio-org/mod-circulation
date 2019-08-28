@@ -5,7 +5,7 @@ import static org.folio.circulation.support.Result.succeeded;
 
 import java.util.concurrent.CompletableFuture;
 
-import org.folio.circulation.domain.notice.schedule.ScheduledNoticeService;
+import org.folio.circulation.domain.notice.schedule.DueDateScheduledNoticeService;
 import org.folio.circulation.domain.policy.LoanPolicy;
 import org.folio.circulation.domain.policy.LoanPolicyRepository;
 import org.folio.circulation.domain.policy.library.ClosedLibraryStrategyService;
@@ -18,7 +18,7 @@ public class UpdateLoan {
   private final ClosedLibraryStrategyService closedLibraryStrategyService;
   private final LoanRepository loanRepository;
   private final LoanPolicyRepository loanPolicyRepository;
-  private final ScheduledNoticeService scheduledNoticeService;
+  private final DueDateScheduledNoticeService scheduledNoticeService;
 
   public UpdateLoan(Clients clients,
       LoanRepository loanRepository,
@@ -27,7 +27,7 @@ public class UpdateLoan {
         DateTime.now(DateTimeZone.UTC), false);
     this.loanPolicyRepository = loanPolicyRepository;
     this.loanRepository = loanRepository;
-    this.scheduledNoticeService = ScheduledNoticeService.using(clients);
+    this.scheduledNoticeService = DueDateScheduledNoticeService.using(clients);
   }
 
   /**
@@ -49,7 +49,7 @@ public class UpdateLoan {
           .thenApply(r -> r.next(this::recall))
           .thenComposeAsync(r -> r.after(closedLibraryStrategyService::applyClosedLibraryDueDateManagement))
           .thenComposeAsync(r -> r.after(loanRepository::updateLoan))
-          .thenComposeAsync(r -> r.after(scheduledNoticeService::rescheduleDueDateNotices))
+          .thenApply(r -> r.next(scheduledNoticeService::rescheduleDueDateNotices))
           .thenApply(r -> r.map(v -> requestAndRelatedRecords.withRequest(request.withLoan(v.getLoan()))));
     } else {
       return completedFuture(succeeded(requestAndRelatedRecords));
