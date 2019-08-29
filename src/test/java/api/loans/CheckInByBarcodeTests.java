@@ -375,7 +375,7 @@ public class CheckInByBarcodeTests extends APITests {
     noticeContextMatchers.putAll(TemplateContextMatchers.getUserContextMatchers(james));
     noticeContextMatchers.putAll(TemplateContextMatchers.getItemContextMatchers(nod, true));
     noticeContextMatchers.putAll(TemplateContextMatchers.getLoanContextMatchers(checkInResponse.getLoan()));
-    noticeContextMatchers.put("loan.checkinDate",
+    noticeContextMatchers.put("loan.checkedInDate",
       withinSecondsAfter(Seconds.seconds(10), checkInDate));
     MatcherAssert.assertThat(sentNotices,
       hasItems(
