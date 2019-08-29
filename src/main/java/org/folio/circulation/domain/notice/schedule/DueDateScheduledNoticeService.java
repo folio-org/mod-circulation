@@ -63,7 +63,7 @@ public class DueDateScheduledNoticeService {
     return new ScheduledNoticeBuilder()
       .setId(UUID.randomUUID().toString())
       .setLoanId(loan.getId())
-      .setUserId(loan.getUserId())
+      .setRecipientId(loan.getUserId())
       .setNextRunTime(determineNextRunTime(configuration, loan))
       .setNoticeConfig(createScheduledNoticeConfig(configuration))
       .setTriggeringEvent(TriggeringEvent.DUE_DATE)

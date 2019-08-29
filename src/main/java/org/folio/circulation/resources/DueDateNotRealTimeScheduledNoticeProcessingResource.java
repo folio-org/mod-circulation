@@ -40,7 +40,7 @@ public class DueDateNotRealTimeScheduledNoticeProcessingResource extends Schedul
     ScheduledNoticesRepository scheduledNoticesRepository, int limit) {
 
     List<CqlOrder> cqlOrders = Stream.of(
-      "userId", "noticeConfig.templateId",
+      "recipientId", "noticeConfig.templateId",
       "triggeringEvent", "noticeConfig.format",
       "noticeConfig.timing")
       .map(CqlOrder::asc).collect(Collectors.toList());

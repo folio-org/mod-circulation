@@ -7,7 +7,7 @@ public class ScheduledNoticeBuilder {
   private String id;
   private String loanId;
   private String requestId;
-  private String userId;
+  private String recipientId;
   private TriggeringEvent triggeringEvent;
   private DateTime nextRunTime;
   private ScheduledNoticeConfig noticeConfig;
@@ -27,8 +27,8 @@ public class ScheduledNoticeBuilder {
     return this;
   }
 
-  public ScheduledNoticeBuilder setUserId(String userId) {
-    this.userId = userId;
+  public ScheduledNoticeBuilder setRecipientId(String recipientId) {
+    this.recipientId = recipientId;
     return this;
   }
 
@@ -48,6 +48,6 @@ public class ScheduledNoticeBuilder {
   }
 
   public ScheduledNotice build() {
-    return new ScheduledNotice(id, loanId, requestId, userId, triggeringEvent, nextRunTime, noticeConfig);
+    return new ScheduledNotice(id, loanId, requestId, recipientId, triggeringEvent, nextRunTime, noticeConfig);
   }
 }

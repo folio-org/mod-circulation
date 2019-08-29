@@ -293,7 +293,7 @@ public class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests 
     assertThat(scheduledNotices, hasSize(4));
 
     long numberOfUniqueUserIds = scheduledNotices.stream()
-      .map(notice -> notice.getString("userId"))
+      .map(notice -> notice.getString("recipientId"))
       .distinct().count();
     assertThat(numberOfUniqueUserIds, is(1L));
   }

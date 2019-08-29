@@ -115,7 +115,7 @@ public class RequestScheduledNoticeService {
     return new ScheduledNoticeBuilder()
       .setId(UUID.randomUUID().toString())
       .setRequestId(request.getId())
-      .setUserId(request.getUserId())
+      .setRecipientId(request.getUserId())
       .setTriggeringEvent(triggeringEvent)
       .setNextRunTime(nextRunTime)
       .setNoticeConfig(createScheduledNoticeConfig(cfg))
