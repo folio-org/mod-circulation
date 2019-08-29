@@ -6,6 +6,8 @@ import static org.folio.circulation.support.Result.failed;
 import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.domain.Loan;
@@ -14,6 +16,7 @@ import org.folio.circulation.domain.policy.LoanPolicy;
 import org.folio.circulation.domain.policy.library.ClosedLibraryStrategyService;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.Result;
+import org.folio.circulation.support.http.server.ValidationError;
 import org.joda.time.DateTime;
 
 import io.vertx.core.json.JsonObject;
@@ -41,10 +44,17 @@ public class RegularCheckOutStrategy implements CheckOutStrategy {
 
   private Result<LoanAndRelatedRecords> refuseWhenItemIsNotLoanable(LoanAndRelatedRecords relatedRecords) {
     final Loan loan = relatedRecords.getLoan();
+    final LoanPolicy loanPolicy = loan.getLoanPolicy();
 
-    if (loan.getLoanPolicy().isNotLoanable()) {
+    if (loanPolicy.isNotLoanable()) {
       String itemBarcode = loan.getItem().getBarcode();
-      return failed(singleValidationError("Item is not loanable", ITEM_BARCODE, itemBarcode));
+
+      Map<String, String> parameters = new HashMap<>();
+      parameters.put(ITEM_BARCODE, itemBarcode);
+      parameters.put("loanPolicyId", loanPolicy.getId());
+      parameters.put("loanPolicyName", loanPolicy.getName());
+      return failed(singleValidationError(
+        new ValidationError("Item is not loanable", parameters)));
     }
     return succeeded(relatedRecords);
   }

@@ -5,6 +5,7 @@ import static api.support.APITestContext.END_OF_2019_DUE_DATE;
 import static api.support.builders.ItemBuilder.AVAILABLE;
 import static api.support.builders.ItemBuilder.CHECKED_OUT;
 import static api.support.matchers.CheckOutByBarcodeResponseMatchers.hasItemBarcodeParameter;
+import static api.support.matchers.CheckOutByBarcodeResponseMatchers.hasLoanPolicyParameters;
 import static api.support.matchers.CheckOutByBarcodeResponseMatchers.hasProxyUserBarcodeParameter;
 import static api.support.matchers.CheckOutByBarcodeResponseMatchers.hasServicePointParameter;
 import static api.support.matchers.CheckOutByBarcodeResponseMatchers.hasUserBarcodeParameter;
@@ -941,5 +942,31 @@ public class CheckOutByBarcodeTests extends APITests {
     smallAngryPlanet = itemsClient.get(smallAngryPlanet);
 
     assertThat(smallAngryPlanet, hasItemStatus(CHECKED_OUT));
+  }
+
+  @Test
+  public void cannotCheckOutWhenItemIsNotLoanable()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    IndividualResource notLoanablePolicy = loanPoliciesFixture.create(
+      new LoanPolicyBuilder()
+        .withName("Not Loanable Policy")
+        .withLoanable(false));
+    useLoanPolicyAsFallback(
+      notLoanablePolicy.getId(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
+      noticePoliciesFixture.inactiveNotice().getId());
+
+    InventoryItemResource nod = itemsFixture.basedUponNod();
+    IndividualResource steve = usersFixture.steve();
+    Response response = loansFixture.attemptCheckOutByBarcode(nod, steve);
+
+    assertThat(response.getJson(), hasErrorWith(allOf(
+      hasMessage("Item is not loanable"),
+      hasItemBarcodeParameter(nod),
+      hasLoanPolicyParameters(notLoanablePolicy))));
   }
 }
