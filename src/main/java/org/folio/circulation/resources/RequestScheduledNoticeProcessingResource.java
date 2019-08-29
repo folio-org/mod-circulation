@@ -1,7 +1,8 @@
 package org.folio.circulation.resources;
 
+import static org.folio.circulation.support.ResultBinding.mapResult;
+
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.domain.MultipleRecords;
@@ -34,9 +35,11 @@ public class RequestScheduledNoticeProcessingResource extends ScheduledNoticePro
   }
 
   @Override
-  protected CompletableFuture<Result<Collection<ScheduledNotice>>> handleNotices(
-    Clients clients, Collection<ScheduledNotice> scheduledNotices) {
+  protected CompletableFuture<Result<MultipleRecords<ScheduledNotice>>> handleNotices(
+    Clients clients, MultipleRecords<ScheduledNotice> scheduledNotices) {
 
-    return RequestScheduledNoticeHandler.using(clients).handleNotices(scheduledNotices);
+    return RequestScheduledNoticeHandler.using(clients)
+      .handleNotices(scheduledNotices.getRecords())
+      .thenApply(mapResult(v -> scheduledNotices));
   }
 }

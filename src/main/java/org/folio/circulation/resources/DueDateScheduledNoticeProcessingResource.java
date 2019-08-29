@@ -1,6 +1,7 @@
 package org.folio.circulation.resources;
 
-import java.util.Collection;
+import static org.folio.circulation.support.ResultBinding.mapResult;
+
 import java.util.Collections;
 import java.util.concurrent.CompletableFuture;
 
@@ -34,12 +35,13 @@ public class DueDateScheduledNoticeProcessingResource extends ScheduledNoticePro
   }
 
   @Override
-  protected CompletableFuture<Result<Collection<ScheduledNotice>>> handleNotices(
-    Clients clients, Collection<ScheduledNotice> noticesResult) {
+  protected CompletableFuture<Result<MultipleRecords<ScheduledNotice>>> handleNotices(
+    Clients clients, MultipleRecords<ScheduledNotice> noticesResult) {
 
     final DueDateScheduledNoticeHandler dueDateNoticeHandler =
       DueDateScheduledNoticeHandler.using(clients, DateTime.now(DateTimeZone.UTC));
 
-    return dueDateNoticeHandler.handleNotices(noticesResult);
+    return dueDateNoticeHandler.handleNotices(noticesResult.getRecords())
+      .thenApply(mapResult(v -> noticesResult));
   }
 }

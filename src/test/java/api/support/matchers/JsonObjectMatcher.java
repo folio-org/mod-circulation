@@ -7,36 +7,41 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import org.hamcrest.CoreMatchers;
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
 import org.hamcrest.TypeSafeDiagnosingMatcher;
-
-import com.jayway.jsonpath.ReadContext;
-import com.jayway.jsonpath.matchers.JsonPathMatchers;
 
 import io.vertx.core.json.JsonObject;
 
 public class JsonObjectMatcher extends TypeSafeDiagnosingMatcher<JsonObject> {
 
   @SafeVarargs
-  public static Matcher<JsonObject> allOfPaths(Matcher<? super ReadContext>... jsonPathMatchers) {
+  public static Matcher<JsonObject> allOfPaths(Matcher<? super String>... jsonPathMatchers) {
     return new JsonObjectMatcher(Arrays.asList(jsonPathMatchers));
   }
 
-  public static Matcher<JsonObject> allOfPaths(List<Matcher<? super ReadContext>> jsonPathMatchers) {
+  public static Matcher<JsonObject> allOfPaths(List<Matcher<? super String>> jsonPathMatchers) {
     return new JsonObjectMatcher(jsonPathMatchers);
   }
 
   public static Matcher<JsonObject> allOfPaths(Map<String, Matcher<String>> jsonPathMatchers) {
-    List<Matcher<? super ReadContext>> matchers = jsonPathMatchers.entrySet().stream()
+    List<Matcher<? super String>> matchers = jsonPathMatchers.entrySet().stream()
       .map(e -> hasJsonPath(e.getKey(), e.getValue()))
       .collect(Collectors.toList());
     return JsonObjectMatcher.allOfPaths(matchers);
   }
 
-  private final List<Matcher<? super ReadContext>> jsonPathMatchers;
+  public static Matcher<? super String> toStringMatcher(Map<String, Matcher<String>> jsonPathMatchers) {
+    List<Matcher<? super String>> matchers = jsonPathMatchers.entrySet().stream()
+      .map(e -> hasJsonPath(e.getKey(), e.getValue()))
+      .collect(Collectors.toList());
+    return CoreMatchers.allOf(matchers);
+  }
 
-  public JsonObjectMatcher(List<Matcher<? super ReadContext>> jsonPathMatchers) {
+  private final List<Matcher<? super String>> jsonPathMatchers;
+
+  public JsonObjectMatcher(List<Matcher<? super String>> jsonPathMatchers) {
     this.jsonPathMatchers = jsonPathMatchers;
   }
 
@@ -44,8 +49,7 @@ public class JsonObjectMatcher extends TypeSafeDiagnosingMatcher<JsonObject> {
   protected boolean matchesSafely(JsonObject jsonObject, Description description) {
     String jsonString = jsonObject.encode();
 
-    List<Matcher<String>> notMatched = jsonPathMatchers.stream()
-      .map(JsonPathMatchers::isJsonString)
+    List<Matcher<? super String>> notMatched = jsonPathMatchers.stream()
       .filter(m -> !m.matches(jsonString))
       .collect(Collectors.toList());
 

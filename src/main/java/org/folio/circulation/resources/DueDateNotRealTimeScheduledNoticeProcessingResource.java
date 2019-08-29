@@ -1,8 +1,8 @@
 package org.folio.circulation.resources;
 
+import static java.lang.Math.max;
 import static org.folio.circulation.support.ResultBinding.mapResult;
 
-import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -52,19 +52,24 @@ public class DueDateNotRealTimeScheduledNoticeProcessingResource extends Schedul
   }
 
   @Override
-  protected CompletableFuture<Result<Collection<ScheduledNotice>>> handleNotices(Clients clients, Collection<ScheduledNotice> notices) {
+  protected CompletableFuture<Result<MultipleRecords<ScheduledNotice>>> handleNotices(
+    Clients clients, MultipleRecords<ScheduledNotice> notices) {
+
     final DueDateNotRealTimeScheduledNoticeHandler dueDateNoticeHandler =
       DueDateNotRealTimeScheduledNoticeHandler.using(clients, DateTime.now(DateTimeZone.UTC));
 
     Map<ScheduledNoticeGroupDefinition, List<ScheduledNotice>> orderedGroups =
-      notices.stream().collect(Collectors.groupingBy(
+      notices.getRecords().stream().collect(Collectors.groupingBy(
         ScheduledNoticeGroupDefinition::from,
         LinkedHashMap::new,
         Collectors.toList()));
 
-    //Last group is cut off because there can be only a part of it
+    boolean fetchedAllTheRecords = notices.getTotalRecords().equals(notices.getRecords().size());
+    //If not all the records are fetched then the last group is cut off because there might be only a part of it
     //If there is only one group, it is taken into processing
-    int limit = Math.max(orderedGroups.size() - 1, 1);
+    int limit = fetchedAllTheRecords
+      ? orderedGroups.size()
+      : max(orderedGroups.size() - 1, 1);
 
     List<Pair<ScheduledNoticeGroupDefinition, List<ScheduledNotice>>> noticeGroups =
       orderedGroups.entrySet()
