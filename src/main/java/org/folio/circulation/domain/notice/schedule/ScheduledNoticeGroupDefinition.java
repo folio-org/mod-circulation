@@ -10,7 +10,7 @@ public class ScheduledNoticeGroupDefinition {
   public static ScheduledNoticeGroupDefinition from(ScheduledNotice notice) {
     ScheduledNoticeConfig config = notice.getConfiguration();
 
-    return new ScheduledNoticeGroupDefinition(notice.getRecipientId(), config.getTemplateId(),
+    return new ScheduledNoticeGroupDefinition(notice.getRecipientUserId(), config.getTemplateId(),
       notice.getTriggeringEvent(), config.getFormat(), config.getTiming());
   }
 
