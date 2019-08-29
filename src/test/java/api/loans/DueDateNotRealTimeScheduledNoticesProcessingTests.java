@@ -9,6 +9,7 @@ import static api.support.matchers.PatronNoticeMatcher.hasEmailNoticeProperties;
 import static com.jayway.jsonpath.matchers.JsonPathMatchers.hasJsonPath;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.hasItems;
+import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.Matchers.hasSize;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
@@ -33,6 +34,7 @@ import org.junit.Test;
 import api.support.APITests;
 import api.support.builders.NoticeConfigurationBuilder;
 import api.support.builders.NoticePolicyBuilder;
+import api.support.fixtures.ConfigurationExample;
 import api.support.http.InventoryItemResource;
 import io.vertx.core.json.JsonObject;
 
@@ -232,5 +234,67 @@ public class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests 
     scheduledNoticeProcessingClient.runDueDateNotRealTimeNoticesProcessing(nextDayAfterBeforeNoticeShouldBeSend);
 
     assertThat(patronNoticesClient.getAll(), hasSize(0));
+  }
+
+  @Test
+  public void processingTakesNoticesLimitedByConfiguration()
+    throws MalformedURLException,
+    InterruptedException,
+    TimeoutException,
+    ExecutionException {
+
+    UUID templateId = UUID.randomUUID();
+    Period beforePeriod = Period.weeks(1);
+
+    JsonObject uponAtDueDateNoticeConfig = new NoticeConfigurationBuilder()
+      .withTemplateId(templateId)
+      .withDueDateEvent()
+      .withBeforeTiming(beforePeriod)
+      .sendInRealTime(false)
+      .create();
+
+    NoticePolicyBuilder noticePolicy = new NoticePolicyBuilder()
+      .withName("Policy with due date notices")
+      .withLoanNotices(Collections.singletonList(uponAtDueDateNoticeConfig));
+    useLoanPolicyAsFallback(
+      loanPoliciesFixture.canCirculateRolling().getId(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
+      noticePoliciesFixture.create(noticePolicy).getId());
+
+    DateTime loanDate = new DateTime(2019, 8, 23, 10, 30);
+
+    IndividualResource james = usersFixture.james();
+    IndividualResource steve = usersFixture.steve();
+    IndividualResource rebecca = usersFixture.rebecca();
+
+    //Generate several loans
+    for (int i = 0; i < 4; i++) {
+      String baseBarcode = Integer.toString(i);
+      loansFixture.checkOutByBarcode(
+        itemsFixture.basedUponNod(b -> b.withBarcode(baseBarcode + "1")), james);
+      loansFixture.checkOutByBarcode(
+        itemsFixture.basedUponNod((b -> b.withBarcode(baseBarcode + "2"))), steve);
+      loansFixture.checkOutByBarcode(
+        itemsFixture.basedUponNod((b -> b.withBarcode(baseBarcode + "3"))), rebecca);
+    }
+
+    Awaitility.await()
+      .atMost(1, TimeUnit.SECONDS)
+      .until(scheduledNoticesClient::getAll, hasSize(12));
+
+    int noticesLimitConfig = 10;
+    configClient.create(ConfigurationExample.schedulerNoticesLimitConfiguration(Integer.toString(noticesLimitConfig)));
+
+    //Should fetch 10 notices, when total records is 12
+    //So that notices for one of the users should not be processed
+    scheduledNoticeProcessingClient.runDueDateNotRealTimeNoticesProcessing(loanDate.plusYears(1));
+
+    List<JsonObject> scheduledNotices = scheduledNoticesClient.getAll();
+    assertThat(scheduledNotices, hasSize(4));
+
+    long numberOfUniqueUserIds = scheduledNotices.stream()
+      .map(notice -> notice.getString("userId"))
+      .distinct().count();
+    assertThat(numberOfUniqueUserIds, is(1L));
   }
 }
