@@ -1,5 +1,6 @@
 package api.requests.scenarios;
 
+import static api.support.matchers.ItemStatusCodeMatcher.hasItemStatus;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
@@ -14,9 +15,11 @@ import java.util.concurrent.TimeoutException;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.joda.time.DateTime;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import api.support.APITests;
+import api.support.builders.RequestBuilder;
 import io.vertx.core.json.JsonObject;
 
 public class CancelRequestTests extends APITests {
@@ -195,5 +198,36 @@ public class CancelRequestTests extends APITests {
 
     assertThat("Should be in same order as before cancellation", requestIds, contains(
       requestByJessica.getId(), requestBySteve.getId(), requestByCharlotte.getId()));
+  }
+
+  /**
+   * In order for items to appear on the hold shelf clearance report they need
+   * to retain the request fulfilment related status after being cancelled
+   */
+  @Ignore("As the fix is being cherry picked this cannot be fixed within the same commit")
+  @Test
+  public void cancellingAPartiallyFulfilledPageRequestErroneouslyResetsItemStatus()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    IndividualResource jessica = usersFixture.jessica();
+
+    final IndividualResource requestByJessica = requestsFixture.place(
+      new RequestBuilder()
+      .page()
+      .forItem(smallAngryPlanet)
+      .by(jessica)
+      .fulfilToHoldShelf(servicePointsFixture.cd1()));
+
+    loansFixture.checkInByBarcode(smallAngryPlanet);
+
+    requestsFixture.cancelRequest(requestByJessica);
+
+    final IndividualResource itemAfterCancellation = itemsClient.get(smallAngryPlanet);
+
+    assertThat(itemAfterCancellation, hasItemStatus("Paged"));
   }
 }
