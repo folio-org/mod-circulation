@@ -59,15 +59,15 @@ public class Location {
     return getProperty(representation, "name");
   }
 
-  String getLibraryId() {
+  public String getLibraryId() {
     return getProperty(representation, "libraryId");
   }
 
-  String getCampusId() {
+  public String getCampusId() {
     return getProperty(representation, "campusId");
   }
 
-  String getInstitutionId() {
+  public String getInstitutionId() {
     return getProperty(representation, "institutionId");
   }
 

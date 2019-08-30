@@ -444,10 +444,10 @@ public class Text2Drools extends CirculationRulesBaseListener {
   private static String criteriumTypeClassname(String letter) {
     switch (letter) {
     case "t": return "LoanType";
-    case "a": return "CampusLocation";
-    case "b": return "BranchLocation";
-    case "c": return "CollectionLocation";
-    case "s": return "ShelvingLocation";
+    case "a": return "Institution";
+    case "b": return "Campus";
+    case "c": return "Library";
+    case "s": return "Location";
     case "m": return "ItemType";
     case "g": return "PatronGroup";
     default:  throw new IllegalArgumentException(

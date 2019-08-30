@@ -1,17 +1,17 @@
 package org.folio.circulation.rules;
 
 /**
- * Store UUID of the campus location.
+ * Store the UUID of the shelving location.
  */
-public class CampusLocation {
-  /** UUID of the campus location. */
+public class Location {
+  /** UUID of the  location. */
   @SuppressWarnings("squid:ClassVariableVisibilityCheck")  // Drools directly uses public fields
   public String id;
-  /**
-   * Set campus.
-   * @param id  UUID of the campus location.
+
+  /** Set location.
+   * @param id  UUID of the location.
    */
-  public CampusLocation(String id) {
+  public Location(String id) {
     this.id = id;
   }
 
