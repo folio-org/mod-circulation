@@ -29,8 +29,11 @@ public class Account {
     return getNestedStringProperty(representation, "status", "name");
   }
 
+  public boolean isClosed() {
+    return getStatus().equalsIgnoreCase("closed");
+  }
+
   public static Account from(JsonObject representation) {
     return new Account(representation);
   }
-
 }

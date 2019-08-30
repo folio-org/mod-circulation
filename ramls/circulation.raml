@@ -16,6 +16,7 @@ types:
   check-in-by-barcode-response: !include check-in-by-barcode-response.json
   error: !include raml-util/schemas/error.schema
   errors: !include raml-util/schemas/errors.schema
+  anonymize-loans-response: !include schema/anonymize-loans-response.json
 
 traits:
   language: !include raml-util/traits/language.raml
@@ -226,6 +227,21 @@ resourceTypes:
         responses:
           501:
             description: "Not implemented yet"
+    /anonymize/{userId}:
+      post:
+        is: [validate]
+        body:
+        responses:
+          200:
+            description: "Number of closed loans for this user that have been anonymized"
+            body:
+              application/json:
+                type: anonymize-loans-response
+          500:
+            description: "Internal server error, e.g. due to misconfiguration"
+            body:
+              text/plain:
+                example: "Internal server error, contact administrator"
   /rules:
     displayName: Circulation rules
     get:

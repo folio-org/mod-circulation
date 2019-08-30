@@ -148,6 +148,10 @@ public class InterfaceUrls {
     return circulationModuleUrl("/circulation/loans" + subPath);
   }
 
+  public static URL circulationAnonymizeLoansURL(String subPath) {
+    return circulationModuleUrl("/circulation/loans/anonymize/" + subPath);
+  }
+
   public static URL accountsUrl(String subPath) {
     return APITestContext.viaOkapiModuleUrl("/accounts" + subPath);
   }
@@ -159,7 +163,7 @@ public class InterfaceUrls {
   public static URL circulationRulesUrl(String subPath) {
     return circulationModuleUrl("/circulation/rules" + subPath);
   }
-  
+
   static URL cancellationReasonsStorageUrl(String subPath) {
     return APITestContext.viaOkapiModuleUrl(
         "/cancellation-reason-storage/cancellation-reasons" + subPath);

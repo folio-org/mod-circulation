@@ -1,0 +1,22 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "description": "Response schema for anonymize loans request",
+  "type": "object",
+  "properties": {
+    "anonymizedLoans": {
+      "description": "Successfully anonymized loan ids",
+      "type": "array",
+      "items":{
+        "type": "string"
+      }
+    },
+    "notAnonymizedLoans": {
+      "description": "Not anonymized loan ids due to open fees and fines",
+      "type": "array",
+      "items":{
+        "type": "string"
+      }
+    }
+  },
+  "additionalProperties": false
+}
