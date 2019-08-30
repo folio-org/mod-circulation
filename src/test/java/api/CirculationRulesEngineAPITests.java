@@ -13,11 +13,12 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import org.folio.circulation.resources.LoanCirculationRulesEngineResource;
+import org.folio.circulation.rules.Institution;
 import org.folio.circulation.rules.ItemType;
 import org.folio.circulation.rules.LoanType;
 import org.folio.circulation.rules.PatronGroup;
 import org.folio.circulation.rules.Policy;
-import org.folio.circulation.rules.ShelvingLocation;
+import org.folio.circulation.rules.Location;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.client.ResponseHandler;
 import org.junit.Before;
@@ -38,7 +39,7 @@ public class CirculationRulesEngineAPITests extends APITests {
   }
 
   private Policy applyLoanPolicy(ItemType itemType, LoanType loanType,
-      PatronGroup patronGroup, ShelvingLocation shelvingLocation) {
+      PatronGroup patronGroup, Location shelvingLocation, Institution institution) {
     try {
       CompletableFuture<Response> completed = new CompletableFuture<>();
       URL url = circulationRulesUrl(
@@ -47,6 +48,7 @@ public class CirculationRulesEngineAPITests extends APITests {
           + "&loan_type_id="         + loanType.id
           + "&patron_type_id="       + patronGroup.id
           + "&shelving_location_id=" + shelvingLocation.id
+          + "&institution_location_id=" + institution.id
           );
       client.get(url, ResponseHandler.any(completed));
       Response response = completed.get(10, TimeUnit.SECONDS);
@@ -61,7 +63,7 @@ public class CirculationRulesEngineAPITests extends APITests {
   }
 
   private Policy applyRequestPolicy(ItemType itemType, String requestType,
-      PatronGroup patronGroup, ShelvingLocation shelvingLocation) {
+      PatronGroup patronGroup, Location shelvingLocation, Institution institution) {
     try {
       CompletableFuture<Response> completed = new CompletableFuture<>();
       URL url = circulationRulesUrl(
@@ -70,6 +72,7 @@ public class CirculationRulesEngineAPITests extends APITests {
           + "&loan_type_id="         + requestType
           + "&patron_type_id="       + patronGroup.id
           + "&shelving_location_id=" + shelvingLocation.id
+          + "&institution_location_id=" + institution.id
           );
       client.get(url, ResponseHandler.any(completed));
       Response response = completed.get(10, TimeUnit.SECONDS);
@@ -84,7 +87,7 @@ public class CirculationRulesEngineAPITests extends APITests {
   }
 
   private Policy applyNoticePolicy(ItemType itemType, String noticeType,
-          PatronGroup patronGroup, ShelvingLocation shelvingLocation) {
+          PatronGroup patronGroup, Location shelvingLocation, Institution institution) {
         try {
           CompletableFuture<Response> completed = new CompletableFuture<>();
           URL url = circulationRulesUrl(
@@ -93,6 +96,7 @@ public class CirculationRulesEngineAPITests extends APITests {
               + "&loan_type_id="         + noticeType
               + "&patron_type_id="       + patronGroup.id
               + "&shelving_location_id=" + shelvingLocation.id
+              + "&institution_location_id=" + institution.id
               );
           client.get(url, ResponseHandler.any(completed));
           Response response = completed.get(10, TimeUnit.SECONDS);
@@ -113,8 +117,10 @@ public class CirculationRulesEngineAPITests extends APITests {
   private LoanType t2 = new LoanType("220e2dad-e3c7-42f3-bb46-515ba29ba65f");
   private PatronGroup g1 = new PatronGroup("0122feae-bd0e-4405-88de-525d93ba7cfd");
   private PatronGroup g2 = new PatronGroup("87d14197-6de3-4ba5-9201-6c4129504adf");
-  private ShelvingLocation s1 = new ShelvingLocation("cdc0b09d-dd56-4377-ae10-a20b50121dc4");
-  private ShelvingLocation s2 = new ShelvingLocation("fe91de23-6bf5-4179-a90e-3e87769af86e");
+  private Location s1 = new Location("cdc0b09d-dd56-4377-ae10-a20b50121dc4");
+  private Location s2 = new Location("fe91de23-6bf5-4179-a90e-3e87769af86e");
+  private Institution i1 = new Institution("78046fb2-ca5b-11e9-a32f-2a2ae2dbcce4");
+  private Institution i2 = new Institution("87e6a828-ca5b-11e9-a32f-2a2ae2dbcce4");
   // Loan Policies
   private Policy lp6 = new Policy("6a475259-8a97-4992-a415-76440f5f7c23");
   private Policy lp7 = new Policy("7b586360-8ba8-4aa3-b526-875510608d34");
@@ -146,6 +152,13 @@ public class CirculationRulesEngineAPITests extends APITests {
       "m " + m1 + " + t " + t1 + " : l " + lp2 + " r " + rp1 + " n " + np1,
       "m " + m1 + " + t " + t1 + " + g " + g1 + " : l " + lp3 + " r " + rp1 + " n " + np1
       );
+
+  private String rulesWithInstitution = String.join("\n",
+    "priority: t, s, c, b, a, m, g",
+    "fallback-policy: l " + lp2 + " r " + rp1 + " n " + np1,
+    "m " + m2 + ": l " + lp3 + " r " + rp2 + " n " + np2,
+    "a " + i1 + ": l " + lp4 + " r " + rp2 + " n " + np2
+  );
 
   @Before
   public void setUp() {
@@ -304,36 +317,45 @@ public class CirculationRulesEngineAPITests extends APITests {
   @Test
   public void loanFallback() {
     setRules(rulesFallback);
-    assertThat(applyLoanPolicy(m1, t1, g1, s1), is(lp6));
+    assertThat(applyLoanPolicy(m1, t1, g1, s1, i1), is(lp6));
   }
 
   @Test
   public void requestFallback() {
     setRules(rulesFallback);
-    assertThat(applyRequestPolicy(m1, t1.id, g1, s1), is(rp1));
+    assertThat(applyRequestPolicy(m1, t1.id, g1, s1, i1), is(rp1));
   }
 
   @Test
   public void noticeFallback() {
     setRules(rulesFallback);
-    assertThat(applyNoticePolicy(m1, t1.id, g1, s1), is(np1));
+    assertThat(applyNoticePolicy(m1, t1.id, g1, s1, i1), is(np1));
   }
 
   @Test
   public void test1() {
     setRules(rules1);
-    assertThat(applyLoanPolicy(m2, t2, g2, s2), is(lp4));
-    assertThat(applyLoanPolicy(m2, t2, g1, s2), is(lp3));
-    assertThat(applyLoanPolicy(m1, t2, g1, s2), is(lp2));
+    assertThat(applyLoanPolicy(m2, t2, g2, s2, i2), is(lp4));
+    assertThat(applyLoanPolicy(m2, t2, g1, s2, i2), is(lp3));
+    assertThat(applyLoanPolicy(m1, t2, g1, s2, i2), is(lp2));
   }
 
   @Test
   public void test2() {
     setRules(rules2);
-    assertThat(applyLoanPolicy(m2, t2, g2, s2), is(lp6));
-    assertThat(applyLoanPolicy(m1, t2, g2, s2), is(lp1));
-    assertThat(applyLoanPolicy(m1, t1, g2, s2), is(lp2));
-    assertThat(applyLoanPolicy(m1, t1, g1, s2), is(lp3));
+    assertThat(applyLoanPolicy(m2, t2, g2, s2, i2), is(lp6));
+    assertThat(applyLoanPolicy(m1, t2, g2, s2, i2), is(lp1));
+    assertThat(applyLoanPolicy(m1, t1, g2, s2, i2), is(lp2));
+    assertThat(applyLoanPolicy(m1, t1, g1, s2, i2), is(lp3));
+  }
+
+  @Test
+  public void shouldApplyRulesWithInstitution() {
+    setRules(rulesWithInstitution);
+    assertThat(applyLoanPolicy(m2, t2, g2, s2, i2), is(lp3));
+    assertThat(applyLoanPolicy(m2, t2, g2, s2, i1), is(lp4));
+    assertThat(applyLoanPolicy(m1, t2, g2, s2, i1), is(lp4));
+    assertThat(applyLoanPolicy(m1, t2, g2, s2, i2), is(lp2));
   }
 
   private void matchesLoanPolicy(JsonArray array, int match, Policy policy, int line) {
@@ -432,28 +454,28 @@ public class CirculationRulesEngineAPITests extends APITests {
   @Test
   public void setRulesInvalidatesCache() {
     setRules(rulesFallback);
-    assertThat(applyLoanPolicy(m1, t1, g1, s1), is(lp6));
+    assertThat(applyLoanPolicy(m1, t1, g1, s1, i1), is(lp6));
     setRules(rulesFallback2);
-    assertThat(applyLoanPolicy(m1, t1, g1, s1), is(lp7));
+    assertThat(applyLoanPolicy(m1, t1, g1, s1, i1), is(lp7));
     setRules(rulesFallback);
-    assertThat(applyLoanPolicy(m1, t1, g1, s1), is(lp6));
+    assertThat(applyLoanPolicy(m1, t1, g1, s1, i1), is(lp6));
     setRules(rulesFallback2);
-    assertThat(applyLoanPolicy(m1, t1, g1, s1), is(lp7));
+    assertThat(applyLoanPolicy(m1, t1, g1, s1, i1), is(lp7));
   }
 
   @Test
   public void cache() throws Exception {
     setRules(rulesFallback);
-    assertThat(applyLoanPolicy(m1, t1, g1, s1), is(lp6));
+    assertThat(applyLoanPolicy(m1, t1, g1, s1, i1), is(lp6));
 
     updateCirculationRulesInStorageWithoutInvalidatingCache(rulesFallback2);
 
-    assertThat(applyLoanPolicy(m1, t1, g1, s1), is(lp6));
+    assertThat(applyLoanPolicy(m1, t1, g1, s1, i1), is(lp6));
 
     // reduce cache time to trigger reload from storage backend
     LoanCirculationRulesEngineResource.setCacheTime(0, 0);
 
-    assertThat(applyLoanPolicy(m1, t1, g1, s1), is(lp7));
+    assertThat(applyLoanPolicy(m1, t1, g1, s1, i1), is(lp7));
   }
 
   private void updateCirculationRulesInStorageWithoutInvalidatingCache(String rules)

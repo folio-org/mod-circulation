@@ -49,16 +49,18 @@ public class Drools {
     String loanTypeId = params.get(LOAN_TYPE_ID_NAME);
     String patronGroupId = params.get(PATRON_TYPE_ID_NAME);
     String shelvingLocationId = params.get(SHELVING_LOCATION_ID_NAME);
+    String institutionLocationId = params.get(INSTITUTION_LOCATION_ID_NAME);
+
     KieSession kieSession = kieContainer.newKieSession();
     match.loanPolicyId = null;
     kieSession.setGlobal("match", match);
     kieSession.insert(new ItemType(itemTypeId));
     kieSession.insert(new LoanType(loanTypeId));
     kieSession.insert(new PatronGroup(patronGroupId));
-    kieSession.insert(new ShelvingLocation(shelvingLocationId));
-    kieSession.insert(new CampusLocation(""));
-    kieSession.insert(new BranchLocation(""));
-    kieSession.insert(new CollectionLocation(""));
+    kieSession.insert(new Location(shelvingLocationId));
+    kieSession.insert(new Institution(institutionLocationId));
+    kieSession.insert(new Campus(""));
+    kieSession.insert(new Library(""));
     return kieSession;
   }
 

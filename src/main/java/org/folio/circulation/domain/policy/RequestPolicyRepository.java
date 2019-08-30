@@ -10,6 +10,7 @@ import java.lang.invoke.MethodHandles;
 import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.domain.Item;
+import org.folio.circulation.domain.Location;
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestAndRelatedRecords;
 import org.folio.circulation.domain.User;
@@ -31,10 +32,12 @@ public class RequestPolicyRepository {
 
   private final CirculationRulesClient circulationRequestRulesClient;
   private final CollectionResourceClient requestPoliciesStorageClient;
+  private final CollectionResourceClient locationsStorageClient;
 
   public RequestPolicyRepository(Clients clients) {
     this.circulationRequestRulesClient = clients.circulationRequestRules();
     this.requestPoliciesStorageClient = clients.requestPoliciesStorage();
+    this.locationsStorageClient = clients.locationsStorage();
   }
 
   public CompletableFuture<Result<RequestAndRelatedRecords>> lookupRequestPolicy(
@@ -87,8 +90,14 @@ public class RequestPolicyRepository {
       "Applying request rules for material type: {}, patron group: {}, loan type: {}, location: {}",
       materialTypeId, patronGroupId, loanTypeId, locationId);
 
-    circulationRequestRulesClient.applyRules(loanTypeId, locationId, materialTypeId,
-      patronGroupId, ResponseHandler.any(circulationRulesResponse));
+    locationsStorageClient.get(locationId)
+      .thenAccept(r -> {
+        Location location = Location.from(r.getJson());
+        circulationRequestRulesClient.applyRules(loanTypeId, locationId,
+          materialTypeId, patronGroupId,
+          location.getInstitutionId(),
+          ResponseHandler.any(circulationRulesResponse));
+      });
 
     circulationRulesResponse.thenAcceptAsync(response -> {
       if (response.getStatusCode() == 404) {

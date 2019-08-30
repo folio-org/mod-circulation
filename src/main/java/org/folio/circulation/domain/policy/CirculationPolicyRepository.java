@@ -29,12 +29,15 @@ public abstract class CirculationPolicyRepository<T> {
 
   private final CirculationRulesClient circulationRulesClient;
   final CollectionResourceClient policyStorageClient;
+  private final CollectionResourceClient locationsStorageClient;
 
   CirculationPolicyRepository(
     CirculationRulesClient circulationRulesClient,
-    CollectionResourceClient policyStorageClient) {
+    CollectionResourceClient policyStorageClient,
+    CollectionResourceClient locationsStorageClient) {
     this.circulationRulesClient = circulationRulesClient;
     this.policyStorageClient = policyStorageClient;
+    this.locationsStorageClient = locationsStorageClient;
   }
 
   public CompletableFuture<Result<T>> lookupPolicy(Loan loan) {
@@ -94,8 +97,15 @@ public abstract class CirculationPolicyRepository<T> {
       "Applying circulation rules for material type: {}, patron group: {}, loan type: {}, location: {}",
       materialTypeId, patronGroupId, loanTypeId, locationId);
 
-    circulationRulesClient.applyRules(loanTypeId, locationId, materialTypeId,
-      patronGroupId, ResponseHandler.any(circulationRulesResponse));
+
+    locationsStorageClient.get(locationId)
+      .thenAccept(r -> {
+        Location location = Location.from(r.getJson());
+        circulationRulesClient.applyRules(loanTypeId, locationId,
+          materialTypeId, patronGroupId,
+          location.getInstitutionId(),
+          ResponseHandler.any(circulationRulesResponse));
+      });
 
     circulationRulesResponse.thenAcceptAsync(response -> {
       if (response.getStatusCode() == 404) {

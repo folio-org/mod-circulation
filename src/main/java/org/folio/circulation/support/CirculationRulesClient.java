@@ -29,10 +29,11 @@ public class CirculationRulesClient {
     String locationId,
     String materialTypeId,
     String patronGroup,
+    String institutionId,
     Handler<HttpClientResponse> responseHandler) {
 
     String circulationRulesQuery = queryParameters(loanTypeId, locationId,
-      materialTypeId, patronGroup);
+      materialTypeId, institutionId, patronGroup);
 
     log.info("Applying circulation rules for {}", circulationRulesQuery);
 
@@ -44,10 +45,11 @@ public class CirculationRulesClient {
     String loanTypeId,
     String locationId,
     String materialTypeId,
+    String institutionId,
     String patronGroup) {
 
     return String.format(
-      "item_type_id=%s&loan_type_id=%s&patron_type_id=%s&shelving_location_id=%s",
-      materialTypeId, loanTypeId, patronGroup, locationId);
+      "item_type_id=%s&loan_type_id=%s&patron_type_id=%s&shelving_location_id=%s&institution_location_id=%s",
+      materialTypeId, loanTypeId, patronGroup, locationId, institutionId);
   }
 }
