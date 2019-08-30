@@ -1,3 +1,8 @@
+## 16.5.1 2019-08-30
+
+* Retains item status after cancelling (or editing) awaiting pickup page request CIRC-429
+* Retains item status after moving page request CIRC-411
+
 ## 16.5.0 2019-07-24
 
 * Send due date changed notice when moving recall recquest CIRC-316
