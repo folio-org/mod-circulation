@@ -1,5 +1,6 @@
 package org.folio.circulation.rules;
 
+import static org.folio.circulation.resources.AbstractCirculationRulesEngineResource.INSTITUTION_LOCATION_ID_NAME;
 import static org.folio.circulation.resources.AbstractCirculationRulesEngineResource.ITEM_TYPE_ID_NAME;
 import static org.folio.circulation.resources.AbstractCirculationRulesEngineResource.LOAN_TYPE_ID_NAME;
 import static org.folio.circulation.resources.AbstractCirculationRulesEngineResource.PATRON_TYPE_ID_NAME;
