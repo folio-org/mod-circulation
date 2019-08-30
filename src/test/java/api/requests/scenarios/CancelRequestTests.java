@@ -15,7 +15,6 @@ import java.util.concurrent.TimeoutException;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.joda.time.DateTime;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import api.support.APITests;
@@ -204,9 +203,8 @@ public class CancelRequestTests extends APITests {
    * In order for items to appear on the hold shelf clearance report they need
    * to retain the request fulfilment related status after being cancelled
    */
-  @Ignore("As the fix is being cherry picked this cannot be fixed within the same commit")
   @Test
-  public void cancellingAPartiallyFulfilledPageRequestErroneouslyResetsItemStatus()
+  public void cancellingAPartiallyFulfilledPageRequestShouldNotChangeItemStatus()
     throws InterruptedException,
     MalformedURLException,
     TimeoutException,
@@ -228,6 +226,6 @@ public class CancelRequestTests extends APITests {
 
     final IndividualResource itemAfterCancellation = itemsClient.get(smallAngryPlanet);
 
-    assertThat(itemAfterCancellation, hasItemStatus("Paged"));
+    assertThat(itemAfterCancellation, hasItemStatus("Awaiting pickup"));
   }
 }
