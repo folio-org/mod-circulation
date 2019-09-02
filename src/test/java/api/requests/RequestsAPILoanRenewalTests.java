@@ -1,5 +1,6 @@
 package api.requests;
 
+import static api.support.builders.FixedDueDateSchedule.wholeMonth;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static org.hamcrest.CoreMatchers.allOf;
@@ -8,10 +9,12 @@ import static org.hamcrest.junit.MatcherAssert.assertThat;
 import static org.joda.time.DateTimeConstants.APRIL;
 
 import java.net.MalformedURLException;
+import java.time.LocalDate;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
+import api.support.builders.FixedDueDateSchedulesBuilder;
 import api.support.builders.LoanPolicyBuilder;
 import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.support.http.client.IndividualResource;
@@ -50,7 +53,8 @@ public class RequestsAPILoanRenewalTests extends APITests {
   }
 
   @Test
-  public void allowRenewalLoanByBarcodeWhenFirstRequestInQueueIsHold() throws InterruptedException, MalformedURLException, TimeoutException, ExecutionException {
+  public void allowRenewalLoanByBarcodeWhenProfileIsRollingFirstRequestInQueueIsHoldAndRenewingIsAllowedInLoanPolicy()
+    throws InterruptedException, MalformedURLException, TimeoutException, ExecutionException {
 
     final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource rebecca = usersFixture.rebecca();
@@ -65,6 +69,80 @@ public class RequestsAPILoanRenewalTests extends APITests {
 
     Response response = loansFixture.attemptRenewal(200, smallAngryPlanet, rebecca);
     assertThat(response.getJson().getString("action"), is("renewed"));
+  }
+
+  @Test
+  public void forbidRenewalLoanByBarcodeWhenProfileIsRollingFirstRequestInQueueIsHoldAndRenewingIsDisallowedInLoanPolicy()
+    throws InterruptedException, MalformedURLException, TimeoutException, ExecutionException {
+
+    final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final IndividualResource rebecca = usersFixture.rebecca();
+
+    loanPolicyWithRollingProfileAndRenewingIsForbiddenWhenHoldIsPending();
+
+    loansFixture.checkOutByBarcode(smallAngryPlanet, rebecca);
+    requestsFixture.place(new RequestBuilder()
+      .hold()
+      .forItem(smallAngryPlanet)
+      .withPickupServicePointId(servicePointsFixture.cd1().getId())
+      .by(usersFixture.charlotte()));
+
+    Response response = loansFixture.attemptRenewalById(smallAngryPlanet, rebecca);
+
+    String message = response.getJson().getJsonArray("errors").getJsonObject(0).getString("message");
+    assertThat(message, is("Items with this loan policy cannot be renewed when there is an active, pending hold request"));
+  }
+
+
+  @Test
+  public void allowRenewalLoanByBarcodeWhenProfileIsFixedFirstRequestInQueueIsHoldAndRenewingIsAllowedInLoanPolicy()
+    throws InterruptedException, MalformedURLException, TimeoutException, ExecutionException {
+
+    final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final IndividualResource rebecca = usersFixture.rebecca();
+
+
+    loansFixture.checkOutByBarcode(smallAngryPlanet, rebecca);
+
+    useLoanPolicyAsFallback(
+      loanPoliciesFixture.canCirculateFixed().getId(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
+      noticePoliciesFixture.activeNotice().getId()
+    );
+
+    requestsFixture.place(new RequestBuilder()
+      .hold()
+      .forItem(smallAngryPlanet)
+      .withPickupServicePointId(servicePointsFixture.cd1().getId())
+      .by(usersFixture.charlotte()));
+
+    IndividualResource response = loansFixture.renewLoan(smallAngryPlanet, rebecca);
+
+    assertThat(response.getJson().getString("action"), is("renewed"));
+  }
+
+  @Test
+  public void forbidRenewalLoanByBarcodeWhenLoanProfileIsFixedFirstRequestInQueueIsHoldAndRenewingIsDisallowedInLoanPolicy()
+    throws InterruptedException, MalformedURLException, TimeoutException, ExecutionException {
+
+    final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final IndividualResource rebecca = usersFixture.rebecca();
+
+    loansFixture.checkOutByBarcode(smallAngryPlanet, rebecca);
+
+    loanPolicyWithFixedProfileAndRenewingIsForbiddenWhenHoldIsPending();
+
+    requestsFixture.place(new RequestBuilder()
+      .hold()
+      .forItem(smallAngryPlanet)
+      .withPickupServicePointId(servicePointsFixture.cd1().getId())
+      .by(usersFixture.charlotte()));
+
+
+    Response response = loansFixture.attemptRenewal(smallAngryPlanet, rebecca);
+
+    String message = response.getJson().getJsonArray("errors").getJsonObject(0).getString("message");
+    assertThat(message, is("Items with this loan policy cannot be renewed when there is an active, pending hold request"));
   }
 
   @Test
@@ -88,7 +166,8 @@ public class RequestsAPILoanRenewalTests extends APITests {
   }
 
   @Test
-  public void allowRenewalLoanByIdWhenFirstRequestInQueueIsHold() throws InterruptedException, MalformedURLException, TimeoutException, ExecutionException {
+  public void allowRenewalLoanByIdWhenProfileIsRollingFirstRequestInQueueIsHoldAndRenewingIsAllowedInLoanPolicy()
+    throws InterruptedException, MalformedURLException, TimeoutException, ExecutionException {
 
     final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource rebecca = usersFixture.rebecca();
@@ -106,6 +185,80 @@ public class RequestsAPILoanRenewalTests extends APITests {
 
     assertThat(response.getJson().getString("action"), is("renewed"));
   }
+
+  @Test
+  public void forbidRenewalLoanByIdWhenLoanProfileIsRollingFirstRequestInQueueIsHoldAndRenewingIsDisallowedInLoanPolicy()
+    throws InterruptedException, MalformedURLException, TimeoutException, ExecutionException {
+
+    final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final IndividualResource rebecca = usersFixture.rebecca();
+
+    loansFixture.checkOutByBarcode(smallAngryPlanet, rebecca);
+
+    loanPolicyWithRollingProfileAndRenewingIsForbiddenWhenHoldIsPending();
+
+    requestsFixture.place(new RequestBuilder()
+      .hold()
+      .forItem(smallAngryPlanet)
+      .withPickupServicePointId(servicePointsFixture.cd1().getId())
+      .by(usersFixture.charlotte()));
+
+
+    Response response = loansFixture.attemptRenewalById(smallAngryPlanet, rebecca);
+
+    String message = response.getJson().getJsonArray("errors").getJsonObject(0).getString("message");
+    assertThat(message, is("Items with this loan policy cannot be renewed when there is an active, pending hold request"));
+  }
+
+  @Test
+  public void forbidRenewalLoanByIdWhenLoanProfileIsFixedFirstRequestInQueueIsHoldAndRenewingIsDisallowedInLoanPolicy()
+    throws InterruptedException, MalformedURLException, TimeoutException, ExecutionException {
+
+    final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final IndividualResource rebecca = usersFixture.rebecca();
+
+    loansFixture.checkOutByBarcode(smallAngryPlanet, rebecca);
+
+    loanPolicyWithFixedProfileAndRenewingIsForbiddenWhenHoldIsPending();
+
+    requestsFixture.place(new RequestBuilder()
+      .hold()
+      .forItem(smallAngryPlanet)
+      .withPickupServicePointId(servicePointsFixture.cd1().getId())
+      .by(usersFixture.charlotte()));
+
+
+    Response response = loansFixture.attemptRenewalById(smallAngryPlanet, rebecca);
+
+    String message = response.getJson().getJsonArray("errors").getJsonObject(0).getString("message");
+    assertThat(message, is("Items with this loan policy cannot be renewed when there is an active, pending hold request"));
+  }
+
+  @Test
+  public void allowRenewalLoanByIdWhenLoanProfileIsFixedFirstRequestInQueueIsHoldAndRenewingIsAllowedInLoanPolicy()
+    throws InterruptedException, MalformedURLException, TimeoutException, ExecutionException {
+
+    final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final IndividualResource rebecca = usersFixture.rebecca();
+
+    loansFixture.checkOutByBarcode(smallAngryPlanet, rebecca);
+
+    useLoanPolicyAsFallback(
+      loanPoliciesFixture.canCirculateFixed().getId(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
+      noticePoliciesFixture.activeNotice().getId()
+    );
+
+    requestsFixture.place(new RequestBuilder()
+      .hold()
+      .forItem(smallAngryPlanet)
+      .withPickupServicePointId(servicePointsFixture.cd1().getId())
+      .by(usersFixture.charlotte()));
+
+    IndividualResource response = loansFixture.renewLoanById(smallAngryPlanet, rebecca);
+
+    assertThat(response.getJson().getString("action"), is("renewed"));
+   }
 
   @Test
   public void allowRenewalOverrideWhenFirstRequestIsRecall()
@@ -253,5 +406,41 @@ public class RequestsAPILoanRenewalTests extends APITests {
 
     assertThat(response.getJson(), hasErrorWith(hasMessage(ITEMS_CANNOT_BE_RENEWED_MSG)));
     assertThat(response.getJson(), hasErrorWith(hasMessage(EXPECTED_REASON_LOAN_IS_NOT_LOANABLE)));
+  }
+
+  private void loanPolicyWithRollingProfileAndRenewingIsForbiddenWhenHoldIsPending()
+    throws InterruptedException, ExecutionException, TimeoutException, MalformedURLException {
+
+    LoanPolicyBuilder dueDateLimitedPolicy = new LoanPolicyBuilder()
+      .withName("Rolling. Renewing is forbidden with holds requests")
+      .withDescription("Rolling profile with disallowed renewing a loan when a hold request is pending")
+      .rolling(Period.weeks(3))
+      .unlimitedRenewals()
+      .renewFromSystemDate();
+
+    useLoanPolicyAsFallback(
+      loanPoliciesFixture.create(dueDateLimitedPolicy).getId(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
+      noticePoliciesFixture.activeNotice().getId()
+    );
+  }
+
+  private void loanPolicyWithFixedProfileAndRenewingIsForbiddenWhenHoldIsPending()
+    throws InterruptedException, MalformedURLException, TimeoutException, ExecutionException {
+    LocalDate now = LocalDate.now();
+    FixedDueDateSchedulesBuilder fixedDueDateSchedules = new FixedDueDateSchedulesBuilder()
+      .withName("1 month - Fixed Due Date Schedule")
+      .addSchedule(wholeMonth(now.getYear(), now.getMonthValue()));
+
+    LoanPolicyBuilder dueDateLimitedPolicy = new LoanPolicyBuilder()
+      .withName("Fixed Due Date Policy")
+      .fixed(loanPoliciesFixture.createSchedule(fixedDueDateSchedules).getId())
+      .renewFromSystemDate();
+
+    useLoanPolicyAsFallback(
+      loanPoliciesFixture.create(dueDateLimitedPolicy).getId(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
+      noticePoliciesFixture.activeNotice().getId()
+    );
   }
 }

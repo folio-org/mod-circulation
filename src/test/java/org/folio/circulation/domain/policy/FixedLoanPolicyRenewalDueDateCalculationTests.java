@@ -96,7 +96,8 @@ public class FixedLoanPolicyRenewalDueDateCalculationTests {
     DateTime renewalDate = new DateTime(2019, 1, 1, 8, 10, 45, DateTimeZone.UTC);
 
     String requestId = UUID.randomUUID().toString();
-    RequestQueue requestQueue = creteRequestQueue(requestId, RequestType.HOLD);
+    RequestQueue requestQueue =  new RequestQueue(Collections.emptyList());
+
 
     final Result<Loan> result = loanPolicy.renew(loan, renewalDate, requestQueue);
 
