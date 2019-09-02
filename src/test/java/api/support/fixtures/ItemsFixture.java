@@ -88,6 +88,7 @@ public class ItemsFixture {
       .forHolding(holdingsId)
       .available()
       .withTemporaryLocation(locationId)
+      .withMaterialType(materialTypesFixture.videoRecording().getId())
       .create();
 
     return itemsClient.create(item1);
