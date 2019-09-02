@@ -955,6 +955,7 @@ public class CheckOutByBarcodeTests extends APITests {
       new LoanPolicyBuilder()
         .withName("Not Loanable Policy")
         .withLoanable(false));
+
     useLoanPolicyAsFallback(
       notLoanablePolicy.getId(),
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
