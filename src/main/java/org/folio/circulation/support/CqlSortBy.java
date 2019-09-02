@@ -9,30 +9,30 @@ import org.apache.commons.lang3.StringUtils;
 
 public class CqlSortBy {
 
-  private final List<CqlOrder> orders;
+  private final List<CqlSortClause> orders;
 
-  private CqlSortBy(List<CqlOrder> orders) {
+  private CqlSortBy(List<CqlSortClause> orders) {
     this.orders = orders;
   }
 
-  public static CqlSortBy sortBy(CqlOrder... orders) {
+  public static CqlSortBy sortBy(CqlSortClause... orders) {
     return CqlSortBy.sortBy(Arrays.asList(orders));
   }
 
-  public static CqlSortBy sortBy(List<CqlOrder> orders) {
+  public static CqlSortBy sortBy(List<CqlSortClause> orders) {
     return new CqlSortBy(orders);
   }
 
   public static CqlSortBy ascending(String index) {
-    return CqlSortBy.sortBy(CqlOrder.asc(index));
+    return CqlSortBy.sortBy(CqlSortClause.ascending(index));
   }
 
   public static CqlSortBy descending(String index) {
-    return CqlSortBy.sortBy(CqlOrder.desc(index));
+    return CqlSortBy.sortBy(CqlSortClause.descending(index));
   }
 
   public static CqlSortBy none() {
-    return CqlSortBy.sortBy(Collections.emptyList());
+    return new CqlSortBy(Collections.emptyList());
   }
 
   public String applyTo(String query) {
@@ -40,7 +40,7 @@ public class CqlSortBy {
       return query;
     }
     String sortBy = orders.stream()
-      .map(CqlOrder::asText)
+      .map(CqlSortClause::asText)
       .collect(Collectors.joining(
         StringUtils.SPACE, " sortBy ", StringUtils.EMPTY));
     return query.concat(sortBy);

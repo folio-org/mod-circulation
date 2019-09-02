@@ -19,7 +19,7 @@ import org.folio.circulation.domain.notice.schedule.ScheduledNoticeGroupDefiniti
 import org.folio.circulation.domain.notice.schedule.ScheduledNoticesRepository;
 import org.folio.circulation.domain.notice.schedule.TriggeringEvent;
 import org.folio.circulation.support.Clients;
-import org.folio.circulation.support.CqlOrder;
+import org.folio.circulation.support.CqlSortClause;
 import org.folio.circulation.support.CqlSortBy;
 import org.folio.circulation.support.Result;
 import org.joda.time.DateTime;
@@ -39,16 +39,16 @@ public class DueDateNotRealTimeScheduledNoticeProcessingResource extends Schedul
   protected CompletableFuture<Result<MultipleRecords<ScheduledNotice>>> findNoticesToSend(
     ScheduledNoticesRepository scheduledNoticesRepository, int limit) {
 
-    List<CqlOrder> cqlOrders = Stream.of(
+    List<CqlSortClause> cqlSortClauses = Stream.of(
       "recipientUserId", "noticeConfig.templateId",
       "triggeringEvent", "noticeConfig.format",
       "noticeConfig.timing")
-      .map(CqlOrder::asc).collect(Collectors.toList());
+      .map(CqlSortClause::ascending).collect(Collectors.toList());
 
     DateTime timeLimit = LocalDate.now().toDateTime(LocalTime.MIDNIGHT);
     return scheduledNoticesRepository.findNotices(timeLimit, false,
       Collections.singletonList(TriggeringEvent.DUE_DATE),
-      CqlSortBy.sortBy(cqlOrders), limit);
+      CqlSortBy.sortBy(cqlSortClauses), limit);
   }
 
   @Override

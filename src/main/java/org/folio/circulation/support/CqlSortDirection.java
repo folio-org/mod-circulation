@@ -2,7 +2,7 @@ package org.folio.circulation.support;
 
 public enum CqlSortDirection {
 
-  ASC("sort.ascending"), DESC("sort.descending");
+  ASCENDING("sort.ascending"), DESCENDING("sort.descending");
 
   private String representation;
 

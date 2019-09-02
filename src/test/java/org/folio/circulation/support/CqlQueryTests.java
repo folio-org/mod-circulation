@@ -1,10 +1,9 @@
 package org.folio.circulation.support;
 
-import static org.folio.circulation.support.CqlOrder.asc;
-import static org.folio.circulation.support.CqlOrder.desc;
-import static org.folio.circulation.support.CqlQuery.*;
 import static org.folio.circulation.support.CqlQuery.exactMatch;
 import static org.folio.circulation.support.CqlQuery.exactMatchAny;
+import static org.folio.circulation.support.CqlQuery.greaterThan;
+import static org.folio.circulation.support.CqlQuery.lessThan;
 import static org.folio.circulation.support.CqlSortBy.ascending;
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.is;
@@ -20,7 +19,7 @@ public class CqlQueryTests {
   @Test
   public void queryIsUrlEncoded() {
     final Result<CqlQuery> query = exactMatch("barcode", "  12345  ")
-      .map(q -> q.sortBy(CqlSortBy.ascending("barcode")));
+      .map(q -> q.sortBy(ascending("barcode")));
 
     final Result<String> encodedQueryResult = query.next(CqlQuery::encode);
 
@@ -110,7 +109,9 @@ public class CqlQueryTests {
   @Test
   public void canSortByMultipleIndexes() {
     Result<CqlQuery> query = exactMatch("barcode", "12345")
-      .map(cqlQuery -> cqlQuery.sortBy(CqlSortBy.sortBy(asc("position"), desc("lastTime"))));
+      .map(cqlQuery -> cqlQuery.sortBy(CqlSortBy.sortBy(
+        CqlSortClause.ascending("position"),
+        CqlSortClause.descending("lastTime"))));
 
     assertThat(query.value().asText(),
       is("barcode==\"12345\" sortBy position/sort.ascending lastTime/sort.descending"));
