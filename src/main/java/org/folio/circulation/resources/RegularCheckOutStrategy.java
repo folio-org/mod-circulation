@@ -6,6 +6,8 @@ import static org.folio.circulation.support.Result.failed;
 import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.domain.Loan;
@@ -41,10 +43,16 @@ public class RegularCheckOutStrategy implements CheckOutStrategy {
 
   private Result<LoanAndRelatedRecords> refuseWhenItemIsNotLoanable(LoanAndRelatedRecords relatedRecords) {
     final Loan loan = relatedRecords.getLoan();
+    final LoanPolicy loanPolicy = loan.getLoanPolicy();
 
-    if (loan.getLoanPolicy().isNotLoanable()) {
+    if (loanPolicy.isNotLoanable()) {
       String itemBarcode = loan.getItem().getBarcode();
-      return failed(singleValidationError("Item is not loanable", ITEM_BARCODE, itemBarcode));
+
+      Map<String, String> parameters = new HashMap<>();
+      parameters.put(ITEM_BARCODE, itemBarcode);
+      return failed(singleValidationError(
+        loanPolicy.loanPolicyValidationError(
+          "Item is not loanable", parameters)));
     }
     return succeeded(relatedRecords);
   }
