@@ -16,7 +16,6 @@ import org.folio.circulation.domain.policy.LoanPolicy;
 import org.folio.circulation.domain.policy.library.ClosedLibraryStrategyService;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.Result;
-import org.folio.circulation.support.http.server.ValidationError;
 import org.joda.time.DateTime;
 
 import io.vertx.core.json.JsonObject;
@@ -51,10 +50,9 @@ public class RegularCheckOutStrategy implements CheckOutStrategy {
 
       Map<String, String> parameters = new HashMap<>();
       parameters.put(ITEM_BARCODE, itemBarcode);
-      parameters.put("loanPolicyId", loanPolicy.getId());
-      parameters.put("loanPolicyName", loanPolicy.getName());
       return failed(singleValidationError(
-        new ValidationError("Item is not loanable", parameters)));
+        loanPolicy.loanPolicyValidationError(
+          "Item is not loanable", parameters)));
     }
     return succeeded(relatedRecords);
   }
