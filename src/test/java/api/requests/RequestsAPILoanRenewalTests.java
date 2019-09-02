@@ -50,7 +50,8 @@ public class RequestsAPILoanRenewalTests extends APITests {
   }
 
   @Test
-  public void allowRenewalLoanByBarcodeWhenFirstRequestInQueueIsHold() throws InterruptedException, MalformedURLException, TimeoutException, ExecutionException {
+  public void allowRenewalLoanByBarcodeWhenFirstRequestInQueueIsHoldAndRenewingIsAllowedInLoanPolicy()
+    throws InterruptedException, MalformedURLException, TimeoutException, ExecutionException {
 
     final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource rebecca = usersFixture.rebecca();
@@ -88,7 +89,8 @@ public class RequestsAPILoanRenewalTests extends APITests {
   }
 
   @Test
-  public void allowRenewalLoanByIdWhenFirstRequestInQueueIsHold() throws InterruptedException, MalformedURLException, TimeoutException, ExecutionException {
+  public void allowRenewalLoanByIdWhenFirstRequestInQueueIsHoldAndRenewingIsAllowedInLoanPolicy()
+    throws InterruptedException, MalformedURLException, TimeoutException, ExecutionException {
 
     final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource rebecca = usersFixture.rebecca();

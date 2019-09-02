@@ -362,8 +362,7 @@ public class RollingLoanPolicyRenewalDueDateCalculationTests {
 
     Loan loan = loanFor(loanDate);
 
-    String requestId = UUID.randomUUID().toString();
-    RequestQueue requestQueue = creteRequestQueue(requestId, RequestType.HOLD);
+    RequestQueue requestQueue = new RequestQueue(Collections.emptyList());
 
     final Result<Loan> result = loanPolicy.renew(loan, DateTime.now(),requestQueue);
 
