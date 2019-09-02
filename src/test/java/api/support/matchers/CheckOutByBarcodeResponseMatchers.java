@@ -1,6 +1,7 @@
 package api.support.matchers;
 
 import static api.support.matchers.ValidationErrorMatchers.hasParameter;
+import static org.hamcrest.CoreMatchers.allOf;
 
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.server.ValidationError;
@@ -21,5 +22,12 @@ public class CheckOutByBarcodeResponseMatchers {
 
   public static Matcher<ValidationError> hasServicePointParameter(String servicePoint) {
     return hasParameter("checkoutServicePointId", servicePoint);
+  }
+
+  public static Matcher<ValidationError> hasLoanPolicyParameters(IndividualResource loanPolicy) {
+    return allOf(
+      hasParameter("loanPolicyId", loanPolicy.getId().toString()),
+      hasParameter("loanPolicyName", loanPolicy.getJson().getString("name"))
+    );
   }
 }
