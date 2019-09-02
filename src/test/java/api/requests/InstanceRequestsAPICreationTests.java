@@ -650,10 +650,11 @@ public class InstanceRequestsAPICreationTests extends APITests {
 
     IndividualResource mainFloor = locationsFixture.mainFloor();
     IndividualResource secondFloor = locationsFixture.secondFloorEconomics();
+    IndividualResource thirdFloor = locationsFixture.thirdFloor();
 
     final IndividualResource item1 = itemsFixture.basedUponDunkirkWithCustomHoldingAndLocation(holdings.getId(), secondFloor.getId());
     final IndividualResource item2 = itemsFixture.basedUponDunkirkWithCustomHoldingAndLocation(holdings.getId(), mainFloor.getId());
-    final IndividualResource item3 = itemsFixture.basedUponDunkirkWithCustomHoldingAndLocation(holdings.getId(), secondFloor.getId());
+    final IndividualResource item3 = itemsFixture.basedUponDunkirkWithCustomHoldingAndLocation(holdings.getId(), thirdFloor.getId());
 
     //All of these items are checked out, have the same queue length, and due dates
     DateTime sameCheckoutDate = DateTime.now();
