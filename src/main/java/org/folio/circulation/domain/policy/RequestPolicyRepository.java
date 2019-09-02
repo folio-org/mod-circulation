@@ -17,8 +17,10 @@ import org.folio.circulation.domain.User;
 import org.folio.circulation.support.CirculationRulesClient;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
+import org.folio.circulation.support.FetchSingleRecord;
 import org.folio.circulation.support.ForwardOnFailure;
 import org.folio.circulation.support.Result;
+import org.folio.circulation.support.ServerErrorFailure;
 import org.folio.circulation.support.SingleRecordFetcher;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.client.ResponseHandler;
@@ -53,7 +55,13 @@ public class RequestPolicyRepository {
     Item item,
     User user) {
 
-    return lookupRequestPolicyId(item, user)
+
+    return FetchSingleRecord.<Location>forRecord("location")
+      .using(locationsStorageClient)
+      .mapTo(Location::from)
+      .whenNotFound(failed(new ServerErrorFailure("Can`t found location")))
+      .fetch(item.getLocationId())
+      .thenCompose(r -> r.after(location -> lookupRequestPolicyId(item, user, location)))
       .thenComposeAsync(r -> r.after(this::lookupRequestPolicy))
       .thenApply(result -> result.map(RequestPolicy::from));
   }
@@ -69,7 +77,8 @@ public class RequestPolicyRepository {
 
   private CompletableFuture<Result<String>> lookupRequestPolicyId(
     Item item,
-    User user) {
+    User user,
+    Location location) {
 
     CompletableFuture<Result<String>> findRequestPolicyCompleted
       = new CompletableFuture<>();
@@ -90,14 +99,10 @@ public class RequestPolicyRepository {
       "Applying request rules for material type: {}, patron group: {}, loan type: {}, location: {}",
       materialTypeId, patronGroupId, loanTypeId, locationId);
 
-    locationsStorageClient.get(locationId)
-      .thenAccept(r -> {
-        Location location = Location.from(r.getJson());
-        circulationRequestRulesClient.applyRules(loanTypeId, locationId,
-          materialTypeId, patronGroupId,
-          location.getInstitutionId(),
-          ResponseHandler.any(circulationRulesResponse));
-      });
+    circulationRequestRulesClient.applyRules(loanTypeId, locationId,
+      materialTypeId, patronGroupId,
+      location.getInstitutionId(),
+      ResponseHandler.any(circulationRulesResponse));
 
     circulationRulesResponse.thenAcceptAsync(response -> {
       if (response.getStatusCode() == 404) {

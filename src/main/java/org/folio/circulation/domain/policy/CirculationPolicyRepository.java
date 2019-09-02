@@ -15,8 +15,10 @@ import org.folio.circulation.domain.Location;
 import org.folio.circulation.domain.User;
 import org.folio.circulation.support.CirculationRulesClient;
 import org.folio.circulation.support.CollectionResourceClient;
+import org.folio.circulation.support.FetchSingleRecord;
 import org.folio.circulation.support.ForwardOnFailure;
 import org.folio.circulation.support.Result;
+import org.folio.circulation.support.ServerErrorFailure;
 import org.folio.circulation.support.SingleRecordFetcher;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.client.ResponseHandler;
@@ -53,7 +55,12 @@ public abstract class CirculationPolicyRepository<T> {
     Item item,
     User user) {
 
-    return lookupPolicyId(item, user)
+    return FetchSingleRecord.<Location>forRecord("location")
+      .using(locationsStorageClient)
+      .mapTo(Location::from)
+      .whenNotFound(failed(new ServerErrorFailure("Can`t found location")))
+      .fetch(item.getLocationId())
+      .thenCompose(r -> r.after(location -> lookupPolicyId(item, user, location)))
       .thenComposeAsync(r -> r.after(this::lookupPolicy))
       .thenApply(result -> result.next(this::mapToPolicy));
   }
@@ -74,7 +81,7 @@ public abstract class CirculationPolicyRepository<T> {
       .fetch(policyId);
   }
 
-  private CompletableFuture<Result<String>> lookupPolicyId(Item item, User user) {
+  private CompletableFuture<Result<String>> lookupPolicyId(Item item, User user, Location location) {
     CompletableFuture<Result<String>> findLoanPolicyCompleted = new CompletableFuture<>();
 
     if (item.isNotFound()) {
@@ -99,14 +106,8 @@ public abstract class CirculationPolicyRepository<T> {
       materialTypeId, patronGroupId, loanTypeId, locationId);
 
 
-    locationsStorageClient.get(locationId)
-      .thenAccept(r -> {
-        Location location = Location.from(r.getJson());
-        circulationRulesClient.applyRules(loanTypeId, locationId,
-          materialTypeId, patronGroupId,
-          location.getInstitutionId(),
-          ResponseHandler.any(circulationRulesResponse));
-      });
+    circulationRulesClient.applyRules(loanTypeId, locationId, materialTypeId,
+      patronGroupId, location.getInstitutionId(), ResponseHandler.any(circulationRulesResponse));
 
     circulationRulesResponse.thenAcceptAsync(response -> {
       if (response.getStatusCode() == 404) {
