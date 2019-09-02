@@ -1,6 +1,7 @@
 package api.requests;
 
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.not;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 
 import java.net.MalformedURLException;
@@ -18,33 +19,6 @@ import io.vertx.core.json.JsonObject;
 
 public class RequestsAPILoanHistoryTests extends APITests {
   @Test
-  public void creatingHoldRequestChangesTheOpenLoanForTheSameItem()
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException,
-    MalformedURLException {
-
-    final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
-    final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
-
-    UUID loanId = loansFixture.checkOutByBarcode(smallAngryPlanet).getId();
-
-    requestsClient.create(new RequestBuilder()
-      .hold()
-      .forItem(smallAngryPlanet)
-      .withPickupServicePointId(pickupServicePointId)
-      .withRequesterId(usersFixture.charlotte().getId()));
-
-    JsonObject loanFromStorage = loansStorageClient.getById(loanId).getJson();
-
-    assertThat("action snapshot in storage is not hold requested",
-      loanFromStorage.getString("action"), is("holdrequested"));
-
-    assertThat("item status snapshot in storage is not checked out",
-      loanFromStorage.getString("itemStatus"), is("Checked out"));
-  }
-
-  @Test
   public void creatingRecallRequestChangesTheOpenLoanForTheSameItem()
     throws InterruptedException,
     ExecutionException,
@@ -54,7 +28,8 @@ public class RequestsAPILoanHistoryTests extends APITests {
     final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
-    UUID loanId = loansFixture.checkOutByBarcode(smallAngryPlanet).getId();
+    IndividualResource originalLoan = loansFixture.checkOutByBarcode(smallAngryPlanet);
+    UUID loanId = originalLoan.getId();
 
     requestsClient.create(new RequestBuilder()
       .recall()
@@ -66,6 +41,13 @@ public class RequestsAPILoanHistoryTests extends APITests {
 
     assertThat("item status snapshot in storage is not checked out",
       loanFromStorage.getString("itemStatus"), is("Checked out"));
+
+    // Verify that loan update was executed only once - to update loan dueDate
+    // So we will have correct loan history
+    assertThat("Due date was not updated", loanFromStorage.getInstant("dueDate"),
+      is(not(originalLoan.getJson().getInstant("dueDate"))));
+    assertThat("Action was updated but not expected", loanFromStorage.getString("action"),
+      is("checkedout"));
   }
 
   @Test
