@@ -11,7 +11,7 @@ import org.joda.time.DateTimeUtils;
 public class ScheduledNoticeProcessingClient {
 
   public void runDueDateNoticesProcessing(DateTime mockSystemTime) {
-    wrapWithTimeMocking(this::runDueDateNoticesProcessing, mockSystemTime);
+    runWithFrozenTime(this::runDueDateNoticesProcessing, mockSystemTime);
   }
 
   public void runDueDateNoticesProcessing() {
@@ -20,7 +20,7 @@ public class ScheduledNoticeProcessingClient {
   }
 
   public void runDueDateNotRealTimeNoticesProcessing(DateTime mockSystemTime) {
-    wrapWithTimeMocking(this::runDueDateNotRealTimeNoticesProcessing, mockSystemTime);
+    runWithFrozenTime(this::runDueDateNotRealTimeNoticesProcessing, mockSystemTime);
   }
 
   public void runDueDateNotRealTimeNoticesProcessing() {
@@ -29,7 +29,7 @@ public class ScheduledNoticeProcessingClient {
   }
 
   public void runRequestNoticesProcessing(DateTime mockSystemTime) {
-    wrapWithTimeMocking(this::runRequestNoticesProcessing, mockSystemTime);
+    runWithFrozenTime(this::runRequestNoticesProcessing, mockSystemTime);
   }
 
   public void runRequestNoticesProcessing() {
@@ -37,7 +37,7 @@ public class ScheduledNoticeProcessingClient {
     manuallyStartTimedTask(url, 204, "request-scheduled-notices-processing-request");
   }
 
-  private void wrapWithTimeMocking(Runnable runnable, DateTime mockSystemTime) {
+  private void runWithFrozenTime(Runnable runnable, DateTime mockSystemTime) {
     try {
       DateTimeUtils.setCurrentMillisFixed(mockSystemTime.getMillis());
       runnable.run();
