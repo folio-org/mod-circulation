@@ -305,7 +305,8 @@ public abstract class AbstractCirculationRulesEngineResource extends Resource {
         invalidUuid(request, ITEM_TYPE_ID_NAME) ||
         invalidUuid(request, LOAN_TYPE_ID_NAME) ||
         invalidUuid(request, PATRON_TYPE_ID_NAME) ||
-        invalidUuid(request, LOCATION_ID_NAME);
+        invalidUuid(request, LOCATION_ID_NAME)  ||
+        invalidUuid(request, INSTITUTION_ID_NAME);
   }
 
   protected abstract String getPolicyId(MultiMap params, Drools drools);

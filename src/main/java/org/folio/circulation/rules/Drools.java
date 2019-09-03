@@ -48,8 +48,8 @@ public class Drools {
     String itemTypeId = params.get(ITEM_TYPE_ID_NAME);
     String loanTypeId = params.get(LOAN_TYPE_ID_NAME);
     String patronGroupId = params.get(PATRON_TYPE_ID_NAME);
-    String shelvingLocationId = params.get(LOCATION_ID_NAME);
-    String institutionLocationId = params.get(INSTITUTION_ID_NAME);
+    String locationId = params.get(LOCATION_ID_NAME);
+    String institutionId = params.get(INSTITUTION_ID_NAME);
 
     KieSession kieSession = kieContainer.newKieSession();
     match.loanPolicyId = null;
@@ -57,8 +57,8 @@ public class Drools {
     kieSession.insert(new ItemType(itemTypeId));
     kieSession.insert(new LoanType(loanTypeId));
     kieSession.insert(new PatronGroup(patronGroupId));
-    kieSession.insert(new Location(shelvingLocationId));
-    kieSession.insert(new Institution(institutionLocationId));
+    kieSession.insert(new Location(locationId));
+    kieSession.insert(new Institution(institutionId));
     kieSession.insert(new Campus(""));
     kieSession.insert(new Library(""));
     return kieSession;
