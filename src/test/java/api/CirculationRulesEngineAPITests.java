@@ -373,7 +373,8 @@ public class CirculationRulesEngineAPITests extends APITests {
         + "?item_type_id="         + m2
         + "&loan_type_id="         + t2
         + "&patron_type_id="       + g2
-        + "&location_id=" + s2
+        + "&location_id="          + s2
+        + "&institution_id="       + i2
         );
     client.get(url, ResponseHandler.any(completed));
     Response response = completed.get(10, TimeUnit.SECONDS);
@@ -408,7 +409,8 @@ public class CirculationRulesEngineAPITests extends APITests {
         + "?item_type_id="         + m2
         + "&loan_type_id="         + t2
         + "&patron_type_id="       + g2
-        + "&location_id=" + s2
+        + "&location_id="          + s2
+        + "&institution_id="       + i2
         );
     client.get(url, ResponseHandler.any(completed));
     Response response = completed.get(10, TimeUnit.SECONDS);
@@ -433,7 +435,8 @@ public class CirculationRulesEngineAPITests extends APITests {
         + "?item_type_id="         + m2
         + "&loan_type_id="         + t2
         + "&patron_type_id="       + g2
-        + "&location_id=" + s2
+        + "&location_id="          + s2
+        + "&institution_id="       + i2
     );
 
     client.get(url, ResponseHandler.any(completed));
