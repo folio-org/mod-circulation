@@ -81,6 +81,18 @@ public class LocationsFixture {
     return locationRecordCreator.createIfAbsent(
       locationExamples.thirdFloor());
   }
+  public IndividualResource fourthServicePoint()
+
+      throws InterruptedException,
+      MalformedURLException,
+      TimeoutException,
+      ExecutionException {
+
+    final LocationExamples locationExamples = getLocationExamplesForCd4();
+
+    return locationRecordCreator.createIfAbsent(
+        locationExamples.secondFloorEconomics());
+  }
 
   public IndividualResource secondFloorEconomics()
     throws InterruptedException,
@@ -137,6 +149,22 @@ public class LocationsFixture {
       servicePointsFixture.cd1().getId(),
       null,
       null);
+  }
+
+  private LocationExamples getLocationExamplesForCd4()
+      throws InterruptedException,
+      MalformedURLException,
+      TimeoutException,
+      ExecutionException {
+
+    return new LocationExamples(
+        nottinghamUniversity().getId(),
+        jubileeCampus().getId(),
+        businessLibrary().getId(),
+        djanoglyLibrary().getId(),
+        servicePointsFixture.cd4().getId(),
+        null,
+        null);
   }
 
   private LocationExamples getLocationMultiServicePointsExamples()

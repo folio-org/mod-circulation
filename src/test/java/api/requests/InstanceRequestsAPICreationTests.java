@@ -649,12 +649,12 @@ public class InstanceRequestsAPICreationTests extends APITests {
     IndividualResource holdings = holdingsFixture.defaultWithHoldings(instanceMultipleCopies.getId());
 
     IndividualResource mainFloor = locationsFixture.mainFloor();
-    IndividualResource secondFloor = locationsFixture.secondFloorEconomics();
-    IndividualResource thirdFloor = locationsFixture.thirdFloor();
+    IndividualResource cd4Location = locationsFixture.fourthServicePoint();
 
-    final IndividualResource item1 = itemsFixture.basedUponDunkirkWithCustomHoldingAndLocation(holdings.getId(), secondFloor.getId());
+    //mainfloor - is the location of CD1, others - no
+    final IndividualResource item1 = itemsFixture.basedUponDunkirkWithCustomHoldingAndLocation(holdings.getId(), cd4Location.getId());
     final IndividualResource item2 = itemsFixture.basedUponDunkirkWithCustomHoldingAndLocation(holdings.getId(), mainFloor.getId());
-    final IndividualResource item3 = itemsFixture.basedUponDunkirkWithCustomHoldingAndLocation(holdings.getId(), thirdFloor.getId());
+    final IndividualResource item3 = itemsFixture.basedUponDunkirkWithCustomHoldingAndLocation(holdings.getId(), cd4Location.getId());
 
     //All of these items are checked out, have the same queue length, and due dates
     DateTime sameCheckoutDate = DateTime.now();
@@ -678,6 +678,7 @@ public class InstanceRequestsAPICreationTests extends APITests {
     Response postResponse = postCompleted.get(REQUEST_TIMEOUT, TimeUnit.SECONDS);
 
     JsonObject representation = postResponse.getJson();
+    //mainfloor - is the location of CD1, others - no
     validateInstanceRequestResponse(representation,
       pickupServicePointId,
       instanceMultipleCopies.getId(),
