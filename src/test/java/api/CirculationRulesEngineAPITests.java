@@ -39,7 +39,7 @@ public class CirculationRulesEngineAPITests extends APITests {
   }
 
   private Policy applyLoanPolicy(ItemType itemType, LoanType loanType,
-      PatronGroup patronGroup, Location shelvingLocation, Institution institution) {
+      PatronGroup patronGroup, Location location, Institution institution) {
     try {
       CompletableFuture<Response> completed = new CompletableFuture<>();
       URL url = circulationRulesUrl(
@@ -47,8 +47,8 @@ public class CirculationRulesEngineAPITests extends APITests {
           + "?item_type_id="         + itemType.id
           + "&loan_type_id="         + loanType.id
           + "&patron_type_id="       + patronGroup.id
-          + "&shelving_location_id=" + shelvingLocation.id
-          + "&institution_location_id=" + institution.id
+          + "&location_id="          + location.id
+          + "&institution_id="       + institution.id
           );
       client.get(url, ResponseHandler.any(completed));
       Response response = completed.get(10, TimeUnit.SECONDS);
@@ -63,7 +63,7 @@ public class CirculationRulesEngineAPITests extends APITests {
   }
 
   private Policy applyRequestPolicy(ItemType itemType, String requestType,
-      PatronGroup patronGroup, Location shelvingLocation, Institution institution) {
+      PatronGroup patronGroup, Location location, Institution institution) {
     try {
       CompletableFuture<Response> completed = new CompletableFuture<>();
       URL url = circulationRulesUrl(
@@ -71,8 +71,8 @@ public class CirculationRulesEngineAPITests extends APITests {
           + "?item_type_id="         + itemType.id
           + "&loan_type_id="         + requestType
           + "&patron_type_id="       + patronGroup.id
-          + "&shelving_location_id=" + shelvingLocation.id
-          + "&institution_location_id=" + institution.id
+          + "&location_id="          + location.id
+          + "&institution_id="       + institution.id
           );
       client.get(url, ResponseHandler.any(completed));
       Response response = completed.get(10, TimeUnit.SECONDS);
@@ -87,7 +87,7 @@ public class CirculationRulesEngineAPITests extends APITests {
   }
 
   private Policy applyNoticePolicy(ItemType itemType, String noticeType,
-          PatronGroup patronGroup, Location shelvingLocation, Institution institution) {
+          PatronGroup patronGroup, Location location, Institution institution) {
         try {
           CompletableFuture<Response> completed = new CompletableFuture<>();
           URL url = circulationRulesUrl(
@@ -95,8 +95,8 @@ public class CirculationRulesEngineAPITests extends APITests {
               + "?item_type_id="         + itemType.id
               + "&loan_type_id="         + noticeType
               + "&patron_type_id="       + patronGroup.id
-              + "&shelving_location_id=" + shelvingLocation.id
-              + "&institution_location_id=" + institution.id
+              + "&location_id="          + location.id
+              + "&institution_id="       + institution.id
               );
           client.get(url, ResponseHandler.any(completed));
           Response response = completed.get(10, TimeUnit.SECONDS);
@@ -229,7 +229,7 @@ public class CirculationRulesEngineAPITests extends APITests {
         "item_type_id=" + m1,
         "loan_type_id=" + t1,
         "patron_type_id=" + lp1,
-        "shelving_location_id=" + s1
+        "location_id=" + s1
     };
 
     applyOneLoanParameterMissing(p[1], p[2], p[3],  p[0]);
@@ -244,7 +244,7 @@ public class CirculationRulesEngineAPITests extends APITests {
         "item_type_id=" + m1,
         "loan_type_id=" + t1,
         "patron_type_id=" + lp1,
-        "shelving_location_id=" + s1
+        "location_id=" + s1
     };
 
     applyOneRequestParameterMissing(p[1], p[2], p[3],  p[0]);
@@ -259,7 +259,7 @@ public class CirculationRulesEngineAPITests extends APITests {
         "item_type_id=" + m1,
         "loan_type_id=" + t1,
         "patron_type_id=" + lp1,
-        "shelving_location_id=" + s1
+        "location_id=" + s1
     };
 
     applyOneNoticeParameterMissing(p[1], p[2], p[3],  p[0]);
@@ -274,7 +274,7 @@ public class CirculationRulesEngineAPITests extends APITests {
         + "?item_type_id=" + i
         + "&loan_type_id=" + l
         + "&patron_type_id=" + p
-        + "&shelving_location_id=" + s);
+        + "&location_id=" + s);
     client.get(url, ResponseHandler.any(completed));
     Response response;
     try {
@@ -373,7 +373,7 @@ public class CirculationRulesEngineAPITests extends APITests {
         + "?item_type_id="         + m2
         + "&loan_type_id="         + t2
         + "&patron_type_id="       + g2
-        + "&shelving_location_id=" + s2
+        + "&location_id=" + s2
         );
     client.get(url, ResponseHandler.any(completed));
     Response response = completed.get(10, TimeUnit.SECONDS);
@@ -408,7 +408,7 @@ public class CirculationRulesEngineAPITests extends APITests {
         + "?item_type_id="         + m2
         + "&loan_type_id="         + t2
         + "&patron_type_id="       + g2
-        + "&shelving_location_id=" + s2
+        + "&location_id=" + s2
         );
     client.get(url, ResponseHandler.any(completed));
     Response response = completed.get(10, TimeUnit.SECONDS);
@@ -433,7 +433,7 @@ public class CirculationRulesEngineAPITests extends APITests {
         + "?item_type_id="         + m2
         + "&loan_type_id="         + t2
         + "&patron_type_id="       + g2
-        + "&shelving_location_id=" + s2
+        + "&location_id=" + s2
     );
 
     client.get(url, ResponseHandler.any(completed));

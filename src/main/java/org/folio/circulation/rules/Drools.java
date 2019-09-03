@@ -1,10 +1,10 @@
 package org.folio.circulation.rules;
 
-import static org.folio.circulation.resources.AbstractCirculationRulesEngineResource.INSTITUTION_LOCATION_ID_NAME;
+import static org.folio.circulation.resources.AbstractCirculationRulesEngineResource.INSTITUTION_ID_NAME;
 import static org.folio.circulation.resources.AbstractCirculationRulesEngineResource.ITEM_TYPE_ID_NAME;
 import static org.folio.circulation.resources.AbstractCirculationRulesEngineResource.LOAN_TYPE_ID_NAME;
 import static org.folio.circulation.resources.AbstractCirculationRulesEngineResource.PATRON_TYPE_ID_NAME;
-import static org.folio.circulation.resources.AbstractCirculationRulesEngineResource.SHELVING_LOCATION_ID_NAME;
+import static org.folio.circulation.resources.AbstractCirculationRulesEngineResource.LOCATION_ID_NAME;
 import static org.folio.circulation.support.JsonPropertyWriter.write;
 
 import org.kie.api.KieServices;
@@ -48,8 +48,8 @@ public class Drools {
     String itemTypeId = params.get(ITEM_TYPE_ID_NAME);
     String loanTypeId = params.get(LOAN_TYPE_ID_NAME);
     String patronGroupId = params.get(PATRON_TYPE_ID_NAME);
-    String shelvingLocationId = params.get(SHELVING_LOCATION_ID_NAME);
-    String institutionLocationId = params.get(INSTITUTION_LOCATION_ID_NAME);
+    String shelvingLocationId = params.get(LOCATION_ID_NAME);
+    String institutionLocationId = params.get(INSTITUTION_ID_NAME);
 
     KieSession kieSession = kieContainer.newKieSession();
     match.loanPolicyId = null;

@@ -301,8 +301,8 @@ public abstract class APITests {
     CompletableFuture<Response> completed = new CompletableFuture<>();
 
     client.get(InterfaceUrls.circulationRulesUrl("/loan-policy"
-        + String.format("?item_type_id=%s&loan_type_id=%s&patron_type_id=%s&shelving_location_id=%s",
-      UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID())),
+        + String.format("?item_type_id=%s&loan_type_id=%s&patron_type_id=%s&location_id=%s&institution_id=%s",
+      UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID())),
       ResponseHandler.any(completed));
 
     Response response = completed.get(5, TimeUnit.SECONDS);

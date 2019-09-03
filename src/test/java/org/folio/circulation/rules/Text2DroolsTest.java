@@ -3,7 +3,7 @@ package org.folio.circulation.rules;
 import static org.folio.circulation.resources.AbstractCirculationRulesEngineResource.ITEM_TYPE_ID_NAME;
 import static org.folio.circulation.resources.AbstractCirculationRulesEngineResource.LOAN_TYPE_ID_NAME;
 import static org.folio.circulation.resources.AbstractCirculationRulesEngineResource.PATRON_TYPE_ID_NAME;
-import static org.folio.circulation.resources.AbstractCirculationRulesEngineResource.SHELVING_LOCATION_ID_NAME;
+import static org.folio.circulation.resources.AbstractCirculationRulesEngineResource.LOCATION_ID_NAME;
 import static org.folio.circulation.rules.CirculationRulesExceptionMatcher.matches;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
@@ -500,7 +500,7 @@ public class Text2DroolsTest {
     params.add(ITEM_TYPE_ID_NAME, itId);
     params.add(LOAN_TYPE_ID_NAME, ltId);
     params.add(PATRON_TYPE_ID_NAME, ptId);
-    params.add(SHELVING_LOCATION_ID_NAME, slId);
+    params.add(LOCATION_ID_NAME, slId);
     return params;
   }
 

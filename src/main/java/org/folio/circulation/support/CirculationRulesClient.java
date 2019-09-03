@@ -49,7 +49,7 @@ public class CirculationRulesClient {
     String patronGroup) {
 
     return String.format(
-      "item_type_id=%s&loan_type_id=%s&patron_type_id=%s&shelving_location_id=%s&institution_location_id=%s",
+      "item_type_id=%s&loan_type_id=%s&patron_type_id=%s&location_id=%s&institution_id=%s",
       materialTypeId, loanTypeId, patronGroup, locationId, institutionId);
   }
 }

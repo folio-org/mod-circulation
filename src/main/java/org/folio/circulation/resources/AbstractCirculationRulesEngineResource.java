@@ -29,16 +29,16 @@ import io.vertx.ext.web.RoutingContext;
 
 /**
  * The circulation rules engine calculates the loan policy based on
- * item type, loan type, patron type and shelving location.
+ * item type, loan type, patron type, location and institution.
  */
 public abstract class AbstractCirculationRulesEngineResource extends Resource {
   protected static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
   public static final String ITEM_TYPE_ID_NAME = "item_type_id";
   public static final String PATRON_TYPE_ID_NAME = "patron_type_id";
-  public static final String SHELVING_LOCATION_ID_NAME = "shelving_location_id";
+  public static final String LOCATION_ID_NAME = "location_id";
   public static final String LOAN_TYPE_ID_NAME = "loan_type_id";
-  public static final String INSTITUTION_LOCATION_ID_NAME = "institution_location_id";
+  public static final String INSTITUTION_ID_NAME = "institution_id";
 
   private final String applyPath;
   private final String applyAllPath;
@@ -305,7 +305,7 @@ public abstract class AbstractCirculationRulesEngineResource extends Resource {
         invalidUuid(request, ITEM_TYPE_ID_NAME) ||
         invalidUuid(request, LOAN_TYPE_ID_NAME) ||
         invalidUuid(request, PATRON_TYPE_ID_NAME) ||
-        invalidUuid(request, SHELVING_LOCATION_ID_NAME);
+        invalidUuid(request, LOCATION_ID_NAME);
   }
 
   protected abstract String getPolicyId(MultiMap params, Drools drools);

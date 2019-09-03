@@ -59,7 +59,7 @@ public class RequestPolicyRepository {
     return FetchSingleRecord.<Location>forRecord("location")
       .using(locationsStorageClient)
       .mapTo(Location::from)
-      .whenNotFound(failed(new ServerErrorFailure("Can`t found location")))
+      .whenNotFound(failed(new ServerErrorFailure("Can`t find location")))
       .fetch(item.getLocationId())
       .thenCompose(r -> r.after(location -> lookupRequestPolicyId(item, user, location)))
       .thenComposeAsync(r -> r.after(this::lookupRequestPolicy))
