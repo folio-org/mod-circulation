@@ -39,7 +39,6 @@ import org.folio.circulation.domain.RequestType;
 import org.folio.circulation.domain.ServicePointRepository;
 import org.folio.circulation.domain.UpdateItem;
 import org.folio.circulation.domain.UpdateLoan;
-import org.folio.circulation.domain.UpdateLoanActionHistory;
 import org.folio.circulation.domain.UpdateRequestQueue;
 import org.folio.circulation.domain.UpdateUponRequest;
 import org.folio.circulation.domain.UserRepository;
@@ -225,7 +224,6 @@ public class RequestByInstanceIdResource extends Resource {
     final UpdateUponRequest updateUponRequest = new UpdateUponRequest(
         new UpdateItem(clients),
         new UpdateLoan(clients, loanRepository, loanPolicyRepository),
-        new UpdateLoanActionHistory(clients),
         UpdateRequestQueue.using(clients));
 
     final CreateRequestService createRequestService = new CreateRequestService(

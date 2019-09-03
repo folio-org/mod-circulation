@@ -16,7 +16,6 @@ import org.folio.circulation.domain.RequestType;
 import org.folio.circulation.domain.ServicePointRepository;
 import org.folio.circulation.domain.UpdateItem;
 import org.folio.circulation.domain.UpdateLoan;
-import org.folio.circulation.domain.UpdateLoanActionHistory;
 import org.folio.circulation.domain.UpdateRequestQueue;
 import org.folio.circulation.domain.UpdateRequestService;
 import org.folio.circulation.domain.UpdateUponRequest;
@@ -67,7 +66,6 @@ public class RequestCollectionResource extends CollectionResource {
     final UpdateUponRequest updateUponRequest = new UpdateUponRequest(
         new UpdateItem(clients),
         new UpdateLoan(clients, loanRepository, loanPolicyRepository),
-        new UpdateLoanActionHistory(clients),
         UpdateRequestQueue.using(clients));
 
     final CreateRequestService createRequestService = new CreateRequestService(
@@ -118,7 +116,6 @@ public class RequestCollectionResource extends CollectionResource {
     final UpdateUponRequest updateUponRequest = new UpdateUponRequest(
         updateItem,
         new UpdateLoan(clients, loanRepository, loanPolicyRepository),
-        new UpdateLoanActionHistory(clients),
         updateRequestQueue);
 
     final CreateRequestService createRequestService = new CreateRequestService(
@@ -234,7 +231,6 @@ public class RequestCollectionResource extends CollectionResource {
     final UpdateUponRequest updateUponRequest = new UpdateUponRequest(
         new UpdateItem(clients),
         new UpdateLoan(clients, loanRepository, loanPolicyRepository),
-        new UpdateLoanActionHistory(clients),
         UpdateRequestQueue.using(clients));
     
     final MoveRequestProcessAdapter moveRequestProcessAdapter = 
