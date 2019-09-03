@@ -15,8 +15,8 @@ import java.util.concurrent.CompletableFuture;
 import org.folio.circulation.domain.AccountRepository;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.MultipleRecords;
-import org.folio.circulation.domain.anonymization.checks.AnonymizationCheck;
-import org.folio.circulation.domain.anonymization.checks.FeesAndFinesClosedAnonymizationCheck;
+import org.folio.circulation.domain.anonymization.checks.AnonymizationChecker;
+import org.folio.circulation.domain.anonymization.checks.FeesAndFinesClosedAnonymizationChecker;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.Result;
 
@@ -27,7 +27,7 @@ import org.folio.circulation.support.Result;
  */
 public class CheckingLoanAnonymizationService extends DefaultLoanAnonymizationService {
 
-  private static final AnonymizationCheck anonymizationCheck = new FeesAndFinesClosedAnonymizationCheck();
+  private static final AnonymizationChecker checker = new FeesAndFinesClosedAnonymizationChecker();
   private final AccountRepository accountRepository;
 
   CheckingLoanAnonymizationService(Clients clients) {
@@ -55,7 +55,7 @@ public class CheckingLoanAnonymizationService extends DefaultLoanAnonymizationSe
   }
 
   private boolean applyChecks(Loan loan) {
-    return anonymizationCheck.canBeAnonymized(loan);
+    return checker.canBeAnonymized(loan);
   }
 
 }
