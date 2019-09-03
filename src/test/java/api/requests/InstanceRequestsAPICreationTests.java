@@ -25,7 +25,6 @@ import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.LocalDate;
 import org.joda.time.format.ISODateTimeFormat;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import api.support.APITests;
@@ -636,7 +635,6 @@ public class InstanceRequestsAPICreationTests extends APITests {
   }
 
   @Test
-  @Ignore
   public void canCreateATitleLevelRequestForAnUnAvailableItemWithAMatchingPickupLocationId()
     throws InterruptedException,
     ExecutionException,
