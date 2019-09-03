@@ -36,7 +36,7 @@ public abstract class DefaultLoanAnonymizationService implements LoanAnonymizati
         .thenCompose(this::populateLoanInformation)
           .thenApply(r -> r.map(records::withInputLoans))
         .thenCompose(this::filterNotEligibleLoans)
-        .thenCompose(r -> r.after(anonymizeStorageLoansRepository::post));
+        .thenCompose(r -> r.after(anonymizeStorageLoansRepository::postAnonymizeStorageLoans));
   }
 
   protected CompletableFuture<Result<Collection<Loan>>> populateLoanInformation(Result<MultipleRecords<Loan>> records) {

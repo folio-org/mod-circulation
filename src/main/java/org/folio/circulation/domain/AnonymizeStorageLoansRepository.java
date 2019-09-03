@@ -34,7 +34,7 @@ public class AnonymizeStorageLoansRepository {
    * Fill the records with the response from /anonymize-storage-loans
    *
    */
-  private static ResponseInterpreter<LoanAnonymizationRecords> forwardingStorageResponseInterpreter(
+  private static ResponseInterpreter<LoanAnonymizationRecords> createStorageLoanResponseInterpreter(
       LoanAnonymizationRecords records) {
     Function<Response, Result<LoanAnonymizationRecords>> mapper = mapUsingJson(
         response -> records.withAnonymizedLoans(response.getJsonArray("anonymizedLoans")
@@ -56,7 +56,7 @@ public class AnonymizeStorageLoansRepository {
   /**
    * Send POST request to /anonymize-storage-loans
    */
-  public CompletableFuture<Result<LoanAnonymizationRecords>> post(LoanAnonymizationRecords records) {
+  public CompletableFuture<Result<LoanAnonymizationRecords>> postAnonymizeStorageLoans(LoanAnonymizationRecords records) {
 
     log.info("Calling POST /anonymize-storage-loans");
     if (records.getAnonymizedLoans()
@@ -64,7 +64,7 @@ public class AnonymizeStorageLoansRepository {
       return completedFuture(succeeded(records));
     }
     return loanStorageClient.post(createRequestPayload(records))
-      .thenApply(forwardingStorageResponseInterpreter(records)::apply);
+      .thenApply(createStorageLoanResponseInterpreter(records)::apply);
   }
 
 }
