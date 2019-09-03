@@ -366,4 +366,8 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   public DateTime getReturnDate() {
     return getDateTimeProperty(representation, RETURN_DATE);
   }
+
+  public void changeItemStatus(String itemStatus) {
+    representation.put(LoanProperties.ITEM_STATUS, itemStatus);
+  }
 }
