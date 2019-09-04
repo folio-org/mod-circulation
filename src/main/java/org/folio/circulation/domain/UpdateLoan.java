@@ -40,11 +40,14 @@ public class UpdateLoan {
    */
   CompletableFuture<Result<RequestAndRelatedRecords>> onRequestCreateOrUpdate(
       RequestAndRelatedRecords requestAndRelatedRecords) {
+
     Request request = requestAndRelatedRecords.getRequest();
     Loan loan = request.getLoan();
+
     if (request.getRequestType() == RequestType.RECALL && loan != null) {
       return loanRepository.getById(loan.getId())
-          .thenApply(r -> r.map(LoanAndRelatedRecords::new))
+          .thenApply(r -> r.map(l -> new LoanAndRelatedRecords(l,
+            requestAndRelatedRecords.getTimeZone())))
           .thenComposeAsync(r -> r.after(loanPolicyRepository::lookupLoanPolicy))
           .thenApply(r -> r.next(this::recall))
           .thenComposeAsync(r -> r.after(closedLibraryStrategyService::applyClosedLibraryDueDateManagement))

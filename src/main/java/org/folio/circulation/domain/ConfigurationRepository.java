@@ -38,8 +38,9 @@ public class ConfigurationRepository {
     return lookupConfigurations(cqlQueryResult, applySearchSchedulerNoticesLimit());
   }
 
-  private CompletableFuture<Result<DateTimeZone>> findTimeZoneConfiguration() {
+  public CompletableFuture<Result<DateTimeZone>> findTimeZoneConfiguration() {
     Result<CqlQuery> cqlQueryResult = defineModuleNameAndConfigNameFilter("ORG", "localeSettings");
+
     return lookupConfigurations(cqlQueryResult, applySearchDateTimeZone());
   }
 

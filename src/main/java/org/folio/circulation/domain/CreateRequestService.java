@@ -3,6 +3,8 @@ package org.folio.circulation.domain;
 import static org.folio.circulation.support.Result.of;
 
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
+import java.util.function.Function;
 
 import org.folio.circulation.domain.policy.RequestPolicyRepository;
 import org.folio.circulation.domain.validation.RequestLoanValidator;
@@ -42,11 +44,18 @@ public class CreateRequestService {
       .next(RequestServiceUtility::refuseWhenUserHasAlreadyRequestedItem)
       .after(requestLoanValidator::refuseWhenUserHasAlreadyBeenLoanedItem)
       .thenComposeAsync(r -> r.after(requestPolicyRepository::lookupRequestPolicy))
+      .thenComposeAsync(getTimeZoneForRequestRelatedRecords())
       .thenApply(r -> r.next(RequestServiceUtility::refuseWhenRequestCannotBeFulfilled))
       .thenComposeAsync(r -> r.after(updateUponRequest.updateItem::onRequestCreateOrUpdate))
       .thenComposeAsync(r -> r.after(updateUponRequest.updateLoan::onRequestCreateOrUpdate))
       .thenComposeAsync(r -> r.after(requestRepository::create))
       .thenComposeAsync(r -> r.after(updateUponRequest.updateRequestQueue::onCreate))
       .thenApply(r -> r.next(requestNoticeSender::sendNoticeOnRequestCreated));
+  }
+
+  private Function<Result<RequestAndRelatedRecords>, CompletionStage<Result<RequestAndRelatedRecords>>> getTimeZoneForRequestRelatedRecords() {
+    return r -> r.combineAfter(
+      unused -> configurationRepository.findTimeZoneConfiguration(),
+      RequestAndRelatedRecords::withTimeZone);
   }
 }
