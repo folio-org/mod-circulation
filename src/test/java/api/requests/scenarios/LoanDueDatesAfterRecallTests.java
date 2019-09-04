@@ -33,7 +33,6 @@ import org.joda.time.format.ISODateTimeFormat;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -464,7 +463,6 @@ public class LoanDueDatesAfterRecallTests extends APITests {
   }
 
   @Test
-  @Ignore("Creating a request does not currently get the tenant timezone")
   public void changedDueDateAfterRecallingAnItemShouldRespectTenantTimezone()
     throws InterruptedException,
     ExecutionException,

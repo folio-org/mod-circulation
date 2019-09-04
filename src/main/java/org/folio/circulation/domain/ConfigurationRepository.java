@@ -25,7 +25,7 @@ public class ConfigurationRepository {
       LoanAndRelatedRecords::withTimeZone);
   }
 
-  private CompletableFuture<Result<DateTimeZone>> findTimeZoneConfiguration() {
+  public CompletableFuture<Result<DateTimeZone>> findTimeZoneConfiguration() {
     final ConfigurationService configurationService = new ConfigurationService();
 
     final Result<CqlQuery> moduleQuery = exactMatch("module", "ORG");
