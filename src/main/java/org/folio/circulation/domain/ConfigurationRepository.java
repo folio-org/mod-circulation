@@ -18,11 +18,11 @@ public class ConfigurationRepository {
     configurationClient = clients.configurationStorageClient();
   }
 
-  public CompletableFuture<Result<LoanAndRelatedRecords>> lookupTimeZone(
-    LoanAndRelatedRecords relatedRecords) {
+  public CompletableFuture<Result<LoanAndRelatedRecords>> lookupTimeZoneForLoanRelatedRecords(
+    Result<LoanAndRelatedRecords> relatedRecords) {
 
-    return findTimeZoneConfiguration()
-      .thenApply(result -> result.map(relatedRecords::withTimeZone));
+    return relatedRecords.combineAfter(r -> findTimeZoneConfiguration(),
+      LoanAndRelatedRecords::withTimeZone);
   }
 
   private CompletableFuture<Result<DateTimeZone>> findTimeZoneConfiguration() {
