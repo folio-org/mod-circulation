@@ -10,6 +10,7 @@ import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Loan;
+import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.User;
 import org.folio.circulation.support.CirculationRulesClient;
 import org.folio.circulation.support.CollectionResourceClient;
@@ -38,6 +39,10 @@ public abstract class CirculationPolicyRepository<T> {
 
   public CompletableFuture<Result<T>> lookupPolicy(Loan loan) {
     return lookupPolicy(loan.getItem(), loan.getUser());
+  }
+
+  public CompletableFuture<Result<T>> lookupPolicy(Request request) {
+    return lookupPolicy(request.getItem(), request.getRequester());
   }
 
   public CompletableFuture<Result<T>> lookupPolicy(

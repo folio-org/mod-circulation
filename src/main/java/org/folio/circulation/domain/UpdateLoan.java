@@ -1,11 +1,13 @@
 package org.folio.circulation.domain;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
+import static org.folio.circulation.support.Result.of;
 import static org.folio.circulation.support.Result.succeeded;
 
 import java.util.concurrent.CompletableFuture;
 
-import org.folio.circulation.domain.notice.schedule.ScheduledNoticeService;
+import org.apache.commons.lang.StringUtils;
+import org.folio.circulation.domain.notice.schedule.DueDateScheduledNoticeService;
 import org.folio.circulation.domain.policy.LoanPolicy;
 import org.folio.circulation.domain.policy.LoanPolicyRepository;
 import org.folio.circulation.domain.policy.library.ClosedLibraryStrategyService;
@@ -18,7 +20,7 @@ public class UpdateLoan {
   private final ClosedLibraryStrategyService closedLibraryStrategyService;
   private final LoanRepository loanRepository;
   private final LoanPolicyRepository loanPolicyRepository;
-  private final ScheduledNoticeService scheduledNoticeService;
+  private final DueDateScheduledNoticeService scheduledNoticeService;
 
   public UpdateLoan(Clients clients,
       LoanRepository loanRepository,
@@ -27,7 +29,7 @@ public class UpdateLoan {
         DateTime.now(DateTimeZone.UTC), false);
     this.loanPolicyRepository = loanPolicyRepository;
     this.loanRepository = loanRepository;
-    this.scheduledNoticeService = ScheduledNoticeService.using(clients);
+    this.scheduledNoticeService = DueDateScheduledNoticeService.using(clients);
   }
 
   /**
@@ -47,13 +49,26 @@ public class UpdateLoan {
           .thenApply(r -> r.map(LoanAndRelatedRecords::new))
           .thenComposeAsync(r -> r.after(loanPolicyRepository::lookupLoanPolicy))
           .thenApply(r -> r.next(this::recall))
+          .thenApply(r -> r.next(recallResult -> updateLoanAction(recallResult, request)))
           .thenComposeAsync(r -> r.after(closedLibraryStrategyService::applyClosedLibraryDueDateManagement))
           .thenComposeAsync(r -> r.after(loanRepository::updateLoan))
-          .thenComposeAsync(r -> r.after(scheduledNoticeService::rescheduleDueDateNotices))
+          .thenApply(r -> r.next(scheduledNoticeService::rescheduleDueDateNotices))
           .thenApply(r -> r.map(v -> requestAndRelatedRecords.withRequest(request.withLoan(v.getLoan()))));
     } else {
       return completedFuture(succeeded(requestAndRelatedRecords));
     }
+  }
+
+  private Result<LoanAndRelatedRecords> updateLoanAction(LoanAndRelatedRecords loanAndRelatedRecords, Request request) {
+    Loan loan = loanAndRelatedRecords.getLoan();
+    String action = request.actionOnCreateOrUpdate();
+
+    if (StringUtils.isNotBlank(action)) {
+      loan.changeAction(action);
+      loan.changeItemStatus(request.getItem().getStatus().getValue());
+    }
+
+    return of(() -> loanAndRelatedRecords);
   }
 
   //TODO: Possibly combine this with LoanRenewalService?

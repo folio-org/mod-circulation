@@ -19,7 +19,8 @@ import org.folio.circulation.resources.RequestCirculationRulesEngineResource;
 import org.folio.circulation.resources.RequestCollectionResource;
 import org.folio.circulation.resources.RequestHoldShelfClearanceResource;
 import org.folio.circulation.resources.RequestQueueResource;
-import org.folio.circulation.resources.ScheduledNoticeProcessingResource;
+import org.folio.circulation.resources.DueDateScheduledNoticeProcessingResource;
+import org.folio.circulation.resources.RequestScheduledNoticeProcessingResource;
 import org.folio.circulation.support.logging.Logging;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -87,8 +88,8 @@ public class CirculationVerticle extends AbstractVerticle {
         client)
         .register(router);
 
-    new ScheduledNoticeProcessingResource(client).register(router);
-
+    new DueDateScheduledNoticeProcessingResource(client).register(router);
+    new RequestScheduledNoticeProcessingResource(client).register(router);
 
     server.requestHandler(router::accept)
       .listen(config().getInteger("port"), result -> {

@@ -5,10 +5,16 @@ import static api.support.builders.ItemBuilder.PAGED;
 import static api.support.builders.RequestBuilder.OPEN_AWAITING_PICKUP;
 import static api.support.matchers.ItemStatusCodeMatcher.hasItemStatus;
 import static org.folio.circulation.domain.representations.RequestProperties.REQUEST_TYPE;
+import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 
 import java.net.MalformedURLException;
+import java.time.Clock;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
@@ -16,9 +22,11 @@ import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.RequestStatus;
 import org.folio.circulation.domain.RequestType;
+import org.folio.circulation.support.ClockManager;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
+import org.junit.After;
 import org.junit.Test;
 
 import api.support.APITests;
@@ -33,6 +41,11 @@ import io.vertx.core.json.JsonObject;
  * @see <a href="https://issues.folio.org/browse/CIRC-395">CIRC-395</a>
  */
 public class MoveRequestTests extends APITests {
+
+  @After
+  public void restoreStubs() {
+    ClockManager.getClockManager().setClock(Clock.systemUTC());
+  }
 
   @Test
   public void canMoveRequestFromOneItemCopyToAnother()
@@ -850,4 +863,72 @@ public class MoveRequestTests extends APITests {
 
   }
 
+  /**
+   * Use case:<br/>
+   * 1. Check out item X to a User A.
+   * 2. Check out item Y to a User B.
+   * 3. Two loans have been created for the items.
+   * 4. Create Recall request to item X for User C.
+   * 5. Move the Recall request to item Y.
+   * <br/>
+   * Expect: Due dates for the two loans have been updated during the last move
+   * request.
+   *
+   * @throws Exception - In case of any exception
+   */
+  @Test
+  public void canUpdateSourceAndDestinationLoanDueDateOnMoveRecallRequest() throws Exception {
+    final Instant expectedLoanDueDate = LocalDateTime
+      .now().plusHours(4).toInstant(ZoneOffset.UTC);
+
+    IndividualResource smallAngryPlanetItem = itemsFixture.basedUponSmallAngryPlanet();
+    IndividualResource interestingTimesItem = itemsFixture.basedUponInterestingTimes();
+
+    IndividualResource jamesUser = usersFixture.james();
+    IndividualResource jessicaUser = usersFixture.jessica();
+    IndividualResource steveUser = usersFixture.steve();
+
+    // James and Jessica check out items, so loans will be get created
+    loansFixture.checkOutByBarcode(smallAngryPlanetItem, jamesUser);
+    loansFixture.checkOutByBarcode(interestingTimesItem, jessicaUser);
+
+    // Create recall request for 'smallAngryPlanet' item to Steve
+    IndividualResource recallRequestBySteve = requestsFixture.place(new RequestBuilder()
+      .recall()
+      .fulfilToHoldShelf()
+      .withItemId(smallAngryPlanetItem.getId())
+      .withRequesterId(steveUser.getId())
+      .withPickupServicePointId(servicePointsFixture.cd1().getId()));
+
+    // Have to mock system clocks to demonstrate a delay between the requests
+    // So the dueDates will be recalculated
+    mockSystemClocks(expectedLoanDueDate);
+    // Then move the 'smallAngryPlanet' recall request to the 'interestingTimes' item
+    requestsFixture.move(new MoveRequestBuilder(recallRequestBySteve.getId(),
+      interestingTimesItem.getId(),
+      RequestType.RECALL.getValue()
+    ));
+
+    // EXPECT:
+    // Loans for 1st and 2nd item has expected dueDate.
+    List<JsonObject> allItemLoans = loansClient.getAll();
+    assertThat(allItemLoans, hasSize(2));
+
+    JsonObject smallAngryPlanetLoan = allItemLoans.stream()
+      .filter(loan -> loan.getString("itemId")
+        .equals(smallAngryPlanetItem.getId().toString()))
+      .findFirst().orElse(new JsonObject());
+    JsonObject interestingTimesLoan = allItemLoans.stream()
+      .filter(loan -> loan.getString("itemId")
+        .equals(interestingTimesItem.getId().toString()))
+      .findFirst().orElse(new JsonObject());
+
+    assertThat(smallAngryPlanetLoan.getInstant("dueDate"), is(expectedLoanDueDate));
+    assertThat(interestingTimesLoan.getInstant("dueDate"), is(expectedLoanDueDate));
+  }
+
+  private void mockSystemClocks(Instant dateTime) {
+    ClockManager.getClockManager().setClock(
+      Clock.fixed(dateTime, ZoneOffset.UTC));
+  }
 }

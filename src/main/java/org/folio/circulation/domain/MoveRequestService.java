@@ -73,7 +73,6 @@ public class MoveRequestService {
   private CompletableFuture<Result<RequestAndRelatedRecords>> updateRelatedObjects(
       RequestAndRelatedRecords requestAndRelatedRecords) {
     return updateUponRequest.updateItem.onRequestCreateOrUpdate(requestAndRelatedRecords)
-      .thenComposeAsync(r -> r.after(updateUponRequest.updateLoanActionHistory::onRequestCreateOrUpdate))
       .thenComposeAsync(r -> r.after(updateUponRequest.updateLoan::onRequestCreateOrUpdate));
   }
 }

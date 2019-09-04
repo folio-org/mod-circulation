@@ -17,6 +17,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -87,11 +88,11 @@ public class LoanPolicy {
       }
 
       if (isNotLoanable()) {
-        errors.add(errorForPolicy("item is not loanable"));
+        errors.add(loanPolicyValidationError("item is not loanable"));
         return failedValidation(errors);
       }
       if (isNotRenewable()) {
-        errors.add(errorForPolicy("loan is not renewable"));
+        errors.add(loanPolicyValidationError("loan is not renewable"));
         return failedValidation(errors);
       }
       boolean isRenewalWithHoldRequest = false;
@@ -99,7 +100,7 @@ public class LoanPolicy {
       if (isHold(firstRequest)) {
         if (!isHoldRequestRenewable()) {
           String reason = "Items with this loan policy cannot be renewed when there is an active, pending hold request";
-          errors.add(errorForPolicy(reason));
+          errors.add(loanPolicyValidationError(reason));
           return failedValidation(errors);
         }
         isRenewalWithHoldRequest = true;
@@ -187,7 +188,7 @@ public class LoanPolicy {
 
   private Result<DateTime> errorWhenEarlierOrSameDueDate(Loan loan, DateTime proposedDueDate) {
     if (isSameOrBefore(loan, proposedDueDate)) {
-      return failedValidation(errorForPolicy(
+      return failedValidation(loanPolicyValidationError(
         RENEWAL_WOULD_NOT_CHANGE_THE_DUE_DATE));
     }
     return Result.succeeded(proposedDueDate);
@@ -214,15 +215,20 @@ public class LoanPolicy {
       "renewal date falls outside of the date ranges in the loan policy, " +
       "items cannot be renewed when there is an active recall request";
 
-    return errorForPolicy(reason);
+    return loanPolicyValidationError(reason);
   }
 
-  private ValidationError errorForPolicy(String reason) {
-    HashMap<String, String> parameters = new HashMap<>();
+  private ValidationError loanPolicyValidationError(String message) {
+    return loanPolicyValidationError(message, Collections.emptyMap());
+  }
+
+  public ValidationError loanPolicyValidationError(
+    String message, Map<String, String> additionalParameters) {
+
+    Map<String, String> parameters = new HashMap<>(additionalParameters);
     parameters.put("loanPolicyId", getId());
     parameters.put("loanPolicyName", getName());
-
-    return new ValidationError(reason, parameters);
+    return new ValidationError(message, parameters);
   }
 
   private boolean isNotRenewable() {
@@ -231,7 +237,7 @@ public class LoanPolicy {
 
   private void errorWhenReachedRenewalLimit(Loan loan, List<ValidationError> errors) {
     if (hasReachedRenewalLimit(loan)) {
-      errors.add(errorForPolicy("loan at maximum renewal number"));
+      errors.add(loanPolicyValidationError("loan at maximum renewal number"));
     }
   }
 
@@ -241,7 +247,7 @@ public class LoanPolicy {
     List<ValidationError> errors) {
 
     if(isSameOrBefore(loan, proposedDueDate)) {
-      errors.add(errorForPolicy(RENEWAL_WOULD_NOT_CHANGE_THE_DUE_DATE));
+      errors.add(loanPolicyValidationError(RENEWAL_WOULD_NOT_CHANGE_THE_DUE_DATE));
     }
   }
 
@@ -277,24 +283,18 @@ public class LoanPolicy {
     //TODO: Temporary until have better logic for missing loans policy
     if(loansPolicy == null) {
       return new UnknownDueDateStrategy(getId(), getName(), "", isRenewal,
-        this::errorForPolicy);
+        this::loanPolicyValidationError);
     }
 
     if(isRolling(loansPolicy)) {
       if(isRenewal) {
-        return new RollingRenewalDueDateStrategy(
-          getId(),
-          getName(),
-          systemDate,
-          getRenewFrom(),
-          getRenewalPeriod(loansPolicy, renewalsPolicy, isRenewalWithHoldRequest),
-          getRenewalDueDateLimitSchedules(),
-          this::errorForPolicy
-        );
+        return new RollingRenewalDueDateStrategy(getId(), getName(),
+          systemDate, getRenewFrom(), getRenewalPeriod(loansPolicy, renewalsPolicy,isRenewalWithHoldRequest),
+          getRenewalDueDateLimitSchedules(), this::loanPolicyValidationError);
       }
       else {
         return new RollingCheckOutDueDateStrategy(getId(), getName(),
-          getPeriod(loansPolicy), fixedDueDateSchedules, this::errorForPolicy);
+          getPeriod(loansPolicy), fixedDueDateSchedules, this::loanPolicyValidationError);
       }
     }
     else if(isFixed(loansPolicy)) {
@@ -302,20 +302,20 @@ public class LoanPolicy {
         if (isRenewalWithHoldRequest) {
           return new RollingRenewalDueDateStrategy(getId(), getName(), systemDate,
             "SYSTEM_DATE", getAlternateRenewalLoanPeriodForHolds(),
-            new NoFixedDueDateSchedules(), this::errorForPolicy);
+            new NoFixedDueDateSchedules(), this::loanPolicyValidationError);
         } else {
           return new FixedScheduleRenewalDueDateStrategy(getId(), getName(),
-            getRenewalFixedDueDateSchedules(), systemDate, this::errorForPolicy);
+            getRenewalFixedDueDateSchedules(), systemDate, this::loanPolicyValidationError);
         }
       }
       else {
         return new FixedScheduleCheckOutDueDateStrategy(getId(), getName(),
-          fixedDueDateSchedules, this::errorForPolicy);
+          fixedDueDateSchedules, this::loanPolicyValidationError);
       }
     }
     else {
       return new UnknownDueDateStrategy(getId(), getName(),
-        getProfileId(loansPolicy), isRenewal, this::errorForPolicy);
+        getProfileId(loansPolicy), isRenewal, this::loanPolicyValidationError);
     }
   }
 
@@ -582,9 +582,9 @@ public class LoanPolicy {
 
     if (representation.containsKey(key)) {
       result = getPeriod(representation, key).addTo(initialDateTime,
-          () -> errorForPolicy(format("the \"%s\" in the loan policy is not recognized", key)),
-          interval -> errorForPolicy(format("the interval \"%s\" in \"%s\" is not recognized", interval, key)),
-          duration -> errorForPolicy(format("the duration \"%s\" in \"%s\" is invalid", duration, key)));
+          () -> loanPolicyValidationError(format("the \"%s\" in the loan policy is not recognized", key)),
+          interval -> loanPolicyValidationError(format("the interval \"%s\" in \"%s\" is not recognized", interval, key)),
+          duration -> loanPolicyValidationError(format("the duration \"%s\" in \"%s\" is invalid", duration, key)));
     } else {
       result = succeeded(defaultDateTime);
     }
