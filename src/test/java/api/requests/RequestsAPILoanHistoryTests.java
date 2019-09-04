@@ -46,8 +46,8 @@ public class RequestsAPILoanHistoryTests extends APITests {
     // So we will have correct loan history
     assertThat("Due date was not updated", loanFromStorage.getInstant("dueDate"),
       is(not(originalLoan.getJson().getInstant("dueDate"))));
-    assertThat("Action was updated but not expected", loanFromStorage.getString("action"),
-      is("checkedout"));
+    assertThat("Action was not updated", loanFromStorage.getString("action"),
+      is("recallrequested"));
   }
 
   @Test
