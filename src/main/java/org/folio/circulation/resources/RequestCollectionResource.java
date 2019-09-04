@@ -4,6 +4,7 @@ import static org.folio.circulation.domain.representations.RequestProperties.PRO
 import static org.folio.circulation.support.JsonPropertyWriter.write;
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 
+import org.folio.circulation.domain.ConfigurationRepository;
 import org.folio.circulation.domain.CreateRequestService;
 import org.folio.circulation.domain.LoanRepository;
 import org.folio.circulation.domain.MoveRequestService;
@@ -62,6 +63,7 @@ public class RequestCollectionResource extends CollectionResource {
     final LoanRepository loanRepository = new LoanRepository(clients);
     final LoanPolicyRepository loanPolicyRepository = new LoanPolicyRepository(clients);
     final RequestNoticeSender requestNoticeSender = RequestNoticeSender.using(clients);
+    final ConfigurationRepository configurationRepository = new ConfigurationRepository(clients);
 
     final UpdateUponRequest updateUponRequest = new UpdateUponRequest(
         new UpdateItem(clients),
@@ -74,7 +76,7 @@ public class RequestCollectionResource extends CollectionResource {
         new RequestPolicyRepository(clients),
         updateUponRequest,
         new RequestLoanValidator(loanRepository),
-        requestNoticeSender);
+        requestNoticeSender, configurationRepository);
 
     final RequestFromRepresentationService requestFromRepresentationService =
       new RequestFromRepresentationService(
@@ -108,6 +110,7 @@ public class RequestCollectionResource extends CollectionResource {
     final LoanRepository loanRepository = new LoanRepository(clients);
     final LoanPolicyRepository loanPolicyRepository = new LoanPolicyRepository(clients);
     final RequestNoticeSender requestNoticeSender = RequestNoticeSender.using(clients);
+    final ConfigurationRepository configurationRepository = new ConfigurationRepository(clients);
 
     final UpdateItem updateItem = new UpdateItem(clients);
 
@@ -122,7 +125,7 @@ public class RequestCollectionResource extends CollectionResource {
         new RequestPolicyRepository(clients),
         updateUponRequest,
         new RequestLoanValidator(loanRepository),
-        requestNoticeSender);
+        requestNoticeSender, configurationRepository);
 
     final UpdateRequestService updateRequestService = new UpdateRequestService(
         requestRepository,
@@ -228,8 +231,8 @@ public class RequestCollectionResource extends CollectionResource {
         new UpdateLoan(clients, loanRepository, loanPolicyRepository),
         new UpdateLoanActionHistory(clients),
         UpdateRequestQueue.using(clients));
-    
-    final MoveRequestProcessAdapter moveRequestProcessAdapter = 
+
+    final MoveRequestProcessAdapter moveRequestProcessAdapter =
         new MoveRequestProcessAdapter(
           itemRepository,
           loanRepository,
@@ -253,10 +256,10 @@ public class RequestCollectionResource extends CollectionResource {
       .thenApply(OkJsonResponseResult::from)
       .thenAccept(r -> r.writeTo(routingContext.response()));
   }
-  
+
   private RequestAndRelatedRecords asMove(RequestAndRelatedRecords requestAndRelatedRecords,
     JsonObject representation) {
-    String originalItemId = requestAndRelatedRecords.getItemId();    
+    String originalItemId = requestAndRelatedRecords.getItemId();
     String destinationItemId = representation.getString("destinationItemId");
     if (representation.containsKey("requestType")) {
       RequestType requestType = RequestType.from(representation.getString("requestType"));
