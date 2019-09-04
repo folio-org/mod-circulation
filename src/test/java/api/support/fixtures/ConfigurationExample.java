@@ -16,11 +16,15 @@ public class ConfigurationExample {
   }
 
   public static ConfigRecordBuilder utcTimezoneConfiguration() {
-    return getLocaleAndTimeZoneConfiguration("UTC");
+    return timezoneConfigurationFor("UTC");
   }
 
   public static ConfigRecordBuilder newYorkTimezoneConfiguration() {
-    return getLocaleAndTimeZoneConfiguration("America/New_York");
+    return timezoneConfigurationFor("America/New_York");
+  }
+
+  public static ConfigRecordBuilder timezoneConfigurationFor(String timezone) {
+    return getLocaleAndTimeZoneConfiguration(timezone);
   }
 
   private static ConfigRecordBuilder getLocaleAndTimeZoneConfiguration(String timezone) {
