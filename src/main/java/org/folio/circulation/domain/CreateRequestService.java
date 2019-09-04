@@ -15,18 +15,21 @@ public class CreateRequestService {
   private final UpdateUponRequest updateUponRequest;
   private final RequestLoanValidator requestLoanValidator;
   private final RequestNoticeSender requestNoticeSender;
+  private final ConfigurationRepository configurationRepository;
 
   public CreateRequestService(RequestRepository requestRepository,
-    RequestPolicyRepository requestPolicyRepository,
-    UpdateUponRequest updateUponRequest,
-    RequestLoanValidator requestLoanValidator,
-    RequestNoticeSender requestNoticeSender) {
+                              RequestPolicyRepository requestPolicyRepository,
+                              UpdateUponRequest updateUponRequest,
+                              RequestLoanValidator requestLoanValidator,
+                              RequestNoticeSender requestNoticeSender,
+                              ConfigurationRepository configurationRepository) {
 
     this.requestRepository = requestRepository;
     this.requestPolicyRepository = requestPolicyRepository;
     this.updateUponRequest = updateUponRequest;
     this.requestLoanValidator = requestLoanValidator;
     this.requestNoticeSender = requestNoticeSender;
+    this.configurationRepository = configurationRepository;
   }
 
   public CompletableFuture<Result<RequestAndRelatedRecords>> createRequest(
