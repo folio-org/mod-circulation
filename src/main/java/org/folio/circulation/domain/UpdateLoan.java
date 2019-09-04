@@ -1,10 +1,12 @@
 package org.folio.circulation.domain;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
+import static org.folio.circulation.support.Result.of;
 import static org.folio.circulation.support.Result.succeeded;
 
 import java.util.concurrent.CompletableFuture;
 
+import org.apache.commons.lang.StringUtils;
 import org.folio.circulation.domain.notice.schedule.DueDateScheduledNoticeService;
 import org.folio.circulation.domain.policy.LoanPolicy;
 import org.folio.circulation.domain.policy.LoanPolicyRepository;
@@ -47,6 +49,7 @@ public class UpdateLoan {
           .thenApply(r -> r.map(LoanAndRelatedRecords::new))
           .thenComposeAsync(r -> r.after(loanPolicyRepository::lookupLoanPolicy))
           .thenApply(r -> r.next(this::recall))
+          .thenApply(r -> r.next(recallResult -> updateLoanAction(recallResult, request)))
           .thenComposeAsync(r -> r.after(closedLibraryStrategyService::applyClosedLibraryDueDateManagement))
           .thenComposeAsync(r -> r.after(loanRepository::updateLoan))
           .thenApply(r -> r.next(scheduledNoticeService::rescheduleDueDateNotices))
@@ -54,6 +57,18 @@ public class UpdateLoan {
     } else {
       return completedFuture(succeeded(requestAndRelatedRecords));
     }
+  }
+
+  private Result<LoanAndRelatedRecords> updateLoanAction(LoanAndRelatedRecords loanAndRelatedRecords, Request request) {
+    Loan loan = loanAndRelatedRecords.getLoan();
+    String action = request.actionOnCreateOrUpdate();
+
+    if (StringUtils.isNotBlank(action)) {
+      loan.changeAction(action);
+      loan.changeItemStatus(request.getItem().getStatus().getValue());
+    }
+
+    return of(() -> loanAndRelatedRecords);
   }
 
   //TODO: Possibly combine this with LoanRenewalService?
