@@ -36,8 +36,8 @@ public class LoanPolicy {
   private static final String LOANS_POLICY_KEY = "loansPolicy";
   private static final String PERIOD_KEY = "period";
   private static final String RENEWAL_WOULD_NOT_CHANGE_THE_DUE_DATE = "renewal would not change the due date";
-  private static final String REQUEST_MANAGEMENT_KEY = "requestManagement";
-  private static final String HOLDS_KEY = "holds";
+  public static final String REQUEST_MANAGEMENT_KEY = "requestManagement";
+  public static final String HOLDS_KEY = "holds";
   private static final String ALTERNATE_RENEWAL_LOAN_PERIOD_KEY = "alternateRenewalLoanPeriod";
 
   private final JsonObject representation;
