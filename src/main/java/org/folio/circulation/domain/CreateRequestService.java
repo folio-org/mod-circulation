@@ -16,9 +16,12 @@ public class CreateRequestService {
   private final RequestLoanValidator requestLoanValidator;
   private final RequestNoticeSender requestNoticeSender;
 
-  public CreateRequestService(RequestRepository requestRepository, RequestPolicyRepository requestPolicyRepository,
-      UpdateUponRequest updateUponRequest, RequestLoanValidator requestLoanValidator,
-      RequestNoticeSender requestNoticeSender) {
+  public CreateRequestService(RequestRepository requestRepository,
+    RequestPolicyRepository requestPolicyRepository,
+    UpdateUponRequest updateUponRequest,
+    RequestLoanValidator requestLoanValidator,
+    RequestNoticeSender requestNoticeSender) {
+
     this.requestRepository = requestRepository;
     this.requestPolicyRepository = requestPolicyRepository;
     this.updateUponRequest = updateUponRequest;
