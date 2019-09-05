@@ -14,7 +14,11 @@ public class LoanAndRelatedRecords implements UserRelatedRecord {
   }
 
   public LoanAndRelatedRecords(Loan loan) {
-    this(loan, null, DateTimeZone.UTC);
+    this(loan, DateTimeZone.UTC);
+  }
+
+  public LoanAndRelatedRecords(Loan loan, DateTimeZone timeZone) {
+    this(loan, null, timeZone);
   }
 
   public LoanAndRelatedRecords withLoan(Loan newLoan) {
