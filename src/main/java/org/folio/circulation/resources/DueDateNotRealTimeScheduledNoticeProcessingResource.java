@@ -19,8 +19,8 @@ import org.folio.circulation.domain.notice.schedule.ScheduledNoticeGroupDefiniti
 import org.folio.circulation.domain.notice.schedule.ScheduledNoticesRepository;
 import org.folio.circulation.domain.notice.schedule.TriggeringEvent;
 import org.folio.circulation.support.Clients;
-import org.folio.circulation.support.CqlSortClause;
 import org.folio.circulation.support.CqlSortBy;
+import org.folio.circulation.support.CqlSortClause;
 import org.folio.circulation.support.Result;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
@@ -31,6 +31,16 @@ import io.vertx.core.http.HttpClient;
 
 public class DueDateNotRealTimeScheduledNoticeProcessingResource extends ScheduledNoticeProcessingResource {
 
+  private static final CqlSortBy FETCH_NOTICES_SORT_CLAUSE =
+    CqlSortBy.sortBy(
+      Stream.of(
+        "recipientUserId", "noticeConfig.templateId",
+        "triggeringEvent", "noticeConfig.format",
+        "noticeConfig.timing")
+        .map(CqlSortClause::ascending)
+        .collect(Collectors.toList())
+    );
+
   public DueDateNotRealTimeScheduledNoticeProcessingResource(HttpClient client) {
     super("/circulation/due-date-not-real-time-scheduled-notices-processing", client);
   }
@@ -39,16 +49,10 @@ public class DueDateNotRealTimeScheduledNoticeProcessingResource extends Schedul
   protected CompletableFuture<Result<MultipleRecords<ScheduledNotice>>> findNoticesToSend(
     ScheduledNoticesRepository scheduledNoticesRepository, int limit) {
 
-    List<CqlSortClause> cqlSortClauses = Stream.of(
-      "recipientUserId", "noticeConfig.templateId",
-      "triggeringEvent", "noticeConfig.format",
-      "noticeConfig.timing")
-      .map(CqlSortClause::ascending).collect(Collectors.toList());
-
     DateTime timeLimit = LocalDate.now().toDateTime(LocalTime.MIDNIGHT);
     return scheduledNoticesRepository.findNotices(timeLimit, false,
       Collections.singletonList(TriggeringEvent.DUE_DATE),
-      CqlSortBy.sortBy(cqlSortClauses), limit);
+      FETCH_NOTICES_SORT_CLAUSE, limit);
   }
 
   @Override
