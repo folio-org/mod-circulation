@@ -1,28 +1,32 @@
 package org.folio.circulation.domain;
 
 import org.folio.circulation.domain.policy.RequestPolicy;
+import org.joda.time.DateTimeZone;
 
 public class RequestAndRelatedRecords implements UserRelatedRecord, ItemRelatedRecord {
   private final Request request;
   private final RequestQueue requestQueue;
   private final RequestPolicy requestPolicy;
-  
+  private final DateTimeZone timeZone;
+
   private final MoveRequestRecord moveRequestRecord;
 
   private RequestAndRelatedRecords(
     Request request,
     RequestQueue requestQueue,
     RequestPolicy requestPolicy,
-    MoveRequestRecord moveRequestRecord) {
+    MoveRequestRecord moveRequestRecord,
+    DateTimeZone timeZone) {
 
     this.request = request;
     this.requestQueue = requestQueue;
     this.requestPolicy = requestPolicy;
+    this.timeZone = timeZone;
     this.moveRequestRecord = moveRequestRecord;
   }
 
   public RequestAndRelatedRecords(Request request) {
-    this(request, null, null, null);
+    this(request, null, null, null, DateTimeZone.UTC);
   }
 
   public RequestAndRelatedRecords withRequest(Request newRequest) {
@@ -30,7 +34,8 @@ public class RequestAndRelatedRecords implements UserRelatedRecord, ItemRelatedR
       newRequest.withItem(request.getItem()),
       this.requestQueue,
       null,
-      this.moveRequestRecord
+      this.moveRequestRecord,
+      this.timeZone
     );
   }
 
@@ -39,7 +44,8 @@ public class RequestAndRelatedRecords implements UserRelatedRecord, ItemRelatedR
       this.request,
       this.requestQueue,
       newRequestPolicy,
-      this.moveRequestRecord
+      this.moveRequestRecord,
+      this.timeZone
     );
   }
 
@@ -48,7 +54,8 @@ public class RequestAndRelatedRecords implements UserRelatedRecord, ItemRelatedR
       this.request,
       newRequestQueue,
       this.requestPolicy,
-      this.moveRequestRecord
+      this.moveRequestRecord,
+      this.timeZone
     );
   }
 
@@ -57,7 +64,8 @@ public class RequestAndRelatedRecords implements UserRelatedRecord, ItemRelatedR
       this.request.withItem(newItem),
       this.requestQueue,
       this.requestPolicy,
-      this.moveRequestRecord
+      this.moveRequestRecord,
+      this.timeZone
     );
   }
 
@@ -66,17 +74,24 @@ public class RequestAndRelatedRecords implements UserRelatedRecord, ItemRelatedR
       this.request.withLoan(newLoan),
       this.requestQueue,
       this.requestPolicy,
-      this.moveRequestRecord
+      this.moveRequestRecord,
+      this.timeZone
     );
   }
-  
+
   public RequestAndRelatedRecords withRequestType(RequestType newRequestType) {
     return new RequestAndRelatedRecords(
       this.request.withRequestType(newRequestType),
       this.requestQueue,
       this.requestPolicy,
-      this.moveRequestRecord
+      this.moveRequestRecord,
+      this.timeZone
     );
+  }
+
+  RequestAndRelatedRecords withTimeZone(DateTimeZone newTimeZone) {
+    return new RequestAndRelatedRecords(request, requestQueue, requestPolicy,
+      moveRequestRecord, newTimeZone);
   }
 
   public RequestAndRelatedRecords asMove(String originalItemId, String destinationItemId) {
@@ -84,7 +99,7 @@ public class RequestAndRelatedRecords implements UserRelatedRecord, ItemRelatedR
       this.request,
       this.requestQueue,
       this.requestPolicy,
-      MoveRequestRecord.with(originalItemId, destinationItemId)
+      MoveRequestRecord.with(originalItemId, destinationItemId), timeZone
     );
   }
 
@@ -119,5 +134,9 @@ public class RequestAndRelatedRecords implements UserRelatedRecord, ItemRelatedR
   @Override
   public String getItemId() {
     return request.getItemId();
+  }
+
+  DateTimeZone getTimeZone() {
+    return timeZone;
   }
 }

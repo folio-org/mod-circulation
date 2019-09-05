@@ -389,7 +389,8 @@
             "inventory-storage.loan-types.item.get",
             "calendar.opening-hours.collection.get",
             "scheduled-notice-storage.scheduled-notices.collection.delete",
-            "scheduled-notice-storage.scheduled-notices.item.post"
+            "scheduled-notice-storage.scheduled-notices.item.post",
+            "configuration.entries.collection.get"
           ]
         },
         {
@@ -476,7 +477,8 @@
             "circulation-storage.patron-notice-policies.item.get",
             "patron-notice.post",
             "circulation-storage.cancellation-reasons.item.get",
-            "inventory-storage.loan-types.item.get"
+            "inventory-storage.loan-types.item.get",
+            "configuration.entries.collection.get"
           ]
         },
         {
@@ -560,7 +562,8 @@
             "circulation-storage.patron-notice-policies.item.get",
             "patron-notice.post",
             "inventory-storage.loan-types.item.get",
-            "calendar.opening-hours.collection.get"
+            "calendar.opening-hours.collection.get",
+            "configuration.entries.collection.get"
           ]
         }
       ]
@@ -964,7 +967,8 @@
         "circulation-storage.patron-notice-policies.item.get",
         "patron-notice.post",
         "circulation-storage.cancellation-reasons.item.get",
-        "inventory-storage.loan-types.item.get"
+        "inventory-storage.loan-types.item.get",
+        "configuration.entries.collection.get"
       ],
       "visible": false
     },
