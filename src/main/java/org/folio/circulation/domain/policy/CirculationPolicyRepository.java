@@ -11,14 +11,11 @@ import java.util.concurrent.CompletableFuture;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.Request;
-import org.folio.circulation.domain.Location;
 import org.folio.circulation.domain.User;
 import org.folio.circulation.support.CirculationRulesClient;
 import org.folio.circulation.support.CollectionResourceClient;
-import org.folio.circulation.support.FetchSingleRecord;
 import org.folio.circulation.support.ForwardOnFailure;
 import org.folio.circulation.support.Result;
-import org.folio.circulation.support.ServerErrorFailure;
 import org.folio.circulation.support.SingleRecordFetcher;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.client.ResponseHandler;
@@ -32,15 +29,12 @@ public abstract class CirculationPolicyRepository<T> {
 
   private final CirculationRulesClient circulationRulesClient;
   final CollectionResourceClient policyStorageClient;
-  private final CollectionResourceClient locationsStorageClient;
 
   CirculationPolicyRepository(
     CirculationRulesClient circulationRulesClient,
-    CollectionResourceClient policyStorageClient,
-    CollectionResourceClient locationsStorageClient) {
+    CollectionResourceClient policyStorageClient) {
     this.circulationRulesClient = circulationRulesClient;
     this.policyStorageClient = policyStorageClient;
-    this.locationsStorageClient = locationsStorageClient;
   }
 
   public CompletableFuture<Result<T>> lookupPolicy(Loan loan) {
@@ -55,12 +49,7 @@ public abstract class CirculationPolicyRepository<T> {
     Item item,
     User user) {
 
-    return FetchSingleRecord.<Location>forRecord("location")
-      .using(locationsStorageClient)
-      .mapTo(Location::from)
-      .whenNotFound(failed(new ServerErrorFailure("Can`t find location")))
-      .fetch(item.getLocationId())
-      .thenCompose(r -> r.after(location -> lookupPolicyId(item, user, location)))
+    return lookupPolicyId(item, user)
       .thenComposeAsync(r -> r.after(this::lookupPolicy))
       .thenApply(result -> result.next(this::mapToPolicy));
   }
@@ -81,7 +70,7 @@ public abstract class CirculationPolicyRepository<T> {
       .fetch(policyId);
   }
 
-  private CompletableFuture<Result<String>> lookupPolicyId(Item item, User user, Location location) {
+  private CompletableFuture<Result<String>> lookupPolicyId(Item item, User user) {
     CompletableFuture<Result<String>> findLoanPolicyCompleted = new CompletableFuture<>();
 
     if (item.isNotFound()) {
@@ -105,9 +94,8 @@ public abstract class CirculationPolicyRepository<T> {
       "Applying circulation rules for material type: {}, patron group: {}, loan type: {}, location: {}",
       materialTypeId, patronGroupId, loanTypeId, locationId);
 
-
     circulationRulesClient.applyRules(loanTypeId, locationId, materialTypeId,
-      patronGroupId, location.getInstitutionId(), ResponseHandler.any(circulationRulesResponse));
+      patronGroupId, ResponseHandler.any(circulationRulesResponse));
 
     circulationRulesResponse.thenAcceptAsync(response -> {
       if (response.getStatusCode() == 404) {

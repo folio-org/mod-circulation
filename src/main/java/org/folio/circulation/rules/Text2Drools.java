@@ -447,7 +447,7 @@ public class Text2Drools extends CirculationRulesBaseListener {
     case "a": return "Institution";
     case "b": return "Campus";
     case "c": return "Library";
-    case "s": return "Location";
+    case "s": return "ItemLocation";
     case "m": return "ItemType";
     case "g": return "PatronGroup";
     default:  throw new IllegalArgumentException(
