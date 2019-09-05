@@ -607,6 +607,36 @@
           "methods": [
             "POST"
           ],
+          "pathPattern": "/circulation/due-date-not-real-time-scheduled-notices-processing",
+          "modulePermissions": [
+            "scheduled-notice-storage.scheduled-notices.collection.get",
+            "scheduled-notice-storage.scheduled-notices.item.delete",
+            "scheduled-notice-storage.scheduled-notices.item.put",
+            "circulation-storage.loans.item.get",
+            "circulation-storage.loan-policies.item.get",
+            "circulation-storage.loan-policies.collection.get",
+            "inventory-storage.items.item.get",
+            "inventory-storage.locations.item.get",
+            "inventory-storage.location-units.institutions.item.get",
+            "inventory-storage.location-units.campuses.item.get",
+            "inventory-storage.location-units.libraries.item.get",
+            "inventory-storage.material-types.item.get",
+            "inventory-storage.holdings.item.get",
+            "inventory-storage.loan-types.item.get",
+            "inventory-storage.service-points.item.get",
+            "inventory-storage.instances.item.get",
+            "circulation.rules.loan-policy.get",
+            "configuration.entries.collection.get",
+            "patron-notice.post",
+            "users.item.get"
+          ],
+          "unit": "minute",
+          "delay": "2"
+        },
+        {
+          "methods": [
+            "POST"
+          ],
           "pathPattern": "/circulation/request-scheduled-notices-processing",
           "modulePermissions": [
             "scheduled-notice-storage.scheduled-notices.collection.get",

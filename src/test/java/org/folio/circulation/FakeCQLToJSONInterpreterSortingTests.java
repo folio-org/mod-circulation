@@ -17,43 +17,43 @@ public class FakeCQLToJSONInterpreterSortingTests {
 
   @Test
   public void canSortBySingleStringPropertyImpliedOrder() {
-    canSortBySingleParameter("rank", stringRankedRecords(),
+    canSort("rank", stringRankedRecords(),
       "rank", "2", "3", "4", "7", "9");
   }
 
   @Test
   public void canSortBySingleStringPropertyAscending() {
-    canSortBySingleParameter("rank/sort.ascending", stringRankedRecords(),
+    canSort("rank/sort.ascending", stringRankedRecords(),
       "rank", "2", "3", "4", "7", "9");
   }
 
   @Test
   public void canSortBySingleStringPropertyDescending() {
-    canSortBySingleParameter("rank/sort.descending", stringRankedRecords(),
+    canSort("rank/sort.descending", stringRankedRecords(),
       "rank", "9", "7", "4", "3", "2");
   }
 
   @Test
   public void canSortBySingleIntegerPropertyImpliedOrder() {
-    canSortBySingleParameter("rank", integerRankedRecords(),
+    canSort("rank", integerRankedRecords(),
       "rank", 2, 3, 4, 7, 9);
   }
 
   @Test
   public void canSortBySingleIntegerPropertyAscending() {
-    canSortBySingleParameter("rank/sort.ascending", integerRankedRecords(),
+    canSort("rank/sort.ascending", integerRankedRecords(),
       "rank", 2, 3, 4, 7, 9);
   }
 
   @Test
   public void canSortBySingleIntegerPropertyDescending() {
-    canSortBySingleParameter("rank/sort.descending", integerRankedRecords(),
+    canSort("rank/sort.descending", integerRankedRecords(),
       "rank", 9, 7, 4, 3, 2);
   }
 
   @Test
   public void canSortBySingleDatePropertyAscending() {
-    canSortBySingleParameter("date/sort.ascending", datedRecords(), "date",
+    canSort("date/sort.ascending", datedRecords(), "date",
       "2017-11-24T12:31:27.000+0000",
       "2018-01-12T12:31:27.000+0000",
       "2018-02-04T15:10:54.000+0000",
@@ -61,7 +61,14 @@ public class FakeCQLToJSONInterpreterSortingTests {
       "2018-02-14T15:10:54.000+0000");
   }
 
-  private void canSortBySingleParameter(
+  @Test
+  public void canSortByMultipleProperties() {
+    canSort("firstRank/sort.ascending secondRank/sort.descending",
+      multiplePropertiesRecords(), "secondRank",
+      "k", "a", "t", "c", "d");
+  }
+
+  private void canSort(
     String sortSpecification,
     Collection<JsonObject> records,
     String property,
@@ -167,6 +174,42 @@ public class FakeCQLToJSONInterpreterSortingTests {
     records.add(new JsonObject()
       .put("id", "65450")
       .put("date", "2018-02-22T08:15:04.000+0000"));
+
+    return records;
+  }
+
+  private Collection<JsonObject> multiplePropertiesRecords() {
+    Collection<JsonObject> records = new ArrayList<>();
+
+    records.add(new JsonObject()
+      .put("id", "12345")
+      .put("firstRank", 2)
+      .put("secondRank", "a"));
+
+    records.add(new JsonObject()
+      .put("id", "12345")
+      .put("firstRank", 4)
+      .put("secondRank", "c"));
+
+    records.add(new JsonObject()
+      .put("id", "12345")
+      .put("firstRank", 4)
+      .put("secondRank", "t"));
+
+    records.add(new JsonObject()
+      .put("id", "12345")
+      .put("firstRank", 7)
+      .put("secondRank", "d"));
+
+    records.add(new JsonObject()
+      .put("id", "12345")
+      .put("firstRank", 2)
+      .put("secondRank", "k"));
+
+    records.add(new JsonObject()
+      .put("id", "65450")
+      .put("firstRank", 1)
+      .put("secondRank", "m"));
 
     return records;
   }

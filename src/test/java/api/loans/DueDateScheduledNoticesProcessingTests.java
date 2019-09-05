@@ -25,7 +25,6 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-import api.support.fixtures.ConfigurationExample;
 import org.awaitility.Awaitility;
 import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.support.http.client.IndividualResource;
@@ -41,6 +40,7 @@ import api.support.builders.HoldingBuilder;
 import api.support.builders.ItemBuilder;
 import api.support.builders.NoticeConfigurationBuilder;
 import api.support.builders.NoticePolicyBuilder;
+import api.support.fixtures.ConfigurationExample;
 import api.support.fixtures.ItemExamples;
 import api.support.fixtures.TemplateContextMatchers;
 import api.support.http.InventoryItemResource;
@@ -113,7 +113,7 @@ public class DueDateScheduledNoticesProcessingTests extends APITests {
     ExecutionException {
 
     DateTime beforeDueDateTime = dueDate.minus(beforePeriod.timePeriod()).plusSeconds(1);
-    scheduledNoticeProcessingClient.runNoticesProcessing(beforeDueDateTime);
+    scheduledNoticeProcessingClient.runDueDateNoticesProcessing(beforeDueDateTime);
 
     checkSentNotices(beforeTemplateId);
 
@@ -135,7 +135,7 @@ public class DueDateScheduledNoticesProcessingTests extends APITests {
     ExecutionException {
 
     DateTime justBeforeDueDateTime = dueDate.minusSeconds(1);
-    scheduledNoticeProcessingClient.runNoticesProcessing(justBeforeDueDateTime);
+    scheduledNoticeProcessingClient.runDueDateNoticesProcessing(justBeforeDueDateTime);
 
     checkSentNotices(beforeTemplateId);
 
@@ -153,7 +153,7 @@ public class DueDateScheduledNoticesProcessingTests extends APITests {
     ExecutionException {
 
     DateTime justAfterDueDateTime = dueDate.plusSeconds(1);
-    scheduledNoticeProcessingClient.runNoticesProcessing(justAfterDueDateTime);
+    scheduledNoticeProcessingClient.runDueDateNoticesProcessing(justAfterDueDateTime);
 
     checkSentNotices(uponAtTemplateId);
 
@@ -171,12 +171,12 @@ public class DueDateScheduledNoticesProcessingTests extends APITests {
     ExecutionException {
 
     DateTime justAfterDueDateTime = dueDate.plusSeconds(1);
-    scheduledNoticeProcessingClient.runNoticesProcessing(justAfterDueDateTime);
+    scheduledNoticeProcessingClient.runDueDateNoticesProcessing(justAfterDueDateTime);
     //Clear all sent notices before actual test
     patronNoticesClient.deleteAll();
 
     DateTime afterNoticeRunTime = dueDate.plus(afterPeriod.timePeriod()).plusSeconds(1);
-    scheduledNoticeProcessingClient.runNoticesProcessing(afterNoticeRunTime);
+    scheduledNoticeProcessingClient.runDueDateNoticesProcessing(afterNoticeRunTime);
 
     DateTime afterNoticeExpectedRunTime = dueDate
       .plus(afterPeriod.timePeriod())
@@ -188,7 +188,7 @@ public class DueDateScheduledNoticesProcessingTests extends APITests {
       afterNoticeExpectedRunTime);
 
     //Run again to send recurring notice
-    scheduledNoticeProcessingClient.runNoticesProcessing(
+    scheduledNoticeProcessingClient.runDueDateNoticesProcessing(
       afterNoticeExpectedRunTime.plusSeconds(1));
 
     checkSentNotices(afterTemplateId, afterTemplateId);
@@ -206,7 +206,7 @@ public class DueDateScheduledNoticesProcessingTests extends APITests {
     patronNoticesClient.deleteAll();
 
     //Run after loan is closed
-    scheduledNoticeProcessingClient.runNoticesProcessing(
+    scheduledNoticeProcessingClient.runDueDateNoticesProcessing(
       secondRecurringRunTime.plusSeconds(1));
 
     checkSentNotices();
@@ -239,7 +239,7 @@ public class DueDateScheduledNoticesProcessingTests extends APITests {
       scheduledNoticesClient.create(notice);
     }
 
-    scheduledNoticeProcessingClient.runNoticesProcessing();
+    scheduledNoticeProcessingClient.runDueDateNoticesProcessing();
     List<JsonObject> unprocessedScheduledNotices = scheduledNoticesClient.getAll();
 
     Comparator<JsonObject> nextRunTimeComparator =
@@ -272,7 +272,7 @@ public class DueDateScheduledNoticesProcessingTests extends APITests {
     configClient.create(ConfigurationExample.schedulerNoticesLimitConfiguration(Integer.toString(noticesLimitConfig)));
 
     createNotices(numberOfNotices);
-    scheduledNoticeProcessingClient.runNoticesProcessing();
+    scheduledNoticeProcessingClient.runDueDateNoticesProcessing();
     List<JsonObject> unprocessedScheduledNotices = scheduledNoticesClient.getAll();
 
     assertThat(unprocessedScheduledNotices, hasSize(expectedNumberOfUnprocessedNotices));
@@ -294,7 +294,7 @@ public class DueDateScheduledNoticesProcessingTests extends APITests {
     configClient.create(ConfigurationExample.schedulerNoticesLimitConfiguration("IncorrectVal"));
 
     createNotices(numberOfNotices);
-    scheduledNoticeProcessingClient.runNoticesProcessing();
+    scheduledNoticeProcessingClient.runDueDateNoticesProcessing();
     List<JsonObject> unprocessedScheduledNotices = scheduledNoticesClient.getAll();
 
     assertThat(unprocessedScheduledNotices, hasSize(expectedNumberOfUnprocessedNotices));
@@ -312,7 +312,7 @@ public class DueDateScheduledNoticesProcessingTests extends APITests {
     int expectedNumberOfUnprocessedNotices = 0;
 
     createNotices(SCHEDULED_NOTICES_PROCESSING_LIMIT);
-    scheduledNoticeProcessingClient.runNoticesProcessing();
+    scheduledNoticeProcessingClient.runDueDateNoticesProcessing();
     List<JsonObject> unprocessedScheduledNotices = scheduledNoticesClient.getAll();
 
     assertThat(unprocessedScheduledNotices, hasSize(expectedNumberOfUnprocessedNotices));
@@ -464,6 +464,7 @@ public class DueDateScheduledNoticesProcessingTests extends APITests {
       .put("id", UUID.randomUUID().toString())
       .put("loanId", loan.getId().toString())
       .put(NEXT_RUN_TIME, nextRunTime.withZone(DateTimeZone.UTC).toString())
+      .put("triggeringEvent", "Due date")
       .put("noticeConfig",
         new JsonObject()
           .put("timing", BEFORE_TIMING)
