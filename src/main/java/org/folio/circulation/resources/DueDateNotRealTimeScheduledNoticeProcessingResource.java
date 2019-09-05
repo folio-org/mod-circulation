@@ -11,7 +11,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.apache.commons.lang3.tuple.Pair;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.notice.schedule.DueDateNotRealTimeScheduledNoticeHandler;
 import org.folio.circulation.domain.notice.schedule.ScheduledNotice;
@@ -75,12 +74,11 @@ public class DueDateNotRealTimeScheduledNoticeProcessingResource extends Schedul
       ? orderedGroups.size()
       : max(orderedGroups.size() - 1, 1);
 
-    List<Pair<ScheduledNoticeGroupDefinition, List<ScheduledNotice>>> noticeGroups =
-      orderedGroups.entrySet()
-        .stream()
-        .limit(limit)
-        .map(e -> Pair.of(e.getKey(), e.getValue()))
-        .collect(Collectors.toList());
+    List<List<ScheduledNotice>> noticeGroups = orderedGroups.entrySet()
+      .stream()
+      .limit(limit)
+      .map(Map.Entry::getValue)
+      .collect(Collectors.toList());
 
     return dueDateNoticeHandler.handleNotices(noticeGroups)
       .thenApply(mapResult(v -> notices));

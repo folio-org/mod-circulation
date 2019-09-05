@@ -52,22 +52,19 @@ public class DueDateNotRealTimeScheduledNoticeHandler {
   }
 
   public CompletableFuture<Result<Void>> handleNotices(
-    List<Pair<ScheduledNoticeGroupDefinition, List<ScheduledNotice>>> noticeGroups) {
+    List<List<ScheduledNotice>> noticeGroups) {
 
     CompletableFuture<Result<Void>> future = completedFuture(succeeded(null));
-    for (Pair<ScheduledNoticeGroupDefinition, List<ScheduledNotice>> noticeGroup : noticeGroups) {
+    for (List<ScheduledNotice> noticeGroup : noticeGroups) {
       future = future.thenCompose(r -> r.after(v -> handleNoticeGroup(noticeGroup)));
     }
     return future.thenApply(mapResult(v -> null));
   }
 
-  private CompletableFuture<Result<Void>> handleNoticeGroup(
-    Pair<ScheduledNoticeGroupDefinition, List<ScheduledNotice>> noticeGroup) {
-
-    List<ScheduledNotice> scheduledNotices = noticeGroup.getRight();
+  private CompletableFuture<Result<Void>> handleNoticeGroup(List<ScheduledNotice> noticeGroup) {
 
     List<CompletableFuture<Result<Pair<ScheduledNotice, LoanAndRelatedRecords>>>> contextFutures =
-      scheduledNotices.stream().map(this::getContext).collect(Collectors.toList());
+      noticeGroup.stream().map(this::getContext).collect(Collectors.toList());
 
     return CompletableFuture.allOf(contextFutures.toArray(new CompletableFuture[0]))
       .thenApply(v -> contextFutures.stream().map(CompletableFuture::join).collect(Collectors.toList()))
