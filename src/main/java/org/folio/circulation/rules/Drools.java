@@ -59,7 +59,7 @@ public class Drools {
     kieSession.insert(new ItemLocation(locationId));
     kieSession.insert(new Institution(location.getInstitutionId()));
     kieSession.insert(new Campus(""));
-    kieSession.insert(new Library(""));
+    kieSession.insert(new Library(location.getLibraryId()));
     return kieSession;
   }
 
