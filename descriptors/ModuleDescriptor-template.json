@@ -516,7 +516,6 @@
             "circulation.requests.queue.collection.get"
           ],
           "modulePermissions": [
-            "circulation-storage.request-policies.item.get",
             "circulation-storage.requests.item.get",
             "circulation-storage.requests.collection.get",
             "circulation-storage.loans.collection.get",
