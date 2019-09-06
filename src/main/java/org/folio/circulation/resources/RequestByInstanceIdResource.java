@@ -24,6 +24,7 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
+import org.folio.circulation.domain.ConfigurationRepository;
 import org.folio.circulation.domain.CreateRequestService;
 import org.folio.circulation.domain.InstanceRequestRelatedRecords;
 import org.folio.circulation.domain.Item;
@@ -214,12 +215,13 @@ public class RequestByInstanceIdResource extends Resource {
     });
   }
 
-  private CompletableFuture<Result<RequestAndRelatedRecords>> placeRequests(List<JsonObject> itemRequestRepresentations,
-                                                                            Clients clients) {
+  private CompletableFuture<Result<RequestAndRelatedRecords>> placeRequests(
+    List<JsonObject> itemRequestRepresentations, Clients clients) {
 
     final RequestNoticeSender requestNoticeSender = RequestNoticeSender.using(clients);
     final LoanRepository loanRepository = new LoanRepository(clients);
     final LoanPolicyRepository loanPolicyRepository = new LoanPolicyRepository(clients);
+    final ConfigurationRepository configurationRepository = new ConfigurationRepository(clients);
 
     final UpdateUponRequest updateUponRequest = new UpdateUponRequest(
         new UpdateItem(clients),
@@ -231,7 +233,7 @@ public class RequestByInstanceIdResource extends Resource {
         new RequestPolicyRepository(clients),
         updateUponRequest,
         new RequestLoanValidator(loanRepository),
-        requestNoticeSender);
+        requestNoticeSender, configurationRepository);
 
     return placeRequest(itemRequestRepresentations, 0, createRequestService,
                         clients, loanRepository, new ArrayList<>());

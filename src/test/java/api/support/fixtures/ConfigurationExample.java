@@ -6,7 +6,6 @@ import api.support.builders.ConfigRecordBuilder;
 import io.vertx.core.json.JsonObject;
 
 public class ConfigurationExample {
-
   private static final String DEFAULT_TIME_ZONE_MODULE_NAME = "ORG";
   private static final String DEFAULT_TIME_ZONE_CONFIG_NAME = "localeSettings";
   private static final String US_LOCALE = "en-US";
@@ -14,16 +13,18 @@ public class ConfigurationExample {
   private static final String DEFAULT_NOTIFICATION_SCHEDULER_MODULE_NAME = "NOTIFICATION_SCHEDULER";
   private static final String DEFAULT_NOTIFICATION_SCHEDULER_CONFIG_NAME = "noticesLimit";
 
-  private ConfigurationExample() {
-    // not use
-  }
+  private ConfigurationExample() { }
 
   public static ConfigRecordBuilder utcTimezoneConfiguration() {
-    return getLocaleAndTimeZoneConfiguration("UTC");
+    return timezoneConfigurationFor("UTC");
   }
 
   public static ConfigRecordBuilder newYorkTimezoneConfiguration() {
-    return getLocaleAndTimeZoneConfiguration("America/New_York");
+    return timezoneConfigurationFor("America/New_York");
+  }
+
+  public static ConfigRecordBuilder timezoneConfigurationFor(String timezone) {
+    return getLocaleAndTimeZoneConfiguration(timezone);
   }
 
   private static ConfigRecordBuilder getLocaleAndTimeZoneConfiguration(String timezone) {
