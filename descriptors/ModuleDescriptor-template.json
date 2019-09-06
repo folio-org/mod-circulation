@@ -355,12 +355,15 @@
             "circulation.requests.item.post"
           ],
           "modulePermissions": [
+            "circulation.rules.loan-policy.get",
             "circulation-storage.requests.item.post",
             "inventory-storage.items.item.put",
             "circulation-storage.requests.collection.get",
             "circulation-storage.requests.item.get",
             "circulation-storage.loans.item.put",
             "circulation-storage.loans.collection.get",
+            "circulation-storage.loans.item.get",
+            "circulation-storage.loan-policies.item.get",
             "inventory-storage.items.item.get",
             "inventory-storage.items.collection.get",
             "inventory-storage.holdings.collection.get",
@@ -373,6 +376,8 @@
             "inventory-storage.location-units.campuses.item.get",
             "inventory-storage.location-units.libraries.item.get",
             "inventory-storage.location-units.libraries.collection.get",
+            "inventory-storage.material-types.collection.get",
+            "inventory-storage.material-types.item.get",
             "inventory-storage.service-points.collection.get",
             "inventory-storage.service-points.item.get",
             "users.item.get",
@@ -447,11 +452,17 @@
             "circulation.requests.item.put"
           ],
           "modulePermissions": [
+            "calendar.opening-hours.collection.get",
+            "circulation.rules.loan-policy.get",
+            "circulation.rules.request-policy.get",
             "circulation-storage.requests.item.put",
             "circulation-storage.requests.item.post",
             "inventory-storage.items.item.put",
+            "circulation-storage.request-policies.item.get",
             "circulation-storage.requests.collection.get",
             "circulation-storage.requests.item.get",
+            "circulation-storage.loan-policies.item.get",
+            "circulation-storage.loans.item.get",
             "circulation-storage.loans.item.put",
             "circulation-storage.loans.collection.get",
             "inventory-storage.items.item.get",
@@ -466,6 +477,7 @@
             "inventory-storage.location-units.campuses.item.get",
             "inventory-storage.location-units.libraries.item.get",
             "inventory-storage.location-units.libraries.collection.get",
+            "inventory-storage.material-types.collection.get",
             "inventory-storage.service-points.collection.get",
             "inventory-storage.service-points.item.get",
             "users.item.get",
@@ -478,7 +490,9 @@
             "patron-notice.post",
             "circulation-storage.cancellation-reasons.item.get",
             "inventory-storage.loan-types.item.get",
-            "configuration.entries.collection.get"
+            "configuration.entries.collection.get",
+            "scheduled-notice-storage.scheduled-notices.collection.delete",
+            "scheduled-notice-storage.scheduled-notices.item.post"
           ]
         },
         {
@@ -502,6 +516,7 @@
             "circulation.requests.queue.collection.get"
           ],
           "modulePermissions": [
+            "circulation-storage.request-policies.item.get",
             "circulation-storage.requests.item.get",
             "circulation-storage.requests.collection.get",
             "circulation-storage.loans.collection.get",
@@ -534,10 +549,16 @@
             "circulation.requests.instances.item.post"
           ],
           "modulePermissions": [
+            "circulation.rules.loan-policy.get",
+            "circulation.rules.request-policy.get",
+            "circulation-storage.request-policies.item.get",
             "circulation-storage.requests.item.post",
+            "circulation-storage.requests.item.put",
             "inventory-storage.items.item.put",
             "circulation-storage.requests.collection.get",
             "circulation-storage.requests.item.get",
+            "circulation-storage.loan-policies.item.get",
+            "circulation-storage.loans.item.get",
             "circulation-storage.loans.item.put",
             "circulation-storage.loans.collection.get",
             "inventory-storage.items.item.get",
@@ -550,7 +571,10 @@
             "inventory-storage.locations.item.get",
             "inventory-storage.location-units.institutions.item.get",
             "inventory-storage.location-units.campuses.item.get",
+            "inventory-storage.location-units.libraries.collection.get",
             "inventory-storage.location-units.libraries.item.get",
+            "inventory-storage.material-types.collection.get",
+            "inventory-storage.material-types.item.get",
             "inventory-storage.service-points.collection.get",
             "inventory-storage.service-points.item.get",
             "users.item.get",
@@ -563,7 +587,9 @@
             "patron-notice.post",
             "inventory-storage.loan-types.item.get",
             "calendar.opening-hours.collection.get",
-            "configuration.entries.collection.get"
+            "configuration.entries.collection.get",
+            "scheduled-notice-storage.scheduled-notices.collection.delete",
+            "scheduled-notice-storage.scheduled-notices.item.post"
           ]
         }
       ]
@@ -582,6 +608,7 @@
             "scheduled-notice-storage.scheduled-notices.collection.get",
             "scheduled-notice-storage.scheduled-notices.item.delete",
             "scheduled-notice-storage.scheduled-notices.item.put",
+            "scheduled-notice-storage.scheduled-notices.item.post",
             "circulation-storage.loans.item.get",
             "circulation-storage.loan-policies.item.get",
             "circulation-storage.loan-policies.collection.get",
@@ -642,6 +669,7 @@
             "scheduled-notice-storage.scheduled-notices.collection.get",
             "scheduled-notice-storage.scheduled-notices.item.delete",
             "scheduled-notice-storage.scheduled-notices.item.put",
+            "scheduled-notice-storage.scheduled-notices.item.post",
             "inventory-storage.items.item.get",
             "inventory-storage.locations.item.get",
             "inventory-storage.location-units.institutions.item.get",
