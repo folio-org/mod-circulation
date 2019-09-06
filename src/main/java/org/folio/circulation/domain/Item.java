@@ -228,6 +228,7 @@ public class Item {
     return getLocationId(getItem(), holdingRepresentation);
   }
 
+  // calculate the effectiveLocation
   private static String getLocationId(JsonObject item, JsonObject holding) {
     if(item != null && item.containsKey(TEMPORARY_LOCATION_ID)) {
       return item.getString(TEMPORARY_LOCATION_ID);

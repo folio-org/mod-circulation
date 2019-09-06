@@ -75,6 +75,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     // and possibly convert isFound to unknown item class
     if (item != null && item.isFound()) {
       representation.put("itemId", item.getItemId());
+      representation.put("itemLocationId", item.getLocationId());
     }
 
     // TODO: Refuse if ID does not match property in representation
@@ -188,6 +189,10 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   @Override
   public String getItemId() {
     return getProperty(representation, "itemId");
+  }
+
+  public String getItemLocationId() {
+    return getProperty(representation, "itemLocationId");
   }
 
   public DateTime getLoanDate() {
