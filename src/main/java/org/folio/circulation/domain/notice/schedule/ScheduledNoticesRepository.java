@@ -1,21 +1,22 @@
 package org.folio.circulation.domain.notice.schedule;
 
-import static java.util.Arrays.asList;
 import static java.util.function.Function.identity;
 import static org.folio.circulation.domain.notice.schedule.JsonScheduledNoticeMapper.mapToJson;
-import static org.folio.circulation.domain.notice.schedule.TriggeringEvent.HOLD_EXPIRATION;
-import static org.folio.circulation.domain.notice.schedule.TriggeringEvent.REQUEST_EXPIRATION;
-import static org.folio.circulation.support.CqlSortBy.ascending;
+import static org.folio.circulation.support.CqlQuery.exactMatch;
+import static org.folio.circulation.support.CqlQuery.exactMatchAny;
 import static org.folio.circulation.support.http.CommonResponseInterpreters.noContentRecordInterpreter;
 import static org.folio.circulation.support.http.ResponseMapping.flatMapUsingJson;
 import static org.folio.circulation.support.http.ResponseMapping.forwardOnFailure;
 
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.CqlQuery;
+import org.folio.circulation.support.CqlSortBy;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.client.ResponseInterpreter;
@@ -48,21 +49,18 @@ public class ScheduledNoticesRepository {
       .thenApply(interpreter::apply);
   }
 
-  public CompletableFuture<Result<MultipleRecords<ScheduledNotice>>> findNoticesToSend(
-    DateTime systemTime, int pageLimit) {
+  public CompletableFuture<Result<MultipleRecords<ScheduledNotice>>> findNotices(
+    DateTime timeLimit, boolean realTime,
+    List<TriggeringEvent> triggeringEvents, CqlSortBy cqlSortBy, int pageLimit) {
 
-    return CqlQuery.lessThan("nextRunTime", systemTime.withZone(DateTimeZone.UTC))
-      .map(cqlQuery -> cqlQuery.sortBy(ascending("nextRunTime")))
-      .after(query -> findBy(query, pageLimit));
-  }
+    List<String> triggeringEventRepresentations = triggeringEvents.stream()
+      .map(TriggeringEvent::getRepresentation)
+      .collect(Collectors.toList());
 
-  public CompletableFuture<Result<MultipleRecords<ScheduledNotice>>> findRequestNoticesToSend(
-    DateTime systemTime, int pageLimit) {
-
-    return CqlQuery.lessThan("nextRunTime", systemTime.withZone(DateTimeZone.UTC))
-      .combine(CqlQuery.exactMatchAny("triggeringEvent",
-        asList(REQUEST_EXPIRATION.getRepresentation(), HOLD_EXPIRATION.getRepresentation())), CqlQuery::and)
-      .map(cqlQuery -> cqlQuery.sortBy(ascending("nextRunTime")))
+    return CqlQuery.lessThan("nextRunTime", timeLimit.withZone(DateTimeZone.UTC))
+      .combine(exactMatch("noticeConfig.sendInRealTime", Boolean.toString(realTime)), CqlQuery::and)
+      .combine(exactMatchAny("triggeringEvent", triggeringEventRepresentations), CqlQuery::and)
+      .map(cqlQuery -> cqlQuery.sortBy(cqlSortBy))
       .after(query -> findBy(query, pageLimit));
   }
 
@@ -91,11 +89,11 @@ public class ScheduledNoticesRepository {
   }
 
   CompletableFuture<Result<Response>> deleteByLoanId(String loanId) {
-    return CqlQuery.exactMatch("loanId", loanId).after(this::deleteMany);
+    return exactMatch("loanId", loanId).after(this::deleteMany);
   }
 
   CompletableFuture<Result<Response>> deleteByRequestId(String requestId) {
-    return CqlQuery.exactMatch("requestId", requestId).after(this::deleteMany);
+    return exactMatch("requestId", requestId).after(this::deleteMany);
   }
 
   private CompletableFuture<Result<Response>> deleteMany(CqlQuery cqlQuery) {

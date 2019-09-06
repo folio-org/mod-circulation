@@ -2,7 +2,6 @@ package org.folio.circulation.resources;
 
 import static org.folio.circulation.support.Result.failed;
 
-import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.domain.ConfigurationRepository;
@@ -48,7 +47,6 @@ public abstract class ScheduledNoticeProcessingResource extends Resource {
 
     configurationRepository.lookupSchedulerNoticesProcessingLimit()
       .thenCompose(r -> r.after(limit -> findNoticesToSend(scheduledNoticesRepository, limit)))
-      .thenApply(r -> r.map(MultipleRecords::getRecords))
       .thenCompose(r -> r.after(notices -> handleNotices(clients, notices)))
       .thenApply(this::createWritableResult)
       .thenAccept(result -> result.writeTo(routingContext.response()));
@@ -57,8 +55,8 @@ public abstract class ScheduledNoticeProcessingResource extends Resource {
   protected abstract CompletableFuture<Result<MultipleRecords<ScheduledNotice>>> findNoticesToSend(
     ScheduledNoticesRepository scheduledNoticesRepository, int limit);
 
-  protected abstract CompletableFuture<Result<Collection<ScheduledNotice>>> handleNotices(
-    Clients clients, Collection<ScheduledNotice> noticesResult);
+  protected abstract CompletableFuture<Result<MultipleRecords<ScheduledNotice>>> handleNotices(
+    Clients clients, MultipleRecords<ScheduledNotice> noticesResult);
 
   private ResponseWritableResult<Void> createWritableResult(Result<?> result) {
     if (result.failed()) {

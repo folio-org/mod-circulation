@@ -2,7 +2,6 @@ package api.support.matchers;
 
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static com.jayway.jsonpath.matchers.JsonPathMatchers.hasJsonPath;
-import static com.jayway.jsonpath.matchers.JsonPathMatchers.withJsonPath;
 import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.is;
 
@@ -44,13 +43,13 @@ public class ScheduledNoticeMatchers {
     boolean expectedSendInRealTime, String expectedFormat) {
 
     return JsonObjectMatcher.allOfPaths(
-      withJsonPath(LOAN_ID, UUIDMatcher.is(expectedLoanId)),
-      withJsonPath(NEXT_RUN_TIME, isEquivalentTo(expectedNextRunTime)),
-      withJsonPath(TIMING, is(expectedTiming)),
-      withJsonPath(TEMPLATE_ID, UUIDMatcher.is(expectedTemplateId)),
-      withJsonPath(RECURRING_PERIOD_INTERVAL, isPeriod(expectedRecurringPeriod)),
-      withJsonPath(SEND_IN_REAL_TIME, is(expectedSendInRealTime)),
-      withJsonPath(FORMAT, is(expectedFormat))
+      hasJsonPath(LOAN_ID, UUIDMatcher.is(expectedLoanId)),
+      hasJsonPath(NEXT_RUN_TIME, isEquivalentTo(expectedNextRunTime)),
+      hasJsonPath(TIMING, is(expectedTiming)),
+      hasJsonPath(TEMPLATE_ID, UUIDMatcher.is(expectedTemplateId)),
+      hasJsonPath(RECURRING_PERIOD_INTERVAL, isPeriod(expectedRecurringPeriod)),
+      hasJsonPath(SEND_IN_REAL_TIME, is(expectedSendInRealTime)),
+      hasJsonPath(FORMAT, is(expectedFormat))
     );
   }
 
