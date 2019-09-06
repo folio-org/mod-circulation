@@ -478,6 +478,7 @@
             "inventory-storage.location-units.libraries.item.get",
             "inventory-storage.location-units.libraries.collection.get",
             "inventory-storage.material-types.collection.get",
+            "inventory-storage.material-types.item.get",
             "inventory-storage.service-points.collection.get",
             "inventory-storage.service-points.item.get",
             "users.item.get",
