@@ -34,7 +34,6 @@ import org.hamcrest.MatcherAssert;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.junit.After;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import api.support.APITests;
@@ -938,7 +937,6 @@ public class MoveRequestTests extends APITests {
   }
 
   @Test
-  @Ignore("Fails due to timezone not being fetched when request is moved")
   public void changedDueDateAfterRecallingAnItemShouldRespectTenantTimezone()
     throws InterruptedException,
     ExecutionException,

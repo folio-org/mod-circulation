@@ -4,6 +4,8 @@ import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.support.Result.of;
 
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
+import java.util.function.Function;
 
 import org.folio.circulation.domain.policy.RequestPolicyRepository;
 import org.folio.circulation.domain.validation.RequestLoanValidator;
@@ -17,16 +19,23 @@ public class MoveRequestService {
   private final MoveRequestProcessAdapter moveRequestProcessAdapter;
   private final RequestLoanValidator requestLoanValidator;
   private final RequestNoticeSender requestNoticeSender;
+  private final ConfigurationRepository configurationRepository;
 
-  public MoveRequestService(RequestRepository requestRepository, RequestPolicyRepository requestPolicyRepository,
-      UpdateUponRequest updateUponRequest, MoveRequestProcessAdapter moveRequestHelper,
-      RequestLoanValidator requestLoanValidator, RequestNoticeSender requestNoticeSender) {
+  public MoveRequestService(RequestRepository requestRepository,
+                            RequestPolicyRepository requestPolicyRepository,
+                            UpdateUponRequest updateUponRequest,
+                            MoveRequestProcessAdapter moveRequestHelper,
+                            RequestLoanValidator requestLoanValidator,
+                            RequestNoticeSender requestNoticeSender,
+                            ConfigurationRepository configurationRepository) {
+
     this.requestRepository = requestRepository;
     this.requestPolicyRepository = requestPolicyRepository;
     this.updateUponRequest = updateUponRequest;
     this.moveRequestProcessAdapter = moveRequestHelper;
     this.requestLoanValidator = requestLoanValidator;
     this.requestNoticeSender = requestNoticeSender;
+    this.configurationRepository = configurationRepository;
   }
 
   public CompletableFuture<Result<RequestAndRelatedRecords>> moveRequest(
@@ -36,6 +45,7 @@ public class MoveRequestService {
       .thenComposeAsync(r -> r.after(moveRequestProcessAdapter::getDestinationRequestQueue))
       .thenApply(r -> r.map(this::pagedRequestIfDestinationItemAvailable))
       .thenCompose(r -> r.after(this::validateUpdateRequest))
+      .thenComposeAsync(getTimeZoneForRequestRelatedRecords())
       .thenCompose(r -> r.after(updateUponRequest.updateRequestQueue::onMovedTo))
       .thenComposeAsync(r -> r.after(this::updateRelatedObjects))
       .thenCompose(r -> r.after(requestRepository::update))
@@ -51,15 +61,19 @@ public class MoveRequestService {
 
   private RequestAndRelatedRecords pagedRequestIfDestinationItemAvailable(
       RequestAndRelatedRecords requestAndRelatedRecords) {
+
     Item item = requestAndRelatedRecords.getRequest().getItem();
+
     if (item.getStatus().equals(ItemStatus.AVAILABLE)) {
       return requestAndRelatedRecords.withRequestType(RequestType.PAGE);
     }
+
     return requestAndRelatedRecords;
   }
 
   private CompletableFuture<Result<RequestAndRelatedRecords>> validateUpdateRequest(
       RequestAndRelatedRecords requestAndRelatedRecords) {
+
     return of(() -> requestAndRelatedRecords)
       .next(RequestServiceUtility::refuseWhenItemDoesNotExist)
       .next(RequestServiceUtility::refuseWhenInvalidUserAndPatronGroup)
@@ -72,7 +86,14 @@ public class MoveRequestService {
 
   private CompletableFuture<Result<RequestAndRelatedRecords>> updateRelatedObjects(
       RequestAndRelatedRecords requestAndRelatedRecords) {
+
     return updateUponRequest.updateItem.onRequestCreateOrUpdate(requestAndRelatedRecords)
       .thenComposeAsync(r -> r.after(updateUponRequest.updateLoan::onRequestCreateOrUpdate));
+  }
+
+  private Function<Result<RequestAndRelatedRecords>, CompletionStage<Result<RequestAndRelatedRecords>>> getTimeZoneForRequestRelatedRecords() {
+    return r -> r.combineAfter(
+      unused -> configurationRepository.findTimeZoneConfiguration(),
+      RequestAndRelatedRecords::withTimeZone);
   }
 }
