@@ -121,6 +121,7 @@ public class ItemsFixture {
 
     return itemsClient.create(item1);
   }
+
   public InventoryItemResource basedUponSmallAngryPlanet()
     throws InterruptedException,
     MalformedURLException,
@@ -128,6 +129,15 @@ public class ItemsFixture {
     ExecutionException {
 
     return basedUponSmallAngryPlanet(identity());
+  }
+
+  public InventoryItemResource basedUponSmallAngryPlanet(String barcode)
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    return basedUponSmallAngryPlanet(item -> item.withBarcode(barcode));
   }
 
   public InventoryItemResource basedUponSmallAngryPlanet(
