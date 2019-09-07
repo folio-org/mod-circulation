@@ -25,7 +25,6 @@ import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.support.ClockManager;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
-import org.hamcrest.junit.MatcherAssert;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeConstants;
 import org.joda.time.DateTimeZone;
@@ -522,7 +521,7 @@ public class LoanDueDatesAfterRecallTests extends APITests {
       .toDateTime(END_OF_A_DAY, DateTimeZone.forID(stockholmTimeZone))
       .plusDays(5);
 
-    MatcherAssert.assertThat("due date should be end of the day, 5 days from loan date",
+    assertThat("due date should be end of the day, 5 days from loan date",
       storedLoan.getString("dueDate"), isEquivalentTo(expectedDueDate));
   }
 
