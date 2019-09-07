@@ -4,8 +4,6 @@ import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.support.Result.of;
 
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionStage;
-import java.util.function.Function;
 
 import org.folio.circulation.domain.policy.RequestPolicyRepository;
 import org.folio.circulation.domain.validation.RequestLoanValidator;
@@ -45,7 +43,8 @@ public class MoveRequestService {
       .thenComposeAsync(r -> r.after(moveRequestProcessAdapter::getDestinationRequestQueue))
       .thenApply(r -> r.map(this::pagedRequestIfDestinationItemAvailable))
       .thenCompose(r -> r.after(this::validateUpdateRequest))
-      .thenComposeAsync(getTimeZoneForRequestRelatedRecords())
+      .thenComposeAsync(r -> r.combineAfter(configurationRepository::findTimeZoneConfiguration,
+        RequestAndRelatedRecords::withTimeZone))
       .thenCompose(r -> r.after(updateUponRequest.updateRequestQueue::onMovedTo))
       .thenComposeAsync(r -> r.after(this::updateRelatedObjects))
       .thenCompose(r -> r.after(requestRepository::update))
@@ -89,11 +88,5 @@ public class MoveRequestService {
 
     return updateUponRequest.updateItem.onRequestCreateOrUpdate(requestAndRelatedRecords)
       .thenComposeAsync(r -> r.after(updateUponRequest.updateLoan::onRequestCreateOrUpdate));
-  }
-
-  private Function<Result<RequestAndRelatedRecords>, CompletionStage<Result<RequestAndRelatedRecords>>> getTimeZoneForRequestRelatedRecords() {
-    return r -> r.combineAfter(
-      unused -> configurationRepository.findTimeZoneConfiguration(),
-      RequestAndRelatedRecords::withTimeZone);
   }
 }

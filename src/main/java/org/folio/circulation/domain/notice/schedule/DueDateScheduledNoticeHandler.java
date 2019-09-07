@@ -72,7 +72,8 @@ public class DueDateScheduledNoticeHandler {
     return loanRepository.getById(notice.getLoanId())
       .thenApply(r -> r.map(LoanAndRelatedRecords::new))
       .thenCompose(r -> r.after(loanPolicyRepository::lookupLoanPolicy))
-      .thenCompose(configurationRepository::lookupTimeZoneForLoanRelatedRecords)
+      .thenCompose(r -> r.combineAfter(configurationRepository::findTimeZoneConfiguration,
+        LoanAndRelatedRecords::withTimeZone))
       .thenCompose(r -> r.after(records -> sendNotice(records, notice)))
       .thenCompose(r -> r.after(relatedRecords -> updateNotice(relatedRecords, notice)));
   }
