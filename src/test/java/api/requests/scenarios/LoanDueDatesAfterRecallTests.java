@@ -517,13 +517,12 @@ public class LoanDueDatesAfterRecallTests extends APITests {
     assertThat("due date is the original date",
       storedLoan.getString("dueDate"), not(originalDueDate));
 
-    final DateTime expectedDueDate =
-      loanDate.toLocalDate()
-        .toDateTime(END_OF_A_DAY, DateTimeZone.forID(stockholmTimeZone));
+    final DateTime expectedDueDate = loanDate.toLocalDate()
+      .toDateTime(END_OF_A_DAY, DateTimeZone.forID(stockholmTimeZone))
+      .plusDays(5);
 
-    assertThat("due date should be end of the day, 5 days from request date",
-      storedLoan.getString("dueDate"),
-        isEquivalentTo(expectedDueDate.plusDays(5)));
+    assertThat("due date should be end of the day, 5 days from loan date",
+      storedLoan.getString("dueDate"), isEquivalentTo(expectedDueDate));
   }
 
   private void freezeTime(DateTime dateTime) {
