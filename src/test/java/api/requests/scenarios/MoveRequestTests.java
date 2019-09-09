@@ -3,8 +3,13 @@ package api.requests.scenarios;
 import static api.support.builders.ItemBuilder.AVAILABLE;
 import static api.support.builders.ItemBuilder.PAGED;
 import static api.support.builders.RequestBuilder.OPEN_AWAITING_PICKUP;
+import static api.support.fixtures.ConfigurationExample.timezoneConfigurationFor;
 import static api.support.matchers.ItemStatusCodeMatcher.hasItemStatus;
+import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
+import static org.folio.circulation.domain.policy.DueDateManagement.KEEP_THE_CURRENT_DUE_DATE;
+import static org.folio.circulation.domain.policy.library.ClosedLibraryStrategyUtils.END_OF_A_DAY;
 import static org.folio.circulation.domain.representations.RequestProperties.REQUEST_TYPE;
+import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
@@ -22,16 +27,20 @@ import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.RequestStatus;
 import org.folio.circulation.domain.RequestType;
+import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.support.ClockManager;
 import org.folio.circulation.support.http.client.IndividualResource;
+import org.hamcrest.MatcherAssert;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.junit.After;
 import org.junit.Test;
 
 import api.support.APITests;
+import api.support.builders.LoanPolicyBuilder;
 import api.support.builders.MoveRequestBuilder;
 import api.support.builders.RequestBuilder;
+import api.support.http.InventoryItemResource;
 import io.vertx.core.json.JsonObject;
 
 /**
@@ -43,7 +52,7 @@ import io.vertx.core.json.JsonObject;
 public class MoveRequestTests extends APITests {
 
   @After
-  public void restoreStubs() {
+  public void after() {
     ClockManager.getClockManager().setClock(Clock.systemUTC());
   }
 
@@ -902,7 +911,7 @@ public class MoveRequestTests extends APITests {
 
     // Have to mock system clocks to demonstrate a delay between the requests
     // So the dueDates will be recalculated
-    mockSystemClocks(expectedLoanDueDate);
+    freezeTime(expectedLoanDueDate);
     // Then move the 'smallAngryPlanet' recall request to the 'interestingTimes' item
     requestsFixture.move(new MoveRequestBuilder(recallRequestBySteve.getId(),
       interestingTimesItem.getId(),
@@ -927,7 +936,84 @@ public class MoveRequestTests extends APITests {
     assertThat(interestingTimesLoan.getInstant("dueDate"), is(expectedLoanDueDate));
   }
 
-  private void mockSystemClocks(Instant dateTime) {
+  @Test
+  public void changedDueDateAfterRecallingAnItemShouldRespectTenantTimezone()
+    throws InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    MalformedURLException {
+
+    final String stockholmTimeZone = "Europe/Stockholm";
+
+    final InventoryItemResource sourceItem =
+      itemsFixture.basedUponSmallAngryPlanet("65654345643");
+
+    final InventoryItemResource destinationItem =
+      itemsFixture.basedUponSmallAngryPlanet("75605832024");
+
+    final IndividualResource requestServicePoint = servicePointsFixture.cd1();
+    final IndividualResource steve = usersFixture.steve();
+    final IndividualResource jessica = usersFixture.jessica();
+
+    configClient.create(timezoneConfigurationFor(stockholmTimeZone));
+
+    final LoanPolicyBuilder canCirculateRollingPolicy = new LoanPolicyBuilder()
+      .withName("Can Circulate Rolling With Recalls")
+      .withDescription("Can circulate item With Recalls")
+      .rolling(Period.days(14))
+      .unlimitedRenewals()
+      .renewFromSystemDate()
+      .withRecallsMinimumGuaranteedLoanPeriod(Period.days(5))
+      .withClosedLibraryDueDateManagement(KEEP_THE_CURRENT_DUE_DATE.getValue());
+
+    final IndividualResource loanPolicy = loanPoliciesFixture.create(canCirculateRollingPolicy);
+
+    useLoanPolicyAsFallback(loanPolicy.getId(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
+      noticePoliciesFixture.inactiveNotice().getId());
+
+    final DateTime loanDate = DateTime.now(DateTimeZone.UTC).minusDays(3);
+
+    loansFixture.checkOutByBarcode(sourceItem, steve, loanDate);
+
+    final IndividualResource loan = loansFixture.checkOutByBarcode(
+      destinationItem, steve, loanDate);
+
+    final String originalDueDate = loan.getJson().getString("dueDate");
+
+    final DateTime requestDate = DateTime.now(DateTimeZone.UTC);
+
+    freezeTime(requestDate);
+
+    final IndividualResource recallRequest = requestsFixture.place(
+      new RequestBuilder()
+        .recall()
+        .forItem(sourceItem)
+        .by(jessica)
+        .withRequestDate(requestDate)
+        .withPickupServicePoint(requestServicePoint));
+
+    requestsFixture.move(new MoveRequestBuilder(recallRequest.getId(),
+      destinationItem.getId()));
+
+    final JsonObject storedLoan = loansStorageClient.getById(loan.getId()).getJson();
+
+    MatcherAssert.assertThat("due date is the original date",
+      storedLoan.getString("dueDate"), not(originalDueDate));
+
+    final DateTime expectedDueDate = loanDate.toLocalDate()
+        .toDateTime(END_OF_A_DAY, DateTimeZone.forID(stockholmTimeZone))
+        .plusDays(5);
+
+    assertThat("due date should be end of the day, 5 days from loan date",
+      storedLoan.getString("dueDate"), isEquivalentTo(expectedDueDate));
+  }
+
+  private void freezeTime(DateTime dateTime) {
+    freezeTime(Instant.ofEpochMilli(dateTime.getMillis()));
+  }
+
+  private void freezeTime(Instant dateTime) {
     ClockManager.getClockManager().setClock(
       Clock.fixed(dateTime, ZoneOffset.UTC));
   }

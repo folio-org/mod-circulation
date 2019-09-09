@@ -26,20 +26,14 @@ public class ConfigurationRepository {
     configurationClient = clients.configurationStorageClient();
   }
 
-  public CompletableFuture<Result<LoanAndRelatedRecords>> lookupTimeZone(
-    LoanAndRelatedRecords relatedRecords) {
-
-    return findTimeZoneConfiguration()
-      .thenApply(result -> result.map(relatedRecords::withTimeZone));
-  }
-
   public CompletableFuture<Result<Integer>> lookupSchedulerNoticesProcessingLimit() {
     Result<CqlQuery> cqlQueryResult = defineModuleNameAndConfigNameFilter("NOTIFICATION_SCHEDULER", "noticesLimit");
     return lookupConfigurations(cqlQueryResult, applySearchSchedulerNoticesLimit());
   }
 
-  private CompletableFuture<Result<DateTimeZone>> findTimeZoneConfiguration() {
+  public CompletableFuture<Result<DateTimeZone>> findTimeZoneConfiguration() {
     Result<CqlQuery> cqlQueryResult = defineModuleNameAndConfigNameFilter("ORG", "localeSettings");
+
     return lookupConfigurations(cqlQueryResult, applySearchDateTimeZone());
   }
 
