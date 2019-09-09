@@ -13,6 +13,10 @@ public class PatronNoticePolicy {
     this.noticeConfigurations = noticeConfigurations;
   }
 
+  public List<NoticeConfiguration> getNoticeConfigurations() {
+    return noticeConfigurations;
+  }
+
   public List<NoticeConfiguration> lookupNoticeConfiguration(NoticeEventType eventType, NoticeTiming timing) {
     return noticeConfigurations.stream()
       .filter(d -> Objects.equals(d.getNoticeEventType(), eventType))

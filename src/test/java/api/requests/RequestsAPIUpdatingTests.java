@@ -8,6 +8,8 @@ import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static api.support.matchers.ValidationErrorMatchers.hasUUIDParameter;
 import static org.folio.HttpStatus.HTTP_VALIDATION_ERROR;
+import static org.folio.circulation.domain.representations.RequestProperties.CANCELLATION_REASON_NAME;
+import static org.folio.circulation.domain.representations.RequestProperties.CANCELLATION_REASON_PUBLIC_DESCRIPTION;
 import static org.folio.circulation.support.JsonPropertyWriter.write;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.hasItems;
@@ -31,7 +33,6 @@ import org.awaitility.Awaitility;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 import org.hamcrest.Matcher;
-import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
@@ -43,7 +44,7 @@ import api.support.builders.Address;
 import api.support.builders.NoticeConfigurationBuilder;
 import api.support.builders.NoticePolicyBuilder;
 import api.support.builders.RequestBuilder;
-import api.support.fixtures.NoticeMatchers;
+import api.support.fixtures.TemplateContextMatchers;
 import api.support.http.InventoryItemResource;
 import io.vertx.core.json.JsonObject;
 
@@ -493,7 +494,7 @@ public class RequestsAPIUpdatingTests extends APITests {
   }
 
   @Test
-  public void requestCancellationNoticeIsSentWhenPolicyDefinesCancelledRequestNoticeConfiguration()
+  public void cancellationReasonPublicDescriptionIsUsedAsReasonForCancellationToken()
     throws InterruptedException,
     MalformedURLException,
     TimeoutException,
@@ -527,9 +528,10 @@ public class RequestsAPIUpdatingTests extends APITests {
         .withRequestExpiration(new LocalDate(2017, 7, 30))
         .withHoldShelfExpiration(new LocalDate(2017, 8, 31)));
 
+    final IndividualResource itemNotAvailable = cancellationReasonsFixture.itemNotAvailable();
     JsonObject updatedRequest = RequestBuilder.from(createdRequest)
       .cancelled()
-      .withCancellationReasonId(cancellationReasonsFixture.courseReserves().getId())
+      .withCancellationReasonId(itemNotAvailable.getId())
       .withCancellationAdditionalInformation("Cancellation info")
       .create();
     requestsClient.replace(createdRequest.getId(), updatedRequest);
@@ -540,12 +542,144 @@ public class RequestsAPIUpdatingTests extends APITests {
     List<JsonObject> sentNotices = patronNoticesClient.getAll();
 
     Map<String, Matcher<String>> noticeContextMatchers = new HashMap<>();
-    noticeContextMatchers.putAll(NoticeMatchers.getUserContextMatchers(requester));
-    noticeContextMatchers.putAll(NoticeMatchers.getItemContextMatchers(temeraire));
-    noticeContextMatchers.putAll(NoticeMatchers.getRequestContextMatchers(updatedRequest));
-    noticeContextMatchers.putAll(NoticeMatchers.getCancelledRequestContextMatchers(updatedRequest));
-    MatcherAssert.assertThat(sentNotices,
+    noticeContextMatchers.putAll(TemplateContextMatchers.getUserContextMatchers(requester));
+    noticeContextMatchers.putAll(TemplateContextMatchers.getItemContextMatchers(temeraire, true));
+    noticeContextMatchers.putAll(TemplateContextMatchers.getRequestContextMatchers(updatedRequest));
+    noticeContextMatchers.putAll(TemplateContextMatchers.getCancelledRequestContextMatchers(updatedRequest));
+    noticeContextMatchers.put("request.reasonForCancellation",
+      is(itemNotAvailable.getJson().getString(CANCELLATION_REASON_PUBLIC_DESCRIPTION)));
+    assertThat(sentNotices,
       hasItems(
         hasEmailNoticeProperties(requester.getId(), requestCancellationTemplateId, noticeContextMatchers)));
+  }
+
+  @Test
+  public void cancellationReasonNameIsUsedAsReasonForCancellationTokenWhenPublicDescriptionIsNotPresent()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    UUID requestCancellationTemplateId = UUID.randomUUID();
+    JsonObject requestCancellationConfiguration = new NoticeConfigurationBuilder()
+      .withTemplateId(requestCancellationTemplateId)
+      .withEventType(REQUEST_CANCELLATION)
+      .create();
+    NoticePolicyBuilder noticePolicy = new NoticePolicyBuilder()
+      .withName("Policy with request cancellation notice")
+      .withLoanNotices(Collections.singletonList(requestCancellationConfiguration));
+    useLoanPolicyAsFallback(
+      loanPoliciesFixture.canCirculateRolling().getId(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
+      noticePoliciesFixture.create(noticePolicy).getId());
+
+    final InventoryItemResource temeraire = itemsFixture.basedUponTemeraire();
+    final IndividualResource requester = usersFixture.steve();
+    DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
+    final IndividualResource exampleServicePoint = servicePointsFixture.cd1();
+    IndividualResource createdRequest = requestsClient.create(
+      new RequestBuilder()
+        .page()
+        .withRequestDate(requestDate)
+        .forItem(temeraire)
+        .by(requester)
+        .fulfilToHoldShelf()
+        .withPickupServicePointId(exampleServicePoint.getId())
+        .withRequestExpiration(new LocalDate(2017, 7, 30))
+        .withHoldShelfExpiration(new LocalDate(2017, 8, 31)));
+
+    final IndividualResource courseReserves = cancellationReasonsFixture.courseReserves();
+    JsonObject updatedRequest = RequestBuilder.from(createdRequest)
+      .cancelled()
+      .withCancellationReasonId(courseReserves.getId())
+      .withCancellationAdditionalInformation("Cancellation info")
+      .create();
+    requestsClient.replace(createdRequest.getId(), updatedRequest);
+
+    Awaitility.await()
+      .atMost(1, TimeUnit.SECONDS)
+      .until(patronNoticesClient::getAll, Matchers.hasSize(1));
+    List<JsonObject> sentNotices = patronNoticesClient.getAll();
+
+    Map<String, Matcher<String>> noticeContextMatchers = new HashMap<>();
+    noticeContextMatchers.putAll(TemplateContextMatchers.getUserContextMatchers(requester));
+    noticeContextMatchers.putAll(TemplateContextMatchers.getItemContextMatchers(temeraire, true));
+    noticeContextMatchers.putAll(TemplateContextMatchers.getRequestContextMatchers(updatedRequest));
+    noticeContextMatchers.putAll(TemplateContextMatchers.getCancelledRequestContextMatchers(updatedRequest));
+    noticeContextMatchers.put("request.reasonForCancellation",
+      is(courseReserves.getJson().getString(CANCELLATION_REASON_NAME)));
+    assertThat(sentNotices,
+      hasItems(
+        hasEmailNoticeProperties(requester.getId(), requestCancellationTemplateId, noticeContextMatchers)));
+  }
+
+  @Test
+  public void replacedRequestShouldOnlyIncludeStoredPropertiesInStorage()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    final InventoryItemResource temeraire = itemsFixture.basedUponTemeraire();
+
+    loansFixture.checkOutByBarcode(temeraire);
+
+    final IndividualResource steve = usersFixture.steve();
+    final IndividualResource charlotte = usersFixture.charlotte();
+
+    proxyRelationshipsFixture.currentProxyFor(steve, charlotte);
+
+    DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
+
+    final IndividualResource exampleServicePoint = servicePointsFixture.cd1();
+
+    IndividualResource createdRequest = requestsClient.create(
+      new RequestBuilder()
+        .recall()
+        .withRequestDate(requestDate)
+        .forItem(temeraire)
+        .by(steve)
+        .proxiedBy(charlotte)
+        .fulfilToHoldShelf()
+        .withPickupServicePointId(exampleServicePoint.getId())
+        .withRequestExpiration(new LocalDate(2017, 7, 30))
+        .withHoldShelfExpiration(new LocalDate(2017, 8, 31)));
+
+    requestsClient.replace(createdRequest.getId(), createdRequest.copyJson());
+
+    Response getStorageRequestResponse = requestsStorageClient.getById(createdRequest.getId());
+
+    assertThat(String.format("Failed to get request: %s", getStorageRequestResponse.getBody()),
+      getStorageRequestResponse.getStatusCode(), is(HttpURLConnection.HTTP_OK));
+
+    JsonObject storageRepresentation = getStorageRequestResponse.getJson();
+
+    assertThat("has information taken from requesting user",
+      storageRepresentation.containsKey("requester"), is(true));
+
+    final JsonObject requesterSummary = storageRepresentation.getJsonObject("requester");
+
+    assertThat("last name is taken from requesting user",
+      requesterSummary.getString("lastName"), is("Jones"));
+
+    assertThat("first name is taken from requesting user",
+      requesterSummary.getString("firstName"), is("Steven"));
+
+    assertThat("patron group information should not be stored for requesting user",
+      requesterSummary.containsKey("patronGroup"), is(false));
+
+    assertThat("has information taken from proxying user",
+      storageRepresentation.containsKey("proxy"), is(true));
+
+    final JsonObject proxySummary = storageRepresentation.getJsonObject("proxy");
+
+    assertThat("last name is taken from proxying user",
+      proxySummary.getString("lastName"), is("Broadwell"));
+
+    assertThat("first name is taken from proxying user",
+      proxySummary.getString("firstName"), is("Charlotte"));
+
+    assertThat("patron group information should not be stored for proxying user",
+      proxySummary.containsKey("patronGroup"), is(false));
   }
 }

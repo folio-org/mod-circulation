@@ -1,28 +1,32 @@
 package org.folio.circulation.domain;
 
+import static java.util.Objects.nonNull;
+import static java.util.Objects.requireNonNull;
 import static org.folio.circulation.domain.representations.LoanProperties.ACTION_COMMENT;
 import static org.folio.circulation.domain.representations.LoanProperties.CHECKIN_SERVICE_POINT_ID;
+import static org.folio.circulation.domain.representations.LoanProperties.CHECKOUT_SERVICE_POINT_ID;
 import static org.folio.circulation.domain.representations.LoanProperties.DUE_DATE;
 import static org.folio.circulation.domain.representations.LoanProperties.RETURN_DATE;
 import static org.folio.circulation.domain.representations.LoanProperties.STATUS;
 import static org.folio.circulation.domain.representations.LoanProperties.SYSTEM_RETURN_DATE;
 import static org.folio.circulation.domain.representations.LoanProperties.USER_ID;
-import static org.folio.circulation.support.Result.failed;
-import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.JsonPropertyFetcher.getDateTimeProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getIntegerProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getNestedStringProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
 import static org.folio.circulation.support.JsonPropertyWriter.write;
+import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
+import static org.folio.circulation.support.results.CommonFailures.failedDueToServerError;
 
+import java.util.Collection;
 import java.util.Objects;
 import java.util.UUID;
 
 import org.apache.commons.lang3.StringUtils;
+import org.folio.circulation.domain.policy.LoanPolicy;
 import org.folio.circulation.domain.representations.LoanProperties;
 import org.folio.circulation.support.Result;
-import org.folio.circulation.support.ServerErrorFailure;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 
@@ -33,32 +37,39 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   private final Item item;
   private final User user;
   private final User proxy;
+
+  private final Collection<Account> accounts;
+
   private final DateTime originalDueDate;
 
-  private String checkoutServicePointId;
-  private String checkinServicePointId;
+  private final String checkoutServicePointId;
+  private final String checkinServicePointId;
 
-  private ServicePoint checkoutServicePoint;
-  private ServicePoint checkinServicePoint;
+  private final ServicePoint checkoutServicePoint;
+  private final ServicePoint checkinServicePoint;
 
-  public Loan(JsonObject representation) {
-    this(representation, null, null, null, null, null, null);
-  }
+  private final LoanPolicy loanPolicy;
 
-  public Loan(JsonObject representation, Item item, User user, User proxy,
-              ServicePoint checkinServicePoint, ServicePoint checkoutServicePoint, DateTime originalDueDate) {
+  private Loan(JsonObject representation, Item item, User user, User proxy,
+               ServicePoint checkinServicePoint, ServicePoint checkoutServicePoint,
+               DateTime originalDueDate, LoanPolicy loanPolicy, Collection<Account> accounts) {
+
+    requireNonNull(loanPolicy, "loanPolicy cannot be null");
 
     this.representation = representation;
     this.item = item;
     this.user = user;
     this.proxy = proxy;
+    this.accounts = accounts;
     this.checkinServicePoint = checkinServicePoint;
     this.checkoutServicePoint = checkoutServicePoint;
 
-    this.checkoutServicePointId = getProperty(representation, LoanProperties.CHECKOUT_SERVICE_POINT_ID);
+    this.checkoutServicePointId = getProperty(representation, CHECKOUT_SERVICE_POINT_ID);
     this.checkinServicePointId = getProperty(representation, CHECKIN_SERVICE_POINT_ID);
 
     this.originalDueDate = originalDueDate == null ? getDueDate() : originalDueDate;
+
+    this.loanPolicy = loanPolicy;
 
     // TODO: Refuse if ID does not match property in representation,
     // and possibly convert isFound to unknown item class
@@ -75,32 +86,22 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     if (proxy != null) {
       representation.put("proxyUserId", proxy.getId());
     }
-
   }
 
   public static Loan from(JsonObject representation) {
-    return from(representation, null);
-  }
-
-  public static Loan from(JsonObject representation, Item item) {
-    return from(representation, item, null, null);
-  }
-
-  public static Loan from(JsonObject representation, Item item, User user, User proxy) {
-    return from(representation, item, user, proxy, null);
-  }
-
-  public static Loan from(JsonObject representation, Item item, User user, User proxy, DateTime oldDueDate) {
     defaultStatusAndAction(representation);
-    return new Loan(representation, item, user, proxy, null, null, oldDueDate);
+    return new Loan(representation, null, null, null, null, null, null,
+      LoanPolicy.unknown(null), null);
   }
 
   JsonObject asJson() {
     return representation.copy();
   }
 
-  public void changeDueDate(DateTime newDueDate) {
+  public Loan changeDueDate(DateTime newDueDate) {
     write(representation, DUE_DATE, newDueDate);
+
+    return this;
   }
 
   private void changeReturnDate(DateTime returnDate) {
@@ -133,7 +134,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
 
   public Result<Void> isValidStatus() {
     if (!representation.containsKey(STATUS)) {
-      return failed(new ServerErrorFailure("Loan does not have a status"));
+      return failedDueToServerError("Loan does not have a status");
     }
 
     switch (getStatus()) {
@@ -165,8 +166,12 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     }
   }
 
-  boolean isClosed() {
+  public boolean isClosed() {
     return StringUtils.equals(getStatus(), "Closed");
+  }
+
+  public boolean isOpen() {
+    return StringUtils.equals(getStatus(), "Open");
   }
 
   private String getStatus() {
@@ -177,6 +182,9 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     return getProperty(representation, "id");
   }
 
+  public Collection<Account> getAccounts() {
+    return accounts;
+  }
   @Override
   public String getItemId() {
     return getProperty(representation, "itemId");
@@ -200,9 +208,14 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     return item;
   }
 
+  Loan replaceRepresentation(JsonObject newRepresentation) {
+    return new Loan(newRepresentation, item, user, proxy, checkinServicePoint,
+      checkoutServicePoint, originalDueDate, loanPolicy, accounts);
+  }
+
   public Loan withItem(Item item) {
     return new Loan(representation, item, user, proxy, checkinServicePoint,
-        checkoutServicePoint, originalDueDate);
+        checkoutServicePoint, originalDueDate, loanPolicy, accounts);
   }
 
   public User getUser() {
@@ -211,7 +224,19 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
 
   public Loan withUser(User newUser) {
     return new Loan(representation, item, newUser, proxy, checkinServicePoint,
-        checkoutServicePoint, originalDueDate);
+        checkoutServicePoint, originalDueDate, loanPolicy, accounts);
+  }
+
+  Loan withPatronGroupAtCheckout(PatronGroup patronGroup) {
+    if (nonNull(patronGroup)) {
+      JsonObject patronGroupAtCheckout = new JsonObject()
+        .put("id", patronGroup.getId())
+        .put("name", patronGroup.getGroup());
+
+      write(representation, LoanProperties.PATRON_GROUP_AT_CHECKOUT,
+        patronGroupAtCheckout);
+    }
+    return this;
   }
 
   public User getProxy() {
@@ -220,37 +245,61 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
 
   Loan withProxy(User newProxy) {
     return new Loan(representation, item, user, newProxy, checkinServicePoint,
-      checkoutServicePoint, originalDueDate);
-  }
-  
-  public Loan withCheckinServicePoint(ServicePoint newCheckinServicePoint) {
-    return new Loan(representation, item, user, proxy, newCheckinServicePoint,
-      checkoutServicePoint, originalDueDate);
-  }
-  
-  public Loan withCheckoutServicePoint(ServicePoint newCheckoutServicePoint) {
-    return new Loan(representation, item, user, proxy, checkinServicePoint,
-      newCheckoutServicePoint, originalDueDate);
+      checkoutServicePoint, originalDueDate, loanPolicy, accounts);
   }
 
-  private void changeLoanPolicy(String newLoanPolicyId) {
+  Loan withCheckinServicePoint(ServicePoint newCheckinServicePoint) {
+    return new Loan(representation, item, user, proxy, newCheckinServicePoint,
+      checkoutServicePoint, originalDueDate, loanPolicy, accounts);
+  }
+
+  Loan withCheckoutServicePoint(ServicePoint newCheckoutServicePoint) {
+    return new Loan(representation, item, user, proxy, checkinServicePoint,
+      newCheckoutServicePoint, originalDueDate, loanPolicy, accounts);
+  }
+
+  public Loan withAccounts(Collection<Account> newAccounts) {
+    return new Loan(representation, item, user, proxy, checkinServicePoint,
+      checkoutServicePoint, originalDueDate, loanPolicy, newAccounts);
+  }
+
+  public String getLoanPolicyId() {
+    return representation.getString("loanPolicyId");
+  }
+
+  public LoanPolicy getLoanPolicy() {
+    return loanPolicy;
+  }
+
+  public Loan withLoanPolicy(LoanPolicy newloanPolicy) {
+    requireNonNull(newloanPolicy, "newloanPolicy cannot be null");
+
+    return new Loan(representation, item, user, proxy, checkinServicePoint,
+      checkoutServicePoint, originalDueDate, newloanPolicy, accounts);
+  }
+
+  private void setLoanPolicyId(String newLoanPolicyId) {
     if (newLoanPolicyId != null) {
       representation.put("loanPolicyId", newLoanPolicyId);
     }
   }
-  
+
   public ServicePoint getCheckinServicePoint() {
     return this.checkinServicePoint;
   }
-  
+
   public ServicePoint getCheckoutServicePoint() {
     return this.checkoutServicePoint;
+  }
+
+  String getPatronGroupIdAtCheckout() {
+    return  getProperty(representation, "patronGroupIdAtCheckout");
   }
 
   public Loan renew(DateTime dueDate, String basedUponLoanPolicyId) {
     changeAction("renewed");
     removeActionComment();
-    changeLoanPolicy(basedUponLoanPolicyId);
+    setLoanPolicyId(basedUponLoanPolicyId);
     changeDueDate(dueDate);
     incrementRenewalCount();
 
@@ -261,7 +310,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
                               String basedUponLoanPolicyId,
                               String actionComment) {
     changeAction("renewedThroughOverride");
-    changeLoanPolicy(basedUponLoanPolicyId);
+    setLoanPolicyId(basedUponLoanPolicyId);
     changeDueDate(dueDate);
     incrementRenewalCount();
     changeActionComment(actionComment);
@@ -314,11 +363,11 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     return !Objects.equals(originalDueDate, getDueDate());
   }
 
-  public DateTime getOriginalDueDate() {
-    return originalDueDate;
-  }
-
   public DateTime getReturnDate() {
     return getDateTimeProperty(representation, RETURN_DATE);
+  }
+
+  public void changeItemStatus(String itemStatus) {
+    representation.put(LoanProperties.ITEM_STATUS, itemStatus);
   }
 }

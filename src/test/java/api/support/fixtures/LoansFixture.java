@@ -67,6 +67,23 @@ public class LoansFixture {
       .withDueDate(loanDate.plusWeeks(3)));
   }
 
+  public IndividualResource createLoan(
+    IndividualResource item,
+    IndividualResource to,
+    DateTime loanDate)
+    throws MalformedURLException,
+    InterruptedException,
+    ExecutionException,
+    TimeoutException {
+
+    return loansClient.create(new LoanBuilder()
+      .open()
+      .withItemId(item.getId())
+      .withUserId(to.getId())
+      .withLoanDate(loanDate)
+      .withDueDate(loanDate.plusWeeks(3)));
+  }
+
   public Response attemptToCreateLoan(
     IndividualResource item,
     IndividualResource to)

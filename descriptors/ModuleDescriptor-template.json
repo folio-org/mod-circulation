@@ -3,8 +3,44 @@
   "name": "Circulation Module",
   "provides": [
     {
+      "id": "requests-reports",
+      "version": "0.2",
+      "handlers": [
+        {
+          "methods": [
+            "GET"
+          ],
+          "pathPattern": "/circulation/requests-reports/hold-shelf-clearance/{id}",
+          "permissionsRequired": [
+            "circulation.requests.hold-shelf-clearance-report.get"
+          ],
+          "modulePermissions": [
+            "modperms.circulation.requests.hold-shelf-clearance-report.get"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "request-move",
+      "version": "0.2",
+      "handlers": [
+        {
+          "methods": [
+            "POST"
+          ],
+          "pathPattern": "/circulation/requests/{id}/move",
+          "permissionsRequired": [
+            "circulation.requests.item.move.post"
+          ],
+          "modulePermissions": [
+            "modperms.circulation.requests.item.move.post"
+          ]
+        }
+      ]
+    },
+    {
       "id": "circulation",
-      "version": "7.5",
+      "version": "7.11",
       "handlers": [
         {
           "methods": [
@@ -15,40 +51,7 @@
             "circulation.check-out-by-barcode.post"
           ],
           "modulePermissions": [
-            "circulation-storage.loans.item.post",
-            "calendar.collection.get",
-            "calendar.collection.add",
-            "circulation-storage.loans.item.get",
-            "circulation-storage.loans.collection.get",
-            "circulation.rules.loan-policy.get",
-            "circulation.rules.request-policy.get",
-            "circulation-storage.requests.collection.get",
-            "circulation-storage.requests.item.put",
-            "inventory-storage.items.item.put",
-            "inventory-storage.items.item.get",
-            "inventory-storage.items.collection.get",
-            "inventory-storage.locations.item.get",
-            "inventory-storage.locations.collection.get",
-            "inventory-storage.holdings.collection.get",
-            "inventory-storage.holdings.item.get",
-            "inventory-storage.instances.collection.get",
-            "inventory-storage.instances.item.get",
-            "inventory-storage.service-points.collection.get",
-            "inventory-storage.service-points.item.get",
-            "users.item.get",
-            "proxiesfor.collection.get",
-            "inventory-storage.material-types.item.get",
-            "inventory-storage.material-types.collection.get",
-            "circulation-storage.loan-policies.item.get",
-            "circulation-storage.request-policies.item.get",
-            "circulation-storage.fixed-due-date-schedules.item.get",
-            "circulation-storage.fixed-due-date-schedules.collection.get",
-            "circulation-storage.patron-notice-policies.item.get",
-            "patron-notice.post",
-            "circulation.rules.notice-policy.get",
-            "configuration.entries.collection.get",
-            "users.collection.get",
-            "inventory-storage.loan-types.item.get"
+            "modperms.circulation.check-out-by-barcode.post"
           ]
         },
         {
@@ -60,38 +63,7 @@
             "circulation.override-check-out-by-barcode.post"
           ],
           "modulePermissions": [
-            "circulation-storage.loans.item.post",
-            "circulation-storage.loans.item.get",
-            "circulation-storage.loans.collection.get",
-            "circulation.rules.loan-policy.get",
-            "circulation.rules.request-policy.get",
-            "circulation-storage.requests.collection.get",
-            "circulation-storage.requests.item.put",
-            "inventory-storage.items.item.put",
-            "inventory-storage.items.item.get",
-            "inventory-storage.items.collection.get",
-            "inventory-storage.locations.item.get",
-            "inventory-storage.locations.collection.get",
-            "inventory-storage.holdings.collection.get",
-            "inventory-storage.holdings.item.get",
-            "inventory-storage.instances.collection.get",
-            "inventory-storage.instances.item.get",
-            "inventory-storage.service-points.collection.get",
-            "inventory-storage.service-points.item.get",
-            "users.item.get",
-            "proxiesfor.collection.get",
-            "inventory-storage.material-types.item.get",
-            "inventory-storage.material-types.collection.get",
-            "circulation-storage.loan-policies.item.get",
-            "circulation-storage.request-policies.item.get",
-            "circulation-storage.fixed-due-date-schedules.item.get",
-            "circulation-storage.fixed-due-date-schedules.collection.get",
-            "circulation-storage.patron-notice-policies.item.get",
-            "patron-notice.post",
-            "circulation.rules.notice-policy.get",
-            "configuration.entries.collection.get",
-            "users.collection.get",
-            "inventory-storage.loan-types.item.get"
+            "modperms.circulation.override-check-out-by-barcode.post"
           ]
         },
         {
@@ -103,37 +75,7 @@
             "circulation.check-in-by-barcode.post"
           ],
           "modulePermissions": [
-            "circulation-storage.loans.item.put",
-            "circulation-storage.loans.item.get",
-            "circulation-storage.loans.collection.get",
-            "circulation.rules.loan-policy.get",
-            "circulation.rules.request-policy.get",
-            "circulation-storage.requests.collection.get",
-            "circulation-storage.requests.item.put",
-            "inventory-storage.items.item.put",
-            "inventory-storage.items.item.get",
-            "inventory-storage.items.collection.get",
-            "inventory-storage.locations.item.get",
-            "inventory-storage.locations.collection.get",
-            "inventory-storage.holdings.collection.get",
-            "inventory-storage.holdings.item.get",
-            "inventory-storage.instances.collection.get",
-            "inventory-storage.instances.item.get",
-            "inventory-storage.material-types.item.get",
-            "inventory-storage.material-types.collection.get",
-            "inventory-storage.service-points.collection.get",
-            "inventory-storage.service-points.item.get",
-            "users.item.get",
-            "users.collection.get",
-            "proxiesfor.collection.get",
-            "circulation-storage.loan-policies.item.get",
-            "circulation-storage.request-policies.item.get",
-            "circulation-storage.fixed-due-date-schedules.item.get",
-            "circulation-storage.fixed-due-date-schedules.collection.get",
-            "circulation-storage.patron-notice-policies.item.get",
-            "patron-notice.post",
-            "circulation.rules.notice-policy.get",
-            "inventory-storage.loan-types.item.get"
+            "modperms.circulation.check-in-by-barcode.post"
           ]
         },
         {
@@ -145,34 +87,7 @@
             "circulation.renew-by-barcode.post"
           ],
           "modulePermissions": [
-            "circulation-storage.loans.item.put",
-            "circulation-storage.loans.item.get",
-            "circulation-storage.loans.collection.get",
-            "circulation.rules.loan-policy.get",
-            "circulation.rules.request-policy.get",
-            "circulation-storage.requests.collection.get",
-            "circulation-storage.requests.item.put",
-            "inventory-storage.items.item.put",
-            "inventory-storage.items.item.get",
-            "inventory-storage.items.collection.get",
-            "inventory-storage.locations.item.get",
-            "inventory-storage.locations.collection.get",
-            "inventory-storage.holdings.collection.get",
-            "inventory-storage.holdings.item.get",
-            "inventory-storage.instances.collection.get",
-            "inventory-storage.instances.item.get",
-            "inventory-storage.material-types.item.get",
-            "inventory-storage.material-types.collection.get",
-            "inventory-storage.service-points.collection.get",
-            "inventory-storage.service-points.item.get",
-            "users.item.get",
-            "users.collection.get",
-            "proxiesfor.collection.get",
-            "circulation-storage.loan-policies.item.get",
-            "circulation-storage.request-policies.item.get",
-            "circulation-storage.fixed-due-date-schedules.item.get",
-            "circulation-storage.fixed-due-date-schedules.collection.get",
-            "calendar.collection.get"
+            "modperms.circulation.renew-by-barcode.post"
           ]
         },
         {
@@ -184,34 +99,7 @@
             "circulation.override-renewal-by-barcode.post"
           ],
           "modulePermissions": [
-            "circulation-storage.loans.item.put",
-            "circulation-storage.loans.item.get",
-            "circulation-storage.loans.collection.get",
-            "circulation.rules.loan-policy.get",
-            "circulation.rules.request-policy.get",
-            "circulation-storage.requests.collection.get",
-            "circulation-storage.requests.item.put",
-            "inventory-storage.items.item.put",
-            "inventory-storage.items.item.get",
-            "inventory-storage.items.collection.get",
-            "inventory-storage.locations.item.get",
-            "inventory-storage.locations.collection.get",
-            "inventory-storage.holdings.collection.get",
-            "inventory-storage.holdings.item.get",
-            "inventory-storage.instances.collection.get",
-            "inventory-storage.instances.item.get",
-            "inventory-storage.material-types.item.get",
-            "inventory-storage.material-types.collection.get",
-            "inventory-storage.service-points.collection.get",
-            "inventory-storage.service-points.item.get",
-            "users.item.get",
-            "users.collection.get",
-            "proxiesfor.collection.get",
-            "circulation-storage.loan-policies.item.get",
-            "circulation-storage.request-policies.item.get",
-            "circulation-storage.fixed-due-date-schedules.item.get",
-            "circulation-storage.fixed-due-date-schedules.collection.get",
-            "configuration.entries.collection.get"
+            "modperms.circulation.override-renewal-by-barcode.post"
           ]
         },
         {
@@ -223,34 +111,7 @@
             "circulation.renew-by-id.post"
           ],
           "modulePermissions": [
-            "circulation-storage.loans.item.put",
-            "circulation-storage.loans.item.get",
-            "circulation-storage.loans.collection.get",
-            "circulation.rules.loan-policy.get",
-            "circulation.rules.request-policy.get",
-            "circulation-storage.requests.collection.get",
-            "circulation-storage.requests.item.put",
-            "inventory-storage.items.item.put",
-            "inventory-storage.items.item.get",
-            "inventory-storage.items.collection.get",
-            "inventory-storage.locations.item.get",
-            "inventory-storage.locations.collection.get",
-            "inventory-storage.holdings.collection.get",
-            "inventory-storage.holdings.item.get",
-            "inventory-storage.instances.collection.get",
-            "inventory-storage.instances.item.get",
-            "inventory-storage.material-types.item.get",
-            "inventory-storage.material-types.collection.get",
-            "inventory-storage.service-points.collection.get",
-            "inventory-storage.service-points.item.get",
-            "users.item.get",
-            "users.collection.get",
-            "proxiesfor.collection.get",
-            "circulation-storage.loan-policies.item.get",
-            "circulation-storage.request-policies.item.get",
-            "circulation-storage.fixed-due-date-schedules.item.get",
-            "circulation-storage.fixed-due-date-schedules.collection.get",
-            "calendar.collection.get"
+            "modperms.circulation.renew-by-id.post"
           ]
         },
         {
@@ -262,21 +123,7 @@
             "circulation.loans.collection.get"
           ],
           "modulePermissions": [
-            "circulation-storage.loans.collection.get",
-            "inventory-storage.items.item.get",
-            "inventory-storage.items.collection.get",
-            "inventory-storage.locations.item.get",
-            "inventory-storage.locations.collection.get",
-            "inventory-storage.holdings.collection.get",
-            "inventory-storage.holdings.item.get",
-            "inventory-storage.instances.collection.get",
-            "inventory-storage.instances.item.get",
-            "inventory-storage.material-types.collection.get",
-            "inventory-storage.material-types.item.get",
-            "inventory-storage.service-points.collection.get",
-            "inventory-storage.service-points.item.get",
-            "users.collection.get",
-            "users.item.get"
+            "modperms.circulation.loans.collection.get"
           ]
         },
         {
@@ -288,33 +135,7 @@
             "circulation.loans.item.post"
           ],
           "modulePermissions": [
-            "circulation-storage.loans.item.post",
-            "circulation-storage.loans.item.get",
-            "circulation-storage.loans.collection.get",
-            "circulation.rules.loan-policy.get",
-            "circulation.rules.request-policy.get",
-            "circulation-storage.requests.collection.get",
-            "circulation-storage.requests.item.put",
-            "inventory-storage.items.item.put",
-            "inventory-storage.items.item.get",
-            "inventory-storage.items.collection.get",
-            "inventory-storage.locations.item.get",
-            "inventory-storage.locations.collection.get",
-            "inventory-storage.holdings.collection.get",
-            "inventory-storage.holdings.item.get",
-            "inventory-storage.instances.collection.get",
-            "inventory-storage.instances.item.get",
-            "inventory-storage.material-types.collection.get",
-            "inventory-storage.material-types.item.get",
-            "inventory-storage.service-points.collection.get",
-            "inventory-storage.service-points.item.get",
-            "users.item.get",
-            "proxiesfor.collection.get",
-            "inventory-storage.material-types.item.get",
-            "circulation-storage.loan-policies.item.get",
-            "circulation-storage.request-policies.item.get",
-            "circulation-storage.fixed-due-date-schedules.item.get",
-            "circulation-storage.fixed-due-date-schedules.collection.get"
+            "modperms.circulation.loans.item.post"
           ]
         },
         {
@@ -338,19 +159,7 @@
             "circulation.loans.item.get"
           ],
           "modulePermissions": [
-            "circulation-storage.loans.item.get",
-            "inventory-storage.items.item.get",
-            "inventory-storage.items.collection.get",
-            "inventory-storage.locations.item.get",
-            "inventory-storage.locations.collection.get",
-            "inventory-storage.holdings.collection.get",
-            "inventory-storage.holdings.item.get",
-            "inventory-storage.instances.collection.get",
-            "inventory-storage.instances.item.get",
-            "inventory-storage.material-types.collection.get",
-            "inventory-storage.material-types.item.get",
-            "inventory-storage.service-points.collection.get",
-            "inventory-storage.service-points.item.get"
+            "modperms.circulation.loans.item.get"
           ]
         },
         {
@@ -362,30 +171,7 @@
             "circulation.loans.item.put"
           ],
           "modulePermissions": [
-            "circulation-storage.loans.item.put",
-            "circulation-storage.loans.collection.get",
-            "circulation.rules.loan-policy.get",
-            "circulation.rules.request-policy.get",
-            "circulation-storage.requests.item.put",
-            "circulation-storage.requests.collection.get",
-            "inventory-storage.items.item.get",
-            "inventory-storage.items.item.put",
-            "inventory-storage.items.collection.get",
-            "inventory-storage.locations.item.get",
-            "inventory-storage.locations.collection.get",
-            "inventory-storage.holdings.collection.get",
-            "inventory-storage.holdings.item.get",
-            "inventory-storage.instances.collection.get",
-            "inventory-storage.instances.item.get",
-            "inventory-storage.service-points.collection.get",
-            "inventory-storage.service-points.item.get",
-            "proxiesfor.collection.get",
-            "users.item.get",
-            "proxiesfor.collection.get",
-            "inventory-storage.material-types.item.get",
-            "circulation-storage.loan-policies.item.get",
-            "circulation-storage.request-policies.item.get",
-            "circulation-storage.fixed-due-date-schedules.item.get"
+            "modperms.circulation.loans.item.put"
           ]
         },
         {
@@ -505,24 +291,7 @@
             "circulation.requests.collection.get"
           ],
           "modulePermissions": [
-            "circulation-storage.requests.item.get",
-            "circulation-storage.requests.collection.get",
-            "circulation-storage.loans.collection.get",
-            "circulation-storage.loans.item.get",
-            "inventory-storage.items.collection.get",
-            "inventory-storage.items.item.get",
-            "inventory-storage.holdings.collection.get",
-            "inventory-storage.holdings.item.get",
-            "inventory-storage.instances.collection.get",
-            "inventory-storage.instances.item.get",
-            "inventory-storage.locations.collection.get",
-            "inventory-storage.locations.item.get",
-            "inventory-storage.service-points.collection.get",
-            "inventory-storage.service-points.item.get",
-            "users.item.get",
-            "users.collection.get",
-            "usergroups.collection.get",
-            "usergroups.item.get"
+            "modperms.circulation.requests.collection.get"
           ]
         },
         {
@@ -534,32 +303,7 @@
             "circulation.requests.item.post"
           ],
           "modulePermissions": [
-            "circulation-storage.requests.item.post",
-            "inventory-storage.items.item.put",
-            "circulation-storage.requests.collection.get",
-            "circulation-storage.requests.item.get",
-            "circulation-storage.loans.item.put",
-            "circulation-storage.loans.collection.get",
-            "inventory-storage.items.item.get",
-            "inventory-storage.items.collection.get",
-            "inventory-storage.holdings.collection.get",
-            "inventory-storage.holdings.item.get",
-            "inventory-storage.instances.collection.get",
-            "inventory-storage.instances.item.get",
-            "inventory-storage.locations.collection.get",
-            "inventory-storage.locations.item.get",
-            "inventory-storage.service-points.collection.get",
-            "inventory-storage.service-points.item.get",
-            "users.item.get",
-            "users.collection.get",
-            "usergroups.collection.get",
-            "usergroups.item.get",
-            "proxiesfor.collection.get",
-            "circulation.rules.notice-policy.get",
-            "circulation-storage.patron-notice-policies.item.get",
-            "patron-notice.post",
-            "inventory-storage.loan-types.item.get",
-            "calendar.collection.get"
+            "modperms.circulation.requests.item.post"
           ]
         },
         {
@@ -583,24 +327,7 @@
             "circulation.requests.item.get"
           ],
           "modulePermissions": [
-            "circulation-storage.requests.item.get",
-            "circulation-storage.requests.collection.get",
-            "circulation-storage.loans.collection.get",
-            "circulation-storage.loans.item.get",
-            "inventory-storage.items.collection.get",
-            "inventory-storage.items.item.get",
-            "inventory-storage.holdings.collection.get",
-            "inventory-storage.holdings.item.get",
-            "inventory-storage.instances.collection.get",
-            "inventory-storage.instances.item.get",
-            "inventory-storage.locations.collection.get",
-            "inventory-storage.locations.item.get",
-            "inventory-storage.service-points.collection.get",
-            "inventory-storage.service-points.item.get",
-            "users.item.get",
-            "users.collection.get",
-            "usergroups.collection.get",
-            "usergroups.item.get"
+            "modperms.circulation.requests.item.get"
           ]
         },
         {
@@ -612,33 +339,7 @@
             "circulation.requests.item.put"
           ],
           "modulePermissions": [
-            "circulation-storage.requests.item.put",
-            "circulation-storage.requests.item.post",
-            "inventory-storage.items.item.put",
-            "circulation-storage.requests.collection.get",
-            "circulation-storage.requests.item.get",
-            "circulation-storage.loans.item.put",
-            "circulation-storage.loans.collection.get",
-            "inventory-storage.items.item.get",
-            "inventory-storage.items.collection.get",
-            "inventory-storage.holdings.collection.get",
-            "inventory-storage.holdings.item.get",
-            "inventory-storage.instances.collection.get",
-            "inventory-storage.instances.item.get",
-            "inventory-storage.locations.collection.get",
-            "inventory-storage.locations.item.get",
-            "inventory-storage.service-points.collection.get",
-            "inventory-storage.service-points.item.get",
-            "users.item.get",
-            "users.collection.get",
-            "usergroups.collection.get",
-            "usergroups.item.get",
-            "proxiesfor.collection.get",
-            "circulation.rules.notice-policy.get",
-            "circulation-storage.patron-notice-policies.item.get",
-            "patron-notice.post",
-            "circulation-storage.cancellation-reasons.item.get",
-            "inventory-storage.loan-types.item.get"
+            "modperms.circulation.requests.item.put"
           ]
         },
         {
@@ -662,25 +363,116 @@
             "circulation.requests.queue.collection.get"
           ],
           "modulePermissions": [
-            "circulation-storage.requests.item.get",
-            "circulation-storage.requests.collection.get",
-            "circulation-storage.loans.collection.get",
-            "circulation-storage.loans.item.get",
-            "inventory-storage.items.collection.get",
-            "inventory-storage.items.item.get",
-            "inventory-storage.holdings.collection.get",
-            "inventory-storage.holdings.item.get",
-            "inventory-storage.instances.collection.get",
-            "inventory-storage.instances.item.get",
-            "inventory-storage.locations.collection.get",
-            "inventory-storage.locations.item.get",
-            "inventory-storage.service-points.collection.get",
-            "inventory-storage.service-points.item.get",
-            "users.item.get",
-            "users.collection.get",
-            "usergroups.collection.get",
-            "usergroups.item.get"
+            "modperms.circulation.requests.queue.collection.get"
           ]
+        },
+        {
+          "methods": [
+            "POST"
+          ],
+          "pathPattern": "/circulation/requests/instances",
+          "permissionsRequired": [
+            "circulation.requests.instances.item.post"
+          ],
+          "modulePermissions": [
+            "modperms.circulation.requests.instances.item.post"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "_timer",
+      "version": "1.0",
+      "interfaceType": "system",
+      "handlers": [
+        {
+          "methods": [
+            "POST"
+          ],
+          "pathPattern": "/circulation/due-date-scheduled-notices-processing",
+          "modulePermissions": [
+            "scheduled-notice-storage.scheduled-notices.collection.get",
+            "scheduled-notice-storage.scheduled-notices.item.delete",
+            "scheduled-notice-storage.scheduled-notices.item.put",
+            "circulation-storage.loans.item.get",
+            "circulation-storage.loan-policies.item.get",
+            "circulation-storage.loan-policies.collection.get",
+            "inventory-storage.items.item.get",
+            "inventory-storage.locations.item.get",
+            "inventory-storage.location-units.institutions.item.get",
+            "inventory-storage.location-units.campuses.item.get",
+            "inventory-storage.location-units.libraries.item.get",
+            "inventory-storage.material-types.item.get",
+            "inventory-storage.holdings.item.get",
+            "inventory-storage.loan-types.item.get",
+            "inventory-storage.service-points.item.get",
+            "inventory-storage.instances.item.get",
+            "circulation.rules.loan-policy.get",
+            "configuration.entries.collection.get",
+            "patron-notice.post",
+            "users.item.get"
+          ],
+          "unit": "minute",
+          "delay": "5"
+        },
+        {
+          "methods": [
+            "POST"
+          ],
+          "pathPattern": "/circulation/due-date-not-real-time-scheduled-notices-processing",
+          "modulePermissions": [
+            "scheduled-notice-storage.scheduled-notices.collection.get",
+            "scheduled-notice-storage.scheduled-notices.item.delete",
+            "scheduled-notice-storage.scheduled-notices.item.put",
+            "circulation-storage.loans.item.get",
+            "circulation-storage.loan-policies.item.get",
+            "circulation-storage.loan-policies.collection.get",
+            "inventory-storage.items.item.get",
+            "inventory-storage.locations.item.get",
+            "inventory-storage.location-units.institutions.item.get",
+            "inventory-storage.location-units.campuses.item.get",
+            "inventory-storage.location-units.libraries.item.get",
+            "inventory-storage.material-types.item.get",
+            "inventory-storage.holdings.item.get",
+            "inventory-storage.loan-types.item.get",
+            "inventory-storage.service-points.item.get",
+            "inventory-storage.instances.item.get",
+            "circulation.rules.loan-policy.get",
+            "configuration.entries.collection.get",
+            "patron-notice.post",
+            "users.item.get"
+          ],
+          "unit": "minute",
+          "delay": "2"
+        },
+        {
+          "methods": [
+            "POST"
+          ],
+          "pathPattern": "/circulation/request-scheduled-notices-processing",
+          "modulePermissions": [
+            "scheduled-notice-storage.scheduled-notices.collection.get",
+            "scheduled-notice-storage.scheduled-notices.item.delete",
+            "scheduled-notice-storage.scheduled-notices.item.put",
+            "inventory-storage.items.item.get",
+            "inventory-storage.locations.item.get",
+            "inventory-storage.location-units.institutions.item.get",
+            "inventory-storage.location-units.campuses.item.get",
+            "inventory-storage.location-units.libraries.item.get",
+            "inventory-storage.material-types.item.get",
+            "inventory-storage.holdings.item.get",
+            "inventory-storage.loan-types.item.get",
+            "inventory-storage.service-points.item.get",
+            "inventory-storage.instances.item.get",
+            "circulation-storage.loans.collection.get",
+            "circulation-storage.requests.item.get",
+            "patron-notice.post",
+            "users.item.get",
+            "usergroups.collection.get",
+            "configuration.entries.collection.get"
+          ],
+          "unit": "minute",
+          "delay": "2"
         }
       ]
     }
@@ -688,7 +480,7 @@
   "requires": [
     {
       "id": "loan-storage",
-      "version": "5.3"
+      "version": "5.3 6.0"
     },
     {
       "id": "circulation-rules-storage",
@@ -700,7 +492,7 @@
     },
     {
       "id": "instance-storage",
-      "version": "4.0 5.0 6.0"
+      "version": "4.0 5.0 6.0 7.0"
     },
     {
       "id": "holdings-storage",
@@ -708,7 +500,7 @@
     },
     {
       "id": "request-storage",
-      "version": "3.0"
+      "version": "3.1"
     },
     {
       "id": "users",
@@ -740,11 +532,11 @@
     },
     {
       "id": "calendar",
-      "version": "2.0"
+      "version": "3.0"
     },
     {
       "id": "patron-notice-policy-storage",
-      "version": "0.7"
+      "version": "0.9"
     },
     {
       "id": "patron-notice",
@@ -761,6 +553,18 @@
     {
       "id": "loan-types",
       "version": "2.2"
+    },
+    {
+      "id": "scheduled-notice-storage",
+      "version": "0.1"
+    },
+    {
+      "id": "feesfines",
+      "version": "15.0"
+    },
+    {
+      "id": "location-units",
+      "version": "1.1"
     }
   ],
   "permissionSets": [
@@ -895,9 +699,24 @@
       "description": "delete individual request"
     },
     {
+      "permissionName": "circulation.requests.item.move.post",
+      "displayName": "circulation - move individual requests to another item",
+      "description": "move individual request to another item"
+    },
+    {
       "permissionName": "circulation.requests.queue.collection.get",
       "displayName": "circulation - request queue for an item",
       "description": "get request queue for an item"
+    },
+    {
+      "permissionName": "circulation.requests.instances.item.post",
+      "displayName": "circulation - create instance level request",
+      "description": "create a request given an instance"
+    },
+    {
+      "permissionName": "circulation.requests.hold-shelf-clearance-report.get",
+      "displayName": "circulation - request hold shelf clearance report",
+      "description": "get all hold shelf clearance requests to generating a report"
     },
     {
       "permissionName": "circulation.all",
@@ -929,9 +748,727 @@
         "circulation.requests.item.post",
         "circulation.requests.item.put",
         "circulation.requests.item.delete",
+        "circulation.requests.item.move.post",
         "circulation.requests.collection.delete",
-        "circulation.requests.queue.collection.get"
+        "circulation.requests.queue.collection.get",
+        "circulation.requests.instances.item.post",
+        "circulation.requests.hold-shelf-clearance-report.get"
       ]
+    },
+    {
+      "permissionName": "modperms.circulation.requests.hold-shelf-clearance-report.get",
+      "displayName" : "module permissions for one op",
+      "description" : "to reduce X-Okapi-Token size",
+      "subPermissions": [
+        "inventory-storage.items.item.get",
+        "inventory-storage.items.collection.get",
+        "inventory-storage.holdings.collection.get",
+        "inventory-storage.holdings.item.get",
+        "inventory-storage.instances.collection.get",
+        "inventory-storage.instances.item.get",
+        "inventory-storage.service-points.collection.get",
+        "inventory-storage.service-points.item.get",
+        "circulation-storage.requests.item.get",
+        "circulation-storage.requests.collection.get",
+        "users.collection.get",
+        "users.item.get"
+      ],
+      "visible": false
+    },
+    {
+      "permissionName": "modperms.circulation.requests.item.move.post",
+      "displayName" : "module permissions for one op",
+      "description" : "to reduce X-Okapi-Token size",
+      "subPermissions": [
+        "circulation-storage.requests.item.put",
+        "circulation-storage.requests.item.post",
+        "inventory-storage.items.item.put",
+        "circulation-storage.requests.collection.get",
+        "circulation-storage.requests.item.get",
+        "circulation-storage.loans.item.put",
+        "circulation-storage.loans.collection.get",
+        "inventory-storage.items.item.get",
+        "inventory-storage.items.collection.get",
+        "inventory-storage.holdings.collection.get",
+        "inventory-storage.holdings.item.get",
+        "inventory-storage.instances.collection.get",
+        "inventory-storage.instances.item.get",
+        "inventory-storage.locations.collection.get",
+        "inventory-storage.locations.item.get",
+        "inventory-storage.location-units.institutions.item.get",
+        "inventory-storage.location-units.campuses.item.get",
+        "inventory-storage.location-units.libraries.item.get",
+        "inventory-storage.service-points.collection.get",
+        "inventory-storage.service-points.item.get",
+        "users.item.get",
+        "users.collection.get",
+        "usergroups.collection.get",
+        "usergroups.item.get",
+        "proxiesfor.collection.get",
+        "circulation.rules.notice-policy.get",
+        "circulation-storage.patron-notice-policies.item.get",
+        "patron-notice.post",
+        "circulation-storage.cancellation-reasons.item.get",
+        "inventory-storage.loan-types.item.get",
+        "configuration.entries.collection.get"
+      ],
+      "visible": false
+    },
+    {
+      "permissionName": "modperms.circulation.check-out-by-barcode.post",
+      "displayName" : "module permissions for one op",
+      "description" : "to reduce X-Okapi-Token size",
+      "subPermissions": [
+        "circulation-storage.loans.item.post",
+        "calendar.opening-hours.collection.get",
+        "circulation-storage.loans.item.get",
+        "circulation-storage.loans.collection.get",
+        "circulation.rules.loan-policy.get",
+        "circulation.rules.request-policy.get",
+        "circulation-storage.requests.collection.get",
+        "circulation-storage.requests.item.put",
+        "inventory-storage.items.item.put",
+        "inventory-storage.items.item.get",
+        "inventory-storage.items.collection.get",
+        "inventory-storage.locations.item.get",
+        "inventory-storage.locations.collection.get",
+        "inventory-storage.location-units.institutions.item.get",
+        "inventory-storage.location-units.campuses.item.get",
+        "inventory-storage.location-units.libraries.item.get",
+        "inventory-storage.holdings.collection.get",
+        "inventory-storage.holdings.item.get",
+        "inventory-storage.instances.collection.get",
+        "inventory-storage.instances.item.get",
+        "inventory-storage.service-points.collection.get",
+        "inventory-storage.service-points.item.get",
+        "users.item.get",
+        "proxiesfor.collection.get",
+        "inventory-storage.material-types.item.get",
+        "inventory-storage.material-types.collection.get",
+        "circulation-storage.loan-policies.item.get",
+        "circulation-storage.loan-policies.collection.get",
+        "circulation-storage.request-policies.item.get",
+        "circulation-storage.fixed-due-date-schedules.item.get",
+        "circulation-storage.fixed-due-date-schedules.collection.get",
+        "circulation-storage.patron-notice-policies.item.get",
+        "patron-notice.post",
+        "circulation.rules.notice-policy.get",
+        "configuration.entries.collection.get",
+        "users.collection.get",
+        "inventory-storage.loan-types.item.get",
+        "scheduled-notice-storage.scheduled-notices.item.post",
+        "usergroups.collection.get",
+        "usergroups.item.get"
+      ],
+      "visible": false
+    },
+    {
+      "permissionName": "modperms.circulation.override-check-out-by-barcode.post",
+      "displayName" : "module permissions for one op",
+      "description" : "to reduce X-Okapi-Token size",
+      "subPermissions": [
+        "circulation-storage.loans.item.post",
+        "circulation-storage.loans.item.get",
+        "circulation-storage.loans.collection.get",
+        "circulation.rules.loan-policy.get",
+        "circulation.rules.request-policy.get",
+        "circulation-storage.requests.collection.get",
+        "circulation-storage.requests.item.put",
+        "inventory-storage.items.item.put",
+        "inventory-storage.items.item.get",
+        "inventory-storage.items.collection.get",
+        "inventory-storage.locations.item.get",
+        "inventory-storage.locations.collection.get",
+        "inventory-storage.location-units.institutions.item.get",
+        "inventory-storage.location-units.campuses.item.get",
+        "inventory-storage.location-units.libraries.item.get",
+        "inventory-storage.holdings.collection.get",
+        "inventory-storage.holdings.item.get",
+        "inventory-storage.instances.collection.get",
+        "inventory-storage.instances.item.get",
+        "inventory-storage.service-points.collection.get",
+        "inventory-storage.service-points.item.get",
+        "users.item.get",
+        "proxiesfor.collection.get",
+        "inventory-storage.material-types.item.get",
+        "inventory-storage.material-types.collection.get",
+        "circulation-storage.loan-policies.item.get",
+        "circulation-storage.loan-policies.collection.get",
+        "circulation-storage.request-policies.item.get",
+        "circulation-storage.fixed-due-date-schedules.item.get",
+        "circulation-storage.fixed-due-date-schedules.collection.get",
+        "circulation-storage.patron-notice-policies.item.get",
+        "patron-notice.post",
+        "circulation.rules.notice-policy.get",
+        "configuration.entries.collection.get",
+        "users.collection.get",
+        "inventory-storage.loan-types.item.get",
+        "scheduled-notice-storage.scheduled-notices.item.post",
+        "usergroups.collection.get",
+        "usergroups.item.get"
+      ],
+      "visible": false
+    },
+    {
+      "permissionName": "modperms.circulation.check-in-by-barcode.post",
+      "displayName" : "module permissions for one op",
+      "description" : "to reduce X-Okapi-Token size",
+      "subPermissions": [
+        "circulation-storage.loans.item.put",
+        "circulation-storage.loans.item.get",
+        "circulation-storage.loans.collection.get",
+        "circulation.rules.loan-policy.get",
+        "circulation.rules.request-policy.get",
+        "circulation-storage.requests.collection.get",
+        "circulation-storage.requests.item.put",
+        "inventory-storage.items.item.put",
+        "inventory-storage.items.item.get",
+        "inventory-storage.items.collection.get",
+        "inventory-storage.locations.item.get",
+        "inventory-storage.locations.collection.get",
+        "inventory-storage.location-units.institutions.item.get",
+        "inventory-storage.location-units.campuses.item.get",
+        "inventory-storage.location-units.libraries.item.get",
+        "inventory-storage.holdings.collection.get",
+        "inventory-storage.holdings.item.get",
+        "inventory-storage.instances.collection.get",
+        "inventory-storage.instances.item.get",
+        "inventory-storage.material-types.item.get",
+        "inventory-storage.material-types.collection.get",
+        "inventory-storage.service-points.collection.get",
+        "inventory-storage.service-points.item.get",
+        "users.item.get",
+        "users.collection.get",
+        "proxiesfor.collection.get",
+        "circulation-storage.loan-policies.item.get",
+        "circulation-storage.loan-policies.collection.get",
+        "circulation-storage.request-policies.item.get",
+        "circulation-storage.fixed-due-date-schedules.item.get",
+        "circulation-storage.fixed-due-date-schedules.collection.get",
+        "circulation-storage.patron-notice-policies.item.get",
+        "patron-notice.post",
+        "circulation.rules.notice-policy.get",
+        "inventory-storage.loan-types.item.get"
+      ],
+      "visible": false
+    },
+    {
+      "permissionName": "modperms.circulation.renew-by-barcode.post",
+      "displayName" : "module permissions for one op",
+      "description" : "to reduce X-Okapi-Token size",
+      "subPermissions": [
+        "circulation-storage.loans.item.put",
+        "circulation-storage.loans.item.get",
+        "circulation-storage.loans.collection.get",
+        "circulation.rules.loan-policy.get",
+        "circulation.rules.request-policy.get",
+        "circulation-storage.requests.collection.get",
+        "circulation-storage.requests.item.put",
+        "inventory-storage.items.item.put",
+        "inventory-storage.items.item.get",
+        "inventory-storage.items.collection.get",
+        "inventory-storage.locations.item.get",
+        "inventory-storage.locations.collection.get",
+        "inventory-storage.location-units.institutions.item.get",
+        "inventory-storage.location-units.campuses.item.get",
+        "inventory-storage.location-units.libraries.item.get",
+        "inventory-storage.holdings.collection.get",
+        "inventory-storage.holdings.item.get",
+        "inventory-storage.instances.collection.get",
+        "inventory-storage.instances.item.get",
+        "inventory-storage.material-types.item.get",
+        "inventory-storage.material-types.collection.get",
+        "inventory-storage.service-points.collection.get",
+        "inventory-storage.service-points.item.get",
+        "inventory-storage.loan-types.item.get",
+        "users.item.get",
+        "users.collection.get",
+        "proxiesfor.collection.get",
+        "circulation-storage.loan-policies.item.get",
+        "circulation-storage.loan-policies.collection.get",
+        "circulation-storage.request-policies.item.get",
+        "circulation-storage.fixed-due-date-schedules.item.get",
+        "circulation-storage.fixed-due-date-schedules.collection.get",
+        "calendar.opening-hours.collection.get",
+        "configuration.entries.collection.get",
+        "circulation.rules.notice-policy.get",
+        "circulation-storage.patron-notice-policies.item.get",
+        "scheduled-notice-storage.scheduled-notices.collection.delete",
+        "scheduled-notice-storage.scheduled-notices.item.post",
+        "patron-notice.post"
+      ],
+      "visible": false
+},
+    {
+      "permissionName": "modperms.circulation.override-renewal-by-barcode.post",
+      "displayName" : "module permissions for one op",
+      "description" : "to reduce X-Okapi-Token size",
+      "subPermissions": [
+        "circulation-storage.loans.item.put",
+        "circulation-storage.loans.item.get",
+        "circulation-storage.loans.collection.get",
+        "circulation.rules.loan-policy.get",
+        "circulation.rules.request-policy.get",
+        "circulation-storage.requests.collection.get",
+        "circulation-storage.requests.item.put",
+        "inventory-storage.items.item.put",
+        "inventory-storage.items.item.get",
+        "inventory-storage.items.collection.get",
+        "inventory-storage.locations.item.get",
+        "inventory-storage.locations.collection.get",
+        "inventory-storage.location-units.institutions.item.get",
+        "inventory-storage.location-units.campuses.item.get",
+        "inventory-storage.location-units.libraries.item.get",
+        "inventory-storage.holdings.collection.get",
+        "inventory-storage.holdings.item.get",
+        "inventory-storage.instances.collection.get",
+        "inventory-storage.instances.item.get",
+        "inventory-storage.material-types.item.get",
+        "inventory-storage.material-types.collection.get",
+        "inventory-storage.service-points.collection.get",
+        "inventory-storage.service-points.item.get",
+        "inventory-storage.loan-types.item.get",
+        "users.item.get",
+        "users.collection.get",
+        "proxiesfor.collection.get",
+        "circulation-storage.loan-policies.item.get",
+        "circulation-storage.loan-policies.collection.get",
+        "circulation-storage.request-policies.item.get",
+        "circulation-storage.fixed-due-date-schedules.item.get",
+        "circulation-storage.fixed-due-date-schedules.collection.get",
+        "configuration.entries.collection.get",
+        "circulation.rules.notice-policy.get",
+        "circulation-storage.patron-notice-policies.item.get",
+        "scheduled-notice-storage.scheduled-notices.collection.delete",
+        "scheduled-notice-storage.scheduled-notices.item.post",
+        "patron-notice.post"
+      ],
+      "visible": false
+    },
+    {
+      "permissionName": "modperms.circulation.renew-by-id.post",
+      "displayName" : "module permissions for one op",
+      "description" : "to reduce X-Okapi-Token size",
+      "subPermissions": [
+        "circulation-storage.loans.item.put",
+        "circulation-storage.loans.item.get",
+        "circulation-storage.loans.collection.get",
+        "circulation.rules.loan-policy.get",
+        "circulation.rules.request-policy.get",
+        "circulation-storage.requests.collection.get",
+        "circulation-storage.requests.item.put",
+        "inventory-storage.items.item.put",
+        "inventory-storage.items.item.get",
+        "inventory-storage.items.collection.get",
+        "inventory-storage.locations.item.get",
+        "inventory-storage.locations.collection.get",
+        "inventory-storage.location-units.institutions.item.get",
+        "inventory-storage.location-units.campuses.item.get",
+        "inventory-storage.location-units.libraries.item.get",
+        "inventory-storage.holdings.collection.get",
+        "inventory-storage.holdings.item.get",
+        "inventory-storage.instances.collection.get",
+        "inventory-storage.instances.item.get",
+        "inventory-storage.material-types.item.get",
+        "inventory-storage.material-types.collection.get",
+        "inventory-storage.service-points.collection.get",
+        "inventory-storage.service-points.item.get",
+        "inventory-storage.loan-types.item.get",
+        "users.item.get",
+        "users.collection.get",
+        "proxiesfor.collection.get",
+        "circulation-storage.loan-policies.item.get",
+        "circulation-storage.loan-policies.collection.get",
+        "circulation-storage.request-policies.item.get",
+        "circulation-storage.fixed-due-date-schedules.item.get",
+        "circulation-storage.fixed-due-date-schedules.collection.get",
+        "calendar.opening-hours.collection.get",
+        "configuration.entries.collection.get",
+        "circulation.rules.notice-policy.get",
+        "circulation-storage.patron-notice-policies.item.get",
+        "scheduled-notice-storage.scheduled-notices.collection.delete",
+        "scheduled-notice-storage.scheduled-notices.item.post",
+        "patron-notice.post"
+      ],
+      "visible": false
+    },
+    {
+      "permissionName": "modperms.circulation.loans.item.post",
+      "displayName" : "module permissions for one op",
+      "description" : "to reduce X-Okapi-Token size",
+      "subPermissions": [
+        "circulation-storage.loans.item.post",
+        "circulation-storage.loans.item.get",
+        "circulation-storage.loans.collection.get",
+        "circulation.rules.loan-policy.get",
+        "circulation.rules.request-policy.get",
+        "circulation-storage.requests.collection.get",
+        "circulation-storage.requests.item.put",
+        "inventory-storage.items.item.put",
+        "inventory-storage.items.item.get",
+        "inventory-storage.items.collection.get",
+        "inventory-storage.locations.item.get",
+        "inventory-storage.locations.collection.get",
+        "inventory-storage.location-units.institutions.item.get",
+        "inventory-storage.location-units.campuses.item.get",
+        "inventory-storage.location-units.libraries.item.get",
+        "inventory-storage.holdings.collection.get",
+        "inventory-storage.holdings.item.get",
+        "inventory-storage.instances.collection.get",
+        "inventory-storage.instances.item.get",
+        "inventory-storage.material-types.collection.get",
+        "inventory-storage.material-types.item.get",
+        "inventory-storage.service-points.collection.get",
+        "inventory-storage.service-points.item.get",
+        "users.item.get",
+        "proxiesfor.collection.get",
+        "inventory-storage.material-types.item.get",
+        "circulation-storage.loan-policies.item.get",
+        "circulation-storage.loan-policies.collection.get",
+        "circulation-storage.request-policies.item.get",
+        "circulation-storage.fixed-due-date-schedules.item.get",
+        "circulation-storage.fixed-due-date-schedules.collection.get"
+      ],
+      "visible": false
+    },
+    {
+      "permissionName": "modperms.circulation.loans.collection.get",
+      "displayName" : "module permissions for one op",
+      "description" : "to reduce X-Okapi-Token size",
+      "subPermissions": [
+        "circulation-storage.loans.collection.get",
+        "circulation-storage.loan-policies.item.get",
+        "circulation-storage.loan-policies.collection.get",
+        "inventory-storage.items.item.get",
+        "inventory-storage.items.collection.get",
+        "inventory-storage.locations.item.get",
+        "inventory-storage.locations.collection.get",
+        "inventory-storage.location-units.institutions.item.get",
+        "inventory-storage.location-units.campuses.item.get",
+        "inventory-storage.location-units.libraries.collection.get",
+        "inventory-storage.location-units.libraries.item.get",
+        "inventory-storage.holdings.collection.get",
+        "inventory-storage.holdings.item.get",
+        "inventory-storage.instances.collection.get",
+        "inventory-storage.instances.item.get",
+        "inventory-storage.material-types.collection.get",
+        "inventory-storage.material-types.item.get",
+        "inventory-storage.service-points.collection.get",
+        "inventory-storage.service-points.item.get",
+        "users.collection.get",
+        "users.item.get",
+        "inventory-storage.locations.collection.get",
+        "accounts.collection.get",
+        "usergroups.collection.get",
+        "usergroups.item.get"
+      ],
+      "visible": false
+    },
+    {
+      "permissionName": "modperms.circulation.loans.item.get",
+      "displayName" : "module permissions for one op",
+      "description" : "to reduce X-Okapi-Token size",
+      "subPermissions": [
+        "circulation-storage.loans.item.get",
+        "circulation-storage.loan-policies.item.get",
+        "circulation-storage.loan-policies.collection.get",
+        "inventory-storage.items.item.get",
+        "inventory-storage.items.collection.get",
+        "inventory-storage.locations.item.get",
+        "inventory-storage.locations.collection.get",
+        "inventory-storage.location-units.institutions.item.get",
+        "inventory-storage.location-units.campuses.item.get",
+        "inventory-storage.location-units.libraries.item.get",
+        "inventory-storage.holdings.collection.get",
+        "inventory-storage.holdings.item.get",
+        "inventory-storage.instances.collection.get",
+        "inventory-storage.instances.item.get",
+        "inventory-storage.material-types.collection.get",
+        "inventory-storage.material-types.item.get",
+        "inventory-storage.service-points.collection.get",
+        "inventory-storage.service-points.item.get",
+        "accounts.collection.get",
+        "usergroups.collection.get",
+        "usergroups.item.get"
+      ],
+      "visible": false
+    },
+    {
+      "permissionName": "modperms.circulation.requests.collection.get",
+      "displayName": "module permissions for one op",
+      "description": "to reduce X-Okapi-Token size",
+      "subPermissions": [
+        "circulation-storage.requests.item.get",
+        "circulation-storage.requests.collection.get",
+        "circulation-storage.loans.collection.get",
+        "circulation-storage.loans.item.get",
+        "inventory-storage.items.collection.get",
+        "inventory-storage.items.item.get",
+        "inventory-storage.holdings.collection.get",
+        "inventory-storage.holdings.item.get",
+        "inventory-storage.instances.collection.get",
+        "inventory-storage.instances.item.get",
+        "inventory-storage.locations.collection.get",
+        "inventory-storage.locations.item.get",
+        "inventory-storage.location-units.institutions.item.get",
+        "inventory-storage.location-units.campuses.item.get",
+        "inventory-storage.location-units.libraries.item.get",
+        "inventory-storage.service-points.collection.get",
+        "inventory-storage.service-points.item.get",
+        "users.item.get",
+        "users.collection.get",
+        "usergroups.collection.get",
+        "usergroups.item.get",
+        "inventory-storage.location-units.libraries.collection.get"
+      ],
+      "visible": false
+    },
+    {
+      "permissionName": "modperms.circulation.requests.item.post",
+      "displayName": "module permissions for one op",
+      "description": "to reduce X-Okapi-Token size",
+      "subPermissions": [
+        "circulation.rules.loan-policy.get",
+        "circulation-storage.requests.item.post",
+        "inventory-storage.items.item.put",
+        "circulation-storage.requests.collection.get",
+        "circulation-storage.requests.item.get",
+        "circulation-storage.loans.item.put",
+        "circulation-storage.loans.collection.get",
+        "circulation-storage.loans.item.get",
+        "circulation-storage.loan-policies.item.get",
+        "inventory-storage.items.item.get",
+        "inventory-storage.items.collection.get",
+        "inventory-storage.holdings.collection.get",
+        "inventory-storage.holdings.item.get",
+        "inventory-storage.instances.collection.get",
+        "inventory-storage.instances.item.get",
+        "inventory-storage.locations.collection.get",
+        "inventory-storage.locations.item.get",
+        "inventory-storage.location-units.institutions.item.get",
+        "inventory-storage.location-units.campuses.item.get",
+        "inventory-storage.location-units.libraries.item.get",
+        "inventory-storage.location-units.libraries.collection.get",
+        "inventory-storage.material-types.collection.get",
+        "inventory-storage.material-types.item.get",
+        "inventory-storage.service-points.collection.get",
+        "inventory-storage.service-points.item.get",
+        "users.item.get",
+        "users.collection.get",
+        "usergroups.collection.get",
+        "usergroups.item.get",
+        "proxiesfor.collection.get",
+        "circulation.rules.notice-policy.get",
+        "circulation-storage.patron-notice-policies.item.get",
+        "circulation.rules.request-policy.get",
+        "circulation-storage.request-policies.item.get",
+        "circulation-storage.requests.item.put",
+        "patron-notice.post",
+        "inventory-storage.loan-types.item.get",
+        "calendar.opening-hours.collection.get",
+        "scheduled-notice-storage.scheduled-notices.collection.delete",
+        "scheduled-notice-storage.scheduled-notices.item.post",
+        "configuration.entries.collection.get"
+      ],
+      "visible": false
+    },
+    {
+      "permissionName": "modperms.circulation.requests.item.get",
+      "displayName": "module permissions for one op",
+      "description": "to reduce X-Okapi-Token size",
+      "subPermissions": [
+        "circulation-storage.requests.item.get",
+        "circulation-storage.requests.collection.get",
+        "circulation-storage.loans.collection.get",
+        "circulation-storage.loans.item.get",
+        "inventory-storage.items.collection.get",
+        "inventory-storage.items.item.get",
+        "inventory-storage.holdings.collection.get",
+        "inventory-storage.holdings.item.get",
+        "inventory-storage.instances.collection.get",
+        "inventory-storage.instances.item.get",
+        "inventory-storage.locations.collection.get",
+        "inventory-storage.locations.item.get",
+        "inventory-storage.location-units.institutions.item.get",
+        "inventory-storage.location-units.campuses.item.get",
+        "inventory-storage.location-units.libraries.item.get",
+        "inventory-storage.service-points.collection.get",
+        "inventory-storage.service-points.item.get",
+        "users.item.get",
+        "users.collection.get",
+        "usergroups.collection.get",
+        "usergroups.item.get",
+        "inventory-storage.location-units.libraries.collection.get"
+      ],
+      "visible": false
+    },
+    {
+      "permissionName": "modperms.circulation.requests.item.put",
+      "displayName": "module permissions for one op",
+      "description": "to reduce X-Okapi-Token size",
+      "subPermissions": [
+        "calendar.opening-hours.collection.get",
+        "circulation.rules.loan-policy.get",
+        "circulation.rules.request-policy.get",
+        "circulation-storage.requests.item.put",
+        "circulation-storage.requests.item.post",
+        "inventory-storage.items.item.put",
+        "circulation-storage.request-policies.item.get",
+        "circulation-storage.requests.collection.get",
+        "circulation-storage.requests.item.get",
+        "circulation-storage.loan-policies.item.get",
+        "circulation-storage.loans.item.get",
+        "circulation-storage.loans.item.put",
+        "circulation-storage.loans.collection.get",
+        "inventory-storage.items.item.get",
+        "inventory-storage.items.collection.get",
+        "inventory-storage.holdings.collection.get",
+        "inventory-storage.holdings.item.get",
+        "inventory-storage.instances.collection.get",
+        "inventory-storage.instances.item.get",
+        "inventory-storage.locations.collection.get",
+        "inventory-storage.locations.item.get",
+        "inventory-storage.location-units.institutions.item.get",
+        "inventory-storage.location-units.campuses.item.get",
+        "inventory-storage.location-units.libraries.item.get",
+        "inventory-storage.location-units.libraries.collection.get",
+        "inventory-storage.material-types.collection.get",
+        "inventory-storage.material-types.item.get",
+        "inventory-storage.service-points.collection.get",
+        "inventory-storage.service-points.item.get",
+        "users.item.get",
+        "users.collection.get",
+        "usergroups.collection.get",
+        "usergroups.item.get",
+        "proxiesfor.collection.get",
+        "circulation.rules.notice-policy.get",
+        "circulation-storage.patron-notice-policies.item.get",
+        "patron-notice.post",
+        "circulation-storage.cancellation-reasons.item.get",
+        "inventory-storage.loan-types.item.get",
+        "configuration.entries.collection.get",
+        "scheduled-notice-storage.scheduled-notices.collection.delete",
+        "scheduled-notice-storage.scheduled-notices.item.post"
+      ],
+      "visible": false
+    },
+    {
+      "permissionName": "modperms.circulation.requests.queue.collection.get",
+      "displayName": "module permissions for one op",
+      "description": "to reduce X-Okapi-Token size",
+      "subPermissions": [
+        "circulation-storage.requests.item.get",
+        "circulation-storage.requests.collection.get",
+        "circulation-storage.loans.collection.get",
+        "circulation-storage.loans.item.get",
+        "inventory-storage.items.collection.get",
+        "inventory-storage.items.item.get",
+        "inventory-storage.holdings.collection.get",
+        "inventory-storage.holdings.item.get",
+        "inventory-storage.instances.collection.get",
+        "inventory-storage.instances.item.get",
+        "inventory-storage.locations.collection.get",
+        "inventory-storage.locations.item.get",
+        "inventory-storage.location-units.institutions.item.get",
+        "inventory-storage.location-units.campuses.item.get",
+        "inventory-storage.location-units.libraries.item.get",
+        "inventory-storage.service-points.collection.get",
+        "inventory-storage.service-points.item.get",
+        "users.item.get",
+        "users.collection.get",
+        "usergroups.collection.get",
+        "usergroups.item.get"
+      ],
+      "visible": false
+    },
+    {
+      "permissionName": "modperms.circulation.requests.instances.item.post",
+      "displayName": "module permissions for one op",
+      "description": "to reduce X-Okapi-Token size",
+      "subPermissions": [
+        "circulation.rules.loan-policy.get",
+        "circulation.rules.request-policy.get",
+        "circulation-storage.request-policies.item.get",
+        "circulation-storage.requests.item.post",
+        "circulation-storage.requests.item.put",
+        "inventory-storage.items.item.put",
+        "circulation-storage.requests.collection.get",
+        "circulation-storage.requests.item.get",
+        "circulation-storage.loan-policies.item.get",
+        "circulation-storage.loans.item.get",
+        "circulation-storage.loans.item.put",
+        "circulation-storage.loans.collection.get",
+        "inventory-storage.items.item.get",
+        "inventory-storage.items.collection.get",
+        "inventory-storage.holdings.collection.get",
+        "inventory-storage.holdings.item.get",
+        "inventory-storage.instances.collection.get",
+        "inventory-storage.instances.item.get",
+        "inventory-storage.locations.collection.get",
+        "inventory-storage.locations.item.get",
+        "inventory-storage.location-units.institutions.item.get",
+        "inventory-storage.location-units.campuses.item.get",
+        "inventory-storage.location-units.libraries.collection.get",
+        "inventory-storage.location-units.libraries.item.get",
+        "inventory-storage.material-types.collection.get",
+        "inventory-storage.material-types.item.get",
+        "inventory-storage.service-points.collection.get",
+        "inventory-storage.service-points.item.get",
+        "users.item.get",
+        "users.collection.get",
+        "usergroups.collection.get",
+        "usergroups.item.get",
+        "proxiesfor.collection.get",
+        "circulation.rules.notice-policy.get",
+        "circulation-storage.patron-notice-policies.item.get",
+        "patron-notice.post",
+        "inventory-storage.loan-types.item.get",
+        "calendar.opening-hours.collection.get",
+        "configuration.entries.collection.get",
+        "scheduled-notice-storage.scheduled-notices.collection.delete",
+        "scheduled-notice-storage.scheduled-notices.item.post"
+      ],
+      "visible": false
+    },
+    {
+      "permissionName": "modperms.circulation.loans.item.put",
+      "displayName": "module permissions for one op",
+      "description": "to reduce X-Okapi-Token size",
+      "subPermissions": [
+        "circulation-storage.loans.item.put",
+        "circulation-storage.loans.collection.get",
+        "circulation.rules.loan-policy.get",
+        "circulation.rules.request-policy.get",
+        "circulation-storage.requests.item.put",
+        "circulation-storage.requests.collection.get",
+        "inventory-storage.items.item.get",
+        "inventory-storage.items.item.put",
+        "inventory-storage.items.collection.get",
+        "inventory-storage.locations.item.get",
+        "inventory-storage.locations.collection.get",
+        "inventory-storage.location-units.institutions.item.get",
+        "inventory-storage.location-units.campuses.item.get",
+        "inventory-storage.location-units.libraries.item.get",
+        "inventory-storage.holdings.collection.get",
+        "inventory-storage.holdings.item.get",
+        "inventory-storage.instances.collection.get",
+        "inventory-storage.instances.item.get",
+        "inventory-storage.service-points.collection.get",
+        "inventory-storage.service-points.item.get",
+        "proxiesfor.collection.get",
+        "users.item.get",
+        "proxiesfor.collection.get",
+        "inventory-storage.material-types.item.get",
+        "circulation-storage.loan-policies.item.get",
+        "circulation-storage.loan-policies.collection.get",
+        "circulation-storage.request-policies.item.get",
+        "circulation-storage.fixed-due-date-schedules.item.get",
+        "circulation.rules.notice-policy.get",
+        "circulation-storage.patron-notice-policies.item.get",
+        "scheduled-notice-storage.scheduled-notices.collection.delete",
+        "scheduled-notice-storage.scheduled-notices.item.post"
+      ],
+      "visible": false
     }
   ],
   "metadata": {

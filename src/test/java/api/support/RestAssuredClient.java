@@ -31,11 +31,18 @@ public class RestAssuredClient {
   }
 
   private static RequestSpecification timeoutConfig() {
+    final int defaultTimeOutInMilliseconds = 5000;
+
+    return timeoutConfig(defaultTimeOutInMilliseconds);
+  }
+
+  private static RequestSpecification timeoutConfig(int timeOutInMilliseconds) {
     return new RequestSpecBuilder()
       .setConfig(RestAssured.config()
         .httpClient(HttpClientConfig.httpClientConfig()
-          .setParam("http.connection.timeout", 5000)
-          .setParam("http.socket.timeout", 5000))).build();
+          .setParam("http.connection.timeout", timeOutInMilliseconds)
+          .setParam("http.socket.timeout", timeOutInMilliseconds)))
+      .build();
   }
 
   public static Response from(io.restassured.response.Response response) {
@@ -46,8 +53,23 @@ public class RestAssuredClient {
     });
 
     return new Response(response.statusCode(), response.body().print(),
-      response.contentType(),
-      mappedHeaders);
+      response.contentType(), mappedHeaders, null);
+  }
+
+  public static io.restassured.response.Response manuallyStartTimedTask(
+    URL url,
+    int expectedStatusCode,
+    String requestId) {
+
+    return given()
+      .log().all()
+      .spec(defaultHeaders(requestId))
+      .spec(timeoutConfig(10000))
+      .when().post(url)
+      .then()
+      .log().all()
+      .statusCode(expectedStatusCode)
+      .extract().response();
   }
 
   public static io.restassured.response.Response post(

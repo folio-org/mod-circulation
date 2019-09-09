@@ -1,11 +1,21 @@
 package org.folio.circulation.domain;
 
+import static java.lang.String.format;
+import static java.util.Objects.nonNull;
 import static java.util.concurrent.CompletableFuture.completedFuture;
+import static org.folio.circulation.domain.representations.LoanProperties.PATRON_GROUP_AT_CHECKOUT;
+import static org.folio.circulation.domain.representations.LoanProperties.PATRON_GROUP_ID_AT_CHECKOUT;
 import static org.folio.circulation.support.CqlQuery.exactMatch;
 import static org.folio.circulation.support.CqlQuery.exactMatchAny;
+import static org.folio.circulation.support.JsonPropertyWriter.write;
 import static org.folio.circulation.support.Result.failed;
 import static org.folio.circulation.support.Result.of;
 import static org.folio.circulation.support.Result.succeeded;
+import static org.folio.circulation.support.ResultBinding.mapResult;
+import static org.folio.circulation.support.http.CommonResponseInterpreters.noContentRecordInterpreter;
+import static org.folio.circulation.support.http.ResponseMapping.forwardOnFailure;
+import static org.folio.circulation.support.http.ResponseMapping.mapUsingJson;
+import static org.folio.circulation.support.results.CommonFailures.failedDueToServerError;
 
 import java.lang.invoke.MethodHandles;
 import java.util.Collection;
@@ -14,20 +24,21 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.folio.circulation.domain.policy.LoanPolicy;
+import org.folio.circulation.domain.representations.LoanProperties;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.CqlQuery;
-import org.folio.circulation.support.ForwardOnFailure;
+import org.folio.circulation.support.FetchSingleRecord;
 import org.folio.circulation.support.ItemRepository;
+import org.folio.circulation.support.RecordNotFoundFailure;
 import org.folio.circulation.support.Result;
-import org.folio.circulation.support.ServerErrorFailure;
 import org.folio.circulation.support.SingleRecordFetcher;
 import org.folio.circulation.support.http.client.Response;
-import org.joda.time.DateTime;
+import org.folio.circulation.support.http.client.ResponseInterpreter;
+import org.folio.circulation.support.results.CommonFailures;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -47,53 +58,25 @@ public class LoanRepository {
 
   public CompletableFuture<Result<LoanAndRelatedRecords>> createLoan(
     LoanAndRelatedRecords loanAndRelatedRecords) {
-    LoanAndRelatedRecords recalledLoanandRelatedRecords = null;
-    RequestQueue requestQueue = loanAndRelatedRecords.getRequestQueue();
-    Collection<Request> requests = requestQueue.getRequests();
 
-    if(!requests.isEmpty()) {
-      /* 
-        This gets the top request, since UpdateRequestQueue.java#L106 updates the request queue prior to loan creation.
-        If that sequesnse changes, the following will need to be updated to requests.stream().skip(1).findFirst().orElse(null)
-        and the condition above could do a > 1 comparison. (CIRC-277)
-      */
-      Request nextRequestInQueue = requests.stream().findFirst().orElse(null);
-      if(nextRequestInQueue != null && nextRequestInQueue.getRequestType() == RequestType.RECALL) {
-        LoanPolicy loanPolicy = loanAndRelatedRecords.getLoanPolicy();
-        Result<LoanAndRelatedRecords> httpResult = loanPolicy.recall(loanAndRelatedRecords.getLoan())
-          .map(loanAndRelatedRecords::withLoan);
-        recalledLoanandRelatedRecords = httpResult.value();
-      } 
-    }
+    final Loan loan = loanAndRelatedRecords.getLoan();
 
-    LoanAndRelatedRecords newLoanAndRelatedRecords = recalledLoanandRelatedRecords == null ? loanAndRelatedRecords : recalledLoanandRelatedRecords;
+    JsonObject storageLoan = mapToStorageRepresentation(loan, loan.getItem());
 
-    JsonObject storageLoan = mapToStorageRepresentation(
-      newLoanAndRelatedRecords.getLoan(), newLoanAndRelatedRecords.getLoan().getItem());
+    final ResponseInterpreter<Loan> interpreter = new ResponseInterpreter<Loan>()
+      .flatMapOn(201, mapUsingJson(loan::replaceRepresentation))
+      .otherwise(forwardOnFailure());
 
-    if(newLoanAndRelatedRecords.getLoanPolicy() != null) {
-      storageLoan.put("loanPolicyId", newLoanAndRelatedRecords.getLoanPolicy().getId());
-    }
-
-    User user = newLoanAndRelatedRecords.getLoan().getUser();
-    User proxy = newLoanAndRelatedRecords.getLoan().getProxy();
-        
-    return loansStorageClient.post(storageLoan).thenApply(response -> {
-      if (response.getStatusCode() == 201) {
-        return succeeded(
-          newLoanAndRelatedRecords.withLoan(Loan.from(response.getJson(),
-          newLoanAndRelatedRecords.getLoan().getItem(), user, proxy)));
-      } else {
-        return failed(new ForwardOnFailure(response));
-      }
-    });
+    return loansStorageClient.post(storageLoan)
+      .thenApply(interpreter::apply)
+      .thenApply(mapResult(loanAndRelatedRecords::withLoan));
   }
 
   public CompletableFuture<Result<LoanAndRelatedRecords>> updateLoan(
     LoanAndRelatedRecords loanAndRelatedRecords) {
 
     return updateLoan(loanAndRelatedRecords.getLoan())
-      .thenApply(r -> r.map(loanAndRelatedRecords::withLoan));
+      .thenApply(mapResult(loanAndRelatedRecords::withLoan));
   }
 
   public CompletableFuture<Result<Loan>> updateLoan(Loan loan) {
@@ -103,21 +86,9 @@ public class LoanRepository {
 
     JsonObject storageLoan = mapToStorageRepresentation(loan, loan.getItem());
 
-    final Function<Response, Result<Loan>> mapResponse = response -> {
-      if (response.getStatusCode() == 204) {
-        return succeeded(loan);
-      } else {
-        return failed(
-          new ServerErrorFailure(String.format("Failed to update loan (%s:%s)",
-            response.getStatusCode(), response.getBody())));
-      }
-    };
-
     return loansStorageClient.put(loan.getId(), storageLoan)
-      .thenApply(mapResponse)
-      .thenComposeAsync(r -> r.after(
-        //Fetch updated loan without having to get the item and the user again
-        l -> fetchLoan(l.getId(), loan.getItem(), loan.getUser(), loan.getOriginalDueDate())));
+      .thenApply(noContentRecordInterpreter(loan)::apply)
+      .thenComposeAsync(r -> r.after(this::refreshLoanRepresentation));
   }
 
   /**
@@ -128,7 +99,18 @@ public class LoanRepository {
    * failure if more than one open loan for the item found
    */
   public CompletableFuture<Result<Loan>> findOpenLoanForRequest(Request request) {
-    return findOpenLoans(request.getItemId())
+    return findOpenLoanForItem(request.getItem());
+  }
+
+  /**
+   *
+   * @param item the item with ID to fetch the open loan for
+   * @return  success with loan if one found,
+   * success with null if the no open loan is found,
+   * failure if more than one open loan for the item found
+   */
+  public CompletableFuture<Result<Loan>> findOpenLoanForItem(Item item) {
+    return findOpenLoans(item.getItemId())
       .thenApply(loansResult -> loansResult.next(loans -> {
         //TODO: Consider introducing an unknown loan class, instead of null
         if (loans.getTotalRecords() == 0) {
@@ -138,11 +120,11 @@ public class LoanRepository {
           final Optional<Loan> firstLoan = loans.getRecords().stream().findFirst();
 
           return firstLoan
-            .map(loan -> succeeded(Loan.from(loan.asJson(), request.getItem())))
-            .orElse(null);
+            .map(loan -> Result.of(() -> loan.withItem(item)))
+            .orElse(Result.of(() -> null));
         } else {
-          return failed(new ServerErrorFailure(
-            String.format("More than one open loan for item %s", request.getItemId())));
+          return failedDueToServerError(format(
+            "More than one open loan for item %s", item.getItemId()));
         }
       }));
   }
@@ -151,24 +133,22 @@ public class LoanRepository {
     return fetchLoan(id)
       .thenComposeAsync(this::fetchItem)
       .thenComposeAsync(this::fetchUser)
-      .exceptionally(e -> failed(new ServerErrorFailure(e)));
+      .exceptionally(CommonFailures::failedDueToServerError);
   }
 
   private CompletableFuture<Result<Loan>> fetchLoan(String id) {
-    return new SingleRecordFetcher<>(
-      loansStorageClient, "loan", Loan::from)
+    return FetchSingleRecord.<Loan>forRecord("loan")
+      .using(loansStorageClient)
+      .mapTo(Loan::from)
+      .whenNotFound(failed(new RecordNotFoundFailure("loan", id)))
       .fetch(id);
   }
 
-  private CompletableFuture<Result<Loan>> fetchLoan(
-    String id,
-    Item item,
-    User user,
-    DateTime oldDueDate) {
-
+  private CompletableFuture<Result<Loan>> refreshLoanRepresentation(Loan loan) {
     return new SingleRecordFetcher<>(loansStorageClient, "loan",
-      representation -> Loan.from(representation, item, user, null, oldDueDate))
-      .fetch(id);
+      new ResponseInterpreter<Loan>()
+        .flatMapOn(200, mapUsingJson(loan::replaceRepresentation)))
+      .fetch(loan.getId());
   }
 
   private CompletableFuture<Result<Loan>> fetchItem(Result<Loan> result) {
@@ -177,8 +157,7 @@ public class LoanRepository {
 
   //TODO: Check if user not found should result in failure?
   private CompletableFuture<Result<Loan>> fetchUser(Result<Loan> result) {
-    return result.combineAfter(userRepository::getUser,
-      (loan, user) -> Loan.from(loan.asJson(), loan.getItem(), user, null));
+    return result.combineAfter(userRepository::getUser, Loan::withUser);
   }
 
   public CompletableFuture<Result<MultipleRecords<Loan>>> findBy(String query) {
@@ -191,15 +170,29 @@ public class LoanRepository {
   private Result<MultipleRecords<Loan>> mapResponseToLoans(Response response) {
     return MultipleRecords.from(response, Loan::from, "loans");
   }
-  
+
   private static JsonObject mapToStorageRepresentation(Loan loan, Item item) {
     JsonObject storageLoan = loan.asJson();
 
+    keepPatronGroupIdAtCheckoutProperties(loan, storageLoan);
     removeChangeMetadata(storageLoan);
     removeSummaryProperties(storageLoan);
     keepLatestItemStatus(item, storageLoan);
+    removeBorrowerProperties(storageLoan);
+    removeLoanPolicyProperties(storageLoan);
+    removeFeesAndFinesProperties(storageLoan);
+
+    updateLastLoanPolicyUsedId(storageLoan, loan.getLoanPolicy());
 
     return storageLoan;
+  }
+
+  private static void removeLoanPolicyProperties(JsonObject storageLoan) {
+    storageLoan.remove(LoanProperties.LOAN_POLICY);
+  }
+
+  private static void removeBorrowerProperties(JsonObject storageLoan) {
+    storageLoan.remove(LoanProperties.BORROWER);
   }
 
   private static void keepLatestItemStatus(Item item, JsonObject storageLoan) {
@@ -208,15 +201,42 @@ public class LoanRepository {
     storageLoan.put("itemStatus", item.getStatus().getValue());
   }
 
+  private static void updateLastLoanPolicyUsedId(JsonObject storageLoan,
+                                                 LoanPolicy loanPolicy) {
+
+    if(nonNull(loanPolicy) && loanPolicy.getId() != null) {
+      storageLoan.put("loanPolicyId", loanPolicy.getId());
+    }
+  }
+
+  private static void removeFeesAndFinesProperties(JsonObject storageLoan) {
+    storageLoan.remove(LoanProperties.FEESANDFINES);
+  }
+
   private static void removeChangeMetadata(JsonObject storageLoan) {
     storageLoan.remove("metadata");
   }
 
   private static void removeSummaryProperties(JsonObject storageLoan) {
+    storageLoan.remove(LoanProperties.BORROWER);
     storageLoan.remove("item");
     storageLoan.remove("checkinServicePoint");
     storageLoan.remove("checkoutServicePoint");
+    storageLoan.remove(PATRON_GROUP_AT_CHECKOUT);
   }
+
+ private static void keepPatronGroupIdAtCheckoutProperties(Loan loan, JsonObject storageLoan) {
+    if (nonNull(loan.getUser()) && nonNull(loan.getUser().getPatronGroup())) {
+      write(storageLoan, PATRON_GROUP_ID_AT_CHECKOUT,
+        loan.getUser().getPatronGroup().getId());
+    }
+
+    //TODO: Should this really be re-writing the value?
+    if (storageLoan.containsKey(PATRON_GROUP_AT_CHECKOUT)) {
+      write(storageLoan, PATRON_GROUP_ID_AT_CHECKOUT,
+        storageLoan.getJsonObject(PATRON_GROUP_AT_CHECKOUT).getString("id"));
+    }
+ }
 
   public CompletableFuture<Result<Boolean>> hasOpenLoan(String itemId) {
     return findOpenLoans(itemId)

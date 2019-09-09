@@ -1,7 +1,10 @@
 package org.folio.circulation.domain.policy;
 
+import static java.lang.String.format;
+import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.support.Result.failed;
 import static org.folio.circulation.support.Result.succeeded;
+import static org.folio.circulation.support.results.CommonFailures.failedDueToServerError;
 
 import java.lang.invoke.MethodHandles;
 import java.util.concurrent.CompletableFuture;
@@ -15,7 +18,6 @@ import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.ForwardOnFailure;
 import org.folio.circulation.support.Result;
-import org.folio.circulation.support.ServerErrorFailure;
 import org.folio.circulation.support.SingleRecordFetcher;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.client.ResponseHandler;
@@ -57,8 +59,8 @@ public class RequestPolicyRepository {
     String requestPolicyId) {
 
     return SingleRecordFetcher.json(requestPoliciesStorageClient, "request policy",
-      response -> failed(new ServerErrorFailure(
-        String.format("Request policy %s could not be found, please check circulation rules", requestPolicyId))))
+      response -> failedDueToServerError(format(
+        "Request policy %s could not be found, please check circulation rules", requestPolicyId)))
       .fetch(requestPolicyId);
   }
 
@@ -70,8 +72,8 @@ public class RequestPolicyRepository {
       = new CompletableFuture<>();
 
     if(item.isNotFound()) {
-      return CompletableFuture.completedFuture(failed(
-        new ServerErrorFailure("Unable to find matching request rules for unknown item")));
+      return completedFuture(failedDueToServerError(
+        "Unable to find matching request rules for unknown item"));
     }
 
     String materialTypeId = item.getMaterialTypeId();
@@ -90,8 +92,8 @@ public class RequestPolicyRepository {
 
     circulationRulesResponse.thenAcceptAsync(response -> {
       if (response.getStatusCode() == 404) {
-        findRequestPolicyCompleted.complete(failed(
-          new ServerErrorFailure("Unable to find matching request rules")));
+        findRequestPolicyCompleted.complete(
+          failedDueToServerError("Unable to find matching request rules"));
       } else if (response.getStatusCode() != 200) {
         findRequestPolicyCompleted.complete(failed(
           new ForwardOnFailure(response)));

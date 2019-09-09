@@ -1,0 +1,20 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "type": "object",
+  "description": "Request to move a request from one item to another",
+  "properties": {
+    "destinationItemId": {
+      "description": "UUID of the item the request should be moved to",
+      "type": "string"
+    },
+    "requestType": {
+      "description": "Whether the item should be held upon return, recalled or paged for",
+      "type": "string",
+      "enum": ["Hold", "Recall", "Page"]
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "destinationItemId"
+  ]
+}

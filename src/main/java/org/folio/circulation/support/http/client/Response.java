@@ -1,6 +1,7 @@
 package org.folio.circulation.support.http.client;
 
 import static io.vertx.core.http.HttpHeaders.CONTENT_TYPE;
+import static java.lang.String.format;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -14,24 +15,33 @@ public class Response {
   private final int statusCode;
   private final String contentType;
   private final CaseInsensitiveHeaders headers;
+  private final String fromUrl;
 
   public Response(int statusCode, String body, String contentType) {
-    this(statusCode, body, contentType, new CaseInsensitiveHeaders());
+    this(statusCode, body, contentType, new CaseInsensitiveHeaders(), null);
   }
 
   public Response(
     int statusCode,
     String body,
     String contentType,
-    CaseInsensitiveHeaders headers) {
+    CaseInsensitiveHeaders headers,
+    String fromUrl) {
 
     this.statusCode = statusCode;
     this.body = body;
     this.contentType = contentType;
     this.headers = headers;
+    this.fromUrl = fromUrl;
   }
 
   public static Response from(HttpClientResponse response, Buffer body) {
+    return from(response, body, null);
+  }
+
+  public static Response from(HttpClientResponse response, Buffer body,
+                              String fromUrl) {
+
     final CaseInsensitiveHeaders headers = new CaseInsensitiveHeaders();
 
     headers.addAll(response.headers());
@@ -39,7 +49,7 @@ public class Response {
     return new Response(response.statusCode(),
       BufferHelper.stringFromBuffer(body),
       convertNullToEmpty(response.getHeader(CONTENT_TYPE)),
-      headers);
+      headers, fromUrl);
   }
 
   public boolean hasBody() {
@@ -73,5 +83,16 @@ public class Response {
 
   String getHeader(String name) {
     return headers.get(name);
+  }
+
+  String getFromUrl() {
+    return fromUrl;
+  }
+
+  @Override
+  public String toString() {
+    return format(
+      "Response from \"%s\" status code: %s body: \"%s\", content type: \"%s\"",
+        getFromUrl(), getStatusCode(), getBody(), getContentType());
   }
 }

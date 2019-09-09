@@ -1,8 +1,11 @@
 package org.folio.circulation.domain;
 
+import static java.util.Objects.isNull;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.support.Result.of;
+import static org.folio.circulation.support.Result.ofAsync;
 import static org.folio.circulation.support.Result.succeeded;
+import static org.folio.circulation.support.ResultBinding.mapResult;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 
 import java.lang.invoke.MethodHandles;
@@ -10,9 +13,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
-import java.util.Objects;
 
 import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.support.Clients;
@@ -41,10 +44,18 @@ public class UserRepository {
   }
 
   public CompletableFuture<Result<User>> getProxyUser(UserRelatedRecord userRelatedRecord) {
+    if (userRelatedRecord.getProxyUserId() == null) {
+      return CompletableFuture.completedFuture(succeeded(null));
+    }
+
     return getUser(userRelatedRecord.getProxyUserId());
   }
 
   public CompletableFuture<Result<User>> getUser(String userId) {
+    if(isNull(userId)) {
+      return ofAsync(() -> null);
+    }
+
     return FetchSingleRecord.<User>forRecord("user")
       .using(usersStorageClient)
       .mapTo(User::new)
@@ -53,29 +64,31 @@ public class UserRepository {
   }
 
   public CompletableFuture<Result<Loan>> findUserForLoan(Result<Loan> loanResult) {
-    return loanResult.after(loan -> {
-      String userId = loan.getUserId();
-      if (userId == null) {
-        return completedFuture(loanResult);
-      }
-      return getUser(userId)
-        .thenApply(userResult ->
-          userResult.map(user -> {
-            if (user == null) {
-              log.info("No user found for loan {}", loan.getId());
-            } else {
-              log.info("User with username {} found for loan {}",
-                loan.getUser().getUsername(), loan.getId());
-            }
-            return loan.withUser(user);
-          }));
-    });
+    return loanResult.after(loan -> getUser(loan.getUserId())
+      .thenApply(userResult ->
+        userResult.map(user -> {
+          if (isNull(user)) {
+            log.info("No user found for loan {}", loan.getId());
+          } else {
+            log.info("User with username {} found for loan {}",
+              loan.getUser().getUsername(), loan.getId());
+          }
+          return loan.withUser(user);
+        })));
   }
-
 
   public CompletableFuture<Result<MultipleRecords<Loan>>> findUsersForLoans(
     MultipleRecords<Loan> multipleLoans) {
+
     Collection<Loan> loans = multipleLoans.getRecords();
+
+    return getUsersForLoans(loans)
+      .thenApply(r -> r.map(users -> multipleLoans.mapRecords(
+        loan -> loan.withUser(users.getOrDefault(loan.getUserId(), null)))));
+  }
+
+  private CompletableFuture<Result<Map<String, User>>> getUsersForLoans(
+    Collection<Loan> loans) {
 
     final List<String> usersToFetch =
       loans.stream()
@@ -85,27 +98,10 @@ public class UserRepository {
         .distinct()
         .collect(Collectors.toList());
 
-    if (usersToFetch.isEmpty()) {
-      log.info("No users to query for loans");
-      return completedFuture(succeeded(multipleLoans));
-    }
-
     final MultipleRecordFetcher<User> fetcher = createUsersFetcher();
 
     return fetcher.findByIds(usersToFetch)
-      .thenApply(multipleUsersResult -> multipleUsersResult.next(
-        multipleUsers -> {
-          List<Loan> newLoanList = new ArrayList<>();
-          Collection<User> users = multipleUsers.getRecords();
-          for (Loan loan : loans) {
-            Loan newLoan = loan;
-            for (User user : users) {
-              newLoan = newLoan.withUser(user);
-            }
-            newLoanList.add(newLoan);
-          }
-          return succeeded(new MultipleRecords<>(newLoanList, multipleLoans.getTotalRecords()));
-        }));
+      .thenApply(mapResult(users -> users.toMap(User::getId)));
   }
 
   private MultipleRecordFetcher<User> createUsersFetcher() {
@@ -114,6 +110,10 @@ public class UserRepository {
 
   //TODO: Replace this with validator
   public CompletableFuture<Result<User>> getUserFailOnNotFound(String userId) {
+    if(isNull(userId)) {
+      return completedFuture(failedValidation("user is not found", "userId", userId));
+    }
+
     return FetchSingleRecord.<User>forRecord("user")
       .using(usersStorageClient)
       .mapTo(User::new)
@@ -164,7 +164,7 @@ public class UserRepository {
     }
 
     final MultipleRecordFetcher<User> fetcher
-      = new MultipleRecordFetcher<>(usersStorageClient, "users", User::from);
+      = new MultipleRecordFetcher<>(usersStorageClient, USERS_RECORD_PROPERTY, User::from);
 
     return fetcher.findByIds(usersToFetch)
       .thenApply(multipleUsersResult -> multipleUsersResult.next(
@@ -199,6 +199,6 @@ public class UserRepository {
   }
 
   private Result<MultipleRecords<User>> mapResponseToUsers(Response response) {
-    return MultipleRecords.from(response, User::from, "users");
+    return MultipleRecords.from(response, User::from, USERS_RECORD_PROPERTY);
   }
 }

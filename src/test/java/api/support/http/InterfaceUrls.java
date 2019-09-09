@@ -108,6 +108,10 @@ public class InterfaceUrls {
     return circulationModuleUrl("/circulation/requests" + subPath);
   }
 
+  public static URL requestReportUrl(String servicePointId) {
+    return circulationModuleUrl("/circulation/requests-reports/hold-shelf-clearance/" + servicePointId);
+  }
+
   public static URL requestQueueUrl(UUID itemId) {
     return requestsUrl(String.format("/queue/%s", itemId));
   }
@@ -144,6 +148,10 @@ public class InterfaceUrls {
     return circulationModuleUrl("/circulation/loans" + subPath);
   }
 
+  public static URL accountsUrl(String subPath) {
+    return APITestContext.viaOkapiModuleUrl("/accounts" + subPath);
+  }
+
   public static URL circulationRulesUrl() {
     return circulationRulesUrl("");
   }
@@ -163,6 +171,10 @@ public class InterfaceUrls {
 
   static URL patronNoticesUrl(String subPath) {
     return APITestContext.viaOkapiModuleUrl("/patron-notice" + subPath);
+  }
+
+  static URL scheduledNoticesUrl(String subPath) {
+    return APITestContext.viaOkapiModuleUrl("/scheduled-notice-storage/scheduled-notices" + subPath);
   }
 
   static URL configurationUrl(String subPath) {

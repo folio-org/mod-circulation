@@ -1,0 +1,28 @@
+#%RAML 1.0
+title: Circulation
+version: v0.2
+protocols: [ HTTP, HTTPS ]
+baseUri: http://localhost:9130
+
+documentation:
+  - title: Circulation Business Logic API
+    content: <b>API for report generation</b>
+
+types:
+  requests: !include requests.json
+
+traits:
+  language: !include raml-util/traits/language.raml
+
+resourceTypes:
+  collection-get: !include raml-util/rtypes/collection-get.raml
+
+/circulation:
+  /requests-reports:
+    displayName: Hold shelf clearance report
+    /hold-shelf-clearance:
+      /{servicePointId}:
+        type:
+          collection-get:
+            exampleCollection: !include examples/requests.json
+            schemaCollection: requests

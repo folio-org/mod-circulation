@@ -6,6 +6,8 @@ import static org.folio.circulation.support.Result.failed;
 import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.domain.Loan;
@@ -41,22 +43,28 @@ public class RegularCheckOutStrategy implements CheckOutStrategy {
   }
 
   private Result<LoanAndRelatedRecords> refuseWhenItemIsNotLoanable(LoanAndRelatedRecords relatedRecords) {
-    if (relatedRecords.getLoanPolicy().isNotLoanable()) {
-      String itemBarcode = relatedRecords.getLoan().getItem().getBarcode();
-      return failed(singleValidationError("Item is not loanable", ITEM_BARCODE, itemBarcode));
+    final Loan loan = relatedRecords.getLoan();
+    final LoanPolicy loanPolicy = loan.getLoanPolicy();
+
+    if (loanPolicy.isNotLoanable()) {
+      String itemBarcode = loan.getItem().getBarcode();
+
+      Map<String, String> parameters = new HashMap<>();
+      parameters.put(ITEM_BARCODE, itemBarcode);
+      return failed(singleValidationError(
+        loanPolicy.loanPolicyValidationError(
+          "Item is not loanable", parameters)));
     }
     return succeeded(relatedRecords);
   }
 
   private Result<LoanAndRelatedRecords> calculateDefaultInitialDueDate(LoanAndRelatedRecords loanAndRelatedRecords) {
     Loan loan = loanAndRelatedRecords.getLoan();
-    LoanPolicy loanPolicy = loanAndRelatedRecords.getLoanPolicy();
+    LoanPolicy loanPolicy = loan.getLoanPolicy();
     RequestQueue requestQueue = loanAndRelatedRecords.getRequestQueue();
     return loanPolicy.calculateInitialDueDate(loan, requestQueue)
-      .map(dueDate -> {
-        loanAndRelatedRecords.getLoan().changeDueDate(dueDate);
-        return loanAndRelatedRecords;
-      });
+      .map(loan::changeDueDate)
+      .map(loanAndRelatedRecords::withLoan);
   }
   
 }

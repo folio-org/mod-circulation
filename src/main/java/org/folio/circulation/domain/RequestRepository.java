@@ -1,7 +1,13 @@
 package org.folio.circulation.domain;
 
+import static java.util.Objects.isNull;
 import static org.folio.circulation.support.Result.failed;
+import static org.folio.circulation.support.Result.of;
+import static org.folio.circulation.support.Result.ofAsync;
 import static org.folio.circulation.support.Result.succeeded;
+import static org.folio.circulation.support.ResultBinding.mapResult;
+import static org.folio.circulation.support.http.ResponseMapping.forwardOnFailure;
+import static org.folio.circulation.support.http.ResponseMapping.mapUsingJson;
 
 import java.util.concurrent.CompletableFuture;
 
@@ -9,12 +15,12 @@ import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.CqlQuery;
 import org.folio.circulation.support.FetchSingleRecord;
-import org.folio.circulation.support.ForwardOnFailure;
 import org.folio.circulation.support.ItemRepository;
+import org.folio.circulation.support.RecordNotFoundFailure;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.SingleRecordFetcher;
-import org.folio.circulation.support.SingleRecordMapper;
 import org.folio.circulation.support.http.client.Response;
+import org.folio.circulation.support.http.client.ResponseInterpreter;
 
 import io.vertx.core.json.JsonObject;
 
@@ -26,7 +32,6 @@ public class RequestRepository {
   private final LoanRepository loanRepository;
   private final ServicePointRepository servicePointRepository;
   private final PatronGroupRepository patronGroupRepository;
-  
 
   private RequestRepository(
     CollectionResourceClient requestsStorageClient,
@@ -42,16 +47,23 @@ public class RequestRepository {
     this.itemRepository = itemRepository;
     this.userRepository = userRepository;
     this.loanRepository = loanRepository;
-    this.servicePointRepository = servicePointRepository; 
+    this.servicePointRepository = servicePointRepository;
     this.patronGroupRepository = patronGroupRepository;
   }
 
   public static RequestRepository using(Clients clients) {
-    return new RequestRepository(clients.requestsStorage(),
+    return using(clients, false);
+  }
+
+  public static RequestRepository using(Clients clients, boolean fetchMaterialType) {
+    return new RequestRepository(
+      clients.requestsStorage(),
       clients.cancellationReasonStorage(),
-      new ItemRepository(clients, true, false, true),
-      new UserRepository(clients), new LoanRepository(clients),
-      new ServicePointRepository(clients), new PatronGroupRepository(clients));
+      new ItemRepository(clients, true, fetchMaterialType, true),
+      new UserRepository(clients),
+      new LoanRepository(clients),
+      new ServicePointRepository(clients),
+      new PatronGroupRepository(clients));
   }
 
   public CompletableFuture<Result<MultipleRecords<Request>>> findBy(String query) {
@@ -74,6 +86,13 @@ public class RequestRepository {
         itemRepository.fetchItemsFor(requests, Request::withItem));
   }
 
+  CompletableFuture<Result<MultipleRecords<Request>>> findByWithoutItems(
+    CqlQuery query, Integer pageLimit) {
+
+    return requestsStorageClient.getMany(query, pageLimit)
+      .thenApply(result -> result.next(this::mapResponseToRequests));
+  }
+
   private Result<MultipleRecords<Request>> mapResponseToRequests(Response response) {
     return MultipleRecords.from(response, Request::from, "requests");
   }
@@ -89,14 +108,9 @@ public class RequestRepository {
   }
 
   private CompletableFuture<Result<Boolean>> exists(String id) {
-    return new SingleRecordFetcher<>(requestsStorageClient, "request",
-      new SingleRecordMapper<>(request -> true, response -> {
-        if (response.getStatusCode() == 404) {
-          return succeeded(false);
-        } else {
-          return failed(new ForwardOnFailure(response));
-        }
-      }))
+    return createSingleRequestFetcher(new ResponseInterpreter<Boolean>()
+      .on(200, of(() -> true))
+      .on(404, of(() -> false)))
       .fetch(id);
   }
 
@@ -112,24 +126,23 @@ public class RequestRepository {
   }
 
   private CompletableFuture<Result<Request>> fetchRequest(String id) {
-    return new SingleRecordFetcher<>(requestsStorageClient, "request", Request::from)
+    return createSingleRequestFetcher(new ResponseInterpreter<Request>()
+      .flatMapOn(200, mapUsingJson(Request::from))
+      .on(404, failed(new RecordNotFoundFailure("request", id))))
       .fetch(id);
   }
 
   //TODO: May need to fetch updated representation of request
   public CompletableFuture<Result<Request>> update(Request request) {
-    final JsonObject representation = new RequestRepresentation()
-      .storedRequest(request);
+    final JsonObject representation
+      = new StoredRequestRepresentation().storedRequest(request);
+
+    final ResponseInterpreter<Request> interpreter = new ResponseInterpreter<Request>()
+      .on(204, of(() -> request))
+      .otherwise(forwardOnFailure());
 
     return requestsStorageClient.put(request.getId(), representation)
-      .thenApply(response -> {
-        if(response.getStatusCode() == 204) {
-          return succeeded(request);
-        }
-        else {
-          return failed(new ForwardOnFailure(response));
-        }
-    });
+      .thenApply(interpreter::apply);
   }
 
   public CompletableFuture<Result<RequestAndRelatedRecords>> update(
@@ -144,37 +157,33 @@ public class RequestRepository {
 
     final Request request = requestAndRelatedRecords.getRequest();
 
-    JsonObject representation = new RequestRepresentation()
+    JsonObject representation = new StoredRequestRepresentation()
       .storedRequest(request);
 
+    final ResponseInterpreter<Request> interpreter = new ResponseInterpreter<Request>()
+      .flatMapOn(201, mapUsingJson(request::withRequestJsonRepresentation))
+      .otherwise(forwardOnFailure());
+
     return requestsStorageClient.post(representation)
-      .thenApply(response -> {
-        if (response.getStatusCode() == 201) {
-          //Retain all of the previously fetched related records
-          return succeeded(requestAndRelatedRecords.withRequest(
-            request.withRequestJsonRepresentation(response.getJson())
-          ));
-        } else {
-          return failed(new ForwardOnFailure(response));
-        }
-    });
+      .thenApply(interpreter::apply)
+      .thenApply(mapResult(requestAndRelatedRecords::withRequest));
   }
 
   public CompletableFuture<Result<Request>> delete(Request request) {
+    final ResponseInterpreter<Request> interpreter = new ResponseInterpreter<Request>()
+      .on(204, of(() -> request))
+      .otherwise(forwardOnFailure());
+
     return requestsStorageClient.delete(request.getId())
-      .thenApply(response -> {
-        if(response.getStatusCode() == 204) {
-          return succeeded(request);
-        }
-        else {
-          return failed(new ForwardOnFailure(response));
-        }
-    });
+      .thenApply(interpreter::apply);
   }
 
   public CompletableFuture<Result<Request>> loadCancellationReason(Request request) {
+    if(isNull(request) || isNull(request.getCancellationReasonId())) {
+      return ofAsync(() -> null);
+    }
 
-    return FetchSingleRecord.<Request>forRecord("cancellationreason")
+    return FetchSingleRecord.<Request>forRecord("cancellation reason")
       .using(cancellationReasonStorageClient)
       .mapTo(request::withCancellationReasonJsonRepresentation)
       .whenNotFound(succeeded(request))
@@ -192,26 +201,31 @@ public class RequestRepository {
     return result.combineAfter(request ->
       getUser(request.getProxyUserId()), Request::withProxy);
   }
-  
+
   private CompletableFuture<Result<Request>> fetchLoan(Result<Request> result) {
     return result.combineAfter(loanRepository::findOpenLoanForRequest, Request::withLoan);
   }
-  
+
   private CompletableFuture<Result<Request>> fetchPickupServicePoint(Result<Request> result) {
     return result.combineAfter(request -> getServicePoint(request.getPickupServicePointId()),
         Request::withPickupServicePoint);
   }
-  
+
   private CompletableFuture<Result<Request>> fetchPatronGroups(Result<Request> result) {
     return patronGroupRepository.findPatronGroupsForSingleRequestUsers(result);
   }
-  
-  private CompletableFuture<Result<User>> getUser(String proxyUserId) {
-    return userRepository.getUser(proxyUserId);
+
+  private CompletableFuture<Result<User>> getUser(String userId) {
+    return userRepository.getUser(userId);
   }
-  
+
   private CompletableFuture<Result<ServicePoint>> getServicePoint(String servicePointId) {
     return servicePointRepository.getServicePointById(servicePointId);
   }
-  
+
+  private <R> SingleRecordFetcher<R> createSingleRequestFetcher(
+    ResponseInterpreter<R> interpreter) {
+
+    return new SingleRecordFetcher<>(requestsStorageClient, "request", interpreter);
+  }
 }

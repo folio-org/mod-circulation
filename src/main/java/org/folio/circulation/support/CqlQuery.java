@@ -4,10 +4,9 @@ import static java.lang.String.format;
 import static java.lang.String.join;
 import static java.lang.String.valueOf;
 import static java.util.stream.Collectors.toList;
-
 import static org.folio.circulation.support.CqlSortBy.none;
-import static org.folio.circulation.support.Result.failed;
 import static org.folio.circulation.support.Result.of;
+import static org.folio.circulation.support.results.CommonFailures.failedDueToServerError;
 
 import java.lang.invoke.MethodHandles;
 import java.net.URLEncoder;
@@ -34,12 +33,23 @@ public class CqlQuery {
     final List<String> filteredValues = filterNullValues(values);
 
     if(filteredValues.isEmpty()) {
-      return failed(new ServerErrorFailure(
-        format("Cannot generate CQL query using index %s matching no values", indexName)));
+      return failedDueToServerError(
+        format("Cannot generate CQL query using index %s matching no values", indexName));
     }
 
     return Result.of(() -> new CqlQuery(
       format("%s==(%s)", indexName, join(" or ", wrapValuesInQuotes(filteredValues))), none()));
+  }
+
+  /**
+   * Uses greater than ('>'), as not equals operator ('<>') is not supported in CQL at present
+   */
+  public static Result<CqlQuery> greaterThan(String index, Object value) {
+    return Result.of(() -> new CqlQuery(format("%s>\"%s\"", index, value), none()));
+  }
+
+  public static Result<CqlQuery> lessThan(String index, Object value) {
+    return Result.of(() -> new CqlQuery(format("%s<\"%s\"", index, value), none()));
   }
 
   private static List<String> filterNullValues(Collection<String> values) {

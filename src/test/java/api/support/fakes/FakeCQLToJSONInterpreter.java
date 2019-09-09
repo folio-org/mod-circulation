@@ -1,9 +1,4 @@
 package api.support.fakes;
-import io.vertx.core.json.JsonObject;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.tuple.ImmutablePair;
-import org.apache.commons.lang3.tuple.ImmutableTriple;
-
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
@@ -11,6 +6,12 @@ import java.util.List;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.apache.commons.lang3.tuple.ImmutableTriple;
+
+import io.vertx.core.json.JsonObject;
 
 public class FakeCQLToJSONInterpreter {
   private final boolean diagnosticsEnabled;
@@ -40,7 +41,16 @@ public class FakeCQLToJSONInterpreter {
     }
   }
 
-  private Comparator<? super JsonObject> sortForQuery(String sort) {
+  private Comparator<JsonObject> sortForQuery(String sort) {
+    String[] sortClauses = sort.split(StringUtils.SPACE);
+
+    return Arrays.stream(sortClauses)
+      .map(this::sortClauseToComparator)
+      .reduce(Comparator::thenComparing)
+      .get();
+  }
+
+  private Comparator<JsonObject> sortClauseToComparator(String sort) {
     if(StringUtils.contains(sort, "/")) {
       String propertyName = StringUtils.substring(sort, 0,
         StringUtils.lastIndexOf(sort, "/")).trim();

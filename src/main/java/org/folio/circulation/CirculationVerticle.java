@@ -4,18 +4,25 @@ import java.lang.invoke.MethodHandles;
 
 import org.folio.circulation.resources.CheckInByBarcodeResource;
 import org.folio.circulation.resources.CheckOutByBarcodeResource;
-import org.folio.circulation.resources.RegularCheckOutStrategy;
 import org.folio.circulation.resources.CirculationRulesResource;
+import org.folio.circulation.resources.DueDateNotRealTimeScheduledNoticeProcessingResource;
 import org.folio.circulation.resources.LoanCirculationRulesEngineResource;
 import org.folio.circulation.resources.LoanCollectionResource;
 import org.folio.circulation.resources.NoticeCirculationRulesEngineResource;
 import org.folio.circulation.resources.OverrideCheckOutStrategy;
-import org.folio.circulation.resources.OverrideRenewalByBarcodeResource;
+import org.folio.circulation.resources.OverrideRenewalStrategy;
+import org.folio.circulation.resources.RegularCheckOutStrategy;
+import org.folio.circulation.resources.RegularRenewalStrategy;
 import org.folio.circulation.resources.RenewByBarcodeResource;
 import org.folio.circulation.resources.RenewByIdResource;
+import org.folio.circulation.resources.RequestByInstanceIdResource;
 import org.folio.circulation.resources.RequestCirculationRulesEngineResource;
 import org.folio.circulation.resources.RequestCollectionResource;
+import org.folio.circulation.resources.RequestHoldShelfClearanceResource;
 import org.folio.circulation.resources.RequestQueueResource;
+import org.folio.circulation.resources.DueDateScheduledNoticeProcessingResource;
+import org.folio.circulation.resources.RequestScheduledNoticeProcessingResource;
+import org.folio.circulation.support.logging.Logging;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,7 +46,7 @@ public class CirculationVerticle extends AbstractVerticle {
 
     Router router = Router.router(vertx);
 
-    // bump up the connection pool size from the default value of 5 
+    // bump up the connection pool size from the default value of 5
     HttpClient client = vertx.createHttpClient(new HttpClientOptions().setMaxPoolSize(100));
 
     this.server = vertx.createHttpServer();
@@ -49,13 +56,21 @@ public class CirculationVerticle extends AbstractVerticle {
     new CheckOutByBarcodeResource("/circulation/override-check-out-by-barcode",
       client, new OverrideCheckOutStrategy()).register(router);
     new CheckInByBarcodeResource(client).register(router);
-    new RenewByBarcodeResource(client).register(router);
-    new RenewByIdResource(client).register(router);
+
+    new RenewByBarcodeResource("/circulation/renew-by-barcode",
+      new RegularRenewalStrategy(), client).register(router);
+    new RenewByIdResource("/circulation/renew-by-id",
+      new RegularRenewalStrategy(), client).register(router);
+    new RenewByBarcodeResource("/circulation/override-renewal-by-barcode",
+      new OverrideRenewalStrategy(), client).register(router);
+
     new LoanCollectionResource(client).register(router);
     new RequestCollectionResource(client).register(router);
     new RequestQueueResource(client).register(router);
-    new OverrideRenewalByBarcodeResource(client).register(router);
+    new RequestByInstanceIdResource(client).register(router);
 
+    new RequestHoldShelfClearanceResource("/circulation/requests-reports/hold-shelf-clearance/:servicePointId", client)
+      .register(router);
     new CirculationRulesResource("/circulation/rules", client)
       .register(router);
     new LoanCirculationRulesEngineResource(
@@ -73,6 +88,10 @@ public class CirculationVerticle extends AbstractVerticle {
       "/circulation/rules/notice-policy-all",
         client)
         .register(router);
+
+    new DueDateScheduledNoticeProcessingResource(client).register(router);
+    new DueDateNotRealTimeScheduledNoticeProcessingResource(client).register(router);
+    new RequestScheduledNoticeProcessingResource(client).register(router);
 
     server.requestHandler(router::accept)
       .listen(config().getInteger("port"), result -> {

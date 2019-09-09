@@ -1,8 +1,8 @@
 package org.folio.circulation.resources;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
-import static org.folio.circulation.domain.notice.NoticeContextUtil.createAvailableNoticeContext;
-import static org.folio.circulation.domain.notice.NoticeContextUtil.createLoanNoticeContext;
+import static org.folio.circulation.domain.notice.TemplateContextUtil.createAvailableNoticeContext;
+import static org.folio.circulation.domain.notice.TemplateContextUtil.createLoanNoticeContext;
 import static org.folio.circulation.support.Result.succeeded;
 
 import java.util.Objects;
@@ -17,6 +17,7 @@ import org.folio.circulation.domain.LoanRepository;
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestQueue;
 import org.folio.circulation.domain.RequestQueueRepository;
+import org.folio.circulation.domain.ServicePoint;
 import org.folio.circulation.domain.ServicePointRepository;
 import org.folio.circulation.domain.UpdateItem;
 import org.folio.circulation.domain.UpdateRequestQueue;
@@ -120,6 +121,28 @@ class CheckInProcessAdapter {
     return completedFuture(succeeded(item));
   }
 
+  CompletableFuture<Result<ServicePoint>> getCheckInServicePoint(CheckInProcessRecords records) {
+    return servicePointRepository.getServicePointById(records.getCheckInServicePointId());
+  }
+
+  CompletableFuture<Result<Request>> getPickupServicePoint(CheckInProcessRecords records) {
+    Request firstRequest = records.getHighestPriorityFulfillableRequest();
+    if (firstRequest == null) {
+      return completedFuture(succeeded(null));
+    }
+    return servicePointRepository.getServicePointById(UUID.fromString(firstRequest.getPickupServicePointId()))
+      .thenApply(r -> r.map(firstRequest::withPickupServicePoint));
+  }
+
+  CompletableFuture<Result<Request>> getRequester(CheckInProcessRecords records) {
+    Request firstRequest = records.getHighestPriorityFulfillableRequest();
+    if (firstRequest == null) {
+      return completedFuture(succeeded(null));
+    }
+    return userRepository.getUser(firstRequest)
+      .thenApply(r -> r.map(firstRequest::withRequester));
+  }
+
   Result<CheckInProcessRecords> sendCheckInPatronNotice(CheckInProcessRecords records) {
     if (records.getLoan() == null) {
       return succeeded(records);
@@ -129,7 +152,7 @@ class CheckInProcessAdapter {
       .withUser(records.getLoan().getUser())
       .withEventType(NoticeEventType.CHECK_IN)
       .withTiming(NoticeTiming.UPON_AT)
-      .withNoticeContext(createLoanNoticeContext(records.getLoan(), null))
+      .withNoticeContext(createLoanNoticeContext(records.getLoan()))
       .build();
     patronNoticeService.acceptNoticeEvent(noticeEvent);
     return succeeded(records);

@@ -1,33 +1,48 @@
 package org.folio.circulation.support;
 
-public abstract class CqlSortBy {
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
+
+import org.apache.commons.lang3.StringUtils;
+
+public class CqlSortBy {
+
+  private final List<CqlSortClause> orders;
+
+  private CqlSortBy(List<CqlSortClause> orders) {
+    this.orders = orders;
+  }
+
+  public static CqlSortBy sortBy(CqlSortClause... orders) {
+    return CqlSortBy.sortBy(Arrays.asList(orders));
+  }
+
+  public static CqlSortBy sortBy(List<CqlSortClause> orders) {
+    return new CqlSortBy(orders);
+  }
+
   public static CqlSortBy ascending(String index) {
-    return new AscendingCqlSortBy(index);
+    return CqlSortBy.sortBy(CqlSortClause.ascending(index));
+  }
+
+  public static CqlSortBy descending(String index) {
+    return CqlSortBy.sortBy(CqlSortClause.descending(index));
   }
 
   public static CqlSortBy none() {
-    return new NoCqlSortBy();
+    return new CqlSortBy(Collections.emptyList());
   }
 
-  protected abstract String applyTo(String query);
-
-  private static class AscendingCqlSortBy extends CqlSortBy {
-    private final String index;
-
-    AscendingCqlSortBy(String index) {
-      this.index = index;
-    }
-
-    @Override
-    protected String applyTo(String query) {
-      return String.format("%s sortBy %s/sort.ascending", query, index);
-    }
-  }
-
-  private static class NoCqlSortBy extends CqlSortBy {
-    @Override
-    protected String applyTo(String query) {
+  public String applyTo(String query) {
+    if (orders.isEmpty()) {
       return query;
     }
+    String sortBy = orders.stream()
+      .map(CqlSortClause::asText)
+      .collect(Collectors.joining(
+        StringUtils.SPACE, " sortBy ", StringUtils.EMPTY));
+    return query.concat(sortBy);
   }
 }

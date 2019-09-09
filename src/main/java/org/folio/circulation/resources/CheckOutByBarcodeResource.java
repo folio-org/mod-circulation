@@ -1,7 +1,7 @@
 package org.folio.circulation.resources;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
-import static org.folio.circulation.domain.notice.NoticeContextUtil.createLoanNoticeContext;
+import static org.folio.circulation.domain.notice.TemplateContextUtil.createLoanNoticeContext;
 import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequest.ITEM_BARCODE;
 import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequest.PROXY_USER_BARCODE;
 import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequest.SERVICE_POINT_ID;
@@ -18,6 +18,8 @@ import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.domain.LoanRepository;
 import org.folio.circulation.domain.LoanRepresentation;
+import org.folio.circulation.domain.LoanService;
+import org.folio.circulation.domain.PatronGroupRepository;
 import org.folio.circulation.domain.RequestQueueRepository;
 import org.folio.circulation.domain.UpdateItem;
 import org.folio.circulation.domain.UpdateRequestQueue;
@@ -28,6 +30,8 @@ import org.folio.circulation.domain.notice.NoticeTiming;
 import org.folio.circulation.domain.notice.PatronNoticeEvent;
 import org.folio.circulation.domain.notice.PatronNoticeEventBuilder;
 import org.folio.circulation.domain.notice.PatronNoticeService;
+import org.folio.circulation.domain.notice.schedule.DueDateScheduledNoticeService;
+import org.folio.circulation.domain.notice.schedule.ScheduledNoticesRepository;
 import org.folio.circulation.domain.policy.LoanPolicyRepository;
 import org.folio.circulation.domain.policy.PatronNoticePolicyRepository;
 import org.folio.circulation.domain.representations.LoanProperties;
@@ -96,10 +100,15 @@ public class CheckOutByBarcodeResource extends Resource {
     final ItemRepository itemRepository = new ItemRepository(clients, true, true, true);
     final RequestQueueRepository requestQueueRepository = RequestQueueRepository.using(clients);
     final LoanRepository loanRepository = new LoanRepository(clients);
+    final LoanService loanService = new LoanService(clients);
     final LoanPolicyRepository loanPolicyRepository = new LoanPolicyRepository(clients);
     final PatronNoticePolicyRepository patronNoticePolicyRepository = new PatronNoticePolicyRepository(clients);
     final PatronNoticeService patronNoticeService = new PatronNoticeService(patronNoticePolicyRepository, clients);
+    final PatronGroupRepository patronGroupRepository = new PatronGroupRepository(clients);
     final ConfigurationRepository configurationRepository = new ConfigurationRepository(clients);
+    final ScheduledNoticesRepository scheduledNoticesRepository = ScheduledNoticesRepository.using(clients);
+    final DueDateScheduledNoticeService scheduledNoticeService =
+      new DueDateScheduledNoticeService(scheduledNoticesRepository, patronNoticePolicyRepository);
 
     final ProxyRelationshipValidator proxyRelationshipValidator = new ProxyRelationshipValidator(
       clients, () -> singleValidationError(
@@ -148,13 +157,17 @@ public class CheckOutByBarcodeResource extends Resource {
       .thenComposeAsync(r -> r.after(openLoanValidator::refuseWhenHasOpenLoan))
       .thenComposeAsync(r -> r.after(requestQueueRepository::get))
       .thenApply(requestedByAnotherPatronValidator::refuseWhenRequestedByAnotherPatron)
-      .thenComposeAsync(r -> r.after(configurationRepository::lookupTimeZone))
+      .thenCompose(r -> r.combineAfter(configurationRepository::findTimeZoneConfiguration,
+        LoanAndRelatedRecords::withTimeZone))
       .thenComposeAsync(r -> r.after(loanPolicyRepository::lookupLoanPolicy))
       .thenComposeAsync(r -> r.after(relatedRecords -> checkOutStrategy.checkOut(relatedRecords, request, clients)))
       .thenComposeAsync(r -> r.after(requestQueueUpdate::onCheckOut))
       .thenComposeAsync(r -> r.after(updateItem::onCheckOut))
+      .thenComposeAsync(r -> r.after(loanService::truncateLoanWhenItemRecalled))
+      .thenComposeAsync(r -> r.after(patronGroupRepository::findPatronGroupForLoanAndRelatedRecords))
       .thenComposeAsync(r -> r.after(loanRepository::createLoan))
       .thenApply(r -> r.next(records -> sendCheckOutPatronNotice(records, patronNoticeService)))
+      .thenApply(r -> r.next(scheduledNoticeService::scheduleNoticesForLoanDueDate))
       .thenApply(r -> r.map(LoanAndRelatedRecords::getLoan))
       .thenApply(r -> r.map(loanRepresentation::extendedLoan))
       .thenApply(this::createdLoanFrom)
@@ -209,18 +222,18 @@ public class CheckOutByBarcodeResource extends Resource {
     LoanAndRelatedRecords relatedRecords,
     PatronNoticeService patronNoticeService) {
 
-    JsonObject noticeContext = createLoanNoticeContext(
-      relatedRecords.getLoan(),
-      relatedRecords.getLoanPolicy(),
-      relatedRecords.getTimeZone());
+    final Loan loan = relatedRecords.getLoan();
+
+    JsonObject noticeContext = createLoanNoticeContext(loan);
 
     PatronNoticeEvent noticeEvent = new PatronNoticeEventBuilder()
-      .withItem(relatedRecords.getLoan().getItem())
-      .withUser(relatedRecords.getLoan().getUser())
+      .withItem(loan.getItem())
+      .withUser(loan.getUser())
       .withEventType(NoticeEventType.CHECK_OUT)
       .withTiming(NoticeTiming.UPON_AT)
       .withNoticeContext(noticeContext)
       .build();
+
     patronNoticeService.acceptNoticeEvent(noticeEvent);
     return succeeded(relatedRecords);
   }

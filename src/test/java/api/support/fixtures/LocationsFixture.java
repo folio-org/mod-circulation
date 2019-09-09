@@ -59,9 +59,9 @@ public class LocationsFixture {
 
   public IndividualResource basedUponExampleLocation(
     Function<LocationBuilder, LocationBuilder> additionalLocationProperties)
-      throws InterruptedException, 
-      MalformedURLException, 
-      TimeoutException, 
+      throws InterruptedException,
+      MalformedURLException,
+      TimeoutException,
       ExecutionException {
 
     final LocationExamples locationExamples = getLocationExamples();
@@ -106,6 +106,23 @@ public class LocationsFixture {
       locationExamples.mezzanineDisplayCase());
   }
 
+  /**
+  mainFloor location has multiple service points:
+      servicePointsFixture.cd1()  is primary service point,
+      servicePointsFixture.cd2(),
+      servicePointsFixture.cd3(),
+  */
+  public IndividualResource mainFloor()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    final LocationExamples locationExamples = getLocationMultiServicePointsExamples();
+
+    return locationRecordCreator.createIfAbsent(locationExamples.mainLocation());
+  }
+
   private LocationExamples getLocationExamples()
     throws InterruptedException,
     MalformedURLException,
@@ -117,7 +134,25 @@ public class LocationsFixture {
       jubileeCampus().getId(),
       businessLibrary().getId(),
       djanoglyLibrary().getId(),
-      servicePointsFixture.cd1().getId());
+      servicePointsFixture.cd1().getId(),
+      null,
+      null);
+  }
+
+  private LocationExamples getLocationMultiServicePointsExamples()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    return new LocationExamples(
+      nottinghamUniversity().getId(),
+      jubileeCampus().getId(),
+      businessLibrary().getId(),
+      djanoglyLibrary().getId(),
+      servicePointsFixture.cd1().getId(),
+      servicePointsFixture.cd2().getId(),
+      servicePointsFixture.cd3().getId());
   }
 
   private IndividualResource djanoglyLibrary()

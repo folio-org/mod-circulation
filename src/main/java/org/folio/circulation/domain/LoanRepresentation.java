@@ -1,13 +1,18 @@
 package org.folio.circulation.domain;
 
-import java.lang.invoke.MethodHandles;
+import static java.util.Objects.isNull;
 
+import io.vertx.core.json.JsonObject;
+import org.folio.circulation.domain.policy.LoanPolicy;
 import org.folio.circulation.domain.representations.ItemSummaryRepresentation;
 import org.folio.circulation.domain.representations.LoanProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.vertx.core.json.JsonObject;
+import java.lang.invoke.MethodHandles;
+import java.util.Collection;
+
+import static org.folio.circulation.support.JsonPropertyWriter.write;
 
 public class LoanRepresentation {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
@@ -18,11 +23,11 @@ public class LoanRepresentation {
     }
 
     JsonObject extendedRepresentation = extendedLoan(loan.asJson(), loan.getItem());
-    
+
     if(loan.getCheckinServicePoint() != null) {
       addAdditionalServicePointProperties(extendedRepresentation, loan.getCheckinServicePoint(), "checkinServicePoint");
     }
-    
+
     if(loan.getCheckoutServicePoint() != null) {
       addAdditionalServicePointProperties(extendedRepresentation, loan.getCheckoutServicePoint(), "checkoutServicePoint");
     }
@@ -33,6 +38,16 @@ public class LoanRepresentation {
       //When there is no user, it means that the loan has been anonymized
       extendedRepresentation.remove(LoanProperties.BORROWER);
     }
+
+    if (loan.getLoanPolicy() != null) {
+      additionalLoanPolicyProperties(extendedRepresentation, loan.getLoanPolicy());
+    } else {
+      extendedRepresentation.remove(LoanProperties.LOAN_POLICY);
+    }
+
+    additionalAccountProperties(extendedRepresentation, loan.getAccounts());
+
+    extendedRepresentation.remove(LoanProperties.PATRON_GROUP_ID_AT_CHECKOUT);
 
     return extendedRepresentation;
   }
@@ -54,8 +69,36 @@ public class LoanRepresentation {
 
     return loan;
   }
-  
-  private static void addAdditionalServicePointProperties(
+
+  private void additionalAccountProperties(JsonObject loanRepresentation, Collection<Account> accounts) {
+    if (accounts == null) {
+      return;
+    }
+    double remainingFeesFines = accounts.stream().
+      map(Account::getRemainingFeeFineAmount).reduce(Double::sum).orElse(0d);
+
+    JsonObject feesAndFinesSummary = loanRepresentation.containsKey(LoanProperties.FEESANDFINES)
+      ? loanRepresentation.getJsonObject(LoanProperties.FEESANDFINES)
+      : new JsonObject();
+    write(feesAndFinesSummary, "amountRemainingToPay", remainingFeesFines);
+    write(loanRepresentation, LoanProperties.FEESANDFINES, feesAndFinesSummary);
+  }
+
+  private void additionalLoanPolicyProperties(JsonObject loanRepresentation, LoanPolicy loanPolicy) {
+    if (loanPolicy == null) {
+      log.info("Unable to add loan policy properties to loan {}," + " loanPolicy is null", loanRepresentation.getString("id"));
+      return;
+    }
+    JsonObject loanPolicySummary = loanRepresentation.containsKey(LoanProperties.LOAN_POLICY)
+        ? loanRepresentation.getJsonObject(LoanProperties.LOAN_POLICY)
+        : new JsonObject();
+
+    loanPolicySummary.put("name", loanPolicy.getName());
+
+    loanRepresentation.put(LoanProperties.LOAN_POLICY, loanPolicySummary);
+  }
+
+  private void addAdditionalServicePointProperties(
     JsonObject loanRepresentation,
     ServicePoint servicePoint,
     String fieldName) {
@@ -95,5 +138,21 @@ public class LoanRepresentation {
     borrowerSummary.put("barcode", borrower.getBarcode());
 
     loanRepresentation.put(LoanProperties.BORROWER, borrowerSummary);
+
+    additionalPatronGroupProperties(loanRepresentation, borrower.getPatronGroup());
+  }
+
+  private void additionalPatronGroupProperties(JsonObject loanRepresentation, PatronGroup patronGroupAtCheckout) {
+    if (isNull(patronGroupAtCheckout)) {
+      return;
+    }
+
+    JsonObject patronGroupAtCheckoutSummary = loanRepresentation.containsKey(LoanProperties.PATRON_GROUP_AT_CHECKOUT)
+      ? loanRepresentation.getJsonObject(LoanProperties.PATRON_GROUP_AT_CHECKOUT)
+      : new JsonObject();
+    write(patronGroupAtCheckoutSummary, "id", patronGroupAtCheckout.getId());
+    write(patronGroupAtCheckoutSummary, "name", patronGroupAtCheckout.getGroup());
+
+    loanRepresentation.put(LoanProperties.PATRON_GROUP_AT_CHECKOUT, patronGroupAtCheckoutSummary);
   }
 }

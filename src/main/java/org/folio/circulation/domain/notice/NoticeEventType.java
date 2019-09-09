@@ -7,7 +7,7 @@ public enum NoticeEventType {
 
   CHECK_IN("Check in"),
   CHECK_OUT("Check out"),
-  RENEW("Renew"),
+  RENEWED("Renewed"),
   DUE_DATE("Due date"),
 
   PAGING_REQUEST("Paging request"),
@@ -16,6 +16,7 @@ public enum NoticeEventType {
   RECALL_TO_LOANEE("Recall loanee"),
   REQUEST_CANCELLATION("Request cancellation"),
   AVAILABLE("Available"),
+  REQUEST_EXPIRATION("Request expiration"),
   HOLD_EXPIRATION("Hold Expiration"),
   UNKNOWN("Unknown");
 

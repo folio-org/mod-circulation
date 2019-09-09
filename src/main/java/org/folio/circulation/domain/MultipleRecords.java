@@ -1,29 +1,26 @@
 package org.folio.circulation.domain;
 
 import static java.util.function.Function.identity;
+import static java.util.stream.Stream.concat;
 import static org.folio.circulation.support.JsonArrayHelper.mapToList;
-import static org.folio.circulation.support.Result.failed;
 import static org.folio.circulation.support.Result.succeeded;
 
-import java.lang.invoke.MethodHandles;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.folio.circulation.support.Result;
-import org.folio.circulation.support.ServerErrorFailure;
 import org.folio.circulation.support.http.client.Response;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.folio.circulation.support.http.client.ResponseInterpreter;
 
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
 public class MultipleRecords<T> {
-  private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
   private static final String TOTAL_RECORDS_PROPERTY_NAME = "totalRecords";
 
   private final Collection<T> records;
@@ -43,24 +40,9 @@ public class MultipleRecords<T> {
     Function<JsonObject, T> mapper,
     String recordsPropertyName) {
 
-    if(response != null) {
-      log.info("Response received, status code: {} body: {}",
-        response.getStatusCode(), response.getBody());
-
-      if (response.getStatusCode() != 200) {
-        return failed(new ServerErrorFailure(
-          String.format("Failed to fetch %s from storage (%s:%s)",
-            recordsPropertyName, response.getStatusCode(), response.getBody())));
-      }
-
-      return from(response.getJson(), mapper, recordsPropertyName);
-    }
-    else {
-      log.warn("Did not receive response to request");
-      return failed(new ServerErrorFailure(
-        String.format("Did not receive response to request for multiple %s",
-          recordsPropertyName)));
-    }
+    return new ResponseInterpreter<MultipleRecords<T>>()
+      .flatMapOn(200, r -> from(r.getJson(), mapper, recordsPropertyName))
+      .apply(response);
   }
 
   public static <T> Result<MultipleRecords<T>> from(JsonObject representation,
@@ -74,9 +56,17 @@ public class MultipleRecords<T> {
       wrappedRecords, totalRecords));
   }
 
+  public <R> List<R> toKeys(Function<T, R> keyMapper) {
+    return getRecords().stream()
+      .map(keyMapper)
+      .filter(Objects::nonNull)
+      .collect(Collectors.toList());
+  }
+
   public Map<String, T> toMap(Function<T, String> keyMapper) {
-    return getRecords().stream().collect(
-      Collectors.toMap(keyMapper, identity()));
+    return getRecords().stream()
+      .collect(Collectors.toMap(keyMapper, identity(),
+        (record1, record2) -> record1));
   }
 
   /**
@@ -87,10 +77,25 @@ public class MultipleRecords<T> {
    * @return new multiple records collection with mapped records
    * and same total record count
    */
-   <R> MultipleRecords<R> mapRecords(Function<T, R> mapper) {
+  public <R> MultipleRecords<R> mapRecords(Function<T, R> mapper) {
     return new MultipleRecords<>(
       getRecords().stream().map(mapper).collect(Collectors.toList()),
         getTotalRecords());
+  }
+
+  public <R> Result<MultipleRecords<R>> flatMapRecords(Function<T, Result<R>> mapper) {
+    List<Result<R>> mappedRecordsList = records.stream()
+      .map(mapper).collect(Collectors.toList());
+
+    Result<List<R>> combinedResult = Result.combineAll(mappedRecordsList);
+    return combinedResult.map(list -> new MultipleRecords<>(list, totalRecords));
+  }
+
+  public MultipleRecords<T> combine(MultipleRecords<T> other) {
+    final List<T> allRecords = concat(records.stream(), other.records.stream())
+      .collect(Collectors.toList());
+
+    return new MultipleRecords<>(allRecords, totalRecords + other.totalRecords);
   }
 
   public JsonObject asJson(
@@ -112,5 +117,9 @@ public class MultipleRecords<T> {
 
   public Integer getTotalRecords() {
     return totalRecords;
+  }
+
+  public boolean isEmpty() {
+    return records.isEmpty();
   }
 }

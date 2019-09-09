@@ -1,14 +1,13 @@
 package org.folio.circulation.domain.policy;
 
-import static org.folio.circulation.support.Result.failed;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
+import static org.folio.circulation.support.results.CommonFailures.failedDueToServerError;
 
 import java.util.Optional;
 import java.util.function.Function;
 
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.support.Result;
-import org.folio.circulation.support.ServerErrorFailure;
 import org.folio.circulation.support.http.server.ValidationError;
 import org.joda.time.DateTime;
 
@@ -51,7 +50,7 @@ abstract class AbstractFixedScheduleCheckOutDueDateStrategy extends DueDateStrat
     }
     catch(Exception e) {
       logException(e, "Error occurred during fixed schedule check out due date calculation");
-      return failed(new ServerErrorFailure(e));
+      return failedDueToServerError(e);
     }
   }
 }

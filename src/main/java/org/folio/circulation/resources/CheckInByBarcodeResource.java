@@ -12,14 +12,15 @@ import org.folio.circulation.domain.UpdateItem;
 import org.folio.circulation.domain.UpdateRequestQueue;
 import org.folio.circulation.domain.UserRepository;
 import org.folio.circulation.domain.notice.PatronNoticeService;
+import org.folio.circulation.domain.notice.schedule.RequestScheduledNoticeService;
 import org.folio.circulation.domain.policy.PatronNoticePolicyRepository;
 import org.folio.circulation.domain.representations.CheckInByBarcodeRequest;
 import org.folio.circulation.domain.representations.CheckInByBarcodeResponse;
 import org.folio.circulation.storage.ItemByBarcodeInStorageFinder;
 import org.folio.circulation.storage.SingleOpenLoanForItemInStorageFinder;
 import org.folio.circulation.support.Clients;
-import org.folio.circulation.support.Result;
 import org.folio.circulation.support.ItemRepository;
+import org.folio.circulation.support.Result;
 import org.folio.circulation.support.RouteRegistration;
 import org.folio.circulation.support.http.server.WebContext;
 
@@ -78,6 +79,9 @@ public class CheckInByBarcodeResource extends Resource {
       requestQueueRepository, updateItem, requestQueueUpdate, loanRepository,
       servicePointRepository, patronNoticeService, userRepository);
 
+    final RequestScheduledNoticeService requestScheduledNoticeService =
+      RequestScheduledNoticeService.using(clients);
+
     checkInRequestResult
       .map(CheckInProcessRecords::new)
       .combineAfter(processAdapter::findItem, CheckInProcessRecords::withItem)
@@ -95,8 +99,15 @@ public class CheckInByBarcodeResource extends Resource {
       .thenComposeAsync(updateItemResult -> updateItemResult.combineAfter(
         processAdapter::getDestinationServicePoint, CheckInProcessRecords::withItem))
       .thenComposeAsync(updateItemResult -> updateItemResult.combineAfter(
+        processAdapter::getCheckInServicePoint, CheckInProcessRecords::withCheckInServicePoint))
+      .thenComposeAsync(updateItemResult -> updateItemResult.combineAfter(
+        processAdapter::getPickupServicePoint, CheckInProcessRecords::withHighestPriorityFulfillableRequest))
+      .thenComposeAsync(updateItemResult -> updateItemResult.combineAfter(
+        processAdapter::getRequester, CheckInProcessRecords::withHighestPriorityFulfillableRequest))
+      .thenComposeAsync(updateItemResult -> updateItemResult.combineAfter(
         processAdapter::updateLoan, CheckInProcessRecords::withLoan))
       .thenApply(updateItemResult -> updateItemResult.next(processAdapter::sendCheckInPatronNotice))
+      .thenApply(r -> r.next(requestScheduledNoticeService::rescheduleRequestNotices))
       .thenApply(CheckInByBarcodeResponse::from)
       .thenAccept(result -> result.writeTo(routingContext.response()));
   }

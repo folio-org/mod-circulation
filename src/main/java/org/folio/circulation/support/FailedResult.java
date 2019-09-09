@@ -1,10 +1,11 @@
 package org.folio.circulation.support;
 
-import io.vertx.core.http.HttpServerResponse;
+import java.lang.invoke.MethodHandles;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.lang.invoke.MethodHandles;
+import io.vertx.core.http.HttpServerResponse;
 
 public class FailedResult<T> implements ResponseWritableResult<T> {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
@@ -38,6 +39,6 @@ public class FailedResult<T> implements ResponseWritableResult<T> {
 
   @Override
   public String toString() {
-    return String.format("Failed Http Result with cause %s", cause.toString());
+    return String.format("failed result due to a %s", cause.toString());
   }
 }

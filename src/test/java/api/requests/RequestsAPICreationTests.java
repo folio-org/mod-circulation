@@ -59,14 +59,16 @@ import org.junit.runner.RunWith;
 import api.support.APITests;
 import api.support.builders.Address;
 import api.support.builders.ItemBuilder;
+import api.support.builders.HoldingBuilder;
 import api.support.builders.LoanPolicyBuilder;
 import api.support.builders.NoticeConfigurationBuilder;
 import api.support.builders.NoticePolicyBuilder;
 import api.support.builders.RequestBuilder;
 import api.support.builders.UserBuilder;
+import api.support.fixtures.ItemExamples;
 import api.support.fixtures.ItemsFixture;
 import api.support.fixtures.LoansFixture;
-import api.support.fixtures.NoticeMatchers;
+import api.support.fixtures.TemplateContextMatchers;
 import api.support.fixtures.RequestsFixture;
 import api.support.fixtures.UsersFixture;
 import api.support.http.InventoryItemResource;
@@ -1524,7 +1526,7 @@ public class RequestsAPICreationTests extends APITests {
 
     UUID id = UUID.randomUUID();
     UUID pickupServicePointId = servicePointsFixture.cd1().getId();
-    IndividualResource item = itemsFixture.basedUponSmallAngryPlanet();
+    InventoryItemResource item = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource requester = usersFixture.steve();
     DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
     IndividualResource request = requestsFixture.place(new RequestBuilder()
@@ -1546,9 +1548,9 @@ public class RequestsAPICreationTests extends APITests {
     List<JsonObject> sentNotices = patronNoticesClient.getAll();
 
     Map<String, Matcher<String>> noticeContextMatchers = new HashMap<>();
-    noticeContextMatchers.putAll(NoticeMatchers.getUserContextMatchers(requester));
-    noticeContextMatchers.putAll(NoticeMatchers.getItemContextMatchers(item));
-    noticeContextMatchers.putAll(NoticeMatchers.getRequestContextMatchers(request));
+    noticeContextMatchers.putAll(TemplateContextMatchers.getUserContextMatchers(requester));
+    noticeContextMatchers.putAll(TemplateContextMatchers.getItemContextMatchers(item, true));
+    noticeContextMatchers.putAll(TemplateContextMatchers.getRequestContextMatchers(request));
     MatcherAssert.assertThat(sentNotices,
       hasItems(
         hasEmailNoticeProperties(requester.getId(), pageConfirmationTemplateId, noticeContextMatchers)));
@@ -1581,7 +1583,15 @@ public class RequestsAPICreationTests extends APITests {
 
     UUID id = UUID.randomUUID();
     UUID pickupServicePointId = servicePointsFixture.cd1().getId();
-    IndividualResource item = itemsFixture.basedUponSmallAngryPlanet();
+
+    ItemBuilder itemBuilder = ItemExamples.basedUponSmallAngryPlanet(materialTypesFixture.book().getId(), loanTypesFixture.canCirculate().getId());
+    HoldingBuilder holdingBuilder = itemsFixture.applyCallNumberHoldings(
+      "CN",
+      "Prefix",
+      "Suffix",
+      Collections.singletonList("CopyNumbers"));
+    InventoryItemResource item = itemsFixture.basedUponSmallAngryPlanet(itemBuilder, holdingBuilder);
+
     IndividualResource requester = usersFixture.steve();
     DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
 
@@ -1606,9 +1616,9 @@ public class RequestsAPICreationTests extends APITests {
     List<JsonObject> sentNotices = patronNoticesClient.getAll();
 
     Map<String, Matcher<String>> noticeContextMatchers = new HashMap<>();
-    noticeContextMatchers.putAll(NoticeMatchers.getUserContextMatchers(requester));
-    noticeContextMatchers.putAll(NoticeMatchers.getItemContextMatchers(item));
-    noticeContextMatchers.putAll(NoticeMatchers.getRequestContextMatchers(request));
+    noticeContextMatchers.putAll(TemplateContextMatchers.getUserContextMatchers(requester));
+    noticeContextMatchers.putAll(TemplateContextMatchers.getItemContextMatchers(item, true));
+    noticeContextMatchers.putAll(TemplateContextMatchers.getRequestContextMatchers(request));
     MatcherAssert.assertThat(sentNotices,
       hasItems(
         hasEmailNoticeProperties(requester.getId(), holdConfirmationTemplateId, noticeContextMatchers)));
@@ -1655,7 +1665,16 @@ public class RequestsAPICreationTests extends APITests {
 
     UUID id = UUID.randomUUID();
     UUID pickupServicePointId = servicePointsFixture.cd1().getId();
-    IndividualResource item = itemsFixture.basedUponSmallAngryPlanet();
+
+    ItemBuilder itemBuilder = ItemExamples.basedUponSmallAngryPlanet(
+      materialTypesFixture.book().getId(),
+      loanTypesFixture.canCirculate().getId(),
+      "ItemCN",
+      "ItemPrefix",
+      "ItemSuffix",
+      Arrays.asList("CopyNumbers", "CopyDetails"));
+
+    InventoryItemResource item = itemsFixture.basedUponSmallAngryPlanet(itemBuilder, itemsFixture.thirdFloorHoldings());
     IndividualResource requester = usersFixture.steve();
     IndividualResource loanOwner = usersFixture.jessica();
 
@@ -1685,14 +1704,14 @@ public class RequestsAPICreationTests extends APITests {
     List<JsonObject> sentNotices = patronNoticesClient.getAll();
 
     Map<String, Matcher<String>> recallConfirmationContextMatchers = new HashMap<>();
-    recallConfirmationContextMatchers.putAll(NoticeMatchers.getUserContextMatchers(requester));
-    recallConfirmationContextMatchers.putAll(NoticeMatchers.getItemContextMatchers(item));
-    recallConfirmationContextMatchers.putAll(NoticeMatchers.getLoanContextMatchers(loanAfterRecall, 0));
-    recallConfirmationContextMatchers.putAll(NoticeMatchers.getRequestContextMatchers(request));
+    recallConfirmationContextMatchers.putAll(TemplateContextMatchers.getUserContextMatchers(requester));
+    recallConfirmationContextMatchers.putAll(TemplateContextMatchers.getItemContextMatchers(item, false));
+    recallConfirmationContextMatchers.putAll(TemplateContextMatchers.getLoanContextMatchers(loanAfterRecall));
+    recallConfirmationContextMatchers.putAll(TemplateContextMatchers.getRequestContextMatchers(request));
     Map<String, Matcher<String>> recallNotificationContextMatchers = new HashMap<>();
-    recallNotificationContextMatchers.putAll(NoticeMatchers.getUserContextMatchers(loanOwner));
-    recallNotificationContextMatchers.putAll(NoticeMatchers.getItemContextMatchers(item));
-    recallNotificationContextMatchers.putAll(NoticeMatchers.getLoanContextMatchers(loanAfterRecall, 0));
+    recallNotificationContextMatchers.putAll(TemplateContextMatchers.getUserContextMatchers(loanOwner));
+    recallNotificationContextMatchers.putAll(TemplateContextMatchers.getItemContextMatchers(item, false));
+    recallNotificationContextMatchers.putAll(TemplateContextMatchers.getLoanContextMatchers(loanAfterRecall));
     MatcherAssert.assertThat(sentNotices,
       hasItems(
         hasEmailNoticeProperties(requester.getId(), recallConfirmationTemplateId,
@@ -1760,6 +1779,57 @@ public class RequestsAPICreationTests extends APITests {
     List<JsonObject> sentNotices = patronNoticesClient.getAll();
     assertThat("Recall notice to loan owner shouldn't be sent when due date hasn't been changed",
       sentNotices, Matchers.empty());
+  }
+
+  @Test
+  public void canCreatePagedRequestWithNullProxyUser()
+    throws InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    MalformedURLException {
+
+    //Set up the item's initial status to be AVAILABLE
+    final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final String itemInitialStatus = smallAngryPlanet.getResponse().getJson().getJsonObject("status").getString("name");
+    assertThat(itemInitialStatus, is(ItemStatus.AVAILABLE.getValue()));
+
+    //Attempt to create a page request on it.  Final expected status is PAGED
+    final IndividualResource servicePoint = servicePointsFixture.cd1();
+    final IndividualResource pagedRequest = requestsClient.create(new RequestBuilder()
+      .page()
+      .forItem(smallAngryPlanet)
+      .withPickupServicePointId(servicePoint.getId())
+      .by(usersFixture.james())
+      .withUserProxyId(null));
+
+    String finalStatus = pagedRequest.getResponse().getJson().getJsonObject("item").getString("status");
+    assertThat(pagedRequest.getJson().getString("requestType"), is(RequestType.PAGE.getValue()));
+    assertThat(pagedRequest.getResponse(), hasStatus(HTTP_CREATED));
+    assertThat(finalStatus, is(ItemStatus.PAGED.getValue()));
+  }
+
+  @Test
+  public void requestCreationDoesNotFailWhenCirculationRulesReferenceInvalidNoticePolicyId()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    setInvalidNoticePolicyReferenceInRules("some-invalid-policy");
+
+    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final IndividualResource steve = usersFixture.steve();
+
+    final IndividualResource createdRequest = requestsFixture.place(new RequestBuilder()
+      .open()
+      .page()
+      .forItem(smallAngryPlanet)
+      .by(steve)
+      .withRequestDate(DateTime.now())
+      .fulfilToHoldShelf()
+      .withPickupServicePointId(servicePointsFixture.cd1().getId()));
+
+    assertThat(createdRequest.getResponse(), hasStatus(HTTP_CREATED));
   }
 
   private void mockClockManagerToReturnFixedTime(DateTime dateTime) {

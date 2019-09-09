@@ -1,6 +1,8 @@
 package api.support;
 
 import static api.support.APITestContext.createClient;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 
@@ -12,6 +14,9 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import api.support.fixtures.*;
+import org.folio.circulation.domain.representations.LoanProperties;
+import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.OkapiHttpClient;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.client.ResponseHandler;
@@ -22,24 +27,9 @@ import org.junit.BeforeClass;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import api.support.fixtures.AddressTypesFixture;
-import api.support.fixtures.CancellationReasonsFixture;
-import api.support.fixtures.CirculationRulesFixture;
-import api.support.fixtures.ItemsFixture;
-import api.support.fixtures.LoanPoliciesFixture;
-import api.support.fixtures.LoanTypesFixture;
-import api.support.fixtures.LoansFixture;
-import api.support.fixtures.LocationsFixture;
-import api.support.fixtures.MaterialTypesFixture;
-import api.support.fixtures.NoticePoliciesFixture;
-import api.support.fixtures.PatronGroupsFixture;
-import api.support.fixtures.ProxyRelationshipsFixture;
-import api.support.fixtures.RequestPoliciesFixture;
-import api.support.fixtures.RequestsFixture;
-import api.support.fixtures.ServicePointsFixture;
-import api.support.fixtures.UsersFixture;
 import api.support.http.InterfaceUrls;
 import api.support.http.ResourceClient;
+import io.vertx.core.json.JsonObject;
 
 public abstract class APITests {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
@@ -67,12 +57,17 @@ public abstract class APITests {
     = ResourceClient.forProxyRelationships(client);
 
   protected final ResourceClient instancesClient = ResourceClient.forInstances(client);
-  private final ResourceClient holdingsClient = ResourceClient.forHoldings(client);
+  protected final ResourceClient holdingsClient = ResourceClient.forHoldings(client);
   protected final ResourceClient itemsClient = ResourceClient.forItems(client);
 
   protected final ResourceClient loansClient = ResourceClient.forLoans(client);
+  protected final ResourceClient accountsClient = ResourceClient.forAccounts(client);
+
   protected final ResourceClient loansStorageClient
     = ResourceClient.forLoansStorage(client);
+
+  protected final ResourceClient requestsStorageClient
+    = ResourceClient.forRequestsStorage(client);
 
   protected final ResourceClient requestsClient = ResourceClient.forRequests(client);
 
@@ -96,6 +91,9 @@ public abstract class APITests {
 
   protected final ResourceClient patronNoticesClient =
     ResourceClient.forPatronNotices(client);
+
+  protected final ResourceClient scheduledNoticesClient =
+    ResourceClient.forScheduledNotices(client);
 
   protected final ServicePointsFixture servicePointsFixture
     = new ServicePointsFixture(servicePointsClient);
@@ -146,6 +144,15 @@ public abstract class APITests {
 
   protected final RequestsFixture requestsFixture = new RequestsFixture(
     requestsClient, cancellationReasonsFixture, servicePointsFixture);
+
+  protected final InstancesFixture instancesFixture
+    = new InstancesFixture(instanceTypesClient, contributorNameTypesClient, client);
+
+  protected final HoldingsFixture holdingsFixture
+    = new HoldingsFixture(client);
+
+  protected final ScheduledNoticeProcessingClient scheduledNoticeProcessingClient =
+    new ScheduledNoticeProcessingClient();
 
   protected APITests() {
     this(true);
@@ -222,6 +229,7 @@ public abstract class APITests {
     instancesClient.deleteAll();
     configClient.deleteAll();
     patronNoticesClient.deleteAll();
+    scheduledNoticesClient.deleteAll();
 
     //TODO: Only cleans up reference records, move items, holdings records
     // and instances into here too
@@ -241,6 +249,7 @@ public abstract class APITests {
     patronGroupsFixture.cleanUp();
 
     cancellationReasonsFixture.cleanUp();
+    instancesFixture.cleanUp();
   }
 
   //Needs to be done each time as some tests manipulate the rules
@@ -272,12 +281,15 @@ public abstract class APITests {
     );
   }
 
-  protected void useLoanPolicyAsFallback(UUID loanPolicyId, UUID requestPolicyId, UUID noticePolicyId)
+  protected void useLoanPolicyAsFallback(UUID loanPolicyId, UUID requestPolicyId,
+                                         UUID noticePolicyId)
     throws InterruptedException,
     ExecutionException,
     TimeoutException {
 
-    circulationRulesFixture.updateCirculationRules(loanPolicyId, requestPolicyId, noticePolicyId);
+    circulationRulesFixture.updateCirculationRules(loanPolicyId, requestPolicyId,
+      noticePolicyId);
+
     warmUpApplyEndpoint();
   }
 
@@ -317,6 +329,8 @@ public abstract class APITests {
     ResourceClient.forInstances(cleanupClient).deleteAll();
 
     ResourceClient.forUsers(cleanupClient).deleteAllIndividually();
+
+    ResourceClient.forAccounts(cleanupClient).deleteAll();
   }
 
   private static void deleteAllRecords()
@@ -355,4 +369,67 @@ public abstract class APITests {
     ResourceClient.forCancellationReasons(client).deleteAllIndividually();
   }
 
+  protected void loanHasFeeFinesProperties(JsonObject loan, double remainingAmount) {
+    hasProperty("amountRemainingToPay", loan.getJsonObject("feesAndFines"),
+      "loan", remainingAmount);
+  }
+
+  protected void loanHasLoanPolicyProperties(JsonObject loan, IndividualResource loanPolicy) {
+    hasProperty("loanPolicyId", loan, "loan", loanPolicy.getId().toString());
+    hasProperty("loanPolicy", loan, "loan");
+    JsonObject loanPolicyObject = loan.getJsonObject("loanPolicy");
+    hasProperty("name", loanPolicyObject, "loan policy", loanPolicy.getJson().getString("name"));
+  }
+
+  protected void loanHasPatronGroupProperties(JsonObject loan, String patronGroupValue) {
+    JsonObject patronGroupObject = loan.getJsonObject(LoanProperties.PATRON_GROUP_AT_CHECKOUT);
+    hasProperty("id", patronGroupObject, "patron group at checkout");
+    hasProperty("name", patronGroupObject, "patron group at checkout");
+    hasProperty("name", patronGroupObject, "patron group at checkout", patronGroupValue);
+  }
+
+  protected void hasProperty(String property, JsonObject resource, String type) {
+    assertThat(String.format("%s should have an %s: %s",
+      type, property, resource),
+      resource.containsKey(property), is(true));
+  }
+
+
+  protected void hasProperty(String property, JsonObject resource, String type, Object value) {
+    assertThat(String.format("%s should have an %s: %s",
+      type, property, resource),
+      resource.getMap().get(property), equalTo(value));
+  }
+
+
+  protected void doesNotHaveProperty(String property, JsonObject resource, String type) {
+    assertThat(String.format("%s should NOT have an %s: %s",
+            type, property, resource),
+            resource.getValue(property), is(nullValue()));
+  }
+
+  protected void setInvalidLoanPolicyReferenceInRules(String invalidLoanPolicyReference)
+    throws InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    MalformedURLException {
+
+    circulationRulesFixture.updateCirculationRules(
+      circulationRulesFixture.soleFallbackPolicyRule(invalidLoanPolicyReference,
+        requestPoliciesFixture.allowAllRequestPolicy().getId().toString(),
+        noticePoliciesFixture.inactiveNotice().getId().toString()));
+  }
+
+  protected void setInvalidNoticePolicyReferenceInRules(String invalidNoticePolicyReference)
+    throws InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    MalformedURLException {
+
+    circulationRulesFixture.updateCirculationRules(
+      circulationRulesFixture.soleFallbackPolicyRule(
+        loanPoliciesFixture.canCirculateRolling().getId().toString(),
+        requestPoliciesFixture.allowAllRequestPolicy().getId().toString(),
+        invalidNoticePolicyReference));
+  }
 }

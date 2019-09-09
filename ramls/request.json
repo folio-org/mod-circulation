@@ -42,7 +42,9 @@
         "Open - Awaiting pickup",
         "Open - In transit",
         "Closed - Filled",
-        "Closed - Cancelled"
+        "Closed - Cancelled",
+        "Closed - Unfilled",
+        "Closed - Pickup expired"
       ]
     },
     "cancellationReasonId": {
@@ -101,6 +103,16 @@
               "type": "string",
               "description": "The name of the location",
               "readonly": true
+            },
+            "libraryName": {
+              "type": "string",
+              "description": "The name of the library of the location",
+              "readonly": true
+            },
+            "code": {
+              "type": "string",
+              "description": "The location code",
+              "readonly": true
             }
           }
         },
@@ -120,6 +132,7 @@
         },
         "copyNumbers": {
           "type": "array",
+          "description": "Copy numbers for the item",
           "items": {
             "type": "string"
           }

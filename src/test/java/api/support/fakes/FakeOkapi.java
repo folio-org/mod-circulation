@@ -1,15 +1,22 @@
 package api.support.fakes;
 
+import static api.support.fakes.StorageSchema.validatorForStorageLoanSchema;
 import static api.support.fixtures.CalendarExamples.CASE_CALENDAR_IS_EMPTY_SERVICE_POINT_ID;
 import static api.support.fixtures.CalendarExamples.getCalendarById;
 import static api.support.fixtures.LibraryHoursExamples.CASE_CALENDAR_IS_UNAVAILABLE_SERVICE_POINT_ID;
 import static api.support.fixtures.LibraryHoursExamples.CASE_CLOSED_LIBRARY_IN_THU_SERVICE_POINT_ID;
 import static api.support.fixtures.LibraryHoursExamples.CASE_CLOSED_LIBRARY_SERVICE_POINT_ID;
 import static api.support.fixtures.LibraryHoursExamples.getLibraryHoursById;
+import static org.folio.circulation.support.results.CommonFailures.failedDueToServerError;
 
+import java.io.IOException;
 import java.lang.invoke.MethodHandles;
+import java.util.Collection;
+import java.util.Objects;
 
 import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.folio.circulation.support.Result;
+import org.folio.circulation.support.ValidationErrorFailure;
 import org.folio.circulation.support.http.client.BufferHelper;
 import org.folio.circulation.support.http.client.OkapiHttpClient;
 import org.folio.circulation.support.http.server.ForwardResponse;
@@ -22,6 +29,7 @@ import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Future;
 import io.vertx.core.MultiMap;
 import io.vertx.core.http.HttpServer;
+import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 
 public class FakeOkapi extends AbstractVerticle {
@@ -39,7 +47,7 @@ public class FakeOkapi extends AbstractVerticle {
   }
 
   @Override
-  public void start(Future<Void> startFuture) {
+  public void start(Future<Void> startFuture) throws IOException {
     log.debug("Starting fake loan storage module");
 
     Router router = Router.router(vertx);
@@ -97,8 +105,7 @@ public class FakeOkapi extends AbstractVerticle {
     new FakeStorageModuleBuilder()
       .withRecordName("loan")
       .withRootPath("/loan-storage/loans")
-      .withRequiredProperties("itemId", "loanDate", "action")
-      .withDisallowedProperties("checkinServicePoint", "checkoutServicePoint")
+      .validateRecordsWith(validatorForStorageLoanSchema())
       .withChangeMetadata()
       .create().register(router);
 
@@ -114,6 +121,12 @@ public class FakeOkapi extends AbstractVerticle {
       .withRootPath("/loan-policy-storage/loan-policies")
       .withCollectionPropertyName("loanPolicies")
       .withRequiredProperties("name", "loanable", "renewable")
+      .create().register(router);
+
+    new FakeStorageModuleBuilder()
+      .withRecordName("accounts")
+      .withRootPath("/accounts")
+      .withCollectionPropertyName("accounts")
       .create().register(router);
 
     new FakeStorageModuleBuilder()
@@ -171,6 +184,7 @@ public class FakeOkapi extends AbstractVerticle {
       .withRequiredProperties("itemId", "requesterId", "requestType",
         "requestDate", "fulfilmentPreference")
       .withDisallowedProperties("pickupServicePoint", "loan", "deliveryAddress")
+      .withRecordConstraint(this::requestHasSamePosition)
       .withChangeMetadata()
       .create().register(router);
 
@@ -248,6 +262,14 @@ public class FakeOkapi extends AbstractVerticle {
       .create()
       .register(router);
 
+    new FakeStorageModuleBuilder()
+      .withRecordName("scheduled notice")
+      .withCollectionPropertyName("scheduledNotices")
+      .withRootPath("/scheduled-notice-storage/scheduled-notices")
+      .allowDeleteByQuery()
+      .create()
+      .register(router);
+
     server.requestHandler(router::accept)
       .listen(PORT_TO_USE, result -> {
         if (result.succeeded()) {
@@ -257,6 +279,30 @@ public class FakeOkapi extends AbstractVerticle {
           startFuture.fail(result.cause());
         }
       });
+  }
+
+  private Result<Object> requestHasSamePosition(
+    Collection<JsonObject> existingRequests,
+    JsonObject newOrUpdatedRequest) {
+
+    try {
+      return existingRequests.stream()
+        .filter(request -> !Objects.equals(request.getString("id"),
+          newOrUpdatedRequest.getString("id")))
+        .filter(request -> Objects.equals(request.getString("itemId"),
+          newOrUpdatedRequest.getString("itemId")))
+        .filter(request -> newOrUpdatedRequest.getInteger("position") != null &&
+          Objects.equals(request.getInteger("position"),
+          newOrUpdatedRequest.getInteger("position")))
+        .findAny()
+        .map(r -> (Result<Object>) ValidationErrorFailure.failedValidation(
+          "Cannot have more than one request with the same position in the queue",
+          "itemId", r.getString("itemId")))
+        .orElse(Result.succeeded(null));
+    }
+    catch(Exception e) {
+      return failedDueToServerError(e);
+    }
   }
 
   private void forwardRequestsToApplyCirculationRulesBackToCirculationModule(Router router) {

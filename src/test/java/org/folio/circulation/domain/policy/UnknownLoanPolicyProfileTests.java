@@ -4,6 +4,7 @@ import static api.support.matchers.FailureMatcher.hasValidationFailure;
 import static org.junit.Assert.assertThat;
 
 import org.folio.circulation.domain.Loan;
+import org.folio.circulation.domain.RequestQueue;
 import org.folio.circulation.support.Result;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
@@ -11,6 +12,8 @@ import org.junit.Test;
 
 import api.support.builders.LoanBuilder;
 import api.support.builders.LoanPolicyBuilder;
+
+import java.util.Collections;
 
 public class UnknownLoanPolicyProfileTests {
   @Test
@@ -47,7 +50,7 @@ public class UnknownLoanPolicyProfileTests {
       .withLoanDate(loanDate)
       .asDomainObject();
 
-    final Result<Loan> result = loanPolicy.renew(loan, DateTime.now());
+    final Result<Loan> result = loanPolicy.renew(loan, DateTime.now(), new RequestQueue(Collections.emptyList()));
 
     assertThat(result, hasValidationFailure(
       "profile \"Unknown profile\" in the loan policy is not recognised"));

@@ -10,10 +10,14 @@ import static org.folio.circulation.domain.RequestStatus.OPEN_IN_TRANSIT;
 import static org.folio.circulation.domain.RequestStatus.OPEN_NOT_YET_FILLED;
 import static org.folio.circulation.domain.representations.RequestProperties.CANCELLATION_ADDITIONAL_INFORMATION;
 import static org.folio.circulation.domain.representations.RequestProperties.CANCELLATION_REASON_ID;
+import static org.folio.circulation.domain.representations.RequestProperties.CANCELLATION_REASON_NAME;
+import static org.folio.circulation.domain.representations.RequestProperties.CANCELLATION_REASON_PUBLIC_DESCRIPTION;
 import static org.folio.circulation.domain.representations.RequestProperties.HOLD_SHELF_EXPIRATION_DATE;
-import static org.folio.circulation.domain.representations.RequestProperties.NAME;
+import static org.folio.circulation.domain.representations.RequestProperties.ITEM_ID;
 import static org.folio.circulation.domain.representations.RequestProperties.POSITION;
+import static org.folio.circulation.domain.representations.RequestProperties.REQUEST_DATE;
 import static org.folio.circulation.domain.representations.RequestProperties.REQUEST_EXPIRATION_DATE;
+import static org.folio.circulation.domain.representations.RequestProperties.REQUEST_TYPE;
 import static org.folio.circulation.domain.representations.RequestProperties.STATUS;
 import static org.folio.circulation.support.JsonPropertyFetcher.getDateTimeProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getIntegerProperty;
@@ -22,9 +26,10 @@ import static org.folio.circulation.support.JsonPropertyWriter.write;
 
 import java.util.Objects;
 
-import io.vertx.core.json.JsonObject;
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
+
+import io.vertx.core.json.JsonObject;
 
 public class Request implements ItemRelatedRecord, UserRelatedRecord {
   private final JsonObject requestRepresentation;
@@ -35,9 +40,8 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
   private final Loan loan;
   private final ServicePoint pickupServicePoint;
 
-  public static final String REQUEST_TYPE = "requestType";
-
   private boolean changedPosition = false;
+  private Integer previousPosition;
 
   public Request(
     JsonObject requestRepresentation,
@@ -90,14 +94,26 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   public boolean isOpen() {
-    return isAwaitingPickup() || isNotYetFilled()|| isInTransit();
+    return isAwaitingPickup() || isNotYetFilled() || isInTransit();
   }
 
-  private boolean isInTransit(){
+  public boolean isNotDisplaceable() {
+    return isAwaitingPickup() || isInTransit() || (isItemPaged() && isFirst());
+  }
+
+  private boolean isItemPaged() {
+    return item != null && item.isPaged();
+  }
+
+  private boolean isFirst() {
+    return hasPosition() && getPosition().equals(1);
+  }
+
+  private boolean isInTransit() {
     return getStatus() == OPEN_IN_TRANSIT;
   }
 
-  private boolean isNotYetFilled(){
+  private boolean isNotYetFilled() {
     return getStatus() == OPEN_NOT_YET_FILLED;
   }
 
@@ -132,12 +148,16 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
 
   @Override
   public String getItemId() {
-    return requestRepresentation.getString("itemId");
+    return requestRepresentation.getString(ITEM_ID);
   }
 
   public Request withItem(Item newItem) {
-    return new Request(requestRepresentation, cancellationReasonRepresentation, newItem, requester, proxy, loan,
-      pickupServicePoint);
+    // NOTE: this is null in RequestsAPIUpdatingTests.replacingAnExistingRequestRemovesItemInformationWhenItemDoesNotExist test 
+    if (newItem.getItemId() != null) {
+      requestRepresentation.put(ITEM_ID, newItem.getItemId());
+    }
+    return new Request(requestRepresentation, cancellationReasonRepresentation, newItem, requester, proxy,
+      loan == null ? null : loan.withItem(newItem), pickupServicePoint);
   }
 
   public Request withRequester(User newRequester) {
@@ -183,14 +203,14 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   public RequestType getRequestType() {
-    return RequestType.from(requestRepresentation.getString(REQUEST_TYPE));
+    return RequestType.from(getProperty(requestRepresentation, REQUEST_TYPE));
   }
 
   Boolean allowedForItem() {
     return RequestTypeItemStatusWhiteList.canCreateRequestForItem(getItem().getStatus(), getRequestType());
   }
 
-  String actionOnCreation() {
+  String actionOnCreateOrUpdate() {
     return getRequestType().toLoanAction();
   }
 
@@ -201,6 +221,11 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
   void changeStatus(RequestStatus status) {
     //TODO: Check for null status
     status.writeTo(requestRepresentation);
+  }
+
+  Request withRequestType(RequestType type) {
+    requestRepresentation.put(REQUEST_TYPE, type.getValue());
+    return this;
   }
 
   public Item getItem() {
@@ -219,6 +244,10 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
     return requestRepresentation.getJsonObject("requester");
   }
 
+  public JsonObject getItemFromRepresentation() {
+    return requestRepresentation.getJsonObject("item");
+  }
+
   public String getRequesterBarcode() {
     return getRequesterFromRepresentation().getString("barcode", StringUtils.EMPTY);
   }
@@ -235,16 +264,17 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
     return pickupServicePoint;
   }
 
-  Request changePosition(Integer newPosition) {
-    if (!Objects.equals(getPosition(), newPosition)) {
+  void changePosition(Integer newPosition) {
+    Integer prevPosition = getPosition();
+    if (!Objects.equals(prevPosition, newPosition)) {
+      previousPosition = prevPosition;
       write(requestRepresentation, POSITION, newPosition);
       changedPosition = true;
     }
-
-    return this;
   }
 
   void removePosition() {
+    previousPosition = getPosition();
     requestRepresentation.remove(POSITION);
     changedPosition = true;
   }
@@ -253,8 +283,24 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
     return getIntegerProperty(requestRepresentation, POSITION, null);
   }
 
+  boolean hasPosition() {
+    return getPosition() != null;
+  }
+
   boolean hasChangedPosition() {
     return changedPosition;
+  }
+
+  Integer getPreviousPosition() {
+    return previousPosition;
+  }
+
+  boolean hasPreviousPosition() {
+    return getPreviousPosition() != null;
+  }
+
+  void freePreviousPosition() {
+    previousPosition = null;
   }
 
   ItemStatus checkedInItemStatus() {
@@ -275,6 +321,10 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
   void removeHoldShelfExpirationDate() {
     requestRepresentation.remove(HOLD_SHELF_EXPIRATION_DATE);
   }
+  
+  public DateTime getRequestDate() {
+    return getDateTimeProperty(requestRepresentation, REQUEST_DATE);
+  }
 
   public DateTime getHoldShelfExpirationDate() {
     return getDateTimeProperty(requestRepresentation, HOLD_SHELF_EXPIRATION_DATE);
@@ -293,6 +343,10 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   public String getCancellationReasonName() {
-    return getProperty(cancellationReasonRepresentation, NAME);
+    return getProperty(cancellationReasonRepresentation, CANCELLATION_REASON_NAME);
+  }
+
+  public String getCancellationReasonPublicDescription() {
+    return getProperty(cancellationReasonRepresentation, CANCELLATION_REASON_PUBLIC_DESCRIPTION);
   }
 }

@@ -53,6 +53,18 @@
       "description": "ID of last policy used in relation to this loan",
       "type": "string"
     },
+    "loanPolicy": {
+      "description": "Additional information about the loan policy of the item, taken from the loan loanPolicyId",
+      "readonly": true,
+      "type": "object",
+      "properties": {
+        "name": {
+          "readonly": true,
+          "description": "Name of last policy used in relation to this loan (read only, defined by the server)",
+          "type": "string"
+        }
+      }
+    },
     "item": {
       "description": "Additional information about the item",
       "type": "object",
@@ -240,6 +252,35 @@
           "type": "boolean"
         }
       }
+    },
+    "patronGroupAtCheckout": {
+      "description": "Patron Group at checkout",
+      "type": "object",
+      "properties": {
+        "id": {
+          "description": "Unique ID (generated UUID) of the patron group",
+          "type": "string",
+          "readonly" : true
+        },
+        "name": {
+          "description": "Patron group name",
+          "type": "string",
+          "readonly" : true
+        }
+       },
+      "additionalProperties": false
+    },
+    "feesAndFines": {
+      "description": "Fees and fines associated with loans",
+      "type": "object",
+      "properties": {
+        "amountRemainingToPay": {
+          "type": "number",
+          "description": "Total remaining amount due on fees and fines for the loan (read only, defined by the server)",
+          "readonly" : true
+        }
+      },
+      "additionalProperties": false
     },
     "metadata": {
       "description": "Metadata about creation and changes to loan, provided by the server (client should not provide)",

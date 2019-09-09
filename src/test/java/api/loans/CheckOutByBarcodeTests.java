@@ -2,8 +2,10 @@ package api.loans;
 
 import static api.requests.RequestsAPICreationTests.setupMissingItem;
 import static api.support.APITestContext.END_OF_2019_DUE_DATE;
+import static api.support.builders.ItemBuilder.AVAILABLE;
 import static api.support.builders.ItemBuilder.CHECKED_OUT;
 import static api.support.matchers.CheckOutByBarcodeResponseMatchers.hasItemBarcodeParameter;
+import static api.support.matchers.CheckOutByBarcodeResponseMatchers.hasLoanPolicyParameters;
 import static api.support.matchers.CheckOutByBarcodeResponseMatchers.hasProxyUserBarcodeParameter;
 import static api.support.matchers.CheckOutByBarcodeResponseMatchers.hasServicePointParameter;
 import static api.support.matchers.CheckOutByBarcodeResponseMatchers.hasUserBarcodeParameter;
@@ -24,6 +26,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 
 import java.net.MalformedURLException;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -33,6 +36,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import org.apache.commons.lang3.StringUtils;
 import org.awaitility.Awaitility;
 import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.support.http.client.IndividualResource;
@@ -51,13 +55,16 @@ import api.support.APITests;
 import api.support.builders.CheckOutByBarcodeRequestBuilder;
 import api.support.builders.FixedDueDateSchedule;
 import api.support.builders.FixedDueDateSchedulesBuilder;
+import api.support.builders.ItemBuilder;
 import api.support.builders.LoanBuilder;
 import api.support.builders.LoanPolicyBuilder;
 import api.support.builders.NoticeConfigurationBuilder;
 import api.support.builders.NoticePolicyBuilder;
 import api.support.builders.RequestBuilder;
 import api.support.builders.UserBuilder;
-import api.support.fixtures.NoticeMatchers;
+import api.support.fixtures.ItemExamples;
+import api.support.fixtures.TemplateContextMatchers;
+import api.support.http.InventoryItemResource;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
@@ -102,9 +109,9 @@ public class CheckOutByBarcodeTests extends APITests {
     assertThat("loan date should be as supplied",
       loan.getString("loanDate"), isEquivalentTo(loanDate));
 
-    assertThat("last loan policy should be stored",
-      loan.getString("loanPolicyId"),
-      is(loanPoliciesFixture.canCirculateRolling().getId()));
+    loanHasLoanPolicyProperties(loan, loanPoliciesFixture.canCirculateRolling());
+
+    loanHasPatronGroupProperties(loan, "Regular Group");
 
     assertThat("due date should be 3 weeks after loan date, based upon loan policy",
       loan.getString("dueDate"), isEquivalentTo(loanDate.plusWeeks(3)));
@@ -191,9 +198,9 @@ public class CheckOutByBarcodeTests extends APITests {
     assertThat("loan date should be as supplied",
       loan.getString("loanDate"), isEquivalentTo(loanDate));
 
-    assertThat("last loan policy should be stored",
-      loan.getString("loanPolicyId"),
-      is(loanPoliciesFixture.canCirculateFixed().getId()));
+    loanHasPatronGroupProperties(loan, "Regular Group");
+
+    loanHasLoanPolicyProperties(loan, loanPoliciesFixture.canCirculateFixed());
 
     assertThat("due date should be based upon fixed due date schedule",
       loan.getString("dueDate"),
@@ -219,8 +226,8 @@ public class CheckOutByBarcodeTests extends APITests {
       .rolling(Period.days(30))
       .limitedBySchedule(dueDateLimitScheduleId);
 
-    UUID dueDateLimitedPolicyId = loanPoliciesFixture.create(dueDateLimitedPolicy)
-      .getId();
+    final IndividualResource loanPolicyResource = loanPoliciesFixture.create(dueDateLimitedPolicy);
+    UUID dueDateLimitedPolicyId = loanPolicyResource.getId();
 
     useLoanPolicyAsFallback(
       dueDateLimitedPolicyId,
@@ -245,8 +252,9 @@ public class CheckOutByBarcodeTests extends APITests {
     assertThat("loan date should be as supplied",
       loan.getString("loanDate"), isEquivalentTo(loanDate));
 
-    assertThat("last loan policy should be stored",
-      loan.getString("loanPolicyId"), is(dueDateLimitedPolicyId));
+    loanHasPatronGroupProperties(loan, "Regular Group");
+
+    loanHasLoanPolicyProperties(loan, loanPolicyResource);
 
     assertThat("due date should be limited by schedule",
       loan.getString("dueDate"),
@@ -576,7 +584,15 @@ public class CheckOutByBarcodeTests extends APITests {
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
       noticePoliciesFixture.create(noticePolicy).getId());
 
-    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    ItemBuilder itemBuilder = ItemExamples.basedUponSmallAngryPlanet(
+      materialTypesFixture.book().getId(),
+      loanTypesFixture.canCirculate().getId(),
+      StringUtils.EMPTY,
+      "ItemPrefix",
+      "ItemSuffix",
+      Collections.singletonList(""));
+
+    InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet(itemBuilder, itemsFixture.thirdFloorHoldings());
     final IndividualResource steve = usersFixture.steve();
 
     final DateTime loanDate =
@@ -595,11 +611,10 @@ public class CheckOutByBarcodeTests extends APITests {
     List<JsonObject> sentNotices = patronNoticesClient.getAll();
 
     Map<String, Matcher<String>> noticeContextMatchers = new HashMap<>();
-    noticeContextMatchers.putAll(NoticeMatchers.getUserContextMatchers(steve));
-    noticeContextMatchers.putAll(NoticeMatchers.getItemContextMatchers(smallAngryPlanet));
-    noticeContextMatchers.putAll(NoticeMatchers.getLoanContextMatchers(loan, 0));
-    noticeContextMatchers.putAll(NoticeMatchers.getLoanPolicyContextMatchers(
-      loanPoliciesFixture.canCirculateRolling(), 0));
+    noticeContextMatchers.putAll(TemplateContextMatchers.getUserContextMatchers(steve));
+    noticeContextMatchers.putAll(TemplateContextMatchers.getItemContextMatchers(smallAngryPlanet, true));
+    noticeContextMatchers.putAll(TemplateContextMatchers.getLoanContextMatchers(loan));
+    noticeContextMatchers.putAll(TemplateContextMatchers.getLoanPolicyContextMatchersForUnlimitedRenewals());
     MatcherAssert.assertThat(sentNotices,
       hasItems(
         hasEmailNoticeProperties(steve.getId(), checkOutTemplateId, noticeContextMatchers)));
@@ -872,5 +887,87 @@ public class CheckOutByBarcodeTests extends APITests {
     smallAngryPlanet = itemsClient.get(smallAngryPlanet);
 
     assertThat(smallAngryPlanet, hasItemStatus(CHECKED_OUT));
+  }
+
+  @Test
+  public void checkOutFailsWhenCirculationRulesReferenceInvalidLoanPolicyId()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    setInvalidLoanPolicyReferenceInRules("some-loan-policy");
+
+    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final IndividualResource steve = usersFixture.steve();
+
+    final DateTime loanDate = new DateTime(2018, 3, 18, 11, 43, 54, DateTimeZone.UTC);
+
+    final Response response = loansFixture.attemptCheckOutByBarcode(500,
+      new CheckOutByBarcodeRequestBuilder()
+        .forItem(smallAngryPlanet)
+        .to(steve)
+        .on(loanDate)
+        .at(servicePointsFixture.cd1()));
+
+    assertThat(response.getBody(),
+      is("Loan policy some-loan-policy could not be found, please check circulation rules"));
+
+    smallAngryPlanet = itemsClient.get(smallAngryPlanet);
+
+    assertThat(smallAngryPlanet, hasItemStatus(AVAILABLE));
+  }
+
+  @Test
+  public void checkOutDoesNotFailWhenCirculationRulesReferenceInvalidNoticePolicyId()
+  throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    setInvalidNoticePolicyReferenceInRules("some-notice-policy");
+
+    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final IndividualResource steve = usersFixture.steve();
+
+    final DateTime loanDate = new DateTime(2018, 3, 18, 11, 43, 54, DateTimeZone.UTC);
+
+    loansFixture.checkOutByBarcode(
+      new CheckOutByBarcodeRequestBuilder()
+        .forItem(smallAngryPlanet)
+        .to(steve)
+        .on(loanDate)
+        .at(servicePointsFixture.cd1()));
+
+    smallAngryPlanet = itemsClient.get(smallAngryPlanet);
+
+    assertThat(smallAngryPlanet, hasItemStatus(CHECKED_OUT));
+  }
+
+  @Test
+  public void cannotCheckOutWhenItemIsNotLoanable()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    IndividualResource notLoanablePolicy = loanPoliciesFixture.create(
+      new LoanPolicyBuilder()
+        .withName("Not Loanable Policy")
+        .withLoanable(false));
+
+    useLoanPolicyAsFallback(
+      notLoanablePolicy.getId(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
+      noticePoliciesFixture.inactiveNotice().getId());
+
+    InventoryItemResource nod = itemsFixture.basedUponNod();
+    IndividualResource steve = usersFixture.steve();
+    Response response = loansFixture.attemptCheckOutByBarcode(nod, steve);
+
+    assertThat(response.getJson(), hasErrorWith(allOf(
+      hasMessage("Item is not loanable"),
+      hasItemBarcodeParameter(nod),
+      hasLoanPolicyParameters(notLoanablePolicy))));
   }
 }

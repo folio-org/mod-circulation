@@ -2,7 +2,10 @@ package api.requests.scenarios;
 
 import static api.support.fixtures.CalendarExamples.CASE_FRI_SAT_MON_SERVICE_POINT_ID;
 import static api.support.fixtures.CalendarExamples.CASE_FRI_SAT_MON_SERVICE_POINT_NEXT_DAY;
+import static api.support.fixtures.ConfigurationExample.timezoneConfigurationFor;
+import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static java.lang.Boolean.TRUE;
+import static org.folio.circulation.domain.policy.DueDateManagement.KEEP_THE_CURRENT_DUE_DATE;
 import static org.folio.circulation.domain.policy.library.ClosedLibraryStrategyUtils.END_OF_A_DAY;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;
@@ -25,7 +28,9 @@ import org.folio.circulation.support.http.client.Response;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeConstants;
 import org.joda.time.DateTimeZone;
+import org.joda.time.LocalTime;
 import org.joda.time.format.ISODateTimeFormat;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -34,6 +39,7 @@ import org.junit.runner.RunWith;
 import api.support.APITests;
 import api.support.builders.LoanBuilder;
 import api.support.builders.LoanPolicyBuilder;
+import api.support.builders.RequestBuilder;
 import api.support.builders.ServicePointBuilder;
 import io.vertx.core.json.JsonObject;
 import junitparams.JUnitParamsRunner;
@@ -53,14 +59,20 @@ public class LoanDueDatesAfterRecallTests extends APITests {
   private static Clock clock;
 
   @BeforeClass
-  public static void setUpBeforeClass() throws Exception {
+  public static void setUpBeforeClass() {
     clock = Clock.fixed(Instant.now(), ZoneOffset.UTC);
   }
 
   @Before
-  public void setUp() throws Exception {
+  public void setUp() {
     // reset the clock before each test (just in case)
     ClockManager.getClockManager().setClock(clock);
+  }
+
+  @After
+  public void after() {
+    // reset the clock before each test (just in case)
+    ClockManager.getClockManager().setClock(Clock.systemUTC());
   }
 
   @Test
@@ -308,8 +320,7 @@ public class LoanDueDatesAfterRecallTests extends APITests {
     final DateTime loanDate =
         new DateTime(2019, DateTimeConstants.JANUARY, 25, 10, 0, DateTimeZone.UTC);
 
-    // Update the clock so this will all work
-    ClockManager.getClockManager().setClock(Clock.fixed(Instant.ofEpochMilli(loanDate.getMillis()), ZoneOffset.UTC));
+    freezeTime(loanDate);
 
     final IndividualResource loan = loansClient.create(new LoanBuilder()
         .open()
@@ -396,10 +407,10 @@ public class LoanDueDatesAfterRecallTests extends APITests {
 
   @Test
   public void initialLoanDueDateOnCreateWithPrexistingRequests()
-      throws 
-      MalformedURLException, 
-      InterruptedException, 
-      TimeoutException, 
+      throws
+      MalformedURLException,
+      InterruptedException,
+      TimeoutException,
       ExecutionException {
 
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
@@ -414,6 +425,7 @@ public class LoanDueDatesAfterRecallTests extends APITests {
         .rolling(Period.weeks(3))
         .unlimitedRenewals()
         .renewFromSystemDate()
+        .withClosedLibraryDueDateManagement(KEEP_THE_CURRENT_DUE_DATE.getValue())
         .withRecallsMinimumGuaranteedLoanPeriod(Period.weeks(2))
         .withRecallsRecallReturnInterval(Period.months(2));
 
@@ -439,9 +451,82 @@ public class LoanDueDatesAfterRecallTests extends APITests {
 
     final JsonObject storedLoan = loansStorageClient.getById(loan.getId()).getJson();
 
-    final String expectedDueDate = ClockManager.getClockManager().getDateTime().plusMonths(2).toString(ISODateTimeFormat.dateTime());
+    final String expectedDueDate = ClockManager
+      .getClockManager()
+      .getDateTime()
+      .plusMonths(2)
+      .withTime(LocalTime.MIDNIGHT.minusSeconds(1))
+      .toString(ISODateTimeFormat.dateTime());
+
     assertThat("due date is not the recall due date (2 months)",
         storedLoan.getString("dueDate"), is(expectedDueDate));
+  }
 
+  @Test
+  public void changedDueDateAfterRecallingAnItemShouldRespectTenantTimezone()
+    throws InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    MalformedURLException {
+
+    final String stockholmTimeZone = "Europe/Stockholm";
+
+    final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final IndividualResource requestServicePoint = servicePointsFixture.cd1();
+    final IndividualResource steve = usersFixture.steve();
+    final IndividualResource jessica = usersFixture.jessica();
+
+    configClient.create(timezoneConfigurationFor(stockholmTimeZone));
+
+    final LoanPolicyBuilder canCirculateRollingPolicy = new LoanPolicyBuilder()
+      .withName("Can Circulate Rolling With Recalls")
+      .withDescription("Can circulate item With Recalls")
+      .rolling(Period.days(14))
+      .unlimitedRenewals()
+      .renewFromSystemDate()
+      .withRecallsMinimumGuaranteedLoanPeriod(Period.days(5))
+      .withClosedLibraryDueDateManagement(KEEP_THE_CURRENT_DUE_DATE.getValue());
+
+    final IndividualResource loanPolicy = loanPoliciesFixture.create(canCirculateRollingPolicy);
+
+    useLoanPolicyAsFallback(loanPolicy.getId(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
+      noticePoliciesFixture.inactiveNotice().getId());
+
+    final DateTime loanDate = DateTime.now(DateTimeZone.UTC).minusDays(3);
+
+    final IndividualResource loan = loansFixture.checkOutByBarcode(
+      smallAngryPlanet, steve, loanDate);
+
+    final String originalDueDate = loan.getJson().getString("dueDate");
+
+    final DateTime requestDate = DateTime.now(DateTimeZone.UTC);
+
+    freezeTime(requestDate);
+
+    requestsFixture.place(
+      new RequestBuilder()
+        .recall()
+        .forItem(smallAngryPlanet)
+        .by(jessica)
+        .withRequestDate(requestDate)
+        .withPickupServicePoint(requestServicePoint));
+
+    final JsonObject storedLoan = loansStorageClient.getById(loan.getId()).getJson();
+
+    assertThat("due date is the original date",
+      storedLoan.getString("dueDate"), not(originalDueDate));
+
+    final DateTime expectedDueDate = loanDate.toLocalDate()
+      .toDateTime(END_OF_A_DAY, DateTimeZone.forID(stockholmTimeZone))
+      .plusDays(5);
+
+    assertThat("due date should be end of the day, 5 days from loan date",
+      storedLoan.getString("dueDate"), isEquivalentTo(expectedDueDate));
+  }
+
+  private void freezeTime(DateTime dateTime) {
+    ClockManager.getClockManager().setClock(
+      Clock.fixed(Instant.ofEpochMilli(dateTime.getMillis()), ZoneOffset.UTC));
   }
 }

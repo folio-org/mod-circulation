@@ -1,23 +1,27 @@
 package org.folio.circulation.domain.notice;
 
-import java.util.Optional;
-import java.util.stream.Collectors;
+import static java.lang.Math.max;
+import static java.util.stream.Collectors.joining;
+import static org.folio.circulation.support.JsonPropertyWriter.write;
+import static org.folio.circulation.support.JsonStringArrayHelper.toStream;
 
+import java.util.Optional;
+
+import org.folio.circulation.domain.CheckInProcessRecords;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Loan;
+import org.folio.circulation.domain.Location;
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestType;
 import org.folio.circulation.domain.ServicePoint;
 import org.folio.circulation.domain.User;
 import org.folio.circulation.domain.policy.LoanPolicy;
 import org.folio.circulation.support.JsonArrayHelper;
-import org.folio.circulation.support.JsonStringArrayHelper;
 import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
 
 import io.vertx.core.json.JsonObject;
 
-public class NoticeContextUtil {
+public class TemplateContextUtil {
 
   private static final String USER = "user";
   private static final String ITEM = "item";
@@ -26,20 +30,20 @@ public class NoticeContextUtil {
 
   private static final String UNLIMITED = "unlimited";
 
-  private NoticeContextUtil() {
+  private TemplateContextUtil() {
   }
 
-  public static JsonObject createLoanNoticeContext(Loan loan, LoanPolicy loanPolicy) {
-    return createLoanNoticeContext(loan,loanPolicy, DateTimeZone.UTC);
+  public static JsonObject createLoanNoticeContextWithoutUser(Loan loan) {
+    return new JsonObject()
+      .put(ITEM, createItemContext(loan.getItem()))
+      .put(LOAN, createLoanContext(loan));
   }
 
-  public static JsonObject createLoanNoticeContext(
-    Loan loan, LoanPolicy loanPolicy, DateTimeZone timeZone) {
-
+  public static JsonObject createLoanNoticeContext(Loan loan) {
     return new JsonObject()
       .put(USER, createUserContext(loan.getUser()))
       .put(ITEM, createItemContext(loan.getItem()))
-      .put(LOAN, createLoanContext(loan, loanPolicy, timeZone));
+      .put(LOAN, createLoanContext(loan));
   }
 
   public static JsonObject createRequestNoticeContext(Request request) {
@@ -61,7 +65,33 @@ public class NoticeContextUtil {
       .put(REQUEST, createRequestContext(request));
   }
 
-  private static JsonObject createUserContext(User user) {
+  public static JsonObject createCheckInContext(CheckInProcessRecords records) {
+    JsonObject checkInContext = new JsonObject();
+
+    Item item = records.getItem();
+    if (item != null) {
+      JsonObject itemContext = createItemContext(item);
+      if (item.getInTransitDestinationServicePoint() != null) {
+        itemContext.put("fromServicePoint", records.getCheckInServicePoint().getName());
+        itemContext.put("toServicePoint", item.getInTransitDestinationServicePoint().getName());
+      }
+      checkInContext.put(ITEM, itemContext);
+    }
+
+    Request firstRequest = records.getHighestPriorityFulfillableRequest();
+    if (firstRequest != null) {
+      checkInContext.put(REQUEST, createRequestContext(firstRequest));
+
+      User requester = firstRequest.getRequester();
+      if (requester != null) {
+        checkInContext.put("requester", createUserContext(requester));
+      }
+    }
+
+    return checkInContext;
+  }
+
+  public static JsonObject createUserContext(User user) {
     return new JsonObject()
       .put("firstName", user.getFirstName())
       .put("lastName", user.getLastName())
@@ -72,14 +102,14 @@ public class NoticeContextUtil {
   private static JsonObject createItemContext(Item item) {
     String contributorNamesToken = JsonArrayHelper.toStream(item.getContributorNames())
       .map(o -> o.getString("name"))
-      .collect(Collectors.joining("; "));
+      .collect(joining("; "));
 
     String yearCaptionsToken = String.join("; ", item.getYearCaption());
 
-    String captionsToken = JsonStringArrayHelper.toStream(item.getCopyNumbers())
-      .collect(Collectors.joining("; "));
+    String copyNumbersToken = toStream(item.getCopyNumbers())
+      .collect(joining("; "));
 
-    return new JsonObject()
+    JsonObject itemContext = new JsonObject()
       .put("title", item.getTitle())
       .put("barcode", item.getBarcode())
       .put("status", item.getStatus().getValue())
@@ -94,15 +124,31 @@ public class NoticeContextUtil {
       .put("yearCaption", yearCaptionsToken)
       .put("materialType", item.getMaterialTypeName())
       .put("loanType", item.getLoanTypeName())
-      .put("copy", captionsToken)
+      .put("copy", copyNumbersToken)
       .put("numberOfPieces", item.getNumberOfPieces())
       .put("descriptionOfPieces", item.getDescriptionOfPieces());
+
+    Location location = item.getLocation();
+
+    if (location != null) {
+      itemContext
+        .put("effectiveLocationSpecific", location.getName())
+        .put("effectiveLocationLibrary", location.getLibraryName())
+        .put("effectiveLocationCampus", location.getCampusName())
+        .put("effectiveLocationInstitution", location.getInstitutionName());
+    }
+
+    return itemContext;
+
   }
 
   private static JsonObject createRequestContext(Request request) {
     Optional<Request> optionalRequest = Optional.ofNullable(request);
     JsonObject requestContext = new JsonObject();
 
+    optionalRequest
+      .map(Request::getId)
+      .ifPresent(value -> requestContext.put("requestID", value));
     optionalRequest
       .map(Request::getPickupServicePoint)
       .map(ServicePoint::getName)
@@ -119,36 +165,34 @@ public class NoticeContextUtil {
       .map(Request::getCancellationAdditionalInformation)
       .ifPresent(value -> requestContext.put("additionalInfo", value));
     optionalRequest
-      .map(Request::getCancellationReasonName)
-      .ifPresent(value -> requestContext.put("cancellationReason", value));
+      .map(Request::getCancellationReasonPublicDescription)
+      .map(Optional::of)
+      .orElse(optionalRequest.map(Request::getCancellationReasonName))
+      .ifPresent(value -> requestContext.put("reasonForCancellation", value));
 
     return requestContext;
   }
 
   private static JsonObject createLoanContext(Loan loan) {
-    return createLoanContext(loan, null, DateTimeZone.UTC);
-  }
-
-  private static JsonObject createLoanContext(
-    Loan loan, LoanPolicy loanPolicy, DateTimeZone timeZone) {
-
     JsonObject loanContext = new JsonObject();
-    loanContext.put("initialBorrowDate", loan.getLoanDate().withZone(timeZone).toString());
-    loanContext.put("numberOfRenewalsTaken", loan.getRenewalCount());
-    loanContext.put("dueDate", loan.getDueDate().withZone(timeZone).toString());
 
+    write(loanContext, "initialBorrowDate", loan.getLoanDate());
+    write(loanContext, "dueDate", loan.getDueDate());
     if (loan.getReturnDate() != null) {
-      loanContext.put("checkinDate", loan.getReturnDate().toString());
+      write(loanContext, "checkedInDate", loan.getReturnDate());
     }
+
+    loanContext.put("numberOfRenewalsTaken", Integer.toString(loan.getRenewalCount()));
+    LoanPolicy loanPolicy = loan.getLoanPolicy();
     if (loanPolicy != null) {
       if (loanPolicy.unlimitedRenewals()) {
         loanContext.put("numberOfRenewalsAllowed", UNLIMITED);
         loanContext.put("numberOfRenewalsRemaining", UNLIMITED);
       } else {
         int renewalLimit = loanPolicy.getRenewalLimit();
-        int renewalsRemaining = renewalLimit - loan.getRenewalCount();
-        loanContext.put("numberOfRenewalsAllowed", renewalLimit);
-        loanContext.put("numberOfRenewalsRemaining", renewalsRemaining);
+        int renewalsRemaining = max(renewalLimit - loan.getRenewalCount(), 0);
+        loanContext.put("numberOfRenewalsAllowed", Integer.toString(renewalLimit));
+        loanContext.put("numberOfRenewalsRemaining", Integer.toString(renewalsRemaining));
       }
     }
 

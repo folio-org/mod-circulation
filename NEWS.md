@@ -1,3 +1,59 @@
+## 16.5.0 2019-07-24
+
+* Send due date changed notice when moving recall request CIRC-316
+
+## 16.4.0 2019-07-23
+
+* Can override renewals with request related failures (CIRC-311, CIRC-319)
+* Introduces experimental move request API (CIRC-315, CIRC-316, CIRC-333, CIRC-395)
+* Decides upon item for title level requests based upon due date (CIRC-361)
+* Provides template context for staff slips during check in (CIRC-378) 
+* Adds `Closed - Unfilled` and `Closed - Pickup expired` request states (CIRC-350)
+* Includes additional location information for requests (CIRC-331)
+* Includes outstanding fees and fines amount to pay for loans (CIRC-323)
+* Assorted bug fixes (CIRC-305, CIRC-350, CIRC-353, CIRC-356, CIRC-357, CIRC-371, CIRC-390)
+* Provides `circulation 7.10` (CIRC-323, CIRC-350, CIRC-315, CIRC-331)
+* Provides `requests-move 0.2` (CIRC-350)
+* Provides `requests-reports 0.2` (CIRC-350)
+* Requires `calendar 3.0` (CIRC-363, MODCAL-45)
+* Requires `feesfines 15.0` (CIRC-232)
+* Requires `loan-storage 5.3 or 6.0` (CIRC-380)
+* Requires `instance-storage 4.0, 5.0, 6.0 or 7.0` (CIRC-396)
+
+## 16.3.0 2019-06-17
+
+* Use sets for module permissions to reduce size when included in headers (CIRC-352)
+* Only fetch single record by ID when ID is not null (CIRC-359)
+* Only update request queue when loan is closed (CIRC-351)
+* Uses correct request type for instance level requests (CIRC-344)
+
+## 16.2.0 2019-06-12
+
+* Processes scheduled patron notices (CIRC-337)
+* Includes location related tokens for patron notices (CIRC-332)
+* Handles missing request expiration date for instance level requests (CIRC-345)
+* Does not attempt to store extended requester patron group information (CIRC-342)
+
+## 16.1.0 2019-06-10
+
+* Introduces creation of requests based upon an instance (CIRC-245, CIRC-264, CIRC-265, CIRC-267)
+* Includes borrower personal information for loans (CIRC-290, CIRC-335, CIRC-336)
+* Notifies requester for all recall requests, not only those which change due date (CIRC-295)
+* Include additional tokens in patron notices (CIRC-296, CIRC-297)
+* Schedule time based patron notices on check out (CIRC-322)
+* Send scheduled patron notices (CIRC-310)
+* Provides custom hold shelf clearance report (CIRC-320)
+* Corrects issues with incorrect request JSON schema documentation (CIRC-321)
+* Includes technical metadata in module descriptor (FOLIO-2003)
+* Can only use drools 7.0.0 due to compatibility with Alpine Linux (CIRC-309)
+* Provides `circulation 7.6` (CIRC-245, CIRC-265, CIRC-267)
+* Provides `requests-reports 0.1` (CIRC-320)
+* Provides `_timer 1.0 interface for sending scheduled patron notices` (CIRC-310)
+* Requires `request-storage 3.1` (CIRC-320)
+* Requires `cancellation-reason-storage 1.1` (CIRC-296, CIRC-297)
+* Requires `loan-types 2.2` (CIRC-296, CIRC-297)
+* Requires `scheduled-notice-storage 0.1` (CIRC-310)
+
 ## 16.0.0 2019-05-09
 
 * Block loan renewal when item is recalled (CIRC-202)

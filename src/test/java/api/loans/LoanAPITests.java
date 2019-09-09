@@ -1,8 +1,10 @@
 package api.loans;
 
 import static api.requests.RequestsAPICreationTests.setupMissingItem;
+import static api.support.JsonCollectionAssistant.getRecordById;
 import static api.support.http.AdditionalHttpStatusCodes.UNPROCESSABLE_ENTITY;
 import static api.support.http.InterfaceUrls.loansUrl;
+import static api.support.matchers.ResponseStatusCodeMatcher.hasStatus;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static api.support.matchers.UUIDMatcher.is;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
@@ -10,8 +12,12 @@ import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static api.support.matchers.ValidationErrorMatchers.hasMessageContaining;
 import static api.support.matchers.ValidationErrorMatchers.hasNullParameter;
 import static api.support.matchers.ValidationErrorMatchers.hasUUIDParameter;
+import static org.folio.HttpStatus.HTTP_VALIDATION_ERROR;
 import static org.hamcrest.CoreMatchers.allOf;
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.greaterThan;
+import static org.hamcrest.Matchers.not;
+import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 
@@ -23,6 +29,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
@@ -38,8 +45,10 @@ import org.joda.time.format.ISODateTimeFormat;
 import org.junit.Test;
 
 import api.support.APITests;
+import api.support.builders.AccountBuilder;
 import api.support.builders.ItemBuilder;
 import api.support.builders.LoanBuilder;
+import api.support.fixtures.ConfigurationExample;
 import api.support.http.InterfaceUrls;
 import api.support.http.InventoryItemResource;
 import io.vertx.core.json.JsonArray;
@@ -91,9 +100,7 @@ public class LoanAPITests extends APITests {
     assertThat("action is not checkedout",
       loan.getString("action"), is("checkedout"));
 
-    assertThat("last loan policy should be stored",
-      loan.getString("loanPolicyId"),
-      is(loanPoliciesFixture.canCirculateRolling().getId()));
+    loanHasLoanPolicyProperties(loan, loanPoliciesFixture.canCirculateRolling());
 
     assertThat("ID is taken from item",
       loan.getJsonObject("item").getString("id"), is(itemId));
@@ -160,6 +167,144 @@ public class LoanAPITests extends APITests {
       is("Checked out"));
 
     loanHasExpectedProperties(loan, user);
+
+  }
+
+  @Test
+  public void canGetLoanWithoutOpenFeesFines()
+    throws InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    MalformedURLException {
+
+    UUID id = UUID.randomUUID();
+
+    UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
+
+    IndividualResource user = usersFixture.charlotte();
+    UUID userId = user.getId();
+
+    DateTime loanDate = new DateTime(2017, 2, 27, 10, 23, 43, DateTimeZone.UTC);
+    DateTime dueDate = new DateTime(2017, 3, 29, 10, 23, 43, DateTimeZone.UTC);
+
+    IndividualResource response = loansClient.create(new LoanBuilder()
+      .withId(id)
+      .open()
+      .withUserId(userId)
+      .withItemId(itemId)
+      .withLoanDate(loanDate)
+      .withDueDate(dueDate));
+
+    accountsClient.create(new AccountBuilder()
+      .feeFineStatusOpen()
+      .withLoan(response)
+      .feeFineStatusClosed()
+      .withRemainingFeeFine(150)
+    );
+
+    JsonObject loan = loansClient.get(id).getJson();
+
+    loanHasFeeFinesProperties(loan, 0);
+  }
+
+
+  @Test
+  public void canGetMultipleFeesFinesForSingleLoan()
+    throws InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    MalformedURLException {
+
+    UUID id = UUID.randomUUID();
+
+    UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
+
+    IndividualResource user = usersFixture.charlotte();
+    UUID userId = user.getId();
+
+    DateTime loanDate = new DateTime(2017, 2, 27, 10, 23, 43, DateTimeZone.UTC);
+    DateTime dueDate = new DateTime(2017, 3, 29, 10, 23, 43, DateTimeZone.UTC);
+
+    IndividualResource response = loansClient.create(new LoanBuilder()
+      .withId(id)
+      .open()
+      .withUserId(userId)
+      .withItemId(itemId)
+      .withLoanDate(loanDate)
+      .withDueDate(dueDate));
+
+    accountsClient.create(new AccountBuilder()
+      .feeFineStatusOpen()
+      .withLoan(response)
+      .withRemainingFeeFine(150)
+    );
+
+    JsonObject loan = loansClient.get(id).getJson();
+
+    loanHasFeeFinesProperties(loan, 150d);
+
+    accountsClient.create(new AccountBuilder()
+      .feeFineStatusOpen()
+      .withLoan(response)
+      .withRemainingFeeFine(150)
+    );
+
+    loan = loansClient.get(id).getJson();
+
+    loanHasFeeFinesProperties(loan, 300d);
+  }
+
+  @Test
+  public void canGetMultipleFeesFinesForMultipleLoans()
+    throws InterruptedException, MalformedURLException, TimeoutException, ExecutionException {
+
+    configClient.create(ConfigurationExample.utcTimezoneConfiguration());
+    IndividualResource item1 = itemsFixture.basedUponSmallAngryPlanet();
+    final InventoryItemResource item2 = itemsFixture.basedUponNod();
+
+    final IndividualResource user1 = usersFixture.jessica();
+    final IndividualResource user2 = usersFixture.steve();
+
+    IndividualResource loan1 = loansFixture.checkOutByBarcode(
+      item1, user1, new DateTime(2018, 4, 21, 11, 21, 43,
+        DateTimeZone.UTC));
+
+    IndividualResource loan2 = loansFixture.checkOutByBarcode(
+      item2, user2, new DateTime(2018, 4, 21, 11, 21, 43,
+        DateTimeZone.UTC));
+
+
+    accountsClient.create(new AccountBuilder()
+      .feeFineStatusOpen()
+      .withLoan(loan1)
+      .withRemainingFeeFine(100)
+    );
+
+    accountsClient.create(new AccountBuilder()
+      .feeFineStatusOpen()
+      .withLoan(loan1)
+      .withRemainingFeeFine(100)
+    );
+
+    accountsClient.create(new AccountBuilder()
+      .feeFineStatusOpen()
+      .withLoan(loan2)
+      .withRemainingFeeFine(99)
+    );
+
+    accountsClient.create(new AccountBuilder()
+      .feeFineStatusOpen()
+      .withLoan(loan2)
+      .withRemainingFeeFine(1000)
+    );
+
+    List<JsonObject> loans = loansClient.getAll();
+
+    JsonObject fetchedLoan1 = getRecordById(loans, loan1.getId()).get();
+    JsonObject fetchedLoan2 = getRecordById(loans, loan2.getId()).get();
+
+    loanHasFeeFinesProperties(fetchedLoan1, 200);
+    loanHasFeeFinesProperties(fetchedLoan2, 1099);
 
   }
 
@@ -299,7 +444,7 @@ public class LoanAPITests extends APITests {
         .withLoanDate(loanDate)
         .withDueDate(dueDate)
         .create(),
-      ResponseHandler.json(createCompleted));
+      ResponseHandler.any(createCompleted));
 
     Response response = createCompleted.get(5, TimeUnit.SECONDS);
 
@@ -676,9 +821,7 @@ public class LoanAPITests extends APITests {
     assertThat("action is not checkedout",
       loan.getString("action"), is("checkedout"));
 
-    assertThat("last loan policy should be stored",
-      loan.getString("loanPolicyId"),
-      is(loanPoliciesFixture.canCirculateRolling().getId()));
+    loanHasLoanPolicyProperties(response.getJson(), loanPoliciesFixture.canCirculateRolling());
 
     assertThat("title is taken from item",
       loan.getJsonObject("item").containsKey("title"), is(true));
@@ -812,9 +955,7 @@ public class LoanAPITests extends APITests {
     assertThat("action is not checkedout",
       loan.getString("action"), is("checkedout"));
 
-    assertThat("last loan policy should be stored",
-      loan.getString("loanPolicyId"),
-      is(loanPoliciesFixture.canCirculateRolling().getId()));
+    loanHasLoanPolicyProperties(loan, loanPoliciesFixture.canCirculateRolling());
 
     assertThat("ID is taken from item",
       loan.getJsonObject("item").getString("id"), is(itemId));
@@ -866,6 +1007,30 @@ public class LoanAPITests extends APITests {
 
     loanHasExpectedProperties(loan, user);
 
+  }
+
+  @Test
+  public void canGetLoanPolicyPropertiesForMultipleLoans()
+          throws InterruptedException, MalformedURLException, TimeoutException, ExecutionException {
+
+    configClient.create(ConfigurationExample.utcTimezoneConfiguration());
+    IndividualResource item1 = itemsFixture.basedUponSmallAngryPlanet();
+    final InventoryItemResource item2 = itemsFixture.basedUponNod();
+
+    final IndividualResource user1 = usersFixture.jessica();
+    final IndividualResource user2 = usersFixture.steve();
+
+    loansFixture.checkOutByBarcode(item1, user1, new DateTime(2018, 4, 21, 11, 21, 43, DateTimeZone.UTC))
+            .getJson();
+
+    loansFixture.checkOutByBarcode(item2, user2, new DateTime(2018, 4, 21, 11, 21, 43, DateTimeZone.UTC))
+            .getJson();
+
+    final IndividualResource loanPolicy = loanPoliciesFixture.canCirculateRolling();
+
+    List<JsonObject> loans = loansClient.getAll();
+
+    loans.forEach(loanJson -> loanHasLoanPolicyProperties(loanJson, loanPolicy));
   }
 
   @Test
@@ -943,8 +1108,6 @@ public class LoanAPITests extends APITests {
     MalformedURLException,
     TimeoutException,
     ExecutionException {
-
-    DateTime loanDate = new DateTime(2017, 3, 1, 13, 25, 46, DateTimeZone.UTC);
 
     final InventoryItemResource item = itemsFixture.basedUponNod();
 
@@ -1044,7 +1207,7 @@ public class LoanAPITests extends APITests {
     hasNoBorrowerProperties(updatedLoan);
   }
   @Test
-  public void multipleClosedLoansHaveNoBorrowerInformtion()
+  public void multipleClosedLoansHaveNoBorrowerInformation()
           throws InterruptedException,
           MalformedURLException,
           TimeoutException,
@@ -1069,21 +1232,25 @@ public class LoanAPITests extends APITests {
             .closed()
             .withCheckinServicePointId(checkinServicePointId2)
             .withUserId(user.getId()));
+
     JsonObject updatedLoanRequest = loan1.copyJson();
+
     updatedLoanRequest.getJsonObject("status").put("name", "Closed");
     updatedLoanRequest.remove("userId");
+
     loansClient.replace(loan1.getId(), updatedLoanRequest);
 
     updatedLoanRequest = loan2.copyJson();
+
     updatedLoanRequest.getJsonObject("status").put("name", "Closed");
     updatedLoanRequest.remove("userId");
+
     loansClient.replace(loan2.getId(), updatedLoanRequest);
 
     List<JsonObject> loans = loansClient.getAll();
 
     loans.forEach(this::hasNoBorrowerProperties);
   }
-
 
   @Test
   public void cannotUpdateAnOpenLoanWithoutAUserId()
@@ -1111,6 +1278,8 @@ public class LoanAPITests extends APITests {
       ResponseHandler.any(putCompleted));
 
     Response putResponse = putCompleted.get(5, TimeUnit.SECONDS);
+
+    assertThat(putResponse, hasStatus(HTTP_VALIDATION_ERROR));
 
     assertThat(putResponse.getJson(), hasErrorWith(allOf(
       hasMessage("Open loan must have a user ID"),
@@ -1498,6 +1667,45 @@ public class LoanAPITests extends APITests {
   }
 
   @Test
+  public void canGetMultipleLoansForDifferentBorrowers()
+    throws InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    MalformedURLException {
+
+    UUID smallAngryPlanetId = itemsFixture.basedUponSmallAngryPlanet().getId();
+    UUID nodId = itemsFixture.basedUponNod().getId();
+
+    UUID checkinServicePointId = servicePointsFixture.cd1().getId();
+    UUID checkinServicePointId2 = servicePointsFixture.cd2().getId();
+
+    final IndividualResource steveUser = usersFixture.steve();
+    final IndividualResource firstLoan = loansClient.createAtSpecificLocation(new LoanBuilder()
+      .withItemId(smallAngryPlanetId)
+      .withCheckinServicePointId(checkinServicePointId)
+      .closed()
+      .withUserId(usersFixture.steve().getId()));
+
+    final IndividualResource jessicaUser = usersFixture.jessica();
+    final IndividualResource secondLoan = loansClient.createAtSpecificLocation(new LoanBuilder()
+      .withItemId(nodId)
+      .closed()
+      .withCheckinServicePointId(checkinServicePointId2)
+      .withUserId(usersFixture.jessica().getId()));
+
+    final List<JsonObject> multipleLoans = loansClient.getAll();
+
+     assertThat("Should have different 'userId' for different loans",
+       multipleLoans.get(0).getString("userId"),
+       not(multipleLoans.get(1).getString("userId")));
+
+    assertThat("Should have two loans",
+      multipleLoans.size(), is(2));
+    loanHasExpectedProperties(firstLoan.getJson(), steveUser);
+    loanHasExpectedProperties(secondLoan.getJson(), jessicaUser);
+  }
+
+  @Test
   public void canDeleteALoan()
     throws InterruptedException,
     MalformedURLException,
@@ -1628,9 +1836,173 @@ public class LoanAPITests extends APITests {
 
     List<JsonObject> loanList = getLoans(getResponse.getJson());
 
-    loanList.forEach(this::loanHasCheckinServicePointProperties);
-    loanList.forEach(this::loanHasCheckoutServicePointProperties);
+    loanList.forEach(loanJson -> {
+      loanHasCheckinServicePointProperties(loanJson);
+      loanHasCheckoutServicePointProperties(loanJson);
+    });
 
+  }
+
+  @Test
+  public void canGetPagedLoansWithMoreItemsThanDefaultPageLimit()
+      throws InterruptedException,
+      ExecutionException,
+      TimeoutException,
+      MalformedURLException {
+    createLoans(50);
+    queryLoans(50);
+  }
+
+  @Test
+  public void canGetPagedLoansWhenIdQueryWouldExceedQueryStringLengthLimit()
+      throws InterruptedException,
+      ExecutionException,
+      TimeoutException,
+      MalformedURLException {
+    createLoans(100);
+    queryLoans(100);
+  }
+
+  private void createLoans(int total) throws MalformedURLException, InterruptedException, TimeoutException, ExecutionException {
+    final IndividualResource mainFloor = locationsFixture.mainFloor();
+    for(int i = 0; i < total; i++) {
+      final IndividualResource item = itemsFixture.basedUponTemeraire(
+        holdingBuilder -> holdingBuilder
+          .withPermanentLocation(mainFloor)
+          .withNoTemporaryLocation(),
+        itemBuilder -> itemBuilder
+          .withNoPermanentLocation()
+          .withNoTemporaryLocation()
+          .withBarcode(randomBarcode()));
+      createLoan(getRandomUserId(), item.getId());
+    }
+  }
+
+  private String randomBarcode() {
+    ThreadLocalRandom random = ThreadLocalRandom.current();
+    return String.valueOf(random.nextLong(10_000_000_000L, 100_000_000_000L));
+  }
+
+  private UUID getRandomUserId()
+      throws MalformedURLException,
+      InterruptedException,
+      TimeoutException,
+      ExecutionException {
+    ThreadLocalRandom random = ThreadLocalRandom.current();
+    switch(random.nextInt(5)) {
+    case 0: return usersFixture.charlotte().getId();
+    case 1: return usersFixture.james().getId();
+    case 2: return usersFixture.jessica().getId();
+    case 3: return usersFixture.rebecca().getId();
+    default: return usersFixture.steve().getId();
+    }
+  }
+
+  private void createLoan(UUID userId, UUID itemId) throws MalformedURLException, InterruptedException, TimeoutException, ExecutionException {
+    DateTime loanDate = new DateTime(2017, 2, 27, 10, 23, 43, DateTimeZone.UTC);
+    DateTime dueDate = new DateTime(2017, 3, 29, 10, 23, 43, DateTimeZone.UTC);
+    UUID checkinServicePointId = servicePointsFixture.cd1().getId();
+    UUID checkoutServicePointId = servicePointsFixture.cd2().getId();
+    UUID loanId = UUID.randomUUID();
+    loansClient.create(new LoanBuilder()
+      .withId(loanId)
+      .open()
+      .withUserId(userId)
+      .withItemId(itemId)
+      .withLoanDate(loanDate)
+      .withDueDate(dueDate)
+      .withCheckinServicePointId(checkinServicePointId)
+      .withCheckoutServicePointId(checkoutServicePointId));
+  }
+
+  private void queryLoans(int limit)
+      throws InterruptedException,
+      ExecutionException,
+      TimeoutException {
+    CompletableFuture<Response> pageCompleted = new CompletableFuture<>();
+
+    client.get(loansUrl() + "?limit=" + limit,
+      ResponseHandler.json(pageCompleted));
+
+    Response pageResponse = pageCompleted.get(10, TimeUnit.SECONDS);
+
+    assertThat(String.format("Failed to get page of loans: %s",
+      pageResponse.getBody()),
+      pageResponse.getStatusCode(), is(200));
+
+    JsonObject page = pageResponse.getJson();
+
+    List<JsonObject> loans = getLoans(page);
+
+    assertThat("Did not have expeded number of loans in page",
+      loans.size(), is(limit));
+
+    loans.forEach(loan -> {
+      assertThat("%s loan response does not have item", loan.containsKey("item"), is(true));
+    });
+  }
+
+  @Test
+  public void canGetAnonymizedLoan() throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    InventoryItemResource item = itemsFixture.basedUponSmallAngryPlanet();
+    IndividualResource jessica = usersFixture.jessica();
+
+    IndividualResource individualResource = loansFixture.checkOutByBarcode(item,
+      jessica, new DateTime(2018, 4, 21, 11, 21, 43, DateTimeZone.UTC));
+
+    JsonObject savedLoan = loansStorageClient.get(individualResource.getId())
+      .getResponse().getJson();
+
+     savedLoan.remove("userId");
+
+     loansStorageClient.replace(individualResource.getId(), savedLoan);
+
+     JsonObject loan = loansClient.get(individualResource.getId()).getJson();
+
+     loanHasPatronGroupProperties(loan, "Regular Group");
+  }
+
+  @Test
+  public void canGetMultipleAnonymizedLoans() throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    InventoryItemResource firstItem = itemsFixture.basedUponSmallAngryPlanet();
+    IndividualResource jessica = usersFixture.jessica();
+    IndividualResource firstLoan = loansFixture.checkOutByBarcode(firstItem,
+      jessica, new DateTime(2018, 4, 21, 11, 21, 43, DateTimeZone.UTC));
+
+    InventoryItemResource secondItem = itemsFixture.basedUponNod();
+    IndividualResource henry = usersFixture.undergradHenry();
+    IndividualResource secondLoan = loansFixture.checkOutByBarcode(secondItem,
+      henry, new DateTime(2018, 4, 21, 11, 21, 43, DateTimeZone.UTC));
+
+    JsonObject firstSavedLoan = loansStorageClient.get(firstLoan.getId())
+      .getResponse().getJson();
+
+    firstSavedLoan.remove("userId");
+
+    loansStorageClient.replace(firstLoan.getId(), firstSavedLoan);
+
+    JsonObject secondSavedLoan = loansStorageClient.get(secondLoan.getId())
+      .getResponse().getJson();
+
+    secondSavedLoan.remove("userId");
+
+    loansStorageClient.replace(secondLoan.getId(), secondSavedLoan);
+
+    List<JsonObject> loans = loansClient.getAll();
+
+    JsonObject fetchedLoan1 = getRecordById(loans, firstLoan.getId()).get();
+    JsonObject fetchedLoan2 = getRecordById(loans, secondLoan.getId()).get();
+
+    loanHasPatronGroupProperties(fetchedLoan1, "Regular Group");
+    loanHasPatronGroupProperties(fetchedLoan2, "undergrad");
   }
 
   private void loanHasExpectedProperties(JsonObject loan, IndividualResource user) {
@@ -1690,7 +2062,7 @@ public class LoanAPITests extends APITests {
       loan.containsKey("itemStatus"), is(false));
   }
 
-  private void hasProperty(String property, JsonObject resource, String type, Object value) {
+  protected void hasProperty(String property, JsonObject resource, String type, Object value) {
     assertThat(String.format("%s should have an %s: %s",
       type, property, resource),
       resource.getMap().get(property), equalTo(value));
@@ -1701,13 +2073,13 @@ public class LoanAPITests extends APITests {
     doesNotHaveProperty(LoanProperties.BORROWER, loanJson, "loan");
   }
 
-  private void doesNotHaveProperty(String property, JsonObject resource, String type) {
+  protected void doesNotHaveProperty(String property, JsonObject resource, String type) {
     assertThat(String.format("%s should NOT have an %s: %s",
             type, property, resource),
             resource.getValue(property), is(nullValue()));
   }
 
-  private void hasProperty(String property, JsonObject resource, String type) {
+  protected void hasProperty(String property, JsonObject resource, String type) {
     assertThat(String.format("%s should have an %s: %s",
       type, property, resource),
       resource.containsKey(property), is(true));

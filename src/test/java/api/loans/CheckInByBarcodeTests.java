@@ -42,7 +42,8 @@ import api.support.builders.CheckInByBarcodeRequestBuilder;
 import api.support.builders.NoticeConfigurationBuilder;
 import api.support.builders.NoticePolicyBuilder;
 import api.support.builders.RequestBuilder;
-import api.support.fixtures.NoticeMatchers;
+import api.support.fixtures.TemplateContextMatchers;
+import api.support.http.InventoryItemResource;
 import io.vertx.core.json.JsonObject;
 
 public class CheckInByBarcodeTests extends APITests {
@@ -348,7 +349,7 @@ public class CheckInByBarcodeTests extends APITests {
     final IndividualResource homeLocation = locationsFixture.basedUponExampleLocation(
       builder -> builder.withPrimaryServicePoint(checkInServicePointId));
 
-    final IndividualResource nod = itemsFixture.basedUponNod(
+    final InventoryItemResource nod = itemsFixture.basedUponNod(
       builder -> builder.withTemporaryLocation(homeLocation.getId()));
 
     loansFixture.checkOutByBarcode(nod, james, loanDate);
@@ -371,10 +372,10 @@ public class CheckInByBarcodeTests extends APITests {
     List<JsonObject> sentNotices = patronNoticesClient.getAll();
 
     Map<String, Matcher<String>> noticeContextMatchers = new HashMap<>();
-    noticeContextMatchers.putAll(NoticeMatchers.getUserContextMatchers(james));
-    noticeContextMatchers.putAll(NoticeMatchers.getItemContextMatchers(nod));
-    noticeContextMatchers.putAll(NoticeMatchers.getLoanContextMatchers(checkInResponse.getLoan(), 0));
-    noticeContextMatchers.put("loan.checkinDate",
+    noticeContextMatchers.putAll(TemplateContextMatchers.getUserContextMatchers(james));
+    noticeContextMatchers.putAll(TemplateContextMatchers.getItemContextMatchers(nod, true));
+    noticeContextMatchers.putAll(TemplateContextMatchers.getLoanContextMatchers(checkInResponse.getLoan()));
+    noticeContextMatchers.put("loan.checkedInDate",
       withinSecondsAfter(Seconds.seconds(10), checkInDate));
     MatcherAssert.assertThat(sentNotices,
       hasItems(
@@ -428,7 +429,7 @@ public class CheckInByBarcodeTests extends APITests {
 
   @Test
   public void patronNoticeOnCheckInAfterCheckOutAndRequestToItem() throws Exception {
-    IndividualResource item = itemsFixture.basedUponSmallAngryPlanet();
+    InventoryItemResource item = itemsFixture.basedUponSmallAngryPlanet();
 
     loansFixture.checkOutByBarcode(item, usersFixture.jessica());
 
@@ -470,7 +471,7 @@ public class CheckInByBarcodeTests extends APITests {
 
   @Test
   public void patronNoticeOnCheckInAfterRequestToItem() throws Exception {
-    IndividualResource item = itemsFixture.basedUponSmallAngryPlanet();
+    InventoryItemResource item = itemsFixture.basedUponSmallAngryPlanet();
     DateTime requestDate = new DateTime(2019, 5, 5, 10, 22, 54, DateTimeZone.UTC);
     UUID servicePointId = servicePointsFixture.cd1().getId();
     IndividualResource requester = usersFixture.steve();
@@ -510,7 +511,7 @@ public class CheckInByBarcodeTests extends APITests {
 
   private void checkPatronNoticeEvent(
     IndividualResource request, IndividualResource requester,
-    IndividualResource item, UUID expectedTemplateId)
+    InventoryItemResource item, UUID expectedTemplateId)
     throws Exception {
 
     Awaitility.await()
@@ -520,9 +521,9 @@ public class CheckInByBarcodeTests extends APITests {
     List<JsonObject> sentNotices = patronNoticesClient.getAll();
 
     Map<String, Matcher<String>> noticeContextMatchers = new HashMap<>();
-    noticeContextMatchers.putAll(NoticeMatchers.getUserContextMatchers(requester));
-    noticeContextMatchers.putAll(NoticeMatchers.getItemContextMatchers(item));
-    noticeContextMatchers.putAll(NoticeMatchers.getRequestContextMatchers(request));
+    noticeContextMatchers.putAll(TemplateContextMatchers.getUserContextMatchers(requester));
+    noticeContextMatchers.putAll(TemplateContextMatchers.getItemContextMatchers(item, true));
+    noticeContextMatchers.putAll(TemplateContextMatchers.getRequestContextMatchers(request));
     MatcherAssert.assertThat(sentNotices,
       hasItems(
         hasEmailNoticeProperties(requester.getId(), expectedTemplateId, noticeContextMatchers)));

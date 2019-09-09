@@ -1,11 +1,18 @@
 package org.folio.circulation.support;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
+import static org.folio.circulation.support.results.CommonFailures.failedDueToServerError;
 
+import java.util.Collection;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import org.folio.circulation.support.results.CommonFailures;
 
 public interface Result<T> {
 
@@ -20,7 +27,7 @@ public interface Result<T> {
     try {
       return succeeded(supplier.get());
     } catch (Exception e) {
-      return failed(e);
+      return failedDueToServerError(e);
     }
   }
 
@@ -56,6 +63,39 @@ public interface Result<T> {
     BiFunction<T, U, V> combiner) {
 
     return firstResult.combine(secondResult, combiner);
+  }
+
+  /**
+   * Combines results from all the lists of results, of all elements succeed.
+   * Otherwise, returns  failure, first failed element takes precedence
+   *
+   * @param results lists of results to combine
+   * @return either failure of the first failed result,
+   * or successful result with values collected to list
+   */
+  @SafeVarargs
+  static <T> Result<List<T>> combineAll(
+    List<Result<T>>... results) {
+
+    return Stream.of(results).flatMap(Collection::stream)
+      .map(r -> r.map(Stream::of))
+      .reduce(of(Stream::empty), Result::combineResultStream)
+      .map(stream -> stream.collect(Collectors.toList()));
+  }
+
+  /**
+   * Combines two result streams, if all of elements succeed.
+   * Otherwise, returns either failure, first failed element takes precedence
+   *
+   * @param firstResult  first result stream
+   * @param secondResult second result stream
+   * @return either failure of the first failed result,
+   * or successful result with values collected to stream
+   */
+  static <T> Result<Stream<T>> combineResultStream(
+    Result<Stream<T>> firstResult, Result<Stream<T>> secondResult) {
+
+    return Result.combine(firstResult, secondResult, Stream::concat);
   }
 
   /**
@@ -111,6 +151,24 @@ public interface Result<T> {
     return after(nextAction)
       .thenApply(actionResult -> combine(actionResult, combiner));
   }
+
+  /**
+   * Combines a result together with the result of an action, if both succeed.
+   * If the first result is a failure then it is returned, and the action is not invoked
+   * otherwise if the result of the action is a failure it is returned
+   *
+   * @param nextAction the action to invoke if the current result succeeded
+   * @param combiner function to combine the values together
+   * @return either failure from the first result, failure from the action
+   * or successful result with the values combined
+   */
+  default <U, V> CompletableFuture<Result<V>> combineAfter(
+    Supplier<CompletableFuture<Result<U>>> nextAction,
+    BiFunction<T, U, V> combiner) {
+
+    return combineAfter(u -> nextAction.get(), combiner);
+  }
+
 
   /**
    * Allows branching between two paths based upon the outcome of a condition
@@ -243,10 +301,6 @@ public interface Result<T> {
     return new FailedResult<>(cause);
   }
 
-  static <T> Result<T> failed(Throwable e) {
-    return failed(new ServerErrorFailure(e));
-  }
-
   default <R> CompletableFuture<Result<R>> after(
     Function<T, CompletableFuture<Result<R>>> action) {
 
@@ -256,9 +310,9 @@ public interface Result<T> {
 
     try {
       return action.apply(value())
-        .exceptionally(Result::failed);
+        .exceptionally(CommonFailures::failedDueToServerError);
     } catch (Exception e) {
-      return completedFuture(failed(new ServerErrorFailure(e)));
+      return completedFuture(failedDueToServerError(e));
     }
   }
 
@@ -279,7 +333,7 @@ public interface Result<T> {
     try {
       return action.apply(value());
     } catch (Exception e) {
-      return failed(e);
+      return failedDueToServerError(e);
     }
   }
 
@@ -294,6 +348,28 @@ public interface Result<T> {
    */
   default <U> Result<U> map(Function<T, U> map) {
     return next(value -> succeeded(map.apply(value)));
+  }
+
+  /**
+   * Map the cause of a failed result to a new result (of the same type)
+   *
+   * Responds with a new result with the outcome of applying the map to the current
+   * failure cause unless current result has succeeded (or the mapping throws an exception)
+   *
+   * @param map function to apply to value of result
+   * @return success when result succeeded and map is applied successfully, failure otherwise
+   */
+  default Result<T> mapFailure(Function<HttpFailure, Result<T>> map) {
+    if(succeeded()) {
+      return Result.of(this::value);
+    }
+
+    try {
+      return map.apply(cause());
+    }
+    catch(Exception e) {
+      return failedDueToServerError(e);
+    }
   }
 
   default T orElse(T other) {

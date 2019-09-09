@@ -59,17 +59,17 @@ class RollingRenewalDueDateStrategy extends DueDateStrategy {
 
     switch (renewFrom) {
       case RENEW_FROM_DUE_DATE:
-        return calculateDueDate(loan.getDueDate(), loan.getLoanDate());
+        return calculateDueDate(loan.getDueDate());
       case RENEW_FROM_SYSTEM_DATE:
-        return calculateDueDate(systemDate, loan.getLoanDate());
+        return calculateDueDate(systemDate);
       default:
         return failedValidation(errorForPolicy(RENEW_FROM_UNRECOGNISED_MESSAGE));
     }
   }
 
-  protected Result<DateTime> calculateDueDate(DateTime from, DateTime loanDate) {
+  protected Result<DateTime> calculateDueDate(DateTime from) {
     return renewalDueDate(from)
-      .next(dueDate -> truncateDueDateBySchedule(loanDate, dueDate));
+      .next(dueDate -> truncateDueDateBySchedule(from, dueDate));
   }
 
   Result<DateTime> renewalDueDate(DateTime from) {
@@ -80,10 +80,10 @@ class RollingRenewalDueDateStrategy extends DueDateStrategy {
   }
 
   private Result<DateTime> truncateDueDateBySchedule(
-    DateTime loanDate,
+    DateTime from,
     DateTime dueDate) {
 
-    return dueDateLimitSchedules.truncateDueDate(dueDate, loanDate,
+    return dueDateLimitSchedules.truncateDueDate(dueDate, from,
       () -> errorForPolicy(NO_APPLICABLE_DUE_DATE_LIMIT_SCHEDULE_MESSAGE));
   }
 }

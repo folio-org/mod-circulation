@@ -1,0 +1,40 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "title": "A request for an item based on the specified instance ID",
+  "description": "Request for an item selected from the that might be at a different location or already checked out to another patron",
+  "type": "object",
+  "properties": {
+    "requestDate": {
+      "description": "Date the request was made",
+      "type": "string",
+      "format": "date-time"
+    },
+    "requesterId": {
+      "description": "ID of the user who made the request",
+      "type": "string",
+      "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
+    },
+    "instanceId": {
+      "description": "ID of the instance being requested",
+      "type": "string",
+      "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
+    },
+    "requestExpirationDate": {
+      "description": "Date when the request expires",
+      "type": "string",
+      "format": "date-time"
+    },
+    "pickupServicePointId": {
+      "description": "The ID of the Service Point where this request can be picked up",
+      "type": "string",
+      "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "instanceId",
+    "requesterId",
+    "requestDate",
+    "pickupServicePointId"
+  ]
+}

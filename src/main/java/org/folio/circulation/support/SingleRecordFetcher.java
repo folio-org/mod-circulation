@@ -1,14 +1,19 @@
 package org.folio.circulation.support;
 
+import static java.lang.String.format;
+import static java.util.Objects.requireNonNull;
 import static java.util.function.Function.identity;
-import static org.folio.circulation.support.Result.failed;
 import static org.folio.circulation.support.Result.succeeded;
+import static org.folio.circulation.support.http.ResponseMapping.mapUsingJson;
+import static org.folio.circulation.support.logging.LogMessageSanitizer.sanitizeLogParameter;
 
 import java.lang.invoke.MethodHandles;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
 import org.folio.circulation.support.http.client.Response;
+import org.folio.circulation.support.http.client.ResponseInterpreter;
+import org.folio.circulation.support.results.CommonFailures;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -19,24 +24,16 @@ public class SingleRecordFetcher<T> {
 
   private final CollectionResourceClient client;
   private final String recordType;
-  private final SingleRecordMapper<T> mapper;
+  private final ResponseInterpreter<T> interpreter;
 
   public SingleRecordFetcher(
     CollectionResourceClient client,
     String recordType,
-    SingleRecordMapper<T> mapper) {
+    ResponseInterpreter<T> interpreter) {
 
     this.client = client;
     this.recordType = recordType;
-    this.mapper = mapper;
-  }
-
-  public SingleRecordFetcher(
-    CollectionResourceClient client,
-    String recordType,
-    Function<JsonObject, T> mapper) {
-
-    this(client, recordType, new SingleRecordMapper<>(mapper));
+    this.interpreter = interpreter;
   }
 
   public static SingleRecordFetcher<JsonObject> json(
@@ -45,21 +42,30 @@ public class SingleRecordFetcher<T> {
     Function<Response, Result<JsonObject>> resultOnFailure) {
 
     return new SingleRecordFetcher<>(client, recordType,
-      new SingleRecordMapper<>(identity(), resultOnFailure));
+      new ResponseInterpreter<JsonObject>()
+        .flatMapOn(200, mapUsingJson(identity()))
+        .otherwise(resultOnFailure));
   }
 
   static SingleRecordFetcher<JsonObject> jsonOrNull(
     CollectionResourceClient client,
     String recordType) {
 
-    return json(client, recordType, r -> succeeded(null));
+    return new SingleRecordFetcher<>(client, recordType,
+      new ResponseInterpreter<JsonObject>()
+        .flatMapOn(200, mapUsingJson(identity()))
+        .otherwise(response -> succeeded(null)));
   }
 
   public CompletableFuture<Result<T>> fetch(String id) {
-    log.info("Fetching {} with ID: {}", recordType, id);
+    if (log.isInfoEnabled()) {
+      log.info("Fetching {} with ID: {}", recordType, sanitizeLogParameter(id));
+    }
+
+    requireNonNull(id, format("Cannot fetch single %s with null ID", recordType));
 
     return client.get(id)
-      .thenApply(mapper::mapFrom)
-      .exceptionally(e -> failed(new ServerErrorFailure(e)));
+      .thenApply(interpreter::apply)
+      .exceptionally(CommonFailures::failedDueToServerError);
   }
 }

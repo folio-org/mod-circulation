@@ -4,34 +4,52 @@ import static api.support.builders.FixedDueDateSchedule.forDay;
 import static api.support.builders.FixedDueDateSchedule.wholeMonth;
 import static api.support.builders.ItemBuilder.CHECKED_OUT;
 import static api.support.matchers.ItemStatusCodeMatcher.hasItemStatus;
+import static api.support.matchers.PatronNoticeMatcher.hasEmailNoticeProperties;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static api.support.matchers.ValidationErrorMatchers.hasParameter;
 import static org.hamcrest.CoreMatchers.allOf;
+import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 import java.net.MalformedURLException;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import org.apache.commons.lang3.StringUtils;
+import org.awaitility.Awaitility;
 import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.server.ValidationError;
 import org.hamcrest.Matcher;
+import org.hamcrest.MatcherAssert;
+import org.hamcrest.Matchers;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeConstants;
 import org.joda.time.DateTimeZone;
 import org.junit.Test;
 
 import api.support.APITests;
+import api.support.builders.CheckOutByBarcodeRequestBuilder;
 import api.support.builders.FixedDueDateSchedulesBuilder;
+import api.support.builders.ItemBuilder;
 import api.support.builders.LoanPolicyBuilder;
+import api.support.builders.NoticeConfigurationBuilder;
+import api.support.builders.NoticePolicyBuilder;
+import api.support.fixtures.ItemExamples;
+import api.support.fixtures.TemplateContextMatchers;
+import api.support.http.InventoryItemResource;
 import io.vertx.core.json.JsonObject;
 
 public class OverrideRenewByBarcodeTests extends APITests {
@@ -144,6 +162,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource jessica = usersFixture.jessica();
+    loansFixture.checkOutByBarcode(smallAngryPlanet, jessica);
 
     final Response response = loansFixture.attemptOverride(smallAngryPlanet,
       jessica, StringUtils.EMPTY, null);
@@ -211,8 +230,8 @@ public class OverrideRenewByBarcodeTests extends APITests {
       .rolling(Period.days(2))
       .notRenewable();
 
-    UUID nonRenewablePolicyId = loanPoliciesFixture.create(nonRenewablePolicy)
-      .getId();
+    final IndividualResource loanPolicy = loanPoliciesFixture.create(nonRenewablePolicy);
+    UUID nonRenewablePolicyId = loanPolicy.getId();
 
     useLoanPolicyAsFallback(
       nonRenewablePolicyId,
@@ -246,8 +265,9 @@ public class OverrideRenewByBarcodeTests extends APITests {
     assertThat("renewal count should be incremented",
       renewedLoan.getInteger("renewalCount"), is(1));
 
+    //TODO loanpolicyname is not stored, possible bug?
     assertThat("last loan policy should be stored",
-      renewedLoan.getString("loanPolicyId"), is(nonRenewablePolicyId.toString()));
+            renewedLoan.getString("loanPolicyId"), is(nonRenewablePolicyId.toString()));
 
     assertThat("due date should be 2 weeks from now",
       renewedLoan.getString("dueDate"),
@@ -327,7 +347,8 @@ public class OverrideRenewByBarcodeTests extends APITests {
       .fixed(fixedDueDateSchedulesId)
       .renewFromCurrentDueDate();
 
-    UUID dueDateLimitedPolicyId = loanPoliciesFixture.create(currentDueDateRollingPolicy).getId();
+    final IndividualResource loanPolicy = loanPoliciesFixture.create(currentDueDateRollingPolicy);
+    UUID dueDateLimitedPolicyId = loanPolicy.getId();
 
     useLoanPolicyAsFallback(
       dueDateLimitedPolicyId,
@@ -362,8 +383,9 @@ public class OverrideRenewByBarcodeTests extends APITests {
     assertThat("renewal count should be incremented",
       renewedLoan.getInteger("renewalCount"), is(1));
 
+    //TODO loanpolicyname is not stored, possible bug?
     assertThat("last loan policy should be stored",
-      renewedLoan.getString("loanPolicyId"), is(dueDateLimitedPolicyId.toString()));
+            renewedLoan.getString("loanPolicyId"), is(dueDateLimitedPolicyId.toString()));
 
     assertThat("due date should be 2 months from previous due date",
       renewedLoan.getString("dueDate"),
@@ -416,11 +438,16 @@ public class OverrideRenewByBarcodeTests extends APITests {
       noticePoliciesFixture.activeNotice().getId()
     );
 
-    loansFixture.attemptRenewal(422, smallAngryPlanet, jessica);
+    Response response = loansFixture.attemptRenewal(422, smallAngryPlanet, jessica);
+
+    assertThat(response.getJson(), hasErrorWith(allOf(
+      hasMessage("renewal date falls outside of date ranges in rolling loan policy"))));
+
+    final DateTime newDueDate = loanDueDate.plusWeeks(3).plusMonths(2);
 
     final JsonObject renewedLoan =
       loansFixture.overrideRenewalByBarcode(smallAngryPlanet, jessica,
-        OVERRIDE_COMMENT, null)
+        OVERRIDE_COMMENT, newDueDate.toString())
         .getJson();
 
     assertThat(renewedLoan.getString("id"), is(loanId.toString()));
@@ -443,10 +470,9 @@ public class OverrideRenewByBarcodeTests extends APITests {
     assertThat("renewal count should be incremented",
       renewedLoan.getInteger("renewalCount"), is(1));
 
-    DateTime expectedDueDate = loanDueDate.plusWeeks(3).plusMonths(2);
     assertThat("due date should be 1st of Feb 2019",
       renewedLoan.getString("dueDate"),
-      isEquivalentTo(expectedDueDate));
+      isEquivalentTo(newDueDate));
   }
 
   @Test
@@ -543,8 +569,9 @@ public class OverrideRenewByBarcodeTests extends APITests {
       hasMessage("Override renewal does not match any of expected cases: " +
         "item is not loanable, " +
         "item is not renewable, " +
-        "reached number of renewals limit or " +
-        "renewal date falls outside of the date ranges in the loan policy"))));
+        "reached number of renewals limit," +
+        "renewal date falls outside of the date ranges in the loan policy, " +
+        "items cannot be renewed when there is an active recall request"))));
   }
 
   @Test
@@ -719,6 +746,82 @@ public class OverrideRenewByBarcodeTests extends APITests {
         OVERRIDE_COMMENT, newDueDate.toString());
 
     assertThat(response.getJson(), hasErrorWith(hasRenewalWouldNotChangeDueDateMessage()));
+  }
+
+  @Test
+  public void renewalNoticeIsSentWhenPolicyDefinesRenewalNoticeConfiguration()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    UUID renewalTemplateId = UUID.randomUUID();
+    JsonObject renewalNoticeConfiguration = new NoticeConfigurationBuilder()
+      .withTemplateId(renewalTemplateId)
+      .withRenewalEvent()
+      .create();
+    JsonObject checkInNoticeConfiguration = new NoticeConfigurationBuilder()
+      .withTemplateId(UUID.randomUUID())
+      .withCheckInEvent()
+      .create();
+
+    IndividualResource noticePolicy = noticePoliciesFixture.create(
+      new NoticePolicyBuilder()
+        .withName("Policy with renewal notice")
+        .withLoanNotices(Arrays.asList(renewalNoticeConfiguration, checkInNoticeConfiguration)));
+
+    IndividualResource nonRenewablePolicy = loanPoliciesFixture.create(
+      new LoanPolicyBuilder()
+        .withName("Non Renewable Policy")
+        .rolling(Period.days(2))
+        .notRenewable());
+
+    useLoanPolicyAsFallback(
+      nonRenewablePolicy.getId(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
+      noticePolicy.getId());
+
+    ItemBuilder itemBuilder = ItemExamples.basedUponSmallAngryPlanet(
+      materialTypesFixture.book().getId(),
+      loanTypesFixture.canCirculate().getId(),
+      StringUtils.EMPTY,
+      "ItemPrefix",
+      "ItemSuffix",
+      Collections.singletonList(""));
+
+    InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet(itemBuilder, itemsFixture.thirdFloorHoldings());
+    final IndividualResource steve = usersFixture.steve();
+
+    final DateTime loanDate =
+      new DateTime(2018, 3, 18, 11, 43, 54, DateTimeZone.UTC);
+
+    loansFixture.checkOutByBarcode(
+      new CheckOutByBarcodeRequestBuilder()
+        .forItem(smallAngryPlanet)
+        .to(steve)
+        .on(loanDate)
+        .at(UUID.randomUUID()));
+
+    IndividualResource loanAfterRenewal =
+      loansFixture.overrideRenewalByBarcode(smallAngryPlanet, steve,
+        OVERRIDE_COMMENT, loanDate.plusDays(4).toString());
+
+    Awaitility.await()
+      .atMost(1, TimeUnit.SECONDS)
+      .until(patronNoticesClient::getAll, Matchers.hasSize(1));
+    List<JsonObject> sentNotices = patronNoticesClient.getAll();
+
+    int expectedRenewalLimit = 0;
+    int expectedRenewalsRemaining = 0;
+    Map<String, Matcher<String>> noticeContextMatchers = new HashMap<>();
+    noticeContextMatchers.putAll(TemplateContextMatchers.getUserContextMatchers(steve));
+    noticeContextMatchers.putAll(TemplateContextMatchers.getItemContextMatchers(smallAngryPlanet, true));
+    noticeContextMatchers.putAll(TemplateContextMatchers.getLoanContextMatchers(loanAfterRenewal));
+    noticeContextMatchers.putAll(TemplateContextMatchers.getLoanPolicyContextMatchers(
+      expectedRenewalLimit, expectedRenewalsRemaining));
+    MatcherAssert.assertThat(sentNotices,
+      hasItems(
+        hasEmailNoticeProperties(steve.getId(), renewalTemplateId, noticeContextMatchers)));
   }
 
   private Matcher<ValidationError> hasUserRelatedParameter(IndividualResource user) {

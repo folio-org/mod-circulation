@@ -1,6 +1,8 @@
 package api.support.fakes;
 
+import static java.lang.String.format;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
+import static org.folio.circulation.support.results.CommonFailures.failedDueToServerError;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -12,11 +14,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang3.StringUtils;
+import org.folio.circulation.infrastructure.serialization.JsonSchemaValidator;
 import org.folio.circulation.support.CreatedJsonResponseResult;
+import org.folio.circulation.support.Result;
 import org.folio.circulation.support.http.server.ClientErrorResponse;
 import org.folio.circulation.support.http.server.SuccessResponse;
 import org.folio.circulation.support.http.server.ValidationError;
@@ -42,6 +47,7 @@ public class FakeStorageModule extends AbstractVerticle {
   private final String rootPath;
   private final String collectionPropertyName;
   private final boolean hasCollectionDelete;
+  private final boolean hasDeleteByQuery;
   private final Collection<String> requiredProperties;
   private final Map<String, Map<String, JsonObject>> storedResourcesByTenant;
   private final String recordTypeName;
@@ -49,6 +55,8 @@ public class FakeStorageModule extends AbstractVerticle {
   private final Collection<String> disallowedProperties;
   private final Boolean includeChangeMetadata;
   private final String changeMetadataPropertyName = "metadata";
+  private final BiFunction<Collection<JsonObject>, JsonObject, Result<Object>> constraint;
+  private final JsonSchemaValidator recordValidator;
 
   public static Stream<String> getQueries() {
     return queries.stream();
@@ -58,21 +66,27 @@ public class FakeStorageModule extends AbstractVerticle {
     String rootPath,
     String collectionPropertyName,
     String tenantId,
-    Collection<String> requiredProperties,
+    JsonSchemaValidator recordValidator,
+    @Deprecated Collection<String> requiredProperties,
     boolean hasCollectionDelete,
+    boolean hasDeleteByQuery,
     String recordTypeName,
     Collection<String> uniqueProperties,
-    Collection<String> disallowedProperties,
-    Boolean includeChangeMetadata) {
+    @Deprecated Collection<String> disallowedProperties,
+    Boolean includeChangeMetadata,
+    BiFunction<Collection<JsonObject>, JsonObject, Result<Object>> constraint) {
 
     this.rootPath = rootPath;
     this.collectionPropertyName = collectionPropertyName;
     this.requiredProperties = requiredProperties;
     this.hasCollectionDelete = hasCollectionDelete;
+    this.hasDeleteByQuery = hasDeleteByQuery;
     this.recordTypeName = recordTypeName;
     this.uniqueProperties = uniqueProperties;
     this.disallowedProperties = disallowedProperties;
+    this.constraint = constraint;
     this.includeChangeMetadata = includeChangeMetadata;
+    this.recordValidator = recordValidator;
 
     storedResourcesByTenant = new HashMap<>();
     storedResourcesByTenant.put(tenantId, new HashMap<>());
@@ -87,6 +101,7 @@ public class FakeStorageModule extends AbstractVerticle {
     router.post(pathTree).handler(BodyHandler.create());
     router.put(pathTree).handler(BodyHandler.create());
 
+    router.post(rootPath).handler(this::checkRepresentationAgainstRecordSchema);
     router.post(rootPath).handler(this::checkRequiredProperties);
     router.post(rootPath).handler(this::checkUniqueProperties);
     router.post(rootPath).handler(this::checkDisallowedProperties);
@@ -95,44 +110,68 @@ public class FakeStorageModule extends AbstractVerticle {
     router.get(rootPath).handler(this::checkForUnexpectedQueryParameters);
     router.get(rootPath).handler(this::getMany);
 
-    router.delete(rootPath).handler(this::empty);
+    if (hasDeleteByQuery) {
+      router.delete(rootPath).handler(this::deleteMany);
+    } else {
+      router.delete(rootPath).handler(this::empty);
+    }
 
+    router.put(rootPath + "/:id").handler(this::checkRepresentationAgainstRecordSchema);
     router.put(rootPath + "/:id").handler(this::checkRequiredProperties);
     router.put(rootPath + "/:id").handler(this::checkDisallowedProperties);
     router.put(rootPath + "/:id").handler(this::replace);
 
-    router.get(rootPath + "/:id").handler(this::get);
+    router.get(rootPath + "/:id").handler(this::getById);
     router.delete(rootPath + "/:id").handler(this::delete);
   }
 
   private void create(RoutingContext routingContext) {
+      WebContext context = new WebContext(routingContext);
 
-    WebContext context = new WebContext(routingContext);
+      JsonObject body = getJsonFromBody(routingContext);
 
-    JsonObject body = getJsonFromBody(routingContext);
+      String id = body.getString("id", UUID.randomUUID().toString());
 
-    String id = body.getString("id", UUID.randomUUID().toString());
-
-    body.put("id", id);
+      body.put("id", id);
 
     if(includeChangeMetadata) {
-      final String fakeUserId = APITestContext.getUserId();
-      body.put(changeMetadataPropertyName, new JsonObject()
-        .put("createdDate", new DateTime(DateTimeZone.UTC)
-          .toString(ISODateTimeFormat.dateTime()))
-        .put("createdByUserId", fakeUserId)
-        .put("updatedDate", new DateTime(DateTimeZone.UTC)
-          .toString(ISODateTimeFormat.dateTime()))
-        .put("updatedByUserId", fakeUserId));
+        final String fakeUserId = APITestContext.getUserId();
+        body.put(changeMetadataPropertyName, new JsonObject()
+          .put("createdDate", new DateTime(DateTimeZone.UTC)
+            .toString(ISODateTimeFormat.dateTime()))
+          .put("createdByUserId", fakeUserId)
+          .put("updatedDate", new DateTime(DateTimeZone.UTC)
+            .toString(ISODateTimeFormat.dateTime()))
+          .put("updatedByUserId", fakeUserId));
+      }
+
+      final Map<String, JsonObject> existingRecords = getResourcesForTenant(context);
+
+      if (constraint == null) {
+        existingRecords.put(id, body);
+
+        System.out.println(
+          format("Created %s resource: %s", recordTypeName, id));
+
+        new CreatedJsonResponseResult(body, null)
+          .writeTo(routingContext.response());
+      }
+    else {
+      final Result<Object> checkConstraint = constraint.apply(existingRecords.values(), body);
+
+      if (checkConstraint.succeeded()) {
+        existingRecords.put(id, body);
+
+        System.out.println(
+          format("Created %s resource: %s", recordTypeName, id));
+
+        new CreatedJsonResponseResult(body, null)
+          .writeTo(routingContext.response());
+      }
+      else {
+        checkConstraint.cause().writeTo(routingContext.response());
+      }
     }
-
-    getResourcesForTenant(context).put(id, body);
-
-    System.out.println(
-      String.format("Created %s resource: %s", recordTypeName, id));
-
-    new CreatedJsonResponseResult(body, null)
-      .writeTo(routingContext.response());
   }
 
   private void replace(RoutingContext routingContext) {
@@ -146,11 +185,10 @@ public class FakeStorageModule extends AbstractVerticle {
 
     if(resourcesForTenant.containsKey(id)) {
       System.out.println(
-        String.format("Replaced %s resource: %s", recordTypeName, id));
+        format("Replaced %s resource: %s", recordTypeName, id));
 
       if(includeChangeMetadata) {
         final String fakeUserId = APITestContext.getUserId();
-
         final JsonObject existingChangeMetadata = resourcesForTenant.get(id)
           .getJsonObject(changeMetadataPropertyName);
 
@@ -162,12 +200,25 @@ public class FakeStorageModule extends AbstractVerticle {
         body.put(changeMetadataPropertyName, updatedChangeMetadata);
       }
 
-      resourcesForTenant.replace(id, body);
-      SuccessResponse.noContent(routingContext.response());
+      if (constraint == null) {
+        resourcesForTenant.replace(id, body);
+        SuccessResponse.noContent(routingContext.response());
+      }
+      else {
+        final Result<Object> checkConstraint = constraint.apply(resourcesForTenant.values(), body);
+
+        if (checkConstraint.succeeded()) {
+          resourcesForTenant.replace(id, body);
+          SuccessResponse.noContent(routingContext.response());
+        }
+        else {
+          checkConstraint.cause().writeTo(routingContext.response());
+        }
+      }
     }
     else {
       System.out.println(
-        String.format("Created %s resource: %s", recordTypeName, id));
+        format("Created %s resource: %s", recordTypeName, id));
 
       if(includeChangeMetadata) {
         final String fakeUserId = APITestContext.getUserId();
@@ -185,18 +236,25 @@ public class FakeStorageModule extends AbstractVerticle {
     }
   }
 
-  private void get(RoutingContext routingContext) {
+  private void getById(RoutingContext routingContext) {
     WebContext context = new WebContext(routingContext);
 
-    String id = routingContext.request().getParam("id");
+    Result<UUID> idParsingResult = getIdParameter(routingContext);
+
+    if(idParsingResult.failed()) {
+      idParsingResult.cause().writeTo(routingContext.response());
+      return;
+    }
 
     Map<String, JsonObject> resourcesForTenant = getResourcesForTenant(context);
+
+    final String id = idParsingResult.value().toString();
 
     if(resourcesForTenant.containsKey(id)) {
       final JsonObject resourceRepresentation = resourcesForTenant.get(id);
 
       System.out.println(
-        String.format("Found %s resource: %s", recordTypeName,
+        format("Found %s resource: %s", recordTypeName,
           resourceRepresentation.encodePrettily()));
 
       HttpServerResponse response = routingContext.response();
@@ -221,7 +279,7 @@ public class FakeStorageModule extends AbstractVerticle {
     }
     else {
       System.out.println(
-        String.format("Failed to find %s resource: %s", recordTypeName, id));
+        format("Failed to find %s resource: %s", recordTypeName, idParsingResult));
 
       ClientErrorResponse.notFound(routingContext.response());
     }
@@ -234,10 +292,10 @@ public class FakeStorageModule extends AbstractVerticle {
     Integer offset = context.getIntegerParameter("offset", 0);
     String query = context.getStringParameter("query", null);
 
-    System.out.println(String.format("Handling %s", routingContext.request().uri()));
+    System.out.println(format("Handling %s", routingContext.request().uri()));
 
     if(query != null) {
-      queries.add(String.format("%s?%s", routingContext.request().path(), query));
+      queries.add(format("%s?%s", routingContext.request().path(), query));
     }
 
     Map<String, JsonObject> resourcesForTenant = getResourcesForTenant(context);
@@ -256,7 +314,7 @@ public class FakeStorageModule extends AbstractVerticle {
     result.put("totalRecords", filteredItems.size());
 
     System.out.println(
-      String.format("Found %s resources: %s", recordTypeName,
+      format("Found %s resources: %s", recordTypeName,
         result.encodePrettily()));
 
     HttpServerResponse response = routingContext.response();
@@ -285,6 +343,20 @@ public class FakeStorageModule extends AbstractVerticle {
     Map <String, JsonObject> resourcesForTenant = getResourcesForTenant(context);
 
     resourcesForTenant.clear();
+
+    SuccessResponse.noContent(routingContext.response());
+  }
+
+  private void deleteMany(RoutingContext routingContext) {
+    WebContext context = new WebContext(routingContext);
+
+    String query = context.getStringParameter("query", null);
+
+    Map<String, JsonObject> resourcesForTenant = getResourcesForTenant(context);
+
+    new FakeCQLToJSONInterpreter(false)
+      .execute(resourcesForTenant.values(), query)
+      .forEach(item -> resourcesForTenant.remove(item.getString("id")));
 
     SuccessResponse.noContent(routingContext.response());
   }
@@ -345,6 +417,23 @@ public class FakeStorageModule extends AbstractVerticle {
     }
   }
 
+  private void checkRepresentationAgainstRecordSchema(RoutingContext routingContext) {
+    if (recordValidator == null) {
+      routingContext.next();
+      return;
+    }
+
+    final Result<String> validationResult = recordValidator.validate(
+      routingContext.getBodyAsString());
+
+    if (validationResult.failed()) {
+      validationResult.cause().writeTo(routingContext.response());
+    }
+    else {
+      routingContext.next();
+    }
+  }
+
   private void checkRequiredProperties(RoutingContext routingContext) {
     JsonObject body = getJsonFromBody(routingContext);
 
@@ -362,6 +451,19 @@ public class FakeStorageModule extends AbstractVerticle {
     else {
       failedValidation(errors).writeTo(routingContext.response());
     }
+  }
+
+  //PgUtil from RAML Module Builder 24.0.0 fails with a 500 error like
+  //ErrorMessage(fields=Map(Line -> 137, File -> uuid.c, SQLSTATE -> 22P02,
+  // Routine -> string_to_uuid, V -> ERROR,
+  // Message -> invalid input syntax for type uuid: "null", Severity -> ERROR))
+  // when an ID parameter is not a UUID
+  private Result<UUID> getIdParameter(RoutingContext routingContext) {
+    final String id = routingContext.request().getParam("id");
+
+    return Result.of(() -> UUID.fromString(id))
+      .mapFailure(r -> failedDueToServerError(format(
+        "ID parameter \"%s\" is not a valid UUID", id)));
   }
 
   private void checkUniqueProperties(RoutingContext routingContext) {
@@ -384,7 +486,7 @@ public class FakeStorageModule extends AbstractVerticle {
         .anyMatch(usedValue -> usedValue.equals(proposedValue))) {
 
         errors.add(new ValidationError(
-          String.format("%s with this %s already exists", recordTypeName, uniqueProperty),
+          format("%s with this %s already exists", recordTypeName, uniqueProperty),
           uniqueProperty, proposedValue));
 
         failedValidation(errors).writeTo(routingContext.response());
@@ -409,7 +511,7 @@ public class FakeStorageModule extends AbstractVerticle {
     disallowedProperties.forEach(disallowedProperty -> {
       if(body.containsKey(disallowedProperty)) {
         errors.add(new ValidationError(
-          String.format("Unrecognised field \"%s\"", disallowedProperty),
+          format("Unrecognised field \"%s\"", disallowedProperty),
           disallowedProperty, null));
 
         failedValidation(errors).writeTo(routingContext.response());
@@ -453,10 +555,10 @@ public class FakeStorageModule extends AbstractVerticle {
     System.out.println("Unexpected query parameters");
 
     unexpectedParameters
-      .forEach(queryParameter -> System.out.println(String.format("\"%s\"", queryParameter)));
+      .forEach(queryParameter -> System.out.println(format("\"%s\"", queryParameter)));
 
     ClientErrorResponse.badRequest(routingContext.response(),
-      String.format("Unexpected query string parameters: %s",
+      format("Unexpected query string parameters: %s",
         String.join(",", unexpectedParameters)));
   }
 }

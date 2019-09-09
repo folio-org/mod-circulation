@@ -46,7 +46,6 @@ public class RequestBuilder extends JsonBuilder implements Builder {
   private final UUID pickupServicePointId;
   private final Tags tags;
 
-
   public RequestBuilder() {
     this(UUID.randomUUID(),
       "Hold",
@@ -341,6 +340,11 @@ public class RequestBuilder extends JsonBuilder implements Builder {
   //TODO: Remove, and combine with service point to be fulfilled to
   public RequestBuilder fulfilToHoldShelf() {
     return withFulfilmentPreference("Hold Shelf");
+  }
+
+  public RequestBuilder fulfilToHoldShelf(IndividualResource newPickupServicePoint) {
+    return withFulfilmentPreference("Hold Shelf")
+      .withPickupServicePointId(newPickupServicePoint.getId());
   }
 
   public RequestBuilder fulfilToHoldShelf(UUID newPickupServicePointId) {

@@ -1,10 +1,11 @@
 package api.support.builders;
 
-import io.vertx.core.json.JsonObject;
-import org.folio.circulation.domain.policy.Period;
-
 import java.util.Objects;
 import java.util.UUID;
+
+import org.folio.circulation.domain.policy.Period;
+
+import io.vertx.core.json.JsonObject;
 
 public class LoanPolicyBuilder extends JsonBuilder implements Builder {
   private static final String RENEW_FROM_SYSTEM_DATE = "SYSTEM_DATE";
@@ -109,32 +110,34 @@ public class LoanPolicyBuilder extends JsonBuilder implements Builder {
     put(request, "loanable", loanable);
     put(request, "renewable", renewable);
 
-    JsonObject loansPolicy = new JsonObject();
+    if(loanable) {
+      JsonObject loansPolicy = new JsonObject();
 
-    put(loansPolicy, "profileId", profile);
+      put(loansPolicy, "profileId", profile);
 
-    //TODO: Replace with sub-builders
-    if(Objects.equals(profile, "Rolling")) {
-      put(loansPolicy, "period", loanPeriod);
+      //TODO: Replace with sub-builders
+      if(Objects.equals(profile, "Rolling")) {
+        put(loansPolicy, "period", loanPeriod);
 
-      //Due date limited rolling policy, maybe should be separate property
-      put(loansPolicy, "fixedDueDateScheduleId", fixedDueDateScheduleId);
+        //Due date limited rolling policy, maybe should be separate property
+        put(loansPolicy, "fixedDueDateScheduleId", fixedDueDateScheduleId);
 
-      put(loansPolicy, "closedLibraryDueDateManagementId",
-        closedLibraryDueDateManagementId);
+        put(loansPolicy, "closedLibraryDueDateManagementId",
+          closedLibraryDueDateManagementId);
 
-      put(loansPolicy, "openingTimeOffset", openingTimeOffsetPeriod);
+        put(loansPolicy, "openingTimeOffset", openingTimeOffsetPeriod);
+      }
+      else if(Objects.equals(profile, "Fixed")) {
+        put(loansPolicy, "fixedDueDateScheduleId", fixedDueDateScheduleId);
+
+        put(loansPolicy, "closedLibraryDueDateManagementId",
+          closedLibraryDueDateManagementId);
+
+        put(loansPolicy, "openingTimeOffset", openingTimeOffsetPeriod);
+      }
+
+      put(request, "loansPolicy", loansPolicy);
     }
-    else if(Objects.equals(profile, "Fixed")) {
-      put(loansPolicy, "fixedDueDateScheduleId", fixedDueDateScheduleId);
-
-      put(loansPolicy, "closedLibraryDueDateManagementId",
-        closedLibraryDueDateManagementId);
-
-      put(loansPolicy, "openingTimeOffset", openingTimeOffsetPeriod);
-    }
-
-    put(request, "loansPolicy", loansPolicy);
 
     if(renewable) {
       JsonObject renewalsPolicy = new JsonObject();

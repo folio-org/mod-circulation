@@ -1,6 +1,6 @@
 #%RAML 1.0
 title: Circulation
-version: v7.5
+version: v7.11
 protocols: [ HTTP, HTTPS ]
 baseUri: http://localhost:9130
 
@@ -568,3 +568,26 @@ resourceTypes:
             exampleCollection: !include examples/request-queue.json
             schemaCollection: requests
         get:
+    /instances:
+      displayName: Instance level requests
+      post:
+        description: Creates a request for a specific item from the given instance ID
+        is: [
+          language,
+          validate
+        ]
+        body:
+          application/json:
+            type: !include request-by-instance-id.json
+            example: !include examples/request-by-instance-id.json
+        responses:
+          201:
+            body:
+              application/json:
+                type: request
+                example: !include examples/request.json
+          500:
+            description: "Internal server error"
+            body:
+              text/plain:
+                example: "Internal server error"
