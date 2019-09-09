@@ -16,6 +16,8 @@ import java.util.concurrent.TimeoutException;
 
 import api.support.builders.FixedDueDateSchedulesBuilder;
 import api.support.builders.LoanPolicyBuilder;
+
+import org.folio.circulation.domain.policy.LoanPolicy;
 import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
@@ -90,7 +92,7 @@ public class RequestsAPILoanRenewalTests extends APITests {
     Response response = loansFixture.attemptRenewalById(smallAngryPlanet, rebecca);
 
     String message = response.getJson().getJsonArray("errors").getJsonObject(0).getString("message");
-    assertThat(message, is("Items with this loan policy cannot be renewed when there is an active, pending hold request"));
+    assertThat(message, is(LoanPolicy.CAN_NOT_RENEW_ITEM_ERROR));
   }
 
 
@@ -142,7 +144,7 @@ public class RequestsAPILoanRenewalTests extends APITests {
     Response response = loansFixture.attemptRenewal(smallAngryPlanet, rebecca);
 
     String message = response.getJson().getJsonArray("errors").getJsonObject(0).getString("message");
-    assertThat(message, is("Items with this loan policy cannot be renewed when there is an active, pending hold request"));
+    assertThat(message, is(LoanPolicy.CAN_NOT_RENEW_ITEM_ERROR));
   }
 
   @Test
@@ -207,7 +209,7 @@ public class RequestsAPILoanRenewalTests extends APITests {
     Response response = loansFixture.attemptRenewalById(smallAngryPlanet, rebecca);
 
     String message = response.getJson().getJsonArray("errors").getJsonObject(0).getString("message");
-    assertThat(message, is("Items with this loan policy cannot be renewed when there is an active, pending hold request"));
+    assertThat(message, is(LoanPolicy.CAN_NOT_RENEW_ITEM_ERROR));
   }
 
   @Test
@@ -231,7 +233,7 @@ public class RequestsAPILoanRenewalTests extends APITests {
     Response response = loansFixture.attemptRenewalById(smallAngryPlanet, rebecca);
 
     String message = response.getJson().getJsonArray("errors").getJsonObject(0).getString("message");
-    assertThat(message, is("Items with this loan policy cannot be renewed when there is an active, pending hold request"));
+    assertThat(message, is(LoanPolicy.CAN_NOT_RENEW_ITEM_ERROR));
   }
 
   @Test

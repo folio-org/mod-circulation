@@ -40,6 +40,8 @@ public class LoanPolicy {
   public static final String REQUEST_MANAGEMENT_KEY = "requestManagement";
   public static final String HOLDS_KEY = "holds";
   private static final String ALTERNATE_RENEWAL_LOAN_PERIOD_KEY = "alternateRenewalLoanPeriod";
+  public static final String CAN_NOT_RENEW_ITEM_ERROR =
+    "Items with this loan policy cannot be renewed when there is an active, pending hold request";
 
   private final JsonObject representation;
   private final FixedDueDateSchedules fixedDueDateSchedules;
@@ -99,8 +101,7 @@ public class LoanPolicy {
       //Here can be either Hold request or null only
       if (isHold(firstRequest)) {
         if (!isHoldRequestRenewable()) {
-          String reason = "Items with this loan policy cannot be renewed when there is an active, pending hold request";
-          errors.add(loanPolicyValidationError(reason));
+          errors.add(loanPolicyValidationError(CAN_NOT_RENEW_ITEM_ERROR));
           return failedValidation(errors);
         }
         isRenewalWithHoldRequest = true;
