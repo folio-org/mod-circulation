@@ -31,6 +31,7 @@ import org.junit.Test;
 import api.support.APITests;
 import api.support.builders.RequestBuilder;
 import api.support.http.InventoryItemResource;
+import io.vertx.core.json.JsonObject;
 
 public class RequestsAPILoanRenewalTests extends APITests {
 
@@ -67,6 +68,9 @@ public class RequestsAPILoanRenewalTests extends APITests {
     final IndividualResource rebecca = usersFixture.rebecca();
 
     loansFixture.checkOutByBarcode(smallAngryPlanet, rebecca);
+
+    useRollingPolicyWithRenewingAllowedForHoldingRequest();
+
     UUID pickupServicePointId = servicePointsFixture.cd1().getId();
     requestsFixture.place(new RequestBuilder()
       .hold()
@@ -113,7 +117,6 @@ public class RequestsAPILoanRenewalTests extends APITests {
     final DateTime expectedDueDate = DateTime.now(DateTimeZone.UTC).plusWeeks(3);
     final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource rebecca = usersFixture.rebecca();
-
 
     loansFixture.checkOutByBarcode(smallAngryPlanet, rebecca);
 
@@ -192,6 +195,8 @@ public class RequestsAPILoanRenewalTests extends APITests {
     final IndividualResource rebecca = usersFixture.rebecca();
 
     loansFixture.checkOutByBarcode(smallAngryPlanet, rebecca);
+
+    useRollingPolicyWithRenewingAllowedForHoldingRequest();
 
     requestsFixture.place(new RequestBuilder()
       .hold()
@@ -463,6 +468,27 @@ public class RequestsAPILoanRenewalTests extends APITests {
 
     useLoanPolicyAsFallback(
       loanPoliciesFixture.create(dueDateLimitedPolicy).getId(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
+      noticePoliciesFixture.activeNotice().getId()
+    );
+  }
+
+  private void useRollingPolicyWithRenewingAllowedForHoldingRequest()
+    throws InterruptedException, MalformedURLException, TimeoutException, ExecutionException {
+    JsonObject holds = new JsonObject();
+    holds.put("alternateRenewalLoanPeriod", Period.weeks(3).asJson());
+    holds.put("renewItemsWithRequest", true);
+
+    final LoanPolicyBuilder rollingPolicy = new LoanPolicyBuilder()
+      .withName("Can Circulate Rolling")
+      .withDescription("Can circulate item")
+      .withHolds(holds)
+      .rolling(Period.weeks(3))
+      .unlimitedRenewals()
+      .renewFromSystemDate();
+
+    useLoanPolicyAsFallback(
+      loanPoliciesFixture.create(rollingPolicy).getId(),
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
       noticePoliciesFixture.activeNotice().getId()
     );
