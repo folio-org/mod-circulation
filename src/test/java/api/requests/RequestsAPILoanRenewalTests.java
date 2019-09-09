@@ -4,6 +4,7 @@ import static api.support.builders.FixedDueDateSchedule.wholeMonth;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static org.hamcrest.CoreMatchers.allOf;
+import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 import static org.joda.time.DateTimeConstants.APRIL;
@@ -22,6 +23,7 @@ import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
 import org.junit.Test;
 
 import api.support.APITests;
@@ -71,6 +73,21 @@ public class RequestsAPILoanRenewalTests extends APITests {
 
     Response response = loansFixture.attemptRenewal(200, smallAngryPlanet, rebecca);
     assertThat(response.getJson().getString("action"), is("renewed"));
+    // Assert no validation issues, so the renewal is allowed
+    assertThat(response.getJson().getJsonArray("errors"), nullValue());
+
+    // We use SYSTEM_DATE as base for due date renew + 3 weeks
+    // Set mls and seconds to 0 as we're mostly interesting in weeks
+    final DateTime expectedDueDate = DateTime.now(DateTimeZone.UTC)
+      .plusWeeks(3)
+      .withSecondOfMinute(0)
+      .withMillisOfSecond(0);
+    final DateTime actualDueDate = new DateTime(response.getJson()
+      .getInstant("dueDate").toEpochMilli())
+      .withZone(DateTimeZone.UTC)
+      .withSecondOfMinute(0)
+      .withMillisOfSecond(0);
+    assertThat(actualDueDate, is(expectedDueDate));
   }
 
   @Test
@@ -121,6 +138,19 @@ public class RequestsAPILoanRenewalTests extends APITests {
     IndividualResource response = loansFixture.renewLoan(smallAngryPlanet, rebecca);
 
     assertThat(response.getJson().getString("action"), is("renewed"));
+    // Assert no validation issues, so the renewal is allowed
+    assertThat(response.getJson().getJsonArray("errors"), nullValue());
+
+    final DateTime expectedDueDate = DateTime.now(DateTimeZone.UTC)
+      .plusWeeks(3)
+      .withSecondOfMinute(0)
+      .withMillisOfSecond(0);
+    final DateTime actualDueDate = new DateTime(response.getJson()
+      .getInstant("dueDate").toEpochMilli())
+      .withZone(DateTimeZone.UTC)
+      .withSecondOfMinute(0)
+      .withMillisOfSecond(0);
+    assertThat(actualDueDate, is(expectedDueDate));
   }
 
   @Test
@@ -186,6 +216,21 @@ public class RequestsAPILoanRenewalTests extends APITests {
     IndividualResource response = loansFixture.renewLoanById(smallAngryPlanet, rebecca);
 
     assertThat(response.getJson().getString("action"), is("renewed"));
+    // Assert no validation issues, so the renewal is allowed
+    assertThat(response.getJson().getJsonArray("error"), nullValue());
+
+    // We use SYSTEM_DATE as base for due date renew + 3 weeks
+    // Set mls and seconds to 0 as we're mostly interesting in weeks
+    final DateTime expectedDueDate = DateTime.now(DateTimeZone.UTC)
+      .plusWeeks(3)
+      .withSecondOfMinute(0)
+      .withMillisOfSecond(0);
+    final DateTime actualDueDate = new DateTime(response.getJson()
+      .getInstant("dueDate").toEpochMilli())
+      .withZone(DateTimeZone.UTC)
+      .withSecondOfMinute(0)
+      .withMillisOfSecond(0);
+    assertThat(actualDueDate, is(expectedDueDate));
   }
 
   @Test

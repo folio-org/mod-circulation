@@ -37,8 +37,8 @@ public class LoanPolicy {
   private static final String LOANS_POLICY_KEY = "loansPolicy";
   private static final String PERIOD_KEY = "period";
   private static final String RENEWAL_WOULD_NOT_CHANGE_THE_DUE_DATE = "renewal would not change the due date";
-  public static final String REQUEST_MANAGEMENT_KEY = "requestManagement";
-  public static final String HOLDS_KEY = "holds";
+  private static final String REQUEST_MANAGEMENT_KEY = "requestManagement";
+  private static final String HOLDS_KEY = "holds";
   private static final String ALTERNATE_RENEWAL_LOAN_PERIOD_KEY = "alternateRenewalLoanPeriod";
   public static final String CAN_NOT_RENEW_ITEM_ERROR =
     "Items with this loan policy cannot be renewed when there is an active, pending hold request";
