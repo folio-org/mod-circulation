@@ -23,11 +23,10 @@ import org.slf4j.LoggerFactory;
 
 public class AccountRepository {
 
-  private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
-
   private final CollectionResourceClient accountsStorageClient;
+  private static final Result<CqlQuery> openAccountStatusQuery =
+    exactMatch("status.name", "Open");
 
-  private final Result<CqlQuery> accountStatusQuery = exactMatch("status.name", "Open");
 
   public AccountRepository(Clients clients) {
     accountsStorageClient = clients.accountsStorageClient();
@@ -39,20 +38,21 @@ public class AccountRepository {
         return completedFuture(loanResult);
       }
       return loanResult
-        .combineAfter(r -> getAccountsForLoan(loan.getId()),
+        .combineAfter(r -> fetchOpenAccountsForLoan(loan.getId()),
           Loan::withAccounts);
     });
   }
 
-  private CompletableFuture<Result<Collection<Account>>> getAccountsForLoan(String loanId) {
+  private CompletableFuture<Result<Collection<Account>>> fetchOpenAccountsForLoan(
+    String loanId) {
 
-    final Result<CqlQuery> loanIdQuery = exactMatch("loanId", loanId);
-
-    return createAccountsFetcher().findByQuery(accountStatusQuery.combine(loanIdQuery, CqlQuery::and))
+    return createAccountsFetcher().findByQuery(
+      openAccountStatusQuery.combine(exactMatch("loanId", loanId), CqlQuery::and))
       .thenApply(r -> r.map(MultipleRecords::getRecords));
   }
 
-  public CompletableFuture<Result<MultipleRecords<Loan>>> findOpenAccountsForLoans(MultipleRecords<Loan> multipleLoans) {
+  public CompletableFuture<Result<MultipleRecords<Loan>>> findOpenAccountsForLoans(
+    MultipleRecords<Loan> multipleLoans) {
 
     if (multipleLoans.getRecords().isEmpty()) {
       return completedFuture(succeeded(multipleLoans));
@@ -60,7 +60,8 @@ public class AccountRepository {
 
     return getAccountsForLoans(multipleLoans.getRecords())
       .thenApply(r -> r.map(accountMap -> multipleLoans.mapRecords(
-        loan -> loan.withAccounts(accountMap.getOrDefault(loan.getId(), new ArrayList<>())))));
+        loan -> loan.withAccounts(accountMap.getOrDefault(loan.getId(),
+          new ArrayList<>())))));
   }
 
   private CompletableFuture<Result<Map<String, List<Account>>>> getAccountsForLoans(
@@ -74,7 +75,7 @@ public class AccountRepository {
         .collect(Collectors.toSet());
 
     return createAccountsFetcher()
-      .findByIndexNameAndQuery(accountsToFetch, "loanId", accountStatusQuery)
+      .findByIndexNameAndQuery(accountsToFetch, "loanId", openAccountStatusQuery)
       .thenComposeAsync(r -> r.after(multipleRecords -> completedFuture(succeeded(
         multipleRecords.getRecords().stream().collect(
           Collectors.groupingBy(Account::getLoanId))
