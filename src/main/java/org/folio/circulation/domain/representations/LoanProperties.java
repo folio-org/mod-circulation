@@ -7,6 +7,7 @@ public class LoanProperties {
   public static final String USER_ID = "userId";
   public static final String STATUS = "status";
   public static final String ACTION = "action";
+  public static final String ITEM_STATUS = "itemStatus";
   public static final String DUE_DATE = "dueDate";
   public static final String RETURN_DATE = "returnDate";
   public static final String SYSTEM_RETURN_DATE = "systemReturnDate";

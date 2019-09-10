@@ -6,6 +6,7 @@ import org.folio.circulation.resources.CheckInByBarcodeResource;
 import org.folio.circulation.resources.CheckOutByBarcodeResource;
 import org.folio.circulation.resources.CirculationRulesResource;
 import org.folio.circulation.resources.LoanAnonymizationResource;
+import org.folio.circulation.resources.DueDateNotRealTimeScheduledNoticeProcessingResource;
 import org.folio.circulation.resources.LoanCirculationRulesEngineResource;
 import org.folio.circulation.resources.LoanCollectionResource;
 import org.folio.circulation.resources.NoticeCirculationRulesEngineResource;
@@ -90,6 +91,7 @@ public class CirculationVerticle extends AbstractVerticle {
         .register(router);
 
     new DueDateScheduledNoticeProcessingResource(client).register(router);
+    new DueDateNotRealTimeScheduledNoticeProcessingResource(client).register(router);
     new RequestScheduledNoticeProcessingResource(client).register(router);
 
     new LoanAnonymizationResource(client).register(router);
