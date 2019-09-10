@@ -53,7 +53,7 @@ public class AnonymizeLoansByUserIdAPITests extends APITests {
 
     assertThat(loanResource.getJson(), hasOpenStatus());
 
-    fakeAnonymizeLoansRequest(user.getId());
+    anonymizeLoansForUser(user.getId());
 
     JsonObject storageLoan = loansStorageClient.getById(loanID)
       .getJson();
@@ -78,12 +78,12 @@ public class AnonymizeLoansByUserIdAPITests extends APITests {
     UUID loanId1 = loanResource1.getId();
     UUID loanId2 = loanResource2.getId();
 
-    sendCheckinLoanRequest(item1);
+    loansFixture.checkInByBarcode(item1);
 
     Response storageLoan = loansStorageClient.getById(loanId1);
     assertThat(storageLoan.getJson(), not(isAnonymized()));
 
-    fakeAnonymizeLoansRequest(user.getId());
+    anonymizeLoansForUser(user.getId());
 
     storageLoan = loansStorageClient.getById(loanId1);
 
@@ -103,9 +103,9 @@ public class AnonymizeLoansByUserIdAPITests extends APITests {
       .at(servicePoint.getId()));
     UUID loanID = loanResource.getId();
 
-    sendCheckinLoanRequest(item1);
+    loansFixture.checkInByBarcode(item1);
 
-    fakeAnonymizeLoansRequest(user.getId());
+    anonymizeLoansForUser(user.getId());
 
     assertThat(loansStorageClient.getById(loanID)
       .getJson(), isAnonymized());
@@ -121,14 +121,14 @@ public class AnonymizeLoansByUserIdAPITests extends APITests {
       .at(servicePoint.getId()));
     UUID loanID = loanResource.getId();
 
-    accountsClient.create(new AccountBuilder().feeFineStatusOpen()
+    accountsClient.create(new AccountBuilder()
       .withLoan(loanResource)
       .feeFineStatusClosed()
       .withRemainingFeeFine(150));
 
-    sendCheckinLoanRequest(item1);
+    loansFixture.checkInByBarcode(item1);
 
-    fakeAnonymizeLoansRequest(user.getId());
+    anonymizeLoansForUser(user.getId());
 
     assertThat(loansStorageClient.getById(loanID)
       .getJson(), isAnonymized());
@@ -157,10 +157,10 @@ public class AnonymizeLoansByUserIdAPITests extends APITests {
       .feeFineStatusOpen()
       .withRemainingFeeFine(150));
 
-    sendCheckinLoanRequest(item1);
-    sendCheckinLoanRequest(item2);
+    loansFixture.checkInByBarcode(item1);
+    loansFixture.checkInByBarcode(item2);
 
-    fakeAnonymizeLoansRequest(user.getId());
+    anonymizeLoansForUser(user.getId());
 
     assertThat(loansStorageClient.getById(loanID1)
       .getJson(), not(isAnonymized()));
@@ -170,7 +170,7 @@ public class AnonymizeLoansByUserIdAPITests extends APITests {
   }
 
   @Test
-  public void canNotAnonymizeLoansWithOpenFeesAndFines()
+  public void doesNotAnonymizeLoansWithOpenFeesAndFines()
       throws InterruptedException, ExecutionException, TimeoutException, MalformedURLException {
 
     IndividualResource loanResource = loansFixture.checkOutByBarcode
@@ -184,21 +184,16 @@ public class AnonymizeLoansByUserIdAPITests extends APITests {
       .feeFineStatusOpen()
       .withRemainingFeeFine(150));
 
-    sendCheckinLoanRequest(item1);
+    loansFixture.checkInByBarcode(item1);
 
-    fakeAnonymizeLoansRequest(user.getId());
+    anonymizeLoansForUser(user.getId());
 
     JsonObject json = loansStorageClient.getById(loanID).getJson();
 
     assertThat(json, not(isAnonymized()));
   }
 
-  private void sendCheckinLoanRequest(IndividualResource item)
-      throws InterruptedException, MalformedURLException, TimeoutException, ExecutionException {
-    loansFixture.checkInByBarcode(item);
-  }
-
-  private void fakeAnonymizeLoansRequest(UUID userId)
+  private void anonymizeLoansForUser(UUID userId)
       throws InterruptedException, ExecutionException, TimeoutException {
     CompletableFuture<Response> createCompleted = new CompletableFuture<>();
     client.post(circulationAnonymizeLoansURL(userId.toString()), null, ResponseHandler.any(createCompleted));
