@@ -24,7 +24,7 @@ public class LoanAnonymizationResource extends Resource {
   @Override
   public void register(Router router) {
     RouteRegistration routeRegistration = new RouteRegistration(
-        "/circulation/loans/anonymize/:userId", router);
+        "/loan-anonymization/anonymizeByUserId/:userId", router);
     routeRegistration.create(this::anonymizeLoans);
   }
 

@@ -39,6 +39,22 @@
       ]
     },
     {
+      "id": "loan-anonymization",
+      "version": "0.1",
+      "handlers": [
+        {
+          "methods": ["POST"],
+          "pathPattern": "/loan-anonymization/anonymizeByUserId/{userId}",
+          "permissionsRequired": [
+            "circulation.loans.collection.anonymize.user.post"
+          ],
+          "modulePermissions": [
+            "modperms.circulation.loans.anonymize"
+          ]
+        }
+      ]
+    },
+    {
       "id": "circulation",
       "version": "7.11",
       "handlers": [
@@ -184,16 +200,6 @@
           ],
           "modulePermissions": [
             "circulation-storage.loans.item.delete"
-          ]
-        },
-        {
-          "methods": ["POST"],
-          "pathPattern": "/circulation/loans/anonymize/{userId}",
-          "permissionsRequired": [
-            "circulation.loans.collection.anonymize.user.post"
-          ],
-          "modulePermissions": [
-            "modperms.circulation.loans.anonymize"
           ]
         },
         {
