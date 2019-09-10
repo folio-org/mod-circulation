@@ -40,7 +40,7 @@ public class Text2DroolsTest {
     String droolsText = Text2Drools.convert(HEADER);
     Drools drools = new Drools(droolsText);
     assertThat(drools.loanPolicy(params("foo", "bar", "biz", "shelf"),
-      createLocationWithId(FIRST_INSTITUTION_ID)),
+      createLocationWithInstitution(FIRST_INSTITUTION_ID)),
       is("no-loan"));
   }
 
@@ -92,7 +92,7 @@ public class Text2DroolsTest {
     log.debug("drools = {}" + drools);
     for (String [] s : loanTestCases) {
       assertThat(first3(s), Drools.loanPolicy(drools, params(s[0], s[1], s[2], "shelf"),
-        createLocationWithId(SECOND_INSTITUTION_ID)),
+        createLocationWithInstitution(SECOND_INSTITUTION_ID)),
         is(s[3]));
     }
   }
@@ -102,7 +102,7 @@ public class Text2DroolsTest {
     Drools drools = new Drools(Text2Drools.convert(test1));
     for (String [] s : loanTestCases) {
       assertThat(first3(s), drools.loanPolicy(params(s[0], s[1], s[2], "shelf"),
-        createLocationWithId(SECOND_INSTITUTION_ID)), is(s[3]));
+        createLocationWithInstitution(SECOND_INSTITUTION_ID)), is(s[3]));
     }
   }
 
@@ -116,7 +116,7 @@ public class Text2DroolsTest {
     String drools = Text2Drools.convert(test1);
     for (String[] s : requestTestCases) {
       assertThat(first3(s), Drools.requestPolicy(drools, params(s[0], s[1], s[2], "shelf"),
-        createLocationWithId(SECOND_INSTITUTION_ID)), is(s[3]));
+        createLocationWithInstitution(SECOND_INSTITUTION_ID)), is(s[3]));
     }
   }
 
@@ -138,7 +138,7 @@ public class Text2DroolsTest {
     Drools drools = new Drools(Text2Drools.convert(circulationRules));
     for (String [] s : cases) {
       JsonArray array = drools.loanPolicies(params(s[0], s[1], s[2], "shelf"),
-        createLocationWithId(SECOND_INSTITUTION_ID));
+        createLocationWithInstitution(SECOND_INSTITUTION_ID));
       String [] policies = new String[array.size()];
       for (int i=0; i<array.size(); i++) {
         policies[i] = array.getJsonObject(i).getString("loanPolicyId");
@@ -151,7 +151,7 @@ public class Text2DroolsTest {
       Drools drools = new Drools(Text2Drools.convert(circulationRules));
       for (String [] s : cases) {
         JsonArray array = drools.requestPolicies(params(s[0], s[1], s[2], "shelf"),
-          createLocationWithId(SECOND_INSTITUTION_ID));
+          createLocationWithInstitution(SECOND_INSTITUTION_ID));
         String [] policies = new String[array.size()];
         for (int i=0; i<array.size(); i++) {
           policies[i] = array.getJsonObject(i).getString("requestPolicyId");
@@ -268,11 +268,11 @@ public class Text2DroolsTest {
         "     g visitor: l policy-d r no-hold n basic-notice"
         )));
     assertThat(drools.loanPolicy(params("book", "regular", "student", "shelf"),
-      createLocationWithId(SECOND_INSTITUTION_ID)), is("policy-a"));
+      createLocationWithInstitution(SECOND_INSTITUTION_ID)), is("policy-a"));
     assertThat(drools.loanPolicy(params("dvd",  "regular", "student", "shelf"),
-      createLocationWithId(SECOND_INSTITUTION_ID)), is("policy-b"));
+      createLocationWithInstitution(SECOND_INSTITUTION_ID)), is("policy-b"));
     assertThat(drools.loanPolicy(params("dvd",  "regular", "visitor", "shelf"),
-      createLocationWithId(SECOND_INSTITUTION_ID)), is("policy-d"));
+      createLocationWithInstitution(SECOND_INSTITUTION_ID)), is("policy-d"));
   }
 
   @Test
@@ -286,11 +286,11 @@ public class Text2DroolsTest {
         "     g visitor: l policy-d r no-hold n basic-notice"
         )));
     assertThat(drools.loanPolicy(params("book", "regular", "student", "shelf"),
-      createLocationWithId(SECOND_INSTITUTION_ID)), is("policy-a"));
+      createLocationWithInstitution(SECOND_INSTITUTION_ID)), is("policy-a"));
     assertThat(drools.loanPolicy(params("dvd",  "regular", "student", "shelf"),
-      createLocationWithId(SECOND_INSTITUTION_ID)), is("policy-c"));
+      createLocationWithInstitution(SECOND_INSTITUTION_ID)), is("policy-c"));
     assertThat(drools.loanPolicy(params("dvd",  "regular", "visitor", "shelf"),
-      createLocationWithId(SECOND_INSTITUTION_ID)), is("policy-d"));
+      createLocationWithInstitution(SECOND_INSTITUTION_ID)), is("policy-d"));
   }
 
   @Test
@@ -351,11 +351,11 @@ public class Text2DroolsTest {
         "s new:l policy-a r no-hold n basic-notice",
         "a " + FIRST_INSTITUTION_ID + ":l policy-b r hold n basic-notice")));
     assertThat(drools.loanPolicy(params("dvd", "regular", "student", "shelf"),
-      createLocationWithId(SECOND_INSTITUTION_ID)), is("no-loan"));
+      createLocationWithInstitution(SECOND_INSTITUTION_ID)), is("no-loan"));
     assertThat(drools.loanPolicy(params("dvd", "regular", "student", "new"),
-      createLocationWithId(SECOND_INSTITUTION_ID)), is("policy-a"));
+      createLocationWithInstitution(SECOND_INSTITUTION_ID)), is("policy-a"));
     assertThat(drools.loanPolicy(params("dvd", "regular", "student", "new"),
-      createLocationWithId(FIRST_INSTITUTION_ID)), is("policy-b"));
+      createLocationWithInstitution(FIRST_INSTITUTION_ID)), is("policy-b"));
   }
 
  @Test
@@ -366,31 +366,31 @@ public class Text2DroolsTest {
         "s new   :   l policy-a r no-hold n basic-notice",
         "a " + FIRST_INSTITUTION_ID + "   : l policy-b r hold n basic-notice")));
     assertThat(drools.loanPolicy(params("dvd", "regular", "student", "shelf"),
-      createLocationWithId(SECOND_INSTITUTION_ID)), is("no-loan"));
+      createLocationWithInstitution(SECOND_INSTITUTION_ID)), is("no-loan"));
     assertThat(drools.loanPolicy(params("dvd", "regular", "student", "new"),
-      createLocationWithId(SECOND_INSTITUTION_ID)), is("policy-a"));
+      createLocationWithInstitution(SECOND_INSTITUTION_ID)), is("policy-a"));
    assertThat(drools.loanPolicy(params("dvd", "regular", "student", "new"),
-     createLocationWithId(FIRST_INSTITUTION_ID)), is("policy-b"));
+     createLocationWithInstitution(FIRST_INSTITUTION_ID)), is("policy-b"));
   }
 
   @Test
   public void negation() {
     Drools drools = new Drools(Text2Drools.convert(HEADER + "m !dvd !music: l policy-a r no-hold n basic-notice"));
     assertThat(drools.loanPolicy(params("dvd",       "regular", "student", "shelf"),
-      createLocationWithId(SECOND_INSTITUTION_ID)), is("no-loan"));
+      createLocationWithInstitution(SECOND_INSTITUTION_ID)), is("no-loan"));
     assertThat(drools.loanPolicy(params("music",     "regular", "student", "shelf"),
-      createLocationWithId(SECOND_INSTITUTION_ID)), is("no-loan"));
+      createLocationWithInstitution(SECOND_INSTITUTION_ID)), is("no-loan"));
     assertThat(drools.loanPolicy(params("newspaper", "regular", "student", "shelf"),
-      createLocationWithId(SECOND_INSTITUTION_ID)), is("policy-a"));
+      createLocationWithInstitution(SECOND_INSTITUTION_ID)), is("policy-a"));
   }
 
   @Test
   public void negationSingle() {
     Drools drools = new Drools(Text2Drools.convert(HEADER + "m !dvd: l policy-a r no-hold n basic-notice"));
     assertThat(drools.loanPolicy(params("dvd",       "regular", "student", "shelf"),
-      createLocationWithId(SECOND_INSTITUTION_ID)), is("no-loan"));
+      createLocationWithInstitution(SECOND_INSTITUTION_ID)), is("no-loan"));
     assertThat(drools.loanPolicy(params("newspaper", "regular", "student", "shelf"),
-      createLocationWithId(SECOND_INSTITUTION_ID)), is("policy-a"));
+      createLocationWithInstitution(SECOND_INSTITUTION_ID)), is("policy-a"));
   }
 
   @Test
@@ -404,13 +404,13 @@ public class Text2DroolsTest {
         "b new: l policy-d r no-hold n basic-notice",
         "c new: l policy-e r no-hold n basic-notice")));
     assertThat(drools.loanPolicy(params("dvd",  "regular", "student",  "new"),
-      createLocationWithId(SECOND_INSTITUTION_ID)),   is("policy-a"));
+      createLocationWithInstitution(SECOND_INSTITUTION_ID)),   is("policy-a"));
     assertThat(drools.loanPolicy(params("book", "regular", "student",  "new"),
-      createLocationWithId(SECOND_INSTITUTION_ID)),   is("policy-b"));
+      createLocationWithInstitution(SECOND_INSTITUTION_ID)),   is("policy-b"));
     assertThat(drools.loanPolicy(params("book", "regular", "student",  "shelf"),
-      createLocationWithId(SECOND_INSTITUTION_ID)), is("policy-b"));
+      createLocationWithInstitution(SECOND_INSTITUTION_ID)), is("policy-b"));
     assertThat(drools.loanPolicy(params("book", "regular", "student",  "old"),
-      createLocationWithId(FIRST_INSTITUTION_ID)),   is("policy-c"));
+      createLocationWithInstitution(FIRST_INSTITUTION_ID)),   is("policy-c"));
   }
 
   @Test
@@ -424,19 +424,19 @@ public class Text2DroolsTest {
         "s stacks: l policy-stacks r no-hold n basic-notice",
         "a " + FIRST_INSTITUTION_ID + ": l policy-a r no-hold n basic-notice")));
     assertThat(drools.loanPolicy(params("book", "regular",       "student", "new"),
-      createLocationWithId(SECOND_INSTITUTION_ID)),         is("policy-new"));
+      createLocationWithInstitution(SECOND_INSTITUTION_ID)),         is("policy-new"));
     assertThat(drools.loanPolicy(params("book", "regular",       "student", "open-stacks"),
-      createLocationWithId(SECOND_INSTITUTION_ID)), is("policy-book"));
+      createLocationWithInstitution(SECOND_INSTITUTION_ID)), is("policy-book"));
     assertThat(drools.loanPolicy(params("book", "regular",       "student", "stacks"),
-      createLocationWithId(SECOND_INSTITUTION_ID)),      is("policy-stacks"));
+      createLocationWithInstitution(SECOND_INSTITUTION_ID)),      is("policy-stacks"));
     assertThat(drools.loanPolicy(params("book", "special-items", "student", "new"),
-      createLocationWithId(SECOND_INSTITUTION_ID)),         is("policy-special"));
+      createLocationWithInstitution(SECOND_INSTITUTION_ID)),         is("policy-special"));
     assertThat(drools.loanPolicy(params("book", "special-items", "student", "stacks"),
-      createLocationWithId(SECOND_INSTITUTION_ID)),      is("policy-special"));
+      createLocationWithInstitution(SECOND_INSTITUTION_ID)),      is("policy-special"));
     assertThat(drools.loanPolicy(params("book", "special-items", "student", "open-stacks"),
-      createLocationWithId(SECOND_INSTITUTION_ID)), is("policy-special"));
+      createLocationWithInstitution(SECOND_INSTITUTION_ID)), is("policy-special"));
     assertThat(drools.loanPolicy(params("book", "regular",       "student", "open-stacks"),
-      createLocationWithId(FIRST_INSTITUTION_ID)), is("policy-a"));
+      createLocationWithInstitution(FIRST_INSTITUTION_ID)), is("policy-a"));
   }
 
   @Test
@@ -489,7 +489,7 @@ public class Text2DroolsTest {
     while (n < 100) {
       for (String [] s : loanTestCases) {
         drools.loanPolicy(params(s[0], s[1], s[2], "shelf"),
-          createLocationWithId(SECOND_INSTITUTION_ID));
+          createLocationWithInstitution(SECOND_INSTITUTION_ID));
         n++;
       }
     }
@@ -556,7 +556,7 @@ public class Text2DroolsTest {
     return params;
   }
 
-  private Location createLocationWithId(String id){
+  private Location createLocationWithInstitution(String id){
     return Location.from(new LocationBuilder().forInstitution(UUID.fromString(id)).create());
   }
 }

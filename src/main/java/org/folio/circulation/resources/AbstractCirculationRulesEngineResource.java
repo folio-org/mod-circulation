@@ -36,7 +36,7 @@ import io.vertx.ext.web.RoutingContext;
 
 /**
  * The circulation rules engine calculates the loan policy based on
- * item type, loan type, patron type, location and institution.
+ * item type, loan type, patron type and location.
  */
 public abstract class AbstractCirculationRulesEngineResource extends Resource {
   protected static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());

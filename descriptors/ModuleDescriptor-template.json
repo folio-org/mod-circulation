@@ -40,7 +40,7 @@
     },
     {
       "id": "circulation",
-      "version": "7.11",
+      "version": "8.0",
       "handlers": [
         {
           "methods": [
@@ -215,102 +215,6 @@
           ],
           "modulePermissions": [
             "circulation-storage.loans.item.delete"
-          ]
-        },
-        {
-          "methods": [
-            "GET"
-          ],
-          "pathPattern": "/circulation/rules",
-          "permissionsRequired": [
-            "circulation.rules.get"
-          ],
-          "modulePermissions": [
-            "circulation-storage.circulation-rules.get"
-          ]
-        },
-        {
-          "methods": [
-            "PUT"
-          ],
-          "pathPattern": "/circulation/rules",
-          "permissionsRequired": [
-            "circulation.rules.put"
-          ],
-          "modulePermissions": [
-            "circulation-storage.circulation-rules.put"
-          ]
-        },
-        {
-          "methods": [
-            "GET"
-          ],
-          "pathPattern": "/circulation/rules/loan-policy",
-          "permissionsRequired": [
-            "circulation.rules.loan-policy.get"
-          ],
-          "modulePermissions": [
-            "circulation-storage.circulation-rules.get"
-          ]
-        },
-        {
-          "methods": [
-            "GET"
-          ],
-          "pathPattern": "/circulation/rules/loan-policy-all",
-          "permissionsRequired": [
-            "circulation.rules.loan-policy-all.get"
-          ],
-          "modulePermissions": [
-            "circulation-storage.circulation-rules.get"
-          ]
-        },
-        {
-          "methods": [
-            "GET"
-          ],
-          "pathPattern": "/circulation/rules/request-policy",
-          "permissionsRequired": [
-            "circulation.rules.request-policy.get"
-          ],
-          "modulePermissions": [
-            "circulation-storage.circulation-rules.get"
-          ]
-        },
-        {
-          "methods": [
-            "GET"
-          ],
-          "pathPattern": "/circulation/rules/request-policy-all",
-          "permissionsRequired": [
-            "circulation.rules.request-policy-all.get"
-          ],
-          "modulePermissions": [
-            "circulation-storage.circulation-rules.get"
-          ]
-        },
-        {
-          "methods": [
-            "GET"
-          ],
-          "pathPattern": "/circulation/rules/notice-policy",
-          "permissionsRequired": [
-            "circulation.rules.notice-policy.get"
-          ],
-          "modulePermissions": [
-            "circulation-storage.circulation-rules.get"
-          ]
-        },
-        {
-          "methods": [
-            "GET"
-          ],
-          "pathPattern": "/circulation/rules/notice-policy-all",
-          "permissionsRequired": [
-            "circulation.rules.notice-policy-all.get"
-          ],
-          "modulePermissions": [
-            "circulation-storage.circulation-rules.get"
           ]
         },
         {
@@ -561,6 +465,108 @@
             "patron-notice.post",
             "inventory-storage.loan-types.item.get",
             "calendar.opening-hours.collection.get"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "circulation-rules",
+      "version": "1.0",
+      "handlers": [
+        {
+          "methods": [
+            "GET"
+          ],
+          "pathPattern": "/circulation/rules",
+          "permissionsRequired": [
+            "circulation.rules.get"
+          ],
+          "modulePermissions": [
+            "circulation-storage.circulation-rules.get"
+          ]
+        },
+        {
+          "methods": [
+            "PUT"
+          ],
+          "pathPattern": "/circulation/rules",
+          "permissionsRequired": [
+            "circulation.rules.put"
+          ],
+          "modulePermissions": [
+            "circulation-storage.circulation-rules.put"
+          ]
+        },
+        {
+          "methods": [
+            "GET"
+          ],
+          "pathPattern": "/circulation/rules/loan-policy",
+          "permissionsRequired": [
+            "circulation.rules.loan-policy.get"
+          ],
+          "modulePermissions": [
+            "circulation-storage.circulation-rules.get"
+          ]
+        },
+        {
+          "methods": [
+            "GET"
+          ],
+          "pathPattern": "/circulation/rules/loan-policy-all",
+          "permissionsRequired": [
+            "circulation.rules.loan-policy-all.get"
+          ],
+          "modulePermissions": [
+            "circulation-storage.circulation-rules.get"
+          ]
+        },
+        {
+          "methods": [
+            "GET"
+          ],
+          "pathPattern": "/circulation/rules/request-policy",
+          "permissionsRequired": [
+            "circulation.rules.request-policy.get"
+          ],
+          "modulePermissions": [
+            "circulation-storage.circulation-rules.get"
+          ]
+        },
+        {
+          "methods": [
+            "GET"
+          ],
+          "pathPattern": "/circulation/rules/request-policy-all",
+          "permissionsRequired": [
+            "circulation.rules.request-policy-all.get"
+          ],
+          "modulePermissions": [
+            "circulation-storage.circulation-rules.get"
+          ]
+        },
+        {
+          "methods": [
+            "GET"
+          ],
+          "pathPattern": "/circulation/rules/notice-policy",
+          "permissionsRequired": [
+            "circulation.rules.notice-policy.get"
+          ],
+          "modulePermissions": [
+            "circulation-storage.circulation-rules.get"
+          ]
+        },
+        {
+          "methods": [
+            "GET"
+          ],
+          "pathPattern": "/circulation/rules/notice-policy-all",
+          "permissionsRequired": [
+            "circulation.rules.notice-policy-all.get"
+          ],
+          "modulePermissions": [
+            "circulation-storage.circulation-rules.get"
           ]
         }
       ]
