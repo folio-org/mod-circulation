@@ -38,9 +38,11 @@ public class RequestsAPILoanRenewalTests extends APITests {
   private static final String ITEMS_CANNOT_BE_RENEWED_MSG = "items cannot be renewed when there is an active recall request";
   private static final String EXPECTED_REASON_LOAN_IS_NOT_RENEWABLE = "loan is not renewable";
   private static final String EXPECTED_REASON_LOAN_IS_NOT_LOANABLE = "item is not loanable";
+  private static final int DEFAULT_HOLD_RENEWAL_PERIOD = 4;
 
   @Test
-  public void forbidRenewalLoanByBarcodeWhenFirstRequestInQueueIsRecall() throws InterruptedException, MalformedURLException, TimeoutException, ExecutionException {
+  public void forbidRenewalLoanByBarcodeWhenFirstRequestInQueueIsRecall()
+    throws InterruptedException, MalformedURLException, TimeoutException, ExecutionException {
 
     final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource rebecca = usersFixture.rebecca();
@@ -63,7 +65,8 @@ public class RequestsAPILoanRenewalTests extends APITests {
   public void allowRenewalLoanByBarcodeWhenProfileIsRollingFirstRequestInQueueIsHoldAndRenewingIsAllowedInLoanPolicy()
     throws InterruptedException, MalformedURLException, TimeoutException, ExecutionException {
 
-    final DateTime expectedDueDate = DateTime.now(DateTimeZone.UTC).plusWeeks(3);
+    final DateTime expectedDueDate = DateTime.now(DateTimeZone.UTC)
+      .plusWeeks(DEFAULT_HOLD_RENEWAL_PERIOD);
     final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource rebecca = usersFixture.rebecca();
 
@@ -167,7 +170,8 @@ public class RequestsAPILoanRenewalTests extends APITests {
   }
 
   @Test
-  public void forbidRenewalLoanByIdWhenFirstRequestInQueueIsRecall() throws InterruptedException, MalformedURLException, TimeoutException, ExecutionException {
+  public void forbidRenewalLoanByIdWhenFirstRequestInQueueIsRecall()
+    throws InterruptedException, MalformedURLException, TimeoutException, ExecutionException {
 
     final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource rebecca = usersFixture.rebecca();
@@ -190,7 +194,8 @@ public class RequestsAPILoanRenewalTests extends APITests {
   public void allowRenewalLoanByIdWhenProfileIsRollingFirstRequestInQueueIsHoldAndRenewingIsAllowedInLoanPolicy()
     throws InterruptedException, MalformedURLException, TimeoutException, ExecutionException {
 
-    final DateTime expectedDueDate = DateTime.now(DateTimeZone.UTC).plusWeeks(3);
+    final DateTime expectedDueDate = DateTime.now(DateTimeZone.UTC)
+      .plusWeeks(DEFAULT_HOLD_RENEWAL_PERIOD);
     final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource rebecca = usersFixture.rebecca();
 
@@ -476,11 +481,12 @@ public class RequestsAPILoanRenewalTests extends APITests {
   private void useRollingPolicyWithRenewingAllowedForHoldingRequest()
     throws InterruptedException, MalformedURLException, TimeoutException, ExecutionException {
     JsonObject holds = new JsonObject();
-    holds.put("alternateRenewalLoanPeriod", Period.weeks(3).asJson());
+    holds.put("alternateRenewalLoanPeriod", Period
+      .weeks(DEFAULT_HOLD_RENEWAL_PERIOD).asJson());
     holds.put("renewItemsWithRequest", true);
 
     final LoanPolicyBuilder rollingPolicy = new LoanPolicyBuilder()
-      .withName("Can Circulate Rolling")
+      .withName("Can Circulate Rolling with holding renewal")
       .withDescription("Can circulate item")
       .withHolds(holds)
       .rolling(Period.weeks(3))
