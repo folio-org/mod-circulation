@@ -1,3 +1,7 @@
+## 16.5.2 2019-09-11
+
+* Respect tenant timezone when creating or moving requests (CIRC-434, CIRC-443)
+
 ## 16.5.1 2019-08-30
 
 * Retains item status after cancelling (or editing) awaiting pickup page request CIRC-429
