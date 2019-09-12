@@ -83,30 +83,10 @@ public abstract class RenewalResource extends Resource {
       .thenComposeAsync(r -> r.after(records -> renewalStrategy.renew(records, bodyAsJson, clients)))
       .thenComposeAsync(r -> r.after(loanRepository::updateLoan))
       .thenApply(r -> r.next(scheduledNoticeService::rescheduleDueDateNotices))
-      .thenApply(r -> r.next(records -> sendRenewalPatronNotice(records, patronNoticeService)))
+      .thenApply(r -> r.next(records -> patronNoticeService.sendLoanNotice(records, NoticeEventType.RENEWED)))
       .thenApply(r -> r.map(loanRepresentation::extendedLoan))
       .thenApply(LoanResponse::from)
       .thenAccept(result -> result.writeTo(routingContext.response()));
-  }
-
-  private Result<LoanAndRelatedRecords> sendRenewalPatronNotice(
-    LoanAndRelatedRecords relatedRecords,
-    PatronNoticeService patronNoticeService) {
-
-    final Loan loan = relatedRecords.getLoan();
-
-    JsonObject noticeContext = createLoanNoticeContext(loan);
-
-    PatronNoticeEvent noticeEvent = new PatronNoticeEventBuilder()
-      .withItem(loan.getItem())
-      .withUser(loan.getUser())
-      .withEventType(NoticeEventType.RENEWED)
-      .withTiming(NoticeTiming.UPON_AT)
-      .withNoticeContext(noticeContext)
-      .build();
-
-    patronNoticeService.acceptNoticeEvent(noticeEvent);
-    return succeeded(relatedRecords);
   }
 
   protected abstract CompletableFuture<Result<Loan>> findLoan(

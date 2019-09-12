@@ -167,7 +167,7 @@ public class CheckOutByBarcodeResource extends Resource {
       .thenComposeAsync(r -> r.after(loanService::truncateLoanWhenItemRecalled))
       .thenComposeAsync(r -> r.after(patronGroupRepository::findPatronGroupForLoanAndRelatedRecords))
       .thenComposeAsync(r -> r.after(loanRepository::createLoan))
-      .thenApply(r -> r.next(records -> sendCheckOutPatronNotice(records, patronNoticeService)))
+      .thenApply(r -> r.next(records -> patronNoticeService.sendLoanNotice(records, NoticeEventType.CHECK_OUT)))
       .thenApply(r -> r.next(scheduledNoticeService::scheduleNoticesForLoanDueDate))
       .thenApply(r -> r.map(LoanAndRelatedRecords::getLoan))
       .thenApply(r -> r.map(loanRepresentation::extendedLoan))
@@ -218,25 +218,4 @@ public class CheckOutByBarcodeResource extends Resource {
     return Result.combine(loanResult, inventoryRecordsResult,
       LoanAndRelatedRecords::withItem);
   }
-
-  private Result<LoanAndRelatedRecords> sendCheckOutPatronNotice(
-    LoanAndRelatedRecords relatedRecords,
-    PatronNoticeService patronNoticeService) {
-
-    final Loan loan = relatedRecords.getLoan();
-
-    JsonObject noticeContext = createLoanNoticeContext(loan);
-
-    PatronNoticeEvent noticeEvent = new PatronNoticeEventBuilder()
-      .withItem(loan.getItem())
-      .withUser(loan.getUser())
-      .withEventType(NoticeEventType.CHECK_OUT)
-      .withTiming(NoticeTiming.UPON_AT)
-      .withNoticeContext(noticeContext)
-      .build();
-
-    patronNoticeService.acceptNoticeEvent(noticeEvent);
-    return succeeded(relatedRecords);
-  }
-
 }
