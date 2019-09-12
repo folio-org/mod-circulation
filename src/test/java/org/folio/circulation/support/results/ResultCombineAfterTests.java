@@ -82,4 +82,18 @@ public class ResultCombineAfterTests {
 
     assertThat(result, isErrorFailureContaining("Something went wrong"));
   }
+
+  @Test
+  public void canCombineAfterUnrelatedResultIsSupplied()
+    throws ExecutionException,
+    InterruptedException {
+
+    final Result<Integer> result = succeeded(10)
+      .combineAfter(() -> completedFuture(succeeded(20)),
+        (v1, v2) -> v1 + v2)
+      .get();
+
+    assertThat(result.succeeded(), is(true));
+    assertThat(result.value(), is(30));
+  }
 }
