@@ -30,9 +30,7 @@ import org.hamcrest.Matcher;
 import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
 import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
 import org.joda.time.Period;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import api.support.APITests;
@@ -189,7 +187,6 @@ public class ChangeDueDateTests extends APITests {
 
 
   @Test
-  @Ignore("Not implemented")
   public void manualDueDateChangeNoticeIsSentWhenPolicyDefinesManualDueDateChangeNoticeConfiguration()
     throws InterruptedException,
     MalformedURLException,
@@ -212,11 +209,12 @@ public class ChangeDueDateTests extends APITests {
         .withLoanNotices(Arrays.asList(
           manualDueDateChangeNoticeConfiguration, checkInNoticeConfiguration)));
 
+    int renewalLimit = 3;
     IndividualResource loanPolicyWithLimitedRenewals = loanPoliciesFixture.create(
       new LoanPolicyBuilder()
         .withName("Limited renewals loan policy")
         .rolling(org.folio.circulation.domain.policy.Period.months(1))
-        .limitedRenewals(3));
+        .limitedRenewals(renewalLimit));
 
     useLoanPolicyAsFallback(
       loanPolicyWithLimitedRenewals.getId(),
@@ -253,14 +251,11 @@ public class ChangeDueDateTests extends APITests {
       .until(patronNoticesClient::getAll, Matchers.hasSize(1));
     List<JsonObject> sentNotices = patronNoticesClient.getAll();
 
-    int expectedRenewalLimit = 3;
-    int expectedRenewalsRemaining = 2;
     Map<String, Matcher<String>> noticeContextMatchers = new HashMap<>();
     noticeContextMatchers.putAll(TemplateContextMatchers.getUserContextMatchers(steve));
     noticeContextMatchers.putAll(TemplateContextMatchers.getItemContextMatchers(smallAngryPlanet, true));
     noticeContextMatchers.putAll(TemplateContextMatchers.getLoanContextMatchers(loanAfterUpdate));
-    noticeContextMatchers.putAll(TemplateContextMatchers.getLoanPolicyContextMatchers(
-      expectedRenewalLimit, expectedRenewalsRemaining));
+    noticeContextMatchers.putAll(TemplateContextMatchers.getLoanPolicyContextMatchers(renewalLimit, renewalLimit));
     MatcherAssert.assertThat(sentNotices,
       hasItems(
         hasEmailNoticeProperties(steve.getId(), manualDueDateChangeTemplateId, noticeContextMatchers)));

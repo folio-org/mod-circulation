@@ -48,6 +48,9 @@ public class PatronNoticeService {
   }
 
   public void acceptNoticeEvent(PatronNoticeEvent event) {
+    if (event.getUser() == null || event.getItem() == null) {
+      return;
+    }
     noticePolicyRepository.lookupPolicy(event.getItem(), event.getUser())
       .thenAccept(r -> r.next(policy -> applyNoticePolicy(event, policy)));
   }
