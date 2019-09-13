@@ -10,6 +10,7 @@ import static org.folio.circulation.domain.representations.LoanProperties.RETURN
 import static org.folio.circulation.domain.representations.LoanProperties.STATUS;
 import static org.folio.circulation.domain.representations.LoanProperties.SYSTEM_RETURN_DATE;
 import static org.folio.circulation.domain.representations.LoanProperties.USER_ID;
+import static org.folio.circulation.support.JsonPropertyFetcher.getBooleanProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getDateTimeProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getIntegerProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getNestedStringProperty;
@@ -104,6 +105,12 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     return this;
   }
 
+  public Loan changeDueDateChangedByRecall(boolean newDueDateChangedByRecall) {
+    write(representation, "dueDateChangedByRecall", newDueDateChangedByRecall);
+
+    return this;
+  }
+
   private void changeReturnDate(DateTime returnDate) {
     write(representation, RETURN_DATE, returnDate);
   }
@@ -172,6 +179,10 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
 
   public boolean isOpen() {
     return StringUtils.equals(getStatus(), "Open");
+  }
+
+  public boolean isDueDateChangedByRecall() {
+    return getBooleanProperty(representation, "dueDateChangedByRecall");
   }
 
   private String getStatus() {

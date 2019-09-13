@@ -880,15 +880,24 @@ public class MoveRequestTests extends APITests {
    * 4. Create Recall request to item X for User C.
    * 5. Move the Recall request to item Y.
    * <br/>
-   * Expect: Due dates for the two loans have been updated during the last move
-   * request.
+   * Expect: The due date for User B's loan is updated after the move and
+   *         the due date for User A's loan is not updated after the move.
+   *         Both loans have their due dates truncated by the application of
+   *         the recall, but this happens only once, at step 4 for User A's
+   *         loan and at step 5 for User B's loan. Since the truncation uses
+   *         the system date, the due dates will not be equivalent in any
+   *         practical application of this scenario, so the test reflects that.
    *
    * @throws Exception - In case of any exception
    */
   @Test
   public void canUpdateSourceAndDestinationLoanDueDateOnMoveRecallRequest() throws Exception {
-    final Instant expectedLoanDueDate = LocalDateTime
-      .now().plusHours(4).toInstant(ZoneOffset.UTC);
+    // Recall placed 2 hours from now
+    final Instant expectedJamesLoanDueDate = LocalDateTime
+        .now().plusHours(2).toInstant(ZoneOffset.UTC);
+    // Move placed 4 hours from now
+    final Instant expectedJessicaLoanDueDate = LocalDateTime
+        .now().plusHours(4).toInstant(ZoneOffset.UTC);
 
     IndividualResource smallAngryPlanetItem = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource interestingTimesItem = itemsFixture.basedUponInterestingTimes();
@@ -901,6 +910,10 @@ public class MoveRequestTests extends APITests {
     loansFixture.checkOutByBarcode(smallAngryPlanetItem, jamesUser);
     loansFixture.checkOutByBarcode(interestingTimesItem, jessicaUser);
 
+    // Have to mock system clocks to demonstrate a delay between the requests
+    // So the dueDates will be recalculated
+    freezeTime(expectedJamesLoanDueDate);
+
     // Create recall request for 'smallAngryPlanet' item to Steve
     IndividualResource recallRequestBySteve = requestsFixture.place(new RequestBuilder()
       .recall()
@@ -911,7 +924,7 @@ public class MoveRequestTests extends APITests {
 
     // Have to mock system clocks to demonstrate a delay between the requests
     // So the dueDates will be recalculated
-    freezeTime(expectedLoanDueDate);
+    freezeTime(expectedJessicaLoanDueDate);
     // Then move the 'smallAngryPlanet' recall request to the 'interestingTimes' item
     requestsFixture.move(new MoveRequestBuilder(recallRequestBySteve.getId(),
       interestingTimesItem.getId(),
@@ -932,8 +945,8 @@ public class MoveRequestTests extends APITests {
         .equals(interestingTimesItem.getId().toString()))
       .findFirst().orElse(new JsonObject());
 
-    assertThat(smallAngryPlanetLoan.getInstant("dueDate"), is(expectedLoanDueDate));
-    assertThat(interestingTimesLoan.getInstant("dueDate"), is(expectedLoanDueDate));
+    assertThat(smallAngryPlanetLoan.getInstant("dueDate"), is(expectedJamesLoanDueDate));
+    assertThat(interestingTimesLoan.getInstant("dueDate"), is(expectedJessicaLoanDueDate));
   }
 
   @Test
