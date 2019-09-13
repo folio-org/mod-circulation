@@ -1,8 +1,5 @@
 package org.folio.circulation.resources;
 
-import static org.folio.circulation.domain.notice.TemplateContextUtil.createLoanNoticeContext;
-import static org.folio.circulation.support.Result.succeeded;
-
 import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.domain.ConfigurationRepository;
@@ -13,9 +10,6 @@ import org.folio.circulation.domain.LoanRepresentation;
 import org.folio.circulation.domain.RequestQueueRepository;
 import org.folio.circulation.domain.UserRepository;
 import org.folio.circulation.domain.notice.NoticeEventType;
-import org.folio.circulation.domain.notice.NoticeTiming;
-import org.folio.circulation.domain.notice.PatronNoticeEvent;
-import org.folio.circulation.domain.notice.PatronNoticeEventBuilder;
 import org.folio.circulation.domain.notice.PatronNoticeService;
 import org.folio.circulation.domain.notice.schedule.DueDateScheduledNoticeService;
 import org.folio.circulation.domain.policy.LoanPolicyRepository;
