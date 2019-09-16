@@ -84,15 +84,15 @@ public class TemplateContextUtil {
 
       User requester = firstRequest.getRequester();
       if (requester != null) {
-        checkInContext.put("requester", createUserContext(requester, firstRequest));
+        checkInContext.put("requester", createUserContext(requester, firstRequest.getDeliveryAddressTypeId()));
       }
     }
 
     return checkInContext;
   }
 
-  public static JsonObject createUserContext(User user, Request request) {
-    JsonObject address = user.getAddressByType(request.getDeliveryAddressTypeId());
+  public static JsonObject createUserContext(User user, String deliveryAddressTypeId) {
+    JsonObject address = user.getAddressByType(deliveryAddressTypeId);
 
     JsonObject userContext = createUserContext(user);
     if(address != null){
@@ -186,7 +186,6 @@ public class TemplateContextUtil {
       .map(Optional::of)
       .orElse(optionalRequest.map(Request::getCancellationReasonName))
       .ifPresent(value -> requestContext.put("reasonForCancellation", value));
-
     optionalRequest
       .map(Request::getAddressType)
       .ifPresent(value -> requestContext.put("deliveryAddressType", value.getAddressType()));

@@ -177,9 +177,9 @@ public class CheckInByBarcodeTests extends APITests {
     CheckInByBarcodeResponse response = loansFixture.checkInByBarcode(item, checkInDate, servicePoint.getId());
 
     User requesterUser = new User(requester.getJson());
-    JsonObject context = response.getStaffSlipContext();
-    JsonObject userContext = context.getJsonObject("requester");
-    JsonObject requestContext = context.getJsonObject("request");
+    JsonObject staffSlipContext = response.getStaffSlipContext();
+    JsonObject userContext = staffSlipContext.getJsonObject("requester");
+    JsonObject requestContext = staffSlipContext.getJsonObject("request");
 
     assertThat(userContext.getString("firstName"), is(requesterUser.getFirstName()));
     assertThat(userContext.getString("lastName"), is(requesterUser.getLastName()));

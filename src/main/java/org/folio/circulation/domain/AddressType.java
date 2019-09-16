@@ -7,22 +7,19 @@ import io.vertx.core.json.JsonObject;
 
 public class AddressType {
   private final String addressType;
-  /**
-   * Address Type description
-   */
-  private final String desc;
+  private final String description;
   private final String id;
 
 
   public AddressType(JsonObject representation) {
     this.addressType = getProperty(representation, "addressType");
-    this.desc = getProperty(representation, "desc");
+    this.description = getProperty(representation, "desc");
     this.id = getProperty(representation, "id");
   }
 
-  public AddressType(String addressType, String desc, String id) {
+  public AddressType(String addressType, String description, String id) {
     this.addressType = addressType;
-    this.desc = desc;
+    this.description = description;
     this.id = id;
   }
 
@@ -30,8 +27,8 @@ public class AddressType {
     return addressType;
   }
 
-  public String getDesc() {
-    return desc;
+  public String getDescription() {
+    return description;
   }
 
   public String getId() {

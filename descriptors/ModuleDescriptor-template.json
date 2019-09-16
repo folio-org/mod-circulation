@@ -939,6 +939,7 @@
         "inventory-storage.service-points.item.get",
         "users.item.get",
         "users.collection.get",
+        "addresstypes.item.get",
         "proxiesfor.collection.get",
         "circulation-storage.loan-policies.item.get",
         "circulation-storage.loan-policies.collection.get",
