@@ -122,7 +122,7 @@ public class RequestRepresentation {
       return;
     }
 
-    ofNullable(request.getDeliveryAddressType())
+    ofNullable(request.getDeliveryAddressTypeId())
       .map(requester::getAddressByType)
       .ifPresent(address -> {
         JsonObject jsonObject = new JsonObject();

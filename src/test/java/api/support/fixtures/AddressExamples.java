@@ -21,6 +21,6 @@ public class AddressExamples {
 
   public static Address SiriusBlack() {
     return new Address(HOME_ADDRESS_TYPE, "12 Grimmauld Place",
-      null, "London", null, null, null);
+      null, "London", "London region", "123456", "UK");
   }
 }

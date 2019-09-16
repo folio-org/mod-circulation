@@ -14,6 +14,7 @@ public class Clients {
   private final CollectionResourceClient holdingsStorageClient;
   private final CollectionResourceClient instancesStorageClient;
   private final CollectionResourceClient usersStorageClient;
+  private final CollectionResourceClient addressTypesStorageClient;
   private final CollectionResourceClient loansStorageClient;
   private final CollectionResourceClient locationsStorageClient;
   private final CollectionResourceClient institutionsStorageClient;
@@ -50,6 +51,7 @@ public class Clients {
       holdingsStorageClient = createHoldingsStorageClient(client, context);
       instancesStorageClient = createInstanceStorageClient(client, context);
       usersStorageClient = createUsersStorageClient(client, context);
+      addressTypesStorageClient = createAddressTypesStorageClient(client, context);
       loansStorageClient = createLoansStorageClient(client, context);
       locationsStorageClient = createLocationsStorageClient(client, context);
       institutionsStorageClient = createInstitutionsStorageClient(client, context);
@@ -103,6 +105,10 @@ public class Clients {
 
   public CollectionResourceClient usersStorage() {
     return usersStorageClient;
+  }
+
+  public CollectionResourceClient addressTypesStorage() {
+    return addressTypesStorageClient;
   }
 
   public CollectionResourceClient loansStorage() {
@@ -274,6 +280,13 @@ public class Clients {
     throws MalformedURLException {
 
     return getCollectionResourceClient(client, context, "/users");
+  }
+
+  private static CollectionResourceClient createAddressTypesStorageClient(
+    OkapiHttpClient client,
+    WebContext context)
+    throws MalformedURLException {
+    return getCollectionResourceClient(client, context, "/addresstypes");
   }
 
   private static CollectionResourceClient createLoansStorageClient(

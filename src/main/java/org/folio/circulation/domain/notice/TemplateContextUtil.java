@@ -84,19 +84,36 @@ public class TemplateContextUtil {
 
       User requester = firstRequest.getRequester();
       if (requester != null) {
-        checkInContext.put("requester", createUserContext(requester));
+        checkInContext.put("requester", createUserContext(requester, firstRequest));
       }
     }
 
     return checkInContext;
   }
 
+  public static JsonObject createUserContext(User user, Request request) {
+    JsonObject address = user.getAddressByType(request.getDeliveryAddressTypeId());
+
+    JsonObject userContext = createUserContext(user);
+    if(address != null){
+      userContext
+        .put("addressLine1", address.getString("addressLine1", null))
+        .put("addressLine2", address.getString("addressLine2", null))
+        .put("city", address.getString("city", null))
+        .put("region", address.getString("region", null))
+        .put("postalCode", address.getString("postalCode", null))
+        .put("countryId", address.getString("countryId", null));
+    }
+
+    return userContext;
+  }
+
   public static JsonObject createUserContext(User user) {
     return new JsonObject()
-      .put("firstName", user.getFirstName())
-      .put("lastName", user.getLastName())
-      .put("middleName", user.getMiddleName())
-      .put("barcode", user.getBarcode());
+    .put("firstName", user.getFirstName())
+    .put("lastName", user.getLastName())
+    .put("middleName", user.getMiddleName())
+    .put("barcode", user.getBarcode());
   }
 
   private static JsonObject createItemContext(Item item) {
@@ -169,6 +186,10 @@ public class TemplateContextUtil {
       .map(Optional::of)
       .orElse(optionalRequest.map(Request::getCancellationReasonName))
       .ifPresent(value -> requestContext.put("reasonForCancellation", value));
+
+    optionalRequest
+      .map(Request::getAddressType)
+      .ifPresent(value -> requestContext.put("deliveryAddressType", value.getAddressType()));
 
     return requestContext;
   }
