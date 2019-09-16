@@ -48,7 +48,7 @@ public class UpdateLoan {
 
     if (request.getRequestType() == RequestType.RECALL && loan != null) {
       return loanRepository.getById(loan.getId())
-          .thenComposeAsync(r -> r.after(l -> doRecall(l, requestAndRelatedRecords, request)));
+          .thenComposeAsync(r -> r.after(l -> recall(l, requestAndRelatedRecords, request)));
     } else {
       return completedFuture(succeeded(requestAndRelatedRecords));
     }
@@ -66,9 +66,9 @@ public class UpdateLoan {
     return of(() -> loanAndRelatedRecords);
   }
 
-  private CompletableFuture<Result<RequestAndRelatedRecords>> doRecall(Loan loan,
+  private CompletableFuture<Result<RequestAndRelatedRecords>> recall(Loan loan,
       RequestAndRelatedRecords requestAndRelatedRecords, Request request) {
-    if (loan.isDueDateChangedByRecall()) {
+    if (loan.wasDueDateChangedByRecall()) {
       // We don't need to apply the recall
       return completedFuture(succeeded(requestAndRelatedRecords));
     } else {

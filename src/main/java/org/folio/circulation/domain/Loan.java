@@ -1,5 +1,6 @@
 package org.folio.circulation.domain;
 
+import static java.lang.Boolean.TRUE;
 import static java.util.Objects.nonNull;
 import static java.util.Objects.requireNonNull;
 import static org.folio.circulation.domain.representations.LoanProperties.ACTION_COMMENT;
@@ -105,8 +106,8 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     return this;
   }
 
-  public Loan changeDueDateChangedByRecall(boolean newDueDateChangedByRecall) {
-    write(representation, "dueDateChangedByRecall", newDueDateChangedByRecall);
+  public Loan changeDueDateChangedByRecall() {
+    write(representation, "dueDateChangedByRecall", TRUE);
 
     return this;
   }
@@ -181,7 +182,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     return StringUtils.equals(getStatus(), "Open");
   }
 
-  public boolean isDueDateChangedByRecall() {
+  public boolean wasDueDateChangedByRecall() {
     return getBooleanProperty(representation, "dueDateChangedByRecall");
   }
 

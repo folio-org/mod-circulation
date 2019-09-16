@@ -516,9 +516,9 @@ public class LoanPolicy {
   }
 
   private Loan changeDueDate(DateTime dueDate, Loan loan) {
-    if (!loan.isDueDateChangedByRecall()) {
+    if (!loan.wasDueDateChangedByRecall()) {
       loan.changeDueDate(dueDate);
-      loan.changeDueDateChangedByRecall(true);
+      loan.changeDueDateChangedByRecall();
     }
 
     return loan;

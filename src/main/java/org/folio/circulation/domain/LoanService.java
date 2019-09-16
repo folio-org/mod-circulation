@@ -44,7 +44,7 @@ public class LoanService {
     final LoanPolicy loanPolicy = loanToRecall.getLoanPolicy();
 
     // We don't need to apply the recall
-    if (loanToRecall.isDueDateChangedByRecall()) {
+    if (loanToRecall.wasDueDateChangedByRecall()) {
       return completedFuture(succeeded(records));
     }
 
