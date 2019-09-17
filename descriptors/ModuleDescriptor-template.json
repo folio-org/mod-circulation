@@ -44,7 +44,7 @@
       "handlers": [
         {
           "methods": ["POST"],
-          "pathPattern": "/loan-anonymization/anonymizeByUserId/{userId}",
+          "pathPattern": "/loan-anonymization/by-user/{userId}",
           "permissionsRequired": [
             "circulation.loans.collection.anonymize.user.post"
           ],

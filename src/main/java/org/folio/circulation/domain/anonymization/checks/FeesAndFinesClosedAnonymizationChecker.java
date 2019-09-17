@@ -15,6 +15,6 @@ public class FeesAndFinesClosedAnonymizationChecker implements AnonymizationChec
 
   @Override
   public String getReason() {
-    return "openfeesandfines";
+    return "haveOpenFeesAndFines";
   }
 }

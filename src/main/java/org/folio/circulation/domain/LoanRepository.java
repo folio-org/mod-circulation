@@ -3,7 +3,6 @@ package org.folio.circulation.domain;
 import static java.lang.String.format;
 import static java.util.Objects.nonNull;
 import static java.util.concurrent.CompletableFuture.completedFuture;
-import static org.folio.circulation.domain.anonymization.LoanAnonymization.FETCH_LOANS_LIMIT;
 import static org.folio.circulation.domain.representations.LoanProperties.PATRON_GROUP_AT_CHECKOUT;
 import static org.folio.circulation.domain.representations.LoanProperties.PATRON_GROUP_ID_AT_CHECKOUT;
 import static org.folio.circulation.support.CqlQuery.exactMatch;
@@ -161,12 +160,23 @@ public class LoanRepository {
     return result.combineAfter(userRepository::getUser, Loan::withUser);
   }
 
-  public CompletableFuture<Result<MultipleRecords<Loan>>> findClosedLoansForUser(String userId) {
+  public CompletableFuture<Result<MultipleRecords<Loan>>> findClosedLoans(int fetchLoansLimit) {
+    return queryLoanStorage(fetchLoansLimit, getStatusCQLQuery("Closed"));
+  }
+
+  private CompletableFuture<Result<MultipleRecords<Loan>>> queryLoanStorage(
+      int fetchLoansLimit, Result<CqlQuery> statusQuery) {
+
+    return statusQuery
+        .after(q -> loansStorageClient.getMany(q, fetchLoansLimit))
+        .thenApply(result -> result.next(this::mapResponseToLoans));
+  }
+
+  public CompletableFuture<Result<MultipleRecords<Loan>>> findClosedLoansForUser(
+      String userId, int fetchLoansLimit) {
     Result<CqlQuery> query = exactMatch("userId", userId);
     final Result<CqlQuery> statusQuery = getStatusCQLQuery("Closed");
-   return  statusQuery.combine(query, CqlQuery::and)
-    .after(q -> loansStorageClient.getMany(q, FETCH_LOANS_LIMIT))
-      .thenApply(result -> result.next(this::mapResponseToLoans));
+   return queryLoanStorage(fetchLoansLimit, statusQuery.combine(query, CqlQuery::and));
   }
 
   public CompletableFuture<Result<MultipleRecords<Loan>>> findBy(String query) {
@@ -260,9 +270,7 @@ public class LoanRepository {
     final Result<CqlQuery> statusQuery = getStatusCQLQuery("Open");
     final Result<CqlQuery> itemIdQuery = exactMatch("itemId", itemId);
 
-    return statusQuery.combine(itemIdQuery, CqlQuery::and)
-      .after(query -> loansStorageClient.getMany(query, 1))
-      .thenApply(result -> result.next(this::mapResponseToLoans));
+    return queryLoanStorage(1, statusQuery.combine(itemIdQuery, CqlQuery::and));
   }
 
   CompletableFuture<Result<MultipleRecords<Request>>> findOpenLoansFor(
@@ -288,9 +296,8 @@ public class LoanRepository {
     final Result<CqlQuery> statusQuery = getStatusCQLQuery("Open");
     final Result<CqlQuery> itemIdQuery = exactMatchAny("itemId", itemsToFetchLoansFor);
 
-    return statusQuery.combine(itemIdQuery, CqlQuery::and)
-      .after(query -> loansStorageClient.getMany(query, requests.size()))
-      .thenApply(result -> result.next(this::mapResponseToLoans))
+    return queryLoanStorage(requests.size(), statusQuery.combine(
+        itemIdQuery, CqlQuery::and))
       .thenApply(multipleLoansResult -> multipleLoansResult.next(
         loans -> matchLoansToRequests(multipleRequests, loans)));
   }
