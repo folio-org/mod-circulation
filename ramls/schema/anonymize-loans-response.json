@@ -10,11 +10,13 @@
         "type": "string"
       }
     },
-    "notAnonymizedLoans": {
-      "description": "Not anonymized loan ids due to open fees and fines",
+    "errors": {
+      "description": "List of errors",
+      "id": "errors",
       "type": "array",
-      "items":{
-        "type": "string"
+      "items": {
+        "type": "object",
+        "$ref": "../raml-util/schemas/error.schema"
       }
     }
   },
