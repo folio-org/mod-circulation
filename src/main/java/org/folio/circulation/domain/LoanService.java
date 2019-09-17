@@ -32,7 +32,7 @@ public class LoanService {
     }
     /*
       This gets the top request, since UpdateRequestQueue.java#L106 updates the request queue prior to loan creation.
-      If that sequesnse changes, the following will need to be updated to requests.stream().skip(1).findFirst().orElse(null)
+      If that sequence changes, the following will need to be updated to requests.stream().skip(1).findFirst().orElse(null)
       and the condition above could do a > 1 comparison. (CIRC-277)
     */
     Request nextRequestInQueue = requests.stream().findFirst().orElse(null);
@@ -42,6 +42,11 @@ public class LoanService {
 
     final Loan loanToRecall = records.getLoan();
     final LoanPolicy loanPolicy = loanToRecall.getLoanPolicy();
+
+    // We don't need to apply the recall
+    if (loanToRecall.wasDueDateChangedByRecall()) {
+      return completedFuture(succeeded(records));
+    }
 
     return completedFuture(loanPolicy
       .recall(loanToRecall)
