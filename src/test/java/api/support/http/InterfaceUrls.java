@@ -149,7 +149,7 @@ public class InterfaceUrls {
   }
 
   public static URL circulationAnonymizeLoansURL(String subPath) {
-    return circulationModuleUrl("/loan-anonymization/anonymizeByUserId/" + subPath);
+    return circulationModuleUrl("/loan-anonymization/by-user/" + subPath);
   }
 
   public static URL accountsUrl(String subPath) {
