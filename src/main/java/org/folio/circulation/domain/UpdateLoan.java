@@ -48,15 +48,7 @@ public class UpdateLoan {
 
     if (request.getRequestType() == RequestType.RECALL && loan != null) {
       return loanRepository.getById(loan.getId())
-          .thenApply(r -> r.map(l -> new LoanAndRelatedRecords(l,
-            requestAndRelatedRecords.getTimeZone())))
-          .thenComposeAsync(r -> r.after(loanPolicyRepository::lookupLoanPolicy))
-          .thenApply(r -> r.next(this::recall))
-          .thenApply(r -> r.next(recallResult -> updateLoanAction(recallResult, request)))
-          .thenComposeAsync(r -> r.after(closedLibraryStrategyService::applyClosedLibraryDueDateManagement))
-          .thenComposeAsync(r -> r.after(loanRepository::updateLoan))
-          .thenApply(r -> r.next(scheduledNoticeService::rescheduleDueDateNotices))
-          .thenApply(r -> r.map(v -> requestAndRelatedRecords.withRequest(request.withLoan(v.getLoan()))));
+          .thenComposeAsync(r -> r.after(l -> recall(l, requestAndRelatedRecords, request)));
     } else {
       return completedFuture(succeeded(requestAndRelatedRecords));
     }
@@ -72,6 +64,24 @@ public class UpdateLoan {
     }
 
     return of(() -> loanAndRelatedRecords);
+  }
+
+  private CompletableFuture<Result<RequestAndRelatedRecords>> recall(Loan loan,
+      RequestAndRelatedRecords requestAndRelatedRecords, Request request) {
+    if (loan.wasDueDateChangedByRecall()) {
+      // We don't need to apply the recall
+      return completedFuture(succeeded(requestAndRelatedRecords));
+    } else {
+      return Result.of(() -> new LoanAndRelatedRecords(loan,
+          requestAndRelatedRecords.getTimeZone()))
+          .after(loanPolicyRepository::lookupLoanPolicy)
+          .thenApply(r -> r.next(this::recall))
+          .thenApply(r -> r.next(recallResult -> updateLoanAction(recallResult, request)))
+          .thenComposeAsync(r -> r.after(closedLibraryStrategyService::applyClosedLibraryDueDateManagement))
+          .thenComposeAsync(r -> r.after(loanRepository::updateLoan))
+          .thenApply(r -> r.next(scheduledNoticeService::rescheduleDueDateNotices))
+          .thenApply(r -> r.map(v -> requestAndRelatedRecords.withRequest(request.withLoan(v.getLoan()))));
+    }
   }
 
   //TODO: Possibly combine this with LoanRenewalService?
