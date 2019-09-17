@@ -92,9 +92,6 @@ public class TemplateContextUtil {
   }
 
   public static JsonObject createUserContext(User user) {
-    if (user == null) {
-      return new JsonObject();
-    }
     return new JsonObject()
       .put("firstName", user.getFirstName())
       .put("lastName", user.getLastName())

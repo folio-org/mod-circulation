@@ -1,14 +1,10 @@
 package org.folio.circulation.domain.notice;
 
-import static org.folio.circulation.domain.notice.TemplateContextUtil.createLoanNoticeContext;
-import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.http.CommonResponseInterpreters.mapToRecordInterpreter;
 
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
-import org.folio.circulation.domain.Loan;
-import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.domain.notice.schedule.ScheduledNoticeConfig;
 import org.folio.circulation.domain.policy.PatronNoticePolicyRepository;
 import org.folio.circulation.support.Clients;
@@ -30,27 +26,7 @@ public class PatronNoticeService {
     this.patronNoticeClient = clients.patronNoticeClient();
   }
 
-  public Result<LoanAndRelatedRecords> sendLoanNotice(LoanAndRelatedRecords records, NoticeEventType eventType) {
-    final Loan loan = records.getLoan();
-
-    JsonObject noticeContext = createLoanNoticeContext(loan);
-
-    PatronNoticeEvent noticeEvent = new PatronNoticeEventBuilder()
-      .withItem(loan.getItem())
-      .withUser(loan.getUser())
-      .withEventType(eventType)
-      .withTiming(NoticeTiming.UPON_AT)
-      .withNoticeContext(noticeContext)
-      .build();
-
-    acceptNoticeEvent(noticeEvent);
-    return succeeded(records);
-  }
-
   public void acceptNoticeEvent(PatronNoticeEvent event) {
-    if (event.getUser() == null || event.getItem() == null) {
-      return;
-    }
     noticePolicyRepository.lookupPolicy(event.getItem(), event.getUser())
       .thenAccept(r -> r.next(policy -> applyNoticePolicy(event, policy)));
   }
@@ -71,7 +47,7 @@ public class PatronNoticeService {
     String recipientId = event.getUser().getId();
 
     sendPatronNotices(matchingNoticeConfiguration, recipientId, event.getNoticeContext());
-    return succeeded(policy);
+    return Result.succeeded(policy);
   }
 
   private void sendPatronNotices(List<NoticeConfiguration> noticeConfigurations, String recipientId, JsonObject context) {

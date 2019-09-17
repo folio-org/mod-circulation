@@ -24,8 +24,6 @@ import org.folio.circulation.domain.UpdateItem;
 import org.folio.circulation.domain.UpdateRequestQueue;
 import org.folio.circulation.domain.User;
 import org.folio.circulation.domain.UserRepository;
-import org.folio.circulation.domain.notice.NoticeEventType;
-import org.folio.circulation.domain.notice.PatronNoticeService;
 import org.folio.circulation.domain.notice.schedule.DueDateScheduledNoticeService;
 import org.folio.circulation.domain.policy.LoanPolicyRepository;
 import org.folio.circulation.domain.validation.AlreadyCheckedOutValidator;
@@ -148,8 +146,7 @@ public class LoanCollectionResource extends CollectionResource {
 
     final DueDateScheduledNoticeService scheduledNoticeService = DueDateScheduledNoticeService.using(clients);
 
-    final LoanPolicyRepository loanPolicyRepository = new LoanPolicyRepository(clients);
-    final PatronNoticeService patronNoticeService = PatronNoticeService.using(clients);
+    final LoanNoticeSender loanNoticeSender = LoanNoticeSender.using(clients);
 
     completedFuture(succeeded(new LoanAndRelatedRecords(loan)))
       .thenCompose(larrResult ->
@@ -170,9 +167,7 @@ public class LoanCollectionResource extends CollectionResource {
       // as this is how the loan action history is populated
       .thenComposeAsync(result -> result.after(loanRepository::updateLoan))
       .thenApply(r -> r.next(scheduledNoticeService::rescheduleDueDateNotices))
-      .thenCompose(r -> r.after(loanPolicyRepository::lookupLoanPolicy))
-      .thenApply(r -> r.next(records ->
-        patronNoticeService.sendLoanNotice(records, NoticeEventType.MANUAL_DUE_DATE_CHANGE)))
+      .thenCompose(r -> r.after(loanNoticeSender::sendManualDueDateChangeNotice))
       .thenApply(NoContentResult::from)
       .thenAccept(result -> result.writeTo(routingContext.response()));
   }

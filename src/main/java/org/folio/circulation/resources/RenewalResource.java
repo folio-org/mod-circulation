@@ -9,8 +9,6 @@ import org.folio.circulation.domain.LoanRepository;
 import org.folio.circulation.domain.LoanRepresentation;
 import org.folio.circulation.domain.RequestQueueRepository;
 import org.folio.circulation.domain.UserRepository;
-import org.folio.circulation.domain.notice.NoticeEventType;
-import org.folio.circulation.domain.notice.PatronNoticeService;
 import org.folio.circulation.domain.notice.schedule.DueDateScheduledNoticeService;
 import org.folio.circulation.domain.policy.LoanPolicyRepository;
 import org.folio.circulation.domain.representations.LoanResponse;
@@ -58,7 +56,7 @@ public abstract class RenewalResource extends Resource {
     final ConfigurationRepository configurationRepository = new ConfigurationRepository(clients);
     final DueDateScheduledNoticeService scheduledNoticeService = DueDateScheduledNoticeService.using(clients);
 
-    final PatronNoticeService patronNoticeService = PatronNoticeService.using(clients);
+    final LoanNoticeSender loanNoticeSender = LoanNoticeSender.using(clients);
 
     //TODO: Validation check for same user should be in the domain service
 
@@ -77,7 +75,7 @@ public abstract class RenewalResource extends Resource {
       .thenComposeAsync(r -> r.after(records -> renewalStrategy.renew(records, bodyAsJson, clients)))
       .thenComposeAsync(r -> r.after(loanRepository::updateLoan))
       .thenApply(r -> r.next(scheduledNoticeService::rescheduleDueDateNotices))
-      .thenApply(r -> r.next(records -> patronNoticeService.sendLoanNotice(records, NoticeEventType.RENEWED)))
+      .thenApply(r -> r.next(loanNoticeSender::sendRenewalPatronNotice))
       .thenApply(r -> r.map(loanRepresentation::extendedLoan))
       .thenApply(LoanResponse::from)
       .thenAccept(result -> result.writeTo(routingContext.response()));

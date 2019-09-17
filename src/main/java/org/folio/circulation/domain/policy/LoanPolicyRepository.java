@@ -1,7 +1,6 @@
 package org.folio.circulation.domain.policy;
 
 import static java.util.Objects.isNull;
-import static java.util.concurrent.CompletableFuture.*;
 import static org.folio.circulation.domain.policy.LoanPolicy.unknown;
 import static org.folio.circulation.support.Result.ofAsync;
 import static org.folio.circulation.support.Result.succeeded;
@@ -37,10 +36,6 @@ public class LoanPolicyRepository extends CirculationPolicyRepository<LoanPolicy
 
   public CompletableFuture<Result<LoanAndRelatedRecords>> lookupLoanPolicy(
     LoanAndRelatedRecords relatedRecords) {
-
-    if (relatedRecords.getLoan().getUser() == null) {
-      return completedFuture(succeeded(relatedRecords));
-    }
 
     return Result.of(relatedRecords::getLoan)
       .combineAfter(this::lookupPolicy, Loan::withLoanPolicy)
@@ -113,7 +108,7 @@ public class LoanPolicyRepository extends CirculationPolicyRepository<LoanPolicy
     }
 
     if (scheduleIds.isEmpty()) {
-      return completedFuture(succeeded(loanPolicy));
+      return CompletableFuture.completedFuture(succeeded(loanPolicy));
     }
 
     return getSchedules(scheduleIds)
