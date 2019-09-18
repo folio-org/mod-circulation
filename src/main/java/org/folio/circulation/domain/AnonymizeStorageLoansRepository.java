@@ -1,17 +1,21 @@
 package org.folio.circulation.domain;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
+import static org.folio.circulation.support.JsonStringArrayHelper.toList;
 import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.http.ResponseMapping.forwardOnFailure;
 import static org.folio.circulation.support.http.ResponseMapping.mapUsingJson;
 
 import java.lang.invoke.MethodHandles;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
+import java.util.stream.Collectors;
 import org.folio.circulation.domain.anonymization.LoanAnonymizationRecords;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
+import org.folio.circulation.support.JsonStringArrayHelper;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.client.ResponseInterpreter;
@@ -38,8 +42,9 @@ public class AnonymizeStorageLoansRepository {
   createStorageLoanResponseInterpreter(LoanAnonymizationRecords records) {
 
     Function<Response, Result<LoanAnonymizationRecords>> mapper = mapUsingJson(
-        response -> records.withAnonymizedLoans(response.getJsonArray("anonymizedLoans")
-          .getList()));
+        response -> records.withAnonymizedLoans(
+            toList(response.getJsonArray("anonymizedLoans")))
+    );
     return new ResponseInterpreter<LoanAnonymizationRecords>().flatMapOn(200, mapper)
       .otherwise(forwardOnFailure());
   }
