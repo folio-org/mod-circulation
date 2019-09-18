@@ -24,7 +24,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
     "anonymizedLoans",
     "errors"
 })
-public class AnonymizeStorageLoansResponse {
+public class LoanAnonymizationAPIResponse {
 
     /**
      * Successfully anonymized loan ids
@@ -32,11 +32,11 @@ public class AnonymizeStorageLoansResponse {
      */
     @JsonProperty("anonymizedLoans")
     @JsonPropertyDescription("Successfully anonymized loan ids")
-    private List<String> anonymizedLoans = new ArrayList<String>();
+    private List<String> anonymizedLoans = new ArrayList<>();
     @JsonProperty("errors")
     private Object errors;
     @JsonIgnore
-    private Map<String, Object> additionalProperties = new HashMap<String, Object>();
+    private Map<String, Object> additionalProperties = new HashMap<>();
 
     /**
      * Successfully anonymized loan ids
@@ -56,7 +56,7 @@ public class AnonymizeStorageLoansResponse {
         this.anonymizedLoans = anonymizedLoans;
     }
 
-    public AnonymizeStorageLoansResponse withAnonymizedLoans(List<String> anonymizedLoans) {
+    public LoanAnonymizationAPIResponse withAnonymizedLoans(List<String> anonymizedLoans) {
         this.anonymizedLoans = anonymizedLoans;
         return this;
     }
@@ -71,7 +71,7 @@ public class AnonymizeStorageLoansResponse {
         this.errors = errors;
     }
 
-    public AnonymizeStorageLoansResponse withErrors(Object errors) {
+    public LoanAnonymizationAPIResponse withErrors(Object errors) {
         this.errors = errors;
         return this;
     }
@@ -86,7 +86,7 @@ public class AnonymizeStorageLoansResponse {
         this.additionalProperties.put(name, value);
     }
 
-    public AnonymizeStorageLoansResponse withAdditionalProperty(String name, Object value) {
+    public LoanAnonymizationAPIResponse withAdditionalProperty(String name, Object value) {
         this.additionalProperties.put(name, value);
         return this;
     }

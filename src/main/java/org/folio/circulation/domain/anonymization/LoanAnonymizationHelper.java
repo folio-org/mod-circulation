@@ -10,9 +10,9 @@ import org.folio.circulation.support.Clients;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class LoanAnonymizationFacade {
+public class LoanAnonymizationHelper {
 
-  private final int fetchLoansLimit = 5000;
+  static final int FETCH_LOANS_LIMIT = 5000;
   private final Logger log = LoggerFactory.getLogger(MethodHandles.lookup()
     .lookupClass());
   private final Clients clients;
@@ -21,13 +21,13 @@ public class LoanAnonymizationFacade {
       Collections.singletonList(new FeesAndFinesClosedAnonymizationChecker());
   private LoanAnonymizationFinderService loansFinderService;
 
-  public LoanAnonymizationFacade(Clients clients) {
+  public LoanAnonymizationHelper(Clients clients) {
     this.clients = clients;
     loanAnonymizationService = new DefaultLoanAnonymizationService(this);
   }
 
   public LoanAnonymizationService byUserId(String userId) {
-    log.info("Initializing loan anonymization for borrower {}", userId);
+    log.info("Initializing loan anonymization for borrower");
 
     loansFinderService = new LoansForBorrowerFinder(this, userId);
     return loanAnonymizationService;
@@ -45,10 +45,6 @@ public class LoanAnonymizationFacade {
 
   List<AnonymizationChecker> anonymizationCheckers() {
     return anonymizationCheckers;
-  }
-
-  int getFetchLoansLimit() {
-    return fetchLoansLimit;
   }
 
   LoanAnonymizationFinderService loansFinder() {

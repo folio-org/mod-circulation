@@ -27,15 +27,15 @@ public class AnonymizeLoansRepresentation {
   }
 
   private static ResponseWritableResult<JsonObject> mapToJson(LoanAnonymizationRecords records) {
-    AnonymizeStorageLoansResponse response = new AnonymizeStorageLoansResponse();
+    LoanAnonymizationAPIResponse response = new LoanAnonymizationAPIResponse();
     response
         .withAnonymizedLoans(records.getAnonymizedLoans())
-        .withErrors(mapToNotAnonymizedLoans(records.getNotAnonymizedLoans()));
+        .withErrors(mapToErrors(records.getNotAnonymizedLoans()));
     return new OkJsonResponseResult(JsonObject.mapFrom(response));
 
   }
 
-  private static List<Error> mapToNotAnonymizedLoans(
+  private static List<Error> mapToErrors(
       MultiValuedMap<String, String> multiMap) {
 
     return multiMap.keySet()

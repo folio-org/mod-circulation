@@ -45,9 +45,9 @@ public class Error {
      */
     @JsonProperty("parameters")
     @JsonPropertyDescription("List of key/value parameters of an error")
-    private List<Parameter> parameters = new ArrayList<Parameter>();
+    private List<Parameter> parameters = new ArrayList<>();
     @JsonIgnore
-    private Map<String, Object> additionalProperties = new HashMap<String, Object>();
+    private Map<String, Object> additionalProperties = new HashMap<>();
 
     /**
      * 

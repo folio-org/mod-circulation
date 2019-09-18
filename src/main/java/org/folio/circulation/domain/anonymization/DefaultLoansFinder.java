@@ -13,9 +13,9 @@ import org.folio.circulation.support.Result;
 abstract class DefaultLoansFinder implements LoanAnonymizationFinderService {
 
   private final AccountRepository accountRepository;
-  protected LoanAnonymizationFacade anonymization;
+  protected LoanAnonymizationHelper anonymization;
 
-  public DefaultLoansFinder(LoanAnonymizationFacade anonymization) {
+  public DefaultLoansFinder(LoanAnonymizationHelper anonymization) {
     this.anonymization = anonymization;
     accountRepository = new AccountRepository(anonymization.clients());
   }

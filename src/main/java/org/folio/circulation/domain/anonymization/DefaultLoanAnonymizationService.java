@@ -19,10 +19,10 @@ public class DefaultLoanAnonymizationService implements LoanAnonymizationService
 
   private static final String CAN_BE_ANONYMIZED_KEY = "_";
 
-  private final LoanAnonymizationFacade anonymization;
+  private final LoanAnonymizationHelper anonymization;
   private final AnonymizeStorageLoansRepository anonymizeStorageLoansRepository;
 
-  DefaultLoanAnonymizationService(LoanAnonymizationFacade anonymization) {
+  DefaultLoanAnonymizationService(LoanAnonymizationHelper anonymization) {
     this.anonymization = anonymization;
     anonymizeStorageLoansRepository = new AnonymizeStorageLoansRepository(anonymization.clients());
   }
