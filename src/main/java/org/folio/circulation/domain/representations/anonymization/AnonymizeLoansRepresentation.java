@@ -18,8 +18,7 @@ import io.vertx.core.json.JsonObject;
 
 public class AnonymizeLoansRepresentation {
 
-  private AnonymizeLoansRepresentation() {
-  }
+  private AnonymizeLoansRepresentation() { }
 
   public static ResponseWritableResult<JsonObject> from(Result<LoanAnonymizationRecords> records) {
     return records.map(AnonymizeLoansRepresentation::mapToJson)

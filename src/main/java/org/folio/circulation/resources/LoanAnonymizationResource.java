@@ -30,8 +30,7 @@ public class LoanAnonymizationResource extends Resource {
     final WebContext context = new WebContext(routingContext);
     final Clients clients = Clients.create(context, client);
 
-    String borrowerId = routingContext.request()
-      .getParam("userId");
+    String borrowerId = routingContext.request().getParam("userId");
 
     LoanAnonymizationService loanAnonymization =
       new LoanAnonymizationHelper(clients).byUserId(borrowerId);
