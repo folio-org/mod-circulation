@@ -172,7 +172,7 @@ public class LoanRepository {
         .thenApply(result -> result.next(this::mapResponseToLoans));
   }
 
-  public CompletableFuture<Result<MultipleRecords<Loan>>> findClosedLoansForUser(
+  public CompletableFuture<Result<MultipleRecords<Loan>>> findClosedLoans(
       String userId, int fetchLoansLimit) {
     Result<CqlQuery> query = exactMatch("userId", userId);
     final Result<CqlQuery> statusQuery = getStatusCQLQuery("Closed");
