@@ -13,11 +13,11 @@ public enum NoticeEventType {
   PAGING_REQUEST("Paging request"),
   HOLD_REQUEST("Hold request"),
   RECALL_REQUEST("Recall request"),
-  RECALL_TO_LOANEE("Recall loanee"),
+  ITEM_RECALLED("Item recalled"),
   REQUEST_CANCELLATION("Request cancellation"),
   AVAILABLE("Available"),
   REQUEST_EXPIRATION("Request expiration"),
-  HOLD_EXPIRATION("Hold Expiration"),
+  HOLD_EXPIRATION("Hold expiration"),
   UNKNOWN("Unknown");
 
 

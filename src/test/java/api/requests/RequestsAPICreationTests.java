@@ -83,7 +83,7 @@ public class RequestsAPICreationTests extends APITests {
   private static final String PAGING_REQUEST_EVENT = "Paging request";
   private static final String HOLD_REQUEST_EVENT = "Hold request";
   private static final String RECALL_REQUEST_EVENT = "Recall request";
-  private static final String RECALL_TO_LOANEE = "Recall loanee";
+  private static final String ITEM_RECALLED = "Item recalled";
 
   @Test
   public void canCreateARequest()
@@ -1639,7 +1639,7 @@ public class RequestsAPICreationTests extends APITests {
       .create();
     JsonObject recallToLoaneeConfiguration = new NoticeConfigurationBuilder()
       .withTemplateId(recallToLoaneeTemplateId)
-      .withEventType(RECALL_TO_LOANEE)
+      .withEventType(ITEM_RECALLED)
       .create();
     JsonObject pageConfirmationConfiguration = new NoticeConfigurationBuilder()
       .withTemplateId(UUID.randomUUID())
@@ -1730,7 +1730,7 @@ public class RequestsAPICreationTests extends APITests {
     UUID recallToLoanOwnerTemplateId = UUID.randomUUID();
     JsonObject recallToLoanOwnerNoticeConfiguration = new NoticeConfigurationBuilder()
       .withTemplateId(recallToLoanOwnerTemplateId)
-      .withEventType(RECALL_TO_LOANEE)
+      .withEventType(ITEM_RECALLED)
       .create();
     NoticePolicyBuilder noticePolicy = new NoticePolicyBuilder()
       .withName("Policy with recall notice")
