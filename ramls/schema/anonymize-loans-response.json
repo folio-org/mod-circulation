@@ -1,0 +1,24 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "description": "Response schema for anonymize loans request",
+  "type": "object",
+  "properties": {
+    "anonymizedLoans": {
+      "description": "Successfully anonymized loan ids",
+      "type": "array",
+      "items":{
+        "type": "string"
+      }
+    },
+    "errors": {
+      "description": "List of errors",
+      "id": "errors",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "$ref": "../raml-util/schemas/error.schema"
+      }
+    }
+  },
+  "additionalProperties": false
+}
