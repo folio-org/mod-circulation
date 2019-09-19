@@ -39,6 +39,22 @@
       ]
     },
     {
+      "id": "loan-anonymization",
+      "version": "0.1",
+      "handlers": [
+        {
+          "methods": ["POST"],
+          "pathPattern": "/loan-anonymization/by-user/{userId}",
+          "permissionsRequired": [
+            "circulation.loans.collection.anonymize.user.post"
+          ],
+          "modulePermissions": [
+            "modperms.circulation.loans.anonymize"
+          ]
+        }
+      ]
+    },
+    {
       "id": "circulation",
       "version": "7.11",
       "handlers": [
@@ -536,7 +552,7 @@
     },
     {
       "id": "patron-notice-policy-storage",
-      "version": "0.9"
+      "version": "0.11"
     },
     {
       "id": "patron-notice",
@@ -622,6 +638,11 @@
       "permissionName": "circulation.loans.item.put",
       "displayName": "circulation - modify loan",
       "description": "modify individual loan"
+    },
+    {
+      "permissionName": "circulation.loans.collection.anonymize.user.post",
+      "displayName": "circulation - anonymize loans",
+      "description": "anonymize loans"
     },
     {
       "permissionName": "circulation.loans.item.delete",
@@ -1046,6 +1067,53 @@
       "visible": false
     },
     {
+      "permissionName": "modperms.circulation.loans.anonymize",
+      "displayName" : "module permissions for one op",
+      "description" : "to reduce X-Okapi-Token size",
+      "subPermissions": [
+        "circulation-storage.loans.item.put",
+        "circulation-storage.loans.item.get",
+        "circulation-storage.loans.collection.get",
+        "circulation.rules.loan-policy.get",
+        "circulation.rules.request-policy.get",
+        "circulation-storage.requests.collection.get",
+        "circulation-storage.requests.item.put",
+        "inventory-storage.items.item.put",
+        "inventory-storage.items.item.get",
+        "inventory-storage.items.collection.get",
+        "inventory-storage.locations.item.get",
+        "inventory-storage.locations.collection.get",
+        "inventory-storage.location-units.institutions.item.get",
+        "inventory-storage.location-units.campuses.item.get",
+        "inventory-storage.location-units.libraries.item.get",
+        "inventory-storage.holdings.collection.get",
+        "inventory-storage.holdings.item.get",
+        "inventory-storage.instances.collection.get",
+        "inventory-storage.instances.item.get",
+        "inventory-storage.material-types.item.get",
+        "inventory-storage.material-types.collection.get",
+        "inventory-storage.service-points.collection.get",
+        "inventory-storage.service-points.item.get",
+        "inventory-storage.loan-types.item.get",
+        "users.item.get",
+        "users.collection.get",
+        "proxiesfor.collection.get",
+        "circulation-storage.loan-policies.item.get",
+        "circulation-storage.loan-policies.collection.get",
+        "circulation-storage.request-policies.item.get",
+        "circulation-storage.fixed-due-date-schedules.item.get",
+        "circulation-storage.fixed-due-date-schedules.collection.get",
+        "configuration.entries.collection.get",
+        "circulation.rules.notice-policy.get",
+        "circulation-storage.patron-notice-policies.item.get",
+        "scheduled-notice-storage.scheduled-notices.collection.delete",
+        "scheduled-notice-storage.scheduled-notices.item.post",
+        "patron-notice.post",
+        "anonymize-storage-loans.post"
+      ],
+      "visible": false
+    },
+    {
       "permissionName": "modperms.circulation.renew-by-id.post",
       "displayName" : "module permissions for one op",
       "description" : "to reduce X-Okapi-Token size",
@@ -1145,7 +1213,6 @@
         "inventory-storage.locations.collection.get",
         "inventory-storage.location-units.institutions.item.get",
         "inventory-storage.location-units.campuses.item.get",
-        "inventory-storage.location-units.libraries.collection.get",
         "inventory-storage.location-units.libraries.item.get",
         "inventory-storage.holdings.collection.get",
         "inventory-storage.holdings.item.get",
@@ -1459,6 +1526,7 @@
         "users.item.get",
         "proxiesfor.collection.get",
         "inventory-storage.material-types.item.get",
+        "inventory-storage.loan-types.item.get",
         "circulation-storage.loan-policies.item.get",
         "circulation-storage.loan-policies.collection.get",
         "circulation-storage.request-policies.item.get",
@@ -1477,9 +1545,17 @@
   },
   "launchDescriptor": {
     "dockerImage": "${artifactId}:${version}",
+    "dockerPull": false,
     "dockerArgs": {
-      "HostConfig": { "PortBindings": { "9801/tcp":  [{ "HostPort": "%p" }] } }
+      "HostConfig": {
+        "Memory": 357913941,
+        "PortBindings": { "9801/tcp": [ { "HostPort": "%p" } ] }
+      }
     },
-    "dockerPull" : false
+    "env": [
+      { "name": "JAVA_OPTIONS",
+        "value": "-XX:+UnlockExperimentalVMOptions -XX:+UseCGroupMemoryLimitForHeap"
+      }
+    ]
   }
 }

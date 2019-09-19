@@ -61,6 +61,10 @@ public class NoticeConfigurationBuilder extends JsonBuilder implements Builder {
     return withEventType("Renewed");
   }
 
+  public NoticeConfigurationBuilder withManualDueDateChangeEvent() {
+    return withEventType("Manual due date change");
+  }
+
   public NoticeConfigurationBuilder withCheckInEvent() {
     return withEventType("Check in");
   }
@@ -74,7 +78,7 @@ public class NoticeConfigurationBuilder extends JsonBuilder implements Builder {
   }
 
   public NoticeConfigurationBuilder withHoldShelfExpirationEvent() {
-    return withEventType("Hold Expiration");
+    return withEventType("Hold expiration");
   }
 
   private NoticeConfigurationBuilder withTiming(String timing, JsonObject timingPeriod) {

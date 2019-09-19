@@ -67,7 +67,7 @@ public class MoveRequestPolicyTests extends APITests {
     UUID recallToLoaneeTemplateId = UUID.randomUUID();
     JsonObject recallToLoaneeConfiguration = new NoticeConfigurationBuilder()
       .withTemplateId(recallToLoaneeTemplateId)
-      .withEventType(NoticeEventType.RECALL_TO_LOANEE.getRepresentation())
+      .withEventType(NoticeEventType.ITEM_RECALLED.getRepresentation())
       .create();
 
     noticePolicy = new NoticePolicyBuilder()
@@ -244,7 +244,7 @@ public class MoveRequestPolicyTests extends APITests {
     // jessica places recall request on interestingTimes
     IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
       interestingTimes, jessica, DateTime.now(DateTimeZone.UTC), RequestType.RECALL.getValue());
-    
+
     assertThat(patronNoticesClient.getAll().size(), is(1));
 
     // move jessica's recall request from interestingTimes to smallAngryPlanet

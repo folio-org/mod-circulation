@@ -24,11 +24,14 @@ import org.folio.circulation.support.http.server.ServerErrorResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.inject.internal.util.Lists;
+
 import api.support.APITestContext;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Future;
 import io.vertx.core.MultiMap;
 import io.vertx.core.http.HttpServer;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 
@@ -191,6 +194,7 @@ public class FakeOkapi extends AbstractVerticle {
     registerCirculationRulesStorage(router);
     registerCalendar(router);
     registerLibraryHours(router);
+    registerFakeStorageLoansAnonymize(router);
 
     new FakeStorageModuleBuilder()
       .withRecordName("institution")
@@ -365,6 +369,26 @@ public class FakeOkapi extends AbstractVerticle {
         }
       });
     }
+  }
+
+  private void registerFakeStorageLoansAnonymize(Router router) {
+
+    router.post("/anonymize-storage-loans")
+      .handler(routingContext -> {
+        routingContext.request()
+          .bodyHandler(body -> {
+            JsonObject responseBody = new JsonObject();
+            JsonArray providedLoanIds = body.toJsonObject()
+              .getJsonArray("loanIds");
+            providedLoanIds = Objects.isNull(providedLoanIds) ? new JsonArray() : providedLoanIds;
+            responseBody.put("anonymizedLoans", Lists.newArrayList(providedLoanIds));
+            responseBody.put("notAnonymizedLoans", new JsonArray());
+            routingContext.response()
+              .putHeader("Content-type", "application/json")
+              .setStatusCode(200)
+              .end(responseBody.encode());
+          });
+      });
   }
 
   private void registerCirculationRulesStorage(Router router) {
