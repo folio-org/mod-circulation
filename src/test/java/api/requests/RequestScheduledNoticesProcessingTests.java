@@ -27,6 +27,7 @@ import org.hamcrest.Matcher;
 import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import api.support.APITests;
@@ -68,6 +69,7 @@ public class RequestScheduledNoticesProcessingTests extends APITests {
     pickupServicePoint = servicePointsFixture.cd1();
   }
 
+  @Ignore
   @Test
   public void uponAtRequestExpirationNoticeShouldBeSentAndDeletedWhenRequestExpirationDateHasPassed()
     throws MalformedURLException,
