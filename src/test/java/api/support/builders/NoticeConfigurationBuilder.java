@@ -78,7 +78,7 @@ public class NoticeConfigurationBuilder extends JsonBuilder implements Builder {
   }
 
   public NoticeConfigurationBuilder withHoldShelfExpirationEvent() {
-    return withEventType("Hold Expiration");
+    return withEventType("Hold expiration");
   }
 
   private NoticeConfigurationBuilder withTiming(String timing, JsonObject timingPeriod) {
