@@ -552,7 +552,7 @@
     },
     {
       "id": "patron-notice-policy-storage",
-      "version": "0.9"
+      "version": "0.11"
     },
     {
       "id": "patron-notice",
