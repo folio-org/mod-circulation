@@ -312,6 +312,7 @@ public class LoanPolicy {
         if(isAlternateDueDateSchedule(requestQueue)) {
           rollingPeriod = getPeriod(holds, ALTERNATE_CHECKOUT_LOAN_PERIOD_KEY);
         }
+
         return new RollingCheckOutDueDateStrategy(getId(), getName(),
           rollingPeriod, fixedDueDateSchedules, this::loanPolicyValidationError);
       }
@@ -404,8 +405,8 @@ public class LoanPolicy {
 
   private JsonObject getHolds() {
     return representation
-      .getJsonObject("requestManagement", new JsonObject())
-      .getJsonObject("holds", new JsonObject());
+      .getJsonObject(REQUEST_MANAGEMENT_KEY, new JsonObject())
+      .getJsonObject(HOLDS_KEY, new JsonObject());
   }
 
   private FixedDueDateSchedules getRenewalDueDateLimitSchedules() {

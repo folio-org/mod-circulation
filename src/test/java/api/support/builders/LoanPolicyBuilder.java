@@ -188,11 +188,17 @@ public class LoanPolicyBuilder extends JsonBuilder implements Builder {
       put(requestManagement, "recalls", recalls);
     }
 
-    if (holds != null) {
-      if (alternateCheckoutLoanPeriod != null) {
-        put(holds, "alternateCheckoutLoanPeriod", alternateCheckoutLoanPeriod);
+    JsonObject newHolds = null;
+    if (alternateCheckoutLoanPeriod != null) {
+      if (requestManagement == null) {
+        requestManagement = new JsonObject();
       }
+      newHolds = new JsonObject();
+      put(newHolds, "alternateCheckoutLoanPeriod", alternateCheckoutLoanPeriod);
+      put(requestManagement, "holds", newHolds);
+    }
 
+    if (holds != null) {
       if (requestManagement == null) {
         requestManagement = new JsonObject();
       }
@@ -668,7 +674,7 @@ public class LoanPolicyBuilder extends JsonBuilder implements Builder {
       this.alternateFixedDueDateScheduleId,
       this.renewable,
       this.recallsMinimumGuaranteedLoanPeriod,
-      recallsRecallReturnInterval,
+      this.recallsRecallReturnInterval,
       holds,
       this.alternateCheckoutLoanPeriod);
   }
@@ -692,8 +698,8 @@ public class LoanPolicyBuilder extends JsonBuilder implements Builder {
       this.alternateFixedDueDateScheduleId,
       this.renewable,
       this.recallsMinimumGuaranteedLoanPeriod,
-      recallsRecallReturnInterval,
-      alternateCheckoutLoanPeriod.asJson(),
-      holds);
+      this.recallsRecallReturnInterval,
+      this.holds,
+      alternateCheckoutLoanPeriod.asJson());
   }
 }
