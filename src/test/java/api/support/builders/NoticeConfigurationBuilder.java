@@ -61,6 +61,10 @@ public class NoticeConfigurationBuilder extends JsonBuilder implements Builder {
     return withEventType("Renewed");
   }
 
+  public NoticeConfigurationBuilder withManualDueDateChangeEvent() {
+    return withEventType("Manual due date change");
+  }
+
   public NoticeConfigurationBuilder withCheckInEvent() {
     return withEventType("Check in");
   }

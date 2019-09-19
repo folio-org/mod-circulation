@@ -1,7 +1,6 @@
 package org.folio.circulation.resources;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
-import static org.folio.circulation.domain.notice.TemplateContextUtil.createLoanNoticeContext;
 import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequest.ITEM_BARCODE;
 import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequest.PROXY_USER_BARCODE;
 import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequest.SERVICE_POINT_ID;
@@ -25,11 +24,6 @@ import org.folio.circulation.domain.UpdateItem;
 import org.folio.circulation.domain.UpdateRequestQueue;
 import org.folio.circulation.domain.User;
 import org.folio.circulation.domain.UserRepository;
-import org.folio.circulation.domain.notice.NoticeEventType;
-import org.folio.circulation.domain.notice.NoticeTiming;
-import org.folio.circulation.domain.notice.PatronNoticeEvent;
-import org.folio.circulation.domain.notice.PatronNoticeEventBuilder;
-import org.folio.circulation.domain.notice.PatronNoticeService;
 import org.folio.circulation.domain.notice.schedule.DueDateScheduledNoticeService;
 import org.folio.circulation.domain.notice.schedule.ScheduledNoticesRepository;
 import org.folio.circulation.domain.policy.LoanPolicyRepository;
@@ -104,7 +98,7 @@ public class CheckOutByBarcodeResource extends Resource {
     final LoanService loanService = new LoanService(clients);
     final LoanPolicyRepository loanPolicyRepository = new LoanPolicyRepository(clients);
     final PatronNoticePolicyRepository patronNoticePolicyRepository = new PatronNoticePolicyRepository(clients);
-    final PatronNoticeService patronNoticeService = new PatronNoticeService(patronNoticePolicyRepository, clients);
+    final LoanNoticeSender loanNoticeSender = LoanNoticeSender.using(clients);
     final PatronGroupRepository patronGroupRepository = new PatronGroupRepository(clients);
     final ConfigurationRepository configurationRepository = new ConfigurationRepository(clients);
     final ScheduledNoticesRepository scheduledNoticesRepository = ScheduledNoticesRepository.using(clients);
@@ -167,7 +161,7 @@ public class CheckOutByBarcodeResource extends Resource {
       .thenComposeAsync(r -> r.after(loanService::truncateLoanWhenItemRecalled))
       .thenComposeAsync(r -> r.after(patronGroupRepository::findPatronGroupForLoanAndRelatedRecords))
       .thenComposeAsync(r -> r.after(loanRepository::createLoan))
-      .thenApply(r -> r.next(records -> sendCheckOutPatronNotice(records, patronNoticeService)))
+      .thenApply(r -> r.next(loanNoticeSender::sendCheckOutPatronNotice))
       .thenApply(r -> r.next(scheduledNoticeService::scheduleNoticesForLoanDueDate))
       .thenApply(r -> r.map(LoanAndRelatedRecords::getLoan))
       .thenApply(r -> r.map(loanRepresentation::extendedLoan))
@@ -218,25 +212,4 @@ public class CheckOutByBarcodeResource extends Resource {
     return Result.combine(loanResult, inventoryRecordsResult,
       LoanAndRelatedRecords::withItem);
   }
-
-  private Result<LoanAndRelatedRecords> sendCheckOutPatronNotice(
-    LoanAndRelatedRecords relatedRecords,
-    PatronNoticeService patronNoticeService) {
-
-    final Loan loan = relatedRecords.getLoan();
-
-    JsonObject noticeContext = createLoanNoticeContext(loan);
-
-    PatronNoticeEvent noticeEvent = new PatronNoticeEventBuilder()
-      .withItem(loan.getItem())
-      .withUser(loan.getUser())
-      .withEventType(NoticeEventType.CHECK_OUT)
-      .withTiming(NoticeTiming.UPON_AT)
-      .withNoticeContext(noticeContext)
-      .build();
-
-    patronNoticeService.acceptNoticeEvent(noticeEvent);
-    return succeeded(relatedRecords);
-  }
-
 }

@@ -8,6 +8,7 @@ public enum NoticeEventType {
   CHECK_IN("Check in"),
   CHECK_OUT("Check out"),
   RENEWED("Renewed"),
+  MANUAL_DUE_DATE_CHANGE("Manual due date change"),
   DUE_DATE("Due date"),
 
   PAGING_REQUEST("Paging request"),
