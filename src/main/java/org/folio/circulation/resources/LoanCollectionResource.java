@@ -128,7 +128,7 @@ public class LoanCollectionResource extends CollectionResource {
     final Clients clients = Clients.create(context, client);
     final RequestQueueRepository requestQueueRepository = RequestQueueRepository.using(clients);
     final ServicePointRepository servicePointRepository = new ServicePointRepository(clients);
-    final ItemRepository itemRepository = new ItemRepository(clients, false, false, false);
+    final ItemRepository itemRepository = new ItemRepository(clients, true, true, true);
     final UserRepository userRepository = new UserRepository(clients);
 
     final UpdateRequestQueue requestQueueUpdate = UpdateRequestQueue.using(clients);
@@ -145,6 +145,8 @@ public class LoanCollectionResource extends CollectionResource {
         new ServicePointLoanLocationValidator();
 
     final DueDateScheduledNoticeService scheduledNoticeService = DueDateScheduledNoticeService.using(clients);
+
+    final LoanNoticeSender loanNoticeSender = LoanNoticeSender.using(clients);
 
     completedFuture(succeeded(new LoanAndRelatedRecords(loan)))
       .thenCompose(larrResult ->
@@ -165,6 +167,7 @@ public class LoanCollectionResource extends CollectionResource {
       // as this is how the loan action history is populated
       .thenComposeAsync(result -> result.after(loanRepository::updateLoan))
       .thenApply(r -> r.next(scheduledNoticeService::rescheduleDueDateNotices))
+      .thenCompose(r -> r.after(loanNoticeSender::sendManualDueDateChangeNotice))
       .thenApply(NoContentResult::from)
       .thenAccept(result -> result.writeTo(routingContext.response()));
   }

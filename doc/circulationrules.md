@@ -290,7 +290,7 @@ There always must be a line with a set of three fallback policies, one for
 each type like `fallback-policy: l no-circulation r no-request n no-notice`.
 It must be after the priority line and before the first rule.
 
-For `priority: last-line` it must be after the last rule.
+For `priority: first-line` it must be after the last rule.
 
 ## Single circulation rules file
 

@@ -1465,6 +1465,7 @@
         "users.item.get",
         "proxiesfor.collection.get",
         "inventory-storage.material-types.item.get",
+        "inventory-storage.loan-types.item.get",
         "circulation-storage.loan-policies.item.get",
         "circulation-storage.loan-policies.collection.get",
         "circulation-storage.request-policies.item.get",
