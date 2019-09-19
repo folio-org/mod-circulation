@@ -13,9 +13,11 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import org.folio.circulation.resources.LoanCirculationRulesEngineResource;
+import org.folio.circulation.rules.Campus;
 import org.folio.circulation.rules.Institution;
 import org.folio.circulation.rules.ItemLocation;
 import org.folio.circulation.rules.ItemType;
+import org.folio.circulation.rules.Library;
 import org.folio.circulation.rules.LoanType;
 import org.folio.circulation.rules.PatronGroup;
 import org.folio.circulation.rules.Policy;
@@ -126,6 +128,8 @@ public class CirculationRulesEngineAPITests extends APITests {
   private ItemLocation s1 = new ItemLocation(String.valueOf(mainFloor.getId()));
   private ItemLocation s2 = new ItemLocation(String.valueOf(fourthFloor.getId()));
   private Institution i1 = new Institution(mainFloor.getJson().getString("institutionId"));
+  private Library l1 = new Library(mainFloor.getJson().getString("libraryId"));
+  private Campus c1 = new Campus(mainFloor.getJson().getString("campusId"));
   // Loan Policies
   private Policy lp6 = new Policy("6a475259-8a97-4992-a415-76440f5f7c23");
   private Policy lp7 = new Policy("7b586360-8ba8-4aa3-b526-875510608d34");
@@ -163,6 +167,20 @@ public class CirculationRulesEngineAPITests extends APITests {
     "fallback-policy: l " + lp2 + " r " + rp1 + " n " + np1,
     "m " + m2 + ": l " + lp3 + " r " + rp2 + " n " + np2,
     "a " + i1 + ": l " + lp4 + " r " + rp2 + " n " + np2
+  );
+
+  private String rulesWithLibrary = String.join("\n",
+    "priority: t, s, c, b, a, m, g",
+    "fallback-policy: l " + lp2 + " r " + rp1 + " n " + np1,
+    "m " + m2 + ": l " + lp3 + " r " + rp2 + " n " + np2,
+    "c " + l1 + ": l " + lp4 + " r " + rp2 + " n " + np2
+  );
+
+  private String rulesWithCampus = String.join("\n",
+    "priority: t, s, c, b, a, m, g",
+    "fallback-policy: l " + lp2 + " r " + rp1 + " n " + np1,
+    "m " + m2 + ": l " + lp3 + " r " + rp2 + " n " + np2,
+    "b " + c1 + ": l " + lp4 + " r " + rp2 + " n " + np2
   );
 
   @Before
@@ -357,6 +375,24 @@ public class CirculationRulesEngineAPITests extends APITests {
   @Test
   public void shouldApplyRulesWithInstitution() {
     setRules(rulesWithInstitution);
+    assertThat(applyLoanPolicy(m1, t2, g2, s2), is(lp2));
+    assertThat(applyLoanPolicy(m2, t2, g2, s2), is(lp3));
+    assertThat(applyLoanPolicy(m1, t2, g2, s1), is(lp4));
+    assertThat(applyLoanPolicy(m2, t2, g2, s1), is(lp4));
+  }
+
+  @Test
+  public void shouldApplyRulesWithLibrary() {
+    setRules(rulesWithLibrary);
+    assertThat(applyLoanPolicy(m1, t2, g2, s2), is(lp2));
+    assertThat(applyLoanPolicy(m2, t2, g2, s2), is(lp3));
+    assertThat(applyLoanPolicy(m1, t2, g2, s1), is(lp4));
+    assertThat(applyLoanPolicy(m2, t2, g2, s1), is(lp4));
+  }
+
+  @Test
+  public void shouldApplyRulesWithCampus() {
+    setRules(rulesWithLibrary);
     assertThat(applyLoanPolicy(m1, t2, g2, s2), is(lp2));
     assertThat(applyLoanPolicy(m2, t2, g2, s2), is(lp3));
     assertThat(applyLoanPolicy(m1, t2, g2, s1), is(lp4));
