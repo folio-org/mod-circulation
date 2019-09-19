@@ -441,7 +441,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
     Response response = loansFixture.attemptRenewal(422, smallAngryPlanet, jessica);
 
     assertThat(response.getJson(), hasErrorWith(allOf(
-      hasMessage("renewal date falls outside of date ranges in rolling loan policy"))));
+      hasMessage("renewal date falls outside of date ranges in the loan policy"))));
 
     final DateTime newDueDate = loanDueDate.plusWeeks(3).plusMonths(2);
 
