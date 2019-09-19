@@ -29,6 +29,7 @@ public class LoanPolicyBuilder extends JsonBuilder implements Builder {
   private final boolean loanable;
   private final JsonObject recallsMinimumGuaranteedLoanPeriod;
   private final JsonObject recallsRecallReturnInterval;
+  private final JsonObject holds;
 
   public LoanPolicyBuilder() {
     this(UUID.randomUUID(),
@@ -47,6 +48,7 @@ public class LoanPolicyBuilder extends JsonBuilder implements Builder {
       null,
       null,
       true,
+      null,
       null,
       null
     );
@@ -69,7 +71,8 @@ public class LoanPolicyBuilder extends JsonBuilder implements Builder {
     UUID alternateFixedDueDateScheduleId,
     boolean renewable,
     JsonObject recallsMinimumGuaranteedLoanPeriod,
-    JsonObject recallsRecallReturnInterval) {
+    JsonObject recallsRecallReturnInterval,
+    JsonObject holds) {
 
     this.id = id;
     this.name = name;
@@ -91,6 +94,7 @@ public class LoanPolicyBuilder extends JsonBuilder implements Builder {
     this.renewable = renewable;
     this.recallsMinimumGuaranteedLoanPeriod = recallsMinimumGuaranteedLoanPeriod;
     this.recallsRecallReturnInterval = recallsRecallReturnInterval;
+    this.holds = holds;
   }
 
   @Override
@@ -180,6 +184,13 @@ public class LoanPolicyBuilder extends JsonBuilder implements Builder {
       put(requestManagement, "recalls", recalls);
     }
 
+    if (holds != null) {
+      if (requestManagement == null) {
+        requestManagement = new JsonObject();
+      }
+      put(requestManagement, "holds", holds);
+    }
+
     if (requestManagement != null) {
       put(request, "requestManagement", requestManagement);
     }
@@ -205,7 +216,8 @@ public class LoanPolicyBuilder extends JsonBuilder implements Builder {
       this.alternateFixedDueDateScheduleId,
       this.renewable,
       this.recallsMinimumGuaranteedLoanPeriod,
-      this.recallsRecallReturnInterval);
+      this.recallsRecallReturnInterval,
+      this.holds);
   }
 
   public LoanPolicyBuilder withName(String name) {
@@ -226,7 +238,8 @@ public class LoanPolicyBuilder extends JsonBuilder implements Builder {
       this.alternateFixedDueDateScheduleId,
       this.renewable,
       this.recallsMinimumGuaranteedLoanPeriod,
-      this.recallsRecallReturnInterval);
+      this.recallsRecallReturnInterval,
+      this.holds);
   }
 
   public LoanPolicyBuilder withDescription(String description) {
@@ -247,7 +260,8 @@ public class LoanPolicyBuilder extends JsonBuilder implements Builder {
       this.alternateFixedDueDateScheduleId,
       this.renewable,
       this.recallsMinimumGuaranteedLoanPeriod,
-      this.recallsRecallReturnInterval);
+      this.recallsRecallReturnInterval,
+      this.holds);
   }
 
   public LoanPolicyBuilder withLoanable(boolean loanable) {
@@ -268,7 +282,8 @@ public class LoanPolicyBuilder extends JsonBuilder implements Builder {
       this.alternateFixedDueDateScheduleId,
       this.renewable,
       this.recallsMinimumGuaranteedLoanPeriod,
-      this.recallsRecallReturnInterval);
+      this.recallsRecallReturnInterval,
+      this.holds);
   }
 
   public LoanPolicyBuilder withLoansProfile(String profile) {
@@ -289,7 +304,8 @@ public class LoanPolicyBuilder extends JsonBuilder implements Builder {
       this.alternateFixedDueDateScheduleId,
       this.renewable,
       this.recallsMinimumGuaranteedLoanPeriod,
-      this.recallsRecallReturnInterval);
+      this.recallsRecallReturnInterval,
+      this.holds);
   }
 
   public LoanPolicyBuilder rolling(Period period) {
@@ -310,7 +326,8 @@ public class LoanPolicyBuilder extends JsonBuilder implements Builder {
       this.alternateFixedDueDateScheduleId,
       this.renewable,
       this.recallsMinimumGuaranteedLoanPeriod,
-      this.recallsRecallReturnInterval);
+      this.recallsRecallReturnInterval,
+      this.holds);
   }
 
   public LoanPolicyBuilder fixed(UUID fixedDueDateScheduleId) {
@@ -331,7 +348,8 @@ public class LoanPolicyBuilder extends JsonBuilder implements Builder {
       this.alternateFixedDueDateScheduleId,
       this.renewable,
       this.recallsMinimumGuaranteedLoanPeriod,
-      this.recallsRecallReturnInterval);
+      this.recallsRecallReturnInterval,
+      this.holds);
   }
 
   public LoanPolicyBuilder limitedBySchedule(UUID fixedDueDateScheduleId) {
@@ -357,7 +375,8 @@ public class LoanPolicyBuilder extends JsonBuilder implements Builder {
       this.alternateFixedDueDateScheduleId,
       this.renewable,
       this.recallsMinimumGuaranteedLoanPeriod,
-      this.recallsRecallReturnInterval);
+      this.recallsRecallReturnInterval,
+      this.holds);
   }
 
   public LoanPolicyBuilder unlimitedRenewals() {
@@ -378,7 +397,8 @@ public class LoanPolicyBuilder extends JsonBuilder implements Builder {
       this.alternateFixedDueDateScheduleId,
       this.renewable,
       this.recallsMinimumGuaranteedLoanPeriod,
-      this.recallsRecallReturnInterval);
+      this.recallsRecallReturnInterval,
+      this.holds);
   }
 
   public LoanPolicyBuilder limitedRenewals(int limit) {
@@ -399,7 +419,8 @@ public class LoanPolicyBuilder extends JsonBuilder implements Builder {
       this.alternateFixedDueDateScheduleId,
       this.renewable,
       this.recallsMinimumGuaranteedLoanPeriod,
-      this.recallsRecallReturnInterval);
+      this.recallsRecallReturnInterval,
+      this.holds);
   }
 
   public LoanPolicyBuilder renewFromSystemDate() {
@@ -428,7 +449,8 @@ public class LoanPolicyBuilder extends JsonBuilder implements Builder {
       this.alternateFixedDueDateScheduleId,
       this.renewable,
       this.recallsMinimumGuaranteedLoanPeriod,
-      this.recallsRecallReturnInterval);
+      this.recallsRecallReturnInterval,
+      this.holds);
   }
 
   public LoanPolicyBuilder renewWith(Period period) {
@@ -453,7 +475,8 @@ public class LoanPolicyBuilder extends JsonBuilder implements Builder {
       dueDateLimitScheduleId,
       this.renewable,
       this.recallsMinimumGuaranteedLoanPeriod,
-      this.recallsRecallReturnInterval);
+      this.recallsRecallReturnInterval,
+      this.holds);
   }
 
   public Builder renewWith(UUID fixedDueDateScheduleId) {
@@ -481,7 +504,8 @@ public class LoanPolicyBuilder extends JsonBuilder implements Builder {
       fixedDueDateScheduleId,
       this.renewable,
       this.recallsMinimumGuaranteedLoanPeriod,
-      this.recallsRecallReturnInterval);
+      this.recallsRecallReturnInterval,
+      this.holds);
   }
 
   public LoanPolicyBuilder notRenewable() {
@@ -502,7 +526,8 @@ public class LoanPolicyBuilder extends JsonBuilder implements Builder {
       this.alternateFixedDueDateScheduleId,
       false,
       this.recallsMinimumGuaranteedLoanPeriod,
-      this.recallsRecallReturnInterval);
+      this.recallsRecallReturnInterval,
+      this.holds);
   }
 
   public LoanPolicyBuilder withClosedLibraryDueDateManagement(
@@ -525,7 +550,8 @@ public class LoanPolicyBuilder extends JsonBuilder implements Builder {
       this.alternateFixedDueDateScheduleId,
       this.renewable,
       this.recallsMinimumGuaranteedLoanPeriod,
-      this.recallsRecallReturnInterval);
+      this.recallsRecallReturnInterval,
+      this.holds);
   }
 
   public LoanPolicyBuilder withOpeningTimeOffset(Period openingTimeOffsetPeriod) {
@@ -547,7 +573,8 @@ public class LoanPolicyBuilder extends JsonBuilder implements Builder {
       this.alternateFixedDueDateScheduleId,
       this.renewable,
       this.recallsMinimumGuaranteedLoanPeriod,
-      this.recallsRecallReturnInterval);
+      this.recallsRecallReturnInterval,
+      this.holds);
   }
 
   public LoanPolicyBuilder withRecallsMinimumGuaranteedLoanPeriod(Period recallsMinimumGuaranteedLoanPeriod) {
@@ -569,7 +596,8 @@ public class LoanPolicyBuilder extends JsonBuilder implements Builder {
       this.alternateFixedDueDateScheduleId,
       this.renewable,
       recallsMinimumGuaranteedLoanPeriod.asJson(),
-      this.recallsRecallReturnInterval);
+      this.recallsRecallReturnInterval,
+      this.holds);
   }
 
   public LoanPolicyBuilder withRecallsRecallReturnInterval(Period recallsRecallReturnInterval) {
@@ -591,6 +619,30 @@ public class LoanPolicyBuilder extends JsonBuilder implements Builder {
       this.alternateFixedDueDateScheduleId,
       this.renewable,
       this.recallsMinimumGuaranteedLoanPeriod,
-      recallsRecallReturnInterval.asJson());
+      recallsRecallReturnInterval.asJson(),
+      this.holds);
+  }
+
+  public LoanPolicyBuilder withHolds(JsonObject holds) {
+    return new LoanPolicyBuilder(
+      this.id,
+      this.name,
+      this.description,
+      this.loanable,
+      this.profile,
+      this.loanPeriod,
+      this.fixedDueDateScheduleId,
+      this.closedLibraryDueDateManagementId,
+      this.openingTimeOffsetPeriod,
+      this.unlimitedRenewals,
+      this.numberAllowed,
+      this.renewFrom,
+      this.renewWithDifferentPeriod,
+      this.differentRenewalPeriod,
+      this.alternateFixedDueDateScheduleId,
+      this.renewable,
+      this.recallsMinimumGuaranteedLoanPeriod,
+      recallsRecallReturnInterval,
+      holds);
   }
 }

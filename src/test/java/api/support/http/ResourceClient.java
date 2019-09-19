@@ -341,6 +341,14 @@ public class ResourceClient {
   }
 
   public Response attemptReplace(UUID id, Builder builder)
+      throws MalformedURLException,
+      InterruptedException,
+      ExecutionException,
+      TimeoutException {
+    return attemptReplace(id, builder.create());
+  }
+
+  public Response attemptReplace(UUID id, JsonObject jsonObject)
     throws MalformedURLException,
     InterruptedException,
     ExecutionException,
@@ -353,7 +361,7 @@ public class ResourceClient {
       path = String.format("/%s", id);
     }
 
-    client.put(urlMaker.combine(path), builder.create(),
+    client.put(urlMaker.combine(path), jsonObject,
       ResponseHandler.any(putCompleted));
 
     return putCompleted.get(5, TimeUnit.SECONDS);
@@ -555,7 +563,7 @@ public class ResourceClient {
     return JsonArrayHelper.toList(json
       .getJsonArray(collectionArrayPropertyName));
   }
-  
+
   public IndividualResource move(Builder builder)
     throws InterruptedException,
     MalformedURLException,
@@ -564,7 +572,7 @@ public class ResourceClient {
 
     return move(builder.create());
   }
-  
+
   public Response attemptMove(Builder builder)
     throws InterruptedException,
     MalformedURLException,
@@ -582,7 +590,7 @@ public class ResourceClient {
 
     return moveCompleted.get(15, TimeUnit.SECONDS);
   }
-  
+
   public IndividualResource move(JsonObject request)
     throws MalformedURLException,
     InterruptedException,

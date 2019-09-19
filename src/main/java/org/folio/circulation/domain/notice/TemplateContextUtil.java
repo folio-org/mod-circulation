@@ -18,6 +18,7 @@ import org.folio.circulation.domain.User;
 import org.folio.circulation.domain.policy.LoanPolicy;
 import org.folio.circulation.support.JsonArrayHelper;
 import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
 
 import io.vertx.core.json.JsonObject;
 
@@ -75,6 +76,7 @@ public class TemplateContextUtil {
         itemContext.put("fromServicePoint", records.getCheckInServicePoint().getName());
         itemContext.put("toServicePoint", item.getInTransitDestinationServicePoint().getName());
       }
+      write(itemContext, "lastCheckedInDateTime", DateTime.now(DateTimeZone.UTC));
       checkInContext.put(ITEM, itemContext);
     }
 

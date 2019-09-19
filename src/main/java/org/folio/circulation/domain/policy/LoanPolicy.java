@@ -1,6 +1,7 @@
 package org.folio.circulation.domain.policy;
 
 import static java.lang.String.format;
+import static org.folio.circulation.domain.RequestType.HOLD;
 import static org.folio.circulation.domain.RequestType.RECALL;
 import static org.folio.circulation.support.JsonPropertyFetcher.getBooleanProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getIntegerProperty;
@@ -36,6 +37,11 @@ public class LoanPolicy {
   private static final String LOANS_POLICY_KEY = "loansPolicy";
   private static final String PERIOD_KEY = "period";
   private static final String RENEWAL_WOULD_NOT_CHANGE_THE_DUE_DATE = "renewal would not change the due date";
+  private static final String REQUEST_MANAGEMENT_KEY = "requestManagement";
+  private static final String HOLDS_KEY = "holds";
+  private static final String ALTERNATE_RENEWAL_LOAN_PERIOD_KEY = "alternateRenewalLoanPeriod";
+  public static final String CAN_NOT_RENEW_ITEM_ERROR =
+    "Items with this loan policy cannot be renewed when there is an active, pending hold request";
 
   private final JsonObject representation;
   private final FixedDueDateSchedules fixedDueDateSchedules;
@@ -67,7 +73,7 @@ public class LoanPolicy {
 
   //TODO: make this have similar signature to renew
   public Result<DateTime> calculateInitialDueDate(Loan loan) {
-    return determineStrategy(false, null).calculateDueDate(loan);
+    return determineStrategy(false, false, null).calculateDueDate(loan);
   }
 
   public Result<Loan> renew(Loan loan, DateTime systemDate, RequestQueue requestQueue) {
@@ -91,9 +97,19 @@ public class LoanPolicy {
         errors.add(loanPolicyValidationError("loan is not renewable"));
         return failedValidation(errors);
       }
+      boolean isRenewalWithHoldRequest = false;
+      //Here can be either Hold request or null only
+      if (isHold(firstRequest)) {
+        if (!isHoldRequestRenewable()) {
+          errors.add(loanPolicyValidationError(CAN_NOT_RENEW_ITEM_ERROR));
+          return failedValidation(errors);
+        }
+        isRenewalWithHoldRequest = true;
+      }
 
       final Result<DateTime> proposedDueDateResult =
-        determineStrategy(true, systemDate).calculateDueDate(loan);
+        determineStrategy(true, isRenewalWithHoldRequest, systemDate)
+          .calculateDueDate(loan);
 
       //TODO: Need a more elegent way of combining validation errors
       if(proposedDueDateResult.failed()) {
@@ -122,6 +138,20 @@ public class LoanPolicy {
     }
   }
 
+  private boolean isHoldRequestRenewable() {
+    boolean renewItemsWithRequest = false;
+    if (representation != null && representation.containsKey(REQUEST_MANAGEMENT_KEY)) {
+      JsonObject requestManagement = representation.getJsonObject(REQUEST_MANAGEMENT_KEY);
+      JsonObject holds = requestManagement.getJsonObject(HOLDS_KEY);
+      renewItemsWithRequest = getBooleanProperty(holds, "renewItemsWithRequest");
+    }
+    return renewItemsWithRequest;
+  }
+
+  private boolean isHold(Request request) {
+    return request != null && request.getRequestType() == HOLD;
+  }
+
   public Result<Loan> overrideRenewal(Loan loan, DateTime systemDate,
                                       DateTime overrideDueDate, String comment,
                                       boolean hasRecallRequest) {
@@ -130,7 +160,7 @@ public class LoanPolicy {
         return overrideRenewalForDueDate(loan, overrideDueDate, comment);
       }
       final Result<DateTime> proposedDueDateResult =
-        determineStrategy(true, systemDate).calculateDueDate(loan);
+        determineStrategy(true, false, systemDate).calculateDueDate(loan);
 
       if (proposedDueDateResult.failed()) {
         return overrideRenewalForDueDate(loan, overrideDueDate, comment);
@@ -243,7 +273,11 @@ public class LoanPolicy {
     return getIntegerProperty(getRenewalsPolicy(), "numberAllowed", 0);
   }
 
-  private DueDateStrategy determineStrategy(boolean isRenewal, DateTime systemDate) {
+  private DueDateStrategy determineStrategy(
+    boolean isRenewal,
+    boolean isRenewalWithHoldRequest,
+    DateTime systemDate) {
+
     final JsonObject loansPolicy = getLoansPolicy();
     final JsonObject renewalsPolicy = getRenewalsPolicy();
 
@@ -256,7 +290,7 @@ public class LoanPolicy {
     if(isRolling(loansPolicy)) {
       if(isRenewal) {
         return new RollingRenewalDueDateStrategy(getId(), getName(),
-          systemDate, getRenewFrom(), getRenewalPeriod(loansPolicy, renewalsPolicy),
+          systemDate, getRenewFrom(), getRenewalPeriod(loansPolicy, renewalsPolicy,isRenewalWithHoldRequest),
           getRenewalDueDateLimitSchedules(), this::loanPolicyValidationError);
       }
       else {
@@ -266,8 +300,14 @@ public class LoanPolicy {
     }
     else if(isFixed(loansPolicy)) {
       if(isRenewal) {
-        return new FixedScheduleRenewalDueDateStrategy(getId(), getName(),
-          getRenewalFixedDueDateSchedules(), systemDate, this::loanPolicyValidationError);
+        if (isRenewalWithHoldRequest) {
+          return new RollingRenewalDueDateStrategy(getId(), getName(), systemDate,
+            "SYSTEM_DATE", getAlternateRenewalLoanPeriodForHolds(),
+            new NoFixedDueDateSchedules(), this::loanPolicyValidationError);
+        } else {
+          return new FixedScheduleRenewalDueDateStrategy(getId(), getName(),
+            getRenewalFixedDueDateSchedules(), systemDate, this::loanPolicyValidationError);
+        }
       }
       else {
         return new FixedScheduleCheckOutDueDateStrategy(getId(), getName(),
@@ -304,11 +344,24 @@ public class LoanPolicy {
 
   private Period getRenewalPeriod(
     JsonObject loansPolicy,
-    JsonObject renewalsPolicy) {
+    JsonObject renewalsPolicy,
+    boolean isRenewalWithHoldRequest) {
 
-    return useDifferentPeriod()
-      ? getPeriod(renewalsPolicy)
-      : getPeriod(loansPolicy);
+    Period result;
+    if (isRenewalWithHoldRequest) {
+      result = getAlternateRenewalLoanPeriodForHolds();
+    } else {
+      result = useDifferentPeriod() ? getPeriod(renewalsPolicy) : getPeriod(loansPolicy);
+    }
+    return result;
+  }
+
+  private Period getAlternateRenewalLoanPeriodForHolds() {
+    JsonObject holds = representation
+      .getJsonObject(REQUEST_MANAGEMENT_KEY)
+      .getJsonObject(HOLDS_KEY);
+
+    return getPeriod(holds, ALTERNATE_RENEWAL_LOAN_PERIOD_KEY);
   }
 
   private Period getPeriod(JsonObject policy) {
