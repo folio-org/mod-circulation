@@ -1,7 +1,9 @@
 package org.folio.circulation.support;
 
+import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import io.vertx.core.json.JsonArray;
@@ -38,5 +40,9 @@ public class JsonStringArrayHelper {
         return null;
       }
     };
+  }
+
+  public static List<String> toList(JsonArray array) {
+    return  toStream(array).collect(Collectors.toList());
   }
 }
