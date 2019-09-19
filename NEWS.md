@@ -1,3 +1,7 @@
+## 16.7.0 2019-09-18
+
+* Only change due date for early return on first recall request (CIRC-440)
+
 ## 16.6.0 2019-09-09
 
 * Loan is only updated during requests when due date changes (CIRC-289)
