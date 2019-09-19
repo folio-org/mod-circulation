@@ -119,7 +119,7 @@ public class RequestNoticeSender {
     PatronNoticeEvent itemRecalledEvent = new PatronNoticeEventBuilder()
       .withItem(loan.getItem())
       .withUser(loan.getUser())
-      .withEventType(NoticeEventType.RECALL_TO_LOANEE)
+      .withEventType(NoticeEventType.ITEM_RECALLED)
       .withTiming(NoticeTiming.UPON_AT)
       .withNoticeContext(TemplateContextUtil.createLoanNoticeContext(loan))
       .build();
