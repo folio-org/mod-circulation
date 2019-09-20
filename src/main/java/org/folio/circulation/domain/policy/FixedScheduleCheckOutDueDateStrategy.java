@@ -10,11 +10,11 @@ import org.folio.circulation.support.Result;
 import org.folio.circulation.support.http.server.ValidationError;
 import org.joda.time.DateTime;
 
-public class FixedScheduleCheckOutDueDateStrategy extends DueDateStrategy {
+class FixedScheduleCheckOutDueDateStrategy extends DueDateStrategy {
   private static final String NO_APPLICABLE_DUE_DATE_SCHEDULE_MESSAGE =
     "loan date falls outside of the date ranges in the loan policy";
 
-  protected final FixedDueDateSchedules fixedDueDateSchedules;
+  private final FixedDueDateSchedules fixedDueDateSchedules;
 
   FixedScheduleCheckOutDueDateStrategy(
     String loanPolicyId,

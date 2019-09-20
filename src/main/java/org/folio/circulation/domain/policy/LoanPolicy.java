@@ -346,13 +346,6 @@ public class LoanPolicy {
     }
   }
 
-  private FixedDueDateSchedules buildAlternateDueDateSchedules(DateTime systemDate, JsonObject holds) {
-    List<JsonObject> schedules =
-      new ArrayList<>(fixedDueDateSchedules.getSchedules());
-    schedules.add(0, buildSchedule(systemDate, holds));
-    return new FixedDueDateSchedules("alternateDueDateSchedule", schedules);
-  }
-
   private boolean isAlternatePeriod(RequestQueue requestQueue) {
     final JsonObject holds = getHolds();
     if(Objects.isNull(requestQueue)
@@ -370,30 +363,6 @@ public class LoanPolicy {
       }
     }
     return isAlternateDueDateSchedule;
-  }
-
-  private JsonObject buildSchedule(DateTime systemDate, JsonObject request) {
-    String key = ALTERNATE_CHECKOUT_LOAN_PERIOD_KEY;
-    Period duration = getPeriod(request, key);
-    DateTime dueDate = duration.addTo(
-        systemDate,
-        () -> loanPolicyValidationError(format(KEY_ERROR_TEXT, key)),
-        interval -> loanPolicyValidationError(format(INTERVAL_ERROR_TEXT, interval, key)),
-        dur -> loanPolicyValidationError(format(DURATION_ERROR_TEXT, dur, key)))
-          .value();
-
-    Map<String, Object> scheduleProperties = new HashMap<>();
-    // Ensure the schedule contains the system date
-    scheduleProperties.put("from", systemDate.minusDays(1).toString());
-    scheduleProperties.put("due", dueDate.toString());
-    scheduleProperties.put("to", duration.addTo(
-        dueDate,
-        () -> loanPolicyValidationError(format(KEY_ERROR_TEXT, key)),
-        interval -> loanPolicyValidationError(format(INTERVAL_ERROR_TEXT, interval, key)),
-        dur -> loanPolicyValidationError(format(DURATION_ERROR_TEXT, dur, key)))
-        .value().toString());
-    return new JsonObject(scheduleProperties);
-
   }
 
   private JsonObject getLoansPolicy() {
