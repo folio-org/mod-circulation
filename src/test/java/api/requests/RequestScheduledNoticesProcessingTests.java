@@ -27,7 +27,7 @@ import org.hamcrest.Matcher;
 import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
 import org.junit.Before;
-import org.junit.Ignore;
+import org.junit.FixMethodOrder;
 import org.junit.Test;
 
 import api.support.APITests;
@@ -41,7 +41,9 @@ import api.support.fixtures.ItemExamples;
 import api.support.fixtures.TemplateContextMatchers;
 import api.support.http.InventoryItemResource;
 import io.vertx.core.json.JsonObject;
+import org.junit.runners.MethodSorters;
 
+@FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class RequestScheduledNoticesProcessingTests extends APITests {
 
   private UUID templateId = UUID.randomUUID();
@@ -69,7 +71,6 @@ public class RequestScheduledNoticesProcessingTests extends APITests {
     pickupServicePoint = servicePointsFixture.cd1();
   }
 
-  @Ignore
   @Test
   public void uponAtRequestExpirationNoticeShouldBeSentAndDeletedWhenRequestExpirationDateHasPassed()
     throws MalformedURLException,
