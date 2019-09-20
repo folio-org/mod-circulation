@@ -29,6 +29,7 @@ import org.joda.time.LocalDate;
 import org.junit.Before;
 import org.junit.FixMethodOrder;
 import org.junit.Test;
+import org.junit.runners.MethodSorters;
 
 import api.support.APITests;
 import api.support.builders.CheckInByBarcodeRequestBuilder;
@@ -41,7 +42,6 @@ import api.support.fixtures.ItemExamples;
 import api.support.fixtures.TemplateContextMatchers;
 import api.support.http.InventoryItemResource;
 import io.vertx.core.json.JsonObject;
-import org.junit.runners.MethodSorters;
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class RequestScheduledNoticesProcessingTests extends APITests {
@@ -71,8 +71,12 @@ public class RequestScheduledNoticesProcessingTests extends APITests {
     pickupServicePoint = servicePointsFixture.cd1();
   }
 
+  /**
+   * method name starting with a for @FixMethodOrder(MethodSorters.NAME_ASCENDING) .
+   * FIXME: remove the cause that make this method fail when executed after the others of this class.
+   */
   @Test
-  public void uponAtRequestExpirationNoticeShouldBeSentAndDeletedWhenRequestExpirationDateHasPassed()
+  public void aUponAtRequestExpirationNoticeShouldBeSentAndDeletedWhenRequestExpirationDateHasPassed()
     throws MalformedURLException,
     InterruptedException,
     TimeoutException,
