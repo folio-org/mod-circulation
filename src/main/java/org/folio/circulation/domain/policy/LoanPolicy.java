@@ -309,7 +309,7 @@ public class LoanPolicy {
       }
       else {
         Period rollingPeriod = getPeriod(loansPolicy);
-        if(isAlternateDueDateSchedule(requestQueue)) {
+        if(isAlternatePeriod(requestQueue)) {
           rollingPeriod = getPeriod(holds, ALTERNATE_CHECKOUT_LOAN_PERIOD_KEY);
         }
 
@@ -329,9 +329,10 @@ public class LoanPolicy {
         }
       }
       else {
-        if(isAlternateDueDateSchedule(requestQueue)) {
-          return new AlternateFixedScheduleCheckOutDueDateStrategy(getId(), getName(),
-            buildAlternateDueDateSchedules(systemDate, holds), this::loanPolicyValidationError);
+        if(isAlternatePeriod(requestQueue)) {
+          return new RollingCheckOutDueDateStrategy(getId(), getName(),
+            getPeriod(holds, ALTERNATE_CHECKOUT_LOAN_PERIOD_KEY),
+              fixedDueDateSchedules, this::loanPolicyValidationError);
         }
         else {
           return new DefaultFixedScheduleCheckOutDueDateStrategy(getId(), getName(),
@@ -352,7 +353,7 @@ public class LoanPolicy {
     return new FixedDueDateSchedules("alternateDueDateSchedule", schedules);
   }
 
-  private boolean isAlternateDueDateSchedule(RequestQueue requestQueue) {
+  private boolean isAlternatePeriod(RequestQueue requestQueue) {
     final JsonObject holds = getHolds();
     if(Objects.isNull(requestQueue)
       || !holds.containsKey(ALTERNATE_CHECKOUT_LOAN_PERIOD_KEY)) {
