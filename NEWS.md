@@ -1,3 +1,7 @@
+## 16.7.1 2019-09-20
+
+* Include missing permissions when moving requests between items (CIRC-459)
+
 ## 16.7.0 2019-09-18
 
 * Only change due date for early return on first recall request (CIRC-440)
