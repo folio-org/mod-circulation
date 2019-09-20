@@ -12,21 +12,21 @@ import api.support.builders.LocationBuilder;
 public class LocationExamples {
 
   private final UUID djanoglyLibraryId;
-  private final UUID nottinghamUniversityId;
+  private final UUID institutionId;
   private final UUID jubileeCampusId;
   private final UUID businessLibraryId;
   private final UUID primaryServicePointId;
   private final Set<UUID> otherServicePointIds;
 
   public LocationExamples(
-    UUID nottinghamUniversityId,
+    UUID institutionId,
     UUID jubileeCampusId,
     UUID businessLibraryId,
     UUID djanoglyLibraryId,
     UUID primaryServicePointId,
     UUID... servicePointIds) {
 
-    this.nottinghamUniversityId = nottinghamUniversityId;
+    this.institutionId = institutionId;
     this.jubileeCampusId = jubileeCampusId;
     this.businessLibraryId = businessLibraryId;
     this.djanoglyLibraryId = djanoglyLibraryId;
@@ -41,7 +41,7 @@ public class LocationExamples {
     return new LocationBuilder()
       .withName("Display Case, Mezzanine")
       .withCode("NU/JC/BL/DM")
-      .forInstitution(nottinghamUniversityId)
+      .forInstitution(institutionId)
       .forCampus(jubileeCampusId)
       .forLibrary(businessLibraryId)
       .withPrimaryServicePoint(primaryServicePointId)
@@ -52,7 +52,7 @@ public class LocationExamples {
     return new LocationBuilder()
       .withName("2nd Floor - Economics")
       .withCode("NU/JC/DL/2FE")
-      .forInstitution(nottinghamUniversityId)
+      .forInstitution(institutionId)
       .forCampus(jubileeCampusId)
       .forLibrary(djanoglyLibraryId)
       .withPrimaryServicePoint(primaryServicePointId)
@@ -63,7 +63,7 @@ public class LocationExamples {
     return new LocationBuilder()
       .withName("3rd Floor")
       .withCode("NU/JC/DL/3F")
-      .forInstitution(nottinghamUniversityId)
+      .forInstitution(institutionId)
       .forCampus(jubileeCampusId)
       .forLibrary(djanoglyLibraryId)
       .withPrimaryServicePoint(primaryServicePointId)
@@ -74,7 +74,7 @@ public class LocationExamples {
     return new LocationBuilder()
       .withName("Example location")
       .withCode("NU/JC/DL/EX")
-      .forInstitution(nottinghamUniversityId)
+      .forInstitution(institutionId)
       .forCampus(jubileeCampusId)
       .forLibrary(djanoglyLibraryId)
       .withPrimaryServicePoint(primaryServicePointId)
@@ -85,7 +85,18 @@ public class LocationExamples {
       return new LocationBuilder()
       .withName("Main")
       .withCode("NU/JC/DL/3F")
-      .forInstitution(nottinghamUniversityId)
+      .forInstitution(institutionId)
+      .forCampus(jubileeCampusId)
+      .forLibrary(djanoglyLibraryId)
+      .withPrimaryServicePoint(primaryServicePointId)
+      .servedBy(otherServicePointIds);
+  }
+
+  public LocationBuilder fourthFloorLocation() {
+    return new LocationBuilder()
+      .withName("Fourth Floor")
+      .withCode("NU/JC/DL/4F")
+      .forInstitution(institutionId)
       .forCampus(jubileeCampusId)
       .forLibrary(djanoglyLibraryId)
       .withPrimaryServicePoint(primaryServicePointId)

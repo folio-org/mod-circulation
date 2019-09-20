@@ -1,17 +1,17 @@
 package org.folio.circulation.rules;
 
 /**
- * Store the branch location.
+ * Store the collection location.
  */
-public class BranchLocation {
-  /** UUID of the branch location. */
+public class Library {
+  /** UUID of the library. */
   @SuppressWarnings("squid:ClassVariableVisibilityCheck")  // Drools directly uses public fields
   public String id;
   /**
-   * Set the branch.
-   * @param UUID of the branch location.
+   * Set collection.
+   * @param id  UUID of the library.
    */
-  public BranchLocation(String id) {
+  public Library(String id) {
     this.id = id;
   }
 

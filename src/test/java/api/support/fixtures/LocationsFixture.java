@@ -81,6 +81,18 @@ public class LocationsFixture {
     return locationRecordCreator.createIfAbsent(
       locationExamples.thirdFloor());
   }
+  public IndividualResource fourthServicePoint()
+
+      throws InterruptedException,
+      MalformedURLException,
+      TimeoutException,
+      ExecutionException {
+
+    final LocationExamples locationExamples = getLocationExamplesForCd4();
+
+    return locationRecordCreator.createIfAbsent(
+        locationExamples.secondFloorEconomics());
+  }
 
   public IndividualResource secondFloorEconomics()
     throws InterruptedException,
@@ -123,6 +135,17 @@ public class LocationsFixture {
     return locationRecordCreator.createIfAbsent(locationExamples.mainLocation());
   }
 
+  public IndividualResource fourthFloor()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    final LocationExamples locationExamples = getLocationExamplesWithKopenhavnInstitution();
+
+    return locationRecordCreator.createIfAbsent(locationExamples.fourthFloorLocation());
+  }
+
   private LocationExamples getLocationExamples()
     throws InterruptedException,
     MalformedURLException,
@@ -135,6 +158,38 @@ public class LocationsFixture {
       businessLibrary().getId(),
       djanoglyLibrary().getId(),
       servicePointsFixture.cd1().getId(),
+      null,
+      null);
+  }
+
+  private LocationExamples getLocationExamplesForCd4()
+      throws InterruptedException,
+      MalformedURLException,
+      TimeoutException,
+      ExecutionException {
+
+    return new LocationExamples(
+        nottinghamUniversity().getId(),
+        jubileeCampus().getId(),
+        businessLibrary().getId(),
+        djanoglyLibrary().getId(),
+        servicePointsFixture.cd4().getId(),
+        null,
+        null);
+  }
+
+  private LocationExamples getLocationExamplesWithKopenhavnInstitution()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    return new LocationExamples(
+      kopenhavnUniversity().getId(),
+      mainCampus().getId(),
+      mainLibrary().getId(),
+      mainLibrary().getId(),
+      servicePointsFixture.cd6().getId(),
       null,
       null);
   }
@@ -183,6 +238,20 @@ public class LocationsFixture {
     return libraryRecordCreator.createIfAbsent(businessLibrary);
   }
 
+  private IndividualResource mainLibrary()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    final JsonObject businessLibrary = new JsonObject();
+
+    write(businessLibrary, "name", "Main Library");
+    write(businessLibrary, "campusId", mainCampus().getId());
+
+    return libraryRecordCreator.createIfAbsent(businessLibrary);
+  }
+
   private IndividualResource jubileeCampus()
     throws InterruptedException,
     MalformedURLException,
@@ -197,6 +266,20 @@ public class LocationsFixture {
     return campusRecordCreator.createIfAbsent(jubileeCampus);
   }
 
+  private IndividualResource mainCampus()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    final JsonObject mainCampus = new JsonObject();
+
+    write(mainCampus, "name", "Main Campus");
+    write(mainCampus, "institutionId", kopenhavnUniversity().getId());
+
+    return campusRecordCreator.createIfAbsent(mainCampus);
+  }
+
   private IndividualResource nottinghamUniversity()
     throws InterruptedException,
     MalformedURLException,
@@ -208,5 +291,18 @@ public class LocationsFixture {
     write(nottinghamUniversity, "name", "Nottingham University");
 
     return institutionRecordCreator.createIfAbsent(nottinghamUniversity);
+  }
+
+  private IndividualResource kopenhavnUniversity()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    final JsonObject kopenhavnUniversity = new JsonObject();
+
+    write(kopenhavnUniversity, "name", "Kopenhavn University");
+
+    return institutionRecordCreator.createIfAbsent(kopenhavnUniversity);
   }
 }

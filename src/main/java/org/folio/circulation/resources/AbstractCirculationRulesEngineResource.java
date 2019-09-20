@@ -1,17 +1,24 @@
 package org.folio.circulation.resources;
 
+import static org.folio.circulation.support.Result.failed;
+import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.http.server.ServerErrorResponse.internalError;
 
 import java.lang.invoke.MethodHandles;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 
 import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.folio.circulation.domain.Location;
 import org.folio.circulation.rules.Drools;
 import org.folio.circulation.rules.Text2Drools;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
+import org.folio.circulation.support.FetchSingleRecord;
 import org.folio.circulation.support.OkJsonResponseResult;
+import org.folio.circulation.support.Result;
+import org.folio.circulation.support.ServerErrorFailure;
 import org.folio.circulation.support.http.server.ClientErrorResponse;
 import org.folio.circulation.support.http.server.ForwardResponse;
 import org.folio.circulation.support.http.server.WebContext;
@@ -29,14 +36,14 @@ import io.vertx.ext.web.RoutingContext;
 
 /**
  * The circulation rules engine calculates the loan policy based on
- * item type, loan type, patron type and shelving location.
+ * item type, loan type, patron type and location.
  */
 public abstract class AbstractCirculationRulesEngineResource extends Resource {
   protected static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
   public static final String ITEM_TYPE_ID_NAME = "item_type_id";
   public static final String PATRON_TYPE_ID_NAME = "patron_type_id";
-  public static final String SHELVING_LOCATION_ID_NAME = "shelving_location_id";
+  public static final String LOCATION_ID_NAME = "location_id";
   public static final String LOAN_TYPE_ID_NAME = "loan_type_id";
 
   private final String applyPath;
@@ -250,11 +257,18 @@ public abstract class AbstractCirculationRulesEngineResource extends Resource {
     }
     drools(routingContext, drools -> {
       try {
-        String policyId = getPolicyId(request.params(), drools);
-        JsonObject json = new JsonObject().put(getPolicyIdKey(), policyId);
+        final CollectionResourceClient locationsStorageClient =
+          Clients.create(new WebContext(routingContext), client).locationsStorage();
 
-        new OkJsonResponseResult(json)
-          .writeTo(routingContext.response());
+        FetchSingleRecord.<Location>forRecord("location")
+          .using(locationsStorageClient)
+          .mapTo(Location::from)
+          .whenNotFound(failed(new ServerErrorFailure("Can`t find location")))
+          .fetch(request.params().get(LOCATION_ID_NAME))
+          .thenCompose(r -> r.after(location -> getPolicyId(request.params(), drools, location)))
+          .thenCompose(r -> r.after(this::buildJsonResult))
+          .thenApply(OkJsonResponseResult::from)
+          .thenAccept(result -> result.writeTo(routingContext.response()));
       }
       catch (Exception e) {
         log.error("apply notice policy", e);
@@ -263,22 +277,40 @@ public abstract class AbstractCirculationRulesEngineResource extends Resource {
     });
   }
 
+  private CompletableFuture<Result<JsonObject>> buildJsonResult(String policyId){
+    return CompletableFuture.completedFuture(succeeded(new JsonObject().put(getPolicyIdKey(),
+      policyId)));
+  }
+
   private void applyAll(RoutingContext routingContext, Drools drools) {
     HttpServerRequest request = routingContext.request();
     if (invalidApplyParameters(request)) {
       return;
     }
     try {
-      JsonArray matches = getPolicies(request.params(), drools);
-      JsonObject json = new JsonObject().put("circulationRuleMatches", matches);
 
-      new OkJsonResponseResult(json)
-        .writeTo(routingContext.response());
+      final CollectionResourceClient locationsStorageClient =
+        Clients.create(new WebContext(routingContext), client).locationsStorage();
+
+      FetchSingleRecord.<Location>forRecord("location")
+        .using(locationsStorageClient)
+        .mapTo(Location::from)
+        .whenNotFound(failed(new ServerErrorFailure("Can`t find location")))
+        .fetch(request.params().get(LOCATION_ID_NAME))
+        .thenCompose(r -> r.after(location -> getPolicies(request.params(), drools, location)))
+        .thenCompose(r -> r.after(this::buildJsonResult))
+        .thenApply(OkJsonResponseResult::from)
+        .thenAccept(result -> result.writeTo(routingContext.response()));
     }
     catch (Exception e) {
       log.error("applyAll", e);
       internalError(routingContext.response(), ExceptionUtils.getStackTrace(e));
     }
+  }
+
+  private CompletableFuture<Result<JsonObject>> buildJsonResult(JsonArray matches){
+    return CompletableFuture.completedFuture(succeeded(new JsonObject().put("circulationRuleMatches",
+      matches)));
   }
 
   private void applyAll(RoutingContext routingContext) {
@@ -304,12 +336,12 @@ public abstract class AbstractCirculationRulesEngineResource extends Resource {
         invalidUuid(request, ITEM_TYPE_ID_NAME) ||
         invalidUuid(request, LOAN_TYPE_ID_NAME) ||
         invalidUuid(request, PATRON_TYPE_ID_NAME) ||
-        invalidUuid(request, SHELVING_LOCATION_ID_NAME);
+        invalidUuid(request, LOCATION_ID_NAME);
   }
 
-  protected abstract String getPolicyId(MultiMap params, Drools drools);
+  protected abstract CompletableFuture<Result<String>> getPolicyId(MultiMap params, Drools drools, Location location);
 
   protected abstract String getPolicyIdKey();
 
-  protected abstract JsonArray getPolicies(MultiMap params, Drools drools);
+  protected abstract CompletableFuture<Result<JsonArray>> getPolicies(MultiMap params, Drools drools, Location location);
 }
