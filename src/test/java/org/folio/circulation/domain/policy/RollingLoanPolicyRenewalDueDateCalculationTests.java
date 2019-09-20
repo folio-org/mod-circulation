@@ -30,7 +30,7 @@ import static org.junit.Assert.assertThat;
 public class RollingLoanPolicyRenewalDueDateCalculationTests {
 
   private static final String EXPECTED_REASON_DATE_FALLS_OTSIDE_DATE_RANGES =
-    "renewal date falls outside of date ranges in rolling loan policy";
+    "renewal date falls outside of date ranges in the loan policy";
 
   private static final String EXPECTED_REASON_OPEN_RECALL_REQUEST =
     "items cannot be renewed when there is an active recall request";
@@ -362,8 +362,7 @@ public class RollingLoanPolicyRenewalDueDateCalculationTests {
 
     Loan loan = loanFor(loanDate);
 
-    String requestId = UUID.randomUUID().toString();
-    RequestQueue requestQueue = creteRequestQueue(requestId, RequestType.HOLD);
+    RequestQueue requestQueue = new RequestQueue(Collections.emptyList());
 
     final Result<Loan> result = loanPolicy.renew(loan, DateTime.now(),requestQueue);
 
