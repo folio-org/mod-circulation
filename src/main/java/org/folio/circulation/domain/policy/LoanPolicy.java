@@ -335,7 +335,7 @@ public class LoanPolicy {
               fixedDueDateSchedules, this::loanPolicyValidationError);
         }
         else {
-          return new DefaultFixedScheduleCheckOutDueDateStrategy(getId(), getName(),
+          return new FixedScheduleCheckOutDueDateStrategy(getId(), getName(),
             fixedDueDateSchedules, this::loanPolicyValidationError);
         }
       }
