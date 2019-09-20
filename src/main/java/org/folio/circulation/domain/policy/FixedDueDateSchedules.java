@@ -12,7 +12,6 @@ import org.folio.circulation.support.JsonArrayHelper;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.http.server.ValidationError;
 import org.joda.time.DateTime;
-
 import io.vertx.core.json.JsonObject;
 
 public class FixedDueDateSchedules {

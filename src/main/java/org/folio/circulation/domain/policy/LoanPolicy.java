@@ -25,6 +25,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestQueue;
+import org.folio.circulation.domain.RequestStatus;
+import org.folio.circulation.domain.RequestType;
 import org.folio.circulation.support.ClockManager;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.ValidationErrorFailure;
@@ -37,11 +39,20 @@ public class LoanPolicy {
   private static final String LOANS_POLICY_KEY = "loansPolicy";
   private static final String PERIOD_KEY = "period";
   private static final String RENEWAL_WOULD_NOT_CHANGE_THE_DUE_DATE = "renewal would not change the due date";
+
   private static final String REQUEST_MANAGEMENT_KEY = "requestManagement";
   private static final String HOLDS_KEY = "holds";
   private static final String ALTERNATE_RENEWAL_LOAN_PERIOD_KEY = "alternateRenewalLoanPeriod";
   public static final String CAN_NOT_RENEW_ITEM_ERROR =
     "Items with this loan policy cannot be renewed when there is an active, pending hold request";
+
+  private static final String INTERVAL_ID = "intervalId";
+  private static final String DURATION = "duration";
+  private static final String ALTERNATE_CHECKOUT_LOAN_PERIOD_KEY = "alternateCheckoutLoanPeriod";
+
+  private static final String KEY_ERROR_TEXT = "the \"%s\" in the holds is not recognized";
+  private static final String INTERVAL_ERROR_TEXT = "the interval \"%s\" in \"%s\" is not recognized";
+  private static final String DURATION_ERROR_TEXT = "the duration \"%s\" in \"%s\" is invalid";
 
   private final JsonObject representation;
   private final FixedDueDateSchedules fixedDueDateSchedules;
@@ -72,8 +83,9 @@ public class LoanPolicy {
   }
 
   //TODO: make this have similar signature to renew
-  public Result<DateTime> calculateInitialDueDate(Loan loan) {
-    return determineStrategy(false, false, null).calculateDueDate(loan);
+  public Result<DateTime> calculateInitialDueDate(Loan loan, RequestQueue requestQueue) {
+    final DateTime systemTime = ClockManager.getClockManager().getDateTime();
+    return determineStrategy(requestQueue, false, false, systemTime).calculateDueDate(loan);
   }
 
   public Result<Loan> renew(Loan loan, DateTime systemDate, RequestQueue requestQueue) {
@@ -108,7 +120,7 @@ public class LoanPolicy {
       }
 
       final Result<DateTime> proposedDueDateResult =
-        determineStrategy(true, isRenewalWithHoldRequest, systemDate)
+        determineStrategy(null, true, isRenewalWithHoldRequest, systemDate)
           .calculateDueDate(loan);
 
       //TODO: Need a more elegent way of combining validation errors
@@ -160,7 +172,7 @@ public class LoanPolicy {
         return overrideRenewalForDueDate(loan, overrideDueDate, comment);
       }
       final Result<DateTime> proposedDueDateResult =
-        determineStrategy(true, false, systemDate).calculateDueDate(loan);
+        determineStrategy(null, true, false, systemDate).calculateDueDate(loan);
 
       if (proposedDueDateResult.failed()) {
         return overrideRenewalForDueDate(loan, overrideDueDate, comment);
@@ -274,12 +286,14 @@ public class LoanPolicy {
   }
 
   private DueDateStrategy determineStrategy(
+    RequestQueue requestQueue,
     boolean isRenewal,
     boolean isRenewalWithHoldRequest,
     DateTime systemDate) {
 
     final JsonObject loansPolicy = getLoansPolicy();
     final JsonObject renewalsPolicy = getRenewalsPolicy();
+    final JsonObject holds = getHolds();
 
     //TODO: Temporary until have better logic for missing loans policy
     if(loansPolicy == null) {
@@ -294,8 +308,13 @@ public class LoanPolicy {
           getRenewalDueDateLimitSchedules(), this::loanPolicyValidationError);
       }
       else {
+        Period rollingPeriod = getPeriod(loansPolicy);
+        if(isAlternatePeriod(requestQueue)) {
+          rollingPeriod = getPeriod(holds, ALTERNATE_CHECKOUT_LOAN_PERIOD_KEY);
+        }
+
         return new RollingCheckOutDueDateStrategy(getId(), getName(),
-          getPeriod(loansPolicy), fixedDueDateSchedules, this::loanPolicyValidationError);
+          rollingPeriod, fixedDueDateSchedules, this::loanPolicyValidationError);
       }
     }
     else if(isFixed(loansPolicy)) {
@@ -310,8 +329,15 @@ public class LoanPolicy {
         }
       }
       else {
-        return new FixedScheduleCheckOutDueDateStrategy(getId(), getName(),
-          fixedDueDateSchedules, this::loanPolicyValidationError);
+        if(isAlternatePeriod(requestQueue)) {
+          return new RollingCheckOutDueDateStrategy(getId(), getName(),
+            getPeriod(holds, ALTERNATE_CHECKOUT_LOAN_PERIOD_KEY),
+              fixedDueDateSchedules, this::loanPolicyValidationError);
+        }
+        else {
+          return new FixedScheduleCheckOutDueDateStrategy(getId(), getName(),
+            fixedDueDateSchedules, this::loanPolicyValidationError);
+        }
       }
     }
     else {
@@ -320,12 +346,37 @@ public class LoanPolicy {
     }
   }
 
+  private boolean isAlternatePeriod(RequestQueue requestQueue) {
+    final JsonObject holds = getHolds();
+    if(Objects.isNull(requestQueue)
+      || !holds.containsKey(ALTERNATE_CHECKOUT_LOAN_PERIOD_KEY)) {
+      return false;
+    }
+    Optional<Request> potentialRequest = requestQueue.getRequests().stream().skip(1).findFirst();
+    boolean isAlternateDueDateSchedule = false;
+    if(potentialRequest.isPresent()) {
+      Request request = potentialRequest.get();
+      boolean isHold = request.getRequestType() == RequestType.HOLD;
+      boolean isOpenNotYetFilled = request.getStatus() == RequestStatus.OPEN_NOT_YET_FILLED;
+      if(isHold && isOpenNotYetFilled) {
+        isAlternateDueDateSchedule = true;
+      }
+    }
+    return isAlternateDueDateSchedule;
+  }
+
   private JsonObject getLoansPolicy() {
     return representation.getJsonObject(LOANS_POLICY_KEY);
   }
 
   private JsonObject getRenewalsPolicy() {
     return representation.getJsonObject("renewalsPolicy");
+  }
+
+  private JsonObject getHolds() {
+    return representation
+      .getJsonObject(REQUEST_MANAGEMENT_KEY, new JsonObject())
+      .getJsonObject(HOLDS_KEY, new JsonObject());
   }
 
   private FixedDueDateSchedules getRenewalDueDateLimitSchedules() {
@@ -369,8 +420,8 @@ public class LoanPolicy {
   }
 
   private Period getPeriod(JsonObject policy, String periodKey) {
-    String interval = getNestedStringProperty(policy, periodKey, "intervalId");
-    Integer duration = getNestedIntegerProperty(policy, periodKey, "duration");
+    String interval = getNestedStringProperty(policy, periodKey, INTERVAL_ID);
+    Integer duration = getNestedIntegerProperty(policy, periodKey, DURATION);
     return Period.from(duration, interval);
   }
 
@@ -414,7 +465,7 @@ public class LoanPolicy {
   }
 
   //TODO: potentially remove this, when builder can create class or JSON representation
-  LoanPolicy withDueDateSchedules(JsonObject fixedDueDateSchedules) {
+  public LoanPolicy withDueDateSchedules(JsonObject fixedDueDateSchedules) {
     return withDueDateSchedules(FixedDueDateSchedules.from(fixedDueDateSchedules));
   }
 
@@ -423,7 +474,7 @@ public class LoanPolicy {
   }
 
   //TODO: potentially remove this, when builder can create class or JSON representation
-  LoanPolicy withAlternateRenewalSchedules(JsonObject renewalSchedules) {
+  public LoanPolicy withAlternateRenewalSchedules(JsonObject renewalSchedules) {
     return withAlternateRenewalSchedules(FixedDueDateSchedules.from(renewalSchedules));
   }
 
@@ -476,7 +527,7 @@ public class LoanPolicy {
       return LoanPolicyPeriod.INCORRECT;
     }
 
-    String intervalId = period.getString("intervalId");
+    String intervalId = period.getString(INTERVAL_ID);
     return LoanPolicyPeriod.getProfileByName(intervalId);
   }
 
@@ -486,8 +537,7 @@ public class LoanPolicy {
     if (Objects.isNull(period)) {
       return 0;
     }
-
-    return period.getInteger("duration");
+    return period.getInteger(DURATION);
   }
 
   public String getId() {
@@ -588,8 +638,8 @@ public class LoanPolicy {
     if (representation.containsKey(key)) {
       result = getPeriod(representation, key).addTo(initialDateTime,
           () -> loanPolicyValidationError(format("the \"%s\" in the loan policy is not recognized", key)),
-          interval -> loanPolicyValidationError(format("the interval \"%s\" in \"%s\" is not recognized", interval, key)),
-          duration -> loanPolicyValidationError(format("the duration \"%s\" in \"%s\" is invalid", duration, key)));
+          interval -> loanPolicyValidationError(format(INTERVAL_ERROR_TEXT, interval, key)),
+          duration -> loanPolicyValidationError(format(DURATION_ERROR_TEXT, duration, key)));
     } else {
       result = succeeded(defaultDateTime);
     }

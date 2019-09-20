@@ -66,7 +66,6 @@ public class LoanPoliciesFixture {
     MalformedURLException,
     TimeoutException,
     ExecutionException {
-
     return loanPolicyRecordCreator.createIfAbsent(builder);
   }
 
