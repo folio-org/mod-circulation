@@ -24,6 +24,7 @@ import org.hamcrest.Matcher;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.LocalDate;
+import org.joda.time.Seconds;
 import org.junit.Test;
 
 import api.support.APITests;
@@ -32,6 +33,7 @@ import api.support.builders.CheckInByBarcodeRequestBuilder;
 import api.support.builders.RequestBuilder;
 import api.support.http.InventoryItemResource;
 import api.support.matchers.JsonObjectMatcher;
+import api.support.matchers.TextDateTimeMatcher;
 import io.vertx.core.json.JsonObject;
 
 public class ServicePointCheckInTests extends APITests {
@@ -58,6 +60,8 @@ public class ServicePointCheckInTests extends APITests {
         .withPickupServicePoint(requestServicePoint)
         .withRequestDate(new DateTime(2019, 7, 5, 10, 0))
         .withRequestExpiration(new LocalDate(2019, 7, 11)));
+
+    final DateTime beforeCheckIn = DateTime.now(DateTimeZone.UTC);
 
     final CheckInByBarcodeResponse checkInResponse = loansFixture.checkInByBarcode(
       new CheckInByBarcodeRequestBuilder()
@@ -117,6 +121,8 @@ public class ServicePointCheckInTests extends APITests {
     staffSlipContextMatchers.putAll(getRequesterContextMatchers(jessica));
     staffSlipContextMatchers.putAll(getRequestContextMatchers(requestAfterCheckIn));
     staffSlipContextMatchers.put("request.requestID", is(request.getId()));
+    staffSlipContextMatchers.put("item.lastCheckedInDateTime",
+      TextDateTimeMatcher.withinSecondsAfter(Seconds.seconds(2), beforeCheckIn));
 
     JsonObject staffSlipContext = checkInResponse.getStaffSlipContext();
     assertThat(staffSlipContext, JsonObjectMatcher.allOfPaths(staffSlipContextMatchers));
@@ -145,6 +151,8 @@ public class ServicePointCheckInTests extends APITests {
 
     final IndividualResource request = requestsFixture.placeHoldShelfRequest(nod, jessica,
         DateTime.now(DateTimeZone.UTC), requestServicePoint.getId());
+
+    final DateTime beforeCheckIn = DateTime.now(DateTimeZone.UTC);
 
     final CheckInByBarcodeResponse checkInResponse = loansFixture.checkInByBarcode(
       new CheckInByBarcodeRequestBuilder()
@@ -222,6 +230,8 @@ public class ServicePointCheckInTests extends APITests {
     staffSlipContextMatchers.putAll(getRequesterContextMatchers(jessica));
     staffSlipContextMatchers.put("request.servicePointPickup", servicePointNameMatcher(requestServicePoint));
     staffSlipContextMatchers.put("request.requestID", is(request.getId()));
+    staffSlipContextMatchers.put("item.lastCheckedInDateTime",
+      TextDateTimeMatcher.withinSecondsAfter(Seconds.seconds(2), beforeCheckIn));
 
     JsonObject staffSlipContext = checkInResponse.getStaffSlipContext();
     assertThat(staffSlipContext, JsonObjectMatcher.allOfPaths(staffSlipContextMatchers));

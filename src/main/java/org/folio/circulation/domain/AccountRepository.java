@@ -1,10 +1,11 @@
 package org.folio.circulation.domain;
 
-import org.folio.circulation.support.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import static java.util.concurrent.CompletableFuture.completedFuture;
+import static org.folio.circulation.support.CqlQuery.exactMatch;
+import static org.folio.circulation.support.Result.succeeded;
 
 import java.lang.invoke.MethodHandles;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -12,44 +13,45 @@ import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
-import static java.util.concurrent.CompletableFuture.completedFuture;
-import static org.folio.circulation.support.CqlQuery.exactMatch;
-import static org.folio.circulation.support.CqlQuery.exactMatchAny;
-import static org.folio.circulation.support.Result.succeeded;
+import org.folio.circulation.support.Clients;
+import org.folio.circulation.support.CollectionResourceClient;
+import org.folio.circulation.support.CqlQuery;
+import org.folio.circulation.support.MultipleRecordFetcher;
+import org.folio.circulation.support.Result;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class AccountRepository {
 
-  private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
-
   private final CollectionResourceClient accountsStorageClient;
+  private static final Result<CqlQuery> openAccountStatusQuery =
+    exactMatch("status.name", "Open");
 
-  private final Result<CqlQuery> accountStatusQuery = exactMatch("status.name", "Open");
 
   public AccountRepository(Clients clients) {
     accountsStorageClient = clients.accountsStorageClient();
   }
 
-  public CompletableFuture<Result<Loan>> findAccountsForLoan(Result<Loan> loanResult) {
+  public CompletableFuture<Result<Loan>> findOpenAccountsForLoan(Result<Loan> loanResult) {
     return loanResult.after(loan -> {
       if (loan == null) {
         return completedFuture(loanResult);
       }
       return loanResult
-        .combineAfter(r -> getAccountsForLoan(loan.getId()),
+        .combineAfter(r -> fetchOpenAccountsForLoan(loan.getId()),
           Loan::withAccounts);
     });
   }
 
-  private CompletableFuture<Result<Collection<Account>>> getAccountsForLoan(String loanId) {
+  private CompletableFuture<Result<Collection<Account>>> fetchOpenAccountsForLoan(
+    String loanId) {
 
-    final Result<CqlQuery> loanIdQuery = exactMatch("loanId", loanId);
-
-    return createAccountsFetcher().findByQuery
-      (accountStatusQuery.combine(loanIdQuery, CqlQuery::and))
+    return createAccountsFetcher().findByQuery(
+      openAccountStatusQuery.combine(exactMatch("loanId", loanId), CqlQuery::and))
       .thenApply(r -> r.map(MultipleRecords::getRecords));
   }
 
-  public CompletableFuture<Result<MultipleRecords<Loan>>> findAccountsForLoans(
+  public CompletableFuture<Result<MultipleRecords<Loan>>> findOpenAccountsForLoans(
     MultipleRecords<Loan> multipleLoans) {
 
     if (multipleLoans.getRecords().isEmpty()) {
@@ -58,7 +60,8 @@ public class AccountRepository {
 
     return getAccountsForLoans(multipleLoans.getRecords())
       .thenApply(r -> r.map(accountMap -> multipleLoans.mapRecords(
-        loan -> loan.withAccounts(accountMap.getOrDefault(loan.getId(), null)))));
+        loan -> loan.withAccounts(accountMap.getOrDefault(loan.getId(),
+          new ArrayList<>())))));
   }
 
   private CompletableFuture<Result<Map<String, List<Account>>>> getAccountsForLoans(
@@ -72,7 +75,7 @@ public class AccountRepository {
         .collect(Collectors.toSet());
 
     return createAccountsFetcher()
-      .findByIndexNameAndQuery(accountsToFetch, "loanId", accountStatusQuery)
+      .findByIndexNameAndQuery(accountsToFetch, "loanId", openAccountStatusQuery)
       .thenComposeAsync(r -> r.after(multipleRecords -> completedFuture(succeeded(
         multipleRecords.getRecords().stream().collect(
           Collectors.groupingBy(Account::getLoanId))
