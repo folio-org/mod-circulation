@@ -8,6 +8,6 @@ public class StorageSchema {
   private StorageSchema() { }
 
   public static JsonSchemaValidator validatorForStorageLoanSchema() throws IOException {
-    return JsonSchemaValidator.fromResource("/storage-loan-6-1.json");
+    return JsonSchemaValidator.fromResource("/storage-loan-6-2.json");
   }
 }

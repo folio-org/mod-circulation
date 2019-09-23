@@ -19,8 +19,8 @@ class FixedScheduleCheckOutDueDateStrategy extends DueDateStrategy {
   FixedScheduleCheckOutDueDateStrategy(
     String loanPolicyId,
     String loanPolicyName,
-    FixedDueDateSchedules fixedDueDateSchedules, Function<String,
-    ValidationError> errorForPolicy) {
+    FixedDueDateSchedules fixedDueDateSchedules,
+    Function<String, ValidationError> errorForPolicy) {
 
     super(loanPolicyId, loanPolicyName, errorForPolicy);
 

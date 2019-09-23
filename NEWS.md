@@ -1,6 +1,28 @@
+## 16.7.0 2019-09-18
+
+* Only change due date for early return on first recall request (CIRC-440)
+
+## 16.6.0 2019-09-09
+
+* Loan is only updated during requests when due date changes (CIRC-289)
+* Respect tenant timezone when creating or moving requests (CIRC-434, CIRC-443)  
+* Remembers patron group of borrower at check out (CIRC-327)
+* Loan renewal responds with multiple failure reasons (CIRC-384)
+* Sends time based request related patron notices (CIRC-387)
+* Groups multiple item together for time based loan notices (CIRC-408)
+* Can configure number of patron notices processed at a time (CIRC-407)
+* Prevent requests from being moved above page requests (CIRC-416)
+* Retain checked out status after requests are moved (CIRC-411, CIRC-429)
+* Various permissions related fixes (CIRC-409, CIRC-418, CIRC-447)
+* Includes correct `check in date` token for notices (CIRC-420)
+* Protects against no loans policy after overridden check out (CIRC-424)
+* Provides `circulation 7.11` (CIRC-327)
+* Requires `patron-notice-policy-storage 0.7` (CIRC-387)
+* Requires `location-units 1.1` (CIRC-418)
+
 ## 16.5.0 2019-07-24
 
-* Send due date changed notice when moving recall request CIRC-316
+* Send due date changed notice when moving recall request (CIRC-316)
 
 ## 16.4.0 2019-07-23
 

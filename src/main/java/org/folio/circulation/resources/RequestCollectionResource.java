@@ -230,6 +230,7 @@ public class RequestCollectionResource extends CollectionResource {
     final ItemRepository itemRepository = new ItemRepository(clients, true, true, true);
     final LoanRepository loanRepository = new LoanRepository(clients);
     final LoanPolicyRepository loanPolicyRepository = new LoanPolicyRepository(clients);
+    final ConfigurationRepository configurationRepository = new ConfigurationRepository(clients);
 
     final UpdateUponRequest updateUponRequest = new UpdateUponRequest(
         new UpdateItem(clients),
@@ -249,7 +250,7 @@ public class RequestCollectionResource extends CollectionResource {
         updateUponRequest,
         moveRequestProcessAdapter,
         new RequestLoanValidator(loanRepository),
-        RequestNoticeSender.using(clients));
+        RequestNoticeSender.using(clients), configurationRepository);
 
     requestRepository.getById(id)
       .thenApply(r -> r.map(RequestAndRelatedRecords::new))

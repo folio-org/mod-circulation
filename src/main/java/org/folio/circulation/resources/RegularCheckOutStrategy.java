@@ -12,6 +12,7 @@ import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
+import org.folio.circulation.domain.RequestQueue;
 import org.folio.circulation.domain.policy.LoanPolicy;
 import org.folio.circulation.domain.policy.library.ClosedLibraryStrategyService;
 import org.folio.circulation.support.Clients;
@@ -60,9 +61,10 @@ public class RegularCheckOutStrategy implements CheckOutStrategy {
   private Result<LoanAndRelatedRecords> calculateDefaultInitialDueDate(LoanAndRelatedRecords loanAndRelatedRecords) {
     Loan loan = loanAndRelatedRecords.getLoan();
     LoanPolicy loanPolicy = loan.getLoanPolicy();
-
-    return loanPolicy.calculateInitialDueDate(loan)
+    RequestQueue requestQueue = loanAndRelatedRecords.getRequestQueue();
+    return loanPolicy.calculateInitialDueDate(loan, requestQueue)
       .map(loan::changeDueDate)
       .map(loanAndRelatedRecords::withLoan);
   }
+  
 }

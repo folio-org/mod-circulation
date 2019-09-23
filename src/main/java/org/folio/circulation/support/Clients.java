@@ -37,6 +37,7 @@ public class Clients {
   private final CollectionResourceClient configurationStorageClient;
   private final CollectionResourceClient scheduledNoticesStorageClient;
   private final CollectionResourceClient accountsStorageClient;
+  private final CollectionResourceClient anonymizeStorageLoansClient;
 
   public static Clients create(WebContext context, HttpClient httpClient) {
     return new Clients(context.createHttpClient(httpClient), context);
@@ -52,6 +53,7 @@ public class Clients {
       usersStorageClient = createUsersStorageClient(client, context);
       loansStorageClient = createLoansStorageClient(client, context);
       locationsStorageClient = createLocationsStorageClient(client, context);
+      anonymizeStorageLoansClient = createAnonymizeStorageLoansClient(client, context);
       institutionsStorageClient = createInstitutionsStorageClient(client, context);
       campusesStorageClient = createCampusesStorageClient(client, context);
       librariesStorageClient = createLibrariesStorageClient(client, context);
@@ -107,6 +109,10 @@ public class Clients {
 
   public CollectionResourceClient loansStorage() {
     return loansStorageClient;
+  }
+
+  public CollectionResourceClient anonymizeStorageLoansClient() {
+    return anonymizeStorageLoansClient;
   }
 
   public CollectionResourceClient locationsStorage() {
@@ -282,6 +288,14 @@ public class Clients {
     throws MalformedURLException {
 
     return getCollectionResourceClient(client, context, "/loan-storage/loans");
+  }
+
+  private static CollectionResourceClient createAnonymizeStorageLoansClient(
+    OkapiHttpClient client,
+    WebContext context)
+    throws MalformedURLException {
+
+    return getCollectionResourceClient(client, context, "/anonymize-storage-loans");
   }
 
   private static CollectionResourceClient createLocationsStorageClient(

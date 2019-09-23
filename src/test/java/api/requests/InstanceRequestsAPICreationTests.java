@@ -90,7 +90,9 @@ public class InstanceRequestsAPICreationTests extends APITests {
     IndividualResource instance = instancesFixture.basedUponDunkirk();
     IndividualResource holdings = holdingsFixture.defaultWithHoldings(instance.getId());
 
-    final IndividualResource item = itemsFixture.basedUponDunkirkWithCustomHoldingAndLocation(holdings.getId(), null);
+    IndividualResource locationsResource = locationsFixture.mainFloor();
+
+    final IndividualResource item = itemsFixture.basedUponDunkirkWithCustomHoldingAndLocation(holdings.getId(), locationsResource.getId());
 
     JsonObject requestBody = createInstanceRequestObject(instance.getId(), requesterId,
       pickupServicePointId, requestDate, requestExpirationDate);
@@ -127,7 +129,9 @@ public class InstanceRequestsAPICreationTests extends APITests {
     IndividualResource instance = instancesFixture.basedUponDunkirk();
     IndividualResource holdings = holdingsFixture.defaultWithHoldings(instance.getId());
 
-    final IndividualResource item = itemsFixture.basedUponDunkirkWithCustomHoldingAndLocation(holdings.getId(), null);
+    IndividualResource locationsResource = locationsFixture.mainFloor();
+
+    final IndividualResource item = itemsFixture.basedUponDunkirkWithCustomHoldingAndLocation(holdings.getId(), locationsResource.getId());
 
     JsonObject requestBody = createInstanceRequestObject(instance.getId(), requesterId,
       pickupServicePointId, requestDate, null);
@@ -165,10 +169,12 @@ public class InstanceRequestsAPICreationTests extends APITests {
     IndividualResource instance = instancesFixture.basedUponDunkirk();
     IndividualResource holdings = holdingsFixture.defaultWithHoldings(instance.getId());
 
+    IndividualResource locationsResource = locationsFixture.mainFloor();
+
     //create 3 copies with no location id's assigned.
-    itemsFixture.basedUponDunkirkWithCustomHoldingAndLocation(holdings.getId(), null);
-    itemsFixture.basedUponDunkirkWithCustomHoldingAndLocation(holdings.getId(), null);
-    itemsFixture.basedUponDunkirkWithCustomHoldingAndLocation(holdings.getId(), null);
+    itemsFixture.basedUponDunkirkWithCustomHoldingAndLocation(holdings.getId(), locationsResource.getId());
+    itemsFixture.basedUponDunkirkWithCustomHoldingAndLocation(holdings.getId(), locationsResource.getId());
+    itemsFixture.basedUponDunkirkWithCustomHoldingAndLocation(holdings.getId(), locationsResource.getId());
 
     JsonObject requestBody = createInstanceRequestObject(instance.getId(), requesterId,
       pickupServicePointId, requestDate, requestExpirationDate);
@@ -245,9 +251,11 @@ public class InstanceRequestsAPICreationTests extends APITests {
     IndividualResource instance = instancesFixture.basedUponDunkirk();
     IndividualResource holdings = holdingsFixture.defaultWithHoldings(instance.getId());
 
+    IndividualResource locationsResource = locationsFixture.mainFloor();
+
     //create 2 copies with no location id's assigned.
-    final IndividualResource item1 = itemsFixture.basedUponDunkirkWithCustomHoldingAndLocationAndCheckedOut(holdings.getId(), null);
-    final IndividualResource item2 = itemsFixture.basedUponDunkirkWithCustomHoldingAndLocationAndCheckedOut(holdings.getId(), null);
+    final IndividualResource item1 = itemsFixture.basedUponDunkirkWithCustomHoldingAndLocationAndCheckedOut(holdings.getId(), locationsResource.getId());
+    final IndividualResource item2 = itemsFixture.basedUponDunkirkWithCustomHoldingAndLocationAndCheckedOut(holdings.getId(), locationsResource.getId());
 
     //Set up request queues. Item1 has 2 requests (1 queued request), Item2 has 0 queued request. Item2 should be satisfied.
     placeHoldRequest(item1, pickupServicePointId, usersFixture.jessica(), requestExpirationDate);
@@ -291,9 +299,11 @@ public class InstanceRequestsAPICreationTests extends APITests {
     IndividualResource instance = instancesFixture.basedUponDunkirk();
     IndividualResource holdings = holdingsFixture.defaultWithHoldings(instance.getId());
 
+    IndividualResource locationsResource = locationsFixture.mainFloor();
+
     //create 2 copies with no location id's assigned.
-    final IndividualResource item1 = itemsFixture.basedUponDunkirkWithCustomHoldingAndLocationAndCheckedOut(holdings.getId(), null);
-    final IndividualResource item2 = itemsFixture.basedUponDunkirkWithCustomHoldingAndLocation(holdings.getId(), null);
+    final IndividualResource item1 = itemsFixture.basedUponDunkirkWithCustomHoldingAndLocationAndCheckedOut(holdings.getId(), locationsResource.getId());
+    final IndividualResource item2 = itemsFixture.basedUponDunkirkWithCustomHoldingAndLocation(holdings.getId(), locationsResource.getId());
 
     //Set up request queues. Item1 has requests (1 queued request), Item2 is Avaialble. Item2 should be satisfied.
     placeHoldRequest(item1, pickupServicePointId, usersFixture.jessica(), requestExpirationDate);
@@ -338,9 +348,11 @@ public class InstanceRequestsAPICreationTests extends APITests {
     IndividualResource instance = instancesFixture.basedUponDunkirk();
     IndividualResource holdings = holdingsFixture.defaultWithHoldings(instance.getId());
 
+    IndividualResource locationsResource = locationsFixture.mainFloor();
+
     //create 2 copies with no location id's assigned.
-    final IndividualResource item1 = itemsFixture.basedUponDunkirkWithCustomHoldingAndLocation(holdings.getId(), null);
-    final IndividualResource item2 = itemsFixture.basedUponDunkirkWithCustomHoldingAndLocation(holdings.getId(), null);
+    final IndividualResource item1 = itemsFixture.basedUponDunkirkWithCustomHoldingAndLocation(holdings.getId(), locationsResource.getId());
+    final IndividualResource item2 = itemsFixture.basedUponDunkirkWithCustomHoldingAndLocation(holdings.getId(), locationsResource.getId());
 
     loansFixture.createLoan(item1, usersFixture.charlotte(), DateTime.now().plusDays(2));
     loansFixture.createLoan(item2, usersFixture.charlotte(), DateTime.now());
@@ -396,8 +408,10 @@ public class InstanceRequestsAPICreationTests extends APITests {
     IndividualResource instance = instancesFixture.basedUponDunkirk();
     IndividualResource holdings = holdingsFixture.defaultWithHoldings(instance.getId());
 
+    IndividualResource locationsResource = locationsFixture.mainFloor();
+
     //create 1 copy with no location id's assigned.
-    final IndividualResource item = itemsFixture.basedUponDunkirkWithCustomHoldingAndLocationAndCheckedOut(holdings.getId(), null);
+    final IndividualResource item = itemsFixture.basedUponDunkirkWithCustomHoldingAndLocationAndCheckedOut(holdings.getId(), locationsResource.getId());
 
     //Set up request queues. Item1 has requests (1 queued request)
     placeHoldRequest(item, pickupServicePointId, usersFixture.jessica(), requestExpirationDate1);
@@ -441,9 +455,10 @@ public class InstanceRequestsAPICreationTests extends APITests {
     IndividualResource instance = instancesFixture.basedUponDunkirk();
     IndividualResource holdings = holdingsFixture.defaultWithHoldings(instance.getId());
 
+    IndividualResource locationsResource = locationsFixture.mainFloor();
     //create 2 copies with no location id's assigned.
-    final IndividualResource item1 = itemsFixture.basedUponDunkirkWithCustomHoldingAndLocation(holdings.getId(), null);
-    final IndividualResource item2 = itemsFixture.basedUponDunkirkWithCustomHoldingAndLocationAndCheckedOut(holdings.getId(), null);
+    final IndividualResource item1 = itemsFixture.basedUponDunkirkWithCustomHoldingAndLocation(holdings.getId(), locationsResource.getId());
+    final IndividualResource item2 = itemsFixture.basedUponDunkirkWithCustomHoldingAndLocationAndCheckedOut(holdings.getId(), locationsResource.getId());
 
     //Set up request queues. Item1 has requests (1 queued request), Item2 has requests (1 queued), either could be satisfied.
     loansFixture.createLoan(item1, usersFixture.jessica());
@@ -484,9 +499,10 @@ public class InstanceRequestsAPICreationTests extends APITests {
     IndividualResource instance = instancesFixture.basedUponDunkirk();
     IndividualResource holdings = holdingsFixture.defaultWithHoldings(instance.getId());
 
+    IndividualResource locationsResource = locationsFixture.mainFloor();
     //create 2 copies with no location id's assigned.
-    final IndividualResource item1 = itemsFixture.basedUponDunkirkWithCustomHoldingAndLocation(holdings.getId(), null);
-    final IndividualResource item2 = itemsFixture.basedUponDunkirkWithCustomHoldingAndLocation(holdings.getId(), null);
+    final IndividualResource item1 = itemsFixture.basedUponDunkirkWithCustomHoldingAndLocation(holdings.getId(), locationsResource.getId());
+    final IndividualResource item2 = itemsFixture.basedUponDunkirkWithCustomHoldingAndLocation(holdings.getId(), locationsResource.getId());
 
     loansFixture.createLoan(item1, usersFixture.james(),  DateTime.now());
     loansFixture.createLoan(item2, usersFixture.rebecca(), DateTime.now().plusDays(5));
@@ -529,10 +545,12 @@ public class InstanceRequestsAPICreationTests extends APITests {
     IndividualResource instance = instancesFixture.basedUponDunkirk();
     IndividualResource holdings = holdingsFixture.defaultWithHoldings(instance.getId());
 
+    IndividualResource locationsResource = locationsFixture.mainFloor();
+
     //create 2 copies with no location id's assigned.
-    final IndividualResource item1 = itemsFixture.basedUponDunkirkWithCustomHoldingAndLocation(holdings.getId(), null);
-    final IndividualResource item2 = itemsFixture.basedUponDunkirkWithCustomHoldingAndLocation(holdings.getId(), null);
-    final IndividualResource item3 = itemsFixture.basedUponDunkirkWithCustomHoldingAndLocation(holdings.getId(), null);
+    final IndividualResource item1 = itemsFixture.basedUponDunkirkWithCustomHoldingAndLocation(holdings.getId(), locationsResource.getId());
+    final IndividualResource item2 = itemsFixture.basedUponDunkirkWithCustomHoldingAndLocation(holdings.getId(), locationsResource.getId());
+    final IndividualResource item3 = itemsFixture.basedUponDunkirkWithCustomHoldingAndLocation(holdings.getId(), locationsResource.getId());
 
     loansFixture.createLoan(item1, usersFixture.james(),  DateTime.now().plusDays(5));
     loansFixture.createLoan(item2, usersFixture.rebecca(), DateTime.now().plusDays(3));
@@ -577,9 +595,10 @@ public class InstanceRequestsAPICreationTests extends APITests {
     IndividualResource instance = instancesFixture.basedUponDunkirk();
     IndividualResource holdings = holdingsFixture.defaultWithHoldings(instance.getId());
 
+    IndividualResource locationsResource = locationsFixture.mainFloor();
     //create 2 copies with no location id's assigned.
-    final IndividualResource item1 = itemsFixture.basedUponDunkirkWithCustomHoldingAndLocation(holdings.getId(), null);
-    final IndividualResource item2 = itemsFixture.basedUponDunkirkWithCustomHoldingAndLocation(holdings.getId(), null);
+    final IndividualResource item1 = itemsFixture.basedUponDunkirkWithCustomHoldingAndLocation(holdings.getId(), locationsResource.getId());
+    final IndividualResource item2 = itemsFixture.basedUponDunkirkWithCustomHoldingAndLocation(holdings.getId(), locationsResource.getId());
 
     loansFixture.createLoan(item1, usersFixture.james(),  DateTime.now().plusDays(21));
     loansFixture.createLoan(item2, usersFixture.rebecca(), DateTime.now().plusDays(5));
@@ -629,11 +648,13 @@ public class InstanceRequestsAPICreationTests extends APITests {
     IndividualResource instanceMultipleCopies = instancesFixture.basedUponDunkirk();
     IndividualResource holdings = holdingsFixture.defaultWithHoldings(instanceMultipleCopies.getId());
 
-    IndividualResource locationsResource = locationsFixture.mainFloor();
+    IndividualResource mainFloor = locationsFixture.mainFloor();
+    IndividualResource cd4Location = locationsFixture.fourthServicePoint();
 
-    final IndividualResource item1 = itemsFixture.basedUponDunkirkWithCustomHoldingAndLocation(holdings.getId(), null);
-    final IndividualResource item2 = itemsFixture.basedUponDunkirkWithCustomHoldingAndLocation(holdings.getId(), locationsResource.getId());
-    final IndividualResource item3 = itemsFixture.basedUponDunkirkWithCustomHoldingAndLocation(holdings.getId(), null);
+    //mainfloor - is the location of CD1, others - no
+    final IndividualResource item1 = itemsFixture.basedUponDunkirkWithCustomHoldingAndLocation(holdings.getId(), cd4Location.getId());
+    final IndividualResource item2 = itemsFixture.basedUponDunkirkWithCustomHoldingAndLocation(holdings.getId(), mainFloor.getId());
+    final IndividualResource item3 = itemsFixture.basedUponDunkirkWithCustomHoldingAndLocation(holdings.getId(), cd4Location.getId());
 
     //All of these items are checked out, have the same queue length, and due dates
     DateTime sameCheckoutDate = DateTime.now();
@@ -657,6 +678,7 @@ public class InstanceRequestsAPICreationTests extends APITests {
     Response postResponse = postCompleted.get(REQUEST_TIMEOUT, TimeUnit.SECONDS);
 
     JsonObject representation = postResponse.getJson();
+    //mainfloor - is the location of CD1, others - no
     validateInstanceRequestResponse(representation,
       pickupServicePointId,
       instanceMultipleCopies.getId(),
@@ -727,7 +749,7 @@ public class InstanceRequestsAPICreationTests extends APITests {
 
     //create three items
     itemsFixture.basedUponDunkirkWithCustomHoldingAndLocation(holdings.getId(), locationsResource.getId());
-    final IndividualResource item1 = itemsFixture.basedUponDunkirkWithCustomHoldingAndLocation(holdings.getId(), null);
+    final IndividualResource item1 = itemsFixture.basedUponDunkirkWithCustomHoldingAndLocation(holdings.getId(), locationsResource.getId());
     itemsFixture.basedUponDunkirkWithCustomHoldingAndLocation(holdings.getId(), null);
 
     requestsClient.create(new RequestBuilder()

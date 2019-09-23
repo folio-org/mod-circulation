@@ -42,7 +42,7 @@ public class LoanAndRelatedRecords implements UserRelatedRecord {
     return withLoan(loan.withItem(newItem));
   }
 
-  LoanAndRelatedRecords withTimeZone(DateTimeZone newTimeZone) {
+  public LoanAndRelatedRecords withTimeZone(DateTimeZone newTimeZone) {
     return new LoanAndRelatedRecords(loan, requestQueue, newTimeZone);
   }
 

@@ -26,13 +26,6 @@ public class ConfigurationRepository {
     configurationClient = clients.configurationStorageClient();
   }
 
-  public CompletableFuture<Result<LoanAndRelatedRecords>> lookupTimeZoneForLoanRelatedRecords(
-    Result<LoanAndRelatedRecords> relatedRecords) {
-
-    return relatedRecords.combineAfter(r -> findTimeZoneConfiguration(),
-      LoanAndRelatedRecords::withTimeZone);
-  }
-
   public CompletableFuture<Result<Integer>> lookupSchedulerNoticesProcessingLimit() {
     Result<CqlQuery> cqlQueryResult = defineModuleNameAndConfigNameFilter("NOTIFICATION_SCHEDULER", "noticesLimit");
     return lookupConfigurations(cqlQueryResult, applySearchSchedulerNoticesLimit());

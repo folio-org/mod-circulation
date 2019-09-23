@@ -1,13 +1,24 @@
 package org.folio.circulation.domain.policy;
 
-import api.support.builders.FixedDueDateSchedule;
-import api.support.builders.FixedDueDateSchedulesBuilder;
-import api.support.builders.LoanBuilder;
-import api.support.builders.LoanPolicyBuilder;
-import io.vertx.core.json.JsonObject;
+import static api.support.matchers.FailureMatcher.hasNumberOfFailureMessages;
+import static api.support.matchers.FailureMatcher.hasValidationFailure;
+import static java.lang.String.format;
+import static java.util.Arrays.asList;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.number.IsCloseTo.closeTo;
+import static org.junit.Assert.assertThat;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
+
+import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestQueue;
+import org.folio.circulation.domain.RequestStatus;
 import org.folio.circulation.domain.RequestType;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.http.server.ValidationError;
@@ -15,14 +26,13 @@ import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.junit.Test;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.UUID;
-
-import static api.support.matchers.FailureMatcher.hasNumberOfFailureMessages;
-import static api.support.matchers.FailureMatcher.hasValidationFailure;
-import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.assertThat;
+import api.support.builders.FixedDueDateSchedule;
+import api.support.builders.FixedDueDateSchedulesBuilder;
+import api.support.builders.ItemBuilder;
+import api.support.builders.LoanBuilder;
+import api.support.builders.LoanPolicyBuilder;
+import api.support.builders.RequestBuilder;
+import io.vertx.core.json.JsonObject;
 
 public class FixedLoanPolicyRenewalDueDateCalculationTests {
 
@@ -96,7 +106,8 @@ public class FixedLoanPolicyRenewalDueDateCalculationTests {
     DateTime renewalDate = new DateTime(2019, 1, 1, 8, 10, 45, DateTimeZone.UTC);
 
     String requestId = UUID.randomUUID().toString();
-    RequestQueue requestQueue = creteRequestQueue(requestId, RequestType.HOLD);
+    RequestQueue requestQueue =  new RequestQueue(Collections.emptyList());
+
 
     final Result<Loan> result = loanPolicy.renew(loan, renewalDate, requestQueue);
 
@@ -221,6 +232,64 @@ public class FixedLoanPolicyRenewalDueDateCalculationTests {
     final Result<Loan> result = loanPolicy.renew(loan, renewalDate, new RequestQueue(Collections.emptyList()));
 
     assertThat(result.value().getDueDate(), is(expectedSchedule.due));
+  }
+
+  @Test
+  public void shouldApplyAlternateScheduleWhenQueuedRequestIsHoldAndFixed() {
+    final Period alternateCheckoutLoanPeriod = Period.from(2, "Weeks");
+    final DateTime systemTime = DateTime.now();
+
+    LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
+      .fixed(UUID.randomUUID())
+      .withAlternateCheckoutLoanPeriod(alternateCheckoutLoanPeriod)
+      .create())
+      .withDueDateSchedules(new FixedDueDateSchedulesBuilder()
+        .addSchedule(FixedDueDateSchedule.wholeYear(systemTime.getYear()))
+        .create());
+
+    Item item = Item.from(
+      new ItemBuilder()
+        .checkOut()
+        .withId(UUID.randomUUID())
+        .create());
+    Loan loan = Loan.from(
+      new LoanBuilder()
+        .withItemId(UUID.fromString(item.getItemId()))
+        .withLoanDate(systemTime)
+        .create());
+
+    Request requestOne = Request.from(new RequestBuilder()
+      .withId(UUID.randomUUID())
+      .withItemId(UUID.fromString(loan.getItemId()))
+      .withPosition(1)
+      .create());
+
+    Request requestTwo = Request.from(new RequestBuilder()
+      .withId(UUID.randomUUID())
+      .withStatus(RequestStatus.OPEN_NOT_YET_FILLED.getValue())
+      .hold()
+      .withItemId(UUID.fromString(loan.getItemId()))
+      .withPosition(2)
+      .create());
+
+    RequestQueue requestQueue = new RequestQueue(asList(requestOne, requestTwo));
+    Result<DateTime> initialDueDateResult = loanPolicy.calculateInitialDueDate(loan, requestQueue);
+
+    String key = "alternateCheckoutLoanPeriod";
+    DateTime expectedDueDate = alternateCheckoutLoanPeriod.addTo(
+        systemTime,
+        () -> errorForLoanPeriod(format("the \"%s\" is not recognized", key)),
+        interval -> errorForLoanPeriod(format("the interval \"%s\" in \"%s\" is not recognized", interval, key)),
+        dur -> errorForLoanPeriod(format("the duration \"%s\" in \"%s\" is invalid", dur, key)))
+          .value();
+    Long result = initialDueDateResult.value().getMillis();
+    Long expected = expectedDueDate.getMillis();
+    assertThat(result.doubleValue(), closeTo(expected.doubleValue(), 60000));
+  }
+
+  private ValidationError errorForLoanPeriod(String reason) {
+    Map<String, String> parameters = new HashMap<String, String>();
+    return new ValidationError(reason, parameters);
   }
 
   @Test
@@ -465,11 +534,14 @@ public class FixedLoanPolicyRenewalDueDateCalculationTests {
       EXPECTED_REASON_DATE_FALLS_OUTSIDE_DATE_RANGES));
   }
 
+  UUID checkoutServicePointId = UUID.randomUUID();
+
   private Loan existingLoan() {
     return new LoanBuilder()
       .open()
       .withLoanDate(new DateTime(2018, 1, 20, 13, 45, 21, DateTimeZone.UTC))
       .withDueDate(new DateTime(2018, 1, 31, 23, 59, 59, DateTimeZone.UTC))
+      .withCheckoutServicePointId(checkoutServicePointId)
       .asDomainObject();
   }
 

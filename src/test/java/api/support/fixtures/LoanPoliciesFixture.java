@@ -66,7 +66,6 @@ public class LoanPoliciesFixture {
     MalformedURLException,
     TimeoutException,
     ExecutionException {
-
     return loanPolicyRecordCreator.createIfAbsent(builder);
   }
 
@@ -89,14 +88,19 @@ public class LoanPoliciesFixture {
   }
 
   public IndividualResource canCirculateRolling()
-      throws InterruptedException, 
-      MalformedURLException, 
-      TimeoutException, 
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
       ExecutionException {
+
+    JsonObject holds = new JsonObject();
+    holds.put("alternateRenewalLoanPeriod", Period.weeks(3).asJson());
+    holds.put("renewItemsWithRequest", true);
 
     final LoanPolicyBuilder canCirculateRollingPolicy = new LoanPolicyBuilder()
       .withName("Can Circulate Rolling")
       .withDescription("Can circulate item")
+      .withHolds(holds)
       .rolling(Period.weeks(3))
       .unlimitedRenewals()
       .renewFromSystemDate();
@@ -110,8 +114,13 @@ public class LoanPoliciesFixture {
     TimeoutException,
     ExecutionException {
 
+    JsonObject holds = new JsonObject();
+    holds.put("alternateRenewalLoanPeriod", Period.weeks(3).asJson());
+    holds.put("renewItemsWithRequest", true);
+
     LoanPolicyBuilder canCirculateFixedLoanPolicy = new LoanPolicyBuilder()
       .withName("Can Circulate Fixed")
+      .withHolds(holds)
       .withDescription("Can circulate item")
       .fixed(createExampleFixedDueDateSchedule().getId());
 
