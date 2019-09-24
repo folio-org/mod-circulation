@@ -9,6 +9,7 @@ import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
+import org.folio.circulation.domain.AddressTypeRepository;
 import org.folio.circulation.domain.CheckInProcessRecords;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Loan;
@@ -43,6 +44,7 @@ class CheckInProcessAdapter {
   private final ServicePointRepository servicePointRepository;
   private final PatronNoticeService patronNoticeService;
   private final UserRepository userRepository;
+  private final AddressTypeRepository addressTypeRepository;
 
   @SuppressWarnings("squid:S00107")
   CheckInProcessAdapter(
@@ -52,7 +54,7 @@ class CheckInProcessAdapter {
     RequestQueueRepository requestQueueRepository,
     UpdateItem updateItem, UpdateRequestQueue requestQueueUpdate,
     LoanRepository loanRepository, ServicePointRepository servicePointRepository,
-    PatronNoticeService patronNoticeService, UserRepository userRepository) {
+    PatronNoticeService patronNoticeService, UserRepository userRepository, AddressTypeRepository addressTypeRepository) {
 
     this.itemFinder = itemFinder;
     this.singleOpenLoanFinder = singleOpenLoanFinder;
@@ -64,6 +66,7 @@ class CheckInProcessAdapter {
     this.servicePointRepository = servicePointRepository;
     this.patronNoticeService = patronNoticeService;
     this.userRepository = userRepository;
+    this.addressTypeRepository = addressTypeRepository;
   }
 
   CompletableFuture<Result<Item>> findItem(CheckInProcessRecords records) {
@@ -141,6 +144,15 @@ class CheckInProcessAdapter {
     }
     return userRepository.getUser(firstRequest)
       .thenApply(r -> r.map(firstRequest::withRequester));
+  }
+
+  CompletableFuture<Result<Request>> getAddressType(CheckInProcessRecords records) {
+    Request firstRequest = records.getHighestPriorityFulfillableRequest();
+    if (firstRequest == null) {
+      return completedFuture(succeeded(null));
+    }
+    return addressTypeRepository.getAddressTypeById(firstRequest.getDeliveryAddressTypeId())
+      .thenApply(r -> r.map(firstRequest::withAddressType));
   }
 
   Result<CheckInProcessRecords> sendCheckInPatronNotice(CheckInProcessRecords records) {

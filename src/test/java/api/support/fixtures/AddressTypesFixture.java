@@ -1,5 +1,7 @@
 package api.support.fixtures;
 
+import static api.support.fixtures.AddressExamples.HOME_ADDRESS_TYPE;
+import static api.support.fixtures.AddressExamples.WORK_ADDRESS_TYPE;
 import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
 import static org.folio.circulation.support.JsonPropertyWriter.write;
 
@@ -30,16 +32,32 @@ public class AddressTypesFixture {
   }
 
   public IndividualResource work()
-      throws InterruptedException, 
-      MalformedURLException, 
-      TimeoutException, 
+      throws InterruptedException,
+      MalformedURLException,
+      TimeoutException,
       ExecutionException {
 
     final JsonObject workAddressType = new JsonObject();
 
     write(workAddressType, "addressType", "Work");
     write(workAddressType, "desc", "Work address type");
+    write(workAddressType, "id", WORK_ADDRESS_TYPE);
 
     return addressTypeRecordCreator.createIfAbsent(workAddressType);
+  }
+
+  public IndividualResource home()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    final JsonObject homeAddressType = new JsonObject();
+
+    write(homeAddressType, "addressType", "Home");
+    write(homeAddressType, "desc", "Home address type");
+    write(homeAddressType, "id", HOME_ADDRESS_TYPE);
+
+    return addressTypeRecordCreator.createIfAbsent(homeAddressType);
   }
 }

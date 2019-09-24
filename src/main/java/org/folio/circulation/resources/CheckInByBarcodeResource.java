@@ -3,6 +3,7 @@ package org.folio.circulation.resources;
 import static org.folio.circulation.domain.validation.CommonFailures.moreThanOneOpenLoanFailure;
 import static org.folio.circulation.domain.validation.CommonFailures.noItemFoundForBarcodeFailure;
 
+import org.folio.circulation.domain.AddressTypeRepository;
 import org.folio.circulation.domain.CheckInProcessRecords;
 import org.folio.circulation.domain.LoanCheckInService;
 import org.folio.circulation.domain.LoanRepository;
@@ -49,6 +50,7 @@ public class CheckInByBarcodeResource extends Resource {
     final LoanRepository loanRepository = new LoanRepository(clients);
     final ItemRepository itemRepository = new ItemRepository(clients, true, true, true);
     final UserRepository userRepository = new UserRepository(clients);
+    final AddressTypeRepository addressTypeRepository = new AddressTypeRepository(clients);
     final RequestQueueRepository requestQueueRepository = RequestQueueRepository.using(clients);
     final ServicePointRepository servicePointRepository = new ServicePointRepository(clients);
 
@@ -77,7 +79,7 @@ public class CheckInByBarcodeResource extends Resource {
     final CheckInProcessAdapter processAdapter = new CheckInProcessAdapter(
       itemFinder, singleOpenLoanFinder, loanCheckInService,
       requestQueueRepository, updateItem, requestQueueUpdate, loanRepository,
-      servicePointRepository, patronNoticeService, userRepository);
+      servicePointRepository, patronNoticeService, userRepository, addressTypeRepository);
 
     final RequestScheduledNoticeService requestScheduledNoticeService =
       RequestScheduledNoticeService.using(clients);
@@ -104,6 +106,8 @@ public class CheckInByBarcodeResource extends Resource {
         processAdapter::getPickupServicePoint, CheckInProcessRecords::withHighestPriorityFulfillableRequest))
       .thenComposeAsync(updateItemResult -> updateItemResult.combineAfter(
         processAdapter::getRequester, CheckInProcessRecords::withHighestPriorityFulfillableRequest))
+      .thenComposeAsync(updateItemResult -> updateItemResult.combineAfter(
+        processAdapter::getAddressType, CheckInProcessRecords::withHighestPriorityFulfillableRequest))
       .thenComposeAsync(updateItemResult -> updateItemResult.combineAfter(
         processAdapter::updateLoan, CheckInProcessRecords::withLoan))
       .thenApply(updateItemResult -> updateItemResult.next(processAdapter::sendCheckInPatronNotice))
