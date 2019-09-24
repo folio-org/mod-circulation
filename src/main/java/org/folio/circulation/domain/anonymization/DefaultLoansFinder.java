@@ -23,7 +23,7 @@ abstract class DefaultLoansFinder implements LoanAnonymizationFinderService {
   CompletableFuture<Result<Collection<Loan>>> fillLoanInformation(
       Result<MultipleRecords<Loan>> records) {
 
-    return records.after(accountRepository::findOpenAccountsForLoans)
+    return records.after(accountRepository::findAccountsForLoans)
       .thenCompose(r -> completedFuture(r.map(MultipleRecords::getRecords)));
   }
 

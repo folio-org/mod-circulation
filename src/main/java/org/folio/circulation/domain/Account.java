@@ -33,6 +33,10 @@ public class Account {
     return getStatus().equalsIgnoreCase("closed");
   }
 
+  public boolean isOpen() {
+    return getStatus().equalsIgnoreCase("open");
+  }
+
   public static Account from(JsonObject representation) {
     return new Account(representation);
   }
