@@ -187,7 +187,7 @@ public class LoanCollectionResource extends CollectionResource {
     String id = routingContext.request().getParam("id");
 
     loanRepository.getById(id)
-      .thenComposeAsync(accountRepository::findOpenAccountsForLoan)
+      .thenComposeAsync(accountRepository::findAccountsForLoan)
       .thenComposeAsync(servicePointRepository::findServicePointsForLoan)
       .thenComposeAsync(userRepository::findUserForLoan)
       .thenComposeAsync(loanPolicyRepository::findPolicyForLoan)
@@ -222,7 +222,7 @@ public class LoanCollectionResource extends CollectionResource {
 
     loanRepository.findBy(routingContext.request().query())
       .thenCompose(multiLoanRecordsResult ->
-        multiLoanRecordsResult.after(accountRepository::findOpenAccountsForLoans))
+        multiLoanRecordsResult.after(accountRepository::findAccountsForLoans))
       .thenCompose(multiLoanRecordsResult ->
         multiLoanRecordsResult.after(servicePointRepository::findServicePointsForLoans))
       .thenCompose(multiLoanRecordsResult ->
