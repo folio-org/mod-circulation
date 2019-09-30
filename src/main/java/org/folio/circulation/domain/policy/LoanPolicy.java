@@ -304,7 +304,7 @@ public class LoanPolicy {
     if(isRolling(loansPolicy)) {
       if(isRenewal) {
         return new RollingRenewalDueDateStrategy(getId(), getName(),
-          systemDate, getRenewFrom(), getRenewalPeriod(loansPolicy, renewalsPolicy,isRenewalWithHoldRequest),
+          systemDate, getRenewFrom(), getRenewalPeriod(loansPolicy, renewalsPolicy, isRenewalWithHoldRequest),
           getRenewalDueDateLimitSchedules(), this::loanPolicyValidationError);
       }
       else {
@@ -318,15 +318,9 @@ public class LoanPolicy {
       }
     }
     else if(isFixed(loansPolicy)) {
-      if(isRenewal) {
-        if (isRenewalWithHoldRequest) {
-          return new RollingRenewalDueDateStrategy(getId(), getName(), systemDate,
-            "SYSTEM_DATE", getAlternateRenewalLoanPeriodForHolds(),
-            new NoFixedDueDateSchedules(), this::loanPolicyValidationError);
-        } else {
-          return new FixedScheduleRenewalDueDateStrategy(getId(), getName(),
-            getRenewalFixedDueDateSchedules(), systemDate, this::loanPolicyValidationError);
-        }
+      if (isRenewal) {
+        return new FixedScheduleRenewalDueDateStrategy(getId(), getName(),
+          getRenewalFixedDueDateSchedules(), systemDate, this::loanPolicyValidationError);
       }
       else {
         if(isAlternatePeriod(requestQueue)) {
@@ -399,20 +393,22 @@ public class LoanPolicy {
     boolean isRenewalWithHoldRequest) {
 
     Period result;
-    if (isRenewalWithHoldRequest) {
+    if (isRenewalWithHoldRequest && hasAlternateRenewalLoanPeriodForHolds()) {
       result = getAlternateRenewalLoanPeriodForHolds();
     } else {
-      result = useDifferentPeriod() ? getPeriod(renewalsPolicy) : getPeriod(loansPolicy);
+      result = useDifferentPeriod()
+        ? getPeriod(renewalsPolicy)
+        : getPeriod(loansPolicy);
     }
     return result;
   }
 
-  private Period getAlternateRenewalLoanPeriodForHolds() {
-    JsonObject holds = representation
-      .getJsonObject(REQUEST_MANAGEMENT_KEY)
-      .getJsonObject(HOLDS_KEY);
+  private boolean hasAlternateRenewalLoanPeriodForHolds() {
+    return getHolds().containsKey(ALTERNATE_RENEWAL_LOAN_PERIOD_KEY);
+  }
 
-    return getPeriod(holds, ALTERNATE_RENEWAL_LOAN_PERIOD_KEY);
+  private Period getAlternateRenewalLoanPeriodForHolds() {
+    return getPeriod(getHolds(), ALTERNATE_RENEWAL_LOAN_PERIOD_KEY);
   }
 
   private Period getPeriod(JsonObject policy) {
