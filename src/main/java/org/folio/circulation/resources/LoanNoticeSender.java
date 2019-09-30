@@ -35,11 +35,6 @@ public class LoanNoticeSender {
     this.loanPolicyRepository = loanPolicyRepository;
   }
 
-  public Result<LoanAndRelatedRecords> sendCheckOutPatronNotice(LoanAndRelatedRecords records) {
-    sendLoanNotice(records, NoticeEventType.CHECK_OUT);
-    return succeeded(records);
-  }
-
   public Result<LoanAndRelatedRecords> sendRenewalPatronNotice(LoanAndRelatedRecords records) {
     sendLoanNotice(records, NoticeEventType.RENEWED);
     return succeeded(records);
