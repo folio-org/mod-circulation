@@ -1,9 +1,10 @@
 package org.folio.circulation.domain.notice.session;
 
-import static org.folio.circulation.domain.notice.session.PatronActionType.invalidActionTypeErrorMessage;
+import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getUUIDProperty;
 import static org.folio.circulation.support.JsonPropertyWriter.write;
 import static org.folio.circulation.support.http.ResponseMapping.flatMapUsingJson;
+import static org.folio.circulation.support.results.CommonFailures.failedDueToServerError;
 
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -11,7 +12,6 @@ import java.util.concurrent.CompletableFuture;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.Result;
-import org.folio.circulation.support.ServerErrorFailure;
 import org.folio.circulation.support.http.client.ResponseInterpreter;
 
 import io.vertx.core.json.JsonObject;
@@ -58,12 +58,11 @@ public class PatronActionSessionRepository {
     UUID id = getUUIDProperty(json, ID);
     UUID patronId = getUUIDProperty(json, PATRON_ID);
     UUID loanId = getUUIDProperty(json, LOAN_ID);
+    String actionTypeValue = getProperty(json, ACTION_TYPE);
 
-    PatronActionType patronActionType = PatronActionType.from(json.getString(ACTION_TYPE));
-    if (!patronActionType.isValid()) {
-      return Result.failed(new ServerErrorFailure(invalidActionTypeErrorMessage()));
-    }
-
-    return Result.succeeded(new PatronSessionRecord(id, patronId, loanId, patronActionType));
+    return PatronActionType.from(actionTypeValue)
+      .map(patronActionType -> new PatronSessionRecord(id, patronId, loanId, patronActionType))
+      .map(Result::succeeded)
+      .orElse(failedDueToServerError("Invalid patron action type value: " + actionTypeValue));
   }
 }
