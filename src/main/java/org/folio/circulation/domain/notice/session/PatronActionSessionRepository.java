@@ -1,8 +1,11 @@
 package org.folio.circulation.domain.notice.session;
 
 import static org.folio.circulation.domain.notice.session.PatronActionType.invalidActionTypeErrorMessage;
+import static org.folio.circulation.support.JsonPropertyFetcher.getUUIDProperty;
+import static org.folio.circulation.support.JsonPropertyWriter.write;
 import static org.folio.circulation.support.http.ResponseMapping.flatMapUsingJson;
 
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.support.Clients;
@@ -42,17 +45,19 @@ public class PatronActionSessionRepository {
   }
 
   private JsonObject mapToJson(PatronSessionRecord patronSessionRecord) {
-    return new JsonObject()
-      .put(ID, patronSessionRecord.getId())
-      .put(PATRON_ID, patronSessionRecord.getPatronId())
-      .put(LOAN_ID, patronSessionRecord.getLoanId())
-      .put(ACTION_TYPE, patronSessionRecord.getActionType().getRepresentation());
+    JsonObject json = new JsonObject();
+    write(json, ID, patronSessionRecord.getId());
+    write(json, PATRON_ID, patronSessionRecord.getPatronId());
+    write(json, LOAN_ID, patronSessionRecord.getLoanId());
+    write(json, ACTION_TYPE, patronSessionRecord.getActionType().getRepresentation());
+
+    return json;
   }
 
   private Result<PatronSessionRecord> mapFromJson(JsonObject json) {
-    String id = json.getString(ID);
-    String patronId = json.getString(PATRON_ID);
-    String loanId = json.getString(LOAN_ID);
+    UUID id = getUUIDProperty(json, ID);
+    UUID patronId = getUUIDProperty(json, PATRON_ID);
+    UUID loanId = getUUIDProperty(json, LOAN_ID);
 
     PatronActionType patronActionType = PatronActionType.from(json.getString(ACTION_TYPE));
     if (!patronActionType.isValid()) {

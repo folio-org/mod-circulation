@@ -2,30 +2,32 @@ package org.folio.circulation.domain.notice.session;
 
 import static java.util.Objects.requireNonNull;
 
+import java.util.UUID;
+
 public class PatronSessionRecord {
 
-  private final String id;
-  private final String patronId;
-  private final String loanId;
+  private final UUID id;
+  private final UUID patronId;
+  private final UUID loanId;
   private final PatronActionType actionType;
 
-  public PatronSessionRecord(String id, String patronId,
-                             String loanId, PatronActionType actionType) {
+  public PatronSessionRecord(UUID id, UUID patronId,
+                             UUID loanId, PatronActionType actionType) {
     this.id = requireNonNull(id);
     this.patronId = requireNonNull(patronId);
     this.loanId = requireNonNull(loanId);
     this.actionType = requireNonNull(actionType);
   }
 
-  public String getId() {
+  public UUID getId() {
     return id;
   }
 
-  public String getPatronId() {
+  public UUID getPatronId() {
     return patronId;
   }
 
-  public String getLoanId() {
+  public UUID getLoanId() {
     return loanId;
   }
 

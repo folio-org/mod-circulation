@@ -22,11 +22,11 @@ public class PatronActionSessionService {
   }
 
   public CompletableFuture<Result<LoanAndRelatedRecords>> saveCheckOutSessionRecord(LoanAndRelatedRecords records) {
-    String patronId = records.getUserId();
-    String loanId = records.getLoan().getId();
+    UUID patronId = UUID.fromString(records.getUserId());
+    UUID loanId = UUID.fromString(records.getLoan().getId());
 
     PatronSessionRecord patronSessionRecord =
-      new PatronSessionRecord(UUID.randomUUID().toString(),
+      new PatronSessionRecord(UUID.randomUUID(),
         patronId, loanId, PatronActionType.CHECK_OUT);
 
     return patronActionSessionRepository.create(patronSessionRecord)
