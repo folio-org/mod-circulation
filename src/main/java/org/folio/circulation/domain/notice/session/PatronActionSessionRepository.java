@@ -1,5 +1,6 @@
 package org.folio.circulation.domain.notice.session;
 
+import static org.folio.circulation.domain.notice.session.PatronActionType.invalidActionTypeErrorMessage;
 import static org.folio.circulation.support.http.ResponseMapping.flatMapUsingJson;
 
 import java.util.concurrent.CompletableFuture;
@@ -7,6 +8,7 @@ import java.util.concurrent.CompletableFuture;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.Result;
+import org.folio.circulation.support.ServerErrorFailure;
 import org.folio.circulation.support.http.client.ResponseInterpreter;
 
 import io.vertx.core.json.JsonObject;
@@ -52,7 +54,11 @@ public class PatronActionSessionRepository {
     String patronId = json.getString(PATRON_ID);
     String loanId = json.getString(LOAN_ID);
 
-    return Result.of(() -> PatronActionType.from(json.getString(ACTION_TYPE)))
-      .map(patronActionType -> new PatronSessionRecord(id, patronId, loanId, patronActionType));
+    PatronActionType patronActionType = PatronActionType.from(json.getString(ACTION_TYPE));
+    if (!patronActionType.isValid()) {
+      return Result.failed(new ServerErrorFailure(invalidActionTypeErrorMessage()));
+    }
+
+    return Result.succeeded(new PatronSessionRecord(id, patronId, loanId, patronActionType));
   }
 }

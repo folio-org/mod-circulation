@@ -2,11 +2,13 @@ package org.folio.circulation.domain.notice.session;
 
 import java.util.Arrays;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 public enum PatronActionType {
 
   CHECK_OUT("Check-out"),
-  CHECK_IN("Check-in");
+  CHECK_IN("Check-in"),
+  UNKNOWN("");
 
   private String representation;
 
@@ -18,10 +20,23 @@ public enum PatronActionType {
     return representation;
   }
 
+  public boolean isValid() {
+    return this != UNKNOWN;
+  }
+
   public static PatronActionType from(String value) {
     return Arrays.stream(values())
-      .filter(v -> Objects.equals(v.getRepresentation(), (value)))
+      .filter(type -> Objects.equals(type.getRepresentation(), value))
       .findFirst()
-      .orElseThrow(() -> new IllegalArgumentException("Invalid patron action type representation: " + value));
+      .orElse(UNKNOWN);
+  }
+
+  public static String invalidActionTypeErrorMessage() {
+    String joinedRepresentations = Arrays.stream(values())
+      .filter(PatronActionType::isValid)
+      .map(type -> type.representation)
+      .collect(Collectors.joining(", "));
+
+    return "Patron action type must be " + joinedRepresentations;
   }
 }
