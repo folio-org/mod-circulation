@@ -8,11 +8,11 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import org.apache.commons.collections4.MultiValuedMap;
-import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.domain.anonymization.LoanAnonymizationRecords;
 import org.folio.circulation.support.OkJsonResponseResult;
 import org.folio.circulation.support.ResponseWritableResult;
 import org.folio.circulation.support.Result;
+import org.json.JSONArray;
 
 import io.vertx.core.json.JsonObject;
 
@@ -41,7 +41,7 @@ public class AnonymizeLoansRepresentation {
       .stream()
       .map(k -> new Error().withMessage(k)
         .withParameters(Collections.singletonList(new Parameter().withKey("loanIds")
-          .withValue(StringUtils.join(multiMap.get(k))))))
+          .withValue(new JSONArray(multiMap.get(k)).toString()))))
       .collect(Collectors.toList());
 
   }

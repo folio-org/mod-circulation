@@ -5,7 +5,7 @@ import java.util.Collections;
 import java.util.List;
 
 import org.folio.circulation.domain.anonymization.checks.AnonymizationChecker;
-import org.folio.circulation.domain.anonymization.checks.HasNoAssociatedFeesAndFines;
+import org.folio.circulation.domain.anonymization.checks.HaveNoAssociatedFeesAndFines;
 import org.folio.circulation.support.Clients;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,7 +18,7 @@ public class LoanAnonymizationHelper {
   private final Clients clients;
   private final LoanAnonymizationService loanAnonymizationService;
   private final List<AnonymizationChecker> anonymizationCheckers =
-      Collections.singletonList(new HasNoAssociatedFeesAndFines());
+      Collections.singletonList(new HaveNoAssociatedFeesAndFines());
   private LoanAnonymizationFinderService loansFinderService;
 
   public LoanAnonymizationHelper(Clients clients) {
