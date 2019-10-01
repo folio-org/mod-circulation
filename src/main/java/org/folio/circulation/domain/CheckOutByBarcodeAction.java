@@ -9,15 +9,18 @@ import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequ
 import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
 import io.vertx.core.json.JsonObject;
+import org.joda.time.format.ISODateTimeFormat;
 
 import org.folio.circulation.domain.notice.schedule.DueDateScheduledNoticeService;
 import org.folio.circulation.domain.notice.schedule.ScheduledNoticesRepository;
 import org.folio.circulation.domain.policy.LoanPolicyRepository;
 import org.folio.circulation.domain.policy.PatronNoticePolicyRepository;
 import org.folio.circulation.domain.representations.CheckOutByBarcodeRequest;
+import org.folio.circulation.domain.representations.LoanProperties;
 import org.folio.circulation.domain.validation.AlreadyCheckedOutValidator;
 import org.folio.circulation.domain.validation.ExistingOpenLoanValidator;
 import org.folio.circulation.domain.validation.InactiveUserValidator;
@@ -29,10 +32,11 @@ import org.folio.circulation.domain.validation.ServicePointOfCheckoutPresentVali
 import org.folio.circulation.resources.CheckOutStrategy;
 import org.folio.circulation.resources.LoanNoticeSender;
 import org.folio.circulation.support.Clients;
+import org.folio.circulation.support.ClockManager;
 import org.folio.circulation.support.ItemRepository;
 import org.folio.circulation.support.Result;
 
-public class CheckOutByBarcodeCommand {
+public class CheckOutByBarcodeAction {
 
   private Clients clients;
   private CheckOutStrategy checkOutStrategy;
@@ -41,29 +45,31 @@ public class CheckOutByBarcodeCommand {
   private CheckOutByBarcodeRequest request;
 
 
-  public CheckOutByBarcodeCommand(CheckOutStrategy checkOutStrategy, Clients clients) {
+  public CheckOutByBarcodeAction(CheckOutStrategy checkOutStrategy, Clients clients) {
     this.checkOutStrategy = checkOutStrategy;
     this.clients = clients;
   }
 
-  public CompletableFuture<Result<Loan>> execute(Loan loan, JsonObject jsonRequest) {
-    this.request = CheckOutByBarcodeRequest.from(jsonRequest);
-    this.jsonRequest = jsonRequest;
+  public CompletableFuture<Result<Loan>> execute(JsonObject jsonReq) {
+    this.request = CheckOutByBarcodeRequest.from(jsonReq);
+    this.jsonRequest = jsonReq;
 
-    return prepare(succeeded(new LoanAndRelatedRecords(loan)))
+    return prepare()
             .thenCompose(this::validate)
             .thenCompose(this::doWork)
             .thenCompose(this::finalize)
             .thenApply(this::getResult);
   }
 
-  private CompletableFuture<Result<LoanAndRelatedRecords>> prepare(Result<LoanAndRelatedRecords> loanAndRelatedRecords) {
+  private CompletableFuture<Result<LoanAndRelatedRecords>> prepare() {
     UserRepository userRepository = new UserRepository(clients);
     ItemRepository itemRepository = new ItemRepository(clients, true, true, true);
     RequestQueueRepository requestQueueRepository = RequestQueueRepository.using(clients);
     ConfigurationRepository configurationRepository= new ConfigurationRepository(clients);
 
-    return completedFuture(loanAndRelatedRecords)
+    Loan loan = createLoan();
+
+    return completedFuture(succeeded(new LoanAndRelatedRecords(loan)))
       .thenCombineAsync(userRepository.getUserByBarcode(request.getUserBarcode()), this::addUser)
       .thenCombineAsync(userRepository.getProxyUserByBarcode(request.getProxyUserBarcode()), this::addProxyUser)
       .thenCombineAsync(itemRepository.fetchByBarcode(request.getItemBarcode()), this::addItem)
@@ -150,6 +156,27 @@ public class CheckOutByBarcodeCommand {
 
   private Result<Loan> getResult(Result<LoanAndRelatedRecords> loanAndRelatedRecords) {
     return loanAndRelatedRecords.map(LoanAndRelatedRecords::getLoan);
+  }
+
+  private Loan createLoan() {
+    final JsonObject loanJson = new JsonObject();
+
+    loanJson.put("id", UUID.randomUUID().toString());
+    copyOrDefaultLoanDate(jsonRequest, loanJson);
+    loanJson.put(LoanProperties.CHECKOUT_SERVICE_POINT_ID, request.getServicePointId());
+
+    return Loan.from(loanJson);
+  }
+
+  private void copyOrDefaultLoanDate(JsonObject request, JsonObject loan) {
+    final String loanDateProperty = "loanDate";
+
+    if (request.containsKey(loanDateProperty)) {
+      loan.put(loanDateProperty, request.getString(loanDateProperty));
+    } else {
+      loan.put(loanDateProperty, ClockManager.getClockManager().getDateTime()
+        .toString(ISODateTimeFormat.dateTime()));
+    }
   }
 
   private Result<LoanAndRelatedRecords> addProxyUser(

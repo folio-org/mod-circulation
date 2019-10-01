@@ -1,11 +1,31 @@
 package org.folio.circulation.resources;
 
+import static java.util.concurrent.CompletableFuture.completedFuture;
+
+import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequest.ITEM_BARCODE;
+import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequest.LOAN_DATE;
+import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequest.SERVICE_POINT_ID;
+import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequest.USER_BARCODE;
 import static org.folio.circulation.domain.validation.CommonFailures.moreThanOneOpenLoanFailure;
 import static org.folio.circulation.domain.validation.CommonFailures.noItemFoundForBarcodeFailure;
+import static org.folio.circulation.support.JsonPropertyWriter.write;
+import static org.folio.circulation.support.Result.succeeded;
+
+import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+
+import io.vertx.core.http.HttpClient;
+import io.vertx.core.json.JsonObject;
+import io.vertx.ext.web.Router;
+import io.vertx.ext.web.RoutingContext;
 
 import org.folio.circulation.domain.CheckInProcessRecords;
+import org.folio.circulation.domain.CheckOutByBarcodeAction;
 import org.folio.circulation.domain.LoanCheckInService;
 import org.folio.circulation.domain.LoanRepository;
+import org.folio.circulation.domain.Request;
+import org.folio.circulation.domain.RequestFulfilmentPreference;
+import org.folio.circulation.domain.RequestQueue;
 import org.folio.circulation.domain.RequestQueueRepository;
 import org.folio.circulation.domain.ServicePointRepository;
 import org.folio.circulation.domain.UpdateItem;
@@ -23,10 +43,6 @@ import org.folio.circulation.support.ItemRepository;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.RouteRegistration;
 import org.folio.circulation.support.http.server.WebContext;
-
-import io.vertx.core.http.HttpClient;
-import io.vertx.ext.web.Router;
-import io.vertx.ext.web.RoutingContext;
 
 public class CheckInByBarcodeResource extends Resource {
   public CheckInByBarcodeResource(HttpClient client) {
@@ -108,7 +124,53 @@ public class CheckInByBarcodeResource extends Resource {
         processAdapter::updateLoan, CheckInProcessRecords::withLoan))
       .thenApply(updateItemResult -> updateItemResult.next(processAdapter::sendCheckInPatronNotice))
       .thenApply(r -> r.next(requestScheduledNoticeService::rescheduleRequestNotices))
+      .thenCompose(r -> r.after(
+        records -> checkOutIfDelivery(records, clients, processAdapter)))
       .thenApply(CheckInByBarcodeResponse::from)
       .thenAccept(result -> result.writeTo(routingContext.response()));
+  }
+
+  private CompletableFuture<Result<CheckInProcessRecords>> checkOutIfDelivery(
+      CheckInProcessRecords records, Clients clients, CheckInProcessAdapter processAdapter) {
+    // detect if Delivery Request is the topmost one
+    // if Yes --> do Checkout
+    // Otherwise --> do NOTHING
+
+    return processAdapter.getRequestQueue(records)
+      .thenApply(this::findHighestPriorityDeliveryRequest)
+      .thenCompose(deliveryRequestResult -> deliveryRequestResult.after(
+        request -> request
+          .map(req -> checkOut(req, records, clients))
+          .orElse(completedFuture(succeeded(records)))
+      ));
+  }
+
+  private CompletableFuture<Result<CheckInProcessRecords>> checkOut(Request request, CheckInProcessRecords records,
+      Clients clients) {
+    JsonObject checkOutReq = new JsonObject();
+    write(checkOutReq, ITEM_BARCODE, records.getItem().getBarcode());
+    // take user from request
+    write(checkOutReq, USER_BARCODE, request.getRequesterBarcode());
+    write(checkOutReq, SERVICE_POINT_ID, records.getCheckInRequest().getServicePointId());
+    write(checkOutReq, LOAN_DATE,  records.getCheckInRequest().getCheckInDate());
+
+    CheckOutStrategy strategy = new RegularCheckOutStrategy();
+    CheckOutByBarcodeAction cmd = new CheckOutByBarcodeAction(strategy, clients);
+
+    return cmd.execute(checkOutReq)
+      .thenApply(loanResult -> {
+        // as an option update item in check in req from check out item
+        return Result.succeeded(records);
+      });
+  }
+
+  private Result<Optional<Request>> findHighestPriorityDeliveryRequest(Result<RequestQueue> requestQueueResult) {
+    return requestQueueResult.next(requestQueue -> {
+      Optional<Request> deliveryRequest = requestQueue.getRequests().stream()
+        .findFirst()
+        .filter(request -> request.getFulfilmentPreference().equals(RequestFulfilmentPreference.DELIVERY));
+
+      return succeeded(deliveryRequest);
+    });
   }
 }

@@ -8,7 +8,7 @@ public class CheckOutByBarcodeRequest {
   public static final String USER_BARCODE = "userBarcode";
   public static final String PROXY_USER_BARCODE = "proxyUserBarcode";
   public static final String SERVICE_POINT_ID = "servicePointId";
-  public static final String LOAD_DATE = "loanDate";
+  public static final String LOAN_DATE = "loanDate";
 
   private String itemBarcode;
   private String userBarcode;
@@ -31,7 +31,7 @@ public class CheckOutByBarcodeRequest {
     String userBarcode = request.getString(USER_BARCODE);
     String proxyUserBarcode = request.getString(PROXY_USER_BARCODE);
     String servicePointId = request.getString(SERVICE_POINT_ID);
-    String loanDate = request.getString(LOAD_DATE);
+    String loanDate = request.getString(LOAN_DATE);
 
     return new CheckOutByBarcodeRequest(itemBarcode, userBarcode, proxyUserBarcode, servicePointId, loanDate);
   }

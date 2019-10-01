@@ -1,22 +1,16 @@
 package org.folio.circulation.resources;
 
-import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequest.SERVICE_POINT_ID;
 import static org.folio.circulation.support.Result.failed;
-
-import java.util.UUID;
 
 import io.vertx.core.http.HttpClient;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
-import org.joda.time.format.ISODateTimeFormat;
 
-import org.folio.circulation.domain.CheckOutByBarcodeCommand;
+import org.folio.circulation.domain.CheckOutByBarcodeAction;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanRepresentation;
-import org.folio.circulation.domain.representations.LoanProperties;
 import org.folio.circulation.support.Clients;
-import org.folio.circulation.support.ClockManager;
 import org.folio.circulation.support.CreatedJsonResponseResult;
 import org.folio.circulation.support.ResponseWritableResult;
 import org.folio.circulation.support.Result;
@@ -45,33 +39,14 @@ public class CheckOutByBarcodeResource extends Resource {
     final WebContext context = new WebContext(routingContext);
 
     JsonObject request = routingContext.getBodyAsJson();
-
-    final JsonObject loanJson = new JsonObject();
-    loanJson.put("id", UUID.randomUUID().toString());
-    copyOrDefaultLoanDate(request, loanJson);
-    loanJson.put(LoanProperties.CHECKOUT_SERVICE_POINT_ID, request.getString(SERVICE_POINT_ID));
-
-    Loan loan = Loan.from(loanJson);
-
     final Clients clients = Clients.create(context, client);
 
-    CheckOutByBarcodeCommand cmd = new CheckOutByBarcodeCommand(checkOutStrategy, clients);
+    CheckOutByBarcodeAction cmd = new CheckOutByBarcodeAction(checkOutStrategy, clients);
 
-    cmd.execute(loan, request)
+    cmd.execute(request)
       .thenApply(this::toExtendedLoan)
       .thenApply(this::createdLoanFrom)
       .thenAccept(result -> result.writeTo(routingContext.response()));
-  }
-
-  private void copyOrDefaultLoanDate(JsonObject request, JsonObject loan) {
-    final String loanDateProperty = "loanDate";
-
-    if (request.containsKey(loanDateProperty)) {
-      loan.put(loanDateProperty, request.getString(loanDateProperty));
-    } else {
-      loan.put(loanDateProperty, ClockManager.getClockManager().getDateTime()
-        .toString(ISODateTimeFormat.dateTime()));
-    }
   }
 
   private Result<JsonObject> toExtendedLoan(Result<Loan> r) {
