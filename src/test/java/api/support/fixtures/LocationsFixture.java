@@ -308,7 +308,7 @@ public class LocationsFixture {
     final JsonObject kopenhavnUniversity = new JsonObject();
 
     write(kopenhavnUniversity, "name", "Kopenhavn University");
-    write(kopenhavnUniversity, "institutionId", "KU");
+    write(kopenhavnUniversity, "code", "KU");
 
     return institutionRecordCreator.createIfAbsent(kopenhavnUniversity);
   }
