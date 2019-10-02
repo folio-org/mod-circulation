@@ -29,31 +29,31 @@ public class Address {
     this.countryId = countryId;
   }
 
-  UUID getType() {
+  public UUID getType() {
     return type;
   }
 
-  String getAddressLineOne() {
+  public String getAddressLineOne() {
     return addressLineOne;
   }
 
-  String getAddressLineTwo() {
+  public String getAddressLineTwo() {
     return addressLineTwo;
   }
 
-  String getCity() {
+  public String getCity() {
     return city;
   }
 
-  String getRegion() {
+  public String getRegion() {
     return region;
   }
 
-  String getPostalCode() {
+  public String getPostalCode() {
     return postalCode;
   }
 
-  String getCountryId() {
+  public String getCountryId() {
     return countryId;
   }
 }

@@ -85,7 +85,7 @@ public class User {
     return getNestedStringProperty(representation, PERSONAL_PROPERTY_NAME, "middleName");
   }
 
-  JsonObject getAddressByType(String type) {
+  public JsonObject getAddressByType(String type) {
     JsonObject personal = representation.getJsonObject(PERSONAL_PROPERTY_NAME);
 
     if(personal == null) { return null; }

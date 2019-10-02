@@ -74,8 +74,8 @@ public class LoanRepresentation {
     if (accounts == null) {
       return;
     }
-    double remainingFeesFines = accounts.stream().
-      map(Account::getRemainingFeeFineAmount).reduce(Double::sum).orElse(0d);
+    double remainingFeesFines = accounts.stream().filter(Account::isOpen)
+      .map(Account::getRemainingFeeFineAmount).reduce(Double::sum).orElse(0d);
 
     JsonObject feesAndFinesSummary = loanRepresentation.containsKey(LoanProperties.FEESANDFINES)
       ? loanRepresentation.getJsonObject(LoanProperties.FEESANDFINES)

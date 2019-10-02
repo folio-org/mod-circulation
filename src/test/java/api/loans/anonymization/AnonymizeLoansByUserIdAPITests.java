@@ -112,7 +112,7 @@ public class AnonymizeLoansByUserIdAPITests extends APITests {
   }
 
   @Test
-  public void canAnonymizeClosedLoansWithClosedFeesAndFines()
+  public void canNotAnonymizeClosedLoansWithClosedFeesAndFines()
       throws InterruptedException, ExecutionException, TimeoutException, MalformedURLException {
 
     IndividualResource loanResource = loansFixture.checkOutByBarcode(
@@ -131,7 +131,7 @@ public class AnonymizeLoansByUserIdAPITests extends APITests {
     anonymizeLoansForUser(user.getId());
 
     assertThat(loansStorageClient.getById(loanID)
-      .getJson(), isAnonymized());
+      .getJson(), not(isAnonymized()));
   }
 
   @Test
