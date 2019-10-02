@@ -4,6 +4,7 @@ import static java.lang.Boolean.TRUE;
 import static java.util.Objects.nonNull;
 import static java.util.Objects.requireNonNull;
 import static org.folio.circulation.domain.representations.LoanProperties.ACTION_COMMENT;
+import static org.folio.circulation.domain.representations.LoanProperties.ITEM_LOCATION_AT_CHECKOUT;
 import static org.folio.circulation.domain.representations.LoanProperties.CHECKIN_SERVICE_POINT_ID;
 import static org.folio.circulation.domain.representations.LoanProperties.CHECKOUT_SERVICE_POINT_ID;
 import static org.folio.circulation.domain.representations.LoanProperties.DUE_DATE;
@@ -77,7 +78,6 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     // and possibly convert isFound to unknown item class
     if (item != null && item.isFound()) {
       representation.put("itemId", item.getItemId());
-      representation.put("itemLocationId", item.getLocationId());
     }
 
     // TODO: Refuse if ID does not match property in representation
@@ -135,6 +135,10 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
 
   public void changeActionComment(String comment) {
     representation.put(ACTION_COMMENT, comment);
+  }
+  public Loan changeItemLocationAtCheckout(String itemLocationId) {
+    representation.put(ITEM_LOCATION_AT_CHECKOUT, itemLocationId);
+    return this;
   }
 
   private void removeActionComment() {
@@ -231,6 +235,11 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   public Loan withItem(Item item) {
+    return new Loan(representation, item, user, proxy, checkinServicePoint,
+        checkoutServicePoint, originalDueDate, loanPolicy, accounts);
+  }
+
+  public Loan withItemLocation(Item item) {
     return new Loan(representation, item, user, proxy, checkinServicePoint,
         checkoutServicePoint, originalDueDate, loanPolicy, accounts);
   }
