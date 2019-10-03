@@ -46,6 +46,9 @@ public class LoanPolicy {
   public static final String CAN_NOT_RENEW_ITEM_ERROR =
     "Items with this loan policy cannot be renewed when there is an active, pending hold request";
 
+  public static final String FIXED_POLICY_HAS_ALTERNATE_PERIOD =
+    "Item's loan policy has fixed profile but alternative renewal period for holds is specified";
+
   private static final String INTERVAL_ID = "intervalId";
   private static final String DURATION = "duration";
   private static final String ALTERNATE_CHECKOUT_LOAN_PERIOD_KEY = "alternateCheckoutLoanPeriod";
@@ -116,6 +119,11 @@ public class LoanPolicy {
           errors.add(loanPolicyValidationError(CAN_NOT_RENEW_ITEM_ERROR));
           return failedValidation(errors);
         }
+        if (isFixed(getLoansPolicy()) && hasAlternateRenewalLoanPeriodForHolds()) {
+          errors.add(loanPolicyValidationError(FIXED_POLICY_HAS_ALTERNATE_PERIOD));
+          return failedValidation(errors);
+        }
+
         isRenewalWithHoldRequest = true;
       }
 

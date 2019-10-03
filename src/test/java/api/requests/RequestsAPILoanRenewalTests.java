@@ -31,6 +31,7 @@ import api.support.builders.FixedDueDateSchedulesBuilder;
 import api.support.builders.LoanPolicyBuilder;
 import api.support.builders.RequestBuilder;
 import api.support.http.InventoryItemResource;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
 public class RequestsAPILoanRenewalTests extends APITests {
@@ -558,6 +559,58 @@ public class RequestsAPILoanRenewalTests extends APITests {
 
     assertThat(response.getJson(), hasErrorWith(hasMessage(ITEMS_CANNOT_BE_RENEWED_MSG)));
     assertThat(response.getJson(), hasErrorWith(hasMessage(EXPECTED_REASON_LOAN_IS_NOT_LOANABLE)));
+  }
+
+  @Test
+  public void validationErrorWhenRenewalPeriodForHoldsSpecifiedForFixedPolicy()
+    throws InterruptedException, MalformedURLException, TimeoutException, ExecutionException {
+    final DateTime from = DateTime.now(DateTimeZone.UTC).minusMonths(3);
+    final DateTime to = DateTime.now(DateTimeZone.UTC).plusMonths(3);
+    final DateTime dueDate = to.plusDays(15);
+
+    final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final IndividualResource rebecca = usersFixture.rebecca();
+
+    loansFixture.checkOutByBarcode(smallAngryPlanet, rebecca);
+
+    IndividualResource schedule = loanPoliciesFixture.createSchedule(new FixedDueDateSchedulesBuilder()
+      .withId(UUID.randomUUID())
+      .withName("Can circulate schedule")
+      .withDescription("descr")
+      .addSchedule(new FixedDueDateSchedule(from, to, dueDate))
+    );
+
+    JsonObject holds = new JsonObject()
+      .put("renewItemsWithRequest", true)
+      .put("alternateRenewalLoanPeriod", Period.weeks(10).asJson());
+
+    IndividualResource fixedPolicy = loanPoliciesFixture.create(new LoanPolicyBuilder()
+      .fixed(schedule.getId())
+      .withName("Fixed with holds")
+      .withDescription("Fixed policy with holds")
+      .withHolds(holds)
+    );
+
+    useLoanPolicyAsFallback(
+      fixedPolicy.getId(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
+      noticePoliciesFixture.activeNotice().getId()
+    );
+
+    requestsFixture.place(new RequestBuilder()
+      .hold()
+      .forItem(smallAngryPlanet)
+      .withPickupServicePointId(servicePointsFixture.cd1().getId())
+      .by(usersFixture.charlotte()));
+
+    Response response = loansFixture.attemptRenewal(smallAngryPlanet, rebecca);
+
+    assertThat(response.getStatusCode(), is(422));
+
+    JsonArray errors = response.getJson().getJsonArray("errors");
+    assertThat(errors.size(), is(1));
+    assertThat(errors.getJsonObject(0).getString("message"),
+      is("Item's loan policy has fixed profile but alternative renewal period for holds is specified"));
   }
 
   private void loanPolicyWithRollingProfileAndRenewingIsForbiddenWhenHoldIsPending()
