@@ -6,7 +6,7 @@ import static org.folio.circulation.domain.policy.DueDateManagement.KEEP_THE_CUR
 import static org.folio.circulation.domain.policy.Period.weeks;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
-import static org.joda.time.DateTimeConstants.OCTOBER;
+import static org.joda.time.DateTimeConstants.SEPTEMBER;
 
 import java.net.MalformedURLException;
 import java.util.UUID;
@@ -123,7 +123,7 @@ public class CheckoutWithRequestScenarioTests extends APITests {
 
     FixedDueDateSchedulesBuilder fixedDueDateSchedules = new FixedDueDateSchedulesBuilder()
       .withName("Fixed Due Date Schedule")
-      .addSchedule(wholeMonth(2019, OCTOBER));
+      .addSchedule(wholeMonth(2019, SEPTEMBER));
 
     UUID fixedDueDateSchedulesId = loanPoliciesFixture.createSchedule(
       fixedDueDateSchedules).getId();
@@ -139,7 +139,9 @@ public class CheckoutWithRequestScenarioTests extends APITests {
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
       noticePoliciesFixture.inactiveNotice().getId());
 
-    loansFixture.checkOutByBarcode(smallAngryPlanet, usersFixture.steve());
+    DateTime loanDate = new DateTime(2019, 9, 20, 11, 32, 12, DateTimeZone.UTC);
+
+    loansFixture.checkOutByBarcode(smallAngryPlanet, usersFixture.steve(), loanDate);
 
     requestsClient.create(new RequestBuilder()
       .hold()
@@ -155,8 +157,6 @@ public class CheckoutWithRequestScenarioTests extends APITests {
 
     loansFixture.checkInByBarcode(smallAngryPlanet);
 
-    final DateTime loanDate = new DateTime(2019, 10, 20, 11, 32, 12, DateTimeZone.UTC);
-
     final IndividualResource loan = loansFixture.checkOutByBarcode(new CheckOutByBarcodeRequestBuilder()
       .forItem(smallAngryPlanet)
       .to(charlotte)
@@ -164,7 +164,7 @@ public class CheckoutWithRequestScenarioTests extends APITests {
       .on(loanDate));
 
     assertThat(loan.getJson().getString("dueDate"), isEquivalentTo(
-      new DateTime(2019, 10, 31, 23, 59, 59, DateTimeZone.UTC)));
+      new DateTime(2019, 9, 30, 23, 59, 59, DateTimeZone.UTC)));
 
     Response changedItem = itemsClient.getById(smallAngryPlanet.getId());
 
