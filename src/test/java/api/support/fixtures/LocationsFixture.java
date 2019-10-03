@@ -220,6 +220,7 @@ public class LocationsFixture {
 
     write(djanoglyLibrary, "name", "Djanogly Learning Resource Centre");
     write(djanoglyLibrary, "campusId", jubileeCampus().getId());
+    write(djanoglyLibrary, "code", "DLRC");
 
     return libraryRecordCreator.createIfAbsent(djanoglyLibrary);
   }
@@ -234,6 +235,7 @@ public class LocationsFixture {
 
     write(businessLibrary, "name", "Business Library");
     write(businessLibrary, "campusId", jubileeCampus().getId());
+    write(businessLibrary, "code", "BL");
 
     return libraryRecordCreator.createIfAbsent(businessLibrary);
   }
@@ -248,6 +250,7 @@ public class LocationsFixture {
 
     write(businessLibrary, "name", "Main Library");
     write(businessLibrary, "campusId", mainCampus().getId());
+    write(businessLibrary, "code","ML");
 
     return libraryRecordCreator.createIfAbsent(businessLibrary);
   }
@@ -262,6 +265,7 @@ public class LocationsFixture {
 
     write(jubileeCampus, "name", "Jubilee Campus");
     write(jubileeCampus, "institutionId", nottinghamUniversity().getId());
+    write(jubileeCampus, "code", "JC");
 
     return campusRecordCreator.createIfAbsent(jubileeCampus);
   }
@@ -276,6 +280,7 @@ public class LocationsFixture {
 
     write(mainCampus, "name", "Main Campus");
     write(mainCampus, "institutionId", kopenhavnUniversity().getId());
+    write(mainCampus, "code", "MC");
 
     return campusRecordCreator.createIfAbsent(mainCampus);
   }
@@ -289,6 +294,7 @@ public class LocationsFixture {
     final JsonObject nottinghamUniversity = new JsonObject();
 
     write(nottinghamUniversity, "name", "Nottingham University");
+    write(nottinghamUniversity, "code", "NU");
 
     return institutionRecordCreator.createIfAbsent(nottinghamUniversity);
   }
@@ -302,6 +308,7 @@ public class LocationsFixture {
     final JsonObject kopenhavnUniversity = new JsonObject();
 
     write(kopenhavnUniversity, "name", "Kopenhavn University");
+    write(kopenhavnUniversity, "code", "KU");
 
     return institutionRecordCreator.createIfAbsent(kopenhavnUniversity);
   }

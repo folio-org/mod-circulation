@@ -1,5 +1,8 @@
 package api.support.fakes;
 
+import static api.support.fakes.StorageSchema.validatorForLocationCampSchema;
+import static api.support.fakes.StorageSchema.validatorForLocationInstSchema;
+import static api.support.fakes.StorageSchema.validatorForLocationLibSchema;
 import static api.support.fakes.StorageSchema.validatorForStorageLoanSchema;
 import static api.support.fixtures.CalendarExamples.CASE_CALENDAR_IS_EMPTY_SERVICE_POINT_ID;
 import static api.support.fixtures.CalendarExamples.getCalendarById;
@@ -200,21 +203,21 @@ public class FakeOkapi extends AbstractVerticle {
       .withRecordName("institution")
       .withRootPath("/location-units/institutions")
       .withCollectionPropertyName("locinsts")
-      .withRequiredProperties("name")
+      .validateRecordsWith(validatorForLocationInstSchema())
       .create().register(router);
 
     new FakeStorageModuleBuilder()
       .withRecordName("campus")
       .withRootPath("/location-units/campuses")
       .withCollectionPropertyName("loccamps")
-      .withRequiredProperties("name", "institutionId")
+      .validateRecordsWith(validatorForLocationCampSchema())
       .create().register(router);
 
     new FakeStorageModuleBuilder()
       .withRecordName("library")
       .withRootPath("/location-units/libraries")
       .withCollectionPropertyName("loclibs")
-      .withRequiredProperties("name", "campusId")
+      .validateRecordsWith(validatorForLocationLibSchema())
       .create().register(router);
 
     new FakeStorageModuleBuilder()
@@ -271,6 +274,14 @@ public class FakeOkapi extends AbstractVerticle {
       .withCollectionPropertyName("scheduledNotices")
       .withRootPath("/scheduled-notice-storage/scheduled-notices")
       .allowDeleteByQuery()
+      .create()
+      .register(router);
+
+
+    new FakeStorageModuleBuilder()
+      .withRecordName("patron action session")
+      .withCollectionPropertyName("patronActionSessions")
+      .withRootPath("/patron-action-session-storage/patron-action-sessions")
       .create()
       .register(router);
 
