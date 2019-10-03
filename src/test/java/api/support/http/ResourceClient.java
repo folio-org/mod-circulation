@@ -191,6 +191,11 @@ public class ResourceClient {
       "scheduled notice", "scheduledNotices");
   }
 
+  public static ResourceClient forPatronSessionRecords(OkapiHttpClient client) {
+    return new ResourceClient(client, InterfaceUrls::patronActionSessionsUrl,
+      "patron session records", "patronActionSessions");
+  }
+
   public static ResourceClient forConfiguration(OkapiHttpClient client) {
     return new ResourceClient(client, InterfaceUrls::configurationUrl,
       "configuration entries", "configs");

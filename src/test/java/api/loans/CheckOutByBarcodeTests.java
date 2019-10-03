@@ -10,7 +10,6 @@ import static api.support.matchers.CheckOutByBarcodeResponseMatchers.hasProxyUse
 import static api.support.matchers.CheckOutByBarcodeResponseMatchers.hasServicePointParameter;
 import static api.support.matchers.CheckOutByBarcodeResponseMatchers.hasUserBarcodeParameter;
 import static api.support.matchers.ItemStatusCodeMatcher.hasItemStatus;
-import static api.support.matchers.PatronNoticeMatcher.hasEmailNoticeProperties;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static api.support.matchers.TextDateTimeMatcher.withinSecondsAfter;
 import static api.support.matchers.UUIDMatcher.is;
@@ -19,32 +18,23 @@ import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static api.support.matchers.ValidationErrorMatchers.hasMessageContaining;
 import static java.net.HttpURLConnection.HTTP_OK;
 import static org.hamcrest.CoreMatchers.allOf;
-import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.hasSize;
 
 import java.net.MalformedURLException;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import org.apache.commons.lang3.StringUtils;
-import org.awaitility.Awaitility;
 import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.client.ResponseHandler;
-import org.hamcrest.Matcher;
-import org.hamcrest.MatcherAssert;
-import org.hamcrest.Matchers;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.Seconds;
@@ -55,15 +45,10 @@ import api.support.APITests;
 import api.support.builders.CheckOutByBarcodeRequestBuilder;
 import api.support.builders.FixedDueDateSchedule;
 import api.support.builders.FixedDueDateSchedulesBuilder;
-import api.support.builders.ItemBuilder;
 import api.support.builders.LoanBuilder;
 import api.support.builders.LoanPolicyBuilder;
-import api.support.builders.NoticeConfigurationBuilder;
-import api.support.builders.NoticePolicyBuilder;
 import api.support.builders.RequestBuilder;
 import api.support.builders.UserBuilder;
-import api.support.fixtures.ItemExamples;
-import api.support.fixtures.TemplateContextMatchers;
 import api.support.http.InventoryItemResource;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
@@ -170,6 +155,14 @@ public class CheckOutByBarcodeTests extends APITests {
     assertThat("location is taken from holding",
       loan.getJsonObject("item").getJsonObject("location").getString("name"),
       is("3rd Floor"));
+
+    List<JsonObject> patronSessionRecords = patronSessionRecordsClient.getAll();
+    assertThat(patronSessionRecords, hasSize(1));
+
+    JsonObject sessionRecord = patronSessionRecords.get(0);
+    assertThat(sessionRecord.getString("patronId"), is(steve.getId()));
+    assertThat(sessionRecord.getString("loanId"), is(response.getId()));
+    assertThat(sessionRecord.getString("actionType"), is("Check-out"));
   }
 
   @Test
@@ -558,66 +551,6 @@ public class CheckOutByBarcodeTests extends APITests {
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("Check out must be performed at a service point"),
       hasServicePointParameter(null))));
-  }
-
-  @Test
-  public void checkoutNoticeIsSentWhenPolicyDefinesCheckoutNotice()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
-
-    UUID checkOutTemplateId = UUID.randomUUID();
-    JsonObject checkOutNoticeConfiguration = new NoticeConfigurationBuilder()
-      .withTemplateId(checkOutTemplateId)
-      .withCheckOutEvent()
-      .create();
-    JsonObject checkInNoticeConfiguration = new NoticeConfigurationBuilder()
-      .withTemplateId(UUID.randomUUID())
-      .withCheckInEvent()
-      .create();
-    NoticePolicyBuilder noticePolicy = new NoticePolicyBuilder()
-      .withName("Policy with checkout notice")
-      .withLoanNotices(Arrays.asList(checkOutNoticeConfiguration, checkInNoticeConfiguration));
-    useLoanPolicyAsFallback(
-      loanPoliciesFixture.canCirculateRolling().getId(),
-      requestPoliciesFixture.allowAllRequestPolicy().getId(),
-      noticePoliciesFixture.create(noticePolicy).getId());
-
-    ItemBuilder itemBuilder = ItemExamples.basedUponSmallAngryPlanet(
-      materialTypesFixture.book().getId(),
-      loanTypesFixture.canCirculate().getId(),
-      StringUtils.EMPTY,
-      "ItemPrefix",
-      "ItemSuffix",
-      Collections.singletonList(""));
-
-    InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet(itemBuilder, itemsFixture.thirdFloorHoldings());
-    final IndividualResource steve = usersFixture.steve();
-
-    final DateTime loanDate =
-      new DateTime(2018, 3, 18, 11, 43, 54, DateTimeZone.UTC);
-
-    final IndividualResource loan = loansFixture.checkOutByBarcode(
-      new CheckOutByBarcodeRequestBuilder()
-        .forItem(smallAngryPlanet)
-        .to(steve)
-        .on(loanDate)
-        .at(UUID.randomUUID()));
-
-    Awaitility.await()
-      .atMost(1, TimeUnit.SECONDS)
-      .until(patronNoticesClient::getAll, Matchers.hasSize(1));
-    List<JsonObject> sentNotices = patronNoticesClient.getAll();
-
-    Map<String, Matcher<String>> noticeContextMatchers = new HashMap<>();
-    noticeContextMatchers.putAll(TemplateContextMatchers.getUserContextMatchers(steve));
-    noticeContextMatchers.putAll(TemplateContextMatchers.getItemContextMatchers(smallAngryPlanet, true));
-    noticeContextMatchers.putAll(TemplateContextMatchers.getLoanContextMatchers(loan));
-    noticeContextMatchers.putAll(TemplateContextMatchers.getLoanPolicyContextMatchersForUnlimitedRenewals());
-    MatcherAssert.assertThat(sentNotices,
-      hasItems(
-        hasEmailNoticeProperties(steve.getId(), checkOutTemplateId, noticeContextMatchers)));
   }
 
   @Test
