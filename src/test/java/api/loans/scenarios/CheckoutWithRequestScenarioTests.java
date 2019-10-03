@@ -9,14 +9,19 @@ import static org.hamcrest.junit.MatcherAssert.assertThat;
 import static org.joda.time.DateTimeConstants.SEPTEMBER;
 
 import java.net.MalformedURLException;
+import java.time.Clock;
+import java.time.Instant;
+import java.time.ZoneOffset;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
+import org.folio.circulation.support.ClockManager;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
+import org.junit.After;
 import org.junit.Test;
 
 import api.support.APITests;
@@ -27,6 +32,11 @@ import api.support.builders.RequestBuilder;
 import api.support.http.InventoryItemResource;
 
 public class CheckoutWithRequestScenarioTests extends APITests {
+
+  @After
+  public void restoreClocks() {
+    ClockManager.getClockManager().setClock(Clock.systemUTC());
+  }
 
   @Test
   public void canCheckoutPagedItem()
@@ -64,6 +74,14 @@ public class CheckoutWithRequestScenarioTests extends APITests {
     final IndividualResource charlotte = usersFixture.charlotte();
     final IndividualResource james = usersFixture.james();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
+
+    DateTime fakeNow = DateTime.now(DateTimeZone.UTC)
+      .withYear(2019)
+      .withMonthOfYear(SEPTEMBER)
+      .withDayOfMonth(1);
+    // Set the current date time
+    ClockManager.getClockManager()
+      .setClock(Clock.fixed(Instant.ofEpochMilli(fakeNow.getMillis()), ZoneOffset.UTC));
 
     final IndividualResource policy = loanPoliciesFixture.create(new LoanPolicyBuilder()
       .withName("Limited loan period for items with hold requests")
@@ -120,6 +138,14 @@ public class CheckoutWithRequestScenarioTests extends APITests {
     final IndividualResource charlotte = usersFixture.charlotte();
     final IndividualResource james = usersFixture.james();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
+
+    DateTime now = new DateTime(DateTimeZone.UTC)
+      .withYear(2019)
+      .withMonthOfYear(9)
+      .withDayOfMonth(1);
+
+    ClockManager.getClockManager()
+      .setClock(Clock.fixed(Instant.ofEpochMilli(now.getMillis()), ZoneOffset.UTC));
 
     FixedDueDateSchedulesBuilder fixedDueDateSchedules = new FixedDueDateSchedulesBuilder()
       .withName("Fixed Due Date Schedule")
