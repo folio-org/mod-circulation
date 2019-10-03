@@ -1,5 +1,8 @@
 package api.support.fakes;
 
+import static api.support.fakes.StorageSchema.validatorForLocationCampSchema;
+import static api.support.fakes.StorageSchema.validatorForLocationInstSchema;
+import static api.support.fakes.StorageSchema.validatorForLocationLibSchema;
 import static api.support.fakes.StorageSchema.validatorForStorageLoanSchema;
 import static api.support.fixtures.CalendarExamples.CASE_CALENDAR_IS_EMPTY_SERVICE_POINT_ID;
 import static api.support.fixtures.CalendarExamples.getCalendarById;
@@ -200,21 +203,21 @@ public class FakeOkapi extends AbstractVerticle {
       .withRecordName("institution")
       .withRootPath("/location-units/institutions")
       .withCollectionPropertyName("locinsts")
-      .withRequiredProperties("name", "code")
+      .validateRecordsWith(validatorForLocationInstSchema())
       .create().register(router);
 
     new FakeStorageModuleBuilder()
       .withRecordName("campus")
       .withRootPath("/location-units/campuses")
       .withCollectionPropertyName("loccamps")
-      .withRequiredProperties("name", "institutionId", "code")
+      .validateRecordsWith(validatorForLocationCampSchema())
       .create().register(router);
 
     new FakeStorageModuleBuilder()
       .withRecordName("library")
       .withRootPath("/location-units/libraries")
       .withCollectionPropertyName("loclibs")
-      .withRequiredProperties("name", "campusId", "code")
+      .validateRecordsWith(validatorForLocationLibSchema())
       .create().register(router);
 
     new FakeStorageModuleBuilder()
