@@ -207,10 +207,6 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     return getProperty(representation, "itemId");
   }
 
-  public String getItemLocationId() {
-    return getProperty(representation, "itemLocationId");
-  }
-
   public DateTime getLoanDate() {
     return getDateTimeProperty(representation, "loanDate");
   }
@@ -235,11 +231,6 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   public Loan withItem(Item item) {
-    return new Loan(representation, item, user, proxy, checkinServicePoint,
-        checkoutServicePoint, originalDueDate, loanPolicy, accounts);
-  }
-
-  public Loan withItemLocation(Item item) {
     return new Loan(representation, item, user, proxy, checkinServicePoint,
         checkoutServicePoint, originalDueDate, loanPolicy, accounts);
   }
