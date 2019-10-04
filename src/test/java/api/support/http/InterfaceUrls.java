@@ -188,4 +188,13 @@ public class InterfaceUrls {
   static URL configurationUrl(String subPath) {
     return APITestContext.viaOkapiModuleUrl("/configurations/entries" + subPath);
   }
+
+  public static URL reorderQueueUrl(String itemId) {
+    return getQueueUrl(itemId + "/reorder");
+  }
+
+  public static URL getQueueUrl(String itemId) {
+    return circulationModuleUrl(String
+      .format("/circulation/requests/queue/%s", itemId));
+  }
 }

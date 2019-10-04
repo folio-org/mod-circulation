@@ -1,0 +1,23 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "title": "Reorder request",
+  "description": "Reorder request",
+  "type": "object",
+  "properties": {
+    "id" : {
+      "description": "Request id",
+      "type": "string",
+      "pattern" : "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
+    },
+    "position": {
+      "description": "New position for the request",
+      "type": "integer",
+      "minimum": 1
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "position"
+  ]
+}

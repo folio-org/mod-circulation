@@ -1,0 +1,20 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "title": "Reorder requests",
+  "description": "Collection of reorder request",
+  "type": "object",
+  "properties": {
+    "reorderedQueue" : {
+      "type": "array",
+      "description": "All request from the item queue and theirs new positions in the queue.",
+      "items": {
+        "type": "object",
+        "$ref": "reorder-request.json"
+      }
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "reorderedQueue"
+  ]
+}
