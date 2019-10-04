@@ -165,7 +165,9 @@ public class CheckoutWithRequestScenarioTests extends APITests {
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
       noticePoliciesFixture.inactiveNotice().getId());
 
-    loansFixture.checkOutByBarcode(smallAngryPlanet, usersFixture.steve());
+    DateTime loanDate = new DateTime(2019, 9, 20, 11, 32, 12, DateTimeZone.UTC);
+
+    loansFixture.checkOutByBarcode(smallAngryPlanet, usersFixture.steve(), loanDate);
 
     requestsClient.create(new RequestBuilder()
       .hold()
@@ -180,8 +182,6 @@ public class CheckoutWithRequestScenarioTests extends APITests {
       .by(james));
 
     loansFixture.checkInByBarcode(smallAngryPlanet);
-
-    final DateTime loanDate = new DateTime(2019, 9, 20, 11, 32, 12, DateTimeZone.UTC);
 
     final IndividualResource loan = loansFixture.checkOutByBarcode(new CheckOutByBarcodeRequestBuilder()
       .forItem(smallAngryPlanet)
