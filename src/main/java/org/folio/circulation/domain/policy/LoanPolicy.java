@@ -9,6 +9,7 @@ import static org.folio.circulation.support.JsonPropertyFetcher.getNestedInteger
 import static org.folio.circulation.support.JsonPropertyFetcher.getNestedObjectProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getNestedStringProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
+import static org.folio.circulation.support.Result.failed;
 import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 import static org.folio.circulation.support.results.CommonFailures.failedDueToServerError;
@@ -29,6 +30,7 @@ import org.folio.circulation.domain.RequestStatus;
 import org.folio.circulation.domain.RequestType;
 import org.folio.circulation.support.ClockManager;
 import org.folio.circulation.support.Result;
+import org.folio.circulation.support.ServerErrorFailure;
 import org.folio.circulation.support.ValidationErrorFailure;
 import org.folio.circulation.support.http.server.ValidationError;
 import org.joda.time.DateTime;
@@ -120,8 +122,7 @@ public class LoanPolicy {
           return failedValidation(errors);
         }
         if (isFixed(getLoansPolicy()) && hasAlternateRenewalLoanPeriodForHolds()) {
-          errors.add(loanPolicyValidationError(FIXED_POLICY_HAS_ALTERNATE_PERIOD));
-          return failedValidation(errors);
+          return failed(new ServerErrorFailure(FIXED_POLICY_HAS_ALTERNATE_PERIOD));
         }
 
         isRenewalWithHoldRequest = true;
