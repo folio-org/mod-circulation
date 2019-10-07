@@ -101,7 +101,7 @@ public class Text2Drools extends CirculationRulesBaseListener {
 
   private int indentation = 0;
 
-  private String[] policyTypes = {"l", "r", "n"};
+  private String[] policyTypes = {"l", "r", "n", "o"};
 
   private enum PriorityType {
     NONE,
