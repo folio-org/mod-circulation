@@ -682,4 +682,49 @@ public class RequestsAPIUpdatingTests extends APITests {
     assertThat("patron group information should not be stored for proxying user",
       proxySummary.containsKey("patronGroup"), is(false));
   }
+
+  @Test
+  public void cannotReplaceRequestWithAnInactiveUser()
+    throws InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    MalformedURLException {
+
+    final InventoryItemResource temeraire = itemsFixture.basedUponTemeraire();
+
+    loansFixture.checkOutByBarcode(temeraire);
+
+    final IndividualResource steve = usersFixture.steve();
+
+    DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
+
+    final IndividualResource exampleServicePoint = servicePointsFixture.cd1();
+
+    IndividualResource createdRequest = requestsClient.create(
+      new RequestBuilder()
+      .recall()
+      .withRequestDate(requestDate)
+      .forItem(temeraire)
+      .by(steve)
+      .fulfilToHoldShelf()
+      .withPickupServicePointId(exampleServicePoint.getId())
+      .withRequestExpiration(new LocalDate(2017, 7, 30))
+      .withHoldShelfExpiration(new LocalDate(2017, 8, 31)));
+
+    final IndividualResource inactiveCharlotte = usersFixture.charlotte(c -> c.inactive());
+
+    final Response putResponse = requestsClient.attemptReplace(createdRequest.getId(),
+        RequestBuilder.from(createdRequest)
+        .hold()
+        .by(inactiveCharlotte)
+        .withTags(new RequestBuilder.Tags(Arrays.asList("new", "important"))));
+
+    assertThat(putResponse, hasStatus(HTTP_VALIDATION_ERROR));
+
+    assertThat(putResponse.getJson(), hasErrorWith(allOf(
+      hasMessage("Inactive users cannot make requests"),
+      hasUUIDParameter("requesterId", inactiveCharlotte.getId()),
+      hasUUIDParameter("itemId", temeraire.getId()))));
+
+  }
 }

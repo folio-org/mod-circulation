@@ -88,7 +88,7 @@ public class RequestServiceUtility {
 
     User requester = request.getRequest().getRequester();
 
-    if (requester.isInactive()) {
+    if (requester != null && requester.isInactive()) {
       Map<String, String> parameters = new HashMap<>();
 
       parameters.put("requesterId", request.getRequest().getUserId());
