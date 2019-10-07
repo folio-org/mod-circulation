@@ -676,6 +676,11 @@ public class RequestsAPICreationTests extends APITests {
 
     assertThat(recallResponse.getJson(), hasErrorWith(allOf(
       hasMessage("Inactive users cannot make requests"))));
+
+    hasUUIDParameter("requesterId", inactiveCharlotte.getId());
+
+    hasUUIDParameter("itemId", smallAngryPlanet.getId());
+
   }
 
   @Test

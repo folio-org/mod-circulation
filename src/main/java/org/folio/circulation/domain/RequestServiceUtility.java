@@ -93,7 +93,6 @@ public class RequestServiceUtility {
 
       parameters.put("requesterId", request.getRequest().getUserId());
       parameters.put("itemId", request.getRequest().getItemId());
-      parameters.put("requestId", request.getRequest().getId());
 
       String message = "Inactive users cannot make requests";
 
