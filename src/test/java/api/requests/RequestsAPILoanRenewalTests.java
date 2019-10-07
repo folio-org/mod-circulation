@@ -610,6 +610,56 @@ public class RequestsAPILoanRenewalTests extends APITests {
     );
   }
 
+  @Test
+  public void validationErrorWhenRenewalPeriodSpecifiedForFixedPolicy()
+    throws InterruptedException, MalformedURLException, TimeoutException, ExecutionException {
+    final DateTime from = DateTime.now(DateTimeZone.UTC).minusMonths(3);
+    final DateTime to = DateTime.now(DateTimeZone.UTC).plusMonths(3);
+    final DateTime dueDate = to.plusDays(15);
+
+    final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final IndividualResource rebecca = usersFixture.rebecca();
+
+    loansFixture.checkOutByBarcode(smallAngryPlanet, rebecca);
+
+    IndividualResource schedule = loanPoliciesFixture.createSchedule(new FixedDueDateSchedulesBuilder()
+      .withId(UUID.randomUUID())
+      .withName("Can circulate schedule")
+      .withDescription("descr")
+      .addSchedule(new FixedDueDateSchedule(from, to, dueDate))
+    );
+
+    JsonObject holds = new JsonObject()
+      .put("renewItemsWithRequest", true);
+
+    IndividualResource fixedPolicy = loanPoliciesFixture.create(new LoanPolicyBuilder()
+      .fixed(schedule.getId())
+      .withName("Fixed with holds")
+      .withDescription("Fixed policy with holds")
+      .renewWith(Period.weeks(2))
+      .withHolds(holds)
+    );
+
+    useLoanPolicyAsFallback(
+      fixedPolicy.getId(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
+      noticePoliciesFixture.activeNotice().getId()
+    );
+
+    requestsFixture.place(new RequestBuilder()
+      .hold()
+      .forItem(smallAngryPlanet)
+      .withPickupServicePointId(servicePointsFixture.cd1().getId())
+      .by(usersFixture.charlotte()));
+
+    Response response = loansFixture.attemptRenewal(500, smallAngryPlanet, rebecca);
+
+    assertThat(
+      response.getBody(),
+      is("Item's loan policy has fixed profile but renewal period is specified")
+    );
+  }
+
   private void loanPolicyWithRollingProfileAndRenewingIsForbiddenWhenHoldIsPending()
     throws InterruptedException, ExecutionException, TimeoutException, MalformedURLException {
 
