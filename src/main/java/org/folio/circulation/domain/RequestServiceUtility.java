@@ -87,12 +87,16 @@ public class RequestServiceUtility {
     RequestAndRelatedRecords request) {
 
     User requester = request.getRequest().getRequester();
+
     if (requester.isInactive()) {
       Map<String, String> parameters = new HashMap<>();
+
       parameters.put("requesterId", request.getRequest().getUserId());
       parameters.put("itemId", request.getRequest().getItemId());
-      parameters.put("requestId", requester.getId());
+      parameters.put("requestId", request.getRequest().getId());
+
       String message = "Inactive users cannot make requests";
+
       return failedValidation(new ValidationError(message, parameters));
     } else {
       return of(() -> request);
