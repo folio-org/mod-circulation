@@ -91,11 +91,11 @@ public class Location {
     return new Location(representation, libraryRepresentation, campusRepresentation, institutionRepresentation);
   }
 
-  Location withCampusRepresentation(JsonObject campusRepresentation) {
+  public Location withCampusRepresentation(JsonObject campusRepresentation) {
     return new Location(representation, libraryRepresentation, campusRepresentation, institutionRepresentation);
   }
 
-  Location withInstitutionRepresentation(JsonObject institutionRepresentation) {
+  public Location withInstitutionRepresentation(JsonObject institutionRepresentation) {
     return new Location(representation, libraryRepresentation, campusRepresentation, institutionRepresentation);
   }
 

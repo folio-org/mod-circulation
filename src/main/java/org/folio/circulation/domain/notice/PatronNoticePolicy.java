@@ -2,7 +2,7 @@ package org.folio.circulation.domain.notice;
 
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
+import java.util.Optional;
 
 public class PatronNoticePolicy {
 
@@ -17,10 +17,10 @@ public class PatronNoticePolicy {
     return noticeConfigurations;
   }
 
-  public List<NoticeConfiguration> lookupNoticeConfiguration(NoticeEventType eventType, NoticeTiming timing) {
+  public Optional<NoticeConfiguration> lookupNoticeConfiguration(NoticeEventType eventType, NoticeTiming timing) {
     return noticeConfigurations.stream()
       .filter(d -> Objects.equals(d.getNoticeEventType(), eventType))
       .filter(d -> Objects.equals(d.getTiming(), timing))
-      .collect(Collectors.toList());
+      .findFirst();
   }
 }

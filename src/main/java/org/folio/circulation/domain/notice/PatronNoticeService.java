@@ -1,15 +1,30 @@
 package org.folio.circulation.domain.notice;
 
+import static java.util.concurrent.CompletableFuture.completedFuture;
+import static java.util.stream.Collectors.groupingBy;
+import static org.folio.circulation.support.AsyncCoordinationUtils.allOf;
+import static org.folio.circulation.support.Result.succeeded;
+import static org.folio.circulation.support.ResultBinding.mapResult;
 import static org.folio.circulation.support.http.CommonResponseInterpreters.mapToRecordInterpreter;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
+import org.apache.commons.lang3.tuple.Pair;
 import org.folio.circulation.domain.notice.schedule.ScheduledNoticeConfig;
 import org.folio.circulation.domain.policy.PatronNoticePolicyRepository;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.Result;
+import org.folio.circulation.support.http.client.ResponseInterpreter;
 
 import io.vertx.core.json.JsonObject;
 
@@ -26,59 +41,162 @@ public class PatronNoticeService {
     this.patronNoticeClient = clients.patronNoticeClient();
   }
 
-  public void acceptNoticeEvent(PatronNoticeEvent event) {
-    noticePolicyRepository.lookupPolicy(event.getItem(), event.getUser())
-      .thenAccept(r -> r.next(policy -> applyNoticePolicy(event, policy)));
+  public CompletableFuture<Result<Void>> acceptNoticeEvent(PatronNoticeEvent event) {
+    return acceptMultipleNoticeEvent(Collections.singletonList(event),
+      contexts -> contexts.stream().findFirst().orElse(new JsonObject()));
   }
 
   public CompletableFuture<Result<Void>> acceptScheduledNoticeEvent(
     ScheduledNoticeConfig noticeConfig, String recipientId, JsonObject context) {
-    PatronNotice patronNotice = toPatronNotice(noticeConfig);
+
+    PatronNotice patronNotice = new PatronNotice();
     patronNotice.setRecipientId(recipientId);
-    patronNotice.setContext(context);
-    return sendNotice(patronNotice).thenApply(r -> r.map(n -> null));
-  }
-
-  private Result<PatronNoticePolicy> applyNoticePolicy(
-    PatronNoticeEvent event, PatronNoticePolicy policy) {
-
-    List<NoticeConfiguration> matchingNoticeConfiguration =
-      policy.lookupNoticeConfiguration(event.getEventType(), event.getTiming());
-    String recipientId = event.getUser().getId();
-
-    sendPatronNotices(matchingNoticeConfiguration, recipientId, event.getNoticeContext());
-    return Result.succeeded(policy);
-  }
-
-  private void sendPatronNotices(List<NoticeConfiguration> noticeConfigurations, String recipientId, JsonObject context) {
-    noticeConfigurations.stream()
-      .map(this::toPatronNotice)
-      .map(n -> n.setRecipientId(recipientId))
-      .map(n -> n.setContext(context))
-      .forEach(this::sendNotice);
-  }
-
-  private PatronNotice toPatronNotice(NoticeConfiguration noticeConfiguration) {
-    PatronNotice patronNotice = new PatronNotice();
-    patronNotice.setTemplateId(noticeConfiguration.getTemplateId());
-    patronNotice.setDeliveryChannel(noticeConfiguration.getNoticeFormat().getDeliveryChannel());
-    patronNotice.setOutputFormat(noticeConfiguration.getNoticeFormat().getOutputFormat());
-    return patronNotice;
-  }
-
-  private PatronNotice toPatronNotice(ScheduledNoticeConfig noticeConfig) {
-    PatronNotice patronNotice = new PatronNotice();
     patronNotice.setTemplateId(noticeConfig.getTemplateId());
     patronNotice.setDeliveryChannel(noticeConfig.getFormat().getDeliveryChannel());
     patronNotice.setOutputFormat(noticeConfig.getFormat().getOutputFormat());
-    return patronNotice;
+    patronNotice.setContext(context);
+
+    return sendNotice(patronNotice);
   }
 
+  public CompletableFuture<Result<Void>> acceptMultipleNoticeEvent(
+    Collection<PatronNoticeEvent> events,
+    Function<Collection<JsonObject>, JsonObject> contextCombiner) {
 
-  private CompletableFuture<Result<PatronNotice>> sendNotice(PatronNotice patronNotice) {
+    return allOf(events, this::loadNoticePolicyId)
+      .thenApply(mapResult(this::groupEvents))
+      .thenCompose(r -> r.after(eventGroups -> handleGroupedEvents(eventGroups, contextCombiner)));
+  }
+
+  private CompletableFuture<Result<Pair<PatronNoticeEvent, String>>> loadNoticePolicyId(PatronNoticeEvent event) {
+    return noticePolicyRepository.lookupPolicyId(event.getItem(), event.getUser())
+      .thenApply(mapResult(noticePolicyId -> Pair.of(event, noticePolicyId)));
+  }
+
+  private Map<NoticeEventGroupDefinition, List<PatronNoticeEvent>> groupEvents(
+    List<Pair<PatronNoticeEvent, String>> eventsWithNoticePolicyId) {
+
+    return eventsWithNoticePolicyId.stream()
+      .collect(groupingBy(NoticeEventGroupDefinition::from,
+        Collectors.mapping(Pair::getLeft, Collectors.toList())));
+  }
+
+  private CompletableFuture<Result<Void>> handleGroupedEvents(
+    Map<NoticeEventGroupDefinition, List<PatronNoticeEvent>> eventGroups,
+    Function<Collection<JsonObject>, JsonObject> contextCombiner) {
+
+    return allOf(eventGroups.entrySet(), e -> handleGroupedEvent(e, contextCombiner))
+      .thenApply(mapResult(v -> null));
+  }
+
+  private CompletableFuture<Result<Void>> handleGroupedEvent(
+    Map.Entry<NoticeEventGroupDefinition, List<PatronNoticeEvent>> groupedEvent,
+    Function<Collection<JsonObject>, JsonObject> contextCombiner) {
+
+    NoticeEventGroupDefinition eventGroupDefinition = groupedEvent.getKey();
+    List<PatronNoticeEvent> events = groupedEvent.getValue();
+
+    List<JsonObject> noticeContexts = events.stream()
+      .map(PatronNoticeEvent::getNoticeContext)
+      .collect(Collectors.toList());
+
+    JsonObject combinedContext = contextCombiner.apply(noticeContexts);
+
+    return noticePolicyRepository.lookupPolicy(eventGroupDefinition.noticePolicyId)
+      .thenCompose(r -> r.after(policy ->
+        applyNoticePolicy(policy, eventGroupDefinition, combinedContext)));
+  }
+
+  private CompletableFuture<Result<Void>> applyNoticePolicy(
+    PatronNoticePolicy policy, NoticeEventGroupDefinition eventGroupDefinition, JsonObject noticeContext) {
+
+    Optional<NoticeConfiguration> matchingNoticeConfiguration =
+      policy.lookupNoticeConfiguration(eventGroupDefinition.eventType, eventGroupDefinition.timing);
+
+    if (!matchingNoticeConfiguration.isPresent()) {
+      return completedFuture(succeeded(null));
+    }
+
+    return sendPatronNotice(matchingNoticeConfiguration.get(),
+      eventGroupDefinition.recipientId, noticeContext);
+  }
+
+  private CompletableFuture<Result<Void>> sendPatronNotice(
+    NoticeConfiguration noticeConfiguration, String recipientId, JsonObject context) {
+
+    PatronNotice patronNotice = new PatronNotice();
+    patronNotice.setRecipientId(recipientId);
+    patronNotice.setTemplateId(noticeConfiguration.getTemplateId());
+    patronNotice.setDeliveryChannel(noticeConfiguration.getNoticeFormat().getDeliveryChannel());
+    patronNotice.setOutputFormat(noticeConfiguration.getNoticeFormat().getOutputFormat());
+    patronNotice.setContext(context);
+
+    return sendNotice(patronNotice);
+  }
+
+  private CompletableFuture<Result<Void>> sendNotice(PatronNotice patronNotice) {
     JsonObject body = JsonObject.mapFrom(patronNotice);
+    ResponseInterpreter<Void> responseInterpreter =
+      mapToRecordInterpreter(null, 200, 201);
 
     return patronNoticeClient.post(body)
-      .thenApply(mapToRecordInterpreter(patronNotice, 200, 201)::apply);
+      .thenApply(responseInterpreter::apply);
+  }
+
+  private static class NoticeEventGroupDefinition {
+
+    private final String recipientId;
+    private final String noticePolicyId;
+    private final NoticeEventType eventType;
+    private final NoticeTiming timing;
+
+    private static NoticeEventGroupDefinition from(
+      Pair<PatronNoticeEvent, String> noticeEventWithPolicyId) {
+
+      PatronNoticeEvent event = noticeEventWithPolicyId.getLeft();
+      String noticePolicyId = noticeEventWithPolicyId.getRight();
+
+      return new NoticeEventGroupDefinition(
+        event.getUser().getId(),
+        noticePolicyId,
+        event.getEventType(),
+        event.getTiming());
+    }
+
+    public NoticeEventGroupDefinition(
+      String recipientId, String noticePolicyId,
+      NoticeEventType eventType, NoticeTiming timing) {
+
+      this.recipientId = recipientId;
+      this.noticePolicyId = noticePolicyId;
+      this.eventType = eventType;
+      this.timing = timing;
+    }
+
+    @Override
+    public boolean equals(Object object) {
+      if (this == object) return true;
+
+      if (object == null || getClass() != object.getClass()) return false;
+
+      NoticeEventGroupDefinition that = (NoticeEventGroupDefinition) object;
+
+      return new EqualsBuilder()
+        .append(recipientId, that.recipientId)
+        .append(noticePolicyId, that.noticePolicyId)
+        .append(eventType, that.eventType)
+        .append(timing, that.timing)
+        .isEquals();
+    }
+
+    @Override
+    public int hashCode() {
+      return new HashCodeBuilder(17, 37)
+        .append(recipientId)
+        .append(noticePolicyId)
+        .append(eventType)
+        .append(timing)
+        .toHashCode();
+    }
   }
 }

@@ -33,6 +33,7 @@ import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.CqlQuery;
 import org.folio.circulation.support.FetchSingleRecord;
 import org.folio.circulation.support.ItemRepository;
+import org.folio.circulation.support.MultipleRecordFetcher;
 import org.folio.circulation.support.RecordNotFoundFailure;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.SingleRecordFetcher;
@@ -183,6 +184,14 @@ public class LoanRepository {
     //TODO: Should fetch users for all loans
     return loansStorageClient.getManyWithRawQueryStringParameters(query)
       .thenApply(this::mapResponseToLoans)
+      .thenComposeAsync(loans -> itemRepository.fetchItemsFor(loans, Loan::withItem));
+  }
+
+  public CompletableFuture<Result<MultipleRecords<Loan>>> findByIds(Collection<String> loanIds) {
+    MultipleRecordFetcher<Loan> fetcher =
+      new MultipleRecordFetcher<>(loansStorageClient, "loans", Loan::from);
+
+    return fetcher.findByIds(loanIds)
       .thenComposeAsync(loans -> itemRepository.fetchItemsFor(loans, Loan::withItem));
   }
 
