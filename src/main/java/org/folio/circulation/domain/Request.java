@@ -37,6 +37,7 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
   private final Item item;
   private final User requester;
   private final User proxy;
+  private final AddressType addressType;
   private final Loan loan;
   private final ServicePoint pickupServicePoint;
 
@@ -49,6 +50,7 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
     Item item,
     User requester,
     User proxy,
+    AddressType addressType,
     Loan loan,
     ServicePoint pickupServicePoint) {
 
@@ -57,12 +59,13 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
     this.item = item;
     this.requester = requester;
     this.proxy = proxy;
+    this.addressType = addressType;
     this.loan = loan;
     this.pickupServicePoint = pickupServicePoint;
   }
 
   public static Request from(JsonObject representation) {
-    return new Request(representation, null, null, null, null, null, null);
+    return new Request(representation, null, null, null, null, null, null, null);
   }
 
   Request withRequestJsonRepresentation(JsonObject representation) {
@@ -71,6 +74,7 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
       getItem(),
       getRequester(),
       getProxy(),
+      getAddressType(),
       getLoan(),
       getPickupServicePoint());
   }
@@ -81,6 +85,7 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
       getItem(),
       getRequester(),
       getProxy(),
+      getAddressType(),
       getLoan(),
       getPickupServicePoint());
   }
@@ -152,31 +157,36 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   public Request withItem(Item newItem) {
-    // NOTE: this is null in RequestsAPIUpdatingTests.replacingAnExistingRequestRemovesItemInformationWhenItemDoesNotExist test 
+    // NOTE: this is null in RequestsAPIUpdatingTests.replacingAnExistingRequestRemovesItemInformationWhenItemDoesNotExist test
     if (newItem.getItemId() != null) {
       requestRepresentation.put(ITEM_ID, newItem.getItemId());
     }
-    return new Request(requestRepresentation, cancellationReasonRepresentation, newItem, requester, proxy,
+    return new Request(requestRepresentation, cancellationReasonRepresentation, newItem, requester, proxy, addressType,
       loan == null ? null : loan.withItem(newItem), pickupServicePoint);
   }
 
   public Request withRequester(User newRequester) {
-    return new Request(requestRepresentation, cancellationReasonRepresentation, item, newRequester, proxy, loan,
+    return new Request(requestRepresentation, cancellationReasonRepresentation, item, newRequester, proxy, addressType, loan,
       pickupServicePoint);
   }
 
   public Request withProxy(User newProxy) {
-    return new Request(requestRepresentation, cancellationReasonRepresentation, item, requester, newProxy, loan,
+    return new Request(requestRepresentation, cancellationReasonRepresentation, item, requester, newProxy, addressType, loan,
+      pickupServicePoint);
+  }
+
+  public Request withAddressType(AddressType addressType) {
+    return new Request(requestRepresentation, cancellationReasonRepresentation, item, requester, proxy, addressType, loan,
       pickupServicePoint);
   }
 
   public Request withLoan(Loan newLoan) {
-    return new Request(requestRepresentation, cancellationReasonRepresentation, item, requester, proxy, newLoan,
+    return new Request(requestRepresentation, cancellationReasonRepresentation, item, requester, proxy, addressType, newLoan,
       pickupServicePoint);
   }
 
   public Request withPickupServicePoint(ServicePoint newPickupServicePoint) {
-    return new Request(requestRepresentation, cancellationReasonRepresentation, item, requester, proxy, loan,
+    return new Request(requestRepresentation, cancellationReasonRepresentation, item, requester, proxy, addressType, loan,
       newPickupServicePoint);
   }
 
@@ -256,6 +266,10 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
     return proxy;
   }
 
+  public AddressType getAddressType() {
+    return addressType;
+  }
+
   public String getPickupServicePointId() {
     return requestRepresentation.getString("pickupServicePointId");
   }
@@ -307,7 +321,7 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
     return getFulfilmentPreference().toCheckedInItemStatus();
   }
 
-  String getDeliveryAddressType() {
+  public String getDeliveryAddressTypeId() {
     return requestRepresentation.getString("deliveryAddressTypeId");
   }
 
@@ -321,7 +335,7 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
   void removeHoldShelfExpirationDate() {
     requestRepresentation.remove(HOLD_SHELF_EXPIRATION_DATE);
   }
-  
+
   public DateTime getRequestDate() {
     return getDateTimeProperty(requestRepresentation, REQUEST_DATE);
   }

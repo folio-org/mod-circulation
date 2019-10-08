@@ -181,6 +181,10 @@ public class InterfaceUrls {
     return APITestContext.viaOkapiModuleUrl("/scheduled-notice-storage/scheduled-notices" + subPath);
   }
 
+  static URL patronActionSessionsUrl(String subPath) {
+    return APITestContext.viaOkapiModuleUrl("/patron-action-session-storage/patron-action-sessions" + subPath);
+  }
+
   static URL configurationUrl(String subPath) {
     return APITestContext.viaOkapiModuleUrl("/configurations/entries" + subPath);
   }

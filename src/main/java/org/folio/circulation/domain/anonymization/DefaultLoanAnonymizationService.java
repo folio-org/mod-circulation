@@ -11,7 +11,8 @@ import org.folio.circulation.domain.anonymization.checks.AnonymizationChecker;
 import org.folio.circulation.support.Result;
 
 /**
- * Validates loan eligibility for anonymization. By default a loan can only be anonymized if it's closed and there are no open fees
+ * Checks loan eligibility for anonymization.
+ * By default a loan can only be anonymized if it's closed and there are no fees
  * and fines associated with it.
  *
  */

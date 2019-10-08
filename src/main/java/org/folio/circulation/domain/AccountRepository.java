@@ -4,7 +4,6 @@ import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.support.CqlQuery.exactMatch;
 import static org.folio.circulation.support.Result.succeeded;
 
-import java.lang.invoke.MethodHandles;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -15,43 +14,34 @@ import java.util.stream.Collectors;
 
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
-import org.folio.circulation.support.CqlQuery;
 import org.folio.circulation.support.MultipleRecordFetcher;
 import org.folio.circulation.support.Result;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class AccountRepository {
 
+  private static final String LOAN_ID_FIELD_NAME = "loanId";
   private final CollectionResourceClient accountsStorageClient;
-  private static final Result<CqlQuery> openAccountStatusQuery =
-    exactMatch("status.name", "Open");
-
 
   public AccountRepository(Clients clients) {
     accountsStorageClient = clients.accountsStorageClient();
   }
 
-  public CompletableFuture<Result<Loan>> findOpenAccountsForLoan(Result<Loan> loanResult) {
+  public CompletableFuture<Result<Loan>> findAccountsForLoan(Result<Loan> loanResult) {
     return loanResult.after(loan -> {
       if (loan == null) {
         return completedFuture(loanResult);
       }
-      return loanResult
-        .combineAfter(r -> fetchOpenAccountsForLoan(loan.getId()),
-          Loan::withAccounts);
+      return loanResult.combineAfter(r -> fetchAccountsForLoan(loan.getId()), Loan::withAccounts);
     });
   }
 
-  private CompletableFuture<Result<Collection<Account>>> fetchOpenAccountsForLoan(
-    String loanId) {
+  private CompletableFuture<Result<Collection<Account>>> fetchAccountsForLoan(String loanId) {
 
-    return createAccountsFetcher().findByQuery(
-      openAccountStatusQuery.combine(exactMatch("loanId", loanId), CqlQuery::and))
+    return createAccountsFetcher().findByQuery(exactMatch(LOAN_ID_FIELD_NAME, loanId))
       .thenApply(r -> r.map(MultipleRecords::getRecords));
   }
 
-  public CompletableFuture<Result<MultipleRecords<Loan>>> findOpenAccountsForLoans(
+  public CompletableFuture<Result<MultipleRecords<Loan>>> findAccountsForLoans(
     MultipleRecords<Loan> multipleLoans) {
 
     if (multipleLoans.getRecords().isEmpty()) {
@@ -64,24 +54,19 @@ public class AccountRepository {
           new ArrayList<>())))));
   }
 
-  private CompletableFuture<Result<Map<String, List<Account>>>> getAccountsForLoans(
-    Collection<Loan> loans) {
+  private CompletableFuture<Result<Map<String, List<Account>>>> getAccountsForLoans(Collection<Loan> loans) {
 
-    final Collection<String> accountsToFetch =
+    final Collection<String> loanIds =
       loans.stream()
         .filter(Objects::nonNull)
         .map(Loan::getId)
         .filter(Objects::nonNull)
         .collect(Collectors.toSet());
 
-    return createAccountsFetcher()
-      .findByIndexNameAndQuery(accountsToFetch, "loanId", openAccountStatusQuery)
+    return createAccountsFetcher().findByIndexName(loanIds, LOAN_ID_FIELD_NAME)
       .thenComposeAsync(r -> r.after(multipleRecords -> completedFuture(succeeded(
         multipleRecords.getRecords().stream().collect(
-          Collectors.groupingBy(Account::getLoanId))
-        ))
-        )
-      );
+          Collectors.groupingBy(Account::getLoanId))))));
   }
 
   private MultipleRecordFetcher<Account> createAccountsFetcher() {

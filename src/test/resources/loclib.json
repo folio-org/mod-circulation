@@ -1,0 +1,31 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "type": "object",
+  "description": "third-level location unit",
+  "properties": {
+    "id": {
+      "type": "string"
+    },
+    "name": {
+      "description": "name of the location",
+      "type": "string"
+    },
+    "code": {
+      "description": "distinct code for the location",
+      "type": "string"
+    },
+    "campusId": {
+      "description": "ID of the second-level location unit that the third-level unit belongs to",
+      "type": "string"
+    },
+    "metadata": {
+      "type": "object",
+      "$ref": "raml-util/schemas/metadata.schema",
+      "readonly": true
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "name", "campusId", "code"
+  ]
+}

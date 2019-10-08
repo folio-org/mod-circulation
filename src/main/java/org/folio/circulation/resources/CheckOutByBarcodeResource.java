@@ -26,6 +26,7 @@ import org.folio.circulation.domain.User;
 import org.folio.circulation.domain.UserRepository;
 import org.folio.circulation.domain.notice.schedule.DueDateScheduledNoticeService;
 import org.folio.circulation.domain.notice.schedule.ScheduledNoticesRepository;
+import org.folio.circulation.domain.notice.session.PatronActionSessionService;
 import org.folio.circulation.domain.policy.LoanPolicyRepository;
 import org.folio.circulation.domain.policy.PatronNoticePolicyRepository;
 import org.folio.circulation.domain.representations.LoanProperties;
@@ -97,7 +98,6 @@ public class CheckOutByBarcodeResource extends Resource {
     final LoanService loanService = new LoanService(clients);
     final LoanPolicyRepository loanPolicyRepository = new LoanPolicyRepository(clients);
     final PatronNoticePolicyRepository patronNoticePolicyRepository = new PatronNoticePolicyRepository(clients);
-    final LoanNoticeSender loanNoticeSender = LoanNoticeSender.using(clients);
     final PatronGroupRepository patronGroupRepository = new PatronGroupRepository(clients);
     final ConfigurationRepository configurationRepository = new ConfigurationRepository(clients);
     final ScheduledNoticesRepository scheduledNoticesRepository = ScheduledNoticesRepository.using(clients);
@@ -137,6 +137,9 @@ public class CheckOutByBarcodeResource extends Resource {
 
     final LoanRepresentation loanRepresentation = new LoanRepresentation();
 
+    final PatronActionSessionService patronActionSessionService =
+      PatronActionSessionService.using(clients);
+
     completedFuture(succeeded(new LoanAndRelatedRecords(loan)))
       .thenApply(servicePointOfCheckoutPresentValidator::refuseCheckOutWhenServicePointIsNotPresent)
       .thenCombineAsync(userRepository.getUserByBarcode(userBarcode), this::addUser)
@@ -160,7 +163,7 @@ public class CheckOutByBarcodeResource extends Resource {
       .thenComposeAsync(r -> r.after(loanService::truncateLoanWhenItemRecalled))
       .thenComposeAsync(r -> r.after(patronGroupRepository::findPatronGroupForLoanAndRelatedRecords))
       .thenComposeAsync(r -> r.after(loanRepository::createLoan))
-      .thenApply(r -> r.next(loanNoticeSender::sendCheckOutPatronNotice))
+      .thenComposeAsync(r -> r.after(patronActionSessionService::saveCheckOutSessionRecord))
       .thenApply(r -> r.next(scheduledNoticeService::scheduleNoticesForLoanDueDate))
       .thenApply(r -> r.map(LoanAndRelatedRecords::getLoan))
       .thenApply(r -> r.map(loanRepresentation::extendedLoan))

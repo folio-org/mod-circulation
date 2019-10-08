@@ -1,5 +1,6 @@
 package api.loans;
 
+import static api.support.fixtures.AddressExamples.SiriusBlack;
 import static api.support.matchers.PatronNoticeMatcher.hasEmailNoticeProperties;
 import static api.support.matchers.ResponseStatusCodeMatcher.hasStatus;
 import static api.support.matchers.TextDateTimeMatcher.withinSecondsAfter;
@@ -25,6 +26,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import org.awaitility.Awaitility;
+import org.folio.circulation.domain.User;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 import org.hamcrest.Matcher;
@@ -38,6 +40,7 @@ import org.junit.Test;
 
 import api.support.APITests;
 import api.support.CheckInByBarcodeResponse;
+import api.support.builders.Address;
 import api.support.builders.CheckInByBarcodeRequestBuilder;
 import api.support.builders.NoticeConfigurationBuilder;
 import api.support.builders.NoticePolicyBuilder;
@@ -138,6 +141,62 @@ public class CheckInByBarcodeTests extends APITests {
 
     assertThat("Checkin Service Point Id should be stored.",
       storedLoan.getString("checkinServicePointId"), is(checkInServicePointId));
+  }
+
+  @Test
+  public void canCreateStaffSlipContextOnCheckInByBarcode()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+    InventoryItemResource item = itemsFixture.basedUponSmallAngryPlanet();
+
+    DateTime requestDate = new DateTime(2019, 7, 22, 10, 22, 54, DateTimeZone.UTC);
+    IndividualResource servicePoint = servicePointsFixture.cd1();
+    Address address = SiriusBlack();
+    IndividualResource requester = usersFixture.steve(builder ->
+      builder.withAddress(address));
+
+    LocalDate requestExpiration = new LocalDate(2019, 7, 30);
+    LocalDate holdShelfExpiration = new LocalDate(2019, 8, 31);
+    IndividualResource request = requestsFixture.place(new RequestBuilder()
+      .withId(UUID.randomUUID())
+      .open()
+      .page()
+      .forItem(item)
+      .by(requester)
+      .withRequestDate(requestDate)
+      .fulfilToHoldShelf()
+      .withRequestExpiration(requestExpiration)
+      .withHoldShelfExpiration(holdShelfExpiration)
+      .withPickupServicePointId(servicePoint.getId())
+      .withDeliveryAddressType(addressTypesFixture.home().getId())
+      .withTags(new RequestBuilder.Tags(asList("new", "important"))));
+
+    DateTime checkInDate = new DateTime(2019, 7, 25, 14, 23, 41, DateTimeZone.UTC);
+    CheckInByBarcodeResponse response = loansFixture.checkInByBarcode(item, checkInDate, servicePoint.getId());
+
+    User requesterUser = new User(requester.getJson());
+    JsonObject staffSlipContext = response.getStaffSlipContext();
+    JsonObject userContext = staffSlipContext.getJsonObject("requester");
+    JsonObject requestContext = staffSlipContext.getJsonObject("request");
+
+    assertThat(userContext.getString("firstName"), is(requesterUser.getFirstName()));
+    assertThat(userContext.getString("lastName"), is(requesterUser.getLastName()));
+    assertThat(userContext.getString("middleName"), is(requesterUser.getMiddleName()));
+    assertThat(userContext.getString("barcode"), is(requesterUser.getBarcode()));
+    assertThat(userContext.getString("addressLine1"), is(address.getAddressLineOne()));
+    assertThat(userContext.getString("addressLine2"), is(address.getAddressLineTwo()));
+    assertThat(userContext.getString("city"), is(address.getCity()));
+    assertThat(userContext.getString("region"), is(address.getRegion()));
+    assertThat(userContext.getString("postalCode"), is(address.getPostalCode()));
+    assertThat(userContext.getString("countryId"), is(address.getCountryId()));
+
+    assertThat(requestContext.getString("deliveryAddressType"), is(addressTypesFixture.home().getJson().getString("addressType")));
+    assertThat(requestContext.getString("requestExpirationDate"), is(requestExpiration.toDateTimeAtStartOfDay().toString()));
+    assertThat(requestContext.getString("holdShelfExpirationDate"), is(holdShelfExpiration.toDateTimeAtStartOfDay().toString()));
+    assertThat(requestContext.getString("requestID"), is(request.getId()));
+    assertThat(requestContext.getString("servicePointPickup"), is(servicePoint.getJson().getString("name")));
   }
 
   @Test
