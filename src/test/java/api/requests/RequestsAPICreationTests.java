@@ -673,14 +673,10 @@ public class RequestsAPICreationTests extends APITests {
       .withRequesterId(inactiveCharlotte.getId()));
 
     assertThat(recallResponse, hasStatus(HTTP_VALIDATION_ERROR));
-
     assertThat(recallResponse.getJson(), hasErrorWith(allOf(
-      hasMessage("Inactive users cannot make requests"))));
-
-    hasUUIDParameter("requesterId", inactiveCharlotte.getId());
-
-    hasUUIDParameter("itemId", smallAngryPlanet.getId());
-
+      hasMessage("Inactive users cannot make requests"),
+      hasUUIDParameter("requesterId", inactiveCharlotte.getId()),
+      hasUUIDParameter("itemId", smallAngryPlanet.getId()))));
   }
 
   @Test
