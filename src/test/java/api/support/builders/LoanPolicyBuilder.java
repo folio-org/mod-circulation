@@ -505,7 +505,7 @@ public class LoanPolicyBuilder extends JsonBuilder implements Builder {
       this.alternateCheckoutLoanPeriod);
   }
 
-  public Builder renewWith(UUID fixedDueDateScheduleId) {
+  public LoanPolicyBuilder renewWith(UUID fixedDueDateScheduleId) {
     if(!Objects.equals(profile, "Fixed")) {
       throw new IllegalArgumentException("Can only be used with fixed profile");
     }
