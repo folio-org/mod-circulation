@@ -77,11 +77,12 @@ public class PatronActionSessionService {
 
   private CompletableFuture<Result<MultipleRecords<PatronSessionRecord>>> sendNotices(
     MultipleRecords<PatronSessionRecord> records) {
-    List<PatronSessionRecord> sessionRecords = new ArrayList<>(records.getRecords());
 
-    if (sessionRecords.isEmpty()) {
+    if (records.isEmpty()) {
       return completedFuture(succeeded(null));
     }
+    List<PatronSessionRecord> sessionRecords = new ArrayList<>(records.getRecords());
+
     PatronSessionRecord recordSample = sessionRecords.get(0);
 
     //The user is the same for all records
