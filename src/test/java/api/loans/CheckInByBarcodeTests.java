@@ -397,7 +397,8 @@ public class CheckInByBarcodeTests extends APITests {
     useLoanPolicyAsFallback(
       loanPoliciesFixture.canCirculateRolling().getId(),
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
-      noticePoliciesFixture.create(noticePolicy).getId());
+      noticePoliciesFixture.create(noticePolicy).getId(),
+      overdueFinePoliciesFixture.facultyStandard().getId());
 
     DateTime loanDate = new DateTime(2018, 3, 1, 13, 25, 46, DateTimeZone.UTC);
 
@@ -463,7 +464,8 @@ public class CheckInByBarcodeTests extends APITests {
     useLoanPolicyAsFallback(
       loanPoliciesFixture.canCirculateRolling().getId(),
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
-      noticePoliciesFixture.create(noticePolicy).getId());
+      noticePoliciesFixture.create(noticePolicy).getId(),
+      overdueFinePoliciesFixture.facultyStandard().getId());
 
     final UUID checkInServicePointId = servicePointsFixture.cd1().getId();
 
@@ -520,7 +522,8 @@ public class CheckInByBarcodeTests extends APITests {
     useLoanPolicyAsFallback(
       loanPoliciesFixture.canCirculateRolling().getId(),
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
-      noticePoliciesFixture.create(noticePolicy).getId());
+      noticePoliciesFixture.create(noticePolicy).getId(),
+      overdueFinePoliciesFixture.facultyStandard().getId());
 
     DateTime checkInDate = new DateTime(2019, 7, 25, 14, 23, 41, DateTimeZone.UTC);
     loansFixture.checkInByBarcode(item, checkInDate, servicePointId);
@@ -559,7 +562,8 @@ public class CheckInByBarcodeTests extends APITests {
     useLoanPolicyAsFallback(
       loanPoliciesFixture.canCirculateRolling().getId(),
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
-      noticePoliciesFixture.create(noticePolicy).getId());
+      noticePoliciesFixture.create(noticePolicy).getId(),
+      overdueFinePoliciesFixture.facultyStandard().getId());
 
     loansFixture.checkInByBarcode(item,
       new DateTime(2019, 5, 10, 14, 23, 41, DateTimeZone.UTC),

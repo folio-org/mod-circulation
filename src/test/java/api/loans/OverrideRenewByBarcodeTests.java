@@ -76,7 +76,8 @@ public class OverrideRenewByBarcodeTests extends APITests {
     useLoanPolicyAsFallback(
       unknownLoanPolicyId,
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
-      noticePoliciesFixture.activeNotice().getId()
+      noticePoliciesFixture.activeNotice().getId(),
+      overdueFinePoliciesFixture.facultyStandard().getId()
     );
 
     final Response response = loansFixture.attemptRenewal(500, smallAngryPlanet,
@@ -198,7 +199,8 @@ public class OverrideRenewByBarcodeTests extends APITests {
     useLoanPolicyAsFallback(
       nonRenewablePolicyId,
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
-      noticePoliciesFixture.activeNotice().getId()
+      noticePoliciesFixture.activeNotice().getId(),
+      overdueFinePoliciesFixture.facultyStandard().getId()
     );
 
     loansFixture.attemptRenewal(422, smallAngryPlanet, jessica);
@@ -236,7 +238,8 @@ public class OverrideRenewByBarcodeTests extends APITests {
     useLoanPolicyAsFallback(
       nonRenewablePolicyId,
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
-      noticePoliciesFixture.activeNotice().getId()
+      noticePoliciesFixture.activeNotice().getId(),
+      overdueFinePoliciesFixture.facultyStandard().getId()
     );
 
     loansFixture.attemptRenewal(422, smallAngryPlanet, jessica);
@@ -306,7 +309,8 @@ public class OverrideRenewByBarcodeTests extends APITests {
     useLoanPolicyAsFallback(
       dueDateLimitedPolicyId,
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
-      noticePoliciesFixture.activeNotice().getId()
+      noticePoliciesFixture.activeNotice().getId(),
+      overdueFinePoliciesFixture.facultyStandard().getId()
     );
 
     loansFixture.attemptRenewal(422, smallAngryPlanet, jessica);
@@ -353,7 +357,8 @@ public class OverrideRenewByBarcodeTests extends APITests {
     useLoanPolicyAsFallback(
       dueDateLimitedPolicyId,
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
-      noticePoliciesFixture.activeNotice().getId()
+      noticePoliciesFixture.activeNotice().getId(),
+      overdueFinePoliciesFixture.facultyStandard().getId()
     );
 
     loansFixture.attemptRenewal(422, smallAngryPlanet, jessica);
@@ -435,7 +440,8 @@ public class OverrideRenewByBarcodeTests extends APITests {
     useLoanPolicyAsFallback(
       dueDateLimitedPolicyId,
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
-      noticePoliciesFixture.activeNotice().getId()
+      noticePoliciesFixture.activeNotice().getId(),
+      overdueFinePoliciesFixture.facultyStandard().getId()
     );
 
     Response response = loansFixture.attemptRenewal(422, smallAngryPlanet, jessica);
@@ -496,7 +502,8 @@ public class OverrideRenewByBarcodeTests extends APITests {
     useLoanPolicyAsFallback(
       limitedRenewalsPolicyId,
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
-      noticePoliciesFixture.activeNotice().getId()
+      noticePoliciesFixture.activeNotice().getId(),
+      overdueFinePoliciesFixture.facultyStandard().getId()
     );
 
     DateTime loanDate = DateTime.now(DateTimeZone.UTC);
@@ -559,7 +566,8 @@ public class OverrideRenewByBarcodeTests extends APITests {
     useLoanPolicyAsFallback(
       rollingPolicyId,
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
-      noticePoliciesFixture.activeNotice().getId()
+      noticePoliciesFixture.activeNotice().getId(),
+      overdueFinePoliciesFixture.facultyStandard().getId()
     );
 
     final Response response = loansFixture.attemptOverride(smallAngryPlanet,
@@ -779,7 +787,8 @@ public class OverrideRenewByBarcodeTests extends APITests {
     useLoanPolicyAsFallback(
       nonRenewablePolicy.getId(),
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
-      noticePolicy.getId());
+      noticePolicy.getId(),
+      overdueFinePoliciesFixture.facultyStandard().getId());
 
     ItemBuilder itemBuilder = ItemExamples.basedUponSmallAngryPlanet(
       materialTypesFixture.book().getId(),
@@ -851,7 +860,8 @@ public class OverrideRenewByBarcodeTests extends APITests {
     useLoanPolicyAsFallback(
       policyId,
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
-      noticePoliciesFixture.activeNotice().getId());
+      noticePoliciesFixture.activeNotice().getId(),
+      overdueFinePoliciesFixture.facultyStandard().getId());
   }
 
   private void assertLoanHasActionComment(JsonObject loan, String actionComment) {

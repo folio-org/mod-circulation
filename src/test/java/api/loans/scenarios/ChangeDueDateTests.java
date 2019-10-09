@@ -219,7 +219,8 @@ public class ChangeDueDateTests extends APITests {
     useLoanPolicyAsFallback(
       loanPolicyWithLimitedRenewals.getId(),
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
-      noticePolicy.getId());
+      noticePolicy.getId(),
+      overdueFinePoliciesFixture.facultyStandard().getId());
 
     ItemBuilder itemBuilder = ItemExamples.basedUponSmallAngryPlanet(
       materialTypesFixture.book().getId(),

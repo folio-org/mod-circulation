@@ -112,6 +112,7 @@ public class CirculationRulesResource extends Resource {
     }
     LoanCirculationRulesEngineResource.clearCache(new WebContext(routingContext).getTenantId());
     RequestCirculationRulesEngineResource.clearCache(new WebContext(routingContext).getTenantId());
+    OverdueCirculationRulesEngineResource.clearCache(new WebContext(routingContext).getTenantId());
 
     loansRulesClient.put(rulesInput.copy()).thenAccept(response -> {
       if (response.getStatusCode() == 204) {

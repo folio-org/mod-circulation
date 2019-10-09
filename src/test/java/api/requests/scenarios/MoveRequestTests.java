@@ -983,7 +983,8 @@ public class MoveRequestTests extends APITests {
 
     useLoanPolicyAsFallback(loanPolicy.getId(),
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
-      noticePoliciesFixture.inactiveNotice().getId());
+      noticePoliciesFixture.inactiveNotice().getId(),
+      overdueFinePoliciesFixture.facultyStandard().getId());
 
     final DateTime loanDate = DateTime.now(DateTimeZone.UTC).minusDays(3);
 

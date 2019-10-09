@@ -14,6 +14,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import api.support.fixtures.OverdueFinePoliciesFixture;
 import org.folio.circulation.domain.representations.LoanProperties;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.OkapiHttpClient;
@@ -101,6 +102,9 @@ public abstract class APITests {
   protected final ResourceClient noticePolicyClient
     = ResourceClient.forNoticePolicies(client);
 
+  protected final ResourceClient overdueFinePolicyClient
+    = ResourceClient.forOverdueFinePolicies(client);
+
   private final ResourceClient instanceTypesClient
     = ResourceClient.forInstanceTypes(client);
 
@@ -137,6 +141,9 @@ public abstract class APITests {
 
   protected final NoticePoliciesFixture noticePoliciesFixture
     = new NoticePoliciesFixture(noticePolicyClient);
+
+  protected final OverdueFinePoliciesFixture overdueFinePoliciesFixture
+    = new OverdueFinePoliciesFixture(overdueFinePolicyClient);
 
   protected final CirculationRulesFixture circulationRulesFixture
     = new CirculationRulesFixture(client);
@@ -284,7 +291,8 @@ public abstract class APITests {
     useLoanPolicyAsFallback(
       loanPoliciesFixture.canCirculateRolling().getId(),
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
-      noticePoliciesFixture.activeNotice().getId()
+      noticePoliciesFixture.activeNotice().getId(),
+      overdueFinePoliciesFixture.facultyStandard().getId()
     );
   }
 
@@ -298,18 +306,19 @@ public abstract class APITests {
     useLoanPolicyAsFallback(
       loanPoliciesFixture.canCirculateFixed().getId(),
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
-      noticePoliciesFixture.activeNotice().getId()
+      noticePoliciesFixture.activeNotice().getId(),
+      overdueFinePoliciesFixture.facultyStandard().getId()
     );
   }
 
   protected void useLoanPolicyAsFallback(UUID loanPolicyId, UUID requestPolicyId,
-                                         UUID noticePolicyId)
+                                         UUID noticePolicyId, UUID overdueFinePolicyId)
     throws InterruptedException,
     ExecutionException,
     TimeoutException, MalformedURLException {
 
     circulationRulesFixture.updateCirculationRules(loanPolicyId, requestPolicyId,
-      noticePolicyId);
+      noticePolicyId, overdueFinePolicyId);
 
     warmUpApplyEndpoint();
   }
@@ -438,7 +447,8 @@ public abstract class APITests {
     circulationRulesFixture.updateCirculationRules(
       circulationRulesFixture.soleFallbackPolicyRule(invalidLoanPolicyReference,
         requestPoliciesFixture.allowAllRequestPolicy().getId().toString(),
-        noticePoliciesFixture.inactiveNotice().getId().toString()));
+        noticePoliciesFixture.inactiveNotice().getId().toString(),
+        overdueFinePoliciesFixture.facultyStandard().getId().toString()));
   }
 
   protected void setInvalidNoticePolicyReferenceInRules(String invalidNoticePolicyReference)
@@ -451,6 +461,7 @@ public abstract class APITests {
       circulationRulesFixture.soleFallbackPolicyRule(
         loanPoliciesFixture.canCirculateRolling().getId().toString(),
         requestPoliciesFixture.allowAllRequestPolicy().getId().toString(),
-        invalidNoticePolicyReference));
+        invalidNoticePolicyReference,
+        overdueFinePoliciesFixture.facultyStandard().getId().toString()));
   }
 }

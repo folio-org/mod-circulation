@@ -129,7 +129,8 @@ public class LoanDueDatesAfterRecallTests extends APITests {
 
     useLoanPolicyAsFallback(loanPolicy.getId(),
         requestPoliciesFixture.allowAllRequestPolicy().getId(),
-        noticePoliciesFixture.inactiveNotice().getId());
+        noticePoliciesFixture.inactiveNotice().getId(),
+        overdueFinePoliciesFixture.facultyStandard().getId());
 
     final IndividualResource loan = loansFixture.checkOutByBarcode(
       smallAngryPlanet, steve, DateTime.now(DateTimeZone.UTC));
@@ -173,7 +174,8 @@ public class LoanDueDatesAfterRecallTests extends APITests {
 
     useLoanPolicyAsFallback(loanPolicy.getId(),
         requestPoliciesFixture.allowAllRequestPolicy().getId(),
-        noticePoliciesFixture.inactiveNotice().getId());
+        noticePoliciesFixture.inactiveNotice().getId(),
+        overdueFinePoliciesFixture.facultyStandard().getId());
 
     // We use the loan date to calculate the MGD
     final DateTime loanDate = DateTime.now(DateTimeZone.UTC);
@@ -219,7 +221,8 @@ public class LoanDueDatesAfterRecallTests extends APITests {
 
     useLoanPolicyAsFallback(loanPolicy.getId(),
         requestPoliciesFixture.allowAllRequestPolicy().getId(),
-        noticePoliciesFixture.inactiveNotice().getId());
+        noticePoliciesFixture.inactiveNotice().getId(),
+        overdueFinePoliciesFixture.facultyStandard().getId());
 
     // We use the loan date to calculate the minimum guaranteed due date (MGD)
     final DateTime loanDate = DateTime.now(DateTimeZone.UTC);
@@ -265,7 +268,8 @@ public class LoanDueDatesAfterRecallTests extends APITests {
 
     useLoanPolicyAsFallback(loanPolicy.getId(),
         requestPoliciesFixture.allowAllRequestPolicy().getId(),
-        noticePoliciesFixture.inactiveNotice().getId());
+        noticePoliciesFixture.inactiveNotice().getId(),
+        overdueFinePoliciesFixture.facultyStandard().getId());
 
     // We use the loan date to calculate the minimum guaranteed due date (MGD)
     final DateTime loanDate = DateTime.now(DateTimeZone.UTC);
@@ -313,7 +317,8 @@ public class LoanDueDatesAfterRecallTests extends APITests {
 
     useLoanPolicyAsFallback(loanPolicy.getId(),
         requestPoliciesFixture.allowAllRequestPolicy().getId(),
-        noticePoliciesFixture.inactiveNotice().getId());
+        noticePoliciesFixture.inactiveNotice().getId(),
+        overdueFinePoliciesFixture.facultyStandard().getId());
 
     servicePointsFixture.create(new ServicePointBuilder(checkOutServicePointId, "CLDDM Desk", "clddm", "CLDDM Desk Test", null, null, TRUE, null));
 
@@ -388,7 +393,8 @@ public class LoanDueDatesAfterRecallTests extends APITests {
 
     useLoanPolicyAsFallback(loanPolicy.getId(),
         requestPoliciesFixture.allowAllRequestPolicy().getId(),
-        noticePoliciesFixture.inactiveNotice().getId());
+        noticePoliciesFixture.inactiveNotice().getId(),
+        overdueFinePoliciesFixture.facultyStandard().getId());
 
     // We use the loan date to calculate the minimum guaranteed due date (MGD)
     final DateTime loanDate = DateTime.now(DateTimeZone.UTC);
@@ -434,7 +440,8 @@ public class LoanDueDatesAfterRecallTests extends APITests {
 
     useLoanPolicyAsFallback(loanPolicy.getId(),
         requestPoliciesFixture.allowAllRequestPolicy().getId(),
-        noticePoliciesFixture.inactiveNotice().getId());
+        noticePoliciesFixture.inactiveNotice().getId(),
+        overdueFinePoliciesFixture.facultyStandard().getId());
 
     loansFixture.checkOutByBarcode(smallAngryPlanet, charlotte,
       DateTime.now(DateTimeZone.UTC));
@@ -492,7 +499,8 @@ public class LoanDueDatesAfterRecallTests extends APITests {
 
     useLoanPolicyAsFallback(loanPolicy.getId(),
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
-      noticePoliciesFixture.inactiveNotice().getId());
+      noticePoliciesFixture.inactiveNotice().getId(),
+      overdueFinePoliciesFixture.facultyStandard().getId());
 
     final DateTime loanDate = DateTime.now(DateTimeZone.UTC).minusDays(3);
 
@@ -551,7 +559,8 @@ public class LoanDueDatesAfterRecallTests extends APITests {
 
     useLoanPolicyAsFallback(loanPolicy.getId(),
         requestPoliciesFixture.allowAllRequestPolicy().getId(),
-        noticePoliciesFixture.inactiveNotice().getId());
+        noticePoliciesFixture.inactiveNotice().getId(),
+        overdueFinePoliciesFixture.facultyStandard().getId());
 
     requestsFixture.placeHoldShelfRequest(smallAngryPlanet, jessica,
         DateTime.now(DateTimeZone.UTC), requestServicePoint.getId(), "Page");
@@ -606,7 +615,8 @@ public class LoanDueDatesAfterRecallTests extends APITests {
 
     useLoanPolicyAsFallback(loanPolicy.getId(),
         requestPoliciesFixture.allowAllRequestPolicy().getId(),
-        noticePoliciesFixture.inactiveNotice().getId());
+        noticePoliciesFixture.inactiveNotice().getId(),
+        overdueFinePoliciesFixture.facultyStandard().getId());
 
     requestsFixture.placeHoldShelfRequest(smallAngryPlanet, jessica,
         DateTime.now(DateTimeZone.UTC), requestServicePoint.getId(), "Page");
@@ -662,7 +672,8 @@ public class LoanDueDatesAfterRecallTests extends APITests {
 
     useLoanPolicyAsFallback(loanPolicy.getId(),
         requestPoliciesFixture.allowAllRequestPolicy().getId(),
-        noticePoliciesFixture.inactiveNotice().getId());
+        noticePoliciesFixture.inactiveNotice().getId(),
+        overdueFinePoliciesFixture.facultyStandard().getId());
 
     final IndividualResource loan = loansFixture.checkOutByBarcode(
       smallAngryPlanet, steve, ClockManager.getClockManager().getDateTime());
@@ -717,7 +728,8 @@ public class LoanDueDatesAfterRecallTests extends APITests {
 
     useLoanPolicyAsFallback(loanPolicy.getId(),
         requestPoliciesFixture.allowAllRequestPolicy().getId(),
-        noticePoliciesFixture.inactiveNotice().getId());
+        noticePoliciesFixture.inactiveNotice().getId(),
+        overdueFinePoliciesFixture.facultyStandard().getId());
 
     final IndividualResource loan = loansFixture.checkOutByBarcode(
       smallAngryPlanet, steve, ClockManager.getClockManager().getDateTime());
@@ -772,7 +784,8 @@ public class LoanDueDatesAfterRecallTests extends APITests {
 
     useLoanPolicyAsFallback(loanPolicy.getId(),
         requestPoliciesFixture.allowAllRequestPolicy().getId(),
-        noticePoliciesFixture.inactiveNotice().getId());
+        noticePoliciesFixture.inactiveNotice().getId(),
+        overdueFinePoliciesFixture.facultyStandard().getId());
 
     final IndividualResource loan = loansFixture.checkOutByBarcode(
       smallAngryPlanet, steve, DateTime.now(DateTimeZone.UTC));
@@ -827,7 +840,8 @@ public class LoanDueDatesAfterRecallTests extends APITests {
 
     useLoanPolicyAsFallback(loanPolicy.getId(),
         requestPoliciesFixture.allowAllRequestPolicy().getId(),
-        noticePoliciesFixture.inactiveNotice().getId());
+        noticePoliciesFixture.inactiveNotice().getId(),
+        overdueFinePoliciesFixture.facultyStandard().getId());
 
     final IndividualResource loan = loansFixture.checkOutByBarcode(
       smallAngryPlanet, steve, DateTime.now(DateTimeZone.UTC));
@@ -883,7 +897,8 @@ public class LoanDueDatesAfterRecallTests extends APITests {
 
     useLoanPolicyAsFallback(loanPolicy.getId(),
         requestPoliciesFixture.allowAllRequestPolicy().getId(),
-        noticePoliciesFixture.inactiveNotice().getId());
+        noticePoliciesFixture.inactiveNotice().getId(),
+        overdueFinePoliciesFixture.facultyStandard().getId());
 
     final IndividualResource loan = loansFixture.checkOutByBarcode(
       smallAngryPlanet, jessica, ClockManager.getClockManager().getDateTime());

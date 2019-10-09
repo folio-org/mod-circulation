@@ -77,7 +77,8 @@ public class MoveRequestPolicyTests extends APITests {
     useLoanPolicyAsFallback(
       loanPoliciesFixture.canCirculateRolling().getId(),
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
-      noticePoliciesFixture.create(noticePolicy).getId());
+      noticePoliciesFixture.create(noticePolicy).getId(),
+      overdueFinePoliciesFixture.facultyStandard().getId());
   }
 
   @Test
@@ -90,6 +91,7 @@ public class MoveRequestPolicyTests extends APITests {
     final String anyLoanPolicy = loanPoliciesFixture.canCirculateRolling().getId().toString();
     final String bookMaterialType = materialTypesFixture.book().getId().toString();
     final String anyRequestPolicy = requestPoliciesFixture.allowAllRequestPolicy().getId().toString();
+    final String anyOverdueFinePolicy = overdueFinePoliciesFixture.facultyStandard().getId().toString();
 
     ArrayList<RequestType> allowedRequestTypes = new ArrayList<>();
     allowedRequestTypes.add(RequestType.RECALL);
@@ -102,7 +104,7 @@ public class MoveRequestPolicyTests extends APITests {
     final String rules = String.join("\n",
       "priority: t, s, c, b, a, m, g",
       "fallback-policy : l " + anyLoanPolicy + " r " + anyRequestPolicy + " n " + anyNoticePolicy + "\n",
-      "m " + bookMaterialType + ": l " + anyLoanPolicy + " r " + noHoldRequestPolicy +" n " + anyNoticePolicy
+      "m " + bookMaterialType + ": l " + anyLoanPolicy + " r " + noHoldRequestPolicy +" n " + anyNoticePolicy + "o" + anyOverdueFinePolicy
     );
 
     setRules(rules);
@@ -296,7 +298,8 @@ public class MoveRequestPolicyTests extends APITests {
 
     useLoanPolicyAsFallback(loanPolicy.getId(),
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
-      noticePoliciesFixture.create(noticePolicy).getId());
+      noticePoliciesFixture.create(noticePolicy).getId(),
+      overdueFinePoliciesFixture.facultyStandard().getId());
 
     final IndividualResource loan = loansFixture.checkOutByBarcode(
       smallAngryPlanet, steve, DateTime.now(DateTimeZone.UTC));
@@ -363,7 +366,8 @@ public class MoveRequestPolicyTests extends APITests {
 
     useLoanPolicyAsFallback(loanPolicy.getId(),
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
-      noticePoliciesFixture.create(noticePolicy).getId());
+      noticePoliciesFixture.create(noticePolicy).getId(),
+      overdueFinePoliciesFixture.facultyStandard().getId());
 
     final IndividualResource loan = loansFixture.checkOutByBarcode(
       smallAngryPlanet, steve, DateTime.now(DateTimeZone.UTC));

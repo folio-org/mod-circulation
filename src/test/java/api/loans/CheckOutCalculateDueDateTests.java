@@ -1044,7 +1044,8 @@ public class CheckOutCalculateDueDateTests extends APITests {
     useLoanPolicyAsFallback(
       loanPolicy.getId(),
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
-      noticePoliciesFixture.activeNotice().getId()
+      noticePoliciesFixture.activeNotice().getId(),
+      overdueFinePoliciesFixture.facultyStandard().getId()
     );
 
     return loanPolicy;

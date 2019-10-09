@@ -50,13 +50,14 @@ public class RequestPolicyTests extends APITests {
     final String anyLoanPolicy = loanPoliciesFixture.canCirculateRolling().getId().toString();
     final String anyRequestPolicy = requestPoliciesFixture.allowAllRequestPolicy().getId().toString();
     final String recallRequestPolicy = requestPoliciesFixture.recallRequestPolicy().getId().toString();
+    final String anyOverdueFinePolicy = overdueFinePoliciesFixture.facultyStandard().getId().toString();
 
     //This rule is set up to show that the fallback policy won't be used but the patronGroup policy g is used instead.
     //The patronGroup policy allows undergraduate students to place a request on any material type, loan or notice type.
     final String rules = String.join("\n",
       "priority: t, s, c, b, a, m, g",
       "fallback-policy : l " + anyLoanPolicy + " r " + anyRequestPolicy + " n " + anyNoticePolicy + "\n",
-      "g " + undergradPatronGroup + ": l " + anyLoanPolicy + " r " + recallRequestPolicy +" n " + anyNoticePolicy
+      "g " + undergradPatronGroup + ": l " + anyLoanPolicy + " r " + recallRequestPolicy +" n " + anyNoticePolicy + " o " + anyOverdueFinePolicy
     );
 
     setRules(rules);
@@ -90,6 +91,7 @@ public class RequestPolicyTests extends APITests {
     final String anyNoticePolicy = noticePoliciesFixture.activeNotice().getId().toString();
     final String anyLoanPolicy = loanPoliciesFixture.canCirculateRolling().getId().toString();
     final String anyRequestPolicy = requestPoliciesFixture.allowAllRequestPolicy().getId().toString();
+    final String anyOverdueFinePolicy = overdueFinePoliciesFixture.facultyStandard().getId().toString();
 
     ArrayList<RequestType> allowedRequestTypes = new ArrayList<>();
     allowedRequestTypes.add(RequestType.HOLD);
@@ -103,7 +105,7 @@ public class RequestPolicyTests extends APITests {
     final String rules = String.join("\n",
       "priority: t, s, c, b, a, m, g",
       "fallback-policy : l " + anyLoanPolicy + " r " + anyRequestPolicy + " n " + anyNoticePolicy + "\n",
-      "g " + undergradPatronGroupPolicy + ": l " + anyLoanPolicy + " r " + noRecallRequestPolicy +" n " + anyNoticePolicy
+      "g " + undergradPatronGroupPolicy + ": l " + anyLoanPolicy + " r " + noRecallRequestPolicy +" n " + anyNoticePolicy + " o " + anyOverdueFinePolicy
     );
 
     setRules(rules);
@@ -136,13 +138,14 @@ public class RequestPolicyTests extends APITests {
     final String anyLoanPolicy = loanPoliciesFixture.canCirculateRolling().getId().toString();
     final String bookMaterialType = materialTypesFixture.book().getId().toString();
     final String anyRequestPolicy = requestPoliciesFixture.allowAllRequestPolicy().getId().toString();
+    final String anyOverdueFinePolicy = overdueFinePoliciesFixture.facultyStandard().getId().toString();
 
     //This rule is set up to show that the fallback policy won't be used but the material policy m is used instead.
     //The materialType policy allows any patron to place a request on a library item of BOOK material type, any loan and notice types.
     final String rule = String.join("\n",
       "priority: t, s, c, b, a, m, g",
       "fallback-policy : l " + anyLoanPolicy + " r " + anyRequestPolicy + " n " + anyNoticePolicy + "\n",
-      "m " + bookMaterialType + ": l " + anyLoanPolicy + " r " + holdRequestPolicy +" n " + anyNoticePolicy
+      "m " + bookMaterialType + ": l " + anyLoanPolicy + " r " + holdRequestPolicy +" n " + anyNoticePolicy + " o " + anyOverdueFinePolicy
     );
 
     setRules(rule);
@@ -176,6 +179,7 @@ public class RequestPolicyTests extends APITests {
     final String anyLoanPolicy = loanPoliciesFixture.canCirculateRolling().getId().toString();
     final String bookMaterialType = materialTypesFixture.book().getId().toString();
     final String anyRequestPolicy = requestPoliciesFixture.allowAllRequestPolicy().getId().toString();
+    final String anyOverdueFinePolicy = overdueFinePoliciesFixture.facultyStandard().getId().toString();
 
     ArrayList<RequestType> allowedRequestTypes = new ArrayList<>();
     allowedRequestTypes.add(RequestType.RECALL);
@@ -188,7 +192,7 @@ public class RequestPolicyTests extends APITests {
     final String rules = String.join("\n",
       "priority: t, s, c, b, a, m, g",
       "fallback-policy : l " + anyLoanPolicy + " r " + anyRequestPolicy + " n " + anyNoticePolicy + "\n",
-      "m " + bookMaterialType + ": l " + anyLoanPolicy + " r " + noHoldRequestPolicy +" n " + anyNoticePolicy
+      "m " + bookMaterialType + ": l " + anyLoanPolicy + " r " + noHoldRequestPolicy +" n " + anyNoticePolicy + " o " + anyOverdueFinePolicy
     );
 
     setRules(rules);
@@ -219,10 +223,11 @@ public class RequestPolicyTests extends APITests {
     final String nonCirculatingLoanTypePolicy = loanPoliciesFixture.canCirculateFixed().getId().toString();
     final String anyNoticePolicy = noticePoliciesFixture.activeNotice().getId().toString();
     final String pageRequestPolicy = requestPoliciesFixture.pageRequestPolicy().getId().toString();
+    final String anyOverdueFinePolicy = overdueFinePoliciesFixture.facultyStandard().getId().toString();
 
     final String rules = String.join("\n",
       "priority: t, s, c, b, a, m, g",
-      "fallback-policy : l " + nonCirculatingLoanTypePolicy + " r " + pageRequestPolicy + " n " + anyNoticePolicy
+      "fallback-policy : l " + nonCirculatingLoanTypePolicy + " r " + pageRequestPolicy + " n " + anyNoticePolicy + " o " + anyOverdueFinePolicy
     );
 
     setRules(rules);
@@ -252,6 +257,7 @@ public class RequestPolicyTests extends APITests {
 
     final String anyNoticePolicy = noticePoliciesFixture.activeNotice().getId().toString();
     final String nonCirculatingLoanTypePolicy = loanPoliciesFixture.canCirculateFixed().getId().toString();
+    final String anyOverdueFinePolicy = overdueFinePoliciesFixture.facultyStandard().getId().toString();
 
     ArrayList<RequestType> allowedRequestTypes = new ArrayList<>();
     allowedRequestTypes.add(RequestType.RECALL);
@@ -261,7 +267,7 @@ public class RequestPolicyTests extends APITests {
 
     final String rules =
       "priority: t, s, c, b, a, m, g " +
-      "fallback-policy : l " + nonCirculatingLoanTypePolicy + " r " + noPageRequestPolicy + " n " + anyNoticePolicy;
+      "fallback-policy : l " + nonCirculatingLoanTypePolicy + " r " + noPageRequestPolicy + " n " + anyNoticePolicy + " o " + anyOverdueFinePolicy;
 
     setRules(rules);
 
@@ -291,12 +297,13 @@ public class RequestPolicyTests extends APITests {
     final String anyLoanPolicy = loanPoliciesFixture.canCirculateRolling().getId().toString();
     final String anyRequestPolicy = requestPoliciesFixture.allowAllRequestPolicy().getId().toString();
     final String recallRequestPolicy = requestPoliciesFixture.recallRequestPolicy().getId().toString();
+    final String anyOverdueFinePolicy = overdueFinePoliciesFixture.facultyStandard().getId().toString();
 
     //This rule is set up to show that the fallback policy will be used instead of the undergrad patronGroup policy.
     final String rules = String.join("\n",
       "priority: t, s, c, b, a, m, g",
       "fallback-policy : l " + anyLoanPolicy + " r " + anyRequestPolicy + " n " + anyNoticePolicy + "\n",
-      "g " + undergradPatronGroup + ": l " + anyLoanPolicy + " r " + recallRequestPolicy +" n " + anyNoticePolicy
+      "g " + undergradPatronGroup + ": l " + anyLoanPolicy + " r " + recallRequestPolicy +" n " + anyNoticePolicy + " o " + anyOverdueFinePolicy
     );
 
     setRules(rules);

@@ -162,7 +162,8 @@ public class OverrideCheckOutByBarcodeTests extends APITests {
     useLoanPolicyAsFallback(
       loanPoliciesFixture.create(loanablePolicy).getId(),
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
-      noticePoliciesFixture.activeNotice().getId());
+      noticePoliciesFixture.activeNotice().getId(),
+      overdueFinePoliciesFixture.facultyStandard().getId());
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource steve = usersFixture.steve();
@@ -335,7 +336,8 @@ public class OverrideCheckOutByBarcodeTests extends APITests {
     useLoanPolicyAsFallback(
       loanPoliciesFixture.create(notLoanablePolicy).getId(),
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
-      noticePoliciesFixture.inactiveNotice().getId());
+      noticePoliciesFixture.inactiveNotice().getId(),
+      overdueFinePoliciesFixture.facultyStandard().getId());
   }
 
 }

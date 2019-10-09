@@ -345,6 +345,8 @@ public class Text2Drools extends CirculationRulesBaseListener {
       policyTypeName = "request";
     } else if (policy.POLICY_TYPE().toString().equals("n")) {
       policyTypeName = "notice";
+    } else if (policy.POLICY_TYPE().toString().equals("o")) {
+      policyTypeName = "overdue";
     }
     return String.format("    match.%sPolicyId = ", policyTypeName);
   }

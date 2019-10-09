@@ -64,7 +64,8 @@ public class CheckOutByBarcodeFixedDueDateScenariosTest extends APITests {
     UUID loanPolicyId = loanPolicyClient.create(loanPolicy).getId();
     UUID requestPolicyId = requestPoliciesFixture.allowAllRequestPolicy().getId();
     UUID noticePolicyId = noticePoliciesFixture.activeNotice().getId();
-    useLoanPolicyAsFallback(loanPolicyId, requestPolicyId, noticePolicyId);
+    UUID overdueFinePolicyId = overdueFinePoliciesFixture.facultyStandard().getId();
+    useLoanPolicyAsFallback(loanPolicyId, requestPolicyId, noticePolicyId, overdueFinePolicyId);
 
     IndividualResource loan = loansFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
@@ -113,7 +114,8 @@ public class CheckOutByBarcodeFixedDueDateScenariosTest extends APITests {
     UUID loanPolicyId = loanPolicyClient.create(loanPolicy).getId();
     UUID requestPolicyId = requestPoliciesFixture.allowAllRequestPolicy().getId();
     UUID noticePolicyId = noticePoliciesFixture.activeNotice().getId();
-    useLoanPolicyAsFallback(loanPolicyId, requestPolicyId, noticePolicyId);
+    UUID overdueFinePolicyId = overdueFinePoliciesFixture.facultyStandard().getId();
+    useLoanPolicyAsFallback(loanPolicyId, requestPolicyId, noticePolicyId, overdueFinePolicyId);
 
     IndividualResource loan = loansFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
@@ -163,7 +165,8 @@ public class CheckOutByBarcodeFixedDueDateScenariosTest extends APITests {
     UUID loanPolicyId = loanPolicyClient.create(loanPolicy).getId();
     UUID requestPolicyId = requestPoliciesFixture.allowAllRequestPolicy().getId();
     UUID noticePolicyId = noticePoliciesFixture.activeNotice().getId();
-    useLoanPolicyAsFallback(loanPolicyId, requestPolicyId, noticePolicyId);
+    UUID overdueFinePolicyId = overdueFinePoliciesFixture.facultyStandard().getId();
+    useLoanPolicyAsFallback(loanPolicyId, requestPolicyId, noticePolicyId, overdueFinePolicyId);
 
     IndividualResource loan = loansFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()

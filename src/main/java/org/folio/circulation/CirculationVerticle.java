@@ -10,6 +10,7 @@ import org.folio.circulation.resources.DueDateNotRealTimeScheduledNoticeProcessi
 import org.folio.circulation.resources.LoanCirculationRulesEngineResource;
 import org.folio.circulation.resources.LoanCollectionResource;
 import org.folio.circulation.resources.NoticeCirculationRulesEngineResource;
+import org.folio.circulation.resources.OverdueCirculationRulesEngineResource;
 import org.folio.circulation.resources.OverrideCheckOutStrategy;
 import org.folio.circulation.resources.OverrideRenewalStrategy;
 import org.folio.circulation.resources.RegularCheckOutStrategy;

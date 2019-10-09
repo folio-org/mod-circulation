@@ -85,7 +85,8 @@ public class DueDateScheduledNoticesTests extends APITests {
     useLoanPolicyAsFallback(
       loanPoliciesFixture.canCirculateRolling().getId(),
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
-      noticePoliciesFixture.create(noticePolicy).getId());
+      noticePoliciesFixture.create(noticePolicy).getId(),
+      overdueFinePoliciesFixture.facultyStandard().getId());
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource steve = usersFixture.steve();
@@ -156,7 +157,8 @@ public class DueDateScheduledNoticesTests extends APITests {
     useLoanPolicyAsFallback(
       loanPoliciesFixture.canCirculateRolling().getId(),
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
-      noticePoliciesFixture.create(noticePolicy).getId());
+      noticePoliciesFixture.create(noticePolicy).getId(),
+      overdueFinePoliciesFixture.facultyStandard().getId());
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource steve = usersFixture.steve();
@@ -214,7 +216,8 @@ public class DueDateScheduledNoticesTests extends APITests {
     useLoanPolicyAsFallback(
       loanPoliciesFixture.canCirculateRolling().getId(),
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
-      noticePoliciesFixture.create(noticePolicy).getId());
+      noticePoliciesFixture.create(noticePolicy).getId(),
+      overdueFinePoliciesFixture.facultyStandard().getId());
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource steve = usersFixture.steve();
@@ -283,7 +286,8 @@ public class DueDateScheduledNoticesTests extends APITests {
     useLoanPolicyAsFallback(
       loanPoliciesFixture.canCirculateRolling().getId(),
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
-      noticePoliciesFixture.create(noticePolicy).getId());
+      noticePoliciesFixture.create(noticePolicy).getId(),
+      overdueFinePoliciesFixture.facultyStandard().getId());
 
     IndividualResource item = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource borrower = usersFixture.steve();
@@ -372,7 +376,8 @@ public class DueDateScheduledNoticesTests extends APITests {
     useLoanPolicyAsFallback(
       loanPoliciesFixture.create(loanPolicy).getId(),
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
-      noticePoliciesFixture.create(noticePolicy).getId());
+      noticePoliciesFixture.create(noticePolicy).getId(),
+      overdueFinePoliciesFixture.facultyStandard().getId());
 
     IndividualResource item = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource borrower = usersFixture.steve();
@@ -463,7 +468,8 @@ public class DueDateScheduledNoticesTests extends APITests {
     useLoanPolicyAsFallback(
       loanPoliciesFixture.create(loanPolicy).getId(),
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
-      noticePoliciesFixture.create(noticePolicy).getId());
+      noticePoliciesFixture.create(noticePolicy).getId(),
+      overdueFinePoliciesFixture.facultyStandard().getId());
 
     IndividualResource item = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource borrower = usersFixture.steve();
@@ -552,7 +558,8 @@ public class DueDateScheduledNoticesTests extends APITests {
     useLoanPolicyAsFallback(
       loanPoliciesFixture.canCirculateRolling().getId(),
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
-      noticePoliciesFixture.create(noticePolicy).getId());
+      noticePoliciesFixture.create(noticePolicy).getId(),
+      overdueFinePoliciesFixture.facultyStandard().getId());
 
     IndividualResource item = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource borrower = usersFixture.steve();

@@ -126,7 +126,8 @@ public class RequestsAPILoanRenewalTests extends APITests {
     useLoanPolicyAsFallback(
       loanPoliciesFixture.canCirculateFixed().getId(),
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
-      noticePoliciesFixture.activeNotice().getId()
+      noticePoliciesFixture.activeNotice().getId(),
+      overdueFinePoliciesFixture.facultyStandard().getId()
     );
 
     requestsFixture.place(new RequestBuilder()
@@ -280,7 +281,8 @@ public class RequestsAPILoanRenewalTests extends APITests {
     useLoanPolicyAsFallback(
       loanPoliciesFixture.canCirculateFixed().getId(),
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
-      noticePoliciesFixture.activeNotice().getId()
+      noticePoliciesFixture.activeNotice().getId(),
+      overdueFinePoliciesFixture.facultyStandard().getId()
     );
 
     requestsFixture.place(new RequestBuilder()
@@ -391,7 +393,8 @@ public class RequestsAPILoanRenewalTests extends APITests {
     useLoanPolicyAsFallback(
       notRenewablePolicyId,
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
-      noticePoliciesFixture.activeNotice().getId()
+      noticePoliciesFixture.activeNotice().getId(),
+      overdueFinePoliciesFixture.facultyStandard().getId()
     );
 
     requestsFixture.place(new RequestBuilder()
@@ -433,7 +436,8 @@ public class RequestsAPILoanRenewalTests extends APITests {
     useLoanPolicyAsFallback(
       notRenewablePolicyId,
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
-      noticePoliciesFixture.activeNotice().getId()
+      noticePoliciesFixture.activeNotice().getId(),
+      overdueFinePoliciesFixture.facultyStandard().getId()
     );
 
     Response response = loansFixture.attemptRenewal(smallAngryPlanet, rebecca);
@@ -455,7 +459,8 @@ public class RequestsAPILoanRenewalTests extends APITests {
     useLoanPolicyAsFallback(
       loanPoliciesFixture.create(dueDateLimitedPolicy).getId(),
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
-      noticePoliciesFixture.activeNotice().getId()
+      noticePoliciesFixture.activeNotice().getId(),
+      overdueFinePoliciesFixture.facultyStandard().getId()
     );
   }
 
@@ -474,7 +479,8 @@ public class RequestsAPILoanRenewalTests extends APITests {
     useLoanPolicyAsFallback(
       loanPoliciesFixture.create(dueDateLimitedPolicy).getId(),
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
-      noticePoliciesFixture.activeNotice().getId()
+      noticePoliciesFixture.activeNotice().getId(),
+      overdueFinePoliciesFixture.facultyStandard().getId()
     );
   }
 
@@ -496,7 +502,8 @@ public class RequestsAPILoanRenewalTests extends APITests {
     useLoanPolicyAsFallback(
       loanPoliciesFixture.create(rollingPolicy).getId(),
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
-      noticePoliciesFixture.activeNotice().getId()
+      noticePoliciesFixture.activeNotice().getId(),
+      overdueFinePoliciesFixture.facultyStandard().getId()
     );
   }
 }
