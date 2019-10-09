@@ -144,7 +144,7 @@ public class RequestPolicyTests extends APITests {
     //The materialType policy allows any patron to place a request on a library item of BOOK material type, any loan and notice types.
     final String rule = String.join("\n",
       "priority: t, s, c, b, a, m, g",
-      "fallback-policy : l " + anyLoanPolicy + " r " + anyRequestPolicy + " n " + anyNoticePolicy + "o" + anyOverdueFinePolicy + "\n",
+      "fallback-policy : l " + anyLoanPolicy + " r " + anyRequestPolicy + " n " + anyNoticePolicy + " o " + anyOverdueFinePolicy + "\n",
       "m " + bookMaterialType + ": l " + anyLoanPolicy + " r " + holdRequestPolicy +" n " + anyNoticePolicy + " o " + anyOverdueFinePolicy
     );
 

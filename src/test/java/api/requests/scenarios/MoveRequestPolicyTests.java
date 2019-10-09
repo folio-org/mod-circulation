@@ -103,8 +103,8 @@ public class MoveRequestPolicyTests extends APITests {
     //The material type rule m allows any patron to place any request but HOLDs on any BOOK, loan or notice types
     final String rules = String.join("\n",
       "priority: t, s, c, b, a, m, g",
-      "fallback-policy : l " + anyLoanPolicy + " r " + anyRequestPolicy + " n " + anyNoticePolicy + "o" + anyOverdueFinePolicy + "\n",
-      "m " + bookMaterialType + ": l " + anyLoanPolicy + " r " + noHoldRequestPolicy +" n " + anyNoticePolicy + "o" + anyOverdueFinePolicy
+      "fallback-policy : l " + anyLoanPolicy + " r " + anyRequestPolicy + " n " + anyNoticePolicy + " o " + anyOverdueFinePolicy + "\n",
+      "m " + bookMaterialType + ": l " + anyLoanPolicy + " r " + noHoldRequestPolicy +" n " + anyNoticePolicy + " o " + anyOverdueFinePolicy
     );
 
     setRules(rules);
