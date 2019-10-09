@@ -14,12 +14,11 @@ import org.folio.circulation.domain.RequestRepository;
 import org.folio.circulation.domain.RequestStatus;
 import org.folio.circulation.domain.RequestType;
 import org.folio.circulation.domain.User;
-import org.folio.circulation.domain.notice.TemplateContextUtil;
 import org.folio.circulation.domain.notice.NoticeEventType;
-import org.folio.circulation.domain.notice.NoticeTiming;
 import org.folio.circulation.domain.notice.PatronNoticeEvent;
 import org.folio.circulation.domain.notice.PatronNoticeEventBuilder;
 import org.folio.circulation.domain.notice.PatronNoticeService;
+import org.folio.circulation.domain.notice.TemplateContextUtil;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.Result;
 
@@ -60,7 +59,6 @@ public class RequestNoticeSender {
       .withItem(item)
       .withUser(requester)
       .withEventType(eventType)
-      .withTiming(NoticeTiming.UPON_AT)
       .withNoticeContext(createRequestNoticeContext(request))
       .build();
     patronNoticeService.acceptNoticeEvent(requestCreatedEvent);
@@ -107,7 +105,6 @@ public class RequestNoticeSender {
       .withItem(item)
       .withUser(requester)
       .withEventType(NoticeEventType.REQUEST_CANCELLATION)
-      .withTiming(NoticeTiming.UPON_AT)
       .withNoticeContext(createRequestNoticeContext(request))
       .build();
     patronNoticeService.acceptNoticeEvent(requestCancelledEvent);
@@ -120,7 +117,6 @@ public class RequestNoticeSender {
       .withItem(loan.getItem())
       .withUser(loan.getUser())
       .withEventType(NoticeEventType.ITEM_RECALLED)
-      .withTiming(NoticeTiming.UPON_AT)
       .withNoticeContext(TemplateContextUtil.createLoanNoticeContext(loan))
       .build();
     patronNoticeService.acceptNoticeEvent(itemRecalledEvent);

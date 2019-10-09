@@ -18,7 +18,6 @@ import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.User;
 import org.folio.circulation.domain.notice.NoticeEventType;
-import org.folio.circulation.domain.notice.NoticeTiming;
 import org.folio.circulation.domain.notice.PatronNoticeEvent;
 import org.folio.circulation.domain.notice.PatronNoticeEventBuilder;
 import org.folio.circulation.domain.notice.PatronNoticeService;
@@ -93,7 +92,6 @@ public class PatronActionSessionService {
         .withItem(r.getLoan().getItem())
         .withUser(r.getLoan().getUser())
         .withEventType(actionToEventMap.get(r.getActionType()))
-        .withTiming(NoticeTiming.UPON_AT)
         .withNoticeContext(createLoanNoticeContextWithoutUser(r.getLoan()))
         .build())
       .collect(Collectors.toList());

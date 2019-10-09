@@ -111,7 +111,7 @@ public class PatronNoticeService {
     PatronNoticePolicy policy, NoticeEventGroupDefinition eventGroupDefinition, JsonObject noticeContext) {
 
     Optional<NoticeConfiguration> matchingNoticeConfiguration =
-      policy.lookupNoticeConfiguration(eventGroupDefinition.eventType, eventGroupDefinition.timing);
+      policy.lookupNoticeConfiguration(eventGroupDefinition.eventType);
 
     if (!matchingNoticeConfiguration.isPresent()) {
       return completedFuture(succeeded(null));
@@ -148,7 +148,6 @@ public class PatronNoticeService {
     private final String recipientId;
     private final String noticePolicyId;
     private final NoticeEventType eventType;
-    private final NoticeTiming timing;
 
     private static NoticeEventGroupDefinition from(
       Pair<PatronNoticeEvent, String> noticeEventWithPolicyId) {
@@ -159,18 +158,16 @@ public class PatronNoticeService {
       return new NoticeEventGroupDefinition(
         event.getUser().getId(),
         noticePolicyId,
-        event.getEventType(),
-        event.getTiming());
+        event.getEventType());
     }
 
     public NoticeEventGroupDefinition(
       String recipientId, String noticePolicyId,
-      NoticeEventType eventType, NoticeTiming timing) {
+      NoticeEventType eventType) {
 
       this.recipientId = recipientId;
       this.noticePolicyId = noticePolicyId;
       this.eventType = eventType;
-      this.timing = timing;
     }
 
     @Override
@@ -185,7 +182,6 @@ public class PatronNoticeService {
         .append(recipientId, that.recipientId)
         .append(noticePolicyId, that.noticePolicyId)
         .append(eventType, that.eventType)
-        .append(timing, that.timing)
         .isEquals();
     }
 
@@ -195,7 +191,6 @@ public class PatronNoticeService {
         .append(recipientId)
         .append(noticePolicyId)
         .append(eventType)
-        .append(timing)
         .toHashCode();
     }
   }
