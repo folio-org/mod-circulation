@@ -6,7 +6,11 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-public class AsyncCoordinationUtils {
+public class AsyncCoordinationUtil {
+
+  private AsyncCoordinationUtil() {
+    throw new UnsupportedOperationException();
+  }
 
   /**
    * Applies {@code asyncAction} to all the elements in {@code collection}
