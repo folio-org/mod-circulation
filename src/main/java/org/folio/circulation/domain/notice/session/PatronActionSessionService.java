@@ -7,7 +7,7 @@ import static org.folio.circulation.support.AsyncCoordinationUtil.allOf;
 import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.ResultBinding.mapResult;
 
-import java.util.Collection;
+import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.UUID;
@@ -77,12 +77,12 @@ public class PatronActionSessionService {
 
   private CompletableFuture<Result<MultipleRecords<PatronSessionRecord>>> sendNotices(
     MultipleRecords<PatronSessionRecord> records) {
-    Collection<PatronSessionRecord> sessionRecords = records.getRecords();
+    List<PatronSessionRecord> sessionRecords = new ArrayList<>(records.getRecords());
 
     if (sessionRecords.isEmpty()) {
       return completedFuture(succeeded(null));
     }
-    PatronSessionRecord recordSample = sessionRecords.stream().findFirst().get();
+    PatronSessionRecord recordSample = sessionRecords.get(0);
 
     //The user is the same for all records
     User user = recordSample.getLoan().getUser();
