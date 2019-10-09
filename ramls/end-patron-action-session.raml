@@ -17,18 +17,18 @@ traits:
 
 /circulation:
   /end-patron-action-session:
-     displayName: End Patron Action Session
-      post:
-        is: [validate]
-        body:
-          application/json:
-            type: end-patron-action-session-request
-            example: !include examples/end-patron-action-session-request.json
-        responses:
-          204:
-            description: "Session has been successfully ended"
-          500:
-            description: "Internal server error"
-            body:
-              text/plain:
-                example: "Internal server error"
+    displayName: End Patron Action Session
+    post:
+      is: [validate]
+      body:
+        application/json:
+          type: end-patron-action-session-request
+          example: !include examples/end-patron-action-session-request.json
+      responses:
+        204:
+          description: "Session has been successfully ended"
+        500:
+          description: "Internal server error"
+          body:
+            text/plain:
+              example: "Internal server error"
