@@ -156,6 +156,10 @@ public class InterfaceUrls {
     return circulationModuleUrl("/loan-anonymization/by-user/" + subPath);
   }
 
+  public static URL endSessionUrl() {
+    return circulationModuleUrl("/circulation/end-patron-action-session");
+  }
+
   public static URL accountsUrl(String subPath) {
     return APITestContext.viaOkapiModuleUrl("/accounts" + subPath);
   }

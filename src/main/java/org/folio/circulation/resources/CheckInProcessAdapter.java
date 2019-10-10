@@ -25,7 +25,6 @@ import org.folio.circulation.domain.UpdateRequestQueue;
 import org.folio.circulation.domain.User;
 import org.folio.circulation.domain.UserRepository;
 import org.folio.circulation.domain.notice.NoticeEventType;
-import org.folio.circulation.domain.notice.NoticeTiming;
 import org.folio.circulation.domain.notice.PatronNoticeEvent;
 import org.folio.circulation.domain.notice.PatronNoticeEventBuilder;
 import org.folio.circulation.domain.notice.PatronNoticeService;
@@ -163,7 +162,6 @@ class CheckInProcessAdapter {
       .withItem(records.getItem())
       .withUser(records.getLoan().getUser())
       .withEventType(NoticeEventType.CHECK_IN)
-      .withTiming(NoticeTiming.UPON_AT)
       .withNoticeContext(createLoanNoticeContext(records.getLoan()))
       .build();
     patronNoticeService.acceptNoticeEvent(noticeEvent);
@@ -197,7 +195,6 @@ class CheckInProcessAdapter {
         .withItem(item)
         .withUser(user)
         .withEventType(NoticeEventType.AVAILABLE)
-        .withTiming(NoticeTiming.UPON_AT)
         .withNoticeContext(createAvailableNoticeContext(item, user, request))
         .build();
       patronNoticeService.acceptNoticeEvent(noticeEvent);
