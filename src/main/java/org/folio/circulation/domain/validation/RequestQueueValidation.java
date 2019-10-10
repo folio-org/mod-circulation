@@ -2,6 +2,7 @@ package org.folio.circulation.domain.validation;
 
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 
+import java.util.List;
 import java.util.Objects;
 import java.util.function.Predicate;
 
@@ -26,10 +27,19 @@ public class RequestQueueValidation {
     );
   }
 
+  /**
+   * Verifies that provided reordered queue has exact the same requests that currently present
+   * in the DB. No new requests added to neither reorderedQueue nor actual queue in DB.
+   *
+   * @param result - Context.
+   * @return New result, failed when the validation has not been passed.
+   */
   public static Result<ReorderRequestContext> queueIsConsistent(Result<ReorderRequestContext> result) {
     return result.failWhen(
       context -> Result.succeeded(isQueueInconsistent(context)),
-      context -> singleValidationError("There is inconsistency between provided reordered queue and item queue.", null, null)
+      context -> singleValidationError(
+        "There is inconsistency between provided reordered queue and item queue.",
+        null, null)
     );
   }
 
@@ -42,6 +52,35 @@ public class RequestQueueValidation {
   public static Result<ReorderRequestContext> pageRequestHasFirstPosition(Result<ReorderRequestContext> result) {
     return validateRequestAtFirstPosition(result, RequestHelper::isPageRequest,
       "Page requests can not be displaced from position 1.");
+  }
+
+  /**
+   * Verifies that newPositions has sequential order, i.e. 1, 2, 3, 4
+   * but not 1, 2, 3, 40.
+   *
+   * @param result - Context object.
+   * @return New Result, failed if validation have not been passed.
+   */
+  public static Result<ReorderRequestContext> positionsAreSequential(Result<ReorderRequestContext> result) {
+    return result.failWhen(
+      r -> {
+        // This check works based on the fact
+        // that sum of numbers from 1 to n = n * (n + 1) / 2
+        List<ReorderRequest> reorderRequests = r.getReorderQueueRequest().getReorderedQueue();
+
+        // Calculate actual sum of the newPositions
+        final int actualPositionsSum = reorderRequests.stream()
+          .mapToInt(ReorderRequest::getNewPosition)
+          .sum();
+
+        // Estimate expected sum for given queue size
+        final int expectedPositionsSum = reorderRequests.size() * (reorderRequests.size() + 1) / 2;
+
+        // Compare it with actual sum and fail when they do not match
+        return Result.succeeded(actualPositionsSum != expectedPositionsSum);
+      },
+      r -> singleValidationError("Positions must have sequential order.", "newPosition", null)
+    );
   }
 
   private static boolean isQueueInconsistent(ReorderRequestContext context) {
@@ -73,7 +112,7 @@ public class RequestQueueValidation {
 
         return Result.succeeded(notAtFirstPosition);
       },
-      r -> singleValidationError(onFailureMessage, "position", null)
+      r -> singleValidationError(onFailureMessage, "newPosition", null)
     );
   }
 }

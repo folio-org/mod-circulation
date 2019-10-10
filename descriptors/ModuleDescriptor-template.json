@@ -290,7 +290,7 @@
           "methods": [
             "POST"
           ],
-          "pathPattern": "/circulation/requests/queue/{id}/reorder",
+          "pathPattern": "/circulation/requests/queue/{itemId}/reorder",
           "permissionsRequired": [
             "circulation.requests.queue.reorder.collection.post"
           ],

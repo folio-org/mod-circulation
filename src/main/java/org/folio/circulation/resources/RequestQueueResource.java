@@ -75,6 +75,7 @@ public class RequestQueueResource extends Resource {
       .thenApply(r -> r.map(reorderContext::withRequestQueue))
       // Validation block
       .thenApply(RequestQueueValidation::queueFoundForItem)
+      .thenApply(RequestQueueValidation::positionsAreSequential)
       .thenApply(RequestQueueValidation::queueIsConsistent)
       .thenApply(RequestQueueValidation::pageRequestHasFirstPosition)
       .thenApply(RequestQueueValidation::fulfillingRequestHasFirstPosition)

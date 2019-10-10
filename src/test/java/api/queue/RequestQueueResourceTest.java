@@ -139,6 +139,41 @@ public class RequestQueueResourceTest extends APITests {
   }
 
   @Test
+  @Parameters({
+    "1, 2, 5, 4",
+    "0, 2, 3, 4",
+    "6, 2, 3, 1",
+    "70, 0, 10, 2",
+    "1, 3, 4, 5",
+    "1, 2, 4, 5",
+    "1, 2, 3, 5",
+  })
+  public void refuseWhenPositionsAreNotSequential(
+    int firstPosition, int secondPosition, int thirdPosition, int fourthPosition) throws Exception {
+
+    loansFixture.checkOutByBarcode(item, rebecca);
+
+    IndividualResource firstHoldRequest = holdRequest(steve);
+    IndividualResource secondHoldRequest = holdRequest(james);
+    IndividualResource firstRecallRequest = recallRequest(charlotte);
+    IndividualResource secondRecallRequest = recallRequest(jessica);
+
+    JsonObject reorderQueue = new ReorderQueueBuilder()
+      .addReorderRequest(firstHoldRequest.getId().toString(), firstPosition)
+      .addReorderRequest(secondHoldRequest.getId().toString(), secondPosition)
+      .addReorderRequest(firstRecallRequest.getId().toString(), thirdPosition)
+      .addReorderRequest(secondRecallRequest.getId().toString(), fourthPosition)
+      .create();
+
+    Response response = requestQueueFixture.attemptReorderQueue(
+      item.getId().toString(), reorderQueue);
+
+    verifyValidationFailure(response,
+      is("Positions must have sequential order.")
+    );
+  }
+
+  @Test
   public void refuseAttemptToReorderRequestsWithDuplicatedPositions() throws Exception {
     loansFixture.checkOutByBarcode(item, usersFixture.rebecca());
 
@@ -153,9 +188,9 @@ public class RequestQueueResourceTest extends APITests {
         .create()
     );
 
-    assertThat(response.getStatusCode(), is(500));
-    assertThat(response.getBody(),
-      is("Some requests have not been updated. Fetch the queue and try again."));
+    verifyValidationFailure(response,
+      is("Positions must have sequential order.")
+    );
   }
 
   @Test
@@ -168,8 +203,6 @@ public class RequestQueueResourceTest extends APITests {
     "4, 3, 1, 2",
     "3, 4, 2, 1",
     "3, 4, 1, 2",
-    "3, 4, 1, 50",
-    "40, 2, 1, 3",
   })
   public void shouldReorderQueueSuccessfully(int firstPosition, int secondPosition,
                                              int thirdPosition, int fourthPosition) throws Exception {

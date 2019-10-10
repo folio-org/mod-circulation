@@ -14,11 +14,10 @@ public class ReorderQueueTestDataSource {
       testCase("2, 1, 3, 4", "4, 3, 1, 2"),
       testCase("3, 1, 2, 4", "2, 4, 1, 3"),
       testCase("3, 4, 2, 1", "3, 4, 2, 1"),
-      testCase("3, 4, 1, 2", "2, 1, 50, 3"),
+      testCase("3, 4, 1, 2", "2, 1, 4, 3"),
       testCase("4, 3, 1, 2", "4, 3, 2, 1"),
       testCase("4, 1, 3, 2", "4, 3, 1, 2"),
       testCase("4, 1, 2, 3", "2, 4, 1, 3"),
-      testCase("4, 50, 2, 3", "2, 1, 50, 3"),
     };
   }
 
