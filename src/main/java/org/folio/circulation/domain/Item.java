@@ -106,7 +106,7 @@ public class Item {
     return getStatus().equals(status);
   }
 
-  boolean hasChanged() {
+  public boolean hasChanged() {
     return changed;
   }
 

@@ -38,7 +38,6 @@ import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.LocalDate;
 import org.joda.time.Seconds;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import api.support.APITests;
@@ -572,7 +571,6 @@ public class CheckInByBarcodeTests extends APITests {
   }
 
   @Test
-  @Ignore("Not fixed yet")
   public void availableNoticeIsSentOnceWhenItemStatusIsChangedToAwaitingPickup()
     throws InterruptedException,
     MalformedURLException,
