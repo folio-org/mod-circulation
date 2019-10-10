@@ -24,7 +24,7 @@ public class RequestQueueRepository {
   private static final Logger LOG = LoggerFactory.getLogger(RequestQueueRepository.class);
   private final RequestRepository requestRepository;
 
-  private RequestQueueRepository(RequestRepository requestRepository) {
+  RequestQueueRepository(RequestRepository requestRepository) {
     this.requestRepository = requestRepository;
   }
 
@@ -93,10 +93,9 @@ public class RequestQueueRepository {
         request = changedRequests.get(++index);
       }
       if (!positionTaken) {
-        CompletableFuture<Result<Request>> updateFuture =
-          requestRepository.update(request);
+        final Request updateRequest = request;
         requestUpdated = requestUpdated.thenComposeAsync(r ->
-          r.after(notUsed -> updateFuture));
+          r.after(notUsed -> requestRepository.update(updateRequest)));
         request.freePreviousPosition();
         changedRequests.remove(index);
       }

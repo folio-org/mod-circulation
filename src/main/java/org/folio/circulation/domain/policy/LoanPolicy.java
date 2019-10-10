@@ -9,6 +9,7 @@ import static org.folio.circulation.support.JsonPropertyFetcher.getNestedInteger
 import static org.folio.circulation.support.JsonPropertyFetcher.getNestedObjectProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getNestedStringProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
+import static org.folio.circulation.support.Result.failed;
 import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 import static org.folio.circulation.support.results.CommonFailures.failedDueToServerError;
@@ -29,6 +30,7 @@ import org.folio.circulation.domain.RequestStatus;
 import org.folio.circulation.domain.RequestType;
 import org.folio.circulation.support.ClockManager;
 import org.folio.circulation.support.Result;
+import org.folio.circulation.support.ServerErrorFailure;
 import org.folio.circulation.support.ValidationErrorFailure;
 import org.folio.circulation.support.http.server.ValidationError;
 import org.joda.time.DateTime;
@@ -45,6 +47,12 @@ public class LoanPolicy {
   private static final String ALTERNATE_RENEWAL_LOAN_PERIOD_KEY = "alternateRenewalLoanPeriod";
   public static final String CAN_NOT_RENEW_ITEM_ERROR =
     "Items with this loan policy cannot be renewed when there is an active, pending hold request";
+
+  private static final String FIXED_POLICY_HAS_ALTERNATE_RENEWAL_PERIOD_FOR_HOLDS =
+    "Item's loan policy has fixed profile but alternative renewal period for holds is specified";
+
+  private static final String FIXED_POLICY_HAS_ALTERNATE_RENEWAL_PERIOD =
+    "Item's loan policy has fixed profile but renewal period is specified";
 
   private static final String INTERVAL_ID = "intervalId";
   private static final String DURATION = "duration";
@@ -116,6 +124,20 @@ public class LoanPolicy {
           errors.add(loanPolicyValidationError(CAN_NOT_RENEW_ITEM_ERROR));
           return failedValidation(errors);
         }
+
+        if (isFixed(getLoansPolicy())) {
+          if (hasAlternateRenewalLoanPeriodForHolds()) {
+            return failed(
+              new ServerErrorFailure(FIXED_POLICY_HAS_ALTERNATE_RENEWAL_PERIOD_FOR_HOLDS)
+            );
+          }
+          if (hasRenewalPeriod()) {
+            return failed(
+              new ServerErrorFailure(FIXED_POLICY_HAS_ALTERNATE_RENEWAL_PERIOD)
+            );
+          }
+        }
+
         isRenewalWithHoldRequest = true;
       }
 
@@ -148,6 +170,12 @@ public class LoanPolicy {
     catch(Exception e) {
       return failedDueToServerError(e);
     }
+  }
+
+  private boolean hasRenewalPeriod() {
+    return useDifferentPeriod()
+      && getRenewalsPolicy() != null
+      && getRenewalsPolicy().containsKey(PERIOD_KEY);
   }
 
   private boolean isHoldRequestRenewable() {
@@ -304,7 +332,7 @@ public class LoanPolicy {
     if(isRolling(loansPolicy)) {
       if(isRenewal) {
         return new RollingRenewalDueDateStrategy(getId(), getName(),
-          systemDate, getRenewFrom(), getRenewalPeriod(loansPolicy, renewalsPolicy,isRenewalWithHoldRequest),
+          systemDate, getRenewFrom(), getRenewalPeriod(loansPolicy, renewalsPolicy, isRenewalWithHoldRequest),
           getRenewalDueDateLimitSchedules(), this::loanPolicyValidationError);
       }
       else {
@@ -318,15 +346,9 @@ public class LoanPolicy {
       }
     }
     else if(isFixed(loansPolicy)) {
-      if(isRenewal) {
-        if (isRenewalWithHoldRequest) {
-          return new RollingRenewalDueDateStrategy(getId(), getName(), systemDate,
-            "SYSTEM_DATE", getAlternateRenewalLoanPeriodForHolds(),
-            new NoFixedDueDateSchedules(), this::loanPolicyValidationError);
-        } else {
-          return new FixedScheduleRenewalDueDateStrategy(getId(), getName(),
-            getRenewalFixedDueDateSchedules(), systemDate, this::loanPolicyValidationError);
-        }
+      if (isRenewal) {
+        return new FixedScheduleRenewalDueDateStrategy(getId(), getName(),
+          getRenewalFixedDueDateSchedules(), systemDate, this::loanPolicyValidationError);
       }
       else {
         if(isAlternatePeriod(requestQueue)) {
@@ -399,20 +421,22 @@ public class LoanPolicy {
     boolean isRenewalWithHoldRequest) {
 
     Period result;
-    if (isRenewalWithHoldRequest) {
+    if (isRenewalWithHoldRequest && hasAlternateRenewalLoanPeriodForHolds()) {
       result = getAlternateRenewalLoanPeriodForHolds();
     } else {
-      result = useDifferentPeriod() ? getPeriod(renewalsPolicy) : getPeriod(loansPolicy);
+      result = useDifferentPeriod()
+        ? getPeriod(renewalsPolicy)
+        : getPeriod(loansPolicy);
     }
     return result;
   }
 
-  private Period getAlternateRenewalLoanPeriodForHolds() {
-    JsonObject holds = representation
-      .getJsonObject(REQUEST_MANAGEMENT_KEY)
-      .getJsonObject(HOLDS_KEY);
+  private boolean hasAlternateRenewalLoanPeriodForHolds() {
+    return getHolds().containsKey(ALTERNATE_RENEWAL_LOAN_PERIOD_KEY);
+  }
 
-    return getPeriod(holds, ALTERNATE_RENEWAL_LOAN_PERIOD_KEY);
+  private Period getAlternateRenewalLoanPeriodForHolds() {
+    return getPeriod(getHolds(), ALTERNATE_RENEWAL_LOAN_PERIOD_KEY);
   }
 
   private Period getPeriod(JsonObject policy) {

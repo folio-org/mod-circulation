@@ -50,8 +50,7 @@ public abstract class CirculationPolicyRepository<T> {
     User user) {
 
     return lookupPolicyId(item, user)
-      .thenComposeAsync(r -> r.after(this::lookupPolicy))
-      .thenApply(result -> result.next(this::mapToPolicy));
+      .thenComposeAsync(r -> r.after(this::lookupPolicy));
   }
 
   private Result<T> mapToPolicy(JsonObject json) {
@@ -62,15 +61,16 @@ public abstract class CirculationPolicyRepository<T> {
     return toPolicy(json);
   }
 
-  private CompletableFuture<Result<JsonObject>> lookupPolicy(String policyId) {
+  public CompletableFuture<Result<T>> lookupPolicy(String policyId) {
     log.info("Looking up policy with id {}", policyId);
 
     return SingleRecordFetcher.json(policyStorageClient, "circulation policy",
       response -> failedDueToServerError(getPolicyNotFoundErrorMessage(policyId)))
-      .fetch(policyId);
+      .fetch(policyId)
+      .thenApply(result -> result.next(this::mapToPolicy));
   }
 
-  private CompletableFuture<Result<String>> lookupPolicyId(Item item, User user) {
+  public CompletableFuture<Result<String>> lookupPolicyId(Item item, User user) {
     CompletableFuture<Result<String>> findLoanPolicyCompleted = new CompletableFuture<>();
 
     if (item.isNotFound()) {
