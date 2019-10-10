@@ -1,6 +1,7 @@
 package org.folio.circulation.domain.notice.schedule;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
+import static org.folio.circulation.support.AsyncCoordinationUtil.allOf;
 import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.ResultBinding.mapResult;
 
@@ -62,13 +63,7 @@ public class DueDateNotRealTimeScheduledNoticeHandler {
   }
 
   private CompletableFuture<Result<Void>> handleNoticeGroup(List<ScheduledNotice> noticeGroup) {
-
-    List<CompletableFuture<Result<Pair<ScheduledNotice, LoanAndRelatedRecords>>>> contextFutures =
-      noticeGroup.stream().map(this::getContext).collect(Collectors.toList());
-
-    return CompletableFuture.allOf(contextFutures.toArray(new CompletableFuture[0]))
-      .thenApply(v -> contextFutures.stream().map(CompletableFuture::join).collect(Collectors.toList()))
-      .thenApply(Result::combineAll)
+  return allOf(noticeGroup, this::getContext)
       .thenCompose(r -> r.after(this::sendGroupedNotice))
       .thenCompose(r -> r.after(this::updateGroupedNotice))
       .thenApply(mapResult(p -> null));

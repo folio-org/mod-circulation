@@ -1,0 +1,24 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "type": "object",
+  "description": "Request to end patron action session",
+  "properties": {
+    "patronId": {
+      "type": "string",
+      "description": "Id of a patron whose session is to be ended, UUID",
+      "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
+    },
+    "actionType": {
+      "type": "string",
+      "description": "Defines action type for session that is to be ended",
+      "enum": [
+        "Check-out",
+        "Check-in"
+      ]
+    }
+  },
+  "required": [
+    "patronId",
+    "actionType"
+  ]
+}

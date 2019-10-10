@@ -29,6 +29,7 @@ import org.slf4j.LoggerFactory;
 import api.support.fixtures.AddressTypesFixture;
 import api.support.fixtures.CancellationReasonsFixture;
 import api.support.fixtures.CirculationRulesFixture;
+import api.support.fixtures.EndPatronSessionClient;
 import api.support.fixtures.HoldingsFixture;
 import api.support.fixtures.InstancesFixture;
 import api.support.fixtures.ItemsFixture;
@@ -115,6 +116,9 @@ public abstract class APITests {
 
   protected final ResourceClient patronSessionRecordsClient =
     ResourceClient.forPatronSessionRecords(client);
+
+  protected final EndPatronSessionClient endPatronSessionClient =
+    new EndPatronSessionClient();
 
   protected final ServicePointsFixture servicePointsFixture
     = new ServicePointsFixture(servicePointsClient);
@@ -251,6 +255,7 @@ public abstract class APITests {
     configClient.deleteAll();
     patronNoticesClient.deleteAll();
     scheduledNoticesClient.deleteAll();
+    patronSessionRecordsClient.deleteAllIndividually();
 
     //TODO: Only cleans up reference records, move items, holdings records
     // and instances into here too
