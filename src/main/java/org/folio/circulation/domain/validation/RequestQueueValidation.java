@@ -1,12 +1,13 @@
 package org.folio.circulation.domain.validation;
 
+import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
+
 import java.util.Objects;
 import java.util.function.Predicate;
 
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.reorder.ReorderRequest;
 import org.folio.circulation.resources.context.ReorderRequestContext;
-import org.folio.circulation.support.BadRequestFailure;
 import org.folio.circulation.support.RecordNotFoundFailure;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.request.RequestHelper;
@@ -28,7 +29,7 @@ public class RequestQueueValidation {
   public static Result<ReorderRequestContext> queueIsConsistent(Result<ReorderRequestContext> result) {
     return result.failWhen(
       context -> Result.succeeded(isQueueInconsistent(context)),
-      context -> new BadRequestFailure("There is inconsistency between provided reordered queue and item queue.")
+      context -> singleValidationError("There is inconsistency between provided reordered queue and item queue.", null, null)
     );
   }
 
@@ -67,12 +68,12 @@ public class RequestQueueValidation {
             Request request = entry.getValue();
 
             return requestTypePredicate.test(request)
-              && reorderRequest.getPosition() != 1;
+              && reorderRequest.getNewPosition() != 1;
           });
 
         return Result.succeeded(notAtFirstPosition);
       },
-      r -> new BadRequestFailure(onFailureMessage)
+      r -> singleValidationError(onFailureMessage, "position", null)
     );
   }
 }

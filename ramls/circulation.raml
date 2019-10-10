@@ -575,8 +575,8 @@ resourceTypes:
                 application/json:
                   type: requests
                   example: !include examples/requests.json
-            400:
-              description: "Business-flow validation errors."
+            422:
+              description: "Validation errors."
               body:
                 text/plain:
                   example: "Page requests can not be displaced from position 1."

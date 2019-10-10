@@ -190,10 +190,10 @@ public class InterfaceUrls {
   }
 
   public static URL reorderQueueUrl(String itemId) {
-    return getQueueUrl(itemId + "/reorder");
+    return requestQueueUrl(itemId + "/reorder");
   }
 
-  public static URL getQueueUrl(String itemId) {
+  public static URL requestQueueUrl(String itemId) {
     return circulationModuleUrl(String
       .format("/circulation/requests/queue/%s", itemId));
   }

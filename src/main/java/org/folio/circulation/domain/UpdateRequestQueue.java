@@ -192,7 +192,7 @@ public class UpdateRequestQueue {
     // 1st: set new positions for the requests in the queue
     return result.after(context -> {
       context.getReorderRequestToRequestMap().forEach(
-        (reorderRequest, request) -> request.changePosition(reorderRequest.getPosition())
+        (reorderRequest, request) -> request.changePosition(reorderRequest.getNewPosition())
       );
 
       // 2nd: Call storage module to reorder requests.

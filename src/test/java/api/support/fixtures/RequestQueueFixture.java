@@ -39,7 +39,7 @@ public class RequestQueueFixture {
   public JsonObject retrieveQueue(String itemId) throws Exception {
     CompletableFuture<Response> readCompleted = new CompletableFuture<>();
 
-    okapiHttpClient.get(InterfaceUrls.getQueueUrl(itemId),
+    okapiHttpClient.get(InterfaceUrls.requestQueueUrl(itemId),
       ResponseHandler.json(readCompleted));
 
     Response response = readCompleted.get(5, TimeUnit.SECONDS);

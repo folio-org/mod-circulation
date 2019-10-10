@@ -1,4 +1,4 @@
-package org.folio.circulation.resources;
+package api.queue;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertEquals;
@@ -12,6 +12,7 @@ import java.util.stream.Collectors;
 
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
+import org.hamcrest.Matcher;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -60,7 +61,7 @@ public class RequestQueueResourceTest extends APITests {
   }
 
   @Test
-  public void validationErrorOnPageRequestDisplace() throws Exception {
+  public void refuseAttemptToMovePageRequestFromFirstPosition() throws Exception {
     IndividualResource pageRequest = pageRequest(steve);
     IndividualResource recallRequest = recallRequest(jessica);
 
@@ -72,13 +73,13 @@ public class RequestQueueResourceTest extends APITests {
         .create()
     );
 
-    assertThat(response.getStatusCode(), is(400));
-    assertThat(response.getBody(),
-      is("Page requests can not be displaced from position 1."));
+    verifyValidationFailure(response,
+      is("Page requests can not be displaced from position 1.")
+    );
   }
 
   @Test
-  public void validationErrorOnFulfillingRequestDisplace() throws Exception {
+  public void refuseAttemptToMoveRequestBeingFulfilledFromFirstPosition() throws Exception {
     loansFixture.checkOutByBarcode(item, usersFixture.rebecca());
 
     IndividualResource inFulfillmentRequest = inFulfillmentRecallRequest(steve);
@@ -92,13 +93,13 @@ public class RequestQueueResourceTest extends APITests {
         .create()
     );
 
-    assertThat(response.getStatusCode(), is(400));
-    assertThat(response.getBody(),
-      is("Requests can not be displaced from position 1 when fulfillment begun."));
+    verifyValidationFailure(response,
+      is("Requests can not be displaced from position 1 when fulfillment begun.")
+    );
   }
 
   @Test
-  public void validationErrorWhenNonExistingRequestProvidedInReorderedQueue() throws Exception {
+  public void refuseAttemptToTryingToAddRequestToQueueDuringReorder() throws Exception {
     loansFixture.checkOutByBarcode(item, usersFixture.rebecca());
 
     IndividualResource firstRecallRequest = recallRequest(steve);
@@ -113,13 +114,13 @@ public class RequestQueueResourceTest extends APITests {
         .create()
     );
 
-    assertThat(response.getStatusCode(), is(400));
-    assertThat(response.getBody(),
-      is("There is inconsistency between provided reordered queue and item queue."));
+    verifyValidationFailure(response,
+      is("There is inconsistency between provided reordered queue and item queue.")
+    );
   }
 
   @Test
-  public void validationErrorWhenNotAllRequestsProvidedInReorderedQueue() throws Exception {
+  public void refuseWhenNotAllRequestsProvidedInReorderedQueue() throws Exception {
     loansFixture.checkOutByBarcode(item, usersFixture.rebecca());
 
     holdRequest(steve);
@@ -132,13 +133,13 @@ public class RequestQueueResourceTest extends APITests {
         .create()
     );
 
-    assertThat(response.getStatusCode(), is(400));
-    assertThat(response.getBody(),
-      is("There is inconsistency between provided reordered queue and item queue."));
+    verifyValidationFailure(response,
+      is("There is inconsistency between provided reordered queue and item queue.")
+    );
   }
 
   @Test
-  public void canNotSaveRequestsWithDuplicatedPositions() throws Exception {
+  public void refuseAttemptToReorderRequestsWithDuplicatedPositions() throws Exception {
     loansFixture.checkOutByBarcode(item, usersFixture.rebecca());
 
     IndividualResource holdRequest = holdRequest(steve);
@@ -189,7 +190,7 @@ public class RequestQueueResourceTest extends APITests {
     JsonObject response = requestQueueFixture
       .reorderQueue(item.getId().toString(), reorderQueue);
 
-    assertQueue(reorderQueue, response);
+    verifyQueueUpdated(reorderQueue, response);
   }
 
   @Test
@@ -212,7 +213,7 @@ public class RequestQueueResourceTest extends APITests {
     JsonObject initialReorderResponse = requestQueueFixture
       .reorderQueue(item.getId().toString(), initialReorder);
 
-    assertQueue(initialReorder, initialReorderResponse);
+    verifyQueueUpdated(initialReorder, initialReorderResponse);
 
     JsonObject subsequentReorder = new ReorderQueueBuilder()
       .addReorderRequest(firstHoldRequest.getId().toString(), targetState[0])
@@ -224,7 +225,7 @@ public class RequestQueueResourceTest extends APITests {
     JsonObject subsequentReorderResponse = requestQueueFixture
       .reorderQueue(item.getId().toString(), subsequentReorder);
 
-    assertQueue(subsequentReorder, subsequentReorderResponse);
+    verifyQueueUpdated(subsequentReorder, subsequentReorderResponse);
   }
 
   private IndividualResource pageRequest(IndividualResource requester) throws Exception {
@@ -272,44 +273,53 @@ public class RequestQueueResourceTest extends APITests {
     );
   }
 
-  private void assertQueue(JsonObject initialQueue, JsonObject reorderedQueue)
+  private void verifyQueueUpdated(JsonObject initialQueue, JsonObject reorderedQueue)
     throws Exception {
 
     JsonArray reorderedRequests = reorderedQueue.getJsonArray("requests");
     List<JsonObject> expectedRequests = initialQueue.getJsonArray("reorderedQueue")
       .stream()
       .map(obj -> (JsonObject) obj)
-      .sorted(Comparator.comparingInt(request -> request.getInteger("position")))
+      .sorted(Comparator.comparingInt(request -> request.getInteger("newPosition")))
       .collect(Collectors.toList());
 
     assertEquals("Expected number of requests and actual do not match",
-      expectedRequests.size(), reorderedRequests.size());
+      expectedRequests.size(),
+      reorderedRequests.size()
+    );
+    assertQueue(expectedRequests, reorderedRequests);
 
-    for (int i = 0; i < expectedRequests.size(); i++) {
-      JsonObject initialCurrentRequest = expectedRequests.get(i);
-      JsonObject currentRequest = reorderedRequests.getJsonObject(i);
-
-      assertThat(currentRequest.getString("id"),
-        is(initialCurrentRequest.getString("id")));
-      assertThat(currentRequest.getInteger("position"),
-        is(initialCurrentRequest.getInteger("position")));
-    }
-
-    JsonArray requestsInDb = requestQueueFixture
+    JsonArray requestsFromDb = requestQueueFixture
       .retrieveQueue(item.getId().toString())
       .getJsonArray("requests");
 
     assertEquals("Requests in DB and actual do not match",
-      reorderedRequests.size(), requestsInDb.size());
+      reorderedRequests.size(),
+      requestsFromDb.size()
+    );
+    assertQueue(expectedRequests, requestsFromDb);
+  }
 
-    for (int i = 0; i < requestsInDb.size(); i++) {
-      JsonObject currentRequest = reorderedRequests.getJsonObject(i);
-      JsonObject currentRequestFromDb = requestsInDb.getJsonObject(i);
+  private void assertQueue(List<JsonObject> expectedQueue, JsonArray actualQueue) {
+    for (int i = 0; i < expectedQueue.size(); i++) {
+      JsonObject currentExpectedRequest = expectedQueue.get(i);
+      JsonObject currentActualRequest = actualQueue.getJsonObject(i);
 
-      assertEquals(currentRequest.getString("id"),
-        currentRequestFromDb.getString("id"));
-      assertEquals(currentRequest.getInteger("position"),
-        currentRequestFromDb.getInteger("position"));
+      assertEquals(currentExpectedRequest.getString("id"),
+        currentActualRequest.getString("id"));
+      assertEquals(currentExpectedRequest.getInteger("newPosition"),
+        currentActualRequest.getInteger("position"));
     }
+  }
+
+  private void verifyValidationFailure(
+    Response response, Matcher<String> errorMessageMatcher) {
+
+    assertThat(response.getStatusCode(), is(422));
+
+    JsonArray errors = response.getJson().getJsonArray("errors");
+    assertThat(errors.size(), is(1));
+    assertThat(errors.getJsonObject(0).getString("message"),
+      errorMessageMatcher);
   }
 }

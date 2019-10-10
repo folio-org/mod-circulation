@@ -1,4 +1,4 @@
-package org.folio.circulation.resources;
+package api.queue;
 
 import java.util.Arrays;
 
