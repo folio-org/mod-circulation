@@ -592,7 +592,8 @@ public class CheckInByBarcodeTests extends APITests {
     useLoanPolicyAsFallback(
       loanPoliciesFixture.canCirculateRolling().getId(),
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
-      noticePoliciesFixture.create(noticePolicy).getId());
+      noticePoliciesFixture.create(noticePolicy).getId(),
+      overdueFinePoliciesFixture.facultyStandard().getId());
 
     InventoryItemResource requestedItem = itemsFixture.basedUponNod();
     UUID pickupServicePointId = servicePointsFixture.cd1().getId();
