@@ -85,6 +85,17 @@ public class Text2DroolsTest {
     { "newspaper", "special-items", "visitor",                 "request-8", "request-7", "request-2", "no-hold" },
   };
 
+  private String[][] overdueTestCases = new String[][] {
+    // item type,   request type,   patron type,   request policies
+    { "foo",        "foo",          "foo",                                                            "overdue" },
+    { "book",       "regular",      "undergrad",                                         "overdue-1", "overdue"},
+    { "book",      "special-items", "undergrad",  "overdue-6",              "overdue-7", "overdue-1", "overdue" },
+    { "book",      "special-items", "visitor",    "overdue-8", "overdue-6", "overdue-7", "overdue-1", "overdue" },
+    { "newspaper", "regular",       "undergrad",                                         "overdue-2", "overdue" },
+    { "newspaper", "special-items", "undergrad",                            "overdue-7", "overdue-2", "overdue" },
+    { "newspaper", "special-items", "visitor",                 "overdue-8", "overdue-7", "overdue-2", "overdue" },
+  };
+
   /** @return s[0] + " " + s[1] + " " + s[2] */
   private String first3(String [] s) {
     return s[0] + " " + s[1] + " " + s[2];
@@ -122,6 +133,11 @@ public class Text2DroolsTest {
       assertThat(first3(s), Drools.requestPolicy(drools, params(s[0], s[1], s[2], "shelf"),
         createLocation(SECOND_INSTITUTION_ID, SECOND_LIBRARY_ID, SECOND_CAMPUS_ID)), is(s[3]));
     }
+  }
+
+  @Test
+  public void testOverdueFinePolicyList() {
+    testOverdueFinePolicies(test1, overdueTestCases);
   }
 
   /** s without the first 3 elements, converted to a String.
@@ -162,6 +178,19 @@ public class Text2DroolsTest {
         }
         assertThat(first3(s), Arrays.toString(policies), is(expected(s)));
       }
+  }
+
+  private void testOverdueFinePolicies(String circulationRules, String[][] cases) {
+    Drools drools = new Drools(Text2Drools.convert(circulationRules));
+    for (String [] s : cases) {
+      JsonArray array = drools.overduePolicies(params(s[0], s[1], s[2], "shelf"),
+        createLocation(SECOND_INSTITUTION_ID, SECOND_LIBRARY_ID, SECOND_CAMPUS_ID));
+      String [] policies = new String[array.size()];
+      for (int i=0; i<array.size(); i++) {
+        policies[i] = array.getJsonObject(i).getString("overduePolicyId");
+      }
+      assertThat(first3(s), Arrays.toString(policies), is(expected(s)));
+    }
   }
 
   @Test
@@ -433,6 +462,29 @@ public class Text2DroolsTest {
   }
 
   @Test
+  public void overdueFinePolicy() {
+    Drools drools = new Drools(Text2Drools.convert(String.join("\n",
+      "priority: last-line",
+      "fallback-policy: l no-loan r no-hold n basic-notice o fallback",
+      "s new: l policy-a r no-hold n basic-notice o overdue-a",
+      "m book: l policy-b r no-hold n basic-notice o overdue-b",
+      "a " + FIRST_INSTITUTION_ID + ": l policy-c r no-hold n basic-notice o overdue-c",
+      "b new: l policy-d r no-hold n basic-notice o overdue-d",
+      "c "+ FIRST_LIBRARY_ID + ": l policy-e r no-hold n basic-notice o overdue-e",
+      "b "+ FIRST_CAMPUS_ID + ": l policy-e r no-hold n basic-notice o overdue-e")));
+    assertThat(drools.overduePolicy(params("dvd",  "regular", "student",  "new"),
+      createLocation(SECOND_INSTITUTION_ID, SECOND_LIBRARY_ID, SECOND_CAMPUS_ID)),   is("overdue-a"));
+    assertThat(drools.overduePolicy(params("book", "regular", "student",  "new"),
+      createLocation(SECOND_INSTITUTION_ID, SECOND_LIBRARY_ID, SECOND_CAMPUS_ID)),   is("overdue-b"));
+    assertThat(drools.overduePolicy(params("book", "regular", "student",  "shelf"),
+      createLocation(SECOND_INSTITUTION_ID, SECOND_LIBRARY_ID, SECOND_CAMPUS_ID)), is("overdue-b"));
+    assertThat(drools.overduePolicy(params("book", "regular", "student",  "old"),
+      createLocation(FIRST_INSTITUTION_ID, SECOND_LIBRARY_ID, SECOND_CAMPUS_ID)),   is("overdue-c"));
+    assertThat(drools.overduePolicy(params("book", "regular", "student",  "old"),
+      createLocation(FIRST_INSTITUTION_ID, FIRST_LIBRARY_ID, FIRST_CAMPUS_ID)),   is("overdue-e"));
+  }
+
+  @Test
   public void shelvingLocationDefaultPriority() {
     Drools drools = new Drools(Text2Drools.convert(String.join("\n",
         "priority: t, s, c, b, a, m, g",
@@ -556,6 +608,15 @@ public class Text2DroolsTest {
       Text2Drools.convert(HEADER + "m book: l no-loan n basic-notice");
     } catch (CirculationRulesException e) {
       assertThat(e, matches("Must contain one of each policy type, missing type r", 3, 6));
+    }
+  }
+
+  @Test
+  public void missingOverduePolicy() {
+    try {
+      Text2Drools.convert(HEADER + "m book: l no-loan r basic-request n basic-notice");
+    } catch (CirculationRulesException e) {
+      assertThat(e, matches("Must contain one of each policy type, missing type o", 3, 6));
     }
   }
 
