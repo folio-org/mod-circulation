@@ -375,6 +375,10 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     return !Objects.equals(originalDueDate, getDueDate());
   }
 
+  public DateTime getSystemReturnDate() {
+    return getDateTimeProperty(representation, SYSTEM_RETURN_DATE);
+  }
+
   public DateTime getReturnDate() {
     return getDateTimeProperty(representation, RETURN_DATE);
   }

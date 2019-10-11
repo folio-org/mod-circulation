@@ -71,6 +71,10 @@ public class ResourceClient {
       "accounts");
   }
 
+  public static ResourceClient forFeefineActions(OkapiHttpClient client) {
+    return new ResourceClient(client, InterfaceUrls::feefineActionsUrl, "feefineactions");
+  }
+
   public static ResourceClient forLoanPolicies(OkapiHttpClient client) {
     return new ResourceClient(client, InterfaceUrls::loanPoliciesStorageUrl,
       "loan policies", "loanPolicies");

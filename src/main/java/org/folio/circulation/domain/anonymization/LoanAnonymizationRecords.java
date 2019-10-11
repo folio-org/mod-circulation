@@ -13,14 +13,13 @@ public class LoanAnonymizationRecords {
 
   private List<String> anonymizedLoans = new ArrayList<>();
   private List<Loan> loansFound = new ArrayList<>();
-  private MultiValuedMap<String, String> notAnonymizedLoans =
-      new HashSetValuedHashMap<>();
+  private MultiValuedMap<String, String> notAnonymizedLoans = new HashSetValuedHashMap<>();
 
-  public List<Loan> getLoansFound() {
+  List<Loan> getLoansFound() {
     return loansFound;
   }
 
-  public LoanAnonymizationRecords withLoansFound(Collection<Loan> loans) {
+  LoanAnonymizationRecords withLoansFound(Collection<Loan> loans) {
     if (CollectionUtils.isEmpty(loans)) {
       return this;
     }
@@ -42,8 +41,7 @@ public class LoanAnonymizationRecords {
     return newRecords;
   }
 
-  public LoanAnonymizationRecords withNotAnonymizedLoans(
-      MultiValuedMap<String, String> loans) {
+  public LoanAnonymizationRecords withNotAnonymizedLoans(MultiValuedMap<String, String> loans) {
     LoanAnonymizationRecords newRecords = new LoanAnonymizationRecords();
     newRecords.loansFound = new ArrayList<>(loansFound);
     newRecords.anonymizedLoans = new ArrayList<>(anonymizedLoans);
@@ -57,5 +55,12 @@ public class LoanAnonymizationRecords {
 
   public MultiValuedMap<String, String> getNotAnonymizedLoans() {
     return notAnonymizedLoans;
+  }
+
+  @Override
+  public String toString() {
+    return "LoanAnonymizationRecords{" + "anonymizedLoans=" + anonymizedLoans + ","
+        + " notAnonymizedLoans=" + notAnonymizedLoans
+        + '}';
   }
 }
