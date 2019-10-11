@@ -1,3 +1,7 @@
+## 16.7.2 2019-10-11
+
+* Ensure requests in the request queue are updated in order, synchronously (CIRC-463)
+
 ## 16.7.1 2019-09-20
 
 * Include missing permissions when moving requests between items (CIRC-459)
