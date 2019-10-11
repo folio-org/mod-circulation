@@ -1,3 +1,7 @@
+## 16.5.3 2019-10-11
+
+* Ensure requests in the request queue are updated in order, synchronously (CIRC-463)
+
 ## 16.5.2 2019-09-11
 
 * Respect tenant timezone when creating or moving requests (CIRC-434, CIRC-443)
