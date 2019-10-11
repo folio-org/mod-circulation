@@ -106,7 +106,7 @@ public class Item {
     return getStatus().equals(status);
   }
 
-  boolean hasChanged() {
+  public boolean hasChanged() {
     return changed;
   }
 
@@ -301,10 +301,13 @@ public class Item {
 
   Item changeStatus(ItemStatus newStatus) {
     //TODO: Check if status is null
+
+    if (isNotSameStatus(newStatus)) {
+      changed = true;
+    }
+
     write(itemRepresentation, "status",
       new JsonObject().put("name", newStatus.getValue()));
-
-    changed = true;
 
     //TODO: Remove this hack to remove destination service point
     // needs refactoring of how in transit for pickup is done
