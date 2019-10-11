@@ -537,6 +537,16 @@ public class Text2DroolsTest {
   }
 
   @Test
+  public void duplicateOverdueFinePolicy() {
+    try {
+      Text2Drools.convert(HEADER + "m book: l policy-a r no-hold n basic-notice o overdue o overdue-1");
+      fail();
+    } catch (CirculationRulesException e) {
+      assertThat(e, matches("Only one policy of type l allowed", 3, 6));
+    }
+  }
+
+  @Test
   public void comment() {
     String drools = Text2Drools.convert(HEADER + "# m book: l loan-anyhow r no-hold n basic-notice o overdue");
     assertThat(drools, not(containsString("loan-anyhow")));
@@ -605,7 +615,7 @@ public class Text2DroolsTest {
   @Test
   public void missingRequestPolicy() {
     try {
-      Text2Drools.convert(HEADER + "m book: l no-loan n basic-notice");
+      Text2Drools.convert(HEADER + "m book: l no-loan n basic-notice o overdue");
     } catch (CirculationRulesException e) {
       assertThat(e, matches("Must contain one of each policy type, missing type r", 3, 6));
     }
@@ -625,7 +635,7 @@ public class Text2DroolsTest {
     try {
       Text2Drools.convert(String.join("\n",
         "priority: first-line",
-        "m book: r allow-hold n general-notice l two-week o overdue",
+        "m book: r allow-hold n general-notice o overdue l two-week ",
         "fallback-policy: l no-loan r no-hold n basic-notice o overdue"
       ));
     } catch (CirculationRulesException e) {
