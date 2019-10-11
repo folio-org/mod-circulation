@@ -542,7 +542,7 @@ public class Text2DroolsTest {
       Text2Drools.convert(HEADER + "m book: l policy-a r no-hold n basic-notice o overdue o overdue-1");
       fail();
     } catch (CirculationRulesException e) {
-      assertThat(e, matches("Only one policy of type l allowed", 3, 6));
+      assertThat(e, matches("Only one policy of type o allowed", 3, 6));
     }
   }
 
