@@ -73,6 +73,10 @@ public class NoticeConfigurationBuilder extends JsonBuilder implements Builder {
     return withEventType("Due date");
   }
 
+  public NoticeConfigurationBuilder withAvailableEvent() {
+    return withEventType("Available");
+  }
+
   public NoticeConfigurationBuilder withRequestExpirationEvent() {
     return withEventType("Request expiration");
   }
