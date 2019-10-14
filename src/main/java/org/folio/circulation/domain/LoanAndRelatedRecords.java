@@ -43,7 +43,8 @@ public class LoanAndRelatedRecords implements UserRelatedRecord {
   }
 
   public LoanAndRelatedRecords withItemLocation() {
-    return withLoan(loan.changeItemLocationAtCheckout(this.loan.getItemId()));
+    Item item = this.loan.getItem();
+    return withLoan(loan.changeItemLocationAtCheckout(item.getLocationId()));
   }
 
   public LoanAndRelatedRecords withTimeZone(DateTimeZone newTimeZone) {

@@ -101,6 +101,9 @@ public class CheckInByBarcodeTests extends APITests {
     assertThat("ID should be included for item",
       loanRepresentation.getJsonObject("item").getString("id"), is(nod.getId()));
 
+    assertThat("itemEffectiveLocationAtCheckOut should match temporary location ID",
+      loanRepresentation.getString("itemEffectiveLocationAtCheckOut"), is(nod.getJson().getString("temporaryLocationId")));
+
     assertThat("title is taken from item",
       loanRepresentation.getJsonObject("item").getString("title"),
       is("Nod"));
