@@ -337,16 +337,23 @@ public class Text2Drools extends CirculationRulesBaseListener {
     drools.append("end\n\n");
   }
 
-  private String policyMatchString(PolicyContext policy) {
+  private static String policyMatchString(PolicyContext policy) {
     String policyTypeName = "";
-    if (policy.POLICY_TYPE().toString().equals("l")) {
-      policyTypeName = "loan";
-    } else if (policy.POLICY_TYPE().toString().equals("r")) {
-      policyTypeName = "request";
-    } else if (policy.POLICY_TYPE().toString().equals("n")) {
-      policyTypeName = "notice";
-    } else if (policy.POLICY_TYPE().toString().equals("o")) {
-      policyTypeName = "overdue";
+    switch (policy.POLICY_TYPE().toString()) {
+      case "l":
+        policyTypeName = "loan";
+        break;
+      case "r":
+        policyTypeName = "request";
+        break;
+      case "n":
+        policyTypeName = "notice";
+        break;
+      case "o":
+        policyTypeName = "overdue";
+        break;
+      default: throw new IllegalArgumentException("Unknown policy type: "
+        + policy.POLICY_TYPE().toString());
     }
     return String.format("    match.%sPolicyId = ", policyTypeName);
   }

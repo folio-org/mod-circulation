@@ -981,7 +981,7 @@ public class MoveRequestTests extends APITests {
 
     final IndividualResource loanPolicy = loanPoliciesFixture.create(canCirculateRollingPolicy);
 
-    useLoanPolicyAsFallback(loanPolicy.getId(),
+    useFallbackPolicies(loanPolicy.getId(),
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
       noticePoliciesFixture.inactiveNotice().getId(),
       overdueFinePoliciesFixture.facultyStandard().getId());

@@ -73,7 +73,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
     loansFixture.checkOutByBarcode(smallAngryPlanet, jessica,
       new DateTime(2018, DateTimeConstants.APRIL, 21, 11, 21, 43));
 
-    useLoanPolicyAsFallback(
+    useFallbackPolicies(
       unknownLoanPolicyId,
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
       noticePoliciesFixture.activeNotice().getId(),
@@ -196,7 +196,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
     UUID nonRenewablePolicyId = loanPoliciesFixture.create(nonRenewablePolicy)
       .getId();
 
-    useLoanPolicyAsFallback(
+    useFallbackPolicies(
       nonRenewablePolicyId,
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
       noticePoliciesFixture.activeNotice().getId(),
@@ -235,7 +235,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
     final IndividualResource loanPolicy = loanPoliciesFixture.create(nonRenewablePolicy);
     UUID nonRenewablePolicyId = loanPolicy.getId();
 
-    useLoanPolicyAsFallback(
+    useFallbackPolicies(
       nonRenewablePolicyId,
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
       noticePoliciesFixture.activeNotice().getId(),
@@ -306,7 +306,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
     UUID dueDateLimitedPolicyId = loanPoliciesFixture.create(currentDueDateRollingPolicy)
       .getId();
 
-    useLoanPolicyAsFallback(
+    useFallbackPolicies(
       dueDateLimitedPolicyId,
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
       noticePoliciesFixture.activeNotice().getId(),
@@ -354,7 +354,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
     final IndividualResource loanPolicy = loanPoliciesFixture.create(currentDueDateRollingPolicy);
     UUID dueDateLimitedPolicyId = loanPolicy.getId();
 
-    useLoanPolicyAsFallback(
+    useFallbackPolicies(
       dueDateLimitedPolicyId,
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
       noticePoliciesFixture.activeNotice().getId(),
@@ -437,7 +437,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
     UUID dueDateLimitedPolicyId = loanPoliciesFixture.create(currentDueDateRollingPolicy)
       .getId();
 
-    useLoanPolicyAsFallback(
+    useFallbackPolicies(
       dueDateLimitedPolicyId,
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
       noticePoliciesFixture.activeNotice().getId(),
@@ -499,7 +499,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
     UUID limitedRenewalsPolicyId = loanPoliciesFixture.create(limitedRenewalsPolicy)
       .getId();
 
-    useLoanPolicyAsFallback(
+    useFallbackPolicies(
       limitedRenewalsPolicyId,
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
       noticePoliciesFixture.activeNotice().getId(),
@@ -563,7 +563,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
     UUID rollingPolicyId = loanPoliciesFixture.create(currentDueDateRollingPolicy)
       .getId();
 
-    useLoanPolicyAsFallback(
+    useFallbackPolicies(
       rollingPolicyId,
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
       noticePoliciesFixture.activeNotice().getId(),
@@ -784,7 +784,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
         .rolling(Period.days(2))
         .notRenewable());
 
-    useLoanPolicyAsFallback(
+    useFallbackPolicies(
       nonRenewablePolicy.getId(),
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
       noticePolicy.getId(),
@@ -857,7 +857,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
     ExecutionException {
     UUID policyId =
       loanPoliciesFixture.create(loanPolicyBuilder).getId();
-    useLoanPolicyAsFallback(
+    useFallbackPolicies(
       policyId,
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
       noticePoliciesFixture.activeNotice().getId(),

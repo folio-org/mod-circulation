@@ -14,6 +14,8 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import api.support.builders.LoanPolicyBuilder;
+import api.support.builders.NoticePolicyBuilder;
 import api.support.fixtures.OverdueFinePoliciesFixture;
 import org.folio.circulation.domain.representations.LoanProperties;
 import org.folio.circulation.support.http.client.IndividualResource;
@@ -293,7 +295,7 @@ public abstract class APITests {
     MalformedURLException {
 
     log.info("Using rolling loan policy as fallback policy");
-    useLoanPolicyAsFallback(
+    useFallbackPolicies(
       loanPoliciesFixture.canCirculateRolling().getId(),
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
       noticePoliciesFixture.activeNotice().getId(),
@@ -308,7 +310,7 @@ public abstract class APITests {
     MalformedURLException {
 
     log.info("Using fixed loan policy as fallback policy");
-    useLoanPolicyAsFallback(
+    useFallbackPolicies(
       loanPoliciesFixture.canCirculateFixed().getId(),
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
       noticePoliciesFixture.activeNotice().getId(),
@@ -316,8 +318,8 @@ public abstract class APITests {
     );
   }
 
-  protected void useLoanPolicyAsFallback(UUID loanPolicyId, UUID requestPolicyId,
-                                         UUID noticePolicyId, UUID overdueFinePolicyId)
+  protected void useFallbackPolicies(UUID loanPolicyId, UUID requestPolicyId,
+                                     UUID noticePolicyId, UUID overdueFinePolicyId)
     throws InterruptedException,
     ExecutionException,
     TimeoutException, MalformedURLException {
@@ -326,6 +328,43 @@ public abstract class APITests {
       noticePolicyId, overdueFinePolicyId);
 
     warmUpApplyEndpoint();
+  }
+
+
+  protected void setFallbackPolicies(LoanPolicyBuilder loanPolicyBuilder)
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+    final IndividualResource loanPolicy = loanPoliciesFixture.create(loanPolicyBuilder);
+    useFallbackPolicies(loanPolicy.getId(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
+      noticePoliciesFixture.inactiveNotice().getId(),
+      overdueFinePoliciesFixture.facultyStandard().getId());
+  }
+
+  protected void use(NoticePolicyBuilder noticePolicy)
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+    useFallbackPolicies(
+      loanPoliciesFixture.canCirculateRolling().getId(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
+      noticePoliciesFixture.create(noticePolicy).getId(),
+      overdueFinePoliciesFixture.facultyStandard().getId());
+  }
+
+  protected void use(LoanPolicyBuilder loanPolicy)
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+    UUID loanPolicyId = loanPolicyClient.create(loanPolicy).getId();
+    UUID requestPolicyId = requestPoliciesFixture.allowAllRequestPolicy().getId();
+    UUID noticePolicyId = noticePoliciesFixture.activeNotice().getId();
+    UUID overdueFinePolicyId = overdueFinePoliciesFixture.facultyStandard().getId();
+    useFallbackPolicies(loanPolicyId, requestPolicyId, noticePolicyId, overdueFinePolicyId);
   }
 
   protected void warmUpApplyEndpoint()

@@ -361,7 +361,7 @@ public class RequestScheduledNoticesProcessingTests extends APITests {
       .withName("Policy with request notices")
       .withRequestNotices(singletonList(noticeConfiguration));
 
-    useLoanPolicyAsFallback(
+    useFallbackPolicies(
       loanPoliciesFixture.canCirculateRolling().getId(),
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
       noticePoliciesFixture.create(noticePolicy).getId(),

@@ -82,7 +82,7 @@ public class DueDateScheduledNoticesTests extends APITests {
         beforeDueDateNoticeConfiguration,
         uponAtDueDateNoticeConfiguration,
         afterDueDateNoticeConfiguration));
-    useLoanPolicyAsFallback(
+    useFallbackPolicies(
       loanPoliciesFixture.canCirculateRolling().getId(),
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
       noticePoliciesFixture.create(noticePolicy).getId(),
@@ -154,7 +154,7 @@ public class DueDateScheduledNoticesTests extends APITests {
       .withLoanNotices(Arrays.asList(
         firstBeforeDueDateNoticeConfiguration,
         secondBeforeDueDateNoticeConfiguration));
-    useLoanPolicyAsFallback(
+    useFallbackPolicies(
       loanPoliciesFixture.canCirculateRolling().getId(),
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
       noticePoliciesFixture.create(noticePolicy).getId(),
@@ -213,7 +213,7 @@ public class DueDateScheduledNoticesTests extends APITests {
       .withLoanNotices(Arrays.asList(
         checkOutNoticeConfiguration,
         checkInNoticeConfiguration));
-    useLoanPolicyAsFallback(
+    useFallbackPolicies(
       loanPoliciesFixture.canCirculateRolling().getId(),
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
       noticePoliciesFixture.create(noticePolicy).getId(),
@@ -283,7 +283,7 @@ public class DueDateScheduledNoticesTests extends APITests {
         uponAtDueDateNoticeConfiguration,
         afterDueDateNoticeConfiguration));
 
-    useLoanPolicyAsFallback(
+    useFallbackPolicies(
       loanPoliciesFixture.canCirculateRolling().getId(),
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
       noticePoliciesFixture.create(noticePolicy).getId(),
@@ -373,7 +373,7 @@ public class DueDateScheduledNoticesTests extends APITests {
       .rolling(Period.weeks(3))
       .notRenewable();
 
-    useLoanPolicyAsFallback(
+    useFallbackPolicies(
       loanPoliciesFixture.create(loanPolicy).getId(),
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
       noticePoliciesFixture.create(noticePolicy).getId(),
@@ -465,7 +465,7 @@ public class DueDateScheduledNoticesTests extends APITests {
       .rolling(Period.weeks(3))
       .withRecallsMinimumGuaranteedLoanPeriod(Period.weeks(2));
 
-    useLoanPolicyAsFallback(
+    useFallbackPolicies(
       loanPoliciesFixture.create(loanPolicy).getId(),
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
       noticePoliciesFixture.create(noticePolicy).getId(),
@@ -555,7 +555,7 @@ public class DueDateScheduledNoticesTests extends APITests {
         beforeDueDateNoticeConfiguration,
         uponAtDueDateNoticeConfiguration,
         afterDueDateNoticeConfiguration));
-    useLoanPolicyAsFallback(
+    useFallbackPolicies(
       loanPoliciesFixture.canCirculateRolling().getId(),
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
       noticePoliciesFixture.create(noticePolicy).getId(),

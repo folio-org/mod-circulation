@@ -185,7 +185,7 @@ public class CheckOutCalculateDueDateShortTermTests extends APITests {
     UUID requestPolicyId = requestPoliciesFixture.allowAllRequestPolicy().getId();
     UUID noticePolicyId = noticePoliciesFixture.activeNotice().getId();
     UUID overdueFinePolicyId = overdueFinePoliciesFixture.facultyStandard().getId();
-    useLoanPolicyAsFallback(loanPolicy.getId(), requestPolicyId, noticePolicyId, overdueFinePolicyId);
+    useFallbackPolicies(loanPolicy.getId(), requestPolicyId, noticePolicyId, overdueFinePolicyId);
 
     return loanPolicy;
   }

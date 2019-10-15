@@ -210,17 +210,13 @@ public class ChangeDueDateTests extends APITests {
           manualDueDateChangeNoticeConfiguration, checkInNoticeConfiguration)));
 
     int renewalLimit = 3;
-    IndividualResource loanPolicyWithLimitedRenewals = loanPoliciesFixture.create(
-      new LoanPolicyBuilder()
-        .withName("Limited renewals loan policy")
-        .rolling(org.folio.circulation.domain.policy.Period.months(1))
-        .limitedRenewals(renewalLimit));
 
-    useLoanPolicyAsFallback(
-      loanPolicyWithLimitedRenewals.getId(),
-      requestPoliciesFixture.allowAllRequestPolicy().getId(),
-      noticePolicy.getId(),
-      overdueFinePoliciesFixture.facultyStandard().getId());
+    LoanPolicyBuilder loanPolicyWithLimitedRenewals = new LoanPolicyBuilder()
+      .withName("Limited renewals loan policy")
+      .rolling(org.folio.circulation.domain.policy.Period.months(1))
+      .limitedRenewals(renewalLimit);
+
+    setFallbackPolicies(loanPolicyWithLimitedRenewals);
 
     ItemBuilder itemBuilder = ItemExamples.basedUponSmallAngryPlanet(
       materialTypesFixture.book().getId(),

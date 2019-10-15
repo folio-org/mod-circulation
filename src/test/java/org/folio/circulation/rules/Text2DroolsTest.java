@@ -462,29 +462,6 @@ public class Text2DroolsTest {
   }
 
   @Test
-  public void overdueFinePolicy() {
-    Drools drools = new Drools(Text2Drools.convert(String.join("\n",
-      "priority: last-line",
-      "fallback-policy: l no-loan r no-hold n basic-notice o fallback",
-      "s new: l policy-a r no-hold n basic-notice o overdue-a",
-      "m book: l policy-b r no-hold n basic-notice o overdue-b",
-      "a " + FIRST_INSTITUTION_ID + ": l policy-c r no-hold n basic-notice o overdue-c",
-      "b new: l policy-d r no-hold n basic-notice o overdue-d",
-      "c "+ FIRST_LIBRARY_ID + ": l policy-e r no-hold n basic-notice o overdue-e",
-      "b "+ FIRST_CAMPUS_ID + ": l policy-e r no-hold n basic-notice o overdue-e")));
-    assertThat(drools.overduePolicy(params("dvd",  "regular", "student",  "new"),
-      createLocation(SECOND_INSTITUTION_ID, SECOND_LIBRARY_ID, SECOND_CAMPUS_ID)),   is("overdue-a"));
-    assertThat(drools.overduePolicy(params("book", "regular", "student",  "new"),
-      createLocation(SECOND_INSTITUTION_ID, SECOND_LIBRARY_ID, SECOND_CAMPUS_ID)),   is("overdue-b"));
-    assertThat(drools.overduePolicy(params("book", "regular", "student",  "shelf"),
-      createLocation(SECOND_INSTITUTION_ID, SECOND_LIBRARY_ID, SECOND_CAMPUS_ID)), is("overdue-b"));
-    assertThat(drools.overduePolicy(params("book", "regular", "student",  "old"),
-      createLocation(FIRST_INSTITUTION_ID, SECOND_LIBRARY_ID, SECOND_CAMPUS_ID)),   is("overdue-c"));
-    assertThat(drools.overduePolicy(params("book", "regular", "student",  "old"),
-      createLocation(FIRST_INSTITUTION_ID, FIRST_LIBRARY_ID, FIRST_CAMPUS_ID)),   is("overdue-e"));
-  }
-
-  @Test
   public void shelvingLocationDefaultPriority() {
     Drools drools = new Drools(Text2Drools.convert(String.join("\n",
         "priority: t, s, c, b, a, m, g",
@@ -514,6 +491,31 @@ public class Text2DroolsTest {
       createLocation(FIRST_INSTITUTION_ID, FIRST_LIBRARY_ID, FIRST_CAMPUS_ID)), is("policy-c"));
     assertThat(drools.loanPolicy(params("book", "regular",       "student", "open-stacks"),
       createLocation(SECOND_INSTITUTION_ID, SECOND_LIBRARY_ID, FIRST_CAMPUS_ID)), is("policy-d"));
+  }
+
+  @Test
+  public void overdueFinePolicy() {
+    Drools drools = new Drools(Text2Drools.convert(String.join("\n",
+      "priority: last-line",
+      "fallback-policy: l no-loan r no-hold n basic-notice o fallback",
+      "s new: l policy-a r no-hold n basic-notice o overdue-a",
+      "m book: l policy-b r no-hold n basic-notice o overdue-b",
+      "a " + FIRST_INSTITUTION_ID + ": l policy-c r no-hold n basic-notice o overdue-c",
+      "b new: l policy-d r no-hold n basic-notice o overdue-d",
+      "c "+ FIRST_LIBRARY_ID + ": l policy-e r no-hold n basic-notice o overdue-e",
+      "b "+ FIRST_CAMPUS_ID + ": l policy-e r no-hold n basic-notice o overdue-f")));
+    assertThat(drools.overduePolicy(params("dvd",  "regular", "student",  "new"),
+      createLocation(SECOND_INSTITUTION_ID, SECOND_LIBRARY_ID, SECOND_CAMPUS_ID)),   is("overdue-a"));
+    assertThat(drools.overduePolicy(params("book", "regular", "student",  "new"),
+      createLocation(SECOND_INSTITUTION_ID, SECOND_LIBRARY_ID, SECOND_CAMPUS_ID)),   is("overdue-b"));
+    assertThat(drools.overduePolicy(params("book", "regular", "student",  "shelf"),
+      createLocation(SECOND_INSTITUTION_ID, SECOND_LIBRARY_ID, SECOND_CAMPUS_ID)), is("overdue-b"));
+    assertThat(drools.overduePolicy(params("book", "regular", "student",  "old"),
+      createLocation(FIRST_INSTITUTION_ID, SECOND_LIBRARY_ID, SECOND_CAMPUS_ID)),   is("overdue-c"));
+    assertThat(drools.overduePolicy(params("book", "regular", "student",  "old"),
+      createLocation(FIRST_INSTITUTION_ID, FIRST_LIBRARY_ID, SECOND_CAMPUS_ID)),   is("overdue-e"));
+   assertThat(drools.overduePolicy(params("book", "regular", "student",  "old"),
+      createLocation(FIRST_INSTITUTION_ID, SECOND_LIBRARY_ID, FIRST_CAMPUS_ID)),   is("overdue-f"));
   }
 
   @Test

@@ -153,8 +153,34 @@ public class Drools {
     return match.noticePolicyId;
   }
 
+   /**
+   * Return all notice policies calculated using the drools rules
+   * in the order they match.
+   * @param params request params
+   * @param location - location with institution, library and campus
+   * @return matches, each match has a noticePolicyId and a circulationRuleLine field
+   */
+  public JsonArray noticePolicies(MultiMap params, Location location) {
+    KieSession kieSession = createSession(params, location);
+
+    JsonArray array = new JsonArray();
+
+    while (kieSession.fireAllRules() > 0) {
+      JsonObject json = new JsonObject();
+
+      json.put("noticePolicyId", match.noticePolicyId);
+      writeLineMatch(json);
+
+      array.add(json);
+    }
+
+    kieSession.dispose();
+
+    return array;
+  }
+
   /**
-   * Calculate the overdue fine  policy for itemTypeName and requestTypeName.
+   * Calculate the overdue fine policy for itemTypeName and requestTypeName.
    * @param params request params
    * @param location - location with institution, library and campus
    * @return the name of the overdue fine policy
@@ -188,32 +214,6 @@ public class Drools {
     }
 
     kieSession.dispose();
-    return array;
-  }
-
-   /**
-   * Return all notice policies calculated using the drools rules
-   * in the order they match.
-   * @param params request params
-   * @param location - location with institution, library and campus
-   * @return matches, each match has a noticePolicyId and a circulationRuleLine field
-   */
-  public JsonArray noticePolicies(MultiMap params, Location location) {
-    KieSession kieSession = createSession(params, location);
-
-    JsonArray array = new JsonArray();
-
-    while (kieSession.fireAllRules() > 0) {
-      JsonObject json = new JsonObject();
-
-      json.put("noticePolicyId", match.noticePolicyId);
-      writeLineMatch(json);
-
-      array.add(json);
-    }
-
-    kieSession.dispose();
-
     return array;
   }
 

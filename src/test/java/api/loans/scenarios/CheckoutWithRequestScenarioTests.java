@@ -71,7 +71,7 @@ public class CheckoutWithRequestScenarioTests extends APITests {
       .withAlternateCheckoutLoanPeriod(weeks(1))
       .withClosedLibraryDueDateManagement(KEEP_THE_CURRENT_DUE_DATE.getValue()));
 
-    useLoanPolicyAsFallback(
+    useFallbackPolicies(
       policy.getId(),
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
       noticePoliciesFixture.inactiveNotice().getId(),
@@ -135,7 +135,7 @@ public class CheckoutWithRequestScenarioTests extends APITests {
       .withAlternateCheckoutLoanPeriod(weeks(3))
       .withClosedLibraryDueDateManagement(KEEP_THE_CURRENT_DUE_DATE.getValue()));
 
-    useLoanPolicyAsFallback(
+    useFallbackPolicies(
       policy.getId(),
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
       noticePoliciesFixture.inactiveNotice().getId(),

@@ -55,7 +55,7 @@ public class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests 
     NoticePolicyBuilder noticePolicy = new NoticePolicyBuilder()
       .withName("Policy with due date notices")
       .withLoanNotices(Collections.singletonList(uponAtDueDateNoticeConfig));
-    useLoanPolicyAsFallback(
+    useFallbackPolicies(
       loanPoliciesFixture.canCirculateRolling().getId(),
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
       noticePoliciesFixture.create(noticePolicy).getId(),
@@ -134,7 +134,7 @@ public class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests 
     NoticePolicyBuilder noticePolicy = new NoticePolicyBuilder()
       .withName("Policy with due date notices")
       .withLoanNotices(Collections.singletonList(uponAtDueDateNoticeConfig));
-    useLoanPolicyAsFallback(
+    useFallbackPolicies(
       loanPoliciesFixture.canCirculateRolling().getId(),
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
       noticePoliciesFixture.create(noticePolicy).getId(),
@@ -188,7 +188,7 @@ public class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests 
     NoticePolicyBuilder noticePolicy = new NoticePolicyBuilder()
       .withName("Policy with due date notices")
       .withLoanNotices(Collections.singletonList(uponAtDueDateNoticeConfig));
-    useLoanPolicyAsFallback(
+    useFallbackPolicies(
       loanPoliciesFixture.canCirculateRolling().getId(),
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
       noticePoliciesFixture.create(noticePolicy).getId(),
@@ -235,7 +235,7 @@ public class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests 
     NoticePolicyBuilder noticePolicy = new NoticePolicyBuilder()
       .withName("Policy with due date notices")
       .withLoanNotices(Collections.singletonList(uponAtDueDateNoticeConfig));
-    useLoanPolicyAsFallback(
+    useFallbackPolicies(
       loanPoliciesFixture.canCirculateRolling().getId(),
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
       noticePoliciesFixture.create(noticePolicy).getId(),

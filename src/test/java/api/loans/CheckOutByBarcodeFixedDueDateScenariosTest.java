@@ -61,11 +61,7 @@ public class CheckOutByBarcodeFixedDueDateScenariosTest extends APITests {
       .withClosedLibraryDueDateManagement(DueDateManagement.MOVE_TO_THE_END_OF_THE_NEXT_OPEN_DAY.getValue())
       .limitedBySchedule(fixedDueDateSchedulesId);
 
-    UUID loanPolicyId = loanPolicyClient.create(loanPolicy).getId();
-    UUID requestPolicyId = requestPoliciesFixture.allowAllRequestPolicy().getId();
-    UUID noticePolicyId = noticePoliciesFixture.activeNotice().getId();
-    UUID overdueFinePolicyId = overdueFinePoliciesFixture.facultyStandard().getId();
-    useLoanPolicyAsFallback(loanPolicyId, requestPolicyId, noticePolicyId, overdueFinePolicyId);
+    use(loanPolicy);
 
     IndividualResource loan = loansFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
@@ -110,12 +106,7 @@ public class CheckOutByBarcodeFixedDueDateScenariosTest extends APITests {
       .withClosedLibraryDueDateManagement(DueDateManagement.MOVE_TO_THE_END_OF_THE_NEXT_OPEN_DAY.getValue())
       .fixed(fixedDueDateSchedulesId);
 
-
-    UUID loanPolicyId = loanPolicyClient.create(loanPolicy).getId();
-    UUID requestPolicyId = requestPoliciesFixture.allowAllRequestPolicy().getId();
-    UUID noticePolicyId = noticePoliciesFixture.activeNotice().getId();
-    UUID overdueFinePolicyId = overdueFinePoliciesFixture.facultyStandard().getId();
-    useLoanPolicyAsFallback(loanPolicyId, requestPolicyId, noticePolicyId, overdueFinePolicyId);
+    use(loanPolicy);
 
     IndividualResource loan = loansFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
@@ -162,11 +153,7 @@ public class CheckOutByBarcodeFixedDueDateScenariosTest extends APITests {
       .withClosedLibraryDueDateManagement(DueDateManagement.MOVE_TO_THE_END_OF_THE_NEXT_OPEN_DAY.getValue())
       .limitedBySchedule(fixedDueDateSchedulesId);
 
-    UUID loanPolicyId = loanPolicyClient.create(loanPolicy).getId();
-    UUID requestPolicyId = requestPoliciesFixture.allowAllRequestPolicy().getId();
-    UUID noticePolicyId = noticePoliciesFixture.activeNotice().getId();
-    UUID overdueFinePolicyId = overdueFinePoliciesFixture.facultyStandard().getId();
-    useLoanPolicyAsFallback(loanPolicyId, requestPolicyId, noticePolicyId, overdueFinePolicyId);
+    use(loanPolicy);
 
     IndividualResource loan = loansFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()

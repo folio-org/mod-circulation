@@ -508,7 +508,7 @@ public class RequestsAPIUpdatingTests extends APITests {
     NoticePolicyBuilder noticePolicy = new NoticePolicyBuilder()
       .withName("Policy with request cancellation notice")
       .withLoanNotices(Collections.singletonList(requestCancellationConfiguration));
-    useLoanPolicyAsFallback(
+    useFallbackPolicies(
       loanPoliciesFixture.canCirculateRolling().getId(),
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
       noticePoliciesFixture.create(noticePolicy).getId(),
@@ -569,7 +569,7 @@ public class RequestsAPIUpdatingTests extends APITests {
     NoticePolicyBuilder noticePolicy = new NoticePolicyBuilder()
       .withName("Policy with request cancellation notice")
       .withLoanNotices(Collections.singletonList(requestCancellationConfiguration));
-    useLoanPolicyAsFallback(
+    useFallbackPolicies(
       loanPoliciesFixture.canCirculateRolling().getId(),
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
       noticePoliciesFixture.create(noticePolicy).getId(),

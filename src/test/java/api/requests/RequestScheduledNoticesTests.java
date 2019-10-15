@@ -81,7 +81,7 @@ public class RequestScheduledNoticesTests extends APITests {
       .withName("request policy")
       .withRequestNotices(Collections.singletonList(requestNotice));
 
-    useLoanPolicyAsFallback(
+    useFallbackPolicies(
       loanPoliciesFixture.canCirculateRolling().getId(),
       requestPoliciesFixture.pageRequestPolicy().getId(),
       noticePoliciesFixture.create(noticePolicyBuilder).getId(),
@@ -134,7 +134,7 @@ public class RequestScheduledNoticesTests extends APITests {
       .withName("request policy")
       .withRequestNotices(Collections.singletonList(requestNotice));
 
-    useLoanPolicyAsFallback(
+    useFallbackPolicies(
       loanPoliciesFixture.canCirculateRolling().getId(),
       requestPoliciesFixture.pageRequestPolicy().getId(),
       noticePoliciesFixture.create(noticePolicyBuilder).getId(),
@@ -170,7 +170,7 @@ public class RequestScheduledNoticesTests extends APITests {
       .withName("request policy")
       .withRequestNotices(Collections.singletonList(requestNotice));
 
-    useLoanPolicyAsFallback(
+    useFallbackPolicies(
       loanPoliciesFixture.canCirculateRolling().getId(),
       requestPoliciesFixture.pageRequestPolicy().getId(),
       noticePoliciesFixture.create(noticePolicyBuilder).getId(),
@@ -208,7 +208,7 @@ public class RequestScheduledNoticesTests extends APITests {
       .withName("request policy")
       .withRequestNotices(Collections.singletonList(requestNotice));
 
-    useLoanPolicyAsFallback(
+    useFallbackPolicies(
       loanPoliciesFixture.canCirculateRolling().getId(),
       requestPoliciesFixture.pageRequestPolicy().getId(),
       noticePoliciesFixture.create(noticePolicyBuilder).getId(),
@@ -261,7 +261,7 @@ public class RequestScheduledNoticesTests extends APITests {
       .withName("request policy")
       .withRequestNotices(Collections.singletonList(requestNotice));
 
-    useLoanPolicyAsFallback(
+    useFallbackPolicies(
       loanPoliciesFixture.canCirculateRolling().getId(),
       requestPoliciesFixture.pageRequestPolicy().getId(),
       noticePoliciesFixture.create(noticePolicyBuilder).getId(),
@@ -337,7 +337,7 @@ public class RequestScheduledNoticesTests extends APITests {
       .withName("request policy")
       .withRequestNotices(Collections.singletonList(requestNotice));
 
-    useLoanPolicyAsFallback(
+    useFallbackPolicies(
       loanPoliciesFixture.canCirculateRolling().getId(),
       requestPoliciesFixture.pageRequestPolicy().getId(),
       noticePoliciesFixture.create(noticePolicyBuilder).getId(),
@@ -397,7 +397,7 @@ public class RequestScheduledNoticesTests extends APITests {
       .withName("request policy")
       .withRequestNotices(Collections.singletonList(requestNotice));
 
-    useLoanPolicyAsFallback(
+    useFallbackPolicies(
       loanPoliciesFixture.canCirculateRolling().getId(),
       requestPoliciesFixture.pageRequestPolicy().getId(),
       noticePoliciesFixture.create(noticePolicyBuilder).getId(),

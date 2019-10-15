@@ -159,7 +159,7 @@ public class OverrideCheckOutByBarcodeTests extends APITests {
     LoanPolicyBuilder loanablePolicy = new LoanPolicyBuilder()
       .withName("Loanable Policy")
       .rolling(Period.days(2));
-    useLoanPolicyAsFallback(
+    useFallbackPolicies(
       loanPoliciesFixture.create(loanablePolicy).getId(),
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
       noticePoliciesFixture.activeNotice().getId(),
@@ -333,7 +333,7 @@ public class OverrideCheckOutByBarcodeTests extends APITests {
       .withLoanable(false)
       .notRenewable();
 
-    useLoanPolicyAsFallback(
+    useFallbackPolicies(
       loanPoliciesFixture.create(notLoanablePolicy).getId(),
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
       noticePoliciesFixture.inactiveNotice().getId(),

@@ -74,7 +74,7 @@ public class MoveRequestPolicyTests extends APITests {
       .withName("Policy with recall notice")
       .withLoanNotices(singletonList(recallToLoaneeConfiguration));
 
-    useLoanPolicyAsFallback(
+    useFallbackPolicies(
       loanPoliciesFixture.canCirculateRolling().getId(),
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
       noticePoliciesFixture.create(noticePolicy).getId(),
@@ -296,7 +296,7 @@ public class MoveRequestPolicyTests extends APITests {
 
     final IndividualResource loanPolicy = loanPoliciesFixture.create(canCirculateRollingPolicy);
 
-    useLoanPolicyAsFallback(loanPolicy.getId(),
+    useFallbackPolicies(loanPolicy.getId(),
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
       noticePoliciesFixture.create(noticePolicy).getId(),
       overdueFinePoliciesFixture.facultyStandard().getId());
@@ -364,7 +364,7 @@ public class MoveRequestPolicyTests extends APITests {
 
     final IndividualResource loanPolicy = loanPoliciesFixture.create(canCirculateRollingPolicy);
 
-    useLoanPolicyAsFallback(loanPolicy.getId(),
+    useFallbackPolicies(loanPolicy.getId(),
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
       noticePoliciesFixture.create(noticePolicy).getId(),
       overdueFinePoliciesFixture.facultyStandard().getId());

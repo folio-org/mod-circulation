@@ -1041,7 +1041,7 @@ public class CheckOutCalculateDueDateTests extends APITests {
 
     IndividualResource loanPolicy = loanPoliciesFixture.create(loanPolicyEntry);
 
-    useLoanPolicyAsFallback(
+    useFallbackPolicies(
       loanPolicy.getId(),
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
       noticePoliciesFixture.activeNotice().getId(),
