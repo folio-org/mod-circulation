@@ -9,7 +9,6 @@ import java.util.concurrent.CompletableFuture;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.domain.notice.NoticeEventType;
-import org.folio.circulation.domain.notice.NoticeTiming;
 import org.folio.circulation.domain.notice.PatronNoticeEvent;
 import org.folio.circulation.domain.notice.PatronNoticeEventBuilder;
 import org.folio.circulation.domain.notice.PatronNoticeService;
@@ -61,7 +60,6 @@ public class LoanNoticeSender {
       .withItem(loan.getItem())
       .withUser(loan.getUser())
       .withEventType(eventType)
-      .withTiming(NoticeTiming.UPON_AT)
       .withNoticeContext(noticeContext)
       .build();
 
