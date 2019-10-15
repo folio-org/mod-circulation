@@ -190,7 +190,7 @@ class CheckInProcessAdapter {
 
   private Result<CheckInProcessRecords> sendAvailableNotice(Request request, User user, CheckInProcessRecords records) {
     Item item = records.getItem();
-    if (item.isAwaitingPickup()) {
+    if (item.isAwaitingPickup() && item.hasChanged()) {
       PatronNoticeEvent noticeEvent = new PatronNoticeEventBuilder()
         .withItem(item)
         .withUser(user)
