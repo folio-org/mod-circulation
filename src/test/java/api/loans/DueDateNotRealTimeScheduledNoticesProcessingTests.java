@@ -55,11 +55,7 @@ public class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests 
     NoticePolicyBuilder noticePolicy = new NoticePolicyBuilder()
       .withName("Policy with due date notices")
       .withLoanNotices(Collections.singletonList(uponAtDueDateNoticeConfig));
-    useFallbackPolicies(
-      loanPoliciesFixture.canCirculateRolling().getId(),
-      requestPoliciesFixture.allowAllRequestPolicy().getId(),
-      noticePoliciesFixture.create(noticePolicy).getId(),
-      overdueFinePoliciesFixture.facultyStandard().getId());
+    use(noticePolicy);
 
     DateTime loanDate = new DateTime(2019, 8, 23, 10, 30);
 
@@ -134,11 +130,7 @@ public class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests 
     NoticePolicyBuilder noticePolicy = new NoticePolicyBuilder()
       .withName("Policy with due date notices")
       .withLoanNotices(Collections.singletonList(uponAtDueDateNoticeConfig));
-    useFallbackPolicies(
-      loanPoliciesFixture.canCirculateRolling().getId(),
-      requestPoliciesFixture.allowAllRequestPolicy().getId(),
-      noticePoliciesFixture.create(noticePolicy).getId(),
-      overdueFinePoliciesFixture.facultyStandard().getId());
+    use(noticePolicy);
 
     DateTime loanDate = new DateTime(2019, 8, 23, 10, 30);
 
@@ -188,11 +180,7 @@ public class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests 
     NoticePolicyBuilder noticePolicy = new NoticePolicyBuilder()
       .withName("Policy with due date notices")
       .withLoanNotices(Collections.singletonList(uponAtDueDateNoticeConfig));
-    useFallbackPolicies(
-      loanPoliciesFixture.canCirculateRolling().getId(),
-      requestPoliciesFixture.allowAllRequestPolicy().getId(),
-      noticePoliciesFixture.create(noticePolicy).getId(),
-      overdueFinePoliciesFixture.facultyStandard().getId());
+    use(noticePolicy);
 
     DateTime loanDate = new DateTime(2019, 8, 23, 10, 30);
 
@@ -235,11 +223,8 @@ public class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests 
     NoticePolicyBuilder noticePolicy = new NoticePolicyBuilder()
       .withName("Policy with due date notices")
       .withLoanNotices(Collections.singletonList(uponAtDueDateNoticeConfig));
-    useFallbackPolicies(
-      loanPoliciesFixture.canCirculateRolling().getId(),
-      requestPoliciesFixture.allowAllRequestPolicy().getId(),
-      noticePoliciesFixture.create(noticePolicy).getId(),
-      overdueFinePoliciesFixture.facultyStandard().getId());
+
+    use(noticePolicy);
 
     DateTime loanDate = new DateTime(2019, 8, 23, 10, 30);
 

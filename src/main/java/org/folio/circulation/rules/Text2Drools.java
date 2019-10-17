@@ -338,24 +338,18 @@ public class Text2Drools extends CirculationRulesBaseListener {
   }
 
   private static String policyMatchString(PolicyContext policy) {
-    String policyTypeName = "";
     switch (policy.POLICY_TYPE().toString()) {
       case "l":
-        policyTypeName = "loan";
-        break;
+        return "    match.loanPolicyId = ";
       case "r":
-        policyTypeName = "request";
-        break;
+        return "    match.requestPolicyId = ";
       case "n":
-        policyTypeName = "notice";
-        break;
+        return "    match.noticePolicyId = ";
       case "o":
-        policyTypeName = "overdue";
-        break;
+        return "    match.overduePolicyId = ";
       default: throw new IllegalArgumentException("Unknown policy type: "
         + policy.POLICY_TYPE().toString());
     }
-    return String.format("    match.%sPolicyId = ", policyTypeName);
   }
 
   private int getSalience(int line) {

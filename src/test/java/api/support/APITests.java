@@ -331,6 +331,12 @@ public abstract class APITests {
   }
 
 
+  /**
+   * This method uses the loan policy, allowAllRequestPolicy request policy,
+   * inactiveNotice notice policy, facultyStandard overdue fine policy from
+   * the loanPolicyBuilder.
+   * @param loanPolicyBuilder - loan policy builder.
+   */
   protected void setFallbackPolicies(LoanPolicyBuilder loanPolicyBuilder)
     throws InterruptedException,
     MalformedURLException,
@@ -343,6 +349,70 @@ public abstract class APITests {
       overdueFinePoliciesFixture.facultyStandard().getId());
   }
 
+  /**
+   * This method uses the loan policy, allowAllRequestPolicy request policy,
+   * activeNotice notice policy, facultyStandard overdue fine policy from
+   * the loanPolicyBuilder.
+   * @param loanPolicyBuilder - loan policy builder.
+   */
+  protected void useWithActiveNotice(LoanPolicyBuilder loanPolicyBuilder)
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+    useFallbackPolicies(
+      loanPoliciesFixture.create(loanPolicyBuilder).getId(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
+      noticePoliciesFixture.activeNotice().getId(),
+      overdueFinePoliciesFixture.facultyStandard().getId()
+    );
+  }
+
+  /**
+   * This method uses the loan policy, allowAllRequestPolicy request policy,
+   * activeNotice notice policy, facultyStandard overdue fine policy from
+   * the loanPolicyBuilder.
+   * @param loanPolicyBuilder - loan policy builder.
+   */
+  protected void use(LoanPolicyBuilder loanPolicyBuilder)
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+    useFallbackPolicies(
+      loanPolicyClient.create(loanPolicyBuilder).getId(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
+      noticePoliciesFixture.activeNotice().getId(),
+      overdueFinePoliciesFixture.facultyStandard().getId());
+  }
+
+  /**
+   * This method uses the loan policy, allowAllRequestPolicy request policy,
+   * activeNotice notice policy, facultyStandard overdue fine policy from
+   * the loanPolicyBuilder and noticePolicyBuilder.
+   * @param loanPolicyBuilder - loan policy builder.
+   */
+  protected void use(LoanPolicyBuilder loanPolicyBuilder,
+                     NoticePolicyBuilder noticePolicyBuilder)
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+    useFallbackPolicies(
+      loanPoliciesFixture.create(loanPolicyBuilder).getId(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
+      noticePoliciesFixture.create(noticePolicyBuilder).getId(),
+      overdueFinePoliciesFixture.facultyStandard().getId());
+
+  }
+
+  /**
+   * This method uses notice policy, canCirculateRolling loan policy,
+   * allowAllRequestPolicy request policy,
+   * facultyStandard overdue fine policy from
+   * the loanPolicyBuilder.
+   * @param noticePolicy - notice policy.
+   */
   protected void use(NoticePolicyBuilder noticePolicy)
     throws InterruptedException,
     MalformedURLException,
@@ -355,16 +425,22 @@ public abstract class APITests {
       overdueFinePoliciesFixture.facultyStandard().getId());
   }
 
-  protected void use(LoanPolicyBuilder loanPolicy)
+  /**
+   * This method uses notice policy, canCirculateRolling loan policy,
+   * allowAllRequestPolicy request policy, facultyStandard overdue fine policy from
+   * the loanPolicyBuilder.
+   * @param noticePolicy - notice policy.
+   */
+  protected void useWithPaging(NoticePolicyBuilder noticePolicy)
     throws InterruptedException,
     MalformedURLException,
     TimeoutException,
     ExecutionException {
-    UUID loanPolicyId = loanPolicyClient.create(loanPolicy).getId();
-    UUID requestPolicyId = requestPoliciesFixture.allowAllRequestPolicy().getId();
-    UUID noticePolicyId = noticePoliciesFixture.activeNotice().getId();
-    UUID overdueFinePolicyId = overdueFinePoliciesFixture.facultyStandard().getId();
-    useFallbackPolicies(loanPolicyId, requestPolicyId, noticePolicyId, overdueFinePolicyId);
+    useFallbackPolicies(
+      loanPoliciesFixture.canCirculateRolling().getId(),
+      requestPoliciesFixture.pageRequestPolicy().getId(),
+      noticePoliciesFixture.create(noticePolicy).getId(),
+      overdueFinePoliciesFixture.facultyStandard().getId());
   }
 
   protected void warmUpApplyEndpoint()

@@ -59,46 +59,49 @@ public class Text2DroolsTest {
       "m book cd dvd + t special-items: l in-house r request-6 n notice-6 o overdue-6",
       "t special-items: l policy-d r request-7 n notice-7 o overdue-7",
       "    g visitor alumni: l in-house r request-8 n notice-8 o overdue-8",
-      "a " + FIRST_INSTITUTION_ID + ": l in-house r request-8 n notice-8 o overdue-8"
+      "a " + FIRST_INSTITUTION_ID + ": l in-university r request-9 n notice-9 o overdue-9"
       );
   private String [][] loanTestCases = new String[][] {
-    // item type,   loan type,      patron type,   loan policies
-    { "foo",       "foo",           "foo",                                                        "no-loan" },
-    { "book",      "regular",       "undergrad",                                      "policy-a", "no-loan" },
-    { "book",      "special-items", "undergrad",  "in-house",             "policy-d", "policy-a", "no-loan" },
-    { "book",      "special-items", "visitor",    "in-house", "in-house", "policy-d", "policy-a", "no-loan" },
-    { "newspaper", "regular",       "undergrad",                                      "policy-c", "no-loan" },
-    { "newspaper", "special-items", "undergrad",                          "policy-d", "policy-c", "no-loan" },
-    { "newspaper", "special-items", "visitor",                "in-house", "policy-d", "policy-c", "no-loan" },
-    { "dvd",       "special-items", "undergrad",  "in-house",             "policy-d", "policy-a", "no-loan" },
-    { "map",       "special-items", "alumni",                 "in-house", "policy-d",             "no-loan" },
+    // item type,   loan type,      patron type, institution id,   loan policies
+    { "foo",       "foo",           "foo",       SECOND_INSTITUTION_ID,                                                      "no-loan" },
+    { "book",      "regular",       "undergrad", FIRST_INSTITUTION_ID,                        "in-university",   "policy-a", "no-loan" },
+    { "book",      "special-items", "undergrad", FIRST_INSTITUTION_ID,  "in-house", "policy-d", "in-university", "policy-a", "no-loan" },
+    { "book",      "special-items", "visitor",   SECOND_INSTITUTION_ID,      "in-house", "in-house", "policy-d", "policy-a", "no-loan" },
+    { "newspaper", "regular",       "undergrad", FIRST_INSTITUTION_ID,                          "in-university", "policy-c", "no-loan" },
+    { "newspaper", "special-items", "undergrad", FIRST_INSTITUTION_ID,              "policy-d", "in-university", "policy-c", "no-loan" },
+    { "newspaper", "special-items", "visitor",   FIRST_INSTITUTION_ID,  "in-house", "policy-d", "in-university", "policy-c", "no-loan" },
+    { "dvd",       "special-items", "undergrad", FIRST_INSTITUTION_ID,  "in-house", "policy-d", "in-university", "policy-a", "no-loan" },
+    { "map",       "special-items", "alumni",    FIRST_INSTITUTION_ID,              "in-house", "policy-d", "in-university", "no-loan" },
+    { "foo",       "foo",           "foo",       FIRST_INSTITUTION_ID,                                      "in-university", "no-loan" },
   };
 
   private String[][] requestTestCases = new String[][] {
-    // item type,   request type,   patron type,   request policies
-    { "foo",        "foo",          "foo",                                                            "no-hold" },
-    { "book",       "regular",      "undergrad",                                         "request-1", "no-hold" },
-    { "book",      "special-items", "undergrad",  "request-6",              "request-7", "request-1", "no-hold" },
-    { "book",      "special-items", "visitor",    "request-8", "request-6", "request-7", "request-1", "no-hold" },
-    { "newspaper", "regular",       "undergrad",                                         "request-2", "no-hold" },
-    { "newspaper", "special-items", "undergrad",                            "request-7", "request-2", "no-hold" },
-    { "newspaper", "special-items", "visitor",                 "request-8", "request-7", "request-2", "no-hold" },
+    // item type,   request type,   patron type, institution id,  request policies
+    { "foo",        "foo",          "foo",       SECOND_INSTITUTION_ID,                                                     "no-hold" },
+    { "book",       "regular",      "undergrad", FIRST_INSTITUTION_ID,                            "request-9", "request-1", "no-hold" },
+    { "book",      "special-items", "undergrad", FIRST_INSTITUTION_ID,  "request-6", "request-7", "request-9", "request-1", "no-hold" },
+    { "book",      "special-items", "visitor",   SECOND_INSTITUTION_ID, "request-8", "request-6", "request-7", "request-1", "no-hold" },
+    { "newspaper", "regular",       "undergrad", FIRST_INSTITUTION_ID,                            "request-9", "request-2", "no-hold" },
+    { "newspaper", "special-items", "undergrad", FIRST_INSTITUTION_ID,               "request-7", "request-9", "request-2", "no-hold" },
+    { "newspaper", "special-items", "visitor",   FIRST_INSTITUTION_ID,  "request-8", "request-7", "request-9", "request-2", "no-hold" },
+    { "foo",       "foo",           "foo",       FIRST_INSTITUTION_ID,                                         "request-9", "no-hold" },
   };
 
   private String[][] overdueTestCases = new String[][] {
-    // item type,   request type,   patron type,   request policies
-    { "foo",        "foo",          "foo",                                                            "overdue" },
-    { "book",       "regular",      "undergrad",                                         "overdue-1", "overdue"},
-    { "book",      "special-items", "undergrad",  "overdue-6",              "overdue-7", "overdue-1", "overdue" },
-    { "book",      "special-items", "visitor",    "overdue-8", "overdue-6", "overdue-7", "overdue-1", "overdue" },
-    { "newspaper", "regular",       "undergrad",                                         "overdue-2", "overdue" },
-    { "newspaper", "special-items", "undergrad",                            "overdue-7", "overdue-2", "overdue" },
-    { "newspaper", "special-items", "visitor",                 "overdue-8", "overdue-7", "overdue-2", "overdue" },
+    // item type,   request type,   patron type, institution id,   overdue policies
+    { "foo",       "foo",           "foo",       SECOND_INSTITUTION_ID,                                                     "overdue" },
+    { "book",      "regular",       "undergrad", FIRST_INSTITUTION_ID,                            "overdue-9", "overdue-1", "overdue" },
+    { "book",      "special-items", "undergrad", FIRST_INSTITUTION_ID,  "overdue-6", "overdue-7", "overdue-9", "overdue-1", "overdue" },
+    { "book",      "special-items", "visitor",   SECOND_INSTITUTION_ID, "overdue-8", "overdue-6", "overdue-7", "overdue-1", "overdue" },
+    { "newspaper", "regular",       "undergrad", FIRST_INSTITUTION_ID,                            "overdue-9", "overdue-2", "overdue" },
+    { "newspaper", "special-items", "undergrad", FIRST_INSTITUTION_ID,               "overdue-7", "overdue-9", "overdue-2", "overdue" },
+    { "newspaper", "special-items", "visitor",   FIRST_INSTITUTION_ID,  "overdue-8", "overdue-7", "overdue-9", "overdue-2", "overdue" },
+    { "foo",       "foo",           "foo",       FIRST_INSTITUTION_ID,                                         "overdue-9", "overdue" },
   };
 
-  /** @return s[0] + " " + s[1] + " " + s[2] */
-  private String first3(String [] s) {
-    return s[0] + " " + s[1] + " " + s[2];
+  /** @return s[0] + " " + s[1] + " " + s[2] + " " + s[3] */
+  private String first4(String [] s) {
+    return s[0] + " " + s[1] + " " + s[2] + " " + s[3];
   }
 
   @Test
@@ -106,9 +109,9 @@ public class Text2DroolsTest {
     String drools = Text2Drools.convert(test1);
     log.debug("drools = {}" + drools);
     for (String [] s : loanTestCases) {
-      assertThat(first3(s), Drools.loanPolicy(drools, params(s[0], s[1], s[2], "shelf"),
-        createLocation(SECOND_INSTITUTION_ID, SECOND_LIBRARY_ID, SECOND_CAMPUS_ID)),
-        is(s[3]));
+      assertThat(first4(s), Drools.loanPolicy(drools, params(s[0], s[1], s[2], s[3]),
+        createLocation(s[3], SECOND_LIBRARY_ID, SECOND_CAMPUS_ID)),
+        is(s[4]));
     }
   }
 
@@ -116,8 +119,8 @@ public class Text2DroolsTest {
   public void test1() {
     Drools drools = new Drools(Text2Drools.convert(test1));
     for (String [] s : loanTestCases) {
-      assertThat(first3(s), drools.loanPolicy(params(s[0], s[1], s[2], "shelf"),
-        createLocation(SECOND_INSTITUTION_ID, SECOND_LIBRARY_ID, SECOND_CAMPUS_ID)), is(s[3]));
+        assertThat(first4(s), drools.loanPolicy(params(s[0], s[1], s[2], s[3]),
+          createLocation(s[3], SECOND_LIBRARY_ID, SECOND_CAMPUS_ID)), is(s[4]));
     }
   }
 
@@ -130,8 +133,8 @@ public class Text2DroolsTest {
   public void testRequestPolicy() {
     String drools = Text2Drools.convert(test1);
     for (String[] s : requestTestCases) {
-      assertThat(first3(s), Drools.requestPolicy(drools, params(s[0], s[1], s[2], "shelf"),
-        createLocation(SECOND_INSTITUTION_ID, SECOND_LIBRARY_ID, SECOND_CAMPUS_ID)), is(s[3]));
+      assertThat(first4(s), Drools.requestPolicy(drools, params(s[0], s[1], s[2], s[3]),
+        createLocation(s[3], SECOND_LIBRARY_ID, SECOND_CAMPUS_ID)), is(s[4]));
     }
   }
 
@@ -140,12 +143,12 @@ public class Text2DroolsTest {
     testOverdueFinePolicies(test1, overdueTestCases);
   }
 
-  /** s without the first 3 elements, converted to a String.
+  /** s without the first 4 elements, converted to a String.
    * <p>
-   * expected({"a", "b", "c", "d", "e", "f", "g"}) = "[d, e, f, g]"
+   * expected({"a", "b", "c", "d", "e", "f", "g"}) = "[e, f, g]"
    * */
   private String expected(String [] s) {
-    return Arrays.toString(Arrays.copyOfRange(s, 3, s.length));
+    return Arrays.toString(Arrays.copyOfRange(s, 4, s.length));
   }
 
   /**
@@ -157,39 +160,39 @@ public class Text2DroolsTest {
   private void testLoanPolicies(String circulationRules, String [][] cases) {
     Drools drools = new Drools(Text2Drools.convert(circulationRules));
     for (String [] s : cases) {
-      JsonArray array = drools.loanPolicies(params(s[0], s[1], s[2], "shelf"),
-        createLocation(SECOND_INSTITUTION_ID, SECOND_LIBRARY_ID, SECOND_CAMPUS_ID));
+      JsonArray array = drools.loanPolicies(params(s[0], s[1], s[2], s[3]),
+        createLocation(s[3], SECOND_LIBRARY_ID, SECOND_CAMPUS_ID));
       String [] policies = new String[array.size()];
       for (int i=0; i<array.size(); i++) {
         policies[i] = array.getJsonObject(i).getString("loanPolicyId");
       }
-      assertThat(first3(s), Arrays.toString(policies), is(expected(s)));
+      assertThat(first4(s), Arrays.toString(policies), is(expected(s)));
     }
   }
 
   private void testRequestPolicies(String circulationRules, String[][] cases) {
       Drools drools = new Drools(Text2Drools.convert(circulationRules));
       for (String [] s : cases) {
-        JsonArray array = drools.requestPolicies(params(s[0], s[1], s[2], "shelf"),
-          createLocation(SECOND_INSTITUTION_ID, SECOND_LIBRARY_ID, SECOND_CAMPUS_ID));
+        JsonArray array = drools.requestPolicies(params(s[0], s[1], s[2], s[3]),
+          createLocation(s[3], SECOND_LIBRARY_ID, SECOND_CAMPUS_ID));
         String [] policies = new String[array.size()];
         for (int i=0; i<array.size(); i++) {
           policies[i] = array.getJsonObject(i).getString("requestPolicyId");
         }
-        assertThat(first3(s), Arrays.toString(policies), is(expected(s)));
+        assertThat(first4(s), Arrays.toString(policies), is(expected(s)));
       }
   }
 
   private void testOverdueFinePolicies(String circulationRules, String[][] cases) {
     Drools drools = new Drools(Text2Drools.convert(circulationRules));
     for (String [] s : cases) {
-      JsonArray array = drools.overduePolicies(params(s[0], s[1], s[2], "shelf"),
-        createLocation(SECOND_INSTITUTION_ID, SECOND_LIBRARY_ID, SECOND_CAMPUS_ID));
+      JsonArray array = drools.overduePolicies(params(s[0], s[1], s[2], s[3]),
+        createLocation(s[3], SECOND_LIBRARY_ID, SECOND_CAMPUS_ID));
       String [] policies = new String[array.size()];
       for (int i=0; i<array.size(); i++) {
         policies[i] = array.getJsonObject(i).getString("overduePolicyId");
       }
-      assertThat(first3(s), Arrays.toString(policies), is(expected(s)));
+      assertThat(first4(s), Arrays.toString(policies), is(expected(s)));
     }
   }
 
@@ -223,9 +226,9 @@ public class Text2DroolsTest {
         ""
     );
     String [][] cases = {
-        { "book", "special-items", "visitor",     "in-house", "policy-b", "no-loan" },
-        { "book", "special-items", "undergrad",               "policy-b", "no-loan" },
-        { "dvd",  "special-items", "undergrad",                           "no-loan" },
+        { "book", "special-items", "visitor",   FIRST_INSTITUTION_ID,     "in-house", "policy-b", "no-loan" },
+        { "book", "special-items", "undergrad", FIRST_INSTITUTION_ID,                 "policy-b", "no-loan" },
+        { "dvd",  "special-items", "undergrad", FIRST_INSTITUTION_ID,                             "no-loan" },
     };
     testLoanPolicies(circulationRules, cases);
   }
