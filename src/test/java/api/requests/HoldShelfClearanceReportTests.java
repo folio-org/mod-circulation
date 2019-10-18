@@ -440,6 +440,62 @@ public class HoldShelfClearanceReportTests extends APITests {
     assertThat(response.getJson().getInteger(TOTAL_RECORDS), is(0));
   }
 
+  @Test
+  public void checkWhenPickupRequestClosedInFirstServicePoint()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+
+    // init for SP1
+    final IndividualResource rebeca = usersFixture.rebecca();
+    final UUID firstServicePointId = servicePointsFixture.cd1().getId();
+    final String firstAwaitingPickupRequestClosedDate = "2019-03-11T15:45:23.000+0000";
+
+    // init for SP2
+    final IndividualResource steve = usersFixture.steve();
+    final UUID secondServicePointId = servicePointsFixture.cd2().getId();
+
+    // #1 check-out the item in SP1
+    loansFixture.checkOutByBarcode(smallAngryPlanet, usersFixture.james());
+
+    // #2 create the first request in SP1
+    RequestBuilder firstRequestBuilderOnItem = new RequestBuilder()
+      .open()
+      .hold()
+      .withPickupServicePointId(firstServicePointId)
+      .forItem(smallAngryPlanet)
+      .by(rebeca);
+    IndividualResource firstRequest = requestsClient.create(firstRequestBuilderOnItem);
+
+    // #3 create the second request in SP2
+    new RequestBuilder()
+      .open()
+      .hold()
+      .withPickupServicePointId(secondServicePointId)
+      .forItem(smallAngryPlanet)
+      .by(steve);
+
+    // #4 check-in the item in SP1
+    loansFixture.checkInByBarcode(smallAngryPlanet);
+
+    // #5 cancel the request in SP1
+    requestsClient.replace(firstRequest.getId(),
+      firstRequestBuilderOnItem.withStatus(RequestStatus.CLOSED_PICKUP_EXPIRED.getValue()).create()
+        .put(CLOSED_DATE_KEY, firstAwaitingPickupRequestClosedDate));
+
+    // #6 get the report in SP1
+    Response response = ResourceClient.forRequestReport(client).getById(firstServicePointId);
+    verifyResponse(smallAngryPlanet, rebeca, response, RequestStatus.CLOSED_PICKUP_EXPIRED);
+
+    // #7 get the report in SP2 >>> empty
+    response = ResourceClient.forRequestReport(client).getById(secondServicePointId);
+    assertThat(response.getStatusCode(), is(HTTP_OK));
+    assertThat(response.getJson().getInteger(TOTAL_RECORDS), is(0));
+  }
+
   private void verifyResponse(InventoryItemResource item,
                               IndividualResource requester,
                               Response response,
