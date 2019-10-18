@@ -415,16 +415,26 @@ public class HoldShelfClearanceReportTests extends APITests {
       .on(DateTime.now(DateTimeZone.UTC))
       .at(secondServicePointId));
 
-    // #7 cancel the request in SP2 >> last closed request
+    // #7 Check that the report doesn't contain data when the item has the status `Awaiting pickup`,
+    // first request - CLOSED_PICKUP_EXPIRED and second request - `Awaiting pickup`
+    Response response = ResourceClient.forRequestReport(client).getById(firstServicePointId);
+    assertThat(response.getStatusCode(), is(HTTP_OK));
+    assertThat(response.getJson().getInteger(TOTAL_RECORDS), is(0));
+
+    response = ResourceClient.forRequestReport(client).getById(secondServicePointId);
+    assertThat(response.getStatusCode(), is(HTTP_OK));
+    assertThat(response.getJson().getInteger(TOTAL_RECORDS), is(0));
+
+    // #8 cancel the request in SP2 >> last closed request
     requestsClient.replace(secondRequest.getId(),
       secondRequestBuilderOnItem.withStatus(RequestStatus.CLOSED_CANCELLED.getValue()).create()
         .put(CLOSED_DATE_KEY, secondAwaitingPickupRequestClosedDate));
 
-    // #8 get the report in SP2
-    Response response = ResourceClient.forRequestReport(client).getById(secondServicePointId);
+    // #9 get the report in SP2
+    response = ResourceClient.forRequestReport(client).getById(secondServicePointId);
     verifyResponse(smallAngryPlanet, steve, response, RequestStatus.CLOSED_CANCELLED);
 
-    // #9 get the report in SP1 >>> empty
+    // #10 get the report in SP1 >>> empty
     response = ResourceClient.forRequestReport(client).getById(firstServicePointId);
     assertThat(response.getStatusCode(), is(HTTP_OK));
     assertThat(response.getJson().getInteger(TOTAL_RECORDS), is(0));
