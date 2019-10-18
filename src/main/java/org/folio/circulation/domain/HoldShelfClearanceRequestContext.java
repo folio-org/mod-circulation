@@ -13,7 +13,7 @@ public class HoldShelfClearanceRequestContext {
     return this;
   }
 
-  public HoldShelfClearanceRequestContext withAwaitingPickupRequestItemIds(List<String> itemIds) {
+  public HoldShelfClearanceRequestContext withAwaitingPickupRequestItemIds(List<String> requestItemIds) {
     this.awaitingPickupRequestItemIds = itemIds;
     return this;
   }
