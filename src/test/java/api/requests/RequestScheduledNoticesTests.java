@@ -81,7 +81,10 @@ public class RequestScheduledNoticesTests extends APITests {
       .withName("request policy")
       .withRequestNotices(Collections.singletonList(requestNotice));
 
-    useWithPaging(noticePolicyBuilder);
+    useLoanPolicyAsFallback(
+      loanPoliciesFixture.canCirculateRolling().getId(),
+      requestPoliciesFixture.pageRequestPolicy().getId(),
+      noticePoliciesFixture.create(noticePolicyBuilder).getId());
 
     LocalDate requestExpiration = LocalDate.now().plusMonths(3);
     IndividualResource request = requestsFixture.place(new RequestBuilder().page()
@@ -130,7 +133,10 @@ public class RequestScheduledNoticesTests extends APITests {
       .withName("request policy")
       .withRequestNotices(Collections.singletonList(requestNotice));
 
-    useWithPaging(noticePolicyBuilder);
+    useLoanPolicyAsFallback(
+      loanPoliciesFixture.canCirculateRolling().getId(),
+      requestPoliciesFixture.pageRequestPolicy().getId(),
+      noticePoliciesFixture.create(noticePolicyBuilder).getId());
 
     requestsFixture.place(new RequestBuilder().page()
       .forItem(item)
@@ -162,7 +168,10 @@ public class RequestScheduledNoticesTests extends APITests {
       .withName("request policy")
       .withRequestNotices(Collections.singletonList(requestNotice));
 
-    useWithPaging(noticePolicyBuilder);
+    useLoanPolicyAsFallback(
+      loanPoliciesFixture.canCirculateRolling().getId(),
+      requestPoliciesFixture.pageRequestPolicy().getId(),
+      noticePoliciesFixture.create(noticePolicyBuilder).getId());
 
     requestsFixture.place(new RequestBuilder().page()
       .forItem(item)
@@ -196,7 +205,10 @@ public class RequestScheduledNoticesTests extends APITests {
       .withName("request policy")
       .withRequestNotices(Collections.singletonList(requestNotice));
 
-    useWithPaging(noticePolicyBuilder);
+    useLoanPolicyAsFallback(
+      loanPoliciesFixture.canCirculateRolling().getId(),
+      requestPoliciesFixture.pageRequestPolicy().getId(),
+      noticePoliciesFixture.create(noticePolicyBuilder).getId());
 
     LocalDate requestExpiration = LocalDate.now().plusMonths(3);
     IndividualResource request = requestsFixture.place(new RequestBuilder().page()
@@ -245,7 +257,10 @@ public class RequestScheduledNoticesTests extends APITests {
       .withName("request policy")
       .withRequestNotices(Collections.singletonList(requestNotice));
 
-    useWithPaging(noticePolicyBuilder);
+    useLoanPolicyAsFallback(
+      loanPoliciesFixture.canCirculateRolling().getId(),
+      requestPoliciesFixture.pageRequestPolicy().getId(),
+      noticePoliciesFixture.create(noticePolicyBuilder).getId());
 
     LocalDate requestExpiration = LocalDate.now(DateTimeZone.UTC).plusMonths(3);
     RequestBuilder requestBuilder = new RequestBuilder().page()
@@ -317,7 +332,10 @@ public class RequestScheduledNoticesTests extends APITests {
       .withName("request policy")
       .withRequestNotices(Collections.singletonList(requestNotice));
 
-    useWithPaging(noticePolicyBuilder);
+    useLoanPolicyAsFallback(
+      loanPoliciesFixture.canCirculateRolling().getId(),
+      requestPoliciesFixture.pageRequestPolicy().getId(),
+      noticePoliciesFixture.create(noticePolicyBuilder).getId());
 
     LocalDate requestExpiration = LocalDate.now(DateTimeZone.UTC).plusMonths(3);
     RequestBuilder requestBuilder = new RequestBuilder().page()
@@ -373,7 +391,10 @@ public class RequestScheduledNoticesTests extends APITests {
       .withName("request policy")
       .withRequestNotices(Collections.singletonList(requestNotice));
 
-    useWithPaging(noticePolicyBuilder);
+    useLoanPolicyAsFallback(
+      loanPoliciesFixture.canCirculateRolling().getId(),
+      requestPoliciesFixture.pageRequestPolicy().getId(),
+      noticePoliciesFixture.create(noticePolicyBuilder).getId());
 
     LocalDate requestExpiration = LocalDate.now().plusMonths(3);
     RequestBuilder requestBuilder = new RequestBuilder().page()

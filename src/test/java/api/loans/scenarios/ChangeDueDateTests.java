@@ -216,11 +216,10 @@ public class ChangeDueDateTests extends APITests {
         .rolling(org.folio.circulation.domain.policy.Period.months(1))
         .limitedRenewals(renewalLimit));
 
-    useFallbackPolicies(
+    useLoanPolicyAsFallback(
       loanPolicyWithLimitedRenewals.getId(),
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
-      noticePolicy.getId(),
-      overdueFinePoliciesFixture.facultyStandard().getId());
+      noticePolicy.getId());
 
     ItemBuilder itemBuilder = ItemExamples.basedUponSmallAngryPlanet(
       materialTypesFixture.book().getId(),

@@ -1518,11 +1518,10 @@ public class RequestsAPICreationTests extends APITests {
     NoticePolicyBuilder noticePolicy = new NoticePolicyBuilder()
       .withName("Policy with page notice")
       .withLoanNotices(Arrays.asList(pageConfirmationConfiguration, holdConfirmationConfiguration));
-    useFallbackPolicies(
+    useLoanPolicyAsFallback(
       loanPoliciesFixture.canCirculateRolling().getId(),
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
-      noticePoliciesFixture.create(noticePolicy).getId(),
-      overdueFinePoliciesFixture.facultyStandard().getId());
+      noticePoliciesFixture.create(noticePolicy).getId());
 
 
     UUID id = UUID.randomUUID();
@@ -1576,11 +1575,10 @@ public class RequestsAPICreationTests extends APITests {
     NoticePolicyBuilder noticePolicy = new NoticePolicyBuilder()
       .withName("Policy with hold notice")
       .withLoanNotices(Arrays.asList(holdConfirmationConfiguration, recallConfirmationConfiguration));
-    useFallbackPolicies(
+    useLoanPolicyAsFallback(
       loanPoliciesFixture.canCirculateRolling().getId(),
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
-      noticePoliciesFixture.create(noticePolicy).getId(),
-      overdueFinePoliciesFixture.facultyStandard().getId());
+      noticePoliciesFixture.create(noticePolicy).getId());
 
 
     UUID id = UUID.randomUUID();
@@ -1660,11 +1658,10 @@ public class RequestsAPICreationTests extends APITests {
       .withRecallsMinimumGuaranteedLoanPeriod(Period.weeks(2))
       .withRecallsRecallReturnInterval(Period.weeks(1));
 
-    useFallbackPolicies(
+    useLoanPolicyAsFallback(
       loanPoliciesFixture.create(loanPolicy).getId(),
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
-      noticePoliciesFixture.create(noticePolicy).getId(),
-      overdueFinePoliciesFixture.facultyStandard().getId());
+      noticePoliciesFixture.create(noticePolicy).getId());
 
     UUID id = UUID.randomUUID();
     UUID pickupServicePointId = servicePointsFixture.cd1().getId();
@@ -1748,11 +1745,10 @@ public class RequestsAPICreationTests extends APITests {
       .withRecallsMinimumGuaranteedLoanPeriod(Period.weeks(3))
       .withRecallsRecallReturnInterval(Period.weeks(1));
 
-    useFallbackPolicies(
+    useLoanPolicyAsFallback(
       loanPoliciesFixture.create(loanPolicy).getId(),
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
-      noticePoliciesFixture.create(noticePolicy).getId(),
-      overdueFinePoliciesFixture.facultyStandard().getId());
+      noticePoliciesFixture.create(noticePolicy).getId());
 
     UUID id = UUID.randomUUID();
     UUID pickupServicePointId = servicePointsFixture.cd1().getId();

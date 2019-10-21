@@ -364,11 +364,10 @@ public class DueDateScheduledNoticesProcessingTests extends APITests {
         beforeDueDateNoticeConfiguration,
         uponAtDueDateNoticeConfiguration,
         afterDueDateNoticeConfiguration));
-    useFallbackPolicies(
+    useLoanPolicyAsFallback(
       loanPoliciesFixture.canCirculateRolling().getId(),
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
-      noticePoliciesFixture.create(noticePolicy).getId(),
-      overdueFinePoliciesFixture.facultyStandard().getId());
+      noticePoliciesFixture.create(noticePolicy).getId());
   }
 
   private void assertSetUpIsCorrect()

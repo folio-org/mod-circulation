@@ -396,8 +396,10 @@ public class CheckInByBarcodeTests extends APITests {
     NoticePolicyBuilder noticePolicy = new NoticePolicyBuilder()
       .withName("Policy with checkout notice")
       .withLoanNotices(Arrays.asList(checkOutNoticeConfiguration, renewNoticeConfiguration));
-
-    use(noticePolicy);
+    useLoanPolicyAsFallback(
+      loanPoliciesFixture.canCirculateRolling().getId(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
+      noticePoliciesFixture.create(noticePolicy).getId());
 
     DateTime loanDate = new DateTime(2018, 3, 1, 13, 25, 46, DateTimeZone.UTC);
 
@@ -460,7 +462,10 @@ public class CheckInByBarcodeTests extends APITests {
     NoticePolicyBuilder noticePolicy = new NoticePolicyBuilder()
       .withName("Policy with checkout notice")
       .withLoanNotices(Arrays.asList(checkOutNoticeConfiguration, renewNoticeConfiguration));
-    use(noticePolicy);
+    useLoanPolicyAsFallback(
+      loanPoliciesFixture.canCirculateRolling().getId(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
+      noticePoliciesFixture.create(noticePolicy).getId());
 
     final UUID checkInServicePointId = servicePointsFixture.cd1().getId();
 
@@ -514,7 +519,10 @@ public class CheckInByBarcodeTests extends APITests {
         .singletonList(new NoticeConfigurationBuilder()
           .withTemplateId(availableNoticeTemplateId).withAvailableEvent().create()));
 
-    use(noticePolicy);
+    useLoanPolicyAsFallback(
+      loanPoliciesFixture.canCirculateRolling().getId(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
+      noticePoliciesFixture.create(noticePolicy).getId());
 
     DateTime checkInDate = new DateTime(2019, 7, 25, 14, 23, 41, DateTimeZone.UTC);
     loansFixture.checkInByBarcode(item, checkInDate, servicePointId);
@@ -550,7 +558,10 @@ public class CheckInByBarcodeTests extends APITests {
         .singletonList(new NoticeConfigurationBuilder()
           .withTemplateId(availableNoticeTemplateId).withAvailableEvent().create()));
 
-    use(noticePolicy);
+    useLoanPolicyAsFallback(
+      loanPoliciesFixture.canCirculateRolling().getId(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
+      noticePoliciesFixture.create(noticePolicy).getId());
 
     loansFixture.checkInByBarcode(item,
       new DateTime(2019, 5, 10, 14, 23, 41, DateTimeZone.UTC),
@@ -574,7 +585,10 @@ public class CheckInByBarcodeTests extends APITests {
       .withName("Policy with available notice")
       .withLoanNotices(Collections.singletonList(availableNoticeConfig));
 
-    use(noticePolicy);
+    useLoanPolicyAsFallback(
+      loanPoliciesFixture.canCirculateRolling().getId(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
+      noticePoliciesFixture.create(noticePolicy).getId());
 
     InventoryItemResource requestedItem = itemsFixture.basedUponNod();
     UUID pickupServicePointId = servicePointsFixture.cd1().getId();

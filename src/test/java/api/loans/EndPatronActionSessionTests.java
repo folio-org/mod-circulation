@@ -56,11 +56,10 @@ public class EndPatronActionSessionTests extends APITests {
     NoticePolicyBuilder noticePolicy = new NoticePolicyBuilder()
       .withName("Policy with check-out notice")
       .withLoanNotices(Collections.singletonList(checkOutNoticeConfig));
-    useFallbackPolicies(
+    useLoanPolicyAsFallback(
       loanPoliciesFixture.canCirculateRolling().getId(),
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
-      noticePoliciesFixture.create(noticePolicy).getId(),
-      overdueFinePoliciesFixture.facultyStandard().getId());
+      noticePoliciesFixture.create(noticePolicy).getId());
   }
 
   @Test

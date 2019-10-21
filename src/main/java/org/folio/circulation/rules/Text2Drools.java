@@ -101,7 +101,7 @@ public class Text2Drools extends CirculationRulesBaseListener {
 
   private int indentation = 0;
 
-  private String[] policyTypes = {"l", "r", "n", "o"};
+  private String[] policyTypes = {"l", "r", "n"};
 
   private enum PriorityType {
     NONE,
@@ -337,19 +337,16 @@ public class Text2Drools extends CirculationRulesBaseListener {
     drools.append("end\n\n");
   }
 
-  private static String policyMatchString(PolicyContext policy) {
-    switch (policy.POLICY_TYPE().toString()) {
-      case "l":
-        return "    match.loanPolicyId = ";
-      case "r":
-        return "    match.requestPolicyId = ";
-      case "n":
-        return "    match.noticePolicyId = ";
-      case "o":
-        return "    match.overduePolicyId = ";
-      default: throw new IllegalArgumentException("Unknown policy type: "
-        + policy.POLICY_TYPE().toString());
+  private String policyMatchString(PolicyContext policy) {
+    String policyTypeName = "";
+    if (policy.POLICY_TYPE().toString().equals("l")) {
+      policyTypeName = "loan";
+    } else if (policy.POLICY_TYPE().toString().equals("r")) {
+      policyTypeName = "request";
+    } else if (policy.POLICY_TYPE().toString().equals("n")) {
+      policyTypeName = "notice";
     }
+    return String.format("    match.%sPolicyId = ", policyTypeName);
   }
 
   private int getSalience(int line) {

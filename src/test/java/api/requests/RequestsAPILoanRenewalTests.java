@@ -129,7 +129,11 @@ public class RequestsAPILoanRenewalTests extends APITests {
       .unlimitedRenewals()
       .renewFromSystemDate();
 
-    useWithActiveNotice(rollingPolicy);
+    useLoanPolicyAsFallback(
+      loanPoliciesFixture.create(rollingPolicy).getId(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
+      noticePoliciesFixture.activeNotice().getId()
+    );
 
     requestsFixture.place(new RequestBuilder()
       .hold()
@@ -165,7 +169,11 @@ public class RequestsAPILoanRenewalTests extends APITests {
       .renewFromSystemDate()
       .renewWith(Period.weeks(renewalPeriod));
 
-    useWithActiveNotice(rollingPolicy);
+    useLoanPolicyAsFallback(
+      loanPoliciesFixture.create(rollingPolicy).getId(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
+      noticePoliciesFixture.activeNotice().getId()
+    );
 
     requestsFixture.place(new RequestBuilder()
       .hold()
@@ -329,14 +337,19 @@ public class RequestsAPILoanRenewalTests extends APITests {
     JsonObject holds = new JsonObject()
       .put("renewItemsWithRequest", true);
 
-    LoanPolicyBuilder loanPolicy = new LoanPolicyBuilder()
+    IndividualResource fixedPolicy = loanPoliciesFixture.create(new LoanPolicyBuilder()
       .fixed(loanPoliciesFixture.createExampleFixedDueDateSchedule().getId())
       .renewWith(schedule.getId())
       .withName("Fixed with holds")
       .withDescription("Fixed policy with holds")
-      .withHolds(holds);
+      .withHolds(holds)
+    );
 
-    useWithActiveNotice(loanPolicy);
+    useLoanPolicyAsFallback(
+      fixedPolicy.getId(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
+      noticePoliciesFixture.activeNotice().getId()
+    );
 
     requestsFixture.place(new RequestBuilder()
       .hold()
@@ -373,13 +386,18 @@ public class RequestsAPILoanRenewalTests extends APITests {
     JsonObject holds = new JsonObject()
       .put("renewItemsWithRequest", true);
 
-    LoanPolicyBuilder loanPolicy = new LoanPolicyBuilder()
+    IndividualResource fixedPolicy = loanPoliciesFixture.create(new LoanPolicyBuilder()
       .fixed(schedule.getId())
       .withName("Fixed with holds")
       .withDescription("Fixed policy with holds")
-      .withHolds(holds);
+      .withHolds(holds)
+    );
 
-    useWithActiveNotice(loanPolicy);
+    useLoanPolicyAsFallback(
+      fixedPolicy.getId(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
+      noticePoliciesFixture.activeNotice().getId()
+    );
 
     requestsFixture.place(new RequestBuilder()
       .hold()
@@ -485,7 +503,14 @@ public class RequestsAPILoanRenewalTests extends APITests {
       .rolling(Period.days(2))
       .notRenewable();
 
-    useWithActiveNotice(limitedRenewalsPolicy);
+    UUID notRenewablePolicyId = loanPoliciesFixture
+      .create(limitedRenewalsPolicy).getId();
+
+    useLoanPolicyAsFallback(
+      notRenewablePolicyId,
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
+      noticePoliciesFixture.activeNotice().getId()
+    );
 
     requestsFixture.place(new RequestBuilder()
       .recall()
@@ -520,7 +545,14 @@ public class RequestsAPILoanRenewalTests extends APITests {
       .rolling(Period.days(2))
       .withLoanable(false);
 
-    useWithActiveNotice(limitedRenewalsPolicy);
+    UUID notRenewablePolicyId = loanPoliciesFixture
+      .create(limitedRenewalsPolicy).getId();
+
+    useLoanPolicyAsFallback(
+      notRenewablePolicyId,
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
+      noticePoliciesFixture.activeNotice().getId()
+    );
 
     Response response = loansFixture.attemptRenewal(smallAngryPlanet, rebecca);
 
@@ -551,15 +583,18 @@ public class RequestsAPILoanRenewalTests extends APITests {
       .put("renewItemsWithRequest", true)
       .put("alternateRenewalLoanPeriod", Period.weeks(10).asJson());
 
-    LoanPolicyBuilder loanPolicy = new LoanPolicyBuilder()
+    IndividualResource fixedPolicy = loanPoliciesFixture.create(new LoanPolicyBuilder()
       .fixed(schedule.getId())
       .withName("Fixed with holds")
       .withDescription("Fixed policy with holds")
-      .withHolds(holds);
+      .withHolds(holds)
+    );
 
-    loanPoliciesFixture.create(loanPolicy);
-
-    useWithActiveNotice(loanPolicy);
+    useLoanPolicyAsFallback(
+      fixedPolicy.getId(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
+      noticePoliciesFixture.activeNotice().getId()
+    );
 
     requestsFixture.place(new RequestBuilder()
       .hold()
@@ -597,14 +632,19 @@ public class RequestsAPILoanRenewalTests extends APITests {
     JsonObject holds = new JsonObject()
       .put("renewItemsWithRequest", true);
 
-    LoanPolicyBuilder loanPolicy = new LoanPolicyBuilder()
+    IndividualResource fixedPolicy = loanPoliciesFixture.create(new LoanPolicyBuilder()
       .fixed(schedule.getId())
       .withName("Fixed with holds")
       .withDescription("Fixed policy with holds")
       .renewWith(Period.weeks(2))
-      .withHolds(holds);
+      .withHolds(holds)
+    );
 
-    useWithActiveNotice(loanPolicy);
+    useLoanPolicyAsFallback(
+      fixedPolicy.getId(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
+      noticePoliciesFixture.activeNotice().getId()
+    );
 
     requestsFixture.place(new RequestBuilder()
       .hold()
@@ -630,7 +670,11 @@ public class RequestsAPILoanRenewalTests extends APITests {
       .unlimitedRenewals()
       .renewFromSystemDate();
 
-    useWithActiveNotice(dueDateLimitedPolicy);
+    useLoanPolicyAsFallback(
+      loanPoliciesFixture.create(dueDateLimitedPolicy).getId(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
+      noticePoliciesFixture.activeNotice().getId()
+    );
   }
 
   private void loanPolicyWithFixedProfileAndRenewingIsForbiddenWhenHoldIsPending()
@@ -645,7 +689,11 @@ public class RequestsAPILoanRenewalTests extends APITests {
       .fixed(loanPoliciesFixture.createSchedule(fixedDueDateSchedules).getId())
       .renewFromSystemDate();
 
-    useWithActiveNotice(dueDateLimitedPolicy);
+    useLoanPolicyAsFallback(
+      loanPoliciesFixture.create(dueDateLimitedPolicy).getId(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
+      noticePoliciesFixture.activeNotice().getId()
+    );
   }
 
   private void useRollingPolicyWithRenewingAllowedForHoldingRequest()
@@ -663,6 +711,10 @@ public class RequestsAPILoanRenewalTests extends APITests {
       .unlimitedRenewals()
       .renewFromSystemDate();
 
-    useWithActiveNotice(rollingPolicy);
+    useLoanPolicyAsFallback(
+      loanPoliciesFixture.create(rollingPolicy).getId(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
+      noticePoliciesFixture.activeNotice().getId()
+    );
   }
 }
