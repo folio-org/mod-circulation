@@ -1,12 +1,28 @@
 package org.folio.circulation.resources;
 
-import io.vertx.core.http.HttpClient;
-import io.vertx.core.json.JsonArray;
-import io.vertx.core.json.JsonObject;
-import io.vertx.ext.web.Router;
-import io.vertx.ext.web.RoutingContext;
+import static org.folio.circulation.domain.ItemStatus.AWAITING_PICKUP;
+import static org.folio.circulation.domain.RequestStatus.CLOSED_CANCELLED;
+import static org.folio.circulation.domain.RequestStatus.CLOSED_PICKUP_EXPIRED;
+import static org.folio.circulation.domain.RequestStatus.OPEN_AWAITING_PICKUP;
+import static org.folio.circulation.support.CqlQuery.exactMatch;
+import static org.folio.circulation.support.CqlQuery.exactMatchAny;
+import static org.folio.circulation.support.CqlSortBy.descending;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+import java.util.function.Predicate;
+import java.util.stream.Collector;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+
 import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.domain.HoldShelfClearanceContext;
+import org.folio.circulation.domain.HoldShelfClearanceRequestContext;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.Request;
@@ -21,21 +37,11 @@ import org.folio.circulation.support.RouteRegistration;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.server.WebContext;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
-import java.util.stream.Collector;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
-
-import static org.folio.circulation.domain.ItemStatus.AWAITING_PICKUP;
-import static org.folio.circulation.domain.RequestStatus.*;
-import static org.folio.circulation.support.CqlQuery.exactMatch;
-import static org.folio.circulation.support.CqlSortBy.descending;
+import io.vertx.core.http.HttpClient;
+import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
+import io.vertx.ext.web.Router;
+import io.vertx.ext.web.RoutingContext;
 
 public class RequestHoldShelfClearanceResource extends Resource {
 
@@ -49,6 +55,7 @@ public class RequestHoldShelfClearanceResource extends Resource {
    * Default limit value on a query
    */
   private static final int PAGE_LIMIT = 100;
+  private static final int PAGE_REQUEST_LIMIT = 1;
   private static final String SERVICE_POINT_ID_PARAM = "servicePointId";
   private static final String ITEMS_KEY = "items";
   private static final String ITEM_ID_KEY = "itemId";
@@ -56,7 +63,6 @@ public class RequestHoldShelfClearanceResource extends Resource {
   private static final String STATUS_KEY = "status";
   private static final String STATUS_NAME_KEY = "status.name";
   private static final String TOTAL_RECORDS_KEY = "totalRecords";
-  private static final String SERVICE_POINT_ID_KEY = "pickupServicePointId";
   private static final String REQUEST_CLOSED_DATE_KEY = "awaitingPickupRequestClosedDate";
 
   private final String rootPath;
@@ -85,8 +91,9 @@ public class RequestHoldShelfClearanceResource extends Resource {
     findAllAwaitingPickupItems(itemsStorageClient)
       .thenComposeAsync(r -> r.after(this::mapContextToItemIdList))
       .thenComposeAsync(r -> r.after(this::mapItemIdsInBatchItemIds))
-      .thenComposeAsync(r -> findExpiredOrCancelledItemsIds(requestsStorage, servicePointId, r.value()))
-      .thenComposeAsync(r -> findExpiredOrCancelledRequestByItemIds(requestsStorage, servicePointId, r.value()))
+      .thenComposeAsync(r -> findAwaitingPickupRequestsByItemsIds(requestsStorage, r.value()))
+      .thenComposeAsync(r -> findExpiredOrCancelledRequestByItemIds(requestsStorage, r.value()))
+      .thenApply(r -> findExpiredOrCancelledRequestByServicePoint(servicePointId, r.value()))
       .thenApply(r -> fetchItemToRequest(r, itemRepository))
       .thenApply(this::mapResultToJson)
       .thenApply(OkJsonResponseResult::from)
@@ -164,25 +171,21 @@ public class RequestHoldShelfClearanceResource extends Resource {
       .collect(Collectors.toList());
   }
 
-  private CompletableFuture<Result<List<String>>> findExpiredOrCancelledItemsIds(CollectionResourceClient client,
-                                                                                 String servicePointId,
-                                                                                 List<List<String>> batchItemIds) {
-    List<Result<MultipleRecords<Request>>> awaitingPickupRequests = findAwaitingPickupRequests(client, servicePointId, batchItemIds);
+  private CompletableFuture<Result<HoldShelfClearanceRequestContext>> findAwaitingPickupRequestsByItemsIds(CollectionResourceClient client,
+                                                                                                           List<List<String>> batchItemIds) {
+    List<Result<MultipleRecords<Request>>> awaitingPickupRequests = findAwaitingPickupRequests(client, batchItemIds);
     return CompletableFuture.completedFuture(Result.succeeded(
-      findDifferenceBetweenAvailableItemsAndExpired(batchItemIds, awaitingPickupRequests)));
+      createHoldShelfClearanceRequestContext(batchItemIds, awaitingPickupRequests)));
   }
 
   private List<Result<MultipleRecords<Request>>> findAwaitingPickupRequests(CollectionResourceClient client,
-                                                                            String servicePointId,
                                                                             List<List<String>> batchItemIds) {
     return batchItemIds.stream()
       .map(batch -> {
-        final Result<CqlQuery> servicePointQuery = exactMatch(SERVICE_POINT_ID_KEY, servicePointId);
         final Result<CqlQuery> statusQuery = exactMatch(STATUS_KEY, OPEN_AWAITING_PICKUP.getValue());
-        final Result<CqlQuery> itemIdsQuery = CqlQuery.exactMatchAny(ITEM_ID_KEY, batch);
+        final Result<CqlQuery> itemIdsQuery = exactMatchAny(ITEM_ID_KEY, batch);
 
-        Result<CqlQuery> cqlQueryResult = servicePointQuery
-          .combine(statusQuery, CqlQuery::and)
+        Result<CqlQuery> cqlQueryResult = statusQuery
           .combine(itemIdsQuery, CqlQuery::and);
 
         return findRequestsByCqlQuery(client, cqlQueryResult);
@@ -191,45 +194,60 @@ public class RequestHoldShelfClearanceResource extends Resource {
       .collect(Collectors.toList());
   }
 
-  private List<String> findDifferenceBetweenAvailableItemsAndExpired(List<List<String>> batchItemIds,
-                                                                     List<Result<MultipleRecords<Request>>> requests) {
-    List<String> awaitingPickupItemIds = requests.stream()
-      .flatMap(records -> records.value().getRecords().stream())
-      .map(Request::getItemId)
-      .collect(Collectors.toList());
-
-    List<String> itemIds = batchItemIds.stream()
+  private HoldShelfClearanceRequestContext createHoldShelfClearanceRequestContext(List<List<String>> batchItemIds,
+                                                                                  List<Result<MultipleRecords<Request>>> results) {
+    List<String> allAwaitingPickupItemIds = batchItemIds.stream()
       .flatMap(Collection::stream)
       .collect(Collectors.toList());
 
-    itemIds.removeAll(awaitingPickupItemIds);
-    return itemIds;
+    List<String> awaitingPickupRequestItemIds = results.stream()
+      .flatMap(r -> r.value().getRecords().stream())
+      .map(Request::getItemId)
+      .collect(Collectors.toList());
+
+    return new HoldShelfClearanceRequestContext()
+      .withAwaitingPickupItemIds(allAwaitingPickupItemIds)
+      .withAwaitingPickupRequestItemIds(awaitingPickupRequestItemIds);
   }
 
-  private CompletableFuture<Result<List<Request>>> findExpiredOrCancelledRequestByItemIds(CollectionResourceClient client,
-                                                                                          String servicePointId, List<String> itemIds) {
-    List<Result<MultipleRecords<Request>>> requestList = findRequestsSortedByClosedDate(client, servicePointId, itemIds);
-    return CompletableFuture.completedFuture(
-      Result.succeeded(getFirstRequestFromList(requestList)));
+  private CompletableFuture<Result<HoldShelfClearanceRequestContext>> findExpiredOrCancelledRequestByItemIds(CollectionResourceClient client,
+                                                                                                             HoldShelfClearanceRequestContext context) {
+    List<Result<MultipleRecords<Request>>> requestList = findRequestsSortedByClosedDate(client, context.getAwaitingPickupItemIds());
+    List<Request> firstRequestFromList = getFirstRequestFromList(requestList);
+    return CompletableFuture.completedFuture(Result.succeeded(context.withExpiredOrCancelledRequests(firstRequestFromList)));
+  }
+
+  private Predicate<Request> hasContextRequestForServicePoint(String servicePointId) {
+    return r -> r.getPickupServicePointId().equals(servicePointId);
+  }
+
+  private Predicate<Request> hasNotContextAwaitingPickupRequestForItemId(HoldShelfClearanceRequestContext context) {
+    return req -> !context.getAwaitingPickupRequestItemIds().contains(req.getItemId());
+  }
+
+  private Result<List<Request>> findExpiredOrCancelledRequestByServicePoint(String servicePointId,
+                                                                            HoldShelfClearanceRequestContext context) {
+    List<Request> requestList = context.getExpiredOrCancelledRequests().stream()
+      .filter(hasContextRequestForServicePoint(servicePointId))
+      .filter(hasNotContextAwaitingPickupRequestForItemId(context))
+      .collect(Collectors.toList());
+    return Result.succeeded(requestList);
   }
 
   /**
    * Find for each item ids requests sorted by awaitingPickupRequestClosedDate
    */
   private List<Result<MultipleRecords<Request>>> findRequestsSortedByClosedDate(CollectionResourceClient client,
-                                                                                String servicePointId,
                                                                                 List<String> itemIds) {
     return itemIds.stream()
       .filter(Objects::nonNull)
       .map(itemId -> {
-        final Result<CqlQuery> servicePointQuery = exactMatch(SERVICE_POINT_ID_KEY, servicePointId);
         final Result<CqlQuery> itemIdQuery = CqlQuery.exactMatch(ITEM_ID_KEY, itemId);
         final Result<CqlQuery> notEmptyDateQuery = CqlQuery.greaterThan(REQUEST_CLOSED_DATE_KEY, StringUtils.EMPTY);
-        final Result<CqlQuery> statusQuery = CqlQuery.exactMatchAny(STATUS_KEY,
+        final Result<CqlQuery> statusQuery = exactMatchAny(STATUS_KEY,
           Arrays.asList(CLOSED_PICKUP_EXPIRED.getValue(), CLOSED_CANCELLED.getValue()));
 
-        Result<CqlQuery> cqlQueryResult = servicePointQuery
-          .combine(itemIdQuery, CqlQuery::and)
+        Result<CqlQuery> cqlQueryResult = itemIdQuery
           .combine(statusQuery, CqlQuery::and)
           .combine(notEmptyDateQuery, CqlQuery::and)
           .map(q -> q.sortBy(descending(REQUEST_CLOSED_DATE_KEY)));
@@ -250,7 +268,7 @@ public class RequestHoldShelfClearanceResource extends Resource {
   private CompletableFuture<Result<MultipleRecords<Request>>> findRequestsByCqlQuery(CollectionResourceClient client,
                                                                                      Result<CqlQuery> cqlQueryResult) {
     return cqlQueryResult
-      .after(query -> client.getMany(query, PAGE_LIMIT))
+      .after(query -> client.getMany(query, PAGE_REQUEST_LIMIT))
       .thenApply(result -> result.next(this::mapResponseToRequest));
   }
 
