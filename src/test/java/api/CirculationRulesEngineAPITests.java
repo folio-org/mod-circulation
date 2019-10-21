@@ -143,44 +143,47 @@ public class CirculationRulesEngineAPITests extends APITests {
   // Notice Policies
   private Policy np1 = new Policy("662cb440-c66b-46ba-b70f-7ebff4026644");
   private Policy np2 = new Policy("b6bcddac-7c6c-4b29-a6fe-4627ef78c782");
+  // Overdue Fine Policies
+  private Policy op1 = new Policy("eadea55e-0e6f-4d77-a1b3-0a434a1bf4a9");
+  private Policy op2 = new Policy("ee672000-30f6-4f49-9311-b6a1fdf21726");
 
-  private String rulesFallback =  "priority: t, s, c, b, a, m, g\nfallback-policy: l " + lp6 + " r " + rp1 + " n " + np1;
-  private String rulesFallback2 = "priority: t, s, c, b, a, m, g\nfallback-policy: l " + lp7 + " r " + rp2 + " n " + np2;
+  private String rulesFallback =  "priority: t, s, c, b, a, m, g\nfallback-policy: l " + lp6 + " r " + rp1 + " n " + np1 + " o " + op1;
+  private String rulesFallback2 = "priority: t, s, c, b, a, m, g\nfallback-policy: l " + lp7 + " r " + rp2 + " n " + np2 + " o " + op2;
 
   private String rules1 = String.join("\n",
       "priority: t, s, c, b, a, m, g",
-      "fallback-policy: l " + lp2 + " r " + rp1 + " n " + np1,
-      "m " + m2 + ": l " + lp3 + " r " + rp1 + " n " + np1,
-      "    g " + g2 + ": l " + lp4 + " r " + rp1 + " n " + np1
+      "fallback-policy: l " + lp2 + " r " + rp1 + " n " + np1 + " o " + op1,
+      "m " + m2 + ": l " + lp3 + " r " + rp1 + " n " + np1 + " o " + op1,
+      "    g " + g2 + ": l " + lp4 + " r " + rp1 + " n " + np1 + " o " + op1
       );
 
   private String rules2 = String.join("\n",
       "priority: t, s, c, b, a, m, g",
-      "fallback-policy: l " + lp6 + " r " + rp1 + " n " + np1,
-      "m " + m1 + ": l " + lp1 + " r " + rp1 + " n " + np1,
-      "m " + m1 + " + t " + t1 + " : l " + lp2 + " r " + rp1 + " n " + np1,
-      "m " + m1 + " + t " + t1 + " + g " + g1 + " : l " + lp3 + " r " + rp1 + " n " + np1
+      "fallback-policy: l " + lp6 + " r " + rp1 + " n " + np1 + " o " + op1,
+      "m " + m1 + ": l " + lp1 + " r " + rp1 + " n " + np1 + " o " + op1,
+      "m " + m1 + " + t " + t1 + " : l " + lp2 + " r " + rp1 + " n " + np1 + " o " + op1,
+      "m " + m1 + " + t " + t1 + " + g " + g1 + " : l " + lp3 + " r " + rp1 + " n " + np1 + " o " + op1
       );
 
   private String rulesWithInstitution = String.join("\n",
     "priority: t, s, c, b, a, m, g",
-    "fallback-policy: l " + lp2 + " r " + rp1 + " n " + np1,
-    "m " + m2 + ": l " + lp3 + " r " + rp2 + " n " + np2,
-    "a " + i1 + ": l " + lp4 + " r " + rp2 + " n " + np2
+    "fallback-policy: l " + lp2 + " r " + rp1 + " n " + np1 + " o " + op1,
+    "m " + m2 + ": l " + lp3 + " r " + rp2 + " n " + np2 + " o " + op1,
+    "a " + i1 + ": l " + lp4 + " r " + rp2 + " n " + np2 + " o " + op2
   );
 
   private String rulesWithLibrary = String.join("\n",
     "priority: t, s, c, b, a, m, g",
-    "fallback-policy: l " + lp2 + " r " + rp1 + " n " + np1,
-    "m " + m2 + ": l " + lp3 + " r " + rp2 + " n " + np2,
-    "c " + l1 + ": l " + lp4 + " r " + rp2 + " n " + np2
+    "fallback-policy: l " + lp2 + " r " + rp1 + " n " + np1 + " o " + op1,
+    "m " + m2 + ": l " + lp3 + " r " + rp2 + " n " + np2 + " o " + op2,
+    "c " + l1 + ": l " + lp4 + " r " + rp2 + " n " + np2 + " o " + op2
   );
 
   private String rulesWithCampus = String.join("\n",
     "priority: t, s, c, b, a, m, g",
-    "fallback-policy: l " + lp2 + " r " + rp1 + " n " + np1,
-    "m " + m2 + ": l " + lp3 + " r " + rp2 + " n " + np2,
-    "b " + c1 + ": l " + lp4 + " r " + rp2 + " n " + np2
+    "fallback-policy: l " + lp2 + " r " + rp1 + " n " + np1 + " o " + op1,
+    "m " + m2 + ": l " + lp3 + " r " + rp2 + " n " + np2 + " o " + op2,
+    "b " + c1 + ": l " + lp4 + " r " + rp2 + " n " + np2 + " o " + op2
   );
 
   @Before
