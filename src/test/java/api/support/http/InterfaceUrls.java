@@ -72,10 +72,6 @@ public class InterfaceUrls {
     return APITestContext.viaOkapiModuleUrl("/patron-notice-policy-storage/patron-notice-policies" + subPath);
   }
 
-  static URL overdueFinesPoliciesStorageUrl(String subPath) {
-    return APITestContext.viaOkapiModuleUrl("/overdue-fines-policies" + subPath);
-  }
-
   static URL fixedDueDateSchedulesStorageUrl(String subPath) {
     return APITestContext.viaOkapiModuleUrl("/fixed-due-date-schedule-storage/fixed-due-date-schedules" + subPath);
   }

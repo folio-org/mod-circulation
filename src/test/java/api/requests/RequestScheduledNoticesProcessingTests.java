@@ -361,11 +361,10 @@ public class RequestScheduledNoticesProcessingTests extends APITests {
       .withName("Policy with request notices")
       .withRequestNotices(singletonList(noticeConfiguration));
 
-    useFallbackPolicies(
+    useLoanPolicyAsFallback(
       loanPoliciesFixture.canCirculateRolling().getId(),
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
-      noticePoliciesFixture.create(noticePolicy).getId(),
-      overdueFinePoliciesFixture.facultyStandard().getId());
+      noticePoliciesFixture.create(noticePolicy).getId());
   }
 
   private Matcher<JsonObject> getTemplateContextMatcher(UUID templateId, IndividualResource request) {
