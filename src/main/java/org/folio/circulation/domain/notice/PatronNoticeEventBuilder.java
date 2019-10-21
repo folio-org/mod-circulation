@@ -10,7 +10,6 @@ public class PatronNoticeEventBuilder {
   private Item item;
   private User user;
   private NoticeEventType eventType;
-  private NoticeTiming timing;
   private JsonObject noticeContext;
 
   public PatronNoticeEventBuilder withItem(Item item) {
@@ -28,17 +27,12 @@ public class PatronNoticeEventBuilder {
     return this;
   }
 
-  public PatronNoticeEventBuilder withTiming(NoticeTiming timing) {
-    this.timing = timing;
-    return this;
-  }
-
   public PatronNoticeEventBuilder withNoticeContext(JsonObject noticeContext) {
     this.noticeContext = noticeContext;
     return this;
   }
 
   public PatronNoticeEvent build() {
-    return new PatronNoticeEvent(item, user, eventType, timing, noticeContext);
+    return new PatronNoticeEvent(item, user, eventType, noticeContext);
   }
 }

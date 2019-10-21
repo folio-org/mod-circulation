@@ -11,6 +11,8 @@ import static java.util.Arrays.asList;
 import static org.folio.HttpStatus.HTTP_VALIDATION_ERROR;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.notNullValue;
+import static org.hamcrest.Matchers.empty;
+import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 
@@ -394,10 +396,8 @@ public class CheckInByBarcodeTests extends APITests {
     NoticePolicyBuilder noticePolicy = new NoticePolicyBuilder()
       .withName("Policy with checkout notice")
       .withLoanNotices(Arrays.asList(checkOutNoticeConfiguration, renewNoticeConfiguration));
-    useLoanPolicyAsFallback(
-      loanPoliciesFixture.canCirculateRolling().getId(),
-      requestPoliciesFixture.allowAllRequestPolicy().getId(),
-      noticePoliciesFixture.create(noticePolicy).getId());
+
+    use(noticePolicy);
 
     DateTime loanDate = new DateTime(2018, 3, 1, 13, 25, 46, DateTimeZone.UTC);
 
@@ -427,7 +427,7 @@ public class CheckInByBarcodeTests extends APITests {
 
     Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
-      .until(patronNoticesClient::getAll, Matchers.hasSize(1));
+      .until(patronNoticesClient::getAll, hasSize(1));
     List<JsonObject> sentNotices = patronNoticesClient.getAll();
 
     Map<String, Matcher<String>> noticeContextMatchers = new HashMap<>();
@@ -460,10 +460,7 @@ public class CheckInByBarcodeTests extends APITests {
     NoticePolicyBuilder noticePolicy = new NoticePolicyBuilder()
       .withName("Policy with checkout notice")
       .withLoanNotices(Arrays.asList(checkOutNoticeConfiguration, renewNoticeConfiguration));
-    useLoanPolicyAsFallback(
-      loanPoliciesFixture.canCirculateRolling().getId(),
-      requestPoliciesFixture.allowAllRequestPolicy().getId(),
-      noticePoliciesFixture.create(noticePolicy).getId());
+    use(noticePolicy);
 
     final UUID checkInServicePointId = servicePointsFixture.cd1().getId();
 
@@ -515,12 +512,9 @@ public class CheckInByBarcodeTests extends APITests {
       .withName("Policy notice")
       .withLoanNotices(Collections
         .singletonList(new NoticeConfigurationBuilder()
-          .withTemplateId(availableNoticeTemplateId).withEventType("Available").create()));
+          .withTemplateId(availableNoticeTemplateId).withAvailableEvent().create()));
 
-    useLoanPolicyAsFallback(
-      loanPoliciesFixture.canCirculateRolling().getId(),
-      requestPoliciesFixture.allowAllRequestPolicy().getId(),
-      noticePoliciesFixture.create(noticePolicy).getId());
+    use(noticePolicy);
 
     DateTime checkInDate = new DateTime(2019, 7, 25, 14, 23, 41, DateTimeZone.UTC);
     loansFixture.checkInByBarcode(item, checkInDate, servicePointId);
@@ -554,18 +548,58 @@ public class CheckInByBarcodeTests extends APITests {
       .withName("Policy notice")
       .withLoanNotices(Collections
         .singletonList(new NoticeConfigurationBuilder()
-          .withTemplateId(availableNoticeTemplateId).withEventType("Available").create()));
+          .withTemplateId(availableNoticeTemplateId).withAvailableEvent().create()));
 
-    useLoanPolicyAsFallback(
-      loanPoliciesFixture.canCirculateRolling().getId(),
-      requestPoliciesFixture.allowAllRequestPolicy().getId(),
-      noticePoliciesFixture.create(noticePolicy).getId());
+    use(noticePolicy);
 
     loansFixture.checkInByBarcode(item,
       new DateTime(2019, 5, 10, 14, 23, 41, DateTimeZone.UTC),
       servicePointId);
 
     checkPatronNoticeEvent(request, requester, item, availableNoticeTemplateId);
+  }
+
+  @Test
+  public void availableNoticeIsSentOnceWhenItemStatusIsChangedToAwaitingPickup()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException  {
+
+    JsonObject availableNoticeConfig = new NoticeConfigurationBuilder()
+      .withTemplateId(UUID.randomUUID())
+      .withAvailableEvent()
+      .create();
+    NoticePolicyBuilder noticePolicy = new NoticePolicyBuilder()
+      .withName("Policy with available notice")
+      .withLoanNotices(Collections.singletonList(availableNoticeConfig));
+
+    use(noticePolicy);
+
+    InventoryItemResource requestedItem = itemsFixture.basedUponNod();
+    UUID pickupServicePointId = servicePointsFixture.cd1().getId();
+
+    DateTime requestDate = new DateTime(2019, 10, 9, 10, 0);
+    requestsFixture.place(new RequestBuilder()
+      .page()
+      .forItem(requestedItem)
+      .by(usersFixture.steve())
+      .withPickupServicePointId(pickupServicePointId)
+      .withRequestDate(requestDate));
+
+    DateTime checkInDate = new DateTime(2019, 10, 10, 12, 30);
+
+    loansFixture.checkInByBarcode(requestedItem, checkInDate, pickupServicePointId);
+    Awaitility.await()
+      .atMost(1, TimeUnit.SECONDS)
+      .until(patronNoticesClient::getAll, hasSize(1));
+    patronNoticesClient.deleteAll();
+
+    //Check-in again and verify no notice are sent
+    loansFixture.checkInByBarcode(requestedItem, checkInDate, pickupServicePointId);
+    Awaitility.await()
+      .atMost(1, TimeUnit.SECONDS)
+      .until(patronNoticesClient::getAll, empty());
   }
 
   private void checkPatronNoticeEvent(
@@ -575,7 +609,7 @@ public class CheckInByBarcodeTests extends APITests {
 
     Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
-      .until(patronNoticesClient::getAll, Matchers.hasSize(1));
+      .until(patronNoticesClient::getAll, hasSize(1));
 
     List<JsonObject> sentNotices = patronNoticesClient.getAll();
 

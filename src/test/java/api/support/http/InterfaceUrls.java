@@ -72,6 +72,10 @@ public class InterfaceUrls {
     return APITestContext.viaOkapiModuleUrl("/patron-notice-policy-storage/patron-notice-policies" + subPath);
   }
 
+  static URL overdueFinesPoliciesStorageUrl(String subPath) {
+    return APITestContext.viaOkapiModuleUrl("/overdue-fines-policies" + subPath);
+  }
+
   static URL fixedDueDateSchedulesStorageUrl(String subPath) {
     return APITestContext.viaOkapiModuleUrl("/fixed-due-date-schedule-storage/fixed-due-date-schedules" + subPath);
   }
@@ -150,6 +154,10 @@ public class InterfaceUrls {
 
   public static URL circulationAnonymizeLoansURL(String subPath) {
     return circulationModuleUrl("/loan-anonymization/by-user/" + subPath);
+  }
+
+  public static URL endSessionUrl() {
+    return circulationModuleUrl("/circulation/end-patron-action-session");
   }
 
   public static URL accountsUrl(String subPath) {

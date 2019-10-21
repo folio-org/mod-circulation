@@ -3,7 +3,6 @@ package org.folio.circulation.domain;
 import static java.util.Objects.isNull;
 import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.toList;
-
 import static org.folio.circulation.support.Result.ofAsync;
 import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.ResultBinding.mapResult;
@@ -14,13 +13,14 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
-import io.vertx.core.json.JsonObject;
 import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.MultipleRecordFetcher;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.SingleRecordFetcher;
+
+import io.vertx.core.json.JsonObject;
 
 public class LocationRepository {
 
@@ -135,4 +135,37 @@ public class LocationRepository {
             .thenApply(mapResult(records -> records.toMap(library ->
                     library.getString("id"))));
   }
+
+  public CompletableFuture<Result<Map<String, JsonObject>>> getCampuses(
+    Collection<Location> locations) {
+
+    final MultipleRecordFetcher<JsonObject> fetcher = new MultipleRecordFetcher<>(
+      campusesStorageClient, "loccamps", identity());
+
+    List<String> campusesIds = locations.stream()
+      .map(Location::getCampusId)
+      .distinct()
+      .collect(toList());
+
+    return fetcher.findByIds(campusesIds)
+      .thenApply(mapResult(records -> records.toMap(campus ->
+        campus.getString("id"))));
+  }
+
+  public CompletableFuture<Result<Map<String, JsonObject>>> getInstitutions(
+    Collection<Location> locations) {
+
+    final MultipleRecordFetcher<JsonObject> fetcher = new MultipleRecordFetcher<>(
+      institutionsStorageClient, "locinsts", identity());
+
+    List<String> institutionsIds = locations.stream()
+      .map(Location::getInstitutionId)
+      .distinct()
+      .collect(toList());
+
+    return fetcher.findByIds(institutionsIds)
+      .thenApply(mapResult(records -> records.toMap(institution ->
+        institution.getString("id"))));
+  }
+
 }

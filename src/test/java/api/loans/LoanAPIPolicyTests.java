@@ -43,6 +43,9 @@ public class LoanAPIPolicyTests extends APITests {
   private static UUID np3;
   private static UUID np4;
 
+  private static UUID op1;
+  private static UUID op2;
+
   public LoanAPIPolicyTests() {
     super(false);
   }
@@ -91,11 +94,11 @@ public class LoanAPIPolicyTests extends APITests {
 
     String rules = String.join("\n",
       "priority: t, s, c, b, a, m, g",
-      "fallback-policy: l " + lpFallback + " r " + rpFallback + " n " + npFallback,
-      "m " + videoRecording + " + g " + group1 + " : l " + lp1 + " r " + rp1 + " n " + np1,
-      "m " + book + " + t " + canCirculate + " : l " + lp2 + " r " + rp2 + " n " + np2,
-      "m " + book + " + t " + readingRoom + " : l " + lp3 + " r " + rp3 + " n " + np3,
-      "m " + book + " + t " + canCirculate + " + g " + group1 + " : l " + lp4 + " r " + rp4 + " n " + np4);
+      "fallback-policy: l " + lpFallback + " r " + rpFallback + " n " + npFallback + " o " + op1,
+      "m " + videoRecording + " + g " + group1 + " : l " + lp1 + " r " + rp1 + " n " + np1 + " o " + op1,
+      "m " + book + " + t " + canCirculate + " : l " + lp2 + " r " + rp2 + " n " + np2 + " o " + op1,
+      "m " + book + " + t " + readingRoom + " : l " + lp3 + " r " + rp3 + " n " + np3 + " o " + op1,
+      "m " + book + " + t " + canCirculate + " + g " + group1 + " : l " + lp4 + " r " + rp4 + " n " + np4 + " o " + op1);
 
     circulationRulesFixture.updateCirculationRules(rules);
 
