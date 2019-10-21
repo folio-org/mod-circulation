@@ -125,11 +125,7 @@ public class LoanDueDatesAfterRecallTests extends APITests {
         .withRecallsMinimumGuaranteedLoanPeriod(Period.weeks(2))
         .withRecallsRecallReturnInterval(Period.months(2));
 
-    final IndividualResource loanPolicy = loanPoliciesFixture.create(canCirculateRollingPolicy);
-
-    useLoanPolicyAsFallback(loanPolicy.getId(),
-        requestPoliciesFixture.allowAllRequestPolicy().getId(),
-        noticePoliciesFixture.inactiveNotice().getId());
+    setFallbackPolicies(canCirculateRollingPolicy);
 
     final IndividualResource loan = loansFixture.checkOutByBarcode(
       smallAngryPlanet, steve, DateTime.now(DateTimeZone.UTC));
@@ -169,11 +165,7 @@ public class LoanDueDatesAfterRecallTests extends APITests {
         .withRecallsMinimumGuaranteedLoanPeriod(Period.weeks(2))
         .withRecallsRecallReturnInterval(Period.weeks(1));
 
-    final IndividualResource loanPolicy = loanPoliciesFixture.create(canCirculateRollingPolicy);
-
-    useLoanPolicyAsFallback(loanPolicy.getId(),
-        requestPoliciesFixture.allowAllRequestPolicy().getId(),
-        noticePoliciesFixture.inactiveNotice().getId());
+    setFallbackPolicies(canCirculateRollingPolicy);
 
     // We use the loan date to calculate the MGD
     final DateTime loanDate = DateTime.now(DateTimeZone.UTC);
@@ -215,11 +207,7 @@ public class LoanDueDatesAfterRecallTests extends APITests {
         .renewFromSystemDate()
         .withRecallsRecallReturnInterval(Period.weeks(1));
 
-    final IndividualResource loanPolicy = loanPoliciesFixture.create(canCirculateRollingPolicy);
-
-    useLoanPolicyAsFallback(loanPolicy.getId(),
-        requestPoliciesFixture.allowAllRequestPolicy().getId(),
-        noticePoliciesFixture.inactiveNotice().getId());
+    setFallbackPolicies(canCirculateRollingPolicy);
 
     // We use the loan date to calculate the minimum guaranteed due date (MGD)
     final DateTime loanDate = DateTime.now(DateTimeZone.UTC);
@@ -261,11 +249,7 @@ public class LoanDueDatesAfterRecallTests extends APITests {
         .renewFromSystemDate()
         .withRecallsMinimumGuaranteedLoanPeriod(Period.weeks(2));
 
-    final IndividualResource loanPolicy = loanPoliciesFixture.create(canCirculateRollingPolicy);
-
-    useLoanPolicyAsFallback(loanPolicy.getId(),
-        requestPoliciesFixture.allowAllRequestPolicy().getId(),
-        noticePoliciesFixture.inactiveNotice().getId());
+    setFallbackPolicies(canCirculateRollingPolicy);
 
     // We use the loan date to calculate the minimum guaranteed due date (MGD)
     final DateTime loanDate = DateTime.now(DateTimeZone.UTC);
@@ -309,11 +293,7 @@ public class LoanDueDatesAfterRecallTests extends APITests {
         .withRecallsRecallReturnInterval(Period.weeks(1))
         .withClosedLibraryDueDateManagement(DueDateManagement.MOVE_TO_THE_END_OF_THE_NEXT_OPEN_DAY.getValue());
 
-    final IndividualResource loanPolicy = loanPoliciesFixture.create(canCirculateRollingPolicy);
-
-    useLoanPolicyAsFallback(loanPolicy.getId(),
-        requestPoliciesFixture.allowAllRequestPolicy().getId(),
-        noticePoliciesFixture.inactiveNotice().getId());
+    setFallbackPolicies(canCirculateRollingPolicy);
 
     servicePointsFixture.create(new ServicePointBuilder(checkOutServicePointId, "CLDDM Desk", "clddm", "CLDDM Desk Test", null, null, TRUE, null));
 
@@ -384,11 +364,7 @@ public class LoanDueDatesAfterRecallTests extends APITests {
         .withRecallsMinimumGuaranteedLoanPeriod(Period.from(mgdDuration, mgdInterval))
         .withRecallsRecallReturnInterval(Period.from(rdDuration, rdInterval));
 
-    final IndividualResource loanPolicy = loanPoliciesFixture.create(canCirculateRollingPolicy);
-
-    useLoanPolicyAsFallback(loanPolicy.getId(),
-        requestPoliciesFixture.allowAllRequestPolicy().getId(),
-        noticePoliciesFixture.inactiveNotice().getId());
+    setFallbackPolicies(canCirculateRollingPolicy);
 
     // We use the loan date to calculate the minimum guaranteed due date (MGD)
     final DateTime loanDate = DateTime.now(DateTimeZone.UTC);
@@ -430,11 +406,7 @@ public class LoanDueDatesAfterRecallTests extends APITests {
         .withRecallsMinimumGuaranteedLoanPeriod(Period.weeks(2))
         .withRecallsRecallReturnInterval(Period.months(2));
 
-    final IndividualResource loanPolicy = loanPoliciesFixture.create(canCirculateRollingPolicy);
-
-    useLoanPolicyAsFallback(loanPolicy.getId(),
-        requestPoliciesFixture.allowAllRequestPolicy().getId(),
-        noticePoliciesFixture.inactiveNotice().getId());
+    setFallbackPolicies(canCirculateRollingPolicy);
 
     loansFixture.checkOutByBarcode(smallAngryPlanet, charlotte,
       DateTime.now(DateTimeZone.UTC));
@@ -488,11 +460,7 @@ public class LoanDueDatesAfterRecallTests extends APITests {
       .withRecallsMinimumGuaranteedLoanPeriod(Period.days(5))
       .withClosedLibraryDueDateManagement(KEEP_THE_CURRENT_DUE_DATE.getValue());
 
-    final IndividualResource loanPolicy = loanPoliciesFixture.create(canCirculateRollingPolicy);
-
-    useLoanPolicyAsFallback(loanPolicy.getId(),
-      requestPoliciesFixture.allowAllRequestPolicy().getId(),
-      noticePoliciesFixture.inactiveNotice().getId());
+    setFallbackPolicies(canCirculateRollingPolicy);
 
     final DateTime loanDate = DateTime.now(DateTimeZone.UTC).minusDays(3);
 
@@ -547,11 +515,7 @@ public class LoanDueDatesAfterRecallTests extends APITests {
         .withRecallsMinimumGuaranteedLoanPeriod(Period.weeks(2))
         .withRecallsRecallReturnInterval(Period.weeks(1));
 
-    final IndividualResource loanPolicy = loanPoliciesFixture.create(canCirculateRollingPolicy);
-
-    useLoanPolicyAsFallback(loanPolicy.getId(),
-        requestPoliciesFixture.allowAllRequestPolicy().getId(),
-        noticePoliciesFixture.inactiveNotice().getId());
+    setFallbackPolicies(canCirculateRollingPolicy);
 
     requestsFixture.placeHoldShelfRequest(smallAngryPlanet, jessica,
         DateTime.now(DateTimeZone.UTC), requestServicePoint.getId(), "Page");
@@ -602,11 +566,7 @@ public class LoanDueDatesAfterRecallTests extends APITests {
         .withRecallsMinimumGuaranteedLoanPeriod(Period.weeks(2))
         .withRecallsRecallReturnInterval(Period.weeks(1));
 
-    final IndividualResource loanPolicy = loanPoliciesFixture.create(canCirculateRollingPolicy);
-
-    useLoanPolicyAsFallback(loanPolicy.getId(),
-        requestPoliciesFixture.allowAllRequestPolicy().getId(),
-        noticePoliciesFixture.inactiveNotice().getId());
+     setFallbackPolicies(canCirculateRollingPolicy);
 
     requestsFixture.placeHoldShelfRequest(smallAngryPlanet, jessica,
         DateTime.now(DateTimeZone.UTC), requestServicePoint.getId(), "Page");
@@ -658,11 +618,7 @@ public class LoanDueDatesAfterRecallTests extends APITests {
         .withRecallsMinimumGuaranteedLoanPeriod(Period.weeks(2))
         .withRecallsRecallReturnInterval(Period.weeks(1));
 
-    final IndividualResource loanPolicy = loanPoliciesFixture.create(canCirculateRollingPolicy);
-
-    useLoanPolicyAsFallback(loanPolicy.getId(),
-        requestPoliciesFixture.allowAllRequestPolicy().getId(),
-        noticePoliciesFixture.inactiveNotice().getId());
+    setFallbackPolicies(canCirculateRollingPolicy);
 
     final IndividualResource loan = loansFixture.checkOutByBarcode(
       smallAngryPlanet, steve, ClockManager.getClockManager().getDateTime());
@@ -713,11 +669,7 @@ public class LoanDueDatesAfterRecallTests extends APITests {
         .withRecallsMinimumGuaranteedLoanPeriod(Period.weeks(2))
         .withRecallsRecallReturnInterval(Period.weeks(1));
 
-    final IndividualResource loanPolicy = loanPoliciesFixture.create(canCirculateRollingPolicy);
-
-    useLoanPolicyAsFallback(loanPolicy.getId(),
-        requestPoliciesFixture.allowAllRequestPolicy().getId(),
-        noticePoliciesFixture.inactiveNotice().getId());
+    setFallbackPolicies(canCirculateRollingPolicy);
 
     final IndividualResource loan = loansFixture.checkOutByBarcode(
       smallAngryPlanet, steve, ClockManager.getClockManager().getDateTime());
@@ -768,11 +720,7 @@ public class LoanDueDatesAfterRecallTests extends APITests {
         .renewFromSystemDate()
         .withRecallsRecallReturnInterval(Period.months(2));
 
-    final IndividualResource loanPolicy = loanPoliciesFixture.create(canCirculateRollingPolicy);
-
-    useLoanPolicyAsFallback(loanPolicy.getId(),
-        requestPoliciesFixture.allowAllRequestPolicy().getId(),
-        noticePoliciesFixture.inactiveNotice().getId());
+    setFallbackPolicies(canCirculateRollingPolicy);
 
     final IndividualResource loan = loansFixture.checkOutByBarcode(
       smallAngryPlanet, steve, DateTime.now(DateTimeZone.UTC));
@@ -823,11 +771,7 @@ public class LoanDueDatesAfterRecallTests extends APITests {
         .withRecallsMinimumGuaranteedLoanPeriod(Period.weeks(2))
         .withRecallsRecallReturnInterval(Period.months(2));
 
-    final IndividualResource loanPolicy = loanPoliciesFixture.create(canCirculateRollingPolicy);
-
-    useLoanPolicyAsFallback(loanPolicy.getId(),
-        requestPoliciesFixture.allowAllRequestPolicy().getId(),
-        noticePoliciesFixture.inactiveNotice().getId());
+    setFallbackPolicies(canCirculateRollingPolicy);
 
     final IndividualResource loan = loansFixture.checkOutByBarcode(
       smallAngryPlanet, steve, DateTime.now(DateTimeZone.UTC));
@@ -879,11 +823,8 @@ public class LoanDueDatesAfterRecallTests extends APITests {
         .withRecallsMinimumGuaranteedLoanPeriod(Period.weeks(1))
         .withRecallsRecallReturnInterval(Period.weeks(2));
 
-    final IndividualResource loanPolicy = loanPoliciesFixture.create(canCirculateRollingPolicy);
 
-    useLoanPolicyAsFallback(loanPolicy.getId(),
-        requestPoliciesFixture.allowAllRequestPolicy().getId(),
-        noticePoliciesFixture.inactiveNotice().getId());
+    setFallbackPolicies(canCirculateRollingPolicy);
 
     final IndividualResource loan = loansFixture.checkOutByBarcode(
       smallAngryPlanet, jessica, ClockManager.getClockManager().getDateTime());
