@@ -1,12 +1,12 @@
-package org.folio.circulation.domain.anonymization.checks;
+package org.folio.circulation.domain.anonymization.checkers;
 
 import org.folio.circulation.domain.Loan;
 
-public class HaveNoAssociatedFeesAndFines implements AnonymizationChecker {
+public class NoAssociatedFeesAndFinesChecker extends DefaultAnonymizationChecker {
 
   @Override
   public boolean canBeAnonymized(Loan loan) {
-    return loan.getAccounts().isEmpty();
+    return !hasAssociatedFeesAndFines(loan);
   }
 
   @Override

@@ -11,6 +11,8 @@ import org.folio.circulation.domain.Loan;
 
 public class LoanAnonymizationRecords {
 
+  public static final String CAN_BE_ANONYMIZED_KEY = "_";
+
   private List<String> anonymizedLoans = new ArrayList<>();
   private List<Loan> loansFound = new ArrayList<>();
   private MultiValuedMap<String, String> notAnonymizedLoans =
