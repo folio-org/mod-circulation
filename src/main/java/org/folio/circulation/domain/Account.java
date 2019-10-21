@@ -3,21 +3,20 @@ package org.folio.circulation.domain;
 import static org.folio.circulation.support.JsonPropertyFetcher.getNestedStringProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.Optional;
 
-import org.apache.commons.lang.math.NumberUtils;
+import org.apache.commons.lang3.math.NumberUtils;
 import org.joda.time.DateTime;
-
-import com.google.inject.internal.util.Lists;
 
 import io.vertx.core.json.JsonObject;
 
 public class Account {
 
   private final JsonObject representation;
-  private Collection<FeeFineAction> feeFineActions = Lists.newArrayList();
+  private Collection<FeeFineAction> feeFineActions = new ArrayList<>();
 
   public Account(JsonObject representation) {
     this.representation = representation;

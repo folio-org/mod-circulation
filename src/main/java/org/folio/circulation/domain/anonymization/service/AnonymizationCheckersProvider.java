@@ -1,5 +1,7 @@
 package org.folio.circulation.domain.anonymization.service;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import org.folio.circulation.domain.anonymization.checkers.AnonymizationChecker;
@@ -33,11 +35,11 @@ class AnonymizationCheckersProvider {
   }
 
   private List<AnonymizationChecker> generalCheckers() {
-    return Lists.newArrayList(new NoAssociatedFeesAndFinesChecker());
+    return Collections.singletonList(new NoAssociatedFeesAndFinesChecker());
   }
 
   private List<AnonymizationChecker> closedLoansCheckers() {
-    List<AnonymizationChecker> result = Lists.newArrayList();
+    List<AnonymizationChecker> result = new ArrayList<>();
     if (loanHistorySettings == null) {
       return result;
     }
@@ -62,7 +64,7 @@ class AnonymizationCheckersProvider {
 
   private List<AnonymizationChecker> feesAndFinesCheckers() {
 
-    List<AnonymizationChecker> result = Lists.newArrayList();
+    List<AnonymizationChecker> result = new ArrayList<>();
     if (loanHistorySettings == null || !loanHistorySettings.treatLoansWithFeesAndFinesDifferently()) {
       return result;
     }

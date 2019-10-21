@@ -398,7 +398,7 @@ public class FakeOkapi extends AbstractVerticle {
             JsonArray providedLoanIds = body.toJsonObject()
               .getJsonArray("loanIds");
             providedLoanIds = Objects.isNull(providedLoanIds) ? new JsonArray() : providedLoanIds;
-            responseBody.put("anonymizedLoans", Lists.newArrayList(providedLoanIds));
+            responseBody.put("anonymizedLoans", providedLoanIds);
             responseBody.put("notAnonymizedLoans", new JsonArray());
             routingContext.response()
               .putHeader("Content-type", "application/json")
