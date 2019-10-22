@@ -222,10 +222,11 @@ public class CheckOutByBarcodeTests extends APITests {
     final IndividualResource loanPolicyResource = loanPoliciesFixture.create(dueDateLimitedPolicy);
     UUID dueDateLimitedPolicyId = loanPolicyResource.getId();
 
-    useLoanPolicyAsFallback(
+    useFallbackPolicies(
       dueDateLimitedPolicyId,
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
-      noticePoliciesFixture.activeNotice().getId()
+      noticePoliciesFixture.activeNotice().getId(),
+      overdueFinePoliciesFixture.facultyStandard().getId()
     );
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
@@ -505,10 +506,11 @@ public class CheckOutByBarcodeTests extends APITests {
 
     final UUID nonExistentloanPolicyId = UUID.randomUUID();
 
-    useLoanPolicyAsFallback(
+    useFallbackPolicies(
       nonExistentloanPolicyId,
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
-      noticePoliciesFixture.activeNotice().getId()
+      noticePoliciesFixture.activeNotice().getId(),
+      overdueFinePoliciesFixture.facultyStandard().getId()
     );
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
@@ -889,10 +891,11 @@ public class CheckOutByBarcodeTests extends APITests {
         .withName("Not Loanable Policy")
         .withLoanable(false));
 
-    useLoanPolicyAsFallback(
+    useFallbackPolicies(
       notLoanablePolicy.getId(),
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
-      noticePoliciesFixture.inactiveNotice().getId());
+      noticePoliciesFixture.inactiveNotice().getId(),
+      overdueFinePoliciesFixture.facultyStandard().getId());
 
     InventoryItemResource nod = itemsFixture.basedUponNod();
     IndividualResource steve = usersFixture.steve();
