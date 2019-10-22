@@ -34,7 +34,6 @@ public class UpdateRequestService {
     RequestAndRelatedRecords requestAndRelatedRecords) {
 
     return closedRequestValidator.refuseWhenAlreadyClosed(requestAndRelatedRecords)
-      .thenApply(r -> r.next(RequestServiceUtility::refuseWhenUserIsInactive))
       .thenApply(r -> r.next(this::removeRequestQueuePositionWhenCancelled))
       .thenComposeAsync(r -> r.after(requestRepository::update))
       .thenComposeAsync(r -> r.after(updateRequestQueue::onCancellation))

@@ -7,6 +7,7 @@ import static api.support.matchers.UUIDMatcher.is;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static api.support.matchers.ValidationErrorMatchers.hasUUIDParameter;
+import static org.folio.HttpStatus.HTTP_NO_CONTENT;
 import static org.folio.HttpStatus.HTTP_VALIDATION_ERROR;
 import static org.folio.circulation.domain.representations.RequestProperties.CANCELLATION_REASON_NAME;
 import static org.folio.circulation.domain.representations.RequestProperties.CANCELLATION_REASON_PUBLIC_DESCRIPTION;
@@ -44,6 +45,7 @@ import api.support.builders.Address;
 import api.support.builders.NoticeConfigurationBuilder;
 import api.support.builders.NoticePolicyBuilder;
 import api.support.builders.RequestBuilder;
+import api.support.builders.UserBuilder;
 import api.support.fixtures.TemplateContextMatchers;
 import api.support.http.InventoryItemResource;
 import io.vertx.core.json.JsonObject;
@@ -686,7 +688,7 @@ public class RequestsAPIUpdatingTests extends APITests {
   }
 
   @Test
-  public void cannotReplaceRequestWithAnInactiveUser()
+  public void canReplaceRequestWithAnInactiveUser()
     throws InterruptedException,
     ExecutionException,
     TimeoutException,
@@ -713,7 +715,8 @@ public class RequestsAPIUpdatingTests extends APITests {
       .withRequestExpiration(new LocalDate(2017, 7, 30))
       .withHoldShelfExpiration(new LocalDate(2017, 8, 31)));
 
-    final IndividualResource inactiveCharlotte = usersFixture.charlotte(c -> c.inactive());
+    final IndividualResource inactiveCharlotte
+      = usersFixture.charlotte(UserBuilder::inactive);
 
     final Response putResponse = requestsClient.attemptReplace(createdRequest.getId(),
         RequestBuilder.from(createdRequest)
@@ -721,12 +724,6 @@ public class RequestsAPIUpdatingTests extends APITests {
         .by(inactiveCharlotte)
         .withTags(new RequestBuilder.Tags(Arrays.asList("new", "important"))));
 
-    assertThat(putResponse, hasStatus(HTTP_VALIDATION_ERROR));
-
-    assertThat(putResponse.getJson(), hasErrorWith(allOf(
-      hasMessage("Inactive users cannot make requests"),
-      hasUUIDParameter("requesterId", inactiveCharlotte.getId()),
-      hasUUIDParameter("itemId", temeraire.getId()))));
-
+    assertThat(putResponse, hasStatus(HTTP_NO_CONTENT));
   }
 }
