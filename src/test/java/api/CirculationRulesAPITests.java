@@ -24,13 +24,13 @@ public class CirculationRulesAPITests extends APITests {
 
   @Test
   public void canPutAndGet() throws Exception {
-    String rule = "priority: t, s, c, b, a, m, g\nfallback-policy: l no-circulation r no-hold n basic-notice o basic-overdue\n";
+    String rule = "priority: t, s, c, b, a, m, g\nfallback-policy: l no-circulation r no-hold n basic-notice\n";
 
     circulationRulesFixture.updateCirculationRules(rule);
 
     assertThat(getText(), is(rule));
 
-    rule = "priority: t, s, c, b, a, m, g\nfallback-policy: l loan-forever r two-week-hold n two-week-notice o forever-overdue\n";
+    rule = "priority: t, s, c, b, a, m, g\nfallback-policy: l loan-forever r two-week-hold n two-week-notice\n";
 
     circulationRulesFixture.updateCirculationRules(rule);
 

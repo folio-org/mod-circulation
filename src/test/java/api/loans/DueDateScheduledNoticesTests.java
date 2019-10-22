@@ -4,7 +4,6 @@ import static api.support.matchers.ScheduledNoticeMatchers.hasScheduledLoanNotic
 import static org.folio.circulation.support.JsonPropertyFetcher.getDateTimeProperty;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.Matchers.hasSize;
-import static org.hamcrest.Matchers.not;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 
 import java.net.MalformedURLException;
@@ -83,7 +82,10 @@ public class DueDateScheduledNoticesTests extends APITests {
         beforeDueDateNoticeConfiguration,
         uponAtDueDateNoticeConfiguration,
         afterDueDateNoticeConfiguration));
-    use(noticePolicy);
+    useLoanPolicyAsFallback(
+      loanPoliciesFixture.canCirculateRolling().getId(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
+      noticePoliciesFixture.create(noticePolicy).getId());
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource steve = usersFixture.steve();
@@ -151,8 +153,10 @@ public class DueDateScheduledNoticesTests extends APITests {
       .withLoanNotices(Arrays.asList(
         firstBeforeDueDateNoticeConfiguration,
         secondBeforeDueDateNoticeConfiguration));
-
-    use(noticePolicy);
+    useLoanPolicyAsFallback(
+      loanPoliciesFixture.canCirculateRolling().getId(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
+      noticePoliciesFixture.create(noticePolicy).getId());
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource steve = usersFixture.steve();
@@ -207,8 +211,10 @@ public class DueDateScheduledNoticesTests extends APITests {
       .withLoanNotices(Arrays.asList(
         checkOutNoticeConfiguration,
         checkInNoticeConfiguration));
-
-    use(noticePolicy);
+    useLoanPolicyAsFallback(
+      loanPoliciesFixture.canCirculateRolling().getId(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
+      noticePoliciesFixture.create(noticePolicy).getId());
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource steve = usersFixture.steve();
@@ -274,7 +280,10 @@ public class DueDateScheduledNoticesTests extends APITests {
         uponAtDueDateNoticeConfiguration,
         afterDueDateNoticeConfiguration));
 
-    use(noticePolicy);
+    useLoanPolicyAsFallback(
+      loanPoliciesFixture.canCirculateRolling().getId(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
+      noticePoliciesFixture.create(noticePolicy).getId());
 
     IndividualResource item = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource borrower = usersFixture.steve();
@@ -360,7 +369,10 @@ public class DueDateScheduledNoticesTests extends APITests {
       .rolling(Period.weeks(3))
       .notRenewable();
 
-    use(loanPolicy, noticePolicy);
+    useLoanPolicyAsFallback(
+      loanPoliciesFixture.create(loanPolicy).getId(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
+      noticePoliciesFixture.create(noticePolicy).getId());
 
     IndividualResource item = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource borrower = usersFixture.steve();
@@ -448,7 +460,10 @@ public class DueDateScheduledNoticesTests extends APITests {
       .rolling(Period.weeks(3))
       .withRecallsMinimumGuaranteedLoanPeriod(Period.weeks(2));
 
-    use(loanPolicy, noticePolicy);
+    useLoanPolicyAsFallback(
+      loanPoliciesFixture.create(loanPolicy).getId(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
+      noticePoliciesFixture.create(noticePolicy).getId());
 
     IndividualResource item = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource borrower = usersFixture.steve();
@@ -534,8 +549,10 @@ public class DueDateScheduledNoticesTests extends APITests {
         beforeDueDateNoticeConfiguration,
         uponAtDueDateNoticeConfiguration,
         afterDueDateNoticeConfiguration));
-
-    use(noticePolicy);
+    useLoanPolicyAsFallback(
+      loanPoliciesFixture.canCirculateRolling().getId(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
+      noticePoliciesFixture.create(noticePolicy).getId());
 
     IndividualResource item = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource borrower = usersFixture.steve();

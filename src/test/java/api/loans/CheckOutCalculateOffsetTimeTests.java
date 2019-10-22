@@ -496,8 +496,7 @@ public class CheckOutCalculateOffsetTimeTests extends APITests {
 
     UUID requestPolicyId = requestPoliciesFixture.allowAllRequestPolicy().getId();
     UUID noticePolicyId = noticePoliciesFixture.activeNotice().getId();
-    UUID overdueFinePolicyId = overdueFinePoliciesFixture.facultyStandard().getId();
-    useFallbackPolicies(loanPolicy.getId(), requestPolicyId, noticePolicyId, overdueFinePolicyId);
+    useLoanPolicyAsFallback(loanPolicy.getId(), requestPolicyId, noticePolicyId);
 
     return loanPolicy;
   }

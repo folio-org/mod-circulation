@@ -158,8 +158,13 @@ abstract class RenewalAPITests extends APITests {
 
     final IndividualResource loanPolicy = loanPoliciesFixture
             .create(currentDueDateRollingPolicy);
+    UUID dueDateLimitedPolicyId = loanPolicy.getId();
 
-    use(currentDueDateRollingPolicy);
+    useLoanPolicyAsFallback(
+      dueDateLimitedPolicyId,
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
+      noticePoliciesFixture.activeNotice().getId()
+    );
 
     final JsonObject renewedLoan = renew(smallAngryPlanet, jessica).getJson();
 
@@ -212,8 +217,13 @@ abstract class RenewalAPITests extends APITests {
       .renewFromCurrentDueDate();
 
     final IndividualResource loanPolicy = loanPoliciesFixture.create(dueDateLimitedPolicy);
+    UUID dueDateLimitedPolicyId = loanPolicy.getId();
 
-    use(dueDateLimitedPolicy);
+    useLoanPolicyAsFallback(
+      dueDateLimitedPolicyId,
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
+      noticePoliciesFixture.activeNotice().getId()
+    );
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource steve = usersFixture.steve();
@@ -261,8 +271,13 @@ abstract class RenewalAPITests extends APITests {
 
     final IndividualResource dueDateLimitedPolicy = loanPoliciesFixture
             .create(currentDueDateRollingPolicy);
+    UUID dueDateLimitedPolicyId = dueDateLimitedPolicy.getId();
 
-    use(currentDueDateRollingPolicy);
+    useLoanPolicyAsFallback(
+      dueDateLimitedPolicyId,
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
+      noticePoliciesFixture.activeNotice().getId()
+    );
 
     final JsonObject renewedLoan = renew(smallAngryPlanet, jessica).getJson();
 
@@ -316,8 +331,13 @@ abstract class RenewalAPITests extends APITests {
 
     final IndividualResource loanPolicy = loanPoliciesFixture
             .create(dueDateLimitedPolicy);
+    UUID dueDateLimitedPolicyId = loanPolicy.getId();
 
-    use(dueDateLimitedPolicy);
+    useLoanPolicyAsFallback(
+      dueDateLimitedPolicyId,
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
+      noticePoliciesFixture.activeNotice().getId()
+    );
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource steve = usersFixture.steve();
@@ -364,8 +384,13 @@ abstract class RenewalAPITests extends APITests {
       .renewWith(Period.days(8));
 
     final IndividualResource loanPolicy = loanPoliciesFixture.create(dueDateLimitedPolicy);
+    UUID dueDateLimitedPolicyId = loanPolicy.getId();
 
-    use(dueDateLimitedPolicy);
+    useLoanPolicyAsFallback(
+      dueDateLimitedPolicyId,
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
+      noticePoliciesFixture.activeNotice().getId()
+    );
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource steve = usersFixture.steve();
@@ -415,8 +440,13 @@ abstract class RenewalAPITests extends APITests {
       .renewFromSystemDate();
 
     final IndividualResource fiexDueDatePolicy = loanPoliciesFixture.create(dueDateLimitedPolicy);
+    UUID fixedDueDatePolicyId = fiexDueDatePolicy.getId();
 
-    use(dueDateLimitedPolicy);
+    useLoanPolicyAsFallback(
+      fixedDueDatePolicyId,
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
+      noticePoliciesFixture.activeNotice().getId()
+    );
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource steve = usersFixture.steve();
@@ -466,8 +496,13 @@ abstract class RenewalAPITests extends APITests {
       .limitedRenewals(3);
 
     final IndividualResource loanPolicy = loanPoliciesFixture.create(limitedRenewalsPolicy);
+    UUID limitedRenewalsPolicyId = loanPolicy.getId();
 
-    use(limitedRenewalsPolicy);
+    useLoanPolicyAsFallback(
+      limitedRenewalsPolicyId,
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
+      noticePoliciesFixture.activeNotice().getId()
+    );
 
     final IndividualResource loan = loansFixture.checkOutByBarcode(smallAngryPlanet, jessica,
       new DateTime(2018, 4, 21, 11, 21, 43, DateTimeZone.UTC));
@@ -572,11 +607,10 @@ abstract class RenewalAPITests extends APITests {
     loansFixture.checkOutByBarcode(smallAngryPlanet, jessica,
       new DateTime(2018, 4, 21, 11, 21, 43, DateTimeZone.UTC));
 
-    useFallbackPolicies(
+    useLoanPolicyAsFallback(
       unknownLoanPolicyId,
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
-      noticePoliciesFixture.activeNotice().getId(),
-      overdueFinePoliciesFixture.facultyStandard().getId()
+      noticePoliciesFixture.activeNotice().getId()
     );
 
     final Response response = loansFixture.attemptRenewal(500, smallAngryPlanet, jessica);
@@ -602,13 +636,18 @@ abstract class RenewalAPITests extends APITests {
       .limitedRenewals(3);
 
     final IndividualResource loanPolicyResponse = loanPoliciesFixture.create(limitedRenewalsPolicy);
+    UUID limitedRenewalsPolicyId = loanPolicyResponse.getId();
 
     IndividualResource loan = loansFixture.checkOutByBarcode(smallAngryPlanet, jessica,
         new DateTime(2019, 4, 21, 11, 21, 43, DateTimeZone.UTC));
 
     loanHasLoanPolicyProperties(loan.getJson(), loanPoliciesFixture.canCirculateRolling());
 
-    use(limitedRenewalsPolicy);
+    useLoanPolicyAsFallback(
+            limitedRenewalsPolicyId,
+            requestPoliciesFixture.allowAllRequestPolicy().getId(),
+            noticePoliciesFixture.activeNotice().getId()
+    );
 
     loan = renew(smallAngryPlanet, jessica);
 
@@ -634,7 +673,11 @@ abstract class RenewalAPITests extends APITests {
     UUID limitedRenewalsPolicyId = loanPoliciesFixture
       .create(limitedRenewalsPolicy).getId();
 
-    use(limitedRenewalsPolicy);
+    useLoanPolicyAsFallback(
+      limitedRenewalsPolicyId,
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
+      noticePoliciesFixture.activeNotice().getId()
+    );
 
     loansFixture.checkOutByBarcode(smallAngryPlanet, jessica,
       new DateTime(2018, 4, 21, 11, 21, 43, DateTimeZone.UTC));
@@ -670,7 +713,11 @@ abstract class RenewalAPITests extends APITests {
     UUID limitedRenewalsPolicyId = loanPoliciesFixture
       .create(limitedRenewalsPolicy).getId();
 
-    use(limitedRenewalsPolicy);
+    useLoanPolicyAsFallback(
+      limitedRenewalsPolicyId,
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
+      noticePoliciesFixture.activeNotice().getId()
+    );
 
     loansFixture.checkOutByBarcode(smallAngryPlanet, jessica,
       new DateTime(2018, 4, 21, 11, 21, 43, DateTimeZone.UTC));
@@ -723,7 +770,11 @@ abstract class RenewalAPITests extends APITests {
     UUID limitedRenewalsPolicyId = loanPoliciesFixture
       .create(limitedRenewalsPolicy).getId();
 
-    use(limitedRenewalsPolicy);
+    useLoanPolicyAsFallback(
+      limitedRenewalsPolicyId,
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
+      noticePoliciesFixture.activeNotice().getId()
+    );
 
     loansFixture.checkOutByBarcode(smallAngryPlanet, jessica,
       DateTime.now(DateTimeZone.UTC).minusDays(1)).getJson();
@@ -761,7 +812,11 @@ abstract class RenewalAPITests extends APITests {
     UUID notRenewablePolicyId = loanPoliciesFixture
       .create(limitedRenewalsPolicy).getId();
 
-    use(limitedRenewalsPolicy);
+    useLoanPolicyAsFallback(
+      notRenewablePolicyId,
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
+      noticePoliciesFixture.activeNotice().getId()
+    );
 
     loansFixture.checkOutByBarcode(smallAngryPlanet, jessica,
       new DateTime(2018, 4, 21, 11, 21, 43, DateTimeZone.UTC));
@@ -800,7 +855,11 @@ abstract class RenewalAPITests extends APITests {
     UUID notRenewablePolicyId = loanPoliciesFixture
       .create(limitedRenewalsPolicy).getId();
 
-    use(limitedRenewalsPolicy);
+    useLoanPolicyAsFallback(
+      notRenewablePolicyId,
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
+      noticePoliciesFixture.activeNotice().getId()
+    );
 
     loansFixture.checkOutByBarcode(smallAngryPlanet, jessica,
       DateTime.now(DateTimeZone.UTC));
@@ -828,7 +887,14 @@ abstract class RenewalAPITests extends APITests {
       .rolling(Period.days(2))
       .notRenewable();
 
-    use(policyForCheckout);
+    UUID notRenewablePolicyId = loanPoliciesFixture
+      .create(policyForCheckout).getId();
+
+    useLoanPolicyAsFallback(
+      notRenewablePolicyId,
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
+      noticePoliciesFixture.activeNotice().getId()
+    );
 
     loansFixture.checkOutByBarcode(smallAngryPlanet, jessica,
       new DateTime(2018, 4, 21, 11, 21, 43, DateTimeZone.UTC));
@@ -840,7 +906,11 @@ abstract class RenewalAPITests extends APITests {
     UUID notLoanablePolicyId = loanPoliciesFixture
       .create(nonLoanablePolicy).getId();
 
-    use(nonLoanablePolicy);
+    useLoanPolicyAsFallback(
+      notLoanablePolicyId,
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
+      noticePoliciesFixture.activeNotice().getId()
+    );
 
     final Response response = attemptRenewal(smallAngryPlanet, jessica);
 
@@ -936,7 +1006,10 @@ abstract class RenewalAPITests extends APITests {
       .withClosedLibraryDueDateManagement(
         DueDateManagement.KEEP_THE_CURRENT_DUE_DATE.getValue());
 
-    use(loanPolicy);
+    UUID loanPolicyIdForCheckOut = loanPolicyClient.create(loanPolicy).getId();
+    useLoanPolicyAsFallback(loanPolicyIdForCheckOut,
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
+      noticePoliciesFixture.activeNotice().getId());
 
     loansFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
@@ -945,12 +1018,14 @@ abstract class RenewalAPITests extends APITests {
         .at(checkoutServicePointId)
         .on(loanDate));
 
-    LoanPolicyBuilder renewPolicy = loanPolicy
+    UUID loanPolicyIdForRenew = loanPolicyClient.create(loanPolicy
       .withName("For renew")
       .withClosedLibraryDueDateManagement(
-        DueDateManagement.MOVE_TO_THE_END_OF_THE_PREVIOUS_OPEN_DAY.getValue());
-
-    use(renewPolicy);
+        DueDateManagement.MOVE_TO_THE_END_OF_THE_PREVIOUS_OPEN_DAY.getValue())
+    ).getId();
+    useLoanPolicyAsFallback(loanPolicyIdForRenew,
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
+      noticePoliciesFixture.activeNotice().getId());
 
     JsonObject renewedLoan = renew(smallAngryPlanet, jessica).getJson();
 
@@ -983,7 +1058,10 @@ abstract class RenewalAPITests extends APITests {
       .withClosedLibraryDueDateManagement(
         DueDateManagement.KEEP_THE_CURRENT_DUE_DATE.getValue());
 
-    use(loanPolicy);
+    UUID loanPolicyIdForCheckOut = loanPolicyClient.create(loanPolicy).getId();
+    useLoanPolicyAsFallback(loanPolicyIdForCheckOut,
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
+      noticePoliciesFixture.activeNotice().getId());
 
     loansFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
@@ -992,12 +1070,14 @@ abstract class RenewalAPITests extends APITests {
         .at(checkoutServicePointId)
         .on(loanDate));
 
-    LoanPolicyBuilder renewPolicy = loanPolicy
+    UUID loanPolicyIdForRenew = loanPolicyClient.create(loanPolicy
       .withName("For renew")
       .withClosedLibraryDueDateManagement(
-        DueDateManagement.MOVE_TO_THE_END_OF_THE_NEXT_OPEN_DAY.getValue());
-
-    use(renewPolicy);
+        DueDateManagement.MOVE_TO_THE_END_OF_THE_NEXT_OPEN_DAY.getValue())
+    ).getId();
+    useLoanPolicyAsFallback(loanPolicyIdForRenew,
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
+      noticePoliciesFixture.activeNotice().getId());
 
     JsonObject renewedLoan = renew(smallAngryPlanet, jessica).getJson();
 
@@ -1028,7 +1108,10 @@ abstract class RenewalAPITests extends APITests {
       .withClosedLibraryDueDateManagement(
         DueDateManagement.KEEP_THE_CURRENT_DUE_DATE.getValue());
 
-    use(loanPolicy);
+    UUID loanPolicyIdForCheckOut = loanPolicyClient.create(loanPolicy).getId();
+    useLoanPolicyAsFallback(loanPolicyIdForCheckOut,
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
+      noticePoliciesFixture.activeNotice().getId());
 
     loansFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
@@ -1037,12 +1120,14 @@ abstract class RenewalAPITests extends APITests {
         .at(checkoutServicePointId)
         .on(loanDate));
 
-    LoanPolicyBuilder renewPolicy = loanPolicy
+    UUID loanPolicyIdForRenew = loanPolicyClient.create(loanPolicy
       .withName("For renew")
       .withClosedLibraryDueDateManagement(
-        DueDateManagement.MOVE_TO_BEGINNING_OF_NEXT_OPEN_SERVICE_POINT_HOURS.getValue());
-
-    use(renewPolicy);
+        DueDateManagement.MOVE_TO_BEGINNING_OF_NEXT_OPEN_SERVICE_POINT_HOURS.getValue())
+    ).getId();
+    useLoanPolicyAsFallback(loanPolicyIdForRenew,
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
+      noticePoliciesFixture.activeNotice().getId());
 
     JsonObject renewedLoan = renew(smallAngryPlanet, jessica).getJson();
 
@@ -1075,7 +1160,10 @@ abstract class RenewalAPITests extends APITests {
       .withClosedLibraryDueDateManagement(
         DueDateManagement.KEEP_THE_CURRENT_DUE_DATE_TIME.getValue());
 
-    use(loanPolicy);
+    UUID loanPolicyIdForCheckOut = loanPolicyClient.create(loanPolicy).getId();
+    useLoanPolicyAsFallback(loanPolicyIdForCheckOut,
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
+      noticePoliciesFixture.activeNotice().getId());
 
     loansFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
@@ -1084,12 +1172,14 @@ abstract class RenewalAPITests extends APITests {
         .at(checkoutServicePointId)
         .on(loanDate));
 
-    LoanPolicyBuilder renewPolicy = loanPolicy
+    UUID loanPolicyIdForRenew = loanPolicyClient.create(loanPolicy
       .withName("For renew")
       .withClosedLibraryDueDateManagement(
-        DueDateManagement.MOVE_TO_END_OF_CURRENT_SERVICE_POINT_HOURS.getValue());
-
-    use(renewPolicy);
+        DueDateManagement.MOVE_TO_END_OF_CURRENT_SERVICE_POINT_HOURS.getValue())
+    ).getId();
+    useLoanPolicyAsFallback(loanPolicyIdForRenew,
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
+      noticePoliciesFixture.activeNotice().getId());
 
     DateTimeUtils.setCurrentMillisFixed(loanDate.plusHours(1).getMillis());
     JsonObject renewedLoan = renew(smallAngryPlanet, jessica).getJson();
@@ -1125,7 +1215,10 @@ abstract class RenewalAPITests extends APITests {
       .withClosedLibraryDueDateManagement(
         DueDateManagement.KEEP_THE_CURRENT_DUE_DATE.getValue());
 
-    use(loanPolicy);
+    UUID loanPolicyIdForCheckOut = loanPolicyClient.create(loanPolicy).getId();
+    useLoanPolicyAsFallback(loanPolicyIdForCheckOut,
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
+      noticePoliciesFixture.activeNotice().getId());
 
     loansFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
@@ -1134,12 +1227,14 @@ abstract class RenewalAPITests extends APITests {
         .at(checkoutServicePointId)
         .on(loanDate));
 
-    LoanPolicyBuilder renewPolicy = loanPolicy
+    UUID loanPolicyIdForRenew = loanPolicyClient.create(loanPolicy
       .withName("For renew")
       .withClosedLibraryDueDateManagement(
-        DueDateManagement.MOVE_TO_BEGINNING_OF_NEXT_OPEN_SERVICE_POINT_HOURS.getValue());
-
-    use(renewPolicy);
+        DueDateManagement.MOVE_TO_BEGINNING_OF_NEXT_OPEN_SERVICE_POINT_HOURS.getValue())
+    ).getId();
+    useLoanPolicyAsFallback(loanPolicyIdForRenew,
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
+      noticePoliciesFixture.activeNotice().getId());
 
     JsonObject renewedLoan = renew(smallAngryPlanet, jessica).getJson();
 
@@ -1239,6 +1334,8 @@ abstract class RenewalAPITests extends APITests {
       .limitedBySchedule(fixedDueDateSchedulesId)
       .renewFromSystemDate();
 
+    UUID dueDateLimitedPolicyId = loanPoliciesFixture.create(currentDueDateRollingPolicy)
+      .getId();
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource jessica = usersFixture.jessica();
@@ -1248,7 +1345,11 @@ abstract class RenewalAPITests extends APITests {
 
     loansFixture.checkOutByBarcode(smallAngryPlanet, jessica, loanDueDate);
 
-    use(currentDueDateRollingPolicy);
+    useLoanPolicyAsFallback(
+      dueDateLimitedPolicyId,
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
+      noticePoliciesFixture.activeNotice().getId()
+    );
 
     loansFixture.attemptRenewal(422, smallAngryPlanet, jessica);
   }
@@ -1336,16 +1437,21 @@ abstract class RenewalAPITests extends APITests {
       .withCheckInEvent()
       .create();
 
-    NoticePolicyBuilder policyWithRenewalNotice = new NoticePolicyBuilder()
-      .withName("Policy with renewal notice")
-      .withLoanNotices(Arrays.asList(renewalNoticeConfiguration, checkInNoticeConfiguration));
+    IndividualResource noticePolicy = noticePoliciesFixture.create(
+      new NoticePolicyBuilder()
+        .withName("Policy with renewal notice")
+        .withLoanNotices(Arrays.asList(renewalNoticeConfiguration, checkInNoticeConfiguration)));
 
-    LoanPolicyBuilder limitedRenewalsLoanPolicy = new LoanPolicyBuilder()
-      .withName("Limited renewals loan policy")
-      .rolling(Period.months(1))
-      .limitedRenewals(3);
+    IndividualResource loanPolicyWithLimitedRenewals = loanPoliciesFixture.create(
+      new LoanPolicyBuilder()
+        .withName("Limited renewals loan policy")
+        .rolling(Period.months(1))
+        .limitedRenewals(3));
 
-    use(limitedRenewalsLoanPolicy, policyWithRenewalNotice);
+    useLoanPolicyAsFallback(
+      loanPolicyWithLimitedRenewals.getId(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
+      noticePolicy.getId());
 
     ItemBuilder itemBuilder = ItemExamples.basedUponSmallAngryPlanet(
       materialTypesFixture.book().getId(),
@@ -1402,11 +1508,10 @@ abstract class RenewalAPITests extends APITests {
 
     loansFixture.checkOutByBarcode(smallAngryPlanet, jessica, loanDate);
 
-    useFallbackPolicies(
+    useLoanPolicyAsFallback(
       dueDateLimitedPolicyId,
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
-      noticePoliciesFixture.activeNotice().getId(),
-      overdueFinePoliciesFixture.facultyStandard().getId()
+      noticePoliciesFixture.activeNotice().getId()
     );
 
     Response response = loansFixture.attemptRenewal(200, smallAngryPlanet, jessica);
