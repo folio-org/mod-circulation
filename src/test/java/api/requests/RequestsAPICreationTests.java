@@ -659,7 +659,7 @@ public class RequestsAPICreationTests extends APITests {
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource steve = usersFixture.steve();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
-    final IndividualResource inactiveCharlotte = usersFixture.charlotte( c -> c.inactive());
+    final IndividualResource inactiveCharlotte = usersFixture.charlotte(UserBuilder::inactive);
 
     loansFixture.checkOutByBarcode(smallAngryPlanet, steve);
 
@@ -673,6 +673,42 @@ public class RequestsAPICreationTests extends APITests {
       .withRequesterId(inactiveCharlotte.getId()));
 
     assertThat(recallResponse, hasStatus(HTTP_VALIDATION_ERROR));
+
+    assertThat(recallResponse.getJson(), hasErrorWith(allOf(
+      hasMessage("Inactive users cannot make requests"),
+      hasUUIDParameter("requesterId", inactiveCharlotte.getId()),
+      hasUUIDParameter("itemId", smallAngryPlanet.getId()))));
+  }
+
+  @Test
+  public void cannotCreateRequestAtSpecificLocationWithAnInactiveUser()
+    throws InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    MalformedURLException {
+
+    final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final IndividualResource steve = usersFixture.steve();
+    final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
+    final IndividualResource inactiveCharlotte = usersFixture.charlotte(UserBuilder::inactive);
+
+    loansFixture.checkOutByBarcode(smallAngryPlanet, steve);
+
+    DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
+
+    final UUID requestId = UUID.randomUUID();
+
+    final Response recallResponse = requestsClient.attemptCreateAtSpecificLocation(
+      new RequestBuilder()
+      .withId(requestId)
+      .recall()
+      .forItem(smallAngryPlanet)
+      .withPickupServicePointId(pickupServicePointId)
+      .withRequestDate(requestDate)
+      .withRequesterId(inactiveCharlotte.getId()));
+
+    assertThat(recallResponse, hasStatus(HTTP_VALIDATION_ERROR));
+
     assertThat(recallResponse.getJson(), hasErrorWith(allOf(
       hasMessage("Inactive users cannot make requests"),
       hasUUIDParameter("requesterId", inactiveCharlotte.getId()),
