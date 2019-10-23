@@ -31,6 +31,11 @@ public class ConfigurationRepository {
     return lookupConfigurations(cqlQueryResult, applySearchSchedulerNoticesLimit());
   }
 
+  public CompletableFuture<Result<Integer>> lookupSessionTimeout() {
+    Result<CqlQuery> cqlQueryResult = defineModuleNameAndConfigNameFilter("CHECKOUT", "other_settings");
+    return lookupConfigurations(cqlQueryResult, applySessionTimeout());
+  }
+
   public CompletableFuture<Result<DateTimeZone>> findTimeZoneConfiguration() {
     Result<CqlQuery> cqlQueryResult = defineModuleNameAndConfigNameFilter("ORG", "localeSettings");
 
@@ -59,5 +64,9 @@ public class ConfigurationRepository {
 
   private Function<MultipleRecords<Configuration>, Integer> applySearchSchedulerNoticesLimit() {
     return configurations -> new ConfigurationService().findSchedulerNoticesLimit(configurations.getRecords());
+  }
+
+  private Function<MultipleRecords<Configuration>, Integer> applySessionTimeout() {
+    return configurations -> new ConfigurationService().findSessionTimeout(configurations.getRecords());
   }
 }
