@@ -15,6 +15,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.BiFunction;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -57,6 +58,8 @@ public class FakeStorageModule extends AbstractVerticle {
   private final String changeMetadataPropertyName = "metadata";
   private final BiFunction<Collection<JsonObject>, JsonObject, Result<Object>> constraint;
   private final JsonSchemaValidator recordValidator;
+  private final String batchUpdatePath;
+  private final Function<JsonObject, JsonObject> batchUpdatePreProcessor;
 
   public static Stream<String> getQueries() {
     return queries.stream();
@@ -74,7 +77,9 @@ public class FakeStorageModule extends AbstractVerticle {
     Collection<String> uniqueProperties,
     @Deprecated Collection<String> disallowedProperties,
     Boolean includeChangeMetadata,
-    BiFunction<Collection<JsonObject>, JsonObject, Result<Object>> constraint) {
+    BiFunction<Collection<JsonObject>, JsonObject, Result<Object>> constraint,
+    String batchUpdatePath,
+    Function<JsonObject, JsonObject> batchUpdatePreProcessor) {
 
     this.rootPath = rootPath;
     this.collectionPropertyName = collectionPropertyName;
@@ -87,6 +92,8 @@ public class FakeStorageModule extends AbstractVerticle {
     this.constraint = constraint;
     this.includeChangeMetadata = includeChangeMetadata;
     this.recordValidator = recordValidator;
+    this.batchUpdatePath = batchUpdatePath;
+    this.batchUpdatePreProcessor = batchUpdatePreProcessor;
 
     storedResourcesByTenant = new HashMap<>();
     storedResourcesByTenant.put(tenantId, new HashMap<>());
@@ -123,6 +130,38 @@ public class FakeStorageModule extends AbstractVerticle {
 
     router.get(rootPath + "/:id").handler(this::getById);
     router.delete(rootPath + "/:id").handler(this::delete);
+
+    if (StringUtils.isNotBlank(batchUpdatePath)) {
+      router.route(batchUpdatePath).handler(this::checkTokenHeader);
+      router.route(batchUpdatePath).handler(this::checkRequestIdHeader);
+
+      router.post(batchUpdatePath).handler(BodyHandler.create());
+      router.post(batchUpdatePath).handler(this::batchUpdate);
+    }
+  }
+
+  private void batchUpdate(RoutingContext routingContext) {
+    WebContext context = new WebContext(routingContext);
+    JsonObject body = routingContext.getBodyAsJson();
+
+    if (batchUpdatePreProcessor != null) {
+      body = batchUpdatePreProcessor.apply(body);
+    }
+
+    JsonArray entities = body.getJsonArray(collectionPropertyName);
+    for (int entityIndex = 0; entityIndex < entities.size(); entityIndex++) {
+      JsonObject entity = entities.getJsonObject(entityIndex);
+      String id = entity.getString("id");
+
+      Result<Void> replaceResult = replaceSingleItem(context, id, entity);
+      if (replaceResult.failed()) {
+        replaceResult.cause().writeTo(routingContext.response());
+
+        return;
+      }
+    }
+
+    routingContext.response().setStatusCode(201).end();
   }
 
   private void create(RoutingContext routingContext) {
@@ -181,13 +220,22 @@ public class FakeStorageModule extends AbstractVerticle {
 
     JsonObject body = getJsonFromBody(routingContext);
 
+    Result<Void> replaceResult = replaceSingleItem(context, id, body);
+    if (replaceResult.succeeded()) {
+      SuccessResponse.noContent(routingContext.response());
+    } else {
+      replaceResult.cause().writeTo(routingContext.response());
+    }
+  }
+
+  private Result<Void> replaceSingleItem(WebContext context, String id, JsonObject body) {
     Map<String, JsonObject> resourcesForTenant = getResourcesForTenant(context);
 
-    if(resourcesForTenant.containsKey(id)) {
+    if (resourcesForTenant.containsKey(id)) {
       System.out.println(
         format("Replaced %s resource: %s", recordTypeName, id));
 
-      if(includeChangeMetadata) {
+      if (includeChangeMetadata) {
         final String fakeUserId = APITestContext.getUserId();
         final JsonObject existingChangeMetadata = resourcesForTenant.get(id)
           .getJsonObject(changeMetadataPropertyName);
@@ -202,25 +250,20 @@ public class FakeStorageModule extends AbstractVerticle {
 
       if (constraint == null) {
         resourcesForTenant.replace(id, body);
-        SuccessResponse.noContent(routingContext.response());
-      }
-      else {
+      } else {
         final Result<Object> checkConstraint = constraint.apply(resourcesForTenant.values(), body);
 
         if (checkConstraint.succeeded()) {
           resourcesForTenant.replace(id, body);
-          SuccessResponse.noContent(routingContext.response());
-        }
-        else {
-          checkConstraint.cause().writeTo(routingContext.response());
+        } else {
+          return Result.failed(checkConstraint.cause());
         }
       }
-    }
-    else {
+    } else {
       System.out.println(
         format("Created %s resource: %s", recordTypeName, id));
 
-      if(includeChangeMetadata) {
+      if (includeChangeMetadata) {
         final String fakeUserId = APITestContext.getUserId();
         body.put(changeMetadataPropertyName, new JsonObject()
           .put("createdDate", new DateTime(DateTimeZone.UTC)
@@ -232,8 +275,9 @@ public class FakeStorageModule extends AbstractVerticle {
       }
 
       resourcesForTenant.put(id, body);
-      SuccessResponse.noContent(routingContext.response());
     }
+
+    return Result.succeeded(null);
   }
 
   private void getById(RoutingContext routingContext) {

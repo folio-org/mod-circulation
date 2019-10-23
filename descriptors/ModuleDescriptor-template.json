@@ -576,6 +576,10 @@
       "version": "3.1"
     },
     {
+      "id": "request-storage-batch",
+      "version": "0.1"
+    },
+    {
       "id": "users",
       "version": "14.2 15.0"
     },
@@ -1528,7 +1532,7 @@
       "description": "to reduce X-Okapi-Token size",
       "subPermissions": [
         "circulation-storage.requests.item.get",
-        "circulation-storage.requests.item.put",
+        "circulation-storage.request-batch.item.post",
         "circulation-storage.requests.collection.get",
         "circulation-storage.loans.collection.get",
         "circulation-storage.loans.item.get",

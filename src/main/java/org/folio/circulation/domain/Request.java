@@ -90,20 +90,6 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
       getPickupServicePoint());
   }
 
-  Request withNoPosition() {
-    JsonObject requestRepresentationCopy = requestRepresentation.copy();
-    requestRepresentationCopy.remove(POSITION);
-
-    return new Request(requestRepresentationCopy,
-      cancellationReasonRepresentation,
-      getItem(),
-      getRequester(),
-      getProxy(),
-      getAddressType(),
-      getLoan(),
-      getPickupServicePoint());
-  }
-
   public JsonObject asJson() {
     return requestRepresentation.copy();
   }
