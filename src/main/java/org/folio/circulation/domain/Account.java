@@ -24,7 +24,7 @@ public class Account {
 
   private Account(JsonObject representation, Collection<FeeFineAction> actions) {
     this.representation = representation;
-    this.feeFineActions = actions;
+    this.feeFineActions = actions == null ? new ArrayList<>() : actions;
   }
 
   public static Account from(JsonObject representation) {
@@ -54,7 +54,7 @@ public class Account {
       .map(FeeFineAction::getDateAction);
   }
 
-  public Account withFeefineActions(Collection<FeeFineAction> actions) {
+  public Account withFeeFineActions(Collection<FeeFineAction> actions) {
     return new Account(representation, actions);
   }
 
