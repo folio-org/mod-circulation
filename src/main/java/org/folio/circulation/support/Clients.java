@@ -38,7 +38,7 @@ public class Clients {
   private final CollectionResourceClient configurationStorageClient;
   private final CollectionResourceClient scheduledNoticesStorageClient;
   private final CollectionResourceClient accountsStorageClient;
-  private final CollectionResourceClient feefineActionsStorageClient;
+  private final CollectionResourceClient feeFineActionsStorageClient;
   private final CollectionResourceClient anonymizeStorageLoansClient;
   private final CollectionResourceClient patronActionSessionsStorageClient;
 
@@ -79,7 +79,7 @@ public class Clients {
       configurationStorageClient = createConfigurationStorageClient(client, context);
       scheduledNoticesStorageClient = createScheduledNoticesStorageClient(client, context);
       accountsStorageClient = createAccountsStorageClient(client,context);
-      feefineActionsStorageClient = createFeeFineActionsStorageClient(client,context);
+      feeFineActionsStorageClient = createFeeFineActionsStorageClient(client,context);
       patronActionSessionsStorageClient = createPatronActionSessionsStorageClient(client,context);
     }
     catch(MalformedURLException e) {
@@ -209,8 +209,8 @@ public class Clients {
     return accountsStorageClient;
   }
 
-  public CollectionResourceClient feefineActionsStorageClient() {
-    return feefineActionsStorageClient;
+  public CollectionResourceClient feeFineActionsStorageClient() {
+    return feeFineActionsStorageClient;
   }
 
   public CollectionResourceClient patronActionSessionsStorageClient() {

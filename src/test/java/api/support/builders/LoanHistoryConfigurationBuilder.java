@@ -54,14 +54,17 @@ public class LoanHistoryConfigurationBuilder extends JsonBuilder implements Buil
     JsonObject config = new JsonObject();
 
     JsonObject closingType = new JsonObject();
+
     put(closingType, "loan", loanClosingType);
     put(closingType, "feeFine", feeFineClosingType);
 
     JsonObject feeFine = new JsonObject();
+
     put(feeFine, "intervalId", feeFineCloseIntervalId);
     put(feeFine, "duration", feeFineCloseDuration);
 
     JsonObject loan = new JsonObject();
+
     put(loan, "intervalId", loanCloseIntervalId);
     put(loan, "duration", loanCloseDuration);
 
@@ -69,6 +72,7 @@ public class LoanHistoryConfigurationBuilder extends JsonBuilder implements Buil
     put(config, "treatEnabled", exceptionForFeesAndFines);
     put(config, "feeFine", feeFine);
     put(config, "loan", loan);
+
     return config;
   }
 }

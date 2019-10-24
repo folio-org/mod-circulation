@@ -26,7 +26,7 @@ public class AccountRepository {
 
   public AccountRepository(Clients clients) {
     accountsStorageClient = clients.accountsStorageClient();
-    feefineActionsStorageClient = clients.feefineActionsStorageClient();
+    feefineActionsStorageClient = clients.feeFineActionsStorageClient();
   }
 
   public CompletableFuture<Result<Loan>> findAccountsForLoan(Result<Loan> loanResult) {
