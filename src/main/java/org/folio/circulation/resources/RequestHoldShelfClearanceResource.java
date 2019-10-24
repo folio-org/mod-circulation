@@ -205,6 +205,8 @@ public class RequestHoldShelfClearanceResource extends Resource {
       .map(Request::getItemId)
       .collect(Collectors.toList());
 
+    allAwaitingPickupItemIds.removeAll(awaitingPickupRequestItemIds);
+
     return new HoldShelfClearanceRequestContext()
       .withAwaitingPickupItemIds(allAwaitingPickupItemIds)
       .withAwaitingPickupRequestItemIds(awaitingPickupRequestItemIds);
