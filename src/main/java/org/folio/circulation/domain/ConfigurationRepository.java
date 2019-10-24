@@ -8,7 +8,7 @@ import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
-import org.folio.circulation.domain.anonymization.config.LoanHistorySettings;
+import org.folio.circulation.domain.anonymization.config.LoanAnonymizationConfigurationForTenant;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.CqlQuery;
@@ -38,7 +38,7 @@ public class ConfigurationRepository {
    * Gets loan history tenant configuration - settings for loan anonymization
    *
    */
-  public CompletableFuture<Result<LoanHistorySettings>> loanHistoryConfiguration() {
+  public CompletableFuture<Result<LoanAnonymizationConfigurationForTenant>> loanHistoryConfiguration() {
     return defineModuleNameAndConfigNameFilter("LOAN_HISTORY", "loan_history")
       .after(query -> configurationClient.getMany(query, DEFAULT_PAGE_LIMIT))
       .thenApply(result -> result.next(response -> from(response, Configuration::new, CONFIGS_KEY)))
@@ -46,13 +46,13 @@ public class ConfigurationRepository {
       .thenApply(r -> r.map(this::getFirstConfiguration));
   }
 
-  private LoanHistorySettings getFirstConfiguration(Collection<Configuration> configurations) {
+  private LoanAnonymizationConfigurationForTenant getFirstConfiguration(Collection<Configuration> configurations) {
     final String period = configurations.stream()
       .map(Configuration::getValue)
       .findFirst()
       .orElse("");
 
-    return LoanHistorySettings.from(new JsonObject(period));
+    return LoanAnonymizationConfigurationForTenant.from(new JsonObject(period));
   }
 
   public CompletableFuture<Result<DateTimeZone>> findTimeZoneConfiguration() {

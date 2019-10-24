@@ -12,17 +12,17 @@ import org.folio.circulation.domain.anonymization.checkers.LoanClosePeriodChecke
 import org.folio.circulation.domain.anonymization.checkers.NeverAnonymizeLoansChecker;
 import org.folio.circulation.domain.anonymization.checkers.NeverAnonymizeLoansWithFeeFinesChecker;
 import org.folio.circulation.domain.anonymization.checkers.NoAssociatedFeesAndFinesChecker;
-import org.folio.circulation.domain.anonymization.config.LoanHistorySettings;
+import org.folio.circulation.domain.anonymization.config.LoanAnonymizationConfigurationForTenant;
 
 class AnonymizationCheckersProvider {
 
-  private final LoanHistorySettings loanHistorySettings;
+  private final LoanAnonymizationConfigurationForTenant loanAnonymizationConfigurationForTenant;
   private final List<AnonymizationChecker> generalCheckers;
   private final List<AnonymizationChecker> feesAndFinesCheckers;
   private final List<AnonymizationChecker> closedLoansCheckers;
 
-  AnonymizationCheckersProvider(LoanHistorySettings settings) {
-    this.loanHistorySettings = settings;
+  AnonymizationCheckersProvider(LoanAnonymizationConfigurationForTenant settings) {
+    this.loanAnonymizationConfigurationForTenant = settings;
     generalCheckers = getDefaultCheckers();
     feesAndFinesCheckers = getFeesAndFinesCheckersFromLoanHistory();
     closedLoansCheckers = getClosedLoansCheckersFromLoanHistory();
@@ -38,16 +38,17 @@ class AnonymizationCheckersProvider {
 
   private List<AnonymizationChecker> getClosedLoansCheckersFromLoanHistory() {
     List<AnonymizationChecker> result = new ArrayList<>();
-    if (loanHistorySettings == null) {
+    if (loanAnonymizationConfigurationForTenant == null) {
       return result;
     }
 
-    switch (loanHistorySettings.getLoanClosingType()) {
+    switch (loanAnonymizationConfigurationForTenant.getLoanClosingType()) {
     case IMMEDIATELY:
       result.add(new AnonymizeLoansImmediatelyChecker());
       break;
     case INTERVAL:
-      result.add(new LoanClosePeriodChecker(loanHistorySettings.getLoanClosePeriod()));
+      result.add(new LoanClosePeriodChecker(
+          loanAnonymizationConfigurationForTenant.getLoanClosePeriod()));
       break;
     case UNKNOWN:
     case NEVER:
@@ -63,16 +64,18 @@ class AnonymizationCheckersProvider {
   private List<AnonymizationChecker> getFeesAndFinesCheckersFromLoanHistory() {
 
     List<AnonymizationChecker> result = new ArrayList<>();
-    if (loanHistorySettings == null || !loanHistorySettings.treatLoansWithFeesAndFinesDifferently()) {
+    if (loanAnonymizationConfigurationForTenant == null || !loanAnonymizationConfigurationForTenant
+        .treatLoansWithFeesAndFinesDifferently()) {
       return result;
     }
 
-    switch (loanHistorySettings.getFeesAndFinesClosingType()) {
+    switch (loanAnonymizationConfigurationForTenant.getFeesAndFinesClosingType()) {
     case IMMEDIATELY:
       result.add(new AnonymizeLoansWithFeeFinesImmediatelyChecker());
       break;
     case INTERVAL:
-      result.add(new FeesAndFinesClosePeriodChecker(loanHistorySettings.getFeeFineClosePeriod()));
+      result.add(new FeesAndFinesClosePeriodChecker(
+          loanAnonymizationConfigurationForTenant.getFeeFineClosePeriod()));
       break;
     case UNKNOWN:
     case NEVER:

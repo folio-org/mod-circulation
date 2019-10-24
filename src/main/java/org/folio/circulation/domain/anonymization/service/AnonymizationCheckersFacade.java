@@ -8,16 +8,17 @@ import java.util.List;
 import org.apache.commons.collections4.multimap.HashSetValuedHashMap;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.anonymization.checkers.AnonymizationChecker;
-import org.folio.circulation.domain.anonymization.config.LoanHistorySettings;
+import org.folio.circulation.domain.anonymization.config.LoanAnonymizationConfigurationForTenant;
 
 public class AnonymizationCheckersFacade {
 
-  private final LoanHistorySettings settings;
+  private final LoanAnonymizationConfigurationForTenant config;
   private AnonymizationCheckersProvider checkersProvider;
 
-  public AnonymizationCheckersFacade(LoanHistorySettings settings) {
-    this.settings = settings;
-    checkersProvider = new AnonymizationCheckersProvider(settings);
+  public AnonymizationCheckersFacade(
+      LoanAnonymizationConfigurationForTenant config) {
+    this.config = config;
+    checkersProvider = new AnonymizationCheckersProvider(config);
   }
 
   public AnonymizationCheckersFacade() {
@@ -44,10 +45,10 @@ public class AnonymizationCheckersFacade {
   }
 
   private List<AnonymizationChecker> getAnonymizationCheckers(Loan loan) {
-    if (settings == null) {
+    if (config == null) {
       return checkersProvider.getGeneralCheckers();
     }
-    if (!loan.getAccounts().isEmpty() && settings.treatLoansWithFeesAndFinesDifferently()) {
+    if (!loan.getAccounts().isEmpty() && config.treatLoansWithFeesAndFinesDifferently()) {
       return checkersProvider.getFeesAndFinesCheckers();
     } else {
       return checkersProvider.getClosedLoansCheckers();

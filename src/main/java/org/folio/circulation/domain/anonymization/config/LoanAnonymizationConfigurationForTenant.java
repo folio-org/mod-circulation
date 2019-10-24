@@ -8,7 +8,7 @@ import org.folio.circulation.domain.policy.Period;
 
 import io.vertx.core.json.JsonObject;
 
-public class LoanHistorySettings {
+public class LoanAnonymizationConfigurationForTenant {
 
   private static final String FEEFINE = "feeFine";
   private JsonObject representation;
@@ -18,7 +18,7 @@ public class LoanHistorySettings {
   private Period loanClosePeriod;
   private Period feeFineClosePeriod;
 
-  private LoanHistorySettings(JsonObject representation) {
+  private LoanAnonymizationConfigurationForTenant(JsonObject representation) {
     this.representation = representation;
     this.feesAndFinesClosingType = ClosingType.from(
         getNestedStringProperty(representation, "closingType", FEEFINE));
@@ -33,8 +33,8 @@ public class LoanHistorySettings {
       getNestedStringProperty(representation, FEEFINE, "intervalId"));
   }
 
-  public static LoanHistorySettings from(JsonObject jsonObject) {
-    return new LoanHistorySettings(jsonObject);
+  public static LoanAnonymizationConfigurationForTenant from(JsonObject jsonObject) {
+    return new LoanAnonymizationConfigurationForTenant(jsonObject);
   }
 
   public JsonObject getRepresentation() {
