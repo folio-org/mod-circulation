@@ -23,20 +23,20 @@ class AnonymizationCheckersProvider {
 
   AnonymizationCheckersProvider(LoanHistorySettings settings) {
     this.loanHistorySettings = settings;
-    generalCheckers = generalCheckers();
-    feesAndFinesCheckers = feesAndFinesCheckers();
-    closedLoansCheckers = closedLoansCheckers();
+    generalCheckers = getDefaultCheckers();
+    feesAndFinesCheckers = getFeesAndFinesCheckersFromLoanHistory();
+    closedLoansCheckers = getClosedLoansCheckersFromLoanHistory();
   }
 
   AnonymizationCheckersProvider() {
     this(null);
   }
 
-  private List<AnonymizationChecker> generalCheckers() {
+  private List<AnonymizationChecker> getDefaultCheckers() {
     return Collections.singletonList(new NoAssociatedFeesAndFinesChecker());
   }
 
-  private List<AnonymizationChecker> closedLoansCheckers() {
+  private List<AnonymizationChecker> getClosedLoansCheckersFromLoanHistory() {
     List<AnonymizationChecker> result = new ArrayList<>();
     if (loanHistorySettings == null) {
       return result;
@@ -60,7 +60,7 @@ class AnonymizationCheckersProvider {
     return result;
   }
 
-  private List<AnonymizationChecker> feesAndFinesCheckers() {
+  private List<AnonymizationChecker> getFeesAndFinesCheckersFromLoanHistory() {
 
     List<AnonymizationChecker> result = new ArrayList<>();
     if (loanHistorySettings == null || !loanHistorySettings.treatLoansWithFeesAndFinesDifferently()) {
