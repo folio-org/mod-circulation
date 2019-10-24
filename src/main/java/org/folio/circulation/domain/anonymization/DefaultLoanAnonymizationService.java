@@ -7,7 +7,7 @@ import java.util.concurrent.CompletableFuture;
 
 import org.apache.commons.collections4.multimap.HashSetValuedHashMap;
 import org.folio.circulation.domain.AnonymizeStorageLoansRepository;
-import org.folio.circulation.domain.anonymization.service.AnonymizationCheckersFacade;
+import org.folio.circulation.domain.anonymization.service.AnonymizationCheckersService;
 import org.folio.circulation.domain.anonymization.service.LoanAnonymizationFinderService;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.Result;
@@ -15,12 +15,12 @@ import org.folio.circulation.support.Result;
 public class DefaultLoanAnonymizationService implements LoanAnonymizationService {
 
   private final AnonymizeStorageLoansRepository anonymizeStorageLoansRepository;
-  private final AnonymizationCheckersFacade anonymizationCheckersFacade;
+  private final AnonymizationCheckersService anonymizationCheckersService;
   private final LoanAnonymizationFinderService loansFinder;
 
-  DefaultLoanAnonymizationService(Clients clients, AnonymizationCheckersFacade anonymizationCheckersFacade,
+  DefaultLoanAnonymizationService(Clients clients, AnonymizationCheckersService anonymizationCheckersService,
       LoanAnonymizationFinderService loansFinderService) {
-    this.anonymizationCheckersFacade = anonymizationCheckersFacade;
+    this.anonymizationCheckersService = anonymizationCheckersService;
     this.loansFinder = loansFinderService;
     anonymizeStorageLoansRepository = new AnonymizeStorageLoansRepository(clients);
   }
@@ -38,7 +38,8 @@ public class DefaultLoanAnonymizationService implements LoanAnonymizationService
       Result<LoanAnonymizationRecords> anonymizationRecords) {
 
     return completedFuture(anonymizationRecords.map(records -> {
-      HashSetValuedHashMap<String, String> segregatedLoans = anonymizationCheckersFacade.segregateLoans(records.getLoansFound());
+      HashSetValuedHashMap<String, String> segregatedLoans = anonymizationCheckersService
+          .segregateLoans(records.getLoansFound());
       return records.withAnonymizedLoans(segregatedLoans.remove(CAN_BE_ANONYMIZED_KEY))
         .withNotAnonymizedLoans(segregatedLoans);
     }));

@@ -8,7 +8,6 @@ import org.joda.time.DateTime;
 import io.vertx.core.json.JsonObject;
 
 public class FeeFineAction {
-
   private final JsonObject representation;
 
   public FeeFineAction(JsonObject representation) {

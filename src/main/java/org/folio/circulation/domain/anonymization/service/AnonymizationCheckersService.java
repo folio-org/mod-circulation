@@ -10,18 +10,18 @@ import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.anonymization.checkers.AnonymizationChecker;
 import org.folio.circulation.domain.anonymization.config.LoanAnonymizationConfigurationForTenant;
 
-public class AnonymizationCheckersFacade {
+public class AnonymizationCheckersService {
 
   private final LoanAnonymizationConfigurationForTenant config;
   private AnonymizationCheckersProvider checkersProvider;
 
-  public AnonymizationCheckersFacade(
+  public AnonymizationCheckersService(
       LoanAnonymizationConfigurationForTenant config) {
     this.config = config;
     checkersProvider = new AnonymizationCheckersProvider(config);
   }
 
-  public AnonymizationCheckersFacade() {
+  public AnonymizationCheckersService() {
     this(null);
     checkersProvider = new AnonymizationCheckersProvider();
   }

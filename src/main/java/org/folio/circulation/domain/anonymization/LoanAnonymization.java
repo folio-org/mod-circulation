@@ -3,7 +3,7 @@ package org.folio.circulation.domain.anonymization;
 import java.lang.invoke.MethodHandles;
 
 import org.folio.circulation.domain.anonymization.config.LoanAnonymizationConfigurationForTenant;
-import org.folio.circulation.domain.anonymization.service.AnonymizationCheckersFacade;
+import org.folio.circulation.domain.anonymization.service.AnonymizationCheckersService;
 import org.folio.circulation.domain.anonymization.service.LoanAnonymizationFinderService;
 import org.folio.circulation.domain.anonymization.service.LoansForBorrowerFinder;
 import org.folio.circulation.domain.anonymization.service.LoansForTenantFinder;
@@ -18,7 +18,7 @@ public class LoanAnonymization {
     .lookupClass());
   private final Clients clients;
   private LoanAnonymizationFinderService loansFinderService;
-  private AnonymizationCheckersFacade anonymizationCheckersFacade;
+  private AnonymizationCheckersService anonymizationCheckersService;
 
   public LoanAnonymization(Clients clients) {
     this.clients = clients;
@@ -28,9 +28,10 @@ public class LoanAnonymization {
     log.info("Initializing loan anonymization for borrower");
 
     loansFinderService = new LoansForBorrowerFinder(clients, userId);
-    anonymizationCheckersFacade = new AnonymizationCheckersFacade();
+    anonymizationCheckersService = new AnonymizationCheckersService();
 
-    return new DefaultLoanAnonymizationService(clients, anonymizationCheckersFacade, loansFinderService);
+    return new DefaultLoanAnonymizationService(clients,
+        anonymizationCheckersService, loansFinderService);
   }
 
   public LoanAnonymizationService byCurrentTenant(
@@ -38,8 +39,9 @@ public class LoanAnonymization {
     log.info("Initializing loan anonymization for current tenant");
 
     loansFinderService = new LoansForTenantFinder(clients);
-    anonymizationCheckersFacade = new AnonymizationCheckersFacade(config);
+    anonymizationCheckersService = new AnonymizationCheckersService(config);
 
-    return new DefaultLoanAnonymizationService(clients, anonymizationCheckersFacade, loansFinderService);
+    return new DefaultLoanAnonymizationService(clients,
+        anonymizationCheckersService, loansFinderService);
   }
 }
