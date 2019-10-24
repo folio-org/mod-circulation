@@ -10,6 +10,7 @@ import io.vertx.core.json.JsonObject;
 
 public class LoanHistorySettings {
 
+  private static final String FEEFINE = "feeFine";
   private JsonObject representation;
   private ClosingType loanClosingType;
   private ClosingType feesAndFinesClosingType;
@@ -20,7 +21,7 @@ public class LoanHistorySettings {
   private LoanHistorySettings(JsonObject representation) {
     this.representation = representation;
     this.feesAndFinesClosingType = ClosingType.from(
-        getNestedStringProperty(representation, "closingType", "feeFine"));
+        getNestedStringProperty(representation, "closingType", FEEFINE));
     this.loanClosingType = ClosingType.from(
         getNestedStringProperty(representation, "closingType", "loan"));
     this.treatLoansWithFeesAndFinesDifferently = getBooleanProperty(representation, "treatEnabled");
@@ -28,8 +29,8 @@ public class LoanHistorySettings {
       getNestedIntegerProperty(representation, "loan", "duration"),
       getNestedStringProperty(representation, "loan", "intervalId"));
     this.feeFineClosePeriod = Period.from(
-      getNestedIntegerProperty(representation, "feeFine", "duration"),
-      getNestedStringProperty(representation, "feeFine", "intervalId"));
+      getNestedIntegerProperty(representation, FEEFINE, "duration"),
+      getNestedStringProperty(representation, FEEFINE, "intervalId"));
   }
 
   public static LoanHistorySettings from(JsonObject jsonObject) {

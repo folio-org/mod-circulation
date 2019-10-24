@@ -2,11 +2,11 @@ package org.folio.circulation.domain.anonymization.checkers;
 
 import org.folio.circulation.domain.Loan;
 
-public class AnonymizeLoansWithFeeFinesImmediatelyChecker extends DefaultAnonymizationChecker {
+public class AnonymizeLoansWithFeeFinesImmediatelyChecker implements AnonymizationChecker {
 
   @Override
   public boolean canBeAnonymized(Loan loan) {
-    return allFeesAndFinesClosed(loan);
+    return loan.allFeesAndFinesClosed();
   }
 
   @Override

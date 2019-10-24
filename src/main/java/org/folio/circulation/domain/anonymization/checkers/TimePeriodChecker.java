@@ -3,7 +3,7 @@ package org.folio.circulation.domain.anonymization.checkers;
 import org.folio.circulation.domain.policy.Period;
 import org.joda.time.DateTime;
 
-abstract class TimePeriodChecker extends DefaultAnonymizationChecker {
+abstract class TimePeriodChecker implements AnonymizationChecker {
 
   private Period period;
 

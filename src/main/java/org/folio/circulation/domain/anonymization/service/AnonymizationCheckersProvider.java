@@ -14,8 +14,6 @@ import org.folio.circulation.domain.anonymization.checkers.NeverAnonymizeLoansWi
 import org.folio.circulation.domain.anonymization.checkers.NoAssociatedFeesAndFinesChecker;
 import org.folio.circulation.domain.anonymization.config.LoanHistorySettings;
 
-import com.google.inject.internal.util.Lists;
-
 class AnonymizationCheckersProvider {
 
   private final LoanHistorySettings loanHistorySettings;

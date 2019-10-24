@@ -15,7 +15,7 @@ public class FeesAndFinesClosePeriodChecker extends TimePeriodChecker {
 
   @Override
   public boolean canBeAnonymized(Loan loan) {
-    return allFeesAndFinesClosed(loan)
+    return loan.allFeesAndFinesClosed()
         && findLatestAccountCloseDate(loan).map(this::checkTimePeriodPassed)
           .orElse(false);
 

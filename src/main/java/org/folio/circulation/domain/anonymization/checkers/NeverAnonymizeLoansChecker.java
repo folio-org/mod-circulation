@@ -2,7 +2,7 @@ package org.folio.circulation.domain.anonymization.checkers;
 
 import org.folio.circulation.domain.Loan;
 
-public class NeverAnonymizeLoansChecker extends DefaultAnonymizationChecker {
+public class NeverAnonymizeLoansChecker implements AnonymizationChecker {
 
   @Override
   public boolean canBeAnonymized(Loan loan) {

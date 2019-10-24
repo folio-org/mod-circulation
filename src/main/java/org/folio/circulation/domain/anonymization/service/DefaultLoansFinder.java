@@ -8,7 +8,6 @@ import java.util.concurrent.CompletableFuture;
 import org.folio.circulation.domain.AccountRepository;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.MultipleRecords;
-import org.folio.circulation.domain.anonymization.LoanAnonymization;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.Result;
 

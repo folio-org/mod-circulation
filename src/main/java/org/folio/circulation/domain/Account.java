@@ -48,7 +48,6 @@ public class Account {
   }
 
   public Optional<DateTime> getClosedDate() {
-
     return feeFineActions.stream()
       .filter(ffa -> ffa.getBalance().equals(NumberUtils.DOUBLE_ZERO))
       .max(Comparator.comparing(FeeFineAction::getDateAction))

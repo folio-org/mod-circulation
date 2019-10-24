@@ -24,7 +24,7 @@ import api.support.builders.FeefineActionsBuilder;
 import api.support.http.InventoryItemResource;
 import io.vertx.core.json.JsonObject;
 
-class LoanAnonymizationTests extends APITests {
+abstract class LoanAnonymizationTests extends APITests {
 
   private static final int TIMEOUT_SECONDS = 20;
   protected static final int ONE_MINUTE_AND_ONE = 60001;
@@ -80,7 +80,7 @@ class LoanAnonymizationTests extends APITests {
     FeefineActionsBuilder builder = new FeefineActionsBuilder().forAccount(account.getId())
       .withBalance(150)
       .withDate(null);
-    feefineActionsClient.create(builder);
+    feeFineActionsClient.create(builder);
   }
 
   void createClosedAccountWithFeeFines(IndividualResource loanResource, DateTime closedDate)
@@ -99,7 +99,7 @@ class LoanAnonymizationTests extends APITests {
         .withBalance(0)
         .withDate(closedDate.minusDays(1));
 
-    feefineActionsClient.create(builder);
-    feefineActionsClient.create(builder1);
+    feeFineActionsClient.create(builder);
+    feeFineActionsClient.create(builder1);
   }
 }

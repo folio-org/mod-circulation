@@ -168,7 +168,7 @@ public class InterfaceUrls {
     return APITestContext.viaOkapiModuleUrl("/accounts" + subPath);
   }
 
-  public static URL feefineActionsUrl(String subPath) {
+  public static URL feeFineActionsUrl(String subPath) {
     return APITestContext.viaOkapiModuleUrl("/feefineactions" + subPath);
   }
 

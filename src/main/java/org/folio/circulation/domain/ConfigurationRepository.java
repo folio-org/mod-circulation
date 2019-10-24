@@ -43,10 +43,10 @@ public class ConfigurationRepository {
       .after(query -> configurationClient.getMany(query, DEFAULT_PAGE_LIMIT))
       .thenApply(result -> result.next(response -> from(response, Configuration::new, CONFIGS_KEY)))
       .thenApply(r -> r.next(r1 -> r.map(MultipleRecords::getRecords)))
-      .thenApply(r -> r.map(this::getFistConfiguration));
+      .thenApply(r -> r.map(this::getFirstConfiguration));
   }
 
-  private LoanHistorySettings getFistConfiguration(Collection<Configuration> configurations) {
+  private LoanHistorySettings getFirstConfiguration(Collection<Configuration> configurations) {
     final String period = configurations.stream()
       .map(Configuration::getValue)
       .findFirst()
