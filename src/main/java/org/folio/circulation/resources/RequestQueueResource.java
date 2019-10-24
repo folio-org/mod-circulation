@@ -25,7 +25,6 @@ import org.folio.circulation.support.http.server.WebContext;
 import io.vertx.core.json.JsonObject;
 
 public class RequestQueueResource extends Resource {
-  private static final String CIRCULATION_REQUESTS_QUEUE_URI = "/circulation/requests/queue/";
 
   public RequestQueueResource(HttpClient client) {
     super(client);
@@ -33,10 +32,12 @@ public class RequestQueueResource extends Resource {
 
   @Override
   public void register(Router router) {
-    //TODO: Replace with route registration, for failure handling
-    router.get(CIRCULATION_REQUESTS_QUEUE_URI + ":itemId").handler(this::getMany);
+    final String circulationRequestQueueUri = "/circulation/requests/queue/";
 
-    new RouteRegistration(CIRCULATION_REQUESTS_QUEUE_URI + ":itemId/reorder", router)
+    //TODO: Replace with route registration, for failure handling
+    router.get(circulationRequestQueueUri + ":itemId").handler(this::getMany);
+
+    new RouteRegistration(circulationRequestQueueUri + ":itemId/reorder", router)
       .create(this::reorder);
   }
 

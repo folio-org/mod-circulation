@@ -149,6 +149,7 @@ public class FakeStorageModule extends AbstractVerticle {
     }
 
     JsonArray entities = body.getJsonArray(collectionPropertyName);
+
     for (int entityIndex = 0; entityIndex < entities.size(); entityIndex++) {
       JsonObject entity = entities.getJsonObject(entityIndex);
       String id = entity.getString("id");

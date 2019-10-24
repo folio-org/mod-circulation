@@ -30,7 +30,7 @@ import io.vertx.core.json.JsonObject;
 public class UpdateRequestQueueTest {
 
   @Test
-  public void testOnReorderWhenServerErrorOccurred() throws Exception {
+  public void shouldFailWhenBatchUpdateFails() throws Exception {
     ReorderRequestContext context = createContext();
     Response batchResponse = new Response(500, "Server Error", "text/plain");
 
