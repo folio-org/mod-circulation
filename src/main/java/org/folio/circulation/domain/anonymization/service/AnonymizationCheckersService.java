@@ -2,12 +2,11 @@ package org.folio.circulation.domain.anonymization.service;
 
 import static org.folio.circulation.domain.anonymization.LoanAnonymizationRecords.CAN_BE_ANONYMIZED_KEY;
 
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
-import org.apache.commons.collections4.multimap.HashSetValuedHashMap;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.anonymization.checkers.AnonymizationChecker;
 import org.folio.circulation.domain.anonymization.checkers.AnonymizeLoansImmediatelyChecker;
@@ -23,8 +22,7 @@ public class AnonymizationCheckersService {
 
   private final LoanAnonymizationConfigurationForTenant config;
 
-  public AnonymizationCheckersService(
-      LoanAnonymizationConfigurationForTenant config) {
+  public AnonymizationCheckersService(LoanAnonymizationConfigurationForTenant config) {
     this.config = config;
   }
 
@@ -32,27 +30,21 @@ public class AnonymizationCheckersService {
     this(null);
   }
 
-  public HashSetValuedHashMap<String, String> segregateLoans(Collection<Loan> loans) {
-    HashSetValuedHashMap<String, String> multiMap = new HashSetValuedHashMap<>();
-    for (Loan loan : loans) {
-      boolean loanCanBeAnonymized = true;
-      List<AnonymizationChecker> anonymizationCheckers =
-          getAnonymizationCheckers(loan);
-      for (AnonymizationChecker checker : anonymizationCheckers) {
-        if (!checker.canBeAnonymized(loan)) {
-          multiMap.put(checker.getReason(), loan.getId());
-          loanCanBeAnonymized = false;
+  public Map<String, List<String>> segregateLoans(Collection<Loan> loans) {
+    return loans.stream()
+      .collect(Collectors.groupingBy(l -> {
+        AnonymizationChecker checker = getAnonymizationCheckers(l);
+        if (!checker.canBeAnonymized(l)) {
+          return checker.getReason();
+        } else {
+          return CAN_BE_ANONYMIZED_KEY;
         }
-      }
-      if (loanCanBeAnonymized)
-        multiMap.put(CAN_BE_ANONYMIZED_KEY, loan.getId());
-    }
-    return multiMap;
+      }, Collectors.mapping(Loan::getId, Collectors.toList())));
   }
 
-  private List<AnonymizationChecker> getAnonymizationCheckers(Loan loan) {
+  private AnonymizationChecker getAnonymizationCheckers(Loan loan) {
     if (config == null) {
-      return getDefaultCheckers();
+      return getManualAnonymizationChecker();
     }
     if (loan.hasAssociatedFeesAndFines() && config.treatLoansWithFeesAndFinesDifferently()) {
       return getFeesAndFinesCheckersFromLoanHistory();
@@ -61,57 +53,46 @@ public class AnonymizationCheckersService {
     }
   }
 
-  private List<AnonymizationChecker> getDefaultCheckers() {
-    return Collections.singletonList(new NoAssociatedFeesAndFinesChecker());
+  private AnonymizationChecker getManualAnonymizationChecker() {
+    return new NoAssociatedFeesAndFinesChecker();
   }
 
-  private List<AnonymizationChecker> getClosedLoansCheckersFromLoanHistory() {
-    List<AnonymizationChecker> result = new ArrayList<>();
+  private AnonymizationChecker getClosedLoansCheckersFromLoanHistory() {
+    AnonymizationChecker checker = null;
     if (config == null) {
-      return result;
+      return getManualAnonymizationChecker();
     }
 
     switch (config.getLoanClosingType()) {
     case IMMEDIATELY:
-      result.add(new AnonymizeLoansImmediatelyChecker());
+      checker = new AnonymizeLoansImmediatelyChecker();
       break;
     case INTERVAL:
-      result.add(new LoanClosePeriodChecker(
-          config.getLoanClosePeriod()));
+      checker = new LoanClosePeriodChecker(config.getLoanClosePeriod());
       break;
     case UNKNOWN:
     case NEVER:
-      result.add(new NeverAnonymizeLoansChecker());
-      break;
-    default:
-      return result;
+      checker = new NeverAnonymizeLoansChecker();
     }
 
-    return result;
+    return checker;
   }
 
-  private List<AnonymizationChecker> getFeesAndFinesCheckersFromLoanHistory() {
-    List<AnonymizationChecker> result = new ArrayList<>();
-    if (config == null || !config
-        .treatLoansWithFeesAndFinesDifferently()) {
-      return result;
-    }
+  private AnonymizationChecker getFeesAndFinesCheckersFromLoanHistory() {
+    AnonymizationChecker checker = null;
+
     switch (config.getFeesAndFinesClosingType()) {
     case IMMEDIATELY:
-      result.add(new AnonymizeLoansWithFeeFinesImmediatelyChecker());
+      checker = new AnonymizeLoansWithFeeFinesImmediatelyChecker();
       break;
     case INTERVAL:
-      result.add(new FeesAndFinesClosePeriodChecker(
-          config.getFeeFineClosePeriod()));
+      checker = new FeesAndFinesClosePeriodChecker(config.getFeeFineClosePeriod());
       break;
     case UNKNOWN:
     case NEVER:
-      result.add(new NeverAnonymizeLoansWithFeeFinesChecker());
-      break;
-    default:
-      return result;
+      checker = new NeverAnonymizeLoansWithFeeFinesChecker();
     }
 
-    return result;
+    return checker;
   }
 }

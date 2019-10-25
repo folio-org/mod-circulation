@@ -3,9 +3,10 @@ package org.folio.circulation.domain.anonymization;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.domain.anonymization.LoanAnonymizationRecords.CAN_BE_ANONYMIZED_KEY;
 
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
-import org.apache.commons.collections4.multimap.HashSetValuedHashMap;
 import org.folio.circulation.domain.AnonymizeStorageLoansRepository;
 import org.folio.circulation.domain.anonymization.service.AnonymizationCheckersService;
 import org.folio.circulation.domain.anonymization.service.LoanAnonymizationFinderService;
@@ -38,8 +39,9 @@ public class DefaultLoanAnonymizationService implements LoanAnonymizationService
       Result<LoanAnonymizationRecords> anonymizationRecords) {
 
     return completedFuture(anonymizationRecords.map(records -> {
-      HashSetValuedHashMap<String, String> segregatedLoans = anonymizationCheckersService
+      Map<String, List<String>> segregatedLoans = anonymizationCheckersService
           .segregateLoans(records.getLoansFound());
+
       return records.withAnonymizedLoans(segregatedLoans.remove(CAN_BE_ANONYMIZED_KEY))
         .withNotAnonymizedLoans(segregatedLoans);
     }));

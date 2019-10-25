@@ -5,9 +5,9 @@ import static org.folio.circulation.support.Result.failed;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
-import org.apache.commons.collections4.MultiValuedMap;
 import org.folio.circulation.domain.anonymization.LoanAnonymizationRecords;
 import org.folio.circulation.support.OkJsonResponseResult;
 import org.folio.circulation.support.ResponseWritableResult;
@@ -35,7 +35,7 @@ public class AnonymizeLoansRepresentation {
   }
 
   private static List<Error> mapToErrors(
-      MultiValuedMap<String, String> multiMap) {
+      Map<String, List<String>> multiMap) {
 
     return multiMap.keySet()
       .stream()
