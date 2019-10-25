@@ -447,13 +447,14 @@ public class HoldShelfClearanceReportTests extends APITests {
   }
 
   @Test
-  public void checkWhenPickupRequestExpiredInDifferentServicePoints()
+  public void checkWhenPickupRequestsCancelledInDifferentServicePoints()
     throws InterruptedException,
     MalformedURLException,
     TimeoutException,
     ExecutionException {
 
     final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final InventoryItemResource nod = itemsFixture.basedUponNod();
 
     // init for SP1
     final IndividualResource rebeca = usersFixture.rebecca();
@@ -463,7 +464,6 @@ public class HoldShelfClearanceReportTests extends APITests {
     // init for SP2
     final IndividualResource steve = usersFixture.steve();
     final UUID secondServicePointId = servicePointsFixture.cd2().getId();
-    final String secondAwaitingPickupRequestClosedDate = "2019-03-11T15:55:23.000+0000";
 
     // #1 create the first request in SP1
     RequestBuilder firstRequestBuilderOnItem = new RequestBuilder()
@@ -481,7 +481,7 @@ public class HoldShelfClearanceReportTests extends APITests {
       .withPickupServicePointId(secondServicePointId)
       .forItem(smallAngryPlanet)
       .by(steve);
-    IndividualResource secondRequest = requestsClient.create(secondRequestBuilderOnItem);
+    requestsClient.create(secondRequestBuilderOnItem);
 
     // #3 check-in item in SP1
     loansFixture.checkInByBarcode(smallAngryPlanet);
@@ -507,7 +507,7 @@ public class HoldShelfClearanceReportTests extends APITests {
       .at(secondServicePointId));
 
     // #8 get hold shelf expiration report in SP1 >>> empty
-    ResourceClient.forRequestReport(client).getById(firstServicePointId);
+    response = ResourceClient.forRequestReport(client).getById(firstServicePointId);
     assertThat(response.getStatusCode(), is(HTTP_OK));
     assertThat(response.getJson().getInteger(TOTAL_RECORDS), is(0));
 
@@ -516,19 +516,58 @@ public class HoldShelfClearanceReportTests extends APITests {
     assertThat(response.getStatusCode(), is(HTTP_OK));
     assertThat(response.getJson().getInteger(TOTAL_RECORDS), is(0));
 
-    // #10 cancel the request in SP2
-    requestsClient.replace(secondRequest.getId(),
-      secondRequestBuilderOnItem.withStatus(RequestStatus.CLOSED_CANCELLED.getValue()).create()
-        .put(CLOSED_DATE_KEY, secondAwaitingPickupRequestClosedDate));
+    final String thirdAwaitingPickupRequestClosedDate = "2019-03-12T15:45:23.000+0000";
 
-    // #11 get hold shelf expiration report in SP1 >>> empty
+    // #1 create the first request in SP1
+    RequestBuilder thirdRequestBuilderOnItem = new RequestBuilder()
+      .open()
+      .page()
+      .withPickupServicePointId(firstServicePointId)
+      .forItem(nod)
+      .by(rebeca);
+    IndividualResource thirdRequest = requestsClient.create(thirdRequestBuilderOnItem);
+
+    // #2 create the second request in SP2
+    RequestBuilder fourthRequestBuilderOnItem = new RequestBuilder()
+      .open()
+      .hold()
+      .withPickupServicePointId(secondServicePointId)
+      .forItem(nod)
+      .by(steve);
+    requestsClient.create(fourthRequestBuilderOnItem);
+
+    // #3 check-in item in SP1
+    loansFixture.checkInByBarcode(nod);
+
+    // #4 cancel request1 in SP1
+    requestsClient.replace(thirdRequest.getId(),
+      thirdRequestBuilderOnItem.withStatus(RequestStatus.CLOSED_CANCELLED.getValue()).create()
+        .put(CLOSED_DATE_KEY, thirdAwaitingPickupRequestClosedDate));
+
+    // #5 get hold shelf expiration report in SP1
+    response = ResourceClient.forRequestReport(client).getById(firstServicePointId);
+    verifyResponse(nod, rebeca, response, RequestStatus.CLOSED_CANCELLED);
+
+    // #6 get hold shelf expiration in SP2 >>> empty
+    response = ResourceClient.forRequestReport(client).getById(secondServicePointId);
+    assertThat(response.getStatusCode(), is(HTTP_OK));
+    assertThat(response.getJson().getInteger(TOTAL_RECORDS), is(0));
+
+    // #7 check-in item in SP2
+    loansFixture.checkInByBarcode(new CheckInByBarcodeRequestBuilder()
+      .forItem(nod)
+      .on(DateTime.now(DateTimeZone.UTC))
+      .at(secondServicePointId));
+
+    // #8 get hold shelf expiration report in SP1 >>> empty
     response = ResourceClient.forRequestReport(client).getById(firstServicePointId);
     assertThat(response.getStatusCode(), is(HTTP_OK));
     assertThat(response.getJson().getInteger(TOTAL_RECORDS), is(0));
 
-    // #12 get hold shelf expiration in SP2
+    // #9 get report in SP2 >>> empty
     response = ResourceClient.forRequestReport(client).getById(secondServicePointId);
-    verifyResponse(smallAngryPlanet, steve, response, RequestStatus.CLOSED_CANCELLED);
+    assertThat(response.getStatusCode(), is(HTTP_OK));
+    assertThat(response.getJson().getInteger(TOTAL_RECORDS), is(0));
   }
 
   private void verifyResponse(InventoryItemResource item,
