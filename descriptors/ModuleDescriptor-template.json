@@ -1649,10 +1649,6 @@
       "visible": false
     }
   ],
-  "metadata": {
-    "containerMemory": "256",
-    "databaseConnection": "false"
-  },
   "launchDescriptor": {
     "dockerImage": "${artifactId}:${version}",
     "dockerPull": false,
