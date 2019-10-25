@@ -158,7 +158,7 @@ public class RollingLoanPolicyCheckOutDueDateCalculationTests {
   @Test
   public void shouldApplyAlternateScheduleWhenQueuedRequestIsHoldAndRolling() {
     final Period alternateCheckoutLoanPeriod = Period.from(2, "Weeks");
-    final DateTime systemTime = DateTime.now();
+    final DateTime systemTime = DateTime.now(DateTimeZone.UTC);
 
     LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
       .rolling(Period.months(1))

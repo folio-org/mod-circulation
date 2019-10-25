@@ -7,13 +7,12 @@ import static org.folio.circulation.domain.ItemStatus.PAGED;
 import static org.folio.circulation.domain.ItemStatus.IN_TRANSIT;
 import static org.folio.circulation.domain.ItemStatus.MISSING;
 import static org.folio.circulation.domain.representations.InstanceProperties.CONTRIBUTORS;
+import static org.folio.circulation.domain.representations.ItemProperties.EFFECTIVE_LOCATION_ID;
 import static org.folio.circulation.domain.representations.ItemProperties.IN_TRANSIT_DESTINATION_SERVICE_POINT_ID;
 import static org.folio.circulation.domain.representations.ItemProperties.ITEM_CALL_NUMBER_ID;
 import static org.folio.circulation.domain.representations.ItemProperties.ITEM_CALL_NUMBER_PREFIX_ID;
 import static org.folio.circulation.domain.representations.ItemProperties.ITEM_CALL_NUMBER_SUFFIX_ID;
 import static org.folio.circulation.domain.representations.ItemProperties.ITEM_COPY_NUMBERS_ID;
-import static org.folio.circulation.domain.representations.ItemProperties.PERMANENT_LOCATION_ID;
-import static org.folio.circulation.domain.representations.ItemProperties.TEMPORARY_LOCATION_ID;
 import static org.folio.circulation.domain.representations.ItemProperties.TITLE_PROPERTY;
 import static org.folio.circulation.domain.representations.HoldingsProperties.CALL_NUMBER_ID;
 import static org.folio.circulation.domain.representations.HoldingsProperties.CALL_NUMBER_PREFIX_ID;
@@ -225,25 +224,9 @@ public class Item {
   }
 
   public String getLocationId() {
-    return getLocationId(getItem(), holdingRepresentation);
-  }
-
-  private static String getLocationId(JsonObject item, JsonObject holding) {
-    if(item != null && item.containsKey(TEMPORARY_LOCATION_ID)) {
-      return item.getString(TEMPORARY_LOCATION_ID);
-    }
-    if(item != null && item.containsKey(PERMANENT_LOCATION_ID)) {
-      return item.getString(PERMANENT_LOCATION_ID);
-    }
-    else if(holding != null && holding.containsKey(TEMPORARY_LOCATION_ID)) {
-      return holding.getString(TEMPORARY_LOCATION_ID);
-    }
-    else if(holding != null && holding.containsKey(PERMANENT_LOCATION_ID)) {
-      return holding.getString(PERMANENT_LOCATION_ID);
-    }
-    else {
-      return null;
-    }
+    return getItem() != null
+      ? getItem().getString(EFFECTIVE_LOCATION_ID)
+      : null;
   }
 
   public String getEnumeration() {
