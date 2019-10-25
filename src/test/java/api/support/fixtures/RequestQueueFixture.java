@@ -4,7 +4,9 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import org.folio.circulation.support.http.client.OkapiHttpClient;
 import org.folio.circulation.support.http.client.Response;
@@ -20,7 +22,9 @@ public class RequestQueueFixture {
     this.okapiHttpClient = client;
   }
 
-  public Response attemptReorderQueue(String itemId, JsonObject reorderQueue) throws Exception {
+  public Response attemptReorderQueue(String itemId, JsonObject reorderQueue)
+    throws InterruptedException, ExecutionException, TimeoutException {
+
     CompletableFuture<Response> reorderCompleted = new CompletableFuture<>();
 
     okapiHttpClient.post(InterfaceUrls.reorderQueueUrl(itemId), reorderQueue,
@@ -29,7 +33,9 @@ public class RequestQueueFixture {
     return reorderCompleted.get(5, TimeUnit.SECONDS);
   }
 
-  public JsonObject reorderQueue(String itemId, JsonObject reorderQueue) throws Exception {
+  public JsonObject reorderQueue(String itemId, JsonObject reorderQueue)
+    throws InterruptedException, ExecutionException, TimeoutException {
+
     Response response = attemptReorderQueue(itemId, reorderQueue);
 
     assertThat(response.getStatusCode(), is(200));

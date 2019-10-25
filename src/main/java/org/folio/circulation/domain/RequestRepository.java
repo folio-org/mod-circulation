@@ -12,6 +12,7 @@ import static org.folio.circulation.support.http.ResponseMapping.mapUsingJson;
 import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
 
+import org.folio.circulation.storage.RequestBatch;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.CqlQuery;

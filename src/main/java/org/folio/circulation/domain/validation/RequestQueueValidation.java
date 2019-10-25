@@ -2,9 +2,10 @@ package org.folio.circulation.domain.validation;
 
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 
+import java.util.Comparator;
 import java.util.List;
-import java.util.Objects;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.reorder.ReorderRequest;
@@ -64,20 +65,21 @@ public class RequestQueueValidation {
   public static Result<ReorderRequestContext> positionsAreSequential(Result<ReorderRequestContext> result) {
     return result.failWhen(
       r -> {
-        // This check works based on the fact
-        // that sum of numbers from 1 to n = n * (n + 1) / 2
-        List<ReorderRequest> reorderRequests = r.getReorderQueueRequest().getReorderedQueue();
+        List<ReorderRequest> sortedReorderedQueue = r.getReorderQueueRequest()
+          .getReorderedQueue().stream()
+          .sorted(Comparator.comparingInt(ReorderRequest::getNewPosition))
+          .collect(Collectors.toList());
 
-        // Calculate actual sum of the newPositions
-        final int actualPositionsSum = reorderRequests.stream()
-          .mapToInt(ReorderRequest::getNewPosition)
-          .sum();
+        int expectedCurrentPosition = 1;
+        for (ReorderRequest reorderRequest : sortedReorderedQueue) {
+          if (reorderRequest.getNewPosition() != expectedCurrentPosition) {
+            return Result.succeeded(true);
+          }
 
-        // Estimate expected sum for given queue size
-        final int expectedPositionsSum = reorderRequests.size() * (reorderRequests.size() + 1) / 2;
+          expectedCurrentPosition++;
+        }
 
-        // Compare it with actual sum and fail when they do not match
-        return Result.succeeded(actualPositionsSum != expectedPositionsSum);
+        return Result.succeeded(false);
       },
       r -> singleValidationError("Positions must have sequential order.", "newPosition", null)
     );
@@ -89,9 +91,14 @@ public class RequestQueueValidation {
       return true;
     }
 
-    // Check whether an reordered request did not match with request in the queue.
-    return context.getReorderRequestToRequestMap().values().stream()
-      .anyMatch(Objects::isNull);
+    return reorderRequestContainsUnmatchedRequests(context);
+  }
+
+  private static boolean reorderRequestContainsUnmatchedRequests(
+    ReorderRequestContext context) {
+
+    return context.getReorderRequestToRequestMap().entrySet().stream()
+      .anyMatch(entry -> entry.getKey() == null || entry.getValue() == null);
   }
 
   private static Result<ReorderRequestContext> validateRequestAtFirstPosition(
