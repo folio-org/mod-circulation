@@ -3,8 +3,9 @@ package org.folio.circulation.domain.anonymization.service;
 import static org.folio.circulation.domain.anonymization.LoanAnonymizationRecords.CAN_BE_ANONYMIZED_KEY;
 
 import java.util.Collection;
-import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.folio.circulation.domain.Loan;
@@ -22,35 +23,47 @@ public class AnonymizationCheckersService {
 
   private final LoanAnonymizationConfigurationForTenant config;
 
+  private final AnonymizationChecker manualAnonymizationChecker;
+  private AnonymizationChecker feesAndFinesCheckersFromLoanHistory;
+  private AnonymizationChecker closedLoansCheckersFromLoanHistory;
+
+
   public AnonymizationCheckersService(LoanAnonymizationConfigurationForTenant config) {
     this.config = config;
+    if ( config != null) {
+      feesAndFinesCheckersFromLoanHistory = getFeesAndFinesCheckersFromLoanHistory();
+      closedLoansCheckersFromLoanHistory = getClosedLoansCheckersFromLoanHistory();
+    }
+    manualAnonymizationChecker = getManualAnonymizationChecker();
   }
 
   public AnonymizationCheckersService() {
     this(null);
   }
 
-  public Map<String, List<String>> segregateLoans(Collection<Loan> loans) {
+  public Map<String, Set<String>> segregateLoans(Collection<Loan> loans) {
     return loans.stream()
-      .collect(Collectors.groupingBy(l -> {
-        AnonymizationChecker checker = getAnonymizationCheckers(l);
-        if (!checker.canBeAnonymized(l)) {
-          return checker.getReason();
-        } else {
-          return CAN_BE_ANONYMIZED_KEY;
-        }
-      }, Collectors.mapping(Loan::getId, Collectors.toList())));
+      .collect(Collectors.groupingBy(applyCheckersForLoanAndLoanHistoryConfig(),
+        Collectors.mapping(Loan::getId, Collectors.toSet())));
   }
 
-  private AnonymizationChecker getAnonymizationCheckers(Loan loan) {
-    if (config == null) {
-      return getManualAnonymizationChecker();
-    }
-    if (loan.hasAssociatedFeesAndFines() && config.treatLoansWithFeesAndFinesDifferently()) {
-      return getFeesAndFinesCheckersFromLoanHistory();
-    } else {
-      return getClosedLoansCheckersFromLoanHistory();
-    }
+  private Function<Loan, String> applyCheckersForLoanAndLoanHistoryConfig() {
+    return loan -> {
+      AnonymizationChecker checker;
+      if (config == null) {
+        checker = manualAnonymizationChecker;
+      } else if (loan.hasAssociatedFeesAndFines() && config.treatLoansWithFeesAndFinesDifferently()) {
+        checker = feesAndFinesCheckersFromLoanHistory;
+      } else {
+        checker = closedLoansCheckersFromLoanHistory;
+      }
+
+      if (!checker.canBeAnonymized(loan)) {
+        return checker.getReason();
+      } else {
+        return CAN_BE_ANONYMIZED_KEY;
+      }
+    };
   }
 
   private AnonymizationChecker getManualAnonymizationChecker() {
@@ -59,20 +72,17 @@ public class AnonymizationCheckersService {
 
   private AnonymizationChecker getClosedLoansCheckersFromLoanHistory() {
     AnonymizationChecker checker = null;
-    if (config == null) {
-      return getManualAnonymizationChecker();
-    }
 
     switch (config.getLoanClosingType()) {
-    case IMMEDIATELY:
-      checker = new AnonymizeLoansImmediatelyChecker();
-      break;
-    case INTERVAL:
-      checker = new LoanClosePeriodChecker(config.getLoanClosePeriod());
-      break;
-    case UNKNOWN:
-    case NEVER:
-      checker = new NeverAnonymizeLoansChecker();
+      case IMMEDIATELY:
+        checker = new AnonymizeLoansImmediatelyChecker();
+        break;
+      case INTERVAL:
+        checker = new LoanClosePeriodChecker(config.getLoanClosePeriod());
+        break;
+      case UNKNOWN:
+      case NEVER:
+        checker = new NeverAnonymizeLoansChecker();
     }
 
     return checker;
@@ -82,15 +92,15 @@ public class AnonymizationCheckersService {
     AnonymizationChecker checker = null;
 
     switch (config.getFeesAndFinesClosingType()) {
-    case IMMEDIATELY:
-      checker = new AnonymizeLoansWithFeeFinesImmediatelyChecker();
-      break;
-    case INTERVAL:
-      checker = new FeesAndFinesClosePeriodChecker(config.getFeeFineClosePeriod());
-      break;
-    case UNKNOWN:
-    case NEVER:
-      checker = new NeverAnonymizeLoansWithFeeFinesChecker();
+      case IMMEDIATELY:
+        checker = new AnonymizeLoansWithFeeFinesImmediatelyChecker();
+        break;
+      case INTERVAL:
+        checker = new FeesAndFinesClosePeriodChecker(config.getFeeFineClosePeriod());
+        break;
+      case UNKNOWN:
+      case NEVER:
+        checker = new NeverAnonymizeLoansWithFeeFinesChecker();
     }
 
     return checker;

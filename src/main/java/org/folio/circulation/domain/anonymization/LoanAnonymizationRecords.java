@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import java.util.Set;
 import org.apache.commons.collections4.CollectionUtils;
 import org.folio.circulation.domain.Loan;
 
@@ -15,7 +16,7 @@ public class LoanAnonymizationRecords {
 
   private List<String> anonymizedLoans = new ArrayList<>();
   private List<Loan> loansFound = new ArrayList<>();
-  private Map<String, List<String>> notAnonymizedLoans =
+  private Map<String, Collection<String>> notAnonymizedLoans =
       new HashMap<>();
 
   public List<Loan> getLoansFound() {
@@ -45,7 +46,7 @@ public class LoanAnonymizationRecords {
   }
 
   public LoanAnonymizationRecords withNotAnonymizedLoans(
-      Map<String, List<String>> loans) {
+      Map<String, Set<String>> loans) {
     LoanAnonymizationRecords newRecords = new LoanAnonymizationRecords();
     newRecords.loansFound = new ArrayList<>(loansFound);
     newRecords.anonymizedLoans = new ArrayList<>(anonymizedLoans);
@@ -57,7 +58,7 @@ public class LoanAnonymizationRecords {
     return anonymizedLoans;
   }
 
-  public Map<String, List<String>> getNotAnonymizedLoans() {
+  public Map<String, Collection<String>> getNotAnonymizedLoans() {
     return notAnonymizedLoans;
   }
 }
