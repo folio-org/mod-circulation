@@ -133,13 +133,13 @@ public class FakeStorageModule extends AbstractVerticle {
   private void create(RoutingContext routingContext) {
     WebContext context = new WebContext(routingContext);
 
-    JsonObject originBody = getJsonFromBody(routingContext);
+    JsonObject originalBody = getJsonFromBody(routingContext);
 
-    String id = originBody.getString("id", UUID.randomUUID().toString());
+    String id = originalBody.getString("id", UUID.randomUUID().toString());
 
-    originBody.put("id", id);
+    originalBody.put("id", id);
 
-    preProcessBody(originBody).thenAccept(body -> {
+    preProcessBody(originalBody).thenAccept(body -> {
       if (includeChangeMetadata) {
         final String fakeUserId = APITestContext.getUserId();
         body.put(changeMetadataPropertyName, new JsonObject()
@@ -184,9 +184,9 @@ public class FakeStorageModule extends AbstractVerticle {
 
     String id = routingContext.request().getParam("id");
 
-    JsonObject originBody = getJsonFromBody(routingContext);
+    JsonObject originalBody = getJsonFromBody(routingContext);
 
-    preProcessBody(originBody).thenAccept(body -> {
+    preProcessBody(originalBody).thenAccept(body -> {
       Map<String, JsonObject> resourcesForTenant = getResourcesForTenant(context);
 
       if (resourcesForTenant.containsKey(id)) {

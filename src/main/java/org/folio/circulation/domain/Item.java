@@ -224,9 +224,7 @@ public class Item {
   }
 
   public String getLocationId() {
-    return getItem() != null
-      ? getItem().getString(EFFECTIVE_LOCATION_ID)
-      : null;
+    return getProperty(getItem(), EFFECTIVE_LOCATION_ID);
   }
 
   public String getEnumeration() {
