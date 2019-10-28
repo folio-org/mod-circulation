@@ -1,3 +1,7 @@
+## 16.7.3 2019-10-29
+
+* Fixes item appearing on hold shelf clearance report for incorrect service point (CIRC-516)
+
 ## 16.7.2 2019-10-11
 
 * Ensure requests in the request queue are updated in order, synchronously (CIRC-463)
