@@ -4,16 +4,21 @@ import static org.folio.circulation.domain.ItemStatus.AVAILABLE;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 public class RequestQueue {
 
-  private Collection<Request> requests;
+  private List<Request> requests;
 
   public RequestQueue(Collection<Request> requests) {
-    this.requests = requests;
+    this.requests = new ArrayList<>(requests);
+
+    // Ordering requests by position, so we can add and remove them
+    // without sorting and just re-sequence from 1 to n
+    this.requests.sort(Comparator.comparingInt(Request::getPosition));
   }
 
   ItemStatus checkedInItemStatus() {
@@ -51,7 +56,7 @@ public class RequestQueue {
   public void add(Request newRequest) {
     requests = new ArrayList<>(requests);
     requests.add(newRequest);
-    orderRequests();
+    reSequenceRequests();
   }
 
   public void remove(Request request) {
@@ -59,16 +64,10 @@ public class RequestQueue {
       .filter(r -> !r.getId().equals(request.getId()))
       .collect(Collectors.toList());
     request.removePosition();
-    orderRequests();
+    reSequenceRequests();
   }
 
-  private void orderRequests() {
-    requests = requests.stream()
-      // order by date descending
-      .sorted((req1, req2) -> req1.getRequestDate().compareTo(req2.getRequestDate()))
-      // order by (request status = "Open - In transit" or "Open - Awaiting pickup") first
-      .sorted((req1, req2) -> Boolean.compare(req2.isNotDisplaceable(), req1.isNotDisplaceable()))
-      .collect(Collectors.toList());
+  private void reSequenceRequests() {
     final AtomicInteger position = new AtomicInteger(1);
     requests.forEach(req -> req.changePosition(position.getAndIncrement()));
   }
