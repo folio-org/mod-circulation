@@ -11,6 +11,8 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import api.support.builders.ConfigRecordBuilder;
+import api.support.builders.LoanHistoryConfigurationBuilder;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.client.ResponseHandler;
@@ -101,5 +103,16 @@ abstract class LoanAnonymizationTests extends APITests {
 
     feeFineActionsClient.create(builder);
     feeFineActionsClient.create(builder1);
+  }
+
+  protected void createConfiguration(LoanHistoryConfigurationBuilder loanHistoryConfig) {
+    ConfigRecordBuilder configRecordBuilder = new ConfigRecordBuilder("LOAN_HISTORY", "loan_history", loanHistoryConfig.create()
+      .encodePrettily());
+
+    try {
+      configClient.create(configRecordBuilder);
+    } catch (InterruptedException | MalformedURLException | TimeoutException | ExecutionException e) {
+      e.printStackTrace();
+    }
   }
 }

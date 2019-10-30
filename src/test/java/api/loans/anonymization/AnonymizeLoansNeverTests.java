@@ -15,7 +15,6 @@ import org.joda.time.DateTimeUtils;
 import org.junit.Test;
 
 import api.support.builders.CheckOutByBarcodeRequestBuilder;
-import api.support.builders.ConfigRecordBuilder;
 import api.support.builders.LoanHistoryConfigurationBuilder;
 
 public class AnonymizeLoansNeverTests extends LoanAnonymizationTests {
@@ -38,10 +37,8 @@ public class AnonymizeLoansNeverTests extends LoanAnonymizationTests {
     LoanHistoryConfigurationBuilder loanHistoryConfig = new LoanHistoryConfigurationBuilder()
       .loanCloseAnonymizeNever()
       .feeFineCloseAnonymizeImmediately();
-    ConfigRecordBuilder config = new ConfigRecordBuilder("LOAN_HISTORY", "loan_history", loanHistoryConfig.create()
-      .encodePrettily());
-    configClient.create(config);
-//*********************************************************************
+    createConfiguration(loanHistoryConfig);
+
     IndividualResource loanResource = loansFixture.checkOutByBarcode(new CheckOutByBarcodeRequestBuilder().forItem(item1)
       .to(user)
       .at(servicePoint.getId()));
@@ -51,7 +48,7 @@ public class AnonymizeLoansNeverTests extends LoanAnonymizationTests {
     loansFixture.checkInByBarcode(item1);
 
     anonymizeLoansInTenant();
-//*********************************************************************
+
     assertThat(loansStorageClient.getById(loanID)
       .getJson(), not(isAnonymized()));
   }
@@ -74,10 +71,8 @@ public class AnonymizeLoansNeverTests extends LoanAnonymizationTests {
     LoanHistoryConfigurationBuilder loanHistoryConfig = new LoanHistoryConfigurationBuilder()
         .loanCloseAnonymizeNever()
         .feeFineCloseAnonymizeImmediately();
-    ConfigRecordBuilder config = new ConfigRecordBuilder("LOAN_HISTORY", "loan_history", loanHistoryConfig.create()
-        .encodePrettily());
-    configClient.create(config);
-    //*********************************************************************
+    createConfiguration(loanHistoryConfig);
+
     IndividualResource loanResource = loansFixture.checkOutByBarcode(new CheckOutByBarcodeRequestBuilder().forItem(item1)
         .to(user)
         .at(servicePoint.getId()));
@@ -87,7 +82,7 @@ public class AnonymizeLoansNeverTests extends LoanAnonymizationTests {
     loansFixture.checkInByBarcode(item1);
 
     anonymizeLoansInTenant();
-    //*********************************************************************
+
     assertThat(loansStorageClient.getById(loanID)
         .getJson(), isAnonymized());
   }
@@ -110,10 +105,8 @@ public class AnonymizeLoansNeverTests extends LoanAnonymizationTests {
     LoanHistoryConfigurationBuilder loanHistoryConfig = new LoanHistoryConfigurationBuilder()
         .loanCloseAnonymizeNever()
         .feeFineCloseAnonymizeNever();
-    ConfigRecordBuilder config = new ConfigRecordBuilder("LOAN_HISTORY", "loan_history", loanHistoryConfig.create()
-        .encodePrettily());
-    configClient.create(config);
-    //*********************************************************************
+    createConfiguration(loanHistoryConfig);
+
     IndividualResource loanResource = loansFixture.checkOutByBarcode(new CheckOutByBarcodeRequestBuilder().forItem(item1)
         .to(user)
         .at(servicePoint.getId()));
@@ -123,7 +116,7 @@ public class AnonymizeLoansNeverTests extends LoanAnonymizationTests {
     loansFixture.checkInByBarcode(item1);
 
     anonymizeLoansInTenant();
-    //*********************************************************************
+
     assertThat(loansStorageClient.getById(loanID).getJson(),
         not(isAnonymized()));
   }
@@ -146,10 +139,8 @@ public class AnonymizeLoansNeverTests extends LoanAnonymizationTests {
     LoanHistoryConfigurationBuilder loanHistoryConfig = new LoanHistoryConfigurationBuilder()
         .loanCloseAnonymizeNever()
         .feeFineCloseAnonymizeNever();
-    ConfigRecordBuilder config = new ConfigRecordBuilder("LOAN_HISTORY", "loan_history", loanHistoryConfig.create()
-        .encodePrettily());
-    configClient.create(config);
-    //*********************************************************************
+    createConfiguration(loanHistoryConfig);
+
     IndividualResource loanResource = loansFixture.checkOutByBarcode(new CheckOutByBarcodeRequestBuilder().forItem(item1)
         .to(user)
         .at(servicePoint.getId()));
@@ -159,7 +150,7 @@ public class AnonymizeLoansNeverTests extends LoanAnonymizationTests {
     loansFixture.checkInByBarcode(item1);
 
     anonymizeLoansInTenant();
-    //*********************************************************************
+
     assertThat(loansStorageClient.getById(loanID).getJson(),
         not(isAnonymized()));
   }
@@ -182,10 +173,8 @@ public class AnonymizeLoansNeverTests extends LoanAnonymizationTests {
     LoanHistoryConfigurationBuilder loanHistoryConfig = new LoanHistoryConfigurationBuilder()
         .loanCloseAnonymizeNever()
         .feeFineCloseAnonymizeNever();
-    ConfigRecordBuilder config = new ConfigRecordBuilder("LOAN_HISTORY", "loan_history", loanHistoryConfig.create()
-        .encodePrettily());
-    configClient.create(config);
-    //*********************************************************************
+    createConfiguration(loanHistoryConfig);
+
     IndividualResource loanResource = loansFixture.checkOutByBarcode(new CheckOutByBarcodeRequestBuilder().forItem(item1)
         .to(user)
         .at(servicePoint.getId()));
@@ -195,7 +184,7 @@ public class AnonymizeLoansNeverTests extends LoanAnonymizationTests {
     loansFixture.checkInByBarcode(item1);
 
     anonymizeLoansInTenant();
-    //*********************************************************************
+
     assertThat(loansStorageClient.getById(loanID).getJson(),
         not(isAnonymized()));
   }
@@ -218,10 +207,8 @@ public class AnonymizeLoansNeverTests extends LoanAnonymizationTests {
     LoanHistoryConfigurationBuilder loanHistoryConfig = new LoanHistoryConfigurationBuilder()
         .loanCloseAnonymizeNever()
         .feeFineCloseAnonymizeNever();
-    ConfigRecordBuilder config = new ConfigRecordBuilder("LOAN_HISTORY", "loan_history", loanHistoryConfig.create()
-        .encodePrettily());
-    configClient.create(config);
-    //*********************************************************************
+    createConfiguration(loanHistoryConfig);
+
     IndividualResource loanResource = loansFixture.checkOutByBarcode(new CheckOutByBarcodeRequestBuilder().forItem(item1)
         .to(user)
         .at(servicePoint.getId()));
@@ -231,7 +218,7 @@ public class AnonymizeLoansNeverTests extends LoanAnonymizationTests {
     loansFixture.checkInByBarcode(item1);
 
     anonymizeLoansInTenant();
-    //*********************************************************************
+
     assertThat(loansStorageClient.getById(loanID).getJson(),
         not(isAnonymized()));
   }
@@ -255,10 +242,8 @@ public class AnonymizeLoansNeverTests extends LoanAnonymizationTests {
         new LoanHistoryConfigurationBuilder()
         .loanCloseAnonymizeNever()
         .feeFineCloseAnonymizeAfterXInterval(20, "minute");
-    ConfigRecordBuilder config = new ConfigRecordBuilder("LOAN_HISTORY", "loan_history", loanHistoryConfig.create()
-        .encodePrettily());
-    configClient.create(config);
-    //*********************************************************************
+    createConfiguration(loanHistoryConfig);
+
     IndividualResource loanResource = loansFixture.checkOutByBarcode(new CheckOutByBarcodeRequestBuilder().forItem(item1)
         .to(user)
         .at(servicePoint.getId()));
@@ -268,7 +253,7 @@ public class AnonymizeLoansNeverTests extends LoanAnonymizationTests {
     loansFixture.checkInByBarcode(item1);
 
     anonymizeLoansInTenant();
-    //*********************************************************************
+
     assertThat(loansStorageClient.getById(loanID).getJson(),
         not(isAnonymized()));
   }
@@ -293,10 +278,8 @@ public class AnonymizeLoansNeverTests extends LoanAnonymizationTests {
         new LoanHistoryConfigurationBuilder()
             .loanCloseAnonymizeNever()
             .feeFineCloseAnonymizeAfterXInterval(20, "minute");
-    ConfigRecordBuilder config = new ConfigRecordBuilder("LOAN_HISTORY", "loan_history", loanHistoryConfig.create()
-        .encodePrettily());
-    configClient.create(config);
-    //*********************************************************************
+    createConfiguration(loanHistoryConfig);
+
     IndividualResource loanResource = loansFixture.checkOutByBarcode(new CheckOutByBarcodeRequestBuilder().forItem(item1)
         .to(user)
         .at(servicePoint.getId()));
@@ -307,7 +290,7 @@ public class AnonymizeLoansNeverTests extends LoanAnonymizationTests {
 
     DateTimeUtils.setCurrentMillisOffset(20*ONE_MINUTE_AND_ONE);
     anonymizeLoansInTenant();
-    //*********************************************************************
+
     assertThat(loansStorageClient.getById(loanID).getJson(),
         isAnonymized());
   }
@@ -320,10 +303,8 @@ public class AnonymizeLoansNeverTests extends LoanAnonymizationTests {
         new LoanHistoryConfigurationBuilder()
         .loanCloseAnonymizeNever()
         .feeFineCloseAnonymizeImmediately();
-    ConfigRecordBuilder config = new ConfigRecordBuilder("LOAN_HISTORY", "loan_history", loanHistoryConfig.create()
-        .encodePrettily());
-    configClient.create(config);
-    //*********************************************************************
+    createConfiguration(loanHistoryConfig);
+
     IndividualResource loanResource = loansFixture.checkOutByBarcode(new CheckOutByBarcodeRequestBuilder().forItem(item1)
         .to(user)
         .at(servicePoint.getId()));
@@ -332,7 +313,7 @@ public class AnonymizeLoansNeverTests extends LoanAnonymizationTests {
     loansFixture.checkInByBarcode(item1);
 
     anonymizeLoansInTenant();
-    //*********************************************************************
+
     assertThat(loansStorageClient.getById(loanID).getJson(),
         not(isAnonymized()));
   }
@@ -346,10 +327,8 @@ public class AnonymizeLoansNeverTests extends LoanAnonymizationTests {
         new LoanHistoryConfigurationBuilder()
         .loanCloseAnonymizeNever()
         .feeFineCloseAnonymizeNever();
-    ConfigRecordBuilder config = new ConfigRecordBuilder("LOAN_HISTORY", "loan_history", loanHistoryConfig.create()
-        .encodePrettily());
-    configClient.create(config);
-    //*********************************************************************
+    createConfiguration(loanHistoryConfig);
+
     IndividualResource loanResource = loansFixture.checkOutByBarcode(new CheckOutByBarcodeRequestBuilder().forItem(item1)
         .to(user)
         .at(servicePoint.getId()));
@@ -358,7 +337,7 @@ public class AnonymizeLoansNeverTests extends LoanAnonymizationTests {
     loansFixture.checkInByBarcode(item1);
 
     anonymizeLoansInTenant();
-    //*********************************************************************
+
     assertThat(loansStorageClient.getById(loanID).getJson(),
         not(isAnonymized()));
   }
@@ -370,10 +349,8 @@ public class AnonymizeLoansNeverTests extends LoanAnonymizationTests {
     LoanHistoryConfigurationBuilder loanHistoryConfig =
         new LoanHistoryConfigurationBuilder()
         .loanCloseAnonymizeNever();
-    ConfigRecordBuilder config = new ConfigRecordBuilder("LOAN_HISTORY", "loan_history", loanHistoryConfig.create()
-        .encodePrettily());
-    configClient.create(config);
-    //*********************************************************************
+      createConfiguration(loanHistoryConfig);
+
     IndividualResource loanResource = loansFixture.checkOutByBarcode(new CheckOutByBarcodeRequestBuilder().forItem(item1)
         .to(user)
         .at(servicePoint.getId()));
@@ -382,7 +359,7 @@ public class AnonymizeLoansNeverTests extends LoanAnonymizationTests {
     loansFixture.checkInByBarcode(item1);
 
     anonymizeLoansInTenant();
-    //*********************************************************************
+
     assertThat(loansStorageClient.getById(loanID).getJson(),
         not(isAnonymized()));
   }
