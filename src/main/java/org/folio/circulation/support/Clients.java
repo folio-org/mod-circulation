@@ -9,6 +9,7 @@ import io.vertx.core.http.HttpClient;
 
 public class Clients {
   private final CollectionResourceClient requestsStorageClient;
+  private final CollectionResourceClient requestsBatchStorageClient;
   private final CollectionResourceClient cancellationReasonStorageClient;
   private final CollectionResourceClient itemsStorageClient;
   private final CollectionResourceClient holdingsStorageClient;
@@ -49,6 +50,7 @@ public class Clients {
   private Clients(OkapiHttpClient client, WebContext context) {
     try {
       requestsStorageClient = createRequestsStorageClient(client, context);
+      requestsBatchStorageClient = createRequestsBatchStorageClient(client, context);
       cancellationReasonStorageClient = createCancellationReasonStorageClient(client, context);
       itemsStorageClient = createItemsStorageClient(client, context);
       holdingsStorageClient = createHoldingsStorageClient(client, context);
@@ -89,6 +91,10 @@ public class Clients {
 
   public CollectionResourceClient requestsStorage() {
     return requestsStorageClient;
+  }
+
+  public CollectionResourceClient requestsBatchStorage() {
+    return requestsBatchStorageClient;
   }
 
   public CollectionResourceClient cancellationReasonStorage() {
@@ -256,6 +262,12 @@ public class Clients {
     throws MalformedURLException {
 
     return getCollectionResourceClient(client, context, "/request-storage/requests");
+  }
+
+  private static CollectionResourceClient createRequestsBatchStorageClient(
+    OkapiHttpClient client, WebContext context) throws MalformedURLException {
+
+    return getCollectionResourceClient(client, context, "/request-storage-batch/requests");
   }
 
   private static CollectionResourceClient createCancellationReasonStorageClient(

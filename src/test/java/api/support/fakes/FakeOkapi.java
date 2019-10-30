@@ -205,6 +205,8 @@ public class FakeOkapi extends AbstractVerticle {
       .withDisallowedProperties("pickupServicePoint", "loan", "deliveryAddress")
       .withRecordConstraint(this::requestHasSamePosition)
       .withChangeMetadata()
+      .withBatchUpdate("/request-storage-batch/requests")
+      .withBatchUpdatePreProcessor(this::resetPositionsBeforeBatchUpdate)
       .create().register(router);
 
     registerCirculationRulesStorage(router);
@@ -520,5 +522,16 @@ public class FakeOkapi extends AbstractVerticle {
     log.debug(String.format("GET: /calendar/periods/%s/calculateopening, queries=%s",
       servicePointId, queries));
     return getCalendarById(servicePointId, queries).toString();
+  }
+
+  private JsonObject resetPositionsBeforeBatchUpdate(JsonObject batchUpdateRequest) {
+    JsonArray requests = batchUpdateRequest.getJsonArray("requests");
+
+    JsonArray requestsCopy = requests.copy();
+    requestsCopy
+      .forEach(requestCopy -> ((JsonObject) requestCopy).remove("position"));
+
+    batchUpdateRequest.put("requests", requestsCopy.addAll(requests));
+    return batchUpdateRequest;
   }
 }
