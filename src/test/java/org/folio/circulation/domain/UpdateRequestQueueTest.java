@@ -34,7 +34,7 @@ public class UpdateRequestQueueTest {
     ReorderRequestContext context = createContext();
     Response batchResponse = new Response(500, "Server Error", "text/plain");
 
-    Clients clients = failBatchRequestUpdateClients(batchResponse);
+    Clients clients = createMockBatchRequestClient(batchResponse);
     RequestQueueRepository requestQueueRepository = RequestQueueRepository.using(clients);
 
     UpdateRequestQueue updateRequestQueue =
@@ -64,7 +64,7 @@ public class UpdateRequestQueueTest {
       .create());
   }
 
-  private Clients failBatchRequestUpdateClients(Response responseToReturnOnBatch) {
+  private Clients createMockBatchRequestClient(Response responseToReturnOnBatch) {
     Clients clients = mock(Clients.class);
     CollectionResourceClient requestBatchClient = mock(CollectionResourceClient.class);
 
