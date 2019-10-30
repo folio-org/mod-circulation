@@ -61,15 +61,6 @@ These are the single letter criteria type names:
 
 `a`, `b`, `c` and `s` build a location hierarchy.
 
-`s` is the only location level than is implemented in the circulation rules engine yet.
-
-The circulation rules editor and the circulation rules engine haven't been migrated to the
-complete location hierarchy yet (see
-[UIIN-127 Migrate to hierarchical location end-point](https://issues.folio.org/browse/UIIN-127)).
-
-`a`, `b` and `c` can be put into the circulation rules file but they havn't been
-implemented in the circulation rules engine yet causing these rules to never match.
-
 ## Criterium
 
 A criterium consists of a single letter criterium type and a name selection of that type.
