@@ -17,18 +17,18 @@ import org.folio.circulation.domain.anonymization.checkers.LoanClosePeriodChecke
 import org.folio.circulation.domain.anonymization.checkers.NeverAnonymizeLoansChecker;
 import org.folio.circulation.domain.anonymization.checkers.NeverAnonymizeLoansWithFeeFinesChecker;
 import org.folio.circulation.domain.anonymization.checkers.NoAssociatedFeesAndFinesChecker;
-import org.folio.circulation.domain.anonymization.config.LoanAnonymizationConfigurationForTenant;
+import org.folio.circulation.domain.anonymization.config.LoanAnonymizationConfiguration;
 
 public class AnonymizationCheckersService {
 
-  private final LoanAnonymizationConfigurationForTenant config;
+  private final LoanAnonymizationConfiguration config;
 
   private final AnonymizationChecker manualAnonymizationChecker;
   private AnonymizationChecker feesAndFinesCheckersFromLoanHistory;
   private AnonymizationChecker closedLoansCheckersFromLoanHistory;
 
 
-  public AnonymizationCheckersService(LoanAnonymizationConfigurationForTenant config) {
+  public AnonymizationCheckersService(LoanAnonymizationConfiguration config) {
     this.config = config;
     if ( config != null) {
       feesAndFinesCheckersFromLoanHistory = getFeesAndFinesCheckersFromLoanHistory();

@@ -2,7 +2,7 @@ package org.folio.circulation.domain.anonymization;
 
 import java.lang.invoke.MethodHandles;
 
-import org.folio.circulation.domain.anonymization.config.LoanAnonymizationConfigurationForTenant;
+import org.folio.circulation.domain.anonymization.config.LoanAnonymizationConfiguration;
 import org.folio.circulation.domain.anonymization.service.AnonymizationCheckersService;
 import org.folio.circulation.domain.anonymization.service.LoanAnonymizationFinderService;
 import org.folio.circulation.domain.anonymization.service.LoansForBorrowerFinder;
@@ -35,7 +35,7 @@ public class LoanAnonymization {
   }
 
   public LoanAnonymizationService byCurrentTenant(
-      LoanAnonymizationConfigurationForTenant config) {
+      LoanAnonymizationConfiguration config) {
     log.info("Initializing loan anonymization for current tenant");
 
     loansFinderService = new LoansForTenantFinder(clients);
