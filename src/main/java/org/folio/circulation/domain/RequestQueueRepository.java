@@ -7,13 +7,17 @@ import static org.folio.circulation.support.CqlSortBy.ascending;
 import static org.folio.circulation.support.Result.succeeded;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CqlQuery;
 import org.folio.circulation.support.Result;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class RequestQueueRepository {
+  private static final Logger LOG = LoggerFactory.getLogger(RequestQueueRepository.class);
   private final RequestRepository requestRepository;
 
   RequestQueueRepository(RequestRepository requestRepository) {
@@ -93,5 +97,18 @@ public class RequestQueueRepository {
       }
     }
     return requestUpdated.thenApply(r -> r.map(notUsed -> requestQueue));
+  }
+
+  CompletableFuture<Result<RequestQueue>> reorderRequests(RequestQueue requestQueue) {
+    Collection<Request> requestsWithChangedPosition = requestQueue
+      .getRequestsWithChangedPosition();
+
+    if (requestsWithChangedPosition.isEmpty()) {
+      LOG.info("No requests with changed positions found");
+      return completedFuture(succeeded(requestQueue));
+    }
+
+    return requestRepository.batchUpdate(requestsWithChangedPosition)
+      .thenApply(r -> r.map(result -> requestQueue));
   }
 }
