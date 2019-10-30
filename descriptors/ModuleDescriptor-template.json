@@ -56,7 +56,7 @@
     },
     {
       "id": "circulation",
-      "version": "8.0",
+      "version": "8.1",
       "handlers": [
         {
           "methods": [
@@ -284,6 +284,18 @@
           ],
           "modulePermissions": [
             "modperms.circulation.requests.queue.collection.get"
+          ]
+        },
+        {
+          "methods": [
+            "POST"
+          ],
+          "pathPattern": "/circulation/requests/queue/{itemId}/reorder",
+          "permissionsRequired": [
+            "circulation.requests.queue.reorder.collection.post"
+          ],
+          "modulePermissions": [
+            "modperms.circulation.requests.queue.reorder.collection.post"
           ]
         },
         {
@@ -564,6 +576,10 @@
       "version": "3.1"
     },
     {
+      "id": "request-storage-batch",
+      "version": "0.1"
+    },
+    {
       "id": "users",
       "version": "14.2 15.0"
     },
@@ -633,6 +649,11 @@
     }
   ],
   "permissionSets": [
+    {
+      "permissionName": "circulation.requests.queue.reorder.collection.post",
+      "displayName": "circulation - reorder queue for an item",
+      "description": "change request positions in queue for an item"
+    },
     {
       "permissionName": "circulation.check-out-by-barcode.post",
       "displayName": "circulation - check out item by barcode",
@@ -826,6 +847,7 @@
         "circulation.requests.item.move.post",
         "circulation.requests.collection.delete",
         "circulation.requests.queue.collection.get",
+        "circulation.requests.queue.reorder.collection.post",
         "circulation.requests.instances.item.post",
         "circulation.requests.hold-shelf-clearance-report.get"
       ]
@@ -1481,6 +1503,36 @@
       "description": "to reduce X-Okapi-Token size",
       "subPermissions": [
         "circulation-storage.requests.item.get",
+        "circulation-storage.requests.collection.get",
+        "circulation-storage.loans.collection.get",
+        "circulation-storage.loans.item.get",
+        "inventory-storage.items.collection.get",
+        "inventory-storage.items.item.get",
+        "inventory-storage.holdings.collection.get",
+        "inventory-storage.holdings.item.get",
+        "inventory-storage.instances.collection.get",
+        "inventory-storage.instances.item.get",
+        "inventory-storage.locations.collection.get",
+        "inventory-storage.locations.item.get",
+        "inventory-storage.location-units.institutions.item.get",
+        "inventory-storage.location-units.campuses.item.get",
+        "inventory-storage.location-units.libraries.item.get",
+        "inventory-storage.service-points.collection.get",
+        "inventory-storage.service-points.item.get",
+        "users.item.get",
+        "users.collection.get",
+        "usergroups.collection.get",
+        "usergroups.item.get"
+      ],
+      "visible": false
+    },
+    {
+      "permissionName": "modperms.circulation.requests.queue.reorder.collection.post",
+      "displayName": "module permissions for one op",
+      "description": "to reduce X-Okapi-Token size",
+      "subPermissions": [
+        "circulation-storage.requests.item.get",
+        "circulation-storage.request-batch.item.post",
         "circulation-storage.requests.collection.get",
         "circulation-storage.loans.collection.get",
         "circulation-storage.loans.item.get",

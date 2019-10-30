@@ -1,13 +1,17 @@
 package org.folio.circulation.domain;
 
+import static java.util.Comparator.comparingInt;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.support.Result.ofAsync;
 import static org.folio.circulation.support.Result.succeeded;
 
 import java.lang.invoke.MethodHandles;
 import java.time.ZonedDateTime;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 
+import org.folio.circulation.resources.context.ReorderRequestContext;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.ClockManager;
 import org.folio.circulation.support.Result;
@@ -183,5 +187,32 @@ public class UpdateRequestQueue {
       .thenComposeAsync(r -> r.after(
         requestQueueRepository::updateRequestsWithChangedPositions))
       .thenApply(r -> r.map(requestQueue -> request));
+  }
+
+  public CompletableFuture<Result<ReorderRequestContext>> onReorder(
+    Result<ReorderRequestContext> result) {
+
+    // 1st: set new positions for the requests in the queue
+    return result.after(context -> {
+      context.getReorderRequestToRequestMap().forEach(
+        (reorderRequest, request) -> request.changePosition(reorderRequest.getNewPosition())
+      );
+
+      // 2nd: Call storage module to reorder requests.
+      return completedFuture(succeeded(context))
+        .thenApply(r -> r.map(ReorderRequestContext::getRequestQueue))
+        .thenCompose(r -> r.after(requestQueueRepository::reorderRequests))
+        .thenApply(r -> r.map(this::orderQueueByRequestPosition))
+        .thenApply(r -> r.map(context::withRequestQueue));
+    });
+  }
+
+  private RequestQueue orderQueueByRequestPosition(RequestQueue queue) {
+    List<Request> requests = queue.getRequests()
+      .stream()
+      .sorted(comparingInt(Request::getPosition))
+      .collect(Collectors.toList());
+
+    return new RequestQueue(requests);
   }
 }
