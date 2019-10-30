@@ -561,32 +561,6 @@ resourceTypes:
         responses:
           501:
             description: "Not implemented yet"
-      /reorder:
-        post:
-          description: Reorder requests in the item queue
-          body:
-            application/json:
-              type: !include schema/reorder-queue.json
-              example: !include examples/reorder-queue.json
-          responses:
-            200:
-              description: "Queue has been reordered successfully"
-              body:
-                application/json:
-                  type: requests
-                  example: !include examples/requests.json
-            422:
-              description: "Validation errors."
-              body:
-                text/plain:
-                  example: "Page requests can not be displaced from position 1."
-            404:
-              description: "Queue for item not found."
-            500:
-              description: "Internal server error."
-              body:
-                text/plain:
-                  example: "Internal server error."
     /queue:
       /{itemId}:
         type:
@@ -594,6 +568,32 @@ resourceTypes:
             exampleCollection: !include examples/request-queue.json
             schemaCollection: requests
         get:
+        /reorder:
+          post:
+            description: Reorder requests in the item queue
+            body:
+              application/json:
+                type: !include schema/reorder-queue.json
+                example: !include examples/reorder-queue.json
+            responses:
+              200:
+                description: "Queue has been reordered successfully"
+                body:
+                  application/json:
+                    type: requests
+                    example: !include examples/requests.json
+              422:
+                description: "Validation errors."
+                body:
+                  text/plain:
+                    example: "Page requests can not be displaced from position 1."
+              404:
+                description: "Queue for item not found."
+              500:
+                description: "Internal server error."
+                body:
+                  text/plain:
+                    example: "Internal server error."
     /instances:
       displayName: Instance level requests
       post:
