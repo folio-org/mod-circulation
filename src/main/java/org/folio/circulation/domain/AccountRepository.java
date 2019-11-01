@@ -20,10 +20,13 @@ import org.folio.circulation.support.Result;
 public class AccountRepository {
 
   private static final String LOAN_ID_FIELD_NAME = "loanId";
+  private static final String ACCOUNT_ID_FIELD_NAME = "accountId";
   private final CollectionResourceClient accountsStorageClient;
+  private final CollectionResourceClient feefineActionsStorageClient;
 
   public AccountRepository(Clients clients) {
     accountsStorageClient = clients.accountsStorageClient();
+    feefineActionsStorageClient = clients.feeFineActionsStorageClient();
   }
 
   public CompletableFuture<Result<Loan>> findAccountsForLoan(Result<Loan> loanResult) {
@@ -37,7 +40,9 @@ public class AccountRepository {
 
   private CompletableFuture<Result<Collection<Account>>> fetchAccountsForLoan(String loanId) {
 
-    return createAccountsFetcher().findByQuery(exactMatch(LOAN_ID_FIELD_NAME, loanId))
+    return createAccountsFetcher().findByQuery(
+      exactMatch(LOAN_ID_FIELD_NAME, loanId))
+      .thenCompose(r -> r.after(this::findFeeFineActionsForAccounts))
       .thenApply(r -> r.map(MultipleRecords::getRecords));
   }
 
@@ -64,12 +69,45 @@ public class AccountRepository {
         .collect(Collectors.toSet());
 
     return createAccountsFetcher().findByIndexName(loanIds, LOAN_ID_FIELD_NAME)
-      .thenComposeAsync(r -> r.after(multipleRecords -> completedFuture(succeeded(
-        multipleRecords.getRecords().stream().collect(
-          Collectors.groupingBy(Account::getLoanId))))));
+      .thenCompose(r -> r.after(this::findFeeFineActionsForAccounts))
+      .thenComposeAsync(r -> r.after(multipleRecords -> completedFuture(succeeded(multipleRecords.getRecords()
+        .stream()
+        .collect(Collectors.groupingBy(Account::getLoanId))))));
+  }
+
+  public CompletableFuture<Result<MultipleRecords<Account>>> findFeeFineActionsForAccounts(
+      MultipleRecords<Account> multipleLoans) {
+
+    if (multipleLoans.getRecords().isEmpty()) {
+      return completedFuture(succeeded(multipleLoans));
+    }
+
+    return getFeeFineActionsForAccounts(multipleLoans.getRecords())
+        .thenApply(r -> r.map(accountMap -> multipleLoans.mapRecords(
+            loan -> loan.withFeeFineActions(accountMap.getOrDefault(loan.getId(),
+                new ArrayList<>())))));
+  }
+
+  private CompletableFuture<Result<Map<String, List<FeeFineAction>>>> getFeeFineActionsForAccounts(Collection<Account> accounts) {
+
+    final Collection<String> loanIds =
+    accounts.stream()
+      .filter(Objects::nonNull)
+      .map(Account::getId)
+      .filter(Objects::nonNull)
+      .collect(Collectors.toSet());
+
+    return createFeeFineActionFetcher().findByIndexName(loanIds, ACCOUNT_ID_FIELD_NAME)
+        .thenComposeAsync(r -> r.after(multipleRecords -> completedFuture(succeeded(
+            multipleRecords.getRecords().stream().collect(
+                Collectors.groupingBy(FeeFineAction::getAccountId))))));
   }
 
   private MultipleRecordFetcher<Account> createAccountsFetcher() {
     return new MultipleRecordFetcher<>(accountsStorageClient, "accounts", Account::from);
+  }
+
+  private MultipleRecordFetcher<FeeFineAction> createFeeFineActionFetcher() {
+    return new MultipleRecordFetcher<>(feefineActionsStorageClient, "feefineactions", FeeFineAction::from);
   }
 }
