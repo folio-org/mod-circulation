@@ -2,8 +2,7 @@ package org.folio.circulation.resources;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
 
-import org.folio.circulation.domain.anonymization.LoanAnonymizationHelper;
-import org.folio.circulation.domain.anonymization.LoanAnonymizationService;
+import org.folio.circulation.domain.anonymization.LoanAnonymization;
 import org.folio.circulation.domain.representations.anonymization.AnonymizeLoansRepresentation;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.RouteRegistration;
@@ -21,8 +20,7 @@ public class LoanAnonymizationResource extends Resource {
 
   @Override
   public void register(Router router) {
-    RouteRegistration routeRegistration = new RouteRegistration(
-        "/loan-anonymization/by-user/:userId", router);
+    RouteRegistration routeRegistration = new RouteRegistration("/loan-anonymization/by-user/:userId", router);
     routeRegistration.create(this::anonymizeLoans);
   }
 
@@ -32,11 +30,9 @@ public class LoanAnonymizationResource extends Resource {
 
     String borrowerId = routingContext.request().getParam("userId");
 
-    LoanAnonymizationService loanAnonymization =
-      new LoanAnonymizationHelper(clients).byUserId(borrowerId);
-
-    completedFuture(loanAnonymization.anonymizeLoans()
-        .thenApply(AnonymizeLoansRepresentation::from)
-        .thenAccept(result -> result.writeTo(routingContext.response())));
+    completedFuture(new LoanAnonymization(clients).byUserId(borrowerId)
+      .anonymizeLoans()
+      .thenApply(AnonymizeLoansRepresentation::from)
+      .thenAccept(result -> result.writeTo(routingContext.response())));
   }
 }
