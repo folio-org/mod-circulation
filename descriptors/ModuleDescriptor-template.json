@@ -21,6 +21,33 @@
       ]
     },
     {
+      "id": "inventory-reports",
+      "version": "0.1",
+      "handlers": [
+        {
+          "methods": [
+            "GET"
+          ],
+          "pathPattern": "/circulation/inventory-reports/items-in-transit",
+          "permissionsRequired": [
+            "circulation.inventory.items-in-transit-report.get"
+          ],
+          "modulePermissions": [
+            "inventory-storage.items.item.get",
+            "inventory-storage.locations.item.get",
+            "inventory-storage.location-units.institutions.item.get",
+            "inventory-storage.location-units.campuses.item.get",
+            "inventory-storage.location-units.libraries.item.get",
+            "inventory-storage.material-types.item.get",
+            "inventory-storage.holdings.item.get",
+            "inventory-storage.loan-types.item.get",
+            "inventory-storage.service-points.item.get",
+            "inventory-storage.instances.item.get"
+          ]
+        }
+      ]
+    },
+    {
       "id": "request-move",
       "version": "0.2",
       "handlers": [
@@ -810,6 +837,11 @@
       "description": "get all hold shelf clearance requests to generating a report"
     },
     {
+      "permissionName": "circulation.inventory.items-in-transit-report.get",
+      "displayName": "circulation - items in transit report",
+      "description": "get all items in transit to generating a report"
+    },
+    {
       "permissionName": "circulation.end-patron-action-session.post",
       "displayName": "circulation - end patron action session",
       "description": "end patron action session"
@@ -849,7 +881,8 @@
         "circulation.requests.queue.collection.get",
         "circulation.requests.queue.reorder.collection.post",
         "circulation.requests.instances.item.post",
-        "circulation.requests.hold-shelf-clearance-report.get"
+        "circulation.requests.hold-shelf-clearance-report.get",
+        "circulation.inventory.items-in-transit-report.get"
       ]
     },
     {

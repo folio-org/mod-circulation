@@ -116,6 +116,10 @@ public class InterfaceUrls {
     return circulationModuleUrl("/circulation/requests-reports/hold-shelf-clearance/" + servicePointId);
   }
 
+  public static URL inventoryReportUrl() {
+    return circulationModuleUrl("/circulation/inventory-reports/items-in-transit");
+  }
+
   public static URL requestQueueUrl(UUID itemId) {
     return requestsUrl(String.format("/queue/%s", itemId));
   }

@@ -1,0 +1,28 @@
+#%RAML 1.0
+title: Circulation
+version: v0.1
+protocols: [ HTTP, HTTPS ]
+baseUri: http://localhost:9130
+
+documentation:
+  - title: Circulation Business Logic API
+    content: <b>API for report generation</b>
+
+types:
+  requests: !include items.json
+
+traits:
+  language: !include raml-util/traits/language.raml
+
+resourceTypes:
+  collection-get: !include raml-util/rtypes/collection-get.raml
+
+/circulation:
+  /inventory-reports:
+    displayName: In transit items report
+    /items-in-transit:
+      /{servicePointId}:
+        type:
+          collection-get:
+            exampleCollection: !include examples/items.json
+            schemaCollection: requests

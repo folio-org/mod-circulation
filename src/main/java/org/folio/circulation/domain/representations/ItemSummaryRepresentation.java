@@ -57,7 +57,9 @@ public class ItemSummaryRepresentation {
 
     if(location != null) {
       itemSummary.put("location", new JsonObject()
-        .put("name", location.getName()));
+        .put("name", location.getName())
+        .put("code", location.getCode())
+        .put("library", location.getLibraryName()));
     }
 
     final String materialTypeProperty = "materialType";

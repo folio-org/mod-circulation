@@ -6,6 +6,7 @@ import org.folio.circulation.resources.CheckInByBarcodeResource;
 import org.folio.circulation.resources.CheckOutByBarcodeResource;
 import org.folio.circulation.resources.CirculationRulesResource;
 import org.folio.circulation.resources.EndPatronActionSessionResource;
+import org.folio.circulation.resources.ItemsInTransitResource;
 import org.folio.circulation.resources.LoanAnonymizationResource;
 import org.folio.circulation.resources.DueDateNotRealTimeScheduledNoticeProcessingResource;
 import org.folio.circulation.resources.LoanCirculationRulesEngineResource;
@@ -73,6 +74,9 @@ public class CirculationVerticle extends AbstractVerticle {
 
     new RequestHoldShelfClearanceResource("/circulation/requests-reports/hold-shelf-clearance/:servicePointId", client)
       .register(router);
+    new ItemsInTransitResource("/circulation/inventory-reports/items-in-transit", client)
+      .register(router);
+
     new CirculationRulesResource("/circulation/rules", client)
       .register(router);
     new LoanCirculationRulesEngineResource(
