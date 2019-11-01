@@ -3,9 +3,12 @@ package org.folio.circulation.domain;
 import static org.folio.circulation.domain.MultipleRecords.from;
 import static org.folio.circulation.support.CqlQuery.exactMatch;
 
+import io.vertx.core.json.JsonObject;
+import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
+import org.folio.circulation.domain.anonymization.config.LoanAnonymizationConfiguration;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.CqlQuery;
@@ -29,6 +32,27 @@ public class ConfigurationRepository {
   public CompletableFuture<Result<Integer>> lookupSchedulerNoticesProcessingLimit() {
     Result<CqlQuery> cqlQueryResult = defineModuleNameAndConfigNameFilter("NOTIFICATION_SCHEDULER", "noticesLimit");
     return lookupConfigurations(cqlQueryResult, applySearchSchedulerNoticesLimit());
+  }
+
+  /**
+   * Gets loan history tenant configuration - settings for loan anonymization
+   *
+   */
+  public CompletableFuture<Result<LoanAnonymizationConfiguration>> loanHistoryConfiguration() {
+    return defineModuleNameAndConfigNameFilter("LOAN_HISTORY", "loan_history")
+      .after(query -> configurationClient.getMany(query, DEFAULT_PAGE_LIMIT))
+      .thenApply(result -> result.next(response -> from(response, Configuration::new, CONFIGS_KEY)))
+      .thenApply(r -> r.next(r1 -> r.map(MultipleRecords::getRecords)))
+      .thenApply(r -> r.map(this::getFirstConfiguration));
+  }
+
+  private LoanAnonymizationConfiguration getFirstConfiguration(Collection<Configuration> configurations) {
+    final String period = configurations.stream()
+      .map(Configuration::getValue)
+      .findFirst()
+      .orElse("");
+
+    return LoanAnonymizationConfiguration.from(new JsonObject(period));
   }
 
   public CompletableFuture<Result<DateTimeZone>> findTimeZoneConfiguration() {

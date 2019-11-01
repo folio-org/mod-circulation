@@ -1,59 +1,49 @@
 package org.folio.circulation.domain.anonymization;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
+import static org.folio.circulation.domain.anonymization.LoanAnonymizationRecords.CAN_BE_ANONYMIZED_KEY;
 
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
-import org.apache.commons.collections4.multimap.HashSetValuedHashMap;
 import org.folio.circulation.domain.AnonymizeStorageLoansRepository;
-import org.folio.circulation.domain.Loan;
-import org.folio.circulation.domain.anonymization.checks.AnonymizationChecker;
+import org.folio.circulation.domain.anonymization.service.AnonymizationCheckersService;
+import org.folio.circulation.domain.anonymization.service.LoanAnonymizationFinderService;
+import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.Result;
 
-/**
- * Checks loan eligibility for anonymization.
- * By default a loan can only be anonymized if it's closed and there are no fees
- * and fines associated with it.
- *
- */
 public class DefaultLoanAnonymizationService implements LoanAnonymizationService {
 
-  private static final String CAN_BE_ANONYMIZED_KEY = "_";
-
-  private final LoanAnonymizationHelper anonymization;
   private final AnonymizeStorageLoansRepository anonymizeStorageLoansRepository;
+  private final AnonymizationCheckersService anonymizationCheckersService;
+  private final LoanAnonymizationFinderService loansFinder;
 
-  DefaultLoanAnonymizationService(LoanAnonymizationHelper anonymization) {
-    this.anonymization = anonymization;
-    anonymizeStorageLoansRepository = new AnonymizeStorageLoansRepository(anonymization.clients());
+  DefaultLoanAnonymizationService(Clients clients, AnonymizationCheckersService anonymizationCheckersService,
+      LoanAnonymizationFinderService loansFinderService) {
+    this.anonymizationCheckersService = anonymizationCheckersService;
+    this.loansFinder = loansFinderService;
+    anonymizeStorageLoansRepository = new AnonymizeStorageLoansRepository(clients);
   }
 
   @Override
   public CompletableFuture<Result<LoanAnonymizationRecords>> anonymizeLoans() {
 
-    return anonymization.loansFinder().findLoansToAnonymize()
+    return loansFinder.findLoansToAnonymize()
       .thenApply(r -> r.map(new LoanAnonymizationRecords()::withLoansFound))
-      .thenCompose(this::segregateLoans)
+      .thenCompose(this::segregateLoanRecords)
       .thenCompose(r -> r.after(anonymizeStorageLoansRepository::postAnonymizeStorageLoans));
   }
 
-  private CompletableFuture<Result<LoanAnonymizationRecords>> segregateLoans(
+  private CompletableFuture<Result<LoanAnonymizationRecords>> segregateLoanRecords(
       Result<LoanAnonymizationRecords> anonymizationRecords) {
 
     return completedFuture(anonymizationRecords.map(records -> {
-      HashSetValuedHashMap<String, String> multiMap = new HashSetValuedHashMap<>();
-      for (Loan loan : records.getLoansFound()) {
-        for (AnonymizationChecker checker : anonymization.anonymizationCheckers()) {
-          if (!checker.canBeAnonymized(loan)) {
-            multiMap.put(checker.getReason(), loan.getId());
-          } else {
-            multiMap.put(CAN_BE_ANONYMIZED_KEY, loan.getId());
-          }
-        }
-      }
+      Map<String, Set<String>> segregatedLoans = anonymizationCheckersService
+          .segregateLoans(records.getLoansFound());
 
-      return records.withAnonymizedLoans(multiMap.remove(CAN_BE_ANONYMIZED_KEY))
-        .withNotAnonymizedLoans(multiMap);
+      return records.withAnonymizedLoans(segregatedLoans.remove(CAN_BE_ANONYMIZED_KEY))
+        .withNotAnonymizedLoans(segregatedLoans);
     }));
 
   }
