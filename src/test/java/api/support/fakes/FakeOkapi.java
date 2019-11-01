@@ -143,6 +143,12 @@ public class FakeOkapi extends AbstractVerticle {
       .create().register(router);
 
     new FakeStorageModuleBuilder()
+        .withRecordName("feefineactions")
+        .withRootPath("/feefineactions")
+        .withCollectionPropertyName("feefineactions")
+        .create().register(router);
+
+    new FakeStorageModuleBuilder()
       .withRecordName("request policy")
       .withRootPath("/request-policy-storage/request-policies")
       .withCollectionPropertyName("requestPolicies")
@@ -408,7 +414,7 @@ public class FakeOkapi extends AbstractVerticle {
             JsonArray providedLoanIds = body.toJsonObject()
               .getJsonArray("loanIds");
             providedLoanIds = Objects.isNull(providedLoanIds) ? new JsonArray() : providedLoanIds;
-            responseBody.put("anonymizedLoans", Lists.newArrayList(providedLoanIds));
+            responseBody.put("anonymizedLoans", providedLoanIds);
             responseBody.put("notAnonymizedLoans", new JsonArray());
             routingContext.response()
               .putHeader("Content-type", "application/json")
