@@ -65,13 +65,26 @@ These are the single letter criteria type names:
 
 A criterium consists of a single letter criterium type and a name selection of that type.
 
-If it has one or more names of that type like `g visitor undergrad` then it matches
-any patron group listed.
+If it has one or more names of that type it matches any patron group listed. If the patron
+group is `visitor` or `undergrad` this rule matches:
 
-If it has one or more negated names of that type like `g !visitor !undergrad` then it matches
-any patron group that is not listed, for example `staff`.
+```
+g visitor undergrad: policy-a
+```
 
-Use the keyword `all` for the name selection like `g all` to match all patron groups.
+### "!" and "all"
+
+If the criterium has one or more negated names (name with exclamation mark prepended) then it matches
+any patron group that is not listed, for example this rule matches `staff` but neither `visitor` nor `undergrad`:
+
+```
+g !visitor !undergrad: policy-b
+```
+
+Use the keyword `all` for the name selection to match all patron groups, for example
+```
+g all: policy-c
+```
 This is needed to alter the rule priority, see below.
 
 ## Criteria
