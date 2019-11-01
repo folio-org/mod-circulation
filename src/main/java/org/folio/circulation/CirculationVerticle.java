@@ -25,6 +25,7 @@ import org.folio.circulation.resources.RequestHoldShelfClearanceResource;
 import org.folio.circulation.resources.RequestQueueResource;
 import org.folio.circulation.resources.DueDateScheduledNoticeProcessingResource;
 import org.folio.circulation.resources.RequestScheduledNoticeProcessingResource;
+import org.folio.circulation.resources.ScheduledAnonymizationProcessingResource;
 import org.folio.circulation.support.logging.Logging;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -100,6 +101,7 @@ public class CirculationVerticle extends AbstractVerticle {
     new RequestScheduledNoticeProcessingResource(client).register(router);
 
     new LoanAnonymizationResource(client).register(router);
+    new ScheduledAnonymizationProcessingResource(client).register(router);
 
     new EndPatronActionSessionResource(client).register(router);
 
