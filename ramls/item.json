@@ -73,6 +73,24 @@
         "type": "string"
       }
     },
+    "status": {
+      "description": "The status for an item (should be In transit for all items in report)",
+      "type": "object",
+      "readonly": true,
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "The name of the status",
+          "readonly": true
+        }
+      }
+    },
+    "inTransitDestinationServicePointId": {
+      "description": "Destination service point: the service point where the item was sent as a result of its most recent scan in the check in app",
+      "type": "string",
+      "readonly": true
+    },
     "enumeration": {
       "description": "The volume and/or issue number for the item",
       "type": "string"
