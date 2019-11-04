@@ -11,7 +11,9 @@
         "name": "Checked Out"
       },
       "location": {
-        "name": "Main Library"
+        "name": "Main Library",
+        "code": "KU/CC/DI/M",
+        "library": "Datalogisk Institut"
       },
       "materialType": {
         "name": "Book"
