@@ -41,6 +41,8 @@ import io.vertx.core.json.JsonObject;
 
 public class Item {
 
+  private static final String ITEM_STATUS = "status";
+
   private final JsonObject itemRepresentation;
   private final JsonObject holdingRepresentation;
   private final JsonObject instanceRepresentation;
@@ -190,11 +192,17 @@ public class Item {
   }
 
   public ItemStatus getStatus() {
-    return ItemStatus.from(getStatusName());
+    ItemStatus itemStatus = ItemStatus.from(getStatusName());
+    itemStatus.setDate(getStatusDate());
+    return itemStatus;
   }
 
   private String getStatusName() {
-    return getNestedStringProperty(getItem(), "status", "name");
+    return getNestedStringProperty(getItem(), ITEM_STATUS, "name");
+  }
+
+  private String getStatusDate() {
+    return getNestedStringProperty(getItem(), ITEM_STATUS, "date");
   }
 
   public Location getLocation() {
@@ -306,7 +314,7 @@ public class Item {
       changed = true;
     }
 
-    write(itemRepresentation, "status",
+    write(itemRepresentation, ITEM_STATUS,
       new JsonObject().put("name", newStatus.getValue()));
 
     //TODO: Remove this hack to remove destination service point

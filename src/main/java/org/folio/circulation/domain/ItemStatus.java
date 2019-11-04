@@ -24,12 +24,22 @@ public enum ItemStatus {
 
   private final String value;
 
+  private String date;
+
   ItemStatus(String value) {
     this.value = value;
   }
 
   public String getValue() {
     return value;
+  }
+
+  public String getDate() {
+    return date;
+  }
+
+  public void setDate(String date) {
+    this.date = date;
   }
 
   private boolean valueMatches(String value) {
