@@ -237,7 +237,7 @@ public class FixedLoanPolicyRenewalDueDateCalculationTests {
   @Test
   public void shouldApplyAlternateScheduleWhenQueuedRequestIsHoldAndFixed() {
     final Period alternateCheckoutLoanPeriod = Period.from(2, "Weeks");
-    final DateTime systemTime = DateTime.now();
+    final DateTime systemTime = DateTime.now(DateTimeZone.UTC);
 
     LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
       .fixed(UUID.randomUUID())
