@@ -38,7 +38,7 @@ public enum ItemStatus {
     return date;
   }
 
-  public void setDate(String date) {
+  void setDate(String date) {
     this.date = date;
   }
 
