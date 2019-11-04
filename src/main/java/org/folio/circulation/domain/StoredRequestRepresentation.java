@@ -10,10 +10,10 @@ import org.slf4j.LoggerFactory;
 
 import io.vertx.core.json.JsonObject;
 
-class StoredRequestRepresentation {
+public class StoredRequestRepresentation {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
-  JsonObject storedRequest(Request request) {
+  public JsonObject storedRequest(Request request) {
     final JsonObject representation = request.asJson();
 
     addStoredItemProperties(representation, request.getItem());

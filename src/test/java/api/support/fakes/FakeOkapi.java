@@ -136,6 +136,12 @@ public class FakeOkapi extends AbstractVerticle {
       .create().register(router);
 
     new FakeStorageModuleBuilder()
+        .withRecordName("feefineactions")
+        .withRootPath("/feefineactions")
+        .withCollectionPropertyName("feefineactions")
+        .create().register(router);
+
+    new FakeStorageModuleBuilder()
       .withRecordName("request policy")
       .withRootPath("/request-policy-storage/request-policies")
       .withCollectionPropertyName("requestPolicies")
@@ -199,6 +205,8 @@ public class FakeOkapi extends AbstractVerticle {
       .withDisallowedProperties("pickupServicePoint", "loan", "deliveryAddress")
       .withRecordConstraint(this::requestHasSamePosition)
       .withChangeMetadata()
+      .withBatchUpdate("/request-storage-batch/requests")
+      .withBatchUpdatePreProcessor(this::resetPositionsBeforeBatchUpdate)
       .create().register(router);
 
     registerCirculationRulesStorage(router);
@@ -399,7 +407,7 @@ public class FakeOkapi extends AbstractVerticle {
             JsonArray providedLoanIds = body.toJsonObject()
               .getJsonArray("loanIds");
             providedLoanIds = Objects.isNull(providedLoanIds) ? new JsonArray() : providedLoanIds;
-            responseBody.put("anonymizedLoans", Lists.newArrayList(providedLoanIds));
+            responseBody.put("anonymizedLoans", providedLoanIds);
             responseBody.put("notAnonymizedLoans", new JsonArray());
             routingContext.response()
               .putHeader("Content-type", "application/json")
@@ -514,5 +522,16 @@ public class FakeOkapi extends AbstractVerticle {
     log.debug(String.format("GET: /calendar/periods/%s/calculateopening, queries=%s",
       servicePointId, queries));
     return getCalendarById(servicePointId, queries).toString();
+  }
+
+  private JsonObject resetPositionsBeforeBatchUpdate(JsonObject batchUpdateRequest) {
+    JsonArray requests = batchUpdateRequest.getJsonArray("requests");
+
+    JsonArray requestsCopy = requests.copy();
+    requestsCopy
+      .forEach(requestCopy -> ((JsonObject) requestCopy).remove("position"));
+
+    batchUpdateRequest.put("requests", requestsCopy.addAll(requests));
+    return batchUpdateRequest;
   }
 }

@@ -1,4 +1,4 @@
-package org.folio.circulation.domain.anonymization;
+package org.folio.circulation.domain.anonymization.service;
 
 import java.util.Collection;
 import java.util.concurrent.CompletableFuture;

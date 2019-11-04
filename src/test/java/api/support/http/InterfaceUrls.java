@@ -156,12 +156,20 @@ public class InterfaceUrls {
     return circulationModuleUrl("/loan-anonymization/by-user/" + subPath);
   }
 
+  public static URL circulationAnonymizeLoansInTenantURL() {
+    return circulationModuleUrl("/circulation/scheduled-anonymize-processing/");
+  }
+
   public static URL endSessionUrl() {
     return circulationModuleUrl("/circulation/end-patron-action-session");
   }
 
   public static URL accountsUrl(String subPath) {
     return APITestContext.viaOkapiModuleUrl("/accounts" + subPath);
+  }
+
+  public static URL feeFineActionsUrl(String subPath) {
+    return APITestContext.viaOkapiModuleUrl("/feefineactions" + subPath);
   }
 
   public static URL circulationRulesUrl() {
@@ -195,5 +203,14 @@ public class InterfaceUrls {
 
   static URL configurationUrl(String subPath) {
     return APITestContext.viaOkapiModuleUrl("/configurations/entries" + subPath);
+  }
+
+  public static URL reorderQueueUrl(String itemId) {
+    return requestQueueUrl(itemId + "/reorder");
+  }
+
+  public static URL requestQueueUrl(String itemId) {
+    return circulationModuleUrl(String
+      .format("/circulation/requests/queue/%s", itemId));
   }
 }
