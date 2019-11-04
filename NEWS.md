@@ -1,3 +1,7 @@
+## 16.7.4 2019-11-04
+
+* Fixes item appearing on hold shelf clearance report for incorrect service point (CIRC-516)
+
 ## 16.7.3 2019-10-29
 
 * Fixes item appearing on hold shelf clearance report for incorrect service point (CIRC-516)
@@ -17,7 +21,7 @@
 ## 16.6.0 2019-09-09
 
 * Loan is only updated during requests when due date changes (CIRC-289)
-* Respect tenant timezone when creating or moving requests (CIRC-434, CIRC-443)  
+* Respect tenant timezone when creating or moving requests (CIRC-434, CIRC-443)
 * Remembers patron group of borrower at check out (CIRC-327)
 * Loan renewal responds with multiple failure reasons (CIRC-384)
 * Sends time based request related patron notices (CIRC-387)
@@ -41,7 +45,7 @@
 * Can override renewals with request related failures (CIRC-311, CIRC-319)
 * Introduces experimental move request API (CIRC-315, CIRC-316, CIRC-333, CIRC-395)
 * Decides upon item for title level requests based upon due date (CIRC-361)
-* Provides template context for staff slips during check in (CIRC-378) 
+* Provides template context for staff slips during check in (CIRC-378)
 * Adds `Closed - Unfilled` and `Closed - Pickup expired` request states (CIRC-350)
 * Includes additional location information for requests (CIRC-331)
 * Includes outstanding fees and fines amount to pay for loans (CIRC-323)
@@ -99,7 +103,7 @@
 * Do not attempt to fetch related records when no requests are found (CIRC-250)
 * Clear loan action after overriding renewal (CIRC-251)
 * Stop a patron having more than a single open request for an item (CIRC-255)
-* Stop a patron from requesting an item they have on loan (CIRC-258) 
+* Stop a patron from requesting an item they have on loan (CIRC-258)
 * Send request related patron notices (CIRC-256, CIRC-262)
 * Truncate loan due date when item is recalled (CIRC-259)
 * Paged items can only be checked out by the requester (CIRC-260)
@@ -150,13 +154,13 @@
 * Using PUT to a loan for check in is no longer supported (CIRC-146)
 * Provides `circulation` interface version 5.2 (CIRC-146, CIRC-150)
 * Requires only `item-storage` interface version `6.1` or `7.0` (CIRC-146)
-* Requires only `location` interface version `3.0` (CIRC-146) 
+* Requires only `location` interface version `3.0` (CIRC-146)
 
 ## 13.1.0 2018-11-28
 
 * Initial check in by barcode API for checking in an item at a service point (CIRC-154)
 * Removes additional delivery address properties before storage (CIRC-171)
-* Provides `circulation` interface version 5.1 (CIRC-154) 
+* Provides `circulation` interface version 5.1 (CIRC-154)
 * Requires `item-storage` interface version `5.3`, `6.0` or `7.0` (CIRC-170)
 * Requires `instance-storage` interface version `4.0`, `5.0`, or  `6.0` (CIRC-168)
 * Requires `holdings-storage` interface version `1.3`, `2.0` or `3.0` (CIRC-169)
@@ -165,7 +169,7 @@
 
 * Stores the service point where checking out or in occurred (CIRC-104)
 * Uses RAML 1.0 for API documentation (CIRC-157)
-* Include extended `patronGroup` properties for requesting `user` for (CIRC-156) 
+* Include extended `patronGroup` properties for requesting `user` for (CIRC-156)
 * Validate pickup service point for a request (CIRC-152)
 * Bug fixes for fetching related records (CIRC-153, CIRC-161, CIRC-164, CIRC-165)
 * Provides `circulation` 5.0 interface (CIRC-104)
