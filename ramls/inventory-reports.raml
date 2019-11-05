@@ -17,11 +17,9 @@ traits:
 resourceTypes:
   collection-get: !include raml-util/rtypes/collection-get.raml
 
-/circulation:
-  /inventory-reports:
+/inventory-reports:
     displayName: In transit items report
     /items-in-transit:
-      /{servicePointId}:
         type:
           collection-get:
             exampleCollection: !include examples/items-in-transit.json

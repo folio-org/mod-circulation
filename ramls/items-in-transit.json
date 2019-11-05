@@ -20,13 +20,11 @@
           },
           "title": {
             "description": "title of the item (stored)",
-            "type": "string",
-            "readonly": true
+            "type": "string"
           },
           "barcode": {
             "description": "barcode of the item (stored)",
-            "type": "string",
-            "readonly": true
+            "type": "string"
           },
           "contributors": {
             "description": "A list of contributor names",
@@ -44,47 +42,39 @@
           },
           "callNumber" : {
             "description" : "The call number from the holdings record",
-            "type": "string",
-            "readonly": true
+            "type": "string"
           },
           "status": {
             "description": "The status for an item (should be In transit for all items in report)",
             "type": "object",
-            "readonly": true,
             "additionalProperties": false,
             "properties": {
               "name": {
                 "type": "string",
-                "description": "The name of the status",
-                "readonly": true
+                "description": "The name of the status"
               }
             }
           },
           "inTransitDestinationServicePointId": {
             "description": "Destination service point: the service point where the item was sent as a result of its most recent scan in the check in app",
-            "type": "string",
-            "readonly": true
+            "type": "string"
           },
           "location": {
             "description": "The effective location of the item",
             "type": "object",
-            "readonly": true,
             "additionalProperties": false,
             "properties": {
               "name": {
                 "type": "string",
-                "description": "The name of the location",
-                "readonly": true
+                "description": "The name of the location"
               },
               "libraryName": {
                 "type": "string",
-                "description": "The name of the library of the location",
-                "readonly": true
+                "description": "The name of the library of the location"
               },
               "code": {
                 "type": "string",
-                "description": "The location code",
-                "readonly": true
+                "description": "The location code"
               }
             }
           }
