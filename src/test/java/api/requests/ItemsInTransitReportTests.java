@@ -25,7 +25,7 @@ public class ItemsInTransitReportTests extends APITests {
 
   private static final String LOCATION_NAME = "name";
   private static final String LOCATION_CODE = "code";
-  private static final String LIBRARY = "library";
+  private static final String LIBRARY = "libraryName";
   private static final String STATUS_KEY = "status";
   private static final String BARCODE_KEY = "barcode";
   private static final String TITLE = "title";
