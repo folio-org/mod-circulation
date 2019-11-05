@@ -61,9 +61,9 @@ public class ResourceClient {
       "requestReport");
   }
 
-  public static ResourceClient forInventoryReport(OkapiHttpClient client) {
+  public static ResourceClient forItemsInTransitReport(OkapiHttpClient client) {
     return new ResourceClient(client,
-      subPath -> InterfaceUrls.inventoryReportUrl(), "items");
+      subPath -> InterfaceUrls.itemsInTransitReportUrl(), "items");
   }
 
   public static ResourceClient forLoans(OkapiHttpClient client) {

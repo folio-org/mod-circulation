@@ -28,7 +28,7 @@
           "methods": [
             "GET"
           ],
-          "pathPattern": "/circulation/inventory-reports/items-in-transit",
+          "pathPattern": "/inventory-reports/items-in-transit",
           "permissionsRequired": [
             "circulation.inventory.items-in-transit-report.get"
           ],

@@ -75,7 +75,7 @@ public class CirculationVerticle extends AbstractVerticle {
 
     new RequestHoldShelfClearanceResource("/circulation/requests-reports/hold-shelf-clearance/:servicePointId", client)
       .register(router);
-    new ItemsInTransitResource("/circulation/inventory-reports/items-in-transit", client)
+    new ItemsInTransitResource("/inventory-reports/items-in-transit", client)
       .register(router);
 
     new CirculationRulesResource("/circulation/rules", client)

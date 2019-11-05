@@ -67,14 +67,6 @@
             "name": {
               "description": "The name of the location",
               "type": "string"
-            },
-            "libraryName": {
-              "description": "The name of the library of the location",
-              "type": "string"
-            },
-            "code": {
-              "description": "The location code",
-              "type": "string"
             }
           },
           "additionalProperties": false

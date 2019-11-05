@@ -39,7 +39,7 @@ public class ItemsInTransitReportTests extends APITests {
     TimeoutException,
     ExecutionException {
 
-    List<JsonObject> items = ResourceClient.forInventoryReport(client).getAll();
+    List<JsonObject> items = ResourceClient.forItemsInTransitReport(client).getAll();
 
     assertTrue(items.isEmpty());
   }
@@ -76,7 +76,7 @@ public class ItemsInTransitReportTests extends APITests {
     loansFixture.checkInByBarcode(smallAngryPlanet);
 
     // #4 get items report with in transit status
-    List<JsonObject> items = ResourceClient.forInventoryReport(client).getAll();
+    List<JsonObject> items = ResourceClient.forItemsInTransitReport(client).getAll();
 
     assertThat(items.size(), is(1));
     JsonObject itemJson = items.get(0);
