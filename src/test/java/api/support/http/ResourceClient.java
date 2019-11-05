@@ -71,6 +71,10 @@ public class ResourceClient {
       "accounts");
   }
 
+  public static ResourceClient forFeeFineActions(OkapiHttpClient client) {
+    return new ResourceClient(client, InterfaceUrls::feeFineActionsUrl, "feefineactions");
+  }
+
   public static ResourceClient forLoanPolicies(OkapiHttpClient client) {
     return new ResourceClient(client, InterfaceUrls::loanPoliciesStorageUrl,
       "loan policies", "loanPolicies");
@@ -84,6 +88,11 @@ public class ResourceClient {
   public static ResourceClient forNoticePolicies(OkapiHttpClient client) {
     return new ResourceClient(client, InterfaceUrls::noticePoliciesStorageUrl,
       "notice policies", "noticePolicies");
+  }
+
+  public static ResourceClient forOverdueFinePolicies(OkapiHttpClient client) {
+    return new ResourceClient(client, InterfaceUrls::overdueFinesPoliciesStorageUrl,
+      "overdue fines policies", "overdueFinePolicies");
   }
 
   public static ResourceClient forFixedDueDateSchedules(OkapiHttpClient client) {

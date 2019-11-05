@@ -7,6 +7,7 @@ import static api.support.matchers.UUIDMatcher.is;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static api.support.matchers.ValidationErrorMatchers.hasUUIDParameter;
+import static org.folio.HttpStatus.HTTP_NO_CONTENT;
 import static org.folio.HttpStatus.HTTP_VALIDATION_ERROR;
 import static org.folio.circulation.domain.representations.RequestProperties.CANCELLATION_REASON_NAME;
 import static org.folio.circulation.domain.representations.RequestProperties.CANCELLATION_REASON_PUBLIC_DESCRIPTION;
@@ -44,6 +45,7 @@ import api.support.builders.Address;
 import api.support.builders.NoticeConfigurationBuilder;
 import api.support.builders.NoticePolicyBuilder;
 import api.support.builders.RequestBuilder;
+import api.support.builders.UserBuilder;
 import api.support.fixtures.TemplateContextMatchers;
 import api.support.http.InventoryItemResource;
 import io.vertx.core.json.JsonObject;
@@ -508,10 +510,11 @@ public class RequestsAPIUpdatingTests extends APITests {
     NoticePolicyBuilder noticePolicy = new NoticePolicyBuilder()
       .withName("Policy with request cancellation notice")
       .withLoanNotices(Collections.singletonList(requestCancellationConfiguration));
-    useLoanPolicyAsFallback(
+    useFallbackPolicies(
       loanPoliciesFixture.canCirculateRolling().getId(),
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
-      noticePoliciesFixture.create(noticePolicy).getId());
+      noticePoliciesFixture.create(noticePolicy).getId(),
+      overdueFinePoliciesFixture.facultyStandard().getId());
 
     final InventoryItemResource temeraire = itemsFixture.basedUponTemeraire();
     final IndividualResource requester = usersFixture.steve();
@@ -568,10 +571,11 @@ public class RequestsAPIUpdatingTests extends APITests {
     NoticePolicyBuilder noticePolicy = new NoticePolicyBuilder()
       .withName("Policy with request cancellation notice")
       .withLoanNotices(Collections.singletonList(requestCancellationConfiguration));
-    useLoanPolicyAsFallback(
+    useFallbackPolicies(
       loanPoliciesFixture.canCirculateRolling().getId(),
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
-      noticePoliciesFixture.create(noticePolicy).getId());
+      noticePoliciesFixture.create(noticePolicy).getId(),
+      overdueFinePoliciesFixture.facultyStandard().getId());
 
     final InventoryItemResource temeraire = itemsFixture.basedUponTemeraire();
     final IndividualResource requester = usersFixture.steve();
@@ -681,5 +685,45 @@ public class RequestsAPIUpdatingTests extends APITests {
 
     assertThat("patron group information should not be stored for proxying user",
       proxySummary.containsKey("patronGroup"), is(false));
+  }
+
+  @Test
+  public void canReplaceRequestWithAnInactiveUser()
+    throws InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    MalformedURLException {
+
+    final InventoryItemResource temeraire = itemsFixture.basedUponTemeraire();
+
+    loansFixture.checkOutByBarcode(temeraire);
+
+    final IndividualResource steve = usersFixture.steve();
+
+    DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
+
+    final IndividualResource exampleServicePoint = servicePointsFixture.cd1();
+
+    IndividualResource createdRequest = requestsClient.create(
+      new RequestBuilder()
+      .recall()
+      .withRequestDate(requestDate)
+      .forItem(temeraire)
+      .by(steve)
+      .fulfilToHoldShelf()
+      .withPickupServicePointId(exampleServicePoint.getId())
+      .withRequestExpiration(new LocalDate(2017, 7, 30))
+      .withHoldShelfExpiration(new LocalDate(2017, 8, 31)));
+
+    final IndividualResource inactiveCharlotte
+      = usersFixture.charlotte(UserBuilder::inactive);
+
+    final Response putResponse = requestsClient.attemptReplace(createdRequest.getId(),
+        RequestBuilder.from(createdRequest)
+        .hold()
+        .by(inactiveCharlotte)
+        .withTags(new RequestBuilder.Tags(Arrays.asList("new", "important"))));
+
+    assertThat(putResponse, hasStatus(HTTP_NO_CONTENT));
   }
 }

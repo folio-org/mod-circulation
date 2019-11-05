@@ -9,8 +9,10 @@ import static org.folio.circulation.support.ResultBinding.mapResult;
 import static org.folio.circulation.support.http.ResponseMapping.forwardOnFailure;
 import static org.folio.circulation.support.http.ResponseMapping.mapUsingJson;
 
+import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
 
+import org.folio.circulation.storage.RequestBatch;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.CqlQuery;
@@ -26,6 +28,7 @@ import io.vertx.core.json.JsonObject;
 
 public class RequestRepository {
   private final CollectionResourceClient requestsStorageClient;
+  private final CollectionResourceClient requestsBatchStorageClient;
   private final CollectionResourceClient cancellationReasonStorageClient;
   private final ItemRepository itemRepository;
   private final UserRepository userRepository;
@@ -35,6 +38,7 @@ public class RequestRepository {
 
   private RequestRepository(
     CollectionResourceClient requestsStorageClient,
+    CollectionResourceClient requestsBatchStorageClient,
     CollectionResourceClient cancellationReasonStorageClient,
     ItemRepository itemRepository,
     UserRepository userRepository,
@@ -43,6 +47,7 @@ public class RequestRepository {
     PatronGroupRepository patronGroupRepository) {
 
     this.requestsStorageClient = requestsStorageClient;
+    this.requestsBatchStorageClient = requestsBatchStorageClient;
     this.cancellationReasonStorageClient = cancellationReasonStorageClient;
     this.itemRepository = itemRepository;
     this.userRepository = userRepository;
@@ -58,6 +63,7 @@ public class RequestRepository {
   public static RequestRepository using(Clients clients, boolean fetchMaterialType) {
     return new RequestRepository(
       clients.requestsStorage(),
+      clients.requestsBatchStorage(),
       clients.cancellationReasonStorage(),
       new ItemRepository(clients, true, fetchMaterialType, true),
       new UserRepository(clients),
@@ -188,6 +194,23 @@ public class RequestRepository {
       .mapTo(request::withCancellationReasonJsonRepresentation)
       .whenNotFound(succeeded(request))
       .fetch(request.getCancellationReasonId());
+  }
+
+  public CompletableFuture<Result<Collection<Request>>> batchUpdate(
+    Collection<Request> requests) {
+
+    if (requests == null || requests.isEmpty()) {
+      return CompletableFuture.completedFuture(succeeded(requests));
+    }
+
+    ResponseInterpreter<Collection<Request>> interpreter =
+      new ResponseInterpreter<Collection<Request>>()
+        .on(201, of(() -> requests))
+        .otherwise(forwardOnFailure());
+
+    RequestBatch requestBatch = new RequestBatch(requests);
+    return requestsBatchStorageClient.post(requestBatch.toJson())
+      .thenApply(interpreter::apply);
   }
 
   //TODO: Check if need to request requester

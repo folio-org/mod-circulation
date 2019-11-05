@@ -24,12 +24,12 @@ public class CirculationRulesFixture {
   }
 
   public void updateCirculationRules(UUID loanPolicyId, UUID requestPolicyId,
-                                     UUID noticePolicyId)
+                                     UUID noticePolicyId, UUID overdueFinePolicyId)
     throws InterruptedException,
     ExecutionException,
     TimeoutException {
 
-    String rule = soleFallbackPolicyRule(loanPolicyId, requestPolicyId, noticePolicyId);
+    String rule = soleFallbackPolicyRule(loanPolicyId, requestPolicyId, noticePolicyId, overdueFinePolicyId);
 
     updateCirculationRules(rule);
   }
@@ -55,16 +55,16 @@ public class CirculationRulesFixture {
   }
 
   private String soleFallbackPolicyRule(UUID loanPolicyId, UUID requestPolicyId,
-                                        UUID noticePolicyId) {
+                                        UUID noticePolicyId, UUID overdueFinePolicyId) {
 
     return soleFallbackPolicyRule(loanPolicyId.toString(), requestPolicyId.toString(),
-      noticePolicyId.toString());
+      noticePolicyId.toString(), overdueFinePolicyId.toString());
   }
 
   public String soleFallbackPolicyRule(String loanPolicyId, String requestPolicyId,
-                                        String noticePolicyId) {
+                                        String noticePolicyId, String overdueFinePolicyId) {
 
-    return String.format("priority: t, s, c, b, a, m, g%nfallback-policy: l %s r %s n %s%n",
-      loanPolicyId, requestPolicyId, noticePolicyId);
+    return String.format("priority: t, s, c, b, a, m, g%nfallback-policy: l %s r %s n %s o %s%n",
+      loanPolicyId, requestPolicyId, noticePolicyId, overdueFinePolicyId);
   }
 }

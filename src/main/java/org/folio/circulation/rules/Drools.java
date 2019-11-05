@@ -179,6 +179,44 @@ public class Drools {
     return array;
   }
 
+  /**
+   * Calculate the overdue fine policy for itemTypeName and requestTypeName.
+   * @param params request params
+   * @param location - location with institution, library and campus
+   * @return the name of the overdue fine policy
+   */
+  public String overduePolicy(MultiMap params, Location location) {
+    KieSession kieSession = createSession(params, location);
+    kieSession.fireAllRules();
+    kieSession.dispose();
+    return match.overduePolicyId;
+  }
+
+  /**
+   * Return all overdue fine policies calculated using the drools rules
+   * in the order they match.
+   * @param params request params
+   * @param location - location with institution, library and campus
+   * @return matches, each match has a overduePolicyId and a circulationRuleLine field
+   */
+  public JsonArray overduePolicies(MultiMap params, Location location) {
+    KieSession kieSession = createSession(params, location);
+
+    JsonArray array = new JsonArray();
+
+    while (kieSession.fireAllRules() > 0) {
+      JsonObject json = new JsonObject();
+
+      write(json, "overduePolicyId", match.overduePolicyId);
+      writeLineMatch(json);
+
+      array.add(json);
+    }
+
+    kieSession.dispose();
+    return array;
+  }
+
   private void writeLineMatch(JsonObject json) {
     write(json, "circulationRuleLine", match.lineNumber);
   }

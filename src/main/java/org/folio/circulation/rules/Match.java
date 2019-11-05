@@ -13,6 +13,9 @@ public class Match {
   /** notice policy of the matching rule */
   @SuppressWarnings("squid:ClassVariableVisibilityCheck")  // Drools directly uses public fields
   public String noticePolicyId;
+  /** overdue policy of the matching rule */
+  @SuppressWarnings("squid:ClassVariableVisibilityCheck")  // Drools directly uses public fields
+  public String overduePolicyId;
   /** line number of the matching rule */
   @SuppressWarnings("squid:ClassVariableVisibilityCheck")  // Drools directly uses public fields
   public int lineNumber;

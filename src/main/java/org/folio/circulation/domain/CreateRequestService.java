@@ -39,6 +39,7 @@ public class CreateRequestService {
       .next(RequestServiceUtility::refuseWhenItemDoesNotExist)
       .next(RequestServiceUtility::refuseWhenInvalidUserAndPatronGroup)
       .next(RequestServiceUtility::refuseWhenItemIsNotValid)
+      .next(RequestServiceUtility::refuseWhenUserIsInactive)
       .next(RequestServiceUtility::refuseWhenUserHasAlreadyRequestedItem)
       .after(requestLoanValidator::refuseWhenUserHasAlreadyBeenLoanedItem)
       .thenComposeAsync(r -> r.after(requestPolicyRepository::lookupRequestPolicy))
