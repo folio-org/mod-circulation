@@ -60,10 +60,10 @@ public class FakeStorageModule extends AbstractVerticle {
   private final String changeMetadataPropertyName = "metadata";
   private final BiFunction<Collection<JsonObject>, JsonObject, Result<Object>> constraint;
   private final JsonSchemaValidator recordValidator;
-  private final Collection<String> queryParameters;
   private final String batchUpdatePath;
   private final Function<JsonObject, JsonObject> batchUpdatePreProcessor;
   private final Function<JsonObject, CompletableFuture<JsonObject>> recordPreProcessor;
+  private final Collection<String> queryParameters;
 
   public static Stream<String> getQueries() {
     return queries.stream();
@@ -82,11 +82,10 @@ public class FakeStorageModule extends AbstractVerticle {
     @Deprecated Collection<String> disallowedProperties,
     Boolean includeChangeMetadata,
     BiFunction<Collection<JsonObject>, JsonObject, Result<Object>> constraint,
-    Collection<String> queryParameters) {
-    BiFunction<Collection<JsonObject>, JsonObject, Result<Object>> constraint,
     String batchUpdatePath,
     Function<JsonObject, JsonObject> batchUpdatePreProcessor,
-    Function<JsonObject, CompletableFuture<JsonObject>> recordPreProcessor) {
+    Function<JsonObject, CompletableFuture<JsonObject>> recordPreProcessor,
+    Collection<String> queryParameters) {
 
     this.rootPath = rootPath;
     this.collectionPropertyName = collectionPropertyName;
