@@ -12,6 +12,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.BiFunction;
@@ -57,6 +58,7 @@ public class FakeStorageModule extends AbstractVerticle {
   private final String changeMetadataPropertyName = "metadata";
   private final BiFunction<Collection<JsonObject>, JsonObject, Result<Object>> constraint;
   private final JsonSchemaValidator recordValidator;
+  private final Collection<String> queryParameters;
 
   public static Stream<String> getQueries() {
     return queries.stream();
@@ -74,7 +76,8 @@ public class FakeStorageModule extends AbstractVerticle {
     Collection<String> uniqueProperties,
     @Deprecated Collection<String> disallowedProperties,
     Boolean includeChangeMetadata,
-    BiFunction<Collection<JsonObject>, JsonObject, Result<Object>> constraint) {
+    BiFunction<Collection<JsonObject>, JsonObject, Result<Object>> constraint,
+    Collection<String> queryParameters) {
 
     this.rootPath = rootPath;
     this.collectionPropertyName = collectionPropertyName;
@@ -87,6 +90,9 @@ public class FakeStorageModule extends AbstractVerticle {
     this.constraint = constraint;
     this.includeChangeMetadata = includeChangeMetadata;
     this.recordValidator = recordValidator;
+    this.queryParameters = Objects.isNull(queryParameters)
+      ? new ArrayList<>()
+      : queryParameters;
 
     storedResourcesByTenant = new HashMap<>();
     storedResourcesByTenant.put(tenantId, new HashMap<>());
@@ -541,6 +547,7 @@ public class FakeStorageModule extends AbstractVerticle {
       .filter(queryParameter -> {
         boolean isValidParameter = queryParameter.contains("query") ||
           queryParameter.contains("offset") ||
+          isContainsQueryParameter(queryParameter) ||
           queryParameter.contains("limit");
 
         return !isValidParameter;
@@ -560,5 +567,10 @@ public class FakeStorageModule extends AbstractVerticle {
     ClientErrorResponse.badRequest(routingContext.response(),
       format("Unexpected query string parameters: %s",
         String.join(",", unexpectedParameters)));
+  }
+
+  private boolean isContainsQueryParameter(String queryParameter) {
+    String query = StringUtils.substringBefore(queryParameter, "=");
+    return this.queryParameters.contains(query);
   }
 }

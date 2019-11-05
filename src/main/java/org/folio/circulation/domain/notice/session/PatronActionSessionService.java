@@ -8,8 +8,10 @@ import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.ResultBinding.mapResult;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.EnumMap;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
@@ -70,7 +72,7 @@ public class PatronActionSessionService {
     return patronActionSessionRepository.findPatronActionSessions(patronId, actionType, DEFAULT_SESSION_SIZE_LIMIT)
       .thenCompose(r -> r.after(this::sendNotices))
       .thenCompose(r -> r.after(records ->
-        allOf(records.getRecords(), patronActionSessionRepository::delete)))
+        allOf(Objects.isNull(records)? Collections.emptyList() : records.getRecords(), patronActionSessionRepository::delete)))
       .thenApply(mapResult(v -> null));
   }
 

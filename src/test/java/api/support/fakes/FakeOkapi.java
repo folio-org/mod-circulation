@@ -270,6 +270,13 @@ public class FakeOkapi extends AbstractVerticle {
       .register(router);
 
     new FakeStorageModuleBuilder()
+      .withCollectionPropertyName("expiredSessions")
+      .withRootPath("/patron-action-session-storage/expired-session-patron-ids")
+      .withQueryParameters("action_type", "session_inactivity_time")
+      .create()
+      .register(router);
+
+    new FakeStorageModuleBuilder()
       .withRecordName("scheduled notice")
       .withCollectionPropertyName("scheduledNotices")
       .withRootPath("/scheduled-notice-storage/scheduled-notices")
@@ -308,14 +315,13 @@ public class FakeOkapi extends AbstractVerticle {
           newOrUpdatedRequest.getString("itemId")))
         .filter(request -> newOrUpdatedRequest.getInteger("position") != null &&
           Objects.equals(request.getInteger("position"),
-          newOrUpdatedRequest.getInteger("position")))
+            newOrUpdatedRequest.getInteger("position")))
         .findAny()
         .map(r -> (Result<Object>) ValidationErrorFailure.failedValidation(
           "Cannot have more than one request with the same position in the queue",
           "itemId", r.getString("itemId")))
         .orElse(Result.succeeded(null));
-    }
-    catch(Exception e) {
+    } catch (Exception e) {
       return failedDueToServerError(e);
     }
   }

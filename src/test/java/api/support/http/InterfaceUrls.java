@@ -192,4 +192,8 @@ public class InterfaceUrls {
   static URL configurationUrl(String subPath) {
     return APITestContext.viaOkapiModuleUrl("/configurations/entries" + subPath);
   }
+
+  static URL patronExpiredSessionsUrl(String subPath) {
+    return APITestContext.viaOkapiModuleUrl("/patron-action-session-storage/expired-session-patron-ids");
+  }
 }

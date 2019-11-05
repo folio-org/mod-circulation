@@ -4,6 +4,7 @@ import static org.folio.circulation.support.Result.failed;
 
 import java.util.concurrent.CompletableFuture;
 
+import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.domain.ConfigurationRepository;
 import org.folio.circulation.domain.notice.session.PatronActionSessionService;
 import org.folio.circulation.domain.notice.session.PatronActionType;
@@ -49,14 +50,21 @@ public class ExpiredSessionProcessingResource extends Resource {
     configurationRepository.lookupSessionTimeout()
       .thenCompose(r -> r.after(this::defineExpiredTime))
       .thenCompose(r -> patronExpiredSessionRepository.findPatronExpiredSessions(PatronActionType.CHECK_OUT, r.value().toString()))
-      .thenCompose(r -> r.after(patronId -> patronSessionService.endSession(patronId, PatronActionType.CHECK_OUT))
-      .thenApply(this::createWritableResult)
-      .thenAccept(result -> result.writeTo(routingContext.response())));
+      .thenCompose(r -> r.after(patronId -> attemptEndSession(patronSessionService, patronId))
+        .thenApply(this::createWritableResult)
+        .thenAccept(result -> result.writeTo(routingContext.response())));
   }
 
   private CompletableFuture<Result<DateTime>> defineExpiredTime(Integer timeout) {
     Result<DateTime> dateTimeResult = Result.succeeded(DateTime.now(DateTimeZone.UTC).minusMinutes(timeout));
     return CompletableFuture.completedFuture(dateTimeResult);
+  }
+
+  private CompletableFuture<Result<Void>> attemptEndSession(PatronActionSessionService patronSessionService, String patronId) {
+    if (StringUtils.isBlank(patronId)) {
+      return CompletableFuture.completedFuture(Result.succeeded(null));
+    }
+    return patronSessionService.endSession(patronId, PatronActionType.CHECK_OUT);
   }
 
   private ResponseWritableResult<Void> createWritableResult(Result<?> result) {

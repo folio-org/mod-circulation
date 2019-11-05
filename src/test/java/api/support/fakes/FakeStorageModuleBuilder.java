@@ -3,6 +3,8 @@ package api.support.fakes;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
+import java.util.Objects;
 import java.util.function.BiFunction;
 
 import org.folio.circulation.infrastructure.serialization.JsonSchemaValidator;
@@ -24,6 +26,7 @@ public class FakeStorageModuleBuilder {
   private final Boolean includeChangeMetadata;
   private final BiFunction<Collection<JsonObject>, JsonObject, Result<Object>> constraint;
   private final JsonSchemaValidator recordValidator;
+  private final Collection<String> queryParameters;
 
   FakeStorageModuleBuilder() {
     this(
@@ -38,7 +41,7 @@ public class FakeStorageModuleBuilder {
       false,
       false,
       (c, r) -> Result.succeeded(null),
-      null);
+      null, null);
   }
 
   private FakeStorageModuleBuilder(
@@ -53,7 +56,8 @@ public class FakeStorageModuleBuilder {
     Boolean hasDeleteByQuery,
     Boolean includeChangeMetadata,
     BiFunction<Collection<JsonObject>, JsonObject, Result<Object>> constraint,
-    JsonSchemaValidator recordValidator) {
+    JsonSchemaValidator recordValidator,
+    Collection<String> queryParameters) {
 
     this.rootPath = rootPath;
     this.collectionPropertyName = collectionPropertyName;
@@ -67,13 +71,14 @@ public class FakeStorageModuleBuilder {
     this.includeChangeMetadata = includeChangeMetadata;
     this.constraint = constraint;
     this.recordValidator = recordValidator;
+    this.queryParameters = queryParameters;
   }
 
   public FakeStorageModule create() {
     return new FakeStorageModule(rootPath, collectionPropertyName, tenantId,
       recordValidator, requiredProperties, hasCollectionDelete, hasDeleteByQuery,
       recordName, uniqueProperties, disallowedProperties, includeChangeMetadata,
-      constraint);
+      constraint, queryParameters);
   }
 
   FakeStorageModuleBuilder withRootPath(String rootPath) {
@@ -93,7 +98,9 @@ public class FakeStorageModuleBuilder {
       this.hasDeleteByQuery,
       this.includeChangeMetadata,
       this.constraint,
-      this.recordValidator);
+      this.recordValidator,
+      this.queryParameters
+    );
   }
 
   FakeStorageModuleBuilder withCollectionPropertyName(
@@ -111,7 +118,8 @@ public class FakeStorageModuleBuilder {
       this.hasDeleteByQuery,
       this.includeChangeMetadata,
       this.constraint,
-      this.recordValidator);
+      this.recordValidator,
+      this.queryParameters);
   }
 
   FakeStorageModuleBuilder withRecordName(String recordName) {
@@ -127,7 +135,8 @@ public class FakeStorageModuleBuilder {
       this.hasDeleteByQuery,
       this.includeChangeMetadata,
       this.constraint,
-      this.recordValidator);
+      this.recordValidator,
+      this.queryParameters);
   }
 
   FakeStorageModuleBuilder validateRecordsWith(JsonSchemaValidator validator) {
@@ -143,7 +152,8 @@ public class FakeStorageModuleBuilder {
       this.hasDeleteByQuery,
       this.includeChangeMetadata,
       this.constraint,
-      validator);
+      validator,
+      this.queryParameters);
   }
 
   @Deprecated()
@@ -166,7 +176,8 @@ public class FakeStorageModuleBuilder {
       this.hasDeleteByQuery,
       this.includeChangeMetadata,
       this.constraint,
-      this.recordValidator);
+      this.recordValidator,
+      this.queryParameters);
   }
 
   @Deprecated()
@@ -178,8 +189,8 @@ public class FakeStorageModuleBuilder {
     return withRequiredProperties(Arrays.asList(requiredProperties));
   }
 
-    private FakeStorageModuleBuilder withUniqueProperties(
-      Collection<String> uniqueProperties) {
+  private FakeStorageModuleBuilder withUniqueProperties(
+    Collection<String> uniqueProperties) {
 
     return new FakeStorageModuleBuilder(
       this.rootPath,
@@ -193,7 +204,8 @@ public class FakeStorageModuleBuilder {
       this.hasDeleteByQuery,
       this.includeChangeMetadata,
       this.constraint,
-      this.recordValidator);
+      this.recordValidator,
+      this.queryParameters);
   }
 
   FakeStorageModuleBuilder withUniqueProperties(String... uniqueProperties) {
@@ -220,7 +232,8 @@ public class FakeStorageModuleBuilder {
       this.hasDeleteByQuery,
       this.includeChangeMetadata,
       this.constraint,
-      this.recordValidator);
+      this.recordValidator,
+      this.queryParameters);
   }
 
   @Deprecated()
@@ -245,7 +258,8 @@ public class FakeStorageModuleBuilder {
       this.hasDeleteByQuery,
       this.includeChangeMetadata,
       this.constraint,
-      this.recordValidator);
+      this.recordValidator,
+      this.queryParameters);
   }
 
   FakeStorageModuleBuilder allowDeleteByQuery() {
@@ -261,7 +275,8 @@ public class FakeStorageModuleBuilder {
       true,
       this.includeChangeMetadata,
       this.constraint,
-      this.recordValidator);
+      this.recordValidator,
+      this.queryParameters);
   }
 
   FakeStorageModuleBuilder withChangeMetadata() {
@@ -277,7 +292,8 @@ public class FakeStorageModuleBuilder {
       this.hasDeleteByQuery,
       true,
       this.constraint,
-      this.recordValidator);
+      this.recordValidator,
+      this.queryParameters);
   }
 
   FakeStorageModuleBuilder withRecordConstraint(
@@ -295,6 +311,28 @@ public class FakeStorageModuleBuilder {
       this.hasDeleteByQuery,
       this.includeChangeMetadata,
       constraint,
-      this.recordValidator);
+      this.recordValidator,
+      this.queryParameters);
+  }
+
+  FakeStorageModuleBuilder withQueryParameters(String... queryParameters) {
+    List<String> parameters = Objects.isNull(queryParameters)
+      ? new ArrayList<>()
+      : Arrays.asList(queryParameters);
+
+    return new FakeStorageModuleBuilder(
+      this.rootPath,
+      this.collectionPropertyName,
+      this.tenantId,
+      this.requiredProperties,
+      this.disallowedProperties,
+      this.hasCollectionDelete,
+      this.recordName,
+      this.uniqueProperties,
+      this.hasDeleteByQuery,
+      this.includeChangeMetadata,
+      this.constraint,
+      this.recordValidator,
+      parameters);
   }
 }
