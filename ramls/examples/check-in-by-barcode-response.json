@@ -13,7 +13,7 @@
       "location": {
         "name": "Main Library",
         "code": "KU/CC/DI/M",
-        "library": "Datalogisk Institut"
+        "libraryName": "Datalogisk Institut"
       },
       "materialType": {
         "name": "Book"

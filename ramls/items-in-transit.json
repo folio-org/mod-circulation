@@ -1,0 +1,120 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "title": "Collection of items",
+  "description": "Collection of items",
+  "type": "object",
+  "properties": {
+    "items": {
+      "description": "Paged collection of items",
+      "id": "items",
+      "type": "array",
+      "items": {
+        "title": "An item",
+        "description": "Full information about an item",
+        "type": "object",
+        "properties": {
+          "id": {
+            "description": "UUID of the item",
+            "type": "string",
+            "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
+          },
+          "title": {
+            "description": "title of the item (stored)",
+            "type": "string",
+            "readonly": true
+          },
+          "barcode": {
+            "description": "barcode of the item (stored)",
+            "type": "string",
+            "readonly": true
+          },
+          "holdingsRecordId": {
+            "description": "The ID of the holdings for the item",
+            "type": "string",
+            "readonly": true
+          },
+          "instanceId": {
+            "description": "The ID of the instance for the item",
+            "type": "string",
+            "readonly": true
+          },
+          "location": {
+            "description": "The effective location of the item",
+            "type": "object",
+            "readonly": true,
+            "additionalProperties": false,
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "The name of the location",
+                "readonly": true
+              },
+              "libraryName": {
+                "type": "string",
+                "description": "The name of the library of the location",
+                "readonly": true
+              },
+              "code": {
+                "type": "string",
+                "description": "The location code",
+                "readonly": true
+              }
+            }
+          },
+          "contributorNames": {
+            "description": "A list of contributor names",
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "name": {
+                  "description": "The contributor name",
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "copyNumbers": {
+            "type": "array",
+            "description": "Copy numbers for the item",
+            "items": {
+              "type": "string"
+            }
+          },
+          "status": {
+            "description": "The status for an item (should be In transit for all items in report)",
+            "type": "object",
+            "readonly": true,
+            "additionalProperties": false,
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "The name of the status",
+                "readonly": true
+              }
+            }
+          },
+          "inTransitDestinationServicePointId": {
+            "description": "Destination service point: the service point where the item was sent as a result of its most recent scan in the check in app",
+            "type": "string",
+            "readonly": true
+          },
+          "enumeration": {
+            "description": "The volume and/or issue number for the item",
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "totalRecords": {
+      "description": "Total number of items",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "items",
+    "totalRecords"
+  ]
+}

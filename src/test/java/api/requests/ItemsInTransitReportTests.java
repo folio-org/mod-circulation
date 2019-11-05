@@ -60,7 +60,7 @@ public class ItemsInTransitReportTests extends APITests {
     final IndividualResource steve = usersFixture.steve();
     final UUID secondServicePointId = servicePointsFixture.cd2().getId();
 
-    //#1 checkout SP 1
+    //#1 checkout item in SP1
     loansFixture.checkOutByBarcode(smallAngryPlanet);
 
     // #2 create the request in SP2

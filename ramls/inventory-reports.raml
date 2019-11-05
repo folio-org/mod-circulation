@@ -9,7 +9,7 @@ documentation:
     content: <b>API for report generation</b>
 
 types:
-  items: !include items.json
+  items: !include items-in-transit.json
 
 traits:
   language: !include raml-util/traits/language.raml
@@ -24,5 +24,5 @@ resourceTypes:
       /{servicePointId}:
         type:
           collection-get:
-            exampleCollection: !include examples/items.json
+            exampleCollection: !include examples/items-in-transit.json
             schemaCollection: items
