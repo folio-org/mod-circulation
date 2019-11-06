@@ -88,8 +88,8 @@ public class CheckOutByBarcodeTests extends APITests {
     assertThat("item ID should match barcode",
       loan.getString("itemId"), is(smallAngryPlanet.getId()));
 
-    assertThat("itemEffectiveLocationAtCheckOut should match permanent location ID",
-      loan.getString("itemEffectiveLocationAtCheckOut"), is(holding.getString("permanentLocationId")));
+    assertThat("itemEffectiveLocationIdAtCheckOut should match permanent location ID",
+      loan.getString("itemEffectiveLocationIdAtCheckOut"), is(holding.getString("permanentLocationId")));
 
     assertThat("status should be open",
       loan.getJsonObject("status").getString("name"), is("Open"));
