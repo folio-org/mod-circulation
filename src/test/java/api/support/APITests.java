@@ -45,6 +45,7 @@ import api.support.fixtures.NoticePoliciesFixture;
 import api.support.fixtures.PatronGroupsFixture;
 import api.support.fixtures.ProxyRelationshipsFixture;
 import api.support.fixtures.RequestPoliciesFixture;
+import api.support.fixtures.RequestQueueFixture;
 import api.support.fixtures.RequestsFixture;
 import api.support.fixtures.ScheduledNoticeProcessingClient;
 import api.support.fixtures.ServicePointsFixture;
@@ -84,6 +85,7 @@ public abstract class APITests {
 
   protected final ResourceClient loansClient = ResourceClient.forLoans(client);
   protected final ResourceClient accountsClient = ResourceClient.forAccounts(client);
+  protected final ResourceClient feeFineActionsClient = ResourceClient.forFeeFineActions(client);
 
   protected final ResourceClient loansStorageClient
     = ResourceClient.forLoansStorage(client);
@@ -187,6 +189,9 @@ public abstract class APITests {
 
   protected final ScheduledNoticeProcessingClient scheduledNoticeProcessingClient =
     new ScheduledNoticeProcessingClient();
+
+  protected final RequestQueueFixture requestQueueFixture =
+    new RequestQueueFixture(client);
 
   protected APITests() {
     this(true);

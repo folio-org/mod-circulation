@@ -101,6 +101,14 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     return representation.copy();
   }
 
+  public boolean hasAssociatedFeesAndFines() {
+    return !getAccounts().isEmpty();
+  }
+
+  public boolean allFeesAndFinesClosed() {
+    return getAccounts().stream().allMatch(Account::isClosed);
+  }
+
   public Loan changeDueDate(DateTime newDueDate) {
     write(representation, DUE_DATE, newDueDate);
 
@@ -378,6 +386,10 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
 
   public boolean hasDueDateChanged() {
     return !Objects.equals(originalDueDate, getDueDate());
+  }
+
+  public DateTime getSystemReturnDate() {
+    return getDateTimeProperty(representation, SYSTEM_RETURN_DATE);
   }
 
   public DateTime getReturnDate() {

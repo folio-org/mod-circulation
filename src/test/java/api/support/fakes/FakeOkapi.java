@@ -16,12 +16,17 @@ import java.io.IOException;
 import java.lang.invoke.MethodHandles;
 import java.util.Collection;
 import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
 
+import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.folio.circulation.domain.representations.ItemProperties;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.ValidationErrorFailure;
 import org.folio.circulation.support.http.client.BufferHelper;
 import org.folio.circulation.support.http.client.OkapiHttpClient;
+import org.folio.circulation.support.http.client.Response;
+import org.folio.circulation.support.http.client.ResponseHandler;
 import org.folio.circulation.support.http.server.ForwardResponse;
 import org.folio.circulation.support.http.server.ServerErrorResponse;
 import org.slf4j.Logger;
@@ -30,6 +35,7 @@ import org.slf4j.LoggerFactory;
 import com.google.inject.internal.util.Lists;
 
 import api.support.APITestContext;
+import api.support.http.InterfaceUrls;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Future;
 import io.vertx.core.MultiMap;
@@ -106,6 +112,7 @@ public class FakeOkapi extends AbstractVerticle {
       .withRecordName("item")
       .withRootPath("/item-storage/items")
       .withRequiredProperties("holdingsRecordId", "materialTypeId", "permanentLoanTypeId")
+      .withRecordPreProcessor(this::setEffectiveLocationIdForItem)
       .create().register(router);
 
     new FakeStorageModuleBuilder()
@@ -134,6 +141,12 @@ public class FakeOkapi extends AbstractVerticle {
       .withRootPath("/accounts")
       .withCollectionPropertyName("accounts")
       .create().register(router);
+
+    new FakeStorageModuleBuilder()
+        .withRecordName("feefineactions")
+        .withRootPath("/feefineactions")
+        .withCollectionPropertyName("feefineactions")
+        .create().register(router);
 
     new FakeStorageModuleBuilder()
       .withRecordName("request policy")
@@ -199,6 +212,8 @@ public class FakeOkapi extends AbstractVerticle {
       .withDisallowedProperties("pickupServicePoint", "loan", "deliveryAddress")
       .withRecordConstraint(this::requestHasSamePosition)
       .withChangeMetadata()
+      .withBatchUpdate("/request-storage-batch/requests")
+      .withBatchUpdatePreProcessor(this::resetPositionsBeforeBatchUpdate)
       .create().register(router);
 
     registerCirculationRulesStorage(router);
@@ -399,7 +414,7 @@ public class FakeOkapi extends AbstractVerticle {
             JsonArray providedLoanIds = body.toJsonObject()
               .getJsonArray("loanIds");
             providedLoanIds = Objects.isNull(providedLoanIds) ? new JsonArray() : providedLoanIds;
-            responseBody.put("anonymizedLoans", Lists.newArrayList(providedLoanIds));
+            responseBody.put("anonymizedLoans", providedLoanIds);
             responseBody.put("notAnonymizedLoans", new JsonArray());
             routingContext.response()
               .putHeader("Content-type", "application/json")
@@ -514,5 +529,51 @@ public class FakeOkapi extends AbstractVerticle {
     log.debug(String.format("GET: /calendar/periods/%s/calculateopening, queries=%s",
       servicePointId, queries));
     return getCalendarById(servicePointId, queries).toString();
+  }
+
+  private CompletableFuture<JsonObject> setEffectiveLocationIdForItem(JsonObject item) {
+    String permanentLocationId = item.getString(ItemProperties.PERMANENT_LOCATION_ID);
+    String temporaryLocationId = item.getString(ItemProperties.TEMPORARY_LOCATION_ID);
+
+    if (ObjectUtils.anyNotNull(temporaryLocationId, permanentLocationId)) {
+      item.put(
+        ItemProperties.EFFECTIVE_LOCATION_ID,
+        ObjectUtils.firstNonNull(temporaryLocationId, permanentLocationId)
+      );
+
+      return CompletableFuture.completedFuture(item);
+    }
+
+    CompletableFuture<Response> getCompleted = new CompletableFuture<>();
+    final String holdingsRecordId = item.getString("holdingsRecordId");
+
+    APITestContext.createClient(ex -> log.warn("Error: ", ex))
+      .get(
+        InterfaceUrls.holdingsStorageUrl("?query=id=" + holdingsRecordId),
+        ResponseHandler.json(getCompleted)
+      );
+
+    return getCompleted.thenApply(response -> {
+      JsonObject holding = response.getJson()
+        .getJsonArray("holdingsRecords").getJsonObject(0);
+
+      String permanentLocation = holding.getString(ItemProperties.PERMANENT_LOCATION_ID);
+      String temporaryLocation = holding.getString(ItemProperties.TEMPORARY_LOCATION_ID);
+
+      return item.put(ItemProperties.EFFECTIVE_LOCATION_ID,
+        ObjectUtils.firstNonNull(temporaryLocation, permanentLocation)
+      );
+    });
+  }
+
+  private JsonObject resetPositionsBeforeBatchUpdate(JsonObject batchUpdateRequest) {
+    JsonArray requests = batchUpdateRequest.getJsonArray("requests");
+
+    JsonArray requestsCopy = requests.copy();
+    requestsCopy
+      .forEach(requestCopy -> ((JsonObject) requestCopy).remove("position"));
+
+    batchUpdateRequest.put("requests", requestsCopy.addAll(requests));
+    return batchUpdateRequest;
   }
 }

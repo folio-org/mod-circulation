@@ -9,6 +9,7 @@ import io.vertx.core.http.HttpClient;
 
 public class Clients {
   private final CollectionResourceClient requestsStorageClient;
+  private final CollectionResourceClient requestsBatchStorageClient;
   private final CollectionResourceClient cancellationReasonStorageClient;
   private final CollectionResourceClient itemsStorageClient;
   private final CollectionResourceClient holdingsStorageClient;
@@ -38,6 +39,7 @@ public class Clients {
   private final CollectionResourceClient configurationStorageClient;
   private final CollectionResourceClient scheduledNoticesStorageClient;
   private final CollectionResourceClient accountsStorageClient;
+  private final CollectionResourceClient feeFineActionsStorageClient;
   private final CollectionResourceClient anonymizeStorageLoansClient;
   private final CollectionResourceClient patronActionSessionsStorageClient;
 
@@ -48,6 +50,7 @@ public class Clients {
   private Clients(OkapiHttpClient client, WebContext context) {
     try {
       requestsStorageClient = createRequestsStorageClient(client, context);
+      requestsBatchStorageClient = createRequestsBatchStorageClient(client, context);
       cancellationReasonStorageClient = createCancellationReasonStorageClient(client, context);
       itemsStorageClient = createItemsStorageClient(client, context);
       holdingsStorageClient = createHoldingsStorageClient(client, context);
@@ -78,6 +81,7 @@ public class Clients {
       configurationStorageClient = createConfigurationStorageClient(client, context);
       scheduledNoticesStorageClient = createScheduledNoticesStorageClient(client, context);
       accountsStorageClient = createAccountsStorageClient(client,context);
+      feeFineActionsStorageClient = createFeeFineActionsStorageClient(client,context);
       patronActionSessionsStorageClient = createPatronActionSessionsStorageClient(client,context);
     }
     catch(MalformedURLException e) {
@@ -87,6 +91,10 @@ public class Clients {
 
   public CollectionResourceClient requestsStorage() {
     return requestsStorageClient;
+  }
+
+  public CollectionResourceClient requestsBatchStorage() {
+    return requestsBatchStorageClient;
   }
 
   public CollectionResourceClient cancellationReasonStorage() {
@@ -207,6 +215,10 @@ public class Clients {
     return accountsStorageClient;
   }
 
+  public CollectionResourceClient feeFineActionsStorageClient() {
+    return feeFineActionsStorageClient;
+  }
+
   public CollectionResourceClient patronActionSessionsStorageClient() {
     return patronActionSessionsStorageClient;
   }
@@ -250,6 +262,12 @@ public class Clients {
     throws MalformedURLException {
 
     return getCollectionResourceClient(client, context, "/request-storage/requests");
+  }
+
+  private static CollectionResourceClient createRequestsBatchStorageClient(
+    OkapiHttpClient client, WebContext context) throws MalformedURLException {
+
+    return getCollectionResourceClient(client, context, "/request-storage-batch/requests");
   }
 
   private static CollectionResourceClient createCancellationReasonStorageClient(
@@ -465,6 +483,13 @@ public class Clients {
     WebContext context)
     throws MalformedURLException {
     return getCollectionResourceClient(client, context, "/accounts");
+  }
+
+  private CollectionResourceClient createFeeFineActionsStorageClient(
+      OkapiHttpClient client,
+      WebContext context)
+      throws MalformedURLException {
+    return getCollectionResourceClient(client, context, "/feefineactions");
   }
 
   private CollectionResourceClient createPatronActionSessionsStorageClient(

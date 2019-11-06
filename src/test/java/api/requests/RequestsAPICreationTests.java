@@ -58,8 +58,8 @@ import org.junit.runner.RunWith;
 
 import api.support.APITests;
 import api.support.builders.Address;
-import api.support.builders.ItemBuilder;
 import api.support.builders.HoldingBuilder;
+import api.support.builders.ItemBuilder;
 import api.support.builders.LoanPolicyBuilder;
 import api.support.builders.NoticeConfigurationBuilder;
 import api.support.builders.NoticePolicyBuilder;
@@ -68,8 +68,8 @@ import api.support.builders.UserBuilder;
 import api.support.fixtures.ItemExamples;
 import api.support.fixtures.ItemsFixture;
 import api.support.fixtures.LoansFixture;
-import api.support.fixtures.TemplateContextMatchers;
 import api.support.fixtures.RequestsFixture;
+import api.support.fixtures.TemplateContextMatchers;
 import api.support.fixtures.UsersFixture;
 import api.support.http.InventoryItemResource;
 import api.support.http.ResourceClient;
@@ -647,6 +647,72 @@ public class RequestsAPICreationTests extends APITests {
 
     assertThat(recallResponse.getJson(), hasErrorWith(allOf(
       hasMessage("A valid user and patron group are required. User is null"))));
+  }
+
+  @Test
+  public void cannotCreateRequestWithAnInactiveUser()
+    throws InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    MalformedURLException {
+
+    final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final IndividualResource steve = usersFixture.steve();
+    final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
+    final IndividualResource inactiveCharlotte = usersFixture.charlotte(UserBuilder::inactive);
+
+    loansFixture.checkOutByBarcode(smallAngryPlanet, steve);
+
+    DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
+
+    final Response recallResponse = requestsClient.attemptCreate(new RequestBuilder()
+      .recall()
+      .forItem(smallAngryPlanet)
+      .withPickupServicePointId(pickupServicePointId)
+      .withRequestDate(requestDate)
+      .withRequesterId(inactiveCharlotte.getId()));
+
+    assertThat(recallResponse, hasStatus(HTTP_VALIDATION_ERROR));
+
+    assertThat(recallResponse.getJson(), hasErrorWith(allOf(
+      hasMessage("Inactive users cannot make requests"),
+      hasUUIDParameter("requesterId", inactiveCharlotte.getId()),
+      hasUUIDParameter("itemId", smallAngryPlanet.getId()))));
+  }
+
+  @Test
+  public void cannotCreateRequestAtSpecificLocationWithAnInactiveUser()
+    throws InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    MalformedURLException {
+
+    final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final IndividualResource steve = usersFixture.steve();
+    final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
+    final IndividualResource inactiveCharlotte = usersFixture.charlotte(UserBuilder::inactive);
+
+    loansFixture.checkOutByBarcode(smallAngryPlanet, steve);
+
+    DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
+
+    final UUID requestId = UUID.randomUUID();
+
+    final Response recallResponse = requestsClient.attemptCreateAtSpecificLocation(
+      new RequestBuilder()
+      .withId(requestId)
+      .recall()
+      .forItem(smallAngryPlanet)
+      .withPickupServicePointId(pickupServicePointId)
+      .withRequestDate(requestDate)
+      .withRequesterId(inactiveCharlotte.getId()));
+
+    assertThat(recallResponse, hasStatus(HTTP_VALIDATION_ERROR));
+
+    assertThat(recallResponse.getJson(), hasErrorWith(allOf(
+      hasMessage("Inactive users cannot make requests"),
+      hasUUIDParameter("requesterId", inactiveCharlotte.getId()),
+      hasUUIDParameter("itemId", smallAngryPlanet.getId()))));
   }
 
   @Test
