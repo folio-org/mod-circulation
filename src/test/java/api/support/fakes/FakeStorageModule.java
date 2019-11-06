@@ -62,7 +62,7 @@ public class FakeStorageModule extends AbstractVerticle {
   private final JsonSchemaValidator recordValidator;
   private final String batchUpdatePath;
   private final Function<JsonObject, JsonObject> batchUpdatePreProcessor;
-  private final Collection<BiFunction<JsonObject, JsonObject, CompletableFuture<JsonObject>>> recordPreProcessors;
+  private final List<BiFunction<JsonObject, JsonObject, CompletableFuture<JsonObject>>> recordPreProcessors;
 
   public static Stream<String> getQueries() {
     return queries.stream();
@@ -83,7 +83,7 @@ public class FakeStorageModule extends AbstractVerticle {
     BiFunction<Collection<JsonObject>, JsonObject, Result<Object>> constraint,
     String batchUpdatePath,
     Function<JsonObject, JsonObject> batchUpdatePreProcessor,
-    Collection<BiFunction<JsonObject, JsonObject, CompletableFuture<JsonObject>>> recordPreProcessors) {
+    List<BiFunction<JsonObject, JsonObject, CompletableFuture<JsonObject>>> recordPreProcessors) {
 
     this.rootPath = rootPath;
     this.collectionPropertyName = collectionPropertyName;
@@ -182,7 +182,7 @@ public class FakeStorageModule extends AbstractVerticle {
 
     originalBody.put("id", id);
 
-    preProcessBody(new JsonObject(), originalBody).thenAccept(body -> {
+    preProcessBody(null, originalBody).thenAccept(body -> {
       if (includeChangeMetadata) {
         final String fakeUserId = APITestContext.getUserId();
         body.put(changeMetadataPropertyName, new JsonObject()
@@ -622,14 +622,14 @@ public class FakeStorageModule extends AbstractVerticle {
   }
 
   private CompletableFuture<JsonObject> preProcessBody(JsonObject oldBody, JsonObject newBody) {
-    CompletableFuture<JsonObject> resultJson = CompletableFuture.completedFuture(newBody);
+    CompletableFuture<JsonObject> resultJsonFuture = CompletableFuture.completedFuture(newBody);
 
     if(recordPreProcessors != null && recordPreProcessors.stream().noneMatch(Objects::isNull)){
       for (BiFunction<JsonObject, JsonObject, CompletableFuture<JsonObject>> preProcessor:
         recordPreProcessors) {
-        resultJson = resultJson.thenCompose(previous -> preProcessor.apply(oldBody, newBody));
+        resultJsonFuture = resultJsonFuture.thenCompose(previous -> preProcessor.apply(oldBody, newBody));
       }
-      return resultJson;
+      return resultJsonFuture;
     }
     return CompletableFuture.completedFuture(newBody);
   }

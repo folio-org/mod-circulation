@@ -574,15 +574,16 @@ public class FakeOkapi extends AbstractVerticle {
 
   private CompletableFuture<JsonObject> setItemStatusDateForItem(JsonObject oldItem,
                                                                  JsonObject newItem) {
-    JsonObject oldItemStatus = oldItem.getJsonObject(ItemProperties.STATUS_PROPERTY);
-    JsonObject newItemStatus = newItem.getJsonObject(ItemProperties.STATUS_PROPERTY);
-    if(ObjectUtils.allNotNull(oldItemStatus, newItemStatus)){
-      if(!Objects.equals(oldItemStatus.getString("name"),
-        newItemStatus.getString("name"))){
-        DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
-        df.setTimeZone(TimeZone.getTimeZone("UTC"));
-        String ISOCurrentDateTime = df.format(new Date());
-        newItemStatus.put("date", ISOCurrentDateTime);
+    if (Objects.nonNull(oldItem)) {
+      JsonObject oldItemStatus = oldItem.getJsonObject(ItemProperties.STATUS_PROPERTY);
+      JsonObject newItemStatus = newItem.getJsonObject(ItemProperties.STATUS_PROPERTY);
+      if (ObjectUtils.allNotNull(oldItemStatus, newItemStatus)) {
+        if (!Objects.equals(oldItemStatus.getString("name"),
+          newItemStatus.getString("name"))) {
+          DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
+          df.setTimeZone(TimeZone.getTimeZone("UTC"));
+          newItemStatus.put("date", df.format(new Date()));
+        }
       }
     }
     return CompletableFuture.completedFuture(newItem);

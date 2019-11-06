@@ -3,6 +3,7 @@ package api.support.fakes;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -28,7 +29,7 @@ public class FakeStorageModuleBuilder {
   private final JsonSchemaValidator recordValidator;
   private final String updateBatchPath;
   private final Function<JsonObject, JsonObject> batchUpdatePreProcessor;
-  private final Collection<BiFunction<JsonObject, JsonObject, CompletableFuture<JsonObject>>> recordPreProcessors;
+  private final List<BiFunction<JsonObject, JsonObject, CompletableFuture<JsonObject>>> recordPreProcessors;
 
   FakeStorageModuleBuilder() {
     this(
@@ -64,7 +65,7 @@ public class FakeStorageModuleBuilder {
     JsonSchemaValidator recordValidator,
     String updateBatchPath,
     Function<JsonObject, JsonObject> batchUpdatePreProcessor,
-    Collection<BiFunction<JsonObject, JsonObject, CompletableFuture<JsonObject>>> recordPreProcessors) {
+    List<BiFunction<JsonObject, JsonObject, CompletableFuture<JsonObject>>> recordPreProcessors) {
 
     this.rootPath = rootPath;
     this.collectionPropertyName = collectionPropertyName;
@@ -385,7 +386,7 @@ public class FakeStorageModuleBuilder {
   }
 
   FakeStorageModuleBuilder withRecordPreProcessor(
-    Collection<BiFunction<JsonObject, JsonObject, CompletableFuture<JsonObject>>> recordPreProcessor) {
+    List<BiFunction<JsonObject, JsonObject, CompletableFuture<JsonObject>>> recordPreProcessor) {
 
     return new FakeStorageModuleBuilder(
       this.rootPath,
