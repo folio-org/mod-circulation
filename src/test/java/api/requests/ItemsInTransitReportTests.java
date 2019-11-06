@@ -1,6 +1,7 @@
 package api.requests;
 
 import api.support.APITests;
+import api.support.builders.CheckInByBarcodeRequestBuilder;
 import api.support.builders.RequestBuilder;
 import api.support.http.InventoryItemResource;
 import api.support.http.ResourceClient;
@@ -8,6 +9,8 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.support.http.client.IndividualResource;
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
 import org.junit.Test;
 
 import java.net.MalformedURLException;
@@ -45,25 +48,30 @@ public class ItemsInTransitReportTests extends APITests {
   }
 
   @Test
-  public void reportWhenThereAreItemInTransit()
+  public void reportIncludeItemInTransit()
     throws InterruptedException,
     MalformedURLException,
     TimeoutException,
     ExecutionException {
 
     final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
-    final JsonObject smallAngryPlanetInstance = smallAngryPlanet.getInstance().getJson();
-    final String contributors = String.valueOf(((JsonArray) smallAngryPlanetInstance
-      .getMap().get(CONTRIBUTORS)).getJsonObject(0).getMap().get("name"));
-
-    // init for SP2
     final IndividualResource steve = usersFixture.steve();
     final UUID secondServicePointId = servicePointsFixture.cd2().getId();
 
-    //#1 checkout item in SP1
     loansFixture.checkOutByBarcode(smallAngryPlanet);
+    createRequest(smallAngryPlanet, steve, secondServicePointId);
+    loansFixture.checkInByBarcode(smallAngryPlanet);
 
-    // #2 create the request in SP2
+    List<JsonObject> items = ResourceClient.forItemsInTransitReport(client).getAll();
+
+    verifyResponse(smallAngryPlanet, secondServicePointId, items);
+  }
+
+  private void createRequest(InventoryItemResource smallAngryPlanet, IndividualResource steve, UUID secondServicePointId)
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
     RequestBuilder secondRequestBuilderOnItem = new RequestBuilder()
       .open()
       .hold()
@@ -71,25 +79,112 @@ public class ItemsInTransitReportTests extends APITests {
       .forItem(smallAngryPlanet)
       .by(steve);
     requestsClient.create(secondRequestBuilderOnItem);
+  }
 
-    // #3 check-in item in SP1
-    loansFixture.checkInByBarcode(smallAngryPlanet);
-
-    // #4 get items report with in transit status
-    List<JsonObject> items = ResourceClient.forItemsInTransitReport(client).getAll();
-
-    assertThat(items.size(), is(1));
+  private void verifyResponse(InventoryItemResource smallAngryPlanet,
+                              UUID secondServicePointId,
+                              List<JsonObject> items) {
     JsonObject itemJson = items.get(0);
     assertThat(itemJson.getString(BARCODE_KEY), is(smallAngryPlanet.getBarcode()));
     assertThat(itemJson.getJsonObject(STATUS_KEY).getMap().get("name"),
       is(ItemStatus.IN_TRANSIT.getValue()));
     assertThat(itemJson.getString(DESTINATION_SERVICE_POINT), is(String.valueOf(secondServicePointId)));
+    final JsonObject smallAngryPlanetInstance = smallAngryPlanet.getInstance().getJson();
     assertThat(itemJson.getString(TITLE), is(smallAngryPlanetInstance.getString(TITLE)));
+    final String contributors = String.valueOf(((JsonArray) smallAngryPlanetInstance
+      .getMap().get(CONTRIBUTORS)).getJsonObject(0).getMap().get("name"));
     assertThat(itemJson.getJsonArray(CONTRIBUTORS)
       .getJsonObject(0).getMap().get("name"), is(contributors));
     Map<String, String> actualLocation = (Map<String, String>) itemJson.getMap().get("location");
     assertThat(actualLocation.get(LOCATION_NAME), is("3rd Floor"));
     assertThat(actualLocation.get(LOCATION_CODE), is("NU/JC/DL/3F"));
     assertThat(actualLocation.get(LIBRARY), is("Djanogly Learning Resource Centre"));
+  }
+
+  @Test
+  public void reportIncludeMultipleDifferentItemsInTransit()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final InventoryItemResource nod = itemsFixture.basedUponNod();
+
+    final IndividualResource steve = usersFixture.steve();
+    final IndividualResource rebecca = usersFixture.rebecca();
+
+    final UUID secondServicePointId = servicePointsFixture.cd2().getId();
+
+    loansFixture.checkOutByBarcode(smallAngryPlanet);
+    loansFixture.checkOutByBarcode(nod);
+
+    createRequest(smallAngryPlanet, steve, secondServicePointId);
+    createRequest(nod, rebecca, secondServicePointId);
+
+    loansFixture.checkInByBarcode(smallAngryPlanet);
+    loansFixture.checkInByBarcode(nod);
+
+    List<JsonObject> items = ResourceClient.forItemsInTransitReport(client).getAll();
+
+    assertThat(items.size(), is(2));
+  }
+
+  @Test
+  public void reportExcludesItemsOtherThenInTransitStatus()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final InventoryItemResource nod = itemsFixture.basedUponNod();
+
+    final IndividualResource steve = usersFixture.steve();
+    final UUID secondServicePointId = servicePointsFixture.cd2().getId();
+
+    loansFixture.checkOutByBarcode(smallAngryPlanet);
+    loansFixture.checkOutByBarcode(nod);
+
+    createRequest(smallAngryPlanet, steve, secondServicePointId);
+
+    loansFixture.checkInByBarcode(smallAngryPlanet);
+
+    List<JsonObject> items = ResourceClient.forItemsInTransitReport(client).getAll();
+
+    verifyResponse(smallAngryPlanet, secondServicePointId, items);
+  }
+
+  @Test
+  public void reportIncludeItemsInTransitIrrespectiveOfServicePoint()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final InventoryItemResource nod = itemsFixture.basedUponNod();
+
+    final IndividualResource steve = usersFixture.steve();
+    final IndividualResource rebecca = usersFixture.rebecca();
+
+    final UUID firstServicePointId = servicePointsFixture.cd1().getId();
+    final UUID secondServicePointId = servicePointsFixture.cd2().getId();
+
+    loansFixture.checkOutByBarcode(smallAngryPlanet);
+    loansFixture.checkOutByBarcode(nod);
+
+    createRequest(smallAngryPlanet, steve, firstServicePointId);
+    createRequest(nod, rebecca, secondServicePointId);
+
+    loansFixture.checkInByBarcode(new CheckInByBarcodeRequestBuilder()
+      .forItem(smallAngryPlanet)
+      .on(DateTime.now(DateTimeZone.UTC))
+      .at(secondServicePointId));
+    loansFixture.checkInByBarcode(nod);
+
+    List<JsonObject> items = ResourceClient.forItemsInTransitReport(client).getAll();
+
+    assertThat(items.size(), is(2));
   }
 }
