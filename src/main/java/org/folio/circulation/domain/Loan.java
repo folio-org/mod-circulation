@@ -136,8 +136,8 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   public void changeActionComment(String comment) {
     representation.put(ACTION_COMMENT, comment);
   }
-  public Loan changeItemLocationAtCheckout(String itemLocationId) {
-    representation.put(ITEM_LOCATION_AT_CHECKOUT, itemLocationId);
+  public Loan changeItemEffectiveLocationIdAtCheckOut(String locationId) {
+    representation.put(ITEM_LOCATION_AT_CHECKOUT, locationId);
     return this;
   }
 

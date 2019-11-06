@@ -219,6 +219,6 @@ public class CheckOutByBarcodeResource extends Resource {
   private CompletableFuture<Result<LoanAndRelatedRecords>> addItemLocation(
     LoanAndRelatedRecords relatedRecords) {
 
-    return completedFuture(succeeded(relatedRecords.withItemLocation()));
+    return completedFuture(succeeded(relatedRecords.withItemEffectiveLocationIdAtCheckOut()));
   }
 }
