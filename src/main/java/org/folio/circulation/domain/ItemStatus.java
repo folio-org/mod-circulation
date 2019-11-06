@@ -8,6 +8,7 @@ public enum ItemStatus {
   NONE(""),
   AVAILABLE("Available"),
   AWAITING_PICKUP("Awaiting pickup"),
+  AWAITING_DELIVERY("Awaiting delivery"),
   CHECKED_OUT("Checked out"),
   IN_TRANSIT("In transit"),
   MISSING("Missing"),

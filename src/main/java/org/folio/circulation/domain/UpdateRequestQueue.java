@@ -2,6 +2,7 @@ package org.folio.circulation.domain;
 
 import static java.util.Comparator.comparingInt;
 import static java.util.concurrent.CompletableFuture.completedFuture;
+
 import static org.folio.circulation.support.Result.ofAsync;
 import static org.folio.circulation.support.Result.succeeded;
 
@@ -11,14 +12,15 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
-import org.folio.circulation.resources.context.ReorderRequestContext;
-import org.folio.circulation.support.Clients;
-import org.folio.circulation.support.ClockManager;
-import org.folio.circulation.support.Result;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import org.folio.circulation.resources.context.ReorderRequestContext;
+import org.folio.circulation.support.Clients;
+import org.folio.circulation.support.ClockManager;
+import org.folio.circulation.support.Result;
 
 public class UpdateRequestQueue {
   private final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
@@ -61,44 +63,84 @@ public class UpdateRequestQueue {
     RequestQueue requestQueue, String checkInServicePointId) {
 
     if (requestQueue.hasOutstandingFulfillableRequests()) {
-      Request firstRequest = requestQueue.getHighestPriorityFulfillableRequest();
-
-      String requestPickupServicePointId = firstRequest.getPickupServicePointId();
-
-      if (checkInServicePointId.equalsIgnoreCase(requestPickupServicePointId)) {
-        firstRequest.changeStatus(RequestStatus.OPEN_AWAITING_PICKUP);
-
-        if (firstRequest.getHoldShelfExpirationDate() == null) {
-          return servicePointRepository.getServicePointById(requestPickupServicePointId)
-              .thenApply(servicePointResult -> servicePointResult.map(firstRequest::withPickupServicePoint))
-              .thenApply(requestResult -> requestResult.map(request -> {
-                ServicePoint pickupServicePoint = request.getPickupServicePoint();
-                TimePeriod holdShelfExpiryPeriod = pickupServicePoint.getHoldShelfExpiryPeriod();
-                ZonedDateTime now = ZonedDateTime.now(ClockManager.getClockManager().getClock());
-                ZonedDateTime holdShelfExpirationDate = holdShelfExpiryPeriod.getInterval().addTo(now, holdShelfExpiryPeriod.getDuration());
-                // Need to use Joda time here since formatting/parsing using
-                // java.time has issues with the ISO-8601 format FOLIO uses,
-                // specifically: 2019-02-18T00:00:00.000+0000 cannot be parsed
-                // due to a missing ':' in the offset. Parsing is possible if
-                // the format is: 2019-02-18T00:00:00.000+00:00
-                firstRequest.changeHoldShelfExpirationDate(new DateTime(holdShelfExpirationDate.toInstant().toEpochMilli(), DateTimeZone.UTC));
-
-                return firstRequest;
-              }))
-              .thenComposeAsync(r -> r.after(requestRepository::update))
-              .thenApply(r -> r.map(v -> requestQueue));
-        }
-      } else {
-        firstRequest.changeStatus(RequestStatus.OPEN_IN_TRANSIT);
-        firstRequest.removeHoldShelfExpirationDate();
-      }
-
-      return requestRepository.update(firstRequest)
-        .thenApply(result -> result.map(v -> requestQueue));
-
+      return updateOutstandingRequestOnCheckIn(requestQueue, checkInServicePointId);
     } else {
       return completedFuture(succeeded(requestQueue));
     }
+  }
+
+  private CompletableFuture<Result<RequestQueue>> updateOutstandingRequestOnCheckIn(
+    RequestQueue requestQueue, String checkInServicePointId) {
+
+    Request req = requestQueue.getHighestPriorityFulfillableRequest();
+
+    CompletableFuture<Result<Request>> updatedReq;
+
+    switch (req.getFulfilmentPreference()) {
+      case HOLD_SHELF:
+        if (checkInServicePointId.equalsIgnoreCase(req.getPickupServicePointId())) {
+          updatedReq = putInPickup(req);
+        } else {
+          updatedReq = putInTransit(req);
+        }
+
+        break;
+      case DELIVERY:
+        updatedReq = putInDelivery(req);
+        break;
+      default:
+        throw new IllegalStateException("Unexpected value: " +
+          req.getFulfilmentPreference());
+    }
+
+    return updatedReq
+      .thenComposeAsync(r -> r.after(requestRepository::update))
+      .thenApply(result -> result.map(v -> requestQueue));
+  }
+
+  private CompletableFuture<Result<Request>> putInPickup(Request request) {
+    request.changeStatus(RequestStatus.OPEN_AWAITING_PICKUP);
+
+    if (request.getHoldShelfExpirationDate() == null) {
+      String pickupServicePointId = request.getPickupServicePointId();
+
+      return servicePointRepository.getServicePointById(pickupServicePointId)
+        .thenApply(servicePointResult -> servicePointResult.map(request::withPickupServicePoint))
+        .thenApply(requestResult -> requestResult.map(this::populateHoldShelfExpirationDate));
+    } else {
+      return completedFuture(succeeded(request));
+    }
+  }
+
+  private CompletableFuture<Result<Request>> putInTransit(Request request) {
+    request.changeStatus(RequestStatus.OPEN_IN_TRANSIT);
+    request.removeHoldShelfExpirationDate();
+
+    return completedFuture(succeeded(request));
+  }
+
+  private CompletableFuture<Result<Request>> putInDelivery(Request request) {
+    request.changeStatus(RequestStatus.OPEN_AWAITING_DELIVERY);
+    request.removeHoldShelfExpirationDate();
+
+    return completedFuture(succeeded(request));
+  }
+
+  private Request populateHoldShelfExpirationDate(Request request) {
+    ServicePoint pickupServicePoint = request.getPickupServicePoint();
+
+    TimePeriod holdShelfExpiryPeriod = pickupServicePoint.getHoldShelfExpiryPeriod();
+
+    ZonedDateTime now = ZonedDateTime.now(ClockManager.getClockManager().getClock());
+    ZonedDateTime holdShelfExpirationDate = holdShelfExpiryPeriod.getInterval().addTo(now, holdShelfExpiryPeriod.getDuration());
+    // Need to use Joda time here since formatting/parsing using
+    // java.time has issues with the ISO-8601 format FOLIO uses,
+    // specifically: 2019-02-18T00:00:00.000+0000 cannot be parsed
+    // due to a missing ':' in the offset. Parsing is possible if
+    // the format is: 2019-02-18T00:00:00.000+00:00
+    request.changeHoldShelfExpirationDate(new DateTime(holdShelfExpirationDate.toInstant().toEpochMilli(), DateTimeZone.UTC));
+
+    return request;
   }
 
   public CompletableFuture<Result<LoanAndRelatedRecords>> onCheckOut(
