@@ -12,6 +12,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -61,7 +62,7 @@ public class FakeStorageModule extends AbstractVerticle {
   private final JsonSchemaValidator recordValidator;
   private final String batchUpdatePath;
   private final Function<JsonObject, JsonObject> batchUpdatePreProcessor;
-  private final Function<JsonObject, CompletableFuture<JsonObject>> recordPreProcessor;
+  private final Collection<BiFunction<JsonObject, JsonObject, CompletableFuture<JsonObject>>> recordPreProcessors;
 
   public static Stream<String> getQueries() {
     return queries.stream();
@@ -82,7 +83,7 @@ public class FakeStorageModule extends AbstractVerticle {
     BiFunction<Collection<JsonObject>, JsonObject, Result<Object>> constraint,
     String batchUpdatePath,
     Function<JsonObject, JsonObject> batchUpdatePreProcessor,
-    Function<JsonObject, CompletableFuture<JsonObject>> recordPreProcessor) {
+    Collection<BiFunction<JsonObject, JsonObject, CompletableFuture<JsonObject>>> recordPreProcessors) {
 
     this.rootPath = rootPath;
     this.collectionPropertyName = collectionPropertyName;
@@ -97,7 +98,7 @@ public class FakeStorageModule extends AbstractVerticle {
     this.recordValidator = recordValidator;
     this.batchUpdatePath = batchUpdatePath;
     this.batchUpdatePreProcessor = batchUpdatePreProcessor;
-    this.recordPreProcessor = recordPreProcessor;
+    this.recordPreProcessors = recordPreProcessors;
 
     storedResourcesByTenant = new HashMap<>();
     storedResourcesByTenant.put(tenantId, new HashMap<>());
@@ -181,7 +182,7 @@ public class FakeStorageModule extends AbstractVerticle {
 
     originalBody.put("id", id);
 
-    preProcessBody(originalBody).thenAccept(body -> {
+    preProcessBody(new JsonObject(), originalBody).thenAccept(body -> {
       if (includeChangeMetadata) {
         final String fakeUserId = APITestContext.getUserId();
         body.put(changeMetadataPropertyName, new JsonObject()
@@ -239,8 +240,10 @@ public class FakeStorageModule extends AbstractVerticle {
 
   private CompletableFuture<Result<Void>> replaceSingleItem(
     WebContext context, String id, JsonObject rawBody) {
+    Map<String, JsonObject> resourceForTenant = getResourcesForTenant(context);
+    JsonObject oldBody = resourceForTenant.get(id);
 
-    return preProcessBody(rawBody).thenApply(body -> {
+    return preProcessBody(oldBody, rawBody).thenApply(body -> {
       Map<String, JsonObject> resourcesForTenant = getResourcesForTenant(context);
 
       if (resourcesForTenant.containsKey(id)) {
@@ -618,9 +621,16 @@ public class FakeStorageModule extends AbstractVerticle {
         String.join(",", unexpectedParameters)));
   }
 
-  private CompletableFuture<JsonObject> preProcessBody(JsonObject originBody) {
-    return recordPreProcessor != null
-      ? recordPreProcessor.apply(originBody)
-      : CompletableFuture.completedFuture(originBody);
+  private CompletableFuture<JsonObject> preProcessBody(JsonObject oldBody, JsonObject newBody) {
+    CompletableFuture<JsonObject> resultJson = CompletableFuture.completedFuture(newBody);
+
+    if(recordPreProcessors != null && recordPreProcessors.stream().noneMatch(Objects::isNull)){
+      for (BiFunction<JsonObject, JsonObject, CompletableFuture<JsonObject>> preProcessor:
+        recordPreProcessors) {
+        resultJson = resultJson.thenCompose(previous -> preProcessor.apply(oldBody, newBody));
+      }
+      return resultJson;
+    }
+    return CompletableFuture.completedFuture(newBody);
   }
 }

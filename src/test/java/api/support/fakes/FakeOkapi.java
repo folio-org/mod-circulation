@@ -14,8 +14,12 @@ import static org.folio.circulation.support.results.CommonFailures.failedDueToSe
 
 import java.io.IOException;
 import java.lang.invoke.MethodHandles;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.Collection;
+import java.util.Date;
 import java.util.Objects;
+import java.util.TimeZone;
 import java.util.concurrent.CompletableFuture;
 
 import org.apache.commons.lang3.ObjectUtils;
@@ -112,7 +116,8 @@ public class FakeOkapi extends AbstractVerticle {
       .withRecordName("item")
       .withRootPath("/item-storage/items")
       .withRequiredProperties("holdingsRecordId", "materialTypeId", "permanentLoanTypeId")
-      .withRecordPreProcessor(this::setEffectiveLocationIdForItem)
+      .withRecordPreProcessor(Lists.newArrayList(this::setEffectiveLocationIdForItem,
+        this::setItemStatusDateForItem))
       .create().register(router);
 
     new FakeStorageModuleBuilder()
@@ -531,21 +536,22 @@ public class FakeOkapi extends AbstractVerticle {
     return getCalendarById(servicePointId, queries).toString();
   }
 
-  private CompletableFuture<JsonObject> setEffectiveLocationIdForItem(JsonObject item) {
-    String permanentLocationId = item.getString(ItemProperties.PERMANENT_LOCATION_ID);
-    String temporaryLocationId = item.getString(ItemProperties.TEMPORARY_LOCATION_ID);
+  private CompletableFuture<JsonObject> setEffectiveLocationIdForItem(JsonObject oldItem,
+                                                                      JsonObject newItem) {
+    String permanentLocationId = newItem.getString(ItemProperties.PERMANENT_LOCATION_ID);
+    String temporaryLocationId = newItem.getString(ItemProperties.TEMPORARY_LOCATION_ID);
 
     if (ObjectUtils.anyNotNull(temporaryLocationId, permanentLocationId)) {
-      item.put(
+      newItem.put(
         ItemProperties.EFFECTIVE_LOCATION_ID,
         ObjectUtils.firstNonNull(temporaryLocationId, permanentLocationId)
       );
 
-      return CompletableFuture.completedFuture(item);
+      return CompletableFuture.completedFuture(newItem);
     }
 
     CompletableFuture<Response> getCompleted = new CompletableFuture<>();
-    final String holdingsRecordId = item.getString("holdingsRecordId");
+    final String holdingsRecordId = newItem.getString("holdingsRecordId");
 
     APITestContext.createClient(ex -> log.warn("Error: ", ex))
       .get(
@@ -560,10 +566,26 @@ public class FakeOkapi extends AbstractVerticle {
       String permanentLocation = holding.getString(ItemProperties.PERMANENT_LOCATION_ID);
       String temporaryLocation = holding.getString(ItemProperties.TEMPORARY_LOCATION_ID);
 
-      return item.put(ItemProperties.EFFECTIVE_LOCATION_ID,
+      return newItem.put(ItemProperties.EFFECTIVE_LOCATION_ID,
         ObjectUtils.firstNonNull(temporaryLocation, permanentLocation)
       );
     });
+  }
+
+  private CompletableFuture<JsonObject> setItemStatusDateForItem(JsonObject oldItem,
+                                                                 JsonObject newItem) {
+    JsonObject oldItemStatus = oldItem.getJsonObject(ItemProperties.STATUS_PROPERTY);
+    JsonObject newItemStatus = newItem.getJsonObject(ItemProperties.STATUS_PROPERTY);
+    if(ObjectUtils.allNotNull(oldItemStatus, newItemStatus)){
+      if(!Objects.equals(oldItemStatus.getString("name"),
+        newItemStatus.getString("name"))){
+        DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
+        df.setTimeZone(TimeZone.getTimeZone("UTC"));
+        String ISOCurrentDateTime = df.format(new Date());
+        newItemStatus.put("date", ISOCurrentDateTime);
+      }
+    }
+    return CompletableFuture.completedFuture(newItem);
   }
 
   private JsonObject resetPositionsBeforeBatchUpdate(JsonObject batchUpdateRequest) {
