@@ -39,7 +39,7 @@ public class ItemSummaryRepresentation {
       status.put("date", item.getStatus().getDate());
     }
 
-    write(itemSummary, "status", status);
+    write(itemSummary, ItemProperties.STATUS_PROPERTY, status);
 
     write(itemSummary, "inTransitDestinationServicePointId",
       item.getInTransitDestinationServicePointId());

@@ -15,10 +15,13 @@ public enum ItemStatus {
   ON_ORDER("On order"),
   IN_PROCESS("In process");
 
-  public static ItemStatus from(String value) {
+  public static ItemStatus from(String value, String date) {
     return Arrays.stream(values())
       .filter(status -> status.valueMatches(value))
-      .findFirst()
+      .findFirst().map(status -> {
+        status.setDate(date);
+        return status;
+      })
       .orElse(NONE);
   }
 
