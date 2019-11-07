@@ -65,7 +65,7 @@ public class ItemsInTransitReportTests extends APITests {
     List<JsonObject> items = ResourceClient.forItemsInTransitReport(client).getAll();
 
     assertThat(items.size(), is(1));
-    verifyResponse(items.get(0), smallAngryPlanet, secondServicePointId);
+    verifySmallAngryPlanetItem(items.get(0), smallAngryPlanet, secondServicePointId);
   }
 
   @Test
@@ -120,7 +120,7 @@ public class ItemsInTransitReportTests extends APITests {
     List<JsonObject> items = ResourceClient.forItemsInTransitReport(client).getAll();
 
     assertThat(items.size(), is(1));
-    verifyResponse(items.get(0), smallAngryPlanet, secondServicePointId);
+    verifySmallAngryPlanetItem(items.get(0), smallAngryPlanet, secondServicePointId);
   }
 
   @Test
@@ -170,7 +170,7 @@ public class ItemsInTransitReportTests extends APITests {
     requestsClient.create(secondRequestBuilderOnItem);
   }
 
-  private void verifyResponse(JsonObject itemJson, InventoryItemResource smallAngryPlanet,
+  private void verifySmallAngryPlanetItem(JsonObject itemJson, InventoryItemResource smallAngryPlanet,
                               UUID secondServicePointId) {
     assertThat(itemJson.getString(BARCODE_KEY), is(smallAngryPlanet.getBarcode()));
     assertThat(itemJson.getJsonObject(STATUS_KEY).getMap().get("name"),
