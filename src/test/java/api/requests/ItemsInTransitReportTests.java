@@ -48,7 +48,7 @@ public class ItemsInTransitReportTests extends APITests {
   }
 
   @Test
-  public void reportIncludeItemInTransit()
+  public void reportIncludesItemInTransit()
     throws InterruptedException,
     MalformedURLException,
     TimeoutException,
@@ -64,45 +64,12 @@ public class ItemsInTransitReportTests extends APITests {
 
     List<JsonObject> items = ResourceClient.forItemsInTransitReport(client).getAll();
 
-    verifyResponse(smallAngryPlanet, secondServicePointId, items);
-  }
-
-  private void createRequest(InventoryItemResource smallAngryPlanet, IndividualResource steve, UUID secondServicePointId)
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
-    RequestBuilder secondRequestBuilderOnItem = new RequestBuilder()
-      .open()
-      .hold()
-      .withPickupServicePointId(secondServicePointId)
-      .forItem(smallAngryPlanet)
-      .by(steve);
-    requestsClient.create(secondRequestBuilderOnItem);
-  }
-
-  private void verifyResponse(InventoryItemResource smallAngryPlanet,
-                              UUID secondServicePointId,
-                              List<JsonObject> items) {
-    JsonObject itemJson = items.get(0);
-    assertThat(itemJson.getString(BARCODE_KEY), is(smallAngryPlanet.getBarcode()));
-    assertThat(itemJson.getJsonObject(STATUS_KEY).getMap().get("name"),
-      is(ItemStatus.IN_TRANSIT.getValue()));
-    assertThat(itemJson.getString(DESTINATION_SERVICE_POINT), is(String.valueOf(secondServicePointId)));
-    final JsonObject smallAngryPlanetInstance = smallAngryPlanet.getInstance().getJson();
-    assertThat(itemJson.getString(TITLE), is(smallAngryPlanetInstance.getString(TITLE)));
-    final String contributors = String.valueOf(((JsonArray) smallAngryPlanetInstance
-      .getMap().get(CONTRIBUTORS)).getJsonObject(0).getMap().get("name"));
-    assertThat(itemJson.getJsonArray(CONTRIBUTORS)
-      .getJsonObject(0).getMap().get("name"), is(contributors));
-    Map<String, String> actualLocation = (Map<String, String>) itemJson.getMap().get("location");
-    assertThat(actualLocation.get(LOCATION_NAME), is("3rd Floor"));
-    assertThat(actualLocation.get(LOCATION_CODE), is("NU/JC/DL/3F"));
-    assertThat(actualLocation.get(LIBRARY), is("Djanogly Learning Resource Centre"));
+    assertThat(items.size(), is(1));
+    verifyResponse(items.get(0), smallAngryPlanet, secondServicePointId);
   }
 
   @Test
-  public void reportIncludeMultipleDifferentItemsInTransit()
+  public void reportIncludesMultipleDifferentItemsInTransit()
     throws InterruptedException,
     MalformedURLException,
     TimeoutException,
@@ -131,7 +98,7 @@ public class ItemsInTransitReportTests extends APITests {
   }
 
   @Test
-  public void reportExcludesItemsOtherThenInTransitStatus()
+  public void reportExcludesItemsThatAreNotInTransit()
     throws InterruptedException,
     MalformedURLException,
     TimeoutException,
@@ -152,11 +119,12 @@ public class ItemsInTransitReportTests extends APITests {
 
     List<JsonObject> items = ResourceClient.forItemsInTransitReport(client).getAll();
 
-    verifyResponse(smallAngryPlanet, secondServicePointId, items);
+    assertThat(items.size(), is(1));
+    verifyResponse(items.get(0), smallAngryPlanet, secondServicePointId);
   }
 
   @Test
-  public void reportIncludeItemsInTransitIrrespectiveOfServicePoint()
+  public void reportIncludesItemsInTransitToDifferentServicePoints()
     throws InterruptedException,
     MalformedURLException,
     TimeoutException,
@@ -187,4 +155,37 @@ public class ItemsInTransitReportTests extends APITests {
 
     assertThat(items.size(), is(2));
   }
+
+  private void createRequest(InventoryItemResource smallAngryPlanet, IndividualResource steve, UUID secondServicePointId)
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+    RequestBuilder secondRequestBuilderOnItem = new RequestBuilder()
+      .open()
+      .hold()
+      .withPickupServicePointId(secondServicePointId)
+      .forItem(smallAngryPlanet)
+      .by(steve);
+    requestsClient.create(secondRequestBuilderOnItem);
+  }
+
+  private void verifyResponse(JsonObject itemJson, InventoryItemResource smallAngryPlanet,
+                              UUID secondServicePointId) {
+    assertThat(itemJson.getString(BARCODE_KEY), is(smallAngryPlanet.getBarcode()));
+    assertThat(itemJson.getJsonObject(STATUS_KEY).getMap().get("name"),
+      is(ItemStatus.IN_TRANSIT.getValue()));
+    assertThat(itemJson.getString(DESTINATION_SERVICE_POINT), is(String.valueOf(secondServicePointId)));
+    final JsonObject smallAngryPlanetInstance = smallAngryPlanet.getInstance().getJson();
+    assertThat(itemJson.getString(TITLE), is(smallAngryPlanetInstance.getString(TITLE)));
+    final String contributors = String.valueOf(((JsonArray) smallAngryPlanetInstance
+      .getMap().get(CONTRIBUTORS)).getJsonObject(0).getMap().get("name"));
+    assertThat(itemJson.getJsonArray(CONTRIBUTORS)
+      .getJsonObject(0).getMap().get("name"), is(contributors));
+    Map<String, String> actualLocation = (Map<String, String>) itemJson.getMap().get("location");
+    assertThat(actualLocation.get(LOCATION_NAME), is("3rd Floor"));
+    assertThat(actualLocation.get(LOCATION_CODE), is("NU/JC/DL/3F"));
+    assertThat(actualLocation.get(LIBRARY), is("Djanogly Learning Resource Centre"));
+  }
+
 }
