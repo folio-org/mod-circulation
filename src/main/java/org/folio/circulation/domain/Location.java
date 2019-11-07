@@ -71,7 +71,7 @@ public class Location {
     return getProperty(representation, "institutionId");
   }
 
-  String getCode() {
+  public String getCode() {
     return getProperty(representation, "code");
   }
 
