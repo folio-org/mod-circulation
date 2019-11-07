@@ -11,7 +11,7 @@ import static org.folio.circulation.support.JsonPropertyWriter.writeNamedObject;
 public class ItemReportRepresentation {
 
   public JsonObject createItemSummary(Item item) {
-    if(item == null || item.isNotFound()) {
+    if (item == null || item.isNotFound()) {
       return new JsonObject();
     }
 
@@ -31,7 +31,7 @@ public class ItemReportRepresentation {
     final ServicePoint inTransitDestinationServicePoint
       = item.getInTransitDestinationServicePoint();
 
-    if(inTransitDestinationServicePoint != null) {
+    if (inTransitDestinationServicePoint != null) {
       final JsonObject destinationServicePointSummary = new JsonObject();
 
       write(destinationServicePointSummary, "id",
@@ -46,7 +46,7 @@ public class ItemReportRepresentation {
 
     final Location location = item.getLocation();
 
-    if(location != null) {
+    if (location != null) {
       itemReport.put("location", new JsonObject()
         .put("name", location.getName())
         .put("code", location.getCode())
