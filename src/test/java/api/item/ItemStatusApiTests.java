@@ -37,7 +37,7 @@ public class ItemStatusApiTests extends APITests {
     JsonObject checkedOutItem = itemsClient.get(item.getId()).getJson();
 
     assertThat(checkedOutItem.getJsonObject(ITEM_STATUS)
-        .getString("date"), is(notNullValue()));
+        .getString(ITEM_STATUS_DATE), is(notNullValue()));
   }
 
   @Test

@@ -10,6 +10,8 @@ import static api.support.fixtures.LibraryHoursExamples.CASE_CALENDAR_IS_UNAVAIL
 import static api.support.fixtures.LibraryHoursExamples.CASE_CLOSED_LIBRARY_IN_THU_SERVICE_POINT_ID;
 import static api.support.fixtures.LibraryHoursExamples.CASE_CLOSED_LIBRARY_SERVICE_POINT_ID;
 import static api.support.fixtures.LibraryHoursExamples.getLibraryHoursById;
+import static org.folio.circulation.domain.representations.LoanProperties.DUE_DATE;
+import static org.folio.circulation.support.JsonPropertyWriter.write;
 import static org.folio.circulation.support.results.CommonFailures.failedDueToServerError;
 
 import java.io.IOException;
@@ -25,6 +27,7 @@ import java.util.concurrent.CompletableFuture;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.folio.circulation.domain.representations.ItemProperties;
+import org.folio.circulation.support.JsonPropertyWriter;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.ValidationErrorFailure;
 import org.folio.circulation.support.http.client.BufferHelper;
@@ -582,7 +585,7 @@ public class FakeOkapi extends AbstractVerticle {
           newItemStatus.getString("name"))) {
           DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
           df.setTimeZone(TimeZone.getTimeZone("UTC"));
-          newItemStatus.put("date", df.format(new Date()));
+          write(newItemStatus, "date", df.format(new Date()));
         }
       }
     }
