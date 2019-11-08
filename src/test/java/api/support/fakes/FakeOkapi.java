@@ -10,24 +10,18 @@ import static api.support.fixtures.LibraryHoursExamples.CASE_CALENDAR_IS_UNAVAIL
 import static api.support.fixtures.LibraryHoursExamples.CASE_CLOSED_LIBRARY_IN_THU_SERVICE_POINT_ID;
 import static api.support.fixtures.LibraryHoursExamples.CASE_CLOSED_LIBRARY_SERVICE_POINT_ID;
 import static api.support.fixtures.LibraryHoursExamples.getLibraryHoursById;
-import static org.folio.circulation.domain.representations.LoanProperties.DUE_DATE;
 import static org.folio.circulation.support.JsonPropertyWriter.write;
 import static org.folio.circulation.support.results.CommonFailures.failedDueToServerError;
 
 import java.io.IOException;
 import java.lang.invoke.MethodHandles;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.Collection;
-import java.util.Date;
 import java.util.Objects;
-import java.util.TimeZone;
 import java.util.concurrent.CompletableFuture;
 
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.folio.circulation.domain.representations.ItemProperties;
-import org.folio.circulation.support.JsonPropertyWriter;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.ValidationErrorFailure;
 import org.folio.circulation.support.http.client.BufferHelper;
@@ -36,6 +30,7 @@ import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.client.ResponseHandler;
 import org.folio.circulation.support.http.server.ForwardResponse;
 import org.folio.circulation.support.http.server.ServerErrorResponse;
+import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -583,9 +578,7 @@ public class FakeOkapi extends AbstractVerticle {
       if (ObjectUtils.allNotNull(oldItemStatus, newItemStatus)) {
         if (!Objects.equals(oldItemStatus.getString("name"),
           newItemStatus.getString("name"))) {
-          DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
-          df.setTimeZone(TimeZone.getTimeZone("UTC"));
-          write(newItemStatus, "date", df.format(new Date()));
+          write(newItemStatus, "date", new DateTime());
         }
       }
     }
