@@ -13,6 +13,7 @@ import java.util.function.Function;
 
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.OkapiHttpClient;
+import org.folio.circulation.support.http.client.Response;
 
 import api.support.builders.HoldingBuilder;
 import api.support.builders.InstanceBuilder;
@@ -51,6 +52,17 @@ public class ItemsFixture {
 
     contributorNameTypeRecordCreator = new RecordCreator(
       contributorNameTypesClient, nameType -> getProperty(nameType, "name"));
+  }
+
+  public Response updateItem(UUID itemId, JsonObject update)
+      throws MalformedURLException, InterruptedException, ExecutionException, TimeoutException {
+
+    return itemsClient.attemptReplace(itemId, update);
+  }
+  public Response getItem(UUID itemId)
+      throws MalformedURLException, InterruptedException, ExecutionException, TimeoutException {
+
+    return itemsClient.getById(itemId);
   }
 
   public void cleanUp()
