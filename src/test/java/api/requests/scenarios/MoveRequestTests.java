@@ -132,7 +132,7 @@ public class MoveRequestTests extends APITests {
     assertThat(moveRecallRequestToItemCopyA.getJson().getString("requesterId"), is(steve.getId().toString()));
     assertThat(moveRecallRequestToItemCopyA.getJson().getString("status"), is(RequestStatus.OPEN_NOT_YET_FILLED.getValue()));
     assertThat(moveRecallRequestToItemCopyA.getJson().getJsonObject("item").getString("status"), is(ItemStatus.CHECKED_OUT.getValue()));
-    assertThat(moveRecallRequestToItemCopyA.getJson().getInteger("position"), is(1));
+    assertThat(moveRecallRequestToItemCopyA.getJson().getInteger("position"), is(2));
     retainsStoredSummaries(moveRecallRequestToItemCopyA);
 
     holdRequestForItemCopyA = requestsClient.get(holdRequestForItemCopyA);
@@ -140,7 +140,7 @@ public class MoveRequestTests extends APITests {
     assertThat(holdRequestForItemCopyA.getJson().getString("requesterId"), is(charlotte.getId().toString()));
     assertThat(holdRequestForItemCopyA.getJson().getString("status"), is(RequestStatus.OPEN_NOT_YET_FILLED.getValue()));
     assertThat(holdRequestForItemCopyA.getJson().getJsonObject("item").getString("status"), is(ItemStatus.CHECKED_OUT.getValue()));
-    assertThat(holdRequestForItemCopyA.getJson().getInteger("position"), is(2));
+    assertThat(holdRequestForItemCopyA.getJson().getInteger("position"), is(1));
     retainsStoredSummaries(holdRequestForItemCopyA);
 
     pageRequestForItemCopyB = requestsClient.get(pageRequestForItemCopyB);
@@ -360,12 +360,12 @@ public class MoveRequestTests extends APITests {
 
     // check positioning after second move
     requestByJessica = requestsClient.get(requestByJessica);
-    assertThat(requestByJessica.getJson().getInteger("position"), is(1));
+    assertThat(requestByJessica.getJson().getInteger("position"), is(2));
     assertThat(requestByJessica.getJson().getString("itemId"), is(interestingTimes.getId().toString()));
     retainsStoredSummaries(requestByJessica);
 
     requestBySteve = requestsClient.get(requestBySteve);
-    assertThat(requestBySteve.getJson().getInteger("position"), is(2));
+    assertThat(requestBySteve.getJson().getInteger("position"), is(1));
     assertThat(requestBySteve.getJson().getString("itemId"), is(interestingTimes.getId().toString()));
     retainsStoredSummaries(requestBySteve);
 
@@ -528,12 +528,12 @@ public class MoveRequestTests extends APITests {
     retainsStoredSummaries(requestByRebecca);
 
     requestByJessica = requestsClient.get(requestByJessica);
-    assertThat(requestByJessica.getJson().getInteger("position"), is(2));
+    assertThat(requestByJessica.getJson().getInteger("position"), is(3));
     assertThat(requestByJessica.getJson().getString("itemId"), is(interestingTimes.getId().toString()));
     retainsStoredSummaries(requestByJessica);
 
     requestByJames = requestsClient.get(requestByJames);
-    assertThat(requestByJames.getJson().getInteger("position"), is(3));
+    assertThat(requestByJames.getJson().getInteger("position"), is(2));
     assertThat(requestByJames.getJson().getString("itemId"), is(interestingTimes.getId().toString()));
     retainsStoredSummaries(requestByJames);
 
@@ -857,9 +857,8 @@ public class MoveRequestTests extends APITests {
           RequestType.RECALL.getValue()
         ));
 
-        // Confirm Steves's request is first and item is AVAILABLE
         stevesRequest = requestsClient.get(stevesRequest);
-        assertThat(stevesRequest.getJson().getInteger("position"), is(1));
+        assertThat(stevesRequest.getJson().getInteger("position"), is(2));
         assertThat(itemsClient.get(itemCopyB).getJson().getJsonObject("status").getString("name"), is(ItemStatus.AVAILABLE.getValue()));
 
         requestsFixture.move(new MoveRequestBuilder(
