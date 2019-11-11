@@ -7,6 +7,7 @@ import static org.folio.circulation.support.Result.succeeded;
 
 import java.lang.invoke.MethodHandles;
 import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
@@ -15,6 +16,7 @@ import org.folio.circulation.resources.context.ReorderRequestContext;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.ClockManager;
 import org.folio.circulation.support.Result;
+import org.folio.circulation.support.utils.DateTimeUtil;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.slf4j.Logger;
@@ -74,14 +76,17 @@ public class UpdateRequestQueue {
               .thenApply(requestResult -> requestResult.map(request -> {
                 ServicePoint pickupServicePoint = request.getPickupServicePoint();
                 TimePeriod holdShelfExpiryPeriod = pickupServicePoint.getHoldShelfExpiryPeriod();
-                ZonedDateTime now = ZonedDateTime.now(ClockManager.getClockManager().getClock());
-                ZonedDateTime holdShelfExpirationDate = holdShelfExpiryPeriod.getInterval().addTo(now, holdShelfExpiryPeriod.getDuration());
+
+                ZonedDateTime holdShelfExpirationDate =
+                  calculateHoldShelfExpirationDate(holdShelfExpiryPeriod);
+
                 // Need to use Joda time here since formatting/parsing using
                 // java.time has issues with the ISO-8601 format FOLIO uses,
                 // specifically: 2019-02-18T00:00:00.000+0000 cannot be parsed
                 // due to a missing ':' in the offset. Parsing is possible if
                 // the format is: 2019-02-18T00:00:00.000+00:00
-                firstRequest.changeHoldShelfExpirationDate(new DateTime(holdShelfExpirationDate.toInstant().toEpochMilli(), DateTimeZone.UTC));
+                firstRequest.changeHoldShelfExpirationDate(
+                  new DateTime(holdShelfExpirationDate.toInstant().toEpochMilli(), DateTimeZone.UTC));
 
                 return firstRequest;
               }))
@@ -214,5 +219,22 @@ public class UpdateRequestQueue {
       .collect(Collectors.toList());
 
     return new RequestQueue(requests);
+  }
+
+  private ZonedDateTime calculateHoldShelfExpirationDate(TimePeriod holdShelfExpiryPeriod) {
+    ZonedDateTime now = ZonedDateTime.now(ClockManager.getClockManager().getClock());
+    ZonedDateTime holdShelfExpirationDate = holdShelfExpiryPeriod.getInterval()
+      .addTo(now, holdShelfExpiryPeriod.getDuration());
+
+    if (shouldShiftToTheEndOfTheDay(holdShelfExpiryPeriod.getInterval())) {
+      holdShelfExpirationDate = DateTimeUtil.atEndOfTheDay(holdShelfExpirationDate);
+    }
+
+    return holdShelfExpirationDate;
+  }
+
+  private boolean shouldShiftToTheEndOfTheDay(ChronoUnit chronoUnit) {
+    return chronoUnit == ChronoUnit.DAYS
+      || chronoUnit == ChronoUnit.WEEKS || chronoUnit == ChronoUnit.MONTHS;
   }
 }
