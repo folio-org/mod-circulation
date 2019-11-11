@@ -189,11 +189,15 @@ public class Item {
   }
 
   public ItemStatus getStatus() {
-    return ItemStatus.from(getStatusName());
+    return ItemStatus.from(getStatusName(), getStatusDate());
   }
 
   private String getStatusName() {
-    return getNestedStringProperty(getItem(), "status", "name");
+    return getNestedStringProperty(getItem(), ItemProperties.STATUS_PROPERTY, "name");
+  }
+
+  private String getStatusDate() {
+    return getNestedStringProperty(getItem(), ItemProperties.STATUS_PROPERTY, "date");
   }
 
   public Location getLocation() {
@@ -287,7 +291,7 @@ public class Item {
       changed = true;
     }
 
-    write(itemRepresentation, "status",
+    write(itemRepresentation, ItemProperties.STATUS_PROPERTY,
       new JsonObject().put("name", newStatus.getValue()));
 
     //TODO: Remove this hack to remove destination service point
