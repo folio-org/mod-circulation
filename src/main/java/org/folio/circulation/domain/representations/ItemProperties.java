@@ -15,4 +15,5 @@ public class ItemProperties {
   public static final String ITEM_CALL_NUMBER_SUFFIX_ID = "itemLevelCallNumberSuffix";
   public static final String ITEM_COPY_NUMBERS_ID = "copyNumbers";
   public static final String EFFECTIVE_LOCATION_ID = "effectiveLocationId";
+  public static final String STATUS_PROPERTY = "status";
 }
