@@ -16,7 +16,7 @@ class ConfigurationService {
   private final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
   private static final int DEFAULT_SCHEDULED_NOTICES_PROCESSING_LIMIT = 100;
-  private static final int DEFAULT_CHECKOUT_TIMEOUT_DURATION = 3;
+  private static final int DEFAULT_CHECKOUT_TIMEOUT_DURATION_IN_MINUTES = 3;
   private static final DateTimeZone DEFAULT_DATE_TIME_ZONE = DateTimeZone.UTC;
   private static final String TIMEZONE_KEY = "timezone";
   private static final String RECORDS_NAME = "configs";
@@ -56,7 +56,7 @@ class ConfigurationService {
     final Integer sessionTimeout = configurations.stream()
       .map(this::applySessionTimeout)
       .findFirst()
-      .orElse(DEFAULT_CHECKOUT_TIMEOUT_DURATION);
+      .orElse(DEFAULT_CHECKOUT_TIMEOUT_DURATION_IN_MINUTES);
 
     log.info("Session timeout: `{}`", sessionTimeout);
 
@@ -67,7 +67,7 @@ class ConfigurationService {
     String value = config.getValue();
     JsonObject otherSettingsConfigJson = new JsonObject(value);
     return isConfigurationEmptyOrUnavailable(otherSettingsConfigJson)
-      ? DEFAULT_CHECKOUT_TIMEOUT_DURATION
+      ? DEFAULT_CHECKOUT_TIMEOUT_DURATION_IN_MINUTES
       : findTimeoutDuration(otherSettingsConfigJson);
   }
 
@@ -76,7 +76,7 @@ class ConfigurationService {
   }
 
   private Integer findTimeoutDuration(JsonObject configJson) {
-    return configJson.getInteger(CHECKOUT_TIMEOUT_DURATION_KEY, DEFAULT_CHECKOUT_TIMEOUT_DURATION);
+    return configJson.getInteger(CHECKOUT_TIMEOUT_DURATION_KEY, DEFAULT_CHECKOUT_TIMEOUT_DURATION_IN_MINUTES);
   }
 
   private Integer applySchedulerNoticesLimit(Configuration config) {

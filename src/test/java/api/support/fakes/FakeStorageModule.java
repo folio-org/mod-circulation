@@ -63,7 +63,7 @@ public class FakeStorageModule extends AbstractVerticle {
   private final String batchUpdatePath;
   private final Function<JsonObject, JsonObject> batchUpdatePreProcessor;
   private final Function<JsonObject, CompletableFuture<JsonObject>> recordPreProcessor;
-  private final Collection<String> queryParameters;
+  private final Collection<String> additionalQueryParameters;
 
   public static Stream<String> getQueries() {
     return queries.stream();
@@ -98,7 +98,7 @@ public class FakeStorageModule extends AbstractVerticle {
     this.constraint = constraint;
     this.includeChangeMetadata = includeChangeMetadata;
     this.recordValidator = recordValidator;
-    this.queryParameters = Objects.isNull(queryParameters)
+    this.additionalQueryParameters = Objects.isNull(queryParameters)
       ? new ArrayList<>()
       : queryParameters;
     this.batchUpdatePath = batchUpdatePath;
@@ -627,7 +627,7 @@ public class FakeStorageModule extends AbstractVerticle {
 
   private boolean isContainsQueryParameter(String queryParameter) {
     String query = StringUtils.substringBefore(queryParameter, "=");
-    return this.queryParameters.contains(query);
+    return this.additionalQueryParameters.contains(query);
   }
 
   private CompletableFuture<JsonObject> preProcessBody(JsonObject originBody) {

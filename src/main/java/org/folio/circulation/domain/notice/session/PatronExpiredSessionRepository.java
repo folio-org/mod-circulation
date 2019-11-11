@@ -12,7 +12,7 @@ import io.vertx.core.json.JsonObject;
 
 public class PatronExpiredSessionRepository {
 
-  private static final int PAGE_LIMIT = 1;
+  private static final int SESSION_LIMIT = 1;
   private static final String PATH_PARAM_WITH_QUERY = "expired-session-patron-ids?action_type=%s&session_inactivity_time_limit=%s&limit=%d";
   private static final String EXPIRED_SESSIONS = "expiredSessions";
   private final CollectionResourceClient patronExpiredSessionsStorageClient;
@@ -33,7 +33,7 @@ public class PatronExpiredSessionRepository {
 
   private CompletableFuture<Result<String>> lookupExpiredSession(String actionType,
                                                                  String inactivityTimeLimit) {
-    String path = String.format(PATH_PARAM_WITH_QUERY, actionType, inactivityTimeLimit, PAGE_LIMIT);
+    String path = String.format(PATH_PARAM_WITH_QUERY, actionType, inactivityTimeLimit, SESSION_LIMIT);
     return FetchSingleRecord.<String>forRecord("patronActionSessions")
       .using(patronExpiredSessionsStorageClient)
       .mapTo(this::mapFromJson)

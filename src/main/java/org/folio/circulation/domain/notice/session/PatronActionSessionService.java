@@ -72,7 +72,7 @@ public class PatronActionSessionService {
     return patronActionSessionRepository.findPatronActionSessions(patronId, actionType, DEFAULT_SESSION_SIZE_LIMIT)
       .thenCompose(r -> r.after(this::sendNotices))
       .thenCompose(r -> r.after(records ->
-        allOf(Objects.isNull(records)? Collections.emptyList() : records.getRecords(), patronActionSessionRepository::delete)))
+        allOf(Objects.isNull(records) ? Collections.emptyList() : records.getRecords(), patronActionSessionRepository::delete)))
       .thenApply(mapResult(v -> null));
   }
 
