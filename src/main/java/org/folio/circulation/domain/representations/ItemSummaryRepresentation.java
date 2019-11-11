@@ -4,6 +4,7 @@ import static org.folio.circulation.support.JsonPropertyWriter.write;
 import static org.folio.circulation.support.JsonPropertyWriter.writeNamedObject;
 
 import java.lang.invoke.MethodHandles;
+import java.util.Objects;
 
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.ServicePoint;
@@ -31,8 +32,14 @@ public class ItemSummaryRepresentation {
     write(itemSummary, "contributors", item.getContributorNames());
     write(itemSummary, "callNumber", item.getCallNumber());
 
-    //TODO: Check for null item status
-    writeNamedObject(itemSummary, "status", item.getStatus().getValue());
+    JsonObject status = new JsonObject()
+      .put("name", item.getStatus().getValue());
+
+    if (Objects.nonNull(item.getStatus().getDate())){
+      status.put("date", item.getStatus().getDate());
+    }
+
+    write(itemSummary, ItemProperties.STATUS_PROPERTY, status);
 
     write(itemSummary, "inTransitDestinationServicePointId",
       item.getInTransitDestinationServicePointId());
