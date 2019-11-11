@@ -235,7 +235,6 @@ public abstract class APITests {
     holdingsClient.deleteAll();
     instancesClient.deleteAll();
     configClient.deleteAll();
-    expiredEndSessionClient.deleteAll();
 
     //TODO: Only cleans up reference records, move items, holdings records
     // and instances into here too

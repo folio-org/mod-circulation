@@ -8,7 +8,7 @@ import java.net.URL;
 public class ExpiredSessionProcessingClient {
 
   public void runRequestExpiredSessionsProcessing(int expectedStatusCode) {
-    URL url = circulationModuleUrl("/circulation/expired-session-processing");
-    manuallyStartTimedTask(url, expectedStatusCode, "expired-session-processing-request");
+    URL url = circulationModuleUrl("/circulation/notice-session-expiration-by-timeout");
+    manuallyStartTimedTask(url, expectedStatusCode, "notice-session-expiration-by-timeout-request");
   }
 }

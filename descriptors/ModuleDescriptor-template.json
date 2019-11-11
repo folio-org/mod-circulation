@@ -462,7 +462,7 @@
           "methods": [
             "POST"
           ],
-          "pathPattern": "/circulation/expired-session-processing",
+          "pathPattern": "/circulation/notice-session-expiration-by-timeout",
           "modulePermissions": [
             "patron-action-session-storage.expired-session-patron-ids.collection.get",
             "patron-action-session-storage.patron-action-sessions.collection.get",

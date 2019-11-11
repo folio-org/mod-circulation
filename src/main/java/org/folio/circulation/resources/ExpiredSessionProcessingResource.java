@@ -31,7 +31,7 @@ public class ExpiredSessionProcessingResource extends Resource {
   @Override
   public void register(Router router) {
     RouteRegistration routeRegistration = new RouteRegistration(
-      "/circulation/expired-session-processing", router);
+      "/circulation/notice-session-expiration-by-timeout", router);
 
     routeRegistration.create(this::process);
   }

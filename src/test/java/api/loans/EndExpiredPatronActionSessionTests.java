@@ -26,6 +26,7 @@ public class EndExpiredPatronActionSessionTests extends APITests {
     IndividualResource james = usersFixture.james();
     loansFixture.checkOutByBarcode(itemsFixture.basedUponNod(), james);
     loansFixture.checkOutByBarcode(itemsFixture.basedUponInterestingTimes(), james);
+    expiredEndSessionClient.deleteAll();
   }
 
   @Test

@@ -31,12 +31,14 @@ public class ConfigurationRepository {
 
   public CompletableFuture<Result<Integer>> lookupSchedulerNoticesProcessingLimit() {
     Result<CqlQuery> cqlQueryResult = defineModuleNameAndConfigNameFilter("NOTIFICATION_SCHEDULER", "noticesLimit");
+
     return lookupConfigurations(cqlQueryResult, applySearchSchedulerNoticesLimit());
   }
 
   public CompletableFuture<Result<Integer>> lookupSessionTimeout() {
-    Result<CqlQuery> cqlQueryResult = defineModuleNameAndConfigNameFilter("CHECKOUT", "other_settings");
-    return lookupConfigurations(cqlQueryResult, applySessionTimeout());
+    Result<CqlQuery> otherSettingsQuery = defineModuleNameAndConfigNameFilter("CHECKOUT", "other_settings");
+
+    return lookupConfigurations(otherSettingsQuery, applySessionTimeout());
   }
 
   /**
