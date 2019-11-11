@@ -61,6 +61,11 @@ public class ResourceClient {
       "requestReport");
   }
 
+  public static ResourceClient forItemsInTransitReport(OkapiHttpClient client) {
+    return new ResourceClient(client,
+      subPath -> InterfaceUrls.itemsInTransitReportUrl(), "items");
+  }
+
   public static ResourceClient forLoans(OkapiHttpClient client) {
     return new ResourceClient(client, InterfaceUrls::loansUrl,
       "loans");
