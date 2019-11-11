@@ -16,6 +16,7 @@ import static org.folio.HttpStatus.HTTP_VALIDATION_ERROR;
 import static org.folio.circulation.domain.ItemStatus.PAGED;
 import static org.folio.circulation.domain.RequestType.RECALL;
 import static org.hamcrest.CoreMatchers.allOf;
+import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.emptyString;
@@ -471,9 +472,7 @@ public class RequestsAPICreationTests extends APITests {
       response, hasStatus(HTTP_BAD_REQUEST));
 
     assertThat(response.getBody(),
-      is("Request status must be \"Open - Not yet filled\", " +
-        "\"Open - Awaiting pickup\", \"Open - In transit\", " +
-        "\"Closed - Filled\", \"Closed - Unfilled\" or \"Closed - Pickup expired\""));
+      containsString("Request status must be one of the following:"));
   }
 
   //TODO: Replace with validation error message
@@ -506,9 +505,7 @@ public class RequestsAPICreationTests extends APITests {
       response, hasStatus(HTTP_BAD_REQUEST));
 
     assertThat(response.getBody(),
-      is("Request status must be \"Open - Not yet filled\", " +
-        "\"Open - Awaiting pickup\", \"Open - In transit\", " +
-        "\"Closed - Filled\", \"Closed - Unfilled\" or \"Closed - Pickup expired\""));
+      containsString("Request status must be one of the following:"));
   }
 
   @Test

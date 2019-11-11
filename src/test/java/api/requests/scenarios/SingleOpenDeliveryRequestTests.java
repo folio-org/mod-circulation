@@ -1,9 +1,12 @@
 package api.requests.scenarios;
 
-import static api.support.builders.ItemBuilder.AVAILABLE;
+import static api.support.builders.ItemBuilder.AWAITING_DELIVERY;
 import static api.support.builders.ItemBuilder.CHECKED_OUT;
-import static api.support.builders.RequestBuilder.OPEN_NOT_YET_FILLED;
+import static api.support.builders.RequestBuilder.CLOSED_FILLED;
+import static api.support.builders.RequestBuilder.OPEN_AWAITING_DELIVERY;
 import static api.support.matchers.ItemStatusCodeMatcher.hasItemStatus;
+import static org.hamcrest.CoreMatchers.containsString;
+import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 
@@ -21,7 +24,7 @@ import api.support.APITests;
 
 public class SingleOpenDeliveryRequestTests extends APITests {
   @Test
-  public void statusDoesNotChangesWhenItemCheckedIn()
+  public void statusChangesToAwaitingDeliveryWhenItemCheckedIn()
     throws InterruptedException,
     MalformedURLException,
     TimeoutException,
@@ -40,16 +43,16 @@ public class SingleOpenDeliveryRequestTests extends APITests {
 
     Response request = requestsClient.getById(requestByJessica.getId());
 
-    assertThat(request.getJson().getString("status"), is(OPEN_NOT_YET_FILLED));
+    assertThat(request.getJson().getString("status"), is(OPEN_AWAITING_DELIVERY));
     assertThat(request.getJson().getInteger("position"), is(1));
 
     smallAngryPlanet = itemsClient.get(smallAngryPlanet);
 
-    assertThat(smallAngryPlanet, hasItemStatus(AVAILABLE));
+    assertThat(smallAngryPlanet, hasItemStatus(AWAITING_DELIVERY));
   }
 
   @Test
-  public void statusDoesNotChangeWhenItemCheckedOutToRequester()
+  public void requestStatusChangesToFilledWhenItemCheckedOutToRequester()
     throws InterruptedException,
     MalformedURLException,
     TimeoutException,
@@ -70,16 +73,15 @@ public class SingleOpenDeliveryRequestTests extends APITests {
 
     Response request = requestsClient.getById(requestByJessica.getId());
 
-    assertThat(request.getJson().getString("status"), is(OPEN_NOT_YET_FILLED));
+    assertThat(request.getJson().getString("status"), is(CLOSED_FILLED));
 
     smallAngryPlanet = itemsClient.get(smallAngryPlanet);
 
-    //As this request is still in the queue (as it cannot currently be fulfilled)
     assertThat(smallAngryPlanet, hasItemStatus(CHECKED_OUT));
   }
 
   @Test
-  public void itemCanBeCheckedOutToAnotherPatron()
+  public void itemCantBeCheckedOutToAnotherPatron()
     throws InterruptedException,
     MalformedURLException,
     TimeoutException,
@@ -97,15 +99,18 @@ public class SingleOpenDeliveryRequestTests extends APITests {
 
     loansFixture.checkInByBarcode(smallAngryPlanet);
 
-    loansFixture.checkOutByBarcode(smallAngryPlanet, rebecca);
+    Response response = loansFixture.attemptCheckOutByBarcode(smallAngryPlanet, rebecca);
+    assertThat(response.getStatusCode(), equalTo(422));
+    assertThat(response.getBody(), containsString("cannot be checked out to user"));
+    assertThat(response.getBody(), containsString("because it has been requested by another patron"));
 
     Response request = requestsClient.getById(requestByJessica.getId());
 
-    assertThat(request.getJson().getString("status"), is(OPEN_NOT_YET_FILLED));
+    assertThat(request.getJson().getString("status"), is(OPEN_AWAITING_DELIVERY));
 
     smallAngryPlanet = itemsClient.get(smallAngryPlanet);
 
     //This request is still in the queue (as it cannot currently be fulfilled)
-    assertThat(smallAngryPlanet, hasItemStatus(CHECKED_OUT));
+    assertThat(smallAngryPlanet, hasItemStatus(AWAITING_DELIVERY));
   }
 }

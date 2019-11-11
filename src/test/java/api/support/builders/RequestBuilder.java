@@ -21,6 +21,7 @@ import io.vertx.core.json.JsonObject;
 public class RequestBuilder extends JsonBuilder implements Builder {
   public static final String OPEN_NOT_YET_FILLED = "Open - Not yet filled";
   public static final String OPEN_AWAITING_PICKUP = "Open - Awaiting pickup";
+  public static final String OPEN_AWAITING_DELIVERY = "Open - Awaiting delivery";
   public static final String OPEN_IN_TRANSIT = "Open - In transit";
   public static final String CLOSED_FILLED = "Closed - Filled";
   public static final String CLOSED_CANCELLED = "Closed - Cancelled";
