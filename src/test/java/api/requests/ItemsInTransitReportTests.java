@@ -204,8 +204,8 @@ public class ItemsInTransitReportTests extends APITests {
     final DateTime checkInDate1 = new DateTime(2019, 8, 13, 5, 0);
     final DateTime checkInDate2 = new DateTime(2019, 4, 3, 2, 10);
     final DateTime requestDate1 = new DateTime(2019, 7, 5, 10, 0);
-    final LocalDate requestExpirationDate1 = new LocalDate(2019, 7, 11);
     final DateTime requestDate2 = new DateTime(2019, 10, 8, 11, 0);
+    final LocalDate requestExpirationDate1 = new LocalDate(2019, 7, 11);
     final LocalDate requestExpirationDate2 = new LocalDate(2020, 1, 12);
     final String servicePointName1 = "Circ Desk 1";
     final String servicePointName2 = "Circ Desk 2";

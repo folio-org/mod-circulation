@@ -61,24 +61,26 @@ public class ItemsInTransitResource extends Resource {
     final WebContext context = new WebContext(routingContext);
     final Clients clients = Clients.create(context, client);
 
-    CollectionResourceClient loansStorageClient = clients.loansStorage();
+    final CollectionResourceClient loansStorageClient = clients.loansStorage();
     final RequestRepository requestRepository = RequestRepository.using(clients);
     final ItemRepository itemRepository = new ItemRepository(clients, true, true, true);
     final ServicePointRepository servicePointRepository = new ServicePointRepository(clients);
 
     itemRepository.getAllItemsByField("status.name", IN_TRANSIT.getValue())
-      .thenComposeAsync(r -> r.after(items -> fetchItemRelatedRecords(items, itemRepository, servicePointRepository)))
-      .thenComposeAsync(result -> result.after(multipleRequests -> fetchLoan(loansStorageClient, servicePointRepository, multipleRequests)))
+      .thenComposeAsync(r -> r.after(resultItemContext ->
+        fetchItemRelatedRecords(resultItemContext, itemRepository, servicePointRepository)))
+      .thenComposeAsync(r -> r.after(itemAndRelatedRecords ->
+        fetchLoans(loansStorageClient, servicePointRepository, itemAndRelatedRecords)))
       .thenComposeAsync(r -> findRequestsByItemsIds(requestRepository, r.value()))
       .thenApply(this::mapResultToJson)
       .thenApply(OkJsonResponseResult::from)
       .thenAccept(r -> r.writeTo(routingContext.response()));
   }
 
-  private CompletableFuture<Result<List<ItemAndRelatedRecords>>> fetchLoan(CollectionResourceClient loanStorage,
-                                                                           ServicePointRepository servicePointRepository,
-                                                                           List<ItemAndRelatedRecords> multipleRequests) {
-    final List<String> itemsToFetchLoansFor = multipleRequests.stream()
+  private CompletableFuture<Result<List<ItemAndRelatedRecords>>> fetchLoans(CollectionResourceClient loanStorage,
+                                                                            ServicePointRepository servicePointRepository,
+                                                                            List<ItemAndRelatedRecords> itemAndRelatedRecords) {
+    final List<String> itemsToFetchLoansFor = itemAndRelatedRecords.stream()
       .filter(Objects::nonNull)
       .map(itemAndRelatedRecord -> itemAndRelatedRecord.getItem().getItemId())
       .filter(Objects::nonNull)
@@ -86,23 +88,22 @@ public class ItemsInTransitResource extends Resource {
       .collect(Collectors.toList());
 
     if (itemsToFetchLoansFor.isEmpty()) {
-      return completedFuture(succeeded(multipleRequests));
+      return completedFuture(succeeded(itemAndRelatedRecords));
     }
 
-    final Result<CqlQuery> statusQuery = exactMatch("itemStatus", "In transit");
+    final Result<CqlQuery> statusQuery = exactMatch("itemStatus", IN_TRANSIT.getValue());
     final Result<CqlQuery> itemIdQuery = exactMatchAny("itemId", itemsToFetchLoansFor);
 
     CompletableFuture<Result<MultipleRecords<Loan>>> multipleRecordsLoans =
       statusQuery.combine(
         itemIdQuery, CqlQuery::and)
-        .after(q -> loanStorage.getMany(q, multipleRequests.size()))
+        .after(q -> loanStorage.getMany(q, itemAndRelatedRecords.size()))
         .thenApply(result -> result.next(this::mapResponseToLoans));
-
 
     return multipleRecordsLoans.thenCompose(multiLoanRecordsResult ->
       multiLoanRecordsResult.after(servicePointRepository::findServicePointsForLoans))
       .thenApply(multipleLoansResult -> multipleLoansResult.next(
-        loans -> matchLoansToRequests(multipleRequests, loans)));
+        loans -> matchLoansToRequests(itemAndRelatedRecords, loans)));
   }
 
   private Result<List<ItemAndRelatedRecords>> matchLoansToRequests(
@@ -155,9 +156,9 @@ public class ItemsInTransitResource extends Resource {
   private CompletableFuture<Result<List<ItemAndRelatedRecords>>> findRequestsByItemsIds(RequestRepository requestRepository,
                                                                                         List<ItemAndRelatedRecords> batchItemIds) {
     List<Result<MultipleRecords<Request>>> requestList = batchItemIds.stream()
-      .map(item -> {
+      .map(itemAndRelatedRecords -> {
         final Result<CqlQuery> statusQuery = exactMatchAny("status", RequestStatus.openStates());
-        final Result<CqlQuery> itemIdsQuery = exactMatch("itemId", item.getItem().getItemId());
+        final Result<CqlQuery> itemIdsQuery = exactMatch("itemId", itemAndRelatedRecords.getItem().getItemId());
 
         Result<CqlQuery> cqlQueryResult = statusQuery.combine(itemIdsQuery, CqlQuery::and);
 
@@ -185,8 +186,8 @@ public class ItemsInTransitResource extends Resource {
       });
   }
 
-  private List<Request> getFirstRequestFromList(List<Result<MultipleRecords<Request>>> multipleRecordsList) {
-    return multipleRecordsList.stream()
+  private List<Request> getFirstRequestFromList(List<Result<MultipleRecords<Request>>> multipleRecordsRequestList) {
+    return multipleRecordsRequestList.stream()
       .map(r -> r.value().getRecords().stream().findFirst())
       .filter(Optional::isPresent)
       .map(Optional::get)
