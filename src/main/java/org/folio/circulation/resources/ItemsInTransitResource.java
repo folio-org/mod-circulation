@@ -175,15 +175,11 @@ public class ItemsInTransitResource extends Resource {
                                List<Result<MultipleRecords<Request>>> requestList) {
     List<Request> firstRequestFromList = getFirstRequestFromList(requestList);
     Map<String, Request> itemRequestsMap = new HashMap<>();
-    firstRequestFromList.forEach(request -> {
-      itemRequestsMap.put(request.getItemId(), request);
-    });
+    firstRequestFromList.forEach(request -> itemRequestsMap.put(request.getItemId(), request));
     batchItemIds.stream().filter(itemAndRelatedRecords -> itemRequestsMap
       .containsKey(itemAndRelatedRecords.getItem().getItemId()))
-      .forEach(itemAndRelatedRecords -> {
-        itemAndRelatedRecords
-          .setRequest(itemRequestsMap.get(itemAndRelatedRecords.getItem().getItemId()));
-      });
+      .forEach(itemAndRelatedRecords -> itemAndRelatedRecords
+          .setRequest(itemRequestsMap.get(itemAndRelatedRecords.getItem().getItemId())));
   }
 
   private List<Request> getFirstRequestFromList(List<Result<MultipleRecords<Request>>> multipleRecordsRequestList) {

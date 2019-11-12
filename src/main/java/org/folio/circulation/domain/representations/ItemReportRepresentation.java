@@ -4,10 +4,13 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.ItemAndRelatedRecords;
+import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.Location;
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.ServicePoint;
+import org.folio.circulation.domain.User;
+
 import java.util.Optional;
 
 import static org.folio.circulation.support.JsonPropertyWriter.write;
@@ -32,7 +35,7 @@ public class ItemReportRepresentation {
     write(itemReport, "contributors", item.getContributorNames());
     write(itemReport, "callNumber", item.getCallNumber());
     writeNamedObject(itemReport, "status", Optional.ofNullable(item.getStatus())
-      .map(itemStatus -> itemStatus.getValue()).orElse(null));
+      .map(ItemStatus::getValue).orElse(null));
     write(itemReport, "inTransitDestinationServicePointId", item.getInTransitDestinationServicePointId());
 
     final ServicePoint inTransitDestinationServicePoint = item.getInTransitDestinationServicePoint();
@@ -78,7 +81,7 @@ public class ItemReportRepresentation {
     write(requestJson, "requestExpirationDate", request.getRequestExpirationDate());
     write(requestJson, "requestPickupServicePointName",
       Optional.ofNullable(request.getPickupServicePoint())
-        .map(servicePoint -> servicePoint.getName()).orElse(null));
+        .map(ServicePoint::getName).orElse(null));
 
     final JsonObject tags = (JsonObject) request.asJson().getMap().get("tags");
     if (tags != null) {
@@ -86,7 +89,7 @@ public class ItemReportRepresentation {
       write(requestJson, "tags", tagsJson);
     }
     write(requestJson, "requestPatronGroup", Optional.ofNullable(request.getRequester())
-      .map(req -> req.getPersonalName()).orElse(null));
+      .map(User::getPersonalName).orElse(null));
     write(itemReport, "request", requestJson);
 
   }
