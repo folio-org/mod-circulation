@@ -59,6 +59,21 @@
             "description": "Destination service point: the service point where the item was sent as a result of its most recent scan in the check in app",
             "type": "string"
           },
+          "inTransitDestinationServicePoint": {
+            "description": "Service point an item is intended to be transited to (should only be present when in transit)",
+            "type": "object",
+            "properties": {
+              "id": {
+                "description": "UUID of the service point",
+                "type": "string",
+                "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
+              },
+              "name": {
+                "description": "Name of the service point",
+                "type": "string"
+              }
+            }
+          },
           "location": {
             "description": "The effective location of the item",
             "type": "object",
@@ -75,6 +90,74 @@
               "code": {
                 "type": "string",
                 "description": "The location code"
+              }
+            }
+          },
+          "request": {
+            "description": "The effective location of the item",
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "requestType": {
+                "type": "string",
+                "description": "The type of the request"
+              },
+              "requestDate": {
+                "description": "Date the request was made",
+                "type": "string",
+                "format": "date-time"
+              },
+              "requestExpirationDate": {
+                "description": "Date when the request expires",
+                "type": "string",
+                "format": "date-time"
+              },
+              "requestPickupServicePointName": {
+                "description": "The name of the request pickup service point",
+                "type": "string"
+              },
+              "requestPatronGroup": {
+                "type": "string",
+                "description": "The patron group of the request"
+              }
+            }
+          },
+          "loan": {
+            "description": "The effective location of the item",
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "loan": {
+                "description": "The loan of the item",
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "The name of the service point"
+                  },
+                  "code": {
+                    "type": "string",
+                    "description": "The location code of the service point"
+                  },
+                  "discoveryDisplayName": {
+                    "type": "string",
+                    "description": "The discovery display name of the service point"
+                  },
+                  "shelvingLagTime": {
+                    "description": "Shelving lag time",
+                    "type": "integer"
+                  },
+                  "pickupLocation": {
+                    "description": "Is this a pickup location",
+                    "type": "boolean"
+                  }
+                }
+              },
+              "checkInDateTime": {
+                "description": "Date when the item is checked in",
+                "type": "string",
+                "format": "date-time"
               }
             }
           }

@@ -16,28 +16,34 @@
       "status": {
         "name": "In transit"
       },
-      "inTransitDestinationServicePointId": "3a40852d-49fd-4df2-a1f9-6e2641a6e91f",
-      "location": {
-        "name": "Main Library",
-        "code": "KU/CC/DI/M",
-        "library": "Datalogisk Institut"
-      }
-    },
-    {
-      "id": "1714f71f-b845-444b-a79e-a577487a6f7d",
-      "title": "The American Journal of Medicine",
-      "barcode": "000111222333444",
-      "callNumber": "R11.A38",
-      "status": {
-        "name": "In transit"
+      "inTransitDestinationServicePointId": "c4c90014-c8c9-4ade-8f24-b5e313319f4b",
+      "inTransitDestinationServicePoint": {
+        "id": "c4c90014-c8c9-4ade-8f24-b5e313319f4b",
+        "name": "Circ Desk 2"
       },
-      "inTransitDestinationServicePointId": "3a40852d-49fd-4df2-a1f9-6e2641a6e91f",
       "location": {
         "name": "Main Library",
         "code": "KU/CC/DI/M",
-        "library": "Datalogisk Institut"
+        "libraryName": "Datalogisk Institut"
+      },
+      "request": {
+        "requestType": "Hold",
+        "requestDate": "2019-11-11T19:19:36.000Z",
+        "requestExpirationDate": "2019-11-13T00:00:00.000Z",
+        "requestPickupServicePointName": "Circ Desk 2",
+        "requestPatronGroup": "Jast, Perry"
+      },
+      "loan": {
+        "checkInServicePoint": {
+          "name": "Online",
+          "code": "Online",
+          "discoveryDisplayName": "Online",
+          "shelvingLagTime": 0,
+          "pickupLocation": false
+        },
+        "checkInDateTime": "2019-11-11T19:19:49.000Z"
       }
     }
   ],
-  "totalRecords": 2
+  "totalRecords": 1
 }
