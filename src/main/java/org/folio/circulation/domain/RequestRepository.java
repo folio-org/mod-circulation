@@ -82,6 +82,17 @@ public class RequestRepository {
       .thenComposeAsync(result -> result.after(patronGroupRepository::findPatronGroupsForRequestsUsers));
   }
 
+  public CompletableFuture<Result<MultipleRecords<Request>>> findByWithRelatedRecords(
+    Result<CqlQuery> queryResult, Integer pageLimit) {
+    return requestsStorageClient.getMany(queryResult.value(), pageLimit)
+      .thenApply(result -> result.next(this::mapResponseToRequests))
+      .thenComposeAsync(requests ->
+        itemRepository.fetchItemsFor(requests, Request::withItem))
+      .thenComposeAsync(result -> result.after(servicePointRepository::findServicePointsForRequests))
+      .thenComposeAsync(result -> result.after(userRepository::findUsersForRequests))
+      .thenComposeAsync(result -> result.after(patronGroupRepository::findPatronGroupsForRequestsUsers));
+  }
+
   //TODO: try to consolidate this further with above
   CompletableFuture<Result<MultipleRecords<Request>>> findBy(
     CqlQuery query, Integer pageLimit) {

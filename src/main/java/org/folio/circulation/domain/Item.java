@@ -320,7 +320,7 @@ public class Item {
       .changeDestination(destinationServicePointId);
   }
 
-  Item updateDestinationServicePoint(ServicePoint servicePoint) {
+  public Item updateDestinationServicePoint(ServicePoint servicePoint) {
     return changeInTransitDestinationServicePoint(servicePoint);
   }
 

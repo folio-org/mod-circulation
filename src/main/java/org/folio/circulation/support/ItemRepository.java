@@ -3,11 +3,13 @@ package org.folio.circulation.support;
 import static java.util.Objects.isNull;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.function.Function.identity;
+import static org.folio.circulation.support.CqlQuery.exactMatch;
 import static org.folio.circulation.support.Result.ofAsync;
 import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.ResultBinding.mapResult;
 
 import java.lang.invoke.MethodHandles;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
@@ -23,6 +25,7 @@ import org.folio.circulation.domain.Location;
 import org.folio.circulation.domain.LocationRepository;
 import org.folio.circulation.domain.MaterialTypeRepository;
 import org.folio.circulation.domain.MultipleRecords;
+import org.folio.circulation.domain.ResultItemContext;
 import org.folio.circulation.domain.ServicePoint;
 import org.folio.circulation.domain.ServicePointRepository;
 import org.folio.circulation.support.http.client.Response;
@@ -47,6 +50,7 @@ public class ItemRepository {
   private final boolean fetchLoanType;
 
   private static final String ITEMS_COLLECTION_PROPERTY_NAME = "items";
+  private static final int PAGE_LIMIT = 100;
 
   public ItemRepository(
     Clients clients,
@@ -345,7 +349,7 @@ public class ItemRepository {
       .collect(Collectors.toList());
   }
 
-  private CompletableFuture<Result<Item>> fetchItemRelatedRecords(
+  public CompletableFuture<Result<Item>> fetchItemRelatedRecords(
     Result<Item> item) {
 
     return fetchHoldingsRecord(item)
@@ -354,4 +358,49 @@ public class ItemRepository {
       .thenComposeAsync(this::fetchMaterialType)
       .thenComposeAsync(this::fetchLoanType);
   }
+
+  public CompletableFuture<Result<ResultItemContext>> getAllItemsByField(String fieldName, String fieldValue) {
+    CompletableFuture<Result<ResultItemContext>> future = new CompletableFuture<>();
+    ResultItemContext initialContext = new ResultItemContext(0, new ArrayList<>());
+    fetchNextPage(initialContext, future, fieldName, fieldValue);
+    return future;
+  }
+
+  private ResultItemContext fillResultItemContext(ResultItemContext initialContext,
+                                                  Result<MultipleRecords<Item>> itemRecords) {
+    List<Result<MultipleRecords<Item>>> resultListOfItems = initialContext.getResultListOfItems();
+    resultListOfItems.add(itemRecords);
+    int newPageNumber = initialContext.getCurrPageNumber() + 1;
+    return new ResultItemContext(newPageNumber, resultListOfItems);
+  }
+
+  private void fetchNextPage(ResultItemContext initialContext,
+                             CompletableFuture<Result<ResultItemContext>> future,
+                             String fieldName, String fieldValue) {
+    getItemsByField(initialContext, fieldName, fieldValue)
+      .thenApply(itemRecords -> {
+          ResultItemContext context = fillResultItemContext(initialContext, itemRecords);
+          int totalRecords = itemRecords.value().getTotalRecords();
+
+          if (totalRecords > context.getPageOffset(PAGE_LIMIT)) {
+            fetchNextPage(context, future, fieldName, fieldValue);
+          } else {
+            future.complete(Result.of(() -> context));
+          }
+          return itemRecords;
+        }
+      );
+  }
+
+  private CompletableFuture<Result<MultipleRecords<Item>>> getItemsByField(ResultItemContext resultItemContext,
+                                                                           String fieldName, String fieldValue) {
+    final Result<CqlQuery> itemStatusQuery = exactMatch(fieldName, fieldValue);
+    int pageOffset = resultItemContext.getCurrPageNumber() * PAGE_LIMIT;
+
+     return itemStatusQuery
+      .after(query -> itemsClient.getMany(query, PAGE_LIMIT, pageOffset))
+       .thenApply(result -> result
+      .next(response -> MultipleRecords.from(response, Item::from, ITEMS_COLLECTION_PROPERTY_NAME)));
+  }
+
 }

@@ -21,12 +21,12 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import org.apache.commons.lang3.StringUtils;
-import org.folio.circulation.domain.HoldShelfClearanceContext;
 import org.folio.circulation.domain.HoldShelfClearanceRequestContext;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestRepresentation;
+import org.folio.circulation.domain.ResultItemContext;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.CqlQuery;
@@ -54,11 +54,9 @@ public class RequestHoldShelfClearanceResource extends Resource {
   /**
    * Default limit value on a query
    */
-  private static final int PAGE_LIMIT = 100;
   private static final int PAGE_REQUEST_LIMIT = 1;
   private static final int AWAITING_PICKUP_REQUEST_LIMIT = 10000;
   private static final String SERVICE_POINT_ID_PARAM = "servicePointId";
-  private static final String ITEMS_KEY = "items";
   private static final String ITEM_ID_KEY = "itemId";
   private static final String REQUESTS_KEY = "requests";
   private static final String STATUS_KEY = "status";
@@ -83,13 +81,12 @@ public class RequestHoldShelfClearanceResource extends Resource {
     final WebContext context = new WebContext(routingContext);
     final Clients clients = Clients.create(context, client);
 
-    final CollectionResourceClient itemsStorageClient = clients.itemsStorage();
     final ItemRepository itemRepository = new ItemRepository(clients, false, false, false);
     final CollectionResourceClient requestsStorage = clients.requestsStorage();
 
     final String servicePointId = routingContext.request().getParam(SERVICE_POINT_ID_PARAM);
 
-    findAllAwaitingPickupItems(itemsStorageClient)
+    itemRepository.getAllItemsByField(STATUS_NAME_KEY, AWAITING_PICKUP.getValue())
       .thenComposeAsync(r -> r.after(this::mapContextToItemIdList))
       .thenComposeAsync(r -> r.after(this::mapItemIdsInBatchItemIds))
       .thenComposeAsync(r -> findAwaitingPickupRequestsByItemsIds(requestsStorage, r.value()))
@@ -101,50 +98,7 @@ public class RequestHoldShelfClearanceResource extends Resource {
       .thenAccept(r -> r.writeTo(routingContext.response()));
   }
 
-  private CompletableFuture<Result<HoldShelfClearanceContext>> findAllAwaitingPickupItems(CollectionResourceClient client) {
-    CompletableFuture<Result<HoldShelfClearanceContext>> future = new CompletableFuture<>();
-    HoldShelfClearanceContext initialContext = new HoldShelfClearanceContext(0, new ArrayList<>());
-    fetchNextPage(client, initialContext, future);
-    return future;
-  }
-
-  private void fetchNextPage(CollectionResourceClient client, HoldShelfClearanceContext initialContext,
-                             CompletableFuture<Result<HoldShelfClearanceContext>> future) {
-    findAwaitingPickupItemsByQuery(client, initialContext)
-      .thenApply(itemRecords -> {
-          HoldShelfClearanceContext context = fillHoldShelfClearanceContext(initialContext, itemRecords);
-          int totalRecords = itemRecords.value().getTotalRecords();
-
-          if (totalRecords > context.getPageOffset(PAGE_LIMIT)) {
-            fetchNextPage(client, context, future);
-          } else {
-            future.complete(Result.of(() -> context));
-          }
-
-          return itemRecords;
-        }
-      );
-  }
-
-  private CompletableFuture<Result<MultipleRecords<Item>>> findAwaitingPickupItemsByQuery(CollectionResourceClient client,
-                                                                                          HoldShelfClearanceContext holdShelfClearanceContext) {
-    final Result<CqlQuery> itemStatusQuery = exactMatch(STATUS_NAME_KEY, AWAITING_PICKUP.getValue());
-    int pageOffset = holdShelfClearanceContext.getCurrPageNumber() * PAGE_LIMIT;
-
-    return itemStatusQuery
-      .after(query -> client.getMany(query, PAGE_LIMIT, pageOffset))
-      .thenApply(result -> result.next(this::mapResponseToItems));
-  }
-
-  private HoldShelfClearanceContext fillHoldShelfClearanceContext(HoldShelfClearanceContext initialContext,
-                                                                  Result<MultipleRecords<Item>> itemRecords) {
-    List<Result<MultipleRecords<Item>>> resultListOfItems = initialContext.getResultListOfItems();
-    resultListOfItems.add(itemRecords);
-    int newPageNumber = initialContext.getCurrPageNumber() + 1;
-    return new HoldShelfClearanceContext(newPageNumber, resultListOfItems);
-  }
-
-  private CompletableFuture<Result<List<String>>> mapContextToItemIdList(HoldShelfClearanceContext holdShelfClearanceContext) {
+  private CompletableFuture<Result<List<String>>> mapContextToItemIdList(ResultItemContext holdShelfClearanceContext) {
     List<String> itemIds = holdShelfClearanceContext.getResultListOfItems().stream()
       .flatMap(records -> records.value().getRecords().stream())
       .filter(item -> StringUtils.isNoneBlank(item.getItemId()))
@@ -297,10 +251,6 @@ public class RequestHoldShelfClearanceResource extends Resource {
   private CompletableFuture<Result<Request>> fetchItem(ItemRepository itemRepository, Request request) {
     return CompletableFuture.completedFuture(Result.succeeded(request))
       .thenComposeAsync(result -> result.combineAfter(itemRepository::fetchFor, Request::withItem));
-  }
-
-  private Result<MultipleRecords<Item>> mapResponseToItems(Response response) {
-    return MultipleRecords.from(response, Item::from, ITEMS_KEY);
   }
 
   private Result<MultipleRecords<Request>> mapResponseToRequest(Response response) {

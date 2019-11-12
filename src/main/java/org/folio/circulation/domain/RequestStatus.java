@@ -46,7 +46,7 @@ public enum RequestStatus {
     this.value = value;
   }
 
-  static ArrayList<String> openStates() {
+  public static ArrayList<String> openStates() {
     final ArrayList<String> openStates = new ArrayList<>();
 
     openStates.add(OPEN_AWAITING_PICKUP.getValue());
