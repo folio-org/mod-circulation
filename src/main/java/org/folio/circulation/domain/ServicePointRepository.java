@@ -39,7 +39,7 @@ public class ServicePointRepository {
     return getServicePointById(id.toString());
   }
 
-  CompletableFuture<Result<ServicePoint>> getServicePointById(String id) {
+  public CompletableFuture<Result<ServicePoint>> getServicePointById(String id) {
     if(id == null) {
       return ofAsync(() -> null);
     }
