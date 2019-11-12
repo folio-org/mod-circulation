@@ -89,12 +89,6 @@ public class RequestQueue {
       .collect(Collectors.toList());
   }
 
-  public Boolean positionPreviouslyTaken(Request request) {
-    return requests.stream()
-      .anyMatch(r -> !r.getId().equals(request.getId()) &&
-          (r.hasPreviousPosition() && r.getPreviousPosition().equals(request.getPosition())));
-  }
-
   //TODO: Encapsulate this better
   public Collection<Request> getRequests() {
     return requests;

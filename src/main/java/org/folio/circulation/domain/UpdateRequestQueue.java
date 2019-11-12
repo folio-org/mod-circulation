@@ -201,7 +201,7 @@ public class UpdateRequestQueue {
       // 2nd: Call storage module to reorder requests.
       return completedFuture(succeeded(context))
         .thenApply(r -> r.map(ReorderRequestContext::getRequestQueue))
-        .thenCompose(r -> r.after(requestQueueRepository::reorderRequests))
+        .thenCompose(r -> r.after(requestQueueRepository::updateRequestsWithChangedPositions))
         .thenApply(r -> r.map(this::orderQueueByRequestPosition))
         .thenApply(r -> r.map(context::withRequestQueue));
     });
