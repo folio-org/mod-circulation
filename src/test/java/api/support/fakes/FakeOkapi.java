@@ -17,6 +17,7 @@ import java.io.IOException;
 import java.lang.invoke.MethodHandles;
 import java.util.Collection;
 import java.util.Objects;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
 import org.apache.commons.lang3.ObjectUtils;
@@ -230,6 +231,7 @@ public class FakeOkapi extends AbstractVerticle {
     registerCalendar(router);
     registerLibraryHours(router);
     registerFakeStorageLoansAnonymize(router);
+    registerCurrentlyLoggedInUser(router);
 
     new FakeStorageModuleBuilder()
       .withRecordName("institution")
@@ -418,6 +420,24 @@ public class FakeOkapi extends AbstractVerticle {
         }
       });
     }
+  }
+
+  private void registerCurrentlyLoggedInUser(Router router) {
+
+    router.get("/bl-users/_self")
+        .handler(routingContext -> {
+          routingContext.request()
+              .bodyHandler(body -> {
+                JsonObject responseBody = new JsonObject();
+                JsonObject userObj = new JsonObject();
+                write(userObj, "id", UUID.randomUUID());
+                write(responseBody, "user", userObj);
+                routingContext.response()
+                    .putHeader("Content-type", "application/json")
+                    .setStatusCode(200)
+                    .end(responseBody.encode());
+              });
+        });
   }
 
   private void registerFakeStorageLoansAnonymize(Router router) {
