@@ -4,6 +4,8 @@ import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.domain.ItemStatus.AVAILABLE;
 import static org.folio.circulation.domain.ItemStatus.CHECKED_OUT;
 import static org.folio.circulation.domain.ItemStatus.PAGED;
+import static org.folio.circulation.domain.representations.ItemProperties.LASTCHECKIN;
+import static org.folio.circulation.support.JsonPropertyWriter.write;
 import static org.folio.circulation.support.Result.of;
 import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
@@ -12,10 +14,14 @@ import static org.folio.circulation.support.http.CommonResponseInterpreters.noCo
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Function;
 
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.Result;
+import org.joda.time.DateTime;
+
+import io.vertx.core.json.JsonObject;
 
 public class UpdateItem {
 
@@ -25,20 +31,27 @@ public class UpdateItem {
     itemsStorageClient = clients.itemsStorage();
   }
 
-  public CompletableFuture<Result<Item>> onCheckIn(
-    Item item,
-    RequestQueue requestQueue,
-    UUID checkInServicePointId) {
-
+  public CompletableFuture<Result<Item>> onCheckIn(Item item, RequestQueue requestQueue,
+      UUID checkInServicePointId, UUID loggedInUserId, DateTime dateTime) {
     return changeItemOnCheckIn(item, requestQueue, checkInServicePointId)
-      .after(updatedItem -> {
-        if(updatedItem.hasChanged()) {
-          return storeItem(updatedItem);
-        }
-        else {
-          return completedFuture(succeeded(item));
-        }
-      });
+      .next(addLastCheckInProperties(checkInServicePointId, loggedInUserId, dateTime))
+      .after(this::storeItem);
+  }
+
+  private Function<Item, Result<Item>> addLastCheckInProperties(
+      UUID checkInServicePointId, UUID loggedInUserId, DateTime dateTime) {
+    return itemObj -> {
+      JsonObject itemJson = itemObj.getItem();
+
+      JsonObject lastCheckInObj = new JsonObject();
+      write(lastCheckInObj, "staffMemberId", loggedInUserId);
+      write(lastCheckInObj, "servicePointId", checkInServicePointId);
+      write(lastCheckInObj, "dateTime", dateTime);
+
+      write(itemJson, LASTCHECKIN, lastCheckInObj);
+
+      return succeeded(itemObj);
+    };
   }
 
   private Result<Item> changeItemOnCheckIn(
