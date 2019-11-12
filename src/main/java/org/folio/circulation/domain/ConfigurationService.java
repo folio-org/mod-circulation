@@ -16,9 +16,12 @@ class ConfigurationService {
   private final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
   private static final int DEFAULT_SCHEDULED_NOTICES_PROCESSING_LIMIT = 100;
+  private static final int DEFAULT_CHECKOUT_TIMEOUT_DURATION_IN_MINUTES = 3;
   private static final DateTimeZone DEFAULT_DATE_TIME_ZONE = DateTimeZone.UTC;
   private static final String TIMEZONE_KEY = "timezone";
   private static final String RECORDS_NAME = "configs";
+  private static final String CHECKOUT_TIMEOUT_DURATION_KEY = "checkoutTimeoutDuration";
+  private static final String CHECKOUT_TIMEOUT_KEY = "checkoutTimeout";
 
   DateTimeZone findDateTimeZone(JsonObject representation) {
     return from(representation, Configuration::new, RECORDS_NAME)
@@ -47,6 +50,33 @@ class ConfigurationService {
     log.info("Scheduled notices processing limit: `{}`", noticesLimit);
 
     return noticesLimit;
+  }
+
+  Integer findSessionTimeout(Collection<Configuration> configurations) {
+    final Integer sessionTimeout = configurations.stream()
+      .map(this::applySessionTimeout)
+      .findFirst()
+      .orElse(DEFAULT_CHECKOUT_TIMEOUT_DURATION_IN_MINUTES);
+
+    log.info("Session timeout: `{}`", sessionTimeout);
+
+    return sessionTimeout;
+  }
+
+  private Integer applySessionTimeout(Configuration config) {
+    String value = config.getValue();
+    JsonObject otherSettingsConfigJson = new JsonObject(value);
+    return isConfigurationEmptyOrUnavailable(otherSettingsConfigJson)
+      ? DEFAULT_CHECKOUT_TIMEOUT_DURATION_IN_MINUTES
+      : findTimeoutDuration(otherSettingsConfigJson);
+  }
+
+  private boolean isConfigurationEmptyOrUnavailable(JsonObject configJson) {
+    return configJson.isEmpty() || !configJson.getBoolean(CHECKOUT_TIMEOUT_KEY, false);
+  }
+
+  private Integer findTimeoutDuration(JsonObject configJson) {
+    return configJson.getInteger(CHECKOUT_TIMEOUT_DURATION_KEY, DEFAULT_CHECKOUT_TIMEOUT_DURATION_IN_MINUTES);
   }
 
   private Integer applySchedulerNoticesLimit(Configuration config) {

@@ -63,6 +63,7 @@ public class FakeStorageModule extends AbstractVerticle {
   private final String batchUpdatePath;
   private final Function<JsonObject, JsonObject> batchUpdatePreProcessor;
   private final List<BiFunction<JsonObject, JsonObject, CompletableFuture<JsonObject>>> recordPreProcessors;
+  private final Collection<String> additionalQueryParameters;
 
   public static Stream<String> getQueries() {
     return queries.stream();
@@ -83,7 +84,8 @@ public class FakeStorageModule extends AbstractVerticle {
     BiFunction<Collection<JsonObject>, JsonObject, Result<Object>> constraint,
     String batchUpdatePath,
     Function<JsonObject, JsonObject> batchUpdatePreProcessor,
-    List<BiFunction<JsonObject, JsonObject, CompletableFuture<JsonObject>>> recordPreProcessors) {
+    List<BiFunction<JsonObject, JsonObject, CompletableFuture<JsonObject>>> recordPreProcessors,
+    Collection<String> queryParameters) {
 
     this.rootPath = rootPath;
     this.collectionPropertyName = collectionPropertyName;
@@ -96,6 +98,9 @@ public class FakeStorageModule extends AbstractVerticle {
     this.constraint = constraint;
     this.includeChangeMetadata = includeChangeMetadata;
     this.recordValidator = recordValidator;
+    this.additionalQueryParameters = Objects.isNull(queryParameters)
+      ? new ArrayList<>()
+      : queryParameters;
     this.batchUpdatePath = batchUpdatePath;
     this.batchUpdatePreProcessor = batchUpdatePreProcessor;
     this.recordPreProcessors = recordPreProcessors;
@@ -600,6 +605,7 @@ public class FakeStorageModule extends AbstractVerticle {
       .filter(queryParameter -> {
         boolean isValidParameter = queryParameter.contains("query") ||
           queryParameter.contains("offset") ||
+          isContainsQueryParameter(queryParameter) ||
           queryParameter.contains("limit");
 
         return !isValidParameter;
@@ -632,5 +638,10 @@ public class FakeStorageModule extends AbstractVerticle {
       return resultJsonFuture;
     }
     return CompletableFuture.completedFuture(newBody);
+  }
+
+  private boolean isContainsQueryParameter(String queryParameter) {
+    String query = StringUtils.substringBefore(queryParameter, "=");
+    return this.additionalQueryParameters.contains(query);
   }
 }

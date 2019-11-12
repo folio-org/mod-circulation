@@ -210,6 +210,11 @@ public class ResourceClient {
       "patron session records", "patronActionSessions");
   }
 
+  public static ResourceClient forExpiredSessions(OkapiHttpClient client) {
+    return new ResourceClient(client, InterfaceUrls::patronExpiredSessionsUrl,
+      "expired session records");
+  }
+
   public static ResourceClient forConfiguration(OkapiHttpClient client) {
     return new ResourceClient(client, InterfaceUrls::configurationUrl,
       "configuration entries", "configs");
