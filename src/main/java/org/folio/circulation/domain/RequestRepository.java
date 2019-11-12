@@ -207,7 +207,7 @@ public class RequestRepository {
       .fetch(request.getCancellationReasonId());
   }
 
-  public CompletableFuture<Result<Collection<Request>>> batchUpdate(
+  CompletableFuture<Result<Collection<Request>>> batchUpdate(
     Collection<Request> requests) {
 
     if (requests == null || requests.isEmpty()) {

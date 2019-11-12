@@ -313,10 +313,6 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
     return getPreviousPosition() != null;
   }
 
-  void freePreviousPosition() {
-    previousPosition = null;
-  }
-
   ItemStatus checkedInItemStatus() {
     return getFulfilmentPreference().toCheckedInItemStatus();
   }

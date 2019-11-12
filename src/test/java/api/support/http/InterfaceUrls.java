@@ -209,6 +209,10 @@ public class InterfaceUrls {
     return APITestContext.viaOkapiModuleUrl("/configurations/entries" + subPath);
   }
 
+  static URL patronExpiredSessionsUrl(String subPath) {
+    return APITestContext.viaOkapiModuleUrl("/patron-action-session-storage/expired-session-patron-ids");
+  }
+
   public static URL reorderQueueUrl(String itemId) {
     return requestQueueUrl(itemId + "/reorder");
   }
