@@ -1,7 +1,9 @@
 package api.requests.scenarios;
 
+import static api.support.builders.ItemBuilder.AVAILABLE;
 import static api.support.builders.ItemBuilder.AWAITING_DELIVERY;
 import static api.support.builders.ItemBuilder.CHECKED_OUT;
+import static api.support.builders.RequestBuilder.CLOSED_CANCELLED;
 import static api.support.builders.RequestBuilder.CLOSED_FILLED;
 import static api.support.builders.RequestBuilder.OPEN_AWAITING_DELIVERY;
 import static api.support.matchers.ItemStatusCodeMatcher.hasItemStatus;
@@ -14,15 +16,16 @@ import java.net.MalformedURLException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
-import org.folio.circulation.support.http.client.IndividualResource;
-import org.folio.circulation.support.http.client.Response;
+import api.support.APITests;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.junit.Test;
 
-import api.support.APITests;
+import org.folio.circulation.support.http.client.IndividualResource;
+import org.folio.circulation.support.http.client.Response;
 
 public class SingleOpenDeliveryRequestTests extends APITests {
+
   @Test
   public void statusChangesToAwaitingDeliveryWhenItemCheckedIn()
     throws InterruptedException,
@@ -41,14 +44,9 @@ public class SingleOpenDeliveryRequestTests extends APITests {
 
     loansFixture.checkInByBarcode(smallAngryPlanet);
 
-    Response request = requestsClient.getById(requestByJessica.getId());
+    validateRequestStatusAndPosition(requestByJessica, OPEN_AWAITING_DELIVERY, 1);
 
-    assertThat(request.getJson().getString("status"), is(OPEN_AWAITING_DELIVERY));
-    assertThat(request.getJson().getInteger("position"), is(1));
-
-    smallAngryPlanet = itemsClient.get(smallAngryPlanet);
-
-    assertThat(smallAngryPlanet, hasItemStatus(AWAITING_DELIVERY));
+    validateItemStatus(smallAngryPlanet, AWAITING_DELIVERY);
   }
 
   @Test
@@ -71,13 +69,8 @@ public class SingleOpenDeliveryRequestTests extends APITests {
 
     loansFixture.checkOutByBarcode(smallAngryPlanet, jessica);
 
-    Response request = requestsClient.getById(requestByJessica.getId());
-
-    assertThat(request.getJson().getString("status"), is(CLOSED_FILLED));
-
-    smallAngryPlanet = itemsClient.get(smallAngryPlanet);
-
-    assertThat(smallAngryPlanet, hasItemStatus(CHECKED_OUT));
+    validateRequestStatus(requestByJessica, CLOSED_FILLED);
+    validateItemStatus(smallAngryPlanet, CHECKED_OUT);
   }
 
   @Test
@@ -104,13 +97,92 @@ public class SingleOpenDeliveryRequestTests extends APITests {
     assertThat(response.getBody(), containsString("cannot be checked out to user"));
     assertThat(response.getBody(), containsString("because it has been requested by another patron"));
 
-    Response request = requestsClient.getById(requestByJessica.getId());
+    validateRequestStatusAndPosition(requestByJessica, OPEN_AWAITING_DELIVERY, 1);
+    validateItemStatus(smallAngryPlanet, AWAITING_DELIVERY);
+  }
 
-    assertThat(request.getJson().getString("status"), is(OPEN_AWAITING_DELIVERY));
+  @Test
+  public void itemCanBeCheckedInForSecondTime()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
 
-    smallAngryPlanet = itemsClient.get(smallAngryPlanet);
+    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    IndividualResource james = usersFixture.james();
+    IndividualResource jessica = usersFixture.jessica();
 
-    //This request is still in the queue (as it cannot currently be fulfilled)
-    assertThat(smallAngryPlanet, hasItemStatus(AWAITING_DELIVERY));
+    loansFixture.checkOutByBarcode(smallAngryPlanet, james);
+
+    IndividualResource requestByJessica = requestsFixture.placeDeliveryRequest(
+      smallAngryPlanet, jessica, new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC));
+
+    loansFixture.checkInByBarcode(smallAngryPlanet);
+
+    validateRequestStatusAndPosition(requestByJessica, OPEN_AWAITING_DELIVERY, 1);
+    validateItemStatus(smallAngryPlanet, AWAITING_DELIVERY);
+
+    loansFixture.checkInByBarcode(smallAngryPlanet);
+
+    validateRequestStatusAndPosition(requestByJessica, OPEN_AWAITING_DELIVERY, 1);
+    validateItemStatus(smallAngryPlanet, AWAITING_DELIVERY);
+  }
+
+  @Test
+  public void itemWithCanceledRequestBecomesAvailable() throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    IndividualResource james = usersFixture.james();
+    IndividualResource jessica = usersFixture.jessica();
+
+    loansFixture.checkOutByBarcode(smallAngryPlanet, james);
+
+    IndividualResource requestByJessica = requestsFixture.placeDeliveryRequest(
+      smallAngryPlanet, jessica, new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC));
+
+    requestsFixture.cancelRequest(requestByJessica);
+
+    loansFixture.checkInByBarcode(smallAngryPlanet);
+
+    validateRequestStatus(requestByJessica, CLOSED_CANCELLED);
+    validateItemStatus(smallAngryPlanet, AVAILABLE);
+  }
+
+  private void validateRequestStatus(IndividualResource request, String expectedStatus)
+    throws MalformedURLException,
+    InterruptedException,
+    ExecutionException,
+    TimeoutException {
+
+    Response response = requestsClient.getById(request.getId());
+
+    assertThat(response.getJson().getString("status"), is(expectedStatus));
+  }
+
+  private void validateRequestStatusAndPosition(IndividualResource request,
+      String expectedStatus, int expectedPosition)
+    throws MalformedURLException,
+    InterruptedException,
+    ExecutionException,
+    TimeoutException {
+
+    Response response = requestsClient.getById(request.getId());
+
+    assertThat(response.getJson().getString("status"), is(expectedStatus));
+    assertThat(response.getJson().getInteger("position"), is(expectedPosition));
+  }
+
+  private void validateItemStatus(IndividualResource item,
+        String expectedStatus)
+    throws MalformedURLException,
+    InterruptedException,
+    ExecutionException,
+    TimeoutException {
+
+    item = itemsClient.get(item);
+
+    assertThat(item, hasItemStatus(expectedStatus));
   }
 }
