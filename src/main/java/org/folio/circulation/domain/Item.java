@@ -425,13 +425,15 @@ public class Item {
   }
 
   public Item withLastCheckIn(JsonObject lastCheckInRepresentation) {
-    return new Item(
-        itemRepresentation.put(ItemProperties.LASTCHECKIN, lastCheckInRepresentation),
-        holdingRepresentation,
-        instanceRepresentation,
-        location,
-        materialTypeRepresentation,
-        primaryServicePoint,
-        loanTypeRepresentation);
+    Item item = new Item(
+      itemRepresentation.put(ItemProperties.LASTCHECKIN, lastCheckInRepresentation),
+      holdingRepresentation,
+      instanceRepresentation,
+      location,
+      materialTypeRepresentation,
+      primaryServicePoint,
+      loanTypeRepresentation);
+    item.changed = this.changed;
+    return item;
   }
 }
