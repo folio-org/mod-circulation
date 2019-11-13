@@ -165,32 +165,27 @@ public class CalendarExamples {
         createOpeningDay(Collections.singletonList(new OpeningHour(END_TIME_SECOND_PERIOD, LocalTime.MIDNIGHT.minusSeconds(1))),
           CASE_CURRENT_IS_OPEN_PREV_DAY, false, true)
       ),
-
       // current day
       createDayPeriod(
         createOpeningDay(Collections.singletonList(new OpeningHour(LocalTime.MIDNIGHT, LocalTime.MIDNIGHT.plusHours(3))),
           CASE_CURRENT_IS_OPEN_CURR_DAY, false, true)
       ),
-
       // next day
       createDayPeriod(
         createOpeningDay(Collections.singletonList(new OpeningHour(START_TIME_FIRST_PERIOD, END_TIME_FIRST_PERIOD)),
           CASE_CURRENT_IS_OPEN_NEXT_DAY, false, true)
       )));
-
     fakeOpeningPeriods.put(ROLLOVER_SCENARIO_NEXT_DAY_CLOSED_SERVICE_POINT_ID, new OpeningDayPeriodBuilder(ROLLOVER_SCENARIO_NEXT_DAY_CLOSED_SERVICE_POINT_ID,
       // prev day
       createDayPeriod(
         createOpeningDay(Collections.singletonList(new OpeningHour(START_TIME_FIRST_PERIOD, END_TIME_SECOND_PERIOD)),
           CASE_CURRENT_IS_OPEN_PREV_DAY, false, true)
       ),
-
       // current day
       createDayPeriod(
         createOpeningDay(Collections.singletonList(new OpeningHour(END_TIME_SECOND_PERIOD, LocalTime.MIDNIGHT.minusSeconds(1))),
           CASE_CURRENT_IS_OPEN_CURR_DAY, false, true)
       ),
-
       // next day
       createDayPeriod(
         createOpeningDay(Collections.singletonList(new OpeningHour(LocalTime.MIDNIGHT, LocalTime.MIDNIGHT.plusHours(3))),

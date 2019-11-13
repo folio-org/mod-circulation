@@ -4,6 +4,7 @@ import static java.lang.Boolean.TRUE;
 import static java.util.Objects.nonNull;
 import static java.util.Objects.requireNonNull;
 import static org.folio.circulation.domain.representations.LoanProperties.ACTION_COMMENT;
+import static org.folio.circulation.domain.representations.LoanProperties.ITEM_LOCATION_ID_AT_CHECKOUT;
 import static org.folio.circulation.domain.representations.LoanProperties.CHECKIN_SERVICE_POINT_ID;
 import static org.folio.circulation.domain.representations.LoanProperties.CHECKOUT_SERVICE_POINT_ID;
 import static org.folio.circulation.domain.representations.LoanProperties.DUE_DATE;
@@ -142,6 +143,10 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
 
   public void changeActionComment(String comment) {
     representation.put(ACTION_COMMENT, comment);
+  }
+  public Loan changeItemEffectiveLocationIdAtCheckOut(String locationId) {
+    representation.put(ITEM_LOCATION_ID_AT_CHECKOUT, locationId);
+    return this;
   }
 
   private void removeActionComment() {

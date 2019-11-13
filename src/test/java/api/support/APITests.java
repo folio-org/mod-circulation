@@ -33,6 +33,7 @@ import api.support.fixtures.AddressTypesFixture;
 import api.support.fixtures.CancellationReasonsFixture;
 import api.support.fixtures.CirculationRulesFixture;
 import api.support.fixtures.EndPatronSessionClient;
+import api.support.fixtures.ExpiredSessionProcessingClient;
 import api.support.fixtures.HoldingsFixture;
 import api.support.fixtures.InstancesFixture;
 import api.support.fixtures.ItemsFixture;
@@ -127,6 +128,12 @@ public abstract class APITests {
 
   protected final EndPatronSessionClient endPatronSessionClient =
     new EndPatronSessionClient();
+
+  protected final ExpiredSessionProcessingClient expiredSessionProcessingClient =
+    new ExpiredSessionProcessingClient();
+
+  protected final ResourceClient expiredEndSessionClient =
+    ResourceClient.forExpiredSessions(client);
 
   protected final ServicePointsFixture servicePointsFixture
     = new ServicePointsFixture(servicePointsClient);

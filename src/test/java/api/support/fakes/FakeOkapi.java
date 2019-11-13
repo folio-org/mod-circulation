@@ -10,6 +10,7 @@ import static api.support.fixtures.LibraryHoursExamples.CASE_CALENDAR_IS_UNAVAIL
 import static api.support.fixtures.LibraryHoursExamples.CASE_CLOSED_LIBRARY_IN_THU_SERVICE_POINT_ID;
 import static api.support.fixtures.LibraryHoursExamples.CASE_CLOSED_LIBRARY_SERVICE_POINT_ID;
 import static api.support.fixtures.LibraryHoursExamples.getLibraryHoursById;
+import static org.folio.circulation.support.JsonPropertyWriter.write;
 import static org.folio.circulation.support.results.CommonFailures.failedDueToServerError;
 
 import java.io.IOException;
@@ -29,6 +30,7 @@ import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.client.ResponseHandler;
 import org.folio.circulation.support.http.server.ForwardResponse;
 import org.folio.circulation.support.http.server.ServerErrorResponse;
+import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -112,7 +114,8 @@ public class FakeOkapi extends AbstractVerticle {
       .withRecordName("item")
       .withRootPath("/item-storage/items")
       .withRequiredProperties("holdingsRecordId", "materialTypeId", "permanentLoanTypeId")
-      .withRecordPreProcessor(this::setEffectiveLocationIdForItem)
+      .withRecordPreProcessor(Lists.newArrayList(this::setEffectiveLocationIdForItem,
+        this::setItemStatusDateForItem))
       .create().register(router);
 
     new FakeStorageModuleBuilder()
@@ -292,6 +295,13 @@ public class FakeOkapi extends AbstractVerticle {
       .register(router);
 
     new FakeStorageModuleBuilder()
+      .withCollectionPropertyName("expiredSessions")
+      .withRootPath("/patron-action-session-storage/expired-session-patron-ids")
+      .withQueryParameters("action_type", "session_inactivity_time")
+      .create()
+      .register(router);
+
+    new FakeStorageModuleBuilder()
       .withRecordName("scheduled notice")
       .withCollectionPropertyName("scheduledNotices")
       .withRootPath("/scheduled-notice-storage/scheduled-notices")
@@ -330,14 +340,13 @@ public class FakeOkapi extends AbstractVerticle {
           newOrUpdatedRequest.getString("itemId")))
         .filter(request -> newOrUpdatedRequest.getInteger("position") != null &&
           Objects.equals(request.getInteger("position"),
-          newOrUpdatedRequest.getInteger("position")))
+            newOrUpdatedRequest.getInteger("position")))
         .findAny()
         .map(r -> (Result<Object>) ValidationErrorFailure.failedValidation(
           "Cannot have more than one request with the same position in the queue",
           "itemId", r.getString("itemId")))
         .orElse(Result.succeeded(null));
-    }
-    catch(Exception e) {
+    } catch (Exception e) {
       return failedDueToServerError(e);
     }
   }
@@ -531,21 +540,22 @@ public class FakeOkapi extends AbstractVerticle {
     return getCalendarById(servicePointId, queries).toString();
   }
 
-  private CompletableFuture<JsonObject> setEffectiveLocationIdForItem(JsonObject item) {
-    String permanentLocationId = item.getString(ItemProperties.PERMANENT_LOCATION_ID);
-    String temporaryLocationId = item.getString(ItemProperties.TEMPORARY_LOCATION_ID);
+  private CompletableFuture<JsonObject> setEffectiveLocationIdForItem(JsonObject oldItem,
+                                                                      JsonObject newItem) {
+    String permanentLocationId = newItem.getString(ItemProperties.PERMANENT_LOCATION_ID);
+    String temporaryLocationId = newItem.getString(ItemProperties.TEMPORARY_LOCATION_ID);
 
     if (ObjectUtils.anyNotNull(temporaryLocationId, permanentLocationId)) {
-      item.put(
+      newItem.put(
         ItemProperties.EFFECTIVE_LOCATION_ID,
         ObjectUtils.firstNonNull(temporaryLocationId, permanentLocationId)
       );
 
-      return CompletableFuture.completedFuture(item);
+      return CompletableFuture.completedFuture(newItem);
     }
 
     CompletableFuture<Response> getCompleted = new CompletableFuture<>();
-    final String holdingsRecordId = item.getString("holdingsRecordId");
+    final String holdingsRecordId = newItem.getString("holdingsRecordId");
 
     APITestContext.createClient(ex -> log.warn("Error: ", ex))
       .get(
@@ -560,10 +570,25 @@ public class FakeOkapi extends AbstractVerticle {
       String permanentLocation = holding.getString(ItemProperties.PERMANENT_LOCATION_ID);
       String temporaryLocation = holding.getString(ItemProperties.TEMPORARY_LOCATION_ID);
 
-      return item.put(ItemProperties.EFFECTIVE_LOCATION_ID,
+      return newItem.put(ItemProperties.EFFECTIVE_LOCATION_ID,
         ObjectUtils.firstNonNull(temporaryLocation, permanentLocation)
       );
     });
+  }
+
+  private CompletableFuture<JsonObject> setItemStatusDateForItem(JsonObject oldItem,
+                                                                 JsonObject newItem) {
+    if (Objects.nonNull(oldItem)) {
+      JsonObject oldItemStatus = oldItem.getJsonObject(ItemProperties.STATUS_PROPERTY);
+      JsonObject newItemStatus = newItem.getJsonObject(ItemProperties.STATUS_PROPERTY);
+      if (ObjectUtils.allNotNull(oldItemStatus, newItemStatus)) {
+        if (!Objects.equals(oldItemStatus.getString("name"),
+          newItemStatus.getString("name"))) {
+          write(newItemStatus, "date", new DateTime());
+        }
+      }
+    }
+    return CompletableFuture.completedFuture(newItem);
   }
 
   private JsonObject resetPositionsBeforeBatchUpdate(JsonObject batchUpdateRequest) {

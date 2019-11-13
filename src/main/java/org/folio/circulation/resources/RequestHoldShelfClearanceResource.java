@@ -56,7 +56,6 @@ public class RequestHoldShelfClearanceResource extends Resource {
    */
   private static final int PAGE_LIMIT = 100;
   private static final int PAGE_REQUEST_LIMIT = 1;
-  private static final int AWAITING_PICKUP_REQUEST_LIMIT = 10000;
   private static final String SERVICE_POINT_ID_PARAM = "servicePointId";
   private static final String ITEMS_KEY = "items";
   private static final String ITEM_ID_KEY = "itemId";
@@ -189,7 +188,7 @@ public class RequestHoldShelfClearanceResource extends Resource {
         Result<CqlQuery> cqlQueryResult = statusQuery
           .combine(itemIdsQuery, CqlQuery::and);
 
-        return findRequestsByCqlQuery(client, cqlQueryResult, AWAITING_PICKUP_REQUEST_LIMIT);
+        return findRequestsByCqlQuery(client, cqlQueryResult, batch.size());
       })
       .map(CompletableFuture::join)
       .collect(Collectors.toList());
