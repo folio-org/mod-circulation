@@ -7,7 +7,6 @@ import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.ItemAndRelatedRecords;
-import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanRepository;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.Request;
@@ -22,7 +21,6 @@ import org.folio.circulation.support.ItemRepository;
 import org.folio.circulation.support.OkJsonResponseResult;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.RouteRegistration;
-import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.server.WebContext;
 import org.folio.circulation.support.request.RequestHelper;
 
@@ -65,16 +63,11 @@ public class ItemsInTransitResource extends Resource {
     itemRepository.getAllItemsByField("status.name", IN_TRANSIT.getValue())
       .thenComposeAsync(r -> r.after(resultItemContext ->
         fetchItemRelatedRecords(resultItemContext, itemRepository, servicePointRepository)))
-      .thenComposeAsync(r -> r.after(itemAndRelatedRecords -> loanRepository
-        .fetchLoans(itemAndRelatedRecords)))
+      .thenComposeAsync(r -> loanRepository.fetchLoans(r.value()))
       .thenComposeAsync(r -> findRequestsByItemsIds(requestRepository, r.value()))
       .thenApply(this::mapResultToJson)
       .thenApply(OkJsonResponseResult::from)
       .thenAccept(r -> r.writeTo(routingContext.response()));
-  }
-
-  private Result<MultipleRecords<Loan>> mapResponseToLoans(Response response) {
-    return MultipleRecords.from(response, Loan::from, "loans");
   }
 
   public CompletableFuture<Result<List<ItemAndRelatedRecords>>> fetchItemRelatedRecords(ResultItemContext resultItemContext,

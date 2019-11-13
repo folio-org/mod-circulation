@@ -45,12 +45,6 @@ import org.folio.circulation.support.request.RequestHelper;
 public class RequestHoldShelfClearanceResource extends Resource {
 
   /**
-   * The optimal number of identifiers that will not exceed the permissible length
-   * of the URI in according to the RFC 2616
-   */
-  private static final int BATCH_SIZE = 40;
-
-  /**
    * Default limit value on a query
    */
   private static final int PAGE_REQUEST_LIMIT = 1;
