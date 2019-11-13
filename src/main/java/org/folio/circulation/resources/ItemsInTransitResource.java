@@ -8,6 +8,7 @@ import io.vertx.ext.web.RoutingContext;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.ItemAndRelatedRecords;
 import org.folio.circulation.domain.Loan;
+import org.folio.circulation.domain.LoanRepository;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestRepository;
@@ -16,7 +17,6 @@ import org.folio.circulation.domain.ResultItemContext;
 import org.folio.circulation.domain.ServicePointRepository;
 import org.folio.circulation.domain.representations.ItemReportRepresentation;
 import org.folio.circulation.support.Clients;
-import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.CqlQuery;
 import org.folio.circulation.support.ItemRepository;
 import org.folio.circulation.support.OkJsonResponseResult;
@@ -24,26 +24,22 @@ import org.folio.circulation.support.Result;
 import org.folio.circulation.support.RouteRegistration;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.server.WebContext;
+import org.folio.circulation.support.request.RequestHelper;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Function;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
-import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.domain.ItemStatus.IN_TRANSIT;
-import static org.folio.circulation.support.CqlQuery.exactMatch;
 import static org.folio.circulation.support.CqlQuery.exactMatchAny;
-import static org.folio.circulation.support.Result.of;
-import static org.folio.circulation.support.Result.succeeded;
+import static org.folio.circulation.support.CqlSortBy.ascending;
 
 public class ItemsInTransitResource extends Resource {
 
-  private static final int OPEN_REQUEST_LIMIT = 1;
   private final String rootPath;
 
   public ItemsInTransitResource(String rootPath, HttpClient client) {
@@ -61,7 +57,7 @@ public class ItemsInTransitResource extends Resource {
     final WebContext context = new WebContext(routingContext);
     final Clients clients = Clients.create(context, client);
 
-    final CollectionResourceClient loansStorageClient = clients.loansStorage();
+    final LoanRepository loanRepository = new LoanRepository(clients);
     final RequestRepository requestRepository = RequestRepository.using(clients);
     final ItemRepository itemRepository = new ItemRepository(clients, true, true, true);
     final ServicePointRepository servicePointRepository = new ServicePointRepository(clients);
@@ -69,61 +65,12 @@ public class ItemsInTransitResource extends Resource {
     itemRepository.getAllItemsByField("status.name", IN_TRANSIT.getValue())
       .thenComposeAsync(r -> r.after(resultItemContext ->
         fetchItemRelatedRecords(resultItemContext, itemRepository, servicePointRepository)))
-      .thenComposeAsync(r -> r.after(itemAndRelatedRecords ->
-        fetchLoans(loansStorageClient, servicePointRepository, itemAndRelatedRecords)))
+      .thenComposeAsync(r -> r.after(itemAndRelatedRecords -> loanRepository
+        .fetchLoans(itemAndRelatedRecords)))
       .thenComposeAsync(r -> findRequestsByItemsIds(requestRepository, r.value()))
       .thenApply(this::mapResultToJson)
       .thenApply(OkJsonResponseResult::from)
       .thenAccept(r -> r.writeTo(routingContext.response()));
-  }
-
-  private CompletableFuture<Result<List<ItemAndRelatedRecords>>> fetchLoans(CollectionResourceClient loanStorage,
-                                                                            ServicePointRepository servicePointRepository,
-                                                                            List<ItemAndRelatedRecords> itemAndRelatedRecords) {
-    final List<String> itemsToFetchLoansFor = itemAndRelatedRecords.stream()
-      .filter(Objects::nonNull)
-      .map(itemAndRelatedRecord -> itemAndRelatedRecord.getItem().getItemId())
-      .filter(Objects::nonNull)
-      .distinct()
-      .collect(Collectors.toList());
-
-    if (itemsToFetchLoansFor.isEmpty()) {
-      return completedFuture(succeeded(itemAndRelatedRecords));
-    }
-
-    final Result<CqlQuery> statusQuery = exactMatch("itemStatus", IN_TRANSIT.getValue());
-    final Result<CqlQuery> itemIdQuery = exactMatchAny("itemId", itemsToFetchLoansFor);
-
-    CompletableFuture<Result<MultipleRecords<Loan>>> multipleRecordsLoans =
-      statusQuery.combine(
-        itemIdQuery, CqlQuery::and)
-        .after(q -> loanStorage.getMany(q, itemAndRelatedRecords.size()))
-        .thenApply(result -> result.next(this::mapResponseToLoans));
-
-    return multipleRecordsLoans.thenCompose(multiLoanRecordsResult ->
-      multiLoanRecordsResult.after(servicePointRepository::findServicePointsForLoans))
-      .thenApply(multipleLoansResult -> multipleLoansResult.next(
-        loans -> matchLoansToRequests(itemAndRelatedRecords, loans)));
-  }
-
-  private Result<List<ItemAndRelatedRecords>> matchLoansToRequests(
-    List<ItemAndRelatedRecords> multipleRequests,
-    MultipleRecords<Loan> loans) {
-
-    return of(() ->
-      multipleRequests.stream()
-        .map(itemAndRelatedRecord -> matchLoansToRequest(itemAndRelatedRecord, loans))
-        .collect(Collectors.toList()));
-  }
-
-  private ItemAndRelatedRecords matchLoansToRequest(
-    ItemAndRelatedRecords request,
-    MultipleRecords<Loan> loans) {
-
-    final Map<String, Loan> loanMap = loans.toMap(Loan::getItemId);
-    request
-      .setLoan(loanMap.getOrDefault(request.getItem().getItemId(), null));
-    return request;
   }
 
   private Result<MultipleRecords<Loan>> mapResponseToLoans(Response response) {
@@ -154,40 +101,67 @@ public class ItemsInTransitResource extends Resource {
   }
 
   private CompletableFuture<Result<List<ItemAndRelatedRecords>>> findRequestsByItemsIds(RequestRepository requestRepository,
-                                                                                        List<ItemAndRelatedRecords> batchItemIds) {
-    List<Result<MultipleRecords<Request>>> requestList = batchItemIds.stream()
+                                                                                        List<ItemAndRelatedRecords> itemAndRelatedRecordsList) {
+    return mapToItemIdList(itemAndRelatedRecordsList)
+      .thenComposeAsync(r -> r.after(RequestHelper::mapItemIdsInBatchItemIds))
+      .thenComposeAsync(r -> getInTransitRequestByItemsIds(requestRepository, r.value()))
+      .thenComposeAsync(r -> setRequestToItemAndRelatedRecords(itemAndRelatedRecordsList, r.value()));
+  }
+
+  private CompletableFuture<Result<List<Result<MultipleRecords<Request>>>>> getInTransitRequestByItemsIds(RequestRepository requestRepository,
+                                                                                                          List<List<String>> batchItemIds) {
+    List<Result<MultipleRecords<Request>>> inTransitRequest = getInTransitRequest(requestRepository, batchItemIds);
+    return CompletableFuture.completedFuture(Result.succeeded(inTransitRequest));
+  }
+
+  private List<Result<MultipleRecords<Request>>> getInTransitRequest(RequestRepository requestRepository,
+                                                                     List<List<String>> batchItemIds) {
+    return batchItemIds.stream()
       .map(itemAndRelatedRecords -> {
         final Result<CqlQuery> statusQuery = exactMatchAny("status", RequestStatus.openStates());
-        final Result<CqlQuery> itemIdsQuery = exactMatch("itemId", itemAndRelatedRecords.getItem().getItemId());
+        final Result<CqlQuery> itemIdsQuery = exactMatchAny("itemId", itemAndRelatedRecords);
 
-        Result<CqlQuery> cqlQueryResult = statusQuery.combine(itemIdsQuery, CqlQuery::and);
+        Result<CqlQuery> cqlQueryResult = statusQuery.combine(itemIdsQuery, CqlQuery::and)
+          .map(q -> q.sortBy(ascending("position")));
 
-        return requestRepository.findByWithRelatedRecords(cqlQueryResult, OPEN_REQUEST_LIMIT);
+        return requestRepository.findByWithRelatedRecords(cqlQueryResult, itemAndRelatedRecords.size());
       })
       .map(CompletableFuture::join)
       .collect(Collectors.toList());
-
-    setFirstRequest(batchItemIds, requestList);
-    return CompletableFuture.completedFuture(Result.succeeded(batchItemIds));
   }
 
-  private void setFirstRequest(List<ItemAndRelatedRecords> batchItemIds,
-                               List<Result<MultipleRecords<Request>>> requestList) {
-    List<Request> firstRequestFromList = getFirstRequestFromList(requestList);
-    Map<String, Request> itemRequestsMap = new HashMap<>();
-    firstRequestFromList.forEach(request -> itemRequestsMap.put(request.getItemId(), request));
-    batchItemIds.stream().filter(itemAndRelatedRecords -> itemRequestsMap
-      .containsKey(itemAndRelatedRecords.getItem().getItemId()))
-      .forEach(itemAndRelatedRecords -> itemAndRelatedRecords
-          .setRequest(itemRequestsMap.get(itemAndRelatedRecords.getItem().getItemId())));
-  }
-
-  private List<Request> getFirstRequestFromList(List<Result<MultipleRecords<Request>>> multipleRecordsRequestList) {
-    return multipleRecordsRequestList.stream()
-      .map(r -> r.value().getRecords().stream().findFirst())
-      .filter(Optional::isPresent)
-      .map(Optional::get)
+  private CompletableFuture<Result<List<String>>> mapToItemIdList(List<ItemAndRelatedRecords> itemAndRelatedRecordsList) {
+    List<String> itemIds = itemAndRelatedRecordsList.stream()
+      .map(ItemAndRelatedRecords::getItem)
+      .filter(Objects::nonNull)
+      .map(Item::getItemId)
+      .filter(Objects::nonNull)
       .collect(Collectors.toList());
+
+    return CompletableFuture.completedFuture(Result.succeeded(itemIds));
+  }
+
+  private CompletableFuture<Result<List<ItemAndRelatedRecords>>> setRequestToItemAndRelatedRecords(
+    List<ItemAndRelatedRecords> itemAndRelatedRecordsList,
+    List<Result<MultipleRecords<Request>>> requestList) {
+
+    Map<String, Request> itemRequestsMap = mapToItemRequestMap(requestList);
+    setRequestToItemAndRelatedRecords(itemAndRelatedRecordsList, itemRequestsMap);
+    return CompletableFuture.completedFuture(Result.succeeded(itemAndRelatedRecordsList));
+  }
+
+  private void setRequestToItemAndRelatedRecords(List<ItemAndRelatedRecords> itemAndRelatedRecordsList,
+                                                 Map<String, Request> itemRequestsMap) {
+    itemAndRelatedRecordsList.stream().filter(itemAndRelatedRecord -> itemRequestsMap
+      .containsKey(itemAndRelatedRecord.getItem().getItemId()))
+      .forEach(itemAndRelatedRecords -> itemAndRelatedRecords
+        .setRequest(itemRequestsMap.get(itemAndRelatedRecords.getItem().getItemId())));
+  }
+
+  private Map<String, Request> mapToItemRequestMap(List<Result<MultipleRecords<Request>>> requestList) {
+    return requestList.stream()
+      .flatMap(records -> records.value().getRecords().stream())
+      .collect(Collectors.toMap(Request::getItemId, Function.identity()));
   }
 
   private Result<JsonObject> mapResultToJson

@@ -2,7 +2,7 @@ package org.folio.circulation.domain;
 
 public class ItemAndRelatedRecords {
 
-  private Item item;
+  private final Item item;
   private Request request;
   private Loan loan;
 
@@ -12,10 +12,6 @@ public class ItemAndRelatedRecords {
 
   public Item getItem() {
     return item;
-  }
-
-  public void setItem(Item item) {
-    this.item = item;
   }
 
   public Request getRequest() {

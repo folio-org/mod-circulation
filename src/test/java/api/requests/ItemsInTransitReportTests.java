@@ -24,6 +24,7 @@ import java.util.concurrent.TimeoutException;
 import static api.support.JsonCollectionAssistant.getRecordById;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 public class ItemsInTransitReportTests extends APITests {
@@ -46,6 +47,7 @@ public class ItemsInTransitReportTests extends APITests {
   private static final String CHECK_IN_DATE_TIME = "checkInDateTime";
   private static final String DISCOVERY_DISPLAY_NAME = "discoveryDisplayName";
   private static final String PICKUP_LOCATION = "pickupLocation";
+  private static final String REQUEST = "request";
 
   @Test
   public void reportIsEmptyWhenThereAreNoItemsInTransit()
@@ -244,6 +246,126 @@ public class ItemsInTransitReportTests extends APITests {
     verifyLoan(secondItemJson, checkInDate2);
   }
 
+  @Test
+  public void reportIncludesItemsInTransitWithMoreThanOneOpenRequestInQueue()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final InventoryItemResource nod = itemsFixture.basedUponNod();
+
+    final IndividualResource steve = usersFixture.steve();
+    final IndividualResource rebecca = usersFixture.rebecca();
+
+    final UUID firstServicePointId = servicePointsFixture.cd1().getId();
+    final UUID secondServicePointId = servicePointsFixture.cd2().getId();
+
+    final DateTime checkInDate1 = new DateTime(2019, 8, 13, 5, 0);
+    final DateTime checkInDate2 = new DateTime(2019, 4, 3, 2, 10);
+
+    final DateTime requestSmallAngryPlanetDate1 = new DateTime(2019, 7, 5, 10, 0);
+    final DateTime requestSmallAngryPlanetDate2 = new DateTime(2019, 10, 1, 12, 0);
+    final LocalDate requestSmallAngryPlanetExpirationDate1 = new LocalDate(2019, 7, 11);
+    final LocalDate requestSmallAngryPlanetExpirationDate2 = new LocalDate(2019, 11, 12);
+
+    final DateTime requestNodeDate1 = new DateTime(2019, 5, 11, 1, 0);
+    final DateTime requestNodeDate2 = new DateTime(2019, 10, 8, 11, 0);
+    final LocalDate requestNodeExpirationDate1 = new LocalDate(2020, 1, 12);
+    final LocalDate requestNodeExpirationDate2 = new LocalDate(2020, 10, 10);
+
+    final String servicePointName1 = "Circ Desk 1";
+    final String servicePointName2 = "Circ Desk 2";
+    final String requestPatronGroup1 = "Jones, Steven";
+    final String requestPatronGroup2 = "Stuart, Rebecca";
+
+    loansFixture.checkOutByBarcode(smallAngryPlanet);
+    loansFixture.checkOutByBarcode(nod);
+
+    createRequest(smallAngryPlanet, steve, firstServicePointId, requestSmallAngryPlanetDate1, requestSmallAngryPlanetExpirationDate1);
+    createRequest(smallAngryPlanet, rebecca, firstServicePointId, requestSmallAngryPlanetDate2, requestSmallAngryPlanetExpirationDate2);
+
+    createRequest(nod, rebecca, secondServicePointId, requestNodeDate1, requestNodeExpirationDate1);
+    createRequest(nod, steve, secondServicePointId, requestNodeDate2, requestNodeExpirationDate2);
+
+    loansFixture.checkInByBarcode(new CheckInByBarcodeRequestBuilder()
+      .forItem(smallAngryPlanet)
+      .on(checkInDate1)
+      .at(secondServicePointId));
+    loansFixture.checkInByBarcode(new CheckInByBarcodeRequestBuilder()
+      .forItem(nod)
+      .on(checkInDate2)
+      .at(firstServicePointId));
+
+    List<JsonObject> items = ResourceClient.forItemsInTransitReport(client).getAll();
+
+    assertThat(items.size(), is(2));
+    JsonObject firstItemJson = getRecordById(items, smallAngryPlanet.getId()).get();
+    verifyItem(firstItemJson, smallAngryPlanet, firstServicePointId);
+    verifyLocation(firstItemJson);
+    verifyRequest(firstItemJson, requestSmallAngryPlanetDate1, requestSmallAngryPlanetExpirationDate1, requestPatronGroup1, servicePointName1);
+    verifyLoan(firstItemJson, checkInDate1, servicePointName2,
+      "cd2", "Circulation Desk -- Back Entrance");
+
+    JsonObject secondItemJson = getRecordById(items, nod.getId()).get();
+    verifyItem(secondItemJson, nod, secondServicePointId);
+    verifyLocation(secondItemJson);
+    verifyRequest(secondItemJson, requestNodeDate1, requestNodeExpirationDate1, requestPatronGroup2, servicePointName2);
+    verifyLoan(secondItemJson, checkInDate2);
+  }
+
+  @Test
+  public void reportIncludesItemsInTransitWithEmptyRequestQueue()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final InventoryItemResource nod = itemsFixture.basedUponNod();
+
+    final IndividualResource steve = usersFixture.steve();
+    final IndividualResource rebecca = usersFixture.rebecca();
+
+    final UUID firsServicePointId = servicePointsFixture.cd1().getId();
+    final UUID secondServicePointId = servicePointsFixture.cd2().getId();
+
+    final DateTime checkInDate1 = new DateTime(2019, 8, 13, 5, 0);
+    final DateTime checkInDate2 = new DateTime(2019, 4, 3, 2, 10);
+
+    final String servicePointName2 = "Circ Desk 2";
+    final String servicePointCode2 = "cd2";
+    final String checkInServicePointDiscoveryName = "Circulation Desk -- Back Entrance";
+
+    loansFixture.checkOutByBarcode(smallAngryPlanet);
+    loansFixture.checkOutByBarcode(nod);
+
+    loansFixture.checkInByBarcode(new CheckInByBarcodeRequestBuilder()
+      .forItem(smallAngryPlanet)
+      .on(checkInDate1)
+      .at(secondServicePointId));
+    loansFixture.checkInByBarcode(new CheckInByBarcodeRequestBuilder()
+      .forItem(nod)
+      .on(checkInDate2)
+      .at(secondServicePointId));
+
+    List<JsonObject> items = ResourceClient.forItemsInTransitReport(client).getAll();
+
+    assertThat(items.size(), is(2));
+    JsonObject firstItemJson = getRecordById(items, smallAngryPlanet.getId()).get();
+    verifyItem(firstItemJson, smallAngryPlanet, firsServicePointId);
+    verifyLocation(firstItemJson);
+    assertNull(firstItemJson.getMap().get(REQUEST));
+    verifyLoan(firstItemJson, checkInDate1, servicePointName2, servicePointCode2, checkInServicePointDiscoveryName);
+
+    JsonObject secondItemJson = getRecordById(items, nod.getId()).get();
+    verifyItem(secondItemJson, nod, firsServicePointId);
+    verifyLocation(secondItemJson);
+    assertNull(secondItemJson.getMap().get(REQUEST));
+    verifyLoan(secondItemJson, checkInDate2, servicePointName2, servicePointCode2, checkInServicePointDiscoveryName);
+  }
+
   private void createRequest(InventoryItemResource smallAngryPlanet,
                              IndividualResource steve, UUID secondServicePointId,
                              DateTime requestDate, LocalDate requestExpirationDate)
@@ -288,7 +410,7 @@ public class ItemsInTransitReportTests extends APITests {
 
   private void verifyRequest(JsonObject itemJson, DateTime requestDate,
                              LocalDate requestExpirationDate, String requestPatronGroup, String pickupServicePoint) {
-    Map<String, String> actualRequest = (Map<String, String>) itemJson.getMap().get("request");
+    Map<String, String> actualRequest = (Map<String, String>) itemJson.getMap().get(REQUEST);
     assertThat(actualRequest.get(REQUEST_TYPE), is("Hold"));
     assertThat(actualRequest.get(REQUEST_PATRON_GROUP), is(requestPatronGroup));
     assertThat(actualRequest.get(REQUEST_CREATION_DATE), is(String.valueOf(requestDate)));

@@ -94,7 +94,7 @@
             }
           },
           "request": {
-            "description": "The effective location of the item",
+            "description": "The first open item's request in the queue",
             "type": "object",
             "additionalProperties": false,
             "properties": {

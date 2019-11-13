@@ -83,9 +83,9 @@ public class ItemReportRepresentation {
       Optional.ofNullable(request.getPickupServicePoint())
         .map(ServicePoint::getName).orElse(null));
 
-    final JsonObject tags = (JsonObject) request.asJson().getMap().get("tags");
+    final JsonObject tags = request.asJson().getJsonObject("tags");
     if (tags != null) {
-      final JsonArray tagsJson = (JsonArray) tags.getMap().get("tagList");
+      final JsonArray tagsJson = tags.getJsonArray("tagList");
       write(requestJson, "tags", tagsJson);
     }
     write(requestJson, "requestPatronGroup", Optional.ofNullable(request.getRequester())
