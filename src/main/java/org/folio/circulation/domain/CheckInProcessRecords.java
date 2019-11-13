@@ -22,7 +22,7 @@ public class CheckInProcessRecords {
   private final RequestQueue requestQueue;
   private final ServicePoint checkInServicePoint;
   private final Request highestPriorityFulfillableRequest;
-  private UUID loggedInUserId;
+  private final UUID loggedInUserId;
 
   public CheckInProcessRecords(CheckInByBarcodeRequest checkInRequest) {
     this(checkInRequest, null, null, null, null, null, null);
@@ -34,7 +34,8 @@ public class CheckInProcessRecords {
     Loan loan,
     RequestQueue requestQueue,
     ServicePoint checkInServicePoint,
-    Request highestPriorityFulfillableRequest, UUID loggedInUserId) {
+    Request highestPriorityFulfillableRequest,
+    UUID loggedInUserId) {
 
     this.checkInRequest = checkInRequest;
     this.item = item;
@@ -109,7 +110,7 @@ public class CheckInProcessRecords {
       request, loggedInUserId);
   }
 
-  public CheckInProcessRecords withLoggedInUserId(String staffMemberId) {
+  public CheckInProcessRecords withLoggedInUserId(String userId) {
     return new CheckInProcessRecords(
         this.checkInRequest,
         this.item,
@@ -117,7 +118,7 @@ public class CheckInProcessRecords {
         this.requestQueue,
         this.checkInServicePoint,
         this.highestPriorityFulfillableRequest,
-        UUID.fromString(staffMemberId));
+        UUID.fromString(userId));
   }
 
   public String getCheckInRequestBarcode() {

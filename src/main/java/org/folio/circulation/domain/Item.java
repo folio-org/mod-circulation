@@ -423,4 +423,15 @@ public class Item {
       this.primaryServicePoint,
       newLoanTypeRepresentation);
   }
+
+  public Item withLastCheckIn(JsonObject lastCheckInRepresentation) {
+    return new Item(
+        itemRepresentation.put(ItemProperties.LASTCHECKIN, lastCheckInRepresentation),
+        holdingRepresentation,
+        instanceRepresentation,
+        location,
+        materialTypeRepresentation,
+        primaryServicePoint,
+        loanTypeRepresentation);
+  }
 }

@@ -11,7 +11,6 @@ import org.folio.circulation.domain.RequestQueueRepository;
 import org.folio.circulation.domain.ServicePointRepository;
 import org.folio.circulation.domain.UpdateItem;
 import org.folio.circulation.domain.UpdateRequestQueue;
-import org.folio.circulation.domain.UserBlRepository;
 import org.folio.circulation.domain.UserRepository;
 import org.folio.circulation.domain.notice.PatronNoticeService;
 import org.folio.circulation.domain.notice.schedule.RequestScheduledNoticeService;
@@ -51,7 +50,7 @@ public class CheckInByBarcodeResource extends Resource {
     final LoanRepository loanRepository = new LoanRepository(clients);
     final ItemRepository itemRepository = new ItemRepository(clients, true, true, true);
     final UserRepository userRepository = new UserRepository(clients);
-    final UserBlRepository userBlRepository = new UserBlRepository(clients);
+
     final AddressTypeRepository addressTypeRepository = new AddressTypeRepository(clients);
     final RequestQueueRepository requestQueueRepository = RequestQueueRepository.using(clients);
     final ServicePointRepository servicePointRepository = new ServicePointRepository(clients);
@@ -97,8 +96,7 @@ public class CheckInByBarcodeResource extends Resource {
         processAdapter::getRequestQueue, CheckInProcessRecords::withRequestQueue))
       .thenComposeAsync(findRequestQueueResult -> findRequestQueueResult.combineAfter(
         processAdapter::updateRequestQueue, CheckInProcessRecords::withRequestQueue))
-      .thenComposeAsync(result -> result.combineAfter(
-        r -> userBlRepository.getLoggedInUser(),CheckInProcessRecords::withLoggedInUserId)
+      .thenApply(r -> r.map(records -> records.withLoggedInUserId(context.getUserId())))
       .thenComposeAsync(updateRequestQueueResult -> updateRequestQueueResult.combineAfter(
         processAdapter::updateItem, CheckInProcessRecords::withItem))
       .thenApply(handleItemStatus -> handleItemStatus.next(processAdapter::sendItemStatusPatronNotice))
@@ -117,6 +115,6 @@ public class CheckInByBarcodeResource extends Resource {
       .thenApply(updateItemResult -> updateItemResult.next(processAdapter::sendCheckInPatronNotice))
       .thenApply(r -> r.next(requestScheduledNoticeService::rescheduleRequestNotices))
       .thenApply(CheckInByBarcodeResponse::from)
-      .thenAccept(r -> r.writeTo(routingContext.response())));
+      .thenAccept(r -> r.writeTo(routingContext.response()));
   }
 }

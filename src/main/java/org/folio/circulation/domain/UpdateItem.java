@@ -4,7 +4,6 @@ import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.domain.ItemStatus.AVAILABLE;
 import static org.folio.circulation.domain.ItemStatus.CHECKED_OUT;
 import static org.folio.circulation.domain.ItemStatus.PAGED;
-import static org.folio.circulation.domain.representations.ItemProperties.LASTCHECKIN;
 import static org.folio.circulation.support.JsonPropertyWriter.write;
 import static org.folio.circulation.support.Result.of;
 import static org.folio.circulation.support.Result.succeeded;
@@ -41,16 +40,13 @@ public class UpdateItem {
   private Function<Item, Result<Item>> addLastCheckInProperties(
       UUID checkInServicePointId, UUID loggedInUserId, DateTime dateTime) {
     return itemObj -> {
-      JsonObject itemJson = itemObj.getItem();
 
       JsonObject lastCheckInObj = new JsonObject();
       write(lastCheckInObj, "staffMemberId", loggedInUserId);
       write(lastCheckInObj, "servicePointId", checkInServicePointId);
       write(lastCheckInObj, "dateTime", dateTime);
 
-      write(itemJson, LASTCHECKIN, lastCheckInObj);
-
-      return succeeded(itemObj);
+      return succeeded(itemObj.withLastCheckIn(lastCheckInObj));
     };
   }
 
