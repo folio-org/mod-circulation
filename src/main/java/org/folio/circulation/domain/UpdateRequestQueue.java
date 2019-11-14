@@ -98,7 +98,7 @@ public class UpdateRequestQueue {
       .thenApply(result -> result.map(v -> requestQueue));
   }
 
-  private CompletableFuture<Result<Request>> putInPickup(Request request) {
+  private CompletableFuture<Result<Request>> awaitPickup(Request request) {
     request.changeStatus(RequestStatus.OPEN_AWAITING_PICKUP);
 
     if (request.getHoldShelfExpirationDate() == null) {
