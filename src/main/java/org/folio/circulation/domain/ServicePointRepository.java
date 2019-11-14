@@ -121,8 +121,8 @@ public class ServicePointRepository {
             return succeeded(new MultipleRecords<>(newLoanList, multipleLoans.getTotalRecords()));
           }));
   }
-  
-  CompletableFuture<Result<MultipleRecords<Request>>> findServicePointsForRequests(
+
+  public CompletableFuture<Result<MultipleRecords<Request>>> findServicePointsForRequests(
     MultipleRecords<Request> multipleRequests) {
     Collection<Request> requests = multipleRequests.getRecords();
 
