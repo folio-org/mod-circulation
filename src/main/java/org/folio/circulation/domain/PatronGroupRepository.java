@@ -45,7 +45,7 @@ public class PatronGroupRepository {
     });
   }
 
-  CompletableFuture<Result<MultipleRecords<Request>>> findPatronGroupsForRequestsUsers(
+  public CompletableFuture<Result<MultipleRecords<Request>>> findPatronGroupsForRequestsUsers(
     MultipleRecords<Request> multipleRequests) {
 
     Collection<Request> requests = multipleRequests.getRecords();

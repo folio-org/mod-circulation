@@ -8,6 +8,7 @@ import static org.folio.circulation.support.CqlQuery.exactMatch;
 import static org.folio.circulation.support.CqlQuery.exactMatchAny;
 import static org.folio.circulation.support.CqlSortBy.descending;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -17,6 +18,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.Predicate;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.domain.HoldShelfClearanceRequestContext;
@@ -26,7 +28,6 @@ import org.folio.circulation.domain.ReportRepository;
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestRepresentation;
 import org.folio.circulation.domain.ItemsReportFetcher;
-import org.folio.circulation.support.items.ItemBatchUtils;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.CqlQuery;
@@ -44,6 +45,12 @@ import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 
 public class RequestHoldShelfClearanceResource extends Resource {
+
+  /**
+   * The optimal number of identifiers that will not exceed the permissible length
+   * of the URI in according to the RFC 2616
+   */
+  private static final int BATCH_SIZE = 40;
 
   /**
    * Default limit value on a query
@@ -82,7 +89,7 @@ public class RequestHoldShelfClearanceResource extends Resource {
 
     reportRepository.getAllItemsByField(STATUS_NAME_KEY, AWAITING_PICKUP.getValue())
       .thenComposeAsync(r -> r.after(this::mapContextToItemIdList))
-      .thenComposeAsync(r -> r.after(ItemBatchUtils::mapItemIdsInBatchItemIds))
+      .thenComposeAsync(r -> r.after(this::mapItemIdsInBatchItemIds))
       .thenComposeAsync(r -> findAwaitingPickupRequestsByItemsIds(requestsStorage, r.value()))
       .thenComposeAsync(r -> findExpiredOrCancelledRequestByItemIds(requestsStorage, r.value()))
       .thenApply(r -> findExpiredOrCancelledRequestByServicePoint(servicePointId, r.value()))
@@ -99,6 +106,25 @@ public class RequestHoldShelfClearanceResource extends Resource {
       .map(Item::getItemId)
       .collect(Collectors.toList());
     return CompletableFuture.completedFuture(Result.succeeded(itemIds));
+  }
+
+  private CompletableFuture<Result<List<List<String>>>> mapItemIdsInBatchItemIds(List<String> itemIds) {
+    return CompletableFuture.completedFuture(Result.succeeded(splitIds(itemIds)));
+  }
+
+  private List<List<String>> splitIds(List<String> itemsIds) {
+    int size = itemsIds.size();
+    if (size <= 0) {
+      return new ArrayList<>();
+    }
+
+    int fullChunks = (size - 1) / BATCH_SIZE;
+    return IntStream.range(0, fullChunks + 1)
+      .mapToObj(n ->
+        itemsIds.subList(n * BATCH_SIZE, n == fullChunks
+          ? size
+          : (n + 1) * BATCH_SIZE))
+      .collect(Collectors.toList());
   }
 
   private CompletableFuture<Result<HoldShelfClearanceRequestContext>> findAwaitingPickupRequestsByItemsIds(CollectionResourceClient client,
