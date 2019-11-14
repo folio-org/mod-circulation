@@ -127,8 +127,8 @@
             "type": "object",
             "additionalProperties": false,
             "properties": {
-              "loan": {
-                "description": "The loan of the item",
+              "checkInServicePoint": {
+                "description": "The check in service point",
                 "type": "object",
                 "additionalProperties": false,
                 "properties": {
