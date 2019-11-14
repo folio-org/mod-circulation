@@ -89,8 +89,8 @@ public class ItemsInTransitReportTests extends APITests {
     JsonObject itemJson = items.get(0);
     verifyItem(itemJson, smallAngryPlanet, secondServicePointId);
     verifyLocation(itemJson);
-    verifyRequest(itemJson, requestDate, requestExpirationDate);
-    verifyLoan(itemJson, checkInDate);
+    verifyRequestWithSecondPickupServicePoint(itemJson, requestDate, requestExpirationDate);
+    verifyLoanInFirstServicePoint(itemJson, checkInDate);
   }
 
   @Test
@@ -140,14 +140,14 @@ public class ItemsInTransitReportTests extends APITests {
     JsonObject firstItemJson = getRecordById(items, smallAngryPlanet.getId()).get();
     verifyItem(firstItemJson, smallAngryPlanet, secondServicePointId);
     verifyLocation(firstItemJson);
-    verifyRequest(firstItemJson, requestDate1, requestExpirationDate1);
-    verifyLoan(firstItemJson, checkInDate1);
+    verifyRequestWithSecondPickupServicePoint(firstItemJson, requestDate1, requestExpirationDate1);
+    verifyLoanInFirstServicePoint(firstItemJson, checkInDate1);
 
     JsonObject secondItemJson = getRecordById(items, nod.getId()).get();
     verifyItem(secondItemJson, nod, secondServicePointId);
     verifyLocation(secondItemJson);
     verifyRequest(secondItemJson, requestDate2, requestExpirationDate2, requestPatronGroup2, servicePointName2);
-    verifyLoan(secondItemJson, checkInDate2);
+    verifyLoanInFirstServicePoint(secondItemJson, checkInDate2);
   }
 
   @Test
@@ -183,8 +183,8 @@ public class ItemsInTransitReportTests extends APITests {
     JsonObject itemJson = items.get(0);
     verifyItem(itemJson, smallAngryPlanet, secondServicePointId);
     verifyLocation(itemJson);
-    verifyRequest(itemJson, requestDate, requestExpirationDate);
-    verifyLoan(itemJson, checkInDate);
+    verifyRequestWithSecondPickupServicePoint(itemJson, requestDate, requestExpirationDate);
+    verifyLoanInFirstServicePoint(itemJson, checkInDate);
   }
 
   @Test
@@ -243,7 +243,7 @@ public class ItemsInTransitReportTests extends APITests {
     verifyItem(secondItemJson, nod, secondServicePointId);
     verifyLocation(secondItemJson);
     verifyRequest(secondItemJson, requestDate2, requestExpirationDate2, requestPatronGroup2, servicePointName2);
-    verifyLoan(secondItemJson, checkInDate2);
+    verifyLoanInFirstServicePoint(secondItemJson, checkInDate2);
   }
 
   @Test
@@ -312,7 +312,7 @@ public class ItemsInTransitReportTests extends APITests {
     verifyItem(secondItemJson, nod, secondServicePointId);
     verifyLocation(secondItemJson);
     verifyRequest(secondItemJson, requestNodeDate1, requestNodeExpirationDate1, requestPatronGroup2, servicePointName2);
-    verifyLoan(secondItemJson, checkInDate2);
+    verifyLoanInFirstServicePoint(secondItemJson, checkInDate2);
   }
 
   @Test
@@ -324,9 +324,6 @@ public class ItemsInTransitReportTests extends APITests {
 
     final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final InventoryItemResource nod = itemsFixture.basedUponNod();
-
-    final IndividualResource steve = usersFixture.steve();
-    final IndividualResource rebecca = usersFixture.rebecca();
 
     final UUID firsServicePointId = servicePointsFixture.cd1().getId();
     final UUID secondServicePointId = servicePointsFixture.cd2().getId();
@@ -390,15 +387,15 @@ public class ItemsInTransitReportTests extends APITests {
   private void verifyItem(JsonObject itemJson, InventoryItemResource item,
                           UUID secondServicePointId) {
     assertThat(itemJson.getString(BARCODE_KEY), is(item.getBarcode()));
-    assertThat(itemJson.getJsonObject(STATUS_KEY).getMap().get("name"),
+    assertThat(itemJson.getJsonObject(STATUS_KEY).getMap().get(NAME),
       is(ItemStatus.IN_TRANSIT.getValue()));
     assertThat(itemJson.getString(DESTINATION_SERVICE_POINT), is(String.valueOf(secondServicePointId)));
     final JsonObject smallAngryPlanetInstance = item.getInstance().getJson();
     assertThat(itemJson.getString(TITLE), is(smallAngryPlanetInstance.getString(TITLE)));
     final String contributors = String.valueOf(((JsonArray) smallAngryPlanetInstance
-      .getMap().get(CONTRIBUTORS)).getJsonObject(0).getMap().get("name"));
+      .getMap().get(CONTRIBUTORS)).getJsonObject(0).getMap().get(NAME));
     assertThat(itemJson.getJsonArray(CONTRIBUTORS)
-      .getJsonObject(0).getMap().get("name"), is(contributors));
+      .getJsonObject(0).getMap().get(NAME), is(contributors));
   }
 
   private void verifyLocation(JsonObject itemJson) {
@@ -419,8 +416,9 @@ public class ItemsInTransitReportTests extends APITests {
     assertThat(actualRequest.get(TAGS), is(Arrays.asList("tag1", "tag2")));
   }
 
-  private void verifyRequest(JsonObject itemJson, DateTime requestDate,
+  private void verifyRequestWithSecondPickupServicePoint(JsonObject itemJson, DateTime requestDate,
                              LocalDate requestExpirationDate) {
+
     verifyRequest(itemJson, requestDate, requestExpirationDate, "Jones, Steven", "Circ Desk 2");
   }
 
@@ -436,7 +434,7 @@ public class ItemsInTransitReportTests extends APITests {
     assertThat(actualCheckInServicePoint.get(PICKUP_LOCATION), is(Boolean.TRUE));
   }
 
-  private void verifyLoan(JsonObject itemJson, DateTime checkInDate) {
+  private void verifyLoanInFirstServicePoint(JsonObject itemJson, DateTime checkInDate) {
     verifyLoan(itemJson, checkInDate, "Circ Desk 1",
       "cd1", "Circulation Desk -- Hallway");
   }

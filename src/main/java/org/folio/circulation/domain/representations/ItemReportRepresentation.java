@@ -3,7 +3,7 @@ package org.folio.circulation.domain.representations;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import org.folio.circulation.domain.Item;
-import org.folio.circulation.domain.ItemAndRelatedRecords;
+import org.folio.circulation.domain.InTransitReportEntry;
 import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.Location;
@@ -18,11 +18,11 @@ import static org.folio.circulation.support.JsonPropertyWriter.writeNamedObject;
 
 public class ItemReportRepresentation {
 
-  public JsonObject createItemReport(ItemAndRelatedRecords itemAndRelatedRecords) {
-    if (itemAndRelatedRecords == null) {
+  public JsonObject createItemReport(InTransitReportEntry inTransitReportEntry) {
+    if (inTransitReportEntry == null) {
       return new JsonObject();
     }
-    final Item item = itemAndRelatedRecords.getItem();
+    final Item item = inTransitReportEntry.getItem();
 
     if (item == null || item.isNotFound()) {
       return new JsonObject();
@@ -47,11 +47,11 @@ public class ItemReportRepresentation {
     if (location != null) {
       writeLocation(itemReport, location);
     }
-    final Request request = itemAndRelatedRecords.getRequest();
+    final Request request = inTransitReportEntry.getRequest();
     if (request != null) {
-      writeRequest(itemAndRelatedRecords.getRequest(), itemReport);
+      writeRequest(inTransitReportEntry.getRequest(), itemReport);
     }
-    final Loan loan = itemAndRelatedRecords.getLoan();
+    final Loan loan = inTransitReportEntry.getLoan();
     if (loan != null) {
       writeLoan(itemReport, loan);
     }

@@ -1,12 +1,11 @@
 package org.folio.circulation.domain;
 
-public class ItemAndRelatedRecords {
-
+public class InTransitReportEntry {
   private final Item item;
   private Request request;
   private Loan loan;
 
-  public ItemAndRelatedRecords(Item item) {
+  public InTransitReportEntry(Item item) {
     this.item = item;
   }
 

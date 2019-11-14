@@ -316,17 +316,17 @@ public class LoanRepository {
         loans -> matchLoansToRequests(multipleRequests, loans)));
   }
 
-  public CompletableFuture<Result<List<ItemAndRelatedRecords>>> fetchLoans(
-    List<ItemAndRelatedRecords> itemAndRelatedRecords) {
-    final List<String> itemsToFetchLoansFor = itemAndRelatedRecords.stream()
+  public CompletableFuture<Result<List<InTransitReportEntry>>> fetchLoans(
+    List<InTransitReportEntry> inTransitReportEntries) {
+    final List<String> itemsToFetchLoansFor = inTransitReportEntries.stream()
       .filter(Objects::nonNull)
-      .map(itemAndRelatedRecord -> itemAndRelatedRecord.getItem().getItemId())
+      .map(inTransitReportEntry -> inTransitReportEntry.getItem().getItemId())
       .filter(Objects::nonNull)
       .distinct()
       .collect(Collectors.toList());
 
     if (itemsToFetchLoansFor.isEmpty()) {
-      return completedFuture(succeeded(itemAndRelatedRecords));
+      return completedFuture(succeeded(inTransitReportEntries));
     }
 
     final Result<CqlQuery> statusQuery = exactMatch(ITEM_STATUS, IN_TRANSIT.getValue());
@@ -335,33 +335,33 @@ public class LoanRepository {
     CompletableFuture<Result<MultipleRecords<Loan>>> multipleRecordsLoans =
       statusQuery.combine(
         itemIdQuery, CqlQuery::and)
-        .after(q -> loansStorageClient.getMany(q, itemAndRelatedRecords.size()))
+        .after(q -> loansStorageClient.getMany(q, inTransitReportEntries.size()))
         .thenApply(result -> result.next(this::mapResponseToLoans));
 
     return multipleRecordsLoans.thenCompose(multiLoanRecordsResult ->
       multiLoanRecordsResult.after(servicePointRepository::findServicePointsForLoans))
       .thenApply(multipleLoansResult -> multipleLoansResult.next(
-        loans -> matchLoansToItemAndRelatedRecords(itemAndRelatedRecords, loans)));
+        loans -> matchLoansToInTransitReportEntry(inTransitReportEntries, loans)));
   }
 
-  private Result<List<ItemAndRelatedRecords>> matchLoansToItemAndRelatedRecords(
-    List<ItemAndRelatedRecords> multipleRequests,
+  private Result<List<InTransitReportEntry>> matchLoansToInTransitReportEntry(
+    List<InTransitReportEntry> InTransitReportEntryList,
     MultipleRecords<Loan> loans) {
 
     return of(() ->
-      multipleRequests.stream()
-        .map(itemAndRelatedRecord -> matchLoansToItemAndRelatedRecords(itemAndRelatedRecord, loans))
+      InTransitReportEntryList.stream()
+        .map(InTransitReportEntry -> matchLoansToInTransitReportEntry(InTransitReportEntry, loans))
         .collect(Collectors.toList()));
   }
 
-  private ItemAndRelatedRecords matchLoansToItemAndRelatedRecords(
-    ItemAndRelatedRecords request,
+  private InTransitReportEntry matchLoansToInTransitReportEntry(
+    InTransitReportEntry inTransitReportEntry,
     MultipleRecords<Loan> loans) {
 
     final Map<String, Loan> loanMap = loans.toMap(Loan::getItemId);
-    request
-      .setLoan(loanMap.getOrDefault(request.getItem().getItemId(), null));
-    return request;
+    inTransitReportEntry
+      .setLoan(loanMap.getOrDefault(inTransitReportEntry.getItem().getItemId(), null));
+    return inTransitReportEntry;
   }
 
   private Result<CqlQuery> getStatusCQLQuery(String status) {

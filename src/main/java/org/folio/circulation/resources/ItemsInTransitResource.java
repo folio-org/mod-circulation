@@ -6,7 +6,7 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import org.folio.circulation.domain.Item;
-import org.folio.circulation.domain.ItemAndRelatedRecords;
+import org.folio.circulation.domain.InTransitReportEntry;
 import org.folio.circulation.domain.LoanRepository;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.Request;
@@ -62,7 +62,7 @@ public class ItemsInTransitResource extends Resource {
 
     itemRepository.getAllItemsByField("status.name", IN_TRANSIT.getValue())
       .thenComposeAsync(r -> r.after(resultItemContext ->
-        fetchItemRelatedRecords(resultItemContext, itemRepository, servicePointRepository)))
+        fetchInTransitReportEntry(resultItemContext, itemRepository, servicePointRepository)))
       .thenComposeAsync(r -> loanRepository.fetchLoans(r.value()))
       .thenComposeAsync(r -> findRequestsByItemsIds(requestRepository, r.value()))
       .thenApply(this::mapResultToJson)
@@ -70,17 +70,17 @@ public class ItemsInTransitResource extends Resource {
       .thenAccept(r -> r.writeTo(routingContext.response()));
   }
 
-  public CompletableFuture<Result<List<ItemAndRelatedRecords>>> fetchItemRelatedRecords(ResultItemContext resultItemContext,
-                                                                                        ItemRepository itemRepository,
-                                                                                        ServicePointRepository servicePointRepository) {
-    List<ItemAndRelatedRecords> itemAndRelatedRecords = resultItemContext.getResultListOfItems().stream()
+  public CompletableFuture<Result<List<InTransitReportEntry>>> fetchInTransitReportEntry(ResultItemContext resultItemContext,
+                                                                                       ItemRepository itemRepository,
+                                                                                       ServicePointRepository servicePointRepository) {
+    List<InTransitReportEntry> inTransitReportEntries = resultItemContext.getResultListOfItems().stream()
       .flatMap(records -> records.value().getRecords()
         .stream()).map(item -> fetchRelatedRecords(itemRepository, servicePointRepository, item))
       .map(CompletableFuture::join)
-      .map(item -> new ItemAndRelatedRecords(item.value()))
+      .map(item -> new InTransitReportEntry(item.value()))
       .collect(Collectors.toList());
 
-    return CompletableFuture.completedFuture(Result.succeeded(itemAndRelatedRecords));
+    return CompletableFuture.completedFuture(Result.succeeded(inTransitReportEntries));
   }
 
   private CompletableFuture<Result<Item>> fetchRelatedRecords(ItemRepository itemRepository,
@@ -93,12 +93,12 @@ public class ItemsInTransitResource extends Resource {
           .getServicePointById(it.getInTransitDestinationServicePointId()), Item::updateDestinationServicePoint));
   }
 
-  private CompletableFuture<Result<List<ItemAndRelatedRecords>>> findRequestsByItemsIds(RequestRepository requestRepository,
-                                                                                        List<ItemAndRelatedRecords> itemAndRelatedRecordsList) {
-    return mapToItemIdList(itemAndRelatedRecordsList)
+  private CompletableFuture<Result<List<InTransitReportEntry>>> findRequestsByItemsIds(RequestRepository requestRepository,
+                                                                                       List<InTransitReportEntry> inTransitReportEntryList) {
+    return mapToItemIdList(inTransitReportEntryList)
       .thenComposeAsync(r -> r.after(RequestHelper::mapItemIdsInBatchItemIds))
       .thenComposeAsync(r -> getInTransitRequestByItemsIds(requestRepository, r.value()))
-      .thenComposeAsync(r -> setRequestToItemAndRelatedRecords(itemAndRelatedRecordsList, r.value()));
+      .thenComposeAsync(r -> setRequestToInTransitReportEntry(inTransitReportEntryList, r.value()));
   }
 
   private CompletableFuture<Result<List<Result<MultipleRecords<Request>>>>> getInTransitRequestByItemsIds(RequestRepository requestRepository,
@@ -110,22 +110,22 @@ public class ItemsInTransitResource extends Resource {
   private List<Result<MultipleRecords<Request>>> getInTransitRequest(RequestRepository requestRepository,
                                                                      List<List<String>> batchItemIds) {
     return batchItemIds.stream()
-      .map(itemAndRelatedRecords -> {
+      .map(itemIds -> {
         final Result<CqlQuery> statusQuery = exactMatchAny("status", RequestStatus.openStates());
-        final Result<CqlQuery> itemIdsQuery = exactMatchAny("itemId", itemAndRelatedRecords);
+        final Result<CqlQuery> itemIdsQuery = exactMatchAny("itemId", itemIds);
 
         Result<CqlQuery> cqlQueryResult = statusQuery.combine(itemIdsQuery, CqlQuery::and)
           .map(q -> q.sortBy(ascending("position")));
 
-        return requestRepository.findByWithRelatedRecords(cqlQueryResult, itemAndRelatedRecords.size());
+        return requestRepository.findBy(cqlQueryResult, itemIds.size());
       })
       .map(CompletableFuture::join)
       .collect(Collectors.toList());
   }
 
-  private CompletableFuture<Result<List<String>>> mapToItemIdList(List<ItemAndRelatedRecords> itemAndRelatedRecordsList) {
-    List<String> itemIds = itemAndRelatedRecordsList.stream()
-      .map(ItemAndRelatedRecords::getItem)
+  private CompletableFuture<Result<List<String>>> mapToItemIdList(List<InTransitReportEntry> inTransitReportEntryList) {
+    List<String> itemIds = inTransitReportEntryList.stream()
+      .map(InTransitReportEntry::getItem)
       .filter(Objects::nonNull)
       .map(Item::getItemId)
       .filter(Objects::nonNull)
@@ -134,21 +134,21 @@ public class ItemsInTransitResource extends Resource {
     return CompletableFuture.completedFuture(Result.succeeded(itemIds));
   }
 
-  private CompletableFuture<Result<List<ItemAndRelatedRecords>>> setRequestToItemAndRelatedRecords(
-    List<ItemAndRelatedRecords> itemAndRelatedRecordsList,
+  private CompletableFuture<Result<List<InTransitReportEntry>>> setRequestToInTransitReportEntry(
+    List<InTransitReportEntry> inTransitReportEntryList,
     List<Result<MultipleRecords<Request>>> requestList) {
 
     Map<String, Request> itemRequestsMap = mapToItemRequestMap(requestList);
-    setRequestToItemAndRelatedRecords(itemAndRelatedRecordsList, itemRequestsMap);
-    return CompletableFuture.completedFuture(Result.succeeded(itemAndRelatedRecordsList));
+    setRequestToInTransitReportEntry(inTransitReportEntryList, itemRequestsMap);
+    return CompletableFuture.completedFuture(Result.succeeded(inTransitReportEntryList));
   }
 
-  private void setRequestToItemAndRelatedRecords(List<ItemAndRelatedRecords> itemAndRelatedRecordsList,
+  private void setRequestToInTransitReportEntry(List<InTransitReportEntry> inTransitReportEntryList,
                                                  Map<String, Request> itemRequestsMap) {
-    itemAndRelatedRecordsList.stream().filter(itemAndRelatedRecord -> itemRequestsMap
-      .containsKey(itemAndRelatedRecord.getItem().getItemId()))
-      .forEach(itemAndRelatedRecords -> itemAndRelatedRecords
-        .setRequest(itemRequestsMap.get(itemAndRelatedRecords.getItem().getItemId())));
+    inTransitReportEntryList.stream().filter(inTransitReportEntry -> itemRequestsMap
+      .containsKey(inTransitReportEntry.getItem().getItemId()))
+      .forEach(inTransitReportEntry -> inTransitReportEntry
+        .setRequest(itemRequestsMap.get(inTransitReportEntry.getItem().getItemId())));
   }
 
   private Map<String, Request> mapToItemRequestMap(List<Result<MultipleRecords<Request>>> requestList) {
@@ -158,9 +158,9 @@ public class ItemsInTransitResource extends Resource {
   }
 
   private Result<JsonObject> mapResultToJson
-    (Result<List<ItemAndRelatedRecords>> itemAndRelatedRecords) {
+    (Result<List<InTransitReportEntry>> inTransitReportEntry) {
 
-    return itemAndRelatedRecords.map(resultList -> resultList
+    return inTransitReportEntry.map(resultList -> resultList
       .stream().map(itemAndRelatedRecord -> new ItemReportRepresentation()
         .createItemReport(itemAndRelatedRecord))
       .collect(Collector.of(JsonArray::new, JsonArray::add, JsonArray::add)))
