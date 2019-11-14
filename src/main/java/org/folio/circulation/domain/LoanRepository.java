@@ -3,7 +3,6 @@ package org.folio.circulation.domain;
 import static java.lang.String.format;
 import static java.util.Objects.nonNull;
 import static java.util.concurrent.CompletableFuture.completedFuture;
-import static org.folio.circulation.domain.ItemStatus.IN_TRANSIT;
 import static org.folio.circulation.domain.representations.LoanProperties.PATRON_GROUP_AT_CHECKOUT;
 import static org.folio.circulation.domain.representations.LoanProperties.PATRON_GROUP_ID_AT_CHECKOUT;
 import static org.folio.circulation.support.CqlQuery.exactMatch;
@@ -50,7 +49,6 @@ public class LoanRepository {
   private final CollectionResourceClient loansStorageClient;
   private final ItemRepository itemRepository;
   private final UserRepository userRepository;
-  private final ServicePointRepository servicePointRepository;
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
   private static final String ITEM_STATUS = "itemStatus";
   private static final String ITEM_ID = "itemId";
@@ -59,7 +57,6 @@ public class LoanRepository {
     loansStorageClient = clients.loansStorage();
     itemRepository = new ItemRepository(clients, true, true, true);
     userRepository = new UserRepository(clients);
-    servicePointRepository = new ServicePointRepository(clients);
   }
 
   public CompletableFuture<Result<LoanAndRelatedRecords>> createLoan(
@@ -314,54 +311,6 @@ public class LoanRepository {
         itemIdQuery, CqlQuery::and))
       .thenApply(multipleLoansResult -> multipleLoansResult.next(
         loans -> matchLoansToRequests(multipleRequests, loans)));
-  }
-
-  public CompletableFuture<Result<List<InTransitReportEntry>>> fetchLoans(
-    List<InTransitReportEntry> inTransitReportEntries) {
-    final List<String> itemsToFetchLoansFor = inTransitReportEntries.stream()
-      .filter(Objects::nonNull)
-      .map(inTransitReportEntry -> inTransitReportEntry.getItem().getItemId())
-      .filter(Objects::nonNull)
-      .distinct()
-      .collect(Collectors.toList());
-
-    if (itemsToFetchLoansFor.isEmpty()) {
-      return completedFuture(succeeded(inTransitReportEntries));
-    }
-
-    final Result<CqlQuery> statusQuery = exactMatch(ITEM_STATUS, IN_TRANSIT.getValue());
-    final Result<CqlQuery> itemIdQuery = exactMatchAny(ITEM_ID, itemsToFetchLoansFor);
-
-    CompletableFuture<Result<MultipleRecords<Loan>>> multipleRecordsLoans =
-      statusQuery.combine(
-        itemIdQuery, CqlQuery::and)
-        .after(q -> loansStorageClient.getMany(q, inTransitReportEntries.size()))
-        .thenApply(result -> result.next(this::mapResponseToLoans));
-
-    return multipleRecordsLoans.thenCompose(multiLoanRecordsResult ->
-      multiLoanRecordsResult.after(servicePointRepository::findServicePointsForLoans))
-      .thenApply(multipleLoansResult -> multipleLoansResult.next(
-        loans -> matchLoansToInTransitReportEntry(inTransitReportEntries, loans)));
-  }
-
-  private Result<List<InTransitReportEntry>> matchLoansToInTransitReportEntry(
-    List<InTransitReportEntry> InTransitReportEntryList,
-    MultipleRecords<Loan> loans) {
-
-    return of(() ->
-      InTransitReportEntryList.stream()
-        .map(InTransitReportEntry -> matchLoansToInTransitReportEntry(InTransitReportEntry, loans))
-        .collect(Collectors.toList()));
-  }
-
-  private InTransitReportEntry matchLoansToInTransitReportEntry(
-    InTransitReportEntry inTransitReportEntry,
-    MultipleRecords<Loan> loans) {
-
-    final Map<String, Loan> loanMap = loans.toMap(Loan::getItemId);
-    inTransitReportEntry
-      .setLoan(loanMap.getOrDefault(inTransitReportEntry.getItem().getItemId(), null));
-    return inTransitReportEntry;
   }
 
   private Result<CqlQuery> getStatusCQLQuery(String status) {

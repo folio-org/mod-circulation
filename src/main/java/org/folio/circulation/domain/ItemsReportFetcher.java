@@ -4,12 +4,12 @@ import org.folio.circulation.support.Result;
 
 import java.util.List;
 
-public class ResultItemContext {
+public class ItemsReportFetcher {
   private final int currPageNumber;
   private final List<Result<MultipleRecords<Item>>> resultListOfItems;
 
-  public ResultItemContext(int currPageNumber,
-                           List<Result<MultipleRecords<Item>>> resultListOfItems) {
+  public ItemsReportFetcher(int currPageNumber,
+                            List<Result<MultipleRecords<Item>>> resultListOfItems) {
     this.currPageNumber = currPageNumber;
     this.resultListOfItems = resultListOfItems;
   }

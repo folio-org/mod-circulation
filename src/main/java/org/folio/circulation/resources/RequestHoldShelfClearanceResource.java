@@ -22,9 +22,11 @@ import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.domain.HoldShelfClearanceRequestContext;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.MultipleRecords;
+import org.folio.circulation.domain.ReportRepository;
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestRepresentation;
-import org.folio.circulation.domain.ResultItemContext;
+import org.folio.circulation.domain.ItemsReportFetcher;
+import org.folio.circulation.support.items.ItemBatchUtils;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.CqlQuery;
@@ -40,7 +42,6 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
-import org.folio.circulation.support.request.RequestHelper;
 
 public class RequestHoldShelfClearanceResource extends Resource {
 
@@ -75,12 +76,13 @@ public class RequestHoldShelfClearanceResource extends Resource {
 
     final ItemRepository itemRepository = new ItemRepository(clients, false, false, false);
     final CollectionResourceClient requestsStorage = clients.requestsStorage();
+    final ReportRepository reportRepository = new ReportRepository(clients);
 
     final String servicePointId = routingContext.request().getParam(SERVICE_POINT_ID_PARAM);
 
-    itemRepository.getAllItemsByField(STATUS_NAME_KEY, AWAITING_PICKUP.getValue())
+    reportRepository.getAllItemsByField(STATUS_NAME_KEY, AWAITING_PICKUP.getValue())
       .thenComposeAsync(r -> r.after(this::mapContextToItemIdList))
-      .thenComposeAsync(r -> r.after(RequestHelper::mapItemIdsInBatchItemIds))
+      .thenComposeAsync(r -> r.after(ItemBatchUtils::mapItemIdsInBatchItemIds))
       .thenComposeAsync(r -> findAwaitingPickupRequestsByItemsIds(requestsStorage, r.value()))
       .thenComposeAsync(r -> findExpiredOrCancelledRequestByItemIds(requestsStorage, r.value()))
       .thenApply(r -> findExpiredOrCancelledRequestByServicePoint(servicePointId, r.value()))
@@ -90,8 +92,8 @@ public class RequestHoldShelfClearanceResource extends Resource {
       .thenAccept(r -> r.writeTo(routingContext.response()));
   }
 
-  private CompletableFuture<Result<List<String>>> mapContextToItemIdList(ResultItemContext holdShelfClearanceContext) {
-    List<String> itemIds = holdShelfClearanceContext.getResultListOfItems().stream()
+  private CompletableFuture<Result<List<String>>> mapContextToItemIdList(ItemsReportFetcher itemsReportFetcher) {
+    List<String> itemIds = itemsReportFetcher.getResultListOfItems().stream()
       .flatMap(records -> records.value().getRecords().stream())
       .filter(item -> StringUtils.isNoneBlank(item.getItemId()))
       .map(Item::getItemId)
