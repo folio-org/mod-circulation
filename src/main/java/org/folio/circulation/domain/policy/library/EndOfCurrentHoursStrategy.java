@@ -39,7 +39,7 @@ public class EndOfCurrentHoursStrategy extends ShortTermLoansBaseStrategy {
   private boolean hasLibraryRolloverWorkingDay(LibraryTimetable libraryTimetable,
                                                LibraryInterval requestedInterval) {
 
-    if(isNotSequenceOfWorkingDays(libraryTimetable, requestedInterval)) {
+    if (isNotSequenceOfWorkingDays(libraryTimetable, requestedInterval)) {
       return false;
     }
 
