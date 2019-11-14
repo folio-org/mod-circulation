@@ -61,6 +61,11 @@ public class ResourceClient {
       "requestReport");
   }
 
+  public static ResourceClient forItemsInTransitReport(OkapiHttpClient client) {
+    return new ResourceClient(client,
+      subPath -> InterfaceUrls.itemsInTransitReportUrl(), "items");
+  }
+
   public static ResourceClient forLoans(OkapiHttpClient client) {
     return new ResourceClient(client, InterfaceUrls::loansUrl,
       "loans");
@@ -203,6 +208,11 @@ public class ResourceClient {
   public static ResourceClient forPatronSessionRecords(OkapiHttpClient client) {
     return new ResourceClient(client, InterfaceUrls::patronActionSessionsUrl,
       "patron session records", "patronActionSessions");
+  }
+
+  public static ResourceClient forExpiredSessions(OkapiHttpClient client) {
+    return new ResourceClient(client, InterfaceUrls::patronExpiredSessionsUrl,
+      "expired session records");
   }
 
   public static ResourceClient forConfiguration(OkapiHttpClient client) {

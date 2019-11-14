@@ -42,6 +42,7 @@ public class Clients {
   private final CollectionResourceClient feeFineActionsStorageClient;
   private final CollectionResourceClient anonymizeStorageLoansClient;
   private final CollectionResourceClient patronActionSessionsStorageClient;
+  private final CollectionResourceClient patronExpiredSessionsStorageClient;
 
   public static Clients create(WebContext context, HttpClient httpClient) {
     return new Clients(context.createHttpClient(httpClient), context);
@@ -83,6 +84,7 @@ public class Clients {
       accountsStorageClient = createAccountsStorageClient(client,context);
       feeFineActionsStorageClient = createFeeFineActionsStorageClient(client,context);
       patronActionSessionsStorageClient = createPatronActionSessionsStorageClient(client,context);
+      patronExpiredSessionsStorageClient = createPatronExpiredSessionsStorageClient(client,context);
     }
     catch(MalformedURLException e) {
       throw new InvalidOkapiLocationException(context.getOkapiLocation(), e);
@@ -221,6 +223,10 @@ public class Clients {
 
   public CollectionResourceClient patronActionSessionsStorageClient() {
     return patronActionSessionsStorageClient;
+  }
+
+  public CollectionResourceClient patronExpiredSessionsStorageClient() {
+    return patronExpiredSessionsStorageClient;
   }
 
   private static CollectionResourceClient getCollectionResourceClient(
@@ -497,5 +503,12 @@ public class Clients {
     WebContext context)
     throws MalformedURLException {
     return getCollectionResourceClient(client, context, "/patron-action-session-storage/patron-action-sessions");
+  }
+
+  private CollectionResourceClient createPatronExpiredSessionsStorageClient(
+    OkapiHttpClient client,
+    WebContext context)
+    throws MalformedURLException {
+    return getCollectionResourceClient(client, context, "/patron-action-session-storage");
   }
 }

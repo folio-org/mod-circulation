@@ -6,6 +6,8 @@ import org.folio.circulation.resources.CheckInByBarcodeResource;
 import org.folio.circulation.resources.CheckOutByBarcodeResource;
 import org.folio.circulation.resources.CirculationRulesResource;
 import org.folio.circulation.resources.EndPatronActionSessionResource;
+import org.folio.circulation.resources.ItemsInTransitResource;
+import org.folio.circulation.resources.ExpiredSessionProcessingResource;
 import org.folio.circulation.resources.LoanAnonymizationResource;
 import org.folio.circulation.resources.DueDateNotRealTimeScheduledNoticeProcessingResource;
 import org.folio.circulation.resources.LoanCirculationRulesEngineResource;
@@ -74,6 +76,9 @@ public class CirculationVerticle extends AbstractVerticle {
 
     new RequestHoldShelfClearanceResource("/circulation/requests-reports/hold-shelf-clearance/:servicePointId", client)
       .register(router);
+    new ItemsInTransitResource("/inventory-reports/items-in-transit", client)
+      .register(router);
+
     new CirculationRulesResource("/circulation/rules", client)
       .register(router);
     new LoanCirculationRulesEngineResource(
@@ -95,6 +100,7 @@ public class CirculationVerticle extends AbstractVerticle {
     new DueDateScheduledNoticeProcessingResource(client).register(router);
     new DueDateNotRealTimeScheduledNoticeProcessingResource(client).register(router);
     new RequestScheduledNoticeProcessingResource(client).register(router);
+    new ExpiredSessionProcessingResource(client).register(router);
 
     new LoanAnonymizationResource(client).register(router);
     new ScheduledAnonymizationProcessingResource(client).register(router);

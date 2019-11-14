@@ -116,6 +116,10 @@ public class InterfaceUrls {
     return circulationModuleUrl("/circulation/requests-reports/hold-shelf-clearance/" + servicePointId);
   }
 
+  public static URL itemsInTransitReportUrl() {
+    return circulationModuleUrl("/inventory-reports/items-in-transit");
+  }
+
   public static URL requestQueueUrl(UUID itemId) {
     return requestsUrl(String.format("/queue/%s", itemId));
   }
@@ -203,6 +207,10 @@ public class InterfaceUrls {
 
   static URL configurationUrl(String subPath) {
     return APITestContext.viaOkapiModuleUrl("/configurations/entries" + subPath);
+  }
+
+  static URL patronExpiredSessionsUrl(String subPath) {
+    return APITestContext.viaOkapiModuleUrl("/patron-action-session-storage/expired-session-patron-ids");
   }
 
   public static URL reorderQueueUrl(String itemId) {

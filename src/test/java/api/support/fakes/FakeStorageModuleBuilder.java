@@ -3,6 +3,8 @@ package api.support.fakes;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -28,7 +30,8 @@ public class FakeStorageModuleBuilder {
   private final JsonSchemaValidator recordValidator;
   private final String updateBatchPath;
   private final Function<JsonObject, JsonObject> batchUpdatePreProcessor;
-  private final Function<JsonObject, CompletableFuture<JsonObject>> recordPreProcessor;
+  private final List<BiFunction<JsonObject, JsonObject, CompletableFuture<JsonObject>>> recordPreProcessors;
+  private final Collection<String> queryParameters;
 
   FakeStorageModuleBuilder() {
     this(
@@ -43,6 +46,7 @@ public class FakeStorageModuleBuilder {
       false,
       false,
       (c, r) -> Result.succeeded(null),
+      null,
       null,
       null,
       null,
@@ -64,7 +68,8 @@ public class FakeStorageModuleBuilder {
     JsonSchemaValidator recordValidator,
     String updateBatchPath,
     Function<JsonObject, JsonObject> batchUpdatePreProcessor,
-    Function<JsonObject, CompletableFuture<JsonObject>> recordPreProcessor) {
+    List<BiFunction<JsonObject, JsonObject, CompletableFuture<JsonObject>>> recordPreProcessors,
+    Collection<String> queryParameters) {
 
     this.rootPath = rootPath;
     this.collectionPropertyName = collectionPropertyName;
@@ -78,16 +83,18 @@ public class FakeStorageModuleBuilder {
     this.includeChangeMetadata = includeChangeMetadata;
     this.constraint = constraint;
     this.recordValidator = recordValidator;
+    this.queryParameters = queryParameters;
     this.updateBatchPath = updateBatchPath;
     this.batchUpdatePreProcessor = batchUpdatePreProcessor;
-    this.recordPreProcessor = recordPreProcessor;
+    this.recordPreProcessors = recordPreProcessors;
   }
 
   public FakeStorageModule create() {
     return new FakeStorageModule(rootPath, collectionPropertyName, tenantId,
       recordValidator, requiredProperties, hasCollectionDelete, hasDeleteByQuery,
       recordName, uniqueProperties, disallowedProperties, includeChangeMetadata,
-      constraint, updateBatchPath, batchUpdatePreProcessor, recordPreProcessor);
+      constraint, updateBatchPath, batchUpdatePreProcessor, recordPreProcessors,
+      queryParameters);
   }
 
   FakeStorageModuleBuilder withRootPath(String rootPath) {
@@ -110,7 +117,8 @@ public class FakeStorageModuleBuilder {
       this.recordValidator,
       this.updateBatchPath,
       this.batchUpdatePreProcessor,
-      this.recordPreProcessor);
+      this.recordPreProcessors,
+      this.queryParameters);
   }
 
   FakeStorageModuleBuilder withCollectionPropertyName(
@@ -131,7 +139,8 @@ public class FakeStorageModuleBuilder {
       this.recordValidator,
       this.updateBatchPath,
       this.batchUpdatePreProcessor,
-      this.recordPreProcessor);
+      this.recordPreProcessors,
+      this.queryParameters);
 
   }
 
@@ -151,7 +160,8 @@ public class FakeStorageModuleBuilder {
       this.recordValidator,
       this.updateBatchPath,
       this.batchUpdatePreProcessor,
-      this.recordPreProcessor);
+      this.recordPreProcessors,
+      this.queryParameters);
   }
 
   FakeStorageModuleBuilder validateRecordsWith(JsonSchemaValidator validator) {
@@ -170,7 +180,8 @@ public class FakeStorageModuleBuilder {
       validator,
       this.updateBatchPath,
       this.batchUpdatePreProcessor,
-      this.recordPreProcessor);
+      this.recordPreProcessors,
+      this.queryParameters);
   }
 
   @Deprecated()
@@ -196,7 +207,8 @@ public class FakeStorageModuleBuilder {
       this.recordValidator,
       this.updateBatchPath,
       this.batchUpdatePreProcessor,
-      this.recordPreProcessor);
+      this.recordPreProcessors,
+      this.queryParameters);
   }
 
   @Deprecated()
@@ -208,8 +220,8 @@ public class FakeStorageModuleBuilder {
     return withRequiredProperties(Arrays.asList(requiredProperties));
   }
 
-    private FakeStorageModuleBuilder withUniqueProperties(
-      Collection<String> uniqueProperties) {
+  private FakeStorageModuleBuilder withUniqueProperties(
+    Collection<String> uniqueProperties) {
 
     return new FakeStorageModuleBuilder(
       this.rootPath,
@@ -226,7 +238,8 @@ public class FakeStorageModuleBuilder {
       this.recordValidator,
       this.updateBatchPath,
       this.batchUpdatePreProcessor,
-      this.recordPreProcessor);
+      this.recordPreProcessors,
+      this.queryParameters);
   }
 
   FakeStorageModuleBuilder withUniqueProperties(String... uniqueProperties) {
@@ -256,7 +269,8 @@ public class FakeStorageModuleBuilder {
       this.recordValidator,
       this.updateBatchPath,
       this.batchUpdatePreProcessor,
-      this.recordPreProcessor);
+      this.recordPreProcessors,
+      this.queryParameters);
   }
 
   @Deprecated()
@@ -284,7 +298,8 @@ public class FakeStorageModuleBuilder {
       this.recordValidator,
       this.updateBatchPath,
       this.batchUpdatePreProcessor,
-      this.recordPreProcessor);
+      this.recordPreProcessors,
+      this.queryParameters);
   }
 
   FakeStorageModuleBuilder allowDeleteByQuery() {
@@ -303,7 +318,8 @@ public class FakeStorageModuleBuilder {
       this.recordValidator,
       this.updateBatchPath,
       this.batchUpdatePreProcessor,
-      this.recordPreProcessor);
+      this.recordPreProcessors,
+      this.queryParameters);
   }
 
   FakeStorageModuleBuilder withChangeMetadata() {
@@ -322,7 +338,8 @@ public class FakeStorageModuleBuilder {
       this.recordValidator,
       this.updateBatchPath,
       this.batchUpdatePreProcessor,
-      this.recordPreProcessor);
+      this.recordPreProcessors,
+      this.queryParameters);
   }
 
   FakeStorageModuleBuilder withRecordConstraint(
@@ -343,7 +360,32 @@ public class FakeStorageModuleBuilder {
       this.recordValidator,
       this.updateBatchPath,
       this.batchUpdatePreProcessor,
-      this.recordPreProcessor);
+      this.recordPreProcessors,
+      this.queryParameters);
+  }
+
+  FakeStorageModuleBuilder withQueryParameters(String... queryParameters) {
+    List<String> parameters = Objects.isNull(queryParameters)
+      ? new ArrayList<>()
+      : Arrays.asList(queryParameters);
+
+    return new FakeStorageModuleBuilder(
+      this.rootPath,
+      this.collectionPropertyName,
+      this.tenantId,
+      this.requiredProperties,
+      this.disallowedProperties,
+      this.hasCollectionDelete,
+      this.recordName,
+      this.uniqueProperties,
+      this.hasDeleteByQuery,
+      this.includeChangeMetadata,
+      this.constraint,
+      this.recordValidator,
+      this.updateBatchPath,
+      this.batchUpdatePreProcessor,
+      this.recordPreProcessors,
+      parameters);
   }
 
   FakeStorageModuleBuilder withBatchUpdate(String path) {
@@ -362,7 +404,8 @@ public class FakeStorageModuleBuilder {
       this.recordValidator,
       path,
       this.batchUpdatePreProcessor,
-      this.recordPreProcessor);
+      this.recordPreProcessors,
+      this.queryParameters);
   }
 
   FakeStorageModuleBuilder withBatchUpdatePreProcessor(Function<JsonObject, JsonObject> preProcessor) {
@@ -381,11 +424,12 @@ public class FakeStorageModuleBuilder {
       this.recordValidator,
       this.updateBatchPath,
       preProcessor,
-      this.recordPreProcessor);
+      this.recordPreProcessors,
+      this.queryParameters);
   }
 
   FakeStorageModuleBuilder withRecordPreProcessor(
-    Function<JsonObject, CompletableFuture<JsonObject>> recordPreProcessor) {
+    List<BiFunction<JsonObject, JsonObject, CompletableFuture<JsonObject>>> recordPreProcessor) {
 
     return new FakeStorageModuleBuilder(
       this.rootPath,
@@ -402,6 +446,7 @@ public class FakeStorageModuleBuilder {
       this.recordValidator,
       this.updateBatchPath,
       this.batchUpdatePreProcessor,
-      recordPreProcessor);
+      recordPreProcessor,
+      this.queryParameters);
   }
 }

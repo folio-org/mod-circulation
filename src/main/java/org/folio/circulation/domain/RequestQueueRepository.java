@@ -6,7 +6,6 @@ import static org.folio.circulation.support.CqlQuery.exactMatchAny;
 import static org.folio.circulation.support.CqlSortBy.ascending;
 import static org.folio.circulation.support.Result.succeeded;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
 
@@ -20,7 +19,7 @@ public class RequestQueueRepository {
   private static final Logger LOG = LoggerFactory.getLogger(RequestQueueRepository.class);
   private final RequestRepository requestRepository;
 
-  RequestQueueRepository(RequestRepository requestRepository) {
+  private RequestQueueRepository(RequestRepository requestRepository) {
     this.requestRepository = requestRepository;
   }
 
@@ -68,38 +67,6 @@ public class RequestQueueRepository {
   CompletableFuture<Result<RequestQueue>> updateRequestsWithChangedPositions(
     RequestQueue requestQueue) {
 
-    final ArrayList<Request> changedRequests = new ArrayList<>(requestQueue.getRequestsWithChangedPosition());
-
-    if(changedRequests.isEmpty()) {
-      return completedFuture(succeeded(requestQueue));
-    }
-
-    CompletableFuture<Result<Request>> requestUpdated = completedFuture(succeeded(null));
-
-    int index;
-    Request request;
-    boolean positionTaken = false;
-
-    while (!changedRequests.isEmpty()) {
-      index = 0;
-      request = changedRequests.get(index);
-      while (changedRequests.size() > 1
-          && (positionTaken = requestQueue.positionPreviouslyTaken(request))
-          && index + 1 < changedRequests.size()) {
-        request = changedRequests.get(++index);
-      }
-      if (!positionTaken) {
-        final Request updateRequest = request;
-        requestUpdated = requestUpdated.thenComposeAsync(r ->
-          r.after(notUsed -> requestRepository.update(updateRequest)));
-        request.freePreviousPosition();
-        changedRequests.remove(index);
-      }
-    }
-    return requestUpdated.thenApply(r -> r.map(notUsed -> requestQueue));
-  }
-
-  CompletableFuture<Result<RequestQueue>> reorderRequests(RequestQueue requestQueue) {
     Collection<Request> requestsWithChangedPosition = requestQueue
       .getRequestsWithChangedPosition();
 

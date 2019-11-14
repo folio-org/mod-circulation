@@ -16,14 +16,19 @@ public enum ItemStatus {
   ON_ORDER("On order"),
   IN_PROCESS("In process");
 
-  public static ItemStatus from(String value) {
+  public static ItemStatus from(String value, String date) {
     return Arrays.stream(values())
       .filter(status -> status.valueMatches(value))
-      .findFirst()
+      .findFirst().map(status -> {
+        status.setDate(date);
+        return status;
+      })
       .orElse(NONE);
   }
 
   private final String value;
+
+  private String date;
 
   ItemStatus(String value) {
     this.value = value;
@@ -31,6 +36,14 @@ public enum ItemStatus {
 
   public String getValue() {
     return value;
+  }
+
+  public String getDate() {
+    return date;
+  }
+
+  void setDate(String date) {
+    this.date = date;
   }
 
   private boolean valueMatches(String value) {
