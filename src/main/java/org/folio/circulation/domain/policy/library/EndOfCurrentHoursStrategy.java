@@ -25,7 +25,7 @@ public class EndOfCurrentHoursStrategy extends ShortTermLoansBaseStrategy {
     if (currentTimeInterval == null) {
       return failed(failureForAbsentTimetable());
     }
-    if(hasLibraryRolloverWorkingDay(libraryTimetable, requestedInterval)){
+    if (hasLibraryRolloverWorkingDay(libraryTimetable, requestedInterval)){
       return succeeded(requestedInterval.getPrevious().getEndTime());
     }
     if (currentTimeInterval.isOpen()) {
