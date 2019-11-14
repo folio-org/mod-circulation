@@ -85,7 +85,7 @@ public class ItemsInTransitResource extends Resource {
       .thenAccept(r -> r.writeTo(routingContext.response()));
   }
 
-  public CompletableFuture<Result<List<InTransitReportEntry>>> fetchInTransitReportEntry(ItemsReportFetcher itemsReportFetcher,
+  private CompletableFuture<Result<List<InTransitReportEntry>>> fetchInTransitReportEntry(ItemsReportFetcher itemsReportFetcher,
                                                                                          ItemRepository itemRepository,
                                                                                          ServicePointRepository servicePointRepository) {
     List<InTransitReportEntry> inTransitReportEntries = itemsReportFetcher.getResultListOfItems().stream()
@@ -185,28 +185,6 @@ public class ItemsInTransitResource extends Resource {
 
   private Result<MultipleRecords<Loan>> mapResponseToLoans(Response response) {
     return MultipleRecords.from(response, Loan::from, "loans");
-  }
-
-  private CompletableFuture<Result<List<Result<MultipleRecords<Request>>>>> getInTransitRequestByItemsIds(RequestRepository requestRepository,
-                                                                                                          List<List<String>> batchItemIds) {
-    List<Result<MultipleRecords<Request>>> inTransitRequest = getInTransitRequest(requestRepository, batchItemIds);
-    return CompletableFuture.completedFuture(Result.succeeded(inTransitRequest));
-  }
-
-  private List<Result<MultipleRecords<Request>>> getInTransitRequest(RequestRepository requestRepository,
-                                                                     List<List<String>> batchItemIds) {
-    return batchItemIds.stream()
-      .map(itemIds -> {
-        final Result<CqlQuery> statusQuery = exactMatchAny("status", RequestStatus.openStates());
-        final Result<CqlQuery> itemIdsQuery = exactMatchAny(ITEM_ID, itemIds);
-
-        Result<CqlQuery> cqlQueryResult = statusQuery.combine(itemIdsQuery, CqlQuery::and)
-          .map(q -> q.sortBy(ascending("position")));
-
-        return requestRepository.findBy(cqlQueryResult, itemIds.size());
-      })
-      .map(CompletableFuture::join)
-      .collect(Collectors.toList());
   }
 
   private List<String> mapToItemIdList(List<InTransitReportEntry> inTransitReportEntryList) {
