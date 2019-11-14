@@ -1,14 +1,7 @@
 package api.support.fixtures;
 
-import api.support.builders.CalendarBuilder;
-import api.support.builders.OpeningDayPeriodBuilder;
-import io.vertx.core.MultiMap;
-import io.vertx.core.http.CaseInsensitiveHeaders;
-import api.support.OpeningDayPeriod;
-import org.folio.circulation.domain.OpeningHour;
-import org.joda.time.DateTime;
-import org.joda.time.LocalDate;
-import org.joda.time.LocalTime;
+import static api.support.OpeningDayPeriod.createDayPeriod;
+import static org.folio.circulation.domain.OpeningDay.createOpeningDay;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -17,10 +10,21 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static org.folio.circulation.domain.OpeningDay.createOpeningDay;
-import static api.support.OpeningDayPeriod.createDayPeriod;
+import org.folio.circulation.domain.OpeningHour;
+import org.joda.time.DateTime;
+import org.joda.time.LocalDate;
+import org.joda.time.LocalTime;
+
+import api.support.OpeningDayPeriod;
+import api.support.builders.CalendarBuilder;
+import api.support.builders.OpeningDayPeriodBuilder;
+import io.vertx.core.MultiMap;
+import io.vertx.core.http.CaseInsensitiveHeaders;
 
 public class CalendarExamples {
+
+  public static final String ROLLOVER_SCENARIO_SERVICE_POINT_ID = "22211111-2f09-4bc9-8924-3734882d44a3";
+  public static final String ROLLOVER_SCENARIO_NEXT_DAY_CLOSED_SERVICE_POINT_ID = "33311111-2f09-4bc9-8924-3734882d44a3";
 
   public static final String CASE_FRI_SAT_MON_DAY_ALL_SERVICE_POINT_ID = "11111111-2f09-4bc9-8924-3734882d44a3";
   public static final String CASE_FRI_SAT_MON_SERVICE_POINT_ID = "22222222-2f09-4bc9-8924-3734882d44a3";
@@ -39,6 +43,7 @@ public class CalendarExamples {
   public static final LocalDate CASE_CURRENT_IS_OPEN_PREV_DAY = new LocalDate(2019, 2, 4);
   public static final LocalDate CASE_CURRENT_IS_OPEN_CURR_DAY = new LocalDate(2019, 2, 5);
   public static final LocalDate CASE_CURRENT_IS_OPEN_NEXT_DAY = new LocalDate(2019, 2, 6);
+  public static final LocalDate CASE_CURRENT_IS_OPEN_IN_ONE_DAY = new LocalDate(2019, 2, 7);
 
   public static final LocalDate WEDNESDAY_DATE = new LocalDate(2018, 12, 11);
   public static final LocalDate THURSDAY_DATE = new LocalDate(2018, 12, 12);
@@ -154,6 +159,38 @@ public class CalendarExamples {
         createOpeningDay(Arrays.asList(new OpeningHour(START_TIME_FIRST_PERIOD, END_TIME_FIRST_PERIOD), new OpeningHour(START_TIME_SECOND_PERIOD, END_TIME_SECOND_PERIOD)),
           CASE_CURRENT_IS_OPEN_NEXT_DAY, false, true)
       )));
+    fakeOpeningPeriods.put(ROLLOVER_SCENARIO_SERVICE_POINT_ID, new OpeningDayPeriodBuilder(ROLLOVER_SCENARIO_SERVICE_POINT_ID,
+      // prev day
+      createDayPeriod(
+        createOpeningDay(Collections.singletonList(new OpeningHour(END_TIME_SECOND_PERIOD, LocalTime.MIDNIGHT.minusSeconds(1))),
+          CASE_CURRENT_IS_OPEN_PREV_DAY, false, true)
+      ),
+      // current day
+      createDayPeriod(
+        createOpeningDay(Collections.singletonList(new OpeningHour(LocalTime.MIDNIGHT, LocalTime.MIDNIGHT.plusHours(3))),
+          CASE_CURRENT_IS_OPEN_CURR_DAY, false, true)
+      ),
+      // next day
+      createDayPeriod(
+        createOpeningDay(Collections.singletonList(new OpeningHour(START_TIME_FIRST_PERIOD, END_TIME_FIRST_PERIOD)),
+          CASE_CURRENT_IS_OPEN_NEXT_DAY, false, true)
+      )));
+    fakeOpeningPeriods.put(ROLLOVER_SCENARIO_NEXT_DAY_CLOSED_SERVICE_POINT_ID, new OpeningDayPeriodBuilder(ROLLOVER_SCENARIO_NEXT_DAY_CLOSED_SERVICE_POINT_ID,
+      // prev day
+      createDayPeriod(
+        createOpeningDay(Collections.singletonList(new OpeningHour(START_TIME_FIRST_PERIOD, END_TIME_SECOND_PERIOD)),
+          CASE_CURRENT_IS_OPEN_PREV_DAY, false, true)
+      ),
+      // current day
+      createDayPeriod(
+        createOpeningDay(Collections.singletonList(new OpeningHour(END_TIME_SECOND_PERIOD, LocalTime.MIDNIGHT.minusSeconds(1))),
+          CASE_CURRENT_IS_OPEN_CURR_DAY, false, true)
+      ),
+      // next day
+      createDayPeriod(
+        createOpeningDay(Collections.singletonList(new OpeningHour(LocalTime.MIDNIGHT, LocalTime.MIDNIGHT.plusHours(3))),
+          CASE_CURRENT_IS_OPEN_IN_ONE_DAY, false, true)
+      )));
   }
 
   private static OpeningDayPeriodBuilder buildAllDayOpenCalenderResponse(LocalDate requestedDate, String servicePointId) {
@@ -177,6 +214,12 @@ public class CalendarExamples {
 
   public static CalendarBuilder getCalendarById(String serviceId, MultiMap queries) {
     switch (serviceId) {
+      case ROLLOVER_SCENARIO_SERVICE_POINT_ID:
+        return new CalendarBuilder(fakeOpeningPeriods.get(serviceId));
+
+      case ROLLOVER_SCENARIO_NEXT_DAY_CLOSED_SERVICE_POINT_ID:
+        return new CalendarBuilder(fakeOpeningPeriods.get(serviceId));
+
       case CASE_PREV_OPEN_AND_CURRENT_NEXT_CLOSED:
         return new CalendarBuilder(fakeOpeningPeriods.get(serviceId));
 
