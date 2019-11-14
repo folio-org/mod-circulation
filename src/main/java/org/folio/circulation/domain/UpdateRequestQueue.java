@@ -6,8 +6,8 @@ import static org.folio.circulation.support.Result.ofAsync;
 import static org.folio.circulation.support.Result.succeeded;
 
 import java.lang.invoke.MethodHandles;
+import java.time.Instant;
 import java.time.ZonedDateTime;
-import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
@@ -71,14 +71,20 @@ public class UpdateRequestQueue {
         firstRequest.changeStatus(RequestStatus.OPEN_AWAITING_PICKUP);
 
         if (firstRequest.getHoldShelfExpirationDate() == null) {
-          return servicePointRepository.getServicePointById(requestPickupServicePointId)
+          return servicePointRepository.getServicePointWithTenantTimeZone(requestPickupServicePointId)
               .thenApply(servicePointResult -> servicePointResult.map(firstRequest::withPickupServicePoint))
               .thenApply(requestResult -> requestResult.map(request -> {
                 ServicePoint pickupServicePoint = request.getPickupServicePoint();
                 TimePeriod holdShelfExpiryPeriod = pickupServicePoint.getHoldShelfExpiryPeriod();
+                DateTimeZone tenantTimeZone = pickupServicePoint.getTenantTimeZone();
+
+                log.debug("Using time zone {} and period {}",
+                  tenantTimeZone,
+                  holdShelfExpiryPeriod.getInterval()
+                );
 
                 ZonedDateTime holdShelfExpirationDate =
-                  calculateHoldShelfExpirationDate(holdShelfExpiryPeriod);
+                  calculateHoldShelfExpirationDate(holdShelfExpiryPeriod, tenantTimeZone);
 
                 // Need to use Joda time here since formatting/parsing using
                 // java.time has issues with the ISO-8601 format FOLIO uses,
@@ -221,20 +227,19 @@ public class UpdateRequestQueue {
     return new RequestQueue(requests);
   }
 
-  private ZonedDateTime calculateHoldShelfExpirationDate(TimePeriod holdShelfExpiryPeriod) {
-    ZonedDateTime now = ZonedDateTime.now(ClockManager.getClockManager().getClock());
+  private ZonedDateTime calculateHoldShelfExpirationDate(
+    TimePeriod holdShelfExpiryPeriod, DateTimeZone tenantTimeZone) {
+
+    ZonedDateTime now = Instant.now(ClockManager.getClockManager().getClock())
+      .atZone(tenantTimeZone.toTimeZone().toZoneId());
+
     ZonedDateTime holdShelfExpirationDate = holdShelfExpiryPeriod.getInterval()
       .addTo(now, holdShelfExpiryPeriod.getDuration());
 
-    if (shouldShiftToTheEndOfTheDay(holdShelfExpiryPeriod.getInterval())) {
+    if (DateTimeUtil.isLongTermPeriod(holdShelfExpiryPeriod.getInterval())) {
       holdShelfExpirationDate = DateTimeUtil.atEndOfTheDay(holdShelfExpirationDate);
     }
 
     return holdShelfExpirationDate;
-  }
-
-  private boolean shouldShiftToTheEndOfTheDay(ChronoUnit chronoUnit) {
-    return chronoUnit == ChronoUnit.DAYS
-      || chronoUnit == ChronoUnit.WEEKS || chronoUnit == ChronoUnit.MONTHS;
   }
 }
