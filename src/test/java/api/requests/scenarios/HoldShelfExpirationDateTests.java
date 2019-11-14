@@ -19,6 +19,7 @@ import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.time.Clock;
 import java.time.Instant;
+import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
@@ -38,6 +39,7 @@ import org.junit.runner.RunWith;
 
 import api.support.APITests;
 import api.support.builders.CheckInByBarcodeRequestBuilder;
+import api.support.fixtures.ConfigurationExample;
 import io.vertx.core.json.JsonObject;
 import junitparams.JUnitParamsRunner;
 import junitparams.Parameters;
@@ -142,6 +144,82 @@ public class HoldShelfExpirationDateTests extends APITests{
 
     assertThat("request hold shelf expiration date is " + amount + " " + interval.toString() + " in the future",
       storedRequest.getString("holdShelfExpirationDate"),
+      is(toIsoString(expectedExpirationDate)));
+  }
+
+  @Test
+  public void shouldUseTenantTimeZoneForLongTerm() throws Exception {
+    final ChronoUnit interval = ChronoUnit.DAYS;
+    final int amount = 30;
+    final ZoneId tenantTimeZone = ZoneId.of("America/New_York");
+
+    IndividualResource updateTimeZoneConfig = configClient
+      .create(ConfigurationExample.timezoneConfigurationFor(tenantTimeZone.getId()));
+    assertThat(updateTimeZoneConfig.getResponse().getStatusCode(), is(201));
+
+    final IndividualResource checkInServicePoint = servicePointsFixture.cd1();
+    final IndividualResource james = usersFixture.james();
+    final IndividualResource jessica = usersFixture.jessica();
+
+    final IndividualResource nod = itemsFixture.basedUponNod();
+
+    loansFixture.checkOutByBarcode(nod, james);
+
+    final IndividualResource request = requestsFixture.placeHoldShelfRequest(nod, jessica,
+      DateTime.now(DateTimeZone.UTC), checkInServicePoint.getId());
+
+    loansFixture.checkInByBarcode(
+      new CheckInByBarcodeRequestBuilder()
+        .forItem(nod)
+        .at(checkInServicePoint.getId()));
+
+    final JsonObject storedRequest = requestsClient.getById(request.getId()).getJson();
+
+    ZonedDateTime expectedExpirationDate = atEndOfTheDay(
+      interval.addTo(Instant.now(clock).atZone(tenantTimeZone), amount))
+      .toInstant()
+      .atZone(ZoneOffset.UTC);
+
+    assertThat(storedRequest.getString("status"), is(OPEN_AWAITING_PICKUP));
+    assertThat(storedRequest.getString("holdShelfExpirationDate"),
+      is(toIsoString(expectedExpirationDate)));
+  }
+
+  @Test
+  public void shouldUseTenantTimeZoneForShortTerm() throws Exception {
+    final ChronoUnit interval = ChronoUnit.MINUTES;
+    final int amount = 42;
+    final ZoneId tenantTimeZone = ZoneId.of("America/New_York");
+
+    IndividualResource updateTimeZoneConfig = configClient
+      .create(ConfigurationExample.timezoneConfigurationFor(tenantTimeZone.getId()));
+    assertThat(updateTimeZoneConfig.getResponse().getStatusCode(), is(201));
+
+    final IndividualResource checkInServicePoint = servicePointsFixture.cd5();
+    final IndividualResource james = usersFixture.james();
+    final IndividualResource jessica = usersFixture.jessica();
+
+    final IndividualResource nod = itemsFixture.basedUponNod();
+
+    loansFixture.checkOutByBarcode(nod, james);
+
+    final IndividualResource request = requestsFixture.placeHoldShelfRequest(nod, jessica,
+      DateTime.now(DateTimeZone.UTC), checkInServicePoint.getId());
+
+    loansFixture.checkInByBarcode(
+      new CheckInByBarcodeRequestBuilder()
+        .forItem(nod)
+        .at(checkInServicePoint.getId()));
+
+    final JsonObject storedRequest = requestsClient.getById(request.getId()).getJson();
+
+    ZonedDateTime expectedExpirationDate = interval
+      .addTo(Instant.now(clock).atZone(tenantTimeZone), amount)
+      .toInstant()
+      .atZone(ZoneOffset.UTC);
+
+    assertThat(storedRequest.getString("status"), is(OPEN_AWAITING_PICKUP));
+    assertThat(storedRequest.getString("holdShelfExpirationDate"),
       is(toIsoString(expectedExpirationDate)));
   }
 
