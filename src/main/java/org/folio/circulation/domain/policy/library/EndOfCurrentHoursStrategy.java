@@ -46,8 +46,8 @@ public class EndOfCurrentHoursStrategy extends ShortTermLoansBaseStrategy {
     LocalTime endLocalTime = libraryTimetable.getHead().getEndTime().toLocalTime();
     LocalTime startLocalTime = requestedInterval.getPrevious().getStartTime().toLocalTime();
 
-    return isDateEqualToRange(endLocalTime, LocalTime.MIDNIGHT.minusMinutes(1))
-      && isDateEqualToRange(startLocalTime, LocalTime.MIDNIGHT);
+    return isDateEqualToBoundaryValueOfDay(endLocalTime, LocalTime.MIDNIGHT.minusMinutes(1))
+      && isDateEqualToBoundaryValueOfDay(startLocalTime, LocalTime.MIDNIGHT);
   }
 
   private boolean isNotSequenceOfWorkingDays(LibraryTimetable libraryTimetable, LibraryInterval requestedInterval) {
@@ -55,7 +55,7 @@ public class EndOfCurrentHoursStrategy extends ShortTermLoansBaseStrategy {
       requestedInterval.getPrevious().getStartTime()) != Days.ZERO;
   }
 
-  private boolean isDateEqualToRange(LocalTime requestedInterval, LocalTime range) {
-    return requestedInterval.compareTo(range) == 0;
+  private boolean isDateEqualToBoundaryValueOfDay(LocalTime requestedInterval, LocalTime boundaryValueOfDay) {
+    return requestedInterval.compareTo(boundaryValueOfDay) == 0;
   }
 }
