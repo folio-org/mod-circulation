@@ -119,7 +119,7 @@ public class UpdateRequestQueue {
     return completedFuture(succeeded(request));
   }
 
-  private CompletableFuture<Result<Request>> putInDelivery(Request request) {
+  private CompletableFuture<Result<Request>> awaitDelivery(Request request) {
     request.changeStatus(RequestStatus.OPEN_AWAITING_DELIVERY);
     request.removeHoldShelfExpirationDate();
 
