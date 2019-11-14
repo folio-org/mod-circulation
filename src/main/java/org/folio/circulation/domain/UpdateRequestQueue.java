@@ -72,7 +72,7 @@ public class UpdateRequestQueue {
   private CompletableFuture<Result<RequestQueue>> updateOutstandingRequestOnCheckIn(
     RequestQueue requestQueue, String checkInServicePointId) {
 
-    Request req = requestQueue.getHighestPriorityFulfillableRequest();
+    Request requestBeingFulfilled = requestQueue.getHighestPriorityFulfillableRequest();
 
     CompletableFuture<Result<Request>> updatedReq;
 
