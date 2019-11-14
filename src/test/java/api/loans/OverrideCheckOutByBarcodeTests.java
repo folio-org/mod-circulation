@@ -163,7 +163,8 @@ public class OverrideCheckOutByBarcodeTests extends APITests {
       loanPoliciesFixture.create(loanablePolicy).getId(),
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
       noticePoliciesFixture.activeNotice().getId(),
-      overdueFinePoliciesFixture.facultyStandard().getId());
+      overdueFinePoliciesFixture.facultyStandard().getId(),
+      lostItemFeePoliciesFixture.facultyStandard().getId());
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource steve = usersFixture.steve();
@@ -337,7 +338,8 @@ public class OverrideCheckOutByBarcodeTests extends APITests {
       loanPoliciesFixture.create(notLoanablePolicy).getId(),
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
       noticePoliciesFixture.inactiveNotice().getId(),
-      overdueFinePoliciesFixture.facultyStandard().getId());
+      overdueFinePoliciesFixture.facultyStandard().getId(),
+      lostItemFeePoliciesFixture.facultyStandard().getId());
   }
 
 }

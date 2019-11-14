@@ -154,7 +154,7 @@ policies : ':' policy+
          | ':' { notifyErrorListeners("Policy missing after ':'"); }
          ;
 
-policy : POLICY_TYPE 
+policy : POLICY_TYPE
           ( NAME
           | { notifyErrorListeners("Name missing."); }
           )
@@ -164,7 +164,7 @@ CRITERIUM_LETTER: [tabcsmg];
 
 // More specific rules need to appear first to prevent a
 // general rule from swallowing a token.
-POLICY_TYPE: [lrno];
+POLICY_TYPE: [lrnoi];
 
 NAME: [0-9a-zA-Z-]+;
 

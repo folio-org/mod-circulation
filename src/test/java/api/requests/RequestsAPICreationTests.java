@@ -1588,7 +1588,8 @@ public class RequestsAPICreationTests extends APITests {
       loanPoliciesFixture.canCirculateRolling().getId(),
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
       noticePoliciesFixture.create(noticePolicy).getId(),
-      overdueFinePoliciesFixture.facultyStandard().getId());
+      overdueFinePoliciesFixture.facultyStandard().getId(),
+      lostItemFeePoliciesFixture.facultyStandard().getId());
 
 
     UUID id = UUID.randomUUID();
@@ -1646,7 +1647,8 @@ public class RequestsAPICreationTests extends APITests {
       loanPoliciesFixture.canCirculateRolling().getId(),
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
       noticePoliciesFixture.create(noticePolicy).getId(),
-      overdueFinePoliciesFixture.facultyStandard().getId());
+      overdueFinePoliciesFixture.facultyStandard().getId(),
+      lostItemFeePoliciesFixture.facultyStandard().getId());
 
 
     UUID id = UUID.randomUUID();
@@ -1730,7 +1732,8 @@ public class RequestsAPICreationTests extends APITests {
       loanPoliciesFixture.create(loanPolicy).getId(),
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
       noticePoliciesFixture.create(noticePolicy).getId(),
-      overdueFinePoliciesFixture.facultyStandard().getId());
+      overdueFinePoliciesFixture.facultyStandard().getId(),
+      lostItemFeePoliciesFixture.facultyStandard().getId());
 
     UUID id = UUID.randomUUID();
     UUID pickupServicePointId = servicePointsFixture.cd1().getId();
@@ -1818,7 +1821,8 @@ public class RequestsAPICreationTests extends APITests {
       loanPoliciesFixture.create(loanPolicy).getId(),
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
       noticePoliciesFixture.create(noticePolicy).getId(),
-      overdueFinePoliciesFixture.facultyStandard().getId());
+      overdueFinePoliciesFixture.facultyStandard().getId(),
+      lostItemFeePoliciesFixture.facultyStandard().getId());
 
     UUID id = UUID.randomUUID();
     UUID pickupServicePointId = servicePointsFixture.cd1().getId();

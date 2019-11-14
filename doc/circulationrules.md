@@ -5,17 +5,17 @@ patron group and the item's material type, loan type, and location.
 
 Example circulation rules file:
 
-    fallback-policy: l no-circulation r no-request n no-notice o overdue
-    m book : l regular-loan r no-requests n no-notices o not-overdue
-    m newspaper: l reading-room r no-requests n no-notices o overdue
-    m streaming-subscription: l policy-s r no-requests n no-notices o overdue
-        g visitor undergrad: l in-house r no-requests n no-notices o overdue
+    fallback-policy: l no-circulation r no-request n no-notice o overdue i lost-item
+    m book : l regular-loan r no-requests n no-notices o not-overdue i lost-item
+    m newspaper: l reading-room r no-requests n no-notices o overdue i lost-item
+    m streaming-subscription: l policy-s r no-requests n no-notices o overdue i lost-item
+        g visitor undergrad: l in-house r no-requests n no-notices o overdue i lost-item
 
 How does this short example work?
 
 The `fallback-policy` line defines a default policy for each of the 4 policy types.
-An `l` indicates a loan policy, `r` a request policy, `n` a notice policy, and `o` 
-an overdue fine policy'.
+An `l` indicates a loan policy, `r` a request policy, `n` a notice policy, `o` 
+an overdue fine policy' and `i` lost item fee policy.
 
 After `m` is the item's material type. Books can be loaned using the `regular-loan` loan policy,
 newspapers can be loaned for the `reading-room` only.
@@ -41,7 +41,7 @@ can contain only these characters: a-z, A-Z, 0-9 and minus "-".
 ## Policies
 
 A list of policies is appended to a criteria line after a colon, with each policy's
-type indicated by an `l`, `r`, `n`, `o`.
+type indicated by an `l`, `r`, `n`, `o`, `i`.
 They can be in any order, but must have one of each type.
 If the line matches then those policies are applied.
 
@@ -98,7 +98,7 @@ To avoid long lines one may replace the `+` by a line break followed by an inden
 
 ```
 g visitor
-    t rare: l loan-policy-a r request-policy-a n notice-policy-a o overdue
+    t rare: l loan-policy-a r request-policy-a n notice-policy-a o overdue i lost-item
 ```
 
 The second line matches when the criteria of the first and the second line matches.
@@ -106,14 +106,14 @@ The second line matches when the criteria of the first and the second line match
 Indentation allows for a nested hierarchy:
 
 ```
-g staff: l loan-policy-a r request-policy-a n notice-policy-a o overdue-a
-g visitor: l loan-policy-b r request-policy-b n notice-policy-b o overdue-b
-    m book: l loan-policy-c r request-policy-c n notice-policy-c o overdue-c
-        t rare: l loan-policy-d r request-policy-d n notice-policy-d o overdue-d
-        t course-reserve: l loan-policy-e r request-policy-e n notice-policy-e o overdue-e
-            s law-department: l loan-policy-f r request-policy-f n notice-policy-f o overdue-f
-            s math-department: l loan-policy-g r request-policy-g n notice-policy-g o overdue-g
-    s new-acquisition: l loan-policy-h r request-policy-h n notice-policy-h o overdue-h
+g staff: l loan-policy-a r request-policy-a n notice-policy-a o overdue-a i lost-item-a
+g visitor: l loan-policy-b r request-policy-b n notice-policy-b o overdue-b i lost-item-b
+    m book: l loan-policy-c r request-policy-c n notice-policy-c o overdue-c i lost-item-c
+        t rare: l loan-policy-d r request-policy-d n notice-policy-d o overdue-d i lost-item-d
+        t course-reserve: l loan-policy-e r request-policy-e n notice-policy-e o overdue-e i lost-item-e
+            s law-department: l loan-policy-f r request-policy-f n notice-policy-f o overdue-f i lost-item-f
+            s math-department: l loan-policy-g r request-policy-g n notice-policy-g o overdue-g i lost-item-g
+    s new-acquisition: l loan-policy-h r request-policy-h n notice-policy-h o overdue-h i lost-item-h
 ```
 
 A current line matches if the current line's criteria matches and for
@@ -123,36 +123,40 @@ has matching criteria.
 The hierarchy shown before contains these rules:
 
 Patron group staff (indentation level 0) gives loan-policy-a, request-policy-a,
- notice-policy-a, and overdue-a.
+ notice-policy-a, overdue-a and lost-item-a.
 (This is true for any material type, any loan type and any shelving location.)
 
 Patron group visitor (indentation level 0) and shelving location new-acquisition
-(indentation level 1) gives loan-policy-h, request-policy-h, notice-policy-h and overdue-h.
+(indentation level 1) gives loan-policy-h, request-policy-h, notice-policy-h, overdue-h
+and i lost-item-h.
 (This is true for any loan type and any material type.)
 
 Patron group visitor (indentation level 0) and material type book (indentation level 1)
 and loan type course-reserve (indentation level 2) and shelving location math-department
-(indentation level 3) gives loan-policy-g, request-policy-g, notice-policy-g and overdue-g.
+(indentation level 3) gives loan-policy-g, request-policy-g, notice-policy-g, overdue-g
+and i lost-item-g.
 
 Patron group visitor (indentation level 0) and material type book (indentation level 1)
 and loan type course-reserve (indentation level 2) and shelving location law-department
-(indentation level 3) gives loan-policy-f, request-policy-f, notice-policy-f and overdue-f.
+(indentation level 3) gives loan-policy-f, request-policy-f, notice-policy-f, overdue-f
+and i lost-item-f.
 
 Patron group visitor (indentation level 0) and material type book (indentation level 1)
 and loan type course-reserve (indentation level 2) and any shelving location different from
-math-department and law-department gives loan-policy-e, request-policy-e, notice-policy-e and overdue-e.
+math-department and law-department gives loan-policy-e, request-policy-e, notice-policy-e, overdue-e
+and i lost-item-e.
 
 Patron group visitor (indentation level 0) and material type book (indentation level 1)
-and loan type rare (indentation level 2) gives loan-policy-d, request-policy-d, notice-policy-d
-and overdue-d.
+and loan type rare (indentation level 2) gives loan-policy-d, request-policy-d, notice-policy-d,
+overdue-d and i lost-item-d.
 (This is true for any shelving location.)
 
 Patron group visitor (indentation level 0) and material type book (indentation level 1)
-and any loan type different from rare and course-reserve gives loan-policy-c, request-policy-c, notice-policy-c
-and overdue-c. (This is true for any shelving location.)
+and any loan type different from rare and course-reserve gives loan-policy-c, request-policy-c, notice-policy-c,
+overdue-c and i lost-item-c. (This is true for any shelving location.)
 
 Patron group visitor (indentation level 0) and any material type different from book and globe
-gives loan-policy-b, request-policy-b, notice-policy-b, and overdue-b. (This is true for any loan type
+gives loan-policy-b, request-policy-b, notice-policy-b, overdue-b and i lost-item-b. (This is true for any loan type
 and any shelving location.)
 
 ## Multiple matching rules
@@ -193,10 +197,10 @@ Example a:
 
 ```
 priority: criterium(t, s, c, b, a, m, g), number-of-criteria, last-line
-fallback-policy: l no-circulation r no-request n no-notice o overdue
-g visitor: l loan-policy-a r request-policy-a n notice-policy-a o overdue
-t rare: l loan-policy-c r request-policy-c n notice-policy-c o overdue
-m book: l loan-policy-e r request-policy-e n notice-policy-e o overdue
+fallback-policy: l no-circulation r no-request n no-notice o overdue i lost-item
+g visitor: l loan-policy-a r request-policy-a n notice-policy-a o overdue i lost-item
+t rare: l loan-policy-c r request-policy-c n notice-policy-c o overdue i lost-item
+m book: l loan-policy-e r request-policy-e n notice-policy-e o overdue i lost-item
 ```
 
 A loan for patron group `visitor` and loan type `rare` and material type `book` matches
@@ -207,12 +211,12 @@ Example b:
 
 ```
 priority: criterium(t, s, c, b, a, m, g), number-of-criteria, last-line
-fallback-policy: l no-circulation r no-request n no-notice o overdue
-g visitor:l loan-policy-a r request-policy-a n notice-policy-a o overdue
-    t rare: l loan-policy-b r request-policy-b n notice-policy-b o overdue
-t rare: l loan-policy-c r request-policy-c n notice-policy-c o overdue
-    m book: l loan-policy-d r request-policy-d n notice-policy-d o overdue
-m book: l loan-policy-e r request-policy-e n notice-policy-e o overdue
+fallback-policy: l no-circulation r no-request n no-notice o overdue i lost-item
+g visitor:l loan-policy-a r request-policy-a n notice-policy-a o overdue i lost-item
+    t rare: l loan-policy-b r request-policy-b n notice-policy-b o overdue i lost-item
+t rare: l loan-policy-c r request-policy-c n notice-policy-c o overdue i lost-item
+    m book: l loan-policy-d r request-policy-d n notice-policy-d o overdue i lost-item
+m book: l loan-policy-e r request-policy-e n notice-policy-e o overdue i lost-item
 ```
 
 We assign priority numbers to the criterium types:
@@ -223,12 +227,12 @@ all five rules and each rule has this priority:
 
 ```
 priority: criterium(t, s, c, b, a, m, g), number-of-criteria, last-line
-fallback-policy: l no-circulation r no-request n no-notice o overdue
-g visitor: max(g=1)=1: l loan-policy-a r request-policy-a n notice-policy-a o overdue o overdue
-g visitor + t rare: max(g=1, t=7)=7: l loan-policy-b r request-policy-b n notice-policy-b o overdue
-t rare: max(t=7)=7: l loan-policy-c r request-policy-c n notice-policy-c o overdue
-t rare + m book: max(t=7, m=2)=7: l loan-policy-d r request-policy-d n notice-policy-d o overdue
-m book: max(m=2)=2: l loan-policy-e r request-policy-e n notice-policy-e o overdue
+fallback-policy: l no-circulation r no-request n no-notice o overdue i lost-item
+g visitor: max(g=1)=1: l loan-policy-a r request-policy-a n notice-policy-a o overdue o overdue i lost-item
+g visitor + t rare: max(g=1, t=7)=7: l loan-policy-b r request-policy-b n notice-policy-b o overdue i lost-item
+t rare: max(t=7)=7: l loan-policy-c r request-policy-c n notice-policy-c o overdue i lost-item
+t rare + m book: max(t=7, m=2)=7: l loan-policy-d r request-policy-d n notice-policy-d o overdue i lost-item
+m book: max(m=2)=2: l loan-policy-e r request-policy-e n notice-policy-e o overdue i lost-item
 ```
 
 The three rules with policy-b, policy-c and policy-d have the highest criterium type priority of 7.
@@ -244,10 +248,10 @@ Any number of location criterium types (`a`, `b`, `c`, `s`) count as one.
 
 ```
 priority: criterium(t, s, c, b, a, m, g), number-of-criteria, last-line
-fallback-policy: l no-circulation r no-request n no-notice o overdue
-g visitor + t rare: l loan-policy-b r request-policy-b n notice-policy-b o overdue-b
-t rare: l loan-policy-c r request-policy-c n notice-policy-c o overdue-c
-t rare + m book: l loan-policy-d r request-policy-d n notice-policy-d o overdue-d
+fallback-policy: l no-circulation r no-request n no-notice o overdue i lost-item
+g visitor + t rare: l loan-policy-b r request-policy-b n notice-policy-b o overdue-b i lost-item-b
+t rare: l loan-policy-c r request-policy-c n notice-policy-c o overdue-c i lost-item-c
+t rare + m book: l loan-policy-d r request-policy-d n notice-policy-d o overdue-d i lost-item-d
 ```
 
 A loan for material type `book` and loan type `rare` and patron group `visitor` matches
@@ -264,11 +268,11 @@ priority but without restricting to some names. Example:
 
 ```
 priority: criterium(t, s, c, b, a, m, g), number-of-criteria, last-line
-fallback-policy: l no-circulation r no-request n no-notice o overdue
-g visitor + t rare: l loan-policy-b r request-policy-b n notice-policy-b o overdue
-t rare: l loan-policy-c r request-policy-c n notice-policy-c o overdue
-t rare + m book: l loan-policy-d r request-policy-d n notice-policy-d o overdue
-g all + t all + s course-reserve: l loan-policy-e r request-policy-e n notice-policy-e o overdue
+fallback-policy: l no-circulation r no-request n no-notice o overdue i lost-item
+g visitor + t rare: l loan-policy-b r request-policy-b n notice-policy-b o overdue i lost-item
+t rare: l loan-policy-c r request-policy-c n notice-policy-c o overdue i lost-item
+t rare + m book: l loan-policy-d r request-policy-d n notice-policy-d o overdue i lost-item
+g all + t all + s course-reserve: l loan-policy-e r request-policy-e n notice-policy-e o overdue i lost-item
 ```
 
 The loan-policy-e rule has priority over the other three rules because it has a `t` criterium
@@ -294,7 +298,7 @@ The line with loanpolicy-d has higher priority because it is last (it has a high
 ## Fallback policy
 
 There always must be a line with a set of three fallback policies, one for
-each type like `fallback-policy: l no-circulation r no-request n no-notice o overdue`.
+each type like `fallback-policy: l no-circulation r no-request n no-notice o overdue i lost-item`.
 It must be after the priority line and before the first rule.
 
 For `priority: first-line` it must be after the last rule.
