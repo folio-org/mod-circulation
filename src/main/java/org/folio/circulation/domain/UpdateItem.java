@@ -31,23 +31,16 @@ public class UpdateItem {
   }
 
   public CompletableFuture<Result<Item>> onCheckIn(Item item, RequestQueue requestQueue,
-      UUID checkInServicePointId, UUID loggedInUserId, DateTime dateTime) {
+      UUID checkInServicePointId, String loggedInUserId, DateTime dateTime) {
     return changeItemOnCheckIn(item, requestQueue, checkInServicePointId)
       .next(addLastCheckInProperties(checkInServicePointId, loggedInUserId, dateTime))
       .after(this::storeItem);
   }
 
   private Function<Item, Result<Item>> addLastCheckInProperties(
-      UUID checkInServicePointId, UUID loggedInUserId, DateTime dateTime) {
-    return itemObj -> {
-
-      JsonObject lastCheckInObj = new JsonObject();
-      write(lastCheckInObj, "staffMemberId", loggedInUserId);
-      write(lastCheckInObj, "servicePointId", checkInServicePointId);
-      write(lastCheckInObj, "dateTime", dateTime);
-
-      return succeeded(itemObj.withLastCheckIn(lastCheckInObj));
-    };
+      UUID checkInServicePointId, String loggedInUserId, DateTime dateTime) {
+    return item -> succeeded(item.withLastCheckIn(
+      new LastCheckIn(dateTime, checkInServicePointId, loggedInUserId)));
   }
 
   private Result<Item> changeItemOnCheckIn(

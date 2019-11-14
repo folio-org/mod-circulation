@@ -424,9 +424,9 @@ public class Item {
       newLoanTypeRepresentation);
   }
 
-  public Item withLastCheckIn(JsonObject lastCheckInRepresentation) {
+  public Item withLastCheckIn(LastCheckIn lastCheckIn) {
     Item item = new Item(
-      itemRepresentation.put(ItemProperties.LASTCHECKIN, lastCheckInRepresentation),
+      itemRepresentation.put(ItemProperties.LASTCHECKIN, lastCheckIn.toJson()),
       holdingRepresentation,
       instanceRepresentation,
       location,

@@ -22,7 +22,7 @@ public class CheckInProcessRecords {
   private final RequestQueue requestQueue;
   private final ServicePoint checkInServicePoint;
   private final Request highestPriorityFulfillableRequest;
-  private final UUID loggedInUserId;
+  private final String loggedInUserId;
 
   public CheckInProcessRecords(CheckInByBarcodeRequest checkInRequest) {
     this(checkInRequest, null, null, null, null, null, null);
@@ -35,7 +35,7 @@ public class CheckInProcessRecords {
     RequestQueue requestQueue,
     ServicePoint checkInServicePoint,
     Request highestPriorityFulfillableRequest,
-    UUID loggedInUserId) {
+    String loggedInUserId) {
 
     this.checkInRequest = checkInRequest;
     this.item = item;
@@ -72,7 +72,7 @@ public class CheckInProcessRecords {
       this.requestQueue,
       this.checkInServicePoint,
       this.highestPriorityFulfillableRequest,
-        this.loggedInUserId);
+      loggedInUserId);
   }
 
   public CheckInProcessRecords withRequestQueue(RequestQueue requestQueue) {
@@ -87,7 +87,7 @@ public class CheckInProcessRecords {
       requestQueue,
       this.checkInServicePoint,
       firstRequest,
-    this.loggedInUserId);
+      loggedInUserId);
   }
 
   public CheckInProcessRecords withCheckInServicePoint(ServicePoint checkInServicePoint) {
@@ -97,7 +97,8 @@ public class CheckInProcessRecords {
       this.loan,
       this.requestQueue,
       checkInServicePoint,
-      this.highestPriorityFulfillableRequest, loggedInUserId);
+      this.highestPriorityFulfillableRequest,
+      loggedInUserId);
   }
 
   public CheckInProcessRecords withHighestPriorityFulfillableRequest(Request request) {
@@ -107,7 +108,8 @@ public class CheckInProcessRecords {
       this.loan,
       this.requestQueue,
       this.checkInServicePoint,
-      request, loggedInUserId);
+      request,
+      loggedInUserId);
   }
 
   public CheckInProcessRecords withLoggedInUserId(String userId) {
@@ -118,7 +120,7 @@ public class CheckInProcessRecords {
         this.requestQueue,
         this.checkInServicePoint,
         this.highestPriorityFulfillableRequest,
-        UUID.fromString(userId));
+        userId);
   }
 
   public String getCheckInRequestBarcode() {
@@ -153,7 +155,7 @@ public class CheckInProcessRecords {
     return highestPriorityFulfillableRequest;
   }
 
-  public UUID getLoggedInUserId() {
+  public String getLoggedInUserId() {
     return loggedInUserId;
   }
 }

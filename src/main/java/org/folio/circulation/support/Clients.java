@@ -511,5 +511,4 @@ public class Clients {
     throws MalformedURLException {
     return getCollectionResourceClient(client, context, "/patron-action-session-storage");
   }
-
 }

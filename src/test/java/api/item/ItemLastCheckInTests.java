@@ -1,22 +1,22 @@
 package api.item;
 
-import api.support.APITestContext;
-import api.support.APITests;
-import io.vertx.core.json.JsonObject;
+import static org.hamcrest.CoreMatchers.is;
+import static org.junit.Assert.assertThat;
+
+
+import java.net.MalformedURLException;
 import java.util.UUID;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeoutException;
+
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.junit.Test;
 
-import java.net.MalformedURLException;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeoutException;
-
-import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.notNullValue;
-import static org.junit.Assert.assertThat;
+import api.support.APITestContext;
+import api.support.APITests;
+import io.vertx.core.json.JsonObject;
 
 public class ItemLastCheckInTests extends APITests {
 
@@ -27,17 +27,17 @@ public class ItemLastCheckInTests extends APITests {
     IndividualResource item = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource user = usersFixture.jessica();
     UUID servicePointId = servicePointsFixture.cd1().getId();
-    DateTime now = DateTime.now();
+    DateTime checkInDate = DateTime.now();
 
     loansFixture.checkOutByBarcode(item, user, new DateTime(DateTimeZone.UTC));
 
-    loansFixture.checkInByBarcode(item, now, servicePointId);
+    loansFixture.checkInByBarcode(item, checkInDate, servicePointId);
     JsonObject actualItem = itemsClient.get(item.getId()).getJson();
 
     JsonObject lastCheckIn = actualItem.getJsonObject("lastCheckIn");
 
-    assertThat(lastCheckIn.getString("dateTime"), is(now.toString()));
+    assertThat(lastCheckIn.getString("dateTime"), is(checkInDate.toString()));
     assertThat(lastCheckIn.getString("servicePointId"), is(servicePointId.toString()));
-    assertThat(lastCheckIn.getString("staffMemberId"), is(APITestContext.USER_ID));
+    assertThat(lastCheckIn.getString("staffMemberId"), is(APITestContext.getUserId()));
   }
 }
