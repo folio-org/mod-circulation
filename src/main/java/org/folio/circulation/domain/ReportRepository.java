@@ -1,15 +1,15 @@
 package org.folio.circulation.domain;
 
-import org.folio.circulation.support.Clients;
-import org.folio.circulation.support.CollectionResourceClient;
-import org.folio.circulation.support.CqlQuery;
-import org.folio.circulation.support.Result;
+import static org.folio.circulation.support.CqlQuery.exactMatch;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
-import static org.folio.circulation.support.CqlQuery.exactMatch;
+import org.folio.circulation.support.Clients;
+import org.folio.circulation.support.CollectionResourceClient;
+import org.folio.circulation.support.CqlQuery;
+import org.folio.circulation.support.Result;
 
 public class ReportRepository {
 

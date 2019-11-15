@@ -1,20 +1,21 @@
 package org.folio.circulation.domain.representations;
 
+import static org.folio.circulation.support.JsonPropertyWriter.write;
+import static org.folio.circulation.support.JsonPropertyWriter.writeNamedObject;
+
+import java.util.Optional;
+
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
-import org.folio.circulation.domain.Item;
+
 import org.folio.circulation.domain.InTransitReportEntry;
+import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.Location;
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.ServicePoint;
 import org.folio.circulation.domain.User;
-
-import java.util.Optional;
-
-import static org.folio.circulation.support.JsonPropertyWriter.write;
-import static org.folio.circulation.support.JsonPropertyWriter.writeNamedObject;
 
 public class ItemReportRepresentation {
 

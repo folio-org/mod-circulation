@@ -8,6 +8,13 @@ import static org.folio.circulation.support.CqlSortBy.ascending;
 import static org.folio.circulation.support.Result.of;
 import static org.folio.circulation.support.Result.succeeded;
 
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collector;
+import java.util.stream.Collectors;
+
 import io.vertx.core.http.HttpClient;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
@@ -21,7 +28,6 @@ import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.PatronGroupRepository;
 import org.folio.circulation.domain.ReportRepository;
 import org.folio.circulation.domain.Request;
-import org.folio.circulation.domain.RequestRepository;
 import org.folio.circulation.domain.RequestStatus;
 import org.folio.circulation.domain.ServicePointRepository;
 import org.folio.circulation.domain.UserRepository;
@@ -36,13 +42,6 @@ import org.folio.circulation.support.Result;
 import org.folio.circulation.support.RouteRegistration;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.server.WebContext;
-
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.concurrent.CompletableFuture;
-import java.util.stream.Collector;
-import java.util.stream.Collectors;
 
 
 public class ItemsInTransitResource extends Resource {

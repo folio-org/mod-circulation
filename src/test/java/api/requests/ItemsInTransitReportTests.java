@@ -1,17 +1,10 @@
 package api.requests;
 
-import api.support.APITests;
-import api.support.builders.CheckInByBarcodeRequestBuilder;
-import api.support.builders.RequestBuilder;
-import api.support.http.InventoryItemResource;
-import api.support.http.ResourceClient;
-import io.vertx.core.json.JsonArray;
-import io.vertx.core.json.JsonObject;
-import org.folio.circulation.domain.ItemStatus;
-import org.folio.circulation.support.http.client.IndividualResource;
-import org.joda.time.DateTime;
-import org.joda.time.LocalDate;
-import org.junit.Test;
+import static api.support.JsonCollectionAssistant.getRecordById;
+import static org.hamcrest.core.Is.is;
+import static org.hamcrest.junit.MatcherAssert.assertThat;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 import java.net.MalformedURLException;
 import java.util.Arrays;
@@ -21,11 +14,19 @@ import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
-import static api.support.JsonCollectionAssistant.getRecordById;
-import static org.hamcrest.core.Is.is;
-import static org.hamcrest.junit.MatcherAssert.assertThat;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import api.support.APITests;
+import api.support.builders.CheckInByBarcodeRequestBuilder;
+import api.support.builders.RequestBuilder;
+import api.support.http.InventoryItemResource;
+import api.support.http.ResourceClient;
+import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
+import org.joda.time.DateTime;
+import org.joda.time.LocalDate;
+import org.junit.Test;
+
+import org.folio.circulation.domain.ItemStatus;
+import org.folio.circulation.support.http.client.IndividualResource;
 
 public class ItemsInTransitReportTests extends APITests {
 
