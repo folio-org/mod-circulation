@@ -23,10 +23,12 @@ public enum RequestStatus {
   CLOSED_UNFILLED("Closed - Unfilled"),
   CLOSED_PICKUP_EXPIRED("Closed - Pickup expired");
 
-  private static final EnumSet<RequestStatus> VALID_STATUSES =
-    EnumSet.range(OPEN_NOT_YET_FILLED, CLOSED_PICKUP_EXPIRED);
-  private static final EnumSet<RequestStatus> OPEN_STATUSES =
-    EnumSet.range(OPEN_NOT_YET_FILLED, OPEN_AWAITING_DELIVERY);
+  private static final EnumSet<RequestStatus> VALID_STATUSES = EnumSet.of(
+    OPEN_NOT_YET_FILLED, OPEN_AWAITING_PICKUP, OPEN_IN_TRANSIT, OPEN_AWAITING_DELIVERY,
+    CLOSED_FILLED, CLOSED_CANCELLED, CLOSED_UNFILLED, CLOSED_PICKUP_EXPIRED);
+
+  private static final EnumSet<RequestStatus> OPEN_STATUSES = EnumSet.of(
+    OPEN_NOT_YET_FILLED, OPEN_AWAITING_PICKUP, OPEN_IN_TRANSIT, OPEN_AWAITING_DELIVERY);
 
   private final String value;
 
