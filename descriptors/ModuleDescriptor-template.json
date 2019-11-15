@@ -33,16 +33,7 @@
             "circulation.inventory.items-in-transit-report.get"
           ],
           "modulePermissions": [
-            "inventory-storage.items.item.get",
-            "inventory-storage.locations.item.get",
-            "inventory-storage.location-units.institutions.item.get",
-            "inventory-storage.location-units.campuses.item.get",
-            "inventory-storage.location-units.libraries.item.get",
-            "inventory-storage.material-types.item.get",
-            "inventory-storage.holdings.item.get",
-            "inventory-storage.loan-types.item.get",
-            "inventory-storage.service-points.item.get",
-            "inventory-storage.instances.item.get"
+            "modperms.inventory.items-in-transit-report.get"
           ]
         }
       ]
@@ -1758,6 +1749,35 @@
         "circulation-storage.patron-notice-policies.item.get",
         "scheduled-notice-storage.scheduled-notices.collection.delete",
         "scheduled-notice-storage.scheduled-notices.item.post"
+      ],
+      "visible": false
+    },
+    {
+      "permissionName": "modperms.inventory.items-in-transit-report.get",
+      "displayName": "module permissions for one op",
+      "description": "to reduce X-Okapi-Token size",
+      "subPermissions": [
+        "inventory-storage.items.item.get",
+        "inventory-storage.items.collection.get",
+        "inventory-storage.holdings.collection.get",
+        "inventory-storage.holdings.item.get",
+        "inventory-storage.locations.item.get",
+        "inventory-storage.instances.collection.get",
+        "inventory-storage.instances.item.get",
+        "inventory-storage.service-points.collection.get",
+        "inventory-storage.service-points.item.get",
+        "inventory-storage.material-types.collection.get",
+        "inventory-storage.material-types.item.get",
+        "circulation-storage.requests.item.get",
+        "circulation-storage.requests.collection.get",
+        "inventory-storage.locations.item.get",
+        "inventory-storage.locations.collection.get",
+        "inventory-storage.location-units.institutions.item.get",
+        "inventory-storage.location-units.campuses.item.get",
+        "inventory-storage.location-units.libraries.item.get",
+        "inventory-storage.location-units.libraries.collection.get",
+        "circulation-storage.loans.collection.get",
+        "circulation-storage.loans.item.get"
       ],
       "visible": false
     }
