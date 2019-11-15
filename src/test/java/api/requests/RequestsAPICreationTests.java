@@ -472,7 +472,9 @@ public class RequestsAPICreationTests extends APITests {
       response, hasStatus(HTTP_BAD_REQUEST));
 
     assertThat(response.getBody(),
-      containsString("Request status must be one of the following:"));
+      is("Request status must be one of the following: \"Open - Not yet filled\", " +
+        "\"Open - Awaiting pickup\", \"Open - In transit\", \"Open - Awaiting delivery\", " +
+        "\"Closed - Filled\", \"Closed - Cancelled\", \"Closed - Unfilled\", \"Closed - Pickup expired\""));
   }
 
   //TODO: Replace with validation error message
