@@ -1,14 +1,16 @@
 package api.loans;
 
 import static api.support.fixtures.CalendarExamples.CASE_CURRENT_IS_OPEN;
+import static api.support.fixtures.CalendarExamples.CASE_CURRENT_IS_OPEN_CURR_DAY;
 import static api.support.fixtures.CalendarExamples.CASE_CURRENT_IS_OPEN_PREV_DAY;
 import static api.support.fixtures.CalendarExamples.CASE_FRI_SAT_MON_DAY_ALL_PREV_DATE;
 import static api.support.fixtures.CalendarExamples.CASE_FRI_SAT_MON_DAY_ALL_SERVICE_POINT_ID;
 import static api.support.fixtures.CalendarExamples.CASE_FRI_SAT_MON_SERVICE_POINT_ID;
 import static api.support.fixtures.CalendarExamples.CASE_FRI_SAT_MON_SERVICE_POINT_PREV_DAY;
 import static api.support.fixtures.CalendarExamples.END_TIME_FIRST_PERIOD;
+import static api.support.fixtures.CalendarExamples.ROLLOVER_SCENARIO_NEXT_DAY_CLOSED_SERVICE_POINT_ID;
+import static api.support.fixtures.CalendarExamples.ROLLOVER_SCENARIO_SERVICE_POINT_ID;
 import static org.hamcrest.CoreMatchers.containsString;
-import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 import java.net.MalformedURLException;
@@ -81,6 +83,38 @@ public class CheckOutCalculateDueDateShortTermTests extends APITests {
       .toDateTime(LocalTime.MIDNIGHT, DateTimeZone.UTC);
 
     checkOffsetTime(loanDate, expectedDueDate, CASE_FRI_SAT_MON_DAY_ALL_SERVICE_POINT_ID, INTERVAL_HOURS, duration);
+  }
+
+  @Test
+  public void testMoveToTheEndOfCurrentServicePointHoursRolloverScenario() throws Exception {
+    int duration = 18;
+
+    Response response = configClient.create(ConfigurationExample.utcTimezoneConfiguration())
+      .getResponse();
+    assertThat(response.getBody(), containsString(DateTimeZone.UTC.toString()));
+
+    DateTime loanDate = CASE_CURRENT_IS_OPEN_CURR_DAY.toDateTime(TEST_TIME_MORNING, DateTimeZone.UTC);
+
+    DateTime expectedDueDate = CASE_CURRENT_IS_OPEN_CURR_DAY
+      .toDateTime(LocalTime.MIDNIGHT.plusHours(3), DateTimeZone.UTC);
+
+    checkOffsetTime(loanDate, expectedDueDate, ROLLOVER_SCENARIO_SERVICE_POINT_ID, INTERVAL_HOURS, duration);
+  }
+
+  @Test
+  public void testMoveToTheEndOfCurrentServicePointHoursNextDayIsClosed() throws Exception {
+    int duration = 1;
+
+    Response response = configClient.create(ConfigurationExample.utcTimezoneConfiguration())
+      .getResponse();
+    assertThat(response.getBody(), containsString(DateTimeZone.UTC.toString()));
+
+    DateTime loanDate = CASE_CURRENT_IS_OPEN_CURR_DAY.toDateTime(TEST_TIME_MORNING, DateTimeZone.UTC);
+
+    DateTime expectedDueDate = CASE_CURRENT_IS_OPEN_CURR_DAY
+      .toDateTime(LocalTime.MIDNIGHT.minusMinutes(1), DateTimeZone.UTC);
+
+    checkOffsetTime(loanDate, expectedDueDate, ROLLOVER_SCENARIO_NEXT_DAY_CLOSED_SERVICE_POINT_ID, INTERVAL_HOURS, duration);
   }
 
   /**
@@ -185,7 +219,8 @@ public class CheckOutCalculateDueDateShortTermTests extends APITests {
     UUID requestPolicyId = requestPoliciesFixture.allowAllRequestPolicy().getId();
     UUID noticePolicyId = noticePoliciesFixture.activeNotice().getId();
     UUID overdueFinePolicyId = overdueFinePoliciesFixture.facultyStandard().getId();
-    useFallbackPolicies(loanPolicy.getId(), requestPolicyId, noticePolicyId, overdueFinePolicyId);
+    UUID lostItemFeePolicyId = lostItemFeePoliciesFixture.facultyStandard().getId();
+    useFallbackPolicies(loanPolicy.getId(), requestPolicyId, noticePolicyId, overdueFinePolicyId, lostItemFeePolicyId);
 
     return loanPolicy;
   }

@@ -514,7 +514,8 @@ public class RequestsAPIUpdatingTests extends APITests {
       loanPoliciesFixture.canCirculateRolling().getId(),
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
       noticePoliciesFixture.create(noticePolicy).getId(),
-      overdueFinePoliciesFixture.facultyStandard().getId());
+      overdueFinePoliciesFixture.facultyStandard().getId(),
+      lostItemFeePoliciesFixture.facultyStandard().getId());
 
     final InventoryItemResource temeraire = itemsFixture.basedUponTemeraire();
     final IndividualResource requester = usersFixture.steve();
@@ -575,7 +576,8 @@ public class RequestsAPIUpdatingTests extends APITests {
       loanPoliciesFixture.canCirculateRolling().getId(),
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
       noticePoliciesFixture.create(noticePolicy).getId(),
-      overdueFinePoliciesFixture.facultyStandard().getId());
+      overdueFinePoliciesFixture.facultyStandard().getId(),
+      lostItemFeePoliciesFixture.facultyStandard().getId());
 
     final InventoryItemResource temeraire = itemsFixture.basedUponTemeraire();
     final IndividualResource requester = usersFixture.steve();

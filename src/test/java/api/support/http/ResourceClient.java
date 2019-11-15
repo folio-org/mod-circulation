@@ -100,6 +100,11 @@ public class ResourceClient {
       "overdue fines policies", "overdueFinePolicies");
   }
 
+  public static ResourceClient forLostItemFeePolicies(OkapiHttpClient client) {
+    return new ResourceClient(client, InterfaceUrls::lostItemFeesPoliciesStorageUrl,
+      "lost item fee policies", "lostItemFeePolicies");
+  }
+
   public static ResourceClient forFixedDueDateSchedules(OkapiHttpClient client) {
     return new ResourceClient(client, InterfaceUrls::fixedDueDateSchedulesStorageUrl,
       "fixed due date schedules", "fixedDueDateSchedules");

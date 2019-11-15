@@ -62,9 +62,6 @@ public class CheckOutByBarcodeTests extends APITests {
     ExecutionException {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
-    InventoryItemResource smallAngryPlanetRsrc = (InventoryItemResource)smallAngryPlanet;
-    JsonObject holding = smallAngryPlanetRsrc.getHoldingsRecord().getJson();
-
     final IndividualResource steve = usersFixture.steve();
 
     final DateTime loanDate = new DateTime(2018, 3, 18, 11, 43, 54, DateTimeZone.UTC);
@@ -87,9 +84,6 @@ public class CheckOutByBarcodeTests extends APITests {
 
     assertThat("item ID should match barcode",
       loan.getString("itemId"), is(smallAngryPlanet.getId()));
-
-    assertThat("itemEffectiveLocationIdAtCheckOut should match permanent location ID",
-      loan.getString("itemEffectiveLocationIdAtCheckOut"), is(holding.getString("permanentLocationId")));
 
     assertThat("status should be open",
       loan.getJsonObject("status").getString("name"), is("Open"));
@@ -232,7 +226,8 @@ public class CheckOutByBarcodeTests extends APITests {
       dueDateLimitedPolicyId,
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
       noticePoliciesFixture.activeNotice().getId(),
-      overdueFinePoliciesFixture.facultyStandard().getId()
+      overdueFinePoliciesFixture.facultyStandard().getId(),
+      lostItemFeePoliciesFixture.facultyStandard().getId()
     );
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
@@ -516,7 +511,8 @@ public class CheckOutByBarcodeTests extends APITests {
       nonExistentloanPolicyId,
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
       noticePoliciesFixture.activeNotice().getId(),
-      overdueFinePoliciesFixture.facultyStandard().getId()
+      overdueFinePoliciesFixture.facultyStandard().getId(),
+      lostItemFeePoliciesFixture.facultyStandard().getId()
     );
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
@@ -901,7 +897,8 @@ public class CheckOutByBarcodeTests extends APITests {
       notLoanablePolicy.getId(),
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
       noticePoliciesFixture.inactiveNotice().getId(),
-      overdueFinePoliciesFixture.facultyStandard().getId());
+      overdueFinePoliciesFixture.facultyStandard().getId(),
+      lostItemFeePoliciesFixture.facultyStandard().getId());
 
     InventoryItemResource nod = itemsFixture.basedUponNod();
     IndividualResource steve = usersFixture.steve();
