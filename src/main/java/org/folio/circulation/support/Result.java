@@ -377,4 +377,21 @@ public interface Result<T> {
       ? value()
       : other;
   }
+
+  /**
+   * Returns a BiFunction that combines two results and executes another BiFunction
+   * on un-flatted values.
+   *
+   * @param resultValuesHandler - Handler to handle result values.
+   * @param <T>                 - First result type.
+   * @param <U>                 - Second result type.
+   * @param <R>                 - Resulting type.
+   * @return A BiFunction that combines two results and executes a resultValuesHandler on un-flatted values.
+   */
+  static <T, U, R> BiFunction<Result<T>, Result<U>, Result<R>> combined(
+    BiFunction<T, U, Result<R>> resultValuesHandler) {
+
+    return (firstResult, secondResult) ->
+      firstResult.combineToResult(secondResult, resultValuesHandler);
+  }
 }

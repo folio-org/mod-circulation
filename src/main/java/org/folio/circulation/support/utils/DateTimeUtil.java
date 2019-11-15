@@ -2,7 +2,6 @@ package org.folio.circulation.support.utils;
 
 
 import java.time.ZonedDateTime;
-import java.time.temporal.ChronoUnit;
 
 public class DateTimeUtil {
 
@@ -15,10 +14,5 @@ public class DateTimeUtil {
       .withHour(23)
       .withMinute(59)
       .withSecond(59);
-  }
-
-  public static boolean isLongTermPeriod(ChronoUnit chronoUnit) {
-    return chronoUnit == ChronoUnit.DAYS
-      || chronoUnit == ChronoUnit.WEEKS || chronoUnit == ChronoUnit.MONTHS;
   }
 }
