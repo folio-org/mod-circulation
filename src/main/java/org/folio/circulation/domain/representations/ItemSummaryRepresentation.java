@@ -89,25 +89,15 @@ public class ItemSummaryRepresentation {
     return itemSummary;
   }
 
+
   public JsonObject createItemStorageRepresentation(Item item) {
-    JsonObject itemSummary = createItemSummary(item);
-    JsonObject itemJson = item.getItem();
 
-    if (itemJson != null) {
-      populateProperty(itemSummary, itemJson, MATERIAL_TYPE_ID);
-      populateProperty(itemSummary, itemJson, PERMANENT_LOAN_TYPE_ID);
-    }
-
+    JsonObject summary = item.getItem().copy();
     if (item.getLastCheckIn() != null) {
-      write(itemSummary, LASTCHECKIN, item.getLastCheckIn().toJson());
+      write(summary, LASTCHECKIN, item.getLastCheckIn().toJson());
     }
 
-    return itemSummary;
-  }
-
-  private void populateProperty(JsonObject to, JsonObject from,
-    String propName) {
-    write(to, propName, getProperty(from, propName));
+    return summary;
   }
 
 }
