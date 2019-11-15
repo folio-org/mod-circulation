@@ -129,7 +129,7 @@ public class SingleOpenDeliveryRequestTests extends APITests {
   }
 
   @Test
-  public void itemWithCanceledRequestBecomesAvailable() throws InterruptedException,
+  public void itemBecomesAvailableWhenRequestIsCancelled() throws InterruptedException,
     MalformedURLException,
     TimeoutException,
     ExecutionException {
