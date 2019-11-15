@@ -76,21 +76,21 @@ public class UpdateRequestQueue {
 
     CompletableFuture<Result<Request>> updatedReq;
 
-    switch (req.getFulfilmentPreference()) {
+    switch (requestBeingFulfilled.getFulfilmentPreference()) {
       case HOLD_SHELF:
-        if (checkInServicePointId.equalsIgnoreCase(req.getPickupServicePointId())) {
-          updatedReq = putInPickup(req);
+        if (checkInServicePointId.equalsIgnoreCase(requestBeingFulfilled.getPickupServicePointId())) {
+          updatedReq = awaitPickup(requestBeingFulfilled);
         } else {
-          updatedReq = putInTransit(req);
+          updatedReq = putInTransit(requestBeingFulfilled);
         }
 
         break;
       case DELIVERY:
-        updatedReq = putInDelivery(req);
+        updatedReq = awaitDelivery(requestBeingFulfilled);
         break;
       default:
         throw new IllegalStateException("Unexpected value: " +
-          req.getFulfilmentPreference());
+          requestBeingFulfilled.getFulfilmentPreference());
     }
 
     return updatedReq
