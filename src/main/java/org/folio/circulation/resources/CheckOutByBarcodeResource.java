@@ -10,7 +10,6 @@ import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.domain.ConfigurationRepository;
 import org.folio.circulation.domain.Item;
@@ -148,7 +147,6 @@ public class CheckOutByBarcodeResource extends Resource {
       .thenApply(inactiveUserValidator::refuseWhenUserIsInactive)
       .thenApply(inactiveProxyUserValidator::refuseWhenUserIsInactive)
       .thenCombineAsync(itemRepository.fetchByBarcode(itemBarcode), this::addItem)
-      .thenComposeAsync(r -> r.after(this::addItemLocation))
       .thenApply(itemNotFoundValidator::refuseWhenItemNotFound)
       .thenApply(alreadyCheckedOutValidator::refuseWhenItemIsAlreadyCheckedOut)
       .thenApply(itemMissingValidator::refuseWhenItemIsMissing)
@@ -215,10 +213,5 @@ public class CheckOutByBarcodeResource extends Resource {
 
     return Result.combine(loanResult, inventoryRecordsResult,
       LoanAndRelatedRecords::withItem);
-  }
-  private CompletableFuture<Result<LoanAndRelatedRecords>> addItemLocation(
-    LoanAndRelatedRecords relatedRecords) {
-
-    return completedFuture(succeeded(relatedRecords.withItemEffectiveLocationIdAtCheckOut()));
   }
 }
