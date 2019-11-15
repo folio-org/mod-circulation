@@ -173,6 +173,13 @@ public class FakeOkapi extends AbstractVerticle {
       .create().register(router);
 
     new FakeStorageModuleBuilder()
+      .withRecordName("lost item fee policy")
+      .withRootPath("/lost-item-fees-policies")
+      .withCollectionPropertyName("lostItemFeePolicies")
+      .withRequiredProperties("name")
+      .create().register(router);
+
+    new FakeStorageModuleBuilder()
       .withRecordName("user group")
       .withRootPath("/groups")
       .withCollectionPropertyName("usergroups")
