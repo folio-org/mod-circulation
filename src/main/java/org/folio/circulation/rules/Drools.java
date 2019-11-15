@@ -217,6 +217,44 @@ public class Drools {
     return array;
   }
 
+  /**
+   * Calculate the lost item fee policy for itemTypeName and requestTypeName.
+   * @param params request params
+   * @param location - location with institution, library and campus
+   * @return the name of the lost item fee fine policy
+   */
+  public String lostItemPolicy(MultiMap params, Location location) {
+    KieSession kieSession = createSession(params, location);
+    kieSession.fireAllRules();
+    kieSession.dispose();
+    return match.lostItemPolicyId;
+  }
+
+  /**
+   * Return all lost item fee policies calculated using the drools rules
+   * in the order they match.
+   * @param params request params
+   * @param location - location with institution, library and campus
+   * @return matches, each match has a lostItemPolicyId and a circulationRuleLine field
+   */
+  public JsonArray lostItemPolicies(MultiMap params, Location location) {
+    KieSession kieSession = createSession(params, location);
+
+    JsonArray array = new JsonArray();
+
+    while (kieSession.fireAllRules() > 0) {
+      JsonObject json = new JsonObject();
+
+      write(json, "lostItemPolicyId", match.lostItemPolicyId);
+      writeLineMatch(json);
+
+      array.add(json);
+    }
+
+    kieSession.dispose();
+    return array;
+  }
+
   private void writeLineMatch(JsonObject json) {
     write(json, "circulationRuleLine", match.lineNumber);
   }

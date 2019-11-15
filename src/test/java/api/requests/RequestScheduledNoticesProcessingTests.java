@@ -365,7 +365,8 @@ public class RequestScheduledNoticesProcessingTests extends APITests {
       loanPoliciesFixture.canCirculateRolling().getId(),
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
       noticePoliciesFixture.create(noticePolicy).getId(),
-      overdueFinePoliciesFixture.facultyStandard().getId());
+      overdueFinePoliciesFixture.facultyStandard().getId(),
+      lostItemFeePoliciesFixture.facultyStandard().getId());
   }
 
   private Matcher<JsonObject> getTemplateContextMatcher(UUID templateId, IndividualResource request) {

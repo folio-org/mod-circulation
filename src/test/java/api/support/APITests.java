@@ -16,6 +16,7 @@ import java.util.concurrent.TimeoutException;
 
 import api.support.builders.LoanPolicyBuilder;
 import api.support.builders.NoticePolicyBuilder;
+import api.support.fixtures.LostItemFeePoliciesFixture;
 import api.support.fixtures.OverdueFinePoliciesFixture;
 import org.folio.circulation.domain.representations.LoanProperties;
 import org.folio.circulation.support.http.client.IndividualResource;
@@ -111,6 +112,9 @@ public abstract class APITests {
   protected final ResourceClient overdueFinePolicyClient
     = ResourceClient.forOverdueFinePolicies(client);
 
+  protected final ResourceClient lostItemFeePolicyClient
+    = ResourceClient.forLostItemFeePolicies(client);
+
   private final ResourceClient instanceTypesClient
     = ResourceClient.forInstanceTypes(client);
 
@@ -159,6 +163,9 @@ public abstract class APITests {
 
   protected final OverdueFinePoliciesFixture overdueFinePoliciesFixture
     = new OverdueFinePoliciesFixture(overdueFinePolicyClient);
+
+  protected final LostItemFeePoliciesFixture lostItemFeePoliciesFixture
+    = new LostItemFeePoliciesFixture(lostItemFeePolicyClient);
 
   protected final CirculationRulesFixture circulationRulesFixture
     = new CirculationRulesFixture(client);
@@ -311,7 +318,8 @@ public abstract class APITests {
       loanPoliciesFixture.canCirculateRolling().getId(),
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
       noticePoliciesFixture.activeNotice().getId(),
-      overdueFinePoliciesFixture.facultyStandard().getId()
+      overdueFinePoliciesFixture.facultyStandard().getId(),
+      lostItemFeePoliciesFixture.facultyStandard().getId()
     );
   }
 
@@ -326,18 +334,21 @@ public abstract class APITests {
       loanPoliciesFixture.canCirculateFixed().getId(),
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
       noticePoliciesFixture.activeNotice().getId(),
-      overdueFinePoliciesFixture.facultyStandard().getId()
+      overdueFinePoliciesFixture.facultyStandard().getId(),
+      lostItemFeePoliciesFixture.facultyStandard().getId()
+
     );
   }
 
   protected void useFallbackPolicies(UUID loanPolicyId, UUID requestPolicyId,
-                                     UUID noticePolicyId, UUID overdueFinePolicyId)
+                                     UUID noticePolicyId, UUID overdueFinePolicyId,
+                                     UUID lostItemFeePolicyId)
     throws InterruptedException,
     ExecutionException,
     TimeoutException, MalformedURLException {
 
     circulationRulesFixture.updateCirculationRules(loanPolicyId, requestPolicyId,
-      noticePolicyId, overdueFinePolicyId);
+      noticePolicyId, overdueFinePolicyId, lostItemFeePolicyId);
 
     warmUpApplyEndpoint();
   }
@@ -358,7 +369,8 @@ public abstract class APITests {
     useFallbackPolicies(loanPolicy.getId(),
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
       noticePoliciesFixture.inactiveNotice().getId(),
-      overdueFinePoliciesFixture.facultyStandard().getId());
+      overdueFinePoliciesFixture.facultyStandard().getId(),
+      lostItemFeePoliciesFixture.facultyStandard().getId());
   }
 
   /**
@@ -376,7 +388,8 @@ public abstract class APITests {
       loanPoliciesFixture.create(loanPolicyBuilder).getId(),
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
       noticePoliciesFixture.activeNotice().getId(),
-      overdueFinePoliciesFixture.facultyStandard().getId()
+      overdueFinePoliciesFixture.facultyStandard().getId(),
+      lostItemFeePoliciesFixture.facultyStandard().getId()
     );
   }
 
@@ -395,7 +408,8 @@ public abstract class APITests {
       loanPolicyClient.create(loanPolicyBuilder).getId(),
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
       noticePoliciesFixture.activeNotice().getId(),
-      overdueFinePoliciesFixture.facultyStandard().getId());
+      overdueFinePoliciesFixture.facultyStandard().getId(),
+      lostItemFeePoliciesFixture.facultyStandard().getId());
   }
 
   /**
@@ -414,7 +428,8 @@ public abstract class APITests {
       loanPoliciesFixture.create(loanPolicyBuilder).getId(),
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
       noticePoliciesFixture.create(noticePolicyBuilder).getId(),
-      overdueFinePoliciesFixture.facultyStandard().getId());
+      overdueFinePoliciesFixture.facultyStandard().getId(),
+      lostItemFeePoliciesFixture.facultyStandard().getId());
 
   }
 
@@ -434,7 +449,8 @@ public abstract class APITests {
       loanPoliciesFixture.canCirculateRolling().getId(),
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
       noticePoliciesFixture.create(noticePolicy).getId(),
-      overdueFinePoliciesFixture.facultyStandard().getId());
+      overdueFinePoliciesFixture.facultyStandard().getId(),
+      lostItemFeePoliciesFixture.facultyStandard().getId());
   }
 
   /**
@@ -452,7 +468,8 @@ public abstract class APITests {
       loanPoliciesFixture.canCirculateRolling().getId(),
       requestPoliciesFixture.pageRequestPolicy().getId(),
       noticePoliciesFixture.create(noticePolicy).getId(),
-      overdueFinePoliciesFixture.facultyStandard().getId());
+      overdueFinePoliciesFixture.facultyStandard().getId(),
+      lostItemFeePoliciesFixture.facultyStandard().getId());
   }
 
   protected void warmUpApplyEndpoint()
@@ -580,7 +597,8 @@ public abstract class APITests {
       circulationRulesFixture.soleFallbackPolicyRule(invalidLoanPolicyReference,
         requestPoliciesFixture.allowAllRequestPolicy().getId().toString(),
         noticePoliciesFixture.inactiveNotice().getId().toString(),
-        overdueFinePoliciesFixture.facultyStandard().getId().toString()));
+        overdueFinePoliciesFixture.facultyStandard().getId().toString(),
+        lostItemFeePoliciesFixture.facultyStandard().getId().toString()));
   }
 
   protected void setInvalidNoticePolicyReferenceInRules(String invalidNoticePolicyReference)
@@ -594,6 +612,7 @@ public abstract class APITests {
         loanPoliciesFixture.canCirculateRolling().getId().toString(),
         requestPoliciesFixture.allowAllRequestPolicy().getId().toString(),
         invalidNoticePolicyReference,
-        overdueFinePoliciesFixture.facultyStandard().getId().toString()));
+        overdueFinePoliciesFixture.facultyStandard().getId().toString(),
+        lostItemFeePoliciesFixture.facultyStandard().getId().toString()));
   }
 }
