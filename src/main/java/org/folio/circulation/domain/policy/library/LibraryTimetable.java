@@ -57,4 +57,8 @@ class LibraryTimetable {
   LibraryInterval getTail() {
     return tail;
   }
+
+  LibraryInterval getHead() {
+    return head;
+  }
 }

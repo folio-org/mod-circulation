@@ -8,7 +8,7 @@ public class OpeningHour {
 
   private static final String START_TIME_KEY = "startTime";
   private static final String END_TIME_KEY = "endTime";
-  private static final String TIME_PATTERN = "kk:mm";
+  private static final String TIME_PATTERN = "HH:mm";
 
   private LocalTime startTime;
   private LocalTime endTime;
