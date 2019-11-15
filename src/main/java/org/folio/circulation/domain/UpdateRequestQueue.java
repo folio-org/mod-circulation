@@ -28,21 +28,26 @@ public class UpdateRequestQueue {
   private final RequestQueueRepository requestQueueRepository;
   private final RequestRepository requestRepository;
   private final ServicePointRepository servicePointRepository;
+  private final ConfigurationRepository configurationRepository;
 
   public UpdateRequestQueue(
     RequestQueueRepository requestQueueRepository,
     RequestRepository requestRepository,
-    ServicePointRepository servicePointRepository) {
+    ServicePointRepository servicePointRepository,
+    ConfigurationRepository configurationRepository) {
+
     this.requestQueueRepository = requestQueueRepository;
     this.requestRepository = requestRepository;
     this.servicePointRepository = servicePointRepository;
+    this.configurationRepository = configurationRepository;
   }
 
   public static UpdateRequestQueue using(Clients clients) {
     return new UpdateRequestQueue(
       RequestQueueRepository.using(clients),
       RequestRepository.using(clients),
-      new ServicePointRepository(clients));
+      new ServicePointRepository(clients),
+      new ConfigurationRepository(clients));
   }
 
   public CompletableFuture<Result<LoanAndRelatedRecords>> onCheckIn(
@@ -71,12 +76,11 @@ public class UpdateRequestQueue {
         firstRequest.changeStatus(RequestStatus.OPEN_AWAITING_PICKUP);
 
         if (firstRequest.getHoldShelfExpirationDate() == null) {
-          return servicePointRepository.getServicePointWithTenantTimeZone(requestPickupServicePointId)
-              .thenApply(servicePointResult -> servicePointResult.map(firstRequest::withPickupServicePoint))
-              .thenApply(requestResult -> requestResult.map(request -> {
-                ServicePoint pickupServicePoint = request.getPickupServicePoint();
+          return servicePointRepository.getServicePointById(requestPickupServicePointId)
+            .thenCombineAsync(configurationRepository.findTimeZoneConfiguration(),
+              Result.combined((pickupServicePoint, tenantTimeZone) -> {
+
                 TimePeriod holdShelfExpiryPeriod = pickupServicePoint.getHoldShelfExpiryPeriod();
-                DateTimeZone tenantTimeZone = pickupServicePoint.getTenantTimeZone();
 
                 log.debug("Using time zone {} and period {}",
                   tenantTimeZone,
@@ -94,10 +98,10 @@ public class UpdateRequestQueue {
                 firstRequest.changeHoldShelfExpirationDate(
                   new DateTime(holdShelfExpirationDate.toInstant().toEpochMilli(), DateTimeZone.UTC));
 
-                return firstRequest;
+                return succeeded(firstRequest);
               }))
-              .thenComposeAsync(r -> r.after(requestRepository::update))
-              .thenApply(r -> r.map(v -> requestQueue));
+            .thenComposeAsync(r -> r.after(requestRepository::update))
+            .thenApply(r -> r.map(v -> requestQueue));
         }
       } else {
         firstRequest.changeStatus(RequestStatus.OPEN_IN_TRANSIT);
@@ -236,7 +240,7 @@ public class UpdateRequestQueue {
     ZonedDateTime holdShelfExpirationDate = holdShelfExpiryPeriod.getInterval()
       .addTo(now, holdShelfExpiryPeriod.getDuration());
 
-    if (DateTimeUtil.isLongTermPeriod(holdShelfExpiryPeriod.getInterval())) {
+    if (holdShelfExpiryPeriod.isLongTermPeriod()) {
       holdShelfExpirationDate = DateTimeUtil.atEndOfTheDay(holdShelfExpirationDate);
     }
 
