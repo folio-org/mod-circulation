@@ -133,12 +133,10 @@ class CheckInProcessAdapter {
     if (firstRequest == null) {
       return completedFuture(succeeded(null));
     }
-    return servicePointRepository.getServicePointById(
-        StringUtils.isNotBlank(firstRequest.getPickupServicePointId())
-          ? UUID.fromString(firstRequest.getPickupServicePointId())
-          : null
-      )
-      .thenApply(r -> r.map(firstRequest::withPickupServicePoint));
+    return StringUtils.isNotBlank(firstRequest.getPickupServicePointId())
+      ? servicePointRepository.getServicePointById(UUID.fromString(firstRequest.getPickupServicePointId()))
+          .thenApply(r -> r.map(firstRequest::withPickupServicePoint))
+      : completedFuture(succeeded(firstRequest));
   }
 
   CompletableFuture<Result<Request>> getRequester(CheckInProcessRecords records) {
