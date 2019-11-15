@@ -4,7 +4,6 @@ import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.domain.ItemStatus.AVAILABLE;
 import static org.folio.circulation.domain.ItemStatus.CHECKED_OUT;
 import static org.folio.circulation.domain.ItemStatus.PAGED;
-import static org.folio.circulation.support.JsonPropertyWriter.write;
 import static org.folio.circulation.support.Result.of;
 import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
@@ -20,7 +19,6 @@ import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.Result;
 import org.joda.time.DateTime;
 
-import io.vertx.core.json.JsonObject;
 
 public class UpdateItem {
 

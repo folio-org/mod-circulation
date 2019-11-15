@@ -28,7 +28,7 @@ public class APITestContext {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
   private static final String TENANT_ID = "test_tenant";
-  private static final String USER_ID = "79ff2a8b-d9c3-5b39-ad4a-0a84025ab085";
+  private static String USER_ID = "79ff2a8b-d9c3-5b39-ad4a-0a84025ab085";
 
   private static final String TOKEN = "eyJhbGciOiJIUzUxMiJ9eyJzdWIiOiJhZG1pbiIsInVzZXJfaWQiOiI3OWZmMmE4Yi1kOWMzLTViMzktYWQ0YS0wYTg0MDI1YWIwODUiLCJ0ZW5hbnQiOiJ0ZXN0X3RlbmFudCJ9BShwfHcNClt5ZXJ8ImQTMQtAM1sQEnhsfWNmXGsYVDpuaDN3RVQ9";
   public static final DateTime END_OF_2019_DUE_DATE = new DateTime(2019, 12, 31, 23, 59, 59, DateTimeZone.UTC);
@@ -53,6 +53,10 @@ public class APITestContext {
 
   public static String getUserId() {
     return USER_ID;
+  }
+
+  public static void setUserId(String userId) {
+    USER_ID = userId;
   }
 
   public static int circulationModulePort() {
