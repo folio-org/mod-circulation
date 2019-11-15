@@ -368,7 +368,8 @@ public class DueDateScheduledNoticesProcessingTests extends APITests {
       loanPoliciesFixture.canCirculateRolling().getId(),
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
       noticePoliciesFixture.create(noticePolicy).getId(),
-      overdueFinePoliciesFixture.facultyStandard().getId());
+      overdueFinePoliciesFixture.facultyStandard().getId(),
+      lostItemFeePoliciesFixture.facultyStandard().getId());
   }
 
   private void assertSetUpIsCorrect()

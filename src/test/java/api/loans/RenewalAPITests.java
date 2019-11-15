@@ -576,7 +576,8 @@ abstract class RenewalAPITests extends APITests {
       unknownLoanPolicyId,
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
       noticePoliciesFixture.activeNotice().getId(),
-      overdueFinePoliciesFixture.facultyStandard().getId()
+      overdueFinePoliciesFixture.facultyStandard().getId(),
+      lostItemFeePoliciesFixture.facultyStandard().getId()
     );
 
     final Response response = loansFixture.attemptRenewal(500, smallAngryPlanet, jessica);
@@ -1406,7 +1407,8 @@ abstract class RenewalAPITests extends APITests {
       dueDateLimitedPolicyId,
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
       noticePoliciesFixture.activeNotice().getId(),
-      overdueFinePoliciesFixture.facultyStandard().getId()
+      overdueFinePoliciesFixture.facultyStandard().getId(),
+      lostItemFeePoliciesFixture.facultyStandard().getId()
     );
 
     Response response = loansFixture.attemptRenewal(200, smallAngryPlanet, jessica);

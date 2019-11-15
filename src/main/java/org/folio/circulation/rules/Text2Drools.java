@@ -101,7 +101,7 @@ public class Text2Drools extends CirculationRulesBaseListener {
 
   private int indentation = 0;
 
-  private String[] policyTypes = {"l", "r", "n", "o"};
+  private String[] policyTypes = {"l", "r", "n", "o", "i"};
 
   private enum PriorityType {
     NONE,
@@ -347,6 +347,8 @@ public class Text2Drools extends CirculationRulesBaseListener {
         return "    match.noticePolicyId = ";
       case "o":
         return "    match.overduePolicyId = ";
+      case "i":
+        return "    match.lostItemPolicyId = ";
       default: throw new IllegalArgumentException("Unknown policy type: "
         + policy.POLICY_TYPE().toString());
     }
