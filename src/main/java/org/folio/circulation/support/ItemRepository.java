@@ -345,7 +345,7 @@ public class ItemRepository {
       .collect(Collectors.toList());
   }
 
-  private CompletableFuture<Result<Item>> fetchItemRelatedRecords(
+  public CompletableFuture<Result<Item>> fetchItemRelatedRecords(
     Result<Item> item) {
 
     return fetchHoldingsRecord(item)

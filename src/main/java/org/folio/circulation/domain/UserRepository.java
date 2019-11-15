@@ -148,7 +148,7 @@ public class UserRepository {
             propertyName, barcode))));
   }
 
-  CompletableFuture<Result<MultipleRecords<Request>>> findUsersForRequests(
+  public CompletableFuture<Result<MultipleRecords<Request>>> findUsersForRequests(
     MultipleRecords<Request> multipleRequests) {
 
     Collection<Request> requests = multipleRequests.getRecords();

@@ -50,6 +50,8 @@ public class LoanRepository {
   private final ItemRepository itemRepository;
   private final UserRepository userRepository;
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
+  private static final String ITEM_STATUS = "itemStatus";
+  private static final String ITEM_ID = "itemId";
 
   public LoanRepository(Clients clients) {
     loansStorageClient = clients.loansStorage();
@@ -225,8 +227,8 @@ public class LoanRepository {
 
   private static void keepLatestItemStatus(Item item, JsonObject storageLoan) {
     //TODO: Check for null item status
-    storageLoan.remove("itemStatus");
-    storageLoan.put("itemStatus", item.getStatus().getValue());
+    storageLoan.remove(ITEM_STATUS);
+    storageLoan.put(ITEM_STATUS, item.getStatus().getValue());
   }
 
   private static void updateLastLoanPolicyUsedId(JsonObject storageLoan,
@@ -277,7 +279,7 @@ public class LoanRepository {
 
   private CompletableFuture<Result<MultipleRecords<Loan>>> findOpenLoans(String itemId) {
     final Result<CqlQuery> statusQuery = getStatusCQLQuery("Open");
-    final Result<CqlQuery> itemIdQuery = exactMatch("itemId", itemId);
+    final Result<CqlQuery> itemIdQuery = exactMatch(ITEM_ID, itemId);
 
     return queryLoanStorage(1, statusQuery.combine(itemIdQuery, CqlQuery::and));
   }
@@ -303,7 +305,7 @@ public class LoanRepository {
     }
 
     final Result<CqlQuery> statusQuery = getStatusCQLQuery("Open");
-    final Result<CqlQuery> itemIdQuery = exactMatchAny("itemId", itemsToFetchLoansFor);
+    final Result<CqlQuery> itemIdQuery = exactMatchAny(ITEM_ID, itemsToFetchLoansFor);
 
     return queryLoanStorage(requests.size(), statusQuery.combine(
         itemIdQuery, CqlQuery::and))
