@@ -15,7 +15,7 @@ How does this short example work?
 
 The `fallback-policy` line defines a default policy for each of the 4 policy types.
 An `l` indicates a loan policy, `r` a request policy, `n` a notice policy, `o` 
-an overdue fine policy' and `i` lost item fee policy.
+an overdue fine policy' and `i` a lost item fee policy.
 
 After `m` is the item's material type. Books can be loaned using the `regular-loan` loan policy,
 newspapers can be loaned for the `reading-room` only.

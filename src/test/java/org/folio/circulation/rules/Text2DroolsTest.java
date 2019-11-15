@@ -101,14 +101,14 @@ public class Text2DroolsTest {
 
   private String[][] lostItemTestCases = new String[][] {
     // item type,   request type,   patron type, institution id,   lost item policies
-    { "foo",       "foo",           "foo",       SECOND_INSTITUTION_ID,                                                     "lost-item" },
-    { "book",      "regular",       "undergrad", FIRST_INSTITUTION_ID,                            "lost-item-9", "lost-item-1", "lost-item" },
+    { "foo",       "foo",           "foo",       SECOND_INSTITUTION_ID,                                                             "lost-item" },
+    { "book",      "regular",       "undergrad", FIRST_INSTITUTION_ID,                                "lost-item-9", "lost-item-1", "lost-item" },
     { "book",      "special-items", "undergrad", FIRST_INSTITUTION_ID,  "lost-item-6", "lost-item-7", "lost-item-9", "lost-item-1", "lost-item" },
     { "book",      "special-items", "visitor",   SECOND_INSTITUTION_ID, "lost-item-8", "lost-item-6", "lost-item-7", "lost-item-1", "lost-item" },
-    { "newspaper", "regular",       "undergrad", FIRST_INSTITUTION_ID,                            "lost-item-9", "lost-item-2", "lost-item" },
-    { "newspaper", "special-items", "undergrad", FIRST_INSTITUTION_ID,               "lost-item-7", "lost-item-9", "lost-item-2", "lost-item" },
+    { "newspaper", "regular",       "undergrad", FIRST_INSTITUTION_ID,                                "lost-item-9", "lost-item-2", "lost-item" },
+    { "newspaper", "special-items", "undergrad", FIRST_INSTITUTION_ID,                 "lost-item-7", "lost-item-9", "lost-item-2", "lost-item" },
     { "newspaper", "special-items", "visitor",   FIRST_INSTITUTION_ID,  "lost-item-8", "lost-item-7", "lost-item-9", "lost-item-2", "lost-item" },
-    { "foo",       "foo",           "foo",       FIRST_INSTITUTION_ID,                                         "lost-item-9", "lost-item" },
+    { "foo",       "foo",           "foo",       FIRST_INSTITUTION_ID,                                               "lost-item-9", "lost-item" },
   };
 
 

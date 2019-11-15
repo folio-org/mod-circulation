@@ -265,7 +265,7 @@ public class LostItemFeePolicyBuilder extends JsonBuilder implements Builder {
       this.lostItemProcessingFee,
       this.chargeAmountItemPatron,
       this.chargeAmountItemSystem,
-      lostItemChargeFeeFine,
+      this.lostItemChargeFeeFine,
       returnedLostItemProcessingFee,
       this.replacedLostItemProcessingFee,
       this.replacementProcessingFee,
