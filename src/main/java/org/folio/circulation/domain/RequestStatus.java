@@ -2,32 +2,40 @@ package org.folio.circulation.domain;
 
 import static org.apache.commons.lang3.StringUtils.equalsIgnoreCase;
 
-import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.EnumSet;
 import java.util.List;
-
-import org.folio.circulation.domain.representations.RequestProperties;
+import java.util.stream.Collectors;
 
 import io.vertx.core.json.JsonObject;
+import org.apache.commons.lang3.StringUtils;
+
+import org.folio.circulation.domain.representations.RequestProperties;
 
 public enum RequestStatus {
   NONE(""),
   OPEN_NOT_YET_FILLED("Open - Not yet filled"),
   OPEN_AWAITING_PICKUP("Open - Awaiting pickup"),
   OPEN_IN_TRANSIT("Open - In transit"),
+  OPEN_AWAITING_DELIVERY("Open - Awaiting delivery"),
   CLOSED_FILLED("Closed - Filled"),
   CLOSED_CANCELLED("Closed - Cancelled"),
   CLOSED_UNFILLED("Closed - Unfilled"),
   CLOSED_PICKUP_EXPIRED("Closed - Pickup expired");
 
+  private static final EnumSet<RequestStatus> VALID_STATUSES = EnumSet.of(
+    OPEN_NOT_YET_FILLED, OPEN_AWAITING_PICKUP, OPEN_IN_TRANSIT, OPEN_AWAITING_DELIVERY,
+    CLOSED_FILLED, CLOSED_CANCELLED, CLOSED_UNFILLED, CLOSED_PICKUP_EXPIRED);
+
+  private static final EnumSet<RequestStatus> OPEN_STATUSES = EnumSet.of(
+    OPEN_NOT_YET_FILLED, OPEN_AWAITING_PICKUP, OPEN_IN_TRANSIT, OPEN_AWAITING_DELIVERY);
+
   private final String value;
 
   public static String invalidStatusErrorMessage() {
-    //TODO: Generalise this to join all states
-    return String.format("Request status must be \"%s\", \"%s\", \"%s\", \"%s\", \"%s\" or \"%s\"",
-      OPEN_NOT_YET_FILLED.getValue(), OPEN_AWAITING_PICKUP.getValue(),
-      OPEN_IN_TRANSIT.getValue(), CLOSED_FILLED.getValue(),
-      CLOSED_UNFILLED.getValue(), CLOSED_PICKUP_EXPIRED.getValue());
+    return "Request status must be one of the following: " +
+      VALID_STATUSES.stream().map(s -> StringUtils.wrap(s.getValue(), '"'))
+        .collect(Collectors.joining(", "));
   }
 
   public static RequestStatus from(String value) {
@@ -48,13 +56,8 @@ public enum RequestStatus {
   }
 
   public static List<String> openStates() {
-    final ArrayList<String> openStates = new ArrayList<>();
-
-    openStates.add(OPEN_AWAITING_PICKUP.getValue());
-    openStates.add(OPEN_NOT_YET_FILLED.getValue());
-    openStates.add(OPEN_IN_TRANSIT.getValue());
-
-    return openStates;
+    return OPEN_STATUSES.stream().map(RequestStatus::getValue)
+      .collect(Collectors.toList());
   }
 
   public boolean isValid() {
