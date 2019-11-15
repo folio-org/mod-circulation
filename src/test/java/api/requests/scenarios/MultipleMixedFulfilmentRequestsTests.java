@@ -1,9 +1,11 @@
 package api.requests.scenarios;
 
 import static api.support.builders.ItemBuilder.AWAITING_DELIVERY;
+import static api.support.builders.ItemBuilder.AWAITING_PICKUP;
 import static api.support.builders.ItemBuilder.CHECKED_OUT;
 import static api.support.builders.RequestBuilder.CLOSED_FILLED;
 import static api.support.builders.RequestBuilder.OPEN_AWAITING_DELIVERY;
+import static api.support.builders.RequestBuilder.OPEN_AWAITING_PICKUP;
 import static api.support.builders.RequestBuilder.OPEN_NOT_YET_FILLED;
 import static api.support.matchers.ItemStatusCodeMatcher.hasItemStatus;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
@@ -71,7 +73,7 @@ public class MultipleMixedFulfilmentRequestsTests extends APITests {
   }
 
   @Test
-  public void deliveryRequestsAreProcessedNextWhenCheckingInLoanThatFulfilsRequest()
+  public void deliveryRequestIsProcessedWhenItIsNextInQueueAndItemCheckedIn()
     throws InterruptedException,
     MalformedURLException,
     TimeoutException,
@@ -109,6 +111,43 @@ public class MultipleMixedFulfilmentRequestsTests extends APITests {
     smallAngryPlanet = itemsClient.get(smallAngryPlanet);
 
     assertThat(smallAngryPlanet, hasItemStatus(AWAITING_DELIVERY));
+  }
+
+  @Test
+  public void holdShelfRequestIsProcessedWhenItIsNextInQueueAndItemCheckedIn()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    IndividualResource james = usersFixture.james();
+    IndividualResource jessica = usersFixture.jessica();
+    IndividualResource steve = usersFixture.steve();
+    IndividualResource rebecca = usersFixture.rebecca();
+
+    loansFixture.checkOutByBarcode(smallAngryPlanet, james);
+
+    IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
+      smallAngryPlanet, jessica, DATE_TIME_2017);
+
+    IndividualResource deliveryRequestByRebecca = requestsFixture.placeDeliveryRequest(
+      smallAngryPlanet, rebecca, DATE_TIME_2018);
+
+    IndividualResource requestBySteve = requestsFixture.placeHoldShelfRequest(
+      smallAngryPlanet, steve, DATE_TIME_2018);
+
+    loansFixture.checkInByBarcode(smallAngryPlanet);
+
+    assertRequestHasStatus(requestByJessica, OPEN_AWAITING_PICKUP);
+
+    assertRequestHasStatus(deliveryRequestByRebecca, OPEN_NOT_YET_FILLED);
+
+    assertRequestHasStatus(requestBySteve, OPEN_NOT_YET_FILLED);
+
+    smallAngryPlanet = itemsClient.get(smallAngryPlanet);
+
+    assertThat(smallAngryPlanet, hasItemStatus(AWAITING_PICKUP));
   }
 
   @Test
