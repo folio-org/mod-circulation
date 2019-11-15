@@ -4,6 +4,7 @@ import static org.apache.commons.lang3.StringUtils.equalsIgnoreCase;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 import org.folio.circulation.domain.representations.RequestProperties;
 
@@ -46,7 +47,7 @@ public enum RequestStatus {
     this.value = value;
   }
 
-  static ArrayList<String> openStates() {
+  public static List<String> openStates() {
     final ArrayList<String> openStates = new ArrayList<>();
 
     openStates.add(OPEN_AWAITING_PICKUP.getValue());
