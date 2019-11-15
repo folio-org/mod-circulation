@@ -1757,7 +1757,6 @@
       "displayName": "module permissions for one op",
       "description": "to reduce X-Okapi-Token size",
       "subPermissions": [
-        "modperms.inventory.items-in-transit-report.get",
         "inventory-storage.items.item.get",
         "inventory-storage.items.collection.get",
         "inventory-storage.holdings.collection.get",
