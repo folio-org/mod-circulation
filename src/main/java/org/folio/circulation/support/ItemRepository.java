@@ -354,5 +354,4 @@ public class ItemRepository {
       .thenComposeAsync(this::fetchMaterialType)
       .thenComposeAsync(this::fetchLoanType);
   }
-
 }

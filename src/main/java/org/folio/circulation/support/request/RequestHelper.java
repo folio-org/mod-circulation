@@ -17,5 +17,4 @@ public final class RequestHelper {
   public static boolean isPageRequest(Request request) {
     return request != null && request.getRequestType() == RequestType.PAGE;
   }
-
 }
