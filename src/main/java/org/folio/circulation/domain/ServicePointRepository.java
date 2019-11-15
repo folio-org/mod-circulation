@@ -39,7 +39,7 @@ public class ServicePointRepository {
     return getServicePointById(id.toString());
   }
 
-  CompletableFuture<Result<ServicePoint>> getServicePointById(String id) {
+  public CompletableFuture<Result<ServicePoint>> getServicePointById(String id) {
     if(id == null) {
       return ofAsync(() -> null);
     }
@@ -121,8 +121,8 @@ public class ServicePointRepository {
             return succeeded(new MultipleRecords<>(newLoanList, multipleLoans.getTotalRecords()));
           }));
   }
-  
-  CompletableFuture<Result<MultipleRecords<Request>>> findServicePointsForRequests(
+
+  public CompletableFuture<Result<MultipleRecords<Request>>> findServicePointsForRequests(
     MultipleRecords<Request> multipleRequests) {
     Collection<Request> requests = multipleRequests.getRecords();
 

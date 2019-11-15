@@ -58,7 +58,7 @@ public class MultipleRecordFetcher<T> {
   private CompletableFuture<Result<MultipleRecords<T>>> findByBatchQueriesAndQuery(
       List<Result<CqlQuery>> queries, Result<CqlQuery> andQuery) {
     return findByBatchQueries(queries.stream().map(query ->
-      andQuery.combine(query, CqlQuery::and))
+      query.combine(andQuery, CqlQuery::and))
       .collect(Collectors.toList()));
   }
 
