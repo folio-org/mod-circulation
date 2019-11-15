@@ -19,7 +19,6 @@ import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.FetchSingleRecord;
 import org.folio.circulation.support.MultipleRecordFetcher;
 import org.folio.circulation.support.Result;
-import org.joda.time.DateTimeZone;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,11 +26,9 @@ public class ServicePointRepository {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
   private final CollectionResourceClient servicePointsStorageClient;
-  private final ConfigurationRepository configurationRepository;
 
   public ServicePointRepository(Clients clients) {
     servicePointsStorageClient = clients.servicePointsStorage();
-    configurationRepository = new ConfigurationRepository(clients);
   }
 
   public CompletableFuture<Result<ServicePoint>> getServicePointById(UUID id) {
@@ -53,30 +50,11 @@ public class ServicePointRepository {
         .whenNotFound(succeeded(null))
         .fetch(id);
   }
-
-  CompletableFuture<Result<ServicePoint>> getServicePointWithTenantTimeZone(String id) {
-    return getServicePointById(id)
-      .thenCombineAsync(
-        configurationRepository.findTimeZoneConfiguration(),
-        this::processServicePointAndTimeZoneResults
-      );
-  }
-
-  private Result<ServicePoint> processServicePointAndTimeZoneResults(Result<ServicePoint> servicePointResult, Result<DateTimeZone> tenantTimeZoneResult) {
-    return servicePointResult.combineToResult(tenantTimeZoneResult, (servicePoint, tenantTimeZone) -> {
-      if (servicePoint == null) {
-        log.info("Service point is null");
-        return succeeded(null);
-      }
-
-      return succeeded(servicePoint.withTenantTimeZone(tenantTimeZone));
-    });
-  }
-
+  
   public CompletableFuture<Result<ServicePoint>> getServicePointForRequest(Request request) {
     return getServicePointById(request.getPickupServicePointId());
-  }
-
+  } 
+  
   public CompletableFuture<Result<Loan>> findServicePointsForLoan(Result<Loan> loanResult) {
     return fetchCheckInServicePoint(loanResult)
       .thenComposeAsync(this::fetchCheckOutServicePoint);
@@ -98,8 +76,8 @@ public class ServicePointRepository {
     MultipleRecords<Loan> multipleLoans) {
 
     Collection<Loan> loans = multipleLoans.getRecords();
-
-    final List<String> servicePointsToFetch =
+    
+    final List<String> servicePointsToFetch = 
         Stream.concat((loans.stream()
           .filter(Objects::nonNull)
           .map(Loan::getCheckInServicePointId)
@@ -113,14 +91,14 @@ public class ServicePointRepository {
        )
       .distinct()
       .collect(Collectors.toList());
-
+    
     if(servicePointsToFetch.isEmpty()) {
       log.info("No service points to query for loans");
       return completedFuture(succeeded(multipleLoans));
     }
 
     final MultipleRecordFetcher<ServicePoint> fetcher = createServicePointsFetcher();
-
+    
     return fetcher.findByIds(servicePointsToFetch)
       .thenApply(multipleServicePointsResult -> multipleServicePointsResult.next(
           multipleServicePoints -> {
@@ -143,7 +121,7 @@ public class ServicePointRepository {
             return succeeded(new MultipleRecords<>(newLoanList, multipleLoans.getTotalRecords()));
           }));
   }
-
+  
   CompletableFuture<Result<MultipleRecords<Request>>> findServicePointsForRequests(
     MultipleRecords<Request> multipleRequests) {
     Collection<Request> requests = multipleRequests.getRecords();
@@ -170,9 +148,9 @@ public class ServicePointRepository {
             for(Request request : requests) {
               Request newRequest = null;
               boolean foundSP = false; //Have we found a matching service point for the request?
-              for(ServicePoint servicePoint : spCollection) {
+              for(ServicePoint servicePoint : spCollection) { 
                 if(request.getPickupServicePointId() != null &&
-                    request.getPickupServicePointId().equals(servicePoint.getId())) {
+                    request.getPickupServicePointId().equals(servicePoint.getId())) {                
                   newRequest = request.withPickupServicePoint(servicePoint);
                   foundSP = true;
                   break;
