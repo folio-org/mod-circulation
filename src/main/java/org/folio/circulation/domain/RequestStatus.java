@@ -53,7 +53,7 @@ public enum RequestStatus {
     this.value = value;
   }
 
-  static List<String> openStates() {
+  public static List<String> openStates() {
     return OPEN_STATUSES.stream().map(RequestStatus::getValue)
       .collect(Collectors.toList());
   }
