@@ -1,18 +1,20 @@
 package org.folio.circulation.domain.representations;
 
+import static org.folio.circulation.domain.representations.ItemProperties.LASTCHECKIN;
+import static org.folio.circulation.domain.representations.ItemProperties.MATERIAL_TYPE_ID;
+import static org.folio.circulation.domain.representations.ItemProperties.PERMANENT_LOAN_TYPE_ID;
+import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
 import static org.folio.circulation.support.JsonPropertyWriter.write;
-import static org.folio.circulation.support.JsonPropertyWriter.writeNamedObject;
 
 import java.lang.invoke.MethodHandles;
 import java.util.Objects;
 
+import io.vertx.core.json.JsonObject;
 import org.folio.circulation.domain.Item;
-import org.folio.circulation.domain.ServicePoint;
 import org.folio.circulation.domain.Location;
+import org.folio.circulation.domain.ServicePoint;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import io.vertx.core.json.JsonObject;
 
 public class ItemSummaryRepresentation {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
@@ -86,4 +88,26 @@ public class ItemSummaryRepresentation {
 
     return itemSummary;
   }
+
+  public JsonObject createItemStorageRepresentation(Item item) {
+    JsonObject itemSummary = createItemSummary(item);
+    JsonObject itemJson = item.getItem();
+
+    if (itemJson != null) {
+      populateProperty(itemSummary, itemJson, MATERIAL_TYPE_ID);
+      populateProperty(itemSummary, itemJson, PERMANENT_LOAN_TYPE_ID);
+    }
+
+    if (item.getLastCheckIn() != null) {
+      write(itemSummary, LASTCHECKIN, item.getLastCheckIn().toJson());
+    }
+
+    return itemSummary;
+  }
+
+  private void populateProperty(JsonObject to, JsonObject from,
+    String propName) {
+    write(to, propName, getProperty(from, propName));
+  }
+
 }

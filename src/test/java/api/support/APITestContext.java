@@ -55,6 +55,10 @@ public class APITestContext {
     return USER_ID;
   }
 
+  public static void defaultUserId(){
+    USER_ID = "79ff2a8b-d9c3-5b39-ad4a-0a84025ab085";
+  }
+
   public static void setUserId(String userId) {
     USER_ID = userId;
   }

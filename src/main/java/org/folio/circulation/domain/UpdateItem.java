@@ -14,6 +14,7 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
+import org.folio.circulation.domain.representations.ItemSummaryRepresentation;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.Result;
@@ -139,7 +140,8 @@ public class UpdateItem {
   }
 
   private CompletableFuture<Result<Item>> storeItem(Item item) {
-    return itemsStorageClient.put(item.getItemId(), item.getItem())
+    return itemsStorageClient.put(item.getItemId(),
+      new ItemSummaryRepresentation().createItemStorageRepresentation(item))
       .thenApply(noContentRecordInterpreter(item)::apply);
   }
 

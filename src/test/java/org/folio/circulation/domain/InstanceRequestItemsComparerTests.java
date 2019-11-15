@@ -255,7 +255,8 @@ public class InstanceRequestItemsComparerTests {
 
       location = new Location(homeLocation, null, null, null);
     }
-    
-    return new Item(itemRepresentation, null, null, location, null, null, null);
+
+    return new Item(itemRepresentation, null, null, location, null, null, null,
+                    null);
   }
 }
