@@ -75,7 +75,7 @@ public class ItemsInTransitResource extends Resource {
 
     reportRepository.getAllItemsByField("status.name", IN_TRANSIT.getValue())
       .thenComposeAsync(r -> r.after(itemsReportFetcher ->
-        fetchInTransitReportEntry(itemsReportFetcher, itemRepository, servicePointRepository)))
+        fetchItemsRelatedRecords(itemsReportFetcher, itemRepository, servicePointRepository)))
       .thenComposeAsync(r -> r.after(inTransitReportEntries ->
         fetchLoans(loansStorageClient, servicePointRepository, inTransitReportEntries)))
       .thenComposeAsync(r -> findRequestsByItemsIds(requestsStorageClient, itemRepository,
@@ -85,20 +85,20 @@ public class ItemsInTransitResource extends Resource {
       .thenAccept(r -> r.writeTo(routingContext.response()));
   }
 
-  private CompletableFuture<Result<List<InTransitReportEntry>>> fetchInTransitReportEntry(ItemsReportFetcher itemsReportFetcher,
+  private CompletableFuture<Result<List<InTransitReportEntry>>> fetchItemsRelatedRecords(ItemsReportFetcher itemsReportFetcher,
                                                                                           ItemRepository itemRepository,
                                                                                           ServicePointRepository servicePointRepository) {
     List<Item> items = itemsReportFetcher.getResultListOfItems().stream()
       .flatMap(resultListOfItem -> resultListOfItem.value().getRecords().stream())
       .collect(Collectors.toList());
 
-    return allOf(items, item->fetchRelatedRecords(itemRepository, servicePointRepository, item))
-    .thenApply(resultItem -> getInTransitReportEntryStream(resultItem.value()));
+    return allOf(items, item -> fetchRelatedRecords(itemRepository, servicePointRepository, item))
+    .thenApply(resultItem -> mapToInTransitReportEntries(resultItem.value()));
   }
 
-  private Result<List<InTransitReportEntry>> getInTransitReportEntryStream(List<Item> items) {
+  private Result<List<InTransitReportEntry>> mapToInTransitReportEntries(List<Item> items) {
     List<InTransitReportEntry> inTransitReportEntries=
-      items.stream().map(item -> new InTransitReportEntry(item))
+      items.stream().map(InTransitReportEntry::new)
         .collect(Collectors.toList());
 
     return Result.succeeded(inTransitReportEntries);
