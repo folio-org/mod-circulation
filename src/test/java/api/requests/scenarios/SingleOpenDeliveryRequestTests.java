@@ -74,7 +74,7 @@ public class SingleOpenDeliveryRequestTests extends APITests {
   }
 
   @Test
-  public void itemCantBeCheckedOutToAnotherPatron()
+  public void itemCannotBeCheckedOutToAnotherPatron()
     throws InterruptedException,
     MalformedURLException,
     TimeoutException,
