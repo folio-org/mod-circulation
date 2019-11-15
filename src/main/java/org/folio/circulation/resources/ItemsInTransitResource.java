@@ -2,6 +2,7 @@ package org.folio.circulation.resources;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.domain.ItemStatus.IN_TRANSIT;
+import static org.folio.circulation.support.AsyncCoordinationUtil.allOf;
 import static org.folio.circulation.support.CqlQuery.exactMatch;
 import static org.folio.circulation.support.CqlQuery.exactMatchAny;
 import static org.folio.circulation.support.CqlSortBy.ascending;
@@ -85,16 +86,22 @@ public class ItemsInTransitResource extends Resource {
   }
 
   private CompletableFuture<Result<List<InTransitReportEntry>>> fetchInTransitReportEntry(ItemsReportFetcher itemsReportFetcher,
-                                                                                         ItemRepository itemRepository,
-                                                                                         ServicePointRepository servicePointRepository) {
-    List<InTransitReportEntry> inTransitReportEntries = itemsReportFetcher.getResultListOfItems().stream()
-      .flatMap(records -> records.value().getRecords()
-        .stream()).map(item -> fetchRelatedRecords(itemRepository, servicePointRepository, item))
-      .map(CompletableFuture::join)
-      .map(item -> new InTransitReportEntry(item.value()))
+                                                                                          ItemRepository itemRepository,
+                                                                                          ServicePointRepository servicePointRepository) {
+    List<Item> items = itemsReportFetcher.getResultListOfItems().stream()
+      .flatMap(resultListOfItem -> resultListOfItem.value().getRecords().stream())
       .collect(Collectors.toList());
 
-    return CompletableFuture.completedFuture(Result.succeeded(inTransitReportEntries));
+    return allOf(items, item->fetchRelatedRecords(itemRepository, servicePointRepository, item))
+    .thenApply(resultItem -> getInTransitReportEntryStream(resultItem.value()));
+  }
+
+  private Result<List<InTransitReportEntry>> getInTransitReportEntryStream(List<Item> items) {
+    List<InTransitReportEntry> inTransitReportEntries=
+      items.stream().map(item -> new InTransitReportEntry(item))
+        .collect(Collectors.toList());
+
+    return Result.succeeded(inTransitReportEntries);
   }
 
   private CompletableFuture<Result<Item>> fetchRelatedRecords(ItemRepository itemRepository,
