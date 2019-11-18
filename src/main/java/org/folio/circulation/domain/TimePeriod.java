@@ -9,11 +9,11 @@ import io.vertx.core.json.JsonObject;
 
 public class TimePeriod {
   private final JsonObject representation;
-  
+
   public TimePeriod(JsonObject representation) {
     this.representation = representation;
   }
-  
+
   public Integer getDuration() {
     return getIntegerProperty(representation, "duration", null);
   }
@@ -30,6 +30,13 @@ public class TimePeriod {
       // Default is days
       return ChronoUnit.DAYS;
     }
+  }
+
+  public boolean isLongTermPeriod() {
+    final ChronoUnit chronoUnit = getInterval();
+
+    return chronoUnit == ChronoUnit.DAYS || chronoUnit == ChronoUnit.WEEKS
+      || chronoUnit == ChronoUnit.MONTHS;
   }
 
   public static TimePeriod from(JsonObject representation) {
