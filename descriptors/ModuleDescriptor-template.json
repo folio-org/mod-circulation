@@ -4,7 +4,7 @@
   "provides": [
     {
       "id": "requests-reports",
-      "version": "0.3",
+      "version": "0.4",
       "handlers": [
         {
           "methods": [
@@ -40,7 +40,7 @@
     },
     {
       "id": "request-move",
-      "version": "0.3",
+      "version": "0.4",
       "handlers": [
         {
           "methods": [
@@ -74,7 +74,7 @@
     },
     {
       "id": "circulation",
-      "version": "8.2",
+      "version": "8.3",
       "handlers": [
         {
           "methods": [
