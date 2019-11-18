@@ -7,6 +7,8 @@ import java.util.concurrent.CompletableFuture;
 import io.vertx.core.http.HttpClient;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
+
+import org.folio.circulation.domain.ConfigurationRepository;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.RequestQueueRepository;
 import org.folio.circulation.domain.RequestRepository;
@@ -69,7 +71,8 @@ public class RequestQueueResource extends Resource {
     final RequestRepository requestRepository = RequestRepository.using(clients);
     final RequestQueueRepository requestQueueRepository = RequestQueueRepository.using(clients);
     final UpdateRequestQueue updateRequestQueue = new UpdateRequestQueue(
-      requestQueueRepository, requestRepository, new ServicePointRepository(clients)
+      requestQueueRepository, requestRepository, new ServicePointRepository(clients),
+      new ConfigurationRepository(clients)
     );
 
     requestQueueRepository.get(reorderContext.getItemId())
