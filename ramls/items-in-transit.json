@@ -44,6 +44,21 @@
             "description" : "The call number from the holdings record",
             "type": "string"
           },
+          "enumeration": {
+            "description": "The enumeration of the item",
+            "type": "string"
+          },
+          "volume": {
+            "description": "The volume of the item",
+            "type": "string"
+          },
+          "yearCaption": {
+            "description": "The year caption of the item",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
           "status": {
             "description": "The status for an item (should be In transit for all items in report)",
             "type": "object",
@@ -119,6 +134,13 @@
               "requestPatronGroup": {
                 "type": "string",
                 "description": "The patron group of the request"
+              },
+              "tags": {
+                "description": "List of tags",
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
               }
             }
           },

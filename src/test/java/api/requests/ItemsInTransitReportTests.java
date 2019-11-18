@@ -8,6 +8,7 @@ import static org.junit.Assert.assertTrue;
 
 import java.net.MalformedURLException;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -16,11 +17,14 @@ import java.util.concurrent.TimeoutException;
 
 import api.support.APITests;
 import api.support.builders.CheckInByBarcodeRequestBuilder;
+import api.support.builders.ItemBuilder;
 import api.support.builders.RequestBuilder;
+import api.support.fixtures.ItemExamples;
 import api.support.http.InventoryItemResource;
 import api.support.http.ResourceClient;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
 import org.junit.Test;
@@ -49,6 +53,11 @@ public class ItemsInTransitReportTests extends APITests {
   private static final String DISCOVERY_DISPLAY_NAME = "discoveryDisplayName";
   private static final String PICKUP_LOCATION = "pickupLocation";
   private static final String REQUEST = "request";
+  private static final String CALL_NUMBER = "callNumber";
+  private static final String ITEM_LEVEL_CALL_NUMBER = "itemLevelCallNumber";
+  private static final String ENUMERATION = "enumeration";
+  private static final String VOLUME = "volume";
+  private static final String YEAR_CAPTION = "yearCaption";
 
   @Test
   public void reportIsEmptyWhenThereAreNoItemsInTransit()
@@ -69,7 +78,7 @@ public class ItemsInTransitReportTests extends APITests {
     TimeoutException,
     ExecutionException {
 
-    final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final InventoryItemResource smallAngryPlanet = createSmallAngryPlanet();
     final IndividualResource steve = usersFixture.steve();
     final UUID firstServicePointId = servicePointsFixture.cd1().getId();
     final UUID secondServicePointId = servicePointsFixture.cd2().getId();
@@ -101,8 +110,8 @@ public class ItemsInTransitReportTests extends APITests {
     TimeoutException,
     ExecutionException {
 
-    final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
-    final InventoryItemResource nod = itemsFixture.basedUponNod();
+    final InventoryItemResource smallAngryPlanet = createSmallAngryPlanet();
+    final InventoryItemResource nod = createNod();
 
     final IndividualResource steve = usersFixture.steve();
     final IndividualResource rebecca = usersFixture.rebecca();
@@ -158,8 +167,8 @@ public class ItemsInTransitReportTests extends APITests {
     TimeoutException,
     ExecutionException {
 
-    final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
-    final InventoryItemResource nod = itemsFixture.basedUponNod();
+    final InventoryItemResource smallAngryPlanet = createSmallAngryPlanet();
+    final InventoryItemResource nod = createNod();
     final DateTime checkInDate = new DateTime(2019, 8, 13, 5, 0);
     final DateTime requestDate = new DateTime(2019, 7, 5, 10, 0);
     final LocalDate requestExpirationDate = new LocalDate(2019, 7, 11);
@@ -195,8 +204,8 @@ public class ItemsInTransitReportTests extends APITests {
     TimeoutException,
     ExecutionException {
 
-    final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
-    final InventoryItemResource nod = itemsFixture.basedUponNod();
+    final InventoryItemResource smallAngryPlanet = createSmallAngryPlanet();
+    final InventoryItemResource nod = createNod();
 
     final IndividualResource steve = usersFixture.steve();
     final IndividualResource rebecca = usersFixture.rebecca();
@@ -254,8 +263,8 @@ public class ItemsInTransitReportTests extends APITests {
     TimeoutException,
     ExecutionException {
 
-    final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
-    final InventoryItemResource nod = itemsFixture.basedUponNod();
+    final InventoryItemResource smallAngryPlanet = createSmallAngryPlanet();
+    final InventoryItemResource nod = createNod();
 
     final IndividualResource steve = usersFixture.steve();
     final IndividualResource rebecca = usersFixture.rebecca();
@@ -323,9 +332,8 @@ public class ItemsInTransitReportTests extends APITests {
     TimeoutException,
     ExecutionException {
 
-    final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
-    final InventoryItemResource nod = itemsFixture.basedUponNod();
-
+    final InventoryItemResource smallAngryPlanet = createSmallAngryPlanet();
+    final InventoryItemResource nod = createNod();
     final UUID firsServicePointId = servicePointsFixture.cd1().getId();
     final UUID secondServicePointId = servicePointsFixture.cd2().getId();
 
@@ -397,6 +405,11 @@ public class ItemsInTransitReportTests extends APITests {
       .getMap().get(CONTRIBUTORS)).getJsonObject(0).getMap().get(NAME));
     assertThat(itemJson.getJsonArray(CONTRIBUTORS)
       .getJsonObject(0).getMap().get(NAME), is(contributors));
+    final JsonObject smallAngryPlanetResponse = item.getResponse().getJson();
+    assertThat(itemJson.getString(CALL_NUMBER), is(smallAngryPlanetResponse.getString(ITEM_LEVEL_CALL_NUMBER)));
+    assertThat(itemJson.getString(ENUMERATION), is(smallAngryPlanetResponse.getString(ENUMERATION)));
+    assertThat(itemJson.getString(VOLUME), is(smallAngryPlanetResponse.getString(VOLUME)));
+    assertThat(itemJson.getJsonArray(YEAR_CAPTION), is(smallAngryPlanetResponse.getJsonArray(YEAR_CAPTION)));
   }
 
   private void verifyLocation(JsonObject itemJson) {
@@ -440,4 +453,30 @@ public class ItemsInTransitReportTests extends APITests {
       "cd1", "Circulation Desk -- Hallway");
   }
 
+  private InventoryItemResource createNod() throws MalformedURLException, InterruptedException, ExecutionException, TimeoutException {
+    final ItemBuilder nodItemBuilder = ItemExamples.basedUponNod(
+      materialTypesFixture.book().getId(),
+      loanTypesFixture.canCirculate().getId())
+      .withEnumeration("nodeEnumeration")
+      .withVolume("nodeVolume")
+      .withYearCaption(Arrays.asList("2017"))
+      .withCallNumber("222245", null, null);
+    return itemsFixture.basedUponNod(builder -> nodItemBuilder);
+  }
+
+  private InventoryItemResource createSmallAngryPlanet() throws MalformedURLException,
+    InterruptedException, ExecutionException, TimeoutException {
+    final ItemBuilder smallAngryPlanetItemBuilder = ItemExamples.basedUponSmallAngryPlanet(
+      materialTypesFixture.book().getId(),
+      loanTypesFixture.canCirculate().getId(),
+      StringUtils.EMPTY,
+      "ItemPrefix",
+      "ItemSuffix",
+      Collections.singletonList(""))
+      .withEnumeration("smallAngryPlanetEnumeration")
+      .withVolume("smallAngryPlanetVolume")
+      .withYearCaption(Arrays.asList("2019"))
+      .withCallNumber("55555", null, null);;
+    return itemsFixture.basedUponSmallAngryPlanet(smallAngryPlanetItemBuilder, itemsFixture.thirdFloorHoldings());
+  }
 }

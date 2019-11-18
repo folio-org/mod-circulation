@@ -32,7 +32,7 @@ public class ItemExamples {
       .withCopyNumbers(copyNumbers);
   }
 
-  static ItemBuilder basedUponNod(
+  public static ItemBuilder basedUponNod(
     UUID bookMaterialTypeId,
     UUID loanTypeId) {
 
