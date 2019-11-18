@@ -58,6 +58,11 @@ public class ItemsInTransitReportTests extends APITests {
   private static final String ENUMERATION = "enumeration";
   private static final String VOLUME = "volume";
   private static final String YEAR_CAPTION = "yearCaption";
+  private static final String SERVICE_POINT_NAME_1 = "Circ Desk 1";
+  private static final String SERVICE_POINT_NAME_2 = "Circ Desk 2";
+  private static final String REQUEST_PATRON_GROUP_2 = "Stuart, Rebecca";
+  private static final String REQUEST_PATRON_GROUP_1 = "Jones, Steven";
+  private static final String SERVICE_POINT_CODE_2 = "cd2";
 
   @Test
   public void reportIsEmptyWhenThereAreNoItemsInTransit()
@@ -126,8 +131,6 @@ public class ItemsInTransitReportTests extends APITests {
 
     final DateTime requestDate2 = new DateTime(2019, 10, 8, 11, 0);
     final LocalDate requestExpirationDate2 = new LocalDate(2020, 1, 12);
-    final String servicePointName2 = "Circ Desk 2";
-    final String requestPatronGroup2 = "Stuart, Rebecca";
 
     loansFixture.checkOutByBarcode(smallAngryPlanet);
     loansFixture.checkOutByBarcode(nod);
@@ -156,7 +159,7 @@ public class ItemsInTransitReportTests extends APITests {
     JsonObject secondItemJson = getRecordById(items, nod.getId()).get();
     verifyItem(secondItemJson, nod, secondServicePointId);
     verifyLocation(secondItemJson);
-    verifyRequest(secondItemJson, requestDate2, requestExpirationDate2, requestPatronGroup2, servicePointName2);
+    verifyRequest(secondItemJson, requestDate2, requestExpirationDate2, REQUEST_PATRON_GROUP_2, SERVICE_POINT_NAME_2);
     verifyLoanInFirstServicePoint(secondItemJson, checkInDate2);
   }
 
@@ -219,10 +222,6 @@ public class ItemsInTransitReportTests extends APITests {
     final DateTime requestDate2 = new DateTime(2019, 10, 8, 11, 0);
     final LocalDate requestExpirationDate1 = new LocalDate(2019, 7, 11);
     final LocalDate requestExpirationDate2 = new LocalDate(2020, 1, 12);
-    final String servicePointName1 = "Circ Desk 1";
-    final String servicePointName2 = "Circ Desk 2";
-    final String requestPatronGroup1 = "Jones, Steven";
-    final String requestPatronGroup2 = "Stuart, Rebecca";
 
     loansFixture.checkOutByBarcode(smallAngryPlanet);
     loansFixture.checkOutByBarcode(nod);
@@ -245,14 +244,14 @@ public class ItemsInTransitReportTests extends APITests {
     JsonObject firstItemJson = getRecordById(items, smallAngryPlanet.getId()).get();
     verifyItem(firstItemJson, smallAngryPlanet, firstServicePointId);
     verifyLocation(firstItemJson);
-    verifyRequest(firstItemJson, requestDate1, requestExpirationDate1, requestPatronGroup1, servicePointName1);
-    verifyLoan(firstItemJson, checkInDate1, servicePointName2,
-      "cd2", "Circulation Desk -- Back Entrance");
+    verifyRequest(firstItemJson, requestDate1, requestExpirationDate1, REQUEST_PATRON_GROUP_1, SERVICE_POINT_NAME_1);
+    verifyLoan(firstItemJson, checkInDate1, SERVICE_POINT_NAME_2,
+      SERVICE_POINT_CODE_2, "Circulation Desk -- Back Entrance");
 
     JsonObject secondItemJson = getRecordById(items, nod.getId()).get();
     verifyItem(secondItemJson, nod, secondServicePointId);
     verifyLocation(secondItemJson);
-    verifyRequest(secondItemJson, requestDate2, requestExpirationDate2, requestPatronGroup2, servicePointName2);
+    verifyRequest(secondItemJson, requestDate2, requestExpirationDate2, REQUEST_PATRON_GROUP_2, SERVICE_POINT_NAME_2);
     verifyLoanInFirstServicePoint(secondItemJson, checkInDate2);
   }
 
@@ -285,11 +284,6 @@ public class ItemsInTransitReportTests extends APITests {
     final LocalDate requestNodeExpirationDate1 = new LocalDate(2020, 1, 12);
     final LocalDate requestNodeExpirationDate2 = new LocalDate(2020, 10, 10);
 
-    final String servicePointName1 = "Circ Desk 1";
-    final String servicePointName2 = "Circ Desk 2";
-    final String requestPatronGroup1 = "Jones, Steven";
-    final String requestPatronGroup2 = "Stuart, Rebecca";
-
     loansFixture.checkOutByBarcode(smallAngryPlanet);
     loansFixture.checkOutByBarcode(nod);
 
@@ -314,14 +308,14 @@ public class ItemsInTransitReportTests extends APITests {
     JsonObject firstItemJson = getRecordById(items, smallAngryPlanet.getId()).get();
     verifyItem(firstItemJson, smallAngryPlanet, firstServicePointId);
     verifyLocation(firstItemJson);
-    verifyRequest(firstItemJson, requestSmallAngryPlanetDate1, requestSmallAngryPlanetExpirationDate1, requestPatronGroup1, servicePointName1);
-    verifyLoan(firstItemJson, checkInDate1, servicePointName2,
-      "cd2", "Circulation Desk -- Back Entrance");
+    verifyRequest(firstItemJson, requestSmallAngryPlanetDate1, requestSmallAngryPlanetExpirationDate1, REQUEST_PATRON_GROUP_1, SERVICE_POINT_NAME_1);
+    verifyLoan(firstItemJson, checkInDate1, SERVICE_POINT_NAME_2,
+      SERVICE_POINT_CODE_2, "Circulation Desk -- Back Entrance");
 
     JsonObject secondItemJson = getRecordById(items, nod.getId()).get();
     verifyItem(secondItemJson, nod, secondServicePointId);
     verifyLocation(secondItemJson);
-    verifyRequest(secondItemJson, requestNodeDate1, requestNodeExpirationDate1, requestPatronGroup2, servicePointName2);
+    verifyRequest(secondItemJson, requestNodeDate1, requestNodeExpirationDate1, REQUEST_PATRON_GROUP_2, SERVICE_POINT_NAME_2);
     verifyLoanInFirstServicePoint(secondItemJson, checkInDate2);
   }
 
@@ -340,8 +334,6 @@ public class ItemsInTransitReportTests extends APITests {
     final DateTime checkInDate1 = new DateTime(2019, 8, 13, 5, 0);
     final DateTime checkInDate2 = new DateTime(2019, 4, 3, 2, 10);
 
-    final String servicePointName2 = "Circ Desk 2";
-    final String servicePointCode2 = "cd2";
     final String checkInServicePointDiscoveryName = "Circulation Desk -- Back Entrance";
 
     loansFixture.checkOutByBarcode(smallAngryPlanet);
@@ -363,13 +355,82 @@ public class ItemsInTransitReportTests extends APITests {
     verifyItem(firstItemJson, smallAngryPlanet, firsServicePointId);
     verifyLocation(firstItemJson);
     assertNull(firstItemJson.getMap().get(REQUEST));
-    verifyLoan(firstItemJson, checkInDate1, servicePointName2, servicePointCode2, checkInServicePointDiscoveryName);
+    verifyLoan(firstItemJson, checkInDate1, SERVICE_POINT_NAME_2, SERVICE_POINT_CODE_2, checkInServicePointDiscoveryName);
 
     JsonObject secondItemJson = getRecordById(items, nod.getId()).get();
     verifyItem(secondItemJson, nod, firsServicePointId);
     verifyLocation(secondItemJson);
     assertNull(secondItemJson.getMap().get(REQUEST));
-    verifyLoan(secondItemJson, checkInDate2, servicePointName2, servicePointCode2, checkInServicePointDiscoveryName);
+    verifyLoan(secondItemJson, checkInDate2, SERVICE_POINT_NAME_2, SERVICE_POINT_CODE_2, checkInServicePointDiscoveryName);
+  }
+
+  @Test
+  public void reportItemsInTransitSortedByCheckInServicePoint()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    final InventoryItemResource smallAngryPlanet = createSmallAngryPlanet();
+    final InventoryItemResource nod = createNod();
+    final InventoryItemResource smallAngryPlanetWithFourthCheckInServicePoint = itemsFixture
+      .basedUponSmallAngryPlanet(createSmallAngryPlanetItemBuilder()
+        .withBarcode("34"), itemsFixture.thirdFloorHoldings());
+    final IndividualResource steve = usersFixture.steve();
+    final IndividualResource rebecca = usersFixture.rebecca();
+    final UUID firstServicePointId = servicePointsFixture.cd1().getId();
+    final UUID secondServicePointId = servicePointsFixture.cd2().getId();
+    final UUID fourthServicePointId = servicePointsFixture.cd4().getId();
+    final DateTime checkInDate1 = new DateTime(2019, 8, 13, 5, 0);
+    final DateTime checkInDate2 = new DateTime(2019, 4, 3, 2, 10);
+    final DateTime checkInDate3 = new DateTime(2019, 10, 10, 3, 0);
+    final DateTime requestDate1 = new DateTime(2019, 7, 5, 10, 0);
+    final DateTime requestDate2 = new DateTime(2019, 10, 8, 11, 0);
+    final LocalDate requestExpirationDate1 = new LocalDate(2019, 7, 11);
+    final LocalDate requestExpirationDate2 = new LocalDate(2020, 1, 12);
+
+    loansFixture.checkOutByBarcode(smallAngryPlanet);
+    loansFixture.checkOutByBarcode(nod);
+    loansFixture.checkOutByBarcode(smallAngryPlanetWithFourthCheckInServicePoint);
+
+    createRequest(smallAngryPlanet, steve, firstServicePointId, requestDate1, requestExpirationDate1);
+    createRequest(nod, rebecca, secondServicePointId, requestDate2, requestExpirationDate2);
+
+    loansFixture.checkInByBarcode(new CheckInByBarcodeRequestBuilder()
+      .forItem(smallAngryPlanetWithFourthCheckInServicePoint)
+      .on(checkInDate3)
+      .at(fourthServicePointId));
+    loansFixture.checkInByBarcode(new CheckInByBarcodeRequestBuilder()
+      .forItem(nod)
+      .on(checkInDate2)
+      .at(firstServicePointId));
+    loansFixture.checkInByBarcode(new CheckInByBarcodeRequestBuilder()
+      .forItem(smallAngryPlanet)
+      .on(checkInDate1)
+      .at(secondServicePointId));
+
+    List<JsonObject> items = ResourceClient.forItemsInTransitReport(client).getAll();
+
+    assertThat(items.size(), is(3));
+
+    JsonObject firstItemJson = items.get(0);
+    verifyItem(firstItemJson, nod, secondServicePointId);
+    verifyLocation(firstItemJson);
+    verifyRequest(firstItemJson, requestDate2, requestExpirationDate2, REQUEST_PATRON_GROUP_2, SERVICE_POINT_NAME_2);
+    verifyLoanInFirstServicePoint(firstItemJson, checkInDate2);
+
+    JsonObject secondItemJson = items.get(1);
+    verifyItem(secondItemJson, smallAngryPlanet, firstServicePointId);
+    verifyLocation(secondItemJson);
+    verifyRequest(secondItemJson, requestDate1, requestExpirationDate1, REQUEST_PATRON_GROUP_1, SERVICE_POINT_NAME_1);
+    verifyLoan(secondItemJson, checkInDate1, SERVICE_POINT_NAME_2,
+      SERVICE_POINT_CODE_2, "Circulation Desk -- Back Entrance");
+
+    JsonObject thirdItemJson = items.get(2);
+    verifyItem(thirdItemJson, smallAngryPlanetWithFourthCheckInServicePoint, firstServicePointId);
+    verifyLocation(thirdItemJson);
+    verifyLoan(thirdItemJson, checkInDate3, "Circ Desk 4",
+      "cd4", "Circulation Desk -- Basement");
   }
 
   private void createRequest(InventoryItemResource smallAngryPlanet,
@@ -431,9 +492,9 @@ public class ItemsInTransitReportTests extends APITests {
   }
 
   private void verifyRequestWithSecondPickupServicePoint(JsonObject itemJson, DateTime requestDate,
-                             LocalDate requestExpirationDate) {
+                                                         LocalDate requestExpirationDate) {
 
-    verifyRequest(itemJson, requestDate, requestExpirationDate, "Jones, Steven", "Circ Desk 2");
+    verifyRequest(itemJson, requestDate, requestExpirationDate, REQUEST_PATRON_GROUP_1, SERVICE_POINT_NAME_2);
   }
 
   private void verifyLoan(JsonObject itemJson, DateTime checkInDate,
@@ -449,7 +510,7 @@ public class ItemsInTransitReportTests extends APITests {
   }
 
   private void verifyLoanInFirstServicePoint(JsonObject itemJson, DateTime checkInDate) {
-    verifyLoan(itemJson, checkInDate, "Circ Desk 1",
+    verifyLoan(itemJson, checkInDate, SERVICE_POINT_NAME_1,
       "cd1", "Circulation Desk -- Hallway");
   }
 
@@ -466,7 +527,13 @@ public class ItemsInTransitReportTests extends APITests {
 
   private InventoryItemResource createSmallAngryPlanet() throws MalformedURLException,
     InterruptedException, ExecutionException, TimeoutException {
-    final ItemBuilder smallAngryPlanetItemBuilder = ItemExamples.basedUponSmallAngryPlanet(
+    final ItemBuilder smallAngryPlanetItemBuilder = createSmallAngryPlanetItemBuilder();
+    return itemsFixture.basedUponSmallAngryPlanet(smallAngryPlanetItemBuilder, itemsFixture.thirdFloorHoldings());
+  }
+
+  private ItemBuilder createSmallAngryPlanetItemBuilder() throws MalformedURLException,
+    InterruptedException, ExecutionException, TimeoutException {
+    return ItemExamples.basedUponSmallAngryPlanet(
       materialTypesFixture.book().getId(),
       loanTypesFixture.canCirculate().getId(),
       StringUtils.EMPTY,
@@ -476,7 +543,6 @@ public class ItemsInTransitReportTests extends APITests {
       .withEnumeration("smallAngryPlanetEnumeration")
       .withVolume("smallAngryPlanetVolume")
       .withYearCaption(Arrays.asList("2019"))
-      .withCallNumber("55555", null, null);;
-    return itemsFixture.basedUponSmallAngryPlanet(smallAngryPlanetItemBuilder, itemsFixture.thirdFloorHoldings());
+      .withCallNumber("55555", null, null);
   }
 }

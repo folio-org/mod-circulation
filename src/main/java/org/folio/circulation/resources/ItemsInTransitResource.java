@@ -9,9 +9,11 @@ import static org.folio.circulation.support.CqlSortBy.ascending;
 import static org.folio.circulation.support.Result.of;
 import static org.folio.circulation.support.Result.succeeded;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
@@ -30,6 +32,7 @@ import org.folio.circulation.domain.PatronGroupRepository;
 import org.folio.circulation.domain.ReportRepository;
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestStatus;
+import org.folio.circulation.domain.ServicePoint;
 import org.folio.circulation.domain.ServicePointRepository;
 import org.folio.circulation.domain.UserRepository;
 import org.folio.circulation.domain.representations.ItemReportRepresentation;
@@ -49,6 +52,11 @@ public class ItemsInTransitResource extends Resource {
 
   private static final String ITEM_ID = "itemId";
   private final String rootPath;
+  private static final Comparator<InTransitReportEntry> IN_TRANSIT_REPORT_ENTRY_COMPARATOR =
+    Comparator.comparing(inTransitReportEntry-> Optional.ofNullable(inTransitReportEntry
+      .getLoan()).map(loan -> Optional.ofNullable(loan.getCheckinServicePoint())
+      .map(ServicePoint::getName).orElse(null))
+      .orElse(null), Comparator.nullsLast(String::compareTo));
 
   public ItemsInTransitResource(String rootPath, HttpClient client) {
     super(client);
@@ -176,6 +184,7 @@ public class ItemsInTransitResource extends Resource {
     return of(() ->
       inTransitReportEntries.stream()
         .map(inTransitReportEntry -> matchLoansToInTransitReportEntry(inTransitReportEntry, loans))
+        .sorted(IN_TRANSIT_REPORT_ENTRY_COMPARATOR)
         .collect(Collectors.toList()));
   }
 
