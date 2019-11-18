@@ -13,6 +13,7 @@ public class ItemBuilder extends JsonBuilder implements Builder {
   public static final String AVAILABLE = "Available";
   public static final String CHECKED_OUT = "Checked out";
   public static final String AWAITING_PICKUP = "Awaiting pickup";
+  public static final String AWAITING_DELIVERY = "Awaiting delivery";
   public static final String IN_TRANSIT = "In transit";
   public static final String PAGED = "Paged";
   public static final String MISSING = "Missing";

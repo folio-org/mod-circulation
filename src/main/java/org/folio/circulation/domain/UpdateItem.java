@@ -47,23 +47,7 @@ public class UpdateItem {
     UUID checkInServicePointId) {
 
     if (requestQueue.hasOutstandingFulfillableRequests()) {
-      Request request = requestQueue.getHighestPriorityFulfillableRequest();
-
-      String pickupServicePointIdString = request.getPickupServicePointId();
-      if (pickupServicePointIdString == null) {
-          return failedValidation(
-            "Failed to check in item due to the highest priority " +
-              "request missing a pickup service point",
-              "pickupServicePointId", null);
-      }
-
-      UUID pickUpServicePointId = UUID.fromString(pickupServicePointIdString);
-      if (checkInServicePointId.equals(pickUpServicePointId)) {
-        return succeeded(item.changeStatus(requestQueue.getHighestPriorityFulfillableRequest()
-          .checkedInItemStatus()));
-      } else {
-        return succeeded(item.inTransitToServicePoint(pickUpServicePointId));
-      }
+      return changeItemWithOutstandingRequest(item, requestQueue, checkInServicePointId);
     } else {
       if(Optional.ofNullable(item.getLocation())
         .map(location -> location.homeLocationIsServedBy(checkInServicePointId))
@@ -74,6 +58,55 @@ public class UpdateItem {
         return succeeded(item.inTransitToHome());
       }
     }
+  }
+
+  private Result<Item> changeItemWithOutstandingRequest(
+    Item item,
+    RequestQueue requestQueue,
+    UUID checkInServicePointId) {
+
+    Request req = requestQueue.getHighestPriorityFulfillableRequest();
+
+    Result<Item> itemResult;
+    switch (req.getFulfilmentPreference()) {
+      case HOLD_SHELF:
+        itemResult = changeItemWithHoldRequest(item, checkInServicePointId, req);
+        break;
+      case DELIVERY:
+        itemResult = changeItemWithDeliveryRequest(item, req);
+        break;
+      default:
+        throw new IllegalStateException("Unexpected value: " +
+          req.getFulfilmentPreference());
+    }
+
+    return itemResult;
+  }
+
+  private Result<Item> changeItemWithHoldRequest(
+    Item item,
+    UUID checkInServicePointId,
+    Request request) {
+
+    String pickupServicePointIdString = request.getPickupServicePointId();
+
+    if (pickupServicePointIdString == null) {
+      return failedValidation(
+        "Failed to check in item due to the highest priority " +
+          "request missing a pickup service point",
+        "pickupServicePointId", null);
+    }
+
+    UUID pickUpServicePointId = UUID.fromString(pickupServicePointIdString);
+    if (checkInServicePointId.equals(pickUpServicePointId)) {
+      return succeeded(item.changeStatus(request.checkedInItemStatus()));
+    } else {
+      return succeeded(item.inTransitToServicePoint(pickUpServicePointId));
+    }
+  }
+
+  private Result<Item> changeItemWithDeliveryRequest(Item item, Request request) {
+    return succeeded(item.changeStatus(request.checkedInItemStatus()));
   }
 
   public CompletableFuture<Result<LoanAndRelatedRecords>> onCheckOut(

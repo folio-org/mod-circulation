@@ -9,6 +9,7 @@ import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
+import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.domain.AddressTypeRepository;
 import org.folio.circulation.domain.CheckInProcessRecords;
 import org.folio.circulation.domain.Item;
@@ -132,8 +133,10 @@ class CheckInProcessAdapter {
     if (firstRequest == null) {
       return completedFuture(succeeded(null));
     }
-    return servicePointRepository.getServicePointById(UUID.fromString(firstRequest.getPickupServicePointId()))
-      .thenApply(r -> r.map(firstRequest::withPickupServicePoint));
+    return StringUtils.isNotBlank(firstRequest.getPickupServicePointId())
+      ? servicePointRepository.getServicePointById(UUID.fromString(firstRequest.getPickupServicePointId()))
+          .thenApply(r -> r.map(firstRequest::withPickupServicePoint))
+      : completedFuture(succeeded(firstRequest));
   }
 
   CompletableFuture<Result<Request>> getRequester(CheckInProcessRecords records) {
