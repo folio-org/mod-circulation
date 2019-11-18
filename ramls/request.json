@@ -84,6 +84,10 @@
           "type": "string",
           "readonly": true
         },
+        "callNumber" : {
+          "description" : "Deprecated call number from the holdings record, use effectiveCallNumberComponents.callNumber instead",
+          "type": "string"
+        },
         "holdingsRecordId": {
           "description": "The ID of the holdings for the item",
           "type": "string",
@@ -141,6 +145,10 @@
         "enumeration": {
           "description": "The volume and/or issue number for the item",
           "type": "string"
+        },
+        "effectiveCallNumberComponents": {
+          "description": "Elements of a full call number generated from the item or holding",
+          "$ref": "schema/effective-call-number-components.json"
         }
       },
       "additionalProperties": false

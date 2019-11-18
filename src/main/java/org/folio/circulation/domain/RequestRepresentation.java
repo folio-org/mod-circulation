@@ -2,6 +2,8 @@ package org.folio.circulation.domain;
 
 import static java.util.Objects.isNull;
 import static java.util.Optional.ofNullable;
+import static org.folio.circulation.domain.representations.ItemProperties.CALL_NUMBER;
+import static org.folio.circulation.domain.representations.ItemProperties.EFFECTIVE_CALL_NUMBER_COMPONENTS;
 import static org.folio.circulation.support.JsonPropertyFetcher.copyProperty;
 import static org.folio.circulation.support.JsonPropertyWriter.write;
 
@@ -86,9 +88,10 @@ public class RequestRepresentation {
       itemSummary.put("status", statusValue);
     }
 
-    String callNumber = item.getCallNumber();
-    if (callNumber != null) {
-      itemSummary.put("callNumber", callNumber);
+    EffectiveCallNumberComponents callNumberComponents = item.getEffectiveCallNumberComponents();
+    if (callNumberComponents != null) {
+      write(itemSummary, CALL_NUMBER, callNumberComponents.getCallNumber());
+      write(itemSummary, EFFECTIVE_CALL_NUMBER_COMPONENTS, JsonObject.mapFrom(callNumberComponents));
     }
 
     JsonArray copyNumbers = item.getCopyNumbers();

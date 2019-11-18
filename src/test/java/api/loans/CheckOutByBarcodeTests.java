@@ -17,11 +17,13 @@ import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static api.support.matchers.ValidationErrorMatchers.hasMessageContaining;
 import static java.net.HttpURLConnection.HTTP_OK;
+import static org.folio.circulation.domain.representations.ItemProperties.EFFECTIVE_CALL_NUMBER_COMPONENTS;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
+import static org.junit.Assert.assertTrue;
 
 import java.net.MalformedURLException;
 import java.util.List;
@@ -31,6 +33,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import org.folio.circulation.domain.EffectiveCallNumberComponents;
 import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
@@ -163,6 +166,17 @@ public class CheckOutByBarcodeTests extends APITests {
     assertThat(sessionRecord.getString("patronId"), is(steve.getId()));
     assertThat(sessionRecord.getString("loanId"), is(response.getId()));
     assertThat(sessionRecord.getString("actionType"), is("Check-out"));
+
+    assertTrue(loan.getJsonObject("item").containsKey(EFFECTIVE_CALL_NUMBER_COMPONENTS));
+
+    EffectiveCallNumberComponents callNumberComponents = loan
+      .getJsonObject("item")
+      .getJsonObject(EFFECTIVE_CALL_NUMBER_COMPONENTS)
+      .mapTo(EffectiveCallNumberComponents.class);
+
+    assertThat(callNumberComponents.getCallNumber(), is("123456"));
+    assertThat(callNumberComponents.getCallNumberPrefix(), is("PR"));
+    assertThat(callNumberComponents.getCallNumberSuffix(), is("CIRC"));
   }
 
   @Test
