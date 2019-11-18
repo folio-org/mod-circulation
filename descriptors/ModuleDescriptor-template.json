@@ -4,7 +4,7 @@
   "provides": [
     {
       "id": "requests-reports",
-      "version": "0.2",
+      "version": "0.3",
       "handlers": [
         {
           "methods": [
@@ -40,7 +40,7 @@
     },
     {
       "id": "request-move",
-      "version": "0.2",
+      "version": "0.3",
       "handlers": [
         {
           "methods": [
@@ -74,7 +74,7 @@
     },
     {
       "id": "circulation",
-      "version": "8.1",
+      "version": "8.2",
       "handlers": [
         {
           "methods": [
@@ -670,11 +670,11 @@
     },
     {
       "id": "request-storage",
-      "version": "3.1"
+      "version": "3.2"
     },
     {
       "id": "request-storage-batch",
-      "version": "0.1"
+      "version": "0.2"
     },
     {
       "id": "users",
@@ -1757,7 +1757,6 @@
       "displayName": "module permissions for one op",
       "description": "to reduce X-Okapi-Token size",
       "subPermissions": [
-        "modperms.inventory.items-in-transit-report.get",
         "inventory-storage.items.item.get",
         "inventory-storage.items.collection.get",
         "inventory-storage.holdings.collection.get",

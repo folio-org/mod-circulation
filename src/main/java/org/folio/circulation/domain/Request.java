@@ -1,10 +1,12 @@
 package org.folio.circulation.domain;
 
+import static org.folio.circulation.domain.RequestFulfilmentPreference.DELIVERY;
 import static org.folio.circulation.domain.RequestFulfilmentPreference.HOLD_SHELF;
 import static org.folio.circulation.domain.RequestStatus.CLOSED_CANCELLED;
 import static org.folio.circulation.domain.RequestStatus.CLOSED_FILLED;
 import static org.folio.circulation.domain.RequestStatus.CLOSED_PICKUP_EXPIRED;
 import static org.folio.circulation.domain.RequestStatus.CLOSED_UNFILLED;
+import static org.folio.circulation.domain.RequestStatus.OPEN_AWAITING_DELIVERY;
 import static org.folio.circulation.domain.RequestStatus.OPEN_AWAITING_PICKUP;
 import static org.folio.circulation.domain.RequestStatus.OPEN_IN_TRANSIT;
 import static org.folio.circulation.domain.RequestStatus.OPEN_NOT_YET_FILLED;
@@ -26,10 +28,9 @@ import static org.folio.circulation.support.JsonPropertyWriter.write;
 
 import java.util.Objects;
 
+import io.vertx.core.json.JsonObject;
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
-
-import io.vertx.core.json.JsonObject;
 
 public class Request implements ItemRelatedRecord, UserRelatedRecord {
   private final JsonObject requestRepresentation;
@@ -95,7 +96,7 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   boolean isFulfillable() {
-    return getFulfilmentPreference() == HOLD_SHELF;
+    return getFulfilmentPreference() == HOLD_SHELF || getFulfilmentPreference() == DELIVERY;
   }
 
   public boolean isOpen() {
@@ -145,6 +146,10 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
 
   boolean isAwaitingPickup() {
     return getStatus() == OPEN_AWAITING_PICKUP;
+  }
+
+  boolean isAwaitingDelivery() {
+    return getStatus() == OPEN_AWAITING_DELIVERY;
   }
 
   boolean isFor(User user) {
