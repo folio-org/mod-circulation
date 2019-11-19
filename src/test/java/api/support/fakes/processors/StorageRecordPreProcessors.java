@@ -33,9 +33,8 @@ public final class StorageRecordPreProcessors {
     throw new UnsupportedOperationException("Do not instantiate");
   }
 
-  @SuppressWarnings("unused")
   public static CompletableFuture<JsonObject> setEffectiveLocationIdForItem(
-    JsonObject oldItem, JsonObject newItem) {
+    @SuppressWarnings("unused") JsonObject oldItem, JsonObject newItem) {
 
     String permanentLocationId = newItem.getString(ItemProperties.PERMANENT_LOCATION_ID);
     String temporaryLocationId = newItem.getString(ItemProperties.TEMPORARY_LOCATION_ID);
@@ -78,9 +77,8 @@ public final class StorageRecordPreProcessors {
     return CompletableFuture.completedFuture(newItem);
   }
 
-  @SuppressWarnings("unused")
   public static CompletableFuture<JsonObject> setEffectiveCallNumberComponents(
-    JsonObject oldItem, JsonObject newItem) {
+    @SuppressWarnings("unused") JsonObject oldItem, JsonObject newItem) {
 
     CompletableFuture<JsonObject> holdings =
       CompletableFuture.completedFuture(new JsonObject());
