@@ -61,7 +61,7 @@ public class RequestTypeItemStatusWhiteListTests {
   }
 
   @Test
-  public void canCreateRecallRequestWhenItemStatusPaged() {    
+  public void canCreateRecallRequestWhenItemStatusPaged() {
     assertTrue(RequestTypeItemStatusWhiteList.canCreateRequestForItem(ItemStatus.PAGED, RequestType.RECALL));
   }
 
@@ -73,5 +73,25 @@ public class RequestTypeItemStatusWhiteListTests {
   @Test
   public void canCreatePagedRequestWhenItemStatusIsAvailable() {
     assertTrue(RequestTypeItemStatusWhiteList.canCreateRequestForItem(ItemStatus.AVAILABLE, RequestType.PAGE));
+  }
+
+  @Test
+  public void canCreateHoldRequestWhenItemStatusAwaitingDelivery() {
+    assertTrue(RequestTypeItemStatusWhiteList.canCreateRequestForItem(ItemStatus.AWAITING_DELIVERY, RequestType.HOLD));
+  }
+
+  @Test
+  public void canCreateRecallRequestWhenItemStatusAwaitingDelivery() {
+    assertTrue(RequestTypeItemStatusWhiteList.canCreateRequestForItem(ItemStatus.AWAITING_DELIVERY, RequestType.RECALL));
+  }
+
+  @Test
+  public void cannotCreatePagedRequestWhenItemStatusAwaitingDelivery() {
+    assertFalse(RequestTypeItemStatusWhiteList.canCreateRequestForItem(ItemStatus.AWAITING_DELIVERY, RequestType.PAGE));
+  }
+
+  @Test
+  public void cannotCreateNoneRequestWhenItemStatusAwaitingDelivery() {
+    assertFalse(RequestTypeItemStatusWhiteList.canCreateRequestForItem(ItemStatus.AWAITING_DELIVERY, RequestType.NONE));
   }
 }
