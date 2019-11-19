@@ -8,7 +8,6 @@ import static org.folio.circulation.domain.ItemStatus.MISSING;
 import static org.folio.circulation.domain.ItemStatus.PAGED;
 import static org.folio.circulation.domain.representations.HoldingsProperties.COPY_NUMBER_ID;
 import static org.folio.circulation.domain.representations.InstanceProperties.CONTRIBUTORS;
-import static org.folio.circulation.domain.representations.ItemProperties.EFFECTIVE_CALL_NUMBER_COMPONENTS;
 import static org.folio.circulation.domain.representations.ItemProperties.EFFECTIVE_LOCATION_ID;
 import static org.folio.circulation.domain.representations.ItemProperties.IN_TRANSIT_DESTINATION_SERVICE_POINT_ID;
 import static org.folio.circulation.domain.representations.ItemProperties.ITEM_COPY_NUMBERS_ID;
@@ -22,6 +21,7 @@ import static org.folio.circulation.support.JsonPropertyWriter.write;
 import static org.folio.circulation.support.JsonStringArrayHelper.toStream;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -36,6 +36,8 @@ public class Item {
   private final JsonObject itemRepresentation;
   private final JsonObject holdingRepresentation;
   private final JsonObject instanceRepresentation;
+  private final CallNumberComponents callNumberComponents;
+
   private Location location;
   private JsonObject materialTypeRepresentation;
   private ServicePoint primaryServicePoint;
@@ -60,6 +62,7 @@ public class Item {
     this.materialTypeRepresentation = materialTypeRepresentation;
     this.primaryServicePoint = servicePoint;
     this.loanTypeRepresentation = loanTypeRepresentation;
+    this.callNumberComponents = fetchCallNumberComponents(itemRepresentation);
   }
 
   public static Item from(JsonObject representation) {
@@ -152,13 +155,14 @@ public class Item {
     return getProperty(holdingRepresentation, "instanceId");
   }
 
-  public EffectiveCallNumberComponents getEffectiveCallNumberComponents() {
-    if (!itemRepresentation.containsKey(EFFECTIVE_CALL_NUMBER_COMPONENTS)) {
-      return null;
-    }
+  public String getCallNumber() {
+    return Optional.ofNullable(callNumberComponents)
+      .map(CallNumberComponents::getCallNumber)
+      .orElse(null);
+  }
 
-    return itemRepresentation.getJsonObject(EFFECTIVE_CALL_NUMBER_COMPONENTS)
-      .mapTo(EffectiveCallNumberComponents.class);
+  public CallNumberComponents getCallNumberComponents() {
+    return callNumberComponents;
   }
 
   public ItemStatus getStatus() {
@@ -395,5 +399,15 @@ public class Item {
       this.materialTypeRepresentation,
       this.primaryServicePoint,
       newLoanTypeRepresentation);
+  }
+
+  private CallNumberComponents fetchCallNumberComponents(JsonObject itemRepresentation) {
+    if (itemRepresentation == null) {
+      return null;
+    }
+
+    return Optional.ofNullable(itemRepresentation.getJsonObject("effectiveCallNumberComponents"))
+      .map(CallNumberComponents::fromJson)
+      .orElse(null);
   }
 }

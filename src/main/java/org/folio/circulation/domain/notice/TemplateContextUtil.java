@@ -7,8 +7,8 @@ import static org.folio.circulation.support.JsonStringArrayHelper.toStream;
 
 import java.util.Optional;
 
+import org.folio.circulation.domain.CallNumberComponents;
 import org.folio.circulation.domain.CheckInProcessRecords;
-import org.folio.circulation.domain.EffectiveCallNumberComponents;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.Location;
@@ -155,7 +155,7 @@ public class TemplateContextUtil {
         .put("effectiveLocationInstitution", location.getInstitutionName());
     }
 
-    EffectiveCallNumberComponents callNumberComponents = item.getEffectiveCallNumberComponents();
+    CallNumberComponents callNumberComponents = item.getCallNumberComponents();
     if (callNumberComponents != null) {
       itemContext
         .put("callNumber", callNumberComponents.getCallNumber())

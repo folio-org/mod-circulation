@@ -1,13 +1,12 @@
 package org.folio.circulation.domain.representations;
 
-import static org.folio.circulation.domain.representations.ItemProperties.CALL_NUMBER;
-import static org.folio.circulation.domain.representations.ItemProperties.EFFECTIVE_CALL_NUMBER_COMPONENTS;
+import static org.folio.circulation.domain.representations.CallNumberComponentsRepresentation.createCallNumberComponents;
+import static org.folio.circulation.domain.representations.ItemProperties.CALL_NUMBER_COMPONENTS;
 import static org.folio.circulation.support.JsonPropertyWriter.write;
 
 import java.lang.invoke.MethodHandles;
 import java.util.Objects;
 
-import org.folio.circulation.domain.EffectiveCallNumberComponents;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Location;
 import org.folio.circulation.domain.ServicePoint;
@@ -32,12 +31,8 @@ public class ItemSummaryRepresentation {
     write(itemSummary, "title", item.getTitle());
     write(itemSummary, "barcode", item.getBarcode());
     write(itemSummary, "contributors", item.getContributorNames());
-
-    EffectiveCallNumberComponents callNumberComponents = item.getEffectiveCallNumberComponents();
-    if (callNumberComponents != null) {
-      write(itemSummary, CALL_NUMBER, callNumberComponents.getCallNumber());
-      write(itemSummary, EFFECTIVE_CALL_NUMBER_COMPONENTS, JsonObject.mapFrom(callNumberComponents));
-    }
+    write(itemSummary, "callNumber", item.getCallNumber());
+    write(itemSummary, CALL_NUMBER_COMPONENTS, createCallNumberComponents(item.getCallNumberComponents()));
 
     JsonObject status = new JsonObject()
       .put("name", item.getStatus().getValue());

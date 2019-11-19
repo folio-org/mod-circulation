@@ -13,7 +13,6 @@ public class ItemProperties {
   public static final String ITEM_COPY_NUMBERS_ID = "copyNumbers";
   public static final String EFFECTIVE_LOCATION_ID = "effectiveLocationId";
   public static final String STATUS_PROPERTY = "status";
-  public static final String EFFECTIVE_CALL_NUMBER_COMPONENTS = "effectiveCallNumberComponents";
-  public static final String CALL_NUMBER = "callNumber";
+  public static final String CALL_NUMBER_COMPONENTS = "callNumberComponents";
   public static final String HOLDINGS_RECORD_ID = "holdingsRecordId";
 }

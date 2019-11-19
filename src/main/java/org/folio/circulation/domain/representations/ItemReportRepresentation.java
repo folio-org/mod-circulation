@@ -1,12 +1,10 @@
 package org.folio.circulation.domain.representations;
 
-import static org.folio.circulation.domain.representations.ItemProperties.CALL_NUMBER;
 import static org.folio.circulation.support.JsonPropertyWriter.write;
 import static org.folio.circulation.support.JsonPropertyWriter.writeNamedObject;
 
 import java.util.Optional;
 
-import org.folio.circulation.domain.EffectiveCallNumberComponents;
 import org.folio.circulation.domain.InTransitReportEntry;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.ItemStatus;
@@ -36,14 +34,10 @@ public class ItemReportRepresentation {
     write(itemReport, "title", item.getTitle());
     write(itemReport, "barcode", item.getBarcode());
     write(itemReport, "contributors", item.getContributorNames());
+    write(itemReport, "callNumber", item.getCallNumber());
     writeNamedObject(itemReport, "status", Optional.ofNullable(item.getStatus())
       .map(ItemStatus::getValue).orElse(null));
     write(itemReport, "inTransitDestinationServicePointId", item.getInTransitDestinationServicePointId());
-
-    EffectiveCallNumberComponents callNumberComponents = item.getEffectiveCallNumberComponents();
-    if (callNumberComponents != null) {
-      write(itemReport, CALL_NUMBER, callNumberComponents.getCallNumber());
-    }
 
     final ServicePoint inTransitDestinationServicePoint = item.getInTransitDestinationServicePoint();
     if (inTransitDestinationServicePoint != null) {

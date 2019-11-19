@@ -1,0 +1,19 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "type": "object",
+  "description": "Elements of a full call number",
+  "properties": {
+    "callNumber": {
+      "type": "string",
+      "description": "Effective Call Number for item."
+    },
+    "callNumberPrefix": {
+      "description": "Effective Call Number Prefix for item.",
+      "type": "string"
+    },
+    "callNumberSuffix": {
+      "description": "Effective Call Number Suffix for item.",
+      "type": "string"
+    }
+  }
+}

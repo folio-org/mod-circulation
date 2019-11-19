@@ -13,7 +13,7 @@ import static api.support.matchers.ValidationErrorMatchers.hasMessageContaining;
 import static api.support.matchers.ValidationErrorMatchers.hasNullParameter;
 import static api.support.matchers.ValidationErrorMatchers.hasUUIDParameter;
 import static org.folio.HttpStatus.HTTP_VALIDATION_ERROR;
-import static org.folio.circulation.domain.representations.ItemProperties.EFFECTIVE_CALL_NUMBER_COMPONENTS;
+import static org.folio.circulation.domain.representations.ItemProperties.CALL_NUMBER_COMPONENTS;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.greaterThan;
@@ -21,6 +21,7 @@ import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import java.io.UnsupportedEncodingException;
@@ -35,7 +36,6 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import org.folio.circulation.domain.EffectiveCallNumberComponents;
 import org.folio.circulation.domain.representations.LoanProperties;
 import org.folio.circulation.support.JsonArrayHelper;
 import org.folio.circulation.support.http.client.IndividualResource;
@@ -2064,16 +2064,14 @@ public class LoanAPITests extends APITests {
     assertThat("Should not have snapshot of item status, as current status is included",
       loan.containsKey("itemStatus"), is(false));
 
-    assertTrue(loan.getJsonObject("item").containsKey(EFFECTIVE_CALL_NUMBER_COMPONENTS));
-
-    EffectiveCallNumberComponents callNumberComponents = loan
+    assertTrue(loan.getJsonObject("item").containsKey(CALL_NUMBER_COMPONENTS));
+    JsonObject callNumberComponents = loan
       .getJsonObject("item")
-      .getJsonObject(EFFECTIVE_CALL_NUMBER_COMPONENTS)
-      .mapTo(EffectiveCallNumberComponents.class);
+      .getJsonObject(CALL_NUMBER_COMPONENTS);
 
-    assertThat(callNumberComponents.getCallNumber(), is("123456"));
-    assertThat(callNumberComponents.getCallNumberPrefix(), is("PR"));
-    assertThat(callNumberComponents.getCallNumberSuffix(), is("CIRC"));
+    assertThat(callNumberComponents.getString("callNumber"), is("123456"));
+    assertFalse(callNumberComponents.containsKey("callNumberPrefix"));
+    assertThat(callNumberComponents.getString("callNumberSuffix"), is("CIRC"));
   }
 
   protected void hasProperty(String property, JsonObject resource, String type, Object value) {

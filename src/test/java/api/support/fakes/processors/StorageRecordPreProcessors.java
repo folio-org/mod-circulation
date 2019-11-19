@@ -2,7 +2,6 @@ package api.support.fakes.processors;
 
 import static api.support.http.InterfaceUrls.holdingsStorageUrl;
 import static org.apache.commons.lang3.ObjectUtils.firstNonNull;
-import static org.folio.circulation.domain.representations.ItemProperties.EFFECTIVE_CALL_NUMBER_COMPONENTS;
 import static org.folio.circulation.domain.representations.ItemProperties.HOLDINGS_RECORD_ID;
 import static org.folio.circulation.support.JsonPropertyWriter.write;
 
@@ -101,14 +100,15 @@ public final class StorageRecordPreProcessors {
         final String itemLevelCallComponentPropertyName =
           getItemLevelCallNumberComponentName(callComponentName);
 
-        final String propertyValue = hasItemLevelCallNumber
-          ? newItem.getString(itemLevelCallComponentPropertyName)
-          : holding.getString(callComponentName);
+        final String propertyValue = StringUtils.firstNonBlank(
+          newItem.getString(itemLevelCallComponentPropertyName),
+          holding.getString(callComponentName)
+        );
 
         effectiveCallNumberComponents.put(callComponentName, propertyValue);
       });
 
-      return newItem.put(EFFECTIVE_CALL_NUMBER_COMPONENTS, effectiveCallNumberComponents);
+      return newItem.put("effectiveCallNumberComponents", effectiveCallNumberComponents);
     });
   }
 

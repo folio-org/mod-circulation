@@ -78,7 +78,7 @@
           "type": "string"
         },
         "callNumber" : {
-          "description" : "Deprecated call number from the holdings record, use effectiveCallNumberComponents.callNumber instead",
+          "description" : "Deprecated call number from the holdings record, use callNumberComponents.callNumber instead",
           "type": "string"
         },
         "materialType": {
@@ -153,9 +153,9 @@
             }
           }
         },
-        "effectiveCallNumberComponents": {
-          "description": "Elements of a full call number generated from the item or holding",
-          "$ref": "schema/effective-call-number-components.json"
+        "callNumberComponents": {
+          "description": "Elements of a full call number",
+          "$ref": "schema/call-number-components.json"
         }
       }
     },
