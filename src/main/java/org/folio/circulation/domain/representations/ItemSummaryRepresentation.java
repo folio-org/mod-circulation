@@ -1,9 +1,6 @@
 package org.folio.circulation.domain.representations;
 
-import static org.folio.circulation.domain.representations.ItemProperties.LASTCHECKIN;
-import static org.folio.circulation.domain.representations.ItemProperties.MATERIAL_TYPE_ID;
-import static org.folio.circulation.domain.representations.ItemProperties.PERMANENT_LOAN_TYPE_ID;
-import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
+import static org.folio.circulation.domain.representations.ItemProperties.LAST_CHECK_IN;
 import static org.folio.circulation.support.JsonPropertyWriter.write;
 
 import java.lang.invoke.MethodHandles;
@@ -94,7 +91,7 @@ public class ItemSummaryRepresentation {
 
     JsonObject summary = item.getItem().copy();
     if (item.getLastCheckIn() != null) {
-      write(summary, LASTCHECKIN, item.getLastCheckIn().toJson());
+      write(summary, LAST_CHECK_IN, item.getLastCheckIn().toJson());
     }
 
     return summary;

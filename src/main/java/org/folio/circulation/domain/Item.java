@@ -73,7 +73,7 @@ public class Item {
   }
 
   public static Item from(JsonObject representation) {
-    return new Item(representation, null, null, null, null, null, null,null);
+    return new Item(representation, null, null, null, null, null, null, null);
   }
 
   public boolean isCheckedOut() {

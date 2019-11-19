@@ -15,12 +15,16 @@ import io.vertx.core.json.JsonObject;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
-import org.junit.Before;
 import org.junit.Test;
 
 public class ItemLastCheckInTests extends APITests {
 
-  @Before public void setUp() {
+  @Override
+  public void afterEach()
+    throws InterruptedException, MalformedURLException, TimeoutException,
+    ExecutionException {
+
+    super.afterEach();
     APITestContext.defaultUserId();
   }
 
@@ -36,46 +40,54 @@ public class ItemLastCheckInTests extends APITests {
 
     loansFixture.checkOutByBarcode(item, user, new DateTime(DateTimeZone.UTC));
     loansFixture.checkInByBarcode(item, checkInDate, servicePointId);
-    JsonObject lastCheckIn = itemsClient.get(item.getId())
-      .getJson()
+    JsonObject lastCheckIn = itemsClient.get(item.getId()).getJson()
       .getJsonObject("lastCheckIn");
 
     assertThat(lastCheckIn.getString("dateTime"), is(checkInDate.toString()));
-    assertThat(lastCheckIn.getString("servicePointId"), is(servicePointId.toString()));
-    assertThat(lastCheckIn.getString("staffMemberId"), is(APITestContext.getUserId()));
+    assertThat(lastCheckIn.getString("servicePointId"),
+      is(servicePointId.toString()));
+    assertThat(lastCheckIn.getString("staffMemberId"),
+      is(APITestContext.getUserId()));
   }
 
   @Test
-  public void shouldNotFailCheckInWhenInvalidOrEmptyLoggedInUserId()
+  public void shouldNotFailCheckInWithEmptyLoggedInUserId()
     throws InterruptedException, MalformedURLException, TimeoutException,
     ExecutionException {
 
     IndividualResource item = itemsFixture.basedUponSmallAngryPlanet();
-    IndividualResource user = usersFixture.jessica();
     UUID servicePointId = servicePointsFixture.cd1().getId();
     DateTime checkInDate = DateTime.now();
 
-    APITestContext.setUserId("null");
-    loansFixture.checkOutByBarcode(item, user, new DateTime(DateTimeZone.UTC));
-
-    loansFixture.checkInByBarcode(item, checkInDate, servicePointId);
-    JsonObject lastCheckIn = itemsClient.get(item.getId())
-      .getJson()
-      .getJsonObject("lastCheckIn");
-
-    assertThat(lastCheckIn.getString("dateTime"), is(checkInDate.toString()));
-    assertThat(lastCheckIn.getString("servicePointId"), is(servicePointId.toString()));
-    assertThat(lastCheckIn.getString("staffMemberId"), is(nullValue()));
-
     APITestContext.setUserId("");
     loansFixture.checkInByBarcode(item, checkInDate, servicePointId);
-    lastCheckIn = itemsClient.get(item.getId())
-      .getJson()
+    JsonObject lastCheckIn = itemsClient.get(item.getId()).getJson()
       .getJsonObject("lastCheckIn");
 
     assertThat(lastCheckIn.getString("dateTime"), is(checkInDate.toString()));
-    assertThat(lastCheckIn.getString("servicePointId"), is(servicePointId.toString()));
+    assertThat(lastCheckIn.getString("servicePointId"),
+      is(servicePointId.toString()));
     assertThat(lastCheckIn.getString("staffMemberId"), is(nullValue()));
+  }
+
+  @Test
+  public void shouldNotFailCheckInWithInvalidLoggedInUserId()
+    throws InterruptedException, MalformedURLException, TimeoutException,
+    ExecutionException {
+
+    IndividualResource item = itemsFixture.basedUponSmallAngryPlanet();
+    UUID servicePointId = servicePointsFixture.cd1().getId();
+    DateTime checkInDate = DateTime.now();
+
+    APITestContext.setUserId("INVALID_UUID");
+    loansFixture.checkInByBarcode(item, checkInDate, servicePointId);
+    JsonObject lastCheckIn = itemsClient.get(item.getId()).getJson()
+      .getJsonObject("lastCheckIn");
+
+    assertThat(lastCheckIn.getString("dateTime"), is(checkInDate.toString()));
+    assertThat(lastCheckIn.getString("servicePointId"),
+      is(servicePointId.toString()));
+    assertThat(lastCheckIn.getString("staffMemberId"), is(APITestContext.getUserId()));
   }
 
   @Test
@@ -88,8 +100,7 @@ public class ItemLastCheckInTests extends APITests {
     DateTime checkInDate = DateTime.now();
 
     loansFixture.checkInByBarcode(item, checkInDate, servicePointId);
-    JsonObject lastCheckIn = itemsClient.get(item.getId())
-      .getJson()
+    JsonObject lastCheckIn = itemsClient.get(item.getId()).getJson()
       .getJsonObject("lastCheckIn");
 
     assertThat(lastCheckIn.getString("dateTime"), is(checkInDate.toString()));
@@ -107,25 +118,22 @@ public class ItemLastCheckInTests extends APITests {
     DateTime firstCheckInDate = DateTime.now();
 
     loansFixture.checkInByBarcode(item, firstCheckInDate, servicePointId);
-    JsonObject lastCheckIn = itemsClient.get(item.getId())
-      .getJson()
+    JsonObject lastCheckIn = itemsClient.get(item.getId()).getJson()
       .getJsonObject("lastCheckIn");
 
     assertThat(lastCheckIn.getString("dateTime"), is(firstCheckInDate.toString()));
     assertThat(lastCheckIn.getString("servicePointId"), is(servicePointId.toString()));
     assertThat(lastCheckIn.getString("staffMemberId"), is(APITestContext.getUserId()));
 
-    loansFixture.checkInByBarcode(item, DateTime.now(), servicePointId);
-
+    DateTime secondCheckInDate = DateTime.now();
     UUID servicePointId2 = servicePointsFixture.cd2().getId();
     APITestContext.setUserId(UUID.randomUUID().toString());
-    loansFixture.checkInByBarcode(item, DateTime.now(), servicePointId2);
-    lastCheckIn = itemsClient.get(item.getId())
-      .getJson()
+
+    loansFixture.checkInByBarcode(item, secondCheckInDate, servicePointId2);
+    lastCheckIn = itemsClient.get(item.getId()).getJson()
       .getJsonObject("lastCheckIn");
 
-    assert (DateTime.parse(lastCheckIn.getString("dateTime"))
-      .isAfter(firstCheckInDate));
+    assertThat(lastCheckIn.getString("dateTime"), is(secondCheckInDate.toString()));
     assertThat(lastCheckIn.getString("servicePointId"), is(servicePointId2.toString()));
     assertThat(lastCheckIn.getString("staffMemberId"), is(APITestContext.getUserId()));
   }
