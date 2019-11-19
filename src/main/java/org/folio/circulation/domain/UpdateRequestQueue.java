@@ -6,6 +6,7 @@ import static org.folio.circulation.support.Result.ofAsync;
 import static org.folio.circulation.support.Result.succeeded;
 
 import java.lang.invoke.MethodHandles;
+import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -15,6 +16,7 @@ import org.folio.circulation.resources.context.ReorderRequestContext;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.ClockManager;
 import org.folio.circulation.support.Result;
+import org.folio.circulation.support.utils.DateTimeUtil;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.slf4j.Logger;
@@ -26,21 +28,26 @@ public class UpdateRequestQueue {
   private final RequestQueueRepository requestQueueRepository;
   private final RequestRepository requestRepository;
   private final ServicePointRepository servicePointRepository;
+  private final ConfigurationRepository configurationRepository;
 
   public UpdateRequestQueue(
     RequestQueueRepository requestQueueRepository,
     RequestRepository requestRepository,
-    ServicePointRepository servicePointRepository) {
+    ServicePointRepository servicePointRepository,
+    ConfigurationRepository configurationRepository) {
+
     this.requestQueueRepository = requestQueueRepository;
     this.requestRepository = requestRepository;
     this.servicePointRepository = servicePointRepository;
+    this.configurationRepository = configurationRepository;
   }
 
   public static UpdateRequestQueue using(Clients clients) {
     return new UpdateRequestQueue(
       RequestQueueRepository.using(clients),
       RequestRepository.using(clients),
-      new ServicePointRepository(clients));
+      new ServicePointRepository(clients),
+      new ConfigurationRepository(clients));
   }
 
   public CompletableFuture<Result<LoanAndRelatedRecords>> onCheckIn(
@@ -103,8 +110,13 @@ public class UpdateRequestQueue {
       String pickupServicePointId = request.getPickupServicePointId();
 
       return servicePointRepository.getServicePointById(pickupServicePointId)
-        .thenApply(servicePointResult -> servicePointResult.map(request::withPickupServicePoint))
-        .thenApply(requestResult -> requestResult.map(this::populateHoldShelfExpirationDate));
+        .thenCombineAsync(configurationRepository.findTimeZoneConfiguration(),
+          Result.combined((servicePoint, tenantTimeZone) ->
+            populateHoldShelfExpirationDate(
+              request.withPickupServicePoint(servicePoint),
+              tenantTimeZone
+            ))
+        );
     } else {
       return completedFuture(succeeded(request));
     }
@@ -124,21 +136,28 @@ public class UpdateRequestQueue {
     return completedFuture(succeeded(request));
   }
 
-  private Request populateHoldShelfExpirationDate(Request request) {
+  private Result<Request> populateHoldShelfExpirationDate(Request request, DateTimeZone tenantTimeZone) {
     ServicePoint pickupServicePoint = request.getPickupServicePoint();
-
     TimePeriod holdShelfExpiryPeriod = pickupServicePoint.getHoldShelfExpiryPeriod();
 
-    ZonedDateTime now = ZonedDateTime.now(ClockManager.getClockManager().getClock());
-    ZonedDateTime holdShelfExpirationDate = holdShelfExpiryPeriod.getInterval().addTo(now, holdShelfExpiryPeriod.getDuration());
+    log.debug("Using time zone {} and period {}",
+      tenantTimeZone,
+      holdShelfExpiryPeriod.getInterval()
+    );
+
+    ZonedDateTime holdShelfExpirationDate =
+      calculateHoldShelfExpirationDate(holdShelfExpiryPeriod, tenantTimeZone);
+
     // Need to use Joda time here since formatting/parsing using
     // java.time has issues with the ISO-8601 format FOLIO uses,
     // specifically: 2019-02-18T00:00:00.000+0000 cannot be parsed
     // due to a missing ':' in the offset. Parsing is possible if
     // the format is: 2019-02-18T00:00:00.000+00:00
-    request.changeHoldShelfExpirationDate(new DateTime(holdShelfExpirationDate.toInstant().toEpochMilli(), DateTimeZone.UTC));
+    request.changeHoldShelfExpirationDate(new DateTime(
+      holdShelfExpirationDate.toInstant().toEpochMilli(), DateTimeZone.UTC
+    ));
 
-    return request;
+    return succeeded(request);
   }
 
   public CompletableFuture<Result<LoanAndRelatedRecords>> onCheckOut(
@@ -254,5 +273,21 @@ public class UpdateRequestQueue {
       .collect(Collectors.toList());
 
     return new RequestQueue(requests);
+  }
+
+  private ZonedDateTime calculateHoldShelfExpirationDate(
+    TimePeriod holdShelfExpiryPeriod, DateTimeZone tenantTimeZone) {
+
+    ZonedDateTime now = Instant.now(ClockManager.getClockManager().getClock())
+      .atZone(tenantTimeZone.toTimeZone().toZoneId());
+
+    ZonedDateTime holdShelfExpirationDate = holdShelfExpiryPeriod.getInterval()
+      .addTo(now, holdShelfExpiryPeriod.getDuration());
+
+    if (holdShelfExpiryPeriod.isLongTermPeriod()) {
+      holdShelfExpirationDate = DateTimeUtil.atEndOfTheDay(holdShelfExpirationDate);
+    }
+
+    return holdShelfExpirationDate;
   }
 }

@@ -27,6 +27,7 @@ public class RequestTypeItemStatusWhiteList {
     recallRules.put(ItemStatus.CHECKED_OUT, true);
     recallRules.put(ItemStatus.AVAILABLE, false);
     recallRules.put(ItemStatus.AWAITING_PICKUP, true);
+    recallRules.put(ItemStatus.AWAITING_DELIVERY, true);
     recallRules.put(ItemStatus.IN_TRANSIT, true);
     recallRules.put(ItemStatus.MISSING, false);
     recallRules.put(ItemStatus.PAGED, true);
@@ -40,6 +41,7 @@ public class RequestTypeItemStatusWhiteList {
     holdRules.put(ItemStatus.CHECKED_OUT, true);
     holdRules.put(ItemStatus.AVAILABLE, false);
     holdRules.put(ItemStatus.AWAITING_PICKUP, true);
+    holdRules.put(ItemStatus.AWAITING_DELIVERY, true);
     holdRules.put(ItemStatus.IN_TRANSIT, true);
     holdRules.put(ItemStatus.MISSING, true);
     holdRules.put(ItemStatus.PAGED, true);
@@ -53,6 +55,7 @@ public class RequestTypeItemStatusWhiteList {
     pageRules.put(ItemStatus.CHECKED_OUT, false);
     pageRules.put(ItemStatus.AVAILABLE, true);
     pageRules.put(ItemStatus.AWAITING_PICKUP, false);
+    pageRules.put(ItemStatus.AWAITING_DELIVERY, false);
     pageRules.put(ItemStatus.IN_TRANSIT, false);
     pageRules.put(ItemStatus.MISSING, false);
     pageRules.put(ItemStatus.PAGED, false);
@@ -66,6 +69,7 @@ public class RequestTypeItemStatusWhiteList {
     noneRules.put(ItemStatus.CHECKED_OUT, false);
     noneRules.put(ItemStatus.AVAILABLE, false);
     noneRules.put(ItemStatus.AWAITING_PICKUP, false);
+    noneRules.put(ItemStatus.AWAITING_DELIVERY, false);
     noneRules.put(ItemStatus.IN_TRANSIT, false);
     noneRules.put(ItemStatus.MISSING, false);
     noneRules.put(ItemStatus.PAGED, false);
