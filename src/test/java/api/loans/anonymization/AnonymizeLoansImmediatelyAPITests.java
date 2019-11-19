@@ -29,7 +29,7 @@ public class AnonymizeLoansImmediatelyAPITests extends LoanAnonymizationTests {
    *     Then do not anonymize the loan
    */
   @Test
-  public void testOpenLoansWithOpenFeesAndFinesIsNotAnonymized()
+  public void testClosedLoanWithOpenFeesAndFinesIsNotAnonymizedForSettingsOfImmediately()
     throws InterruptedException, ExecutionException, TimeoutException, MalformedURLException {
 
     LoanHistoryConfigurationBuilder loanHistoryConfig = new LoanHistoryConfigurationBuilder()
@@ -42,7 +42,8 @@ public class AnonymizeLoansImmediatelyAPITests extends LoanAnonymizationTests {
       .at(servicePoint.getId()));
     UUID loanID = loanResource.getId();
 
-    createClosedAccountWithFeeFines(loanResource, DateTime.now());
+    createOpenAccountWithFeeFines(loanResource);
+    loansFixture.checkInByBarcode(item1);
 
     anonymizeLoansInTenant();
 
@@ -61,7 +62,7 @@ public class AnonymizeLoansImmediatelyAPITests extends LoanAnonymizationTests {
    *     Then anonymize the loan
    */
   @Test
-  public void testClosedLoansWithClosedFeesAndIsAnonymized()
+  public void testClosedLoanWithClosedFeesAndFinesIsAnonymizedForSettingsOfImmediately()
     throws InterruptedException, ExecutionException, TimeoutException, MalformedURLException {
 
     LoanHistoryConfigurationBuilder loanHistoryConfig = new LoanHistoryConfigurationBuilder()
@@ -89,13 +90,13 @@ public class AnonymizeLoansImmediatelyAPITests extends LoanAnonymizationTests {
    *
    *     Given:
    *         An Anonymize closed loans setting of "Immediately after loan closes"
-   *         An Anonymize closed loans with associated fees/fines setting of "Immediately after fee/fine closes"
-   *         A closed loan with an associated fee/fine
-   *     When all fees/fines associated with the loan are closed
-   *     Then anonymize the loan
+   *         An Anonymize closed loans with associated fees/fines setting of "Never"
+   *         An open loan with an associated fee/fine
+   *     When the item in the loan is checked in
+   *     Then do not anonymize the loan
    */
   @Test
-  public void testClosedLoansWithOpenFeesAndFinesIsNotAnonymized()
+  public void testClosedLoanWithOpenFeesAndFinesIsNotAnonymizedForSettingsOfNever()
     throws InterruptedException, ExecutionException, TimeoutException, MalformedURLException {
 
     LoanHistoryConfigurationBuilder loanHistoryConfig = new LoanHistoryConfigurationBuilder()
@@ -129,7 +130,7 @@ public class AnonymizeLoansImmediatelyAPITests extends LoanAnonymizationTests {
    *     Then do not anonymize the loan
    */
   @Test
-  public void testClosedLoansWithClosedFeesAndFinesIsNotAnonymized()
+  public void testOpenLoanWithClosedFeesAndFinesIsNotAnonymizedForSettingsOfNever()
     throws InterruptedException, ExecutionException, TimeoutException, MalformedURLException {
 
     LoanHistoryConfigurationBuilder loanHistoryConfig = new LoanHistoryConfigurationBuilder()
@@ -163,7 +164,7 @@ public class AnonymizeLoansImmediatelyAPITests extends LoanAnonymizationTests {
    *     Then do not anonymize the loan
    */
   @Test
-  public void testClosedLoansWithOpenFeesAndFinesIsNotAnonymizedWhenIntervalNotPassed()
+  public void testClosedLoanWithClosedFeesAndFinesIsNotAnonymizedWhenIntervalAfterFeeFineClosesNotPassed()
     throws InterruptedException, ExecutionException, TimeoutException, MalformedURLException {
 
     LoanHistoryConfigurationBuilder loanHistoryConfig = new LoanHistoryConfigurationBuilder()
@@ -197,7 +198,7 @@ public class AnonymizeLoansImmediatelyAPITests extends LoanAnonymizationTests {
    *     Then do not anonymize the loan
    */
   @Test
-  public void testClosedLoansWithOpenFeesAndFinesIsAnonymizedWhenIntervalPassed()
+  public void testClosedLoansWithOpenFeesAndFinesIsAnonymizedWhenIntervaAfterFeeFineCloseslPassed()
     throws InterruptedException, ExecutionException, TimeoutException, MalformedURLException {
 
     LoanHistoryConfigurationBuilder loanHistoryConfig = new LoanHistoryConfigurationBuilder()
