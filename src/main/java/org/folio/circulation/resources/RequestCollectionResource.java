@@ -183,7 +183,8 @@ public class RequestCollectionResource extends CollectionResource {
     final UpdateRequestQueue updateRequestQueue = new UpdateRequestQueue(
       RequestQueueRepository.using(clients),
       requestRepository,
-      new ServicePointRepository(clients)
+      new ServicePointRepository(clients),
+      new ConfigurationRepository(clients)
     );
 
     requestRepository.getById(id)
