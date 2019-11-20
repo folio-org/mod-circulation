@@ -19,8 +19,6 @@ import org.junit.Test;
 public class AnonymizeLoansImmediatelyAPITests extends LoanAnonymizationTests {
 
   /**
-   * Scenario 1
-   *
    *     Given:
    *         An Anonymize closed loans setting of "Immediately after loan closes"
    *         An Anonymize closed loans with associated fees/fines setting of "Immediately after fee/fine closes"
@@ -29,7 +27,7 @@ public class AnonymizeLoansImmediatelyAPITests extends LoanAnonymizationTests {
    *     Then do not anonymize the loan
    */
   @Test
-  public void testClosedLoanWithOpenFeesAndFinesIsNotAnonymizedForSettingsOfImmediately()
+  public void shouldNotAnonymizeClosedLoansWithOpenFeesAndFinesAndSettingsOfAnonymizeImmediately()
     throws InterruptedException, ExecutionException, TimeoutException, MalformedURLException {
 
     LoanHistoryConfigurationBuilder loanHistoryConfig = new LoanHistoryConfigurationBuilder()
@@ -52,8 +50,6 @@ public class AnonymizeLoansImmediatelyAPITests extends LoanAnonymizationTests {
   }
 
   /**
-   * Scenario 2
-   *
    *     Given:
    *         An Anonymize closed loans setting of "Immediately after loan closes"
    *         An Anonymize closed loans with associated fees/fines setting of "Immediately after fee/fine closes"
@@ -62,7 +58,7 @@ public class AnonymizeLoansImmediatelyAPITests extends LoanAnonymizationTests {
    *     Then anonymize the loan
    */
   @Test
-  public void testClosedLoanWithClosedFeesAndFinesIsAnonymizedForSettingsOfImmediately()
+  public void shouldAnonymizeClosedLoansWhenFeesAndFinesCloseAndSettingsOfAnonymizeImmediately()
     throws InterruptedException, ExecutionException, TimeoutException, MalformedURLException {
 
     LoanHistoryConfigurationBuilder loanHistoryConfig = new LoanHistoryConfigurationBuilder()
@@ -86,8 +82,6 @@ public class AnonymizeLoansImmediatelyAPITests extends LoanAnonymizationTests {
   }
 
   /**
-   * Scenario 3
-   *
    *     Given:
    *         An Anonymize closed loans setting of "Immediately after loan closes"
    *         An Anonymize closed loans with associated fees/fines setting of "Never"
@@ -96,7 +90,7 @@ public class AnonymizeLoansImmediatelyAPITests extends LoanAnonymizationTests {
    *     Then do not anonymize the loan
    */
   @Test
-  public void testClosedLoanWithOpenFeesAndFinesIsNotAnonymizedForSettingsOfNever()
+  public void shouldNotAnonymizeWhenLoansWithOpenFeesAndFinesCloseAndSettingsOfNeverAnonymizeLoansWithFeesAndFines()
     throws InterruptedException, ExecutionException, TimeoutException, MalformedURLException {
 
     LoanHistoryConfigurationBuilder loanHistoryConfig = new LoanHistoryConfigurationBuilder()
@@ -120,8 +114,6 @@ public class AnonymizeLoansImmediatelyAPITests extends LoanAnonymizationTests {
   }
 
   /**
-   * Scenario 4
-   *
    *     Given:
    *         An Anonymize closed loans setting of "Immediately after loan closes"
    *         An Anonymize closed loans with associated fees/fines setting of "Never"
@@ -130,7 +122,7 @@ public class AnonymizeLoansImmediatelyAPITests extends LoanAnonymizationTests {
    *     Then do not anonymize the loan
    */
   @Test
-  public void testOpenLoanWithClosedFeesAndFinesIsNotAnonymizedForSettingsOfNever()
+  public void shouldNotAnonymizeOpenLoansWhenFeesAndFinesCloseAndSettingsOfNeverAnonymizeLoansWithFeesAndFines()
     throws InterruptedException, ExecutionException, TimeoutException, MalformedURLException {
 
     LoanHistoryConfigurationBuilder loanHistoryConfig = new LoanHistoryConfigurationBuilder()
@@ -145,8 +137,6 @@ public class AnonymizeLoansImmediatelyAPITests extends LoanAnonymizationTests {
 
     createClosedAccountWithFeeFines(loanResource, DateTime.now());
 
-    loansFixture.checkInByBarcode(item1);
-
     anonymizeLoansInTenant();
 
     assertThat(loansStorageClient.getById(loanID).getJson(),
@@ -154,8 +144,6 @@ public class AnonymizeLoansImmediatelyAPITests extends LoanAnonymizationTests {
   }
 
   /**
-   * Scenario 1.1
-   *
    *     Given:
    *         An Anonymize closed loans setting of "Immediately"
    *         An Anonymize closed loans with associated fees/fines setting of "X interval after fee/fine closes"
@@ -164,7 +152,7 @@ public class AnonymizeLoansImmediatelyAPITests extends LoanAnonymizationTests {
    *     Then do not anonymize the loan
    */
   @Test
-  public void testClosedLoanWithClosedFeesAndFinesIsNotAnonymizedWhenIntervalAfterFeeFineClosesNotPassed()
+  public void shouldNotAnonymizeClosedLoansWithClosedFeesAndFinesWhenAnonymizationIntervalForLoansWithFeesAndFinesHasNotPassed()
     throws InterruptedException, ExecutionException, TimeoutException, MalformedURLException {
 
     LoanHistoryConfigurationBuilder loanHistoryConfig = new LoanHistoryConfigurationBuilder()
@@ -188,17 +176,16 @@ public class AnonymizeLoansImmediatelyAPITests extends LoanAnonymizationTests {
   }
 
   /**
-   * Scenario 1.2
    *
    *     Given:
    *         An Anonymize closed loans setting of "Immediately"
    *         An Anonymize closed loans with associated fees/fines setting of "X interval after fee/fine closes"
-   *         An open loan with an associated fee/fine
-   *     When the item in the loan is checked in
-   *     Then do not anonymize the loan
+   *         A closed loan with an associated fee/fine
+   *     When all fees/fines associated with the loan are closed, and X interval has elapsed after the fees/fines have closed
+   *     Then anonymize the loan
    */
   @Test
-  public void testClosedLoansWithOpenFeesAndFinesIsAnonymizedWhenIntervaAfterFeeFineCloseslPassed()
+  public void shouldAnonymizeClosedLoansWhenFeesAndFinesCloseAndAnonymizationIntervalForLoansWithFeesAndFinesHasPassed()
     throws InterruptedException, ExecutionException, TimeoutException, MalformedURLException {
 
     LoanHistoryConfigurationBuilder loanHistoryConfig = new LoanHistoryConfigurationBuilder()
