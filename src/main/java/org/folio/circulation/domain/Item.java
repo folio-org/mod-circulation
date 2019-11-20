@@ -43,6 +43,7 @@ public class Item {
   private final JsonObject itemRepresentation;
   private final JsonObject holdingRepresentation;
   private final JsonObject instanceRepresentation;
+  private final LastCheckIn lastCheckIn;
   private Location location;
   private JsonObject materialTypeRepresentation;
   private ServicePoint primaryServicePoint;
@@ -58,7 +59,8 @@ public class Item {
     Location location,
     JsonObject materialTypeRepresentation,
     ServicePoint servicePoint,
-    JsonObject loanTypeRepresentation) {
+    JsonObject loanTypeRepresentation,
+    LastCheckIn lastCheckIn) {
 
     this.itemRepresentation = itemRepresentation;
     this.holdingRepresentation = holdingRepresentation;
@@ -67,10 +69,11 @@ public class Item {
     this.materialTypeRepresentation = materialTypeRepresentation;
     this.primaryServicePoint = servicePoint;
     this.loanTypeRepresentation = loanTypeRepresentation;
+    this.lastCheckIn = lastCheckIn;
   }
 
   public static Item from(JsonObject representation) {
-    return new Item(representation, null, null, null, null, null, null);
+    return new Item(representation, null, null, null, null, null, null, null);
   }
 
   public boolean isCheckedOut() {
@@ -354,6 +357,10 @@ public class Item {
     return getItem() != null;
   }
 
+  public LastCheckIn getLastCheckIn() {
+    return lastCheckIn;
+  }
+
   public boolean doesNotHaveHolding() {
     return holdingRepresentation == null;
   }
@@ -366,7 +373,8 @@ public class Item {
       newLocation,
       this.materialTypeRepresentation,
       this.primaryServicePoint,
-      this.loanTypeRepresentation);
+      this.loanTypeRepresentation,
+      lastCheckIn);
   }
 
   public Item withMaterialType(JsonObject newMaterialType) {
@@ -377,7 +385,8 @@ public class Item {
       this.location,
       newMaterialType,
       this.primaryServicePoint,
-      this.loanTypeRepresentation);
+      this.loanTypeRepresentation,
+      lastCheckIn);
   }
 
   public Item withHoldingsRecord(JsonObject newHoldingsRecordRepresentation) {
@@ -388,7 +397,8 @@ public class Item {
       this.location,
       this.materialTypeRepresentation,
       this.primaryServicePoint,
-      this.loanTypeRepresentation);
+      this.loanTypeRepresentation,
+      lastCheckIn);
   }
 
   public Item withInstance(JsonObject newInstanceRepresentation) {
@@ -399,7 +409,8 @@ public class Item {
       this.location,
       this.materialTypeRepresentation,
       this.primaryServicePoint,
-      this.loanTypeRepresentation);
+      this.loanTypeRepresentation,
+      lastCheckIn);
   }
 
   public Item withPrimaryServicePoint(ServicePoint servicePoint) {
@@ -410,7 +421,8 @@ public class Item {
       this.location,
       this.materialTypeRepresentation,
       servicePoint,
-      this.loanTypeRepresentation);
+      this.loanTypeRepresentation,
+      lastCheckIn);
   }
 
   public Item withLoanType(JsonObject newLoanTypeRepresentation) {
@@ -421,6 +433,21 @@ public class Item {
       this.location,
       this.materialTypeRepresentation,
       this.primaryServicePoint,
-      newLoanTypeRepresentation);
+      newLoanTypeRepresentation,
+      lastCheckIn);
+  }
+
+  public Item withLastCheckIn(LastCheckIn lastCheckIn) {
+    Item item = new Item(
+      itemRepresentation,
+      holdingRepresentation,
+      instanceRepresentation,
+      location,
+      materialTypeRepresentation,
+      primaryServicePoint,
+      loanTypeRepresentation,
+      lastCheckIn);
+    item.changed = this.changed;
+    return item;
   }
 }

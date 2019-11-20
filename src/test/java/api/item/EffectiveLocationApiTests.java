@@ -28,8 +28,8 @@ public class EffectiveLocationApiTests extends APITests {
         .withNoPermanentLocation()
         .withNoTemporaryLocation()
         .create(),
-      instanceBuilder().create(),
-      null, null, null, null);
+        instanceBuilder().create(),
+        null, null, null, null, null);
 
     assertThat(item.getLocationId(), is(popularReadingLocationId));
   }
