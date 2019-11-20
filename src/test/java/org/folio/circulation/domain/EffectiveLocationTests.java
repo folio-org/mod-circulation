@@ -25,8 +25,8 @@ public class EffectiveLocationTests extends APITests {
         .withNoPermanentLocation()
         .withNoTemporaryLocation()
         .create(),
-      instanceBuilder().create(),
-      null, null, null, null);
+        instanceBuilder().create(),
+        null, null, null, null, null);
 
     assertThat(item.getLocationId(), nullValue());
   }
@@ -41,8 +41,8 @@ public class EffectiveLocationTests extends APITests {
         .withPermanentLocation(secondFloorEconomicsLocationId)
         .withNoTemporaryLocation()
         .create(),
-      instanceBuilder().create(),
-      null, null, null, null);
+        instanceBuilder().create(),
+        null, null, null, null, null);
 
     assertThat(item.getLocationId(), nullValue());
   }
