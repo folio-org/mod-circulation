@@ -52,11 +52,6 @@ public class ItemsInTransitResource extends Resource {
 
   private static final String ITEM_ID = "itemId";
   private final String rootPath;
-  private static final Comparator<InTransitReportEntry> IN_TRANSIT_REPORT_ENTRY_COMPARATOR =
-    Comparator.comparing(inTransitReportEntry-> Optional.ofNullable(inTransitReportEntry
-      .getLoan()).map(loan -> Optional.ofNullable(loan.getCheckinServicePoint())
-      .map(ServicePoint::getName).orElse(null))
-      .orElse(null), Comparator.nullsLast(String::compareTo));
 
   public ItemsInTransitResource(String rootPath, HttpClient client) {
     super(client);
@@ -80,12 +75,13 @@ public class ItemsInTransitResource extends Resource {
     final ReportRepository reportRepository = new ReportRepository(clients);
     final UserRepository userRepository = new UserRepository(clients);
     final PatronGroupRepository patronGroupRepository = new PatronGroupRepository(clients);
+    final Comparator<InTransitReportEntry> sortByCheckinServicePointComparator = sortByCheckinServicePointComparator();
 
     reportRepository.getAllItemsByField("status.name", IN_TRANSIT.getValue())
       .thenComposeAsync(r -> r.after(itemsReportFetcher ->
         fetchItemsRelatedRecords(itemsReportFetcher, itemRepository, servicePointRepository)))
       .thenComposeAsync(r -> r.after(inTransitReportEntries ->
-        fetchLoans(loansStorageClient, servicePointRepository, inTransitReportEntries)))
+        fetchLoans(loansStorageClient, servicePointRepository, inTransitReportEntries, sortByCheckinServicePointComparator)))
       .thenComposeAsync(r -> findRequestsByItemsIds(requestsStorageClient, itemRepository,
         servicePointRepository, userRepository, patronGroupRepository, r.value()))
       .thenApply(this::mapResultToJson)
@@ -150,7 +146,8 @@ public class ItemsInTransitResource extends Resource {
   private CompletableFuture<Result<List<InTransitReportEntry>>> fetchLoans(
     CollectionResourceClient loansStorageClient,
     ServicePointRepository servicePointRepository,
-    List<InTransitReportEntry> inTransitReportEntries) {
+    List<InTransitReportEntry> inTransitReportEntries,
+    Comparator<InTransitReportEntry> sortByCheckinServicePointComparator) {
     final List<String> itemsToFetchLoansFor = inTransitReportEntries.stream()
       .filter(Objects::nonNull)
       .map(inTransitReportEntry -> inTransitReportEntry.getItem().getItemId())
@@ -174,17 +171,18 @@ public class ItemsInTransitResource extends Resource {
     return multipleRecordsLoans.thenCompose(multiLoanRecordsResult ->
       multiLoanRecordsResult.after(servicePointRepository::findServicePointsForLoans))
       .thenApply(multipleLoansResult -> multipleLoansResult.next(
-        loans -> matchLoansToInTransitReportEntry(inTransitReportEntries, loans)));
+        loans -> matchLoansToInTransitReportEntry(inTransitReportEntries, loans, sortByCheckinServicePointComparator)));
   }
 
   private Result<List<InTransitReportEntry>> matchLoansToInTransitReportEntry(
     List<InTransitReportEntry> inTransitReportEntries,
-    MultipleRecords<Loan> loans) {
+    MultipleRecords<Loan> loans,
+    Comparator<InTransitReportEntry> sortByCheckinServicePointComparator) {
 
     return of(() ->
       inTransitReportEntries.stream()
         .map(inTransitReportEntry -> matchLoansToInTransitReportEntry(inTransitReportEntry, loans))
-        .sorted(IN_TRANSIT_REPORT_ENTRY_COMPARATOR)
+        .sorted(sortByCheckinServicePointComparator)
         .collect(Collectors.toList()));
   }
 
@@ -235,6 +233,13 @@ public class ItemsInTransitResource extends Resource {
       .next(jsonArray -> Result.succeeded(new JsonObject()
         .put("items", jsonArray)
         .put("totalRecords", jsonArray.size())));
+  }
+
+  private Comparator<InTransitReportEntry> sortByCheckinServicePointComparator() {
+    return Comparator.comparing(inTransitReportEntry-> Optional.ofNullable(inTransitReportEntry
+      .getLoan()).map(loan -> Optional.ofNullable(loan.getCheckinServicePoint())
+      .map(ServicePoint::getName).orElse(null))
+      .orElse(null), Comparator.nullsLast(String::compareTo));
   }
 
 }
