@@ -16,4 +16,5 @@ public class ItemProperties {
   public static final String ITEM_COPY_NUMBERS_ID = "copyNumbers";
   public static final String EFFECTIVE_LOCATION_ID = "effectiveLocationId";
   public static final String STATUS_PROPERTY = "status";
+  public static final String LAST_CHECK_IN = "lastCheckIn";
 }
