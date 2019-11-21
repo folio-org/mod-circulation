@@ -35,6 +35,18 @@
           "modulePermissions": [
             "modperms.inventory.items-in-transit-report.get"
           ]
+        },
+        {
+          "methods": [
+            "GET"
+          ],
+          "pathPattern": "/inventory-reports/items-for-pick-slips",
+          "permissionsRequired": [
+            "circulation.inventory.items-in-transit-report.get"
+          ],
+          "modulePermissions": [
+            "modperms.inventory.items-in-transit-report.get"
+          ]
         }
       ]
     },
