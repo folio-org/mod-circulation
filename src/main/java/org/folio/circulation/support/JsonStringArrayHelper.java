@@ -2,6 +2,7 @@ package org.folio.circulation.support;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -24,8 +25,9 @@ public class JsonStringArrayHelper {
   }
 
   public static Stream<String> toStream(JsonArray array) {
-    return array
-      .stream()
+    return Optional.ofNullable(array)
+      .map(JsonArray::stream)
+      .orElse(Stream.empty())
       .filter(Objects::nonNull)
       .map(castToString())
       .filter(Objects::nonNull);

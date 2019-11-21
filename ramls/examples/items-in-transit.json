@@ -13,6 +13,11 @@
         }
       ],
       "callNumber": "TK5105.88815 . A58 2004 FT MEADE",
+      "enumeration": "enum",
+      "volume": "volume",
+      "yearCaption": [
+        "2019"
+      ],
       "status": {
         "name": "In transit"
       },
@@ -31,7 +36,11 @@
         "requestDate": "2019-11-11T19:19:36.000Z",
         "requestExpirationDate": "2019-11-13T00:00:00.000Z",
         "requestPickupServicePointName": "Circ Desk 2",
-        "requestPatronGroup": "Jast, Perry"
+        "requestPatronGroup": "Jast, Perry",
+        "tags": [
+          "tag1",
+          "tag2"
+        ]
       },
       "loan": {
         "checkInServicePoint": {

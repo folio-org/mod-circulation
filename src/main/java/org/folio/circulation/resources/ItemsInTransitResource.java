@@ -9,9 +9,11 @@ import static org.folio.circulation.support.CqlSortBy.ascending;
 import static org.folio.circulation.support.Result.of;
 import static org.folio.circulation.support.Result.succeeded;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
@@ -30,6 +32,7 @@ import org.folio.circulation.domain.PatronGroupRepository;
 import org.folio.circulation.domain.ReportRepository;
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestStatus;
+import org.folio.circulation.domain.ServicePoint;
 import org.folio.circulation.domain.ServicePointRepository;
 import org.folio.circulation.domain.UserRepository;
 import org.folio.circulation.domain.representations.ItemReportRepresentation;
@@ -72,12 +75,14 @@ public class ItemsInTransitResource extends Resource {
     final ReportRepository reportRepository = new ReportRepository(clients);
     final UserRepository userRepository = new UserRepository(clients);
     final PatronGroupRepository patronGroupRepository = new PatronGroupRepository(clients);
+    final Comparator<InTransitReportEntry> sortByCheckinServicePointComparator = sortByCheckinServicePointComparator();
 
     reportRepository.getAllItemsByField("status.name", IN_TRANSIT.getValue())
       .thenComposeAsync(r -> r.after(itemsReportFetcher ->
         fetchItemsRelatedRecords(itemsReportFetcher, itemRepository, servicePointRepository)))
       .thenComposeAsync(r -> r.after(inTransitReportEntries ->
-        fetchLoans(loansStorageClient, servicePointRepository, inTransitReportEntries)))
+        fetchLoans(loansStorageClient, servicePointRepository, inTransitReportEntries,
+          sortByCheckinServicePointComparator)))
       .thenComposeAsync(r -> findRequestsByItemsIds(requestsStorageClient, itemRepository,
         servicePointRepository, userRepository, patronGroupRepository, r.value()))
       .thenApply(this::mapResultToJson)
@@ -142,7 +147,8 @@ public class ItemsInTransitResource extends Resource {
   private CompletableFuture<Result<List<InTransitReportEntry>>> fetchLoans(
     CollectionResourceClient loansStorageClient,
     ServicePointRepository servicePointRepository,
-    List<InTransitReportEntry> inTransitReportEntries) {
+    List<InTransitReportEntry> inTransitReportEntries,
+    Comparator<InTransitReportEntry> sortByCheckinServicePointComparator) {
     final List<String> itemsToFetchLoansFor = inTransitReportEntries.stream()
       .filter(Objects::nonNull)
       .map(inTransitReportEntry -> inTransitReportEntry.getItem().getItemId())
@@ -166,16 +172,18 @@ public class ItemsInTransitResource extends Resource {
     return multipleRecordsLoans.thenCompose(multiLoanRecordsResult ->
       multiLoanRecordsResult.after(servicePointRepository::findServicePointsForLoans))
       .thenApply(multipleLoansResult -> multipleLoansResult.next(
-        loans -> matchLoansToInTransitReportEntry(inTransitReportEntries, loans)));
+        loans -> matchLoansToInTransitReportEntry(inTransitReportEntries, loans, sortByCheckinServicePointComparator)));
   }
 
   private Result<List<InTransitReportEntry>> matchLoansToInTransitReportEntry(
     List<InTransitReportEntry> inTransitReportEntries,
-    MultipleRecords<Loan> loans) {
+    MultipleRecords<Loan> loans,
+    Comparator<InTransitReportEntry> sortByCheckinServicePointComparator) {
 
     return of(() ->
       inTransitReportEntries.stream()
         .map(inTransitReportEntry -> matchLoansToInTransitReportEntry(inTransitReportEntry, loans))
+        .sorted(sortByCheckinServicePointComparator)
         .collect(Collectors.toList()));
   }
 
@@ -226,6 +234,13 @@ public class ItemsInTransitResource extends Resource {
       .next(jsonArray -> Result.succeeded(new JsonObject()
         .put("items", jsonArray)
         .put("totalRecords", jsonArray.size())));
+  }
+
+  private Comparator<InTransitReportEntry> sortByCheckinServicePointComparator() {
+    return Comparator.comparing(inTransitReportEntry-> Optional.ofNullable(inTransitReportEntry
+      .getLoan()).map(loan -> Optional.ofNullable(loan.getCheckinServicePoint())
+      .map(ServicePoint::getName).orElse(null))
+      .orElse(null), Comparator.nullsLast(String::compareTo));
   }
 
 }
