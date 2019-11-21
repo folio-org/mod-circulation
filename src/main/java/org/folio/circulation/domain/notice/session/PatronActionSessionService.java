@@ -4,6 +4,7 @@ import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.domain.notice.TemplateContextUtil.createLoanNoticeContextWithoutUser;
 import static org.folio.circulation.domain.notice.TemplateContextUtil.createUserContext;
 import static org.folio.circulation.support.AsyncCoordinationUtil.allOf;
+import static org.folio.circulation.support.Result.of;
 import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.ResultBinding.mapResult;
 
@@ -16,6 +17,8 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
+import org.folio.circulation.domain.CheckInProcessRecords;
+import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.User;
@@ -103,6 +106,21 @@ public class PatronActionSessionService {
         .put("user", createUserContext(user))
         .put("loans", loanContexts)
     )
+      .thenApply(mapResult(v -> records));
+  }
+
+  public CompletableFuture<Result<CheckInProcessRecords>> saveCheckInSessionRecord(CheckInProcessRecords records) {
+    Loan loan = records.getLoan();
+    if (loan == null) {
+      return completedFuture(of(() -> records));
+    }
+    UUID patronId = UUID.fromString(loan.getUserId());
+    UUID loanId = UUID.fromString(loan.getId());
+    PatronSessionRecord patronSessionRecord =
+      new PatronSessionRecord(UUID.randomUUID(),
+        patronId, loanId, PatronActionType.CHECK_IN);
+
+    return patronActionSessionRepository.create(patronSessionRecord)
       .thenApply(mapResult(v -> records));
   }
 }
