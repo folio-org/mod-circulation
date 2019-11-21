@@ -81,7 +81,8 @@ public class ItemsInTransitResource extends Resource {
       .thenComposeAsync(r -> r.after(itemsReportFetcher ->
         fetchItemsRelatedRecords(itemsReportFetcher, itemRepository, servicePointRepository)))
       .thenComposeAsync(r -> r.after(inTransitReportEntries ->
-        fetchLoans(loansStorageClient, servicePointRepository, inTransitReportEntries, sortByCheckinServicePointComparator)))
+        fetchLoans(loansStorageClient, servicePointRepository, inTransitReportEntries,
+          sortByCheckinServicePointComparator)))
       .thenComposeAsync(r -> findRequestsByItemsIds(requestsStorageClient, itemRepository,
         servicePointRepository, userRepository, patronGroupRepository, r.value()))
       .thenApply(this::mapResultToJson)
