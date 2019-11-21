@@ -92,7 +92,8 @@ class CheckInProcessAdapter {
 
   CompletableFuture<Result<Item>> updateItem(CheckInProcessRecords records) {
     return updateItem.onCheckIn(records.getItem(), records.getRequestQueue(),
-      records.getCheckInServicePointId());
+      records.getCheckInServicePointId(), records.getLoggedInUserId(),
+      records.getCheckInRequest().getCheckInDate());
   }
 
   CompletableFuture<Result<RequestQueue>> updateRequestQueue(
