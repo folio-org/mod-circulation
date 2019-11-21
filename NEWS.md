@@ -1,3 +1,7 @@
+## 16.7.5 2019-11-21
+
+* Sets hold shelf expiration date to the end of the day for long term periods (CIRC-543)
+
 ## 16.7.4 2019-11-04
 
 * Fixes item appearing on hold shelf clearance report for incorrect service point (CIRC-516)
