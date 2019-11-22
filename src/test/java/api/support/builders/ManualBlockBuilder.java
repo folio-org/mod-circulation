@@ -53,6 +53,7 @@ public class ManualBlockBuilder extends JsonBuilder implements Builder {
   public JsonObject create() {
     final JsonObject jsonObject = new JsonObject();
 
+    write(jsonObject, "id", id);
     write(jsonObject, "type", type);
     write(jsonObject, "desc",  desc);
     write(jsonObject, "staffInformation", staffInformation);
@@ -64,6 +65,20 @@ public class ManualBlockBuilder extends JsonBuilder implements Builder {
     write(jsonObject, "userId", userId);
 
     return jsonObject;
+  }
+
+  public ManualBlockBuilder withId(UUID id) {
+    return new ManualBlockBuilder(
+      id,
+      this.type,
+      this.desc,
+      this.staffInformation,
+      this.patronMessage,
+      this.expirationDate,
+      this.borrowing,
+      this.renewals,
+      this.requests,
+      this.userId);
   }
 
   public ManualBlockBuilder withType(String type) {

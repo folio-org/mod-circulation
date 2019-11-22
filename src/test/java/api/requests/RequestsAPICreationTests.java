@@ -1907,7 +1907,7 @@ public class RequestsAPICreationTests extends APITests {
   }
 
   @Test
-  public void cannotCreateRequestWhenRequestorHasActiveManualBlocks()
+  public void cannotCreateRequestWhenRequestorHasActiveRequestManualBlocks()
     throws InterruptedException,
     ExecutionException,
     TimeoutException,
@@ -1917,34 +1917,15 @@ public class RequestsAPICreationTests extends APITests {
     final IndividualResource requester = usersFixture.rebecca();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
     final DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
+    final DateTime expirationDate = new DateTime().plusDays(4);
+    final ManualBlockBuilder manualBlockBuilder =
+      getManualBlockBuilder(requester, false, false, true, expirationDate);
+    final RequestBuilder requestBuilder = createRequestBuilder(item, requester, pickupServicePointId, requestDate);
 
     loansFixture.checkOutByBarcode(item, usersFixture.jessica());
-
-    ManualBlockBuilder manualBlockBuilder=new ManualBlockBuilder()
-      .withType("Manual")
-      .withDesc("Display description")
-      .withStaffInformation("Staff information")
-      .withPatronMessage("Patron message")
-      .withExpirationDate(new DateTime().plusDays(5))
-      .withBorrowing(true)
-      .withRenewals(true)
-      .withRequests(true)
-      .withUserId(String.valueOf(requester.getId()));
-
     manualBlocksFixture.create(manualBlockBuilder);
 
-    Response postResponse = requestsClient.attemptCreate(new RequestBuilder()
-      .withId(UUID.randomUUID())
-      .open()
-      .recall()
-      .forItem(item)
-      .by(requester)
-      .withRequestDate(requestDate)
-      .fulfilToHoldShelf()
-      .withRequestExpiration(new LocalDate(2017, 7, 30))
-      .withHoldShelfExpiration(new LocalDate(2017, 8, 31))
-      .withPickupServicePointId(pickupServicePointId)
-      .withTags(new RequestBuilder.Tags(asList("new", "important"))));
+    Response postResponse = requestsClient.attemptCreate(requestBuilder);
 
     assertThat(postResponse, hasStatus(HTTP_VALIDATION_ERROR));
     assertThat(postResponse.getJson(), hasErrorWith(allOf(
@@ -1963,40 +1944,21 @@ public class RequestsAPICreationTests extends APITests {
     final IndividualResource requester = usersFixture.rebecca();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
     final DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
+    final DateTime expirationDate = new DateTime().plusDays(4);
+    final ManualBlockBuilder manualBlockBuilder = getManualBlockBuilder(requester, false, false, false, expirationDate);
+    final RequestBuilder requestBuilder = createRequestBuilder(item, requester, pickupServicePointId, requestDate);
 
     loansFixture.checkOutByBarcode(item, usersFixture.jessica());
 
-    ManualBlockBuilder manualBlockBuilder = new ManualBlockBuilder()
-      .withType("Manual")
-      .withDesc("Display description")
-      .withStaffInformation("Staff information")
-      .withPatronMessage("Patron message")
-      .withExpirationDate(new DateTime().plusDays(5))
-      .withBorrowing(true)
-      .withRenewals(true)
-      .withRequests(false)
-      .withUserId(String.valueOf(requester.getId()));
-
     manualBlocksFixture.create(manualBlockBuilder);
 
-    Response postResponse = requestsClient.attemptCreate(new RequestBuilder()
-      .withId(UUID.randomUUID())
-      .open()
-      .recall()
-      .forItem(item)
-      .by(requester)
-      .withRequestDate(requestDate)
-      .fulfilToHoldShelf()
-      .withRequestExpiration(new LocalDate(2017, 7, 30))
-      .withHoldShelfExpiration(new LocalDate(2017, 8, 31))
-      .withPickupServicePointId(pickupServicePointId)
-      .withTags(new RequestBuilder.Tags(asList("new", "important"))));
+    Response postResponse = requestsClient.attemptCreate(requestBuilder);
 
     assertThat(postResponse, hasStatus(HTTP_CREATED));
   }
 
   @Test
-  public void cannotCreateRequestWhenRequestorHasManualExpiredBlock()
+  public void canCreateRequestWhenRequestorHasManualExpiredBlock()
     throws InterruptedException,
     ExecutionException,
     TimeoutException,
@@ -2006,23 +1968,99 @@ public class RequestsAPICreationTests extends APITests {
     final IndividualResource requester = usersFixture.rebecca();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
     final DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
+    final DateTime expirationDate = new DateTime().minusDays(1);
+    final ManualBlockBuilder manualBlockBuilder =
+      getManualBlockBuilder(requester, false, false, true, expirationDate);
+    final RequestBuilder requestBuilder = createRequestBuilder(item, requester, pickupServicePointId, requestDate);
 
     loansFixture.checkOutByBarcode(item, usersFixture.jessica());
+    manualBlocksFixture.create(manualBlockBuilder);
 
-    ManualBlockBuilder manualBlockBuilder = new ManualBlockBuilder()
+    Response postResponse = requestsClient.attemptCreate(requestBuilder);
+
+    assertThat(postResponse, hasStatus(HTTP_CREATED));
+  }
+
+  @Test
+  public void canCreateRequestWhenRequestorNoHaveRequestBlockAndHaveBorrowingRenewalsBlock()
+    throws InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    MalformedURLException {
+
+    final IndividualResource item = itemsFixture.basedUponSmallAngryPlanet();
+    final IndividualResource requester = usersFixture.rebecca();
+    final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
+    final DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
+    final DateTime expirationDate = new DateTime().plusDays(7);
+    final ManualBlockBuilder borrowingManualBlockBuilder =
+      getManualBlockBuilder(requester, true, false, false, expirationDate);
+    final ManualBlockBuilder renewalsManualBlockBuilder =
+      getManualBlockBuilder(requester, false, true, false, expirationDate);
+    final RequestBuilder requestBuilder = createRequestBuilder(item, requester, pickupServicePointId, requestDate);
+
+    loansFixture.checkOutByBarcode(item, usersFixture.jessica());
+    manualBlocksFixture.create(borrowingManualBlockBuilder);
+    manualBlocksFixture.create(renewalsManualBlockBuilder);
+
+    Response postResponse = requestsClient.attemptCreate(requestBuilder);
+
+    assertThat(postResponse, hasStatus(HTTP_CREATED));
+  }
+
+  @Test
+  public void cannotCreateRequestWhenRequestorHasSomeActiveRequestManualBlocks()
+    throws InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    MalformedURLException {
+
+    final IndividualResource item = itemsFixture.basedUponSmallAngryPlanet();
+    final IndividualResource requester = usersFixture.rebecca();
+    final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
+    final DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
+    final DateTime expirationDate = new DateTime().plusDays(4);
+    final ManualBlockBuilder requestManualBlockBuilder1 =
+      getManualBlockBuilder(requester, false, false, true, expirationDate);
+    final ManualBlockBuilder requestManualBlockBuilder2 =
+      getManualBlockBuilder(requester, true, true, true, expirationDate)
+        .withDesc("Test");
+    final RequestBuilder requestBuilder = createRequestBuilder(item, requester, pickupServicePointId, requestDate);
+
+    loansFixture.checkOutByBarcode(item, usersFixture.jessica());
+    manualBlocksFixture.create(requestManualBlockBuilder1);
+    manualBlocksFixture.create(requestManualBlockBuilder2);
+
+    Response postResponse = requestsClient.attemptCreate(requestBuilder);
+
+    assertThat(postResponse, hasStatus(HTTP_VALIDATION_ERROR));
+    assertThat(postResponse.getJson(), hasErrorWith(allOf(
+      hasMessage("Patron blocked from requesting"))));
+  }
+
+  private ManualBlockBuilder getManualBlockBuilder(IndividualResource requester,
+                                                   boolean borrowingActiveBlock,
+                                                   boolean renewalsActiveBlock,
+                                                   boolean requestsActiveBlock,
+                                                   DateTime expirationDate) {
+    return new ManualBlockBuilder()
       .withType("Manual")
       .withDesc("Display description")
       .withStaffInformation("Staff information")
       .withPatronMessage("Patron message")
-      .withExpirationDate(new DateTime().minusDays(1))
-      .withBorrowing(true)
-      .withRenewals(true)
-      .withRequests(true)
-      .withUserId(String.valueOf(requester.getId()));
+      .withExpirationDate(expirationDate)
+      .withBorrowing(borrowingActiveBlock)
+      .withRenewals(renewalsActiveBlock)
+      .withRequests(requestsActiveBlock)
+      .withUserId(String.valueOf(requester.getId()))
+      .withId(UUID.randomUUID());
+  }
 
-    manualBlocksFixture.create(manualBlockBuilder);
-
-    Response postResponse = requestsClient.attemptCreate(new RequestBuilder()
+  private RequestBuilder createRequestBuilder(IndividualResource item,
+                                              IndividualResource requester,
+                                              UUID pickupServicePointId,
+                                              DateTime requestDate) {
+    return new RequestBuilder()
       .withId(UUID.randomUUID())
       .open()
       .recall()
@@ -2033,9 +2071,7 @@ public class RequestsAPICreationTests extends APITests {
       .withRequestExpiration(new LocalDate(2017, 7, 30))
       .withHoldShelfExpiration(new LocalDate(2017, 8, 31))
       .withPickupServicePointId(pickupServicePointId)
-      .withTags(new RequestBuilder.Tags(asList("new", "important"))));
-
-    assertThat(postResponse, hasStatus(HTTP_CREATED));
+      .withTags(new RequestBuilder.Tags(asList("new", "important")));
   }
 
   private void mockClockManagerToReturnFixedTime(DateTime dateTime) {

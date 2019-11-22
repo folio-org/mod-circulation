@@ -31,7 +31,7 @@ public class UserManualBlocksValidator {
   public CompletableFuture<Result<RequestAndRelatedRecords>> refuseWhenUserIsBlocked(
     RequestAndRelatedRecords requestAndRelatedRecords) {
 
-    User requester = Optional.ofNullable(requestAndRelatedRecords.getRequest())
+    final User requester = Optional.ofNullable(requestAndRelatedRecords.getRequest())
       .map(Request::getRequester).orElse(null);
 
     if (requester != null) {
@@ -48,7 +48,7 @@ public class UserManualBlocksValidator {
   }
 
   private HttpFailure createBlockedValidationError(MultipleRecords<ManualBlock> manualBlocks) {
-    String reason = manualBlocks.getRecords().stream()
+    final String reason = manualBlocks.getRecords().stream()
       .map(ManualBlock::getDesc).collect(Collectors.joining(";"));
 
     return singleValidationError(
