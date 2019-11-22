@@ -36,6 +36,7 @@ public class Item {
   private final JsonObject itemRepresentation;
   private final JsonObject holdingRepresentation;
   private final JsonObject instanceRepresentation;
+  private final LastCheckIn lastCheckIn;
   private final CallNumberComponents callNumberComponents;
 
   private Location location;
@@ -54,6 +55,7 @@ public class Item {
     JsonObject materialTypeRepresentation,
     ServicePoint servicePoint,
     JsonObject loanTypeRepresentation,
+    LastCheckIn lastCheckIn,
     CallNumberComponents callNumberComponents) {
 
     this.itemRepresentation = itemRepresentation;
@@ -63,11 +65,13 @@ public class Item {
     this.materialTypeRepresentation = materialTypeRepresentation;
     this.primaryServicePoint = servicePoint;
     this.loanTypeRepresentation = loanTypeRepresentation;
+    this.lastCheckIn = lastCheckIn;
     this.callNumberComponents = callNumberComponents;
   }
 
   public static Item from(JsonObject representation) {
     return new Item(representation,
+      null,
       null,
       null,
       null,
@@ -340,6 +344,10 @@ public class Item {
     return getItem() != null;
   }
 
+  public LastCheckIn getLastCheckIn() {
+    return lastCheckIn;
+  }
+
   public boolean doesNotHaveHolding() {
     return holdingRepresentation == null;
   }
@@ -353,6 +361,7 @@ public class Item {
       this.materialTypeRepresentation,
       this.primaryServicePoint,
       this.loanTypeRepresentation,
+      lastCheckIn,
       this.callNumberComponents);
   }
 
@@ -365,6 +374,7 @@ public class Item {
       newMaterialType,
       this.primaryServicePoint,
       this.loanTypeRepresentation,
+      lastCheckIn,
       this.callNumberComponents);
   }
 
@@ -377,6 +387,7 @@ public class Item {
       this.materialTypeRepresentation,
       this.primaryServicePoint,
       this.loanTypeRepresentation,
+      lastCheckIn,
       this.callNumberComponents);
   }
 
@@ -389,6 +400,7 @@ public class Item {
       this.materialTypeRepresentation,
       this.primaryServicePoint,
       this.loanTypeRepresentation,
+      lastCheckIn,
       this.callNumberComponents);
   }
 
@@ -401,6 +413,7 @@ public class Item {
       this.materialTypeRepresentation,
       servicePoint,
       this.loanTypeRepresentation,
+      lastCheckIn,
       this.callNumberComponents);
   }
 
@@ -413,6 +426,22 @@ public class Item {
       this.materialTypeRepresentation,
       this.primaryServicePoint,
       newLoanTypeRepresentation,
+      lastCheckIn,
       this.callNumberComponents);
+  }
+
+  public Item withLastCheckIn(LastCheckIn lastCheckIn) {
+    Item item = new Item(
+      itemRepresentation,
+      holdingRepresentation,
+      instanceRepresentation,
+      location,
+      materialTypeRepresentation,
+      primaryServicePoint,
+      loanTypeRepresentation,
+      lastCheckIn,
+      this.callNumberComponents);
+    item.changed = this.changed;
+    return item;
   }
 }

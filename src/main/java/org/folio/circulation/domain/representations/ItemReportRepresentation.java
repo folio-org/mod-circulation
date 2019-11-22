@@ -35,6 +35,9 @@ public class ItemReportRepresentation {
     write(itemReport, "barcode", item.getBarcode());
     write(itemReport, "contributors", item.getContributorNames());
     write(itemReport, "callNumber", item.getCallNumber());
+    write(itemReport, "enumeration", item.getEnumeration());
+    write(itemReport, "volume", item.getVolume());
+    write(itemReport, "yearCaption", new JsonArray(item.getYearCaption()));
     writeNamedObject(itemReport, "status", Optional.ofNullable(item.getStatus())
       .map(ItemStatus::getValue).orElse(null));
     write(itemReport, "inTransitDestinationServicePointId", item.getInTransitDestinationServicePointId());

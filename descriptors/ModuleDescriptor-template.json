@@ -22,7 +22,7 @@
     },
     {
       "id": "inventory-reports",
-      "version": "0.1",
+      "version": "0.2",
       "handlers": [
         {
           "methods": [
@@ -658,7 +658,7 @@
     },
     {
       "id": "item-storage",
-      "version": "7.6"
+      "version": "7.7"
     },
     {
       "id": "instance-storage",

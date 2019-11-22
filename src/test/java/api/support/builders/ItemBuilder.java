@@ -34,10 +34,12 @@ public class ItemBuilder extends JsonBuilder implements Builder {
   private final String itemLevelCallNumberSuffix;
   private String enumeration;
   private List<String> copyNumbers;
+  private List<String> yearCaption;
+  private String volume;
 
   public ItemBuilder() {
     this(UUID.randomUUID(), null, "565578437802", AVAILABLE,
-      null, null, null, null, null, null, null, null, null, null);
+      null, null, null, null, null, null, null, null, null, null, null, null);
   }
 
   private ItemBuilder(
@@ -54,7 +56,9 @@ public class ItemBuilder extends JsonBuilder implements Builder {
     List<String> copyNumbers,
     String itemLevelCallNumber,
     String itemLevelCallNumberPrefix,
-    String itemLevelCallNumberSuffix) {
+    String itemLevelCallNumberSuffix,
+    String volume,
+    List<String> yearCaption) {
 
     this.id = id;
     this.holdingId = holdingId;
@@ -70,6 +74,8 @@ public class ItemBuilder extends JsonBuilder implements Builder {
     this.itemLevelCallNumber = itemLevelCallNumber;
     this.itemLevelCallNumberPrefix = itemLevelCallNumberPrefix;
     this.itemLevelCallNumberSuffix = itemLevelCallNumberSuffix;
+    this.volume = volume;
+    this.yearCaption = yearCaption;
   }
 
   public JsonObject create() {
@@ -89,6 +95,8 @@ public class ItemBuilder extends JsonBuilder implements Builder {
     put(itemRequest, "itemLevelCallNumber", itemLevelCallNumber);
     put(itemRequest, "itemLevelCallNumberPrefix", itemLevelCallNumberPrefix);
     put(itemRequest, "itemLevelCallNumberSuffix", itemLevelCallNumberSuffix);
+    put(itemRequest, "volume", volume);
+    put(itemRequest, "yearCaption", new JsonArray(yearCaption));
 
     return itemRequest;
   }
@@ -128,7 +136,9 @@ public class ItemBuilder extends JsonBuilder implements Builder {
       this.copyNumbers,
       this.itemLevelCallNumber,
       this.itemLevelCallNumberPrefix,
-      this.itemLevelCallNumberSuffix);
+      this.itemLevelCallNumberSuffix,
+      this.volume,
+      this.yearCaption);
   }
 
   public ItemBuilder withBarcode(String barcode) {
@@ -146,7 +156,9 @@ public class ItemBuilder extends JsonBuilder implements Builder {
       this.copyNumbers,
       this.itemLevelCallNumber,
       this.itemLevelCallNumberPrefix,
-      this.itemLevelCallNumberSuffix);
+      this.itemLevelCallNumberSuffix,
+      this.volume,
+      this.yearCaption);
   }
 
   public ItemBuilder withNoBarcode() {
@@ -172,7 +184,9 @@ public class ItemBuilder extends JsonBuilder implements Builder {
       this.copyNumbers,
       this.itemLevelCallNumber,
       this.itemLevelCallNumberPrefix,
-      this.itemLevelCallNumberSuffix);
+      this.itemLevelCallNumberSuffix,
+      this.volume,
+      this.yearCaption);
   }
 
   public ItemBuilder withNoPermanentLocation() {
@@ -198,7 +212,9 @@ public class ItemBuilder extends JsonBuilder implements Builder {
       this.copyNumbers,
       this.itemLevelCallNumber,
       this.itemLevelCallNumberPrefix,
-      this.itemLevelCallNumberSuffix);
+      this.itemLevelCallNumberSuffix,
+      this.volume,
+      this.yearCaption);
   }
 
   public ItemBuilder withNoTemporaryLocation() {
@@ -220,7 +236,9 @@ public class ItemBuilder extends JsonBuilder implements Builder {
       this.copyNumbers,
       this.itemLevelCallNumber,
       this.itemLevelCallNumberPrefix,
-      this.itemLevelCallNumberSuffix);
+      this.itemLevelCallNumberSuffix,
+      this.volume,
+      this.yearCaption);
   }
 
   public ItemBuilder withMaterialType(UUID materialTypeId) {
@@ -238,7 +256,9 @@ public class ItemBuilder extends JsonBuilder implements Builder {
       this.copyNumbers,
       this.itemLevelCallNumber,
       this.itemLevelCallNumberPrefix,
-      this.itemLevelCallNumberSuffix);
+      this.itemLevelCallNumberSuffix,
+      this.volume,
+      this.yearCaption);
   }
 
   public ItemBuilder withPermanentLoanType(UUID loanTypeId) {
@@ -256,7 +276,9 @@ public class ItemBuilder extends JsonBuilder implements Builder {
       this.copyNumbers,
       this.itemLevelCallNumber,
       this.itemLevelCallNumberPrefix,
-      this.itemLevelCallNumberSuffix);
+      this.itemLevelCallNumberSuffix,
+      this.volume,
+      this.yearCaption);
   }
 
   public ItemBuilder withTemporaryLoanType(UUID loanTypeId) {
@@ -274,7 +296,9 @@ public class ItemBuilder extends JsonBuilder implements Builder {
       this.copyNumbers,
       this.itemLevelCallNumber,
       this.itemLevelCallNumberPrefix,
-      this.itemLevelCallNumberSuffix);
+      this.itemLevelCallNumberSuffix,
+      this.volume,
+      this.yearCaption);
   }
 
   public ItemBuilder withId(UUID id) {
@@ -292,7 +316,9 @@ public class ItemBuilder extends JsonBuilder implements Builder {
       this.copyNumbers,
       this.itemLevelCallNumber,
       this.itemLevelCallNumberPrefix,
-      this.itemLevelCallNumberSuffix);
+      this.itemLevelCallNumberSuffix,
+      this.volume,
+      this.yearCaption);
   }
 
   public ItemBuilder withEnumeration(String enumeration) {
@@ -310,7 +336,9 @@ public class ItemBuilder extends JsonBuilder implements Builder {
       this.copyNumbers,
       this.itemLevelCallNumber,
       this.itemLevelCallNumberPrefix,
-      this.itemLevelCallNumberSuffix);
+      this.itemLevelCallNumberSuffix,
+      this.volume,
+      this.yearCaption);
   }
 
   public ItemBuilder withCopyNumbers(List<String> copyNumbers) {
@@ -328,7 +356,9 @@ public class ItemBuilder extends JsonBuilder implements Builder {
       copyNumbers,
       this.itemLevelCallNumber,
       this.itemLevelCallNumberPrefix,
-      this.itemLevelCallNumberSuffix);
+      this.itemLevelCallNumberSuffix,
+      this.volume,
+      this.yearCaption);
   }
 
   public ItemBuilder withCallNumber(
@@ -350,6 +380,48 @@ public class ItemBuilder extends JsonBuilder implements Builder {
       this.copyNumbers,
       itemLevelCallNumber,
       itemLevelCallNumberPrefix,
-      itemLevelCallNumberSuffix);
+      itemLevelCallNumberSuffix,
+      this.volume,
+      this.yearCaption);
   }
+
+  public ItemBuilder withVolume(String volume) {
+    return new ItemBuilder(
+      this.id,
+      this.holdingId,
+      this.barcode,
+      this.status,
+      this.permanentLocationId,
+      this.temporaryLocationId,
+      this.materialTypeId,
+      this.permanentLoanTypeId,
+      this.temporaryLoanTypeId,
+      this.enumeration,
+      this.copyNumbers,
+      this.itemLevelCallNumber,
+      this.itemLevelCallNumberPrefix,
+      this.itemLevelCallNumberSuffix,
+      volume,
+      this.yearCaption);
+  }
+
+    public ItemBuilder withYearCaption(List<String> yearCaption) {
+      return new ItemBuilder(
+        this.id,
+        this.holdingId,
+        this.barcode,
+        this.status,
+        this.permanentLocationId,
+        this.temporaryLocationId,
+        this.materialTypeId,
+        this.permanentLoanTypeId,
+        this.temporaryLoanTypeId,
+        this.enumeration,
+        this.copyNumbers,
+        this.itemLevelCallNumber,
+        this.itemLevelCallNumberPrefix,
+        this.itemLevelCallNumberSuffix,
+        this.volume,
+        yearCaption);
+    }
 }

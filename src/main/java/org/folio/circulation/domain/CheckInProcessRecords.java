@@ -22,9 +22,10 @@ public class CheckInProcessRecords {
   private final RequestQueue requestQueue;
   private final ServicePoint checkInServicePoint;
   private final Request highestPriorityFulfillableRequest;
+  private final String loggedInUserId;
 
   public CheckInProcessRecords(CheckInByBarcodeRequest checkInRequest) {
-    this(checkInRequest, null, null, null, null, null);
+    this(checkInRequest, null, null, null, null, null, null);
   }
 
   private CheckInProcessRecords(
@@ -33,7 +34,8 @@ public class CheckInProcessRecords {
     Loan loan,
     RequestQueue requestQueue,
     ServicePoint checkInServicePoint,
-    Request highestPriorityFulfillableRequest) {
+    Request highestPriorityFulfillableRequest,
+    String loggedInUserId) {
 
     this.checkInRequest = checkInRequest;
     this.item = item;
@@ -41,6 +43,7 @@ public class CheckInProcessRecords {
     this.requestQueue = requestQueue;
     this.checkInServicePoint = checkInServicePoint;
     this.highestPriorityFulfillableRequest = highestPriorityFulfillableRequest;
+    this.loggedInUserId = loggedInUserId;
   }
 
   public CheckInProcessRecords withItem(Item item) {
@@ -57,7 +60,8 @@ public class CheckInProcessRecords {
       updatedLoan,
       this.requestQueue,
       this.checkInServicePoint,
-      this.highestPriorityFulfillableRequest);
+      this.highestPriorityFulfillableRequest,
+      this.loggedInUserId);
   }
 
   public CheckInProcessRecords withLoan(Loan loan) {
@@ -67,7 +71,8 @@ public class CheckInProcessRecords {
       loan,
       this.requestQueue,
       this.checkInServicePoint,
-      this.highestPriorityFulfillableRequest);
+      this.highestPriorityFulfillableRequest,
+      loggedInUserId);
   }
 
   public CheckInProcessRecords withRequestQueue(RequestQueue requestQueue) {
@@ -81,7 +86,8 @@ public class CheckInProcessRecords {
       this.loan,
       requestQueue,
       this.checkInServicePoint,
-      firstRequest);
+      firstRequest,
+      loggedInUserId);
   }
 
   public CheckInProcessRecords withCheckInServicePoint(ServicePoint checkInServicePoint) {
@@ -91,7 +97,8 @@ public class CheckInProcessRecords {
       this.loan,
       this.requestQueue,
       checkInServicePoint,
-      this.highestPriorityFulfillableRequest);
+      this.highestPriorityFulfillableRequest,
+      loggedInUserId);
   }
 
   public CheckInProcessRecords withHighestPriorityFulfillableRequest(Request request) {
@@ -101,7 +108,19 @@ public class CheckInProcessRecords {
       this.loan,
       this.requestQueue,
       this.checkInServicePoint,
-      request);
+      request,
+      loggedInUserId);
+  }
+
+  public CheckInProcessRecords withLoggedInUserId(String userId) {
+    return new CheckInProcessRecords(
+        this.checkInRequest,
+        this.item,
+        this.loan,
+        this.requestQueue,
+        this.checkInServicePoint,
+        this.highestPriorityFulfillableRequest,
+        userId);
   }
 
   public String getCheckInRequestBarcode() {
@@ -134,5 +153,9 @@ public class CheckInProcessRecords {
 
   public Request getHighestPriorityFulfillableRequest() {
     return highestPriorityFulfillableRequest;
+  }
+
+  public String getLoggedInUserId() {
+    return loggedInUserId;
   }
 }
