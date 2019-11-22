@@ -22,14 +22,12 @@ public class EffectiveLocationApiTests extends APITests {
     InventoryItemResource createdItem = itemsFixture
       .basedUponNod(builder -> builder.withPermanentLocation(popularReadingLocationId));
 
-    final Item item = new Item(
-      createdItem.getJson(),
-      new HoldingBuilder()
+    final Item item = Item.from(createdItem.getJson())
+      .withHoldingsRecord(new HoldingBuilder()
         .withNoPermanentLocation()
         .withNoTemporaryLocation()
-        .create(),
-      instanceBuilder().create(),
-      null, null, null, null);
+        .create()
+      ).withInstance(instanceBuilder().create());
 
     assertThat(item.getLocationId(), is(popularReadingLocationId));
   }

@@ -53,7 +53,8 @@ public class Item {
     Location location,
     JsonObject materialTypeRepresentation,
     ServicePoint servicePoint,
-    JsonObject loanTypeRepresentation) {
+    JsonObject loanTypeRepresentation,
+    CallNumberComponents callNumberComponents) {
 
     this.itemRepresentation = itemRepresentation;
     this.holdingRepresentation = holdingRepresentation;
@@ -62,11 +63,19 @@ public class Item {
     this.materialTypeRepresentation = materialTypeRepresentation;
     this.primaryServicePoint = servicePoint;
     this.loanTypeRepresentation = loanTypeRepresentation;
-    this.callNumberComponents = fetchCallNumberComponents(itemRepresentation);
+    this.callNumberComponents = callNumberComponents;
   }
 
   public static Item from(JsonObject representation) {
-    return new Item(representation, null, null, null, null, null, null);
+    return new Item(representation,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      CallNumberComponents.fromItemJson(representation)
+    );
   }
 
   public boolean isCheckedOut() {
@@ -343,7 +352,8 @@ public class Item {
       newLocation,
       this.materialTypeRepresentation,
       this.primaryServicePoint,
-      this.loanTypeRepresentation);
+      this.loanTypeRepresentation,
+      this.callNumberComponents);
   }
 
   public Item withMaterialType(JsonObject newMaterialType) {
@@ -354,7 +364,8 @@ public class Item {
       this.location,
       newMaterialType,
       this.primaryServicePoint,
-      this.loanTypeRepresentation);
+      this.loanTypeRepresentation,
+      this.callNumberComponents);
   }
 
   public Item withHoldingsRecord(JsonObject newHoldingsRecordRepresentation) {
@@ -365,7 +376,8 @@ public class Item {
       this.location,
       this.materialTypeRepresentation,
       this.primaryServicePoint,
-      this.loanTypeRepresentation);
+      this.loanTypeRepresentation,
+      this.callNumberComponents);
   }
 
   public Item withInstance(JsonObject newInstanceRepresentation) {
@@ -376,7 +388,8 @@ public class Item {
       this.location,
       this.materialTypeRepresentation,
       this.primaryServicePoint,
-      this.loanTypeRepresentation);
+      this.loanTypeRepresentation,
+      this.callNumberComponents);
   }
 
   public Item withPrimaryServicePoint(ServicePoint servicePoint) {
@@ -387,7 +400,8 @@ public class Item {
       this.location,
       this.materialTypeRepresentation,
       servicePoint,
-      this.loanTypeRepresentation);
+      this.loanTypeRepresentation,
+      this.callNumberComponents);
   }
 
   public Item withLoanType(JsonObject newLoanTypeRepresentation) {
@@ -398,16 +412,7 @@ public class Item {
       this.location,
       this.materialTypeRepresentation,
       this.primaryServicePoint,
-      newLoanTypeRepresentation);
-  }
-
-  private CallNumberComponents fetchCallNumberComponents(JsonObject itemRepresentation) {
-    if (itemRepresentation == null) {
-      return null;
-    }
-
-    return Optional.ofNullable(itemRepresentation.getJsonObject("effectiveCallNumberComponents"))
-      .map(CallNumberComponents::fromJson)
-      .orElse(null);
+      newLoanTypeRepresentation,
+      this.callNumberComponents);
   }
 }

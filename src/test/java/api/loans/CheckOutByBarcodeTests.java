@@ -172,8 +172,8 @@ public class CheckOutByBarcodeTests extends APITests {
       .getJsonObject(CALL_NUMBER_COMPONENTS);
 
     assertThat(callNumberComponents.getString("callNumber"), is("123456"));
-    assertFalse(callNumberComponents.containsKey("callNumberPrefix"));
-    assertThat(callNumberComponents.getString("callNumberSuffix"), is("CIRC"));
+    assertFalse(callNumberComponents.containsKey("prefix"));
+    assertThat(callNumberComponents.getString("suffix"), is("CIRC"));
   }
 
   @Test

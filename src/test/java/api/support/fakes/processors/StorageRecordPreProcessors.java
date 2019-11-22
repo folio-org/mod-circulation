@@ -12,6 +12,8 @@ import java.util.concurrent.CompletableFuture;
 
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.ImmutableTriple;
+import org.apache.commons.lang3.tuple.Triple;
 import org.folio.circulation.domain.representations.ItemProperties;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.client.ResponseHandler;
@@ -25,8 +27,11 @@ import io.vertx.core.json.JsonObject;
 public final class StorageRecordPreProcessors {
   private static final Logger log = LoggerFactory.getLogger(StorageRecordPreProcessors.class);
 
-  private static final List<String> CALL_NUMBER_PROPERTIES = Arrays.asList(
-    "callNumber", "callNumberPrefix", "callNumberSuffix"
+  // Holdings record property name, item property name, effective property name
+  private static final List<Triple<String, String, String>> CALL_NUMBER_PROPERTIES = Arrays.asList(
+    new ImmutableTriple<>("callNumber", "itemLevelCallNumber", "callNumber"),
+    new ImmutableTriple<>("callNumberPrefix", "itemLevelCallNumberPrefix", "prefix"),
+    new ImmutableTriple<>("callNumberSuffix", "itemLevelCallNumberSuffix", "suffix")
   );
 
   private StorageRecordPreProcessors() {
@@ -83,10 +88,11 @@ public final class StorageRecordPreProcessors {
     CompletableFuture<JsonObject> holdings =
       CompletableFuture.completedFuture(new JsonObject());
 
-    boolean hasItemLevelCallNumber = StringUtils
-      .isNotBlank(newItem.getString("itemLevelCallNumber"));
+    boolean shouldRetrieveHoldings = CALL_NUMBER_PROPERTIES.stream()
+      .map(Triple::getMiddle)
+      .anyMatch(property -> StringUtils.isBlank(newItem.getString(property)));
 
-    if (!hasItemLevelCallNumber) {
+    if (shouldRetrieveHoldings) {
       String holdingsId = newItem.getString(HOLDINGS_RECORD_ID);
       holdings = getHoldingById(holdingsId);
     }
@@ -94,16 +100,17 @@ public final class StorageRecordPreProcessors {
     return holdings.thenApply(holding -> {
       JsonObject effectiveCallNumberComponents = new JsonObject();
 
-      CALL_NUMBER_PROPERTIES.forEach(callComponentName -> {
-        final String itemLevelCallComponentPropertyName =
-          getItemLevelCallNumberComponentName(callComponentName);
+      CALL_NUMBER_PROPERTIES.forEach(properties -> {
+        String itemPropertyName = properties.getMiddle();
+        String holdingsPropertyName = properties.getLeft();
+        String effectivePropertyName = properties.getRight();
 
         final String propertyValue = StringUtils.firstNonBlank(
-          newItem.getString(itemLevelCallComponentPropertyName),
-          holding.getString(callComponentName)
+          newItem.getString(itemPropertyName),
+          holding.getString(holdingsPropertyName)
         );
 
-        effectiveCallNumberComponents.put(callComponentName, propertyValue);
+        effectiveCallNumberComponents.put(effectivePropertyName, propertyValue);
       });
 
       return newItem.put("effectiveCallNumberComponents", effectiveCallNumberComponents);
@@ -121,9 +128,5 @@ public final class StorageRecordPreProcessors {
       .thenApply(response -> response.getJson().getJsonArray("holdingsRecords")
         .getJsonObject(0)
       );
-  }
-
-  private static String getItemLevelCallNumberComponentName(String effectivePropertyName) {
-    return "itemLevel" + StringUtils.capitalize(effectivePropertyName);
   }
 }

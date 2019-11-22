@@ -5,15 +5,18 @@
   "properties": {
     "callNumber": {
       "type": "string",
-      "description": "Effective Call Number for item."
+      "description": "Call number for item",
+      "readonly": true
     },
-    "callNumberPrefix": {
-      "description": "Effective Call Number Prefix for item.",
-      "type": "string"
+    "prefix": {
+      "description": "Call number prefix for item",
+      "type": "string",
+      "readonly": true
     },
-    "callNumberSuffix": {
-      "description": "Effective Call Number Suffix for item.",
-      "type": "string"
+    "suffix": {
+      "description": "Call number suffix for item",
+      "type": "string",
+      "readonly": true
     }
   }
 }

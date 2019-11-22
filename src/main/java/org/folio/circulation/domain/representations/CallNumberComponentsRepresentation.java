@@ -6,7 +6,7 @@ import org.folio.circulation.domain.CallNumberComponents;
 
 import io.vertx.core.json.JsonObject;
 
-public class CallNumberComponentsRepresentation {
+public final class CallNumberComponentsRepresentation {
 
   private CallNumberComponentsRepresentation() {
     throw new UnsupportedOperationException("Do not instantiate");
@@ -20,8 +20,8 @@ public class CallNumberComponentsRepresentation {
     JsonObject representation = new JsonObject();
 
     write(representation, "callNumber", callNumberComponents.getCallNumber());
-    write(representation, "callNumberPrefix", callNumberComponents.getCallNumberPrefix());
-    write(representation, "callNumberSuffix", callNumberComponents.getCallNumberSuffix());
+    write(representation, "prefix", callNumberComponents.getPrefix());
+    write(representation, "suffix", callNumberComponents.getSuffix());
 
     return representation;
   }

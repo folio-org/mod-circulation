@@ -159,8 +159,8 @@ public class TemplateContextUtil {
     if (callNumberComponents != null) {
       itemContext
         .put("callNumber", callNumberComponents.getCallNumber())
-        .put("callNumberPrefix", callNumberComponents.getCallNumberPrefix())
-        .put("callNumberSuffix", callNumberComponents.getCallNumberSuffix());
+        .put("callNumberPrefix", callNumberComponents.getPrefix())
+        .put("callNumberSuffix", callNumberComponents.getSuffix());
     }
 
     return itemContext;
