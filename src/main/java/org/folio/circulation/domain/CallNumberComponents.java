@@ -7,13 +7,11 @@ import java.util.Optional;
 import io.vertx.core.json.JsonObject;
 
 public class CallNumberComponents {
-
   private final String callNumber;
   private final String prefix;
   private final String suffix;
 
   private CallNumberComponents(String callNumber, String prefix, String suffix) {
-
     this.callNumber = callNumber;
     this.prefix = prefix;
     this.suffix = suffix;
