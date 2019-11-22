@@ -28,6 +28,7 @@ import org.folio.circulation.domain.validation.ClosedRequestValidator;
 import org.folio.circulation.domain.validation.ProxyRelationshipValidator;
 import org.folio.circulation.domain.validation.RequestLoanValidator;
 import org.folio.circulation.domain.validation.ServicePointPickupLocationValidator;
+import org.folio.circulation.domain.validation.UserManualBlocksValidator;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CreatedJsonResponseResult;
 import org.folio.circulation.support.ItemRepository;
@@ -75,7 +76,8 @@ public class RequestCollectionResource extends CollectionResource {
         new RequestPolicyRepository(clients),
         updateUponRequest,
         new RequestLoanValidator(loanRepository),
-        requestNoticeSender, configurationRepository);
+        requestNoticeSender, configurationRepository,
+        new UserManualBlocksValidator(clients.manualBlocksStorageClient()));
 
     final RequestFromRepresentationService requestFromRepresentationService =
       new RequestFromRepresentationService(
@@ -126,7 +128,8 @@ public class RequestCollectionResource extends CollectionResource {
         new RequestPolicyRepository(clients),
         updateUponRequest,
         new RequestLoanValidator(loanRepository),
-        requestNoticeSender, configurationRepository);
+        requestNoticeSender, configurationRepository,
+        new UserManualBlocksValidator(clients.manualBlocksStorageClient()));
 
     final UpdateRequestService updateRequestService = new UpdateRequestService(
         requestRepository,

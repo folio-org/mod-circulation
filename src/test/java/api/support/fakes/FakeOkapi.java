@@ -309,6 +309,13 @@ public class FakeOkapi extends AbstractVerticle {
       .register(router);
 
     new FakeStorageModuleBuilder()
+      .withCollectionPropertyName("manualblocks")
+      .withRootPath("/manualblocks")
+      .withQueryParameters("userId")
+      .create()
+      .register(router);
+
+    new FakeStorageModuleBuilder()
       .withRecordName("scheduled notice")
       .withCollectionPropertyName("scheduledNotices")
       .withRootPath("/scheduled-notice-storage/scheduled-notices")

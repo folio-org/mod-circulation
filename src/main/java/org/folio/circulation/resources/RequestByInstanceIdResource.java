@@ -49,6 +49,7 @@ import org.folio.circulation.domain.representations.RequestByInstanceIdRequest;
 import org.folio.circulation.domain.validation.ProxyRelationshipValidator;
 import org.folio.circulation.domain.validation.RequestLoanValidator;
 import org.folio.circulation.domain.validation.ServicePointPickupLocationValidator;
+import org.folio.circulation.domain.validation.UserManualBlocksValidator;
 import org.folio.circulation.storage.ItemByInstanceIdFinder;
 import org.folio.circulation.support.BadRequestFailure;
 import org.folio.circulation.support.Clients;
@@ -233,7 +234,8 @@ public class RequestByInstanceIdResource extends Resource {
         new RequestPolicyRepository(clients),
         updateUponRequest,
         new RequestLoanValidator(loanRepository),
-        requestNoticeSender, configurationRepository);
+        requestNoticeSender, configurationRepository,
+        new UserManualBlocksValidator(clients.manualBlocksStorageClient()));
 
     return placeRequest(itemRequestRepresentations, 0, createRequestService,
                         clients, loanRepository, new ArrayList<>());
