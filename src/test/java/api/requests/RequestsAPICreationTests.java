@@ -1917,7 +1917,8 @@ public class RequestsAPICreationTests extends APITests {
     final IndividualResource requester = usersFixture.rebecca();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
     final DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
-    final DateTime expirationDate = new DateTime().plusDays(4);
+    final DateTime now = ClockManager.getClockManager().getDateTime();
+    final DateTime expirationDate = now.plusDays(4);
     final ManualBlockBuilder manualBlockBuilder =
       getManualBlockBuilder(requester, false, false, true, expirationDate);
     final RequestBuilder requestBuilder = createRequestBuilder(item, requester, pickupServicePointId, requestDate);
@@ -1944,7 +1945,8 @@ public class RequestsAPICreationTests extends APITests {
     final IndividualResource requester = usersFixture.rebecca();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
     final DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
-    final DateTime expirationDate = new DateTime().plusDays(4);
+    final DateTime now = ClockManager.getClockManager().getDateTime();
+    final DateTime expirationDate = now.plusDays(4);
     final ManualBlockBuilder manualBlockBuilder = getManualBlockBuilder(requester, false, false, false, expirationDate);
     final RequestBuilder requestBuilder = createRequestBuilder(item, requester, pickupServicePointId, requestDate);
 
@@ -1968,7 +1970,8 @@ public class RequestsAPICreationTests extends APITests {
     final IndividualResource requester = usersFixture.rebecca();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
     final DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
-    final DateTime expirationDate = new DateTime().minusDays(1);
+    final DateTime now = ClockManager.getClockManager().getDateTime();
+    final DateTime expirationDate = now.minusDays(1);
     final ManualBlockBuilder manualBlockBuilder =
       getManualBlockBuilder(requester, false, false, true, expirationDate);
     final RequestBuilder requestBuilder = createRequestBuilder(item, requester, pickupServicePointId, requestDate);
@@ -1992,7 +1995,8 @@ public class RequestsAPICreationTests extends APITests {
     final IndividualResource requester = usersFixture.rebecca();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
     final DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
-    final DateTime expirationDate = new DateTime().plusDays(7);
+    final DateTime now = ClockManager.getClockManager().getDateTime();
+    final DateTime expirationDate = now.plusDays(7);
     final ManualBlockBuilder borrowingManualBlockBuilder =
       getManualBlockBuilder(requester, true, false, false, expirationDate);
     final ManualBlockBuilder renewalsManualBlockBuilder =
@@ -2019,7 +2023,8 @@ public class RequestsAPICreationTests extends APITests {
     final IndividualResource requester = usersFixture.rebecca();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
     final DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
-    final DateTime expirationDate = new DateTime().plusDays(4);
+    final DateTime now = ClockManager.getClockManager().getDateTime();
+    final DateTime expirationDate = now.plusDays(4);
     final ManualBlockBuilder requestManualBlockBuilder1 =
       getManualBlockBuilder(requester, false, false, true, expirationDate);
     final ManualBlockBuilder requestManualBlockBuilder2 =

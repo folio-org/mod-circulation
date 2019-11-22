@@ -29,8 +29,4 @@ public class ManualBlock {
   public static ManualBlock from(JsonObject representation) {
     return new ManualBlock(representation);
   }
-
-  public JsonObject asJson() {
-    return representation.copy();
-  }
 }

@@ -16,7 +16,7 @@ public class ManualBlocksFixture {
 
   public ManualBlocksFixture(ResourceClient manualBlocksClient) {
     manualBlocksRecordCreator = new RecordCreator(manualBlocksClient,
-      materialType -> getProperty(materialType, "id"));
+      manualBlock -> getProperty(manualBlock, "id"));
   }
 
   public IndividualResource create(ManualBlockBuilder manualBlockBuilder)

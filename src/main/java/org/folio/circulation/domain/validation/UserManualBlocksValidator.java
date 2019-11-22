@@ -9,6 +9,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 import org.folio.circulation.domain.Request;
+import org.folio.circulation.support.ClockManager;
 import org.joda.time.DateTime;
 
 import org.folio.circulation.domain.ManualBlock;
@@ -61,6 +62,7 @@ public class UserManualBlocksValidator {
   }
 
   private boolean isNotActive(DateTime expirationDate, boolean requests) {
-   return requests && expirationDate != null && expirationDate.isAfter(DateTime.now());
+    final DateTime now = ClockManager.getClockManager().getDateTime();
+    return requests && expirationDate != null && expirationDate.isAfter(now);
   }
 }
