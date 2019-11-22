@@ -6,7 +6,7 @@ import org.folio.circulation.resources.CheckInByBarcodeResource;
 import org.folio.circulation.resources.CheckOutByBarcodeResource;
 import org.folio.circulation.resources.CirculationRulesResource;
 import org.folio.circulation.resources.EndPatronActionSessionResource;
-import org.folio.circulation.resources.ItemsForPickSlipsResource;
+import org.folio.circulation.resources.PickSlipsReportResource;
 import org.folio.circulation.resources.ItemsInTransitResource;
 import org.folio.circulation.resources.ExpiredSessionProcessingResource;
 import org.folio.circulation.resources.LoanAnonymizationResource;
@@ -79,7 +79,7 @@ public class CirculationVerticle extends AbstractVerticle {
       .register(router);
     new ItemsInTransitResource("/inventory-reports/items-in-transit", client)
       .register(router);
-    new ItemsForPickSlipsResource("/inventory-reports/items-for-pick-slips", client)
+    new PickSlipsReportResource("/inventory-reports/items-for-pick-slips", client)
         .register(router);
 
     new CirculationRulesResource("/circulation/rules", client)

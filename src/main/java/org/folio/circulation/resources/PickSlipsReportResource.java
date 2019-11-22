@@ -10,28 +10,26 @@ import org.folio.circulation.domain.ItemsReportFetcher;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.ReportRepository;
 import org.folio.circulation.domain.Request;
-import org.folio.circulation.domain.RequestRepository;
 import org.folio.circulation.domain.RequestStatus;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.CqlQuery;
-import org.folio.circulation.support.ItemRepository;
 import org.folio.circulation.support.OkJsonResponseResult;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.RouteRegistration;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.server.WebContext;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static org.folio.circulation.domain.ItemStatus.PAGED;
 import static org.folio.circulation.support.CqlQuery.exactMatch;
 import static org.folio.circulation.support.CqlQuery.exactMatchAny;
 
-public class ItemsForPickSlipsResource extends Resource {
+public class PickSlipsReportResource extends Resource {
 
   private static final int FAKE_LIMIT = 100;
 
@@ -46,7 +44,7 @@ public class ItemsForPickSlipsResource extends Resource {
 
   private final String rootPath;
 
-  public ItemsForPickSlipsResource(String rootPath, HttpClient client) {
+  public PickSlipsReportResource(String rootPath, HttpClient client) {
     super(client);
     this.rootPath = rootPath;
   }
@@ -63,75 +61,62 @@ public class ItemsForPickSlipsResource extends Resource {
 
     final String servicePointId = routingContext.request().getParam(SERVICE_POINT_ID_PARAM);
 
-    final CollectionResourceClient itemsStorageClient = clients.itemsStorage();
     final CollectionResourceClient requestsStorageClient = clients.requestsStorage();
     final ReportRepository reportRepository = new ReportRepository(clients);
-    final ItemRepository itemRepository = new ItemRepository(clients, true, true, true);
-    final RequestRepository requestRepository = RequestRepository.using(clients);
-
-    // TODO: filter items by effective location
 
     reportRepository.getAllItemsByField(STATUS_NAME_KEY, PAGED.getValue())
-        .thenComposeAsync(result -> mapFetcherToItemList(result.value()))
-        .thenComposeAsync(items -> findItemsWithUnfilledOpenRequests(requestsStorageClient, items))
+        .thenComposeAsync(r -> r.after(this::mapFetcherToItemsList))
+        .thenComposeAsync(r -> findItemsWithUnfilledOpenRequests(requestsStorageClient, r.value()))
         .thenApply(this::mapResultToJson)
         .thenApply(OkJsonResponseResult::from)
         .thenAccept(r -> r.writeTo(routingContext.response()));
   }
 
-  private CompletableFuture<List<Item>> mapFetcherToItemList(ItemsReportFetcher fetcher) {
+  private CompletableFuture<Result<List<Item>>> mapFetcherToItemsList(ItemsReportFetcher fetcher) {
     List<Item> items = fetcher.getResultListOfItems().stream()
-        .flatMap(result -> result.value().getRecords().stream())
+        .flatMap(records -> records.value().getRecords().stream())
         .filter(item -> StringUtils.isNoneBlank(item.getItemId()))
         .collect(Collectors.toList());
 
-    return CompletableFuture.completedFuture(items);
+    return CompletableFuture.completedFuture(Result.succeeded(items));
   }
 
-  private CompletableFuture<List<Item>> findItemsWithUnfilledOpenRequests(
-      CollectionResourceClient client,
-      List<Item> items) {
-
+  private CompletableFuture<List<Item>> findItemsWithUnfilledOpenRequests(CollectionResourceClient client, List<Item> items) {
     List<String> itemIds = items.stream()
         .map(Item::getItemId)
         .collect(Collectors.toList());
 
-    return findUnfilledOpenRequestsForItems(client, itemIds)
-        .thenComposeAsync(requests -> filterRequestedItems(items, requests));
-
+    return fetchUnfilledOpenRequestsForItems(client, itemIds)
+        .thenApply(r -> r.next(this::mapResponseToRecords))
+        .thenApply(r -> filterRequestedItems(items, r.value()));
   }
 
-  private CompletableFuture<List<Item>> filterRequestedItems(List<Item> items, List<Request> requests) {
-    List<String> requestedItemIds = requests.stream()
-        .map(Request::getItemId)
-        .collect(Collectors.toList());
-
-    List<Item> requestedItems = items.stream()
-        .filter(i -> requestedItemIds.contains(i.getItemId()))
-        .collect(Collectors.toList());
-
-    return CompletableFuture.completedFuture(requestedItems);
-  }
-
-  private CompletableFuture<List<Request>> findUnfilledOpenRequestsForItems(
+  private CompletableFuture<Result<Response>> fetchUnfilledOpenRequestsForItems(
       CollectionResourceClient client,
       List<String> itemIds) {
 
     final Result<CqlQuery> statusQuery = exactMatch(REQUEST_STATUS_KEY, RequestStatus.OPEN_NOT_YET_FILLED.getValue());
     final Result<CqlQuery> itemIdsQuery = exactMatchAny(REQUEST_ITEM_ID_KEY, itemIds);
 
-    CompletableFuture<Result<Response>> queryResultFuture = statusQuery
+    return statusQuery
         .combine(itemIdsQuery, CqlQuery::and)
         .after(query -> client.getMany(query, FAKE_LIMIT));
-
-    return queryResultFuture.thenApply(r -> mapResponseToRequestList(r.value()));
   }
 
-  private List<Request> mapResponseToRequestList(Response response) {
-    return new ArrayList<>(
-        MultipleRecords.from(response, Request::from, REQUESTS_KEY)
-        .value()
-        .getRecords());
+  private Result<MultipleRecords<Request>> mapResponseToRecords(Response response) {
+    return MultipleRecords.from(response, Request::from, REQUESTS_KEY);
+  }
+
+  private List<Item> filterRequestedItems(List<Item> items, MultipleRecords<Request> records) {
+    List<String> requestedItemIds = records
+        .toKeys(Function.identity())
+        .stream()
+        .map(Request::getItemId)
+        .collect(Collectors.toList());
+
+    return items.stream()
+        .filter(i -> requestedItemIds.contains(i.getItemId()))
+        .collect(Collectors.toList());
   }
 
   private Result<JsonObject> mapResultToJson(List<Item> items) {
@@ -139,7 +124,10 @@ public class ItemsForPickSlipsResource extends Resource {
         .map(Item::getItem)
         .collect(Collectors.toList());
 
-    JsonObject jsonResult = new JsonObject().put(ITEMS_KEY, jsonItems);
+    JsonObject jsonResult = new JsonObject()
+        .put(ITEMS_KEY, jsonItems)
+        .put(TOTAL_RECORDS_KEY, jsonItems.size());
+
     return Result.succeeded(jsonResult);
   }
 
