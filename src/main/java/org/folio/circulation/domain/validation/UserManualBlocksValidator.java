@@ -8,6 +8,7 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
+import org.folio.circulation.domain.Request;
 import org.joda.time.DateTime;
 
 import org.folio.circulation.domain.ManualBlock;
@@ -31,7 +32,7 @@ public class UserManualBlocksValidator {
     RequestAndRelatedRecords requestAndRelatedRecords) {
 
     User requester = Optional.ofNullable(requestAndRelatedRecords.getRequest())
-      .map(request -> request.getRequester()).orElse(null);
+      .map(Request::getRequester).orElse(null);
 
     if (requester != null) {
       final MultipleRecordFetcher<ManualBlock> fetcher = new MultipleRecordFetcher<>(
@@ -39,8 +40,8 @@ public class UserManualBlocksValidator {
 
       return fetcher.findByIndexName(Arrays.asList(requester.getId()), "userId")
         .thenApply(manualBlockResult -> manualBlockResult
-          .failWhen(manualBlockMultipleRecords -> of(() -> activeManualBlocksExist(manualBlockMultipleRecords)),
-            manualBlocks -> createBlockedValidationError(manualBlocks))
+          .failWhen(manualBlockMultipleRecords -> of(() ->
+                activeManualBlocksExist(manualBlockMultipleRecords)), this::createBlockedValidationError)
           .map(manualBlockMultipleRecords -> requestAndRelatedRecords));
     }
     return CompletableFuture.completedFuture(Result.succeeded(requestAndRelatedRecords));
@@ -48,8 +49,7 @@ public class UserManualBlocksValidator {
 
   private HttpFailure createBlockedValidationError(MultipleRecords<ManualBlock> manualBlocks) {
     String reason = manualBlocks.getRecords().stream()
-      .map(manualBlock -> manualBlock.getDesc())
-      .collect(Collectors.joining(";"));
+      .map(ManualBlock::getDesc).collect(Collectors.joining(";"));
 
     return singleValidationError(
       new ValidationError("Patron blocked from requesting", "reason", reason));
