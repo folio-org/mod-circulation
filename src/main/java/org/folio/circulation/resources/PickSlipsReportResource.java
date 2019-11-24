@@ -34,7 +34,7 @@ import static org.folio.circulation.support.AsyncCoordinationUtil.allOf;
 import static org.folio.circulation.support.CqlQuery.exactMatch;
 import static org.folio.circulation.support.CqlQuery.exactMatchAny;
 
-public class PickSlipReportResource extends Resource {
+public class PickSlipsReportResource extends Resource {
 
   private static final int BATCH_SIZE = 40;
 
@@ -48,7 +48,7 @@ public class PickSlipReportResource extends Resource {
 
   private final String rootPath;
 
-  public PickSlipReportResource(String rootPath, HttpClient client) {
+  public PickSlipsReportResource(String rootPath, HttpClient client) {
     super(client);
     this.rootPath = rootPath;
   }
@@ -67,38 +67,31 @@ public class PickSlipReportResource extends Resource {
 
     final CollectionResourceClient requestsStorageClient = clients.requestsStorage();
     final ReportRepository reportRepository = new ReportRepository(clients);
-    final ItemRepository itemRepository = new ItemRepository(clients, true, false, false);
+    final ItemRepository itemRepository = new ItemRepository(clients, true, true, false);
 
     reportRepository.getAllItemsByField(STATUS_NAME_KEY, PAGED.getValue())
-        .thenComposeAsync(r -> r.after(fetcher -> fetchItemRelatedRecords(fetcher, itemRepository)))
-        .thenComposeAsync(r -> r.after(items -> filterItemsByServicePoint(items, servicePointId)))
+        .thenApply(r -> r.next(this::mapFetcherToItems))
+        .thenComposeAsync(r -> r.after(items -> allOf(items, itemRepository::fetchItemRelatedRecords)))
+        .thenApply(r -> r.next(i -> filterItemsByServicePoint(i, servicePointId)))
         .thenComposeAsync(r -> r.after(items -> filterItemsByRequestStatus(items, requestsStorageClient)))
         .thenApply(r -> r.next(this::mapResultToJson))
         .thenApply(OkJsonResponseResult::from)
         .thenAccept(r -> r.writeTo(routingContext.response()));
   }
 
-  private CompletableFuture<Result<List<Item>>> fetchItemRelatedRecords(ItemsReportFetcher fetcher,
-      ItemRepository repository) {
-
-    List<Item> items = fetcher.getResultListOfItems().stream()
+  private Result<List<Result<Item>>> mapFetcherToItems(ItemsReportFetcher fetcher) {
+    return Result.succeeded(
+        fetcher.getResultListOfItems().stream()
         .flatMap(resultListOfItem -> resultListOfItem.value().getRecords().stream())
-        .collect(Collectors.toList());
-
-    return allOf(items, item -> fetchItemRelatedRecords(item, repository));
+        .map(Result::succeeded)
+        .collect(Collectors.toList()));
   }
 
-  private CompletableFuture<Result<Item>> fetchItemRelatedRecords(Item item, ItemRepository repository) {
-    return CompletableFuture.completedFuture(Result.succeeded(item))
-        .thenComposeAsync(repository::fetchItemRelatedRecords);
-  }
-
-  private CompletableFuture<Result<List<Item>>> filterItemsByServicePoint(List<Item> items, UUID servicePointId) {
-    List<Item> result = items.stream()
+  private Result<List<Item>> filterItemsByServicePoint(List<Item> items, UUID servicePointId) {
+    return Result.succeeded(
+        items.stream()
         .filter(item -> servicePointId.equals(item.getLocation().getPrimaryServicePointId()))
-        .collect(Collectors.toList());
-
-    return CompletableFuture.completedFuture(Result.succeeded(result));
+        .collect(Collectors.toList()));
   }
 
   private CompletableFuture<Result<List<Item>>> filterItemsByRequestStatus(
@@ -110,11 +103,11 @@ public class PickSlipReportResource extends Resource {
 
     List<List<String>> batches = splitIdsIntoBatches(itemIds);
 
-    return allOf(batches, batch -> fetchRequestsByItemId(batch, client))
+    return allOf(batches, batch -> fetchRequestsForItems(batch, client))
         .thenApply(r -> r.next(records -> filterRequestedItems(items, records)));
   }
 
-  private CompletableFuture<Result<MultipleRecords<Request>>> fetchRequestsByItemId(List<String> itemIds,
+  private CompletableFuture<Result<MultipleRecords<Request>>> fetchRequestsForItems(List<String> itemIds,
       CollectionResourceClient client) {
 
     final Result<CqlQuery> statusQuery = exactMatch(REQUEST_STATUS_KEY, RequestStatus.OPEN_NOT_YET_FILLED.getValue());

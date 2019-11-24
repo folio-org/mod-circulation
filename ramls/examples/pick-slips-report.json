@@ -1,0 +1,28 @@
+{
+  "items": [
+    {
+      "id": "d6f7c1ba-a237-465e-94ed-f37e91bc64bd",
+      "holdingsRecordId": "fb7b70f1-b898-4924-a991-0e4b6312bb5f",
+      "instanceId": "7fbd5d84-62d1-44c6-9c45-6cb173998bbd",
+      "title": "Bridget Jones's Baby: the diaries",
+      "barcode": "4539876054383",
+      "contributors": [
+        {
+          "name": "Fielding, Helen"
+        }
+      ],
+      "callNumber": "PR6056.I4588 B749 2016",
+      "status": {
+        "name": "Paged",
+        "date": "2019-11-24T09:48:03.655"
+      },
+      "location": {
+        "name": "Annex"
+      },
+      "materialType": {
+        "name": "book"
+      }
+    }
+  ],
+  "totalRecords": 1
+}
