@@ -20,14 +20,13 @@ import org.folio.circulation.support.Result;
 import org.folio.circulation.support.RouteRegistration;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.server.WebContext;
+import org.folio.circulation.support.utils.BatchProcessingUtil;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 import static org.folio.circulation.domain.ItemStatus.PAGED;
 import static org.folio.circulation.support.AsyncCoordinationUtil.allOf;
@@ -36,7 +35,11 @@ import static org.folio.circulation.support.CqlQuery.exactMatchAny;
 
 public class PickSlipsReportResource extends Resource {
 
-  private static final int BATCH_SIZE = 40;
+  /**
+   * The optimal number of identifiers that will not exceed the permissible length
+   * of the URI according to the RFC 2616
+   */
+  private static final int UUID_BATCH_SIZE = 40;
 
   private static final String SERVICE_POINT_ID_PARAM = "servicePointId";
   private static final String STATUS_NAME_KEY = "status.name";
@@ -72,7 +75,7 @@ public class PickSlipsReportResource extends Resource {
     reportRepository.getAllItemsByField(STATUS_NAME_KEY, PAGED.getValue())
         .thenApply(r -> r.next(this::mapFetcherToItems))
         .thenComposeAsync(r -> r.after(items -> allOf(items, itemRepository::fetchItemRelatedRecords)))
-        .thenApply(r -> r.next(i -> filterItemsByServicePoint(i, servicePointId)))
+        .thenApply(r -> r.next(items -> filterItemsByServicePoint(items, servicePointId)))
         .thenComposeAsync(r -> r.after(items -> filterItemsByRequestStatus(items, requestsStorageClient)))
         .thenApply(r -> r.next(this::mapResultToJson))
         .thenApply(OkJsonResponseResult::from)
@@ -101,7 +104,7 @@ public class PickSlipsReportResource extends Resource {
         .map(Item::getItemId)
         .collect(Collectors.toList());
 
-    List<List<String>> batches = splitIdsIntoBatches(itemIds);
+    List<List<String>> batches = BatchProcessingUtil.partitionList(itemIds, UUID_BATCH_SIZE);
 
     return allOf(batches, batch -> fetchRequestsForItems(batch, client))
         .thenApply(r -> r.next(records -> filterRequestedItems(items, records)));
@@ -144,21 +147,6 @@ public class PickSlipsReportResource extends Resource {
         .put(TOTAL_RECORDS_KEY, jsonItems.size());
 
     return Result.succeeded(jsonResult);
-  }
-
-  private List<List<String>> splitIdsIntoBatches(List<String> itemIds) {
-    int size = itemIds.size();
-    if (size <= 0) {
-      return new ArrayList<>();
-    }
-
-    int fullChunks = (size - 1) / BATCH_SIZE;
-    return IntStream.range(0, fullChunks + 1)
-        .mapToObj(n ->
-            itemIds.subList(n * BATCH_SIZE, n == fullChunks
-                ? size
-                : (n + 1) * BATCH_SIZE))
-        .collect(Collectors.toList());
   }
 
 }
