@@ -5,9 +5,6 @@ import static org.folio.circulation.support.JsonPropertyWriter.writeNamedObject;
 
 import java.util.Optional;
 
-import io.vertx.core.json.JsonArray;
-import io.vertx.core.json.JsonObject;
-
 import org.folio.circulation.domain.InTransitReportEntry;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.ItemStatus;
@@ -17,6 +14,9 @@ import org.folio.circulation.domain.PatronGroup;
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.ServicePoint;
 import org.folio.circulation.domain.User;
+
+import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
 
 public class ItemReportRepresentation {
 

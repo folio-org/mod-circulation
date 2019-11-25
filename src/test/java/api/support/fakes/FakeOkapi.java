@@ -10,34 +10,27 @@ import static api.support.fixtures.LibraryHoursExamples.CASE_CALENDAR_IS_UNAVAIL
 import static api.support.fixtures.LibraryHoursExamples.CASE_CLOSED_LIBRARY_IN_THU_SERVICE_POINT_ID;
 import static api.support.fixtures.LibraryHoursExamples.CASE_CLOSED_LIBRARY_SERVICE_POINT_ID;
 import static api.support.fixtures.LibraryHoursExamples.getLibraryHoursById;
-import static org.folio.circulation.support.JsonPropertyWriter.write;
 import static org.folio.circulation.support.results.CommonFailures.failedDueToServerError;
 
 import java.io.IOException;
 import java.lang.invoke.MethodHandles;
 import java.util.Collection;
 import java.util.Objects;
-import java.util.concurrent.CompletableFuture;
 
-import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
-import org.folio.circulation.domain.representations.ItemProperties;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.ValidationErrorFailure;
 import org.folio.circulation.support.http.client.BufferHelper;
 import org.folio.circulation.support.http.client.OkapiHttpClient;
-import org.folio.circulation.support.http.client.Response;
-import org.folio.circulation.support.http.client.ResponseHandler;
 import org.folio.circulation.support.http.server.ForwardResponse;
 import org.folio.circulation.support.http.server.ServerErrorResponse;
-import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.inject.internal.util.Lists;
 
 import api.support.APITestContext;
-import api.support.http.InterfaceUrls;
+import api.support.fakes.processors.StorageRecordPreProcessors;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Future;
 import io.vertx.core.MultiMap;
@@ -114,8 +107,11 @@ public class FakeOkapi extends AbstractVerticle {
       .withRecordName("item")
       .withRootPath("/item-storage/items")
       .withRequiredProperties("holdingsRecordId", "materialTypeId", "permanentLoanTypeId")
-      .withRecordPreProcessor(Lists.newArrayList(this::setEffectiveLocationIdForItem,
-        this::setItemStatusDateForItem))
+      .withRecordPreProcessor(Lists.newArrayList(
+        StorageRecordPreProcessors::setEffectiveLocationIdForItem,
+        StorageRecordPreProcessors::setItemStatusDateForItem,
+        StorageRecordPreProcessors::setEffectiveCallNumberComponents
+      ))
       .create().register(router);
 
     new FakeStorageModuleBuilder()
@@ -552,57 +548,6 @@ public class FakeOkapi extends AbstractVerticle {
     log.debug(String.format("GET: /calendar/periods/%s/calculateopening, queries=%s",
       servicePointId, queries));
     return getCalendarById(servicePointId, queries).toString();
-  }
-
-  private CompletableFuture<JsonObject> setEffectiveLocationIdForItem(JsonObject oldItem,
-                                                                      JsonObject newItem) {
-    String permanentLocationId = newItem.getString(ItemProperties.PERMANENT_LOCATION_ID);
-    String temporaryLocationId = newItem.getString(ItemProperties.TEMPORARY_LOCATION_ID);
-
-    if (ObjectUtils.anyNotNull(temporaryLocationId, permanentLocationId)) {
-      newItem.put(
-        ItemProperties.EFFECTIVE_LOCATION_ID,
-        ObjectUtils.firstNonNull(temporaryLocationId, permanentLocationId)
-      );
-
-      return CompletableFuture.completedFuture(newItem);
-    }
-
-    CompletableFuture<Response> getCompleted = new CompletableFuture<>();
-    final String holdingsRecordId = newItem.getString("holdingsRecordId");
-
-    APITestContext.createClient(ex -> log.warn("Error: ", ex))
-      .get(
-        InterfaceUrls.holdingsStorageUrl("?query=id=" + holdingsRecordId),
-        ResponseHandler.json(getCompleted)
-      );
-
-    return getCompleted.thenApply(response -> {
-      JsonObject holding = response.getJson()
-        .getJsonArray("holdingsRecords").getJsonObject(0);
-
-      String permanentLocation = holding.getString(ItemProperties.PERMANENT_LOCATION_ID);
-      String temporaryLocation = holding.getString(ItemProperties.TEMPORARY_LOCATION_ID);
-
-      return newItem.put(ItemProperties.EFFECTIVE_LOCATION_ID,
-        ObjectUtils.firstNonNull(temporaryLocation, permanentLocation)
-      );
-    });
-  }
-
-  private CompletableFuture<JsonObject> setItemStatusDateForItem(JsonObject oldItem,
-                                                                 JsonObject newItem) {
-    if (Objects.nonNull(oldItem)) {
-      JsonObject oldItemStatus = oldItem.getJsonObject(ItemProperties.STATUS_PROPERTY);
-      JsonObject newItemStatus = newItem.getJsonObject(ItemProperties.STATUS_PROPERTY);
-      if (ObjectUtils.allNotNull(oldItemStatus, newItemStatus)) {
-        if (!Objects.equals(oldItemStatus.getString("name"),
-          newItemStatus.getString("name"))) {
-          write(newItemStatus, "date", new DateTime());
-        }
-      }
-    }
-    return CompletableFuture.completedFuture(newItem);
   }
 
   private JsonObject resetPositionsBeforeBatchUpdate(JsonObject batchUpdateRequest) {
