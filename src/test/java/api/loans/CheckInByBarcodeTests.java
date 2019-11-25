@@ -378,6 +378,59 @@ public class CheckInByBarcodeTests extends APITests {
   }
 
   @Test
+  public void patronNoticeOnCheckInIsNotSentWhenCheckInLoanNoticeIsDefinedAndLoanExists()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    UUID checkInTemplateId = UUID.randomUUID();
+    JsonObject checkOutNoticeConfiguration = new NoticeConfigurationBuilder()
+      .withTemplateId(checkInTemplateId)
+      .withCheckInEvent()
+      .create();
+    JsonObject renewNoticeConfiguration = new NoticeConfigurationBuilder()
+      .withTemplateId(UUID.randomUUID())
+      .withEventType("Renew")
+      .create();
+    NoticePolicyBuilder noticePolicy = new NoticePolicyBuilder()
+      .withName("Policy with checkout notice")
+      .withLoanNotices(Arrays.asList(checkOutNoticeConfiguration, renewNoticeConfiguration));
+
+    use(noticePolicy);
+
+    DateTime loanDate = new DateTime(2018, 3, 1, 13, 25, 46, DateTimeZone.UTC);
+
+    final IndividualResource james = usersFixture.james();
+
+    final UUID checkInServicePointId = servicePointsFixture.cd1().getId();
+
+    final IndividualResource homeLocation = locationsFixture.basedUponExampleLocation(
+      builder -> builder.withPrimaryServicePoint(checkInServicePointId));
+
+    final InventoryItemResource nod = itemsFixture.basedUponNod(
+      builder -> builder.withTemporaryLocation(homeLocation.getId()));
+
+    loansFixture.checkOutByBarcode(nod, james, loanDate);
+
+    DateTime checkInDate = new DateTime(2018, 3, 5, 14, 23, 41, DateTimeZone.UTC);
+    final CheckInByBarcodeResponse checkInResponse = loansFixture.checkInByBarcode(
+      new CheckInByBarcodeRequestBuilder()
+        .forItem(nod)
+        .on(checkInDate)
+        .at(checkInServicePointId));
+
+    JsonObject loanRepresentation = checkInResponse.getLoan();
+
+    assertThat("Closed loan should be present",
+      loanRepresentation, notNullValue());
+
+    Awaitility.await()
+      .atMost(1, TimeUnit.SECONDS)
+      .until(patronNoticesClient::getAll, hasSize(0));
+  }
+
+  @Test
   public void shouldNotSendPatronNoticeWhenCheckInNoticeIsDefinedAndCheckInDoesNotCloseLoan()
     throws InterruptedException,
     MalformedURLException,
