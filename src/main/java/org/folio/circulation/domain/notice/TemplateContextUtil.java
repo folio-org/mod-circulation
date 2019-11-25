@@ -7,6 +7,7 @@ import static org.folio.circulation.support.JsonStringArrayHelper.toStream;
 
 import java.util.Optional;
 
+import org.folio.circulation.domain.CallNumberComponents;
 import org.folio.circulation.domain.CheckInProcessRecords;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Loan;
@@ -134,9 +135,6 @@ public class TemplateContextUtil {
       .put("status", item.getStatus().getValue())
       .put("primaryContributor", item.getPrimaryContributorName())
       .put("allContributors", contributorNamesToken)
-      .put("callNumber", item.getCallNumber())
-      .put("callNumberPrefix", item.getCallNumberPrefix())
-      .put("callNumberSuffix", item.getCallNumberSuffix())
       .put("enumeration", item.getEnumeration())
       .put("volume", item.getVolume())
       .put("chronology", item.getChronology())
@@ -157,8 +155,15 @@ public class TemplateContextUtil {
         .put("effectiveLocationInstitution", location.getInstitutionName());
     }
 
-    return itemContext;
+    CallNumberComponents callNumberComponents = item.getCallNumberComponents();
+    if (callNumberComponents != null) {
+      itemContext
+        .put("callNumber", callNumberComponents.getCallNumber())
+        .put("callNumberPrefix", callNumberComponents.getPrefix())
+        .put("callNumberSuffix", callNumberComponents.getSuffix());
+    }
 
+    return itemContext;
   }
 
   private static JsonObject createRequestContext(Request request) {

@@ -1,17 +1,18 @@
 package org.folio.circulation.domain;
 
-import io.vertx.core.json.JsonArray;
-import io.vertx.core.json.JsonObject;
-import org.joda.time.DateTime;
-import org.junit.Test;
+import static org.folio.circulation.domain.InstanceRequestItemsComparer.sortRequestQueues;
+import static org.junit.Assert.assertEquals;
 
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.UUID;
 
-import static org.folio.circulation.domain.InstanceRequestItemsComparer.sortRequestQueues;
-import static org.junit.Assert.assertEquals;
+import org.joda.time.DateTime;
+import org.junit.Test;
+
+import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
 
 public class InstanceRequestItemsComparerTests {
 
@@ -256,7 +257,7 @@ public class InstanceRequestItemsComparerTests {
       location = new Location(homeLocation, null, null, null);
     }
 
-    return new Item(itemRepresentation, null, null, location, null, null, null,
-                    null);
+    return Item.from(itemRepresentation)
+      .withLocation(location);
   }
 }
