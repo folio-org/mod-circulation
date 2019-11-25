@@ -78,10 +78,16 @@ public class TemplateContextMatchers {
   private static String findRepresentationCallNumbers(InventoryItemResource itemResource,
                                                       boolean applyHoldingRecord,
                                                       String propertyName) {
-    return applyHoldingRecord
-      ? itemResource.getHoldingsRecord().getJson().getString(propertyName)
-      : itemResource.getResponse().getJson()
-      .getString(String.format(ITEM_REPRESENTATION_PREFIX, StringUtils.capitalize(propertyName)));
+    String itemPropertyName = String
+      .format(ITEM_REPRESENTATION_PREFIX, StringUtils.capitalize(propertyName));
+
+    if (!applyHoldingRecord) {
+      return itemResource.getJson().getString(itemPropertyName);
+    }
+
+    return StringUtils.firstNonBlank(
+      itemResource.getJson().getString(itemPropertyName),
+      itemResource.getHoldingsRecord().getJson().getString(propertyName));
   }
 
   private static String findRepresentationCopyNumbers(InventoryItemResource itemResource,

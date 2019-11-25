@@ -351,7 +351,8 @@ public class ItemsFixture {
     return new HoldingBuilder()
       .withPermanentLocation(locationsFixture.thirdFloor())
       .withNoTemporaryLocation()
-      .withCallNumber("123456");
+      .withCallNumber("123456")
+      .withCallNumberSuffix("CIRC");
   }
 
   public HoldingBuilder applyCallNumberHoldings(

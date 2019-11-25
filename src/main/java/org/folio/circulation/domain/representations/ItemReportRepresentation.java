@@ -5,17 +5,18 @@ import static org.folio.circulation.support.JsonPropertyWriter.writeNamedObject;
 
 import java.util.Optional;
 
-import io.vertx.core.json.JsonArray;
-import io.vertx.core.json.JsonObject;
-
 import org.folio.circulation.domain.InTransitReportEntry;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.Location;
+import org.folio.circulation.domain.PatronGroup;
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.ServicePoint;
 import org.folio.circulation.domain.User;
+
+import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
 
 public class ItemReportRepresentation {
 
@@ -35,6 +36,9 @@ public class ItemReportRepresentation {
     write(itemReport, "barcode", item.getBarcode());
     write(itemReport, "contributors", item.getContributorNames());
     write(itemReport, "callNumber", item.getCallNumber());
+    write(itemReport, "enumeration", item.getEnumeration());
+    write(itemReport, "volume", item.getVolume());
+    write(itemReport, "yearCaption", new JsonArray(item.getYearCaption()));
     writeNamedObject(itemReport, "status", Optional.ofNullable(item.getStatus())
       .map(ItemStatus::getValue).orElse(null));
     write(itemReport, "inTransitDestinationServicePointId", item.getInTransitDestinationServicePointId());
@@ -89,8 +93,12 @@ public class ItemReportRepresentation {
       final JsonArray tagsJson = tags.getJsonArray("tagList");
       write(requestJson, "tags", tagsJson);
     }
-    write(requestJson, "requestPatronGroup", Optional.ofNullable(request.getRequester())
-      .map(User::getPersonalName).orElse(null));
+
+    PatronGroup patronGroup = Optional.ofNullable(request.getRequester())
+      .map(User::getPatronGroup).orElse(null);
+    if (patronGroup != null){
+      write(requestJson, "requestPatronGroup", patronGroup.getDesc());
+    }
     write(itemReport, "request", requestJson);
 
   }

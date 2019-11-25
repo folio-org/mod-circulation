@@ -4,7 +4,7 @@
   "provides": [
     {
       "id": "requests-reports",
-      "version": "0.3",
+      "version": "0.4",
       "handlers": [
         {
           "methods": [
@@ -52,7 +52,7 @@
     },
     {
       "id": "request-move",
-      "version": "0.3",
+      "version": "0.4",
       "handlers": [
         {
           "methods": [
@@ -86,7 +86,7 @@
     },
     {
       "id": "circulation",
-      "version": "8.2",
+      "version": "8.3",
       "handlers": [
         {
           "methods": [
@@ -670,7 +670,7 @@
     },
     {
       "id": "item-storage",
-      "version": "7.6"
+      "version": "7.8"
     },
     {
       "id": "instance-storage",
@@ -1536,7 +1536,8 @@
         "calendar.opening-hours.collection.get",
         "scheduled-notice-storage.scheduled-notices.collection.delete",
         "scheduled-notice-storage.scheduled-notices.item.post",
-        "configuration.entries.collection.get"
+        "configuration.entries.collection.get",
+        "manualblocks.collection.get"
       ],
       "visible": false
     },
@@ -1838,7 +1839,7 @@
     },
     "env": [
       { "name": "JAVA_OPTIONS",
-        "value": "-XX:+UnlockExperimentalVMOptions -XX:+UseCGroupMemoryLimitForHeap"
+        "value": "-XX:MaxRAMPercentage=66.0"
       }
     ]
   }

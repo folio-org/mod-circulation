@@ -229,4 +229,8 @@ public class InterfaceUrls {
     return circulationModuleUrl(String
       .format("/circulation/requests/queue/%s", itemId));
   }
+
+  static URL userManualBlocksStorageUrl() {
+    return APITestContext.viaOkapiModuleUrl("/manualblocks");
+  }
 }

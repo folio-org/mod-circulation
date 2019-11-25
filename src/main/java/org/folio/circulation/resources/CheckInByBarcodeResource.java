@@ -50,6 +50,7 @@ public class CheckInByBarcodeResource extends Resource {
     final LoanRepository loanRepository = new LoanRepository(clients);
     final ItemRepository itemRepository = new ItemRepository(clients, true, true, true);
     final UserRepository userRepository = new UserRepository(clients);
+
     final AddressTypeRepository addressTypeRepository = new AddressTypeRepository(clients);
     final RequestQueueRepository requestQueueRepository = RequestQueueRepository.using(clients);
     final ServicePointRepository servicePointRepository = new ServicePointRepository(clients);
@@ -95,6 +96,7 @@ public class CheckInByBarcodeResource extends Resource {
         processAdapter::getRequestQueue, CheckInProcessRecords::withRequestQueue))
       .thenComposeAsync(findRequestQueueResult -> findRequestQueueResult.combineAfter(
         processAdapter::updateRequestQueue, CheckInProcessRecords::withRequestQueue))
+      .thenApply(r -> r.map(records -> records.withLoggedInUserId(context.getUserId())))
       .thenComposeAsync(updateRequestQueueResult -> updateRequestQueueResult.combineAfter(
         processAdapter::updateItem, CheckInProcessRecords::withItem))
       .thenApply(handleItemStatus -> handleItemStatus.next(processAdapter::sendItemStatusPatronNotice))
@@ -113,6 +115,6 @@ public class CheckInByBarcodeResource extends Resource {
       .thenApply(updateItemResult -> updateItemResult.next(processAdapter::sendCheckInPatronNotice))
       .thenApply(r -> r.next(requestScheduledNoticeService::rescheduleRequestNotices))
       .thenApply(CheckInByBarcodeResponse::from)
-      .thenAccept(result -> result.writeTo(routingContext.response()));
+      .thenAccept(r -> r.writeTo(routingContext.response()));
   }
 }

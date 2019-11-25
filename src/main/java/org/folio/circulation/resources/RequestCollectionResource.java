@@ -20,6 +20,7 @@ import org.folio.circulation.domain.UpdateLoan;
 import org.folio.circulation.domain.UpdateRequestQueue;
 import org.folio.circulation.domain.UpdateRequestService;
 import org.folio.circulation.domain.UpdateUponRequest;
+import org.folio.circulation.domain.UserManualBlock;
 import org.folio.circulation.domain.UserRepository;
 import org.folio.circulation.domain.notice.schedule.RequestScheduledNoticeService;
 import org.folio.circulation.domain.policy.LoanPolicyRepository;
@@ -28,9 +29,11 @@ import org.folio.circulation.domain.validation.ClosedRequestValidator;
 import org.folio.circulation.domain.validation.ProxyRelationshipValidator;
 import org.folio.circulation.domain.validation.RequestLoanValidator;
 import org.folio.circulation.domain.validation.ServicePointPickupLocationValidator;
+import org.folio.circulation.domain.validation.UserManualBlocksValidator;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CreatedJsonResponseResult;
 import org.folio.circulation.support.ItemRepository;
+import org.folio.circulation.support.MultipleRecordFetcher;
 import org.folio.circulation.support.NoContentResult;
 import org.folio.circulation.support.OkJsonResponseResult;
 import org.folio.circulation.support.http.server.WebContext;
@@ -64,6 +67,8 @@ public class RequestCollectionResource extends CollectionResource {
     final LoanPolicyRepository loanPolicyRepository = new LoanPolicyRepository(clients);
     final RequestNoticeSender requestNoticeSender = RequestNoticeSender.using(clients);
     final ConfigurationRepository configurationRepository = new ConfigurationRepository(clients);
+    final MultipleRecordFetcher<UserManualBlock> userManualBlocksValidator= new MultipleRecordFetcher<>
+      (clients.userManualBlocksStorageClient(), "manualblocks", UserManualBlock::from);
 
     final UpdateUponRequest updateUponRequest = new UpdateUponRequest(
         new UpdateItem(clients),
@@ -75,7 +80,8 @@ public class RequestCollectionResource extends CollectionResource {
         new RequestPolicyRepository(clients),
         updateUponRequest,
         new RequestLoanValidator(loanRepository),
-        requestNoticeSender, configurationRepository);
+        requestNoticeSender, configurationRepository,
+        new UserManualBlocksValidator(userManualBlocksValidator));
 
     final RequestFromRepresentationService requestFromRepresentationService =
       new RequestFromRepresentationService(
@@ -113,6 +119,8 @@ public class RequestCollectionResource extends CollectionResource {
     final LoanPolicyRepository loanPolicyRepository = new LoanPolicyRepository(clients);
     final RequestNoticeSender requestNoticeSender = RequestNoticeSender.using(clients);
     final ConfigurationRepository configurationRepository = new ConfigurationRepository(clients);
+    final MultipleRecordFetcher<UserManualBlock> userManualBlocksValidator = new MultipleRecordFetcher<>
+      (clients.userManualBlocksStorageClient(), "manualblocks", UserManualBlock::from);
 
     final UpdateItem updateItem = new UpdateItem(clients);
 
@@ -126,7 +134,8 @@ public class RequestCollectionResource extends CollectionResource {
         new RequestPolicyRepository(clients),
         updateUponRequest,
         new RequestLoanValidator(loanRepository),
-        requestNoticeSender, configurationRepository);
+        requestNoticeSender, configurationRepository,
+        new UserManualBlocksValidator(userManualBlocksValidator));
 
     final UpdateRequestService updateRequestService = new UpdateRequestService(
         requestRepository,

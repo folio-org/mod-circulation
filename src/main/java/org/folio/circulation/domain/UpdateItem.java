@@ -12,10 +12,14 @@ import static org.folio.circulation.support.http.CommonResponseInterpreters.noCo
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Function;
 
+import org.folio.circulation.domain.representations.ItemSummaryRepresentation;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.Result;
+import org.joda.time.DateTime;
+
 
 public class UpdateItem {
 
@@ -25,20 +29,17 @@ public class UpdateItem {
     itemsStorageClient = clients.itemsStorage();
   }
 
-  public CompletableFuture<Result<Item>> onCheckIn(
-    Item item,
-    RequestQueue requestQueue,
-    UUID checkInServicePointId) {
-
+  public CompletableFuture<Result<Item>> onCheckIn(Item item, RequestQueue requestQueue,
+      UUID checkInServicePointId, String loggedInUserId, DateTime dateTime) {
     return changeItemOnCheckIn(item, requestQueue, checkInServicePointId)
-      .after(updatedItem -> {
-        if(updatedItem.hasChanged()) {
-          return storeItem(updatedItem);
-        }
-        else {
-          return completedFuture(succeeded(item));
-        }
-      });
+      .next(addLastCheckInProperties(checkInServicePointId, loggedInUserId, dateTime))
+      .after(this::storeItem);
+  }
+
+  private Function<Item, Result<Item>> addLastCheckInProperties(
+      UUID checkInServicePointId, String loggedInUserId, DateTime dateTime) {
+    return item -> succeeded(item.withLastCheckIn(
+      new LastCheckIn(dateTime, checkInServicePointId, loggedInUserId)));
   }
 
   private Result<Item> changeItemOnCheckIn(
@@ -172,7 +173,8 @@ public class UpdateItem {
   }
 
   private CompletableFuture<Result<Item>> storeItem(Item item) {
-    return itemsStorageClient.put(item.getItemId(), item.getItem())
+    return itemsStorageClient.put(item.getItemId(),
+      new ItemSummaryRepresentation().createItemStorageRepresentation(item))
       .thenApply(noContentRecordInterpreter(item)::apply);
   }
 
