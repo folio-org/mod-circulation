@@ -10,6 +10,7 @@ import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.Location;
+import org.folio.circulation.domain.PatronGroup;
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.ServicePoint;
 import org.folio.circulation.domain.User;
@@ -92,8 +93,12 @@ public class ItemReportRepresentation {
       final JsonArray tagsJson = tags.getJsonArray("tagList");
       write(requestJson, "tags", tagsJson);
     }
-    write(requestJson, "requestPatronGroup", Optional.ofNullable(request.getRequester())
-      .map(User::getPersonalName).orElse(null));
+
+    PatronGroup patronGroup = Optional.ofNullable(request.getRequester())
+      .map(User::getPatronGroup).orElse(null);
+    if (patronGroup != null){
+      write(requestJson, "requestPatronGroup", patronGroup.getDesc());
+    }
     write(itemReport, "request", requestJson);
 
   }
