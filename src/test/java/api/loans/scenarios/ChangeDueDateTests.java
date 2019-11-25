@@ -1,5 +1,8 @@
 package api.loans.scenarios;
 
+import static api.support.RestAssuredClient.from;
+import static api.support.RestAssuredClient.post;
+import static api.support.http.InterfaceUrls.batchChangeDueDate;
 import static api.support.http.InterfaceUrls.loansUrl;
 import static api.support.matchers.PatronNoticeMatcher.hasEmailNoticeProperties;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
@@ -21,6 +24,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import io.vertx.core.json.JsonArray;
 import org.apache.commons.lang3.StringUtils;
 import org.awaitility.Awaitility;
 import org.folio.circulation.support.http.client.IndividualResource;
@@ -78,38 +82,14 @@ public class ChangeDueDateTests extends APITests {
 
     Response updatedLoanResponse = loansClient.getById(loan.getId());
 
-    JsonObject updatedLoan = updatedLoanResponse.getJson();
+    verifyLoanAfterChangingDueDate(updatedLoanResponse.getJson(), newDueDate);
 
-    assertThat("status is not open",
-      updatedLoan.getJsonObject("status").getString("name"), is("Open"));
-
-    assertThat("action is not change due date",
-      updatedLoan.getString("action"), is("dueDateChange"));
-
-    assertThat("should not contain a return date",
-      updatedLoan.containsKey("returnDate"), is(false));
-
-    assertThat("due date does not match",
-      updatedLoan.getString("dueDate"), isEquivalentTo(newDueDate));
-
-    assertThat("renewal count should not have changed",
-      updatedLoan.containsKey("renewalCount"), is(false));
+    verifyLoanInStorageAfterChangingDueDate(loansStorageClient.getById(loan.getId()).getJson());
 
     JsonObject fetchedItem = itemsClient.getById(item.getId()).getJson();
 
     assertThat("item status is not checked out",
       fetchedItem.getJsonObject("status").getString("name"), is("Checked out"));
-
-    final JsonObject loanInStorage = loansStorageClient.getById(loan.getId()).getJson();
-
-    assertThat("item status snapshot in storage is not checked out",
-      loanInStorage.getString("itemStatus"), is("Checked out"));
-
-    assertThat("Should not contain check in service point summary",
-      loanInStorage.containsKey("checkinServicePoint"), is(false));
-
-    assertThat("Should not contain check out service point summary",
-      loanInStorage.containsKey("checkoutServicePoint"), is(false));
   }
 
   @Test
@@ -151,38 +131,14 @@ public class ChangeDueDateTests extends APITests {
 
     Response updatedLoanResponse = loansClient.getById(loan.getId());
 
-    JsonObject updatedLoan = updatedLoanResponse.getJson();
+    verifyLoanAfterChangingDueDate(updatedLoanResponse.getJson(), newDueDate);
 
-    assertThat("status is not open",
-      updatedLoan.getJsonObject("status").getString("name"), is("Open"));
-
-    assertThat("action is not change due date",
-      updatedLoan.getString("action"), is("dueDateChange"));
-
-    assertThat("should not contain a return date",
-      updatedLoan.containsKey("returnDate"), is(false));
-
-    assertThat("due date does not match",
-      updatedLoan.getString("dueDate"), isEquivalentTo(newDueDate));
-
-    assertThat("renewal count should not have changed",
-      updatedLoan.containsKey("renewalCount"), is(false));
+    verifyLoanInStorageAfterChangingDueDate(loansStorageClient.getById(loan.getId()).getJson());
 
     JsonObject fetchedItem = itemsClient.getById(item.getId()).getJson();
 
     assertThat("item status is not checked out",
       fetchedItem.getJsonObject("status").getString("name"), is("Checked out"));
-
-    final JsonObject loanInStorage = loansStorageClient.getById(loan.getId()).getJson();
-
-    assertThat("item status snapshot in storage is not checked out",
-      loanInStorage.getString("itemStatus"), is("Checked out"));
-
-    assertThat("Should not contain check in service point summary",
-      loanInStorage.containsKey("checkinServicePoint"), is(false));
-
-    assertThat("Should not contain check out service point summary",
-      loanInStorage.containsKey("checkoutServicePoint"), is(false));
   }
 
 
@@ -261,5 +217,188 @@ public class ChangeDueDateTests extends APITests {
     MatcherAssert.assertThat(sentNotices,
       hasItems(
         hasEmailNoticeProperties(steve.getId(), manualDueDateChangeTemplateId, noticeContextMatchers)));
+  }
+
+  @Test
+  public void manualBatchDueDateChangeNoticeIsSentWhenPolicyDefinesManualDueDateChangeNoticeConfiguration()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    UUID manualDueDateChangeTemplateId = UUID.randomUUID();
+    JsonObject manualDueDateChangeNoticeConfiguration = new NoticeConfigurationBuilder()
+      .withTemplateId(manualDueDateChangeTemplateId)
+      .withManualDueDateChangeEvent()
+      .create();
+    JsonObject checkInNoticeConfiguration = new NoticeConfigurationBuilder()
+      .withTemplateId(UUID.randomUUID())
+      .withCheckInEvent()
+      .create();
+
+    IndividualResource noticePolicy = noticePoliciesFixture.create(
+      new NoticePolicyBuilder()
+        .withName("Policy with manual due date change notice")
+        .withLoanNotices(Arrays.asList(
+          manualDueDateChangeNoticeConfiguration, checkInNoticeConfiguration)));
+
+    int renewalLimit = 3;
+    IndividualResource loanPolicyWithLimitedRenewals = loanPoliciesFixture.create(
+      new LoanPolicyBuilder()
+        .withName("Limited renewals loan policy")
+        .rolling(org.folio.circulation.domain.policy.Period.months(1))
+        .limitedRenewals(renewalLimit));
+
+    useFallbackPolicies(
+      loanPolicyWithLimitedRenewals.getId(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
+      noticePolicy.getId(),
+      overdueFinePoliciesFixture.facultyStandard().getId(),
+      lostItemFeePoliciesFixture.facultyStandard().getId());
+
+    ItemBuilder itemBuilder = ItemExamples.basedUponSmallAngryPlanet(
+      materialTypesFixture.book().getId(),
+      loanTypesFixture.canCirculate().getId(),
+      StringUtils.EMPTY,
+      "ItemPrefix",
+      "ItemSuffix",
+      Collections.singletonList(""));
+    InventoryItemResource smallAngryPlanet =
+      itemsFixture.basedUponSmallAngryPlanet(itemBuilder, itemsFixture.thirdFloorHoldings());
+
+    InventoryItemResource basedUponDunkirk =
+      itemsFixture.basedUponDunkirk();
+
+    IndividualResource steve = usersFixture.steve();
+
+    IndividualResource firstLoan = loansFixture.checkOutByBarcode(smallAngryPlanet, steve);
+    JsonObject firstLoanToChange = firstLoan.getJson().copy();
+    DateTime dueDate = DateTime.parse(firstLoanToChange.getString("dueDate"));
+    DateTime newDueDate = dueDate.plus(Period.weeks(2));
+
+    IndividualResource secondLoan = loansFixture.checkOutByBarcode(basedUponDunkirk, steve);
+
+    JsonObject requestBody = new JsonObject();
+
+    UUID firstLoanId = firstLoan.getId();
+    UUID secondLoanId = secondLoan.getId();
+
+    write(requestBody, "loans", new JsonArray(Arrays.asList(firstLoanId, secondLoanId)));
+    write(requestBody, "dueDate", newDueDate);
+
+    from(post(requestBody, batchChangeDueDate(),
+      204, "batch-change-due-date"));
+
+    IndividualResource firstLoanAfterUpdate = loansClient.get(firstLoan);
+    IndividualResource secondLoanAfterUpdate = loansClient.get(secondLoan);
+
+    Awaitility.await()
+      .atMost(1, TimeUnit.SECONDS)
+      .until(patronNoticesClient::getAll, Matchers.hasSize(2));
+    List<JsonObject> sentNotices = patronNoticesClient.getAll();
+
+    Map<String, Matcher<String>> noticeContextMatchers = new HashMap<>();
+    noticeContextMatchers.putAll(TemplateContextMatchers.getUserContextMatchers(steve));
+    noticeContextMatchers.putAll(TemplateContextMatchers.getItemContextMatchers(smallAngryPlanet, true));
+    noticeContextMatchers.putAll(TemplateContextMatchers.getLoanContextMatchers(firstLoanAfterUpdate));
+    noticeContextMatchers.putAll(TemplateContextMatchers.getLoanPolicyContextMatchers(renewalLimit, renewalLimit));
+    MatcherAssert.assertThat(sentNotices,
+      hasItems(
+        hasEmailNoticeProperties(steve.getId(), manualDueDateChangeTemplateId, noticeContextMatchers)));
+
+    Map<String, Matcher<String>> secondNoticeContextMatchers = new HashMap<>();
+    noticeContextMatchers.putAll(TemplateContextMatchers.getUserContextMatchers(steve));
+    noticeContextMatchers.putAll(TemplateContextMatchers.getItemContextMatchers(basedUponDunkirk, true));
+    noticeContextMatchers.putAll(TemplateContextMatchers.getLoanContextMatchers(secondLoanAfterUpdate));
+    noticeContextMatchers.putAll(TemplateContextMatchers.getLoanPolicyContextMatchers(renewalLimit, renewalLimit));
+    MatcherAssert.assertThat(sentNotices,
+      hasItems(
+        hasEmailNoticeProperties(steve.getId(), manualDueDateChangeTemplateId, secondNoticeContextMatchers)));
+  }
+
+  @Test
+  public void canManuallyChangeTheDueDateOfLoanByBatch()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    final InventoryItemResource basedUponNodItem = itemsFixture.basedUponNod();
+
+    final InventoryItemResource basedUponDunkirkItem = itemsFixture.basedUponDunkirk();
+
+    IndividualResource firstLoan = loansFixture.checkOutByBarcode(basedUponNodItem);
+
+    IndividualResource secondLoan = loansFixture.checkOutByBarcode(basedUponDunkirkItem);
+
+    Response firstFetchedLoan = loansClient.getById(firstLoan.getId());
+
+    JsonObject firstLoanToChange = firstFetchedLoan.getJson().copy();
+
+    DateTime dueDate = DateTime.parse(firstLoanToChange.getString("dueDate"));
+
+    DateTime newDueDate = dueDate.plus(Period.days(14));
+
+    JsonObject requestBody = new JsonObject();
+
+    UUID firstLoanId = firstLoan.getId();
+    UUID secondLoanId = secondLoan.getId();
+    write(requestBody, "loans", new JsonArray(Arrays.asList(firstLoanId,secondLoanId)));
+    write(requestBody, "dueDate", newDueDate);
+
+    from(post(requestBody, batchChangeDueDate(),
+      204, "batch-change-due-date"));
+
+    Response firstUpdatedLoanResponse = loansClient.getById(firstLoan.getId());
+
+    Response secondUpdatedLoanResponse = loansClient.getById(firstLoan.getId());
+
+    verifyLoanAfterChangingDueDate(firstUpdatedLoanResponse.getJson(), newDueDate);
+
+    verifyLoanAfterChangingDueDate(secondUpdatedLoanResponse.getJson(), newDueDate);
+
+    verifyLoanInStorageAfterChangingDueDate(loansStorageClient
+      .getById(firstLoan.getId()).getJson());
+
+    verifyLoanInStorageAfterChangingDueDate(loansStorageClient
+      .getById(secondLoan.getId()).getJson());
+
+    JsonObject fetchedItem = itemsClient.getById(basedUponNodItem.getId()).getJson();
+
+    assertThat("item status is not checked out",
+      fetchedItem.getJsonObject("status").getString("name"), is("Checked out"));
+
+    JsonObject secondFetchedItem = itemsClient.getById(basedUponDunkirkItem.getId()).getJson();
+
+    assertThat("item status is not checked out",
+      secondFetchedItem.getJsonObject("status").getString("name"), is("Checked out"));
+  }
+
+  private void verifyLoanAfterChangingDueDate(JsonObject updatedLoan, DateTime newDueDate) {
+    assertThat("status is not open",
+      updatedLoan.getJsonObject("status").getString("name"), is("Open"));
+
+    assertThat("action is not change due date",
+      updatedLoan.getString("action"), is("dueDateChange"));
+
+    assertThat("should not contain a return date",
+      updatedLoan.containsKey("returnDate"), is(false));
+
+    assertThat("due date does not match",
+      updatedLoan.getString("dueDate"), isEquivalentTo(newDueDate));
+
+    assertThat("renewal count should not have changed",
+      updatedLoan.containsKey("renewalCount"), is(false));
+  }
+
+  private void verifyLoanInStorageAfterChangingDueDate(JsonObject storedLoan) {
+    assertThat("item status snapshot in storage is not checked out",
+      storedLoan.getString("itemStatus"), is("Checked out"));
+
+    assertThat("Should not contain check in service point summary",
+      storedLoan.containsKey("checkinServicePoint"), is(false));
+
+    assertThat("Should not contain check out service point summary",
+      storedLoan.containsKey("checkoutServicePoint"), is(false));
   }
 }

@@ -174,6 +174,18 @@
           "methods": [
             "POST"
           ],
+          "pathPattern": "/circulation/batch/change-due-date",
+          "permissionsRequired": [
+            "circulation.batch.change-due-date.post"
+          ],
+          "modulePermissions": [
+            "modperms.circulation.batch.change-due-date.post"
+          ]
+        },
+        {
+          "methods": [
+            "POST"
+          ],
           "pathPattern": "/circulation/renew-by-id",
           "permissionsRequired": [
             "circulation.renew-by-id.post"
@@ -816,6 +828,11 @@
       "description": "override renewal using barcodes for item and loanee"
     },
     {
+      "permissionName": "circulation.batch.change-due-date.post",
+      "displayName": "circulation - batch change due date",
+      "description": "batch due date changing for loans"
+    },
+    {
       "permissionName": "circulation.loans.collection.get",
       "displayName": "circulation - get loan collection",
       "description": "get loan collection"
@@ -971,6 +988,7 @@
         "circulation.renew-by-barcode.post",
         "circulation.renew-by-id.post",
         "circulation.override-renewal-by-barcode.post",
+        "circulation.batch.change-due-date.post",
         "circulation.loans.collection.get",
         "circulation.loans.item.get",
         "circulation.loans.item.post",
@@ -1255,6 +1273,52 @@
 },
     {
       "permissionName": "modperms.circulation.override-renewal-by-barcode.post",
+      "displayName" : "module permissions for one op",
+      "description" : "to reduce X-Okapi-Token size",
+      "subPermissions": [
+        "circulation-storage.loans.item.put",
+        "circulation-storage.loans.item.get",
+        "circulation-storage.loans.collection.get",
+        "circulation.rules.loan-policy.get",
+        "circulation.rules.request-policy.get",
+        "circulation-storage.requests.collection.get",
+        "circulation-storage.requests.item.put",
+        "inventory-storage.items.item.put",
+        "inventory-storage.items.item.get",
+        "inventory-storage.items.collection.get",
+        "inventory-storage.locations.item.get",
+        "inventory-storage.locations.collection.get",
+        "inventory-storage.location-units.institutions.item.get",
+        "inventory-storage.location-units.campuses.item.get",
+        "inventory-storage.location-units.libraries.item.get",
+        "inventory-storage.holdings.collection.get",
+        "inventory-storage.holdings.item.get",
+        "inventory-storage.instances.collection.get",
+        "inventory-storage.instances.item.get",
+        "inventory-storage.material-types.item.get",
+        "inventory-storage.material-types.collection.get",
+        "inventory-storage.service-points.collection.get",
+        "inventory-storage.service-points.item.get",
+        "inventory-storage.loan-types.item.get",
+        "users.item.get",
+        "users.collection.get",
+        "proxiesfor.collection.get",
+        "circulation-storage.loan-policies.item.get",
+        "circulation-storage.loan-policies.collection.get",
+        "circulation-storage.request-policies.item.get",
+        "circulation-storage.fixed-due-date-schedules.item.get",
+        "circulation-storage.fixed-due-date-schedules.collection.get",
+        "configuration.entries.collection.get",
+        "circulation.rules.notice-policy.get",
+        "circulation-storage.patron-notice-policies.item.get",
+        "scheduled-notice-storage.scheduled-notices.collection.delete",
+        "scheduled-notice-storage.scheduled-notices.item.post",
+        "patron-notice.post"
+      ],
+      "visible": false
+    },
+    {
+      "permissionName": "modperms.circulation.batch.change-due-date.post",
       "displayName" : "module permissions for one op",
       "description" : "to reduce X-Okapi-Token size",
       "subPermissions": [

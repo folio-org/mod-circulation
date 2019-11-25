@@ -1,30 +1,25 @@
 package org.folio.circulation.resources;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
-import static org.folio.circulation.domain.representations.LoanProperties.ITEM_ID;
-import static org.folio.circulation.support.Result.of;
+import static org.folio.circulation.resources.LoanCollectionResourceHelper.createItemNotFoundValidator;
+import static org.folio.circulation.resources.LoanCollectionResourceHelper.getServicePointsForLoanAndRelated;
 import static org.folio.circulation.support.Result.succeeded;
-import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 
-import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.domain.AccountRepository;
-import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.domain.LoanRepository;
 import org.folio.circulation.domain.LoanRepresentation;
 import org.folio.circulation.domain.LoanService;
 import org.folio.circulation.domain.PatronGroupRepository;
-import org.folio.circulation.domain.RequestQueue;
 import org.folio.circulation.domain.RequestQueueRepository;
 import org.folio.circulation.domain.ServicePointRepository;
 import org.folio.circulation.domain.UpdateItem;
+import org.folio.circulation.domain.UpdateLoan;
 import org.folio.circulation.domain.UpdateRequestQueue;
-import org.folio.circulation.domain.User;
 import org.folio.circulation.domain.UserRepository;
-import org.folio.circulation.domain.notice.schedule.DueDateScheduledNoticeService;
 import org.folio.circulation.domain.policy.LoanPolicyRepository;
 import org.folio.circulation.domain.validation.AlreadyCheckedOutValidator;
 import org.folio.circulation.domain.validation.ItemNotFoundValidator;
@@ -37,7 +32,6 @@ import org.folio.circulation.support.CreatedJsonResponseResult;
 import org.folio.circulation.support.ItemRepository;
 import org.folio.circulation.support.NoContentResult;
 import org.folio.circulation.support.OkJsonResponseResult;
-import org.folio.circulation.support.Result;
 import org.folio.circulation.support.http.server.WebContext;
 
 import io.vertx.core.http.HttpClient;
@@ -93,17 +87,17 @@ public class LoanCollectionResource extends CollectionResource {
     completedFuture(succeeded(new LoanAndRelatedRecords(loan)))
       .thenCompose(larrResult ->
         getServicePointsForLoanAndRelated(larrResult, servicePointRepository))
-      .thenApply(this::refuseWhenNotOpenOrClosed)
-      .thenApply(this::refuseWhenOpenAndNoUserId)
+      .thenApply(LoanCollectionResourceHelper::refuseWhenNotOpenOrClosed)
+      .thenApply(LoanCollectionResourceHelper::refuseWhenOpenAndNoUserId)
       .thenApply(spLoanLocationValidator::checkServicePointLoanLocation)
-      .thenCombineAsync(itemRepository.fetchFor(loan), this::addItem)
+      .thenCombineAsync(itemRepository.fetchFor(loan), LoanCollectionResourceHelper::addItem)
       .thenApply(itemNotFoundValidator::refuseWhenItemNotFound)
-      .thenApply(this::refuseWhenHoldingDoesNotExist)
+      .thenApply(LoanCollectionResourceHelper::refuseWhenHoldingDoesNotExist)
       .thenApply(alreadyCheckedOutValidator::refuseWhenItemIsAlreadyCheckedOut)
       .thenApply(itemStatusValidator::refuseWhenItemStatusIsInvalid)
       .thenComposeAsync(r -> r.after(proxyRelationshipValidator::refuseWhenInvalid))
-      .thenCombineAsync(requestQueueRepository.get(loan.getItemId()), this::addRequestQueue)
-      .thenCombineAsync(userRepository.getUserFailOnNotFound(loan.getUserId()), this::addUser)
+      .thenCombineAsync(requestQueueRepository.get(loan.getItemId()), LoanCollectionResourceHelper::addRequestQueue)
+      .thenCombineAsync(userRepository.getUserFailOnNotFound(loan.getUserId()), LoanCollectionResourceHelper::addUser)
       .thenApply(requestedByAnotherPatronValidator::refuseWhenRequestedByAnotherPatron)
       .thenComposeAsync(r -> r.after(loanPolicyRepository::lookupLoanPolicy))
       .thenComposeAsync(r -> r.after(requestQueueUpdate::onCheckOut))
@@ -126,48 +120,9 @@ public class LoanCollectionResource extends CollectionResource {
     final Loan loan = Loan.from(incomingRepresentation);
 
     final Clients clients = Clients.create(context, client);
-    final RequestQueueRepository requestQueueRepository = RequestQueueRepository.using(clients);
-    final ServicePointRepository servicePointRepository = new ServicePointRepository(clients);
-    final ItemRepository itemRepository = new ItemRepository(clients, true, true, true);
-    final UserRepository userRepository = new UserRepository(clients);
 
-    final UpdateRequestQueue requestQueueUpdate = UpdateRequestQueue.using(clients);
-    final UpdateItem updateItem = new UpdateItem(clients);
-    final LoanRepository loanRepository = new LoanRepository(clients);
-
-    final ProxyRelationshipValidator proxyRelationshipValidator = new ProxyRelationshipValidator(
-      clients, () -> singleValidationError("proxyUserId is not valid", "proxyUserId",
-        loan.getProxyUserId()));
-
-    final ItemNotFoundValidator itemNotFoundValidator = createItemNotFoundValidator(loan);
-
-    final ServicePointLoanLocationValidator spLoanLocationValidator =
-        new ServicePointLoanLocationValidator();
-
-    final DueDateScheduledNoticeService scheduledNoticeService = DueDateScheduledNoticeService.using(clients);
-
-    final LoanNoticeSender loanNoticeSender = LoanNoticeSender.using(clients);
-
-    completedFuture(succeeded(new LoanAndRelatedRecords(loan)))
-      .thenCompose(larrResult ->
-        getServicePointsForLoanAndRelated(larrResult, servicePointRepository))
-      .thenApply(this::refuseWhenNotOpenOrClosed)
-      .thenApply(this::refuseWhenOpenAndNoUserId)
-      .thenApply(spLoanLocationValidator::checkServicePointLoanLocation)
-      .thenApply(this::refuseWhenClosedAndNoCheckInServicePointId)
-      .thenCombineAsync(itemRepository.fetchFor(loan), this::addItem)
-      .thenCombineAsync(userRepository.getUser(loan.getUserId()), this::addUser)
-      .thenApply(itemNotFoundValidator::refuseWhenItemNotFound)
-      .thenComposeAsync(r -> r.after(proxyRelationshipValidator::refuseWhenInvalid))
-      .thenCombineAsync(requestQueueRepository.get(loan.getItemId()), this::addRequestQueue)
-      .thenComposeAsync(result -> result.after(requestQueueUpdate::onCheckIn))
-      .thenComposeAsync(result -> result.after(updateItem::onLoanUpdate))
-      // Loan must be updated after item
-      // due to snapshot of item status stored with the loan
-      // as this is how the loan action history is populated
-      .thenComposeAsync(result -> result.after(loanRepository::updateLoan))
-      .thenApply(r -> r.next(scheduledNoticeService::rescheduleDueDateNotices))
-      .thenCompose(r -> r.after(loanNoticeSender::sendManualDueDateChangeNotice))
+    new UpdateLoan(clients, new LoanRepository(clients))
+      .replaceLoan(loan)
       .thenApply(NoContentResult::from)
       .thenAccept(result -> result.writeTo(routingContext.response()));
   }
@@ -244,93 +199,5 @@ public class LoanCollectionResource extends CollectionResource {
     clients.loansStorage().delete()
       .thenApply(NoContentResult::from)
       .thenAccept(r -> r.writeTo(routingContext.response()));
-  }
-
-  private Result<LoanAndRelatedRecords> addItem(
-    Result<LoanAndRelatedRecords> loanResult,
-    Result<Item> item) {
-
-    return Result.combine(loanResult, item,
-      LoanAndRelatedRecords::withItem);
-  }
-
-  private Result<LoanAndRelatedRecords> addRequestQueue(
-    Result<LoanAndRelatedRecords> loanResult,
-    Result<RequestQueue> requestQueueResult) {
-
-    return Result.combine(loanResult, requestQueueResult,
-      LoanAndRelatedRecords::withRequestQueue);
-  }
-
-  private Result<LoanAndRelatedRecords> addUser(
-    Result<LoanAndRelatedRecords> loanResult,
-    Result<User> getUserResult) {
-
-    return Result.combine(loanResult, getUserResult,
-      LoanAndRelatedRecords::withRequestingUser);
-  }
-
-  private Result<LoanAndRelatedRecords> refuseWhenHoldingDoesNotExist(
-    Result<LoanAndRelatedRecords> result) {
-
-    return result.next(loan -> {
-      if(loan.getLoan().getItem().doesNotHaveHolding()) {
-        return failedValidation("Holding does not exist",
-          ITEM_ID, loan.getLoan().getItemId());
-      }
-      else {
-        return result;
-      }
-    });
-  }
-
-  private Result<LoanAndRelatedRecords> refuseWhenClosedAndNoCheckInServicePointId(
-    Result<LoanAndRelatedRecords> loanAndRelatedRecords) {
-
-    return loanAndRelatedRecords
-      .map(LoanAndRelatedRecords::getLoan)
-      .next(Loan::closedLoanHasCheckInServicePointId)
-      .next(v -> loanAndRelatedRecords);
-  }
-
-  private Result<LoanAndRelatedRecords> refuseWhenNotOpenOrClosed(
-    Result<LoanAndRelatedRecords> loanAndRelatedRecords) {
-
-    return loanAndRelatedRecords
-      .map(LoanAndRelatedRecords::getLoan)
-      .next(Loan::isValidStatus)
-      .next(v -> loanAndRelatedRecords);
-  }
-
-  private Result<LoanAndRelatedRecords> refuseWhenOpenAndNoUserId(
-    Result<LoanAndRelatedRecords> loanAndRelatedRecords) {
-
-    return loanAndRelatedRecords
-      .map(LoanAndRelatedRecords::getLoan)
-      .next(Loan::openLoanHasUserId)
-      .next(v -> loanAndRelatedRecords);
-  }
-
-  private CompletableFuture<Result<LoanAndRelatedRecords>> getServicePointsForLoanAndRelated(
-    Result<LoanAndRelatedRecords> larrResult,
-    ServicePointRepository servicePointRepository) {
-
-    return larrResult.combineAfter(loanAndRelatedRecords ->
-        getServicePointsForLoan(loanAndRelatedRecords.getLoan(), servicePointRepository),
-      LoanAndRelatedRecords::withLoan);
-  }
-
-  private CompletableFuture<Result<Loan>> getServicePointsForLoan(
-    Loan loan,
-    ServicePointRepository servicePointRepository) {
-
-    return servicePointRepository.findServicePointsForLoan(of(() -> loan));
-  }
-
-  private ItemNotFoundValidator createItemNotFoundValidator(Loan loan) {
-    return new ItemNotFoundValidator(
-      () -> singleValidationError(
-        String.format("No item with ID %s could be found", loan.getItemId()),
-        ITEM_ID, loan.getItemId()));
   }
 }

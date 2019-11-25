@@ -159,6 +159,26 @@ resourceTypes:
           body:
             text/plain:
               example: "Internal server error"
+  /batch/change-due-date:
+    displayName: Change due date of an existing loans by batch via ids and changed due date
+      post:
+        description: Updates the due date of an existing loan
+        is: [
+          language,
+          validate
+        ]
+        body:
+          application/json:
+            type: !include batch-due-date-request.json
+            example: !include examples/batch-due-date-request.json
+        responses:
+          204:
+            description: "All loans due dates were updated"
+          500:
+            description: "Internal server error"
+            body:
+              text/plain:
+                example: "Internal server error"
   /check-in-by-barcode:
     displayName: Checkin an existing loan using barcode for item and loanee
     post:

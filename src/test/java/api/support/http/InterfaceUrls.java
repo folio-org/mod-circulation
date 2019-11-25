@@ -156,6 +156,10 @@ public class InterfaceUrls {
     return circulationModuleUrl("/circulation/renew-by-id");
   }
 
+  public static URL batchChangeDueDate() {
+    return circulationModuleUrl("/circulation/batch/change-due-date");
+  }
+
   public static URL loansUrl() {
     return loansUrl("");
   }

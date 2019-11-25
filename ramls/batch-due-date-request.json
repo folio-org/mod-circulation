@@ -1,0 +1,21 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "type": "object",
+  "description": "Request to change due date of an existing loans by batch via ids and changed due date.",
+  "properties": {
+    "loans": {
+      "description": "Loan`s ids for changing due date",
+      "type": "array"
+    },
+    "dueDate": {
+      "description": "New due date for loans",
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "loans",
+    "dueDate"
+  ]
+}
