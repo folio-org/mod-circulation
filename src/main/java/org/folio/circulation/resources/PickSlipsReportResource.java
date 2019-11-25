@@ -20,7 +20,6 @@ import org.folio.circulation.support.Result;
 import org.folio.circulation.support.RouteRegistration;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.server.WebContext;
-import org.folio.circulation.support.utils.BatchProcessingUtil;
 
 import java.util.Collection;
 import java.util.List;
@@ -32,6 +31,7 @@ import static org.folio.circulation.domain.ItemStatus.PAGED;
 import static org.folio.circulation.support.AsyncCoordinationUtil.allOf;
 import static org.folio.circulation.support.CqlQuery.exactMatch;
 import static org.folio.circulation.support.CqlQuery.exactMatchAny;
+import static org.folio.circulation.support.utils.BatchProcessingUtil.partitionList;
 
 public class PickSlipsReportResource extends Resource {
 
@@ -70,23 +70,22 @@ public class PickSlipsReportResource extends Resource {
 
     final CollectionResourceClient requestsStorageClient = clients.requestsStorage();
     final ReportRepository reportRepository = new ReportRepository(clients);
-    final ItemRepository itemRepository = new ItemRepository(clients, true, true, false);
+    final ItemRepository itemRepository = new ItemRepository(clients, true, false, false);
 
     reportRepository.getAllItemsByField(STATUS_NAME_KEY, PAGED.getValue())
         .thenApply(r -> r.next(this::mapFetcherToItems))
+        .thenComposeAsync(r -> r.after(items -> filterRequestedItems(items, requestsStorageClient)))
         .thenComposeAsync(r -> r.after(items -> allOf(items, itemRepository::fetchItemRelatedRecords)))
         .thenApply(r -> r.next(items -> filterItemsByServicePoint(items, servicePointId)))
-        .thenComposeAsync(r -> r.after(items -> filterItemsByRequestStatus(items, requestsStorageClient)))
         .thenApply(r -> r.next(this::mapResultToJson))
         .thenApply(OkJsonResponseResult::from)
         .thenAccept(r -> r.writeTo(routingContext.response()));
   }
 
-  private Result<List<Result<Item>>> mapFetcherToItems(ItemsReportFetcher fetcher) {
+  private Result<List<Item>> mapFetcherToItems(ItemsReportFetcher fetcher) {
     return Result.succeeded(
         fetcher.getResultListOfItems().stream()
         .flatMap(resultListOfItem -> resultListOfItem.value().getRecords().stream())
-        .map(Result::succeeded)
         .collect(Collectors.toList()));
   }
 
@@ -97,14 +96,14 @@ public class PickSlipsReportResource extends Resource {
         .collect(Collectors.toList()));
   }
 
-  private CompletableFuture<Result<List<Item>>> filterItemsByRequestStatus(
+  private CompletableFuture<Result<List<Result<Item>>>> filterRequestedItems(
       List<Item> items, CollectionResourceClient client) {
 
     List<String> itemIds = items.stream()
         .map(Item::getItemId)
         .collect(Collectors.toList());
 
-    List<List<String>> batches = BatchProcessingUtil.partitionList(itemIds, UUID_BATCH_SIZE);
+    List<List<String>> batches = partitionList(itemIds, UUID_BATCH_SIZE);
 
     return allOf(batches, batch -> fetchRequestsForItems(batch, client))
         .thenApply(r -> r.next(records -> filterRequestedItems(items, records)));
@@ -126,7 +125,7 @@ public class PickSlipsReportResource extends Resource {
     return MultipleRecords.from(response, Request::from, REQUESTS_KEY);
   }
 
-  private Result<List<Item>> filterRequestedItems(List<Item> items, List<MultipleRecords<Request>> records) {
+  private Result<List<Result<Item>>> filterRequestedItems(List<Item> items, List<MultipleRecords<Request>> records) {
     List<String> requestedItemIds = records.stream()
         .map(rec -> rec.toKeys(Request::getItemId))
         .flatMap(Collection::stream)
@@ -134,6 +133,7 @@ public class PickSlipsReportResource extends Resource {
 
     return Result.succeeded(items.stream()
       .filter(i -> requestedItemIds.contains(i.getItemId()))
+      .map(Result::succeeded)
       .collect(Collectors.toList()));
   }
 
