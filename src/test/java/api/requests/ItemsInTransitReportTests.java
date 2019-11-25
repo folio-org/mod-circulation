@@ -60,8 +60,7 @@ public class ItemsInTransitReportTests extends APITests {
   private static final String YEAR_CAPTION = "yearCaption";
   private static final String SERVICE_POINT_NAME_1 = "Circ Desk 1";
   private static final String SERVICE_POINT_NAME_2 = "Circ Desk 2";
-  private static final String REQUEST_PATRON_GROUP_2 = "Stuart, Rebecca";
-  private static final String REQUEST_PATRON_GROUP_1 = "Jones, Steven";
+  private static final String REQUEST_PATRON_GROUP_DESCRIPTION = "Regular group";
   private static final String SERVICE_POINT_CODE_2 = "cd2";
 
   @Test
@@ -159,7 +158,7 @@ public class ItemsInTransitReportTests extends APITests {
     JsonObject secondItemJson = getRecordById(items, nod.getId()).get();
     verifyItem(secondItemJson, nod, secondServicePointId);
     verifyLocation(secondItemJson);
-    verifyRequest(secondItemJson, requestDate2, requestExpirationDate2, REQUEST_PATRON_GROUP_2, SERVICE_POINT_NAME_2);
+    verifyRequest(secondItemJson, requestDate2, requestExpirationDate2, REQUEST_PATRON_GROUP_DESCRIPTION, SERVICE_POINT_NAME_2);
     verifyLoanInFirstServicePoint(secondItemJson, checkInDate2);
   }
 
@@ -244,14 +243,14 @@ public class ItemsInTransitReportTests extends APITests {
     JsonObject firstItemJson = getRecordById(items, smallAngryPlanet.getId()).get();
     verifyItem(firstItemJson, smallAngryPlanet, firstServicePointId);
     verifyLocation(firstItemJson);
-    verifyRequest(firstItemJson, requestDate1, requestExpirationDate1, REQUEST_PATRON_GROUP_1, SERVICE_POINT_NAME_1);
+    verifyRequest(firstItemJson, requestDate1, requestExpirationDate1, REQUEST_PATRON_GROUP_DESCRIPTION, SERVICE_POINT_NAME_1);
     verifyLoan(firstItemJson, checkInDate1, SERVICE_POINT_NAME_2,
       SERVICE_POINT_CODE_2, "Circulation Desk -- Back Entrance");
 
     JsonObject secondItemJson = getRecordById(items, nod.getId()).get();
     verifyItem(secondItemJson, nod, secondServicePointId);
     verifyLocation(secondItemJson);
-    verifyRequest(secondItemJson, requestDate2, requestExpirationDate2, REQUEST_PATRON_GROUP_2, SERVICE_POINT_NAME_2);
+    verifyRequest(secondItemJson, requestDate2, requestExpirationDate2, REQUEST_PATRON_GROUP_DESCRIPTION, SERVICE_POINT_NAME_2);
     verifyLoanInFirstServicePoint(secondItemJson, checkInDate2);
   }
 
@@ -308,14 +307,14 @@ public class ItemsInTransitReportTests extends APITests {
     JsonObject firstItemJson = getRecordById(items, smallAngryPlanet.getId()).get();
     verifyItem(firstItemJson, smallAngryPlanet, firstServicePointId);
     verifyLocation(firstItemJson);
-    verifyRequest(firstItemJson, requestSmallAngryPlanetDate1, requestSmallAngryPlanetExpirationDate1, REQUEST_PATRON_GROUP_1, SERVICE_POINT_NAME_1);
+    verifyRequest(firstItemJson, requestSmallAngryPlanetDate1, requestSmallAngryPlanetExpirationDate1, REQUEST_PATRON_GROUP_DESCRIPTION, SERVICE_POINT_NAME_1);
     verifyLoan(firstItemJson, checkInDate1, SERVICE_POINT_NAME_2,
       SERVICE_POINT_CODE_2, "Circulation Desk -- Back Entrance");
 
     JsonObject secondItemJson = getRecordById(items, nod.getId()).get();
     verifyItem(secondItemJson, nod, secondServicePointId);
     verifyLocation(secondItemJson);
-    verifyRequest(secondItemJson, requestNodeDate1, requestNodeExpirationDate1, REQUEST_PATRON_GROUP_2, SERVICE_POINT_NAME_2);
+    verifyRequest(secondItemJson, requestNodeDate1, requestNodeExpirationDate1, REQUEST_PATRON_GROUP_DESCRIPTION, SERVICE_POINT_NAME_2);
     verifyLoanInFirstServicePoint(secondItemJson, checkInDate2);
   }
 
@@ -416,13 +415,13 @@ public class ItemsInTransitReportTests extends APITests {
     JsonObject firstItemJson = items.get(0);
     verifyItem(firstItemJson, nod, secondServicePointId);
     verifyLocation(firstItemJson);
-    verifyRequest(firstItemJson, requestDate2, requestExpirationDate2, REQUEST_PATRON_GROUP_2, SERVICE_POINT_NAME_2);
+    verifyRequest(firstItemJson, requestDate2, requestExpirationDate2, REQUEST_PATRON_GROUP_DESCRIPTION, SERVICE_POINT_NAME_2);
     verifyLoanInFirstServicePoint(firstItemJson, checkInDate2);
 
     JsonObject secondItemJson = items.get(1);
     verifyItem(secondItemJson, smallAngryPlanet, firstServicePointId);
     verifyLocation(secondItemJson);
-    verifyRequest(secondItemJson, requestDate1, requestExpirationDate1, REQUEST_PATRON_GROUP_1, SERVICE_POINT_NAME_1);
+    verifyRequest(secondItemJson, requestDate1, requestExpirationDate1, REQUEST_PATRON_GROUP_DESCRIPTION, SERVICE_POINT_NAME_1);
     verifyLoan(secondItemJson, checkInDate1, SERVICE_POINT_NAME_2,
       SERVICE_POINT_CODE_2, "Circulation Desk -- Back Entrance");
 
@@ -494,7 +493,7 @@ public class ItemsInTransitReportTests extends APITests {
   private void verifyRequestWithSecondPickupServicePoint(JsonObject itemJson, DateTime requestDate,
                                                          LocalDate requestExpirationDate) {
 
-    verifyRequest(itemJson, requestDate, requestExpirationDate, REQUEST_PATRON_GROUP_1, SERVICE_POINT_NAME_2);
+    verifyRequest(itemJson, requestDate, requestExpirationDate, REQUEST_PATRON_GROUP_DESCRIPTION, SERVICE_POINT_NAME_2);
   }
 
   private void verifyLoan(JsonObject itemJson, DateTime checkInDate,
