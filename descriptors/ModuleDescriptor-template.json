@@ -4,7 +4,7 @@
   "provides": [
     {
       "id": "requests-reports",
-      "version": "0.3",
+      "version": "0.4",
       "handlers": [
         {
           "methods": [
@@ -40,7 +40,7 @@
     },
     {
       "id": "request-move",
-      "version": "0.3",
+      "version": "0.4",
       "handlers": [
         {
           "methods": [
@@ -74,7 +74,7 @@
     },
     {
       "id": "circulation",
-      "version": "8.2",
+      "version": "8.3",
       "handlers": [
         {
           "methods": [
@@ -658,7 +658,7 @@
     },
     {
       "id": "item-storage",
-      "version": "7.7"
+      "version": "7.8"
     },
     {
       "id": "instance-storage",
@@ -1794,7 +1794,7 @@
     },
     "env": [
       { "name": "JAVA_OPTIONS",
-        "value": "-XX:+UnlockExperimentalVMOptions -XX:+UseCGroupMemoryLimitForHeap"
+        "value": "-XX:MaxRAMPercentage=66.0"
       }
     ]
   }

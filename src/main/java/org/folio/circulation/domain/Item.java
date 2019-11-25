@@ -3,21 +3,15 @@ package org.folio.circulation.domain;
 import static org.folio.circulation.domain.ItemStatus.AVAILABLE;
 import static org.folio.circulation.domain.ItemStatus.AWAITING_PICKUP;
 import static org.folio.circulation.domain.ItemStatus.CHECKED_OUT;
-import static org.folio.circulation.domain.ItemStatus.PAGED;
 import static org.folio.circulation.domain.ItemStatus.IN_TRANSIT;
 import static org.folio.circulation.domain.ItemStatus.MISSING;
+import static org.folio.circulation.domain.ItemStatus.PAGED;
+import static org.folio.circulation.domain.representations.HoldingsProperties.COPY_NUMBER_ID;
 import static org.folio.circulation.domain.representations.InstanceProperties.CONTRIBUTORS;
 import static org.folio.circulation.domain.representations.ItemProperties.EFFECTIVE_LOCATION_ID;
 import static org.folio.circulation.domain.representations.ItemProperties.IN_TRANSIT_DESTINATION_SERVICE_POINT_ID;
-import static org.folio.circulation.domain.representations.ItemProperties.ITEM_CALL_NUMBER_ID;
-import static org.folio.circulation.domain.representations.ItemProperties.ITEM_CALL_NUMBER_PREFIX_ID;
-import static org.folio.circulation.domain.representations.ItemProperties.ITEM_CALL_NUMBER_SUFFIX_ID;
 import static org.folio.circulation.domain.representations.ItemProperties.ITEM_COPY_NUMBERS_ID;
 import static org.folio.circulation.domain.representations.ItemProperties.TITLE_PROPERTY;
-import static org.folio.circulation.domain.representations.HoldingsProperties.CALL_NUMBER_ID;
-import static org.folio.circulation.domain.representations.HoldingsProperties.CALL_NUMBER_PREFIX_ID;
-import static org.folio.circulation.domain.representations.HoldingsProperties.CALL_NUMBER_SUFFIX_ID;
-import static org.folio.circulation.domain.representations.HoldingsProperties.COPY_NUMBER_ID;
 import static org.folio.circulation.support.JsonArrayHelper.mapToList;
 import static org.folio.circulation.support.JsonPropertyFetcher.getArrayProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getNestedStringProperty;
@@ -27,11 +21,10 @@ import static org.folio.circulation.support.JsonPropertyWriter.write;
 import static org.folio.circulation.support.JsonStringArrayHelper.toStream;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
-import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.domain.representations.ItemProperties;
 import org.folio.circulation.support.JsonArrayHelper;
 
@@ -44,6 +37,8 @@ public class Item {
   private final JsonObject holdingRepresentation;
   private final JsonObject instanceRepresentation;
   private final LastCheckIn lastCheckIn;
+  private final CallNumberComponents callNumberComponents;
+
   private Location location;
   private JsonObject materialTypeRepresentation;
   private ServicePoint primaryServicePoint;
@@ -60,7 +55,8 @@ public class Item {
     JsonObject materialTypeRepresentation,
     ServicePoint servicePoint,
     JsonObject loanTypeRepresentation,
-    LastCheckIn lastCheckIn) {
+    LastCheckIn lastCheckIn,
+    CallNumberComponents callNumberComponents) {
 
     this.itemRepresentation = itemRepresentation;
     this.holdingRepresentation = holdingRepresentation;
@@ -70,10 +66,20 @@ public class Item {
     this.primaryServicePoint = servicePoint;
     this.loanTypeRepresentation = loanTypeRepresentation;
     this.lastCheckIn = lastCheckIn;
+    this.callNumberComponents = callNumberComponents;
   }
 
   public static Item from(JsonObject representation) {
-    return new Item(representation, null, null, null, null, null, null, null);
+    return new Item(representation,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      CallNumberComponents.fromItemJson(representation)
+    );
   }
 
   public boolean isCheckedOut() {
@@ -163,32 +169,13 @@ public class Item {
   }
 
   public String getCallNumber() {
-    return getEffectiveCallNumberProperty(CALL_NUMBER_ID);
+    return Optional.ofNullable(callNumberComponents)
+      .map(CallNumberComponents::getCallNumber)
+      .orElse(null);
   }
 
-  public String getCallNumberPrefix() {
-    return getEffectiveCallNumberProperty(CALL_NUMBER_PREFIX_ID);
-  }
-
-  public String getCallNumberSuffix() {
-    return getEffectiveCallNumberProperty(CALL_NUMBER_SUFFIX_ID);
-  }
-
-  private String getEffectiveCallNumberProperty(String propertyName) {
-    return hasItemRepresentationCallNumber()
-      ? getProperty(itemRepresentation, mapToItemCallNumberPropertyName(propertyName))
-      : getProperty(holdingRepresentation, propertyName);
-  }
-
-  private boolean hasItemRepresentationCallNumber() {
-    return StringUtils.isNotBlank(getProperty(itemRepresentation, ITEM_CALL_NUMBER_ID));
-  }
-
-  private String mapToItemCallNumberPropertyName(String holdingsPropertyName) {
-    return Stream.of(ITEM_CALL_NUMBER_ID, ITEM_CALL_NUMBER_PREFIX_ID, ITEM_CALL_NUMBER_SUFFIX_ID)
-      .filter(val -> StringUtils.containsIgnoreCase(val, holdingsPropertyName))
-      .findFirst()
-      .orElse(StringUtils.EMPTY);
+  public CallNumberComponents getCallNumberComponents() {
+    return callNumberComponents;
   }
 
   public ItemStatus getStatus() {
@@ -374,7 +361,8 @@ public class Item {
       this.materialTypeRepresentation,
       this.primaryServicePoint,
       this.loanTypeRepresentation,
-      lastCheckIn);
+      lastCheckIn,
+      this.callNumberComponents);
   }
 
   public Item withMaterialType(JsonObject newMaterialType) {
@@ -386,7 +374,8 @@ public class Item {
       newMaterialType,
       this.primaryServicePoint,
       this.loanTypeRepresentation,
-      lastCheckIn);
+      lastCheckIn,
+      this.callNumberComponents);
   }
 
   public Item withHoldingsRecord(JsonObject newHoldingsRecordRepresentation) {
@@ -398,7 +387,8 @@ public class Item {
       this.materialTypeRepresentation,
       this.primaryServicePoint,
       this.loanTypeRepresentation,
-      lastCheckIn);
+      lastCheckIn,
+      this.callNumberComponents);
   }
 
   public Item withInstance(JsonObject newInstanceRepresentation) {
@@ -410,7 +400,8 @@ public class Item {
       this.materialTypeRepresentation,
       this.primaryServicePoint,
       this.loanTypeRepresentation,
-      lastCheckIn);
+      lastCheckIn,
+      this.callNumberComponents);
   }
 
   public Item withPrimaryServicePoint(ServicePoint servicePoint) {
@@ -422,7 +413,8 @@ public class Item {
       this.materialTypeRepresentation,
       servicePoint,
       this.loanTypeRepresentation,
-      lastCheckIn);
+      lastCheckIn,
+      this.callNumberComponents);
   }
 
   public Item withLoanType(JsonObject newLoanTypeRepresentation) {
@@ -434,7 +426,8 @@ public class Item {
       this.materialTypeRepresentation,
       this.primaryServicePoint,
       newLoanTypeRepresentation,
-      lastCheckIn);
+      lastCheckIn,
+      this.callNumberComponents);
   }
 
   public Item withLastCheckIn(LastCheckIn lastCheckIn) {
@@ -446,7 +439,8 @@ public class Item {
       materialTypeRepresentation,
       primaryServicePoint,
       loanTypeRepresentation,
-      lastCheckIn);
+      lastCheckIn,
+      this.callNumberComponents);
     item.changed = this.changed;
     return item;
   }

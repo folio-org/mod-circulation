@@ -15,6 +15,7 @@ import static org.folio.HttpStatus.HTTP_CREATED;
 import static org.folio.HttpStatus.HTTP_VALIDATION_ERROR;
 import static org.folio.circulation.domain.ItemStatus.PAGED;
 import static org.folio.circulation.domain.RequestType.RECALL;
+import static org.folio.circulation.domain.representations.ItemProperties.CALL_NUMBER_COMPONENTS;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.hasItems;
@@ -23,6 +24,8 @@ import static org.hamcrest.Matchers.emptyString;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 import java.net.MalformedURLException;
 import java.time.Clock;
@@ -179,6 +182,16 @@ public class RequestsAPICreationTests extends APITests {
 
     assertThat(tagsRepresentation.containsKey("tagList"), is(true));
     assertThat(tagsRepresentation.getJsonArray("tagList"), contains("new", "important"));
+
+    assertTrue(representation.getJsonObject("item").containsKey(CALL_NUMBER_COMPONENTS));
+
+    JsonObject callNumberComponents = representation
+      .getJsonObject("item")
+      .getJsonObject(CALL_NUMBER_COMPONENTS);
+
+    assertThat(callNumberComponents.getString("callNumber"), is("123456"));
+    assertFalse(callNumberComponents.containsKey("prefix"));
+    assertThat(callNumberComponents.getString("suffix"), is("CIRC"));
   }
 
   @Test
