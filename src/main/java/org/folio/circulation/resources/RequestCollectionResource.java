@@ -68,7 +68,7 @@ public class RequestCollectionResource extends CollectionResource {
     final RequestNoticeSender requestNoticeSender = RequestNoticeSender.using(clients);
     final ConfigurationRepository configurationRepository = new ConfigurationRepository(clients);
     final MultipleRecordFetcher<UserManualBlock> userManualBlocksValidator= new MultipleRecordFetcher<>
-      (clients.manualBlocksStorageClient(), "manualblocks", UserManualBlock::from);
+      (clients.userManualBlocksStorageClient(), "manualblocks", UserManualBlock::from);
 
     final UpdateUponRequest updateUponRequest = new UpdateUponRequest(
         new UpdateItem(clients),
@@ -120,7 +120,7 @@ public class RequestCollectionResource extends CollectionResource {
     final RequestNoticeSender requestNoticeSender = RequestNoticeSender.using(clients);
     final ConfigurationRepository configurationRepository = new ConfigurationRepository(clients);
     final MultipleRecordFetcher<UserManualBlock> userManualBlocksValidator = new MultipleRecordFetcher<>
-      (clients.manualBlocksStorageClient(), "manualblocks", UserManualBlock::from);
+      (clients.userManualBlocksStorageClient(), "manualblocks", UserManualBlock::from);
 
     final UpdateItem updateItem = new UpdateItem(clients);
 

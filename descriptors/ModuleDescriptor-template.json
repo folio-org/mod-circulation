@@ -1520,7 +1520,7 @@
         "scheduled-notice-storage.scheduled-notices.collection.delete",
         "scheduled-notice-storage.scheduled-notices.item.post",
         "configuration.entries.collection.get",
-         "manualblocks.collection.get"
+        "manualblocks.collection.get"
       ],
       "visible": false
     },
