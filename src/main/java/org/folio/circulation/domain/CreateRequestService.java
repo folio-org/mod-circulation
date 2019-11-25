@@ -6,6 +6,7 @@ import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.domain.policy.RequestPolicyRepository;
 import org.folio.circulation.domain.validation.RequestLoanValidator;
+import org.folio.circulation.domain.validation.UserManualBlocksValidator;
 import org.folio.circulation.resources.RequestNoticeSender;
 import org.folio.circulation.support.Result;
 
@@ -16,13 +17,15 @@ public class CreateRequestService {
   private final RequestLoanValidator requestLoanValidator;
   private final RequestNoticeSender requestNoticeSender;
   private final ConfigurationRepository configurationRepository;
+  private final UserManualBlocksValidator userManualBlocksValidator;
 
   public CreateRequestService(RequestRepository requestRepository,
                               RequestPolicyRepository requestPolicyRepository,
                               UpdateUponRequest updateUponRequest,
                               RequestLoanValidator requestLoanValidator,
                               RequestNoticeSender requestNoticeSender,
-                              ConfigurationRepository configurationRepository) {
+                              ConfigurationRepository configurationRepository,
+                              UserManualBlocksValidator userManualBlocksValidator) {
 
     this.requestRepository = requestRepository;
     this.requestPolicyRepository = requestPolicyRepository;
@@ -30,6 +33,7 @@ public class CreateRequestService {
     this.requestLoanValidator = requestLoanValidator;
     this.requestNoticeSender = requestNoticeSender;
     this.configurationRepository = configurationRepository;
+    this.userManualBlocksValidator = userManualBlocksValidator;
   }
 
   public CompletableFuture<Result<RequestAndRelatedRecords>> createRequest(
@@ -42,6 +46,7 @@ public class CreateRequestService {
       .next(RequestServiceUtility::refuseWhenUserIsInactive)
       .next(RequestServiceUtility::refuseWhenUserHasAlreadyRequestedItem)
       .after(requestLoanValidator::refuseWhenUserHasAlreadyBeenLoanedItem)
+      .thenComposeAsync(r -> r.after(userManualBlocksValidator::refuseWhenUserIsBlocked))
       .thenComposeAsync(r -> r.after(requestPolicyRepository::lookupRequestPolicy))
       .thenComposeAsync(r -> r.combineAfter(configurationRepository::findTimeZoneConfiguration,
         RequestAndRelatedRecords::withTimeZone))
