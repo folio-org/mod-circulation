@@ -17,7 +17,7 @@ import java.util.concurrent.TimeoutException;
 import api.support.builders.LoanPolicyBuilder;
 import api.support.builders.NoticePolicyBuilder;
 import api.support.fixtures.LostItemFeePoliciesFixture;
-import api.support.fixtures.ManualBlocksFixture;
+import api.support.fixtures.UserManualBlocksFixture;
 import api.support.fixtures.OverdueFinePoliciesFixture;
 import org.folio.circulation.domain.representations.LoanProperties;
 import org.folio.circulation.support.http.client.IndividualResource;
@@ -153,8 +153,8 @@ public abstract class APITests {
   protected final MaterialTypesFixture materialTypesFixture
     = new MaterialTypesFixture(ResourceClient.forMaterialTypes(client));
 
-  protected final ManualBlocksFixture manualBlocksFixture
-    = new ManualBlocksFixture(ResourceClient.forManualBlocks(client));
+  protected final UserManualBlocksFixture userManualBlocksFixture
+    = new UserManualBlocksFixture(ResourceClient.forUserManualBlocks(client));
 
   protected final LoanPoliciesFixture loanPoliciesFixture
     = new LoanPoliciesFixture(loanPolicyClient, fixedDueDateScheduleClient);
@@ -308,7 +308,7 @@ public abstract class APITests {
 
     cancellationReasonsFixture.cleanUp();
     instancesFixture.cleanUp();
-    manualBlocksFixture.cleanUp();
+    userManualBlocksFixture.cleanUp();
   }
 
   //Needs to be done each time as some tests manipulate the rules

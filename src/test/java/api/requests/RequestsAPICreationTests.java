@@ -38,7 +38,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import api.support.builders.ManualBlockBuilder;
+import api.support.builders.UserManualBlockBuilder;
 import org.awaitility.Awaitility;
 import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.domain.MultipleRecords;
@@ -1919,12 +1919,14 @@ public class RequestsAPICreationTests extends APITests {
     final DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
     final DateTime now = ClockManager.getClockManager().getDateTime();
     final DateTime expirationDate = now.plusDays(4);
-    final ManualBlockBuilder manualBlockBuilder =
-      getManualBlockBuilder(requester, false, false, true, expirationDate);
+    final UserManualBlockBuilder userManualBlockBuilder = getManualBlockBuilder()
+        .withRequests(true)
+        .withExpirationDate(expirationDate)
+        .withUserId(String.valueOf(requester.getId()));
     final RequestBuilder requestBuilder = createRequestBuilder(item, requester, pickupServicePointId, requestDate);
 
     loansFixture.checkOutByBarcode(item, usersFixture.jessica());
-    manualBlocksFixture.create(manualBlockBuilder);
+    userManualBlocksFixture.create(userManualBlockBuilder);
 
     Response postResponse = requestsClient.attemptCreate(requestBuilder);
 
@@ -1947,12 +1949,14 @@ public class RequestsAPICreationTests extends APITests {
     final DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
     final DateTime now = ClockManager.getClockManager().getDateTime();
     final DateTime expirationDate = now.plusDays(4);
-    final ManualBlockBuilder manualBlockBuilder = getManualBlockBuilder(requester, false, false, false, expirationDate);
+    final UserManualBlockBuilder userManualBlockBuilder = getManualBlockBuilder()
+      .withExpirationDate(expirationDate)
+      .withUserId(String.valueOf(requester.getId()));
     final RequestBuilder requestBuilder = createRequestBuilder(item, requester, pickupServicePointId, requestDate);
 
     loansFixture.checkOutByBarcode(item, usersFixture.jessica());
 
-    manualBlocksFixture.create(manualBlockBuilder);
+    userManualBlocksFixture.create(userManualBlockBuilder);
 
     Response postResponse = requestsClient.attemptCreate(requestBuilder);
 
@@ -1972,12 +1976,14 @@ public class RequestsAPICreationTests extends APITests {
     final DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
     final DateTime now = ClockManager.getClockManager().getDateTime();
     final DateTime expirationDate = now.minusDays(1);
-    final ManualBlockBuilder manualBlockBuilder =
-      getManualBlockBuilder(requester, false, false, true, expirationDate);
+    final UserManualBlockBuilder userManualBlockBuilder = getManualBlockBuilder()
+      .withRequests(true)
+      .withExpirationDate(expirationDate)
+      .withUserId(String.valueOf(requester.getId()));
     final RequestBuilder requestBuilder = createRequestBuilder(item, requester, pickupServicePointId, requestDate);
 
     loansFixture.checkOutByBarcode(item, usersFixture.jessica());
-    manualBlocksFixture.create(manualBlockBuilder);
+    userManualBlocksFixture.create(userManualBlockBuilder);
 
     Response postResponse = requestsClient.attemptCreate(requestBuilder);
 
@@ -1997,15 +2003,20 @@ public class RequestsAPICreationTests extends APITests {
     final DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
     final DateTime now = ClockManager.getClockManager().getDateTime();
     final DateTime expirationDate = now.plusDays(7);
-    final ManualBlockBuilder borrowingManualBlockBuilder =
-      getManualBlockBuilder(requester, true, false, false, expirationDate);
-    final ManualBlockBuilder renewalsManualBlockBuilder =
-      getManualBlockBuilder(requester, false, true, false, expirationDate);
+    final UserManualBlockBuilder borrowingUserManualBlockBuilder = getManualBlockBuilder()
+      .withBorrowing(true)
+      .withExpirationDate(expirationDate)
+      .withUserId(String.valueOf(requester.getId()));
+    final UserManualBlockBuilder renewalsUserManualBlockBuilder =
+      getManualBlockBuilder()
+        .withRenewals(true)
+        .withExpirationDate(expirationDate)
+        .withUserId(String.valueOf(requester.getId()));
     final RequestBuilder requestBuilder = createRequestBuilder(item, requester, pickupServicePointId, requestDate);
 
     loansFixture.checkOutByBarcode(item, usersFixture.jessica());
-    manualBlocksFixture.create(borrowingManualBlockBuilder);
-    manualBlocksFixture.create(renewalsManualBlockBuilder);
+    userManualBlocksFixture.create(borrowingUserManualBlockBuilder);
+    userManualBlocksFixture.create(renewalsUserManualBlockBuilder);
 
     Response postResponse = requestsClient.attemptCreate(requestBuilder);
 
@@ -2025,16 +2036,22 @@ public class RequestsAPICreationTests extends APITests {
     final DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
     final DateTime now = ClockManager.getClockManager().getDateTime();
     final DateTime expirationDate = now.plusDays(4);
-    final ManualBlockBuilder requestManualBlockBuilder1 =
-      getManualBlockBuilder(requester, false, false, true, expirationDate);
-    final ManualBlockBuilder requestManualBlockBuilder2 =
-      getManualBlockBuilder(requester, true, true, true, expirationDate)
+    final UserManualBlockBuilder requestUserManualBlockBuilder1 = getManualBlockBuilder()
+        .withRequests(true)
+        .withExpirationDate(expirationDate)
+        .withUserId(String.valueOf(requester.getId()));
+    final UserManualBlockBuilder requestUserManualBlockBuilder2 = getManualBlockBuilder()
+        .withBorrowing(true)
+        .withRenewals(true)
+        .withRequests(true)
+        .withExpirationDate(expirationDate)
+        .withUserId(String.valueOf(requester.getId()))
         .withDesc("Test");
     final RequestBuilder requestBuilder = createRequestBuilder(item, requester, pickupServicePointId, requestDate);
 
     loansFixture.checkOutByBarcode(item, usersFixture.jessica());
-    manualBlocksFixture.create(requestManualBlockBuilder1);
-    manualBlocksFixture.create(requestManualBlockBuilder2);
+    userManualBlocksFixture.create(requestUserManualBlockBuilder1);
+    userManualBlocksFixture.create(requestUserManualBlockBuilder2);
 
     Response postResponse = requestsClient.attemptCreate(requestBuilder);
 
@@ -2043,21 +2060,12 @@ public class RequestsAPICreationTests extends APITests {
       hasMessage("Patron blocked from requesting"))));
   }
 
-  private ManualBlockBuilder getManualBlockBuilder(IndividualResource requester,
-                                                   boolean borrowingActiveBlock,
-                                                   boolean renewalsActiveBlock,
-                                                   boolean requestsActiveBlock,
-                                                   DateTime expirationDate) {
-    return new ManualBlockBuilder()
+  private UserManualBlockBuilder getManualBlockBuilder() {
+    return new UserManualBlockBuilder()
       .withType("Manual")
       .withDesc("Display description")
       .withStaffInformation("Staff information")
       .withPatronMessage("Patron message")
-      .withExpirationDate(expirationDate)
-      .withBorrowing(borrowingActiveBlock)
-      .withRenewals(renewalsActiveBlock)
-      .withRequests(requestsActiveBlock)
-      .withUserId(String.valueOf(requester.getId()))
       .withId(UUID.randomUUID());
   }
 

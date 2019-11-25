@@ -6,26 +6,26 @@ import java.net.MalformedURLException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
-import api.support.builders.ManualBlockBuilder;
+import api.support.builders.UserManualBlockBuilder;
 import api.support.http.ResourceClient;
 
 import org.folio.circulation.support.http.client.IndividualResource;
 
-public class ManualBlocksFixture {
-  private final RecordCreator manualBlocksRecordCreator;
+public class UserManualBlocksFixture {
+  private final RecordCreator userManualBlocksRecordCreator;
 
-  public ManualBlocksFixture(ResourceClient manualBlocksClient) {
-    manualBlocksRecordCreator = new RecordCreator(manualBlocksClient,
+  public UserManualBlocksFixture(ResourceClient manualBlocksClient) {
+    userManualBlocksRecordCreator = new RecordCreator(manualBlocksClient,
       manualBlock -> getProperty(manualBlock, "id"));
   }
 
-  public IndividualResource create(ManualBlockBuilder manualBlockBuilder)
+  public IndividualResource create(UserManualBlockBuilder userManualBlockBuilder)
     throws InterruptedException,
     MalformedURLException,
     TimeoutException,
     ExecutionException {
 
-    return manualBlocksRecordCreator.createIfAbsent(manualBlockBuilder.create());
+    return userManualBlocksRecordCreator.createIfAbsent(userManualBlockBuilder.create());
   }
 
   public void cleanUp()
@@ -34,6 +34,6 @@ public class ManualBlocksFixture {
     TimeoutException,
     ExecutionException {
 
-    manualBlocksRecordCreator.cleanUp();
+    userManualBlocksRecordCreator.cleanUp();
   }
 }

@@ -7,7 +7,7 @@ import org.joda.time.DateTime;
 
 import static org.folio.circulation.support.JsonPropertyWriter.write;
 
-public class ManualBlockBuilder extends JsonBuilder implements Builder {
+public class UserManualBlockBuilder extends JsonBuilder implements Builder {
 
   private final UUID id;
   private final String type;
@@ -20,13 +20,13 @@ public class ManualBlockBuilder extends JsonBuilder implements Builder {
   private final boolean requests;
   private final String userId;
 
-  public ManualBlockBuilder() {
+  public UserManualBlockBuilder() {
     this(null, null, null, null,
       null, null, false,
       false, false, null);
   }
 
-  private ManualBlockBuilder(
+  private UserManualBlockBuilder(
     UUID id,
     String type,
     String desc,
@@ -67,8 +67,8 @@ public class ManualBlockBuilder extends JsonBuilder implements Builder {
     return jsonObject;
   }
 
-  public ManualBlockBuilder withId(UUID id) {
-    return new ManualBlockBuilder(
+  public UserManualBlockBuilder withId(UUID id) {
+    return new UserManualBlockBuilder(
       id,
       this.type,
       this.desc,
@@ -81,8 +81,8 @@ public class ManualBlockBuilder extends JsonBuilder implements Builder {
       this.userId);
   }
 
-  public ManualBlockBuilder withType(String type) {
-    return new ManualBlockBuilder(
+  public UserManualBlockBuilder withType(String type) {
+    return new UserManualBlockBuilder(
       this.id,
       type,
       this.desc,
@@ -95,8 +95,8 @@ public class ManualBlockBuilder extends JsonBuilder implements Builder {
       this.userId);
   }
 
-  public ManualBlockBuilder withDesc(String desc) {
-    return new ManualBlockBuilder(
+  public UserManualBlockBuilder withDesc(String desc) {
+    return new UserManualBlockBuilder(
       this.id,
       this.type,
       desc,
@@ -109,8 +109,8 @@ public class ManualBlockBuilder extends JsonBuilder implements Builder {
       this.userId);
   }
 
-  public ManualBlockBuilder withStaffInformation(String staffInformation) {
-    return new ManualBlockBuilder(
+  public UserManualBlockBuilder withStaffInformation(String staffInformation) {
+    return new UserManualBlockBuilder(
       this.id,
       this.type,
       this.desc,
@@ -123,8 +123,8 @@ public class ManualBlockBuilder extends JsonBuilder implements Builder {
       this.userId);
   }
 
-  public ManualBlockBuilder withPatronMessage(String patronMessage) {
-    return new ManualBlockBuilder(
+  public UserManualBlockBuilder withPatronMessage(String patronMessage) {
+    return new UserManualBlockBuilder(
       this.id,
       this.type,
       this.desc,
@@ -137,8 +137,8 @@ public class ManualBlockBuilder extends JsonBuilder implements Builder {
       this.userId);
   }
 
-  public ManualBlockBuilder withExpirationDate(DateTime expirationDate) {
-    return new ManualBlockBuilder(
+  public UserManualBlockBuilder withExpirationDate(DateTime expirationDate) {
+    return new UserManualBlockBuilder(
       this.id,
       this.type,
       this.desc,
@@ -151,8 +151,8 @@ public class ManualBlockBuilder extends JsonBuilder implements Builder {
       this.userId);
   }
 
-  public ManualBlockBuilder withBorrowing(boolean borrowing) {
-    return new ManualBlockBuilder(
+  public UserManualBlockBuilder withBorrowing(boolean borrowing) {
+    return new UserManualBlockBuilder(
       this.id,
       this.type,
       this.desc,
@@ -165,8 +165,8 @@ public class ManualBlockBuilder extends JsonBuilder implements Builder {
       this.userId);
   }
 
-  public ManualBlockBuilder withRenewals(boolean renewals) {
-    return new ManualBlockBuilder(
+  public UserManualBlockBuilder withRenewals(boolean renewals) {
+    return new UserManualBlockBuilder(
       this.id,
       this.type,
       this.desc,
@@ -179,8 +179,8 @@ public class ManualBlockBuilder extends JsonBuilder implements Builder {
       this.userId);
   }
 
-  public ManualBlockBuilder withRequests(boolean requests) {
-    return new ManualBlockBuilder(
+  public UserManualBlockBuilder withRequests(boolean requests) {
+    return new UserManualBlockBuilder(
       this.id,
       this.type,
       this.desc,
@@ -193,8 +193,8 @@ public class ManualBlockBuilder extends JsonBuilder implements Builder {
       this.userId);
   }
 
-  public ManualBlockBuilder withUserId(String userId) {
-    return new ManualBlockBuilder(
+  public UserManualBlockBuilder withUserId(String userId) {
+    return new UserManualBlockBuilder(
       this.id,
       this.type,
       this.desc,

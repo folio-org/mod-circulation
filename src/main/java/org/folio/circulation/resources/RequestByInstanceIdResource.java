@@ -42,6 +42,7 @@ import org.folio.circulation.domain.UpdateItem;
 import org.folio.circulation.domain.UpdateLoan;
 import org.folio.circulation.domain.UpdateRequestQueue;
 import org.folio.circulation.domain.UpdateUponRequest;
+import org.folio.circulation.domain.UserManualBlock;
 import org.folio.circulation.domain.UserRepository;
 import org.folio.circulation.domain.policy.LoanPolicyRepository;
 import org.folio.circulation.domain.policy.RequestPolicyRepository;
@@ -57,6 +58,7 @@ import org.folio.circulation.support.CreatedJsonResponseResult;
 import org.folio.circulation.support.ForwardOnFailure;
 import org.folio.circulation.support.HttpFailure;
 import org.folio.circulation.support.ItemRepository;
+import org.folio.circulation.support.MultipleRecordFetcher;
 import org.folio.circulation.support.ResponseWritableResult;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.RouteRegistration;
@@ -223,6 +225,8 @@ public class RequestByInstanceIdResource extends Resource {
     final LoanRepository loanRepository = new LoanRepository(clients);
     final LoanPolicyRepository loanPolicyRepository = new LoanPolicyRepository(clients);
     final ConfigurationRepository configurationRepository = new ConfigurationRepository(clients);
+    final MultipleRecordFetcher<UserManualBlock> userManualBlocksValidator = new MultipleRecordFetcher<>
+      (clients.manualBlocksStorageClient(), "manualblocks", UserManualBlock::from);
 
     final UpdateUponRequest updateUponRequest = new UpdateUponRequest(
         new UpdateItem(clients),
@@ -235,7 +239,7 @@ public class RequestByInstanceIdResource extends Resource {
         updateUponRequest,
         new RequestLoanValidator(loanRepository),
         requestNoticeSender, configurationRepository,
-        new UserManualBlocksValidator(clients.manualBlocksStorageClient()));
+        new UserManualBlocksValidator(userManualBlocksValidator));
 
     return placeRequest(itemRequestRepresentations, 0, createRequestService,
                         clients, loanRepository, new ArrayList<>());

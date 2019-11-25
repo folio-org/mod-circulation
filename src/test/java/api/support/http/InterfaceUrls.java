@@ -226,7 +226,7 @@ public class InterfaceUrls {
       .format("/circulation/requests/queue/%s", itemId));
   }
 
-  static URL manualBlocksStorageUrl() {
+  static URL userManualBlocksStorageUrl() {
     return APITestContext.viaOkapiModuleUrl("/manualblocks");
   }
 }
