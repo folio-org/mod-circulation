@@ -10,7 +10,7 @@ import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.ReportRepository;
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestStatus;
-import org.folio.circulation.domain.representations.ItemSummaryRepresentation;
+import org.folio.circulation.domain.representations.ItemPickSlipRepresentation;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.CqlQuery;
@@ -140,7 +140,7 @@ public class PickSlipsReportResource extends Resource {
 
   private Result<JsonObject> mapResultToJson(List<Item> items) {
     List<JsonObject> jsonItems = items.stream()
-        .map(item -> new ItemSummaryRepresentation().createItemSummary(item))
+        .map(item -> new ItemPickSlipRepresentation().create(item))
         .collect(Collectors.toList());
 
     JsonObject jsonResult = new JsonObject()

@@ -1,23 +1,24 @@
 {
   "items": [
     {
-      "id": "d6f7c1ba-a237-465e-94ed-f37e91bc64bd",
-      "holdingsRecordId": "fb7b70f1-b898-4924-a991-0e4b6312bb5f",
+      "id": "4428a37c-8bae-4f0d-865d-970d83d5ad55",
+      "holdingsRecordId": "65cb2bf0-d4c2-4886-8ad0-b76f1ba75d61",
       "instanceId": "7fbd5d84-62d1-44c6-9c45-6cb173998bbd",
       "title": "Bridget Jones's Baby: the diaries",
-      "barcode": "4539876054383",
+      "barcode": "4539876054382",
+      "callNumber": "PR6056.I4588 B749 2016",
+      "status": "Paged",
       "contributors": [
         {
           "name": "Fielding, Helen"
         }
       ],
-      "callNumber": "PR6056.I4588 B749 2016",
-      "status": {
-        "name": "Paged",
-        "date": "2019-11-24T09:48:03.655"
-      },
       "location": {
-        "name": "Annex"
+        "name": "Main Library",
+        "code": "KU/CC/DI/M",
+        "libraryName": "Datalogisk Institut",
+        "institutionName": "Københavns Universitet",
+        "campusName": "City Campus"
       }
     }
   ],

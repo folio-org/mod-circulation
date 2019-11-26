@@ -19,6 +19,22 @@
           "description" : "The call number from the holdings record",
           "type": "string"
         },
+        "holdingsRecordId": {
+          "description": "The ID of the holdings for the item",
+          "type": "string"
+        },
+        "instanceId": {
+          "description": "The ID of the instance for the item",
+          "type": "string"
+        },
+        "barcode": {
+          "description": "The barcode of the item",
+          "type": "string"
+        },
+        "status": {
+          "description": "The status of the item",
+          "type": "string"
+        },
         "contributors": {
           "description": "Contributors from the instance record",
           "type": "array",
@@ -33,18 +49,6 @@
             "additionalProperties": false
           }
         },
-        "holdingsRecordId": {
-          "description": "The ID of the holdings for the item",
-          "type": "string"
-        },
-        "instanceId": {
-          "description": "The ID of the instance for the item",
-          "type": "string"
-        },
-        "barcode": {
-          "description": "The barcode of the item",
-          "type": "string"
-        },
         "location": {
           "description": "The effective location of the item",
           "type": "object",
@@ -52,16 +56,21 @@
             "name": {
               "description": "The name of the location",
               "type": "string"
-            }
-          },
-          "additionalProperties": false
-        },
-        "status": {
-          "description": "Overall status of the item",
-          "type": "object",
-          "properties": {
-            "name": {
-              "description": "Name of the item status",
+            },
+            "code": {
+              "description": "The code of the location",
+              "type": "string"
+            },
+            "libraryName": {
+              "description": "The name of the library",
+              "type": "string"
+            },
+            "institutionName": {
+              "description": "The name of the institution",
+              "type": "string"
+            },
+            "campusName": {
+              "description": "The name of the campus",
               "type": "string"
             }
           },
