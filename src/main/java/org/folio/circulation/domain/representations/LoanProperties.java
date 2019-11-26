@@ -19,4 +19,5 @@ public class LoanProperties {
   public static final String FEESANDFINES = "feesAndFines";
   public static final String PATRON_GROUP_ID_AT_CHECKOUT = "patronGroupIdAtCheckout";
   public static final String PATRON_GROUP_AT_CHECKOUT = "patronGroupAtCheckout";
+  public static final String DECLARED_LOST_DATE = "declaredLostDate";
 }

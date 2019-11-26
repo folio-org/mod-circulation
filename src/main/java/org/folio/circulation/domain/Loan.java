@@ -25,16 +25,17 @@ import java.util.Collection;
 import java.util.Objects;
 import java.util.UUID;
 
+import io.vertx.core.json.JsonObject;
 import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.domain.policy.LoanPolicy;
 import org.folio.circulation.domain.representations.LoanProperties;
+import org.folio.circulation.support.ClockManager;
 import org.folio.circulation.support.Result;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 
-import io.vertx.core.json.JsonObject;
-
 public class Loan implements ItemRelatedRecord, UserRelatedRecord {
+  private static final String DECLARED_LOST_ACTION_NAME = "declaredLost";
   private final JsonObject representation;
   private final Item item;
   private final User user;
@@ -134,6 +135,15 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
 
   private void changeCheckInServicePointId(UUID servicePointId) {
     write(representation, "checkinServicePointId", servicePointId);
+  }
+
+  private void changeItemStatusToDeclaredLost(){
+
+    Item item = getItem();
+    if (item != null) {
+      item.changeStatus(ItemStatus.LOST);
+    }
+    changeItemStatus(ItemStatus.LOST.getValue());
   }
 
   private void changeStatus(String status) {
@@ -349,6 +359,16 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     return this;
   }
 
+  public Loan declareItemLost(String comment) {
+    changeAction(DECLARED_LOST_ACTION_NAME);
+    if (StringUtils.isNotBlank(comment)) {
+      changeActionComment(comment);
+    }
+    changeItemStatusToDeclaredLost();
+    changeDeclaredLostDateTime(ClockManager.getClockManager().getDateTime());
+    return this;
+  }
+
   private void incrementRenewalCount() {
     write(representation, "renewalCount", getRenewalCount() + 1);
   }
@@ -393,5 +413,9 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
 
   public void changeItemStatus(String itemStatus) {
     representation.put(LoanProperties.ITEM_STATUS, itemStatus);
+  }
+
+  public void changeDeclaredLostDateTime(DateTime dateTime) {
+    write(representation, LoanProperties.DECLARED_LOST_DATE, dateTime);
   }
 }

@@ -14,7 +14,8 @@ public enum ItemStatus {
   MISSING("Missing"),
   PAGED("Paged"),
   ON_ORDER("On order"),
-  IN_PROCESS("In process");
+  IN_PROCESS("In process"),
+  LOST("Declared lost");
 
   public static ItemStatus from(String value, String date) {
     return Arrays.stream(values())
