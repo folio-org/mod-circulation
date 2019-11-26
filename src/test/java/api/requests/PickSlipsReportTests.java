@@ -3,11 +3,16 @@ package api.requests;
 import static java.net.HttpURLConnection.HTTP_OK;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
-import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.net.MalformedURLException;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
@@ -18,6 +23,7 @@ import api.support.APITests;
 import api.support.builders.RequestBuilder;
 import api.support.http.InventoryItemResource;
 import api.support.http.ResourceClient;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.domain.RequestType;
@@ -156,7 +162,7 @@ public class PickSlipsReportTests extends APITests {
     assertThat(response.getStatusCode(), is(HTTP_OK));
 
     assertResponseHasItems(response, 1);
-    assertResponseContainsAllRequiredFields(response);
+    validateResponse(response, Collections.singletonList(smallAngryPlanet));
   }
 
   @Test
@@ -193,7 +199,7 @@ public class PickSlipsReportTests extends APITests {
     assertThat(response.getStatusCode(), is(HTTP_OK));
 
     assertResponseHasItems(response, 1);
-    assertResponseContainsAllRequiredFields(response);
+    validateResponse(response, Collections.singletonList(smallAngryPlanet));
   }
 
   @Test
@@ -248,7 +254,7 @@ public class PickSlipsReportTests extends APITests {
 
     // Circ desk 1: Second floor
     IndividualResource secondFloorCd1 = locationsFixture.secondFloorEconomics();
-    final IndividualResource temeraireSecondFloorCd1 = itemsFixture.basedUponTemeraire(
+    final InventoryItemResource temeraireSecondFloorCd1 = itemsFixture.basedUponTemeraire(
         holdingBuilder -> holdingBuilder
             .withPermanentLocation(secondFloorCd1)
             .withNoTemporaryLocation(),
@@ -265,7 +271,7 @@ public class PickSlipsReportTests extends APITests {
 
     // Circ desk 1: Third floor
     IndividualResource thirdFloorCd1 = locationsFixture.thirdFloor();
-    final IndividualResource planetThirdFloorCd1 = itemsFixture.basedUponSmallAngryPlanet(
+    final InventoryItemResource planetThirdFloorCd1 = itemsFixture.basedUponSmallAngryPlanet(
         holdingBuilder -> holdingBuilder
             .withPermanentLocation(thirdFloorCd1)
             .withNoTemporaryLocation(),
@@ -284,7 +290,7 @@ public class PickSlipsReportTests extends APITests {
     assertThat(response.getStatusCode(), is(HTTP_OK));
 
     assertResponseHasItems(response, 2);
-    assertResponseContainsAllRequiredFields(response);
+    validateResponse(response, Arrays.asList(temeraireSecondFloorCd1, planetThirdFloorCd1));
   }
 
   @Test
@@ -298,7 +304,7 @@ public class PickSlipsReportTests extends APITests {
 
     // Circ desk 1: Third floor
     IndividualResource thirdFloorCd1 = locationsFixture.thirdFloor();
-    final IndividualResource planetThirdFloorCd1 = itemsFixture.basedUponSmallAngryPlanet(
+    final InventoryItemResource planetThirdFloorCd1 = itemsFixture.basedUponSmallAngryPlanet(
         holdingBuilder -> holdingBuilder
             .withPermanentLocation(thirdFloorCd1)
             .withNoTemporaryLocation(),
@@ -315,7 +321,7 @@ public class PickSlipsReportTests extends APITests {
 
     // Circ desk 4: Second floor
     IndividualResource secondFloorCd4 = locationsFixture.fourthServicePoint();
-    final IndividualResource planetSecondFloorCd4 = itemsFixture.basedUponSmallAngryPlanet(
+    final InventoryItemResource planetSecondFloorCd4 = itemsFixture.basedUponSmallAngryPlanet(
         holdingBuilder -> holdingBuilder
             .withPermanentLocation(secondFloorCd4)
             .withNoTemporaryLocation(),
@@ -335,7 +341,7 @@ public class PickSlipsReportTests extends APITests {
     assertThat(responseForCd1.getStatusCode(), is(HTTP_OK));
 
     assertResponseHasItems(responseForCd1, 1);
-    assertResponseContainsAllRequiredFields(responseForCd1);
+    validateResponse(responseForCd1, Collections.singletonList(planetThirdFloorCd1));
     assertThat(responseForCd1.getJson().getJsonArray(ITEMS_KEY).getJsonObject(0).getString(ID_KEY),
         is(planetThirdFloorCd1.getId().toString()));
 
@@ -345,34 +351,50 @@ public class PickSlipsReportTests extends APITests {
     assertThat(responseForCd4.getStatusCode(), is(HTTP_OK));
 
     assertResponseHasItems(responseForCd4, 1);
-    assertResponseContainsAllRequiredFields(responseForCd4);
+    validateResponse(responseForCd4, Collections.singletonList(planetSecondFloorCd4));
     assertThat(responseForCd4.getJson().getJsonArray(ITEMS_KEY).getJsonObject(0).getString(ID_KEY),
         is(planetSecondFloorCd4.getId().toString()));
   }
 
-  private void assertResponseContainsAllRequiredFields(Response response) {
-    response
-        .getJson()
-        .getJsonArray(ITEMS_KEY).stream()
-        .map(JsonObject.class::cast)
-        .forEach(item -> {
-          JsonObject location = item.getJsonObject(LOCATION_KEY);
-          assertTrue(StringUtils.isNoneBlank(
-              item.getString(ID_KEY),
-              item.getString(HOLDINGS_RECORD_ID_KEY),
-              item.getString(INSTANCE_ID_KEY),
-              item.getString(TITLE_KEY),
-              item.getString(BARCODE_KEY),
-              item.getString(CALL_NUMBER_KEY),
-              item.getString(STATUS_KEY),
-              location.getString(NAME_KEY),
-              location.getString(CODE_KEY),
-              location.getString(LIBRARY_NAME_KEY),
-              location.getString(INSTITUTION_NAME_KEY),
-              location.getString(CAMPUS_NAME_KEY)
-          ));
-          assertFalse(item.getJsonArray(CONTRIBUTORS_KEY).isEmpty());
-        });
+  private void validateResponse(Response response, List<InventoryItemResource> sourceItems) {
+    sourceItems.forEach(sourceItem -> {
+      Optional<JsonObject> matchingItemFromResponse = response
+          .getJson()
+          .getJsonArray(ITEMS_KEY).stream()
+          .map(JsonObject.class::cast)
+          .filter(itemFromResponse -> sourceItem.getId().toString().equals(itemFromResponse.getString(ID_KEY)))
+          .findFirst();
+
+      if (matchingItemFromResponse.isPresent()) {
+        validateItem(matchingItemFromResponse.get(), sourceItem);
+      } else {
+        fail("Expected item is missing in response: itemId=" + sourceItem.getId());
+      }
+    });
+  }
+
+  private void validateItem(JsonObject item, InventoryItemResource sourceItem) {
+    assertThat(item.getString(ID_KEY), is(sourceItem.getId().toString()));
+    assertThat(item.getString(INSTANCE_ID_KEY), is(sourceItem.getInstanceId().toString()));
+    assertThat(item.getString(HOLDINGS_RECORD_ID_KEY), is(sourceItem.getHoldingsRecordId().toString()));
+    assertThat(item.getString(BARCODE_KEY), is(sourceItem.getBarcode()));
+    assertThat(item.getString(TITLE_KEY), is(sourceItem.getInstance().getResponse().getJson().getString(TITLE_KEY)));
+
+    JsonArray contributorsFromSource = sourceItem.getInstance().getJson().getJsonArray(CONTRIBUTORS_KEY);
+    if (contributorsFromSource != null) {
+      assertEquals(contributorsFromSource.size(), item.getJsonArray(CONTRIBUTORS_KEY).size());
+    }
+
+    JsonObject location = item.getJsonObject(LOCATION_KEY);
+    assertTrue(StringUtils.isNoneBlank(
+        item.getString(CALL_NUMBER_KEY),
+        item.getString(STATUS_KEY),
+        location.getString(NAME_KEY),
+        location.getString(CODE_KEY),
+        location.getString(LIBRARY_NAME_KEY),
+        location.getString(INSTITUTION_NAME_KEY),
+        location.getString(CAMPUS_NAME_KEY)
+    ));
   }
 
   private void assertResponseHasItems(Response response, int itemsCount) {
