@@ -18,6 +18,7 @@ import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import api.support.APITests;
 import api.support.builders.RequestBuilder;
@@ -162,7 +163,7 @@ public class PickSlipsReportTests extends APITests {
     assertThat(response.getStatusCode(), is(HTTP_OK));
 
     assertResponseHasItems(response, 1);
-    validateResponse(response, Collections.singletonList(smallAngryPlanet));
+    validateResponse(response, smallAngryPlanet);
   }
 
   @Test
@@ -199,7 +200,7 @@ public class PickSlipsReportTests extends APITests {
     assertThat(response.getStatusCode(), is(HTTP_OK));
 
     assertResponseHasItems(response, 1);
-    validateResponse(response, Collections.singletonList(smallAngryPlanet));
+    validateResponse(response, smallAngryPlanet);
   }
 
   @Test
@@ -290,7 +291,7 @@ public class PickSlipsReportTests extends APITests {
     assertThat(response.getStatusCode(), is(HTTP_OK));
 
     assertResponseHasItems(response, 2);
-    validateResponse(response, Arrays.asList(temeraireSecondFloorCd1, planetThirdFloorCd1));
+    validateResponse(response, temeraireSecondFloorCd1, planetThirdFloorCd1);
   }
 
   @Test
@@ -341,7 +342,7 @@ public class PickSlipsReportTests extends APITests {
     assertThat(responseForCd1.getStatusCode(), is(HTTP_OK));
 
     assertResponseHasItems(responseForCd1, 1);
-    validateResponse(responseForCd1, Collections.singletonList(planetThirdFloorCd1));
+    validateResponse(responseForCd1, planetThirdFloorCd1);
     assertThat(responseForCd1.getJson().getJsonArray(ITEMS_KEY).getJsonObject(0).getString(ID_KEY),
         is(planetThirdFloorCd1.getId().toString()));
 
@@ -351,13 +352,13 @@ public class PickSlipsReportTests extends APITests {
     assertThat(responseForCd4.getStatusCode(), is(HTTP_OK));
 
     assertResponseHasItems(responseForCd4, 1);
-    validateResponse(responseForCd4, Collections.singletonList(planetSecondFloorCd4));
+    validateResponse(responseForCd4, planetSecondFloorCd4);
     assertThat(responseForCd4.getJson().getJsonArray(ITEMS_KEY).getJsonObject(0).getString(ID_KEY),
         is(planetSecondFloorCd4.getId().toString()));
   }
 
-  private void validateResponse(Response response, List<InventoryItemResource> sourceItems) {
-    sourceItems.forEach(sourceItem -> {
+  private void validateResponse(Response response, InventoryItemResource... sourceItems) {
+    Stream.of(sourceItems).forEach(sourceItem -> {
       Optional<JsonObject> matchingItemFromResponse = response
           .getJson()
           .getJsonArray(ITEMS_KEY).stream()
