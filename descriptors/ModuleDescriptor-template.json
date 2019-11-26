@@ -222,6 +222,19 @@
         },
         {
           "methods": [
+            "PUT"
+          ],
+          "pathPattern": "/circulation/loans/{id}/declare-lost",
+          "permissionsRequired": [
+            "circulation.loans.item.declare.lost"
+          ],
+          "modulePermissions": [
+            "inventory-storage.items.item.put",
+            "modperms.circulation.loans.item.put"
+          ]
+        },
+        {
+          "methods": [
             "GET"
           ],
           "pathPattern": "/circulation/requests",
@@ -650,7 +663,7 @@
   "requires": [
     {
       "id": "loan-storage",
-      "version": "5.3 6.0"
+      "version": "6.4"
     },
     {
       "id": "circulation-rules-storage",
@@ -815,6 +828,11 @@
       "permissionName": "circulation.loans.item.delete",
       "displayName": "circulation - delete individual loan",
       "description": "delete individual loan"
+    },
+    {
+      "permissionName": "circulation.loans.item.declare.lost",
+      "displayName": "circulation - declare loan and item lost",
+      "description": "declare loan and item lost"
     },
     {
       "permissionName": "circulation.rules.get",

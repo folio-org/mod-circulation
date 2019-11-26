@@ -168,6 +168,10 @@ public class InterfaceUrls {
     return circulationModuleUrl("/circulation/scheduled-anonymize-processing/");
   }
 
+  public static URL declareLoanLostURL(String subPath) {
+    return circulationModuleUrl(String.format("/circulation/loans/%s/declare-lost", subPath));
+  }
+
   public static URL endSessionUrl() {
     return circulationModuleUrl("/circulation/end-patron-action-session");
   }

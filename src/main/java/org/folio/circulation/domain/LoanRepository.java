@@ -75,6 +75,15 @@ public class LoanRepository {
       .thenApply(mapResult(loanAndRelatedRecords::withLoan));
   }
 
+  public CompletableFuture<Result<Loan>> updateLoanItemInStorage(Loan loan) {
+    if (loan == null || loan.getItem() == null) {
+      return completedFuture(of(() -> null));
+    }
+
+    itemRepository.updateItem(loan.getItem());
+    return completedFuture(succeeded(loan));
+  }
+
   public CompletableFuture<Result<LoanAndRelatedRecords>> updateLoan(
     LoanAndRelatedRecords loanAndRelatedRecords) {
 
