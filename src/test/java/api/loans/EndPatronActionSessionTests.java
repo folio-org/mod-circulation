@@ -181,33 +181,6 @@ public class EndPatronActionSessionTests extends APITests {
   }
 
   @Test
-  public void checkInSessionShouldBeCreatedWhenLoanedItemIsCheckedInByBarcode()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
-
-    IndividualResource james = usersFixture.james();
-    UUID checkInServicePointId = servicePointsFixture.cd1().getId();
-    InventoryItemResource nod = itemsFixture.basedUponNod();
-
-    IndividualResource loan = loansFixture.checkOutByBarcode(nod, james);
-    loansFixture.checkInByBarcode(
-      new CheckInByBarcodeRequestBuilder()
-        .forItem(nod)
-        .at(checkInServicePointId));
-
-    assertThat(patronSessionRecordsClient.getAll(), Matchers.hasSize(2));
-
-    List<JsonObject> checkInSessions = getCheckInSessions();
-    assertThat(checkInSessions, Matchers.hasSize(1));
-
-    JsonObject checkInSession = checkInSessions.get(0);
-    assertThat(checkInSession.getString("patronId"), is(james.getId().toString()));
-    assertThat(checkInSession.getString("loanId"), is(loan.getId().toString()));
-  }
-
-  @Test
   public void checkInSessionShouldNotBeCreatedWhenItemWithoutOpenLoanIsCheckedInByBarcode()
     throws InterruptedException,
     MalformedURLException,
@@ -236,7 +209,7 @@ public class EndPatronActionSessionTests extends APITests {
     UUID checkInServicePointId = servicePointsFixture.cd1().getId();
     InventoryItemResource nod = itemsFixture.basedUponNod();
 
-    loansFixture.checkOutByBarcode(nod, steve);
+    IndividualResource loan = loansFixture.checkOutByBarcode(nod, steve);
     loansFixture.checkInByBarcode(
       new CheckInByBarcodeRequestBuilder()
         .forItem(nod)
@@ -244,6 +217,9 @@ public class EndPatronActionSessionTests extends APITests {
 
     List<JsonObject> checkInSessions = getCheckInSessions();
     assertThat(checkInSessions, Matchers.hasSize(1));
+    JsonObject checkInSession = checkInSessions.get(0);
+    assertThat(checkInSession.getString("patronId"), is(steve.getId().toString()));
+    assertThat(checkInSession.getString("loanId"), is(loan.getId().toString()));
 
     assertThat(patronNoticesClient.getAll(), empty());
     endPatronSessionClient.endCheckInSession(steve.getId());
