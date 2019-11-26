@@ -19,17 +19,6 @@
           "description" : "The call number from the holdings record",
           "type": "string"
         },
-        "materialType": {
-          "description": "The material type from the item record",
-          "type": "object",
-          "properties": {
-            "name": {
-              "description": "Name of the material type",
-              "type": "string"
-            }
-          },
-          "additionalProperties": false
-        },
         "contributors": {
           "description": "Contributors from the instance record",
           "type": "array",
