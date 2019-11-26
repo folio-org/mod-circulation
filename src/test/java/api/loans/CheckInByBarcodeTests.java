@@ -425,9 +425,6 @@ public class CheckInByBarcodeTests extends APITests {
     assertThat("Closed loan should be present",
       loanRepresentation, notNullValue());
 
-    Awaitility.await()
-      .atMost(1, TimeUnit.SECONDS)
-      .until(patronNoticesClient::getAll, hasSize(0));
     TimeUnit.SECONDS.sleep(1);
     assertThat(patronNoticesClient.getAll(), hasSize(0));
   }
