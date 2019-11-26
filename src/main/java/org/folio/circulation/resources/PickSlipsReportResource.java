@@ -23,6 +23,7 @@ import org.folio.circulation.support.http.server.WebContext;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
@@ -126,10 +127,10 @@ public class PickSlipsReportResource extends Resource {
   }
 
   private Result<List<Result<Item>>> filterRequestedItems(List<Item> items, List<MultipleRecords<Request>> records) {
-    List<String> requestedItemIds = records.stream()
+    Set<String> requestedItemIds = records.stream()
         .map(rec -> rec.toKeys(Request::getItemId))
         .flatMap(Collection::stream)
-        .collect(Collectors.toList());
+        .collect(Collectors.toSet());
 
     return Result.succeeded(items.stream()
       .filter(i -> requestedItemIds.contains(i.getItemId()))
