@@ -35,11 +35,19 @@ public class PickSlipsReportTests extends APITests {
   private static final String TOTAL_RECORDS = "totalRecords";
   private static final String ITEMS_KEY = "items";
   private static final String ID_KEY = "id";
+  private static final String HOLDINGS_RECORD_ID_KEY = "holdingsRecordId";
+  private static final String INSTANCE_ID_KEY = "instanceId";
   private static final String TITLE_KEY = "title";
+  private static final String BARCODE_KEY = "barcode";
+  private static final String CALL_NUMBER_KEY = "callNumber";
+  private static final String STATUS_KEY = "status";
   private static final String CONTRIBUTORS_KEY = "contributors";
   private static final String LOCATION_KEY = "location";
   private static final String NAME_KEY = "name";
-  private static final String CALL_NUMBER_KEY = "callNumber";
+  private static final String CODE_KEY = "code";
+  private static final String LIBRARY_NAME_KEY = "libraryName";
+  private static final String INSTITUTION_NAME_KEY = "institutionName";
+  private static final String CAMPUS_NAME_KEY = "campusName";
 
   @Test
   public void reportIsEmptyForNonExistentServicePointId()
@@ -348,11 +356,20 @@ public class PickSlipsReportTests extends APITests {
         .getJsonArray(ITEMS_KEY).stream()
         .map(JsonObject.class::cast)
         .forEach(item -> {
+          JsonObject location = item.getJsonObject(LOCATION_KEY);
           assertTrue(StringUtils.isNoneBlank(
               item.getString(ID_KEY),
+              item.getString(HOLDINGS_RECORD_ID_KEY),
+              item.getString(INSTANCE_ID_KEY),
               item.getString(TITLE_KEY),
+              item.getString(BARCODE_KEY),
               item.getString(CALL_NUMBER_KEY),
-              item.getJsonObject(LOCATION_KEY).getString(NAME_KEY)
+              item.getString(STATUS_KEY),
+              location.getString(NAME_KEY),
+              location.getString(CODE_KEY),
+              location.getString(LIBRARY_NAME_KEY),
+              location.getString(INSTITUTION_NAME_KEY),
+              location.getString(CAMPUS_NAME_KEY)
           ));
           assertFalse(item.getJsonArray(CONTRIBUTORS_KEY).isEmpty());
         });
