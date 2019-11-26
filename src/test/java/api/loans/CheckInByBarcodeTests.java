@@ -428,6 +428,8 @@ public class CheckInByBarcodeTests extends APITests {
     Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
       .until(patronNoticesClient::getAll, hasSize(0));
+    TimeUnit.SECONDS.sleep(1);
+    assertThat(patronNoticesClient.getAll(), hasSize(0));
   }
 
   @Test

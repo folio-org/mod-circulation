@@ -32,37 +32,14 @@ import api.support.http.InventoryItemResource;
 import io.vertx.core.json.JsonObject;
 import org.apache.commons.lang3.tuple.Pair;
 import org.awaitility.Awaitility;
-import org.folio.circulation.support.http.client.IndividualResource;
-import org.folio.circulation.support.http.client.Response;
 import org.hamcrest.Matcher;
 import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.net.MalformedURLException;
-import java.util.Arrays;
-import java.util.List;
-import java.util.UUID;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-import java.util.function.Predicate;
-import java.util.stream.Collectors;
-
-import static api.support.fixtures.TemplateContextMatchers.getLoanPolicyContextMatchersForUnlimitedRenewals;
-import static api.support.fixtures.TemplateContextMatchers.getMultipleLoansContextMatcher;
-import static api.support.matchers.JsonObjectMatcher.toStringMatcher;
-import static api.support.matchers.PatronNoticeMatcher.hasEmailNoticeProperties;
-import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
-import static api.support.matchers.ValidationErrorMatchers.hasMessage;
-import static api.support.matchers.ValidationErrorMatchers.hasParameter;
-import static org.hamcrest.CoreMatchers.allOf;
-import static org.hamcrest.CoreMatchers.hasItems;
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.empty;
-import static org.hamcrest.Matchers.hasSize;
+import org.folio.circulation.support.http.client.IndividualResource;
+import org.folio.circulation.support.http.client.Response;
 
 public class EndPatronActionSessionTests extends APITests {
 
@@ -204,7 +181,7 @@ public class EndPatronActionSessionTests extends APITests {
   }
 
   @Test
-  public void checkInSessionShouldBeCreatedForCheckInByBarcode()
+  public void checkInSessionShouldBeCreatedWhenLoanedItemIsCheckedInByBarcode()
     throws InterruptedException,
     MalformedURLException,
     TimeoutException,
@@ -231,7 +208,7 @@ public class EndPatronActionSessionTests extends APITests {
   }
 
   @Test
-  public void checkInSessionShouldNotBeCreatedWithoutLoanForCheckInByBarcode()
+  public void checkInSessionShouldNotBeCreatedWhenItemWithoutOpenLoanIsCheckedInByBarcode()
     throws InterruptedException,
     MalformedURLException,
     TimeoutException,
@@ -245,11 +222,11 @@ public class EndPatronActionSessionTests extends APITests {
         .forItem(nod)
         .at(checkInServicePointId));
 
-    assertThat(patronSessionRecordsClient.getAll(), Matchers.empty());
+    assertThat(patronSessionRecordsClient.getAll(), empty());
   }
 
   @Test
-  public void checkInSessionShouldBeEndedWithPatronNotice()
+  public void patronNoticesShouldBeSentWhenCheckInSessionIsEnded()
     throws InterruptedException,
     MalformedURLException,
     TimeoutException,
