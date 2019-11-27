@@ -30,9 +30,6 @@ public class ItemPickSlipRepresentation {
       itemSummary.put("location", new JsonObject()
         .put("name", location.getName())
         .put("code", location.getCode())
-        .put("libraryName", location.getLibraryName())
-        .put("institutionName", location.getInstitutionName())
-        .put("campusName", location.getCampusName())
       );
     }
 

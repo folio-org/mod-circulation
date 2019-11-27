@@ -9,23 +9,26 @@
       "properties": {
         "id": {
           "description": "ID of the item",
-          "type": "string"
+          "type": "string",
+          "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
         },
         "title": {
           "description": "The title of the item lent to the patron",
           "type": "string"
         },
         "callNumber" : {
-          "description" : "The call number from the holdings record",
+          "description" : "The effective call number of the item",
           "type": "string"
         },
         "holdingsRecordId": {
           "description": "The ID of the holdings for the item",
-          "type": "string"
+          "type": "string",
+          "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
         },
         "instanceId": {
           "description": "The ID of the instance for the item",
-          "type": "string"
+          "type": "string",
+          "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
         },
         "barcode": {
           "description": "The barcode of the item",

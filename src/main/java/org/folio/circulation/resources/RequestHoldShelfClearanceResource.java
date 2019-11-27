@@ -43,7 +43,6 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
-import org.folio.circulation.support.utils.BatchProcessingUtil;
 
 public class RequestHoldShelfClearanceResource extends Resource {
 
@@ -110,8 +109,22 @@ public class RequestHoldShelfClearanceResource extends Resource {
   }
 
   private CompletableFuture<Result<List<List<String>>>> mapItemIdsInBatchItemIds(List<String> itemIds) {
-    return CompletableFuture.completedFuture(Result.succeeded(
-        BatchProcessingUtil.partitionList(itemIds, BATCH_SIZE)));
+    return CompletableFuture.completedFuture(Result.succeeded(splitIds(itemIds)));
+  }
+
+  private List<List<String>> splitIds(List<String> itemsIds) {
+    int size = itemsIds.size();
+    if (size <= 0) {
+      return new ArrayList<>();
+    }
+
+    int fullChunks = (size - 1) / BATCH_SIZE;
+    return IntStream.range(0, fullChunks + 1)
+      .mapToObj(n ->
+        itemsIds.subList(n * BATCH_SIZE, n == fullChunks
+          ? size
+          : (n + 1) * BATCH_SIZE))
+      .collect(Collectors.toList());
   }
 
   private CompletableFuture<Result<HoldShelfClearanceRequestContext>> findAwaitingPickupRequestsByItemsIds(CollectionResourceClient client,

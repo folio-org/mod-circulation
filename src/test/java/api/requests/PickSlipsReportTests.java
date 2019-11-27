@@ -37,7 +37,7 @@ import org.folio.circulation.support.http.client.Response;
 
 public class PickSlipsReportTests extends APITests {
 
-  private static final int UUID_BATCH_SIZE = 40;
+  private static final int UUID_BATCH_SIZE = 50;
 
   private static final String TOTAL_RECORDS = "totalRecords";
   private static final String ITEMS_KEY = "items";
@@ -52,9 +52,6 @@ public class PickSlipsReportTests extends APITests {
   private static final String LOCATION_KEY = "location";
   private static final String NAME_KEY = "name";
   private static final String CODE_KEY = "code";
-  private static final String LIBRARY_NAME_KEY = "libraryName";
-  private static final String INSTITUTION_NAME_KEY = "institutionName";
-  private static final String CAMPUS_NAME_KEY = "campusName";
 
   @Test
   public void reportIsEmptyForNonExistentServicePointId()
@@ -204,7 +201,7 @@ public class PickSlipsReportTests extends APITests {
   }
 
   @Test
-  public void multiBatchRequestFetchingProcessesAllRequests()
+  public void multiBatchFetchingProcessesAllItemsAndRequests()
       throws InterruptedException,
       MalformedURLException,
       TimeoutException,
@@ -391,10 +388,7 @@ public class PickSlipsReportTests extends APITests {
         item.getString(CALL_NUMBER_KEY),
         item.getString(STATUS_KEY),
         location.getString(NAME_KEY),
-        location.getString(CODE_KEY),
-        location.getString(LIBRARY_NAME_KEY),
-        location.getString(INSTITUTION_NAME_KEY),
-        location.getString(CAMPUS_NAME_KEY)
+        location.getString(CODE_KEY)
     ));
   }
 
