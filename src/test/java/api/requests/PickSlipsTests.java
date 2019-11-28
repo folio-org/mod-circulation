@@ -33,11 +33,8 @@ import org.folio.circulation.domain.RequestStatus;
 import org.folio.circulation.support.http.client.Response;
 
 public class PickSlipsTests extends APITests {
-
-  private static final int UUID_BATCH_SIZE = 50;
-
   private static final String TOTAL_RECORDS = "totalRecords";
-  private static final String ITEMS_KEY = "items";
+  private static final String PICK_SLIPS_KEY = "pickSlips";
   private static final String ID_KEY = "id";
   private static final String HOLDINGS_RECORD_ID_KEY = "holdingsRecordId";
   private static final String INSTANCE_ID_KEY = "instanceId";
@@ -206,7 +203,8 @@ public class PickSlipsTests extends APITests {
 
     UUID servicePointId = servicePointsFixture.cd1().getId();
 
-    final int itemsCount = UUID_BATCH_SIZE + 1;
+    // MultipleRecordFetcher has a limit of 50 UUIDs for a single GET request
+    final int itemsCount = 51;
     Set<String> expectedItemIds = new HashSet<>(itemsCount);
 
     for (int i = 0; i < itemsCount; i++) {
@@ -230,7 +228,7 @@ public class PickSlipsTests extends APITests {
 
     Set<String> itemIdsFromResponse = response
         .getJson()
-        .getJsonArray(ITEMS_KEY)
+        .getJsonArray(PICK_SLIPS_KEY)
         .stream()
         .map(item -> ((JsonObject) item).getString(ID_KEY))
         .collect(Collectors.toSet());
@@ -337,7 +335,7 @@ public class PickSlipsTests extends APITests {
 
     assertResponseHasItems(responseForCd1, 1);
     validateResponse(responseForCd1, planetThirdFloorCd1);
-    assertThat(responseForCd1.getJson().getJsonArray(ITEMS_KEY).getJsonObject(0).getString(ID_KEY),
+    assertThat(responseForCd1.getJson().getJsonArray(PICK_SLIPS_KEY).getJsonObject(0).getString(ID_KEY),
         is(planetThirdFloorCd1.getId().toString()));
 
     // Report for Circ Desk 4
@@ -347,7 +345,7 @@ public class PickSlipsTests extends APITests {
 
     assertResponseHasItems(responseForCd4, 1);
     validateResponse(responseForCd4, planetSecondFloorCd4);
-    assertThat(responseForCd4.getJson().getJsonArray(ITEMS_KEY).getJsonObject(0).getString(ID_KEY),
+    assertThat(responseForCd4.getJson().getJsonArray(PICK_SLIPS_KEY).getJsonObject(0).getString(ID_KEY),
         is(planetSecondFloorCd4.getId().toString()));
   }
 
@@ -355,7 +353,7 @@ public class PickSlipsTests extends APITests {
     Stream.of(sourceItems).forEach(sourceItem -> {
       Optional<JsonObject> matchingItemFromResponse = response
           .getJson()
-          .getJsonArray(ITEMS_KEY).stream()
+          .getJsonArray(PICK_SLIPS_KEY).stream()
           .map(JsonObject.class::cast)
           .filter(itemFromResponse -> sourceItem.getId().toString().equals(itemFromResponse.getString(ID_KEY)))
           .findFirst();
@@ -391,7 +389,7 @@ public class PickSlipsTests extends APITests {
 
   private void assertResponseHasItems(Response response, int itemsCount) {
     JsonObject responseJson = response.getJson();
-    assertThat(responseJson.getJsonArray(ITEMS_KEY).size(), is(itemsCount));
+    assertThat(responseJson.getJsonArray(PICK_SLIPS_KEY).size(), is(itemsCount));
     assertThat(responseJson.getInteger(TOTAL_RECORDS), is(itemsCount));
   }
 

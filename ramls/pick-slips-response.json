@@ -1,22 +1,21 @@
 {
   "$schema": "http://json-schema.org/draft-04/schema#",
-  "title": "Collection of items",
-  "description": "Collection of items",
+  "description": "A collection of pick slips",
   "type": "object",
   "properties": {
-    "items": {
-      "description": "Collection of items",
-      "id": "items",
+    "pickSlips": {
+      "description": "A collection of current pick slips",
+      "id": "pickSlip",
       "type": "array",
       "items": {
-        "title": "An item",
-        "description": "Information about an item",
+        "title": "A pick slip",
+        "description": "A pick slip representation of an item",
         "type": "object",
         "properties": {
           "id": {
             "description": "ID of the item",
             "type": "string",
-            "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
+            "$ref": "uuid.json"
           },
           "title": {
             "description": "The title of the item",
@@ -29,12 +28,12 @@
           "holdingsRecordId": {
             "description": "The ID of the holdings for the item",
             "type": "string",
-            "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
+            "$ref": "uuid.json"
           },
           "instanceId": {
             "description": "The ID of the instance for the item",
             "type": "string",
-            "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
+            "$ref": "uuid.json"
           },
           "barcode": {
             "description": "The barcode of the item",

@@ -35,7 +35,6 @@ import static java.util.function.Function.identity;
 import static org.folio.circulation.support.CqlQuery.exactMatch;
 
 public class PickSlipsResource extends Resource {
-
   private static final String ID_KEY = "id";
   private static final String ITEMS_KEY = "items";
   private static final String STATUS_KEY = "status";
@@ -43,6 +42,7 @@ public class PickSlipsResource extends Resource {
   private static final String REQUESTS_KEY = "requests";
   private static final String LOCATIONS_KEY = "locations";
   private static final String INSTANCES_KEY = "instances";
+  private static final String PICK_SLIPS_KEY = "pickSlips";
   private static final String STATUS_NAME_KEY = "status.name";
   private static final String TOTAL_RECORDS_KEY = "totalRecords";
   private static final String HOLDINGS_RECORDS_KEY = "holdingsRecords";
@@ -179,7 +179,7 @@ public class PickSlipsResource extends Resource {
         .collect(Collectors.toList());
 
     JsonObject jsonResult = new JsonObject()
-        .put(ITEMS_KEY, jsonItems)
+        .put(PICK_SLIPS_KEY, jsonItems)
         .put(TOTAL_RECORDS_KEY, jsonItems.size());
 
     return Result.succeeded(jsonResult);
