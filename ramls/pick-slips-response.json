@@ -5,7 +5,7 @@
   "properties": {
     "pickSlips": {
       "description": "A collection of current pick slips",
-      "id": "pickSlip",
+      "id": "pickSlips",
       "type": "array",
       "items": {
         "title": "A pick slip",
