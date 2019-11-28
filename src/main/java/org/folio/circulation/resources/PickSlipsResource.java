@@ -23,6 +23,7 @@ import org.folio.circulation.support.http.server.WebContext;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -102,13 +103,12 @@ public class PickSlipsResource extends Resource {
   }
 
   private Result<Set<Item>> populateLocationsInItems(Set<Item> items, Set<Location> locations) {
+    Map<String, Location> locationMap = locations.stream()
+        .collect(Collectors.toMap(Location::getId, identity()));
+
     return Result.succeeded(
       items.stream()
-        .map(item -> item.withLocation(
-          locations.stream()
-            .filter(location -> location.getId().equals(item.getLocationId()))
-            .findFirst()
-            .orElse(null)))
+        .map(item -> item.withLocation(locationMap.get(item.getLocationId())))
         .collect(Collectors.toSet()));
   }
 
