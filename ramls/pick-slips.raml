@@ -1,15 +1,15 @@
 #%RAML 1.0
 title: Circulation
-version: v0.2
+version: v0.1
 protocols: [ HTTP, HTTPS ]
 baseUri: http://localhost:9130
 
 documentation:
   - title: Circulation Business Logic API
-    content: <b>API for report generation</b>
+    content: <b>API for pick slips generation</b>
 
 types:
-  items: !include items-in-transit.json
+  pick-slips: !include pick-slips-response.json
 
 traits:
   language: !include raml-util/traits/language.raml
@@ -17,10 +17,10 @@ traits:
 resourceTypes:
   collection-get: !include raml-util/rtypes/collection-get.raml
 
-/inventory-reports:
-    displayName: In transit items report
-    /items-in-transit:
+/circulation:
+    /pick-slips:
+      /{servicePointId}:
         type:
           collection-get:
-            exampleCollection: !include examples/items-in-transit.json
-            schemaCollection: items
+            exampleCollection: !include examples/pick-slips-response.json
+            schemaCollection: pick-slips

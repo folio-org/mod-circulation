@@ -35,17 +35,23 @@
           "modulePermissions": [
             "modperms.inventory.items-in-transit-report.get"
           ]
-        },
+        }
+      ]
+    },
+    {
+      "id": "pick-slips",
+      "version": "0.1",
+      "handlers": [
         {
           "methods": [
             "GET"
           ],
-          "pathPattern": "/inventory-reports/pick-slips/{servicePointId}",
+          "pathPattern": "/circulation/pick-slips/{servicePointId}",
           "permissionsRequired": [
-            "circulation.inventory.pick-slips-report.get"
+            "circulation.pick-slips.get"
           ],
           "modulePermissions": [
-            "modperms.inventory.pick-slips-report.get"
+            "modperms.circulation.pick-slips.get"
           ]
         }
       ]
@@ -924,9 +930,9 @@
       "description": "get all items in transit to generating a report"
     },
     {
-      "permissionName": "circulation.inventory.pick-slips-report.get",
-      "displayName": "circulation - pick slips report",
-      "description": "get items for pick slips report generation"
+      "permissionName": "circulation.pick-slips.get",
+      "displayName": "circulation - pick slips",
+      "description": "get items for pick slips generation"
     },
     {
       "permissionName": "circulation.end-patron-action-session.post",
@@ -970,7 +976,7 @@
         "circulation.requests.instances.item.post",
         "circulation.requests.hold-shelf-clearance-report.get",
         "circulation.inventory.items-in-transit-report.get",
-        "circulation.inventory.pick-slips-report.get"
+        "circulation.pick-slips.get"
       ]
     },
     {
@@ -1801,7 +1807,7 @@
       "visible": false
     },
     {
-      "permissionName": "modperms.inventory.pick-slips-report.get",
+      "permissionName": "modperms.circulation.pick-slips.get",
       "displayName": "module permissions for one op",
       "description": "to reduce X-Okapi-Token size",
       "subPermissions": [
@@ -1815,10 +1821,6 @@
         "inventory-storage.service-points.item.get",
         "inventory-storage.locations.item.get",
         "inventory-storage.locations.collection.get",
-        "inventory-storage.location-units.institutions.item.get",
-        "inventory-storage.location-units.campuses.item.get",
-        "inventory-storage.location-units.libraries.item.get",
-        "inventory-storage.location-units.libraries.collection.get",
         "circulation-storage.requests.item.get",
         "circulation-storage.requests.collection.get"
       ],

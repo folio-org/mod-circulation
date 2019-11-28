@@ -8,10 +8,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.net.MalformedURLException;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -35,7 +32,7 @@ import org.junit.Test;
 import org.folio.circulation.domain.RequestStatus;
 import org.folio.circulation.support.http.client.Response;
 
-public class PickSlipsReportTests extends APITests {
+public class PickSlipsTests extends APITests {
 
   private static final int UUID_BATCH_SIZE = 50;
 
@@ -70,7 +67,7 @@ public class PickSlipsReportTests extends APITests {
         .forItem(smallAngryPlanet)
         .by(usersFixture.james()));
 
-    Response response = ResourceClient.forPickSlipsReport(client).getById(UUID.randomUUID());
+    Response response = ResourceClient.forPickSlips(client).getById(UUID.randomUUID());
     assertThat(response.getStatusCode(), is(HTTP_OK));
 
     assertResponseHasItems(response, 0);
@@ -94,7 +91,7 @@ public class PickSlipsReportTests extends APITests {
         .by(usersFixture.james()));
 
     UUID differentServicePointId = servicePointsFixture.cd2().getId();
-    Response response = ResourceClient.forPickSlipsReport(client).getById(differentServicePointId);
+    Response response = ResourceClient.forPickSlips(client).getById(differentServicePointId);
     assertThat(response.getStatusCode(), is(HTTP_OK));
 
     assertResponseHasItems(response, 0);
@@ -109,7 +106,7 @@ public class PickSlipsReportTests extends APITests {
 
     final UUID servicePointId = servicePointsFixture.cd1().getId();
 
-    Response response = ResourceClient.forPickSlipsReport(client).getById(servicePointId);
+    Response response = ResourceClient.forPickSlips(client).getById(servicePointId);
     assertThat(response.getStatusCode(), is(HTTP_OK));
 
     assertResponseHasItems(response, 0);
@@ -133,7 +130,7 @@ public class PickSlipsReportTests extends APITests {
         .forItem(smallAngryPlanet)
         .by(usersFixture.james()));
 
-    Response response = ResourceClient.forPickSlipsReport(client).getById(servicePointId);
+    Response response = ResourceClient.forPickSlips(client).getById(servicePointId);
     assertThat(response.getStatusCode(), is(HTTP_OK));
 
     assertResponseHasItems(response, 0);
@@ -156,7 +153,7 @@ public class PickSlipsReportTests extends APITests {
         .forItem(smallAngryPlanet)
         .by(usersFixture.james()));
 
-    Response response = ResourceClient.forPickSlipsReport(client).getById(servicePointId);
+    Response response = ResourceClient.forPickSlips(client).getById(servicePointId);
     assertThat(response.getStatusCode(), is(HTTP_OK));
 
     assertResponseHasItems(response, 1);
@@ -193,7 +190,7 @@ public class PickSlipsReportTests extends APITests {
     requestsClient.replace(secondRequest.getId(),
         secondRequestBuilder.withRequestType(RequestType.PAGE.getValue()));
 
-    Response response = ResourceClient.forPickSlipsReport(client).getById(servicePointId);
+    Response response = ResourceClient.forPickSlips(client).getById(servicePointId);
     assertThat(response.getStatusCode(), is(HTTP_OK));
 
     assertResponseHasItems(response, 1);
@@ -226,7 +223,7 @@ public class PickSlipsReportTests extends APITests {
 
     assertThat(expectedItemIds.size(), is(itemsCount));
 
-    Response response = ResourceClient.forPickSlipsReport(client).getById(servicePointId);
+    Response response = ResourceClient.forPickSlips(client).getById(servicePointId);
     assertThat(response.getStatusCode(), is(HTTP_OK));
 
     assertResponseHasItems(response, itemsCount);
@@ -284,7 +281,7 @@ public class PickSlipsReportTests extends APITests {
         .forItem(planetThirdFloorCd1)
         .by(usersFixture.charlotte()));
 
-    Response response = ResourceClient.forPickSlipsReport(client).getById(circDesk1);
+    Response response = ResourceClient.forPickSlips(client).getById(circDesk1);
     assertThat(response.getStatusCode(), is(HTTP_OK));
 
     assertResponseHasItems(response, 2);
@@ -335,7 +332,7 @@ public class PickSlipsReportTests extends APITests {
         .by(usersFixture.jessica()));
 
     // Report for Circ Desk 1
-    Response responseForCd1 = ResourceClient.forPickSlipsReport(client).getById(circDesk1);
+    Response responseForCd1 = ResourceClient.forPickSlips(client).getById(circDesk1);
     assertThat(responseForCd1.getStatusCode(), is(HTTP_OK));
 
     assertResponseHasItems(responseForCd1, 1);
@@ -345,7 +342,7 @@ public class PickSlipsReportTests extends APITests {
 
     // Report for Circ Desk 4
     UUID circDesk4 = servicePointsFixture.cd4().getId();
-    Response responseForCd4 = ResourceClient.forPickSlipsReport(client).getById(circDesk4);
+    Response responseForCd4 = ResourceClient.forPickSlips(client).getById(circDesk4);
     assertThat(responseForCd4.getStatusCode(), is(HTTP_OK));
 
     assertResponseHasItems(responseForCd4, 1);

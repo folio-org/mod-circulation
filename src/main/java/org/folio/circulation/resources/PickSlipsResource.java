@@ -33,7 +33,7 @@ import java.util.stream.Collectors;
 import static java.util.function.Function.identity;
 import static org.folio.circulation.support.CqlQuery.exactMatch;
 
-public class PickSlipsReportResource extends Resource {
+public class PickSlipsResource extends Resource {
 
   private static final String ID_KEY = "id";
   private static final String ITEMS_KEY = "items";
@@ -51,7 +51,7 @@ public class PickSlipsReportResource extends Resource {
 
   private final String rootPath;
 
-  public PickSlipsReportResource(String rootPath, HttpClient client) {
+  public PickSlipsResource(String rootPath, HttpClient client) {
     super(client);
     this.rootPath = rootPath;
   }

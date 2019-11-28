@@ -124,8 +124,8 @@ public class InterfaceUrls {
     return circulationModuleUrl("/inventory-reports/items-in-transit");
   }
 
-   static URL pickSlipsReportUrl(String servicePointId) {
-    return circulationModuleUrl("/inventory-reports/pick-slips"  + servicePointId);
+   static URL pickSlipsUrl(String servicePointId) {
+    return circulationModuleUrl("/circulation/pick-slips"  + servicePointId);
   }
 
   public static URL requestQueueUrl(UUID itemId) {
