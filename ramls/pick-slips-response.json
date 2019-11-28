@@ -77,10 +77,11 @@
       }
     },
     "totalRecords": {
-      "description": "Total number of items",
+      "description": "Total number of pick slips",
       "type": "integer"
     }
   },
+  "additionalProperties": false,
   "required": [
     "items",
     "totalRecords"
