@@ -68,17 +68,11 @@ public class PickSlipsReportResource extends Resource {
     final WebContext context = new WebContext(routingContext);
     final Clients clients = Clients.create(context, client);
 
-    final CollectionResourceClient locationsStorageClient = clients.locationsStorage();
-    final CollectionResourceClient itemStorageClient = clients.itemsStorage();
-    final CollectionResourceClient requestsStorageClient = clients.requestsStorage();
-    final CollectionResourceClient instancesStorageClient = clients.instancesStorage();
-    final CollectionResourceClient holdingsStorageClient = clients.holdingsStorage();
-
-    fetchLocationsForServicePoint(servicePointId, locationsStorageClient)
-      .thenComposeAsync(r -> r.after(locations -> fetchPagedItemsByLocations(locations, itemStorageClient)))
-      .thenComposeAsync(r -> r.after(items -> filterItemsByOpenUnfilledRequests(items, requestsStorageClient)))
-      .thenComposeAsync(r -> r.after(items -> fetchHoldingRecords(items, holdingsStorageClient)))
-      .thenComposeAsync(r -> r.after(items -> fetchInstances(items, instancesStorageClient)))
+    fetchLocationsForServicePoint(servicePointId, clients.locationsStorage())
+      .thenComposeAsync(r -> r.after(locations -> fetchPagedItemsByLocations(locations, clients.itemsStorage())))
+      .thenComposeAsync(r -> r.after(items -> filterItemsByOpenUnfilledRequests(items, clients.requestsStorage())))
+      .thenComposeAsync(r -> r.after(items -> fetchHoldings(items, clients.holdingsStorage())))
+      .thenComposeAsync(r -> r.after(items -> fetchInstances(items, clients.instancesStorage())))
       .thenApply(r -> r.next(this::mapResultToJson))
       .thenApply(OkJsonResponseResult::from)
       .thenAccept(r -> r.writeTo(routingContext.response()));
@@ -104,10 +98,10 @@ public class PickSlipsReportResource extends Resource {
     return new MultipleRecordFetcher<>(itemStorageClient, ITEMS_KEY, Item::from)
       .findByIndexNameAndQuery(locationIds, EFFECTIVE_LOCATION_ID_KEY, statusQuery)
       .thenApply(r -> r.next(this::recordsToSet))
-      .thenApply(r -> r.next(items -> addLocationsToItems(items, locations)));
+      .thenApply(r -> r.next(items -> populateLocationsInItems(items, locations)));
   }
 
-  private Result<Set<Item>> addLocationsToItems(Set<Item> items, Set<Location> locations) {
+  private Result<Set<Item>> populateLocationsInItems(Set<Item> items, Set<Location> locations) {
     return Result.succeeded(
       items.stream()
         .map(item -> item.withLocation(
@@ -143,7 +137,7 @@ public class PickSlipsReportResource extends Resource {
       .collect(Collectors.toSet()));
   }
 
-  private CompletableFuture<Result<Set<Item>>> fetchHoldingRecords(
+  private CompletableFuture<Result<Set<Item>>> fetchHoldings(
     Set<Item> items, CollectionResourceClient client) {
 
       Set<String> holdingsIds = items.stream()
