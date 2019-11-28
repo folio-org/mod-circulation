@@ -115,10 +115,13 @@ public class PatronActionSessionRepository {
   public CompletableFuture<Result<MultipleRecords<PatronSessionRecord>>> findPatronActionSessions(
     String patronId, PatronActionType actionType, int limit) {
 
-    final Result<CqlQuery> patronIdQuery = exactMatch(PATRON_ID, patronId);
-    final Result<CqlQuery> actionTypeQuery = exactMatch(ACTION_TYPE, actionType.getRepresentation());
+    Result<CqlQuery> cqlQueryResult = exactMatch(PATRON_ID, patronId);
+    if(!PatronActionType.ALL.equals(actionType)) {
+      final Result<CqlQuery> actionTypeQuery = exactMatch(ACTION_TYPE, actionType.getRepresentation());
+      cqlQueryResult = cqlQueryResult.combine(actionTypeQuery, CqlQuery::and);
+    }
 
-    return patronIdQuery.combine(actionTypeQuery, CqlQuery::and)
+    return cqlQueryResult
       .after(query -> findBy(query, limit))
       .thenCompose(r -> r.combineAfter(
         () -> userRepository.getUser(patronId), this::setUserForLoans));
