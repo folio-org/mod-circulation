@@ -39,6 +39,24 @@
       ]
     },
     {
+      "id": "pick-slips",
+      "version": "0.1",
+      "handlers": [
+        {
+          "methods": [
+            "GET"
+          ],
+          "pathPattern": "/circulation/pick-slips/{servicePointId}",
+          "permissionsRequired": [
+            "circulation.pick-slips.get"
+          ],
+          "modulePermissions": [
+            "modperms.circulation.pick-slips.get"
+          ]
+        }
+      ]
+    },
+    {
       "id": "request-move",
       "version": "0.4",
       "handlers": [
@@ -912,6 +930,11 @@
       "description": "get all items in transit to generating a report"
     },
     {
+      "permissionName": "circulation.pick-slips.get",
+      "displayName": "circulation - pick slips",
+      "description": "get items for pick slips generation"
+    },
+    {
       "permissionName": "circulation.end-patron-action-session.post",
       "displayName": "circulation - end patron action session",
       "description": "end patron action session"
@@ -952,7 +975,8 @@
         "circulation.requests.queue.reorder.collection.post",
         "circulation.requests.instances.item.post",
         "circulation.requests.hold-shelf-clearance-report.get",
-        "circulation.inventory.items-in-transit-report.get"
+        "circulation.inventory.items-in-transit-report.get",
+        "circulation.pick-slips.get"
       ]
     },
     {
@@ -1786,6 +1810,26 @@
         "inventory-storage.location-units.libraries.collection.get",
         "circulation-storage.loans.collection.get",
         "circulation-storage.loans.item.get"
+      ],
+      "visible": false
+    },
+    {
+      "permissionName": "modperms.circulation.pick-slips.get",
+      "displayName": "module permissions for one op",
+      "description": "to reduce X-Okapi-Token size",
+      "subPermissions": [
+        "inventory-storage.items.item.get",
+        "inventory-storage.items.collection.get",
+        "inventory-storage.holdings.collection.get",
+        "inventory-storage.holdings.item.get",
+        "inventory-storage.instances.collection.get",
+        "inventory-storage.instances.item.get",
+        "inventory-storage.service-points.collection.get",
+        "inventory-storage.service-points.item.get",
+        "inventory-storage.locations.item.get",
+        "inventory-storage.locations.collection.get",
+        "circulation-storage.requests.item.get",
+        "circulation-storage.requests.collection.get"
       ],
       "visible": false
     }
