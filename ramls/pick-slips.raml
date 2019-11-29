@@ -1,0 +1,26 @@
+#%RAML 1.0
+title: Pick Slips
+version: v0.1
+protocols: [ HTTP, HTTPS ]
+baseUri: http://localhost:9130
+
+documentation:
+  - title: API for fetching current pick slips
+    content: <b>API for pick slips generation</b>
+
+types:
+  pick-slips: !include pick-slips-response.json
+
+traits:
+  language: !include raml-util/traits/language.raml
+
+resourceTypes:
+  collection-get: !include raml-util/rtypes/collection-get.raml
+
+/circulation:
+    /pick-slips:
+      /{servicePointId}:
+        type:
+          collection-get:
+            exampleCollection: !include examples/pick-slips-response.json
+            schemaCollection: pick-slips
