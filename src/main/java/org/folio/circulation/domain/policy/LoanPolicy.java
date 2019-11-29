@@ -61,7 +61,6 @@ public class LoanPolicy {
   private static final String KEY_ERROR_TEXT = "the \"%s\" in the holds is not recognized";
   private static final String INTERVAL_ERROR_TEXT = "the interval \"%s\" in \"%s\" is not recognized";
   private static final String DURATION_ERROR_TEXT = "the duration \"%s\" in \"%s\" is invalid";
-  private static final int DEFAULT_ITEM_LIMIT_VALUE = 0;
 
   private final JsonObject representation;
   private final FixedDueDateSchedules fixedDueDateSchedules;
@@ -695,6 +694,6 @@ public class LoanPolicy {
     if (getLoansPolicy() != null) {
       return  getLoansPolicy().getInteger("itemLimit");
     }
-    return DEFAULT_ITEM_LIMIT_VALUE;
+    return null;
   }
 }

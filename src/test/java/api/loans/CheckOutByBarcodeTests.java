@@ -953,4 +953,59 @@ public class CheckOutByBarcodeTests extends APITests {
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("Patron has reached maximum limit of 1 items"))));
   }
+
+  @Test
+  public void canCheckOutWhenItemLimitIsReachedForAnotherMaterialType()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    IndividualResource loanPolicyWithItemLimit = loanPoliciesFixture.create(
+      new LoanPolicyBuilder()
+        .withName("Loan Policy with item limit")
+        .withItemLimit(1)
+        .rolling(Period.months(2))
+        .renewFromCurrentDueDate());
+
+    IndividualResource loanPolicyWithoutItemLimit = loanPoliciesFixture.create(
+      new LoanPolicyBuilder()
+        .withName("Loan Policy without item limit")
+        .rolling(Period.months(2))
+        .renewFromCurrentDueDate());
+
+    final String loanPolicyWithItemLimitId = loanPolicyWithItemLimit.getId().toString();
+    final String loanPolicyWithoutItemLimitId = loanPolicyWithoutItemLimit.getId().toString();
+    final String anyRequestPolicy = requestPoliciesFixture.allowAllRequestPolicy().getId().toString();
+    final String anyNoticePolicy = noticePoliciesFixture.activeNotice().getId().toString();
+    final String anyOverdueFinePolicy = overdueFinePoliciesFixture.facultyStandard().getId().toString();
+    final String anyLostItemFeePolicy = lostItemFeePoliciesFixture.facultyStandard().getId().toString();
+    final UUID videoRecording = materialTypesFixture.videoRecording().getId();
+
+    String rules = String.join("\n",
+      "priority: t, s, c, b, a, m, g",
+      "fallback-policy: l " + loanPolicyWithItemLimitId + " r " + anyRequestPolicy + " n " + anyNoticePolicy + " o " + anyOverdueFinePolicy + " i " + anyLostItemFeePolicy,
+      "m " + videoRecording + " : l " + loanPolicyWithoutItemLimitId + " r " + anyRequestPolicy + " n " + anyNoticePolicy  + " o " + anyOverdueFinePolicy + " i " + anyLostItemFeePolicy);
+
+    circulationRulesFixture.updateCirculationRules(rules);
+
+    IndividualResource firstBookTypeItem = itemsFixture.basedUponNod();
+    IndividualResource secondBookTypeItem = itemsFixture.basedUponSmallAngryPlanet();
+    IndividualResource videoTypeItem = itemsFixture.basedUponDunkirk();
+    IndividualResource steve = usersFixture.steve();
+
+    loansFixture.checkOutByBarcode(firstBookTypeItem, steve);
+    firstBookTypeItem = itemsClient.get(firstBookTypeItem);
+    assertThat(firstBookTypeItem, hasItemStatus(CHECKED_OUT));
+
+    Response response = loansFixture.attemptCheckOutByBarcode(secondBookTypeItem, steve);
+    assertThat(response.getJson(), hasErrorWith(allOf(
+      hasMessage("Patron has reached maximum limit of 1 items"))));
+    secondBookTypeItem = itemsClient.get(secondBookTypeItem);
+    assertThat(secondBookTypeItem, hasItemStatus(AVAILABLE));
+
+    loansFixture.checkOutByBarcode(videoTypeItem, steve);
+    videoTypeItem = itemsClient.get(videoTypeItem);
+    assertThat(videoTypeItem, hasItemStatus(CHECKED_OUT));
+  }
 }

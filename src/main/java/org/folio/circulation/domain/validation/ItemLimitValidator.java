@@ -26,7 +26,7 @@ public class ItemLimitValidator {
   public CompletableFuture<Result<LoanAndRelatedRecords>> refuseWhenItemLimitIsReached(
     LoanAndRelatedRecords records) {
     Integer itemLimit = records.getLoan().getLoanPolicy().getItemLimit();
-    if (itemLimit == null || itemLimit == 0) {
+    if (itemLimit == null) {
       return completedFuture(succeeded(records));
     }
 
