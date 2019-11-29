@@ -91,8 +91,24 @@
       ]
     },
     {
+      "id": "declare-item-lost",
+      "version": "0.1",
+      "handlers": [
+        {
+          "methods": ["PUT"],
+          "pathPattern": "/circulation/loans/{id}/declare-item-lost",
+          "permissionsRequired": [
+            "circulation.loans.declare-item-lost.put"
+          ],
+          "modulePermissions": [
+            "modperms.circulation.loans.declare-item-lost.put"
+          ]
+        }
+      ]
+    },
+    {
       "id": "circulation",
-      "version": "8.4",
+      "version": "8.3",
       "handlers": [
         {
           "methods": [
@@ -236,19 +252,6 @@
           ],
           "modulePermissions": [
             "circulation-storage.loans.item.delete"
-          ]
-        },
-        {
-          "methods": [
-            "PUT"
-          ],
-          "pathPattern": "/circulation/loans/{id}/declare-lost",
-          "permissionsRequired": [
-            "circulation.loans.item.declare.lost"
-          ],
-          "modulePermissions": [
-            "inventory-storage.items.item.put",
-            "modperms.circulation.loans.item.put"
           ]
         },
         {
@@ -848,9 +851,9 @@
       "description": "delete individual loan"
     },
     {
-      "permissionName": "circulation.loans.item.declare.lost",
-      "displayName": "circulation - declare loan and item lost",
-      "description": "declare loan and item lost"
+      "permissionName": "circulation.loans.declare-item-lost.put",
+      "displayName": "circulation - declare the loaned item lost",
+      "description": "declares the loaned item lost"
     },
     {
       "permissionName": "circulation.rules.get",
@@ -1759,6 +1762,17 @@
         "configuration.entries.collection.get",
         "scheduled-notice-storage.scheduled-notices.collection.delete",
         "scheduled-notice-storage.scheduled-notices.item.post"
+      ],
+      "visible": false
+    },
+    {
+      "permissionName": "modperms.circulation.loans.declare-item-lost.put",
+      "displayName": "module permissions for one op",
+      "description": "to reduce X-Okapi-Token size",
+      "subPermissions": [
+        "circulation-storage.loans.item.put",
+        "users.item.get",
+        "inventory-storage.items.item.put"
       ],
       "visible": false
     },

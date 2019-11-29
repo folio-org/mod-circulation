@@ -1,6 +1,5 @@
 package api.support.matchers;
 
-import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
 
@@ -20,13 +19,6 @@ public class LoanMatchers {
 
   public static TypeSafeDiagnosingMatcher<JsonObject> isAnonymized() {
     return doesNotHaveUserId();
-  }
-
-  public static Matcher<JsonObject> loanItemIsDeclaredLost() {
-    return allOf(
-      hasItemStatus("Declared lost"),
-      hasLoanProperty("declaredLostDate")
-      );
   }
 
   public static TypeSafeDiagnosingMatcher<JsonObject> hasLoanProperty(
@@ -68,32 +60,7 @@ public class LoanMatchers {
     };
   }
 
-  private static TypeSafeDiagnosingMatcher<JsonObject> hasItemStatus(
-    String expectedStatus) {
-    return new TypeSafeDiagnosingMatcher<JsonObject>() {
-      @Override
-      public void describeTo(Description description) {
-        description.appendText("Loan item should have a status of ")
-          .appendText(expectedStatus);
-      }
-
-      @Override
-      protected boolean matchesSafely(JsonObject representation,
-        Description description) {
-
-        final Matcher<String> itemStatusMatcher = is(expectedStatus);
-
-        final String itemStatus = representation.getJsonObject("item")
-          .getJsonObject("status").getString("name");
-
-        itemStatusMatcher.describeMismatch(itemStatus, description);
-
-        return itemStatusMatcher.matches(itemStatus);
-      }
-    };
-  }
-
-  private static TypeSafeDiagnosingMatcher<JsonObject> hasStatus(
+  public static TypeSafeDiagnosingMatcher<JsonObject> hasStatus(
     String status) {
     return new TypeSafeDiagnosingMatcher<JsonObject>() {
       @Override

@@ -172,8 +172,8 @@ public class InterfaceUrls {
     return circulationModuleUrl("/circulation/scheduled-anonymize-processing/");
   }
 
-  public static URL declareLoanLostURL(String subPath) {
-    return circulationModuleUrl(String.format("/circulation/loans/%s/declare-lost", subPath));
+  public static URL declareLoanItemLostURL(String loanId) {
+    return circulationModuleUrl(String.format("/circulation/loans/%s/declare-item-lost", loanId));
   }
 
   public static URL endSessionUrl() {

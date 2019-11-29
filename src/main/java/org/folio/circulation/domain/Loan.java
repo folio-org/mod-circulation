@@ -29,7 +29,6 @@ import io.vertx.core.json.JsonObject;
 import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.domain.policy.LoanPolicy;
 import org.folio.circulation.domain.representations.LoanProperties;
-import org.folio.circulation.support.ClockManager;
 import org.folio.circulation.support.Result;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
@@ -137,13 +136,12 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     write(representation, "checkinServicePointId", servicePointId);
   }
 
-  private void changeItemStatusToDeclaredLost(){
-
+  private void changeItemStatusToDeclaredLost() {
     Item item = getItem();
     if (item != null) {
-      item.changeStatus(ItemStatus.LOST);
+      item.changeStatus(ItemStatus.DECLARED_LOST);
     }
-    changeItemStatus(ItemStatus.LOST.getValue());
+    changeItemStatus(ItemStatus.DECLARED_LOST.getValue());
   }
 
   private void changeStatus(String status) {
@@ -151,7 +149,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   public void changeActionComment(String comment) {
-    representation.put(ACTION_COMMENT, comment);
+    write(representation, ACTION_COMMENT, comment);
   }
 
   private void removeActionComment() {
@@ -359,13 +357,11 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     return this;
   }
 
-  public Loan declareItemLost(String comment) {
+  public Loan declareItemLost(String comment, DateTime dateTime) {
     changeAction(DECLARED_LOST_ACTION_NAME);
-    if (StringUtils.isNotBlank(comment)) {
-      changeActionComment(comment);
-    }
+    changeActionComment(comment);
     changeItemStatusToDeclaredLost();
-    changeDeclaredLostDateTime(ClockManager.getClockManager().getDateTime());
+    changeDeclaredLostDateTime(dateTime);
     return this;
   }
 
