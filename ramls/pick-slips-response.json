@@ -1,0 +1,89 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "description": "A collection of pick slips",
+  "type": "object",
+  "properties": {
+    "pickSlips": {
+      "description": "A collection of current pick slips",
+      "id": "pickSlips",
+      "type": "array",
+      "items": {
+        "title": "A pick slip",
+        "description": "A pick slip representation of an item",
+        "type": "object",
+        "properties": {
+          "id": {
+            "description": "ID of the item",
+            "type": "string",
+            "$ref": "uuid.json"
+          },
+          "title": {
+            "description": "The title of the item",
+            "type": "string"
+          },
+          "callNumber" : {
+            "description" : "The effective call number of the item",
+            "type": "string"
+          },
+          "holdingsRecordId": {
+            "description": "The ID of the holdings for the item",
+            "type": "string",
+            "$ref": "uuid.json"
+          },
+          "instanceId": {
+            "description": "The ID of the instance for the item",
+            "type": "string",
+            "$ref": "uuid.json"
+          },
+          "barcode": {
+            "description": "The barcode of the item",
+            "type": "string"
+          },
+          "status": {
+            "description": "The status of the item",
+            "type": "string"
+          },
+          "contributors": {
+            "description": "Contributors from the instance record",
+            "type": "array",
+            "items" : {
+              "type": "object",
+              "properties" : {
+                "name" : {
+                  "description": "Name of the contributor",
+                  "type" : "string"
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "location": {
+            "description": "The effective location of the item",
+            "type": "object",
+            "properties": {
+              "name": {
+                "description": "The name of the location",
+                "type": "string"
+              },
+              "code": {
+                "description": "The code of the location",
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "totalRecords": {
+      "description": "Total number of pick slips",
+      "type": "integer"
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "items",
+    "totalRecords"
+  ]
+}
