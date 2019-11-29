@@ -17,7 +17,6 @@ import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static api.support.matchers.ValidationErrorMatchers.hasMessageContaining;
 import static java.net.HttpURLConnection.HTTP_OK;
-import static org.folio.circulation.domain.representations.ItemProperties.CALL_NUMBER_COMPONENTS;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
@@ -26,6 +25,8 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+import static org.folio.circulation.domain.representations.ItemProperties.CALL_NUMBER_COMPONENTS;
+
 import java.net.MalformedURLException;
 import java.util.List;
 import java.util.UUID;
@@ -33,15 +34,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-
-import org.folio.circulation.domain.policy.Period;
-import org.folio.circulation.support.http.client.IndividualResource;
-import org.folio.circulation.support.http.client.Response;
-import org.folio.circulation.support.http.client.ResponseHandler;
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
-import org.joda.time.Seconds;
-import org.junit.Test;
 
 import api.support.APITestContext;
 import api.support.APITests;
@@ -55,6 +47,15 @@ import api.support.builders.UserBuilder;
 import api.support.http.InventoryItemResource;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
+import org.joda.time.Seconds;
+import org.junit.Test;
+
+import org.folio.circulation.domain.policy.Period;
+import org.folio.circulation.support.http.client.IndividualResource;
+import org.folio.circulation.support.http.client.Response;
+import org.folio.circulation.support.http.client.ResponseHandler;
 
 public class CheckOutByBarcodeTests extends APITests {
   @Test
@@ -919,5 +920,37 @@ public class CheckOutByBarcodeTests extends APITests {
       hasMessage("Item is not loanable"),
       hasItemBarcodeParameter(nod),
       hasLoanPolicyParameters(notLoanablePolicy))));
+  }
+
+  @Test
+  public void cannotCheckOutWhenItemLimitOfLoanPolicyIsReached()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    IndividualResource loanPolicyWithItemLimit = loanPoliciesFixture.create(
+      new LoanPolicyBuilder()
+        .withName("Loan Policy with item limit")
+        .withItemLimit(1)
+        .rolling(Period.months(2))
+        .renewFromCurrentDueDate());
+
+    useFallbackPolicies(
+      loanPolicyWithItemLimit.getId(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
+      noticePoliciesFixture.inactiveNotice().getId(),
+      overdueFinePoliciesFixture.facultyStandard().getId(),
+      lostItemFeePoliciesFixture.facultyStandard().getId());
+
+    InventoryItemResource firstItem = itemsFixture.basedUponNod();
+    InventoryItemResource secondItem = itemsFixture.basedUponDunkirk();
+    IndividualResource steve = usersFixture.steve();
+
+    loansFixture.checkOutByBarcode(firstItem, steve);
+    Response response = loansFixture.attemptCheckOutByBarcode(secondItem, steve);
+
+    assertThat(response.getJson(), hasErrorWith(allOf(
+      hasMessage("Patron has reached maximum limit of 1 items"))));
   }
 }

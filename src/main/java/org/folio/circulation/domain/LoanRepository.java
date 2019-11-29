@@ -335,4 +335,12 @@ public class LoanRepository {
       .withLoan(loanMap.getOrDefault(request.getItemId(), null));
   }
 
+  public CompletableFuture<Result<MultipleRecords<Loan>>> findOpenLoansByUserId(
+    LoanAndRelatedRecords loanAndRelatedRecords) {
+    String userId = loanAndRelatedRecords.getLoan().getUser().getId();
+    final Result<CqlQuery> statusQuery = getStatusCQLQuery("Open");
+    final Result<CqlQuery> userIdQuery = exactMatch("userId", userId);
+
+    return queryLoanStorage(1, statusQuery.combine(userIdQuery, CqlQuery::and));
+  }
 }
