@@ -193,6 +193,7 @@ public class CheckInByBarcodeTests extends APITests {
     assertThat(userContext.getString("region"), is(address.getRegion()));
     assertThat(userContext.getString("postalCode"), is(address.getPostalCode()));
     assertThat(userContext.getString("countryId"), is(address.getCountryId()));
+    assertThat(userContext.getString("country"), is("United Kingdom"));
 
     assertThat(requestContext.getString("deliveryAddressType"), is(addressTypesFixture.home().getJson().getString("addressType")));
     assertThat(requestContext.getString("requestExpirationDate"), is(requestExpiration.toDateTimeAtStartOfDay().toString()));

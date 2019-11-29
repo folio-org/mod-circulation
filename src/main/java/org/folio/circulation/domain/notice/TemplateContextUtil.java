@@ -2,10 +2,17 @@ package org.folio.circulation.domain.notice;
 
 import static java.lang.Math.max;
 import static java.util.stream.Collectors.joining;
+
 import static org.folio.circulation.support.JsonPropertyWriter.write;
 import static org.folio.circulation.support.JsonStringArrayHelper.toStream;
 
+import java.util.Locale;
 import java.util.Optional;
+
+import io.vertx.core.json.JsonObject;
+
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
 
 import org.folio.circulation.domain.CallNumberComponents;
 import org.folio.circulation.domain.CheckInProcessRecords;
@@ -18,10 +25,6 @@ import org.folio.circulation.domain.ServicePoint;
 import org.folio.circulation.domain.User;
 import org.folio.circulation.domain.policy.LoanPolicy;
 import org.folio.circulation.support.JsonArrayHelper;
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
-
-import io.vertx.core.json.JsonObject;
 
 public class TemplateContextUtil {
 
@@ -99,13 +102,16 @@ public class TemplateContextUtil {
 
     JsonObject userContext = createUserContext(user);
     if(address != null){
+      String countryId = address.getString("countryId", null);
+      String countryName = getCountryName(countryId);
       userContext
         .put("addressLine1", address.getString("addressLine1", null))
         .put("addressLine2", address.getString("addressLine2", null))
         .put("city", address.getString("city", null))
         .put("region", address.getString("region", null))
         .put("postalCode", address.getString("postalCode", null))
-        .put("countryId", address.getString("countryId", null));
+        .put("countryId", countryId)
+        .put("country", countryName);
     }
 
     return userContext;
@@ -224,5 +230,12 @@ public class TemplateContextUtil {
     }
 
     return loanContext;
+  }
+
+  private static String getCountryName(String alpha2Code) {
+    return Optional
+      .ofNullable(alpha2Code)
+      .map(code -> new Locale("", alpha2Code).getDisplayCountry(Locale.ENGLISH))
+      .orElse(null);
   }
 }
