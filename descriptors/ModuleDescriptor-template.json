@@ -4,7 +4,7 @@
   "provides": [
     {
       "id": "requests-reports",
-      "version": "0.3",
+      "version": "0.4",
       "handlers": [
         {
           "methods": [
@@ -40,7 +40,7 @@
     },
     {
       "id": "request-move",
-      "version": "0.3",
+      "version": "0.4",
       "handlers": [
         {
           "methods": [
@@ -74,7 +74,7 @@
     },
     {
       "id": "circulation",
-      "version": "8.2",
+      "version": "8.3",
       "handlers": [
         {
           "methods": [
@@ -658,7 +658,7 @@
     },
     {
       "id": "item-storage",
-      "version": "7.7"
+      "version": "7.8"
     },
     {
       "id": "instance-storage",
@@ -982,6 +982,7 @@
       "subPermissions": [
         "circulation-storage.requests.item.put",
         "circulation-storage.requests.item.post",
+        "circulation-storage.request-batch.item.post",
         "inventory-storage.items.item.put",
         "circulation-storage.requests.collection.get",
         "circulation-storage.requests.item.get",
@@ -1025,6 +1026,7 @@
         "calendar.opening-hours.collection.get",
         "circulation-storage.loans.item.get",
         "circulation-storage.loans.collection.get",
+        "circulation-storage.request-batch.item.post",
         "circulation.rules.loan-policy.get",
         "circulation.rules.request-policy.get",
         "circulation-storage.requests.collection.get",
@@ -1037,6 +1039,7 @@
         "inventory-storage.location-units.institutions.item.get",
         "inventory-storage.location-units.campuses.item.get",
         "inventory-storage.location-units.libraries.item.get",
+        "inventory-storage.location-units.libraries.collection.get",
         "inventory-storage.holdings.collection.get",
         "inventory-storage.holdings.item.get",
         "inventory-storage.instances.collection.get",
@@ -1074,6 +1077,7 @@
         "circulation.rules.request-policy.get",
         "circulation-storage.requests.collection.get",
         "circulation-storage.requests.item.put",
+        "circulation-storage.request-batch.item.post",
         "inventory-storage.items.item.put",
         "inventory-storage.items.item.get",
         "inventory-storage.items.collection.get",
@@ -1484,6 +1488,7 @@
         "inventory-storage.items.item.put",
         "circulation-storage.requests.collection.get",
         "circulation-storage.requests.item.get",
+        "circulation-storage.request-batch.item.post",
         "circulation-storage.loans.item.put",
         "circulation-storage.loans.collection.get",
         "circulation-storage.loans.item.get",
@@ -1519,7 +1524,8 @@
         "calendar.opening-hours.collection.get",
         "scheduled-notice-storage.scheduled-notices.collection.delete",
         "scheduled-notice-storage.scheduled-notices.item.post",
-        "configuration.entries.collection.get"
+        "configuration.entries.collection.get",
+        "manualblocks.collection.get"
       ],
       "visible": false
     },
@@ -1563,6 +1569,7 @@
         "circulation.rules.request-policy.get",
         "circulation-storage.requests.item.put",
         "circulation-storage.requests.item.post",
+        "circulation-storage.request-batch.item.post",
         "inventory-storage.items.item.put",
         "circulation-storage.request-policies.item.get",
         "circulation-storage.requests.collection.get",
@@ -1653,6 +1660,7 @@
         "inventory-storage.location-units.institutions.item.get",
         "inventory-storage.location-units.campuses.item.get",
         "inventory-storage.location-units.libraries.item.get",
+        "inventory-storage.location-units.libraries.collection.get",
         "inventory-storage.service-points.collection.get",
         "inventory-storage.service-points.item.get",
         "users.item.get",
@@ -1793,7 +1801,7 @@
     },
     "env": [
       { "name": "JAVA_OPTIONS",
-        "value": "-XX:+UnlockExperimentalVMOptions -XX:+UseCGroupMemoryLimitForHeap"
+        "value": "-XX:MaxRAMPercentage=66.0"
       }
     ]
   }

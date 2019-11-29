@@ -1,5 +1,7 @@
 package org.folio.circulation.domain.representations;
 
+import static org.folio.circulation.domain.representations.CallNumberComponentsRepresentation.createCallNumberComponents;
+import static org.folio.circulation.domain.representations.ItemProperties.CALL_NUMBER_COMPONENTS;
 import static org.folio.circulation.domain.representations.ItemProperties.LAST_CHECK_IN;
 import static org.folio.circulation.support.JsonPropertyWriter.write;
 
@@ -30,6 +32,7 @@ public class ItemSummaryRepresentation {
     write(itemSummary, "barcode", item.getBarcode());
     write(itemSummary, "contributors", item.getContributorNames());
     write(itemSummary, "callNumber", item.getCallNumber());
+    write(itemSummary, CALL_NUMBER_COMPONENTS, createCallNumberComponents(item.getCallNumberComponents()));
 
     JsonObject status = new JsonObject()
       .put("name", item.getStatus().getValue());

@@ -1,6 +1,7 @@
 package api.requests.scenarios;
 
 import static api.support.matchers.ItemStatusCodeMatcher.hasItemStatus;
+import static org.folio.circulation.domain.RequestStatus.CLOSED_CANCELLED;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
@@ -9,16 +10,23 @@ import static org.joda.time.DateTimeZone.UTC;
 import java.net.MalformedURLException;
 import java.util.Collection;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.support.http.client.IndividualResource;
+import org.folio.circulation.support.http.client.Response;
+import org.folio.circulation.support.http.client.ResponseHandler;
 import org.joda.time.DateTime;
 import org.junit.Test;
 
 import api.support.APITests;
 import api.support.builders.RequestBuilder;
+import api.support.http.InterfaceUrls;
+import api.support.http.InventoryItemResource;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
 public class CancelRequestTests extends APITests {
@@ -227,5 +235,58 @@ public class CancelRequestTests extends APITests {
     final IndividualResource itemAfterCancellation = itemsClient.get(smallAngryPlanet);
 
     assertThat(itemAfterCancellation, hasItemStatus("Awaiting pickup"));
+  }
+
+  @Test
+  public void shouldAllowToCancelRequestWithNoPosition() throws Exception {
+    IndividualResource requesterId = usersFixture.rebecca();
+    final InventoryItemResource nod = itemsFixture.basedUponNod();
+
+    loansFixture.checkOutByBarcode(nod, requesterId);
+
+    IndividualResource firstHoldRequest = holdRequestWithNoPosition(nod,
+      usersFixture.steve());
+    IndividualResource secondHoldRequest = holdRequestWithNoPosition(nod,
+      usersFixture.charlotte());
+
+    requestsFixture.cancelRequest(firstHoldRequest);
+    requestsFixture.cancelRequest(secondHoldRequest);
+
+    Response allRequests = getAllRequests();
+
+    assertThat(allRequests.getStatusCode(), is(200));
+    assertThat(allRequests.getJson().getInteger("totalRecords"), is(2));
+
+    JsonArray requestsArray = allRequests.getJson().getJsonArray("requests");
+    JsonObject firstRequest = requestsArray.getJsonObject(0);
+    JsonObject secondRequest = requestsArray.getJsonObject(1);
+
+    assertThat(firstRequest.getString("status"), is(CLOSED_CANCELLED.getValue()));
+    assertThat(secondRequest.getString("status"), is(CLOSED_CANCELLED.getValue()));
+  }
+
+  private Response getAllRequests()
+    throws InterruptedException, ExecutionException, TimeoutException {
+
+    CompletableFuture<Response> getAllCompleted = new CompletableFuture<>();
+    client.get(InterfaceUrls.requestsUrl(), ResponseHandler.any(getAllCompleted));
+
+    return getAllCompleted.get(5, TimeUnit.SECONDS);
+  }
+
+  private IndividualResource holdRequestWithNoPosition(
+    IndividualResource item, IndividualResource requester) throws Exception {
+
+    JsonObject request = new RequestBuilder()
+      .open()
+      .hold()
+      .forItem(item)
+      .by(requester)
+      .withPickupServicePoint(servicePointsFixture.cd1())
+      .create();
+
+    request.remove("position");
+
+    return requestsStorageClient.create(request);
   }
 }

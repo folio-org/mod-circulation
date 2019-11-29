@@ -15,6 +15,7 @@ import static org.folio.HttpStatus.HTTP_CREATED;
 import static org.folio.HttpStatus.HTTP_VALIDATION_ERROR;
 import static org.folio.circulation.domain.ItemStatus.PAGED;
 import static org.folio.circulation.domain.RequestType.RECALL;
+import static org.folio.circulation.domain.representations.ItemProperties.CALL_NUMBER_COMPONENTS;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.hasItems;
@@ -23,6 +24,8 @@ import static org.hamcrest.Matchers.emptyString;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 import java.net.MalformedURLException;
 import java.time.Clock;
@@ -38,6 +41,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import api.support.builders.UserManualBlockBuilder;
 import org.awaitility.Awaitility;
 import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.domain.MultipleRecords;
@@ -179,6 +183,16 @@ public class RequestsAPICreationTests extends APITests {
 
     assertThat(tagsRepresentation.containsKey("tagList"), is(true));
     assertThat(tagsRepresentation.getJsonArray("tagList"), contains("new", "important"));
+
+    assertTrue(representation.getJsonObject("item").containsKey(CALL_NUMBER_COMPONENTS));
+
+    JsonObject callNumberComponents = representation
+      .getJsonObject("item")
+      .getJsonObject(CALL_NUMBER_COMPONENTS);
+
+    assertThat(callNumberComponents.getString("callNumber"), is("123456"));
+    assertFalse(callNumberComponents.containsKey("prefix"));
+    assertThat(callNumberComponents.getString("suffix"), is("CIRC"));
   }
 
   @Test
@@ -1903,6 +1917,187 @@ public class RequestsAPICreationTests extends APITests {
       .withPickupServicePointId(servicePointsFixture.cd1().getId()));
 
     assertThat(createdRequest.getResponse(), hasStatus(HTTP_CREATED));
+  }
+
+  @Test
+  public void cannotCreateRequestWhenRequestorHasActiveRequestManualBlocks()
+    throws InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    MalformedURLException {
+
+    final IndividualResource item = itemsFixture.basedUponSmallAngryPlanet();
+    final IndividualResource requester = usersFixture.rebecca();
+    final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
+    final DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
+    final DateTime now = ClockManager.getClockManager().getDateTime();
+    final DateTime expirationDate = now.plusDays(4);
+    final UserManualBlockBuilder userManualBlockBuilder = getManualBlockBuilder()
+        .withRequests(true)
+        .withExpirationDate(expirationDate)
+        .withUserId(String.valueOf(requester.getId()));
+    final RequestBuilder requestBuilder = createRequestBuilder(item, requester, pickupServicePointId, requestDate);
+
+    loansFixture.checkOutByBarcode(item, usersFixture.jessica());
+    userManualBlocksFixture.create(userManualBlockBuilder);
+
+    Response postResponse = requestsClient.attemptCreate(requestBuilder);
+
+    assertThat(postResponse, hasStatus(HTTP_VALIDATION_ERROR));
+    assertThat(postResponse.getJson(), hasErrorWith(allOf(
+      hasMessage("Patron blocked from requesting"))));
+      hasParameter("reason", "Display description");
+  }
+
+  @Test
+  public void canCreateRequestWhenRequestorNotHaveActiveManualBlocks()
+    throws InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    MalformedURLException {
+
+    final IndividualResource item = itemsFixture.basedUponSmallAngryPlanet();
+    final IndividualResource requester = usersFixture.rebecca();
+    final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
+    final DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
+    final DateTime now = ClockManager.getClockManager().getDateTime();
+    final DateTime expirationDate = now.plusDays(4);
+    final UserManualBlockBuilder userManualBlockBuilder = getManualBlockBuilder()
+      .withExpirationDate(expirationDate)
+      .withUserId(String.valueOf(requester.getId()));
+    final RequestBuilder requestBuilder = createRequestBuilder(item, requester, pickupServicePointId, requestDate);
+
+    loansFixture.checkOutByBarcode(item, usersFixture.jessica());
+
+    userManualBlocksFixture.create(userManualBlockBuilder);
+
+    Response postResponse = requestsClient.attemptCreate(requestBuilder);
+
+    assertThat(postResponse, hasStatus(HTTP_CREATED));
+  }
+
+  @Test
+  public void canCreateRequestWhenRequestorHasManualExpiredBlock()
+    throws InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    MalformedURLException {
+
+    final IndividualResource item = itemsFixture.basedUponSmallAngryPlanet();
+    final IndividualResource requester = usersFixture.rebecca();
+    final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
+    final DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
+    final DateTime now = ClockManager.getClockManager().getDateTime();
+    final DateTime expirationDate = now.minusDays(1);
+    final UserManualBlockBuilder userManualBlockBuilder = getManualBlockBuilder()
+      .withRequests(true)
+      .withExpirationDate(expirationDate)
+      .withUserId(String.valueOf(requester.getId()));
+    final RequestBuilder requestBuilder = createRequestBuilder(item, requester, pickupServicePointId, requestDate);
+
+    loansFixture.checkOutByBarcode(item, usersFixture.jessica());
+    userManualBlocksFixture.create(userManualBlockBuilder);
+
+    Response postResponse = requestsClient.attemptCreate(requestBuilder);
+
+    assertThat(postResponse, hasStatus(HTTP_CREATED));
+  }
+
+  @Test
+  public void canCreateRequestWhenRequestorNoHaveRequestBlockAndHaveBorrowingRenewalsBlock()
+    throws InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    MalformedURLException {
+
+    final IndividualResource item = itemsFixture.basedUponSmallAngryPlanet();
+    final IndividualResource requester = usersFixture.rebecca();
+    final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
+    final DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
+    final DateTime now = ClockManager.getClockManager().getDateTime();
+    final DateTime expirationDate = now.plusDays(7);
+    final UserManualBlockBuilder borrowingUserManualBlockBuilder = getManualBlockBuilder()
+      .withBorrowing(true)
+      .withExpirationDate(expirationDate)
+      .withUserId(String.valueOf(requester.getId()));
+    final UserManualBlockBuilder renewalsUserManualBlockBuilder =
+      getManualBlockBuilder()
+        .withRenewals(true)
+        .withExpirationDate(expirationDate)
+        .withUserId(String.valueOf(requester.getId()));
+    final RequestBuilder requestBuilder = createRequestBuilder(item, requester, pickupServicePointId, requestDate);
+
+    loansFixture.checkOutByBarcode(item, usersFixture.jessica());
+    userManualBlocksFixture.create(borrowingUserManualBlockBuilder);
+    userManualBlocksFixture.create(renewalsUserManualBlockBuilder);
+
+    Response postResponse = requestsClient.attemptCreate(requestBuilder);
+
+    assertThat(postResponse, hasStatus(HTTP_CREATED));
+  }
+
+  @Test
+  public void cannotCreateRequestWhenRequestorHasSomeActiveRequestManualBlocks()
+    throws InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    MalformedURLException {
+
+    final IndividualResource item = itemsFixture.basedUponSmallAngryPlanet();
+    final IndividualResource requester = usersFixture.rebecca();
+    final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
+    final DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
+    final DateTime now = ClockManager.getClockManager().getDateTime();
+    final DateTime expirationDate = now.plusDays(4);
+    final UserManualBlockBuilder requestUserManualBlockBuilder1 = getManualBlockBuilder()
+        .withRequests(true)
+        .withExpirationDate(expirationDate)
+        .withUserId(String.valueOf(requester.getId()));
+    final UserManualBlockBuilder requestUserManualBlockBuilder2 = getManualBlockBuilder()
+        .withBorrowing(true)
+        .withRenewals(true)
+        .withRequests(true)
+        .withExpirationDate(expirationDate)
+        .withUserId(String.valueOf(requester.getId()))
+        .withDesc("Test");
+    final RequestBuilder requestBuilder = createRequestBuilder(item, requester, pickupServicePointId, requestDate);
+
+    loansFixture.checkOutByBarcode(item, usersFixture.jessica());
+    userManualBlocksFixture.create(requestUserManualBlockBuilder1);
+    userManualBlocksFixture.create(requestUserManualBlockBuilder2);
+
+    Response postResponse = requestsClient.attemptCreate(requestBuilder);
+
+    assertThat(postResponse, hasStatus(HTTP_VALIDATION_ERROR));
+    assertThat(postResponse.getJson(), hasErrorWith(allOf(
+      hasMessage("Patron blocked from requesting"))));
+  }
+
+  private UserManualBlockBuilder getManualBlockBuilder() {
+    return new UserManualBlockBuilder()
+      .withType("Manual")
+      .withDesc("Display description")
+      .withStaffInformation("Staff information")
+      .withPatronMessage("Patron message")
+      .withId(UUID.randomUUID());
+  }
+
+  private RequestBuilder createRequestBuilder(IndividualResource item,
+                                              IndividualResource requester,
+                                              UUID pickupServicePointId,
+                                              DateTime requestDate) {
+    return new RequestBuilder()
+      .withId(UUID.randomUUID())
+      .open()
+      .recall()
+      .forItem(item)
+      .by(requester)
+      .withRequestDate(requestDate)
+      .fulfilToHoldShelf()
+      .withRequestExpiration(new LocalDate(2017, 7, 30))
+      .withHoldShelfExpiration(new LocalDate(2017, 8, 31))
+      .withPickupServicePointId(pickupServicePointId)
+      .withTags(new RequestBuilder.Tags(asList("new", "important")));
   }
 
   private void mockClockManagerToReturnFixedTime(DateTime dateTime) {

@@ -155,6 +155,11 @@ public class ResourceClient {
       "material types", "mtypes");
   }
 
+  public static ResourceClient forUserManualBlocks(OkapiHttpClient client) {
+    return new ResourceClient(client, subPath ->
+      InterfaceUrls.userManualBlocksStorageUrl(), "manualblocks", "manualblocks");
+  }
+
   public static ResourceClient forLoanTypes(OkapiHttpClient client) {
     return new ResourceClient(client, InterfaceUrls::loanTypesStorageUrl,
       "loan types", "loantypes");

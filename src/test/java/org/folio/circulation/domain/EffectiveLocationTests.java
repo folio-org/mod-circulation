@@ -16,17 +16,16 @@ public class EffectiveLocationTests extends APITests {
 
   @Test
   public void noLocations() {
-    final Item item = new Item(
-      new ItemBuilder()
-        .withNoPermanentLocation()
-        .withNoTemporaryLocation()
-        .create(),
+    final Item item = Item.from(new ItemBuilder()
+      .withNoPermanentLocation()
+      .withNoTemporaryLocation()
+      .create()
+    ).withHoldingsRecord(
       new HoldingBuilder()
         .withNoPermanentLocation()
         .withNoTemporaryLocation()
-        .create(),
-        instanceBuilder().create(),
-        null, null, null, null, null);
+        .create()
+    ).withInstance(instanceBuilder().create());
 
     assertThat(item.getLocationId(), nullValue());
   }
@@ -35,14 +34,12 @@ public class EffectiveLocationTests extends APITests {
   public void noItem() {
     final UUID secondFloorEconomicsLocationId = UUID.randomUUID();
 
-    final Item item = new Item(
-      null,
-      new HoldingBuilder()
+    final Item item = Item.from(null)
+      .withHoldingsRecord(new HoldingBuilder()
         .withPermanentLocation(secondFloorEconomicsLocationId)
         .withNoTemporaryLocation()
-        .create(),
-        instanceBuilder().create(),
-        null, null, null, null, null);
+        .create()
+      ).withInstance(instanceBuilder().create());
 
     assertThat(item.getLocationId(), nullValue());
   }

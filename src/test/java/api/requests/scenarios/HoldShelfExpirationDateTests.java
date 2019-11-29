@@ -9,6 +9,7 @@ import static api.support.builders.RequestBuilder.OPEN_IN_TRANSIT;
 import static api.support.builders.RequestBuilder.OPEN_NOT_YET_FILLED;
 import static api.support.matchers.ItemStatusCodeMatcher.hasItemStatus;
 import static api.support.matchers.ResponseStatusCodeMatcher.hasStatus;
+import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static org.folio.HttpStatus.HTTP_OK;
 import static org.folio.circulation.support.utils.DateTimeUtil.atEndOfTheDay;
 import static org.hamcrest.CoreMatchers.is;
@@ -22,7 +23,6 @@ import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
@@ -95,11 +95,11 @@ public class HoldShelfExpirationDateTests extends APITests{
     final JsonObject storedRequest = requestsClient.getById(request.getId()).getJson();
 
     assertThat("request status snapshot in storage is " + OPEN_AWAITING_PICKUP,
-        storedRequest.getString("status"), is(OPEN_AWAITING_PICKUP));
+      storedRequest.getString("status"), is(OPEN_AWAITING_PICKUP));
 
     assertThat("request hold shelf expiration date is " + amount + " " + interval.toString() + " in the future",
       storedRequest.getString("holdShelfExpirationDate"),
-      is(toIsoString(interval.addTo(ZonedDateTime.now(clock), amount))));
+      isEquivalentTo(interval.addTo(ZonedDateTime.now(clock), amount)));
   }
 
   @Test
@@ -144,7 +144,7 @@ public class HoldShelfExpirationDateTests extends APITests{
 
     assertThat("request hold shelf expiration date is " + amount + " " + interval.toString() + " in the future",
       storedRequest.getString("holdShelfExpirationDate"),
-      is(toIsoString(expectedExpirationDate)));
+      isEquivalentTo(expectedExpirationDate));
   }
 
   @Test
@@ -182,7 +182,7 @@ public class HoldShelfExpirationDateTests extends APITests{
 
     assertThat(storedRequest.getString("status"), is(OPEN_AWAITING_PICKUP));
     assertThat(storedRequest.getString("holdShelfExpirationDate"),
-      is(toIsoString(expectedExpirationDate)));
+      isEquivalentTo(expectedExpirationDate));
   }
 
   @Test
@@ -220,7 +220,7 @@ public class HoldShelfExpirationDateTests extends APITests{
 
     assertThat(storedRequest.getString("status"), is(OPEN_AWAITING_PICKUP));
     assertThat(storedRequest.getString("holdShelfExpirationDate"),
-      is(toIsoString(expectedExpirationDate)));
+      isEquivalentTo(expectedExpirationDate));
   }
 
   @Test
@@ -257,8 +257,8 @@ public class HoldShelfExpirationDateTests extends APITests{
       ChronoUnit.DAYS.addTo(ZonedDateTime.now(clock), 30));
 
     assertThat("request hold shelf expiration date is 30 days in the future",
-      storedRequest.getString("holdShelfExpirationDate"), is(
-        expectedExpirationDate.format(DateTimeFormatter.ISO_INSTANT)));
+      storedRequest.getString("holdShelfExpirationDate"),
+      isEquivalentTo(expectedExpirationDate));
 
     Clock not30Days = Clock.fixed(Instant.EPOCH, ZoneOffset.UTC);
 
@@ -282,8 +282,8 @@ public class HoldShelfExpirationDateTests extends APITests{
       ChronoUnit.DAYS.addTo(ZonedDateTime.now(clock), 30));
 
     assertThat("request hold shelf expiration date is 30 days in the future and has not been updated",
-        storedRequest.getString("holdShelfExpirationDate"),
-      is(expectedExpirationDateAfterUpdate.format(DateTimeFormatter.ISO_INSTANT)));
+      storedRequest.getString("holdShelfExpirationDate"),
+      isEquivalentTo(expectedExpirationDateAfterUpdate));
   }
 
   @Test
@@ -313,17 +313,17 @@ public class HoldShelfExpirationDateTests extends APITests{
     JsonObject storedRequest = requestsClient.getById(request.getId()).getJson();
 
     assertThat("Item status snapshot in storage is " + AWAITING_PICKUP,
-        nod, hasItemStatus(AWAITING_PICKUP));
+      nod, hasItemStatus(AWAITING_PICKUP));
 
     assertThat("request status snapshot in storage is " + OPEN_AWAITING_PICKUP,
-        storedRequest.getString("status"), is(OPEN_AWAITING_PICKUP));
+      storedRequest.getString("status"), is(OPEN_AWAITING_PICKUP));
 
     final ZonedDateTime expectedExpirationDate = atEndOfTheDay(
       ChronoUnit.DAYS.addTo(ZonedDateTime.now(clock), 30));
 
     assertThat("request hold shelf expiration date is 30 days in the future",
       storedRequest.getString("holdShelfExpirationDate"),
-      is(expectedExpirationDate.format(DateTimeFormatter.ISO_INSTANT)));
+      isEquivalentTo(expectedExpirationDate));
 
     loansFixture.checkInByBarcode(
         new CheckInByBarcodeRequestBuilder()
@@ -333,10 +333,10 @@ public class HoldShelfExpirationDateTests extends APITests{
     final JsonObject storedSecondCheckInRequest = requestsClient.getById(request.getId()).getJson();
 
     assertThat("request status snapshot in storage is " + OPEN_IN_TRANSIT,
-        storedSecondCheckInRequest.getString("status"), is(OPEN_IN_TRANSIT));
+      storedSecondCheckInRequest.getString("status"), is(OPEN_IN_TRANSIT));
 
     assertThat("request hold shelf expiration date is not set",
-        storedSecondCheckInRequest.getString("holdShelfExpirationDate"), emptyOrNullString());
+      storedSecondCheckInRequest.getString("holdShelfExpirationDate"), emptyOrNullString());
   }
 
   @Test
@@ -366,14 +366,14 @@ public class HoldShelfExpirationDateTests extends APITests{
     final JsonObject storedRequest = getByIdResponse.getJson();
 
     assertThat("request status snapshot in storage is " + OPEN_AWAITING_PICKUP,
-        storedRequest.getString("status"), is(OPEN_AWAITING_PICKUP));
+      storedRequest.getString("status"), is(OPEN_AWAITING_PICKUP));
 
     final ZonedDateTime expectedExpirationDate = atEndOfTheDay(
       ChronoUnit.DAYS.addTo(ZonedDateTime.now(clock), 30));
 
     assertThat("request hold shelf expiration date is 30 days in the future",
       storedRequest.getString("holdShelfExpirationDate"),
-      is(expectedExpirationDate.format(DateTimeFormatter.ISO_INSTANT)));
+      isEquivalentTo(expectedExpirationDate));
   }
 
   @Test
@@ -398,10 +398,10 @@ public class HoldShelfExpirationDateTests extends APITests{
     JsonObject storedRequest = requestsClient.getById(request.getId()).getJson();
 
     assertThat("Item status snapshot in storage is " + CHECKED_OUT,
-        nod, hasItemStatus(CHECKED_OUT));
+      nod, hasItemStatus(CHECKED_OUT));
 
     assertThat("request status snapshot in storage is " + OPEN_NOT_YET_FILLED,
-        storedRequest.getString("status"), is(OPEN_NOT_YET_FILLED));
+      storedRequest.getString("status"), is(OPEN_NOT_YET_FILLED));
 
     loansFixture.checkInByBarcode(
       new CheckInByBarcodeRequestBuilder()
@@ -411,10 +411,10 @@ public class HoldShelfExpirationDateTests extends APITests{
     storedRequest = requestsClient.getById(request.getId()).getJson();
 
     assertThat("request status snapshot in storage is " + OPEN_IN_TRANSIT,
-        storedRequest.getString("status"), is(OPEN_IN_TRANSIT));
+      storedRequest.getString("status"), is(OPEN_IN_TRANSIT));
 
     assertThat("request hold shelf expiration date is not set",
-        storedRequest.getString("holdShelfExpirationDate"), emptyOrNullString());
+      storedRequest.getString("holdShelfExpirationDate"), emptyOrNullString());
   }
 
   @Test
@@ -438,10 +438,10 @@ public class HoldShelfExpirationDateTests extends APITests{
     JsonObject storedRequest = requestsClient.getById(request.getId()).getJson();
 
     assertThat("Item status snapshot in storage is " + PAGED,
-        nod, hasItemStatus(PAGED));
+      nod, hasItemStatus(PAGED));
 
     assertThat("request status snapshot in storage is " + OPEN_NOT_YET_FILLED,
-        storedRequest.getString("status"), is(OPEN_NOT_YET_FILLED));
+      storedRequest.getString("status"), is(OPEN_NOT_YET_FILLED));
 
     loansFixture.checkInByBarcode(
       new CheckInByBarcodeRequestBuilder()
@@ -451,10 +451,10 @@ public class HoldShelfExpirationDateTests extends APITests{
     storedRequest = requestsClient.getById(request.getId()).getJson();
 
     assertThat("request status snapshot in storage is " + OPEN_IN_TRANSIT,
-        storedRequest.getString("status"), is(OPEN_IN_TRANSIT));
+      storedRequest.getString("status"), is(OPEN_IN_TRANSIT));
 
     assertThat("request hold shelf expiration date is not set",
-        storedRequest.getString("holdShelfExpirationDate"), emptyOrNullString());
+      storedRequest.getString("holdShelfExpirationDate"), emptyOrNullString());
   }
 
   @Test
@@ -485,13 +485,13 @@ public class HoldShelfExpirationDateTests extends APITests{
     JsonObject storedRequest = requestsClient.getById(request.getId()).getJson();
 
     assertThat("Item status snapshot in storage is " + IN_TRANSIT,
-        nod, hasItemStatus(IN_TRANSIT));
+      nod, hasItemStatus(IN_TRANSIT));
 
     assertThat("request status snapshot in storage is " + OPEN_IN_TRANSIT,
-        storedRequest.getString("status"), is(OPEN_IN_TRANSIT));
+      storedRequest.getString("status"), is(OPEN_IN_TRANSIT));
 
     assertThat("request hold shelf expiration date is not set",
-        storedRequest.getString("holdShelfExpirationDate"), emptyOrNullString());
+      storedRequest.getString("holdShelfExpirationDate"), emptyOrNullString());
 
     loansFixture.checkInByBarcode(
         new CheckInByBarcodeRequestBuilder()
@@ -503,16 +503,12 @@ public class HoldShelfExpirationDateTests extends APITests{
     storedRequest = requestsClient.getById(request.getId()).getJson();
 
     assertThat("Item status snapshot in storage is " + IN_TRANSIT,
-        nod, hasItemStatus(IN_TRANSIT));
+      nod, hasItemStatus(IN_TRANSIT));
 
     assertThat("request status snapshot in storage is " + OPEN_IN_TRANSIT,
-        storedRequest.getString("status"), is(OPEN_IN_TRANSIT));
+      storedRequest.getString("status"), is(OPEN_IN_TRANSIT));
 
     assertThat("request hold shelf expiration date is not set",
-        storedRequest.getString("holdShelfExpirationDate"), emptyOrNullString());
-  }
-
-  private String toIsoString(ZonedDateTime dateTime) {
-    return dateTime.format(DateTimeFormatter.ISO_INSTANT);
+      storedRequest.getString("holdShelfExpirationDate"), emptyOrNullString());
   }
 }
