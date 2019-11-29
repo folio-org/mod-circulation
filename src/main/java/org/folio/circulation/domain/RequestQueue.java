@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
@@ -18,7 +19,10 @@ public class RequestQueue {
 
     // Ordering requests by position, so we can add and remove them
     // without sorting and just re-sequence from 1 to n
-    this.requests.sort(Comparator.comparingInt(Request::getPosition));
+    this.requests.sort(Comparator
+      .comparingInt(request -> Optional.ofNullable(request.getPosition())
+        .orElse(0)
+      ));
   }
 
   ItemStatus checkedInItemStatus() {
