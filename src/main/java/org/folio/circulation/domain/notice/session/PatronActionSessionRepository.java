@@ -117,7 +117,7 @@ public class PatronActionSessionRepository {
 
     Result<CqlQuery> sessionsQuery = exactMatch(PATRON_ID, patronId);
 
-    if(notAllPatronActionType(actionType)) {
+    if (isPatronActionTypeSpecified(actionType)) {
       final Result<CqlQuery> actionTypeQuery = exactMatch(ACTION_TYPE, actionType.getRepresentation());
       sessionsQuery = sessionsQuery.combine(actionTypeQuery, CqlQuery::and);
     }
@@ -128,7 +128,7 @@ public class PatronActionSessionRepository {
         () -> userRepository.getUser(patronId), this::setUserForLoans));
   }
 
-  private boolean notAllPatronActionType(PatronActionType actionType) {
+  private boolean isPatronActionTypeSpecified(PatronActionType actionType) {
     return !PatronActionType.ALL.equals(actionType);
   }
 

@@ -53,7 +53,7 @@ public class EndExpiredPatronActionSessionTests extends APITests {
   }
 
   @Test
-  public void expiredEndSessionAfterCheckIn()
+  public void patronHasSomeSessionsAndOnlySessionsWithSameActionTypeShouldBeExpiredByTimeout()
     throws InterruptedException,
     MalformedURLException,
     TimeoutException,
@@ -86,7 +86,43 @@ public class EndExpiredPatronActionSessionTests extends APITests {
     expiredSessionProcessingClient.runRequestExpiredSessionsProcessing(204);
     Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
-      .until(patronSessionRecordsClient::getAll, empty());
+      .until(patronSessionRecordsClient::getAll,  Matchers.hasSize(2));
+  }
+
+  @Test
+  public void patronHasSeveralSessionsAndOnlyOneShouldBeExpiredByTimeout()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    IndividualResource james = usersFixture.james();
+    InventoryItemResource nod = itemsFixture.basedUponNod();
+    InventoryItemResource interestingTimes = itemsFixture.basedUponInterestingTimes();
+
+    loansFixture.checkOutByBarcode(nod, james);
+    loansFixture.checkOutByBarcode(interestingTimes, james);
+    loansFixture.checkInByBarcode(nod);
+    expiredEndSessionClient.deleteAll();
+
+    List<JsonObject> sessions = patronSessionRecordsClient.getAll();
+    assertThat(sessions, Matchers.hasSize(3));
+
+    String patronId = sessions.stream()
+      .filter(session -> session.getMap().get("actionType")
+        .equals(PatronActionType.CHECK_IN.getRepresentation()))
+      .findFirst()
+      .map(session -> session.getString("patronId"))
+      .orElse("");
+
+    expiredEndSessionClient.create(new EndSessionBuilder()
+      .withPatronId(patronId)
+      .withActionType("Check-in"));
+
+    expiredSessionProcessingClient.runRequestExpiredSessionsProcessing(204);
+    Awaitility.await()
+      .atMost(1, TimeUnit.SECONDS)
+      .until(patronSessionRecordsClient::getAll,  Matchers.hasSize(2));
   }
 
   @Test
