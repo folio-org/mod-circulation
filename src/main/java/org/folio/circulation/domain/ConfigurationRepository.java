@@ -2,17 +2,21 @@ package org.folio.circulation.domain;
 
 import static org.folio.circulation.domain.MultipleRecords.from;
 import static org.folio.circulation.support.CqlQuery.exactMatch;
+import static org.folio.circulation.support.Result.failed;
+import static org.folio.circulation.support.Result.succeeded;
+import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 
-import io.vertx.core.json.JsonObject;
 import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
+import io.vertx.core.json.JsonObject;
 import org.folio.circulation.domain.anonymization.config.LoanAnonymizationConfiguration;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.CqlQuery;
 import org.folio.circulation.support.Result;
+import org.folio.circulation.support.http.client.Response;
 import org.joda.time.DateTimeZone;
 
 public class ConfigurationRepository {
@@ -48,6 +52,7 @@ public class ConfigurationRepository {
   public CompletableFuture<Result<LoanAnonymizationConfiguration>> loanHistoryConfiguration() {
     return defineModuleNameAndConfigNameFilter("LOAN_HISTORY", "loan_history")
       .after(query -> configurationClient.getMany(query, DEFAULT_PAGE_LIMIT))
+      .thenApply(a-> a.next(this::refuseWhenNoConfigurationsFound))
       .thenApply(result -> result.next(response -> from(response, Configuration::new, CONFIGS_KEY)))
       .thenApply(r -> r.next(r1 -> r.map(MultipleRecords::getRecords)))
       .thenApply(r -> r.map(this::getFirstConfiguration));
@@ -60,6 +65,15 @@ public class ConfigurationRepository {
       .orElse("");
 
     return LoanAnonymizationConfiguration.from(new JsonObject(period));
+  }
+
+  private Result<Response> refuseWhenNoConfigurationsFound(Response response) {
+    if (response.getJson().getInteger("totalRecords") == 0){
+      return
+        failed(singleValidationError("No configuration found for loan anonymization ", "moduleName", "LOAN_HISTORY"));
+    }
+
+    return succeeded(response);
   }
 
   public CompletableFuture<Result<DateTimeZone>> findTimeZoneConfiguration() {
