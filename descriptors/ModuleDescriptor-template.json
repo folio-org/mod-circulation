@@ -616,7 +616,7 @@
             "POST"
           ],
           "pathPattern": "/circulation/scheduled-anonymize-processing",
-          "modulePermissions": "modperms.circulation.scheduled.anonymize.processing.post",
+          "modulePermissions": ["modperms.circulation.scheduled.anonymize.processing.post"],
           "unit": "minute",
           "delay": "1"
         }
