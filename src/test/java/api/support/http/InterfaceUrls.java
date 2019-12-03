@@ -124,6 +124,10 @@ public class InterfaceUrls {
     return circulationModuleUrl("/inventory-reports/items-in-transit");
   }
 
+   static URL pickSlipsUrl(String servicePointId) {
+    return circulationModuleUrl("/circulation/pick-slips"  + servicePointId);
+  }
+
   public static URL requestQueueUrl(UUID itemId) {
     return requestsUrl(String.format("/queue/%s", itemId));
   }
