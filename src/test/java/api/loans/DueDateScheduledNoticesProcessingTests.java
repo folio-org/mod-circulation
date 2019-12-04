@@ -318,6 +318,107 @@ public class DueDateScheduledNoticesProcessingTests extends APITests {
     assertThat(unprocessedScheduledNotices, hasSize(expectedNumberOfUnprocessedNotices));
   }
 
+  @Test
+  public void testNoticeIsDeletedIfReferencedLoanDoesNotExist()
+      throws MalformedURLException,
+      InterruptedException,
+      TimeoutException,
+      ExecutionException {
+
+    scheduledNoticesClient.deleteAll();
+    int expectedNumberOfUnprocessedNotices = 0;
+
+    JsonObject brokenNotice = createNoticesOverTime(dueDate.minusMinutes(1)::minusHours, 1).get(0);
+    brokenNotice.put("loanId", UUID.randomUUID().toString());
+
+    scheduledNoticesClient.create(brokenNotice);
+    scheduledNoticeProcessingClient.runDueDateNoticesProcessing(dueDate.minusSeconds(1));
+
+    checkSentNotices();
+
+    List<JsonObject> unprocessedScheduledNotices = scheduledNoticesClient.getAll();
+    assertThat(unprocessedScheduledNotices, hasSize(expectedNumberOfUnprocessedNotices));
+  }
+
+  @Test
+  public void testNoticeIsDeletedIfReferencedItemDoesNotExist()
+      throws MalformedURLException,
+      InterruptedException,
+      TimeoutException,
+      ExecutionException {
+
+    scheduledNoticesClient.deleteAll();
+    int expectedNumberOfUnprocessedNotices = 0;
+
+    JsonObject brokenNotice = createNoticesOverTime(dueDate.minusMinutes(1)::minusHours, 1).get(0);
+
+    itemsClient.delete(item);
+
+    scheduledNoticesClient.create(brokenNotice);
+    scheduledNoticeProcessingClient.runDueDateNoticesProcessing(dueDate.minusSeconds(1));
+
+    checkSentNotices();
+
+    List<JsonObject> unprocessedScheduledNotices = scheduledNoticesClient.getAll();
+    assertThat(unprocessedScheduledNotices, hasSize(expectedNumberOfUnprocessedNotices));
+  }
+
+  @Test
+  public void testNoticeIsDeletedIfReferencedUserDoesNotExist()
+      throws MalformedURLException,
+      InterruptedException,
+      TimeoutException,
+      ExecutionException {
+
+    scheduledNoticesClient.deleteAll();
+    int expectedNumberOfUnprocessedNotices = 0;
+
+    JsonObject brokenNotice = createNoticesOverTime(dueDate.minusMinutes(1)::minusHours, 1).get(0);
+
+    usersClient.delete(borrower);
+
+    scheduledNoticesClient.create(brokenNotice);
+    scheduledNoticeProcessingClient.runDueDateNoticesProcessing(dueDate.minusSeconds(1));
+
+    checkSentNotices();
+
+    List<JsonObject> unprocessedScheduledNotices = scheduledNoticesClient.getAll();
+    assertThat(unprocessedScheduledNotices, hasSize(expectedNumberOfUnprocessedNotices));
+  }
+
+  @Test
+  public void testNoticesForNonExistentLoansDoNotBlockTheQueue()
+      throws MalformedURLException,
+      InterruptedException,
+      TimeoutException,
+      ExecutionException {
+
+    scheduledNoticesClient.deleteAll();
+    int expectedNumberOfUnprocessedNotices = 0;
+
+    List<JsonObject> notices = createNoticesOverTime(dueDate.minusMinutes(1)::minusHours, 4);
+
+    notices.get(0).put("loanId", UUID.randomUUID().toString());
+    notices.get(2).put("loanId", UUID.randomUUID().toString());
+
+    for (JsonObject notice : notices) {
+      scheduledNoticesClient.create(notice);
+    }
+
+    scheduledNoticeProcessingClient.runDueDateNoticesProcessing(dueDate.minusSeconds(1));
+
+    UUID expectedSentTemplateId1 = UUID.fromString(
+        notices.get(1).getJsonObject("noticeConfig").getString("templateId"));
+
+    UUID expectedSentTemplateId2 = UUID.fromString(
+        notices.get(3).getJsonObject("noticeConfig").getString("templateId"));
+
+    checkSentNotices(expectedSentTemplateId1, expectedSentTemplateId2);
+
+    List<JsonObject> unprocessedScheduledNotices = scheduledNoticesClient.getAll();
+    assertThat(unprocessedScheduledNotices, hasSize(expectedNumberOfUnprocessedNotices));
+  }
+
   private void createNotices(int numberOfNotices)
     throws MalformedURLException,
     InterruptedException,
