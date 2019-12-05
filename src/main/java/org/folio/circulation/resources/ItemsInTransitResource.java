@@ -116,7 +116,8 @@ public class ItemsInTransitResource extends Resource {
       .thenComposeAsync(itemRepository::fetchItemRelatedRecords)
       .thenComposeAsync(result -> result
         .combineAfter(currentItem -> servicePointRepository
-          .getServicePointById(currentItem.getInTransitDestinationServicePointId()), Item::updateDestinationServicePoint))
+          .getServicePointById(currentItem.getInTransitDestinationServicePointId()),
+          Item::updateDestinationServicePoint))
       .thenComposeAsync(result -> result
         .combineAfter(currentItem -> servicePointRepository
           .getServicePointById(currentItem.getLastCheckInServicePointId()),
