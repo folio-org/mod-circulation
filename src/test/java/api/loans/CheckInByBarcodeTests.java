@@ -378,7 +378,7 @@ public class CheckInByBarcodeTests extends APITests {
   }
 
   @Test
-  public void patronNoticeOnCheckInIsSentWhenCheckInLoanNoticeIsDefinedAndLoanExists()
+  public void patronNoticeOnCheckInIsNotSentWhenCheckInLoanNoticeIsDefinedAndLoanExists()
     throws InterruptedException,
     MalformedURLException,
     TimeoutException,
@@ -425,20 +425,8 @@ public class CheckInByBarcodeTests extends APITests {
     assertThat("Closed loan should be present",
       loanRepresentation, notNullValue());
 
-    Awaitility.await()
-      .atMost(1, TimeUnit.SECONDS)
-      .until(patronNoticesClient::getAll, hasSize(1));
-    List<JsonObject> sentNotices = patronNoticesClient.getAll();
-
-    Map<String, Matcher<String>> noticeContextMatchers = new HashMap<>();
-    noticeContextMatchers.putAll(TemplateContextMatchers.getUserContextMatchers(james));
-    noticeContextMatchers.putAll(TemplateContextMatchers.getItemContextMatchers(nod, true));
-    noticeContextMatchers.putAll(TemplateContextMatchers.getLoanContextMatchers(checkInResponse.getLoan()));
-    noticeContextMatchers.put("loan.checkedInDate",
-      withinSecondsAfter(Seconds.seconds(10), checkInDate));
-    MatcherAssert.assertThat(sentNotices,
-      hasItems(
-        hasEmailNoticeProperties(james.getId(), checkInTemplateId, noticeContextMatchers)));
+    TimeUnit.SECONDS.sleep(1);
+    assertThat(patronNoticesClient.getAll(), hasSize(0));
   }
 
   @Test
