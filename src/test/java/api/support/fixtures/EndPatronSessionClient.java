@@ -6,6 +6,7 @@ import static api.support.http.InterfaceUrls.endSessionUrl;
 
 import java.util.UUID;
 
+import io.vertx.core.json.JsonArray;
 import org.folio.circulation.support.http.client.Response;
 
 import io.vertx.core.json.JsonObject;
@@ -27,8 +28,8 @@ public class EndPatronSessionClient {
     JsonObject body = new JsonObject()
       .put("patronId", patronId.toString())
       .put("actionType", actionType);
-
-    endPatronSession(body);
+    JsonArray jsonArray = new JsonArray().add(body);
+    endPatronSession(new JsonObject().put("endSessions", jsonArray));
   }
 
   private void endPatronSession(JsonObject body) {
