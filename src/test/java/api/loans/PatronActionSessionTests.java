@@ -29,6 +29,7 @@ import api.support.builders.CheckInByBarcodeRequestBuilder;
 import api.support.builders.NoticeConfigurationBuilder;
 import api.support.builders.NoticePolicyBuilder;
 import api.support.http.InventoryItemResource;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import org.apache.commons.lang3.tuple.Pair;
 import org.awaitility.Awaitility;
@@ -78,7 +79,7 @@ public class PatronActionSessionTests extends APITests {
   public void cannotEndSessionWhenPatronIdIsNotSpecified() {
     JsonObject body = new JsonObject()
       .put("actionType", "Check-out");
-    Response response = endPatronSessionClient.attemptEndPatronSession(body);
+    Response response = endPatronSessionClient.attemptEndPatronSession(wrapInObjectWithArray(body));
 
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("End patron session request must have patron id"))));
@@ -88,7 +89,7 @@ public class PatronActionSessionTests extends APITests {
   public void cannotEndSessionWhenActionTypeIsNotSpecified() {
     JsonObject body = new JsonObject()
       .put("patronId", UUID.randomUUID().toString());
-    Response response = endPatronSessionClient.attemptEndPatronSession(body);
+    Response response = endPatronSessionClient.attemptEndPatronSession(wrapInObjectWithArray(body));
 
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("End patron session request must have action type"))));
@@ -101,7 +102,7 @@ public class PatronActionSessionTests extends APITests {
     JsonObject body = new JsonObject()
       .put("patronId", UUID.randomUUID().toString())
       .put("actionType", invalidActionType);
-    Response response = endPatronSessionClient.attemptEndPatronSession(body);
+    Response response = endPatronSessionClient.attemptEndPatronSession(wrapInObjectWithArray(body));
 
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("Invalid patron action type value"),
@@ -264,5 +265,10 @@ public class PatronActionSessionTests extends APITests {
     return patronSessionRecordsClient.getAll().stream()
       .filter(isCheckInSession)
       .collect(Collectors.toList());
+  }
+
+  private JsonObject wrapInObjectWithArray(JsonObject body) {
+    JsonArray jsonArray = new JsonArray().add(body);
+    return new JsonObject().put("endSessions", jsonArray);
   }
 }

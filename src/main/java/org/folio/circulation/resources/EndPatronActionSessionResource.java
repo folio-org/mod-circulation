@@ -12,6 +12,8 @@ import io.vertx.core.http.HttpClient;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 
+import java.util.List;
+
 public class EndPatronActionSessionResource extends Resource {
 
   public EndPatronActionSessionResource(HttpClient client) {
@@ -32,18 +34,20 @@ public class EndPatronActionSessionResource extends Resource {
     PatronActionSessionService patronActionSessionService =
       PatronActionSessionService.using(clients);
 
-    Result<EndPatronSessionRequest> endSessionRequestResult =
+    List<Result<EndPatronSessionRequest>> resultListOfEndSessionRequestResult =
       EndPatronSessionRequest.from(routingContext.getBodyAsJson());
 
-    if (endSessionRequestResult.failed()) {
-      endSessionRequestResult.cause().writeTo(routingContext.response());
-    } else {
-      EndPatronSessionRequest endSessionRequest = endSessionRequestResult.value();
-      patronActionSessionService.endSession(
-        endSessionRequest.getPatronId(),
-        endSessionRequest.getActionType());
+    for (Result<EndPatronSessionRequest> result : resultListOfEndSessionRequestResult) {
+      if (result.failed()) {
+        result.cause().writeTo(routingContext.response());
+      } else {
+        EndPatronSessionRequest endSessionRequest = result.value();
+        patronActionSessionService.endSession(
+          endSessionRequest.getPatronId(),
+          endSessionRequest.getActionType());
 
-      new NoContentResult().writeTo(routingContext.response());
+        new NoContentResult().writeTo(routingContext.response());
+      }
     }
   }
 }

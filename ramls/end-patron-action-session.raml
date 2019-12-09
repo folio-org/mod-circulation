@@ -10,7 +10,7 @@ documentation:
 
 types:
   errors: !include raml-util/schemas/errors.schema
-  end-patron-action-session-request: !include end-patron-action-session-request.json
+  end-patron-action-session-requests: !include end-patron-action-session-requests.json
 
 traits:
   validate: !include raml-util/traits/validation.raml
@@ -22,11 +22,11 @@ traits:
       is: [validate]
       body:
         application/json:
-          type: end-patron-action-session-request
-          example: !include examples/end-patron-action-session-request.json
+          type: end-patron-action-session-requests
+          example: !include examples/end-patron-action-session-requests.json
       responses:
         204:
-          description: "Session has been successfully ended"
+          description: "Sessions have been successfully ended"
         500:
           description: "Internal server error"
           body:
