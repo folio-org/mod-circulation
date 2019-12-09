@@ -1,0 +1,23 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "type": "object",
+  "description": "List of requests to end patron action sessions",
+  "properties": {
+    "endSessions": {
+      "description": "List of requests to end patron action sessions",
+      "id": "endSessions",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "$ref": "end-patron-action-session-request.json"
+      }
+    },
+    "totalRecords": {
+      "type": "integer"
+    }
+  },
+  "required": [
+    "endSessions",
+    "totalRecords"
+  ]
+}
