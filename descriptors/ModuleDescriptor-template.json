@@ -1177,7 +1177,8 @@
         "circulation-storage.patron-notice-policies.item.get",
         "patron-notice.post",
         "circulation.rules.notice-policy.get",
-        "inventory-storage.loan-types.item.get"
+        "inventory-storage.loan-types.item.get",
+        "patron-action-session-storage.patron-action-sessions.item.post"
       ],
       "visible": false
     },
