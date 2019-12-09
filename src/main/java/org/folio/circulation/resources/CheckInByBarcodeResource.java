@@ -14,7 +14,6 @@ import org.folio.circulation.domain.UpdateRequestQueue;
 import org.folio.circulation.domain.UserRepository;
 import org.folio.circulation.domain.notice.PatronNoticeService;
 import org.folio.circulation.domain.notice.schedule.RequestScheduledNoticeService;
-import org.folio.circulation.domain.notice.session.PatronActionSessionService;
 import org.folio.circulation.domain.policy.PatronNoticePolicyRepository;
 import org.folio.circulation.domain.representations.CheckInByBarcodeRequest;
 import org.folio.circulation.domain.representations.CheckInByBarcodeResponse;
@@ -86,9 +85,6 @@ public class CheckInByBarcodeResource extends Resource {
     final RequestScheduledNoticeService requestScheduledNoticeService =
       RequestScheduledNoticeService.using(clients);
 
-    final PatronActionSessionService patronActionSessionService =
-      PatronActionSessionService.using(clients);
-
     checkInRequestResult
       .map(CheckInProcessRecords::new)
       .combineAfter(processAdapter::findItem, CheckInProcessRecords::withItem)
@@ -116,8 +112,7 @@ public class CheckInByBarcodeResource extends Resource {
         processAdapter::getAddressType, CheckInProcessRecords::withHighestPriorityFulfillableRequest))
       .thenComposeAsync(updateItemResult -> updateItemResult.combineAfter(
         processAdapter::updateLoan, CheckInProcessRecords::withLoan))
-      .thenComposeAsync(updateItemResult -> updateItemResult.after(
-        patronActionSessionService::saveCheckInSessionRecord))
+      .thenApply(updateItemResult -> updateItemResult.next(processAdapter::sendCheckInPatronNotice))
       .thenApply(r -> r.next(requestScheduledNoticeService::rescheduleRequestNotices))
       .thenApply(CheckInByBarcodeResponse::from)
       .thenAccept(r -> r.writeTo(routingContext.response()));
