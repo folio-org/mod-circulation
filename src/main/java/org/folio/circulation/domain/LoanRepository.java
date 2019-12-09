@@ -335,7 +335,7 @@ public class LoanRepository {
       .withLoan(loanMap.getOrDefault(request.getItemId(), null));
   }
 
-  public CompletableFuture<Result<MultipleRecords<Loan>>> findOpenLoansByUserId(
+  public CompletableFuture<Result<MultipleRecords<Loan>>> findOpenLoansByUserIdAndLoanPolicyId(
     LoanAndRelatedRecords loanAndRelatedRecords) {
     String userId = loanAndRelatedRecords.getLoan().getUser().getId();
     String loanPolicyId = loanAndRelatedRecords.getLoan().getLoanPolicy().getId();

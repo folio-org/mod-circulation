@@ -38,7 +38,7 @@ public class ItemLimitValidator {
 
   private CompletableFuture<Result<Boolean>> isLimitReached(LoanAndRelatedRecords records, int itemLimit) {
 
-    return loanRepository.findOpenLoansByUserId(records)
+    return loanRepository.findOpenLoansByUserIdAndLoanPolicyId(records)
       .thenApply(r -> r.map(loans -> loans.getTotalRecords() >= itemLimit));
   }
 }
