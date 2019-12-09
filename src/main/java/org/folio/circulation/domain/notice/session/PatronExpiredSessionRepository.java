@@ -52,6 +52,6 @@ public class PatronExpiredSessionRepository {
 
     return PatronActionType.from(actionType)
       .map(patronActionType -> new ExpiredSession(patronId, patronActionType))
-      .get();
+      .orElse(new ExpiredSession());
   }
 }
