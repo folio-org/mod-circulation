@@ -9,38 +9,43 @@ import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static api.support.matchers.ValidationErrorMatchers.hasParameter;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.hasItems;
+import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.hasSize;
 
 import java.net.MalformedURLException;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
+import api.support.APITests;
+import api.support.builders.CheckInByBarcodeRequestBuilder;
+import api.support.builders.NoticeConfigurationBuilder;
+import api.support.builders.NoticePolicyBuilder;
+import api.support.http.InventoryItemResource;
+import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
 import org.apache.commons.lang3.tuple.Pair;
 import org.awaitility.Awaitility;
-import org.folio.circulation.support.http.client.IndividualResource;
-import org.folio.circulation.support.http.client.Response;
 import org.hamcrest.Matcher;
 import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
 import org.junit.Before;
 import org.junit.Test;
 
-import api.support.APITests;
-import api.support.builders.NoticeConfigurationBuilder;
-import api.support.builders.NoticePolicyBuilder;
-import api.support.http.InventoryItemResource;
-import io.vertx.core.json.JsonObject;
+import org.folio.circulation.support.http.client.IndividualResource;
+import org.folio.circulation.support.http.client.Response;
 
-public class EndPatronActionSessionTests extends APITests {
+public class PatronActionSessionTests extends APITests {
 
   private static final UUID CHECK_OUT_NOTICE_TEMPLATE_ID = UUID.fromString("72e7683b-76c2-4ee2-85c2-2fbca8fbcfd8");
+  private static final UUID CHECK_IN_NOTICE_TEMPLATE_ID = UUID.fromString("72e7683b-76c2-4ee2-85c2-2fbca8fbcfd9");
 
   @Before
   public void before()
@@ -53,9 +58,15 @@ public class EndPatronActionSessionTests extends APITests {
       .withTemplateId(CHECK_OUT_NOTICE_TEMPLATE_ID)
       .withCheckOutEvent()
       .create();
+
+    JsonObject checkInNoticeConfig = new NoticeConfigurationBuilder()
+      .withTemplateId(CHECK_IN_NOTICE_TEMPLATE_ID)
+      .withCheckInEvent()
+      .create();
+
     NoticePolicyBuilder noticePolicy = new NoticePolicyBuilder()
       .withName("Policy with check-out notice")
-      .withLoanNotices(Collections.singletonList(checkOutNoticeConfig));
+      .withLoanNotices(Arrays.asList(checkOutNoticeConfig, checkInNoticeConfig));
     useFallbackPolicies(
       loanPoliciesFixture.canCirculateRolling().getId(),
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
@@ -68,7 +79,7 @@ public class EndPatronActionSessionTests extends APITests {
   public void cannotEndSessionWhenPatronIdIsNotSpecified() {
     JsonObject body = new JsonObject()
       .put("actionType", "Check-out");
-    Response response = endPatronSessionClient.attemptEndPatronSession(body);
+    Response response = endPatronSessionClient.attemptEndPatronSession(wrapInObjectWithArray(body));
 
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("End patron session request must have patron id"))));
@@ -78,7 +89,7 @@ public class EndPatronActionSessionTests extends APITests {
   public void cannotEndSessionWhenActionTypeIsNotSpecified() {
     JsonObject body = new JsonObject()
       .put("patronId", UUID.randomUUID().toString());
-    Response response = endPatronSessionClient.attemptEndPatronSession(body);
+    Response response = endPatronSessionClient.attemptEndPatronSession(wrapInObjectWithArray(body));
 
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("End patron session request must have action type"))));
@@ -91,7 +102,7 @@ public class EndPatronActionSessionTests extends APITests {
     JsonObject body = new JsonObject()
       .put("patronId", UUID.randomUUID().toString())
       .put("actionType", invalidActionType);
-    Response response = endPatronSessionClient.attemptEndPatronSession(body);
+    Response response = endPatronSessionClient.attemptEndPatronSession(wrapInObjectWithArray(body));
 
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("Invalid patron action type value"),
@@ -168,5 +179,96 @@ public class EndPatronActionSessionTests extends APITests {
     TimeUnit.SECONDS.sleep(1);
     assertThat(patronSessionRecordsClient.getAll(), hasSize(1));
     assertThat(patronNoticesClient.getAll(), empty());
+  }
+
+  @Test
+  public void checkInSessionShouldBeCreatedWhenLoanedItemIsCheckedInByBarcode()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    IndividualResource james = usersFixture.james();
+    UUID checkInServicePointId = servicePointsFixture.cd1().getId();
+    InventoryItemResource nod = itemsFixture.basedUponNod();
+
+    IndividualResource loan = loansFixture.checkOutByBarcode(nod, james);
+    loansFixture.checkInByBarcode(
+      new CheckInByBarcodeRequestBuilder()
+        .forItem(nod)
+        .at(checkInServicePointId));
+
+    assertThat(patronSessionRecordsClient.getAll(), Matchers.hasSize(2));
+
+    List<JsonObject> checkInSessions = getCheckInSessions();
+    assertThat(checkInSessions, Matchers.hasSize(1));
+
+    JsonObject checkInSession = checkInSessions.get(0);
+    assertThat(checkInSession.getString("patronId"), is(james.getId().toString()));
+    assertThat(checkInSession.getString("loanId"), is(loan.getId().toString()));
+  }
+
+  @Test
+  public void checkInSessionShouldNotBeCreatedWhenItemWithoutOpenLoanIsCheckedInByBarcode()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    UUID checkInServicePointId = servicePointsFixture.cd1().getId();
+    InventoryItemResource nod = itemsFixture.basedUponNod();
+
+    loansFixture.checkInByBarcode(
+      new CheckInByBarcodeRequestBuilder()
+        .forItem(nod)
+        .at(checkInServicePointId));
+
+    assertThat(patronSessionRecordsClient.getAll(), empty());
+  }
+
+  @Test
+  public void patronNoticesShouldBeSentWhenCheckInSessionIsEnded()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    IndividualResource steve = usersFixture.steve();
+    UUID checkInServicePointId = servicePointsFixture.cd1().getId();
+    InventoryItemResource nod = itemsFixture.basedUponNod();
+
+    loansFixture.checkOutByBarcode(nod, steve);
+    loansFixture.checkInByBarcode(
+      new CheckInByBarcodeRequestBuilder()
+        .forItem(nod)
+        .at(checkInServicePointId));
+
+    List<JsonObject> checkInSessions = getCheckInSessions();
+    assertThat(checkInSessions, Matchers.hasSize(1));
+
+    assertThat(patronNoticesClient.getAll(), empty());
+    endPatronSessionClient.endCheckInSession(steve.getId());
+
+    //Wait until session records are deleted
+    Awaitility.await()
+      .atMost(1, TimeUnit.SECONDS)
+      .until(this::getCheckInSessions, empty());
+
+    assertThat(patronNoticesClient.getAll(), hasSize(1));
+  }
+
+  private List<JsonObject> getCheckInSessions() throws MalformedURLException,
+    InterruptedException, ExecutionException, TimeoutException {
+
+    Predicate<JsonObject> isCheckInSession = json -> json.getString("actionType").equals("Check-in");
+
+    return patronSessionRecordsClient.getAll().stream()
+      .filter(isCheckInSession)
+      .collect(Collectors.toList());
+  }
+
+  private JsonObject wrapInObjectWithArray(JsonObject body) {
+    JsonArray jsonArray = new JsonArray().add(body);
+    return new JsonObject().put("endSessions", jsonArray);
   }
 }

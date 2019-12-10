@@ -1,0 +1,13 @@
+{
+  "endSessions": [
+    {
+      "actionType":"Check-in",
+      "patronId":"e63273e7-48f5-4c43-ab4e-1751ecacaa21"
+    },
+    {
+      "actionType":"Check-in",
+      "patronId":"54f65a75-f35b-4f56-86a6-fa4a3d957e57"
+    }
+  ],
+  "totalRecords": 2
+}
