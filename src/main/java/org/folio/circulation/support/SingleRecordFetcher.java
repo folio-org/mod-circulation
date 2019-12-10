@@ -4,6 +4,7 @@ import static java.lang.String.format;
 import static java.util.Objects.requireNonNull;
 import static java.util.function.Function.identity;
 import static org.folio.circulation.support.Result.succeeded;
+import static org.folio.circulation.support.ResultBinding.flatMapResult;
 import static org.folio.circulation.support.http.ResponseMapping.mapUsingJson;
 import static org.folio.circulation.support.logging.LogMessageSanitizer.sanitizeLogParameter;
 
@@ -65,7 +66,7 @@ public class SingleRecordFetcher<T> {
     requireNonNull(id, format("Cannot fetch single %s with null ID", recordType));
 
     return client.get(id)
-      .thenApply(r -> r.next(interpreter::apply))
+      .thenApply(flatMapResult(interpreter::apply))
       .exceptionally(CommonFailures::failedDueToServerError);
   }
 }

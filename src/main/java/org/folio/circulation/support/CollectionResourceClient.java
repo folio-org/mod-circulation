@@ -70,19 +70,15 @@ public class CollectionResourceClient {
   }
 
   public CompletableFuture<Response> get() {
-    return getUsingWebClient(collectionRoot.toString());
-  }
-
-  public CompletableFuture<Result<Response>> get(String id) {
-    return client.toWebClient().get(individualRecordUrl(id));
-  }
-
-  private CompletableFuture<Response> getUsingWebClient(String url) {
-    return client.toWebClient().get(url)
+    return client.toWebClient().get(collectionRoot.toString())
       //Mimic mapping failures to fake 500 response
       //see responseConversationHandler
       .thenApply(r -> r.orElse(new Response(500, "Something went wrong",
         TEXT_PLAIN.toString())));
+  }
+
+  public CompletableFuture<Result<Response>> get(String id) {
+    return client.toWebClient().get(individualRecordUrl(id));
   }
 
   public CompletableFuture<Response> delete(String id) {
