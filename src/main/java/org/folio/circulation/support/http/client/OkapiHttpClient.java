@@ -50,6 +50,11 @@ public class OkapiHttpClient {
     this.exceptionHandler = exceptionHandler;
   }
 
+  public VertxWebClientOkapiHttpClient toWebClient() {
+    return VertxWebClientOkapiHttpClient.createClientUsing(client, okapiUrl,
+      tenantId, token, userId, requestId);
+  }
+
   public void post(
     URL url,
     Object body,

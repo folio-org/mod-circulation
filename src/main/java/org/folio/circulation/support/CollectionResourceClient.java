@@ -1,5 +1,7 @@
 package org.folio.circulation.support;
 
+import static org.apache.http.entity.ContentType.TEXT_PLAIN;
+
 import java.lang.invoke.MethodHandles;
 import java.net.URL;
 import java.util.concurrent.CompletableFuture;
@@ -7,7 +9,6 @@ import java.util.function.Consumer;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
-import org.apache.http.entity.ContentType;
 import org.folio.circulation.support.http.client.OkapiHttpClient;
 import org.folio.circulation.support.http.client.Response;
 import org.slf4j.Logger;
@@ -69,22 +70,19 @@ public class CollectionResourceClient {
   }
 
   public CompletableFuture<Response> get() {
-    final CompletableFuture<Response> future = new CompletableFuture<>();
-
-    client.get(collectionRoot,
-      responseConversationHandler(future::complete));
-
-    return future;
+    return getUsingWebClient(collectionRoot.toString());
   }
 
   public CompletableFuture<Response> get(String id) {
-    final CompletableFuture<Response> future = new CompletableFuture<>();
+    return getUsingWebClient(individualRecordUrl(id));
+  }
 
-    final String url = individualRecordUrl(id);
-
-    client.get(url, responseConversationHandler(url, future::complete));
-
-    return future;
+  private CompletableFuture<Response> getUsingWebClient(String url) {
+    return client.toWebClient().get(url)
+      //Mimic mapping failures to fake 500 response
+      //see responseConversationHandler
+      .thenApply(r -> r.orElse(new Response(500, "Something went wrong",
+        TEXT_PLAIN.toString())));
   }
 
   public CompletableFuture<Response> delete(String id) {
@@ -215,7 +213,7 @@ public class CollectionResourceClient {
       .exceptionHandler(ex -> {
         log.error("Unhandled exception in body handler", ex);
         String trace = ExceptionUtils.getStackTrace(ex);
-        responseHandler.accept(new Response(500, trace, ContentType.TEXT_PLAIN.toString()));
+        responseHandler.accept(new Response(500, trace, TEXT_PLAIN.toString()));
       });
   }
 
