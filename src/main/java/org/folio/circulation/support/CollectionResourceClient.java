@@ -8,6 +8,7 @@ import java.net.URL;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
+import java.util.function.IntPredicate;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -124,18 +125,14 @@ public class CollectionResourceClient {
    * @param rawQueryString raw query string to append to the URL
    * @return response from the server
    */
-  public CompletableFuture<Response> getManyWithRawQueryStringParameters(
+  public CompletableFuture<Result<Response>> getManyWithRawQueryStringParameters(
     String rawQueryString) {
-
-    final CompletableFuture<Response> future = new CompletableFuture<>();
 
     String url = isProvided(rawQueryString)
       ? String.format("%s?%s", collectionRoot, rawQueryString)
       : collectionRoot.toString();
 
-    client.get(url, responseConversationHandler(future::complete));
-
-    return future;
+    return client.toWebClient().get(url);
   }
 
   public CompletableFuture<Result<Response>> getMany(
