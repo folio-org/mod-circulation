@@ -2,6 +2,7 @@ package org.folio.circulation.support.http.client;
 
 import static org.folio.circulation.support.http.OkapiHeader.OKAPI_URL;
 import static org.folio.circulation.support.http.OkapiHeader.TENANT;
+import static org.folio.circulation.support.http.OkapiHeader.TOKEN;
 
 import java.net.URL;
 import java.util.concurrent.CompletableFuture;
@@ -19,20 +20,22 @@ public class VertxWebClientOkapiHttpClient {
   private final WebClient webClient;
   private final URL okapiUrl;
   private String tenantId;
+  private String token;
 
   public static VertxWebClientOkapiHttpClient createClientUsing(
-    HttpClient httpClient, URL okapiUrl, String tenantId) {
+    HttpClient httpClient, URL okapiUrl, String tenantId, String token) {
 
     return new VertxWebClientOkapiHttpClient(WebClient.wrap(httpClient),
-      okapiUrl, tenantId);
+      okapiUrl, tenantId, token);
   }
 
   private VertxWebClientOkapiHttpClient(WebClient webClient, URL okapiUrl,
-    String tenantId) {
+    String tenantId, String token) {
 
     this.webClient = webClient;
     this.okapiUrl = okapiUrl;
     this.tenantId = tenantId;
+    this.token = token;
   }
 
   public CompletableFuture<Result<Response>> get(String url) {
@@ -43,7 +46,7 @@ public class VertxWebClientOkapiHttpClient {
       .putHeader("Accept","application/json, text/plain")
       .putHeader(OKAPI_URL, okapiUrl.toString())
       .putHeader(TENANT, this.tenantId)
-//      .putHeader(TOKEN, this.token)
+      .putHeader(TOKEN, this.token)
 //      .putHeader(USER_ID, this.userId)
 //      .putHeader(REQUEST_ID, this.requestId)
       .timeout(5000)
