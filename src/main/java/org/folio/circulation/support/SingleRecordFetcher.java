@@ -65,7 +65,7 @@ public class SingleRecordFetcher<T> {
     requireNonNull(id, format("Cannot fetch single %s with null ID", recordType));
 
     return client.get(id)
-      .thenApply(interpreter::apply)
+      .thenApply(r -> r.next(interpreter::apply))
       .exceptionally(CommonFailures::failedDueToServerError);
   }
 }

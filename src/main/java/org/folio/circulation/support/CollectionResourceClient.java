@@ -73,8 +73,8 @@ public class CollectionResourceClient {
     return getUsingWebClient(collectionRoot.toString());
   }
 
-  public CompletableFuture<Response> get(String id) {
-    return getUsingWebClient(individualRecordUrl(id));
+  public CompletableFuture<Result<Response>> get(String id) {
+    return client.toWebClient().get(individualRecordUrl(id));
   }
 
   private CompletableFuture<Response> getUsingWebClient(String url) {
