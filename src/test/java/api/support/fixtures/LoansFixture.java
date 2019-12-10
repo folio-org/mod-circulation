@@ -111,7 +111,7 @@ public class LoansFixture {
     DeclareItemLostRequestBuilder builder) {
     JsonObject request = builder.create();
 
-    return new IndividualResource(from(put(request,
+    return new IndividualResource(from(post(request,
       declareLoanItemLostURL(builder.getLoanId().toString()),
       builder.getExpectedResponseStatusCode(), "declare-item-lost-request")));
   }

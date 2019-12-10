@@ -5,6 +5,7 @@ import static org.folio.circulation.support.Result.failed;
 import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
@@ -27,7 +28,7 @@ public class DeclareLostResource extends Resource {
 
   @Override
   public void register(Router router) {
-    router.put("/circulation/loans/:id/declare-item-lost")
+    router.post("/circulation/loans/:id/declare-item-lost")
       .handler(this::declareLost);
   }
 
@@ -48,7 +49,7 @@ public class DeclareLostResource extends Resource {
   private Function<Result<Loan>, Result<Loan>> declareItemLost(
     DeclareItemLostRequest request) {
     return x -> x.map(loan ->
-      loan.declareItemLost(request.getComment(), request.getDeclaredLostDateTime()));
+      loan.declareItemLost(Objects.toString(request.getComment(), ""), request.getDeclaredLostDateTime()));
   }
 
   private CompletableFuture<Result<DeclareItemLostRequest>> validateDeclaredLostRequest(
