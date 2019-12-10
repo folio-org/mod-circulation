@@ -15,6 +15,7 @@ import api.support.APITests;
 import api.support.builders.DeclareItemLostRequestBuilder;
 import api.support.http.InventoryItemResource;
 import io.vertx.core.json.JsonObject;
+import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.joda.time.DateTime;
 import org.junit.Test;
@@ -81,7 +82,7 @@ public class DeclareLostAPITests extends APITests {
     assertThat(actualItem, hasStatus("Declared lost"));
     assertThat(actualLoan, hasOpenStatus());
     assertThat(actualLoan, hasLoanProperty("action", "declaredLost"));
-    assertThat(actualLoan, not(hasLoanProperty("actionComment")));
+    assertThat(actualLoan, hasLoanProperty("actionComment", StringUtils.EMPTY));
     assertThat(actualLoan, hasLoanProperty("declaredLostDate", dateTime.toString()));
   }
 

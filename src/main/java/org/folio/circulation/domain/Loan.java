@@ -3,6 +3,12 @@ package org.folio.circulation.domain;
 import static java.lang.Boolean.TRUE;
 import static java.util.Objects.nonNull;
 import static java.util.Objects.requireNonNull;
+import static org.folio.circulation.domain.LoanAction.CHECKED_OUT;
+import static org.folio.circulation.domain.LoanAction.CHECKED_IN;
+import static org.folio.circulation.domain.LoanAction.DECLARED_LOST;
+import static org.folio.circulation.domain.LoanAction.RENEWED;
+import static org.folio.circulation.domain.LoanAction.RENEWED_THROUGH_OVERRIDE;
+import static org.folio.circulation.domain.representations.LoanProperties.*;
 import static org.folio.circulation.domain.representations.LoanProperties.ACTION_COMMENT;
 import static org.folio.circulation.domain.representations.LoanProperties.CHECKIN_SERVICE_POINT_ID;
 import static org.folio.circulation.domain.representations.LoanProperties.CHECKOUT_SERVICE_POINT_ID;
@@ -34,7 +40,7 @@ import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 
 public class Loan implements ItemRelatedRecord, UserRelatedRecord {
-  private static final String DECLARED_LOST_ACTION_NAME = "declaredLost";
+
   private final JsonObject representation;
   private final Item item;
   private final User user;
@@ -53,8 +59,9 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   private final LoanPolicy loanPolicy;
 
   private Loan(JsonObject representation, Item item, User user, User proxy,
-               ServicePoint checkinServicePoint, ServicePoint checkoutServicePoint,
-               DateTime originalDueDate, LoanPolicy loanPolicy, Collection<Account> accounts) {
+    ServicePoint checkinServicePoint, ServicePoint checkoutServicePoint,
+    DateTime originalDueDate, LoanPolicy loanPolicy,
+    Collection<Account> accounts) {
 
     requireNonNull(loanPolicy, "loanPolicy cannot be null");
 
@@ -128,8 +135,8 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     write(representation, SYSTEM_RETURN_DATE, systemReturnDate);
   }
 
-  public void changeAction(String action) {
-    representation.put(LoanProperties.ACTION, action);
+  public void changeAction(LoanAction action) {
+    write(representation, ACTION, action.getValue());
   }
 
   private void changeCheckInServicePointId(UUID servicePointId) {
@@ -149,7 +156,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   public void changeActionComment(String comment) {
-    write(representation, ACTION_COMMENT, comment);
+    representation.put(ACTION_COMMENT, comment);
   }
 
   private void removeActionComment() {
@@ -325,7 +332,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   public Loan renew(DateTime dueDate, String basedUponLoanPolicyId) {
-    changeAction("renewed");
+    changeAction(RENEWED);
     removeActionComment();
     setLoanPolicyId(basedUponLoanPolicyId);
     changeDueDate(dueDate);
@@ -337,7 +344,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   public Loan overrideRenewal(DateTime dueDate,
                               String basedUponLoanPolicyId,
                               String actionComment) {
-    changeAction("renewedThroughOverride");
+    changeAction(RENEWED_THROUGH_OVERRIDE);
     setLoanPolicyId(basedUponLoanPolicyId);
     changeDueDate(dueDate);
     incrementRenewalCount();
@@ -347,7 +354,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   Loan checkIn(DateTime returnDate, UUID servicePointId) {
-    changeAction("checkedin");
+    changeAction(CHECKED_IN);
     removeActionComment();
     changeStatus("Closed");
     changeReturnDate(returnDate);
@@ -358,7 +365,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   public Loan declareItemLost(String comment, DateTime dateTime) {
-    changeAction(DECLARED_LOST_ACTION_NAME);
+    changeAction(DECLARED_LOST);
     changeActionComment(comment);
     changeItemStatusToDeclaredLost();
     changeDeclaredLostDateTime(dateTime);
@@ -381,8 +388,8 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     if (!loan.containsKey(STATUS)) {
       loan.put(STATUS, new JsonObject().put("name", "Open"));
 
-      if (!loan.containsKey(LoanProperties.ACTION)) {
-        loan.put(LoanProperties.ACTION, "checkedout");
+      if (!loan.containsKey(ACTION)) {
+        loan.put(ACTION, CHECKED_OUT.getValue());
       }
     }
   }
@@ -408,10 +415,10 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   public void changeItemStatus(String itemStatus) {
-    representation.put(LoanProperties.ITEM_STATUS, itemStatus);
+    representation.put(ITEM_STATUS, itemStatus);
   }
 
   public void changeDeclaredLostDateTime(DateTime dateTime) {
-    write(representation, LoanProperties.DECLARED_LOST_DATE, dateTime);
+    write(representation, DECLARED_LOST_DATE, dateTime);
   }
 }
