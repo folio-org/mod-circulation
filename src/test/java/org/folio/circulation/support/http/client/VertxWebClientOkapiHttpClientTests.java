@@ -52,13 +52,16 @@ public class VertxWebClientOkapiHttpClientTests {
     TimeoutException, MalformedURLException {
 
     final URL okapiUrl = new URL("http://okapi.com");
+    final String tenantId = "test-tenant";
 
     fakeWebServer.stubFor(get(urlEqualTo("/record"))
       .withHeader("X-Okapi-Url", equalTo(okapiUrl.toString()))
+      .withHeader("X-Okapi-Tenant", equalTo(tenantId))
       .willReturn(okJson(new JsonObject().put("message", "hello").encodePrettily())));
 
     VertxWebClientOkapiHttpClient client =  createClientUsing(
-      vertxAssistant.createUsingVertx(Vertx::createHttpClient), okapiUrl);
+      vertxAssistant.createUsingVertx(Vertx::createHttpClient), okapiUrl,
+      tenantId);
 
     CompletableFuture<Result<Response>> getCompleted = client.get(fakeWebServer.url("/record"));
 
