@@ -8,6 +8,7 @@ import java.util.Optional;
 import org.folio.circulation.domain.InTransitReportEntry;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.ItemStatus;
+import org.folio.circulation.domain.LastCheckIn;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.Location;
 import org.folio.circulation.domain.PatronGroup;
@@ -45,7 +46,7 @@ public class ItemReportRepresentation {
 
     final ServicePoint inTransitDestinationServicePoint = item.getInTransitDestinationServicePoint();
     if (inTransitDestinationServicePoint != null) {
-      writeInTransitDestinationServicePoint(itemReport, inTransitDestinationServicePoint);
+      writeServicePoint(itemReport, inTransitDestinationServicePoint, "inTransitDestinationServicePoint");
     }
 
     final Location location = item.getLocation();
@@ -60,7 +61,22 @@ public class ItemReportRepresentation {
     if (loan != null) {
       writeLoan(itemReport, loan);
     }
+
+    final LastCheckIn lastCheckIn = item.getLastCheckIn();
+    if (lastCheckIn != null) {
+      writeLastCheckIn(itemReport, lastCheckIn);
+    }
     return itemReport;
+  }
+
+  private void writeLastCheckIn(JsonObject itemReport, LastCheckIn lastCheckIn) {
+    final JsonObject lastCheckInJson = new JsonObject();
+    write(lastCheckInJson, "dateTime", lastCheckIn.getDateTime());
+    final ServicePoint lastCheckInServicePoint = lastCheckIn.getServicePoint();
+    if (lastCheckInServicePoint != null) {
+      writeServicePoint(lastCheckInJson, lastCheckInServicePoint, "servicePoint");
+    }
+    write(itemReport, "lastCheckIn", lastCheckInJson);
   }
 
   private void writeLocation(JsonObject itemReport, Location location) {
@@ -71,12 +87,13 @@ public class ItemReportRepresentation {
     write(itemReport, "location", locationJson);
   }
 
-  private void writeInTransitDestinationServicePoint(JsonObject itemReport,
-                                                     ServicePoint inTransitDestinationServicePoint) {
-    final JsonObject inTransitDestinationServicePointJson = new JsonObject();
-    write(inTransitDestinationServicePointJson, "id", inTransitDestinationServicePoint.getId());
-    write(inTransitDestinationServicePointJson, "name", inTransitDestinationServicePoint.getName());
-    write(itemReport, "inTransitDestinationServicePoint", inTransitDestinationServicePointJson);
+  private void writeServicePoint(JsonObject jsonObject,
+                                 ServicePoint servicePoint,
+                                 String propertyName) {
+    final JsonObject servicePointJson = new JsonObject();
+    write(servicePointJson, "id", servicePoint.getId());
+    write(servicePointJson, "name", servicePoint.getName());
+    write(jsonObject, propertyName, servicePointJson);
   }
 
   private void writeRequest(Request request, JsonObject itemReport) {

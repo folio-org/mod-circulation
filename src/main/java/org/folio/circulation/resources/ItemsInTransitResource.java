@@ -115,8 +115,13 @@ public class ItemsInTransitResource extends Resource {
     return CompletableFuture.completedFuture(Result.succeeded(item))
       .thenComposeAsync(itemRepository::fetchItemRelatedRecords)
       .thenComposeAsync(result -> result
-        .combineAfter(it -> servicePointRepository
-          .getServicePointById(it.getInTransitDestinationServicePointId()), Item::updateDestinationServicePoint));
+        .combineAfter(currentItem -> servicePointRepository
+          .getServicePointById(currentItem.getInTransitDestinationServicePointId()),
+          Item::updateDestinationServicePoint))
+      .thenComposeAsync(result -> result
+        .combineAfter(currentItem -> servicePointRepository
+          .getServicePointById(currentItem.getLastCheckInServicePointId()),
+          Item::updateLastCheckInServicePoint));
   }
 
   private CompletableFuture<Result<List<InTransitReportEntry>>> findRequestsByItemsIds(CollectionResourceClient requestsStorageClient,
