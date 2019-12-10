@@ -21,7 +21,6 @@ import org.folio.circulation.support.Result;
 import org.folio.circulation.support.ServerErrorFailure;
 import org.folio.circulation.support.VertxAssistant;
 import org.junit.AfterClass;
-import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
@@ -79,7 +78,7 @@ public class VertxWebClientOkapiHttpClientTests {
 
     CompletableFuture<Result<Response>> getCompleted = client.get(fakeWebServer.url("/record"));
 
-    final Response response = getCompleted.get(5, TimeUnit.SECONDS).value();
+    final Response response = getCompleted.get(2, TimeUnit.SECONDS).value();
 
     assertThat(response.getStatusCode(), is(200));
     assertThat(response.getJson().getString("message"), is("hello"));
@@ -97,17 +96,18 @@ public class VertxWebClientOkapiHttpClientTests {
       .withHeader("X-Okapi-Token", equalTo(token))
       .withHeader("X-Okapi-User-Id", equalTo(userId))
       .withHeader("X-Okapi-Request-Id", equalTo(requestId))
-      .willReturn(aResponse().withFixedDelay(7000)));
+      .willReturn(aResponse().withFixedDelay(1000)));
 
     VertxWebClientOkapiHttpClient client =  createClientUsing(
       vertxAssistant.createUsingVertx(Vertx::createHttpClient), okapiUrl,
       tenantId, token, userId, requestId);
 
-    CompletableFuture<Result<Response>> getCompleted = client.get(fakeWebServer.url("/record"));
+    CompletableFuture<Result<Response>> getCompleted
+      = client.get(fakeWebServer.url("/record"), 500);
 
-    final Result<Response> responseResult = getCompleted.get(10, TimeUnit.SECONDS);
+    final Result<Response> responseResult = getCompleted.get(1, TimeUnit.SECONDS);
 
     assertThat(responseResult.failed(), is(true));
-    Assert.assertThat(responseResult.cause(), is(instanceOf(ServerErrorFailure.class)));
+    assertThat(responseResult.cause(), is(instanceOf(ServerErrorFailure.class)));
   }
 }

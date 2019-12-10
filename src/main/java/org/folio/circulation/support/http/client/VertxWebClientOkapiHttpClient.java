@@ -20,6 +20,8 @@ import io.vertx.ext.web.client.HttpResponse;
 import io.vertx.ext.web.client.WebClient;
 
 public class VertxWebClientOkapiHttpClient {
+  private static final int DEFAULT_TIMEOUT_IN_MILLISECONDS = 5000;
+
   private final WebClient webClient;
   private final URL okapiUrl;
   private String tenantId;
@@ -46,7 +48,9 @@ public class VertxWebClientOkapiHttpClient {
     this.requestId = requestId;
   }
 
-  public CompletableFuture<Result<Response>> get(String url) {
+  public CompletableFuture<Result<Response>> get(
+    String url, Integer timeoutInMilliseconds) {
+
     final CompletableFuture<Result<Response>> futureResponse = new CompletableFuture<>();
 
     webClient
@@ -57,7 +61,7 @@ public class VertxWebClientOkapiHttpClient {
       .putHeader(TOKEN, this.token)
       .putHeader(USER_ID, this.userId)
       .putHeader(REQUEST_ID, this.requestId)
-      .timeout(5000)
+      .timeout(timeoutInMilliseconds)
       .send(ar -> {
         if (ar.succeeded()) {
           final HttpResponse<Buffer> response = ar.result();
@@ -76,5 +80,9 @@ public class VertxWebClientOkapiHttpClient {
       });
 
     return futureResponse;
+  }
+
+  public CompletableFuture<Result<Response>> get(String url) {
+    return get(url, DEFAULT_TIMEOUT_IN_MILLISECONDS);
   }
 }
