@@ -1,5 +1,6 @@
 package org.folio.circulation.support.http.client;
 
+import static org.apache.http.HttpHeaders.CONTENT_TYPE;
 import static org.folio.circulation.support.http.OkapiHeader.OKAPI_URL;
 import static org.folio.circulation.support.http.OkapiHeader.REQUEST_ID;
 import static org.folio.circulation.support.http.OkapiHeader.TENANT;
@@ -62,8 +63,8 @@ public class VertxWebClientOkapiHttpClient {
           final HttpResponse<Buffer> response = ar.result();
 
           futureResponse.complete(Result.succeeded(new Response(
-            response.statusCode(), response.bodyAsString(), "NOT PARSED YET",
-            new CaseInsensitiveHeaders(), url)));
+            response.statusCode(), response.bodyAsString(),
+            response.getHeader(CONTENT_TYPE), new CaseInsensitiveHeaders(), url)));
         }
         else {
           futureResponse.complete(Result.failed(new ServerErrorFailure(ar.cause())));

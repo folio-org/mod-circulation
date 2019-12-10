@@ -75,5 +75,6 @@ public class VertxWebClientOkapiHttpClientTests {
 
     assertThat(response.getStatusCode(), is(200));
     assertThat(response.getJson().getString("message"), is("hello"));
+    assertThat(response.getContentType(), is("application/json"));
   }
 }
