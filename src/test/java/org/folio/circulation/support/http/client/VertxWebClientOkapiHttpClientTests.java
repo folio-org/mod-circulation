@@ -1,5 +1,6 @@
 package org.folio.circulation.support.http.client;
 
+import static com.github.tomakehurst.wiremock.client.WireMock.equalTo;
 import static com.github.tomakehurst.wiremock.client.WireMock.get;
 import static com.github.tomakehurst.wiremock.client.WireMock.okJson;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
@@ -7,6 +8,8 @@ import static org.folio.circulation.support.http.client.VertxWebClientOkapiHttpC
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -45,14 +48,17 @@ public class VertxWebClientOkapiHttpClientTests {
   }
 
   @Test
-  public void canGetJson()
-    throws InterruptedException, ExecutionException, TimeoutException {
+  public void canGetJson() throws InterruptedException, ExecutionException,
+    TimeoutException, MalformedURLException {
+
+    final URL okapiUrl = new URL("http://okapi.com");
 
     fakeWebServer.stubFor(get(urlEqualTo("/record"))
+      .withHeader("X-Okapi-Url", equalTo(okapiUrl.toString()))
       .willReturn(okJson(new JsonObject().put("message", "hello").encodePrettily())));
 
     VertxWebClientOkapiHttpClient client =  createClientUsing(
-      vertxAssistant.createUsingVertx(Vertx::createHttpClient));
+      vertxAssistant.createUsingVertx(Vertx::createHttpClient), okapiUrl);
 
     CompletableFuture<Result<Response>> getCompleted = client.get(fakeWebServer.url("/record"));
 
