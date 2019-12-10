@@ -1,11 +1,16 @@
 package org.folio.circulation.support;
 
+import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static org.apache.http.entity.ContentType.TEXT_PLAIN;
 
 import java.lang.invoke.MethodHandles;
 import java.net.URL;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
@@ -152,7 +157,7 @@ public class CollectionResourceClient {
   }
 
   private static boolean isProvided(String query) {
-    return StringUtils.isNotBlank(query);
+    return isNotBlank(query);
   }
 
   /**
@@ -174,20 +179,30 @@ public class CollectionResourceClient {
     Integer pageLimit,
     Integer pageOffset) {
 
-    String query = "";
+    String queryParameter = prefixOnCondition(
+      "query=", urlEncodedCqlQuery, CollectionResourceClient::isProvided);
 
-    if (isProvided(urlEncodedCqlQuery)) {
-      query += "?query=" + urlEncodedCqlQuery;
-    }
-    if (pageLimit != null) {
-      query += query.isEmpty() ? "?" : "&";
-      query += "limit=" + pageLimit;
-    }
-    if (pageOffset != null) {
-      query += query.isEmpty() ? "?" : "&";
-      query += "offset=" + pageOffset;
-    }
-    return query;
+    String limitParameter = prefixOnCondition(
+      "limit=", pageLimit, Objects::nonNull);
+
+    String offsetParameter = prefixOnCondition(
+      "offset=", pageOffset, Objects::nonNull);
+
+    final String queryStringParameters
+      = Stream.of(queryParameter, limitParameter, offsetParameter)
+      .filter(StringUtils::isNotBlank)
+      .collect(Collectors.joining("&"));
+
+    return prefixOnCondition(
+      "?", queryStringParameters, StringUtils::isNotBlank);
+  }
+
+  private static <T> String prefixOnCondition(
+    String prefix, T value, Predicate<T> condition) {
+
+    return condition.test(value)
+      ? prefix + value
+      : "";
   }
 
   //TODO: Replace with Consumer<Result<Response>>
