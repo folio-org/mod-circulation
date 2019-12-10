@@ -57,13 +57,16 @@ public class VertxWebClientOkapiHttpClientTests {
     final String userId = "aa26cb88-76b1-5459-a235-fca4fd270c23";
     final String requestId = "test-request-id";
 
+    final String locationResponseHeader = "/a-different-location";
+
     fakeWebServer.stubFor(get(urlEqualTo("/record"))
       .withHeader("X-Okapi-Url", equalTo(okapiUrl.toString()))
       .withHeader("X-Okapi-Tenant", equalTo(tenantId))
       .withHeader("X-Okapi-Token", equalTo(token))
       .withHeader("X-Okapi-User-Id", equalTo(userId))
       .withHeader("X-Okapi-Request-Id", equalTo(requestId))
-      .willReturn(okJson(new JsonObject().put("message", "hello").encodePrettily())));
+      .willReturn(okJson(new JsonObject().put("message", "hello").encodePrettily())
+        .withHeader("Location", locationResponseHeader)));
 
     VertxWebClientOkapiHttpClient client =  createClientUsing(
       vertxAssistant.createUsingVertx(Vertx::createHttpClient), okapiUrl,
@@ -76,5 +79,6 @@ public class VertxWebClientOkapiHttpClientTests {
     assertThat(response.getStatusCode(), is(200));
     assertThat(response.getJson().getString("message"), is("hello"));
     assertThat(response.getContentType(), is("application/json"));
+    assertThat(response.getHeader("location"), is(locationResponseHeader));
   }
 }

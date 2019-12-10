@@ -62,9 +62,13 @@ public class VertxWebClientOkapiHttpClient {
         if (ar.succeeded()) {
           final HttpResponse<Buffer> response = ar.result();
 
+          final CaseInsensitiveHeaders headers = new CaseInsensitiveHeaders();
+
+          headers.addAll(response.headers());
+
           futureResponse.complete(Result.succeeded(new Response(
             response.statusCode(), response.bodyAsString(),
-            response.getHeader(CONTENT_TYPE), new CaseInsensitiveHeaders(), url)));
+            headers.get(CONTENT_TYPE), headers, url)));
         }
         else {
           futureResponse.complete(Result.failed(new ServerErrorFailure(ar.cause())));
