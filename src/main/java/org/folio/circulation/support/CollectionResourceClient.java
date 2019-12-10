@@ -102,7 +102,7 @@ public class CollectionResourceClient {
     return cqlQuery.encode().after(encodedQuery -> {
       final CompletableFuture<Response> future = new CompletableFuture<>();
 
-      String url = collectionRoot + createQueryString(encodedQuery, null, 0);
+      String url = getPagedCollectionUrl(encodedQuery, null, 0);
 
       client.delete(url, responseConversationHandler(future::complete));
 
@@ -136,29 +136,19 @@ public class CollectionResourceClient {
   public CompletableFuture<Result<Response>> getMany(
     CqlQuery cqlQuery, Integer pageLimit) {
 
-    return cqlQuery.encode().after(encodedQuery -> {
-        final CompletableFuture<Response> future = new CompletableFuture<>();
-
-        String url = collectionRoot + createQueryString(encodedQuery, pageLimit, 0);
-
-        client.get(url, responseConversationHandler(future::complete));
-
-        return future.thenApply(Result::succeeded);
-      });
+    return getMany(cqlQuery, pageLimit, 0);
   }
 
   public CompletableFuture<Result<Response>> getMany(
     CqlQuery cqlQuery, Integer pageLimit, Integer pageOffset) {
 
-    return cqlQuery.encode().after(encodedQuery -> {
-      final CompletableFuture<Response> future = new CompletableFuture<>();
+    return cqlQuery.encode()
+      .map(encodedQuery -> getPagedCollectionUrl(encodedQuery, pageLimit, pageOffset))
+      .after(url -> client.toWebClient().get(url));
+  }
 
-      String url = collectionRoot + createQueryString(encodedQuery, pageLimit, pageOffset);
-
-      client.get(url, responseConversationHandler(future::complete));
-
-      return future.thenApply(Result::succeeded);
-    });
+  private String getPagedCollectionUrl(String encodedQuery, Integer pageLimit, Integer pageOffset) {
+    return collectionRoot + createQueryString(encodedQuery, pageLimit, pageOffset);
   }
 
   private static boolean isProvided(String query) {
