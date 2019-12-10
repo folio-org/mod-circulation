@@ -54,16 +54,18 @@ public class VertxWebClientOkapiHttpClientTests {
     final URL okapiUrl = new URL("http://okapi.com");
     final String tenantId = "test-tenant";
     final String token = "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJkaWt1X2FkbWluIiwidXNlcl9pZCI6ImFhMjZjYjg4LTc2YjEtNTQ1OS1hMjM1LWZjYTRmZDI3MGMyMyIsImlhdCI6MTU3NjAxMzY3MiwidGVuYW50IjoiZGlrdSJ9.oGCb0gDIdkXGlCiECvJHgQMXD3QKKW2vTh7PPCrpds8";
+    final String userId = "aa26cb88-76b1-5459-a235-fca4fd270c23";
 
     fakeWebServer.stubFor(get(urlEqualTo("/record"))
       .withHeader("X-Okapi-Url", equalTo(okapiUrl.toString()))
       .withHeader("X-Okapi-Tenant", equalTo(tenantId))
       .withHeader("X-Okapi-Token", equalTo(token))
+      .withHeader("X-Okapi-User-Id", equalTo(userId))
       .willReturn(okJson(new JsonObject().put("message", "hello").encodePrettily())));
 
     VertxWebClientOkapiHttpClient client =  createClientUsing(
       vertxAssistant.createUsingVertx(Vertx::createHttpClient), okapiUrl,
-      tenantId, token);
+      tenantId, token, userId);
 
     CompletableFuture<Result<Response>> getCompleted = client.get(fakeWebServer.url("/record"));
 
