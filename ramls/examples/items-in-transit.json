@@ -51,6 +51,13 @@
           "pickupLocation": false
         },
         "checkInDateTime": "2019-11-11T19:19:49.000Z"
+      },
+      "lastCheckIn": {
+        "dateTime": "2019-12-05T09:37:34.000Z",
+        "servicePoint": {
+          "id": "c4c90014-c8c9-4ade-8f24-b5e313319f4b",
+          "name": "Circ Desk 2"
+        }
       }
     }
   ],

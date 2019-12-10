@@ -77,7 +77,7 @@ public class Item {
       null,
       null,
       null,
-      null,
+      LastCheckIn.fromItemJson(representation),
       CallNumberComponents.fromItemJson(representation)
     );
   }
@@ -171,6 +171,12 @@ public class Item {
   public String getCallNumber() {
     return Optional.ofNullable(callNumberComponents)
       .map(CallNumberComponents::getCallNumber)
+      .orElse(null);
+  }
+
+  public UUID getLastCheckInServicePointId() {
+    return Optional.ofNullable(lastCheckIn)
+      .map(LastCheckIn::getServicePointId)
       .orElse(null);
   }
 
@@ -312,6 +318,13 @@ public class Item {
 
   public Item updateDestinationServicePoint(ServicePoint servicePoint) {
     return changeInTransitDestinationServicePoint(servicePoint);
+  }
+
+  public Item updateLastCheckInServicePoint(ServicePoint servicePoint) {
+    if (lastCheckIn != null) {
+      lastCheckIn.setServicePoint(servicePoint);
+    }
+    return this;
   }
 
   private Item changeDestination(UUID destinationServicePointId) {
