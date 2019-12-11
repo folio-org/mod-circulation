@@ -111,13 +111,13 @@ public class DeclareLostAPITests extends APITests {
   }
 
   @Test
-  public void shouldFailIfLoanIsNotFound() {
+  public void shouldReturn404IfLoanIsNotFound() {
 
     Response response = loansFixture.declareItemLost(
       new DeclareItemLostRequestBuilder().forLoanId(UUID.randomUUID())
         .on(DateTime.now()).withNoComment());
 
-    assertThat(response.getStatusCode(), is(403));
+    assertThat(response.getStatusCode(), is(404));
   }
 
 
