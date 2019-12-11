@@ -90,25 +90,6 @@ public class RestAssuredClient {
       .extract().response();
   }
 
-
-  public static io.restassured.response.Response put(
-    JsonObject representation,
-    URL url,
-    int expectedStatusCode,
-    String requestId) {
-
-    return given()
-      .log().all()
-      .spec(defaultHeaders(requestId))
-      .spec(timeoutConfig())
-      .body(representation.encodePrettily())
-      .when().put(url)
-      .then()
-      .log().all()
-      .statusCode(expectedStatusCode)
-      .extract().response();
-  }
-
   public static io.restassured.response.Response post(
     JsonObject representation,
     URL url,

@@ -2,7 +2,6 @@ package api.support.fixtures;
 
 import static api.support.RestAssuredClient.from;
 import static api.support.RestAssuredClient.post;
-import static api.support.RestAssuredClient.put;
 import static api.support.http.AdditionalHttpStatusCodes.UNPROCESSABLE_ENTITY;
 import static api.support.http.InterfaceUrls.checkInByBarcodeUrl;
 import static api.support.http.InterfaceUrls.checkOutByBarcodeUrl;
