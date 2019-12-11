@@ -2,6 +2,7 @@ package api.support.matchers;
 
 import static java.time.temporal.ChronoUnit.MILLIS;
 
+import java.time.Instant;
 import java.time.ZonedDateTime;
 
 import org.hamcrest.Description;
@@ -30,23 +31,27 @@ public class TextDateTimeMatcher {
   }
 
   public static Matcher<String> isEquivalentTo(ZonedDateTime expected) {
+    return isEquivalentTo(expected.toInstant());
+  }
+
+  public static Matcher<String> isEquivalentTo(Instant expected) {
     return new TypeSafeMatcher<String>() {
       @Override
       public void describeTo(Description description) {
         description.appendText(String.format(
-          "a zoned date time matching: %s", expected.toString()));
+          "a date and time matching: %s", expected.toString()));
       }
 
       @Override
       protected boolean matchesSafely(String textRepresentation) {
         //response representation might vary from request representation
-        ZonedDateTime actual = ZonedDateTime.parse(textRepresentation);
+        Instant actual = Instant.parse(textRepresentation);
 
         //The zoned date time could have a higher precision than milliseconds
         //This makes comparison to an ISO formatted date time using milliseconds
         //excessively precise and brittle
         //Discovered when using JDK 13.0.1 instead of JDK 1.8.0_202-b08
-        return expected.truncatedTo(MILLIS).isEqual(actual);
+        return expected.truncatedTo(MILLIS).equals(actual);
       }
     };
   }

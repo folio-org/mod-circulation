@@ -944,8 +944,8 @@ public class MoveRequestTests extends APITests {
         .equals(interestingTimesItem.getId().toString()))
       .findFirst().orElse(new JsonObject());
 
-    assertThat(smallAngryPlanetLoan.getInstant("dueDate"), is(expectedJamesLoanDueDate));
-    assertThat(interestingTimesLoan.getInstant("dueDate"), is(expectedJessicaLoanDueDate));
+    assertThat(smallAngryPlanetLoan.getString("dueDate"), isEquivalentTo(expectedJamesLoanDueDate));
+    assertThat(interestingTimesLoan.getString("dueDate"), isEquivalentTo(expectedJessicaLoanDueDate));
   }
 
   @Test
