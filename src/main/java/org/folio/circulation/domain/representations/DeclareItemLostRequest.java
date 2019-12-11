@@ -13,9 +13,9 @@ public class DeclareItemLostRequest {
   private static final String COMMENT = "comment";
   private static final String DECLARED_LOST_DATETIME  = "declaredLostDateTime";
 
-  private final String comment;
-  private final DateTime declaredLostDateTime;
   private final String loanId;
+  private final DateTime declaredLostDateTime;
+  private final String comment;
 
   private DeclareItemLostRequest(String comment, DateTime declaredLostDateTime,
     String loanId) {
