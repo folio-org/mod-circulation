@@ -51,12 +51,10 @@ public class DeclareLostResource extends Resource {
   private Result<Loan> declareItemLost(Result<Loan> loanResult,
     DeclareItemLostRequest request) {
 
-    return loanResult.next(loan -> {
-      Loan loan1 = loan
-        .declareItemLost(Objects.toString(request.getComment(), ""),
-          request.getDeclaredLostDateTime());
-      return Result.of(() -> loan1);
-    });
+    return loanResult.next(loan -> Result.of(() ->
+      loan.declareItemLost(
+        Objects.toString(request.getComment(), ""),
+        request.getDeclaredLostDateTime())));
   }
 
   private Result<DeclareItemLostRequest> validateDeclaredLostRequest(

@@ -98,8 +98,8 @@ public class LoanMatchers {
       protected boolean matchesSafely(JsonObject representation,
         Description description) {
         this.describeMismatch(representation.getValue("userId"), description);
-        return !representation.containsKey("userId") && !representation
-          .containsKey("borrower");
+        return !representation.containsKey("userId") &&
+          !representation.containsKey("borrower");
 
       }
     };
