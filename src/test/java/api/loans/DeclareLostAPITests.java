@@ -3,6 +3,7 @@ package api.loans;
 import static api.support.matchers.LoanMatchers.hasLoanProperty;
 import static api.support.matchers.LoanMatchers.hasOpenStatus;
 import static api.support.matchers.LoanMatchers.hasStatus;
+import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 
@@ -17,6 +18,7 @@ import api.support.http.InventoryItemResource;
 import io.vertx.core.json.JsonObject;
 import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.support.http.client.IndividualResource;
+import org.folio.circulation.support.http.client.Response;
 import org.joda.time.DateTime;
 import org.junit.Test;
 
@@ -30,6 +32,7 @@ public class DeclareLostAPITests extends APITests {
   public void beforeEach()
     throws MalformedURLException, InterruptedException, ExecutionException,
     TimeoutException {
+
     super.beforeEach();
     item = itemsFixture.basedUponSmallAngryPlanet();
     user = usersFixture.charlotte();
@@ -45,16 +48,16 @@ public class DeclareLostAPITests extends APITests {
     String comment = "testing";
     DateTime dateTime = DateTime.now();
 
-    loansFixture.declareItemLost(new DeclareItemLostRequestBuilder()
-      .forLoanId(loanID)
-      .on(dateTime)
-      .withComment(comment)
-      .withExpectedResponseStatusCode(204)
+    Response response = loansFixture.declareItemLost(
+      new DeclareItemLostRequestBuilder().forLoanId(loanID).on(dateTime)
+        .withComment(comment)
+
     );
 
     JsonObject actualLoan = loansClient.getById(loanID).getJson();
     JsonObject actualItem = actualLoan.getJsonObject("item");
 
+    assertThat(response.getStatusCode(), is(204));
     assertThat(actualItem, hasStatus("Declared lost"));
     assertThat(actualLoan, hasOpenStatus());
     assertThat(actualLoan, hasLoanProperty("action", "declaredLost"));
@@ -69,16 +72,14 @@ public class DeclareLostAPITests extends APITests {
     UUID loanID = UUID.fromString(loanJson.getString("id"));
     DateTime dateTime = DateTime.now();
 
-    loansFixture.declareItemLost(new DeclareItemLostRequestBuilder()
-      .forLoanId(loanID)
-      .on(dateTime)
-      .withNoComment()
-      .withExpectedResponseStatusCode(204)
-    );
+    Response response = loansFixture.declareItemLost(
+      new DeclareItemLostRequestBuilder().forLoanId(loanID).on(dateTime)
+        .withNoComment());
 
     JsonObject actualLoan = loansClient.getById(loanID).getJson();
     JsonObject actualItem = actualLoan.getJsonObject("item");
 
+    assertThat(response.getStatusCode(), is(204));
     assertThat(actualItem, hasStatus("Declared lost"));
     assertThat(actualLoan, hasOpenStatus());
     assertThat(actualLoan, hasLoanProperty("action", "declaredLost"));
@@ -87,7 +88,7 @@ public class DeclareLostAPITests extends APITests {
   }
 
   @Test
-  public void shouldFailIfLoanIsNotOpen()
+  public void cannotDeclareItemLostForAClosedLoan()
     throws InterruptedException, ExecutionException, TimeoutException,
     MalformedURLException {
     UUID loanID = UUID.fromString(loanJson.getString("id"));
@@ -95,17 +96,15 @@ public class DeclareLostAPITests extends APITests {
 
     loansFixture.checkInByBarcode(item);
 
-    loansFixture.declareItemLost(new DeclareItemLostRequestBuilder()
-      .forLoanId(loanID)
-      .on(dateTime)
-      .withNoComment()
-      .withExpectedResponseStatusCode(422));
+    Response response = loansFixture.declareItemLost(
+      new DeclareItemLostRequestBuilder().forLoanId(loanID).on(dateTime)
+        .withNoComment());
 
     JsonObject actualLoan = loansClient.getById(loanID).getJson();
     JsonObject actualItem = actualLoan.getJsonObject("item");
 
+    assertThat(response.getStatusCode(), is(422));
     assertThat(actualItem, not(hasStatus("Declared lost")));
-
     assertThat(actualLoan, not(hasLoanProperty("action", "declaredLost")));
     assertThat(actualLoan, not(hasLoanProperty("actionComment", "declaredLost")));
     assertThat(actualLoan, not(hasLoanProperty("declaredLostDate")));
@@ -114,12 +113,12 @@ public class DeclareLostAPITests extends APITests {
   @Test
   public void shouldFailIfLoanIsNotFound() {
 
-    loansFixture.declareItemLost(new DeclareItemLostRequestBuilder()
-      .forLoanId(UUID.randomUUID())
-      .on(DateTime.now())
-      .withNoComment()
-      .withExpectedResponseStatusCode(404)
-    );
+    Response response = loansFixture.declareItemLost(
+      new DeclareItemLostRequestBuilder().forLoanId(UUID.randomUUID())
+        .on(DateTime.now()).withNoComment());
+
+    assertThat(response.getStatusCode(), is(403));
   }
+
 
 }

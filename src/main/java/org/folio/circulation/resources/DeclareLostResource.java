@@ -21,7 +21,6 @@ import org.folio.circulation.support.Result;
 import org.folio.circulation.support.http.server.WebContext;
 
 public class DeclareLostResource extends Resource {
-
   public DeclareLostResource(HttpClient client) {
     super(client);
   }

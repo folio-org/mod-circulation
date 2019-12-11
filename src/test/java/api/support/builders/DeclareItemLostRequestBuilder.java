@@ -11,10 +11,9 @@ public class DeclareItemLostRequestBuilder extends JsonBuilder implements Builde
   private final UUID loanId;
   private final DateTime dateTime;
   private final String comment;
-  private final int expectedResponseStatusCode;
 
   public DeclareItemLostRequestBuilder() {
-    this(null, DateTime.now(), null, 204);
+    this(null, DateTime.now(), null);
   }
 
   public UUID getLoanId() {
@@ -29,16 +28,11 @@ public class DeclareItemLostRequestBuilder extends JsonBuilder implements Builde
     return comment;
   }
 
-  public int getExpectedResponseStatusCode() {
-    return expectedResponseStatusCode;
-  }
-
   public DeclareItemLostRequestBuilder(UUID loanId, DateTime dateTime,
-    String comment, int expectedResponseStatusCode) {
+    String comment) {
     this.loanId = loanId;
     this.dateTime = dateTime;
     this.comment = comment;
-    this.expectedResponseStatusCode = expectedResponseStatusCode;
   }
 
   @Override
@@ -51,23 +45,19 @@ public class DeclareItemLostRequestBuilder extends JsonBuilder implements Builde
     return request;
   }
 
-  public DeclareItemLostRequestBuilder withExpectedResponseStatusCode(int expectedResponseStatusCode) {
-    return new DeclareItemLostRequestBuilder(loanId, dateTime, comment, expectedResponseStatusCode);
-  }
-
-  public DeclareItemLostRequestBuilder forLoanId(UUID id) {
-    return new DeclareItemLostRequestBuilder(id, dateTime, comment, expectedResponseStatusCode);
+   public DeclareItemLostRequestBuilder forLoanId(UUID id) {
+    return new DeclareItemLostRequestBuilder(id, dateTime, comment);
   }
 
   public DeclareItemLostRequestBuilder on(DateTime dateTime) {
-    return new DeclareItemLostRequestBuilder(loanId, dateTime, comment, expectedResponseStatusCode);
+    return new DeclareItemLostRequestBuilder(loanId, dateTime, comment);
   }
 
   public DeclareItemLostRequestBuilder withComment(String comment) {
-    return new DeclareItemLostRequestBuilder(loanId, dateTime, comment, expectedResponseStatusCode);
+    return new DeclareItemLostRequestBuilder(loanId, dateTime, comment);
   }
 
   public DeclareItemLostRequestBuilder withNoComment() {
-    return new DeclareItemLostRequestBuilder(loanId, dateTime, "", expectedResponseStatusCode);
+    return new DeclareItemLostRequestBuilder(loanId, dateTime, "");
   }
 }

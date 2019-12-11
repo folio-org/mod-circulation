@@ -107,13 +107,13 @@ public class LoansFixture {
     return response;
   }
 
-  public IndividualResource declareItemLost(
+  public Response declareItemLost(
     DeclareItemLostRequestBuilder builder) {
     JsonObject request = builder.create();
 
-    return new IndividualResource(from(post(request,
-      declareLoanItemLostURL(builder.getLoanId().toString()),
-      builder.getExpectedResponseStatusCode(), "declare-item-lost-request")));
+    return from(
+      post(request, declareLoanItemLostURL(builder.getLoanId().toString()),
+        "declare-item-lost-request"));
   }
 
   public IndividualResource checkOutByBarcode(IndividualResource item)

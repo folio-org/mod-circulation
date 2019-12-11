@@ -8,7 +8,6 @@ import static org.folio.circulation.domain.LoanAction.CHECKED_IN;
 import static org.folio.circulation.domain.LoanAction.DECLARED_LOST;
 import static org.folio.circulation.domain.LoanAction.RENEWED;
 import static org.folio.circulation.domain.LoanAction.RENEWED_THROUGH_OVERRIDE;
-import static org.folio.circulation.domain.representations.LoanProperties.*;
 import static org.folio.circulation.domain.representations.LoanProperties.ACTION_COMMENT;
 import static org.folio.circulation.domain.representations.LoanProperties.CHECKIN_SERVICE_POINT_ID;
 import static org.folio.circulation.domain.representations.LoanProperties.CHECKOUT_SERVICE_POINT_ID;
@@ -136,7 +135,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   public void changeAction(LoanAction action) {
-    write(representation, ACTION, action.getValue());
+    write(representation, LoanProperties.ACTION, action.getValue());
   }
 
   private void changeCheckInServicePointId(UUID servicePointId) {
@@ -388,8 +387,8 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     if (!loan.containsKey(STATUS)) {
       loan.put(STATUS, new JsonObject().put("name", "Open"));
 
-      if (!loan.containsKey(ACTION)) {
-        loan.put(ACTION, CHECKED_OUT.getValue());
+      if (!loan.containsKey(LoanProperties.ACTION)) {
+        loan.put(LoanProperties.ACTION, CHECKED_OUT.getValue());
       }
     }
   }
@@ -415,10 +414,10 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   public void changeItemStatus(String itemStatus) {
-    representation.put(ITEM_STATUS, itemStatus);
+    representation.put(LoanProperties.ITEM_STATUS, itemStatus);
   }
 
   public void changeDeclaredLostDateTime(DateTime dateTime) {
-    write(representation, DECLARED_LOST_DATE, dateTime);
+    write(representation, LoanProperties.DECLARED_LOST_DATE, dateTime);
   }
 }
