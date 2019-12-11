@@ -70,8 +70,6 @@ public abstract class CirculationPolicyRepository<T> {
   }
 
   public CompletableFuture<Result<String>> lookupPolicyId(Item item, User user) {
-    CompletableFuture<Result<String>> findLoanPolicyCompleted = new CompletableFuture<>();
-
     if (item.isNotFound()) {
       return completedFuture(failedDueToServerError(
         "Unable to apply circulation rules for unknown item"));
@@ -94,25 +92,27 @@ public abstract class CirculationPolicyRepository<T> {
     final CompletableFuture<Response> circulationRulesResponse =
       circulationRulesClient.applyRules(loanTypeId, locationId, materialTypeId, patronGroupId);
 
-    circulationRulesResponse.thenAcceptAsync(response -> {
-      if (response.getStatusCode() == 404) {
-        findLoanPolicyCompleted.complete(failedDueToServerError(
-          "Unable to apply circulation rules"));
-      } else if (response.getStatusCode() != 200) {
-        findLoanPolicyCompleted.complete(failed(
-          new ForwardOnFailure(response)));
-      } else {
-        log.info("Rules response {}", response.getBody());
+    return circulationRulesResponse.thenCompose(this::processRulesResponse);
+  }
 
-        String policyId = fetchPolicyId(response.getJson());
+  private CompletableFuture<Result<String>> processRulesResponse(Response response) {
+    final CompletableFuture<Result<String>> future = new CompletableFuture<>();
 
-        log.info("Policy to fetch based upon rules {}", policyId);
+    if (response.getStatusCode() == 404) {
+      future.complete(failedDueToServerError("Unable to apply circulation rules"));
+    } else if (response.getStatusCode() != 200) {
+      future.complete(failed(new ForwardOnFailure(response)));
+    } else {
+      log.info("Rules response {}", response.getBody());
 
-        findLoanPolicyCompleted.complete(succeeded(policyId));
-      }
-    });
+      String policyId = fetchPolicyId(response.getJson());
 
-    return findLoanPolicyCompleted;
+      log.info("Policy to fetch based upon rules {}", policyId);
+
+      future.complete(succeeded(policyId));
+    }
+
+    return future;
   }
 
   protected abstract String getPolicyNotFoundErrorMessage(String policyId);
