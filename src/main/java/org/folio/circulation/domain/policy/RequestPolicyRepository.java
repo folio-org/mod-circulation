@@ -80,11 +80,12 @@ public class RequestPolicyRepository {
       "Applying request rules for material type: {}, patron group: {}, loan type: {}, location: {}",
       materialTypeId, patronGroupId, loanTypeId, locationId);
 
-    CompletableFuture<Response> circulationRulesResponse =
+    CompletableFuture<Result<Response>> circulationRulesResponse =
       circulationRequestRulesClient.applyRules(loanTypeId, locationId, materialTypeId,
       patronGroupId);
 
-    return circulationRulesResponse.thenComposeAsync(this::processRulesResponse);
+    return circulationRulesResponse
+      .thenComposeAsync(r -> r.after(this::processRulesResponse));
   }
 
   private CompletableFuture<Result<String>> processRulesResponse(Response response) {

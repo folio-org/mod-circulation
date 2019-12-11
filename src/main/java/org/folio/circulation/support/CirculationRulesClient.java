@@ -7,7 +7,6 @@ import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.support.http.client.OkapiHttpClient;
 import org.folio.circulation.support.http.client.Response;
-import org.folio.circulation.support.http.client.ResponseHandler;
 import org.folio.circulation.support.http.server.WebContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,21 +23,17 @@ public class CirculationRulesClient {
     root = context.getOkapiBasedUrl(policyPath);
   }
 
-  public CompletableFuture<Response> applyRules(
+  public CompletableFuture<Result<Response>> applyRules(
     String loanTypeId, String locationId, String materialTypeId,
     String patronGroupId) {
-
-    CompletableFuture<Response> future = new CompletableFuture<>();
 
     String circulationRulesQuery = queryParameters(loanTypeId, locationId,
       materialTypeId, patronGroupId);
 
     log.info("Applying circulation rules for {}", circulationRulesQuery);
 
-    client.get(String.format("%s?%s", root, circulationRulesQuery),
-      ResponseHandler.any(future));
-
-    return future;
+    return client.toWebClient()
+      .get(String.format("%s?%s", root, circulationRulesQuery));
   }
 
   private String queryParameters(

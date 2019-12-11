@@ -88,10 +88,11 @@ public abstract class CirculationPolicyRepository<T> {
       "Applying circulation rules for material type: {}, patron group: {}, loan type: {}, location: {}",
       materialTypeId, patronGroupId, loanTypeId, locationId);
 
-    final CompletableFuture<Response> circulationRulesResponse =
+    final CompletableFuture<Result<Response>> circulationRulesResponse =
       circulationRulesClient.applyRules(loanTypeId, locationId, materialTypeId, patronGroupId);
 
-    return circulationRulesResponse.thenCompose(this::processRulesResponse);
+    return circulationRulesResponse
+      .thenCompose(r -> r.after(this::processRulesResponse));
   }
 
   private CompletableFuture<Result<String>> processRulesResponse(Response response) {
