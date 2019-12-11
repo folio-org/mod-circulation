@@ -91,6 +91,22 @@
       ]
     },
     {
+      "id": "declare-item-lost",
+      "version": "0.1",
+      "handlers": [
+        {
+          "methods": ["POST"],
+          "pathPattern": "/circulation/loans/{id}/declare-item-lost",
+          "permissionsRequired": [
+            "circulation.loans.declare-item-lost.post"
+          ],
+          "modulePermissions": [
+            "modperms.circulation.loans.declare-item-lost.post"
+          ]
+        }
+      ]
+    },
+    {
       "id": "circulation",
       "version": "8.3",
       "handlers": [
@@ -668,7 +684,7 @@
   "requires": [
     {
       "id": "loan-storage",
-      "version": "5.3 6.0"
+      "version": "6.4"
     },
     {
       "id": "circulation-rules-storage",
@@ -833,6 +849,11 @@
       "permissionName": "circulation.loans.item.delete",
       "displayName": "circulation - delete individual loan",
       "description": "delete individual loan"
+    },
+    {
+      "permissionName": "circulation.loans.declare-item-lost.post",
+      "displayName": "circulation - declare the loaned item lost",
+      "description": "declares the loaned item lost"
     },
     {
       "permissionName": "circulation.rules.get",
@@ -1741,6 +1762,17 @@
         "configuration.entries.collection.get",
         "scheduled-notice-storage.scheduled-notices.collection.delete",
         "scheduled-notice-storage.scheduled-notices.item.post"
+      ],
+      "visible": false
+    },
+    {
+      "permissionName": "modperms.circulation.loans.declare-item-lost.post",
+      "displayName": "module permissions for one op",
+      "description": "to reduce X-Okapi-Token size",
+      "subPermissions": [
+        "circulation-storage.loans.item.put",
+        "users.item.get",
+        "inventory-storage.items.item.put"
       ],
       "visible": false
     },

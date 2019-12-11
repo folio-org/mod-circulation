@@ -3,6 +3,11 @@ package org.folio.circulation.domain;
 import static java.lang.Boolean.TRUE;
 import static java.util.Objects.nonNull;
 import static java.util.Objects.requireNonNull;
+import static org.folio.circulation.domain.LoanAction.CHECKED_OUT;
+import static org.folio.circulation.domain.LoanAction.CHECKED_IN;
+import static org.folio.circulation.domain.LoanAction.DECLARED_LOST;
+import static org.folio.circulation.domain.LoanAction.RENEWED;
+import static org.folio.circulation.domain.LoanAction.RENEWED_THROUGH_OVERRIDE;
 import static org.folio.circulation.domain.representations.LoanProperties.ACTION_COMMENT;
 import static org.folio.circulation.domain.representations.LoanProperties.CHECKIN_SERVICE_POINT_ID;
 import static org.folio.circulation.domain.representations.LoanProperties.CHECKOUT_SERVICE_POINT_ID;
@@ -25,6 +30,7 @@ import java.util.Collection;
 import java.util.Objects;
 import java.util.UUID;
 
+import io.vertx.core.json.JsonObject;
 import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.domain.policy.LoanPolicy;
 import org.folio.circulation.domain.representations.LoanProperties;
@@ -32,9 +38,8 @@ import org.folio.circulation.support.Result;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 
-import io.vertx.core.json.JsonObject;
-
 public class Loan implements ItemRelatedRecord, UserRelatedRecord {
+
   private final JsonObject representation;
   private final Item item;
   private final User user;
@@ -53,8 +58,9 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   private final LoanPolicy loanPolicy;
 
   private Loan(JsonObject representation, Item item, User user, User proxy,
-               ServicePoint checkinServicePoint, ServicePoint checkoutServicePoint,
-               DateTime originalDueDate, LoanPolicy loanPolicy, Collection<Account> accounts) {
+    ServicePoint checkinServicePoint, ServicePoint checkoutServicePoint,
+    DateTime originalDueDate, LoanPolicy loanPolicy,
+    Collection<Account> accounts) {
 
     requireNonNull(loanPolicy, "loanPolicy cannot be null");
 
@@ -128,12 +134,20 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     write(representation, SYSTEM_RETURN_DATE, systemReturnDate);
   }
 
-  public void changeAction(String action) {
-    representation.put(LoanProperties.ACTION, action);
+  public void changeAction(LoanAction action) {
+    write(representation, LoanProperties.ACTION, action.getValue());
   }
 
   private void changeCheckInServicePointId(UUID servicePointId) {
     write(representation, "checkinServicePointId", servicePointId);
+  }
+
+  private void changeItemStatusToDeclaredLost() {
+    Item item = getItem();
+    if (item != null) {
+      item.changeStatus(ItemStatus.DECLARED_LOST);
+    }
+    changeItemStatus(ItemStatus.DECLARED_LOST.getValue());
   }
 
   private void changeStatus(String status) {
@@ -317,7 +331,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   public Loan renew(DateTime dueDate, String basedUponLoanPolicyId) {
-    changeAction("renewed");
+    changeAction(RENEWED);
     removeActionComment();
     setLoanPolicyId(basedUponLoanPolicyId);
     changeDueDate(dueDate);
@@ -329,7 +343,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   public Loan overrideRenewal(DateTime dueDate,
                               String basedUponLoanPolicyId,
                               String actionComment) {
-    changeAction("renewedThroughOverride");
+    changeAction(RENEWED_THROUGH_OVERRIDE);
     setLoanPolicyId(basedUponLoanPolicyId);
     changeDueDate(dueDate);
     incrementRenewalCount();
@@ -339,13 +353,21 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   Loan checkIn(DateTime returnDate, UUID servicePointId) {
-    changeAction("checkedin");
+    changeAction(CHECKED_IN);
     removeActionComment();
     changeStatus("Closed");
     changeReturnDate(returnDate);
     changeSystemReturnDate(DateTime.now(DateTimeZone.UTC));
     changeCheckInServicePointId(servicePointId);
 
+    return this;
+  }
+
+  public Loan declareItemLost(String comment, DateTime dateTime) {
+    changeAction(DECLARED_LOST);
+    changeActionComment(comment);
+    changeItemStatusToDeclaredLost();
+    changeDeclaredLostDateTime(dateTime);
     return this;
   }
 
@@ -366,7 +388,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
       loan.put(STATUS, new JsonObject().put("name", "Open"));
 
       if (!loan.containsKey(LoanProperties.ACTION)) {
-        loan.put(LoanProperties.ACTION, "checkedout");
+        loan.put(LoanProperties.ACTION, CHECKED_OUT.getValue());
       }
     }
   }
@@ -393,5 +415,9 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
 
   public void changeItemStatus(String itemStatus) {
     representation.put(LoanProperties.ITEM_STATUS, itemStatus);
+  }
+
+  public void changeDeclaredLostDateTime(DateTime dateTime) {
+    write(representation, LoanProperties.DECLARED_LOST_DATE, dateTime);
   }
 }

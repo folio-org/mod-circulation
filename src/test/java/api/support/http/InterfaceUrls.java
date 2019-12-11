@@ -172,6 +172,10 @@ public class InterfaceUrls {
     return circulationModuleUrl("/circulation/scheduled-anonymize-processing/");
   }
 
+  public static URL declareLoanItemLostURL(String loanId) {
+    return circulationModuleUrl(String.format("/circulation/loans/%s/declare-item-lost", loanId));
+  }
+
   public static URL endSessionUrl() {
     return circulationModuleUrl("/circulation/end-patron-action-session");
   }
