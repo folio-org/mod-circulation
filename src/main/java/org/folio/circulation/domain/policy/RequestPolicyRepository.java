@@ -64,11 +64,7 @@ public class RequestPolicyRepository {
   }
 
   private CompletableFuture<Result<String>> lookupRequestPolicyId(
-    Item item,
-    User user) {
-
-    CompletableFuture<Result<String>> findRequestPolicyCompleted
-      = new CompletableFuture<>();
+    Item item, User user) {
 
     if(item.isNotFound()) {
       return completedFuture(failedDueToServerError(
@@ -88,20 +84,20 @@ public class RequestPolicyRepository {
       circulationRequestRulesClient.applyRules(loanTypeId, locationId, materialTypeId,
       patronGroupId);
 
-    circulationRulesResponse.thenAcceptAsync(response -> {
-      if (response.getStatusCode() == 404) {
-        findRequestPolicyCompleted.complete(
-          failedDueToServerError("Unable to find matching request rules"));
-      } else if (response.getStatusCode() != 200) {
-        findRequestPolicyCompleted.complete(failed(
-          new ForwardOnFailure(response)));
-      } else {
-        findRequestPolicyCompleted.complete(
-          succeeded(response.getJson().getString("requestPolicyId")));
-      }
-    });
-
-    return findRequestPolicyCompleted;
+    return circulationRulesResponse.thenComposeAsync(this::processRulesResponse);
   }
 
+  private CompletableFuture<Result<String>> processRulesResponse(Response response) {
+    final CompletableFuture<Result<String>> future = new CompletableFuture<>();
+
+    if (response.getStatusCode() == 404) {
+      future.complete(failedDueToServerError("Unable to find matching request rules"));
+    } else if (response.getStatusCode() != 200) {
+      future.complete(failed(new ForwardOnFailure(response)));
+    } else {
+      future.complete(succeeded(response.getJson().getString("requestPolicyId")));
+    }
+
+    return future;
+  }
 }

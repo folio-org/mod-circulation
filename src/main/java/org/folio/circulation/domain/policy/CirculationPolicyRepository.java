@@ -45,8 +45,7 @@ public abstract class CirculationPolicyRepository<T> {
   }
 
   public CompletableFuture<Result<T>> lookupPolicy(
-    Item item,
-    User user) {
+    Item item, User user) {
 
     return lookupPolicyId(item, user)
       .thenComposeAsync(r -> r.after(this::lookupPolicy));
