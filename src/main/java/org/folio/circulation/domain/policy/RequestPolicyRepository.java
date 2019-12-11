@@ -20,7 +20,6 @@ import org.folio.circulation.support.ForwardOnFailure;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.SingleRecordFetcher;
 import org.folio.circulation.support.http.client.Response;
-import org.folio.circulation.support.http.client.ResponseHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -81,14 +80,13 @@ public class RequestPolicyRepository {
     String loanTypeId = item.determineLoanTypeForItem();
     String locationId = item.getLocationId();
 
-    CompletableFuture<Response> circulationRulesResponse = new CompletableFuture<>();
-
     log.info(
       "Applying request rules for material type: {}, patron group: {}, loan type: {}, location: {}",
       materialTypeId, patronGroupId, loanTypeId, locationId);
 
-    circulationRequestRulesClient.applyRules(loanTypeId, locationId, materialTypeId,
-      patronGroupId, ResponseHandler.any(circulationRulesResponse));
+    CompletableFuture<Response> circulationRulesResponse =
+      circulationRequestRulesClient.applyRules(loanTypeId, locationId, materialTypeId,
+      patronGroupId);
 
     circulationRulesResponse.thenAcceptAsync(response -> {
       if (response.getStatusCode() == 404) {
