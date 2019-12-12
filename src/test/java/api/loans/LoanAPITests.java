@@ -299,7 +299,7 @@ public class LoanAPITests extends APITests {
       .withRemainingFeeFine(1000)
     );
 
-    List<JsonObject> loans = loansClient.getAll();
+    List<JsonObject> loans = getAllLoans();
 
     JsonObject fetchedLoan1 = getRecordById(loans, loan1.getId()).get();
     JsonObject fetchedLoan2 = getRecordById(loans, loan2.getId()).get();
@@ -1027,7 +1027,7 @@ public class LoanAPITests extends APITests {
 
     final IndividualResource loanPolicy = loanPoliciesFixture.canCirculateRolling();
 
-    List<JsonObject> loans = loansClient.getAll();
+    List<JsonObject> loans = getAllLoans();
 
     loans.forEach(loanJson -> loanHasLoanPolicyProperties(loanJson, loanPolicy));
   }
@@ -1246,7 +1246,7 @@ public class LoanAPITests extends APITests {
 
     loansClient.replace(loan2.getId(), updatedLoanRequest);
 
-    List<JsonObject> loans = loansClient.getAll();
+    List<JsonObject> loans = getAllLoans();
 
     loans.forEach(this::hasNoBorrowerProperties);
   }
@@ -1598,7 +1598,7 @@ public class LoanAPITests extends APITests {
       .withCheckinServicePointId(checkinServicePointId2)
       .withNoUserId());
 
-    final List<JsonObject> multipleLoans = loansClient.getAll();
+    final List<JsonObject> multipleLoans = getAllLoans();
 
     assertThat("Should have two loans",
       multipleLoans.size(), is(2));
@@ -1633,7 +1633,7 @@ public class LoanAPITests extends APITests {
       .withCheckinServicePointId(checkinServicePointId2)
       .withUserId(usersFixture.jessica().getId()));
 
-    final List<JsonObject> multipleLoans = loansClient.getAll();
+    final List<JsonObject> multipleLoans = getAllLoans();
 
      assertThat("Should have different 'userId' for different loans",
        multipleLoans.get(0).getString("userId"),
@@ -1936,7 +1936,7 @@ public class LoanAPITests extends APITests {
 
     loansStorageClient.replace(secondLoan.getId(), secondSavedLoan);
 
-    List<JsonObject> loans = loansClient.getAll();
+    List<JsonObject> loans = getAllLoans();
 
     JsonObject fetchedLoan1 = getRecordById(loans, firstLoan.getId()).get();
     JsonObject fetchedLoan2 = getRecordById(loans, secondLoan.getId()).get();
@@ -2061,5 +2061,12 @@ public class LoanAPITests extends APITests {
 
   private List<JsonObject> getLoans(JsonObject page) {
     return JsonArrayHelper.toList(page.getJsonArray("loans"));
+  }
+
+  private List<JsonObject> getAllLoans()
+    throws MalformedURLException, InterruptedException, ExecutionException,
+    TimeoutException {
+
+    return loansClient.getAll();
   }
 }
