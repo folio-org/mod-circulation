@@ -1,11 +1,13 @@
 package api.support.fixtures;
 
 import static api.support.RestAssuredClient.from;
+import static api.support.RestAssuredClient.get;
 import static api.support.RestAssuredClient.post;
 import static api.support.http.AdditionalHttpStatusCodes.UNPROCESSABLE_ENTITY;
 import static api.support.http.InterfaceUrls.checkInByBarcodeUrl;
 import static api.support.http.InterfaceUrls.checkOutByBarcodeUrl;
 import static api.support.http.InterfaceUrls.declareLoanItemLostURL;
+import static api.support.http.InterfaceUrls.loansUrl;
 import static api.support.http.InterfaceUrls.overrideCheckOutByBarcodeUrl;
 import static api.support.http.InterfaceUrls.overrideRenewalByBarcodeUrl;
 import static api.support.http.InterfaceUrls.renewByBarcodeUrl;
@@ -14,11 +16,11 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 
 import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
-import api.support.builders.DeclareItemLostRequestBuilder;
 import org.folio.HttpStatus;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
@@ -28,6 +30,7 @@ import org.joda.time.DateTimeZone;
 import api.support.CheckInByBarcodeResponse;
 import api.support.builders.CheckInByBarcodeRequestBuilder;
 import api.support.builders.CheckOutByBarcodeRequestBuilder;
+import api.support.builders.DeclareItemLostRequestBuilder;
 import api.support.builders.LoanBuilder;
 import api.support.builders.OverrideCheckOutByBarcodeRequestBuilder;
 import api.support.builders.OverrideRenewalByBarcodeRequestBuilder;
@@ -371,5 +374,18 @@ public class LoansFixture {
 
     return from(post(request, overrideCheckOutByBarcodeUrl(),
       expectedStatusCode, "override-check-out-by-barcode-request"));
+  }
+
+  public Response getLoans() {
+    return from(get(loansUrl(), 200, "get-loans"));
+  }
+
+  public Response getLoans(final int limit) throws MalformedURLException {
+    return from(get(new URL(loansUrl() + "?limit=" + limit), 200, "get-loans"));
+  }
+
+  public Response getLoans(int limit, int offset) throws MalformedURLException {
+    return from(get(new URL(loansUrl() + "?limit=" + limit + "&offset=" + offset),
+      200, "get-loans"));
   }
 }

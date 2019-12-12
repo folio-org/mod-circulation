@@ -1342,12 +1342,7 @@ public class LoanAPITests extends APITests {
 
     itemsClient.delete(item.getId());
 
-    CompletableFuture<Response> pageCompleted = new CompletableFuture<>();
-
-    client.get(loansUrl(),
-      ResponseHandler.json(pageCompleted));
-
-    Response pageResponse = pageCompleted.get(5, TimeUnit.SECONDS);
+    Response pageResponse = loansFixture.getLoans();
 
     assertThat(String.format("Failed to get page of loans: %s",
       pageResponse.getBody()),
@@ -1376,17 +1371,8 @@ public class LoanAPITests extends APITests {
     loansFixture.checkOutByBarcode(itemsFixture.basedUponUprooted(),user);
     loansFixture.checkOutByBarcode(itemsFixture.basedUponInterestingTimes(),user);
 
-    CompletableFuture<Response> firstPageCompleted = new CompletableFuture<>();
-    CompletableFuture<Response> secondPageCompleted = new CompletableFuture<>();
-
-    client.get(loansUrl() + "?limit=3",
-      ResponseHandler.json(firstPageCompleted));
-
-    client.get(loansUrl() + "?limit=3&offset=3",
-      ResponseHandler.json(secondPageCompleted));
-
-    Response firstPageResponse = firstPageCompleted.get(5, TimeUnit.SECONDS);
-    Response secondPageResponse = secondPageCompleted.get(5, TimeUnit.SECONDS);
+    Response firstPageResponse = loansFixture.getLoans(3);
+    Response secondPageResponse = loansFixture.getLoans(3, 3);
 
     assertThat(String.format("Failed to get first page of loans: %s",
       firstPageResponse.getBody()),
