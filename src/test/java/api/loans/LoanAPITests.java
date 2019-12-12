@@ -24,10 +24,8 @@ import static org.hamcrest.junit.MatcherAssert.assertThat;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
-import java.net.URLEncoder;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -1371,6 +1369,8 @@ public class LoanAPITests extends APITests {
     loansFixture.checkOutByBarcode(itemsFixture.basedUponUprooted(),user);
     loansFixture.checkOutByBarcode(itemsFixture.basedUponInterestingTimes(),user);
 
+    CompletableFuture<Response> secondPageCompleted = new CompletableFuture<>();
+
     Response firstPageResponse = loansFixture.getLoans(3);
     Response secondPageResponse = loansFixture.getLoans(3, 3);
 
@@ -1413,8 +1413,6 @@ public class LoanAPITests extends APITests {
     IndividualResource secondUser = usersFixture.jessica();
     UUID secondUserId = secondUser.getId();
 
-    String queryTemplate = loansUrl() + "?query=userId=%s";
-
     loansClient.create(new LoanBuilder()
       .withItem(itemsFixture.basedUponSmallAngryPlanet())
       .withUserId(firstUserId));
@@ -1443,17 +1441,10 @@ public class LoanAPITests extends APITests {
       itemsFixture.basedUponInterestingTimes())
       .withUserId(secondUserId));
 
-    CompletableFuture<Response> firstUserSearchCompleted = new CompletableFuture<>();
-    CompletableFuture<Response> secondUserSeatchCompleted = new CompletableFuture<>();
+    String queryTemplate = "userId=%s";
 
-    client.get(String.format(queryTemplate, firstUserId),
-      ResponseHandler.json(firstUserSearchCompleted));
-
-    client.get(String.format(queryTemplate, secondUserId),
-      ResponseHandler.json(secondUserSeatchCompleted));
-
-    Response firstPageResponse = firstUserSearchCompleted.get(5, TimeUnit.SECONDS);
-    Response secondPageResponse = secondUserSeatchCompleted.get(5, TimeUnit.SECONDS);
+    Response firstPageResponse = loansFixture.getLoans(String.format(queryTemplate, firstUserId));
+    Response secondPageResponse = loansFixture.getLoans(String.format(queryTemplate, secondUserId));
 
     assertThat(String.format("Failed to get loans for first user: %s",
       firstPageResponse.getBody()),
@@ -1491,19 +1482,8 @@ public class LoanAPITests extends APITests {
     UUID firstUserId = UUID.randomUUID();
     UUID secondUserId = UUID.randomUUID();
 
-    String queryTemplate = loansUrl() + "?query=userId=%s";
-
-    CompletableFuture<Response> firstUserSearchCompleted = new CompletableFuture<>();
-    CompletableFuture<Response> secondUserSeatchCompleted = new CompletableFuture<>();
-
-    client.get(String.format(queryTemplate, firstUserId),
-      ResponseHandler.json(firstUserSearchCompleted));
-
-    client.get(String.format(queryTemplate, secondUserId),
-      ResponseHandler.json(secondUserSeatchCompleted));
-
-    Response firstPageResponse = firstUserSearchCompleted.get(5, TimeUnit.SECONDS);
-    Response secondPageResponse = secondUserSeatchCompleted.get(5, TimeUnit.SECONDS);
+    Response firstPageResponse = loansFixture.getLoans(String.format("userId=%s", firstUserId));
+    Response secondPageResponse = loansFixture.getLoans(String.format("userId=%s", secondUserId));
 
     assertThat(String.format("Failed to get loans for first user: %s",
       firstPageResponse.getBody()),
@@ -1531,13 +1511,10 @@ public class LoanAPITests extends APITests {
     throws MalformedURLException,
     InterruptedException,
     ExecutionException,
-    TimeoutException,
-    UnsupportedEncodingException {
+    TimeoutException {
 
     IndividualResource user = usersFixture.charlotte();
     UUID userId = user.getId();
-
-    String queryTemplate = "userId=\"%s\" and status.name=\"%s\"";
 
     loansClient.create(new LoanBuilder()
       .withUserId(userId)
@@ -1576,19 +1553,10 @@ public class LoanAPITests extends APITests {
       .withItem(itemsFixture.basedUponInterestingTimes())
       .withRandomPastLoanDate());
 
-    CompletableFuture<Response> openSearchComppleted = new CompletableFuture<>();
-    CompletableFuture<Response> closedSearchCompleted = new CompletableFuture<>();
+    String queryTemplate = "userId=\"%s\" and status.name=\"%s\"";
 
-    client.get(loansUrl(),
-      "query=" + URLEncoder.encode(String.format(queryTemplate, userId, "Open"), "UTF-8"),
-      ResponseHandler.json(openSearchComppleted));
-
-    client.get(loansUrl(),
-      "query=" + URLEncoder.encode(String.format(queryTemplate, userId, "Closed"), "UTF-8"),
-      ResponseHandler.json(closedSearchCompleted));
-
-    Response openLoansResponse = openSearchComppleted.get(5, TimeUnit.SECONDS);
-    Response closedLoansResponse = closedSearchCompleted.get(5, TimeUnit.SECONDS);
+    Response openLoansResponse = loansFixture.getLoans(String.format(queryTemplate, userId, "Open"));
+    Response closedLoansResponse = loansFixture.getLoans(String.format(queryTemplate, userId, "Closed"));
 
     assertThat(String.format("Failed to get open loans: %s",
       openLoansResponse.getBody()),

@@ -17,6 +17,7 @@ import static org.hamcrest.junit.MatcherAssert.assertThat;
 
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.HashMap;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
@@ -388,4 +389,13 @@ public class LoansFixture {
     return from(get(new URL(loansUrl() + "?limit=" + limit + "&offset=" + offset),
       200, "get-loans"));
   }
+
+    public Response getLoans(String query) {
+      final HashMap<String, String> queryStringParameters = new HashMap<>();
+
+      queryStringParameters.put("query", query);
+
+      return from(get(loansUrl(),
+        queryStringParameters, 200, "get-loans"));
+    }
 }
