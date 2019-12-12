@@ -203,7 +203,7 @@ public class LoanAPITests extends APITests {
       .withRemainingFeeFine(150)
     );
 
-    JsonObject loan = loansClient.get(id).getJson();
+    JsonObject loan = getLoanById(id).getJson();
 
     loanHasFeeFinesProperties(loan, 0);
   }
@@ -239,7 +239,7 @@ public class LoanAPITests extends APITests {
       .withRemainingFeeFine(150)
     );
 
-    JsonObject loan = loansClient.get(id).getJson();
+    JsonObject loan = getLoanById(id).getJson();
 
     loanHasFeeFinesProperties(loan, 150d);
 
@@ -249,7 +249,7 @@ public class LoanAPITests extends APITests {
       .withRemainingFeeFine(150)
     );
 
-    loan = loansClient.get(id).getJson();
+    loan = getLoanById(id).getJson();
 
     loanHasFeeFinesProperties(loan, 300d);
   }
@@ -1197,7 +1197,7 @@ public class LoanAPITests extends APITests {
 
     loansClient.replace(loan.getId(), updatedLoanRequest);
 
-    final JsonObject updatedLoan = loansClient.get(loan.getId()).getJson();
+    final JsonObject updatedLoan = getLoanById(loan.getId()).getJson();
 
     assertThat("Should be closed",
       updatedLoan.getJsonObject("status").getString("name"), is("Closed"));
@@ -1915,7 +1915,7 @@ public class LoanAPITests extends APITests {
 
      loansStorageClient.replace(individualResource.getId(), savedLoan);
 
-     JsonObject loan = loansClient.get(individualResource.getId()).getJson();
+     JsonObject loan = getLoanById(individualResource.getId()).getJson();
 
      loanHasPatronGroupProperties(loan, "Regular Group");
   }
@@ -2075,5 +2075,12 @@ public class LoanAPITests extends APITests {
 
   private List<JsonObject> getLoans(JsonObject page) {
     return JsonArrayHelper.toList(page.getJsonArray("loans"));
+  }
+
+  private IndividualResource getLoanById(UUID id)
+    throws MalformedURLException, InterruptedException, ExecutionException,
+    TimeoutException {
+
+    return loansClient.get(id);
   }
 }
