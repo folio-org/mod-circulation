@@ -16,12 +16,12 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 
 import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.HashMap;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
+import org.apache.commons.lang3.StringUtils;
 import org.folio.HttpStatus;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
@@ -65,7 +65,7 @@ public class LoansFixture {
 
     DateTime loanDate = DateTime.now();
 
-    return loansClient.create(new LoanBuilder()
+    return createLoan(new LoanBuilder()
       .open()
       .withItemId(item.getId())
       .withUserId(to.getId())
@@ -82,12 +82,21 @@ public class LoansFixture {
     ExecutionException,
     TimeoutException {
 
-    return loansClient.create(new LoanBuilder()
+    return createLoan(new LoanBuilder()
       .open()
       .withItemId(item.getId())
       .withUserId(to.getId())
       .withLoanDate(loanDate)
       .withDueDate(loanDate.plusWeeks(3)));
+  }
+
+  public IndividualResource createLoan(LoanBuilder builder)
+    throws MalformedURLException,
+    InterruptedException,
+    ExecutionException,
+    TimeoutException {
+
+    return loansClient.create(builder);
   }
 
   public Response attemptToCreateLoan(
@@ -378,24 +387,37 @@ public class LoansFixture {
   }
 
   public Response getLoans() {
-    return from(get(loansUrl(), 200, "get-loans"));
+    return getLoans(null, null, null);
   }
 
-  public Response getLoans(final int limit) throws MalformedURLException {
-    return from(get(new URL(loansUrl() + "?limit=" + limit), 200, "get-loans"));
+  public Response getLoans(final Integer limit) {
+    return getLoans(null, limit, null);
   }
 
-  public Response getLoans(int limit, int offset) throws MalformedURLException {
-    return from(get(new URL(loansUrl() + "?limit=" + limit + "&offset=" + offset),
-      200, "get-loans"));
+  public Response getLoans(Integer limit, Integer offset) {
+    return getLoans(null, limit, offset);
   }
 
-    public Response getLoans(String query) {
-      final HashMap<String, String> queryStringParameters = new HashMap<>();
+  public Response getLoans(String query) {
+    return getLoans(query, null, null);
+  }
 
+  public Response getLoans(String query, Integer limit, Integer offset) {
+    final HashMap<String, String> queryStringParameters = new HashMap<>();
+
+    if (StringUtils.isNotBlank(query)) {
       queryStringParameters.put("query", query);
-
-      return from(get(loansUrl(),
-        queryStringParameters, 200, "get-loans"));
     }
+
+    if (limit != null) {
+      queryStringParameters.put("limit", limit.toString());
+    }
+
+    if (offset != null) {
+      queryStringParameters.put("offset", offset.toString());
+    }
+
+    return from(get(loansUrl(),
+      queryStringParameters, 200, "get-loans"));
+  }
 }

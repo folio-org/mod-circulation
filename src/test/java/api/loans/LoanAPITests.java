@@ -73,7 +73,7 @@ public class LoanAPITests extends APITests {
     DateTime loanDate = new DateTime(2017, 2, 27, 10, 23, 43, DateTimeZone.UTC);
     DateTime dueDate = new DateTime(2017, 3, 29, 10, 23, 43, DateTimeZone.UTC);
 
-    IndividualResource response = loansClient.create(new LoanBuilder()
+    IndividualResource response = loansFixture.createLoan(new LoanBuilder()
       .withId(id)
       .open()
       .withUserId(userId)
@@ -188,7 +188,7 @@ public class LoanAPITests extends APITests {
     DateTime loanDate = new DateTime(2017, 2, 27, 10, 23, 43, DateTimeZone.UTC);
     DateTime dueDate = new DateTime(2017, 3, 29, 10, 23, 43, DateTimeZone.UTC);
 
-    IndividualResource response = loansClient.create(new LoanBuilder()
+    IndividualResource response = loansFixture.createLoan(new LoanBuilder()
       .withId(id)
       .open()
       .withUserId(userId)
@@ -208,7 +208,6 @@ public class LoanAPITests extends APITests {
     loanHasFeeFinesProperties(loan, 0);
   }
 
-
   @Test
   public void canGetMultipleFeesFinesForSingleLoan()
     throws InterruptedException,
@@ -226,7 +225,7 @@ public class LoanAPITests extends APITests {
     DateTime loanDate = new DateTime(2017, 2, 27, 10, 23, 43, DateTimeZone.UTC);
     DateTime dueDate = new DateTime(2017, 3, 29, 10, 23, 43, DateTimeZone.UTC);
 
-    IndividualResource response = loansClient.create(new LoanBuilder()
+    IndividualResource response = loansFixture.createLoan(new LoanBuilder()
       .withId(id)
       .open()
       .withUserId(userId)
@@ -717,17 +716,15 @@ public class LoanAPITests extends APITests {
     DateTime dueDate = new DateTime(2017, 3, 29, 10, 23, 43, DateTimeZone.UTC);
     DateTime systemReturnDate = new DateTime(2017, 4, 1, 12, 0, 0, DateTimeZone.UTC);
 
-    JsonObject builtRequest = new LoanBuilder()
-      .closed()
-      .withId(id)
-      .withUserId(userId)
-      .withItemId(itemId)
-      .withLoanDate(loanDate)
-      .withDueDate(dueDate)
-      .withSystemReturnDate(systemReturnDate)
-      .create();
-
-    IndividualResource response = loansClient.create(builtRequest);
+    IndividualResource response = loansFixture.createLoan(
+      new LoanBuilder()
+        .closed()
+        .withId(id)
+        .withUserId(userId)
+        .withItemId(itemId)
+        .withLoanDate(loanDate)
+        .withDueDate(dueDate)
+        .withSystemReturnDate(systemReturnDate));
 
     JsonObject loan = response.getJson();
 
@@ -808,7 +805,7 @@ public class LoanAPITests extends APITests {
 
     UUID userId = usersFixture.charlotte().getId();
 
-    IndividualResource response = loansClient.create(new LoanBuilder()
+    IndividualResource response = loansFixture.createLoan(new LoanBuilder()
       .withId(id)
       .withUserId(userId)
       .withItemId(itemId)
@@ -860,7 +857,7 @@ public class LoanAPITests extends APITests {
 
     UUID userId = usersFixture.charlotte().getId();
 
-    IndividualResource response = loansClient.create(new LoanBuilder()
+    IndividualResource response = loansFixture.createLoan(new LoanBuilder()
       .withId(id)
       .withUserId(userId)
       .withItemId(itemId)
@@ -920,7 +917,7 @@ public class LoanAPITests extends APITests {
 
     DateTime dueDate = new DateTime(2016, 11, 15, 8, 26, 53, DateTimeZone.UTC);
 
-    loansClient.create(new LoanBuilder()
+    loansFixture.createLoan(new LoanBuilder()
       .withId(id)
       .withUserId(userId)
       .withItemId(itemId)
@@ -1073,7 +1070,7 @@ public class LoanAPITests extends APITests {
 
     UUID userId = usersFixture.charlotte().getId();
 
-    loansClient.create(new LoanBuilder()
+    loansFixture.createLoan(new LoanBuilder()
       .withId(id)
       .withUserId(userId)
       .withItemId(itemId)
@@ -1187,7 +1184,7 @@ public class LoanAPITests extends APITests {
     UUID checkinServicePointId = servicePointsFixture.cd1().getId();
 
 
-    IndividualResource loan = loansClient.create(new LoanBuilder()
+    IndividualResource loan = loansFixture.createLoan(new LoanBuilder()
       .open()
       .withUserId(jessica.getId())
       .withItemId(itemId)
@@ -1264,7 +1261,7 @@ public class LoanAPITests extends APITests {
 
     final IndividualResource jessica = usersFixture.jessica();
 
-    IndividualResource loan = loansClient.create(new LoanBuilder()
+    IndividualResource loan = loansFixture.createLoan(new LoanBuilder()
       .open()
       .withUserId(jessica.getId())
       .withItemId(itemId));
@@ -1413,31 +1410,31 @@ public class LoanAPITests extends APITests {
     IndividualResource secondUser = usersFixture.jessica();
     UUID secondUserId = secondUser.getId();
 
-    loansClient.create(new LoanBuilder()
+    loansFixture.createLoan(new LoanBuilder()
       .withItem(itemsFixture.basedUponSmallAngryPlanet())
       .withUserId(firstUserId));
 
-    loansClient.create(new LoanBuilder()
+    loansFixture.createLoan(new LoanBuilder()
       .withItem(itemsFixture.basedUponNod())
       .withUserId(firstUserId));
 
-    loansClient.create(new LoanBuilder()
+    loansFixture.createLoan(new LoanBuilder()
       .withItem(itemsFixture.basedUponSmallAngryPlanet())
       .withUserId(firstUserId));
 
-    loansClient.create(new LoanBuilder()
+    loansFixture.createLoan(new LoanBuilder()
       .withItem(itemsFixture.basedUponTemeraire())
       .withUserId(firstUserId));
 
-    loansClient.create(new LoanBuilder()
+    loansFixture.createLoan(new LoanBuilder()
       .withItem(itemsFixture.basedUponUprooted())
       .withUserId(secondUserId));
 
-    loansClient.create(new LoanBuilder()
+    loansFixture.createLoan(new LoanBuilder()
       .withItem(itemsFixture.basedUponNod())
       .withUserId(secondUserId));
 
-    loansClient.create(new LoanBuilder().withItem(
+    loansFixture.createLoan(new LoanBuilder().withItem(
       itemsFixture.basedUponInterestingTimes())
       .withUserId(secondUserId));
 
@@ -1516,38 +1513,38 @@ public class LoanAPITests extends APITests {
     IndividualResource user = usersFixture.charlotte();
     UUID userId = user.getId();
 
-    loansClient.create(new LoanBuilder()
+    loansFixture.createLoan(new LoanBuilder()
       .withUserId(userId)
       .withStatus("Open")
       .withItem(itemsFixture.basedUponSmallAngryPlanet())
       .withRandomPastLoanDate());
 
-    loansClient.create(new LoanBuilder()
+    loansFixture.createLoan(new LoanBuilder()
       .withUserId(userId)
       .withStatus("Open")
       .withItem(itemsFixture.basedUponNod())
       .withRandomPastLoanDate());
 
-    loansClient.create(new LoanBuilder()
+    loansFixture.createLoan(new LoanBuilder()
       .withUserId(userId)
       .withItem(
         itemsFixture.basedUponNod())
       .withStatus("Closed")
       .withRandomPastLoanDate());
 
-    loansClient.create(new LoanBuilder()
+    loansFixture.createLoan(new LoanBuilder()
       .withUserId(userId)
       .withStatus("Closed")
       .withItem(itemsFixture.basedUponTemeraire())
       .withRandomPastLoanDate());
 
-    loansClient.create(new LoanBuilder()
+    loansFixture.createLoan(new LoanBuilder()
       .withUserId(userId)
       .withStatus("Closed")
       .withItem(itemsFixture.basedUponUprooted())
       .withRandomPastLoanDate());
 
-    loansClient.create(new LoanBuilder()
+    loansFixture.createLoan(new LoanBuilder()
       .withUserId(userId)
       .withStatus("Closed")
       .withItem(itemsFixture.basedUponInterestingTimes())
@@ -1709,7 +1706,7 @@ public class LoanAPITests extends APITests {
     UUID checkinServicePointId = servicePointsFixture.cd1().getId();
     UUID checkoutServicePointId = servicePointsFixture.cd2().getId();
 
-    loansClient.create(new LoanBuilder()
+    loansFixture.createLoan(new LoanBuilder()
       .withId(loanId)
       .open()
       .withUserId(userId)
@@ -1751,7 +1748,7 @@ public class LoanAPITests extends APITests {
     UUID loan3Id = UUID.randomUUID();
     UUID item3Id = itemsFixture.basedUponUprooted().getId();
 
-    loansClient.create(new LoanBuilder()
+    loansFixture.createLoan(new LoanBuilder()
       .withId(loan1Id)
       .open()
       .withUserId(userId)
@@ -1761,7 +1758,7 @@ public class LoanAPITests extends APITests {
       .withCheckinServicePointId(checkinServicePointId)
       .withCheckoutServicePointId(checkoutServicePointId));
 
-    loansClient.create(new LoanBuilder()
+    loansFixture.createLoan(new LoanBuilder()
       .withId(loan2Id)
       .open()
       .withUserId(userId)
@@ -1771,7 +1768,7 @@ public class LoanAPITests extends APITests {
       .withCheckinServicePointId(checkinServicePointId)
       .withCheckoutServicePointId(checkoutServicePointId));
 
-    loansClient.create(new LoanBuilder()
+    loansFixture.createLoan(new LoanBuilder()
       .withId(loan3Id)
       .open()
       .withUserId(userId)
@@ -1861,7 +1858,7 @@ public class LoanAPITests extends APITests {
     UUID checkinServicePointId = servicePointsFixture.cd1().getId();
     UUID checkoutServicePointId = servicePointsFixture.cd2().getId();
     UUID loanId = UUID.randomUUID();
-    loansClient.create(new LoanBuilder()
+    loansFixture.createLoan(new LoanBuilder()
       .withId(loanId)
       .open()
       .withUserId(userId)
