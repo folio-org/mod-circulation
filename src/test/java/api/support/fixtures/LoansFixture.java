@@ -12,6 +12,7 @@ import static api.support.http.InterfaceUrls.overrideCheckOutByBarcodeUrl;
 import static api.support.http.InterfaceUrls.overrideRenewalByBarcodeUrl;
 import static api.support.http.InterfaceUrls.renewByBarcodeUrl;
 import static api.support.http.InterfaceUrls.renewByIdUrl;
+import static java.lang.Integer.MAX_VALUE;
 
 import java.net.MalformedURLException;
 import java.util.HashMap;
@@ -20,12 +21,14 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
 import org.apache.commons.lang3.StringUtils;
+import org.folio.circulation.support.JsonArrayHelper;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 
 import api.support.CheckInByBarcodeResponse;
+import api.support.MultipleJsonRecords;
 import api.support.builders.CheckInByBarcodeRequestBuilder;
 import api.support.builders.CheckOutByBarcodeRequestBuilder;
 import api.support.builders.DeclareItemLostRequestBuilder;
@@ -396,5 +399,10 @@ public class LoansFixture {
 
     return from(get(loansUrl(),
       queryStringParameters, 200, "get-loans"));
+  }
+
+  public MultipleJsonRecords getAllLoans() {
+    return new MultipleJsonRecords(
+      JsonArrayHelper.mapToList(getLoans(MAX_VALUE).getJson(), "loans"));
   }
 }

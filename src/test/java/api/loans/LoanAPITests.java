@@ -1,7 +1,6 @@
 package api.loans;
 
 import static api.requests.RequestsAPICreationTests.setupMissingItem;
-import static api.support.JsonCollectionAssistant.getRecordById;
 import static api.support.http.AdditionalHttpStatusCodes.UNPROCESSABLE_ENTITY;
 import static api.support.http.InterfaceUrls.loansUrl;
 import static api.support.matchers.ResponseStatusCodeMatcher.hasStatus;
@@ -12,14 +11,13 @@ import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static api.support.matchers.ValidationErrorMatchers.hasMessageContaining;
 import static api.support.matchers.ValidationErrorMatchers.hasNullParameter;
 import static api.support.matchers.ValidationErrorMatchers.hasUUIDParameter;
-import static java.lang.Integer.MAX_VALUE;
 import static org.folio.HttpStatus.HTTP_VALIDATION_ERROR;
 import static org.folio.circulation.domain.representations.ItemProperties.CALL_NUMBER_COMPONENTS;
 import static org.folio.circulation.support.JsonArrayHelper.mapToList;
 import static org.hamcrest.CoreMatchers.allOf;
+import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.greaterThan;
-import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
@@ -29,12 +27,14 @@ import static org.junit.Assert.assertTrue;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.stream.Collectors;
 
 import org.folio.circulation.domain.representations.LoanProperties;
 import org.folio.circulation.support.JsonArrayHelper;
@@ -48,6 +48,7 @@ import org.joda.time.format.ISODateTimeFormat;
 import org.junit.Test;
 
 import api.support.APITests;
+import api.support.MultipleJsonRecords;
 import api.support.builders.AccountBuilder;
 import api.support.builders.ItemBuilder;
 import api.support.builders.LoanBuilder;
@@ -300,14 +301,13 @@ public class LoanAPITests extends APITests {
       .withRemainingFeeFine(1000)
     );
 
-    List<JsonObject> loans = getAllLoans();
+    MultipleJsonRecords loans = loansFixture.getAllLoans();
 
-    JsonObject fetchedLoan1 = getRecordById(loans, loan1.getId()).get();
-    JsonObject fetchedLoan2 = getRecordById(loans, loan2.getId()).get();
+    JsonObject fetchedLoan1 = loans.getById(loan1.getId());
+    JsonObject fetchedLoan2 = loans.getById(loan2.getId());
 
     loanHasFeeFinesProperties(fetchedLoan1, 200);
     loanHasFeeFinesProperties(fetchedLoan2, 1099);
-
   }
 
   @Test
@@ -1028,7 +1028,7 @@ public class LoanAPITests extends APITests {
 
     final IndividualResource loanPolicy = loanPoliciesFixture.canCirculateRolling();
 
-    List<JsonObject> loans = getAllLoans();
+    MultipleJsonRecords loans = loansFixture.getAllLoans();
 
     loans.forEach(loanJson -> loanHasLoanPolicyProperties(loanJson, loanPolicy));
   }
@@ -1247,7 +1247,7 @@ public class LoanAPITests extends APITests {
 
     loansClient.replace(loan2.getId(), updatedLoanRequest);
 
-    List<JsonObject> loans = getAllLoans();
+    MultipleJsonRecords loans = loansFixture.getAllLoans();
 
     loans.forEach(this::hasNoBorrowerProperties);
   }
@@ -1599,7 +1599,7 @@ public class LoanAPITests extends APITests {
       .withCheckinServicePointId(checkinServicePointId2)
       .withNoUserId());
 
-    final List<JsonObject> multipleLoans = getAllLoans();
+    final MultipleJsonRecords multipleLoans = loansFixture.getAllLoans();
 
     assertThat("Should have two loans",
       multipleLoans.size(), is(2));
@@ -1634,14 +1634,19 @@ public class LoanAPITests extends APITests {
       .withCheckinServicePointId(checkinServicePointId2)
       .withUserId(usersFixture.jessica().getId()));
 
-    final List<JsonObject> multipleLoans = getAllLoans();
+    final MultipleJsonRecords multipleLoans = loansFixture.getAllLoans();
 
-     assertThat("Should have different 'userId' for different loans",
-       multipleLoans.get(0).getString("userId"),
-       not(multipleLoans.get(1).getString("userId")));
+    final Set<String> uniqueUserIds = multipleLoans.stream()
+      .map(loan -> loan.getString("userId"))
+      .collect(Collectors.toSet());
+
+    assertThat("Should have different 'userId' for different loans",
+       uniqueUserIds, containsInAnyOrder(jessicaUser.getId().toString(),
+        steveUser.getId().toString()));
 
     assertThat("Should have two loans",
       multipleLoans.size(), is(2));
+
     loanHasExpectedProperties(firstLoan.getJson(), steveUser);
     loanHasExpectedProperties(secondLoan.getJson(), jessicaUser);
   }
@@ -1937,10 +1942,10 @@ public class LoanAPITests extends APITests {
 
     loansStorageClient.replace(secondLoan.getId(), secondSavedLoan);
 
-    List<JsonObject> loans = getAllLoans();
+    MultipleJsonRecords loans = loansFixture.getAllLoans();
 
-    JsonObject fetchedLoan1 = getRecordById(loans, firstLoan.getId()).get();
-    JsonObject fetchedLoan2 = getRecordById(loans, secondLoan.getId()).get();
+    JsonObject fetchedLoan1 = loans.getById(firstLoan.getId());
+    JsonObject fetchedLoan2 = loans.getById(secondLoan.getId());
 
     loanHasPatronGroupProperties(fetchedLoan1, "Regular Group");
     loanHasPatronGroupProperties(fetchedLoan2, "undergrad");
@@ -2064,7 +2069,4 @@ public class LoanAPITests extends APITests {
     return JsonArrayHelper.toList(page.getJsonArray("loans"));
   }
 
-  private List<JsonObject> getAllLoans() {
-    return mapToList(loansFixture.getLoans(MAX_VALUE).getJson(), "loans");
-  }
 }
