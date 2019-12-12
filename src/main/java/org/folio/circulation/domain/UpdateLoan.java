@@ -56,9 +56,9 @@ public class UpdateLoan {
 
   private Result<LoanAndRelatedRecords> updateLoanAction(LoanAndRelatedRecords loanAndRelatedRecords, Request request) {
     Loan loan = loanAndRelatedRecords.getLoan();
-    String action = request.actionOnCreateOrUpdate();
+    LoanAction action = request.actionOnCreateOrUpdate();
 
-    if (StringUtils.isNotBlank(action)) {
+    if (action != null) {
       loan.changeAction(action);
       loan.changeItemStatus(request.getItem().getStatus().getValue());
     }
