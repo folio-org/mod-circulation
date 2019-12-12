@@ -2,6 +2,8 @@ package api.loans;
 
 import static api.requests.RequestsAPICreationTests.setupMissingItem;
 import static api.support.JsonCollectionAssistant.getRecordById;
+import static api.support.RestAssuredClient.from;
+import static api.support.RestAssuredClient.get;
 import static api.support.http.AdditionalHttpStatusCodes.UNPROCESSABLE_ENTITY;
 import static api.support.http.InterfaceUrls.loansUrl;
 import static api.support.matchers.ResponseStatusCodeMatcher.hasStatus;
@@ -46,6 +48,7 @@ import org.joda.time.format.ISODateTimeFormat;
 import org.junit.Test;
 
 import api.support.APITests;
+import api.support.RestAssuredClient;
 import api.support.builders.AccountBuilder;
 import api.support.builders.ItemBuilder;
 import api.support.builders.LoanBuilder;
@@ -2077,10 +2080,8 @@ public class LoanAPITests extends APITests {
     return JsonArrayHelper.toList(page.getJsonArray("loans"));
   }
 
-  private IndividualResource getLoanById(UUID id)
-    throws MalformedURLException, InterruptedException, ExecutionException,
-    TimeoutException {
-
-    return loansClient.get(id);
+  private IndividualResource getLoanById(UUID id) {
+    return new IndividualResource(from(get(
+      loansUrl(String.format("/%s", id)), 200, "get-loan-by-id")));
   }
 }
