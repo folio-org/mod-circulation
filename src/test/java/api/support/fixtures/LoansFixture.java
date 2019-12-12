@@ -12,8 +12,6 @@ import static api.support.http.InterfaceUrls.overrideCheckOutByBarcodeUrl;
 import static api.support.http.InterfaceUrls.overrideRenewalByBarcodeUrl;
 import static api.support.http.InterfaceUrls.renewByBarcodeUrl;
 import static api.support.http.InterfaceUrls.renewByIdUrl;
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.junit.MatcherAssert.assertThat;
 
 import java.net.MalformedURLException;
 import java.util.HashMap;
@@ -22,7 +20,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
 import org.apache.commons.lang3.StringUtils;
-import org.folio.HttpStatus;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 import org.joda.time.DateTime;
@@ -37,31 +34,23 @@ import api.support.builders.OverrideCheckOutByBarcodeRequestBuilder;
 import api.support.builders.OverrideRenewalByBarcodeRequestBuilder;
 import api.support.builders.RenewByBarcodeRequestBuilder;
 import api.support.builders.RenewByIdRequestBuilder;
-import api.support.http.ResourceClient;
 import io.vertx.core.json.JsonObject;
 
 public class LoansFixture {
-  private final ResourceClient loansClient;
   private final UsersFixture usersFixture;
   private final ServicePointsFixture servicePointsFixture;
 
   public LoansFixture(
-    ResourceClient loansClient,
     UsersFixture usersFixture,
     ServicePointsFixture servicePointsFixture) {
 
-    this.loansClient = loansClient;
     this.usersFixture = usersFixture;
     this.servicePointsFixture = servicePointsFixture;
   }
 
   public IndividualResource createLoan(
     IndividualResource item,
-    IndividualResource to)
-    throws MalformedURLException,
-    InterruptedException,
-    ExecutionException,
-    TimeoutException {
+    IndividualResource to) {
 
     DateTime loanDate = DateTime.now();
 
@@ -76,11 +65,7 @@ public class LoansFixture {
   public IndividualResource createLoan(
     IndividualResource item,
     IndividualResource to,
-    DateTime loanDate)
-    throws MalformedURLException,
-    InterruptedException,
-    ExecutionException,
-    TimeoutException {
+    DateTime loanDate) {
 
     return createLoan(new LoanBuilder()
       .open()
@@ -90,37 +75,34 @@ public class LoansFixture {
       .withDueDate(loanDate.plusWeeks(3)));
   }
 
-  public IndividualResource createLoan(LoanBuilder builder)
-    throws MalformedURLException,
-    InterruptedException,
-    ExecutionException,
-    TimeoutException {
-
-    return loansClient.create(builder);
+  public IndividualResource createLoan(LoanBuilder builder) {
+    return new IndividualResource(attemptToCreateLoan(builder, 201));
   }
 
   public Response attemptToCreateLoan(
-    IndividualResource item,
-    IndividualResource to)
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException,
-    MalformedURLException {
+    IndividualResource item, IndividualResource to) {
 
-    final Response response = loansClient.attemptCreate(new LoanBuilder()
-      .open()
-      .withItemId(item.getId())
-      .withUserId(to.getId()));
-
-    assertThat(
-      String.format("Should not be able to create loan: %s", response.getBody()),
-      response.getStatusCode(), is(UNPROCESSABLE_ENTITY));
-
-    return response;
+    return attemptToCreateLoan(item, to, UNPROCESSABLE_ENTITY);
   }
 
-  public Response declareItemLost(
-    DeclareItemLostRequestBuilder builder) {
+  public Response attemptToCreateLoan(
+    IndividualResource item, IndividualResource to, int expectedStatusCode) {
+
+    return attemptToCreateLoan(new LoanBuilder()
+      .open()
+      .withItemId(item.getId())
+      .withUserId(to.getId()), expectedStatusCode);
+  }
+
+  public Response attemptToCreateLoan(
+    LoanBuilder loanBuilder, int expectedStatusCode) {
+
+    return from(post(loanBuilder.create(), loansUrl(),
+      expectedStatusCode, "post-loan"));
+  }
+
+  public Response declareItemLost(DeclareItemLostRequestBuilder builder) {
+
     JsonObject request = builder.create();
 
     return from(
@@ -191,16 +173,6 @@ public class LoansFixture {
     CheckOutByBarcodeRequestBuilder builder) {
 
     return attemptCheckOutByBarcode(422, builder);
-  }
-
-  public Response attemptCheckOutByBarcode(
-    HttpStatus expectedStatusCode,
-    CheckOutByBarcodeRequestBuilder builder) {
-
-    JsonObject request = builder.create();
-
-    return from(post(request, checkOutByBarcodeUrl(),
-      expectedStatusCode.toInt(), "check-out-by-barcode-request"));
   }
 
   public Response attemptCheckOutByBarcode(
