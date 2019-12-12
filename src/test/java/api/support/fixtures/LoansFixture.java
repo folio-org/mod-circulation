@@ -358,6 +358,11 @@ public class LoansFixture {
       expectedStatusCode, "override-check-out-by-barcode-request"));
   }
 
+  public IndividualResource getLoanById(UUID id) {
+    return new IndividualResource(from(get(
+      loansUrl(String.format("/%s", id)), 200, "get-loan-by-id")));
+  }
+
   public Response getLoans() {
     return getLoans(null, null, null);
   }

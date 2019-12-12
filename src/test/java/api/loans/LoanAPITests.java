@@ -2,7 +2,6 @@ package api.loans;
 
 import static api.requests.RequestsAPICreationTests.setupMissingItem;
 import static api.support.JsonCollectionAssistant.getRecordById;
-import static api.support.RestAssuredClient.from;
 import static api.support.RestAssuredClient.get;
 import static api.support.http.AdditionalHttpStatusCodes.UNPROCESSABLE_ENTITY;
 import static api.support.http.InterfaceUrls.loansUrl;
@@ -48,7 +47,6 @@ import org.joda.time.format.ISODateTimeFormat;
 import org.junit.Test;
 
 import api.support.APITests;
-import api.support.RestAssuredClient;
 import api.support.builders.AccountBuilder;
 import api.support.builders.ItemBuilder;
 import api.support.builders.LoanBuilder;
@@ -206,7 +204,7 @@ public class LoanAPITests extends APITests {
       .withRemainingFeeFine(150)
     );
 
-    JsonObject loan = getLoanById(id).getJson();
+    JsonObject loan = loansFixture.getLoanById(id).getJson();
 
     loanHasFeeFinesProperties(loan, 0);
   }
@@ -242,7 +240,7 @@ public class LoanAPITests extends APITests {
       .withRemainingFeeFine(150)
     );
 
-    JsonObject loan = getLoanById(id).getJson();
+    JsonObject loan = loansFixture.getLoanById(id).getJson();
 
     loanHasFeeFinesProperties(loan, 150d);
 
@@ -252,7 +250,7 @@ public class LoanAPITests extends APITests {
       .withRemainingFeeFine(150)
     );
 
-    loan = getLoanById(id).getJson();
+    loan = loansFixture.getLoanById(id).getJson();
 
     loanHasFeeFinesProperties(loan, 300d);
   }
@@ -1200,7 +1198,7 @@ public class LoanAPITests extends APITests {
 
     loansClient.replace(loan.getId(), updatedLoanRequest);
 
-    final JsonObject updatedLoan = getLoanById(loan.getId()).getJson();
+    final JsonObject updatedLoan = loansFixture.getLoanById(loan.getId()).getJson();
 
     assertThat("Should be closed",
       updatedLoan.getJsonObject("status").getString("name"), is("Closed"));
@@ -1918,7 +1916,7 @@ public class LoanAPITests extends APITests {
 
      loansStorageClient.replace(individualResource.getId(), savedLoan);
 
-     JsonObject loan = getLoanById(individualResource.getId()).getJson();
+     JsonObject loan = loansFixture.getLoanById(individualResource.getId()).getJson();
 
      loanHasPatronGroupProperties(loan, "Regular Group");
   }
@@ -2080,8 +2078,4 @@ public class LoanAPITests extends APITests {
     return JsonArrayHelper.toList(page.getJsonArray("loans"));
   }
 
-  private IndividualResource getLoanById(UUID id) {
-    return new IndividualResource(from(get(
-      loansUrl(String.format("/%s", id)), 200, "get-loan-by-id")));
-  }
 }
