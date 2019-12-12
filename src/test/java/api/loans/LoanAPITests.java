@@ -2,7 +2,6 @@ package api.loans;
 
 import static api.requests.RequestsAPICreationTests.setupMissingItem;
 import static api.support.JsonCollectionAssistant.getRecordById;
-import static api.support.RestAssuredClient.get;
 import static api.support.http.AdditionalHttpStatusCodes.UNPROCESSABLE_ENTITY;
 import static api.support.http.InterfaceUrls.loansUrl;
 import static api.support.matchers.ResponseStatusCodeMatcher.hasStatus;
@@ -13,8 +12,10 @@ import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static api.support.matchers.ValidationErrorMatchers.hasMessageContaining;
 import static api.support.matchers.ValidationErrorMatchers.hasNullParameter;
 import static api.support.matchers.ValidationErrorMatchers.hasUUIDParameter;
+import static java.lang.Integer.MAX_VALUE;
 import static org.folio.HttpStatus.HTTP_VALIDATION_ERROR;
 import static org.folio.circulation.domain.representations.ItemProperties.CALL_NUMBER_COMPONENTS;
+import static org.folio.circulation.support.JsonArrayHelper.mapToList;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.greaterThan;
@@ -2063,10 +2064,7 @@ public class LoanAPITests extends APITests {
     return JsonArrayHelper.toList(page.getJsonArray("loans"));
   }
 
-  private List<JsonObject> getAllLoans()
-    throws MalformedURLException, InterruptedException, ExecutionException,
-    TimeoutException {
-
-    return loansClient.getAll();
+  private List<JsonObject> getAllLoans() {
+    return mapToList(loansFixture.getLoans(MAX_VALUE).getJson(), "loans");
   }
 }

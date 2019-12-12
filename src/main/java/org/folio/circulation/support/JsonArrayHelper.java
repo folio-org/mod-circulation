@@ -49,6 +49,13 @@ public class JsonArrayHelper {
     return mapToList(within.getJsonArray(arrayPropertyName), mapper);
   }
 
+  public static List<JsonObject> mapToList(
+    JsonObject within,
+    String arrayPropertyName) {
+
+    return mapToList(within, arrayPropertyName, Function.identity());
+  }
+
   public static Stream<JsonObject> toStream(
     JsonObject within,
     String arrayPropertyName) {
