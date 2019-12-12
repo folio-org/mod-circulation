@@ -1472,36 +1472,21 @@ public class LoanAPITests extends APITests {
   }
 
   @Test
-  public void canFindNoResultsFromSearch()
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException {
-
+  public void canFindNoResultsFromSearch() {
     UUID firstUserId = UUID.randomUUID();
-    UUID secondUserId = UUID.randomUUID();
 
     Response firstPageResponse = loansFixture.getLoans(String.format("userId=%s", firstUserId));
-    Response secondPageResponse = loansFixture.getLoans(String.format("userId=%s", secondUserId));
 
     assertThat(String.format("Failed to get loans for first user: %s",
       firstPageResponse.getBody()),
       firstPageResponse.getStatusCode(), is(200));
 
-    assertThat(String.format("Failed to get loans for second user: %s",
-      secondPageResponse.getBody()),
-      secondPageResponse.getStatusCode(), is(200));
-
     JsonObject firstPage = firstPageResponse.getJson();
-    JsonObject secondPage = secondPageResponse.getJson();
 
     List<JsonObject> firstPageLoans = getLoans(firstPage);
-    List<JsonObject> secondPageLoans = getLoans(secondPage);
 
     assertThat(firstPageLoans.size(), is(0));
     assertThat(firstPage.getInteger("totalRecords"), is(0));
-
-    assertThat(secondPageLoans.size(), is(0));
-    assertThat(secondPage.getInteger("totalRecords"), is(0));
   }
 
   @Test
@@ -2077,5 +2062,4 @@ public class LoanAPITests extends APITests {
   private List<JsonObject> getLoans(JsonObject page) {
     return JsonArrayHelper.toList(page.getJsonArray("loans"));
   }
-
 }
