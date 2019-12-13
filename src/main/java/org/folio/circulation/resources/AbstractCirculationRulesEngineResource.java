@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.folio.circulation.domain.Location;
 import org.folio.circulation.rules.Drools;
 import org.folio.circulation.rules.Text2Drools;
@@ -265,7 +266,7 @@ public abstract class AbstractCirculationRulesEngineResource extends Resource {
           .mapTo(Location::from)
           .whenNotFound(failed(new ServerErrorFailure("Can`t find location")))
           .fetch(request.params().get(LOCATION_ID_NAME))
-          .thenCompose(r -> r.after(location -> getPolicyId(request.params(), drools, location)))
+          .thenCompose(r -> r.after(location -> getPolicyIdAndRuleLine(request.params(), drools, location)))
           .thenCompose(r -> r.after(this::buildJsonResult))
           .thenApply(OkJsonResponseResult::from)
           .thenAccept(result -> result.writeTo(routingContext.response()));
@@ -277,9 +278,11 @@ public abstract class AbstractCirculationRulesEngineResource extends Resource {
     });
   }
 
-  private CompletableFuture<Result<JsonObject>> buildJsonResult(String policyId){
-    return CompletableFuture.completedFuture(succeeded(new JsonObject().put(getPolicyIdKey(),
-      policyId)));
+  private CompletableFuture<Result<JsonObject>> buildJsonResult(Pair<String, Integer> policyId){
+    return CompletableFuture.completedFuture(succeeded(new JsonObject()
+      .put(getPolicyIdKey(), policyId.getKey())
+      .put("lineNumber", policyId.getValue())
+    ));
   }
 
   private void applyAll(RoutingContext routingContext, Drools drools) {
@@ -339,7 +342,7 @@ public abstract class AbstractCirculationRulesEngineResource extends Resource {
         invalidUuid(request, LOCATION_ID_NAME);
   }
 
-  protected abstract CompletableFuture<Result<String>> getPolicyId(MultiMap params, Drools drools, Location location);
+  protected abstract CompletableFuture<Result<Pair<String, Integer>>> getPolicyIdAndRuleLine(MultiMap params, Drools drools, Location location);
 
   protected abstract String getPolicyIdKey();
 

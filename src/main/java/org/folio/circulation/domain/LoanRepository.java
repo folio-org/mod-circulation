@@ -348,4 +348,10 @@ public class LoanRepository {
 
     return queryLoanStorage(1, cqlQueryResult);
   }
+
+  public CompletableFuture<Result<MultipleRecords<Loan>>> findOpenLoansByUserIdAndLoanPolicyIdWithItem(
+    LoanAndRelatedRecords loanAndRelatedRecords){
+
+    return findOpenLoansByUserIdAndLoanPolicyId(loanAndRelatedRecords);
+  }
 }

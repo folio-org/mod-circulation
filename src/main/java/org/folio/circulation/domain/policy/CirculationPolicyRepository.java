@@ -1,12 +1,20 @@
 package org.folio.circulation.domain.policy;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
+
 import static org.folio.circulation.support.Result.failed;
 import static org.folio.circulation.support.Result.succeeded;
+import static org.folio.circulation.support.ResultBinding.mapResult;
 import static org.folio.circulation.support.results.CommonFailures.failedDueToServerError;
 
 import java.lang.invoke.MethodHandles;
 import java.util.concurrent.CompletableFuture;
+
+import io.vertx.core.json.JsonObject;
+import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.apache.commons.lang3.tuple.Pair;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Loan;
@@ -19,10 +27,6 @@ import org.folio.circulation.support.Result;
 import org.folio.circulation.support.SingleRecordFetcher;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.client.ResponseHandler;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import io.vertx.core.json.JsonObject;
 
 public abstract class CirculationPolicyRepository<T> {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
@@ -50,6 +54,7 @@ public abstract class CirculationPolicyRepository<T> {
     User user) {
 
     return lookupPolicyId(item, user)
+      .thenApply(mapResult(pair -> pair.getKey()))
       .thenComposeAsync(r -> r.after(this::lookupPolicy));
   }
 
@@ -70,8 +75,8 @@ public abstract class CirculationPolicyRepository<T> {
       .thenApply(result -> result.next(this::mapToPolicy));
   }
 
-  public CompletableFuture<Result<String>> lookupPolicyId(Item item, User user) {
-    CompletableFuture<Result<String>> findLoanPolicyCompleted = new CompletableFuture<>();
+  public CompletableFuture<Result<Pair<String, Integer>>> lookupPolicyId(Item item, User user) {
+    CompletableFuture<Result<Pair<String, Integer>>> findLoanPolicyCompleted = new CompletableFuture<>();
 
     if (item.isNotFound()) {
       return completedFuture(failedDueToServerError(
@@ -108,14 +113,20 @@ public abstract class CirculationPolicyRepository<T> {
         log.info("Rules response {}", response.getBody());
 
         String policyId = fetchPolicyId(response.getJson());
+        Integer lineNumber = response.getJson().getInteger("lineNumber");
 
         log.info("Policy to fetch based upon rules {}", policyId);
 
-        findLoanPolicyCompleted.complete(succeeded(policyId));
+        findLoanPolicyCompleted.complete(succeeded(new ImmutablePair<>(policyId, lineNumber)));
       }
     });
 
     return findLoanPolicyCompleted;
+  }
+
+  public CompletableFuture<Result<Integer>> lookupLineNumber(Item item, User user) {
+
+    return lookupPolicyId(item, user).thenApply(mapResult(Pair::getValue));
   }
 
   protected abstract String getPolicyNotFoundErrorMessage(String policyId);

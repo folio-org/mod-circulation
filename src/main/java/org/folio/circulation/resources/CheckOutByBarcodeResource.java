@@ -1,6 +1,7 @@
 package org.folio.circulation.resources;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
+
 import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequest.ITEM_BARCODE;
 import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequest.PROXY_USER_BARCODE;
 import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequest.SERVICE_POINT_ID;
@@ -10,6 +11,12 @@ import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 
 import java.util.UUID;
+
+import io.vertx.core.http.HttpClient;
+import io.vertx.core.json.JsonObject;
+import io.vertx.ext.web.Router;
+import io.vertx.ext.web.RoutingContext;
+import org.joda.time.format.ISODateTimeFormat;
 
 import org.folio.circulation.domain.ConfigurationRepository;
 import org.folio.circulation.domain.Item;
@@ -47,12 +54,6 @@ import org.folio.circulation.support.ResponseWritableResult;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.RouteRegistration;
 import org.folio.circulation.support.http.server.WebContext;
-import org.joda.time.format.ISODateTimeFormat;
-
-import io.vertx.core.http.HttpClient;
-import io.vertx.core.json.JsonObject;
-import io.vertx.ext.web.Router;
-import io.vertx.ext.web.RoutingContext;
 
 public class CheckOutByBarcodeResource extends Resource {
 
@@ -134,7 +135,7 @@ public class CheckOutByBarcodeResource extends Resource {
       loanRepository, message -> singleValidationError(message, ITEM_BARCODE, itemBarcode));
 
     final ItemLimitValidator itemLimitValidator = new ItemLimitValidator(
-      message -> singleValidationError(message, ITEM_BARCODE, itemBarcode), loanRepository);
+      message -> singleValidationError(message, ITEM_BARCODE, itemBarcode), loanRepository, loanPolicyRepository, clients.circulationRulesStorage(), routingContext);
 
     final UpdateItem updateItem = new UpdateItem(clients);
     final UpdateRequestQueue requestQueueUpdate = UpdateRequestQueue.using(clients);

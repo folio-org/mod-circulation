@@ -70,7 +70,7 @@ public class PatronNoticeService {
 
   private CompletableFuture<Result<Pair<PatronNoticeEvent, String>>> loadNoticePolicyId(PatronNoticeEvent event) {
     return noticePolicyRepository.lookupPolicyId(event.getItem(), event.getUser())
-      .thenApply(mapResult(noticePolicyId -> Pair.of(event, noticePolicyId)));
+      .thenApply(mapResult(noticePolicyIdLineNumberPair -> Pair.of(event, noticePolicyIdLineNumberPair.getKey())));
   }
 
   private Map<NoticeEventGroupDefinition, List<PatronNoticeEvent>> groupEvents(

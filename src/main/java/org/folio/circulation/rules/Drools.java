@@ -2,10 +2,12 @@ package org.folio.circulation.rules;
 
 import static org.folio.circulation.resources.AbstractCirculationRulesEngineResource.ITEM_TYPE_ID_NAME;
 import static org.folio.circulation.resources.AbstractCirculationRulesEngineResource.LOAN_TYPE_ID_NAME;
-import static org.folio.circulation.resources.AbstractCirculationRulesEngineResource.PATRON_TYPE_ID_NAME;
 import static org.folio.circulation.resources.AbstractCirculationRulesEngineResource.LOCATION_ID_NAME;
+import static org.folio.circulation.resources.AbstractCirculationRulesEngineResource.PATRON_TYPE_ID_NAME;
 import static org.folio.circulation.support.JsonPropertyWriter.write;
 
+import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.apache.commons.lang3.tuple.Pair;
 import org.folio.circulation.domain.Location;
 import org.kie.api.KieServices;
 import org.kie.api.builder.KieBuilder;
@@ -69,11 +71,11 @@ public class Drools {
    * @param location - location with institution, library and campus
    * @return the name of the loan policy
    */
-  public String loanPolicy(MultiMap params, Location location) {
+  public Pair<String, Integer> loanPolicy(MultiMap params, Location location) {
     KieSession kieSession = createSession(params, location);
     kieSession.fireAllRules();
     kieSession.dispose();
-    return match.loanPolicyId;
+    return new ImmutablePair<>(match.loanPolicyId, match.lineNumber);
   }
 
   /**
@@ -92,6 +94,8 @@ public class Drools {
       JsonObject json = new JsonObject();
 
       write(json, "loanPolicyId", match.loanPolicyId);
+      write(json, "lineNumber", match.lineNumber);
+
       writeLineMatch(json);
 
       array.add(json);
@@ -107,11 +111,11 @@ public class Drools {
    * @param location - location with institution, library and campus
    * @return the name of the request policy
    */
-  public String requestPolicy(MultiMap params, Location location) {
+  public Pair<String, Integer> requestPolicy(MultiMap params, Location location) {
     KieSession kieSession = createSession(params, location);
     kieSession.fireAllRules();
     kieSession.dispose();
-    return match.requestPolicyId;
+    return new ImmutablePair<>(match.requestPolicyId, match.lineNumber);
   }
 
    /**
@@ -146,11 +150,11 @@ public class Drools {
    * @param location - location with institution, library and campus
    * @return the name of the notice policy
    */
-  public String noticePolicy(MultiMap params, Location location) {
+  public Pair<String, Integer> noticePolicy(MultiMap params, Location location) {
     KieSession kieSession = createSession(params, location);
     kieSession.fireAllRules();
     kieSession.dispose();
-    return match.noticePolicyId;
+    return new ImmutablePair<>(match.noticePolicyId, match.lineNumber);
   }
 
    /**
@@ -269,7 +273,7 @@ public class Drools {
    * @return loan policy
    */
   public static String loanPolicy(String droolsFile, MultiMap params, Location location) {
-    return new Drools(droolsFile).loanPolicy(params, location);
+    return new Drools(droolsFile).loanPolicy(params, location).getKey();
   }
 
   /**
@@ -280,6 +284,6 @@ public class Drools {
    * @return request policy
    */
   static String requestPolicy(String droolsFile, MultiMap params, Location location) {
-    return new Drools(droolsFile).requestPolicy(params, location);
+    return new Drools(droolsFile).requestPolicy(params, location).getKey();
   }
 }
