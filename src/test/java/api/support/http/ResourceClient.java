@@ -1,6 +1,7 @@
 package api.support.http;
 
-import static java.net.HttpURLConnection.HTTP_CREATED;
+import static api.support.APITestContext.getOkapiHeadersFromContext;
+import static java.net.HttpURLConnection.HTTP_NO_CONTENT;
 import static java.net.HttpURLConnection.HTTP_OK;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
@@ -25,6 +26,7 @@ import org.hamcrest.CoreMatchers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import api.support.RestAssuredClient;
 import api.support.builders.Builder;
 import io.vertx.core.json.JsonObject;
 
@@ -32,6 +34,7 @@ public class ResourceClient {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
   private final OkapiHttpClient client;
+  private final RestAssuredClient restAssuredClient;
   private final UrlMaker urlMaker;
   private final String resourceName;
   private final String collectionArrayPropertyName;
@@ -252,250 +255,121 @@ public class ResourceClient {
     );
   }
 
-  private ResourceClient(
-    OkapiHttpClient client,
-    UrlMaker urlMaker,
-    String resourceName,
-    String collectionArrayPropertyName) {
+  private ResourceClient(OkapiHttpClient client, UrlMaker urlMaker,
+      String resourceName, String collectionArrayPropertyName) {
 
     this.client = client;
     this.urlMaker = urlMaker;
     this.resourceName = resourceName;
     this.collectionArrayPropertyName = collectionArrayPropertyName;
+    restAssuredClient = new RestAssuredClient(getOkapiHeadersFromContext());
   }
 
-  private ResourceClient(
-    OkapiHttpClient client,
-    UrlMaker urlMaker,
+  private ResourceClient(OkapiHttpClient client, UrlMaker urlMaker,
     String resourceName) {
 
-    this.client = client;
-    this.urlMaker = urlMaker;
-    this.resourceName = resourceName;
-    this.collectionArrayPropertyName = resourceName;
+    this(client, urlMaker, resourceName, resourceName);
   }
 
-  public Response attemptCreate(Builder builder)
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException,
-    MalformedURLException {
-
-    CompletableFuture<Response> createCompleted = new CompletableFuture<>();
-
-    client.post(urlMaker.combine(""), builder.create(),
-      ResponseHandler.any(createCompleted));
-
-    return createCompleted.get(5, TimeUnit.SECONDS);
+  public Response attemptCreate(Builder builder) throws MalformedURLException {
+    return attemptCreate(builder.create());
   }
 
-  public IndividualResource create(Builder builder)
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public Response attemptCreate(JsonObject representation)
+      throws MalformedURLException {
 
+    return restAssuredClient.post(representation, urlMaker.combine(""),
+      "attempt-create-record");
+  }
+
+  public IndividualResource create(Builder builder) throws MalformedURLException {
     return create(builder.create());
   }
 
-  public IndividualResource create(JsonObject request)
-    throws MalformedURLException,
-    InterruptedException,
-    ExecutionException,
-    TimeoutException {
+  public IndividualResource create(JsonObject representation)
+      throws MalformedURLException {
 
-    CompletableFuture<Response> createCompleted = new CompletableFuture<>();
-
-    log.debug("Attempting to create {} record: {}", resourceName,
-      request.encodePrettily());
-
-    client.post(urlMaker.combine(""), request,
-      ResponseHandler.any(createCompleted));
-
-    Response response = createCompleted.get(5, TimeUnit.SECONDS);
-
-    assertThat(
-      String.format("Failed to create %s: %s", resourceName,
-        response.getBody()), response.getStatusCode(), is(HTTP_CREATED));
-
-    log.debug("Created resource {}: {}", resourceName,
-      response.getJson().encodePrettily());
-
-    return new IndividualResource(response);
+    return  new IndividualResource(restAssuredClient.post(representation,
+      urlMaker.combine(""), 201, "create-record"));
   }
 
   public Response attemptCreateAtSpecificLocation(Builder builder)
-    throws MalformedURLException,
-    InterruptedException,
-    ExecutionException,
-    TimeoutException {
-
-    CompletableFuture<Response> createCompleted = new CompletableFuture<>();
+      throws MalformedURLException {
 
     JsonObject representation = builder.create();
     String id = representation.getString("id");
 
     final URL location = urlMaker.combine(String.format("/%s", id));
 
-    client.put(location, representation, ResponseHandler.any(createCompleted));
-
-    return createCompleted.get(5, TimeUnit.SECONDS);
+    return restAssuredClient.put(representation, location,
+      "attempt-create-record-at-specific-location");
   }
 
   public IndividualResource createAtSpecificLocation(Builder builder)
-    throws MalformedURLException,
-    InterruptedException,
-    ExecutionException,
-    TimeoutException {
-
-    CompletableFuture<Response> createCompleted = new CompletableFuture<>();
+      throws MalformedURLException {
 
     JsonObject representation = builder.create();
     String id = representation.getString("id");
 
     final URL location = urlMaker.combine(String.format("/%s", id));
 
-    client.put(location, representation, ResponseHandler.any(createCompleted));
+    restAssuredClient.put(representation, location, HTTP_NO_CONTENT,
+      "create-record-at-specific-location");
 
-    Response createResponse = createCompleted.get(5, TimeUnit.SECONDS);
-
-    assertThat(
-      String.format("Failed to create %s %s: %s", resourceName, id, createResponse.getBody()),
-      createResponse.getStatusCode(), is(HttpURLConnection.HTTP_NO_CONTENT));
-
-    System.out.println(String.format("Created resource %s: %s", resourceName,
-      createResponse.getJson().encodePrettily()));
-
-    CompletableFuture<Response> getCompleted = new CompletableFuture<>();
-
-    client.get(location, ResponseHandler.any(getCompleted));
-
-    Response getResponse = getCompleted.get(5, TimeUnit.SECONDS);
-
-    assertThat(
-      String.format("Failed to get %s %s: %s", resourceName, id, getResponse.getBody()),
-      getResponse.getStatusCode(), is(HttpURLConnection.HTTP_OK));
-
-    return new IndividualResource(getResponse);
+    return get(UUID.fromString(id));
   }
 
   public Response attemptReplace(UUID id, Builder builder)
-      throws MalformedURLException,
-      InterruptedException,
-      ExecutionException,
-      TimeoutException {
+      throws MalformedURLException {
+
     return attemptReplace(id, builder.create());
   }
 
-  public Response attemptReplace(UUID id, JsonObject jsonObject)
-    throws MalformedURLException,
-    InterruptedException,
-    ExecutionException,
-    TimeoutException {
+  public Response attemptReplace(UUID id, JsonObject representation)
+      throws MalformedURLException {
 
-    CompletableFuture<Response> putCompleted = new CompletableFuture<>();
+    final URL location = urlMaker.combine(String.format("/%s", id));
 
-    String path = "";
-    if (id != null) {
-      path = String.format("/%s", id);
-    }
-
-    client.put(urlMaker.combine(path), jsonObject,
-      ResponseHandler.any(putCompleted));
-
-    return putCompleted.get(5, TimeUnit.SECONDS);
+    return restAssuredClient.put(representation, location,
+      "attempt-replace-record");
   }
 
-  public void replace(UUID id, Builder builder)
-    throws MalformedURLException,
-    InterruptedException,
-    ExecutionException,
-    TimeoutException {
-
+  public void replace(UUID id, Builder builder) throws MalformedURLException {
     replace(id, builder.create());
   }
 
-  public void replace(UUID id, JsonObject request)
-    throws MalformedURLException,
-    InterruptedException,
-    ExecutionException,
-    TimeoutException {
+  public void replace(UUID id, JsonObject representation)
+      throws MalformedURLException {
 
-    CompletableFuture<Response> putCompleted = new CompletableFuture<>();
+    final URL location = urlMaker.combine(String.format("/%s", id));
 
-    String path = "";
-    if (id != null) {
-      path = String.format("/%s", id);
-    }
-    client.put(urlMaker.combine(path), request,
-      ResponseHandler.any(putCompleted));
-
-    Response putResponse = putCompleted.get(5, TimeUnit.SECONDS);
-
-    assertThat(
-      String.format("Failed to update %s %s: %s", resourceName, id, putResponse.getBody()),
-      putResponse.getStatusCode(), is(HttpURLConnection.HTTP_NO_CONTENT));
+    restAssuredClient.put(representation, location, HTTP_NO_CONTENT,
+      "create-record-at-specific-location");
   }
 
   public Response getById(UUID id)
-    throws MalformedURLException,
-    InterruptedException,
-    ExecutionException,
-    TimeoutException {
+      throws MalformedURLException {
 
-    CompletableFuture<Response> getCompleted = new CompletableFuture<>();
+    final URL location = urlMaker.combine(String.format("/%s", id));
 
-    client.get(urlMaker.combine(String.format("/%s", id)),
-      ResponseHandler.any(getCompleted));
-
-    return getCompleted.get(5, TimeUnit.SECONDS);
+    return restAssuredClient.get(location, "get-record");
   }
 
   public IndividualResource get(IndividualResource record)
-    throws MalformedURLException,
-    InterruptedException,
-    ExecutionException,
-    TimeoutException {
+      throws MalformedURLException {
 
     return get(record.getId());
   }
 
-
-  public IndividualResource get(UUID id)
-    throws MalformedURLException,
-    InterruptedException,
-    ExecutionException,
-    TimeoutException {
-
-    CompletableFuture<Response> getCompleted = new CompletableFuture<>();
-
-    client.get(urlMaker.combine(String.format("/%s", id)),
-      ResponseHandler.any(getCompleted));
-
-    final Response response = getCompleted.get(5, TimeUnit.SECONDS);
-
-    assertThat(
-      String.format("Failed to get %s: %s", resourceName, response.getBody()),
-      response.getStatusCode(), is(HttpURLConnection.HTTP_OK));
-
-    System.out.println(String.format("Found resource %s: %s", resourceName,
-      response.getJson().encodePrettily()));
-
-    return new IndividualResource(response);
+  public IndividualResource get(UUID id) throws MalformedURLException {
+    return new IndividualResource(restAssuredClient.get(
+      urlMaker.combine(String.format("/%s", id)), 200, "get-record"));
   }
 
   public Response attemptGet(IndividualResource resource)
-    throws MalformedURLException,
-    InterruptedException,
-    ExecutionException,
-    TimeoutException {
+      throws MalformedURLException {
 
-    CompletableFuture<Response> getCompleted = new CompletableFuture<>();
-
-    client.get(urlMaker.combine(String.format("/%s", resource.getId())),
-      ResponseHandler.any(getCompleted));
-
-    return getCompleted.get(5, TimeUnit.SECONDS);
+    return getById(resource.getId());
   }
 
   public void delete(UUID id)
@@ -514,7 +388,7 @@ public class ResourceClient {
     assertThat(String.format(
       "Failed to delete %s %s: %s", resourceName, id, response.getBody()),
       response.getStatusCode(), CoreMatchers.anyOf(
-        is(HttpURLConnection.HTTP_NO_CONTENT),
+        is(HTTP_NO_CONTENT),
         is(HttpURLConnection.HTTP_NOT_FOUND)));
   }
 
@@ -583,8 +457,9 @@ public class ResourceClient {
 
     CompletableFuture<Response> getFinished = new CompletableFuture<>();
 
-    client.get(urlMaker.combine("?limit=1000"),
-      ResponseHandler.any(getFinished));
+    final URL url = urlMaker.combine("?limit=1000");
+
+    client.get(url, ResponseHandler.any(getFinished));
 
     Response response = getFinished.get(5, TimeUnit.SECONDS);
 
@@ -593,7 +468,12 @@ public class ResourceClient {
 
     JsonObject json = response.getJson();
 
-    if(!json.containsKey(collectionArrayPropertyName)) {
+    if (json == null) {
+      throw new RuntimeException(String.format(
+        "Response from \"%s\" does not include any JSON", url));
+    }
+
+    if (!json.containsKey(collectionArrayPropertyName)) {
       throw new RuntimeException(String.format(
         "Collection array property \"%s\" is not present in: %s",
         collectionArrayPropertyName, json.encodePrettily()));
@@ -655,7 +535,6 @@ public class ResourceClient {
 
     return new IndividualResource(response);
   }
-
 
   @FunctionalInterface
   public interface UrlMaker {

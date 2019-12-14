@@ -27,6 +27,17 @@ public class RestAssuredClient {
     this.defaultHeaders = defaultHeaders;
   }
 
+  public Response get(URL location, String requestId) {
+    return toResponse(given()
+      .log().all()
+      .spec(standardHeaders(defaultHeaders.withRequestId(requestId)))
+      .spec(timeoutConfig())
+      .when().get(location)
+      .then()
+      .log().all()
+      .extract().response());
+  }
+
   public Response get(URL url, Map<String, String> queryStringParameters,
       int expectedStatusCode, String requestId) {
 
@@ -106,6 +117,33 @@ public class RestAssuredClient {
       .spec(timeoutConfig())
       .body(representation.encodePrettily())
       .when().post(location)
+      .then()
+      .log().all()
+      .statusCode(expectedStatusCode)
+      .extract().response());
+  }
+
+  public Response put(JsonObject representation, URL location, String requestId) {
+    return toResponse(given()
+      .log().all()
+      .spec(standardHeaders(defaultHeaders.withRequestId(requestId)))
+      .spec(timeoutConfig())
+      .body(representation.encodePrettily())
+      .when().put(location)
+      .then()
+      .log().all()
+      .extract().response());
+  }
+
+  public Response put(JsonObject representation, URL location,
+    int expectedStatusCode, String requestId) {
+
+    return toResponse(given()
+      .log().all()
+      .spec(standardHeaders(defaultHeaders.withRequestId(requestId)))
+      .spec(timeoutConfig())
+      .body(representation.encodePrettily())
+      .when().put(location)
       .then()
       .log().all()
       .statusCode(expectedStatusCode)

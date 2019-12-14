@@ -868,54 +868,21 @@ public class InstanceRequestsAPICreationTests extends APITests {
     return requestBody;
   }
 
-  private void placeHoldRequest(IndividualResource item, UUID requestPickupServicePointId,
-                                IndividualResource patron, LocalDate requestExpirationDate){
+  private void placeHoldRequest(IndividualResource item,
+    UUID requestPickupServicePointId, IndividualResource patron,
+    LocalDate requestExpirationDate) throws MalformedURLException {
 
-    IndividualResource holdRequest = null;
-    try {
-      holdRequest = requestsClient.create(
-        new RequestBuilder()
+    IndividualResource holdRequest = requestsClient.create(
+      new RequestBuilder()
         .hold()
         .forItem(item)
         .withPickupServicePointId(requestPickupServicePointId)
         .withRequestExpiration(requestExpirationDate)
         .by(patron));
-    } catch (InterruptedException e) {
-      e.printStackTrace();
-    } catch (MalformedURLException e) {
-      e.printStackTrace();
-    } catch (TimeoutException e) {
-      e.printStackTrace();
-    } catch (ExecutionException e) {
-      e.printStackTrace();
-    }
 
-    JsonObject requestedItem = (holdRequest != null) ? holdRequest.getJson().getJsonObject("item") : new JsonObject();
+    JsonObject requestedItem = (holdRequest != null)
+      ? holdRequest.getJson().getJsonObject("item") : new JsonObject();
+
     assertThat(requestedItem.getString("status"), is(ItemStatus.CHECKED_OUT.getValue()));
   }
-
-  private void placePagedRequest(IndividualResource item, UUID requestPickupServicePointId,
-                                IndividualResource patron, LocalDate requestExpirationDate){
-    IndividualResource pagedRequest = null;
-      try {
-        pagedRequest = requestsClient.create(
-          new RequestBuilder()
-            .page()
-            .forItem(item)
-            .withPickupServicePointId(requestPickupServicePointId)
-            .withRequestExpiration(requestExpirationDate)
-            .by(patron));
-      } catch (InterruptedException e) {
-        e.printStackTrace();
-      } catch (MalformedURLException e) {
-        e.printStackTrace();
-      } catch (TimeoutException e) {
-        e.printStackTrace();
-      } catch (ExecutionException e) {
-        e.printStackTrace();
-      }
-
-      JsonObject requestedItem = (pagedRequest != null) ? pagedRequest.getJson().getJsonObject("item") : new JsonObject();
-      assertThat(requestedItem.getString("status"), is(ItemStatus.PAGED.getValue()));
-    }
 }
