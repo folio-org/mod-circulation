@@ -28,6 +28,11 @@ public class OkapiHeaders {
       requestId);
   }
 
+  public OkapiHeaders withUserId(String userId) {
+    return new OkapiHeaders(this.url, this.tenantId, this.token, userId,
+      this.requestId);
+  }
+
   public URL getUrl() {
     return url;
   }
@@ -42,6 +47,10 @@ public class OkapiHeaders {
 
   public String getUserId() {
     return userId;
+  }
+
+  public boolean hasUserId() {
+    return userId != null;
   }
 
   public String getRequestId() {

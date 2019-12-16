@@ -6,6 +6,7 @@ import static org.folio.circulation.support.http.OkapiHeader.OKAPI_URL;
 import static org.folio.circulation.support.http.OkapiHeader.TENANT;
 
 import java.net.URL;
+import java.util.HashMap;
 import java.util.Map;
 
 import org.folio.circulation.support.http.OkapiHeader;
@@ -70,13 +71,62 @@ public class RestAssuredClient {
       .extract().response());
   }
 
+  public Response post(JsonObject representation, URL url, String requestId) {
+    return from(given()
+      .log().all()
+      .spec(standardHeaders(defaultHeaders.withRequestId(requestId)))
+      .spec(timeoutConfig())
+      .body(representation.encodePrettily())
+      .when().post(url)
+      .then()
+      .log().all()
+      .extract().response());
+  }
+
+  public Response post(JsonObject representation, URL url,
+    int expectedStatusCode, String requestId) {
+
+    return from(given()
+      .log().all()
+      .spec(standardHeaders(defaultHeaders.withRequestId(requestId)))
+      .spec(timeoutConfig())
+      .body(representation.encodePrettily())
+      .when().post(url)
+      .then()
+      .log().all()
+      .statusCode(expectedStatusCode)
+      .extract().response());
+  }
+
+  public Response post(JsonObject representation, URL location,
+    int expectedStatusCode, OkapiHeaders okapiHeaders) {
+
+    return from(given()
+      .log().all()
+      .spec(standardHeaders(okapiHeaders))
+      .spec(timeoutConfig())
+      .body(representation.encodePrettily())
+      .when().post(location)
+      .then()
+      .log().all()
+      .statusCode(expectedStatusCode)
+      .extract().response());
+  }
+
   private static RequestSpecification standardHeaders(OkapiHeaders okapiHeaders) {
+    final HashMap<String, String> headers = new HashMap<>();
+
+    headers.put(OKAPI_URL, okapiHeaders.getUrl().toString());
+    headers.put(TENANT, okapiHeaders.getTenantId());
+    headers.put(OkapiHeader.TOKEN, okapiHeaders.getToken());
+    headers.put(OkapiHeader.REQUEST_ID, okapiHeaders.getRequestId());
+
+    if (okapiHeaders.hasUserId()) {
+      headers.put(OkapiHeader.USER_ID, okapiHeaders.getUserId());
+    }
+
     return new RequestSpecBuilder()
-      .addHeader(OKAPI_URL, okapiHeaders.getUrl().toString())
-      .addHeader(TENANT, okapiHeaders.getTenantId())
-      .addHeader(OkapiHeader.TOKEN, okapiHeaders.getToken())
-      .addHeader(OkapiHeader.USER_ID, okapiHeaders.getUserId())
-      .addHeader(OkapiHeader.REQUEST_ID, okapiHeaders.getRequestId())
+      .addHeaders(headers)
       .setAccept("application/json, text/plain")
       .setContentType("application/json")
       .build();
@@ -106,39 +156,5 @@ public class RestAssuredClient {
 
     return new Response(response.statusCode(), response.body().print(),
       response.contentType(), mappedHeaders, null);
-  }
-
-  public static io.restassured.response.Response post(
-    JsonObject representation,
-    URL url,
-    int expectedStatusCode,
-    String requestId) {
-
-    return given()
-      .log().all()
-      .spec(standardHeaders(getOkapiHeadersFromContext().withRequestId(requestId)))
-      .spec(timeoutConfig())
-      .body(representation.encodePrettily())
-      .when().post(url)
-      .then()
-      .log().all()
-      .statusCode(expectedStatusCode)
-      .extract().response();
-  }
-
-  public static io.restassured.response.Response post(
-    JsonObject representation,
-    URL url,
-    String requestId) {
-
-    return given()
-      .log().all()
-      .spec(standardHeaders(getOkapiHeadersFromContext().withRequestId(requestId)))
-      .spec(timeoutConfig())
-      .body(representation.encodePrettily())
-      .when().post(url)
-      .then()
-      .log().all()
-      .extract().response();
   }
 }
