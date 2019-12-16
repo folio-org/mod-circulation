@@ -87,7 +87,6 @@ public class RestAssuredClient {
     int expectedStatusCode, String requestId) {
 
     return toResponse(given()
-      .log().all()
       .spec(standardHeaders(defaultHeaders.withRequestId(requestId)))
       .spec(timeoutConfig())
       .body(representation.encodePrettily())
