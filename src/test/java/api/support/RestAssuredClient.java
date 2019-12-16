@@ -52,6 +52,24 @@ public class RestAssuredClient {
       .extract().response());
   }
 
+  public Response post(URL url, int expectedStatusCode, String requestId,
+      Integer timeoutInMilliseconds) {
+
+    final RequestSpecification timeoutConfig = timeoutInMilliseconds != null
+      ? timeoutConfig(timeoutInMilliseconds)
+      : timeoutConfig();
+
+    return from(given()
+      .log().all()
+      .spec(standardHeaders(getOkapiHeadersFromContext().withRequestId(requestId)))
+      .spec(timeoutConfig)
+      .when().post(url)
+      .then()
+      .log().all()
+      .statusCode(expectedStatusCode)
+      .extract().response());
+  }
+
   private static RequestSpecification standardHeaders(OkapiHeaders okapiHeaders) {
     return new RequestSpecBuilder()
       .addHeader(OKAPI_URL, okapiHeaders.getUrl().toString())
@@ -88,22 +106,6 @@ public class RestAssuredClient {
 
     return new Response(response.statusCode(), response.body().print(),
       response.contentType(), mappedHeaders, null);
-  }
-
-  public static io.restassured.response.Response manuallyStartTimedTask(
-    URL url,
-    int expectedStatusCode,
-    String requestId) {
-
-    return given()
-      .log().all()
-      .spec(standardHeaders(getOkapiHeadersFromContext().withRequestId(requestId)))
-      .spec(timeoutConfig(10000))
-      .when().post(url)
-      .then()
-      .log().all()
-      .statusCode(expectedStatusCode)
-      .extract().response();
   }
 
   public static io.restassured.response.Response post(

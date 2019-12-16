@@ -1,7 +1,7 @@
 package api.support.fixtures;
 
 import static api.support.APITestContext.circulationModuleUrl;
-import static api.support.RestAssuredClient.manuallyStartTimedTask;
+import static api.support.http.TimedTaskClient.manuallyStartTimedTask;
 
 import java.net.URL;
 
