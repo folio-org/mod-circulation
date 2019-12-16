@@ -30,7 +30,7 @@ public class RestAssuredClient {
   public Response get(URL url, Map<String, String> queryStringParameters,
       int expectedStatusCode, String requestId) {
 
-    return from(given()
+    return toResponse(given()
       .spec(standardHeaders(defaultHeaders.withRequestId(requestId)))
       .queryParams(queryStringParameters)
       .spec(timeoutConfig())
@@ -42,7 +42,7 @@ public class RestAssuredClient {
   }
 
   public Response get(URL url, int expectedStatusCode, String requestId) {
-    return from(given()
+    return toResponse(given()
       .log().all()
       .spec(standardHeaders(defaultHeaders.withRequestId(requestId)))
       .spec(timeoutConfig())
@@ -60,7 +60,7 @@ public class RestAssuredClient {
       ? timeoutConfig(timeoutInMilliseconds)
       : timeoutConfig();
 
-    return from(given()
+    return toResponse(given()
       .log().all()
       .spec(standardHeaders(getOkapiHeadersFromContext().withRequestId(requestId)))
       .spec(timeoutConfig)
@@ -72,7 +72,7 @@ public class RestAssuredClient {
   }
 
   public Response post(JsonObject representation, URL url, String requestId) {
-    return from(given()
+    return toResponse(given()
       .log().all()
       .spec(standardHeaders(defaultHeaders.withRequestId(requestId)))
       .spec(timeoutConfig())
@@ -86,7 +86,7 @@ public class RestAssuredClient {
   public Response post(JsonObject representation, URL url,
     int expectedStatusCode, String requestId) {
 
-    return from(given()
+    return toResponse(given()
       .log().all()
       .spec(standardHeaders(defaultHeaders.withRequestId(requestId)))
       .spec(timeoutConfig())
@@ -101,7 +101,7 @@ public class RestAssuredClient {
   public Response post(JsonObject representation, URL location,
     int expectedStatusCode, OkapiHeaders okapiHeaders) {
 
-    return from(given()
+    return toResponse(given()
       .log().all()
       .spec(standardHeaders(okapiHeaders))
       .spec(timeoutConfig())
@@ -147,7 +147,7 @@ public class RestAssuredClient {
       .build();
   }
 
-  public static Response from(io.restassured.response.Response response) {
+  private static Response toResponse(io.restassured.response.Response response) {
     final CaseInsensitiveHeaders mappedHeaders = new CaseInsensitiveHeaders();
 
     response.headers().iterator().forEachRemaining(h -> {
