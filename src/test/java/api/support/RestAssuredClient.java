@@ -10,6 +10,7 @@ import java.util.Map;
 import org.folio.circulation.support.http.OkapiHeader;
 import org.folio.circulation.support.http.client.Response;
 
+import api.support.http.OkapiHeaders;
 import io.restassured.RestAssured;
 import io.restassured.builder.RequestSpecBuilder;
 import io.restassured.config.HttpClientConfig;
@@ -19,16 +20,25 @@ import io.vertx.core.json.JsonObject;
 
 //TODO: Make methods non-static
 public class RestAssuredClient {
-  private static RequestSpecification defaultHeaders(String requestId) {
+  private static RequestSpecification standardHeaders(OkapiHeaders okapiHeaders) {
     return new RequestSpecBuilder()
-      .addHeader(OKAPI_URL, APITestContext.okapiUrl().toString())
-      .addHeader(TENANT, APITestContext.getTenantId())
-      .addHeader(OkapiHeader.TOKEN, APITestContext.getToken())
-      .addHeader(OkapiHeader.USER_ID, APITestContext.getUserId())
-      .addHeader(OkapiHeader.REQUEST_ID, requestId)
+      .addHeader(OKAPI_URL, okapiHeaders.getUrl().toString())
+      .addHeader(TENANT, okapiHeaders.getTenantId())
+      .addHeader(OkapiHeader.TOKEN, okapiHeaders.getToken())
+      .addHeader(OkapiHeader.USER_ID, okapiHeaders.getUserId())
+      .addHeader(OkapiHeader.REQUEST_ID, okapiHeaders.getRequestId())
       .setAccept("application/json, text/plain")
       .setContentType("application/json")
       .build();
+  }
+
+  private static RequestSpecification headersFromApiTestContext(String requestId) {
+    final OkapiHeaders okapiHeaders = new OkapiHeaders(
+      APITestContext.okapiUrl(),
+      APITestContext.getTenantId(), APITestContext.getToken(),
+      APITestContext.getUserId(), requestId);
+
+    return standardHeaders(okapiHeaders);
   }
 
   private static RequestSpecification timeoutConfig() {
@@ -64,7 +74,7 @@ public class RestAssuredClient {
 
     return given()
       .log().all()
-      .spec(defaultHeaders(requestId))
+      .spec(headersFromApiTestContext(requestId))
       .spec(timeoutConfig(10000))
       .when().post(url)
       .then()
@@ -81,7 +91,7 @@ public class RestAssuredClient {
 
     return given()
       .log().all()
-      .spec(defaultHeaders(requestId))
+      .spec(headersFromApiTestContext(requestId))
       .spec(timeoutConfig())
       .body(representation.encodePrettily())
       .when().post(url)
@@ -98,7 +108,7 @@ public class RestAssuredClient {
 
     return given()
       .log().all()
-      .spec(defaultHeaders(requestId))
+      .spec(headersFromApiTestContext(requestId))
       .spec(timeoutConfig())
       .body(representation.encodePrettily())
       .when().post(url)
@@ -114,7 +124,7 @@ public class RestAssuredClient {
 
     return given()
       .log().all()
-      .spec(defaultHeaders(requestId))
+      .spec(headersFromApiTestContext(requestId))
       .spec(timeoutConfig())
       .when().get(url)
       .then()
@@ -128,7 +138,7 @@ public class RestAssuredClient {
     String requestId) {
 
     return given()
-      .spec(defaultHeaders(requestId))
+      .spec(headersFromApiTestContext(requestId))
       .queryParams(queryStringParameters)
       .spec(timeoutConfig())
       .when().get(url)
