@@ -6,6 +6,7 @@ import static org.folio.circulation.support.Result.failed;
 import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 
+import java.lang.invoke.MethodHandles;
 import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
@@ -18,9 +19,13 @@ import org.folio.circulation.support.CqlQuery;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.http.client.Response;
 import org.joda.time.DateTimeZone;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class ConfigurationRepository {
 
+  private static final Logger logger = LoggerFactory
+    .getLogger(MethodHandles.lookup().lookupClass());
   private static final String CONFIGS_KEY = "configs";
   private static final String MODULE_NAME_KEY = "module";
   private static final String CONFIG_NAME_KEY = "configName";
@@ -69,8 +74,9 @@ public class ConfigurationRepository {
 
   private Result<Response> refuseWhenNoConfigurationsFound(Response response) {
     if (response.getJson().getInteger("totalRecords") == 0){
+      logger.warn("No loan history settings found for loan anonymization");
       return
-        failed(singleValidationError("No configuration found for loan anonymization ", "moduleName", "LOAN_HISTORY"));
+        failed(singleValidationError("No configuration found for loan anonymization", "moduleName", "LOAN_HISTORY"));
     }
 
     return succeeded(response);

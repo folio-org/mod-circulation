@@ -3,6 +3,7 @@ package api.loans.anonymization;
 import static api.support.http.InterfaceUrls.circulationAnonymizeLoansInTenantURL;
 import static api.support.http.InterfaceUrls.circulationAnonymizeLoansURL;
 
+import io.vertx.core.json.JsonArray;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.UUID;
@@ -41,22 +42,26 @@ abstract class LoanAnonymizationTests extends APITests {
     servicePoint = servicePointsFixture.cd1();
   }
 
-  void anonymizeLoansInTenant() throws InterruptedException, ExecutionException, TimeoutException {
-    anonymizeLoans(circulationAnonymizeLoansInTenantURL());
+  Response anonymizeLoansInTenant() throws InterruptedException, ExecutionException, TimeoutException {
+    Response response = anonymizeLoans(circulationAnonymizeLoansInTenantURL());
     DateTimeUtils.setCurrentMillisSystem();
+    return response;
   }
 
-  void anonymizeLoansForUser(UUID userId) throws InterruptedException, ExecutionException, TimeoutException {
-    anonymizeLoans(circulationAnonymizeLoansURL(userId.toString()));
+  Response anonymizeLoansForUser(UUID userId) throws InterruptedException, ExecutionException, TimeoutException {
+    return anonymizeLoans(circulationAnonymizeLoansURL(userId.toString()));
   }
 
-  private void anonymizeLoans(URL url) throws InterruptedException, ExecutionException, TimeoutException {
+  private Response anonymizeLoans(URL url) throws InterruptedException, ExecutionException, TimeoutException {
     CompletableFuture<Response> createCompleted = new CompletableFuture<>();
     client.post(url, null, ResponseHandler.any(createCompleted));
     Response response = createCompleted.get(TIMEOUT_SECONDS, TimeUnit.SECONDS);
-    response.getJson()
-      .getJsonArray("anonymizedLoans")
-      .forEach(this::fakeAnonymizeLoan);
+    JsonArray anonymizedLoans = response.getJson()
+      .getJsonArray("anonymizedLoans");
+    if (anonymizedLoans != null) {
+      anonymizedLoans.forEach(this::fakeAnonymizeLoan);
+    }
+    return response;
   }
 
   private void fakeAnonymizeLoan(Object id) {

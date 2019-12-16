@@ -2,6 +2,7 @@ package api.loans.anonymization;
 
 import static api.support.matchers.LoanMatchers.hasOpenStatus;
 import static api.support.matchers.LoanMatchers.isAnonymized;
+import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 
@@ -11,6 +12,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
 import org.folio.circulation.support.http.client.IndividualResource;
+import org.folio.circulation.support.http.client.Response;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeUtils;
 import org.junit.Test;
@@ -431,5 +433,20 @@ public class AnonymizeLoansAfterXIntervalTests extends LoanAnonymizationTests {
 
     assertThat(loansStorageClient.getById(loanID)
         .getJson(), not(isAnonymized()));
+  }
+
+  @Test
+  public void testNoConfigurationExceptionIsHandled()
+    throws InterruptedException, ExecutionException, TimeoutException, MalformedURLException {
+
+    IndividualResource loanResource = loansFixture.checkOutByBarcode(new CheckOutByBarcodeRequestBuilder().forItem(item1)
+      .to(user)
+      .at(servicePoint.getId()));
+    UUID loanID = loanResource.getId();
+
+    Response response = anonymizeLoansInTenant();
+    assertThat(response.getStatusCode(), is(422));
+    assertThat(loansStorageClient.getById(loanID)
+      .getJson(), not(isAnonymized()));
   }
 }
