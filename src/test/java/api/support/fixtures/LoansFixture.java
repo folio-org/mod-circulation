@@ -27,6 +27,7 @@ import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
+import org.mvel2.util.Make;
 
 import api.support.CheckInByBarcodeResponse;
 import api.support.MultipleJsonRecords;
@@ -398,7 +399,8 @@ public class LoansFixture {
     Stream.of(query, limit, offset)
       .forEach(parameter -> parameter.collectInto(queryStringParameters));
 
-    return restAssuredClient.get(loansUrl(), queryStringParameters, 200, "get-loans");
+    return restAssuredClient.get(loansUrl(),
+      queryStringParameters, 200, "get-loans");
   }
 
   public MultipleJsonRecords getAllLoans() {
