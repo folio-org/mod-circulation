@@ -20,6 +20,38 @@ import io.vertx.core.http.CaseInsensitiveHeaders;
 import io.vertx.core.json.JsonObject;
 
 public class RestAssuredClient {
+  private final OkapiHeaders defaultHeaders;
+
+  public RestAssuredClient(OkapiHeaders defaultHeaders) {
+    this.defaultHeaders = defaultHeaders;
+  }
+
+  public Response get(URL url, Map<String, String> queryStringParameters,
+      int expectedStatusCode, String requestId) {
+
+    return from(given()
+      .spec(standardHeaders(defaultHeaders.withRequestId(requestId)))
+      .queryParams(queryStringParameters)
+      .spec(timeoutConfig())
+      .when().get(url)
+      .then()
+      .log().all()
+      .statusCode(expectedStatusCode)
+      .extract().response());
+  }
+
+  public Response get(URL url, int expectedStatusCode, String requestId) {
+    return from(given()
+      .log().all()
+      .spec(standardHeaders(defaultHeaders.withRequestId(requestId)))
+      .spec(timeoutConfig())
+      .when().get(url)
+      .then()
+      .log().all()
+      .statusCode(expectedStatusCode)
+      .extract().response());
+  }
+
   private static RequestSpecification standardHeaders(OkapiHeaders okapiHeaders) {
     return new RequestSpecBuilder()
       .addHeader(OKAPI_URL, okapiHeaders.getUrl().toString())
@@ -105,37 +137,6 @@ public class RestAssuredClient {
       .when().post(url)
       .then()
       .log().all()
-      .extract().response();
-  }
-
-  public static io.restassured.response.Response get(
-    URL url,
-    int expectedStatusCode,
-    String requestId) {
-
-    return given()
-      .log().all()
-      .spec(standardHeaders(getOkapiHeadersFromContext().withRequestId(requestId)))
-      .spec(timeoutConfig())
-      .when().get(url)
-      .then()
-      .log().all()
-      .statusCode(expectedStatusCode)
-      .extract().response();
-  }
-
-  public static io.restassured.response.Response get(
-    URL url, Map<String, String> queryStringParameters, int expectedStatusCode,
-    String requestId) {
-
-    return given()
-      .spec(standardHeaders(getOkapiHeadersFromContext().withRequestId(requestId)))
-      .queryParams(queryStringParameters)
-      .spec(timeoutConfig())
-      .when().get(url)
-      .then()
-      .log().all()
-      .statusCode(expectedStatusCode)
       .extract().response();
   }
 }

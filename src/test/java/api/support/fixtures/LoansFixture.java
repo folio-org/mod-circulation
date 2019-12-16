@@ -1,7 +1,7 @@
 package api.support.fixtures;
 
+import static api.support.APITestContext.getOkapiHeadersFromContext;
 import static api.support.RestAssuredClient.from;
-import static api.support.RestAssuredClient.get;
 import static api.support.RestAssuredClient.post;
 import static api.support.http.AdditionalHttpStatusCodes.UNPROCESSABLE_ENTITY;
 import static api.support.http.CqlQuery.noQuery;
@@ -13,8 +13,10 @@ import static api.support.http.InterfaceUrls.overrideCheckOutByBarcodeUrl;
 import static api.support.http.InterfaceUrls.overrideRenewalByBarcodeUrl;
 import static api.support.http.InterfaceUrls.renewByBarcodeUrl;
 import static api.support.http.InterfaceUrls.renewByIdUrl;
+import static api.support.http.Limit.maximumLimit;
 import static api.support.http.Limit.noLimit;
 import static api.support.http.Offset.noOffset;
+import static org.folio.circulation.support.JsonArrayHelper.mapToList;
 
 import java.net.MalformedURLException;
 import java.util.HashMap;
@@ -23,7 +25,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Stream;
 
-import org.folio.circulation.support.JsonArrayHelper;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 import org.joda.time.DateTime;
@@ -31,6 +32,7 @@ import org.joda.time.DateTimeZone;
 
 import api.support.CheckInByBarcodeResponse;
 import api.support.MultipleJsonRecords;
+import api.support.RestAssuredClient;
 import api.support.builders.CheckInByBarcodeRequestBuilder;
 import api.support.builders.CheckOutByBarcodeRequestBuilder;
 import api.support.builders.DeclareItemLostRequestBuilder;
@@ -47,6 +49,7 @@ import io.vertx.core.json.JsonObject;
 public class LoansFixture {
   private final UsersFixture usersFixture;
   private final ServicePointsFixture servicePointsFixture;
+  private final RestAssuredClient restAssuredClient;
 
   public LoansFixture(
     UsersFixture usersFixture,
@@ -54,6 +57,7 @@ public class LoansFixture {
 
     this.usersFixture = usersFixture;
     this.servicePointsFixture = servicePointsFixture;
+    restAssuredClient = new RestAssuredClient(getOkapiHeadersFromContext());
   }
 
   public IndividualResource createLoan(
@@ -367,8 +371,8 @@ public class LoansFixture {
   }
 
   public IndividualResource getLoanById(UUID id) {
-    return new IndividualResource(from(get(
-      loansUrl(String.format("/%s", id)), 200, "get-loan-by-id")));
+    return new IndividualResource(restAssuredClient.get(
+      loansUrl(String.format("/%s", id)), 200, "get-loan-by-id"));
   }
 
   public Response getLoans() {
@@ -387,17 +391,17 @@ public class LoansFixture {
     return getLoans(query, noLimit(), noOffset());
   }
 
-  public static Response getLoans(CqlQuery query, Limit limit, Offset offset) {
+  public Response getLoans(CqlQuery query, Limit limit, Offset offset) {
     final HashMap<String, String> queryStringParameters = new HashMap<>();
 
     Stream.of(query, limit, offset)
       .forEach(parameter -> parameter.collectInto(queryStringParameters));
 
-    return from(get(loansUrl(), queryStringParameters, 200, "get-loans"));
+    return restAssuredClient.get(loansUrl(), queryStringParameters, 200, "get-loans");
   }
 
   public MultipleJsonRecords getAllLoans() {
     return new MultipleJsonRecords(
-      JsonArrayHelper.mapToList(getLoans(Limit.maximumLimit()).getJson(), "loans"));
+      mapToList(getLoans(maximumLimit()).getJson(), "loans"));
   }
 }

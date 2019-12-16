@@ -184,7 +184,7 @@ public class APITestContext {
     }
   }
 
-  static OkapiHeaders getOkapiHeadersFromContext() {
+  public static OkapiHeaders getOkapiHeadersFromContext() {
     return new OkapiHeaders(okapiUrl(), getTenantId(), getToken(), getUserId());
   }
 
