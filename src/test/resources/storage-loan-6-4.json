@@ -88,6 +88,11 @@
       "description": "Indicates whether or not this loan had its due date modified by a recall on the loaned item",
       "type": "boolean"
     },
+    "declaredLostDate" : {
+      "description": "Date and time the item was declared lost during this loan",
+      "type": "string",
+      "format": "date-time"
+    },
     "metadata": {
       "description": "Metadata about creation and changes to loan, provided by the server (client should not provide)",
       "type": "object",

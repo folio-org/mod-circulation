@@ -1,6 +1,7 @@
 package org.folio.circulation.resources;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
+import static org.folio.circulation.domain.LoanAction.CHECKED_OUT_THROUGH_OVERRIDE;
 import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequest.ITEM_BARCODE;
 import static org.folio.circulation.support.Result.failed;
 import static org.folio.circulation.support.Result.succeeded;
@@ -80,7 +81,7 @@ public class OverrideCheckOutStrategy implements CheckOutStrategy {
 
   private Result<LoanAndRelatedRecords> setLoanAction(LoanAndRelatedRecords loanAndRelatedRecords, String comment) {
     Loan loan = loanAndRelatedRecords.getLoan();
-    loan.changeAction("checkedOutThroughOverride");
+    loan.changeAction(CHECKED_OUT_THROUGH_OVERRIDE);
     loan.changeActionComment(comment);
     return succeeded(loanAndRelatedRecords);
   }

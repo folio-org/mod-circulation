@@ -5,6 +5,7 @@ import static api.support.RestAssuredClient.post;
 import static api.support.http.AdditionalHttpStatusCodes.UNPROCESSABLE_ENTITY;
 import static api.support.http.InterfaceUrls.checkInByBarcodeUrl;
 import static api.support.http.InterfaceUrls.checkOutByBarcodeUrl;
+import static api.support.http.InterfaceUrls.declareLoanItemLostURL;
 import static api.support.http.InterfaceUrls.overrideCheckOutByBarcodeUrl;
 import static api.support.http.InterfaceUrls.overrideRenewalByBarcodeUrl;
 import static api.support.http.InterfaceUrls.renewByBarcodeUrl;
@@ -17,6 +18,7 @@ import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
+import api.support.builders.DeclareItemLostRequestBuilder;
 import org.folio.HttpStatus;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
@@ -102,6 +104,15 @@ public class LoansFixture {
       response.getStatusCode(), is(UNPROCESSABLE_ENTITY));
 
     return response;
+  }
+
+  public Response declareItemLost(
+    DeclareItemLostRequestBuilder builder) {
+    JsonObject request = builder.create();
+
+    return from(
+      post(request, declareLoanItemLostURL(builder.getLoanId().toString()),
+        "declare-item-lost-request"));
   }
 
   public IndividualResource checkOutByBarcode(IndividualResource item)

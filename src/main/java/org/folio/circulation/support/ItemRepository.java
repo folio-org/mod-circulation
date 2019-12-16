@@ -113,6 +113,13 @@ public class ItemRepository {
       location.getPrimaryServicePointId());
   }
 
+  public CompletableFuture<Response> updateItem(Item item) {
+    if (item == null) {
+      return completedFuture(null);
+    }
+    return itemsClient.put(item.getItemId(), item.getItem());
+  }
+
   private CompletableFuture<Result<Item>> fetchMaterialType(Result<Item> result) {
     return fetchMaterialType
       ? result.combineAfter(materialTypeRepository::getFor, Item::withMaterialType)

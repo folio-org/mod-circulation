@@ -1,17 +1,18 @@
 package org.folio.circulation.domain;
 
 import static org.apache.commons.lang3.StringUtils.equalsIgnoreCase;
+import static org.folio.circulation.domain.LoanAction.*;
 
 import java.util.Arrays;
 
 public enum RequestType {
   NONE("", null),
-  HOLD("Hold", "holdrequested"),
-  RECALL("Recall", "recallrequested"),
+  HOLD("Hold", HOLDREQUESTED),
+  RECALL("Recall", RECALLREQUESTED),
   PAGE("Page", null);
 
   public final String value;
-  public final String loanAction;
+  public final LoanAction loanAction;
 
   public static RequestType from(String value) {
     return Arrays.stream(values())
@@ -20,12 +21,12 @@ public enum RequestType {
       .orElse(NONE);
   }
 
-  RequestType(String value, String loanAction) {
+  RequestType(String value, LoanAction loanAction) {
     this.value = value;
     this.loanAction = loanAction;
   }
 
-  String toLoanAction() {
+  LoanAction toLoanAction() {
     return loanAction;
   }
 
