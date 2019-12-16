@@ -21,6 +21,7 @@ import org.slf4j.LoggerFactory;
 
 import api.support.fakes.FakeOkapi;
 import api.support.fakes.FakeStorageModule;
+import api.support.http.OkapiHeaders;
 import api.support.http.URLHelper;
 import io.vertx.core.Vertx;
 
@@ -181,6 +182,10 @@ public class APITestContext {
     } catch (MalformedURLException ex) {
       throw new IllegalArgumentException("Invalid Okapi URL configured for tests");
     }
+  }
+
+  static OkapiHeaders getOkapiHeaders() {
+    return new OkapiHeaders(okapiUrl(), getTenantId(), getToken(), getUserId());
   }
 
   private static String createFakeRequestId() {

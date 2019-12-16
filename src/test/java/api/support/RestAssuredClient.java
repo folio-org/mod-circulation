@@ -18,7 +18,6 @@ import io.restassured.specification.RequestSpecification;
 import io.vertx.core.http.CaseInsensitiveHeaders;
 import io.vertx.core.json.JsonObject;
 
-//TODO: Make methods non-static
 public class RestAssuredClient {
   private static RequestSpecification standardHeaders(OkapiHeaders okapiHeaders) {
     return new RequestSpecBuilder()
@@ -33,10 +32,8 @@ public class RestAssuredClient {
   }
 
   private static RequestSpecification headersFromApiTestContext(String requestId) {
-    final OkapiHeaders okapiHeaders = new OkapiHeaders(
-      APITestContext.okapiUrl(),
-      APITestContext.getTenantId(), APITestContext.getToken(),
-      APITestContext.getUserId(), requestId);
+    final OkapiHeaders okapiHeaders = APITestContext.getOkapiHeaders()
+      .withRequestId(requestId);
 
     return standardHeaders(okapiHeaders);
   }

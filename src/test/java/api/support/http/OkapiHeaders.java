@@ -9,6 +9,10 @@ public class OkapiHeaders {
   private final String userId;
   private final String requestId;
 
+  public OkapiHeaders(URL url, String tenantId, String token, String userId) {
+    this(url, tenantId, token, userId, null);
+  }
+
   public OkapiHeaders(URL url, String tenantId, String token, String userId,
       String requestId) {
 
@@ -17,6 +21,11 @@ public class OkapiHeaders {
     this.token = token;
     this.userId = userId;
     this.requestId = requestId;
+  }
+
+  public OkapiHeaders withRequestId(String requestId) {
+    return new OkapiHeaders(this.url, this.tenantId, this.token, this.userId,
+      requestId);
   }
 
   public URL getUrl() {
