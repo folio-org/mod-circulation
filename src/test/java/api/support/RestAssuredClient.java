@@ -1,5 +1,6 @@
 package api.support;
 
+import static api.support.APITestContext.getOkapiHeadersFromContext;
 import static io.restassured.RestAssured.given;
 import static org.folio.circulation.support.http.OkapiHeader.OKAPI_URL;
 import static org.folio.circulation.support.http.OkapiHeader.TENANT;
@@ -29,13 +30,6 @@ public class RestAssuredClient {
       .setAccept("application/json, text/plain")
       .setContentType("application/json")
       .build();
-  }
-
-  private static RequestSpecification headersFromApiTestContext(String requestId) {
-    final OkapiHeaders okapiHeaders = APITestContext.getOkapiHeaders()
-      .withRequestId(requestId);
-
-    return standardHeaders(okapiHeaders);
   }
 
   private static RequestSpecification timeoutConfig() {
@@ -71,7 +65,7 @@ public class RestAssuredClient {
 
     return given()
       .log().all()
-      .spec(headersFromApiTestContext(requestId))
+      .spec(standardHeaders(getOkapiHeadersFromContext().withRequestId(requestId)))
       .spec(timeoutConfig(10000))
       .when().post(url)
       .then()
@@ -88,7 +82,7 @@ public class RestAssuredClient {
 
     return given()
       .log().all()
-      .spec(headersFromApiTestContext(requestId))
+      .spec(standardHeaders(getOkapiHeadersFromContext().withRequestId(requestId)))
       .spec(timeoutConfig())
       .body(representation.encodePrettily())
       .when().post(url)
@@ -105,7 +99,7 @@ public class RestAssuredClient {
 
     return given()
       .log().all()
-      .spec(headersFromApiTestContext(requestId))
+      .spec(standardHeaders(getOkapiHeadersFromContext().withRequestId(requestId)))
       .spec(timeoutConfig())
       .body(representation.encodePrettily())
       .when().post(url)
@@ -121,7 +115,7 @@ public class RestAssuredClient {
 
     return given()
       .log().all()
-      .spec(headersFromApiTestContext(requestId))
+      .spec(standardHeaders(getOkapiHeadersFromContext().withRequestId(requestId)))
       .spec(timeoutConfig())
       .when().get(url)
       .then()
@@ -135,7 +129,7 @@ public class RestAssuredClient {
     String requestId) {
 
     return given()
-      .spec(headersFromApiTestContext(requestId))
+      .spec(standardHeaders(getOkapiHeadersFromContext().withRequestId(requestId)))
       .queryParams(queryStringParameters)
       .spec(timeoutConfig())
       .when().get(url)
