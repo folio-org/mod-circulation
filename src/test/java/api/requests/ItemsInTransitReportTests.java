@@ -1,6 +1,9 @@
 package api.requests;
 
 import static api.support.JsonCollectionAssistant.getRecordById;
+import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
+import static org.folio.circulation.support.JsonStringArrayHelper.toList;
+import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 import static org.junit.Assert.assertNull;
@@ -10,10 +13,16 @@ import java.net.MalformedURLException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
+
+import org.apache.commons.lang3.StringUtils;
+import org.folio.circulation.domain.ItemStatus;
+import org.folio.circulation.support.http.client.IndividualResource;
+import org.joda.time.DateTime;
+import org.joda.time.LocalDate;
+import org.junit.Test;
 
 import api.support.APITests;
 import api.support.builders.CheckInByBarcodeRequestBuilder;
@@ -24,13 +33,6 @@ import api.support.http.InventoryItemResource;
 import api.support.http.ResourceClient;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
-import org.apache.commons.lang3.StringUtils;
-import org.joda.time.DateTime;
-import org.joda.time.LocalDate;
-import org.junit.Test;
-
-import org.folio.circulation.domain.ItemStatus;
-import org.folio.circulation.support.http.client.IndividualResource;
 
 public class ItemsInTransitReportTests extends APITests {
 
@@ -105,6 +107,7 @@ public class ItemsInTransitReportTests extends APITests {
     verifyLocation(itemJson);
     verifyRequestWithSecondPickupServicePoint(itemJson, requestDate, requestExpirationDate);
     verifyLoanInFirstServicePoint(itemJson, checkInDate);
+    verifyLastCheckIn(itemJson, checkInDate, SERVICE_POINT_NAME_1);
   }
 
   @Test
@@ -154,12 +157,14 @@ public class ItemsInTransitReportTests extends APITests {
     verifyLocation(firstItemJson);
     verifyRequestWithSecondPickupServicePoint(firstItemJson, requestDate1, requestExpirationDate1);
     verifyLoanInFirstServicePoint(firstItemJson, checkInDate1);
+    verifyLastCheckIn(firstItemJson, checkInDate1, SERVICE_POINT_NAME_1);
 
     JsonObject secondItemJson = getRecordById(items, nod.getId()).get();
     verifyItem(secondItemJson, nod, secondServicePointId);
     verifyLocation(secondItemJson);
     verifyRequest(secondItemJson, requestDate2, requestExpirationDate2, REQUEST_PATRON_GROUP_DESCRIPTION, SERVICE_POINT_NAME_2);
     verifyLoanInFirstServicePoint(secondItemJson, checkInDate2);
+    verifyLastCheckIn(secondItemJson, checkInDate2, SERVICE_POINT_NAME_1);
   }
 
   @Test
@@ -197,6 +202,7 @@ public class ItemsInTransitReportTests extends APITests {
     verifyLocation(itemJson);
     verifyRequestWithSecondPickupServicePoint(itemJson, requestDate, requestExpirationDate);
     verifyLoanInFirstServicePoint(itemJson, checkInDate);
+    verifyLastCheckIn(itemJson, checkInDate, SERVICE_POINT_NAME_1);
   }
 
   @Test
@@ -246,12 +252,14 @@ public class ItemsInTransitReportTests extends APITests {
     verifyRequest(firstItemJson, requestDate1, requestExpirationDate1, REQUEST_PATRON_GROUP_DESCRIPTION, SERVICE_POINT_NAME_1);
     verifyLoan(firstItemJson, checkInDate1, SERVICE_POINT_NAME_2,
       SERVICE_POINT_CODE_2, "Circulation Desk -- Back Entrance");
+    verifyLastCheckIn(firstItemJson, checkInDate1, SERVICE_POINT_NAME_2);
 
     JsonObject secondItemJson = getRecordById(items, nod.getId()).get();
     verifyItem(secondItemJson, nod, secondServicePointId);
     verifyLocation(secondItemJson);
     verifyRequest(secondItemJson, requestDate2, requestExpirationDate2, REQUEST_PATRON_GROUP_DESCRIPTION, SERVICE_POINT_NAME_2);
     verifyLoanInFirstServicePoint(secondItemJson, checkInDate2);
+    verifyLastCheckIn(secondItemJson, checkInDate2, SERVICE_POINT_NAME_1);
   }
 
   @Test
@@ -310,12 +318,14 @@ public class ItemsInTransitReportTests extends APITests {
     verifyRequest(firstItemJson, requestSmallAngryPlanetDate1, requestSmallAngryPlanetExpirationDate1, REQUEST_PATRON_GROUP_DESCRIPTION, SERVICE_POINT_NAME_1);
     verifyLoan(firstItemJson, checkInDate1, SERVICE_POINT_NAME_2,
       SERVICE_POINT_CODE_2, "Circulation Desk -- Back Entrance");
+    verifyLastCheckIn(firstItemJson, checkInDate1, SERVICE_POINT_NAME_2);
 
     JsonObject secondItemJson = getRecordById(items, nod.getId()).get();
     verifyItem(secondItemJson, nod, secondServicePointId);
     verifyLocation(secondItemJson);
     verifyRequest(secondItemJson, requestNodeDate1, requestNodeExpirationDate1, REQUEST_PATRON_GROUP_DESCRIPTION, SERVICE_POINT_NAME_2);
     verifyLoanInFirstServicePoint(secondItemJson, checkInDate2);
+    verifyLastCheckIn(secondItemJson, checkInDate2, SERVICE_POINT_NAME_1);
   }
 
   @Test
@@ -355,12 +365,14 @@ public class ItemsInTransitReportTests extends APITests {
     verifyLocation(firstItemJson);
     assertNull(firstItemJson.getMap().get(REQUEST));
     verifyLoan(firstItemJson, checkInDate1, SERVICE_POINT_NAME_2, SERVICE_POINT_CODE_2, checkInServicePointDiscoveryName);
+    verifyLastCheckIn(firstItemJson, checkInDate1, SERVICE_POINT_NAME_2);
 
     JsonObject secondItemJson = getRecordById(items, nod.getId()).get();
     verifyItem(secondItemJson, nod, firsServicePointId);
     verifyLocation(secondItemJson);
     assertNull(secondItemJson.getMap().get(REQUEST));
     verifyLoan(secondItemJson, checkInDate2, SERVICE_POINT_NAME_2, SERVICE_POINT_CODE_2, checkInServicePointDiscoveryName);
+    verifyLastCheckIn(secondItemJson, checkInDate2, SERVICE_POINT_NAME_2);
   }
 
   @Test
@@ -417,6 +429,7 @@ public class ItemsInTransitReportTests extends APITests {
     verifyLocation(firstItemJson);
     verifyRequest(firstItemJson, requestDate2, requestExpirationDate2, REQUEST_PATRON_GROUP_DESCRIPTION, SERVICE_POINT_NAME_2);
     verifyLoanInFirstServicePoint(firstItemJson, checkInDate2);
+    verifyLastCheckIn(firstItemJson, checkInDate2, SERVICE_POINT_NAME_1);
 
     JsonObject secondItemJson = items.get(1);
     verifyItem(secondItemJson, smallAngryPlanet, firstServicePointId);
@@ -424,12 +437,14 @@ public class ItemsInTransitReportTests extends APITests {
     verifyRequest(secondItemJson, requestDate1, requestExpirationDate1, REQUEST_PATRON_GROUP_DESCRIPTION, SERVICE_POINT_NAME_1);
     verifyLoan(secondItemJson, checkInDate1, SERVICE_POINT_NAME_2,
       SERVICE_POINT_CODE_2, "Circulation Desk -- Back Entrance");
+    verifyLastCheckIn(secondItemJson, checkInDate1, SERVICE_POINT_NAME_2);
 
     JsonObject thirdItemJson = items.get(2);
     verifyItem(thirdItemJson, smallAngryPlanetWithFourthCheckInServicePoint, firstServicePointId);
     verifyLocation(thirdItemJson);
     verifyLoan(thirdItemJson, checkInDate3, "Circ Desk 4",
       "cd4", "Circulation Desk -- Basement");
+    verifyLastCheckIn(thirdItemJson, checkInDate3, "Circ Desk 4");
   }
 
   private void createRequest(InventoryItemResource smallAngryPlanet,
@@ -454,63 +469,97 @@ public class ItemsInTransitReportTests extends APITests {
   }
 
   private void verifyItem(JsonObject itemJson, InventoryItemResource item,
-                          UUID secondServicePointId) {
+    UUID secondServicePointId) {
+
     assertThat(itemJson.getString(BARCODE_KEY), is(item.getBarcode()));
     assertThat(itemJson.getJsonObject(STATUS_KEY).getMap().get(NAME),
       is(ItemStatus.IN_TRANSIT.getValue()));
-    assertThat(itemJson.getString(DESTINATION_SERVICE_POINT), is(String.valueOf(secondServicePointId)));
+
+    assertThat(itemJson.getString(DESTINATION_SERVICE_POINT), is(secondServicePointId.toString()));
+
     final JsonObject smallAngryPlanetInstance = item.getInstance().getJson();
+
     assertThat(itemJson.getString(TITLE), is(smallAngryPlanetInstance.getString(TITLE)));
+
     final String contributors = String.valueOf(((JsonArray) smallAngryPlanetInstance
       .getMap().get(CONTRIBUTORS)).getJsonObject(0).getMap().get(NAME));
+
     assertThat(itemJson.getJsonArray(CONTRIBUTORS)
       .getJsonObject(0).getMap().get(NAME), is(contributors));
+
     final JsonObject smallAngryPlanetResponse = item.getResponse().getJson();
-    assertThat(itemJson.getString(CALL_NUMBER), is(smallAngryPlanetResponse.getString(ITEM_LEVEL_CALL_NUMBER)));
-    assertThat(itemJson.getString(ENUMERATION), is(smallAngryPlanetResponse.getString(ENUMERATION)));
-    assertThat(itemJson.getString(VOLUME), is(smallAngryPlanetResponse.getString(VOLUME)));
-    assertThat(itemJson.getJsonArray(YEAR_CAPTION), is(smallAngryPlanetResponse.getJsonArray(YEAR_CAPTION)));
+
+    assertThat(itemJson.getString(CALL_NUMBER),
+      is(smallAngryPlanetResponse.getString(ITEM_LEVEL_CALL_NUMBER)));
+
+    assertThat(itemJson.getString(ENUMERATION),
+      is(smallAngryPlanetResponse.getString(ENUMERATION)));
+
+    assertThat(itemJson.getString(VOLUME),
+      is(smallAngryPlanetResponse.getString(VOLUME)));
+
+    assertThat(itemJson.getJsonArray(YEAR_CAPTION),
+      is(smallAngryPlanetResponse.getJsonArray(YEAR_CAPTION)));
   }
 
   private void verifyLocation(JsonObject itemJson) {
-    Map<String, String> actualLocation = (Map<String, String>) itemJson.getMap().get("location");
-    assertThat(actualLocation.get(NAME), is("3rd Floor"));
-    assertThat(actualLocation.get(CODE), is("NU/JC/DL/3F"));
-    assertThat(actualLocation.get(LIBRARY), is("Djanogly Learning Resource Centre"));
+    JsonObject actualLocation = itemJson.getJsonObject("location");
+
+    assertThat(actualLocation.getString(NAME), is("3rd Floor"));
+    assertThat(actualLocation.getString(CODE), is("NU/JC/DL/3F"));
+    assertThat(actualLocation.getString(LIBRARY), is("Djanogly Learning Resource Centre"));
   }
 
   private void verifyRequest(JsonObject itemJson, DateTime requestDate,
-                             LocalDate requestExpirationDate, String requestPatronGroup, String pickupServicePoint) {
-    Map<String, String> actualRequest = (Map<String, String>) itemJson.getMap().get(REQUEST);
-    assertThat(actualRequest.get(REQUEST_TYPE), is("Hold"));
-    assertThat(actualRequest.get(REQUEST_PATRON_GROUP), is(requestPatronGroup));
-    assertThat(actualRequest.get(REQUEST_CREATION_DATE), is(String.valueOf(requestDate)));
-    assertThat(actualRequest.get(REQUEST_EXPIRATION_DATE), is(requestExpirationDate.toDateTimeAtStartOfDay().toString()));
-    assertThat(actualRequest.get(REQUEST_PICKUP_SERVICE_POINT_NAME), is(pickupServicePoint));
-    assertThat(actualRequest.get(TAGS), is(Arrays.asList("tag1", "tag2")));
+    LocalDate requestExpirationDate, String requestPatronGroup,
+    String pickupServicePoint) {
+
+    JsonObject actualRequest = itemJson.getJsonObject(REQUEST);
+    assertThat(actualRequest.getString(REQUEST_TYPE), is("Hold"));
+    assertThat(actualRequest.getString(REQUEST_PATRON_GROUP), is(requestPatronGroup));
+    assertThat(actualRequest.getString(REQUEST_CREATION_DATE), isEquivalentTo(requestDate));
+
+    assertThat(actualRequest.getString(REQUEST_EXPIRATION_DATE),
+      isEquivalentTo(requestExpirationDate.toDateTimeAtStartOfDay()));
+
+    assertThat(actualRequest.getString(REQUEST_PICKUP_SERVICE_POINT_NAME), is(pickupServicePoint));
+    assertThat(toList(actualRequest.getJsonArray(TAGS)), hasItems("tag1", "tag2"));
   }
 
-  private void verifyRequestWithSecondPickupServicePoint(JsonObject itemJson, DateTime requestDate,
-                                                         LocalDate requestExpirationDate) {
+  private void verifyRequestWithSecondPickupServicePoint(JsonObject itemJson,
+    DateTime requestDate, LocalDate requestExpirationDate) {
 
-    verifyRequest(itemJson, requestDate, requestExpirationDate, REQUEST_PATRON_GROUP_DESCRIPTION, SERVICE_POINT_NAME_2);
+    verifyRequest(itemJson, requestDate, requestExpirationDate,
+      REQUEST_PATRON_GROUP_DESCRIPTION, SERVICE_POINT_NAME_2);
   }
 
   private void verifyLoan(JsonObject itemJson, DateTime checkInDate,
-                          String checkInServicePointName, String checkInServicePointCode,
-                          String checkInServicePointDiscoveryName) {
-    Map<String, Object> actualLoan = (Map<String, Object>) itemJson.getMap().get("loan");
-    assertThat(actualLoan.get(CHECK_IN_DATE_TIME), is(String.valueOf(checkInDate)));
-    Map<String, String> actualCheckInServicePoint = (Map<String, String>) actualLoan.get(CHECK_IN_SERVICE_POINT);
-    assertThat(actualCheckInServicePoint.get(NAME), is(checkInServicePointName));
-    assertThat(actualCheckInServicePoint.get(CODE), is(checkInServicePointCode));
-    assertThat(actualCheckInServicePoint.get(DISCOVERY_DISPLAY_NAME), is(checkInServicePointDiscoveryName));
-    assertThat(actualCheckInServicePoint.get(PICKUP_LOCATION), is(Boolean.TRUE));
+    String checkInServicePointName, String checkInServicePointCode,
+    String checkInServicePointDiscoveryName) {
+
+    JsonObject actualLoan = itemJson.getJsonObject("loan");
+
+    assertThat(actualLoan.getString(CHECK_IN_DATE_TIME), isEquivalentTo(checkInDate));
+
+    JsonObject actualCheckInServicePoint = actualLoan.getJsonObject(CHECK_IN_SERVICE_POINT);
+
+    assertThat(actualCheckInServicePoint.getString(NAME), is(checkInServicePointName));
+    assertThat(actualCheckInServicePoint.getString(CODE), is(checkInServicePointCode));
+    assertThat(actualCheckInServicePoint.getString(DISCOVERY_DISPLAY_NAME),
+      is(checkInServicePointDiscoveryName));
+
+    assertThat(actualCheckInServicePoint.getBoolean(PICKUP_LOCATION), is(true));
   }
 
   private void verifyLoanInFirstServicePoint(JsonObject itemJson, DateTime checkInDate) {
     verifyLoan(itemJson, checkInDate, SERVICE_POINT_NAME_1,
       "cd1", "Circulation Desk -- Hallway");
+  }
+
+  private void verifyLastCheckIn(JsonObject itemJson, DateTime checkInDate, String servicePointName) {
+    JsonObject actualLastCheckIn = itemJson.getJsonObject("lastCheckIn");
+    assertThat(actualLastCheckIn.getString("dateTime"), is(is(String.valueOf(checkInDate))));
+    assertThat(actualLastCheckIn.getJsonObject("servicePoint").getString(NAME), is(servicePointName));
   }
 
   private InventoryItemResource createNod() throws MalformedURLException, InterruptedException, ExecutionException, TimeoutException {
@@ -519,19 +568,23 @@ public class ItemsInTransitReportTests extends APITests {
       loanTypesFixture.canCirculate().getId())
       .withEnumeration("nodeEnumeration")
       .withVolume("nodeVolume")
-      .withYearCaption(Arrays.asList("2017"))
+      .withYearCaption(Collections.singletonList("2017"))
       .withCallNumber("222245", null, null);
     return itemsFixture.basedUponNod(builder -> nodItemBuilder);
   }
 
   private InventoryItemResource createSmallAngryPlanet() throws MalformedURLException,
     InterruptedException, ExecutionException, TimeoutException {
+
     final ItemBuilder smallAngryPlanetItemBuilder = createSmallAngryPlanetItemBuilder();
-    return itemsFixture.basedUponSmallAngryPlanet(smallAngryPlanetItemBuilder, itemsFixture.thirdFloorHoldings());
+
+    return itemsFixture.basedUponSmallAngryPlanet(smallAngryPlanetItemBuilder,
+      itemsFixture.thirdFloorHoldings());
   }
 
   private ItemBuilder createSmallAngryPlanetItemBuilder() throws MalformedURLException,
     InterruptedException, ExecutionException, TimeoutException {
+
     return ItemExamples.basedUponSmallAngryPlanet(
       materialTypesFixture.book().getId(),
       loanTypesFixture.canCirculate().getId(),
@@ -541,7 +594,7 @@ public class ItemsInTransitReportTests extends APITests {
       Collections.singletonList(""))
       .withEnumeration("smallAngryPlanetEnumeration")
       .withVolume("smallAngryPlanetVolume")
-      .withYearCaption(Arrays.asList("2019"))
+      .withYearCaption(Collections.singletonList("2019"))
       .withCallNumber("55555", null, null);
   }
 }

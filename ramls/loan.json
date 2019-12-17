@@ -286,6 +286,11 @@
       },
       "additionalProperties": false
     },
+    "declaredLostDate" : {
+      "description": "Date and time the item was declared lost during this loan",
+      "type": "string",
+      "format": "date-time"
+    },
     "metadata": {
       "description": "Metadata about creation and changes to loan, provided by the server (client should not provide)",
       "type": "object",

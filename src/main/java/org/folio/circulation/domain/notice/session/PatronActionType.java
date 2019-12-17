@@ -7,7 +7,8 @@ import java.util.Optional;
 public enum PatronActionType {
 
   CHECK_OUT("Check-out"),
-  CHECK_IN("Check-in");
+  CHECK_IN("Check-in"),
+  ALL("");
 
   private String representation;
 

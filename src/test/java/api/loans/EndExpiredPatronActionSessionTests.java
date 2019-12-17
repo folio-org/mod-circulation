@@ -9,25 +9,18 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import org.awaitility.Awaitility;
-import org.folio.circulation.support.http.client.IndividualResource;
-import org.hamcrest.Matchers;
-import org.junit.Before;
-import org.junit.Test;
-
 import api.support.APITests;
 import api.support.builders.EndSessionBuilder;
+import api.support.http.InventoryItemResource;
 import io.vertx.core.json.JsonObject;
+import org.awaitility.Awaitility;
+import org.hamcrest.Matchers;
+import org.junit.Test;
+
+import org.folio.circulation.domain.notice.session.PatronActionType;
+import org.folio.circulation.support.http.client.IndividualResource;
 
 public class EndExpiredPatronActionSessionTests extends APITests {
-
-  @Before
-  public void initSession() throws InterruptedException, MalformedURLException, TimeoutException, ExecutionException {
-    IndividualResource james = usersFixture.james();
-    loansFixture.checkOutByBarcode(itemsFixture.basedUponNod(), james);
-    loansFixture.checkOutByBarcode(itemsFixture.basedUponInterestingTimes(), james);
-    expiredEndSessionClient.deleteAll();
-  }
 
   @Test
   public void expiredEndSessionAfterCheckOut()
@@ -35,6 +28,11 @@ public class EndExpiredPatronActionSessionTests extends APITests {
     MalformedURLException,
     TimeoutException,
     ExecutionException {
+
+    IndividualResource james = usersFixture.james();
+    loansFixture.checkOutByBarcode(itemsFixture.basedUponNod(), james);
+    loansFixture.checkOutByBarcode(itemsFixture.basedUponInterestingTimes(), james);
+    expiredEndSessionClient.deleteAll();
 
     List<JsonObject> sessions = patronSessionRecordsClient.getAll();
     assertThat(sessions, Matchers.hasSize(2));
@@ -55,11 +53,89 @@ public class EndExpiredPatronActionSessionTests extends APITests {
   }
 
   @Test
+  public void patronHasSomeSessionsAndOnlySessionsWithSameActionTypeShouldBeExpiredByTimeout()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    IndividualResource james = usersFixture.james();
+    InventoryItemResource nod = itemsFixture.basedUponNod();
+    InventoryItemResource interestingTimes = itemsFixture.basedUponInterestingTimes();
+
+    loansFixture.checkOutByBarcode(nod, james);
+    loansFixture.checkOutByBarcode(interestingTimes, james);
+    loansFixture.checkInByBarcode(nod);
+    loansFixture.checkInByBarcode(interestingTimes);
+    expiredEndSessionClient.deleteAll();
+
+    List<JsonObject> sessions = patronSessionRecordsClient.getAll();
+    assertThat(sessions, Matchers.hasSize(4));
+
+    String patronId = sessions.stream()
+      .filter(session -> session.getMap().get("actionType")
+        .equals(PatronActionType.CHECK_IN.getRepresentation()))
+      .findFirst()
+      .map(session -> session.getString("patronId"))
+      .orElse("");
+
+    expiredEndSessionClient.create(new EndSessionBuilder()
+      .withPatronId(patronId)
+      .withActionType("Check-in"));
+
+    expiredSessionProcessingClient.runRequestExpiredSessionsProcessing(204);
+    Awaitility.await()
+      .atMost(1, TimeUnit.SECONDS)
+      .until(patronSessionRecordsClient::getAll,  Matchers.hasSize(2));
+  }
+
+  @Test
+  public void patronHasSeveralSessionsAndOnlyOneShouldBeExpiredByTimeout()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    IndividualResource james = usersFixture.james();
+    InventoryItemResource nod = itemsFixture.basedUponNod();
+    InventoryItemResource interestingTimes = itemsFixture.basedUponInterestingTimes();
+
+    loansFixture.checkOutByBarcode(nod, james);
+    loansFixture.checkOutByBarcode(interestingTimes, james);
+    loansFixture.checkInByBarcode(nod);
+    expiredEndSessionClient.deleteAll();
+
+    List<JsonObject> sessions = patronSessionRecordsClient.getAll();
+    assertThat(sessions, Matchers.hasSize(3));
+
+    String patronId = sessions.stream()
+      .filter(session -> session.getMap().get("actionType")
+        .equals(PatronActionType.CHECK_IN.getRepresentation()))
+      .findFirst()
+      .map(session -> session.getString("patronId"))
+      .orElse("");
+
+    expiredEndSessionClient.create(new EndSessionBuilder()
+      .withPatronId(patronId)
+      .withActionType("Check-in"));
+
+    expiredSessionProcessingClient.runRequestExpiredSessionsProcessing(204);
+    Awaitility.await()
+      .atMost(1, TimeUnit.SECONDS)
+      .until(patronSessionRecordsClient::getAll,  Matchers.hasSize(2));
+  }
+
+  @Test
   public void noExpiredEndSessionAfterCheckOut()
     throws InterruptedException,
     MalformedURLException,
     TimeoutException,
     ExecutionException {
+
+    IndividualResource james = usersFixture.james();
+    loansFixture.checkOutByBarcode(itemsFixture.basedUponNod(), james);
+    loansFixture.checkOutByBarcode(itemsFixture.basedUponInterestingTimes(), james);
+    expiredEndSessionClient.deleteAll();
 
     List<JsonObject> sessions = patronSessionRecordsClient.getAll();
     assertThat(sessions, Matchers.hasSize(2));
@@ -73,19 +149,56 @@ public class EndExpiredPatronActionSessionTests extends APITests {
   }
 
   @Test
+  public void noExpiredEndSessionAfterCheckIn()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    IndividualResource james = usersFixture.james();
+    InventoryItemResource nod = itemsFixture.basedUponNod();
+    InventoryItemResource interestingTimes = itemsFixture.basedUponInterestingTimes();
+
+    loansFixture.checkOutByBarcode(nod, james);
+    loansFixture.checkOutByBarcode(interestingTimes, james);
+    loansFixture.checkInByBarcode(nod);
+    loansFixture.checkInByBarcode(interestingTimes);
+    expiredEndSessionClient.deleteAll();
+
+    List<JsonObject> sessions = patronSessionRecordsClient.getAll();
+    assertThat(sessions, Matchers.hasSize(4));
+
+    expiredEndSessionClient.create(new EndSessionBuilder());
+    expiredSessionProcessingClient.runRequestExpiredSessionsProcessing(204);
+
+    Awaitility.await()
+      .atMost(1, TimeUnit.SECONDS)
+      .until(patronSessionRecordsClient::getAll, Matchers.hasSize(4));
+  }
+
+  @Test
   public void notFailEndSessionProcessingWhenServerIsNotResponding()
     throws InterruptedException,
     MalformedURLException,
     TimeoutException,
     ExecutionException {
 
+    IndividualResource james = usersFixture.james();
+    InventoryItemResource nod = itemsFixture.basedUponNod();
+    InventoryItemResource interestingTimes = itemsFixture.basedUponInterestingTimes();
+    loansFixture.checkOutByBarcode(itemsFixture.basedUponNod(), james);
+    loansFixture.checkOutByBarcode(itemsFixture.basedUponInterestingTimes(), james);
+    loansFixture.checkInByBarcode(nod);
+    loansFixture.checkInByBarcode(interestingTimes);
+    expiredEndSessionClient.deleteAll();
+
     List<JsonObject> sessions = patronSessionRecordsClient.getAll();
-    assertThat(sessions, Matchers.hasSize(2));
+    assertThat(sessions, Matchers.hasSize(4));
 
     expiredSessionProcessingClient.runRequestExpiredSessionsProcessing(204);
 
     Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
-      .until(patronSessionRecordsClient::getAll, Matchers.hasSize(2));
+      .until(patronSessionRecordsClient::getAll, Matchers.hasSize(4));
   }
 }
