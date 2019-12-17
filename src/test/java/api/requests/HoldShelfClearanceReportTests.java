@@ -122,7 +122,8 @@ public class HoldShelfClearanceReportTests extends APITests {
     TimeoutException,
     ExecutionException {
 
-    final InventoryItemResource smallAngryPlanet = basedUponSmallAngryPlanet();
+    final InventoryItemResource smallAngryPlanet = itemsFixture
+      .basedUponSmallAngryPlanet(itemsFixture.addCallNumberStringComponents());
     final InventoryItemResource temeraire = itemsFixture
       .basedUponTemeraire(itemBuilder -> itemBuilder
         .withCallNumber("temCallNumber", "temCNPrefix", "temCNSuffix")
@@ -185,7 +186,8 @@ public class HoldShelfClearanceReportTests extends APITests {
     TimeoutException,
     ExecutionException {
 
-    final InventoryItemResource smallAngryPlanet = basedUponSmallAngryPlanet();
+    final InventoryItemResource smallAngryPlanet = itemsFixture
+      .basedUponSmallAngryPlanet(itemsFixture.addCallNumberStringComponents());
     final InventoryItemResource temeraire = itemsFixture.basedUponTemeraire();
     final IndividualResource rebecca = usersFixture.rebecca();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
@@ -226,7 +228,8 @@ public class HoldShelfClearanceReportTests extends APITests {
     TimeoutException,
     ExecutionException {
 
-    final InventoryItemResource smallAngryPlanet = basedUponSmallAngryPlanet();
+    final InventoryItemResource smallAngryPlanet = itemsFixture
+      .basedUponSmallAngryPlanet(itemsFixture.addCallNumberStringComponents());
     final InventoryItemResource temeraire = itemsFixture.basedUponTemeraire();
     final IndividualResource rebecca = usersFixture.rebecca();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
@@ -264,7 +267,8 @@ public class HoldShelfClearanceReportTests extends APITests {
     TimeoutException,
     ExecutionException {
 
-    final InventoryItemResource smallAngryPlanet = basedUponSmallAngryPlanet();
+    final InventoryItemResource smallAngryPlanet = itemsFixture
+      .basedUponSmallAngryPlanet(itemsFixture.addCallNumberStringComponents());
     final IndividualResource rebecca = usersFixture.rebecca();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
     final String earlierAwaitingPickupRequestClosedDate = "2019-03-11T15:45:23.000+0000";
@@ -311,7 +315,8 @@ public class HoldShelfClearanceReportTests extends APITests {
     TimeoutException,
     ExecutionException {
 
-    final InventoryItemResource smallAngryPlanet = basedUponSmallAngryPlanet();
+    final InventoryItemResource smallAngryPlanet = itemsFixture
+      .basedUponSmallAngryPlanet(itemsFixture.addCallNumberStringComponents());
     final IndividualResource rebecca = usersFixture.rebecca();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
     final String awaitingPickupRequestClosedDate = "2019-03-11T15:45:23.000+0000";
@@ -385,7 +390,8 @@ public class HoldShelfClearanceReportTests extends APITests {
     TimeoutException,
     ExecutionException {
 
-    final InventoryItemResource smallAngryPlanet = basedUponSmallAngryPlanet();
+    final InventoryItemResource smallAngryPlanet = itemsFixture
+      .basedUponSmallAngryPlanet(itemsFixture.addCallNumberStringComponents());
 
     // init for SP1
     final IndividualResource rebeca = usersFixture.rebecca();
@@ -639,17 +645,5 @@ public class HoldShelfClearanceReportTests extends APITests {
       is(item.getJson().getString("chronology")));
     assertThat(itemJson.getString("enumeration"),
       is(item.getJson().getString("enumeration")));
-  }
-
-  private InventoryItemResource basedUponSmallAngryPlanet()
-    throws InterruptedException, MalformedURLException, TimeoutException,
-    ExecutionException {
-
-    return itemsFixture.basedUponSmallAngryPlanet(itemBuilder -> itemBuilder
-      .withCallNumber("callNumber", "prefix", "suffix")
-      .withEnumeration("enum")
-      .withVolume("v.1")
-      .withChronology("chronology")
-    );
   }
 }

@@ -24,7 +24,6 @@ import static org.hamcrest.Matchers.emptyString;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import java.net.MalformedURLException;
@@ -41,7 +40,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import api.support.builders.UserManualBlockBuilder;
 import org.awaitility.Awaitility;
 import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.domain.MultipleRecords;
@@ -70,6 +68,7 @@ import api.support.builders.NoticeConfigurationBuilder;
 import api.support.builders.NoticePolicyBuilder;
 import api.support.builders.RequestBuilder;
 import api.support.builders.UserBuilder;
+import api.support.builders.UserManualBlockBuilder;
 import api.support.fixtures.ItemExamples;
 import api.support.fixtures.ItemsFixture;
 import api.support.fixtures.LoansFixture;
@@ -100,7 +99,8 @@ public class RequestsAPICreationTests extends APITests {
     UUID id = UUID.randomUUID();
     UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
-    IndividualResource item = itemsFixture.basedUponSmallAngryPlanet();
+    IndividualResource item = itemsFixture
+      .basedUponSmallAngryPlanet(itemsFixture.addCallNumberStringComponents());
 
     loansFixture.checkOutByBarcode(item, usersFixture.jessica());
 
@@ -137,12 +137,13 @@ public class RequestsAPICreationTests extends APITests {
     assertThat("has information taken from item",
       representation.containsKey("item"), is(true));
 
+    JsonObject requestItem = representation.getJsonObject("item");
     assertThat("title is taken from item",
-      representation.getJsonObject("item").getString("title"),
+      requestItem.getString("title"),
       is("The Long Way to a Small, Angry Planet"));
 
     assertThat("barcode is taken from item",
-      representation.getJsonObject("item").getString("barcode"),
+      requestItem.getString("barcode"),
       is("036000291452"));
 
     assertThat("has information taken from requesting user",
@@ -184,15 +185,18 @@ public class RequestsAPICreationTests extends APITests {
     assertThat(tagsRepresentation.containsKey("tagList"), is(true));
     assertThat(tagsRepresentation.getJsonArray("tagList"), contains("new", "important"));
 
-    assertTrue(representation.getJsonObject("item").containsKey(CALL_NUMBER_COMPONENTS));
+    assertTrue(requestItem.containsKey(CALL_NUMBER_COMPONENTS));
 
-    JsonObject callNumberComponents = representation
-      .getJsonObject("item")
+    JsonObject callNumberComponents = requestItem
       .getJsonObject(CALL_NUMBER_COMPONENTS);
 
-    assertThat(callNumberComponents.getString("callNumber"), is("123456"));
-    assertFalse(callNumberComponents.containsKey("prefix"));
-    assertThat(callNumberComponents.getString("suffix"), is("CIRC"));
+    assertThat(callNumberComponents.getString("callNumber"), is("itCn"));
+    assertThat(callNumberComponents.getString("prefix"), is("itCnPrefix"));
+    assertThat(callNumberComponents.getString("suffix"), is("itCnSuffix"));
+
+    assertThat(requestItem.getString("enumeration"), is("enumeration1"));
+    assertThat(requestItem.getString("chronology"), is("chronology"));
+    assertThat(requestItem.getString("volume"), is("vol.1"));
   }
 
   @Test
