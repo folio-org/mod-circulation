@@ -951,11 +951,11 @@ public class CheckOutByBarcodeTests extends APITests {
     Response response = loansFixture.attemptCheckOutByBarcode(secondItem, steve);
 
     assertThat(response.getJson(), hasErrorWith(allOf(
-      hasMessage("Patron has reached maximum limit of 1 items"))));
+      hasMessage("Patron has reached maximum item limit of 1 items "))));
   }
 
   @Test
-  public void canCheckOutWhenItemLimitIsReachedForAnotherMaterialType()
+  public void canCheckOutVideoMaterialWhenItemLimitIsReachedForBookMaterialType()
     throws InterruptedException,
     MalformedURLException,
     TimeoutException,
@@ -980,12 +980,12 @@ public class CheckOutByBarcodeTests extends APITests {
     final String anyNoticePolicy = noticePoliciesFixture.activeNotice().getId().toString();
     final String anyOverdueFinePolicy = overdueFinePoliciesFixture.facultyStandard().getId().toString();
     final String anyLostItemFeePolicy = lostItemFeePoliciesFixture.facultyStandard().getId().toString();
-    final UUID videoRecording = materialTypesFixture.videoRecording().getId();
+    final UUID book = materialTypesFixture.book().getId();
 
     String rules = String.join("\n",
       "priority: t, s, c, b, a, m, g",
-      "fallback-policy: l " + loanPolicyWithItemLimitId + " r " + anyRequestPolicy + " n " + anyNoticePolicy + " o " + anyOverdueFinePolicy + " i " + anyLostItemFeePolicy,
-      "m " + videoRecording + " : l " + loanPolicyWithoutItemLimitId + " r " + anyRequestPolicy + " n " + anyNoticePolicy  + " o " + anyOverdueFinePolicy + " i " + anyLostItemFeePolicy);
+      "fallback-policy: l " + loanPolicyWithoutItemLimitId + " r " + anyRequestPolicy + " n " + anyNoticePolicy + " o " + anyOverdueFinePolicy + " i " + anyLostItemFeePolicy,
+      "m " + book + " : l " + loanPolicyWithItemLimitId + " r " + anyRequestPolicy + " n " + anyNoticePolicy  + " o " + anyOverdueFinePolicy + " i " + anyLostItemFeePolicy);
 
     circulationRulesFixture.updateCirculationRules(rules);
 
@@ -1000,7 +1000,63 @@ public class CheckOutByBarcodeTests extends APITests {
 
     Response response = loansFixture.attemptCheckOutByBarcode(secondBookTypeItem, steve);
     assertThat(response.getJson(), hasErrorWith(allOf(
-      hasMessage("Patron has reached maximum limit of 1 items"))));
+      hasMessage("Patron has reached maximum item limit of 1 items for material type"))));
+    secondBookTypeItem = itemsClient.get(secondBookTypeItem);
+    assertThat(secondBookTypeItem, hasItemStatus(AVAILABLE));
+
+    loansFixture.checkOutByBarcode(videoTypeItem, steve);
+    videoTypeItem = itemsClient.get(videoTypeItem);
+    assertThat(videoTypeItem, hasItemStatus(CHECKED_OUT));
+  }
+
+  @Test
+  public void canCheckOutWhenItemLimitIsReachedForCanCirculateLoanType()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    IndividualResource loanPolicyWithItemLimit = loanPoliciesFixture.create(
+      new LoanPolicyBuilder()
+        .withName("Loan Policy with item limit")
+        .withItemLimit(1)
+        .rolling(Period.months(2))
+        .renewFromCurrentDueDate());
+
+    IndividualResource loanPolicyWithoutItemLimit = loanPoliciesFixture.create(
+      new LoanPolicyBuilder()
+        .withName("Loan Policy without item limit")
+        .rolling(Period.months(2))
+        .renewFromCurrentDueDate());
+
+    final String loanPolicyWithItemLimitId = loanPolicyWithItemLimit.getId().toString();
+    final String loanPolicyWithoutItemLimitId = loanPolicyWithoutItemLimit.getId().toString();
+    final String anyRequestPolicy = requestPoliciesFixture.allowAllRequestPolicy().getId().toString();
+    final String anyNoticePolicy = noticePoliciesFixture.activeNotice().getId().toString();
+    final String anyOverdueFinePolicy = overdueFinePoliciesFixture.facultyStandard().getId().toString();
+    final String anyLostItemFeePolicy = lostItemFeePoliciesFixture.facultyStandard().getId().toString();
+    //final UUID book = materialTypesFixture.book().getId();
+    final UUID readingRoom = loanTypesFixture.readingRoom().getId();
+
+    String rules = String.join("\n",
+      "priority: t, s, c, b, a, m, g",
+      "fallback-policy: l " + loanPolicyWithoutItemLimitId + " r " + anyRequestPolicy + " n " + anyNoticePolicy + " o " + anyOverdueFinePolicy + " i " + anyLostItemFeePolicy,
+      "t " + readingRoom + " : l " + loanPolicyWithItemLimitId + " r " + anyRequestPolicy + " n " + anyNoticePolicy  + " o " + anyOverdueFinePolicy + " i " + anyLostItemFeePolicy);
+
+    circulationRulesFixture.updateCirculationRules(rules);
+
+    IndividualResource firstBookTypeItem = itemsFixture.basedUponNod(itemBuilder -> itemBuilder.withTemporaryLoanType(readingRoom));
+    IndividualResource secondBookTypeItem = itemsFixture.basedUponSmallAngryPlanet(itemBuilder -> itemBuilder.withTemporaryLoanType(readingRoom));
+    IndividualResource videoTypeItem = itemsFixture.basedUponDunkirk();
+    IndividualResource steve = usersFixture.steve();
+
+    loansFixture.checkOutByBarcode(firstBookTypeItem, steve);
+    firstBookTypeItem = itemsClient.get(firstBookTypeItem);
+    assertThat(firstBookTypeItem, hasItemStatus(CHECKED_OUT));
+
+    Response response = loansFixture.attemptCheckOutByBarcode(secondBookTypeItem, steve);
+    assertThat(response.getJson(), hasErrorWith(allOf(
+      hasMessage("Patron has reached maximum item limit of 1 items for loan type"))));
     secondBookTypeItem = itemsClient.get(secondBookTypeItem);
     assertThat(secondBookTypeItem, hasItemStatus(AVAILABLE));
 

@@ -1,20 +1,24 @@
 package org.folio.circulation.domain.validation;
 
+import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.support.Result.succeeded;
 
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.RoutingContext;
 
+import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.domain.LoanRepository;
-import org.folio.circulation.domain.User;
 import org.folio.circulation.domain.policy.LoanPolicyRepository;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.Result;
@@ -41,13 +45,20 @@ public class ItemLimitValidator {
   public CompletableFuture<Result<LoanAndRelatedRecords>> refuseWhenItemLimitIsReached(
     LoanAndRelatedRecords records) {
 
-    Item item = records.getLoan().getItem();
-    User user = records.getLoan().getUser();
+    Loan loan = records.getLoan();
+    Integer itemLimit = loan.getLoanPolicy().getItemLimit();
 
-    return loanPolicyRepository.lookupLineNumber(item, user)
+    if (itemLimit == null) {
+      return completedFuture(succeeded(records));
+    }
+
+    return loanPolicyRepository.lookupLineNumber(loan.getItem(), loan.getUser())
       .thenComposeAsync(r -> r.after(this::retrieveCirculationRule)
         .thenComposeAsync(result -> result.failAfter(rule -> isLimitReached(rule, records),
-          limit -> itemLimitErrorFunction.apply(String.format("Patron has reached maximum limit of %d items", limit))))
+          rule -> {
+            String message = getErrorMessage(rule);
+            return itemLimitErrorFunction.apply(String.format("Patron has reached maximum item limit of %d items %s", itemLimit, message));
+          }))
         .thenApply(result -> result.map(v -> records)));
   }
 
@@ -55,31 +66,48 @@ public class ItemLimitValidator {
     Item item = records.getLoan().getItem();
     String materialType = item.getMaterialType().getString("name");
     String loanType = item.getLoanTypeName();
-    int itemLimit = records.getLoan().getLoanPolicy().getItemLimit();
-
-    Predicate<Loan> isMaterialTypePresentInCirculationRule = loan -> isRuleMaterialTypePresent(rule)
-        && loan.getItem().getMaterialType().getString("name").equals(materialType);
-    Predicate<Loan> isLoanTypePresentInCirculationRule = loan -> isRuleLoanTypePresent(rule)
-      && loan.getItem().getLoanTypeName().equals(loanType);
+    Integer itemLimit = records.getLoan().getLoanPolicy().getItemLimit();
 
     if (isRuleMaterialTypePresent(rule) || isRuleLoanTypePresent(rule)) {
-
+      return loanRepository.findOpenLoansByUserIdAndLoanPolicyIdWithItem(records)
+        .thenApply(r -> r.map(loans -> loans.getRecords().stream()
+            .filter(loan -> isMaterialTypeMatchInRetrievedLoan(rule, materialType, loan))
+            .filter(loan -> isLoanTypeMatchInRetrievedLoan(rule, loanType, loan))
+            .count()))
+        .thenApply(r -> r.map(loansCount ->loansCount >= itemLimit));
     }
 
     return loanRepository.findOpenLoansByUserIdAndLoanPolicyId(records)
-      .thenApply(r -> r.map(loans -> loans.getRecords().stream()
-          .filter(isMaterialTypePresentInCirculationRule)
-          .filter(isLoanTypePresentInCirculationRule)))
-      .thenApply(r -> r.map(loans -> loans.count() >= itemLimit));
+      .thenApply(r -> r.map(loans -> loans.getTotalRecords() >= itemLimit));
+  }
+
+  private boolean isMaterialTypeMatchInRetrievedLoan(String rule, String expectedMaterialType, Loan loan) {
+    if (isRuleMaterialTypePresent(rule)) {
+      if (expectedMaterialType.equals(loan.getItem().getMaterialType().getString("name"))) {
+        return true;
+      } else {
+        return false;
+      }
+    } else {
+      return true;
+    }
+  }
+
+  private boolean isLoanTypeMatchInRetrievedLoan(String rule, String expectedLoanType, Loan loan) {
+    if (isRuleLoanTypePresent(rule)) {
+      if (expectedLoanType.equals(expectedLoanType.equals(loan.getItem().getLoanTypeName()))) {
+        return true;
+      } else {
+        return false;
+      }
+    } else {
+      return true;
+    }
   }
 
   private CompletableFuture<Result<String>> retrieveCirculationRule(int lineNumber) {
     return circulationRulesStorage.get()
       .thenApply(response -> {
-//        if (response.getStatusCode() != 200) {
-//          ForwardResponse.forward(routingContext.response(), response);
-//          return completedFuture(failedDueToServerError("Unable to retrieve circulation rules"));
-//        }
         JsonObject circulationRules = new JsonObject(response.getBody());
         String rulesAsText = circulationRules.getString("rulesAsText");
         return succeeded(rulesAsText);
@@ -90,14 +118,49 @@ public class ItemLimitValidator {
   private CompletableFuture<Result<String>> getRuleByLineNumber(String rules, int lineNumber) {
     String line = Arrays.asList(rules.split("\n")).get(lineNumber - 1);
 
-    return CompletableFuture.completedFuture(succeeded(line));
+    return completedFuture(succeeded(line));
   }
 
   private boolean isRuleMaterialTypePresent(String rule) {
-    return true;
+    return splitRuleToMap(rule).get("m") != null;
   }
 
   private boolean isRuleLoanTypePresent(String rule) {
-    return true;
+    return splitRuleToMap(rule).get("t") != null;
+  }
+
+  private boolean isRulePatronGroupPresent(String rule) {
+    return splitRuleToMap(rule).get("g") != null;
+  }
+
+  private String getErrorMessage(String rule) {
+    boolean isRuleMaterialTypePresent = isRuleMaterialTypePresent(rule);
+    boolean isRuleLoanTypePresent = isRuleLoanTypePresent(rule);
+    boolean isRulePatronGroupPresent = isRulePatronGroupPresent(rule);
+
+    if (isRulePatronGroupPresent && isRuleMaterialTypePresent && isRuleLoanTypePresent) {
+      return "for combination of patron group, material type and loan type";
+    } else if (isRulePatronGroupPresent && isRuleMaterialTypePresent) {
+      return "for combination of patron group and material type";
+    } else if (isRulePatronGroupPresent && isRuleLoanTypePresent) {
+      return "for combination of patron group and loan type";
+    } else if (isRuleMaterialTypePresent && isRuleLoanTypePresent) {
+      return "for combination of material type and loan type";
+    } else if (isRuleMaterialTypePresent) {
+      return "for material type";
+    } else if (isRuleLoanTypePresent) {
+      return "for loan type";
+    }
+    return StringUtils.EMPTY;
+  }
+
+  private Map<String, String> splitRuleToMap(String rule) {
+    String partOfRuleBeforeColon = rule.split(":")[0];
+
+    return Arrays.stream(partOfRuleBeforeColon.split("\\+"))
+      .map(String::trim)
+      .map(s -> s.split(StringUtils.SPACE))
+      .collect(HashMap::new, (map, array) -> map.put(array[0],
+        array.length > 1 ? array[1] : null), HashMap::putAll);
   }
 }
