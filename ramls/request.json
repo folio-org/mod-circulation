@@ -148,11 +148,13 @@
         },
         "volume": {
           "type": "string",
-          "description": "Volume is intended for monographs when a multipart monograph (e.g. a biography of George Bernard Shaw in three volumes)."
+          "description": "Volume is intended for monographs when a multipart monograph (e.g. a biography of George Bernard Shaw in three volumes).",
+          "readonly": true
         },
         "chronology": {
           "type": "string",
-          "description": "Chronology is the descriptive information for the dating scheme of a serial."
+          "description": "Chronology is the descriptive information for the dating scheme of a serial.",
+          "readonly": true
         },
         "callNumberComponents": {
           "description": "Elements of a full call number",
