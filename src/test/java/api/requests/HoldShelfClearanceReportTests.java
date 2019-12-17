@@ -1,11 +1,13 @@
 package api.requests;
 
-import api.support.APITests;
-import api.support.builders.CheckInByBarcodeRequestBuilder;
-import api.support.builders.RequestBuilder;
-import api.support.http.InventoryItemResource;
-import api.support.http.ResourceClient;
-import io.vertx.core.json.JsonObject;
+import static java.net.HttpURLConnection.HTTP_OK;
+import static org.hamcrest.core.Is.is;
+import static org.hamcrest.junit.MatcherAssert.assertThat;
+
+import java.net.MalformedURLException;
+import java.util.UUID;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeoutException;
 
 import org.folio.circulation.domain.RequestStatus;
 import org.folio.circulation.support.http.client.IndividualResource;
@@ -14,14 +16,12 @@ import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.junit.Test;
 
-import java.net.MalformedURLException;
-import java.util.UUID;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeoutException;
-
-import static java.net.HttpURLConnection.HTTP_OK;
-import static org.hamcrest.core.Is.is;
-import static org.hamcrest.junit.MatcherAssert.assertThat;
+import api.support.APITests;
+import api.support.builders.CheckInByBarcodeRequestBuilder;
+import api.support.builders.RequestBuilder;
+import api.support.http.InventoryItemResource;
+import api.support.http.ResourceClient;
+import io.vertx.core.json.JsonObject;
 
 public class HoldShelfClearanceReportTests extends APITests {
 
@@ -168,7 +168,7 @@ public class HoldShelfClearanceReportTests extends APITests {
     TimeoutException,
     ExecutionException {
 
-    final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final InventoryItemResource smallAngryPlanet = basedUponSmallAngryPlanet();
     final InventoryItemResource temeraire = itemsFixture.basedUponTemeraire();
     final IndividualResource rebecca = usersFixture.rebecca();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
@@ -209,7 +209,7 @@ public class HoldShelfClearanceReportTests extends APITests {
     TimeoutException,
     ExecutionException {
 
-    final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final InventoryItemResource smallAngryPlanet = basedUponSmallAngryPlanet();
     final InventoryItemResource temeraire = itemsFixture.basedUponTemeraire();
     final IndividualResource rebecca = usersFixture.rebecca();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
@@ -247,7 +247,7 @@ public class HoldShelfClearanceReportTests extends APITests {
     TimeoutException,
     ExecutionException {
 
-    final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final InventoryItemResource smallAngryPlanet = basedUponSmallAngryPlanet();
     final IndividualResource rebecca = usersFixture.rebecca();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
     final String earlierAwaitingPickupRequestClosedDate = "2019-03-11T15:45:23.000+0000";
@@ -294,7 +294,7 @@ public class HoldShelfClearanceReportTests extends APITests {
     TimeoutException,
     ExecutionException {
 
-    final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final InventoryItemResource smallAngryPlanet = basedUponSmallAngryPlanet();
     final IndividualResource rebecca = usersFixture.rebecca();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
     final String awaitingPickupRequestClosedDate = "2019-03-11T15:45:23.000+0000";
@@ -368,7 +368,7 @@ public class HoldShelfClearanceReportTests extends APITests {
     TimeoutException,
     ExecutionException {
 
-    final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final InventoryItemResource smallAngryPlanet = basedUponSmallAngryPlanet();
 
     // init for SP1
     final IndividualResource rebeca = usersFixture.rebecca();
@@ -590,7 +590,37 @@ public class HoldShelfClearanceReportTests extends APITests {
 
     JsonObject itemJson = requestJson.getJsonObject(ITEM_KEY);
     assertThat(itemJson.getString(BARCODE_KEY), is(item.getBarcode()));
-    String callNumber = item.getHoldingsRecord().getJson().getString(CALL_NUMBER_KEY);
-    assertThat(itemJson.getString(CALL_NUMBER_KEY), is(callNumber));
+
+    JsonObject expectedCallNumberComponents = item.getJson()
+      .getJsonObject("effectiveCallNumberComponents");
+    assertThat(itemJson.getString(CALL_NUMBER_KEY),
+      is(expectedCallNumberComponents.getString("callNumber")));
+
+    JsonObject actualCallNumberComponents = itemJson.getJsonObject("callNumberComponents");
+
+    assertThat(expectedCallNumberComponents.getString("callNumber"),
+      is(actualCallNumberComponents.getString("callNumber")));
+    assertThat(expectedCallNumberComponents.getString("suffix"),
+      is(actualCallNumberComponents.getString("suffix")));
+    assertThat(expectedCallNumberComponents.getString("prefix"),
+      is(actualCallNumberComponents.getString("prefix")));
+
+    assertThat(itemJson.getString("volume"),
+      is(item.getJson().getString("volume")));
+    assertThat(itemJson.getString("chronology"),
+      is(item.getJson().getString("chronology")));
+    assertThat(itemJson.getString("enumeration"),
+      is(item.getJson().getString("enumeration")));
+  }
+
+  private InventoryItemResource basedUponSmallAngryPlanet()
+    throws InterruptedException, MalformedURLException, TimeoutException, ExecutionException {
+
+    return itemsFixture.basedUponSmallAngryPlanet(itemBuilder -> itemBuilder
+      .withCallNumber("callNumber", "prefix", "suffix")
+      .withEnumeration("enum")
+      .withVolume("v.1")
+      .withChronology("chronology")
+    );
   }
 }

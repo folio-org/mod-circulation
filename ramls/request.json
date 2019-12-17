@@ -146,6 +146,14 @@
           "description": "The volume and/or issue number for the item",
           "type": "string"
         },
+        "volume": {
+          "type": "string",
+          "description": "Volume is intended for monographs when a multipart monograph (e.g. a biography of George Bernard Shaw in three volumes)."
+        },
+        "chronology": {
+          "type": "string",
+          "description": "Chronology is the descriptive information for the dating scheme of a serial."
+        },
         "callNumberComponents": {
           "description": "Elements of a full call number",
           "$ref": "schema/call-number-components.json"
