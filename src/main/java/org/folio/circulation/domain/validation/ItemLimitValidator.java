@@ -8,12 +8,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
-import java.util.function.Predicate;
-import java.util.stream.Collectors;
 
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.RoutingContext;
-
 import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Loan;
@@ -57,7 +54,8 @@ public class ItemLimitValidator {
         .thenComposeAsync(result -> result.failAfter(rule -> isLimitReached(rule, records),
           rule -> {
             String message = getErrorMessage(rule);
-            return itemLimitErrorFunction.apply(String.format("Patron has reached maximum item limit of %d items %s", itemLimit, message));
+            return itemLimitErrorFunction.apply(String.format("Patron has reached maximum item limit of %d items %s",
+              itemLimit, message));
           }))
         .thenApply(result -> result.map(v -> records)));
   }
@@ -95,7 +93,7 @@ public class ItemLimitValidator {
 
   private boolean isLoanTypeMatchInRetrievedLoan(String rule, String expectedLoanType, Loan loan) {
     if (isRuleLoanTypePresent(rule)) {
-      if (expectedLoanType.equals(expectedLoanType.equals(loan.getItem().getLoanTypeName()))) {
+      if (expectedLoanType.equals(loan.getItem().getLoanTypeName())) {
         return true;
       } else {
         return false;
@@ -116,9 +114,9 @@ public class ItemLimitValidator {
   }
 
   private CompletableFuture<Result<String>> getRuleByLineNumber(String rules, int lineNumber) {
-    String line = Arrays.asList(rules.split("\n")).get(lineNumber - 1);
+    String rule = Arrays.asList(rules.split("\n")).get(lineNumber - 1);
 
-    return completedFuture(succeeded(line));
+    return completedFuture(succeeded(rule));
   }
 
   private boolean isRuleMaterialTypePresent(String rule) {

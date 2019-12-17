@@ -3,6 +3,7 @@ package org.folio.circulation.support;
 import static java.util.Objects.isNull;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.function.Function.identity;
+import static org.folio.circulation.support.JsonKeys.byId;
 import static org.folio.circulation.support.Result.ofAsync;
 import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.ResultBinding.mapResult;
@@ -10,6 +11,7 @@ import static org.folio.circulation.support.ResultBinding.mapResult;
 import java.lang.invoke.MethodHandles;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -303,7 +305,6 @@ public class ItemRepository {
         matchItemToRecord(records, items, includeItemMap),
         records.getTotalRecords()));
   }
-
   public CompletableFuture<Result<Collection<Item>>> findByQuery(Result<CqlQuery> queryResult) {
     MultipleRecordFetcher<Item> fetcher
       = new MultipleRecordFetcher<>(itemsClient, ITEMS_COLLECTION_PROPERTY_NAME , Item::from);
@@ -353,5 +354,57 @@ public class ItemRepository {
       .thenComposeAsync(this::fetchLocation)
       .thenComposeAsync(this::fetchMaterialType)
       .thenComposeAsync(this::fetchLoanType);
+  }
+
+  public <T extends ItemRelatedRecord> CompletableFuture<Result<MultipleRecords<T>>> fetchItems(
+    Result<MultipleRecords<T>> result,
+    BiFunction<T, Item, T> includeItemMap) {
+
+    if (result.failed() || result.value().getRecords().isEmpty()) {
+      return CompletableFuture.completedFuture(result);
+    }
+
+    return result.combineAfter(r -> fetchItemsWithLoanTypes(getItemIds(r)),
+      (records, items) -> new MultipleRecords<>(
+        matchItemToRecord(records, items, includeItemMap),
+        records.getTotalRecords()));
+  }
+
+  private CompletableFuture<Result<Collection<Item>>> fetchItemsWithLoanTypes(
+    Collection<String> itemIds) {
+
+    return fetchFor(itemIds)
+      .thenComposeAsync(this::fetchLoanTypes);
+  }
+
+  private CompletableFuture<Result<Collection<Item>>> fetchLoanTypes(
+    Result<Collection<Item>> result) {
+
+    if(fetchLoanType) {
+      return result.after(items ->
+        getLoanTypes(items)
+          .thenApply(r -> r.map(loanTypes -> items.stream()
+            .map(item -> item.withLoanType(loanTypes.get(item.determineLoanTypeForItem())))
+            .collect(Collectors.toList()))));
+    }
+    else {
+      return completedFuture(result);
+    }
+  }
+
+  private CompletableFuture<Result<Map<String, JsonObject>>> getLoanTypes(
+    Collection<Item> inventoryRecords) {
+
+    List<String> loanTypeIds = inventoryRecords.stream()
+      .map(Item::determineLoanTypeForItem)
+      .filter(StringUtils::isNotBlank)
+      .distinct()
+      .collect(Collectors.toList());
+
+    final MultipleRecordFetcher<JsonObject> fetcher = new MultipleRecordFetcher<>(
+      loanTypesClient, "loantypes", identity());
+
+    return fetcher.findByIds(loanTypeIds)
+      .thenApply(mapResult(loanTypes -> loanTypes.toMap(byId())));
   }
 }

@@ -961,21 +961,8 @@ public class CheckOutByBarcodeTests extends APITests {
     TimeoutException,
     ExecutionException {
 
-    IndividualResource loanPolicyWithItemLimit = loanPoliciesFixture.create(
-      new LoanPolicyBuilder()
-        .withName("Loan Policy with item limit")
-        .withItemLimit(1)
-        .rolling(Period.months(2))
-        .renewFromCurrentDueDate());
-
-    IndividualResource loanPolicyWithoutItemLimit = loanPoliciesFixture.create(
-      new LoanPolicyBuilder()
-        .withName("Loan Policy without item limit")
-        .rolling(Period.months(2))
-        .renewFromCurrentDueDate());
-
-    final String loanPolicyWithItemLimitId = loanPolicyWithItemLimit.getId().toString();
-    final String loanPolicyWithoutItemLimitId = loanPolicyWithoutItemLimit.getId().toString();
+    final String loanPolicyWithItemLimitId = prepareLoanPolicyWithItemLimit(1).getId().toString();
+    final String loanPolicyWithoutItemLimitId = prepareLoanPolicyWithoutItemLimit().getId().toString();
     final String anyRequestPolicy = requestPoliciesFixture.allowAllRequestPolicy().getId().toString();
     final String anyNoticePolicy = noticePoliciesFixture.activeNotice().getId().toString();
     final String anyOverdueFinePolicy = overdueFinePoliciesFixture.facultyStandard().getId().toString();
@@ -1010,32 +997,18 @@ public class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void canCheckOutWhenItemLimitIsReachedForCanCirculateLoanType()
+  public void canCheckOutWhenItemLimitIsReachedForReadingRoomLoanType()
     throws InterruptedException,
     MalformedURLException,
     TimeoutException,
     ExecutionException {
 
-    IndividualResource loanPolicyWithItemLimit = loanPoliciesFixture.create(
-      new LoanPolicyBuilder()
-        .withName("Loan Policy with item limit")
-        .withItemLimit(1)
-        .rolling(Period.months(2))
-        .renewFromCurrentDueDate());
-
-    IndividualResource loanPolicyWithoutItemLimit = loanPoliciesFixture.create(
-      new LoanPolicyBuilder()
-        .withName("Loan Policy without item limit")
-        .rolling(Period.months(2))
-        .renewFromCurrentDueDate());
-
-    final String loanPolicyWithItemLimitId = loanPolicyWithItemLimit.getId().toString();
-    final String loanPolicyWithoutItemLimitId = loanPolicyWithoutItemLimit.getId().toString();
+    final String loanPolicyWithItemLimitId = prepareLoanPolicyWithItemLimit(1).getId().toString();
+    final String loanPolicyWithoutItemLimitId = prepareLoanPolicyWithoutItemLimit().getId().toString();
     final String anyRequestPolicy = requestPoliciesFixture.allowAllRequestPolicy().getId().toString();
     final String anyNoticePolicy = noticePoliciesFixture.activeNotice().getId().toString();
     final String anyOverdueFinePolicy = overdueFinePoliciesFixture.facultyStandard().getId().toString();
     final String anyLostItemFeePolicy = lostItemFeePoliciesFixture.facultyStandard().getId().toString();
-    //final UUID book = materialTypesFixture.book().getId();
     final UUID readingRoom = loanTypesFixture.readingRoom().getId();
 
     String rules = String.join("\n",
@@ -1063,5 +1036,119 @@ public class CheckOutByBarcodeTests extends APITests {
     loansFixture.checkOutByBarcode(videoTypeItem, steve);
     videoTypeItem = itemsClient.get(videoTypeItem);
     assertThat(videoTypeItem, hasItemStatus(CHECKED_OUT));
+  }
+
+  @Test
+  public void canCheckOutWhenItemLimitIsReachedForBookMaterialTypeAndReadingRoomLoanType()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    final String loanPolicyWithItemLimitId = prepareLoanPolicyWithItemLimit(1).getId().toString();
+    final String loanPolicyWithoutItemLimitId = prepareLoanPolicyWithoutItemLimit().getId().toString();
+    final String anyRequestPolicy = requestPoliciesFixture.allowAllRequestPolicy().getId().toString();
+    final String anyNoticePolicy = noticePoliciesFixture.activeNotice().getId().toString();
+    final String anyOverdueFinePolicy = overdueFinePoliciesFixture.facultyStandard().getId().toString();
+    final String anyLostItemFeePolicy = lostItemFeePoliciesFixture.facultyStandard().getId().toString();
+    final UUID readingRoom = loanTypesFixture.readingRoom().getId();
+    final UUID book = materialTypesFixture.book().getId();
+
+    String rules = String.join("\n",
+      "priority: t, s, c, b, a, m, g",
+      "fallback-policy: l " + loanPolicyWithoutItemLimitId + " r " + anyRequestPolicy + " n " + anyNoticePolicy + " o " + anyOverdueFinePolicy + " i " + anyLostItemFeePolicy,
+      "m " + book + " + t " + readingRoom + " : l " + loanPolicyWithItemLimitId + " r " + anyRequestPolicy + " n " + anyNoticePolicy  + " o " + anyOverdueFinePolicy + " i " + anyLostItemFeePolicy);
+
+    circulationRulesFixture.updateCirculationRules(rules);
+
+    IndividualResource firstBookTypeItem = itemsFixture.basedUponNod(itemBuilder -> itemBuilder.withTemporaryLoanType(readingRoom));
+    IndividualResource secondBookTypeItem = itemsFixture.basedUponSmallAngryPlanet(itemBuilder -> itemBuilder.withTemporaryLoanType(readingRoom));
+    IndividualResource videoTypeItem = itemsFixture.basedUponDunkirk();
+    IndividualResource steve = usersFixture.steve();
+
+    loansFixture.checkOutByBarcode(firstBookTypeItem, steve);
+    firstBookTypeItem = itemsClient.get(firstBookTypeItem);
+    assertThat(firstBookTypeItem, hasItemStatus(CHECKED_OUT));
+
+    Response response = loansFixture.attemptCheckOutByBarcode(secondBookTypeItem, steve);
+    assertThat(response.getJson(), hasErrorWith(allOf(
+      hasMessage("Patron has reached maximum item limit of 1 items for combination of material type and loan type"))));
+    secondBookTypeItem = itemsClient.get(secondBookTypeItem);
+    assertThat(secondBookTypeItem, hasItemStatus(AVAILABLE));
+
+    loansFixture.checkOutByBarcode(videoTypeItem, steve);
+    videoTypeItem = itemsClient.get(videoTypeItem);
+    assertThat(videoTypeItem, hasItemStatus(CHECKED_OUT));
+  }
+
+  @Test
+  public void canCheckOutWhenItemLimitIsReachedForBookMaterialTypeAndReadingRoomLoanTypeAndPatronGroup()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    final String loanPolicyWithItemLimitId = prepareLoanPolicyWithItemLimit(1).getId().toString();
+    final String loanPolicyWithoutItemLimitId = prepareLoanPolicyWithoutItemLimit().getId().toString();
+    final String anyRequestPolicy = requestPoliciesFixture.allowAllRequestPolicy().getId().toString();
+    final String anyNoticePolicy = noticePoliciesFixture.activeNotice().getId().toString();
+    final String anyOverdueFinePolicy = overdueFinePoliciesFixture.facultyStandard().getId().toString();
+    final String anyLostItemFeePolicy = lostItemFeePoliciesFixture.facultyStandard().getId().toString();
+    final UUID readingRoom = loanTypesFixture.readingRoom().getId();
+    final UUID book = materialTypesFixture.book().getId();
+    final UUID regular = patronGroupsFixture.regular().getId();
+
+    String rules = String.join("\n",
+      "priority: t, s, c, b, a, m, g",
+      "fallback-policy: l " + loanPolicyWithoutItemLimitId + " r " + anyRequestPolicy + " n " + anyNoticePolicy + " o " + anyOverdueFinePolicy + " i " + anyLostItemFeePolicy,
+      "m " + book + " + t " + readingRoom + " + g " + regular + " : l " + loanPolicyWithItemLimitId + " r " + anyRequestPolicy + " n " + anyNoticePolicy  + " o " + anyOverdueFinePolicy + " i " + anyLostItemFeePolicy);
+
+    circulationRulesFixture.updateCirculationRules(rules);
+
+    IndividualResource firstBookTypeItem = itemsFixture.basedUponNod(itemBuilder -> itemBuilder.withTemporaryLoanType(readingRoom));
+    IndividualResource secondBookTypeItem = itemsFixture.basedUponSmallAngryPlanet(itemBuilder -> itemBuilder.withTemporaryLoanType(readingRoom));
+    IndividualResource videoTypeItem = itemsFixture.basedUponDunkirk();
+    IndividualResource steve = usersFixture.steve();
+
+    loansFixture.checkOutByBarcode(firstBookTypeItem, steve);
+    firstBookTypeItem = itemsClient.get(firstBookTypeItem);
+    assertThat(firstBookTypeItem, hasItemStatus(CHECKED_OUT));
+
+    Response response = loansFixture.attemptCheckOutByBarcode(secondBookTypeItem, steve);
+    assertThat(response.getJson(), hasErrorWith(allOf(
+      hasMessage("Patron has reached maximum item limit of 1 items for combination of patron group, material type and loan type"))));
+    secondBookTypeItem = itemsClient.get(secondBookTypeItem);
+    assertThat(secondBookTypeItem, hasItemStatus(AVAILABLE));
+
+    loansFixture.checkOutByBarcode(videoTypeItem, steve);
+    videoTypeItem = itemsClient.get(videoTypeItem);
+    assertThat(videoTypeItem, hasItemStatus(CHECKED_OUT));
+  }
+
+  private IndividualResource prepareLoanPolicyWithItemLimit(int itemLimit)
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    return loanPoliciesFixture.create(
+      new LoanPolicyBuilder()
+        .withName("Loan Policy with item limit")
+        .withItemLimit(itemLimit)
+        .rolling(Period.months(2))
+        .renewFromCurrentDueDate());
+  }
+
+  private IndividualResource prepareLoanPolicyWithoutItemLimit()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    return loanPoliciesFixture.create(
+      new LoanPolicyBuilder()
+        .withName("Loan Policy without item limit")
+        .rolling(Period.months(2))
+        .renewFromCurrentDueDate());
   }
 }
