@@ -125,12 +125,7 @@ public class HoldShelfClearanceReportTests extends APITests {
     final InventoryItemResource smallAngryPlanet = itemsFixture
       .basedUponSmallAngryPlanet(itemsFixture.addCallNumberStringComponents());
     final InventoryItemResource temeraire = itemsFixture
-      .basedUponTemeraire(itemBuilder -> itemBuilder
-        .withCallNumber("temCallNumber", "temCNPrefix", "temCNSuffix")
-        .withVolume("temVolume")
-        .withEnumeration("temEnumeration")
-        .withChronology("temChronology")
-      );
+      .basedUponTemeraire(itemsFixture.addCallNumberStringComponents("tem"));
 
     final IndividualResource rebecca = usersFixture.rebecca();
     final IndividualResource steve = usersFixture.steve();
@@ -173,10 +168,17 @@ public class HoldShelfClearanceReportTests extends APITests {
     assertThat(responseJson.getInteger(TOTAL_RECORDS), is(2));
     assertThat(requests.size(), is(2));
 
-    verifyRequest(smallAngryPlanet, rebecca, requests.getJsonObject(0),
-      RequestStatus.CLOSED_PICKUP_EXPIRED);
-    verifyRequest(temeraire, steve, requests.getJsonObject(1),
-      RequestStatus.CLOSED_CANCELLED);
+    JsonObject smallAngryPlanetRequest = (JsonObject) requests.stream()
+      .filter(req -> ((JsonObject) req).getString("itemId").equals(smallAngryPlanet.getId().toString()))
+      .findFirst()
+      .orElseThrow(() -> new AssertionError("Can not find smallAngryPlanet request"));
+    JsonObject temeraireRequest = (JsonObject) requests.stream()
+      .filter(req -> ((JsonObject) req).getString("itemId").equals(temeraire.getId().toString()))
+      .findFirst()
+      .orElseThrow(() -> new AssertionError("Can not find temeraire request"));
+
+    verifyRequest(smallAngryPlanet, rebecca, smallAngryPlanetRequest, RequestStatus.CLOSED_PICKUP_EXPIRED);
+    verifyRequest(temeraire, steve, temeraireRequest, RequestStatus.CLOSED_CANCELLED);
   }
 
   @Test
