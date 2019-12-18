@@ -12,8 +12,6 @@ import static api.support.http.InterfaceUrls.overrideCheckOutByBarcodeUrl;
 import static api.support.http.InterfaceUrls.overrideRenewalByBarcodeUrl;
 import static api.support.http.InterfaceUrls.renewByBarcodeUrl;
 import static api.support.http.InterfaceUrls.renewByIdUrl;
-import static api.support.http.Limit.limit;
-import static java.lang.Integer.MAX_VALUE;
 
 import java.net.MalformedURLException;
 import java.util.HashMap;
@@ -406,6 +404,7 @@ public class LoansFixture {
 
   public MultipleJsonRecords getAllLoans() {
     return new MultipleJsonRecords(
-      JsonArrayHelper.mapToList(getLoans(limit(MAX_VALUE)).getJson(), "loans"));
+      JsonArrayHelper.mapToList(getLoans(Limit.maximumLimit()).getJson(), "loans"));
   }
+
 }
