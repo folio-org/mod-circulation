@@ -383,7 +383,7 @@ public class RequestsAPIRetrievalTests extends APITests {
     requestHasCallNumberStringProperties(requestList.stream()
         .filter(req -> temeraire.getId().toString().equals(req.getString("itemId")))
         .findFirst()
-        .orElseThrow(() -> new AssertionError("Expected Nod in response")),
+        .orElseThrow(() -> new AssertionError("Expected Temeraire in response")),
       "tem");
   }
 
