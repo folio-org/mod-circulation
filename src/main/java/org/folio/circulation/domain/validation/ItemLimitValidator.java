@@ -1,6 +1,8 @@
 package org.folio.circulation.domain.validation;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
+
+import static org.folio.circulation.support.Result.ofAsync;
 import static org.folio.circulation.support.Result.succeeded;
 
 import java.util.Arrays;
@@ -12,6 +14,7 @@ import java.util.function.Function;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.RoutingContext;
 import org.apache.commons.lang3.StringUtils;
+
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
@@ -61,6 +64,11 @@ public class ItemLimitValidator {
   }
 
   private CompletableFuture<Result<Boolean>> isLimitReached(String rule, LoanAndRelatedRecords records) {
+
+    if (!isRuleMaterialTypePresent(rule) && !isRuleLoanTypePresent(rule)) {
+      return ofAsync(() -> false);
+    }
+
     Item item = records.getLoan().getItem();
     String materialType = item.getMaterialType().getString("name");
     String loanType = item.getLoanTypeName();
@@ -69,8 +77,8 @@ public class ItemLimitValidator {
     if (isRuleMaterialTypePresent(rule) || isRuleLoanTypePresent(rule)) {
       return loanRepository.findOpenLoansByUserIdAndLoanPolicyIdWithItem(records)
         .thenApply(r -> r.map(loans -> loans.getRecords().stream()
-            .filter(loan -> isMaterialTypeMatchInRetrievedLoan(rule, materialType, loan))
-            .filter(loan -> isLoanTypeMatchInRetrievedLoan(rule, loanType, loan))
+            .filter(loan -> isMaterialTypeMatchInRetrievedLoan(materialType, loan))
+            .filter(loan -> isLoanTypeMatchInRetrievedLoan(loanType, loan))
             .count()))
         .thenApply(r -> r.map(loansCount ->loansCount >= itemLimit));
     }
@@ -79,28 +87,12 @@ public class ItemLimitValidator {
       .thenApply(r -> r.map(loans -> loans.getTotalRecords() >= itemLimit));
   }
 
-  private boolean isMaterialTypeMatchInRetrievedLoan(String rule, String expectedMaterialType, Loan loan) {
-    if (isRuleMaterialTypePresent(rule)) {
-      if (expectedMaterialType.equals(loan.getItem().getMaterialType().getString("name"))) {
-        return true;
-      } else {
-        return false;
-      }
-    } else {
-      return true;
-    }
+  private boolean isMaterialTypeMatchInRetrievedLoan(String expectedMaterialType, Loan loan) {
+    return expectedMaterialType.equals(loan.getItem().getMaterialType().getString("name"));
   }
 
-  private boolean isLoanTypeMatchInRetrievedLoan(String rule, String expectedLoanType, Loan loan) {
-    if (isRuleLoanTypePresent(rule)) {
-      if (expectedLoanType.equals(loan.getItem().getLoanTypeName())) {
-        return true;
-      } else {
-        return false;
-      }
-    } else {
-      return true;
-    }
+  private boolean isLoanTypeMatchInRetrievedLoan(String expectedLoanType, Loan loan) {
+    return expectedLoanType.equals(loan.getItem().getLoanTypeName());
   }
 
   private CompletableFuture<Result<String>> retrieveCirculationRule(int lineNumber) {

@@ -52,7 +52,6 @@ public class LoanRepository {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
   private static final String ITEM_STATUS = "itemStatus";
   private static final String ITEM_ID = "itemId";
-  private static final int LOANS_LIMIT = 100;
 
   public LoanRepository(Clients clients) {
     loansStorageClient = clients.loansStorage();
@@ -347,7 +346,7 @@ public class LoanRepository {
       .combine(userIdQuery, CqlQuery::and)
       .combine(loanPolicyIdQuery, CqlQuery::and);
 
-    return queryLoanStorage(LOANS_LIMIT, cqlQueryResult);
+    return queryLoanStorage(Integer.MAX_VALUE, cqlQueryResult);
   }
 
   public CompletableFuture<Result<MultipleRecords<Loan>>> findOpenLoansByUserIdAndLoanPolicyIdWithItem(

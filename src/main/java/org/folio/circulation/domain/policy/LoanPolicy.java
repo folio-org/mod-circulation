@@ -692,7 +692,7 @@ public class LoanPolicy {
 
   public Integer getItemLimit() {
     if (getLoansPolicy() != null) {
-      return  getLoansPolicy().getInteger("itemLimit");
+      return getLoansPolicy().getInteger("itemLimit");
     }
     return null;
   }

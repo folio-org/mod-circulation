@@ -923,21 +923,14 @@ public class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void cannotCheckOutWhenItemLimitOfLoanPolicyIsReached()
+  public void canCheckOutWhenItemLimitOfLoanPolicyIsReachedButMaterialTypeAndLoanTypeMissing()
     throws InterruptedException,
     MalformedURLException,
     TimeoutException,
     ExecutionException {
 
-    IndividualResource loanPolicyWithItemLimit = loanPoliciesFixture.create(
-      new LoanPolicyBuilder()
-        .withName("Loan Policy with item limit")
-        .withItemLimit(1)
-        .rolling(Period.months(2))
-        .renewFromCurrentDueDate());
-
     useFallbackPolicies(
-      loanPolicyWithItemLimit.getId(),
+      prepareLoanPolicyWithItemLimit(1).getId(),
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
       noticePoliciesFixture.inactiveNotice().getId(),
       overdueFinePoliciesFixture.facultyStandard().getId(),
@@ -948,10 +941,7 @@ public class CheckOutByBarcodeTests extends APITests {
     IndividualResource steve = usersFixture.steve();
 
     loansFixture.checkOutByBarcode(firstItem, steve);
-    Response response = loansFixture.attemptCheckOutByBarcode(secondItem, steve);
-
-    assertThat(response.getJson(), hasErrorWith(allOf(
-      hasMessage("Patron has reached maximum item limit of 1 items "))));
+    loansFixture.checkOutByBarcode(secondItem, steve);
   }
 
   @Test
