@@ -33,6 +33,7 @@ import org.folio.circulation.domain.representations.LoanProperties;
 import org.folio.circulation.domain.validation.AlreadyCheckedOutValidator;
 import org.folio.circulation.domain.validation.ExistingOpenLoanValidator;
 import org.folio.circulation.domain.validation.InactiveUserValidator;
+import org.folio.circulation.domain.validation.ItemDeclaredLostValidator;
 import org.folio.circulation.domain.validation.ItemMissingValidator;
 import org.folio.circulation.domain.validation.ItemNotFoundValidator;
 import org.folio.circulation.domain.validation.ProxyRelationshipValidator;
@@ -126,6 +127,9 @@ public class CheckOutByBarcodeResource extends Resource {
     final ItemMissingValidator itemMissingValidator = new ItemMissingValidator(
       message -> singleValidationError(message, ITEM_BARCODE, itemBarcode));
 
+    final ItemDeclaredLostValidator itemDeclaredLostValidator = new ItemDeclaredLostValidator(
+      message -> singleValidationError(message, ITEM_BARCODE, itemBarcode));
+
     final InactiveUserValidator inactiveUserValidator = InactiveUserValidator.forUser(userBarcode);
     final InactiveUserValidator inactiveProxyUserValidator = InactiveUserValidator.forProxy(proxyUserBarcode);
 
@@ -150,6 +154,7 @@ public class CheckOutByBarcodeResource extends Resource {
       .thenApply(itemNotFoundValidator::refuseWhenItemNotFound)
       .thenApply(alreadyCheckedOutValidator::refuseWhenItemIsAlreadyCheckedOut)
       .thenApply(itemMissingValidator::refuseWhenItemIsMissing)
+      .thenApply(itemDeclaredLostValidator::refuseWhenItemHasDeclaredLostStatus)
       .thenComposeAsync(r -> r.after(proxyRelationshipValidator::refuseWhenInvalid))
       .thenComposeAsync(r -> r.after(openLoanValidator::refuseWhenHasOpenLoan))
       .thenComposeAsync(r -> r.after(requestQueueRepository::get))

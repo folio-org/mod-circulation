@@ -1,5 +1,6 @@
 package api.loans;
 
+import static api.requests.RequestsAPICreationTests.setupDeclaredLostItem;
 import static api.requests.RequestsAPICreationTests.setupMissingItem;
 import static api.support.JsonCollectionAssistant.getRecordById;
 import static api.support.http.AdditionalHttpStatusCodes.UNPROCESSABLE_ENTITY;
@@ -772,6 +773,23 @@ public class LoanAPITests extends APITests {
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessageContaining("has the item status Missing"),
       hasUUIDParameter("itemId", missingItem.getId()))));
+  }
+
+  @Test
+  public void cannotCheckOutDeclaredLostItem()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    final IndividualResource declaredLostItem = setupDeclaredLostItem(itemsFixture);
+    final IndividualResource steve = usersFixture.steve();
+
+    Response response = loansFixture.attemptToCreateLoan(declaredLostItem, steve);
+
+    assertThat(response.getJson(), hasErrorWith(allOf(
+      hasMessageContaining("has the item status Declared lost"),
+      hasUUIDParameter("itemId", declaredLostItem.getId()))));
   }
 
   @Test

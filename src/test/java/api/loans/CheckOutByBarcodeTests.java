@@ -1,5 +1,6 @@
 package api.loans;
 
+import static api.requests.RequestsAPICreationTests.setupDeclaredLostItem;
 import static api.requests.RequestsAPICreationTests.setupMissingItem;
 import static api.support.APITestContext.END_OF_2019_DUE_DATE;
 import static api.support.builders.ItemBuilder.AVAILABLE;
@@ -478,6 +479,21 @@ public class CheckOutByBarcodeTests extends APITests {
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("Cannot check out item that already has an open loan"),
       hasItemBarcodeParameter(smallAngryPlanet))));
+  }
+
+  @Test
+  public void cannotCheckOutWhenItemDeclaredLost() throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    final IndividualResource declaredLostItem = setupDeclaredLostItem(itemsFixture);
+    final IndividualResource steve = usersFixture.steve();
+    final Response response = loansFixture.attemptCheckOutByBarcode(declaredLostItem, steve);
+
+    assertThat(response.getJson(), hasErrorWith(allOf(
+      hasMessageContaining("has the item status Declared lost"),
+      hasItemBarcodeParameter(declaredLostItem))));
   }
 
   @Test

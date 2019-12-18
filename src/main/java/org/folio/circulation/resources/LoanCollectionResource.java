@@ -27,6 +27,7 @@ import org.folio.circulation.domain.UserRepository;
 import org.folio.circulation.domain.notice.schedule.DueDateScheduledNoticeService;
 import org.folio.circulation.domain.policy.LoanPolicyRepository;
 import org.folio.circulation.domain.validation.AlreadyCheckedOutValidator;
+import org.folio.circulation.domain.validation.ItemDeclaredLostValidator;
 import org.folio.circulation.domain.validation.ItemMissingValidator;
 import org.folio.circulation.domain.validation.ItemNotFoundValidator;
 import org.folio.circulation.domain.validation.ProxyRelationshipValidator;
@@ -83,6 +84,9 @@ public class LoanCollectionResource extends CollectionResource {
     final ItemMissingValidator itemMissingValidator = new ItemMissingValidator(
       message -> singleValidationError(message, "itemId", loan.getItemId()));
 
+    final ItemDeclaredLostValidator itemDeclaredLostValidator = new ItemDeclaredLostValidator(
+      message -> singleValidationError(message, "itemId", loan.getItemId()));
+
     final ItemNotFoundValidator itemNotFoundValidator = createItemNotFoundValidator(loan);
 
     final ServicePointLoanLocationValidator spLoanLocationValidator =
@@ -101,6 +105,7 @@ public class LoanCollectionResource extends CollectionResource {
       .thenApply(this::refuseWhenHoldingDoesNotExist)
       .thenApply(alreadyCheckedOutValidator::refuseWhenItemIsAlreadyCheckedOut)
       .thenApply(itemMissingValidator::refuseWhenItemIsMissing)
+      .thenApply(itemDeclaredLostValidator::refuseWhenItemHasDeclaredLostStatus)
       .thenComposeAsync(r -> r.after(proxyRelationshipValidator::refuseWhenInvalid))
       .thenCombineAsync(requestQueueRepository.get(loan.getItemId()), this::addRequestQueue)
       .thenCombineAsync(userRepository.getUserFailOnNotFound(loan.getUserId()), this::addUser)

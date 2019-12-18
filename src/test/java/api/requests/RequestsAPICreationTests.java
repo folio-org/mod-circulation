@@ -1571,11 +1571,21 @@ public class RequestsAPICreationTests extends APITests {
     TimeoutException,
     MalformedURLException {
 
-    //There is no workflow to get an item into the MISSING status. For now assign the MISSING status to the item directly.
     IndividualResource missingItem = itemsFixture.basedUponSmallAngryPlanet(ItemBuilder::missing);
     assertThat(missingItem.getResponse().getJson().getJsonObject("status").getString("name"), is(ItemStatus.MISSING.getValue()));
 
     return missingItem;
+  }
+
+  public static IndividualResource setupDeclaredLostItem(ItemsFixture itemsFixture)
+    throws InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    MalformedURLException {
+    IndividualResource declaredLostItem = itemsFixture.basedUponSmallAngryPlanet(ItemBuilder::declaredLost);
+    assertThat(declaredLostItem.getResponse().getJson().getJsonObject("status").getString("name"), is(ItemStatus.DECLARED_LOST.getValue()));
+
+    return declaredLostItem;
   }
 
   @Test
