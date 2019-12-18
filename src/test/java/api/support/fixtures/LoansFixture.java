@@ -4,6 +4,7 @@ import static api.support.RestAssuredClient.from;
 import static api.support.RestAssuredClient.get;
 import static api.support.RestAssuredClient.post;
 import static api.support.http.AdditionalHttpStatusCodes.UNPROCESSABLE_ENTITY;
+import static api.support.http.CqlQuery.noQuery;
 import static api.support.http.InterfaceUrls.checkInByBarcodeUrl;
 import static api.support.http.InterfaceUrls.checkOutByBarcodeUrl;
 import static api.support.http.InterfaceUrls.declareLoanItemLostURL;
@@ -36,6 +37,7 @@ import api.support.builders.OverrideCheckOutByBarcodeRequestBuilder;
 import api.support.builders.OverrideRenewalByBarcodeRequestBuilder;
 import api.support.builders.RenewByBarcodeRequestBuilder;
 import api.support.builders.RenewByIdRequestBuilder;
+import api.support.http.CqlQuery;
 import api.support.http.Limit;
 import api.support.http.Offset;
 import io.vertx.core.json.JsonObject;
@@ -368,26 +370,26 @@ public class LoansFixture {
   }
 
   public Response getLoans() {
-    return getLoans(null, null, null);
+    return getLoans(noQuery());
   }
 
   public Response getLoans(Limit limit) {
-    return getLoans(null, limit, null);
+    return getLoans(noQuery(), limit, null);
   }
 
   public Response getLoans(Limit limit, Offset offset) {
-    return getLoans(null, limit, offset);
+    return getLoans(noQuery(), limit, offset);
   }
 
-  public Response getLoans(String query) {
+  public Response getLoans(CqlQuery query) {
     return getLoans(query, null, null);
   }
 
-  public Response getLoans(String query, Limit limit, Offset offset) {
+  public Response getLoans(CqlQuery query, Limit limit, Offset offset) {
     final HashMap<String, String> queryStringParameters = new HashMap<>();
 
-    if (StringUtils.isNotBlank(query)) {
-      queryStringParameters.put("query", query);
+    if (StringUtils.isNotBlank(query.getQuery())) {
+      queryStringParameters.put("query", query.getQuery());
     }
 
     if (limit != null) {
@@ -398,13 +400,11 @@ public class LoansFixture {
       queryStringParameters.put("offset", Integer.toString(offset.getOffset()));
     }
 
-    return from(get(loansUrl(),
-      queryStringParameters, 200, "get-loans"));
+    return from(get(loansUrl(), queryStringParameters, 200, "get-loans"));
   }
 
   public MultipleJsonRecords getAllLoans() {
     return new MultipleJsonRecords(
       JsonArrayHelper.mapToList(getLoans(Limit.maximumLimit()).getJson(), "loans"));
   }
-
 }

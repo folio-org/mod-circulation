@@ -2,6 +2,7 @@ package api.loans;
 
 import static api.requests.RequestsAPICreationTests.setupMissingItem;
 import static api.support.http.AdditionalHttpStatusCodes.UNPROCESSABLE_ENTITY;
+import static api.support.http.CqlQuery.query;
 import static api.support.http.InterfaceUrls.loansUrl;
 import static api.support.http.Limit.limit;
 import static api.support.http.Offset.offset;
@@ -54,6 +55,7 @@ import api.support.builders.AccountBuilder;
 import api.support.builders.ItemBuilder;
 import api.support.builders.LoanBuilder;
 import api.support.fixtures.ConfigurationExample;
+import api.support.http.CqlQuery;
 import api.support.http.InterfaceUrls;
 import api.support.http.InventoryItemResource;
 import io.vertx.core.json.JsonArray;
@@ -1441,8 +1443,11 @@ public class LoanAPITests extends APITests {
 
     String queryTemplate = "userId=%s";
 
-    Response firstPageResponse = loansFixture.getLoans(String.format(queryTemplate, firstUserId));
-    Response secondPageResponse = loansFixture.getLoans(String.format(queryTemplate, secondUserId));
+    Response firstPageResponse = loansFixture.getLoans(
+      query(String.format(queryTemplate, firstUserId)));
+
+    Response secondPageResponse = loansFixture.getLoans(
+      query(String.format(queryTemplate, secondUserId)));
 
     assertThat(String.format("Failed to get loans for first user: %s",
       firstPageResponse.getBody()),
@@ -1475,7 +1480,8 @@ public class LoanAPITests extends APITests {
   public void canFindNoResultsFromSearch() {
     UUID firstUserId = UUID.randomUUID();
 
-    Response firstPageResponse = loansFixture.getLoans(String.format("userId=%s", firstUserId));
+    Response firstPageResponse = loansFixture.getLoans(
+      query(String.format("userId=%s", firstUserId)));
 
     assertThat(String.format("Failed to get loans for first user: %s",
       firstPageResponse.getBody()),
@@ -1538,8 +1544,11 @@ public class LoanAPITests extends APITests {
 
     String queryTemplate = "userId=\"%s\" and status.name=\"%s\"";
 
-    Response openLoansResponse = loansFixture.getLoans(String.format(queryTemplate, userId, "Open"));
-    Response closedLoansResponse = loansFixture.getLoans(String.format(queryTemplate, userId, "Closed"));
+    Response openLoansResponse = loansFixture.getLoans(
+      query(String.format(queryTemplate, userId, "Open")));
+
+    Response closedLoansResponse = loansFixture.getLoans(
+      query(String.format(queryTemplate, userId, "Closed")));
 
     assertThat(String.format("Failed to get open loans: %s",
       openLoansResponse.getBody()),
