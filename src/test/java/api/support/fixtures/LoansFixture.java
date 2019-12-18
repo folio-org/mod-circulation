@@ -12,6 +12,7 @@ import static api.support.http.InterfaceUrls.overrideCheckOutByBarcodeUrl;
 import static api.support.http.InterfaceUrls.overrideRenewalByBarcodeUrl;
 import static api.support.http.InterfaceUrls.renewByBarcodeUrl;
 import static api.support.http.InterfaceUrls.renewByIdUrl;
+import static api.support.http.Limit.limit;
 import static java.lang.Integer.MAX_VALUE;
 
 import java.net.MalformedURLException;
@@ -37,6 +38,8 @@ import api.support.builders.OverrideCheckOutByBarcodeRequestBuilder;
 import api.support.builders.OverrideRenewalByBarcodeRequestBuilder;
 import api.support.builders.RenewByBarcodeRequestBuilder;
 import api.support.builders.RenewByIdRequestBuilder;
+import api.support.http.Limit;
+import api.support.http.Offset;
 import io.vertx.core.json.JsonObject;
 
 public class LoansFixture {
@@ -370,11 +373,11 @@ public class LoansFixture {
     return getLoans(null, null, null);
   }
 
-  public Response getLoans(final Integer limit) {
+  public Response getLoans(Limit limit) {
     return getLoans(null, limit, null);
   }
 
-  public Response getLoans(Integer limit, Integer offset) {
+  public Response getLoans(Limit limit, Offset offset) {
     return getLoans(null, limit, offset);
   }
 
@@ -382,7 +385,7 @@ public class LoansFixture {
     return getLoans(query, null, null);
   }
 
-  public Response getLoans(String query, Integer limit, Integer offset) {
+  public Response getLoans(String query, Limit limit, Offset offset) {
     final HashMap<String, String> queryStringParameters = new HashMap<>();
 
     if (StringUtils.isNotBlank(query)) {
@@ -390,11 +393,11 @@ public class LoansFixture {
     }
 
     if (limit != null) {
-      queryStringParameters.put("limit", limit.toString());
+      queryStringParameters.put("limit", Integer.toString(limit.getLimit()));
     }
 
     if (offset != null) {
-      queryStringParameters.put("offset", offset.toString());
+      queryStringParameters.put("offset", Integer.toString(offset.getOffset()));
     }
 
     return from(get(loansUrl(),
@@ -403,6 +406,6 @@ public class LoansFixture {
 
   public MultipleJsonRecords getAllLoans() {
     return new MultipleJsonRecords(
-      JsonArrayHelper.mapToList(getLoans(MAX_VALUE).getJson(), "loans"));
+      JsonArrayHelper.mapToList(getLoans(limit(MAX_VALUE)).getJson(), "loans"));
   }
 }

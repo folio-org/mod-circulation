@@ -3,6 +3,8 @@ package api.loans;
 import static api.requests.RequestsAPICreationTests.setupMissingItem;
 import static api.support.http.AdditionalHttpStatusCodes.UNPROCESSABLE_ENTITY;
 import static api.support.http.InterfaceUrls.loansUrl;
+import static api.support.http.Limit.limit;
+import static api.support.http.Offset.offset;
 import static api.support.matchers.ResponseStatusCodeMatcher.hasStatus;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static api.support.matchers.UUIDMatcher.is;
@@ -13,7 +15,6 @@ import static api.support.matchers.ValidationErrorMatchers.hasNullParameter;
 import static api.support.matchers.ValidationErrorMatchers.hasUUIDParameter;
 import static org.folio.HttpStatus.HTTP_VALIDATION_ERROR;
 import static org.folio.circulation.domain.representations.ItemProperties.CALL_NUMBER_COMPONENTS;
-import static org.folio.circulation.support.JsonArrayHelper.mapToList;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.equalTo;
@@ -1368,10 +1369,8 @@ public class LoanAPITests extends APITests {
     loansFixture.checkOutByBarcode(itemsFixture.basedUponUprooted(),user);
     loansFixture.checkOutByBarcode(itemsFixture.basedUponInterestingTimes(),user);
 
-    CompletableFuture<Response> secondPageCompleted = new CompletableFuture<>();
-
-    Response firstPageResponse = loansFixture.getLoans(3);
-    Response secondPageResponse = loansFixture.getLoans(3, 3);
+    Response firstPageResponse = loansFixture.getLoans(limit(3));
+    Response secondPageResponse = loansFixture.getLoans(limit(3), offset(3));
 
     assertThat(String.format("Failed to get first page of loans: %s",
       firstPageResponse.getBody()),
