@@ -13,14 +13,16 @@ import static api.support.http.InterfaceUrls.overrideCheckOutByBarcodeUrl;
 import static api.support.http.InterfaceUrls.overrideRenewalByBarcodeUrl;
 import static api.support.http.InterfaceUrls.renewByBarcodeUrl;
 import static api.support.http.InterfaceUrls.renewByIdUrl;
+import static api.support.http.Limit.noLimit;
+import static api.support.http.Offset.noOffset;
 
 import java.net.MalformedURLException;
 import java.util.HashMap;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
+import java.util.stream.Stream;
 
-import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.support.JsonArrayHelper;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
@@ -374,7 +376,7 @@ public class LoansFixture {
   }
 
   public Response getLoans(Limit limit) {
-    return getLoans(noQuery(), limit, null);
+    return getLoans(noQuery(), limit, noOffset());
   }
 
   public Response getLoans(Limit limit, Offset offset) {
@@ -382,23 +384,14 @@ public class LoansFixture {
   }
 
   public Response getLoans(CqlQuery query) {
-    return getLoans(query, null, null);
+    return getLoans(query, noLimit(), noOffset());
   }
 
-  public Response getLoans(CqlQuery query, Limit limit, Offset offset) {
+  public static Response getLoans(CqlQuery query, Limit limit, Offset offset) {
     final HashMap<String, String> queryStringParameters = new HashMap<>();
 
-    if (StringUtils.isNotBlank(query.getQuery())) {
-      queryStringParameters.put("query", query.getQuery());
-    }
-
-    if (limit != null) {
-      queryStringParameters.put("limit", Integer.toString(limit.getLimit()));
-    }
-
-    if (offset != null) {
-      queryStringParameters.put("offset", Integer.toString(offset.getOffset()));
-    }
+    Stream.of(query, limit, offset)
+      .forEach(parameter -> parameter.collectInto(queryStringParameters));
 
     return from(get(loansUrl(), queryStringParameters, 200, "get-loans"));
   }

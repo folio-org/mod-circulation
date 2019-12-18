@@ -3,6 +3,7 @@ package api.loans;
 import static api.requests.RequestsAPICreationTests.setupMissingItem;
 import static api.support.http.AdditionalHttpStatusCodes.UNPROCESSABLE_ENTITY;
 import static api.support.http.CqlQuery.query;
+import static api.support.http.CqlQuery.queryFromTemplate;
 import static api.support.http.InterfaceUrls.loansUrl;
 import static api.support.http.Limit.limit;
 import static api.support.http.Offset.offset;
@@ -55,7 +56,6 @@ import api.support.builders.AccountBuilder;
 import api.support.builders.ItemBuilder;
 import api.support.builders.LoanBuilder;
 import api.support.fixtures.ConfigurationExample;
-import api.support.http.CqlQuery;
 import api.support.http.InterfaceUrls;
 import api.support.http.InventoryItemResource;
 import io.vertx.core.json.JsonArray;
@@ -1444,10 +1444,10 @@ public class LoanAPITests extends APITests {
     String queryTemplate = "userId=%s";
 
     Response firstPageResponse = loansFixture.getLoans(
-      CqlQuery.queryFromTemplate(queryTemplate, firstUserId));
+      queryFromTemplate(queryTemplate, firstUserId));
 
     Response secondPageResponse = loansFixture.getLoans(
-      CqlQuery.queryFromTemplate(queryTemplate, secondUserId));
+      queryFromTemplate(queryTemplate, secondUserId));
 
     assertThat(String.format("Failed to get loans for first user: %s",
       firstPageResponse.getBody()),
@@ -1481,7 +1481,7 @@ public class LoanAPITests extends APITests {
     UUID firstUserId = UUID.randomUUID();
 
     Response firstPageResponse = loansFixture.getLoans(
-      CqlQuery.queryFromTemplate("userId=%s", firstUserId));
+      queryFromTemplate("userId=%s", firstUserId));
 
     assertThat(String.format("Failed to get loans for first user: %s",
       firstPageResponse.getBody()),
