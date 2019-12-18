@@ -4,7 +4,6 @@ import static api.support.matchers.FailureMatcher.hasValidationFailure;
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
 import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.number.IsCloseTo.closeTo;
 import static org.junit.Assert.assertThat;
 
 import java.util.HashMap;
@@ -158,7 +157,8 @@ public class RollingLoanPolicyCheckOutDueDateCalculationTests {
   @Test
   public void shouldApplyAlternateScheduleWhenQueuedRequestIsHoldAndRolling() {
     final Period alternateCheckoutLoanPeriod = Period.from(2, "Weeks");
-    final DateTime systemTime = DateTime.now(DateTimeZone.UTC);
+
+    final DateTime systemTime = new DateTime(2019, 6, 14, 11, 23, 43, DateTimeZone.UTC);
 
     LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
       .rolling(Period.months(1))
@@ -194,18 +194,19 @@ public class RollingLoanPolicyCheckOutDueDateCalculationTests {
 
     RequestQueue requestQueue = new RequestQueue(asList(requestOne, requestTwo));
 
-    Result<DateTime> initialDueDateResult = loanPolicy.calculateInitialDueDate(loan, requestQueue);
+    DateTime calculatedDueDate
+      = loanPolicy.calculateInitialDueDate(loan, requestQueue).value();
 
     String key = "alternateCheckoutLoanPeriod";
+
     DateTime expectedDueDate = alternateCheckoutLoanPeriod.addTo(
         systemTime,
         () -> errorForLoanPeriod(format("the \"%s\" is not recognized", key)),
         interval -> errorForLoanPeriod(format("the interval \"%s\" in \"%s\" is not recognized", interval, key)),
         dur -> errorForLoanPeriod(format("the duration \"%s\" in \"%s\" is invalid", dur, key)))
           .value();
-    Long result = initialDueDateResult.value().getMillis();
-    Long expected = expectedDueDate.getMillis();
-    assertThat(result.doubleValue(), closeTo(expected.doubleValue(), 10000));
+
+    assertThat(calculatedDueDate, is(expectedDueDate));
   }
 
   private ValidationError errorForLoanPeriod(String reason) {
