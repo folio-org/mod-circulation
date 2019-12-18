@@ -7,18 +7,14 @@ import org.apache.commons.lang3.StringUtils;
 public class CqlQuery implements QueryStringParameter {
   private final String query;
 
-  public static CqlQuery query(String query) {
-    return new CqlQuery(query);
-  }
-
   public static CqlQuery queryFromTemplate(String queryTemplate,
       Object... parameters) {
 
-    return query(String.format(queryTemplate, parameters));
+    return new CqlQuery(String.format(queryTemplate, parameters));
   }
 
   public static CqlQuery noQuery() {
-    return query(null);
+    return new CqlQuery(null);
   }
 
   private CqlQuery(String query) {

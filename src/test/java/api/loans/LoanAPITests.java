@@ -2,7 +2,6 @@ package api.loans;
 
 import static api.requests.RequestsAPICreationTests.setupMissingItem;
 import static api.support.http.AdditionalHttpStatusCodes.UNPROCESSABLE_ENTITY;
-import static api.support.http.CqlQuery.query;
 import static api.support.http.CqlQuery.queryFromTemplate;
 import static api.support.http.InterfaceUrls.loansUrl;
 import static api.support.http.Limit.limit;
@@ -1545,10 +1544,10 @@ public class LoanAPITests extends APITests {
     String queryTemplate = "userId=\"%s\" and status.name=\"%s\"";
 
     Response openLoansResponse = loansFixture.getLoans(
-      query(String.format(queryTemplate, userId, "Open")));
+      queryFromTemplate(queryTemplate, userId, "Open"));
 
     Response closedLoansResponse = loansFixture.getLoans(
-      query(String.format(queryTemplate, userId, "Closed")));
+      queryFromTemplate(queryTemplate, userId, "Closed"));
 
     assertThat(String.format("Failed to get open loans: %s",
       openLoansResponse.getBody()),
