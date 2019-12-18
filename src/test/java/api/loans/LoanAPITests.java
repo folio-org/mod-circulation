@@ -1444,10 +1444,10 @@ public class LoanAPITests extends APITests {
     String queryTemplate = "userId=%s";
 
     Response firstPageResponse = loansFixture.getLoans(
-      query(String.format(queryTemplate, firstUserId)));
+      CqlQuery.queryFromTemplate(queryTemplate, firstUserId));
 
     Response secondPageResponse = loansFixture.getLoans(
-      query(String.format(queryTemplate, secondUserId)));
+      CqlQuery.queryFromTemplate(queryTemplate, secondUserId));
 
     assertThat(String.format("Failed to get loans for first user: %s",
       firstPageResponse.getBody()),
@@ -1481,7 +1481,7 @@ public class LoanAPITests extends APITests {
     UUID firstUserId = UUID.randomUUID();
 
     Response firstPageResponse = loansFixture.getLoans(
-      query(String.format("userId=%s", firstUserId)));
+      CqlQuery.queryFromTemplate("userId=%s", firstUserId));
 
     assertThat(String.format("Failed to get loans for first user: %s",
       firstPageResponse.getBody()),
