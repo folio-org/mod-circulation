@@ -5,7 +5,7 @@ import static api.support.http.CqlQuery.noQuery;
 import static api.support.http.Limit.limit;
 import static api.support.http.Offset.noOffset;
 import static java.net.HttpURLConnection.HTTP_NO_CONTENT;
-import static org.folio.circulation.support.JsonArrayHelper.toList;
+import static org.folio.circulation.support.JsonArrayHelper.mapToList;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 
@@ -431,27 +431,13 @@ public class ResourceClient {
     });
   }
 
-  //TODO: Replace return value with MultipleJsonRecords
+  //TODO: Replace return valu[e with MultipleJsonRecords
   public List<JsonObject> getAll() throws MalformedURLException {
     final URL location = rootUrl();
 
-    final Response response = restAssuredClient.get(location,
-      noQuery(), limit(1000), noOffset(), 200, "get-all");
-
-    JsonObject json = response.getJson();
-
-    if (json == null) {
-      throw new RuntimeException(String.format(
-        "Response from \"%s\" does not include any JSON", location));
-    }
-
-    if (!json.containsKey(collectionArrayPropertyName)) {
-      throw new RuntimeException(String.format(
-        "Collection array property \"%s\" is not present in: %s",
-        collectionArrayPropertyName, json.encodePrettily()));
-    }
-
-    return toList(json.getJsonArray(collectionArrayPropertyName));
+    return mapToList(restAssuredClient
+      .get(location, noQuery(), limit(1000), noOffset(), 200, "get-all")
+      .getJson(), collectionArrayPropertyName);
   }
 
   private URL recordUrl(Object id) throws MalformedURLException {
