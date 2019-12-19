@@ -484,7 +484,7 @@ public class ResourceClient {
   private URL urlForRecordById(UUID id) throws MalformedURLException {
     return urlMaker.combine(String.format("/%s", id));
   }
-  
+
   @FunctionalInterface
   public interface UrlMaker {
     URL combine(String subPath) throws MalformedURLException;

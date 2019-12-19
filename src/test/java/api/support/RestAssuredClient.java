@@ -8,10 +8,14 @@ import static org.folio.circulation.support.http.OkapiHeader.TENANT;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.Stream;
 
 import org.folio.circulation.support.http.OkapiHeader;
 import org.folio.circulation.support.http.client.Response;
 
+import api.support.http.CqlQuery;
+import api.support.http.Limit;
+import api.support.http.Offset;
 import api.support.http.OkapiHeaders;
 import io.restassured.RestAssured;
 import io.restassured.builder.RequestSpecBuilder;
@@ -36,6 +40,18 @@ public class RestAssuredClient {
       .then()
       .log().all()
       .extract().response());
+  }
+
+  public Response get(URL location, CqlQuery query, Limit limit, Offset offset,
+    int expectedStatusCode, String requestId) {
+
+    final HashMap<String, String> queryStringParameters = new HashMap<>();
+
+    Stream.of(query, limit, offset)
+      .forEach(parameter -> parameter.collectInto(queryStringParameters));
+
+    return get(location,
+      queryStringParameters, expectedStatusCode, requestId);
   }
 
   public Response get(URL url, Map<String, String> queryStringParameters,
