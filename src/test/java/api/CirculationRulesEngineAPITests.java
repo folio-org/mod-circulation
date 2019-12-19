@@ -25,12 +25,10 @@ import org.folio.circulation.rules.PatronGroup;
 import org.folio.circulation.rules.Policy;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
-import org.folio.circulation.support.http.client.ResponseHandler;
 import org.junit.Before;
 import org.junit.Test;
 
 import api.support.APITests;
-import api.support.http.InterfaceUrls;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
