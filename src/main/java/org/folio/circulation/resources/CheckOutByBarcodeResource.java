@@ -13,6 +13,7 @@ import java.util.UUID;
 
 import org.folio.circulation.domain.ConfigurationRepository;
 import org.folio.circulation.domain.Item;
+import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.domain.LoanRepository;
@@ -33,9 +34,8 @@ import org.folio.circulation.domain.representations.LoanProperties;
 import org.folio.circulation.domain.validation.AlreadyCheckedOutValidator;
 import org.folio.circulation.domain.validation.ExistingOpenLoanValidator;
 import org.folio.circulation.domain.validation.InactiveUserValidator;
-import org.folio.circulation.domain.validation.ItemDeclaredLostValidator;
-import org.folio.circulation.domain.validation.ItemMissingValidator;
 import org.folio.circulation.domain.validation.ItemNotFoundValidator;
+import org.folio.circulation.domain.validation.ItemStatusValidator;
 import org.folio.circulation.domain.validation.ProxyRelationshipValidator;
 import org.folio.circulation.domain.validation.RequestedByAnotherPatronValidator;
 import org.folio.circulation.domain.validation.ServicePointOfCheckoutPresentValidator;
@@ -124,10 +124,7 @@ public class CheckOutByBarcodeResource extends Resource {
       () -> singleValidationError(String.format("No item with barcode %s could be found", itemBarcode),
         ITEM_BARCODE, itemBarcode));
 
-    final ItemMissingValidator itemMissingValidator = new ItemMissingValidator(
-      message -> singleValidationError(message, ITEM_BARCODE, itemBarcode));
-
-    final ItemDeclaredLostValidator itemDeclaredLostValidator = new ItemDeclaredLostValidator(
+    final ItemStatusValidator itemStatusValidator = new ItemStatusValidator(
       message -> singleValidationError(message, ITEM_BARCODE, itemBarcode));
 
     final InactiveUserValidator inactiveUserValidator = InactiveUserValidator.forUser(userBarcode);
@@ -153,8 +150,8 @@ public class CheckOutByBarcodeResource extends Resource {
       .thenCombineAsync(itemRepository.fetchByBarcode(itemBarcode), this::addItem)
       .thenApply(itemNotFoundValidator::refuseWhenItemNotFound)
       .thenApply(alreadyCheckedOutValidator::refuseWhenItemIsAlreadyCheckedOut)
-      .thenApply(itemMissingValidator::refuseWhenItemIsMissing)
-      .thenApply(itemDeclaredLostValidator::refuseWhenItemHasDeclaredLostStatus)
+      .thenApply(l -> itemStatusValidator.refuseWhenItemHasInvalidStatus(l, ItemStatus.MISSING))
+      .thenApply(l -> itemStatusValidator.refuseWhenItemHasInvalidStatus(l, ItemStatus.DECLARED_LOST))
       .thenComposeAsync(r -> r.after(proxyRelationshipValidator::refuseWhenInvalid))
       .thenComposeAsync(r -> r.after(openLoanValidator::refuseWhenHasOpenLoan))
       .thenComposeAsync(r -> r.after(requestQueueRepository::get))

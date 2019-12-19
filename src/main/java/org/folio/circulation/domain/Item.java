@@ -110,7 +110,7 @@ public class Item {
     return !isInStatus(prospectiveStatus);
   }
 
-  private boolean isInStatus(ItemStatus status) {
+  public boolean isInStatus(ItemStatus status) {
     return getStatus().equals(status);
   }
 

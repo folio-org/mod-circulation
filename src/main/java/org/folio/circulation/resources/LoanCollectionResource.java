@@ -11,6 +11,7 @@ import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.domain.AccountRepository;
 import org.folio.circulation.domain.Item;
+import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.domain.LoanRepository;
@@ -27,9 +28,8 @@ import org.folio.circulation.domain.UserRepository;
 import org.folio.circulation.domain.notice.schedule.DueDateScheduledNoticeService;
 import org.folio.circulation.domain.policy.LoanPolicyRepository;
 import org.folio.circulation.domain.validation.AlreadyCheckedOutValidator;
-import org.folio.circulation.domain.validation.ItemDeclaredLostValidator;
-import org.folio.circulation.domain.validation.ItemMissingValidator;
 import org.folio.circulation.domain.validation.ItemNotFoundValidator;
+import org.folio.circulation.domain.validation.ItemStatusValidator;
 import org.folio.circulation.domain.validation.ProxyRelationshipValidator;
 import org.folio.circulation.domain.validation.RequestedByAnotherPatronValidator;
 import org.folio.circulation.domain.validation.ServicePointLoanLocationValidator;
@@ -81,10 +81,7 @@ public class LoanCollectionResource extends CollectionResource {
     final AlreadyCheckedOutValidator alreadyCheckedOutValidator = new AlreadyCheckedOutValidator(
       message -> singleValidationError(message, "itemId", loan.getItemId()));
 
-    final ItemMissingValidator itemMissingValidator = new ItemMissingValidator(
-      message -> singleValidationError(message, "itemId", loan.getItemId()));
-
-    final ItemDeclaredLostValidator itemDeclaredLostValidator = new ItemDeclaredLostValidator(
+    final ItemStatusValidator itemStatusValidator = new ItemStatusValidator(
       message -> singleValidationError(message, "itemId", loan.getItemId()));
 
     final ItemNotFoundValidator itemNotFoundValidator = createItemNotFoundValidator(loan);
@@ -104,8 +101,8 @@ public class LoanCollectionResource extends CollectionResource {
       .thenApply(itemNotFoundValidator::refuseWhenItemNotFound)
       .thenApply(this::refuseWhenHoldingDoesNotExist)
       .thenApply(alreadyCheckedOutValidator::refuseWhenItemIsAlreadyCheckedOut)
-      .thenApply(itemMissingValidator::refuseWhenItemIsMissing)
-      .thenApply(itemDeclaredLostValidator::refuseWhenItemHasDeclaredLostStatus)
+      .thenApply(l -> itemStatusValidator.refuseWhenItemHasInvalidStatus(l, ItemStatus.MISSING))
+      .thenApply(l -> itemStatusValidator.refuseWhenItemHasInvalidStatus(l, ItemStatus.DECLARED_LOST))
       .thenComposeAsync(r -> r.after(proxyRelationshipValidator::refuseWhenInvalid))
       .thenCombineAsync(requestQueueRepository.get(loan.getItemId()), this::addRequestQueue)
       .thenCombineAsync(userRepository.getUserFailOnNotFound(loan.getUserId()), this::addUser)
