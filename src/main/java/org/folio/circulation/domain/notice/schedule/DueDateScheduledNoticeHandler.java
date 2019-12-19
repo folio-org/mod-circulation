@@ -30,11 +30,11 @@ import org.slf4j.LoggerFactory;
 public class DueDateScheduledNoticeHandler {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
+  private static final String NOTICE_DELETION_MSG = "Deleting scheduled notice {} as referenced {} {} was not found";
   private static final String USER_REC_TYPE = "user";
   private static final String ITEM_REC_TYPE = "item";
   private static final String LOAN_REC_TYPE = "loan";
-  private static final String[] REQUIRED_REC_TYPES = {USER_REC_TYPE, ITEM_REC_TYPE, LOAN_REC_TYPE};
-  private static final String NOTICE_DELETION_MSG = "Deleting scheduled notice {} as referenced {} {} was not found";
+  static final String[] REQUIRED_REC_TYPES = {USER_REC_TYPE, ITEM_REC_TYPE, LOAN_REC_TYPE};
 
   public static DueDateScheduledNoticeHandler using(Clients clients, DateTime systemTime) {
     return new DueDateScheduledNoticeHandler(
@@ -93,10 +93,10 @@ public class DueDateScheduledNoticeHandler {
       .thenApply(r -> r.mapFailure(this::handleFailure));
   }
 
-  private CompletableFuture<Result<Loan>> deleteNoticeIfLoanIsMissingOrIncomplete(
+  CompletableFuture<Result<Loan>> deleteNoticeIfLoanIsMissingOrIncomplete(
       Result<Loan> result, ScheduledNotice notice) {
 
-    if (result.failed() && isRecordNotFoundFailureForType(result.cause(), LOAN_REC_TYPE)) {
+    if (failedToFindRecordOfType(result, LOAN_REC_TYPE)) {
       return deleteInvalidNoticeAndFail(notice, LOAN_REC_TYPE, notice.getLoanId());
     }
 
@@ -183,6 +183,11 @@ public class DueDateScheduledNoticeHandler {
     return noticeConfig.isRecurring() &&
       noticeConfig.getTiming() == NoticeTiming.BEFORE &&
       notice.getNextRunTime().isAfter(loan.getDueDate());
+  }
+
+  boolean failedToFindRecordOfType(Result result, String... recordTypes) {
+    return result.failed()
+      && isRecordNotFoundFailureForType(result.cause(), recordTypes);
   }
 
   private boolean isRecordNotFoundFailureForType(HttpFailure failure, String... recordTypes) {
