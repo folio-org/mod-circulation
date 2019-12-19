@@ -2,6 +2,7 @@ package api.support.http;
 
 import static api.support.APITestContext.getOkapiHeadersFromContext;
 import static java.net.HttpURLConnection.HTTP_NO_CONTENT;
+import static org.folio.circulation.support.JsonArrayHelper.toList;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 
@@ -16,7 +17,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import org.folio.circulation.support.JsonArrayHelper;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.OkapiHttpClient;
 import org.folio.circulation.support.http.client.Response;
@@ -478,8 +478,7 @@ public class ResourceClient {
         collectionArrayPropertyName, json.encodePrettily()));
     }
 
-    return JsonArrayHelper.toList(json
-      .getJsonArray(collectionArrayPropertyName));
+    return toList(json.getJsonArray(collectionArrayPropertyName));
   }
 
   @FunctionalInterface
