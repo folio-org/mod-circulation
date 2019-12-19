@@ -43,7 +43,7 @@ public class RestAssuredClient {
   }
 
   public Response get(URL location, CqlQuery query, Limit limit, Offset offset,
-    int expectedStatusCode, String requestId) {
+      int expectedStatusCode, String requestId) {
 
     final HashMap<String, String> queryStringParameters = new HashMap<>();
 

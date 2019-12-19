@@ -1,6 +1,9 @@
 package api.support.http;
 
 import static api.support.APITestContext.getOkapiHeadersFromContext;
+import static api.support.http.CqlQuery.noQuery;
+import static api.support.http.Limit.limit;
+import static api.support.http.Offset.noOffset;
 import static java.net.HttpURLConnection.HTTP_NO_CONTENT;
 import static org.folio.circulation.support.JsonArrayHelper.toList;
 import static org.hamcrest.core.Is.is;
@@ -30,8 +33,6 @@ import api.support.builders.Builder;
 import io.vertx.core.json.JsonObject;
 
 public class ResourceClient {
-  private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
-
   private final OkapiHttpClient client;
   private final RestAssuredClient restAssuredClient;
   private final UrlMaker urlMaker;
@@ -418,12 +419,7 @@ public class ResourceClient {
       response.getStatusCode(), is(204));
   }
 
-  public void deleteAllIndividually()
-    throws MalformedURLException,
-    InterruptedException,
-    ExecutionException,
-    TimeoutException {
-
+  public void deleteAllIndividually() throws MalformedURLException {
     List<JsonObject> records = getAll();
 
     records.stream().forEach(record -> {
@@ -448,28 +444,18 @@ public class ResourceClient {
     });
   }
 
-  public List<JsonObject> getAll()
-    throws MalformedURLException,
-    InterruptedException,
-    ExecutionException,
-    TimeoutException {
+  //TODO: Replace return value with MultipleJsonRecords
+  public List<JsonObject> getAll() throws MalformedURLException {
+    final URL location = urlMaker.combine("");
 
-    CompletableFuture<Response> getFinished = new CompletableFuture<>();
-
-    final URL url = urlMaker.combine("?limit=1000");
-
-    client.get(url, ResponseHandler.any(getFinished));
-
-    Response response = getFinished.get(5, TimeUnit.SECONDS);
-
-    assertThat(String.format("Get all records failed: %s", response.getBody()),
-      response.getStatusCode(), is(200));
+    final Response response = restAssuredClient.get(location,
+      noQuery(), limit(1000), noOffset(), 200, "get-all");
 
     JsonObject json = response.getJson();
 
     if (json == null) {
       throw new RuntimeException(String.format(
-        "Response from \"%s\" does not include any JSON", url));
+        "Response from \"%s\" does not include any JSON", location));
     }
 
     if (!json.containsKey(collectionArrayPropertyName)) {
