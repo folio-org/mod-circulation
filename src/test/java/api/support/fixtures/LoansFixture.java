@@ -1,67 +1,68 @@
 package api.support.fixtures;
 
 import static api.support.RestAssuredClient.from;
+import static api.support.RestAssuredClient.get;
 import static api.support.RestAssuredClient.post;
 import static api.support.http.AdditionalHttpStatusCodes.UNPROCESSABLE_ENTITY;
+import static api.support.http.CqlQuery.noQuery;
 import static api.support.http.InterfaceUrls.checkInByBarcodeUrl;
 import static api.support.http.InterfaceUrls.checkOutByBarcodeUrl;
 import static api.support.http.InterfaceUrls.declareLoanItemLostURL;
+import static api.support.http.InterfaceUrls.loansUrl;
 import static api.support.http.InterfaceUrls.overrideCheckOutByBarcodeUrl;
 import static api.support.http.InterfaceUrls.overrideRenewalByBarcodeUrl;
 import static api.support.http.InterfaceUrls.renewByBarcodeUrl;
 import static api.support.http.InterfaceUrls.renewByIdUrl;
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.junit.MatcherAssert.assertThat;
+import static api.support.http.Limit.noLimit;
+import static api.support.http.Offset.noOffset;
 
 import java.net.MalformedURLException;
+import java.util.HashMap;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
+import java.util.stream.Stream;
 
-import api.support.builders.DeclareItemLostRequestBuilder;
-import org.folio.HttpStatus;
+import org.folio.circulation.support.JsonArrayHelper;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 
 import api.support.CheckInByBarcodeResponse;
+import api.support.MultipleJsonRecords;
 import api.support.builders.CheckInByBarcodeRequestBuilder;
 import api.support.builders.CheckOutByBarcodeRequestBuilder;
+import api.support.builders.DeclareItemLostRequestBuilder;
 import api.support.builders.LoanBuilder;
 import api.support.builders.OverrideCheckOutByBarcodeRequestBuilder;
 import api.support.builders.OverrideRenewalByBarcodeRequestBuilder;
 import api.support.builders.RenewByBarcodeRequestBuilder;
 import api.support.builders.RenewByIdRequestBuilder;
-import api.support.http.ResourceClient;
+import api.support.http.CqlQuery;
+import api.support.http.Limit;
+import api.support.http.Offset;
 import io.vertx.core.json.JsonObject;
 
 public class LoansFixture {
-  private final ResourceClient loansClient;
   private final UsersFixture usersFixture;
   private final ServicePointsFixture servicePointsFixture;
 
   public LoansFixture(
-    ResourceClient loansClient,
     UsersFixture usersFixture,
     ServicePointsFixture servicePointsFixture) {
 
-    this.loansClient = loansClient;
     this.usersFixture = usersFixture;
     this.servicePointsFixture = servicePointsFixture;
   }
 
   public IndividualResource createLoan(
     IndividualResource item,
-    IndividualResource to)
-    throws MalformedURLException,
-    InterruptedException,
-    ExecutionException,
-    TimeoutException {
+    IndividualResource to) {
 
     DateTime loanDate = DateTime.now();
 
-    return loansClient.create(new LoanBuilder()
+    return createLoan(new LoanBuilder()
       .open()
       .withItemId(item.getId())
       .withUserId(to.getId())
@@ -72,13 +73,9 @@ public class LoansFixture {
   public IndividualResource createLoan(
     IndividualResource item,
     IndividualResource to,
-    DateTime loanDate)
-    throws MalformedURLException,
-    InterruptedException,
-    ExecutionException,
-    TimeoutException {
+    DateTime loanDate) {
 
-    return loansClient.create(new LoanBuilder()
+    return createLoan(new LoanBuilder()
       .open()
       .withItemId(item.getId())
       .withUserId(to.getId())
@@ -86,28 +83,34 @@ public class LoansFixture {
       .withDueDate(loanDate.plusWeeks(3)));
   }
 
-  public Response attemptToCreateLoan(
-    IndividualResource item,
-    IndividualResource to)
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException,
-    MalformedURLException {
-
-    final Response response = loansClient.attemptCreate(new LoanBuilder()
-      .open()
-      .withItemId(item.getId())
-      .withUserId(to.getId()));
-
-    assertThat(
-      String.format("Should not be able to create loan: %s", response.getBody()),
-      response.getStatusCode(), is(UNPROCESSABLE_ENTITY));
-
-    return response;
+  public IndividualResource createLoan(LoanBuilder builder) {
+    return new IndividualResource(attemptToCreateLoan(builder, 201));
   }
 
-  public Response declareItemLost(
-    DeclareItemLostRequestBuilder builder) {
+  public Response attemptToCreateLoan(
+    IndividualResource item, IndividualResource to) {
+
+    return attemptToCreateLoan(item, to, UNPROCESSABLE_ENTITY);
+  }
+
+  public Response attemptToCreateLoan(
+    IndividualResource item, IndividualResource to, int expectedStatusCode) {
+
+    return attemptToCreateLoan(new LoanBuilder()
+      .open()
+      .withItemId(item.getId())
+      .withUserId(to.getId()), expectedStatusCode);
+  }
+
+  public Response attemptToCreateLoan(
+    LoanBuilder loanBuilder, int expectedStatusCode) {
+
+    return from(post(loanBuilder.create(), loansUrl(),
+      expectedStatusCode, "post-loan"));
+  }
+
+  public Response declareItemLost(DeclareItemLostRequestBuilder builder) {
+
     JsonObject request = builder.create();
 
     return from(
@@ -178,16 +181,6 @@ public class LoansFixture {
     CheckOutByBarcodeRequestBuilder builder) {
 
     return attemptCheckOutByBarcode(422, builder);
-  }
-
-  public Response attemptCheckOutByBarcode(
-    HttpStatus expectedStatusCode,
-    CheckOutByBarcodeRequestBuilder builder) {
-
-    JsonObject request = builder.create();
-
-    return from(post(request, checkOutByBarcodeUrl(),
-      expectedStatusCode.toInt(), "check-out-by-barcode-request"));
   }
 
   public Response attemptCheckOutByBarcode(
@@ -371,5 +364,40 @@ public class LoansFixture {
 
     return from(post(request, overrideCheckOutByBarcodeUrl(),
       expectedStatusCode, "override-check-out-by-barcode-request"));
+  }
+
+  public IndividualResource getLoanById(UUID id) {
+    return new IndividualResource(from(get(
+      loansUrl(String.format("/%s", id)), 200, "get-loan-by-id")));
+  }
+
+  public Response getLoans() {
+    return getLoans(noQuery());
+  }
+
+  public Response getLoans(Limit limit) {
+    return getLoans(noQuery(), limit, noOffset());
+  }
+
+  public Response getLoans(Limit limit, Offset offset) {
+    return getLoans(noQuery(), limit, offset);
+  }
+
+  public Response getLoans(CqlQuery query) {
+    return getLoans(query, noLimit(), noOffset());
+  }
+
+  public static Response getLoans(CqlQuery query, Limit limit, Offset offset) {
+    final HashMap<String, String> queryStringParameters = new HashMap<>();
+
+    Stream.of(query, limit, offset)
+      .forEach(parameter -> parameter.collectInto(queryStringParameters));
+
+    return from(get(loansUrl(), queryStringParameters, 200, "get-loans"));
+  }
+
+  public MultipleJsonRecords getAllLoans() {
+    return new MultipleJsonRecords(
+      JsonArrayHelper.mapToList(getLoans(Limit.maximumLimit()).getJson(), "loans"));
   }
 }
