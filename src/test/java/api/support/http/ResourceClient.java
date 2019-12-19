@@ -9,7 +9,6 @@ import static org.folio.circulation.support.JsonArrayHelper.toList;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 
-import java.lang.invoke.MethodHandles;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -25,8 +24,6 @@ import org.folio.circulation.support.http.client.OkapiHttpClient;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.client.ResponseHandler;
 import org.hamcrest.CoreMatchers;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import api.support.RestAssuredClient;
 import api.support.builders.Builder;
@@ -278,8 +275,8 @@ public class ResourceClient {
   public Response attemptCreate(JsonObject representation)
       throws MalformedURLException {
 
-    return restAssuredClient.post(representation, urlMaker.combine(""),
-      "attempt-create-record");
+    return restAssuredClient.post(representation, rootUrl(),
+        "attempt-create-record");
   }
 
   public IndividualResource create(Builder builder) throws MalformedURLException {
@@ -290,16 +287,14 @@ public class ResourceClient {
       throws MalformedURLException {
 
     return  new IndividualResource(restAssuredClient.post(representation,
-      urlMaker.combine(""), 201, "create-record"));
+      rootUrl(), 201, "create-record"));
   }
 
   public Response attemptCreateAtSpecificLocation(Builder builder)
       throws MalformedURLException {
 
-    JsonObject representation = builder.create();
-    String id = representation.getString("id");
-
-    final URL location = urlMaker.combine(String.format("/%s", id));
+    final JsonObject representation = builder.create();
+    final URL location = recordUrl(representation.getString("id"));
 
     return restAssuredClient.put(representation, location,
       "attempt-create-record-at-specific-location");
@@ -308,15 +303,13 @@ public class ResourceClient {
   public IndividualResource createAtSpecificLocation(Builder builder)
       throws MalformedURLException {
 
-    JsonObject representation = builder.create();
-    String id = representation.getString("id");
-
-    final URL location = urlMaker.combine(String.format("/%s", id));
+    final JsonObject representation = builder.create();
+    final URL location = recordUrl(representation.getString("id"));
 
     restAssuredClient.put(representation, location, HTTP_NO_CONTENT,
       "create-record-at-specific-location");
 
-    return get(UUID.fromString(id));
+    return get(location);
   }
 
   public Response attemptReplace(UUID id, Builder builder)
@@ -328,9 +321,7 @@ public class ResourceClient {
   public Response attemptReplace(UUID id, JsonObject representation)
       throws MalformedURLException {
 
-    final URL location = urlForRecordById(id);
-
-    return restAssuredClient.put(representation, location,
+    return restAssuredClient.put(representation, recordUrl(id),
       "attempt-replace-record");
   }
 
@@ -341,18 +332,12 @@ public class ResourceClient {
   public void replace(UUID id, JsonObject representation)
       throws MalformedURLException {
 
-    final URL location = urlForRecordById(id);
-
-    restAssuredClient.put(representation, location, HTTP_NO_CONTENT,
+    restAssuredClient.put(representation, recordUrl(id), HTTP_NO_CONTENT,
       "create-record-at-specific-location");
   }
 
-  public Response getById(UUID id)
-      throws MalformedURLException {
-
-    final URL location = urlForRecordById(id);
-
-    return restAssuredClient.get(location, "get-record");
+  public Response getById(UUID id) throws MalformedURLException {
+    return restAssuredClient.get(recordUrl(id), "get-record");
   }
 
   public IndividualResource get(IndividualResource record)
@@ -362,8 +347,11 @@ public class ResourceClient {
   }
 
   public IndividualResource get(UUID id) throws MalformedURLException {
-    return new IndividualResource(restAssuredClient.get(
-      urlForRecordById(id), 200, "get-record"));
+    return get(recordUrl(id));
+  }
+
+  public IndividualResource get(URL url) {
+    return new IndividualResource(restAssuredClient.get(url, 200, "get-record"));
   }
 
   public Response attemptGet(IndividualResource resource)
@@ -380,7 +368,7 @@ public class ResourceClient {
 
     CompletableFuture<Response> deleteFinished = new CompletableFuture<>();
 
-    client.delete(urlForRecordById(id),
+    client.delete(recordUrl(id),
       ResponseHandler.any(deleteFinished));
 
     Response response = deleteFinished.get(5, TimeUnit.SECONDS);
@@ -409,7 +397,7 @@ public class ResourceClient {
 
     CompletableFuture<Response> deleteAllFinished = new CompletableFuture<>();
 
-    client.delete(urlMaker.combine(""),
+    client.delete(rootUrl(),
       ResponseHandler.any(deleteAllFinished));
 
     Response response = deleteAllFinished.get(5, TimeUnit.SECONDS);
@@ -426,8 +414,7 @@ public class ResourceClient {
       try {
         CompletableFuture<Response> deleteFinished = new CompletableFuture<>();
 
-        client.delete(urlMaker.combine(String.format("/%s",
-          record.getString("id"))),
+        client.delete(recordUrl(record.getString("id")),
           ResponseHandler.any(deleteFinished));
 
         Response deleteResponse = deleteFinished.get(5, TimeUnit.SECONDS);
@@ -446,7 +433,7 @@ public class ResourceClient {
 
   //TODO: Replace return value with MultipleJsonRecords
   public List<JsonObject> getAll() throws MalformedURLException {
-    final URL location = urlMaker.combine("");
+    final URL location = rootUrl();
 
     final Response response = restAssuredClient.get(location,
       noQuery(), limit(1000), noOffset(), 200, "get-all");
@@ -467,8 +454,12 @@ public class ResourceClient {
     return toList(json.getJsonArray(collectionArrayPropertyName));
   }
 
-  private URL urlForRecordById(UUID id) throws MalformedURLException {
+  private URL recordUrl(Object id) throws MalformedURLException {
     return urlMaker.combine(String.format("/%s", id));
+  }
+
+  private URL rootUrl() throws MalformedURLException {
+    return urlMaker.combine("");
   }
 
   @FunctionalInterface
