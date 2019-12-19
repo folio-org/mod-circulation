@@ -327,7 +327,7 @@ public class ResourceClient {
   public Response attemptReplace(UUID id, JsonObject representation)
       throws MalformedURLException {
 
-    final URL location = urlMaker.combine(String.format("/%s", id));
+    final URL location = urlForRecordById(id);
 
     return restAssuredClient.put(representation, location,
       "attempt-replace-record");
@@ -340,7 +340,7 @@ public class ResourceClient {
   public void replace(UUID id, JsonObject representation)
       throws MalformedURLException {
 
-    final URL location = urlMaker.combine(String.format("/%s", id));
+    final URL location = urlForRecordById(id);
 
     restAssuredClient.put(representation, location, HTTP_NO_CONTENT,
       "create-record-at-specific-location");
@@ -349,7 +349,7 @@ public class ResourceClient {
   public Response getById(UUID id)
       throws MalformedURLException {
 
-    final URL location = urlMaker.combine(String.format("/%s", id));
+    final URL location = urlForRecordById(id);
 
     return restAssuredClient.get(location, "get-record");
   }
@@ -362,7 +362,7 @@ public class ResourceClient {
 
   public IndividualResource get(UUID id) throws MalformedURLException {
     return new IndividualResource(restAssuredClient.get(
-      urlMaker.combine(String.format("/%s", id)), 200, "get-record"));
+      urlForRecordById(id), 200, "get-record"));
   }
 
   public Response attemptGet(IndividualResource resource)
@@ -379,7 +379,7 @@ public class ResourceClient {
 
     CompletableFuture<Response> deleteFinished = new CompletableFuture<>();
 
-    client.delete(urlMaker.combine(String.format("/%s", id)),
+    client.delete(urlForRecordById(id),
       ResponseHandler.any(deleteFinished));
 
     Response response = deleteFinished.get(5, TimeUnit.SECONDS);
@@ -481,6 +481,10 @@ public class ResourceClient {
     return toList(json.getJsonArray(collectionArrayPropertyName));
   }
 
+  private URL urlForRecordById(UUID id) throws MalformedURLException {
+    return urlMaker.combine(String.format("/%s", id));
+  }
+  
   @FunctionalInterface
   public interface UrlMaker {
     URL combine(String subPath) throws MalformedURLException;
