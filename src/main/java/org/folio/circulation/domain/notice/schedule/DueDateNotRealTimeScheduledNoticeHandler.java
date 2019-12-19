@@ -1,6 +1,8 @@
 package org.folio.circulation.domain.notice.schedule;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
+import static org.folio.circulation.domain.notice.schedule.DueDateScheduledNoticeHandler.REQUIRED_REC_TYPES;
+import static org.folio.circulation.support.AsyncCoordinationUtil.allResultsOf;
 import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.ResultBinding.mapResult;
 
@@ -62,20 +64,23 @@ public class DueDateNotRealTimeScheduledNoticeHandler {
   }
 
   private CompletableFuture<Result<Void>> handleNoticeGroup(List<ScheduledNotice> noticeGroup) {
-
-    List<CompletableFuture<Result<Pair<ScheduledNotice, LoanAndRelatedRecords>>>> contextFutures =
-      noticeGroup.stream().map(this::getContext).collect(Collectors.toList());
-
-    return CompletableFuture.allOf(contextFutures.toArray(new CompletableFuture[0]))
-      .thenApply(v -> contextFutures.stream().map(CompletableFuture::join).collect(Collectors.toList()))
-      .thenApply(Result::combineAll)
+  return allResultsOf(noticeGroup, this::getContext)
+      .thenCompose(this::handleFailures)
       .thenCompose(r -> r.after(this::sendGroupedNotice))
       .thenCompose(r -> r.after(this::updateGroupedNotice))
       .thenApply(mapResult(p -> null));
   }
 
+  private CompletableFuture<Result<List<Pair<ScheduledNotice, LoanAndRelatedRecords>>>> handleFailures(
+    List<Result<Pair<ScheduledNotice, LoanAndRelatedRecords>>> results) {
+    results.removeIf(r -> dueDateScheduledNoticeHandler.failedToFindRecordOfType(r, REQUIRED_REC_TYPES));
+    return CompletableFuture.completedFuture(results)
+      .thenApply(Result::combineAll);
+  }
+
   private CompletableFuture<Result<Pair<ScheduledNotice, LoanAndRelatedRecords>>> getContext(ScheduledNotice notice) {
     return loanRepository.getById(notice.getLoanId())
+      .thenCompose(r -> dueDateScheduledNoticeHandler.deleteNoticeIfLoanIsMissingOrIncomplete(r, notice))
       .thenApply(mapResult(LoanAndRelatedRecords::new))
       .thenCompose(r -> r.after(loanPolicyRepository::lookupLoanPolicy))
       .thenApply(mapResult(relatedRecords -> Pair.of(notice, relatedRecords)));
