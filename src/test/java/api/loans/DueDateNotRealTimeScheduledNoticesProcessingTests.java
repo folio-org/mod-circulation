@@ -425,7 +425,7 @@ public class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests 
   }
 
   @Test
-  public void missingLoandDoesNotBlockProcessing()
+  public void missingReferencedEntitiesDoNotBlockProcessing()
     throws MalformedURLException,
     InterruptedException,
     TimeoutException,
