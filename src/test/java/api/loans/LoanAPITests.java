@@ -2,9 +2,11 @@ package api.loans;
 
 import static api.requests.RequestsAPICreationTests.setupDeclaredLostItem;
 import static api.requests.RequestsAPICreationTests.setupMissingItem;
-import static api.support.JsonCollectionAssistant.getRecordById;
 import static api.support.http.AdditionalHttpStatusCodes.UNPROCESSABLE_ENTITY;
+import static api.support.http.CqlQuery.queryFromTemplate;
 import static api.support.http.InterfaceUrls.loansUrl;
+import static api.support.http.Limit.limit;
+import static api.support.http.Offset.offset;
 import static api.support.matchers.ResponseStatusCodeMatcher.hasStatus;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static api.support.matchers.UUIDMatcher.is;
@@ -16,26 +18,26 @@ import static api.support.matchers.ValidationErrorMatchers.hasUUIDParameter;
 import static org.folio.HttpStatus.HTTP_VALIDATION_ERROR;
 import static org.folio.circulation.domain.representations.ItemProperties.CALL_NUMBER_COMPONENTS;
 import static org.hamcrest.CoreMatchers.allOf;
+import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.greaterThan;
-import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
-import java.net.URLEncoder;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.stream.Collectors;
 
 import org.folio.circulation.domain.representations.LoanProperties;
 import org.folio.circulation.support.JsonArrayHelper;
@@ -49,6 +51,7 @@ import org.joda.time.format.ISODateTimeFormat;
 import org.junit.Test;
 
 import api.support.APITests;
+import api.support.MultipleJsonRecords;
 import api.support.builders.AccountBuilder;
 import api.support.builders.ItemBuilder;
 import api.support.builders.LoanBuilder;
@@ -76,7 +79,7 @@ public class LoanAPITests extends APITests {
     DateTime loanDate = new DateTime(2017, 2, 27, 10, 23, 43, DateTimeZone.UTC);
     DateTime dueDate = new DateTime(2017, 3, 29, 10, 23, 43, DateTimeZone.UTC);
 
-    IndividualResource response = loansClient.create(new LoanBuilder()
+    IndividualResource response = loansFixture.createLoan(new LoanBuilder()
       .withId(id)
       .open()
       .withUserId(userId)
@@ -191,7 +194,7 @@ public class LoanAPITests extends APITests {
     DateTime loanDate = new DateTime(2017, 2, 27, 10, 23, 43, DateTimeZone.UTC);
     DateTime dueDate = new DateTime(2017, 3, 29, 10, 23, 43, DateTimeZone.UTC);
 
-    IndividualResource response = loansClient.create(new LoanBuilder()
+    IndividualResource response = loansFixture.createLoan(new LoanBuilder()
       .withId(id)
       .open()
       .withUserId(userId)
@@ -206,11 +209,10 @@ public class LoanAPITests extends APITests {
       .withRemainingFeeFine(150)
     );
 
-    JsonObject loan = loansClient.get(id).getJson();
+    JsonObject loan = loansFixture.getLoanById(id).getJson();
 
     loanHasFeeFinesProperties(loan, 0);
   }
-
 
   @Test
   public void canGetMultipleFeesFinesForSingleLoan()
@@ -229,7 +231,7 @@ public class LoanAPITests extends APITests {
     DateTime loanDate = new DateTime(2017, 2, 27, 10, 23, 43, DateTimeZone.UTC);
     DateTime dueDate = new DateTime(2017, 3, 29, 10, 23, 43, DateTimeZone.UTC);
 
-    IndividualResource response = loansClient.create(new LoanBuilder()
+    IndividualResource response = loansFixture.createLoan(new LoanBuilder()
       .withId(id)
       .open()
       .withUserId(userId)
@@ -243,7 +245,7 @@ public class LoanAPITests extends APITests {
       .withRemainingFeeFine(150)
     );
 
-    JsonObject loan = loansClient.get(id).getJson();
+    JsonObject loan = loansFixture.getLoanById(id).getJson();
 
     loanHasFeeFinesProperties(loan, 150d);
 
@@ -253,7 +255,7 @@ public class LoanAPITests extends APITests {
       .withRemainingFeeFine(150)
     );
 
-    loan = loansClient.get(id).getJson();
+    loan = loansFixture.getLoanById(id).getJson();
 
     loanHasFeeFinesProperties(loan, 300d);
   }
@@ -302,14 +304,13 @@ public class LoanAPITests extends APITests {
       .withRemainingFeeFine(1000)
     );
 
-    List<JsonObject> loans = loansClient.getAll();
+    MultipleJsonRecords loans = loansFixture.getAllLoans();
 
-    JsonObject fetchedLoan1 = getRecordById(loans, loan1.getId()).get();
-    JsonObject fetchedLoan2 = getRecordById(loans, loan2.getId()).get();
+    JsonObject fetchedLoan1 = loans.getById(loan1.getId());
+    JsonObject fetchedLoan2 = loans.getById(loan2.getId());
 
     loanHasFeeFinesProperties(fetchedLoan1, 200);
     loanHasFeeFinesProperties(fetchedLoan2, 1099);
-
   }
 
   @Test
@@ -720,17 +721,15 @@ public class LoanAPITests extends APITests {
     DateTime dueDate = new DateTime(2017, 3, 29, 10, 23, 43, DateTimeZone.UTC);
     DateTime systemReturnDate = new DateTime(2017, 4, 1, 12, 0, 0, DateTimeZone.UTC);
 
-    JsonObject builtRequest = new LoanBuilder()
-      .closed()
-      .withId(id)
-      .withUserId(userId)
-      .withItemId(itemId)
-      .withLoanDate(loanDate)
-      .withDueDate(dueDate)
-      .withSystemReturnDate(systemReturnDate)
-      .create();
-
-    IndividualResource response = loansClient.create(builtRequest);
+    IndividualResource response = loansFixture.createLoan(
+      new LoanBuilder()
+        .closed()
+        .withId(id)
+        .withUserId(userId)
+        .withItemId(itemId)
+        .withLoanDate(loanDate)
+        .withDueDate(dueDate)
+        .withSystemReturnDate(systemReturnDate));
 
     JsonObject loan = response.getJson();
 
@@ -828,7 +827,7 @@ public class LoanAPITests extends APITests {
 
     UUID userId = usersFixture.charlotte().getId();
 
-    IndividualResource response = loansClient.create(new LoanBuilder()
+    IndividualResource response = loansFixture.createLoan(new LoanBuilder()
       .withId(id)
       .withUserId(userId)
       .withItemId(itemId)
@@ -880,7 +879,7 @@ public class LoanAPITests extends APITests {
 
     UUID userId = usersFixture.charlotte().getId();
 
-    IndividualResource response = loansClient.create(new LoanBuilder()
+    IndividualResource response = loansFixture.createLoan(new LoanBuilder()
       .withId(id)
       .withUserId(userId)
       .withItemId(itemId)
@@ -940,7 +939,7 @@ public class LoanAPITests extends APITests {
 
     DateTime dueDate = new DateTime(2016, 11, 15, 8, 26, 53, DateTimeZone.UTC);
 
-    loansClient.create(new LoanBuilder()
+    loansFixture.createLoan(new LoanBuilder()
       .withId(id)
       .withUserId(userId)
       .withItemId(itemId)
@@ -1049,7 +1048,7 @@ public class LoanAPITests extends APITests {
 
     final IndividualResource loanPolicy = loanPoliciesFixture.canCirculateRolling();
 
-    List<JsonObject> loans = loansClient.getAll();
+    MultipleJsonRecords loans = loansFixture.getAllLoans();
 
     loans.forEach(loanJson -> loanHasLoanPolicyProperties(loanJson, loanPolicy));
   }
@@ -1093,7 +1092,7 @@ public class LoanAPITests extends APITests {
 
     UUID userId = usersFixture.charlotte().getId();
 
-    loansClient.create(new LoanBuilder()
+    loansFixture.createLoan(new LoanBuilder()
       .withId(id)
       .withUserId(userId)
       .withItemId(itemId)
@@ -1207,7 +1206,7 @@ public class LoanAPITests extends APITests {
     UUID checkinServicePointId = servicePointsFixture.cd1().getId();
 
 
-    IndividualResource loan = loansClient.create(new LoanBuilder()
+    IndividualResource loan = loansFixture.createLoan(new LoanBuilder()
       .open()
       .withUserId(jessica.getId())
       .withItemId(itemId)
@@ -1220,7 +1219,7 @@ public class LoanAPITests extends APITests {
 
     loansClient.replace(loan.getId(), updatedLoanRequest);
 
-    final JsonObject updatedLoan = loansClient.get(loan.getId()).getJson();
+    final JsonObject updatedLoan = loansFixture.getLoanById(loan.getId()).getJson();
 
     assertThat("Should be closed",
       updatedLoan.getJsonObject("status").getString("name"), is("Closed"));
@@ -1268,7 +1267,7 @@ public class LoanAPITests extends APITests {
 
     loansClient.replace(loan2.getId(), updatedLoanRequest);
 
-    List<JsonObject> loans = loansClient.getAll();
+    MultipleJsonRecords loans = loansFixture.getAllLoans();
 
     loans.forEach(this::hasNoBorrowerProperties);
   }
@@ -1284,7 +1283,7 @@ public class LoanAPITests extends APITests {
 
     final IndividualResource jessica = usersFixture.jessica();
 
-    IndividualResource loan = loansClient.create(new LoanBuilder()
+    IndividualResource loan = loansFixture.createLoan(new LoanBuilder()
       .open()
       .withUserId(jessica.getId())
       .withItemId(itemId));
@@ -1360,12 +1359,7 @@ public class LoanAPITests extends APITests {
 
     itemsClient.delete(item.getId());
 
-    CompletableFuture<Response> pageCompleted = new CompletableFuture<>();
-
-    client.get(loansUrl(),
-      ResponseHandler.json(pageCompleted));
-
-    Response pageResponse = pageCompleted.get(5, TimeUnit.SECONDS);
+    Response pageResponse = loansFixture.getLoans();
 
     assertThat(String.format("Failed to get page of loans: %s",
       pageResponse.getBody()),
@@ -1394,17 +1388,8 @@ public class LoanAPITests extends APITests {
     loansFixture.checkOutByBarcode(itemsFixture.basedUponUprooted(),user);
     loansFixture.checkOutByBarcode(itemsFixture.basedUponInterestingTimes(),user);
 
-    CompletableFuture<Response> firstPageCompleted = new CompletableFuture<>();
-    CompletableFuture<Response> secondPageCompleted = new CompletableFuture<>();
-
-    client.get(loansUrl() + "?limit=3",
-      ResponseHandler.json(firstPageCompleted));
-
-    client.get(loansUrl() + "?limit=3&offset=3",
-      ResponseHandler.json(secondPageCompleted));
-
-    Response firstPageResponse = firstPageCompleted.get(5, TimeUnit.SECONDS);
-    Response secondPageResponse = secondPageCompleted.get(5, TimeUnit.SECONDS);
+    Response firstPageResponse = loansFixture.getLoans(limit(3));
+    Response secondPageResponse = loansFixture.getLoans(limit(3), offset(3));
 
     assertThat(String.format("Failed to get first page of loans: %s",
       firstPageResponse.getBody()),
@@ -1445,47 +1430,41 @@ public class LoanAPITests extends APITests {
     IndividualResource secondUser = usersFixture.jessica();
     UUID secondUserId = secondUser.getId();
 
-    String queryTemplate = loansUrl() + "?query=userId=%s";
-
-    loansClient.create(new LoanBuilder()
+    loansFixture.createLoan(new LoanBuilder()
       .withItem(itemsFixture.basedUponSmallAngryPlanet())
       .withUserId(firstUserId));
 
-    loansClient.create(new LoanBuilder()
+    loansFixture.createLoan(new LoanBuilder()
       .withItem(itemsFixture.basedUponNod())
       .withUserId(firstUserId));
 
-    loansClient.create(new LoanBuilder()
+    loansFixture.createLoan(new LoanBuilder()
       .withItem(itemsFixture.basedUponSmallAngryPlanet())
       .withUserId(firstUserId));
 
-    loansClient.create(new LoanBuilder()
+    loansFixture.createLoan(new LoanBuilder()
       .withItem(itemsFixture.basedUponTemeraire())
       .withUserId(firstUserId));
 
-    loansClient.create(new LoanBuilder()
+    loansFixture.createLoan(new LoanBuilder()
       .withItem(itemsFixture.basedUponUprooted())
       .withUserId(secondUserId));
 
-    loansClient.create(new LoanBuilder()
+    loansFixture.createLoan(new LoanBuilder()
       .withItem(itemsFixture.basedUponNod())
       .withUserId(secondUserId));
 
-    loansClient.create(new LoanBuilder().withItem(
+    loansFixture.createLoan(new LoanBuilder().withItem(
       itemsFixture.basedUponInterestingTimes())
       .withUserId(secondUserId));
 
-    CompletableFuture<Response> firstUserSearchCompleted = new CompletableFuture<>();
-    CompletableFuture<Response> secondUserSeatchCompleted = new CompletableFuture<>();
+    String queryTemplate = "userId=%s";
 
-    client.get(String.format(queryTemplate, firstUserId),
-      ResponseHandler.json(firstUserSearchCompleted));
+    Response firstPageResponse = loansFixture.getLoans(
+      queryFromTemplate(queryTemplate, firstUserId));
 
-    client.get(String.format(queryTemplate, secondUserId),
-      ResponseHandler.json(secondUserSeatchCompleted));
-
-    Response firstPageResponse = firstUserSearchCompleted.get(5, TimeUnit.SECONDS);
-    Response secondPageResponse = secondUserSeatchCompleted.get(5, TimeUnit.SECONDS);
+    Response secondPageResponse = loansFixture.getLoans(
+      queryFromTemplate(queryTemplate, secondUserId));
 
     assertThat(String.format("Failed to get loans for first user: %s",
       firstPageResponse.getBody()),
@@ -1515,47 +1494,22 @@ public class LoanAPITests extends APITests {
   }
 
   @Test
-  public void canFindNoResultsFromSearch()
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException {
-
+  public void canFindNoResultsFromSearch() {
     UUID firstUserId = UUID.randomUUID();
-    UUID secondUserId = UUID.randomUUID();
 
-    String queryTemplate = loansUrl() + "?query=userId=%s";
-
-    CompletableFuture<Response> firstUserSearchCompleted = new CompletableFuture<>();
-    CompletableFuture<Response> secondUserSeatchCompleted = new CompletableFuture<>();
-
-    client.get(String.format(queryTemplate, firstUserId),
-      ResponseHandler.json(firstUserSearchCompleted));
-
-    client.get(String.format(queryTemplate, secondUserId),
-      ResponseHandler.json(secondUserSeatchCompleted));
-
-    Response firstPageResponse = firstUserSearchCompleted.get(5, TimeUnit.SECONDS);
-    Response secondPageResponse = secondUserSeatchCompleted.get(5, TimeUnit.SECONDS);
+    Response firstPageResponse = loansFixture.getLoans(
+      queryFromTemplate("userId=%s", firstUserId));
 
     assertThat(String.format("Failed to get loans for first user: %s",
       firstPageResponse.getBody()),
       firstPageResponse.getStatusCode(), is(200));
 
-    assertThat(String.format("Failed to get loans for second user: %s",
-      secondPageResponse.getBody()),
-      secondPageResponse.getStatusCode(), is(200));
-
     JsonObject firstPage = firstPageResponse.getJson();
-    JsonObject secondPage = secondPageResponse.getJson();
 
     List<JsonObject> firstPageLoans = getLoans(firstPage);
-    List<JsonObject> secondPageLoans = getLoans(secondPage);
 
     assertThat(firstPageLoans.size(), is(0));
     assertThat(firstPage.getInteger("totalRecords"), is(0));
-
-    assertThat(secondPageLoans.size(), is(0));
-    assertThat(secondPage.getInteger("totalRecords"), is(0));
   }
 
   @Test
@@ -1563,64 +1517,55 @@ public class LoanAPITests extends APITests {
     throws MalformedURLException,
     InterruptedException,
     ExecutionException,
-    TimeoutException,
-    UnsupportedEncodingException {
+    TimeoutException {
 
     IndividualResource user = usersFixture.charlotte();
     UUID userId = user.getId();
 
-    String queryTemplate = "userId=\"%s\" and status.name=\"%s\"";
-
-    loansClient.create(new LoanBuilder()
+    loansFixture.createLoan(new LoanBuilder()
       .withUserId(userId)
       .withStatus("Open")
       .withItem(itemsFixture.basedUponSmallAngryPlanet())
       .withRandomPastLoanDate());
 
-    loansClient.create(new LoanBuilder()
+    loansFixture.createLoan(new LoanBuilder()
       .withUserId(userId)
       .withStatus("Open")
       .withItem(itemsFixture.basedUponNod())
       .withRandomPastLoanDate());
 
-    loansClient.create(new LoanBuilder()
+    loansFixture.createLoan(new LoanBuilder()
       .withUserId(userId)
       .withItem(
         itemsFixture.basedUponNod())
       .withStatus("Closed")
       .withRandomPastLoanDate());
 
-    loansClient.create(new LoanBuilder()
+    loansFixture.createLoan(new LoanBuilder()
       .withUserId(userId)
       .withStatus("Closed")
       .withItem(itemsFixture.basedUponTemeraire())
       .withRandomPastLoanDate());
 
-    loansClient.create(new LoanBuilder()
+    loansFixture.createLoan(new LoanBuilder()
       .withUserId(userId)
       .withStatus("Closed")
       .withItem(itemsFixture.basedUponUprooted())
       .withRandomPastLoanDate());
 
-    loansClient.create(new LoanBuilder()
+    loansFixture.createLoan(new LoanBuilder()
       .withUserId(userId)
       .withStatus("Closed")
       .withItem(itemsFixture.basedUponInterestingTimes())
       .withRandomPastLoanDate());
 
-    CompletableFuture<Response> openSearchComppleted = new CompletableFuture<>();
-    CompletableFuture<Response> closedSearchCompleted = new CompletableFuture<>();
+    String queryTemplate = "userId=\"%s\" and status.name=\"%s\"";
 
-    client.get(loansUrl(),
-      "query=" + URLEncoder.encode(String.format(queryTemplate, userId, "Open"), "UTF-8"),
-      ResponseHandler.json(openSearchComppleted));
+    Response openLoansResponse = loansFixture.getLoans(
+      queryFromTemplate(queryTemplate, userId, "Open"));
 
-    client.get(loansUrl(),
-      "query=" + URLEncoder.encode(String.format(queryTemplate, userId, "Closed"), "UTF-8"),
-      ResponseHandler.json(closedSearchCompleted));
-
-    Response openLoansResponse = openSearchComppleted.get(5, TimeUnit.SECONDS);
-    Response closedLoansResponse = closedSearchCompleted.get(5, TimeUnit.SECONDS);
+    Response closedLoansResponse = loansFixture.getLoans(
+      queryFromTemplate(queryTemplate, userId, "Closed"));
 
     assertThat(String.format("Failed to get open loans: %s",
       openLoansResponse.getBody()),
@@ -1679,7 +1624,7 @@ public class LoanAPITests extends APITests {
       .withCheckinServicePointId(checkinServicePointId2)
       .withNoUserId());
 
-    final List<JsonObject> multipleLoans = loansClient.getAll();
+    final MultipleJsonRecords multipleLoans = loansFixture.getAllLoans();
 
     assertThat("Should have two loans",
       multipleLoans.size(), is(2));
@@ -1714,14 +1659,19 @@ public class LoanAPITests extends APITests {
       .withCheckinServicePointId(checkinServicePointId2)
       .withUserId(usersFixture.jessica().getId()));
 
-    final List<JsonObject> multipleLoans = loansClient.getAll();
+    final MultipleJsonRecords multipleLoans = loansFixture.getAllLoans();
 
-     assertThat("Should have different 'userId' for different loans",
-       multipleLoans.get(0).getString("userId"),
-       not(multipleLoans.get(1).getString("userId")));
+    final Set<String> uniqueUserIds = multipleLoans.stream()
+      .map(loan -> loan.getString("userId"))
+      .collect(Collectors.toSet());
+
+    assertThat("Should have different 'userId' for different loans",
+       uniqueUserIds, containsInAnyOrder(jessicaUser.getId().toString(),
+        steveUser.getId().toString()));
 
     assertThat("Should have two loans",
       multipleLoans.size(), is(2));
+
     loanHasExpectedProperties(firstLoan.getJson(), steveUser);
     loanHasExpectedProperties(secondLoan.getJson(), jessicaUser);
   }
@@ -1773,7 +1723,7 @@ public class LoanAPITests extends APITests {
     UUID checkinServicePointId = servicePointsFixture.cd1().getId();
     UUID checkoutServicePointId = servicePointsFixture.cd2().getId();
 
-    loansClient.create(new LoanBuilder()
+    loansFixture.createLoan(new LoanBuilder()
       .withId(loanId)
       .open()
       .withUserId(userId)
@@ -1815,7 +1765,7 @@ public class LoanAPITests extends APITests {
     UUID loan3Id = UUID.randomUUID();
     UUID item3Id = itemsFixture.basedUponUprooted().getId();
 
-    loansClient.create(new LoanBuilder()
+    loansFixture.createLoan(new LoanBuilder()
       .withId(loan1Id)
       .open()
       .withUserId(userId)
@@ -1825,7 +1775,7 @@ public class LoanAPITests extends APITests {
       .withCheckinServicePointId(checkinServicePointId)
       .withCheckoutServicePointId(checkoutServicePointId));
 
-    loansClient.create(new LoanBuilder()
+    loansFixture.createLoan(new LoanBuilder()
       .withId(loan2Id)
       .open()
       .withUserId(userId)
@@ -1835,7 +1785,7 @@ public class LoanAPITests extends APITests {
       .withCheckinServicePointId(checkinServicePointId)
       .withCheckoutServicePointId(checkoutServicePointId));
 
-    loansClient.create(new LoanBuilder()
+    loansFixture.createLoan(new LoanBuilder()
       .withId(loan3Id)
       .open()
       .withUserId(userId)
@@ -1925,7 +1875,7 @@ public class LoanAPITests extends APITests {
     UUID checkinServicePointId = servicePointsFixture.cd1().getId();
     UUID checkoutServicePointId = servicePointsFixture.cd2().getId();
     UUID loanId = UUID.randomUUID();
-    loansClient.create(new LoanBuilder()
+    loansFixture.createLoan(new LoanBuilder()
       .withId(loanId)
       .open()
       .withUserId(userId)
@@ -1982,7 +1932,7 @@ public class LoanAPITests extends APITests {
 
      loansStorageClient.replace(individualResource.getId(), savedLoan);
 
-     JsonObject loan = loansClient.get(individualResource.getId()).getJson();
+     JsonObject loan = loansFixture.getLoanById(individualResource.getId()).getJson();
 
      loanHasPatronGroupProperties(loan, "Regular Group");
   }
@@ -2017,10 +1967,10 @@ public class LoanAPITests extends APITests {
 
     loansStorageClient.replace(secondLoan.getId(), secondSavedLoan);
 
-    List<JsonObject> loans = loansClient.getAll();
+    MultipleJsonRecords loans = loansFixture.getAllLoans();
 
-    JsonObject fetchedLoan1 = getRecordById(loans, firstLoan.getId()).get();
-    JsonObject fetchedLoan2 = getRecordById(loans, secondLoan.getId()).get();
+    JsonObject fetchedLoan1 = loans.getById(firstLoan.getId());
+    JsonObject fetchedLoan2 = loans.getById(secondLoan.getId());
 
     loanHasPatronGroupProperties(fetchedLoan1, "Regular Group");
     loanHasPatronGroupProperties(fetchedLoan2, "undergrad");
@@ -2143,4 +2093,5 @@ public class LoanAPITests extends APITests {
   private List<JsonObject> getLoans(JsonObject page) {
     return JsonArrayHelper.toList(page.getJsonArray("loans"));
   }
+
 }

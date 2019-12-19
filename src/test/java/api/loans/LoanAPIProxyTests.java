@@ -43,7 +43,7 @@ public class LoanAPIProxyTests extends APITests {
     DateTime loanDate = new DateTime(2017, 2, 27, 10, 23, 43, DateTimeZone.UTC);
     DateTime dueDate = new DateTime(2017, 3, 29, 10, 23, 43, DateTimeZone.UTC);
 
-    IndividualResource response = loansClient.create(new LoanBuilder()
+    IndividualResource response = loansFixture.createLoan(new LoanBuilder()
       .withId(id)
       .open()
       .withUserId(sponsor.getId())
@@ -80,7 +80,7 @@ public class LoanAPIProxyTests extends APITests {
     DateTime loanDate = new DateTime(2017, 2, 27, 10, 23, 43, DateTimeZone.UTC);
     DateTime dueDate = new DateTime(2017, 3, 29, 10, 23, 43, DateTimeZone.UTC);
 
-    IndividualResource response = loansClient.create(new LoanBuilder()
+    IndividualResource response = loansFixture.createLoan(new LoanBuilder()
       .withId(id)
       .open()
       .withUserId(sponsor.getId())
@@ -265,7 +265,7 @@ public class LoanAPIProxyTests extends APITests {
     DateTime loanDate = new DateTime(2017, 2, 27, 10, 23, 43, DateTimeZone.UTC);
     DateTime dueDate = new DateTime(2017, 3, 29, 10, 23, 43, DateTimeZone.UTC);
 
-    loansClient.create(new LoanBuilder()
+    loansFixture.createLoan(new LoanBuilder()
       .withId(id)
       .open()
       .withUserId(sponsor.getId())
@@ -311,7 +311,7 @@ public class LoanAPIProxyTests extends APITests {
     DateTime loanDate = new DateTime(2017, 2, 27, 10, 23, 43, DateTimeZone.UTC);
     DateTime dueDate = new DateTime(2017, 3, 29, 10, 23, 43, DateTimeZone.UTC);
 
-    loansClient.create(new LoanBuilder()
+    loansFixture.createLoan(new LoanBuilder()
       .withId(id)
       .open()
       .withUserId(sponsor.getId())
@@ -358,7 +358,7 @@ public class LoanAPIProxyTests extends APITests {
     DateTime loanDate = new DateTime(2017, 2, 27, 10, 23, 43, DateTimeZone.UTC);
     DateTime dueDate = new DateTime(2017, 3, 29, 10, 23, 43, DateTimeZone.UTC);
 
-    loansClient.create(new LoanBuilder()
+    loansFixture.createLoan(new LoanBuilder()
       .withId(id)
       .open()
       .withUserId(otherUser.getId())
@@ -404,7 +404,7 @@ public class LoanAPIProxyTests extends APITests {
     DateTime loanDate = new DateTime(2017, 2, 27, 10, 23, 43, DateTimeZone.UTC);
     DateTime dueDate = new DateTime(2017, 3, 29, 10, 23, 43, DateTimeZone.UTC);
 
-    loansClient.create(new LoanBuilder()
+    loansFixture.createLoan(new LoanBuilder()
       .withId(id)
       .open()
       .withUserId(requestingUser.getId())
