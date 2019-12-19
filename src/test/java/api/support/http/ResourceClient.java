@@ -481,24 +481,6 @@ public class ResourceClient {
     return JsonArrayHelper.toList(json
       .getJsonArray(collectionArrayPropertyName));
   }
-  
-  public Response attemptMove(Builder builder)
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
-
-    CompletableFuture<Response> moveCompleted = new CompletableFuture<>();
-
-    JsonObject request = builder.create();
-
-    String path = String.format("/%s/move", request.getString("id"));
-
-    client.post(urlMaker.combine(path), request,
-      ResponseHandler.any(moveCompleted));
-
-    return moveCompleted.get(15, TimeUnit.SECONDS);
-  }
 
   @FunctionalInterface
   public interface UrlMaker {

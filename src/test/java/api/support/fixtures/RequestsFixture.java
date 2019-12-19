@@ -145,15 +145,18 @@ public class RequestsFixture {
     final JsonObject representation = requestToBuild.create();
 
     return new IndividualResource(restAssuredClient.post(representation,
-        requestsUrl(String.format("/%s/move", representation.getString("id"))),
-        200, "move-request"));
+        requestsUrl(pathToMoveRequest(representation)), 200, "move-request"));
   }
 
-  public Response attemptMove(MoveRequestBuilder requestToBuild)
-      throws InterruptedException, MalformedURLException, TimeoutException,
-      ExecutionException {
+  public Response attemptMove(MoveRequestBuilder requestToBuild) {
+    final JsonObject representation = requestToBuild.create();
 
-    return requestsClient.attemptMove(requestToBuild);
+    return restAssuredClient.post(representation,
+      requestsUrl(pathToMoveRequest(representation)), "move-request");
+  }
+
+  private String pathToMoveRequest(JsonObject representation) {
+    return String.format("/%s/move", representation.getString("id"));
   }
 
   //TODO: Replace return type with MultipleJsonRecords
