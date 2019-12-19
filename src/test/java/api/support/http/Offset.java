@@ -1,6 +1,6 @@
 package api.support.http;
 
-import java.util.HashMap;
+import java.util.Map;
 
 public class Offset implements QueryStringParameter {
   private final Integer offset;
@@ -18,7 +18,7 @@ public class Offset implements QueryStringParameter {
   }
 
   @Override
-  public void collectInto(HashMap<String, String> queryStringParameters) {
+  public void collectInto(Map<String, String> queryStringParameters) {
     if (offset != null) {
       queryStringParameters.put("offset", offset.toString());
     }

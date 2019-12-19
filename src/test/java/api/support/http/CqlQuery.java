@@ -1,6 +1,6 @@
 package api.support.http;
 
-import java.util.HashMap;
+import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -26,7 +26,7 @@ public class CqlQuery implements QueryStringParameter {
   }
 
   @Override
-  public void collectInto(HashMap<String, String> queryStringParameters) {
+  public void collectInto(Map<String, String> queryStringParameters) {
     if (StringUtils.isNotBlank(getQuery())) {
       queryStringParameters.put("query", getQuery());
     }

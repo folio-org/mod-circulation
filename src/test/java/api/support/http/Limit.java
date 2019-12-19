@@ -2,7 +2,7 @@ package api.support.http;
 
 import static java.lang.Integer.MAX_VALUE;
 
-import java.util.HashMap;
+import java.util.Map;
 
 public class Limit implements QueryStringParameter {
   private final Integer limit;
@@ -23,7 +23,7 @@ public class Limit implements QueryStringParameter {
     this.limit = limit;
   }
 
-  public void collectInto(HashMap<String, String> queryStringParameters) {
+  public void collectInto(Map<String, String> queryStringParameters) {
     //TODO: Replace with null value pattern
     if (limit != null) {
       queryStringParameters.put("limit", limit.toString());
