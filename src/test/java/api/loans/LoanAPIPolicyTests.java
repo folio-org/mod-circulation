@@ -146,7 +146,7 @@ public class LoanAPIPolicyTests extends APITests {
     ExecutionException,
     TimeoutException {
 
-    IndividualResource loanResponse = loansClient.create(new LoanBuilder()
+    IndividualResource loanResponse = loansFixture.createLoan(new LoanBuilder()
       .withId(id)
       .withUserId(userId)
       .withItemId(itemId)
