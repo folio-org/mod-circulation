@@ -42,7 +42,7 @@ public class CheckInByReplacingLoanTests extends APITests {
 
     final IndividualResource james = usersFixture.james();
 
-    IndividualResource loan = loansClient.create(new LoanBuilder()
+    IndividualResource loan = loansFixture.createLoan(new LoanBuilder()
       .withLoanDate(loanDate)
       .withUserId(james.getId())
       .withItem(itemsFixture.basedUponNod()));
@@ -119,7 +119,7 @@ public class CheckInByReplacingLoanTests extends APITests {
 
     final IndividualResource james = usersFixture.james();
 
-    IndividualResource loan = loansClient.create(
+    IndividualResource loan = loansFixture.createLoan(
       new LoanBuilder().withLoanDate(loanDate)
         .withUserId(james.getId()).withItem(itemsFixture.basedUponNod()));
 
@@ -153,7 +153,7 @@ public class CheckInByReplacingLoanTests extends APITests {
 
     final IndividualResource james = usersFixture.james();
 
-    IndividualResource loan = loansClient.create(
+    IndividualResource loan = loansFixture.createLoan(
       new LoanBuilder().withLoanDate(loanDate)
         .withUserId(james.getId()).withItem(itemsFixture.basedUponNod()));
 
