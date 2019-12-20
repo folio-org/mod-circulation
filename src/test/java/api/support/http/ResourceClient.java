@@ -4,26 +4,21 @@ import static api.support.APITestContext.getOkapiHeadersFromContext;
 import static api.support.http.CqlQuery.noQuery;
 import static api.support.http.Limit.limit;
 import static api.support.http.Offset.noOffset;
+import static java.net.HttpURLConnection.HTTP_NOT_FOUND;
 import static java.net.HttpURLConnection.HTTP_NO_CONTENT;
 import static org.folio.circulation.support.JsonArrayHelper.mapToList;
+import static org.hamcrest.CoreMatchers.anyOf;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 
-import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.OkapiHttpClient;
 import org.folio.circulation.support.http.client.Response;
-import org.folio.circulation.support.http.client.ResponseHandler;
-import org.hamcrest.CoreMatchers;
 
 import api.support.RestAssuredClient;
 import api.support.builders.Builder;
@@ -360,75 +355,32 @@ public class ResourceClient {
     return getById(resource.getId());
   }
 
-  public void delete(UUID id)
-    throws MalformedURLException,
-    InterruptedException,
-    ExecutionException,
-    TimeoutException {
-
-    CompletableFuture<Response> deleteFinished = new CompletableFuture<>();
-
-    client.delete(recordUrl(id),
-      ResponseHandler.any(deleteFinished));
-
-    Response response = deleteFinished.get(5, TimeUnit.SECONDS);
+  public void delete(UUID id) throws MalformedURLException {
+    final Response response = restAssuredClient.delete(recordUrl(id),
+        "delete-record");
 
     assertThat(String.format(
-      "Failed to delete %s %s: %s", resourceName, id, response.getBody()),
-      response.getStatusCode(), CoreMatchers.anyOf(
-        is(HTTP_NO_CONTENT),
-        is(HttpURLConnection.HTTP_NOT_FOUND)));
+        "Failed to delete %s %s: %s", resourceName, id, response.getBody()),
+        response.getStatusCode(), anyOf(is(HTTP_NO_CONTENT), is(HTTP_NOT_FOUND)));
   }
 
-  public void delete(IndividualResource resource)
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
-
+  public void delete(IndividualResource resource) throws MalformedURLException {
     delete(resource.getId());
   }
 
-  public void deleteAll()
-    throws MalformedURLException,
-    InterruptedException,
-    ExecutionException,
-    TimeoutException {
-
-    CompletableFuture<Response> deleteAllFinished = new CompletableFuture<>();
-
-    client.delete(rootUrl(),
-      ResponseHandler.any(deleteAllFinished));
-
-    Response response = deleteAllFinished.get(5, TimeUnit.SECONDS);
+  public void deleteAll() throws MalformedURLException {
+    final Response response = restAssuredClient.delete(rootUrl(),
+        "delete-all-records");
 
     assertThat(String.format(
-      "Failed to delete %s: %s", resourceName, response.getBody()),
-      response.getStatusCode(), is(204));
+        "Failed to delete %s: %s", resourceName, response.getBody()),
+        response.getStatusCode(), is(HTTP_NO_CONTENT));
   }
 
   public void deleteAllIndividually() throws MalformedURLException {
-    List<JsonObject> records = getAll();
-
-    records.stream().forEach(record -> {
-      try {
-        CompletableFuture<Response> deleteFinished = new CompletableFuture<>();
-
-        client.delete(recordUrl(record.getString("id")),
-          ResponseHandler.any(deleteFinished));
-
-        Response deleteResponse = deleteFinished.get(5, TimeUnit.SECONDS);
-
-        assertThat(String.format(
-          "Failed to delete %s: %s", resourceName, deleteResponse.getBody()),
-          deleteResponse.getStatusCode(), is(204));
-
-      } catch (Throwable e) {
-        assertThat(String.format("Exception whilst deleting %s individually: %s",
-          resourceName, e.toString()),
-          true, is(false));
-      }
-    });
+    for (JsonObject record : getAll()) {
+      delete(UUID.fromString(record.getString("id")));
+    }
   }
 
   //TODO: Replace return valu[e with MultipleJsonRecords

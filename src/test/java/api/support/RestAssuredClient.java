@@ -166,6 +166,17 @@ public class RestAssuredClient {
       .extract().response());
   }
 
+  public Response delete(URL location, String requestId) {
+    return toResponse(given()
+      .log().all()
+      .spec(standardHeaders(defaultHeaders.withRequestId(requestId)))
+      .spec(timeoutConfig())
+      .when().delete(location)
+      .then()
+      .log().all()
+      .extract().response());
+  }
+
   private static RequestSpecification standardHeaders(OkapiHeaders okapiHeaders) {
     final HashMap<String, String> headers = new HashMap<>();
 
