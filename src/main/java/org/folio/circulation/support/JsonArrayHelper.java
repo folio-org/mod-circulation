@@ -24,9 +24,8 @@ public class JsonArrayHelper {
       .collect(Collectors.toList());
   }
 
-  public static <T> List<T> mapToList(
-    JsonArray array,
-    Function<JsonObject, T> mapper) {
+  public static <T> List<T> mapToList(JsonArray array,
+      Function<JsonObject, T> mapper) {
 
     if(array == null) {
       return Collections.emptyList();
@@ -37,10 +36,8 @@ public class JsonArrayHelper {
       .collect(Collectors.toList());
   }
 
-  public static <T> List<T> mapToList(
-    JsonObject within,
-    String arrayPropertyName,
-    Function<JsonObject, T> mapper) {
+  public static <T> List<T> mapToList(JsonObject within, String arrayPropertyName,
+      Function<JsonObject, T> mapper) {
 
     if(within == null || !within.containsKey(arrayPropertyName)) {
       return Collections.emptyList();
@@ -49,9 +46,14 @@ public class JsonArrayHelper {
     return mapToList(within.getJsonArray(arrayPropertyName), mapper);
   }
 
-  public static Stream<JsonObject> toStream(
-    JsonObject within,
-    String arrayPropertyName) {
+  public static List<JsonObject> mapToList(JsonObject within,
+      String arrayPropertyName) {
+
+    return mapToList(within, arrayPropertyName, Function.identity());
+  }
+
+  public static Stream<JsonObject> toStream(JsonObject within,
+      String arrayPropertyName) {
 
     if(within == null || !within.containsKey(arrayPropertyName)) {
       return Stream.empty();
