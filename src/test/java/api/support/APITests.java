@@ -14,11 +14,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import api.support.builders.LoanPolicyBuilder;
-import api.support.builders.NoticePolicyBuilder;
-import api.support.fixtures.LostItemFeePoliciesFixture;
-import api.support.fixtures.UserManualBlocksFixture;
-import api.support.fixtures.OverdueFinePoliciesFixture;
 import org.folio.circulation.domain.representations.LoanProperties;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.OkapiHttpClient;
@@ -31,6 +26,8 @@ import org.junit.BeforeClass;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import api.support.builders.LoanPolicyBuilder;
+import api.support.builders.NoticePolicyBuilder;
 import api.support.fixtures.AddressTypesFixture;
 import api.support.fixtures.CancellationReasonsFixture;
 import api.support.fixtures.CirculationRulesFixture;
@@ -43,8 +40,10 @@ import api.support.fixtures.LoanPoliciesFixture;
 import api.support.fixtures.LoanTypesFixture;
 import api.support.fixtures.LoansFixture;
 import api.support.fixtures.LocationsFixture;
+import api.support.fixtures.LostItemFeePoliciesFixture;
 import api.support.fixtures.MaterialTypesFixture;
 import api.support.fixtures.NoticePoliciesFixture;
+import api.support.fixtures.OverdueFinePoliciesFixture;
 import api.support.fixtures.PatronGroupsFixture;
 import api.support.fixtures.ProxyRelationshipsFixture;
 import api.support.fixtures.RequestPoliciesFixture;
@@ -52,6 +51,7 @@ import api.support.fixtures.RequestQueueFixture;
 import api.support.fixtures.RequestsFixture;
 import api.support.fixtures.ScheduledNoticeProcessingClient;
 import api.support.fixtures.ServicePointsFixture;
+import api.support.fixtures.UserManualBlocksFixture;
 import api.support.fixtures.UsersFixture;
 import api.support.http.InterfaceUrls;
 import api.support.http.ResourceClient;
@@ -496,15 +496,7 @@ public abstract class APITests {
       response.getStatusCode(), is(200));
   }
 
-  private static void deleteOftenCreatedRecords()
-    throws MalformedURLException,
-    InterruptedException,
-    ExecutionException,
-    TimeoutException {
-
-    OkapiHttpClient cleanupClient = createClient(exception ->
-      log.error("Requests to delete all for clean up failed:", exception));
-
+  private static void deleteOftenCreatedRecords() throws MalformedURLException {
     ResourceClient.forRequests().deleteAll();
     ResourceClient.forLoans().deleteAll();
 
@@ -517,15 +509,7 @@ public abstract class APITests {
     ResourceClient.forAccounts().deleteAll();
   }
 
-  private static void deleteAllRecords()
-    throws MalformedURLException,
-    InterruptedException,
-    ExecutionException,
-    TimeoutException {
-
-    OkapiHttpClient client = APITestContext.createClient(exception ->
-      log.error("Requests to delete all for clean up failed:", exception));
-
+  private static void deleteAllRecords() throws MalformedURLException {
     ResourceClient.forRequests().deleteAll();
     ResourceClient.forLoans().deleteAll();
 
