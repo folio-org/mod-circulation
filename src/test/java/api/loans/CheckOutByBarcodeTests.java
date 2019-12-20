@@ -4,7 +4,6 @@ import static api.requests.RequestsAPICreationTests.setupMissingItem;
 import static api.support.APITestContext.END_OF_2019_DUE_DATE;
 import static api.support.builders.ItemBuilder.AVAILABLE;
 import static api.support.builders.ItemBuilder.CHECKED_OUT;
-import static api.support.fixtures.ItemsFixture.setupDeclaredLostItem;
 import static api.support.matchers.CheckOutByBarcodeResponseMatchers.hasItemBarcodeParameter;
 import static api.support.matchers.CheckOutByBarcodeResponseMatchers.hasLoanPolicyParameters;
 import static api.support.matchers.CheckOutByBarcodeResponseMatchers.hasProxyUserBarcodeParameter;
@@ -487,7 +486,7 @@ public class CheckOutByBarcodeTests extends APITests {
     TimeoutException,
     ExecutionException {
 
-    final IndividualResource declaredLostItem = setupDeclaredLostItem(itemsFixture);
+    final IndividualResource declaredLostItem = itemsFixture.setupDeclaredLostItem();
     final IndividualResource steve = usersFixture.steve();
     final Response response = loansFixture.attemptCheckOutByBarcode(declaredLostItem, steve);
 

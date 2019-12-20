@@ -358,12 +358,12 @@ public class ItemsFixture {
       .withCallNumberSuffix("CIRC");
   }
 
-  public static IndividualResource setupDeclaredLostItem(ItemsFixture itemsFixture)
+  public IndividualResource setupDeclaredLostItem()
     throws InterruptedException,
     ExecutionException,
     TimeoutException,
     MalformedURLException {
-    IndividualResource declaredLostItem = itemsFixture.basedUponSmallAngryPlanet(ItemBuilder::declaredLost);
+    IndividualResource declaredLostItem = basedUponSmallAngryPlanet(ItemBuilder::declaredLost);
     assertThat(declaredLostItem.getResponse().getJson().getJsonObject("status").getString("name"), is(ItemStatus.DECLARED_LOST.getValue()));
 
     return declaredLostItem;

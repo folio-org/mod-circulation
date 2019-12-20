@@ -1,7 +1,6 @@
 package api.loans;
 
 import static api.requests.RequestsAPICreationTests.setupMissingItem;
-import static api.support.fixtures.ItemsFixture.setupDeclaredLostItem;
 import static api.support.http.AdditionalHttpStatusCodes.UNPROCESSABLE_ENTITY;
 import static api.support.http.CqlQuery.queryFromTemplate;
 import static api.support.http.InterfaceUrls.loansUrl;
@@ -781,7 +780,7 @@ public class LoanAPITests extends APITests {
     TimeoutException,
     ExecutionException {
 
-    final IndividualResource declaredLostItem = setupDeclaredLostItem(itemsFixture);
+    final IndividualResource declaredLostItem = itemsFixture.setupDeclaredLostItem();
     final IndividualResource steve = usersFixture.steve();
 
     Response response = loansFixture.attemptToCreateLoan(declaredLostItem, steve);
