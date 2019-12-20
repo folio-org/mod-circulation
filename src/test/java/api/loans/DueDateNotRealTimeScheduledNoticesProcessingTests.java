@@ -37,7 +37,6 @@ import api.support.http.InventoryItemResource;
 import io.vertx.core.json.JsonObject;
 
 public class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests {
-
   @Test
   public void uponAtDueDateNoticesShouldBeSentInGroups()
     throws MalformedURLException,
@@ -375,7 +374,7 @@ public class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests 
     InventoryItemResource nod = itemsFixture.basedUponNod();
     IndividualResource nodToJamesLoan = loansFixture.checkOutByBarcode(nod, james, loanDate);
 
-    usersClient.delete(james);
+    usersFixture.remove(james);
 
     Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
@@ -436,7 +435,7 @@ public class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests 
 
     loansClient.delete(temeraireToJames);
     itemsClient.delete(times);
-    usersClient.delete(jessica);
+    usersFixture.remove(jessica);
 
     Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
@@ -471,5 +470,4 @@ public class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests 
       hasEmailNoticeProperties(james.getId(), templateId, noticeToJamesContextMatcher),
       hasEmailNoticeProperties(steve.getId(), templateId, noticeToSteveContextMatcher)));
   }
-
 }

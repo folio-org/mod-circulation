@@ -4,12 +4,8 @@ import static api.support.APITestContext.getOkapiHeadersFromContext;
 import static api.support.http.CqlQuery.noQuery;
 import static api.support.http.Limit.limit;
 import static api.support.http.Offset.noOffset;
-import static java.net.HttpURLConnection.HTTP_NOT_FOUND;
 import static java.net.HttpURLConnection.HTTP_NO_CONTENT;
 import static org.folio.circulation.support.JsonArrayHelper.mapToList;
-import static org.hamcrest.CoreMatchers.anyOf;
-import static org.hamcrest.core.Is.is;
-import static org.hamcrest.junit.MatcherAssert.assertThat;
 
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -356,12 +352,7 @@ public class ResourceClient {
   }
 
   public void delete(UUID id) throws MalformedURLException {
-    final Response response = restAssuredClient.delete(recordUrl(id),
-        "delete-record");
-
-    assertThat(String.format(
-        "Failed to delete %s %s: %s", resourceName, id, response.getBody()),
-        response.getStatusCode(), anyOf(is(HTTP_NO_CONTENT), is(HTTP_NOT_FOUND)));
+    restAssuredClient.delete(recordUrl(id), HTTP_NO_CONTENT, "delete-record");
   }
 
   public void delete(IndividualResource resource) throws MalformedURLException {
@@ -369,12 +360,7 @@ public class ResourceClient {
   }
 
   public void deleteAll() throws MalformedURLException {
-    final Response response = restAssuredClient.delete(rootUrl(),
-        "delete-all-records");
-
-    assertThat(String.format(
-        "Failed to delete %s: %s", resourceName, response.getBody()),
-        response.getStatusCode(), is(HTTP_NO_CONTENT));
+    restAssuredClient.delete(rootUrl(), HTTP_NO_CONTENT, "delete-all-records");
   }
 
   public void deleteAllIndividually() throws MalformedURLException {

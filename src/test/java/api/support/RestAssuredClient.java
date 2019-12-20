@@ -166,7 +166,7 @@ public class RestAssuredClient {
       .extract().response());
   }
 
-  public Response delete(URL location, String requestId) {
+  public Response delete(URL location, int expectedStatusCode, String requestId) {
     return toResponse(given()
       .log().all()
       .spec(standardHeaders(defaultHeaders.withRequestId(requestId)))
@@ -174,6 +174,7 @@ public class RestAssuredClient {
       .when().delete(location)
       .then()
       .log().all()
+      .statusCode(expectedStatusCode)
       .extract().response());
   }
 
