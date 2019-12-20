@@ -265,7 +265,7 @@ public class RequestsAPIRetrievalTests extends APITests {
     ExecutionException,
     TimeoutException {
 
-    Response getResponse = ResourceClient.forRequests(client).getById(UUID.randomUUID());
+    Response getResponse = ResourceClient.forRequests().getById(UUID.randomUUID());
 
     assertThat(getResponse.getStatusCode(), is(HttpURLConnection.HTTP_NOT_FOUND));
   }

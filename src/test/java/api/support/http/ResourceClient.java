@@ -13,7 +13,6 @@ import java.util.List;
 import java.util.UUID;
 
 import org.folio.circulation.support.http.client.IndividualResource;
-import org.folio.circulation.support.http.client.OkapiHttpClient;
 import org.folio.circulation.support.http.client.Response;
 
 import api.support.RestAssuredClient;
@@ -21,242 +20,191 @@ import api.support.builders.Builder;
 import io.vertx.core.json.JsonObject;
 
 public class ResourceClient {
-  private final OkapiHttpClient client;
   private final RestAssuredClient restAssuredClient;
   private final UrlMaker urlMaker;
-  private final String resourceName;
   private final String collectionArrayPropertyName;
 
-  public static ResourceClient forItems(OkapiHttpClient client) {
-    return new ResourceClient(client, InterfaceUrls::itemsStorageUrl,
-      "items");
+  public static ResourceClient forItems() {
+    return new ResourceClient(InterfaceUrls::itemsStorageUrl, "items");
   }
 
-  public static ResourceClient forHoldings(OkapiHttpClient client) {
-    return new ResourceClient(client, InterfaceUrls::holdingsStorageUrl,
-      "holdingsRecords");
+  public static ResourceClient forHoldings() {
+    return new ResourceClient(InterfaceUrls::holdingsStorageUrl, "holdingsRecords");
   }
 
-  public static ResourceClient forInstances(OkapiHttpClient client) {
-    return new ResourceClient(client, InterfaceUrls::instancesStorageUrl,
-      "instances");
+  public static ResourceClient forInstances() {
+    return new ResourceClient(InterfaceUrls::instancesStorageUrl, "instances");
   }
 
-  public static ResourceClient forRequests(OkapiHttpClient client) {
-    return new ResourceClient(client, InterfaceUrls::requestsUrl,
-      "requests");
+  public static ResourceClient forRequests() {
+    return new ResourceClient(InterfaceUrls::requestsUrl, "requests");
   }
 
-  public static ResourceClient forRequestReport(OkapiHttpClient client) {
-    return new ResourceClient(client, InterfaceUrls::requestReportUrl,
-      "requestReport");
+  public static ResourceClient forRequestReport() {
+    return new ResourceClient(InterfaceUrls::requestReportUrl, "requestReport");
   }
 
-  public static ResourceClient forItemsInTransitReport(OkapiHttpClient client) {
-    return new ResourceClient(client,
-      subPath -> InterfaceUrls.itemsInTransitReportUrl(), "items");
+  public static ResourceClient forItemsInTransitReport() {
+    return new ResourceClient(InterfaceUrls::itemsInTransitReportUrl, "items");
   }
 
-  public static ResourceClient forPickSlips(OkapiHttpClient client) {
-    return new ResourceClient(client,
-        InterfaceUrls::pickSlipsUrl, "pickSlips");
+  public static ResourceClient forPickSlips() {
+    return new ResourceClient(InterfaceUrls::pickSlipsUrl, "pickSlips");
   }
 
-  public static ResourceClient forLoans(OkapiHttpClient client) {
-    return new ResourceClient(client, InterfaceUrls::loansUrl,
-      "loans");
+  public static ResourceClient forLoans() {
+    return new ResourceClient(InterfaceUrls::loansUrl, "loans");
   }
 
-  public static ResourceClient forAccounts(OkapiHttpClient client) {
-    return new ResourceClient(client, InterfaceUrls::accountsUrl,
-      "accounts");
+  public static ResourceClient forAccounts() {
+    return new ResourceClient(InterfaceUrls::accountsUrl, "accounts");
   }
 
-  public static ResourceClient forFeeFineActions(OkapiHttpClient client) {
-    return new ResourceClient(client, InterfaceUrls::feeFineActionsUrl, "feefineactions");
+  public static ResourceClient forFeeFineActions() {
+    return new ResourceClient(InterfaceUrls::feeFineActionsUrl, "feefineactions");
   }
 
-  public static ResourceClient forLoanPolicies(OkapiHttpClient client) {
-    return new ResourceClient(client, InterfaceUrls::loanPoliciesStorageUrl,
-      "loan policies", "loanPolicies");
+  public static ResourceClient forLoanPolicies() {
+    return new ResourceClient(InterfaceUrls::loanPoliciesStorageUrl,
+      "loanPolicies");
   }
 
-  public static ResourceClient forRequestPolicies(OkapiHttpClient client) {
-    return new ResourceClient(client, InterfaceUrls::requestPoliciesStorageUrl,
-      "request policies", "requestPolicies");
+  public static ResourceClient forRequestPolicies() {
+    return new ResourceClient(InterfaceUrls::requestPoliciesStorageUrl,
+      "requestPolicies");
   }
 
-  public static ResourceClient forNoticePolicies(OkapiHttpClient client) {
-    return new ResourceClient(client, InterfaceUrls::noticePoliciesStorageUrl,
-      "notice policies", "noticePolicies");
+  public static ResourceClient forNoticePolicies() {
+    return new ResourceClient(InterfaceUrls::noticePoliciesStorageUrl,
+      "noticePolicies");
   }
 
-  public static ResourceClient forOverdueFinePolicies(OkapiHttpClient client) {
-    return new ResourceClient(client, InterfaceUrls::overdueFinesPoliciesStorageUrl,
-      "overdue fines policies", "overdueFinePolicies");
+  public static ResourceClient forOverdueFinePolicies() {
+    return new ResourceClient(InterfaceUrls::overdueFinesPoliciesStorageUrl,
+      "overdueFinePolicies");
   }
 
-  public static ResourceClient forLostItemFeePolicies(OkapiHttpClient client) {
-    return new ResourceClient(client, InterfaceUrls::lostItemFeesPoliciesStorageUrl,
-      "lost item fee policies", "lostItemFeePolicies");
+  public static ResourceClient forLostItemFeePolicies() {
+    return new ResourceClient(InterfaceUrls::lostItemFeesPoliciesStorageUrl,
+      "lostItemFeePolicies");
   }
 
-  public static ResourceClient forFixedDueDateSchedules(OkapiHttpClient client) {
-    return new ResourceClient(client, InterfaceUrls::fixedDueDateSchedulesStorageUrl,
-      "fixed due date schedules", "fixedDueDateSchedules");
+  public static ResourceClient forFixedDueDateSchedules() {
+    return new ResourceClient(InterfaceUrls::fixedDueDateSchedulesStorageUrl,
+      "fixedDueDateSchedules");
   }
 
-  public static ResourceClient forCirculationRules(OkapiHttpClient client) {
-    return new ResourceClient(client, InterfaceUrls::circulationRulesStorageUrl,
-      "circulation rules", "circulationRules");
-  }
-
-  public static ResourceClient forUsers(OkapiHttpClient client) {
-    return new ResourceClient(client, InterfaceUrls::usersUrl,
+  public static ResourceClient forUsers() {
+    return new ResourceClient(InterfaceUrls::usersUrl,
       "users");
   }
 
-  public static ResourceClient forCalendar(OkapiHttpClient client) {
-    return new ResourceClient(client, InterfaceUrls::calendarUrl,
-      "calendar", "calendars");
+  public static ResourceClient forProxyRelationships() {
+    return new ResourceClient(InterfaceUrls::proxyRelationshipsUrl,
+        "proxiesFor");
   }
 
-  public static ResourceClient forProxyRelationships(OkapiHttpClient client) {
-    return new ResourceClient(client, InterfaceUrls::proxyRelationshipsUrl,
-      "proxiesFor");
+  public static ResourceClient forPatronGroups() {
+    return new ResourceClient(InterfaceUrls::patronGroupsStorageUrl,
+        "usergroups");
   }
 
-  public static ResourceClient forPatronGroups(OkapiHttpClient client) {
-    return new ResourceClient(client, InterfaceUrls::patronGroupsStorageUrl,
-      "patron groups", "usergroups");
+  public static ResourceClient forAddressTypes() {
+    return new ResourceClient(InterfaceUrls::addressTypesUrl,
+        "addressTypes");
   }
 
-  public static ResourceClient forAddressTypes(OkapiHttpClient client) {
-    return new ResourceClient(client, InterfaceUrls::addressTypesUrl,
-      "address types", "addressTypes");
+  public static ResourceClient forLoansStorage() {
+    return new ResourceClient(InterfaceUrls::loansStorageUrl,
+        "loans");
   }
 
-  public static ResourceClient forLoansStorage(OkapiHttpClient client) {
-    return new ResourceClient(client, InterfaceUrls::loansStorageUrl,
-      "storage loans", "loans");
+  public static ResourceClient forRequestsStorage() {
+    return new ResourceClient(InterfaceUrls::requestStorageUrl,
+        "requests");
   }
 
-  public static ResourceClient forRequestsStorage(OkapiHttpClient client) {
-    return new ResourceClient(client, InterfaceUrls::requestStorageUrl,
-      "storage requests", "requests");
+  public static ResourceClient forMaterialTypes() {
+    return new ResourceClient(InterfaceUrls::materialTypesStorageUrl,
+      "mtypes");
   }
 
-  public static ResourceClient forMaterialTypes(OkapiHttpClient client) {
-    return new ResourceClient(client, InterfaceUrls::materialTypesStorageUrl,
-      "material types", "mtypes");
+  public static ResourceClient forUserManualBlocks() {
+    return new ResourceClient(subPath ->
+      InterfaceUrls.userManualBlocksStorageUrl(), "manualblocks");
   }
 
-  public static ResourceClient forUserManualBlocks(OkapiHttpClient client) {
-    return new ResourceClient(client, subPath ->
-      InterfaceUrls.userManualBlocksStorageUrl(), "manualblocks", "manualblocks");
+  public static ResourceClient forLoanTypes() {
+    return new ResourceClient(InterfaceUrls::loanTypesStorageUrl,
+        "loantypes");
   }
 
-  public static ResourceClient forLoanTypes(OkapiHttpClient client) {
-    return new ResourceClient(client, InterfaceUrls::loanTypesStorageUrl,
-      "loan types", "loantypes");
+  public static ResourceClient forInstanceTypes() {
+    return new ResourceClient(InterfaceUrls::instanceTypesStorageUrl,
+        "instanceTypes");
   }
 
-  public static ResourceClient forInstanceTypes(OkapiHttpClient client) {
-    return new ResourceClient(client, InterfaceUrls::instanceTypesStorageUrl,
-      "instance types", "instanceTypes");
+  public static ResourceClient forContributorNameTypes() {
+    return new ResourceClient(InterfaceUrls::contributorNameTypesStorageUrl,
+      "contributorNameTypes");
   }
 
-  public static ResourceClient forContributorNameTypes(OkapiHttpClient client) {
-    return new ResourceClient(client, InterfaceUrls::contributorNameTypesStorageUrl,
-      "contributor name types", "contributorNameTypes");
+  public static ResourceClient forInstitutions() {
+    return new ResourceClient(InterfaceUrls::institutionsStorageUrl,
+        "locinsts");
   }
 
-  public static ResourceClient forInstitutions(OkapiHttpClient client) {
-    return new ResourceClient(client, InterfaceUrls::institutionsStorageUrl,
-      "institutions", "locinsts");
+  public static ResourceClient forCampuses() {
+    return new ResourceClient(InterfaceUrls::campusesStorageUrl,
+        "loccamps");
   }
 
-  public static ResourceClient forCampuses(OkapiHttpClient client) {
-    return new ResourceClient(client, InterfaceUrls::campusesStorageUrl,
-      "campuses", "loccamps");
+  public static ResourceClient forLibraries() {
+    return new ResourceClient(InterfaceUrls::librariesStorageUrl, "loclibs");
   }
 
-  public static ResourceClient forLibraries(OkapiHttpClient client) {
-    return new ResourceClient(client, InterfaceUrls::librariesStorageUrl,
-      "libraries", "loclibs");
+  public static ResourceClient forLocations() {
+    return new ResourceClient(InterfaceUrls::locationsStorageUrl, "locations");
   }
 
-  public static ResourceClient forLocations(OkapiHttpClient client) {
-    return new ResourceClient(client, InterfaceUrls::locationsStorageUrl,
-      "locations");
+  public static ResourceClient forCancellationReasons() {
+    return new ResourceClient(InterfaceUrls::cancellationReasonsStorageUrl,
+        "cancellationReasons");
   }
 
-  public static ResourceClient forCancellationReasons(OkapiHttpClient client) {
-    return new ResourceClient(client, InterfaceUrls::cancellationReasonsStorageUrl,
-      "cancellationReasons");
+  public static ResourceClient forServicePoints() {
+    return new ResourceClient(InterfaceUrls::servicePointsStorageUrl,
+        "servicepoints");
   }
 
-  public static ResourceClient forServicePoints(OkapiHttpClient client) {
-    return new ResourceClient(client, InterfaceUrls::servicePointsStorageUrl,
-      "service points", "servicepoints");
+  public static ResourceClient forPatronNotices() {
+    return new ResourceClient(InterfaceUrls::patronNoticesUrl,
+        "patronnotices");
   }
 
-  public static ResourceClient forPatronNotices(OkapiHttpClient client) {
-    return new ResourceClient(client, InterfaceUrls::patronNoticesUrl,
-      "patron notice", "patronnotices");
+  public static ResourceClient forScheduledNotices() {
+    return new ResourceClient(InterfaceUrls::scheduledNoticesUrl,
+        "scheduledNotices");
   }
 
-  public static ResourceClient forScheduledNotices(OkapiHttpClient client) {
-    return new ResourceClient(client, InterfaceUrls::scheduledNoticesUrl,
-      "scheduled notice", "scheduledNotices");
+  public static ResourceClient forPatronSessionRecords() {
+    return new ResourceClient(InterfaceUrls::patronActionSessionsUrl,
+        "patronActionSessions");
   }
 
-  public static ResourceClient forPatronSessionRecords(OkapiHttpClient client) {
-    return new ResourceClient(client, InterfaceUrls::patronActionSessionsUrl,
-      "patron session records", "patronActionSessions");
+  public static ResourceClient forExpiredSessions() {
+    return new ResourceClient(InterfaceUrls::patronExpiredSessionsUrl,
+        "expired session records");
   }
 
-  public static ResourceClient forExpiredSessions(OkapiHttpClient client) {
-    return new ResourceClient(client, InterfaceUrls::patronExpiredSessionsUrl,
-      "expired session records");
+  public static ResourceClient forConfiguration() {
+    return new ResourceClient(InterfaceUrls::configurationUrl, "configs");
   }
 
-  public static ResourceClient forConfiguration(OkapiHttpClient client) {
-    return new ResourceClient(client, InterfaceUrls::configurationUrl,
-      "configuration entries", "configs");
-  }
-
-  public static ResourceClient forRenewByBarcode(OkapiHttpClient client) {
-    return new ResourceClient(client, subPath -> InterfaceUrls.renewByBarcodeUrl(),
-      "renew by barcode");
-  }
-
-  public static ResourceClient forRenewById(OkapiHttpClient client) {
-    return new ResourceClient(client, subPath -> InterfaceUrls.renewByIdUrl(),
-      "renew by id");
-  }
-
-  public static ResourceClient forOverrideRenewalByBarcode(OkapiHttpClient client) {
-    return new ResourceClient(
-      client, subPath -> InterfaceUrls.overrideRenewalByBarcodeUrl(),
-      "override renewal by barcode"
-    );
-  }
-
-  private ResourceClient(OkapiHttpClient client, UrlMaker urlMaker,
-      String resourceName, String collectionArrayPropertyName) {
-
-    this.client = client;
+  private ResourceClient(UrlMaker urlMaker, String collectionArrayPropertyName) {
     this.urlMaker = urlMaker;
-    this.resourceName = resourceName;
     this.collectionArrayPropertyName = collectionArrayPropertyName;
     restAssuredClient = new RestAssuredClient(getOkapiHeadersFromContext());
-  }
-
-  private ResourceClient(OkapiHttpClient client, UrlMaker urlMaker,
-    String resourceName) {
-
-    this(client, urlMaker, resourceName, resourceName);
   }
 
   public Response attemptCreate(Builder builder) throws MalformedURLException {
@@ -371,10 +319,8 @@ public class ResourceClient {
 
   //TODO: Replace return valu[e with MultipleJsonRecords
   public List<JsonObject> getAll() throws MalformedURLException {
-    final URL location = rootUrl();
-
     return mapToList(restAssuredClient
-      .get(location, noQuery(), limit(1000), noOffset(), 200, "get-all")
+      .get(rootUrl(), noQuery(), limit(1000), noOffset(), 200, "get-all")
       .getJson(), collectionArrayPropertyName);
   }
 

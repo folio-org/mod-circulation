@@ -72,7 +72,7 @@ public class ItemsInTransitReportTests extends APITests {
     TimeoutException,
     ExecutionException {
 
-    List<JsonObject> items = ResourceClient.forItemsInTransitReport(client).getAll();
+    List<JsonObject> items = ResourceClient.forItemsInTransitReport().getAll();
 
     assertTrue(items.isEmpty());
   }
@@ -99,7 +99,7 @@ public class ItemsInTransitReportTests extends APITests {
       .on(checkInDate)
       .at(firstServicePointId));
 
-    List<JsonObject> items = ResourceClient.forItemsInTransitReport(client).getAll();
+    List<JsonObject> items = ResourceClient.forItemsInTransitReport().getAll();
 
     assertThat(items.size(), is(1));
     JsonObject itemJson = items.get(0);
@@ -149,7 +149,7 @@ public class ItemsInTransitReportTests extends APITests {
       .on(checkInDate2)
       .at(firsServicePointId));
 
-    List<JsonObject> items = ResourceClient.forItemsInTransitReport(client).getAll();
+    List<JsonObject> items = ResourceClient.forItemsInTransitReport().getAll();
 
     assertThat(items.size(), is(2));
     JsonObject firstItemJson = getRecordById(items, smallAngryPlanet.getId()).get();
@@ -194,7 +194,7 @@ public class ItemsInTransitReportTests extends APITests {
       .on(checkInDate)
       .at(firstServicePointId));
 
-    List<JsonObject> items = ResourceClient.forItemsInTransitReport(client).getAll();
+    List<JsonObject> items = ResourceClient.forItemsInTransitReport().getAll();
 
     assertThat(items.size(), is(1));
     JsonObject itemJson = items.get(0);
@@ -243,7 +243,7 @@ public class ItemsInTransitReportTests extends APITests {
       .on(checkInDate2)
       .at(firstServicePointId));
 
-    List<JsonObject> items = ResourceClient.forItemsInTransitReport(client).getAll();
+    List<JsonObject> items = ResourceClient.forItemsInTransitReport().getAll();
 
     assertThat(items.size(), is(2));
     JsonObject firstItemJson = getRecordById(items, smallAngryPlanet.getId()).get();
@@ -309,7 +309,7 @@ public class ItemsInTransitReportTests extends APITests {
       .on(checkInDate2)
       .at(firstServicePointId));
 
-    List<JsonObject> items = ResourceClient.forItemsInTransitReport(client).getAll();
+    List<JsonObject> items = ResourceClient.forItemsInTransitReport().getAll();
 
     assertThat(items.size(), is(2));
     JsonObject firstItemJson = getRecordById(items, smallAngryPlanet.getId()).get();
@@ -357,7 +357,7 @@ public class ItemsInTransitReportTests extends APITests {
       .on(checkInDate2)
       .at(secondServicePointId));
 
-    List<JsonObject> items = ResourceClient.forItemsInTransitReport(client).getAll();
+    List<JsonObject> items = ResourceClient.forItemsInTransitReport().getAll();
 
     assertThat(items.size(), is(2));
     JsonObject firstItemJson = getRecordById(items, smallAngryPlanet.getId()).get();
@@ -420,7 +420,7 @@ public class ItemsInTransitReportTests extends APITests {
       .on(checkInDate1)
       .at(secondServicePointId));
 
-    List<JsonObject> items = ResourceClient.forItemsInTransitReport(client).getAll();
+    List<JsonObject> items = ResourceClient.forItemsInTransitReport().getAll();
 
     assertThat(items.size(), is(3));
 

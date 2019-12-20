@@ -121,8 +121,8 @@ public class InterfaceUrls {
       "/circulation/requests-reports/hold-shelf-clearance" + subPath);
   }
 
-  public static URL itemsInTransitReportUrl() {
-    return circulationModuleUrl("/inventory-reports/items-in-transit");
+  public static URL itemsInTransitReportUrl(String subPath) {
+    return circulationModuleUrl("/inventory-reports/items-in-transit" + subPath);
   }
 
    static URL pickSlipsUrl(String servicePointId) {
