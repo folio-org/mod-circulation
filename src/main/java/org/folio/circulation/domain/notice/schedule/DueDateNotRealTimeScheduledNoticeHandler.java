@@ -1,7 +1,7 @@
 package org.folio.circulation.domain.notice.schedule;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
-import static org.folio.circulation.domain.notice.schedule.DueDateScheduledNoticeHandler.REQUIRED_REC_TYPES;
+import static org.folio.circulation.domain.notice.schedule.DueDateScheduledNoticeHandler.REQUIRED_RECORD_TYPES;
 import static org.folio.circulation.support.AsyncCoordinationUtil.allResultsOf;
 import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.ResultBinding.mapResult;
@@ -73,7 +73,7 @@ public class DueDateNotRealTimeScheduledNoticeHandler {
 
   private CompletableFuture<Result<List<Pair<ScheduledNotice, LoanAndRelatedRecords>>>> handleFailures(
     List<Result<Pair<ScheduledNotice, LoanAndRelatedRecords>>> results) {
-    results.removeIf(r -> dueDateScheduledNoticeHandler.failedToFindRecordOfType(r, REQUIRED_REC_TYPES));
+    results.removeIf(r -> dueDateScheduledNoticeHandler.failedToFindRecordOfType(r, REQUIRED_RECORD_TYPES));
     return CompletableFuture.completedFuture(results)
       .thenApply(Result::combineAll);
   }
