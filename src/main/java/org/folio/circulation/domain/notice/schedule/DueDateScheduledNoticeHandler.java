@@ -30,11 +30,10 @@ import org.slf4j.LoggerFactory;
 public class DueDateScheduledNoticeHandler {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
-  private static final String NOTICE_DELETION_MSG = "Deleting scheduled notice {} as referenced {} {} was not found";
-  private static final String USER_REC_TYPE = "user";
-  private static final String ITEM_REC_TYPE = "item";
-  private static final String LOAN_REC_TYPE = "loan";
-  static final String[] REQUIRED_REC_TYPES = {USER_REC_TYPE, ITEM_REC_TYPE, LOAN_REC_TYPE};
+  private static final String USER_RECORD_TYPE = "user";
+  private static final String ITEM_RECORD_TYPE = "item";
+  private static final String LOAN_RECORD_TYPE = "loan";
+  static final String[] REQUIRED_RECORD_TYPES = { USER_RECORD_TYPE, ITEM_RECORD_TYPE, LOAN_RECORD_TYPE };
 
   public static DueDateScheduledNoticeHandler using(Clients clients, DateTime systemTime) {
     return new DueDateScheduledNoticeHandler(
@@ -96,31 +95,32 @@ public class DueDateScheduledNoticeHandler {
   CompletableFuture<Result<Loan>> deleteNoticeIfLoanIsMissingOrIncomplete(
       Result<Loan> result, ScheduledNotice notice) {
 
-    if (failedToFindRecordOfType(result, LOAN_REC_TYPE)) {
-      return deleteInvalidNoticeAndFail(notice, LOAN_REC_TYPE, notice.getLoanId());
+    if (failedToFindRecordOfType(result, LOAN_RECORD_TYPE)) {
+      return deleteInvalidNoticeAndFail(notice, LOAN_RECORD_TYPE, notice.getLoanId());
     }
 
     if (result.succeeded()) {
       Loan loan = result.value();
       if (loan.getItem().isNotFound()) {
-        return deleteInvalidNoticeAndFail(notice, ITEM_REC_TYPE, loan.getItemId());
+        return deleteInvalidNoticeAndFail(notice, ITEM_RECORD_TYPE, loan.getItemId());
       }
       if (loan.getUser() == null) {
-        return deleteInvalidNoticeAndFail(notice, USER_REC_TYPE, loan.getUserId());
+        return deleteInvalidNoticeAndFail(notice, USER_RECORD_TYPE, loan.getUserId());
       }
     }
     return completedFuture(result);
   }
 
   private CompletableFuture<Result<Loan>> deleteInvalidNoticeAndFail(
-      ScheduledNotice notice, String missingRecordType, String missingRecordId) {
-    log.info(NOTICE_DELETION_MSG, notice.getId(), missingRecordType, missingRecordId);
+      ScheduledNotice notice, String recordType, String recordId) {
+
+    log.info("Deleting scheduled notice {} as referenced {} {} was not found", notice.getId(), recordType, recordId);
     return scheduledNoticesRepository.delete(notice)
-      .thenApply(r -> r.next(n -> failed(new RecordNotFoundFailure(missingRecordType, missingRecordId))));
+      .thenApply(r -> r.next(n -> failed(new RecordNotFoundFailure(recordType, recordId))));
   }
 
   private Result<ScheduledNotice> handleFailure(HttpFailure failure) {
-    if (isRecordNotFoundFailureForType(failure, REQUIRED_REC_TYPES)) {
+    if (isRecordNotFoundFailureForType(failure, REQUIRED_RECORD_TYPES)) {
       return succeeded(null);
     }
     return failed(failure);
