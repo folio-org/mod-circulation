@@ -237,7 +237,7 @@ public class ItemRepository {
       .findFirst();
   }
 
-  private CompletableFuture<Result<Collection<Item>>> fetchItems(
+  private CompletableFuture<Result<Collection<Item>>> fetchItemsForLoans(
     Collection<String> itemIds) {
 
     final MultipleRecordFetcher<Item> fetcher
@@ -327,7 +327,7 @@ public class ItemRepository {
   private CompletableFuture<Result<Collection<Item>>> fetchFor(
     Collection<String> itemIds) {
 
-    return fetchItems(itemIds)
+    return fetchItemsForLoans(itemIds)
       .thenComposeAsync(this::fetchHoldingRecords)
       .thenComposeAsync(this::fetchInstances)
       .thenComposeAsync(this::fetchLocations)
@@ -363,7 +363,7 @@ public class ItemRepository {
       .thenComposeAsync(this::fetchLoanType);
   }
 
-  public <T extends ItemRelatedRecord> CompletableFuture<Result<MultipleRecords<T>>> fetchItems(
+  public <T extends ItemRelatedRecord> CompletableFuture<Result<MultipleRecords<T>>> fetchItemsForLoans(
     Result<MultipleRecords<T>> result,
     BiFunction<T, Item, T> includeItemMap) {
 

@@ -8,17 +8,25 @@ import static org.folio.circulation.support.JsonPropertyWriter.write;
 
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
+import org.drools.core.definitions.rule.impl.RuleImpl;
+import org.drools.core.event.DefaultAgendaEventListener;
+import org.drools.core.rule.RuleConditionElement;
 import org.folio.circulation.domain.Location;
 import org.kie.api.KieServices;
 import org.kie.api.builder.KieBuilder;
 import org.kie.api.builder.KieFileSystem;
 import org.kie.api.builder.Message.Level;
+import org.kie.api.event.rule.AfterMatchFiredEvent;
 import org.kie.api.runtime.KieContainer;
 import org.kie.api.runtime.KieSession;
 
 import io.vertx.core.MultiMap;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Holds a Drools kieSession to calculate a loan policy.
@@ -69,13 +77,15 @@ public class Drools {
    * Calculate the loan policy for itemTypeName and loanTypeName.
    * @param params request parameters
    * @param location - location with institution, library and campus
-   * @return the name of the loan policy
+   * @return Pair object with the name of the loan policy and list of rule conditions
    */
-  public Pair<String, Integer> loanPolicy(MultiMap params, Location location) {
+  public Pair<String, List<String>> loanPolicy(MultiMap params, Location location) {
     KieSession kieSession = createSession(params, location);
+    RuleEventListener ruleEventListener = new RuleEventListener();
+    kieSession.addEventListener(ruleEventListener);
     kieSession.fireAllRules();
     kieSession.dispose();
-    return new ImmutablePair<>(match.loanPolicyId, match.lineNumber);
+    return new ImmutablePair<>(match.loanPolicyId, ruleEventListener.getRuleConditions());
   }
 
   /**
@@ -94,7 +104,6 @@ public class Drools {
       JsonObject json = new JsonObject();
 
       write(json, "loanPolicyId", match.loanPolicyId);
-      write(json, "lineNumber", match.lineNumber);
 
       writeLineMatch(json);
 
@@ -111,11 +120,11 @@ public class Drools {
    * @param location - location with institution, library and campus
    * @return the name of the request policy
    */
-  public Pair<String, Integer> requestPolicy(MultiMap params, Location location) {
+  public Pair<String, List<String>> requestPolicy(MultiMap params, Location location) {
     KieSession kieSession = createSession(params, location);
     kieSession.fireAllRules();
     kieSession.dispose();
-    return new ImmutablePair<>(match.requestPolicyId, match.lineNumber);
+    return new ImmutablePair<>(match.requestPolicyId, new ArrayList<>());
   }
 
    /**
@@ -150,11 +159,11 @@ public class Drools {
    * @param location - location with institution, library and campus
    * @return the name of the notice policy
    */
-  public Pair<String, Integer> noticePolicy(MultiMap params, Location location) {
+  public Pair<String, List<String>> noticePolicy(MultiMap params, Location location) {
     KieSession kieSession = createSession(params, location);
     kieSession.fireAllRules();
     kieSession.dispose();
-    return new ImmutablePair<>(match.noticePolicyId, match.lineNumber);
+    return new ImmutablePair<>(match.noticePolicyId, new ArrayList<>());
   }
 
    /**
@@ -285,5 +294,31 @@ public class Drools {
    */
   static String requestPolicy(String droolsFile, MultiMap params, Location location) {
     return new Drools(droolsFile).requestPolicy(params, location).getKey();
+  }
+
+  private class RuleEventListener extends DefaultAgendaEventListener {
+
+    private List<RuleConditionElement> ruleConditionElements;
+
+    @Override
+    public void afterMatchFired(AfterMatchFiredEvent event) {
+      RuleImpl rule = (RuleImpl) event.getMatch().getRule();
+      ruleConditionElements = rule.getLhs().getChildren();
+    }
+
+    public List<String> getRuleConditions() {
+
+      return ruleConditionElements.stream()
+        .map(Object::toString)
+        .map(this::getRuleConditionFromStringRuleRepresentation)
+        .collect(Collectors.toList());
+    }
+
+    private String getRuleConditionFromStringRuleRepresentation(String stringRepresentation) {
+      int endIndex = stringRepresentation.indexOf("]");
+      int startIndex = stringRepresentation.lastIndexOf(".") + 1;
+
+      return stringRepresentation.substring(startIndex, endIndex);
+    }
   }
 }

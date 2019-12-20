@@ -2,6 +2,7 @@ package org.folio.circulation.resources;
 
 import static org.folio.circulation.support.Result.succeeded;
 
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 import org.apache.commons.lang3.tuple.Pair;
@@ -24,7 +25,7 @@ public class NoticeCirculationRulesEngineResource extends AbstractCirculationRul
   }
 
   @Override
-  protected CompletableFuture<Result<Pair<String, Integer>>> getPolicyIdAndRuleLine(MultiMap params, Drools drools, Location location) {
+  protected CompletableFuture<Result<Pair<String, List<String>>>> getPolicyIdAndConditionsList(MultiMap params, Drools drools, Location location) {
     return CompletableFuture.completedFuture(succeeded(drools.noticePolicy(params, location)));
   }
 

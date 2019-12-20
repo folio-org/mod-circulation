@@ -6,6 +6,7 @@ import static org.folio.circulation.support.http.server.ServerErrorResponse.inte
 
 import java.lang.invoke.MethodHandles;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
@@ -266,7 +267,7 @@ public abstract class AbstractCirculationRulesEngineResource extends Resource {
           .mapTo(Location::from)
           .whenNotFound(failed(new ServerErrorFailure("Can`t find location")))
           .fetch(request.params().get(LOCATION_ID_NAME))
-          .thenCompose(r -> r.after(location -> getPolicyIdAndRuleLine(request.params(), drools, location)))
+          .thenCompose(r -> r.after(location -> getPolicyIdAndConditionsList(request.params(), drools, location)))
           .thenCompose(r -> r.after(this::buildJsonResult))
           .thenApply(OkJsonResponseResult::from)
           .thenAccept(result -> result.writeTo(routingContext.response()));
@@ -278,10 +279,10 @@ public abstract class AbstractCirculationRulesEngineResource extends Resource {
     });
   }
 
-  private CompletableFuture<Result<JsonObject>> buildJsonResult(Pair<String, Integer> policyId){
+  private CompletableFuture<Result<JsonObject>> buildJsonResult(Pair<String, List<String>> policyIdAndConditionsPair){
     return CompletableFuture.completedFuture(succeeded(new JsonObject()
-      .put(getPolicyIdKey(), policyId.getKey())
-      .put("lineNumber", policyId.getValue())
+      .put(getPolicyIdKey(), policyIdAndConditionsPair.getKey())
+      .put("conditions", policyIdAndConditionsPair.getValue())
     ));
   }
 
@@ -342,7 +343,7 @@ public abstract class AbstractCirculationRulesEngineResource extends Resource {
         invalidUuid(request, LOCATION_ID_NAME);
   }
 
-  protected abstract CompletableFuture<Result<Pair<String, Integer>>> getPolicyIdAndRuleLine(MultiMap params, Drools drools, Location location);
+  protected abstract CompletableFuture<Result<Pair<String, List<String>>>> getPolicyIdAndConditionsList(MultiMap params, Drools drools, Location location);
 
   protected abstract String getPolicyIdKey();
 

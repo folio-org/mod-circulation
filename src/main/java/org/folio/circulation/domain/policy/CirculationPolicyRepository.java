@@ -8,6 +8,7 @@ import static org.folio.circulation.support.ResultBinding.mapResult;
 import static org.folio.circulation.support.results.CommonFailures.failedDueToServerError;
 
 import java.lang.invoke.MethodHandles;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 import io.vertx.core.json.JsonObject;
@@ -75,8 +76,8 @@ public abstract class CirculationPolicyRepository<T> {
       .thenApply(result -> result.next(this::mapToPolicy));
   }
 
-  public CompletableFuture<Result<Pair<String, Integer>>> lookupPolicyId(Item item, User user) {
-    CompletableFuture<Result<Pair<String, Integer>>> findLoanPolicyCompleted = new CompletableFuture<>();
+  public CompletableFuture<Result<Pair<String, List<String>>>> lookupPolicyId(Item item, User user) {
+    CompletableFuture<Result<Pair<String, List<String>>>> findLoanPolicyCompleted = new CompletableFuture<>();
 
     if (item.isNotFound()) {
       return completedFuture(failedDueToServerError(
@@ -113,18 +114,18 @@ public abstract class CirculationPolicyRepository<T> {
         log.info("Rules response {}", response.getBody());
 
         String policyId = fetchPolicyId(response.getJson());
-        Integer lineNumber = response.getJson().getInteger("lineNumber");
+        List<String> conditions = response.getJson().getJsonArray("conditions").getList();
 
         log.info("Policy to fetch based upon rules {}", policyId);
 
-        findLoanPolicyCompleted.complete(succeeded(new ImmutablePair<>(policyId, lineNumber)));
+        findLoanPolicyCompleted.complete(succeeded(new ImmutablePair<>(policyId, conditions)));
       }
     });
 
     return findLoanPolicyCompleted;
   }
 
-  public CompletableFuture<Result<Integer>> lookupLineNumber(Item item, User user) {
+  public CompletableFuture<Result<List<String>>> lookupConditions(Item item, User user) {
 
     return lookupPolicyId(item, user).thenApply(mapResult(Pair::getValue));
   }
