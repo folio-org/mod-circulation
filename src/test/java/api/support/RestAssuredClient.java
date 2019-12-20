@@ -5,6 +5,7 @@ import static org.folio.circulation.support.http.OkapiHeader.OKAPI_URL;
 import static org.folio.circulation.support.http.OkapiHeader.TENANT;
 
 import java.net.URL;
+import java.util.Map;
 
 import org.folio.circulation.support.http.OkapiHeader;
 import org.folio.circulation.support.http.client.Response;
@@ -114,6 +115,21 @@ public class RestAssuredClient {
     return given()
       .log().all()
       .spec(defaultHeaders(requestId))
+      .spec(timeoutConfig())
+      .when().get(url)
+      .then()
+      .log().all()
+      .statusCode(expectedStatusCode)
+      .extract().response();
+  }
+
+  public static io.restassured.response.Response get(
+    URL url, Map<String, String> queryStringParameters, int expectedStatusCode,
+    String requestId) {
+
+    return given()
+      .spec(defaultHeaders(requestId))
+      .queryParams(queryStringParameters)
       .spec(timeoutConfig())
       .when().get(url)
       .then()

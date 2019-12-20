@@ -303,7 +303,7 @@ public class LoanDueDatesAfterRecallTests extends APITests {
 
     freezeTime(loanDate);
 
-    final IndividualResource loan = loansClient.create(new LoanBuilder()
+    final IndividualResource loan = loansFixture.createLoan(new LoanBuilder()
         .open()
         .withItemId(smallAngryPlanet.getId())
         .withUserId(steve.getId())
