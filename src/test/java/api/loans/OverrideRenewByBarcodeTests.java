@@ -100,7 +100,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
 
     loansFixture.checkOutByBarcode(smallAngryPlanet, steve);
 
-    usersClient.delete(steve.getId());
+    usersFixture.remove(steve);
 
     final Response response = loansFixture.attemptOverride(smallAngryPlanet,
       steve, OVERRIDE_COMMENT, null);
