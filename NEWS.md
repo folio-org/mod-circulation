@@ -1,3 +1,7 @@
+## 17.0.1 2019-12-20
+
+* Includes location unit permissions for check in endpoint (CIRC-603)
+
 ## 17.0.0 2019-12-02
 
 * Introduces ability to reorder requests in an item’s queue (CIRC-446, CIRC-455, CIRC-531)
