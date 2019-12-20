@@ -13,7 +13,6 @@ import java.util.UUID;
 
 import org.folio.circulation.domain.ConfigurationRepository;
 import org.folio.circulation.domain.Item;
-import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.domain.LoanRepository;
@@ -150,8 +149,7 @@ public class CheckOutByBarcodeResource extends Resource {
       .thenCombineAsync(itemRepository.fetchByBarcode(itemBarcode), this::addItem)
       .thenApply(itemNotFoundValidator::refuseWhenItemNotFound)
       .thenApply(alreadyCheckedOutValidator::refuseWhenItemIsAlreadyCheckedOut)
-      .thenApply(l -> itemStatusValidator.refuseWhenItemHasInvalidStatus(l, ItemStatus.MISSING))
-      .thenApply(l -> itemStatusValidator.refuseWhenItemHasInvalidStatus(l, ItemStatus.DECLARED_LOST))
+      .thenApply(itemStatusValidator::refuseWhenItemStatusIsInvalid)
       .thenComposeAsync(r -> r.after(proxyRelationshipValidator::refuseWhenInvalid))
       .thenComposeAsync(r -> r.after(openLoanValidator::refuseWhenHasOpenLoan))
       .thenComposeAsync(r -> r.after(requestQueueRepository::get))

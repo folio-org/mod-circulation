@@ -1577,17 +1577,6 @@ public class RequestsAPICreationTests extends APITests {
     return missingItem;
   }
 
-  public static IndividualResource setupDeclaredLostItem(ItemsFixture itemsFixture)
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException,
-    MalformedURLException {
-    IndividualResource declaredLostItem = itemsFixture.basedUponSmallAngryPlanet(ItemBuilder::declaredLost);
-    assertThat(declaredLostItem.getResponse().getJson().getJsonObject("status").getString("name"), is(ItemStatus.DECLARED_LOST.getValue()));
-
-    return declaredLostItem;
-  }
-
   @Test
   public void pageRequestNoticeIsSentWhenPolicyDefinesPageRequestNoticeConfiguration()
     throws InterruptedException,

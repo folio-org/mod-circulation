@@ -1,10 +1,10 @@
 package api.loans;
 
-import static api.requests.RequestsAPICreationTests.setupDeclaredLostItem;
 import static api.requests.RequestsAPICreationTests.setupMissingItem;
 import static api.support.APITestContext.END_OF_2019_DUE_DATE;
 import static api.support.builders.ItemBuilder.AVAILABLE;
 import static api.support.builders.ItemBuilder.CHECKED_OUT;
+import static api.support.fixtures.ItemsFixture.setupDeclaredLostItem;
 import static api.support.matchers.CheckOutByBarcodeResponseMatchers.hasItemBarcodeParameter;
 import static api.support.matchers.CheckOutByBarcodeResponseMatchers.hasLoanPolicyParameters;
 import static api.support.matchers.CheckOutByBarcodeResponseMatchers.hasProxyUserBarcodeParameter;

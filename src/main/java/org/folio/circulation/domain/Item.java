@@ -188,7 +188,7 @@ public class Item {
     return ItemStatus.from(getStatusName(), getStatusDate());
   }
 
-  private String getStatusName() {
+  public String getStatusName() {
     return getNestedStringProperty(getItem(), ItemProperties.STATUS_PROPERTY, "name");
   }
 

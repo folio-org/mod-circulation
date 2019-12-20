@@ -1,7 +1,7 @@
 package api.loans;
 
-import static api.requests.RequestsAPICreationTests.setupDeclaredLostItem;
 import static api.requests.RequestsAPICreationTests.setupMissingItem;
+import static api.support.fixtures.ItemsFixture.setupDeclaredLostItem;
 import static api.support.http.AdditionalHttpStatusCodes.UNPROCESSABLE_ENTITY;
 import static api.support.http.CqlQuery.queryFromTemplate;
 import static api.support.http.InterfaceUrls.loansUrl;

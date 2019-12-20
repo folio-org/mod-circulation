@@ -19,7 +19,7 @@ public class ItemStatusValidator {
     this.itemStatusErrorFunction = itemStatusErrorFunction;
   }
 
-  public Result<LoanAndRelatedRecords> refuseWhenItemHasInvalidStatus(
+  private Result<LoanAndRelatedRecords> checkAndRefuseItem(
     Result<LoanAndRelatedRecords> loanAndRelatedRecords, ItemStatus status) {
 
     return loanAndRelatedRecords.failWhen(
@@ -29,10 +29,16 @@ public class ItemStatusValidator {
         String message =
           String.format("%s (%s) (Barcode:%s) has the item status %s and cannot be checked out",
             item.getTitle(),
-            item.getMaterialType().getString("name"),
+            item.getMaterialTypeName(),
             item.getBarcode(),
-            item.getStatus().getValue());
+            item.getStatusName());
         return itemStatusErrorFunction.apply(message);
       });
+  }
+
+  public Result<LoanAndRelatedRecords> refuseWhenItemStatusIsInvalid(Result<LoanAndRelatedRecords> loanAndRelatedRecords) {
+    return loanAndRelatedRecords
+      .next(p -> checkAndRefuseItem(loanAndRelatedRecords, ItemStatus.MISSING))
+      .next(p -> checkAndRefuseItem(loanAndRelatedRecords, ItemStatus.DECLARED_LOST));
   }
 }

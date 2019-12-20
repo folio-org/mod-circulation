@@ -3,6 +3,8 @@ package api.support.fixtures;
 import static java.util.function.Function.identity;
 import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
 import static org.folio.circulation.support.JsonPropertyWriter.write;
+import static org.hamcrest.core.Is.is;
+import static org.hamcrest.junit.MatcherAssert.assertThat;
 
 import java.net.MalformedURLException;
 import java.util.List;
@@ -11,6 +13,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Function;
 
+import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.OkapiHttpClient;
 
@@ -353,6 +356,17 @@ public class ItemsFixture {
       .withNoTemporaryLocation()
       .withCallNumber("123456")
       .withCallNumberSuffix("CIRC");
+  }
+
+  public static IndividualResource setupDeclaredLostItem(ItemsFixture itemsFixture)
+    throws InterruptedException,
+    ExecutionException,
+    TimeoutException,
+    MalformedURLException {
+    IndividualResource declaredLostItem = itemsFixture.basedUponSmallAngryPlanet(ItemBuilder::declaredLost);
+    assertThat(declaredLostItem.getResponse().getJson().getJsonObject("status").getString("name"), is(ItemStatus.DECLARED_LOST.getValue()));
+
+    return declaredLostItem;
   }
 
   public HoldingBuilder applyCallNumberHoldings(

@@ -11,7 +11,6 @@ import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.domain.AccountRepository;
 import org.folio.circulation.domain.Item;
-import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.domain.LoanRepository;
@@ -101,8 +100,7 @@ public class LoanCollectionResource extends CollectionResource {
       .thenApply(itemNotFoundValidator::refuseWhenItemNotFound)
       .thenApply(this::refuseWhenHoldingDoesNotExist)
       .thenApply(alreadyCheckedOutValidator::refuseWhenItemIsAlreadyCheckedOut)
-      .thenApply(l -> itemStatusValidator.refuseWhenItemHasInvalidStatus(l, ItemStatus.MISSING))
-      .thenApply(l -> itemStatusValidator.refuseWhenItemHasInvalidStatus(l, ItemStatus.DECLARED_LOST))
+      .thenApply(itemStatusValidator::refuseWhenItemStatusIsInvalid)
       .thenComposeAsync(r -> r.after(proxyRelationshipValidator::refuseWhenInvalid))
       .thenCombineAsync(requestQueueRepository.get(loan.getItemId()), this::addRequestQueue)
       .thenCombineAsync(userRepository.getUserFailOnNotFound(loan.getUserId()), this::addUser)
