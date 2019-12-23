@@ -1,5 +1,7 @@
 package api.support.fixtures;
 
+import static api.support.APITestContext.getOkapiHeadersFromContext;
+
 import java.net.MalformedURLException;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
@@ -22,6 +24,7 @@ public class RequestsFixture {
   private final ResourceClient requestsClient;
   private final CancellationReasonsFixture cancellationReasonsFixture;
   private final ServicePointsFixture servicePointsFixture;
+  private final RestAssuredClient restAssuredClient;
 
   public RequestsFixture(
     ResourceClient requestsClient,
@@ -31,6 +34,7 @@ public class RequestsFixture {
     this.requestsClient = requestsClient;
     this.cancellationReasonsFixture = cancellationReasonsFixture;
     this.servicePointsFixture = servicePointsFixture;
+    restAssuredClient = new RestAssuredClient(getOkapiHeadersFromContext());
   }
 
   public IndividualResource place(RequestBuilder requestToBuild)
@@ -198,12 +202,11 @@ public class RequestsFixture {
     return requestsClient.attemptMove(requestToBuild);
   }
 
+  //TODO: Replace return type with MultipleJsonRecords
   public MultipleRecords<JsonObject> getQueueFor(IndividualResource item) {
-    //TODO: Replace with better parsing
     return MultipleRecords.from(
-      RestAssuredClient.from(
-        RestAssuredClient.get(InterfaceUrls.requestQueueUrl(item.getId()),
-      200, "request-queue-request")),
+        restAssuredClient.get(InterfaceUrls.requestQueueUrl(item.getId()),
+      200, "request-queue-request"),
       Function.identity() ,"requests").value();
   }
 }

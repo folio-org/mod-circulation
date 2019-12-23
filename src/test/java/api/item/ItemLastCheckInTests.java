@@ -1,5 +1,6 @@
 package api.item;
 
+import static api.support.APITestContext.getOkapiHeadersFromContext;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.junit.Assert.assertThat;
@@ -9,13 +10,15 @@ import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
-import api.support.APITestContext;
-import api.support.APITests;
-import io.vertx.core.json.JsonObject;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.junit.Test;
+
+import api.support.APITestContext;
+import api.support.APITests;
+import api.support.http.OkapiHeaders;
+import io.vertx.core.json.JsonObject;
 
 public class ItemLastCheckInTests extends APITests {
 
@@ -59,8 +62,12 @@ public class ItemLastCheckInTests extends APITests {
     UUID servicePointId = servicePointsFixture.cd1().getId();
     DateTime checkInDate = DateTime.now();
 
-    APITestContext.setUserId("");
-    loansFixture.checkInByBarcode(item, checkInDate, servicePointId);
+    final OkapiHeaders okapiHeaders = getOkapiHeadersFromContext()
+      .withRequestId("check-in-by-barcode-request")
+      .withUserId("");
+
+    loansFixture.checkInByBarcode(item, checkInDate, servicePointId, okapiHeaders);
+
     JsonObject lastCheckIn = itemsClient.get(item.getId()).getJson()
       .getJsonObject("lastCheckIn");
 
@@ -79,15 +86,19 @@ public class ItemLastCheckInTests extends APITests {
     UUID servicePointId = servicePointsFixture.cd1().getId();
     DateTime checkInDate = DateTime.now();
 
-    APITestContext.setUserId("INVALID_UUID");
-    loansFixture.checkInByBarcode(item, checkInDate, servicePointId);
+    final OkapiHeaders okapiHeaders = getOkapiHeadersFromContext()
+      .withRequestId("check-in-by-barcode-request")
+      .withUserId("INVALID_UUID");
+
+    loansFixture.checkInByBarcode(item, checkInDate, servicePointId, okapiHeaders);
+
     JsonObject lastCheckIn = itemsClient.get(item.getId()).getJson()
       .getJsonObject("lastCheckIn");
 
     assertThat(lastCheckIn.getString("dateTime"), is(checkInDate.toString()));
     assertThat(lastCheckIn.getString("servicePointId"),
       is(servicePointId.toString()));
-    assertThat(lastCheckIn.getString("staffMemberId"), is(APITestContext.getUserId()));
+    assertThat(lastCheckIn.getString("staffMemberId"), is("INVALID_UUID"));
   }
 
   @Test
@@ -100,6 +111,7 @@ public class ItemLastCheckInTests extends APITests {
     DateTime checkInDate = DateTime.now();
 
     loansFixture.checkInByBarcode(item, checkInDate, servicePointId);
+
     JsonObject lastCheckIn = itemsClient.get(item.getId()).getJson()
       .getJsonObject("lastCheckIn");
 
@@ -127,14 +139,21 @@ public class ItemLastCheckInTests extends APITests {
 
     DateTime secondCheckInDate = DateTime.now();
     UUID servicePointId2 = servicePointsFixture.cd2().getId();
-    APITestContext.setUserId(UUID.randomUUID().toString());
 
-    loansFixture.checkInByBarcode(item, secondCheckInDate, servicePointId2);
+    final String randomUserId = UUID.randomUUID().toString();
+
+    final OkapiHeaders okapiHeaders = getOkapiHeadersFromContext()
+      .withRequestId("check-in-by-barcode-request")
+      .withUserId(randomUserId);
+
+    loansFixture.checkInByBarcode(item, secondCheckInDate, servicePointId2,
+      okapiHeaders);
+
     lastCheckIn = itemsClient.get(item.getId()).getJson()
       .getJsonObject("lastCheckIn");
 
     assertThat(lastCheckIn.getString("dateTime"), is(secondCheckInDate.toString()));
     assertThat(lastCheckIn.getString("servicePointId"), is(servicePointId2.toString()));
-    assertThat(lastCheckIn.getString("staffMemberId"), is(APITestContext.getUserId()));
+    assertThat(lastCheckIn.getString("staffMemberId"), is(randomUserId));
   }
 }
