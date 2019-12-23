@@ -1,25 +1,21 @@
 package api.support;
 
 import static api.support.APITestContext.getOkapiHeadersFromContext;
+import static api.support.RestAssuredConfiguration.standardHeaders;
+import static api.support.RestAssuredConfiguration.timeoutConfig;
 import static io.restassured.RestAssured.given;
-import static org.folio.circulation.support.http.OkapiHeader.OKAPI_URL;
-import static org.folio.circulation.support.http.OkapiHeader.TENANT;
 
 import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Stream;
 
-import org.folio.circulation.support.http.OkapiHeader;
 import org.folio.circulation.support.http.client.Response;
 
 import api.support.http.CqlQuery;
 import api.support.http.Limit;
 import api.support.http.Offset;
 import api.support.http.OkapiHeaders;
-import io.restassured.RestAssured;
-import io.restassured.builder.RequestSpecBuilder;
-import io.restassured.config.HttpClientConfig;
 import io.restassured.specification.RequestSpecification;
 import io.vertx.core.http.CaseInsensitiveHeaders;
 import io.vertx.core.json.JsonObject;
@@ -176,40 +172,6 @@ public class RestAssuredClient {
       .log().all()
       .statusCode(expectedStatusCode)
       .extract().response());
-  }
-
-  private static RequestSpecification standardHeaders(OkapiHeaders okapiHeaders) {
-    final HashMap<String, String> headers = new HashMap<>();
-
-    headers.put(OKAPI_URL, okapiHeaders.getUrl().toString());
-    headers.put(TENANT, okapiHeaders.getTenantId());
-    headers.put(OkapiHeader.TOKEN, okapiHeaders.getToken());
-    headers.put(OkapiHeader.REQUEST_ID, okapiHeaders.getRequestId());
-
-    if (okapiHeaders.hasUserId()) {
-      headers.put(OkapiHeader.USER_ID, okapiHeaders.getUserId());
-    }
-
-    return new RequestSpecBuilder()
-      .addHeaders(headers)
-      .setAccept("application/json, text/plain")
-      .setContentType("application/json")
-      .build();
-  }
-
-  private static RequestSpecification timeoutConfig() {
-    final int defaultTimeOutInMilliseconds = 5000;
-
-    return timeoutConfig(defaultTimeOutInMilliseconds);
-  }
-
-  private static RequestSpecification timeoutConfig(int timeOutInMilliseconds) {
-    return new RequestSpecBuilder()
-      .setConfig(RestAssured.config()
-        .httpClient(HttpClientConfig.httpClientConfig()
-          .setParam("http.connection.timeout", timeOutInMilliseconds)
-          .setParam("http.socket.timeout", timeOutInMilliseconds)))
-      .build();
   }
 
   private static Response toResponse(io.restassured.response.Response response) {
