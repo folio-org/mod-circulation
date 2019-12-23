@@ -18,7 +18,7 @@ public class CirculationRulesAPITests extends APITests {
   }
 
   @Test
-  public void canPutAndGet() throws Exception {
+  public void canPutAndGet() {
     String rule = "priority: t, s, c, b, a, m, g\nfallback-policy: l no-circulation r no-hold n basic-notice o basic-overdue i basic-lost-item\n";
 
     circulationRulesFixture.updateCirculationRules(rule);

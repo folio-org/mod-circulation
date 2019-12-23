@@ -173,7 +173,7 @@ public abstract class APITests {
     = new LostItemFeePoliciesFixture(lostItemFeePolicyClient);
 
   protected final CirculationRulesFixture circulationRulesFixture
-    = new CirculationRulesFixture(client,
+    = new CirculationRulesFixture(
         new RestAssuredClient(getOkapiHeadersFromContext()));
 
   protected final ItemsFixture itemsFixture = new ItemsFixture(
