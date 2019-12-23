@@ -33,8 +33,8 @@ import org.folio.circulation.domain.representations.LoanProperties;
 import org.folio.circulation.domain.validation.AlreadyCheckedOutValidator;
 import org.folio.circulation.domain.validation.ExistingOpenLoanValidator;
 import org.folio.circulation.domain.validation.InactiveUserValidator;
-import org.folio.circulation.domain.validation.ItemMissingValidator;
 import org.folio.circulation.domain.validation.ItemNotFoundValidator;
+import org.folio.circulation.domain.validation.ItemStatusValidator;
 import org.folio.circulation.domain.validation.ProxyRelationshipValidator;
 import org.folio.circulation.domain.validation.RequestedByAnotherPatronValidator;
 import org.folio.circulation.domain.validation.ServicePointOfCheckoutPresentValidator;
@@ -123,7 +123,7 @@ public class CheckOutByBarcodeResource extends Resource {
       () -> singleValidationError(String.format("No item with barcode %s could be found", itemBarcode),
         ITEM_BARCODE, itemBarcode));
 
-    final ItemMissingValidator itemMissingValidator = new ItemMissingValidator(
+    final ItemStatusValidator itemStatusValidator = new ItemStatusValidator(
       message -> singleValidationError(message, ITEM_BARCODE, itemBarcode));
 
     final InactiveUserValidator inactiveUserValidator = InactiveUserValidator.forUser(userBarcode);
@@ -149,7 +149,7 @@ public class CheckOutByBarcodeResource extends Resource {
       .thenCombineAsync(itemRepository.fetchByBarcode(itemBarcode), this::addItem)
       .thenApply(itemNotFoundValidator::refuseWhenItemNotFound)
       .thenApply(alreadyCheckedOutValidator::refuseWhenItemIsAlreadyCheckedOut)
-      .thenApply(itemMissingValidator::refuseWhenItemIsMissing)
+      .thenApply(itemStatusValidator::refuseWhenItemStatusIsInvalid)
       .thenComposeAsync(r -> r.after(proxyRelationshipValidator::refuseWhenInvalid))
       .thenComposeAsync(r -> r.after(openLoanValidator::refuseWhenHasOpenLoan))
       .thenComposeAsync(r -> r.after(requestQueueRepository::get))

@@ -774,6 +774,23 @@ public class LoanAPITests extends APITests {
   }
 
   @Test
+  public void cannotCheckOutDeclaredLostItem()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    final IndividualResource declaredLostItem = itemsFixture.setupDeclaredLostItem();
+    final IndividualResource steve = usersFixture.steve();
+
+    Response response = loansFixture.attemptToCreateLoan(declaredLostItem, steve);
+
+    assertThat(response.getJson(), hasErrorWith(allOf(
+      hasMessageContaining("has the item status Declared lost"),
+      hasUUIDParameter("itemId", declaredLostItem.getId()))));
+  }
+
+  @Test
   public void cannotCreateLoanThatIsNotOpenOrClosed()
     throws InterruptedException,
     MalformedURLException,
