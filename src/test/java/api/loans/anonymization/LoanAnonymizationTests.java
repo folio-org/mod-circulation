@@ -1,59 +1,61 @@
 package api.loans.anonymization;
 
+import static api.support.APITestContext.getOkapiHeadersFromContext;
 import static api.support.http.InterfaceUrls.circulationAnonymizeLoansInTenantURL;
 import static api.support.http.InterfaceUrls.circulationAnonymizeLoansURL;
 
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import api.support.builders.ConfigRecordBuilder;
-import api.support.builders.LoanHistoryConfigurationBuilder;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
-import org.folio.circulation.support.http.client.ResponseHandler;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeUtils;
 import org.junit.Before;
 
 import api.support.APITests;
 import api.support.builders.AccountBuilder;
+import api.support.builders.ConfigRecordBuilder;
 import api.support.builders.FeefineActionsBuilder;
+import api.support.builders.LoanHistoryConfigurationBuilder;
 import api.support.http.InventoryItemResource;
+import api.support.http.TimedTaskClient;
 import io.vertx.core.json.JsonObject;
 
 abstract class LoanAnonymizationTests extends APITests {
-
-  private static final int TIMEOUT_SECONDS = 20;
   protected static final int ONE_MINUTE_AND_ONE = 60001;
   protected InventoryItemResource item1;
   protected IndividualResource user;
   protected IndividualResource servicePoint;
 
   @Before
-  public void setup() throws InterruptedException, MalformedURLException, TimeoutException, ExecutionException {
+  public void setup()
+    throws InterruptedException, MalformedURLException, TimeoutException, ExecutionException {
+
     item1 = itemsFixture.basedUponSmallAngryPlanet();
     user = usersFixture.charlotte();
     servicePoint = servicePointsFixture.cd1();
   }
 
-  void anonymizeLoansInTenant() throws InterruptedException, ExecutionException, TimeoutException {
+  void anonymizeLoansInTenant() {
     anonymizeLoans(circulationAnonymizeLoansInTenantURL());
+
     DateTimeUtils.setCurrentMillisSystem();
   }
 
-  void anonymizeLoansForUser(UUID userId) throws InterruptedException, ExecutionException, TimeoutException {
+  void anonymizeLoansForUser(UUID userId) {
     anonymizeLoans(circulationAnonymizeLoansURL(userId.toString()));
   }
 
-  private void anonymizeLoans(URL url) throws InterruptedException, ExecutionException, TimeoutException {
-    CompletableFuture<Response> createCompleted = new CompletableFuture<>();
-    client.post(url, null, ResponseHandler.any(createCompleted));
-    Response response = createCompleted.get(TIMEOUT_SECONDS, TimeUnit.SECONDS);
+  private void anonymizeLoans(URL url) {
+    final TimedTaskClient timedTaskClient = new TimedTaskClient(
+      getOkapiHeadersFromContext());
+
+    Response response = timedTaskClient.start(url, 200, "anonymize-loans");
+
     response.getJson()
       .getJsonArray("anonymizedLoans")
       .forEach(this::fakeAnonymizeLoan);
