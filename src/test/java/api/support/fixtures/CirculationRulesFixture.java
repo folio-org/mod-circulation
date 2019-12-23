@@ -1,5 +1,8 @@
 package api.support.fixtures;
 
+import static api.support.APITestContext.getOkapiHeadersFromContext;
+import static api.support.RestAssuredResponseConversion.toResponse;
+import static api.support.http.InterfaceUrls.circulationRulesUrl;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 
@@ -13,14 +16,27 @@ import org.folio.circulation.support.http.client.OkapiHttpClient;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.client.ResponseHandler;
 
+import api.support.RestAssuredClient;
 import api.support.http.InterfaceUrls;
 import io.vertx.core.json.JsonObject;
 
 public class CirculationRulesFixture {
   private final OkapiHttpClient client;
+  private final RestAssuredClient restAssuredClient;
 
-  public CirculationRulesFixture(OkapiHttpClient client) {
+  public CirculationRulesFixture(OkapiHttpClient client,
+      RestAssuredClient restAssuredClient) {
+
     this.client = client;
+    this.restAssuredClient = restAssuredClient;
+  }
+
+  public Response putRules(String body) {
+    return toResponse(restAssuredClient
+      .beginRequest("put-circulation-rules")
+      .body(body)
+      .when().put(circulationRulesUrl())
+      .then().extract().response());
   }
 
   public void updateCirculationRules(UUID loanPolicyId, UUID requestPolicyId,
@@ -70,5 +86,15 @@ public class CirculationRulesFixture {
 
     return String.format("priority: t, s, c, b, a, m, g%nfallback-policy: l %s r %s n %s o %s i %s%n",
       loanPolicyId, requestPolicyId, noticePolicyId, overdueFinePolicyId, lostItemFeePolicyId);
+  }
+
+  public Response getRules() {
+    final RestAssuredClient restAssuredClient = new RestAssuredClient(
+      getOkapiHeadersFromContext());
+
+    return toResponse(restAssuredClient
+      .beginRequest("get-circulation-rules")
+      .when().get(circulationRulesUrl())
+      .then().extract().response());
   }
 }

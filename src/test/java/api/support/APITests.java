@@ -1,6 +1,7 @@
 package api.support;
 
 import static api.support.APITestContext.createClient;
+import static api.support.APITestContext.getOkapiHeadersFromContext;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.core.Is.is;
@@ -172,7 +173,8 @@ public abstract class APITests {
     = new LostItemFeePoliciesFixture(lostItemFeePolicyClient);
 
   protected final CirculationRulesFixture circulationRulesFixture
-    = new CirculationRulesFixture(client);
+    = new CirculationRulesFixture(client,
+        new RestAssuredClient(getOkapiHeadersFromContext()));
 
   protected final ItemsFixture itemsFixture = new ItemsFixture(
     materialTypesFixture, loanTypesFixture, locationsFixture,
