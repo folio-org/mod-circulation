@@ -1,7 +1,10 @@
 package api;
 
+import static api.support.APITestContext.getOkapiHeadersFromContext;
+import static api.support.RestAssuredResponseConversion.toResponse;
+import static api.support.http.InterfaceUrls.circulationRulesUrl;
+import static org.hamcrest.CoreMatchers.containsStringIgnoringCase;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.containsStringIgnoringCase;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.core.Is.is;
 
@@ -13,7 +16,7 @@ import org.folio.circulation.support.http.client.ResponseHandler;
 import org.junit.Test;
 
 import api.support.APITests;
-import api.support.http.InterfaceUrls;
+import api.support.RestAssuredClient;
 import io.vertx.core.json.JsonObject;
 
 public class CirculationRulesAPITests extends APITests {
@@ -38,18 +41,25 @@ public class CirculationRulesAPITests extends APITests {
   }
 
   @Test
-  public void canReportInvalidJson() throws Exception {
-    CompletableFuture<Response> completed = new CompletableFuture<>();
-    client.put(InterfaceUrls.circulationRulesUrl(), "foo", ResponseHandler.any(completed));
-    Response response = completed.get(5, TimeUnit.SECONDS);
+  public void canReportInvalidJson() {
+    final RestAssuredClient restAssuredClient = new RestAssuredClient(
+        getOkapiHeadersFromContext());
+
+    final Response response = toResponse(restAssuredClient
+      .beginRequest("bad-circulation-rules-request")
+      .body("foo")
+      .when().put(circulationRulesUrl())
+      .then().extract().response());
+
     assertThat(response.getStatusCode(), is(422));
   }
 
   @Test
-  public void canReportValidationError() throws Exception {
+  public void canReportValidationError() {
     JsonObject rules = new JsonObject();
     rules.put("rulesAsText", "\t");
-    Response response = putExpectingFailure(rules);
+
+    Response response = putRules(rules.encodePrettily());
 
     assertThat(response.getStatusCode(), is(422));
 
@@ -62,7 +72,7 @@ public class CirculationRulesAPITests extends APITests {
 
   private Response get() throws Exception {
     CompletableFuture<Response> getCompleted = new CompletableFuture<>();
-    client.get(InterfaceUrls.circulationRulesUrl(), ResponseHandler.any(getCompleted));
+    client.get(circulationRulesUrl(), ResponseHandler.any(getCompleted));
     return getCompleted.get(5, TimeUnit.SECONDS);
   }
 
@@ -75,9 +85,14 @@ public class CirculationRulesAPITests extends APITests {
     return text;
   }
 
-  private Response putExpectingFailure(JsonObject rules) throws Exception {
-    CompletableFuture<Response> completed = new CompletableFuture<>();
-    client.put(InterfaceUrls.circulationRulesUrl(), rules, ResponseHandler.any(completed));
-    return completed.get(5, TimeUnit.SECONDS);
+  private Response putRules(String body) {
+    final RestAssuredClient restAssuredClient = new RestAssuredClient(
+      getOkapiHeadersFromContext());
+
+    return toResponse(restAssuredClient
+      .beginRequest("bad-circulation-rules-request")
+      .body(body)
+      .when().put(circulationRulesUrl())
+      .then().extract().response());
   }
 }

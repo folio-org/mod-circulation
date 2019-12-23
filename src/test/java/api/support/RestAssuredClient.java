@@ -27,11 +27,15 @@ public class RestAssuredClient {
     this.defaultHeaders = defaultHeaders;
   }
 
-  public Response get(URL location, String requestId) {
-    return toResponse(given()
+  public RequestSpecification beginRequest(String requestId) {
+    return given()
       .log().all()
       .spec(standardHeaders(defaultHeaders.withRequestId(requestId)))
-      .spec(timeoutConfig())
+      .spec(timeoutConfig());
+  }
+
+  public Response get(URL location, String requestId) {
+    return toResponse(beginRequest(requestId)
       .when().get(location)
       .then()
       .log().all()
@@ -65,10 +69,7 @@ public class RestAssuredClient {
   }
 
   public Response get(URL url, int expectedStatusCode, String requestId) {
-    return toResponse(given()
-      .log().all()
-      .spec(standardHeaders(defaultHeaders.withRequestId(requestId)))
-      .spec(timeoutConfig())
+    return toResponse(beginRequest(requestId)
       .when().get(url)
       .then()
       .log().all()
@@ -95,10 +96,7 @@ public class RestAssuredClient {
   }
 
   public Response post(JsonObject representation, URL url, String requestId) {
-    return toResponse(given()
-      .log().all()
-      .spec(standardHeaders(defaultHeaders.withRequestId(requestId)))
-      .spec(timeoutConfig())
+    return toResponse(beginRequest(requestId)
       .body(representation.encodePrettily())
       .when().post(url)
       .then()
@@ -109,9 +107,7 @@ public class RestAssuredClient {
   public Response post(JsonObject representation, URL url,
     int expectedStatusCode, String requestId) {
 
-    return toResponse(given()
-      .spec(standardHeaders(defaultHeaders.withRequestId(requestId)))
-      .spec(timeoutConfig())
+    return toResponse(beginRequest(requestId)
       .body(representation.encodePrettily())
       .when().post(url)
       .then()
@@ -136,10 +132,7 @@ public class RestAssuredClient {
   }
 
   public Response put(JsonObject representation, URL location, String requestId) {
-    return toResponse(given()
-      .log().all()
-      .spec(standardHeaders(defaultHeaders.withRequestId(requestId)))
-      .spec(timeoutConfig())
+    return toResponse(beginRequest(requestId)
       .body(representation.encodePrettily())
       .when().put(location)
       .then()
@@ -150,10 +143,7 @@ public class RestAssuredClient {
   public Response put(JsonObject representation, URL location,
     int expectedStatusCode, String requestId) {
 
-    return toResponse(given()
-      .log().all()
-      .spec(standardHeaders(defaultHeaders.withRequestId(requestId)))
-      .spec(timeoutConfig())
+    return toResponse(beginRequest(requestId)
       .body(representation.encodePrettily())
       .when().put(location)
       .then()
@@ -163,10 +153,7 @@ public class RestAssuredClient {
   }
 
   public Response delete(URL location, int expectedStatusCode, String requestId) {
-    return toResponse(given()
-      .log().all()
-      .spec(standardHeaders(defaultHeaders.withRequestId(requestId)))
-      .spec(timeoutConfig())
+    return toResponse(beginRequest(requestId)
       .when().delete(location)
       .then()
       .log().all()

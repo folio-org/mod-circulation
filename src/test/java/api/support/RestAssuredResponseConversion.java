@@ -5,7 +5,7 @@ import org.folio.circulation.support.http.client.Response;
 import io.vertx.core.http.CaseInsensitiveHeaders;
 
 public class RestAssuredResponseConversion {
-  static Response toResponse(io.restassured.response.Response response) {
+  public static Response toResponse(io.restassured.response.Response response) {
     final CaseInsensitiveHeaders mappedHeaders = new CaseInsensitiveHeaders();
 
     response.headers().iterator().forEachRemaining(h -> {
