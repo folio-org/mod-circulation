@@ -3,6 +3,7 @@ package api.support;
 import static api.support.APITestContext.getOkapiHeadersFromContext;
 import static api.support.RestAssuredConfiguration.standardHeaders;
 import static api.support.RestAssuredConfiguration.timeoutConfig;
+import static api.support.RestAssuredResponseConversion.toResponse;
 import static io.restassured.RestAssured.given;
 
 import java.net.URL;
@@ -17,7 +18,6 @@ import api.support.http.Limit;
 import api.support.http.Offset;
 import api.support.http.OkapiHeaders;
 import io.restassured.specification.RequestSpecification;
-import io.vertx.core.http.CaseInsensitiveHeaders;
 import io.vertx.core.json.JsonObject;
 
 public class RestAssuredClient {
@@ -172,16 +172,5 @@ public class RestAssuredClient {
       .log().all()
       .statusCode(expectedStatusCode)
       .extract().response());
-  }
-
-  private static Response toResponse(io.restassured.response.Response response) {
-    final CaseInsensitiveHeaders mappedHeaders = new CaseInsensitiveHeaders();
-
-    response.headers().iterator().forEachRemaining(h -> {
-      mappedHeaders.add(h.getName(), h.getValue());
-    });
-
-    return new Response(response.statusCode(), response.body().print(),
-      response.contentType(), mappedHeaders, null);
   }
 }
