@@ -34,16 +34,15 @@ import io.vertx.core.json.JsonObject;
 
 public class CirculationRulesEngineAPITests extends APITests {
 
-  public CirculationRulesEngineAPITests() throws InterruptedException, MalformedURLException, TimeoutException, ExecutionException {
+  public CirculationRulesEngineAPITests()
+      throws InterruptedException, MalformedURLException,
+      TimeoutException, ExecutionException {
+
     super(false);
   }
 
   private void setRules(String rules) {
-    try {
-      circulationRulesFixture.updateCirculationRules(rules);
-    } catch (Exception e) {
-      throw new RuntimeException(e);
-    }
+    circulationRulesFixture.updateCirculationRules(rules);
   }
 
   private Policy applyLoanPolicy(ItemType itemType, LoanType loanType,
