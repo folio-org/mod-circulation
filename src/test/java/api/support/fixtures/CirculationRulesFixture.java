@@ -85,10 +85,8 @@ public class CirculationRulesFixture {
   public Policy applyRulesForLoanPolicy(ItemType itemType, LoanType loanType,
     PatronGroup patronGroup, ItemLocation location) {
 
-    final Response response = restAssuredClient.get(
-        circulationRulesUrl("/loan-policy"),
-        getApplyParameters(itemType, loanType, patronGroup, location), 200,
-        "apply-rules-to-get-loan-policy");
+    final Response response = applyRulesForPolicy(itemType, loanType,
+        patronGroup, location, "/loan-policy", "apply-rules-to-get-loan-policy");
 
     String loanPolicyId = response.getJson().getString("loanPolicyId");
 
@@ -100,10 +98,9 @@ public class CirculationRulesFixture {
   public Policy applyRulesForRequestPolicy(ItemType itemType, LoanType loanType,
     PatronGroup patronGroup, ItemLocation location) {
 
-    final Response response = restAssuredClient.get(
-      circulationRulesUrl("/request-policy"),
-      getApplyParameters(itemType, loanType, patronGroup, location), 200,
-      "apply-rules-to-get-request-policy");
+    final Response response = applyRulesForPolicy(itemType, loanType,
+        patronGroup, location, "/request-policy",
+        "apply-rules-to-get-request-policy");
 
     String requestPolicyId = response.getJson().getString("requestPolicyId");
 
@@ -115,16 +112,22 @@ public class CirculationRulesFixture {
   public Policy applyRulesForNoticePolicy(ItemType itemType, LoanType loanType,
     PatronGroup patronGroup, ItemLocation location) {
 
-    final Response response = restAssuredClient.get(
-      circulationRulesUrl("/notice-policy"),
-      getApplyParameters(itemType, loanType, patronGroup, location), 200,
-      "apply-rules-to-get-notice-policy");
+    final Response response = applyRulesForPolicy(itemType, loanType,
+        patronGroup, location, "/notice-policy",
+        "apply-rules-to-get-notice-policy");
 
     String requestPolicyId = response.getJson().getString("noticePolicyId");
 
     assertThat(requestPolicyId, is(not(nullValue())));
 
     return new Policy(requestPolicyId);
+  }
+
+  private Response applyRulesForPolicy(ItemType itemType, LoanType loanType, PatronGroup patronGroup, ItemLocation location, String s, String s2) {
+    return restAssuredClient.get(
+      circulationRulesUrl(s),
+      getApplyParameters(itemType, loanType, patronGroup, location), 200,
+      s2);
   }
 
   private Collection<QueryStringParameter> getApplyParameters(ItemType itemType,
