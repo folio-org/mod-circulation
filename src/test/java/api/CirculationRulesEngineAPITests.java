@@ -426,16 +426,15 @@ public class CirculationRulesEngineAPITests extends APITests {
       patronGroup, location);
   }
 
-  private void updateCirculationRulesInStorageWithoutInvalidatingCache(String rules)
-    throws InterruptedException, ExecutionException, TimeoutException {
-
-    CompletableFuture<Response> putCompleted = new CompletableFuture<>();
-
+  private void updateCirculationRulesInStorageWithoutInvalidatingCache(String rules) {
     JsonObject json = new JsonObject().put("rulesAsText", rules);
 
-    client.put(circulationRulesStorageUrl(""), json, any(putCompleted));
-
-    putCompleted.get(5, TimeUnit.SECONDS);
+    restAssuredClient.beginRequest("update-rules-in-storage")
+      .body(json.encodePrettily())
+      .when()
+      .put(circulationRulesStorageUrl(""))
+      .then()
+      .log().all();
   }
 
   private void matchesLoanPolicy(JsonArray array, int match, Policy policy,
