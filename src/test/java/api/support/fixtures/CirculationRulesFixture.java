@@ -21,6 +21,7 @@ import org.folio.circulation.support.http.client.Response;
 
 import api.support.RestAssuredClient;
 import api.support.http.QueryStringParameter;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
 public class CirculationRulesFixture {
@@ -95,6 +96,16 @@ public class CirculationRulesFixture {
     return new Policy(loanPolicyId);
   }
 
+  public JsonArray applyAllRulesForLoanPolicy(ItemType itemType,
+      LoanType loanType, PatronGroup patronGroup, ItemLocation location) {
+
+    final Response response = applyRulesForPolicy(itemType, loanType,
+        patronGroup, location, "/loan-policy-all",
+        "apply-all-rules-to-get-loan-policy");
+
+    return response.getJson().getJsonArray("circulationRuleMatches");
+  }
+
   public Policy applyRulesForRequestPolicy(ItemType itemType, LoanType loanType,
     PatronGroup patronGroup, ItemLocation location) {
 
@@ -107,6 +118,16 @@ public class CirculationRulesFixture {
     assertThat(requestPolicyId, is(not(nullValue())));
 
     return new Policy(requestPolicyId);
+  }
+
+  public JsonArray applyAllRulesForRequestPolicy(ItemType itemType,
+    LoanType loanType, PatronGroup patronGroup, ItemLocation location) {
+
+    final Response response = applyRulesForPolicy(itemType, loanType,
+        patronGroup, location, "/request-policy-all",
+        "apply-all-rules-to-get-request-policy");
+
+    return response.getJson().getJsonArray("circulationRuleMatches");
   }
 
   public Policy applyRulesForNoticePolicy(ItemType itemType, LoanType loanType,
@@ -123,11 +144,24 @@ public class CirculationRulesFixture {
     return new Policy(requestPolicyId);
   }
 
-  private Response applyRulesForPolicy(ItemType itemType, LoanType loanType, PatronGroup patronGroup, ItemLocation location, String s, String s2) {
+  public JsonArray applyAllRulesForNoticePolicy(ItemType itemType,
+    LoanType loanType, PatronGroup patronGroup, ItemLocation location) {
+
+    final Response response = applyRulesForPolicy(itemType, loanType,
+      patronGroup, location, "/notice-policy-all",
+      "apply-all-rules-to-get-notice-policy");
+
+    return response.getJson().getJsonArray("circulationRuleMatches");
+  }
+
+  private Response applyRulesForPolicy(ItemType itemType, LoanType loanType,
+      PatronGroup patronGroup, ItemLocation location, String policyPath,
+      String requestId) {
+
     return restAssuredClient.get(
-      circulationRulesUrl(s),
+      circulationRulesUrl(policyPath),
       getApplyParameters(itemType, loanType, patronGroup, location), 200,
-      s2);
+      requestId);
   }
 
   private Collection<QueryStringParameter> getApplyParameters(ItemType itemType,

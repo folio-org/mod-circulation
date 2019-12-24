@@ -160,8 +160,11 @@ public class CirculationRulesEngineAPITests extends APITests {
     assertThat(response.getBody(), containsString(name));
   }
 
-  private void applyOneRequestParameterMissing(String p1, String p2, String p3, String missing) throws Exception {
+  private void applyOneRequestParameterMissing(String p1, String p2, String p3,
+      String missing) throws Exception {
+
     String name = missing.substring(0, missing.indexOf("="));
+
     CompletableFuture<Response> completed = new CompletableFuture<>();
     URL url = circulationRulesUrl("/request-policy?" + p1 + "&" + p2 + "&" + p3);
     client.get(url, any(completed));
@@ -333,97 +336,46 @@ public class CirculationRulesEngineAPITests extends APITests {
     assertThat(applyRulesForLoanPolicy(m2, t2, g2, s1), is(lp4));
   }
 
-  private void matchesLoanPolicy(JsonArray array, int match, Policy policy, int line) {
-    JsonObject o = array.getJsonObject(match);
-    assertThat("["+match+"].loanPolicyId of "+o, o.getString("loanPolicyId"), is(policy.id));
-    assertThat("["+match+"].circulationRuleLine of "+o, o.getInteger("circulationRuleLine"), is(line));
+  @Test
+  public void canDetermineAllLoanPolicyMatches() {
+    setRules(rules1);
+
+    JsonArray matches = circulationRulesFixture.applyAllRulesForLoanPolicy(
+        m2, t2, g2, s2);
+
+    assertThat(matches.size(), is(3));
+
+    matchesLoanPolicy(matches, 0, lp4, 4);
+    matchesLoanPolicy(matches, 1, lp3, 3);
+    matchesLoanPolicy(matches, 2, lp2, 2);
   }
 
   @Test
-  public void testLoanApplyAll() throws Exception {
+  public void canDetermineAllRequestPolicyMatches() {
     setRules(rules1);
-    CompletableFuture<Response> completed = new CompletableFuture<>();
-    URL url = circulationRulesUrl(
-        "/loan-policy-all"
-        + "?item_type_id="         + m2
-        + "&loan_type_id="         + t2
-        + "&patron_type_id="       + g2
-        + "&location_id="          + s2
-        );
-    client.get(url, any(completed));
-    Response response = completed.get(10, TimeUnit.SECONDS);
-    assertThat(response.getStatusCode() + " " + response.getBody(),
-        response.getStatusCode(), is(200));
-    JsonObject json = new JsonObject(response.getBody());
-    JsonArray array = json.getJsonArray("circulationRuleMatches");
-    matchesLoanPolicy(array, 0, lp4, 4);
-    matchesLoanPolicy(array, 1, lp3, 3);
-    matchesLoanPolicy(array, 2, lp2, 2);
-    assertThat(array.size(), is(3));
-  }
 
-  private void matchesRequestPolicy(JsonArray array, int match, Policy policy, int line) {
-    JsonObject o = array.getJsonObject(match);
-    assertThat("["+match+"].requestPolicyId of "+o, o.getString("requestPolicyId"), is(policy.id));
-    assertThat("["+match+"].circulationRuleLine of "+o, o.getInteger("circulationRuleLine"), is(line));
-  }
+    JsonArray matches = circulationRulesFixture.applyAllRulesForRequestPolicy(
+      m2, t2, g2, s2);
 
-  private void matchesNoticePolicy(JsonArray array, int match, Policy policy, int line) {
-    JsonObject o = array.getJsonObject(match);
-    assertThat("["+match+"].noticePolicyId of "+o, o.getString("noticePolicyId"), is(policy.id));
-    assertThat("["+match+"].circulationRuleLine of "+o, o.getInteger("circulationRuleLine"), is(line));
+    assertThat(matches.size(), is(3));
+
+    matchesRequestPolicy(matches, 0, rp1, 4);
+    matchesRequestPolicy(matches, 1, rp1, 3);
+    matchesRequestPolicy(matches, 2, rp1, 2);
   }
 
   @Test
-  public void testRequestApplyAll() throws Exception {
-    setRules(rules1);
-    CompletableFuture<Response> completed = new CompletableFuture<>();
-    URL url = circulationRulesUrl(
-        "/request-policy-all"
-        + "?item_type_id="         + m2
-        + "&loan_type_id="         + t2
-        + "&patron_type_id="       + g2
-        + "&location_id="          + s2
-        );
-    client.get(url, any(completed));
-    Response response = completed.get(10, TimeUnit.SECONDS);
-    assertThat(response.getStatusCode() + " " + response.getBody(),
-        response.getStatusCode(), is(200));
-    JsonObject json = new JsonObject(response.getBody());
-    JsonArray array = json.getJsonArray("circulationRuleMatches");
-    matchesRequestPolicy(array, 0, rp1, 4);
-    matchesRequestPolicy(array, 1, rp1, 3);
-    matchesRequestPolicy(array, 2, rp1, 2);
-    assertThat(array.size(), is(3));
-  }
-
-  @Test
-  public void canDetermineAllPatronNoticePolicyMatches() throws Exception {
+  public void canDetermineAllPatronNoticePolicyMatches() {
     setRules(rules1);
 
-    CompletableFuture<Response> completed = new CompletableFuture<>();
+    JsonArray matches = circulationRulesFixture.applyAllRulesForNoticePolicy(
+      m2, t2, g2, s2);
 
-    URL url = circulationRulesUrl(
-      "/notice-policy-all"
-        + "?item_type_id="         + m2
-        + "&loan_type_id="         + t2
-        + "&patron_type_id="       + g2
-        + "&location_id="          + s2
-    );
+    assertThat(matches.size(), is(3));
 
-    client.get(url, any(completed));
-
-    Response response = completed.get(10, TimeUnit.SECONDS);
-    assertThat(response.getStatusCode() + " " + response.getBody(),
-      response.getStatusCode(), is(200));
-    JsonObject json = new JsonObject(response.getBody());
-    JsonArray array = json.getJsonArray("circulationRuleMatches");
-
-    matchesNoticePolicy(array, 0, np1, 4);
-    matchesNoticePolicy(array, 1, np1, 3);
-    matchesNoticePolicy(array, 2, np1, 2);
-
-    assertThat(array.size(), is(3));
+    matchesNoticePolicy(matches, 0, np1, 4);
+    matchesNoticePolicy(matches, 1, np1, 3);
+    matchesNoticePolicy(matches, 2, np1, 2);
   }
 
   @Test
@@ -484,5 +436,41 @@ public class CirculationRulesEngineAPITests extends APITests {
     client.put(circulationRulesStorageUrl(""), json, any(putCompleted));
 
     putCompleted.get(5, TimeUnit.SECONDS);
+  }
+
+  private void matchesLoanPolicy(JsonArray array, int match, Policy policy,
+      int line) {
+
+    JsonObject o = array.getJsonObject(match);
+
+    assertThat("Loan policy ID should match",
+      o.getString("loanPolicyId"), is(policy.id));
+
+    assertThat("Circulation rule line number should match",
+      o.getInteger("circulationRuleLine"), is(line));
+  }
+
+  private void matchesRequestPolicy(JsonArray array, int match, Policy policy,
+      int line) {
+
+    JsonObject o = array.getJsonObject(match);
+
+    assertThat("Request policy ID should match",
+        o.getString("requestPolicyId"), is(policy.id));
+
+    assertThat("Circulation rule line number should match",
+        o.getInteger("circulationRuleLine"), is(line));
+  }
+
+  private void matchesNoticePolicy(JsonArray array, int match, Policy policy,
+      int line) {
+
+    JsonObject o = array.getJsonObject(match);
+
+    assertThat("Notice policy ID should match",
+        o.getString("noticePolicyId"), is(policy.id));
+
+    assertThat("Circulation rule line number should match",
+        o.getInteger("circulationRuleLine"), is(line));
   }
 }
