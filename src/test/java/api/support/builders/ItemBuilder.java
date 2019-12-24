@@ -17,6 +17,7 @@ public class ItemBuilder extends JsonBuilder implements Builder {
   public static final String IN_TRANSIT = "In transit";
   public static final String PAGED = "Paged";
   public static final String MISSING = "Missing";
+  public static final String DECLARED_LOST = "Declared lost";
   public static final String ON_ORDER = "On order";
   public static final String IN_PROCESS = "In process";
 
@@ -116,6 +117,10 @@ public class ItemBuilder extends JsonBuilder implements Builder {
 
   public ItemBuilder missing() {
     return withStatus(MISSING);
+  }
+
+  public ItemBuilder declaredLost() {
+    return withStatus(DECLARED_LOST);
   }
 
   public ItemBuilder onOrder() {

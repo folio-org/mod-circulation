@@ -13,6 +13,10 @@ public class RecordNotFoundFailure implements HttpFailure {
     this.id = id;
   }
 
+  public String getRecordType() {
+    return recordType;
+  }
+
   @Override
   public void writeTo(HttpServerResponse response) {
     ClientErrorResponse.notFound(response, toString());
