@@ -19,8 +19,8 @@ public class NamedQueryStringParameter implements QueryStringParameter {
       throw new IllegalArgumentException("name must not be empty");
     }
 
-    if(isBlank(value)) {
-      throw new IllegalArgumentException("value must not be empty");
+    if(value == null) {
+      throw new IllegalArgumentException("value must not be null");
     }
 
     this.name = name;

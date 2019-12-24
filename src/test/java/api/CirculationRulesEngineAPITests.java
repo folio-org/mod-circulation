@@ -2,6 +2,7 @@ package api;
 
 import static api.support.http.InterfaceUrls.circulationRulesStorageUrl;
 import static api.support.http.InterfaceUrls.circulationRulesUrl;
+import static api.support.http.api.support.NamedQueryStringParameter.namedParameter;
 import static org.folio.circulation.support.http.client.ResponseHandler.any;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
@@ -9,6 +10,8 @@ import static org.hamcrest.core.StringContains.containsString;
 
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -29,6 +32,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import api.support.APITests;
+import api.support.http.QueryStringParameter;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
@@ -228,34 +232,32 @@ public class CirculationRulesEngineAPITests extends APITests {
     applyOneNoticeParameterMissing(p[0], p[1], p[2],  p[3]);
   }
 
-  private void applyInvalidUuid(String i, String l, String p, String s, String type) {
-    CompletableFuture<Response> completed = new CompletableFuture<>();
-    URL url = circulationRulesUrl("/" + type + "-policy"
-        + "?item_type_id=" + i
-        + "&loan_type_id=" + l
-        + "&patron_type_id=" + p
-        + "&location_id=" + s);
-    client.get(url, any(completed));
-    Response response;
-    try {
-      response = completed.get(10, TimeUnit.SECONDS);
-    } catch (InterruptedException | ExecutionException | TimeoutException e) {
-      throw new RuntimeException (e);
+  private void applyInvalidUuid(String itemType, String loanType,
+      String patronGroup, String location, String type) {
+
+    final List<QueryStringParameter> parameters = new ArrayList<>();
+
+    if(itemType != null) {
+      parameters.add(namedParameter("item_type_id", itemType));
     }
-    assertThat(response.getStatusCode(), is(400));
+
+    if(loanType != null) {
+      parameters.add(namedParameter("loan_type_id", loanType));
+    }
+
+    if(patronGroup != null) {
+      parameters.add(namedParameter("patron_type_id", patronGroup));
+    }
+
+    if(location != null) {
+      parameters.add(namedParameter("location_id", location));
+    }
+
+    final Response response = restAssuredClient.get(
+        circulationRulesUrl("/" + type + "-policy"), parameters,
+        400, "apply-rules-with-invalid-parameters");
+
     assertThat(response.getBody(), containsString("uuid"));
-  }
-
-  private void applyInvalidUuid(String uuid) {
-    applyInvalidUuid( uuid, t1.id, lp1.id, s1.id, "loan");
-    applyInvalidUuid(m1.id,  uuid, lp1.id, s1.id, "loan");
-    applyInvalidUuid(m1.id, t1.id,  uuid,  s1.id, "loan");
-    applyInvalidUuid(m1.id, t1.id, lp1.id,  uuid, "loan");
-
-    applyInvalidUuid( uuid, t1.id, lp1.id, s1.id, "request");
-    applyInvalidUuid(m1.id,  uuid, lp1.id, s1.id, "request");
-    applyInvalidUuid(m1.id, t1.id,  uuid,  s1.id, "request");
-    applyInvalidUuid(m1.id, t1.id, lp1.id,  uuid, "request");
   }
 
   @Test
@@ -272,6 +274,18 @@ public class CirculationRulesEngineAPITests extends APITests {
     applyInvalidUuid("g0000000-0000-1000-0000-000000000000");
     applyInvalidUuid("00000000-0000-1000-8000-00000000000g");
     applyInvalidUuid("00000000000010008000000000000000");
+  }
+
+  private void applyInvalidUuid(String uuid) {
+    applyInvalidUuid(uuid, t1.id, lp1.id, s1.id, "loan");
+    applyInvalidUuid(m1.id,  uuid, lp1.id, s1.id, "loan");
+    applyInvalidUuid(m1.id, t1.id,  uuid,  s1.id, "loan");
+    applyInvalidUuid(m1.id, t1.id, lp1.id,  uuid, "loan");
+
+    applyInvalidUuid( uuid, t1.id, lp1.id, s1.id, "request");
+    applyInvalidUuid(m1.id,  uuid, lp1.id, s1.id, "request");
+    applyInvalidUuid(m1.id, t1.id,  uuid,  s1.id, "request");
+    applyInvalidUuid(m1.id, t1.id, lp1.id,  uuid, "request");
   }
 
   @Test
@@ -408,8 +422,8 @@ public class CirculationRulesEngineAPITests extends APITests {
   private Policy applyRulesForLoanPolicy(ItemType itemType, LoanType loanType,
       PatronGroup patronGroup, ItemLocation location) {
 
-    return circulationRulesFixture.applyRulesForLoanPolicy(itemType, loanType,
-        patronGroup, location);
+    return circulationRulesFixture.applyRulesForLoanPolicy(
+        itemType, loanType, patronGroup, location);
   }
 
   private Policy applyRequestPolicy(ItemType itemType, LoanType loanType,
