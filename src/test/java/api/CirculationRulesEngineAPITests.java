@@ -3,18 +3,14 @@ package api;
 import static api.support.http.InterfaceUrls.circulationRulesStorageUrl;
 import static api.support.http.InterfaceUrls.circulationRulesUrl;
 import static api.support.http.api.support.NamedQueryStringParameter.namedParameter;
-import static org.folio.circulation.support.http.client.ResponseHandler.any;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.StringContains.containsString;
 
 import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import org.folio.circulation.resources.LoanCirculationRulesEngineResource;
@@ -154,110 +150,28 @@ public class CirculationRulesEngineAPITests extends APITests {
         "apply-rules-with-no-parameters");
   }
 
-  private void applyOneLoanParameterMissing(String p1, String p2, String p3, String missing) throws Exception {
-    String name = missing.substring(0, missing.indexOf("="));
-    CompletableFuture<Response> completed = new CompletableFuture<>();
-    URL url = circulationRulesUrl("/loan-policy?" + p1 + "&" + p2 + "&" + p3);
-    client.get(url, any(completed));
-    Response response = completed.get(10, TimeUnit.SECONDS);
-    assertThat(response.getStatusCode(), is(400));
-    assertThat(response.getBody(), containsString(name));
-  }
-
-  private void applyOneRequestParameterMissing(String p1, String p2, String p3,
-      String missing) throws Exception {
-
-    String name = missing.substring(0, missing.indexOf("="));
-
-    CompletableFuture<Response> completed = new CompletableFuture<>();
-    URL url = circulationRulesUrl("/request-policy?" + p1 + "&" + p2 + "&" + p3);
-    client.get(url, any(completed));
-    Response response = completed.get(10, TimeUnit.SECONDS);
-    assertThat(response.getStatusCode(), is(400));
-    assertThat(response.getBody(), containsString(name));
-  }
-
-  private void applyOneNoticeParameterMissing(String p1, String p2, String p3, String missing) throws Exception {
-      String name = missing.substring(0, missing.indexOf("="));
-      CompletableFuture<Response> completed = new CompletableFuture<>();
-      URL url = circulationRulesUrl("/notice-policy?" + p1 + "&" + p2 + "&" + p3);
-      client.get(url, any(completed));
-      Response response = completed.get(10, TimeUnit.SECONDS);
-      assertThat(response.getStatusCode(), is(400));
-      assertThat(response.getBody(), containsString(name));
-    }
-
   @Test
-  public void applyOneLoanParameterMissing() throws Exception {
-    String [] p = {
-        "item_type_id=" + m1,
-        "loan_type_id=" + t1,
-        "patron_type_id=" + lp1,
-        "location_id=" + s1
-    };
-
-    applyOneLoanParameterMissing(p[1], p[2], p[3],  p[0]);
-    applyOneLoanParameterMissing(p[0], p[2], p[3],  p[1]);
-    applyOneLoanParameterMissing(p[0], p[1], p[3],  p[2]);
-    applyOneLoanParameterMissing(p[0], p[1], p[2],  p[3]);
+  public void applyOneLoanParameterMissing() {
+    applyRulesWithMissingParameters("loan", null, t1.id, lp1.id, s1.id, "item_type_id");
+    applyRulesWithMissingParameters("loan", m1.id, null, lp1.id, s1.id, "loan_type_id");
+    applyRulesWithMissingParameters("loan", m1.id, t1.id, null, s1.id, "patron_type_id");
+    applyRulesWithMissingParameters("loan", m1.id, t1.id, lp1.id, null, "location_id");
   }
 
   @Test
-  public void applyOneRequestParameterMissing() throws Exception {
-    String[] p = {
-        "item_type_id=" + m1,
-        "loan_type_id=" + t1,
-        "patron_type_id=" + lp1,
-        "location_id=" + s1
-    };
-
-    applyOneRequestParameterMissing(p[1], p[2], p[3],  p[0]);
-    applyOneRequestParameterMissing(p[0], p[2], p[3],  p[1]);
-    applyOneRequestParameterMissing(p[0], p[1], p[3],  p[2]);
-    applyOneRequestParameterMissing(p[0], p[1], p[2],  p[3]);
+  public void applyOneRequestParameterMissing() {
+    applyRulesWithMissingParameters("request", null, t1.id, lp1.id, s1.id, "item_type_id");
+    applyRulesWithMissingParameters("request", m1.id, null, lp1.id, s1.id, "loan_type_id");
+    applyRulesWithMissingParameters("request", m1.id, t1.id, null, s1.id, "patron_type_id");
+    applyRulesWithMissingParameters("request", m1.id, t1.id, lp1.id, null, "location_id");
   }
 
   @Test
-  public void applyOneNoticeParameterMissing() throws Exception {
-    String[] p = {
-        "item_type_id=" + m1,
-        "loan_type_id=" + t1,
-        "patron_type_id=" + lp1,
-        "location_id=" + s1
-    };
-
-    applyOneNoticeParameterMissing(p[1], p[2], p[3],  p[0]);
-    applyOneNoticeParameterMissing(p[0], p[2], p[3],  p[1]);
-    applyOneNoticeParameterMissing(p[0], p[1], p[3],  p[2]);
-    applyOneNoticeParameterMissing(p[0], p[1], p[2],  p[3]);
-  }
-
-  private void applyInvalidUuid(String itemType, String loanType,
-      String patronGroup, String location, String type) {
-
-    final List<QueryStringParameter> parameters = new ArrayList<>();
-
-    if(itemType != null) {
-      parameters.add(namedParameter("item_type_id", itemType));
-    }
-
-    if(loanType != null) {
-      parameters.add(namedParameter("loan_type_id", loanType));
-    }
-
-    if(patronGroup != null) {
-      parameters.add(namedParameter("patron_type_id", patronGroup));
-    }
-
-    if(location != null) {
-      parameters.add(namedParameter("location_id", location));
-    }
-
-    final Response response = restAssuredClient.get(
-        circulationRulesUrl("/" + type + "-policy"), parameters,
-        400, "apply-rules-with-invalid-parameters");
-
-    assertThat(response.getBody(), containsString("uuid"));
+  public void applyOneNoticeParameterMissing() {
+    applyRulesWithMissingParameters("notice", null, t1.id, lp1.id, s1.id, "item_type_id");
+    applyRulesWithMissingParameters("notice", m1.id, null, lp1.id, s1.id, "loan_type_id");
+    applyRulesWithMissingParameters("notice", m1.id, t1.id, null, s1.id, "patron_type_id");
+    applyRulesWithMissingParameters("notice", m1.id, t1.id, lp1.id, null, "location_id");
   }
 
   @Test
@@ -286,6 +200,15 @@ public class CirculationRulesEngineAPITests extends APITests {
     applyInvalidUuid(m1.id,  uuid, lp1.id, s1.id, "request");
     applyInvalidUuid(m1.id, t1.id,  uuid,  s1.id, "request");
     applyInvalidUuid(m1.id, t1.id, lp1.id,  uuid, "request");
+  }
+
+  private void applyInvalidUuid(String itemType, String loanType,
+    String patronGroup, String location, String type) {
+
+    final Response response = applyRulesWithInvalidParameters(type, itemType,
+        loanType, patronGroup, location);
+
+    assertThat(response.getBody(), containsString("uuid"));
   }
 
   @Test
@@ -485,5 +408,41 @@ public class CirculationRulesEngineAPITests extends APITests {
 
     assertThat("Circulation rule line number should match",
         o.getInteger("circulationRuleLine"), is(line));
+  }
+
+  private Response applyRulesWithInvalidParameters(String type, String itemType,
+      String loanType, String patronGroup, String location) {
+
+    final List<QueryStringParameter> parameters = new ArrayList<>();
+
+    if(itemType != null) {
+      parameters.add(namedParameter("item_type_id", itemType));
+    }
+
+    if(loanType != null) {
+      parameters.add(namedParameter("loan_type_id", loanType));
+    }
+
+    if(patronGroup != null) {
+      parameters.add(namedParameter("patron_type_id", patronGroup));
+    }
+
+    if(location != null) {
+      parameters.add(namedParameter("location_id", location));
+    }
+
+    return restAssuredClient.get(
+      circulationRulesUrl("/" + type + "-policy"), parameters,
+      400, "apply-rules-with-invalid-parameters");
+  }
+
+  private void applyRulesWithMissingParameters(String type, String itemType,
+      String loanType, String patronGroup, String location,
+      String missingParameterName) {
+
+    final Response response = applyRulesWithInvalidParameters(type, itemType,
+        loanType, patronGroup, location);
+
+    assertThat(response.getBody(), containsString(missingParameterName));
   }
 }
