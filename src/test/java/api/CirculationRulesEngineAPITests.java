@@ -125,30 +125,29 @@ public class CirculationRulesEngineAPITests extends APITests {
   }
 
   @Test
-  public void applyLoanWithoutParameters() throws Exception {
-    CompletableFuture<Response> completed = new CompletableFuture<>();
-    URL url = circulationRulesUrl("/loan-policy");
-    client.get(url, any(completed));
-    Response response = completed.get(10, TimeUnit.SECONDS);
+  public void applyLoanWithoutParameters() {
+    final Response response = applyRulesWithNoParameters("/loan-policy");
+
     assertThat(response.getStatusCode(), is(400));
   }
 
   @Test
-  public void applyRequestWithoutParameters() throws Exception {
-    CompletableFuture<Response> completed = new CompletableFuture<>();
-    URL url = circulationRulesUrl("/request-policy");
-    client.get(url, any(completed));
-    Response response = completed.get(10, TimeUnit.SECONDS);
+  public void applyRequestWithoutParameters() {
+    final Response response = applyRulesWithNoParameters("/request-policy");
+
     assertThat(response.getStatusCode(), is(400));
   }
 
   @Test
-  public void applyNoticeWithoutParameters() throws Exception {
-    CompletableFuture<Response> completed = new CompletableFuture<>();
-    URL url = circulationRulesUrl("/notice-policy");
-    client.get(url, any(completed));
-    Response response = completed.get(10, TimeUnit.SECONDS);
+  public void applyNoticeWithoutParameters() {
+    final Response response = applyRulesWithNoParameters("/notice-policy");
+
     assertThat(response.getStatusCode(), is(400));
+  }
+
+  private Response applyRulesWithNoParameters(String path) {
+    return restAssuredClient.get(circulationRulesUrl(path), 400,
+        "apply-rules-with-no-parameters");
   }
 
   private void applyOneLoanParameterMissing(String p1, String p2, String p3, String missing) throws Exception {

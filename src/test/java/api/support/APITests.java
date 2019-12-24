@@ -65,6 +65,9 @@ public abstract class APITests {
   protected final OkapiHttpClient client = createClient(exception ->
     log.error("Request to circulation module failed:", exception));
 
+  protected final RestAssuredClient restAssuredClient = new RestAssuredClient(
+    getOkapiHeadersFromContext());
+
   private final boolean initialiseCirculationRules;
 
   private final ResourceClient servicePointsClient = ResourceClient.forServicePoints();
