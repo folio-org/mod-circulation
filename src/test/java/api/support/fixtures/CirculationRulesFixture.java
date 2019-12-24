@@ -2,11 +2,19 @@ package api.support.fixtures;
 
 import static api.support.RestAssuredResponseConversion.toResponse;
 import static api.support.http.InterfaceUrls.circulationRulesUrl;
+import static org.hamcrest.CoreMatchers.not;
+import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 
+import java.util.HashMap;
 import java.util.UUID;
 
+import org.folio.circulation.rules.ItemLocation;
+import org.folio.circulation.rules.ItemType;
+import org.folio.circulation.rules.LoanType;
+import org.folio.circulation.rules.PatronGroup;
+import org.folio.circulation.rules.Policy;
 import org.folio.circulation.support.http.client.Response;
 
 import api.support.RestAssuredClient;
@@ -69,5 +77,26 @@ public class CirculationRulesFixture {
       .beginRequest("get-circulation-rules")
       .when().get(circulationRulesUrl())
       .then().extract().response());
+  }
+
+  public Policy applyRulesForLoanPolicy(ItemType itemType, LoanType loanType,
+    PatronGroup patronGroup, ItemLocation location) {
+
+    final HashMap<String, String> queryStringParameters = new HashMap<>();
+
+    queryStringParameters.put("item_type_id", itemType.id);
+    queryStringParameters.put("loan_type_id", loanType.id);
+    queryStringParameters.put("patron_type_id", patronGroup.id);
+    queryStringParameters.put("location_id", location.id);
+
+    final Response response = restAssuredClient.get(
+        circulationRulesUrl("/loan-policy"), queryStringParameters, 200,
+        "apply-rules-to-get-loan-policy");
+
+    String loanPolicyId = response.getJson().getString("loanPolicyId");
+
+    assertThat(loanPolicyId, is(not(nullValue())));
+
+    return new Policy(loanPolicyId);
   }
 }

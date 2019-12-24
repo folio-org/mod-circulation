@@ -1,18 +1,14 @@
 package api;
 
-import static api.support.APITestContext.getOkapiHeadersFromContext;
 import static api.support.http.InterfaceUrls.circulationRulesStorageUrl;
 import static api.support.http.InterfaceUrls.circulationRulesUrl;
 import static org.folio.circulation.support.http.client.ResponseHandler.any;
-import static org.hamcrest.CoreMatchers.not;
-import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.StringContains.containsString;
 
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.HashMap;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -33,7 +29,6 @@ import org.junit.Before;
 import org.junit.Test;
 
 import api.support.APITests;
-import api.support.RestAssuredClient;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
@@ -47,30 +42,6 @@ public class CirculationRulesEngineAPITests extends APITests {
 
   private void setRules(String rules) {
     circulationRulesFixture.updateCirculationRules(rules);
-  }
-
-  private Policy applyRulesForLoanPolicy(ItemType itemType, LoanType loanType,
-      PatronGroup patronGroup, ItemLocation location) {
-
-    final RestAssuredClient restAssuredClient
-      = new RestAssuredClient(getOkapiHeadersFromContext());
-
-    final HashMap<String, String> queryStringParameters = new HashMap<>();
-
-    queryStringParameters.put("item_type_id", itemType.id);
-    queryStringParameters.put("loan_type_id", loanType.id);
-    queryStringParameters.put("patron_type_id", patronGroup.id);
-    queryStringParameters.put("location_id", location.id);
-
-    final Response response = restAssuredClient.get(
-        circulationRulesUrl("/loan-policy"), queryStringParameters, 200,
-        "apply-rules-to-get-loan-policy");
-
-    String loanPolicyId = response.getJson().getString("loanPolicyId");
-
-    assertThat(loanPolicyId, is(not(nullValue())));
-
-    return new Policy(loanPolicyId);
   }
 
   private Policy applyRequestPolicy(ItemType itemType, String requestType,
@@ -527,6 +498,13 @@ public class CirculationRulesEngineAPITests extends APITests {
     LoanCirculationRulesEngineResource.setCacheTime(0, 0);
 
     assertThat(applyRulesForLoanPolicy(m1, t1, g1, s1), is(lp7));
+  }
+
+  private Policy applyRulesForLoanPolicy(ItemType itemType, LoanType loanType,
+      PatronGroup patronGroup, ItemLocation location) {
+
+    return circulationRulesFixture.applyRulesForLoanPolicy(itemType, loanType,
+      patronGroup, location);
   }
 
   private void updateCirculationRulesInStorageWithoutInvalidatingCache(String rules)
