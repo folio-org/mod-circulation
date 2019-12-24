@@ -5,11 +5,11 @@ import static api.support.RestAssuredConfiguration.standardHeaders;
 import static api.support.RestAssuredConfiguration.timeoutConfig;
 import static api.support.RestAssuredResponseConversion.toResponse;
 import static io.restassured.RestAssured.given;
+import static java.util.Arrays.asList;
 
 import java.net.URL;
+import java.util.Collection;
 import java.util.HashMap;
-import java.util.Map;
-import java.util.stream.Stream;
 
 import org.folio.circulation.support.http.client.Response;
 
@@ -17,6 +17,7 @@ import api.support.http.CqlQuery;
 import api.support.http.Limit;
 import api.support.http.Offset;
 import api.support.http.OkapiHeaders;
+import api.support.http.QueryStringParameter;
 import io.restassured.specification.RequestSpecification;
 import io.vertx.core.json.JsonObject;
 
@@ -45,22 +46,22 @@ public class RestAssuredClient {
   public Response get(URL location, CqlQuery query, Limit limit, Offset offset,
       int expectedStatusCode, String requestId) {
 
-    final HashMap<String, String> queryStringParameters = new HashMap<>();
-
-    Stream.of(query, limit, offset)
-      .forEach(parameter -> parameter.collectInto(queryStringParameters));
-
-    return get(location,
-      queryStringParameters, expectedStatusCode, requestId);
+    return get(location, asList(query, limit, offset), expectedStatusCode,
+        requestId);
   }
 
-  public Response get(URL url, Map<String, String> queryStringParameters,
+  public Response get(URL url, Collection<QueryStringParameter> parameters,
       int expectedStatusCode, String requestId) {
+
+    final HashMap<String, String> queryStringParametersMap = new HashMap<>();
+
+    parameters
+      .forEach(parameter -> parameter.collectInto(queryStringParametersMap));
 
     return toResponse(given()
       .log().all()
       .spec(standardHeaders(defaultHeaders.withRequestId(requestId)))
-      .queryParams(queryStringParameters)
+      .queryParams(queryStringParametersMap)
       .spec(timeoutConfig())
       .when().get(url)
       .then()

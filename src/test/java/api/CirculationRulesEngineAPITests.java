@@ -46,6 +46,7 @@ public class CirculationRulesEngineAPITests extends APITests {
 
   private Policy applyRequestPolicy(ItemType itemType, String requestType,
       PatronGroup patronGroup, ItemLocation location) {
+    
     try {
       CompletableFuture<Response> completed = new CompletableFuture<>();
       URL url = circulationRulesUrl(

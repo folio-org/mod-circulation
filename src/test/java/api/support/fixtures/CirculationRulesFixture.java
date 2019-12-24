@@ -2,12 +2,14 @@ package api.support.fixtures;
 
 import static api.support.RestAssuredResponseConversion.toResponse;
 import static api.support.http.InterfaceUrls.circulationRulesUrl;
+import static api.support.http.api.support.NamedQueryStringParameter.namedParameter;
+import static java.util.Arrays.asList;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 
-import java.util.HashMap;
+import java.util.Collection;
 import java.util.UUID;
 
 import org.folio.circulation.rules.ItemLocation;
@@ -18,6 +20,7 @@ import org.folio.circulation.rules.Policy;
 import org.folio.circulation.support.http.client.Response;
 
 import api.support.RestAssuredClient;
+import api.support.http.QueryStringParameter;
 import io.vertx.core.json.JsonObject;
 
 public class CirculationRulesFixture {
@@ -82,15 +85,9 @@ public class CirculationRulesFixture {
   public Policy applyRulesForLoanPolicy(ItemType itemType, LoanType loanType,
     PatronGroup patronGroup, ItemLocation location) {
 
-    final HashMap<String, String> queryStringParameters = new HashMap<>();
-
-    queryStringParameters.put("item_type_id", itemType.id);
-    queryStringParameters.put("loan_type_id", loanType.id);
-    queryStringParameters.put("patron_type_id", patronGroup.id);
-    queryStringParameters.put("location_id", location.id);
-
     final Response response = restAssuredClient.get(
-        circulationRulesUrl("/loan-policy"), queryStringParameters, 200,
+        circulationRulesUrl("/loan-policy"),
+        getApplyParameters(itemType, loanType, patronGroup, location), 200,
         "apply-rules-to-get-loan-policy");
 
     String loanPolicyId = response.getJson().getString("loanPolicyId");
@@ -98,5 +95,15 @@ public class CirculationRulesFixture {
     assertThat(loanPolicyId, is(not(nullValue())));
 
     return new Policy(loanPolicyId);
+  }
+
+  private Collection<QueryStringParameter> getApplyParameters(ItemType itemType,
+      LoanType loanType, PatronGroup patronGroup, ItemLocation location) {
+
+    return asList(
+      namedParameter("item_type_id", itemType.id),
+      namedParameter("loan_type_id", loanType.id),
+      namedParameter("patron_type_id", patronGroup.id),
+      namedParameter("location_id", location.id));
   }
 }
