@@ -107,6 +107,24 @@
       ]
     },
     {
+      "id": "change-due-date",
+      "version": "0.1",
+      "handlers": [
+        {
+          "methods": [
+            "POST"
+          ],
+          "pathPattern": "/circulation/batch/change-due-date",
+          "permissionsRequired": [
+            "circulation.batch.change-due-date.post"
+          ],
+          "modulePermissions": [
+            "modperms.circulation.batch.change-due-date.post"
+          ]
+        }
+      ]
+    },
+    {
       "id": "circulation",
       "version": "8.3",
       "handlers": [
@@ -168,18 +186,6 @@
           ],
           "modulePermissions": [
             "modperms.circulation.override-renewal-by-barcode.post"
-          ]
-        },
-        {
-          "methods": [
-            "POST"
-          ],
-          "pathPattern": "/circulation/batch/change-due-date",
-          "permissionsRequired": [
-            "circulation.batch.change-due-date.post"
-          ],
-          "modulePermissions": [
-            "modperms.circulation.batch.change-due-date.post"
           ]
         },
         {

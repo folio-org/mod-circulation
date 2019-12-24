@@ -8,7 +8,8 @@ public enum LoanAction {
   CHECKED_OUT("checkedout"),
   CHECKED_OUT_THROUGH_OVERRIDE("checkedOutThroughOverride"),
   RECALLREQUESTED("recallrequested"),
-  HOLDREQUESTED("holdrequested");
+  HOLDREQUESTED("holdrequested"),
+  DUE_DATE_CHANGE("dueDateChange");
 
   private final String value;
 

@@ -156,7 +156,7 @@ public class InterfaceUrls {
     return circulationModuleUrl("/circulation/renew-by-id");
   }
 
-  public static URL batchChangeDueDate() {
+  public static URL batchChangeDueDateUrl() {
     return circulationModuleUrl("/circulation/batch/change-due-date");
   }
 

@@ -2,7 +2,7 @@ package org.folio.circulation;
 
 import java.lang.invoke.MethodHandles;
 
-import org.folio.circulation.resources.BatchDueDateResource;
+import org.folio.circulation.resources.BatchChangeDueDateResource;
 import org.folio.circulation.resources.CheckInByBarcodeResource;
 import org.folio.circulation.resources.CheckOutByBarcodeResource;
 import org.folio.circulation.resources.CirculationRulesResource;
@@ -72,7 +72,7 @@ public class CirculationVerticle extends AbstractVerticle {
     new RenewByBarcodeResource("/circulation/override-renewal-by-barcode",
       new OverrideRenewalStrategy(), client).register(router);
 
-    new BatchDueDateResource(client, "/circulation/batch/change-due-date")
+    new BatchChangeDueDateResource(client, "/circulation/batch/change-due-date")
       .register(router);
 
     new LoanCollectionResource(client).register(router);

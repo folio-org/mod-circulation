@@ -1,8 +1,5 @@
 package api.loans.scenarios;
 
-import static api.support.RestAssuredClient.from;
-import static api.support.RestAssuredClient.post;
-import static api.support.http.InterfaceUrls.batchChangeDueDate;
 import static api.support.http.InterfaceUrls.loansUrl;
 import static api.support.matchers.PatronNoticeMatcher.hasEmailNoticeProperties;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
@@ -12,6 +9,22 @@ import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 
+import org.folio.circulation.support.http.client.IndividualResource;
+import org.folio.circulation.support.http.client.Response;
+import org.folio.circulation.support.http.client.ResponseHandler;
+
+import api.support.APITests;
+import api.support.builders.BatchChangeDueDateRequestBuilder;
+import api.support.builders.ItemBuilder;
+import api.support.builders.LoanPolicyBuilder;
+import api.support.builders.NoticeConfigurationBuilder;
+import api.support.builders.NoticePolicyBuilder;
+import api.support.builders.RequestBuilder;
+import api.support.fixtures.ItemExamples;
+import api.support.fixtures.TemplateContextMatchers;
+import api.support.http.InventoryItemResource;
+import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
 import java.net.MalformedURLException;
 import java.util.Arrays;
 import java.util.Collections;
@@ -23,42 +36,36 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-
-import io.vertx.core.json.JsonArray;
 import org.apache.commons.lang3.StringUtils;
 import org.awaitility.Awaitility;
-import org.folio.circulation.support.http.client.IndividualResource;
-import org.folio.circulation.support.http.client.Response;
-import org.folio.circulation.support.http.client.ResponseHandler;
 import org.hamcrest.Matcher;
 import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
 import org.joda.time.DateTime;
 import org.joda.time.Period;
+import org.junit.Assert;
 import org.junit.Test;
 
-import api.support.APITests;
-import api.support.builders.ItemBuilder;
-import api.support.builders.LoanPolicyBuilder;
-import api.support.builders.NoticeConfigurationBuilder;
-import api.support.builders.NoticePolicyBuilder;
-import api.support.builders.RequestBuilder;
-import api.support.fixtures.ItemExamples;
-import api.support.fixtures.TemplateContextMatchers;
-import api.support.http.InventoryItemResource;
-import io.vertx.core.json.JsonObject;
+public class BatchChangeDueDateTests extends APITests {
 
-public class ChangeDueDateTests extends APITests {
+  private IndividualResource loan;
+  private InventoryItemResource item;
+
+  @Override
+  public void beforeEach()
+    throws MalformedURLException, InterruptedException, ExecutionException, TimeoutException {
+    super.beforeEach();
+
+    item = itemsFixture.basedUponNod();
+    loan = loansFixture.checkOutByBarcode(item);
+  }
+
   @Test
   public void canManuallyChangeTheDueDateOfLoan()
     throws InterruptedException,
     MalformedURLException,
     TimeoutException,
     ExecutionException {
-
-    final InventoryItemResource item = itemsFixture.basedUponNod();
-
-    IndividualResource loan = loansFixture.checkOutByBarcode(item);
 
     Response fetchedLoan = loansClient.getById(loan.getId());
 
@@ -98,10 +105,6 @@ public class ChangeDueDateTests extends APITests {
     MalformedURLException,
     TimeoutException,
     ExecutionException {
-
-    final InventoryItemResource item = itemsFixture.basedUponNod();
-
-    IndividualResource loan = loansFixture.checkOutByBarcode(item);
 
     requestsFixture.place(new RequestBuilder()
       .hold()
@@ -278,16 +281,17 @@ public class ChangeDueDateTests extends APITests {
 
     IndividualResource secondLoan = loansFixture.checkOutByBarcode(basedUponDunkirk, steve);
 
-    JsonObject requestBody = new JsonObject();
+    String firstLoanId = firstLoan.getId().toString();
+    String secondLoanId = secondLoan.getId().toString();
 
-    UUID firstLoanId = firstLoan.getId();
-    UUID secondLoanId = secondLoan.getId();
+    Response response = loansFixture
+      .batchChangeDueDate(new BatchChangeDueDateRequestBuilder()
+        .forLoanId(firstLoanId)
+        .forLoanId(secondLoanId)
+        .on(newDueDate)
+      );
 
-    write(requestBody, "loans", new JsonArray(Arrays.asList(firstLoanId, secondLoanId)));
-    write(requestBody, "dueDate", newDueDate);
-
-    from(post(requestBody, batchChangeDueDate(),
-      204, "batch-change-due-date"));
+    assertThat(response.getStatusCode(), is(204));
 
     IndividualResource firstLoanAfterUpdate = loansClient.get(firstLoan);
     IndividualResource secondLoanAfterUpdate = loansClient.get(secondLoan);
@@ -323,15 +327,11 @@ public class ChangeDueDateTests extends APITests {
     TimeoutException,
     ExecutionException {
 
-    final InventoryItemResource basedUponNodItem = itemsFixture.basedUponNod();
-
     final InventoryItemResource basedUponDunkirkItem = itemsFixture.basedUponDunkirk();
-
-    IndividualResource firstLoan = loansFixture.checkOutByBarcode(basedUponNodItem);
 
     IndividualResource secondLoan = loansFixture.checkOutByBarcode(basedUponDunkirkItem);
 
-    Response firstFetchedLoan = loansClient.getById(firstLoan.getId());
+    Response firstFetchedLoan = loansClient.getById(loan.getId());
 
     JsonObject firstLoanToChange = firstFetchedLoan.getJson().copy();
 
@@ -339,31 +339,33 @@ public class ChangeDueDateTests extends APITests {
 
     DateTime newDueDate = dueDate.plus(Period.days(14));
 
-    JsonObject requestBody = new JsonObject();
+    String firstLoanId = loan.getId().toString();
+    String secondLoanId = secondLoan.getId().toString();
 
-    UUID firstLoanId = firstLoan.getId();
-    UUID secondLoanId = secondLoan.getId();
-    write(requestBody, "loans", new JsonArray(Arrays.asList(firstLoanId,secondLoanId)));
-    write(requestBody, "dueDate", newDueDate);
+    Response response = loansFixture
+      .batchChangeDueDate(new BatchChangeDueDateRequestBuilder()
+        .forLoanId(firstLoanId)
+        .forLoanId(secondLoanId)
+        .on(newDueDate)
+      );
 
-    from(post(requestBody, batchChangeDueDate(),
-      204, "batch-change-due-date"));
+    assertThat(response.getStatusCode(), is(204));
 
-    Response firstUpdatedLoanResponse = loansClient.getById(firstLoan.getId());
+    Response firstUpdatedLoanResponse = loansClient.getById(loan.getId());
 
-    Response secondUpdatedLoanResponse = loansClient.getById(firstLoan.getId());
+    Response secondUpdatedLoanResponse = loansClient.getById(loan.getId());
 
     verifyLoanAfterChangingDueDate(firstUpdatedLoanResponse.getJson(), newDueDate);
 
     verifyLoanAfterChangingDueDate(secondUpdatedLoanResponse.getJson(), newDueDate);
 
     verifyLoanInStorageAfterChangingDueDate(loansStorageClient
-      .getById(firstLoan.getId()).getJson());
+      .getById(loan.getId()).getJson());
 
     verifyLoanInStorageAfterChangingDueDate(loansStorageClient
       .getById(secondLoan.getId()).getJson());
 
-    JsonObject fetchedItem = itemsClient.getById(basedUponNodItem.getId()).getJson();
+    JsonObject fetchedItem = itemsClient.getById(item.getId()).getJson();
 
     assertThat("item status is not checked out",
       fetchedItem.getJsonObject("status").getString("name"), is("Checked out"));
@@ -401,4 +403,61 @@ public class ChangeDueDateTests extends APITests {
     assertThat("Should not contain check out service point summary",
       storedLoan.containsKey("checkoutServicePoint"), is(false));
   }
+
+  @Test
+  public void batchChangeDueDateShouldReturnFailedLoanIds() {
+
+    DateTime newDueDate = DateTime.now().plusDays(14);
+
+    String randomUUID = UUID.randomUUID().toString();
+    Response response = loansFixture
+      .batchChangeDueDate(new BatchChangeDueDateRequestBuilder()
+        .forLoanId(loan.getId().toString())
+        .forLoanId(randomUUID)
+        .on(newDueDate)
+      );
+
+    JsonObject errors = response.getJson().getJsonArray("errors")
+      .getJsonObject(0);
+
+    JsonArray failedLoanIds = new JsonArray(
+      errors.getJsonArray("parameters").getJsonObject(0)
+        .getString("value"));
+
+    Assert.assertTrue(failedLoanIds.contains(randomUUID));
+    Assert.assertFalse(failedLoanIds.contains(loan.getId()));
+
+    assertThat(response.getStatusCode(), is(422));
+  }
+
+  @Test
+  public void canNotBatchChangeDueDateWithEmptyRequestBody() {
+
+    Response response = loansFixture
+      .batchChangeDueDate(new BatchChangeDueDateRequestBuilder()
+        .withEmptyBody()
+      );
+    assertThat(response.getStatusCode(), is(422));
+  }
+
+  @Test
+  public void canNotBatchChangeDueDateWithEmptyLoanIds() {
+
+    Response response = loansFixture
+      .batchChangeDueDate(new BatchChangeDueDateRequestBuilder()
+        .on(DateTime.now())
+      );
+    assertThat(response.getStatusCode(), is(422));
+  }
+
+  @Test
+  public void canNotBatchChangeDueDateWithEmptyDueDate() {
+
+    Response response = loansFixture
+      .batchChangeDueDate(new BatchChangeDueDateRequestBuilder()
+        .forLoanId(loan.getId().toString())
+      );
+    assertThat(response.getStatusCode(), is(422));
+  }
+
 }

@@ -6,7 +6,6 @@ import static org.folio.circulation.resources.LoanCollectionResourceHelper.getSe
 import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 
-
 import org.folio.circulation.domain.AccountRepository;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
@@ -17,7 +16,6 @@ import org.folio.circulation.domain.PatronGroupRepository;
 import org.folio.circulation.domain.RequestQueueRepository;
 import org.folio.circulation.domain.ServicePointRepository;
 import org.folio.circulation.domain.UpdateItem;
-import org.folio.circulation.domain.UpdateLoan;
 import org.folio.circulation.domain.UpdateRequestQueue;
 import org.folio.circulation.domain.UserRepository;
 import org.folio.circulation.domain.policy.LoanPolicyRepository;
@@ -121,7 +119,8 @@ public class LoanCollectionResource extends CollectionResource {
 
     final Clients clients = Clients.create(context, client);
 
-    new UpdateLoan(clients, new LoanRepository(clients))
+    LoanRepository loanRepository = new LoanRepository(clients);
+    loanRepository
       .replaceLoan(loan)
       .thenApply(NoContentResult::from)
       .thenAccept(result -> result.writeTo(routingContext.response()));

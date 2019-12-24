@@ -14,6 +14,7 @@ import org.folio.circulation.support.OkJsonResponseResult;
 import org.folio.circulation.support.ResponseWritableResult;
 import org.folio.circulation.support.Result;
 import org.json.JSONArray;
+import org.folio.circulation.domain.representations.Error;
 
 import io.vertx.core.json.JsonObject;
 

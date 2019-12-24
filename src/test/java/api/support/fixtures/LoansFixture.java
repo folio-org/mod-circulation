@@ -16,21 +16,14 @@ import static api.support.http.Limit.noLimit;
 import static api.support.http.Offset.noOffset;
 import static org.folio.circulation.support.JsonArrayHelper.mapToList;
 
-import java.net.MalformedURLException;
-import java.util.HashMap;
-import java.util.UUID;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeoutException;
-import java.util.stream.Stream;
-
+import org.folio.circulation.support.JsonPropertyWriter;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
 
 import api.support.CheckInByBarcodeResponse;
 import api.support.MultipleJsonRecords;
 import api.support.RestAssuredClient;
+import api.support.builders.BatchChangeDueDateRequestBuilder;
 import api.support.builders.CheckInByBarcodeRequestBuilder;
 import api.support.builders.CheckOutByBarcodeRequestBuilder;
 import api.support.builders.DeclareItemLostRequestBuilder;
@@ -40,10 +33,21 @@ import api.support.builders.OverrideRenewalByBarcodeRequestBuilder;
 import api.support.builders.RenewByBarcodeRequestBuilder;
 import api.support.builders.RenewByIdRequestBuilder;
 import api.support.http.CqlQuery;
+import api.support.http.InterfaceUrls;
 import api.support.http.Limit;
 import api.support.http.Offset;
 import api.support.http.OkapiHeaders;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import java.net.MalformedURLException;
+import java.util.HashMap;
+import java.util.List;
+import java.util.UUID;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeoutException;
+import java.util.stream.Stream;
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
 
 public class LoansFixture {
   private final UsersFixture usersFixture;
@@ -128,6 +132,12 @@ public class LoansFixture {
     ExecutionException {
 
     return checkOutByBarcode(item, usersFixture.jessica());
+  }
+
+  public Response batchChangeDueDate(BatchChangeDueDateRequestBuilder requestBuilder) {
+
+    return restAssuredClient.post(requestBuilder.create(),
+      InterfaceUrls.batchChangeDueDateUrl(), "batch-change-due-date-request");
   }
 
   public IndividualResource checkOutByBarcode(
