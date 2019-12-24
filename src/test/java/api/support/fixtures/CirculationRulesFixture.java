@@ -97,6 +97,21 @@ public class CirculationRulesFixture {
     return new Policy(loanPolicyId);
   }
 
+  public Policy applyRulesForRequestPolicy(ItemType itemType, LoanType loanType,
+    PatronGroup patronGroup, ItemLocation location) {
+
+    final Response response = restAssuredClient.get(
+      circulationRulesUrl("/request-policy"),
+      getApplyParameters(itemType, loanType, patronGroup, location), 200,
+      "apply-rules-to-get-request-policy");
+
+    String requestPolicyId = response.getJson().getString("requestPolicyId");
+
+    assertThat(requestPolicyId, is(not(nullValue())));
+
+    return new Policy(requestPolicyId);
+  }
+
   private Collection<QueryStringParameter> getApplyParameters(ItemType itemType,
       LoanType loanType, PatronGroup patronGroup, ItemLocation location) {
 

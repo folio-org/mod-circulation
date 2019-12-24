@@ -44,30 +44,6 @@ public class CirculationRulesEngineAPITests extends APITests {
     circulationRulesFixture.updateCirculationRules(rules);
   }
 
-  private Policy applyRequestPolicy(ItemType itemType, String requestType,
-      PatronGroup patronGroup, ItemLocation location) {
-    
-    try {
-      CompletableFuture<Response> completed = new CompletableFuture<>();
-      URL url = circulationRulesUrl(
-          "/request-policy"
-          + "?item_type_id="         + itemType.id
-          + "&loan_type_id="         + requestType
-          + "&patron_type_id="       + patronGroup.id
-          + "&location_id="          + location.id
-          );
-      client.get(url, any(completed));
-      Response response = completed.get(10, TimeUnit.SECONDS);
-      assert response.getStatusCode() == 200;
-      JsonObject json = new JsonObject(response.getBody());
-      String loanPolicyId = json.getString("requestPolicyId");
-      assert loanPolicyId != null;
-      return new Policy(loanPolicyId);
-    } catch (Exception e) {
-      throw new RuntimeException(e);
-    }
-  }
-
   private Policy applyNoticePolicy(ItemType itemType, String noticeType,
           PatronGroup patronGroup, ItemLocation location) {
         try {
@@ -328,7 +304,7 @@ public class CirculationRulesEngineAPITests extends APITests {
   @Test
   public void requestFallback() {
     setRules(rulesFallback);
-    assertThat(applyRequestPolicy(m1, t1.id, g1, s1), is(rp1));
+    assertThat(applyRequestPolicy(m1, t1, g1, s1), is(rp1));
   }
 
   @Test
@@ -505,7 +481,14 @@ public class CirculationRulesEngineAPITests extends APITests {
       PatronGroup patronGroup, ItemLocation location) {
 
     return circulationRulesFixture.applyRulesForLoanPolicy(itemType, loanType,
-      patronGroup, location);
+        patronGroup, location);
+  }
+
+  private Policy applyRequestPolicy(ItemType itemType, LoanType loanType,
+      PatronGroup patronGroup, ItemLocation location) {
+
+    return circulationRulesFixture.applyRulesForRequestPolicy(itemType, loanType,
+        patronGroup, location);
   }
 
   private void updateCirculationRulesInStorageWithoutInvalidatingCache(String rules)
