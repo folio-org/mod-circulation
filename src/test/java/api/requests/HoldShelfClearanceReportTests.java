@@ -1,10 +1,12 @@
 package api.requests;
 
 import static java.net.HttpURLConnection.HTTP_OK;
+import static org.folio.circulation.support.JsonArrayHelper.toList;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 
 import java.net.MalformedURLException;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
@@ -21,7 +23,6 @@ import api.support.builders.CheckInByBarcodeRequestBuilder;
 import api.support.builders.RequestBuilder;
 import api.support.http.InventoryItemResource;
 import api.support.http.ResourceClient;
-import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
 public class HoldShelfClearanceReportTests extends APITests {
@@ -163,19 +164,13 @@ public class HoldShelfClearanceReportTests extends APITests {
     assertThat(response.getStatusCode(), is(HTTP_OK));
 
     JsonObject responseJson = response.getJson();
-    JsonArray requests = response.getJson().getJsonArray("requests");
+    List<JsonObject> requests = toList(response.getJson().getJsonArray("requests"));
 
     assertThat(responseJson.getInteger(TOTAL_RECORDS), is(2));
     assertThat(requests.size(), is(2));
 
-    JsonObject smallAngryPlanetRequest = (JsonObject) requests.stream()
-      .filter(req -> ((JsonObject) req).getString("itemId").equals(smallAngryPlanet.getId().toString()))
-      .findFirst()
-      .orElseThrow(() -> new AssertionError("Can not find smallAngryPlanet request"));
-    JsonObject temeraireRequest = (JsonObject) requests.stream()
-      .filter(req -> ((JsonObject) req).getString("itemId").equals(temeraire.getId().toString()))
-      .findFirst()
-      .orElseThrow(() -> new AssertionError("Can not find temeraire request"));
+    JsonObject smallAngryPlanetRequest = findRequestByItemId(requests, smallAngryPlanet.getId());
+    JsonObject temeraireRequest = findRequestByItemId(requests, temeraire.getId());
 
     verifyRequest(smallAngryPlanet, rebecca, smallAngryPlanetRequest, RequestStatus.CLOSED_PICKUP_EXPIRED);
     verifyRequest(temeraire, steve, temeraireRequest, RequestStatus.CLOSED_CANCELLED);
@@ -647,5 +642,12 @@ public class HoldShelfClearanceReportTests extends APITests {
       is(item.getJson().getString("chronology")));
     assertThat(itemJson.getString("enumeration"),
       is(item.getJson().getString("enumeration")));
+  }
+
+  private JsonObject findRequestByItemId(List<JsonObject> requests, UUID itemId) {
+    return requests.stream()
+      .filter(req -> req.getString("itemId").equals(itemId.toString()))
+      .findFirst()
+      .orElseThrow(() -> new AssertionError("Can not find Request for item: " + itemId));
   }
 }

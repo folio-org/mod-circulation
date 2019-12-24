@@ -60,7 +60,11 @@ public class RequestsAPIRetrievalTests extends APITests {
     UUID staffGroupId = patronGroupsFixture.staff().getId();
 
     final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet(
-      itemBuilder -> itemsFixture.addCallNumberStringComponents().apply(itemBuilder)
+      itemBuilder -> itemBuilder
+        .withCallNumber("itCn", "itCnPrefix", "itCnSuffix")
+        .withEnumeration("enumeration1")
+        .withChronology("chronology")
+        .withVolume("vol.1")
         .withCopyNumbers(asList(ONE_COPY_NUMBER, TWO_COPY_NUMBER))
     );
 
@@ -375,18 +379,9 @@ public class RequestsAPIRetrievalTests extends APITests {
     requestList.forEach(this::requestHasPatronGroupProperties);
     requestList.forEach(this::requestHasTags);
 
-    requestHasCallNumberStringProperties(requestList.stream()
-        .filter(req -> nod.getId().toString().equals(req.getString("itemId")))
-        .findFirst()
-        .orElseThrow(() -> new AssertionError("Expected Nod in response")),
-      "nod");
-    requestHasCallNumberStringProperties(requestList.stream()
-        .filter(req -> temeraire.getId().toString().equals(req.getString("itemId")))
-        .findFirst()
-        .orElseThrow(() -> new AssertionError("Expected Temeraire in response")),
-      "tem");
+    requestHasCallNumberStringProperties(findRequestByItemId(requestList, nod.getId()), "nod");
+    requestHasCallNumberStringProperties(findRequestByItemId(requestList, temeraire.getId()), "tem");
   }
-
 
   @Test
   public void fulfilledByDeliveryIncludesAddressWhenFindingMultipleRequests()
@@ -834,5 +829,12 @@ public class RequestsAPIRetrievalTests extends APITests {
     assertThat(item.getString("enumeration"), is(prefix + "enumeration1"));
     assertThat(item.getString("chronology"), is(prefix + "chronology"));
     assertThat(item.getString("volume"), is(prefix + "vol.1"));
+  }
+
+  private JsonObject findRequestByItemId(List<JsonObject> allRequests, UUID itemId) {
+    return allRequests.stream()
+      .filter(req -> itemId.toString().equals(req.getString("itemId")))
+      .findFirst()
+      .orElseThrow(() -> new AssertionError("Can not find Request for item: " + itemId));
   }
 }
