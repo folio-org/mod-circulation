@@ -1,14 +1,18 @@
 package api;
 
+import static api.support.APITestContext.getOkapiHeadersFromContext;
 import static api.support.http.InterfaceUrls.circulationRulesStorageUrl;
 import static api.support.http.InterfaceUrls.circulationRulesUrl;
 import static org.folio.circulation.support.http.client.ResponseHandler.any;
+import static org.hamcrest.CoreMatchers.not;
+import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.StringContains.containsString;
 
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.HashMap;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -29,11 +33,11 @@ import org.junit.Before;
 import org.junit.Test;
 
 import api.support.APITests;
+import api.support.RestAssuredClient;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
 public class CirculationRulesEngineAPITests extends APITests {
-
   public CirculationRulesEngineAPITests()
       throws InterruptedException, MalformedURLException,
       TimeoutException, ExecutionException {
@@ -45,27 +49,28 @@ public class CirculationRulesEngineAPITests extends APITests {
     circulationRulesFixture.updateCirculationRules(rules);
   }
 
-  private Policy applyLoanPolicy(ItemType itemType, LoanType loanType,
+  private Policy applyRulesForLoanPolicy(ItemType itemType, LoanType loanType,
       PatronGroup patronGroup, ItemLocation location) {
-    try {
-      CompletableFuture<Response> completed = new CompletableFuture<>();
-      URL url = circulationRulesUrl(
-          "/loan-policy"
-          + "?item_type_id="         + itemType.id
-          + "&loan_type_id="         + loanType.id
-          + "&patron_type_id="       + patronGroup.id
-          + "&location_id="          + location.id
-          );
-      client.get(url, any(completed));
-      Response response = completed.get(10, TimeUnit.SECONDS);
-      assert response.getStatusCode() == 200;
-      JsonObject json = new JsonObject(response.getBody());
-      String loanPolicyId = json.getString("loanPolicyId");
-      assert loanPolicyId != null;
-      return new Policy(loanPolicyId);
-    } catch (Exception e) {
-      throw new RuntimeException(e);
-    }
+
+    final RestAssuredClient restAssuredClient
+      = new RestAssuredClient(getOkapiHeadersFromContext());
+
+    final HashMap<String, String> queryStringParameters = new HashMap<>();
+
+    queryStringParameters.put("item_type_id", itemType.id);
+    queryStringParameters.put("loan_type_id", loanType.id);
+    queryStringParameters.put("patron_type_id", patronGroup.id);
+    queryStringParameters.put("location_id", location.id);
+
+    final Response response = restAssuredClient.get(
+        circulationRulesUrl("/loan-policy"), queryStringParameters, 200,
+        "apply-rules-to-get-loan-policy");
+
+    String loanPolicyId = response.getJson().getString("loanPolicyId");
+
+    assertThat(loanPolicyId, is(not(nullValue())));
+
+    return new Policy(loanPolicyId);
   }
 
   private Policy applyRequestPolicy(ItemType itemType, String requestType,
@@ -345,7 +350,7 @@ public class CirculationRulesEngineAPITests extends APITests {
   @Test
   public void loanFallback() {
     setRules(rulesFallback);
-    assertThat(applyLoanPolicy(m1, t1, g1, s1), is(lp6));
+    assertThat(applyRulesForLoanPolicy(m1, t1, g1, s1), is(lp6));
   }
 
   @Test
@@ -363,45 +368,45 @@ public class CirculationRulesEngineAPITests extends APITests {
   @Test
   public void test1() {
     setRules(rules1);
-    assertThat(applyLoanPolicy(m2, t2, g2, s2), is(lp4));
-    assertThat(applyLoanPolicy(m2, t2, g1, s2), is(lp3));
-    assertThat(applyLoanPolicy(m1, t2, g1, s2), is(lp2));
+    assertThat(applyRulesForLoanPolicy(m2, t2, g2, s2), is(lp4));
+    assertThat(applyRulesForLoanPolicy(m2, t2, g1, s2), is(lp3));
+    assertThat(applyRulesForLoanPolicy(m1, t2, g1, s2), is(lp2));
   }
 
   @Test
   public void test2() {
     setRules(rules2);
-    assertThat(applyLoanPolicy(m2, t2, g2, s2), is(lp6));
-    assertThat(applyLoanPolicy(m1, t2, g2, s2), is(lp1));
-    assertThat(applyLoanPolicy(m1, t1, g2, s2), is(lp2));
-    assertThat(applyLoanPolicy(m1, t1, g1, s2), is(lp3));
+    assertThat(applyRulesForLoanPolicy(m2, t2, g2, s2), is(lp6));
+    assertThat(applyRulesForLoanPolicy(m1, t2, g2, s2), is(lp1));
+    assertThat(applyRulesForLoanPolicy(m1, t1, g2, s2), is(lp2));
+    assertThat(applyRulesForLoanPolicy(m1, t1, g1, s2), is(lp3));
   }
 
   @Test
   public void shouldApplyRulesWithInstitution() {
     setRules(rulesWithInstitution);
-    assertThat(applyLoanPolicy(m1, t2, g2, s2), is(lp2));
-    assertThat(applyLoanPolicy(m2, t2, g2, s2), is(lp3));
-    assertThat(applyLoanPolicy(m1, t2, g2, s1), is(lp4));
-    assertThat(applyLoanPolicy(m2, t2, g2, s1), is(lp4));
+    assertThat(applyRulesForLoanPolicy(m1, t2, g2, s2), is(lp2));
+    assertThat(applyRulesForLoanPolicy(m2, t2, g2, s2), is(lp3));
+    assertThat(applyRulesForLoanPolicy(m1, t2, g2, s1), is(lp4));
+    assertThat(applyRulesForLoanPolicy(m2, t2, g2, s1), is(lp4));
   }
 
   @Test
   public void shouldApplyRulesWithLibrary() {
     setRules(rulesWithLibrary);
-    assertThat(applyLoanPolicy(m1, t2, g2, s2), is(lp2));
-    assertThat(applyLoanPolicy(m2, t2, g2, s2), is(lp3));
-    assertThat(applyLoanPolicy(m1, t2, g2, s1), is(lp4));
-    assertThat(applyLoanPolicy(m2, t2, g2, s1), is(lp4));
+    assertThat(applyRulesForLoanPolicy(m1, t2, g2, s2), is(lp2));
+    assertThat(applyRulesForLoanPolicy(m2, t2, g2, s2), is(lp3));
+    assertThat(applyRulesForLoanPolicy(m1, t2, g2, s1), is(lp4));
+    assertThat(applyRulesForLoanPolicy(m2, t2, g2, s1), is(lp4));
   }
 
   @Test
   public void shouldApplyRulesWithCampus() {
     setRules(rulesWithCampus);
-    assertThat(applyLoanPolicy(m1, t2, g2, s2), is(lp2));
-    assertThat(applyLoanPolicy(m2, t2, g2, s2), is(lp3));
-    assertThat(applyLoanPolicy(m1, t2, g2, s1), is(lp4));
-    assertThat(applyLoanPolicy(m2, t2, g2, s1), is(lp4));
+    assertThat(applyRulesForLoanPolicy(m1, t2, g2, s2), is(lp2));
+    assertThat(applyRulesForLoanPolicy(m2, t2, g2, s2), is(lp3));
+    assertThat(applyRulesForLoanPolicy(m1, t2, g2, s1), is(lp4));
+    assertThat(applyRulesForLoanPolicy(m2, t2, g2, s1), is(lp4));
   }
 
   private void matchesLoanPolicy(JsonArray array, int match, Policy policy, int line) {
@@ -500,28 +505,28 @@ public class CirculationRulesEngineAPITests extends APITests {
   @Test
   public void setRulesInvalidatesCache() {
     setRules(rulesFallback);
-    assertThat(applyLoanPolicy(m1, t1, g1, s1), is(lp6));
+    assertThat(applyRulesForLoanPolicy(m1, t1, g1, s1), is(lp6));
     setRules(rulesFallback2);
-    assertThat(applyLoanPolicy(m1, t1, g1, s1), is(lp7));
+    assertThat(applyRulesForLoanPolicy(m1, t1, g1, s1), is(lp7));
     setRules(rulesFallback);
-    assertThat(applyLoanPolicy(m1, t1, g1, s1), is(lp6));
+    assertThat(applyRulesForLoanPolicy(m1, t1, g1, s1), is(lp6));
     setRules(rulesFallback2);
-    assertThat(applyLoanPolicy(m1, t1, g1, s1), is(lp7));
+    assertThat(applyRulesForLoanPolicy(m1, t1, g1, s1), is(lp7));
   }
 
   @Test
   public void cache() throws Exception {
     setRules(rulesFallback);
-    assertThat(applyLoanPolicy(m1, t1, g1, s1), is(lp6));
+    assertThat(applyRulesForLoanPolicy(m1, t1, g1, s1), is(lp6));
 
     updateCirculationRulesInStorageWithoutInvalidatingCache(rulesFallback2);
 
-    assertThat(applyLoanPolicy(m1, t1, g1, s1), is(lp6));
+    assertThat(applyRulesForLoanPolicy(m1, t1, g1, s1), is(lp6));
 
     // reduce cache time to trigger reload from storage backend
     LoanCirculationRulesEngineResource.setCacheTime(0, 0);
 
-    assertThat(applyLoanPolicy(m1, t1, g1, s1), is(lp7));
+    assertThat(applyRulesForLoanPolicy(m1, t1, g1, s1), is(lp7));
   }
 
   private void updateCirculationRulesInStorageWithoutInvalidatingCache(String rules)
