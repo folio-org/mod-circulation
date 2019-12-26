@@ -87,11 +87,11 @@
           "type": "string"
         },
         "chronology": {
-          "description": "Item`s chronology",
+          "description": "Chronology is the descriptive information for the dating scheme of a serial.",
           "type": "string"
         },
         "volume": {
-          "description": "Item`s volume",
+          "description": "Volume is intended for monographs when a multipart monograph (e.g. a biography of George Bernard Shaw in three volumes).",
           "type": "string"
         },
         "inTransitDestinationServicePointId": {
