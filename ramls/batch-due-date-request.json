@@ -3,8 +3,8 @@
   "type": "object",
   "description": "Request to change due date of an existing loans by batch via ids and changed due date.",
   "properties": {
-    "loans": {
-      "description": "Loan`s ids for changing due date",
+    "loanIds": {
+      "description": "Loan ids for changing due date",
       "type": "array"
     },
     "dueDate": {
@@ -15,7 +15,7 @@
   },
   "additionalProperties": false,
   "required": [
-    "loans",
+    "loanIds",
     "dueDate"
   ]
 }
