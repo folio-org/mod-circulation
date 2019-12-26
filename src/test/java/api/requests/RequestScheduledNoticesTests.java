@@ -3,17 +3,20 @@ package api.requests;
 import static api.support.builders.RequestBuilder.OPEN_NOT_YET_FILLED;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static org.folio.circulation.domain.representations.RequestProperties.HOLD_SHELF_EXPIRATION_DATE;
+import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 
 import java.net.MalformedURLException;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.stream.Collectors;
 
 import org.awaitility.Awaitility;
 import org.folio.circulation.domain.policy.Period;
@@ -414,5 +417,71 @@ public class RequestScheduledNoticesTests extends APITests {
     assertThat(noticeConfig.getString("templateId"), is(templateId.toString()));
     assertThat(noticeConfig.getString("format"), is("Email"));
     assertThat(noticeConfig.getBoolean("sendInRealTime"), is(true));
+  }
+
+  @Test
+  public void requestExpirationAndHoldShelfExpirationNoticesAreCreatedWhenPickupReminderIsFirstInPolicy()
+    throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    JsonObject pickupReminder = new NoticeConfigurationBuilder()
+      .withTemplateId(templateId)
+      .withAvailableEvent()
+      .sendInRealTime(true)
+      .create();
+
+    JsonObject holdShelfExpirationNotice = new NoticeConfigurationBuilder()
+      .withTemplateId(templateId)
+      .withHoldShelfExpirationEvent()
+      .withUponAtTiming()
+      .sendInRealTime(true)
+      .create();
+
+    JsonObject requestExpirationNotice = new NoticeConfigurationBuilder()
+      .withTemplateId(templateId)
+      .withRequestExpirationEvent()
+      .withUponAtTiming()
+      .sendInRealTime(true)
+      .create();
+
+    NoticePolicyBuilder noticePolicyBuilder = new NoticePolicyBuilder()
+      .withName("request policy")
+      .withRequestNotices(Arrays.asList(pickupReminder, holdShelfExpirationNotice, requestExpirationNotice));
+
+    useWithPaging(noticePolicyBuilder);
+
+    LocalDate requestExpirationLocalDate = LocalDate.now().plusMonths(3);
+    RequestBuilder requestBuilder = new RequestBuilder().page()
+      .forItem(item)
+      .withRequesterId(requester.getId())
+      .withRequestDate(DateTime.now())
+      .withStatus(OPEN_NOT_YET_FILLED)
+      .withPickupServicePoint(pickupServicePoint)
+      .withRequestExpiration(requestExpirationLocalDate);
+
+    requestsFixture.place(requestBuilder);
+
+    CheckInByBarcodeRequestBuilder checkInByBarcodeRequestBuilder =
+      new CheckInByBarcodeRequestBuilder()
+        .forItem(item)
+        .withItemBarcode(item.getBarcode())
+        .at(pickupServicePoint);
+
+    loansFixture.checkInByBarcode(checkInByBarcodeRequestBuilder);
+
+    Awaitility.await()
+      .atMost(1, TimeUnit.SECONDS)
+      .until(scheduledNoticesClient::getAll, hasSize(2));
+
+    List<JsonObject> scheduledNotices = scheduledNoticesClient.getAll();
+    assertThat(scheduledNotices.size(), is(2));
+
+    List<String> triggeringEvents = scheduledNotices.stream()
+      .map(n -> n.getString("triggeringEvent"))
+      .collect(Collectors.toList());
+
+    assertThat(triggeringEvents, containsInAnyOrder("Request expiration", "Hold expiration"));
   }
 }
