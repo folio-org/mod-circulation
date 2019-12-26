@@ -3,24 +3,27 @@ package api.item;
 import static api.support.APITestContext.getOkapiHeadersFromContext;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
+import static org.hamcrest.Matchers.closeTo;
 import static org.junit.Assert.assertThat;
-
-import java.net.MalformedURLException;
-import java.util.UUID;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeoutException;
+import static org.junit.Assert.assertTrue;
 
 import org.folio.circulation.support.http.client.IndividualResource;
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
-import org.junit.Test;
 
 import api.support.APITestContext;
 import api.support.APITests;
 import api.support.http.OkapiHeaders;
 import io.vertx.core.json.JsonObject;
+import java.net.MalformedURLException;
+import java.util.UUID;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeoutException;
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
+import org.junit.Test;
 
 public class ItemLastCheckInTests extends APITests {
+
+  private final int CURRENT_TIME_MARGIN_MILLIS = 3000;
 
   @Override
   public void afterEach()
@@ -44,7 +47,11 @@ public class ItemLastCheckInTests extends APITests {
     JsonObject lastCheckIn = itemsClient.get(item.getId()).getJson()
       .getJsonObject("lastCheckIn");
 
-    assertThat(lastCheckIn.getString("dateTime"), is(checkInDate.toString()));
+    DateTime actualCheckinDateTime = DateTime.parse(lastCheckIn.getString("dateTime"));
+
+    assertThat((double) checkInDate.getMillis(),
+      is(closeTo((double) actualCheckinDateTime.getMillis(),
+        CURRENT_TIME_MARGIN_MILLIS)));
     assertThat(lastCheckIn.getString("servicePointId"),
       is(servicePointId.toString()));
     assertThat(lastCheckIn.getString("staffMemberId"),
@@ -67,7 +74,11 @@ public class ItemLastCheckInTests extends APITests {
     JsonObject lastCheckIn = itemsClient.get(item.getId()).getJson()
       .getJsonObject("lastCheckIn");
 
-    assertThat(lastCheckIn.getString("dateTime"), is(checkInDate.toString()));
+    DateTime actualCheckinDateTime = DateTime.parse(lastCheckIn.getString("dateTime"));
+
+    assertThat((double) checkInDate.getMillis(),
+      is(closeTo((double) actualCheckinDateTime.getMillis(),
+        CURRENT_TIME_MARGIN_MILLIS)));
     assertThat(lastCheckIn.getString("servicePointId"),
       is(servicePointId.toString()));
     assertThat(lastCheckIn.getString("staffMemberId"), is(nullValue()));
@@ -89,7 +100,11 @@ public class ItemLastCheckInTests extends APITests {
     JsonObject lastCheckIn = itemsClient.get(item.getId()).getJson()
       .getJsonObject("lastCheckIn");
 
-    assertThat(lastCheckIn.getString("dateTime"), is(checkInDate.toString()));
+    DateTime actualCheckinDateTime = DateTime.parse(lastCheckIn.getString("dateTime"));
+
+    assertThat((double) checkInDate.getMillis(),
+      is(closeTo((double) actualCheckinDateTime.getMillis(),
+        CURRENT_TIME_MARGIN_MILLIS)));
     assertThat(lastCheckIn.getString("servicePointId"),
       is(servicePointId.toString()));
     assertThat(lastCheckIn.getString("staffMemberId"), is("INVALID_UUID"));
@@ -107,7 +122,11 @@ public class ItemLastCheckInTests extends APITests {
     JsonObject lastCheckIn = itemsClient.get(item.getId()).getJson()
       .getJsonObject("lastCheckIn");
 
-    assertThat(lastCheckIn.getString("dateTime"), is(checkInDate.toString()));
+    DateTime actualCheckinDateTime = DateTime.parse(lastCheckIn.getString("dateTime"));
+
+    assertThat((double) checkInDate.getMillis(),
+      is(closeTo((double) actualCheckinDateTime.getMillis(),
+        CURRENT_TIME_MARGIN_MILLIS)));
     assertThat(lastCheckIn.getString("servicePointId"), is(servicePointId.toString()));
     assertThat(lastCheckIn.getString("staffMemberId"), is(APITestContext.getUserId()));
   }
@@ -123,7 +142,11 @@ public class ItemLastCheckInTests extends APITests {
     JsonObject lastCheckIn = itemsClient.get(item.getId()).getJson()
       .getJsonObject("lastCheckIn");
 
-    assertThat(lastCheckIn.getString("dateTime"), is(firstCheckInDate.toString()));
+    DateTime actualCheckinDateTime = DateTime.parse(lastCheckIn.getString("dateTime"));
+
+    assertThat((double) firstCheckInDate.getMillis(),
+      is(closeTo((double) actualCheckinDateTime.getMillis(),
+        CURRENT_TIME_MARGIN_MILLIS)));
     assertThat(lastCheckIn.getString("servicePointId"), is(servicePointId.toString()));
     assertThat(lastCheckIn.getString("staffMemberId"), is(APITestContext.getUserId()));
 
@@ -142,8 +165,34 @@ public class ItemLastCheckInTests extends APITests {
     lastCheckIn = itemsClient.get(item.getId()).getJson()
       .getJsonObject("lastCheckIn");
 
-    assertThat(lastCheckIn.getString("dateTime"), is(secondCheckInDate.toString()));
+    actualCheckinDateTime = DateTime.parse(lastCheckIn.getString("dateTime"));
+
+    assertThat((double) secondCheckInDate.getMillis(),
+      is(closeTo((double) actualCheckinDateTime.getMillis(),
+        CURRENT_TIME_MARGIN_MILLIS)));
     assertThat(lastCheckIn.getString("servicePointId"), is(servicePointId2.toString()));
     assertThat(lastCheckIn.getString("staffMemberId"), is(randomUserId));
+  }
+
+  @Test
+  public void shouldDisplaySystemDateIfCheckinWasBackdated()
+    throws InterruptedException, MalformedURLException, TimeoutException,
+    ExecutionException {
+
+    IndividualResource item = itemsFixture.basedUponSmallAngryPlanet();
+    UUID servicePointId = servicePointsFixture.cd1().getId();
+    DateTime checkInDate = DateTime.now().minusHours(1);
+
+    loansFixture.checkInByBarcode(item, checkInDate, servicePointId);
+    JsonObject lastCheckIn = itemsClient.get(item.getId()).getJson()
+      .getJsonObject("lastCheckIn");
+
+    DateTime actualCheckinTime = DateTime.parse(lastCheckIn.getString("dateTime"));
+
+    assertTrue(actualCheckinTime.isAfter(checkInDate));
+
+    assertThat((double) DateTime.now().getMillis(),
+      is(closeTo((double) actualCheckinTime.getMillis(),
+        CURRENT_TIME_MARGIN_MILLIS)));
   }
 }
