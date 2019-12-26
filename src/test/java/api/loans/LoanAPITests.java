@@ -930,7 +930,10 @@ public class LoanAPITests extends APITests {
 
     UUID itemId = itemsFixture.basedUponSmallAngryPlanet(
       itemBuilder -> itemBuilder
-        .withBarcode("036000291452"))
+        .withBarcode("036000291452")
+        .withEnumeration("v.70:no.1-6")
+        .withChronology("1987:Jan.-June")
+        .withVolume("testVolume"))
       .getId();
 
     IndividualResource user = usersFixture.charlotte();
@@ -1016,6 +1019,15 @@ public class LoanAPITests extends APITests {
 
     assertThat("has item location",
       loan.getJsonObject("item").containsKey("location"), is(true));
+
+    assertThat("has item enumeration",
+      loan.getJsonObject("item").getString("enumeration"), is("v.70:no.1-6"));
+
+    assertThat("has item chronology",
+      loan.getJsonObject("item").getString("chronology"), is("1987:Jan.-June"));
+
+    assertThat("has item volume",
+      loan.getJsonObject("item").getString("volume"), is("testVolume"));
 
     assertThat("location is taken from holding",
       loan.getJsonObject("item").getJsonObject("location").getString("name"),

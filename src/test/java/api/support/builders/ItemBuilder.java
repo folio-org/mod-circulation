@@ -34,13 +34,14 @@ public class ItemBuilder extends JsonBuilder implements Builder {
   private final String itemLevelCallNumberPrefix;
   private final String itemLevelCallNumberSuffix;
   private String enumeration;
+  private String chronology;
   private List<String> copyNumbers;
   private List<String> yearCaption;
   private String volume;
 
   public ItemBuilder() {
     this(UUID.randomUUID(), null, "565578437802", AVAILABLE,
-      null, null, null, null, null, null, null, null, null, null, null, null);
+      null, null, null, null, null, null, null, null, null, null, null, null, null);
   }
 
   private ItemBuilder(
@@ -54,6 +55,7 @@ public class ItemBuilder extends JsonBuilder implements Builder {
     UUID permanentLoanTypeId,
     UUID temporaryLoanTypeId,
     String enumeration,
+    String chronology,
     List<String> copyNumbers,
     String itemLevelCallNumber,
     String itemLevelCallNumberPrefix,
@@ -71,6 +73,7 @@ public class ItemBuilder extends JsonBuilder implements Builder {
     this.temporaryLoanTypeId = temporaryLoanTypeId;
     this.permanentLoanTypeId = permanentLoanTypeId;
     this.enumeration = enumeration;
+    this.chronology = chronology;
     this.copyNumbers = copyNumbers;
     this.itemLevelCallNumber = itemLevelCallNumber;
     this.itemLevelCallNumberPrefix = itemLevelCallNumberPrefix;
@@ -92,6 +95,7 @@ public class ItemBuilder extends JsonBuilder implements Builder {
     put(itemRequest, "temporaryLocationId", temporaryLocationId);
     put(itemRequest, "status", status, new JsonObject().put("name", status));
     put(itemRequest, "enumeration", enumeration);
+    put(itemRequest, "chronology", chronology);
     put(itemRequest, "copyNumbers", new JsonArray(copyNumbers));
     put(itemRequest, "itemLevelCallNumber", itemLevelCallNumber);
     put(itemRequest, "itemLevelCallNumberPrefix", itemLevelCallNumberPrefix);
@@ -138,6 +142,7 @@ public class ItemBuilder extends JsonBuilder implements Builder {
       this.permanentLoanTypeId,
       this.temporaryLoanTypeId,
       this.enumeration,
+      this.chronology,
       this.copyNumbers,
       this.itemLevelCallNumber,
       this.itemLevelCallNumberPrefix,
@@ -158,6 +163,7 @@ public class ItemBuilder extends JsonBuilder implements Builder {
       this.permanentLoanTypeId,
       this.temporaryLoanTypeId,
       this.enumeration,
+      this.chronology,
       this.copyNumbers,
       this.itemLevelCallNumber,
       this.itemLevelCallNumberPrefix,
@@ -186,6 +192,7 @@ public class ItemBuilder extends JsonBuilder implements Builder {
       this.permanentLoanTypeId,
       this.temporaryLoanTypeId,
       this.enumeration,
+      this.chronology,
       this.copyNumbers,
       this.itemLevelCallNumber,
       this.itemLevelCallNumberPrefix,
@@ -213,7 +220,7 @@ public class ItemBuilder extends JsonBuilder implements Builder {
       this.materialTypeId,
       this.permanentLoanTypeId,
       this.temporaryLoanTypeId,
-      this.enumeration,
+      this.enumeration,this.chronology,
       this.copyNumbers,
       this.itemLevelCallNumber,
       this.itemLevelCallNumberPrefix,
@@ -238,6 +245,7 @@ public class ItemBuilder extends JsonBuilder implements Builder {
       this.permanentLoanTypeId,
       this.temporaryLoanTypeId,
       this.enumeration,
+      this.chronology,
       this.copyNumbers,
       this.itemLevelCallNumber,
       this.itemLevelCallNumberPrefix,
@@ -258,6 +266,7 @@ public class ItemBuilder extends JsonBuilder implements Builder {
       this.permanentLoanTypeId,
       this.temporaryLoanTypeId,
       this.enumeration,
+      this.chronology,
       this.copyNumbers,
       this.itemLevelCallNumber,
       this.itemLevelCallNumberPrefix,
@@ -278,6 +287,7 @@ public class ItemBuilder extends JsonBuilder implements Builder {
       loanTypeId,
       this.temporaryLoanTypeId,
       this.enumeration,
+      this.chronology,
       this.copyNumbers,
       this.itemLevelCallNumber,
       this.itemLevelCallNumberPrefix,
@@ -298,6 +308,7 @@ public class ItemBuilder extends JsonBuilder implements Builder {
       this.permanentLoanTypeId,
       loanTypeId,
       this.enumeration,
+      this.chronology,
       this.copyNumbers,
       this.itemLevelCallNumber,
       this.itemLevelCallNumberPrefix,
@@ -318,6 +329,7 @@ public class ItemBuilder extends JsonBuilder implements Builder {
       this.permanentLoanTypeId,
       this.temporaryLoanTypeId,
       this.enumeration,
+      this.chronology,
       this.copyNumbers,
       this.itemLevelCallNumber,
       this.itemLevelCallNumberPrefix,
@@ -338,6 +350,7 @@ public class ItemBuilder extends JsonBuilder implements Builder {
       this.permanentLoanTypeId,
       this.temporaryLoanTypeId,
       enumeration,
+      this.chronology,
       this.copyNumbers,
       this.itemLevelCallNumber,
       this.itemLevelCallNumberPrefix,
@@ -358,6 +371,7 @@ public class ItemBuilder extends JsonBuilder implements Builder {
       this.permanentLoanTypeId,
       this.temporaryLoanTypeId,
       this.enumeration,
+      this.chronology,
       copyNumbers,
       this.itemLevelCallNumber,
       this.itemLevelCallNumberPrefix,
@@ -382,6 +396,7 @@ public class ItemBuilder extends JsonBuilder implements Builder {
       this.permanentLoanTypeId,
       this.temporaryLoanTypeId,
       this.enumeration,
+      this.chronology,
       this.copyNumbers,
       itemLevelCallNumber,
       itemLevelCallNumberPrefix,
@@ -402,6 +417,7 @@ public class ItemBuilder extends JsonBuilder implements Builder {
       this.permanentLoanTypeId,
       this.temporaryLoanTypeId,
       this.enumeration,
+      this.chronology,
       this.copyNumbers,
       this.itemLevelCallNumber,
       this.itemLevelCallNumberPrefix,
@@ -422,11 +438,33 @@ public class ItemBuilder extends JsonBuilder implements Builder {
         this.permanentLoanTypeId,
         this.temporaryLoanTypeId,
         this.enumeration,
-        this.copyNumbers,
+      this.chronology,
+      this.copyNumbers,
         this.itemLevelCallNumber,
         this.itemLevelCallNumberPrefix,
         this.itemLevelCallNumberSuffix,
         this.volume,
         yearCaption);
     }
+
+  public ItemBuilder withChronology(String chronology) {
+    return new ItemBuilder(
+      this.id,
+      this.holdingId,
+      this.barcode,
+      this.status,
+      this.permanentLocationId,
+      this.temporaryLocationId,
+      this.materialTypeId,
+      this.permanentLoanTypeId,
+      this.temporaryLoanTypeId,
+      this.enumeration,
+      chronology,
+      this.copyNumbers,
+      this.itemLevelCallNumber,
+      this.itemLevelCallNumberPrefix,
+      this.itemLevelCallNumberSuffix,
+      this.volume,
+      this.yearCaption);
+  }
 }
