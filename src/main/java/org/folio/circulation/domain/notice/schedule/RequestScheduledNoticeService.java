@@ -82,7 +82,7 @@ public class RequestScheduledNoticeService {
     } else if (eventType == NoticeEventType.HOLD_EXPIRATION) {
       return createHoldExpirationScheduledNotice(request, cfg);
     } else {
-      throw new IllegalStateException();
+      return Optional.empty();
     }
   }
 
