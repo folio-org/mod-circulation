@@ -110,7 +110,7 @@ public class Item {
     return !isInStatus(prospectiveStatus);
   }
 
-  private boolean isInStatus(ItemStatus status) {
+  public boolean isInStatus(ItemStatus status) {
     return getStatus().equals(status);
   }
 
@@ -188,7 +188,7 @@ public class Item {
     return ItemStatus.from(getStatusName(), getStatusDate());
   }
 
-  private String getStatusName() {
+  public String getStatusName() {
     return getNestedStringProperty(getItem(), ItemProperties.STATUS_PROPERTY, "name");
   }
 

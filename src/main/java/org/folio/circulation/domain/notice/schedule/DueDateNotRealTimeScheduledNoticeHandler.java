@@ -1,7 +1,8 @@
 package org.folio.circulation.domain.notice.schedule;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
-import static org.folio.circulation.support.AsyncCoordinationUtil.allOf;
+import static org.folio.circulation.domain.notice.schedule.DueDateScheduledNoticeHandler.REQUIRED_RECORD_TYPES;
+import static org.folio.circulation.support.AsyncCoordinationUtil.allResultsOf;
 import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.ResultBinding.mapResult;
 
@@ -63,14 +64,23 @@ public class DueDateNotRealTimeScheduledNoticeHandler {
   }
 
   private CompletableFuture<Result<Void>> handleNoticeGroup(List<ScheduledNotice> noticeGroup) {
-  return allOf(noticeGroup, this::getContext)
+  return allResultsOf(noticeGroup, this::getContext)
+      .thenCompose(this::handleFailures)
       .thenCompose(r -> r.after(this::sendGroupedNotice))
       .thenCompose(r -> r.after(this::updateGroupedNotice))
       .thenApply(mapResult(p -> null));
   }
 
+  private CompletableFuture<Result<List<Pair<ScheduledNotice, LoanAndRelatedRecords>>>> handleFailures(
+    List<Result<Pair<ScheduledNotice, LoanAndRelatedRecords>>> results) {
+    results.removeIf(r -> dueDateScheduledNoticeHandler.failedToFindRecordOfType(r, REQUIRED_RECORD_TYPES));
+    return CompletableFuture.completedFuture(results)
+      .thenApply(Result::combineAll);
+  }
+
   private CompletableFuture<Result<Pair<ScheduledNotice, LoanAndRelatedRecords>>> getContext(ScheduledNotice notice) {
     return loanRepository.getById(notice.getLoanId())
+      .thenCompose(r -> dueDateScheduledNoticeHandler.deleteNoticeIfLoanIsMissingOrIncomplete(r, notice))
       .thenApply(mapResult(LoanAndRelatedRecords::new))
       .thenCompose(r -> r.after(loanPolicyRepository::lookupLoanPolicy))
       .thenApply(mapResult(relatedRecords -> Pair.of(notice, relatedRecords)));

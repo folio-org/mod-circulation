@@ -482,6 +482,21 @@ public class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
+  public void cannotCheckOutWhenItemDeclaredLost() throws InterruptedException,
+    MalformedURLException,
+    TimeoutException,
+    ExecutionException {
+
+    final IndividualResource declaredLostItem = itemsFixture.setupDeclaredLostItem();
+    final IndividualResource steve = usersFixture.steve();
+    final Response response = loansFixture.attemptCheckOutByBarcode(declaredLostItem, steve);
+
+    assertThat(response.getJson(), hasErrorWith(allOf(
+      hasMessageContaining("has the item status Declared lost"),
+      hasItemBarcodeParameter(declaredLostItem))));
+  }
+
+  @Test
   public void canCheckOutViaProxy()
     throws InterruptedException,
     ExecutionException,

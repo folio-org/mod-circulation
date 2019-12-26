@@ -1,14 +1,20 @@
 package api.support.fixtures;
 
 import static api.support.APITestContext.circulationModuleUrl;
-import static api.support.RestAssuredClient.manuallyStartTimedTask;
 
 import java.net.URL;
 
-public class ExpiredSessionProcessingClient {
+import api.support.APITestContext;
+import api.support.RestAssuredClient;
 
+public class ExpiredSessionProcessingClient {
   public void runRequestExpiredSessionsProcessing(int expectedStatusCode) {
+    final RestAssuredClient restAssuredClient = new RestAssuredClient(
+      APITestContext.getOkapiHeadersFromContext());
+
     URL url = circulationModuleUrl("/circulation/notice-session-expiration-by-timeout");
-    manuallyStartTimedTask(url, expectedStatusCode, "notice-session-expiration-by-timeout-request");
+
+    restAssuredClient.post(url, expectedStatusCode,
+      "notice-session-expiration-by-timeout-request", 10000);
   }
 }

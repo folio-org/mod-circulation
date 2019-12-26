@@ -1,14 +1,14 @@
 package api.support.fixtures;
 
-import static api.support.RestAssuredClient.from;
-import static api.support.RestAssuredClient.post;
+import static api.support.APITestContext.getOkapiHeadersFromContext;
 import static api.support.http.InterfaceUrls.endSessionUrl;
 
 import java.util.UUID;
 
-import io.vertx.core.json.JsonArray;
 import org.folio.circulation.support.http.client.Response;
 
+import api.support.RestAssuredClient;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
 public class EndPatronSessionClient {
@@ -41,6 +41,7 @@ public class EndPatronSessionClient {
   }
 
   private Response attemptEndPatronSession(JsonObject body, int expectedStatus) {
-    return from(post(body, endSessionUrl(), expectedStatus, REQUEST_ID));
+    return new RestAssuredClient(getOkapiHeadersFromContext())
+      .post(body, endSessionUrl(), expectedStatus, REQUEST_ID);
   }
 }
