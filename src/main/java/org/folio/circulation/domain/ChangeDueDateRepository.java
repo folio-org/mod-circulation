@@ -25,6 +25,10 @@ public class ChangeDueDateRepository {
     log.info("Changing due date for {} to {}", loanId, dueDate);
     return loanRepository.getById(loanId)
       .thenApply(r -> r.map(r1 -> r1.changeDueDate(dueDate)))
+      .thenApply(r-> r.map(loan -> {
+        loan.changeAction(LoanAction.DUE_DATE_CHANGE);
+        return loan;
+      }))
       .thenCompose(r -> r.after(loanRepository::replaceLoan))
       .thenApply(r-> r.map(LoanAndRelatedRecords::getLoan));
   }

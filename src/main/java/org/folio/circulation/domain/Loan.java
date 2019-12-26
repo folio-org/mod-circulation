@@ -116,7 +116,6 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
 
   public Loan changeDueDate(DateTime newDueDate) {
     write(representation, DUE_DATE, newDueDate);
-    changeAction(LoanAction.DUE_DATE_CHANGE);
     return this;
   }
 
