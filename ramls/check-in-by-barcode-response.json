@@ -82,6 +82,18 @@
           },
           "additionalProperties": false
         },
+        "enumeration": {
+          "description": "Item`s enumeration",
+          "type": "string"
+        },
+        "chronology": {
+          "description": "Item`s chronology",
+          "type": "string"
+        },
+        "volume": {
+          "description": "Item`s volume",
+          "type": "string"
+        },
         "inTransitDestinationServicePointId": {
           "description": "Service point an item is intended to be transited to (should only be present when in transit)",
           "type": "string",
