@@ -353,6 +353,6 @@ public class LoanRepository {
     LoanAndRelatedRecords loanAndRelatedRecords) {
 
     return findOpenLoansByUserIdAndLoanPolicyId(loanAndRelatedRecords)
-      .thenComposeAsync(loans -> itemRepository.fetchItemsForLoans(loans, Loan::withItem));
+      .thenComposeAsync(loans -> itemRepository.fetchItemsForMultipleRecords(loans, Loan::withItem));
   }
 }

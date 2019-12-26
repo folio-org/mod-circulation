@@ -59,7 +59,9 @@ public class ItemLimitValidator {
     }
 
     Item item = records.getLoan().getItem();
-    String materialType = item.getMaterialType().getString("name");
+    String materialType = item.getMaterialType() != null
+      ? item.getMaterialType().getString("name")
+      : null;
     String loanType = item.getLoanTypeName();
     Integer itemLimit = records.getLoan().getLoanPolicy().getItemLimit();
 
@@ -77,11 +79,13 @@ public class ItemLimitValidator {
   }
 
   private boolean isMaterialTypeMatchInRetrievedLoan(String expectedMaterialType, Loan loan) {
-    return expectedMaterialType.equalsIgnoreCase(loan.getItem().getMaterialType().getString("name"));
+    return expectedMaterialType != null
+      && expectedMaterialType.equalsIgnoreCase(loan.getItem().getMaterialType().getString("name"));
   }
 
   private boolean isLoanTypeMatchInRetrievedLoan(String expectedLoanType, Loan loan) {
-    return expectedLoanType.equalsIgnoreCase(loan.getItem().getLoanTypeName());
+    return expectedLoanType != null
+      && expectedLoanType.equalsIgnoreCase(loan.getItem().getLoanTypeName());
   }
 
   private boolean isRuleMaterialTypePresent(List<String> conditions) {

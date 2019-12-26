@@ -1051,8 +1051,10 @@ public class CheckOutByBarcodeTests extends APITests {
 
     circulationRulesFixture.updateCirculationRules(createRules("m " + book + " + t " + readingRoom + " + g " + regular));
 
-    IndividualResource firstBookTypeItem = itemsFixture.basedUponNod(itemBuilder -> itemBuilder.withTemporaryLoanType(readingRoom));
-    IndividualResource secondBookTypeItem = itemsFixture.basedUponSmallAngryPlanet(itemBuilder -> itemBuilder.withTemporaryLoanType(readingRoom));
+    IndividualResource firstBookTypeItem = itemsFixture.basedUponNod(
+      itemBuilder -> itemBuilder.withTemporaryLoanType(readingRoom));
+    IndividualResource secondBookTypeItem = itemsFixture.basedUponSmallAngryPlanet(
+      itemBuilder -> itemBuilder.withTemporaryLoanType(readingRoom));
     IndividualResource videoTypeItem = itemsFixture.basedUponDunkirk();
     IndividualResource steve = usersFixture.steve();
 

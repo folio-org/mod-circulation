@@ -7,6 +7,13 @@
     "noticePolicyId": {
       "description": "ID of the notice policy determined by the circulation rules",
       "type": "string"
+    },
+    "conditions": {
+      "description": "List of rule conditions",
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
     }
   },
   "additionalProperties": false,
