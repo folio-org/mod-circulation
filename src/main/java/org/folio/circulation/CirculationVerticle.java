@@ -72,7 +72,7 @@ public class CirculationVerticle extends AbstractVerticle {
     new RenewByBarcodeResource("/circulation/override-renewal-by-barcode",
       new OverrideRenewalStrategy(), client).register(router);
 
-    new BatchChangeDueDateResource(client, "/circulation/batch/change-due-date")
+    new BatchChangeDueDateResource(client, "/circulation/loans/batch-change-due-dates")
       .register(router);
 
     new LoanCollectionResource(client).register(router);

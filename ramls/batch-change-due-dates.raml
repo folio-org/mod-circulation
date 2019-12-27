@@ -1,5 +1,5 @@
 #%RAML 1.0
-title: Circulation
+title: Batch change due date
 version: v0.1
 protocols: [ HTTP, HTTPS ]
 baseUri: http://localhost:9130
@@ -11,7 +11,7 @@ documentation:
 types:
   errors: !include raml-util/schemas/errors.schema
   error: !include raml-util/schemas/error.schema
-  batch-change-due-date-request: !include batch-change-due-date-request.json
+  batch-change-due-date-request: !include batch-change-due-dates-request.json
 
 /circulation:
   /batch/change-due-date:
@@ -20,7 +20,7 @@ types:
       description: Updates the due date of an existing loan
       body:
         application/json:
-          type: !include batch-change-due-date-request.json
+          type: !include batch-change-due-dates-request.json
           example: !include examples/batch-due-date-request.json
       responses:
         204:

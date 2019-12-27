@@ -157,7 +157,7 @@ public class InterfaceUrls {
   }
 
   public static URL batchChangeDueDateUrl() {
-    return circulationModuleUrl("/circulation/batch/change-due-date");
+    return circulationModuleUrl("/circulation/loans/batch-change-due-dates");
   }
 
   public static URL loansUrl() {

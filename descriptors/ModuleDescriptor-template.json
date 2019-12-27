@@ -107,14 +107,14 @@
       ]
     },
     {
-      "id": "change-due-date",
+      "id": "batch-change-loan-due-dates",
       "version": "0.1",
       "handlers": [
         {
           "methods": [
             "POST"
           ],
-          "pathPattern": "/circulation/batch/change-due-date",
+          "pathPattern": "/circulation/loans/batch-change-due-dates",
           "permissionsRequired": [
             "circulation.batch.change-due-date.post"
           ],
