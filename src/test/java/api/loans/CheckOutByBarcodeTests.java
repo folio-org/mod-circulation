@@ -938,7 +938,7 @@ public class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void canCheckOutWhenItemLimitOfLoanPolicyIsReachedButMaterialTypeAndLoanTypeMissing()
+  public void canCheckOutWhenItemLimitIsIgnoredForRulesWithoutMaterialTypeOrLoanType()
     throws InterruptedException,
     MalformedURLException,
     TimeoutException,
