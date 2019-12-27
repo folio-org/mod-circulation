@@ -8,11 +8,13 @@ import static api.support.matchers.ItemStatusCodeMatcher.hasItemStatus;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static org.folio.circulation.domain.policy.DueDateManagement.KEEP_THE_CURRENT_DUE_DATE;
 import static org.folio.circulation.domain.policy.library.ClosedLibraryStrategyUtils.END_OF_A_DAY;
+import static org.folio.circulation.domain.representations.ItemProperties.CALL_NUMBER_COMPONENTS;
 import static org.folio.circulation.domain.representations.RequestProperties.REQUEST_TYPE;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
+import static org.junit.Assert.assertTrue;
 
 import java.net.MalformedURLException;
 import java.time.Clock;
@@ -167,8 +169,10 @@ public class MoveRequestTests extends APITests {
     TimeoutException,
     MalformedURLException {
 
-    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
-    IndividualResource interestingTimes = itemsFixture.basedUponInterestingTimes();
+    IndividualResource smallAngryPlanet = itemsFixture
+      .basedUponSmallAngryPlanet(itemsFixture.addCallNumberStringComponents("sap"));
+    IndividualResource interestingTimes = itemsFixture
+      .basedUponInterestingTimes(itemsFixture.addCallNumberStringComponents("it"));
 
     IndividualResource james = usersFixture.james();
     IndividualResource jessica = usersFixture.jessica();
@@ -191,6 +195,7 @@ public class MoveRequestTests extends APITests {
 
     assertThat("Move request should have correct type",
       moveRequest.getJson().getString(REQUEST_TYPE), is(RequestType.PAGE.getValue()));
+    requestHasCallNumberStringProperties(requestByJessica.getJson(), "sap");
 
     requestByJessica = requestsClient.get(requestByJessica);
     assertThat(requestByJessica.getJson().getString(REQUEST_TYPE), is(RequestType.PAGE.getValue()));
@@ -198,6 +203,7 @@ public class MoveRequestTests extends APITests {
     assertThat(requestByJessica.getJson().getInteger("position"), is(1));
     assertThat(requestByJessica.getJson().getString("itemId"), is(interestingTimes.getId().toString()));
     retainsStoredSummaries(requestByJessica);
+    requestHasCallNumberStringProperties(requestByJessica.getJson(), "it");
 
     // check item queues are correct size
     MultipleRecords<JsonObject> smallAngryPlanetQueue = requestsFixture.getQueueFor(smallAngryPlanet);
@@ -1030,5 +1036,20 @@ public class MoveRequestTests extends APITests {
   private void freezeTime(Instant dateTime) {
     ClockManager.getClockManager().setClock(
       Clock.fixed(dateTime, ZoneOffset.UTC));
+  }
+
+  private void requestHasCallNumberStringProperties(JsonObject request, String prefix) {
+    JsonObject item = request.getJsonObject("item");
+
+    assertTrue(item.containsKey(CALL_NUMBER_COMPONENTS));
+    JsonObject callNumberComponents = item.getJsonObject(CALL_NUMBER_COMPONENTS);
+
+    assertThat(callNumberComponents.getString("callNumber"), is(prefix + "itCn"));
+    assertThat(callNumberComponents.getString("prefix"), is(prefix + "itCnPrefix"));
+    assertThat(callNumberComponents.getString("suffix"), is(prefix + "itCnSuffix"));
+
+    assertThat(item.getString("enumeration"), is(prefix + "enumeration1"));
+    assertThat(item.getString("chronology"), is(prefix + "chronology"));
+    assertThat(item.getString("volume"), is(prefix + "vol.1"));
   }
 }

@@ -415,4 +415,16 @@ public class ItemsFixture {
 
     return contributorNameTypeRecordCreator.createIfAbsent(personalName).getId();
   }
+
+  public Function<ItemBuilder, ItemBuilder> addCallNumberStringComponents(String prefix) {
+    return itemBuilder -> itemBuilder
+      .withCallNumber(prefix + "itCn", prefix + "itCnPrefix", prefix + "itCnSuffix")
+      .withEnumeration(prefix + "enumeration1")
+      .withChronology(prefix + "chronology")
+      .withVolume(prefix + "vol.1");
+  }
+
+  public Function<ItemBuilder, ItemBuilder> addCallNumberStringComponents() {
+    return addCallNumberStringComponents("");
+  }
 }
