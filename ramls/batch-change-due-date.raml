@@ -1,0 +1,37 @@
+#%RAML 1.0
+title: Circulation
+version: v0.1
+protocols: [ HTTP, HTTPS ]
+baseUri: http://localhost:9130
+
+documentation:
+  - title: Batch change due date API
+    content: <b>Change due date API for multiple loans</b>
+
+types:
+  errors: !include raml-util/schemas/errors.schema
+  error: !include raml-util/schemas/error.schema
+  batch-change-due-date-request: !include batch-change-due-date-request.json
+
+/circulation:
+  /batch/change-due-date:
+    displayName: Change due date of an existing loans by batch via ids and changed due date
+    post:
+      description: Updates the due date of an existing loan
+      body:
+        application/json:
+          type: !include batch-change-due-date-request.json
+          example: !include examples/batch-due-date-request.json
+      responses:
+        204:
+          description: "All loans due dates were updated"
+        422:
+          description: "Batch due date failed"
+          body:
+            application/json:
+              type: errors
+        500:
+          description: "Internal server error"
+          body:
+            text/plain:
+              example: "Internal server error"
