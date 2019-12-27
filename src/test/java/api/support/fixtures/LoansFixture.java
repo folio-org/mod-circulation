@@ -17,6 +17,7 @@ import static api.support.http.Offset.noOffset;
 import static org.folio.circulation.support.JsonArrayHelper.mapToList;
 
 import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
@@ -108,6 +109,14 @@ public class LoansFixture {
 
     return restAssuredClient.post(loanBuilder.create(), loansUrl(),
       expectedStatusCode, "post-loan");
+  }
+
+  public void replaceLoan(UUID id, JsonObject representation) {
+    restAssuredClient.put(representation, urlForLoan(id), 204, "replace-loan");
+  }
+
+  public Response attemptToReplaceLoan(UUID id, JsonObject representation) {
+    return restAssuredClient.put(representation, urlForLoan(id), "replace-loan");
   }
 
   public Response declareItemLost(UUID loanId,
@@ -351,7 +360,7 @@ public class LoansFixture {
 
   public IndividualResource getLoanById(UUID id) {
     return new IndividualResource(restAssuredClient.get(
-      loansUrl(String.format("/%s", id)), 200, "get-loan-by-id"));
+      urlForLoan(id), 200, "get-loan-by-id"));
   }
 
   public Response getLoans() {
@@ -378,5 +387,9 @@ public class LoansFixture {
   public MultipleJsonRecords getAllLoans() {
     return new MultipleJsonRecords(
         mapToList(getLoans(maximumLimit()).getJson(), "loans"));
+  }
+
+  private URL urlForLoan(UUID id) {
+    return loansUrl(String.format("/%s", id));
   }
 }

@@ -1,6 +1,5 @@
 package api.loans;
 
-import static api.support.http.InterfaceUrls.loansUrl;
 import static api.support.matchers.UUIDMatcher.is;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
@@ -9,17 +8,13 @@ import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 
-import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
-import org.folio.circulation.support.http.client.ResponseHandler;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.format.ISODateTimeFormat;
@@ -27,7 +22,6 @@ import org.junit.Test;
 
 import api.support.APITests;
 import api.support.builders.LoanBuilder;
-import api.support.matchers.UUIDMatcher;
 import io.vertx.core.json.JsonObject;
 
 public class CheckInByReplacingLoanTests extends APITests {
@@ -57,15 +51,7 @@ public class CheckInByReplacingLoanTests extends APITests {
       .put("returnDate", new DateTime(2017, 3, 5, 14, 23, 41, DateTimeZone.UTC)
         .toString(ISODateTimeFormat.dateTime()));
 
-    CompletableFuture<Response> putCompleted = new CompletableFuture<>();
-
-    client.put(loansUrl(String.format("/%s", loan.getId())), returnedLoan,
-      ResponseHandler.any(putCompleted));
-
-    Response putResponse = putCompleted.get(5, TimeUnit.SECONDS);
-
-    assertThat(String.format("Failed to update loan: %s", putResponse.getBody()),
-      putResponse.getStatusCode(), is(HttpURLConnection.HTTP_NO_CONTENT));
+    loansFixture.replaceLoan(loan.getId(), returnedLoan);
 
     Response updatedLoanResponse = loansClient.getById(loan.getId());
 
@@ -129,12 +115,8 @@ public class CheckInByReplacingLoanTests extends APITests {
       .put("returnDate", new DateTime(2017, 3, 5, 14, 23, 41,
         DateTimeZone.UTC).toString(ISODateTimeFormat.dateTime()));
 
-    CompletableFuture<Response> putCompleted = new CompletableFuture<>();
-
-    client.put(loansUrl(String.format("/%s", loan.getId())), returnedLoan,
-      ResponseHandler.any(putCompleted));
-
-    Response putResponse = putCompleted.get(5, TimeUnit.SECONDS);
+    Response putResponse = loansFixture.attemptToReplaceLoan(loan.getId(),
+        returnedLoan);
 
     assertThat(putResponse.getJson(), hasErrorWith(hasMessage(
       "A Closed loan must have a Checkin Service Point")));
@@ -165,12 +147,8 @@ public class CheckInByReplacingLoanTests extends APITests {
       .put("returnDate", new DateTime(2017, 3, 5, 14, 23, 41,
         DateTimeZone.UTC).toString(ISODateTimeFormat.dateTime()));
 
-    CompletableFuture<Response> putCompleted = new CompletableFuture<>();
-
-    client.put(loansUrl(String.format("/%s", loan.getId())), returnedLoan,
-      ResponseHandler.any(putCompleted));
-
-    Response putResponse = putCompleted.get(5, TimeUnit.SECONDS);
+    Response putResponse = loansFixture.attemptToReplaceLoan(loan.getId(),
+      returnedLoan);
 
     assertThat(putResponse.getJson(), hasErrorWith(allOf(
       hasMessage("Check In Service Point does not exist"),
