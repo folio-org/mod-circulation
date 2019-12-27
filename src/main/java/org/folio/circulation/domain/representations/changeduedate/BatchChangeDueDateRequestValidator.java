@@ -11,6 +11,7 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.RoutingContext;
 import java.lang.invoke.MethodHandles;
 import java.util.List;
+import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,35 +33,30 @@ public class BatchChangeDueDateRequestValidator {
   }
 
   public Result<BatchChangeDueDateRequestValidator> validate() {
-
     try {
-      JsonObject payload = routingContext.getBodyAsJson();
-      if (payload == null) {
-        return failedValidation("No payload provided",
-          "", null);
+      String body = routingContext.getBody().toString();
+      if (StringUtils.isEmpty(body)) {
+        return failedValidation(
+          "No request body provided", "", "");
       }
-
+      JsonObject payload = routingContext.getBodyAsJson();
       JsonArray jsonArray = payload.getJsonArray(LOAN_IDS);
-
       if (jsonArray == null || jsonArray.isEmpty()) {
         return failedValidation("No loan ids provided",
           LOAN_IDS, null);
       }
-
       loanIds = jsonArray.getList();
       dueDate = getDateTimeProperty(payload, DUE_DATE);
       if (dueDate == null) {
         return failedValidation("No due date provided",
           DUE_DATE, null);
       }
-
     } catch (Exception e) {
-      String msg = "Exception during changing due date";
+      String msg = "Batch change due date: bad request";
       log.error(msg, e);
-      return failedValidation("Exception during changing due date",
+      return failedValidation(msg,
         "message", e.getMessage());
     }
-
     return succeeded(this);
   }
 
