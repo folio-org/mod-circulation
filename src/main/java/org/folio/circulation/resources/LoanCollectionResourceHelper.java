@@ -1,5 +1,9 @@
 package org.folio.circulation.resources;
 
+import static org.folio.circulation.domain.representations.LoanProperties.ITEM_ID;
+import static org.folio.circulation.support.Result.of;
+import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
+
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
@@ -10,11 +14,6 @@ import org.folio.circulation.domain.validation.ItemNotFoundValidator;
 import org.folio.circulation.support.Result;
 
 import java.util.concurrent.CompletableFuture;
-
-import static org.folio.circulation.domain.representations.LoanProperties.ITEM_ID;
-import static org.folio.circulation.support.Result.of;
-import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
-import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 
 public class LoanCollectionResourceHelper {
 
@@ -44,20 +43,6 @@ public class LoanCollectionResourceHelper {
 
     return Result.combine(loanResult, getUserResult,
       LoanAndRelatedRecords::withRequestingUser);
-  }
-
-  static Result<LoanAndRelatedRecords> refuseWhenHoldingDoesNotExist(
-    Result<LoanAndRelatedRecords> result) {
-
-    return result.next(loan -> {
-      if(loan.getLoan().getItem().doesNotHaveHolding()) {
-        return failedValidation("Holding does not exist",
-          ITEM_ID, loan.getLoan().getItemId());
-      }
-      else {
-        return result;
-      }
-    });
   }
 
   public static Result<LoanAndRelatedRecords> refuseWhenClosedAndNoCheckInServicePointId(

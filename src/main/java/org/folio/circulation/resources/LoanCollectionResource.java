@@ -20,6 +20,7 @@ import org.folio.circulation.domain.UpdateRequestQueue;
 import org.folio.circulation.domain.UserRepository;
 import org.folio.circulation.domain.policy.LoanPolicyRepository;
 import org.folio.circulation.domain.validation.AlreadyCheckedOutValidator;
+import org.folio.circulation.domain.validation.HoldingsValidator;
 import org.folio.circulation.domain.validation.ItemNotFoundValidator;
 import org.folio.circulation.domain.validation.ItemStatusValidator;
 import org.folio.circulation.domain.validation.ProxyRelationshipValidator;
@@ -90,7 +91,7 @@ public class LoanCollectionResource extends CollectionResource {
       .thenApply(spLoanLocationValidator::checkServicePointLoanLocation)
       .thenCombineAsync(itemRepository.fetchFor(loan), LoanCollectionResourceHelper::addItem)
       .thenApply(itemNotFoundValidator::refuseWhenItemNotFound)
-      .thenApply(LoanCollectionResourceHelper::refuseWhenHoldingDoesNotExist)
+      .thenApply(HoldingsValidator::refuseWhenHoldingDoesNotExist)
       .thenApply(alreadyCheckedOutValidator::refuseWhenItemIsAlreadyCheckedOut)
       .thenApply(itemStatusValidator::refuseWhenItemStatusIsInvalid)
       .thenComposeAsync(r -> r.after(proxyRelationshipValidator::refuseWhenInvalid))
