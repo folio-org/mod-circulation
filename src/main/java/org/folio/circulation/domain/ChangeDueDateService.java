@@ -10,14 +10,14 @@ import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class ChangeDueDateRepository {
+public class ChangeDueDateService {
 
   private static final Logger log = LoggerFactory
     .getLogger(MethodHandles.lookup().lookupClass());
 
   private final LoanRepository loanRepository;
 
-  public ChangeDueDateRepository(Clients clients) {
+  public ChangeDueDateService(Clients clients) {
     loanRepository = new LoanRepository(clients);
   }
 

@@ -1,6 +1,6 @@
 package org.folio.circulation.resources;
 
-import org.folio.circulation.domain.ChangeDueDateRepository;
+import org.folio.circulation.domain.ChangeDueDateService;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.representations.changeduedate.BatchChangeDueDateRequest;
 import org.folio.circulation.domain.representations.changeduedate.BatchChangeDueDateRequestValidator;
@@ -44,7 +44,7 @@ public class BatchChangeDueDateResource extends Resource {
 
     final WebContext context = new WebContext(routingContext);
     final Clients clients = Clients.create(context, client);
-    ChangeDueDateRepository changeDueDateRepository = new ChangeDueDateRepository(
+    ChangeDueDateService changeDueDateService = new ChangeDueDateService(
       clients);
     List<String> failedIds = new CopyOnWriteArrayList<>();
 
@@ -60,7 +60,7 @@ public class BatchChangeDueDateResource extends Resource {
     CompletableFuture.allOf(
       request.getLoanIds().stream().map(loanId ->
         {
-          CompletableFuture<Result<Loan>> result = changeDueDateRepository
+          CompletableFuture<Result<Loan>> result = changeDueDateService
             .changeDueDate(loanId, request.getDueDate());
 
           result.exceptionally(e -> {
