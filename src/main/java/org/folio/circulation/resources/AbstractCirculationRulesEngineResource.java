@@ -282,7 +282,7 @@ public abstract class AbstractCirculationRulesEngineResource extends Resource {
   private CompletableFuture<Result<JsonObject>> buildJsonResult(Pair<String, List<String>> policyIdAndConditionsPair) {
     return CompletableFuture.completedFuture(succeeded(new JsonObject()
       .put(getPolicyIdKey(), policyIdAndConditionsPair.getKey())
-      .put("conditions", policyIdAndConditionsPair.getValue())
+      .put("appliedRuleConditions", policyIdAndConditionsPair.getValue())
     ));
   }
 

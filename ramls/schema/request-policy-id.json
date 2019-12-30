@@ -8,8 +8,8 @@
       "description": "ID of the request policy determined by the circulation rules",
       "type": "string"
     },
-    "conditions": {
-      "description": "List of rule conditions",
+    "appliedRuleConditions": {
+      "description": "Conditions list of applied rule",
       "type": "array",
       "items": {
         "type": "string"

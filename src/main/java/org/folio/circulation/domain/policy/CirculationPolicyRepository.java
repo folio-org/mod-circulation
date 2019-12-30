@@ -113,7 +113,7 @@ public abstract class CirculationPolicyRepository<T> {
         log.info("Rules response {}", response.getBody());
 
         String policyId = fetchPolicyId(response.getJson());
-        List<String> conditions = response.getJson().getJsonArray("conditions").getList();
+        List<String> conditions = response.getJson().getJsonArray("appliedRuleConditions").getList();
 
         log.info("Policy to fetch based upon rules {}", policyId);
 
