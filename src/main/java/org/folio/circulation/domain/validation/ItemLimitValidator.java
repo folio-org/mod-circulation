@@ -42,10 +42,10 @@ public class ItemLimitValidator {
       return completedFuture(succeeded(records));
     }
 
-    return loanPolicyRepository.lookupConditions(loan.getItem(), loan.getUser())
-      .thenComposeAsync(result -> result.failAfter(rule -> isLimitReached(rule, records),
-        conditions -> {
-          String message = getErrorMessage(conditions);
+    return ofAsync(() -> loan.getLoanPolicy().getRuleConditions())
+      .thenComposeAsync(result -> result.failAfter(ruleConditions -> isLimitReached(ruleConditions, records),
+        ruleConditions -> {
+          String message = getErrorMessage(ruleConditions);
           return itemLimitErrorFunction.apply(String.format("Patron has reached maximum item limit of %d items %s",
             itemLimit, message));
         }))

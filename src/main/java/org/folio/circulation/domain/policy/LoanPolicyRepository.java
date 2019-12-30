@@ -142,9 +142,9 @@ public class LoanPolicyRepository extends CirculationPolicyRepository<LoanPolicy
   }
 
   @Override
-  protected Result<LoanPolicy> toPolicy(JsonObject representation) {
+  protected Result<LoanPolicy> toPolicy(JsonObject representation, List<String> conditions) {
     return succeeded(new LoanPolicy(representation,
-      new NoFixedDueDateSchedules(), new NoFixedDueDateSchedules()));
+      new NoFixedDueDateSchedules(), new NoFixedDueDateSchedules(), conditions));
   }
 
   @Override

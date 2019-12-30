@@ -7,6 +7,7 @@ import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.ResultBinding.mapResult;
 import static org.folio.circulation.support.http.CommonResponseInterpreters.mapToRecordInterpreter;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -102,7 +103,7 @@ public class PatronNoticeService {
 
     JsonObject combinedContext = contextCombiner.apply(noticeContexts);
 
-    return noticePolicyRepository.lookupPolicy(eventGroupDefinition.noticePolicyId)
+    return noticePolicyRepository.lookupPolicy(eventGroupDefinition.noticePolicyId, new ArrayList<>())
       .thenCompose(r -> r.after(policy ->
         applyNoticePolicy(policy, eventGroupDefinition, combinedContext)));
   }

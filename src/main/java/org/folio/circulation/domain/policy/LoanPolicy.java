@@ -65,6 +65,7 @@ public class LoanPolicy {
   private final JsonObject representation;
   private final FixedDueDateSchedules fixedDueDateSchedules;
   private final FixedDueDateSchedules alternateRenewalFixedDueDateSchedules;
+  private List<String> ruleConditions;
 
   private LoanPolicy(JsonObject representation) {
     this(representation,
@@ -80,6 +81,18 @@ public class LoanPolicy {
     this.representation = representation;
     this.fixedDueDateSchedules = fixedDueDateSchedules;
     this.alternateRenewalFixedDueDateSchedules = alternateRenewalFixedDueDateSchedules;
+  }
+
+  LoanPolicy(
+    JsonObject representation,
+    FixedDueDateSchedules fixedDueDateSchedules,
+    FixedDueDateSchedules alternateRenewalFixedDueDateSchedules,
+    List<String> ruleConditions) {
+
+    this.representation = representation;
+    this.fixedDueDateSchedules = fixedDueDateSchedules;
+    this.alternateRenewalFixedDueDateSchedules = alternateRenewalFixedDueDateSchedules;
+    this.ruleConditions = ruleConditions;
   }
 
   public static LoanPolicy from(JsonObject representation) {
@@ -695,5 +708,9 @@ public class LoanPolicy {
       return getLoansPolicy().getInteger("itemLimit");
     }
     return null;
+  }
+
+  public List<String> getRuleConditions() {
+    return ruleConditions;
   }
 }

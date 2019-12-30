@@ -55,25 +55,24 @@ public abstract class CirculationPolicyRepository<T> {
     User user) {
 
     return lookupPolicyId(item, user)
-      .thenApply(mapResult(pair -> pair.getKey()))
-      .thenComposeAsync(r -> r.after(this::lookupPolicy));
+      .thenComposeAsync(r -> r.after(pair -> lookupPolicy(pair.getKey(), pair.getValue())));
   }
 
-  private Result<T> mapToPolicy(JsonObject json) {
+  private Result<T> mapToPolicy(JsonObject json, List<String> conditions) {
     if (log.isInfoEnabled()) {
       log.info("Mapping json to policy {}", json.encodePrettily());
     }
 
-    return toPolicy(json);
+    return toPolicy(json, conditions);
   }
 
-  public CompletableFuture<Result<T>> lookupPolicy(String policyId) {
+  public CompletableFuture<Result<T>> lookupPolicy(String policyId, List<String> conditions) {
     log.info("Looking up policy with id {}", policyId);
 
     return SingleRecordFetcher.json(policyStorageClient, "circulation policy",
       response -> failedDueToServerError(getPolicyNotFoundErrorMessage(policyId)))
       .fetch(policyId)
-      .thenApply(result -> result.next(this::mapToPolicy));
+      .thenApply(result -> result.next(json -> mapToPolicy(json, conditions)));
   }
 
   public CompletableFuture<Result<Pair<String, List<String>>>> lookupPolicyId(Item item, User user) {
@@ -125,14 +124,9 @@ public abstract class CirculationPolicyRepository<T> {
     return findLoanPolicyCompleted;
   }
 
-  public CompletableFuture<Result<List<String>>> lookupConditions(Item item, User user) {
-
-    return lookupPolicyId(item, user).thenApply(mapResult(Pair::getValue));
-  }
-
   protected abstract String getPolicyNotFoundErrorMessage(String policyId);
 
-  protected abstract Result<T> toPolicy(JsonObject representation);
+  protected abstract Result<T> toPolicy(JsonObject representation, List<String> conditions);
 
   protected abstract String fetchPolicyId(JsonObject jsonObject);
 }
