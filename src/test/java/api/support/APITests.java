@@ -13,7 +13,6 @@ import static org.hamcrest.core.Is.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 
 import java.lang.invoke.MethodHandles;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
@@ -21,7 +20,6 @@ import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
-import org.folio.circulation.domain.representations.LoanProperties;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.OkapiHttpClient;
 import org.junit.After;
@@ -218,7 +216,7 @@ public abstract class APITests {
     new ScheduledNoticeProcessingClient();
 
   protected final RequestQueueFixture requestQueueFixture =
-    new RequestQueueFixture(client);
+    new RequestQueueFixture(restAssuredClient);
 
   protected APITests() {
     this(true);
