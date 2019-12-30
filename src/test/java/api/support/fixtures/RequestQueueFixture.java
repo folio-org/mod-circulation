@@ -31,7 +31,7 @@ public class RequestQueueFixture {
       ResponseHandler.any(reorderCompleted));
 
     return reorderCompleted.get(5, TimeUnit.SECONDS);
-  }
+  } 
 
   public JsonObject reorderQueue(String itemId, JsonObject reorderQueue)
     throws InterruptedException, ExecutionException, TimeoutException {

@@ -1,7 +1,9 @@
 package api.support;
 
 import static api.support.APITestContext.createClient;
+import static api.support.APITestContext.deployVerticles;
 import static api.support.APITestContext.getOkapiHeadersFromContext;
+import static api.support.APITestContext.undeployVerticles;
 import static api.support.http.InterfaceUrls.circulationRulesUrl;
 import static api.support.http.api.support.NamedQueryStringParameter.namedParameter;
 import static org.hamcrest.Matchers.equalTo;
@@ -226,24 +228,17 @@ public abstract class APITests {
   }
 
   @BeforeClass
-  public static void beforeAll()
-    throws InterruptedException,
-    ExecutionException,
+  public static void beforeAll() throws InterruptedException, ExecutionException,
     TimeoutException {
 
-    APITestContext.deployVerticles();
+    deployVerticles();
 
     //Delete everything first just in case
     deleteAllRecords();
   }
 
   @Before
-  public void beforeEach()
-    throws MalformedURLException,
-    InterruptedException,
-    ExecutionException,
-    TimeoutException {
-
+  public void beforeEach() throws InterruptedException {
     requestsClient.deleteAll();
     loansClient.deleteAll();
 
@@ -264,23 +259,16 @@ public abstract class APITests {
   }
 
   @AfterClass
-  public static void afterAll()
-    throws InterruptedException,
-    ExecutionException,
+  public static void afterAll() throws InterruptedException, ExecutionException,
     TimeoutException {
 
     deleteOftenCreatedRecords();
 
-    APITestContext.undeployVerticles();
+    undeployVerticles();
   }
 
   @After
-  public void afterEach()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
-
+  public void afterEach() {
     requestsClient.deleteAll();
     loansClient.deleteAll();
 
@@ -322,8 +310,7 @@ public abstract class APITests {
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
       noticePoliciesFixture.activeNotice().getId(),
       overdueFinePoliciesFixture.facultyStandard().getId(),
-      lostItemFeePoliciesFixture.facultyStandard().getId()
-    );
+      lostItemFeePoliciesFixture.facultyStandard().getId());
   }
 
   protected void useExampleFixedPolicyCirculationRules() {

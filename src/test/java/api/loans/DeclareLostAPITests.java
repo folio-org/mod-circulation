@@ -27,10 +27,7 @@ public class DeclareLostAPITests extends APITests {
   private JsonObject loanJson;
 
   @Override
-  public void beforeEach()
-    throws MalformedURLException, InterruptedException, ExecutionException,
-    TimeoutException {
-
+  public void beforeEach() throws InterruptedException {
     super.beforeEach();
     item = itemsFixture.basedUponSmallAngryPlanet();
 
