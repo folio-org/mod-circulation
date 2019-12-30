@@ -67,7 +67,7 @@ public class CheckInByBarcodeTests extends APITests {
       item -> item.withPrimaryServicePoint(checkInServicePointId));
 
     final IndividualResource nod = itemsFixture.basedUponNod(
-      builder -> builder
+      item -> item
         .withTemporaryLocation(homeLocation.getId())
         .withEnumeration("v.70:no.1-6")
         .withChronology("1987:Jan.-June")
@@ -319,7 +319,7 @@ public class CheckInByBarcodeTests extends APITests {
       item -> item.withPrimaryServicePoint(checkInServicePointId));
 
     final IndividualResource nod = itemsFixture.basedUponNod(
-      builder -> builder
+      item -> item
         .withTemporaryLocation(homeLocation.getId())
         .withEnumeration("v.70:no.1-6")
         .withChronology("1987:Jan.-June")
