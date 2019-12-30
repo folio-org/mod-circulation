@@ -1,6 +1,8 @@
 package api;
 
+import static api.support.http.InterfaceUrls.circulationRulesStorageUrl;
 import static api.support.http.InterfaceUrls.circulationRulesUrl;
+import static org.folio.circulation.support.http.client.ResponseHandler.any;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.StringContains.containsString;
@@ -23,12 +25,10 @@ import org.folio.circulation.rules.PatronGroup;
 import org.folio.circulation.rules.Policy;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
-import org.folio.circulation.support.http.client.ResponseHandler;
 import org.junit.Before;
 import org.junit.Test;
 
 import api.support.APITests;
-import api.support.http.ResourceClient;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
@@ -57,7 +57,7 @@ public class CirculationRulesEngineAPITests extends APITests {
           + "&patron_type_id="       + patronGroup.id
           + "&location_id="          + location.id
           );
-      client.get(url, ResponseHandler.any(completed));
+      client.get(url, any(completed));
       Response response = completed.get(10, TimeUnit.SECONDS);
       assert response.getStatusCode() == 200;
       JsonObject json = new JsonObject(response.getBody());
@@ -80,7 +80,7 @@ public class CirculationRulesEngineAPITests extends APITests {
           + "&patron_type_id="       + patronGroup.id
           + "&location_id="          + location.id
           );
-      client.get(url, ResponseHandler.any(completed));
+      client.get(url, any(completed));
       Response response = completed.get(10, TimeUnit.SECONDS);
       assert response.getStatusCode() == 200;
       JsonObject json = new JsonObject(response.getBody());
@@ -103,7 +103,7 @@ public class CirculationRulesEngineAPITests extends APITests {
               + "&patron_type_id="       + patronGroup.id
               + "&location_id="          + location.id
               );
-          client.get(url, ResponseHandler.any(completed));
+          client.get(url, any(completed));
           Response response = completed.get(10, TimeUnit.SECONDS);
           assert response.getStatusCode() == 200;
           JsonObject json = new JsonObject(response.getBody());
@@ -199,7 +199,7 @@ public class CirculationRulesEngineAPITests extends APITests {
   public void applyLoanWithoutParameters() throws Exception {
     CompletableFuture<Response> completed = new CompletableFuture<>();
     URL url = circulationRulesUrl("/loan-policy");
-    client.get(url, ResponseHandler.any(completed));
+    client.get(url, any(completed));
     Response response = completed.get(10, TimeUnit.SECONDS);
     assertThat(response.getStatusCode(), is(400));
   }
@@ -208,7 +208,7 @@ public class CirculationRulesEngineAPITests extends APITests {
   public void applyRequestWithoutParameters() throws Exception {
     CompletableFuture<Response> completed = new CompletableFuture<>();
     URL url = circulationRulesUrl("/request-policy");
-    client.get(url, ResponseHandler.any(completed));
+    client.get(url, any(completed));
     Response response = completed.get(10, TimeUnit.SECONDS);
     assertThat(response.getStatusCode(), is(400));
   }
@@ -217,7 +217,7 @@ public class CirculationRulesEngineAPITests extends APITests {
   public void applyNoticeWithoutParameters() throws Exception {
     CompletableFuture<Response> completed = new CompletableFuture<>();
     URL url = circulationRulesUrl("/notice-policy");
-    client.get(url, ResponseHandler.any(completed));
+    client.get(url, any(completed));
     Response response = completed.get(10, TimeUnit.SECONDS);
     assertThat(response.getStatusCode(), is(400));
   }
@@ -226,7 +226,7 @@ public class CirculationRulesEngineAPITests extends APITests {
     String name = missing.substring(0, missing.indexOf("="));
     CompletableFuture<Response> completed = new CompletableFuture<>();
     URL url = circulationRulesUrl("/loan-policy?" + p1 + "&" + p2 + "&" + p3);
-    client.get(url, ResponseHandler.any(completed));
+    client.get(url, any(completed));
     Response response = completed.get(10, TimeUnit.SECONDS);
     assertThat(response.getStatusCode(), is(400));
     assertThat(response.getBody(), containsString(name));
@@ -236,7 +236,7 @@ public class CirculationRulesEngineAPITests extends APITests {
     String name = missing.substring(0, missing.indexOf("="));
     CompletableFuture<Response> completed = new CompletableFuture<>();
     URL url = circulationRulesUrl("/request-policy?" + p1 + "&" + p2 + "&" + p3);
-    client.get(url, ResponseHandler.any(completed));
+    client.get(url, any(completed));
     Response response = completed.get(10, TimeUnit.SECONDS);
     assertThat(response.getStatusCode(), is(400));
     assertThat(response.getBody(), containsString(name));
@@ -246,7 +246,7 @@ public class CirculationRulesEngineAPITests extends APITests {
       String name = missing.substring(0, missing.indexOf("="));
       CompletableFuture<Response> completed = new CompletableFuture<>();
       URL url = circulationRulesUrl("/notice-policy?" + p1 + "&" + p2 + "&" + p3);
-      client.get(url, ResponseHandler.any(completed));
+      client.get(url, any(completed));
       Response response = completed.get(10, TimeUnit.SECONDS);
       assertThat(response.getStatusCode(), is(400));
       assertThat(response.getBody(), containsString(name));
@@ -304,7 +304,7 @@ public class CirculationRulesEngineAPITests extends APITests {
         + "&loan_type_id=" + l
         + "&patron_type_id=" + p
         + "&location_id=" + s);
-    client.get(url, ResponseHandler.any(completed));
+    client.get(url, any(completed));
     Response response;
     try {
       response = completed.get(10, TimeUnit.SECONDS);
@@ -422,7 +422,7 @@ public class CirculationRulesEngineAPITests extends APITests {
         + "&patron_type_id="       + g2
         + "&location_id="          + s2
         );
-    client.get(url, ResponseHandler.any(completed));
+    client.get(url, any(completed));
     Response response = completed.get(10, TimeUnit.SECONDS);
     assertThat(response.getStatusCode() + " " + response.getBody(),
         response.getStatusCode(), is(200));
@@ -457,7 +457,7 @@ public class CirculationRulesEngineAPITests extends APITests {
         + "&patron_type_id="       + g2
         + "&location_id="          + s2
         );
-    client.get(url, ResponseHandler.any(completed));
+    client.get(url, any(completed));
     Response response = completed.get(10, TimeUnit.SECONDS);
     assertThat(response.getStatusCode() + " " + response.getBody(),
         response.getStatusCode(), is(200));
@@ -483,7 +483,7 @@ public class CirculationRulesEngineAPITests extends APITests {
         + "&location_id="          + s2
     );
 
-    client.get(url, ResponseHandler.any(completed));
+    client.get(url, any(completed));
 
     Response response = completed.get(10, TimeUnit.SECONDS);
     assertThat(response.getStatusCode() + " " + response.getBody(),
@@ -526,15 +526,14 @@ public class CirculationRulesEngineAPITests extends APITests {
   }
 
   private void updateCirculationRulesInStorageWithoutInvalidatingCache(String rules)
-    throws MalformedURLException,
-    InterruptedException,
-    ExecutionException,
-    TimeoutException {
+    throws InterruptedException, ExecutionException, TimeoutException {
 
-    ResourceClient circulationRulesClient = ResourceClient.forCirculationRules(client);
+    CompletableFuture<Response> putCompleted = new CompletableFuture<>();
 
     JsonObject json = new JsonObject().put("rulesAsText", rules);
 
-    circulationRulesClient.replace(null, json);
+    client.put(circulationRulesStorageUrl(""), json, any(putCompleted));
+
+    putCompleted.get(5, TimeUnit.SECONDS);
   }
 }

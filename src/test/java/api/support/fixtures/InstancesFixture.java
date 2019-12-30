@@ -9,7 +9,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
 import org.folio.circulation.support.http.client.IndividualResource;
-import org.folio.circulation.support.http.client.OkapiHttpClient;
 
 import api.support.builders.InstanceBuilder;
 import api.support.http.ResourceClient;
@@ -21,9 +20,8 @@ public class InstancesFixture {
   private final ResourceClient instancesClient;
 
   public InstancesFixture(
-    ResourceClient instanceTypesClient,
-    ResourceClient contributorNameTypesClient,
-    OkapiHttpClient client) {
+      ResourceClient instanceTypesClient,
+      ResourceClient contributorNameTypesClient) {
 
     instanceTypeRecordCreator = new RecordCreator(instanceTypesClient,
       instanceType -> getProperty(instanceType, "name"));
@@ -31,7 +29,7 @@ public class InstancesFixture {
     contributorNameTypeRecordCreator = new RecordCreator(
       contributorNameTypesClient, nameType -> getProperty(nameType, "name"));
 
-    instancesClient =  ResourceClient.forInstances(client);
+    instancesClient =  ResourceClient.forInstances();
   }
 
   public void cleanUp()

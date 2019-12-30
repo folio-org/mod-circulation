@@ -15,7 +15,6 @@ import java.util.function.Function;
 
 import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.support.http.client.IndividualResource;
-import org.folio.circulation.support.http.client.OkapiHttpClient;
 
 import api.support.builders.HoldingBuilder;
 import api.support.builders.InstanceBuilder;
@@ -35,16 +34,15 @@ public class ItemsFixture {
   private final RecordCreator contributorNameTypeRecordCreator;
 
   public ItemsFixture(
-    OkapiHttpClient client,
     MaterialTypesFixture materialTypesFixture,
     LoanTypesFixture loanTypesFixture,
     LocationsFixture locationsFixture,
     ResourceClient instanceTypesClient,
     ResourceClient contributorNameTypesClient) {
 
-    itemsClient = ResourceClient.forItems(client);
-    holdingsClient = ResourceClient.forHoldings(client);
-    instancesClient = ResourceClient.forInstances(client);
+    itemsClient = ResourceClient.forItems();
+    holdingsClient = ResourceClient.forHoldings();
+    instancesClient = ResourceClient.forInstances();
     this.materialTypesFixture = materialTypesFixture;
     this.loanTypesFixture = loanTypesFixture;
     this.locationsFixture = locationsFixture;

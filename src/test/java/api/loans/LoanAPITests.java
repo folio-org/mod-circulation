@@ -70,7 +70,13 @@ public class LoanAPITests extends APITests {
 
     UUID id = UUID.randomUUID();
 
-    UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
+    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet(
+      item -> item
+        .withEnumeration("v.70:no.1-6")
+        .withChronology("1987:Jan.-June")
+        .withVolume("testVolume"));
+
+    UUID itemId = smallAngryPlanet.getId();
 
     IndividualResource user = usersFixture.charlotte();
     UUID userId = user.getId();
@@ -131,6 +137,15 @@ public class LoanAPITests extends APITests {
     assertThat("item has contributors",
       loan.getJsonObject("item").containsKey("contributors"), is(true));
 
+    assertThat("has item enumeration",
+      loan.getJsonObject("item").getString("enumeration"), is("v.70:no.1-6"));
+
+    assertThat("has item chronology",
+      loan.getJsonObject("item").getString("chronology"), is("1987:Jan.-June"));
+
+    assertThat("has item volume",
+      loan.getJsonObject("item").getString("volume"), is("testVolume"));
+
     JsonArray contributors = loan.getJsonObject("item").getJsonArray("contributors");
 
     assertThat("item has a single contributor",
@@ -171,6 +186,15 @@ public class LoanAPITests extends APITests {
     assertThat("item status snapshot in storage is not checked out",
       loansStorageClient.getById(id).getJson().getString("itemStatus"),
       is("Checked out"));
+
+    assertThat("has item enumeration",
+      item.getString("enumeration"), is("v.70:no.1-6"));
+
+    assertThat("has item chronology",
+      item.getString("chronology"), is("1987:Jan.-June"));
+
+    assertThat("has item volume",
+      item.getString("volume"), is("testVolume"));
 
     loanHasExpectedProperties(loan, user);
 
@@ -321,7 +345,13 @@ public class LoanAPITests extends APITests {
 
     UUID id = UUID.randomUUID();
 
-    UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
+    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet(
+      builder -> builder
+        .withEnumeration("v.70:no.1-6")
+        .withChronology("1987:Jan.-June")
+        .withVolume("testVolume"));
+
+    UUID itemId = smallAngryPlanet.getId();
 
     UUID userId = usersFixture.charlotte().getId();
 
@@ -395,6 +425,15 @@ public class LoanAPITests extends APITests {
       loan.getJsonObject("item").getJsonObject("status").getString("name"),
       is("Checked out"));
 
+    assertThat("has item enumeration",
+      loan.getJsonObject("item").getString("enumeration"), is("v.70:no.1-6"));
+
+    assertThat("has item chronology",
+      loan.getJsonObject("item").getString("chronology"), is("1987:Jan.-June"));
+
+    assertThat("has item volume",
+      loan.getJsonObject("item").getString("volume"), is("testVolume"));
+
     assertThat("Should not have snapshot of item status, as current status is included",
       loan.containsKey("itemStatus"), is(false));
 
@@ -420,6 +459,15 @@ public class LoanAPITests extends APITests {
     assertThat("item status snapshot in storage is not checked out",
       loansStorageClient.getById(id).getJson().getString("itemStatus"),
       is("Checked out"));
+
+    assertThat("has item enumeration",
+      item.getString("enumeration"), is("v.70:no.1-6"));
+
+    assertThat("has item chronology",
+      item.getString("chronology"), is("1987:Jan.-June"));
+
+    assertThat("has item volume",
+      item.getString("volume"), is("testVolume"));
   }
 
   @Test
@@ -822,7 +870,13 @@ public class LoanAPITests extends APITests {
 
     UUID id = UUID.randomUUID();
 
-    UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
+    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet(
+      builder -> builder
+        .withEnumeration("v.70:no.1-6")
+        .withChronology("1987:Jan.-June")
+        .withVolume("testVolume"));
+
+    UUID itemId = smallAngryPlanet.getId();
 
     UUID userId = usersFixture.charlotte().getId();
 
@@ -855,10 +909,28 @@ public class LoanAPITests extends APITests {
       loan.getJsonObject("item").getJsonObject("status").getString("name"),
       is("Checked out"));
 
+    assertThat("has item enumeration",
+      loan.getJsonObject("item").getString("enumeration"), is("v.70:no.1-6"));
+
+    assertThat("has item chronology",
+      loan.getJsonObject("item").getString("chronology"), is("1987:Jan.-June"));
+
+    assertThat("has item volume",
+      loan.getJsonObject("item").getString("volume"), is("testVolume"));
+
     JsonObject item = itemsClient.getById(itemId).getJson();
 
     assertThat("item status is not checked out",
       item.getJsonObject("status").getString("name"), is("Checked out"));
+
+    assertThat("has item enumeration",
+      item.getString("enumeration"), is("v.70:no.1-6"));
+
+    assertThat("has item chronology",
+      item.getString("chronology"), is("1987:Jan.-June"));
+
+    assertThat("has item volume",
+      item.getString("volume"), is("testVolume"));
 
     assertThat("item status snapshot in storage is not checked out",
       loansStorageClient.getById(id).getJson().getString("itemStatus"),
@@ -874,7 +946,13 @@ public class LoanAPITests extends APITests {
 
     UUID id = UUID.randomUUID();
 
-    UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
+    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet(
+      builder -> builder
+        .withEnumeration("v.70:no.1-6")
+        .withChronology("1987:Jan.-June")
+        .withVolume("testVolume"));
+
+    UUID itemId = smallAngryPlanet.getId();
 
     UUID userId = usersFixture.charlotte().getId();
 
@@ -909,10 +987,28 @@ public class LoanAPITests extends APITests {
     assertThat("Should not have snapshot of item status, as current status is included",
       loan.containsKey("itemStatus"), is(false));
 
+    assertThat("has item enumeration",
+      loan.getJsonObject("item").getString("enumeration"), is("v.70:no.1-6"));
+
+    assertThat("has item chronology",
+      loan.getJsonObject("item").getString("chronology"), is("1987:Jan.-June"));
+
+    assertThat("has item volume",
+      loan.getJsonObject("item").getString("volume"), is("testVolume"));
+
     JsonObject item = itemsClient.getById(itemId).getJson();
 
     assertThat("item status is not available",
       item.getJsonObject("status").getString("name"), is("Available"));
+
+    assertThat("has item enumeration",
+      item.getString("enumeration"), is("v.70:no.1-6"));
+
+    assertThat("has item chronology",
+      item.getString("chronology"), is("1987:Jan.-June"));
+
+    assertThat("has item volume",
+      item.getString("volume"), is("testVolume"));
 
     assertThat("item status snapshot in storage is not available",
       loansStorageClient.getById(id).getJson().getString("itemStatus"),
@@ -930,7 +1026,10 @@ public class LoanAPITests extends APITests {
 
     UUID itemId = itemsFixture.basedUponSmallAngryPlanet(
       itemBuilder -> itemBuilder
-        .withBarcode("036000291452"))
+        .withBarcode("036000291452")
+        .withEnumeration("v.70:no.1-6")
+        .withChronology("1987:Jan.-June")
+        .withVolume("testVolume"))
       .getId();
 
     IndividualResource user = usersFixture.charlotte();
@@ -1016,6 +1115,15 @@ public class LoanAPITests extends APITests {
 
     assertThat("has item location",
       loan.getJsonObject("item").containsKey("location"), is(true));
+
+    assertThat("has item enumeration",
+      loan.getJsonObject("item").getString("enumeration"), is("v.70:no.1-6"));
+
+    assertThat("has item chronology",
+      loan.getJsonObject("item").getString("chronology"), is("1987:Jan.-June"));
+
+    assertThat("has item volume",
+      loan.getJsonObject("item").getString("volume"), is("testVolume"));
 
     assertThat("location is taken from holding",
       loan.getJsonObject("item").getJsonObject("location").getString("name"),

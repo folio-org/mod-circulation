@@ -233,7 +233,7 @@ public class SingleOpenHoldShelfRequestTests extends APITests {
     ExecutionException,
     TimeoutException {
 
-    final ResourceClient requestsStorage = forRequestsStorage(client);
+    final ResourceClient requestsStorage = forRequestsStorage();
 
     final Response fetchedRequest = requestsStorage.getById(requestId);
 
