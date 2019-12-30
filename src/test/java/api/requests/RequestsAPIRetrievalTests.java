@@ -14,6 +14,7 @@ import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
+import static org.joda.time.DateTimeZone.UTC;
 import static org.junit.Assert.assertTrue;
 
 import java.net.HttpURLConnection;
@@ -43,37 +44,29 @@ import api.support.http.ResourceClient;
 import io.vertx.core.json.JsonObject;
 
 public class RequestsAPIRetrievalTests extends APITests {
-
   private static final String NEW_TAG = "new";
   private static final String IMPORTANT_TAG = "important";
   private static final String ONE_COPY_NUMBER = "1";
   private static final String TWO_COPY_NUMBER = "2";
 
-
   @Test
-  public void canGetARequestById()
-    throws
-    InterruptedException,
-    ExecutionException,
-    TimeoutException {
-
+  public void canGetARequestById() {
     UUID facultyGroupId = patronGroupsFixture.faculty().getId();
     UUID staffGroupId = patronGroupsFixture.staff().getId();
 
-    final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet(
-      itemBuilder -> itemBuilder
+    final InventoryItemResource smallAngryPlanet = itemsFixture
+      .basedUponSmallAngryPlanet(itemBuilder -> itemBuilder
         .withCallNumber("itCn", "itCnPrefix", "itCnSuffix")
         .withEnumeration("enumeration1")
         .withChronology("chronology")
         .withVolume("vol.1")
-        .withCopyNumbers(asList(ONE_COPY_NUMBER, TWO_COPY_NUMBER))
-    );
+        .withCopyNumbers(asList(ONE_COPY_NUMBER, TWO_COPY_NUMBER)));
 
-    final IndividualResource sponsor = usersFixture.rebecca(
-      builder -> builder.withPatronGroupId(facultyGroupId));
+    final IndividualResource sponsor = usersFixture.rebecca(user -> user
+      .withPatronGroupId(facultyGroupId));
 
-    final IndividualResource proxy = usersFixture.steve(
-      builder -> builder.withPatronGroupId(staffGroupId));
+    final IndividualResource proxy = usersFixture.steve(user -> user
+      .withPatronGroupId(staffGroupId));
 
     final IndividualResource cd1 = servicePointsFixture.cd1();
 
@@ -83,7 +76,7 @@ public class RequestsAPIRetrievalTests extends APITests {
 
     loansFixture.checkOutByBarcode(smallAngryPlanet);
 
-    DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
+    DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, UTC);
 
     final IndividualResource createdRequest = requestsClient.create(
       new RequestBuilder()
@@ -96,14 +89,9 @@ public class RequestsAPIRetrievalTests extends APITests {
         .withRequestExpiration(new LocalDate(2017, 7, 30))
         .withHoldShelfExpiration(new LocalDate(2017, 8, 31))
         .withPickupServicePointId(pickupServicePointId)
-        .withTags(new RequestBuilder.Tags(asList(NEW_TAG, IMPORTANT_TAG)))
-    );
+        .withTags(new RequestBuilder.Tags(asList(NEW_TAG, IMPORTANT_TAG))));
 
-    CompletableFuture<Response> getCompleted = new CompletableFuture<>();
-
-    client.get(requestsUrl(format("/%s", createdRequest.getId())), any(getCompleted));
-
-    Response getResponse = getCompleted.get(5, TimeUnit.SECONDS);
+    Response getResponse = requestsClient.getById(createdRequest.getId());
 
     assertThat(format("Failed to get request: %s", getResponse.getBody()),
       getResponse.getStatusCode(), is(HttpURLConnection.HTTP_OK));
@@ -118,7 +106,9 @@ public class RequestsAPIRetrievalTests extends APITests {
     assertThat(representation.getString("fulfilmentPreference"), is("Hold Shelf"));
     assertThat(representation.getString("requestExpirationDate"), is("2017-07-30"));
     assertThat(representation.getString("holdShelfExpirationDate"), is("2017-08-31"));
-    assertThat(representation.getString("pickupServicePointId"), is(pickupServicePointId));
+    assertThat(representation.getString("pickupServicePointId"),
+      is(pickupServicePointId));
+
     assertThat(representation.getString("status"), is("Open - Not yet filled"));
 
     assertThat(representation.containsKey("proxy"), is(true));
@@ -131,10 +121,14 @@ public class RequestsAPIRetrievalTests extends APITests {
 
     assertThat(representation.containsKey("pickupServicePoint"), is(true));
 
-    final JsonObject pickupServicePoint = representation.getJsonObject("pickupServicePoint");
+    final JsonObject pickupServicePoint = representation
+      .getJsonObject("pickupServicePoint");
 
-    assertThat(pickupServicePoint.getString("name"), is(cd1.getJson().getString("name")));
-    assertThat(pickupServicePoint.getString("code"), is(cd1.getJson().getString("code")));
+    assertThat(pickupServicePoint.getString("name"), is(cd1.getJson()
+      .getString("name")));
+
+    assertThat(pickupServicePoint.getString("code"), is(cd1.getJson()
+      .getString("code")));
 
     assertThat(pickupServicePoint.getString("discoveryDisplayName"),
       is(cd1.getJson().getString("discoveryDisplayName")));
@@ -157,7 +151,8 @@ public class RequestsAPIRetrievalTests extends APITests {
 
     assertThat(itemSummary.containsKey("copyNumbers"), is(true));
 
-    assertThat(itemSummary.getJsonArray("copyNumbers"), contains(ONE_COPY_NUMBER, TWO_COPY_NUMBER));
+    assertThat(itemSummary.getJsonArray("copyNumbers"),
+      contains(ONE_COPY_NUMBER, TWO_COPY_NUMBER));
 
     assertThat("has information taken from requesting user",
       representation.containsKey("requester"), is(true));
@@ -199,7 +194,6 @@ public class RequestsAPIRetrievalTests extends APITests {
     assertThat("current loan has non-null due date",
       representation.getJsonObject("loan").getString("dueDate"), notNullValue());
 
-
     assertThat(representation.containsKey("tags"), is(true));
     final JsonObject tagsRepresentation = representation.getJsonObject("tags");
 
@@ -211,9 +205,8 @@ public class RequestsAPIRetrievalTests extends APITests {
 
   @Test
   public void canGetARequestToBeFulfilledByDeliveryToAnAddressById() {
-
-    final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet(
-      ItemBuilder::available);
+    final IndividualResource smallAngryPlanet =
+      itemsFixture.basedUponSmallAngryPlanet(ItemBuilder::available);
 
     final IndividualResource workAddressType = addressTypesFixture.work();
 
@@ -260,7 +253,7 @@ public class RequestsAPIRetrievalTests extends APITests {
 
   @Test
   public void requestNotFoundForUnknownId() {
-    Response getResponse = ResourceClient.forRequests().getById(UUID.randomUUID());
+    Response getResponse = requestsClient.getById(UUID.randomUUID());
 
     assertThat(getResponse.getStatusCode(), is(HttpURLConnection.HTTP_NOT_FOUND));
   }
