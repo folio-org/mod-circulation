@@ -59,8 +59,6 @@ import io.vertx.core.json.JsonObject;
 public class CheckOutByBarcodeTests extends APITests {
   @Test
   public void canCheckOutUsingItemAndUserBarcode() {
-
-
      IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet(
       item -> item
         .withEnumeration("v.70:no.1-6")
