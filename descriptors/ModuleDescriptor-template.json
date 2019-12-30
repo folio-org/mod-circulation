@@ -108,7 +108,7 @@
     },
     {
       "id": "circulation",
-      "version": "8.3",
+      "version": "8.4",
       "handlers": [
         {
           "methods": [
@@ -366,7 +366,7 @@
     },
     {
       "id": "circulation-rules",
-      "version": "1.0",
+      "version": "1.1",
       "handlers": [
         {
           "methods": [
@@ -412,6 +412,58 @@
           "pathPattern": "/circulation/rules/loan-policy-all",
           "permissionsRequired": [
             "circulation.rules.loan-policy-all.get"
+          ],
+          "modulePermissions": [
+            "circulation-storage.circulation-rules.get",
+            "inventory-storage.locations.item.get"
+          ]
+        },
+        {
+          "methods": [
+            "GET"
+          ],
+          "pathPattern": "/circulation/rules/overdue-fine-policy",
+          "permissionsRequired": [
+            "circulation.rules.overdue-fine-policy.get"
+          ],
+          "modulePermissions": [
+            "circulation-storage.circulation-rules.get",
+            "inventory-storage.locations.item.get"
+          ]
+        },
+        {
+          "methods": [
+            "GET"
+          ],
+          "pathPattern": "/circulation/rules/overdue-fine-policy-all",
+          "permissionsRequired": [
+            "circulation.rules.overdue-fine-policy-all.get"
+          ],
+          "modulePermissions": [
+            "circulation-storage.circulation-rules.get",
+            "inventory-storage.locations.item.get"
+          ]
+        },
+        {
+          "methods": [
+            "GET"
+          ],
+          "pathPattern": "/circulation/rules/lost-item-policy",
+          "permissionsRequired": [
+            "circulation.rules.lost-item-policy.get"
+          ],
+          "modulePermissions": [
+            "circulation-storage.circulation-rules.get",
+            "inventory-storage.locations.item.get"
+          ]
+        },
+        {
+          "methods": [
+            "GET"
+          ],
+          "pathPattern": "/circulation/rules/lost-item-all",
+          "permissionsRequired": [
+            "circulation.rules.lost-item-all.get"
           ],
           "modulePermissions": [
             "circulation-storage.circulation-rules.get",
@@ -1106,7 +1158,9 @@
         "scheduled-notice-storage.scheduled-notices.item.post",
         "usergroups.collection.get",
         "usergroups.item.get",
-        "patron-action-session-storage.patron-action-sessions.item.post"
+        "patron-action-session-storage.patron-action-sessions.item.post",
+        "circulation.rules.overdue-fine-policy.get",
+        "circulation.rules.lost-item-policy.get"
       ],
       "visible": false
     },

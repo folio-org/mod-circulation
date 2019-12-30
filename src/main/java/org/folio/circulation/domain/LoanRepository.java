@@ -27,6 +27,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 import org.folio.circulation.domain.policy.LoanPolicy;
+import org.folio.circulation.domain.policy.LostItemPolicy;
+import org.folio.circulation.domain.policy.OverdueFinePolicy;
 import org.folio.circulation.domain.representations.LoanProperties;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
@@ -210,15 +212,38 @@ public class LoanRepository {
     keepLatestItemStatus(item, storageLoan);
     removeBorrowerProperties(storageLoan);
     removeLoanPolicyProperties(storageLoan);
-    removeFeesAndFinesProperties(storageLoan);
+    removeOverdueFineProperties(storageLoan);
+    removeLostItemProperties(storageLoan);
 
     updateLastLoanPolicyUsedId(storageLoan, loan.getLoanPolicy());
+    updateOverdueFinePolicy(storageLoan, loan.getOverdueFinePolicy());
+    updateLostItemPolicy(storageLoan, loan.getLostItemPolicy());
 
     return storageLoan;
   }
 
+  private static void updateOverdueFinePolicy(JsonObject storageLoan, OverdueFinePolicy overdueFinePolicy) {
+    if(nonNull(overdueFinePolicy) && overdueFinePolicy.getId() != null) {
+      storageLoan.put("overdueFinePolicyId", overdueFinePolicy.getId());
+    }
+  }
+
+  private static void updateLostItemPolicy(JsonObject storageLoan, LostItemPolicy lostItemPolicy) {
+    if(nonNull(lostItemPolicy) && lostItemPolicy.getId() != null) {
+      storageLoan.put("lostItemPolicyId", lostItemPolicy.getId());
+    }
+  }
+
   private static void removeLoanPolicyProperties(JsonObject storageLoan) {
     storageLoan.remove(LoanProperties.LOAN_POLICY);
+  }
+
+  private static void removeOverdueFineProperties(JsonObject storageLoan) {
+    storageLoan.remove(LoanProperties.OVERDUE_FINE_POLICY);
+  }
+
+  private static void removeLostItemProperties(JsonObject storageLoan) {
+    storageLoan.remove(LoanProperties.LOST_ITEM_POLICY);
   }
 
   private static void removeBorrowerProperties(JsonObject storageLoan) {

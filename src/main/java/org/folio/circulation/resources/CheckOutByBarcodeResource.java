@@ -28,6 +28,8 @@ import org.folio.circulation.domain.notice.schedule.DueDateScheduledNoticeServic
 import org.folio.circulation.domain.notice.schedule.ScheduledNoticesRepository;
 import org.folio.circulation.domain.notice.session.PatronActionSessionService;
 import org.folio.circulation.domain.policy.LoanPolicyRepository;
+import org.folio.circulation.domain.policy.LostItemPolicyRepository;
+import org.folio.circulation.domain.policy.OverdueFinePolicyRepository;
 import org.folio.circulation.domain.policy.PatronNoticePolicyRepository;
 import org.folio.circulation.domain.representations.LoanProperties;
 import org.folio.circulation.domain.validation.AlreadyCheckedOutValidator;
@@ -97,6 +99,8 @@ public class CheckOutByBarcodeResource extends Resource {
     final LoanRepository loanRepository = new LoanRepository(clients);
     final LoanService loanService = new LoanService(clients);
     final LoanPolicyRepository loanPolicyRepository = new LoanPolicyRepository(clients);
+    final OverdueFinePolicyRepository overdueFinePolicyRepository = new OverdueFinePolicyRepository(clients);
+    final LostItemPolicyRepository lostItemPolicyRepository = new LostItemPolicyRepository(clients);
     final PatronNoticePolicyRepository patronNoticePolicyRepository = new PatronNoticePolicyRepository(clients);
     final PatronGroupRepository patronGroupRepository = new PatronGroupRepository(clients);
     final ConfigurationRepository configurationRepository = new ConfigurationRepository(clients);
@@ -157,6 +161,8 @@ public class CheckOutByBarcodeResource extends Resource {
       .thenCompose(r -> r.combineAfter(configurationRepository::findTimeZoneConfiguration,
         LoanAndRelatedRecords::withTimeZone))
       .thenComposeAsync(r -> r.after(loanPolicyRepository::lookupLoanPolicy))
+      .thenComposeAsync(r -> r.after(overdueFinePolicyRepository::lookupLoanPolicy))
+      .thenComposeAsync(r -> r.after(lostItemPolicyRepository::lookupLoanPolicy))
       .thenComposeAsync(r -> r.after(relatedRecords -> checkOutStrategy.checkOut(relatedRecords, request, clients)))
       .thenComposeAsync(r -> r.after(requestQueueUpdate::onCheckOut))
       .thenComposeAsync(r -> r.after(updateItem::onCheckOut))
