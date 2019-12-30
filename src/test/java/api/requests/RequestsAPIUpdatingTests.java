@@ -460,10 +460,7 @@ public class RequestsAPIUpdatingTests extends APITests {
   }
 
   @Test
-  public void cancellationReasonPublicDescriptionIsUsedAsReasonForCancellationToken()
-    throws InterruptedException,
-    TimeoutException,
-    ExecutionException {
+  public void cancellationReasonPublicDescriptionIsUsedAsReasonForCancellationToken() {
 
     UUID requestCancellationTemplateId = UUID.randomUUID();
     JsonObject requestCancellationConfiguration = new NoticeConfigurationBuilder()
@@ -521,10 +518,7 @@ public class RequestsAPIUpdatingTests extends APITests {
   }
 
   @Test
-  public void cancellationReasonNameIsUsedAsReasonForCancellationTokenWhenPublicDescriptionIsNotPresent()
-    throws InterruptedException,
-    TimeoutException,
-    ExecutionException {
+  public void cancellationReasonNameIsUsedAsReasonForCancellationTokenWhenPublicDescriptionIsNotPresent() {
 
     UUID requestCancellationTemplateId = UUID.randomUUID();
     JsonObject requestCancellationConfiguration = new NoticeConfigurationBuilder()

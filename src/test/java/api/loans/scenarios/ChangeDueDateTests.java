@@ -185,10 +185,7 @@ public class ChangeDueDateTests extends APITests {
 
 
   @Test
-  public void manualDueDateChangeNoticeIsSentWhenPolicyDefinesManualDueDateChangeNoticeConfiguration()
-    throws InterruptedException,
-    TimeoutException,
-    ExecutionException {
+  public void manualDueDateChangeNoticeIsSentWhenPolicyDefinesManualDueDateChangeNoticeConfiguration() {
 
     UUID manualDueDateChangeTemplateId = UUID.randomUUID();
     JsonObject manualDueDateChangeNoticeConfiguration = new NoticeConfigurationBuilder()

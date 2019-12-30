@@ -186,10 +186,7 @@ public class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void canCheckOutUsingFixedDueDateLoanPolicy()
-    throws InterruptedException,
-    TimeoutException,
-    ExecutionException {
+  public void canCheckOutUsingFixedDueDateLoanPolicy() {
 
     useExampleFixedPolicyCirculationRules();
 
@@ -225,10 +222,7 @@ public class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void canCheckOutUsingDueDateLimitedRollingLoanPolicy()
-    throws InterruptedException,
-    TimeoutException,
-    ExecutionException {
+  public void canCheckOutUsingDueDateLimitedRollingLoanPolicy() {
 
     FixedDueDateSchedulesBuilder dueDateLimitSchedule = new FixedDueDateSchedulesBuilder()
       .withName("March Only Due Date Limit")
@@ -494,10 +488,7 @@ public class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void cannotCheckOutWhenLoanPolicyDoesNotExist()
-    throws InterruptedException,
-    TimeoutException,
-    ExecutionException {
+  public void cannotCheckOutWhenLoanPolicyDoesNotExist() {
 
     final UUID nonExistentloanPolicyId = UUID.randomUUID();
 
@@ -914,10 +905,7 @@ public class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void cannotCheckOutWhenItemIsNotLoanable()
-    throws InterruptedException,
-    TimeoutException,
-    ExecutionException {
+  public void cannotCheckOutWhenItemIsNotLoanable() {
 
     IndividualResource notLoanablePolicy = loanPoliciesFixture.create(
       new LoanPolicyBuilder()

@@ -380,11 +380,7 @@ public class DueDateScheduledNoticesProcessingTests extends APITests {
     }
   }
 
-  private void setUpNoticePolicy()
-    throws
-    InterruptedException,
-    TimeoutException,
-    ExecutionException {
+  private void setUpNoticePolicy() {
 
     JsonObject beforeDueDateNoticeConfiguration = new NoticeConfigurationBuilder()
       .withTemplateId(beforeTemplateId)

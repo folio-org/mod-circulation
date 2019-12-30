@@ -208,10 +208,7 @@ public class CheckOutCalculateDueDateShortTermTests extends APITests {
     return dateTime.withSecondOfMinute(0).withMillisOfSecond(0);
   }
 
-  private IndividualResource createLoanPolicy(JsonObject loanPolicyEntry)
-    throws InterruptedException,
-    TimeoutException,
-    ExecutionException {
+  private IndividualResource createLoanPolicy(JsonObject loanPolicyEntry) {
 
     IndividualResource loanPolicy = loanPoliciesFixture.create(loanPolicyEntry);
     UUID requestPolicyId = requestPoliciesFixture.allowAllRequestPolicy().getId();

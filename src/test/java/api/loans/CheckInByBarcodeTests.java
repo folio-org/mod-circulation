@@ -390,9 +390,7 @@ public class CheckInByBarcodeTests extends APITests {
 
   @Test
   public void patronNoticeOnCheckInIsNotSentWhenCheckInLoanNoticeIsDefinedAndLoanExists()
-    throws InterruptedException,
-    TimeoutException,
-    ExecutionException {
+    throws InterruptedException {
 
     UUID checkInTemplateId = UUID.randomUUID();
     JsonObject checkOutNoticeConfiguration = new NoticeConfigurationBuilder()
@@ -441,9 +439,7 @@ public class CheckInByBarcodeTests extends APITests {
 
   @Test
   public void shouldNotSendPatronNoticeWhenCheckInNoticeIsDefinedAndCheckInDoesNotCloseLoan()
-    throws InterruptedException,
-    TimeoutException,
-    ExecutionException {
+    throws InterruptedException {
 
     UUID checkInTemplateId = UUID.randomUUID();
     JsonObject checkOutNoticeConfiguration = new NoticeConfigurationBuilder()
@@ -481,7 +477,7 @@ public class CheckInByBarcodeTests extends APITests {
   }
 
   @Test
-  public void patronNoticeOnCheckInAfterCheckOutAndRequestToItem() throws Exception {
+  public void patronNoticeOnCheckInAfterCheckOutAndRequestToItem() {
     InventoryItemResource item = itemsFixture.basedUponSmallAngryPlanet();
 
     loansFixture.checkOutByBarcode(item, usersFixture.jessica());
@@ -520,7 +516,7 @@ public class CheckInByBarcodeTests extends APITests {
   }
 
   @Test
-  public void patronNoticeOnCheckInAfterRequestToItem() throws Exception {
+  public void patronNoticeOnCheckInAfterRequestToItem() {
     InventoryItemResource item = itemsFixture.basedUponSmallAngryPlanet();
     DateTime requestDate = new DateTime(2019, 5, 5, 10, 22, 54, DateTimeZone.UTC);
     UUID servicePointId = servicePointsFixture.cd1().getId();
@@ -557,10 +553,7 @@ public class CheckInByBarcodeTests extends APITests {
   }
 
   @Test
-  public void availableNoticeIsSentOnceWhenItemStatusIsChangedToAwaitingPickup()
-    throws InterruptedException,
-    TimeoutException,
-    ExecutionException  {
+  public void availableNoticeIsSentOnceWhenItemStatusIsChangedToAwaitingPickup() {
 
     JsonObject availableNoticeConfig = new NoticeConfigurationBuilder()
       .withTemplateId(UUID.randomUUID())

@@ -347,11 +347,7 @@ public class RequestScheduledNoticesProcessingTests extends APITests {
     assertThat(scheduledNoticesClient.getAll(), hasSize(0));
   }
 
-  private void setupNoticePolicyWithRequestNotice(JsonObject noticeConfiguration)
-    throws
-    InterruptedException,
-    TimeoutException,
-    ExecutionException {
+  private void setupNoticePolicyWithRequestNotice(JsonObject noticeConfiguration) {
 
     NoticePolicyBuilder noticePolicy = new NoticePolicyBuilder()
       .withName("Policy with request notices")

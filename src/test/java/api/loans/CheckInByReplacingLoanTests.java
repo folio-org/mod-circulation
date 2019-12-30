@@ -26,10 +26,7 @@ import io.vertx.core.json.JsonObject;
 
 public class CheckInByReplacingLoanTests extends APITests {
   @Test
-  public void canCompleteALoanByReturningTheItem()
-    throws InterruptedException,
-    TimeoutException,
-    ExecutionException {
+  public void canCompleteALoanByReturningTheItem() {
 
     DateTime loanDate = new DateTime(2017, 3, 1, 13, 25, 46, DateTimeZone.UTC);
 
@@ -94,10 +91,7 @@ public class CheckInByReplacingLoanTests extends APITests {
   }
 
   @Test
-  public void cannotCloseALoanWithoutAServicePoint()
-    throws InterruptedException,
-    TimeoutException,
-    ExecutionException {
+  public void cannotCloseALoanWithoutAServicePoint() {
 
     DateTime loanDate = new DateTime(2017, 3, 1, 13, 25, 46, DateTimeZone.UTC);
 
@@ -123,10 +117,7 @@ public class CheckInByReplacingLoanTests extends APITests {
   }
 
   @Test
-  public void cannotUpdateALoanWithAnUnknownServicePoint()
-    throws InterruptedException,
-    TimeoutException,
-    ExecutionException {
+  public void cannotUpdateALoanWithAnUnknownServicePoint() {
 
     DateTime loanDate = new DateTime(2017, 3, 1, 13, 25, 46, DateTimeZone.UTC);
 

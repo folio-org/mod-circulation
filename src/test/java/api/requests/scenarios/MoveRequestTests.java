@@ -910,10 +910,7 @@ public class MoveRequestTests extends APITests {
   }
 
   @Test
-  public void changedDueDateAfterRecallingAnItemShouldRespectTenantTimezone()
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException {
+  public void changedDueDateAfterRecallingAnItemShouldRespectTenantTimezone() {
 
     final String stockholmTimeZone = "Europe/Stockholm";
 
