@@ -153,6 +153,18 @@
             }
           }
         },
+        "enumeration": {
+          "description": "Item`s enumeration",
+          "type": "string"
+        },
+        "chronology": {
+          "description": "Item`s chronology",
+          "type": "string"
+        },
+        "volume": {
+          "description": "Item`s volume",
+          "type": "string"
+        },
         "callNumberComponents": {
           "description": "Elements of a full call number",
           "$ref": "schema/call-number-components.json"
