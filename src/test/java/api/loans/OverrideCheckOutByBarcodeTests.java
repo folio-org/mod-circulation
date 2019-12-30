@@ -20,6 +20,8 @@ import java.util.concurrent.TimeoutException;
 import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
+import org.hamcrest.core.Is;
+import org.hamcrest.junit.MatcherAssert;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.junit.Test;
@@ -47,7 +49,12 @@ public class OverrideCheckOutByBarcodeTests extends APITests {
     TimeoutException,
     ExecutionException {
 
-    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet(
+      builder -> builder
+        .withEnumeration("v.70:no.1-6")
+        .withChronology("1987:Jan.-June")
+        .withVolume("testVolume"));
+
     IndividualResource steve = usersFixture.steve();
     final UUID checkoutServicePointId = UUID.randomUUID();
 
@@ -122,6 +129,15 @@ public class OverrideCheckOutByBarcodeTests extends APITests {
 
     assertThat("item has contributors",
       loan.getJsonObject("item").containsKey("contributors"), is(true));
+
+    assertThat("has item enumeration",
+      loan.getJsonObject("item").getString("enumeration"), is("v.70:no.1-6"));
+
+    assertThat("has item chronology",
+      loan.getJsonObject("item").getString("chronology"), is("1987:Jan.-June"));
+
+    assertThat("has item volume",
+      loan.getJsonObject("item").getString("volume"), is("testVolume"));
 
     JsonArray contributors = loan.getJsonObject("item").getJsonArray("contributors");
 

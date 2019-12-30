@@ -67,7 +67,11 @@ public class CheckInByBarcodeTests extends APITests {
       builder -> builder.withPrimaryServicePoint(checkInServicePointId));
 
     final IndividualResource nod = itemsFixture.basedUponNod(
-      builder -> builder.withTemporaryLocation(homeLocation.getId()));
+      builder -> builder
+        .withTemporaryLocation(homeLocation.getId())
+        .withEnumeration("v.70:no.1-6")
+        .withChronology("1987:Jan.-June")
+        .withVolume("testVolume"));
 
     final IndividualResource loan = loansFixture.checkOutByBarcode(nod, james,
       new DateTime(2018, 3, 1, 13, 25, 46, DateTimeZone.UTC));
@@ -127,6 +131,15 @@ public class CheckInByBarcodeTests extends APITests {
 
     assertThat("barcode is included for item",
       itemFromResponse.getString("barcode"), is("565578437802"));
+
+    assertThat("has item enumeration",
+      itemFromResponse.getString("enumeration"), is("v.70:no.1-6"));
+
+    assertThat("has item chronology",
+      itemFromResponse.getString("chronology"), is("1987:Jan.-June"));
+
+    assertThat("has item volume",
+      itemFromResponse.getString("volume"), is("testVolume"));
 
     JsonObject updatedNod = itemsClient.getById(nod.getId()).getJson();
 
@@ -306,7 +319,11 @@ public class CheckInByBarcodeTests extends APITests {
       builder -> builder.withPrimaryServicePoint(checkInServicePointId));
 
     final IndividualResource nod = itemsFixture.basedUponNod(
-      builder -> builder.withTemporaryLocation(homeLocation.getId()));
+      builder -> builder
+        .withTemporaryLocation(homeLocation.getId())
+        .withEnumeration("v.70:no.1-6")
+        .withChronology("1987:Jan.-June")
+        .withVolume("testVolume"));
 
     final CheckInByBarcodeResponse checkInResponse = loansFixture.checkInByBarcode(
       nod, new DateTime(2018, 3, 5, 14, 23, 41, DateTimeZone.UTC),
@@ -325,6 +342,15 @@ public class CheckInByBarcodeTests extends APITests {
 
     assertThat("title is included for item",
       itemFromResponse.getString("title"), is("Nod"));
+
+    assertThat("has item enumeration",
+      itemFromResponse.getString("enumeration"), is("v.70:no.1-6"));
+
+    assertThat("has item chronology",
+      itemFromResponse.getString("chronology"), is("1987:Jan.-June"));
+
+    assertThat("has item volume",
+      itemFromResponse.getString("volume"), is("testVolume"));
 
     assertThat("barcode is included for item",
       itemFromResponse.getString("barcode"), is("565578437802"));
@@ -347,7 +373,11 @@ public class CheckInByBarcodeTests extends APITests {
       builder -> builder.withPrimaryServicePoint(checkInServicePointId));
 
     final IndividualResource nod = itemsFixture.basedUponNod(
-      builder -> builder.withTemporaryLocation(homeLocation.getId()));
+      builder -> builder
+        .withTemporaryLocation(homeLocation.getId())
+        .withEnumeration("v.70:no.1-6")
+        .withChronology("1987:Jan.-June")
+        .withVolume("testVolume"));
 
     loansFixture.checkOutByBarcode(nod, james, loanDate);
 
@@ -375,6 +405,15 @@ public class CheckInByBarcodeTests extends APITests {
 
     assertThat("barcode is included for item",
       itemFromResponse.getString("barcode"), is("565578437802"));
+
+    assertThat("has item enumeration",
+      itemFromResponse.getString("enumeration"), is("v.70:no.1-6"));
+
+    assertThat("has item chronology",
+      itemFromResponse.getString("chronology"), is("1987:Jan.-June"));
+
+    assertThat("has item volume",
+      itemFromResponse.getString("volume"), is("testVolume"));
   }
 
   @Test
