@@ -307,57 +307,59 @@ public class RequestsAPIRetrievalTests extends APITests {
 
     requestsClient.create(new RequestBuilder()
       .hold()
-      .withItemId(smallAngryPlanet.getId())
+      .forItem(smallAngryPlanet)
       .withRequesterId(requesterId)
       .withUserProxyId(proxyId)
       .withPickupServicePointId(pickupServicePointId)
       .withTags(new RequestBuilder.Tags(asList(NEW_TAG, IMPORTANT_TAG))));
 
-    requestsClient.create(new RequestBuilder()
-      .hold()
-      .withItemId(nod.getId())
-      .withRequesterId(requesterId)
-      .withUserProxyId(proxyId)
-      .withPickupServicePointId(pickupServicePointId2)
-      .withTags(new RequestBuilder.Tags(asList(NEW_TAG, IMPORTANT_TAG))));
+    final IndividualResource requestForNod = requestsClient.create(
+      new RequestBuilder()
+        .hold()
+        .forItem(nod)
+        .withRequesterId(requesterId)
+        .withUserProxyId(proxyId)
+        .withPickupServicePointId(pickupServicePointId2)
+        .withTags(new RequestBuilder.Tags(asList(NEW_TAG, IMPORTANT_TAG))));
 
     requestsClient.create(new RequestBuilder()
       .hold()
-      .withItemId(interestingTimes.getId())
+      .forItem(interestingTimes)
       .withRequesterId(requesterId)
       .withUserProxyId(proxyId)
       .withPickupServicePointId(pickupServicePointId)
       .withTags(new RequestBuilder.Tags(asList(NEW_TAG, IMPORTANT_TAG))));
 
-    requestsClient.create(new RequestBuilder()
-      .hold()
-      .withItemId(temeraire.getId())
-      .withRequesterId(requesterId)
-      .withUserProxyId(proxyId)
-      .withPickupServicePointId(pickupServicePointId2)
-      .withTags(new RequestBuilder.Tags(asList(NEW_TAG, IMPORTANT_TAG))));
+    final IndividualResource requestForTemeraire = requestsClient.create(
+      new RequestBuilder()
+        .hold()
+        .forItem(temeraire)
+        .withRequesterId(requesterId)
+        .withUserProxyId(proxyId)
+        .withPickupServicePointId(pickupServicePointId2)
+        .withTags(new RequestBuilder.Tags(asList(NEW_TAG, IMPORTANT_TAG))));
 
     requestsClient.create(new RequestBuilder()
       .recall()
-      .withItemId(uprooted.getId())
+      .forItem(uprooted)
       .withRequesterId(requesterId)
       .withUserProxyId(proxyId)
       .withPickupServicePointId(pickupServicePointId)
       .withTags(new RequestBuilder.Tags(asList(NEW_TAG, IMPORTANT_TAG))));
 
-    MultipleJsonRecords requestList = requestsFixture.getAllRequests();
+    MultipleJsonRecords requests = requestsFixture.getAllRequests();
 
-    requestList.forEach(this::requestHasExpectedProperties);
-    requestList.forEach(this::requestHasExpectedLoanProperties);
-    requestList.forEach(this::requestHasServicePointProperties);
-    requestList.forEach(this::requestHasPatronGroupProperties);
-    requestList.forEach(this::requestHasTags);
+    requests.forEach(this::requestHasExpectedProperties);
+    requests.forEach(this::requestHasExpectedLoanProperties);
+    requests.forEach(this::requestHasServicePointProperties);
+    requests.forEach(this::requestHasPatronGroupProperties);
+    requests.forEach(this::requestHasTags);
 
-    requestHasCallNumberStringProperties(
-      findRequestByItemId(requestList.stream(), nod.getId()), "nod");
+    requestHasCallNumberStringProperties(requests.getById(
+      requestForNod.getId()), "nod");
 
-    requestHasCallNumberStringProperties(
-      findRequestByItemId(requestList.stream(), temeraire.getId()), "tem");
+    requestHasCallNumberStringProperties(requests.getById(
+      requestForTemeraire.getId()), "tem");
   }
 
   @Test
@@ -698,12 +700,10 @@ public class RequestsAPIRetrievalTests extends APITests {
 
   protected void hasProperty(String property, JsonObject resource, String type) {
     assertThat(format("%s should have %s: %s: is missing outer property",
-      type, property, resource),
-      resource, notNullValue());
+      type, property, resource), resource, notNullValue());
 
     assertThat(format("%s should have %s: %s",
-      type, property, resource),
-      resource.containsKey(property), is(true));
+      type, property, resource), resource.containsKey(property), is(true));
   }
 
   private void requestHasCallNumberStringProperties(JsonObject request, String prefix) {
@@ -719,13 +719,5 @@ public class RequestsAPIRetrievalTests extends APITests {
     assertThat(item.getString("enumeration"), is(prefix + "enumeration1"));
     assertThat(item.getString("chronology"), is(prefix + "chronology"));
     assertThat(item.getString("volume"), is(prefix + "vol.1"));
-  }
-
-  private JsonObject findRequestByItemId(Stream<JsonObject> requests, UUID itemId) {
-    return requests
-      .filter(req -> itemId.toString().equals(req.getString("itemId")))
-      .findFirst()
-      .orElseThrow(() -> new AssertionError("Can not find Request for item: "
-        + itemId));
   }
 }
