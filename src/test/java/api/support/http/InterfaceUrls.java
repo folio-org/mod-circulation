@@ -84,7 +84,7 @@ public class InterfaceUrls {
     return APITestContext.viaOkapiModuleUrl("/fixed-due-date-schedule-storage/fixed-due-date-schedules" + subPath);
   }
 
-  static URL circulationRulesStorageUrl(String subPath) {
+  public static URL circulationRulesStorageUrl(String subPath) {
     return APITestContext.viaOkapiModuleUrl("/circulation-rules-storage" + subPath);
   }
 
@@ -116,12 +116,13 @@ public class InterfaceUrls {
     return circulationModuleUrl("/circulation/requests" + subPath);
   }
 
-  public static URL requestReportUrl(String servicePointId) {
-    return circulationModuleUrl("/circulation/requests-reports/hold-shelf-clearance/" + servicePointId);
+  public static URL requestReportUrl(String subPath) {
+    return circulationModuleUrl(
+      "/circulation/requests-reports/hold-shelf-clearance" + subPath);
   }
 
-  public static URL itemsInTransitReportUrl() {
-    return circulationModuleUrl("/inventory-reports/items-in-transit");
+  public static URL itemsInTransitReportUrl(String subPath) {
+    return circulationModuleUrl("/inventory-reports/items-in-transit" + subPath);
   }
 
    static URL pickSlipsUrl(String servicePointId) {

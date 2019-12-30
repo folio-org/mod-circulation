@@ -17,11 +17,9 @@ import static api.support.http.Offset.noOffset;
 import static org.folio.circulation.support.JsonArrayHelper.mapToList;
 
 import java.net.MalformedURLException;
-import java.util.HashMap;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
-import java.util.stream.Stream;
 
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
@@ -393,16 +391,12 @@ public class LoansFixture {
   }
 
   public Response getLoans(CqlQuery query, Limit limit, Offset offset) {
-    final HashMap<String, String> queryStringParameters = new HashMap<>();
-
-    Stream.of(query, limit, offset)
-      .forEach(parameter -> parameter.collectInto(queryStringParameters));
-
-    return restAssuredClient.get(loansUrl(), queryStringParameters, 200, "get-loans");
+    return restAssuredClient.get(loansUrl(), query, limit, offset, 200,
+        "get-loans");
   }
 
   public MultipleJsonRecords getAllLoans() {
     return new MultipleJsonRecords(
-      mapToList(getLoans(maximumLimit()).getJson(), "loans"));
+        mapToList(getLoans(maximumLimit()).getJson(), "loans"));
   }
 }

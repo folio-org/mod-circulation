@@ -47,7 +47,7 @@ public class HoldShelfClearanceReportTests extends APITests {
     ExecutionException {
 
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
-    Response response = ResourceClient.forRequestReport(client).getById(pickupServicePointId);
+    Response response = ResourceClient.forRequestReport().getById(pickupServicePointId);
 
     assertThat(response.getStatusCode(), is(HTTP_OK));
 
@@ -73,7 +73,7 @@ public class HoldShelfClearanceReportTests extends APITests {
       .forItem(smallAngryPlanet)
       .by(usersFixture.rebecca()));
 
-    Response response = ResourceClient.forRequestReport(client).getById(pickupServicePointId);
+    Response response = ResourceClient.forRequestReport().getById(pickupServicePointId);
     assertThat(response.getStatusCode(), is(HTTP_OK));
 
     JsonObject responseJson = response.getJson();
@@ -109,7 +109,7 @@ public class HoldShelfClearanceReportTests extends APITests {
       .by(usersFixture.rebecca()));
     loansFixture.checkInByBarcode(smallAngryPlanet);
 
-    Response response = ResourceClient.forRequestReport(client).getById(pickupServicePointId);
+    Response response = ResourceClient.forRequestReport().getById(pickupServicePointId);
     assertThat(response.getStatusCode(), is(HTTP_OK));
 
     JsonObject responseJson = response.getJson();
@@ -160,7 +160,7 @@ public class HoldShelfClearanceReportTests extends APITests {
         .withStatus(RequestStatus.CLOSED_PICKUP_EXPIRED.getValue()).create()
         .put(CLOSED_DATE_KEY, "2018-02-11T14:45:23.000+0000"));
 
-    Response response = ResourceClient.forRequestReport(client).getById(pickupServicePointId);
+    Response response = ResourceClient.forRequestReport().getById(pickupServicePointId);
     assertThat(response.getStatusCode(), is(HTTP_OK));
 
     JsonObject responseJson = response.getJson();
@@ -214,7 +214,7 @@ public class HoldShelfClearanceReportTests extends APITests {
       requestBuilderOnSmallAngryPlanet.withStatus(RequestStatus.CLOSED_CANCELLED.getValue()).create()
         .put(CLOSED_DATE_KEY, "2018-02-11T14:45:23.000+0000"));
 
-    Response response = ResourceClient.forRequestReport(client).getById(pickupServicePointId);
+    Response response = ResourceClient.forRequestReport().getById(pickupServicePointId);
     verifyResponse(smallAngryPlanet, rebecca, response, RequestStatus.CLOSED_CANCELLED);
   }
 
@@ -253,7 +253,7 @@ public class HoldShelfClearanceReportTests extends APITests {
       requestBuilderOnItem.withStatus(RequestStatus.CLOSED_PICKUP_EXPIRED.getValue()).create()
         .put(CLOSED_DATE_KEY, "2018-03-11T15:45:23.000+0000"));
 
-    Response response = ResourceClient.forRequestReport(client).getById(pickupServicePointId);
+    Response response = ResourceClient.forRequestReport().getById(pickupServicePointId);
     verifyResponse(smallAngryPlanet, rebecca, response, RequestStatus.CLOSED_PICKUP_EXPIRED);
   }
 
@@ -301,7 +301,7 @@ public class HoldShelfClearanceReportTests extends APITests {
       secondRequestBuilderOnItem.withStatus(RequestStatus.CLOSED_CANCELLED.getValue()).create()
         .put(CLOSED_DATE_KEY, laterAwaitingPickupRequestClosedDate));
 
-    Response response = ResourceClient.forRequestReport(client).getById(pickupServicePointId);
+    Response response = ResourceClient.forRequestReport().getById(pickupServicePointId);
     verifyResponse(smallAngryPlanet, rebecca, response, RequestStatus.CLOSED_PICKUP_EXPIRED);
   }
 
@@ -349,7 +349,7 @@ public class HoldShelfClearanceReportTests extends APITests {
       secondRequestBuilderOnItem.withStatus(RequestStatus.CLOSED_CANCELLED.getValue()).create()
         .put(CLOSED_DATE_KEY, emptyRequestClosedDate));
 
-    Response response = ResourceClient.forRequestReport(client).getById(pickupServicePointId);
+    Response response = ResourceClient.forRequestReport().getById(pickupServicePointId);
     verifyResponse(smallAngryPlanet, rebecca, response, RequestStatus.CLOSED_PICKUP_EXPIRED);
   }
 
@@ -373,7 +373,7 @@ public class HoldShelfClearanceReportTests extends APITests {
     IndividualResource request = requestsClient.create(requestBuilder);
     requestsClient.replace(request.getId(), requestBuilder.withStatus(RequestStatus.CLOSED_PICKUP_EXPIRED.getValue()));
 
-    Response response = ResourceClient.forRequestReport(client).getById(pickupServicePointId);
+    Response response = ResourceClient.forRequestReport().getById(pickupServicePointId);
     assertThat(response.getStatusCode(), is(HTTP_OK));
 
     JsonObject responseJson = response.getJson();
@@ -427,11 +427,11 @@ public class HoldShelfClearanceReportTests extends APITests {
         .put(CLOSED_DATE_KEY, firstAwaitingPickupRequestClosedDate));
 
     // #5 get hold shelf expiration report in SP1 >>> not empty
-    Response response = ResourceClient.forRequestReport(client).getById(firstServicePointId);
+    Response response = ResourceClient.forRequestReport().getById(firstServicePointId);
     verifyResponse(smallAngryPlanet, rebeca, response, RequestStatus.CLOSED_PICKUP_EXPIRED);
 
     // #6 get hold shelf expiration report report in SP2 >>> empty
-    response = ResourceClient.forRequestReport(client).getById(secondServicePointId);
+    response = ResourceClient.forRequestReport().getById(secondServicePointId);
     assertThat(response.getStatusCode(), is(HTTP_OK));
     assertThat(response.getJson().getInteger(TOTAL_RECORDS), is(0));
 
@@ -443,11 +443,11 @@ public class HoldShelfClearanceReportTests extends APITests {
 
     // #8 Check that hold shelf expiration report doesn't contain data when the item has the status `Awaiting pickup`,
     // first request - CLOSED_PICKUP_EXPIRED and second request - `Awaiting pickup`
-    response = ResourceClient.forRequestReport(client).getById(firstServicePointId);
+    response = ResourceClient.forRequestReport().getById(firstServicePointId);
     assertThat(response.getStatusCode(), is(HTTP_OK));
     assertThat(response.getJson().getInteger(TOTAL_RECORDS), is(0));
 
-    response = ResourceClient.forRequestReport(client).getById(secondServicePointId);
+    response = ResourceClient.forRequestReport().getById(secondServicePointId);
     assertThat(response.getStatusCode(), is(HTTP_OK));
     assertThat(response.getJson().getInteger(TOTAL_RECORDS), is(0));
 
@@ -457,12 +457,12 @@ public class HoldShelfClearanceReportTests extends APITests {
         .put(CLOSED_DATE_KEY, secondAwaitingPickupRequestClosedDate));
 
     // #10 get hold shelf expiration report in SP1 >>> empty
-    response = ResourceClient.forRequestReport(client).getById(firstServicePointId);
+    response = ResourceClient.forRequestReport().getById(firstServicePointId);
     assertThat(response.getStatusCode(), is(HTTP_OK));
     assertThat(response.getJson().getInteger(TOTAL_RECORDS), is(0));
 
     // #11 get hold shelf expiration report in SP2
-    response = ResourceClient.forRequestReport(client).getById(secondServicePointId);
+    response = ResourceClient.forRequestReport().getById(secondServicePointId);
     verifyResponse(smallAngryPlanet, steve, response, RequestStatus.CLOSED_PICKUP_EXPIRED);
   }
 
@@ -512,11 +512,11 @@ public class HoldShelfClearanceReportTests extends APITests {
         .put(CLOSED_DATE_KEY, firstAwaitingPickupRequestClosedDate));
 
     // #5 get hold shelf expiration report in SP1
-    Response response = ResourceClient.forRequestReport(client).getById(firstServicePointId);
+    Response response = ResourceClient.forRequestReport().getById(firstServicePointId);
     verifyResponse(smallAngryPlanet, rebeca, response, RequestStatus.CLOSED_CANCELLED);
 
     // #6 get hold shelf expiration in SP2 >>> empty
-    response = ResourceClient.forRequestReport(client).getById(secondServicePointId);
+    response = ResourceClient.forRequestReport().getById(secondServicePointId);
     assertThat(response.getStatusCode(), is(HTTP_OK));
     assertThat(response.getJson().getInteger(TOTAL_RECORDS), is(0));
 
@@ -527,12 +527,12 @@ public class HoldShelfClearanceReportTests extends APITests {
       .at(secondServicePointId));
 
     // #8 get hold shelf expiration report in SP1 >>> empty
-    response = ResourceClient.forRequestReport(client).getById(firstServicePointId);
+    response = ResourceClient.forRequestReport().getById(firstServicePointId);
     assertThat(response.getStatusCode(), is(HTTP_OK));
     assertThat(response.getJson().getInteger(TOTAL_RECORDS), is(0));
 
     // #9 get report in SP2 >>> empty
-    response = ResourceClient.forRequestReport(client).getById(secondServicePointId);
+    response = ResourceClient.forRequestReport().getById(secondServicePointId);
     assertThat(response.getStatusCode(), is(HTTP_OK));
     assertThat(response.getJson().getInteger(TOTAL_RECORDS), is(0));
 
@@ -565,11 +565,11 @@ public class HoldShelfClearanceReportTests extends APITests {
         .put(CLOSED_DATE_KEY, thirdAwaitingPickupRequestClosedDate));
 
     // #5 get hold shelf expiration report in SP1
-    response = ResourceClient.forRequestReport(client).getById(firstServicePointId);
+    response = ResourceClient.forRequestReport().getById(firstServicePointId);
     verifyResponse(nod, rebeca, response, RequestStatus.CLOSED_CANCELLED);
 
     // #6 get hold shelf expiration in SP2 >>> empty
-    response = ResourceClient.forRequestReport(client).getById(secondServicePointId);
+    response = ResourceClient.forRequestReport().getById(secondServicePointId);
     assertThat(response.getStatusCode(), is(HTTP_OK));
     assertThat(response.getJson().getInteger(TOTAL_RECORDS), is(0));
 
@@ -580,12 +580,12 @@ public class HoldShelfClearanceReportTests extends APITests {
       .at(secondServicePointId));
 
     // #8 get hold shelf expiration report in SP1 >>> empty
-    response = ResourceClient.forRequestReport(client).getById(firstServicePointId);
+    response = ResourceClient.forRequestReport().getById(firstServicePointId);
     assertThat(response.getStatusCode(), is(HTTP_OK));
     assertThat(response.getJson().getInteger(TOTAL_RECORDS), is(0));
 
     // #9 get report in SP2 >>> empty
-    response = ResourceClient.forRequestReport(client).getById(secondServicePointId);
+    response = ResourceClient.forRequestReport().getById(secondServicePointId);
     assertThat(response.getStatusCode(), is(HTTP_OK));
     assertThat(response.getJson().getInteger(TOTAL_RECORDS), is(0));
   }

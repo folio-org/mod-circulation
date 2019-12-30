@@ -375,7 +375,7 @@ public class DueDateScheduledNoticesProcessingTests extends APITests {
 
     JsonObject brokenNotice = createNoticesOverTime(dueDate.minusMinutes(1)::minusHours, 1).get(0);
 
-    usersClient.delete(borrower);
+    usersFixture.remove(borrower);
 
     scheduledNoticesClient.create(brokenNotice);
     scheduledNoticeProcessingClient.runDueDateNoticesProcessing(dueDate.minusSeconds(1));

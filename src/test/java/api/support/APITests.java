@@ -14,11 +14,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import api.support.builders.LoanPolicyBuilder;
-import api.support.builders.NoticePolicyBuilder;
-import api.support.fixtures.LostItemFeePoliciesFixture;
-import api.support.fixtures.UserManualBlocksFixture;
-import api.support.fixtures.OverdueFinePoliciesFixture;
 import org.folio.circulation.domain.representations.LoanProperties;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.OkapiHttpClient;
@@ -31,6 +26,8 @@ import org.junit.BeforeClass;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import api.support.builders.LoanPolicyBuilder;
+import api.support.builders.NoticePolicyBuilder;
 import api.support.fixtures.AddressTypesFixture;
 import api.support.fixtures.CancellationReasonsFixture;
 import api.support.fixtures.CirculationRulesFixture;
@@ -43,8 +40,10 @@ import api.support.fixtures.LoanPoliciesFixture;
 import api.support.fixtures.LoanTypesFixture;
 import api.support.fixtures.LoansFixture;
 import api.support.fixtures.LocationsFixture;
+import api.support.fixtures.LostItemFeePoliciesFixture;
 import api.support.fixtures.MaterialTypesFixture;
 import api.support.fixtures.NoticePoliciesFixture;
+import api.support.fixtures.OverdueFinePoliciesFixture;
 import api.support.fixtures.PatronGroupsFixture;
 import api.support.fixtures.ProxyRelationshipsFixture;
 import api.support.fixtures.RequestPoliciesFixture;
@@ -52,6 +51,7 @@ import api.support.fixtures.RequestQueueFixture;
 import api.support.fixtures.RequestsFixture;
 import api.support.fixtures.ScheduledNoticeProcessingClient;
 import api.support.fixtures.ServicePointsFixture;
+import api.support.fixtures.UserManualBlocksFixture;
 import api.support.fixtures.UsersFixture;
 import api.support.http.InterfaceUrls;
 import api.support.http.ResourceClient;
@@ -66,70 +66,70 @@ public abstract class APITests {
 
   private final boolean initialiseCirculationRules;
 
-  private final ResourceClient servicePointsClient = ResourceClient.forServicePoints(client);
+  private final ResourceClient servicePointsClient = ResourceClient.forServicePoints();
 
-  private final ResourceClient institutionsClient = ResourceClient.forInstitutions(client);
-  private final ResourceClient campusesClient = ResourceClient.forCampuses(client);
-  private final ResourceClient librariesClient = ResourceClient.forLibraries(client);
-  private final ResourceClient locationsClient = ResourceClient.forLocations(client);
+  private final ResourceClient institutionsClient = ResourceClient.forInstitutions();
+  private final ResourceClient campusesClient = ResourceClient.forCampuses();
+  private final ResourceClient librariesClient = ResourceClient.forLibraries();
+  private final ResourceClient locationsClient = ResourceClient.forLocations();
 
-  protected final ResourceClient configClient = ResourceClient.forConfiguration(client);
+  protected final ResourceClient configClient = ResourceClient.forConfiguration();
 
   private final ResourceClient patronGroupsClient
-    = ResourceClient.forPatronGroups(client);
+    = ResourceClient.forPatronGroups();
 
-  protected final ResourceClient usersClient = ResourceClient.forUsers(client);
+  protected final ResourceClient usersClient = ResourceClient.forUsers();
   private final ResourceClient proxyRelationshipsClient
-    = ResourceClient.forProxyRelationships(client);
+    = ResourceClient.forProxyRelationships();
 
-  protected final ResourceClient instancesClient = ResourceClient.forInstances(client);
-  protected final ResourceClient holdingsClient = ResourceClient.forHoldings(client);
-  protected final ResourceClient itemsClient = ResourceClient.forItems(client);
+  protected final ResourceClient instancesClient = ResourceClient.forInstances();
+  protected final ResourceClient holdingsClient = ResourceClient.forHoldings();
+  protected final ResourceClient itemsClient = ResourceClient.forItems();
 
-  protected final ResourceClient loansClient = ResourceClient.forLoans(client);
-  protected final ResourceClient accountsClient = ResourceClient.forAccounts(client);
-  protected final ResourceClient feeFineActionsClient = ResourceClient.forFeeFineActions(client);
+  protected final ResourceClient loansClient = ResourceClient.forLoans();
+  protected final ResourceClient accountsClient = ResourceClient.forAccounts();
+  protected final ResourceClient feeFineActionsClient = ResourceClient.forFeeFineActions();
 
   protected final ResourceClient loansStorageClient
-    = ResourceClient.forLoansStorage(client);
+    = ResourceClient.forLoansStorage();
 
   protected final ResourceClient requestsStorageClient
-    = ResourceClient.forRequestsStorage(client);
+    = ResourceClient.forRequestsStorage();
 
-  protected final ResourceClient requestsClient = ResourceClient.forRequests(client);
+  protected final ResourceClient requestsClient = ResourceClient.forRequests();
 
   protected final ResourceClient fixedDueDateScheduleClient
-    = ResourceClient.forFixedDueDateSchedules(client);
+    = ResourceClient.forFixedDueDateSchedules();
 
   protected final ResourceClient loanPolicyClient
-    = ResourceClient.forLoanPolicies(client);
+    = ResourceClient.forLoanPolicies();
 
   protected final ResourceClient requestPolicyClient
-    = ResourceClient.forRequestPolicies(client);
+    = ResourceClient.forRequestPolicies();
 
   protected final ResourceClient noticePolicyClient
-    = ResourceClient.forNoticePolicies(client);
+    = ResourceClient.forNoticePolicies();
 
   protected final ResourceClient overdueFinePolicyClient
-    = ResourceClient.forOverdueFinePolicies(client);
+    = ResourceClient.forOverdueFinePolicies();
 
   protected final ResourceClient lostItemFeePolicyClient
-    = ResourceClient.forLostItemFeePolicies(client);
+    = ResourceClient.forLostItemFeePolicies();
 
   private final ResourceClient instanceTypesClient
-    = ResourceClient.forInstanceTypes(client);
+    = ResourceClient.forInstanceTypes();
 
   private final ResourceClient contributorNameTypesClient
-    = ResourceClient.forContributorNameTypes(client);
+    = ResourceClient.forContributorNameTypes();
 
   protected final ResourceClient patronNoticesClient =
-    ResourceClient.forPatronNotices(client);
+    ResourceClient.forPatronNotices();
 
   protected final ResourceClient scheduledNoticesClient =
-    ResourceClient.forScheduledNotices(client);
+    ResourceClient.forScheduledNotices();
 
   protected final ResourceClient patronSessionRecordsClient =
-    ResourceClient.forPatronSessionRecords(client);
+    ResourceClient.forPatronSessionRecords();
 
   protected final EndPatronSessionClient endPatronSessionClient =
     new EndPatronSessionClient();
@@ -138,7 +138,7 @@ public abstract class APITests {
     new ExpiredSessionProcessingClient();
 
   protected final ResourceClient expiredEndSessionClient =
-    ResourceClient.forExpiredSessions(client);
+    ResourceClient.forExpiredSessions();
 
   protected final ServicePointsFixture servicePointsFixture
     = new ServicePointsFixture(servicePointsClient);
@@ -148,13 +148,13 @@ public abstract class APITests {
     servicePointsFixture);
 
   protected final LoanTypesFixture loanTypesFixture = new LoanTypesFixture(
-    ResourceClient.forLoanTypes(client));
+    ResourceClient.forLoanTypes());
 
   protected final MaterialTypesFixture materialTypesFixture
-    = new MaterialTypesFixture(ResourceClient.forMaterialTypes(client));
+    = new MaterialTypesFixture(ResourceClient.forMaterialTypes());
 
   protected final UserManualBlocksFixture userManualBlocksFixture
-    = new UserManualBlocksFixture(ResourceClient.forUserManualBlocks(client));
+    = new UserManualBlocksFixture(ResourceClient.forUserManualBlocks());
 
   protected final LoanPoliciesFixture loanPoliciesFixture
     = new LoanPoliciesFixture(loanPolicyClient, fixedDueDateScheduleClient);
@@ -174,12 +174,12 @@ public abstract class APITests {
   protected final CirculationRulesFixture circulationRulesFixture
     = new CirculationRulesFixture(client);
 
-  protected final ItemsFixture itemsFixture = new ItemsFixture(client,
+  protected final ItemsFixture itemsFixture = new ItemsFixture(
     materialTypesFixture, loanTypesFixture, locationsFixture,
     instanceTypesClient, contributorNameTypesClient);
 
   protected final AddressTypesFixture addressTypesFixture
-    = new AddressTypesFixture(ResourceClient.forAddressTypes(client));
+    = new AddressTypesFixture(ResourceClient.forAddressTypes());
 
   protected final PatronGroupsFixture patronGroupsFixture
     = new PatronGroupsFixture(patronGroupsClient);
@@ -194,16 +194,16 @@ public abstract class APITests {
           usersFixture, servicePointsFixture);
 
   protected final CancellationReasonsFixture cancellationReasonsFixture
-    = new CancellationReasonsFixture(ResourceClient.forCancellationReasons(client));
+    = new CancellationReasonsFixture(ResourceClient.forCancellationReasons());
 
   protected final RequestsFixture requestsFixture = new RequestsFixture(
     requestsClient, cancellationReasonsFixture, servicePointsFixture);
 
   protected final InstancesFixture instancesFixture
-    = new InstancesFixture(instanceTypesClient, contributorNameTypesClient, client);
+    = new InstancesFixture(instanceTypesClient, contributorNameTypesClient);
 
   protected final HoldingsFixture holdingsFixture
-    = new HoldingsFixture(client);
+    = new HoldingsFixture();
 
   protected final ScheduledNoticeProcessingClient scheduledNoticeProcessingClient =
     new ScheduledNoticeProcessingClient();
@@ -496,61 +496,45 @@ public abstract class APITests {
       response.getStatusCode(), is(200));
   }
 
-  private static void deleteOftenCreatedRecords()
-    throws MalformedURLException,
-    InterruptedException,
-    ExecutionException,
-    TimeoutException {
+  private static void deleteOftenCreatedRecords() throws MalformedURLException {
+    ResourceClient.forRequests().deleteAll();
+    ResourceClient.forLoans().deleteAll();
 
-    OkapiHttpClient cleanupClient = createClient(exception ->
-      log.error("Requests to delete all for clean up failed:", exception));
+    ResourceClient.forItems().deleteAll();
+    ResourceClient.forHoldings().deleteAll();
+    ResourceClient.forInstances().deleteAll();
 
-    ResourceClient.forRequests(cleanupClient).deleteAll();
-    ResourceClient.forLoans(cleanupClient).deleteAll();
+    ResourceClient.forUsers().deleteAllIndividually();
 
-    ResourceClient.forItems(cleanupClient).deleteAll();
-    ResourceClient.forHoldings(cleanupClient).deleteAll();
-    ResourceClient.forInstances(cleanupClient).deleteAll();
-
-    ResourceClient.forUsers(cleanupClient).deleteAllIndividually();
-
-    ResourceClient.forAccounts(cleanupClient).deleteAll();
+    ResourceClient.forAccounts().deleteAll();
   }
 
-  private static void deleteAllRecords()
-    throws MalformedURLException,
-    InterruptedException,
-    ExecutionException,
-    TimeoutException {
+  private static void deleteAllRecords() throws MalformedURLException {
+    ResourceClient.forRequests().deleteAll();
+    ResourceClient.forLoans().deleteAll();
 
-    OkapiHttpClient client = APITestContext.createClient(exception ->
-      log.error("Requests to delete all for clean up failed:", exception));
+    ResourceClient.forItems().deleteAll();
+    ResourceClient.forHoldings().deleteAll();
+    ResourceClient.forInstances().deleteAll();
 
-    ResourceClient.forRequests(client).deleteAll();
-    ResourceClient.forLoans(client).deleteAll();
+    ResourceClient.forLoanPolicies().deleteAllIndividually();
+    ResourceClient.forFixedDueDateSchedules().deleteAllIndividually();
 
-    ResourceClient.forItems(client).deleteAll();
-    ResourceClient.forHoldings(client).deleteAll();
-    ResourceClient.forInstances(client).deleteAll();
+    ResourceClient.forMaterialTypes().deleteAllIndividually();
+    ResourceClient.forLoanTypes().deleteAllIndividually();
 
-    ResourceClient.forLoanPolicies(client).deleteAllIndividually();
-    ResourceClient.forFixedDueDateSchedules(client).deleteAllIndividually();
+    ResourceClient.forUsers().deleteAllIndividually();
 
-    ResourceClient.forMaterialTypes(client).deleteAllIndividually();
-    ResourceClient.forLoanTypes(client).deleteAllIndividually();
+    ResourceClient.forPatronGroups().deleteAllIndividually();
+    ResourceClient.forAddressTypes().deleteAllIndividually();
 
-    ResourceClient.forUsers(client).deleteAllIndividually();
-
-    ResourceClient.forPatronGroups(client).deleteAllIndividually();
-    ResourceClient.forAddressTypes(client).deleteAllIndividually();
-
-    ResourceClient.forMaterialTypes(client).deleteAllIndividually();
-    ResourceClient.forLoanTypes(client).deleteAllIndividually();
-    ResourceClient.forLocations(client).deleteAllIndividually();
-    ResourceClient.forServicePoints(client).deleteAllIndividually();
-    ResourceClient.forContributorNameTypes(client).deleteAllIndividually();
-    ResourceClient.forInstanceTypes(client).deleteAllIndividually();
-    ResourceClient.forCancellationReasons(client).deleteAllIndividually();
+    ResourceClient.forMaterialTypes().deleteAllIndividually();
+    ResourceClient.forLoanTypes().deleteAllIndividually();
+    ResourceClient.forLocations().deleteAllIndividually();
+    ResourceClient.forServicePoints().deleteAllIndividually();
+    ResourceClient.forContributorNameTypes().deleteAllIndividually();
+    ResourceClient.forInstanceTypes().deleteAllIndividually();
+    ResourceClient.forCancellationReasons().deleteAllIndividually();
   }
 
   protected void loanHasFeeFinesProperties(JsonObject loan, double remainingAmount) {

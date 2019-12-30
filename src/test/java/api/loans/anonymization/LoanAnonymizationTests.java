@@ -68,14 +68,14 @@ abstract class LoanAnonymizationTests extends APITests {
       payload.remove("userId");
       payload.remove("borrower");
       loansStorageClient.attemptReplace(UUID.fromString(id.toString()), payload);
-
-    } catch (MalformedURLException | InterruptedException | ExecutionException | TimeoutException e) {
+    } catch (MalformedURLException e) {
       e.printStackTrace();
     }
   }
 
   void createOpenAccountWithFeeFines(IndividualResource loanResource)
-      throws InterruptedException, MalformedURLException, TimeoutException, ExecutionException {
+      throws MalformedURLException {
+
     IndividualResource account = accountsClient.create(new AccountBuilder().feeFineStatusOpen()
       .withLoan(loanResource)
       .feeFineStatusOpen()
@@ -88,7 +88,7 @@ abstract class LoanAnonymizationTests extends APITests {
   }
 
   void createClosedAccountWithFeeFines(IndividualResource loanResource, DateTime closedDate)
-      throws InterruptedException, MalformedURLException, TimeoutException, ExecutionException {
+      throws MalformedURLException {
 
     IndividualResource account = accountsClient.create(new AccountBuilder().feeFineStatusOpen()
       .withLoan(loanResource)
@@ -108,12 +108,13 @@ abstract class LoanAnonymizationTests extends APITests {
   }
 
   protected void createConfiguration(LoanHistoryConfigurationBuilder loanHistoryConfig) {
-    ConfigRecordBuilder configRecordBuilder = new ConfigRecordBuilder("LOAN_HISTORY", "loan_history", loanHistoryConfig.create()
+    ConfigRecordBuilder configRecordBuilder = new ConfigRecordBuilder(
+      "LOAN_HISTORY", "loan_history", loanHistoryConfig.create()
       .encodePrettily());
 
     try {
       configClient.create(configRecordBuilder);
-    } catch (InterruptedException | MalformedURLException | TimeoutException | ExecutionException e) {
+    } catch (MalformedURLException e) {
       e.printStackTrace();
     }
   }

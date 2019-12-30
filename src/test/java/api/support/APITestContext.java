@@ -96,11 +96,6 @@ public class APITestContext {
       okapiUrl(), TENANT_ID, TOKEN, USER_ID, REQUEST_ID, exceptionHandler);
   }
 
-  static OkapiHttpClient createClient() {
-    return APITestContext.createClient(exception ->
-      log.error("Request failed:", exception));
-  }
-
   static void deployVerticles()
     throws InterruptedException,
     ExecutionException,
