@@ -16,6 +16,7 @@ import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 import org.joda.time.DateTime;
 
+import api.requests.RequestsAPIRetrievalTests;
 import api.support.MultipleJsonRecords;
 import api.support.RestAssuredClient;
 import api.support.builders.MoveRequestBuilder;
@@ -43,12 +44,10 @@ public class RequestsFixture {
   }
 
   public IndividualResource place(RequestBuilder requestToBuild) {
-
     return requestsClient.create(requestToBuild);
   }
 
   public Response attemptPlace(RequestBuilder requestToBuild) {
-
     return requestsClient.attemptCreate(requestToBuild);
   }
 
@@ -125,7 +124,6 @@ public class RequestsFixture {
   }
 
   public void cancelRequest(IndividualResource request) {
-
     final IndividualResource courseReservesCancellationReason
       = cancellationReasonsFixture.courseReserves();
 
@@ -148,6 +146,10 @@ public class RequestsFixture {
 
     return restAssuredClient.post(representation,
       requestsUrl(pathToMoveRequest(representation)), "move-request");
+  }
+
+  public Response getById(UUID id) {
+    return requestsClient.getById(id);
   }
 
   public MultipleJsonRecords getAllRequests() {

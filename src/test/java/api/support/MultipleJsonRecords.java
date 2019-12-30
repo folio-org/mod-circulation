@@ -49,4 +49,8 @@ public class MultipleJsonRecords {
   public int totalRecords() {
     return totalRecords;
   }
+
+  public JsonObject getFirst() {
+    return records.get(0);
+  }
 }

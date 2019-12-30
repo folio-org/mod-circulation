@@ -13,7 +13,6 @@ import static api.support.matchers.UUIDMatcher.is;
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
 import static org.folio.circulation.domain.representations.ItemProperties.CALL_NUMBER_COMPONENTS;
-import static org.folio.circulation.support.http.client.ResponseHandler.any;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.emptyString;
 import static org.hamcrest.Matchers.not;
@@ -24,19 +23,11 @@ import static org.joda.time.DateTimeZone.UTC;
 import static org.junit.Assert.assertTrue;
 
 import java.net.HttpURLConnection;
-import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-import java.util.stream.Stream;
 
-import org.folio.circulation.support.JsonArrayHelper;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
 import org.joda.time.LocalDate;
 import org.junit.Test;
 
@@ -45,11 +36,7 @@ import api.support.MultipleJsonRecords;
 import api.support.builders.Address;
 import api.support.builders.ItemBuilder;
 import api.support.builders.RequestBuilder;
-import api.support.http.CqlQuery;
 import api.support.http.InventoryItemResource;
-import api.support.http.Limit;
-import api.support.http.Offset;
-import api.support.http.ResourceClient;
 import io.vertx.core.json.JsonObject;
 
 public class RequestsAPIRetrievalTests extends APITests {
@@ -87,7 +74,7 @@ public class RequestsAPIRetrievalTests extends APITests {
 
     DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, UTC);
 
-    final IndividualResource createdRequest = requestsClient.create(
+    final IndividualResource createdRequest = requestsFixture.place(
       new RequestBuilder()
         .recall()
         .withRequestDate(requestDate)
@@ -100,7 +87,7 @@ public class RequestsAPIRetrievalTests extends APITests {
         .withPickupServicePointId(pickupServicePointId)
         .withTags(new RequestBuilder.Tags(asList(NEW_TAG, IMPORTANT_TAG))));
 
-    Response getResponse = requestsClient.getById(createdRequest.getId());
+    Response getResponse = requestsFixture.getById(createdRequest.getId());
 
     assertThat(format("Failed to get request: %s", getResponse.getBody()),
       getResponse.getStatusCode(), is(HttpURLConnection.HTTP_OK));
@@ -239,7 +226,7 @@ public class RequestsAPIRetrievalTests extends APITests {
       .by(charlotte)
       .deliverToAddress(workAddressType.getId()));
 
-    JsonObject representation = requestsClient.getById(createdRequest.getId()).getJson();
+    JsonObject representation = requestsFixture.getById(createdRequest.getId()).getJson();
 
     assertThat(representation.getString("id"), is(not(emptyString())));
     assertThat(representation.getString("requestType"), is("Recall"));
@@ -262,7 +249,7 @@ public class RequestsAPIRetrievalTests extends APITests {
 
   @Test
   public void requestNotFoundForUnknownId() {
-    Response getResponse = requestsClient.getById(UUID.randomUUID());
+    Response getResponse = requestsFixture.getById(UUID.randomUUID());
 
     assertThat(getResponse.getStatusCode(), is(HttpURLConnection.HTTP_NOT_FOUND));
   }
@@ -305,7 +292,7 @@ public class RequestsAPIRetrievalTests extends APITests {
     loansFixture.checkOutByBarcode(temeraire, jessica);
     loansFixture.checkOutByBarcode(uprooted, jessica);
 
-    requestsClient.create(new RequestBuilder()
+    requestsFixture.place(new RequestBuilder()
       .hold()
       .forItem(smallAngryPlanet)
       .withRequesterId(requesterId)
@@ -313,7 +300,7 @@ public class RequestsAPIRetrievalTests extends APITests {
       .withPickupServicePointId(pickupServicePointId)
       .withTags(new RequestBuilder.Tags(asList(NEW_TAG, IMPORTANT_TAG))));
 
-    final IndividualResource requestForNod = requestsClient.create(
+    final IndividualResource requestForNod = requestsFixture.place(
       new RequestBuilder()
         .hold()
         .forItem(nod)
@@ -322,7 +309,7 @@ public class RequestsAPIRetrievalTests extends APITests {
         .withPickupServicePointId(pickupServicePointId2)
         .withTags(new RequestBuilder.Tags(asList(NEW_TAG, IMPORTANT_TAG))));
 
-    requestsClient.create(new RequestBuilder()
+    requestsFixture.place(new RequestBuilder()
       .hold()
       .forItem(interestingTimes)
       .withRequesterId(requesterId)
@@ -330,7 +317,7 @@ public class RequestsAPIRetrievalTests extends APITests {
       .withPickupServicePointId(pickupServicePointId)
       .withTags(new RequestBuilder.Tags(asList(NEW_TAG, IMPORTANT_TAG))));
 
-    final IndividualResource requestForTemeraire = requestsClient.create(
+    final IndividualResource requestForTemeraire = requestsFixture.place(
       new RequestBuilder()
         .hold()
         .forItem(temeraire)
@@ -339,7 +326,7 @@ public class RequestsAPIRetrievalTests extends APITests {
         .withPickupServicePointId(pickupServicePointId2)
         .withTags(new RequestBuilder.Tags(asList(NEW_TAG, IMPORTANT_TAG))));
 
-    requestsClient.create(new RequestBuilder()
+    requestsFixture.place(new RequestBuilder()
       .recall()
       .forItem(uprooted)
       .withRequesterId(requesterId)
@@ -388,11 +375,11 @@ public class RequestsAPIRetrievalTests extends APITests {
       .deliverToAddress(workAddressType.getId())
       .by(charlotte));
 
-    final List<JsonObject> allRequests = requestsClient.getAll();
+    final MultipleJsonRecords allRequests = requestsFixture.getAllRequests();
 
     assertThat(allRequests.size(), is(1));
 
-    JsonObject representation = allRequests.get(0);
+    JsonObject representation = allRequests.getFirst();
 
     assertThat(representation.getString("id"), is(not(emptyString())));
     assertThat(representation.getString("requestType"), is("Recall"));
@@ -434,12 +421,13 @@ public class RequestsAPIRetrievalTests extends APITests {
 
     loansFixture.checkInByBarcode(smallAngryPlanet);
 
-    final List<JsonObject> allRequests = requestsClient.getAll();
+    final MultipleJsonRecords allRequests = requestsFixture.getAllRequests();
 
     assertThat(allRequests.size(), is(1));
 
-    JsonObject representation = allRequests.get(0);
+    JsonObject representation = allRequests.getFirst();
 
+    //TODO: Figure out if this check makes sense?
     assertThat("Request should not have a current loan for the item",
       representation.containsKey("deliveryAddress"), is(false));
   }
@@ -449,37 +437,37 @@ public class RequestsAPIRetrievalTests extends APITests {
     UUID requesterId = usersFixture.charlotte().getId();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
-    requestsClient.create(new RequestBuilder()
+    requestsFixture.place(new RequestBuilder()
       .forItem(itemsFixture.basedUponSmallAngryPlanet(ItemBuilder::checkOut))
       .withPickupServicePointId(pickupServicePointId)
       .withRequesterId(requesterId));
 
-    requestsClient.create(new RequestBuilder()
+    requestsFixture.place(new RequestBuilder()
       .forItem(itemsFixture.basedUponNod(ItemBuilder::checkOut))
       .withPickupServicePointId(pickupServicePointId)
       .withRequesterId(requesterId));
 
-    requestsClient.create(new RequestBuilder()
+    requestsFixture.place(new RequestBuilder()
       .forItem(itemsFixture.basedUponInterestingTimes(ItemBuilder::checkOut))
       .withPickupServicePointId(pickupServicePointId)
       .withRequesterId(requesterId));
 
-    requestsClient.create(new RequestBuilder()
+    requestsFixture.place(new RequestBuilder()
       .forItem(itemsFixture.basedUponTemeraire(ItemBuilder::checkOut))
       .withPickupServicePointId(pickupServicePointId)
       .withRequesterId(requesterId));
 
-    requestsClient.create(new RequestBuilder()
+    requestsFixture.place(new RequestBuilder()
       .forItem(itemsFixture.basedUponNod(ItemBuilder::checkOut))
       .withPickupServicePointId(pickupServicePointId)
       .withRequesterId(requesterId));
 
-    requestsClient.create(new RequestBuilder()
+    requestsFixture.place(new RequestBuilder()
       .forItem(itemsFixture.basedUponUprooted(ItemBuilder::checkOut))
       .withPickupServicePointId(pickupServicePointId)
       .withRequesterId(requesterId));
 
-    requestsClient.create(new RequestBuilder()
+    requestsFixture.place(new RequestBuilder()
       .forItem(itemsFixture.basedUponTemeraire(ItemBuilder::checkOut))
       .withPickupServicePointId(pickupServicePointId)
       .withRequesterId(requesterId));
@@ -506,37 +494,37 @@ public class RequestsAPIRetrievalTests extends APITests {
     UUID secondRequester = usersFixture.jessica().getId();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
-    requestsClient.create(new RequestBuilder()
+    requestsFixture.place(new RequestBuilder()
       .forItem(itemsFixture.basedUponSmallAngryPlanet(ItemBuilder::checkOut))
       .withPickupServicePointId(pickupServicePointId)
       .withRequesterId(firstRequester));
 
-    requestsClient.create(new RequestBuilder()
+    requestsFixture.place(new RequestBuilder()
       .forItem(itemsFixture.basedUponNod(ItemBuilder::checkOut))
       .withPickupServicePointId(pickupServicePointId)
       .withRequesterId(firstRequester));
 
-    requestsClient.create(new RequestBuilder()
+    requestsFixture.place(new RequestBuilder()
       .forItem(itemsFixture.basedUponInterestingTimes(ItemBuilder::checkOut))
       .withPickupServicePointId(pickupServicePointId)
       .withRequesterId(secondRequester));
 
-    requestsClient.create(new RequestBuilder()
+    requestsFixture.place(new RequestBuilder()
       .forItem(itemsFixture.basedUponTemeraire(ItemBuilder::checkOut))
       .withPickupServicePointId(pickupServicePointId)
       .withRequesterId(firstRequester));
 
-    requestsClient.create(new RequestBuilder()
+    requestsFixture.place(new RequestBuilder()
       .forItem(itemsFixture.basedUponNod(ItemBuilder::checkOut))
       .withPickupServicePointId(pickupServicePointId)
       .withRequesterId(firstRequester));
 
-    requestsClient.create(new RequestBuilder()
+    requestsFixture.place(new RequestBuilder()
       .forItem(itemsFixture.basedUponUprooted(ItemBuilder::checkOut))
       .withPickupServicePointId(pickupServicePointId)
       .withRequesterId(secondRequester));
 
-    requestsClient.create(new RequestBuilder()
+    requestsFixture.place(new RequestBuilder()
       .withItemId(itemsFixture.basedUponTemeraire(ItemBuilder::checkOut).getId())
       .withPickupServicePointId(pickupServicePointId)
       .withRequesterId(secondRequester));
@@ -562,31 +550,31 @@ public class RequestsAPIRetrievalTests extends APITests {
     proxyRelationshipsFixture.currentProxyFor(sponsor, firstProxy);
     proxyRelationshipsFixture.currentProxyFor(sponsor, secondProxy);
 
-    requestsClient.create(new RequestBuilder()
+    requestsFixture.place(new RequestBuilder()
       .forItem(itemsFixture.basedUponSmallAngryPlanet(ItemBuilder::checkOut))
       .withPickupServicePointId(pickupServicePointId)
       .by(sponsor)
       .proxiedBy(firstProxy));
 
-    requestsClient.create(new RequestBuilder()
+    requestsFixture.place(new RequestBuilder()
       .forItem(itemsFixture.basedUponNod(ItemBuilder::checkOut))
       .withPickupServicePointId(pickupServicePointId)
       .by(sponsor)
       .proxiedBy(secondProxy));
 
-    requestsClient.create(new RequestBuilder()
+    requestsFixture.place(new RequestBuilder()
       .forItem(itemsFixture.basedUponNod(ItemBuilder::checkOut))
       .withPickupServicePointId(pickupServicePointId)
       .by(sponsor)
       .proxiedBy(secondProxy));
 
-    requestsClient.create(new RequestBuilder()
+    requestsFixture.place(new RequestBuilder()
       .forItem(itemsFixture.basedUponUprooted(ItemBuilder::checkOut))
       .withPickupServicePointId(pickupServicePointId)
       .by(sponsor)
       .proxiedBy(firstProxy));
 
-    requestsClient.create(new RequestBuilder()
+    requestsFixture.place(new RequestBuilder()
       .forItem(itemsFixture.basedUponTemeraire(ItemBuilder::checkOut))
       .withPickupServicePointId(pickupServicePointId)
       .by(sponsor)
@@ -607,37 +595,37 @@ public class RequestsAPIRetrievalTests extends APITests {
     UUID requesterId = usersFixture.charlotte().getId();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
-    requestsClient.create(new RequestBuilder()
+    requestsFixture.place(new RequestBuilder()
       .forItem(itemsFixture.basedUponSmallAngryPlanet(ItemBuilder::checkOut))
       .withPickupServicePointId(pickupServicePointId)
       .withRequesterId(requesterId));
 
-    requestsClient.create(new RequestBuilder()
+    requestsFixture.place(new RequestBuilder()
       .forItem(itemsFixture.basedUponNod(ItemBuilder::checkOut))
       .withPickupServicePointId(pickupServicePointId)
       .withRequesterId(requesterId));
 
-    requestsClient.create(new RequestBuilder()
+    requestsFixture.place(new RequestBuilder()
       .forItem(itemsFixture.basedUponInterestingTimes(ItemBuilder::checkOut))
       .withPickupServicePointId(pickupServicePointId)
       .withRequesterId(requesterId));
 
-    requestsClient.create(new RequestBuilder()
+    requestsFixture.place(new RequestBuilder()
       .forItem(itemsFixture.basedUponTemeraire(ItemBuilder::checkOut))
       .withPickupServicePointId(pickupServicePointId)
       .withRequesterId(requesterId));
 
-    requestsClient.create(new RequestBuilder()
+    requestsFixture.place(new RequestBuilder()
       .forItem(itemsFixture.basedUponNod(ItemBuilder::checkOut))
       .withPickupServicePointId(pickupServicePointId)
       .withRequesterId(requesterId));
 
-    requestsClient.create(new RequestBuilder()
+    requestsFixture.place(new RequestBuilder()
       .forItem(itemsFixture.basedUponUprooted(ItemBuilder::checkOut))
       .withPickupServicePointId(pickupServicePointId)
       .withRequesterId(requesterId));
 
-    requestsClient.create(new RequestBuilder()
+    requestsFixture.place(new RequestBuilder()
       .forItem(itemsFixture.basedUponTemeraire(ItemBuilder::checkOut))
       .withPickupServicePointId(pickupServicePointId)
       .withRequesterId(requesterId));
