@@ -1,9 +1,6 @@
 package api.requests.scenarios;
 
-import static api.support.http.CqlQuery.noQuery;
 import static api.support.http.InterfaceUrls.requestsUrl;
-import static api.support.http.Limit.noLimit;
-import static api.support.http.Offset.noOffset;
 import static api.support.matchers.ItemStatusCodeMatcher.hasItemStatus;
 import static org.folio.circulation.domain.RequestStatus.CLOSED_CANCELLED;
 import static org.hamcrest.CoreMatchers.is;
@@ -11,28 +8,18 @@ import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 import static org.joda.time.DateTimeZone.UTC;
 
-import java.net.MalformedURLException;
 import java.util.Collection;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
-import org.folio.circulation.support.http.client.ResponseHandler;
 import org.joda.time.DateTime;
 import org.junit.Test;
 
 import api.support.APITests;
 import api.support.builders.RequestBuilder;
-import api.support.http.CqlQuery;
-import api.support.http.InterfaceUrls;
 import api.support.http.InventoryItemResource;
-import api.support.http.Limit;
-import api.support.http.Offset;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
@@ -239,7 +226,7 @@ public class CancelRequestTests extends APITests {
     requestsFixture.cancelRequest(firstHoldRequest);
     requestsFixture.cancelRequest(secondHoldRequest);
 
-    Response allRequests = getAllRequests();
+    Response allRequests = requestsFixture.getAllRequests();
 
     assertThat(allRequests.getStatusCode(), is(200));
     assertThat(allRequests.getJson().getInteger("totalRecords"), is(2));
@@ -250,11 +237,6 @@ public class CancelRequestTests extends APITests {
 
     assertThat(firstRequest.getString("status"), is(CLOSED_CANCELLED.getValue()));
     assertThat(secondRequest.getString("status"), is(CLOSED_CANCELLED.getValue()));
-  }
-
-  private Response getAllRequests() {
-    return restAssuredClient.get(requestsUrl(), noQuery(), noLimit(),
-      noOffset(), 200, "get-all-requests");
   }
 
   private IndividualResource holdRequestWithNoPosition(

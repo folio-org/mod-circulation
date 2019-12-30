@@ -1,8 +1,11 @@
 package api.support.fixtures;
 
 import static api.support.APITestContext.getOkapiHeadersFromContext;
+import static api.support.http.CqlQuery.noQuery;
 import static api.support.http.InterfaceUrls.requestQueueUrl;
 import static api.support.http.InterfaceUrls.requestsUrl;
+import static api.support.http.Limit.noLimit;
+import static api.support.http.Offset.noOffset;
 import static java.util.function.Function.identity;
 
 import java.net.MalformedURLException;
@@ -15,6 +18,7 @@ import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 import org.joda.time.DateTime;
 
+import api.requests.scenarios.CancelRequestTests;
 import api.support.RestAssuredClient;
 import api.support.builders.MoveRequestBuilder;
 import api.support.builders.RequestBuilder;
@@ -145,8 +149,9 @@ public class RequestsFixture {
       requestsUrl(pathToMoveRequest(representation)), "move-request");
   }
 
-  private String pathToMoveRequest(JsonObject representation) {
-    return String.format("/%s/move", representation.getString("id"));
+  public Response getAllRequests() {
+    return restAssuredClient.get(requestsUrl(), noQuery(), noLimit(),
+      noOffset(), 200, "get-all-requests");
   }
 
   //TODO: Replace return type with MultipleJsonRecords
@@ -154,5 +159,9 @@ public class RequestsFixture {
     return MultipleRecords.from(restAssuredClient.get(
         requestQueueUrl(item.getId()), 200, "request-queue-request"),
         identity() ,"requests").value();
+  }
+
+  private String pathToMoveRequest(JsonObject representation) {
+    return String.format("/%s/move", representation.getString("id"));
   }
 }
