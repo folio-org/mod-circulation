@@ -19,6 +19,7 @@ import org.folio.circulation.rules.PatronGroup;
 import org.folio.circulation.rules.Policy;
 import org.folio.circulation.support.http.client.Response;
 
+import api.loans.LoanAPIPolicyTests;
 import api.support.RestAssuredClient;
 import api.support.http.QueryStringParameter;
 import io.vertx.core.json.JsonArray;
@@ -30,6 +31,16 @@ public class CirculationRulesFixture {
   public CirculationRulesFixture(RestAssuredClient restAssuredClient) {
     this.restAssuredClient = restAssuredClient;
   }
+
+  public String getCirculationRules() {
+    Response getResponse = restAssuredClient.get(circulationRulesUrl(),
+      "get-circulation-rules");
+
+    JsonObject rulesJson = new JsonObject(getResponse.getBody());
+
+    return rulesJson.getString("rulesAsText");
+  }
+
 
   public Response putRules(String body) {
     return toResponse(restAssuredClient

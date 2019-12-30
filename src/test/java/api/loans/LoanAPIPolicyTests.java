@@ -5,23 +5,15 @@ import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsNot.not;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 
-import java.net.MalformedURLException;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 import org.folio.circulation.support.http.client.IndividualResource;
-import org.folio.circulation.support.http.client.Response;
-import org.folio.circulation.support.http.client.ResponseHandler;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.junit.Test;
 
 import api.support.APITests;
 import api.support.builders.LoanBuilder;
-import api.support.http.InterfaceUrls;
 import io.vertx.core.json.JsonObject;
 
 public class LoanAPIPolicyTests extends APITests {
@@ -100,12 +92,8 @@ public class LoanAPIPolicyTests extends APITests {
 
     circulationRulesFixture.updateCirculationRules(rules);
 
-    Response getResponse = restAssuredClient.get(circulationRulesUrl(),
-      "get-circulation-rules");;
+    String circulationRules = circulationRulesFixture.getCirculationRules();
 
-    JsonObject rulesJson = new JsonObject(getResponse.getBody());
-
-    String circulationRules = rulesJson.getString("rulesAsText");
     assertThat("Returned rules match submitted rules", circulationRules, is(rules));
 
     warmUpApplyEndpoint();
