@@ -64,7 +64,13 @@ public class CheckOutByBarcodeTests extends APITests {
     TimeoutException,
     ExecutionException {
 
-    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+
+     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet(
+      item -> item
+        .withEnumeration("v.70:no.1-6")
+        .withChronology("1987:Jan.-June")
+        .withVolume("testVolume"));
+
     final IndividualResource steve = usersFixture.steve();
 
     final DateTime loanDate = new DateTime(2018, 3, 18, 11, 43, 54, DateTimeZone.UTC);
@@ -124,6 +130,15 @@ public class CheckOutByBarcodeTests extends APITests {
 
     assertThat("call number is 123456", loan.getJsonObject("item")
       .getString("callNumber"), is("123456"));
+
+    assertThat("has item enumeration",
+      loan.getJsonObject("item").getString("enumeration"), is("v.70:no.1-6"));
+
+    assertThat("has item chronology",
+      loan.getJsonObject("item").getString("chronology"), is("1987:Jan.-June"));
+
+    assertThat("has item volume",
+      loan.getJsonObject("item").getString("volume"), is("testVolume"));
 
     assertThat(loan.getJsonObject("item").encode() + " contains 'materialType'",
       loan.getJsonObject("item").containsKey("materialType"), is(true));
@@ -625,7 +640,11 @@ public class CheckOutByBarcodeTests extends APITests {
     TimeoutException,
     ExecutionException {
 
-    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet(
+      item -> item
+        .withEnumeration("v.70:no.1-6")
+        .withChronology("1987:Jan.-June")
+        .withVolume("testVolume"));
 
     final IndividualResource steve
       = usersFixture.steve(user -> user.withBarcode("12345 67890"));
@@ -646,6 +665,15 @@ public class CheckOutByBarcodeTests extends APITests {
     assertThat("item ID should match barcode",
       loan.getString("itemId"), is(smallAngryPlanet.getId()));
 
+    assertThat("has item enumeration",
+      loan.getJsonObject("item").getString("enumeration"), is("v.70:no.1-6"));
+
+    assertThat("has item chronology",
+      loan.getJsonObject("item").getString("chronology"), is("1987:Jan.-June"));
+
+    assertThat("has item volume",
+      loan.getJsonObject("item").getString("volume"), is("testVolume"));
+
     assertThat("status should be open",
       loan.getJsonObject("status").getString("name"), is("Open"));
 
@@ -661,7 +689,11 @@ public class CheckOutByBarcodeTests extends APITests {
     TimeoutException,
     ExecutionException {
 
-    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet(
+      item -> item
+        .withEnumeration("v.70:no.1-6")
+        .withChronology("1987:Jan.-June")
+        .withVolume("testVolume"));
 
     final IndividualResource jessica = usersFixture.jessica();
 
@@ -693,6 +725,15 @@ public class CheckOutByBarcodeTests extends APITests {
     assertThat("status should be open",
       loan.getJsonObject("status").getString("name"), is("Open"));
 
+    assertThat("has item enumeration",
+      loan.getJsonObject("item").getString("enumeration"), is("v.70:no.1-6"));
+
+    assertThat("has item chronology",
+      loan.getJsonObject("item").getString("chronology"), is("1987:Jan.-June"));
+
+    assertThat("has item volume",
+      loan.getJsonObject("item").getString("volume"), is("testVolume"));
+
     smallAngryPlanet = itemsClient.get(smallAngryPlanet);
 
     assertThat(smallAngryPlanet, hasItemStatus(CHECKED_OUT));
@@ -705,7 +746,11 @@ public class CheckOutByBarcodeTests extends APITests {
     TimeoutException,
     ExecutionException {
 
-    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet(item -> item.onOrder());
+    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet(item -> item
+      .onOrder()
+      .withEnumeration("v.70:no.1-6")
+      .withChronology("1987:Jan.-June")
+      .withVolume("testVolume"));
 
     final IndividualResource jessica = usersFixture.jessica();
 
@@ -727,6 +772,15 @@ public class CheckOutByBarcodeTests extends APITests {
 
     assertThat("status should be open",
       loan.getJsonObject("status").getString("name"), is("Open"));
+
+    assertThat("has item enumeration",
+      loan.getJsonObject("item").getString("enumeration"), is("v.70:no.1-6"));
+
+    assertThat("has item chronology",
+      loan.getJsonObject("item").getString("chronology"), is("1987:Jan.-June"));
+
+    assertThat("has item volume",
+      loan.getJsonObject("item").getString("volume"), is("testVolume"));
 
     smallAngryPlanet = itemsClient.get(smallAngryPlanet);
 
@@ -740,7 +794,11 @@ public class CheckOutByBarcodeTests extends APITests {
     TimeoutException,
     ExecutionException {
 
-    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet(item -> item.onOrder());
+    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet(item -> item
+      .onOrder()
+      .withEnumeration("v.70:no.1-6")
+      .withChronology("1987:Jan.-June")
+      .withVolume("testVolume"));
 
     final IndividualResource jessica = usersFixture.jessica();
 
@@ -769,6 +827,15 @@ public class CheckOutByBarcodeTests extends APITests {
 
     assertThat("status should be open",
       loan.getJsonObject("status").getString("name"), is("Open"));
+
+    assertThat("has item enumeration",
+      loan.getJsonObject("item").getString("enumeration"), is("v.70:no.1-6"));
+
+    assertThat("has item chronology",
+      loan.getJsonObject("item").getString("chronology"), is("1987:Jan.-June"));
+
+    assertThat("has item volume",
+      loan.getJsonObject("item").getString("volume"), is("testVolume"));
 
     smallAngryPlanet = itemsClient.get(smallAngryPlanet);
 
@@ -782,7 +849,11 @@ public class CheckOutByBarcodeTests extends APITests {
     TimeoutException,
     ExecutionException {
 
-    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet(item -> item.inProcess());
+    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet(item -> item
+      .inProcess()
+      .withEnumeration("v.70:no.1-6")
+      .withChronology("1987:Jan.-June")
+      .withVolume("testVolume"));
 
     final IndividualResource jessica = usersFixture.jessica();
 
@@ -805,6 +876,15 @@ public class CheckOutByBarcodeTests extends APITests {
     assertThat("status should be open",
       loan.getJsonObject("status").getString("name"), is("Open"));
 
+    assertThat("has item enumeration",
+      loan.getJsonObject("item").getString("enumeration"), is("v.70:no.1-6"));
+
+    assertThat("has item chronology",
+      loan.getJsonObject("item").getString("chronology"), is("1987:Jan.-June"));
+
+    assertThat("has item volume",
+      loan.getJsonObject("item").getString("volume"), is("testVolume"));
+
     smallAngryPlanet = itemsClient.get(smallAngryPlanet);
 
     assertThat(smallAngryPlanet, hasItemStatus(CHECKED_OUT));
@@ -817,7 +897,11 @@ public class CheckOutByBarcodeTests extends APITests {
     TimeoutException,
     ExecutionException {
 
-    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet(item -> item.inProcess());
+    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet(item -> item
+      .inProcess()
+      .withEnumeration("v.70:no.1-6")
+      .withChronology("1987:Jan.-June")
+      .withVolume("testVolume"));
 
     final IndividualResource jessica = usersFixture.jessica();
 
@@ -846,6 +930,15 @@ public class CheckOutByBarcodeTests extends APITests {
 
     assertThat("status should be open",
       loan.getJsonObject("status").getString("name"), is("Open"));
+
+    assertThat("has item enumeration",
+      loan.getJsonObject("item").getString("enumeration"), is("v.70:no.1-6"));
+
+    assertThat("has item chronology",
+      loan.getJsonObject("item").getString("chronology"), is("1987:Jan.-June"));
+
+    assertThat("has item volume",
+      loan.getJsonObject("item").getString("volume"), is("testVolume"));
 
     smallAngryPlanet = itemsClient.get(smallAngryPlanet);
 

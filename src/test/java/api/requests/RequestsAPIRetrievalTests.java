@@ -6,6 +6,7 @@ import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static api.support.matchers.UUIDMatcher.is;
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
+import static org.folio.circulation.domain.representations.ItemProperties.CALL_NUMBER_COMPONENTS;
 import static org.folio.circulation.support.http.client.ResponseHandler.any;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.emptyString;
@@ -13,6 +14,7 @@ import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
+import static org.junit.Assert.assertTrue;
 
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
@@ -54,14 +56,15 @@ public class RequestsAPIRetrievalTests extends APITests {
     ExecutionException,
     TimeoutException {
 
-    String enumeration = "DUMMY_ENUMERATION";
-
     UUID facultyGroupId = patronGroupsFixture.faculty().getId();
     UUID staffGroupId = patronGroupsFixture.staff().getId();
 
     final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet(
       itemBuilder -> itemBuilder
-        .withEnumeration(enumeration)
+        .withCallNumber("itCn", "itCnPrefix", "itCnSuffix")
+        .withEnumeration("enumeration1")
+        .withChronology("chronology")
+        .withVolume("vol.1")
         .withCopyNumbers(asList(ONE_COPY_NUMBER, TWO_COPY_NUMBER))
     );
 
@@ -149,8 +152,6 @@ public class RequestsAPIRetrievalTests extends APITests {
     assertThat("barcode is taken from item",
       itemSummary.getString("barcode"), is("036000291452"));
 
-    assertThat(itemSummary.getString("enumeration"), is(enumeration));
-
     assertThat(itemSummary.getString("status"), is(CHECKED_OUT));
 
     assertThat(itemSummary.containsKey("copyNumbers"), is(true));
@@ -203,6 +204,8 @@ public class RequestsAPIRetrievalTests extends APITests {
 
     assertThat(tagsRepresentation.containsKey("tagList"), is(true));
     assertThat(tagsRepresentation.getJsonArray("tagList"), contains(NEW_TAG, IMPORTANT_TAG));
+
+    requestHasCallNumberStringProperties(representation, "");
   }
 
   @Test
@@ -300,9 +303,11 @@ public class RequestsAPIRetrievalTests extends APITests {
     proxyRelationshipsFixture.nonExpiringProxyFor(sponsor, proxy);
 
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
-    final IndividualResource nod = itemsFixture.basedUponNod();
+    final IndividualResource nod = itemsFixture
+      .basedUponNod(itemsFixture.addCallNumberStringComponents("nod"));
     final IndividualResource interestingTimes = itemsFixture.basedUponInterestingTimes();
-    final IndividualResource temeraire = itemsFixture.basedUponTemeraire();
+    final IndividualResource temeraire = itemsFixture
+      .basedUponTemeraire(itemsFixture.addCallNumberStringComponents("tem"));
     final IndividualResource uprooted = itemsFixture.basedUponUprooted();
 
     loansFixture.checkOutByBarcode(smallAngryPlanet, jessica);
@@ -373,8 +378,10 @@ public class RequestsAPIRetrievalTests extends APITests {
     requestList.forEach(this::requestHasServicePointProperties);
     requestList.forEach(this::requestHasPatronGroupProperties);
     requestList.forEach(this::requestHasTags);
-  }
 
+    requestHasCallNumberStringProperties(findRequestByItemId(requestList, nod.getId()), "nod");
+    requestHasCallNumberStringProperties(findRequestByItemId(requestList, temeraire.getId()), "tem");
+  }
 
   @Test
   public void fulfilledByDeliveryIncludesAddressWhenFindingMultipleRequests()
@@ -807,5 +814,27 @@ public class RequestsAPIRetrievalTests extends APITests {
     assertThat(format("%s should have %s: %s",
       type, property, resource),
       resource.containsKey(property), is(true));
+  }
+
+  private void requestHasCallNumberStringProperties(JsonObject request, String prefix) {
+    JsonObject item = request.getJsonObject("item");
+
+    assertTrue(item.containsKey(CALL_NUMBER_COMPONENTS));
+    JsonObject callNumberComponents = item.getJsonObject(CALL_NUMBER_COMPONENTS);
+
+    assertThat(callNumberComponents.getString("callNumber"), is(prefix + "itCn"));
+    assertThat(callNumberComponents.getString("prefix"), is(prefix + "itCnPrefix"));
+    assertThat(callNumberComponents.getString("suffix"), is(prefix + "itCnSuffix"));
+
+    assertThat(item.getString("enumeration"), is(prefix + "enumeration1"));
+    assertThat(item.getString("chronology"), is(prefix + "chronology"));
+    assertThat(item.getString("volume"), is(prefix + "vol.1"));
+  }
+
+  private JsonObject findRequestByItemId(List<JsonObject> allRequests, UUID itemId) {
+    return allRequests.stream()
+      .filter(req -> itemId.toString().equals(req.getString("itemId")))
+      .findFirst()
+      .orElseThrow(() -> new AssertionError("Can not find Request for item: " + itemId));
   }
 }

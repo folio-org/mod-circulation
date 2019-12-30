@@ -81,6 +81,8 @@ public class RequestRepresentation {
     if (enumeration != null) {
       itemSummary.put("enumeration", enumeration);
     }
+    write(itemSummary, "volume", item.getVolume());
+    write(itemSummary, "chronology", item.getChronology());
 
     ItemStatus status = item.getStatus();
     if (status != null) {
@@ -96,6 +98,7 @@ public class RequestRepresentation {
       itemSummary.put("copyNumbers", copyNumbers);
     }
   }
+
   private static JsonObject locationSummary(Location location) {
     JsonObject locationSummary = new JsonObject();
 
