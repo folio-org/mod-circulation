@@ -1,5 +1,9 @@
 package api.requests.scenarios;
 
+import static api.support.http.CqlQuery.noQuery;
+import static api.support.http.InterfaceUrls.requestsUrl;
+import static api.support.http.Limit.noLimit;
+import static api.support.http.Offset.noOffset;
 import static api.support.matchers.ItemStatusCodeMatcher.hasItemStatus;
 import static org.folio.circulation.domain.RequestStatus.CLOSED_CANCELLED;
 import static org.hamcrest.CoreMatchers.is;
@@ -24,8 +28,11 @@ import org.junit.Test;
 
 import api.support.APITests;
 import api.support.builders.RequestBuilder;
+import api.support.http.CqlQuery;
 import api.support.http.InterfaceUrls;
 import api.support.http.InventoryItemResource;
+import api.support.http.Limit;
+import api.support.http.Offset;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
@@ -218,7 +225,7 @@ public class CancelRequestTests extends APITests {
   }
 
   @Test
-  public void shouldAllowToCancelRequestWithNoPosition() throws Exception {
+  public void shouldAllowToCancelRequestWithNoPosition() {
     IndividualResource requesterId = usersFixture.rebecca();
     final InventoryItemResource nod = itemsFixture.basedUponNod();
 
@@ -245,13 +252,9 @@ public class CancelRequestTests extends APITests {
     assertThat(secondRequest.getString("status"), is(CLOSED_CANCELLED.getValue()));
   }
 
-  private Response getAllRequests()
-    throws InterruptedException, ExecutionException, TimeoutException {
-
-    CompletableFuture<Response> getAllCompleted = new CompletableFuture<>();
-    client.get(InterfaceUrls.requestsUrl(), ResponseHandler.any(getAllCompleted));
-
-    return getAllCompleted.get(5, TimeUnit.SECONDS);
+  private Response getAllRequests() {
+    return restAssuredClient.get(requestsUrl(), noQuery(), noLimit(),
+      noOffset(), 200, "get-all-requests");
   }
 
   private IndividualResource holdRequestWithNoPosition(

@@ -27,6 +27,7 @@ public class RequestQueueFixture {
       200, "reorder-request-queue").getJson();
   }
 
+  //TODO: Consolidate with similar method in requests fixture
   public JsonObject retrieveQueue(String itemId) {
     return restAssuredClient.get(requestQueueUrl(itemId), 200,
       "get-request-queue").getJson();
