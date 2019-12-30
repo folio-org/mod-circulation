@@ -64,7 +64,7 @@ public class CheckInByBarcodeTests extends APITests {
     final UUID checkInServicePointId = servicePointsFixture.cd1().getId();
 
     final IndividualResource homeLocation = locationsFixture.basedUponExampleLocation(
-      builder -> builder.withPrimaryServicePoint(checkInServicePointId));
+      item -> item.withPrimaryServicePoint(checkInServicePointId));
 
     final IndividualResource nod = itemsFixture.basedUponNod(
       builder -> builder
@@ -316,7 +316,7 @@ public class CheckInByBarcodeTests extends APITests {
     final UUID checkInServicePointId = servicePointsFixture.cd1().getId();
 
     final IndividualResource homeLocation = locationsFixture.basedUponExampleLocation(
-      builder -> builder.withPrimaryServicePoint(checkInServicePointId));
+      item -> item.withPrimaryServicePoint(checkInServicePointId));
 
     final IndividualResource nod = itemsFixture.basedUponNod(
       builder -> builder
@@ -373,7 +373,7 @@ public class CheckInByBarcodeTests extends APITests {
       builder -> builder.withPrimaryServicePoint(checkInServicePointId));
 
     final IndividualResource nod = itemsFixture.basedUponNod(
-      builder -> builder
+      item -> item
         .withTemporaryLocation(homeLocation.getId())
         .withEnumeration("v.70:no.1-6")
         .withChronology("1987:Jan.-June")

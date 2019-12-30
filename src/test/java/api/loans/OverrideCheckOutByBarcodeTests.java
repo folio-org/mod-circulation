@@ -48,7 +48,7 @@ public class OverrideCheckOutByBarcodeTests extends APITests {
     ExecutionException {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet(
-      builder -> builder
+      item -> item
         .withEnumeration("v.70:no.1-6")
         .withChronology("1987:Jan.-June")
         .withVolume("testVolume"));
