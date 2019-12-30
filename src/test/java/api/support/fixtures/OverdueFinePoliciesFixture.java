@@ -20,11 +20,7 @@ public class OverdueFinePoliciesFixture {
       reason -> getProperty(reason, "name"));
   }
 
-  public IndividualResource facultyStandard()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public IndividualResource facultyStandard() {
 
     JsonObject overdueFine = new JsonObject();
     overdueFine.put("quantity", 5.0);
@@ -49,11 +45,7 @@ public class OverdueFinePoliciesFixture {
     return overdueFinePolicyRecordCreator.createIfAbsent(facultyStandard);
   }
 
-  public IndividualResource create(NoticePolicyBuilder noticePolicy)
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public IndividualResource create(NoticePolicyBuilder noticePolicy) {
     return overdueFinePolicyRecordCreator.createIfAbsent(noticePolicy);
   }
 }

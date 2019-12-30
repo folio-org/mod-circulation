@@ -48,7 +48,6 @@ public class ChangeDueDateTests extends APITests {
   @Test
   public void canManuallyChangeTheDueDateOfLoan()
     throws InterruptedException,
-    MalformedURLException,
     TimeoutException,
     ExecutionException {
 
@@ -115,7 +114,6 @@ public class ChangeDueDateTests extends APITests {
   @Test
   public void canChangeDueDateOfLoanWithOpenRequest()
     throws InterruptedException,
-    MalformedURLException,
     TimeoutException,
     ExecutionException {
 
@@ -189,7 +187,6 @@ public class ChangeDueDateTests extends APITests {
   @Test
   public void manualDueDateChangeNoticeIsSentWhenPolicyDefinesManualDueDateChangeNoticeConfiguration()
     throws InterruptedException,
-    MalformedURLException,
     TimeoutException,
     ExecutionException {
 

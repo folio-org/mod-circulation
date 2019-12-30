@@ -228,8 +228,7 @@ public abstract class APITests {
   public static void beforeAll()
     throws InterruptedException,
     ExecutionException,
-    TimeoutException,
-    MalformedURLException {
+    TimeoutException {
 
     APITestContext.deployVerticles();
 
@@ -268,8 +267,7 @@ public abstract class APITests {
   public static void afterAll()
     throws InterruptedException,
     ExecutionException,
-    TimeoutException,
-    MalformedURLException {
+    TimeoutException {
 
     deleteOftenCreatedRecords();
 
@@ -320,8 +318,7 @@ public abstract class APITests {
   private void useDefaultRollingPolicyCirculationRules()
     throws InterruptedException,
     ExecutionException,
-    TimeoutException,
-    MalformedURLException {
+    TimeoutException {
 
     log.info("Using rolling loan policy as fallback policy");
     useFallbackPolicies(
@@ -336,8 +333,7 @@ public abstract class APITests {
   protected void useExampleFixedPolicyCirculationRules()
     throws InterruptedException,
     ExecutionException,
-    TimeoutException,
-    MalformedURLException {
+    TimeoutException {
 
     log.info("Using fixed loan policy as fallback policy");
     useFallbackPolicies(
@@ -355,7 +351,7 @@ public abstract class APITests {
                                      UUID lostItemFeePolicyId)
     throws InterruptedException,
     ExecutionException,
-    TimeoutException, MalformedURLException {
+    TimeoutException {
 
     circulationRulesFixture.updateCirculationRules(loanPolicyId, requestPolicyId,
       noticePolicyId, overdueFinePolicyId, lostItemFeePolicyId);
@@ -372,7 +368,6 @@ public abstract class APITests {
    */
   protected void setFallbackPolicies(LoanPolicyBuilder loanPolicyBuilder)
     throws InterruptedException,
-    MalformedURLException,
     TimeoutException,
     ExecutionException {
     final IndividualResource loanPolicy = loanPoliciesFixture.create(loanPolicyBuilder);
@@ -391,7 +386,6 @@ public abstract class APITests {
    */
   protected void useWithActiveNotice(LoanPolicyBuilder loanPolicyBuilder)
     throws InterruptedException,
-    MalformedURLException,
     TimeoutException,
     ExecutionException {
     useFallbackPolicies(
@@ -411,7 +405,6 @@ public abstract class APITests {
    */
   protected void use(LoanPolicyBuilder loanPolicyBuilder)
     throws InterruptedException,
-    MalformedURLException,
     TimeoutException,
     ExecutionException {
     useFallbackPolicies(
@@ -431,7 +424,6 @@ public abstract class APITests {
   protected void use(LoanPolicyBuilder loanPolicyBuilder,
                      NoticePolicyBuilder noticePolicyBuilder)
     throws InterruptedException,
-    MalformedURLException,
     TimeoutException,
     ExecutionException {
     useFallbackPolicies(
@@ -452,7 +444,6 @@ public abstract class APITests {
    */
   protected void use(NoticePolicyBuilder noticePolicy)
     throws InterruptedException,
-    MalformedURLException,
     TimeoutException,
     ExecutionException {
     useFallbackPolicies(
@@ -471,7 +462,6 @@ public abstract class APITests {
    */
   protected void useWithPaging(NoticePolicyBuilder noticePolicy)
     throws InterruptedException,
-    MalformedURLException,
     TimeoutException,
     ExecutionException {
     useFallbackPolicies(
@@ -485,7 +475,7 @@ public abstract class APITests {
   protected void warmUpApplyEndpoint()
     throws InterruptedException,
     ExecutionException,
-    TimeoutException, MalformedURLException {
+    TimeoutException {
 
     CompletableFuture<Response> completed = new CompletableFuture<>();
 
@@ -501,7 +491,7 @@ public abstract class APITests {
       response.getStatusCode(), is(200));
   }
 
-  private static void deleteOftenCreatedRecords() throws MalformedURLException {
+  private static void deleteOftenCreatedRecords() {
     ResourceClient.forRequests().deleteAll();
     ResourceClient.forLoans().deleteAll();
 
@@ -514,7 +504,7 @@ public abstract class APITests {
     ResourceClient.forAccounts().deleteAll();
   }
 
-  private static void deleteAllRecords() throws MalformedURLException {
+  private static void deleteAllRecords() {
     ResourceClient.forRequests().deleteAll();
     ResourceClient.forLoans().deleteAll();
 
@@ -581,11 +571,7 @@ public abstract class APITests {
             resource.getValue(property), is(nullValue()));
   }
 
-  protected void setInvalidLoanPolicyReferenceInRules(String invalidLoanPolicyReference)
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException,
-    MalformedURLException {
+  protected void setInvalidLoanPolicyReferenceInRules(String invalidLoanPolicyReference) {
 
     circulationRulesFixture.updateCirculationRules(
       circulationRulesFixture.soleFallbackPolicyRule(invalidLoanPolicyReference,
@@ -595,11 +581,7 @@ public abstract class APITests {
         lostItemFeePoliciesFixture.facultyStandard().getId().toString()));
   }
 
-  protected void setInvalidNoticePolicyReferenceInRules(String invalidNoticePolicyReference)
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException,
-    MalformedURLException {
+  protected void setInvalidNoticePolicyReferenceInRules(String invalidNoticePolicyReference) {
 
     circulationRulesFixture.updateCirculationRules(
       circulationRulesFixture.soleFallbackPolicyRule(

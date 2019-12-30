@@ -31,11 +31,7 @@ import junitparams.Parameters;
 public class MultipleHoldShelfRequestsTests extends APITests {
 
   @Test
-  public void statusOfOldestRequestChangesToAwaitingPickupWhenItemCheckedIn()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void statusOfOldestRequestChangesToAwaitingPickupWhenItemCheckedIn() {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource james = usersFixture.james();
@@ -72,11 +68,7 @@ public class MultipleHoldShelfRequestsTests extends APITests {
   })
   public void statusOfOldestHoldAndRecallRequestsChangeToFulfilledWhenItemCheckedOutToRequester(
     String requestType,
-    String itemStatus)
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+    String itemStatus) {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource james = usersFixture.james();
@@ -108,11 +100,7 @@ public class MultipleHoldShelfRequestsTests extends APITests {
   }
 
   @Test
-  public void checkingInLoanThatFulfilsRequestShouldMakeItemAvailableForPickupToNextRequester()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void checkingInLoanThatFulfilsRequestShouldMakeItemAvailableForPickupToNextRequester() {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource james = usersFixture.james();
@@ -147,11 +135,7 @@ public class MultipleHoldShelfRequestsTests extends APITests {
   }
 
   @Test
-  public void itemCannotBeCheckedOutToOtherPatronWhenOldestRequestIsAwaitingPickup()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void itemCannotBeCheckedOutToOtherPatronWhenOldestRequestIsAwaitingPickup() {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource james = usersFixture.james();
@@ -191,11 +175,7 @@ public class MultipleHoldShelfRequestsTests extends APITests {
   }
 
   @Test
-  public void itemCannotBeCheckedOutToOtherRequesterWhenOldestRequestIsAwaitingPickup()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void itemCannotBeCheckedOutToOtherRequesterWhenOldestRequestIsAwaitingPickup() {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource james = usersFixture.james();

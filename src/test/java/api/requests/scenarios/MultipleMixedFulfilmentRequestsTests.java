@@ -33,11 +33,7 @@ public class MultipleMixedFulfilmentRequestsTests extends APITests {
   private static final DateTime DATE_TIME_2018 = new DateTime(2018, 1, 10, 15, 34, 21, DateTimeZone.UTC);
 
   @Test
-  public void itemCantBeCheckedOutToAnotherRequesterWhenStatusIsAwaitingDelivery()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void itemCantBeCheckedOutToAnotherRequesterWhenStatusIsAwaitingDelivery() {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource james = usersFixture.james();
@@ -73,11 +69,7 @@ public class MultipleMixedFulfilmentRequestsTests extends APITests {
   }
 
   @Test
-  public void deliveryRequestIsProcessedWhenItIsNextInQueueAndItemCheckedIn()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void deliveryRequestIsProcessedWhenItIsNextInQueueAndItemCheckedIn() {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource james = usersFixture.james();
@@ -114,11 +106,7 @@ public class MultipleMixedFulfilmentRequestsTests extends APITests {
   }
 
   @Test
-  public void holdShelfRequestIsProcessedWhenItIsNextInQueueAndItemCheckedIn()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void holdShelfRequestIsProcessedWhenItIsNextInQueueAndItemCheckedIn() {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource james = usersFixture.james();
@@ -151,11 +139,7 @@ public class MultipleMixedFulfilmentRequestsTests extends APITests {
   }
 
   @Test
-  public void itemCanBeCheckedOutToDeliveryRequestRequester()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void itemCanBeCheckedOutToDeliveryRequestRequester() {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource james = usersFixture.james();
@@ -196,7 +180,7 @@ public class MultipleMixedFulfilmentRequestsTests extends APITests {
     assertThat(response.getJson(), hasErrorWith(hasParameter("userBarcode", user.getBarcode())));
   }
 
-  private void assertRequestHasStatus(IndividualResource deliveryRequest, String expectedStatus) throws MalformedURLException, InterruptedException, ExecutionException, TimeoutException {
+  private void assertRequestHasStatus(IndividualResource deliveryRequest, String expectedStatus) {
     deliveryRequest = requestsClient.get(deliveryRequest);
     assertThat(deliveryRequest.getJson().getString("status"), is(expectedStatus));
   }

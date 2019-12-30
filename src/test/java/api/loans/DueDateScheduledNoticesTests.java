@@ -41,7 +41,7 @@ public class DueDateScheduledNoticesTests extends APITests {
 
   @Test
   public void allDueDateNoticesShouldBeScheduledOnCheckoutWhenPolicyDefinesDueDateNoticeConfiguration()
-    throws MalformedURLException,
+    throws
     InterruptedException,
     TimeoutException,
     ExecutionException {
@@ -123,7 +123,7 @@ public class DueDateScheduledNoticesTests extends APITests {
 
   @Test
   public void checkOutSchedulesDifferentBeforeDueDateNotices()
-    throws MalformedURLException,
+    throws
     InterruptedException,
     TimeoutException,
     ExecutionException {
@@ -188,7 +188,7 @@ public class DueDateScheduledNoticesTests extends APITests {
 
   @Test
   public void noNoticesShouldBeScheduledOnCheckOutWhenPolicyDoesNotDefineTimeBasedNotices()
-    throws MalformedURLException,
+    throws
     InterruptedException,
     TimeoutException,
     ExecutionException {
@@ -231,7 +231,7 @@ public class DueDateScheduledNoticesTests extends APITests {
 
   @Test
   public void noticesShouldBeRescheduledAfterRenewal()
-    throws MalformedURLException,
+    throws
     InterruptedException,
     TimeoutException,
     ExecutionException {
@@ -312,7 +312,7 @@ public class DueDateScheduledNoticesTests extends APITests {
 
   @Test
   public void noticesShouldBeRescheduledAfterRenewalOverride()
-    throws MalformedURLException,
+    throws
     InterruptedException,
     TimeoutException,
     ExecutionException {
@@ -400,7 +400,7 @@ public class DueDateScheduledNoticesTests extends APITests {
 
   @Test
   public void noticesShouldBeRescheduledAfterRecall()
-    throws MalformedURLException,
+    throws
     InterruptedException,
     TimeoutException,
     ExecutionException {
@@ -492,7 +492,7 @@ public class DueDateScheduledNoticesTests extends APITests {
 
   @Test
   public void noticesShouldBeRescheduledAfterManualDueDateChange()
-    throws MalformedURLException,
+    throws
     InterruptedException,
     TimeoutException,
     ExecutionException {

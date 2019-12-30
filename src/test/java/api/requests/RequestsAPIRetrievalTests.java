@@ -51,7 +51,7 @@ public class RequestsAPIRetrievalTests extends APITests {
 
   @Test
   public void canGetARequestById()
-    throws MalformedURLException,
+    throws
     InterruptedException,
     ExecutionException,
     TimeoutException {
@@ -209,11 +209,7 @@ public class RequestsAPIRetrievalTests extends APITests {
   }
 
   @Test
-  public void canGetARequestToBeFulfilledByDeliveryToAnAddressById()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void canGetARequestToBeFulfilledByDeliveryToAnAddressById() {
 
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet(
       ItemBuilder::available);
@@ -262,11 +258,7 @@ public class RequestsAPIRetrievalTests extends APITests {
   }
 
   @Test
-  public void requestNotFoundForUnknownId()
-    throws MalformedURLException,
-    InterruptedException,
-    ExecutionException,
-    TimeoutException {
+  public void requestNotFoundForUnknownId() {
 
     Response getResponse = ResourceClient.forRequests().getById(UUID.randomUUID());
 
@@ -275,7 +267,7 @@ public class RequestsAPIRetrievalTests extends APITests {
 
   @Test
   public void canGetMultipleRequests()
-    throws MalformedURLException,
+    throws
     InterruptedException,
     ExecutionException,
     TimeoutException {
@@ -384,11 +376,7 @@ public class RequestsAPIRetrievalTests extends APITests {
   }
 
   @Test
-  public void fulfilledByDeliveryIncludesAddressWhenFindingMultipleRequests()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void fulfilledByDeliveryIncludesAddressWhenFindingMultipleRequests() {
 
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
 
@@ -440,11 +428,7 @@ public class RequestsAPIRetrievalTests extends APITests {
   }
 
   @Test
-  public void closedLoanForItemIsNotIncludedWhenFindingMultipleRequests()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void closedLoanForItemIsNotIncludedWhenFindingMultipleRequests() {
 
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
 
@@ -476,7 +460,7 @@ public class RequestsAPIRetrievalTests extends APITests {
 
   @Test
   public void canPageAllRequests()
-    throws MalformedURLException,
+    throws
     InterruptedException,
     ExecutionException,
     TimeoutException {
@@ -556,7 +540,7 @@ public class RequestsAPIRetrievalTests extends APITests {
 
   @Test
   public void canSearchForRequestsByRequesterLastName()
-    throws MalformedURLException,
+    throws
     InterruptedException,
     ExecutionException,
     TimeoutException {
@@ -622,7 +606,7 @@ public class RequestsAPIRetrievalTests extends APITests {
 
   @Test
   public void canSearchForRequestsByProxyLastName()
-    throws MalformedURLException,
+    throws
     InterruptedException,
     ExecutionException,
     TimeoutException {
@@ -688,7 +672,7 @@ public class RequestsAPIRetrievalTests extends APITests {
 
   @Test
   public void canSearchForRequestsByItemTitle()
-    throws MalformedURLException,
+    throws
     InterruptedException,
     ExecutionException,
     TimeoutException {

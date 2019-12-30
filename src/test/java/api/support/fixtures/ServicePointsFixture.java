@@ -19,80 +19,48 @@ import api.support.http.ResourceClient;
 
 public class ServicePointsFixture {
   private final RecordCreator servicePointRecordCreator;
-  
+
   public ServicePointsFixture(ResourceClient client) {
     servicePointRecordCreator = new RecordCreator(client,
       servicePoint -> getProperty(servicePoint, "code"));
   }
 
-  public void cleanUp()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void cleanUp() {
 
     servicePointRecordCreator.cleanUp();
   }
 
-  public IndividualResource cd1()
-      throws InterruptedException,
-      MalformedURLException,
-      TimeoutException,
-      ExecutionException {
+  public IndividualResource cd1() {
 
     return create(basedUponCircDesk1());
   }
-  
-  public IndividualResource cd2()
-      throws InterruptedException,
-      MalformedURLException,
-      TimeoutException,
-      ExecutionException {
+
+  public IndividualResource cd2() {
 
     return create(basedUponCircDesk2());
-  } 
-  
-  public IndividualResource cd3()
-      throws InterruptedException,
-      MalformedURLException,
-      TimeoutException,
-      ExecutionException {
+  }
+
+  public IndividualResource cd3() {
 
     return create(basedUponCircDesk3());
   }
 
-  public IndividualResource cd4()
-      throws InterruptedException,
-      MalformedURLException,
-      TimeoutException,
-      ExecutionException {
+  public IndividualResource cd4() {
 
     return create(basedUponCircDesk4());
   }
 
-  public IndividualResource cd5()
-      throws InterruptedException,
-      MalformedURLException,
-      TimeoutException,
-      ExecutionException {
+  public IndividualResource cd5() {
 
     return create(basedUponCircDesk5());
   }
 
-  public IndividualResource cd6()
-      throws InterruptedException,
-      MalformedURLException,
-      TimeoutException,
-      ExecutionException {
+  public IndividualResource cd6() {
 
     return create(basedUponCircDesk6());
   }
 
-  public IndividualResource create(ServicePointBuilder builder)
-      throws InterruptedException,
-      MalformedURLException,
-      TimeoutException,
-      ExecutionException {
+  public IndividualResource create(ServicePointBuilder builder) {
 
     return servicePointRecordCreator.createIfAbsent(builder);
   }

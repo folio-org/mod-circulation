@@ -37,22 +37,18 @@ public class RequestsFixture {
     restAssuredClient = new RestAssuredClient(getOkapiHeadersFromContext());
   }
 
-  public IndividualResource place(RequestBuilder requestToBuild)
-      throws MalformedURLException {
+  public IndividualResource place(RequestBuilder requestToBuild) {
 
     return requestsClient.create(requestToBuild);
   }
 
-  public Response attemptPlace(RequestBuilder requestToBuild)
-      throws MalformedURLException {
+  public Response attemptPlace(RequestBuilder requestToBuild) {
 
     return requestsClient.attemptCreate(requestToBuild);
   }
 
   public IndividualResource placeHoldShelfRequest(IndividualResource item,
-      IndividualResource by, DateTime on)
-      throws InterruptedException, MalformedURLException, TimeoutException,
-      ExecutionException {
+      IndividualResource by, DateTime on) {
 
     return place(new RequestBuilder()
       .hold()
@@ -64,7 +60,7 @@ public class RequestsFixture {
   }
 
   public IndividualResource placeDeliveryRequest(IndividualResource item,
-      IndividualResource by, DateTime on) throws MalformedURLException {
+      IndividualResource by, DateTime on) {
 
     return place(new RequestBuilder()
       .hold()
@@ -75,8 +71,7 @@ public class RequestsFixture {
   }
 
   public IndividualResource placeHoldShelfRequest(IndividualResource item,
-      IndividualResource by, DateTime on, UUID pickupServicePointId)
-      throws MalformedURLException {
+      IndividualResource by, DateTime on, UUID pickupServicePointId) {
 
     return place(new RequestBuilder()
         .hold()
@@ -88,8 +83,7 @@ public class RequestsFixture {
   }
 
   public IndividualResource placeHoldShelfRequest(IndividualResource item,
-      IndividualResource by, DateTime on, UUID pickupServicePointId, String type)
-      throws MalformedURLException {
+      IndividualResource by, DateTime on, UUID pickupServicePointId, String type) {
 
     return place(new RequestBuilder()
         .hold()
@@ -102,8 +96,7 @@ public class RequestsFixture {
   }
 
   public IndividualResource placeHoldShelfRequest(IndividualResource item,
-      IndividualResource by, DateTime on, String type)
-      throws MalformedURLException {
+      IndividualResource by, DateTime on, String type) {
 
     return place(new RequestBuilder()
       .withRequestType(type)
@@ -114,8 +107,7 @@ public class RequestsFixture {
   }
 
   public Response attemptPlaceHoldShelfRequest(IndividualResource item,
-      IndividualResource by, DateTime on, UUID pickupServicePointId, String type)
-      throws MalformedURLException {
+      IndividualResource by, DateTime on, UUID pickupServicePointId, String type) {
 
     return attemptPlace(new RequestBuilder()
         .hold()
@@ -127,9 +119,7 @@ public class RequestsFixture {
         .withPickupServicePointId(pickupServicePointId));
   }
 
-  public void cancelRequest(IndividualResource request)
-      throws MalformedURLException, InterruptedException, ExecutionException,
-      TimeoutException {
+  public void cancelRequest(IndividualResource request) {
 
     final IndividualResource courseReservesCancellationReason
       = cancellationReasonsFixture.courseReserves();

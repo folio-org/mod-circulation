@@ -207,30 +207,27 @@ public class ResourceClient {
     restAssuredClient = new RestAssuredClient(getOkapiHeadersFromContext());
   }
 
-  public Response attemptCreate(Builder builder) throws MalformedURLException {
+  public Response attemptCreate(Builder builder) {
     return attemptCreate(builder.create());
   }
 
-  public Response attemptCreate(JsonObject representation)
-      throws MalformedURLException {
+  public Response attemptCreate(JsonObject representation) {
 
     return restAssuredClient.post(representation, rootUrl(),
         "attempt-create-record");
   }
 
-  public IndividualResource create(Builder builder) throws MalformedURLException {
+  public IndividualResource create(Builder builder) {
     return create(builder.create());
   }
 
-  public IndividualResource create(JsonObject representation)
-      throws MalformedURLException {
+  public IndividualResource create(JsonObject representation) {
 
     return  new IndividualResource(restAssuredClient.post(representation,
       rootUrl(), 201, "create-record"));
   }
 
-  public Response attemptCreateAtSpecificLocation(Builder builder)
-      throws MalformedURLException {
+  public Response attemptCreateAtSpecificLocation(Builder builder) {
 
     final JsonObject representation = builder.create();
     final URL location = recordUrl(representation.getString("id"));
@@ -239,8 +236,7 @@ public class ResourceClient {
       "attempt-create-record-at-specific-location");
   }
 
-  public IndividualResource createAtSpecificLocation(Builder builder)
-      throws MalformedURLException {
+  public IndividualResource createAtSpecificLocation(Builder builder) {
 
     final JsonObject representation = builder.create();
     final URL location = recordUrl(representation.getString("id"));
@@ -251,41 +247,37 @@ public class ResourceClient {
     return get(location);
   }
 
-  public Response attemptReplace(UUID id, Builder builder)
-      throws MalformedURLException {
+  public Response attemptReplace(UUID id, Builder builder) {
 
     return attemptReplace(id, builder.create());
   }
 
-  public Response attemptReplace(UUID id, JsonObject representation)
-      throws MalformedURLException {
+  public Response attemptReplace(UUID id, JsonObject representation) {
 
     return restAssuredClient.put(representation, recordUrl(id),
       "attempt-replace-record");
   }
 
-  public void replace(UUID id, Builder builder) throws MalformedURLException {
+  public void replace(UUID id, Builder builder) {
     replace(id, builder.create());
   }
 
-  public void replace(UUID id, JsonObject representation)
-      throws MalformedURLException {
+  public void replace(UUID id, JsonObject representation) {
 
     restAssuredClient.put(representation, recordUrl(id), HTTP_NO_CONTENT,
       "create-record-at-specific-location");
   }
 
-  public Response getById(UUID id) throws MalformedURLException {
+  public Response getById(UUID id) {
     return restAssuredClient.get(recordUrl(id), "get-record");
   }
 
-  public IndividualResource get(IndividualResource record)
-      throws MalformedURLException {
+  public IndividualResource get(IndividualResource record) {
 
     return get(record.getId());
   }
 
-  public IndividualResource get(UUID id) throws MalformedURLException {
+  public IndividualResource get(UUID id) {
     return get(recordUrl(id));
   }
 
@@ -293,47 +285,46 @@ public class ResourceClient {
     return new IndividualResource(restAssuredClient.get(url, 200, "get-record"));
   }
 
-  public Response attemptGet(IndividualResource resource)
-      throws MalformedURLException {
+  public Response attemptGet(IndividualResource resource) {
 
     return getById(resource.getId());
   }
 
-  public void delete(UUID id) throws MalformedURLException {
+  public void delete(UUID id) {
     restAssuredClient.delete(recordUrl(id), HTTP_NO_CONTENT, "delete-record");
   }
 
-  public void delete(IndividualResource resource) throws MalformedURLException {
+  public void delete(IndividualResource resource) {
     delete(resource.getId());
   }
 
-  public void deleteAll() throws MalformedURLException {
+  public void deleteAll() {
     restAssuredClient.delete(rootUrl(), HTTP_NO_CONTENT, "delete-all-records");
   }
 
-  public void deleteAllIndividually() throws MalformedURLException {
+  public void deleteAllIndividually() {
     for (JsonObject record : getAll()) {
       delete(UUID.fromString(record.getString("id")));
     }
   }
 
   //TODO: Replace return valu[e with MultipleJsonRecords
-  public List<JsonObject> getAll() throws MalformedURLException {
+  public List<JsonObject> getAll() {
     return mapToList(restAssuredClient
       .get(rootUrl(), noQuery(), limit(1000), noOffset(), 200, "get-all")
       .getJson(), collectionArrayPropertyName);
   }
 
-  private URL recordUrl(Object id) throws MalformedURLException {
+  private URL recordUrl(Object id) {
     return urlMaker.combine(String.format("/%s", id));
   }
 
-  private URL rootUrl() throws MalformedURLException {
+  private URL rootUrl() {
     return urlMaker.combine("");
   }
 
   @FunctionalInterface
   public interface UrlMaker {
-    URL combine(String subPath) throws MalformedURLException;
+    URL combine(String subPath);
   }
 }

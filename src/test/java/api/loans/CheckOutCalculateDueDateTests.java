@@ -154,7 +154,7 @@ public class CheckOutCalculateDueDateTests extends APITests {
    */
   @Test
   public void testKeepCurrentDueDateLongTermLoansFixed()
-    throws InterruptedException, MalformedURLException, TimeoutException, ExecutionException {
+    throws InterruptedException, TimeoutException, ExecutionException {
 
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource steve = usersFixture.steve();
@@ -193,7 +193,7 @@ public class CheckOutCalculateDueDateTests extends APITests {
    */
   @Test
   public void testMoveToEndOfPreviousAllOpenDayFixed()
-    throws InterruptedException, MalformedURLException, TimeoutException, ExecutionException {
+    throws InterruptedException, TimeoutException, ExecutionException {
 
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource steve = usersFixture.steve();
@@ -234,7 +234,7 @@ public class CheckOutCalculateDueDateTests extends APITests {
    */
   @Test
   public void testMoveToEndOfPreviousOpenDayFixed()
-    throws InterruptedException, MalformedURLException, TimeoutException, ExecutionException {
+    throws InterruptedException, TimeoutException, ExecutionException {
 
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource steve = usersFixture.steve();
@@ -275,7 +275,7 @@ public class CheckOutCalculateDueDateTests extends APITests {
    */
   @Test
   public void testMoveToEndOfNextAllOpenDayFixed()
-    throws InterruptedException, MalformedURLException, TimeoutException, ExecutionException {
+    throws InterruptedException, TimeoutException, ExecutionException {
 
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource steve = usersFixture.steve();
@@ -316,7 +316,7 @@ public class CheckOutCalculateDueDateTests extends APITests {
    */
   @Test
   public void testMoveToEndOfNextOpenDayFixed()
-    throws InterruptedException, MalformedURLException, TimeoutException, ExecutionException {
+    throws InterruptedException, TimeoutException, ExecutionException {
 
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource steve = usersFixture.steve();
@@ -363,7 +363,7 @@ public class CheckOutCalculateDueDateTests extends APITests {
    */
   @Test
   public void testMoveToEndOfPreviousAllOpenDay()
-    throws InterruptedException, MalformedURLException, TimeoutException, ExecutionException {
+    throws InterruptedException, TimeoutException, ExecutionException {
 
     String servicePointId = CASE_FRI_SAT_MON_DAY_ALL_SERVICE_POINT_ID;
     int duration = 3;
@@ -394,7 +394,7 @@ public class CheckOutCalculateDueDateTests extends APITests {
    */
   @Test
   public void testMoveToEndOfPreviousOpenDayTime()
-    throws InterruptedException, MalformedURLException, TimeoutException, ExecutionException {
+    throws InterruptedException, TimeoutException, ExecutionException {
 
     String servicePointId = CASE_FRI_SAT_MON_SERVICE_POINT_ID;
     int duration = 2;
@@ -424,7 +424,7 @@ public class CheckOutCalculateDueDateTests extends APITests {
    */
   @Test
   public void testMoveToEndOfNextAllOpenDay()
-    throws InterruptedException, MalformedURLException, TimeoutException, ExecutionException {
+    throws InterruptedException, TimeoutException, ExecutionException {
 
     String servicePointId = CASE_FRI_SAT_MON_DAY_ALL_SERVICE_POINT_ID;
     int duration = 5;
@@ -455,7 +455,7 @@ public class CheckOutCalculateDueDateTests extends APITests {
    */
   @Test
   public void testMoveToEndOfNextOpenDay()
-    throws InterruptedException, MalformedURLException, TimeoutException, ExecutionException {
+    throws InterruptedException, TimeoutException, ExecutionException {
 
     String servicePointId = CASE_FRI_SAT_MON_SERVICE_POINT_ID;
     int duration = 5;
@@ -488,7 +488,7 @@ public class CheckOutCalculateDueDateTests extends APITests {
    */
   @Test
   public void testMoveToBeginningOfNextOpenServicePointHours()
-    throws InterruptedException, MalformedURLException, TimeoutException, ExecutionException {
+    throws InterruptedException, TimeoutException, ExecutionException {
 
     String servicePointId = CASE_FRI_SAT_MON_SERVICE_POINT_ID;
     int duration = 5;
@@ -516,7 +516,7 @@ public class CheckOutCalculateDueDateTests extends APITests {
    */
   @Test
   public void testMoveToBeginningOfNextOpenServicePointHoursAllDay()
-    throws InterruptedException, MalformedURLException, TimeoutException, ExecutionException {
+    throws InterruptedException, TimeoutException, ExecutionException {
 
     String servicePointId = CASE_FRI_SAT_MON_DAY_ALL_SERVICE_POINT_ID;
     String interval = INTERVAL_HOURS;
@@ -544,7 +544,7 @@ public class CheckOutCalculateDueDateTests extends APITests {
    */
   @Test
   public void testMoveToBeginningOfNextOpenServicePointHoursAllDayCase2()
-    throws InterruptedException, MalformedURLException, TimeoutException, ExecutionException {
+    throws InterruptedException, TimeoutException, ExecutionException {
 
     String servicePointId = CASE_WED_THU_FRI_DAY_ALL_SERVICE_POINT_ID;
     String interval = INTERVAL_HOURS;
@@ -575,7 +575,7 @@ public class CheckOutCalculateDueDateTests extends APITests {
    */
   @Test
   public void testMoveToBeginningOfNextOpenServicePointMinutesCase1()
-    throws InterruptedException, MalformedURLException, TimeoutException, ExecutionException {
+    throws InterruptedException, TimeoutException, ExecutionException {
 
     String servicePointId = CASE_FRI_SAT_MON_SERVICE_POINT_ID;
     int duration = 30;
@@ -604,7 +604,7 @@ public class CheckOutCalculateDueDateTests extends APITests {
    */
   @Test
   public void testMoveToBeginningOfNextOpenServicePointMinutesAllDay()
-    throws InterruptedException, MalformedURLException, TimeoutException, ExecutionException {
+    throws InterruptedException, TimeoutException, ExecutionException {
 
     String servicePointId = CASE_WED_THU_FRI_DAY_ALL_SERVICE_POINT_ID;
     int duration = 30;
@@ -633,7 +633,7 @@ public class CheckOutCalculateDueDateTests extends APITests {
    */
   @Test
   public void testMoveToBeginningOfNextOpenServicePointMinutesAllDayCase1()
-    throws InterruptedException, MalformedURLException, TimeoutException, ExecutionException {
+    throws InterruptedException, TimeoutException, ExecutionException {
 
     String servicePointId = CASE_FRI_SAT_MON_DAY_ALL_SERVICE_POINT_ID;
     int duration = 30;
@@ -660,7 +660,7 @@ public class CheckOutCalculateDueDateTests extends APITests {
    */
   @Test
   public void testKeepCurrentDueDateShortTermLoans()
-    throws InterruptedException, MalformedURLException, TimeoutException, ExecutionException {
+    throws InterruptedException, TimeoutException, ExecutionException {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource steve = usersFixture.steve();
@@ -696,7 +696,7 @@ public class CheckOutCalculateDueDateTests extends APITests {
    */
   @Test
   public void testItemIsNotLoanable()
-    throws InterruptedException, MalformedURLException, TimeoutException, ExecutionException {
+    throws InterruptedException, TimeoutException, ExecutionException {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource steve = usersFixture.steve();
@@ -729,7 +729,7 @@ public class CheckOutCalculateDueDateTests extends APITests {
    */
   @Test
   public void testScenarioWhenCalendarApiIsUnavailable()
-    throws InterruptedException, MalformedURLException, TimeoutException, ExecutionException {
+    throws InterruptedException, TimeoutException, ExecutionException {
 
     final DateTime loanDate = TEST_DATE;
     int duration = 1;
@@ -755,7 +755,7 @@ public class CheckOutCalculateDueDateTests extends APITests {
    */
   @Test
   public void testScenarioWhenCalendarApiIsEmpty()
-    throws InterruptedException, MalformedURLException, TimeoutException, ExecutionException {
+    throws InterruptedException, TimeoutException, ExecutionException {
 
     final DateTime loanDate = TEST_DATE;
     int duration = 1;
@@ -784,7 +784,7 @@ public class CheckOutCalculateDueDateTests extends APITests {
   private void checkFixedDayOrTime(DateTime loanDate, String servicePointId,
                                    DueDateManagement dueDateManagement, int duration, String interval,
                                    DateTime expectedDueDate, boolean isIncludeTime)
-    throws InterruptedException, MalformedURLException, TimeoutException, ExecutionException {
+    throws InterruptedException, TimeoutException, ExecutionException {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource steve = usersFixture.steve();
@@ -1035,7 +1035,6 @@ public class CheckOutCalculateDueDateTests extends APITests {
 
   private IndividualResource createLoanPolicy(JsonObject loanPolicyEntry)
     throws InterruptedException,
-    MalformedURLException,
     TimeoutException,
     ExecutionException {
 

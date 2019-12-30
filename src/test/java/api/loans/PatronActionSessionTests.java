@@ -50,7 +50,6 @@ public class PatronActionSessionTests extends APITests {
   @Before
   public void before()
     throws InterruptedException,
-    MalformedURLException,
     TimeoutException,
     ExecutionException {
 
@@ -110,11 +109,7 @@ public class PatronActionSessionTests extends APITests {
   }
 
   @Test
-  public void checkOutNoticeWithMultipleItemsIsSentWhenCorrespondingSessionIsEnded()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void checkOutNoticeWithMultipleItemsIsSentWhenCorrespondingSessionIsEnded() {
 
     IndividualResource james = usersFixture.james();
     InventoryItemResource nod = itemsFixture.basedUponNod();
@@ -144,10 +139,7 @@ public class PatronActionSessionTests extends APITests {
 
   @Test
   public void checkOutSessionIsNotEndedSentWhenSessionEndsForDifferentUser()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+    throws InterruptedException {
 
     IndividualResource patronForCheckOut = usersFixture.james();
     IndividualResource otherPatron = usersFixture.jessica();
@@ -163,10 +155,7 @@ public class PatronActionSessionTests extends APITests {
 
   @Test
   public void checkOutSessionIsNotEndedWhenCheckInSessionEnds()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+    throws InterruptedException {
 
     IndividualResource james = usersFixture.james();
 
@@ -182,11 +171,7 @@ public class PatronActionSessionTests extends APITests {
   }
 
   @Test
-  public void checkInSessionShouldBeCreatedWhenLoanedItemIsCheckedInByBarcode()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void checkInSessionShouldBeCreatedWhenLoanedItemIsCheckedInByBarcode() {
 
     IndividualResource james = usersFixture.james();
     UUID checkInServicePointId = servicePointsFixture.cd1().getId();
@@ -209,11 +194,7 @@ public class PatronActionSessionTests extends APITests {
   }
 
   @Test
-  public void checkInSessionShouldNotBeCreatedWhenItemWithoutOpenLoanIsCheckedInByBarcode()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void checkInSessionShouldNotBeCreatedWhenItemWithoutOpenLoanIsCheckedInByBarcode() {
 
     UUID checkInServicePointId = servicePointsFixture.cd1().getId();
     InventoryItemResource nod = itemsFixture.basedUponNod();
@@ -227,11 +208,7 @@ public class PatronActionSessionTests extends APITests {
   }
 
   @Test
-  public void patronNoticesShouldBeSentWhenCheckInSessionIsEnded()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void patronNoticesShouldBeSentWhenCheckInSessionIsEnded() {
 
     IndividualResource steve = usersFixture.steve();
     UUID checkInServicePointId = servicePointsFixture.cd1().getId();
@@ -257,8 +234,7 @@ public class PatronActionSessionTests extends APITests {
     assertThat(patronNoticesClient.getAll(), hasSize(1));
   }
 
-  private List<JsonObject> getCheckInSessions() throws MalformedURLException,
-    InterruptedException, ExecutionException, TimeoutException {
+  private List<JsonObject> getCheckInSessions() {
 
     Predicate<JsonObject> isCheckInSession = json -> json.getString("actionType").equals("Check-in");
 

@@ -34,144 +34,88 @@ public class UsersFixture {
     this.patronGroupsFixture = patronGroupsFixture;
   }
 
-  public void cleanUp()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void cleanUp() {
 
     userRecordCreator.cleanUp();
   }
 
-  public IndividualResource jessica()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public IndividualResource jessica() {
 
     return userRecordCreator.createIfAbsent(basedUponJessicaPontefract()
         .inGroupFor(patronGroupsFixture.regular()));
   }
 
-  public IndividualResource james()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public IndividualResource james() {
 
     return userRecordCreator.createIfAbsent(basedUponJamesRodwell()
       .inGroupFor(patronGroupsFixture.regular()));
   }
 
-  public IndividualResource rebecca()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public IndividualResource rebecca() {
 
     return rebecca(identity());
   }
 
   public IndividualResource rebecca(
-    Function<UserBuilder, UserBuilder> additionalProperties)
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+    Function<UserBuilder, UserBuilder> additionalProperties) {
 
     return userRecordCreator.createIfAbsent(
       additionalProperties.apply(basedUponRebeccaStuart()
         .inGroupFor(patronGroupsFixture.regular())));
   }
 
-  public IndividualResource steve()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public IndividualResource steve() {
 
     return steve(identity());
   }
 
   public IndividualResource steve(
-    Function<UserBuilder, UserBuilder> additionalUserProperties)
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+    Function<UserBuilder, UserBuilder> additionalUserProperties) {
 
     return userRecordCreator.createIfAbsent(
       additionalUserProperties.apply(basedUponStevenJones()
         .inGroupFor(patronGroupsFixture.regular())));
   }
 
-  public IndividualResource charlotte()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public IndividualResource charlotte() {
 
     return charlotte(identity());
   }
 
   public IndividualResource charlotte(
-    Function<UserBuilder, UserBuilder> additionalConfiguration)
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+    Function<UserBuilder, UserBuilder> additionalConfiguration) {
 
     return userRecordCreator.createIfAbsent(
       additionalConfiguration.apply(basedUponCharlotteBroadwell()
         .inGroupFor(patronGroupsFixture.regular())));
   }
 
-  public IndividualResource undergradHenry()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public IndividualResource undergradHenry() {
 
     return undergradHenry(identity());
   }
 
   public IndividualResource undergradHenry(
-    Function<UserBuilder, UserBuilder> additionalUserProperties)
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+    Function<UserBuilder, UserBuilder> additionalUserProperties) {
 
     return userRecordCreator.createIfAbsent(
       additionalUserProperties.apply(basedUponHenryHanks()
         .inGroupFor(patronGroupsFixture.undergrad())));
   }
 
-  public IndividualResource noUserGroupBob()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public IndividualResource noUserGroupBob() {
 
     return noUserGroupBob(identity());
   }
 
   public IndividualResource noUserGroupBob(
-    Function<UserBuilder, UserBuilder> additionalUserProperties)
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+    Function<UserBuilder, UserBuilder> additionalUserProperties) {
 
     return userRecordCreator.createIfAbsent(
       additionalUserProperties.apply(basedUponBobbyBibbin()));
   }
 
-  public void remove(IndividualResource user)
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void remove(IndividualResource user) {
 
     userRecordCreator.delete(user);
   }

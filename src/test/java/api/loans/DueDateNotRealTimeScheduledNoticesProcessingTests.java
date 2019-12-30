@@ -39,7 +39,7 @@ import io.vertx.core.json.JsonObject;
 public class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests {
   @Test
   public void uponAtDueDateNoticesShouldBeSentInGroups()
-    throws MalformedURLException,
+    throws
     InterruptedException,
     TimeoutException,
     ExecutionException {
@@ -109,7 +109,7 @@ public class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests 
 
   @Test
   public void beforeRecurringNoticesAreRescheduled()
-    throws MalformedURLException,
+    throws
     InterruptedException,
     TimeoutException,
     ExecutionException {
@@ -161,7 +161,7 @@ public class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests 
 
   @Test
   public void beforeNoticesAreNotSentIfLoanIsClosed()
-    throws MalformedURLException,
+    throws
     InterruptedException,
     TimeoutException,
     ExecutionException {
@@ -204,7 +204,7 @@ public class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests 
 
   @Test
   public void processingTakesNoticesLimitedByConfiguration()
-    throws MalformedURLException,
+    throws
     InterruptedException,
     TimeoutException,
     ExecutionException {
@@ -264,7 +264,7 @@ public class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests 
 
   @Test
   public void noticeIsDeletedIfReferencedLoanDoesNotExist()
-    throws MalformedURLException,
+    throws
     InterruptedException,
     TimeoutException,
     ExecutionException {
@@ -306,7 +306,7 @@ public class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests 
 
   @Test
   public void noticeIsDeletedIfReferencedItemDoesNotExist()
-    throws MalformedURLException,
+    throws
     InterruptedException,
     TimeoutException,
     ExecutionException {
@@ -348,7 +348,7 @@ public class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests 
 
   @Test
   public void noticeIsDeletedIfReferencedUserDoesNotExist()
-    throws MalformedURLException,
+    throws
     InterruptedException,
     TimeoutException,
     ExecutionException {
@@ -390,7 +390,7 @@ public class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests 
 
   @Test
   public void missingReferencedEntitiesDoNotBlockProcessing()
-    throws MalformedURLException,
+    throws
     InterruptedException,
     TimeoutException,
     ExecutionException {

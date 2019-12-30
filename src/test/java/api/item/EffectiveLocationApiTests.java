@@ -16,7 +16,7 @@ import api.support.http.InventoryItemResource;
 public class EffectiveLocationApiTests extends APITests {
 
   @Test
-  public void effectiveLocationReturnedWhenPresent() throws Exception {
+  public void effectiveLocationReturnedWhenPresent() {
     final UUID popularReadingLocationId = UUID.randomUUID();
 
     InventoryItemResource createdItem = itemsFixture

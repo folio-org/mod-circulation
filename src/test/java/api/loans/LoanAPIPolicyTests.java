@@ -57,7 +57,6 @@ public class LoanAPIPolicyTests extends APITests {
   @Test
   public void canRetrieveLoanPolicyId()
     throws InterruptedException,
-    MalformedURLException,
     TimeoutException,
     ExecutionException {
 
@@ -140,11 +139,7 @@ public class LoanAPIPolicyTests extends APITests {
   }
 
   private void testLoanPolicy(UUID id, UUID userId, UUID itemId, DateTime loanDate,
-    DateTime dueDate, String status, String policyName)
-    throws MalformedURLException,
-    InterruptedException,
-    ExecutionException,
-    TimeoutException {
+    DateTime dueDate, String status, String policyName) {
 
     IndividualResource loanResponse = loansFixture.createLoan(new LoanBuilder()
       .withId(id)
@@ -163,11 +158,7 @@ public class LoanAPIPolicyTests extends APITests {
     assertThat(policyJson.getString("name"), is(policyName));
   }
 
-  private void createLoanPolicies()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  private void createLoanPolicies() {
 
     JsonObject p1Json = new JsonObject()
        .put("name", "Policy 1")

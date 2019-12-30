@@ -17,56 +17,32 @@ public class PatronGroupsFixture {
       group -> JsonPropertyFetcher.getProperty(group, "group"));
   }
 
-  public void cleanUp()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void cleanUp() {
 
     patronGroupRecordCreator.cleanUp();
   }
 
-  public IndividualResource regular()
-      throws InterruptedException,
-      MalformedURLException,
-      TimeoutException,
-      ExecutionException {
+  public IndividualResource regular() {
 
     return patronGroupRecordCreator.createIfAbsent(PatronGroupExamples.regular());
   }
 
-  public IndividualResource alternative()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public IndividualResource alternative() {
 
     return patronGroupRecordCreator.createIfAbsent(PatronGroupExamples.alternative());
   }
 
-  public IndividualResource staff()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public IndividualResource staff() {
 
     return patronGroupRecordCreator.createIfAbsent(PatronGroupExamples.staff());
   }
 
-  public IndividualResource faculty()
-      throws InterruptedException,
-      MalformedURLException,
-      TimeoutException,
-      ExecutionException {
+  public IndividualResource faculty() {
 
     return patronGroupRecordCreator.createIfAbsent(PatronGroupExamples.faculty());
   }
 
-  public IndividualResource undergrad()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public IndividualResource undergrad() {
 
     return patronGroupRecordCreator.createIfAbsent(PatronGroupExamples.undergrad());
   }

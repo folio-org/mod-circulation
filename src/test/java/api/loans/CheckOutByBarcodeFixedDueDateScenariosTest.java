@@ -36,7 +36,6 @@ public class CheckOutByBarcodeFixedDueDateScenariosTest extends APITests {
   public void shouldUseMoveToThePreviousOpenDayStrategyForLongTermLoanPolicyWhenDueDateExtendsBeyondFixedDueDate()
     throws
     InterruptedException,
-    MalformedURLException,
     TimeoutException,
     ExecutionException {
 
@@ -81,7 +80,6 @@ public class CheckOutByBarcodeFixedDueDateScenariosTest extends APITests {
   public void shouldUseMoveToThePreviousOpenDayStrategyForFixedLoanPolicyWhenDueDateExtendsBeyondFixedDueDate()
     throws
     InterruptedException,
-    MalformedURLException,
     TimeoutException,
     ExecutionException {
 
@@ -127,7 +125,6 @@ public class CheckOutByBarcodeFixedDueDateScenariosTest extends APITests {
   public void shouldUseSelectedClosedLibraryStrategyWhenDueDateDoesNotExtendBeyondFixedDueDate()
     throws
     InterruptedException,
-    MalformedURLException,
     TimeoutException,
     ExecutionException {
 

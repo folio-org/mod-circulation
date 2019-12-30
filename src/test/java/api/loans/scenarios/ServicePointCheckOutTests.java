@@ -26,9 +26,7 @@ import io.vertx.core.json.JsonObject;
 
 public class ServicePointCheckOutTests extends APITests {
   @Test
-  public void isInTransitWhenCheckedOutAtNonPickupServicePoint()
-      throws MalformedURLException, InterruptedException, TimeoutException,
-      ExecutionException {
+  public void isInTransitWhenCheckedOutAtNonPickupServicePoint() {
     final IndividualResource checkInServicePoint = servicePointsFixture.cd1();
     final IndividualResource checkOutServicePoint = servicePointsFixture.cd2();
     final IndividualResource primaryServicePoint = servicePointsFixture.cd4();

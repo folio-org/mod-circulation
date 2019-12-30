@@ -29,11 +29,7 @@ import io.vertx.core.json.JsonObject;
 
 public class InTransitToHomeLocationTests extends APITests {
   @Test
-  public void isPlacedInTransitWhenCheckedInToReturnItemAtServicePointNotServingHomeLocation()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void isPlacedInTransitWhenCheckedInToReturnItemAtServicePointNotServingHomeLocation() {
 
     final IndividualResource primaryServicePoint = servicePointsFixture.cd1();
 
@@ -127,11 +123,7 @@ public class InTransitToHomeLocationTests extends APITests {
   }
 
   @Test
-  public void isAvailableWhenCheckedInToReceiveAtPrimaryServicePointForHomeLocation()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void isAvailableWhenCheckedInToReceiveAtPrimaryServicePointForHomeLocation() {
 
     final IndividualResource primaryServicePoint = servicePointsFixture.cd1();
 
@@ -206,11 +198,7 @@ public class InTransitToHomeLocationTests extends APITests {
   }
 
   @Test
-  public void isAvailableWhenCheckedInToReceiveAtNonPrimaryServicePointForHomeLocation()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void isAvailableWhenCheckedInToReceiveAtNonPrimaryServicePointForHomeLocation() {
 
     final IndividualResource primaryServicePoint = servicePointsFixture.cd1();
     final IndividualResource otherServingServicePoint = servicePointsFixture.cd2();
@@ -287,11 +275,7 @@ public class InTransitToHomeLocationTests extends APITests {
   }
 
   @Test
-  public void isAvailableWhenCheckedInToReturnItemAtPrimaryServicePointForHomeLocation()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void isAvailableWhenCheckedInToReturnItemAtPrimaryServicePointForHomeLocation() {
 
     final IndividualResource primaryServicePoint = servicePointsFixture.cd1();
 
@@ -363,11 +347,7 @@ public class InTransitToHomeLocationTests extends APITests {
   }
 
   @Test
-  public void isAvailableWhenCheckedInToReturnItemAtOtherServingServicePointForHomeLocation()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void isAvailableWhenCheckedInToReturnItemAtOtherServingServicePointForHomeLocation() {
 
     final IndividualResource primaryServicePoint = servicePointsFixture.cd1();
     final IndividualResource otherServingServicePoint = servicePointsFixture.cd2();
@@ -441,11 +421,7 @@ public class InTransitToHomeLocationTests extends APITests {
   }
 
   @Test
-  public void remainsInTransitWhenCheckedInToReceiveAtServicePointNotForHomeLocation()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void remainsInTransitWhenCheckedInToReceiveAtServicePointNotForHomeLocation() {
 
     final IndividualResource primaryServicePoint = servicePointsFixture.cd1();
 
@@ -535,11 +511,7 @@ public class InTransitToHomeLocationTests extends APITests {
   }
 
   @Test
-  public void isNotPlacedInTransitWhenItemHasOpenFulfillableRequest()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void isNotPlacedInTransitWhenItemHasOpenFulfillableRequest() {
 
     final IndividualResource primaryServicePoint = servicePointsFixture.cd1();
 

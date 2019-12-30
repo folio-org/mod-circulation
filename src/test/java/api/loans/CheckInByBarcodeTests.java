@@ -53,11 +53,7 @@ import io.vertx.core.json.JsonObject;
 
 public class CheckInByBarcodeTests extends APITests {
   @Test
-  public void canCloseAnOpenLoanByCheckingInTheItem()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void canCloseAnOpenLoanByCheckingInTheItem() {
 
     final IndividualResource james = usersFixture.james();
 
@@ -159,11 +155,7 @@ public class CheckInByBarcodeTests extends APITests {
   }
 
   @Test
-  public void canCreateStaffSlipContextOnCheckInByBarcode()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void canCreateStaffSlipContextOnCheckInByBarcode() {
     InventoryItemResource item = itemsFixture.basedUponSmallAngryPlanet();
 
     DateTime requestDate = new DateTime(2019, 7, 22, 10, 22, 54, DateTimeZone.UTC);
@@ -229,11 +221,7 @@ public class CheckInByBarcodeTests extends APITests {
   }
 
   @Test
-  public void cannotCheckInWithoutAServicePoint()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void cannotCheckInWithoutAServicePoint() {
 
     DateTime loanDate = new DateTime(2018, 3, 1, 13, 25, 46, DateTimeZone.UTC);
 
@@ -255,11 +243,7 @@ public class CheckInByBarcodeTests extends APITests {
   }
 
   @Test
-  public void cannotCheckInWithoutAnItem()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void cannotCheckInWithoutAnItem() {
 
     DateTime loanDate = new DateTime(2018, 3, 1, 13, 25, 46, DateTimeZone.UTC);
 
@@ -281,11 +265,7 @@ public class CheckInByBarcodeTests extends APITests {
   }
 
   @Test
-  public void cannotCheckInWithoutACheckInDate()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void cannotCheckInWithoutACheckInDate() {
 
     DateTime loanDate = new DateTime(2018, 3, 1, 13, 25, 46, DateTimeZone.UTC);
 
@@ -307,11 +287,7 @@ public class CheckInByBarcodeTests extends APITests {
   }
 
   @Test
-  public void canCheckInAnItemWithoutAnOpenLoan()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void canCheckInAnItemWithoutAnOpenLoan() {
 
     final UUID checkInServicePointId = servicePointsFixture.cd1().getId();
 
@@ -357,11 +333,7 @@ public class CheckInByBarcodeTests extends APITests {
   }
 
   @Test
-  public void canCheckInAnItemTwice()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void canCheckInAnItemTwice() {
 
     DateTime loanDate = new DateTime(2018, 3, 1, 13, 25, 46, DateTimeZone.UTC);
 
@@ -419,7 +391,6 @@ public class CheckInByBarcodeTests extends APITests {
   @Test
   public void patronNoticeOnCheckInIsNotSentWhenCheckInLoanNoticeIsDefinedAndLoanExists()
     throws InterruptedException,
-    MalformedURLException,
     TimeoutException,
     ExecutionException {
 
@@ -471,7 +442,6 @@ public class CheckInByBarcodeTests extends APITests {
   @Test
   public void shouldNotSendPatronNoticeWhenCheckInNoticeIsDefinedAndCheckInDoesNotCloseLoan()
     throws InterruptedException,
-    MalformedURLException,
     TimeoutException,
     ExecutionException {
 
@@ -589,7 +559,6 @@ public class CheckInByBarcodeTests extends APITests {
   @Test
   public void availableNoticeIsSentOnceWhenItemStatusIsChangedToAwaitingPickup()
     throws InterruptedException,
-    MalformedURLException,
     TimeoutException,
     ExecutionException  {
 
@@ -631,8 +600,7 @@ public class CheckInByBarcodeTests extends APITests {
 
   private void checkPatronNoticeEvent(
     IndividualResource request, IndividualResource requester,
-    InventoryItemResource item, UUID expectedTemplateId)
-    throws Exception {
+    InventoryItemResource item, UUID expectedTemplateId) {
 
     Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
