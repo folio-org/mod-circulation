@@ -1,6 +1,7 @@
 package api.support.fixtures;
 
 import static api.support.APITestContext.getOkapiHeadersFromContext;
+import static api.support.MultipleJsonRecords.multipleRecordsFrom;
 import static api.support.http.AdditionalHttpStatusCodes.UNPROCESSABLE_ENTITY;
 import static api.support.http.CqlQuery.noQuery;
 import static api.support.http.InterfaceUrls.checkInByBarcodeUrl;
@@ -16,11 +17,8 @@ import static api.support.http.Limit.noLimit;
 import static api.support.http.Offset.noOffset;
 import static org.folio.circulation.support.JsonArrayHelper.mapToList;
 
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.UUID;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeoutException;
 
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
@@ -381,12 +379,11 @@ public class LoansFixture {
 
   public Response getLoans(CqlQuery query, Limit limit, Offset offset) {
     return restAssuredClient.get(loansUrl(), query, limit, offset, 200,
-        "get-loans");
+      "get-loans");
   }
 
   public MultipleJsonRecords getAllLoans() {
-    return new MultipleJsonRecords(
-        mapToList(getLoans(maximumLimit()).getJson(), "loans"));
+    return multipleRecordsFrom(getLoans(maximumLimit()), "loans");
   }
 
   private URL urlForLoan(UUID id) {
