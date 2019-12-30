@@ -151,13 +151,12 @@ public class RequestsFixture {
   }
 
   public MultipleJsonRecords getAllRequests() {
-    return multipleRecordsFrom(getRequests(noQuery(), noLimit(), noOffset()),
-      "requests");
+    return getRequests(noQuery(), noLimit(), noOffset());
   }
 
-  private Response getRequests(CqlQuery query, Limit limit, Offset offset) {
-    return restAssuredClient.get(requestsUrl(), query, limit, offset, 200,
-      "get-requests");
+  public MultipleJsonRecords getRequests(CqlQuery query, Limit limit, Offset offset) {
+    return multipleRecordsFrom(restAssuredClient.get(requestsUrl(), query,
+      limit, offset, 200, "get-requests"), "requests");
   }
 
   //TODO: Replace return type with MultipleJsonRecords

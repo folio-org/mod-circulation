@@ -1,7 +1,11 @@
 package api.requests;
 
 import static api.support.builders.ItemBuilder.CHECKED_OUT;
+import static api.support.http.CqlQuery.noQuery;
 import static api.support.http.InterfaceUrls.requestsUrl;
+import static api.support.http.Limit.limit;
+import static api.support.http.Offset.noOffset;
+import static api.support.http.Offset.offset;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static api.support.matchers.UUIDMatcher.is;
 import static java.lang.String.format;
@@ -39,7 +43,10 @@ import api.support.MultipleJsonRecords;
 import api.support.builders.Address;
 import api.support.builders.ItemBuilder;
 import api.support.builders.RequestBuilder;
+import api.support.http.CqlQuery;
 import api.support.http.InventoryItemResource;
+import api.support.http.Limit;
+import api.support.http.Offset;
 import api.support.http.ResourceClient;
 import io.vertx.core.json.JsonObject;
 
@@ -404,7 +411,8 @@ public class RequestsAPIRetrievalTests extends APITests {
 
   @Test
   public void closedLoanForItemIsNotIncludedWhenFindingMultipleRequests() {
-    final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final IndividualResource smallAngryPlanet
+      = itemsFixture.basedUponSmallAngryPlanet();
 
     final IndividualResource charlotte = usersFixture.charlotte();
 
@@ -433,83 +441,59 @@ public class RequestsAPIRetrievalTests extends APITests {
   }
 
   @Test
-  public void canPageAllRequests()
-    throws
-    InterruptedException,
-    ExecutionException,
-    TimeoutException {
-
+  public void canPageAllRequests() {
     UUID requesterId = usersFixture.charlotte().getId();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
     requestsClient.create(new RequestBuilder()
-      .withItemId(itemsFixture.basedUponSmallAngryPlanet(ItemBuilder::checkOut).getId())
+      .forItem(itemsFixture.basedUponSmallAngryPlanet(ItemBuilder::checkOut))
       .withPickupServicePointId(pickupServicePointId)
       .withRequesterId(requesterId));
 
     requestsClient.create(new RequestBuilder()
-      .withItemId(itemsFixture.basedUponNod(ItemBuilder::checkOut).getId())
+      .forItem(itemsFixture.basedUponNod(ItemBuilder::checkOut))
       .withPickupServicePointId(pickupServicePointId)
       .withRequesterId(requesterId));
 
     requestsClient.create(new RequestBuilder()
-      .withItemId(itemsFixture.basedUponInterestingTimes(ItemBuilder::checkOut).getId())
+      .forItem(itemsFixture.basedUponInterestingTimes(ItemBuilder::checkOut))
       .withPickupServicePointId(pickupServicePointId)
       .withRequesterId(requesterId));
 
     requestsClient.create(new RequestBuilder()
-      .withItemId(itemsFixture.basedUponTemeraire(ItemBuilder::checkOut).getId())
+      .forItem(itemsFixture.basedUponTemeraire(ItemBuilder::checkOut))
       .withPickupServicePointId(pickupServicePointId)
       .withRequesterId(requesterId));
 
     requestsClient.create(new RequestBuilder()
-      .withItemId(itemsFixture.basedUponNod(ItemBuilder::checkOut).getId())
+      .forItem(itemsFixture.basedUponNod(ItemBuilder::checkOut))
       .withPickupServicePointId(pickupServicePointId)
       .withRequesterId(requesterId));
 
     requestsClient.create(new RequestBuilder()
-      .withItemId(itemsFixture.basedUponUprooted(ItemBuilder::checkOut).getId())
+      .forItem(itemsFixture.basedUponUprooted(ItemBuilder::checkOut))
       .withPickupServicePointId(pickupServicePointId)
       .withRequesterId(requesterId));
 
     requestsClient.create(new RequestBuilder()
-      .withItemId(itemsFixture.basedUponTemeraire(ItemBuilder::checkOut).getId())
+      .forItem(itemsFixture.basedUponTemeraire(ItemBuilder::checkOut))
       .withPickupServicePointId(pickupServicePointId)
       .withRequesterId(requesterId));
 
-    CompletableFuture<Response> getFirstPageCompleted = new CompletableFuture<>();
+    MultipleJsonRecords firstPage = requestsFixture.getRequests(noQuery(),
+      limit(4), noOffset());
 
-    client.get(requestsUrl() + "?limit=4", any(getFirstPageCompleted));
+    MultipleJsonRecords secondPage = requestsFixture.getRequests(noQuery(),
+      limit(4), offset(4));
 
-    CompletableFuture<Response> getSecondPageCompleted = new CompletableFuture<>();
+    assertThat(firstPage.size(), is(4));
+    assertThat(firstPage.totalRecords(), is(7));
 
-    client.get(requestsUrl() + "?limit=4&offset=4", any(getSecondPageCompleted));
+    assertThat(secondPage.size(), is(3));
+    assertThat(secondPage.totalRecords(), is(7));
 
-    Response firstPageResponse = getFirstPageCompleted.get(5, TimeUnit.SECONDS);
-    Response secondPageResponse = getSecondPageCompleted.get(5, TimeUnit.SECONDS);
-
-    assertThat(format("Failed to get first page of requests: %s",
-      firstPageResponse.getBody()),
-      firstPageResponse.getStatusCode(), is(HttpURLConnection.HTTP_OK));
-
-    assertThat(format("Failed to get second page of requests: %s",
-      secondPageResponse.getBody()),
-      secondPageResponse.getStatusCode(), is(HttpURLConnection.HTTP_OK));
-
-    JsonObject firstPage = firstPageResponse.getJson();
-    JsonObject secondPage = secondPageResponse.getJson();
-
-    List<JsonObject> firstPageRequests = getRequests(firstPage);
-    List<JsonObject> secondPageRequests = getRequests(secondPage);
-
-    assertThat(firstPageRequests.size(), is(4));
-    assertThat(firstPage.getInteger("totalRecords"), is(7));
-
-    assertThat(secondPageRequests.size(), is(3));
-    assertThat(secondPage.getInteger("totalRecords"), is(7));
-
-    firstPageRequests.forEach(this::requestHasExpectedProperties);
-    secondPageRequests.forEach(this::requestHasExpectedProperties);
+    firstPage.forEach(this::requestHasExpectedProperties);
+    secondPage.forEach(this::requestHasExpectedProperties);
   }
 
   @Test
@@ -756,12 +740,9 @@ public class RequestsAPIRetrievalTests extends APITests {
     hasProperty("desc", request.getJsonObject("requester").getJsonObject("patronGroup"), "group");
   }
 
-
   private void requestHasTags(JsonObject request) {
     hasProperty("tags", request, "tags");
-
     hasProperty("tagList", request.getJsonObject("tags"), "List");
-
   }
 
   protected void hasProperty(String property, JsonObject resource, String type) {
