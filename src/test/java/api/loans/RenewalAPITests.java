@@ -1,5 +1,6 @@
 package api.loans;
 
+import static api.support.APITestContext.circulationModuleUrl;
 import static api.support.builders.FixedDueDateSchedule.forDay;
 import static api.support.builders.FixedDueDateSchedule.todayOnly;
 import static api.support.builders.FixedDueDateSchedule.wholeMonth;
@@ -471,11 +472,7 @@ abstract class RenewalAPITests extends APITests {
   }
 
   @Test
-  public void canGetRenewedLoan()
-    throws InterruptedException,
-    TimeoutException,
-    ExecutionException {
-
+  public void canGetRenewedLoan() {
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource jessica = usersFixture.jessica();
 
@@ -489,14 +486,8 @@ abstract class RenewalAPITests extends APITests {
 
     final IndividualResource response = renew(smallAngryPlanet, jessica);
 
-    final CompletableFuture<Response> getCompleted = new CompletableFuture<>();
-
-    client.get(APITestContext.circulationModuleUrl(response.getLocation()),
-      ResponseHandler.json(getCompleted));
-
-    final Response getResponse = getCompleted.get(2, TimeUnit.SECONDS);
-
-    assertThat(getResponse.getStatusCode(), is(HTTP_OK));
+    final Response getResponse = restAssuredClient.get(
+      circulationModuleUrl(response.getLocation()), HTTP_OK, "get-renewed-loan");
 
     JsonObject renewedLoan = getResponse.getJson();
 
