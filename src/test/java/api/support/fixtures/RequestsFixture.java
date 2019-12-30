@@ -1,6 +1,7 @@
 package api.support.fixtures;
 
 import static api.support.APITestContext.getOkapiHeadersFromContext;
+import static api.support.MultipleJsonRecords.multipleRecordsFrom;
 import static api.support.http.CqlQuery.noQuery;
 import static api.support.http.InterfaceUrls.requestQueueUrl;
 import static api.support.http.InterfaceUrls.requestsUrl;
@@ -8,20 +9,20 @@ import static api.support.http.Limit.noLimit;
 import static api.support.http.Offset.noOffset;
 import static java.util.function.Function.identity;
 
-import java.net.MalformedURLException;
 import java.util.UUID;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeoutException;
 
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 import org.joda.time.DateTime;
 
-import api.requests.scenarios.CancelRequestTests;
+import api.support.MultipleJsonRecords;
 import api.support.RestAssuredClient;
 import api.support.builders.MoveRequestBuilder;
 import api.support.builders.RequestBuilder;
+import api.support.http.CqlQuery;
+import api.support.http.Limit;
+import api.support.http.Offset;
 import api.support.http.ResourceClient;
 import io.vertx.core.json.JsonObject;
 
@@ -149,9 +150,14 @@ public class RequestsFixture {
       requestsUrl(pathToMoveRequest(representation)), "move-request");
   }
 
-  public Response getAllRequests() {
-    return restAssuredClient.get(requestsUrl(), noQuery(), noLimit(),
-      noOffset(), 200, "get-all-requests");
+  public MultipleJsonRecords getAllRequests() {
+    return multipleRecordsFrom(getRequests(noQuery(), noLimit(), noOffset()),
+      "requests");
+  }
+
+  private Response getRequests(CqlQuery query, Limit limit, Offset offset) {
+    return restAssuredClient.get(requestsUrl(), query, limit, offset, 200,
+      "get-requests");
   }
 
   //TODO: Replace return type with MultipleJsonRecords

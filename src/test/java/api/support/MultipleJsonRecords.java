@@ -14,16 +14,20 @@ import io.vertx.core.json.JsonObject;
 
 public class MultipleJsonRecords {
   private final List<JsonObject> records;
+  private final int totalRecords;
 
-  public MultipleJsonRecords(List<JsonObject> records) {
+  public MultipleJsonRecords(List<JsonObject> records, int totalRecords) {
     this.records = records;
+    this.totalRecords = totalRecords;
   }
 
   public static MultipleJsonRecords multipleRecordsFrom(Response response,
     String arrayPropertyName) {
 
-    return new MultipleJsonRecords(mapToList(response.getJson(),
-      arrayPropertyName));
+    final JsonObject json = response.getJson();
+
+    return new MultipleJsonRecords(mapToList(json, arrayPropertyName),
+      json.getInteger("totalRecords"));
   }
 
   public JsonObject getById(UUID id) {
@@ -40,5 +44,9 @@ public class MultipleJsonRecords {
 
   public int size() {
     return records.size();
+  }
+
+  public int totalRecords() {
+    return totalRecords;
   }
 }

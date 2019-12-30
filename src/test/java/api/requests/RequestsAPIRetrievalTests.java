@@ -17,13 +17,13 @@ import static org.hamcrest.junit.MatcherAssert.assertThat;
 import static org.junit.Assert.assertTrue;
 
 import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.stream.Stream;
 
 import org.folio.circulation.support.JsonArrayHelper;
 import org.folio.circulation.support.http.client.IndividualResource;
@@ -34,6 +34,7 @@ import org.joda.time.LocalDate;
 import org.junit.Test;
 
 import api.support.APITests;
+import api.support.MultipleJsonRecords;
 import api.support.builders.Address;
 import api.support.builders.ItemBuilder;
 import api.support.builders.RequestBuilder;
@@ -259,19 +260,13 @@ public class RequestsAPIRetrievalTests extends APITests {
 
   @Test
   public void requestNotFoundForUnknownId() {
-
     Response getResponse = ResourceClient.forRequests().getById(UUID.randomUUID());
 
     assertThat(getResponse.getStatusCode(), is(HttpURLConnection.HTTP_NOT_FOUND));
   }
 
   @Test
-  public void canGetMultipleRequests()
-    throws
-    InterruptedException,
-    ExecutionException,
-    TimeoutException {
-
+  public void canGetMultipleRequests() {
     final IndividualResource cd1 = servicePointsFixture.cd1();
     final IndividualResource cd2 = servicePointsFixture.cd2();
     UUID pickupServicePointId = cd1.getId();
@@ -283,11 +278,11 @@ public class RequestsAPIRetrievalTests extends APITests {
     final IndividualResource jessica = usersFixture.jessica();
     final IndividualResource charlotte = usersFixture.charlotte();
 
-    final IndividualResource sponsor = usersFixture.rebecca(
-      builder -> builder.withPatronGroupId(facultyGroupId));
+    final IndividualResource sponsor = usersFixture.rebecca(user -> user
+      .withPatronGroupId(facultyGroupId));
 
-    final IndividualResource proxy = usersFixture.steve(
-      builder -> builder.withPatronGroupId(staffGroupId));
+    final IndividualResource proxy = usersFixture.steve(user -> user
+      .withPatronGroupId(staffGroupId));
 
     UUID proxyId = proxy.getId();
     UUID requesterId = sponsor.getId();
@@ -314,8 +309,7 @@ public class RequestsAPIRetrievalTests extends APITests {
       .withRequesterId(requesterId)
       .withUserProxyId(proxyId)
       .withPickupServicePointId(pickupServicePointId)
-      .withTags(new RequestBuilder.Tags(asList(NEW_TAG, IMPORTANT_TAG)))
-    );
+      .withTags(new RequestBuilder.Tags(asList(NEW_TAG, IMPORTANT_TAG))));
 
     requestsClient.create(new RequestBuilder()
       .hold()
@@ -323,8 +317,7 @@ public class RequestsAPIRetrievalTests extends APITests {
       .withRequesterId(requesterId)
       .withUserProxyId(proxyId)
       .withPickupServicePointId(pickupServicePointId2)
-      .withTags(new RequestBuilder.Tags(asList(NEW_TAG, IMPORTANT_TAG)))
-    );
+      .withTags(new RequestBuilder.Tags(asList(NEW_TAG, IMPORTANT_TAG))));
 
     requestsClient.create(new RequestBuilder()
       .hold()
@@ -332,8 +325,7 @@ public class RequestsAPIRetrievalTests extends APITests {
       .withRequesterId(requesterId)
       .withUserProxyId(proxyId)
       .withPickupServicePointId(pickupServicePointId)
-      .withTags(new RequestBuilder.Tags(asList(NEW_TAG, IMPORTANT_TAG)))
-    );
+      .withTags(new RequestBuilder.Tags(asList(NEW_TAG, IMPORTANT_TAG))));
 
     requestsClient.create(new RequestBuilder()
       .hold()
@@ -341,8 +333,7 @@ public class RequestsAPIRetrievalTests extends APITests {
       .withRequesterId(requesterId)
       .withUserProxyId(proxyId)
       .withPickupServicePointId(pickupServicePointId2)
-      .withTags(new RequestBuilder.Tags(asList(NEW_TAG, IMPORTANT_TAG)))
-    );
+      .withTags(new RequestBuilder.Tags(asList(NEW_TAG, IMPORTANT_TAG))));
 
     requestsClient.create(new RequestBuilder()
       .recall()
@@ -350,20 +341,9 @@ public class RequestsAPIRetrievalTests extends APITests {
       .withRequesterId(requesterId)
       .withUserProxyId(proxyId)
       .withPickupServicePointId(pickupServicePointId)
-      .withTags(new RequestBuilder.Tags(asList(NEW_TAG, IMPORTANT_TAG)))
-    );
+      .withTags(new RequestBuilder.Tags(asList(NEW_TAG, IMPORTANT_TAG))));
 
-    CompletableFuture<Response> getCompleted = new CompletableFuture<>();
-
-    client.get(requestsUrl(), any(getCompleted));
-
-    Response getResponse = getCompleted.get(5, TimeUnit.SECONDS);
-
-    assertThat(format("Failed to get list of requests: %s",
-      getResponse.getBody()),
-      getResponse.getStatusCode(), is(HttpURLConnection.HTTP_OK));
-
-    List<JsonObject> requestList = getRequests(getResponse.getJson());
+    MultipleJsonRecords requestList = requestsFixture.getAllRequests();
 
     requestList.forEach(this::requestHasExpectedProperties);
     requestList.forEach(this::requestHasExpectedLoanProperties);
@@ -371,13 +351,15 @@ public class RequestsAPIRetrievalTests extends APITests {
     requestList.forEach(this::requestHasPatronGroupProperties);
     requestList.forEach(this::requestHasTags);
 
-    requestHasCallNumberStringProperties(findRequestByItemId(requestList, nod.getId()), "nod");
-    requestHasCallNumberStringProperties(findRequestByItemId(requestList, temeraire.getId()), "tem");
+    requestHasCallNumberStringProperties(
+      findRequestByItemId(requestList.stream(), nod.getId()), "nod");
+
+    requestHasCallNumberStringProperties(
+      findRequestByItemId(requestList.stream(), temeraire.getId()), "tem");
   }
 
   @Test
   public void fulfilledByDeliveryIncludesAddressWhenFindingMultipleRequests() {
-
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
 
     final IndividualResource workAddressType = addressTypesFixture.work();
@@ -429,7 +411,6 @@ public class RequestsAPIRetrievalTests extends APITests {
 
   @Test
   public void closedLoanForItemIsNotIncludedWhenFindingMultipleRequests() {
-
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
 
     final IndividualResource charlotte = usersFixture.charlotte();
@@ -815,10 +796,11 @@ public class RequestsAPIRetrievalTests extends APITests {
     assertThat(item.getString("volume"), is(prefix + "vol.1"));
   }
 
-  private JsonObject findRequestByItemId(List<JsonObject> allRequests, UUID itemId) {
-    return allRequests.stream()
+  private JsonObject findRequestByItemId(Stream<JsonObject> requests, UUID itemId) {
+    return requests
       .filter(req -> itemId.toString().equals(req.getString("itemId")))
       .findFirst()
-      .orElseThrow(() -> new AssertionError("Can not find Request for item: " + itemId));
+      .orElseThrow(() -> new AssertionError("Can not find Request for item: "
+        + itemId));
   }
 }

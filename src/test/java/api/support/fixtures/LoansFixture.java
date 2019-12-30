@@ -324,12 +324,6 @@ public class LoansFixture {
       okapiHeaders);
   }
 
-
-  private IndividualResource defaultServicePoint() {
-
-    return servicePointsFixture.cd1();
-  }
-
   public IndividualResource overrideCheckOutByBarcode(
     OverrideCheckOutByBarcodeRequestBuilder builder) {
 
@@ -388,5 +382,9 @@ public class LoansFixture {
 
   private URL urlForLoan(UUID id) {
     return loansUrl(String.format("/%s", id));
+  }
+
+  private IndividualResource defaultServicePoint() {
+    return servicePointsFixture.cd1();
   }
 }

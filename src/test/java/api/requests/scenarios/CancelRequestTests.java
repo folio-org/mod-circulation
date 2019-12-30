@@ -13,14 +13,13 @@ import java.util.UUID;
 
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.support.http.client.IndividualResource;
-import org.folio.circulation.support.http.client.Response;
 import org.joda.time.DateTime;
 import org.junit.Test;
 
 import api.support.APITests;
+import api.support.MultipleJsonRecords;
 import api.support.builders.RequestBuilder;
 import api.support.http.InventoryItemResource;
-import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
 public class CancelRequestTests extends APITests {
@@ -226,14 +225,12 @@ public class CancelRequestTests extends APITests {
     requestsFixture.cancelRequest(firstHoldRequest);
     requestsFixture.cancelRequest(secondHoldRequest);
 
-    Response allRequests = requestsFixture.getAllRequests();
+    MultipleJsonRecords allRequests = requestsFixture.getAllRequests();
 
-    assertThat(allRequests.getStatusCode(), is(200));
-    assertThat(allRequests.getJson().getInteger("totalRecords"), is(2));
+    assertThat(allRequests.totalRecords(), is(2));
 
-    JsonArray requestsArray = allRequests.getJson().getJsonArray("requests");
-    JsonObject firstRequest = requestsArray.getJsonObject(0);
-    JsonObject secondRequest = requestsArray.getJsonObject(1);
+    JsonObject firstRequest = allRequests.getById(firstHoldRequest.getId());
+    JsonObject secondRequest = allRequests.getById(secondHoldRequest.getId());
 
     assertThat(firstRequest.getString("status"), is(CLOSED_CANCELLED.getValue()));
     assertThat(secondRequest.getString("status"), is(CLOSED_CANCELLED.getValue()));
