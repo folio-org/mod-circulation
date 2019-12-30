@@ -6,6 +6,7 @@ import static api.support.APITestContext.getOkapiHeadersFromContext;
 import static api.support.APITestContext.undeployVerticles;
 import static api.support.http.InterfaceUrls.circulationRulesUrl;
 import static api.support.http.api.support.NamedQueryStringParameter.namedParameter;
+import static org.folio.circulation.domain.representations.LoanProperties.PATRON_GROUP_AT_CHECKOUT;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.core.Is.is;
@@ -340,7 +341,8 @@ public abstract class APITests {
    * @param loanPolicyBuilder - loan policy builder.
    */
   protected void setFallbackPolicies(LoanPolicyBuilder loanPolicyBuilder) {
-    final IndividualResource loanPolicy = loanPoliciesFixture.create(loanPolicyBuilder);
+    final IndividualResource loanPolicy = loanPoliciesFixture.create(
+      loanPolicyBuilder);
 
     useFallbackPolicies(loanPolicy.getId(),
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
@@ -356,7 +358,6 @@ public abstract class APITests {
    * @param loanPolicyBuilder - loan policy builder.
    */
   protected void useWithActiveNotice(LoanPolicyBuilder loanPolicyBuilder) {
-
     useFallbackPolicies(loanPoliciesFixture.create(loanPolicyBuilder).getId(),
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
       noticePoliciesFixture.activeNotice().getId(),
@@ -371,7 +372,6 @@ public abstract class APITests {
    * @param loanPolicyBuilder - loan policy builder.
    */
   protected void use(LoanPolicyBuilder loanPolicyBuilder) {
-
     useFallbackPolicies(loanPolicyClient.create(loanPolicyBuilder).getId(),
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
       noticePoliciesFixture.activeNotice().getId(),
@@ -403,7 +403,6 @@ public abstract class APITests {
    * @param noticePolicy - notice policy.
    */
   protected void use(NoticePolicyBuilder noticePolicy) {
-
     useFallbackPolicies(loanPoliciesFixture.canCirculateRolling().getId(),
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
       noticePoliciesFixture.create(noticePolicy).getId(),
@@ -418,7 +417,6 @@ public abstract class APITests {
    * @param noticePolicy - notice policy.
    */
   protected void useWithPaging(NoticePolicyBuilder noticePolicy) {
-
     useFallbackPolicies(loanPoliciesFixture.canCirculateRolling().getId(),
       requestPoliciesFixture.pageRequestPolicy().getId(),
       noticePoliciesFixture.create(noticePolicy).getId(),
@@ -482,20 +480,30 @@ public abstract class APITests {
     ResourceClient.forCancellationReasons().deleteAllIndividually();
   }
 
-  protected void loanHasFeeFinesProperties(JsonObject loan, double remainingAmount) {
+  protected void loanHasFeeFinesProperties(JsonObject loan,
+    double remainingAmount) {
+
     hasProperty("amountRemainingToPay", loan.getJsonObject("feesAndFines"),
       "loan", remainingAmount);
   }
 
-  protected void loanHasLoanPolicyProperties(JsonObject loan, IndividualResource loanPolicy) {
+  protected void loanHasLoanPolicyProperties(JsonObject loan,
+    IndividualResource loanPolicy) {
+
     hasProperty("loanPolicyId", loan, "loan", loanPolicy.getId().toString());
     hasProperty("loanPolicy", loan, "loan");
+
     JsonObject loanPolicyObject = loan.getJsonObject("loanPolicy");
-    hasProperty("name", loanPolicyObject, "loan policy", loanPolicy.getJson().getString("name"));
+
+    hasProperty("name", loanPolicyObject, "loan policy",
+      loanPolicy.getJson().getString("name"));
   }
 
-  protected void loanHasPatronGroupProperties(JsonObject loan, String patronGroupValue) {
-    JsonObject patronGroupObject = loan.getJsonObject(LoanProperties.PATRON_GROUP_AT_CHECKOUT);
+  protected void loanHasPatronGroupProperties(JsonObject loan,
+    String patronGroupValue) {
+
+    JsonObject patronGroupObject = loan.getJsonObject(PATRON_GROUP_AT_CHECKOUT);
+
     hasProperty("id", patronGroupObject, "patron group at checkout");
     hasProperty("name", patronGroupObject, "patron group at checkout");
     hasProperty("name", patronGroupObject, "patron group at checkout", patronGroupValue);
@@ -506,17 +514,22 @@ public abstract class APITests {
       resource.containsKey(property), is(true));
   }
 
-  protected void hasProperty(String property, JsonObject resource, String type, Object value) {
+  protected void hasProperty(String property, JsonObject resource, String type,
+    Object value) {
+
     assertThat(String.format("%s should have an %s: %s", type, property, resource),
       resource.getMap().get(property), equalTo(value));
   }
 
-  protected void doesNotHaveProperty(String property, JsonObject resource, String type) {
+  protected void doesNotHaveProperty(String property, JsonObject resource,
+    String type) {
+
     assertThat(String.format("%s should NOT have an %s: %s", type, property,
       resource), resource.getValue(property), is(nullValue()));
   }
 
-  protected void setInvalidLoanPolicyReferenceInRules(String invalidLoanPolicyReference) {
+  protected void setInvalidLoanPolicyReferenceInRules(
+    String invalidLoanPolicyReference) {
 
     circulationRulesFixture.updateCirculationRules(
       circulationRulesFixture.soleFallbackPolicyRule(invalidLoanPolicyReference,
@@ -526,7 +539,8 @@ public abstract class APITests {
         lostItemFeePoliciesFixture.facultyStandard().getId().toString()));
   }
 
-  protected void setInvalidNoticePolicyReferenceInRules(String invalidNoticePolicyReference) {
+  protected void setInvalidNoticePolicyReferenceInRules(
+    String invalidNoticePolicyReference) {
 
     circulationRulesFixture.updateCirculationRules(
       circulationRulesFixture.soleFallbackPolicyRule(
