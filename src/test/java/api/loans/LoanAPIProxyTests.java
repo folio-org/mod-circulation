@@ -3,8 +3,10 @@ package api.loans;
 import static api.support.http.InterfaceUrls.loansUrl;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
+import static java.net.HttpURLConnection.HTTP_NO_CONTENT;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
+import static org.joda.time.DateTimeZone.UTC;
 
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
@@ -37,8 +39,8 @@ public class LoanAPIProxyTests extends APITests {
 
     proxyRelationshipsFixture.currentProxyFor(sponsor, proxy);
 
-    DateTime loanDate = new DateTime(2017, 2, 27, 10, 23, 43, DateTimeZone.UTC);
-    DateTime dueDate = new DateTime(2017, 3, 29, 10, 23, 43, DateTimeZone.UTC);
+    DateTime loanDate = new DateTime(2017, 2, 27, 10, 23, 43, UTC);
+    DateTime dueDate = new DateTime(2017, 3, 29, 10, 23, 43, UTC);
 
     IndividualResource response = loansFixture.createLoan(new LoanBuilder()
       .withId(id)
@@ -60,7 +62,6 @@ public class LoanAPIProxyTests extends APITests {
 
   @Test
   public void canCreateProxiedLoanWhenNonExpiringRelationship() {
-
     UUID id = UUID.randomUUID();
 
     UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
@@ -70,8 +71,8 @@ public class LoanAPIProxyTests extends APITests {
 
     proxyRelationshipsFixture.nonExpiringProxyFor(sponsor, proxy);
 
-    DateTime loanDate = new DateTime(2017, 2, 27, 10, 23, 43, DateTimeZone.UTC);
-    DateTime dueDate = new DateTime(2017, 3, 29, 10, 23, 43, DateTimeZone.UTC);
+    DateTime loanDate = new DateTime(2017, 2, 27, 10, 23, 43, UTC);
+    DateTime dueDate = new DateTime(2017, 3, 29, 10, 23, 43, UTC);
 
     IndividualResource response = loansFixture.createLoan(new LoanBuilder()
       .withId(id)
@@ -102,8 +103,8 @@ public class LoanAPIProxyTests extends APITests {
 
     proxyRelationshipsFixture.inactiveProxyFor(sponsor, proxy);
 
-    DateTime loanDate = new DateTime(2017, 2, 27, 10, 23, 43, DateTimeZone.UTC);
-    DateTime dueDate = new DateTime(2017, 3, 29, 10, 23, 43, DateTimeZone.UTC);
+    DateTime loanDate = new DateTime(2017, 2, 27, 10, 23, 43, UTC);
+    DateTime dueDate = new DateTime(2017, 3, 29, 10, 23, 43, UTC);
 
     LoanBuilder loan = new LoanBuilder()
       .withId(id)
@@ -131,8 +132,8 @@ public class LoanAPIProxyTests extends APITests {
 
     proxyRelationshipsFixture.expiredProxyFor(sponsor, proxy);
 
-    DateTime loanDate = new DateTime(2017, 2, 27, 10, 23, 43, DateTimeZone.UTC);
-    DateTime dueDate = new DateTime(2017, 3, 29, 10, 23, 43, DateTimeZone.UTC);
+    DateTime loanDate = new DateTime(2017, 2, 27, 10, 23, 43, UTC);
+    DateTime dueDate = new DateTime(2017, 3, 29, 10, 23, 43, UTC);
 
     LoanBuilder loan = new LoanBuilder()
       .withId(id)
@@ -161,8 +162,8 @@ public class LoanAPIProxyTests extends APITests {
 
     proxyRelationshipsFixture.currentProxyFor(unexpectedSponsor, proxy);
 
-    DateTime loanDate = new DateTime(2017, 2, 27, 10, 23, 43, DateTimeZone.UTC);
-    DateTime dueDate = new DateTime(2017, 3, 29, 10, 23, 43, DateTimeZone.UTC);
+    DateTime loanDate = new DateTime(2017, 2, 27, 10, 23, 43, UTC);
+    DateTime dueDate = new DateTime(2017, 3, 29, 10, 23, 43, UTC);
 
     LoanBuilder loan = new LoanBuilder()
       .withId(id)
@@ -183,8 +184,8 @@ public class LoanAPIProxyTests extends APITests {
   public void cannotCreateProxiedLoanWhenNoRelationship() {
     UUID id = UUID.randomUUID();
 
-    DateTime loanDate = new DateTime(2017, 2, 27, 10, 23, 43, DateTimeZone.UTC);
-    DateTime dueDate = new DateTime(2017, 3, 29, 10, 23, 43, DateTimeZone.UTC);
+    DateTime loanDate = new DateTime(2017, 2, 27, 10, 23, 43, UTC);
+    DateTime dueDate = new DateTime(2017, 3, 29, 10, 23, 43, UTC);
 
     UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
 
@@ -207,19 +208,15 @@ public class LoanAPIProxyTests extends APITests {
   }
 
   @Test
-  public void canUpdateProxiedLoanWhenValidProxyRelationship()
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException {
-
+  public void canUpdateProxiedLoanWhenValidProxyRelationship() {
     UUID id = UUID.randomUUID();
     UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
 
     IndividualResource sponsor = usersFixture.jessica();
     IndividualResource proxy = usersFixture.james();
 
-    DateTime loanDate = new DateTime(2017, 2, 27, 10, 23, 43, DateTimeZone.UTC);
-    DateTime dueDate = new DateTime(2017, 3, 29, 10, 23, 43, DateTimeZone.UTC);
+    DateTime loanDate = new DateTime(2017, 2, 27, 10, 23, 43, UTC);
+    DateTime dueDate = new DateTime(2017, 3, 29, 10, 23, 43, UTC);
 
     loansFixture.createLoan(new LoanBuilder()
       .withId(id)
@@ -231,7 +228,7 @@ public class LoanAPIProxyTests extends APITests {
 
     proxyRelationshipsFixture.currentProxyFor(sponsor, proxy);
 
-    JsonObject loan = new LoanBuilder()
+    JsonObject updatedLoan = new LoanBuilder()
       .withId(id)
       .open()
       .withUserId(sponsor.getId())
@@ -240,31 +237,22 @@ public class LoanAPIProxyTests extends APITests {
       .withLoanDate(loanDate)
       .withDueDate(dueDate).create();
 
-    CompletableFuture<Response> putCompleted = new CompletableFuture<>();
-
-    client.put(loansUrl(String.format("/%s", id)), loan,
-      ResponseHandler.any(putCompleted));
-
-    Response putResponse = putCompleted.get(5, TimeUnit.SECONDS);
+    Response putResponse = loansFixture.attemptToReplaceLoan(id, updatedLoan);
 
     assertThat("Valid proxy should allow updates to work but does not",
-      putResponse.getStatusCode(), is(HttpURLConnection.HTTP_NO_CONTENT));
+      putResponse.getStatusCode(), is(HTTP_NO_CONTENT));
   }
 
   @Test
-  public void cannotUpdateProxiedLoanWhenRelationshipHasExpired()
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException {
-
+  public void cannotUpdateProxiedLoanWhenRelationshipHasExpired() {
     UUID id = UUID.randomUUID();
     UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
 
     IndividualResource sponsor = usersFixture.jessica();
     IndividualResource proxy = usersFixture.james();
 
-    DateTime loanDate = new DateTime(2017, 2, 27, 10, 23, 43, DateTimeZone.UTC);
-    DateTime dueDate = new DateTime(2017, 3, 29, 10, 23, 43, DateTimeZone.UTC);
+    DateTime loanDate = new DateTime(2017, 2, 27, 10, 23, 43, UTC);
+    DateTime dueDate = new DateTime(2017, 3, 29, 10, 23, 43, UTC);
 
     loansFixture.createLoan(new LoanBuilder()
       .withId(id)
@@ -276,7 +264,7 @@ public class LoanAPIProxyTests extends APITests {
 
     proxyRelationshipsFixture.expiredProxyFor(sponsor, proxy);
 
-    JsonObject loan = new LoanBuilder()
+    JsonObject updatedLoan = new LoanBuilder()
       .withId(id)
       .open()
       .withUserId(sponsor.getId())
@@ -285,23 +273,17 @@ public class LoanAPIProxyTests extends APITests {
       .withLoanDate(loanDate)
       .withDueDate(dueDate).create();
 
-    CompletableFuture<Response> putCompleted = new CompletableFuture<>();
-
-    client.put(loansUrl(String.format("/%s", id)), loan,
-      ResponseHandler.any(putCompleted));
-
-    Response putResponse = putCompleted.get(5, TimeUnit.SECONDS);
+    Response putResponse = loansFixture.attemptToReplaceLoan(id, updatedLoan);
 
     assertThat("Invalid proxy should fail loan update",
       putResponse.getStatusCode(), is(422));
+
+    assertThat(putResponse.getJson(), hasErrorWith(
+      hasMessage("proxyUserId is not valid")));
   }
 
   @Test
-  public void cannotUpdateProxiedLoanWhenRelationshipIsForOtherSponsor()
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException {
-
+  public void cannotUpdateProxiedLoanWhenRelationshipIsForOtherSponsor() {
     UUID id = UUID.randomUUID();
     UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
 
@@ -309,8 +291,8 @@ public class LoanAPIProxyTests extends APITests {
     IndividualResource otherUser = usersFixture.charlotte();
     IndividualResource proxy = usersFixture.james();
 
-    DateTime loanDate = new DateTime(2017, 2, 27, 10, 23, 43, DateTimeZone.UTC);
-    DateTime dueDate = new DateTime(2017, 3, 29, 10, 23, 43, DateTimeZone.UTC);
+    DateTime loanDate = new DateTime(2017, 2, 27, 10, 23, 43, UTC);
+    DateTime dueDate = new DateTime(2017, 3, 29, 10, 23, 43, UTC);
 
     loansFixture.createLoan(new LoanBuilder()
       .withId(id)
@@ -322,7 +304,7 @@ public class LoanAPIProxyTests extends APITests {
 
     proxyRelationshipsFixture.currentProxyFor(unexpectedSponsor, proxy);
 
-    JsonObject loan = new LoanBuilder()
+    JsonObject updatedLoan = new LoanBuilder()
       .withId(id)
       .open()
       .withUserId(otherUser.getId())
@@ -331,31 +313,25 @@ public class LoanAPIProxyTests extends APITests {
       .withLoanDate(loanDate)
       .withDueDate(dueDate).create();
 
-    CompletableFuture<Response> putCompleted = new CompletableFuture<>();
-
-    client.put(loansUrl(String.format("/%s", id)), loan,
-      ResponseHandler.any(putCompleted));
-
-    Response putResponse = putCompleted.get(5, TimeUnit.SECONDS);
+    Response putResponse = loansFixture.attemptToReplaceLoan(id, updatedLoan);
 
     assertThat("Invalid proxy should fail loan update",
       putResponse.getStatusCode(), is(422));
+
+    assertThat(putResponse.getJson(), hasErrorWith(
+      hasMessage("proxyUserId is not valid")));
   }
 
   @Test
-  public void cannotUpdateProxiedLoanWhenNoRelationship()
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException {
-
+  public void cannotUpdateProxiedLoanWhenNoRelationship() {
     UUID id = UUID.randomUUID();
     UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
 
     IndividualResource requestingUser = usersFixture.jessica();
     IndividualResource userAttemptingToProxy = usersFixture.james();
 
-    DateTime loanDate = new DateTime(2017, 2, 27, 10, 23, 43, DateTimeZone.UTC);
-    DateTime dueDate = new DateTime(2017, 3, 29, 10, 23, 43, DateTimeZone.UTC);
+    DateTime loanDate = new DateTime(2017, 2, 27, 10, 23, 43, UTC);
+    DateTime dueDate = new DateTime(2017, 3, 29, 10, 23, 43, UTC);
 
     loansFixture.createLoan(new LoanBuilder()
       .withId(id)
@@ -365,7 +341,7 @@ public class LoanAPIProxyTests extends APITests {
       .withLoanDate(loanDate)
       .withDueDate(dueDate));
 
-    JsonObject loan = new LoanBuilder()
+    JsonObject updatedLoan = new LoanBuilder()
       .withId(id)
       .open()
       .withUserId(requestingUser.getId())
@@ -375,14 +351,12 @@ public class LoanAPIProxyTests extends APITests {
       .withDueDate(dueDate)
       .create();
 
-    CompletableFuture<Response> putCompleted = new CompletableFuture<>();
-
-    client.put(loansUrl(String.format("/%s", id)), loan,
-      ResponseHandler.any(putCompleted));
-
-    Response putResponse = putCompleted.get(5, TimeUnit.SECONDS);
+    Response putResponse = loansFixture.attemptToReplaceLoan(id, updatedLoan);
 
     assertThat("Invalid proxyUserId is not allowed when updating a loan",
       putResponse.getStatusCode(), is(422));
+
+    assertThat(putResponse.getJson(), hasErrorWith(
+      hasMessage("proxyUserId is not valid")));
   }
 }
