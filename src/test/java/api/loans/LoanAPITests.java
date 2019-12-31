@@ -6,7 +6,6 @@ import static api.support.http.CqlQuery.queryFromTemplate;
 import static api.support.http.InterfaceUrls.loansUrl;
 import static api.support.http.Limit.limit;
 import static api.support.http.Offset.offset;
-import static api.support.matchers.ResponseStatusCodeMatcher.hasStatus;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static api.support.matchers.UUIDMatcher.is;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
@@ -18,7 +17,6 @@ import static java.lang.String.format;
 import static java.net.HttpURLConnection.HTTP_NOT_FOUND;
 import static java.net.HttpURLConnection.HTTP_NO_CONTENT;
 import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.folio.HttpStatus.HTTP_VALIDATION_ERROR;
 import static org.folio.circulation.domain.representations.ItemProperties.CALL_NUMBER_COMPONENTS;
 import static org.folio.circulation.domain.representations.LoanProperties.BORROWER;
 import static org.folio.circulation.support.JsonArrayHelper.toList;
@@ -455,8 +453,6 @@ public class LoanAPITests extends APITests {
     DateTime loanDate = new DateTime(2017, 2, 27, 10, 23, 43, UTC);
     DateTime dueDate = new DateTime(2017, 3, 29, 10, 23, 43, UTC);
 
-    CompletableFuture<Response> createCompleted = new CompletableFuture<>();
-
     final UUID unknownItemId = UUID.randomUUID();
 
     final Response response = loansFixture.attemptToCreateLoan(new LoanBuilder()
@@ -549,8 +545,6 @@ public class LoanAPITests extends APITests {
     UUID checkinServicePointId = servicePointsFixture.cd1().getId();
 
     UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
-
-    CompletableFuture<Response> createCompleted = new CompletableFuture<>();
 
     loansFixture.createLoanAtSpecificLocation(loanId, new LoanBuilder()
         .withId(loanId)
@@ -1058,11 +1052,7 @@ public class LoanAPITests extends APITests {
   }
 
   @Test
-  public void canRenewALoanByExtendingTheDueDate()
-    throws InterruptedException,
-    TimeoutException,
-    ExecutionException {
-
+  public void canRenewALoanByExtendingTheDueDate() {
     final InventoryItemResource item = itemsFixture.basedUponNod();
 
     IndividualResource loan = loansFixture.createLoan(item,
@@ -1078,15 +1068,7 @@ public class LoanAPITests extends APITests {
       .put("dueDate", newDueDate.toString(ISODateTimeFormat.dateTime()))
       .put("renewalCount", 1);
 
-    CompletableFuture<Response> putCompleted = new CompletableFuture<>();
-
-    client.put(loansUrl(format("/%s", loan.getId())), loanToRenew,
-      ResponseHandler.any(putCompleted));
-
-    Response putResponse = putCompleted.get(5, SECONDS);
-
-    assertThat(format("Failed to update loan: %s", putResponse.getBody()),
-      putResponse.getStatusCode(), is(HTTP_NO_CONTENT));
+    loansFixture.replaceLoan(loan.getId(), loanToRenew);
 
     Response updatedLoanResponse = loansClient.getById(loan.getId());
 
@@ -1201,11 +1183,7 @@ public class LoanAPITests extends APITests {
   }
 
   @Test
-  public void cannotUpdateAnOpenLoanWithoutAUserId()
-    throws InterruptedException,
-    TimeoutException,
-    ExecutionException {
-
+  public void cannotUpdateAnOpenLoanWithoutAUserId() {
     UUID itemId = itemsFixture.basedUponNod().getId();
 
     final IndividualResource jessica = usersFixture.jessica();
@@ -1219,14 +1197,8 @@ public class LoanAPITests extends APITests {
 
     updatedLoan.remove("userId");
 
-    CompletableFuture<Response> putCompleted = new CompletableFuture<>();
-
-    client.put(loansUrl(format("/%s", loan.getId())), updatedLoan,
-      ResponseHandler.any(putCompleted));
-
-    Response putResponse = putCompleted.get(5, SECONDS);
-
-    assertThat(putResponse, hasStatus(HTTP_VALIDATION_ERROR));
+    Response putResponse = loansFixture.attemptToReplaceLoan(loan.getId(),
+      updatedLoan);
 
     assertThat(putResponse.getJson(), hasErrorWith(allOf(
       hasMessage("Open loan must have a user ID"),
@@ -1234,11 +1206,7 @@ public class LoanAPITests extends APITests {
   }
 
   @Test
-  public void updatingACurrentLoanDoesNotChangeItemStatus()
-    throws InterruptedException,
-    TimeoutException,
-    ExecutionException {
-
+  public void updatingACurrentLoanDoesNotChangeItemStatus() {
     final InventoryItemResource item = itemsFixture.basedUponNod();
 
     final IndividualResource checkOutResponse = loansFixture.createLoan(item,
@@ -1249,16 +1217,8 @@ public class LoanAPITests extends APITests {
     assertThat("item status is not checked out",
       fetchedItem.getJsonObject("status").getString("name"), is("Checked out"));
 
-    CompletableFuture<Response> putCompleted = new CompletableFuture<>();
-
-    client.put(loansUrl(format("/%s", checkOutResponse.getId())),
-      checkOutResponse.getJson().copy(),
-      ResponseHandler.any(putCompleted));
-
-    Response putResponse = putCompleted.get(5, SECONDS);
-
-    assertThat(format("Failed to update loan: %s", putResponse.getBody()),
-      putResponse.getStatusCode(), is(HTTP_NO_CONTENT));
+    loansFixture.replaceLoan(checkOutResponse.getId(),
+      checkOutResponse.getJson().copy());
 
     JsonObject changedItem = itemsClient.getById(item.getId()).getJson();
 
