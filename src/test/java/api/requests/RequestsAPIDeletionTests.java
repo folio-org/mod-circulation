@@ -1,5 +1,6 @@
 package api.requests;
 
+import static api.support.http.InterfaceUrls.requestsUrl;
 import static java.net.HttpURLConnection.HTTP_NOT_FOUND;
 import static java.net.HttpURLConnection.HTTP_NO_CONTENT;
 import static java.net.HttpURLConnection.HTTP_OK;
@@ -26,7 +27,6 @@ import api.support.http.InventoryItemResource;
 import io.vertx.core.json.JsonObject;
 
 public class RequestsAPIDeletionTests extends APITests {
-
   @Test
   public void canDeleteAllRequests()
     throws InterruptedException,
@@ -62,18 +62,11 @@ public class RequestsAPIDeletionTests extends APITests {
       .withRequesterId(requesterId))
       .getId();
 
-    CompletableFuture<Response> deleteCompleted = new CompletableFuture<>();
-
-    client.delete(InterfaceUrls.requestsUrl(),
-      ResponseHandler.any(deleteCompleted));
-
-    Response deleteResponse = deleteCompleted.get(5, TimeUnit.SECONDS);
-
-    assertThat(deleteResponse.getStatusCode(), is(HTTP_NO_CONTENT));
+    Response deleteResponse = deleteAllRequests();
 
     CompletableFuture<Response> getAllCompleted = new CompletableFuture<>();
 
-    client.get(InterfaceUrls.requestsUrl(), ResponseHandler.any(getAllCompleted));
+    client.get(requestsUrl(), ResponseHandler.any(getAllCompleted));
 
     Response getAllResponse = getAllCompleted.get(5, TimeUnit.SECONDS);
 
@@ -124,7 +117,7 @@ public class RequestsAPIDeletionTests extends APITests {
 
     CompletableFuture<Response> deleteCompleted = new CompletableFuture<>();
 
-    client.delete(InterfaceUrls.requestsUrl(String.format("/%s", secondRequestId)),
+    client.delete(requestsUrl(String.format("/%s", secondRequestId)),
       ResponseHandler.any(deleteCompleted));
 
     Response deleteResponse = deleteCompleted.get(5, TimeUnit.SECONDS);
@@ -139,7 +132,7 @@ public class RequestsAPIDeletionTests extends APITests {
 
     CompletableFuture<Response> getAllCompleted = new CompletableFuture<>();
 
-    client.get(InterfaceUrls.requestsUrl(), ResponseHandler.any(getAllCompleted));
+    client.get(requestsUrl(), ResponseHandler.any(getAllCompleted));
 
     Response getAllResponse = getAllCompleted.get(5, TimeUnit.SECONDS);
 
@@ -156,5 +149,10 @@ public class RequestsAPIDeletionTests extends APITests {
 
   private List<JsonObject> getRequests(JsonObject page) {
     return JsonArrayHelper.toList(page.getJsonArray("requests"));
+  }
+
+  private Response deleteAllRequests() {
+    return restAssuredClient.delete(requestsUrl(),
+      HTTP_NO_CONTENT, "delete-all-requests");
   }
 }
