@@ -15,7 +15,6 @@ import static api.support.http.InterfaceUrls.renewByIdUrl;
 import static api.support.http.Limit.maximumLimit;
 import static api.support.http.Limit.noLimit;
 import static api.support.http.Offset.noOffset;
-import static org.folio.circulation.support.JsonArrayHelper.mapToList;
 
 import java.net.URL;
 import java.util.UUID;
@@ -389,6 +388,10 @@ public class LoansFixture {
 
   public MultipleJsonRecords getAllLoans() {
     return multipleRecordsFrom(getLoans(maximumLimit()), "loans");
+  }
+
+  public void deleteLoan(UUID loanId) {
+    restAssuredClient.delete(urlForLoan(loanId), 204, "delete-loan");
   }
 
   private URL urlForLoan(UUID id) {

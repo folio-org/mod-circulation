@@ -1544,21 +1544,9 @@ public class LoanAPITests extends APITests {
 
     final UUID loanId = loansFixture.createLoan(item, usersFixture.rebecca()).getId();
 
-    CompletableFuture<Response> deleteCompleted = new CompletableFuture<>();
+    loansFixture.deleteLoan(loanId);
 
-    client.delete(loansUrl(format("/%s", loanId)),
-      ResponseHandler.any(deleteCompleted));
-
-    Response deleteResponse = deleteCompleted.get(5, SECONDS);
-
-    assertThat(deleteResponse.getStatusCode(), is(HTTP_NO_CONTENT));
-
-    CompletableFuture<Response> getCompleted = new CompletableFuture<>();
-
-    client.get(loansUrl(format("/%s", loanId)),
-      ResponseHandler.any(getCompleted));
-
-    Response getResponse = getCompleted.get(5, SECONDS);
+    Response getResponse = loansClient.getById(loanId);
 
     assertThat(getResponse.getStatusCode(), is(HTTP_NOT_FOUND));
   }
