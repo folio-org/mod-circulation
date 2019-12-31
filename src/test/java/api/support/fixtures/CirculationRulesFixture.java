@@ -9,7 +9,9 @@ import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.UUID;
 
 import org.folio.circulation.rules.ItemLocation;
@@ -19,7 +21,6 @@ import org.folio.circulation.rules.PatronGroup;
 import org.folio.circulation.rules.Policy;
 import org.folio.circulation.support.http.client.Response;
 
-import api.loans.LoanAPIPolicyTests;
 import api.support.RestAssuredClient;
 import api.support.http.QueryStringParameter;
 import io.vertx.core.json.JsonArray;
@@ -173,6 +174,37 @@ public class CirculationRulesFixture {
       circulationRulesUrl(policyPath),
       getApplyParameters(itemType, loanType, patronGroup, location), 200,
       requestId);
+  }
+
+  public Response attemptToApplyRulesWithNoParameters(String path) {
+    return restAssuredClient.get(circulationRulesUrl(path), 400,
+      "apply-rules-with-no-parameters");
+  }
+
+  public Response attemptToApplyRulesWithInvalidParameters(String type,
+    String itemType, String loanType, String patronGroup, String location) {
+
+    final List<QueryStringParameter> parameters = new ArrayList<>();
+
+    if(itemType != null) {
+      parameters.add(namedParameter("item_type_id", itemType));
+    }
+
+    if(loanType != null) {
+      parameters.add(namedParameter("loan_type_id", loanType));
+    }
+
+    if(patronGroup != null) {
+      parameters.add(namedParameter("patron_type_id", patronGroup));
+    }
+
+    if(location != null) {
+      parameters.add(namedParameter("location_id", location));
+    }
+
+    return restAssuredClient.get(
+      circulationRulesUrl("/" + type + "-policy"), parameters,
+      400, "apply-rules-with-invalid-parameters");
   }
 
   private Collection<QueryStringParameter> getApplyParameters(ItemType itemType,
