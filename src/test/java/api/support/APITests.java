@@ -1,6 +1,5 @@
 package api.support;
 
-import static api.support.APITestContext.createClient;
 import static api.support.APITestContext.deployVerticles;
 import static api.support.APITestContext.getOkapiHeadersFromContext;
 import static api.support.APITestContext.undeployVerticles;
@@ -21,7 +20,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
 import org.folio.circulation.support.http.client.IndividualResource;
-import org.folio.circulation.support.http.client.OkapiHttpClient;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -62,10 +60,6 @@ import io.vertx.core.json.JsonObject;
 
 public abstract class APITests {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
-
-  //Temporarily static to ease moving code from test suite
-  protected final OkapiHttpClient client = createClient(exception ->
-    log.error("Request to circulation module failed:", exception));
 
   protected final RestAssuredClient restAssuredClient = new RestAssuredClient(
     getOkapiHeadersFromContext());
