@@ -1,6 +1,5 @@
 package api;
 
-import static api.support.http.InterfaceUrls.circulationRulesStorageUrl;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.StringContains.containsString;
@@ -320,7 +319,8 @@ public class CirculationRulesEngineAPITests extends APITests {
     setRules(rulesFallback);
     assertThat(applyRulesForLoanPolicy(m1, t1, g1, s1), is(lp6));
 
-    updateCirculationRulesInStorageWithoutInvalidatingCache(rulesFallback2);
+    circulationRulesFixture.updateCirculationRulesWithoutInvalidatingCache(
+      rulesFallback2);
 
     assertThat(applyRulesForLoanPolicy(m1, t1, g1, s1), is(lp6));
 
@@ -349,17 +349,6 @@ public class CirculationRulesEngineAPITests extends APITests {
 
     return circulationRulesFixture.applyRulesForNoticePolicy(itemType, loanType,
       patronGroup, location);
-  }
-
-  private void updateCirculationRulesInStorageWithoutInvalidatingCache(String rules) {
-    JsonObject json = new JsonObject().put("rulesAsText", rules);
-
-    restAssuredClient.beginRequest("update-rules-in-storage")
-      .body(json.encodePrettily())
-      .when()
-      .put(circulationRulesStorageUrl(""))
-      .then()
-      .log().all();
   }
 
   private void matchesLoanPolicy(JsonArray array, int match, Policy policy,

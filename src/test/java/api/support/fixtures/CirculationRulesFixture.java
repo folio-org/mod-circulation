@@ -1,6 +1,7 @@
 package api.support.fixtures;
 
 import static api.support.RestAssuredResponseConversion.toResponse;
+import static api.support.http.InterfaceUrls.circulationRulesStorageUrl;
 import static api.support.http.InterfaceUrls.circulationRulesUrl;
 import static api.support.http.api.support.NamedQueryStringParameter.namedParameter;
 import static java.util.Arrays.asList;
@@ -69,6 +70,18 @@ public class CirculationRulesFixture {
     assertThat(String.format(
       "Failed to set circulation rules: %s", response.getBody()),
       response.getStatusCode(), is(204));
+  }
+
+  public void updateCirculationRulesWithoutInvalidatingCache(String rules) {
+    JsonObject json = new JsonObject().put("rulesAsText", rules);
+
+    restAssuredClient.beginRequest("update-rules-in-storage")
+      .body(json.encodePrettily())
+      .when()
+      .put(circulationRulesStorageUrl(""))
+      .then()
+      .log().all()
+      .statusCode(204);
   }
 
   private String soleFallbackPolicyRule(UUID loanPolicyId, UUID requestPolicyId,
