@@ -102,12 +102,7 @@ public class RequestsAPIDeletionTests extends APITests {
 
     CompletableFuture<Response> deleteCompleted = new CompletableFuture<>();
 
-    client.delete(requestsUrl(String.format("/%s", secondRequestId)),
-      ResponseHandler.any(deleteCompleted));
-
-    Response deleteResponse = deleteCompleted.get(5, TimeUnit.SECONDS);
-
-    assertThat(deleteResponse.getStatusCode(), is(HTTP_NO_CONTENT));
+    requestsFixture.deleteRequest(secondRequestId);
 
     assertThat(requestsClient.getById(firstRequestId).getStatusCode(), is(HTTP_OK));
 

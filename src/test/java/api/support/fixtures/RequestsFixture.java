@@ -186,6 +186,11 @@ public class RequestsFixture {
       "delete-all-requests");
   }
 
+  public Response deleteRequest(UUID requestId) {
+    return restAssuredClient.delete(requestsUrl(String.format("/%s", requestId)),
+      204, "delete-a-request");
+  }
+
   private String pathToMoveRequest(JsonObject representation) {
     return String.format("/%s/move", representation.getString("id"));
   }
