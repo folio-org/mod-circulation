@@ -4,20 +4,14 @@ import static api.support.http.InterfaceUrls.requestsUrl;
 import static api.support.matchers.ResponseStatusCodeMatcher.hasStatus;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
-import static java.net.HttpURLConnection.HTTP_NO_CONTENT;
-import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.folio.HttpStatus.HTTP_CREATED;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeoutException;
 
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
-import org.folio.circulation.support.http.client.ResponseHandler;
 import org.junit.Test;
 
 import api.support.APITests;
@@ -195,7 +189,7 @@ public class RequestsAPIProxyTests extends APITests {
     final RequestBuilder updatedRequest = RequestBuilder.from(createdRequest)
       .proxiedBy(proxy);
 
-    replaceRequest(createdRequest.getId(), updatedRequest);
+    requestsFixture.replaceRequest(createdRequest.getId(), updatedRequest);
 
     final Response fetchedRequest = requestsFixture.getById(createdRequest.getId());
 
@@ -241,8 +235,8 @@ public class RequestsAPIProxyTests extends APITests {
     final RequestBuilder updatedRequest = RequestBuilder.from(createdRequest)
       .proxiedBy(proxy);
 
-    final Response putResponse = attemptToReplaceRequest(createdRequest.getId(),
-      updatedRequest);
+    final Response putResponse = requestsFixture.attemptToReplaceRequest(
+      createdRequest.getId(), updatedRequest);
 
     assertThat(putResponse.getStatusCode(), is(422));
 
@@ -274,22 +268,12 @@ public class RequestsAPIProxyTests extends APITests {
     final RequestBuilder updatedRequest = RequestBuilder.from(createdRequest)
       .proxiedBy(proxy);
 
-    final Response putResponse = attemptToReplaceRequest(createdRequest.getId(),
-      updatedRequest);
+    final Response putResponse = requestsFixture.attemptToReplaceRequest(
+      createdRequest.getId(), updatedRequest);
 
     assertThat(putResponse.getStatusCode(), is(422));
 
     assertThat(putResponse.getJson(), hasErrorWith(
       hasMessage("proxyUserId is not valid")));
-  }
-
-  private Response replaceRequest(UUID id, RequestBuilder updatedRequest) {
-    return restAssuredClient.put(updatedRequest.create(),
-      requestsUrl(String.format("/%s", id)), HTTP_NO_CONTENT, "replace-request");
-  }
-
-  private Response attemptToReplaceRequest(UUID id, RequestBuilder updatedRequest) {
-    return restAssuredClient.put(updatedRequest.create(),
-      requestsUrl(String.format("/%s", id)), "replace-request");
   }
 }

@@ -7,6 +7,7 @@ import static api.support.http.InterfaceUrls.requestQueueUrl;
 import static api.support.http.InterfaceUrls.requestsUrl;
 import static api.support.http.Limit.noLimit;
 import static api.support.http.Offset.noOffset;
+import static java.net.HttpURLConnection.HTTP_NO_CONTENT;
 import static java.util.function.Function.identity;
 
 import java.util.UUID;
@@ -16,6 +17,7 @@ import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 import org.joda.time.DateTime;
 
+import api.requests.RequestsAPIProxyTests;
 import api.requests.RequestsAPIRetrievalTests;
 import api.support.MultipleJsonRecords;
 import api.support.RestAssuredClient;
@@ -121,6 +123,16 @@ public class RequestsFixture {
         .withRequestDate(on)
         .withRequesterId(by.getId())
         .withPickupServicePointId(pickupServicePointId));
+  }
+
+  public Response replaceRequest(UUID id, RequestBuilder updatedRequest) {
+    return restAssuredClient.put(updatedRequest.create(),
+      requestsUrl(String.format("/%s", id)), HTTP_NO_CONTENT, "replace-request");
+  }
+
+  public Response attemptToReplaceRequest(UUID id, RequestBuilder updatedRequest) {
+    return restAssuredClient.put(updatedRequest.create(),
+      requestsUrl(String.format("/%s", id)), "attempt-to-replace-request");
   }
 
   public void cancelRequest(IndividualResource request) {
