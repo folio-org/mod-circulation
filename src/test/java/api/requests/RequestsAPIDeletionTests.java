@@ -66,11 +66,7 @@ public class RequestsAPIDeletionTests extends APITests {
   }
 
   @Test
-  public void canDeleteAnIndividualRequest()
-    throws InterruptedException,
-    TimeoutException,
-    ExecutionException {
-
+  public void canDeleteAnIndividualRequest() {
     UUID requesterId = usersFixture.rebecca().getId();
 
     final InventoryItemResource nod = itemsFixture.basedUponNod();
@@ -104,31 +100,18 @@ public class RequestsAPIDeletionTests extends APITests {
 
     requestsFixture.deleteRequest(secondRequestId);
 
-    assertThat(requestsClient.getById(firstRequestId).getStatusCode(), is(HTTP_OK));
+    assertThat(requestsFixture.getById(firstRequestId).getStatusCode(),
+      is(HTTP_OK));
 
-    assertThat(requestsClient.getById(secondRequestId).getStatusCode(), is(HTTP_NOT_FOUND));
+    assertThat(requestsFixture.getById(secondRequestId).getStatusCode(),
+      is(HTTP_NOT_FOUND));
 
-    assertThat(requestsClient.getById(thirdRequestId).getStatusCode(), is(HTTP_OK));
+    assertThat(requestsFixture.getById(thirdRequestId).getStatusCode(),
+      is(HTTP_OK));
 
-    CompletableFuture<Response> getAllCompleted = new CompletableFuture<>();
+    MultipleJsonRecords allRequests = requestsFixture.getAllRequests();
 
-    client.get(requestsUrl(), ResponseHandler.any(getAllCompleted));
-
-    Response getAllResponse = getAllCompleted.get(5, TimeUnit.SECONDS);
-
-    assertThat(String.format("Get all requests failed: \"%s\"", getAllResponse.getBody()),
-      getAllResponse.getStatusCode(), is(HTTP_OK));
-
-    JsonObject allRequests = getAllResponse.getJson();
-
-    List<JsonObject> requests = getRequests(allRequests);
-
-    assertThat(requests.size(), is(2));
-    assertThat(allRequests.getInteger("totalRecords"), is(2));
+    assertThat(allRequests.size(), is(2));
+    assertThat(allRequests.totalRecords(), is(2));
   }
-
-  private List<JsonObject> getRequests(JsonObject page) {
-    return JsonArrayHelper.toList(page.getJsonArray("requests"));
-  }
-
 }
