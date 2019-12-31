@@ -20,17 +20,14 @@ import org.folio.circulation.support.http.client.ResponseHandler;
 import org.junit.Test;
 
 import api.support.APITests;
+import api.support.MultipleJsonRecords;
 import api.support.builders.RequestBuilder;
 import api.support.http.InventoryItemResource;
 import io.vertx.core.json.JsonObject;
 
 public class RequestsAPIDeletionTests extends APITests {
   @Test
-  public void canDeleteAllRequests()
-    throws InterruptedException,
-    TimeoutException,
-    ExecutionException {
-
+  public void canDeleteAllRequests() {
     UUID requesterId = usersFixture.rebecca().getId();
 
     final InventoryItemResource nod = itemsFixture.basedUponNod();
@@ -62,20 +59,10 @@ public class RequestsAPIDeletionTests extends APITests {
 
     Response deleteResponse = requestsFixture.deleteAllRequests();
 
-    CompletableFuture<Response> getAllCompleted = new CompletableFuture<>();
+    MultipleJsonRecords allRequests = requestsFixture.getAllRequests();
 
-    client.get(requestsUrl(), ResponseHandler.any(getAllCompleted));
-
-    Response getAllResponse = getAllCompleted.get(5, TimeUnit.SECONDS);
-
-    assertThat(getAllResponse.getStatusCode(), is(HTTP_OK));
-
-    JsonObject allRequests = getAllResponse.getJson();
-
-    List<JsonObject> requests = getRequests(allRequests);
-
-    assertThat(requests.size(), is(0));
-    assertThat(allRequests.getInteger("totalRecords"), is(0));
+    assertThat(allRequests.size(), is(0));
+    assertThat(allRequests.totalRecords(), is(0));
   }
 
   @Test
