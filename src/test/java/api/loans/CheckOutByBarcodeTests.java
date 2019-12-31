@@ -2,7 +2,6 @@ package api.loans;
 
 import static api.requests.RequestsAPICreationTests.setupMissingItem;
 import static api.support.APITestContext.END_OF_CURRENT_YEAR_DUE_DATE;
-import static api.support.APITestContext.circulationModuleUrl;
 import static api.support.builders.ItemBuilder.AVAILABLE;
 import static api.support.builders.ItemBuilder.CHECKED_OUT;
 import static api.support.matchers.CheckOutByBarcodeResponseMatchers.hasItemBarcodeParameter;
@@ -17,7 +16,6 @@ import static api.support.matchers.UUIDMatcher.is;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static api.support.matchers.ValidationErrorMatchers.hasMessageContaining;
-import static java.net.HttpURLConnection.HTTP_OK;
 import static org.folio.circulation.domain.representations.ItemProperties.CALL_NUMBER_COMPONENTS;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.is;
@@ -35,7 +33,6 @@ import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
 import org.joda.time.Seconds;
 import org.junit.Test;
 
@@ -277,8 +274,7 @@ public class CheckOutByBarcodeTests extends APITests {
     assertThat("Location header should be present", response.getLocation(),
       is(notNullValue()));
 
-    final Response getResponse = restAssuredClient.get(
-      circulationModuleUrl(response.getLocation()), HTTP_OK, "get-created-loan");
+    loansFixture.getLoanByLocation(response);
   }
 
   @Test

@@ -1,5 +1,6 @@
 package api.support.fixtures;
 
+import static api.support.APITestContext.circulationModuleUrl;
 import static api.support.APITestContext.getOkapiHeadersFromContext;
 import static api.support.MultipleJsonRecords.multipleRecordsFrom;
 import static api.support.http.AdditionalHttpStatusCodes.UNPROCESSABLE_ENTITY;
@@ -15,6 +16,7 @@ import static api.support.http.InterfaceUrls.renewByIdUrl;
 import static api.support.http.Limit.maximumLimit;
 import static api.support.http.Limit.noLimit;
 import static api.support.http.Offset.noOffset;
+import static java.net.HttpURLConnection.HTTP_OK;
 
 import java.net.URL;
 import java.util.UUID;
@@ -363,6 +365,11 @@ public class LoansFixture {
   public IndividualResource getLoanById(UUID id) {
     return new IndividualResource(restAssuredClient.get(
       urlForLoan(id), 200, "get-loan-by-id"));
+  }
+
+  public Response getLoanByLocation(IndividualResource response) {
+    return restAssuredClient.get(circulationModuleUrl(response.getLocation()),
+      HTTP_OK, "get-created-loan");
   }
 
   public MultipleJsonRecords getLoans() {
