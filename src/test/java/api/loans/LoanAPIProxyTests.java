@@ -1,6 +1,8 @@
 package api.loans;
 
 import static api.support.http.InterfaceUrls.loansUrl;
+import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
+import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 
@@ -26,7 +28,6 @@ import io.vertx.core.json.JsonObject;
 public class LoanAPIProxyTests extends APITests {
   @Test
   public void canCreateProxiedLoanWhenCurrentActiveRelationship() {
-
     UUID id = UUID.randomUUID();
 
     UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
@@ -91,11 +92,7 @@ public class LoanAPIProxyTests extends APITests {
   }
 
   @Test
-  public void cannotCreateProxiedLoanWhenRelationshipIsInactive()
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException {
-
+  public void cannotCreateProxiedLoanWhenRelationshipIsInactive() {
     UUID id = UUID.randomUUID();
 
     UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
@@ -108,31 +105,23 @@ public class LoanAPIProxyTests extends APITests {
     DateTime loanDate = new DateTime(2017, 2, 27, 10, 23, 43, DateTimeZone.UTC);
     DateTime dueDate = new DateTime(2017, 3, 29, 10, 23, 43, DateTimeZone.UTC);
 
-    JsonObject loan = new LoanBuilder()
+    LoanBuilder loan = new LoanBuilder()
       .withId(id)
       .open()
       .withUserId(sponsor.getId())
       .withProxyUserId(proxy.getId())
       .withItemId(itemId)
       .withLoanDate(loanDate)
-      .withDueDate(dueDate).create();
+      .withDueDate(dueDate);
 
-    CompletableFuture<Response> postCompleted = new CompletableFuture<>();
+    Response postResponse = loansFixture.attemptToCreateLoan(loan, 422);
 
-    client.post(loansUrl(), loan,
-      ResponseHandler.any(postCompleted));
-
-    Response postResponse = postCompleted.get(5, TimeUnit.SECONDS);
-
-    assertThat(postResponse.getBody(), postResponse.getStatusCode(), is(422));
+    assertThat(postResponse.getJson(), hasErrorWith(
+      hasMessage("proxyUserId is not valid")));
   }
 
   @Test
-  public void cannotCreateProxiedLoanWhenRelationshipHasExpired()
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException {
-
+  public void cannotCreateProxiedLoanWhenRelationshipHasExpired() {
     UUID id = UUID.randomUUID();
 
     UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
@@ -145,31 +134,23 @@ public class LoanAPIProxyTests extends APITests {
     DateTime loanDate = new DateTime(2017, 2, 27, 10, 23, 43, DateTimeZone.UTC);
     DateTime dueDate = new DateTime(2017, 3, 29, 10, 23, 43, DateTimeZone.UTC);
 
-    JsonObject loan = new LoanBuilder()
+    LoanBuilder loan = new LoanBuilder()
       .withId(id)
       .open()
       .withUserId(sponsor.getId())
       .withProxyUserId(proxy.getId())
       .withItemId(itemId)
       .withLoanDate(loanDate)
-      .withDueDate(dueDate).create();
+      .withDueDate(dueDate);
 
-    CompletableFuture<Response> postCompleted = new CompletableFuture<>();
+    Response postResponse = loansFixture.attemptToCreateLoan(loan, 422);
 
-    client.post(loansUrl(), loan,
-      ResponseHandler.any(postCompleted));
-
-    Response postResponse = postCompleted.get(5, TimeUnit.SECONDS);
-
-    assertThat(postResponse.getBody(), postResponse.getStatusCode(), is(422));
+    assertThat(postResponse.getJson(), hasErrorWith(
+      hasMessage("proxyUserId is not valid")));
   }
 
   @Test
-  public void cannotCreateProxiedLoanWhenRelationshipIsForOtherSponsor()
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException {
-
+  public void cannotCreateProxiedLoanWhenRelationshipIsForOtherSponsor() {
     UUID id = UUID.randomUUID();
 
     UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
@@ -183,31 +164,23 @@ public class LoanAPIProxyTests extends APITests {
     DateTime loanDate = new DateTime(2017, 2, 27, 10, 23, 43, DateTimeZone.UTC);
     DateTime dueDate = new DateTime(2017, 3, 29, 10, 23, 43, DateTimeZone.UTC);
 
-    JsonObject loan = new LoanBuilder()
+    LoanBuilder loan = new LoanBuilder()
       .withId(id)
       .open()
       .withUserId(otherUser.getId())
       .withProxyUserId(proxy.getId())
       .withItemId(itemId)
       .withLoanDate(loanDate)
-      .withDueDate(dueDate).create();
+      .withDueDate(dueDate);
 
-    CompletableFuture<Response> postCompleted = new CompletableFuture<>();
+    Response postResponse = loansFixture.attemptToCreateLoan(loan, 422);
 
-    client.post(loansUrl(), loan,
-      ResponseHandler.any(postCompleted));
-
-    Response postResponse = postCompleted.get(5, TimeUnit.SECONDS);
-
-    assertThat(postResponse.getBody(), postResponse.getStatusCode(), is(422));
+    assertThat(postResponse.getJson(), hasErrorWith(
+      hasMessage("proxyUserId is not valid")));
   }
 
   @Test
-  public void cannotCreateProxiedLoanWhenNoRelationship()
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException {
-
+  public void cannotCreateProxiedLoanWhenNoRelationship() {
     UUID id = UUID.randomUUID();
 
     DateTime loanDate = new DateTime(2017, 2, 27, 10, 23, 43, DateTimeZone.UTC);
@@ -218,23 +191,19 @@ public class LoanAPIProxyTests extends APITests {
     IndividualResource requestingUser = usersFixture.jessica();
     IndividualResource userAttemptingToProxy = usersFixture.james();
 
-    JsonObject loan = new LoanBuilder()
+    LoanBuilder loan = new LoanBuilder()
       .withId(id)
       .open()
       .withUserId(requestingUser.getId())
       .withProxyUserId(userAttemptingToProxy.getId())
       .withItemId(itemId)
       .withLoanDate(loanDate)
-      .withDueDate(dueDate).create();
+      .withDueDate(dueDate);
 
-    CompletableFuture<Response> postCompleted = new CompletableFuture<>();
+    Response postResponse = loansFixture.attemptToCreateLoan(loan, 422);
 
-    client.post(loansUrl(), loan,
-      ResponseHandler.any(postCompleted));
-
-    Response postResponse = postCompleted.get(5, TimeUnit.SECONDS);
-
-    assertThat(postResponse.getBody(), postResponse.getStatusCode(), is(422));
+    assertThat(postResponse.getJson(), hasErrorWith(
+      hasMessage("proxyUserId is not valid")));
   }
 
   @Test
