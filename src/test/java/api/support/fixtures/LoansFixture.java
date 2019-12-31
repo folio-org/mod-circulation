@@ -365,29 +365,30 @@ public class LoansFixture {
       urlForLoan(id), 200, "get-loan-by-id"));
   }
 
-  public Response getLoans() {
+  public MultipleJsonRecords getLoans() {
     return getLoans(noQuery());
   }
 
-  public Response getLoans(Limit limit) {
+  public MultipleJsonRecords getLoans(Limit limit) {
     return getLoans(noQuery(), limit, noOffset());
   }
 
-  public Response getLoans(Limit limit, Offset offset) {
+  public MultipleJsonRecords getLoans(Limit limit, Offset offset) {
     return getLoans(noQuery(), limit, offset);
   }
 
-  public Response getLoans(CqlQuery query) {
+  public MultipleJsonRecords getLoans(CqlQuery query) {
     return getLoans(query, noLimit(), noOffset());
   }
 
-  public Response getLoans(CqlQuery query, Limit limit, Offset offset) {
-    return restAssuredClient.get(loansUrl(), query, limit, offset, 200,
-      "get-loans");
+  public MultipleJsonRecords getLoans(CqlQuery query, Limit limit, Offset offset) {
+    return multipleRecordsFrom(
+      restAssuredClient.get(loansUrl(), query, limit, offset, 200,
+      "get-loans"), "loans");
   }
 
   public MultipleJsonRecords getAllLoans() {
-    return multipleRecordsFrom(getLoans(maximumLimit()), "loans");
+    return getLoans(noQuery(), maximumLimit(), noOffset());
   }
 
   public void deleteLoan(UUID loanId) {

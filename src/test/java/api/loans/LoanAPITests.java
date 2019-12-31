@@ -34,6 +34,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
@@ -49,7 +50,6 @@ import api.support.builders.ItemBuilder;
 import api.support.builders.LoanBuilder;
 import api.support.fixtures.ConfigurationExample;
 import api.support.http.InventoryItemResource;
-import api.support.http.Limit;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
@@ -1233,15 +1233,7 @@ public class LoanAPITests extends APITests {
 
     itemsClient.delete(item.getId());
 
-    Response pageResponse = loansFixture.getLoans();
-
-    assertThat(format("Failed to get page of loans: %s",
-      pageResponse.getBody()),
-      pageResponse.getStatusCode(), is(200));
-
-    JsonObject firstPage = pageResponse.getJson();
-
-    JsonObject loan = getLoans(firstPage).get(0);
+    JsonObject loan = loansFixture.getLoans().getFirst();
 
     assertThat("should be no item information available",
       loan.containsKey("item"), is(false));
@@ -1257,34 +1249,21 @@ public class LoanAPITests extends APITests {
     loansFixture.checkOutByBarcode(itemsFixture.basedUponUprooted(),user);
     loansFixture.checkOutByBarcode(itemsFixture.basedUponInterestingTimes(),user);
 
-    Response firstPageResponse = loansFixture.getLoans(limit(3));
-    Response secondPageResponse = loansFixture.getLoans(limit(3), offset(3));
+    MultipleJsonRecords firstPage = loansFixture.getLoans(limit(3));
+    MultipleJsonRecords secondPage = loansFixture.getLoans(limit(3),
+      offset(3));
 
-    assertThat(format("Failed to get first page of loans: %s",
-      firstPageResponse.getBody()),
-      firstPageResponse.getStatusCode(), is(200));
+    assertThat(firstPage.size(), is(3));
+    assertThat(firstPage.totalRecords(), is(5));
 
-    assertThat(format("Failed to get second page of loans: %s",
-      secondPageResponse.getBody()),
-      secondPageResponse.getStatusCode(), is(200));
+    assertThat(secondPage.size(), is(2));
+    assertThat(secondPage.totalRecords(), is(5));
 
-    JsonObject firstPage = firstPageResponse.getJson();
-    JsonObject secondPage = secondPageResponse.getJson();
+    firstPage.forEach(loan -> loanHasExpectedProperties(loan, user));
+    firstPage.forEach(loan -> loanHasExpectedProperties(loan, user));
 
-    List<JsonObject> firstPageLoans = getLoans(firstPage);
-    List<JsonObject> secondPageLoans = getLoans(secondPage);
-
-    assertThat(firstPageLoans.size(), is(3));
-    assertThat(firstPage.getInteger("totalRecords"), is(5));
-
-    assertThat(secondPageLoans.size(), is(2));
-    assertThat(secondPage.getInteger("totalRecords"), is(5));
-
-    firstPageLoans.forEach(loan -> loanHasExpectedProperties(loan, user));
-    secondPageLoans.forEach(loan -> loanHasExpectedProperties(loan, user));
-
-    assertThat(countOfDistinctTitles(firstPageLoans), is(greaterThan(1)));
-    assertThat(countOfDistinctTitles(secondPageLoans), is(greaterThan(1)));
+    assertThat(countOfDistinctTitles(firstPage.stream()), is(greaterThan(1)));
+    assertThat(countOfDistinctTitles(secondPage.stream()), is(greaterThan(1)));
   }
 
   @Test
@@ -1324,56 +1303,32 @@ public class LoanAPITests extends APITests {
 
     String queryTemplate = "userId=%s";
 
-    Response firstPageResponse = loansFixture.getLoans(
+    MultipleJsonRecords firstPage = loansFixture.getLoans(
       queryFromTemplate(queryTemplate, firstUserId));
 
-    Response secondPageResponse = loansFixture.getLoans(
+    MultipleJsonRecords secondPage = loansFixture.getLoans(
       queryFromTemplate(queryTemplate, secondUserId));
 
-    assertThat(format("Failed to get loans for first user: %s",
-      firstPageResponse.getBody()),
-      firstPageResponse.getStatusCode(), is(200));
+    assertThat(firstPage.size(), is(4));
+    assertThat(firstPage.totalRecords(), is(4));
 
-    assertThat(format("Failed to get loans for second user: %s",
-      secondPageResponse.getBody()),
-      secondPageResponse.getStatusCode(), is(200));
+    assertThat(secondPage.size(), is(3));
+    assertThat(secondPage.totalRecords(), is(3));
 
-    JsonObject firstPage = firstPageResponse.getJson();
-    JsonObject secondPage = secondPageResponse.getJson();
+    firstPage.forEach(loan -> loanHasExpectedProperties(loan, firstUser));
+    secondPage.forEach(loan -> loanHasExpectedProperties(loan, secondUser));
 
-    List<JsonObject> firstPageLoans = getLoans(firstPage);
-    List<JsonObject> secondPageLoans = getLoans(secondPage);
-
-    assertThat(firstPageLoans.size(), is(4));
-    assertThat(firstPage.getInteger("totalRecords"), is(4));
-
-    assertThat(secondPageLoans.size(), is(3));
-    assertThat(secondPage.getInteger("totalRecords"), is(3));
-
-    firstPageLoans.forEach(loan -> loanHasExpectedProperties(loan, firstUser));
-    secondPageLoans.forEach(loan -> loanHasExpectedProperties(loan, secondUser));
-
-    assertThat(countOfDistinctTitles(firstPageLoans), is(greaterThan(1)));
-    assertThat(countOfDistinctTitles(secondPageLoans), is(greaterThan(1)));
+    assertThat(countOfDistinctTitles(firstPage.stream()), is(greaterThan(1)));
+    assertThat(countOfDistinctTitles(secondPage.stream()), is(greaterThan(1)));
   }
 
   @Test
   public void canFindNoResultsFromSearch() {
-    UUID firstUserId = UUID.randomUUID();
+    MultipleJsonRecords loans = loansFixture.getLoans(
+      queryFromTemplate("userId=%s", UUID.randomUUID()));
 
-    Response firstPageResponse = loansFixture.getLoans(
-      queryFromTemplate("userId=%s", firstUserId));
-
-    assertThat(format("Failed to get loans for first user: %s",
-      firstPageResponse.getBody()),
-      firstPageResponse.getStatusCode(), is(200));
-
-    JsonObject firstPage = firstPageResponse.getJson();
-
-    List<JsonObject> firstPageLoans = getLoans(firstPage);
-
-    assertThat(firstPageLoans.size(), is(0));
-    assertThat(firstPage.getInteger("totalRecords"), is(0));
+    assertThat(loans.size(), is(0));
+    assertThat(loans.totalRecords(), is(0));
   }
 
   @Test
@@ -1420,42 +1375,27 @@ public class LoanAPITests extends APITests {
 
     String queryTemplate = "userId=\"%s\" and status.name=\"%s\"";
 
-    Response openLoansResponse = loansFixture.getLoans(
+    MultipleJsonRecords openLoans = loansFixture.getLoans(
       queryFromTemplate(queryTemplate, userId, "Open"));
 
-    Response closedLoansResponse = loansFixture.getLoans(
+    MultipleJsonRecords closedLoans = loansFixture.getLoans(
       queryFromTemplate(queryTemplate, userId, "Closed"));
 
-    assertThat(format("Failed to get open loans: %s",
-      openLoansResponse.getBody()),
-      openLoansResponse.getStatusCode(), is(200));
-
-    assertThat(format("Failed to get closed loans: %s",
-      closedLoansResponse.getBody()),
-      closedLoansResponse.getStatusCode(), is(200));
-
-    JsonObject openLoansPage = openLoansResponse.getJson();
-    JsonObject closedLoansPage = closedLoansResponse.getJson();
-
-    List<JsonObject> openLoans = getLoans(openLoansPage);
-    List<JsonObject> closedLoans = getLoans(closedLoansPage);
-
     assertThat(openLoans.size(), is(2));
-    assertThat(openLoansPage.getInteger("totalRecords"), is(2));
+    assertThat(openLoans.totalRecords(), is(2));
 
     assertThat(closedLoans.size(), is(4));
-    assertThat(closedLoansPage.getInteger("totalRecords"), is(4));
+    assertThat(closedLoans.totalRecords(), is(4));
 
-    openLoans.forEach(loan1 -> loanHasExpectedProperties(loan1, user));
+    openLoans.forEach(loan -> loanHasExpectedProperties(loan, user));
 
     closedLoans.forEach(loan -> {
         loanHasExpectedProperties(loan, user);
         hasProperty("returnDate", loan, "loan");
-      }
-    );
+      });
 
-    assertThat(countOfDistinctTitles(openLoans), is(greaterThan(1)));
-    assertThat(countOfDistinctTitles(closedLoans), is(greaterThan(1)));
+    assertThat(countOfDistinctTitles(openLoans.stream()), is(greaterThan(1)));
+    assertThat(countOfDistinctTitles(closedLoans.stream()), is(greaterThan(1)));
   }
 
   @Test
@@ -1694,19 +1634,13 @@ public class LoanAPITests extends APITests {
   }
 
   private void queryLoans(int limit) {
-    Response pageResponse = loansFixture.getLoans(Limit.limit(limit));
-
-    JsonObject page = pageResponse.getJson();
-
-    List<JsonObject> loans = getLoans(page);
+    MultipleJsonRecords loans = loansFixture.getLoans(limit(limit));
 
     assertThat("Did not have expected number of loans in page",
       loans.size(), is(limit));
 
-    for (JsonObject loan : loans) {
-      assertThat("%s loan response does not have item", loan.containsKey("item"),
-        is(true));
-    }
+    loans.forEach(loan ->
+      assertThat("loan does not have item", loan.containsKey("item"), is(true)));
   }
 
   @Test
@@ -1883,14 +1817,10 @@ public class LoanAPITests extends APITests {
         "checkoutServicePoint");
   }
 
-  private Integer countOfDistinctTitles(List<JsonObject> loans) {
-    return Long.valueOf(loans.stream()
+  private Integer countOfDistinctTitles(Stream<JsonObject> loans) {
+    return Long.valueOf(loans
       .map(loan -> loan.getJsonObject("item").getString("title"))
       .distinct()
       .count()).intValue();
-  }
-
-  private List<JsonObject> getLoans(JsonObject page) {
-    return toList(page.getJsonArray("loans"));
   }
 }
