@@ -8,6 +8,7 @@ import static api.support.http.InterfaceUrls.requestsUrl;
 import static api.support.http.Limit.noLimit;
 import static api.support.http.Offset.noOffset;
 import static java.net.HttpURLConnection.HTTP_NO_CONTENT;
+import static java.net.HttpURLConnection.HTTP_OK;
 import static java.util.function.Function.identity;
 
 import java.net.URL;
@@ -149,7 +150,7 @@ public class RequestsFixture {
     final JsonObject representation = requestToBuild.create();
 
     return new IndividualResource(restAssuredClient.post(representation,
-        requestsUrl(pathToMoveRequest(representation)), 200, "move-request"));
+        requestsUrl(pathToMoveRequest(representation)), HTTP_OK, "move-request"));
   }
 
   public Response attemptMove(MoveRequestBuilder requestToBuild) {
@@ -169,14 +170,14 @@ public class RequestsFixture {
 
   public MultipleJsonRecords getRequests(CqlQuery query, Limit limit, Offset offset) {
     return multipleRecordsFrom(restAssuredClient.get(requestsUrl(), query,
-      limit, offset, 200, "get-requests"), "requests");
+      limit, offset, HTTP_OK, "get-requests"), "requests");
   }
 
   //TODO: Replace return type with MultipleJsonRecords
   public MultipleRecords<JsonObject> getQueueFor(IndividualResource item) {
     return MultipleRecords.from(restAssuredClient.get(
-        requestQueueUrl(item.getId()), 200, "request-queue-request"),
-        identity() ,"requests").value();
+        requestQueueUrl(item.getId()), HTTP_OK, "request-queue-request"),
+        identity(), "requests").value();
   }
 
   public Response deleteAllRequests() {
@@ -186,7 +187,7 @@ public class RequestsFixture {
 
   public Response deleteRequest(UUID requestId) {
     return restAssuredClient.delete(individualRequestUrl(requestId),
-      204, "delete-a-request");
+      HTTP_NO_CONTENT, "delete-a-request");
   }
 
   private URL individualRequestUrl(UUID requestId) {
