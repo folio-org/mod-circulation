@@ -10,6 +10,7 @@ import static api.support.http.Offset.noOffset;
 import static java.net.HttpURLConnection.HTTP_NO_CONTENT;
 import static java.util.function.Function.identity;
 
+import java.net.URL;
 import java.util.UUID;
 
 import org.folio.circulation.domain.MultipleRecords;
@@ -17,9 +18,6 @@ import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 import org.joda.time.DateTime;
 
-import api.requests.RequestsAPIDeletionTests;
-import api.requests.RequestsAPIProxyTests;
-import api.requests.RequestsAPIRetrievalTests;
 import api.support.MultipleJsonRecords;
 import api.support.RestAssuredClient;
 import api.support.builders.MoveRequestBuilder;
@@ -128,12 +126,12 @@ public class RequestsFixture {
 
   public Response replaceRequest(UUID id, RequestBuilder updatedRequest) {
     return restAssuredClient.put(updatedRequest.create(),
-      requestsUrl(String.format("/%s", id)), HTTP_NO_CONTENT, "replace-request");
+      individualRequestUrl(id), HTTP_NO_CONTENT, "replace-request");
   }
 
   public Response attemptToReplaceRequest(UUID id, RequestBuilder updatedRequest) {
     return restAssuredClient.put(updatedRequest.create(),
-      requestsUrl(String.format("/%s", id)), "attempt-to-replace-request");
+      individualRequestUrl(id), "attempt-to-replace-request");
   }
 
   public void cancelRequest(IndividualResource request) {
@@ -187,8 +185,12 @@ public class RequestsFixture {
   }
 
   public Response deleteRequest(UUID requestId) {
-    return restAssuredClient.delete(requestsUrl(String.format("/%s", requestId)),
+    return restAssuredClient.delete(individualRequestUrl(requestId),
       204, "delete-a-request");
+  }
+
+  private URL individualRequestUrl(UUID requestId) {
+    return requestsUrl(String.format("/%s", requestId));
   }
 
   private String pathToMoveRequest(JsonObject representation) {
