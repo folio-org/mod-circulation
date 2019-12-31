@@ -34,24 +34,19 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ThreadLocalRandom;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 
-import org.folio.circulation.domain.representations.LoanProperties;
-import org.folio.circulation.support.JsonArrayHelper;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.client.ResponseHandler;
 import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
 import org.joda.time.Period;
 import org.joda.time.format.ISODateTimeFormat;
 import org.junit.Test;
@@ -548,11 +543,7 @@ public class LoanAPITests extends APITests {
   }
 
   @Test
-  public void canCreateClosedLoanInSpecificLocationWithoutUserId()
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException {
-
+  public void canCreateClosedLoanInSpecificLocationWithoutUserId() {
     UUID loanId = UUID.randomUUID();
 
     UUID checkinServicePointId = servicePointsFixture.cd1().getId();
@@ -561,24 +552,17 @@ public class LoanAPITests extends APITests {
 
     CompletableFuture<Response> createCompleted = new CompletableFuture<>();
 
-    client.put(loansUrl(format("/%s", loanId)), new LoanBuilder()
+    loansFixture.createLoanAtSpecificLocation(loanId, new LoanBuilder()
         .withId(loanId)
         .withItemId(itemId)
         .withCheckinServicePointId(checkinServicePointId)
         .closed()
-        .withNoUserId()
-        .create(),
-      ResponseHandler.any(createCompleted));
-
-    Response response = createCompleted.get(5, SECONDS);
-
-    assertThat(response.getStatusCode(), is(204));
+        .withNoUserId());
 
     final IndividualResource item = itemsClient.get(itemId);
 
     assertThat("Item status should be available",
-      item.getJson().getJsonObject("status").getString("name"),
-      is("Available"));
+      item.getJson().getJsonObject("status").getString("name"), is("Available"));
   }
 
   @Test
@@ -632,11 +616,7 @@ public class LoanAPITests extends APITests {
   }
 
   @Test
-  public void cannotCreateOpenLoanAtSpecificLocationWithoutUserId()
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException {
-
+  public void cannotCreateOpenLoanAtSpecificLocationWithoutUserId() {
     UUID loanId = UUID.randomUUID();
 
     final UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
@@ -644,22 +624,14 @@ public class LoanAPITests extends APITests {
     DateTime loanDate = new DateTime(2017, 2, 27, 10, 23, 43, UTC);
     DateTime dueDate = new DateTime(2017, 3, 29, 10, 23, 43, UTC);
 
-    CompletableFuture<Response> createCompleted = new CompletableFuture<>();
-
-    client.put(loansUrl(format("/%s", loanId)), new LoanBuilder()
+    Response response = loansFixture.attemptToCreateLoanAtSpecificLocation(
+      loanId, new LoanBuilder()
         .withId(loanId)
         .withNoUserId()
         .withItemId(itemId)
         .withLoanDate(loanDate)
         .withDueDate(dueDate)
-        .open()
-        .create(),
-      ResponseHandler.any(createCompleted));
-
-    Response response = createCompleted.get(5, SECONDS);
-
-    assertThat(format("Should not create loan: %s", response.getBody()),
-      response.getStatusCode(), is(UNPROCESSABLE_ENTITY));
+        .open());
 
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("Open loan must have a user ID"),
@@ -668,7 +640,6 @@ public class LoanAPITests extends APITests {
 
   @Test
   public void canCreateALoanWithSystemReturnDate() {
-
     UUID id = UUID.randomUUID();
     UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
     UUID userId = usersFixture.charlotte().getId();

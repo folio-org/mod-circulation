@@ -87,14 +87,14 @@ public class LoansFixture {
     return new IndividualResource(attemptToCreateLoan(builder, 201));
   }
 
-  public Response attemptToCreateLoan(
-    IndividualResource item, IndividualResource to) {
+  public Response attemptToCreateLoan(IndividualResource item,
+    IndividualResource to) {
 
     return attemptToCreateLoan(item, to, UNPROCESSABLE_ENTITY);
   }
 
-  public Response attemptToCreateLoan(
-    IndividualResource item, IndividualResource to, int expectedStatusCode) {
+  public Response attemptToCreateLoan(IndividualResource item,
+    IndividualResource to, int expectedStatusCode) {
 
     return attemptToCreateLoan(new LoanBuilder()
       .open()
@@ -102,23 +102,36 @@ public class LoansFixture {
       .withUserId(to.getId()), expectedStatusCode);
   }
 
-  public Response attemptToCreateLoan(
-    LoanBuilder loanBuilder, int expectedStatusCode) {
+  public Response attemptToCreateLoan(LoanBuilder loanBuilder,
+    int expectedStatusCode) {
 
     return restAssuredClient.post(loanBuilder.create(), loansUrl(),
       expectedStatusCode, "post-loan");
   }
 
-  public void replaceLoan(UUID id, JsonObject representation) {
-    restAssuredClient.put(representation, urlForLoan(id), 204, "replace-loan");
+  public void createLoanAtSpecificLocation(UUID loanId, LoanBuilder loanBuilder) {
+    restAssuredClient.put(loanBuilder.create(), urlForLoan(loanId), 204,
+      "create-loan-at-specific-location");
   }
 
-  public Response attemptToReplaceLoan(UUID id, JsonObject representation) {
-    return restAssuredClient.put(representation, urlForLoan(id), "replace-loan");
+  public Response attemptToCreateLoanAtSpecificLocation(UUID loanId,
+    LoanBuilder loanBuilder) {
+
+    return restAssuredClient.put(loanBuilder.create(), urlForLoan(loanId),
+      "attempt-to-create-loan-at-specific-location");
+  }
+
+  public void replaceLoan(UUID loanId, JsonObject representation) {
+    restAssuredClient.put(representation, urlForLoan(loanId), 204, "replace-loan");
+  }
+
+  public Response attemptToReplaceLoan(UUID loanId, JsonObject representation) {
+    return restAssuredClient.put(representation, urlForLoan(loanId),
+      "replace-loan");
   }
 
   public Response declareItemLost(UUID loanId,
-      DeclareItemLostRequestBuilder builder) {
+    DeclareItemLostRequestBuilder builder) {
 
     JsonObject request = builder.create();
 
@@ -127,12 +140,10 @@ public class LoansFixture {
   }
 
   public IndividualResource checkOutByBarcode(IndividualResource item) {
-
     return checkOutByBarcode(item, usersFixture.jessica());
   }
 
-  public IndividualResource checkOutByBarcode(
-    IndividualResource item,
+  public IndividualResource checkOutByBarcode(IndividualResource item,
     IndividualResource to) {
 
     return checkOutByBarcode(new CheckOutByBarcodeRequestBuilder()
