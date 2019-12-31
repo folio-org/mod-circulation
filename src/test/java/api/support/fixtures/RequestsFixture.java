@@ -17,6 +17,7 @@ import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 import org.joda.time.DateTime;
 
+import api.requests.RequestsAPIDeletionTests;
 import api.requests.RequestsAPIProxyTests;
 import api.requests.RequestsAPIRetrievalTests;
 import api.support.MultipleJsonRecords;
@@ -178,6 +179,11 @@ public class RequestsFixture {
     return MultipleRecords.from(restAssuredClient.get(
         requestQueueUrl(item.getId()), 200, "request-queue-request"),
         identity() ,"requests").value();
+  }
+
+  public Response deleteAllRequests() {
+    return restAssuredClient.delete(requestsUrl(), HTTP_NO_CONTENT,
+      "delete-all-requests");
   }
 
   private String pathToMoveRequest(JsonObject representation) {

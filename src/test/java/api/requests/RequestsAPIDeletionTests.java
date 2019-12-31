@@ -7,7 +7,6 @@ import static java.net.HttpURLConnection.HTTP_OK;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 
-import java.net.MalformedURLException;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -22,7 +21,6 @@ import org.junit.Test;
 
 import api.support.APITests;
 import api.support.builders.RequestBuilder;
-import api.support.http.InterfaceUrls;
 import api.support.http.InventoryItemResource;
 import io.vertx.core.json.JsonObject;
 
@@ -62,7 +60,7 @@ public class RequestsAPIDeletionTests extends APITests {
       .withRequesterId(requesterId))
       .getId();
 
-    Response deleteResponse = deleteAllRequests();
+    Response deleteResponse = requestsFixture.deleteAllRequests();
 
     CompletableFuture<Response> getAllCompleted = new CompletableFuture<>();
 
@@ -151,8 +149,4 @@ public class RequestsAPIDeletionTests extends APITests {
     return JsonArrayHelper.toList(page.getJsonArray("requests"));
   }
 
-  private Response deleteAllRequests() {
-    return restAssuredClient.delete(requestsUrl(),
-      HTTP_NO_CONTENT, "delete-all-requests");
-  }
 }
