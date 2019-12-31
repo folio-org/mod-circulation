@@ -3,7 +3,6 @@ package api.loans;
 import static api.requests.RequestsAPICreationTests.setupMissingItem;
 import static api.support.http.AdditionalHttpStatusCodes.UNPROCESSABLE_ENTITY;
 import static api.support.http.CqlQuery.queryFromTemplate;
-import static api.support.http.InterfaceUrls.loansUrl;
 import static api.support.http.Limit.limit;
 import static api.support.http.Offset.offset;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
@@ -15,8 +14,6 @@ import static api.support.matchers.ValidationErrorMatchers.hasNullParameter;
 import static api.support.matchers.ValidationErrorMatchers.hasUUIDParameter;
 import static java.lang.String.format;
 import static java.net.HttpURLConnection.HTTP_NOT_FOUND;
-import static java.net.HttpURLConnection.HTTP_NO_CONTENT;
-import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.folio.circulation.domain.representations.ItemProperties.CALL_NUMBER_COMPONENTS;
 import static org.folio.circulation.domain.representations.LoanProperties.BORROWER;
 import static org.folio.circulation.support.JsonArrayHelper.toList;
@@ -35,15 +32,11 @@ import java.net.HttpURLConnection;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ThreadLocalRandom;
-import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
-import org.folio.circulation.support.http.client.ResponseHandler;
 import org.joda.time.DateTime;
 import org.joda.time.Period;
 import org.joda.time.format.ISODateTimeFormat;
@@ -55,8 +48,8 @@ import api.support.builders.AccountBuilder;
 import api.support.builders.ItemBuilder;
 import api.support.builders.LoanBuilder;
 import api.support.fixtures.ConfigurationExample;
-import api.support.http.InterfaceUrls;
 import api.support.http.InventoryItemResource;
+import api.support.http.Limit;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
@@ -1535,11 +1528,7 @@ public class LoanAPITests extends APITests {
   }
 
   @Test
-  public void canDeleteALoan()
-    throws InterruptedException,
-    TimeoutException,
-    ExecutionException {
-
+  public void canDeleteALoan() {
     final InventoryItemResource item = itemsFixture.basedUponNod();
 
     final UUID loanId = loansFixture.createLoan(item, usersFixture.rebecca()).getId();
@@ -1586,11 +1575,7 @@ public class LoanAPITests extends APITests {
   }
 
   @Test
-  public void canCreateMultipleLoansWithServicePoints()
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException {
-
+  public void canCreateMultipleLoansWithServicePoints() {
     DateTime loanDate = new DateTime(2017, 2, 27, 10, 23, 43, UTC);
     DateTime dueDate = new DateTime(2017, 3, 29, 10, 23, 43, UTC);
 
@@ -1638,17 +1623,7 @@ public class LoanAPITests extends APITests {
       .withCheckinServicePointId(checkinServicePointId)
       .withCheckoutServicePointId(checkoutServicePointId));
 
-    CompletableFuture<Response> getCompleted = new CompletableFuture<>();
-
-    client.get(InterfaceUrls.loansUrl(), ResponseHandler.any(getCompleted));
-
-    Response getResponse = getCompleted.get(5, SECONDS);
-
-    assertThat(format("Failed to get list of requests: %s",
-      getResponse.getBody()),
-      getResponse.getStatusCode(), is(HttpURLConnection.HTTP_OK));
-
-    List<JsonObject> loanList = getLoans(getResponse.getJson());
+    MultipleJsonRecords loanList = loansFixture.getAllLoans();
 
     loanList.forEach(loanJson -> {
       loanHasCheckinServicePointProperties(loanJson);
@@ -1657,19 +1632,13 @@ public class LoanAPITests extends APITests {
   }
 
   @Test
-  public void canGetPagedLoansWithMoreItemsThanDefaultPageLimit()
-      throws InterruptedException,
-      ExecutionException,
-      TimeoutException {
+  public void canGetPagedLoansWithMoreItemsThanDefaultPageLimit() {
     createLoans(50);
     queryLoans(50);
   }
 
   @Test
-  public void canGetPagedLoansWhenIdQueryWouldExceedQueryStringLengthLimit()
-      throws InterruptedException,
-      ExecutionException,
-      TimeoutException {
+  public void canGetPagedLoansWhenIdQueryWouldExceedQueryStringLengthLimit() {
     createLoans(100);
     queryLoans(100);
   }
@@ -1724,32 +1693,20 @@ public class LoanAPITests extends APITests {
       .withCheckoutServicePointId(checkoutServicePointId));
   }
 
-  private void queryLoans(int limit)
-      throws InterruptedException,
-      ExecutionException,
-      TimeoutException {
-    CompletableFuture<Response> pageCompleted = new CompletableFuture<>();
-
-    client.get(loansUrl() + "?limit=" + limit,
-      ResponseHandler.json(pageCompleted));
-
-    Response pageResponse = pageCompleted.get(10, SECONDS);
-
-    assertThat(format("Failed to get page of loans: %s",
-      pageResponse.getBody()),
-      pageResponse.getStatusCode(), is(200));
+  private void queryLoans(int limit) {
+    Response pageResponse = loansFixture.getLoans(Limit.limit(limit));
 
     JsonObject page = pageResponse.getJson();
 
     List<JsonObject> loans = getLoans(page);
 
-    assertThat("Did not have expeded number of loans in page",
+    assertThat("Did not have expected number of loans in page",
       loans.size(), is(limit));
 
-    loans.forEach(loan -> {
+    for (JsonObject loan : loans) {
       assertThat("%s loan response does not have item", loan.containsKey("item"),
         is(true));
-    });
+    }
   }
 
   @Test
@@ -1927,7 +1884,7 @@ public class LoanAPITests extends APITests {
   }
 
   private Integer countOfDistinctTitles(List<JsonObject> loans) {
-    return new Long(loans.stream()
+    return Long.valueOf(loans.stream()
       .map(loan -> loan.getJsonObject("item").getString("title"))
       .distinct()
       .count()).intValue();
