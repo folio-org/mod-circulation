@@ -42,19 +42,19 @@ public class RequestsAPIDeletionTests extends APITests {
     loansFixture.checkOutByBarcode(smallAngryPlanet);
     loansFixture.checkOutByBarcode(temeraire);
 
-    requestsClient.create(new RequestBuilder()
+    requestsFixture.place(new RequestBuilder()
       .withItemId(nod.getId())
       .withPickupServicePointId(pickupServicePointId)
       .withRequesterId(requesterId))
       .getId();
 
-    requestsClient.create(new RequestBuilder()
+    requestsFixture.place(new RequestBuilder()
       .withItemId(smallAngryPlanet.getId())
       .withPickupServicePointId(pickupServicePointId)
       .withRequesterId(requesterId))
       .getId();
 
-    requestsClient.create(new RequestBuilder()
+    requestsFixture.place(new RequestBuilder()
       .withItemId(temeraire.getId())
       .withPickupServicePointId(pickupServicePointId)
       .withRequesterId(requesterId))
@@ -95,19 +95,19 @@ public class RequestsAPIDeletionTests extends APITests {
     loansFixture.checkOutByBarcode(smallAngryPlanet);
     loansFixture.checkOutByBarcode(temeraire);
 
-    final UUID firstRequestId = requestsClient.create(new RequestBuilder()
+    final UUID firstRequestId = requestsFixture.place(new RequestBuilder()
       .withItemId(nod.getId())
       .withPickupServicePointId(pickupServicePointId)
       .withRequesterId(requesterId))
       .getId();
 
-    final UUID secondRequestId = requestsClient.create(new RequestBuilder()
+    final UUID secondRequestId = requestsFixture.place(new RequestBuilder()
       .withItemId(smallAngryPlanet.getId())
       .withPickupServicePointId(pickupServicePointId)
       .withRequesterId(requesterId))
       .getId();
 
-    final UUID thirdRequestId = requestsClient.create(new RequestBuilder()
+    final UUID thirdRequestId = requestsFixture.place(new RequestBuilder()
       .withItemId(temeraire.getId())
       .withPickupServicePointId(pickupServicePointId)
       .withRequesterId(requesterId))
