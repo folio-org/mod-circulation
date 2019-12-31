@@ -1,6 +1,5 @@
 package api.requests;
 
-import static api.support.http.InterfaceUrls.requestsUrl;
 import static api.support.matchers.ResponseStatusCodeMatcher.hasStatus;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
@@ -60,7 +59,7 @@ public class InstanceRequestsAPICreationTests extends APITests {
       instanceMultipleCopies.getId(), requesterId, pickupServicePointId,
       requestDate, requestExpirationDate);
 
-    Response postResponse = attemptToCreateInstanceRequest(requestBody);
+    Response postResponse = requestsFixture.attemptToPlaceForInstance(requestBody);
 
     JsonObject representation = postResponse.getJson();
     validateInstanceRequestResponse(representation, pickupServicePointId,
@@ -87,7 +86,7 @@ public class InstanceRequestsAPICreationTests extends APITests {
     JsonObject requestBody = createInstanceRequestObject(instance.getId(),
       requesterId, pickupServicePointId, requestDate, requestExpirationDate);
 
-    Response postResponse = attemptToCreateInstanceRequest(requestBody);
+    Response postResponse = requestsFixture.attemptToPlaceForInstance(requestBody);
 
     assertThat(postResponse, hasStatus(HTTP_CREATED));
 
@@ -116,7 +115,7 @@ public class InstanceRequestsAPICreationTests extends APITests {
     JsonObject requestBody = createInstanceRequestObject(instance.getId(),
       requesterId, pickupServicePointId, requestDate, null);
 
-    Response postResponse = attemptToCreateInstanceRequest(requestBody);
+    Response postResponse = requestsFixture.attemptToPlaceForInstance(requestBody);
 
     assertThat(postResponse, hasStatus(HTTP_CREATED));
 
@@ -152,10 +151,10 @@ public class InstanceRequestsAPICreationTests extends APITests {
     itemsFixture.basedUponDunkirkWithCustomHoldingAndLocation(holdings.getId(),
       locationsResource.getId());
 
-    JsonObject requestBody = createInstanceRequestObject(instance.getId(), requesterId,
-      pickupServicePointId, requestDate, requestExpirationDate);
+    JsonObject requestBody = createInstanceRequestObject(instance.getId(),
+      requesterId, pickupServicePointId, requestDate, requestExpirationDate);
 
-    Response postResponse = attemptToCreateInstanceRequest(requestBody);
+    Response postResponse = requestsFixture.attemptToPlaceForInstance(requestBody);
 
     assertThat(postResponse, hasStatus(HTTP_CREATED));
 
@@ -188,12 +187,14 @@ public class InstanceRequestsAPICreationTests extends APITests {
     itemsFixture.basedUponDunkirkWithCustomHoldingAndLocationAndCheckedOut(
       holdings.getId(), null);
 
-    JsonObject requestBody = createInstanceRequestObject(instance.getId(), requesterId,
-      pickupServicePointId, requestDate, requestExpirationDate);
+    JsonObject requestBody = createInstanceRequestObject(instance.getId(),
+      requesterId, pickupServicePointId, requestDate, requestExpirationDate);
+
     requestBody.remove("pickupServicePointId");
     requestBody.remove("instanceId");
 
-    Response postResponse = attemptToCreateInstanceRequest(requestBody);
+    Response postResponse = requestsFixture.attemptToPlaceForInstance(requestBody);
+
     assertEquals(422, postResponse.getStatusCode());
 
     assertThat(postResponse.getJson(), hasErrorWith(allOf(
@@ -243,7 +244,8 @@ public class InstanceRequestsAPICreationTests extends APITests {
       instanceRequester.getId(), pickupServicePointId, instanceRequestDate,
       instanceRequestDateRequestExpirationDate);
 
-    Response postResponse = attemptToCreateInstanceRequest(requestBody);
+    Response postResponse = requestsFixture.attemptToPlaceForInstance(requestBody);
+
     assertEquals(201, postResponse.getStatusCode());
 
 
@@ -291,7 +293,8 @@ public class InstanceRequestsAPICreationTests extends APITests {
       instanceRequester.getId(), pickupServicePointId, instanceRequestDate,
       instanceRequestDateRequestExpirationDate);
 
-    Response postResponse = attemptToCreateInstanceRequest(requestBody);
+    Response postResponse = requestsFixture.attemptToPlaceForInstance(requestBody);
+
     assertEquals(201, postResponse.getStatusCode());
 
     JsonObject representation = postResponse.getJson();
@@ -348,7 +351,8 @@ public class InstanceRequestsAPICreationTests extends APITests {
       instanceRequester.getId(), pickupServicePointId, instanceRequestDate,
       instanceRequestDateRequestExpirationDate);
 
-    Response postResponse = attemptToCreateInstanceRequest(requestBody);
+    Response postResponse = requestsFixture.attemptToPlaceForInstance(requestBody);
+
     assertEquals(201, postResponse.getStatusCode());
 
     JsonObject representation = postResponse.getJson();
@@ -407,7 +411,8 @@ public class InstanceRequestsAPICreationTests extends APITests {
       instanceRequester.getId(), pickupServicePointId, instanceRequestDate,
       instanceRequestDateRequestExpirationDate);
 
-    Response postResponse = attemptToCreateInstanceRequest(requestBody);
+    Response postResponse = requestsFixture.attemptToPlaceForInstance(requestBody);
+
     assertEquals(201, postResponse.getStatusCode());
 
     JsonObject representation = postResponse.getJson();
@@ -458,7 +463,8 @@ public class InstanceRequestsAPICreationTests extends APITests {
       instanceRequester.getId(), pickupServicePointId, instanceRequestDate,
       instanceRequestDateRequestExpirationDate);
 
-    Response postResponse = attemptToCreateInstanceRequest(requestBody);
+    Response postResponse = requestsFixture.attemptToPlaceForInstance(requestBody);
+
     assertEquals(201, postResponse.getStatusCode());
 
     JsonObject representation = postResponse.getJson();
@@ -498,7 +504,8 @@ public class InstanceRequestsAPICreationTests extends APITests {
       instanceRequester.getId(), pickupServicePointId, instanceRequestDate,
       instanceRequestDateRequestExpirationDate);
 
-    Response postResponse = attemptToCreateInstanceRequest(requestBody);
+    Response postResponse = requestsFixture.attemptToPlaceForInstance(requestBody);
+
     assertEquals(201, postResponse.getStatusCode());
 
     JsonObject representation = postResponse.getJson();
@@ -555,7 +562,8 @@ public class InstanceRequestsAPICreationTests extends APITests {
       instanceRequester.getId(), pickupServicePointId, instanceRequestDate,
       instanceRequestDateRequestExpirationDate);
 
-    Response postResponse = attemptToCreateInstanceRequest(requestBody);
+    Response postResponse = requestsFixture.attemptToPlaceForInstance(requestBody);
+
     assertEquals(201, postResponse.getStatusCode());
 
     JsonObject representation = postResponse.getJson();
@@ -624,7 +632,8 @@ public class InstanceRequestsAPICreationTests extends APITests {
       instanceRequester.getId(), pickupServicePointId, instanceRequestDate,
       instanceRequestDateRequestExpirationDate);
 
-    Response postResponse = attemptToCreateInstanceRequest(requestBody);
+    Response postResponse = requestsFixture.attemptToPlaceForInstance(requestBody);
+
     assertEquals(201, postResponse.getStatusCode());
 
     JsonObject representation = postResponse.getJson();
@@ -683,7 +692,7 @@ public class InstanceRequestsAPICreationTests extends APITests {
       usersFixture.charlotte().getId(), pickupServicePointId, requestDate,
       requestExpirationDate);
 
-    Response postResponse = attemptToCreateInstanceRequest(requestBody);
+    Response postResponse = requestsFixture.attemptToPlaceForInstance(requestBody);
 
     JsonObject representation = postResponse.getJson();
     //mainfloor - is the location of CD1, others - no
@@ -725,7 +734,7 @@ public class InstanceRequestsAPICreationTests extends APITests {
       requestDate,
       requestExpirationDate);
 
-    Response postResponse = attemptToCreateInstanceRequest(requestBody);
+    Response postResponse = requestsFixture.attemptToPlaceForInstance(requestBody);
 
     JsonObject representation = postResponse.getJson();
     validateInstanceRequestResponse(representation,
@@ -771,7 +780,7 @@ public class InstanceRequestsAPICreationTests extends APITests {
       requestDate,
       requestExpirationDate);
 
-    Response postResponse = attemptToCreateInstanceRequest(requestBody);
+    Response postResponse = requestsFixture.attemptToPlaceForInstance(requestBody);
 
     assertEquals(422, postResponse.getStatusCode());
 
@@ -796,7 +805,8 @@ public class InstanceRequestsAPICreationTests extends APITests {
       requestDate,
       requestExpirationDate);
 
-    Response postResponse = attemptToCreateInstanceRequest(requestBody);
+    Response postResponse = requestsFixture.attemptToPlaceForInstance(requestBody);
+
     assertEquals(422, postResponse.getStatusCode());
     assertThat(postResponse.getJson(), hasErrorWith(allOf(
       hasMessage("There are no items for this instance"),
@@ -818,7 +828,7 @@ public class InstanceRequestsAPICreationTests extends APITests {
       requestDate,
       requestExpirationDate);
 
-    Response postResponse = attemptToCreateInstanceRequest(requestBody);
+    Response postResponse = requestsFixture.attemptToPlaceForInstance(requestBody);
 
     assertEquals(422, postResponse.getStatusCode());
     assertThat(postResponse.getJson(), hasErrorWith(allOf(
@@ -883,8 +893,4 @@ public class InstanceRequestsAPICreationTests extends APITests {
       is(ItemStatus.CHECKED_OUT.getValue()));
   }
 
-  private Response attemptToCreateInstanceRequest(JsonObject representation) {
-    return restAssuredClient.post(representation,
-      requestsUrl("/instances"), "attempt-to-create-instance-request");
-  }
 }

@@ -127,8 +127,13 @@ public class RequestsFixture {
         .withPickupServicePointId(pickupServicePointId));
   }
 
-  public Response replaceRequest(UUID id, RequestBuilder updatedRequest) {
-    return restAssuredClient.put(updatedRequest.create(),
+  public Response attemptToPlaceForInstance(JsonObject representation) {
+    return restAssuredClient.post(representation, requestsUrl("/instances"),
+      "attempt-to-create-instance-request");
+  }
+
+  public void replaceRequest(UUID id, RequestBuilder updatedRequest) {
+    restAssuredClient.put(updatedRequest.create(),
       individualRequestUrl(id), HTTP_NO_CONTENT, "replace-request");
   }
 
@@ -187,8 +192,8 @@ public class RequestsFixture {
       "delete-all-requests");
   }
 
-  public Response deleteRequest(UUID requestId) {
-    return restAssuredClient.delete(individualRequestUrl(requestId),
+  public void deleteRequest(UUID requestId) {
+    restAssuredClient.delete(individualRequestUrl(requestId),
       HTTP_NO_CONTENT, "delete-a-request");
   }
 
