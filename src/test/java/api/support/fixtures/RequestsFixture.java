@@ -30,6 +30,8 @@ import api.support.http.ResourceClient;
 import io.vertx.core.json.JsonObject;
 
 public class RequestsFixture {
+  private final String REQUESTS_COLLECTION_PROPERTY_NAME = "requests";
+
   private final ResourceClient requestsClient;
   private final CancellationReasonsFixture cancellationReasonsFixture;
   private final ServicePointsFixture servicePointsFixture;
@@ -170,14 +172,14 @@ public class RequestsFixture {
 
   public MultipleJsonRecords getRequests(CqlQuery query, Limit limit, Offset offset) {
     return multipleRecordsFrom(restAssuredClient.get(requestsUrl(), query,
-      limit, offset, HTTP_OK, "get-requests"), "requests");
+      limit, offset, HTTP_OK, "get-requests"), REQUESTS_COLLECTION_PROPERTY_NAME);
   }
 
   //TODO: Replace return type with MultipleJsonRecords
   public MultipleRecords<JsonObject> getQueueFor(IndividualResource item) {
     return MultipleRecords.from(restAssuredClient.get(
         requestQueueUrl(item.getId()), HTTP_OK, "request-queue-request"),
-        identity(), "requests").value();
+        identity(), REQUESTS_COLLECTION_PROPERTY_NAME).value();
   }
 
   public Response deleteAllRequests() {
