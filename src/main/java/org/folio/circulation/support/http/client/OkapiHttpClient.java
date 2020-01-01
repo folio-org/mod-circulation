@@ -7,7 +7,6 @@ import static org.folio.circulation.support.http.OkapiHeader.TOKEN;
 import static org.folio.circulation.support.http.OkapiHeader.USER_ID;
 
 import java.lang.invoke.MethodHandles;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.function.Consumer;
 
@@ -110,16 +109,6 @@ public class OkapiHttpClient {
     log.info("PUT {}, Request: {}", url, encodedBody);
 
     request.end(encodedBody);
-  }
-
-  public void get(
-    URL url,
-    String query,
-    Handler<HttpClientResponse> responseHandler)
-    throws MalformedURLException {
-
-    get(new URL(url.getProtocol(), url.getHost(), url.getPort(),
-        url.getPath() + "?" + query).toString(), responseHandler);
   }
 
   public void get(String url, Handler<HttpClientResponse> responseHandler) {

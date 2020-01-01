@@ -14,6 +14,7 @@ import java.util.stream.Collectors;
 import org.folio.circulation.Launcher;
 import org.folio.circulation.support.VertxAssistant;
 import org.folio.circulation.support.http.client.OkapiHttpClient;
+import org.folio.circulation.support.http.client.VertxWebClientOkapiHttpClient;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.slf4j.Logger;
@@ -98,6 +99,12 @@ public class APITestContext {
     return new OkapiHttpClient(
       vertxAssistant.createUsingVertx(Vertx::createHttpClient),
       okapiUrl(), TENANT_ID, TOKEN, USER_ID, REQUEST_ID, exceptionHandler);
+  }
+
+  public static VertxWebClientOkapiHttpClient createWebClient(
+    Consumer<Throwable> exceptionHandler) {
+
+    return createClient(exceptionHandler).toWebClient();
   }
 
   static void deployVerticles()

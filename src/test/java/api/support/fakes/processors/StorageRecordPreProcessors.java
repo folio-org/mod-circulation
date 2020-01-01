@@ -1,5 +1,6 @@
 package api.support.fakes.processors;
 
+import static api.support.APITestContext.createWebClient;
 import static api.support.http.InterfaceUrls.holdingsStorageUrl;
 import static org.apache.commons.lang3.ObjectUtils.firstNonNull;
 import static org.folio.circulation.domain.representations.ItemProperties.HOLDINGS_RECORD_ID;
@@ -118,9 +119,7 @@ public final class StorageRecordPreProcessors {
   }
 
   private static CompletableFuture<JsonObject> getHoldingById(String id) {
-    return APITestContext
-      .createClient(ex -> log.warn("Error: ", ex))
-      .toWebClient()
+    return createWebClient(ex -> log.warn("Error: ", ex))
       .get(holdingsStorageUrl("?query=id=" + id))
       .thenApply(result -> result
         .map(StorageRecordPreProcessors::getFirstHoldingsRecord)
