@@ -112,11 +112,6 @@ public class OkapiHttpClient {
     request.end(encodedBody);
   }
 
-  public void get(URL url, Handler<HttpClientResponse> responseHandler) {
-
-    get(url.toString(), responseHandler);
-  }
-
   public void get(
     URL url,
     String query,
@@ -124,8 +119,7 @@ public class OkapiHttpClient {
     throws MalformedURLException {
 
     get(new URL(url.getProtocol(), url.getHost(), url.getPort(),
-        url.getPath() + "?" + query),
-      responseHandler);
+        url.getPath() + "?" + query).toString(), responseHandler);
   }
 
   public void get(String url, Handler<HttpClientResponse> responseHandler) {

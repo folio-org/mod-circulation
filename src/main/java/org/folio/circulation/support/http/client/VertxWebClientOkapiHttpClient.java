@@ -82,6 +82,10 @@ public class VertxWebClientOkapiHttpClient {
     return futureResponse;
   }
 
+  public CompletableFuture<Result<Response>> get(URL url) {
+    return get(url.toString());
+  }
+
   public CompletableFuture<Result<Response>> get(String url) {
     return get(url, DEFAULT_TIMEOUT_IN_MILLISECONDS);
   }

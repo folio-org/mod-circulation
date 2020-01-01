@@ -16,7 +16,6 @@ import org.apache.commons.lang3.tuple.ImmutableTriple;
 import org.apache.commons.lang3.tuple.Triple;
 import org.folio.circulation.domain.representations.ItemProperties;
 import org.folio.circulation.support.http.client.Response;
-import org.folio.circulation.support.http.client.ResponseHandler;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -113,20 +112,22 @@ public final class StorageRecordPreProcessors {
         effectiveCallNumberComponents.put(effectivePropertyName, propertyValue);
       });
 
-      return newItem.put("effectiveCallNumberComponents", effectiveCallNumberComponents);
+      return newItem.put("effectiveCallNumberComponents",
+        effectiveCallNumberComponents);
     });
   }
 
   private static CompletableFuture<JsonObject> getHoldingById(String id) {
-    final CompletableFuture<Response> getCompleted = new CompletableFuture<>();
-
-    APITestContext
+    return APITestContext
       .createClient(ex -> log.warn("Error: ", ex))
-      .get(holdingsStorageUrl("?query=id=" + id), ResponseHandler.json(getCompleted));
+      .toWebClient()
+      .get(holdingsStorageUrl("?query=id=" + id))
+      .thenApply(result -> result
+        .map(StorageRecordPreProcessors::getFirstHoldingsRecord)
+        .orElse(null));
+  }
 
-    return getCompleted
-      .thenApply(response -> response.getJson().getJsonArray("holdingsRecords")
-        .getJsonObject(0)
-      );
+  private static JsonObject getFirstHoldingsRecord(Response response) {
+    return response.getJson().getJsonArray("holdingsRecords").getJsonObject(0);
   }
 }
