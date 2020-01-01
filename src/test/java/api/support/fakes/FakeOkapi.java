@@ -1,6 +1,7 @@
 package api.support.fakes;
 
 import static api.support.APITestContext.circulationModulePort;
+import static api.support.APITestContext.createWebClient;
 import static api.support.fakes.StorageSchema.validatorForLocationCampSchema;
 import static api.support.fakes.StorageSchema.validatorForLocationInstSchema;
 import static api.support.fakes.StorageSchema.validatorForLocationLibSchema;
@@ -24,11 +25,9 @@ import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.ValidationErrorFailure;
 import org.folio.circulation.support.http.client.VertxWebClientOkapiHttpClient;
-import org.folio.circulation.support.http.server.ServerErrorResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import api.support.APITestContext;
 import api.support.fakes.processors.StorageRecordPreProcessors;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Future;
@@ -374,7 +373,7 @@ public class FakeOkapi extends AbstractVerticle {
   private void forwardApplyingCirculationRulesRequest(RoutingContext context,
     String policyNamePartialPath) {
 
-    VertxWebClientOkapiHttpClient client = createClient(context);
+    VertxWebClientOkapiHttpClient client = createWebClient();
 
     client.get(String.format("http://localhost:%s/circulation/rules/%s?%s",
       circulationModulePort(), policyNamePartialPath, context.request().query()))
@@ -387,13 +386,6 @@ public class FakeOkapi extends AbstractVerticle {
           result.cause().writeTo(context.response());
         }
       });
-  }
-
-  private VertxWebClientOkapiHttpClient createClient(RoutingContext context) {
-    return APITestContext.createWebClient(throwable ->
-      ServerErrorResponse.internalError(context.response(),
-        String.format("Exception when forward circulation rules apply request: %s",
-          throwable.getMessage())));
   }
 
   @Override

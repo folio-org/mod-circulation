@@ -118,7 +118,7 @@ public final class StorageRecordPreProcessors {
   }
 
   private static CompletableFuture<JsonObject> getHoldingById(String id) {
-    return createWebClient(ex -> log.warn("Error: ", ex))
+    return createWebClient()
       .get(holdingsStorageUrl("?query=id=" + id))
       .thenApply(result -> result
         .map(StorageRecordPreProcessors::getFirstHoldingsRecord)

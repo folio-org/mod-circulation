@@ -8,12 +8,10 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import org.folio.circulation.Launcher;
 import org.folio.circulation.support.VertxAssistant;
-import org.folio.circulation.support.http.client.OkapiHttpClient;
 import org.folio.circulation.support.http.client.VertxWebClientOkapiHttpClient;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
@@ -95,13 +93,10 @@ public class APITestContext {
     }
   }
 
-  public static VertxWebClientOkapiHttpClient createWebClient(
-    Consumer<Throwable> exceptionHandler) {
-
-    return new OkapiHttpClient(
-      vertxAssistant.createUsingVertx(Vertx::createHttpClient),
-      okapiUrl(), TENANT_ID, TOKEN, USER_ID, REQUEST_ID, exceptionHandler)
-        .toWebClient();
+  public static VertxWebClientOkapiHttpClient createWebClient() {
+    return VertxWebClientOkapiHttpClient.createClientUsing(
+      vertxAssistant.createUsingVertx(Vertx::createHttpClient), okapiUrl(),
+      TENANT_ID, TOKEN, USER_ID, REQUEST_ID);
   }
 
   static void deployVerticles()
