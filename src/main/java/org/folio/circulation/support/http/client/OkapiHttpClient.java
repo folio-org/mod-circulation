@@ -31,13 +31,8 @@ public class OkapiHttpClient {
   private final String requestId;
   private final Consumer<Throwable> exceptionHandler;
 
-  public OkapiHttpClient(
-    HttpClient httpClient,
-    URL okapiUrl,
-    String tenantId,
-    String token,
-    String userId,
-    String requestId,
+  public OkapiHttpClient(HttpClient httpClient, URL okapiUrl, String tenantId,
+    String token, String userId, String requestId,
     Consumer<Throwable> exceptionHandler) {
 
     this.client = httpClient;
@@ -54,9 +49,7 @@ public class OkapiHttpClient {
       tenantId, token, userId, requestId);
   }
 
-  public void post(
-    URL url,
-    Object body,
+  public void post(URL url, Object body,
     Handler<HttpClientResponse> responseHandler) {
 
     HttpClientRequest request = client.postAbs(url.toString(), responseHandler);
@@ -82,17 +75,13 @@ public class OkapiHttpClient {
     }
   }
 
-  public void put(
-    URL url,
-    Object body,
+  public void put(URL url, Object body,
     Handler<HttpClientResponse> responseHandler) {
 
     put(url.toString(), body, responseHandler);
   }
 
-  public void put(
-    String url,
-    Object body,
+  public void put(String url, Object body,
     Handler<HttpClientResponse> responseHandler) {
 
     HttpClientRequest request = client.putAbs(url, responseHandler);
@@ -111,25 +100,11 @@ public class OkapiHttpClient {
     request.end(encodedBody);
   }
 
-  public void get(String url, Handler<HttpClientResponse> responseHandler) {
-    log.info("GET {}", url);
-
-    HttpClientRequest request = client.getAbs(url, responseHandler);
-
-    addStandardHeaders(request);
-
-    request.exceptionHandler(exceptionHandler::accept);
-
-    request.end();
-  }
-
   public void delete(URL url, Handler<HttpClientResponse> responseHandler) {
-
     delete(url.toString(), responseHandler);
   }
 
   public void delete(String url, Handler<HttpClientResponse> responseHandler) {
-
     HttpClientRequest request = client.deleteAbs(url, responseHandler);
 
     addStandardHeaders(request);
