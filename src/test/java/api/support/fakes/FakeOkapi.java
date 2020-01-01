@@ -12,6 +12,7 @@ import static api.support.fixtures.LibraryHoursExamples.CASE_CLOSED_LIBRARY_IN_T
 import static api.support.fixtures.LibraryHoursExamples.CASE_CLOSED_LIBRARY_SERVICE_POINT_ID;
 import static api.support.fixtures.LibraryHoursExamples.getLibraryHoursById;
 import static java.util.Arrays.asList;
+import static org.folio.circulation.support.http.server.ForwardResponse.forward;
 import static org.folio.circulation.support.results.CommonFailures.failedDueToServerError;
 
 import java.io.IOException;
@@ -22,9 +23,7 @@ import java.util.Objects;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.ValidationErrorFailure;
-import org.folio.circulation.support.http.client.BufferHelper;
-import org.folio.circulation.support.http.client.OkapiHttpClient;
-import org.folio.circulation.support.http.server.ForwardResponse;
+import org.folio.circulation.support.http.client.VertxWebClientOkapiHttpClient;
 import org.folio.circulation.support.http.server.ServerErrorResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -375,18 +374,23 @@ public class FakeOkapi extends AbstractVerticle {
   private void forwardApplyingCirculationRulesRequest(RoutingContext context,
     String policyNamePartialPath) {
 
-    OkapiHttpClient client = createClient(context);
+    VertxWebClientOkapiHttpClient client = createClient(context);
 
     client.get(String.format("http://localhost:%s/circulation/rules/%s?%s",
-      circulationModulePort(), policyNamePartialPath, context.request().query()),
-      httpClientResponse ->
-        httpClientResponse.bodyHandler(buffer ->
-          ForwardResponse.forward(context.response(), httpClientResponse,
-            BufferHelper.stringFromBuffer(buffer))));
+      circulationModulePort(), policyNamePartialPath, context.request().query()))
+      .thenAccept(result -> {
+        //TODO: Replace with better construct for applying a side effect
+        if (result.succeeded()) {
+          forward(context.response(), result.value());
+        }
+        else {
+          result.cause().writeTo(context.response());
+        }
+      });
   }
 
-  private OkapiHttpClient createClient(RoutingContext context) {
-    return APITestContext.createClient(throwable ->
+  private VertxWebClientOkapiHttpClient createClient(RoutingContext context) {
+    return APITestContext.createWebClient(throwable ->
       ServerErrorResponse.internalError(context.response(),
         String.format("Exception when forward circulation rules apply request: %s",
           throwable.getMessage())));
