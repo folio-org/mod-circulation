@@ -21,7 +21,6 @@ import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import api.support.APITestContext;
 import io.vertx.core.json.JsonObject;
 
 public final class StorageRecordPreProcessors {

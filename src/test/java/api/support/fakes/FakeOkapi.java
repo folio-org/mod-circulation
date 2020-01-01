@@ -1,5 +1,6 @@
 package api.support.fakes;
 
+import static api.support.APITestContext.circulationModulePort;
 import static api.support.fakes.StorageSchema.validatorForLocationCampSchema;
 import static api.support.fakes.StorageSchema.validatorForLocationInstSchema;
 import static api.support.fakes.StorageSchema.validatorForLocationLibSchema;
@@ -10,6 +11,7 @@ import static api.support.fixtures.LibraryHoursExamples.CASE_CALENDAR_IS_UNAVAIL
 import static api.support.fixtures.LibraryHoursExamples.CASE_CLOSED_LIBRARY_IN_THU_SERVICE_POINT_ID;
 import static api.support.fixtures.LibraryHoursExamples.CASE_CLOSED_LIBRARY_SERVICE_POINT_ID;
 import static api.support.fixtures.LibraryHoursExamples.getLibraryHoursById;
+import static java.util.Arrays.asList;
 import static org.folio.circulation.support.results.CommonFailures.failedDueToServerError;
 
 import java.io.IOException;
@@ -27,8 +29,6 @@ import org.folio.circulation.support.http.server.ServerErrorResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.inject.internal.util.Lists;
-
 import api.support.APITestContext;
 import api.support.fakes.processors.StorageRecordPreProcessors;
 import io.vertx.core.AbstractVerticle;
@@ -38,6 +38,7 @@ import io.vertx.core.http.HttpServer;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
+import io.vertx.ext.web.RoutingContext;
 
 public class FakeOkapi extends AbstractVerticle {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
@@ -107,11 +108,10 @@ public class FakeOkapi extends AbstractVerticle {
       .withRecordName("item")
       .withRootPath("/item-storage/items")
       .withRequiredProperties("holdingsRecordId", "materialTypeId", "permanentLoanTypeId")
-      .withRecordPreProcessor(Lists.newArrayList(
+      .withRecordPreProcessor(asList(
         StorageRecordPreProcessors::setEffectiveLocationIdForItem,
         StorageRecordPreProcessors::setItemStatusDateForItem,
-        StorageRecordPreProcessors::setEffectiveCallNumberComponents
-      ))
+        StorageRecordPreProcessors::setEffectiveCallNumberComponents))
       .create().register(router);
 
     new FakeStorageModuleBuilder()
@@ -252,13 +252,8 @@ public class FakeOkapi extends AbstractVerticle {
       .withRecordName("locations")
       .withRootPath("/locations")
       .withCollectionPropertyName("locations")
-      .withRequiredProperties(
-        "name",
-        "code",
-        "institutionId",
-        "campusId",
-        "libraryId",
-        "primaryServicePoint")
+      .withRequiredProperties("name", "code", "institutionId", "campusId",
+        "libraryId", "primaryServicePoint")
       .create()
       .register(router);
 
@@ -339,8 +334,7 @@ public class FakeOkapi extends AbstractVerticle {
   }
 
   private Result<Object> requestHasSamePosition(
-    Collection<JsonObject> existingRequests,
-    JsonObject newOrUpdatedRequest) {
+    Collection<JsonObject> existingRequests, JsonObject newOrUpdatedRequest) {
 
     try {
       return existingRequests.stream()
@@ -361,50 +355,41 @@ public class FakeOkapi extends AbstractVerticle {
     }
   }
 
-  private void forwardRequestsToApplyCirculationRulesBackToCirculationModule(Router router) {
+  private void forwardRequestsToApplyCirculationRulesBackToCirculationModule(
+    Router router) {
     //During loan creation, a request to /circulation/rules/loan-policy is made,
     //which is effectively to itself, so needs to be routed back
     router.get("/circulation/rules/loan-policy").handler(context -> {
-      OkapiHttpClient client = APITestContext.createClient(throwable ->
-        ServerErrorResponse.internalError(context.response(),
-          String.format("Exception when forward circulation rules apply request: %s",
-            throwable.getMessage())));
-
-      client.get(String.format("http://localhost:%s/circulation/rules/loan-policy?%s"
-        , APITestContext.circulationModulePort(), context.request().query()),
-        httpClientResponse ->
-          httpClientResponse.bodyHandler(buffer ->
-            ForwardResponse.forward(context.response(), httpClientResponse,
-              BufferHelper.stringFromBuffer(buffer))));
+      forwardApplyingCirculationRulesRequest(context, "loan-policy");
     });
 
     router.get("/circulation/rules/notice-policy").handler(context -> {
-      OkapiHttpClient client = APITestContext.createClient(throwable ->
-        ServerErrorResponse.internalError(context.response(),
-          String.format("Exception when forward circulation rules apply request: %s",
-            throwable.getMessage())));
-
-      client.get(String.format("http://localhost:%s/circulation/rules/notice-policy?%s"
-        , APITestContext.circulationModulePort(), context.request().query()),
-        httpClientResponse ->
-          httpClientResponse.bodyHandler(buffer ->
-            ForwardResponse.forward(context.response(), httpClientResponse,
-              BufferHelper.stringFromBuffer(buffer))));
+      forwardApplyingCirculationRulesRequest(context, "notice-policy");
     });
 
     router.get("/circulation/rules/request-policy").handler(context -> {
-      OkapiHttpClient client = APITestContext.createClient(throwable ->
-        ServerErrorResponse.internalError(context.response(),
-          String.format("Exception when forward circulation rules apply request: %s",
-            throwable.getMessage())));
-
-      client.get(String.format("http://localhost:%s/circulation/rules/request-policy?%s"
-        , APITestContext.circulationModulePort(), context.request().query()),
-        httpClientResponse ->
-          httpClientResponse.bodyHandler(buffer ->
-            ForwardResponse.forward(context.response(), httpClientResponse,
-              BufferHelper.stringFromBuffer(buffer))));
+      forwardApplyingCirculationRulesRequest(context, "request-policy");
     });
+  }
+
+  private void forwardApplyingCirculationRulesRequest(RoutingContext context,
+    String policyNamePartialPath) {
+
+    OkapiHttpClient client = createClient(context);
+
+    client.get(String.format("http://localhost:%s/circulation/rules/%s?%s",
+      circulationModulePort(), policyNamePartialPath, context.request().query()),
+      httpClientResponse ->
+        httpClientResponse.bodyHandler(buffer ->
+          ForwardResponse.forward(context.response(), httpClientResponse,
+            BufferHelper.stringFromBuffer(buffer))));
+  }
+
+  private OkapiHttpClient createClient(RoutingContext context) {
+    return APITestContext.createClient(throwable ->
+      ServerErrorResponse.internalError(context.response(),
+        String.format("Exception when forward circulation rules apply request: %s",
+          throwable.getMessage())));
   }
 
   @Override
@@ -424,7 +409,6 @@ public class FakeOkapi extends AbstractVerticle {
   }
 
   private void registerFakeStorageLoansAnonymize(Router router) {
-
     router.post("/anonymize-storage-loans")
       .handler(routingContext -> {
         routingContext.request()
@@ -432,9 +416,14 @@ public class FakeOkapi extends AbstractVerticle {
             JsonObject responseBody = new JsonObject();
             JsonArray providedLoanIds = body.toJsonObject()
               .getJsonArray("loanIds");
-            providedLoanIds = Objects.isNull(providedLoanIds) ? new JsonArray() : providedLoanIds;
+
+            providedLoanIds = Objects.isNull(providedLoanIds)
+              ? new JsonArray()
+              : providedLoanIds;
+
             responseBody.put("anonymizedLoans", providedLoanIds);
             responseBody.put("notAnonymizedLoans", new JsonArray());
+
             routingContext.response()
               .putHeader("Content-type", "application/json")
               .setStatusCode(200)
