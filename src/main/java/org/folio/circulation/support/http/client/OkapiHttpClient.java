@@ -100,20 +100,6 @@ public class OkapiHttpClient {
     request.end(encodedBody);
   }
 
-  public void delete(URL url, Handler<HttpClientResponse> responseHandler) {
-    delete(url.toString(), responseHandler);
-  }
-
-  public void delete(String url, Handler<HttpClientResponse> responseHandler) {
-    HttpClientRequest request = client.deleteAbs(url, responseHandler);
-
-    addStandardHeaders(request);
-
-    request.exceptionHandler(this.exceptionHandler::accept);
-
-    request.end();
-  }
-
   private void addStandardHeaders(HttpClientRequest request) {
     addHeaderIfPresent(request, "Accept","application/json, text/plain");
     addHeaderIfPresent(request, OKAPI_URL, okapiUrl.toString());
