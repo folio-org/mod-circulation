@@ -36,7 +36,6 @@ import org.folio.circulation.domain.policy.LoanPolicy;
 import org.folio.circulation.domain.representations.LoanProperties;
 import org.folio.circulation.support.Result;
 import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
 
 public class Loan implements ItemRelatedRecord, UserRelatedRecord {
 
@@ -352,12 +351,12 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     return this;
   }
 
-  Loan checkIn(DateTime returnDate, DateTime systemDateTime, UUID servicePointId) {
+  Loan checkIn(DateTime returnDateTime, DateTime systemReturnDateTime, UUID servicePointId) {
     changeAction(CHECKED_IN);
     removeActionComment();
     changeStatus("Closed");
-    changeReturnDate(returnDate);
-    changeSystemReturnDate(systemDateTime);
+    changeReturnDate(returnDateTime);
+    changeSystemReturnDate(systemReturnDateTime);
     changeCheckInServicePointId(servicePointId);
 
     return this;

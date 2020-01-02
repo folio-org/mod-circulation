@@ -1,11 +1,11 @@
 package org.folio.circulation.domain;
 
 import org.folio.circulation.domain.representations.CheckInByBarcodeRequest;
+import org.folio.circulation.support.ClockManager;
 
 import java.util.Optional;
 import java.util.UUID;
 import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
 
 /**
  * The loan captures a snapshot of the item status
@@ -25,7 +25,7 @@ public class CheckInProcessRecords {
   private final ServicePoint checkInServicePoint;
   private final Request highestPriorityFulfillableRequest;
   private final String loggedInUserId;
-  private final DateTime systemDateTime = new DateTime(DateTimeZone.UTC);
+  private final DateTime systemReturnDateTime = ClockManager.getClockManager().getDateTime();
 
   public CheckInProcessRecords(CheckInByBarcodeRequest checkInRequest) {
     this(checkInRequest, null, null, null, null, null, null);
@@ -162,7 +162,7 @@ public class CheckInProcessRecords {
     return loggedInUserId;
   }
 
-  public DateTime getSystemDateTime() {
-    return systemDateTime;
+  public DateTime getSystemReturnDateTime() {
+    return systemReturnDateTime;
   }
 }

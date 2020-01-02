@@ -292,7 +292,7 @@ public class LoanDueDatesAfterRecallTests extends APITests {
     final DateTime loanDate =
         new DateTime(2019, DateTimeConstants.JANUARY, 25, 10, 0, DateTimeZone.UTC);
 
-    freezeTime(loanDate);
+    mockClockManagerToReturnFixedDateTime(loanDate);
 
     final IndividualResource loan = loansFixture.createLoan(new LoanBuilder()
         .open()
@@ -459,7 +459,7 @@ public class LoanDueDatesAfterRecallTests extends APITests {
 
     final DateTime requestDate = DateTime.now(DateTimeZone.UTC);
 
-    freezeTime(requestDate);
+    mockClockManagerToReturnFixedDateTime(requestDate);
 
     requestsFixture.place(
       new RequestBuilder()
@@ -840,10 +840,5 @@ public class LoanDueDatesAfterRecallTests extends APITests {
     final String recalledRenewalDueDate = storedLoan.getString("dueDate");
     assertThat("due date after recall should not change the renewal due date",
         recalledRenewalDueDate, is(renewalDueDate));
-  }
-
-  private void freezeTime(DateTime dateTime) {
-    ClockManager.getClockManager().setClock(
-      Clock.fixed(Instant.ofEpochMilli(dateTime.getMillis()), ZoneOffset.UTC));
   }
 }

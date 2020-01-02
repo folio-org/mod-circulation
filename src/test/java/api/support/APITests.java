@@ -9,6 +9,9 @@ import static org.hamcrest.junit.MatcherAssert.assertThat;
 
 import java.lang.invoke.MethodHandles;
 import java.net.MalformedURLException;
+import java.time.Clock;
+import java.time.Instant;
+import java.time.ZoneOffset;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -16,10 +19,13 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import org.folio.circulation.domain.representations.LoanProperties;
+import org.folio.circulation.support.ClockManager;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.OkapiHttpClient;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.client.ResponseHandler;
+
+import org.joda.time.DateTime;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -590,5 +596,16 @@ public abstract class APITests {
         invalidNoticePolicyReference,
         overdueFinePoliciesFixture.facultyStandard().getId().toString(),
         lostItemFeePoliciesFixture.facultyStandard().getId().toString()));
+  }
+
+  protected void mockClockManagerToReturnFixedDateTime(DateTime dateTime) {
+    ClockManager.getClockManager().setClock(
+      Clock.fixed(
+        Instant.ofEpochMilli(dateTime.getMillis()),
+        ZoneOffset.UTC));
+  }
+
+  protected void mockClockManagerToReturnDefaulDatetTime() {
+    ClockManager.getClockManager().setDefaultClock();
   }
 }

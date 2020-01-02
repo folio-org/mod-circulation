@@ -27,9 +27,6 @@ import static org.hamcrest.junit.MatcherAssert.assertThat;
 import static org.junit.Assert.assertTrue;
 
 import java.net.MalformedURLException;
-import java.time.Clock;
-import java.time.Instant;
-import java.time.ZoneOffset;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -1583,7 +1580,7 @@ public class RequestsAPICreationTests extends APITests {
     IndividualResource loan = loansFixture.checkOutByBarcode(item, loanOwner, loanDate);
 
     DateTime requestDate = loanDate.plusDays(1);
-    mockClockManagerToReturnFixedTime(requestDate);
+    mockClockManagerToReturnFixedDateTime(requestDate);
 
     IndividualResource request = requestsFixture.place(new RequestBuilder()
       .withId(id)
@@ -1662,7 +1659,7 @@ public class RequestsAPICreationTests extends APITests {
     loansFixture.checkOutByBarcode(item, loanOwner, loanDate);
 
     DateTime requestDate = loanDate.plusDays(1);
-    mockClockManagerToReturnFixedTime(requestDate);
+    mockClockManagerToReturnFixedDateTime(requestDate);
 
     requestsFixture.place(new RequestBuilder()
       .withId(id)
@@ -1887,10 +1884,4 @@ public class RequestsAPICreationTests extends APITests {
       .withTags(new RequestBuilder.Tags(asList("new", "important")));
   }
 
-  private void mockClockManagerToReturnFixedTime(DateTime dateTime) {
-    ClockManager.getClockManager().setClock(
-      Clock.fixed(
-        Instant.ofEpochMilli(dateTime.getMillis()),
-        ZoneOffset.UTC));
-  }
 }

@@ -4,29 +4,14 @@ import static api.support.JsonCollectionAssistant.getRecordById;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static org.folio.circulation.support.JsonStringArrayHelper.toList;
 import static org.hamcrest.CoreMatchers.hasItems;
-import static org.hamcrest.Matchers.closeTo;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
-import java.net.MalformedURLException;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.UUID;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeoutException;
-
-import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.domain.ItemStatus;
+import org.folio.circulation.support.JsonPropertyFetcher;
 import org.folio.circulation.support.http.client.IndividualResource;
-
-import org.hamcrest.CoreMatchers;
-import org.joda.time.DateTime;
-import org.joda.time.LocalDate;
-import org.junit.Assert;
-import org.junit.Test;
 
 import api.support.APITests;
 import api.support.builders.CheckInByBarcodeRequestBuilder;
@@ -37,10 +22,22 @@ import api.support.http.InventoryItemResource;
 import api.support.http.ResourceClient;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import java.net.MalformedURLException;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.UUID;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeoutException;
+import org.apache.commons.lang3.StringUtils;
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
+import org.joda.time.LocalDate;
+import org.junit.Assert;
+import org.junit.Test;
 
 public class ItemsInTransitReportTests extends APITests {
 
-  private static final int CURRENT_TIME_MARGIN_MILLIS = 15000;
   private static final String NAME = "name";
   private static final String CODE = "code";
   private static final String LIBRARY = "libraryName";
@@ -69,6 +66,26 @@ public class ItemsInTransitReportTests extends APITests {
   private static final String SERVICE_POINT_NAME_2 = "Circ Desk 2";
   private static final String REQUEST_PATRON_GROUP_DESCRIPTION = "Regular group";
   private static final String SERVICE_POINT_CODE_2 = "cd2";
+
+  private DateTime expectedCheckInDateTime;
+
+  @Override
+  public void beforeEach()
+    throws MalformedURLException, InterruptedException, ExecutionException, TimeoutException {
+
+    super.beforeEach();
+    expectedCheckInDateTime = DateTime.now(DateTimeZone.UTC);
+    mockClockManagerToReturnFixedDateTime(expectedCheckInDateTime);
+  }
+
+  @Override
+  public void afterEach()
+    throws InterruptedException, MalformedURLException, TimeoutException,
+    ExecutionException {
+
+    super.afterEach();
+    mockClockManagerToReturnDefaulDatetTime();
+  }
 
   @Test
   public void reportIsEmptyWhenThereAreNoItemsInTransit() {
@@ -104,7 +121,7 @@ public class ItemsInTransitReportTests extends APITests {
     verifyLocation(itemJson);
     verifyRequestWithSecondPickupServicePoint(itemJson, requestDate, requestExpirationDate);
     verifyLoanInFirstServicePoint(itemJson, checkInDate);
-    verifyLastCheckIn(itemJson, checkInDate, SERVICE_POINT_NAME_1, true);
+    verifyLastCheckIn(itemJson, expectedCheckInDateTime, SERVICE_POINT_NAME_1);
   }
 
   @Test
@@ -150,14 +167,14 @@ public class ItemsInTransitReportTests extends APITests {
     verifyLocation(firstItemJson);
     verifyRequestWithSecondPickupServicePoint(firstItemJson, requestDate1, requestExpirationDate1);
     verifyLoanInFirstServicePoint(firstItemJson, checkInDate1);
-    verifyLastCheckIn(firstItemJson, checkInDate1, SERVICE_POINT_NAME_1, true);
+    verifyLastCheckIn(firstItemJson, expectedCheckInDateTime, SERVICE_POINT_NAME_1);
 
     JsonObject secondItemJson = getRecordById(items, nod.getId()).get();
     verifyItem(secondItemJson, nod, secondServicePointId);
     verifyLocation(secondItemJson);
     verifyRequest(secondItemJson, requestDate2, requestExpirationDate2, REQUEST_PATRON_GROUP_DESCRIPTION, SERVICE_POINT_NAME_2);
     verifyLoanInFirstServicePoint(secondItemJson, checkInDate2);
-    verifyLastCheckIn(secondItemJson, checkInDate2, SERVICE_POINT_NAME_1, true);
+    verifyLastCheckIn(secondItemJson, expectedCheckInDateTime, SERVICE_POINT_NAME_1);
   }
 
   @Test
@@ -191,7 +208,7 @@ public class ItemsInTransitReportTests extends APITests {
     verifyLocation(itemJson);
     verifyRequestWithSecondPickupServicePoint(itemJson, requestDate, requestExpirationDate);
     verifyLoanInFirstServicePoint(itemJson, checkInDate);
-    verifyLastCheckIn(itemJson, checkInDate, SERVICE_POINT_NAME_1, true);
+    verifyLastCheckIn(itemJson, expectedCheckInDateTime, SERVICE_POINT_NAME_1);
   }
 
   @Test
@@ -237,14 +254,14 @@ public class ItemsInTransitReportTests extends APITests {
     verifyRequest(firstItemJson, requestDate1, requestExpirationDate1, REQUEST_PATRON_GROUP_DESCRIPTION, SERVICE_POINT_NAME_1);
     verifyLoan(firstItemJson, checkInDate1, SERVICE_POINT_NAME_2,
       SERVICE_POINT_CODE_2, "Circulation Desk -- Back Entrance");
-    verifyLastCheckIn(firstItemJson, checkInDate1, SERVICE_POINT_NAME_2, true);
+    verifyLastCheckIn(firstItemJson, expectedCheckInDateTime, SERVICE_POINT_NAME_2);
 
     JsonObject secondItemJson = getRecordById(items, nod.getId()).get();
     verifyItem(secondItemJson, nod, secondServicePointId);
     verifyLocation(secondItemJson);
     verifyRequest(secondItemJson, requestDate2, requestExpirationDate2, REQUEST_PATRON_GROUP_DESCRIPTION, SERVICE_POINT_NAME_2);
     verifyLoanInFirstServicePoint(secondItemJson, checkInDate2);
-    verifyLastCheckIn(secondItemJson, checkInDate2, SERVICE_POINT_NAME_1, true);
+    verifyLastCheckIn(secondItemJson, expectedCheckInDateTime, SERVICE_POINT_NAME_1);
   }
 
   @Test
@@ -299,14 +316,14 @@ public class ItemsInTransitReportTests extends APITests {
     verifyRequest(firstItemJson, requestSmallAngryPlanetDate1, requestSmallAngryPlanetExpirationDate1, REQUEST_PATRON_GROUP_DESCRIPTION, SERVICE_POINT_NAME_1);
     verifyLoan(firstItemJson, checkInDate1, SERVICE_POINT_NAME_2,
       SERVICE_POINT_CODE_2, "Circulation Desk -- Back Entrance");
-    verifyLastCheckIn(firstItemJson, checkInDate1, SERVICE_POINT_NAME_2, true);
+    verifyLastCheckIn(firstItemJson, expectedCheckInDateTime, SERVICE_POINT_NAME_2);
 
     JsonObject secondItemJson = getRecordById(items, nod.getId()).get();
     verifyItem(secondItemJson, nod, secondServicePointId);
     verifyLocation(secondItemJson);
     verifyRequest(secondItemJson, requestNodeDate1, requestNodeExpirationDate1, REQUEST_PATRON_GROUP_DESCRIPTION, SERVICE_POINT_NAME_2);
     verifyLoanInFirstServicePoint(secondItemJson, checkInDate2);
-    verifyLastCheckIn(secondItemJson, checkInDate2, SERVICE_POINT_NAME_1, true);
+    verifyLastCheckIn(secondItemJson, expectedCheckInDateTime, SERVICE_POINT_NAME_1);
   }
 
   @Test
@@ -342,14 +359,14 @@ public class ItemsInTransitReportTests extends APITests {
     verifyLocation(firstItemJson);
     assertNull(firstItemJson.getMap().get(REQUEST));
     verifyLoan(firstItemJson, checkInDate1, SERVICE_POINT_NAME_2, SERVICE_POINT_CODE_2, checkInServicePointDiscoveryName);
-    verifyLastCheckIn(firstItemJson, checkInDate1, SERVICE_POINT_NAME_2, true);
+    verifyLastCheckIn(firstItemJson, expectedCheckInDateTime, SERVICE_POINT_NAME_2);
 
     JsonObject secondItemJson = getRecordById(items, nod.getId()).get();
     verifyItem(secondItemJson, nod, firsServicePointId);
     verifyLocation(secondItemJson);
     assertNull(secondItemJson.getMap().get(REQUEST));
     verifyLoan(secondItemJson, checkInDate2, SERVICE_POINT_NAME_2, SERVICE_POINT_CODE_2, checkInServicePointDiscoveryName);
-    verifyLastCheckIn(secondItemJson, checkInDate2, SERVICE_POINT_NAME_2, true);
+    verifyLastCheckIn(secondItemJson, expectedCheckInDateTime, SERVICE_POINT_NAME_2);
   }
 
   @Test
@@ -402,7 +419,7 @@ public class ItemsInTransitReportTests extends APITests {
     verifyLocation(firstItemJson);
     verifyRequest(firstItemJson, requestDate2, requestExpirationDate2, REQUEST_PATRON_GROUP_DESCRIPTION, SERVICE_POINT_NAME_2);
     verifyLoanInFirstServicePoint(firstItemJson, checkInDate2);
-    verifyLastCheckIn(firstItemJson, checkInDate2, SERVICE_POINT_NAME_1, true);
+    verifyLastCheckIn(firstItemJson, expectedCheckInDateTime, SERVICE_POINT_NAME_1);
 
     JsonObject secondItemJson = items.get(1);
     verifyItem(secondItemJson, smallAngryPlanet, firstServicePointId);
@@ -410,14 +427,14 @@ public class ItemsInTransitReportTests extends APITests {
     verifyRequest(secondItemJson, requestDate1, requestExpirationDate1, REQUEST_PATRON_GROUP_DESCRIPTION, SERVICE_POINT_NAME_1);
     verifyLoan(secondItemJson, checkInDate1, SERVICE_POINT_NAME_2,
       SERVICE_POINT_CODE_2, "Circulation Desk -- Back Entrance");
-    verifyLastCheckIn(secondItemJson, checkInDate1, SERVICE_POINT_NAME_2, true);
+    verifyLastCheckIn(secondItemJson, expectedCheckInDateTime, SERVICE_POINT_NAME_2);
 
     JsonObject thirdItemJson = items.get(2);
     verifyItem(thirdItemJson, smallAngryPlanetWithFourthCheckInServicePoint, firstServicePointId);
     verifyLocation(thirdItemJson);
     verifyLoan(thirdItemJson, checkInDate3, "Circ Desk 4",
       "cd4", "Circulation Desk -- Basement");
-    verifyLastCheckIn(thirdItemJson, checkInDate3, "Circ Desk 4", true);
+    verifyLastCheckIn(thirdItemJson, expectedCheckInDateTime, "Circ Desk 4");
   }
 
   private void createRequest(InventoryItemResource smallAngryPlanet,
@@ -525,14 +542,12 @@ public class ItemsInTransitReportTests extends APITests {
       "cd1", "Circulation Desk -- Hallway");
   }
 
-  private void verifyLastCheckIn(JsonObject itemJson, DateTime checkInDate,
-    String servicePointName, boolean checkInDateInPast) {
+  private void verifyLastCheckIn(JsonObject itemJson, DateTime checkInDateTime, String servicePointName) {
+
     JsonObject actualLastCheckIn = itemJson.getJsonObject("lastCheckIn");
-    DateTime actualCheckinDateTime = DateTime.parse(actualLastCheckIn.getString("dateTime"));
-    DateTime expected = checkInDateInPast ? DateTime.now() : checkInDate;
-    Assert.assertThat((double) expected.getMillis(),
-      CoreMatchers.is(closeTo((double) actualCheckinDateTime.getMillis(),
-        CURRENT_TIME_MARGIN_MILLIS)));
+    DateTime actualCheckinDateTime = JsonPropertyFetcher
+      .getDateTimeProperty(actualLastCheckIn, "dateTime");
+    Assert.assertThat(actualCheckinDateTime, is(checkInDateTime));
     assertThat(actualLastCheckIn.getJsonObject("servicePoint").getString(NAME), is(servicePointName));
   }
 
