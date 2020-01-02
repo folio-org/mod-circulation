@@ -94,9 +94,7 @@ public class APITestContext {
     }
   }
 
-  public static OkapiHttpClient createClient(
-    Consumer<Throwable> exceptionHandler) {
-
+  public static OkapiHttpClient createClient(Consumer<Throwable> exceptionHandler) {
     return new OkapiHttpClient(
       vertxAssistant.createUsingVertx(Vertx::createHttpClient),
       okapiUrl(), TENANT_ID, TOKEN, USER_ID, REQUEST_ID, exceptionHandler);

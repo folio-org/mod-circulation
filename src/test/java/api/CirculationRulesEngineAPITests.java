@@ -2,16 +2,15 @@ package api;
 
 import static api.support.http.InterfaceUrls.circulationRulesStorageUrl;
 import static api.support.http.InterfaceUrls.circulationRulesUrl;
-import static org.folio.circulation.support.http.client.ResponseHandler.any;
+import static api.support.http.api.support.NamedQueryStringParameter.namedParameter;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.StringContains.containsString;
 
 import java.net.MalformedURLException;
-import java.net.URL;
-import java.util.concurrent.CompletableFuture;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import org.folio.circulation.resources.LoanCirculationRulesEngineResource;
@@ -29,91 +28,21 @@ import org.junit.Before;
 import org.junit.Test;
 
 import api.support.APITests;
+import api.support.http.QueryStringParameter;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
 public class CirculationRulesEngineAPITests extends APITests {
+  public CirculationRulesEngineAPITests()
+      throws InterruptedException, MalformedURLException,
+      TimeoutException, ExecutionException {
 
-  public CirculationRulesEngineAPITests() throws InterruptedException, MalformedURLException, TimeoutException, ExecutionException {
     super(false);
   }
 
   private void setRules(String rules) {
-    try {
-      circulationRulesFixture.updateCirculationRules(rules);
-    } catch (Exception e) {
-      throw new RuntimeException(e);
-    }
+    circulationRulesFixture.updateCirculationRules(rules);
   }
-
-  private Policy applyLoanPolicy(ItemType itemType, LoanType loanType,
-      PatronGroup patronGroup, ItemLocation location) {
-    try {
-      CompletableFuture<Response> completed = new CompletableFuture<>();
-      URL url = circulationRulesUrl(
-          "/loan-policy"
-          + "?item_type_id="         + itemType.id
-          + "&loan_type_id="         + loanType.id
-          + "&patron_type_id="       + patronGroup.id
-          + "&location_id="          + location.id
-          );
-      client.get(url, any(completed));
-      Response response = completed.get(10, TimeUnit.SECONDS);
-      assert response.getStatusCode() == 200;
-      JsonObject json = new JsonObject(response.getBody());
-      String loanPolicyId = json.getString("loanPolicyId");
-      assert loanPolicyId != null;
-      return new Policy(loanPolicyId);
-    } catch (Exception e) {
-      throw new RuntimeException(e);
-    }
-  }
-
-  private Policy applyRequestPolicy(ItemType itemType, String requestType,
-      PatronGroup patronGroup, ItemLocation location) {
-    try {
-      CompletableFuture<Response> completed = new CompletableFuture<>();
-      URL url = circulationRulesUrl(
-          "/request-policy"
-          + "?item_type_id="         + itemType.id
-          + "&loan_type_id="         + requestType
-          + "&patron_type_id="       + patronGroup.id
-          + "&location_id="          + location.id
-          );
-      client.get(url, any(completed));
-      Response response = completed.get(10, TimeUnit.SECONDS);
-      assert response.getStatusCode() == 200;
-      JsonObject json = new JsonObject(response.getBody());
-      String loanPolicyId = json.getString("requestPolicyId");
-      assert loanPolicyId != null;
-      return new Policy(loanPolicyId);
-    } catch (Exception e) {
-      throw new RuntimeException(e);
-    }
-  }
-
-  private Policy applyNoticePolicy(ItemType itemType, String noticeType,
-          PatronGroup patronGroup, ItemLocation location) {
-        try {
-          CompletableFuture<Response> completed = new CompletableFuture<>();
-          URL url = circulationRulesUrl(
-              "/notice-policy"
-              + "?item_type_id="         + itemType.id
-              + "&loan_type_id="         + noticeType
-              + "&patron_type_id="       + patronGroup.id
-              + "&location_id="          + location.id
-              );
-          client.get(url, any(completed));
-          Response response = completed.get(10, TimeUnit.SECONDS);
-          assert response.getStatusCode() == 200;
-          JsonObject json = new JsonObject(response.getBody());
-          String noticePolicyId = json.getString("noticePolicyId");
-          assert noticePolicyId != null;
-          return new Policy(noticePolicyId);
-        } catch (Exception e) {
-          throw new RuntimeException(e);
-        }
-      }
 
   private final IndividualResource mainFloor = locationsFixture.mainFloor();
   private final IndividualResource fourthFloor = locationsFixture.fourthFloor();
@@ -196,135 +125,53 @@ public class CirculationRulesEngineAPITests extends APITests {
   }
 
   @Test
-  public void applyLoanWithoutParameters() throws Exception {
-    CompletableFuture<Response> completed = new CompletableFuture<>();
-    URL url = circulationRulesUrl("/loan-policy");
-    client.get(url, any(completed));
-    Response response = completed.get(10, TimeUnit.SECONDS);
+  public void applyLoanWithoutParameters() {
+    final Response response = applyRulesWithNoParameters("/loan-policy");
+
     assertThat(response.getStatusCode(), is(400));
   }
 
   @Test
-  public void applyRequestWithoutParameters() throws Exception {
-    CompletableFuture<Response> completed = new CompletableFuture<>();
-    URL url = circulationRulesUrl("/request-policy");
-    client.get(url, any(completed));
-    Response response = completed.get(10, TimeUnit.SECONDS);
+  public void applyRequestWithoutParameters() {
+    final Response response = applyRulesWithNoParameters("/request-policy");
+
     assertThat(response.getStatusCode(), is(400));
   }
 
   @Test
-  public void applyNoticeWithoutParameters() throws Exception {
-    CompletableFuture<Response> completed = new CompletableFuture<>();
-    URL url = circulationRulesUrl("/notice-policy");
-    client.get(url, any(completed));
-    Response response = completed.get(10, TimeUnit.SECONDS);
+  public void applyNoticeWithoutParameters() {
+    final Response response = applyRulesWithNoParameters("/notice-policy");
+
     assertThat(response.getStatusCode(), is(400));
   }
 
-  private void applyOneLoanParameterMissing(String p1, String p2, String p3, String missing) throws Exception {
-    String name = missing.substring(0, missing.indexOf("="));
-    CompletableFuture<Response> completed = new CompletableFuture<>();
-    URL url = circulationRulesUrl("/loan-policy?" + p1 + "&" + p2 + "&" + p3);
-    client.get(url, any(completed));
-    Response response = completed.get(10, TimeUnit.SECONDS);
-    assertThat(response.getStatusCode(), is(400));
-    assertThat(response.getBody(), containsString(name));
-  }
-
-  private void applyOneRequestParameterMissing(String p1, String p2, String p3, String missing) throws Exception {
-    String name = missing.substring(0, missing.indexOf("="));
-    CompletableFuture<Response> completed = new CompletableFuture<>();
-    URL url = circulationRulesUrl("/request-policy?" + p1 + "&" + p2 + "&" + p3);
-    client.get(url, any(completed));
-    Response response = completed.get(10, TimeUnit.SECONDS);
-    assertThat(response.getStatusCode(), is(400));
-    assertThat(response.getBody(), containsString(name));
-  }
-
-  private void applyOneNoticeParameterMissing(String p1, String p2, String p3, String missing) throws Exception {
-      String name = missing.substring(0, missing.indexOf("="));
-      CompletableFuture<Response> completed = new CompletableFuture<>();
-      URL url = circulationRulesUrl("/notice-policy?" + p1 + "&" + p2 + "&" + p3);
-      client.get(url, any(completed));
-      Response response = completed.get(10, TimeUnit.SECONDS);
-      assertThat(response.getStatusCode(), is(400));
-      assertThat(response.getBody(), containsString(name));
-    }
-
-  @Test
-  public void applyOneLoanParameterMissing() throws Exception {
-    String [] p = {
-        "item_type_id=" + m1,
-        "loan_type_id=" + t1,
-        "patron_type_id=" + lp1,
-        "location_id=" + s1
-    };
-
-    applyOneLoanParameterMissing(p[1], p[2], p[3],  p[0]);
-    applyOneLoanParameterMissing(p[0], p[2], p[3],  p[1]);
-    applyOneLoanParameterMissing(p[0], p[1], p[3],  p[2]);
-    applyOneLoanParameterMissing(p[0], p[1], p[2],  p[3]);
+  private Response applyRulesWithNoParameters(String path) {
+    return restAssuredClient.get(circulationRulesUrl(path), 400,
+        "apply-rules-with-no-parameters");
   }
 
   @Test
-  public void applyOneRequestParameterMissing() throws Exception {
-    String[] p = {
-        "item_type_id=" + m1,
-        "loan_type_id=" + t1,
-        "patron_type_id=" + lp1,
-        "location_id=" + s1
-    };
-
-    applyOneRequestParameterMissing(p[1], p[2], p[3],  p[0]);
-    applyOneRequestParameterMissing(p[0], p[2], p[3],  p[1]);
-    applyOneRequestParameterMissing(p[0], p[1], p[3],  p[2]);
-    applyOneRequestParameterMissing(p[0], p[1], p[2],  p[3]);
+  public void applyOneLoanParameterMissing() {
+    applyRulesWithMissingParameters("loan", null, t1.id, lp1.id, s1.id, "item_type_id");
+    applyRulesWithMissingParameters("loan", m1.id, null, lp1.id, s1.id, "loan_type_id");
+    applyRulesWithMissingParameters("loan", m1.id, t1.id, null, s1.id, "patron_type_id");
+    applyRulesWithMissingParameters("loan", m1.id, t1.id, lp1.id, null, "location_id");
   }
 
   @Test
-  public void applyOneNoticeParameterMissing() throws Exception {
-    String[] p = {
-        "item_type_id=" + m1,
-        "loan_type_id=" + t1,
-        "patron_type_id=" + lp1,
-        "location_id=" + s1
-    };
-
-    applyOneNoticeParameterMissing(p[1], p[2], p[3],  p[0]);
-    applyOneNoticeParameterMissing(p[0], p[2], p[3],  p[1]);
-    applyOneNoticeParameterMissing(p[0], p[1], p[3],  p[2]);
-    applyOneNoticeParameterMissing(p[0], p[1], p[2],  p[3]);
+  public void applyOneRequestParameterMissing() {
+    applyRulesWithMissingParameters("request", null, t1.id, lp1.id, s1.id, "item_type_id");
+    applyRulesWithMissingParameters("request", m1.id, null, lp1.id, s1.id, "loan_type_id");
+    applyRulesWithMissingParameters("request", m1.id, t1.id, null, s1.id, "patron_type_id");
+    applyRulesWithMissingParameters("request", m1.id, t1.id, lp1.id, null, "location_id");
   }
 
-  private void applyInvalidUuid(String i, String l, String p, String s, String type) {
-    CompletableFuture<Response> completed = new CompletableFuture<>();
-    URL url = circulationRulesUrl("/" + type + "-policy"
-        + "?item_type_id=" + i
-        + "&loan_type_id=" + l
-        + "&patron_type_id=" + p
-        + "&location_id=" + s);
-    client.get(url, any(completed));
-    Response response;
-    try {
-      response = completed.get(10, TimeUnit.SECONDS);
-    } catch (InterruptedException | ExecutionException | TimeoutException e) {
-      throw new RuntimeException (e);
-    }
-    assertThat(response.getStatusCode(), is(400));
-    assertThat(response.getBody(), containsString("uuid"));
-  }
-
-  private void applyInvalidUuid(String uuid) {
-    applyInvalidUuid( uuid, t1.id, lp1.id, s1.id, "loan");
-    applyInvalidUuid(m1.id,  uuid, lp1.id, s1.id, "loan");
-    applyInvalidUuid(m1.id, t1.id,  uuid,  s1.id, "loan");
-    applyInvalidUuid(m1.id, t1.id, lp1.id,  uuid, "loan");
-
-    applyInvalidUuid( uuid, t1.id, lp1.id, s1.id, "request");
-    applyInvalidUuid(m1.id,  uuid, lp1.id, s1.id, "request");
-    applyInvalidUuid(m1.id, t1.id,  uuid,  s1.id, "request");
-    applyInvalidUuid(m1.id, t1.id, lp1.id,  uuid, "request");
+  @Test
+  public void applyOneNoticeParameterMissing() {
+    applyRulesWithMissingParameters("notice", null, t1.id, lp1.id, s1.id, "item_type_id");
+    applyRulesWithMissingParameters("notice", m1.id, null, lp1.id, s1.id, "loan_type_id");
+    applyRulesWithMissingParameters("notice", m1.id, t1.id, null, s1.id, "patron_type_id");
+    applyRulesWithMissingParameters("notice", m1.id, t1.id, lp1.id, null, "location_id");
   }
 
   @Test
@@ -343,197 +190,259 @@ public class CirculationRulesEngineAPITests extends APITests {
     applyInvalidUuid("00000000000010008000000000000000");
   }
 
+  private void applyInvalidUuid(String uuid) {
+    applyInvalidUuid(uuid, t1.id, lp1.id, s1.id, "loan");
+    applyInvalidUuid(m1.id,  uuid, lp1.id, s1.id, "loan");
+    applyInvalidUuid(m1.id, t1.id,  uuid,  s1.id, "loan");
+    applyInvalidUuid(m1.id, t1.id, lp1.id,  uuid, "loan");
+
+    applyInvalidUuid( uuid, t1.id, lp1.id, s1.id, "request");
+    applyInvalidUuid(m1.id,  uuid, lp1.id, s1.id, "request");
+    applyInvalidUuid(m1.id, t1.id,  uuid,  s1.id, "request");
+    applyInvalidUuid(m1.id, t1.id, lp1.id,  uuid, "request");
+  }
+
+  private void applyInvalidUuid(String itemType, String loanType,
+    String patronGroup, String location, String type) {
+
+    final Response response = applyRulesWithInvalidParameters(type, itemType,
+        loanType, patronGroup, location);
+
+    assertThat(response.getBody(), containsString("uuid"));
+  }
+
   @Test
   public void loanFallback() {
     setRules(rulesFallback);
-    assertThat(applyLoanPolicy(m1, t1, g1, s1), is(lp6));
+    assertThat(applyRulesForLoanPolicy(m1, t1, g1, s1), is(lp6));
   }
 
   @Test
   public void requestFallback() {
     setRules(rulesFallback);
-    assertThat(applyRequestPolicy(m1, t1.id, g1, s1), is(rp1));
+    assertThat(applyRequestPolicy(m1, t1, g1, s1), is(rp1));
   }
 
   @Test
   public void noticeFallback() {
     setRules(rulesFallback);
-    assertThat(applyNoticePolicy(m1, t1.id, g1, s1), is(np1));
+    assertThat(applyNoticePolicy(m1, t1, g1, s1), is(np1));
   }
 
   @Test
   public void test1() {
     setRules(rules1);
-    assertThat(applyLoanPolicy(m2, t2, g2, s2), is(lp4));
-    assertThat(applyLoanPolicy(m2, t2, g1, s2), is(lp3));
-    assertThat(applyLoanPolicy(m1, t2, g1, s2), is(lp2));
+    assertThat(applyRulesForLoanPolicy(m2, t2, g2, s2), is(lp4));
+    assertThat(applyRulesForLoanPolicy(m2, t2, g1, s2), is(lp3));
+    assertThat(applyRulesForLoanPolicy(m1, t2, g1, s2), is(lp2));
   }
 
   @Test
   public void test2() {
     setRules(rules2);
-    assertThat(applyLoanPolicy(m2, t2, g2, s2), is(lp6));
-    assertThat(applyLoanPolicy(m1, t2, g2, s2), is(lp1));
-    assertThat(applyLoanPolicy(m1, t1, g2, s2), is(lp2));
-    assertThat(applyLoanPolicy(m1, t1, g1, s2), is(lp3));
+    assertThat(applyRulesForLoanPolicy(m2, t2, g2, s2), is(lp6));
+    assertThat(applyRulesForLoanPolicy(m1, t2, g2, s2), is(lp1));
+    assertThat(applyRulesForLoanPolicy(m1, t1, g2, s2), is(lp2));
+    assertThat(applyRulesForLoanPolicy(m1, t1, g1, s2), is(lp3));
   }
 
   @Test
   public void shouldApplyRulesWithInstitution() {
     setRules(rulesWithInstitution);
-    assertThat(applyLoanPolicy(m1, t2, g2, s2), is(lp2));
-    assertThat(applyLoanPolicy(m2, t2, g2, s2), is(lp3));
-    assertThat(applyLoanPolicy(m1, t2, g2, s1), is(lp4));
-    assertThat(applyLoanPolicy(m2, t2, g2, s1), is(lp4));
+    assertThat(applyRulesForLoanPolicy(m1, t2, g2, s2), is(lp2));
+    assertThat(applyRulesForLoanPolicy(m2, t2, g2, s2), is(lp3));
+    assertThat(applyRulesForLoanPolicy(m1, t2, g2, s1), is(lp4));
+    assertThat(applyRulesForLoanPolicy(m2, t2, g2, s1), is(lp4));
   }
 
   @Test
   public void shouldApplyRulesWithLibrary() {
     setRules(rulesWithLibrary);
-    assertThat(applyLoanPolicy(m1, t2, g2, s2), is(lp2));
-    assertThat(applyLoanPolicy(m2, t2, g2, s2), is(lp3));
-    assertThat(applyLoanPolicy(m1, t2, g2, s1), is(lp4));
-    assertThat(applyLoanPolicy(m2, t2, g2, s1), is(lp4));
+    assertThat(applyRulesForLoanPolicy(m1, t2, g2, s2), is(lp2));
+    assertThat(applyRulesForLoanPolicy(m2, t2, g2, s2), is(lp3));
+    assertThat(applyRulesForLoanPolicy(m1, t2, g2, s1), is(lp4));
+    assertThat(applyRulesForLoanPolicy(m2, t2, g2, s1), is(lp4));
   }
 
   @Test
   public void shouldApplyRulesWithCampus() {
     setRules(rulesWithCampus);
-    assertThat(applyLoanPolicy(m1, t2, g2, s2), is(lp2));
-    assertThat(applyLoanPolicy(m2, t2, g2, s2), is(lp3));
-    assertThat(applyLoanPolicy(m1, t2, g2, s1), is(lp4));
-    assertThat(applyLoanPolicy(m2, t2, g2, s1), is(lp4));
-  }
-
-  private void matchesLoanPolicy(JsonArray array, int match, Policy policy, int line) {
-    JsonObject o = array.getJsonObject(match);
-    assertThat("["+match+"].loanPolicyId of "+o, o.getString("loanPolicyId"), is(policy.id));
-    assertThat("["+match+"].circulationRuleLine of "+o, o.getInteger("circulationRuleLine"), is(line));
+    assertThat(applyRulesForLoanPolicy(m1, t2, g2, s2), is(lp2));
+    assertThat(applyRulesForLoanPolicy(m2, t2, g2, s2), is(lp3));
+    assertThat(applyRulesForLoanPolicy(m1, t2, g2, s1), is(lp4));
+    assertThat(applyRulesForLoanPolicy(m2, t2, g2, s1), is(lp4));
   }
 
   @Test
-  public void testLoanApplyAll() throws Exception {
+  public void canDetermineAllLoanPolicyMatches() {
     setRules(rules1);
-    CompletableFuture<Response> completed = new CompletableFuture<>();
-    URL url = circulationRulesUrl(
-        "/loan-policy-all"
-        + "?item_type_id="         + m2
-        + "&loan_type_id="         + t2
-        + "&patron_type_id="       + g2
-        + "&location_id="          + s2
-        );
-    client.get(url, any(completed));
-    Response response = completed.get(10, TimeUnit.SECONDS);
-    assertThat(response.getStatusCode() + " " + response.getBody(),
-        response.getStatusCode(), is(200));
-    JsonObject json = new JsonObject(response.getBody());
-    JsonArray array = json.getJsonArray("circulationRuleMatches");
-    matchesLoanPolicy(array, 0, lp4, 4);
-    matchesLoanPolicy(array, 1, lp3, 3);
-    matchesLoanPolicy(array, 2, lp2, 2);
-    assertThat(array.size(), is(3));
-  }
 
-  private void matchesRequestPolicy(JsonArray array, int match, Policy policy, int line) {
-    JsonObject o = array.getJsonObject(match);
-    assertThat("["+match+"].requestPolicyId of "+o, o.getString("requestPolicyId"), is(policy.id));
-    assertThat("["+match+"].circulationRuleLine of "+o, o.getInteger("circulationRuleLine"), is(line));
-  }
+    JsonArray matches = circulationRulesFixture.applyAllRulesForLoanPolicy(
+        m2, t2, g2, s2);
 
-  private void matchesNoticePolicy(JsonArray array, int match, Policy policy, int line) {
-    JsonObject o = array.getJsonObject(match);
-    assertThat("["+match+"].noticePolicyId of "+o, o.getString("noticePolicyId"), is(policy.id));
-    assertThat("["+match+"].circulationRuleLine of "+o, o.getInteger("circulationRuleLine"), is(line));
+    assertThat(matches.size(), is(3));
+
+    matchesLoanPolicy(matches, 0, lp4, 4);
+    matchesLoanPolicy(matches, 1, lp3, 3);
+    matchesLoanPolicy(matches, 2, lp2, 2);
   }
 
   @Test
-  public void testRequestApplyAll() throws Exception {
+  public void canDetermineAllRequestPolicyMatches() {
     setRules(rules1);
-    CompletableFuture<Response> completed = new CompletableFuture<>();
-    URL url = circulationRulesUrl(
-        "/request-policy-all"
-        + "?item_type_id="         + m2
-        + "&loan_type_id="         + t2
-        + "&patron_type_id="       + g2
-        + "&location_id="          + s2
-        );
-    client.get(url, any(completed));
-    Response response = completed.get(10, TimeUnit.SECONDS);
-    assertThat(response.getStatusCode() + " " + response.getBody(),
-        response.getStatusCode(), is(200));
-    JsonObject json = new JsonObject(response.getBody());
-    JsonArray array = json.getJsonArray("circulationRuleMatches");
-    matchesRequestPolicy(array, 0, rp1, 4);
-    matchesRequestPolicy(array, 1, rp1, 3);
-    matchesRequestPolicy(array, 2, rp1, 2);
-    assertThat(array.size(), is(3));
+
+    JsonArray matches = circulationRulesFixture.applyAllRulesForRequestPolicy(
+      m2, t2, g2, s2);
+
+    assertThat(matches.size(), is(3));
+
+    matchesRequestPolicy(matches, 0, rp1, 4);
+    matchesRequestPolicy(matches, 1, rp1, 3);
+    matchesRequestPolicy(matches, 2, rp1, 2);
   }
 
   @Test
-  public void canDetermineAllPatronNoticePolicyMatches() throws Exception {
+  public void canDetermineAllPatronNoticePolicyMatches() {
     setRules(rules1);
 
-    CompletableFuture<Response> completed = new CompletableFuture<>();
+    JsonArray matches = circulationRulesFixture.applyAllRulesForNoticePolicy(
+      m2, t2, g2, s2);
 
-    URL url = circulationRulesUrl(
-      "/notice-policy-all"
-        + "?item_type_id="         + m2
-        + "&loan_type_id="         + t2
-        + "&patron_type_id="       + g2
-        + "&location_id="          + s2
-    );
+    assertThat(matches.size(), is(3));
 
-    client.get(url, any(completed));
-
-    Response response = completed.get(10, TimeUnit.SECONDS);
-    assertThat(response.getStatusCode() + " " + response.getBody(),
-      response.getStatusCode(), is(200));
-    JsonObject json = new JsonObject(response.getBody());
-    JsonArray array = json.getJsonArray("circulationRuleMatches");
-
-    matchesNoticePolicy(array, 0, np1, 4);
-    matchesNoticePolicy(array, 1, np1, 3);
-    matchesNoticePolicy(array, 2, np1, 2);
-
-    assertThat(array.size(), is(3));
+    matchesNoticePolicy(matches, 0, np1, 4);
+    matchesNoticePolicy(matches, 1, np1, 3);
+    matchesNoticePolicy(matches, 2, np1, 2);
   }
 
   @Test
   public void setRulesInvalidatesCache() {
     setRules(rulesFallback);
-    assertThat(applyLoanPolicy(m1, t1, g1, s1), is(lp6));
+    assertThat(applyRulesForLoanPolicy(m1, t1, g1, s1), is(lp6));
     setRules(rulesFallback2);
-    assertThat(applyLoanPolicy(m1, t1, g1, s1), is(lp7));
+    assertThat(applyRulesForLoanPolicy(m1, t1, g1, s1), is(lp7));
     setRules(rulesFallback);
-    assertThat(applyLoanPolicy(m1, t1, g1, s1), is(lp6));
+    assertThat(applyRulesForLoanPolicy(m1, t1, g1, s1), is(lp6));
     setRules(rulesFallback2);
-    assertThat(applyLoanPolicy(m1, t1, g1, s1), is(lp7));
+    assertThat(applyRulesForLoanPolicy(m1, t1, g1, s1), is(lp7));
   }
 
   @Test
   public void cache() throws Exception {
     setRules(rulesFallback);
-    assertThat(applyLoanPolicy(m1, t1, g1, s1), is(lp6));
+    assertThat(applyRulesForLoanPolicy(m1, t1, g1, s1), is(lp6));
 
     updateCirculationRulesInStorageWithoutInvalidatingCache(rulesFallback2);
 
-    assertThat(applyLoanPolicy(m1, t1, g1, s1), is(lp6));
+    assertThat(applyRulesForLoanPolicy(m1, t1, g1, s1), is(lp6));
 
     // reduce cache time to trigger reload from storage backend
     LoanCirculationRulesEngineResource.setCacheTime(0, 0);
 
-    assertThat(applyLoanPolicy(m1, t1, g1, s1), is(lp7));
+    assertThat(applyRulesForLoanPolicy(m1, t1, g1, s1), is(lp7));
   }
 
-  private void updateCirculationRulesInStorageWithoutInvalidatingCache(String rules)
-    throws InterruptedException, ExecutionException, TimeoutException {
+  private Policy applyRulesForLoanPolicy(ItemType itemType, LoanType loanType,
+      PatronGroup patronGroup, ItemLocation location) {
 
-    CompletableFuture<Response> putCompleted = new CompletableFuture<>();
+    return circulationRulesFixture.applyRulesForLoanPolicy(
+        itemType, loanType, patronGroup, location);
+  }
 
+  private Policy applyRequestPolicy(ItemType itemType, LoanType loanType,
+      PatronGroup patronGroup, ItemLocation location) {
+
+    return circulationRulesFixture.applyRulesForRequestPolicy(itemType, loanType,
+        patronGroup, location);
+  }
+
+  private Policy applyNoticePolicy(ItemType itemType, LoanType loanType,
+      PatronGroup patronGroup, ItemLocation location) {
+
+    return circulationRulesFixture.applyRulesForNoticePolicy(itemType, loanType,
+      patronGroup, location);
+  }
+
+  private void updateCirculationRulesInStorageWithoutInvalidatingCache(String rules) {
     JsonObject json = new JsonObject().put("rulesAsText", rules);
 
-    client.put(circulationRulesStorageUrl(""), json, any(putCompleted));
+    restAssuredClient.beginRequest("update-rules-in-storage")
+      .body(json.encodePrettily())
+      .when()
+      .put(circulationRulesStorageUrl(""))
+      .then()
+      .log().all();
+  }
 
-    putCompleted.get(5, TimeUnit.SECONDS);
+  private void matchesLoanPolicy(JsonArray array, int match, Policy policy,
+      int line) {
+
+    JsonObject o = array.getJsonObject(match);
+
+    assertThat("Loan policy ID should match",
+      o.getString("loanPolicyId"), is(policy.id));
+
+    assertThat("Circulation rule line number should match",
+      o.getInteger("circulationRuleLine"), is(line));
+  }
+
+  private void matchesRequestPolicy(JsonArray array, int match, Policy policy,
+      int line) {
+
+    JsonObject o = array.getJsonObject(match);
+
+    assertThat("Request policy ID should match",
+        o.getString("requestPolicyId"), is(policy.id));
+
+    assertThat("Circulation rule line number should match",
+        o.getInteger("circulationRuleLine"), is(line));
+  }
+
+  private void matchesNoticePolicy(JsonArray array, int match, Policy policy,
+      int line) {
+
+    JsonObject o = array.getJsonObject(match);
+
+    assertThat("Notice policy ID should match",
+        o.getString("noticePolicyId"), is(policy.id));
+
+    assertThat("Circulation rule line number should match",
+        o.getInteger("circulationRuleLine"), is(line));
+  }
+
+  private Response applyRulesWithInvalidParameters(String type, String itemType,
+      String loanType, String patronGroup, String location) {
+
+    final List<QueryStringParameter> parameters = new ArrayList<>();
+
+    if(itemType != null) {
+      parameters.add(namedParameter("item_type_id", itemType));
+    }
+
+    if(loanType != null) {
+      parameters.add(namedParameter("loan_type_id", loanType));
+    }
+
+    if(patronGroup != null) {
+      parameters.add(namedParameter("patron_type_id", patronGroup));
+    }
+
+    if(location != null) {
+      parameters.add(namedParameter("location_id", location));
+    }
+
+    return restAssuredClient.get(
+      circulationRulesUrl("/" + type + "-policy"), parameters,
+      400, "apply-rules-with-invalid-parameters");
+  }
+
+  private void applyRulesWithMissingParameters(String type, String itemType,
+      String loanType, String patronGroup, String location,
+      String missingParameterName) {
+
+    final Response response = applyRulesWithInvalidParameters(type, itemType,
+        loanType, patronGroup, location);
+
+    assertThat(response.getBody(), containsString(missingParameterName));
   }
 }
