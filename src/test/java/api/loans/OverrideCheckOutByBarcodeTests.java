@@ -43,7 +43,6 @@ public class OverrideCheckOutByBarcodeTests extends APITests {
   @Test
   public void canOverrideCheckoutWhenItemIsNotLoanable()
     throws InterruptedException,
-    MalformedURLException,
     TimeoutException,
     ExecutionException {
 
@@ -166,7 +165,6 @@ public class OverrideCheckOutByBarcodeTests extends APITests {
   @Test
   public void cannotOverrideCheckoutWhenItemIsLoanable()
     throws InterruptedException,
-    MalformedURLException,
     TimeoutException,
     ExecutionException {
 
@@ -201,7 +199,6 @@ public class OverrideCheckOutByBarcodeTests extends APITests {
   @Test
   public void cannotOverrideCheckoutWhenDueDateIsNotPresent()
     throws InterruptedException,
-    MalformedURLException,
     TimeoutException,
     ExecutionException {
 
@@ -227,7 +224,6 @@ public class OverrideCheckOutByBarcodeTests extends APITests {
   @Test
   public void cannotOverrideCheckoutWhenDueDateIsBeforeLoanDate()
     throws InterruptedException,
-    MalformedURLException,
     TimeoutException,
     ExecutionException {
 
@@ -255,7 +251,6 @@ public class OverrideCheckOutByBarcodeTests extends APITests {
   @Test
   public void cannotOverrideCheckoutWhenDueDateIsTheSameAsLoanDate()
     throws InterruptedException,
-    MalformedURLException,
     TimeoutException,
     ExecutionException {
 
@@ -282,7 +277,6 @@ public class OverrideCheckOutByBarcodeTests extends APITests {
   @Test
   public void cannotOverrideCheckoutWhenCommentIsNotPresent()
     throws InterruptedException,
-    MalformedURLException,
     TimeoutException,
     ExecutionException {
 
@@ -308,7 +302,6 @@ public class OverrideCheckOutByBarcodeTests extends APITests {
   @Test
   public void canCreateRecallRequestAfterOverriddenCheckout()
     throws InterruptedException,
-    MalformedURLException,
     TimeoutException,
     ExecutionException {
 
@@ -339,7 +332,6 @@ public class OverrideCheckOutByBarcodeTests extends APITests {
 
   private void setNotLoanablePolicy()
     throws InterruptedException,
-    MalformedURLException,
     TimeoutException,
     ExecutionException {
 

@@ -61,7 +61,6 @@ public class OverrideRenewByBarcodeTests extends APITests {
   @Test
   public void cannotOverrideRenewalWhenLoanPolicyDoesNotExist()
     throws InterruptedException,
-    MalformedURLException,
     TimeoutException,
     ExecutionException {
 
@@ -89,11 +88,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
   }
 
   @Test
-  public void cannotOverrideRenewalWhenLoaneeCannotBeFound()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void cannotOverrideRenewalWhenLoaneeCannotBeFound() {
 
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource steve = usersFixture.steve();
@@ -112,11 +107,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
   }
 
   @Test
-  public void cannotOverrideRenewalWhenItemCannotBeFound()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void cannotOverrideRenewalWhenItemCannotBeFound() {
 
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource steve = usersFixture.steve();
@@ -134,11 +125,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
   }
 
   @Test
-  public void cannotOverrideRenewalLoanForDifferentUser()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void cannotOverrideRenewalLoanForDifferentUser() {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource james = usersFixture.james();
@@ -156,11 +143,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
   }
 
   @Test
-  public void cannotOverrideRenewalWhenCommentPropertyIsBlank() throws
-    InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void cannotOverrideRenewalWhenCommentPropertyIsBlank() {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource jessica = usersFixture.jessica();
@@ -178,8 +161,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
   public void canOverrideRenewalWhenItemIsNotRenewableAndNewDueDateIsNotSpecified() throws
     InterruptedException,
     ExecutionException,
-    TimeoutException,
-    MalformedURLException {
+    TimeoutException {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource jessica = usersFixture.jessica();
@@ -209,8 +191,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
   public void canOverrideRenewalWhenItemIsNotRenewableAndNewDueDateIsSpecified() throws
     InterruptedException,
     ExecutionException,
-    TimeoutException,
-    MalformedURLException {
+    TimeoutException {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource jessica = usersFixture.jessica();
@@ -269,7 +250,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
   public void canOverrideRenewalWhenDateFallsOutsideOfTheDateRangesInTheFixedLoanPolicyAndDueDateIsNotSpecified() throws
     InterruptedException,
     ExecutionException,
-    TimeoutException, MalformedURLException {
+    TimeoutException {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource jessica = usersFixture.jessica();
@@ -306,7 +287,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
   public void canOverrideRenewalWhenDateFallsOutsideOfTheDateRangesInTheFixedLoanPolicyAndDueDateIsSpecified() throws
     InterruptedException,
     ExecutionException,
-    TimeoutException, MalformedURLException {
+    TimeoutException {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource jessica = usersFixture.jessica();
@@ -380,7 +361,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
   public void canOverrideRenewalWhenDateFallsOutsideOfTheDateRangesInTheRollingLoanPolicy() throws
     InterruptedException,
     ExecutionException,
-    TimeoutException, MalformedURLException {
+    TimeoutException {
 
     final DateTime renewalDate = DateTime.now();
 
@@ -452,8 +433,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
   public void canOverrideRenewalWhenLoanReachedRenewalLimitAndDueDateIsNotSpecified() throws
     InterruptedException,
     ExecutionException,
-    TimeoutException,
-    MalformedURLException {
+    TimeoutException {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource jessica = usersFixture.jessica();
@@ -504,7 +484,6 @@ public class OverrideRenewByBarcodeTests extends APITests {
   @Test
   public void cannotOverrideRenewalWhenLoanDoesNotMatchAnyOfOverrideCases() throws
     InterruptedException,
-    MalformedURLException,
     TimeoutException,
     ExecutionException {
 
@@ -537,8 +516,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
   public void renewalRemovesActionCommentAfterOverride() throws
     InterruptedException,
     ExecutionException,
-    TimeoutException,
-    MalformedURLException {
+    TimeoutException {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource jessica = usersFixture.jessica();
@@ -576,8 +554,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
   public void checkInRemovesActionCommentAfterOverride() throws
     InterruptedException,
     ExecutionException,
-    TimeoutException,
-    MalformedURLException {
+    TimeoutException {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource jessica = usersFixture.jessica();
@@ -610,8 +587,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
   public void cannotOverrideRenewalWhenItemIsNotLoanableAndNewDueDateIsNotSpecified() throws
     InterruptedException,
     ExecutionException,
-    TimeoutException,
-    MalformedURLException {
+    TimeoutException {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource jessica = usersFixture.jessica();
@@ -642,8 +618,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
   public void canOverrideRenewalWhenItemIsNotLoanableAndNewDueDateIsSpecified() throws
     InterruptedException,
     ExecutionException,
-    TimeoutException,
-    MalformedURLException {
+    TimeoutException {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource jessica = usersFixture.jessica();
@@ -683,8 +658,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
   public void cannotOverrideRenewalWhenDueDateIsEarlierOrSameAsCurrentLoanDueDate() throws
     InterruptedException,
     ExecutionException,
-    TimeoutException,
-    MalformedURLException {
+    TimeoutException {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource jessica = usersFixture.jessica();
@@ -710,7 +684,6 @@ public class OverrideRenewByBarcodeTests extends APITests {
   @Test
   public void renewalNoticeIsSentWhenPolicyDefinesRenewalNoticeConfiguration()
     throws InterruptedException,
-    MalformedURLException,
     TimeoutException,
     ExecutionException {
 
@@ -797,7 +770,6 @@ public class OverrideRenewByBarcodeTests extends APITests {
 
   private void createLoanPolicyAndSetAsFallback(LoanPolicyBuilder loanPolicyBuilder) throws
     InterruptedException,
-    MalformedURLException,
     TimeoutException,
     ExecutionException {
     use(loanPolicyBuilder);

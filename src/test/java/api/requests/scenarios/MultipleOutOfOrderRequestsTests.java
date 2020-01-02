@@ -23,11 +23,7 @@ public class MultipleOutOfOrderRequestsTests extends APITests {
   @Ignore("Disabled since introducing position in queue, " +
     "need to decide if will support this, in the interim before allowing changing of position")
   @Test
-  public void statusOfOldestRequestCreatedOutOfOrderChangesToAwaitingPickupWhenItemCheckedIn()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void statusOfOldestRequestCreatedOutOfOrderChangesToAwaitingPickupWhenItemCheckedIn() {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource james = usersFixture.james();

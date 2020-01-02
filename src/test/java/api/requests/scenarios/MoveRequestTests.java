@@ -59,11 +59,7 @@ public class MoveRequestTests extends APITests {
   }
 
   @Test
-  public void canMoveRequestFromOneItemCopyToAnother()
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException,
-    MalformedURLException {
+  public void canMoveRequestFromOneItemCopyToAnother() {
 
     final IndividualResource secondFloorEconomics = locationsFixture.secondFloorEconomics();
     final IndividualResource mezzanineDisplayCase = locationsFixture.mezzanineDisplayCase();
@@ -163,11 +159,7 @@ public class MoveRequestTests extends APITests {
   }
 
   @Test
-  public void canMoveAShelfHoldRequestToAnAvailableItem()
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException,
-    MalformedURLException {
+  public void canMoveAShelfHoldRequestToAnAvailableItem() {
 
     IndividualResource smallAngryPlanet = itemsFixture
       .basedUponSmallAngryPlanet(itemsFixture.addCallNumberStringComponents("sap"));
@@ -214,11 +206,7 @@ public class MoveRequestTests extends APITests {
   }
 
   @Test
-  public void canMoveARecallRequest()
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException,
-    MalformedURLException {
+  public void canMoveARecallRequest() {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource interestingTimes = itemsFixture.basedUponInterestingTimes();
@@ -297,11 +285,7 @@ public class MoveRequestTests extends APITests {
   }
 
   @Test
-  public void canMoveTwoRequests()
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException,
-    MalformedURLException {
+  public void canMoveTwoRequests() {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource interestingTimes = itemsFixture.basedUponInterestingTimes();
@@ -384,11 +368,7 @@ public class MoveRequestTests extends APITests {
   }
 
   @Test
-  public void canMoveAHoldShelfRequestLeavingEmptyQueueAndItemStatusChange()
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException,
-    MalformedURLException {
+  public void canMoveAHoldShelfRequestLeavingEmptyQueueAndItemStatusChange() {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource interestingTimes = itemsFixture.basedUponInterestingTimes();
@@ -423,11 +403,7 @@ public class MoveRequestTests extends APITests {
   }
 
   @Test
-  public void canMoveAHoldShelfRequestToAnEmptyQueue()
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException,
-    MalformedURLException {
+  public void canMoveAHoldShelfRequestToAnEmptyQueue() {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource interestingTimes = itemsFixture.basedUponInterestingTimes();
@@ -469,11 +445,7 @@ public class MoveRequestTests extends APITests {
   }
 
   @Test
-  public void canMoveAHoldShelfRequestReorderingDestinationRequestQueue()
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException,
-    MalformedURLException {
+  public void canMoveAHoldShelfRequestReorderingDestinationRequestQueue() {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource interestingTimes = itemsFixture.basedUponInterestingTimes();
@@ -552,11 +524,7 @@ public class MoveRequestTests extends APITests {
   }
 
   @Test
-  public void canMoveAHoldShelfRequestPreventDisplacingOpenRequest()
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException,
-    MalformedURLException {
+  public void canMoveAHoldShelfRequestPreventDisplacingOpenRequest() {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource interestingTimes = itemsFixture.basedUponInterestingTimes();
@@ -638,11 +606,7 @@ public class MoveRequestTests extends APITests {
   }
 
   @Test
-  public void canMoveARecallRequestAsHoldRequest()
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException,
-    MalformedURLException {
+  public void canMoveARecallRequestAsHoldRequest() {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource interestingTimes = itemsFixture.basedUponInterestingTimes();
@@ -727,11 +691,7 @@ public class MoveRequestTests extends APITests {
 
   //This scenerio utilizes two items of the same instance, but the logic in question applies as well for two separate instances.
   @Test
-  public void cannotDisplacePagedRequest()
-      throws MalformedURLException,
-      InterruptedException,
-      TimeoutException,
-      ExecutionException {
+  public void cannotDisplacePagedRequest() {
 
       final IndividualResource secondFloorEconomics = locationsFixture.secondFloorEconomics();
       final IndividualResource mezzanineDisplayCase = locationsFixture.mezzanineDisplayCase();
@@ -809,11 +769,7 @@ public class MoveRequestTests extends APITests {
   }
 
   @Test
-  public void checkoutItemStatusDoesNotChangeOnPagedRequest()
-      throws MalformedURLException,
-      InterruptedException,
-      TimeoutException,
-      ExecutionException {
+  public void checkoutItemStatusDoesNotChangeOnPagedRequest() {
 
         final IndividualResource secondFloorEconomics = locationsFixture.secondFloorEconomics();
         final IndividualResource mezzanineDisplayCase = locationsFixture.mezzanineDisplayCase();
@@ -893,10 +849,9 @@ public class MoveRequestTests extends APITests {
    *         the system date, the due dates will not be equivalent in any
    *         practical application of this scenario, so the test reflects that.
    *
-   * @throws Exception - In case of any exception
    */
   @Test
-  public void canUpdateSourceAndDestinationLoanDueDateOnMoveRecallRequest() throws Exception {
+  public void canUpdateSourceAndDestinationLoanDueDateOnMoveRecallRequest() {
     // Recall placed 2 hours from now
     final Instant expectedJamesLoanDueDate = LocalDateTime
         .now().plusHours(2).toInstant(ZoneOffset.UTC);
@@ -958,8 +913,7 @@ public class MoveRequestTests extends APITests {
   public void changedDueDateAfterRecallingAnItemShouldRespectTenantTimezone()
     throws InterruptedException,
     ExecutionException,
-    TimeoutException,
-    MalformedURLException {
+    TimeoutException {
 
     final String stockholmTimeZone = "Europe/Stockholm";
 

@@ -40,8 +40,7 @@ public class InstanceRequestsAPICreationTests extends APITests {
   public void canCreateATitleLevelRequestForMultipleAvailableItemsAndAMatchingPickupLocationId()
     throws InterruptedException,
     ExecutionException,
-    TimeoutException,
-    MalformedURLException {
+    TimeoutException {
 
     UUID pickupServicePointId = servicePointsFixture.cd1().getId();
     UUID requesterId = usersFixture.jessica().getId();
@@ -79,8 +78,7 @@ public class InstanceRequestsAPICreationTests extends APITests {
   public void canCreateATitleLevelRequestForOneAvailableCopy()
     throws InterruptedException,
     ExecutionException,
-    TimeoutException,
-    MalformedURLException {
+    TimeoutException {
 
     UUID pickupServicePointId = servicePointsFixture.cd1().getId();
     UUID requesterId = usersFixture.jessica().getId();
@@ -119,8 +117,7 @@ public class InstanceRequestsAPICreationTests extends APITests {
   public void canCreateATitleLevelRequestForOneAvailableCopyWithoutRequestExpirationDate()
     throws InterruptedException,
     ExecutionException,
-    TimeoutException,
-    MalformedURLException {
+    TimeoutException {
 
     UUID pickupServicePointId = servicePointsFixture.cd1().getId();
     UUID requesterId = usersFixture.jessica().getId();
@@ -158,8 +155,7 @@ public class InstanceRequestsAPICreationTests extends APITests {
   public void canCreateATitleLevelRequestForMultipleAvailableItemsWithNoMatchingPickupLocationIds()
     throws InterruptedException,
     ExecutionException,
-    TimeoutException,
-    MalformedURLException {
+    TimeoutException {
 
     UUID pickupServicePointId = servicePointsFixture.cd1().getId();
     UUID requesterId = usersFixture.jessica().getId();
@@ -202,8 +198,7 @@ public class InstanceRequestsAPICreationTests extends APITests {
   public void cannotSuccessfullyPlaceATitleLevelRequestWhenTitleLevelRequestMissingRequiredFields()
     throws InterruptedException,
     ExecutionException,
-    TimeoutException,
-    MalformedURLException {
+    TimeoutException {
 
     UUID pickupServicePointId = servicePointsFixture.cd1().getId();
     UUID requesterId = usersFixture.jessica().getId();
@@ -240,8 +235,7 @@ public class InstanceRequestsAPICreationTests extends APITests {
   public void canSuccessfullyPlaceATitleLevelRequestWhenNoCopyIsAvailable()
     throws InterruptedException,
     ExecutionException,
-    TimeoutException,
-    MalformedURLException {
+    TimeoutException {
 
     UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
@@ -288,8 +282,7 @@ public class InstanceRequestsAPICreationTests extends APITests {
   public void canSuccessfullyPlaceATitleLevelRequestOnAvailableCopyWithAdditionalUnavailableCopy()
     throws InterruptedException,
     ExecutionException,
-    TimeoutException,
-    MalformedURLException {
+    TimeoutException {
 
     UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
@@ -333,8 +326,7 @@ public class InstanceRequestsAPICreationTests extends APITests {
   public void canSuccessfullyPlaceATitleLevelRequestOnUnvailableCopyWhenBothUnavailableCopiesHaveSameQueueLength()
     throws InterruptedException,
     ExecutionException,
-    TimeoutException,
-    MalformedURLException {
+    TimeoutException {
 
     UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
@@ -394,8 +386,7 @@ public class InstanceRequestsAPICreationTests extends APITests {
   public void canSuccessfullyPlaceATitleLevelRequestOnOneLoneUnvailableCopy()
     throws InterruptedException,
     ExecutionException,
-    TimeoutException,
-    MalformedURLException {
+    TimeoutException {
 
     UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
@@ -438,8 +429,7 @@ public class InstanceRequestsAPICreationTests extends APITests {
   public void canPlaceATitleLevelRequestOnUnvailableCopyWhenThereIsAvailableItem()
     throws InterruptedException,
     ExecutionException,
-    TimeoutException,
-    MalformedURLException {
+    TimeoutException {
 
     //The scenario we're checking is if a user has already checked out an item, but then
     //goes back to place an instance level request. The system will find this item and rejects the request for the user, so the user
@@ -488,8 +478,7 @@ public class InstanceRequestsAPICreationTests extends APITests {
   public void canPlaceRequestWhenAllCopiesAreCheckedOutButNoRequestQueuesForThem()
     throws InterruptedException,
     ExecutionException,
-    TimeoutException,
-    MalformedURLException {
+    TimeoutException {
 
     UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
@@ -534,8 +523,7 @@ public class InstanceRequestsAPICreationTests extends APITests {
   @Test
   public void canPlaceRequestOnCheckedoutCopyWithNearestDueDate() throws InterruptedException,
     ExecutionException,
-    TimeoutException,
-    MalformedURLException {
+    TimeoutException {
 
     UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
@@ -582,8 +570,7 @@ public class InstanceRequestsAPICreationTests extends APITests {
   @Test
   public void canPlaceRequestOnCheckedoutCopyWithRequestQueuesAndNearestDueDate() throws InterruptedException,
     ExecutionException,
-    TimeoutException,
-    MalformedURLException {
+    TimeoutException {
 
     UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
@@ -638,8 +625,7 @@ public class InstanceRequestsAPICreationTests extends APITests {
   public void canCreateATitleLevelRequestForAnUnAvailableItemWithAMatchingPickupLocationId()
     throws InterruptedException,
     ExecutionException,
-    TimeoutException,
-    MalformedURLException {
+    TimeoutException {
 
     UUID pickupServicePointId = servicePointsFixture.cd1().getId();
     DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
@@ -690,8 +676,7 @@ public class InstanceRequestsAPICreationTests extends APITests {
   public void canCreateATitleLevelRequestForUnavailableItemHavingDueDateVersusOneWithoutLoan()
     throws InterruptedException,
     ExecutionException,
-    TimeoutException,
-    MalformedURLException {
+    TimeoutException {
 
     UUID pickupServicePointId = servicePointsFixture.cd1().getId();
     DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
@@ -735,8 +720,7 @@ public class InstanceRequestsAPICreationTests extends APITests {
   public void cannotCreateATitleLevelRequestForAPreviouslyRequestedCopy()
     throws InterruptedException,
     ExecutionException,
-    TimeoutException,
-    MalformedURLException {
+    TimeoutException {
 
     UUID pickupServicePointId = servicePointsFixture.cd1().getId();
     DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
@@ -780,8 +764,7 @@ public class InstanceRequestsAPICreationTests extends APITests {
   public void cannotCreateATitleLevelRequestForAnInstanceWithoutCopies()
     throws InterruptedException,
     ExecutionException,
-    TimeoutException,
-    MalformedURLException {
+    TimeoutException {
 
     UUID pickupServicePointId = servicePointsFixture.cd1().getId();
     DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
@@ -812,8 +795,7 @@ public class InstanceRequestsAPICreationTests extends APITests {
   public void cannotCreateATitleLevelRequestForAnInstanceWithoutHoldings()
     throws InterruptedException,
     ExecutionException,
-    TimeoutException,
-    MalformedURLException {
+    TimeoutException {
 
     UUID pickupServicePointId = servicePointsFixture.cd1().getId();
     DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
@@ -870,7 +852,7 @@ public class InstanceRequestsAPICreationTests extends APITests {
 
   private void placeHoldRequest(IndividualResource item,
     UUID requestPickupServicePointId, IndividualResource patron,
-    LocalDate requestExpirationDate) throws MalformedURLException {
+    LocalDate requestExpirationDate) {
 
     IndividualResource holdRequest = requestsClient.create(
       new RequestBuilder()

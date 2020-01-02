@@ -170,7 +170,6 @@ public class CheckOutCalculateDueDateShortTermTests extends APITests {
   private void checkOffsetTime(DateTime loanDate, DateTime expectedDueDate,
                                String servicePointId, String interval, int duration)
     throws InterruptedException,
-    MalformedURLException,
     TimeoutException,
     ExecutionException {
 
@@ -211,7 +210,6 @@ public class CheckOutCalculateDueDateShortTermTests extends APITests {
 
   private IndividualResource createLoanPolicy(JsonObject loanPolicyEntry)
     throws InterruptedException,
-    MalformedURLException,
     TimeoutException,
     ExecutionException {
 

@@ -44,11 +44,7 @@ public class LocationsFixture {
     this.servicePointsFixture = servicePointsFixture;
   }
 
-  public void cleanUp()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void cleanUp() {
 
     locationRecordCreator.cleanUp();
 
@@ -58,11 +54,7 @@ public class LocationsFixture {
   }
 
   public IndividualResource basedUponExampleLocation(
-    Function<LocationBuilder, LocationBuilder> additionalLocationProperties)
-      throws InterruptedException,
-      MalformedURLException,
-      TimeoutException,
-      ExecutionException {
+    Function<LocationBuilder, LocationBuilder> additionalLocationProperties) {
 
     final LocationExamples locationExamples = getLocationExamples();
 
@@ -70,23 +62,14 @@ public class LocationsFixture {
       additionalLocationProperties.apply(locationExamples.example()));
   }
 
-  public IndividualResource thirdFloor()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public IndividualResource thirdFloor() {
 
     final LocationExamples locationExamples = getLocationExamples();
 
     return locationRecordCreator.createIfAbsent(
       locationExamples.thirdFloor());
   }
-  public IndividualResource fourthServicePoint()
-
-      throws InterruptedException,
-      MalformedURLException,
-      TimeoutException,
-      ExecutionException {
+  public IndividualResource fourthServicePoint() {
 
     final LocationExamples locationExamples = getLocationExamplesForCd4();
 
@@ -94,11 +77,7 @@ public class LocationsFixture {
         locationExamples.secondFloorEconomics());
   }
 
-  public IndividualResource secondFloorEconomics()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public IndividualResource secondFloorEconomics() {
 
     final LocationExamples locationExamples = getLocationExamples();
 
@@ -106,11 +85,7 @@ public class LocationsFixture {
       locationExamples.secondFloorEconomics());
   }
 
-  public IndividualResource mezzanineDisplayCase()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public IndividualResource mezzanineDisplayCase() {
 
     final LocationExamples locationExamples = getLocationExamples();
 
@@ -124,33 +99,21 @@ public class LocationsFixture {
       servicePointsFixture.cd2(),
       servicePointsFixture.cd3(),
   */
-  public IndividualResource mainFloor()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public IndividualResource mainFloor() {
 
     final LocationExamples locationExamples = getLocationMultiServicePointsExamples();
 
     return locationRecordCreator.createIfAbsent(locationExamples.mainLocation());
   }
 
-  public IndividualResource fourthFloor()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public IndividualResource fourthFloor() {
 
     final LocationExamples locationExamples = getLocationExamplesWithKopenhavnInstitution();
 
     return locationRecordCreator.createIfAbsent(locationExamples.fourthFloorLocation());
   }
 
-  private LocationExamples getLocationExamples()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  private LocationExamples getLocationExamples() {
 
     return new LocationExamples(
       nottinghamUniversity().getId(),
@@ -162,11 +125,7 @@ public class LocationsFixture {
       null);
   }
 
-  private LocationExamples getLocationExamplesForCd4()
-      throws InterruptedException,
-      MalformedURLException,
-      TimeoutException,
-      ExecutionException {
+  private LocationExamples getLocationExamplesForCd4() {
 
     return new LocationExamples(
         nottinghamUniversity().getId(),
@@ -178,11 +137,7 @@ public class LocationsFixture {
         null);
   }
 
-  private LocationExamples getLocationExamplesWithKopenhavnInstitution()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  private LocationExamples getLocationExamplesWithKopenhavnInstitution() {
 
     return new LocationExamples(
       kopenhavnUniversity().getId(),
@@ -194,11 +149,7 @@ public class LocationsFixture {
       null);
   }
 
-  private LocationExamples getLocationMultiServicePointsExamples()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  private LocationExamples getLocationMultiServicePointsExamples() {
 
     return new LocationExamples(
       nottinghamUniversity().getId(),
@@ -210,11 +161,7 @@ public class LocationsFixture {
       servicePointsFixture.cd3().getId());
   }
 
-  private IndividualResource djanoglyLibrary()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  private IndividualResource djanoglyLibrary() {
 
     final JsonObject djanoglyLibrary = new JsonObject();
 
@@ -225,11 +172,7 @@ public class LocationsFixture {
     return libraryRecordCreator.createIfAbsent(djanoglyLibrary);
   }
 
-  private IndividualResource businessLibrary()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  private IndividualResource businessLibrary() {
 
     final JsonObject businessLibrary = new JsonObject();
 
@@ -240,11 +183,7 @@ public class LocationsFixture {
     return libraryRecordCreator.createIfAbsent(businessLibrary);
   }
 
-  private IndividualResource mainLibrary()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  private IndividualResource mainLibrary() {
 
     final JsonObject businessLibrary = new JsonObject();
 
@@ -255,11 +194,7 @@ public class LocationsFixture {
     return libraryRecordCreator.createIfAbsent(businessLibrary);
   }
 
-  private IndividualResource jubileeCampus()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  private IndividualResource jubileeCampus() {
 
     final JsonObject jubileeCampus = new JsonObject();
 
@@ -270,11 +205,7 @@ public class LocationsFixture {
     return campusRecordCreator.createIfAbsent(jubileeCampus);
   }
 
-  private IndividualResource mainCampus()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  private IndividualResource mainCampus() {
 
     final JsonObject mainCampus = new JsonObject();
 
@@ -285,11 +216,7 @@ public class LocationsFixture {
     return campusRecordCreator.createIfAbsent(mainCampus);
   }
 
-  private IndividualResource nottinghamUniversity()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  private IndividualResource nottinghamUniversity() {
 
     final JsonObject nottinghamUniversity = new JsonObject();
 
@@ -299,11 +226,7 @@ public class LocationsFixture {
     return institutionRecordCreator.createIfAbsent(nottinghamUniversity);
   }
 
-  private IndividualResource kopenhavnUniversity()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  private IndividualResource kopenhavnUniversity() {
 
     final JsonObject kopenhavnUniversity = new JsonObject();
 

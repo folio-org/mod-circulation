@@ -29,11 +29,7 @@ import io.vertx.core.json.JsonObject;
 public class RequestByInstanceIdResourceTests extends APITests {
 
   @Test
-  public void canGetOrderedAvailableItemsList()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void canGetOrderedAvailableItemsList() {
 
     UUID primaryServicePointId = servicePointsFixture.cd2().getId();
     UUID secondaryServicePointId = UUID.randomUUID();

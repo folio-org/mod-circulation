@@ -20,8 +20,7 @@ public class HoldingsFixture {
     holdingsClient =  ResourceClient.forHoldings();
   }
 
-  public IndividualResource defaultWithHoldings(UUID instanceId)
-    throws InterruptedException, MalformedURLException, TimeoutException, ExecutionException {
+  public IndividualResource defaultWithHoldings(UUID instanceId) {
 
 
     HoldingBuilder holdingsBuilder = new HoldingBuilder()

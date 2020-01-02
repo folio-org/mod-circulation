@@ -16,11 +16,7 @@ import api.support.builders.RequestBuilder;
 
 public class RequestsForDifferentItemsTests extends APITests {
   @Test
-  public void requestsCreatedForDifferentItemsAreInDifferentQueues()
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException,
-    MalformedURLException {
+  public void requestsCreatedForDifferentItemsAreInDifferentQueues() {
 
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource nod = itemsFixture.basedUponNod();

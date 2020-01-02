@@ -36,7 +36,7 @@ public class RequestQueueResourceTest extends APITests {
   private IndividualResource charlotte;
 
   @Before
-  public void setUp() throws Exception {
+  public void setUp() {
     item = itemsFixture.basedUponSmallAngryPlanet();
 
     jessica = usersFixture.jessica();
@@ -261,7 +261,7 @@ public class RequestQueueResourceTest extends APITests {
     verifyQueueUpdated(subsequentReorder, subsequentReorderResponse);
   }
 
-  private IndividualResource pageRequest(IndividualResource requester) throws Exception {
+  private IndividualResource pageRequest(IndividualResource requester) {
     return requestsFixture.place(
       new RequestBuilder()
         .open()
@@ -272,7 +272,7 @@ public class RequestQueueResourceTest extends APITests {
     );
   }
 
-  private IndividualResource holdRequest(IndividualResource requester) throws Exception {
+  private IndividualResource holdRequest(IndividualResource requester) {
     return requestsFixture.place(
       new RequestBuilder()
         .open()
@@ -283,7 +283,7 @@ public class RequestQueueResourceTest extends APITests {
     );
   }
 
-  private IndividualResource recallRequest(IndividualResource requester) throws Exception {
+  private IndividualResource recallRequest(IndividualResource requester) {
     return requestsFixture.place(
       new RequestBuilder()
         .open()
@@ -294,7 +294,7 @@ public class RequestQueueResourceTest extends APITests {
     );
   }
 
-  private IndividualResource inFulfillmentRecallRequest(IndividualResource requester) throws Exception {
+  private IndividualResource inFulfillmentRecallRequest(IndividualResource requester) {
     return requestsFixture.place(
       new RequestBuilder()
         .open()

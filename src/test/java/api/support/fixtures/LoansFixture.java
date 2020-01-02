@@ -119,22 +119,14 @@ public class LoansFixture {
       declareLoanItemLostURL(loanId.toString()), "declare-item-lost-request");
   }
 
-  public IndividualResource checkOutByBarcode(IndividualResource item)
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public IndividualResource checkOutByBarcode(IndividualResource item) {
 
     return checkOutByBarcode(item, usersFixture.jessica());
   }
 
   public IndividualResource checkOutByBarcode(
     IndividualResource item,
-    IndividualResource to)
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+    IndividualResource to) {
 
     return checkOutByBarcode(new CheckOutByBarcodeRequestBuilder()
       .forItem(item)
@@ -145,11 +137,7 @@ public class LoansFixture {
   public IndividualResource checkOutByBarcode(
     IndividualResource item,
     IndividualResource to,
-    DateTime loanDate)
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+    DateTime loanDate) {
 
     return checkOutByBarcode(new CheckOutByBarcodeRequestBuilder()
       .forItem(item)
@@ -298,11 +286,7 @@ public class LoansFixture {
       checkInByBarcodeUrl(), 200, "check-in-by-barcode-request"));
   }
 
-  public CheckInByBarcodeResponse checkInByBarcode(IndividualResource item)
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public CheckInByBarcodeResponse checkInByBarcode(IndividualResource item) {
 
     return checkInByBarcode(new CheckInByBarcodeRequestBuilder()
       .forItem(item)
@@ -334,11 +318,7 @@ public class LoansFixture {
   }
 
 
-  private IndividualResource defaultServicePoint()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  private IndividualResource defaultServicePoint() {
 
     return servicePointsFixture.cd1();
   }

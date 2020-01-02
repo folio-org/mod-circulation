@@ -23,11 +23,7 @@ import org.folio.circulation.support.http.client.IndividualResource;
 public class EndExpiredPatronActionSessionTests extends APITests {
 
   @Test
-  public void expiredEndSessionAfterCheckOut()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void expiredEndSessionAfterCheckOut() {
 
     IndividualResource james = usersFixture.james();
     loansFixture.checkOutByBarcode(itemsFixture.basedUponNod(), james);
@@ -53,11 +49,7 @@ public class EndExpiredPatronActionSessionTests extends APITests {
   }
 
   @Test
-  public void patronHasSomeSessionsAndOnlySessionsWithSameActionTypeShouldBeExpiredByTimeout()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void patronHasSomeSessionsAndOnlySessionsWithSameActionTypeShouldBeExpiredByTimeout() {
 
     IndividualResource james = usersFixture.james();
     InventoryItemResource nod = itemsFixture.basedUponNod();
@@ -90,11 +82,7 @@ public class EndExpiredPatronActionSessionTests extends APITests {
   }
 
   @Test
-  public void patronHasSeveralSessionsAndOnlyOneShouldBeExpiredByTimeout()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void patronHasSeveralSessionsAndOnlyOneShouldBeExpiredByTimeout() {
 
     IndividualResource james = usersFixture.james();
     InventoryItemResource nod = itemsFixture.basedUponNod();
@@ -126,11 +114,7 @@ public class EndExpiredPatronActionSessionTests extends APITests {
   }
 
   @Test
-  public void noExpiredEndSessionAfterCheckOut()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void noExpiredEndSessionAfterCheckOut() {
 
     IndividualResource james = usersFixture.james();
     loansFixture.checkOutByBarcode(itemsFixture.basedUponNod(), james);
@@ -149,11 +133,7 @@ public class EndExpiredPatronActionSessionTests extends APITests {
   }
 
   @Test
-  public void noExpiredEndSessionAfterCheckIn()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void noExpiredEndSessionAfterCheckIn() {
 
     IndividualResource james = usersFixture.james();
     InventoryItemResource nod = itemsFixture.basedUponNod();
@@ -177,11 +157,7 @@ public class EndExpiredPatronActionSessionTests extends APITests {
   }
 
   @Test
-  public void notFailEndSessionProcessingWhenServerIsNotResponding()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void notFailEndSessionProcessingWhenServerIsNotResponding() {
 
     IndividualResource james = usersFixture.james();
     InventoryItemResource nod = itemsFixture.basedUponNod();

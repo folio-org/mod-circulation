@@ -30,8 +30,7 @@ public class RequestsAPIProxyTests extends APITests {
   public void canCreateProxiedRequestWhenCurrentActiveRelationship()
     throws InterruptedException,
     ExecutionException,
-    TimeoutException,
-    MalformedURLException {
+    TimeoutException {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
 
@@ -88,8 +87,7 @@ public class RequestsAPIProxyTests extends APITests {
   public void canCreateProxiedRequestWhenNonExpiringRelationship()
     throws InterruptedException,
     ExecutionException,
-    TimeoutException,
-    MalformedURLException {
+    TimeoutException {
 
     IndividualResource item = itemsFixture.basedUponSmallAngryPlanet();
 
@@ -123,8 +121,7 @@ public class RequestsAPIProxyTests extends APITests {
   public void cannotCreateProxiedRequestWhenRelationshipIsInactive()
     throws InterruptedException,
     ExecutionException,
-    TimeoutException,
-    MalformedURLException {
+    TimeoutException {
 
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
 
@@ -157,8 +154,7 @@ public class RequestsAPIProxyTests extends APITests {
   public void cannotCreateProxiedRequestWhenRelationshipHasExpired()
     throws InterruptedException,
     ExecutionException,
-    TimeoutException,
-    MalformedURLException {
+    TimeoutException {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
 
@@ -191,8 +187,7 @@ public class RequestsAPIProxyTests extends APITests {
   public void cannotCreateProxiedRequestWhenRelationshipIsForOtherSponsor()
     throws InterruptedException,
     ExecutionException,
-    TimeoutException,
-    MalformedURLException {
+    TimeoutException {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
 
@@ -224,8 +219,7 @@ public class RequestsAPIProxyTests extends APITests {
   public void canUpdateProxiedRequestWhenValidProxyRelationship()
     throws InterruptedException,
     ExecutionException,
-    TimeoutException,
-    MalformedURLException {
+    TimeoutException {
 
     final InventoryItemResource temeraire = itemsFixture.basedUponTemeraire();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
@@ -287,8 +281,7 @@ public class RequestsAPIProxyTests extends APITests {
   public void cannotUpdateProxiedRequestWhenRelationshipHasExpired()
     throws InterruptedException,
     ExecutionException,
-    TimeoutException,
-    MalformedURLException {
+    TimeoutException {
 
     final InventoryItemResource temeraire = itemsFixture.basedUponTemeraire();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
@@ -325,8 +318,7 @@ public class RequestsAPIProxyTests extends APITests {
   public void cannotUpdateProxiedRequestWhenRelationshipIsForOtherSponsor()
     throws InterruptedException,
     ExecutionException,
-    TimeoutException,
-    MalformedURLException {
+    TimeoutException {
 
     final InventoryItemResource temeraire = itemsFixture.basedUponTemeraire();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();

@@ -30,20 +30,13 @@ public class RequestPolicyTests extends APITests {
 
   private final IndividualResource requestPickupServicePoint;
 
-  public RequestPolicyTests() throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException{
+  public RequestPolicyTests() {
 
     requestPickupServicePoint = servicePointsFixture.cd1();
   }
 
   @Test
-  public void canCreateRecallRequestsWithRequestPolicyAllowingRecalls()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void canCreateRecallRequestsWithRequestPolicyAllowingRecalls() {
 
     final String undergradPatronGroup = patronGroupsFixture.undergrad().getId().toString();
     final String anyNoticePolicy = noticePoliciesFixture.activeNotice().getId().toString();
@@ -82,11 +75,7 @@ public class RequestPolicyTests extends APITests {
   }
 
   @Test
-  public void cannotCreateRecallRequestsWithRequestPolicyNotAllowingRecalls()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void cannotCreateRecallRequestsWithRequestPolicyNotAllowingRecalls() {
 
     final String undergradPatronGroupPolicy = patronGroupsFixture.undergrad().getId().toString();
     final String anyNoticePolicy = noticePoliciesFixture.activeNotice().getId().toString();
@@ -129,11 +118,7 @@ public class RequestPolicyTests extends APITests {
   }
 
   @Test
-  public void canCreateHoldRequestsWithRequestWithReqestPolicyAllowingHolds()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void canCreateHoldRequestsWithRequestWithReqestPolicyAllowingHolds() {
 
     final String holdRequestPolicy = requestPoliciesFixture.holdRequestPolicy().getId().toString();
     final String anyNoticePolicy = noticePoliciesFixture.activeNotice().getId().toString();
@@ -172,11 +157,7 @@ public class RequestPolicyTests extends APITests {
   }
 
   @Test
-  public void cannotCreateHoldRequestsWithRequestPolicyNotAllowingHolds()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void cannotCreateHoldRequestsWithRequestPolicyNotAllowingHolds() {
 
     final String anyNoticePolicy = noticePoliciesFixture.activeNotice().getId().toString();
     final String anyLoanPolicy = loanPoliciesFixture.canCirculateRolling().getId().toString();
@@ -218,11 +199,7 @@ public class RequestPolicyTests extends APITests {
   }
 
   @Test
-  public void canCreatePageRequestsWithRequestPolicyAllowingPageRequests()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void canCreatePageRequestsWithRequestPolicyAllowingPageRequests() {
 
     final String nonCirculatingLoanTypePolicy = loanPoliciesFixture.canCirculateFixed().getId().toString();
     final String anyNoticePolicy = noticePoliciesFixture.activeNotice().getId().toString();
@@ -254,11 +231,7 @@ public class RequestPolicyTests extends APITests {
   }
 
   @Test
-  public void cannotCreatePageRequestsWithRequestPolicyNotAllowingPagings()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void cannotCreatePageRequestsWithRequestPolicyNotAllowingPagings() {
 
     final String anyNoticePolicy = noticePoliciesFixture.activeNotice().getId().toString();
     final String nonCirculatingLoanTypePolicy = loanPoliciesFixture.canCirculateFixed().getId().toString();
@@ -292,11 +265,7 @@ public class RequestPolicyTests extends APITests {
   }
 
   @Test
-  public void canCreateRecallRequestsWithRequestPolicyUsingFallbackRules()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void canCreateRecallRequestsWithRequestPolicyUsingFallbackRules() {
 
     final String undergradPatronGroup = patronGroupsFixture.undergrad().getId().toString();
     final String anyNoticePolicy = noticePoliciesFixture.activeNotice().getId().toString();
@@ -334,11 +303,7 @@ public class RequestPolicyTests extends APITests {
   }
 
   @Test
-  public void cannotCreatePageRequestsWithoutCirculationRulesDefined()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void cannotCreatePageRequestsWithoutCirculationRulesDefined() {
 
     //In order to not have any request policy around, need to remove the default one which was created before each test run
     final String defaultRequestPolicyName = "Example Request Policy";
@@ -361,11 +326,7 @@ public class RequestPolicyTests extends APITests {
   }
 
   @Test
-  public void cannotCreatePageRequestsWithoutMatchingCirculationRules()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void cannotCreatePageRequestsWithoutMatchingCirculationRules() {
 
     //In order to not have any request policy around, need to remove the default one which was created before each test run
     final String defaultRequestPolicyName = "Example Request Policy";

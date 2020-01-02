@@ -34,7 +34,6 @@ public class CheckInByReplacingLoanTests extends APITests {
   @Test
   public void canCompleteALoanByReturningTheItem()
     throws InterruptedException,
-    MalformedURLException,
     TimeoutException,
     ExecutionException {
 
@@ -111,7 +110,6 @@ public class CheckInByReplacingLoanTests extends APITests {
   @Test
   public void cannotCloseALoanWithoutAServicePoint()
     throws InterruptedException,
-    MalformedURLException,
     TimeoutException,
     ExecutionException {
 
@@ -145,7 +143,6 @@ public class CheckInByReplacingLoanTests extends APITests {
   @Test
   public void cannotUpdateALoanWithAnUnknownServicePoint()
     throws InterruptedException,
-    MalformedURLException,
     TimeoutException,
     ExecutionException {
 

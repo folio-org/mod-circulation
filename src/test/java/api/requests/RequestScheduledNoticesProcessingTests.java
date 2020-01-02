@@ -52,11 +52,7 @@ public class RequestScheduledNoticesProcessingTests extends APITests {
   private IndividualResource pickupServicePoint;
 
   @Before
-  public void beforeEach()
-    throws MalformedURLException,
-    InterruptedException,
-    TimeoutException,
-    ExecutionException {
+  public void beforeEach() {
 
     ItemBuilder itemBuilder = ItemExamples.basedUponSmallAngryPlanet(
       materialTypesFixture.book().getId(), loanTypesFixture.canCirculate().getId());
@@ -77,7 +73,7 @@ public class RequestScheduledNoticesProcessingTests extends APITests {
    */
   @Test
   public void aUponAtRequestExpirationNoticeShouldBeSentAndDeletedWhenRequestExpirationDateHasPassed()
-    throws MalformedURLException,
+    throws
     InterruptedException,
     TimeoutException,
     ExecutionException {
@@ -119,7 +115,7 @@ public class RequestScheduledNoticesProcessingTests extends APITests {
 
   @Test
   public void uponAtRequestExpirationNoticeShouldNotBeSentWhenRequestExpirationDateHasPassedAndRequestIsNotClosed()
-    throws MalformedURLException,
+    throws
     InterruptedException,
     TimeoutException,
     ExecutionException {
@@ -152,7 +148,7 @@ public class RequestScheduledNoticesProcessingTests extends APITests {
 
   @Test
   public void uponAtHoldExpirationNoticeShouldBeSentAndDeletedWhenHoldExpirationDateHasPassed()
-    throws MalformedURLException,
+    throws
     InterruptedException,
     TimeoutException,
     ExecutionException {
@@ -193,7 +189,7 @@ public class RequestScheduledNoticesProcessingTests extends APITests {
 
   @Test
   public void uponAtHoldExpirationNoticeShouldNotBeSentWhenHoldExpirationDateHasPassedAndRequestIsNotClosed()
-    throws MalformedURLException,
+    throws
     InterruptedException,
     TimeoutException,
     ExecutionException {
@@ -231,7 +227,7 @@ public class RequestScheduledNoticesProcessingTests extends APITests {
 
   @Test
   public void beforeRequestExpirationNoticeShouldBeSentAndDeletedWhenIsNotRecurring()
-    throws MalformedURLException,
+    throws
     InterruptedException,
     TimeoutException,
     ExecutionException {
@@ -266,7 +262,7 @@ public class RequestScheduledNoticesProcessingTests extends APITests {
 
   @Test
   public void beforeRequestExpirationRecurringNoticeShouldBeSentAndUpdatedWhenFirstThreholdBeforeExpirationHasPassed()
-    throws MalformedURLException,
+    throws
     InterruptedException,
     TimeoutException,
     ExecutionException {
@@ -310,7 +306,7 @@ public class RequestScheduledNoticesProcessingTests extends APITests {
 
   @Test
   public void beforeHoldExpirationNoticeShouldBeSentAndDeletedWhenIsNotRecurring()
-    throws MalformedURLException,
+    throws
     InterruptedException,
     TimeoutException,
     ExecutionException {
@@ -352,7 +348,7 @@ public class RequestScheduledNoticesProcessingTests extends APITests {
   }
 
   private void setupNoticePolicyWithRequestNotice(JsonObject noticeConfiguration)
-    throws MalformedURLException,
+    throws
     InterruptedException,
     TimeoutException,
     ExecutionException {
