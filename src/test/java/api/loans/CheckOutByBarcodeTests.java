@@ -1,7 +1,7 @@
 package api.loans;
 
 import static api.requests.RequestsAPICreationTests.setupMissingItem;
-import static api.support.APITestContext.END_OF_2019_DUE_DATE;
+import static api.support.APITestContext.END_OF_CURRENT_YEAR_DUE_DATE;
 import static api.support.builders.ItemBuilder.AVAILABLE;
 import static api.support.builders.ItemBuilder.CHECKED_OUT;
 import static api.support.matchers.CheckOutByBarcodeResponseMatchers.hasItemBarcodeParameter;
@@ -184,7 +184,13 @@ public class CheckOutByBarcodeTests extends APITests {
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource steve = usersFixture.steve();
 
-    final DateTime loanDate = new DateTime(2019, 3, 18, 11, 43, 54, DateTimeZone.UTC);
+    final DateTime loanDate = DateTime.now(DateTimeZone.UTC)
+      .withMonthOfYear(3)
+      .withDayOfMonth(18)
+      .withHourOfDay(11)
+      .withMinuteOfHour(43)
+      .withSecondOfMinute(54)
+      .withMillisOfSecond(0);
 
     final IndividualResource response = loansFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
@@ -203,8 +209,7 @@ public class CheckOutByBarcodeTests extends APITests {
     loanHasLoanPolicyProperties(loan, loanPoliciesFixture.canCirculateFixed());
 
     assertThat("due date should be based upon fixed due date schedule",
-      loan.getString("dueDate"),
-      isEquivalentTo(END_OF_2019_DUE_DATE));
+      loan.getString("dueDate"), isEquivalentTo(END_OF_CURRENT_YEAR_DUE_DATE));
   }
 
   @Test

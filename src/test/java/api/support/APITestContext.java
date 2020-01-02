@@ -31,7 +31,13 @@ public class APITestContext {
   private static final String USER_ID = "79ff2a8b-d9c3-5b39-ad4a-0a84025ab085";
 
   private static final String TOKEN = "eyJhbGciOiJIUzUxMiJ9eyJzdWIiOiJhZG1pbiIsInVzZXJfaWQiOiI3OWZmMmE4Yi1kOWMzLTViMzktYWQ0YS0wYTg0MDI1YWIwODUiLCJ0ZW5hbnQiOiJ0ZXN0X3RlbmFudCJ9BShwfHcNClt5ZXJ8ImQTMQtAM1sQEnhsfWNmXGsYVDpuaDN3RVQ9";
-  public static final DateTime END_OF_2019_DUE_DATE = new DateTime(2019, 12, 31, 23, 59, 59, DateTimeZone.UTC);
+  public static final DateTime END_OF_CURRENT_YEAR_DUE_DATE = DateTime.now(DateTimeZone.UTC)
+    .withMonthOfYear(12)
+    .withDayOfMonth(31)
+    .withHourOfDay(23)
+    .withMinuteOfHour(59)
+    .withSecondOfMinute(59)
+    .withMillisOfSecond(0);
 
   private static final String REQUEST_ID = createFakeRequestId();
 
