@@ -52,30 +52,31 @@ public class ItemLimitValidator {
       .thenApply(result -> result.map(v -> records));
   }
 
-  private CompletableFuture<Result<Boolean>> isLimitReached(List<String> ruleConditions, LoanAndRelatedRecords records) {
+  private CompletableFuture<Result<Boolean>> isLimitReached(List<String> ruleConditions,
+                                                            LoanAndRelatedRecords records) {
 
     if (!isRuleMaterialTypePresent(ruleConditions) && !isRuleLoanTypePresent(ruleConditions)) {
       return ofAsync(() -> false);
     }
 
     Item item = records.getLoan().getItem();
-    String materialType = item.getMaterialType() != null
-      ? item.getMaterialType().getString("name")
+    String materialTypeId = item.getMaterialType() != null
+      ? item.getMaterialType().getString("id")
       : null;
     String loanType = item.getLoanTypeName();
     Integer itemLimit = records.getLoan().getLoanPolicy().getItemLimit();
 
     return loanRepository.findOpenLoansByUserIdWithItem(records)
       .thenApply(r -> r.map(loans -> loans.getRecords().stream()
-        .filter(loan -> isMaterialTypeMatchInRetrievedLoan(materialType, loan))
+        .filter(loan -> isMaterialTypeMatchInRetrievedLoan(materialTypeId, loan))
         .filter(loan -> isLoanTypeMatchInRetrievedLoan(loanType, loan))
         .count()))
       .thenApply(r -> r.map(loansCount -> loansCount >= itemLimit));
   }
 
-  private boolean isMaterialTypeMatchInRetrievedLoan(String expectedMaterialType, Loan loan) {
-    return expectedMaterialType != null
-      && expectedMaterialType.equalsIgnoreCase(loan.getItem().getMaterialType().getString("name"));
+  private boolean isMaterialTypeMatchInRetrievedLoan(String expectedMaterialTypeId, Loan loan) {
+    return expectedMaterialTypeId != null
+      && expectedMaterialTypeId.equals(loan.getItem().getMaterialType().getString("id"));
   }
 
   private boolean isLoanTypeMatchInRetrievedLoan(String expectedLoanType, Loan loan) {

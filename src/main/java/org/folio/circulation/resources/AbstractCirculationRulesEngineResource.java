@@ -267,7 +267,7 @@ public abstract class AbstractCirculationRulesEngineResource extends Resource {
           .mapTo(Location::from)
           .whenNotFound(failed(new ServerErrorFailure("Can`t find location")))
           .fetch(request.params().get(LOCATION_ID_NAME))
-          .thenCompose(r -> r.after(location -> getPolicyIdAndConditionsList(request.params(), drools, location)))
+          .thenCompose(r -> r.after(location -> getPolicyIdAndRuleMatch(request.params(), drools, location)))
           .thenCompose(r -> r.after(this::buildJsonResult))
           .thenApply(OkJsonResponseResult::from)
           .thenAccept(result -> result.writeTo(routingContext.response()));
@@ -343,7 +343,8 @@ public abstract class AbstractCirculationRulesEngineResource extends Resource {
         invalidUuid(request, LOCATION_ID_NAME);
   }
 
-  protected abstract CompletableFuture<Result<Pair<String, List<String>>>> getPolicyIdAndConditionsList(MultiMap params, Drools drools, Location location);
+  protected abstract CompletableFuture<Result<Pair<String, List<String>>>> getPolicyIdAndRuleMatch(
+    MultiMap params, Drools drools, Location location);
 
   protected abstract String getPolicyIdKey();
 
