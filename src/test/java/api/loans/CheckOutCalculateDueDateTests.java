@@ -1,6 +1,6 @@
 package api.loans;
 
-import static api.support.APITestContext.END_OF_2019_DUE_DATE;
+import static api.support.APITestContext.END_OF_CURRENT_YEAR_DUE_DATE;
 import static api.support.fixtures.CalendarExamples.CASE_CALENDAR_IS_EMPTY_SERVICE_POINT_ID;
 import static api.support.fixtures.CalendarExamples.CASE_FRI_SAT_MON_DAY_ALL_CURRENT_DATE;
 import static api.support.fixtures.CalendarExamples.CASE_FRI_SAT_MON_DAY_ALL_SERVICE_POINT_ID;
@@ -38,7 +38,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
 import org.folio.circulation.domain.OpeningDay;
-import api.support.OpeningDayPeriod;
 import org.folio.circulation.domain.OpeningHour;
 import org.folio.circulation.domain.policy.DueDateManagement;
 import org.folio.circulation.domain.policy.Period;
@@ -52,6 +51,7 @@ import org.joda.time.LocalTime;
 import org.junit.Test;
 
 import api.support.APITests;
+import api.support.OpeningDayPeriod;
 import api.support.builders.CheckOutByBarcodeRequestBuilder;
 import api.support.builders.LoanPolicyBuilder;
 import api.support.fixtures.ConfigurationExample;
@@ -76,7 +76,7 @@ public class CheckOutCalculateDueDateTests extends APITests {
   public void testRespectSelectedTimezoneForDueDateCalculations() throws Exception {
 
     String expectedTimeZone = "America/New_York";
-    DateTime expectedDateTime = new DateTime(2019, 12, 31, 23, 59, 59, DateTimeZone.forID(expectedTimeZone));
+    DateTime expectedDateTime = currentYearDateTime(12, 31, 23, 59, 59, DateTimeZone.forID(expectedTimeZone));
 
     Response configResponse = configClient.create(ConfigurationExample.newYorkTimezoneConfiguration())
       .getResponse();
@@ -99,14 +99,14 @@ public class CheckOutCalculateDueDateTests extends APITests {
       new CheckOutByBarcodeRequestBuilder()
         .forItem(smallAngryPlanet)
         .to(steve)
-        .on(new DateTime(2019, 1, 11, 14, 43, 54, DateTimeZone.forID(expectedTimeZone)))
+        .on(currentYearDateTime(1, 11, 14, 43, 54, DateTimeZone.forID(expectedTimeZone)))
         .at(checkoutServicePointId));
 
     final JsonObject loan = response.getJson();
 
     loanHasLoanPolicyProperties(loan, loanPolicy);
 
-    assertThat(ERROR_MESSAGE_DUE_DATE + END_OF_2019_DUE_DATE,
+    assertThat(ERROR_MESSAGE_DUE_DATE + END_OF_CURRENT_YEAR_DUE_DATE,
       loan.getString(DUE_DATE_KEY), isEquivalentTo(expectedDateTime));
   }
 
@@ -133,15 +133,15 @@ public class CheckOutCalculateDueDateTests extends APITests {
       new CheckOutByBarcodeRequestBuilder()
         .forItem(smallAngryPlanet)
         .to(steve)
-        .on(new DateTime(2019, 1, 11, 14, 43, 54, DateTimeZone.UTC))
+        .on(currentYearDateTime(1, 11, 14, 43, 54))
         .at(checkoutServicePointId));
 
     final JsonObject loan = response.getJson();
 
     loanHasLoanPolicyProperties(loan, loanPolicy);
 
-    assertThat(ERROR_MESSAGE_DUE_DATE + END_OF_2019_DUE_DATE,
-      loan.getString(DUE_DATE_KEY), isEquivalentTo(END_OF_2019_DUE_DATE));
+    assertThat(ERROR_MESSAGE_DUE_DATE + END_OF_CURRENT_YEAR_DUE_DATE,
+      loan.getString(DUE_DATE_KEY), isEquivalentTo(END_OF_CURRENT_YEAR_DUE_DATE));
   }
 
   /**
@@ -172,15 +172,15 @@ public class CheckOutCalculateDueDateTests extends APITests {
       new CheckOutByBarcodeRequestBuilder()
         .forItem(smallAngryPlanet)
         .to(steve)
-        .on(new DateTime(2019, 1, 11, 14, 43, 54, DateTimeZone.UTC))
+        .on(currentYearDateTime(1, 11, 14, 43, 54))
         .at(checkoutServicePointId));
 
     final JsonObject loan = response.getJson();
 
     loanHasLoanPolicyProperties(loan, loanPolicy);
 
-    assertThat(ERROR_MESSAGE_DUE_DATE + END_OF_2019_DUE_DATE,
-      loan.getString(DUE_DATE_KEY), isEquivalentTo(END_OF_2019_DUE_DATE));
+    assertThat(ERROR_MESSAGE_DUE_DATE + END_OF_CURRENT_YEAR_DUE_DATE,
+      loan.getString(DUE_DATE_KEY), isEquivalentTo(END_OF_CURRENT_YEAR_DUE_DATE));
   }
 
   /**
@@ -1050,5 +1050,23 @@ public class CheckOutCalculateDueDateTests extends APITests {
     );
 
     return loanPolicy;
+  }
+
+  private DateTime currentYearDateTime(int month, int day, int hour, int minute,
+                                       int second) {
+
+    return currentYearDateTime(month, day, hour, minute, second, DateTimeZone.UTC);
+  }
+
+  private DateTime currentYearDateTime(int month, int day, int hour, int minute,
+                                       int second, DateTimeZone zone) {
+
+    return DateTime.now(zone)
+      .withMonthOfYear(month)
+      .withDayOfMonth(day)
+      .withHourOfDay(hour)
+      .withMinuteOfHour(minute)
+      .withSecondOfMinute(second)
+      .withMillisOfSecond(0);
   }
 }
