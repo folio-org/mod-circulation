@@ -1,11 +1,13 @@
 package org.folio.circulation.support.http.client;
 
-import static org.apache.http.HttpHeaders.CONTENT_TYPE;
+import static org.folio.circulation.support.Result.failed;
+import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.http.OkapiHeader.OKAPI_URL;
 import static org.folio.circulation.support.http.OkapiHeader.REQUEST_ID;
 import static org.folio.circulation.support.http.OkapiHeader.TENANT;
 import static org.folio.circulation.support.http.OkapiHeader.TOKEN;
 import static org.folio.circulation.support.http.OkapiHeader.USER_ID;
+import static org.folio.circulation.support.http.client.Response.responseFrom;
 
 import java.net.URL;
 import java.util.concurrent.CompletableFuture;
@@ -14,7 +16,6 @@ import org.folio.circulation.support.Result;
 import org.folio.circulation.support.ServerErrorFailure;
 
 import io.vertx.core.buffer.Buffer;
-import io.vertx.core.http.CaseInsensitiveHeaders;
 import io.vertx.core.http.HttpClient;
 import io.vertx.ext.web.client.HttpResponse;
 import io.vertx.ext.web.client.WebClient;
@@ -51,7 +52,8 @@ public class VertxWebClientOkapiHttpClient {
   public CompletableFuture<Result<Response>> get(
     String url, Integer timeoutInMilliseconds) {
 
-    final CompletableFuture<Result<Response>> futureResponse = new CompletableFuture<>();
+    final CompletableFuture<Result<Response>> futureResponse
+      = new CompletableFuture<>();
 
     webClient
       .getAbs(url)
@@ -66,16 +68,10 @@ public class VertxWebClientOkapiHttpClient {
         if (ar.succeeded()) {
           final HttpResponse<Buffer> response = ar.result();
 
-          final CaseInsensitiveHeaders headers = new CaseInsensitiveHeaders();
-
-          headers.addAll(response.headers());
-
-          futureResponse.complete(Result.succeeded(new Response(
-            response.statusCode(), response.bodyAsString(),
-            headers.get(CONTENT_TYPE), headers, url)));
+          futureResponse.complete(succeeded(responseFrom(url, response)));
         }
         else {
-          futureResponse.complete(Result.failed(new ServerErrorFailure(ar.cause())));
+          futureResponse.complete(failed(new ServerErrorFailure(ar.cause())));
         }
       });
 
