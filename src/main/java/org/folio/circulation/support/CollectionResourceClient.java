@@ -65,32 +65,31 @@ public class CollectionResourceClient {
   }
 
   public CompletableFuture<Response> delete(String id) {
-    final CompletableFuture<Response> future = new CompletableFuture<>();
-
-    client.delete(individualRecordUrl(id),
-      responseConversationHandler(future::complete));
-
-    return future;
+    return internalDelete(individualRecordUrl(id))
+      //Mimic mapping failures to fake 500 response
+      //see responseConversationHandler
+      .thenApply(r -> r.orElse(new Response(500, "Something went wrong",
+        TEXT_PLAIN.toString())));
   }
 
   public CompletableFuture<Response> delete() {
-    final CompletableFuture<Response> future = new CompletableFuture<>();
-
-    client.delete(collectionRoot, responseConversationHandler(future::complete));
-
-    return future;
+    return internalDelete(collectionRoot.toString())
+      //Mimic mapping failures to fake 500 response
+      //see responseConversationHandler
+      .thenApply(r -> r.orElse(new Response(500, "Something went wrong",
+        TEXT_PLAIN.toString())));
   }
 
   public CompletableFuture<Result<Response>> deleteMany(CqlQuery cqlQuery) {
     return cqlQuery.encode().after(encodedQuery -> {
-      final CompletableFuture<Response> future = new CompletableFuture<>();
-
       String url = getPagedCollectionUrl(encodedQuery, null, 0);
 
-      client.delete(url, responseConversationHandler(future::complete));
-
-      return future.thenApply(Result::succeeded);
+      return internalDelete(url);
     });
+  }
+
+  private CompletableFuture<Result<Response>> internalDelete(String url) {
+    return client.toWebClient().delete(url);
   }
 
   public CompletableFuture<Result<Response>> get() {
