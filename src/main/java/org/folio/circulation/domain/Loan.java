@@ -352,12 +352,12 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     return this;
   }
 
-  Loan checkIn(DateTime returnDate, UUID servicePointId) {
+  Loan checkIn(DateTime returnDate, DateTime systemDateTime, UUID servicePointId) {
     changeAction(CHECKED_IN);
     removeActionComment();
     changeStatus("Closed");
     changeReturnDate(returnDate);
-    changeSystemReturnDate(DateTime.now(DateTimeZone.UTC));
+    changeSystemReturnDate(systemDateTime);
     changeCheckInServicePointId(servicePointId);
 
     return this;

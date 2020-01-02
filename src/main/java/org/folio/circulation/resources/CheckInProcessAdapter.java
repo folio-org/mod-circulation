@@ -26,14 +26,12 @@ import org.folio.circulation.domain.notice.PatronNoticeEventBuilder;
 import org.folio.circulation.domain.notice.PatronNoticeService;
 import org.folio.circulation.storage.ItemByBarcodeInStorageFinder;
 import org.folio.circulation.storage.SingleOpenLoanForItemInStorageFinder;
-import org.folio.circulation.support.ClockManager;
 import org.folio.circulation.support.Result;
 
 import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import org.apache.commons.lang3.StringUtils;
-import org.joda.time.DateTime;
 
 class CheckInProcessAdapter {
   private final ItemByBarcodeInStorageFinder itemFinder;
@@ -83,7 +81,8 @@ class CheckInProcessAdapter {
 
   CompletableFuture<Result<Loan>> checkInLoan(CheckInProcessRecords records) {
     return completedFuture(
-      loanCheckInService.checkIn(records.getLoan(), records.getCheckInRequest()));
+      loanCheckInService.checkIn(records.getLoan(), records.getSystemDateTime(),
+        records.getCheckInRequest()));
   }
 
   CompletableFuture<Result<RequestQueue>> getRequestQueue(
@@ -95,13 +94,7 @@ class CheckInProcessAdapter {
   CompletableFuture<Result<Item>> updateItem(CheckInProcessRecords records) {
     return updateItem.onCheckIn(records.getItem(), records.getRequestQueue(),
       records.getCheckInServicePointId(), records.getLoggedInUserId(),
-      determineCheckInDate(records));
-  }
-
-  private DateTime determineCheckInDate(CheckInProcessRecords records) {
-    DateTime checkInDate = records.getCheckInRequest().getCheckInDate();
-    DateTime now = ClockManager.getClockManager().getDateTime();
-    return checkInDate.isBefore(now) ? now : checkInDate;
+     records.getSystemDateTime());
   }
 
   CompletableFuture<Result<RequestQueue>> updateRequestQueue(
