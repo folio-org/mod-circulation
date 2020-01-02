@@ -26,7 +26,6 @@ import static org.hamcrest.core.Is.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 import static org.junit.Assert.assertTrue;
 
-import java.net.MalformedURLException;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
@@ -378,7 +377,7 @@ public class RequestsAPICreationTests extends APITests {
     loansFixture.checkOutByBarcode(smallAngryPlanet, rebecca);
 
     JsonObject itemWithChangedStatus = smallAngryPlanet.copyJson()
-      .put("status", new JsonObject().put("name", "Checked Out"));
+      .put("status", new JsonObject().put("name", "Checked out"));
 
     itemsClient.replace(itemId, itemWithChangedStatus);
 
@@ -1573,7 +1572,7 @@ public class RequestsAPICreationTests extends APITests {
       "ItemCN",
       "ItemPrefix",
       "ItemSuffix",
-      Arrays.asList("CopyNumbers", "CopyDetails"));
+      "CopyNumbers");
 
     InventoryItemResource item = itemsFixture.basedUponSmallAngryPlanet(itemBuilder, itemsFixture.thirdFloorHoldings());
     IndividualResource requester = usersFixture.steve();

@@ -2,16 +2,11 @@ package api.requests;
 
 import static api.support.JsonCollectionAssistant.getRecordById;
 import static api.support.matchers.UUIDMatcher.is;
-import static java.util.Arrays.asList;
-import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 
-import java.net.MalformedURLException;
 import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeoutException;
 
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
@@ -80,7 +75,7 @@ public class RequestsAPIRelatedRecordsTests extends APITests {
   public void checkRelatedRecordsForMultipleRequests() {
 
     final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet(
-      itemBuilder -> itemBuilder.withCopyNumbers(asList(ONE_COPY_NUMBER, TWO_COPY_NUMBER))
+      itemBuilder -> itemBuilder.withCopyNumber(TWO_COPY_NUMBER)
     );
 
     final InventoryItemResource temeraire = itemsFixture.basedUponTemeraire();
@@ -123,8 +118,8 @@ public class RequestsAPIRelatedRecordsTests extends APITests {
       firstItem.getString("instanceId"),
       is(smallAngryPlanet.getInstanceId()));
 
-    assertThat(firstItem.containsKey("copyNumbers"), is(true));
-    assertThat(firstItem.getJsonArray("copyNumbers"), contains(ONE_COPY_NUMBER, TWO_COPY_NUMBER));
+    assertThat(firstItem.containsKey("copyNumber"), is(true));
+    assertThat(firstItem.getString("copyNumber"), is(TWO_COPY_NUMBER));
 
     JsonObject secondItem = getRecordById(fetchedRequestsResponse, secondRequestId)
       .get()

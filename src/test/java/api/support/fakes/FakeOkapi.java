@@ -3,6 +3,7 @@ package api.support.fakes;
 import static api.support.fakes.StorageSchema.validatorForLocationCampSchema;
 import static api.support.fakes.StorageSchema.validatorForLocationInstSchema;
 import static api.support.fakes.StorageSchema.validatorForLocationLibSchema;
+import static api.support.fakes.StorageSchema.validatorForStorageItemSchema;
 import static api.support.fakes.StorageSchema.validatorForStorageLoanSchema;
 import static api.support.fixtures.CalendarExamples.CASE_CALENDAR_IS_EMPTY_SERVICE_POINT_ID;
 import static api.support.fixtures.CalendarExamples.getCalendarById;
@@ -106,12 +107,12 @@ public class FakeOkapi extends AbstractVerticle {
     new FakeStorageModuleBuilder()
       .withRecordName("item")
       .withRootPath("/item-storage/items")
-      .withRequiredProperties("holdingsRecordId", "materialTypeId", "permanentLoanTypeId")
       .withRecordPreProcessor(Lists.newArrayList(
         StorageRecordPreProcessors::setEffectiveLocationIdForItem,
         StorageRecordPreProcessors::setItemStatusDateForItem,
         StorageRecordPreProcessors::setEffectiveCallNumberComponents
       ))
+      .validateRecordsWith(validatorForStorageItemSchema())
       .create().register(router);
 
     new FakeStorageModuleBuilder()

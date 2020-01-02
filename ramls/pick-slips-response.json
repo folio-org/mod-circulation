@@ -41,7 +41,8 @@
           },
           "status": {
             "description": "The status of the item",
-            "type": "string"
+            "type": "string",
+            "$ref": "schema/item-status-names.json"
           },
           "contributors": {
             "description": "Contributors from the instance record",

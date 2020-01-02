@@ -80,9 +80,10 @@ public class ItemLastCheckInTests extends APITests {
     UUID servicePointId = servicePointsFixture.cd1().getId();
     DateTime checkInDate = DateTime.now();
 
+    String invalidUuid = "00000000-0000-0000-0000-000000000000";
     final OkapiHeaders okapiHeaders = getOkapiHeadersFromContext()
       .withRequestId("check-in-by-barcode-request")
-      .withUserId("INVALID_UUID");
+      .withUserId(invalidUuid);
 
     loansFixture.checkInByBarcode(item, checkInDate, servicePointId, okapiHeaders);
 
@@ -92,7 +93,7 @@ public class ItemLastCheckInTests extends APITests {
     assertThat(lastCheckIn.getString("dateTime"), is(checkInDate.toString()));
     assertThat(lastCheckIn.getString("servicePointId"),
       is(servicePointId.toString()));
-    assertThat(lastCheckIn.getString("staffMemberId"), is("INVALID_UUID"));
+    assertThat(lastCheckIn.getString("staffMemberId"), is(invalidUuid));
   }
 
   @Test

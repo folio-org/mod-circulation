@@ -9,9 +9,7 @@ import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 
-import java.net.MalformedURLException;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -226,7 +224,7 @@ public class ChangeDueDateTests extends APITests {
       StringUtils.EMPTY,
       "ItemPrefix",
       "ItemSuffix",
-      Collections.singletonList(""));
+      "");
     InventoryItemResource smallAngryPlanet =
       itemsFixture.basedUponSmallAngryPlanet(itemBuilder, itemsFixture.thirdFloorHoldings());
 

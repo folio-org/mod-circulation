@@ -74,6 +74,12 @@
       "readOnly": true,
       "type": "object",
       "properties": {
+        "status": {
+          "type": "string",
+          "description": "Item status at the request creation time.",
+          "$ref": "schema/item-status-names.json",
+          "readonly": true
+        },
         "title": {
           "description": "title of the item (stored)",
           "type": "string",
@@ -135,12 +141,9 @@
             }
           }
         },
-        "copyNumbers": {
-          "type": "array",
-          "description": "Copy numbers for the item",
-          "items": {
-            "type": "string"
-          }
+        "copyNumber": {
+          "type": "string",
+          "description": "Copy number for the item"
         },
         "enumeration": {
           "description": "The volume and/or issue number for the item",
@@ -161,7 +164,8 @@
           "$ref": "schema/call-number-components.json"
         }
       },
-      "additionalProperties": false
+      "additionalProperties": false,
+      "required": ["status"]
     },
     "requester": {
       "description": "Copy of some requesting patron metadata (used for searching and sorting), will be taken from the user referred to by the requesterId",

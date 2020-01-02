@@ -9,13 +9,10 @@ import static org.hamcrest.junit.MatcherAssert.assertThat;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
-import java.net.MalformedURLException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeoutException;
 
 import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.domain.ItemStatus;
@@ -553,7 +550,7 @@ public class ItemsInTransitReportTests extends APITests {
       StringUtils.EMPTY,
       "ItemPrefix",
       "ItemSuffix",
-      Collections.singletonList(""))
+      "")
       .withEnumeration("smallAngryPlanetEnumeration")
       .withVolume("smallAngryPlanetVolume")
       .withYearCaption(Collections.singletonList("2019"))

@@ -1,0 +1,18 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "type": "string",
+  "description": "Allowed item status values.",
+  "enum": [
+    "Available",
+    "Awaiting pickup",
+    "Awaiting delivery",
+    "Checked out",
+    "In process",
+    "In transit",
+    "Missing",
+    "On order",
+    "Paged",
+    "Withdrawn",
+    "Declared lost"
+  ]
+}

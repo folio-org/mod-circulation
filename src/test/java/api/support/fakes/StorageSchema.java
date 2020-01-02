@@ -7,6 +7,10 @@ import org.folio.circulation.infrastructure.serialization.JsonSchemaValidator;
 public class StorageSchema {
   private StorageSchema() { }
 
+  public static JsonSchemaValidator validatorForStorageItemSchema() throws IOException {
+    return JsonSchemaValidator.fromResource("/item-storage-8-0.json");
+  }
+
   public static JsonSchemaValidator validatorForStorageLoanSchema() throws IOException {
     return JsonSchemaValidator.fromResource("/storage-loan-6-4.json");
   }

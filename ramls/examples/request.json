@@ -13,10 +13,7 @@
     "location": {
       "name": "Main Library"
     },
-    "copyNumbers": [
-      "1",
-      "2"
-    ]
+    "copyNumber": "cp.1"
   },
   "tags": {
     "tagList": [
