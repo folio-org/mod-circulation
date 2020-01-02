@@ -6,6 +6,7 @@ import static com.github.tomakehurst.wiremock.client.WireMock.get;
 import static com.github.tomakehurst.wiremock.client.WireMock.okJson;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static org.folio.circulation.support.http.client.VertxWebClientOkapiHttpClient.createClientUsing;
+import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -100,6 +101,12 @@ public class VertxWebClientOkapiHttpClientTests {
 
     assertThat(responseResult.failed(), is(true));
     assertThat(responseResult.cause(), is(instanceOf(ServerErrorFailure.class)));
+
+    final ServerErrorFailure cause = (ServerErrorFailure) responseResult.cause();
+
+    assertThat(cause.getReason(), containsString(
+      "The timeout period of 500ms has been exceeded while executing " +
+        "GET /record for host localhost"));
   }
 
   private MappingBuilder getWithFolioHeaders() {
