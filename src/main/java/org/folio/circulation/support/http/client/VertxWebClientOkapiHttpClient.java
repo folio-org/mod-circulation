@@ -50,14 +50,13 @@ public class VertxWebClientOkapiHttpClient {
     this.requestId = requestId;
   }
 
-  public CompletableFuture<Result<Response>> get(
-    String url, Integer timeoutInMilliseconds) {
+  public CompletableFuture<Result<Response>> get(String url,
+    Integer timeoutInMilliseconds) {
 
     final CompletableFuture<Result<Response>> futureResponse
       = new CompletableFuture<>();
 
-    webClient
-      .getAbs(url)
+    webClient.getAbs(url)
       .putHeader(ACCEPT, "application/json, text/plain")
       .putHeader(OKAPI_URL, okapiUrl.toString())
       .putHeader(TENANT, this.tenantId)
@@ -85,5 +84,31 @@ public class VertxWebClientOkapiHttpClient {
 
   public CompletableFuture<Result<Response>> get(String url) {
     return get(url, DEFAULT_TIMEOUT_IN_MILLISECONDS);
+  }
+
+  public CompletableFuture<Result<Response>> delete(String url) {
+    final CompletableFuture<Result<Response>> futureResponse
+      = new CompletableFuture<>();
+
+    webClient.deleteAbs(url)
+      .putHeader(ACCEPT, "application/json, text/plain")
+      .putHeader(OKAPI_URL, okapiUrl.toString())
+      .putHeader(TENANT, this.tenantId)
+      .putHeader(TOKEN, this.token)
+      .putHeader(USER_ID, this.userId)
+      .putHeader(REQUEST_ID, this.requestId)
+      .timeout(DEFAULT_TIMEOUT_IN_MILLISECONDS)
+      .send(ar -> {
+        if (ar.succeeded()) {
+          final HttpResponse<Buffer> response = ar.result();
+
+          futureResponse.complete(succeeded(responseFrom(url, response)));
+        }
+        else {
+          futureResponse.complete(failed(new ServerErrorFailure(ar.cause())));
+        }
+      });
+
+    return futureResponse;
   }
 }
