@@ -335,24 +335,15 @@ public class LoanRepository {
       .withLoan(loanMap.getOrDefault(request.getItemId(), null));
   }
 
-  public CompletableFuture<Result<MultipleRecords<Loan>>> findOpenLoansByUserIdAndLoanPolicyId(
+  public CompletableFuture<Result<MultipleRecords<Loan>>> findOpenLoansByUserIdWithItem(
     LoanAndRelatedRecords loanAndRelatedRecords) {
     String userId = loanAndRelatedRecords.getLoan().getUser().getId();
-    String loanPolicyId = loanAndRelatedRecords.getLoan().getLoanPolicy().getId();
     final Result<CqlQuery> statusQuery = getStatusCQLQuery("Open");
     final Result<CqlQuery> userIdQuery = exactMatch("userId", userId);
-    final Result<CqlQuery> loanPolicyIdQuery = exactMatch("loanPolicyId", loanPolicyId);
     Result<CqlQuery> cqlQueryResult = statusQuery
-      .combine(userIdQuery, CqlQuery::and)
-      .combine(loanPolicyIdQuery, CqlQuery::and);
+      .combine(userIdQuery, CqlQuery::and);
 
-    return queryLoanStorage(Integer.MAX_VALUE, cqlQueryResult);
-  }
-
-  public CompletableFuture<Result<MultipleRecords<Loan>>> findOpenLoansByUserIdAndLoanPolicyIdWithItem(
-    LoanAndRelatedRecords loanAndRelatedRecords) {
-
-    return findOpenLoansByUserIdAndLoanPolicyId(loanAndRelatedRecords)
+    return queryLoanStorage(Integer.MAX_VALUE, cqlQueryResult)
       .thenComposeAsync(loans -> itemRepository.fetchItemsForMultipleRecords(loans, Loan::withItem));
   }
 }

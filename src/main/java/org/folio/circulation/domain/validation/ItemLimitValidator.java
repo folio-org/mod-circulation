@@ -65,17 +65,12 @@ public class ItemLimitValidator {
     String loanType = item.getLoanTypeName();
     Integer itemLimit = records.getLoan().getLoanPolicy().getItemLimit();
 
-    if (isRuleMaterialTypePresent(ruleConditions) || isRuleLoanTypePresent(ruleConditions)) {
-      return loanRepository.findOpenLoansByUserIdAndLoanPolicyIdWithItem(records)
-        .thenApply(r -> r.map(loans -> loans.getRecords().stream()
-          .filter(loan -> isMaterialTypeMatchInRetrievedLoan(materialType, loan))
-          .filter(loan -> isLoanTypeMatchInRetrievedLoan(loanType, loan))
-          .count()))
-        .thenApply(r -> r.map(loansCount ->loansCount >= itemLimit));
-    }
-
-    return loanRepository.findOpenLoansByUserIdAndLoanPolicyId(records)
-      .thenApply(r -> r.map(loans -> loans.getTotalRecords() >= itemLimit));
+    return loanRepository.findOpenLoansByUserIdWithItem(records)
+      .thenApply(r -> r.map(loans -> loans.getRecords().stream()
+        .filter(loan -> isMaterialTypeMatchInRetrievedLoan(materialType, loan))
+        .filter(loan -> isLoanTypeMatchInRetrievedLoan(loanType, loan))
+        .count()))
+      .thenApply(r -> r.map(loansCount -> loansCount >= itemLimit));
   }
 
   private boolean isMaterialTypeMatchInRetrievedLoan(String expectedMaterialType, Loan loan) {
