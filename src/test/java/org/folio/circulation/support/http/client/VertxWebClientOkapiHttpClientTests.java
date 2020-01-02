@@ -25,6 +25,7 @@ import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
 
+import com.github.tomakehurst.wiremock.client.MappingBuilder;
 import com.github.tomakehurst.wiremock.junit.WireMockRule;
 
 import io.vertx.core.Vertx;
@@ -63,12 +64,7 @@ public class VertxWebClientOkapiHttpClientTests {
 
     final String locationResponseHeader = "/a-different-location";
 
-    fakeWebServer.stubFor(get(urlEqualTo("/record"))
-      .withHeader("X-Okapi-Url", equalTo(okapiUrl.toString()))
-      .withHeader("X-Okapi-Tenant", equalTo(tenantId))
-      .withHeader("X-Okapi-Token", equalTo(token))
-      .withHeader("X-Okapi-User-Id", equalTo(userId))
-      .withHeader("X-Okapi-Request-Id", equalTo(requestId))
+    fakeWebServer.stubFor(getWithFolioHeaders()
       .willReturn(okJson(new JsonObject().put("message", "hello").encodePrettily())
         .withHeader("Location", locationResponseHeader)));
 
@@ -90,12 +86,7 @@ public class VertxWebClientOkapiHttpClientTests {
   public void failsWhenGetTimesOut()
     throws InterruptedException, ExecutionException, TimeoutException {
 
-    fakeWebServer.stubFor(get(urlEqualTo("/record"))
-      .withHeader("X-Okapi-Url", equalTo(okapiUrl.toString()))
-      .withHeader("X-Okapi-Tenant", equalTo(tenantId))
-      .withHeader("X-Okapi-Token", equalTo(token))
-      .withHeader("X-Okapi-User-Id", equalTo(userId))
-      .withHeader("X-Okapi-Request-Id", equalTo(requestId))
+    fakeWebServer.stubFor(getWithFolioHeaders()
       .willReturn(aResponse().withFixedDelay(1000)));
 
     VertxWebClientOkapiHttpClient client =  createClientUsing(
@@ -109,5 +100,14 @@ public class VertxWebClientOkapiHttpClientTests {
 
     assertThat(responseResult.failed(), is(true));
     assertThat(responseResult.cause(), is(instanceOf(ServerErrorFailure.class)));
+  }
+
+  private MappingBuilder getWithFolioHeaders() {
+    return get(urlEqualTo("/record"))
+      .withHeader("X-Okapi-Url", equalTo(okapiUrl.toString()))
+      .withHeader("X-Okapi-Tenant", equalTo(tenantId))
+      .withHeader("X-Okapi-Token", equalTo(token))
+      .withHeader("X-Okapi-User-Id", equalTo(userId))
+      .withHeader("X-Okapi-Request-Id", equalTo(requestId));
   }
 }
