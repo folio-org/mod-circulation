@@ -48,14 +48,16 @@ public class LoanPoliciesFixture {
     TimeoutException,
     ExecutionException {
 
+    final int currentYear = DateTime.now(DateTimeZone.UTC).getYear();
+
     FixedDueDateSchedulesBuilder fixedDueDateSchedule =
       new FixedDueDateSchedulesBuilder()
         .withName("Example Fixed Due Date Schedule")
         .withDescription("Example Fixed Due Date Schedule")
         .addSchedule(new FixedDueDateSchedule(
-          new DateTime(2019, 1, 1, 0, 0, 0, DateTimeZone.UTC),
-          new DateTime(2019, 12, 31, 23, 59, 59, DateTimeZone.UTC),
-          new DateTime(2019, 12, 31, 23, 59, 59, DateTimeZone.UTC)
+          new DateTime(currentYear, 1, 1, 0, 0, 0, DateTimeZone.UTC),
+          new DateTime(currentYear, 12, 31, 23, 59, 59, DateTimeZone.UTC),
+          new DateTime(currentYear, 12, 31, 23, 59, 59, DateTimeZone.UTC)
         ));
 
     return createSchedule(fixedDueDateSchedule);
