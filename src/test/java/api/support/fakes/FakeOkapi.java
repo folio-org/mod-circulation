@@ -378,6 +378,34 @@ public class FakeOkapi extends AbstractVerticle {
               BufferHelper.stringFromBuffer(buffer))));
     });
 
+    router.get("/circulation/rules/overdue-fine-policy").handler(context -> {
+      OkapiHttpClient client = APITestContext.createClient(throwable ->
+        ServerErrorResponse.internalError(context.response(),
+          String.format("Exception when forward circulation rules apply request: %s",
+            throwable.getMessage())));
+
+      client.get(String.format("http://localhost:%s/circulation/rules/overdue-fine-policy?%s"
+        , APITestContext.circulationModulePort(), context.request().query()),
+        httpClientResponse ->
+          httpClientResponse.bodyHandler(buffer ->
+            ForwardResponse.forward(context.response(), httpClientResponse,
+              BufferHelper.stringFromBuffer(buffer))));
+    });
+
+    router.get("/circulation/rules/lost-item-policy").handler(context -> {
+      OkapiHttpClient client = APITestContext.createClient(throwable ->
+        ServerErrorResponse.internalError(context.response(),
+          String.format("Exception when forward circulation rules apply request: %s",
+            throwable.getMessage())));
+
+      client.get(String.format("http://localhost:%s/circulation/rules/lost-item-policy?%s"
+        , APITestContext.circulationModulePort(), context.request().query()),
+        httpClientResponse ->
+          httpClientResponse.bodyHandler(buffer ->
+            ForwardResponse.forward(context.response(), httpClientResponse,
+              BufferHelper.stringFromBuffer(buffer))));
+    });
+
     router.get("/circulation/rules/notice-policy").handler(context -> {
       OkapiHttpClient client = APITestContext.createClient(throwable ->
         ServerErrorResponse.internalError(context.response(),

@@ -4,6 +4,8 @@ import static java.util.Objects.isNull;
 
 import io.vertx.core.json.JsonObject;
 import org.folio.circulation.domain.policy.LoanPolicy;
+import org.folio.circulation.domain.policy.LostItemPolicy;
+import org.folio.circulation.domain.policy.OverdueFinePolicy;
 import org.folio.circulation.domain.representations.ItemSummaryRepresentation;
 import org.folio.circulation.domain.representations.LoanProperties;
 import org.slf4j.Logger;
@@ -45,6 +47,18 @@ public class LoanRepresentation {
       extendedRepresentation.remove(LoanProperties.LOAN_POLICY);
     }
 
+    if (loan.getOverdueFinePolicy() != null) {
+      additionalOverdueFinePolicyProperties(extendedRepresentation, loan.getOverdueFinePolicy());
+    } else {
+      extendedRepresentation.remove(LoanProperties.OVERDUE_FINE_POLICY);
+    }
+
+    if (loan.getLostItemPolicy() != null) {
+      additionalLostItemPolicyProperties(extendedRepresentation, loan.getLostItemPolicy());
+    } else {
+      extendedRepresentation.remove(LoanProperties.LOST_ITEM_POLICY);
+    }
+
     additionalAccountProperties(extendedRepresentation, loan.getAccounts());
 
     extendedRepresentation.remove(LoanProperties.PATRON_GROUP_ID_AT_CHECKOUT);
@@ -52,6 +66,35 @@ public class LoanRepresentation {
     return extendedRepresentation;
   }
 
+  private void additionalOverdueFinePolicyProperties(JsonObject loanRepresentation,
+                                                     OverdueFinePolicy overdueFinePolicy) {
+    if (overdueFinePolicy == null) {
+      log.info("Unable to add loan policy properties to loan {}," + " loanPolicy is null", loanRepresentation.getString("id"));
+      return;
+    }
+    JsonObject loanPolicySummary = loanRepresentation.containsKey(LoanProperties.OVERDUE_FINE_POLICY)
+            ? loanRepresentation.getJsonObject(LoanProperties.OVERDUE_FINE_POLICY)
+            : new JsonObject();
+
+    loanPolicySummary.put("name", overdueFinePolicy.getName());
+
+    loanRepresentation.put(LoanProperties.OVERDUE_FINE_POLICY, loanPolicySummary);
+  }
+
+  private void additionalLostItemPolicyProperties(JsonObject loanRepresentation,
+                                                     LostItemPolicy lostItemPolicy) {
+    if (lostItemPolicy == null) {
+      log.info("Unable to add loan policy properties to loan {}," + " loanPolicy is null", loanRepresentation.getString("id"));
+      return;
+    }
+    JsonObject lostItemPolicySummary = loanRepresentation.containsKey(LoanProperties.LOST_ITEM_POLICY)
+            ? loanRepresentation.getJsonObject(LoanProperties.LOST_ITEM_POLICY)
+            : new JsonObject();
+
+    lostItemPolicySummary.put("name", lostItemPolicy.getName());
+
+    loanRepresentation.put(LoanProperties.LOST_ITEM_POLICY, lostItemPolicySummary);
+  }
 
   public JsonObject extendedLoan(LoanAndRelatedRecords relatedRecords) {
     return extendedLoan(relatedRecords.getLoan());

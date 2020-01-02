@@ -248,11 +248,12 @@ public class CheckOutByBarcodeTests extends APITests {
     final IndividualResource loanPolicyResource = loanPoliciesFixture.create(dueDateLimitedPolicy);
     UUID dueDateLimitedPolicyId = loanPolicyResource.getId();
 
+    UUID overDueId = overdueFinePoliciesFixture.facultyStandard().getId();
     useFallbackPolicies(
       dueDateLimitedPolicyId,
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
       noticePoliciesFixture.activeNotice().getId(),
-      overdueFinePoliciesFixture.facultyStandard().getId(),
+            overDueId,
       lostItemFeePoliciesFixture.facultyStandard().getId()
     );
 
