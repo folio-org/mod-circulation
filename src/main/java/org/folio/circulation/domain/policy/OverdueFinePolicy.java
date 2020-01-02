@@ -4,6 +4,7 @@ import io.vertx.core.json.JsonObject;
 
 import java.util.UUID;
 
+import static org.folio.circulation.support.JsonPropertyFetcher.getBooleanProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
 
 public class OverdueFinePolicy {
@@ -26,6 +27,14 @@ public class OverdueFinePolicy {
 
   public String getName() {
     return getProperty(representation, "name");
+  }
+
+  public boolean shouldIgnoreGracePeriodsForRecalls() {
+    return getBooleanProperty(representation, "gracePeriodRecall");
+  }
+
+  public boolean shouldCountClosed() {
+    return getBooleanProperty(representation, "countClosed");
   }
 
   public void setName(String name) {
