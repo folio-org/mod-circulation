@@ -65,6 +65,38 @@
         }
       }
     },
+    "overdueFinePolicyId": {
+      "description": "ID of last overdue fine policy used in relation to this loan",
+      "type": "string"
+    },
+    "overdueFinePolicy": {
+      "description": "Additional information about the overdue fine policy of the item, taken from the loan overdueFinePolicyId",
+      "readonly": true,
+      "type": "object",
+      "properties": {
+        "name": {
+          "readonly": true,
+          "description": "Name of last overdue fine policy used in relation to this loan (read only, defined by the server)",
+          "type": "string"
+        }
+      }
+    },
+    "lostItemPolicyId": {
+      "description": "ID of last lost item policy used in relation to this loan",
+      "type": "string"
+    },
+    "lostItemPolicy": {
+      "description": "Additional information about the lost item policy of the item, taken from the loan lostItemPolicyId",
+      "readonly": true,
+      "type": "object",
+      "properties": {
+        "name": {
+          "readonly": true,
+          "description": "Name of last lost item policy used in relation to this loan (read only, defined by the server)",
+          "type": "string"
+        }
+      }
+    },
     "item": {
       "description": "Additional information about the item",
       "type": "object",

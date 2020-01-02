@@ -26,6 +26,8 @@ import org.folio.circulation.domain.User;
 import org.folio.circulation.domain.UserRepository;
 import org.folio.circulation.domain.notice.schedule.DueDateScheduledNoticeService;
 import org.folio.circulation.domain.policy.LoanPolicyRepository;
+import org.folio.circulation.domain.policy.LostItemPolicyRepository;
+import org.folio.circulation.domain.policy.OverdueFinePolicyRepository;
 import org.folio.circulation.domain.validation.AlreadyCheckedOutValidator;
 import org.folio.circulation.domain.validation.ItemNotFoundValidator;
 import org.folio.circulation.domain.validation.ItemStatusValidator;
@@ -217,6 +219,8 @@ public class LoanCollectionResource extends CollectionResource {
     final LoanRepresentation loanRepresentation = new LoanRepresentation();
     final UserRepository userRepository = new UserRepository(clients);
     final LoanPolicyRepository loanPolicyRepository = new LoanPolicyRepository(clients);
+    final OverdueFinePolicyRepository overdueFinePolicyRepository = new OverdueFinePolicyRepository(clients);
+    final LostItemPolicyRepository lostItemPolicyRepository = new LostItemPolicyRepository(clients);
     final AccountRepository accountRepository = new AccountRepository(clients);
     final PatronGroupRepository patronGroupRepository = new PatronGroupRepository(clients);
 
@@ -229,6 +233,10 @@ public class LoanCollectionResource extends CollectionResource {
         multiLoanRecordsResult.after(userRepository::findUsersForLoans))
       .thenCompose(multiLoanRecordsResult ->
         multiLoanRecordsResult.after(loanPolicyRepository::findLoanPoliciesForLoans))
+      .thenCompose(multiLoanRecordsResult ->
+        multiLoanRecordsResult.after(overdueFinePolicyRepository::findLoanPoliciesForLoans))
+      .thenCompose(multiLoanRecordsResult ->
+        multiLoanRecordsResult.after(lostItemPolicyRepository::findLoanPoliciesForLoans))
       .thenCompose(multiLoanRecordsResult ->
         multiLoanRecordsResult.after(patronGroupRepository::findPatronGroupsByIds))
       .thenApply(multipleLoanRecordsResult -> multipleLoanRecordsResult.map(loans ->

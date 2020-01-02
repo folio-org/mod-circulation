@@ -251,8 +251,8 @@ public class CheckOutByBarcodeTests extends APITests {
       dueDateLimitedPolicyId,
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
       noticePoliciesFixture.activeNotice().getId(),
-      overdueFinePoliciesFixture.facultyStandard().getId(),
-      lostItemFeePoliciesFixture.facultyStandard().getId()
+      overdueFinePolicyResource.getId(),
+      lostItemFeePolicyResource.getId()
     );
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
