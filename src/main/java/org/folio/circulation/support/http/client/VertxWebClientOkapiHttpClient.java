@@ -18,6 +18,7 @@ import org.folio.circulation.support.ServerErrorFailure;
 
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpClient;
+import io.vertx.ext.web.client.HttpRequest;
 import io.vertx.ext.web.client.HttpResponse;
 import io.vertx.ext.web.client.WebClient;
 
@@ -56,13 +57,9 @@ public class VertxWebClientOkapiHttpClient {
     final CompletableFuture<Result<Response>> futureResponse
       = new CompletableFuture<>();
 
-    webClient.getAbs(url)
-      .putHeader(ACCEPT, "application/json, text/plain")
-      .putHeader(OKAPI_URL, okapiUrl.toString())
-      .putHeader(TENANT, this.tenantId)
-      .putHeader(TOKEN, this.token)
-      .putHeader(USER_ID, this.userId)
-      .putHeader(REQUEST_ID, this.requestId)
+    final HttpRequest<Buffer> request = webClient.getAbs(url);
+
+    withStandardHeaders(request)
       .timeout(timeoutInMilliseconds)
       .send(ar -> {
         if (ar.succeeded()) {
@@ -90,13 +87,7 @@ public class VertxWebClientOkapiHttpClient {
     final CompletableFuture<Result<Response>> futureResponse
       = new CompletableFuture<>();
 
-    webClient.deleteAbs(url)
-      .putHeader(ACCEPT, "application/json, text/plain")
-      .putHeader(OKAPI_URL, okapiUrl.toString())
-      .putHeader(TENANT, this.tenantId)
-      .putHeader(TOKEN, this.token)
-      .putHeader(USER_ID, this.userId)
-      .putHeader(REQUEST_ID, this.requestId)
+    withStandardHeaders(webClient.deleteAbs(url))
       .timeout(DEFAULT_TIMEOUT_IN_MILLISECONDS)
       .send(ar -> {
         if (ar.succeeded()) {
@@ -110,5 +101,15 @@ public class VertxWebClientOkapiHttpClient {
       });
 
     return futureResponse;
+  }
+
+  private HttpRequest<Buffer> withStandardHeaders(HttpRequest<Buffer> request) {
+    return request
+      .putHeader(ACCEPT, "application/json, text/plain")
+      .putHeader(OKAPI_URL, okapiUrl.toString())
+      .putHeader(TENANT, this.tenantId)
+      .putHeader(TOKEN, this.token)
+      .putHeader(USER_ID, this.userId)
+      .putHeader(REQUEST_ID, this.requestId);
   }
 }
