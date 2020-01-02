@@ -93,15 +93,19 @@ public class VertxWebClientOkapiHttpClient {
 
     withStandardHeaders(webClient.deleteAbs(url))
       .timeout(DEFAULT_TIMEOUT_IN_MILLISECONDS)
-      .send(ar -> {
-        if (ar.succeeded()) {
-          final HttpResponse<Buffer> response = ar.result();
+      .send(asyncResult -> {
+        final Result<Response> result;
 
-          futureResponse.complete(succeeded(responseFrom(url, response)));
+        if (asyncResult.succeeded()) {
+          final HttpResponse<Buffer> response = asyncResult.result();
+
+          result = succeeded(responseFrom(url, response));
         }
         else {
-          futureResponse.complete(failed(new ServerErrorFailure(ar.cause())));
+          result = failed(new ServerErrorFailure(asyncResult.cause()));
         }
+
+        futureResponse.complete(result);
       });
 
     return futureResponse;
