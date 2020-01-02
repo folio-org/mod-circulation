@@ -30,7 +30,6 @@ public class RequestsAPIDeletionTests extends APITests {
   @Test
   public void canDeleteAllRequests()
     throws InterruptedException,
-    MalformedURLException,
     TimeoutException,
     ExecutionException {
 
@@ -91,7 +90,6 @@ public class RequestsAPIDeletionTests extends APITests {
   @Test
   public void canDeleteAnIndividualRequest()
     throws InterruptedException,
-    MalformedURLException,
     TimeoutException,
     ExecutionException {
 

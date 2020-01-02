@@ -25,11 +25,7 @@ import io.vertx.core.json.JsonObject;
 
 public class LoanAPIProxyTests extends APITests {
   @Test
-  public void canCreateProxiedLoanWhenCurrentActiveRelationship()
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException,
-    MalformedURLException {
+  public void canCreateProxiedLoanWhenCurrentActiveRelationship() {
 
     UUID id = UUID.randomUUID();
 
@@ -62,11 +58,7 @@ public class LoanAPIProxyTests extends APITests {
   }
 
   @Test
-  public void canCreateProxiedLoanWhenNonExpiringRelationship()
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException,
-    MalformedURLException {
+  public void canCreateProxiedLoanWhenNonExpiringRelationship() {
 
     UUID id = UUID.randomUUID();
 
@@ -102,8 +94,7 @@ public class LoanAPIProxyTests extends APITests {
   public void cannotCreateProxiedLoanWhenRelationshipIsInactive()
     throws InterruptedException,
     ExecutionException,
-    TimeoutException,
-    MalformedURLException {
+    TimeoutException {
 
     UUID id = UUID.randomUUID();
 
@@ -140,8 +131,7 @@ public class LoanAPIProxyTests extends APITests {
   public void cannotCreateProxiedLoanWhenRelationshipHasExpired()
     throws InterruptedException,
     ExecutionException,
-    TimeoutException,
-    MalformedURLException {
+    TimeoutException {
 
     UUID id = UUID.randomUUID();
 
@@ -178,8 +168,7 @@ public class LoanAPIProxyTests extends APITests {
   public void cannotCreateProxiedLoanWhenRelationshipIsForOtherSponsor()
     throws InterruptedException,
     ExecutionException,
-    TimeoutException,
-    MalformedURLException {
+    TimeoutException {
 
     UUID id = UUID.randomUUID();
 
@@ -217,8 +206,7 @@ public class LoanAPIProxyTests extends APITests {
   public void cannotCreateProxiedLoanWhenNoRelationship()
     throws InterruptedException,
     ExecutionException,
-    TimeoutException,
-    MalformedURLException {
+    TimeoutException {
 
     UUID id = UUID.randomUUID();
 
@@ -253,8 +241,7 @@ public class LoanAPIProxyTests extends APITests {
   public void canUpdateProxiedLoanWhenValidProxyRelationship()
     throws InterruptedException,
     ExecutionException,
-    TimeoutException,
-    MalformedURLException {
+    TimeoutException {
 
     UUID id = UUID.randomUUID();
     UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
@@ -299,8 +286,7 @@ public class LoanAPIProxyTests extends APITests {
   public void cannotUpdateProxiedLoanWhenRelationshipHasExpired()
     throws InterruptedException,
     ExecutionException,
-    TimeoutException,
-    MalformedURLException {
+    TimeoutException {
 
     UUID id = UUID.randomUUID();
     UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
@@ -345,8 +331,7 @@ public class LoanAPIProxyTests extends APITests {
   public void cannotUpdateProxiedLoanWhenRelationshipIsForOtherSponsor()
     throws InterruptedException,
     ExecutionException,
-    TimeoutException,
-    MalformedURLException {
+    TimeoutException {
 
     UUID id = UUID.randomUUID();
     UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
@@ -392,8 +377,7 @@ public class LoanAPIProxyTests extends APITests {
   public void cannotUpdateProxiedLoanWhenNoRelationship()
     throws InterruptedException,
     ExecutionException,
-    TimeoutException,
-    MalformedURLException {
+    TimeoutException {
 
     UUID id = UUID.randomUUID();
     UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();

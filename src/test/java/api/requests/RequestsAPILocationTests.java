@@ -23,11 +23,7 @@ import static org.hamcrest.junit.MatcherAssert.assertThat;
 
 public class RequestsAPILocationTests extends APITests {
   @Test
-  public void locationIsIncludedForSingleRequest()
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException,
-    MalformedURLException {
+  public void locationIsIncludedForSingleRequest() {
 
     final IndividualResource thirdFloor = locationsFixture.thirdFloor();
     final IndividualResource secondFloorEconomics = locationsFixture.secondFloorEconomics();
@@ -79,11 +75,7 @@ public class RequestsAPILocationTests extends APITests {
   }
 
   @Test
-  public void locationIncludedForMultipleRequests()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void locationIncludedForMultipleRequests() {
 
     final IndividualResource thirdFloor = locationsFixture.thirdFloor();
     final IndividualResource secondFloorEconomics = locationsFixture.secondFloorEconomics();

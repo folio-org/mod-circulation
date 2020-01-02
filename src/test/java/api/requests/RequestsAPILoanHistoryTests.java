@@ -19,11 +19,7 @@ import io.vertx.core.json.JsonObject;
 
 public class RequestsAPILoanHistoryTests extends APITests {
   @Test
-  public void creatingRecallRequestChangesTheOpenLoanForTheSameItem()
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException,
-    MalformedURLException {
+  public void creatingRecallRequestChangesTheOpenLoanForTheSameItem() {
 
     final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
@@ -51,11 +47,7 @@ public class RequestsAPILoanHistoryTests extends APITests {
   }
 
   @Test
-  public void creatingHoldRequestDoesNotChangeClosedLoanForTheSameItem()
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException,
-    MalformedURLException {
+  public void creatingHoldRequestDoesNotChangeClosedLoanForTheSameItem() {
 
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
@@ -83,11 +75,7 @@ public class RequestsAPILoanHistoryTests extends APITests {
   }
 
   @Test
-  public void creatingRecallRequestDoesNotChangeClosedLoanForTheSameItem()
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException,
-    MalformedURLException {
+  public void creatingRecallRequestDoesNotChangeClosedLoanForTheSameItem() {
 
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
@@ -115,11 +103,7 @@ public class RequestsAPILoanHistoryTests extends APITests {
   }
 
   @Test
-  public void creatingHoldRequestDoesNotChangeOpenLoanForDifferentItem()
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException,
-    MalformedURLException {
+  public void creatingHoldRequestDoesNotChangeOpenLoanForDifferentItem() {
 
     final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final InventoryItemResource nod = itemsFixture.basedUponNod();
@@ -147,11 +131,7 @@ public class RequestsAPILoanHistoryTests extends APITests {
   }
 
   @Test
-  public void creatingRecallRequestDoesNotChangeOpenLoanForDifferentItem()
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException,
-    MalformedURLException {
+  public void creatingRecallRequestDoesNotChangeOpenLoanForDifferentItem() {
 
     final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final InventoryItemResource nod = itemsFixture.basedUponNod();
@@ -179,11 +159,7 @@ public class RequestsAPILoanHistoryTests extends APITests {
   }
 
   @Test
-  public void creatingHoldRequestStillSucceedsWhenThereIsNoLoan()
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException,
-    MalformedURLException {
+  public void creatingHoldRequestStillSucceedsWhenThereIsNoLoan() {
 
     final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
@@ -200,11 +176,7 @@ public class RequestsAPILoanHistoryTests extends APITests {
   }
 
   @Test
-  public void creatingRecallRequestStillSucceedsWhenThereIsNoLoan()
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException,
-    MalformedURLException {
+  public void creatingRecallRequestStillSucceedsWhenThereIsNoLoan() {
 
     final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();

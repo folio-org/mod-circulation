@@ -22,11 +22,7 @@ import io.vertx.core.json.JsonObject;
 public class RequestsAPITitleTests extends APITests {
 
   @Test
-  public void titleIsFromInstanceWhenCreatingRequestWithHoldingAndInstance()
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException,
-    MalformedURLException {
+  public void titleIsFromInstanceWhenCreatingRequestWithHoldingAndInstance() {
 
     final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
@@ -62,11 +58,7 @@ public class RequestsAPITitleTests extends APITests {
   }
 
   @Test
-  public void titleIsChangedWhenRequestUpdatedAndInstanceTitleChanged()
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException,
-    MalformedURLException {
+  public void titleIsChangedWhenRequestUpdatedAndInstanceTitleChanged() {
 
     final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
@@ -102,11 +94,7 @@ public class RequestsAPITitleTests extends APITests {
   }
 
   @Test
-  public void titlesComeFromMultipleInstancesForMultipleRequests()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void titlesComeFromMultipleInstancesForMultipleRequests() {
 
     final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final InventoryItemResource temeraire = itemsFixture.basedUponTemeraire();

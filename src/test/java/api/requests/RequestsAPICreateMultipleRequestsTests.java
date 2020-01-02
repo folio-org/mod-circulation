@@ -19,11 +19,7 @@ import api.support.builders.RequestBuilder;
 public class RequestsAPICreateMultipleRequestsTests extends APITests {
 
   @Test
-  public void canCreateMultipleRequestsOfSameTypeForSameItem()
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException,
-    MalformedURLException {
+  public void canCreateMultipleRequestsOfSameTypeForSameItem() {
 
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
@@ -54,11 +50,7 @@ public class RequestsAPICreateMultipleRequestsTests extends APITests {
   }
 
   @Test
-  public void canCreateMultipleRequestsOfDifferentTypeForSameItem()
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException,
-    MalformedURLException {
+  public void canCreateMultipleRequestsOfDifferentTypeForSameItem() {
 
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
@@ -89,11 +81,7 @@ public class RequestsAPICreateMultipleRequestsTests extends APITests {
   }
 
   @Test
-  public void cannotCreateMultipleRequestsWithPageRequestForSameItemWhenItIsCheckedOut()
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException,
-    MalformedURLException {
+  public void cannotCreateMultipleRequestsWithPageRequestForSameItemWhenItIsCheckedOut() {
 
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
@@ -127,11 +115,7 @@ public class RequestsAPICreateMultipleRequestsTests extends APITests {
   }
 
   @Test
-  public void canCreateMultipleRequestsAtSpecificLocation()
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException,
-    MalformedURLException {
+  public void canCreateMultipleRequestsAtSpecificLocation() {
 
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();

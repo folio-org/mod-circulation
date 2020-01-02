@@ -66,11 +66,7 @@ public class ItemsInTransitReportTests extends APITests {
   private static final String SERVICE_POINT_CODE_2 = "cd2";
 
   @Test
-  public void reportIsEmptyWhenThereAreNoItemsInTransit()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void reportIsEmptyWhenThereAreNoItemsInTransit() {
 
     List<JsonObject> items = ResourceClient.forItemsInTransitReport().getAll();
 
@@ -78,11 +74,7 @@ public class ItemsInTransitReportTests extends APITests {
   }
 
   @Test
-  public void reportIncludesItemInTransit()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void reportIncludesItemInTransit() {
 
     final InventoryItemResource smallAngryPlanet = createSmallAngryPlanet();
     final IndividualResource steve = usersFixture.steve();
@@ -111,11 +103,7 @@ public class ItemsInTransitReportTests extends APITests {
   }
 
   @Test
-  public void reportIncludesMultipleDifferentItemsInTransit()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void reportIncludesMultipleDifferentItemsInTransit() {
 
     final InventoryItemResource smallAngryPlanet = createSmallAngryPlanet();
     final InventoryItemResource nod = createNod();
@@ -168,11 +156,7 @@ public class ItemsInTransitReportTests extends APITests {
   }
 
   @Test
-  public void reportExcludesItemsThatAreNotInTransit()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void reportExcludesItemsThatAreNotInTransit() {
 
     final InventoryItemResource smallAngryPlanet = createSmallAngryPlanet();
     final InventoryItemResource nod = createNod();
@@ -206,11 +190,7 @@ public class ItemsInTransitReportTests extends APITests {
   }
 
   @Test
-  public void reportIncludesItemsInTransitToDifferentServicePoints()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void reportIncludesItemsInTransitToDifferentServicePoints() {
 
     final InventoryItemResource smallAngryPlanet = createSmallAngryPlanet();
     final InventoryItemResource nod = createNod();
@@ -263,11 +243,7 @@ public class ItemsInTransitReportTests extends APITests {
   }
 
   @Test
-  public void reportIncludesItemsInTransitWithMoreThanOneOpenRequestInQueue()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void reportIncludesItemsInTransitWithMoreThanOneOpenRequestInQueue() {
 
     final InventoryItemResource smallAngryPlanet = createSmallAngryPlanet();
     final InventoryItemResource nod = createNod();
@@ -329,11 +305,7 @@ public class ItemsInTransitReportTests extends APITests {
   }
 
   @Test
-  public void reportIncludesItemsInTransitWithEmptyRequestQueue()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void reportIncludesItemsInTransitWithEmptyRequestQueue() {
 
     final InventoryItemResource smallAngryPlanet = createSmallAngryPlanet();
     final InventoryItemResource nod = createNod();
@@ -376,11 +348,7 @@ public class ItemsInTransitReportTests extends APITests {
   }
 
   @Test
-  public void reportItemsInTransitSortedByCheckInServicePoint()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void reportItemsInTransitSortedByCheckInServicePoint() {
 
     final InventoryItemResource smallAngryPlanet = createSmallAngryPlanet();
     final InventoryItemResource nod = createNod();
@@ -449,11 +417,7 @@ public class ItemsInTransitReportTests extends APITests {
 
   private void createRequest(InventoryItemResource smallAngryPlanet,
                              IndividualResource steve, UUID secondServicePointId,
-                             DateTime requestDate, LocalDate requestExpirationDate)
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+                             DateTime requestDate, LocalDate requestExpirationDate) {
     RequestBuilder.Tags tags = new RequestBuilder.Tags(Arrays.asList("tag1", "tag2"));
     RequestBuilder secondRequestBuilderOnItem = new RequestBuilder()
       .open()
@@ -562,7 +526,7 @@ public class ItemsInTransitReportTests extends APITests {
     assertThat(actualLastCheckIn.getJsonObject("servicePoint").getString(NAME), is(servicePointName));
   }
 
-  private InventoryItemResource createNod() throws MalformedURLException, InterruptedException, ExecutionException, TimeoutException {
+  private InventoryItemResource createNod() {
     final ItemBuilder nodItemBuilder = ItemExamples.basedUponNod(
       materialTypesFixture.book().getId(),
       loanTypesFixture.canCirculate().getId())
@@ -573,8 +537,7 @@ public class ItemsInTransitReportTests extends APITests {
     return itemsFixture.basedUponNod(builder -> nodItemBuilder);
   }
 
-  private InventoryItemResource createSmallAngryPlanet() throws MalformedURLException,
-    InterruptedException, ExecutionException, TimeoutException {
+  private InventoryItemResource createSmallAngryPlanet() {
 
     final ItemBuilder smallAngryPlanetItemBuilder = createSmallAngryPlanetItemBuilder();
 
@@ -582,8 +545,7 @@ public class ItemsInTransitReportTests extends APITests {
       itemsFixture.thirdFloorHoldings());
   }
 
-  private ItemBuilder createSmallAngryPlanetItemBuilder() throws MalformedURLException,
-    InterruptedException, ExecutionException, TimeoutException {
+  private ItemBuilder createSmallAngryPlanetItemBuilder() {
 
     return ItemExamples.basedUponSmallAngryPlanet(
       materialTypesFixture.book().getId(),

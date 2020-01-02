@@ -22,9 +22,7 @@ import io.vertx.core.json.JsonObject;
 public class AnonymizeLoansByUserIdAPITests extends LoanAnonymizationTests {
 
   @Test
-  public void canNotAnonymizeNotClosedLoans()
-      throws InterruptedException, ExecutionException, TimeoutException,
-      MalformedURLException {
+  public void canNotAnonymizeNotClosedLoans() {
 
     IndividualResource loanResource = loansFixture.checkOutByBarcode(
         new CheckOutByBarcodeRequestBuilder().forItem(item1)
@@ -42,9 +40,7 @@ public class AnonymizeLoansByUserIdAPITests extends LoanAnonymizationTests {
   }
 
   @Test
-  public void canAonymizeLoansForParticularUser()
-      throws InterruptedException, ExecutionException, TimeoutException,
-      MalformedURLException {
+  public void canAonymizeLoansForParticularUser() {
 
     IndividualResource loanResource1 = loansFixture.checkOutByBarcode(
         new CheckOutByBarcodeRequestBuilder().forItem(item1)
@@ -75,8 +71,7 @@ public class AnonymizeLoansByUserIdAPITests extends LoanAnonymizationTests {
   }
 
   @Test
-  public void canAnonymizeClosedLoansWithNoFeesAndFines()
-      throws InterruptedException, ExecutionException, TimeoutException, MalformedURLException {
+  public void canAnonymizeClosedLoansWithNoFeesAndFines() {
 
     IndividualResource loanResource = loansFixture.checkOutByBarcode(
         new CheckOutByBarcodeRequestBuilder().forItem(item1)
@@ -93,8 +88,7 @@ public class AnonymizeLoansByUserIdAPITests extends LoanAnonymizationTests {
   }
 
   @Test
-  public void canNotAnonymizeClosedLoansWithClosedFeesAndFines()
-      throws InterruptedException, ExecutionException, TimeoutException, MalformedURLException {
+  public void canNotAnonymizeClosedLoansWithClosedFeesAndFines() {
 
     IndividualResource loanResource = loansFixture.checkOutByBarcode(
         new CheckOutByBarcodeRequestBuilder().forItem(item1)
@@ -113,8 +107,7 @@ public class AnonymizeLoansByUserIdAPITests extends LoanAnonymizationTests {
   }
 
   @Test
-  public void canAnonymizeMultipleClosedLoansWithClosedFeesAndFines()
-      throws InterruptedException, ExecutionException, TimeoutException, MalformedURLException {
+  public void canAnonymizeMultipleClosedLoansWithClosedFeesAndFines() {
 
     IndividualResource loanResource1 = loansFixture.checkOutByBarcode(
         new CheckOutByBarcodeRequestBuilder().forItem(item1)
@@ -145,8 +138,7 @@ public class AnonymizeLoansByUserIdAPITests extends LoanAnonymizationTests {
   }
 
   @Test
-  public void doesNotAnonymizeLoansWithOpenFeesAndFines()
-      throws InterruptedException, ExecutionException, TimeoutException, MalformedURLException {
+  public void doesNotAnonymizeLoansWithOpenFeesAndFines() {
 
     IndividualResource loanResource = loansFixture.checkOutByBarcode
         (new CheckOutByBarcodeRequestBuilder().forItem(item1)

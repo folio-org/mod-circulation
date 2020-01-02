@@ -31,11 +31,7 @@ import io.vertx.core.json.JsonObject;
 
 public class CancelRequestTests extends APITests {
   @Test
-  public void canCancelRequest()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void canCancelRequest() {
 
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource james = usersFixture.james();
@@ -64,11 +60,7 @@ public class CancelRequestTests extends APITests {
   }
 
   @Test
-  public void canCancelRequestInMiddleOfTheQueue()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void canCancelRequestInMiddleOfTheQueue() {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource james = usersFixture.james();
@@ -112,11 +104,7 @@ public class CancelRequestTests extends APITests {
   }
 
   @Test
-  public void canCancelRequestAtTheBeginningOfTheQueue()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void canCancelRequestAtTheBeginningOfTheQueue() {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource james = usersFixture.james();
@@ -160,11 +148,7 @@ public class CancelRequestTests extends APITests {
   }
 
   @Test
-  public void canCancelRequestAtTheEndOfTheQueue()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void canCancelRequestAtTheEndOfTheQueue() {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource james = usersFixture.james();
@@ -212,11 +196,7 @@ public class CancelRequestTests extends APITests {
    * to retain the request fulfilment related status after being cancelled
    */
   @Test
-  public void cancellingAPartiallyFulfilledPageRequestShouldNotChangeItemStatus()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void cancellingAPartiallyFulfilledPageRequestShouldNotChangeItemStatus() {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource jessica = usersFixture.jessica();
@@ -275,7 +255,7 @@ public class CancelRequestTests extends APITests {
   }
 
   private IndividualResource holdRequestWithNoPosition(
-    IndividualResource item, IndividualResource requester) throws Exception {
+    IndividualResource item, IndividualResource requester) {
 
     JsonObject request = new RequestBuilder()
       .open()

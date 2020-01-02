@@ -86,11 +86,7 @@ abstract class RenewalAPITests extends APITests {
   abstract Matcher<ValidationError> hasItemNotFoundMessage(IndividualResource item);
 
   @Test
-  public void canRenewRollingLoanFromSystemDate()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void canRenewRollingLoanFromSystemDate() {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource jessica = usersFixture.jessica();
@@ -137,7 +133,6 @@ abstract class RenewalAPITests extends APITests {
   @Test
   public void canRenewRollingLoanFromCurrentDueDate()
     throws InterruptedException,
-    MalformedURLException,
     TimeoutException,
     ExecutionException {
 
@@ -194,7 +189,6 @@ abstract class RenewalAPITests extends APITests {
   @Test
   public void canRenewUsingDueDateLimitedRollingLoanPolicy()
     throws InterruptedException,
-    MalformedURLException,
     TimeoutException,
     ExecutionException {
 
@@ -241,7 +235,6 @@ abstract class RenewalAPITests extends APITests {
   @Test
   public void canRenewRollingLoanUsingDifferentPeriod()
     throws InterruptedException,
-    MalformedURLException,
     TimeoutException,
     ExecutionException {
 
@@ -297,7 +290,6 @@ abstract class RenewalAPITests extends APITests {
   @Test
   public void canRenewUsingAlternateDueDateLimitedRollingLoanPolicy()
     throws InterruptedException,
-    MalformedURLException,
     TimeoutException,
     ExecutionException {
 
@@ -345,7 +337,6 @@ abstract class RenewalAPITests extends APITests {
   @Test
   public void canRenewUsingLoanDueDateLimitSchedulesWhenDifferentPeriodAndNotAlternateLimits()
     throws InterruptedException,
-    MalformedURLException,
     TimeoutException,
     ExecutionException {
 
@@ -393,7 +384,6 @@ abstract class RenewalAPITests extends APITests {
   @Test
   public void canCheckOutUsingFixedDueDateLoanPolicy()
     throws InterruptedException,
-    MalformedURLException,
     TimeoutException,
     ExecutionException {
 
@@ -452,7 +442,6 @@ abstract class RenewalAPITests extends APITests {
   @Test
   public void canRenewMultipleTimesUpToRenewalLimit()
     throws InterruptedException,
-    MalformedURLException,
     TimeoutException,
     ExecutionException {
 
@@ -505,7 +494,6 @@ abstract class RenewalAPITests extends APITests {
   @Test
   public void canGetRenewedLoan()
     throws InterruptedException,
-    MalformedURLException,
     TimeoutException,
     ExecutionException {
 
@@ -560,7 +548,6 @@ abstract class RenewalAPITests extends APITests {
   @Test
   public void cannotRenewWhenLoanPolicyDoesNotExist()
     throws InterruptedException,
-    MalformedURLException,
     TimeoutException,
     ExecutionException {
 
@@ -589,8 +576,7 @@ abstract class RenewalAPITests extends APITests {
   @Test
   public void canRenewLoanWithAnotherLoanPolicyName()
           throws InterruptedException,
-          MalformedURLException,
-          TimeoutException,
+    TimeoutException,
           ExecutionException {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
@@ -619,7 +605,6 @@ abstract class RenewalAPITests extends APITests {
   @Test
   public void cannotRenewWhenRenewalLimitReached()
     throws InterruptedException,
-    MalformedURLException,
     TimeoutException,
     ExecutionException {
 
@@ -655,7 +640,6 @@ abstract class RenewalAPITests extends APITests {
   @Test
   public void multipleRenewalFailuresWhenLoanHasReachedMaximumNumberOfRenewalsAndOpenRecallRequest()
     throws InterruptedException,
-    MalformedURLException,
     TimeoutException,
     ExecutionException {
 
@@ -700,7 +684,6 @@ abstract class RenewalAPITests extends APITests {
   @Test
   public void multipleReasonsWhyCannotRenewWhenRenewalLimitReachedAndDueDateNotChanged()
     throws InterruptedException,
-    MalformedURLException,
     TimeoutException,
     ExecutionException {
 
@@ -747,7 +730,6 @@ abstract class RenewalAPITests extends APITests {
   @Test
   public void cannotRenewWhenNonRenewableRollingPolicy()
     throws InterruptedException,
-    MalformedURLException,
     TimeoutException,
     ExecutionException {
 
@@ -778,7 +760,6 @@ abstract class RenewalAPITests extends APITests {
   @Test
   public void cannotRenewWhenNonRenewableFixedPolicy()
     throws InterruptedException,
-    MalformedURLException,
     TimeoutException,
     ExecutionException {
 
@@ -817,7 +798,6 @@ abstract class RenewalAPITests extends APITests {
   @Test
   public void cannotRenewWhenItemIsNotLoanable()
     throws InterruptedException,
-    MalformedURLException,
     TimeoutException,
     ExecutionException {
 
@@ -852,11 +832,7 @@ abstract class RenewalAPITests extends APITests {
   }
 
   @Test
-  public void cannotRenewWhenLoaneeCannotBeFound()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void cannotRenewWhenLoaneeCannotBeFound() {
 
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource steve = usersFixture.steve();
@@ -874,11 +850,7 @@ abstract class RenewalAPITests extends APITests {
   }
 
   @Test
-  public void cannotRenewWhenItemCannotBeFound()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void cannotRenewWhenItemCannotBeFound() {
 
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource steve = usersFixture.steve();
@@ -895,11 +867,7 @@ abstract class RenewalAPITests extends APITests {
   }
 
   @Test
-  public void cannotRenewLoanForDifferentUser()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void cannotRenewLoanForDifferentUser() {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource james = usersFixture.james();
@@ -918,7 +886,6 @@ abstract class RenewalAPITests extends APITests {
   @Test
   public void testMoveToEndOfPreviousOpenDay()
     throws InterruptedException,
-    MalformedURLException,
     TimeoutException,
     ExecutionException {
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
@@ -965,7 +932,6 @@ abstract class RenewalAPITests extends APITests {
   @Test
   public void testMoveToEndOfNextOpenDay()
     throws InterruptedException,
-    MalformedURLException,
     TimeoutException,
     ExecutionException {
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
@@ -1012,7 +978,6 @@ abstract class RenewalAPITests extends APITests {
   @Test
   public void testMoveToEndOfNextOpenServicePointHours()
     throws InterruptedException,
-    MalformedURLException,
     TimeoutException,
     ExecutionException {
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
@@ -1057,7 +1022,6 @@ abstract class RenewalAPITests extends APITests {
   @Test
   public void testMoveToEndOfCurrentServicePointHours()
     throws InterruptedException,
-    MalformedURLException,
     TimeoutException,
     ExecutionException {
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
@@ -1158,8 +1122,7 @@ abstract class RenewalAPITests extends APITests {
   public void canRenewWhenCurrentDueDateFallsWithinLimitingDueDateSchedule() throws
     InterruptedException,
     ExecutionException,
-    TimeoutException,
-    MalformedURLException {
+    TimeoutException {
 
     FixedDueDateSchedulesBuilder fixedDueDateSchedules = new FixedDueDateSchedulesBuilder()
       .withName("Fixed Due Date Schedule")
@@ -1189,8 +1152,7 @@ abstract class RenewalAPITests extends APITests {
   public void canRenewWhenSystemDateFallsWithinLimitingDueDateSchedule() throws
     InterruptedException,
     ExecutionException,
-    TimeoutException,
-    MalformedURLException {
+    TimeoutException {
 
     FixedDueDateSchedulesBuilder fixedDueDateSchedules = new FixedDueDateSchedulesBuilder()
       .withName("Fixed Due Date Schedule")
@@ -1222,8 +1184,7 @@ abstract class RenewalAPITests extends APITests {
   public void cannotRenewWhenCurrentDueDateDoesNotFallWithinLimitingDueDateSchedule() throws
     InterruptedException,
     ExecutionException,
-    TimeoutException,
-    MalformedURLException {
+    TimeoutException {
 
     DateTime futureDateTime = DateTime.now(DateTimeZone.UTC).plusMonths(1);
 
@@ -1257,7 +1218,6 @@ abstract class RenewalAPITests extends APITests {
   @Test
   public void  canRenewFromCurrentDueDateWhenDueDateFallsWithinRangeOfAlternateDueDateLimit()
     throws InterruptedException,
-    MalformedURLException,
     TimeoutException,
     ExecutionException {
 
@@ -1289,7 +1249,6 @@ abstract class RenewalAPITests extends APITests {
   @Test
   public void  canRenewWhenSystemDateFallsWithinAlternateScheduleAndDueDateDoesNot()
     throws InterruptedException,
-    MalformedURLException,
     TimeoutException,
     ExecutionException {
 
@@ -1323,7 +1282,6 @@ abstract class RenewalAPITests extends APITests {
   @Test
   public void renewalNoticeIsSentWhenPolicyDefinesRenewalNoticeConfiguration()
     throws InterruptedException,
-    MalformedURLException,
     TimeoutException,
     ExecutionException {
 
@@ -1391,7 +1349,6 @@ abstract class RenewalAPITests extends APITests {
 
   private void checkRenewalAttempt(DateTime expectedDueDate, UUID dueDateLimitedPolicyId)
     throws InterruptedException,
-    MalformedURLException,
     TimeoutException,
     ExecutionException {
 

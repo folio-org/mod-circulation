@@ -58,11 +58,7 @@ import io.vertx.core.json.JsonObject;
 
 public class CheckOutByBarcodeTests extends APITests {
   @Test
-  public void canCheckOutUsingItemAndUserBarcode()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void canCheckOutUsingItemAndUserBarcode() {
 
 
      IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet(
@@ -194,7 +190,6 @@ public class CheckOutByBarcodeTests extends APITests {
   @Test
   public void canCheckOutUsingFixedDueDateLoanPolicy()
     throws InterruptedException,
-    MalformedURLException,
     TimeoutException,
     ExecutionException {
 
@@ -234,7 +229,6 @@ public class CheckOutByBarcodeTests extends APITests {
   @Test
   public void canCheckOutUsingDueDateLimitedRollingLoanPolicy()
     throws InterruptedException,
-    MalformedURLException,
     TimeoutException,
     ExecutionException {
 
@@ -290,7 +284,6 @@ public class CheckOutByBarcodeTests extends APITests {
   @Test
   public void canGetLoanCreatedWhilstCheckingOut()
     throws InterruptedException,
-    MalformedURLException,
     TimeoutException,
     ExecutionException {
 
@@ -313,11 +306,7 @@ public class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void canCheckOutWithoutLoanDate()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void canCheckOutWithoutLoanDate() {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource steve = usersFixture.steve();
@@ -338,11 +327,7 @@ public class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void cannotCheckOutWhenLoaneeCannotBeFound()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void cannotCheckOutWhenLoaneeCannotBeFound() {
 
     //TODO: Review this to see if can simplify by not creating user at all?
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
@@ -358,11 +343,7 @@ public class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void cannotCheckOutWhenLoaneeIsInactive()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void cannotCheckOutWhenLoaneeIsInactive() {
 
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource steve = usersFixture.steve(UserBuilder::inactive);
@@ -375,11 +356,7 @@ public class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void cannotCheckOutByProxyWhenProxyingUserIsInactive()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void cannotCheckOutByProxyWhenProxyingUserIsInactive() {
 
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
 
@@ -401,11 +378,7 @@ public class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void cannotCheckOutByProxyWhenNoRelationship()
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException,
-    MalformedURLException {
+  public void cannotCheckOutByProxyWhenNoRelationship() {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource james = usersFixture.james();
@@ -424,11 +397,7 @@ public class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void cannotCheckOutWhenItemCannotBeFound()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void cannotCheckOutWhenItemCannotBeFound() {
 
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource steve = usersFixture.steve();
@@ -443,11 +412,7 @@ public class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void cannotCheckOutWhenItemIsAlreadyCheckedOut()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void cannotCheckOutWhenItemIsAlreadyCheckedOut() {
 
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource jessica = usersFixture.jessica();
@@ -463,10 +428,7 @@ public class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void cannotCheckOutWhenItemIsMissing() throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void cannotCheckOutWhenItemIsMissing() {
 
     final IndividualResource missingItem = setupMissingItem(itemsFixture);
     final IndividualResource steve = usersFixture.steve();
@@ -478,11 +440,7 @@ public class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void cannotCheckOutWhenOpenLoanAlreadyExists()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void cannotCheckOutWhenOpenLoanAlreadyExists() {
 
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource jessica = usersFixture.jessica();
@@ -501,10 +459,7 @@ public class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void cannotCheckOutWhenItemDeclaredLost() throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void cannotCheckOutWhenItemDeclaredLost() {
 
     final IndividualResource declaredLostItem = itemsFixture.setupDeclaredLostItem();
     final IndividualResource steve = usersFixture.steve();
@@ -516,11 +471,7 @@ public class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void canCheckOutViaProxy()
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException,
-    MalformedURLException {
+  public void canCheckOutViaProxy() {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource james = usersFixture.james();
@@ -547,7 +498,6 @@ public class CheckOutByBarcodeTests extends APITests {
   @Test
   public void cannotCheckOutWhenLoanPolicyDoesNotExist()
     throws InterruptedException,
-    MalformedURLException,
     TimeoutException,
     ExecutionException {
 
@@ -579,11 +529,7 @@ public class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void cannotCheckOutWhenServicePointOfCheckoutNotPresent()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void cannotCheckOutWhenServicePointOfCheckoutNotPresent() {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource james = usersFixture.james();
@@ -604,11 +550,7 @@ public class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void canCheckOutUsingItemBarcodeThatContainsSpaces()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void canCheckOutUsingItemBarcodeThatContainsSpaces() {
 
     final IndividualResource steve = usersFixture.steve();
     IndividualResource smallAngryPlanet
@@ -639,11 +581,7 @@ public class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void canCheckOutUsingUserBarcodeThatContainsSpaces()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void canCheckOutUsingUserBarcodeThatContainsSpaces() {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet(
       item -> item
@@ -688,11 +626,7 @@ public class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void canCheckOutUsingProxyUserBarcodeThatContainsSpaces()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void canCheckOutUsingProxyUserBarcodeThatContainsSpaces() {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet(
       item -> item
@@ -745,11 +679,7 @@ public class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void canCheckOutOnOrderItem()
-    throws MalformedURLException,
-    InterruptedException,
-    TimeoutException,
-    ExecutionException {
+  public void canCheckOutOnOrderItem() {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet(item -> item
       .onOrder()
@@ -793,11 +723,7 @@ public class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void canCheckOutOnOrderItemWithRequest()
-    throws MalformedURLException,
-    InterruptedException,
-    TimeoutException,
-    ExecutionException {
+  public void canCheckOutOnOrderItemWithRequest() {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet(item -> item
       .onOrder()
@@ -848,11 +774,7 @@ public class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void canCheckOutInProcessItem()
-    throws MalformedURLException,
-    InterruptedException,
-    TimeoutException,
-    ExecutionException {
+  public void canCheckOutInProcessItem() {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet(item -> item
       .inProcess()
@@ -896,11 +818,7 @@ public class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void canCheckOutInProcessItemWithRequest()
-    throws MalformedURLException,
-    InterruptedException,
-    TimeoutException,
-    ExecutionException {
+  public void canCheckOutInProcessItemWithRequest() {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet(item -> item
       .inProcess()
@@ -951,11 +869,7 @@ public class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void checkOutFailsWhenCirculationRulesReferenceInvalidLoanPolicyId()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void checkOutFailsWhenCirculationRulesReferenceInvalidLoanPolicyId() {
 
     setInvalidLoanPolicyReferenceInRules("some-loan-policy");
 
@@ -980,11 +894,7 @@ public class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void checkOutDoesNotFailWhenCirculationRulesReferenceInvalidNoticePolicyId()
-  throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void checkOutDoesNotFailWhenCirculationRulesReferenceInvalidNoticePolicyId() {
 
     setInvalidNoticePolicyReferenceInRules("some-notice-policy");
 
@@ -1008,7 +918,6 @@ public class CheckOutByBarcodeTests extends APITests {
   @Test
   public void cannotCheckOutWhenItemIsNotLoanable()
     throws InterruptedException,
-    MalformedURLException,
     TimeoutException,
     ExecutionException {
 

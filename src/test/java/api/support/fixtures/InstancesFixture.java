@@ -32,21 +32,13 @@ public class InstancesFixture {
     instancesClient =  ResourceClient.forInstances();
   }
 
-  public void cleanUp()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void cleanUp() {
 
     instanceTypeRecordCreator.cleanUp();
     contributorNameTypeRecordCreator.cleanUp();
   }
 
-  public IndividualResource basedUponDunkirk()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public IndividualResource basedUponDunkirk() {
 
     InstanceBuilder builder = new InstanceBuilder("Dunkirk", booksInstanceTypeId())
       .withContributor("Novik, Naomi", getPersonalContributorNameTypeId());
@@ -55,11 +47,7 @@ public class InstancesFixture {
   }
 
 
-  private UUID getPersonalContributorNameTypeId()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  private UUID getPersonalContributorNameTypeId() {
 
     final JsonObject personalName = new JsonObject();
 
@@ -68,11 +56,7 @@ public class InstancesFixture {
     return contributorNameTypeRecordCreator.createIfAbsent(personalName).getId();
   }
 
-  private UUID booksInstanceTypeId()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  private UUID booksInstanceTypeId() {
 
     final JsonObject booksInstanceType = new JsonObject();
 

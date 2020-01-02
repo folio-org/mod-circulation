@@ -24,11 +24,7 @@ import api.support.builders.RequestBuilder;
 
 public class SingleClosedRequestTests extends APITests {
   @Test
-  public void closedRequestDoesNotStopCheckOutToRequester()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void closedRequestDoesNotStopCheckOutToRequester() {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource james = usersFixture.james();
@@ -63,11 +59,7 @@ public class SingleClosedRequestTests extends APITests {
   }
 
   @Test
-  public void closedRequestDoesNotStopCheckOutToOtherPatron()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void closedRequestDoesNotStopCheckOutToOtherPatron() {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource james = usersFixture.james();

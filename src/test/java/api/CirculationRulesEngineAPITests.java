@@ -33,9 +33,7 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
 public class CirculationRulesEngineAPITests extends APITests {
-  public CirculationRulesEngineAPITests()
-      throws InterruptedException, MalformedURLException,
-      TimeoutException, ExecutionException {
+  public CirculationRulesEngineAPITests() {
 
     super(false);
   }
@@ -328,7 +326,7 @@ public class CirculationRulesEngineAPITests extends APITests {
   }
 
   @Test
-  public void cache() throws Exception {
+  public void cache() {
     setRules(rulesFallback);
     assertThat(applyRulesForLoanPolicy(m1, t1, g1, s1), is(lp6));
 

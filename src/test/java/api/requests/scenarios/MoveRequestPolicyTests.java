@@ -60,8 +60,8 @@ public class MoveRequestPolicyTests extends APITests {
 
   @Before
   public void setUpNoticePolicy()
-      throws MalformedURLException,
-      InterruptedException,
+      throws
+    InterruptedException,
       ExecutionException,
       TimeoutException {
     UUID recallToLoaneeTemplateId = UUID.randomUUID();
@@ -83,11 +83,7 @@ public class MoveRequestPolicyTests extends APITests {
   }
 
   @Test
-  public void cannotMoveRecallRequestsWithRequestPolicyNotAllowingHolds()
-      throws InterruptedException,
-      MalformedURLException,
-      TimeoutException,
-      ExecutionException {
+  public void cannotMoveRecallRequestsWithRequestPolicyNotAllowingHolds() {
     final String anyNoticePolicy = noticePoliciesFixture.activeNotice().getId().toString();
     final String anyLoanPolicy = loanPoliciesFixture.canCirculateRolling().getId().toString();
     final String bookMaterialType = materialTypesFixture.book().getId().toString();
@@ -159,11 +155,7 @@ public class MoveRequestPolicyTests extends APITests {
   }
 
   @Test
-  public void moveRecallRequestWithoutExistingRecallsAndWithNoPolicyValuesChangesDueDateToSystemDate()
-      throws InterruptedException,
-      ExecutionException,
-      TimeoutException,
-      MalformedURLException {
+  public void moveRecallRequestWithoutExistingRecallsAndWithNoPolicyValuesChangesDueDateToSystemDate() {
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource interestingTimes = itemsFixture.basedUponInterestingTimes();
     final IndividualResource steve = usersFixture.steve();
@@ -212,11 +204,7 @@ public class MoveRequestPolicyTests extends APITests {
   }
 
   @Test
-  public void moveRecallRequestWithExistingRecallsAndWithNoPolicyValuesChangesDueDateToSystemDate()
-      throws InterruptedException,
-      ExecutionException,
-      TimeoutException,
-      MalformedURLException {
+  public void moveRecallRequestWithExistingRecallsAndWithNoPolicyValuesChangesDueDateToSystemDate() {
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource interestingTimes = itemsFixture.basedUponInterestingTimes();
     final IndividualResource steve = usersFixture.steve();
@@ -279,8 +267,7 @@ public class MoveRequestPolicyTests extends APITests {
   public void moveRecallRequestWithoutExistingRecallsAndWithMGDAndRDValuesChangesDueDateToRD()
       throws InterruptedException,
       ExecutionException,
-      TimeoutException,
-      MalformedURLException {
+      TimeoutException {
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource interestingTimes = itemsFixture.basedUponInterestingTimes();
     final IndividualResource steve = usersFixture.steve();
@@ -348,8 +335,7 @@ public class MoveRequestPolicyTests extends APITests {
   public void moveRecallRequestWithExistingRecallsAndWithMGDAndRDValuesChangesDueDateToRD()
       throws InterruptedException,
       ExecutionException,
-      TimeoutException,
-      MalformedURLException {
+      TimeoutException {
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource interestingTimes = itemsFixture.basedUponInterestingTimes();
     final IndividualResource steve = usersFixture.steve();

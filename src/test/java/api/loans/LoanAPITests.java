@@ -62,11 +62,7 @@ import io.vertx.core.json.JsonObject;
 
 public class LoanAPITests extends APITests {
   @Test
-  public void canCreateALoan()
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException,
-    MalformedURLException {
+  public void canCreateALoan() {
 
     UUID id = UUID.randomUUID();
 
@@ -201,11 +197,7 @@ public class LoanAPITests extends APITests {
   }
 
   @Test
-  public void canGetLoanWithoutOpenFeesFines()
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException,
-    MalformedURLException {
+  public void canGetLoanWithoutOpenFeesFines() {
 
     UUID id = UUID.randomUUID();
 
@@ -238,11 +230,7 @@ public class LoanAPITests extends APITests {
   }
 
   @Test
-  public void canGetMultipleFeesFinesForSingleLoan()
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException,
-    MalformedURLException {
+  public void canGetMultipleFeesFinesForSingleLoan() {
 
     UUID id = UUID.randomUUID();
 
@@ -284,8 +272,7 @@ public class LoanAPITests extends APITests {
   }
 
   @Test
-  public void canGetMultipleFeesFinesForMultipleLoans()
-    throws InterruptedException, MalformedURLException, TimeoutException, ExecutionException {
+  public void canGetMultipleFeesFinesForMultipleLoans() {
 
     configClient.create(ConfigurationExample.utcTimezoneConfiguration());
     IndividualResource item1 = itemsFixture.basedUponSmallAngryPlanet();
@@ -337,11 +324,7 @@ public class LoanAPITests extends APITests {
   }
 
   @Test
-  public void canCreateALoanAtASpecificLocation()
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException,
-    MalformedURLException {
+  public void canCreateALoanAtASpecificLocation() {
 
     UUID id = UUID.randomUUID();
 
@@ -474,8 +457,7 @@ public class LoanAPITests extends APITests {
   public void cannotCreateALoanForUnknownItem()
     throws InterruptedException,
     ExecutionException,
-    TimeoutException,
-    MalformedURLException {
+    TimeoutException {
 
     UUID id = UUID.randomUUID();
 
@@ -510,11 +492,7 @@ public class LoanAPITests extends APITests {
   }
 
   @Test
-  public void cannotCreateALoanWithUnknownCheckInServicePointId()
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException,
-    MalformedURLException {
+  public void cannotCreateALoanWithUnknownCheckInServicePointId() {
 
     UUID id = UUID.randomUUID();
 
@@ -546,11 +524,7 @@ public class LoanAPITests extends APITests {
   }
 
   @Test
-  public void cannotCreateALoanWithUnknownCheckOutServicePointId()
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException,
-    MalformedURLException {
+  public void cannotCreateALoanWithUnknownCheckOutServicePointId() {
 
     UUID id = UUID.randomUUID();
 
@@ -585,8 +559,7 @@ public class LoanAPITests extends APITests {
   public void cannotCreateClosedLoanWithoutUserId()
     throws InterruptedException,
     ExecutionException,
-    TimeoutException,
-    MalformedURLException {
+    TimeoutException {
 
     UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
 
@@ -613,8 +586,7 @@ public class LoanAPITests extends APITests {
   public void canCreateClosedLoanInSpecificLocationWithoutUserId()
     throws InterruptedException,
     ExecutionException,
-    TimeoutException,
-    MalformedURLException {
+    TimeoutException {
 
     UUID loanId = UUID.randomUUID();
 
@@ -648,8 +620,7 @@ public class LoanAPITests extends APITests {
   public void cannotCreateOpenLoanForUnknownRequestingUser()
     throws InterruptedException,
     ExecutionException,
-    TimeoutException,
-    MalformedURLException {
+    TimeoutException {
 
     UUID loanId = UUID.randomUUID();
 
@@ -685,8 +656,7 @@ public class LoanAPITests extends APITests {
   public void cannotCreateOpenLoanWithoutUserId()
     throws InterruptedException,
     ExecutionException,
-    TimeoutException,
-    MalformedURLException {
+    TimeoutException {
 
     UUID loanId = UUID.randomUUID();
 
@@ -721,8 +691,7 @@ public class LoanAPITests extends APITests {
   public void cannotCreateOpenLoanAtSpecificLocationWithoutUserId()
     throws InterruptedException,
     ExecutionException,
-    TimeoutException,
-    MalformedURLException {
+    TimeoutException {
 
     UUID loanId = UUID.randomUUID();
 
@@ -754,11 +723,7 @@ public class LoanAPITests extends APITests {
   }
 
   @Test
-  public void canCreateALoanWithSystemReturnDate()
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException,
-    MalformedURLException {
+  public void canCreateALoanWithSystemReturnDate() {
 
     UUID id = UUID.randomUUID();
     UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
@@ -785,11 +750,7 @@ public class LoanAPITests extends APITests {
   }
 
   @Test
-  public void cannotCheckOutAnItemTwice()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void cannotCheckOutAnItemTwice() {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource james = usersFixture.james();
@@ -805,11 +766,7 @@ public class LoanAPITests extends APITests {
   }
 
   @Test
-  public void cannotCheckOutMissingItem()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void cannotCheckOutMissingItem() {
 
     final IndividualResource missingItem = setupMissingItem(itemsFixture);
     final IndividualResource steve = usersFixture.steve();
@@ -822,11 +779,7 @@ public class LoanAPITests extends APITests {
   }
 
   @Test
-  public void cannotCheckOutDeclaredLostItem()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void cannotCheckOutDeclaredLostItem() {
 
     final IndividualResource declaredLostItem = itemsFixture.setupDeclaredLostItem();
     final IndividualResource steve = usersFixture.steve();
@@ -839,11 +792,7 @@ public class LoanAPITests extends APITests {
   }
 
   @Test
-  public void cannotCreateLoanThatIsNotOpenOrClosed()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void cannotCreateLoanThatIsNotOpenOrClosed() {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource jessica = usersFixture.jessica();
@@ -862,11 +811,7 @@ public class LoanAPITests extends APITests {
   }
 
   @Test
-  public void canCreateALoanWithoutStatus()
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException,
-    MalformedURLException {
+  public void canCreateALoanWithoutStatus() {
 
     UUID id = UUID.randomUUID();
 
@@ -938,11 +883,7 @@ public class LoanAPITests extends APITests {
   }
 
   @Test
-  public void creatingAReturnedLoanDoesNotChangeItemStatus()
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException,
-    MalformedURLException {
+  public void creatingAReturnedLoanDoesNotChangeItemStatus() {
 
     UUID id = UUID.randomUUID();
 
@@ -1016,11 +957,7 @@ public class LoanAPITests extends APITests {
   }
 
   @Test
-  public void canGetALoanById()
-    throws MalformedURLException,
-    InterruptedException,
-    ExecutionException,
-    TimeoutException {
+  public void canGetALoanById() {
 
     UUID id = UUID.randomUUID();
 
@@ -1137,8 +1074,7 @@ public class LoanAPITests extends APITests {
   }
 
   @Test
-  public void canGetLoanPolicyPropertiesForMultipleLoans()
-          throws InterruptedException, MalformedURLException, TimeoutException, ExecutionException {
+  public void canGetLoanPolicyPropertiesForMultipleLoans() {
 
     configClient.create(ConfigurationExample.utcTimezoneConfiguration());
     IndividualResource item1 = itemsFixture.basedUponSmallAngryPlanet();
@@ -1161,11 +1097,7 @@ public class LoanAPITests extends APITests {
   }
 
   @Test
-  public void loanFoundByIdDoesNotProvideItemInformationForUnknownItem()
-    throws MalformedURLException,
-    InterruptedException,
-    ExecutionException,
-    TimeoutException {
+  public void loanFoundByIdDoesNotProvideItemInformationForUnknownItem() {
 
     final InventoryItemResource item = itemsFixture.basedUponNod();
 
@@ -1185,11 +1117,7 @@ public class LoanAPITests extends APITests {
   }
 
   @Test
-  public void barcodeIsNotIncludedWhenItemDoesNotHaveOne()
-    throws MalformedURLException,
-    InterruptedException,
-    ExecutionException,
-    TimeoutException {
+  public void barcodeIsNotIncludedWhenItemDoesNotHaveOne() {
 
     UUID id = UUID.randomUUID();
 
@@ -1218,11 +1146,7 @@ public class LoanAPITests extends APITests {
   }
 
   @Test
-  public void loanNotFoundForUnknownId()
-    throws MalformedURLException,
-    InterruptedException,
-    ExecutionException,
-    TimeoutException {
+  public void loanNotFoundForUnknownId() {
 
     Response getResponse = loansClient.getById(UUID.randomUUID());
 
@@ -1232,7 +1156,6 @@ public class LoanAPITests extends APITests {
   @Test
   public void canRenewALoanByExtendingTheDueDate()
     throws InterruptedException,
-    MalformedURLException,
     TimeoutException,
     ExecutionException {
 
@@ -1301,11 +1224,7 @@ public class LoanAPITests extends APITests {
   }
 
   @Test
-  public void canUpdateAClosedLoanWithoutAUserId()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void canUpdateAClosedLoanWithoutAUserId() {
 
     UUID itemId = itemsFixture.basedUponNod().getId();
 
@@ -1334,11 +1253,7 @@ public class LoanAPITests extends APITests {
     hasNoBorrowerProperties(updatedLoan);
   }
   @Test
-  public void multipleClosedLoansHaveNoBorrowerInformation()
-          throws InterruptedException,
-          MalformedURLException,
-          TimeoutException,
-          ExecutionException {
+  public void multipleClosedLoansHaveNoBorrowerInformation() {
 
     UUID smallAngryPlanetId = itemsFixture.basedUponSmallAngryPlanet().getId();
     UUID nodId = itemsFixture.basedUponNod().getId();
@@ -1382,7 +1297,6 @@ public class LoanAPITests extends APITests {
   @Test
   public void cannotUpdateAnOpenLoanWithoutAUserId()
     throws InterruptedException,
-    MalformedURLException,
     TimeoutException,
     ExecutionException {
 
@@ -1416,7 +1330,6 @@ public class LoanAPITests extends APITests {
   @Test
   public void updatingACurrentLoanDoesNotChangeItemStatus()
     throws InterruptedException,
-    MalformedURLException,
     TimeoutException,
     ExecutionException {
 
@@ -1454,11 +1367,7 @@ public class LoanAPITests extends APITests {
   }
 
   @Test
-  public void loanInCollectionDoesNotProvideItemInformationForUnknownItem()
-    throws MalformedURLException,
-    InterruptedException,
-    ExecutionException,
-    TimeoutException {
+  public void loanInCollectionDoesNotProvideItemInformationForUnknownItem() {
 
     final InventoryItemResource item = itemsFixture.basedUponNod();
 
@@ -1481,11 +1390,7 @@ public class LoanAPITests extends APITests {
   }
 
   @Test
-  public void canPageLoans()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void canPageLoans() {
 
     IndividualResource user = usersFixture.steve();
 
@@ -1526,11 +1431,7 @@ public class LoanAPITests extends APITests {
   }
 
   @Test
-  public void canSearchByUserId()
-    throws MalformedURLException,
-    InterruptedException,
-    ExecutionException,
-    TimeoutException {
+  public void canSearchByUserId() {
 
     IndividualResource firstUser = usersFixture.steve();
     UUID firstUserId = firstUser.getId();
@@ -1620,11 +1521,7 @@ public class LoanAPITests extends APITests {
   }
 
   @Test
-  public void canFilterByLoanStatus()
-    throws MalformedURLException,
-    InterruptedException,
-    ExecutionException,
-    TimeoutException {
+  public void canFilterByLoanStatus() {
 
     IndividualResource user = usersFixture.charlotte();
     UUID userId = user.getId();
@@ -1707,11 +1604,7 @@ public class LoanAPITests extends APITests {
   }
 
   @Test
-  public void canGetMultipleLoansWithoutUserId()
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException,
-    MalformedURLException {
+  public void canGetMultipleLoansWithoutUserId() {
 
     UUID smallAngryPlanetId = itemsFixture.basedUponSmallAngryPlanet().getId();
     UUID nodId = itemsFixture.basedUponNod().getId();
@@ -1740,11 +1633,7 @@ public class LoanAPITests extends APITests {
   }
 
   @Test
-  public void canGetMultipleLoansForDifferentBorrowers()
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException,
-    MalformedURLException {
+  public void canGetMultipleLoansForDifferentBorrowers() {
 
     UUID smallAngryPlanetId = itemsFixture.basedUponSmallAngryPlanet().getId();
     UUID nodId = itemsFixture.basedUponNod().getId();
@@ -1786,7 +1675,6 @@ public class LoanAPITests extends APITests {
   @Test
   public void canDeleteALoan()
     throws InterruptedException,
-    MalformedURLException,
     TimeoutException,
     ExecutionException {
 
@@ -1814,11 +1702,7 @@ public class LoanAPITests extends APITests {
   }
 
   @Test
-  public void canCreateALoanWithServicePoints()
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException,
-    MalformedURLException {
+  public void canCreateALoanWithServicePoints() {
 
     UUID loanId = UUID.randomUUID();
     UUID itemId = itemsFixture.basedUponSmallAngryPlanet().getId();
@@ -1852,8 +1736,7 @@ public class LoanAPITests extends APITests {
   public void canCreateMultipleLoansWithServicePoints()
     throws InterruptedException,
     ExecutionException,
-    TimeoutException,
-    MalformedURLException {
+    TimeoutException {
 
     DateTime loanDate = new DateTime(2017, 2, 27, 10, 23, 43, DateTimeZone.UTC);
     DateTime dueDate = new DateTime(2017, 3, 29, 10, 23, 43, DateTimeZone.UTC);
@@ -1925,8 +1808,7 @@ public class LoanAPITests extends APITests {
   public void canGetPagedLoansWithMoreItemsThanDefaultPageLimit()
       throws InterruptedException,
       ExecutionException,
-      TimeoutException,
-      MalformedURLException {
+      TimeoutException {
     createLoans(50);
     queryLoans(50);
   }
@@ -1935,13 +1817,12 @@ public class LoanAPITests extends APITests {
   public void canGetPagedLoansWhenIdQueryWouldExceedQueryStringLengthLimit()
       throws InterruptedException,
       ExecutionException,
-      TimeoutException,
-      MalformedURLException {
+      TimeoutException {
     createLoans(100);
     queryLoans(100);
   }
 
-  private void createLoans(int total) throws MalformedURLException, InterruptedException, TimeoutException, ExecutionException {
+  private void createLoans(int total) {
     final IndividualResource mainFloor = locationsFixture.mainFloor();
     for(int i = 0; i < total; i++) {
       final IndividualResource item = itemsFixture.basedUponTemeraire(
@@ -1961,11 +1842,7 @@ public class LoanAPITests extends APITests {
     return String.valueOf(random.nextLong(10_000_000_000L, 100_000_000_000L));
   }
 
-  private UUID getRandomUserId()
-      throws MalformedURLException,
-      InterruptedException,
-      TimeoutException,
-      ExecutionException {
+  private UUID getRandomUserId() {
     ThreadLocalRandom random = ThreadLocalRandom.current();
     switch(random.nextInt(5)) {
     case 0: return usersFixture.charlotte().getId();
@@ -1976,7 +1853,7 @@ public class LoanAPITests extends APITests {
     }
   }
 
-  private void createLoan(UUID userId, UUID itemId) throws MalformedURLException, InterruptedException, TimeoutException, ExecutionException {
+  private void createLoan(UUID userId, UUID itemId) {
     DateTime loanDate = new DateTime(2017, 2, 27, 10, 23, 43, DateTimeZone.UTC);
     DateTime dueDate = new DateTime(2017, 3, 29, 10, 23, 43, DateTimeZone.UTC);
     UUID checkinServicePointId = servicePointsFixture.cd1().getId();
@@ -2021,10 +1898,7 @@ public class LoanAPITests extends APITests {
   }
 
   @Test
-  public void canGetAnonymizedLoan() throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void canGetAnonymizedLoan() {
 
     InventoryItemResource item = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource jessica = usersFixture.jessica();
@@ -2045,10 +1919,7 @@ public class LoanAPITests extends APITests {
   }
 
   @Test
-  public void canGetMultipleAnonymizedLoans() throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void canGetMultipleAnonymizedLoans() {
 
     InventoryItemResource firstItem = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource jessica = usersFixture.jessica();

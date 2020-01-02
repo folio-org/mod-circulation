@@ -21,11 +21,7 @@ public class RequestPoliciesFixture {
       reason -> getProperty(reason, "name"));
   }
 
-  public IndividualResource allowAllRequestPolicy()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public IndividualResource allowAllRequestPolicy() {
 
     ArrayList<RequestType> types = new ArrayList<>();
     types.add(RequestType.HOLD);
@@ -37,31 +33,19 @@ public class RequestPoliciesFixture {
     return requestPolicyRecordCreator.createIfAbsent(allowAllPolicy);
   }
 
-  public IndividualResource customRequestPolicy(ArrayList<RequestType> types)
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public IndividualResource customRequestPolicy(ArrayList<RequestType> types) {
 
     final RequestPolicyBuilder customPolicy = new RequestPolicyBuilder(types);
     return requestPolicyRecordCreator.createIfAbsent(customPolicy);
   }
 
-  public IndividualResource customRequestPolicy(ArrayList<RequestType> types, String name, String description)
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public IndividualResource customRequestPolicy(ArrayList<RequestType> types, String name, String description) {
 
     final RequestPolicyBuilder customPolicy = new RequestPolicyBuilder(types, name, description);
     return requestPolicyRecordCreator.createIfAbsent(customPolicy);
   }
 
-  public IndividualResource recallRequestPolicy()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public IndividualResource recallRequestPolicy() {
 
     ArrayList<RequestType> requestTypesList = new ArrayList<>();
     requestTypesList.add(RequestType.RECALL);
@@ -69,11 +53,7 @@ public class RequestPoliciesFixture {
     return customRequestPolicy(requestTypesList, "Recall request policy", "sample recall policy");
   }
 
-  public IndividualResource holdRequestPolicy()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public IndividualResource holdRequestPolicy() {
 
     ArrayList<RequestType> requestTypesList = new ArrayList<>();
     requestTypesList.add(RequestType.HOLD);
@@ -81,11 +61,7 @@ public class RequestPoliciesFixture {
     return customRequestPolicy(requestTypesList);
   }
 
-  public IndividualResource pageRequestPolicy()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public IndividualResource pageRequestPolicy() {
 
     ArrayList<RequestType> requestTypesList = new ArrayList<>();
     requestTypesList.add(RequestType.PAGE);
@@ -93,11 +69,7 @@ public class RequestPoliciesFixture {
     return customRequestPolicy(requestTypesList);
   }
 
-  public void deleteRequestPolicy(IndividualResource policyToDelete)
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void deleteRequestPolicy(IndividualResource policyToDelete) {
       requestPolicyRecordCreator.delete(policyToDelete);
   }
 
