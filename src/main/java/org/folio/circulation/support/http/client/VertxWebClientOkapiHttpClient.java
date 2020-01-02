@@ -16,6 +16,8 @@ import java.util.concurrent.CompletableFuture;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.ServerErrorFailure;
 
+import io.vertx.core.AsyncResult;
+import io.vertx.core.Handler;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpClient;
 import io.vertx.ext.web.client.HttpRequest;
@@ -93,20 +95,7 @@ public class VertxWebClientOkapiHttpClient {
 
     withStandardHeaders(webClient.deleteAbs(url))
       .timeout(DEFAULT_TIMEOUT_IN_MILLISECONDS)
-      .send(asyncResult -> {
-        final Result<Response> result;
-
-        if (asyncResult.succeeded()) {
-          final HttpResponse<Buffer> response = asyncResult.result();
-
-          result = succeeded(responseFrom(url, response));
-        }
-        else {
-          result = failed(new ServerErrorFailure(asyncResult.cause()));
-        }
-
-        futureResponse.complete(result);
-      });
+      .send(handleAsyncResult(url, futureResponse));
 
     return futureResponse;
   }
@@ -119,5 +108,23 @@ public class VertxWebClientOkapiHttpClient {
       .putHeader(TOKEN, this.token)
       .putHeader(USER_ID, this.userId)
       .putHeader(REQUEST_ID, this.requestId);
+  }
+
+  private Handler<AsyncResult<HttpResponse<Buffer>>> handleAsyncResult(
+    String url, CompletableFuture<Result<Response>> futureResponse) {
+
+    return asyncResult -> {
+      final Result<Response> result = mapAsyncResultToResult(url, asyncResult);
+
+      futureResponse.complete(result);
+    };
+  }
+
+  private Result<Response> mapAsyncResultToResult(String url,
+    AsyncResult<HttpResponse<Buffer>> asyncResult) {
+
+    return asyncResult.succeeded()
+      ? succeeded(responseFrom(url, asyncResult.result()))
+      : failed(new ServerErrorFailure(asyncResult.cause()));
   }
 }
