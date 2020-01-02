@@ -1,5 +1,6 @@
 package org.folio.circulation.support.http.client;
 
+import static org.apache.http.HttpHeaders.ACCEPT;
 import static org.folio.circulation.support.Result.failed;
 import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.http.OkapiHeader.OKAPI_URL;
@@ -57,7 +58,7 @@ public class VertxWebClientOkapiHttpClient {
 
     webClient
       .getAbs(url)
-      .putHeader("Accept","application/json, text/plain")
+      .putHeader(ACCEPT, "application/json, text/plain")
       .putHeader(OKAPI_URL, okapiUrl.toString())
       .putHeader(TENANT, this.tenantId)
       .putHeader(TOKEN, this.token)

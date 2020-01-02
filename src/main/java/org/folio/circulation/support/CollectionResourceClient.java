@@ -148,7 +148,9 @@ public class CollectionResourceClient {
       .after(url -> client.toWebClient().get(url));
   }
 
-  private String getPagedCollectionUrl(String encodedQuery, Integer pageLimit, Integer pageOffset) {
+  private String getPagedCollectionUrl(String encodedQuery, Integer pageLimit,
+    Integer pageOffset) {
+
     return collectionRoot + createQueryString(encodedQuery, pageLimit, pageOffset);
   }
 
@@ -170,9 +172,7 @@ public class CollectionResourceClient {
    * @param pageOffset  the value for the offset parameter, may be null for none
    * @return the query string, may be empty
    */
-  static String createQueryString(
-    String urlEncodedCqlQuery,
-    Integer pageLimit,
+  static String createQueryString(String urlEncodedCqlQuery, Integer pageLimit,
     Integer pageOffset) {
 
     String queryParameter = prefixOnCondition(
@@ -193,8 +193,8 @@ public class CollectionResourceClient {
       "?", queryStringParameters, StringUtils::isNotBlank);
   }
 
-  private static <T> String prefixOnCondition(
-    String prefix, T value, Predicate<T> condition) {
+  private static <T> String prefixOnCondition(String prefix, T value,
+    Predicate<T> condition) {
 
     return condition.test(value)
       ? prefix + value
@@ -206,7 +206,8 @@ public class CollectionResourceClient {
     String fromUrl, Consumer<Response> responseHandler) {
 
     return response -> response
-      .bodyHandler(buffer -> responseHandler.accept(Response.from(response, buffer, fromUrl)))
+      .bodyHandler(buffer -> responseHandler.accept(
+        Response.from(response, buffer, fromUrl)))
       .exceptionHandler(ex -> {
         log.error("Unhandled exception in body handler", ex);
         String trace = ExceptionUtils.getStackTrace(ex);
