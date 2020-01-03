@@ -76,9 +76,7 @@ public class VertxWebClientOkapiHttpClientTests {
       .willReturn(okJson(new JsonObject().put("message", "hello").encodePrettily())
         .withHeader("Location", locationResponseHeader)));
 
-    VertxWebClientOkapiHttpClient client =  createClientUsing(
-      vertxAssistant.createUsingVertx(Vertx::createHttpClient), okapiUrl,
-      tenantId, token, userId, requestId);
+    VertxWebClientOkapiHttpClient client = createClient();
 
     CompletableFuture<Result<Response>> getCompleted = client.get(
       fakeWebServer.url("/record"));
@@ -98,9 +96,7 @@ public class VertxWebClientOkapiHttpClientTests {
     fakeWebServer.stubFor(matchingFolioHeaders(delete(urlEqualTo("/record")))
       .willReturn(noContent()));
 
-    VertxWebClientOkapiHttpClient client =  createClientUsing(
-      vertxAssistant.createUsingVertx(Vertx::createHttpClient), okapiUrl,
-      tenantId, token, userId, requestId);
+    VertxWebClientOkapiHttpClient client = createClient();
 
     CompletableFuture<Result<Response>> getCompleted = client.delete(
       fakeWebServer.url("/record"));
@@ -117,9 +113,7 @@ public class VertxWebClientOkapiHttpClientTests {
     fakeWebServer.stubFor(matchingFolioHeaders(get(urlEqualTo("/record")))
       .willReturn(aResponse().withFixedDelay(1000)));
 
-    VertxWebClientOkapiHttpClient client =  createClientUsing(
-      vertxAssistant.createUsingVertx(Vertx::createHttpClient), okapiUrl,
-      tenantId, token, userId, requestId);
+    VertxWebClientOkapiHttpClient client = createClient();
 
     CompletableFuture<Result<Response>> getCompleted
       = client.get(fakeWebServer.url("/record"), Duration.of(500, MILLIS));
@@ -144,5 +138,11 @@ public class VertxWebClientOkapiHttpClientTests {
       .withHeader("X-Okapi-Token", equalTo(token))
       .withHeader("X-Okapi-User-Id", equalTo(userId))
       .withHeader("X-Okapi-Request-Id", equalTo(requestId));
+  }
+
+  private VertxWebClientOkapiHttpClient createClient() {
+    return createClientUsing(
+      vertxAssistant.createUsingVertx(Vertx::createHttpClient), okapiUrl,
+      tenantId, token, userId, requestId);
   }
 }
