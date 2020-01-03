@@ -52,8 +52,8 @@ public class ItemLimitValidator {
       .thenApply(result -> result.map(v -> records));
   }
 
-  private CompletableFuture<Result<Boolean>> isLimitReached(List<String> ruleConditions,
-                                                            LoanAndRelatedRecords records) {
+  private CompletableFuture<Result<Boolean>> isLimitReached(
+    List<String> ruleConditions, LoanAndRelatedRecords records) {
 
     if (!isRuleMaterialTypePresent(ruleConditions) && !isRuleLoanTypePresent(ruleConditions)) {
       return ofAsync(() -> false);

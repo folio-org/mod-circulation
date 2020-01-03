@@ -1,5 +1,6 @@
 package org.folio.circulation.resources;
 
+import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.support.Result.succeeded;
 
 import java.util.List;
@@ -27,7 +28,7 @@ public class NoticeCirculationRulesEngineResource extends AbstractCirculationRul
   @Override
   protected CompletableFuture<Result<Pair<String, List<String>>>> getPolicyIdAndRuleMatch(
     MultiMap params, Drools drools, Location location) {
-    return CompletableFuture.completedFuture(succeeded(drools.noticePolicy(params, location)));
+    return completedFuture(succeeded(drools.noticePolicy(params, location)));
   }
 
   @Override
@@ -37,6 +38,6 @@ public class NoticeCirculationRulesEngineResource extends AbstractCirculationRul
 
   @Override
   protected  CompletableFuture<Result<JsonArray>> getPolicies(MultiMap params, Drools drools, Location location) {
-    return CompletableFuture.completedFuture(succeeded(drools.noticePolicies(params, location)));
+    return completedFuture(succeeded(drools.noticePolicies(params, location)));
   }
 }
