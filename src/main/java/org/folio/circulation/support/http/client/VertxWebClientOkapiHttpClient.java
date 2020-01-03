@@ -86,6 +86,12 @@ public class VertxWebClientOkapiHttpClient {
     return get(url, DEFAULT_TIMEOUT, queryParameters);
   }
 
+  public CompletableFuture<Result<Response>> delete(URL url,
+    QueryParameter... queryParameters) {
+
+    return delete(url.toString(), queryParameters);
+  }
+
   public CompletableFuture<Result<Response>> delete(String url,
     QueryParameter... queryParameters) {
 
