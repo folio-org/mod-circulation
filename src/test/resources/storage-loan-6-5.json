@@ -93,6 +93,14 @@
       "type": "string",
       "format": "date-time"
     },
+    "overdueFinePolicyId": {
+      "description": "ID of last overdue fine policy used in relation to this loan",
+      "type": "string"
+    },
+    "lostItemPolicyId": {
+      "description": "ID of last lost item policy used in relation to this loan",
+      "type": "string"
+    },
     "metadata": {
       "description": "Metadata about creation and changes to loan, provided by the server (client should not provide)",
       "type": "object",

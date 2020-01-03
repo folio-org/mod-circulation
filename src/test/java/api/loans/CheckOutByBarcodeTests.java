@@ -245,6 +245,9 @@ public class CheckOutByBarcodeTests extends APITests {
       .limitedBySchedule(dueDateLimitScheduleId);
 
     final IndividualResource loanPolicyResource = loanPoliciesFixture.create(dueDateLimitedPolicy);
+    final IndividualResource overdueFinePolicyResource = overdueFinePoliciesFixture.facultyStandard();
+    final IndividualResource lostItemFeePolicyResource = lostItemFeePoliciesFixture.facultyStandard();
+
     UUID dueDateLimitedPolicyId = loanPolicyResource.getId();
 
     useFallbackPolicies(
@@ -275,6 +278,8 @@ public class CheckOutByBarcodeTests extends APITests {
     loanHasPatronGroupProperties(loan, "Regular Group");
 
     loanHasLoanPolicyProperties(loan, loanPolicyResource);
+    loanHasOverdueFinePolicyProperties(loan, overdueFinePolicyResource);
+    loanHasLostItemPolicyProperties(loan, lostItemFeePolicyResource);
 
     assertThat("due date should be limited by schedule",
       loan.getString("dueDate"),
