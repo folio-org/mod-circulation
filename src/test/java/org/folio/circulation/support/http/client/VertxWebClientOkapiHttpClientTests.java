@@ -8,6 +8,7 @@ import static com.github.tomakehurst.wiremock.client.WireMock.get;
 import static com.github.tomakehurst.wiremock.client.WireMock.noContent;
 import static com.github.tomakehurst.wiremock.client.WireMock.okJson;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
+import static java.time.temporal.ChronoUnit.MILLIS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.folio.HttpStatus.HTTP_NO_CONTENT;
 import static org.folio.HttpStatus.HTTP_OK;
@@ -19,6 +20,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.time.Duration;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
@@ -120,7 +122,7 @@ public class VertxWebClientOkapiHttpClientTests {
       tenantId, token, userId, requestId);
 
     CompletableFuture<Result<Response>> getCompleted
-      = client.get(fakeWebServer.url("/record"), 500);
+      = client.get(fakeWebServer.url("/record"), Duration.of(500, MILLIS));
 
     final Result<Response> responseResult = getCompleted.get(1, SECONDS);
 

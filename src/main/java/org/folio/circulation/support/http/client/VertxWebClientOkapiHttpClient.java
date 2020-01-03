@@ -1,5 +1,6 @@
 package org.folio.circulation.support.http.client;
 
+import static java.time.temporal.ChronoUnit.SECONDS;
 import static org.apache.http.HttpHeaders.ACCEPT;
 import static org.folio.circulation.support.Result.failed;
 import static org.folio.circulation.support.Result.succeeded;
@@ -11,6 +12,7 @@ import static org.folio.circulation.support.http.OkapiHeader.USER_ID;
 import static org.folio.circulation.support.http.client.Response.responseFrom;
 
 import java.net.URL;
+import java.time.Duration;
 import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.support.Result;
@@ -24,7 +26,7 @@ import io.vertx.ext.web.client.HttpResponse;
 import io.vertx.ext.web.client.WebClient;
 
 public class VertxWebClientOkapiHttpClient {
-  private static final int DEFAULT_TIMEOUT_IN_MILLISECONDS = 5000;
+  private static final Duration DEFAULT_TIMEOUT = Duration.of(5, SECONDS);
 
   private final WebClient webClient;
   private final URL okapiUrl;
@@ -53,13 +55,13 @@ public class VertxWebClientOkapiHttpClient {
   }
 
   public CompletableFuture<Result<Response>> get(String url,
-    Integer timeoutInMilliseconds) {
+    Duration timeout) {
 
     final CompletableFuture<AsyncResult<HttpResponse<Buffer>>> futureResponse
       = new CompletableFuture<>();
 
     withStandardHeaders(webClient.getAbs(url))
-      .timeout(timeoutInMilliseconds)
+      .timeout(timeout.toMillis())
       .send(futureResponse::complete);
 
     return futureResponse
@@ -71,21 +73,21 @@ public class VertxWebClientOkapiHttpClient {
   }
 
   public CompletableFuture<Result<Response>> get(String url) {
-    return get(url, DEFAULT_TIMEOUT_IN_MILLISECONDS);
+    return get(url, DEFAULT_TIMEOUT);
   }
 
   public CompletableFuture<Result<Response>> delete(String url) {
-    return delete(url, DEFAULT_TIMEOUT_IN_MILLISECONDS);
+    return delete(url, DEFAULT_TIMEOUT);
   }
 
   public CompletableFuture<Result<Response>> delete(String url,
-    int timeoutInMilliseconds) {
+    Duration timeout) {
 
     final CompletableFuture<AsyncResult<HttpResponse<Buffer>>> futureResponse
       = new CompletableFuture<>();
 
     withStandardHeaders(webClient.deleteAbs(url))
-      .timeout(timeoutInMilliseconds)
+      .timeout(timeout.toMillis())
       .send(futureResponse::complete);
 
     return futureResponse
