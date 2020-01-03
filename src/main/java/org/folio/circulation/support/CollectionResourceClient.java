@@ -29,57 +29,38 @@ public class CollectionResourceClient {
   private final OkapiHttpClient client;
   private final URL collectionRoot;
 
-  public CollectionResourceClient(
-    OkapiHttpClient client,
-    URL collectionRoot) {
-
+  public CollectionResourceClient(OkapiHttpClient client, URL collectionRoot) {
     this.client = client;
     this.collectionRoot = collectionRoot;
   }
 
-  public CompletableFuture<Response> post(
-    JsonObject resourceRepresentation) {
-
+  public CompletableFuture<Response> post(JsonObject resourceRepresentation) {
     CompletableFuture<Response> future = new CompletableFuture<>();
 
-    client.post(collectionRoot,
-      resourceRepresentation,
+    client.post(collectionRoot, resourceRepresentation,
       responseConversationHandler(future::complete));
 
     return future;
   }
 
-  public CompletableFuture<Response> put(
-    JsonObject resourceRepresentation) {
-
+  public CompletableFuture<Response> put(JsonObject resourceRepresentation) {
     final CompletableFuture<Response> future = new CompletableFuture<>();
 
-    client.put(collectionRoot,
-      resourceRepresentation,
+    client.put(collectionRoot, resourceRepresentation,
       responseConversationHandler(future::complete));
 
     return future;
   }
 
-  public CompletableFuture<Response> put(
-    String id,
+  public CompletableFuture<Response> put(String id,
     JsonObject resourceRepresentation) {
 
     CompletableFuture<Response> future = new CompletableFuture<>();
 
-    client.put(individualRecordUrl(id),
-      resourceRepresentation,
+    client.put(individualRecordUrl(id), resourceRepresentation,
       responseConversationHandler(future::complete));
 
     return future;
-  }
-
-  public CompletableFuture<Result<Response>> get() {
-    return client.toWebClient().get(collectionRoot.toString());
-  }
-
-  public CompletableFuture<Result<Response>> get(String id) {
-    return client.toWebClient().get(individualRecordUrl(id));
   }
 
   public CompletableFuture<Response> delete(String id) {
@@ -111,6 +92,14 @@ public class CollectionResourceClient {
     });
   }
 
+  public CompletableFuture<Result<Response>> get() {
+    return client.toWebClient().get(collectionRoot.toString());
+  }
+
+  public CompletableFuture<Result<Response>> get(String id) {
+    return client.toWebClient().get(individualRecordUrl(id));
+  }
+  
   /**
    * Make a get request for multiple records using raw query string parameters
    * Should only be used when passing on entire query string from a client request
