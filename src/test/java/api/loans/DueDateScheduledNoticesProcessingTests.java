@@ -1,5 +1,6 @@
 package api.loans;
 
+import static api.support.fixtures.ItemExamples.basedUponSmallAngryPlanet;
 import static api.support.matchers.PatronNoticeMatcher.hasEmailNoticeProperties;
 import static api.support.matchers.ScheduledNoticeMatchers.hasScheduledLoanNotice;
 import static java.util.Comparator.comparing;
@@ -47,7 +48,6 @@ import api.support.http.InventoryItemResource;
 import io.vertx.core.json.JsonObject;
 
 public class DueDateScheduledNoticesProcessingTests extends APITests {
-
   private static final String BEFORE_TIMING = "Before";
   private static final String UPON_AT_TIMING = "Upon At";
   private static final String AFTER_TIMING = "After";
@@ -73,17 +73,13 @@ public class DueDateScheduledNoticesProcessingTests extends APITests {
   private IndividualResource loan;
   private DateTime dueDate;
 
-
   @Before
-  public void beforeEach()
-    throws
-    InterruptedException,
-    TimeoutException,
-    ExecutionException {
-
+  public void beforeEach() {
     setUpNoticePolicy();
 
-    ItemBuilder itemBuilder = ItemExamples.basedUponSmallAngryPlanet(materialTypesFixture.book().getId(), loanTypesFixture.canCirculate().getId());
+    ItemBuilder itemBuilder = basedUponSmallAngryPlanet(
+      materialTypesFixture.book().getId(), loanTypesFixture.canCirculate().getId());
+
     HoldingBuilder holdingBuilder = itemsFixture.applyCallNumberHoldings(
       "CN",
       "Prefix",
@@ -380,12 +376,7 @@ public class DueDateScheduledNoticesProcessingTests extends APITests {
     }
   }
 
-  private void setUpNoticePolicy()
-    throws
-    InterruptedException,
-    TimeoutException,
-    ExecutionException {
-
+  private void setUpNoticePolicy() {
     JsonObject beforeDueDateNoticeConfiguration = new NoticeConfigurationBuilder()
       .withTemplateId(beforeTemplateId)
       .withDueDateEvent()
@@ -393,12 +384,14 @@ public class DueDateScheduledNoticesProcessingTests extends APITests {
       .recurring(beforeRecurringPeriod)
       .sendInRealTime(true)
       .create();
+
     JsonObject uponAtDueDateNoticeConfiguration = new NoticeConfigurationBuilder()
       .withTemplateId(uponAtTemplateId)
       .withDueDateEvent()
       .withUponAtTiming()
       .sendInRealTime(true)
       .create();
+
     JsonObject afterDueDateNoticeConfiguration = new NoticeConfigurationBuilder()
       .withTemplateId(afterTemplateId)
       .withDueDateEvent()
@@ -413,6 +406,7 @@ public class DueDateScheduledNoticesProcessingTests extends APITests {
         beforeDueDateNoticeConfiguration,
         uponAtDueDateNoticeConfiguration,
         afterDueDateNoticeConfiguration));
+
     useFallbackPolicies(
       loanPoliciesFixture.canCirculateRolling().getId(),
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
@@ -422,7 +416,6 @@ public class DueDateScheduledNoticesProcessingTests extends APITests {
   }
 
   private void assertSetUpIsCorrect() {
-
     Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
       .until(scheduledNoticesClient::getAll, hasSize(3));

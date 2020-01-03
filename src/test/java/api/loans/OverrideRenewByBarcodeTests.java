@@ -57,10 +57,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
   private static final String RENEWED_THROUGH_OVERRIDE = "renewedThroughOverride";
 
   @Test
-  public void cannotOverrideRenewalWhenLoanPolicyDoesNotExist()
-    throws InterruptedException,
-    TimeoutException,
-    ExecutionException {
+  public void cannotOverrideRenewalWhenLoanPolicyDoesNotExist() {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource jessica = usersFixture.jessica();
@@ -156,10 +153,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
   }
 
   @Test
-  public void canOverrideRenewalWhenItemIsNotRenewableAndNewDueDateIsNotSpecified() throws
-    InterruptedException,
-    ExecutionException,
-    TimeoutException {
+  public void canOverrideRenewalWhenItemIsNotRenewableAndNewDueDateIsNotSpecified() {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource jessica = usersFixture.jessica();
@@ -186,10 +180,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
   }
 
   @Test
-  public void canOverrideRenewalWhenItemIsNotRenewableAndNewDueDateIsSpecified() throws
-    InterruptedException,
-    ExecutionException,
-    TimeoutException {
+  public void canOverrideRenewalWhenItemIsNotRenewableAndNewDueDateIsSpecified() {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource jessica = usersFixture.jessica();
@@ -245,10 +236,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
   }
 
   @Test
-  public void canOverrideRenewalWhenDateFallsOutsideOfTheDateRangesInTheFixedLoanPolicyAndDueDateIsNotSpecified() throws
-    InterruptedException,
-    ExecutionException,
-    TimeoutException {
+  public void canOverrideRenewalWhenDateFallsOutsideOfTheDateRangesInTheFixedLoanPolicyAndDueDateIsNotSpecified() {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource jessica = usersFixture.jessica();
@@ -282,10 +270,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
   }
 
   @Test
-  public void canOverrideRenewalWhenDateFallsOutsideOfTheDateRangesInTheFixedLoanPolicyAndDueDateIsSpecified() throws
-    InterruptedException,
-    ExecutionException,
-    TimeoutException {
+  public void canOverrideRenewalWhenDateFallsOutsideOfTheDateRangesInTheFixedLoanPolicyAndDueDateIsSpecified() {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource jessica = usersFixture.jessica();
@@ -356,10 +341,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
   }
 
   @Test
-  public void canOverrideRenewalWhenDateFallsOutsideOfTheDateRangesInTheRollingLoanPolicy() throws
-    InterruptedException,
-    ExecutionException,
-    TimeoutException {
+  public void canOverrideRenewalWhenDateFallsOutsideOfTheDateRangesInTheRollingLoanPolicy() {
 
     final DateTime renewalDate = DateTime.now();
 
@@ -428,10 +410,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
   }
 
   @Test
-  public void canOverrideRenewalWhenLoanReachedRenewalLimitAndDueDateIsNotSpecified() throws
-    InterruptedException,
-    ExecutionException,
-    TimeoutException {
+  public void canOverrideRenewalWhenLoanReachedRenewalLimitAndDueDateIsNotSpecified() {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource jessica = usersFixture.jessica();
@@ -480,10 +459,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
   }
 
   @Test
-  public void cannotOverrideRenewalWhenLoanDoesNotMatchAnyOfOverrideCases() throws
-    InterruptedException,
-    TimeoutException,
-    ExecutionException {
+  public void cannotOverrideRenewalWhenLoanDoesNotMatchAnyOfOverrideCases() {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource jessica = usersFixture.jessica();
@@ -680,10 +656,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
   }
 
   @Test
-  public void renewalNoticeIsSentWhenPolicyDefinesRenewalNoticeConfiguration()
-    throws InterruptedException,
-    TimeoutException,
-    ExecutionException {
+  public void renewalNoticeIsSentWhenPolicyDefinesRenewalNoticeConfiguration() {
 
     UUID renewalTemplateId = UUID.randomUUID();
     JsonObject renewalNoticeConfiguration = new NoticeConfigurationBuilder()
@@ -766,10 +739,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
     return hasMessage("renewal would not change the due date");
   }
 
-  private void createLoanPolicyAndSetAsFallback(LoanPolicyBuilder loanPolicyBuilder) throws
-    InterruptedException,
-    TimeoutException,
-    ExecutionException {
+  private void createLoanPolicyAndSetAsFallback(LoanPolicyBuilder loanPolicyBuilder) {
     use(loanPolicyBuilder);
   }
 
