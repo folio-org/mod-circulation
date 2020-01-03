@@ -54,21 +54,6 @@ public class CqlQuery {
     return Result.of(() -> new CqlQuery(format("%s<\"%s\"", index, value), none()));
   }
 
-  private static List<String> filterNullValues(Collection<String> values) {
-    return values.stream()
-      .filter(Objects::nonNull)
-      .map(String::toString)
-      .filter(StringUtils::isNotBlank)
-      .distinct()
-      .collect(toList());
-  }
-
-  private static List<String> wrapValuesInQuotes(List<String> values) {
-    return values.stream()
-      .map(value -> format("\"%s\"", value))
-      .collect(toList());
-  }
-
   private CqlQuery(String query, CqlSortBy sortBy) {
     this.query = query;
     this.sortBy = sortBy;
@@ -83,7 +68,7 @@ public class CqlQuery {
   }
 
   public Result<String> encode() {
-    final String sortedQuery = sortBy.applyTo(query);
+    final String sortedQuery = asText();
 
     log.info("Encoding query {}", sortedQuery);
 
@@ -92,5 +77,20 @@ public class CqlQuery {
 
   String asText() {
     return sortBy.applyTo(query);
+  }
+
+  private static List<String> filterNullValues(Collection<String> values) {
+    return values.stream()
+      .filter(Objects::nonNull)
+      .map(String::toString)
+      .filter(StringUtils::isNotBlank)
+      .distinct()
+      .collect(toList());
+  }
+
+  private static List<String> wrapValuesInQuotes(List<String> values) {
+    return values.stream()
+      .map(value -> format("\"%s\"", value))
+      .collect(toList());
   }
 }
