@@ -14,6 +14,7 @@ import static org.folio.circulation.support.http.client.Response.responseFrom;
 import java.net.URL;
 import java.time.Duration;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Stream;
 
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.ServerErrorFailure;
@@ -55,12 +56,17 @@ public class VertxWebClientOkapiHttpClient {
   }
 
   public CompletableFuture<Result<Response>> get(String url,
-    Duration timeout) {
+    Duration timeout, QueryParameter... queryParameters) {
 
     final CompletableFuture<AsyncResult<HttpResponse<Buffer>>> futureResponse
       = new CompletableFuture<>();
 
-    withStandardHeaders(webClient.getAbs(url))
+    final HttpRequest<Buffer> request = withStandardHeaders(webClient.getAbs(url));
+
+    Stream.of(queryParameters)
+      .forEach(parameter -> parameter.writeTo(request));
+
+    request
       .timeout(timeout.toMillis())
       .send(futureResponse::complete);
 
@@ -72,8 +78,10 @@ public class VertxWebClientOkapiHttpClient {
     return get(url.toString());
   }
 
-  public CompletableFuture<Result<Response>> get(String url) {
-    return get(url, DEFAULT_TIMEOUT);
+  public CompletableFuture<Result<Response>> get(String url,
+    QueryParameter... queryParameters) {
+
+    return get(url, DEFAULT_TIMEOUT, queryParameters);
   }
 
   public CompletableFuture<Result<Response>> delete(String url) {
