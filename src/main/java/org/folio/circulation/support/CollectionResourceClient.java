@@ -74,15 +74,7 @@ public class CollectionResourceClient {
     return future;
   }
 
-  public CompletableFuture<Response> get() {
-    return client.toWebClient().get(collectionRoot.toString())
-      //Mimic mapping failures to fake 500 response
-      //see responseConversationHandler
-      .thenApply(r -> r.orElse(new Response(500, "Something went wrong",
-        TEXT_PLAIN.toString())));
-  }
-
-  public CompletableFuture<Result<Response>> getResult() {
+  public CompletableFuture<Result<Response>> get() {
     return client.toWebClient().get(collectionRoot.toString());
   }
 

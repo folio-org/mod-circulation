@@ -66,7 +66,7 @@ public class CirculationRulesResource extends Resource {
       return;
     }
 
-    circulationRulesClient.getResult()
+    circulationRulesClient.get()
       .thenAccept(result -> result
         .applySideEffect(response -> {
           try {
