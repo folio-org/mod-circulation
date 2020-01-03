@@ -1,5 +1,6 @@
 package org.folio.circulation.resources;
 
+import static org.apache.commons.lang3.exception.ExceptionUtils.getStackTrace;
 import static org.folio.circulation.support.Result.failed;
 import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.http.server.ServerErrorResponse.internalError;
@@ -9,7 +10,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
-import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.folio.circulation.domain.Location;
 import org.folio.circulation.rules.Drools;
 import org.folio.circulation.rules.Text2Drools;
@@ -158,42 +158,44 @@ public abstract class AbstractCirculationRulesEngineResource extends Resource {
       return;
     }
 
-    circulationRulesClient.get().thenAccept(response -> {
-      try {
-        if (response.getStatusCode() != 200) {
-          ForwardResponse.forward(routingContext.response(), response);
-          log.error("{} {}", response.getStatusCode(), response.getBody());
-          return;
-        }
+    circulationRulesClient.getResult()
+      .thenAccept(result -> result
+        .applySideEffect(response -> {
+          try {
+            if (response.getStatusCode() != 200) {
+              ForwardResponse.forward(routingContext.response(), response);
+              log.error("{} {}", response.getStatusCode(), response.getBody());
+              return;
+            }
 
-        rules.reloadTimestamp = System.currentTimeMillis();
-        rules.reloadInitiated = false;
-        JsonObject circulationRules = new JsonObject(response.getBody());
-        if (log.isDebugEnabled()) {
-          log.debug("circulationRules = {}", circulationRules.encodePrettily());
-        }
-        String rulesAsText = circulationRules.getString("rulesAsText");
-        if (rulesAsText == null) {
-          throw new NullPointerException("rulesAsText");
-        }
-        if (rules.rulesAsText.equals(rulesAsText)) {
-          done.handle(null);
-          return;
-        }
-        rules.rulesAsText = rulesAsText;
-        rules.rulesAsDrools = Text2Drools.convert(rulesAsText);
-        log.debug("rulesAsDrools = {}", rules.rulesAsDrools);
-        rules.drools = new Drools(rules.rulesAsDrools);
-        done.handle(null);
-      }
-      catch (Exception e) {
-        log.error("reloadRules", e);
-        if (routingContext.response().ended()) {
-          return;
-        }
-        internalError(routingContext.response(), ExceptionUtils.getStackTrace(e));
-      }
-    });
+            rules.reloadTimestamp = System.currentTimeMillis();
+            rules.reloadInitiated = false;
+            JsonObject circulationRules = new JsonObject(response.getBody());
+            if (log.isDebugEnabled()) {
+              log.debug("circulationRules = {}", circulationRules.encodePrettily());
+            }
+            String rulesAsText = circulationRules.getString("rulesAsText");
+            if (rulesAsText == null) {
+              throw new NullPointerException("rulesAsText");
+            }
+            if (rules.rulesAsText.equals(rulesAsText)) {
+              done.handle(null);
+              return;
+            }
+            rules.rulesAsText = rulesAsText;
+            rules.rulesAsDrools = Text2Drools.convert(rulesAsText);
+            log.debug("rulesAsDrools = {}", rules.rulesAsDrools);
+            rules.drools = new Drools(rules.rulesAsDrools);
+            done.handle(null);
+          }
+          catch (Exception e) {
+            log.error("reloadRules", e);
+            if (routingContext.response().ended()) {
+              return;
+            }
+            internalError(routingContext.response(), getStackTrace(e));
+          }
+    }, cause -> cause.writeTo(routingContext.response())));
   }
 
   /**
@@ -226,12 +228,12 @@ public abstract class AbstractCirculationRulesEngineResource extends Resource {
           droolsHandler.handle(finalRules.drools);
         } catch (Exception e) {
           log.error("drools droolsHandler", e);
-          internalError(routingContext.response(), ExceptionUtils.getStackTrace(e));
+          internalError(routingContext.response(), getStackTrace(e));
         }
       });
     } catch (Exception e) {
       log.error("drools", e);
-      internalError(routingContext.response(), ExceptionUtils.getStackTrace(e));
+      internalError(routingContext.response(), getStackTrace(e));
     }
   }
 
@@ -272,7 +274,7 @@ public abstract class AbstractCirculationRulesEngineResource extends Resource {
       }
       catch (Exception e) {
         log.error("apply notice policy", e);
-        internalError(routingContext.response(), ExceptionUtils.getStackTrace(e));
+        internalError(routingContext.response(), getStackTrace(e));
       }
     });
   }
@@ -304,7 +306,7 @@ public abstract class AbstractCirculationRulesEngineResource extends Resource {
     }
     catch (Exception e) {
       log.error("applyAll", e);
-      internalError(routingContext.response(), ExceptionUtils.getStackTrace(e));
+      internalError(routingContext.response(), getStackTrace(e));
     }
   }
 
@@ -327,7 +329,7 @@ public abstract class AbstractCirculationRulesEngineResource extends Resource {
     }
     catch (Exception e) {
       log.error("applyAll", e);
-      internalError(routingContext.response(), ExceptionUtils.getStackTrace(e));
+      internalError(routingContext.response(), getStackTrace(e));
     }
   }
 
