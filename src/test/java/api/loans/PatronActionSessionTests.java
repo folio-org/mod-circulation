@@ -48,10 +48,7 @@ public class PatronActionSessionTests extends APITests {
   private static final UUID CHECK_IN_NOTICE_TEMPLATE_ID = UUID.fromString("72e7683b-76c2-4ee2-85c2-2fbca8fbcfd9");
 
   @Before
-  public void before()
-    throws InterruptedException,
-    TimeoutException,
-    ExecutionException {
+  public void before() {
 
     JsonObject checkOutNoticeConfig = new NoticeConfigurationBuilder()
       .withTemplateId(CHECK_OUT_NOTICE_TEMPLATE_ID)

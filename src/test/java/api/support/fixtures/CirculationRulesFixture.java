@@ -1,6 +1,7 @@
 package api.support.fixtures;
 
 import static api.support.RestAssuredResponseConversion.toResponse;
+import static api.support.http.InterfaceUrls.circulationRulesStorageUrl;
 import static api.support.http.InterfaceUrls.circulationRulesUrl;
 import static api.support.http.api.support.NamedQueryStringParameter.namedParameter;
 import static java.util.Arrays.asList;
@@ -9,7 +10,9 @@ import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.UUID;
 
 import org.folio.circulation.rules.ItemLocation;
@@ -30,6 +33,16 @@ public class CirculationRulesFixture {
   public CirculationRulesFixture(RestAssuredClient restAssuredClient) {
     this.restAssuredClient = restAssuredClient;
   }
+
+  public String getCirculationRules() {
+    Response getResponse = restAssuredClient.get(circulationRulesUrl(),
+      "get-circulation-rules");
+
+    JsonObject rulesJson = new JsonObject(getResponse.getBody());
+
+    return rulesJson.getString("rulesAsText");
+  }
+
 
   public Response putRules(String body) {
     return toResponse(restAssuredClient
@@ -57,6 +70,18 @@ public class CirculationRulesFixture {
     assertThat(String.format(
       "Failed to set circulation rules: %s", response.getBody()),
       response.getStatusCode(), is(204));
+  }
+
+  public void updateCirculationRulesWithoutInvalidatingCache(String rules) {
+    JsonObject json = new JsonObject().put("rulesAsText", rules);
+
+    restAssuredClient.beginRequest("update-rules-in-storage")
+      .body(json.encodePrettily())
+      .when()
+      .put(circulationRulesStorageUrl(""))
+      .then()
+      .log().all()
+      .statusCode(204);
   }
 
   private String soleFallbackPolicyRule(UUID loanPolicyId, UUID requestPolicyId,
@@ -162,6 +187,37 @@ public class CirculationRulesFixture {
       circulationRulesUrl(policyPath),
       getApplyParameters(itemType, loanType, patronGroup, location), 200,
       requestId);
+  }
+
+  public Response attemptToApplyRulesWithNoParameters(String path) {
+    return restAssuredClient.get(circulationRulesUrl(path), 400,
+      "apply-rules-with-no-parameters");
+  }
+
+  public Response attemptToApplyRulesWithInvalidParameters(String type,
+    String itemType, String loanType, String patronGroup, String location) {
+
+    final List<QueryStringParameter> parameters = new ArrayList<>();
+
+    if(itemType != null) {
+      parameters.add(namedParameter("item_type_id", itemType));
+    }
+
+    if(loanType != null) {
+      parameters.add(namedParameter("loan_type_id", loanType));
+    }
+
+    if(patronGroup != null) {
+      parameters.add(namedParameter("patron_type_id", patronGroup));
+    }
+
+    if(location != null) {
+      parameters.add(namedParameter("location_id", location));
+    }
+
+    return restAssuredClient.get(
+      circulationRulesUrl("/" + type + "-policy"), parameters,
+      400, "apply-rules-with-invalid-parameters");
   }
 
   private Collection<QueryStringParameter> getApplyParameters(ItemType itemType,
