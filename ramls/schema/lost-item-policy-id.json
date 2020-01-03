@@ -1,0 +1,16 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "title": "Result of applying circulation rules to determine a lost item policy",
+  "description": "Describes the outcome of applying loan rules to determine a lost item policy",
+  "type": "object",
+  "properties": {
+    "lostItemPolicyId": {
+      "description": "ID of the lost item policy determined by the circulation rules",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "lostItemPolicyId"
+  ]
+}

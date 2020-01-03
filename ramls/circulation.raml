@@ -345,6 +345,174 @@ resourceTypes:
             body:
               text/plain:
                 example: "Internal server error"
+    /overdue-fine-policy:
+      displayName: Execute circulation rules and return the overdue fine policy that will be applied
+      get:
+        description: Execute circulation rules and return the overdue fine policy that will be applied, either the matching overdue fine policy with the highest priority or the fallback overdue fine policy policy
+        queryParameters:
+          item_type_id:
+            description: "Item type id"
+            pattern: "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[89abAB][a-fA-F0-9]{3}-[a-fA-F0-9]{12}$"
+            required: true
+          loan_type_id:
+            description: "Loan type id"
+            pattern: "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[89abAB][a-fA-F0-9]{3}-[a-fA-F0-9]{12}$"
+            required: true
+          patron_type_id:
+            description: "Patron type id"
+            pattern: "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[89abAB][a-fA-F0-9]{3}-[a-fA-F0-9]{12}$"
+            required: true
+          location_id:
+            description: "Location id"
+            pattern: "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[89abAB][a-fA-F0-9]{3}-[a-fA-F0-9]{12}$"
+            required: true
+        responses:
+          200:
+            body:
+              application/json:
+                type: !include schema/overdue-fine-policy-id.json
+                example: !include examples/overdue-fine-policy-id.json
+          400:
+            description: "Invalid query parameters"
+            body:
+              text/plain:
+                example: "required query parameter missing: item_type_id"
+          422:
+            description: "Invalid id error."
+            body:
+              application/json:
+                type: error
+                example: !include examples/circulation-rules-id-error.json
+          500:
+            description: "Internal server error"
+            body:
+              text/plain:
+                example: "Internal server error"
+    /overdue-fine-policy-all:
+      displayName: Execute circulation rules and return all matching overdue fine policies
+      get:
+        description: Execute circulation rules and return all matching overdue fine policies in decreasing priority and the fallback overdue fine policy
+        queryParameters:
+          item_type_id:
+            description: "Item type id"
+            pattern: "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[89abAB][a-fA-F0-9]{3}-[a-fA-F0-9]{12}$"
+            required: true
+          loan_type_id:
+            description: "Loan type id"
+            pattern: "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[89abAB][a-fA-F0-9]{3}-[a-fA-F0-9]{12}$"
+            required: true
+          patron_type_id:
+            description: "Patron type id"
+            pattern: "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[89abAB][a-fA-F0-9]{3}-[a-fA-F0-9]{12}$"
+            required: true
+          location_id:
+            description: "Location id"
+            pattern: "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[89abAB][a-fA-F0-9]{3}-[a-fA-F0-9]{12}$"
+            required: true
+          rules:
+            description: "Circulation rules if provided, otherwise use stored circulation rules"
+            required: false
+        responses:
+          200:
+            body:
+              application/json:
+                type: !include schema/circulation-rule-overdue-fine-policy-matches.json
+                example: !include examples/circulation-rule-overdue-fine-policy-matches.json
+          422:
+            description: "Invalid id error."
+            body:
+              application/json:
+                type: error
+                example: !include examples/circulation-rules-id-error.json
+          500:
+            description: "Internal server error"
+            body:
+              text/plain:
+                example: "Internal server error"
+    /lost-item-policy:
+      displayName: Execute circulation rules and return the lost item policy that will be applied
+      get:
+        description: Execute circulation rules and return the lost item policy that will be applied, either the matching lost item policy with the highest priority or the fallback lost item policy policy
+        queryParameters:
+          item_type_id:
+            description: "Item type id"
+            pattern: "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[89abAB][a-fA-F0-9]{3}-[a-fA-F0-9]{12}$"
+            required: true
+          loan_type_id:
+            description: "Loan type id"
+            pattern: "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[89abAB][a-fA-F0-9]{3}-[a-fA-F0-9]{12}$"
+            required: true
+          patron_type_id:
+            description: "Patron type id"
+            pattern: "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[89abAB][a-fA-F0-9]{3}-[a-fA-F0-9]{12}$"
+            required: true
+          location_id:
+            description: "Location id"
+            pattern: "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[89abAB][a-fA-F0-9]{3}-[a-fA-F0-9]{12}$"
+            required: true
+        responses:
+          200:
+            body:
+              application/json:
+                type: !include schema/lost-item-policy-id.json
+                example: !include examples/lost-item-policy-id.json
+          400:
+            description: "Invalid query parameters"
+            body:
+              text/plain:
+                example: "required query parameter missing: item_type_id"
+          422:
+            description: "Invalid id error."
+            body:
+              application/json:
+                type: error
+                example: !include examples/circulation-rules-id-error.json
+          500:
+            description: "Internal server error"
+            body:
+              text/plain:
+                example: "Internal server error"
+    /lost-item-policy-all:
+      displayName: Execute circulation rules and return all matching lost item policies
+      get:
+        description: Execute circulation rules and return all matching lost item policies in decreasing priority and the fallback lost item policy
+        queryParameters:
+          item_type_id:
+            description: "Item type id"
+            pattern: "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[89abAB][a-fA-F0-9]{3}-[a-fA-F0-9]{12}$"
+            required: true
+          loan_type_id:
+            description: "Loan type id"
+            pattern: "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[89abAB][a-fA-F0-9]{3}-[a-fA-F0-9]{12}$"
+            required: true
+          patron_type_id:
+            description: "Patron type id"
+            pattern: "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[89abAB][a-fA-F0-9]{3}-[a-fA-F0-9]{12}$"
+            required: true
+          location_id:
+            description: "Location id"
+            pattern: "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[89abAB][a-fA-F0-9]{3}-[a-fA-F0-9]{12}$"
+            required: true
+          rules:
+            description: "Circulation rules if provided, otherwise use stored circulation rules"
+            required: false
+        responses:
+          200:
+            body:
+              application/json:
+                type: !include schema/circulation-rule-lost-item-policy-matches.json
+                example: !include examples/circulation-rule-lost-item-policy-matches.json
+          422:
+            description: "Invalid id error."
+            body:
+              application/json:
+                type: error
+                example: !include examples/circulation-rules-id-error.json
+          500:
+            description: "Internal server error"
+            body:
+              text/plain:
+                example: "Internal server error"
     /request-policy:
       displayName: Execute circulation rules and return the request policy that will be applied
       get:
