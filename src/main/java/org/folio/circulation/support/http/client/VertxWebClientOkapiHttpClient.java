@@ -17,7 +17,6 @@ import org.folio.circulation.support.Result;
 import org.folio.circulation.support.ServerErrorFailure;
 
 import io.vertx.core.AsyncResult;
-import io.vertx.core.Handler;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpClient;
 import io.vertx.ext.web.client.HttpRequest;
@@ -56,25 +55,15 @@ public class VertxWebClientOkapiHttpClient {
   public CompletableFuture<Result<Response>> get(String url,
     Integer timeoutInMilliseconds) {
 
-    final CompletableFuture<Result<Response>> futureResponse
+    final CompletableFuture<AsyncResult<HttpResponse<Buffer>>> futureResponse
       = new CompletableFuture<>();
 
-    final HttpRequest<Buffer> request = webClient.getAbs(url);
-
-    withStandardHeaders(request)
+    withStandardHeaders(webClient.getAbs(url))
       .timeout(timeoutInMilliseconds)
-      .send(ar -> {
-        if (ar.succeeded()) {
-          final HttpResponse<Buffer> response = ar.result();
+      .send(futureResponse::complete);
 
-          futureResponse.complete(succeeded(responseFrom(url, response)));
-        }
-        else {
-          futureResponse.complete(failed(new ServerErrorFailure(ar.cause())));
-        }
-      });
-
-    return futureResponse;
+    return futureResponse
+      .thenApply(asyncResult -> mapAsyncResultToResult(url, asyncResult));
   }
 
   public CompletableFuture<Result<Response>> get(URL url) {
@@ -85,19 +74,22 @@ public class VertxWebClientOkapiHttpClient {
     return get(url, DEFAULT_TIMEOUT_IN_MILLISECONDS);
   }
 
-  public CompletableFuture<Result<Response>> delete(URL url) {
-    return delete(url.toString());
+  public CompletableFuture<Result<Response>> delete(String url) {
+    return delete(url, DEFAULT_TIMEOUT_IN_MILLISECONDS);
   }
 
-  public CompletableFuture<Result<Response>> delete(String url) {
-    final CompletableFuture<Result<Response>> futureResponse
+  public CompletableFuture<Result<Response>> delete(String url,
+    int timeoutInMilliseconds) {
+
+    final CompletableFuture<AsyncResult<HttpResponse<Buffer>>> futureResponse
       = new CompletableFuture<>();
 
     withStandardHeaders(webClient.deleteAbs(url))
-      .timeout(DEFAULT_TIMEOUT_IN_MILLISECONDS)
-      .send(handleAsyncResult(url, futureResponse));
+      .timeout(timeoutInMilliseconds)
+      .send(futureResponse::complete);
 
-    return futureResponse;
+    return futureResponse
+      .thenApply(asyncResult -> mapAsyncResultToResult(url, asyncResult));
   }
 
   private HttpRequest<Buffer> withStandardHeaders(HttpRequest<Buffer> request) {
@@ -110,17 +102,7 @@ public class VertxWebClientOkapiHttpClient {
       .putHeader(REQUEST_ID, this.requestId);
   }
 
-  private Handler<AsyncResult<HttpResponse<Buffer>>> handleAsyncResult(
-    String url, CompletableFuture<Result<Response>> futureResponse) {
-
-    return asyncResult -> {
-      final Result<Response> result = mapAsyncResultToResult(url, asyncResult);
-
-      futureResponse.complete(result);
-    };
-  }
-
-  private Result<Response> mapAsyncResultToResult(String url,
+  private static Result<Response> mapAsyncResultToResult(String url,
     AsyncResult<HttpResponse<Buffer>> asyncResult) {
 
     return asyncResult.succeeded()
