@@ -13,8 +13,6 @@ import java.util.concurrent.TimeoutException;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 import org.joda.time.DateTime;
-import org.joda.time.DateTimeUtils;
-import org.junit.Before;
 
 import api.support.APITests;
 import api.support.builders.AccountBuilder;
@@ -31,17 +29,25 @@ abstract class LoanAnonymizationTests extends APITests {
   protected IndividualResource user;
   protected IndividualResource servicePoint;
 
-  @Before
-  public void setup() {
+  @Override
+  public void beforeEach() throws InterruptedException {
+    super.beforeEach();
+
     item1 = itemsFixture.basedUponSmallAngryPlanet();
     user = usersFixture.charlotte();
     servicePoint = servicePointsFixture.cd1();
   }
 
-  void anonymizeLoansInTenant() {
-    anonymizeLoans(circulationAnonymizeLoansInTenantURL());
+  @Override
+  public void afterEach() {
+    super.afterEach();
 
-    DateTimeUtils.setCurrentMillisSystem();
+    mockClockManagerToReturnDefaultDateTime();
+  }
+
+  void anonymizeLoansInTenant() {
+
+    anonymizeLoans(circulationAnonymizeLoansInTenantURL());
   }
 
   void anonymizeLoansForUser(UUID userId) {

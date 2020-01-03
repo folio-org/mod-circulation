@@ -70,20 +70,17 @@ public class ItemsInTransitReportTests extends APITests {
   private DateTime expectedCheckInDateTime;
 
   @Override
-  public void beforeEach()
-    throws MalformedURLException, InterruptedException, ExecutionException, TimeoutException {
-
+  public void beforeEach() throws InterruptedException {
     super.beforeEach();
+
     expectedCheckInDateTime = DateTime.now(DateTimeZone.UTC);
     mockClockManagerToReturnFixedDateTime(expectedCheckInDateTime);
   }
 
   @Override
-  public void afterEach()
-    throws InterruptedException, MalformedURLException, TimeoutException,
-    ExecutionException {
-
+  public void afterEach() {
     super.afterEach();
+
     mockClockManagerToReturnDefaultDateTime();
   }
 
