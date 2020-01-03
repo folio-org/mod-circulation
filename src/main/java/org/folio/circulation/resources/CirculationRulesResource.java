@@ -1,10 +1,10 @@
 package org.folio.circulation.resources;
 
+import static org.apache.commons.lang3.exception.ExceptionUtils.getStackTrace;
 import static org.folio.circulation.support.http.server.ServerErrorResponse.internalError;
 
 import java.lang.invoke.MethodHandles;
 
-import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.folio.circulation.rules.CirculationRulesException;
 import org.folio.circulation.rules.Text2Drools;
 import org.folio.circulation.support.Clients;
@@ -66,21 +66,23 @@ public class CirculationRulesResource extends Resource {
       return;
     }
 
-    circulationRulesClient.get().thenAccept(response -> {
-      try {
-        if (response.getStatusCode() != 200) {
-          ForwardResponse.forward(routingContext.response(), response);
-          return;
-        }
-        JsonObject circulationRules = new JsonObject(response.getBody());
+    circulationRulesClient.getResult()
+      .thenAccept(result -> result
+        .applySideEffect(response -> {
+          try {
+            if (response.getStatusCode() != 200) {
+              ForwardResponse.forward(routingContext.response(), response);
+              return;
+            }
+            JsonObject circulationRules = new JsonObject(response.getBody());
 
-        new OkJsonResponseResult(circulationRules)
-          .writeTo(routingContext.response());
-      }
-      catch (Exception e) {
-        internalError(routingContext.response(), ExceptionUtils.getStackTrace(e));
-      }
-    });
+            new OkJsonResponseResult(circulationRules)
+              .writeTo(routingContext.response());
+          }
+          catch (Exception e) {
+            internalError(routingContext.response(), getStackTrace(e));
+          }
+    }, cause -> cause.writeTo(routingContext.response())));
   }
 
   //Cannot combine exception catching as cannot resolve overloaded method for error
@@ -107,7 +109,7 @@ public class CirculationRulesResource extends Resource {
       circulationRulesError(routingContext.response(), e);
       return;
     } catch (Exception e) {
-      internalError(routingContext.response(), ExceptionUtils.getStackTrace(e));
+      internalError(routingContext.response(), getStackTrace(e));
       return;
     }
     LoanCirculationRulesEngineResource.clearCache(new WebContext(routingContext).getTenantId());
