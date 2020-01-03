@@ -64,21 +64,14 @@ public class CollectionResourceClient {
     return future;
   }
 
-  public CompletableFuture<Response> delete(String id) {
-    return internalDelete(individualRecordUrl(id))
-      //Mimic mapping failures to fake 500 response
-      //see responseConversationHandler
-      .thenApply(r -> r.orElse(new Response(500, "Something went wrong",
-        TEXT_PLAIN.toString())));
+  public CompletableFuture<Result<Response>> delete(String id) {
+    return internalDelete(individualRecordUrl(id));
   }
 
-  public CompletableFuture<Response> delete() {
-    return internalDelete(collectionRoot.toString())
-      //Mimic mapping failures to fake 500 response
-      //see responseConversationHandler
-      .thenApply(r -> r.orElse(new Response(500, "Something went wrong",
-        TEXT_PLAIN.toString())));
+  public CompletableFuture<Result<Response>> delete() {
+    return internalDelete(collectionRoot.toString());
   }
+
 
   public CompletableFuture<Result<Response>> deleteMany(CqlQuery cqlQuery) {
     return cqlQuery.encode().after(encodedQuery -> {
