@@ -1038,6 +1038,7 @@
         "circulation-storage.cancellation-reasons.item.get",
         "inventory-storage.loan-types.item.get",
         "configuration.entries.collection.get",
+        "calendar.opening-hours.collection.get",
         "circulation.internal.apply-rules"
       ],
       "visible": false
