@@ -74,8 +74,9 @@ public class VertxWebClientOkapiHttpClient {
       .thenApply(asyncResult -> mapAsyncResultToResult(url, asyncResult));
   }
 
-  public CompletableFuture<Result<Response>> get(URL url) {
-    return get(url.toString());
+  public CompletableFuture<Result<Response>> get(URL url,
+    QueryParameter... queryParameters) {
+    return get(url.toString(), queryParameters);
   }
 
   public CompletableFuture<Result<Response>> get(String url,
