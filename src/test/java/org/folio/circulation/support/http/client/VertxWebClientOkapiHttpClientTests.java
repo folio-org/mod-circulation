@@ -112,11 +112,6 @@ public class VertxWebClientOkapiHttpClientTests {
     assertThat(response.getContentType(), is("application/json"));
   }
 
-  private String dummyJsonBody() {
-    return new JsonObject().put("message", "hello")
-      .encodePrettily();
-  }
-
   @Test
   public void canDeleteAResource()
     throws InterruptedException, ExecutionException, TimeoutException {
@@ -133,6 +128,27 @@ public class VertxWebClientOkapiHttpClientTests {
 
     assertThat(response, hasStatus(HTTP_NO_CONTENT));
   }
+
+  @Test
+  public void canDeleteAResourceUsingQueryParameters()
+    throws InterruptedException, ExecutionException, TimeoutException {
+
+    fakeWebServer.stubFor(matchingFolioHeaders(delete(urlPathEqualTo("/record")))
+      .withQueryParam("first-parameter", equalTo("foo"))
+      .withQueryParam("second-parameter", equalTo("bar"))
+      .willReturn(noContent()));
+
+    VertxWebClientOkapiHttpClient client = createClient();
+
+    CompletableFuture<Result<Response>> deleteCompleted = client.delete(
+      fakeWebServer.url("/record"), namedParameter("first-parameter", "foo"),
+      namedParameter("second-parameter", "bar"));
+
+    final Response response = deleteCompleted.get(2, SECONDS).value();
+
+    assertThat(response, hasStatus(HTTP_NO_CONTENT));
+  }
+
 
   @Test
   public void failsWhenGetTimesOut()
@@ -172,5 +188,10 @@ public class VertxWebClientOkapiHttpClientTests {
     return createClientUsing(
       vertxAssistant.createUsingVertx(Vertx::createHttpClient), okapiUrl,
       tenantId, token, userId, requestId);
+  }
+
+  private String dummyJsonBody() {
+    return new JsonObject().put("message", "hello")
+      .encodePrettily();
   }
 }

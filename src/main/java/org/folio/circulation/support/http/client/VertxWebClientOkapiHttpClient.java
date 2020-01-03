@@ -61,7 +61,8 @@ public class VertxWebClientOkapiHttpClient {
     final CompletableFuture<AsyncResult<HttpResponse<Buffer>>> futureResponse
       = new CompletableFuture<>();
 
-    final HttpRequest<Buffer> request = withStandardHeaders(webClient.getAbs(url));
+    final HttpRequest<Buffer> request = withStandardHeaders(
+      webClient.getAbs(url));
 
     Stream.of(queryParameters)
       .forEach(parameter -> parameter.writeTo(request));
@@ -85,17 +86,25 @@ public class VertxWebClientOkapiHttpClient {
     return get(url, DEFAULT_TIMEOUT, queryParameters);
   }
 
-  public CompletableFuture<Result<Response>> delete(String url) {
-    return delete(url, DEFAULT_TIMEOUT);
+  public CompletableFuture<Result<Response>> delete(String url,
+    QueryParameter... queryParameters) {
+
+    return delete(url, DEFAULT_TIMEOUT, queryParameters);
   }
 
   public CompletableFuture<Result<Response>> delete(String url,
-    Duration timeout) {
+    Duration timeout, QueryParameter... queryParameters) {
 
     final CompletableFuture<AsyncResult<HttpResponse<Buffer>>> futureResponse
       = new CompletableFuture<>();
 
-    withStandardHeaders(webClient.deleteAbs(url))
+    final HttpRequest<Buffer> request = withStandardHeaders(
+      webClient.deleteAbs(url));
+
+    Stream.of(queryParameters)
+      .forEach(parameter -> parameter.writeTo(request));
+
+    request
       .timeout(timeout.toMillis())
       .send(futureResponse::complete);
 
