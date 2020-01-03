@@ -112,7 +112,7 @@ public class RequestsAPILoanRenewalTests extends APITests {
   }
 
   @Test
-  public void allowRenewalWithHoldsWhenProfileIsRollingUseLoanPeriod() throws Exception {
+  public void allowRenewalWithHoldsWhenProfileIsRollingUseLoanPeriod() {
     final int renewalPeriod = 90;
     final DateTime expectedDueDate = DateTime.now(DateTimeZone.UTC).plusWeeks(renewalPeriod);
     final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
@@ -147,7 +147,7 @@ public class RequestsAPILoanRenewalTests extends APITests {
   }
 
   @Test
-  public void allowRenewalWithHoldsWhenProfileIsRollingUseRenewalPeriod() throws Exception {
+  public void allowRenewalWithHoldsWhenProfileIsRollingUseRenewalPeriod() {
     final int renewalPeriod = 60;
     final DateTime expectedDueDate = DateTime.now(DateTimeZone.UTC).plusWeeks(renewalPeriod);
     final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
@@ -306,8 +306,7 @@ public class RequestsAPILoanRenewalTests extends APITests {
   }
 
   @Test
-  public void allowRenewalWithHoldsWhenProfileIsFixedUseRenewalSchedule()
-    throws InterruptedException, TimeoutException, ExecutionException {
+  public void allowRenewalWithHoldsWhenProfileIsFixedUseRenewalSchedule() {
     final DateTime from = DateTime.now(DateTimeZone.UTC).minusMonths(3);
     final DateTime to = DateTime.now(DateTimeZone.UTC).plusMonths(3);
     final DateTime dueDate = to.plusDays(15);
@@ -350,8 +349,7 @@ public class RequestsAPILoanRenewalTests extends APITests {
    }
 
   @Test
-  public void allowRenewalWithHoldsWhenProfileIsFixedUseLoanSchedule()
-    throws InterruptedException, TimeoutException, ExecutionException {
+  public void allowRenewalWithHoldsWhenProfileIsFixedUseLoanSchedule() {
     final DateTime from = DateTime.now(DateTimeZone.UTC).minusMonths(3);
     final DateTime to = DateTime.now(DateTimeZone.UTC).plusMonths(3);
     final DateTime dueDate = to.plusDays(15);
@@ -461,8 +459,7 @@ public class RequestsAPILoanRenewalTests extends APITests {
   }
 
   @Test
-  public void multipleRenewalFailuresWhenItemHasOpenRecallRequestAndLoanIsNotRenewable()
-    throws InterruptedException, TimeoutException, ExecutionException {
+  public void multipleRenewalFailuresWhenItemHasOpenRecallRequestAndLoanIsNotRenewable() {
 
     final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource rebecca = usersFixture.rebecca();
@@ -490,8 +487,7 @@ public class RequestsAPILoanRenewalTests extends APITests {
   }
 
   @Test
-  public void multipleRenewalFailuresWhenItemHasOpenRecallRequestAndLoanIsNotLoanable()
-    throws InterruptedException, TimeoutException, ExecutionException {
+  public void multipleRenewalFailuresWhenItemHasOpenRecallRequestAndLoanIsNotLoanable() {
 
     final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource rebecca = usersFixture.rebecca();
@@ -519,8 +515,7 @@ public class RequestsAPILoanRenewalTests extends APITests {
   }
 
   @Test
-  public void validationErrorWhenRenewalPeriodForHoldsSpecifiedForFixedPolicy()
-    throws InterruptedException, TimeoutException, ExecutionException {
+  public void validationErrorWhenRenewalPeriodForHoldsSpecifiedForFixedPolicy() {
     final DateTime from = DateTime.now(DateTimeZone.UTC).minusMonths(3);
     final DateTime to = DateTime.now(DateTimeZone.UTC).plusMonths(3);
     final DateTime dueDate = to.plusDays(15);
@@ -566,8 +561,7 @@ public class RequestsAPILoanRenewalTests extends APITests {
   }
 
   @Test
-  public void validationErrorWhenRenewalPeriodSpecifiedForFixedPolicy()
-    throws InterruptedException, TimeoutException, ExecutionException {
+  public void validationErrorWhenRenewalPeriodSpecifiedForFixedPolicy() {
     final DateTime from = DateTime.now(DateTimeZone.UTC).minusMonths(3);
     final DateTime to = DateTime.now(DateTimeZone.UTC).plusMonths(3);
     final DateTime dueDate = to.plusDays(15);
@@ -610,8 +604,7 @@ public class RequestsAPILoanRenewalTests extends APITests {
     );
   }
 
-  private void loanPolicyWithRollingProfileAndRenewingIsForbiddenWhenHoldIsPending()
-    throws InterruptedException, ExecutionException, TimeoutException {
+  private void loanPolicyWithRollingProfileAndRenewingIsForbiddenWhenHoldIsPending() {
 
     LoanPolicyBuilder dueDateLimitedPolicy = new LoanPolicyBuilder()
       .withName("Rolling. Renewing is forbidden with holds requests")
@@ -623,8 +616,7 @@ public class RequestsAPILoanRenewalTests extends APITests {
     useWithActiveNotice(dueDateLimitedPolicy);
   }
 
-  private void loanPolicyWithFixedProfileAndRenewingIsForbiddenWhenHoldIsPending()
-    throws InterruptedException, TimeoutException, ExecutionException {
+  private void loanPolicyWithFixedProfileAndRenewingIsForbiddenWhenHoldIsPending() {
     LocalDate now = LocalDate.now();
     FixedDueDateSchedulesBuilder fixedDueDateSchedules = new FixedDueDateSchedulesBuilder()
       .withName("1 month - Fixed Due Date Schedule")
@@ -638,8 +630,7 @@ public class RequestsAPILoanRenewalTests extends APITests {
     useWithActiveNotice(dueDateLimitedPolicy);
   }
 
-  private void useRollingPolicyWithRenewingAllowedForHoldingRequest()
-    throws InterruptedException, TimeoutException, ExecutionException {
+  private void useRollingPolicyWithRenewingAllowedForHoldingRequest() {
     JsonObject holds = new JsonObject();
     holds.put("alternateRenewalLoanPeriod", Period
       .weeks(DEFAULT_HOLD_RENEWAL_PERIOD).asJson());

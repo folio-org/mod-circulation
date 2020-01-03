@@ -63,10 +63,7 @@ public class RequestScheduledNoticesTests extends APITests {
   }
 
   @Test
-  public void requestExpirationUponAtNoticeShouldBeScheduledWhenCreatedRequestIsSetToExpire()
-    throws InterruptedException,
-    TimeoutException,
-    ExecutionException {
+  public void requestExpirationUponAtNoticeShouldBeScheduledWhenCreatedRequestIsSetToExpire() {
 
     JsonObject requestNotice = new NoticeConfigurationBuilder()
       .withTemplateId(templateId)
@@ -111,10 +108,7 @@ public class RequestScheduledNoticesTests extends APITests {
   }
 
   @Test
-  public void requestExpirationUponAtNoticeShouldNotBeScheduledWhenCreatedRequestIsNotSetToExpire()
-    throws InterruptedException,
-    TimeoutException,
-    ExecutionException {
+  public void requestExpirationUponAtNoticeShouldNotBeScheduledWhenCreatedRequestIsNotSetToExpire() {
 
     JsonObject requestNotice = new NoticeConfigurationBuilder()
       .withTemplateId(templateId)
@@ -143,9 +137,7 @@ public class RequestScheduledNoticesTests extends APITests {
 
   @Test
   public void requestExpirationNoticeShouldNotBeScheduledWhenCreatedRequestDoesNotExpire()
-    throws InterruptedException,
-    TimeoutException,
-    ExecutionException {
+    throws InterruptedException {
 
     JsonObject requestNotice = new NoticeConfigurationBuilder()
       .withTemplateId(templateId)
@@ -175,10 +167,7 @@ public class RequestScheduledNoticesTests extends APITests {
   }
 
   @Test
-  public void requestExpirationBeforeNoticeShouldBeScheduledWhenCreatedRequestIsSetToExpire()
-    throws InterruptedException,
-    TimeoutException,
-    ExecutionException {
+  public void requestExpirationBeforeNoticeShouldBeScheduledWhenCreatedRequestIsSetToExpire() {
 
     JsonObject requestNotice = new NoticeConfigurationBuilder()
       .withTemplateId(templateId)
@@ -223,10 +212,7 @@ public class RequestScheduledNoticesTests extends APITests {
   }
 
   @Test
-  public void requestExpirationUponAtNoticeShouldBeRescheduledWhenUpdatedRequestIsSetToExpire()
-    throws InterruptedException,
-    TimeoutException,
-    ExecutionException {
+  public void requestExpirationUponAtNoticeShouldBeRescheduledWhenUpdatedRequestIsSetToExpire() {
 
     JsonObject requestNotice = new NoticeConfigurationBuilder()
       .withTemplateId(templateId)
@@ -293,10 +279,7 @@ public class RequestScheduledNoticesTests extends APITests {
   }
 
   @Test
-  public void recurringRequestExpirationNoticeShouldBeDeletedWhenExpirationDateIsRemovedDuringUpdate()
-    throws InterruptedException,
-    TimeoutException,
-    ExecutionException {
+  public void recurringRequestExpirationNoticeShouldBeDeletedWhenExpirationDateIsRemovedDuringUpdate() {
 
     JsonObject requestNotice = new NoticeConfigurationBuilder()
       .withTemplateId(templateId)
@@ -349,10 +332,7 @@ public class RequestScheduledNoticesTests extends APITests {
   }
 
   @Test
-  public void holdShelfExpirationNoticeShouldBeScheduledOnCheckIn()
-    throws InterruptedException,
-    TimeoutException,
-    ExecutionException {
+  public void holdShelfExpirationNoticeShouldBeScheduledOnCheckIn() {
 
     JsonObject requestNotice = new NoticeConfigurationBuilder()
       .withTemplateId(templateId)
@@ -409,11 +389,7 @@ public class RequestScheduledNoticesTests extends APITests {
   }
 
   @Test
-  public void requestExpirationAndHoldShelfExpirationNoticesAreCreatedWhenPickupReminderIsFirstInPolicy()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void requestExpirationAndHoldShelfExpirationNoticesAreCreatedWhenPickupReminderIsFirstInPolicy() {
 
     JsonObject pickupReminder = new NoticeConfigurationBuilder()
       .withTemplateId(templateId)

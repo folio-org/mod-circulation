@@ -23,10 +23,7 @@ import io.vertx.core.json.JsonObject;
 public class ItemLastCheckInTests extends APITests {
 
   @Override
-  public void afterEach()
-    throws InterruptedException, MalformedURLException, TimeoutException,
-    ExecutionException {
-
+  public void afterEach() {
     super.afterEach();
     APITestContext.defaultUserId();
   }
