@@ -14,6 +14,7 @@ import java.util.stream.Stream;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.folio.circulation.support.http.client.CqlQuery;
 import org.folio.circulation.support.http.client.OkapiHttpClient;
 import org.folio.circulation.support.http.client.Response;
 import org.slf4j.Logger;
@@ -99,7 +100,7 @@ public class CollectionResourceClient {
   public CompletableFuture<Result<Response>> get(String id) {
     return client.toWebClient().get(individualRecordUrl(id));
   }
-  
+
   /**
    * Make a get request for multiple records using raw query string parameters
    * Should only be used when passing on entire query string from a client request

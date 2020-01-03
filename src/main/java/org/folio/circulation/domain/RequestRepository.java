@@ -16,7 +16,7 @@ import java.util.concurrent.CompletableFuture;
 import org.folio.circulation.storage.RequestBatch;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
-import org.folio.circulation.support.CqlQuery;
+import org.folio.circulation.support.http.client.CqlQuery;
 import org.folio.circulation.support.FetchSingleRecord;
 import org.folio.circulation.support.ItemRepository;
 import org.folio.circulation.support.RecordNotFoundFailure;

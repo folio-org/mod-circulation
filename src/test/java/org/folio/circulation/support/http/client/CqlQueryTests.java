@@ -1,16 +1,20 @@
-package org.folio.circulation.support;
+package org.folio.circulation.support.http.client;
 
-import static org.folio.circulation.support.CqlQuery.exactMatch;
-import static org.folio.circulation.support.CqlQuery.exactMatchAny;
-import static org.folio.circulation.support.CqlQuery.greaterThan;
-import static org.folio.circulation.support.CqlQuery.lessThan;
 import static org.folio.circulation.support.CqlSortBy.ascending;
+import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
+import static org.folio.circulation.support.http.client.CqlQuery.exactMatchAny;
+import static org.folio.circulation.support.http.client.CqlQuery.greaterThan;
+import static org.folio.circulation.support.http.client.CqlQuery.lessThan;
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 
 import java.util.ArrayList;
 
+import org.folio.circulation.support.CqlSortBy;
+import org.folio.circulation.support.CqlSortClause;
+import org.folio.circulation.support.Result;
+import org.folio.circulation.support.ServerErrorFailure;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.junit.Test;

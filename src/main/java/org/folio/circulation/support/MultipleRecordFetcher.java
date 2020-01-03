@@ -3,7 +3,7 @@ package org.folio.circulation.support;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.apache.commons.collections4.ListUtils.partition;
 import static org.folio.circulation.domain.MultipleRecords.empty;
-import static org.folio.circulation.support.CqlQuery.exactMatchAny;
+import static org.folio.circulation.support.http.client.CqlQuery.exactMatchAny;
 import static org.folio.circulation.support.Result.of;
 
 import java.util.ArrayList;
@@ -14,6 +14,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.folio.circulation.domain.MultipleRecords;
+import org.folio.circulation.support.http.client.CqlQuery;
 import org.folio.circulation.support.http.client.Response;
 
 import io.vertx.core.json.JsonObject;
