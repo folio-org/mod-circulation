@@ -16,8 +16,6 @@ import static api.support.matchers.UUIDMatcher.is;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static api.support.matchers.ValidationErrorMatchers.hasMessageContaining;
-import static java.net.HttpURLConnection.HTTP_OK;
-import static org.folio.circulation.domain.representations.ItemProperties.CALL_NUMBER_COMPONENTS;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
@@ -29,18 +27,9 @@ import static org.junit.Assert.assertTrue;
 
 import static org.folio.circulation.domain.representations.ItemProperties.CALL_NUMBER_COMPONENTS;
 
-import java.net.MalformedURLException;
 import java.util.List;
 import java.util.UUID;
 
-import org.folio.circulation.domain.policy.Period;
-import org.folio.circulation.support.http.client.IndividualResource;
-import org.folio.circulation.support.http.client.Response;
-import org.joda.time.DateTime;
-import org.joda.time.Seconds;
-import org.junit.Test;
-
-import api.support.APITestContext;
 import api.support.APITests;
 import api.support.builders.CheckOutByBarcodeRequestBuilder;
 import api.support.builders.FixedDueDateSchedule;
@@ -53,14 +42,12 @@ import api.support.http.InventoryItemResource;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
 import org.joda.time.Seconds;
 import org.junit.Test;
 
 import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
-import org.folio.circulation.support.http.client.ResponseHandler;
 
 public class CheckOutByBarcodeTests extends APITests {
   @Test
@@ -911,11 +898,7 @@ public class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void canCheckOutWhenItemLimitIsIgnoredForRulesWithoutMaterialTypeOrLoanType()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void canCheckOutWhenItemLimitIsIgnoredForRulesWithoutMaterialTypeOrLoanType() {
 
     useFallbackPolicies(
       prepareLoanPolicyWithItemLimit(1).getId(),
@@ -933,11 +916,7 @@ public class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void canCheckOutVideoMaterialWhenItemLimitIsReachedForBookMaterialType()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void canCheckOutVideoMaterialWhenItemLimitIsReachedForBookMaterialType() {
 
     final UUID book = materialTypesFixture.book().getId();
 
@@ -964,11 +943,7 @@ public class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void canCheckOutWhenItemLimitIsReachedForReadingRoomLoanType()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void canCheckOutWhenItemLimitIsReachedForReadingRoomLoanType() {
 
     final UUID readingRoom = loanTypesFixture.readingRoom().getId();
 
@@ -995,11 +970,7 @@ public class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void canCheckOutWhenItemLimitIsReachedForBookMaterialTypeAndReadingRoomLoanType()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void canCheckOutWhenItemLimitIsReachedForBookMaterialTypeAndReadingRoomLoanType() {
 
     final UUID readingRoom = loanTypesFixture.readingRoom().getId();
     final UUID book = materialTypesFixture.book().getId();
@@ -1027,11 +998,7 @@ public class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void canCheckOutWhenItemLimitIsReachedForBookMaterialTypeAndReadingRoomLoanTypeAndPatronGroup()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void canCheckOutWhenItemLimitIsReachedForBookMaterialTypeAndReadingRoomLoanTypeAndPatronGroup() {
 
     final UUID readingRoom = loanTypesFixture.readingRoom().getId();
     final UUID book = materialTypesFixture.book().getId();
@@ -1062,11 +1029,7 @@ public class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void canCheckOutWhenItemLimitIsReachedForBookMaterialTypeAndCanCirculateLoanTypeInMultipleLinesRules()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void canCheckOutWhenItemLimitIsReachedForBookMaterialTypeAndCanCirculateLoanTypeInMultipleLinesRules() {
 
     final String loanPolicyWithItemLimitId = prepareLoanPolicyWithItemLimit(1).getId().toString();
     final String anyRequestPolicy = requestPoliciesFixture.allowAllRequestPolicy().getId().toString();
@@ -1103,11 +1066,7 @@ public class CheckOutByBarcodeTests extends APITests {
     assertThat(bookTypeItemReadingRoomLoanType, hasItemStatus(CHECKED_OUT));
   }
 
-  private IndividualResource prepareLoanPolicyWithItemLimit(int itemLimit)
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  private IndividualResource prepareLoanPolicyWithItemLimit(int itemLimit) {
 
     return loanPoliciesFixture.create(
       new LoanPolicyBuilder()
@@ -1117,11 +1076,7 @@ public class CheckOutByBarcodeTests extends APITests {
         .renewFromCurrentDueDate());
   }
 
-  private IndividualResource prepareLoanPolicyWithoutItemLimit()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  private IndividualResource prepareLoanPolicyWithoutItemLimit() {
 
     return loanPoliciesFixture.create(
       new LoanPolicyBuilder()
@@ -1130,11 +1085,7 @@ public class CheckOutByBarcodeTests extends APITests {
         .renewFromCurrentDueDate());
   }
 
-  private String createRules(String ruleCondition)
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  private String createRules(String ruleCondition) {
 
     final String loanPolicyWithItemLimitId = prepareLoanPolicyWithItemLimit(1).getId().toString();
     final String loanPolicyWithoutItemLimitId = prepareLoanPolicyWithoutItemLimit().getId().toString();
