@@ -1037,7 +1037,8 @@
         "patron-notice.post",
         "circulation-storage.cancellation-reasons.item.get",
         "inventory-storage.loan-types.item.get",
-        "configuration.entries.collection.get"
+        "configuration.entries.collection.get",
+        "circulation.internal.apply-rules"
       ],
       "visible": false
     },
@@ -1832,7 +1833,26 @@
         "circulation-storage.requests.collection.get"
       ],
       "visible": false
+    },
+    {
+      "permissionName": "circulation.internal.apply-rules",
+      "displayName" : "Apply circulation rules",
+      "description" : "Internal permission set for applying circulation rules",
+      "subPermissions": [
+        "circulation.rules.loan-policy.get",
+        "circulation-storage.loan-policies.collection.get",
+        "circulation-storage.loan-policies.item.get",
+        "circulation.rules.request-policy.get",
+        "circulation-storage.request-policies.item.get",
+        "circulation-storage.request-policies.collection.get",
+        "circulation.rules.notice-policy.get",
+        "circulation-storage.patron-notice-policies.item.get",
+        "circulation-storage.patron-notice-policies.collection.get"
+      ],
+      "visible": false
     }
+
+
   ],
   "launchDescriptor": {
     "dockerImage": "${artifactId}:${version}",
