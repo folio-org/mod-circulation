@@ -38,6 +38,7 @@ import org.folio.circulation.support.MultipleRecordFetcher;
 import org.folio.circulation.support.RecordNotFoundFailure;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.SingleRecordFetcher;
+import org.folio.circulation.support.http.client.Limit;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.client.ResponseInterpreter;
 import org.folio.circulation.support.results.CommonFailures;
@@ -172,7 +173,7 @@ public class LoanRepository {
       int fetchLoansLimit, Result<CqlQuery> statusQuery) {
 
     return statusQuery
-        .after(q -> loansStorageClient.getMany(q, fetchLoansLimit))
+        .after(q -> loansStorageClient.getMany(q, Limit.limit(fetchLoansLimit)))
         .thenApply(result -> result.next(this::mapResponseToLoans));
   }
 

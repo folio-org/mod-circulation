@@ -9,6 +9,7 @@ import static org.folio.circulation.support.ResultBinding.flatMapResult;
 import static org.folio.circulation.support.ResultBinding.mapResult;
 import static org.folio.circulation.support.http.ResponseMapping.forwardOnFailure;
 import static org.folio.circulation.support.http.ResponseMapping.mapUsingJson;
+import static org.folio.circulation.support.http.client.Limit.limit;
 
 import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
@@ -85,7 +86,7 @@ public class RequestRepository {
 
   public CompletableFuture<Result<MultipleRecords<Request>>> findBy(
     Result<CqlQuery> queryResult, Integer pageLimit) {
-    return requestsStorageClient.getMany(queryResult.value(), pageLimit)
+    return requestsStorageClient.getMany(queryResult.value(), limit(pageLimit))
       .thenApply(result -> result.next(this::mapResponseToRequests))
       .thenComposeAsync(requests ->
         itemRepository.fetchItemsFor(requests, Request::withItem))
@@ -98,7 +99,7 @@ public class RequestRepository {
   CompletableFuture<Result<MultipleRecords<Request>>> findBy(
     CqlQuery query, Integer pageLimit) {
 
-    return requestsStorageClient.getMany(query, pageLimit)
+    return requestsStorageClient.getMany(query, limit(pageLimit))
       .thenApply(result -> result.next(this::mapResponseToRequests))
       .thenComposeAsync(requests ->
         itemRepository.fetchItemsFor(requests, Request::withItem));
@@ -107,7 +108,7 @@ public class RequestRepository {
   CompletableFuture<Result<MultipleRecords<Request>>> findByWithoutItems(
     CqlQuery query, Integer pageLimit) {
 
-    return requestsStorageClient.getMany(query, pageLimit)
+    return requestsStorageClient.getMany(query, limit(pageLimit))
       .thenApply(result -> result.next(this::mapResponseToRequests));
   }
 

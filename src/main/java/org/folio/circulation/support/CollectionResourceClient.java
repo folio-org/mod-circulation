@@ -2,6 +2,7 @@ package org.folio.circulation.support;
 
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static org.apache.http.entity.ContentType.TEXT_PLAIN;
+import static org.folio.circulation.support.http.client.Offset.noOffset;
 
 import java.lang.invoke.MethodHandles;
 import java.net.URL;
@@ -15,6 +16,8 @@ import java.util.stream.Stream;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.folio.circulation.support.http.client.CqlQuery;
+import org.folio.circulation.support.http.client.Limit;
+import org.folio.circulation.support.http.client.Offset;
 import org.folio.circulation.support.http.client.OkapiHttpClient;
 import org.folio.circulation.support.http.client.Response;
 import org.slf4j.Logger;
@@ -72,7 +75,6 @@ public class CollectionResourceClient {
     return internalDelete(collectionRoot.toString());
   }
 
-
   public CompletableFuture<Result<Response>> deleteMany(CqlQuery cqlQuery) {
     return cqlQuery.encode().after(encodedQuery -> {
       String url = getPagedCollectionUrl(encodedQuery, null, 0);
@@ -112,18 +114,16 @@ public class CollectionResourceClient {
     return client.toWebClient().get(url);
   }
 
-  public CompletableFuture<Result<Response>> getMany(
-    CqlQuery cqlQuery, Integer pageLimit) {
+  public CompletableFuture<Result<Response>> getMany(CqlQuery cqlQuery,
+    Limit limit) {
 
-    return getMany(cqlQuery, pageLimit, 0);
+    return getMany(cqlQuery, limit, noOffset());
   }
 
-  public CompletableFuture<Result<Response>> getMany(
-    CqlQuery cqlQuery, Integer pageLimit, Integer pageOffset) {
+  public CompletableFuture<Result<Response>> getMany(CqlQuery cqlQuery,
+    Limit limit, Offset offset) {
 
-    return cqlQuery.encode()
-      .map(encodedQuery -> getPagedCollectionUrl(encodedQuery, pageLimit, pageOffset))
-      .after(url -> client.toWebClient().get(url));
+    return client.toWebClient().get(collectionRoot, cqlQuery, limit, offset);
   }
 
   private String getPagedCollectionUrl(String encodedQuery, Integer pageLimit,

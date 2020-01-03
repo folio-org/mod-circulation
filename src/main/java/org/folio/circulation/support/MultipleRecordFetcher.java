@@ -3,8 +3,10 @@ package org.folio.circulation.support;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.apache.commons.collections4.ListUtils.partition;
 import static org.folio.circulation.domain.MultipleRecords.empty;
-import static org.folio.circulation.support.http.client.CqlQuery.exactMatchAny;
 import static org.folio.circulation.support.Result.of;
+import static org.folio.circulation.support.http.client.CqlQuery.exactMatchAny;
+import static org.folio.circulation.support.http.client.Limit.maximumLimit;
+import static org.folio.circulation.support.http.client.Limit.noLimit;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -15,6 +17,7 @@ import java.util.stream.Collectors;
 
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.support.http.client.CqlQuery;
+import org.folio.circulation.support.http.client.Limit;
 import org.folio.circulation.support.http.client.Response;
 
 import io.vertx.core.json.JsonObject;
@@ -53,7 +56,8 @@ public class MultipleRecordFetcher<T> {
     if (ids.isEmpty()) {
       return completedFuture(of(MultipleRecords::empty));
     }
-    return findByBatchQueriesAndQuery(buildBatchQueriesByIndexName(ids, indexName), andQuery);
+    return findByBatchQueriesAndQuery(buildBatchQueriesByIndexName(ids, indexName),
+      andQuery);
   }
 
   private CompletableFuture<Result<MultipleRecords<T>>> findByBatchQueriesAndQuery(
@@ -76,7 +80,7 @@ public class MultipleRecordFetcher<T> {
       List<Result<CqlQuery>> queries) {
     // NOTE: query limit is max value to ensure all records are returned
     List<CompletableFuture<Result<MultipleRecords<T>>>> results = queries.stream()
-        .map(query -> findByQuery(query, Integer.MAX_VALUE))
+        .map(query -> findByQuery(query, maximumLimit()))
         .collect(Collectors.toList());
 
     return CompletableFuture.allOf(results.toArray(new CompletableFuture[0]))
@@ -87,11 +91,11 @@ public class MultipleRecordFetcher<T> {
 
   public CompletableFuture<Result<MultipleRecords<T>>> findByQuery(
     Result<CqlQuery> queryResult) {
-    return findByQuery(queryResult, null);
+    return findByQuery(queryResult, noLimit());
   }
 
   private CompletableFuture<Result<MultipleRecords<T>>> findByQuery(
-    Result<CqlQuery> queryResult, Integer limit) {
+    Result<CqlQuery> queryResult, Limit limit) {
     return queryResult.after(query -> client.getMany(query, limit))
       .thenApply(result -> result.next(this::mapToRecords));
   }

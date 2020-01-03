@@ -3,6 +3,7 @@ package org.folio.circulation.domain.validation;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
 import static org.folio.circulation.support.Result.succeeded;
+import static org.folio.circulation.support.http.client.Limit.limit;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
@@ -45,7 +46,7 @@ public class ProxyRelationshipValidator {
     UserRelatedRecord record) {
 
     return proxyRelationshipQuery(record.getProxyUserId(), record.getUserId())
-      .after(query -> proxyRelationshipsClient.getMany(query, 1000)
+      .after(query -> proxyRelationshipsClient.getMany(query, limit(1000))
       .thenApply(result -> result.next(
         response -> MultipleRecords.from(response, ProxyRelationship::new, "proxiesFor"))
       .map(MultipleRecords::getRecords)

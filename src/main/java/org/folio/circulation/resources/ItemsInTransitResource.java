@@ -3,11 +3,11 @@ package org.folio.circulation.resources;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.domain.ItemStatus.IN_TRANSIT;
 import static org.folio.circulation.support.AsyncCoordinationUtil.allOf;
-import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
-import static org.folio.circulation.support.http.client.CqlQuery.exactMatchAny;
 import static org.folio.circulation.support.CqlSortBy.ascending;
 import static org.folio.circulation.support.Result.of;
 import static org.folio.circulation.support.Result.succeeded;
+import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
+import static org.folio.circulation.support.http.client.CqlQuery.exactMatchAny;
 
 import java.util.Comparator;
 import java.util.List;
@@ -18,11 +18,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
-import io.vertx.core.http.HttpClient;
-import io.vertx.core.json.JsonArray;
-import io.vertx.core.json.JsonObject;
-import io.vertx.ext.web.Router;
-import io.vertx.ext.web.RoutingContext;
 import org.folio.circulation.domain.InTransitReportEntry;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.ItemsReportFetcher;
@@ -38,14 +33,21 @@ import org.folio.circulation.domain.UserRepository;
 import org.folio.circulation.domain.representations.ItemReportRepresentation;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
-import org.folio.circulation.support.http.client.CqlQuery;
 import org.folio.circulation.support.ItemRepository;
 import org.folio.circulation.support.MultipleRecordFetcher;
 import org.folio.circulation.support.OkJsonResponseResult;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.RouteRegistration;
+import org.folio.circulation.support.http.client.CqlQuery;
+import org.folio.circulation.support.http.client.Limit;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.server.WebContext;
+
+import io.vertx.core.http.HttpClient;
+import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
+import io.vertx.ext.web.Router;
+import io.vertx.ext.web.RoutingContext;
 
 
 public class ItemsInTransitResource extends Resource {
@@ -165,19 +167,24 @@ public class ItemsInTransitResource extends Resource {
       return completedFuture(succeeded(inTransitReportEntries));
     }
 
-    final Result<CqlQuery> statusQuery = exactMatch("itemStatus", IN_TRANSIT.getValue());
-    final Result<CqlQuery> itemIdQuery = exactMatchAny(ITEM_ID, itemsToFetchLoansFor);
+    final Result<CqlQuery> statusQuery = exactMatch("itemStatus",
+      IN_TRANSIT.getValue());
+    final Result<CqlQuery> itemIdQuery = exactMatchAny(ITEM_ID,
+      itemsToFetchLoansFor);
 
     CompletableFuture<Result<MultipleRecords<Loan>>> multipleRecordsLoans =
       statusQuery.combine(
         itemIdQuery, CqlQuery::and)
-        .after(q -> loansStorageClient.getMany(q, inTransitReportEntries.size()))
+        .after(q -> loansStorageClient.getMany(q,
+          Limit.limit(inTransitReportEntries.size())))
         .thenApply(result -> result.next(this::mapResponseToLoans));
 
     return multipleRecordsLoans.thenCompose(multiLoanRecordsResult ->
-      multiLoanRecordsResult.after(servicePointRepository::findServicePointsForLoans))
+      multiLoanRecordsResult.after(
+        servicePointRepository::findServicePointsForLoans))
       .thenApply(multipleLoansResult -> multipleLoansResult.next(
-        loans -> matchLoansToInTransitReportEntry(inTransitReportEntries, loans, sortByCheckinServicePointComparator)));
+        loans -> matchLoansToInTransitReportEntry(inTransitReportEntries, loans,
+          sortByCheckinServicePointComparator)));
   }
 
   private Result<List<InTransitReportEntry>> matchLoansToInTransitReportEntry(

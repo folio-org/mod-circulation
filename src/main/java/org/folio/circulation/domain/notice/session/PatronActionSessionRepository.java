@@ -10,6 +10,7 @@ import static org.folio.circulation.support.ResultBinding.mapResult;
 import static org.folio.circulation.support.http.ResponseMapping.flatMapUsingJson;
 import static org.folio.circulation.support.http.ResponseMapping.forwardOnFailure;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
+import static org.folio.circulation.support.http.client.Limit.limit;
 import static org.folio.circulation.support.results.CommonFailures.failedDueToServerError;
 
 import java.util.List;
@@ -140,8 +141,10 @@ public class PatronActionSessionRepository {
       sessionRecord.withLoan(sessionRecord.getLoan().withUser(user)));
   }
 
-  private CompletableFuture<Result<MultipleRecords<PatronSessionRecord>>> findBy(CqlQuery query, int limit) {
-    return patronActionSessionsStorageClient.getMany(query, limit)
+  private CompletableFuture<Result<MultipleRecords<PatronSessionRecord>>> findBy(
+    CqlQuery query, int limit) {
+
+    return patronActionSessionsStorageClient.getMany(query, limit(limit))
       .thenApply(r -> r.next(response ->
         MultipleRecords.from(response, identity(), "patronActionSessions")))
       .thenApply(r -> r.next(records -> records.flatMapRecords(this::mapFromJson)))

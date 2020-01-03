@@ -7,6 +7,7 @@ import static org.folio.circulation.domain.RequestStatus.OPEN_AWAITING_PICKUP;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatchAny;
 import static org.folio.circulation.support.CqlSortBy.descending;
+import static org.folio.circulation.support.http.client.Limit.limit;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -223,15 +224,17 @@ public class RequestHoldShelfClearanceResource extends Resource {
       .collect(Collectors.toList());
   }
 
-  private CompletableFuture<Result<MultipleRecords<Request>>> findRequestsByCqlQuery(CollectionResourceClient client,
-                                                                                     Result<CqlQuery> cqlQueryResult, int limit) {
+  private CompletableFuture<Result<MultipleRecords<Request>>> findRequestsByCqlQuery(
+    CollectionResourceClient client, Result<CqlQuery> cqlQueryResult, int limit) {
+
     return cqlQueryResult
-      .after(query -> client.getMany(query, limit))
+      .after(query -> client.getMany(query, limit(limit)))
       .thenApply(result -> result.next(this::mapResponseToRequest));
   }
 
   private Result<List<Result<Request>>> fetchItemToRequest(Result<List<Request>> requests,
-                                                           ItemRepository itemRepository) {
+    ItemRepository itemRepository) {
+
     return requests.map(r -> r.stream()
       .map(request -> fetchItem(itemRepository, request))
       .map(CompletableFuture::join)
