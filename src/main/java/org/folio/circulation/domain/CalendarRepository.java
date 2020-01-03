@@ -4,7 +4,10 @@ import static org.folio.circulation.domain.OpeningDay.createClosedDay;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import org.folio.circulation.AdjacentOpeningDays;
 import org.folio.circulation.support.Clients;
@@ -19,10 +22,11 @@ import io.vertx.core.json.JsonObject;
 
 public class CalendarRepository {
 
-  private static final String RECORD_NAME = "openingPeriods";
+  private static final String OPENING_PERIODS = "openingPeriods";
   private static final String OPENING_DAY = "openingDay";
   private static final String OPENING_DAYS = "openingDays";
   private static final String PATH_PARAM_WITH_QUERY = "%s/calculateopening?requestedDate=%s";
+  private static final String PERIODS_QUERY_PARAMS = "?servicePointId=%s&startDate=%s&endDate=%s";
 
   private final CollectionResourceClient calendarClient;
 
@@ -35,12 +39,35 @@ public class CalendarRepository {
     String path = String.format(PATH_PARAM_WITH_QUERY, servicePointId, requestedDate);
 
     //TODO: Validation error should have parameters
-    return FetchSingleRecord.<AdjacentOpeningDays>forRecord(RECORD_NAME)
+    return FetchSingleRecord.<AdjacentOpeningDays>forRecord(OPENING_PERIODS)
       .using(calendarClient)
       .mapTo(this::createOpeningDays)
       .whenNotFound(failedValidation(
         new ValidationError("Calendar open periods are not found", Collections.emptyMap())))
       .fetch(path);
+  }
+
+  public CompletableFuture<Result<List<OpeningDay>>> fetchOpeningPeriods(
+      LocalDate startDate, LocalDate endDate, String servicePointId) {
+
+    String path = String.format(PERIODS_QUERY_PARAMS, servicePointId, startDate, endDate);
+    return FetchSingleRecord.<List<OpeningDay>>forRecord(OPENING_PERIODS)
+      .using(calendarClient)
+      .mapTo(this::createOpeningDaysForPeriod)
+      .whenNotFound(failedValidation(
+        new ValidationError("Calendar open periods are not found", Collections.emptyMap())))
+      .fetch(path);
+  }
+
+  private List<OpeningDay> createOpeningDaysForPeriod(JsonObject jsonObject) {
+    if (jsonObject.isEmpty()) {
+      return Collections.emptyList();
+    }
+    JsonArray openingDaysJson = jsonObject.getJsonArray(OPENING_PERIODS);
+    return IntStream.range(0, openingDaysJson.size())
+      .mapToObj(openingDaysJson::getJsonObject)
+      .map(day -> new OpeningDay(day, OPENING_DAY))
+      .collect(Collectors.toList());
   }
 
   private AdjacentOpeningDays createOpeningDays(JsonObject jsonObject) {
@@ -62,4 +89,5 @@ public class CalendarRepository {
     OpeningDay closedDay = createClosedDay();
     return new AdjacentOpeningDays(closedDay, closedDay, closedDay);
   }
+
 }
