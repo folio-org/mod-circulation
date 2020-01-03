@@ -84,9 +84,10 @@ abstract class LoanAnonymizationTests extends APITests {
     feeFineActionsClient.create(builder);
   }
 
-  void createClosedAccountWithFeeFines(IndividualResource loanResource, DateTime closedDate) {
+  void createClosedAccountWithFeeFines(IndividualResource loanResource,
+    DateTime closedDate) {
+
     IndividualResource account = accountsClient.create(new AccountBuilder()
-      .feeFineStatusOpen()
       .withLoan(loanResource)
       .feeFineStatusClosed()
       .withRemainingFeeFine(0));

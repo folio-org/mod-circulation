@@ -27,7 +27,6 @@ import junitparams.Parameters;
 
 @RunWith(JUnitParamsRunner.class)
 public class RequestQueueResourceTest extends APITests {
-
   private IndividualResource item;
   private IndividualResource jessica;
   private IndividualResource steve;
@@ -47,13 +46,12 @@ public class RequestQueueResourceTest extends APITests {
   }
 
   @Test
-  public void validationErrorOnItemDoNotExists() throws Exception {
+  public void validationErrorOnItemDoNotExists() {
     Response response = requestQueueFixture.attemptReorderQueue(
       UUID.randomUUID().toString(),
       new ReorderQueueBuilder()
         .addReorderRequest(UUID.randomUUID().toString(), 1)
-        .create()
-    );
+        .create());
 
     assertThat(response.getStatusCode(), is(404));
     assertTrue(response.getBody()
@@ -61,7 +59,7 @@ public class RequestQueueResourceTest extends APITests {
   }
 
   @Test
-  public void refuseAttemptToMovePageRequestFromFirstPosition() throws Exception {
+  public void refuseAttemptToMovePageRequestFromFirstPosition() {
     IndividualResource pageRequest = pageRequest(steve);
     IndividualResource recallRequest = recallRequest(jessica);
 
@@ -70,16 +68,14 @@ public class RequestQueueResourceTest extends APITests {
       new ReorderQueueBuilder()
         .addReorderRequest(recallRequest.getId().toString(), 1)
         .addReorderRequest(pageRequest.getId().toString(), 2)
-        .create()
-    );
+        .create());
 
     verifyValidationFailure(response,
-      is("Page requests can not be displaced from position 1.")
-    );
+      is("Page requests can not be displaced from position 1."));
   }
 
   @Test
-  public void refuseAttemptToMoveRequestBeingFulfilledFromFirstPosition() throws Exception {
+  public void refuseAttemptToMoveRequestBeingFulfilledFromFirstPosition() {
     loansFixture.checkOutByBarcode(item, usersFixture.rebecca());
 
     IndividualResource inFulfillmentRequest = inFulfillmentRecallRequest(steve);
@@ -90,16 +86,14 @@ public class RequestQueueResourceTest extends APITests {
       new ReorderQueueBuilder()
         .addReorderRequest(recallRequest.getId().toString(), 1)
         .addReorderRequest(inFulfillmentRequest.getId().toString(), 2)
-        .create()
-    );
+        .create());
 
     verifyValidationFailure(response,
-      is("Requests can not be displaced from position 1 when fulfillment begun.")
-    );
+      is("Requests can not be displaced from position 1 when fulfillment begun."));
   }
 
   @Test
-  public void refuseAttemptToTryingToAddRequestToQueueDuringReorder() throws Exception {
+  public void refuseAttemptToTryingToAddRequestToQueueDuringReorder() {
     loansFixture.checkOutByBarcode(item, usersFixture.rebecca());
 
     IndividualResource firstRecallRequest = recallRequest(steve);
@@ -111,31 +105,28 @@ public class RequestQueueResourceTest extends APITests {
         .addReorderRequest(secondRecallRequest.getId().toString(), 1)
         .addReorderRequest(firstRecallRequest.getId().toString(), 2)
         .addReorderRequest(UUID.randomUUID().toString(), 3)
-        .create()
-    );
+        .create());
 
     verifyValidationFailure(response,
-      is("There is inconsistency between provided reordered queue and item queue.")
-    );
+      is("There is inconsistency between provided reordered queue and item queue."));
   }
 
   @Test
-  public void refuseWhenNotAllRequestsProvidedInReorderedQueue() throws Exception {
+  public void refuseWhenNotAllRequestsProvidedInReorderedQueue() {
     loansFixture.checkOutByBarcode(item, usersFixture.rebecca());
 
     holdRequest(steve);
+
     IndividualResource secondRecallRequest = recallRequest(jessica);
 
     Response response = requestQueueFixture.attemptReorderQueue(
       item.getId().toString(),
       new ReorderQueueBuilder()
         .addReorderRequest(secondRecallRequest.getId().toString(), 1)
-        .create()
-    );
+        .create());
 
     verifyValidationFailure(response,
-      is("There is inconsistency between provided reordered queue and item queue.")
-    );
+      is("There is inconsistency between provided reordered queue and item queue."));
   }
 
   @Test
@@ -148,8 +139,8 @@ public class RequestQueueResourceTest extends APITests {
     "1, 2, 4, 5",
     "1, 2, 3, 5",
   })
-  public void refuseWhenPositionsAreNotSequential(
-    int firstPosition, int secondPosition, int thirdPosition, int fourthPosition) throws Exception {
+  public void refuseWhenPositionsAreNotSequential(int firstPosition,
+    int secondPosition, int thirdPosition, int fourthPosition) {
 
     loansFixture.checkOutByBarcode(item, rebecca);
 
@@ -168,13 +159,11 @@ public class RequestQueueResourceTest extends APITests {
     Response response = requestQueueFixture.attemptReorderQueue(
       item.getId().toString(), reorderQueue);
 
-    verifyValidationFailure(response,
-      is("Positions must have sequential order.")
-    );
+    verifyValidationFailure(response, is("Positions must have sequential order."));
   }
 
   @Test
-  public void refuseAttemptToReorderRequestsWithDuplicatedPositions() throws Exception {
+  public void refuseAttemptToReorderRequestsWithDuplicatedPositions() {
     loansFixture.checkOutByBarcode(item, usersFixture.rebecca());
 
     IndividualResource holdRequest = holdRequest(steve);
@@ -185,12 +174,9 @@ public class RequestQueueResourceTest extends APITests {
       new ReorderQueueBuilder()
         .addReorderRequest(recallRequest.getId().toString(), 1)
         .addReorderRequest(holdRequest.getId().toString(), 1)
-        .create()
-    );
+        .create());
 
-    verifyValidationFailure(response,
-      is("Positions must have sequential order.")
-    );
+    verifyValidationFailure(response, is("Positions must have sequential order."));
   }
 
   @Test
@@ -204,8 +190,9 @@ public class RequestQueueResourceTest extends APITests {
     "3, 4, 2, 1",
     "3, 4, 1, 2",
   })
-  public void shouldReorderQueueSuccessfully(int firstPosition, int secondPosition,
-                                             int thirdPosition, int fourthPosition) throws Exception {
+  public void shouldReorderQueueSuccessfully(int firstPosition,
+    int secondPosition, int thirdPosition, int fourthPosition) {
+
     loansFixture.checkOutByBarcode(item, rebecca);
 
     IndividualResource firstHoldRequest = holdRequest(steve);
@@ -228,7 +215,7 @@ public class RequestQueueResourceTest extends APITests {
 
   @Test
   @Parameters(source = ReorderQueueTestDataSource.class)
-  public void canReorderQueueTwice(Integer[] initialState, Integer[] targetState) throws Exception {
+  public void canReorderQueueTwice(Integer[] initialState, Integer[] targetState) {
     loansFixture.checkOutByBarcode(item, rebecca);
 
     IndividualResource firstHoldRequest = holdRequest(steve);
@@ -262,54 +249,49 @@ public class RequestQueueResourceTest extends APITests {
   }
 
   private IndividualResource pageRequest(IndividualResource requester) {
-    return requestsFixture.place(
-      new RequestBuilder()
-        .open()
-        .page()
-        .forItem(item)
-        .by(requester)
-        .withPickupServicePoint(servicePointsFixture.cd1())
-    );
+    return requestsFixture.place(new RequestBuilder()
+      .open()
+      .page()
+      .forItem(item)
+      .by(requester)
+      .withPickupServicePoint(servicePointsFixture.cd1()));
   }
 
   private IndividualResource holdRequest(IndividualResource requester) {
-    return requestsFixture.place(
-      new RequestBuilder()
-        .open()
-        .hold()
-        .forItem(item)
-        .by(requester)
-        .withPickupServicePoint(servicePointsFixture.cd1())
-    );
+    return requestsFixture.place(new RequestBuilder()
+      .open()
+      .hold()
+      .forItem(item)
+      .by(requester)
+      .withPickupServicePoint(servicePointsFixture.cd1()));
   }
 
   private IndividualResource recallRequest(IndividualResource requester) {
-    return requestsFixture.place(
-      new RequestBuilder()
-        .open()
-        .recall()
-        .forItem(item)
-        .by(requester)
-        .withPickupServicePoint(servicePointsFixture.cd1())
-    );
+    return requestsFixture.place(new RequestBuilder()
+      .open()
+      .recall()
+      .forItem(item)
+      .by(requester)
+      .withPickupServicePoint(servicePointsFixture.cd1()));
   }
 
-  private IndividualResource inFulfillmentRecallRequest(IndividualResource requester) {
-    return requestsFixture.place(
-      new RequestBuilder()
-        .open()
-        .recall()
-        .withStatus(RequestBuilder.OPEN_IN_TRANSIT)
-        .forItem(item)
-        .by(requester)
-        .withPickupServicePoint(servicePointsFixture.cd1())
-    );
+  private IndividualResource inFulfillmentRecallRequest(
+    IndividualResource requester) {
+
+    return requestsFixture.place(new RequestBuilder()
+      .open()
+      .recall()
+      .withStatus(RequestBuilder.OPEN_IN_TRANSIT)
+      .forItem(item)
+      .by(requester)
+      .withPickupServicePoint(servicePointsFixture.cd1()));
   }
 
-  private void verifyQueueUpdated(JsonObject initialQueue, JsonObject reorderedQueue)
-    throws Exception {
+  private void verifyQueueUpdated(JsonObject initialQueue,
+    JsonObject reorderedQueue) {
 
     JsonArray reorderedRequests = reorderedQueue.getJsonArray("requests");
+
     List<JsonObject> expectedRequests = initialQueue.getJsonArray("reorderedQueue")
       .stream()
       .map(obj -> (JsonObject) obj)
@@ -317,9 +299,8 @@ public class RequestQueueResourceTest extends APITests {
       .collect(Collectors.toList());
 
     assertEquals("Expected number of requests and actual do not match",
-      expectedRequests.size(),
-      reorderedRequests.size()
-    );
+      expectedRequests.size(), reorderedRequests.size());
+
     assertQueue(expectedRequests, reorderedRequests);
 
     JsonArray requestsFromDb = requestQueueFixture
@@ -327,9 +308,8 @@ public class RequestQueueResourceTest extends APITests {
       .getJsonArray("requests");
 
     assertEquals("Requests in DB and actual do not match",
-      reorderedRequests.size(),
-      requestsFromDb.size()
-    );
+      reorderedRequests.size(), requestsFromDb.size());
+
     assertQueue(expectedRequests, requestsFromDb);
   }
 

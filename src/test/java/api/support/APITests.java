@@ -1,29 +1,29 @@
 package api.support;
 
-import static api.support.APITestContext.createClient;
+import static api.support.APITestContext.deployVerticles;
 import static api.support.APITestContext.getOkapiHeadersFromContext;
+import static api.support.APITestContext.undeployVerticles;
+import static api.support.http.InterfaceUrls.circulationRulesUrl;
+import static api.support.http.api.support.NamedQueryStringParameter.namedParameter;
+import static org.folio.circulation.domain.representations.LoanProperties.PATRON_GROUP_AT_CHECKOUT;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 
 import java.lang.invoke.MethodHandles;
-import java.net.MalformedURLException;
+import java.net.URL;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import org.folio.circulation.domain.representations.LoanProperties;
 import org.folio.circulation.support.ClockManager;
 import org.folio.circulation.support.http.client.IndividualResource;
-import org.folio.circulation.support.http.client.OkapiHttpClient;
-import org.folio.circulation.support.http.client.Response;
-import org.folio.circulation.support.http.client.ResponseHandler;
 
 import org.joda.time.DateTime;
 import org.junit.After;
@@ -60,18 +60,14 @@ import api.support.fixtures.ScheduledNoticeProcessingClient;
 import api.support.fixtures.ServicePointsFixture;
 import api.support.fixtures.UserManualBlocksFixture;
 import api.support.fixtures.UsersFixture;
-import api.support.http.InterfaceUrls;
+import api.support.http.QueryStringParameter;
 import api.support.http.ResourceClient;
 import io.vertx.core.json.JsonObject;
 
 public abstract class APITests {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
-  //Temporarily static to ease moving code from test suite
-  protected final OkapiHttpClient client = createClient(exception ->
-    log.error("Request to circulation module failed:", exception));
-
-  protected final RestAssuredClient restAssuredClient = new RestAssuredClient(
+  private final RestAssuredClient restAssuredClient = new RestAssuredClient(
     getOkapiHeadersFromContext());
 
   private final boolean initialiseCirculationRules;
@@ -220,7 +216,7 @@ public abstract class APITests {
     new ScheduledNoticeProcessingClient();
 
   protected final RequestQueueFixture requestQueueFixture =
-    new RequestQueueFixture(client);
+    new RequestQueueFixture(restAssuredClient);
 
   protected APITests() {
     this(true);
@@ -231,24 +227,17 @@ public abstract class APITests {
   }
 
   @BeforeClass
-  public static void beforeAll()
-    throws InterruptedException,
-    ExecutionException,
+  public static void beforeAll() throws InterruptedException, ExecutionException,
     TimeoutException {
 
-    APITestContext.deployVerticles();
+    deployVerticles();
 
     //Delete everything first just in case
     deleteAllRecords();
   }
 
   @Before
-  public void beforeEach()
-    throws MalformedURLException,
-    InterruptedException,
-    ExecutionException,
-    TimeoutException {
-
+  public void beforeEach() throws InterruptedException {
     requestsClient.deleteAll();
     loansClient.deleteAll();
 
@@ -266,27 +255,19 @@ public abstract class APITests {
     if (initialiseCirculationRules) {
       useDefaultRollingPolicyCirculationRules();
     }
-
   }
 
   @AfterClass
-  public static void afterAll()
-    throws InterruptedException,
-    ExecutionException,
+  public static void afterAll() throws InterruptedException, ExecutionException,
     TimeoutException {
 
     deleteOftenCreatedRecords();
 
-    APITestContext.undeployVerticles();
+    undeployVerticles();
   }
 
   @After
-  public void afterEach()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
-
+  public void afterEach() {
     requestsClient.deleteAll();
     loansClient.deleteAll();
 
@@ -321,43 +302,28 @@ public abstract class APITests {
   }
 
   //Needs to be done each time as some tests manipulate the rules
-  private void useDefaultRollingPolicyCirculationRules()
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException {
-
+  private void useDefaultRollingPolicyCirculationRules() {
     log.info("Using rolling loan policy as fallback policy");
-    useFallbackPolicies(
-      loanPoliciesFixture.canCirculateRolling().getId(),
+
+    useFallbackPolicies(loanPoliciesFixture.canCirculateRolling().getId(),
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
       noticePoliciesFixture.activeNotice().getId(),
       overdueFinePoliciesFixture.facultyStandard().getId(),
-      lostItemFeePoliciesFixture.facultyStandard().getId()
-    );
+      lostItemFeePoliciesFixture.facultyStandard().getId());
   }
 
-  protected void useExampleFixedPolicyCirculationRules()
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException {
-
+  protected void useExampleFixedPolicyCirculationRules() {
     log.info("Using fixed loan policy as fallback policy");
-    useFallbackPolicies(
-      loanPoliciesFixture.canCirculateFixed().getId(),
+
+    useFallbackPolicies(loanPoliciesFixture.canCirculateFixed().getId(),
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
       noticePoliciesFixture.activeNotice().getId(),
       overdueFinePoliciesFixture.facultyStandard().getId(),
-      lostItemFeePoliciesFixture.facultyStandard().getId()
-
-    );
+      lostItemFeePoliciesFixture.facultyStandard().getId());
   }
 
   protected void useFallbackPolicies(UUID loanPolicyId, UUID requestPolicyId,
-                                     UUID noticePolicyId, UUID overdueFinePolicyId,
-                                     UUID lostItemFeePolicyId)
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException {
+    UUID noticePolicyId, UUID overdueFinePolicyId, UUID lostItemFeePolicyId) {
 
     circulationRulesFixture.updateCirculationRules(loanPolicyId, requestPolicyId,
       noticePolicyId, overdueFinePolicyId, lostItemFeePolicyId);
@@ -372,11 +338,10 @@ public abstract class APITests {
    * the loanPolicyBuilder.
    * @param loanPolicyBuilder - loan policy builder.
    */
-  protected void setFallbackPolicies(LoanPolicyBuilder loanPolicyBuilder)
-    throws InterruptedException,
-    TimeoutException,
-    ExecutionException {
-    final IndividualResource loanPolicy = loanPoliciesFixture.create(loanPolicyBuilder);
+  protected void setFallbackPolicies(LoanPolicyBuilder loanPolicyBuilder) {
+    final IndividualResource loanPolicy = loanPoliciesFixture.create(
+      loanPolicyBuilder);
+
     useFallbackPolicies(loanPolicy.getId(),
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
       noticePoliciesFixture.inactiveNotice().getId(),
@@ -390,17 +355,12 @@ public abstract class APITests {
    * the loanPolicyBuilder.
    * @param loanPolicyBuilder - loan policy builder.
    */
-  protected void useWithActiveNotice(LoanPolicyBuilder loanPolicyBuilder)
-    throws InterruptedException,
-    TimeoutException,
-    ExecutionException {
-    useFallbackPolicies(
-      loanPoliciesFixture.create(loanPolicyBuilder).getId(),
+  protected void useWithActiveNotice(LoanPolicyBuilder loanPolicyBuilder) {
+    useFallbackPolicies(loanPoliciesFixture.create(loanPolicyBuilder).getId(),
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
       noticePoliciesFixture.activeNotice().getId(),
       overdueFinePoliciesFixture.facultyStandard().getId(),
-      lostItemFeePoliciesFixture.facultyStandard().getId()
-    );
+      lostItemFeePoliciesFixture.facultyStandard().getId());
   }
 
   /**
@@ -409,12 +369,8 @@ public abstract class APITests {
    * the loanPolicyBuilder.
    * @param loanPolicyBuilder - loan policy builder.
    */
-  protected void use(LoanPolicyBuilder loanPolicyBuilder)
-    throws InterruptedException,
-    TimeoutException,
-    ExecutionException {
-    useFallbackPolicies(
-      loanPolicyClient.create(loanPolicyBuilder).getId(),
+  protected void use(LoanPolicyBuilder loanPolicyBuilder) {
+    useFallbackPolicies(loanPolicyClient.create(loanPolicyBuilder).getId(),
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
       noticePoliciesFixture.activeNotice().getId(),
       overdueFinePoliciesFixture.facultyStandard().getId(),
@@ -428,17 +384,13 @@ public abstract class APITests {
    * @param loanPolicyBuilder - loan policy builder.
    */
   protected void use(LoanPolicyBuilder loanPolicyBuilder,
-                     NoticePolicyBuilder noticePolicyBuilder)
-    throws InterruptedException,
-    TimeoutException,
-    ExecutionException {
-    useFallbackPolicies(
-      loanPoliciesFixture.create(loanPolicyBuilder).getId(),
+    NoticePolicyBuilder noticePolicyBuilder) {
+
+    useFallbackPolicies(loanPoliciesFixture.create(loanPolicyBuilder).getId(),
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
       noticePoliciesFixture.create(noticePolicyBuilder).getId(),
       overdueFinePoliciesFixture.facultyStandard().getId(),
       lostItemFeePoliciesFixture.facultyStandard().getId());
-
   }
 
   /**
@@ -448,12 +400,8 @@ public abstract class APITests {
    * the loanPolicyBuilder.
    * @param noticePolicy - notice policy.
    */
-  protected void use(NoticePolicyBuilder noticePolicy)
-    throws InterruptedException,
-    TimeoutException,
-    ExecutionException {
-    useFallbackPolicies(
-      loanPoliciesFixture.canCirculateRolling().getId(),
+  protected void use(NoticePolicyBuilder noticePolicy) {
+    useFallbackPolicies(loanPoliciesFixture.canCirculateRolling().getId(),
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
       noticePoliciesFixture.create(noticePolicy).getId(),
       overdueFinePoliciesFixture.facultyStandard().getId(),
@@ -466,35 +414,27 @@ public abstract class APITests {
    * the loanPolicyBuilder.
    * @param noticePolicy - notice policy.
    */
-  protected void useWithPaging(NoticePolicyBuilder noticePolicy)
-    throws InterruptedException,
-    TimeoutException,
-    ExecutionException {
-    useFallbackPolicies(
-      loanPoliciesFixture.canCirculateRolling().getId(),
+  protected void useWithPaging(NoticePolicyBuilder noticePolicy) {
+    useFallbackPolicies(loanPoliciesFixture.canCirculateRolling().getId(),
       requestPoliciesFixture.pageRequestPolicy().getId(),
       noticePoliciesFixture.create(noticePolicy).getId(),
       overdueFinePoliciesFixture.facultyStandard().getId(),
       lostItemFeePoliciesFixture.facultyStandard().getId());
   }
 
-  protected void warmUpApplyEndpoint()
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException {
+  protected void warmUpApplyEndpoint() {
+    final URL loanPolicyRulesEndpoint = circulationRulesUrl("/loan-policy");
 
-    CompletableFuture<Response> completed = new CompletableFuture<>();
+    final List<QueryStringParameter> parameters = new ArrayList<>();
 
-    client.get(InterfaceUrls.circulationRulesUrl("/loan-policy"
-        + String.format("?item_type_id=%s&loan_type_id=%s&patron_type_id=%s&location_id=%s",
-      UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID(), locationsFixture.mezzanineDisplayCase().getId())),
-      ResponseHandler.any(completed));
+    parameters.add(namedParameter("item_type_id", UUID.randomUUID().toString()));
+    parameters.add(namedParameter("loan_type_id", UUID.randomUUID().toString()));
+    parameters.add(namedParameter("patron_type_id", UUID.randomUUID().toString()));
+    parameters.add(namedParameter("location_id",
+      locationsFixture.mezzanineDisplayCase().getId().toString()));
 
-    Response response = completed.get(5, TimeUnit.SECONDS);
-
-    assertThat(String.format(
-      "Failed to apply circulation rules: %s", response.getBody()),
-      response.getStatusCode(), is(200));
+    restAssuredClient.get(loanPolicyRulesEndpoint, parameters, 200,
+      "warm-up-circulation-rules");
   }
 
   private static void deleteOftenCreatedRecords() {
@@ -538,46 +478,56 @@ public abstract class APITests {
     ResourceClient.forCancellationReasons().deleteAllIndividually();
   }
 
-  protected void loanHasFeeFinesProperties(JsonObject loan, double remainingAmount) {
+  protected void loanHasFeeFinesProperties(JsonObject loan,
+    double remainingAmount) {
+
     hasProperty("amountRemainingToPay", loan.getJsonObject("feesAndFines"),
       "loan", remainingAmount);
   }
 
-  protected void loanHasLoanPolicyProperties(JsonObject loan, IndividualResource loanPolicy) {
+  protected void loanHasLoanPolicyProperties(JsonObject loan,
+    IndividualResource loanPolicy) {
+
     hasProperty("loanPolicyId", loan, "loan", loanPolicy.getId().toString());
     hasProperty("loanPolicy", loan, "loan");
+
     JsonObject loanPolicyObject = loan.getJsonObject("loanPolicy");
-    hasProperty("name", loanPolicyObject, "loan policy", loanPolicy.getJson().getString("name"));
+
+    hasProperty("name", loanPolicyObject, "loan policy",
+      loanPolicy.getJson().getString("name"));
   }
 
-  protected void loanHasPatronGroupProperties(JsonObject loan, String patronGroupValue) {
-    JsonObject patronGroupObject = loan.getJsonObject(LoanProperties.PATRON_GROUP_AT_CHECKOUT);
+  protected void loanHasPatronGroupProperties(JsonObject loan,
+    String patronGroupValue) {
+
+    JsonObject patronGroupObject = loan.getJsonObject(PATRON_GROUP_AT_CHECKOUT);
+
     hasProperty("id", patronGroupObject, "patron group at checkout");
     hasProperty("name", patronGroupObject, "patron group at checkout");
     hasProperty("name", patronGroupObject, "patron group at checkout", patronGroupValue);
   }
 
   protected void hasProperty(String property, JsonObject resource, String type) {
-    assertThat(String.format("%s should have an %s: %s",
-      type, property, resource),
+    assertThat(String.format("%s should have an %s: %s", type, property, resource),
       resource.containsKey(property), is(true));
   }
 
+  protected void hasProperty(String property, JsonObject resource, String type,
+    Object value) {
 
-  protected void hasProperty(String property, JsonObject resource, String type, Object value) {
-    assertThat(String.format("%s should have an %s: %s",
-      type, property, resource),
+    assertThat(String.format("%s should have an %s: %s", type, property, resource),
       resource.getMap().get(property), equalTo(value));
   }
 
+  protected void doesNotHaveProperty(String property, JsonObject resource,
+    String type) {
 
-  protected void doesNotHaveProperty(String property, JsonObject resource, String type) {
-    assertThat(String.format("%s should NOT have an %s: %s",
-            type, property, resource),
-            resource.getValue(property), is(nullValue()));
+    assertThat(String.format("%s should NOT have an %s: %s", type, property,
+      resource), resource.getValue(property), is(nullValue()));
   }
 
-  protected void setInvalidLoanPolicyReferenceInRules(String invalidLoanPolicyReference) {
+  protected void setInvalidLoanPolicyReferenceInRules(
+    String invalidLoanPolicyReference) {
 
     circulationRulesFixture.updateCirculationRules(
       circulationRulesFixture.soleFallbackPolicyRule(invalidLoanPolicyReference,
@@ -587,7 +537,8 @@ public abstract class APITests {
         lostItemFeePoliciesFixture.facultyStandard().getId().toString()));
   }
 
-  protected void setInvalidNoticePolicyReferenceInRules(String invalidNoticePolicyReference) {
+  protected void setInvalidNoticePolicyReferenceInRules(
+    String invalidNoticePolicyReference) {
 
     circulationRulesFixture.updateCirculationRules(
       circulationRulesFixture.soleFallbackPolicyRule(
@@ -605,7 +556,8 @@ public abstract class APITests {
         ZoneOffset.UTC));
   }
 
-  protected void mockClockManagerToReturnDefaulDatetTime() {
+  protected void mockClockManagerToReturnDefaultDateTime() {
     ClockManager.getClockManager().setDefaultClock();
   }
+
 }

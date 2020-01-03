@@ -84,7 +84,7 @@ public class ItemsInTransitReportTests extends APITests {
     ExecutionException {
 
     super.afterEach();
-    mockClockManagerToReturnDefaulDatetTime();
+    mockClockManagerToReturnDefaultDateTime();
   }
 
   @Test

@@ -59,11 +59,7 @@ public class MoveRequestPolicyTests extends APITests {
   }
 
   @Before
-  public void setUpNoticePolicy()
-      throws
-    InterruptedException,
-      ExecutionException,
-      TimeoutException {
+  public void setUpNoticePolicy() {
     UUID recallToLoaneeTemplateId = UUID.randomUUID();
     JsonObject recallToLoaneeConfiguration = new NoticeConfigurationBuilder()
       .withTemplateId(recallToLoaneeTemplateId)
@@ -264,10 +260,7 @@ public class MoveRequestPolicyTests extends APITests {
   }
 
   @Test
-  public void moveRecallRequestWithoutExistingRecallsAndWithMGDAndRDValuesChangesDueDateToRD()
-      throws InterruptedException,
-      ExecutionException,
-      TimeoutException {
+  public void moveRecallRequestWithoutExistingRecallsAndWithMGDAndRDValuesChangesDueDateToRD() {
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource interestingTimes = itemsFixture.basedUponInterestingTimes();
     final IndividualResource steve = usersFixture.steve();
@@ -332,10 +325,7 @@ public class MoveRequestPolicyTests extends APITests {
   }
 
   @Test
-  public void moveRecallRequestWithExistingRecallsAndWithMGDAndRDValuesChangesDueDateToRD()
-      throws InterruptedException,
-      ExecutionException,
-      TimeoutException {
+  public void moveRecallRequestWithExistingRecallsAndWithMGDAndRDValuesChangesDueDateToRD() {
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource interestingTimes = itemsFixture.basedUponInterestingTimes();
     final IndividualResource steve = usersFixture.steve();

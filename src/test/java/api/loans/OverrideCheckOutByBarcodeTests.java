@@ -163,10 +163,7 @@ public class OverrideCheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void cannotOverrideCheckoutWhenItemIsLoanable()
-    throws InterruptedException,
-    TimeoutException,
-    ExecutionException {
+  public void cannotOverrideCheckoutWhenItemIsLoanable() {
 
     LoanPolicyBuilder loanablePolicy = new LoanPolicyBuilder()
       .withName("Loanable Policy")
@@ -330,10 +327,7 @@ public class OverrideCheckOutByBarcodeTests extends APITests {
     assertThat(placeRequestResponse.getStatusCode(), is(201));
   }
 
-  private void setNotLoanablePolicy()
-    throws InterruptedException,
-    TimeoutException,
-    ExecutionException {
+  private void setNotLoanablePolicy() {
 
     LoanPolicyBuilder notLoanablePolicy = new LoanPolicyBuilder()
       .withName("Not Loanable Policy")

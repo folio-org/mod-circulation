@@ -27,8 +27,7 @@ public class ItemLastCheckInTests extends APITests {
   private DateTime checkInDateTime;
 
   @Override
-  public void beforeEach()
-    throws MalformedURLException, InterruptedException, ExecutionException, TimeoutException {
+  public void beforeEach() throws InterruptedException {
 
     super.beforeEach();
     checkInDateTime = DateTime.now(DateTimeZone.UTC);
@@ -36,12 +35,9 @@ public class ItemLastCheckInTests extends APITests {
   }
 
   @Override
-  public void afterEach()
-    throws InterruptedException, MalformedURLException, TimeoutException,
-    ExecutionException {
-
+  public void afterEach() {
     super.afterEach();
-    mockClockManagerToReturnDefaulDatetTime();
+    mockClockManagerToReturnDefaultDateTime();
   }
 
   @Test

@@ -50,10 +50,7 @@ public class CheckoutWithRequestScenarioTests extends APITests {
   }
 
   @Test
-  public void checkingOutWithHoldRequestAppliesAlternatePeriod()
-    throws InterruptedException,
-    TimeoutException,
-    ExecutionException {
+  public void checkingOutWithHoldRequestAppliesAlternatePeriod() {
 
     final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource charlotte = usersFixture.charlotte();
@@ -107,10 +104,7 @@ public class CheckoutWithRequestScenarioTests extends APITests {
   }
 
   @Test
-  public void checkingOutWithHoldRequestAppliesAlternatePeriodAndScheduledForFixedPolicy()
-    throws InterruptedException,
-    TimeoutException,
-    ExecutionException {
+  public void checkingOutWithHoldRequestAppliesAlternatePeriodAndScheduledForFixedPolicy() {
 
     final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource charlotte = usersFixture.charlotte();
