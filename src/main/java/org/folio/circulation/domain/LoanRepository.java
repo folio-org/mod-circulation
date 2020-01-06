@@ -344,6 +344,6 @@ public class LoanRepository {
       .combine(userIdQuery, CqlQuery::and);
 
     return queryLoanStorage(Integer.MAX_VALUE, cqlQueryResult)
-    .thenComposeAsync(loans -> itemRepository.fetchItemsFor(loans, Loan::withItem));
+      .thenComposeAsync(loans -> itemRepository.fetchItemsFor(loans, Loan::withItem));
   }
 }
