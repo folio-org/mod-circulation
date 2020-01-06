@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-04/schema#",
-  "title": "Circulation policy ids schema",
+  "title": "Circulation overdue fine policy ids schema",
   "description": "All rule matches from an application of the rules",
   "type": "object",
   "properties": {

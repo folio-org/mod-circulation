@@ -234,9 +234,9 @@ public class LoanCollectionResource extends CollectionResource {
       .thenCompose(multiLoanRecordsResult ->
         multiLoanRecordsResult.after(loanPolicyRepository::findLoanPoliciesForLoans))
       .thenCompose(multiLoanRecordsResult ->
-        multiLoanRecordsResult.after(overdueFinePolicyRepository::findLoanPoliciesForLoans))
+        multiLoanRecordsResult.after(overdueFinePolicyRepository::findOverdueFinePoliciesForLoans))
       .thenCompose(multiLoanRecordsResult ->
-        multiLoanRecordsResult.after(lostItemPolicyRepository::findLoanPoliciesForLoans))
+        multiLoanRecordsResult.after(lostItemPolicyRepository::findLostItemPoliciesForLoans))
       .thenCompose(multiLoanRecordsResult ->
         multiLoanRecordsResult.after(patronGroupRepository::findPatronGroupsByIds))
       .thenApply(multipleLoanRecordsResult -> multipleLoanRecordsResult.map(loans ->

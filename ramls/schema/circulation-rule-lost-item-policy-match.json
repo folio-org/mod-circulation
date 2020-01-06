@@ -9,7 +9,7 @@
       "type": "integer"
     },
     "lostItemPolicyId": {
-      "description": "Los item policy id specified by the matching rule",
+      "description": "Lost item policy id specified by the matching rule",
       "type": "string"
     }
   },

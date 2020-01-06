@@ -23,7 +23,7 @@ public class OverdueFinePolicyRepository extends CirculationPolicyRepository<Ove
     super(clients.circulationOverdueFineRules(), clients.overdueFinesPoliciesStorage());
   }
 
-  public CompletableFuture<Result<LoanAndRelatedRecords>> lookupLoanPolicy(
+  public CompletableFuture<Result<LoanAndRelatedRecords>> lookupOverdueFinePolicy(
     LoanAndRelatedRecords relatedRecords) {
 
     return Result.of(relatedRecords::getLoan)
@@ -39,12 +39,13 @@ public class OverdueFinePolicyRepository extends CirculationPolicyRepository<Ove
 
   @Override
   protected String getPolicyNotFoundErrorMessage(String policyId) {
-    return String.format("Loan policy %s could not be found, please check circulation rules", policyId);
+    return String.format("Overdue fine policy %s could not be found," +
+      " please check circulation rules", policyId);
   }
 
   @Override
   protected Result<OverdueFinePolicy> toPolicy(JsonObject representation) {
-    return succeeded(new OverdueFinePolicy(representation));
+    return succeeded(OverdueFinePolicy.from((representation)));
   }
 
   @Override
@@ -52,30 +53,35 @@ public class OverdueFinePolicyRepository extends CirculationPolicyRepository<Ove
     return jsonObject.getString("overdueFinePolicyId");
   }
 
-  public CompletableFuture<Result<MultipleRecords<Loan>>> findLoanPoliciesForLoans(MultipleRecords<Loan> multipleLoans) {
+  public CompletableFuture<Result<MultipleRecords<Loan>>>
+    findOverdueFinePoliciesForLoans(MultipleRecords<Loan> multipleLoans) {
+
     Collection<Loan> loans = multipleLoans.getRecords();
 
-    return getLoanPolicies(loans)
+    return getOverdueFinePolicies(loans)
       .thenApply(r -> r.map(loanPolicies -> multipleLoans.mapRecords(
         loan -> loan.withOverdueFinePolicy(loanPolicies.getOrDefault(
-          loan.getOverdueFinePolicyId(), OverdueFinePolicy.unknown(loan.getOverdueFinePolicyId())))))
+          loan.getOverdueFinePolicyId(),
+          OverdueFinePolicy.unknown(loan.getOverdueFinePolicyId())))))
       );
   }
 
-  private CompletableFuture<Result<Map<String, OverdueFinePolicy>>> getLoanPolicies(Collection<Loan> loans) {
+  private CompletableFuture<Result<Map<String, OverdueFinePolicy>>>
+    getOverdueFinePolicies(Collection<Loan> loans) {
+
     final Collection<String> loansToFetch = loans.stream()
       .map(Loan::getOverdueFinePolicyId)
       .filter(Objects::nonNull)
-      .distinct()
       .collect(Collectors.toSet());
 
-    final MultipleRecordFetcher<OverdueFinePolicy> fetcher = createLoanPoliciesFetcher();
+    final MultipleRecordFetcher<OverdueFinePolicy> fetcher = createOverdueFinePoliciesFetcher();
 
     return fetcher.findByIds(loansToFetch)
       .thenApply(mapResult(r -> r.toMap(OverdueFinePolicy::getId)));
   }
 
-  private MultipleRecordFetcher<OverdueFinePolicy> createLoanPoliciesFetcher() {
-    return new MultipleRecordFetcher<>(policyStorageClient, "overdueFinePolicies", OverdueFinePolicy::from);
+  private MultipleRecordFetcher<OverdueFinePolicy> createOverdueFinePoliciesFetcher() {
+    return new MultipleRecordFetcher<>(policyStorageClient,
+      "overdueFinePolicies", OverdueFinePolicy::from);
   }
 }

@@ -2,50 +2,44 @@ package org.folio.circulation.domain.policy;
 
 import io.vertx.core.json.JsonObject;
 
-import java.util.UUID;
-
 import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
 
 
 public class LostItemPolicy {
-  private final JsonObject representation;
+  private final String id;
+  private final String name;
 
-  public LostItemPolicy(JsonObject representation) {
-    this.representation = representation;
+  private LostItemPolicy(String id) {
+    this(id, null);
   }
 
-  private UUID id;
-  private String name;
-
-  public String getId() {
-    return getProperty(representation, "id");
-  }
-
-  public void setId(UUID id) {
+  private LostItemPolicy(String id, String name) {
     this.id = id;
-  }
-
-  public String getName() {
-    return getProperty(representation, "name");
-  }
-
-  public void setName(String name) {
     this.name = name;
   }
 
-  public static LostItemPolicy from(JsonObject representation) {
-    return new LostItemPolicy(representation);
+  public String getId() {
+    return id;
+  }
+
+  public String getName() {
+    return name;
+  }
+
+  public static LostItemPolicy from(JsonObject lostItemPolicy) {
+    return new LostItemPolicy(
+      getProperty(lostItemPolicy, "id"),
+      getProperty(lostItemPolicy, "name")
+    );
   }
 
   public static LostItemPolicy unknown(String id) {
-    return new UnknownLoanPolicy(id);
+    return new UnknownLostItemPolicy(id);
   }
 
-  //TODO: Improve this to be a proper null object
-  // requires significant rework of the loan policy interface
-  private static class UnknownLoanPolicy extends LostItemPolicy {
-    UnknownLoanPolicy(String id) {
-      super(new JsonObject().put("id", id));
+  private static class UnknownLostItemPolicy extends LostItemPolicy {
+    UnknownLostItemPolicy(String id) {
+      super(id);
     }
   }
 }

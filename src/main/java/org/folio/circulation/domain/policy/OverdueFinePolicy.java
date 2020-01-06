@@ -2,49 +2,43 @@ package org.folio.circulation.domain.policy;
 
 import io.vertx.core.json.JsonObject;
 
-import java.util.UUID;
-
 import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
 
 public class OverdueFinePolicy {
-  private final JsonObject representation;
+  private final String id;
+  private final String name;
 
-  public OverdueFinePolicy(JsonObject representation) {
-    this.representation = representation;
+  private OverdueFinePolicy(String id) {
+    this(id, null);
   }
 
-  private UUID id;
-  private String name;
-
-  public String getId() {
-    return getProperty(representation, "id");
-  }
-
-  public void setId(UUID id) {
+  private OverdueFinePolicy(String id, String name) {
     this.id = id;
-  }
-
-  public String getName() {
-    return getProperty(representation, "name");
-  }
-
-  public void setName(String name) {
     this.name = name;
   }
 
-  public static OverdueFinePolicy from(JsonObject representation) {
-    return new OverdueFinePolicy(representation);
+  public String getId() {
+    return id;
+  }
+
+  public String getName() {
+    return name;
+  }
+
+  public static OverdueFinePolicy from(JsonObject lostItemPolicy) {
+    return new OverdueFinePolicy(
+      getProperty(lostItemPolicy, "id"),
+      getProperty(lostItemPolicy, "name")
+    );
   }
 
   public static OverdueFinePolicy unknown(String id) {
-    return new UnknownLoanPolicy(id);
+    return new OverdueFinePolicy.UnknownOverdueFinePolicy(id);
   }
 
-  //TODO: Improve this to be a proper null object
-  // requires significant rework of the loan policy interface
-  private static class UnknownLoanPolicy extends OverdueFinePolicy {
-    UnknownLoanPolicy(String id) {
-      super(new JsonObject().put("id", id));
+  private static class UnknownOverdueFinePolicy extends OverdueFinePolicy {
+    UnknownOverdueFinePolicy(String id) {
+      super(id);
     }
   }
 }

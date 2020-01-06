@@ -212,23 +212,24 @@ public class LoanRepository {
     keepLatestItemStatus(item, storageLoan);
     removeBorrowerProperties(storageLoan);
     removeLoanPolicyProperties(storageLoan);
+    removeFeesAndFinesProperties(storageLoan);
     removeOverdueFineProperties(storageLoan);
     removeLostItemProperties(storageLoan);
 
     updateLastLoanPolicyUsedId(storageLoan, loan.getLoanPolicy());
-    updateOverdueFinePolicy(storageLoan, loan.getOverdueFinePolicy());
-    updateLostItemPolicy(storageLoan, loan.getLostItemPolicy());
+    updateOverdueFinePolicyId(storageLoan, loan.getOverdueFinePolicy());
+    updateLostItemPolicyId(storageLoan, loan.getLostItemPolicy());
 
     return storageLoan;
   }
 
-  private static void updateOverdueFinePolicy(JsonObject storageLoan, OverdueFinePolicy overdueFinePolicy) {
+  private static void updateOverdueFinePolicyId(JsonObject storageLoan, OverdueFinePolicy overdueFinePolicy) {
     if(nonNull(overdueFinePolicy) && overdueFinePolicy.getId() != null) {
       storageLoan.put("overdueFinePolicyId", overdueFinePolicy.getId());
     }
   }
 
-  private static void updateLostItemPolicy(JsonObject storageLoan, LostItemPolicy lostItemPolicy) {
+  private static void updateLostItemPolicyId(JsonObject storageLoan, LostItemPolicy lostItemPolicy) {
     if(nonNull(lostItemPolicy) && lostItemPolicy.getId() != null) {
       storageLoan.put("lostItemPolicyId", lostItemPolicy.getId());
     }
