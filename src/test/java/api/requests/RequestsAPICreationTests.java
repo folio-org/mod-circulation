@@ -1398,10 +1398,7 @@ public class RequestsAPICreationTests extends APITests {
   }
 
   @Test
-  public void pageRequestNoticeIsSentWhenPolicyDefinesPageRequestNoticeConfiguration()
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException {
+  public void pageRequestNoticeIsSentWhenPolicyDefinesPageRequestNoticeConfiguration() {
 
     UUID pageConfirmationTemplateId = UUID.randomUUID();
     JsonObject pageConfirmationConfiguration = new NoticeConfigurationBuilder()
@@ -1456,10 +1453,7 @@ public class RequestsAPICreationTests extends APITests {
   }
 
   @Test
-  public void holdRequestNoticeIsSentWhenPolicyDefinesHoldRequestNoticeConfiguration()
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException {
+  public void holdRequestNoticeIsSentWhenPolicyDefinesHoldRequestNoticeConfiguration() {
 
     UUID holdConfirmationTemplateId = UUID.randomUUID();
     JsonObject holdConfirmationConfiguration = new NoticeConfigurationBuilder()
@@ -1525,10 +1519,7 @@ public class RequestsAPICreationTests extends APITests {
   }
 
   @Test
-  public void recallRequestNoticeIsSentWhenPolicyDefinesRecallRequestNoticeConfiguration()
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException {
+  public void recallRequestNoticeIsSentWhenPolicyDefinesRecallRequestNoticeConfiguration() {
 
     UUID recallConfirmationTemplateId = UUID.randomUUID();
     UUID recallToLoaneeTemplateId = UUID.randomUUID();
@@ -1623,9 +1614,7 @@ public class RequestsAPICreationTests extends APITests {
 
   @Test
   public void recallNoticeToLoanOwnerIsNotSendWhenDueDateIsNotChanged()
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException {
+    throws InterruptedException {
 
     UUID recallToLoanOwnerTemplateId = UUID.randomUUID();
     JsonObject recallToLoanOwnerNoticeConfiguration = new NoticeConfigurationBuilder()

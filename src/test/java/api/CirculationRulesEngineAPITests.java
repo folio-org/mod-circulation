@@ -1,17 +1,8 @@
 package api;
 
-import static api.support.http.InterfaceUrls.circulationRulesStorageUrl;
-import static api.support.http.InterfaceUrls.circulationRulesUrl;
-import static api.support.http.api.support.NamedQueryStringParameter.namedParameter;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.StringContains.containsString;
-
-import java.net.MalformedURLException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeoutException;
 
 import org.folio.circulation.resources.LoanCirculationRulesEngineResource;
 import org.folio.circulation.rules.Campus;
@@ -28,7 +19,6 @@ import org.junit.Before;
 import org.junit.Test;
 
 import api.support.APITests;
-import api.support.http.QueryStringParameter;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
@@ -124,28 +114,26 @@ public class CirculationRulesEngineAPITests extends APITests {
 
   @Test
   public void applyLoanWithoutParameters() {
-    final Response response = applyRulesWithNoParameters("/loan-policy");
+    final Response response = circulationRulesFixture
+      .attemptToApplyRulesWithNoParameters("/loan-policy");
 
     assertThat(response.getStatusCode(), is(400));
   }
 
   @Test
   public void applyRequestWithoutParameters() {
-    final Response response = applyRulesWithNoParameters("/request-policy");
+    final Response response = circulationRulesFixture
+      .attemptToApplyRulesWithNoParameters("/request-policy");
 
     assertThat(response.getStatusCode(), is(400));
   }
 
   @Test
   public void applyNoticeWithoutParameters() {
-    final Response response = applyRulesWithNoParameters("/notice-policy");
+    final Response response = circulationRulesFixture
+      .attemptToApplyRulesWithNoParameters("/notice-policy");
 
     assertThat(response.getStatusCode(), is(400));
-  }
-
-  private Response applyRulesWithNoParameters(String path) {
-    return restAssuredClient.get(circulationRulesUrl(path), 400,
-        "apply-rules-with-no-parameters");
   }
 
   @Test
@@ -203,8 +191,9 @@ public class CirculationRulesEngineAPITests extends APITests {
   private void applyInvalidUuid(String itemType, String loanType,
     String patronGroup, String location, String type) {
 
-    final Response response = applyRulesWithInvalidParameters(type, itemType,
-        loanType, patronGroup, location);
+    final Response response = circulationRulesFixture
+      .attemptToApplyRulesWithInvalidParameters(type,
+        itemType, loanType, patronGroup, location);
 
     assertThat(response.getBody(), containsString("uuid"));
   }
@@ -330,7 +319,8 @@ public class CirculationRulesEngineAPITests extends APITests {
     setRules(rulesFallback);
     assertThat(applyRulesForLoanPolicy(m1, t1, g1, s1), is(lp6));
 
-    updateCirculationRulesInStorageWithoutInvalidatingCache(rulesFallback2);
+    circulationRulesFixture.updateCirculationRulesWithoutInvalidatingCache(
+      rulesFallback2);
 
     assertThat(applyRulesForLoanPolicy(m1, t1, g1, s1), is(lp6));
 
@@ -359,17 +349,6 @@ public class CirculationRulesEngineAPITests extends APITests {
 
     return circulationRulesFixture.applyRulesForNoticePolicy(itemType, loanType,
       patronGroup, location);
-  }
-
-  private void updateCirculationRulesInStorageWithoutInvalidatingCache(String rules) {
-    JsonObject json = new JsonObject().put("rulesAsText", rules);
-
-    restAssuredClient.beginRequest("update-rules-in-storage")
-      .body(json.encodePrettily())
-      .when()
-      .put(circulationRulesStorageUrl(""))
-      .then()
-      .log().all();
   }
 
   private void matchesLoanPolicy(JsonArray array, int match, Policy policy,
@@ -408,38 +387,13 @@ public class CirculationRulesEngineAPITests extends APITests {
         o.getInteger("circulationRuleLine"), is(line));
   }
 
-  private Response applyRulesWithInvalidParameters(String type, String itemType,
-      String loanType, String patronGroup, String location) {
-
-    final List<QueryStringParameter> parameters = new ArrayList<>();
-
-    if(itemType != null) {
-      parameters.add(namedParameter("item_type_id", itemType));
-    }
-
-    if(loanType != null) {
-      parameters.add(namedParameter("loan_type_id", loanType));
-    }
-
-    if(patronGroup != null) {
-      parameters.add(namedParameter("patron_type_id", patronGroup));
-    }
-
-    if(location != null) {
-      parameters.add(namedParameter("location_id", location));
-    }
-
-    return restAssuredClient.get(
-      circulationRulesUrl("/" + type + "-policy"), parameters,
-      400, "apply-rules-with-invalid-parameters");
-  }
-
   private void applyRulesWithMissingParameters(String type, String itemType,
-      String loanType, String patronGroup, String location,
-      String missingParameterName) {
+    String loanType, String patronGroup, String location,
+    String missingParameterName) {
 
-    final Response response = applyRulesWithInvalidParameters(type, itemType,
-        loanType, patronGroup, location);
+    final Response response = circulationRulesFixture
+      .attemptToApplyRulesWithInvalidParameters(type, itemType, loanType,
+        patronGroup, location);
 
     assertThat(response.getBody(), containsString(missingParameterName));
   }

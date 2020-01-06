@@ -46,11 +46,7 @@ import io.vertx.core.json.JsonObject;
 
 public class ChangeDueDateTests extends APITests {
   @Test
-  public void canManuallyChangeTheDueDateOfLoan()
-    throws InterruptedException,
-    TimeoutException,
-    ExecutionException {
-
+  public void canManuallyChangeTheDueDateOfLoan() {
     final InventoryItemResource item = itemsFixture.basedUponNod();
 
     IndividualResource loan = loansFixture.checkOutByBarcode(item);
@@ -65,15 +61,7 @@ public class ChangeDueDateTests extends APITests {
     write(loanToChange, "action", "dueDateChange");
     write(loanToChange, "dueDate", newDueDate);
 
-    CompletableFuture<Response> putCompleted = new CompletableFuture<>();
-
-    client.put(loansUrl(String.format("/%s", loan.getId())), loanToChange,
-      ResponseHandler.any(putCompleted));
-
-    Response putResponse = putCompleted.get(5, TimeUnit.SECONDS);
-
-    assertThat(String.format("Failed to update loan: %s",
-      putResponse.getBody()), putResponse.getStatusCode(), is(HTTP_NO_CONTENT));
+    loansFixture.replaceLoan(loan.getId(), loanToChange);
 
     Response updatedLoanResponse = loansClient.getById(loan.getId());
 
@@ -112,11 +100,7 @@ public class ChangeDueDateTests extends APITests {
   }
 
   @Test
-  public void canChangeDueDateOfLoanWithOpenRequest()
-    throws InterruptedException,
-    TimeoutException,
-    ExecutionException {
-
+  public void canChangeDueDateOfLoanWithOpenRequest() {
     final InventoryItemResource item = itemsFixture.basedUponNod();
 
     IndividualResource loan = loansFixture.checkOutByBarcode(item);
@@ -137,15 +121,7 @@ public class ChangeDueDateTests extends APITests {
     write(loanToChange, "action", "dueDateChange");
     write(loanToChange, "dueDate", newDueDate);
 
-    CompletableFuture<Response> putCompleted = new CompletableFuture<>();
-
-    client.put(loansUrl(String.format("/%s", loan.getId())), loanToChange,
-      ResponseHandler.any(putCompleted));
-
-    Response putResponse = putCompleted.get(5, TimeUnit.SECONDS);
-
-    assertThat(String.format("Failed to update loan: %s",
-      putResponse.getBody()), putResponse.getStatusCode(), is(HTTP_NO_CONTENT));
+    loansFixture.replaceLoan(loan.getId(), loanToChange);
 
     Response updatedLoanResponse = loansClient.getById(loan.getId());
 
@@ -185,10 +161,7 @@ public class ChangeDueDateTests extends APITests {
 
 
   @Test
-  public void manualDueDateChangeNoticeIsSentWhenPolicyDefinesManualDueDateChangeNoticeConfiguration()
-    throws InterruptedException,
-    TimeoutException,
-    ExecutionException {
+  public void manualDueDateChangeNoticeIsSentWhenPolicyDefinesManualDueDateChangeNoticeConfiguration() {
 
     UUID manualDueDateChangeTemplateId = UUID.randomUUID();
     JsonObject manualDueDateChangeNoticeConfiguration = new NoticeConfigurationBuilder()

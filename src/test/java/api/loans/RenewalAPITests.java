@@ -20,7 +20,6 @@ import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static api.support.matchers.ValidationErrorMatchers.hasParameter;
 import static api.support.matchers.ValidationErrorMatchers.hasUUIDParameter;
-import static java.net.HttpURLConnection.HTTP_OK;
 import static org.folio.circulation.domain.policy.library.ClosedLibraryStrategyUtils.END_OF_A_DAY;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.containsString;
@@ -28,26 +27,22 @@ import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
-import java.net.MalformedURLException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import api.support.builders.RequestBuilder;
 import org.apache.commons.lang3.StringUtils;
 import org.awaitility.Awaitility;
 import org.folio.circulation.domain.policy.DueDateManagement;
 import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
-import org.folio.circulation.support.http.client.ResponseHandler;
 import org.folio.circulation.support.http.server.ValidationError;
 import org.hamcrest.Matcher;
 import org.hamcrest.MatcherAssert;
@@ -59,7 +54,6 @@ import org.joda.time.DateTimeZone;
 import org.joda.time.Seconds;
 import org.junit.Test;
 
-import api.support.APITestContext;
 import api.support.APITests;
 import api.support.builders.CheckOutByBarcodeRequestBuilder;
 import api.support.builders.FixedDueDateSchedule;
@@ -68,6 +62,7 @@ import api.support.builders.ItemBuilder;
 import api.support.builders.LoanPolicyBuilder;
 import api.support.builders.NoticeConfigurationBuilder;
 import api.support.builders.NoticePolicyBuilder;
+import api.support.builders.RequestBuilder;
 import api.support.fixtures.ConfigurationExample;
 import api.support.fixtures.ItemExamples;
 import api.support.fixtures.TemplateContextMatchers;
@@ -131,10 +126,7 @@ abstract class RenewalAPITests extends APITests {
   }
 
   @Test
-  public void canRenewRollingLoanFromCurrentDueDate()
-    throws InterruptedException,
-    TimeoutException,
-    ExecutionException {
+  public void canRenewRollingLoanFromCurrentDueDate() {
 
     configClient.create(ConfigurationExample.utcTimezoneConfiguration());
 
@@ -187,10 +179,7 @@ abstract class RenewalAPITests extends APITests {
   }
 
   @Test
-  public void canRenewUsingDueDateLimitedRollingLoanPolicy()
-    throws InterruptedException,
-    TimeoutException,
-    ExecutionException {
+  public void canRenewUsingDueDateLimitedRollingLoanPolicy() {
 
     FixedDueDateSchedulesBuilder dueDateLimitSchedule = new FixedDueDateSchedulesBuilder()
       .withName("March Only Due Date Limit")
@@ -233,10 +222,7 @@ abstract class RenewalAPITests extends APITests {
   }
 
   @Test
-  public void canRenewRollingLoanUsingDifferentPeriod()
-    throws InterruptedException,
-    TimeoutException,
-    ExecutionException {
+  public void canRenewRollingLoanUsingDifferentPeriod() {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource jessica = usersFixture.jessica();
@@ -288,10 +274,7 @@ abstract class RenewalAPITests extends APITests {
   }
 
   @Test
-  public void canRenewUsingAlternateDueDateLimitedRollingLoanPolicy()
-    throws InterruptedException,
-    TimeoutException,
-    ExecutionException {
+  public void canRenewUsingAlternateDueDateLimitedRollingLoanPolicy() {
 
     FixedDueDateSchedulesBuilder dueDateLimitSchedule = new FixedDueDateSchedulesBuilder()
       .withName("March Only Due Date Limit")
@@ -335,10 +318,7 @@ abstract class RenewalAPITests extends APITests {
   }
 
   @Test
-  public void canRenewUsingLoanDueDateLimitSchedulesWhenDifferentPeriodAndNotAlternateLimits()
-    throws InterruptedException,
-    TimeoutException,
-    ExecutionException {
+  public void canRenewUsingLoanDueDateLimitSchedulesWhenDifferentPeriodAndNotAlternateLimits() {
 
     FixedDueDateSchedulesBuilder dueDateLimitSchedule = new FixedDueDateSchedulesBuilder()
       .withName("March Only Due Date Limit")
@@ -382,10 +362,7 @@ abstract class RenewalAPITests extends APITests {
   }
 
   @Test
-  public void canCheckOutUsingFixedDueDateLoanPolicy()
-    throws InterruptedException,
-    TimeoutException,
-    ExecutionException {
+  public void canCheckOutUsingFixedDueDateLoanPolicy() {
 
     //TODO: Need to be able to inject system date here
     final DateTime renewalDate = DateTime.now(DateTimeZone.UTC);
@@ -440,10 +417,7 @@ abstract class RenewalAPITests extends APITests {
   }
 
   @Test
-  public void canRenewMultipleTimesUpToRenewalLimit()
-    throws InterruptedException,
-    TimeoutException,
-    ExecutionException {
+  public void canRenewMultipleTimesUpToRenewalLimit() {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource jessica = usersFixture.jessica();
@@ -492,11 +466,7 @@ abstract class RenewalAPITests extends APITests {
   }
 
   @Test
-  public void canGetRenewedLoan()
-    throws InterruptedException,
-    TimeoutException,
-    ExecutionException {
-
+  public void canGetRenewedLoan() {
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource jessica = usersFixture.jessica();
 
@@ -510,14 +480,7 @@ abstract class RenewalAPITests extends APITests {
 
     final IndividualResource response = renew(smallAngryPlanet, jessica);
 
-    final CompletableFuture<Response> getCompleted = new CompletableFuture<>();
-
-    client.get(APITestContext.circulationModuleUrl(response.getLocation()),
-      ResponseHandler.json(getCompleted));
-
-    final Response getResponse = getCompleted.get(2, TimeUnit.SECONDS);
-
-    assertThat(getResponse.getStatusCode(), is(HTTP_OK));
+    final Response getResponse = loansFixture.getLoanByLocation(response);
 
     JsonObject renewedLoan = getResponse.getJson();
 
@@ -546,10 +509,7 @@ abstract class RenewalAPITests extends APITests {
   }
 
   @Test
-  public void cannotRenewWhenLoanPolicyDoesNotExist()
-    throws InterruptedException,
-    TimeoutException,
-    ExecutionException {
+  public void cannotRenewWhenLoanPolicyDoesNotExist() {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource jessica = usersFixture.jessica();
@@ -574,10 +534,7 @@ abstract class RenewalAPITests extends APITests {
   }
 
   @Test
-  public void canRenewLoanWithAnotherLoanPolicyName()
-          throws InterruptedException,
-    TimeoutException,
-          ExecutionException {
+  public void canRenewLoanWithAnotherLoanPolicyName() {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource jessica = usersFixture.jessica();
@@ -603,10 +560,7 @@ abstract class RenewalAPITests extends APITests {
   }
 
   @Test
-  public void cannotRenewWhenRenewalLimitReached()
-    throws InterruptedException,
-    TimeoutException,
-    ExecutionException {
+  public void cannotRenewWhenRenewalLimitReached() {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource jessica = usersFixture.jessica();
@@ -638,10 +592,7 @@ abstract class RenewalAPITests extends APITests {
   }
 
   @Test
-  public void multipleRenewalFailuresWhenLoanHasReachedMaximumNumberOfRenewalsAndOpenRecallRequest()
-    throws InterruptedException,
-    TimeoutException,
-    ExecutionException {
+  public void multipleRenewalFailuresWhenLoanHasReachedMaximumNumberOfRenewalsAndOpenRecallRequest() {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource jessica = usersFixture.jessica();
@@ -682,10 +633,7 @@ abstract class RenewalAPITests extends APITests {
   }
 
   @Test
-  public void multipleReasonsWhyCannotRenewWhenRenewalLimitReachedAndDueDateNotChanged()
-    throws InterruptedException,
-    TimeoutException,
-    ExecutionException {
+  public void multipleReasonsWhyCannotRenewWhenRenewalLimitReachedAndDueDateNotChanged() {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource jessica = usersFixture.jessica();
@@ -728,10 +676,7 @@ abstract class RenewalAPITests extends APITests {
   }
 
   @Test
-  public void cannotRenewWhenNonRenewableRollingPolicy()
-    throws InterruptedException,
-    TimeoutException,
-    ExecutionException {
+  public void cannotRenewWhenNonRenewableRollingPolicy() {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource jessica = usersFixture.jessica();
@@ -758,10 +703,7 @@ abstract class RenewalAPITests extends APITests {
   }
 
   @Test
-  public void cannotRenewWhenNonRenewableFixedPolicy()
-    throws InterruptedException,
-    TimeoutException,
-    ExecutionException {
+  public void cannotRenewWhenNonRenewableFixedPolicy() {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource jessica = usersFixture.jessica();
@@ -796,10 +738,7 @@ abstract class RenewalAPITests extends APITests {
   }
 
   @Test
-  public void cannotRenewWhenItemIsNotLoanable()
-    throws InterruptedException,
-    TimeoutException,
-    ExecutionException {
+  public void cannotRenewWhenItemIsNotLoanable() {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource jessica = usersFixture.jessica();
@@ -884,10 +823,7 @@ abstract class RenewalAPITests extends APITests {
   }
 
   @Test
-  public void testMoveToEndOfPreviousOpenDay()
-    throws InterruptedException,
-    TimeoutException,
-    ExecutionException {
+  public void testMoveToEndOfPreviousOpenDay() {
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource jessica = usersFixture.jessica();
     UUID checkoutServicePointId = UUID.fromString(CASE_FRI_SAT_MON_SERVICE_POINT_ID);
@@ -930,10 +866,7 @@ abstract class RenewalAPITests extends APITests {
   }
 
   @Test
-  public void testMoveToEndOfNextOpenDay()
-    throws InterruptedException,
-    TimeoutException,
-    ExecutionException {
+  public void testMoveToEndOfNextOpenDay() {
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource jessica = usersFixture.jessica();
     UUID checkoutServicePointId = UUID.fromString(CASE_FRI_SAT_MON_SERVICE_POINT_ID);
@@ -976,10 +909,7 @@ abstract class RenewalAPITests extends APITests {
   }
 
   @Test
-  public void testMoveToEndOfNextOpenServicePointHours()
-    throws InterruptedException,
-    TimeoutException,
-    ExecutionException {
+  public void testMoveToEndOfNextOpenServicePointHours() {
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource jessica = usersFixture.jessica();
     UUID checkoutServicePointId = UUID.fromString(CASE_FRI_SAT_MON_SERVICE_POINT_ID);
@@ -1020,10 +950,7 @@ abstract class RenewalAPITests extends APITests {
   }
 
   @Test
-  public void testMoveToEndOfCurrentServicePointHours()
-    throws InterruptedException,
-    TimeoutException,
-    ExecutionException {
+  public void testMoveToEndOfCurrentServicePointHours() {
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource jessica = usersFixture.jessica();
     UUID checkoutServicePointId = UUID.fromString(CASE_WED_THU_FRI_SERVICE_POINT_ID);
@@ -1068,7 +995,7 @@ abstract class RenewalAPITests extends APITests {
   }
 
   @Test
-  public void testRespectSelectedTimezoneForDueDateCalculations() throws Exception {
+  public void testRespectSelectedTimezoneForDueDateCalculations() {
 
     String expectedTimeZone = "America/New_York";
 
@@ -1181,10 +1108,7 @@ abstract class RenewalAPITests extends APITests {
   }
 
   @Test
-  public void cannotRenewWhenCurrentDueDateDoesNotFallWithinLimitingDueDateSchedule() throws
-    InterruptedException,
-    ExecutionException,
-    TimeoutException {
+  public void cannotRenewWhenCurrentDueDateDoesNotFallWithinLimitingDueDateSchedule() {
 
     DateTime futureDateTime = DateTime.now(DateTimeZone.UTC).plusMonths(1);
 
@@ -1280,10 +1204,7 @@ abstract class RenewalAPITests extends APITests {
   }
 
   @Test
-  public void renewalNoticeIsSentWhenPolicyDefinesRenewalNoticeConfiguration()
-    throws InterruptedException,
-    TimeoutException,
-    ExecutionException {
+  public void renewalNoticeIsSentWhenPolicyDefinesRenewalNoticeConfiguration() {
 
     UUID renewalTemplateId = UUID.randomUUID();
     JsonObject renewalNoticeConfiguration = new NoticeConfigurationBuilder()
@@ -1347,10 +1268,7 @@ abstract class RenewalAPITests extends APITests {
         hasEmailNoticeProperties(steve.getId(), renewalTemplateId, noticeContextMatchers)));
   }
 
-  private void checkRenewalAttempt(DateTime expectedDueDate, UUID dueDateLimitedPolicyId)
-    throws InterruptedException,
-    TimeoutException,
-    ExecutionException {
+  private void checkRenewalAttempt(DateTime expectedDueDate, UUID dueDateLimitedPolicyId) {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource jessica = usersFixture.jessica();

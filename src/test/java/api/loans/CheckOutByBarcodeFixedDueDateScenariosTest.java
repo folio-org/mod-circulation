@@ -33,11 +33,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 public class CheckOutByBarcodeFixedDueDateScenariosTest extends APITests {
 
   @Test
-  public void shouldUseMoveToThePreviousOpenDayStrategyForLongTermLoanPolicyWhenDueDateExtendsBeyondFixedDueDate()
-    throws
-    InterruptedException,
-    TimeoutException,
-    ExecutionException {
+  public void shouldUseMoveToThePreviousOpenDayStrategyForLongTermLoanPolicyWhenDueDateExtendsBeyondFixedDueDate() {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource jessica = usersFixture.jessica();
@@ -77,11 +73,7 @@ public class CheckOutByBarcodeFixedDueDateScenariosTest extends APITests {
   }
 
   @Test
-  public void shouldUseMoveToThePreviousOpenDayStrategyForFixedLoanPolicyWhenDueDateExtendsBeyondFixedDueDate()
-    throws
-    InterruptedException,
-    TimeoutException,
-    ExecutionException {
+  public void shouldUseMoveToThePreviousOpenDayStrategyForFixedLoanPolicyWhenDueDateExtendsBeyondFixedDueDate() {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource jessica = usersFixture.jessica();
@@ -122,11 +114,7 @@ public class CheckOutByBarcodeFixedDueDateScenariosTest extends APITests {
 
 
   @Test
-  public void shouldUseSelectedClosedLibraryStrategyWhenDueDateDoesNotExtendBeyondFixedDueDate()
-    throws
-    InterruptedException,
-    TimeoutException,
-    ExecutionException {
+  public void shouldUseSelectedClosedLibraryStrategyWhenDueDateDoesNotExtendBeyondFixedDueDate() {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource jessica = usersFixture.jessica();

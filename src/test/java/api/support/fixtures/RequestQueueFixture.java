@@ -1,56 +1,35 @@
 package api.support.fixtures;
 
+import static api.support.http.InterfaceUrls.reorderQueueUrl;
+import static api.support.http.InterfaceUrls.requestQueueUrl;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-
-import org.folio.circulation.support.http.client.OkapiHttpClient;
 import org.folio.circulation.support.http.client.Response;
-import org.folio.circulation.support.http.client.ResponseHandler;
 
-import api.support.http.InterfaceUrls;
+import api.support.RestAssuredClient;
 import io.vertx.core.json.JsonObject;
 
 public class RequestQueueFixture {
-  private final OkapiHttpClient okapiHttpClient;
+  private final RestAssuredClient restAssuredClient;
 
-  public RequestQueueFixture(OkapiHttpClient client) {
-    this.okapiHttpClient = client;
+  public RequestQueueFixture(RestAssuredClient restAssuredClient) {
+    this.restAssuredClient = restAssuredClient;
   }
 
-  public Response attemptReorderQueue(String itemId, JsonObject reorderQueue)
-    throws InterruptedException, ExecutionException, TimeoutException {
-
-    CompletableFuture<Response> reorderCompleted = new CompletableFuture<>();
-
-    okapiHttpClient.post(InterfaceUrls.reorderQueueUrl(itemId), reorderQueue,
-      ResponseHandler.any(reorderCompleted));
-
-    return reorderCompleted.get(5, TimeUnit.SECONDS);
+  public Response attemptReorderQueue(String itemId, JsonObject reorderQueue) {
+    return restAssuredClient.post(reorderQueue, reorderQueueUrl(itemId),
+      "attempt-to-reorder-request-queue");
   }
 
-  public JsonObject reorderQueue(String itemId, JsonObject reorderQueue)
-    throws InterruptedException, ExecutionException, TimeoutException {
-
-    Response response = attemptReorderQueue(itemId, reorderQueue);
-
-    assertThat(response.getStatusCode(), is(200));
-    return response.getJson();
+  public JsonObject reorderQueue(String itemId, JsonObject reorderQueue) {
+    return restAssuredClient.post(reorderQueue, reorderQueueUrl(itemId),
+      200, "reorder-request-queue").getJson();
   }
 
-  public JsonObject retrieveQueue(String itemId) throws Exception {
-    CompletableFuture<Response> readCompleted = new CompletableFuture<>();
-
-    okapiHttpClient.get(InterfaceUrls.requestQueueUrl(itemId),
-      ResponseHandler.json(readCompleted));
-
-    Response response = readCompleted.get(5, TimeUnit.SECONDS);
-
-    assertThat(response.getStatusCode(), is(200));
-    return response.getJson();
+  //TODO: Consolidate with similar method in requests fixture
+  public JsonObject retrieveQueue(String itemId) {
+    return restAssuredClient.get(requestQueueUrl(itemId), 200,
+      "get-request-queue").getJson();
   }
 }

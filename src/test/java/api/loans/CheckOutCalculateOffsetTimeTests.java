@@ -486,10 +486,7 @@ public class CheckOutCalculateOffsetTimeTests extends APITests {
     return new DateTime(dateTime.toString()).withZoneRetainFields(DateTimeZone.UTC);
   }
 
-  private IndividualResource createLoanPolicy(JsonObject loanPolicyEntry)
-    throws InterruptedException,
-    TimeoutException,
-    ExecutionException {
+  private IndividualResource createLoanPolicy(JsonObject loanPolicyEntry) {
 
     IndividualResource loanPolicy = loanPoliciesFixture.create(loanPolicyEntry);
 

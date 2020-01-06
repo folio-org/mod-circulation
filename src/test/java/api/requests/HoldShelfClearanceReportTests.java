@@ -106,9 +106,9 @@ public class HoldShelfClearanceReportTests extends APITests {
 
   @Test
   public void multipleClosedPickupExpiredRequest() {
-
     final InventoryItemResource smallAngryPlanet = itemsFixture
       .basedUponSmallAngryPlanet(itemsFixture.addCallNumberStringComponents());
+
     final InventoryItemResource temeraire = itemsFixture
       .basedUponTemeraire(itemsFixture.addCallNumberStringComponents("tem"));
 

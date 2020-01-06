@@ -1033,10 +1033,7 @@ public class CheckOutCalculateDueDateTests extends APITests {
       .create();
   }
 
-  private IndividualResource createLoanPolicy(JsonObject loanPolicyEntry)
-    throws InterruptedException,
-    TimeoutException,
-    ExecutionException {
+  private IndividualResource createLoanPolicy(JsonObject loanPolicyEntry) {
 
     IndividualResource loanPolicy = loanPoliciesFixture.create(loanPolicyEntry);
 
