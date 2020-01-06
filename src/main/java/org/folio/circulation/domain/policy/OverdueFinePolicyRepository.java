@@ -5,6 +5,7 @@ import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.support.Clients;
+import org.folio.circulation.support.FetchSingleRecord;
 import org.folio.circulation.support.MultipleRecordFetcher;
 import org.folio.circulation.support.Result;
 
@@ -14,6 +15,8 @@ import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
+import static java.util.Objects.isNull;
+import static org.folio.circulation.support.Result.ofAsync;
 import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.ResultBinding.mapResult;
 
@@ -83,5 +86,25 @@ public class OverdueFinePolicyRepository extends CirculationPolicyRepository<Ove
   private MultipleRecordFetcher<OverdueFinePolicy> createOverdueFinePoliciesFetcher() {
     return new MultipleRecordFetcher<>(policyStorageClient,
       "overdueFinePolicies", OverdueFinePolicy::from);
+  }
+
+  public CompletableFuture<Result<Loan>> findOverdueFinePolicyForLoan(Result<Loan> loanResult) {
+    return loanResult.after(loan ->
+      getOverdueFinePolicyById(loan.getOverdueFinePolicyId())
+        .thenApply(result -> result.map(loan::withOverdueFinePolicy)));
+  }
+
+  private CompletableFuture<Result<OverdueFinePolicy>> getOverdueFinePolicyById(
+    String overdueFinePolicyId) {
+
+    if (isNull(overdueFinePolicyId)) {
+      return ofAsync(() -> OverdueFinePolicy.unknown(null));
+    }
+
+    return FetchSingleRecord.<OverdueFinePolicy>forRecord("overdueFinePolicies")
+      .using(policyStorageClient)
+      .mapTo(OverdueFinePolicy::from)
+      .whenNotFound(succeeded(OverdueFinePolicy.unknown(overdueFinePolicyId)))
+      .fetch(overdueFinePolicyId);
   }
 }

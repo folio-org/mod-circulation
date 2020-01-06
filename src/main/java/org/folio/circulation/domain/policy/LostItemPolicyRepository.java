@@ -5,6 +5,7 @@ import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.support.Clients;
+import org.folio.circulation.support.FetchSingleRecord;
 import org.folio.circulation.support.MultipleRecordFetcher;
 import org.folio.circulation.support.Result;
 
@@ -14,6 +15,8 @@ import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
+import static java.util.Objects.isNull;
+import static org.folio.circulation.support.Result.ofAsync;
 import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.ResultBinding.mapResult;
 
@@ -81,5 +84,27 @@ public class LostItemPolicyRepository extends CirculationPolicyRepository<LostIt
   private MultipleRecordFetcher<LostItemPolicy> createLostItemPoliciesFetcher() {
     return new MultipleRecordFetcher<>(policyStorageClient,
       "lostItemFeePolicies", LostItemPolicy::from);
+  }
+
+  public CompletableFuture<Result<Loan>> findLostItemPolicyForLoan(
+    Result<Loan> loanResult) {
+
+    return loanResult.after(loan ->
+      getLostItemPolicyById(loan.getLostItemPolicyId())
+        .thenApply(result -> result.map(loan::withLostItemPolicy)));
+  }
+
+  private CompletableFuture<Result<LostItemPolicy>> getLostItemPolicyById(
+    String lostItemPolicyId) {
+
+    if (isNull(lostItemPolicyId)) {
+      return ofAsync(() -> LostItemPolicy.unknown(null));
+    }
+
+    return FetchSingleRecord.<LostItemPolicy>forRecord("lostItemFeePolicies")
+      .using(policyStorageClient)
+      .mapTo(LostItemPolicy::from)
+      .whenNotFound(succeeded(LostItemPolicy.unknown(lostItemPolicyId)))
+      .fetch(lostItemPolicyId);
   }
 }
