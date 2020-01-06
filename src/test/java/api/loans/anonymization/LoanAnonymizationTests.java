@@ -4,15 +4,8 @@ import static api.support.APITestContext.getOkapiHeadersFromContext;
 import static api.support.http.InterfaceUrls.circulationAnonymizeLoansInTenantURL;
 import static api.support.http.InterfaceUrls.circulationAnonymizeLoansURL;
 
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.UUID;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeoutException;
-
-import org.folio.circulation.support.http.client.IndividualResource;
-import org.folio.circulation.support.http.client.Response;
-import org.joda.time.DateTime;
 
 import api.support.APITests;
 import api.support.builders.AccountBuilder;
@@ -22,6 +15,10 @@ import api.support.builders.LoanHistoryConfigurationBuilder;
 import api.support.http.InventoryItemResource;
 import api.support.http.TimedTaskClient;
 import io.vertx.core.json.JsonObject;
+import org.joda.time.DateTime;
+
+import org.folio.circulation.support.http.client.IndividualResource;
+import org.folio.circulation.support.http.client.Response;
 
 abstract class LoanAnonymizationTests extends APITests {
   protected static final int ONE_MINUTE_AND_ONE = 60001;

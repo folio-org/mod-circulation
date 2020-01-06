@@ -6,18 +6,19 @@ import static org.hamcrest.CoreMatchers.nullValue;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 
-import org.folio.circulation.support.ClockManager;
-import org.folio.circulation.support.JsonPropertyFetcher;
-import org.folio.circulation.support.http.client.IndividualResource;
+import java.util.UUID;
 
 import api.support.APITestContext;
 import api.support.APITests;
 import api.support.http.OkapiHeaders;
 import io.vertx.core.json.JsonObject;
-import java.util.UUID;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.junit.Test;
+
+import org.folio.circulation.support.ClockManager;
+import org.folio.circulation.support.JsonPropertyFetcher;
+import org.folio.circulation.support.http.client.IndividualResource;
 
 public class ItemLastCheckInTests extends APITests {
 
