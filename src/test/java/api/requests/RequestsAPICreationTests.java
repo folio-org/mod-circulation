@@ -361,40 +361,6 @@ public class RequestsAPICreationTests extends APITests {
       hasUUIDParameter("userId", rebecca.getId()))));
   }
 
-  //TODO: Remove this once sample data is updated, temporary to aid change of item status case
-  @Test()
-  public void canCreateARequestEvenWithDifferentCaseCheckedOutStatus() {
-
-    UUID id = UUID.randomUUID();
-
-    final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
-    final IndividualResource steve = usersFixture.steve();
-    final IndividualResource rebecca = usersFixture.rebecca();
-    final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
-
-    UUID itemId = smallAngryPlanet.getId();
-
-    loansFixture.checkOutByBarcode(smallAngryPlanet, rebecca);
-
-    JsonObject itemWithChangedStatus = smallAngryPlanet.copyJson()
-      .put("status", new JsonObject().put("name", "Checked out"));
-
-    itemsClient.replace(itemId, itemWithChangedStatus);
-
-    DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
-
-    requestsFixture.place(new RequestBuilder()
-      .recall()
-      .withId(id)
-      .withRequestDate(requestDate)
-      .forItem(smallAngryPlanet)
-      .by(steve)
-      .withPickupServicePointId(pickupServicePointId)
-      .fulfilToHoldShelf()
-      .withRequestExpiration(new LocalDate(2017, 7, 30))
-      .withHoldShelfExpiration(new LocalDate(2017, 8, 31)));
-  }
-
   @Test
   @Parameters({
     "Open - Not yet filled",
