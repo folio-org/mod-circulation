@@ -2,16 +2,18 @@ package api.requests;
 
 import static api.support.JsonCollectionAssistant.getRecordById;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
-import static org.folio.circulation.support.JsonStringArrayHelper.toList;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
-import org.folio.circulation.domain.ItemStatus;
-import org.folio.circulation.support.JsonPropertyFetcher;
-import org.folio.circulation.support.http.client.IndividualResource;
+import static org.folio.circulation.support.JsonStringArrayHelper.toList;
+
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.UUID;
 
 import api.support.APITests;
 import api.support.builders.CheckInByBarcodeRequestBuilder;
@@ -22,19 +24,16 @@ import api.support.http.InventoryItemResource;
 import api.support.http.ResourceClient;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
-import java.net.MalformedURLException;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.UUID;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeoutException;
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.LocalDate;
 import org.junit.Assert;
 import org.junit.Test;
+
+import org.folio.circulation.domain.ItemStatus;
+import org.folio.circulation.support.JsonPropertyFetcher;
+import org.folio.circulation.support.http.client.IndividualResource;
 
 public class ItemsInTransitReportTests extends APITests {
 

@@ -3,8 +3,9 @@ package org.folio.circulation.domain;
 import static java.lang.Boolean.TRUE;
 import static java.util.Objects.nonNull;
 import static java.util.Objects.requireNonNull;
-import static org.folio.circulation.domain.LoanAction.CHECKED_OUT;
+
 import static org.folio.circulation.domain.LoanAction.CHECKED_IN;
+import static org.folio.circulation.domain.LoanAction.CHECKED_OUT;
 import static org.folio.circulation.domain.LoanAction.DECLARED_LOST;
 import static org.folio.circulation.domain.LoanAction.RENEWED;
 import static org.folio.circulation.domain.LoanAction.RENEWED_THROUGH_OVERRIDE;
@@ -32,10 +33,11 @@ import java.util.UUID;
 
 import io.vertx.core.json.JsonObject;
 import org.apache.commons.lang3.StringUtils;
+import org.joda.time.DateTime;
+
 import org.folio.circulation.domain.policy.LoanPolicy;
 import org.folio.circulation.domain.representations.LoanProperties;
 import org.folio.circulation.support.Result;
-import org.joda.time.DateTime;
 
 public class Loan implements ItemRelatedRecord, UserRelatedRecord {
 

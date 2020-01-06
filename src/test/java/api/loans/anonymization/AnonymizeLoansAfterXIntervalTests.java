@@ -5,14 +5,15 @@ import static api.support.matchers.LoanMatchers.isAnonymized;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 
-import org.folio.circulation.support.http.client.IndividualResource;
+import java.util.UUID;
 
 import api.support.builders.CheckOutByBarcodeRequestBuilder;
 import api.support.builders.LoanHistoryConfigurationBuilder;
-import java.util.UUID;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.junit.Test;
+
+import org.folio.circulation.support.http.client.IndividualResource;
 
 public class AnonymizeLoansAfterXIntervalTests extends LoanAnonymizationTests {
 
