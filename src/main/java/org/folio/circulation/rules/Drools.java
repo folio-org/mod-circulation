@@ -77,13 +77,13 @@ public class Drools {
    * @param location - location with institution, library and campus
    * @return PolicyId object with the name of the loan policy and list of rule conditions
    */
-  public CirculationRulePolicyIdEntity loanPolicy(MultiMap params, Location location) {
+  public CirculationRuleMatchEntity loanPolicy(MultiMap params, Location location) {
     KieSession kieSession = createSession(params, location);
     RuleEventListener ruleEventListener = new RuleEventListener();
     kieSession.addEventListener(ruleEventListener);
     kieSession.fireAllRules();
     kieSession.dispose();
-    return new CirculationRulePolicyIdEntity(match.loanPolicyId, ruleEventListener.getRuleConditions());
+    return new CirculationRuleMatchEntity(match.loanPolicyId, ruleEventListener.getRuleConditions());
   }
 
   /**
@@ -118,11 +118,11 @@ public class Drools {
    * @param location - location with institution, library and campus
    * @return PolicyId object with the name of the loan policy and list of rule conditions
    */
-  public CirculationRulePolicyIdEntity requestPolicy(MultiMap params, Location location) {
+  public CirculationRuleMatchEntity requestPolicy(MultiMap params, Location location) {
     KieSession kieSession = createSession(params, location);
     kieSession.fireAllRules();
     kieSession.dispose();
-    return new CirculationRulePolicyIdEntity(match.requestPolicyId, new ArrayList<>());
+    return new CirculationRuleMatchEntity(match.requestPolicyId, new ArrayList<>());
   }
 
    /**
@@ -157,11 +157,11 @@ public class Drools {
    * @param location - location with institution, library and campus
    * @return PolicyId object with the name of the loan policy and list of rule conditions
    */
-  public CirculationRulePolicyIdEntity noticePolicy(MultiMap params, Location location) {
+  public CirculationRuleMatchEntity noticePolicy(MultiMap params, Location location) {
     KieSession kieSession = createSession(params, location);
     kieSession.fireAllRules();
     kieSession.dispose();
-    return new CirculationRulePolicyIdEntity(match.noticePolicyId, new ArrayList<>());
+    return new CirculationRuleMatchEntity(match.noticePolicyId, new ArrayList<>());
   }
 
    /**
