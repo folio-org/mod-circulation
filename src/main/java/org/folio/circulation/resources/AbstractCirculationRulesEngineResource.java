@@ -6,13 +6,23 @@ import static org.folio.circulation.support.http.server.ServerErrorResponse.inte
 
 import java.lang.invoke.MethodHandles;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
+import io.vertx.core.Handler;
+import io.vertx.core.MultiMap;
+import io.vertx.core.http.HttpClient;
+import io.vertx.core.http.HttpServerRequest;
+import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
+import io.vertx.ext.web.Router;
+import io.vertx.ext.web.RoutingContext;
 import org.apache.commons.lang3.exception.ExceptionUtils;
-import org.apache.commons.lang3.tuple.Pair;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import org.folio.circulation.domain.Location;
+import org.folio.circulation.rules.CirculationRulePolicyIdEntity;
 import org.folio.circulation.rules.Drools;
 import org.folio.circulation.rules.Text2Drools;
 import org.folio.circulation.support.Clients;
@@ -24,17 +34,6 @@ import org.folio.circulation.support.ServerErrorFailure;
 import org.folio.circulation.support.http.server.ClientErrorResponse;
 import org.folio.circulation.support.http.server.ForwardResponse;
 import org.folio.circulation.support.http.server.WebContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import io.vertx.core.Handler;
-import io.vertx.core.MultiMap;
-import io.vertx.core.http.HttpClient;
-import io.vertx.core.http.HttpServerRequest;
-import io.vertx.core.json.JsonArray;
-import io.vertx.core.json.JsonObject;
-import io.vertx.ext.web.Router;
-import io.vertx.ext.web.RoutingContext;
 
 /**
  * The circulation rules engine calculates the loan policy based on
@@ -279,10 +278,10 @@ public abstract class AbstractCirculationRulesEngineResource extends Resource {
     });
   }
 
-  private CompletableFuture<Result<JsonObject>> buildJsonResult(Pair<String, List<String>> policyIdAndConditionsPair) {
+  private CompletableFuture<Result<JsonObject>> buildJsonResult(CirculationRulePolicyIdEntity entity) {
     return CompletableFuture.completedFuture(succeeded(new JsonObject()
-      .put(getPolicyIdKey(), policyIdAndConditionsPair.getKey())
-      .put("appliedRuleConditions", policyIdAndConditionsPair.getValue())
+      .put(getPolicyIdKey(), entity.getPolicyId())
+      .put("appliedRuleConditions", entity.getRuleConditions())
     ));
   }
 
@@ -343,7 +342,7 @@ public abstract class AbstractCirculationRulesEngineResource extends Resource {
         invalidUuid(request, LOCATION_ID_NAME);
   }
 
-  protected abstract CompletableFuture<Result<Pair<String, List<String>>>> getPolicyIdAndRuleMatch(
+  protected abstract CompletableFuture<Result<CirculationRulePolicyIdEntity>> getPolicyIdAndRuleMatch(
     MultiMap params, Drools drools, Location location);
 
   protected abstract String getPolicyIdKey();

@@ -6,12 +6,16 @@ import static org.folio.circulation.resources.AbstractCirculationRulesEngineReso
 import static org.folio.circulation.resources.AbstractCirculationRulesEngineResource.PATRON_TYPE_ID_NAME;
 import static org.folio.circulation.support.JsonPropertyWriter.write;
 
-import org.apache.commons.lang3.tuple.ImmutablePair;
-import org.apache.commons.lang3.tuple.Pair;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
+
+import io.vertx.core.MultiMap;
+import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
 import org.drools.core.definitions.rule.impl.RuleImpl;
 import org.drools.core.event.DefaultAgendaEventListener;
 import org.drools.core.rule.RuleConditionElement;
-import org.folio.circulation.domain.Location;
 import org.kie.api.KieServices;
 import org.kie.api.builder.KieBuilder;
 import org.kie.api.builder.KieFileSystem;
@@ -20,13 +24,7 @@ import org.kie.api.event.rule.AfterMatchFiredEvent;
 import org.kie.api.runtime.KieContainer;
 import org.kie.api.runtime.KieSession;
 
-import io.vertx.core.MultiMap;
-import io.vertx.core.json.JsonArray;
-import io.vertx.core.json.JsonObject;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.stream.Collectors;
+import org.folio.circulation.domain.Location;
 
 /**
  * Holds a Drools kieSession to calculate a loan policy.
@@ -77,15 +75,15 @@ public class Drools {
    * Calculate the loan policy for itemTypeName and loanTypeName.
    * @param params request parameters
    * @param location - location with institution, library and campus
-   * @return Pair object with the name of the loan policy and list of rule conditions
+   * @return PolicyId object with the name of the loan policy and list of rule conditions
    */
-  public Pair<String, List<String>> loanPolicy(MultiMap params, Location location) {
+  public CirculationRulePolicyIdEntity loanPolicy(MultiMap params, Location location) {
     KieSession kieSession = createSession(params, location);
     RuleEventListener ruleEventListener = new RuleEventListener();
     kieSession.addEventListener(ruleEventListener);
     kieSession.fireAllRules();
     kieSession.dispose();
-    return new ImmutablePair<>(match.loanPolicyId, ruleEventListener.getRuleConditions());
+    return new CirculationRulePolicyIdEntity(match.loanPolicyId, ruleEventListener.getRuleConditions());
   }
 
   /**
@@ -118,13 +116,13 @@ public class Drools {
    * Calculate the request policy for itemTypeName and loanType.
    * @param params request params
    * @param location - location with institution, library and campus
-   * @return the name of the request policy
+   * @return PolicyId object with the name of the loan policy and list of rule conditions
    */
-  public Pair<String, List<String>> requestPolicy(MultiMap params, Location location) {
+  public CirculationRulePolicyIdEntity requestPolicy(MultiMap params, Location location) {
     KieSession kieSession = createSession(params, location);
     kieSession.fireAllRules();
     kieSession.dispose();
-    return new ImmutablePair<>(match.requestPolicyId, new ArrayList<>());
+    return new CirculationRulePolicyIdEntity(match.requestPolicyId, new ArrayList<>());
   }
 
    /**
@@ -157,13 +155,13 @@ public class Drools {
    * Calculate the notice policy for itemTypeName and requestTypeName.
    * @param params request params
    * @param location - location with institution, library and campus
-   * @return the name of the notice policy
+   * @return PolicyId object with the name of the loan policy and list of rule conditions
    */
-  public Pair<String, List<String>> noticePolicy(MultiMap params, Location location) {
+  public CirculationRulePolicyIdEntity noticePolicy(MultiMap params, Location location) {
     KieSession kieSession = createSession(params, location);
     kieSession.fireAllRules();
     kieSession.dispose();
-    return new ImmutablePair<>(match.noticePolicyId, new ArrayList<>());
+    return new CirculationRulePolicyIdEntity(match.noticePolicyId, new ArrayList<>());
   }
 
    /**
@@ -282,7 +280,7 @@ public class Drools {
    * @return loan policy
    */
   public static String loanPolicy(String droolsFile, MultiMap params, Location location) {
-    return new Drools(droolsFile).loanPolicy(params, location).getKey();
+    return new Drools(droolsFile).loanPolicy(params, location).getPolicyId();
   }
 
   /**
@@ -293,7 +291,7 @@ public class Drools {
    * @return request policy
    */
   static String requestPolicy(String droolsFile, MultiMap params, Location location) {
-    return new Drools(droolsFile).requestPolicy(params, location).getKey();
+    return new Drools(droolsFile).requestPolicy(params, location).getPolicyId();
   }
 
   private class RuleEventListener extends DefaultAgendaEventListener {

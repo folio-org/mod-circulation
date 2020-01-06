@@ -2,17 +2,16 @@ package org.folio.circulation.resources;
 
 import static org.folio.circulation.support.Result.succeeded;
 
-import java.util.List;
 import java.util.concurrent.CompletableFuture;
-
-import org.apache.commons.lang3.tuple.Pair;
-import org.folio.circulation.domain.Location;
-import org.folio.circulation.rules.Drools;
-import org.folio.circulation.support.Result;
 
 import io.vertx.core.MultiMap;
 import io.vertx.core.http.HttpClient;
 import io.vertx.core.json.JsonArray;
+
+import org.folio.circulation.domain.Location;
+import org.folio.circulation.rules.CirculationRulePolicyIdEntity;
+import org.folio.circulation.rules.Drools;
+import org.folio.circulation.support.Result;
 
 /**
  * The circulation rules engine calculates the loan policy based on
@@ -25,7 +24,7 @@ public class LoanCirculationRulesEngineResource extends AbstractCirculationRules
   }
 
   @Override
-  protected CompletableFuture<Result<Pair<String, List<String>>>> getPolicyIdAndRuleMatch(
+  protected CompletableFuture<Result<CirculationRulePolicyIdEntity>> getPolicyIdAndRuleMatch(
     MultiMap params, Drools drools, Location location) {
     return CompletableFuture.completedFuture(Result.succeeded(drools.loanPolicy(params, location)));
   }
