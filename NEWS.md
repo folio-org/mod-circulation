@@ -1,3 +1,9 @@
+## 17.0.1 2020-01-06
+
+* Allow later patron notices to be sent when invalid notices are also scheduled (CIRC-582)
+* Sends pickup reminder, hold shelf expiration and request expiration notices irrespective of order of notices set up in policy (CIRC-605, CIRC-606)
+* Adds missing permissions needed for moving a request (CIRC-610)
+
 ## 17.0.0 2019-12-02
 
 * Introduces ability to reorder requests in an item’s queue (CIRC-446, CIRC-455, CIRC-531)
