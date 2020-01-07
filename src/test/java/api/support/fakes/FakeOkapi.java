@@ -385,15 +385,9 @@ public class FakeOkapi extends AbstractVerticle {
 
     client.get(String.format("http://localhost:%s/circulation/rules/%s?%s",
       circulationModulePort(), policyNamePartialPath, context.request().query()))
-      .thenAccept(result -> {
-        //TODO: Replace with better construct for applying a side effect
-        if (result.succeeded()) {
-          forward(context.response(), result.value());
-        }
-        else {
-          result.cause().writeTo(context.response());
-        }
-      });
+      .thenAccept(result -> result.applySideEffect(
+        response -> forward(context.response(), response),
+        cause -> cause.writeTo(context.response())));
   }
 
   @Override
