@@ -37,13 +37,8 @@ public class CollectionResourceClient {
     return client.toWebClient().post(collectionRoot, representation);
   }
 
-  public CompletableFuture<Response> put(JsonObject representation) {
-    final CompletableFuture<Response> future = new CompletableFuture<>();
-
-    client.put(collectionRoot, representation,
-      responseConversationHandler(future::complete));
-
-    return future;
+  public CompletableFuture<Result<Response>> put(JsonObject representation) {
+    return client.toWebClient().put(collectionRoot, representation);
   }
 
   public CompletableFuture<Result<Response>> put(String id,

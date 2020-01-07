@@ -113,6 +113,10 @@ public class VertxWebClientOkapiHttpClient {
     return get(url, DEFAULT_TIMEOUT, queryParameters);
   }
 
+  public CompletableFuture<Result<Response>> put(URL url, JsonObject body) {
+    return put(url.toString(), body, DEFAULT_TIMEOUT);
+  }
+
   public CompletableFuture<Result<Response>> put(String url, JsonObject body) {
     return put(url, body, DEFAULT_TIMEOUT);
   }

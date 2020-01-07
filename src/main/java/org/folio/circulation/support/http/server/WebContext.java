@@ -87,8 +87,6 @@ public class WebContext {
 
     return new OkapiHttpClient(httpClient,
       okapiUrl, getTenantId(), getOkapiToken(), getUserId(),
-      getRequestId(), exception -> ServerErrorResponse.internalError(routingContext.response(),
-        String.format("Failed to contact storage module: %s",
-          exception.toString())));
+      getRequestId());
   }
 }
