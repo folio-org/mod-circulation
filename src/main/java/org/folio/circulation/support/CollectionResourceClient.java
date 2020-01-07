@@ -9,18 +9,16 @@ import java.util.concurrent.CompletableFuture;
 import org.folio.circulation.support.http.client.CqlQuery;
 import org.folio.circulation.support.http.client.PageLimit;
 import org.folio.circulation.support.http.client.Offset;
+import org.folio.circulation.support.http.client.OkapiHttpClient;
 import org.folio.circulation.support.http.client.Response;
-import org.folio.circulation.support.http.client.VertxWebClientOkapiHttpClient;
 
 import io.vertx.core.json.JsonObject;
 
 public class CollectionResourceClient {
-  private final VertxWebClientOkapiHttpClient client;
+  private final OkapiHttpClient client;
   private final URL collectionRoot;
 
-  public CollectionResourceClient(VertxWebClientOkapiHttpClient client,
-    URL collectionRoot) {
-
+  public CollectionResourceClient(OkapiHttpClient client, URL collectionRoot) {
     this.collectionRoot = collectionRoot;
     this.client = client;
   }

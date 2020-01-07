@@ -24,7 +24,7 @@ import java.util.Objects;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.ValidationErrorFailure;
-import org.folio.circulation.support.http.client.VertxWebClientOkapiHttpClient;
+import org.folio.circulation.support.http.client.OkapiHttpClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -381,7 +381,7 @@ public class FakeOkapi extends AbstractVerticle {
   private void forwardApplyingCirculationRulesRequest(RoutingContext context,
     String policyNamePartialPath) {
 
-    VertxWebClientOkapiHttpClient client = createWebClient();
+    OkapiHttpClient client = createWebClient();
 
     client.get(String.format("http://localhost:%s/circulation/rules/%s?%s",
       circulationModulePort(), policyNamePartialPath, context.request().query()))

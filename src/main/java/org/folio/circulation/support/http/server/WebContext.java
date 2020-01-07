@@ -10,6 +10,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 
 import org.folio.circulation.support.InvalidOkapiLocationException;
+import org.folio.circulation.support.http.client.OkapiHttpClient;
 import org.folio.circulation.support.http.client.VertxWebClientOkapiHttpClient;
 
 import io.vertx.core.http.HttpClient;
@@ -75,7 +76,7 @@ public class WebContext {
       currentRequestUrl.getPort(), path);
   }
 
-  public VertxWebClientOkapiHttpClient createHttpClient(HttpClient httpClient) {
+  public OkapiHttpClient createHttpClient(HttpClient httpClient) {
     URL okapiUrl;
 
     try {

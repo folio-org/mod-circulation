@@ -2,7 +2,7 @@ package org.folio.circulation.support;
 
 import java.net.MalformedURLException;
 
-import org.folio.circulation.support.http.client.VertxWebClientOkapiHttpClient;
+import org.folio.circulation.support.http.client.OkapiHttpClient;
 import org.folio.circulation.support.http.server.WebContext;
 
 import io.vertx.core.http.HttpClient;
@@ -53,7 +53,7 @@ public class Clients {
     return new Clients(context.createHttpClient(httpClient), context);
   }
 
-  private Clients(VertxWebClientOkapiHttpClient client, WebContext context) {
+  private Clients(OkapiHttpClient client, WebContext context) {
     try {
       requestsStorageClient = createRequestsStorageClient(client, context);
       requestsBatchStorageClient = createRequestsBatchStorageClient(client, context);
@@ -262,7 +262,7 @@ public class Clients {
   }
 
   private static CollectionResourceClient getCollectionResourceClient(
-    VertxWebClientOkapiHttpClient client, WebContext context,
+    OkapiHttpClient client, WebContext context,
     String path)
     throws MalformedURLException {
 
@@ -270,7 +270,7 @@ public class Clients {
   }
 
   private static CirculationRulesClient createCirculationLoanRulesClient(
-    VertxWebClientOkapiHttpClient client, WebContext context)
+    OkapiHttpClient client, WebContext context)
     throws MalformedURLException {
 
     return new CirculationRulesClient(client, context,
@@ -278,7 +278,7 @@ public class Clients {
   }
 
   private static CirculationRulesClient createCirculationOverdueFinesRulesClient(
-    VertxWebClientOkapiHttpClient client, WebContext context)
+    OkapiHttpClient client, WebContext context)
     throws MalformedURLException {
 
     return new CirculationRulesClient(client, context,
@@ -286,7 +286,7 @@ public class Clients {
   }
 
   private static CirculationRulesClient createCirculationLostItemRulesClient(
-    VertxWebClientOkapiHttpClient client, WebContext context)
+    OkapiHttpClient client, WebContext context)
     throws MalformedURLException {
 
     return new CirculationRulesClient(client, context,
@@ -294,7 +294,7 @@ public class Clients {
   }
 
   private static CirculationRulesClient createCirculationRequestRulesClient(
-    VertxWebClientOkapiHttpClient client, WebContext context)
+    OkapiHttpClient client, WebContext context)
     throws MalformedURLException {
 
     return new CirculationRulesClient(client, context,
@@ -302,7 +302,7 @@ public class Clients {
   }
 
   private static CirculationRulesClient createCirculationNoticeRulesClient(
-    VertxWebClientOkapiHttpClient client, WebContext context)
+    OkapiHttpClient client, WebContext context)
     throws MalformedURLException {
 
     return new CirculationRulesClient(client, context,
@@ -310,7 +310,7 @@ public class Clients {
   }
 
   private static CollectionResourceClient createRequestsStorageClient(
-    VertxWebClientOkapiHttpClient client, WebContext context)
+    OkapiHttpClient client, WebContext context)
     throws MalformedURLException {
 
     return getCollectionResourceClient(client, context,
@@ -318,7 +318,7 @@ public class Clients {
   }
 
   private static CollectionResourceClient createRequestsBatchStorageClient(
-    VertxWebClientOkapiHttpClient client, WebContext context)
+    OkapiHttpClient client, WebContext context)
     throws MalformedURLException {
 
     return getCollectionResourceClient(client, context,
@@ -326,7 +326,7 @@ public class Clients {
   }
 
   private static CollectionResourceClient createCancellationReasonStorageClient(
-    VertxWebClientOkapiHttpClient client, WebContext context)
+    OkapiHttpClient client, WebContext context)
     throws MalformedURLException {
 
     return getCollectionResourceClient(client, context,
@@ -334,14 +334,14 @@ public class Clients {
   }
 
   private static CollectionResourceClient createItemsStorageClient(
-    VertxWebClientOkapiHttpClient client, WebContext context)
+    OkapiHttpClient client, WebContext context)
     throws MalformedURLException {
 
     return getCollectionResourceClient(client, context, "/item-storage/items");
   }
 
   private static CollectionResourceClient createHoldingsStorageClient(
-    VertxWebClientOkapiHttpClient client, WebContext context)
+    OkapiHttpClient client, WebContext context)
     throws MalformedURLException {
 
     return getCollectionResourceClient(client, context,
@@ -349,7 +349,7 @@ public class Clients {
   }
 
   private static CollectionResourceClient createInstanceStorageClient(
-    VertxWebClientOkapiHttpClient client, WebContext context)
+    OkapiHttpClient client, WebContext context)
     throws MalformedURLException {
 
     return getCollectionResourceClient(client, context,
@@ -357,28 +357,28 @@ public class Clients {
   }
 
   private static CollectionResourceClient createUsersStorageClient(
-    VertxWebClientOkapiHttpClient client, WebContext context)
+    OkapiHttpClient client, WebContext context)
     throws MalformedURLException {
 
     return getCollectionResourceClient(client, context, "/users");
   }
 
   private static CollectionResourceClient createAddressTypesStorageClient(
-    VertxWebClientOkapiHttpClient client, WebContext context)
+    OkapiHttpClient client, WebContext context)
     throws MalformedURLException {
 
     return getCollectionResourceClient(client, context, "/addresstypes");
   }
 
   private static CollectionResourceClient createLoansStorageClient(
-    VertxWebClientOkapiHttpClient client, WebContext context)
+    OkapiHttpClient client, WebContext context)
     throws MalformedURLException {
 
     return getCollectionResourceClient(client, context, "/loan-storage/loans");
   }
 
   private static CollectionResourceClient createAnonymizeStorageLoansClient(
-    VertxWebClientOkapiHttpClient client, WebContext context)
+    OkapiHttpClient client, WebContext context)
     throws MalformedURLException {
 
     return getCollectionResourceClient(client, context,
@@ -386,14 +386,14 @@ public class Clients {
   }
 
   private static CollectionResourceClient createLocationsStorageClient(
-    VertxWebClientOkapiHttpClient client, WebContext context)
+    OkapiHttpClient client, WebContext context)
     throws MalformedURLException {
 
     return getCollectionResourceClient(client, context, "/locations");
   }
 
   private static CollectionResourceClient createInstitutionsStorageClient(
-    VertxWebClientOkapiHttpClient client, WebContext context)
+    OkapiHttpClient client, WebContext context)
     throws MalformedURLException {
 
     return getCollectionResourceClient(client, context,
@@ -401,7 +401,7 @@ public class Clients {
   }
 
   private static CollectionResourceClient createCampusesStorageClient(
-    VertxWebClientOkapiHttpClient client, WebContext context)
+    OkapiHttpClient client, WebContext context)
     throws MalformedURLException {
 
     return getCollectionResourceClient(client, context,
@@ -409,7 +409,7 @@ public class Clients {
   }
 
   private static CollectionResourceClient createLibrariesStorageClient(
-    VertxWebClientOkapiHttpClient client, WebContext context)
+    OkapiHttpClient client, WebContext context)
     throws MalformedURLException {
 
     return getCollectionResourceClient(client, context,
@@ -417,28 +417,28 @@ public class Clients {
   }
 
   private CollectionResourceClient createProxyUsersStorageClient(
-    VertxWebClientOkapiHttpClient client, WebContext context)
+    OkapiHttpClient client, WebContext context)
     throws MalformedURLException {
 
     return getCollectionResourceClient(client, context, "/proxiesfor");
   }
 
   private CollectionResourceClient createMaterialTypesStorageClient(
-    VertxWebClientOkapiHttpClient client, WebContext context)
+    OkapiHttpClient client, WebContext context)
     throws MalformedURLException {
 
     return getCollectionResourceClient(client, context, "/material-types");
   }
 
   private CollectionResourceClient createLoanTypesStorageClient(
-    VertxWebClientOkapiHttpClient client, WebContext context)
+    OkapiHttpClient client, WebContext context)
     throws MalformedURLException {
 
     return getCollectionResourceClient(client, context, "/loan-types");
   }
 
   private CollectionResourceClient createLoanPoliciesStorageClient(
-    VertxWebClientOkapiHttpClient client, WebContext context)
+    OkapiHttpClient client, WebContext context)
     throws MalformedURLException {
 
     return getCollectionResourceClient(client, context,
@@ -446,7 +446,7 @@ public class Clients {
   }
 
   private CollectionResourceClient createOverdueFinesPoliciesStorageClient(
-    VertxWebClientOkapiHttpClient client, WebContext context)
+    OkapiHttpClient client, WebContext context)
     throws MalformedURLException {
 
     return getCollectionResourceClient(client, context,
@@ -454,7 +454,7 @@ public class Clients {
   }
 
   private CollectionResourceClient createLostItemPoliciesStorageClient(
-    VertxWebClientOkapiHttpClient client, WebContext context)
+    OkapiHttpClient client, WebContext context)
     throws MalformedURLException {
 
     return getCollectionResourceClient(client, context,
@@ -462,7 +462,7 @@ public class Clients {
   }
 
   private CollectionResourceClient createRequestPoliciesStorageClient(
-    VertxWebClientOkapiHttpClient client, WebContext context)
+    OkapiHttpClient client, WebContext context)
     throws MalformedURLException {
 
     return getCollectionResourceClient(client, context,
@@ -470,7 +470,7 @@ public class Clients {
   }
 
   private CollectionResourceClient createFixedDueDateSchedulesStorageClient(
-    VertxWebClientOkapiHttpClient client, WebContext context)
+    OkapiHttpClient client, WebContext context)
     throws MalformedURLException {
 
     return getCollectionResourceClient(client, context,
@@ -479,7 +479,7 @@ public class Clients {
 
 
   private CollectionResourceClient createCirculationRulesStorageClient(
-    VertxWebClientOkapiHttpClient client, WebContext context)
+    OkapiHttpClient client, WebContext context)
     throws MalformedURLException {
 
     return getCollectionResourceClient(client, context,
@@ -487,28 +487,28 @@ public class Clients {
   }
 
   private CollectionResourceClient createServicePointsStorageClient(
-    VertxWebClientOkapiHttpClient client, WebContext context)
+    OkapiHttpClient client, WebContext context)
       throws MalformedURLException {
 
     return getCollectionResourceClient(client, context, "/service-points");
   }
 
   private CollectionResourceClient createPatronGroupsStorageClient(
-    VertxWebClientOkapiHttpClient client, WebContext context)
+    OkapiHttpClient client, WebContext context)
       throws MalformedURLException {
 
     return getCollectionResourceClient(client, context, "/groups");
   }
 
   private CollectionResourceClient createCalendarStorageClient(
-    VertxWebClientOkapiHttpClient client, WebContext context)
+    OkapiHttpClient client, WebContext context)
     throws MalformedURLException {
 
     return getCollectionResourceClient(client, context, "/calendar/periods");
   }
 
   private CollectionResourceClient createPatronNoticePolicesStorageClient(
-    VertxWebClientOkapiHttpClient client, WebContext context)
+    OkapiHttpClient client, WebContext context)
     throws MalformedURLException {
 
     return getCollectionResourceClient(client, context,
@@ -516,14 +516,14 @@ public class Clients {
   }
 
   private CollectionResourceClient createPatronNoticeClient(
-    VertxWebClientOkapiHttpClient client, WebContext context)
+    OkapiHttpClient client, WebContext context)
     throws MalformedURLException {
 
     return getCollectionResourceClient(client, context, "/patron-notice");
   }
 
   private CollectionResourceClient createConfigurationStorageClient(
-    VertxWebClientOkapiHttpClient client, WebContext context)
+    OkapiHttpClient client, WebContext context)
     throws MalformedURLException {
 
     return getCollectionResourceClient(client, context,
@@ -531,28 +531,28 @@ public class Clients {
   }
 
   private CollectionResourceClient createScheduledNoticesStorageClient(
-    VertxWebClientOkapiHttpClient client, WebContext context)
+    OkapiHttpClient client, WebContext context)
     throws MalformedURLException {
 
     return getCollectionResourceClient(client, context,
       "/scheduled-notice-storage/scheduled-notices");
   }
   private CollectionResourceClient createAccountsStorageClient(
-    VertxWebClientOkapiHttpClient client, WebContext context)
+    OkapiHttpClient client, WebContext context)
     throws MalformedURLException {
 
     return getCollectionResourceClient(client, context, "/accounts");
   }
 
   private CollectionResourceClient createFeeFineActionsStorageClient(
-    VertxWebClientOkapiHttpClient client, WebContext context)
+    OkapiHttpClient client, WebContext context)
       throws MalformedURLException {
 
     return getCollectionResourceClient(client, context, "/feefineactions");
   }
 
   private CollectionResourceClient createPatronActionSessionsStorageClient(
-    VertxWebClientOkapiHttpClient client, WebContext context)
+    OkapiHttpClient client, WebContext context)
     throws MalformedURLException {
 
     return getCollectionResourceClient(client, context,
@@ -560,7 +560,7 @@ public class Clients {
   }
 
   private CollectionResourceClient createPatronExpiredSessionsStorageClient(
-    VertxWebClientOkapiHttpClient client, WebContext context)
+    OkapiHttpClient client, WebContext context)
     throws MalformedURLException {
 
     return getCollectionResourceClient(client, context,
@@ -568,7 +568,7 @@ public class Clients {
   }
 
   private static CollectionResourceClient createUserManualBlocksStorageClient(
-    VertxWebClientOkapiHttpClient client, WebContext context)
+    OkapiHttpClient client, WebContext context)
     throws MalformedURLException {
 
     return getCollectionResourceClient(client, context, "/manualblocks");

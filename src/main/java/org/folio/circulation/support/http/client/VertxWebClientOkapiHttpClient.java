@@ -27,7 +27,7 @@ import io.vertx.ext.web.client.HttpRequest;
 import io.vertx.ext.web.client.HttpResponse;
 import io.vertx.ext.web.client.WebClient;
 
-public class VertxWebClientOkapiHttpClient {
+public class VertxWebClientOkapiHttpClient implements OkapiHttpClient {
   private static final Duration DEFAULT_TIMEOUT = Duration.of(5, SECONDS);
 
   private final WebClient webClient;
@@ -37,7 +37,7 @@ public class VertxWebClientOkapiHttpClient {
   private final String userId;
   private String requestId;
 
-  public static VertxWebClientOkapiHttpClient createClientUsing(
+  public static OkapiHttpClient createClientUsing(
     HttpClient httpClient, URL okapiUrl, String tenantId, String token,
     String userId, String requestId) {
 
@@ -56,14 +56,17 @@ public class VertxWebClientOkapiHttpClient {
     this.requestId = requestId;
   }
 
+  @Override
   public CompletableFuture<Result<Response>> post(URL url, JsonObject body) {
     return post(url.toString(), body, DEFAULT_TIMEOUT);
   }
 
+  @Override
   public CompletableFuture<Result<Response>> post(String url, JsonObject body) {
     return post(url, body, DEFAULT_TIMEOUT);
   }
 
+  @Override
   public CompletableFuture<Result<Response>> post(String url,
     JsonObject body, Duration timeout) {
 
@@ -81,6 +84,7 @@ public class VertxWebClientOkapiHttpClient {
       .thenApply(asyncResult -> mapAsyncResultToResult(url, asyncResult));
   }
 
+  @Override
   public CompletableFuture<Result<Response>> get(String url,
     Duration timeout, QueryParameter... queryParameters) {
 
@@ -101,26 +105,31 @@ public class VertxWebClientOkapiHttpClient {
       .thenApply(asyncResult -> mapAsyncResultToResult(url, asyncResult));
   }
 
+  @Override
   public CompletableFuture<Result<Response>> get(URL url,
     QueryParameter... queryParameters) {
 
     return get(url.toString(), queryParameters);
   }
 
+  @Override
   public CompletableFuture<Result<Response>> get(String url,
     QueryParameter... queryParameters) {
 
     return get(url, DEFAULT_TIMEOUT, queryParameters);
   }
 
+  @Override
   public CompletableFuture<Result<Response>> put(URL url, JsonObject body) {
     return put(url.toString(), body, DEFAULT_TIMEOUT);
   }
 
+  @Override
   public CompletableFuture<Result<Response>> put(String url, JsonObject body) {
     return put(url, body, DEFAULT_TIMEOUT);
   }
 
+  @Override
   public CompletableFuture<Result<Response>> put(String url, JsonObject body,
     Duration timeout) {
 
@@ -138,18 +147,21 @@ public class VertxWebClientOkapiHttpClient {
       .thenApply(asyncResult -> mapAsyncResultToResult(url, asyncResult));
   }
 
+  @Override
   public CompletableFuture<Result<Response>> delete(URL url,
     QueryParameter... queryParameters) {
 
     return delete(url.toString(), queryParameters);
   }
 
+  @Override
   public CompletableFuture<Result<Response>> delete(String url,
     QueryParameter... queryParameters) {
 
     return delete(url, DEFAULT_TIMEOUT, queryParameters);
   }
 
+  @Override
   public CompletableFuture<Result<Response>> delete(String url,
     Duration timeout, QueryParameter... queryParameters) {
 
