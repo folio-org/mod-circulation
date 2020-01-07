@@ -56,6 +56,10 @@ public class VertxWebClientOkapiHttpClient {
     this.requestId = requestId;
   }
 
+  public CompletableFuture<Result<Response>> post(URL url, JsonObject body) {
+    return post(url.toString(), body, DEFAULT_TIMEOUT);
+  }
+
   public CompletableFuture<Result<Response>> post(String url, JsonObject body) {
     return post(url, body, DEFAULT_TIMEOUT);
   }
