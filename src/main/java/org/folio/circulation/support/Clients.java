@@ -3,6 +3,7 @@ package org.folio.circulation.support;
 import java.net.MalformedURLException;
 
 import org.folio.circulation.support.http.client.OkapiHttpClient;
+import org.folio.circulation.support.http.client.VertxWebClientOkapiHttpClient;
 import org.folio.circulation.support.http.server.WebContext;
 
 import io.vertx.core.http.HttpClient;
@@ -74,11 +75,11 @@ public class Clients {
       materialTypesStorageClient = createMaterialTypesStorageClient(client, context);
       loanTypesStorageClient = createLoanTypesStorageClient(client, context);
       proxiesForClient = createProxyUsersStorageClient(client, context);
-      circulationLoanRulesClient = createCirculationLoanRulesClient(client, context);
-      circulationOverdueFinesRulesClient = createCirculationOverdueFinesRulesClient(client, context);
-      circulationLostItemRulesClient = createCirculationLostItemRulesClient(client, context);
-      circulationRequestRulesClient = createCirculationRequestRulesClient(client, context);
-      circulationNoticeRulesClient = createCirculationNoticeRulesClient(client, context);
+      circulationLoanRulesClient = createCirculationLoanRulesClient(client.toWebClient(), context);
+      circulationRequestRulesClient = createCirculationRequestRulesClient(client.toWebClient(), context);
+      circulationNoticeRulesClient = createCirculationNoticeRulesClient(client.toWebClient(), context);
+      circulationOverdueFinesRulesClient = createCirculationOverdueFinesRulesClient(client.toWebClient(), context);
+      circulationLostItemRulesClient = createCirculationLostItemRulesClient(client.toWebClient(), context);
       circulationRulesStorageClient = createCirculationRulesStorageClient(client, context);
       loanPoliciesStorageClient = createLoanPoliciesStorageClient(client, context);
       requestPoliciesStorageClient = createRequestPoliciesStorageClient(client, context);
@@ -269,43 +270,43 @@ public class Clients {
   }
 
   private static CirculationRulesClient createCirculationLoanRulesClient(
-    OkapiHttpClient client,
-    WebContext context)
+    VertxWebClientOkapiHttpClient client, WebContext context)
     throws MalformedURLException {
 
-    return new CirculationRulesClient(client, context, "/circulation/rules/loan-policy");
+    return new CirculationRulesClient(client, context,
+      "/circulation/rules/loan-policy");
   }
 
   private static CirculationRulesClient createCirculationOverdueFinesRulesClient(
-          OkapiHttpClient client,
-          WebContext context)
-          throws MalformedURLException {
+    VertxWebClientOkapiHttpClient client, WebContext context)
+    throws MalformedURLException {
 
-    return new CirculationRulesClient(client, context, "/circulation/rules/overdue-fine-policy");
+    return new CirculationRulesClient(client, context,
+      "/circulation/rules/overdue-fine-policy");
   }
 
   private static CirculationRulesClient createCirculationLostItemRulesClient(
-          OkapiHttpClient client,
-          WebContext context)
-          throws MalformedURLException {
+    VertxWebClientOkapiHttpClient client, WebContext context)
+    throws MalformedURLException {
 
-    return new CirculationRulesClient(client, context, "/circulation/rules/lost-item-policy");
+    return new CirculationRulesClient(client, context,
+      "/circulation/rules/lost-item-policy");
   }
 
   private static CirculationRulesClient createCirculationRequestRulesClient(
-    OkapiHttpClient client,
-    WebContext context)
+    VertxWebClientOkapiHttpClient client, WebContext context)
     throws MalformedURLException {
 
-    return new CirculationRulesClient(client, context, "/circulation/rules/request-policy");
+    return new CirculationRulesClient(client, context,
+      "/circulation/rules/request-policy");
   }
 
   private static CirculationRulesClient createCirculationNoticeRulesClient(
-    OkapiHttpClient client,
-    WebContext context)
+    VertxWebClientOkapiHttpClient client, WebContext context)
     throws MalformedURLException {
 
-    return new CirculationRulesClient(client, context, "/circulation/rules/notice-policy");
+    return new CirculationRulesClient(client, context,
+      "/circulation/rules/notice-policy");
   }
 
   private static CollectionResourceClient createRequestsStorageClient(
