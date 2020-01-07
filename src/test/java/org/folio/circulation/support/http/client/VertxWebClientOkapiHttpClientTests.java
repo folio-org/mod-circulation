@@ -10,6 +10,7 @@ import static com.github.tomakehurst.wiremock.client.WireMock.get;
 import static com.github.tomakehurst.wiremock.client.WireMock.noContent;
 import static com.github.tomakehurst.wiremock.client.WireMock.okJson;
 import static com.github.tomakehurst.wiremock.client.WireMock.post;
+import static com.github.tomakehurst.wiremock.client.WireMock.put;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
 import static java.time.temporal.ChronoUnit.MILLIS;
 import static java.util.concurrent.TimeUnit.SECONDS;
@@ -22,6 +23,7 @@ import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.emptyOrNullString;
 
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -140,6 +142,27 @@ public class VertxWebClientOkapiHttpClientTests {
     assertThat(response, hasStatus(HTTP_OK));
     assertThat(response.getJson().getString("message"), is("hello"));
     assertThat(response.getContentType(), is("application/json"));
+  }
+
+  @Test
+  public void canPutWithJson()
+    throws InterruptedException, ExecutionException, TimeoutException {
+
+    fakeWebServer.stubFor(
+      matchingFolioHeaders(put(urlPathEqualTo("/record/12345")))
+      .withHeader("Content-Type", equalTo("application/json"))
+      .withRequestBody(equalToJson(dummyJsonRequestBody().encodePrettily()))
+      .willReturn(noContent()));
+
+    VertxWebClientOkapiHttpClient client = createClient();
+
+    CompletableFuture<Result<Response>> postCompleted = client.put(
+      fakeWebServer.url("/record/12345"), dummyJsonRequestBody());
+
+    final Response response = postCompleted.get(2, SECONDS).value();
+
+    assertThat(response, hasStatus(HTTP_NO_CONTENT));
+    assertThat(response.getBody(), emptyOrNullString());
   }
 
   @Test

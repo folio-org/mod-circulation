@@ -103,6 +103,7 @@ public class VertxWebClientOkapiHttpClient {
 
   public CompletableFuture<Result<Response>> get(URL url,
     QueryParameter... queryParameters) {
+
     return get(url.toString(), queryParameters);
   }
 
@@ -110,6 +111,27 @@ public class VertxWebClientOkapiHttpClient {
     QueryParameter... queryParameters) {
 
     return get(url, DEFAULT_TIMEOUT, queryParameters);
+  }
+
+  public CompletableFuture<Result<Response>> put(String url, JsonObject body) {
+    return put(url, body, DEFAULT_TIMEOUT);
+  }
+
+  public CompletableFuture<Result<Response>> put(String url, JsonObject body,
+    Duration timeout) {
+
+    final CompletableFuture<AsyncResult<HttpResponse<Buffer>>> futureResponse
+      = new CompletableFuture<>();
+
+    final HttpRequest<Buffer> request = withStandardHeaders(
+      webClient.putAbs(url));
+
+    request
+      .timeout(timeout.toMillis())
+      .sendJsonObject(body, futureResponse::complete);
+
+    return futureResponse
+      .thenApply(asyncResult -> mapAsyncResultToResult(url, asyncResult));
   }
 
   public CompletableFuture<Result<Response>> delete(URL url,
