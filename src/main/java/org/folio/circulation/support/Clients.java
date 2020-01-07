@@ -50,7 +50,7 @@ public class Clients {
   private final CollectionResourceClient userManualBlocksStorageClient;
 
   public static Clients create(WebContext context, HttpClient httpClient) {
-    return new Clients(context.createHttpClient(httpClient).toWebClient(), context);
+    return new Clients(context.createHttpClient(httpClient), context);
   }
 
   private Clients(VertxWebClientOkapiHttpClient client, WebContext context) {
