@@ -148,7 +148,7 @@ public class RequestRepository {
       .otherwise(forwardOnFailure());
 
     return requestsStorageClient.put(request.getId(), representation)
-      .thenApply(interpreter::apply);
+      .thenApply(interpreter::flatMap);
   }
 
   public CompletableFuture<Result<RequestAndRelatedRecords>> update(
