@@ -279,9 +279,14 @@ public abstract class AbstractCirculationRulesEngineResource extends Resource {
   }
 
   private CompletableFuture<Result<JsonObject>> buildJsonResult(CirculationRuleMatchEntity entity) {
+    JsonObject appliedRuleConditions = new JsonObject()
+      .put("isItemTypePresent", entity.getAppliedRuleConditionsEntity().isItemTypePresent())
+      .put("isLoanTypePresent", entity.getAppliedRuleConditionsEntity().isLoanTypePresent())
+      .put("isPatronGroupPresent", entity.getAppliedRuleConditionsEntity().isPatronGroupPresent());
+
     return CompletableFuture.completedFuture(succeeded(new JsonObject()
       .put(getPolicyIdKey(), entity.getPolicyId())
-      .put("appliedRuleConditions", entity.getAppliedRuleConditions())
+      .put("appliedRuleConditions", appliedRuleConditions)
     ));
   }
 

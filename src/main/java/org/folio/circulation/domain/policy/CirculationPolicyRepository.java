@@ -4,23 +4,19 @@ import static java.util.concurrent.CompletableFuture.completedFuture;
 
 import static org.folio.circulation.support.Result.failed;
 import static org.folio.circulation.support.Result.succeeded;
-import static org.folio.circulation.support.ResultBinding.mapResult;
 import static org.folio.circulation.support.results.CommonFailures.failedDueToServerError;
 
 import java.lang.invoke.MethodHandles;
-import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
-import io.vertx.core.json.JsonObject;
-import org.apache.commons.lang3.tuple.ImmutablePair;
-import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.User;
+import org.folio.circulation.rules.AppliedRuleConditionsEntity;
+import org.folio.circulation.rules.CirculationRuleMatchEntity;
 import org.folio.circulation.support.CirculationRulesClient;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.ForwardOnFailure;
@@ -28,6 +24,8 @@ import org.folio.circulation.support.Result;
 import org.folio.circulation.support.SingleRecordFetcher;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.client.ResponseHandler;
+
+import io.vertx.core.json.JsonObject;
 
 public abstract class CirculationPolicyRepository<T> {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
@@ -55,28 +53,29 @@ public abstract class CirculationPolicyRepository<T> {
     User user) {
 
     return lookupPolicyId(item, user)
-      .thenComposeAsync(r -> r.after(pair -> lookupPolicy(pair.getKey(), pair.getValue())));
+      .thenComposeAsync(r -> r.after(ruleMatchEntity -> lookupPolicy(
+        ruleMatchEntity.getPolicyId(), ruleMatchEntity.getAppliedRuleConditionsEntity())));
   }
 
-  private Result<T> mapToPolicy(JsonObject json, List<String> conditions) {
+  private Result<T> mapToPolicy(JsonObject json, AppliedRuleConditionsEntity ruleConditionsEntity) {
     if (log.isInfoEnabled()) {
       log.info("Mapping json to policy {}", json.encodePrettily());
     }
 
-    return toPolicy(json, conditions);
+    return toPolicy(json, ruleConditionsEntity);
   }
 
-  public CompletableFuture<Result<T>> lookupPolicy(String policyId, List<String> conditions) {
+  public CompletableFuture<Result<T>> lookupPolicy(String policyId, AppliedRuleConditionsEntity conditionsEntity) {
     log.info("Looking up policy with id {}", policyId);
 
     return SingleRecordFetcher.json(policyStorageClient, "circulation policy",
       response -> failedDueToServerError(getPolicyNotFoundErrorMessage(policyId)))
       .fetch(policyId)
-      .thenApply(result -> result.next(json -> mapToPolicy(json, conditions)));
+      .thenApply(result -> result.next(json -> mapToPolicy(json, conditionsEntity)));
   }
 
-  public CompletableFuture<Result<Pair<String, List<String>>>> lookupPolicyId(Item item, User user) {
-    CompletableFuture<Result<Pair<String, List<String>>>> findLoanPolicyCompleted = new CompletableFuture<>();
+  public CompletableFuture<Result<CirculationRuleMatchEntity>> lookupPolicyId(Item item, User user) {
+    CompletableFuture<Result<CirculationRuleMatchEntity>> findLoanPolicyCompleted = new CompletableFuture<>();
 
     if (item.isNotFound()) {
       return completedFuture(failedDueToServerError(
@@ -113,11 +112,17 @@ public abstract class CirculationPolicyRepository<T> {
         log.info("Rules response {}", response.getBody());
 
         String policyId = fetchPolicyId(response.getJson());
-        List<String> conditions = response.getJson().getJsonArray("appliedRuleConditions").getList();
+        boolean isItemTypePresent = response.getJson().getJsonObject("appliedRuleConditions")
+          .getBoolean("isItemTypePresent");
+        boolean isLoanTypePresent = response.getJson().getJsonObject("appliedRuleConditions")
+          .getBoolean("isLoanTypePresent");
+        boolean isPatronGroupPresent = response.getJson().getJsonObject("appliedRuleConditions")
+          .getBoolean("isPatronGroupPresent");
 
         log.info("Policy to fetch based upon rules {}", policyId);
 
-        findLoanPolicyCompleted.complete(succeeded(new ImmutablePair<>(policyId, conditions)));
+        findLoanPolicyCompleted.complete(succeeded(new CirculationRuleMatchEntity(
+          policyId, new AppliedRuleConditionsEntity(isItemTypePresent, isLoanTypePresent, isPatronGroupPresent))));
       }
     });
 
@@ -126,7 +131,7 @@ public abstract class CirculationPolicyRepository<T> {
 
   protected abstract String getPolicyNotFoundErrorMessage(String policyId);
 
-  protected abstract Result<T> toPolicy(JsonObject representation, List<String> conditions);
+  protected abstract Result<T> toPolicy(JsonObject representation, AppliedRuleConditionsEntity ruleConditionsEntity);
 
   protected abstract String fetchPolicyId(JsonObject jsonObject);
 }

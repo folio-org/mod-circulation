@@ -5,17 +5,16 @@ import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.support.Result.ofAsync;
 import static org.folio.circulation.support.Result.succeeded;
 
-import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
 import org.apache.commons.lang3.StringUtils;
-
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.domain.LoanRepository;
 import org.folio.circulation.domain.policy.LoanPolicyRepository;
+import org.folio.circulation.rules.AppliedRuleConditionsEntity;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.ValidationErrorFailure;
 
@@ -53,9 +52,9 @@ public class ItemLimitValidator {
   }
 
   private CompletableFuture<Result<Boolean>> isLimitReached(
-    List<String> ruleConditions, LoanAndRelatedRecords records) {
+    AppliedRuleConditionsEntity ruleConditionsEntity, LoanAndRelatedRecords records) {
 
-    if (!isRuleMaterialTypePresent(ruleConditions) && !isRuleLoanTypePresent(ruleConditions)) {
+    if (!ruleConditionsEntity.isItemTypePresent() && !ruleConditionsEntity.isLoanTypePresent()) {
       return ofAsync(() -> false);
     }
 
@@ -84,22 +83,10 @@ public class ItemLimitValidator {
       && expectedLoanType.equals(loan.getItem().determineLoanTypeForItem());
   }
 
-  private boolean isRuleMaterialTypePresent(List<String> conditions) {
-    return conditions.contains("ItemType");
-  }
-
-  private boolean isRuleLoanTypePresent(List<String> conditions) {
-    return conditions.contains("LoanType");
-  }
-
-  private boolean isRulePatronGroupPresent(List<String> conditions) {
-    return conditions.contains("PatronGroup");
-  }
-
-  private String getErrorMessage(List<String> conditions) {
-    boolean isRuleMaterialTypePresent = isRuleMaterialTypePresent(conditions);
-    boolean isRuleLoanTypePresent = isRuleLoanTypePresent(conditions);
-    boolean isRulePatronGroupPresent = isRulePatronGroupPresent(conditions);
+  private String getErrorMessage(AppliedRuleConditionsEntity ruleConditionsEntity) {
+    boolean isRuleMaterialTypePresent = ruleConditionsEntity.isItemTypePresent();
+    boolean isRuleLoanTypePresent = ruleConditionsEntity.isLoanTypePresent();
+    boolean isRulePatronGroupPresent = ruleConditionsEntity.isPatronGroupPresent();
 
     if (isRulePatronGroupPresent && isRuleMaterialTypePresent && isRuleLoanTypePresent) {
       return "for combination of patron group, material type and loan type";

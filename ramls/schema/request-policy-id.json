@@ -9,10 +9,21 @@
       "type": "string"
     },
     "appliedRuleConditions": {
-      "description": "Conditions list of applied rule",
-      "type": "array",
-      "items": {
-        "type": "string"
+      "description": "Addition information about conditions which were present in the applied rule",
+      "type": "object",
+      "properties": {
+        "isItemTypePresent": {
+          "description": "Indicates that ItemType was present in applied rule conditions",
+          "type": "boolean"
+        },
+        "isLoanTypePresent": {
+          "description": "Indicates that LoanType was present in applied rule conditions",
+          "type": "boolean"
+        },
+        "isPatronGroupPresent": {
+          "description": "Indicates that PatronGroup was present in applied rule conditions",
+          "type": "boolean"
+        }
       }
     }
   },

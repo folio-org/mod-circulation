@@ -1,6 +1,7 @@
 package org.folio.circulation.domain.policy;
 
 import static java.lang.String.format;
+
 import static org.folio.circulation.domain.RequestType.HOLD;
 import static org.folio.circulation.domain.RequestType.RECALL;
 import static org.folio.circulation.support.JsonPropertyFetcher.getBooleanProperty;
@@ -23,17 +24,18 @@ import java.util.Objects;
 import java.util.Optional;
 
 import org.apache.commons.lang3.StringUtils;
+import org.joda.time.DateTime;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestQueue;
 import org.folio.circulation.domain.RequestStatus;
 import org.folio.circulation.domain.RequestType;
+import org.folio.circulation.rules.AppliedRuleConditionsEntity;
 import org.folio.circulation.support.ClockManager;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.ServerErrorFailure;
 import org.folio.circulation.support.ValidationErrorFailure;
 import org.folio.circulation.support.http.server.ValidationError;
-import org.joda.time.DateTime;
 
 import io.vertx.core.json.JsonObject;
 
@@ -65,7 +67,7 @@ public class LoanPolicy {
   private final JsonObject representation;
   private final FixedDueDateSchedules fixedDueDateSchedules;
   private final FixedDueDateSchedules alternateRenewalFixedDueDateSchedules;
-  private List<String> ruleConditions;
+  private AppliedRuleConditionsEntity ruleConditionsEntity;
 
   private LoanPolicy(JsonObject representation) {
     this(representation,
@@ -87,12 +89,12 @@ public class LoanPolicy {
     JsonObject representation,
     FixedDueDateSchedules fixedDueDateSchedules,
     FixedDueDateSchedules alternateRenewalFixedDueDateSchedules,
-    List<String> ruleConditions) {
+    AppliedRuleConditionsEntity ruleConditionsEntity) {
 
     this.representation = representation;
     this.fixedDueDateSchedules = fixedDueDateSchedules;
     this.alternateRenewalFixedDueDateSchedules = alternateRenewalFixedDueDateSchedules;
-    this.ruleConditions = ruleConditions;
+    this.ruleConditionsEntity = ruleConditionsEntity;
   }
 
   public static LoanPolicy from(JsonObject representation) {
@@ -710,7 +712,7 @@ public class LoanPolicy {
     return null;
   }
 
-  public List<String> getRuleConditions() {
-    return ruleConditions;
+  public AppliedRuleConditionsEntity getRuleConditions() {
+    return ruleConditionsEntity;
   }
 }

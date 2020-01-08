@@ -1,22 +1,22 @@
 package org.folio.circulation.rules;
 
-import java.util.List;
-
 public class CirculationRuleMatchEntity {
 
   private final String policyId;
-  private final List<String> appliedRuleConditions;
+  private final AppliedRuleConditionsEntity appliedRuleConditionsEntity;
 
-  public CirculationRuleMatchEntity(String policyId, List<String> appliedRuleConditions) {
+  public CirculationRuleMatchEntity(String policyId,
+    AppliedRuleConditionsEntity appliedRuleConditionsEntity) {
+
     this.policyId = policyId;
-    this.appliedRuleConditions = appliedRuleConditions;
+    this.appliedRuleConditionsEntity = appliedRuleConditionsEntity;
   }
 
   public String getPolicyId() {
     return policyId;
   }
 
-  public List<String> getAppliedRuleConditions() {
-    return appliedRuleConditions;
+  public AppliedRuleConditionsEntity getAppliedRuleConditionsEntity() {
+    return appliedRuleConditionsEntity;
   }
 }

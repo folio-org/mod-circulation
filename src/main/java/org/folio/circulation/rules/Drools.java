@@ -6,13 +6,9 @@ import static org.folio.circulation.resources.AbstractCirculationRulesEngineReso
 import static org.folio.circulation.resources.AbstractCirculationRulesEngineResource.PATRON_TYPE_ID_NAME;
 import static org.folio.circulation.support.JsonPropertyWriter.write;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import io.vertx.core.MultiMap;
-import io.vertx.core.json.JsonArray;
-import io.vertx.core.json.JsonObject;
 import org.drools.core.definitions.rule.impl.RuleImpl;
 import org.drools.core.event.DefaultAgendaEventListener;
 import org.drools.core.rule.RuleConditionElement;
@@ -25,6 +21,10 @@ import org.kie.api.runtime.KieContainer;
 import org.kie.api.runtime.KieSession;
 
 import org.folio.circulation.domain.Location;
+
+import io.vertx.core.MultiMap;
+import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
 
 /**
  * Holds a Drools kieSession to calculate a loan policy.
@@ -83,7 +83,12 @@ public class Drools {
     kieSession.addEventListener(ruleEventListener);
     kieSession.fireAllRules();
     kieSession.dispose();
-    return new CirculationRuleMatchEntity(match.loanPolicyId, ruleEventListener.getRuleConditions());
+    List<String> appliedRuleConditions = ruleEventListener.getRuleConditions();
+
+    return new CirculationRuleMatchEntity(match.loanPolicyId, new AppliedRuleConditionsEntity(
+      isRuleItemTypePresent(appliedRuleConditions),
+      isRuleLoanTypePresent(appliedRuleConditions),
+      isRulePatronGroupPresent(appliedRuleConditions)));
   }
 
   /**
@@ -122,7 +127,8 @@ public class Drools {
     KieSession kieSession = createSession(params, location);
     kieSession.fireAllRules();
     kieSession.dispose();
-    return new CirculationRuleMatchEntity(match.requestPolicyId, new ArrayList<>());
+    return new CirculationRuleMatchEntity(match.requestPolicyId,
+      new AppliedRuleConditionsEntity(false, false, false));
   }
 
    /**
@@ -161,7 +167,8 @@ public class Drools {
     KieSession kieSession = createSession(params, location);
     kieSession.fireAllRules();
     kieSession.dispose();
-    return new CirculationRuleMatchEntity(match.noticePolicyId, new ArrayList<>());
+    return new CirculationRuleMatchEntity(match.noticePolicyId,
+      new AppliedRuleConditionsEntity(false, false, false));
   }
 
    /**
@@ -292,6 +299,18 @@ public class Drools {
    */
   static String requestPolicy(String droolsFile, MultiMap params, Location location) {
     return new Drools(droolsFile).requestPolicy(params, location).getPolicyId();
+  }
+
+  private boolean isRuleItemTypePresent(List<String> conditions) {
+    return conditions.contains("ItemType");
+  }
+
+  private boolean isRuleLoanTypePresent(List<String> conditions) {
+    return conditions.contains("LoanType");
+  }
+
+  private boolean isRulePatronGroupPresent(List<String> conditions) {
+    return conditions.contains("PatronGroup");
   }
 
   private class RuleEventListener extends DefaultAgendaEventListener {
