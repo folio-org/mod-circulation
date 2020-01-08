@@ -10,12 +10,11 @@ public enum ItemStatus {
   AWAITING_PICKUP("Awaiting pickup"),
   AWAITING_DELIVERY("Awaiting delivery"),
   CHECKED_OUT("Checked out"),
-  IN_PROCESS("In process"),
   IN_TRANSIT("In transit"),
   MISSING("Missing"),
-  ON_ORDER("On order"),
   PAGED("Paged"),
-  WITHDRAWN("Withdrawn"),
+  ON_ORDER("On order"),
+  IN_PROCESS("In process"),
   DECLARED_LOST("Declared lost");
 
   public static ItemStatus from(String value, String date) {

@@ -134,8 +134,7 @@
           "properties": {
             "name": {
               "description": "Name of the item status",
-              "type": "string",
-              "$ref": "schema/item-status-names.json"
+              "type": "string"
             },
             "date": {
               "type": "string",
@@ -144,8 +143,7 @@
               "readonly": true
             }
           },
-          "additionalProperties": false,
-          "required": ["name"]
+          "additionalProperties": false
         },
         "inTransitDestinationServicePointId": {
           "description": "Service point an item is intended to be transited to (should only be present when in transit)",
@@ -179,8 +177,7 @@
           "$ref": "schema/call-number-components.json"
         }
       },
-      "additionalProperties": false,
-      "required": ["status"]
+      "additionalProperties": false
     },
     "status": {
       "description": "Overall status of the loan",

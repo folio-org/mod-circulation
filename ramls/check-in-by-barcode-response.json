@@ -77,18 +77,15 @@
           "properties": {
             "name": {
               "description": "Name of the item status",
-              "type": "string",
-              "$ref": "schema/item-status-names.json"
+              "type": "string"
             },
             "date": {
               "type": "string",
               "description": "Date time when status was last changed",
-              "format": "date-time",
-              "readonly": true
+              "format": "date-time"
             }
           },
-          "additionalProperties": false,
-          "required": ["name"]
+          "additionalProperties": false
         },
         "enumeration": {
           "description": "Item`s enumeration",
@@ -118,8 +115,7 @@
           }
         }
       },
-      "additionalProperties": false,
-      "required": ["status"]
+      "additionalProperties": false
     },
     "staffSlipContext": {
       "description": "Context for staff slip tokens",
