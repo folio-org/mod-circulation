@@ -323,7 +323,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   public Loan withOverdueFinePolicy(OverdueFinePolicy newOverdueFinePolicy) {
-    requireNonNull(newOverdueFinePolicy, "newloanPolicy cannot be null");
+    requireNonNull(newOverdueFinePolicy, "newOverdueFinePolicy cannot be null");
 
     return new Loan(representation, item, user, proxy, checkinServicePoint,
       checkoutServicePoint, originalDueDate, loanPolicy, newOverdueFinePolicy,
@@ -331,7 +331,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   public Loan withLostItemPolicy(LostItemPolicy newLostItemPolicy) {
-    requireNonNull(newLostItemPolicy, "newloanPolicy cannot be null");
+    requireNonNull(newLostItemPolicy, "newLostItemPolicy cannot be null");
 
     return new Loan(representation, item, user, proxy, checkinServicePoint,
       checkoutServicePoint, originalDueDate, loanPolicy, overdueFinePolicy,
