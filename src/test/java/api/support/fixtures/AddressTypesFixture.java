@@ -22,20 +22,12 @@ public class AddressTypesFixture {
       addressType -> getProperty(addressType, "addressType"));
   }
 
-  public void cleanUp()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void cleanUp() {
 
     addressTypeRecordCreator.cleanUp();
   }
 
-  public IndividualResource work()
-      throws InterruptedException,
-      MalformedURLException,
-      TimeoutException,
-      ExecutionException {
+  public IndividualResource work() {
 
     final JsonObject workAddressType = new JsonObject();
 
@@ -46,11 +38,7 @@ public class AddressTypesFixture {
     return addressTypeRecordCreator.createIfAbsent(workAddressType);
   }
 
-  public IndividualResource home()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public IndividualResource home() {
 
     final JsonObject homeAddressType = new JsonObject();
 

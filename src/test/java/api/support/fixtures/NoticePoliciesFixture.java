@@ -19,22 +19,14 @@ public class NoticePoliciesFixture {
       reason -> getProperty(reason, "name"));
   }
 
-  public IndividualResource inactiveNotice()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public IndividualResource inactiveNotice() {
 
     final NoticePolicyBuilder inactiveNoticePolicy = new NoticePolicyBuilder();
 
     return noticePolicyRecordCreator.createIfAbsent(inactiveNoticePolicy);
   }
 
-  public IndividualResource activeNotice()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public IndividualResource activeNotice() {
 
     final NoticePolicyBuilder activeNoticePolicy = new NoticePolicyBuilder()
       .active();
@@ -42,11 +34,7 @@ public class NoticePoliciesFixture {
     return noticePolicyRecordCreator.createIfAbsent(activeNoticePolicy);
   }
 
-  public IndividualResource create(NoticePolicyBuilder noticePolicy)
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public IndividualResource create(NoticePolicyBuilder noticePolicy) {
     return noticePolicyRecordCreator.createIfAbsent(noticePolicy);
   }
 

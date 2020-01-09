@@ -28,7 +28,7 @@ public class DetermineClosedLibraryStrategyTest {
   private ClosedLibraryStrategy closedLibraryStrategy;
 
   @Before
-  public void setUp() throws Exception {
+  public void setUp() {
     JsonObject representation = new LoanPolicyBuilder()
       .withName("Loan policy")
       .withClosedLibraryDueDateManagement(dueDateManagement.getValue())

@@ -38,11 +38,7 @@ import io.vertx.core.json.JsonObject;
 
 public class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests {
   @Test
-  public void uponAtDueDateNoticesShouldBeSentInGroups()
-    throws MalformedURLException,
-    InterruptedException,
-    TimeoutException,
-    ExecutionException {
+  public void uponAtDueDateNoticesShouldBeSentInGroups() {
 
     UUID templateId = UUID.randomUUID();
     JsonObject uponAtDueDateNoticeConfig = new NoticeConfigurationBuilder()
@@ -108,11 +104,7 @@ public class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests 
   }
 
   @Test
-  public void beforeRecurringNoticesAreRescheduled()
-    throws MalformedURLException,
-    InterruptedException,
-    TimeoutException,
-    ExecutionException {
+  public void beforeRecurringNoticesAreRescheduled() {
 
     UUID templateId = UUID.randomUUID();
     Period beforePeriod = Period.weeks(1);
@@ -160,11 +152,7 @@ public class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests 
   }
 
   @Test
-  public void beforeNoticesAreNotSentIfLoanIsClosed()
-    throws MalformedURLException,
-    InterruptedException,
-    TimeoutException,
-    ExecutionException {
+  public void beforeNoticesAreNotSentIfLoanIsClosed() {
 
     UUID templateId = UUID.randomUUID();
     Period beforePeriod = Period.weeks(1);
@@ -203,11 +191,7 @@ public class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests 
   }
 
   @Test
-  public void processingTakesNoticesLimitedByConfiguration()
-    throws MalformedURLException,
-    InterruptedException,
-    TimeoutException,
-    ExecutionException {
+  public void processingTakesNoticesLimitedByConfiguration() {
 
     UUID templateId = UUID.randomUUID();
     Period beforePeriod = Period.weeks(1);
@@ -263,11 +247,7 @@ public class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests 
   }
 
   @Test
-  public void noticeIsDeletedIfReferencedLoanDoesNotExist()
-    throws MalformedURLException,
-    InterruptedException,
-    TimeoutException,
-    ExecutionException {
+  public void noticeIsDeletedIfReferencedLoanDoesNotExist() {
 
     UUID templateId = UUID.randomUUID();
 
@@ -305,11 +285,7 @@ public class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests 
   }
 
   @Test
-  public void noticeIsDeletedIfReferencedItemDoesNotExist()
-    throws MalformedURLException,
-    InterruptedException,
-    TimeoutException,
-    ExecutionException {
+  public void noticeIsDeletedIfReferencedItemDoesNotExist() {
 
     UUID templateId = UUID.randomUUID();
 
@@ -347,11 +323,7 @@ public class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests 
   }
 
   @Test
-  public void noticeIsDeletedIfReferencedUserDoesNotExist()
-    throws MalformedURLException,
-    InterruptedException,
-    TimeoutException,
-    ExecutionException {
+  public void noticeIsDeletedIfReferencedUserDoesNotExist() {
 
     UUID templateId = UUID.randomUUID();
 
@@ -389,11 +361,7 @@ public class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests 
   }
 
   @Test
-  public void missingReferencedEntitiesDoNotBlockProcessing()
-    throws MalformedURLException,
-    InterruptedException,
-    TimeoutException,
-    ExecutionException {
+  public void missingReferencedEntitiesDoNotBlockProcessing() {
 
     UUID templateId = UUID.randomUUID();
 

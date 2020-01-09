@@ -32,8 +32,7 @@ public class AnonymizeLoansAfterXIntervalTests extends LoanAnonymizationTests {
    *     Then do not anonymize the loan
   */
   @Test
-  public void testClosedLoansWithFeesAndFinesNotAnonymizedAfterIntervalNotPassed()
-      throws InterruptedException, ExecutionException, TimeoutException, MalformedURLException {
+  public void testClosedLoansWithFeesAndFinesNotAnonymizedAfterIntervalNotPassed() {
 
     LoanHistoryConfigurationBuilder loanHistoryConfig = new LoanHistoryConfigurationBuilder()
       .loanCloseAnonymizeAfterXInterval(1, "minute")
@@ -65,8 +64,7 @@ public class AnonymizeLoansAfterXIntervalTests extends LoanAnonymizationTests {
    *     Then do not anonymize the loan
    */
   @Test
-  public void testOpenLoansWithFeesAndFinesNotAnonymizedAfterIntervalNotPassed()
-      throws InterruptedException, ExecutionException, TimeoutException, MalformedURLException {
+  public void testOpenLoansWithFeesAndFinesNotAnonymizedAfterIntervalNotPassed() {
 
     LoanHistoryConfigurationBuilder loanHistoryConfig = new LoanHistoryConfigurationBuilder()
       .loanCloseAnonymizeAfterXInterval(1, "minute")
@@ -100,8 +98,7 @@ public class AnonymizeLoansAfterXIntervalTests extends LoanAnonymizationTests {
    *     Then anonymize the loan
    */
   @Test
-  public void testClosedLoansWithClosedFeesAndFinesAnonymizedAfterIntervalPassed()
-      throws InterruptedException, ExecutionException, TimeoutException, MalformedURLException {
+  public void testClosedLoansWithClosedFeesAndFinesAnonymizedAfterIntervalPassed() {
 
     LoanHistoryConfigurationBuilder loanHistoryConfig = new LoanHistoryConfigurationBuilder()
       .loanCloseAnonymizeAfterXInterval(1, "minute")
@@ -135,8 +132,7 @@ public class AnonymizeLoansAfterXIntervalTests extends LoanAnonymizationTests {
    *     Then do not anonymize the loan
    */
   @Test
-  public void testOpenLoansWithFeesAndFinesNotAnonymizedAfterFeeFineCloseIntervalNotPassed()
-      throws InterruptedException, ExecutionException, TimeoutException, MalformedURLException {
+  public void testOpenLoansWithFeesAndFinesNotAnonymizedAfterFeeFineCloseIntervalNotPassed() {
 
     LoanHistoryConfigurationBuilder loanHistoryConfig = new LoanHistoryConfigurationBuilder()
       .loanCloseAnonymizeAfterXInterval(1, "minute")
@@ -170,8 +166,7 @@ public class AnonymizeLoansAfterXIntervalTests extends LoanAnonymizationTests {
    *     Then do not anonymize the loan
    */
   @Test
-  public void testOpenLoansWithFeesAndFinesNotAnonymizedAfterFeeFineCloseIntervalPassed()
-      throws InterruptedException, ExecutionException, TimeoutException, MalformedURLException {
+  public void testOpenLoansWithFeesAndFinesNotAnonymizedAfterFeeFineCloseIntervalPassed() {
 
     LoanHistoryConfigurationBuilder loanHistoryConfig = new LoanHistoryConfigurationBuilder()
       .loanCloseAnonymizeAfterXInterval(1, "minute")
@@ -205,8 +200,7 @@ public class AnonymizeLoansAfterXIntervalTests extends LoanAnonymizationTests {
    *     Then anonymize the loan
    */
   @Test
-  public void testClosedLoansWithClosedFeesAndFinesAnonymizedAfterFeeFineCloseIntervalPassed()
-      throws InterruptedException, ExecutionException, TimeoutException, MalformedURLException {
+  public void testClosedLoansWithClosedFeesAndFinesAnonymizedAfterFeeFineCloseIntervalPassed() {
 
     LoanHistoryConfigurationBuilder loanHistoryConfig = new LoanHistoryConfigurationBuilder()
       .loanCloseAnonymizeAfterXInterval(1, "minute")
@@ -242,8 +236,7 @@ public class AnonymizeLoansAfterXIntervalTests extends LoanAnonymizationTests {
    *     Then do not anonymize the loan
    */
   @Test
-  public void testNeverAnonymizeClosedLoansWithAssociatedFeeFines()
-      throws InterruptedException, ExecutionException, TimeoutException, MalformedURLException {
+  public void testNeverAnonymizeClosedLoansWithAssociatedFeeFines() {
 
     LoanHistoryConfigurationBuilder loanHistoryConfig = new LoanHistoryConfigurationBuilder()
       .loanCloseAnonymizeAfterXInterval(1, "minute")
@@ -277,8 +270,7 @@ public class AnonymizeLoansAfterXIntervalTests extends LoanAnonymizationTests {
    *     Then do not anonymize the loan
    */
   @Test
-  public void testNeverAnonymizeClosedLoansWithAssociatedFeeFinesAfterAfterIntervalPassed()
-      throws InterruptedException, ExecutionException, TimeoutException, MalformedURLException {
+  public void testNeverAnonymizeClosedLoansWithAssociatedFeeFinesAfterAfterIntervalPassed() {
 
     LoanHistoryConfigurationBuilder loanHistoryConfig = new LoanHistoryConfigurationBuilder()
       .loanCloseAnonymizeAfterXInterval(1, "minute")
@@ -313,8 +305,7 @@ public class AnonymizeLoansAfterXIntervalTests extends LoanAnonymizationTests {
    *     Then do not anonymize the loan
    */
   @Test
-  public void testNeverAnonymizeClosedLoansWithAssociatedFeeFinesAfterAfterIntervalNotPassed()
-      throws InterruptedException, ExecutionException, TimeoutException, MalformedURLException {
+  public void testNeverAnonymizeClosedLoansWithAssociatedFeeFinesAfterAfterIntervalNotPassed() {
 
     LoanHistoryConfigurationBuilder loanHistoryConfig = new LoanHistoryConfigurationBuilder()
       .loanCloseAnonymizeAfterXInterval(1, "minute")
@@ -337,8 +328,7 @@ public class AnonymizeLoansAfterXIntervalTests extends LoanAnonymizationTests {
   }
 
   @Test
-  public void testClosedLoansAnonymizedAfterIntervalPassed()
-      throws InterruptedException, ExecutionException, TimeoutException, MalformedURLException {
+  public void testClosedLoansAnonymizedAfterIntervalPassed() {
 
     LoanHistoryConfigurationBuilder loanHistoryConfig = new LoanHistoryConfigurationBuilder().loanCloseAnonymizeAfterXInterval(1,
         "minute");
@@ -366,8 +356,7 @@ public class AnonymizeLoansAfterXIntervalTests extends LoanAnonymizationTests {
   }
 
   @Test
-  public void testClosedLoansNotAnonymizedAfterIntervalNotPassed()
-      throws InterruptedException, ExecutionException, TimeoutException, MalformedURLException {
+  public void testClosedLoansNotAnonymizedAfterIntervalNotPassed() {
 
     LoanHistoryConfigurationBuilder loanHistoryConfig = new LoanHistoryConfigurationBuilder().loanCloseAnonymizeAfterXInterval(1,
         "minute");
@@ -387,8 +376,7 @@ public class AnonymizeLoansAfterXIntervalTests extends LoanAnonymizationTests {
   }
 
   @Test
-  public void testClosedLoanWithClosedFeesAndFinesNotAnonymizedIntervalNotPassed()
-      throws InterruptedException, ExecutionException, TimeoutException, MalformedURLException {
+  public void testClosedLoanWithClosedFeesAndFinesNotAnonymizedIntervalNotPassed() {
 
     LoanHistoryConfigurationBuilder loanHistoryConfig = new LoanHistoryConfigurationBuilder().loanCloseAnonymizeAfterXInterval(1,
         "minute");
@@ -410,8 +398,7 @@ public class AnonymizeLoansAfterXIntervalTests extends LoanAnonymizationTests {
   }
 
   @Test
-  public void testClosedLoanWithOpenFeesAndFinesNotAnonymizedIntervalPassed()
-      throws InterruptedException, ExecutionException, TimeoutException, MalformedURLException {
+  public void testClosedLoanWithOpenFeesAndFinesNotAnonymizedIntervalPassed() {
 
     LoanHistoryConfigurationBuilder loanHistoryConfig = new LoanHistoryConfigurationBuilder().loanCloseAnonymizeAfterXInterval(1,
         "minute");

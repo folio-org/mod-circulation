@@ -22,10 +22,7 @@ public class ItemStatusApiTests extends APITests {
   private static final String ITEM_BARCODE = "barcode";
 
   @Test
-  public void itemStatusDateShouldExistsAfterCheckout() throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void itemStatusDateShouldExistsAfterCheckout() {
 
     IndividualResource item = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource user = usersFixture.jessica();

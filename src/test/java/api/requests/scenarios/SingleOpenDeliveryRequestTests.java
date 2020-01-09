@@ -27,11 +27,7 @@ import org.folio.circulation.support.http.client.Response;
 public class SingleOpenDeliveryRequestTests extends APITests {
 
   @Test
-  public void statusChangesToAwaitingDeliveryWhenItemCheckedIn()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void statusChangesToAwaitingDeliveryWhenItemCheckedIn() {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource james = usersFixture.james();
@@ -50,11 +46,7 @@ public class SingleOpenDeliveryRequestTests extends APITests {
   }
 
   @Test
-  public void requestStatusChangesToFilledWhenItemCheckedOutToRequester()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void requestStatusChangesToFilledWhenItemCheckedOutToRequester() {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource james = usersFixture.james();
@@ -74,11 +66,7 @@ public class SingleOpenDeliveryRequestTests extends APITests {
   }
 
   @Test
-  public void itemCannotBeCheckedOutToAnotherPatron()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void itemCannotBeCheckedOutToAnotherPatron() {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource james = usersFixture.james();
@@ -102,11 +90,7 @@ public class SingleOpenDeliveryRequestTests extends APITests {
   }
 
   @Test
-  public void itemCanBeCheckedInForSecondTime()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void itemCanBeCheckedInForSecondTime() {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource james = usersFixture.james();
@@ -129,10 +113,7 @@ public class SingleOpenDeliveryRequestTests extends APITests {
   }
 
   @Test
-  public void itemBecomesAvailableWhenRequestIsCancelled() throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void itemBecomesAvailableWhenRequestIsCancelled() {
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource james = usersFixture.james();
     IndividualResource jessica = usersFixture.jessica();
@@ -150,11 +131,7 @@ public class SingleOpenDeliveryRequestTests extends APITests {
     validateItemStatus(smallAngryPlanet, AVAILABLE);
   }
 
-  private void validateRequestStatus(IndividualResource request, String expectedStatus)
-    throws MalformedURLException,
-    InterruptedException,
-    ExecutionException,
-    TimeoutException {
+  private void validateRequestStatus(IndividualResource request, String expectedStatus) {
 
     Response response = requestsClient.getById(request.getId());
 
@@ -162,11 +139,7 @@ public class SingleOpenDeliveryRequestTests extends APITests {
   }
 
   private void validateRequestStatusAndPosition(IndividualResource request,
-      String expectedStatus, int expectedPosition)
-    throws MalformedURLException,
-    InterruptedException,
-    ExecutionException,
-    TimeoutException {
+      String expectedStatus, int expectedPosition) {
 
     Response response = requestsClient.getById(request.getId());
 
@@ -175,11 +148,7 @@ public class SingleOpenDeliveryRequestTests extends APITests {
   }
 
   private void validateItemStatus(IndividualResource item,
-        String expectedStatus)
-    throws MalformedURLException,
-    InterruptedException,
-    ExecutionException,
-    TimeoutException {
+        String expectedStatus) {
 
     item = itemsClient.get(item);
 

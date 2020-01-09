@@ -2,63 +2,45 @@ package api.requests;
 
 import static api.support.http.InterfaceUrls.requestsUrl;
 import static api.support.matchers.ResponseStatusCodeMatcher.hasStatus;
-import static java.net.HttpURLConnection.HTTP_NO_CONTENT;
+import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
+import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static org.folio.HttpStatus.HTTP_CREATED;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 
-import java.net.MalformedURLException;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
-import org.folio.circulation.support.http.client.ResponseHandler;
 import org.junit.Test;
 
 import api.support.APITests;
 import api.support.builders.RequestBuilder;
-import api.support.http.InterfaceUrls;
 import api.support.http.InventoryItemResource;
 import io.vertx.core.json.JsonObject;
 
 public class RequestsAPIProxyTests extends APITests {
   @Test
-  public void canCreateProxiedRequestWhenCurrentActiveRelationship()
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException,
-    MalformedURLException {
-
-    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+  public void canCreateProxiedRequestWhenCurrentActiveRelationship() {
+    final IndividualResource smallAngryPlanet
+      = itemsFixture.basedUponSmallAngryPlanet();
 
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
     loansFixture.checkOutByBarcode(smallAngryPlanet, usersFixture.steve());
 
-    IndividualResource sponsor = usersFixture.jessica();
-    IndividualResource proxy = usersFixture.james();
+    final IndividualResource sponsor = usersFixture.jessica();
+    final IndividualResource proxy = usersFixture.james();
 
     proxyRelationshipsFixture.currentProxyFor(sponsor, proxy);
 
-    JsonObject requestRequest = new RequestBuilder()
+    final RequestBuilder request = new RequestBuilder()
       .forItem(smallAngryPlanet)
       .withPickupServicePointId(pickupServicePointId)
       .by(sponsor)
-      .proxiedBy(proxy)
-      .create();
+      .proxiedBy(proxy);
 
-    CompletableFuture<Response> postCompleted = new CompletableFuture<>();
-
-    client.post(requestsUrl(), requestRequest,
-      ResponseHandler.json(postCompleted));
-
-    Response postResponse = postCompleted.get(5, TimeUnit.SECONDS);
-
-    assertThat(postResponse, hasStatus(HTTP_CREATED));
+    final IndividualResource postResponse = requestsFixture.place(request);
 
     JsonObject representation = postResponse.getJson();
 
@@ -68,65 +50,46 @@ public class RequestsAPIProxyTests extends APITests {
     final JsonObject proxyRepresentation = representation.getJsonObject("proxy");
 
     assertThat("last name is taken from proxying user",
-      proxyRepresentation.getString("lastName"),
-      is("Rodwell"));
+      proxyRepresentation.getString("lastName"), is("Rodwell"));
 
     assertThat("first name is taken from proxying user",
-      proxyRepresentation.getString("firstName"),
-      is("James"));
+      proxyRepresentation.getString("firstName"), is("James"));
 
     assertThat("middle name is not taken from proxying user",
-      proxyRepresentation.containsKey("middleName"),
-      is(false));
+      proxyRepresentation.containsKey("middleName"), is(false));
 
     assertThat("barcode is taken from proxying user",
-      proxyRepresentation.getString("barcode"),
-      is("6430530304"));
+      proxyRepresentation.getString("barcode"), is("6430530304"));
   }
 
   @Test
-  public void canCreateProxiedRequestWhenNonExpiringRelationship()
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException,
-    MalformedURLException {
-
-    IndividualResource item = itemsFixture.basedUponSmallAngryPlanet();
+  public void canCreateProxiedRequestWhenNonExpiringRelationship() {
+    final IndividualResource item = itemsFixture.basedUponSmallAngryPlanet();
 
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
     loansFixture.checkOutByBarcode(item, usersFixture.steve());
 
-    IndividualResource sponsor = usersFixture.jessica();
-    IndividualResource proxy = usersFixture.james();
+    final IndividualResource sponsor = usersFixture.jessica();
+    final IndividualResource proxy = usersFixture.james();
 
     proxyRelationshipsFixture.nonExpiringProxyFor(sponsor, proxy);
 
-    JsonObject requestRequest = new RequestBuilder()
+    final RequestBuilder request = new RequestBuilder()
       .forItem(item)
       .withPickupServicePointId(pickupServicePointId)
       .by(sponsor)
-      .proxiedBy(proxy)
-      .create();
+      .proxiedBy(proxy);
 
-    CompletableFuture<Response> postCompleted = new CompletableFuture<>();
-
-    client.post(requestsUrl(), requestRequest,
-      ResponseHandler.json(postCompleted));
-
-    Response postResponse = postCompleted.get(5, TimeUnit.SECONDS);
+    Response postResponse = requestsFixture.attemptPlace(request);
 
     assertThat(postResponse, hasStatus(HTTP_CREATED));
   }
 
   @Test
-  public void cannotCreateProxiedRequestWhenRelationshipIsInactive()
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException,
-    MalformedURLException {
-
-    final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+  public void cannotCreateProxiedRequestWhenRelationshipIsInactive() {
+    final IndividualResource smallAngryPlanet
+      = itemsFixture.basedUponSmallAngryPlanet();
 
     final IndividualResource steve = usersFixture.steve();
 
@@ -137,127 +100,98 @@ public class RequestsAPIProxyTests extends APITests {
 
     proxyRelationshipsFixture.inactiveProxyFor(jessica, james);
 
-    JsonObject requestRequest = new RequestBuilder()
+    final RequestBuilder request = new RequestBuilder()
       .forItem(smallAngryPlanet)
       .by(jessica)
-      .proxiedBy(james)
-      .create();
+      .proxiedBy(james);
 
-    CompletableFuture<Response> postCompleted = new CompletableFuture<>();
-
-    client.post(requestsUrl(), requestRequest,
-      ResponseHandler.any(postCompleted));
-
-    Response postResponse = postCompleted.get(5, TimeUnit.SECONDS);
+    final Response postResponse = requestsFixture.attemptPlace(request);
 
     assertThat(postResponse.getStatusCode(), is(422));
+
+    assertThat(postResponse.getJson(), hasErrorWith(
+      hasMessage("proxyUserId is not valid")));
   }
 
   @Test
-  public void cannotCreateProxiedRequestWhenRelationshipHasExpired()
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException,
-    MalformedURLException {
-
-    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+  public void cannotCreateProxiedRequestWhenRelationshipHasExpired() {
+    final IndividualResource smallAngryPlanet
+      = itemsFixture.basedUponSmallAngryPlanet();
 
     final IndividualResource steve = usersFixture.steve();
 
     loansFixture.checkOutByBarcode(smallAngryPlanet, steve);
 
-    IndividualResource jessica = usersFixture.jessica();
-    IndividualResource james = usersFixture.james();
+    final IndividualResource jessica = usersFixture.jessica();
+    final IndividualResource james = usersFixture.james();
 
     proxyRelationshipsFixture.expiredProxyFor(jessica, james);
 
-    JsonObject requestRequest = new RequestBuilder()
+    final RequestBuilder request = new RequestBuilder()
       .forItem(smallAngryPlanet)
       .by(jessica)
-      .proxiedBy(james)
-      .create();
+      .proxiedBy(james);
 
-    CompletableFuture<Response> postCompleted = new CompletableFuture<>();
-
-    client.post(requestsUrl(), requestRequest,
-      ResponseHandler.any(postCompleted));
-
-    Response postResponse = postCompleted.get(5, TimeUnit.SECONDS);
+    final Response postResponse = requestsFixture.attemptPlace(request);
 
     assertThat(postResponse.getStatusCode(), is(422));
+
+    assertThat(postResponse.getJson(), hasErrorWith(
+      hasMessage("proxyUserId is not valid")));
   }
 
   @Test
-  public void cannotCreateProxiedRequestWhenRelationshipIsForOtherSponsor()
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException,
-    MalformedURLException {
-
-    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+  public void cannotCreateProxiedRequestWhenRelationshipIsForOtherSponsor() {
+    final IndividualResource smallAngryPlanet
+      = itemsFixture.basedUponSmallAngryPlanet();
 
     loansFixture.checkOutByBarcode(smallAngryPlanet, usersFixture.steve());
 
-    IndividualResource jessica = usersFixture.jessica();
-    IndividualResource charlotte = usersFixture.charlotte();
-    IndividualResource james = usersFixture.james();
+    final IndividualResource jessica = usersFixture.jessica();
+    final IndividualResource charlotte = usersFixture.charlotte();
+    final IndividualResource james = usersFixture.james();
 
     proxyRelationshipsFixture.expiredProxyFor(jessica, james);
 
-    JsonObject requestRequest = new RequestBuilder()
+    final RequestBuilder request = new RequestBuilder()
       .forItem(smallAngryPlanet)
       .by(charlotte)
-      .proxiedBy(james)
-      .create();
+      .proxiedBy(james);
 
-    CompletableFuture<Response> postCompleted = new CompletableFuture<>();
-
-    client.post(requestsUrl(), requestRequest,
-      ResponseHandler.any(postCompleted));
-
-    Response postResponse = postCompleted.get(5, TimeUnit.SECONDS);
+    final Response postResponse = requestsFixture.attemptPlace(request);
 
     assertThat(postResponse.getStatusCode(), is(422));
+
+    assertThat(postResponse.getJson(), hasErrorWith(
+      hasMessage("proxyUserId is not valid")));
   }
 
   @Test
-  public void canUpdateProxiedRequestWhenValidProxyRelationship()
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException,
-    MalformedURLException {
-
+  public void canUpdateProxiedRequestWhenValidProxyRelationship() {
     final InventoryItemResource temeraire = itemsFixture.basedUponTemeraire();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
     loansFixture.checkOutByBarcode(temeraire, usersFixture.steve());
 
-    IndividualResource sponsor = usersFixture.jessica();
-    IndividualResource proxy = usersFixture.rebecca();
+    final IndividualResource sponsor = usersFixture.jessica();
+    final IndividualResource proxy = usersFixture.rebecca();
 
-    IndividualResource createdRequest = requestsClient.create(
-      new RequestBuilder()
-        .recall()
-        .withPickupServicePointId(pickupServicePointId)
-        .forItem(temeraire)
-        .by(sponsor));
+    final RequestBuilder request = new RequestBuilder()
+      .recall()
+      .withPickupServicePointId(pickupServicePointId)
+      .forItem(temeraire)
+      .by(sponsor);
+
+    final IndividualResource createdRequest = requestsFixture.place(request);
 
     proxyRelationshipsFixture.currentProxyFor(sponsor, proxy);
 
-    JsonObject updatedRequest = createdRequest.copyJson();
+    final RequestBuilder updatedRequest = RequestBuilder.from(createdRequest)
+      .proxiedBy(proxy);
 
-    updatedRequest.put("proxyUserId", proxy.getId().toString());
+    requestsFixture.replaceRequest(createdRequest.getId(), updatedRequest);
 
-    CompletableFuture<Response> putCompleted = new CompletableFuture<>();
-
-    client.put(InterfaceUrls.requestsUrl(String.format("/%s", createdRequest.getId())),
-      updatedRequest, ResponseHandler.any(putCompleted));
-
-    Response putResponse = putCompleted.get(5, TimeUnit.SECONDS);
-
-    assertThat(putResponse.getStatusCode(), is(HTTP_NO_CONTENT));
-
-    final IndividualResource fetchedRequest = requestsClient.get(createdRequest);
+    final Response fetchedRequest = requestsFixture.getById(createdRequest.getId());
 
     final JsonObject representation = fetchedRequest.getJson();
 
@@ -267,38 +201,29 @@ public class RequestsAPIProxyTests extends APITests {
     final JsonObject proxyRepresentation = representation.getJsonObject("proxy");
 
     assertThat("last name is taken from proxying user",
-      proxyRepresentation.getString("lastName"),
-      is("Stuart"));
+      proxyRepresentation.getString("lastName"), is("Stuart"));
 
     assertThat("first name is taken from proxying user",
-      proxyRepresentation.getString("firstName"),
-      is("Rebecca"));
+      proxyRepresentation.getString("firstName"), is("Rebecca"));
 
     assertThat("middle name is not taken from proxying user",
-      proxyRepresentation.containsKey("middleName"),
-      is(false));
+      proxyRepresentation.containsKey("middleName"), is(false));
 
     assertThat("barcode is taken from proxying user",
-      proxyRepresentation.getString("barcode"),
-      is("6059539205"));
+      proxyRepresentation.getString("barcode"), is("6059539205"));
   }
 
   @Test
-  public void cannotUpdateProxiedRequestWhenRelationshipHasExpired()
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException,
-    MalformedURLException {
-
+  public void cannotUpdateProxiedRequestWhenRelationshipHasExpired() {
     final InventoryItemResource temeraire = itemsFixture.basedUponTemeraire();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
     loansFixture.checkOutByBarcode(temeraire, usersFixture.rebecca());
 
-    IndividualResource sponsor = usersFixture.jessica();
-    IndividualResource proxy = usersFixture.james();
+    final IndividualResource sponsor = usersFixture.jessica();
+    final IndividualResource proxy = usersFixture.james();
 
-    IndividualResource createdRequest = requestsClient.create(
+    final IndividualResource createdRequest = requestsClient.create(
       new RequestBuilder()
         .recall()
         .withPickupServicePointId(pickupServicePointId)
@@ -307,56 +232,48 @@ public class RequestsAPIProxyTests extends APITests {
 
     proxyRelationshipsFixture.expiredProxyFor(sponsor, proxy);
 
-    JsonObject updatedRequest = createdRequest.copyJson();
+    final RequestBuilder updatedRequest = RequestBuilder.from(createdRequest)
+      .proxiedBy(proxy);
 
-    updatedRequest.put("proxyUserId", proxy.getId().toString());
-
-    CompletableFuture<Response> putCompleted = new CompletableFuture<>();
-
-    client.put(InterfaceUrls.requestsUrl(String.format("/%s", createdRequest.getId())),
-      updatedRequest, ResponseHandler.any(putCompleted));
-
-    Response putResponse = putCompleted.get(5, TimeUnit.SECONDS);
+    final Response putResponse = requestsFixture.attemptToReplaceRequest(
+      createdRequest.getId(), updatedRequest);
 
     assertThat(putResponse.getStatusCode(), is(422));
+
+    assertThat(putResponse.getJson(), hasErrorWith(
+      hasMessage("proxyUserId is not valid")));
   }
 
   @Test
-  public void cannotUpdateProxiedRequestWhenRelationshipIsForOtherSponsor()
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException,
-    MalformedURLException {
-
+  public void cannotUpdateProxiedRequestWhenRelationshipIsForOtherSponsor() {
     final InventoryItemResource temeraire = itemsFixture.basedUponTemeraire();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
     loansFixture.checkOutByBarcode(temeraire);
 
-    IndividualResource unexpectedSponsor = usersFixture.jessica();
-    IndividualResource otherUser = usersFixture.charlotte();
-    IndividualResource proxy = usersFixture.james();
+    final IndividualResource unexpectedSponsor = usersFixture.jessica();
+    final IndividualResource otherUser = usersFixture.charlotte();
+    final IndividualResource proxy = usersFixture.james();
 
-    IndividualResource createdRequest = requestsClient.create(
-      new RequestBuilder()
-        .recall()
-        .withPickupServicePointId(pickupServicePointId)
-        .forItem(temeraire)
-        .by(otherUser));
+    final RequestBuilder request = new RequestBuilder()
+      .recall()
+      .withPickupServicePointId(pickupServicePointId)
+      .forItem(temeraire)
+      .by(otherUser);
+
+    final IndividualResource createdRequest = requestsFixture.place(request);
 
     proxyRelationshipsFixture.currentProxyFor(unexpectedSponsor, proxy);
 
-    JsonObject updatedRequest = createdRequest.copyJson();
+    final RequestBuilder updatedRequest = RequestBuilder.from(createdRequest)
+      .proxiedBy(proxy);
 
-    updatedRequest.put("proxyUserId", proxy.getId().toString());
-
-    CompletableFuture<Response> putCompleted = new CompletableFuture<>();
-
-    client.put(InterfaceUrls.requestsUrl(String.format("/%s", createdRequest.getId())),
-      updatedRequest, ResponseHandler.any(putCompleted));
-
-    Response putResponse = putCompleted.get(5, TimeUnit.SECONDS);
+    final Response putResponse = requestsFixture.attemptToReplaceRequest(
+      createdRequest.getId(), updatedRequest);
 
     assertThat(putResponse.getStatusCode(), is(422));
+
+    assertThat(putResponse.getJson(), hasErrorWith(
+      hasMessage("proxyUserId is not valid")));
   }
 }

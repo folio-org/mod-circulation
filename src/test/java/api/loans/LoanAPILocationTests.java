@@ -19,11 +19,7 @@ import io.vertx.core.json.JsonObject;
 
 public class LoanAPILocationTests extends APITests {
   @Test
-  public void locationIsIncludedForSingleLoan()
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException,
-    MalformedURLException {
+  public void locationIsIncludedForSingleLoan() {
 
     final IndividualResource thirdFloor = locationsFixture.thirdFloor();
     final IndividualResource secondFloorEconomics = locationsFixture.secondFloorEconomics();
@@ -64,11 +60,7 @@ public class LoanAPILocationTests extends APITests {
   }
 
   @Test
-  public void locationIncludedForMultipleLoans()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void locationIncludedForMultipleLoans() {
 
     final IndividualResource thirdFloor = locationsFixture.thirdFloor();
     final IndividualResource secondFloorEconomics = locationsFixture.secondFloorEconomics();

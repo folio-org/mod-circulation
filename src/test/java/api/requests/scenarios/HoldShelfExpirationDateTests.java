@@ -49,13 +49,13 @@ public class HoldShelfExpirationDateTests extends APITests{
   private static Clock clock;
 
   @BeforeClass
-  public static void setUpBeforeClass() throws Exception {
+  public static void setUpBeforeClass() {
     clock = Clock.fixed(Instant.now(), ZoneOffset.UTC);
     ClockManager.getClockManager().setClock(clock);
   }
 
   @Before
-  public void setUp() throws Exception {
+  public void setUp() {
     // reset the clock before each test (just in case)
     ClockManager.getClockManager().setClock(clock);
   }
@@ -66,8 +66,7 @@ public class HoldShelfExpirationDateTests extends APITests{
     "cd6|HOURS|9"
   })
   public void requestWithShelfExpirationDateForSpExpiryInHoursAndMinutes(
-    String servicePoint, ChronoUnit interval, int amount) throws MalformedURLException,
-    InterruptedException, TimeoutException, ExecutionException {
+    String servicePoint, ChronoUnit interval, int amount) {
 
     final IndividualResource checkInServicePoint;
     try {
@@ -109,8 +108,7 @@ public class HoldShelfExpirationDateTests extends APITests{
     "cd4|WEEKS|2"
   })
   public void requestWithShelfExpirationDateForSpExpiryInDaysWeeksMonths(
-    String servicePoint, ChronoUnit interval, int amount) throws MalformedURLException,
-    InterruptedException, TimeoutException, ExecutionException {
+    String servicePoint, ChronoUnit interval, int amount) {
 
     final IndividualResource checkInServicePoint;
     try {
@@ -148,7 +146,7 @@ public class HoldShelfExpirationDateTests extends APITests{
   }
 
   @Test
-  public void shouldUseTenantTimeZoneForLongTerm() throws Exception {
+  public void shouldUseTenantTimeZoneForLongTerm() {
     final ChronoUnit interval = ChronoUnit.DAYS;
     final int amount = 30;
     final ZoneId tenantTimeZone = ZoneId.of("America/New_York");
@@ -186,7 +184,7 @@ public class HoldShelfExpirationDateTests extends APITests{
   }
 
   @Test
-  public void shouldUseTenantTimeZoneForShortTerm() throws Exception {
+  public void shouldUseTenantTimeZoneForShortTerm() {
     final ChronoUnit interval = ChronoUnit.MINUTES;
     final int amount = 42;
     final ZoneId tenantTimeZone = ZoneId.of("America/New_York");
@@ -224,9 +222,7 @@ public class HoldShelfExpirationDateTests extends APITests{
   }
 
   @Test
-  public void requestWithHoldShelfExpirationDateAlreadySet()
-      throws MalformedURLException, InterruptedException, TimeoutException,
-      ExecutionException {
+  public void requestWithHoldShelfExpirationDateAlreadySet() {
     final IndividualResource checkInServicePoint = servicePointsFixture.cd1();
 
     final IndividualResource james = usersFixture.james();
@@ -287,9 +283,7 @@ public class HoldShelfExpirationDateTests extends APITests{
   }
 
   @Test
-  public void requestRemoveHoldShelfExpirationDateWhenItemIsInTransit()
-      throws MalformedURLException, InterruptedException, TimeoutException,
-      ExecutionException {
+  public void requestRemoveHoldShelfExpirationDateWhenItemIsInTransit() {
     final IndividualResource checkInServicePoint = servicePointsFixture.cd1();
     final IndividualResource alternateCheckInServicePoint = servicePointsFixture.cd2();
 
@@ -340,9 +334,7 @@ public class HoldShelfExpirationDateTests extends APITests{
   }
 
   @Test
-  public void pageRequestWithHoldShelfExpirationDate()
-      throws MalformedURLException, InterruptedException, TimeoutException,
-      ExecutionException {
+  public void pageRequestWithHoldShelfExpirationDate() {
     final IndividualResource checkInServicePoint = servicePointsFixture.cd1();
 
     final IndividualResource jessica = usersFixture.jessica();
@@ -377,9 +369,7 @@ public class HoldShelfExpirationDateTests extends APITests{
   }
 
   @Test
-  public void requestHoldShelfExpirationDateWhenItemIsInTransit()
-      throws MalformedURLException, InterruptedException, TimeoutException,
-      ExecutionException {
+  public void requestHoldShelfExpirationDateWhenItemIsInTransit() {
     final IndividualResource checkInServicePoint = servicePointsFixture.cd1();
     final IndividualResource alternateCheckInServicePoint = servicePointsFixture.cd2();
 
@@ -418,9 +408,7 @@ public class HoldShelfExpirationDateTests extends APITests{
   }
 
   @Test
-  public void pageRequestInTransitWithHoldShelfExpirationDate()
-      throws MalformedURLException, InterruptedException, TimeoutException,
-      ExecutionException {
+  public void pageRequestInTransitWithHoldShelfExpirationDate() {
     final IndividualResource checkInServicePoint = servicePointsFixture.cd1();
     final IndividualResource alternateServicePoint = servicePointsFixture.cd2();
 
@@ -458,9 +446,7 @@ public class HoldShelfExpirationDateTests extends APITests{
   }
 
   @Test
-  public void requestInTransitRemainsInTransit()
-      throws MalformedURLException, InterruptedException, TimeoutException,
-      ExecutionException {
+  public void requestInTransitRemainsInTransit() {
     final IndividualResource checkInServicePoint = servicePointsFixture.cd1();
     final IndividualResource alternateCheckInServicePoint = servicePointsFixture.cd2();
     final IndividualResource transitCheckInServicePoint = servicePointsFixture.cd4();

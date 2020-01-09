@@ -20,22 +20,14 @@ public class MaterialTypesFixture {
       materialType -> getProperty(materialType, "name"));
   }
 
-  public IndividualResource videoRecording()
-    throws MalformedURLException,
-    InterruptedException,
-    ExecutionException,
-    TimeoutException {
+  public IndividualResource videoRecording() {
 
     final JsonObject videoRecording = materialType("Video Recording");
 
     return materialTypeRecordCreator.createIfAbsent(videoRecording);
   }
 
-  public IndividualResource book()
-    throws MalformedURLException,
-    InterruptedException,
-    ExecutionException,
-    TimeoutException {
+  public IndividualResource book() {
 
     final JsonObject book = materialType("Book");
 
@@ -50,11 +42,7 @@ public class MaterialTypesFixture {
     return materialType;
   }
 
-  public void cleanUp()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void cleanUp() {
 
     materialTypeRecordCreator.cleanUp();
   }

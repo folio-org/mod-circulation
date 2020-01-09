@@ -28,11 +28,7 @@ public class RequestsServicePointsTests extends APITests {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
   @Test
-  public void pagedRequestCheckedInAtIntendedServicePointTest()
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException,
-    MalformedURLException {
+  public void pagedRequestCheckedInAtIntendedServicePointTest() {
 
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource servicePoint = servicePointsFixture.cd1();
@@ -57,11 +53,7 @@ public class RequestsServicePointsTests extends APITests {
   }
 
   @Test
-  public void pagedRequestForItemWithIntransitStatusCheckedInAtIntendedServicePointTest()
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException,
-    MalformedURLException {
+  public void pagedRequestForItemWithIntransitStatusCheckedInAtIntendedServicePointTest() {
 
     //setup item in IN_TRANSIT status
     final IndividualResource requestPickupServicePoint = servicePointsFixture.cd1();
@@ -80,11 +72,7 @@ public class RequestsServicePointsTests extends APITests {
   }
 
   @Test
-  public void pagedRequestCheckedInAtUnIntendedServicePointTest()
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException,
-    MalformedURLException {
+  public void pagedRequestCheckedInAtUnIntendedServicePointTest() {
 
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource requestPickupServicePoint = servicePointsFixture.cd1();

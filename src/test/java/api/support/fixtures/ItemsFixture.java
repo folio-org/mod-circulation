@@ -54,22 +54,14 @@ public class ItemsFixture {
       contributorNameTypesClient, nameType -> getProperty(nameType, "name"));
   }
 
-  public void cleanUp()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void cleanUp() {
 
     //TODO: Also clean up created instances, holdings record and items
     instanceTypeRecordCreator.cleanUp();
     contributorNameTypeRecordCreator.cleanUp();
   }
 
-  public InventoryItemResource basedUponDunkirk()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public InventoryItemResource basedUponDunkirk() {
 
     return create(
       InstanceExamples.basedUponDunkirk(booksInstanceTypeId(),
@@ -79,11 +71,7 @@ public class ItemsFixture {
         loanTypesFixture.canCirculate().getId()));
   }
 
-  public IndividualResource basedUponDunkirkWithCustomHoldingAndLocation(UUID holdingsId, UUID locationId)
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public IndividualResource basedUponDunkirkWithCustomHoldingAndLocation(UUID holdingsId, UUID locationId) {
 
     JsonObject item1 = ItemExamples.basedUponDunkirk(UUID.randomUUID(), loanTypesFixture.canCirculate().getId())
       .forHolding(holdingsId)
@@ -95,11 +83,7 @@ public class ItemsFixture {
     return itemsClient.create(item1);
   }
 
-  public IndividualResource basedUponDunkirkWithCustomHoldingAndLocationAndCheckedOut(UUID holdingsId, UUID locationId)
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public IndividualResource basedUponDunkirkWithCustomHoldingAndLocationAndCheckedOut(UUID holdingsId, UUID locationId) {
 
     JsonObject item1 = ItemExamples.basedUponDunkirk(UUID.randomUUID(), loanTypesFixture.canCirculate().getId())
       .forHolding(holdingsId)
@@ -109,11 +93,7 @@ public class ItemsFixture {
 
     return itemsClient.create(item1);
   }
-  public IndividualResource basedUponDunkirkWithCustomHoldingAndLocationAndStatusInProcess(UUID holdingsId, UUID locationId)
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public IndividualResource basedUponDunkirkWithCustomHoldingAndLocationAndStatusInProcess(UUID holdingsId, UUID locationId) {
 
     JsonObject item1 = ItemExamples.basedUponDunkirk(UUID.randomUUID(), loanTypesFixture.canCirculate().getId())
       .forHolding(holdingsId)
@@ -124,31 +104,19 @@ public class ItemsFixture {
     return itemsClient.create(item1);
   }
 
-  public InventoryItemResource basedUponSmallAngryPlanet()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public InventoryItemResource basedUponSmallAngryPlanet() {
 
     return basedUponSmallAngryPlanet(identity());
   }
 
-  public InventoryItemResource basedUponSmallAngryPlanet(String barcode)
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public InventoryItemResource basedUponSmallAngryPlanet(String barcode) {
 
     return basedUponSmallAngryPlanet(item -> item.withBarcode(barcode));
   }
 
   public InventoryItemResource basedUponSmallAngryPlanet(
     ItemBuilder itemBuilder,
-    HoldingBuilder holdingBuilder)
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+    HoldingBuilder holdingBuilder) {
 
     return applyAdditionalProperties(
       identity(),
@@ -160,11 +128,7 @@ public class ItemsFixture {
   }
 
   public InventoryItemResource basedUponSmallAngryPlanet(
-    Function<ItemBuilder, ItemBuilder> additionalItemProperties)
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+    Function<ItemBuilder, ItemBuilder> additionalItemProperties) {
 
     return basedUponSmallAngryPlanet(
       identity(),
@@ -173,11 +137,7 @@ public class ItemsFixture {
 
   public InventoryItemResource basedUponSmallAngryPlanet(
     Function<HoldingBuilder, HoldingBuilder> additionalHoldingsRecordProperties,
-    Function<ItemBuilder, ItemBuilder> additionalItemProperties)
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+    Function<ItemBuilder, ItemBuilder> additionalItemProperties) {
 
     return applyAdditionalProperties(
       additionalHoldingsRecordProperties,
@@ -189,21 +149,13 @@ public class ItemsFixture {
         loanTypesFixture.canCirculate().getId()));
   }
 
-  public InventoryItemResource basedUponNod()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public InventoryItemResource basedUponNod() {
 
     return basedUponNod(identity());
   }
 
   public InventoryItemResource basedUponNod(
-    Function<ItemBuilder, ItemBuilder> additionalItemProperties)
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+    Function<ItemBuilder, ItemBuilder> additionalItemProperties) {
 
     return applyAdditionalProperties(
       identity(),
@@ -215,22 +167,14 @@ public class ItemsFixture {
         loanTypesFixture.canCirculate().getId()));
   }
 
-  public InventoryItemResource basedUponTemeraire()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public InventoryItemResource basedUponTemeraire() {
 
     return basedUponTemeraire(identity());
   }
 
   public InventoryItemResource basedUponTemeraire(
     Function<HoldingBuilder, HoldingBuilder> additionalHoldingsRecordProperties,
-    Function<ItemBuilder, ItemBuilder> additionalItemProperties)
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+    Function<ItemBuilder, ItemBuilder> additionalItemProperties) {
 
     return applyAdditionalProperties(
       additionalHoldingsRecordProperties,
@@ -243,30 +187,18 @@ public class ItemsFixture {
   }
 
   public InventoryItemResource basedUponTemeraire(
-    Function<ItemBuilder, ItemBuilder> additionalItemProperties)
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+    Function<ItemBuilder, ItemBuilder> additionalItemProperties) {
 
     return basedUponTemeraire(identity(), additionalItemProperties);
   }
 
-  public InventoryItemResource basedUponUprooted()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public InventoryItemResource basedUponUprooted() {
 
     return basedUponUprooted(identity());
   }
 
   public InventoryItemResource basedUponUprooted(
-    Function<ItemBuilder, ItemBuilder> additionalItemProperties)
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+    Function<ItemBuilder, ItemBuilder> additionalItemProperties) {
 
     return applyAdditionalProperties(
       identity(),
@@ -278,21 +210,13 @@ public class ItemsFixture {
         loanTypesFixture.canCirculate().getId()));
   }
 
-  public InventoryItemResource basedUponInterestingTimes()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public InventoryItemResource basedUponInterestingTimes() {
 
     return basedUponInterestingTimes(identity());
   }
 
   public InventoryItemResource basedUponInterestingTimes(
-    Function<ItemBuilder, ItemBuilder> additionalItemProperties)
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+    Function<ItemBuilder, ItemBuilder> additionalItemProperties) {
 
     return applyAdditionalProperties(
       identity(),
@@ -309,11 +233,7 @@ public class ItemsFixture {
     Function<ItemBuilder, ItemBuilder> additionalItemProperties,
     InstanceBuilder instanceBuilder,
     HoldingBuilder holdingsRecordBuilder,
-    ItemBuilder itemBuilder)
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+    ItemBuilder itemBuilder) {
 
     return create(
       instanceBuilder,
@@ -324,11 +244,7 @@ public class ItemsFixture {
   private InventoryItemResource create(
     InstanceBuilder instanceBuilder,
     HoldingBuilder holdingsRecordBuilder,
-    ItemBuilder itemBuilder)
-    throws MalformedURLException,
-    InterruptedException,
-    ExecutionException,
-    TimeoutException {
+    ItemBuilder itemBuilder) {
 
     IndividualResource instance = instancesClient.create(
       instanceBuilder.withInstanceTypeId(booksInstanceTypeId()));
@@ -343,11 +259,7 @@ public class ItemsFixture {
     return new InventoryItemResource(item, holding, instance);
   }
 
-  public HoldingBuilder thirdFloorHoldings()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public HoldingBuilder thirdFloorHoldings() {
 
     return new HoldingBuilder()
       .withPermanentLocation(locationsFixture.thirdFloor())
@@ -356,11 +268,7 @@ public class ItemsFixture {
       .withCallNumberSuffix("CIRC");
   }
 
-  public IndividualResource setupDeclaredLostItem()
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException,
-    MalformedURLException {
+  public IndividualResource setupDeclaredLostItem() {
     IndividualResource declaredLostItem = basedUponSmallAngryPlanet(ItemBuilder::declaredLost);
     assertThat(declaredLostItem.getResponse().getJson().getJsonObject("status").getString("name"), is(ItemStatus.DECLARED_LOST.getValue()));
 
@@ -371,11 +279,7 @@ public class ItemsFixture {
     String callNumber,
     String callNumberPrefix,
     String callNumberSuffix,
-    List<String> copyNumbers)
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+    List<String> copyNumbers) {
 
     return new HoldingBuilder()
       .withPermanentLocation(locationsFixture.thirdFloor())
@@ -386,11 +290,7 @@ public class ItemsFixture {
       .withCopyNumbers(copyNumbers);
   }
 
-  private UUID booksInstanceTypeId()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  private UUID booksInstanceTypeId() {
 
     final JsonObject booksInstanceType = new JsonObject();
 
@@ -401,11 +301,7 @@ public class ItemsFixture {
     return instanceTypeRecordCreator.createIfAbsent(booksInstanceType).getId();
   }
 
-  private UUID getPersonalContributorNameTypeId()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  private UUID getPersonalContributorNameTypeId() {
 
     final JsonObject personalName = new JsonObject();
 

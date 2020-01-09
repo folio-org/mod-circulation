@@ -23,18 +23,13 @@ import io.vertx.core.json.JsonObject;
 public class ItemLastCheckInTests extends APITests {
 
   @Override
-  public void afterEach()
-    throws InterruptedException, MalformedURLException, TimeoutException,
-    ExecutionException {
-
+  public void afterEach() {
     super.afterEach();
     APITestContext.defaultUserId();
   }
 
   @Test
-  public void checkedInItemWithLoanShouldHaveLastCheckedInFields()
-    throws InterruptedException, MalformedURLException, TimeoutException,
-    ExecutionException {
+  public void checkedInItemWithLoanShouldHaveLastCheckedInFields() {
 
     IndividualResource item = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource user = usersFixture.jessica();
@@ -54,9 +49,7 @@ public class ItemLastCheckInTests extends APITests {
   }
 
   @Test
-  public void shouldNotFailCheckInWithEmptyLoggedInUserId()
-    throws InterruptedException, MalformedURLException, TimeoutException,
-    ExecutionException {
+  public void shouldNotFailCheckInWithEmptyLoggedInUserId() {
 
     IndividualResource item = itemsFixture.basedUponSmallAngryPlanet();
     UUID servicePointId = servicePointsFixture.cd1().getId();
@@ -78,9 +71,7 @@ public class ItemLastCheckInTests extends APITests {
   }
 
   @Test
-  public void shouldNotFailCheckInWithInvalidLoggedInUserId()
-    throws InterruptedException, MalformedURLException, TimeoutException,
-    ExecutionException {
+  public void shouldNotFailCheckInWithInvalidLoggedInUserId() {
 
     IndividualResource item = itemsFixture.basedUponSmallAngryPlanet();
     UUID servicePointId = servicePointsFixture.cd1().getId();
@@ -102,9 +93,7 @@ public class ItemLastCheckInTests extends APITests {
   }
 
   @Test
-  public void shouldBeAbleToCheckinItemWithoutLoan()
-    throws InterruptedException, MalformedURLException, TimeoutException,
-    ExecutionException {
+  public void shouldBeAbleToCheckinItemWithoutLoan() {
 
     IndividualResource item = itemsFixture.basedUponSmallAngryPlanet();
     UUID servicePointId = servicePointsFixture.cd1().getId();
@@ -121,9 +110,7 @@ public class ItemLastCheckInTests extends APITests {
   }
 
   @Test
-  public void shouldBeAbleCheckinItemWithoutLoanMultipleTimes()
-    throws InterruptedException, MalformedURLException, TimeoutException,
-    ExecutionException {
+  public void shouldBeAbleCheckinItemWithoutLoanMultipleTimes() {
 
     IndividualResource item = itemsFixture.basedUponSmallAngryPlanet();
     UUID servicePointId = servicePointsFixture.cd1().getId();

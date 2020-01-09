@@ -27,10 +27,7 @@ public class DeclareLostAPITests extends APITests {
   private JsonObject loanJson;
 
   @Override
-  public void beforeEach()
-    throws MalformedURLException, InterruptedException, ExecutionException,
-    TimeoutException {
-
+  public void beforeEach() throws InterruptedException {
     super.beforeEach();
     item = itemsFixture.basedUponSmallAngryPlanet();
 
@@ -39,9 +36,7 @@ public class DeclareLostAPITests extends APITests {
   }
 
   @Test
-  public void canDeclareItemLostWithComment()
-    throws InterruptedException, ExecutionException, TimeoutException,
-    MalformedURLException {
+  public void canDeclareItemLostWithComment() {
     UUID loanId = UUID.fromString(loanJson.getString("id"));
     String comment = "testing";
     DateTime dateTime = DateTime.now();
@@ -87,9 +82,7 @@ public class DeclareLostAPITests extends APITests {
   }
 
   @Test
-  public void cannotDeclareItemLostForAClosedLoan()
-    throws InterruptedException, ExecutionException, TimeoutException,
-    MalformedURLException {
+  public void cannotDeclareItemLostForAClosedLoan() {
 
     UUID loanId = UUID.fromString(loanJson.getString("id"));
     DateTime dateTime = DateTime.now();

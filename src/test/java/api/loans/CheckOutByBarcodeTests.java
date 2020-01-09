@@ -1,7 +1,7 @@
 package api.loans;
 
 import static api.requests.RequestsAPICreationTests.setupMissingItem;
-import static api.support.APITestContext.END_OF_2019_DUE_DATE;
+import static api.support.APITestContext.END_OF_CURRENT_YEAR_DUE_DATE;
 import static api.support.builders.ItemBuilder.AVAILABLE;
 import static api.support.builders.ItemBuilder.CHECKED_OUT;
 import static api.support.matchers.CheckOutByBarcodeResponseMatchers.hasItemBarcodeParameter;
@@ -16,34 +16,26 @@ import static api.support.matchers.UUIDMatcher.is;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static api.support.matchers.ValidationErrorMatchers.hasMessageContaining;
-import static java.net.HttpURLConnection.HTTP_OK;
 import static org.folio.circulation.domain.representations.ItemProperties.CALL_NUMBER_COMPONENTS;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
+import static org.joda.time.DateTimeZone.UTC;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-import java.net.MalformedURLException;
 import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
-import org.folio.circulation.support.http.client.ResponseHandler;
 import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
 import org.joda.time.Seconds;
 import org.junit.Test;
 
-import api.support.APITestContext;
 import api.support.APITests;
 import api.support.builders.CheckOutByBarcodeRequestBuilder;
 import api.support.builders.FixedDueDateSchedule;
@@ -58,13 +50,7 @@ import io.vertx.core.json.JsonObject;
 
 public class CheckOutByBarcodeTests extends APITests {
   @Test
-  public void canCheckOutUsingItemAndUserBarcode()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
-
-
+  public void canCheckOutUsingItemAndUserBarcode() {
      IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet(
       item -> item
         .withEnumeration("v.70:no.1-6")
@@ -73,7 +59,7 @@ public class CheckOutByBarcodeTests extends APITests {
 
     final IndividualResource steve = usersFixture.steve();
 
-    final DateTime loanDate = new DateTime(2018, 3, 18, 11, 43, 54, DateTimeZone.UTC);
+    final DateTime loanDate = new DateTime(2018, 3, 18, 11, 43, 54, UTC);
 
     final UUID checkoutServicePointId = UUID.randomUUID();
 
@@ -192,18 +178,19 @@ public class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void canCheckOutUsingFixedDueDateLoanPolicy()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
-
+  public void canCheckOutUsingFixedDueDateLoanPolicy() {
     useExampleFixedPolicyCirculationRules();
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource steve = usersFixture.steve();
 
-    final DateTime loanDate = new DateTime(2019, 3, 18, 11, 43, 54, DateTimeZone.UTC);
+    final DateTime loanDate = DateTime.now(UTC)
+      .withMonthOfYear(3)
+      .withDayOfMonth(18)
+      .withHourOfDay(11)
+      .withMinuteOfHour(43)
+      .withSecondOfMinute(54)
+      .withMillisOfSecond(0);
 
     final IndividualResource response = loansFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
@@ -222,17 +209,11 @@ public class CheckOutByBarcodeTests extends APITests {
     loanHasLoanPolicyProperties(loan, loanPoliciesFixture.canCirculateFixed());
 
     assertThat("due date should be based upon fixed due date schedule",
-      loan.getString("dueDate"),
-      isEquivalentTo(END_OF_2019_DUE_DATE));
+      loan.getString("dueDate"), isEquivalentTo(END_OF_CURRENT_YEAR_DUE_DATE));
   }
 
   @Test
-  public void canCheckOutUsingDueDateLimitedRollingLoanPolicy()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
-
+  public void canCheckOutUsingDueDateLimitedRollingLoanPolicy() {
     FixedDueDateSchedulesBuilder dueDateLimitSchedule = new FixedDueDateSchedulesBuilder()
       .withName("March Only Due Date Limit")
       .addSchedule(FixedDueDateSchedule.wholeMonth(2018, 3));
@@ -245,22 +226,21 @@ public class CheckOutByBarcodeTests extends APITests {
       .rolling(Period.days(30))
       .limitedBySchedule(dueDateLimitScheduleId);
 
-    final IndividualResource loanPolicyResource = loanPoliciesFixture.create(dueDateLimitedPolicy);
+    final IndividualResource loanPolicyResource = loanPoliciesFixture.create(
+      dueDateLimitedPolicy);
+
     UUID dueDateLimitedPolicyId = loanPolicyResource.getId();
 
-    UUID overDueId = overdueFinePoliciesFixture.facultyStandard().getId();
-    useFallbackPolicies(
-      dueDateLimitedPolicyId,
+    useFallbackPolicies(dueDateLimitedPolicyId,
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
       noticePoliciesFixture.activeNotice().getId(),
-            overDueId,
-      lostItemFeePoliciesFixture.facultyStandard().getId()
-    );
+      overdueFinePoliciesFixture.facultyStandard().getId(),
+      lostItemFeePoliciesFixture.facultyStandard().getId());
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource steve = usersFixture.steve();
 
-    final DateTime loanDate = new DateTime(2018, 3, 18, 11, 43, 54, DateTimeZone.UTC);
+    final DateTime loanDate = new DateTime(2018, 3, 18, 11, 43, 54, UTC);
 
     final IndividualResource response = loansFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
@@ -280,41 +260,25 @@ public class CheckOutByBarcodeTests extends APITests {
 
     assertThat("due date should be limited by schedule",
       loan.getString("dueDate"),
-      isEquivalentTo(new DateTime(2018, 3, 31, 23, 59, 59, DateTimeZone.UTC)));
+      isEquivalentTo(new DateTime(2018, 3, 31, 23, 59, 59, UTC)));
   }
 
   @Test
-  public void canGetLoanCreatedWhilstCheckingOut()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
-
+  public void canGetLoanCreatedWhilstCheckingOut() {
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource steve = usersFixture.steve();
 
-    final IndividualResource response = loansFixture.checkOutByBarcode(smallAngryPlanet, steve);
+    final IndividualResource response = loansFixture.checkOutByBarcode(
+      smallAngryPlanet, steve);
 
-    assertThat("Location header should be present",
-      response.getLocation(), is(notNullValue()));
+    assertThat("Location header should be present", response.getLocation(),
+      is(notNullValue()));
 
-    final CompletableFuture<Response> completed = new CompletableFuture<>();
-
-    client.get(APITestContext.circulationModuleUrl(response.getLocation()),
-      ResponseHandler.json(completed));
-
-    final Response getResponse = completed.get(2, TimeUnit.SECONDS);
-
-    assertThat(getResponse.getStatusCode(), is(HTTP_OK));
+    loansFixture.getLoanByLocation(response);
   }
 
   @Test
-  public void canCheckOutWithoutLoanDate()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
-
+  public void canCheckOutWithoutLoanDate() {
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource steve = usersFixture.steve();
 
@@ -334,12 +298,7 @@ public class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void cannotCheckOutWhenLoaneeCannotBeFound()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
-
+  public void cannotCheckOutWhenLoaneeCannotBeFound() {
     //TODO: Review this to see if can simplify by not creating user at all?
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource steve = usersFixture.steve();
@@ -354,16 +313,12 @@ public class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void cannotCheckOutWhenLoaneeIsInactive()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
-
+  public void cannotCheckOutWhenLoaneeIsInactive() {
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource steve = usersFixture.steve(UserBuilder::inactive);
 
-    final Response response = loansFixture.attemptCheckOutByBarcode(smallAngryPlanet, steve);
+    final Response response = loansFixture.attemptCheckOutByBarcode(
+      smallAngryPlanet, steve);
 
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("Cannot check out to inactive user"),
@@ -371,12 +326,7 @@ public class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void cannotCheckOutByProxyWhenProxyingUserIsInactive()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
-
+  public void cannotCheckOutByProxyWhenProxyingUserIsInactive() {
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
 
     final IndividualResource james = usersFixture.james();
@@ -397,11 +347,7 @@ public class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void cannotCheckOutByProxyWhenNoRelationship()
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException,
-    MalformedURLException {
+  public void cannotCheckOutByProxyWhenNoRelationship() {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource james = usersFixture.james();
@@ -420,18 +366,15 @@ public class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void cannotCheckOutWhenItemCannotBeFound()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void cannotCheckOutWhenItemCannotBeFound() {
 
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource steve = usersFixture.steve();
 
     itemsClient.delete(smallAngryPlanet.getId());
 
-    final Response response = loansFixture.attemptCheckOutByBarcode(smallAngryPlanet, steve);
+    final Response response = loansFixture.attemptCheckOutByBarcode(
+      smallAngryPlanet, steve);
 
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("No item with barcode 036000291452 could be found"),
@@ -439,19 +382,15 @@ public class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void cannotCheckOutWhenItemIsAlreadyCheckedOut()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
-
+  public void cannotCheckOutWhenItemIsAlreadyCheckedOut() {
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource jessica = usersFixture.jessica();
     final IndividualResource steve = usersFixture.steve();
 
     loansFixture.checkOutByBarcode(smallAngryPlanet, jessica);
 
-    final Response response = loansFixture.attemptCheckOutByBarcode(smallAngryPlanet, steve);
+    final Response response = loansFixture.attemptCheckOutByBarcode(
+      smallAngryPlanet, steve);
 
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("Item is already checked out"),
@@ -459,14 +398,12 @@ public class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void cannotCheckOutWhenItemIsMissing() throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
-
+  public void cannotCheckOutWhenItemIsMissing() {
     final IndividualResource missingItem = setupMissingItem(itemsFixture);
     final IndividualResource steve = usersFixture.steve();
-    final Response response = loansFixture.attemptCheckOutByBarcode(missingItem, steve);
+
+    final Response response = loansFixture.attemptCheckOutByBarcode(
+      missingItem, steve);
 
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessageContaining("has the item status Missing"),
@@ -474,12 +411,7 @@ public class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void cannotCheckOutWhenOpenLoanAlreadyExists()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
-
+  public void cannotCheckOutWhenOpenLoanAlreadyExists() {
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource jessica = usersFixture.jessica();
     final IndividualResource steve = usersFixture.steve();
@@ -489,7 +421,8 @@ public class CheckOutByBarcodeTests extends APITests {
       .withItemId(smallAngryPlanet.getId())
       .withUserId(jessica.getId()));
 
-    final Response response = loansFixture.attemptCheckOutByBarcode(smallAngryPlanet, steve);
+    final Response response = loansFixture.attemptCheckOutByBarcode(
+      smallAngryPlanet, steve);
 
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("Cannot check out item that already has an open loan"),
@@ -497,14 +430,12 @@ public class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void cannotCheckOutWhenItemDeclaredLost() throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
-
+  public void cannotCheckOutWhenItemDeclaredLost() {
     final IndividualResource declaredLostItem = itemsFixture.setupDeclaredLostItem();
     final IndividualResource steve = usersFixture.steve();
-    final Response response = loansFixture.attemptCheckOutByBarcode(declaredLostItem, steve);
+
+    final Response response = loansFixture.attemptCheckOutByBarcode(
+      declaredLostItem, steve);
 
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessageContaining("has the item status Declared lost"),
@@ -512,12 +443,7 @@ public class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void canCheckOutViaProxy()
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException,
-    MalformedURLException {
-
+  public void canCheckOutViaProxy() {
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource james = usersFixture.james();
     IndividualResource jessica = usersFixture.jessica();
@@ -541,26 +467,19 @@ public class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void cannotCheckOutWhenLoanPolicyDoesNotExist()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
-
+  public void cannotCheckOutWhenLoanPolicyDoesNotExist() {
     final UUID nonExistentloanPolicyId = UUID.randomUUID();
 
-    useFallbackPolicies(
-      nonExistentloanPolicyId,
+    useFallbackPolicies(nonExistentloanPolicyId,
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
       noticePoliciesFixture.activeNotice().getId(),
       overdueFinePoliciesFixture.facultyStandard().getId(),
-      lostItemFeePoliciesFixture.facultyStandard().getId()
-    );
+      lostItemFeePoliciesFixture.facultyStandard().getId());
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource steve = usersFixture.steve();
 
-    final DateTime loanDate = new DateTime(2018, 3, 18, 11, 43, 54, DateTimeZone.UTC);
+    final DateTime loanDate = new DateTime(2018, 3, 18, 11, 43, 54, UTC);
 
     final Response response = loansFixture.attemptCheckOutByBarcode(500,
       new CheckOutByBarcodeRequestBuilder()
@@ -575,16 +494,11 @@ public class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void cannotCheckOutWhenServicePointOfCheckoutNotPresent()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
-
+  public void cannotCheckOutWhenServicePointOfCheckoutNotPresent() {
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource james = usersFixture.james();
 
-    final DateTime loanDate = new DateTime(2018, 3, 18, 11, 43, 54, DateTimeZone.UTC);
+    final DateTime loanDate = new DateTime(2018, 3, 18, 11, 43, 54, UTC);
 
     final Response response = loansFixture.attemptCheckOutByBarcode(422,
       new CheckOutByBarcodeRequestBuilder()
@@ -600,15 +514,11 @@ public class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void canCheckOutUsingItemBarcodeThatContainsSpaces()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
-
+  public void canCheckOutUsingItemBarcodeThatContainsSpaces() {
     final IndividualResource steve = usersFixture.steve();
     IndividualResource smallAngryPlanet
-      = itemsFixture.basedUponSmallAngryPlanet(item -> item.withBarcode("12345 67890"));
+      = itemsFixture.basedUponSmallAngryPlanet(item -> item
+      .withBarcode("12345 67890"));
 
     final IndividualResource response = loansFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
@@ -635,12 +545,7 @@ public class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void canCheckOutUsingUserBarcodeThatContainsSpaces()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
-
+  public void canCheckOutUsingUserBarcodeThatContainsSpaces() {
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet(
       item -> item
         .withEnumeration("v.70:no.1-6")
@@ -684,12 +589,7 @@ public class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void canCheckOutUsingProxyUserBarcodeThatContainsSpaces()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
-
+  public void canCheckOutUsingProxyUserBarcodeThatContainsSpaces() {
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet(
       item -> item
         .withEnumeration("v.70:no.1-6")
@@ -741,17 +641,13 @@ public class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void canCheckOutOnOrderItem()
-    throws MalformedURLException,
-    InterruptedException,
-    TimeoutException,
-    ExecutionException {
-
-    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet(item -> item
-      .onOrder()
-      .withEnumeration("v.70:no.1-6")
-      .withChronology("1987:Jan.-June")
-      .withVolume("testVolume"));
+  public void canCheckOutOnOrderItem() {
+    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet(
+      item -> item
+        .onOrder()
+        .withEnumeration("v.70:no.1-6")
+        .withChronology("1987:Jan.-June")
+        .withVolume("testVolume"));
 
     final IndividualResource jessica = usersFixture.jessica();
 
@@ -789,26 +685,20 @@ public class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void canCheckOutOnOrderItemWithRequest()
-    throws MalformedURLException,
-    InterruptedException,
-    TimeoutException,
-    ExecutionException {
-
-    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet(item -> item
-      .onOrder()
-      .withEnumeration("v.70:no.1-6")
-      .withChronology("1987:Jan.-June")
-      .withVolume("testVolume"));
+  public void canCheckOutOnOrderItemWithRequest() {
+    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet(
+      item -> item
+        .onOrder()
+        .withEnumeration("v.70:no.1-6")
+        .withChronology("1987:Jan.-June")
+        .withVolume("testVolume"));
 
     final IndividualResource jessica = usersFixture.jessica();
 
-    requestsFixture.place(
-      new RequestBuilder()
-        .withItemId(smallAngryPlanet.getId())
-        .withRequesterId(jessica.getId())
-        .withPickupServicePoint(servicePointsFixture.cd1())
-    );
+    requestsFixture.place(new RequestBuilder()
+      .withItemId(smallAngryPlanet.getId())
+      .withRequesterId(jessica.getId())
+      .withPickupServicePoint(servicePointsFixture.cd1()));
 
     final IndividualResource response = loansFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
@@ -844,17 +734,14 @@ public class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void canCheckOutInProcessItem()
-    throws MalformedURLException,
-    InterruptedException,
-    TimeoutException,
-    ExecutionException {
+  public void canCheckOutInProcessItem() {
 
-    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet(item -> item
-      .inProcess()
-      .withEnumeration("v.70:no.1-6")
-      .withChronology("1987:Jan.-June")
-      .withVolume("testVolume"));
+    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet(
+      item -> item
+        .inProcess()
+        .withEnumeration("v.70:no.1-6")
+        .withChronology("1987:Jan.-June")
+        .withVolume("testVolume"));
 
     final IndividualResource jessica = usersFixture.jessica();
 
@@ -892,26 +779,20 @@ public class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void canCheckOutInProcessItemWithRequest()
-    throws MalformedURLException,
-    InterruptedException,
-    TimeoutException,
-    ExecutionException {
-
-    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet(item -> item
-      .inProcess()
-      .withEnumeration("v.70:no.1-6")
-      .withChronology("1987:Jan.-June")
-      .withVolume("testVolume"));
+  public void canCheckOutInProcessItemWithRequest() {
+    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet(
+      item -> item
+        .inProcess()
+        .withEnumeration("v.70:no.1-6")
+        .withChronology("1987:Jan.-June")
+        .withVolume("testVolume"));
 
     final IndividualResource jessica = usersFixture.jessica();
 
-    requestsFixture.place(
-      new RequestBuilder()
-        .withItemId(smallAngryPlanet.getId())
-        .withRequesterId(jessica.getId())
-        .withPickupServicePoint(servicePointsFixture.cd1())
-    );
+    requestsFixture.place(new RequestBuilder()
+      .withItemId(smallAngryPlanet.getId())
+      .withRequesterId(jessica.getId())
+      .withPickupServicePoint(servicePointsFixture.cd1()));
 
     final IndividualResource response = loansFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
@@ -947,18 +828,13 @@ public class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void checkOutFailsWhenCirculationRulesReferenceInvalidLoanPolicyId()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
-
+  public void checkOutFailsWhenCirculationRulesReferenceInvalidLoanPolicyId() {
     setInvalidLoanPolicyReferenceInRules("some-loan-policy");
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource steve = usersFixture.steve();
 
-    final DateTime loanDate = new DateTime(2018, 3, 18, 11, 43, 54, DateTimeZone.UTC);
+    final DateTime loanDate = new DateTime(2018, 3, 18, 11, 43, 54, UTC);
 
     final Response response = loansFixture.attemptCheckOutByBarcode(500,
       new CheckOutByBarcodeRequestBuilder()
@@ -976,18 +852,13 @@ public class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void checkOutDoesNotFailWhenCirculationRulesReferenceInvalidNoticePolicyId()
-  throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
-
+  public void checkOutDoesNotFailWhenCirculationRulesReferenceInvalidNoticePolicyId() {
     setInvalidNoticePolicyReferenceInRules("some-notice-policy");
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource steve = usersFixture.steve();
 
-    final DateTime loanDate = new DateTime(2018, 3, 18, 11, 43, 54, DateTimeZone.UTC);
+    final DateTime loanDate = new DateTime(2018, 3, 18, 11, 43, 54, UTC);
 
     loansFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
@@ -1002,12 +873,7 @@ public class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void cannotCheckOutWhenItemIsNotLoanable()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
-
+  public void cannotCheckOutWhenItemIsNotLoanable() {
     IndividualResource notLoanablePolicy = loanPoliciesFixture.create(
       new LoanPolicyBuilder()
         .withName("Not Loanable Policy")

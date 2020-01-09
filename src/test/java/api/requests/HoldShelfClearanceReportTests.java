@@ -40,11 +40,7 @@ public class HoldShelfClearanceReportTests extends APITests {
   private static final String CALL_NUMBER_KEY = "callNumber";
 
   @Test
-  public void reportIsEmptyWhenThereAreNoRequests()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void reportIsEmptyWhenThereAreNoRequests() {
 
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
     Response response = ResourceClient.forRequestReport().getById(pickupServicePointId);
@@ -56,11 +52,7 @@ public class HoldShelfClearanceReportTests extends APITests {
   }
 
   @Test
-  public void openUnfulfilledRequestNotIncludedInReport()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void openUnfulfilledRequestNotIncludedInReport() {
 
     final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
@@ -81,11 +73,7 @@ public class HoldShelfClearanceReportTests extends APITests {
   }
 
   @Test
-  public void requestsAwaitingPickupAreNotIncludedInReport()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void requestsAwaitingPickupAreNotIncludedInReport() {
 
     final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final InventoryItemResource temeraire = itemsFixture.basedUponTemeraire();
@@ -117,14 +105,10 @@ public class HoldShelfClearanceReportTests extends APITests {
   }
 
   @Test
-  public void multipleClosedPickupExpiredRequest()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
-
+  public void multipleClosedPickupExpiredRequest() {
     final InventoryItemResource smallAngryPlanet = itemsFixture
       .basedUponSmallAngryPlanet(itemsFixture.addCallNumberStringComponents());
+
     final InventoryItemResource temeraire = itemsFixture
       .basedUponTemeraire(itemsFixture.addCallNumberStringComponents("tem"));
 
@@ -177,11 +161,7 @@ public class HoldShelfClearanceReportTests extends APITests {
   }
 
   @Test
-  public void testClosedCancelledExpiredRequest()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void testClosedCancelledExpiredRequest() {
 
     final InventoryItemResource smallAngryPlanet = itemsFixture
       .basedUponSmallAngryPlanet(itemsFixture.addCallNumberStringComponents());
@@ -219,11 +199,7 @@ public class HoldShelfClearanceReportTests extends APITests {
   }
 
   @Test
-  public void testClosedPickupExpiredRequest()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void testClosedPickupExpiredRequest() {
 
     final InventoryItemResource smallAngryPlanet = itemsFixture
       .basedUponSmallAngryPlanet(itemsFixture.addCallNumberStringComponents());
@@ -258,11 +234,7 @@ public class HoldShelfClearanceReportTests extends APITests {
   }
 
   @Test
-  public void checkThatResponseGetsRequestWithEarlierClosedDate()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void checkThatResponseGetsRequestWithEarlierClosedDate() {
 
     final InventoryItemResource smallAngryPlanet = itemsFixture
       .basedUponSmallAngryPlanet(itemsFixture.addCallNumberStringComponents());
@@ -306,11 +278,7 @@ public class HoldShelfClearanceReportTests extends APITests {
   }
 
   @Test
-  public void checkWhenPickupRequestClosedDateIsEmptyForExpiredRequest()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void checkWhenPickupRequestClosedDateIsEmptyForExpiredRequest() {
 
     final InventoryItemResource smallAngryPlanet = itemsFixture
       .basedUponSmallAngryPlanet(itemsFixture.addCallNumberStringComponents());
@@ -354,11 +322,7 @@ public class HoldShelfClearanceReportTests extends APITests {
   }
 
   @Test
-  public void itemIsCheckedOutAndRequestHasBeenChanged()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void itemIsCheckedOutAndRequestHasBeenChanged() {
 
     final InventoryItemResource temeraire = itemsFixture.basedUponTemeraire();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
@@ -381,11 +345,7 @@ public class HoldShelfClearanceReportTests extends APITests {
   }
 
   @Test
-  public void checkWhenPickupRequestsExpiredInDifferentServicePoints()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void checkWhenPickupRequestsExpiredInDifferentServicePoints() {
 
     final InventoryItemResource smallAngryPlanet = itemsFixture
       .basedUponSmallAngryPlanet(itemsFixture.addCallNumberStringComponents());
@@ -467,11 +427,7 @@ public class HoldShelfClearanceReportTests extends APITests {
   }
 
   @Test
-  public void checkWhenPickupRequestsCancelledInDifferentServicePoints()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void checkWhenPickupRequestsCancelledInDifferentServicePoints() {
 
     final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final InventoryItemResource nod = itemsFixture.basedUponNod();

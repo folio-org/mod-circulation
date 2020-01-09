@@ -21,11 +21,7 @@ import io.vertx.core.json.JsonObject;
 public class LoanAPITitleTests extends APITests {
 
   @Test
-  public void titleIsFromInstanceWhenHoldingAndInstanceAreAvailable()
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException,
-    MalformedURLException {
+  public void titleIsFromInstanceWhenHoldingAndInstanceAreAvailable() {
 
     final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
 
@@ -58,11 +54,7 @@ public class LoanAPITitleTests extends APITests {
   }
 
   @Test
-  public void titlesComeFromMultipleInstancesForMultipleLoans()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void titlesComeFromMultipleInstancesForMultipleLoans() {
 
     final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final InventoryItemResource temeraire = itemsFixture.basedUponTemeraire();

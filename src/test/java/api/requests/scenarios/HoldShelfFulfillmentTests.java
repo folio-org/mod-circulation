@@ -30,11 +30,7 @@ import api.support.builders.CheckInByBarcodeRequestBuilder;
 
 public class HoldShelfFulfillmentTests extends APITests {
   @Test
-  public void itemIsReadyForPickUpWhenCheckedInAtPickupServicePoint()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void itemIsReadyForPickUpWhenCheckedInAtPickupServicePoint() {
 
     final IndividualResource pickupServicePoint = servicePointsFixture.cd1();
 
@@ -65,11 +61,7 @@ public class HoldShelfFulfillmentTests extends APITests {
   }
 
   @Test
-  public void canBeCheckedOutToRequestingPatronWhenReadyForPickup()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void canBeCheckedOutToRequestingPatronWhenReadyForPickup() {
 
     final IndividualResource pickupServicePoint = servicePointsFixture.cd1();
 
@@ -99,11 +91,7 @@ public class HoldShelfFulfillmentTests extends APITests {
   }
 
   @Test
-  public void checkInAtDifferentServicePointPlacesItemInTransit()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void checkInAtDifferentServicePointPlacesItemInTransit() {
 
     final IndividualResource pickupServicePoint = servicePointsFixture.cd1();
     final IndividualResource checkInServicePoint = servicePointsFixture.cd2();
@@ -137,11 +125,7 @@ public class HoldShelfFulfillmentTests extends APITests {
   }
 
   @Test
-  public void canBeCheckedOutToRequestingPatronWhenInTransit()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void canBeCheckedOutToRequestingPatronWhenInTransit() {
 
     final IndividualResource pickupServicePoint = servicePointsFixture.cd1();
     final IndividualResource checkInServicePoint = servicePointsFixture.cd2();
@@ -172,11 +156,7 @@ public class HoldShelfFulfillmentTests extends APITests {
   }
 
   @Test
-  public void itemIsReadyForPickUpWhenCheckedInAtPickupServicePointAfterTransit()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void itemIsReadyForPickUpWhenCheckedInAtPickupServicePointAfterTransit() {
 
     final IndividualResource pickupServicePoint = servicePointsFixture.cd1();
     final IndividualResource checkInServicePoint = servicePointsFixture.cd2();
@@ -211,11 +191,7 @@ public class HoldShelfFulfillmentTests extends APITests {
   }
 
   @Test
-  public void cannotCheckOutToOtherPatronWhenRequestIsAwaitingPickup()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void cannotCheckOutToOtherPatronWhenRequestIsAwaitingPickup() {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource james = usersFixture.james();
@@ -247,11 +223,7 @@ public class HoldShelfFulfillmentTests extends APITests {
   }
 
   @Test
-  public void cannotCheckOutToOtherPatronWhenRequestIsInTransitForPickup()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void cannotCheckOutToOtherPatronWhenRequestIsInTransitForPickup() {
 
     final IndividualResource requestServicePoint = servicePointsFixture.cd1();
     final IndividualResource checkInServicePoint = servicePointsFixture.cd2();

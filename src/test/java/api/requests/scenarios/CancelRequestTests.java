@@ -1,5 +1,6 @@
 package api.requests.scenarios;
 
+import static api.support.http.InterfaceUrls.requestsUrl;
 import static api.support.matchers.ItemStatusCodeMatcher.hasItemStatus;
 import static org.folio.circulation.domain.RequestStatus.CLOSED_CANCELLED;
 import static org.hamcrest.CoreMatchers.is;
@@ -7,35 +8,23 @@ import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 import static org.joda.time.DateTimeZone.UTC;
 
-import java.net.MalformedURLException;
 import java.util.Collection;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.support.http.client.IndividualResource;
-import org.folio.circulation.support.http.client.Response;
-import org.folio.circulation.support.http.client.ResponseHandler;
 import org.joda.time.DateTime;
 import org.junit.Test;
 
 import api.support.APITests;
+import api.support.MultipleJsonRecords;
 import api.support.builders.RequestBuilder;
-import api.support.http.InterfaceUrls;
 import api.support.http.InventoryItemResource;
-import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
 public class CancelRequestTests extends APITests {
   @Test
-  public void canCancelRequest()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void canCancelRequest() {
 
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource james = usersFixture.james();
@@ -64,11 +53,7 @@ public class CancelRequestTests extends APITests {
   }
 
   @Test
-  public void canCancelRequestInMiddleOfTheQueue()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void canCancelRequestInMiddleOfTheQueue() {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource james = usersFixture.james();
@@ -112,11 +97,7 @@ public class CancelRequestTests extends APITests {
   }
 
   @Test
-  public void canCancelRequestAtTheBeginningOfTheQueue()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void canCancelRequestAtTheBeginningOfTheQueue() {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource james = usersFixture.james();
@@ -160,11 +141,7 @@ public class CancelRequestTests extends APITests {
   }
 
   @Test
-  public void canCancelRequestAtTheEndOfTheQueue()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void canCancelRequestAtTheEndOfTheQueue() {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource james = usersFixture.james();
@@ -212,11 +189,7 @@ public class CancelRequestTests extends APITests {
    * to retain the request fulfilment related status after being cancelled
    */
   @Test
-  public void cancellingAPartiallyFulfilledPageRequestShouldNotChangeItemStatus()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void cancellingAPartiallyFulfilledPageRequestShouldNotChangeItemStatus() {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource jessica = usersFixture.jessica();
@@ -238,7 +211,7 @@ public class CancelRequestTests extends APITests {
   }
 
   @Test
-  public void shouldAllowToCancelRequestWithNoPosition() throws Exception {
+  public void shouldAllowToCancelRequestWithNoPosition() {
     IndividualResource requesterId = usersFixture.rebecca();
     final InventoryItemResource nod = itemsFixture.basedUponNod();
 
@@ -252,30 +225,19 @@ public class CancelRequestTests extends APITests {
     requestsFixture.cancelRequest(firstHoldRequest);
     requestsFixture.cancelRequest(secondHoldRequest);
 
-    Response allRequests = getAllRequests();
+    MultipleJsonRecords allRequests = requestsFixture.getAllRequests();
 
-    assertThat(allRequests.getStatusCode(), is(200));
-    assertThat(allRequests.getJson().getInteger("totalRecords"), is(2));
+    assertThat(allRequests.totalRecords(), is(2));
 
-    JsonArray requestsArray = allRequests.getJson().getJsonArray("requests");
-    JsonObject firstRequest = requestsArray.getJsonObject(0);
-    JsonObject secondRequest = requestsArray.getJsonObject(1);
+    JsonObject firstRequest = allRequests.getById(firstHoldRequest.getId());
+    JsonObject secondRequest = allRequests.getById(secondHoldRequest.getId());
 
     assertThat(firstRequest.getString("status"), is(CLOSED_CANCELLED.getValue()));
     assertThat(secondRequest.getString("status"), is(CLOSED_CANCELLED.getValue()));
   }
 
-  private Response getAllRequests()
-    throws InterruptedException, ExecutionException, TimeoutException {
-
-    CompletableFuture<Response> getAllCompleted = new CompletableFuture<>();
-    client.get(InterfaceUrls.requestsUrl(), ResponseHandler.any(getAllCompleted));
-
-    return getAllCompleted.get(5, TimeUnit.SECONDS);
-  }
-
   private IndividualResource holdRequestWithNoPosition(
-    IndividualResource item, IndividualResource requester) throws Exception {
+    IndividualResource item, IndividualResource requester) {
 
     JsonObject request = new RequestBuilder()
       .open()

@@ -1,78 +1,68 @@
 package api.requests;
 
 import static api.support.builders.ItemBuilder.CHECKED_OUT;
+import static api.support.http.CqlQuery.noQuery;
+import static api.support.http.CqlQuery.queryFromTemplate;
 import static api.support.http.InterfaceUrls.requestsUrl;
+import static api.support.http.Limit.limit;
+import static api.support.http.Limit.noLimit;
+import static api.support.http.Offset.noOffset;
+import static api.support.http.Offset.offset;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static api.support.matchers.UUIDMatcher.is;
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
 import static org.folio.circulation.domain.representations.ItemProperties.CALL_NUMBER_COMPONENTS;
-import static org.folio.circulation.support.http.client.ResponseHandler.any;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.emptyString;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
+import static org.joda.time.DateTimeZone.UTC;
 import static org.junit.Assert.assertTrue;
 
 import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
-import org.folio.circulation.support.JsonArrayHelper;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
 import org.joda.time.LocalDate;
 import org.junit.Test;
 
 import api.support.APITests;
+import api.support.MultipleJsonRecords;
 import api.support.builders.Address;
 import api.support.builders.ItemBuilder;
 import api.support.builders.RequestBuilder;
 import api.support.http.InventoryItemResource;
-import api.support.http.ResourceClient;
 import io.vertx.core.json.JsonObject;
 
 public class RequestsAPIRetrievalTests extends APITests {
-
   private static final String NEW_TAG = "new";
   private static final String IMPORTANT_TAG = "important";
   private static final String ONE_COPY_NUMBER = "1";
   private static final String TWO_COPY_NUMBER = "2";
 
-
   @Test
-  public void canGetARequestById()
-    throws MalformedURLException,
-    InterruptedException,
-    ExecutionException,
-    TimeoutException {
-
+  public void canGetARequestById() {
     UUID facultyGroupId = patronGroupsFixture.faculty().getId();
     UUID staffGroupId = patronGroupsFixture.staff().getId();
 
-    final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet(
-      itemBuilder -> itemBuilder
+    final InventoryItemResource smallAngryPlanet = itemsFixture
+      .basedUponSmallAngryPlanet(itemBuilder -> itemBuilder
         .withCallNumber("itCn", "itCnPrefix", "itCnSuffix")
         .withEnumeration("enumeration1")
         .withChronology("chronology")
         .withVolume("vol.1")
-        .withCopyNumbers(asList(ONE_COPY_NUMBER, TWO_COPY_NUMBER))
-    );
+        .withCopyNumbers(asList(ONE_COPY_NUMBER, TWO_COPY_NUMBER)));
 
-    final IndividualResource sponsor = usersFixture.rebecca(
-      builder -> builder.withPatronGroupId(facultyGroupId));
+    final IndividualResource sponsor = usersFixture.rebecca(user -> user
+      .withPatronGroupId(facultyGroupId));
 
-    final IndividualResource proxy = usersFixture.steve(
-      builder -> builder.withPatronGroupId(staffGroupId));
+    final IndividualResource proxy = usersFixture.steve(user -> user
+      .withPatronGroupId(staffGroupId));
 
     final IndividualResource cd1 = servicePointsFixture.cd1();
 
@@ -82,9 +72,9 @@ public class RequestsAPIRetrievalTests extends APITests {
 
     loansFixture.checkOutByBarcode(smallAngryPlanet);
 
-    DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
+    DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, UTC);
 
-    final IndividualResource createdRequest = requestsClient.create(
+    final IndividualResource createdRequest = requestsFixture.place(
       new RequestBuilder()
         .recall()
         .withRequestDate(requestDate)
@@ -95,14 +85,9 @@ public class RequestsAPIRetrievalTests extends APITests {
         .withRequestExpiration(new LocalDate(2017, 7, 30))
         .withHoldShelfExpiration(new LocalDate(2017, 8, 31))
         .withPickupServicePointId(pickupServicePointId)
-        .withTags(new RequestBuilder.Tags(asList(NEW_TAG, IMPORTANT_TAG)))
-    );
+        .withTags(new RequestBuilder.Tags(asList(NEW_TAG, IMPORTANT_TAG))));
 
-    CompletableFuture<Response> getCompleted = new CompletableFuture<>();
-
-    client.get(requestsUrl(format("/%s", createdRequest.getId())), any(getCompleted));
-
-    Response getResponse = getCompleted.get(5, TimeUnit.SECONDS);
+    Response getResponse = requestsFixture.getById(createdRequest.getId());
 
     assertThat(format("Failed to get request: %s", getResponse.getBody()),
       getResponse.getStatusCode(), is(HttpURLConnection.HTTP_OK));
@@ -117,7 +102,9 @@ public class RequestsAPIRetrievalTests extends APITests {
     assertThat(representation.getString("fulfilmentPreference"), is("Hold Shelf"));
     assertThat(representation.getString("requestExpirationDate"), is("2017-07-30"));
     assertThat(representation.getString("holdShelfExpirationDate"), is("2017-08-31"));
-    assertThat(representation.getString("pickupServicePointId"), is(pickupServicePointId));
+    assertThat(representation.getString("pickupServicePointId"),
+      is(pickupServicePointId));
+
     assertThat(representation.getString("status"), is("Open - Not yet filled"));
 
     assertThat(representation.containsKey("proxy"), is(true));
@@ -130,10 +117,14 @@ public class RequestsAPIRetrievalTests extends APITests {
 
     assertThat(representation.containsKey("pickupServicePoint"), is(true));
 
-    final JsonObject pickupServicePoint = representation.getJsonObject("pickupServicePoint");
+    final JsonObject pickupServicePoint = representation
+      .getJsonObject("pickupServicePoint");
 
-    assertThat(pickupServicePoint.getString("name"), is(cd1.getJson().getString("name")));
-    assertThat(pickupServicePoint.getString("code"), is(cd1.getJson().getString("code")));
+    assertThat(pickupServicePoint.getString("name"), is(cd1.getJson()
+      .getString("name")));
+
+    assertThat(pickupServicePoint.getString("code"), is(cd1.getJson()
+      .getString("code")));
 
     assertThat(pickupServicePoint.getString("discoveryDisplayName"),
       is(cd1.getJson().getString("discoveryDisplayName")));
@@ -156,7 +147,8 @@ public class RequestsAPIRetrievalTests extends APITests {
 
     assertThat(itemSummary.containsKey("copyNumbers"), is(true));
 
-    assertThat(itemSummary.getJsonArray("copyNumbers"), contains(ONE_COPY_NUMBER, TWO_COPY_NUMBER));
+    assertThat(itemSummary.getJsonArray("copyNumbers"),
+      contains(ONE_COPY_NUMBER, TWO_COPY_NUMBER));
 
     assertThat("has information taken from requesting user",
       representation.containsKey("requester"), is(true));
@@ -198,7 +190,6 @@ public class RequestsAPIRetrievalTests extends APITests {
     assertThat("current loan has non-null due date",
       representation.getJsonObject("loan").getString("dueDate"), notNullValue());
 
-
     assertThat(representation.containsKey("tags"), is(true));
     final JsonObject tagsRepresentation = representation.getJsonObject("tags");
 
@@ -209,14 +200,9 @@ public class RequestsAPIRetrievalTests extends APITests {
   }
 
   @Test
-  public void canGetARequestToBeFulfilledByDeliveryToAnAddressById()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
-
-    final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet(
-      ItemBuilder::available);
+  public void canGetARequestToBeFulfilledByDeliveryToAnAddressById() {
+    final IndividualResource smallAngryPlanet =
+      itemsFixture.basedUponSmallAngryPlanet(ItemBuilder::available);
 
     final IndividualResource workAddressType = addressTypesFixture.work();
 
@@ -240,7 +226,7 @@ public class RequestsAPIRetrievalTests extends APITests {
       .by(charlotte)
       .deliverToAddress(workAddressType.getId()));
 
-    JsonObject representation = requestsClient.getById(createdRequest.getId()).getJson();
+    JsonObject representation = requestsFixture.getById(createdRequest.getId()).getJson();
 
     assertThat(representation.getString("id"), is(not(emptyString())));
     assertThat(representation.getString("requestType"), is("Recall"));
@@ -262,24 +248,14 @@ public class RequestsAPIRetrievalTests extends APITests {
   }
 
   @Test
-  public void requestNotFoundForUnknownId()
-    throws MalformedURLException,
-    InterruptedException,
-    ExecutionException,
-    TimeoutException {
-
-    Response getResponse = ResourceClient.forRequests().getById(UUID.randomUUID());
+  public void requestNotFoundForUnknownId() {
+    Response getResponse = requestsFixture.getById(UUID.randomUUID());
 
     assertThat(getResponse.getStatusCode(), is(HttpURLConnection.HTTP_NOT_FOUND));
   }
 
   @Test
-  public void canGetMultipleRequests()
-    throws MalformedURLException,
-    InterruptedException,
-    ExecutionException,
-    TimeoutException {
-
+  public void canGetMultipleRequests() {
     final IndividualResource cd1 = servicePointsFixture.cd1();
     final IndividualResource cd2 = servicePointsFixture.cd2();
     UUID pickupServicePointId = cd1.getId();
@@ -291,11 +267,11 @@ public class RequestsAPIRetrievalTests extends APITests {
     final IndividualResource jessica = usersFixture.jessica();
     final IndividualResource charlotte = usersFixture.charlotte();
 
-    final IndividualResource sponsor = usersFixture.rebecca(
-      builder -> builder.withPatronGroupId(facultyGroupId));
+    final IndividualResource sponsor = usersFixture.rebecca(user -> user
+      .withPatronGroupId(facultyGroupId));
 
-    final IndividualResource proxy = usersFixture.steve(
-      builder -> builder.withPatronGroupId(staffGroupId));
+    final IndividualResource proxy = usersFixture.steve(user -> user
+      .withPatronGroupId(staffGroupId));
 
     UUID proxyId = proxy.getId();
     UUID requesterId = sponsor.getId();
@@ -316,80 +292,65 @@ public class RequestsAPIRetrievalTests extends APITests {
     loansFixture.checkOutByBarcode(temeraire, jessica);
     loansFixture.checkOutByBarcode(uprooted, jessica);
 
-    requestsClient.create(new RequestBuilder()
+    requestsFixture.place(new RequestBuilder()
       .hold()
-      .withItemId(smallAngryPlanet.getId())
+      .forItem(smallAngryPlanet)
       .withRequesterId(requesterId)
       .withUserProxyId(proxyId)
       .withPickupServicePointId(pickupServicePointId)
-      .withTags(new RequestBuilder.Tags(asList(NEW_TAG, IMPORTANT_TAG)))
-    );
+      .withTags(new RequestBuilder.Tags(asList(NEW_TAG, IMPORTANT_TAG))));
 
-    requestsClient.create(new RequestBuilder()
-      .hold()
-      .withItemId(nod.getId())
-      .withRequesterId(requesterId)
-      .withUserProxyId(proxyId)
-      .withPickupServicePointId(pickupServicePointId2)
-      .withTags(new RequestBuilder.Tags(asList(NEW_TAG, IMPORTANT_TAG)))
-    );
+    final IndividualResource requestForNod = requestsFixture.place(
+      new RequestBuilder()
+        .hold()
+        .forItem(nod)
+        .withRequesterId(requesterId)
+        .withUserProxyId(proxyId)
+        .withPickupServicePointId(pickupServicePointId2)
+        .withTags(new RequestBuilder.Tags(asList(NEW_TAG, IMPORTANT_TAG))));
 
-    requestsClient.create(new RequestBuilder()
+    requestsFixture.place(new RequestBuilder()
       .hold()
-      .withItemId(interestingTimes.getId())
+      .forItem(interestingTimes)
       .withRequesterId(requesterId)
       .withUserProxyId(proxyId)
       .withPickupServicePointId(pickupServicePointId)
-      .withTags(new RequestBuilder.Tags(asList(NEW_TAG, IMPORTANT_TAG)))
-    );
+      .withTags(new RequestBuilder.Tags(asList(NEW_TAG, IMPORTANT_TAG))));
 
-    requestsClient.create(new RequestBuilder()
-      .hold()
-      .withItemId(temeraire.getId())
-      .withRequesterId(requesterId)
-      .withUserProxyId(proxyId)
-      .withPickupServicePointId(pickupServicePointId2)
-      .withTags(new RequestBuilder.Tags(asList(NEW_TAG, IMPORTANT_TAG)))
-    );
+    final IndividualResource requestForTemeraire = requestsFixture.place(
+      new RequestBuilder()
+        .hold()
+        .forItem(temeraire)
+        .withRequesterId(requesterId)
+        .withUserProxyId(proxyId)
+        .withPickupServicePointId(pickupServicePointId2)
+        .withTags(new RequestBuilder.Tags(asList(NEW_TAG, IMPORTANT_TAG))));
 
-    requestsClient.create(new RequestBuilder()
+    requestsFixture.place(new RequestBuilder()
       .recall()
-      .withItemId(uprooted.getId())
+      .forItem(uprooted)
       .withRequesterId(requesterId)
       .withUserProxyId(proxyId)
       .withPickupServicePointId(pickupServicePointId)
-      .withTags(new RequestBuilder.Tags(asList(NEW_TAG, IMPORTANT_TAG)))
-    );
+      .withTags(new RequestBuilder.Tags(asList(NEW_TAG, IMPORTANT_TAG))));
 
-    CompletableFuture<Response> getCompleted = new CompletableFuture<>();
+    MultipleJsonRecords requests = requestsFixture.getAllRequests();
 
-    client.get(requestsUrl(), any(getCompleted));
+    requests.forEach(this::requestHasExpectedProperties);
+    requests.forEach(this::requestHasExpectedLoanProperties);
+    requests.forEach(this::requestHasServicePointProperties);
+    requests.forEach(this::requestHasPatronGroupProperties);
+    requests.forEach(this::requestHasTags);
 
-    Response getResponse = getCompleted.get(5, TimeUnit.SECONDS);
+    requestHasCallNumberStringProperties(requests.getById(
+      requestForNod.getId()), "nod");
 
-    assertThat(format("Failed to get list of requests: %s",
-      getResponse.getBody()),
-      getResponse.getStatusCode(), is(HttpURLConnection.HTTP_OK));
-
-    List<JsonObject> requestList = getRequests(getResponse.getJson());
-
-    requestList.forEach(this::requestHasExpectedProperties);
-    requestList.forEach(this::requestHasExpectedLoanProperties);
-    requestList.forEach(this::requestHasServicePointProperties);
-    requestList.forEach(this::requestHasPatronGroupProperties);
-    requestList.forEach(this::requestHasTags);
-
-    requestHasCallNumberStringProperties(findRequestByItemId(requestList, nod.getId()), "nod");
-    requestHasCallNumberStringProperties(findRequestByItemId(requestList, temeraire.getId()), "tem");
+    requestHasCallNumberStringProperties(requests.getById(
+      requestForTemeraire.getId()), "tem");
   }
 
   @Test
-  public void fulfilledByDeliveryIncludesAddressWhenFindingMultipleRequests()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
-
+  public void fulfilledByDeliveryIncludesAddressWhenFindingMultipleRequests() {
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
 
     final IndividualResource workAddressType = addressTypesFixture.work();
@@ -414,11 +375,11 @@ public class RequestsAPIRetrievalTests extends APITests {
       .deliverToAddress(workAddressType.getId())
       .by(charlotte));
 
-    final List<JsonObject> allRequests = requestsClient.getAll();
+    final MultipleJsonRecords allRequests = requestsFixture.getAllRequests();
 
     assertThat(allRequests.size(), is(1));
 
-    JsonObject representation = allRequests.get(0);
+    JsonObject representation = allRequests.getFirst();
 
     assertThat(representation.getString("id"), is(not(emptyString())));
     assertThat(representation.getString("requestType"), is("Recall"));
@@ -440,13 +401,9 @@ public class RequestsAPIRetrievalTests extends APITests {
   }
 
   @Test
-  public void closedLoanForItemIsNotIncludedWhenFindingMultipleRequests()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
-
-    final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+  public void closedLoanForItemIsNotIncludedWhenFindingMultipleRequests() {
+    final IndividualResource smallAngryPlanet
+      = itemsFixture.basedUponSmallAngryPlanet();
 
     final IndividualResource charlotte = usersFixture.charlotte();
 
@@ -464,169 +421,126 @@ public class RequestsAPIRetrievalTests extends APITests {
 
     loansFixture.checkInByBarcode(smallAngryPlanet);
 
-    final List<JsonObject> allRequests = requestsClient.getAll();
+    final MultipleJsonRecords allRequests = requestsFixture.getAllRequests();
 
     assertThat(allRequests.size(), is(1));
 
-    JsonObject representation = allRequests.get(0);
+    JsonObject representation = allRequests.getFirst();
 
+    //TODO: Figure out if this check makes sense?
     assertThat("Request should not have a current loan for the item",
       representation.containsKey("deliveryAddress"), is(false));
   }
 
   @Test
-  public void canPageAllRequests()
-    throws MalformedURLException,
-    InterruptedException,
-    ExecutionException,
-    TimeoutException {
-
+  public void canPageAllRequests() {
     UUID requesterId = usersFixture.charlotte().getId();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
-    requestsClient.create(new RequestBuilder()
-      .withItemId(itemsFixture.basedUponSmallAngryPlanet(ItemBuilder::checkOut).getId())
+    requestsFixture.place(new RequestBuilder()
+      .forItem(itemsFixture.basedUponSmallAngryPlanet(ItemBuilder::checkOut))
       .withPickupServicePointId(pickupServicePointId)
       .withRequesterId(requesterId));
 
-    requestsClient.create(new RequestBuilder()
-      .withItemId(itemsFixture.basedUponNod(ItemBuilder::checkOut).getId())
+    requestsFixture.place(new RequestBuilder()
+      .forItem(itemsFixture.basedUponNod(ItemBuilder::checkOut))
       .withPickupServicePointId(pickupServicePointId)
       .withRequesterId(requesterId));
 
-    requestsClient.create(new RequestBuilder()
-      .withItemId(itemsFixture.basedUponInterestingTimes(ItemBuilder::checkOut).getId())
+    requestsFixture.place(new RequestBuilder()
+      .forItem(itemsFixture.basedUponInterestingTimes(ItemBuilder::checkOut))
       .withPickupServicePointId(pickupServicePointId)
       .withRequesterId(requesterId));
 
-    requestsClient.create(new RequestBuilder()
-      .withItemId(itemsFixture.basedUponTemeraire(ItemBuilder::checkOut).getId())
+    requestsFixture.place(new RequestBuilder()
+      .forItem(itemsFixture.basedUponTemeraire(ItemBuilder::checkOut))
       .withPickupServicePointId(pickupServicePointId)
       .withRequesterId(requesterId));
 
-    requestsClient.create(new RequestBuilder()
-      .withItemId(itemsFixture.basedUponNod(ItemBuilder::checkOut).getId())
+    requestsFixture.place(new RequestBuilder()
+      .forItem(itemsFixture.basedUponNod(ItemBuilder::checkOut))
       .withPickupServicePointId(pickupServicePointId)
       .withRequesterId(requesterId));
 
-    requestsClient.create(new RequestBuilder()
-      .withItemId(itemsFixture.basedUponUprooted(ItemBuilder::checkOut).getId())
+    requestsFixture.place(new RequestBuilder()
+      .forItem(itemsFixture.basedUponUprooted(ItemBuilder::checkOut))
       .withPickupServicePointId(pickupServicePointId)
       .withRequesterId(requesterId));
 
-    requestsClient.create(new RequestBuilder()
-      .withItemId(itemsFixture.basedUponTemeraire(ItemBuilder::checkOut).getId())
+    requestsFixture.place(new RequestBuilder()
+      .forItem(itemsFixture.basedUponTemeraire(ItemBuilder::checkOut))
       .withPickupServicePointId(pickupServicePointId)
       .withRequesterId(requesterId));
 
-    CompletableFuture<Response> getFirstPageCompleted = new CompletableFuture<>();
+    MultipleJsonRecords firstPage = requestsFixture.getRequests(noQuery(),
+      limit(4), noOffset());
 
-    client.get(requestsUrl() + "?limit=4", any(getFirstPageCompleted));
+    MultipleJsonRecords secondPage = requestsFixture.getRequests(noQuery(),
+      limit(4), offset(4));
 
-    CompletableFuture<Response> getSecondPageCompleted = new CompletableFuture<>();
+    assertThat(firstPage.size(), is(4));
+    assertThat(firstPage.totalRecords(), is(7));
 
-    client.get(requestsUrl() + "?limit=4&offset=4", any(getSecondPageCompleted));
+    assertThat(secondPage.size(), is(3));
+    assertThat(secondPage.totalRecords(), is(7));
 
-    Response firstPageResponse = getFirstPageCompleted.get(5, TimeUnit.SECONDS);
-    Response secondPageResponse = getSecondPageCompleted.get(5, TimeUnit.SECONDS);
-
-    assertThat(format("Failed to get first page of requests: %s",
-      firstPageResponse.getBody()),
-      firstPageResponse.getStatusCode(), is(HttpURLConnection.HTTP_OK));
-
-    assertThat(format("Failed to get second page of requests: %s",
-      secondPageResponse.getBody()),
-      secondPageResponse.getStatusCode(), is(HttpURLConnection.HTTP_OK));
-
-    JsonObject firstPage = firstPageResponse.getJson();
-    JsonObject secondPage = secondPageResponse.getJson();
-
-    List<JsonObject> firstPageRequests = getRequests(firstPage);
-    List<JsonObject> secondPageRequests = getRequests(secondPage);
-
-    assertThat(firstPageRequests.size(), is(4));
-    assertThat(firstPage.getInteger("totalRecords"), is(7));
-
-    assertThat(secondPageRequests.size(), is(3));
-    assertThat(secondPage.getInteger("totalRecords"), is(7));
-
-    firstPageRequests.forEach(this::requestHasExpectedProperties);
-    secondPageRequests.forEach(this::requestHasExpectedProperties);
+    firstPage.forEach(this::requestHasExpectedProperties);
+    secondPage.forEach(this::requestHasExpectedProperties);
   }
 
   @Test
-  public void canSearchForRequestsByRequesterLastName()
-    throws MalformedURLException,
-    InterruptedException,
-    ExecutionException,
-    TimeoutException {
-
+  public void canSearchForRequestsByRequesterLastName() {
     UUID firstRequester = usersFixture.steve().getId();
     UUID secondRequester = usersFixture.jessica().getId();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
-    requestsClient.create(new RequestBuilder()
-      .withItemId(itemsFixture.basedUponSmallAngryPlanet(ItemBuilder::checkOut).getId())
+    requestsFixture.place(new RequestBuilder()
+      .forItem(itemsFixture.basedUponSmallAngryPlanet(ItemBuilder::checkOut))
       .withPickupServicePointId(pickupServicePointId)
       .withRequesterId(firstRequester));
 
-    requestsClient.create(new RequestBuilder()
-      .withItemId(itemsFixture.basedUponNod(ItemBuilder::checkOut).getId())
+    requestsFixture.place(new RequestBuilder()
+      .forItem(itemsFixture.basedUponNod(ItemBuilder::checkOut))
       .withPickupServicePointId(pickupServicePointId)
       .withRequesterId(firstRequester));
 
-    requestsClient.create(new RequestBuilder()
-      .withItemId(itemsFixture.basedUponInterestingTimes(ItemBuilder::checkOut).getId())
+    requestsFixture.place(new RequestBuilder()
+      .forItem(itemsFixture.basedUponInterestingTimes(ItemBuilder::checkOut))
       .withPickupServicePointId(pickupServicePointId)
       .withRequesterId(secondRequester));
 
-    requestsClient.create(new RequestBuilder()
+    requestsFixture.place(new RequestBuilder()
+      .forItem(itemsFixture.basedUponTemeraire(ItemBuilder::checkOut))
+      .withPickupServicePointId(pickupServicePointId)
+      .withRequesterId(firstRequester));
+
+    requestsFixture.place(new RequestBuilder()
+      .forItem(itemsFixture.basedUponNod(ItemBuilder::checkOut))
+      .withPickupServicePointId(pickupServicePointId)
+      .withRequesterId(firstRequester));
+
+    requestsFixture.place(new RequestBuilder()
+      .forItem(itemsFixture.basedUponUprooted(ItemBuilder::checkOut))
+      .withPickupServicePointId(pickupServicePointId)
+      .withRequesterId(secondRequester));
+
+    requestsFixture.place(new RequestBuilder()
       .withItemId(itemsFixture.basedUponTemeraire(ItemBuilder::checkOut).getId())
       .withPickupServicePointId(pickupServicePointId)
-      .withRequesterId(firstRequester));
-
-    requestsClient.create(new RequestBuilder()
-      .withItemId(itemsFixture.basedUponNod(ItemBuilder::checkOut).getId())
-      .withPickupServicePointId(pickupServicePointId)
-      .withRequesterId(firstRequester));
-
-    requestsClient.create(new RequestBuilder()
-      .withItemId(itemsFixture.basedUponUprooted(ItemBuilder::checkOut).getId())
-      .withPickupServicePointId(pickupServicePointId)
       .withRequesterId(secondRequester));
 
-    requestsClient.create(new RequestBuilder()
-      .withItemId(itemsFixture.basedUponTemeraire(ItemBuilder::checkOut).getId())
-      .withPickupServicePointId(pickupServicePointId)
-      .withRequesterId(secondRequester));
-
-    CompletableFuture<Response> getRequestsCompleted = new CompletableFuture<>();
-
-    client.get(requestsUrl() + format("?query=requester.lastName=%s", "Pontefract"), any(getRequestsCompleted));
-
-    Response getRequestsResponse = getRequestsCompleted.get(5, TimeUnit.SECONDS);
-
-    assertThat(format("Failed to get requests: %s",
-      getRequestsResponse.getBody()),
-      getRequestsResponse.getStatusCode(), is(HttpURLConnection.HTTP_OK));
-
-    JsonObject wrappedRequests = getRequestsResponse.getJson();
-
-    List<JsonObject> requests = getRequests(wrappedRequests);
+    final MultipleJsonRecords requests = requestsFixture.getRequests(
+      queryFromTemplate("requester.lastName=%s", "Pontefract"),
+      noLimit(), noOffset());
 
     assertThat(requests.size(), is(3));
-    assertThat(wrappedRequests.getInteger("totalRecords"), is(3));
+    assertThat(requests.totalRecords(), is(3));
 
     requests.forEach(this::requestHasExpectedProperties);
   }
 
   @Test
-  public void canSearchForRequestsByProxyLastName()
-    throws MalformedURLException,
-    InterruptedException,
-    ExecutionException,
-    TimeoutException {
-
+  public void canSearchForRequestsByProxyLastName() {
     final IndividualResource sponsor = usersFixture.jessica();
 
     final IndividualResource firstProxy = usersFixture.charlotte();
@@ -636,125 +550,94 @@ public class RequestsAPIRetrievalTests extends APITests {
     proxyRelationshipsFixture.currentProxyFor(sponsor, firstProxy);
     proxyRelationshipsFixture.currentProxyFor(sponsor, secondProxy);
 
-    requestsClient.create(new RequestBuilder()
+    requestsFixture.place(new RequestBuilder()
       .forItem(itemsFixture.basedUponSmallAngryPlanet(ItemBuilder::checkOut))
       .withPickupServicePointId(pickupServicePointId)
       .by(sponsor)
       .proxiedBy(firstProxy));
 
-    requestsClient.create(new RequestBuilder()
+    requestsFixture.place(new RequestBuilder()
       .forItem(itemsFixture.basedUponNod(ItemBuilder::checkOut))
       .withPickupServicePointId(pickupServicePointId)
       .by(sponsor)
       .proxiedBy(secondProxy));
 
-    requestsClient.create(new RequestBuilder()
+    requestsFixture.place(new RequestBuilder()
       .forItem(itemsFixture.basedUponNod(ItemBuilder::checkOut))
       .withPickupServicePointId(pickupServicePointId)
       .by(sponsor)
       .proxiedBy(secondProxy));
 
-    requestsClient.create(new RequestBuilder()
+    requestsFixture.place(new RequestBuilder()
       .forItem(itemsFixture.basedUponUprooted(ItemBuilder::checkOut))
       .withPickupServicePointId(pickupServicePointId)
       .by(sponsor)
       .proxiedBy(firstProxy));
 
-    requestsClient.create(new RequestBuilder()
+    requestsFixture.place(new RequestBuilder()
       .forItem(itemsFixture.basedUponTemeraire(ItemBuilder::checkOut))
       .withPickupServicePointId(pickupServicePointId)
       .by(sponsor)
       .proxiedBy(secondProxy));
 
-    CompletableFuture<Response> getRequestsCompleted = new CompletableFuture<>();
-
-    client.get(requestsUrl() + format("?query=proxy.lastName=%s", "Rodwell"), any(getRequestsCompleted));
-
-    Response getRequestsResponse = getRequestsCompleted.get(5, TimeUnit.SECONDS);
-
-    assertThat(format("Failed to get requests: %s",
-      getRequestsResponse.getBody()),
-      getRequestsResponse.getStatusCode(), is(HttpURLConnection.HTTP_OK));
-
-    JsonObject wrappedRequests = getRequestsResponse.getJson();
-
-    List<JsonObject> requests = getRequests(wrappedRequests);
+    final MultipleJsonRecords requests = requestsFixture.getRequests(
+      queryFromTemplate("proxy.lastName=%s", "Rodwell"),
+      noLimit(), noOffset());
 
     assertThat(requests.size(), is(3));
-    assertThat(wrappedRequests.getInteger("totalRecords"), is(3));
+    assertThat(requests.totalRecords(), is(3));
 
     requests.forEach(this::requestHasExpectedProperties);
   }
 
   @Test
-  public void canSearchForRequestsByItemTitle()
-    throws MalformedURLException,
-    InterruptedException,
-    ExecutionException,
-    TimeoutException {
-
+  public void canSearchForRequestsByItemTitle() {
     UUID requesterId = usersFixture.charlotte().getId();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
-    requestsClient.create(new RequestBuilder()
-      .withItemId(itemsFixture.basedUponSmallAngryPlanet(ItemBuilder::checkOut).getId())
+    requestsFixture.place(new RequestBuilder()
+      .forItem(itemsFixture.basedUponSmallAngryPlanet(ItemBuilder::checkOut))
       .withPickupServicePointId(pickupServicePointId)
       .withRequesterId(requesterId));
 
-    requestsClient.create(new RequestBuilder()
-      .withItemId(itemsFixture.basedUponNod(ItemBuilder::checkOut).getId())
+    requestsFixture.place(new RequestBuilder()
+      .forItem(itemsFixture.basedUponNod(ItemBuilder::checkOut))
       .withPickupServicePointId(pickupServicePointId)
       .withRequesterId(requesterId));
 
-    requestsClient.create(new RequestBuilder()
-      .withItemId(itemsFixture.basedUponInterestingTimes(ItemBuilder::checkOut).getId())
+    requestsFixture.place(new RequestBuilder()
+      .forItem(itemsFixture.basedUponInterestingTimes(ItemBuilder::checkOut))
       .withPickupServicePointId(pickupServicePointId)
       .withRequesterId(requesterId));
 
-    requestsClient.create(new RequestBuilder()
-      .withItemId(itemsFixture.basedUponTemeraire(ItemBuilder::checkOut).getId())
+    requestsFixture.place(new RequestBuilder()
+      .forItem(itemsFixture.basedUponTemeraire(ItemBuilder::checkOut))
       .withPickupServicePointId(pickupServicePointId)
       .withRequesterId(requesterId));
 
-    requestsClient.create(new RequestBuilder()
-      .withItemId(itemsFixture.basedUponNod(ItemBuilder::checkOut).getId())
+    requestsFixture.place(new RequestBuilder()
+      .forItem(itemsFixture.basedUponNod(ItemBuilder::checkOut))
       .withPickupServicePointId(pickupServicePointId)
       .withRequesterId(requesterId));
 
-    requestsClient.create(new RequestBuilder()
-      .withItemId(itemsFixture.basedUponUprooted(ItemBuilder::checkOut).getId())
+    requestsFixture.place(new RequestBuilder()
+      .forItem(itemsFixture.basedUponUprooted(ItemBuilder::checkOut))
       .withPickupServicePointId(pickupServicePointId)
       .withRequesterId(requesterId));
 
-    requestsClient.create(new RequestBuilder()
-      .withItemId(itemsFixture.basedUponTemeraire(ItemBuilder::checkOut).getId())
+    requestsFixture.place(new RequestBuilder()
+      .forItem(itemsFixture.basedUponTemeraire(ItemBuilder::checkOut))
       .withPickupServicePointId(pickupServicePointId)
       .withRequesterId(requesterId));
 
-    CompletableFuture<Response> getRequestsCompleted = new CompletableFuture<>();
-
-    client.get(requestsUrl() + "?query=item.title=Nod", any(getRequestsCompleted));
-
-    Response getRequestsResponse = getRequestsCompleted.get(5, TimeUnit.SECONDS);
-
-    assertThat(format("Failed to get requests: %s",
-      getRequestsResponse.getBody()),
-      getRequestsResponse.getStatusCode(), is(HttpURLConnection.HTTP_OK));
-
-    JsonObject wrappedRequests = getRequestsResponse.getJson();
-
-    List<JsonObject> requests = getRequests(wrappedRequests);
+    final MultipleJsonRecords requests = requestsFixture.getRequests(
+      queryFromTemplate("item.title=%s", "Nod"),
+      noLimit(), noOffset());
 
     assertThat(requests.size(), is(2));
-    assertThat(wrappedRequests.getInteger("totalRecords"), is(2));
+    assertThat(requests.totalRecords(), is(2));
 
     requests.forEach(this::requestHasExpectedProperties);
-  }
-
-  private List<JsonObject> getRequests(JsonObject page) {
-    System.out.println("Found requests");
-    System.out.println(page.getJsonArray("requests").encodePrettily());
-    return JsonArrayHelper.toList(page.getJsonArray("requests"));
   }
 
   private void requestHasExpectedProperties(JsonObject request) {
@@ -798,22 +681,17 @@ public class RequestsAPIRetrievalTests extends APITests {
     hasProperty("desc", request.getJsonObject("requester").getJsonObject("patronGroup"), "group");
   }
 
-
   private void requestHasTags(JsonObject request) {
     hasProperty("tags", request, "tags");
-
     hasProperty("tagList", request.getJsonObject("tags"), "List");
-
   }
 
   protected void hasProperty(String property, JsonObject resource, String type) {
     assertThat(format("%s should have %s: %s: is missing outer property",
-      type, property, resource),
-      resource, notNullValue());
+      type, property, resource), resource, notNullValue());
 
     assertThat(format("%s should have %s: %s",
-      type, property, resource),
-      resource.containsKey(property), is(true));
+      type, property, resource), resource.containsKey(property), is(true));
   }
 
   private void requestHasCallNumberStringProperties(JsonObject request, String prefix) {
@@ -829,12 +707,5 @@ public class RequestsAPIRetrievalTests extends APITests {
     assertThat(item.getString("enumeration"), is(prefix + "enumeration1"));
     assertThat(item.getString("chronology"), is(prefix + "chronology"));
     assertThat(item.getString("volume"), is(prefix + "vol.1"));
-  }
-
-  private JsonObject findRequestByItemId(List<JsonObject> allRequests, UUID itemId) {
-    return allRequests.stream()
-      .filter(req -> itemId.toString().equals(req.getString("itemId")))
-      .findFirst()
-      .orElseThrow(() -> new AssertionError("Can not find Request for item: " + itemId));
   }
 }
