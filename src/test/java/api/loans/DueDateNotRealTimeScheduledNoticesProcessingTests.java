@@ -3,6 +3,7 @@ package api.loans;
 import static api.support.fixtures.TemplateContextMatchers.getItemContextMatchers;
 import static api.support.fixtures.TemplateContextMatchers.getLoanContextMatchers;
 import static api.support.fixtures.TemplateContextMatchers.getLoanPolicyContextMatchersForUnlimitedRenewals;
+import static api.support.fixtures.TemplateContextMatchers.getMultipleLoansContextMatcher;
 import static api.support.fixtures.TemplateContextMatchers.getUserContextMatchers;
 import static api.support.matchers.JsonObjectMatcher.toStringMatcher;
 import static api.support.matchers.PatronNoticeMatcher.hasEmailNoticeProperties;
@@ -15,6 +16,7 @@ import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 
 import java.net.MalformedURLException;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
@@ -22,6 +24,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.awaitility.Awaitility;
 import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.support.http.client.IndividualResource;
@@ -318,7 +321,10 @@ public class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests 
       .withName("Policy with due date notices")
       .withLoanNotices(Collections.singletonList(uponAtDueDateNoticeConfig));
 
-    use(noticePolicy);
+    useLoanPolicyAsFallback(
+      loanPoliciesFixture.canCirculateRolling().getId(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
+      noticePoliciesFixture.create(noticePolicy).getId());
 
     DateTime loanDate = new DateTime(2019, 8, 23, 10, 30);
 
@@ -360,7 +366,10 @@ public class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests 
       .withName("Policy with due date notices")
       .withLoanNotices(Collections.singletonList(uponAtDueDateNoticeConfig));
 
-    use(noticePolicy);
+    useLoanPolicyAsFallback(
+      loanPoliciesFixture.canCirculateRolling().getId(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
+      noticePoliciesFixture.create(noticePolicy).getId());
 
     DateTime loanDate = new DateTime(2019, 8, 23, 10, 30);
 
@@ -402,7 +411,10 @@ public class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests 
       .withName("Policy with due date notices")
       .withLoanNotices(Collections.singletonList(uponAtDueDateNoticeConfig));
 
-    use(noticePolicy);
+    useLoanPolicyAsFallback(
+      loanPoliciesFixture.canCirculateRolling().getId(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
+      noticePoliciesFixture.create(noticePolicy).getId());
 
     DateTime loanDate = new DateTime(2019, 8, 23, 10, 30);
 
@@ -444,7 +456,10 @@ public class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests 
       .withName("Policy with due date notices")
       .withLoanNotices(Collections.singletonList(uponAtDueDateNoticeConfig));
 
-    use(noticePolicy);
+    useLoanPolicyAsFallback(
+      loanPoliciesFixture.canCirculateRolling().getId(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
+      noticePoliciesFixture.create(noticePolicy).getId());
 
     DateTime loanDate = new DateTime(2019, 8, 23, 10, 30);
 

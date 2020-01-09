@@ -1,17 +1,23 @@
 package api.support.fixtures;
 
+import static api.support.matchers.JsonObjectMatcher.toStringMatcher;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
+import static com.jayway.jsonpath.matchers.JsonPathMatchers.hasJsonPath;
 import static org.folio.circulation.support.JsonPropertyFetcher.getDateTimeProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getIntegerProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getObjectProperty;
+import static org.hamcrest.CoreMatchers.allOf;
+import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.hamcrest.Matcher;
 
@@ -178,4 +184,32 @@ public class TemplateContextMatchers {
     return is(servicePoint.getJson().getString("name"));
   }
 
+  @SuppressWarnings("unchecked")
+  public static Matcher<? super String> getMultipleLoansContextMatcher(
+    IndividualResource user,
+    Collection<Pair<IndividualResource, InventoryItemResource>> loansWithItems,
+    Matcher<? super String> loanPolicyMatcher) {
+
+    Matcher<? super String> userContextMatcher = toStringMatcher(getUserContextMatchers(user));
+
+    Matcher<? super String>[] loanWithItemContextMatchers = loansWithItems.stream()
+      .map(p -> getLoanWithItemContextMatcher(p.getLeft(), p.getRight(), loanPolicyMatcher))
+      .toArray(Matcher[]::new);
+
+    return allOf(
+      userContextMatcher,
+      hasJsonPath("loans[*]", hasItems(loanWithItemContextMatchers)));
+  }
+
+  private static Matcher<? super String> getLoanWithItemContextMatcher(
+    IndividualResource loan, InventoryItemResource item,
+    Matcher<? super String> loanPolicyMatcher) {
+
+    Matcher<? super String> loanContextMatcher =
+      toStringMatcher(getLoanContextMatchers(loan));
+    Matcher<? super String> itemContextMatcher =
+      toStringMatcher(getItemContextMatchers(item, true));
+
+    return allOf(loanContextMatcher, itemContextMatcher, loanPolicyMatcher);
+  }
 }
