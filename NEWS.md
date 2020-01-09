@@ -1,3 +1,7 @@
+## 16.7.6 2020-01-09
+
+* Allow later patron notices to be sent when invalid notices are also scheduled (CIRC-582)
+
 ## 16.7.5 2019-11-21
 
 * Sets hold shelf expiration date to the end of the day for long term periods (CIRC-543)
