@@ -705,10 +705,11 @@ public class LoanPolicy {
   }
 
   public Integer getItemLimit() {
-    if (getLoansPolicy() != null) {
-      return getLoansPolicy().getInteger("itemLimit");
+    final JsonObject loansPolicy = getLoansPolicy();
+    if (loansPolicy == null) {
+      return null;
     }
-    return null;
+    return getLoansPolicy().getInteger("itemLimit");
   }
 
   public AppliedRuleConditions getRuleConditions() {
