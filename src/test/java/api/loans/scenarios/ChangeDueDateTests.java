@@ -15,7 +15,6 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
-import api.support.builders.DeclareItemLostRequestBuilder;
 import org.apache.commons.lang3.StringUtils;
 import org.awaitility.Awaitility;
 import org.folio.circulation.support.http.client.IndividualResource;
@@ -28,6 +27,7 @@ import org.joda.time.Period;
 import org.junit.Test;
 
 import api.support.APITests;
+import api.support.builders.DeclareItemLostRequestBuilder;
 import api.support.builders.ItemBuilder;
 import api.support.builders.LoanPolicyBuilder;
 import api.support.builders.NoticeConfigurationBuilder;
