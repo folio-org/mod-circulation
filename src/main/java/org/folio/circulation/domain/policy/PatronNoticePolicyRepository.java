@@ -1,6 +1,5 @@
 package org.folio.circulation.domain.policy;
 
-import java.util.List;
 import java.util.function.Function;
 
 import org.folio.circulation.domain.notice.PatronNoticePolicy;

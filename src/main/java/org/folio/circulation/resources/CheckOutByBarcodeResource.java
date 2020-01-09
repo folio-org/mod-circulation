@@ -135,7 +135,7 @@ public class CheckOutByBarcodeResource extends Resource {
       loanRepository, message -> singleValidationError(message, ITEM_BARCODE, itemBarcode));
 
     final ItemLimitValidator itemLimitValidator = new ItemLimitValidator(
-      message -> singleValidationError(message, ITEM_BARCODE, itemBarcode), loanRepository, loanPolicyRepository);
+      message -> singleValidationError(message, ITEM_BARCODE, itemBarcode), loanRepository);
 
     final UpdateItem updateItem = new UpdateItem(clients);
     final UpdateRequestQueue requestQueueUpdate = UpdateRequestQueue.using(clients);

@@ -332,8 +332,8 @@ public class Drools {
     }
 
     private String getRuleConditionFromStringRuleRepresentation(String stringRepresentation) {
-      int endIndex = stringRepresentation.indexOf("]");
-      int startIndex = stringRepresentation.lastIndexOf(".") + 1;
+      int endIndex = stringRepresentation.indexOf(']');
+      int startIndex = stringRepresentation.lastIndexOf('.') + 1;
 
       return stringRepresentation.substring(startIndex, endIndex);
     }

@@ -28,6 +28,7 @@ import org.folio.circulation.support.http.client.ResponseHandler;
 import io.vertx.core.json.JsonObject;
 
 public abstract class CirculationPolicyRepository<T> {
+  private static final String APPLIED_RULE_CONDITIONS = "appliedRuleConditions";
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
   private final CirculationRulesClient circulationRulesClient;
@@ -112,11 +113,11 @@ public abstract class CirculationPolicyRepository<T> {
         log.info("Rules response {}", response.getBody());
 
         String policyId = fetchPolicyId(response.getJson());
-        boolean isItemTypePresent = response.getJson().getJsonObject("appliedRuleConditions")
+        boolean isItemTypePresent = response.getJson().getJsonObject(APPLIED_RULE_CONDITIONS)
           .getBoolean("isItemTypePresent");
-        boolean isLoanTypePresent = response.getJson().getJsonObject("appliedRuleConditions")
+        boolean isLoanTypePresent = response.getJson().getJsonObject(APPLIED_RULE_CONDITIONS)
           .getBoolean("isLoanTypePresent");
-        boolean isPatronGroupPresent = response.getJson().getJsonObject("appliedRuleConditions")
+        boolean isPatronGroupPresent = response.getJson().getJsonObject(APPLIED_RULE_CONDITIONS)
           .getBoolean("isPatronGroupPresent");
 
         log.info("Policy to fetch based upon rules {}", policyId);

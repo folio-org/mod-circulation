@@ -1,7 +1,6 @@
 package org.folio.circulation.domain.validation;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
-
 import static org.folio.circulation.support.Result.ofAsync;
 import static org.folio.circulation.support.Result.succeeded;
 
@@ -13,7 +12,6 @@ import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.domain.LoanRepository;
-import org.folio.circulation.domain.policy.LoanPolicyRepository;
 import org.folio.circulation.rules.AppliedRuleConditionsEntity;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.ValidationErrorFailure;
@@ -21,14 +19,12 @@ import org.folio.circulation.support.ValidationErrorFailure;
 public class ItemLimitValidator {
   private final Function<String, ValidationErrorFailure> itemLimitErrorFunction;
   private final LoanRepository loanRepository;
-  private final LoanPolicyRepository loanPolicyRepository;
 
   public ItemLimitValidator(Function<String, ValidationErrorFailure> itemLimitErrorFunction,
-    LoanRepository loanRepository, LoanPolicyRepository loanPolicyRepository) {
+    LoanRepository loanRepository) {
 
     this.itemLimitErrorFunction = itemLimitErrorFunction;
     this.loanRepository = loanRepository;
-    this.loanPolicyRepository = loanPolicyRepository;
   }
 
   public CompletableFuture<Result<LoanAndRelatedRecords>> refuseWhenItemLimitIsReached(
