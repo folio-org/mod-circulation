@@ -29,6 +29,10 @@ public class ClockManager {
     this.clock = clock;
   }
 
+  public void setDefaultClock() {
+    clock = Clock.systemUTC();
+  }
+
   public Clock getClock() {
     return clock;
   }
