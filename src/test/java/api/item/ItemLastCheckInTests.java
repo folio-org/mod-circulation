@@ -4,21 +4,20 @@ import static api.support.APITestContext.getOkapiHeadersFromContext;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.junit.Assert.assertThat;
-import static org.junit.Assert.assertTrue;
 
 import java.util.UUID;
+
+import org.folio.circulation.support.ClockManager;
+import org.folio.circulation.support.JsonPropertyFetcher;
+import org.folio.circulation.support.http.client.IndividualResource;
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
+import org.junit.Test;
 
 import api.support.APITestContext;
 import api.support.APITests;
 import api.support.http.OkapiHeaders;
 import io.vertx.core.json.JsonObject;
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
-import org.junit.Test;
-
-import org.folio.circulation.support.ClockManager;
-import org.folio.circulation.support.JsonPropertyFetcher;
-import org.folio.circulation.support.http.client.IndividualResource;
 
 public class ItemLastCheckInTests extends APITests {
 
@@ -184,7 +183,6 @@ public class ItemLastCheckInTests extends APITests {
     DateTime actualCheckinDateTime = JsonPropertyFetcher
       .getDateTimeProperty(lastCheckIn, "dateTime");
 
-    assertTrue(actualCheckinDateTime.isAfter(checkInDateTimeInPast));
     assertThat(actualCheckinDateTime, is(checkInDateTime));
   }
 }

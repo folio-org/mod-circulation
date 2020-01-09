@@ -4,16 +4,16 @@ import static api.support.matchers.LoanMatchers.hasOpenStatus;
 import static api.support.matchers.LoanMatchers.isAnonymized;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
+import static org.joda.time.DateTime.now;
+import static org.joda.time.DateTimeZone.UTC;
 
 import java.util.UUID;
 
-import api.support.builders.CheckOutByBarcodeRequestBuilder;
-import api.support.builders.LoanHistoryConfigurationBuilder;
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
+import org.folio.circulation.support.http.client.IndividualResource;
 import org.junit.Test;
 
-import org.folio.circulation.support.http.client.IndividualResource;
+import api.support.builders.CheckOutByBarcodeRequestBuilder;
+import api.support.builders.LoanHistoryConfigurationBuilder;
 
 public class AnonymizeLoansAfterXIntervalTests extends LoanAnonymizationTests {
 
@@ -42,7 +42,7 @@ public class AnonymizeLoansAfterXIntervalTests extends LoanAnonymizationTests {
     UUID loanID = loanResource.getId();
 
     createClosedAccountWithFeeFines(loanResource,
-      DateTime.now(DateTimeZone.UTC).minusMinutes(1));
+      now(UTC).minusMinutes(1));
 
     anonymizeLoansInTenant();
 
@@ -75,12 +75,12 @@ public class AnonymizeLoansAfterXIntervalTests extends LoanAnonymizationTests {
     UUID loanID = loanResource.getId();
 
     createClosedAccountWithFeeFines(loanResource,
-      DateTime.now(DateTimeZone.UTC).minusMinutes(1));
+      now(UTC).minusMinutes(1));
 
     assertThat(loanResource.getJson(), hasOpenStatus());
 
     mockClockManagerToReturnFixedDateTime(
-      DateTime.now(DateTimeZone.UTC).plus(ONE_MINUTE_AND_ONE));
+      now(UTC).plus(ONE_MINUTE_AND_ONE));
 
     anonymizeLoansInTenant();
 
@@ -112,7 +112,7 @@ public class AnonymizeLoansAfterXIntervalTests extends LoanAnonymizationTests {
       .at(servicePoint.getId()));
     UUID loanID = loanResource.getId();
 
-    createClosedAccountWithFeeFines(loanResource, DateTime.now());
+    createClosedAccountWithFeeFines(loanResource, now());
 
     loansFixture.checkInByBarcode(item1);
 
@@ -146,7 +146,7 @@ public class AnonymizeLoansAfterXIntervalTests extends LoanAnonymizationTests {
       .at(servicePoint.getId()));
     UUID loanID = loanResource.getId();
 
-    createClosedAccountWithFeeFines(loanResource, DateTime.now(DateTimeZone.UTC));
+    createClosedAccountWithFeeFines(loanResource, now(UTC));
 
     loansFixture.checkInByBarcode(item1);
 
@@ -180,10 +180,10 @@ public class AnonymizeLoansAfterXIntervalTests extends LoanAnonymizationTests {
       .at(servicePoint.getId()));
     UUID loanID = loanResource.getId();
 
-    createClosedAccountWithFeeFines(loanResource, DateTime.now(DateTimeZone.UTC));
+    createClosedAccountWithFeeFines(loanResource, now(UTC));
 
     mockClockManagerToReturnFixedDateTime(
-      DateTime.now(DateTimeZone.UTC).plus(20 * ONE_MINUTE_AND_ONE));
+      now(UTC).plus(20 * ONE_MINUTE_AND_ONE));
     anonymizeLoansInTenant();
 
     assertThat(loansStorageClient.getById(loanID)
@@ -215,13 +215,13 @@ public class AnonymizeLoansAfterXIntervalTests extends LoanAnonymizationTests {
       .at(servicePoint.getId()));
     UUID loanID = loanResource.getId();
 
-    createClosedAccountWithFeeFines(loanResource, DateTime.now());
-    createClosedAccountWithFeeFines(loanResource, DateTime.now());
+    createClosedAccountWithFeeFines(loanResource, now());
+    createClosedAccountWithFeeFines(loanResource, now());
 
     loansFixture.checkInByBarcode(item1);
 
     mockClockManagerToReturnFixedDateTime(
-      DateTime.now(DateTimeZone.UTC).plus(20 * ONE_MINUTE_AND_ONE));
+      now(UTC).plus(20 * ONE_MINUTE_AND_ONE));
 
     anonymizeLoansInTenant();
 
@@ -253,7 +253,7 @@ public class AnonymizeLoansAfterXIntervalTests extends LoanAnonymizationTests {
       .at(servicePoint.getId()));
     UUID loanID = loanResource.getId();
 
-    createClosedAccountWithFeeFines(loanResource, DateTime.now());
+    createClosedAccountWithFeeFines(loanResource, now(UTC));
 
     loansFixture.checkInByBarcode(item1);
 
@@ -287,12 +287,11 @@ public class AnonymizeLoansAfterXIntervalTests extends LoanAnonymizationTests {
       .at(servicePoint.getId()));
     UUID loanID = loanResource.getId();
 
-    createClosedAccountWithFeeFines(loanResource, DateTime.now());
+    createClosedAccountWithFeeFines(loanResource, now(UTC));
 
     loansFixture.checkInByBarcode(item1);
 
-    mockClockManagerToReturnFixedDateTime(
-      DateTime.now(DateTimeZone.UTC).plus(ONE_MINUTE_AND_ONE));
+    mockClockManagerToReturnFixedDateTime(now(UTC).plus(ONE_MINUTE_AND_ONE));
 
     anonymizeLoansInTenant();
 
@@ -324,7 +323,7 @@ public class AnonymizeLoansAfterXIntervalTests extends LoanAnonymizationTests {
       .at(servicePoint.getId()));
     UUID loanID = loanResource.getId();
 
-    createClosedAccountWithFeeFines(loanResource, DateTime.now());
+    createClosedAccountWithFeeFines(loanResource, now());
 
     loansFixture.checkInByBarcode(item1);
 
@@ -353,8 +352,7 @@ public class AnonymizeLoansAfterXIntervalTests extends LoanAnonymizationTests {
 
     loansFixture.checkInByBarcode(item1);
 
-    mockClockManagerToReturnFixedDateTime(
-      DateTime.now(DateTimeZone.UTC).plus(ONE_MINUTE_AND_ONE));
+    mockClockManagerToReturnFixedDateTime(now(UTC).plus(ONE_MINUTE_AND_ONE));
     anonymizeLoansInTenant();
 
     assertThat(loansStorageClient.getById(loanID)
@@ -396,7 +394,7 @@ public class AnonymizeLoansAfterXIntervalTests extends LoanAnonymizationTests {
     UUID loanID = loanResource.getId();
 
 
-    createClosedAccountWithFeeFines(loanResource, DateTime.now());
+    createClosedAccountWithFeeFines(loanResource, now());
     loansFixture.checkInByBarcode(item1);
 
     anonymizeLoansInTenant();
@@ -420,8 +418,7 @@ public class AnonymizeLoansAfterXIntervalTests extends LoanAnonymizationTests {
 
     createOpenAccountWithFeeFines(loanResource);
 
-    mockClockManagerToReturnFixedDateTime(
-      DateTime.now(DateTimeZone.UTC).plus(ONE_MINUTE_AND_ONE));
+    mockClockManagerToReturnFixedDateTime(now(UTC).plus(ONE_MINUTE_AND_ONE));
 
     loansFixture.checkInByBarcode(item1);
 

@@ -3,10 +3,9 @@ package org.folio.circulation.domain;
 import java.util.Optional;
 import java.util.UUID;
 
-import org.joda.time.DateTime;
-
 import org.folio.circulation.domain.representations.CheckInByBarcodeRequest;
 import org.folio.circulation.support.ClockManager;
+import org.joda.time.DateTime;
 
 /**
  * The loan captures a snapshot of the item status
