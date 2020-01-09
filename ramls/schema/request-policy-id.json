@@ -12,15 +12,15 @@
       "description": "Addition information about conditions which were present in the applied rule",
       "type": "object",
       "properties": {
-        "isItemTypePresent": {
+        "materialTypeMatch": {
           "description": "Indicates that ItemType was present in applied rule conditions",
           "type": "boolean"
         },
-        "isLoanTypePresent": {
+        "loanTypeMatch": {
           "description": "Indicates that LoanType was present in applied rule conditions",
           "type": "boolean"
         },
-        "isPatronGroupPresent": {
+        "patronGroupMatch": {
           "description": "Indicates that PatronGroup was present in applied rule conditions",
           "type": "boolean"
         }

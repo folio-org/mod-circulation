@@ -113,11 +113,11 @@ public abstract class CirculationPolicyRepository<T> {
 
         String policyId = fetchPolicyId(response.getJson());
         boolean isItemTypePresent = response.getJson().getJsonObject(APPLIED_RULE_CONDITIONS)
-          .getBoolean("isItemTypePresent");
+          .getBoolean("materialTypeMatch");
         boolean isLoanTypePresent = response.getJson().getJsonObject(APPLIED_RULE_CONDITIONS)
-          .getBoolean("isLoanTypePresent");
+          .getBoolean("loanTypeMatch");
         boolean isPatronGroupPresent = response.getJson().getJsonObject(APPLIED_RULE_CONDITIONS)
-          .getBoolean("isPatronGroupPresent");
+          .getBoolean("patronGroupMatch");
 
         log.info("Policy to fetch based upon rules {}", policyId);
 
