@@ -1,0 +1,16 @@
+{
+  "ruleMatches": [
+    {
+      "ruleLine": 8,
+      "overdueFinePolicyId": "d9cd0bed-1b49-4b5e-a7bd-064b8d177231"
+    },
+    {
+      "ruleLine": 5,
+      "overdueFinePolicyId": "5e3bf628-cf74-48c2-ae8e-fe1bdc8d6220"
+    },
+    {
+      "ruleLine": 2,
+      "overdueFinePolicyId": "7df77ebc-6dd3-425c-a00a-82c1ae930f72"
+    }
+  ]
+}

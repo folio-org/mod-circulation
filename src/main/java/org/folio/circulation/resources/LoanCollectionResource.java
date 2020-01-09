@@ -183,6 +183,8 @@ public class LoanCollectionResource extends CollectionResource {
     final LoanRepresentation loanRepresentation = new LoanRepresentation();
     final UserRepository userRepository = new UserRepository(clients);
     final LoanPolicyRepository loanPolicyRepository = new LoanPolicyRepository(clients);
+    final OverdueFinePolicyRepository overdueFinePolicyRepository = new OverdueFinePolicyRepository(clients);
+    final LostItemPolicyRepository lostItemPolicyRepository = new LostItemPolicyRepository(clients);
     final AccountRepository accountRepository = new AccountRepository(clients);
     final PatronGroupRepository patronGroupRepository = new PatronGroupRepository(clients);
 
@@ -193,6 +195,8 @@ public class LoanCollectionResource extends CollectionResource {
       .thenComposeAsync(servicePointRepository::findServicePointsForLoan)
       .thenComposeAsync(userRepository::findUserForLoan)
       .thenComposeAsync(loanPolicyRepository::findPolicyForLoan)
+      .thenComposeAsync(overdueFinePolicyRepository::findOverdueFinePolicyForLoan)
+      .thenComposeAsync(lostItemPolicyRepository::findLostItemPolicyForLoan)
       .thenComposeAsync(patronGroupRepository::findGroupForLoan)
       .thenApply(loanResult -> loanResult.map(loanRepresentation::extendedLoan))
       .thenApply(OkJsonResponseResult::from)
@@ -234,9 +238,9 @@ public class LoanCollectionResource extends CollectionResource {
       .thenCompose(multiLoanRecordsResult ->
         multiLoanRecordsResult.after(loanPolicyRepository::findLoanPoliciesForLoans))
       .thenCompose(multiLoanRecordsResult ->
-        multiLoanRecordsResult.after(overdueFinePolicyRepository::findLoanPoliciesForLoans))
+        multiLoanRecordsResult.after(overdueFinePolicyRepository::findOverdueFinePoliciesForLoans))
       .thenCompose(multiLoanRecordsResult ->
-        multiLoanRecordsResult.after(lostItemPolicyRepository::findLoanPoliciesForLoans))
+        multiLoanRecordsResult.after(lostItemPolicyRepository::findLostItemPoliciesForLoans))
       .thenCompose(multiLoanRecordsResult ->
         multiLoanRecordsResult.after(patronGroupRepository::findPatronGroupsByIds))
       .thenApply(multipleLoanRecordsResult -> multipleLoanRecordsResult.map(loans ->

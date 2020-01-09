@@ -69,31 +69,34 @@ public class LoanRepresentation {
   private void additionalOverdueFinePolicyProperties(JsonObject loanRepresentation,
                                                      OverdueFinePolicy overdueFinePolicy) {
     if (overdueFinePolicy == null) {
-      log.info("Unable to add loan policy properties to loan {}," + " loanPolicy is null", loanRepresentation.getString("id"));
+      log.info("Unable to add overdue fine policy properties to loan {}," +
+        " overdueFinePolicy is null", loanRepresentation.getString("id"));
       return;
     }
-    JsonObject loanPolicySummary = loanRepresentation.containsKey(LoanProperties.OVERDUE_FINE_POLICY)
-            ? loanRepresentation.getJsonObject(LoanProperties.OVERDUE_FINE_POLICY)
-            : new JsonObject();
-
-    loanPolicySummary.put("name", overdueFinePolicy.getName());
-
-    loanRepresentation.put(LoanProperties.OVERDUE_FINE_POLICY, loanPolicySummary);
+    addNameProperty(loanRepresentation, LoanProperties.OVERDUE_FINE_POLICY,
+      overdueFinePolicy.getName());
   }
 
   private void additionalLostItemPolicyProperties(JsonObject loanRepresentation,
-                                                     LostItemPolicy lostItemPolicy) {
+                                                  LostItemPolicy lostItemPolicy) {
     if (lostItemPolicy == null) {
-      log.info("Unable to add loan policy properties to loan {}," + " loanPolicy is null", loanRepresentation.getString("id"));
+      log.info("Unable to add lost item policy properties to loan {}," +
+        " lostItemPolicy is null", loanRepresentation.getString("id"));
       return;
     }
-    JsonObject lostItemPolicySummary = loanRepresentation.containsKey(LoanProperties.LOST_ITEM_POLICY)
-            ? loanRepresentation.getJsonObject(LoanProperties.LOST_ITEM_POLICY)
-            : new JsonObject();
+    addNameProperty(loanRepresentation, LoanProperties.LOST_ITEM_POLICY,
+      lostItemPolicy.getName());
+  }
 
-    lostItemPolicySummary.put("name", lostItemPolicy.getName());
+  private void addNameProperty(JsonObject representation,
+                               String property,
+                               String propertyName) {
+    JsonObject summary = representation.containsKey(property)
+      ? representation.getJsonObject(property)
+      : new JsonObject();
 
-    loanRepresentation.put(LoanProperties.LOST_ITEM_POLICY, lostItemPolicySummary);
+    summary.put("name", propertyName);
+    representation.put(property, summary);
   }
 
   public JsonObject extendedLoan(LoanAndRelatedRecords relatedRecords) {
@@ -127,18 +130,15 @@ public class LoanRepresentation {
     write(loanRepresentation, LoanProperties.FEESANDFINES, feesAndFinesSummary);
   }
 
-  private void additionalLoanPolicyProperties(JsonObject loanRepresentation, LoanPolicy loanPolicy) {
+  private void additionalLoanPolicyProperties(JsonObject loanRepresentation,
+                                              LoanPolicy loanPolicy) {
     if (loanPolicy == null) {
-      log.info("Unable to add loan policy properties to loan {}," + " loanPolicy is null", loanRepresentation.getString("id"));
+      log.info("Unable to add loan policy properties to loan {}," + " loanPolicy is null",
+        loanRepresentation.getString("id"));
       return;
     }
-    JsonObject loanPolicySummary = loanRepresentation.containsKey(LoanProperties.LOAN_POLICY)
-        ? loanRepresentation.getJsonObject(LoanProperties.LOAN_POLICY)
-        : new JsonObject();
-
-    loanPolicySummary.put("name", loanPolicy.getName());
-
-    loanRepresentation.put(LoanProperties.LOAN_POLICY, loanPolicySummary);
+    addNameProperty(loanRepresentation, LoanProperties.LOAN_POLICY,
+      loanPolicy.getName());
   }
 
   private void addAdditionalServicePointProperties(

@@ -63,11 +63,11 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   private final LostItemPolicy lostItemPolicy;
 
   private Loan(JsonObject representation, Item item, User user, User proxy,
-    ServicePoint checkinServicePoint, ServicePoint checkoutServicePoint,
-    DateTime originalDueDate, LoanPolicy loanPolicy,
-    Collection<Account> accounts,
-    OverdueFinePolicy overdueFinePolicy,
-    LostItemPolicy lostItemPolicy) {
+               ServicePoint checkinServicePoint, ServicePoint checkoutServicePoint,
+               DateTime originalDueDate, LoanPolicy loanPolicy,
+               OverdueFinePolicy overdueFinePolicy,
+               LostItemPolicy lostItemPolicy,
+               Collection<Account> accounts) {
 
     requireNonNull(loanPolicy, "loanPolicy cannot be null");
 
@@ -108,7 +108,8 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   public static Loan from(JsonObject representation) {
     defaultStatusAndAction(representation);
     return new Loan(representation, null, null, null, null, null, null,
-      LoanPolicy.unknown(null), null, null, null);
+      LoanPolicy.unknown(null), OverdueFinePolicy.unknown(null),
+      LostItemPolicy.unknown(null), null);
   }
 
   JsonObject asJson() {
@@ -253,14 +254,14 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
 
   Loan replaceRepresentation(JsonObject newRepresentation) {
     return new Loan(newRepresentation, item, user, proxy, checkinServicePoint,
-      checkoutServicePoint, originalDueDate, loanPolicy, accounts,
-      overdueFinePolicy, lostItemPolicy);
+      checkoutServicePoint, originalDueDate, loanPolicy, overdueFinePolicy,
+      lostItemPolicy, accounts);
   }
 
   public Loan withItem(Item item) {
     return new Loan(representation, item, user, proxy, checkinServicePoint,
-        checkoutServicePoint, originalDueDate, loanPolicy, accounts,
-      overdueFinePolicy, lostItemPolicy);
+      checkoutServicePoint, originalDueDate, loanPolicy, overdueFinePolicy,
+      lostItemPolicy, accounts);
   }
 
   public User getUser() {
@@ -269,8 +270,8 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
 
   public Loan withUser(User newUser) {
     return new Loan(representation, item, newUser, proxy, checkinServicePoint,
-        checkoutServicePoint, originalDueDate, loanPolicy, accounts,
-      overdueFinePolicy, lostItemPolicy);
+      checkoutServicePoint, originalDueDate, loanPolicy, overdueFinePolicy,
+      lostItemPolicy, accounts);
   }
 
   Loan withPatronGroupAtCheckout(PatronGroup patronGroup) {
@@ -291,26 +292,50 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
 
   Loan withProxy(User newProxy) {
     return new Loan(representation, item, user, newProxy, checkinServicePoint,
-      checkoutServicePoint, originalDueDate, loanPolicy, accounts,
-      overdueFinePolicy, lostItemPolicy);
+      checkoutServicePoint, originalDueDate, loanPolicy, overdueFinePolicy,
+      lostItemPolicy, accounts);
   }
 
   Loan withCheckinServicePoint(ServicePoint newCheckinServicePoint) {
     return new Loan(representation, item, user, proxy, newCheckinServicePoint,
-      checkoutServicePoint, originalDueDate, loanPolicy, accounts,
-      overdueFinePolicy, lostItemPolicy);
+      checkoutServicePoint, originalDueDate, loanPolicy, overdueFinePolicy,
+      lostItemPolicy, accounts);
   }
 
   Loan withCheckoutServicePoint(ServicePoint newCheckoutServicePoint) {
     return new Loan(representation, item, user, proxy, checkinServicePoint,
-      newCheckoutServicePoint, originalDueDate, loanPolicy, accounts,
-      overdueFinePolicy, lostItemPolicy);
+      newCheckoutServicePoint, originalDueDate, loanPolicy, overdueFinePolicy,
+      lostItemPolicy, accounts);
   }
 
   public Loan withAccounts(Collection<Account> newAccounts) {
     return new Loan(representation, item, user, proxy, checkinServicePoint,
-      checkoutServicePoint, originalDueDate, loanPolicy, newAccounts,
-      overdueFinePolicy, lostItemPolicy);
+      checkoutServicePoint, originalDueDate, loanPolicy, overdueFinePolicy,
+      lostItemPolicy, newAccounts);
+  }
+
+  public Loan withLoanPolicy(LoanPolicy newloanPolicy) {
+    requireNonNull(newloanPolicy, "newloanPolicy cannot be null");
+
+    return new Loan(representation, item, user, proxy, checkinServicePoint,
+      checkoutServicePoint, originalDueDate, newloanPolicy, overdueFinePolicy,
+      lostItemPolicy, accounts);
+  }
+
+  public Loan withOverdueFinePolicy(OverdueFinePolicy newOverdueFinePolicy) {
+    requireNonNull(newOverdueFinePolicy, "newOverdueFinePolicy cannot be null");
+
+    return new Loan(representation, item, user, proxy, checkinServicePoint,
+      checkoutServicePoint, originalDueDate, loanPolicy, newOverdueFinePolicy,
+      lostItemPolicy, accounts);
+  }
+
+  public Loan withLostItemPolicy(LostItemPolicy newLostItemPolicy) {
+    requireNonNull(newLostItemPolicy, "newLostItemPolicy cannot be null");
+
+    return new Loan(representation, item, user, proxy, checkinServicePoint,
+      checkoutServicePoint, originalDueDate, loanPolicy, overdueFinePolicy,
+      newLostItemPolicy, accounts);
   }
 
   public String getLoanPolicyId() {
@@ -335,30 +360,6 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
 
   public LostItemPolicy getLostItemPolicy() {
     return lostItemPolicy;
-  }
-
-  public Loan withLoanPolicy(LoanPolicy newloanPolicy) {
-    requireNonNull(newloanPolicy, "newloanPolicy cannot be null");
-
-    return new Loan(representation, item, user, proxy, checkinServicePoint,
-      checkoutServicePoint, originalDueDate, newloanPolicy, accounts,
-      overdueFinePolicy, lostItemPolicy);
-  }
-
-  public Loan withOverdueFinePolicy(OverdueFinePolicy newOverdueFinePolicy) {
-    requireNonNull(newOverdueFinePolicy, "newloanPolicy cannot be null");
-
-    return new Loan(representation, item, user, proxy, checkinServicePoint,
-      checkoutServicePoint, originalDueDate, loanPolicy, accounts,
-      newOverdueFinePolicy, lostItemPolicy);
-  }
-
-  public Loan withLostItemPolicy(LostItemPolicy newLostItemPolicy) {
-    requireNonNull(newLostItemPolicy, "newloanPolicy cannot be null");
-
-    return new Loan(representation, item, user, proxy, checkinServicePoint,
-      checkoutServicePoint, originalDueDate, loanPolicy, accounts,
-      overdueFinePolicy, newLostItemPolicy);
   }
 
   private void setLoanPolicyId(String newLoanPolicyId) {
