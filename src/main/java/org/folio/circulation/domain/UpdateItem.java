@@ -3,12 +3,14 @@ package org.folio.circulation.domain;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.domain.ItemStatus.AVAILABLE;
 import static org.folio.circulation.domain.ItemStatus.CHECKED_OUT;
+import static org.folio.circulation.domain.ItemStatus.DECLARED_LOST;
 import static org.folio.circulation.domain.ItemStatus.PAGED;
 import static org.folio.circulation.support.Result.of;
 import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 import static org.folio.circulation.support.http.CommonResponseInterpreters.noContentRecordInterpreter;
 
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -208,9 +210,13 @@ public class UpdateItem {
     Loan loan,
     RequestQueue requestQueue) {
 
-    return loan.isClosed()
-      ? itemStatusOnCheckIn(requestQueue)
-      : CHECKED_OUT;
+    if(loan.isClosed()) {
+      return itemStatusOnCheckIn(requestQueue);
+    }
+    if(Objects.equals(loan.getItem().getStatus(), ItemStatus.DECLARED_LOST)) {
+      return DECLARED_LOST;
+    }
+    return  CHECKED_OUT;
   }
 
   private ItemStatus itemStatusOnCheckIn(RequestQueue requestQueue) {
