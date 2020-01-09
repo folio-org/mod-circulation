@@ -25,7 +25,7 @@ public class CheckInProcessRecords {
   private final ServicePoint checkInServicePoint;
   private final Request highestPriorityFulfillableRequest;
   private final String loggedInUserId;
-  private final DateTime systemReturnDateTime = ClockManager.getClockManager().getDateTime();
+  private final DateTime checkInProcessedDateTime;
 
   public CheckInProcessRecords(CheckInByBarcodeRequest checkInRequest) {
     this(checkInRequest, null, null, null, null, null, null);
@@ -39,7 +39,6 @@ public class CheckInProcessRecords {
     ServicePoint checkInServicePoint,
     Request highestPriorityFulfillableRequest,
     String loggedInUserId) {
-
     this.checkInRequest = checkInRequest;
     this.item = item;
     this.loan = loan;
@@ -47,6 +46,7 @@ public class CheckInProcessRecords {
     this.checkInServicePoint = checkInServicePoint;
     this.highestPriorityFulfillableRequest = highestPriorityFulfillableRequest;
     this.loggedInUserId = loggedInUserId;
+    checkInProcessedDateTime = ClockManager.getClockManager().getDateTime();
   }
 
   public CheckInProcessRecords withItem(Item item) {
@@ -162,7 +162,7 @@ public class CheckInProcessRecords {
     return loggedInUserId;
   }
 
-  public DateTime getSystemReturnDateTime() {
-    return systemReturnDateTime;
+  public DateTime getCheckInProcessedDateTime() {
+    return checkInProcessedDateTime;
   }
 }

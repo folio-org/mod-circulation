@@ -65,15 +65,6 @@ public class ItemsInTransitReportTests extends APITests {
   private static final String REQUEST_PATRON_GROUP_DESCRIPTION = "Regular group";
   private static final String SERVICE_POINT_CODE_2 = "cd2";
 
-//  private static final DateTime fixedCheckInDateTime = new DateTime(2019, 4, 3, 2, 10, UTC);
-//
-//  @Override
-//  public void beforeEach() throws InterruptedException {
-//
-//    super.beforeEach();
-//    mockClockManagerToReturnFixedDateTime(fixedCheckInDateTime);
-//  }
-
   @Override
   public void afterEach() {
     super.afterEach();
@@ -102,6 +93,7 @@ public class ItemsInTransitReportTests extends APITests {
 
     loansFixture.checkOutByBarcode(smallAngryPlanet);
     createRequest(smallAngryPlanet, steve, secondServicePointId, requestDate, requestExpirationDate);
+
     mockClockManagerToReturnFixedDateTime(checkInDate);
     loansFixture.checkInByBarcode(new CheckInByBarcodeRequestBuilder()
       .forItem(smallAngryPlanet)
@@ -150,6 +142,7 @@ public class ItemsInTransitReportTests extends APITests {
       .forItem(smallAngryPlanet)
       .on(checkInDate1)
       .at(firsServicePointId));
+
     mockClockManagerToReturnFixedDateTime(checkInDate2);
     loansFixture.checkInByBarcode(new CheckInByBarcodeRequestBuilder()
       .forItem(nod)
@@ -191,6 +184,7 @@ public class ItemsInTransitReportTests extends APITests {
     loansFixture.checkOutByBarcode(nod);
 
     createRequest(smallAngryPlanet, steve, secondServicePointId, requestDate, requestExpirationDate);
+
     mockClockManagerToReturnFixedDateTime(checkInDate);
     loansFixture.checkInByBarcode(new CheckInByBarcodeRequestBuilder()
       .forItem(smallAngryPlanet)
@@ -238,6 +232,7 @@ public class ItemsInTransitReportTests extends APITests {
       .forItem(smallAngryPlanet)
       .on(checkInDate1)
       .at(secondServicePointId));
+
     mockClockManagerToReturnFixedDateTime(checkInDate2);
     loansFixture.checkInByBarcode(new CheckInByBarcodeRequestBuilder()
       .forItem(nod)
@@ -302,6 +297,7 @@ public class ItemsInTransitReportTests extends APITests {
       .forItem(smallAngryPlanet)
       .on(checkInDate1)
       .at(secondServicePointId));
+
     mockClockManagerToReturnFixedDateTime(checkInDate2);
     loansFixture.checkInByBarcode(new CheckInByBarcodeRequestBuilder()
       .forItem(nod)
@@ -348,6 +344,7 @@ public class ItemsInTransitReportTests extends APITests {
       .forItem(smallAngryPlanet)
       .on(checkInDate1)
       .at(secondServicePointId));
+
     mockClockManagerToReturnFixedDateTime(checkInDate2);
     loansFixture.checkInByBarcode(new CheckInByBarcodeRequestBuilder()
       .forItem(nod)
@@ -405,11 +402,13 @@ public class ItemsInTransitReportTests extends APITests {
       .forItem(smallAngryPlanetWithFourthCheckInServicePoint)
       .on(checkInDate3)
       .at(fourthServicePointId));
+
     mockClockManagerToReturnFixedDateTime(checkInDate2);
     loansFixture.checkInByBarcode(new CheckInByBarcodeRequestBuilder()
       .forItem(nod)
       .on(checkInDate2)
       .at(firstServicePointId));
+
     mockClockManagerToReturnFixedDateTime(checkInDate1);
     loansFixture.checkInByBarcode(new CheckInByBarcodeRequestBuilder()
       .forItem(smallAngryPlanet)

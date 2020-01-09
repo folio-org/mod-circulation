@@ -5,6 +5,11 @@ import static org.folio.circulation.domain.notice.TemplateContextUtil.createAvai
 import static org.folio.circulation.domain.notice.TemplateContextUtil.createLoanNoticeContext;
 import static org.folio.circulation.support.Result.succeeded;
 
+import java.util.Objects;
+import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+
+import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.domain.AddressTypeRepository;
 import org.folio.circulation.domain.CheckInProcessRecords;
 import org.folio.circulation.domain.Item;
@@ -27,11 +32,6 @@ import org.folio.circulation.domain.notice.PatronNoticeService;
 import org.folio.circulation.storage.ItemByBarcodeInStorageFinder;
 import org.folio.circulation.storage.SingleOpenLoanForItemInStorageFinder;
 import org.folio.circulation.support.Result;
-
-import java.util.Objects;
-import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
-import org.apache.commons.lang3.StringUtils;
 
 class CheckInProcessAdapter {
   private final ItemByBarcodeInStorageFinder itemFinder;
@@ -81,7 +81,7 @@ class CheckInProcessAdapter {
 
   CompletableFuture<Result<Loan>> checkInLoan(CheckInProcessRecords records) {
     return completedFuture(
-      loanCheckInService.checkIn(records.getLoan(), records.getSystemReturnDateTime(),
+      loanCheckInService.checkIn(records.getLoan(), records.getCheckInProcessedDateTime(),
         records.getCheckInRequest()));
   }
 
@@ -94,7 +94,7 @@ class CheckInProcessAdapter {
   CompletableFuture<Result<Item>> updateItem(CheckInProcessRecords records) {
     return updateItem.onCheckIn(records.getItem(), records.getRequestQueue(),
       records.getCheckInServicePointId(), records.getLoggedInUserId(),
-     records.getSystemReturnDateTime());
+     records.getCheckInProcessedDateTime());
   }
 
   CompletableFuture<Result<RequestQueue>> updateRequestQueue(

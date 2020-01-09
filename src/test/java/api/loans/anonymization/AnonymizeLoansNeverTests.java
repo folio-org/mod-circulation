@@ -6,13 +6,13 @@ import static org.hamcrest.junit.MatcherAssert.assertThat;
 
 import java.util.UUID;
 
-import api.support.builders.CheckOutByBarcodeRequestBuilder;
-import api.support.builders.LoanHistoryConfigurationBuilder;
+import org.folio.circulation.support.http.client.IndividualResource;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.junit.Test;
 
-import org.folio.circulation.support.http.client.IndividualResource;
+import api.support.builders.CheckOutByBarcodeRequestBuilder;
+import api.support.builders.LoanHistoryConfigurationBuilder;
 
 public class AnonymizeLoansNeverTests extends LoanAnonymizationTests {
 
