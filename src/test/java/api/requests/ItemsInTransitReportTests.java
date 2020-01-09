@@ -6,6 +6,7 @@ import static org.folio.circulation.support.JsonStringArrayHelper.toList;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
+import static org.joda.time.DateTimeZone.UTC;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
@@ -64,6 +65,15 @@ public class ItemsInTransitReportTests extends APITests {
   private static final String REQUEST_PATRON_GROUP_DESCRIPTION = "Regular group";
   private static final String SERVICE_POINT_CODE_2 = "cd2";
 
+//  private static final DateTime fixedCheckInDateTime = new DateTime(2019, 4, 3, 2, 10, UTC);
+//
+//  @Override
+//  public void beforeEach() throws InterruptedException {
+//
+//    super.beforeEach();
+//    mockClockManagerToReturnFixedDateTime(fixedCheckInDateTime);
+//  }
+
   @Override
   public void afterEach() {
     super.afterEach();
@@ -86,12 +96,13 @@ public class ItemsInTransitReportTests extends APITests {
     final IndividualResource steve = usersFixture.steve();
     final UUID firstServicePointId = servicePointsFixture.cd1().getId();
     final UUID secondServicePointId = servicePointsFixture.cd2().getId();
-    final DateTime checkInDate = new DateTime(2019, 8, 13, 5, 0);
-    final DateTime requestDate = new DateTime(2019, 7, 5, 10, 0);
+    final DateTime checkInDate = new DateTime(2019, 8, 13, 5, 0, UTC);
+    final DateTime requestDate = new DateTime(2019, 7, 5, 10, 0, UTC);
     final LocalDate requestExpirationDate = new LocalDate(2019, 7, 11);
 
     loansFixture.checkOutByBarcode(smallAngryPlanet);
     createRequest(smallAngryPlanet, steve, secondServicePointId, requestDate, requestExpirationDate);
+    mockClockManagerToReturnFixedDateTime(checkInDate);
     loansFixture.checkInByBarcode(new CheckInByBarcodeRequestBuilder()
       .forItem(smallAngryPlanet)
       .on(checkInDate)
@@ -105,8 +116,6 @@ public class ItemsInTransitReportTests extends APITests {
     verifyLocation(itemJson);
     verifyRequestWithSecondPickupServicePoint(itemJson, requestDate, requestExpirationDate);
     verifyLoanInFirstServicePoint(itemJson, checkInDate);
-
-    mockClockManagerToReturnFixedDateTime(checkInDate);
     verifyLastCheckIn(itemJson, checkInDate, SERVICE_POINT_NAME_1);
   }
 
@@ -122,8 +131,8 @@ public class ItemsInTransitReportTests extends APITests {
     final UUID firsServicePointId = servicePointsFixture.cd1().getId();
     final UUID secondServicePointId = servicePointsFixture.cd2().getId();
 
-    final DateTime checkInDate1 = new DateTime(2019, 8, 13, 5, 0);
-    final DateTime checkInDate2 = new DateTime(2019, 4, 3, 2, 10);
+    final DateTime checkInDate1 = new DateTime(2019, 8, 13, 5, 0, UTC);
+    final DateTime checkInDate2 = new DateTime(2019, 4, 3, 2, 10, UTC);
     final DateTime requestDate1 = new DateTime(2019, 7, 5, 10, 0);
     final LocalDate requestExpirationDate1 = new LocalDate(2019, 7, 11);
 
@@ -141,9 +150,7 @@ public class ItemsInTransitReportTests extends APITests {
       .forItem(smallAngryPlanet)
       .on(checkInDate1)
       .at(firsServicePointId));
-
-
-
+    mockClockManagerToReturnFixedDateTime(checkInDate2);
     loansFixture.checkInByBarcode(new CheckInByBarcodeRequestBuilder()
       .forItem(nod)
       .on(checkInDate2)
@@ -151,23 +158,19 @@ public class ItemsInTransitReportTests extends APITests {
 
     List<JsonObject> items = ResourceClient.forItemsInTransitReport().getAll();
 
-//    verifyLastCheckIn(firstItemJson, checkInDate1, SERVICE_POINT_NAME_1);
     assertThat(items.size(), is(2));
     JsonObject firstItemJson = getRecordById(items, smallAngryPlanet.getId()).get();
     verifyItem(firstItemJson, smallAngryPlanet, secondServicePointId);
     verifyLocation(firstItemJson);
     verifyRequestWithSecondPickupServicePoint(firstItemJson, requestDate1, requestExpirationDate1);
     verifyLoanInFirstServicePoint(firstItemJson, checkInDate1);
-
-
+    verifyLastCheckIn(firstItemJson, checkInDate1, SERVICE_POINT_NAME_1);
 
     JsonObject secondItemJson = getRecordById(items, nod.getId()).get();
     verifyItem(secondItemJson, nod, secondServicePointId);
     verifyLocation(secondItemJson);
     verifyRequest(secondItemJson, requestDate2, requestExpirationDate2, REQUEST_PATRON_GROUP_DESCRIPTION, SERVICE_POINT_NAME_2);
     verifyLoanInFirstServicePoint(secondItemJson, checkInDate2);
-
-    mockClockManagerToReturnFixedDateTime(checkInDate2);
     verifyLastCheckIn(secondItemJson, checkInDate2, SERVICE_POINT_NAME_1);
   }
 
@@ -176,7 +179,7 @@ public class ItemsInTransitReportTests extends APITests {
 
     final InventoryItemResource smallAngryPlanet = createSmallAngryPlanet();
     final InventoryItemResource nod = createNod();
-    final DateTime checkInDate = new DateTime(2019, 8, 13, 5, 0);
+    final DateTime checkInDate = new DateTime(2019, 8, 13, 5, 0, UTC);
     final DateTime requestDate = new DateTime(2019, 7, 5, 10, 0);
     final LocalDate requestExpirationDate = new LocalDate(2019, 7, 11);
 
@@ -188,7 +191,7 @@ public class ItemsInTransitReportTests extends APITests {
     loansFixture.checkOutByBarcode(nod);
 
     createRequest(smallAngryPlanet, steve, secondServicePointId, requestDate, requestExpirationDate);
-
+    mockClockManagerToReturnFixedDateTime(checkInDate);
     loansFixture.checkInByBarcode(new CheckInByBarcodeRequestBuilder()
       .forItem(smallAngryPlanet)
       .on(checkInDate)
@@ -202,8 +205,6 @@ public class ItemsInTransitReportTests extends APITests {
     verifyLocation(itemJson);
     verifyRequestWithSecondPickupServicePoint(itemJson, requestDate, requestExpirationDate);
     verifyLoanInFirstServicePoint(itemJson, checkInDate);
-
-    mockClockManagerToReturnFixedDateTime(checkInDate);
     verifyLastCheckIn(itemJson, checkInDate, SERVICE_POINT_NAME_1);
   }
 
@@ -219,8 +220,8 @@ public class ItemsInTransitReportTests extends APITests {
     final UUID firstServicePointId = servicePointsFixture.cd1().getId();
     final UUID secondServicePointId = servicePointsFixture.cd2().getId();
 
-    final DateTime checkInDate1 = new DateTime(2019, 8, 13, 5, 0);
-    final DateTime checkInDate2 = new DateTime(2019, 4, 3, 2, 10);
+    final DateTime checkInDate1 = new DateTime(2019, 8, 13, 5, 0, UTC);
+    final DateTime checkInDate2 = new DateTime(2019, 4, 3, 2, 10, UTC);
     final DateTime requestDate1 = new DateTime(2019, 7, 5, 10, 0);
     final DateTime requestDate2 = new DateTime(2019, 10, 8, 11, 0);
     final LocalDate requestExpirationDate1 = new LocalDate(2019, 7, 11);
@@ -232,10 +233,12 @@ public class ItemsInTransitReportTests extends APITests {
     createRequest(smallAngryPlanet, steve, firstServicePointId, requestDate1, requestExpirationDate1);
     createRequest(nod, rebecca, secondServicePointId, requestDate2, requestExpirationDate2);
 
+    mockClockManagerToReturnFixedDateTime(checkInDate1);
     loansFixture.checkInByBarcode(new CheckInByBarcodeRequestBuilder()
       .forItem(smallAngryPlanet)
       .on(checkInDate1)
       .at(secondServicePointId));
+    mockClockManagerToReturnFixedDateTime(checkInDate2);
     loansFixture.checkInByBarcode(new CheckInByBarcodeRequestBuilder()
       .forItem(nod)
       .on(checkInDate2)
@@ -250,8 +253,6 @@ public class ItemsInTransitReportTests extends APITests {
     verifyRequest(firstItemJson, requestDate1, requestExpirationDate1, REQUEST_PATRON_GROUP_DESCRIPTION, SERVICE_POINT_NAME_1);
     verifyLoan(firstItemJson, checkInDate1, SERVICE_POINT_NAME_2,
       SERVICE_POINT_CODE_2, "Circulation Desk -- Back Entrance");
-
-    mockClockManagerToReturnFixedDateTime(checkInDate1);
     verifyLastCheckIn(firstItemJson, checkInDate1, SERVICE_POINT_NAME_2);
 
     JsonObject secondItemJson = getRecordById(items, nod.getId()).get();
@@ -259,8 +260,6 @@ public class ItemsInTransitReportTests extends APITests {
     verifyLocation(secondItemJson);
     verifyRequest(secondItemJson, requestDate2, requestExpirationDate2, REQUEST_PATRON_GROUP_DESCRIPTION, SERVICE_POINT_NAME_2);
     verifyLoanInFirstServicePoint(secondItemJson, checkInDate2);
-
-    mockClockManagerToReturnFixedDateTime(checkInDate2);
     verifyLastCheckIn(secondItemJson, checkInDate2, SERVICE_POINT_NAME_1);
   }
 
@@ -276,8 +275,8 @@ public class ItemsInTransitReportTests extends APITests {
     final UUID firstServicePointId = servicePointsFixture.cd1().getId();
     final UUID secondServicePointId = servicePointsFixture.cd2().getId();
 
-    final DateTime checkInDate1 = new DateTime(2019, 8, 13, 5, 0);
-    final DateTime checkInDate2 = new DateTime(2019, 4, 3, 2, 10);
+    final DateTime checkInDate1 = new DateTime(2019, 8, 13, 5, 0, UTC);
+    final DateTime checkInDate2 = new DateTime(2019, 4, 3, 2, 10, UTC);
 
     final DateTime requestSmallAngryPlanetDate1 = new DateTime(2019, 7, 5, 10, 0);
     final DateTime requestSmallAngryPlanetDate2 = new DateTime(2019, 10, 1, 12, 0);
@@ -298,10 +297,12 @@ public class ItemsInTransitReportTests extends APITests {
     createRequest(nod, rebecca, secondServicePointId, requestNodeDate1, requestNodeExpirationDate1);
     createRequest(nod, steve, secondServicePointId, requestNodeDate2, requestNodeExpirationDate2);
 
+    mockClockManagerToReturnFixedDateTime(checkInDate1);
     loansFixture.checkInByBarcode(new CheckInByBarcodeRequestBuilder()
       .forItem(smallAngryPlanet)
       .on(checkInDate1)
       .at(secondServicePointId));
+    mockClockManagerToReturnFixedDateTime(checkInDate2);
     loansFixture.checkInByBarcode(new CheckInByBarcodeRequestBuilder()
       .forItem(nod)
       .on(checkInDate2)
@@ -316,8 +317,6 @@ public class ItemsInTransitReportTests extends APITests {
     verifyRequest(firstItemJson, requestSmallAngryPlanetDate1, requestSmallAngryPlanetExpirationDate1, REQUEST_PATRON_GROUP_DESCRIPTION, SERVICE_POINT_NAME_1);
     verifyLoan(firstItemJson, checkInDate1, SERVICE_POINT_NAME_2,
       SERVICE_POINT_CODE_2, "Circulation Desk -- Back Entrance");
-
-    mockClockManagerToReturnFixedDateTime(checkInDate1);
     verifyLastCheckIn(firstItemJson, checkInDate1, SERVICE_POINT_NAME_2);
 
     JsonObject secondItemJson = getRecordById(items, nod.getId()).get();
@@ -325,8 +324,6 @@ public class ItemsInTransitReportTests extends APITests {
     verifyLocation(secondItemJson);
     verifyRequest(secondItemJson, requestNodeDate1, requestNodeExpirationDate1, REQUEST_PATRON_GROUP_DESCRIPTION, SERVICE_POINT_NAME_2);
     verifyLoanInFirstServicePoint(secondItemJson, checkInDate2);
-
-    mockClockManagerToReturnFixedDateTime(checkInDate2);
     verifyLastCheckIn(secondItemJson, checkInDate2, SERVICE_POINT_NAME_1);
   }
 
@@ -338,18 +335,20 @@ public class ItemsInTransitReportTests extends APITests {
     final UUID firsServicePointId = servicePointsFixture.cd1().getId();
     final UUID secondServicePointId = servicePointsFixture.cd2().getId();
 
-    final DateTime checkInDate1 = new DateTime(2019, 8, 13, 5, 0);
-    final DateTime checkInDate2 = new DateTime(2019, 4, 3, 2, 10);
+    final DateTime checkInDate1 = new DateTime(2019, 8, 13, 5, 0, UTC);
+    final DateTime checkInDate2 = new DateTime(2019, 4, 3, 2, 10, UTC);
 
     final String checkInServicePointDiscoveryName = "Circulation Desk -- Back Entrance";
 
     loansFixture.checkOutByBarcode(smallAngryPlanet);
     loansFixture.checkOutByBarcode(nod);
 
+    mockClockManagerToReturnFixedDateTime(checkInDate1);
     loansFixture.checkInByBarcode(new CheckInByBarcodeRequestBuilder()
       .forItem(smallAngryPlanet)
       .on(checkInDate1)
       .at(secondServicePointId));
+    mockClockManagerToReturnFixedDateTime(checkInDate2);
     loansFixture.checkInByBarcode(new CheckInByBarcodeRequestBuilder()
       .forItem(nod)
       .on(checkInDate2)
@@ -363,8 +362,6 @@ public class ItemsInTransitReportTests extends APITests {
     verifyLocation(firstItemJson);
     assertNull(firstItemJson.getMap().get(REQUEST));
     verifyLoan(firstItemJson, checkInDate1, SERVICE_POINT_NAME_2, SERVICE_POINT_CODE_2, checkInServicePointDiscoveryName);
-
-    mockClockManagerToReturnFixedDateTime(checkInDate1);
     verifyLastCheckIn(firstItemJson, checkInDate1, SERVICE_POINT_NAME_2);
 
     JsonObject secondItemJson = getRecordById(items, nod.getId()).get();
@@ -372,8 +369,6 @@ public class ItemsInTransitReportTests extends APITests {
     verifyLocation(secondItemJson);
     assertNull(secondItemJson.getMap().get(REQUEST));
     verifyLoan(secondItemJson, checkInDate2, SERVICE_POINT_NAME_2, SERVICE_POINT_CODE_2, checkInServicePointDiscoveryName);
-
-    mockClockManagerToReturnFixedDateTime(checkInDate2);
     verifyLastCheckIn(secondItemJson, checkInDate2, SERVICE_POINT_NAME_2);
   }
 
@@ -390,9 +385,9 @@ public class ItemsInTransitReportTests extends APITests {
     final UUID firstServicePointId = servicePointsFixture.cd1().getId();
     final UUID secondServicePointId = servicePointsFixture.cd2().getId();
     final UUID fourthServicePointId = servicePointsFixture.cd4().getId();
-    final DateTime checkInDate1 = new DateTime(2019, 8, 13, 5, 0);
-    final DateTime checkInDate2 = new DateTime(2019, 4, 3, 2, 10);
-    final DateTime checkInDate3 = new DateTime(2019, 10, 10, 3, 0);
+    final DateTime checkInDate1 = new DateTime(2019, 8, 13, 5, 0, UTC);
+    final DateTime checkInDate2 = new DateTime(2019, 4, 3, 2, 10, UTC);
+    final DateTime checkInDate3 = new DateTime(2019, 10, 10, 3, 0, UTC);
     final DateTime requestDate1 = new DateTime(2019, 7, 5, 10, 0);
     final DateTime requestDate2 = new DateTime(2019, 10, 8, 11, 0);
     final LocalDate requestExpirationDate1 = new LocalDate(2019, 7, 11);
@@ -405,14 +400,17 @@ public class ItemsInTransitReportTests extends APITests {
     createRequest(smallAngryPlanet, steve, firstServicePointId, requestDate1, requestExpirationDate1);
     createRequest(nod, rebecca, secondServicePointId, requestDate2, requestExpirationDate2);
 
+    mockClockManagerToReturnFixedDateTime(checkInDate3);
     loansFixture.checkInByBarcode(new CheckInByBarcodeRequestBuilder()
       .forItem(smallAngryPlanetWithFourthCheckInServicePoint)
       .on(checkInDate3)
       .at(fourthServicePointId));
+    mockClockManagerToReturnFixedDateTime(checkInDate2);
     loansFixture.checkInByBarcode(new CheckInByBarcodeRequestBuilder()
       .forItem(nod)
       .on(checkInDate2)
       .at(firstServicePointId));
+    mockClockManagerToReturnFixedDateTime(checkInDate1);
     loansFixture.checkInByBarcode(new CheckInByBarcodeRequestBuilder()
       .forItem(smallAngryPlanet)
       .on(checkInDate1)
@@ -427,8 +425,6 @@ public class ItemsInTransitReportTests extends APITests {
     verifyLocation(firstItemJson);
     verifyRequest(firstItemJson, requestDate2, requestExpirationDate2, REQUEST_PATRON_GROUP_DESCRIPTION, SERVICE_POINT_NAME_2);
     verifyLoanInFirstServicePoint(firstItemJson, checkInDate2);
-
-    mockClockManagerToReturnFixedDateTime(checkInDate2);
     verifyLastCheckIn(firstItemJson, checkInDate2, SERVICE_POINT_NAME_1);
 
     JsonObject secondItemJson = items.get(1);
@@ -437,7 +433,6 @@ public class ItemsInTransitReportTests extends APITests {
     verifyRequest(secondItemJson, requestDate1, requestExpirationDate1, REQUEST_PATRON_GROUP_DESCRIPTION, SERVICE_POINT_NAME_1);
     verifyLoan(secondItemJson, checkInDate1, SERVICE_POINT_NAME_2,
       SERVICE_POINT_CODE_2, "Circulation Desk -- Back Entrance");
-    mockClockManagerToReturnFixedDateTime(checkInDate1);
     verifyLastCheckIn(secondItemJson, checkInDate1, SERVICE_POINT_NAME_2);
 
     JsonObject thirdItemJson = items.get(2);
@@ -445,8 +440,6 @@ public class ItemsInTransitReportTests extends APITests {
     verifyLocation(thirdItemJson);
     verifyLoan(thirdItemJson, checkInDate3, "Circ Desk 4",
       "cd4", "Circulation Desk -- Basement");
-
-    mockClockManagerToReturnFixedDateTime(checkInDate3);
     verifyLastCheckIn(thirdItemJson, checkInDate3, "Circ Desk 4");
   }
 

@@ -21,13 +21,13 @@ import io.vertx.core.json.JsonObject;
 
 public class ItemLastCheckInTests extends APITests {
 
-  private static final DateTime checkInDateTime = new DateTime(2019, 4, 3, 2, 10, UTC);
+  private static final DateTime fixedCheckInDateTime = new DateTime(2019, 4, 3, 2, 10, UTC);
 
   @Override
   public void beforeEach() throws InterruptedException {
 
     super.beforeEach();
-    mockClockManagerToReturnFixedDateTime(checkInDateTime);
+    mockClockManagerToReturnFixedDateTime(fixedCheckInDateTime);
   }
 
   @Override
@@ -51,7 +51,7 @@ public class ItemLastCheckInTests extends APITests {
     DateTime actualCheckinDateTime = JsonPropertyFetcher
       .getDateTimeProperty(lastCheckIn, "dateTime");
 
-    assertThat(actualCheckinDateTime, is(checkInDateTime));
+    assertThat(actualCheckinDateTime, is(fixedCheckInDateTime));
     assertThat(lastCheckIn.getString("servicePointId"),
       is(servicePointId.toString()));
     assertThat(lastCheckIn.getString("staffMemberId"),
@@ -68,7 +68,7 @@ public class ItemLastCheckInTests extends APITests {
       .withRequestId("check-in-by-barcode-request")
       .withUserId("");
 
-    loansFixture.checkInByBarcode(item, checkInDateTime, servicePointId, okapiHeaders);
+    loansFixture.checkInByBarcode(item, fixedCheckInDateTime, servicePointId, okapiHeaders);
 
     JsonObject lastCheckIn = itemsClient.get(item.getId()).getJson()
       .getJsonObject("lastCheckIn");
@@ -76,7 +76,7 @@ public class ItemLastCheckInTests extends APITests {
     DateTime actualCheckinDateTime = JsonPropertyFetcher
       .getDateTimeProperty(lastCheckIn, "dateTime");
 
-    assertThat(actualCheckinDateTime, is(checkInDateTime));
+    assertThat(actualCheckinDateTime, is(fixedCheckInDateTime));
     assertThat(lastCheckIn.getString("servicePointId"),
       is(servicePointId.toString()));
     assertThat(lastCheckIn.getString("staffMemberId"), is(nullValue()));
@@ -92,7 +92,7 @@ public class ItemLastCheckInTests extends APITests {
       .withRequestId("check-in-by-barcode-request")
       .withUserId("INVALID_UUID");
 
-    loansFixture.checkInByBarcode(item, checkInDateTime, servicePointId, okapiHeaders);
+    loansFixture.checkInByBarcode(item, fixedCheckInDateTime, servicePointId, okapiHeaders);
 
     JsonObject lastCheckIn = itemsClient.get(item.getId()).getJson()
       .getJsonObject("lastCheckIn");
@@ -100,7 +100,7 @@ public class ItemLastCheckInTests extends APITests {
     DateTime actualCheckinDateTime = JsonPropertyFetcher
       .getDateTimeProperty(lastCheckIn, "dateTime");
 
-    assertThat(actualCheckinDateTime, is(checkInDateTime));
+    assertThat(actualCheckinDateTime, is(fixedCheckInDateTime));
     assertThat(lastCheckIn.getString("servicePointId"),
       is(servicePointId.toString()));
     assertThat(lastCheckIn.getString("staffMemberId"), is("INVALID_UUID"));
@@ -112,7 +112,7 @@ public class ItemLastCheckInTests extends APITests {
     IndividualResource item = itemsFixture.basedUponSmallAngryPlanet();
     UUID servicePointId = servicePointsFixture.cd1().getId();
 
-    loansFixture.checkInByBarcode(item, checkInDateTime, servicePointId);
+    loansFixture.checkInByBarcode(item, fixedCheckInDateTime, servicePointId);
 
     JsonObject lastCheckIn = itemsClient.get(item.getId()).getJson()
       .getJsonObject("lastCheckIn");
@@ -120,7 +120,7 @@ public class ItemLastCheckInTests extends APITests {
     DateTime actualCheckinDateTime = JsonPropertyFetcher
       .getDateTimeProperty(lastCheckIn, "dateTime");
 
-    assertThat(actualCheckinDateTime, is(checkInDateTime));
+    assertThat(actualCheckinDateTime, is(fixedCheckInDateTime));
     assertThat(lastCheckIn.getString("servicePointId"), is(servicePointId.toString()));
     assertThat(lastCheckIn.getString("staffMemberId"), is(APITestContext.getUserId()));
   }
@@ -139,7 +139,7 @@ public class ItemLastCheckInTests extends APITests {
     DateTime actualCheckinDateTime = JsonPropertyFetcher
       .getDateTimeProperty(lastCheckIn, "dateTime");
 
-    assertThat(actualCheckinDateTime, is(checkInDateTime));
+    assertThat(actualCheckinDateTime, is(fixedCheckInDateTime));
     assertThat(lastCheckIn.getString("servicePointId"), is(servicePointId.toString()));
     assertThat(lastCheckIn.getString("staffMemberId"), is(APITestContext.getUserId()));
 
@@ -161,7 +161,7 @@ public class ItemLastCheckInTests extends APITests {
     actualCheckinDateTime = JsonPropertyFetcher
       .getDateTimeProperty(lastCheckIn, "dateTime");
 
-    assertThat(actualCheckinDateTime, is(checkInDateTime));
+    assertThat(actualCheckinDateTime, is(fixedCheckInDateTime));
     assertThat(lastCheckIn.getString("servicePointId"), is(servicePointId2.toString()));
     assertThat(lastCheckIn.getString("staffMemberId"), is(randomUserId));
   }
@@ -181,6 +181,6 @@ public class ItemLastCheckInTests extends APITests {
     DateTime actualCheckinDateTime = JsonPropertyFetcher
       .getDateTimeProperty(lastCheckIn, "dateTime");
 
-    assertThat(actualCheckinDateTime, is(checkInDateTime));
+    assertThat(actualCheckinDateTime, is(fixedCheckInDateTime));
   }
 }
