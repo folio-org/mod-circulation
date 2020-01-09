@@ -35,12 +35,6 @@ public class OverdueFinePolicyRepository extends CirculationPolicyRepository<Ove
   }
 
   @Override
-  public CompletableFuture<Result<OverdueFinePolicy>> lookupPolicy(Loan loan) {
-    return super.lookupPolicy(loan);
-  }
-
-
-  @Override
   protected String getPolicyNotFoundErrorMessage(String policyId) {
     return String.format("Overdue fine policy %s could not be found," +
       " please check circulation rules", policyId);

@@ -11,7 +11,6 @@ import java.util.concurrent.CompletableFuture;
 
 import static org.folio.circulation.support.Result.succeeded;
 
-
 public class LostItemCirculationRulesEngineResource extends AbstractCirculationRulesEngineResource {
 
     public LostItemCirculationRulesEngineResource(String applyPath, String applyAllPath, HttpClient client) {

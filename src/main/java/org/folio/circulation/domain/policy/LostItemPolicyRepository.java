@@ -35,12 +35,6 @@ public class LostItemPolicyRepository extends CirculationPolicyRepository<LostIt
   }
 
   @Override
-  public CompletableFuture<Result<LostItemPolicy>> lookupPolicy(Loan loan) {
-    return super.lookupPolicy(loan);
-  }
-
-
-  @Override
   protected String getPolicyNotFoundErrorMessage(String policyId) {
     return String.format("Lost item policy %s could not be found, please check circulation rules", policyId);
   }
