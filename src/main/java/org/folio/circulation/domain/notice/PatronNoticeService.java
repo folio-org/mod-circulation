@@ -21,7 +21,7 @@ import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.lang3.tuple.Pair;
 import org.folio.circulation.domain.notice.schedule.ScheduledNoticeConfig;
 import org.folio.circulation.domain.policy.PatronNoticePolicyRepository;
-import org.folio.circulation.rules.AppliedRuleConditionsEntity;
+import org.folio.circulation.rules.AppliedRuleConditions;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.Result;
@@ -105,7 +105,7 @@ public class PatronNoticeService {
 
     return noticePolicyRepository.lookupPolicy(
       eventGroupDefinition.noticePolicyId,
-      new AppliedRuleConditionsEntity(false, false, false))
+      new AppliedRuleConditions(false, false, false))
       .thenCompose(r -> r.after(policy ->
         applyNoticePolicy(policy, eventGroupDefinition, combinedContext)));
   }

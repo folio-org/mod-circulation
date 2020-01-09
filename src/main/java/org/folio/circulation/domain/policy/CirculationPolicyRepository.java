@@ -12,7 +12,7 @@ import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.User;
-import org.folio.circulation.rules.AppliedRuleConditionsEntity;
+import org.folio.circulation.rules.AppliedRuleConditions;
 import org.folio.circulation.rules.CirculationRuleMatch;
 import org.folio.circulation.support.CirculationRulesClient;
 import org.folio.circulation.support.CollectionResourceClient;
@@ -54,10 +54,10 @@ public abstract class CirculationPolicyRepository<T> {
 
     return lookupPolicyId(item, user)
       .thenComposeAsync(r -> r.after(ruleMatchEntity -> lookupPolicy(
-        ruleMatchEntity.getPolicyId(), ruleMatchEntity.getAppliedRuleConditionsEntity())));
+        ruleMatchEntity.getPolicyId(), ruleMatchEntity.getAppliedRuleConditions())));
   }
 
-  private Result<T> mapToPolicy(JsonObject json, AppliedRuleConditionsEntity ruleConditionsEntity) {
+  private Result<T> mapToPolicy(JsonObject json, AppliedRuleConditions ruleConditionsEntity) {
     if (log.isInfoEnabled()) {
       log.info("Mapping json to policy {}", json.encodePrettily());
     }
@@ -65,7 +65,7 @@ public abstract class CirculationPolicyRepository<T> {
     return toPolicy(json, ruleConditionsEntity);
   }
 
-  public CompletableFuture<Result<T>> lookupPolicy(String policyId, AppliedRuleConditionsEntity conditionsEntity) {
+  public CompletableFuture<Result<T>> lookupPolicy(String policyId, AppliedRuleConditions conditionsEntity) {
     log.info("Looking up policy with id {}", policyId);
 
     return SingleRecordFetcher.json(policyStorageClient, "circulation policy",
@@ -122,7 +122,7 @@ public abstract class CirculationPolicyRepository<T> {
         log.info("Policy to fetch based upon rules {}", policyId);
 
         findLoanPolicyCompleted.complete(succeeded(new CirculationRuleMatch(
-          policyId, new AppliedRuleConditionsEntity(isItemTypePresent, isLoanTypePresent, isPatronGroupPresent))));
+          policyId, new AppliedRuleConditions(isItemTypePresent, isLoanTypePresent, isPatronGroupPresent))));
       }
     });
 
@@ -131,7 +131,7 @@ public abstract class CirculationPolicyRepository<T> {
 
   protected abstract String getPolicyNotFoundErrorMessage(String policyId);
 
-  protected abstract Result<T> toPolicy(JsonObject representation, AppliedRuleConditionsEntity ruleConditionsEntity);
+  protected abstract Result<T> toPolicy(JsonObject representation, AppliedRuleConditions ruleConditionsEntity);
 
   protected abstract String fetchPolicyId(JsonObject jsonObject);
 }

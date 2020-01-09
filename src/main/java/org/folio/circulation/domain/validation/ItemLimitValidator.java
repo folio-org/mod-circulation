@@ -12,7 +12,7 @@ import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.domain.LoanRepository;
-import org.folio.circulation.rules.AppliedRuleConditionsEntity;
+import org.folio.circulation.rules.AppliedRuleConditions;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.ValidationErrorFailure;
 
@@ -48,7 +48,7 @@ public class ItemLimitValidator {
   }
 
   private CompletableFuture<Result<Boolean>> isLimitReached(
-    AppliedRuleConditionsEntity ruleConditionsEntity, LoanAndRelatedRecords records) {
+    AppliedRuleConditions ruleConditionsEntity, LoanAndRelatedRecords records) {
 
     if (!ruleConditionsEntity.isItemTypePresent() && !ruleConditionsEntity.isLoanTypePresent()) {
       return ofAsync(() -> false);
@@ -79,7 +79,7 @@ public class ItemLimitValidator {
       && expectedLoanType.equals(loan.getItem().determineLoanTypeForItem());
   }
 
-  private String getErrorMessage(AppliedRuleConditionsEntity ruleConditionsEntity) {
+  private String getErrorMessage(AppliedRuleConditions ruleConditionsEntity) {
     boolean isRuleMaterialTypePresent = ruleConditionsEntity.isItemTypePresent();
     boolean isRuleLoanTypePresent = ruleConditionsEntity.isLoanTypePresent();
     boolean isRulePatronGroupPresent = ruleConditionsEntity.isPatronGroupPresent();

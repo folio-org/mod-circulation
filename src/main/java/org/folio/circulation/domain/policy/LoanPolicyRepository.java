@@ -17,7 +17,7 @@ import java.util.stream.Collectors;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.domain.MultipleRecords;
-import org.folio.circulation.rules.AppliedRuleConditionsEntity;
+import org.folio.circulation.rules.AppliedRuleConditions;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.FetchSingleRecord;
@@ -143,7 +143,7 @@ public class LoanPolicyRepository extends CirculationPolicyRepository<LoanPolicy
   }
 
   @Override
-  protected Result<LoanPolicy> toPolicy(JsonObject representation, AppliedRuleConditionsEntity ruleConditionsEntity) {
+  protected Result<LoanPolicy> toPolicy(JsonObject representation, AppliedRuleConditions ruleConditionsEntity) {
     return succeeded(new LoanPolicy(representation,
       new NoFixedDueDateSchedules(), new NoFixedDueDateSchedules(), ruleConditionsEntity));
   }

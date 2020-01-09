@@ -3,20 +3,20 @@ package org.folio.circulation.rules;
 public class CirculationRuleMatch {
 
   private final String policyId;
-  private final AppliedRuleConditionsEntity appliedRuleConditionsEntity;
+  private final AppliedRuleConditions appliedRuleConditions;
 
   public CirculationRuleMatch(String policyId,
-                              AppliedRuleConditionsEntity appliedRuleConditionsEntity) {
+                              AppliedRuleConditions appliedRuleConditions) {
 
     this.policyId = policyId;
-    this.appliedRuleConditionsEntity = appliedRuleConditionsEntity;
+    this.appliedRuleConditions = appliedRuleConditions;
   }
 
   public String getPolicyId() {
     return policyId;
   }
 
-  public AppliedRuleConditionsEntity getAppliedRuleConditionsEntity() {
-    return appliedRuleConditionsEntity;
+  public AppliedRuleConditions getAppliedRuleConditions() {
+    return appliedRuleConditions;
   }
 }

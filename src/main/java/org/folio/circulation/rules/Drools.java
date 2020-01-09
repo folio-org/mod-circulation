@@ -85,7 +85,7 @@ public class Drools {
     kieSession.dispose();
     List<String> appliedRuleConditions = ruleEventListener.getRuleConditions();
 
-    return new CirculationRuleMatch(match.loanPolicyId, new AppliedRuleConditionsEntity(
+    return new CirculationRuleMatch(match.loanPolicyId, new AppliedRuleConditions(
       isRuleItemTypePresent(appliedRuleConditions),
       isRuleLoanTypePresent(appliedRuleConditions),
       isRulePatronGroupPresent(appliedRuleConditions)));
@@ -128,7 +128,7 @@ public class Drools {
     kieSession.fireAllRules();
     kieSession.dispose();
     return new CirculationRuleMatch(match.requestPolicyId,
-      new AppliedRuleConditionsEntity(false, false, false));
+      new AppliedRuleConditions(false, false, false));
   }
 
    /**
@@ -168,7 +168,7 @@ public class Drools {
     kieSession.fireAllRules();
     kieSession.dispose();
     return new CirculationRuleMatch(match.noticePolicyId,
-      new AppliedRuleConditionsEntity(false, false, false));
+      new AppliedRuleConditions(false, false, false));
   }
 
    /**

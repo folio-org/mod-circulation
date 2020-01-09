@@ -28,7 +28,7 @@ import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestQueue;
 import org.folio.circulation.domain.RequestStatus;
 import org.folio.circulation.domain.RequestType;
-import org.folio.circulation.rules.AppliedRuleConditionsEntity;
+import org.folio.circulation.rules.AppliedRuleConditions;
 import org.folio.circulation.support.ClockManager;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.ServerErrorFailure;
@@ -66,7 +66,7 @@ public class LoanPolicy {
   private final JsonObject representation;
   private final FixedDueDateSchedules fixedDueDateSchedules;
   private final FixedDueDateSchedules alternateRenewalFixedDueDateSchedules;
-  private AppliedRuleConditionsEntity ruleConditionsEntity;
+  private AppliedRuleConditions ruleConditionsEntity;
 
   private LoanPolicy(JsonObject representation) {
     this(representation,
@@ -88,7 +88,7 @@ public class LoanPolicy {
     JsonObject representation,
     FixedDueDateSchedules fixedDueDateSchedules,
     FixedDueDateSchedules alternateRenewalFixedDueDateSchedules,
-    AppliedRuleConditionsEntity ruleConditionsEntity) {
+    AppliedRuleConditions ruleConditionsEntity) {
 
     this.representation = representation;
     this.fixedDueDateSchedules = fixedDueDateSchedules;
@@ -711,7 +711,7 @@ public class LoanPolicy {
     return null;
   }
 
-  public AppliedRuleConditionsEntity getRuleConditions() {
+  public AppliedRuleConditions getRuleConditions() {
     return ruleConditionsEntity;
   }
 }
