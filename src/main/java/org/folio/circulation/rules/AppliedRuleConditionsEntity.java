@@ -1,7 +1,6 @@
 package org.folio.circulation.rules;
 
 public class AppliedRuleConditionsEntity {
-
   boolean isItemTypePresent;
   boolean isLoanTypePresent;
   boolean isPatronGroupPresent;

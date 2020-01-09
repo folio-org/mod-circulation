@@ -13,7 +13,7 @@ import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.folio.circulation.domain.Location;
-import org.folio.circulation.rules.CirculationRuleMatchEntity;
+import org.folio.circulation.rules.CirculationRuleMatch;
 import org.folio.circulation.rules.Drools;
 import org.folio.circulation.rules.Text2Drools;
 import org.folio.circulation.support.Clients;
@@ -278,7 +278,7 @@ public abstract class AbstractCirculationRulesEngineResource extends Resource {
     });
   }
 
-  private CompletableFuture<Result<JsonObject>> buildJsonResult(CirculationRuleMatchEntity entity) {
+  private CompletableFuture<Result<JsonObject>> buildJsonResult(CirculationRuleMatch entity) {
     JsonObject appliedRuleConditions = new JsonObject()
       .put("isItemTypePresent", entity.getAppliedRuleConditionsEntity().isItemTypePresent())
       .put("isLoanTypePresent", entity.getAppliedRuleConditionsEntity().isLoanTypePresent())
@@ -347,7 +347,7 @@ public abstract class AbstractCirculationRulesEngineResource extends Resource {
         invalidUuid(request, LOCATION_ID_NAME);
   }
 
-  protected abstract CompletableFuture<Result<CirculationRuleMatchEntity>> getPolicyIdAndRuleMatch(
+  protected abstract CompletableFuture<Result<CirculationRuleMatch>> getPolicyIdAndRuleMatch(
     MultiMap params, Drools drools, Location location);
 
   protected abstract String getPolicyIdKey();

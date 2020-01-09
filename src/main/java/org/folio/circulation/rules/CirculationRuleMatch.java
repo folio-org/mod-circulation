@@ -1,12 +1,12 @@
 package org.folio.circulation.rules;
 
-public class CirculationRuleMatchEntity {
+public class CirculationRuleMatch {
 
   private final String policyId;
   private final AppliedRuleConditionsEntity appliedRuleConditionsEntity;
 
-  public CirculationRuleMatchEntity(String policyId,
-    AppliedRuleConditionsEntity appliedRuleConditionsEntity) {
+  public CirculationRuleMatch(String policyId,
+                              AppliedRuleConditionsEntity appliedRuleConditionsEntity) {
 
     this.policyId = policyId;
     this.appliedRuleConditionsEntity = appliedRuleConditionsEntity;

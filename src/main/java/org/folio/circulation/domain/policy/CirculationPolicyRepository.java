@@ -1,7 +1,6 @@
 package org.folio.circulation.domain.policy;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
-
 import static org.folio.circulation.support.Result.failed;
 import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.results.CommonFailures.failedDueToServerError;
@@ -9,14 +8,12 @@ import static org.folio.circulation.support.results.CommonFailures.failedDueToSe
 import java.lang.invoke.MethodHandles;
 import java.util.concurrent.CompletableFuture;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.User;
 import org.folio.circulation.rules.AppliedRuleConditionsEntity;
-import org.folio.circulation.rules.CirculationRuleMatchEntity;
+import org.folio.circulation.rules.CirculationRuleMatch;
 import org.folio.circulation.support.CirculationRulesClient;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.ForwardOnFailure;
@@ -24,6 +21,8 @@ import org.folio.circulation.support.Result;
 import org.folio.circulation.support.SingleRecordFetcher;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.client.ResponseHandler;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import io.vertx.core.json.JsonObject;
 
@@ -75,8 +74,8 @@ public abstract class CirculationPolicyRepository<T> {
       .thenApply(result -> result.next(json -> mapToPolicy(json, conditionsEntity)));
   }
 
-  public CompletableFuture<Result<CirculationRuleMatchEntity>> lookupPolicyId(Item item, User user) {
-    CompletableFuture<Result<CirculationRuleMatchEntity>> findLoanPolicyCompleted = new CompletableFuture<>();
+  public CompletableFuture<Result<CirculationRuleMatch>> lookupPolicyId(Item item, User user) {
+    CompletableFuture<Result<CirculationRuleMatch>> findLoanPolicyCompleted = new CompletableFuture<>();
 
     if (item.isNotFound()) {
       return completedFuture(failedDueToServerError(
@@ -122,7 +121,7 @@ public abstract class CirculationPolicyRepository<T> {
 
         log.info("Policy to fetch based upon rules {}", policyId);
 
-        findLoanPolicyCompleted.complete(succeeded(new CirculationRuleMatchEntity(
+        findLoanPolicyCompleted.complete(succeeded(new CirculationRuleMatch(
           policyId, new AppliedRuleConditionsEntity(isItemTypePresent, isLoanTypePresent, isPatronGroupPresent))));
       }
     });

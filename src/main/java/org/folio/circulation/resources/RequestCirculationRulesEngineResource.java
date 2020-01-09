@@ -9,7 +9,7 @@ import io.vertx.core.http.HttpClient;
 import io.vertx.core.json.JsonArray;
 
 import org.folio.circulation.domain.Location;
-import org.folio.circulation.rules.CirculationRuleMatchEntity;
+import org.folio.circulation.rules.CirculationRuleMatch;
 import org.folio.circulation.rules.Drools;
 import org.folio.circulation.support.Result;
 
@@ -24,7 +24,7 @@ public class RequestCirculationRulesEngineResource extends AbstractCirculationRu
   }
 
   @Override
-  protected CompletableFuture<Result<CirculationRuleMatchEntity>> getPolicyIdAndRuleMatch(
+  protected CompletableFuture<Result<CirculationRuleMatch>> getPolicyIdAndRuleMatch(
     MultiMap params, Drools drools, Location location) {
     return CompletableFuture.completedFuture(succeeded(drools.requestPolicy(params, location)));
   }

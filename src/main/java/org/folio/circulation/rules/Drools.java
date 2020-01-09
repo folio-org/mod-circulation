@@ -77,7 +77,7 @@ public class Drools {
    * @param location - location with institution, library and campus
    * @return PolicyId object with the name of the loan policy and list of rule conditions
    */
-  public CirculationRuleMatchEntity loanPolicy(MultiMap params, Location location) {
+  public CirculationRuleMatch loanPolicy(MultiMap params, Location location) {
     KieSession kieSession = createSession(params, location);
     RuleEventListener ruleEventListener = new RuleEventListener();
     kieSession.addEventListener(ruleEventListener);
@@ -85,7 +85,7 @@ public class Drools {
     kieSession.dispose();
     List<String> appliedRuleConditions = ruleEventListener.getRuleConditions();
 
-    return new CirculationRuleMatchEntity(match.loanPolicyId, new AppliedRuleConditionsEntity(
+    return new CirculationRuleMatch(match.loanPolicyId, new AppliedRuleConditionsEntity(
       isRuleItemTypePresent(appliedRuleConditions),
       isRuleLoanTypePresent(appliedRuleConditions),
       isRulePatronGroupPresent(appliedRuleConditions)));
@@ -123,11 +123,11 @@ public class Drools {
    * @param location - location with institution, library and campus
    * @return PolicyId object with the name of the loan policy and list of rule conditions
    */
-  public CirculationRuleMatchEntity requestPolicy(MultiMap params, Location location) {
+  public CirculationRuleMatch requestPolicy(MultiMap params, Location location) {
     KieSession kieSession = createSession(params, location);
     kieSession.fireAllRules();
     kieSession.dispose();
-    return new CirculationRuleMatchEntity(match.requestPolicyId,
+    return new CirculationRuleMatch(match.requestPolicyId,
       new AppliedRuleConditionsEntity(false, false, false));
   }
 
@@ -163,11 +163,11 @@ public class Drools {
    * @param location - location with institution, library and campus
    * @return PolicyId object with the name of the loan policy and list of rule conditions
    */
-  public CirculationRuleMatchEntity noticePolicy(MultiMap params, Location location) {
+  public CirculationRuleMatch noticePolicy(MultiMap params, Location location) {
     KieSession kieSession = createSession(params, location);
     kieSession.fireAllRules();
     kieSession.dispose();
-    return new CirculationRuleMatchEntity(match.noticePolicyId,
+    return new CirculationRuleMatch(match.noticePolicyId,
       new AppliedRuleConditionsEntity(false, false, false));
   }
 
