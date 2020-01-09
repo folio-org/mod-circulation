@@ -2,7 +2,7 @@
   <modelVersion>4.0.0</modelVersion>
   <artifactId>mod-circulation</artifactId>
   <groupId>org.folio</groupId>
-  <version>16.7.6</version>
+  <version>16.7.7-SNAPSHOT</version>
   <licenses>
     <license>
       <name>Apache License 2.0</name>
@@ -193,7 +193,7 @@
     <url>https://github.com/folio-org/mod-inventory</url>
     <connection>scm:git:git://github.com:folio-org/mod-inventory.git</connection>
     <developerConnection>scm:git:git@github.com:folio-org/mod-inventory.git</developerConnection>
-    <tag>v16.7.6</tag>
+    <tag>v16.7.0</tag>
   </scm>
 
   <build>
