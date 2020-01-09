@@ -9,7 +9,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
 import org.folio.circulation.support.http.client.IndividualResource;
-import org.folio.circulation.support.http.client.OkapiHttpClient;
 
 import api.support.builders.InstanceBuilder;
 import api.support.http.ResourceClient;
@@ -21,9 +20,8 @@ public class InstancesFixture {
   private final ResourceClient instancesClient;
 
   public InstancesFixture(
-    ResourceClient instanceTypesClient,
-    ResourceClient contributorNameTypesClient,
-    OkapiHttpClient client) {
+      ResourceClient instanceTypesClient,
+      ResourceClient contributorNameTypesClient) {
 
     instanceTypeRecordCreator = new RecordCreator(instanceTypesClient,
       instanceType -> getProperty(instanceType, "name"));
@@ -31,24 +29,16 @@ public class InstancesFixture {
     contributorNameTypeRecordCreator = new RecordCreator(
       contributorNameTypesClient, nameType -> getProperty(nameType, "name"));
 
-    instancesClient =  ResourceClient.forInstances(client);
+    instancesClient =  ResourceClient.forInstances();
   }
 
-  public void cleanUp()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void cleanUp() {
 
     instanceTypeRecordCreator.cleanUp();
     contributorNameTypeRecordCreator.cleanUp();
   }
 
-  public IndividualResource basedUponDunkirk()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public IndividualResource basedUponDunkirk() {
 
     InstanceBuilder builder = new InstanceBuilder("Dunkirk", booksInstanceTypeId())
       .withContributor("Novik, Naomi", getPersonalContributorNameTypeId());
@@ -57,11 +47,7 @@ public class InstancesFixture {
   }
 
 
-  private UUID getPersonalContributorNameTypeId()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  private UUID getPersonalContributorNameTypeId() {
 
     final JsonObject personalName = new JsonObject();
 
@@ -70,11 +56,7 @@ public class InstancesFixture {
     return contributorNameTypeRecordCreator.createIfAbsent(personalName).getId();
   }
 
-  private UUID booksInstanceTypeId()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  private UUID booksInstanceTypeId() {
 
     final JsonObject booksInstanceType = new JsonObject();
 

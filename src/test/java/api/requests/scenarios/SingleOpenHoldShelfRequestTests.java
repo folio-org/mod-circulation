@@ -35,11 +35,7 @@ import io.vertx.core.json.JsonObject;
 
 public class SingleOpenHoldShelfRequestTests extends APITests {
   @Test
-  public void statusChangesToAwaitingPickupWhenItemCheckedIn()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void statusChangesToAwaitingPickupWhenItemCheckedIn() {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource james = usersFixture.james();
@@ -65,11 +61,7 @@ public class SingleOpenHoldShelfRequestTests extends APITests {
   }
 
   @Test
-  public void statusChangesToFulfilledWhenItemCheckedOutToRequester()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void statusChangesToFulfilledWhenItemCheckedOutToRequester() {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource james = usersFixture.james();
@@ -96,11 +88,7 @@ public class SingleOpenHoldShelfRequestTests extends APITests {
   }
 
   @Test
-  public void itemCannotBeCheckedOutToOtherPatronWhenRequestIsAwaitingPickup()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void itemCannotBeCheckedOutToOtherPatronWhenRequestIsAwaitingPickup() {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource james = usersFixture.james();
@@ -134,11 +122,7 @@ public class SingleOpenHoldShelfRequestTests extends APITests {
   }
 
   @Test
-  public void checkingInLoanThatFulfilsRequestShouldMakeItemAvailable()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void checkingInLoanThatFulfilsRequestShouldMakeItemAvailable() {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource james = usersFixture.james();
@@ -161,11 +145,7 @@ public class SingleOpenHoldShelfRequestTests extends APITests {
   }
 
   @Test
-  public void closedRequestShouldNotAffectFurtherLoans()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void closedRequestShouldNotAffectFurtherLoans() {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource james = usersFixture.james();
@@ -197,11 +177,7 @@ public class SingleOpenHoldShelfRequestTests extends APITests {
   }
 
   @Test
-  public void itemCannotBeCheckedInWhenRequestIsMissingPickupServicePoint()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void itemCannotBeCheckedInWhenRequestIsMissingPickupServicePoint() {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource james = usersFixture.james();
@@ -227,13 +203,9 @@ public class SingleOpenHoldShelfRequestTests extends APITests {
       "Failed to check in item due to the highest priority request missing a pickup service point")));
   }
 
-  private void removeServicePoint(UUID requestId)
-    throws MalformedURLException,
-    InterruptedException,
-    ExecutionException,
-    TimeoutException {
+  private void removeServicePoint(UUID requestId) {
 
-    final ResourceClient requestsStorage = forRequestsStorage(client);
+    final ResourceClient requestsStorage = forRequestsStorage();
 
     final Response fetchedRequest = requestsStorage.getById(requestId);
 

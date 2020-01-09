@@ -32,9 +32,7 @@ abstract class LoanAnonymizationTests extends APITests {
   protected IndividualResource servicePoint;
 
   @Before
-  public void setup()
-    throws InterruptedException, MalformedURLException, TimeoutException, ExecutionException {
-
+  public void setup() {
     item1 = itemsFixture.basedUponSmallAngryPlanet();
     user = usersFixture.charlotte();
     servicePoint = servicePointsFixture.cd1();
@@ -62,59 +60,59 @@ abstract class LoanAnonymizationTests extends APITests {
   }
 
   private void fakeAnonymizeLoan(Object id) {
-    try {
-      JsonObject payload = loansStorageClient.get(UUID.fromString(id.toString()))
-        .getJson();
-      payload.remove("userId");
-      payload.remove("borrower");
-      loansStorageClient.attemptReplace(UUID.fromString(id.toString()), payload);
+    JsonObject payload = loansStorageClient.get(UUID.fromString(id.toString()))
+      .getJson();
 
-    } catch (MalformedURLException | InterruptedException | ExecutionException | TimeoutException e) {
-      e.printStackTrace();
-    }
+    payload.remove("userId");
+    payload.remove("borrower");
+
+    loansStorageClient.attemptReplace(UUID.fromString(id.toString()), payload);
   }
 
-  void createOpenAccountWithFeeFines(IndividualResource loanResource)
-      throws InterruptedException, MalformedURLException, TimeoutException, ExecutionException {
-    IndividualResource account = accountsClient.create(new AccountBuilder().feeFineStatusOpen()
+  void createOpenAccountWithFeeFines(IndividualResource loanResource) {
+    IndividualResource account = accountsClient.create(new AccountBuilder()
+      .feeFineStatusOpen()
       .withLoan(loanResource)
       .feeFineStatusOpen()
       .withRemainingFeeFine(150));
 
-    FeefineActionsBuilder builder = new FeefineActionsBuilder().forAccount(account.getId())
+    FeefineActionsBuilder builder = new FeefineActionsBuilder()
+      .forAccount(account.getId())
       .withBalance(150)
       .withDate(null);
+
     feeFineActionsClient.create(builder);
   }
 
-  void createClosedAccountWithFeeFines(IndividualResource loanResource, DateTime closedDate)
-      throws InterruptedException, MalformedURLException, TimeoutException, ExecutionException {
+  void createClosedAccountWithFeeFines(IndividualResource loanResource,
+    DateTime closedDate) {
 
-    IndividualResource account = accountsClient.create(new AccountBuilder().feeFineStatusOpen()
+    IndividualResource account = accountsClient.create(new AccountBuilder()
       .withLoan(loanResource)
       .feeFineStatusClosed()
       .withRemainingFeeFine(0));
 
-    FeefineActionsBuilder builder = new FeefineActionsBuilder().forAccount(account.getId())
+    FeefineActionsBuilder builder = new FeefineActionsBuilder()
+      .forAccount(account.getId())
       .withBalance(0)
       .withDate(closedDate);
 
-    FeefineActionsBuilder builder1 = new FeefineActionsBuilder().forAccount(account.getId())
-        .withBalance(0)
-        .withDate(closedDate.minusDays(1));
+    FeefineActionsBuilder builder1 = new FeefineActionsBuilder()
+      .forAccount(account.getId())
+      .withBalance(0)
+      .withDate(closedDate.minusDays(1));
 
     feeFineActionsClient.create(builder);
     feeFineActionsClient.create(builder1);
   }
 
-  protected void createConfiguration(LoanHistoryConfigurationBuilder loanHistoryConfig) {
-    ConfigRecordBuilder configRecordBuilder = new ConfigRecordBuilder("LOAN_HISTORY", "loan_history", loanHistoryConfig.create()
+  protected void createConfiguration(
+    LoanHistoryConfigurationBuilder loanHistoryConfig) {
+
+    ConfigRecordBuilder configRecordBuilder = new ConfigRecordBuilder(
+      "LOAN_HISTORY", "loan_history", loanHistoryConfig.create()
       .encodePrettily());
 
-    try {
-      configClient.create(configRecordBuilder);
-    } catch (InterruptedException | MalformedURLException | TimeoutException | ExecutionException e) {
-      e.printStackTrace();
-    }
+    configClient.create(configRecordBuilder);
   }
 }

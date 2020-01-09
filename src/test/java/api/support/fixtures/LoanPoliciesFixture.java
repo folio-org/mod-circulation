@@ -2,10 +2,6 @@ package api.support.fixtures;
 
 import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
 
-import java.net.MalformedURLException;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeoutException;
-
 import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.joda.time.DateTime;
@@ -32,67 +28,39 @@ public class LoanPoliciesFixture {
       fixedDueDateScheduleClient, schedule -> getProperty(schedule, "name"));
   }
 
-  public void cleanUp()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
-
+  public void cleanUp() {
     loanPolicyRecordCreator.cleanUp();
     fixedDueDateScheduleRecordCreator.cleanUp();
   }
 
-  public IndividualResource createExampleFixedDueDateSchedule()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public IndividualResource createExampleFixedDueDateSchedule() {
+    final int currentYear = DateTime.now(DateTimeZone.UTC).getYear();
 
     FixedDueDateSchedulesBuilder fixedDueDateSchedule =
       new FixedDueDateSchedulesBuilder()
         .withName("Example Fixed Due Date Schedule")
         .withDescription("Example Fixed Due Date Schedule")
         .addSchedule(new FixedDueDateSchedule(
-          new DateTime(2019, 1, 1, 0, 0, 0, DateTimeZone.UTC),
-          new DateTime(2019, 12, 31, 23, 59, 59, DateTimeZone.UTC),
-          new DateTime(2019, 12, 31, 23, 59, 59, DateTimeZone.UTC)
-        ));
+          new DateTime(currentYear, 1, 1, 0, 0, 0, DateTimeZone.UTC),
+          new DateTime(currentYear, 12, 31, 23, 59, 59, DateTimeZone.UTC),
+          new DateTime(currentYear, 12, 31, 23, 59, 59, DateTimeZone.UTC)));
 
     return createSchedule(fixedDueDateSchedule);
   }
 
-  public IndividualResource create(LoanPolicyBuilder builder)
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public IndividualResource create(LoanPolicyBuilder builder) {
     return loanPolicyRecordCreator.createIfAbsent(builder);
   }
 
-  public IndividualResource create(JsonObject policy)
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
-
+  public IndividualResource create(JsonObject policy) {
     return loanPolicyRecordCreator.createIfAbsent(policy);
   }
 
-  public IndividualResource createSchedule(FixedDueDateSchedulesBuilder builder)
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
-
+  public IndividualResource createSchedule(FixedDueDateSchedulesBuilder builder) {
     return fixedDueDateScheduleRecordCreator.createIfAbsent(builder);
   }
 
-  public IndividualResource canCirculateRolling()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-      ExecutionException {
-
+  public IndividualResource canCirculateRolling() {
     JsonObject holds = new JsonObject();
     holds.put("alternateRenewalLoanPeriod", Period.weeks(3).asJson());
     holds.put("renewItemsWithRequest", true);
@@ -108,12 +76,7 @@ public class LoanPoliciesFixture {
     return loanPolicyRecordCreator.createIfAbsent(canCirculateRollingPolicy);
   }
 
-  public IndividualResource canCirculateFixed()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
-
+  public IndividualResource canCirculateFixed() {
     JsonObject holds = new JsonObject();
     holds.put("alternateRenewalLoanPeriod", Period.weeks(3).asJson());
     holds.put("renewItemsWithRequest", true);

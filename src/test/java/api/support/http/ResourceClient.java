@@ -1,664 +1,330 @@
 package api.support.http;
 
-import static java.net.HttpURLConnection.HTTP_CREATED;
-import static java.net.HttpURLConnection.HTTP_OK;
-import static org.hamcrest.core.Is.is;
-import static org.hamcrest.junit.MatcherAssert.assertThat;
+import static api.support.APITestContext.getOkapiHeadersFromContext;
+import static api.support.http.CqlQuery.noQuery;
+import static api.support.http.Limit.limit;
+import static api.support.http.Offset.noOffset;
+import static java.net.HttpURLConnection.HTTP_NO_CONTENT;
+import static org.folio.circulation.support.JsonArrayHelper.mapToList;
 
-import java.lang.invoke.MethodHandles;
-import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
-import org.folio.circulation.support.JsonArrayHelper;
 import org.folio.circulation.support.http.client.IndividualResource;
-import org.folio.circulation.support.http.client.OkapiHttpClient;
 import org.folio.circulation.support.http.client.Response;
-import org.folio.circulation.support.http.client.ResponseHandler;
-import org.hamcrest.CoreMatchers;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+import api.support.RestAssuredClient;
 import api.support.builders.Builder;
 import io.vertx.core.json.JsonObject;
 
 public class ResourceClient {
-  private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
-
-  private final OkapiHttpClient client;
+  private final RestAssuredClient restAssuredClient;
   private final UrlMaker urlMaker;
-  private final String resourceName;
   private final String collectionArrayPropertyName;
 
-  public static ResourceClient forItems(OkapiHttpClient client) {
-    return new ResourceClient(client, InterfaceUrls::itemsStorageUrl,
-      "items");
+  public static ResourceClient forItems() {
+    return new ResourceClient(InterfaceUrls::itemsStorageUrl, "items");
   }
 
-  public static ResourceClient forHoldings(OkapiHttpClient client) {
-    return new ResourceClient(client, InterfaceUrls::holdingsStorageUrl,
-      "holdingsRecords");
+  public static ResourceClient forHoldings() {
+    return new ResourceClient(InterfaceUrls::holdingsStorageUrl, "holdingsRecords");
   }
 
-  public static ResourceClient forInstances(OkapiHttpClient client) {
-    return new ResourceClient(client, InterfaceUrls::instancesStorageUrl,
-      "instances");
+  public static ResourceClient forInstances() {
+    return new ResourceClient(InterfaceUrls::instancesStorageUrl, "instances");
   }
 
-  public static ResourceClient forRequests(OkapiHttpClient client) {
-    return new ResourceClient(client, InterfaceUrls::requestsUrl,
-      "requests");
+  public static ResourceClient forRequests() {
+    return new ResourceClient(InterfaceUrls::requestsUrl, "requests");
   }
 
-  public static ResourceClient forRequestReport(OkapiHttpClient client) {
-    return new ResourceClient(client, InterfaceUrls::requestReportUrl,
-      "requestReport");
+  public static ResourceClient forRequestReport() {
+    return new ResourceClient(InterfaceUrls::requestReportUrl, "requestReport");
   }
 
-  public static ResourceClient forItemsInTransitReport(OkapiHttpClient client) {
-    return new ResourceClient(client,
-      subPath -> InterfaceUrls.itemsInTransitReportUrl(), "items");
+  public static ResourceClient forItemsInTransitReport() {
+    return new ResourceClient(InterfaceUrls::itemsInTransitReportUrl, "items");
   }
 
-  public static ResourceClient forPickSlips(OkapiHttpClient client) {
-    return new ResourceClient(client,
-        InterfaceUrls::pickSlipsUrl, "pickSlips");
+  public static ResourceClient forPickSlips() {
+    return new ResourceClient(InterfaceUrls::pickSlipsUrl, "pickSlips");
   }
 
-  public static ResourceClient forLoans(OkapiHttpClient client) {
-    return new ResourceClient(client, InterfaceUrls::loansUrl,
-      "loans");
+  public static ResourceClient forLoans() {
+    return new ResourceClient(InterfaceUrls::loansUrl, "loans");
   }
 
-  public static ResourceClient forAccounts(OkapiHttpClient client) {
-    return new ResourceClient(client, InterfaceUrls::accountsUrl,
-      "accounts");
+  public static ResourceClient forAccounts() {
+    return new ResourceClient(InterfaceUrls::accountsUrl, "accounts");
   }
 
-  public static ResourceClient forFeeFineActions(OkapiHttpClient client) {
-    return new ResourceClient(client, InterfaceUrls::feeFineActionsUrl, "feefineactions");
+  public static ResourceClient forFeeFineActions() {
+    return new ResourceClient(InterfaceUrls::feeFineActionsUrl, "feefineactions");
   }
 
-  public static ResourceClient forLoanPolicies(OkapiHttpClient client) {
-    return new ResourceClient(client, InterfaceUrls::loanPoliciesStorageUrl,
-      "loan policies", "loanPolicies");
+  public static ResourceClient forLoanPolicies() {
+    return new ResourceClient(InterfaceUrls::loanPoliciesStorageUrl,
+      "loanPolicies");
   }
 
-  public static ResourceClient forRequestPolicies(OkapiHttpClient client) {
-    return new ResourceClient(client, InterfaceUrls::requestPoliciesStorageUrl,
-      "request policies", "requestPolicies");
+  public static ResourceClient forRequestPolicies() {
+    return new ResourceClient(InterfaceUrls::requestPoliciesStorageUrl,
+      "requestPolicies");
   }
 
-  public static ResourceClient forNoticePolicies(OkapiHttpClient client) {
-    return new ResourceClient(client, InterfaceUrls::noticePoliciesStorageUrl,
-      "notice policies", "noticePolicies");
+  public static ResourceClient forNoticePolicies() {
+    return new ResourceClient(InterfaceUrls::noticePoliciesStorageUrl,
+      "noticePolicies");
   }
 
-  public static ResourceClient forOverdueFinePolicies(OkapiHttpClient client) {
-    return new ResourceClient(client, InterfaceUrls::overdueFinesPoliciesStorageUrl,
-      "overdue fines policies", "overdueFinePolicies");
+  public static ResourceClient forOverdueFinePolicies() {
+    return new ResourceClient(InterfaceUrls::overdueFinesPoliciesStorageUrl,
+      "overdueFinePolicies");
   }
 
-  public static ResourceClient forLostItemFeePolicies(OkapiHttpClient client) {
-    return new ResourceClient(client, InterfaceUrls::lostItemFeesPoliciesStorageUrl,
-      "lost item fee policies", "lostItemFeePolicies");
+  public static ResourceClient forLostItemFeePolicies() {
+    return new ResourceClient(InterfaceUrls::lostItemFeesPoliciesStorageUrl,
+      "lostItemFeePolicies");
   }
 
-  public static ResourceClient forFixedDueDateSchedules(OkapiHttpClient client) {
-    return new ResourceClient(client, InterfaceUrls::fixedDueDateSchedulesStorageUrl,
-      "fixed due date schedules", "fixedDueDateSchedules");
+  public static ResourceClient forFixedDueDateSchedules() {
+    return new ResourceClient(InterfaceUrls::fixedDueDateSchedulesStorageUrl,
+      "fixedDueDateSchedules");
   }
 
-  public static ResourceClient forCirculationRules(OkapiHttpClient client) {
-    return new ResourceClient(client, InterfaceUrls::circulationRulesStorageUrl,
-      "circulation rules", "circulationRules");
-  }
-
-  public static ResourceClient forUsers(OkapiHttpClient client) {
-    return new ResourceClient(client, InterfaceUrls::usersUrl,
+  public static ResourceClient forUsers() {
+    return new ResourceClient(InterfaceUrls::usersUrl,
       "users");
   }
 
-  public static ResourceClient forCalendar(OkapiHttpClient client) {
-    return new ResourceClient(client, InterfaceUrls::calendarUrl,
-      "calendar", "calendars");
+  public static ResourceClient forProxyRelationships() {
+    return new ResourceClient(InterfaceUrls::proxyRelationshipsUrl,
+        "proxiesFor");
   }
 
-  public static ResourceClient forProxyRelationships(OkapiHttpClient client) {
-    return new ResourceClient(client, InterfaceUrls::proxyRelationshipsUrl,
-      "proxiesFor");
+  public static ResourceClient forPatronGroups() {
+    return new ResourceClient(InterfaceUrls::patronGroupsStorageUrl,
+        "usergroups");
   }
 
-  public static ResourceClient forPatronGroups(OkapiHttpClient client) {
-    return new ResourceClient(client, InterfaceUrls::patronGroupsStorageUrl,
-      "patron groups", "usergroups");
+  public static ResourceClient forAddressTypes() {
+    return new ResourceClient(InterfaceUrls::addressTypesUrl,
+        "addressTypes");
   }
 
-  public static ResourceClient forAddressTypes(OkapiHttpClient client) {
-    return new ResourceClient(client, InterfaceUrls::addressTypesUrl,
-      "address types", "addressTypes");
+  public static ResourceClient forLoansStorage() {
+    return new ResourceClient(InterfaceUrls::loansStorageUrl,
+        "loans");
   }
 
-  public static ResourceClient forLoansStorage(OkapiHttpClient client) {
-    return new ResourceClient(client, InterfaceUrls::loansStorageUrl,
-      "storage loans", "loans");
+  public static ResourceClient forRequestsStorage() {
+    return new ResourceClient(InterfaceUrls::requestStorageUrl,
+        "requests");
   }
 
-  public static ResourceClient forRequestsStorage(OkapiHttpClient client) {
-    return new ResourceClient(client, InterfaceUrls::requestStorageUrl,
-      "storage requests", "requests");
+  public static ResourceClient forMaterialTypes() {
+    return new ResourceClient(InterfaceUrls::materialTypesStorageUrl,
+      "mtypes");
   }
 
-  public static ResourceClient forMaterialTypes(OkapiHttpClient client) {
-    return new ResourceClient(client, InterfaceUrls::materialTypesStorageUrl,
-      "material types", "mtypes");
+  public static ResourceClient forUserManualBlocks() {
+    return new ResourceClient(subPath ->
+      InterfaceUrls.userManualBlocksStorageUrl(), "manualblocks");
   }
 
-  public static ResourceClient forUserManualBlocks(OkapiHttpClient client) {
-    return new ResourceClient(client, subPath ->
-      InterfaceUrls.userManualBlocksStorageUrl(), "manualblocks", "manualblocks");
+  public static ResourceClient forLoanTypes() {
+    return new ResourceClient(InterfaceUrls::loanTypesStorageUrl,
+        "loantypes");
   }
 
-  public static ResourceClient forLoanTypes(OkapiHttpClient client) {
-    return new ResourceClient(client, InterfaceUrls::loanTypesStorageUrl,
-      "loan types", "loantypes");
+  public static ResourceClient forInstanceTypes() {
+    return new ResourceClient(InterfaceUrls::instanceTypesStorageUrl,
+        "instanceTypes");
   }
 
-  public static ResourceClient forInstanceTypes(OkapiHttpClient client) {
-    return new ResourceClient(client, InterfaceUrls::instanceTypesStorageUrl,
-      "instance types", "instanceTypes");
+  public static ResourceClient forContributorNameTypes() {
+    return new ResourceClient(InterfaceUrls::contributorNameTypesStorageUrl,
+      "contributorNameTypes");
   }
 
-  public static ResourceClient forContributorNameTypes(OkapiHttpClient client) {
-    return new ResourceClient(client, InterfaceUrls::contributorNameTypesStorageUrl,
-      "contributor name types", "contributorNameTypes");
+  public static ResourceClient forInstitutions() {
+    return new ResourceClient(InterfaceUrls::institutionsStorageUrl,
+        "locinsts");
   }
 
-  public static ResourceClient forInstitutions(OkapiHttpClient client) {
-    return new ResourceClient(client, InterfaceUrls::institutionsStorageUrl,
-      "institutions", "locinsts");
+  public static ResourceClient forCampuses() {
+    return new ResourceClient(InterfaceUrls::campusesStorageUrl,
+        "loccamps");
   }
 
-  public static ResourceClient forCampuses(OkapiHttpClient client) {
-    return new ResourceClient(client, InterfaceUrls::campusesStorageUrl,
-      "campuses", "loccamps");
+  public static ResourceClient forLibraries() {
+    return new ResourceClient(InterfaceUrls::librariesStorageUrl, "loclibs");
   }
 
-  public static ResourceClient forLibraries(OkapiHttpClient client) {
-    return new ResourceClient(client, InterfaceUrls::librariesStorageUrl,
-      "libraries", "loclibs");
+  public static ResourceClient forLocations() {
+    return new ResourceClient(InterfaceUrls::locationsStorageUrl, "locations");
   }
 
-  public static ResourceClient forLocations(OkapiHttpClient client) {
-    return new ResourceClient(client, InterfaceUrls::locationsStorageUrl,
-      "locations");
+  public static ResourceClient forCancellationReasons() {
+    return new ResourceClient(InterfaceUrls::cancellationReasonsStorageUrl,
+        "cancellationReasons");
   }
 
-  public static ResourceClient forCancellationReasons(OkapiHttpClient client) {
-    return new ResourceClient(client, InterfaceUrls::cancellationReasonsStorageUrl,
-      "cancellationReasons");
+  public static ResourceClient forServicePoints() {
+    return new ResourceClient(InterfaceUrls::servicePointsStorageUrl,
+        "servicepoints");
   }
 
-  public static ResourceClient forServicePoints(OkapiHttpClient client) {
-    return new ResourceClient(client, InterfaceUrls::servicePointsStorageUrl,
-      "service points", "servicepoints");
+  public static ResourceClient forPatronNotices() {
+    return new ResourceClient(InterfaceUrls::patronNoticesUrl,
+        "patronnotices");
   }
 
-  public static ResourceClient forPatronNotices(OkapiHttpClient client) {
-    return new ResourceClient(client, InterfaceUrls::patronNoticesUrl,
-      "patron notice", "patronnotices");
+  public static ResourceClient forScheduledNotices() {
+    return new ResourceClient(InterfaceUrls::scheduledNoticesUrl,
+        "scheduledNotices");
   }
 
-  public static ResourceClient forScheduledNotices(OkapiHttpClient client) {
-    return new ResourceClient(client, InterfaceUrls::scheduledNoticesUrl,
-      "scheduled notice", "scheduledNotices");
+  public static ResourceClient forPatronSessionRecords() {
+    return new ResourceClient(InterfaceUrls::patronActionSessionsUrl,
+        "patronActionSessions");
   }
 
-  public static ResourceClient forPatronSessionRecords(OkapiHttpClient client) {
-    return new ResourceClient(client, InterfaceUrls::patronActionSessionsUrl,
-      "patron session records", "patronActionSessions");
+  public static ResourceClient forExpiredSessions() {
+    return new ResourceClient(InterfaceUrls::patronExpiredSessionsUrl,
+        "expired session records");
   }
 
-  public static ResourceClient forExpiredSessions(OkapiHttpClient client) {
-    return new ResourceClient(client, InterfaceUrls::patronExpiredSessionsUrl,
-      "expired session records");
+  public static ResourceClient forConfiguration() {
+    return new ResourceClient(InterfaceUrls::configurationUrl, "configs");
   }
 
-  public static ResourceClient forConfiguration(OkapiHttpClient client) {
-    return new ResourceClient(client, InterfaceUrls::configurationUrl,
-      "configuration entries", "configs");
-  }
-
-  public static ResourceClient forRenewByBarcode(OkapiHttpClient client) {
-    return new ResourceClient(client, subPath -> InterfaceUrls.renewByBarcodeUrl(),
-      "renew by barcode");
-  }
-
-  public static ResourceClient forRenewById(OkapiHttpClient client) {
-    return new ResourceClient(client, subPath -> InterfaceUrls.renewByIdUrl(),
-      "renew by id");
-  }
-
-  public static ResourceClient forOverrideRenewalByBarcode(OkapiHttpClient client) {
-    return new ResourceClient(
-      client, subPath -> InterfaceUrls.overrideRenewalByBarcodeUrl(),
-      "override renewal by barcode"
-    );
-  }
-
-  private ResourceClient(
-    OkapiHttpClient client,
-    UrlMaker urlMaker,
-    String resourceName,
-    String collectionArrayPropertyName) {
-
-    this.client = client;
+  private ResourceClient(UrlMaker urlMaker, String collectionArrayPropertyName) {
     this.urlMaker = urlMaker;
-    this.resourceName = resourceName;
     this.collectionArrayPropertyName = collectionArrayPropertyName;
+    restAssuredClient = new RestAssuredClient(getOkapiHeadersFromContext());
   }
 
-  private ResourceClient(
-    OkapiHttpClient client,
-    UrlMaker urlMaker,
-    String resourceName) {
-
-    this.client = client;
-    this.urlMaker = urlMaker;
-    this.resourceName = resourceName;
-    this.collectionArrayPropertyName = resourceName;
+  public Response attemptCreate(Builder builder) {
+    return attemptCreate(builder.create());
   }
 
-  public Response attemptCreate(Builder builder)
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException,
-    MalformedURLException {
+  public Response attemptCreate(JsonObject representation) {
 
-    CompletableFuture<Response> createCompleted = new CompletableFuture<>();
-
-    client.post(urlMaker.combine(""), builder.create(),
-      ResponseHandler.any(createCompleted));
-
-    return createCompleted.get(5, TimeUnit.SECONDS);
+    return restAssuredClient.post(representation, rootUrl(),
+        "attempt-create-record");
   }
 
-  public IndividualResource create(Builder builder)
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
-
+  public IndividualResource create(Builder builder) {
     return create(builder.create());
   }
 
-  public IndividualResource create(JsonObject request)
-    throws MalformedURLException,
-    InterruptedException,
-    ExecutionException,
-    TimeoutException {
+  public IndividualResource create(JsonObject representation) {
 
-    CompletableFuture<Response> createCompleted = new CompletableFuture<>();
-
-    log.debug("Attempting to create {} record: {}", resourceName,
-      request.encodePrettily());
-
-    client.post(urlMaker.combine(""), request,
-      ResponseHandler.any(createCompleted));
-
-    Response response = createCompleted.get(5, TimeUnit.SECONDS);
-
-    assertThat(
-      String.format("Failed to create %s: %s", resourceName,
-        response.getBody()), response.getStatusCode(), is(HTTP_CREATED));
-
-    log.debug("Created resource {}: {}", resourceName,
-      response.getJson().encodePrettily());
-
-    return new IndividualResource(response);
+    return  new IndividualResource(restAssuredClient.post(representation,
+      rootUrl(), 201, "create-record"));
   }
 
-  public Response attemptCreateAtSpecificLocation(Builder builder)
-    throws MalformedURLException,
-    InterruptedException,
-    ExecutionException,
-    TimeoutException {
+  public Response attemptCreateAtSpecificLocation(Builder builder) {
 
-    CompletableFuture<Response> createCompleted = new CompletableFuture<>();
+    final JsonObject representation = builder.create();
+    final URL location = recordUrl(representation.getString("id"));
 
-    JsonObject representation = builder.create();
-    String id = representation.getString("id");
-
-    final URL location = urlMaker.combine(String.format("/%s", id));
-
-    client.put(location, representation, ResponseHandler.any(createCompleted));
-
-    return createCompleted.get(5, TimeUnit.SECONDS);
+    return restAssuredClient.put(representation, location,
+      "attempt-create-record-at-specific-location");
   }
 
-  public IndividualResource createAtSpecificLocation(Builder builder)
-    throws MalformedURLException,
-    InterruptedException,
-    ExecutionException,
-    TimeoutException {
+  public IndividualResource createAtSpecificLocation(Builder builder) {
 
-    CompletableFuture<Response> createCompleted = new CompletableFuture<>();
+    final JsonObject representation = builder.create();
+    final URL location = recordUrl(representation.getString("id"));
 
-    JsonObject representation = builder.create();
-    String id = representation.getString("id");
+    restAssuredClient.put(representation, location, HTTP_NO_CONTENT,
+      "create-record-at-specific-location");
 
-    final URL location = urlMaker.combine(String.format("/%s", id));
-
-    client.put(location, representation, ResponseHandler.any(createCompleted));
-
-    Response createResponse = createCompleted.get(5, TimeUnit.SECONDS);
-
-    assertThat(
-      String.format("Failed to create %s %s: %s", resourceName, id, createResponse.getBody()),
-      createResponse.getStatusCode(), is(HttpURLConnection.HTTP_NO_CONTENT));
-
-    System.out.println(String.format("Created resource %s: %s", resourceName,
-      createResponse.getJson().encodePrettily()));
-
-    CompletableFuture<Response> getCompleted = new CompletableFuture<>();
-
-    client.get(location, ResponseHandler.any(getCompleted));
-
-    Response getResponse = getCompleted.get(5, TimeUnit.SECONDS);
-
-    assertThat(
-      String.format("Failed to get %s %s: %s", resourceName, id, getResponse.getBody()),
-      getResponse.getStatusCode(), is(HttpURLConnection.HTTP_OK));
-
-    return new IndividualResource(getResponse);
+    return get(location);
   }
 
-  public Response attemptReplace(UUID id, Builder builder)
-      throws MalformedURLException,
-      InterruptedException,
-      ExecutionException,
-      TimeoutException {
+  public Response attemptReplace(UUID id, Builder builder) {
+
     return attemptReplace(id, builder.create());
   }
 
-  public Response attemptReplace(UUID id, JsonObject jsonObject)
-    throws MalformedURLException,
-    InterruptedException,
-    ExecutionException,
-    TimeoutException {
+  public Response attemptReplace(UUID id, JsonObject representation) {
 
-    CompletableFuture<Response> putCompleted = new CompletableFuture<>();
-
-    String path = "";
-    if (id != null) {
-      path = String.format("/%s", id);
-    }
-
-    client.put(urlMaker.combine(path), jsonObject,
-      ResponseHandler.any(putCompleted));
-
-    return putCompleted.get(5, TimeUnit.SECONDS);
+    return restAssuredClient.put(representation, recordUrl(id),
+      "attempt-replace-record");
   }
 
-  public void replace(UUID id, Builder builder)
-    throws MalformedURLException,
-    InterruptedException,
-    ExecutionException,
-    TimeoutException {
-
+  public void replace(UUID id, Builder builder) {
     replace(id, builder.create());
   }
 
-  public void replace(UUID id, JsonObject request)
-    throws MalformedURLException,
-    InterruptedException,
-    ExecutionException,
-    TimeoutException {
+  public void replace(UUID id, JsonObject representation) {
 
-    CompletableFuture<Response> putCompleted = new CompletableFuture<>();
-
-    String path = "";
-    if (id != null) {
-      path = String.format("/%s", id);
-    }
-    client.put(urlMaker.combine(path), request,
-      ResponseHandler.any(putCompleted));
-
-    Response putResponse = putCompleted.get(5, TimeUnit.SECONDS);
-
-    assertThat(
-      String.format("Failed to update %s %s: %s", resourceName, id, putResponse.getBody()),
-      putResponse.getStatusCode(), is(HttpURLConnection.HTTP_NO_CONTENT));
+    restAssuredClient.put(representation, recordUrl(id), HTTP_NO_CONTENT,
+      "create-record-at-specific-location");
   }
 
-  public Response getById(UUID id)
-    throws MalformedURLException,
-    InterruptedException,
-    ExecutionException,
-    TimeoutException {
-
-    CompletableFuture<Response> getCompleted = new CompletableFuture<>();
-
-    client.get(urlMaker.combine(String.format("/%s", id)),
-      ResponseHandler.any(getCompleted));
-
-    return getCompleted.get(5, TimeUnit.SECONDS);
+  public Response getById(UUID id) {
+    return restAssuredClient.get(recordUrl(id), "get-record");
   }
 
-  public IndividualResource get(IndividualResource record)
-    throws MalformedURLException,
-    InterruptedException,
-    ExecutionException,
-    TimeoutException {
+  public IndividualResource get(IndividualResource record) {
 
     return get(record.getId());
   }
 
-
-  public IndividualResource get(UUID id)
-    throws MalformedURLException,
-    InterruptedException,
-    ExecutionException,
-    TimeoutException {
-
-    CompletableFuture<Response> getCompleted = new CompletableFuture<>();
-
-    client.get(urlMaker.combine(String.format("/%s", id)),
-      ResponseHandler.any(getCompleted));
-
-    final Response response = getCompleted.get(5, TimeUnit.SECONDS);
-
-    assertThat(
-      String.format("Failed to get %s: %s", resourceName, response.getBody()),
-      response.getStatusCode(), is(HttpURLConnection.HTTP_OK));
-
-    System.out.println(String.format("Found resource %s: %s", resourceName,
-      response.getJson().encodePrettily()));
-
-    return new IndividualResource(response);
+  public IndividualResource get(UUID id) {
+    return get(recordUrl(id));
   }
 
-  public Response attemptGet(IndividualResource resource)
-    throws MalformedURLException,
-    InterruptedException,
-    ExecutionException,
-    TimeoutException {
-
-    CompletableFuture<Response> getCompleted = new CompletableFuture<>();
-
-    client.get(urlMaker.combine(String.format("/%s", resource.getId())),
-      ResponseHandler.any(getCompleted));
-
-    return getCompleted.get(5, TimeUnit.SECONDS);
+  public IndividualResource get(URL url) {
+    return new IndividualResource(restAssuredClient.get(url, 200, "get-record"));
   }
 
-  public void delete(UUID id)
-    throws MalformedURLException,
-    InterruptedException,
-    ExecutionException,
-    TimeoutException {
+  public Response attemptGet(IndividualResource resource) {
 
-    CompletableFuture<Response> deleteFinished = new CompletableFuture<>();
-
-    client.delete(urlMaker.combine(String.format("/%s", id)),
-      ResponseHandler.any(deleteFinished));
-
-    Response response = deleteFinished.get(5, TimeUnit.SECONDS);
-
-    assertThat(String.format(
-      "Failed to delete %s %s: %s", resourceName, id, response.getBody()),
-      response.getStatusCode(), CoreMatchers.anyOf(
-        is(HttpURLConnection.HTTP_NO_CONTENT),
-        is(HttpURLConnection.HTTP_NOT_FOUND)));
+    return getById(resource.getId());
   }
 
-  public void delete(IndividualResource resource)
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void delete(UUID id) {
+    restAssuredClient.delete(recordUrl(id), HTTP_NO_CONTENT, "delete-record");
+  }
 
+  public void delete(IndividualResource resource) {
     delete(resource.getId());
   }
 
-  public void deleteAll()
-    throws MalformedURLException,
-    InterruptedException,
-    ExecutionException,
-    TimeoutException {
-
-    CompletableFuture<Response> deleteAllFinished = new CompletableFuture<>();
-
-    client.delete(urlMaker.combine(""),
-      ResponseHandler.any(deleteAllFinished));
-
-    Response response = deleteAllFinished.get(5, TimeUnit.SECONDS);
-
-    assertThat(String.format(
-      "Failed to delete %s: %s", resourceName, response.getBody()),
-      response.getStatusCode(), is(204));
+  public void deleteAll() {
+    restAssuredClient.delete(rootUrl(), HTTP_NO_CONTENT, "delete-all-records");
   }
 
-  public void deleteAllIndividually()
-    throws MalformedURLException,
-    InterruptedException,
-    ExecutionException,
-    TimeoutException {
-
-    List<JsonObject> records = getAll();
-
-    records.stream().forEach(record -> {
-      try {
-        CompletableFuture<Response> deleteFinished = new CompletableFuture<>();
-
-        client.delete(urlMaker.combine(String.format("/%s",
-          record.getString("id"))),
-          ResponseHandler.any(deleteFinished));
-
-        Response deleteResponse = deleteFinished.get(5, TimeUnit.SECONDS);
-
-        assertThat(String.format(
-          "Failed to delete %s: %s", resourceName, deleteResponse.getBody()),
-          deleteResponse.getStatusCode(), is(204));
-
-      } catch (Throwable e) {
-        assertThat(String.format("Exception whilst deleting %s individually: %s",
-          resourceName, e.toString()),
-          true, is(false));
-      }
-    });
-  }
-
-  public List<JsonObject> getAll()
-    throws MalformedURLException,
-    InterruptedException,
-    ExecutionException,
-    TimeoutException {
-
-    CompletableFuture<Response> getFinished = new CompletableFuture<>();
-
-    client.get(urlMaker.combine("?limit=1000"),
-      ResponseHandler.any(getFinished));
-
-    Response response = getFinished.get(5, TimeUnit.SECONDS);
-
-    assertThat(String.format("Get all records failed: %s", response.getBody()),
-      response.getStatusCode(), is(200));
-
-    JsonObject json = response.getJson();
-
-    if(!json.containsKey(collectionArrayPropertyName)) {
-      throw new RuntimeException(String.format(
-        "Collection array property \"%s\" is not present in: %s",
-        collectionArrayPropertyName, json.encodePrettily()));
+  public void deleteAllIndividually() {
+    for (JsonObject record : getAll()) {
+      delete(UUID.fromString(record.getString("id")));
     }
-
-    return JsonArrayHelper.toList(json
-      .getJsonArray(collectionArrayPropertyName));
   }
 
-  public IndividualResource move(Builder builder)
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
-
-    return move(builder.create());
+  //TODO: Replace return valu[e with MultipleJsonRecords
+  public List<JsonObject> getAll() {
+    return mapToList(restAssuredClient
+      .get(rootUrl(), noQuery(), limit(1000), noOffset(), 200, "get-all")
+      .getJson(), collectionArrayPropertyName);
   }
 
-  public Response attemptMove(Builder builder)
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
-
-    CompletableFuture<Response> moveCompleted = new CompletableFuture<>();
-
-    JsonObject request = builder.create();
-
-    String path = String.format("/%s/move", request.getString("id"));
-
-    client.post(urlMaker.combine(path), request,
-      ResponseHandler.any(moveCompleted));
-
-    return moveCompleted.get(15, TimeUnit.SECONDS);
+  private URL recordUrl(Object id) {
+    return urlMaker.combine(String.format("/%s", id));
   }
 
-  public IndividualResource move(JsonObject request)
-    throws MalformedURLException,
-    InterruptedException,
-    ExecutionException,
-    TimeoutException {
-
-    CompletableFuture<Response> moveCompleted = new CompletableFuture<>();
-
-    log.debug("Attempting to move {} record: {}", resourceName,
-      request.encodePrettily());
-
-    client.post(urlMaker.combine(String.format("/%s/move", request.getString("id"))), request,
-      ResponseHandler.any(moveCompleted));
-
-    Response response = moveCompleted.get(5, TimeUnit.SECONDS);
-
-    assertThat(
-      String.format("Failed to move %s: %s", resourceName,
-        response.getBody()), response.getStatusCode(), is(HTTP_OK));
-
-    log.debug("Moved resource {}: {}", resourceName,
-      response.getJson().encodePrettily());
-
-    return new IndividualResource(response);
+  private URL rootUrl() {
+    return urlMaker.combine("");
   }
-
 
   @FunctionalInterface
   public interface UrlMaker {
-    URL combine(String subPath) throws MalformedURLException;
+    URL combine(String subPath);
   }
 }

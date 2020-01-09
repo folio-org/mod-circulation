@@ -31,8 +31,7 @@ public class AnonymizeLoansNeverTests extends LoanAnonymizationTests {
    *     Then do not anonymize the loan
   */
   @Test
-  public void testClosedLoansWithFeesAndFinesNotAnonymized()
-      throws InterruptedException, ExecutionException, TimeoutException, MalformedURLException {
+  public void testClosedLoansWithFeesAndFinesNotAnonymized() {
 
     LoanHistoryConfigurationBuilder loanHistoryConfig = new LoanHistoryConfigurationBuilder()
       .loanCloseAnonymizeNever()
@@ -65,8 +64,7 @@ public class AnonymizeLoansNeverTests extends LoanAnonymizationTests {
    *     Then anonymize the loan
    */
   @Test
-  public void testClosedLoansWithFeesAndFinesAnonymizedWhenFeesFinesClose()
-      throws InterruptedException, ExecutionException, TimeoutException, MalformedURLException {
+  public void testClosedLoansWithFeesAndFinesAnonymizedWhenFeesFinesClose() {
 
     LoanHistoryConfigurationBuilder loanHistoryConfig = new LoanHistoryConfigurationBuilder()
         .loanCloseAnonymizeNever()
@@ -99,8 +97,7 @@ public class AnonymizeLoansNeverTests extends LoanAnonymizationTests {
    *     Then do not anonymize the loan
    */
   @Test
-  public void testClosedLoansWithFeesAndFinesNeverAnonymized()
-      throws InterruptedException, ExecutionException, TimeoutException, MalformedURLException {
+  public void testClosedLoansWithFeesAndFinesNeverAnonymized() {
 
     LoanHistoryConfigurationBuilder loanHistoryConfig = new LoanHistoryConfigurationBuilder()
         .loanCloseAnonymizeNever()
@@ -133,8 +130,7 @@ public class AnonymizeLoansNeverTests extends LoanAnonymizationTests {
    *     Then do not anonymize the loan
    */
   @Test
-  public void testClosedLoanWithFeesAndFinesNeverAnonymizedWhenFeesFinesClose()
-      throws InterruptedException, ExecutionException, TimeoutException, MalformedURLException {
+  public void testClosedLoanWithFeesAndFinesNeverAnonymizedWhenFeesFinesClose() {
 
     LoanHistoryConfigurationBuilder loanHistoryConfig = new LoanHistoryConfigurationBuilder()
         .loanCloseAnonymizeNever()
@@ -167,8 +163,7 @@ public class AnonymizeLoansNeverTests extends LoanAnonymizationTests {
    *     Then do not anonymize the loan
    */
   @Test
-  public void testOpenLoanWithFeesAndFinesNeverAnonymizedWhenFeesFinesClose()
-      throws InterruptedException, ExecutionException, TimeoutException, MalformedURLException {
+  public void testOpenLoanWithFeesAndFinesNeverAnonymizedWhenFeesFinesClose() {
 
     LoanHistoryConfigurationBuilder loanHistoryConfig = new LoanHistoryConfigurationBuilder()
         .loanCloseAnonymizeNever()
@@ -201,8 +196,7 @@ public class AnonymizeLoansNeverTests extends LoanAnonymizationTests {
    *     Then do not anonymize the loan
  */
   @Test
-  public void testClosedLoanWithClosedFeesAndFinesNeverAnonymizedWhenFeesFinesClose()
-      throws InterruptedException, ExecutionException, TimeoutException, MalformedURLException {
+  public void testClosedLoanWithClosedFeesAndFinesNeverAnonymizedWhenFeesFinesClose() {
 
     LoanHistoryConfigurationBuilder loanHistoryConfig = new LoanHistoryConfigurationBuilder()
         .loanCloseAnonymizeNever()
@@ -235,8 +229,7 @@ public class AnonymizeLoansNeverTests extends LoanAnonymizationTests {
    *     Then do not anonymize the loan
    */
   @Test
-  public void testClosedLoanWithFeesAndFinesNeverAnonymizedWhenXIntervalNotPassed()
-      throws InterruptedException, ExecutionException, TimeoutException, MalformedURLException {
+  public void testClosedLoanWithFeesAndFinesNeverAnonymizedWhenXIntervalNotPassed() {
 
     LoanHistoryConfigurationBuilder loanHistoryConfig =
         new LoanHistoryConfigurationBuilder()
@@ -271,8 +264,7 @@ public class AnonymizeLoansNeverTests extends LoanAnonymizationTests {
    *     Then anonymize the loan
    */
   @Test
-  public void testClosedLoanWithFeesAndFinesNeverAnonymizedWhenXIntervalPassed()
-      throws InterruptedException, ExecutionException, TimeoutException, MalformedURLException {
+  public void testClosedLoanWithFeesAndFinesNeverAnonymizedWhenXIntervalPassed() {
 
     LoanHistoryConfigurationBuilder loanHistoryConfig =
         new LoanHistoryConfigurationBuilder()
@@ -296,8 +288,7 @@ public class AnonymizeLoansNeverTests extends LoanAnonymizationTests {
   }
 
   @Test
-  public void testClosedLoansWithoutFeesAndFinesNeverAnonymized()
-      throws InterruptedException, ExecutionException, TimeoutException, MalformedURLException {
+  public void testClosedLoansWithoutFeesAndFinesNeverAnonymized() {
 
     LoanHistoryConfigurationBuilder loanHistoryConfig =
         new LoanHistoryConfigurationBuilder()
@@ -320,8 +311,7 @@ public class AnonymizeLoansNeverTests extends LoanAnonymizationTests {
 
 
   @Test
-  public void testClosedLoansWithoutFeesAndFinesNeverAnonymized2()
-      throws InterruptedException, ExecutionException, TimeoutException, MalformedURLException {
+  public void testClosedLoansWithoutFeesAndFinesNeverAnonymized2() {
 
     LoanHistoryConfigurationBuilder loanHistoryConfig =
         new LoanHistoryConfigurationBuilder()
@@ -343,8 +333,7 @@ public class AnonymizeLoansNeverTests extends LoanAnonymizationTests {
   }
 
   @Test
-  public void testClosedLoansWithoutFeesAndFinesNeverAnonymized3()
-      throws InterruptedException, ExecutionException, TimeoutException, MalformedURLException {
+  public void testClosedLoansWithoutFeesAndFinesNeverAnonymized3() {
 
     LoanHistoryConfigurationBuilder loanHistoryConfig =
         new LoanHistoryConfigurationBuilder()

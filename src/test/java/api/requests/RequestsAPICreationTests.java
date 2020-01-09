@@ -90,11 +90,7 @@ public class RequestsAPICreationTests extends APITests {
   private static final String ITEM_RECALLED = "Item recalled";
 
   @Test
-  public void canCreateARequest()
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException,
-    MalformedURLException {
+  public void canCreateARequest() {
 
     UUID id = UUID.randomUUID();
     UUID pickupServicePointId = servicePointsFixture.cd1().getId();
@@ -200,11 +196,7 @@ public class RequestsAPICreationTests extends APITests {
   }
 
   @Test
-  public void canCreateARequestAtSpecificLocation()
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException,
-    MalformedURLException {
+  public void canCreateARequestAtSpecificLocation() {
 
     UUID id = UUID.randomUUID();
 
@@ -299,11 +291,7 @@ public class RequestsAPICreationTests extends APITests {
   }
 
   @Test
-  public void cannotCreateRequestForUnknownItem()
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException,
-    MalformedURLException {
+  public void cannotCreateRequestForUnknownItem() {
 
     UUID itemId = UUID.randomUUID();
     UUID patronId = usersFixture.charlotte().getId();
@@ -322,11 +310,7 @@ public class RequestsAPICreationTests extends APITests {
   }
 
   @Test
-  public void cannotCreateRecallRequestWhenItemIsNotCheckedOut()
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException,
-    MalformedURLException {
+  public void cannotCreateRecallRequestWhenItemIsNotCheckedOut() {
 
     UUID itemId = itemsFixture.basedUponSmallAngryPlanet(
       ItemBuilder::available)
@@ -341,11 +325,7 @@ public class RequestsAPICreationTests extends APITests {
   }
 
   @Test
-  public void cannotCreateHoldRequestWhenItemIsNotCheckedOut()
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException,
-    MalformedURLException {
+  public void cannotCreateHoldRequestWhenItemIsNotCheckedOut() {
 
     UUID itemId = itemsFixture.basedUponSmallAngryPlanet(
       ItemBuilder::available)
@@ -360,11 +340,7 @@ public class RequestsAPICreationTests extends APITests {
   }
 
   @Test
-  public void cannotCreateRequestItemAlreadyCheckedOutToRequestor()
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException,
-    MalformedURLException {
+  public void cannotCreateRequestItemAlreadyCheckedOutToRequestor() {
 
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource rebecca = usersFixture.rebecca();
@@ -388,11 +364,7 @@ public class RequestsAPICreationTests extends APITests {
 
   //TODO: Remove this once sample data is updated, temporary to aid change of item status case
   @Test()
-  public void canCreateARequestEvenWithDifferentCaseCheckedOutStatus()
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException,
-    MalformedURLException {
+  public void canCreateARequestEvenWithDifferentCaseCheckedOutStatus() {
 
     UUID id = UUID.randomUUID();
 
@@ -431,11 +403,7 @@ public class RequestsAPICreationTests extends APITests {
     "Open - In transit",
     "Closed - Filled"
   })
-  public void canCreateARequestWithValidStatus(String status)
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void canCreateARequestWithValidStatus(String status) {
 
     final InventoryItemResource smallAngryPlanet =
       itemsFixture.basedUponSmallAngryPlanet(itemBuilder -> itemBuilder
@@ -466,11 +434,7 @@ public class RequestsAPICreationTests extends APITests {
     "Non-existent status",
     ""
   })
-  public void cannotCreateARequestWithInvalidStatus(String status)
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void cannotCreateARequestWithInvalidStatus(String status) {
 
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
 
@@ -501,11 +465,7 @@ public class RequestsAPICreationTests extends APITests {
     "Non-existent status",
     ""
   })
-  public void cannotCreateARequestAtASpecificLocationWithInvalidStatus(String status)
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void cannotCreateARequestAtASpecificLocationWithInvalidStatus(String status) {
 
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
 
@@ -529,11 +489,7 @@ public class RequestsAPICreationTests extends APITests {
   }
 
   @Test
-  public void canCreateARequestToBeFulfilledByDeliveryToAnAddress()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void canCreateARequestToBeFulfilledByDeliveryToAnAddress() {
 
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet(
       ItemBuilder::available);
@@ -582,11 +538,7 @@ public class RequestsAPICreationTests extends APITests {
   }
 
   @Test
-  public void requestStatusDefaultsToOpen()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void requestStatusDefaultsToOpen() {
 
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource rebecca = usersFixture.rebecca();
@@ -608,11 +560,7 @@ public class RequestsAPICreationTests extends APITests {
   }
 
   @Test
-  public void cannotCreateRequestWithUserBelongingToNoPatronGroup()
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException,
-    MalformedURLException {
+  public void cannotCreateRequestWithUserBelongingToNoPatronGroup() {
 
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource jessica = usersFixture.jessica();
@@ -637,11 +585,7 @@ public class RequestsAPICreationTests extends APITests {
   }
 
   @Test
-  public void cannotCreateRequestWithoutValidUser()
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException,
-    MalformedURLException {
+  public void cannotCreateRequestWithoutValidUser() {
 
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource steve = usersFixture.steve();
@@ -667,11 +611,7 @@ public class RequestsAPICreationTests extends APITests {
   }
 
   @Test
-  public void cannotCreateRequestWithAnInactiveUser()
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException,
-    MalformedURLException {
+  public void cannotCreateRequestWithAnInactiveUser() {
 
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource steve = usersFixture.steve();
@@ -698,11 +638,7 @@ public class RequestsAPICreationTests extends APITests {
   }
 
   @Test
-  public void cannotCreateRequestAtSpecificLocationWithAnInactiveUser()
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException,
-    MalformedURLException {
+  public void cannotCreateRequestAtSpecificLocationWithAnInactiveUser() {
 
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource steve = usersFixture.steve();
@@ -733,11 +669,7 @@ public class RequestsAPICreationTests extends APITests {
   }
 
   @Test
-  public void canCreateARequestWithRequesterWithMiddleName()
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException,
-    MalformedURLException {
+  public void canCreateARequestWithRequesterWithMiddleName() {
 
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource jessica = usersFixture.jessica();
@@ -780,11 +712,7 @@ public class RequestsAPICreationTests extends APITests {
   }
 
   @Test
-  public void canCreateARequestWithRequesterWithNoBarcode()
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException,
-    MalformedURLException {
+  public void canCreateARequestWithRequesterWithNoBarcode() {
 
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource james = usersFixture.james();
@@ -823,11 +751,7 @@ public class RequestsAPICreationTests extends APITests {
   }
 
   @Test
-  public void canCreateARequestForItemWithNoBarcode()
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException,
-    MalformedURLException {
+  public void canCreateARequestForItemWithNoBarcode() {
 
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet(
       ItemBuilder::withNoBarcode);
@@ -861,11 +785,7 @@ public class RequestsAPICreationTests extends APITests {
   }
 
   @Test
-  public void creatingARequestIgnoresReadOnlyInformationProvidedByClient()
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException,
-    MalformedURLException {
+  public void creatingARequestIgnoresReadOnlyInformationProvidedByClient() {
 
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource rebecca = usersFixture.rebecca();
@@ -928,11 +848,7 @@ public class RequestsAPICreationTests extends APITests {
   }
 
   @Test
-  public void cannotCreateARequestWithoutAPickupLocationServicePoint()
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException,
-    MalformedURLException {
+  public void cannotCreateARequestWithoutAPickupLocationServicePoint() {
 
     IndividualResource item = itemsFixture.basedUponSmallAngryPlanet();
 
@@ -959,11 +875,7 @@ public class RequestsAPICreationTests extends APITests {
   }
 
   @Test
-  public void cannotCreateARequestWithANonPickupLocationServicePoint()
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException,
-    MalformedURLException {
+  public void cannotCreateARequestWithANonPickupLocationServicePoint() {
 
     UUID pickupServicePointId = servicePointsFixture.cd3().getId();
 
@@ -994,11 +906,7 @@ public class RequestsAPICreationTests extends APITests {
   }
 
   @Test
-  public void cannotCreateARequestWithUnknownPickupLocationServicePoint()
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException,
-    MalformedURLException {
+  public void cannotCreateARequestWithUnknownPickupLocationServicePoint() {
 
     UUID pickupServicePointId = UUID.randomUUID();
 
@@ -1029,11 +937,7 @@ public class RequestsAPICreationTests extends APITests {
   }
 
   @Test
-  public void canCreatePagedRequestWhenItemStatusIsAvailable()
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException,
-    MalformedURLException {
+  public void canCreatePagedRequestWhenItemStatusIsAvailable() {
 
     //Set up the item's initial status to be AVAILABLE
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
@@ -1055,11 +959,7 @@ public class RequestsAPICreationTests extends APITests {
   }
 
   @Test
-  public void cannotCreatePagedRequestWhenItemStatusIsCheckedOut()
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException,
-    MalformedURLException {
+  public void cannotCreatePagedRequestWhenItemStatusIsCheckedOut() {
 
     //Set up the item's initial status to be CHECKED OUT
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
@@ -1080,11 +980,7 @@ public class RequestsAPICreationTests extends APITests {
   }
 
   @Test
-  public void cannotCreatePagedRequestWhenItemStatusIsAwaitingPickup()
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException,
-    MalformedURLException {
+  public void cannotCreatePagedRequestWhenItemStatusIsAwaitingPickup() {
 
     //Setting up an item with AWAITING_PICKUP status
     final IndividualResource servicePoint = servicePointsFixture.cd1();
@@ -1104,11 +1000,7 @@ public class RequestsAPICreationTests extends APITests {
   }
 
   @Test
-  public void cannotCreatePagedRequestWhenItemStatusIsPaged()
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException,
-    MalformedURLException {
+  public void cannotCreatePagedRequestWhenItemStatusIsPaged() {
 
     //Set up the item's initial status to be PAGED
     final IndividualResource servicePoint = servicePointsFixture.cd1();
@@ -1127,11 +1019,7 @@ public class RequestsAPICreationTests extends APITests {
   }
 
   @Test
-  public void cannotCreatePagedRequestWhenItemStatusIsIntransit()
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException,
-    MalformedURLException {
+  public void cannotCreatePagedRequestWhenItemStatusIsIntransit() {
 
     final IndividualResource requestPickupServicePoint = servicePointsFixture.cd1();
 
@@ -1152,11 +1040,7 @@ public class RequestsAPICreationTests extends APITests {
   }
 
   @Test
-  public void canCreateRecallRequestWhenItemIsCheckedOut()
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException,
-    MalformedURLException {
+  public void canCreateRecallRequestWhenItemIsCheckedOut() {
 
     final IndividualResource checkedOutItem = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource requestPickupServicePoint = servicePointsFixture.cd1();
@@ -1176,11 +1060,7 @@ public class RequestsAPICreationTests extends APITests {
   }
 
   @Test
-  public void canCreateRecallRequestWhenItemIsAwaitingPickup()
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException,
-    MalformedURLException {
+  public void canCreateRecallRequestWhenItemIsAwaitingPickup() {
 
     //Setting up an item with AWAITING_PICKUP status
     final IndividualResource servicePoint = servicePointsFixture.cd1();
@@ -1200,11 +1080,7 @@ public class RequestsAPICreationTests extends APITests {
   }
 
   @Test
-  public void canCreateRecallRequestWhenItemIsInTransit()
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException,
-    MalformedURLException {
+  public void canCreateRecallRequestWhenItemIsInTransit() {
 
     final IndividualResource requestPickupServicePoint = servicePointsFixture.cd1();
 
@@ -1226,11 +1102,7 @@ public class RequestsAPICreationTests extends APITests {
   }
 
   @Test
-  public void cannotCreateRecallRequestWhenItemIsAvailable()
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException,
-    MalformedURLException {
+  public void cannotCreateRecallRequestWhenItemIsAvailable() {
 
     final IndividualResource availableItem = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource requestPickupServicePoint = servicePointsFixture.cd1();
@@ -1247,11 +1119,7 @@ public class RequestsAPICreationTests extends APITests {
   }
 
   @Test
-  public void cannotCreateRecallRequestWhenItemIsMissing()
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException,
-    MalformedURLException {
+  public void cannotCreateRecallRequestWhenItemIsMissing() {
 
     final IndividualResource missingItem = setupMissingItem(itemsFixture);
 
@@ -1267,11 +1135,7 @@ public class RequestsAPICreationTests extends APITests {
   }
 
   @Test
-  public void canCreateRecallRequestWhenItemIsPaged()
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException,
-    MalformedURLException {
+  public void canCreateRecallRequestWhenItemIsPaged() {
 
     final IndividualResource requestPickupServicePoint = servicePointsFixture.cd1();
     final IndividualResource smallAngryPlannet = setupPagedItem(requestPickupServicePoint, itemsFixture, requestsClient, usersFixture);
@@ -1289,11 +1153,7 @@ public class RequestsAPICreationTests extends APITests {
   }
 
   @Test
-  public void canCreateHoldRequestWhenItemIsCheckedOut()
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException,
-    MalformedURLException {
+  public void canCreateHoldRequestWhenItemIsCheckedOut() {
 
     final IndividualResource checkedOutItem = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource requestPickupServicePoint = servicePointsFixture.cd1();
@@ -1314,11 +1174,7 @@ public class RequestsAPICreationTests extends APITests {
   }
 
   @Test
-  public void canCreateHoldRequestWhenItemIsAwaitingPickup()
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException,
-    MalformedURLException {
+  public void canCreateHoldRequestWhenItemIsAwaitingPickup() {
 
     //Setting up an item with AWAITING_PICKUP status
     final IndividualResource servicePoint = servicePointsFixture.cd1();
@@ -1337,11 +1193,7 @@ public class RequestsAPICreationTests extends APITests {
   }
 
   @Test
-  public void canCreateHoldRequestWhenItemIsInTransit()
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException,
-    MalformedURLException {
+  public void canCreateHoldRequestWhenItemIsInTransit() {
 
     final IndividualResource requestPickupServicePoint = servicePointsFixture.cd1();
 
@@ -1364,11 +1216,7 @@ public class RequestsAPICreationTests extends APITests {
   }
 
   @Test
-  public void canCreateHoldRequestWhenItemIsMissing()
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException,
-    MalformedURLException {
+  public void canCreateHoldRequestWhenItemIsMissing() {
 
     final IndividualResource missingItem = setupMissingItem(itemsFixture);
 
@@ -1387,11 +1235,7 @@ public class RequestsAPICreationTests extends APITests {
   }
 
   @Test
-  public void canCreateHoldRequestWhenItemIsPaged()
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException,
-    MalformedURLException {
+  public void canCreateHoldRequestWhenItemIsPaged() {
 
     final IndividualResource requestPickupServicePoint = servicePointsFixture.cd1();
     final IndividualResource pagedItem = setupPagedItem(requestPickupServicePoint, itemsFixture, requestsClient, usersFixture);
@@ -1408,11 +1252,7 @@ public class RequestsAPICreationTests extends APITests {
   }
 
   @Test
-  public void cannotCreateHoldRequestWhenItemIsAvailable()
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException,
-    MalformedURLException {
+  public void cannotCreateHoldRequestWhenItemIsAvailable() {
 
     final IndividualResource availableItem = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource requestPickupServicePoint = servicePointsFixture.cd1();
@@ -1429,11 +1269,7 @@ public class RequestsAPICreationTests extends APITests {
   }
 
   @Test
-  public void cannotCreateTwoRequestsFromTheSameUserForTheSameItem()
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException,
-    MalformedURLException {
+  public void cannotCreateTwoRequestsFromTheSameUserForTheSameItem() {
 
     final IndividualResource checkedOutItem = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource requestPickupServicePoint = servicePointsFixture.cd1();
@@ -1462,11 +1298,7 @@ public class RequestsAPICreationTests extends APITests {
   }
 
   @Test
-  public void canCreateTwoRequestsFromDifferentUsersForTheSameItem()
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException,
-    MalformedURLException {
+  public void canCreateTwoRequestsFromDifferentUsersForTheSameItem() {
 
     final IndividualResource checkedOutItem = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource requestPickupServicePoint = servicePointsFixture.cd1();
@@ -1490,11 +1322,7 @@ public class RequestsAPICreationTests extends APITests {
   }
 
   public static IndividualResource setupPagedItem(IndividualResource requestPickupServicePoint, ItemsFixture itemsFixture,
-                                                  ResourceClient requestClient, UsersFixture usersFixture)
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException,
-    MalformedURLException {
+                                                  ResourceClient requestClient, UsersFixture usersFixture) {
 
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
 
@@ -1511,11 +1339,7 @@ public class RequestsAPICreationTests extends APITests {
   }
 
   public static IndividualResource setupItemAwaitingPickup(IndividualResource requestPickupServicePoint, ResourceClient requestsClient, ResourceClient itemsClient,
-                                                           ItemsFixture itemsFixture, UsersFixture usersFixture, LoansFixture loansFixture)
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException,
-    MalformedURLException {
+                                                           ItemsFixture itemsFixture, UsersFixture usersFixture, LoansFixture loansFixture) {
 
     //Setting up an item with AWAITING_PICKUP status
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
@@ -1536,11 +1360,7 @@ public class RequestsAPICreationTests extends APITests {
 
   public static IndividualResource setupItemInTransit(IndividualResource requestPickupServicePoint, IndividualResource pickupServicePoint,
                                                       ItemsFixture itemsFixture, ResourceClient requestsClient,
-                                                      UsersFixture usersFixture, RequestsFixture requestsFixture, LoansFixture loansFixture)
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException,
-    MalformedURLException {
+                                                      UsersFixture usersFixture, RequestsFixture requestsFixture, LoansFixture loansFixture) {
 
     //In order to get the item into the IN_TRANSIT state, for now we need to go the round-about route of delivering it to the unintended pickup location first
     //then check it in at the intended pickup location.
@@ -1569,11 +1389,7 @@ public class RequestsAPICreationTests extends APITests {
   }
 
 
-  public static IndividualResource setupMissingItem(ItemsFixture itemsFixture)
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException,
-    MalformedURLException {
+  public static IndividualResource setupMissingItem(ItemsFixture itemsFixture) {
 
     IndividualResource missingItem = itemsFixture.basedUponSmallAngryPlanet(ItemBuilder::missing);
     assertThat(missingItem.getResponse().getJson().getJsonObject("status").getString("name"), is(ItemStatus.MISSING.getValue()));
@@ -1582,11 +1398,7 @@ public class RequestsAPICreationTests extends APITests {
   }
 
   @Test
-  public void pageRequestNoticeIsSentWhenPolicyDefinesPageRequestNoticeConfiguration()
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException,
-    MalformedURLException {
+  public void pageRequestNoticeIsSentWhenPolicyDefinesPageRequestNoticeConfiguration() {
 
     UUID pageConfirmationTemplateId = UUID.randomUUID();
     JsonObject pageConfirmationConfiguration = new NoticeConfigurationBuilder()
@@ -1641,11 +1453,7 @@ public class RequestsAPICreationTests extends APITests {
   }
 
   @Test
-  public void holdRequestNoticeIsSentWhenPolicyDefinesHoldRequestNoticeConfiguration()
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException,
-    MalformedURLException {
+  public void holdRequestNoticeIsSentWhenPolicyDefinesHoldRequestNoticeConfiguration() {
 
     UUID holdConfirmationTemplateId = UUID.randomUUID();
     JsonObject holdConfirmationConfiguration = new NoticeConfigurationBuilder()
@@ -1711,11 +1519,7 @@ public class RequestsAPICreationTests extends APITests {
   }
 
   @Test
-  public void recallRequestNoticeIsSentWhenPolicyDefinesRecallRequestNoticeConfiguration()
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException,
-    MalformedURLException {
+  public void recallRequestNoticeIsSentWhenPolicyDefinesRecallRequestNoticeConfiguration() {
 
     UUID recallConfirmationTemplateId = UUID.randomUUID();
     UUID recallToLoaneeTemplateId = UUID.randomUUID();
@@ -1810,10 +1614,7 @@ public class RequestsAPICreationTests extends APITests {
 
   @Test
   public void recallNoticeToLoanOwnerIsNotSendWhenDueDateIsNotChanged()
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException,
-    MalformedURLException {
+    throws InterruptedException {
 
     UUID recallToLoanOwnerTemplateId = UUID.randomUUID();
     JsonObject recallToLoanOwnerNoticeConfiguration = new NoticeConfigurationBuilder()
@@ -1872,11 +1673,7 @@ public class RequestsAPICreationTests extends APITests {
   }
 
   @Test
-  public void canCreatePagedRequestWithNullProxyUser()
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException,
-    MalformedURLException {
+  public void canCreatePagedRequestWithNullProxyUser() {
 
     //Set up the item's initial status to be AVAILABLE
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
@@ -1899,11 +1696,7 @@ public class RequestsAPICreationTests extends APITests {
   }
 
   @Test
-  public void requestCreationDoesNotFailWhenCirculationRulesReferenceInvalidNoticePolicyId()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void requestCreationDoesNotFailWhenCirculationRulesReferenceInvalidNoticePolicyId() {
 
     setInvalidNoticePolicyReferenceInRules("some-invalid-policy");
 
@@ -1923,11 +1716,7 @@ public class RequestsAPICreationTests extends APITests {
   }
 
   @Test
-  public void cannotCreateRequestWhenRequestorHasActiveRequestManualBlocks()
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException,
-    MalformedURLException {
+  public void cannotCreateRequestWhenRequestorHasActiveRequestManualBlocks() {
 
     final IndividualResource item = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource requester = usersFixture.rebecca();
@@ -1953,11 +1742,7 @@ public class RequestsAPICreationTests extends APITests {
   }
 
   @Test
-  public void canCreateRequestWhenRequestorNotHaveActiveManualBlocks()
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException,
-    MalformedURLException {
+  public void canCreateRequestWhenRequestorNotHaveActiveManualBlocks() {
 
     final IndividualResource item = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource requester = usersFixture.rebecca();
@@ -1980,11 +1765,7 @@ public class RequestsAPICreationTests extends APITests {
   }
 
   @Test
-  public void canCreateRequestWhenRequestorHasManualExpiredBlock()
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException,
-    MalformedURLException {
+  public void canCreateRequestWhenRequestorHasManualExpiredBlock() {
 
     final IndividualResource item = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource requester = usersFixture.rebecca();
@@ -2007,11 +1788,7 @@ public class RequestsAPICreationTests extends APITests {
   }
 
   @Test
-  public void canCreateRequestWhenRequestorNoHaveRequestBlockAndHaveBorrowingRenewalsBlock()
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException,
-    MalformedURLException {
+  public void canCreateRequestWhenRequestorNoHaveRequestBlockAndHaveBorrowingRenewalsBlock() {
 
     final IndividualResource item = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource requester = usersFixture.rebecca();
@@ -2040,11 +1817,7 @@ public class RequestsAPICreationTests extends APITests {
   }
 
   @Test
-  public void cannotCreateRequestWhenRequestorHasSomeActiveRequestManualBlocks()
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException,
-    MalformedURLException {
+  public void cannotCreateRequestWhenRequestorHasSomeActiveRequestManualBlocks() {
 
     final IndividualResource item = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource requester = usersFixture.rebecca();

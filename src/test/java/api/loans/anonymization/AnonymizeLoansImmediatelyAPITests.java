@@ -27,8 +27,7 @@ public class AnonymizeLoansImmediatelyAPITests extends LoanAnonymizationTests {
    *     Then do not anonymize the loan
    */
   @Test
-  public void shouldNotAnonymizeClosedLoansWithOpenFeesAndFinesAndSettingsOfAnonymizeImmediately()
-    throws InterruptedException, ExecutionException, TimeoutException, MalformedURLException {
+  public void shouldNotAnonymizeClosedLoansWithOpenFeesAndFinesAndSettingsOfAnonymizeImmediately() {
 
     LoanHistoryConfigurationBuilder loanHistoryConfig = new LoanHistoryConfigurationBuilder()
       .loanCloseAnonymizeImmediately()
@@ -58,8 +57,7 @@ public class AnonymizeLoansImmediatelyAPITests extends LoanAnonymizationTests {
    *     Then anonymize the loan
    */
   @Test
-  public void shouldAnonymizeClosedLoansWhenFeesAndFinesCloseAndSettingsOfAnonymizeImmediately()
-    throws InterruptedException, ExecutionException, TimeoutException, MalformedURLException {
+  public void shouldAnonymizeClosedLoansWhenFeesAndFinesCloseAndSettingsOfAnonymizeImmediately() {
 
     LoanHistoryConfigurationBuilder loanHistoryConfig = new LoanHistoryConfigurationBuilder()
       .loanCloseAnonymizeImmediately()
@@ -90,8 +88,7 @@ public class AnonymizeLoansImmediatelyAPITests extends LoanAnonymizationTests {
    *     Then do not anonymize the loan
    */
   @Test
-  public void shouldNotAnonymizeWhenLoansWithOpenFeesAndFinesCloseAndSettingsOfNeverAnonymizeLoansWithFeesAndFines()
-    throws InterruptedException, ExecutionException, TimeoutException, MalformedURLException {
+  public void shouldNotAnonymizeWhenLoansWithOpenFeesAndFinesCloseAndSettingsOfNeverAnonymizeLoansWithFeesAndFines() {
 
     LoanHistoryConfigurationBuilder loanHistoryConfig = new LoanHistoryConfigurationBuilder()
       .loanCloseAnonymizeImmediately()
@@ -122,8 +119,7 @@ public class AnonymizeLoansImmediatelyAPITests extends LoanAnonymizationTests {
    *     Then do not anonymize the loan
    */
   @Test
-  public void shouldNotAnonymizeOpenLoansWhenFeesAndFinesCloseAndSettingsOfNeverAnonymizeLoansWithFeesAndFines()
-    throws InterruptedException, ExecutionException, TimeoutException, MalformedURLException {
+  public void shouldNotAnonymizeOpenLoansWhenFeesAndFinesCloseAndSettingsOfNeverAnonymizeLoansWithFeesAndFines() {
 
     LoanHistoryConfigurationBuilder loanHistoryConfig = new LoanHistoryConfigurationBuilder()
       .loanCloseAnonymizeImmediately()
@@ -152,8 +148,7 @@ public class AnonymizeLoansImmediatelyAPITests extends LoanAnonymizationTests {
    *     Then do not anonymize the loan
    */
   @Test
-  public void shouldNotAnonymizeClosedLoansWithClosedFeesAndFinesWhenAnonymizationIntervalForLoansWithFeesAndFinesHasNotPassed()
-    throws InterruptedException, ExecutionException, TimeoutException, MalformedURLException {
+  public void shouldNotAnonymizeClosedLoansWithClosedFeesAndFinesWhenAnonymizationIntervalForLoansWithFeesAndFinesHasNotPassed() {
 
     LoanHistoryConfigurationBuilder loanHistoryConfig = new LoanHistoryConfigurationBuilder()
       .loanCloseAnonymizeImmediately()
@@ -185,8 +180,7 @@ public class AnonymizeLoansImmediatelyAPITests extends LoanAnonymizationTests {
    *     Then anonymize the loan
    */
   @Test
-  public void shouldAnonymizeClosedLoansWhenFeesAndFinesCloseAndAnonymizationIntervalForLoansWithFeesAndFinesHasPassed()
-    throws InterruptedException, ExecutionException, TimeoutException, MalformedURLException {
+  public void shouldAnonymizeClosedLoansWhenFeesAndFinesCloseAndAnonymizationIntervalForLoansWithFeesAndFinesHasPassed() {
 
     LoanHistoryConfigurationBuilder loanHistoryConfig = new LoanHistoryConfigurationBuilder()
       .loanCloseAnonymizeImmediately()

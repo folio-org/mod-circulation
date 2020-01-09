@@ -40,11 +40,7 @@ public class DueDateScheduledNoticesTests extends APITests {
   private static final String AFTER_TIMING = "After";
 
   @Test
-  public void allDueDateNoticesShouldBeScheduledOnCheckoutWhenPolicyDefinesDueDateNoticeConfiguration()
-    throws MalformedURLException,
-    InterruptedException,
-    TimeoutException,
-    ExecutionException {
+  public void allDueDateNoticesShouldBeScheduledOnCheckoutWhenPolicyDefinesDueDateNoticeConfiguration() {
 
     UUID beforeTemplateId = UUID.randomUUID();
     Period beforePeriod = Period.days(2);
@@ -122,11 +118,7 @@ public class DueDateScheduledNoticesTests extends APITests {
   }
 
   @Test
-  public void checkOutSchedulesDifferentBeforeDueDateNotices()
-    throws MalformedURLException,
-    InterruptedException,
-    TimeoutException,
-    ExecutionException {
+  public void checkOutSchedulesDifferentBeforeDueDateNotices() {
 
     UUID firstBeforeTemplateId = UUID.randomUUID();
     Period firstBeforePeriod = Period.weeks(1);
@@ -188,10 +180,8 @@ public class DueDateScheduledNoticesTests extends APITests {
 
   @Test
   public void noNoticesShouldBeScheduledOnCheckOutWhenPolicyDoesNotDefineTimeBasedNotices()
-    throws MalformedURLException,
-    InterruptedException,
-    TimeoutException,
-    ExecutionException {
+    throws
+    InterruptedException {
 
     JsonObject checkOutNoticeConfiguration = new NoticeConfigurationBuilder()
       .withTemplateId(UUID.randomUUID())
@@ -230,11 +220,7 @@ public class DueDateScheduledNoticesTests extends APITests {
   }
 
   @Test
-  public void noticesShouldBeRescheduledAfterRenewal()
-    throws MalformedURLException,
-    InterruptedException,
-    TimeoutException,
-    ExecutionException {
+  public void noticesShouldBeRescheduledAfterRenewal() {
 
     UUID beforeTemplateId = UUID.randomUUID();
     Period beforePeriod = Period.days(2);
@@ -311,11 +297,7 @@ public class DueDateScheduledNoticesTests extends APITests {
   }
 
   @Test
-  public void noticesShouldBeRescheduledAfterRenewalOverride()
-    throws MalformedURLException,
-    InterruptedException,
-    TimeoutException,
-    ExecutionException {
+  public void noticesShouldBeRescheduledAfterRenewalOverride() {
 
     UUID beforeTemplateId = UUID.randomUUID();
     Period beforePeriod = Period.days(2);
@@ -399,11 +381,7 @@ public class DueDateScheduledNoticesTests extends APITests {
   }
 
   @Test
-  public void noticesShouldBeRescheduledAfterRecall()
-    throws MalformedURLException,
-    InterruptedException,
-    TimeoutException,
-    ExecutionException {
+  public void noticesShouldBeRescheduledAfterRecall() {
 
     UUID beforeTemplateId = UUID.randomUUID();
     Period beforePeriod = Period.days(2);
@@ -491,11 +469,7 @@ public class DueDateScheduledNoticesTests extends APITests {
   }
 
   @Test
-  public void noticesShouldBeRescheduledAfterManualDueDateChange()
-    throws MalformedURLException,
-    InterruptedException,
-    TimeoutException,
-    ExecutionException {
+  public void noticesShouldBeRescheduledAfterManualDueDateChange() {
 
     UUID beforeTemplateId = UUID.randomUUID();
     Period beforePeriod = Period.days(2);

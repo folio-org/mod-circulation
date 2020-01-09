@@ -19,20 +19,12 @@ public class UserManualBlocksFixture {
       manualBlock -> getProperty(manualBlock, "id"));
   }
 
-  public IndividualResource create(UserManualBlockBuilder userManualBlockBuilder)
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public IndividualResource create(UserManualBlockBuilder userManualBlockBuilder) {
 
     return userManualBlocksRecordCreator.createIfAbsent(userManualBlockBuilder.create());
   }
 
-  public void cleanUp()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void cleanUp() {
 
     userManualBlocksRecordCreator.cleanUp();
   }

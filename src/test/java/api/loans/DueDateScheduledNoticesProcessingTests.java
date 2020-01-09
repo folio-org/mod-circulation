@@ -1,5 +1,6 @@
 package api.loans;
 
+import static api.support.fixtures.ItemExamples.basedUponSmallAngryPlanet;
 import static api.support.matchers.PatronNoticeMatcher.hasEmailNoticeProperties;
 import static api.support.matchers.ScheduledNoticeMatchers.hasScheduledLoanNotice;
 import static java.util.Comparator.comparing;
@@ -47,7 +48,6 @@ import api.support.http.InventoryItemResource;
 import io.vertx.core.json.JsonObject;
 
 public class DueDateScheduledNoticesProcessingTests extends APITests {
-
   private static final String BEFORE_TIMING = "Before";
   private static final String UPON_AT_TIMING = "Upon At";
   private static final String AFTER_TIMING = "After";
@@ -73,17 +73,13 @@ public class DueDateScheduledNoticesProcessingTests extends APITests {
   private IndividualResource loan;
   private DateTime dueDate;
 
-
   @Before
-  public void beforeEach()
-    throws MalformedURLException,
-    InterruptedException,
-    TimeoutException,
-    ExecutionException {
-
+  public void beforeEach() {
     setUpNoticePolicy();
 
-    ItemBuilder itemBuilder = ItemExamples.basedUponSmallAngryPlanet(materialTypesFixture.book().getId(), loanTypesFixture.canCirculate().getId());
+    ItemBuilder itemBuilder = basedUponSmallAngryPlanet(
+      materialTypesFixture.book().getId(), loanTypesFixture.canCirculate().getId());
+
     HoldingBuilder holdingBuilder = itemsFixture.applyCallNumberHoldings(
       "CN",
       "Prefix",
@@ -106,11 +102,7 @@ public class DueDateScheduledNoticesProcessingTests extends APITests {
   }
 
   @Test
-  public void beforeNoticeShouldBeSentAndItsNextRunTimeShouldBeUpdated()
-    throws MalformedURLException,
-    InterruptedException,
-    TimeoutException,
-    ExecutionException {
+  public void beforeNoticeShouldBeSentAndItsNextRunTimeShouldBeUpdated() {
 
     DateTime beforeDueDateTime = dueDate.minus(beforePeriod.timePeriod()).plusSeconds(1);
     scheduledNoticeProcessingClient.runDueDateNoticesProcessing(beforeDueDateTime);
@@ -128,11 +120,7 @@ public class DueDateScheduledNoticesProcessingTests extends APITests {
   }
 
   @Test
-  public void beforeNoticeShouldBeSendAndDeletedWhenItsNextRunTimeIsAfterDueDate()
-    throws MalformedURLException,
-    InterruptedException,
-    TimeoutException,
-    ExecutionException {
+  public void beforeNoticeShouldBeSendAndDeletedWhenItsNextRunTimeIsAfterDueDate() {
 
     DateTime justBeforeDueDateTime = dueDate.minusSeconds(1);
     scheduledNoticeProcessingClient.runDueDateNoticesProcessing(justBeforeDueDateTime);
@@ -146,11 +134,7 @@ public class DueDateScheduledNoticesProcessingTests extends APITests {
   }
 
   @Test
-  public void uponAtNoticeShouldBeSentWhenProcessingJustAfterDueDate()
-    throws MalformedURLException,
-    InterruptedException,
-    TimeoutException,
-    ExecutionException {
+  public void uponAtNoticeShouldBeSentWhenProcessingJustAfterDueDate() {
 
     DateTime justAfterDueDateTime = dueDate.plusSeconds(1);
     scheduledNoticeProcessingClient.runDueDateNoticesProcessing(justAfterDueDateTime);
@@ -164,11 +148,7 @@ public class DueDateScheduledNoticesProcessingTests extends APITests {
   }
 
   @Test
-  public void afterRecurringNoticeShouldBeSentSeveralTimesBeforeLoanIsClosed()
-    throws MalformedURLException,
-    InterruptedException,
-    TimeoutException,
-    ExecutionException {
+  public void afterRecurringNoticeShouldBeSentSeveralTimesBeforeLoanIsClosed() {
 
     DateTime justAfterDueDateTime = dueDate.plusSeconds(1);
     scheduledNoticeProcessingClient.runDueDateNoticesProcessing(justAfterDueDateTime);
@@ -214,11 +194,7 @@ public class DueDateScheduledNoticesProcessingTests extends APITests {
   }
 
   @Test
-  public void processingTakesNoticesInThePastLimitedAndOrdered()
-    throws MalformedURLException,
-    InterruptedException,
-    TimeoutException,
-    ExecutionException {
+  public void processingTakesNoticesInThePastLimitedAndOrdered() {
     //Clean scheduled notices before this test
     scheduledNoticesClient.deleteAll();
 
@@ -256,11 +232,7 @@ public class DueDateScheduledNoticesProcessingTests extends APITests {
   }
 
   @Test
-  public void testNumberOfProcessedNoticesWithSchedulerNoticesLimitConfiguration()
-    throws MalformedURLException,
-    InterruptedException,
-    TimeoutException,
-    ExecutionException {
+  public void testNumberOfProcessedNoticesWithSchedulerNoticesLimitConfiguration() {
 
     scheduledNoticesClient.deleteAll();
 
@@ -279,11 +251,7 @@ public class DueDateScheduledNoticesProcessingTests extends APITests {
   }
 
   @Test
-  public void testNumberOfProcessedNotificationsWithIncorrectConfiguration()
-    throws MalformedURLException,
-    InterruptedException,
-    TimeoutException,
-    ExecutionException {
+  public void testNumberOfProcessedNotificationsWithIncorrectConfiguration() {
 
     scheduledNoticesClient.deleteAll();
 
@@ -301,11 +269,7 @@ public class DueDateScheduledNoticesProcessingTests extends APITests {
   }
 
   @Test
-  public void testDefaultNumberOfProcessedNotices()
-    throws MalformedURLException,
-    InterruptedException,
-    TimeoutException,
-    ExecutionException {
+  public void testDefaultNumberOfProcessedNotices() {
 
     scheduledNoticesClient.deleteAll();
 
@@ -319,11 +283,7 @@ public class DueDateScheduledNoticesProcessingTests extends APITests {
   }
 
   @Test
-  public void testNoticeIsDeletedIfReferencedLoanDoesNotExist()
-      throws MalformedURLException,
-      InterruptedException,
-      TimeoutException,
-      ExecutionException {
+  public void testNoticeIsDeletedIfReferencedLoanDoesNotExist() {
 
     scheduledNoticesClient.deleteAll();
     int expectedNumberOfUnprocessedNotices = 0;
@@ -341,11 +301,7 @@ public class DueDateScheduledNoticesProcessingTests extends APITests {
   }
 
   @Test
-  public void testNoticeIsDeletedIfReferencedItemDoesNotExist()
-      throws MalformedURLException,
-      InterruptedException,
-      TimeoutException,
-      ExecutionException {
+  public void testNoticeIsDeletedIfReferencedItemDoesNotExist() {
 
     scheduledNoticesClient.deleteAll();
     int expectedNumberOfUnprocessedNotices = 0;
@@ -364,18 +320,14 @@ public class DueDateScheduledNoticesProcessingTests extends APITests {
   }
 
   @Test
-  public void testNoticeIsDeletedIfReferencedUserDoesNotExist()
-      throws MalformedURLException,
-      InterruptedException,
-      TimeoutException,
-      ExecutionException {
+  public void testNoticeIsDeletedIfReferencedUserDoesNotExist() {
 
     scheduledNoticesClient.deleteAll();
     int expectedNumberOfUnprocessedNotices = 0;
 
     JsonObject brokenNotice = createNoticesOverTime(dueDate.minusMinutes(1)::minusHours, 1).get(0);
 
-    usersClient.delete(borrower);
+    usersFixture.remove(borrower);
 
     scheduledNoticesClient.create(brokenNotice);
     scheduledNoticeProcessingClient.runDueDateNoticesProcessing(dueDate.minusSeconds(1));
@@ -387,11 +339,7 @@ public class DueDateScheduledNoticesProcessingTests extends APITests {
   }
 
   @Test
-  public void testNoticesForNonExistentLoansDoNotBlockTheQueue()
-      throws MalformedURLException,
-      InterruptedException,
-      TimeoutException,
-      ExecutionException {
+  public void testNoticesForNonExistentLoansDoNotBlockTheQueue() {
 
     scheduledNoticesClient.deleteAll();
     int expectedNumberOfUnprocessedNotices = 0;
@@ -419,11 +367,7 @@ public class DueDateScheduledNoticesProcessingTests extends APITests {
     assertThat(unprocessedScheduledNotices, hasSize(expectedNumberOfUnprocessedNotices));
   }
 
-  private void createNotices(int numberOfNotices)
-    throws MalformedURLException,
-    InterruptedException,
-    TimeoutException,
-    ExecutionException {
+  private void createNotices(int numberOfNotices) {
 
     DateTime systemTime = DateTime.now(DateTimeZone.UTC);
     List<JsonObject> notices = createNoticesOverTime(systemTime::minusHours, numberOfNotices);
@@ -432,12 +376,7 @@ public class DueDateScheduledNoticesProcessingTests extends APITests {
     }
   }
 
-  private void setUpNoticePolicy()
-    throws MalformedURLException,
-    InterruptedException,
-    TimeoutException,
-    ExecutionException {
-
+  private void setUpNoticePolicy() {
     JsonObject beforeDueDateNoticeConfiguration = new NoticeConfigurationBuilder()
       .withTemplateId(beforeTemplateId)
       .withDueDateEvent()
@@ -445,12 +384,14 @@ public class DueDateScheduledNoticesProcessingTests extends APITests {
       .recurring(beforeRecurringPeriod)
       .sendInRealTime(true)
       .create();
+
     JsonObject uponAtDueDateNoticeConfiguration = new NoticeConfigurationBuilder()
       .withTemplateId(uponAtTemplateId)
       .withDueDateEvent()
       .withUponAtTiming()
       .sendInRealTime(true)
       .create();
+
     JsonObject afterDueDateNoticeConfiguration = new NoticeConfigurationBuilder()
       .withTemplateId(afterTemplateId)
       .withDueDateEvent()
@@ -465,6 +406,7 @@ public class DueDateScheduledNoticesProcessingTests extends APITests {
         beforeDueDateNoticeConfiguration,
         uponAtDueDateNoticeConfiguration,
         afterDueDateNoticeConfiguration));
+
     useFallbackPolicies(
       loanPoliciesFixture.canCirculateRolling().getId(),
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
@@ -473,12 +415,7 @@ public class DueDateScheduledNoticesProcessingTests extends APITests {
       lostItemFeePoliciesFixture.facultyStandard().getId());
   }
 
-  private void assertSetUpIsCorrect()
-    throws MalformedURLException,
-    InterruptedException,
-    TimeoutException,
-    ExecutionException {
-
+  private void assertSetUpIsCorrect() {
     Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
       .until(scheduledNoticesClient::getAll, hasSize(3));
@@ -492,11 +429,7 @@ public class DueDateScheduledNoticesProcessingTests extends APITests {
   private void checkScheduledNotices(
     DateTime beforeNoticeNextRunTime,
     DateTime uponAtNoticeNextRunTime,
-    DateTime afterNoticeNextRunTime)
-    throws MalformedURLException,
-    InterruptedException,
-    TimeoutException,
-    ExecutionException {
+    DateTime afterNoticeNextRunTime) {
 
     int numberOfExpectedScheduledNotices = 0;
     numberOfExpectedScheduledNotices += beforeNoticeNextRunTime != null ? 1 : 0;
@@ -530,11 +463,7 @@ public class DueDateScheduledNoticesProcessingTests extends APITests {
   }
 
   @SuppressWarnings("unchecked")
-  private void checkSentNotices(UUID... expectedTemplateIds)
-    throws MalformedURLException,
-    InterruptedException,
-    TimeoutException,
-    ExecutionException {
+  private void checkSentNotices(UUID... expectedTemplateIds) {
 
     Map<String, Matcher<String>> noticeContextMatchers = new HashMap<>();
     noticeContextMatchers.putAll(TemplateContextMatchers.getUserContextMatchers(borrower));

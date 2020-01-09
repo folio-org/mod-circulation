@@ -8,7 +8,6 @@ import java.util.concurrent.TimeoutException;
 
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.support.http.client.IndividualResource;
-import org.folio.circulation.support.http.client.OkapiHttpClient;
 
 import api.support.builders.HoldingBuilder;
 import api.support.http.ResourceClient;
@@ -17,12 +16,11 @@ import io.vertx.core.json.JsonArray;
 public class HoldingsFixture {
   private final ResourceClient holdingsClient;
 
-  public HoldingsFixture(OkapiHttpClient client) {
-    holdingsClient =  ResourceClient.forHoldings(client);
+  public HoldingsFixture() {
+    holdingsClient =  ResourceClient.forHoldings();
   }
 
-  public IndividualResource defaultWithHoldings(UUID instanceId)
-    throws InterruptedException, MalformedURLException, TimeoutException, ExecutionException {
+  public IndividualResource defaultWithHoldings(UUID instanceId) {
 
 
     HoldingBuilder holdingsBuilder = new HoldingBuilder()

@@ -82,6 +82,18 @@
           },
           "additionalProperties": false
         },
+        "enumeration": {
+          "description": "Item`s enumeration",
+          "type": "string"
+        },
+        "chronology": {
+          "description": "Chronology is the descriptive information for the dating scheme of a serial.",
+          "type": "string"
+        },
+        "volume": {
+          "description": "Volume is intended for monographs when a multipart monograph (e.g. a biography of George Bernard Shaw in three volumes).",
+          "type": "string"
+        },
         "inTransitDestinationServicePointId": {
           "description": "Service point an item is intended to be transited to (should only be present when in transit)",
           "type": "string",

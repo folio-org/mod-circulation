@@ -29,11 +29,7 @@ import api.support.builders.RequestBuilder;
 
 public class PageRequestWorkflowTests extends APITests {
   @Test
-  public void canBeFulfilledWithoutPriorCheckIn()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void canBeFulfilledWithoutPriorCheckIn() {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource jessica = usersFixture.jessica();
@@ -60,11 +56,7 @@ public class PageRequestWorkflowTests extends APITests {
   }
 
   @Test
-  public void itemCannotBeCheckedOutToOtherPatronWhenItemIsPagedAndNotYetBeingFulfilled()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void itemCannotBeCheckedOutToOtherPatronWhenItemIsPagedAndNotYetBeingFulfilled() {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource jessica = usersFixture.jessica();

@@ -53,21 +53,21 @@ import io.vertx.core.json.JsonObject;
 
 public class CheckInByBarcodeTests extends APITests {
   @Test
-  public void canCloseAnOpenLoanByCheckingInTheItem()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void canCloseAnOpenLoanByCheckingInTheItem() {
 
     final IndividualResource james = usersFixture.james();
 
     final UUID checkInServicePointId = servicePointsFixture.cd1().getId();
 
     final IndividualResource homeLocation = locationsFixture.basedUponExampleLocation(
-      builder -> builder.withPrimaryServicePoint(checkInServicePointId));
+      item -> item.withPrimaryServicePoint(checkInServicePointId));
 
     final IndividualResource nod = itemsFixture.basedUponNod(
-      builder -> builder.withTemporaryLocation(homeLocation.getId()));
+      item -> item
+        .withTemporaryLocation(homeLocation.getId())
+        .withEnumeration("v.70:no.1-6")
+        .withChronology("1987:Jan.-June")
+        .withVolume("testVolume"));
 
     final IndividualResource loan = loansFixture.checkOutByBarcode(nod, james,
       new DateTime(2018, 3, 1, 13, 25, 46, DateTimeZone.UTC));
@@ -128,6 +128,15 @@ public class CheckInByBarcodeTests extends APITests {
     assertThat("barcode is included for item",
       itemFromResponse.getString("barcode"), is("565578437802"));
 
+    assertThat("has item enumeration",
+      itemFromResponse.getString("enumeration"), is("v.70:no.1-6"));
+
+    assertThat("has item chronology",
+      itemFromResponse.getString("chronology"), is("1987:Jan.-June"));
+
+    assertThat("has item volume",
+      itemFromResponse.getString("volume"), is("testVolume"));
+
     JsonObject updatedNod = itemsClient.getById(nod.getId()).getJson();
 
     assertThat("item status is not available",
@@ -146,11 +155,7 @@ public class CheckInByBarcodeTests extends APITests {
   }
 
   @Test
-  public void canCreateStaffSlipContextOnCheckInByBarcode()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void canCreateStaffSlipContextOnCheckInByBarcode() {
     InventoryItemResource item = itemsFixture.basedUponSmallAngryPlanet();
 
     DateTime requestDate = new DateTime(2019, 7, 22, 10, 22, 54, DateTimeZone.UTC);
@@ -216,11 +221,7 @@ public class CheckInByBarcodeTests extends APITests {
   }
 
   @Test
-  public void cannotCheckInWithoutAServicePoint()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void cannotCheckInWithoutAServicePoint() {
 
     DateTime loanDate = new DateTime(2018, 3, 1, 13, 25, 46, DateTimeZone.UTC);
 
@@ -242,11 +243,7 @@ public class CheckInByBarcodeTests extends APITests {
   }
 
   @Test
-  public void cannotCheckInWithoutAnItem()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void cannotCheckInWithoutAnItem() {
 
     DateTime loanDate = new DateTime(2018, 3, 1, 13, 25, 46, DateTimeZone.UTC);
 
@@ -268,11 +265,7 @@ public class CheckInByBarcodeTests extends APITests {
   }
 
   @Test
-  public void cannotCheckInWithoutACheckInDate()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void cannotCheckInWithoutACheckInDate() {
 
     DateTime loanDate = new DateTime(2018, 3, 1, 13, 25, 46, DateTimeZone.UTC);
 
@@ -294,19 +287,19 @@ public class CheckInByBarcodeTests extends APITests {
   }
 
   @Test
-  public void canCheckInAnItemWithoutAnOpenLoan()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void canCheckInAnItemWithoutAnOpenLoan() {
 
     final UUID checkInServicePointId = servicePointsFixture.cd1().getId();
 
     final IndividualResource homeLocation = locationsFixture.basedUponExampleLocation(
-      builder -> builder.withPrimaryServicePoint(checkInServicePointId));
+      item -> item.withPrimaryServicePoint(checkInServicePointId));
 
     final IndividualResource nod = itemsFixture.basedUponNod(
-      builder -> builder.withTemporaryLocation(homeLocation.getId()));
+      item -> item
+        .withTemporaryLocation(homeLocation.getId())
+        .withEnumeration("v.70:no.1-6")
+        .withChronology("1987:Jan.-June")
+        .withVolume("testVolume"));
 
     final CheckInByBarcodeResponse checkInResponse = loansFixture.checkInByBarcode(
       nod, new DateTime(2018, 3, 5, 14, 23, 41, DateTimeZone.UTC),
@@ -326,16 +319,21 @@ public class CheckInByBarcodeTests extends APITests {
     assertThat("title is included for item",
       itemFromResponse.getString("title"), is("Nod"));
 
+    assertThat("has item enumeration",
+      itemFromResponse.getString("enumeration"), is("v.70:no.1-6"));
+
+    assertThat("has item chronology",
+      itemFromResponse.getString("chronology"), is("1987:Jan.-June"));
+
+    assertThat("has item volume",
+      itemFromResponse.getString("volume"), is("testVolume"));
+
     assertThat("barcode is included for item",
       itemFromResponse.getString("barcode"), is("565578437802"));
   }
 
   @Test
-  public void canCheckInAnItemTwice()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void canCheckInAnItemTwice() {
 
     DateTime loanDate = new DateTime(2018, 3, 1, 13, 25, 46, DateTimeZone.UTC);
 
@@ -347,7 +345,11 @@ public class CheckInByBarcodeTests extends APITests {
       builder -> builder.withPrimaryServicePoint(checkInServicePointId));
 
     final IndividualResource nod = itemsFixture.basedUponNod(
-      builder -> builder.withTemporaryLocation(homeLocation.getId()));
+      item -> item
+        .withTemporaryLocation(homeLocation.getId())
+        .withEnumeration("v.70:no.1-6")
+        .withChronology("1987:Jan.-June")
+        .withVolume("testVolume"));
 
     loansFixture.checkOutByBarcode(nod, james, loanDate);
 
@@ -375,14 +377,20 @@ public class CheckInByBarcodeTests extends APITests {
 
     assertThat("barcode is included for item",
       itemFromResponse.getString("barcode"), is("565578437802"));
+
+    assertThat("has item enumeration",
+      itemFromResponse.getString("enumeration"), is("v.70:no.1-6"));
+
+    assertThat("has item chronology",
+      itemFromResponse.getString("chronology"), is("1987:Jan.-June"));
+
+    assertThat("has item volume",
+      itemFromResponse.getString("volume"), is("testVolume"));
   }
 
   @Test
   public void patronNoticeOnCheckInIsNotSentWhenCheckInLoanNoticeIsDefinedAndLoanExists()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+    throws InterruptedException {
 
     UUID checkInTemplateId = UUID.randomUUID();
     JsonObject checkOutNoticeConfiguration = new NoticeConfigurationBuilder()
@@ -431,10 +439,7 @@ public class CheckInByBarcodeTests extends APITests {
 
   @Test
   public void shouldNotSendPatronNoticeWhenCheckInNoticeIsDefinedAndCheckInDoesNotCloseLoan()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+    throws InterruptedException {
 
     UUID checkInTemplateId = UUID.randomUUID();
     JsonObject checkOutNoticeConfiguration = new NoticeConfigurationBuilder()
@@ -472,7 +477,7 @@ public class CheckInByBarcodeTests extends APITests {
   }
 
   @Test
-  public void patronNoticeOnCheckInAfterCheckOutAndRequestToItem() throws Exception {
+  public void patronNoticeOnCheckInAfterCheckOutAndRequestToItem() {
     InventoryItemResource item = itemsFixture.basedUponSmallAngryPlanet();
 
     loansFixture.checkOutByBarcode(item, usersFixture.jessica());
@@ -511,7 +516,7 @@ public class CheckInByBarcodeTests extends APITests {
   }
 
   @Test
-  public void patronNoticeOnCheckInAfterRequestToItem() throws Exception {
+  public void patronNoticeOnCheckInAfterRequestToItem() {
     InventoryItemResource item = itemsFixture.basedUponSmallAngryPlanet();
     DateTime requestDate = new DateTime(2019, 5, 5, 10, 22, 54, DateTimeZone.UTC);
     UUID servicePointId = servicePointsFixture.cd1().getId();
@@ -548,11 +553,7 @@ public class CheckInByBarcodeTests extends APITests {
   }
 
   @Test
-  public void availableNoticeIsSentOnceWhenItemStatusIsChangedToAwaitingPickup()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException  {
+  public void availableNoticeIsSentOnceWhenItemStatusIsChangedToAwaitingPickup() {
 
     JsonObject availableNoticeConfig = new NoticeConfigurationBuilder()
       .withTemplateId(UUID.randomUUID())
@@ -592,8 +593,7 @@ public class CheckInByBarcodeTests extends APITests {
 
   private void checkPatronNoticeEvent(
     IndividualResource request, IndividualResource requester,
-    InventoryItemResource item, UUID expectedTemplateId)
-    throws Exception {
+    InventoryItemResource item, UUID expectedTemplateId) {
 
     Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)

@@ -424,7 +424,7 @@ public class CheckOutCalculateOffsetTimeTests extends APITests {
   private void checkOffsetTime(DateTime loanDate, DateTime expectedDueDate, String servicePointId,
                                String interval, int duration,
                                String offsetInterval, int offsetDuration)
-    throws InterruptedException, MalformedURLException, TimeoutException, ExecutionException {
+    throws InterruptedException, TimeoutException, ExecutionException {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource steve = usersFixture.steve();
@@ -486,11 +486,7 @@ public class CheckOutCalculateOffsetTimeTests extends APITests {
     return new DateTime(dateTime.toString()).withZoneRetainFields(DateTimeZone.UTC);
   }
 
-  private IndividualResource createLoanPolicy(JsonObject loanPolicyEntry)
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  private IndividualResource createLoanPolicy(JsonObject loanPolicyEntry) {
 
     IndividualResource loanPolicy = loanPoliciesFixture.create(loanPolicyEntry);
 

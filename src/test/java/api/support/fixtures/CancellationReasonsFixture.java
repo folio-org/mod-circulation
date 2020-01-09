@@ -20,47 +20,27 @@ public class CancellationReasonsFixture {
       reason -> getProperty(reason, "name"));
   }
 
-  public void cleanUp()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void cleanUp() {
 
     cancellationReasonsRecordCreator.cleanUp();
   }
 
-  public IndividualResource courseReserves()
-      throws InterruptedException, 
-      MalformedURLException, 
-      TimeoutException, 
-      ExecutionException {
+  public IndividualResource courseReserves() {
 
     return createReason("Course Reserves", "Item needed for course reserves");
   }
 
-  public IndividualResource itemNotAvailable()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public IndividualResource itemNotAvailable() {
 
     return createReason("Item Not Available", "Item is no longer available", "Item is no longer available");
   }
 
-  private IndividualResource createReason(String name, String description)
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  private IndividualResource createReason(String name, String description) {
 
     return createReason(name, description, null);
   }
 
-  private IndividualResource createReason(String name, String description, String publicDescription)
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  private IndividualResource createReason(String name, String description, String publicDescription) {
 
     final JsonObject reason = new JsonObject();
 

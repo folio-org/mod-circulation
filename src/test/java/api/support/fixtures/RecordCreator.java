@@ -35,11 +35,7 @@ class RecordCreator {
     this.identityMapKey = identityMapKey;
   }
 
-  private IndividualResource create(JsonObject record)
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  private IndividualResource create(JsonObject record) {
 
     final IndividualResource createdRecord = client.create(record);
 
@@ -48,11 +44,7 @@ class RecordCreator {
     return createdRecord;
   }
 
-  void cleanUp()
-    throws MalformedURLException,
-    InterruptedException,
-    ExecutionException,
-    TimeoutException {
+  void cleanUp() {
 
     for (UUID userId : createdRecordIds) {
       client.delete(userId);
@@ -61,29 +53,17 @@ class RecordCreator {
     createdRecordIds.clear();
   }
 
-  IndividualResource createIfAbsent(Builder recordBuilder)
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  IndividualResource createIfAbsent(Builder recordBuilder) {
 
     return createIfAbsent(recordBuilder.create());
   }
 
-  IndividualResource createIfAbsent(JsonObject record)
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  IndividualResource createIfAbsent(JsonObject record) {
 
     return createIfAbsent(identityMapKey.apply(record), record);
   }
 
-  private IndividualResource createIfAbsent(String key, JsonObject record)
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  private IndividualResource createIfAbsent(String key, JsonObject record) {
 
     //Cannot use computeIfAbsent as create(record) can throw checked exceptions
     if(needsCreating(key)) {
@@ -99,11 +79,7 @@ class RecordCreator {
     return !identityMap.containsKey(key);
   }
 
-  public void delete(IndividualResource record)
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void delete(IndividualResource record) {
 
     client.delete(record.getId());
     createdRecordIds.remove(record.getId());

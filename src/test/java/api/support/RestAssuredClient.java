@@ -1,23 +1,24 @@
 package api.support;
 
 import static api.support.APITestContext.getOkapiHeadersFromContext;
+import static api.support.RestAssuredConfiguration.standardHeaders;
+import static api.support.RestAssuredConfiguration.timeoutConfig;
+import static api.support.RestAssuredResponseConversion.toResponse;
 import static io.restassured.RestAssured.given;
-import static org.folio.circulation.support.http.OkapiHeader.OKAPI_URL;
-import static org.folio.circulation.support.http.OkapiHeader.TENANT;
+import static java.util.Arrays.asList;
 
 import java.net.URL;
+import java.util.Collection;
 import java.util.HashMap;
-import java.util.Map;
 
-import org.folio.circulation.support.http.OkapiHeader;
 import org.folio.circulation.support.http.client.Response;
 
+import api.support.http.CqlQuery;
+import api.support.http.Limit;
+import api.support.http.Offset;
 import api.support.http.OkapiHeaders;
-import io.restassured.RestAssured;
-import io.restassured.builder.RequestSpecBuilder;
-import io.restassured.config.HttpClientConfig;
+import api.support.http.QueryStringParameter;
 import io.restassured.specification.RequestSpecification;
-import io.vertx.core.http.CaseInsensitiveHeaders;
 import io.vertx.core.json.JsonObject;
 
 public class RestAssuredClient {
@@ -27,12 +28,40 @@ public class RestAssuredClient {
     this.defaultHeaders = defaultHeaders;
   }
 
-  public Response get(URL url, Map<String, String> queryStringParameters,
+  public RequestSpecification beginRequest(String requestId) {
+    return given()
+      .log().all()
+      .spec(standardHeaders(defaultHeaders.withRequestId(requestId)))
+      .spec(timeoutConfig());
+  }
+
+  public Response get(URL location, String requestId) {
+    return toResponse(beginRequest(requestId)
+      .when().get(location)
+      .then()
+      .log().all()
+      .extract().response());
+  }
+
+  public Response get(URL location, CqlQuery query, Limit limit, Offset offset,
       int expectedStatusCode, String requestId) {
 
+    return get(location, asList(query, limit, offset), expectedStatusCode,
+        requestId);
+  }
+
+  public Response get(URL url, Collection<QueryStringParameter> parameters,
+      int expectedStatusCode, String requestId) {
+
+    final HashMap<String, String> queryStringParametersMap = new HashMap<>();
+
+    parameters
+      .forEach(parameter -> parameter.collectInto(queryStringParametersMap));
+
     return toResponse(given()
+      .log().all()
       .spec(standardHeaders(defaultHeaders.withRequestId(requestId)))
-      .queryParams(queryStringParameters)
+      .queryParams(queryStringParametersMap)
       .spec(timeoutConfig())
       .when().get(url)
       .then()
@@ -42,10 +71,7 @@ public class RestAssuredClient {
   }
 
   public Response get(URL url, int expectedStatusCode, String requestId) {
-    return toResponse(given()
-      .log().all()
-      .spec(standardHeaders(defaultHeaders.withRequestId(requestId)))
-      .spec(timeoutConfig())
+    return toResponse(beginRequest(requestId)
       .when().get(url)
       .then()
       .log().all()
@@ -72,10 +98,7 @@ public class RestAssuredClient {
   }
 
   public Response post(JsonObject representation, URL url, String requestId) {
-    return toResponse(given()
-      .log().all()
-      .spec(standardHeaders(defaultHeaders.withRequestId(requestId)))
-      .spec(timeoutConfig())
+    return toResponse(beginRequest(requestId)
       .body(representation.encodePrettily())
       .when().post(url)
       .then()
@@ -86,10 +109,7 @@ public class RestAssuredClient {
   public Response post(JsonObject representation, URL url,
     int expectedStatusCode, String requestId) {
 
-    return toResponse(given()
-      .log().all()
-      .spec(standardHeaders(defaultHeaders.withRequestId(requestId)))
-      .spec(timeoutConfig())
+    return toResponse(beginRequest(requestId)
       .body(representation.encodePrettily())
       .when().post(url)
       .then()
@@ -113,48 +133,33 @@ public class RestAssuredClient {
       .extract().response());
   }
 
-  private static RequestSpecification standardHeaders(OkapiHeaders okapiHeaders) {
-    final HashMap<String, String> headers = new HashMap<>();
-
-    headers.put(OKAPI_URL, okapiHeaders.getUrl().toString());
-    headers.put(TENANT, okapiHeaders.getTenantId());
-    headers.put(OkapiHeader.TOKEN, okapiHeaders.getToken());
-    headers.put(OkapiHeader.REQUEST_ID, okapiHeaders.getRequestId());
-
-    if (okapiHeaders.hasUserId()) {
-      headers.put(OkapiHeader.USER_ID, okapiHeaders.getUserId());
-    }
-
-    return new RequestSpecBuilder()
-      .addHeaders(headers)
-      .setAccept("application/json, text/plain")
-      .setContentType("application/json")
-      .build();
+  public Response put(JsonObject representation, URL location, String requestId) {
+    return toResponse(beginRequest(requestId)
+      .body(representation.encodePrettily())
+      .when().put(location)
+      .then()
+      .log().all()
+      .extract().response());
   }
 
-  private static RequestSpecification timeoutConfig() {
-    final int defaultTimeOutInMilliseconds = 5000;
+  public Response put(JsonObject representation, URL location,
+    int expectedStatusCode, String requestId) {
 
-    return timeoutConfig(defaultTimeOutInMilliseconds);
+    return toResponse(beginRequest(requestId)
+      .body(representation.encodePrettily())
+      .when().put(location)
+      .then()
+      .log().all()
+      .statusCode(expectedStatusCode)
+      .extract().response());
   }
 
-  private static RequestSpecification timeoutConfig(int timeOutInMilliseconds) {
-    return new RequestSpecBuilder()
-      .setConfig(RestAssured.config()
-        .httpClient(HttpClientConfig.httpClientConfig()
-          .setParam("http.connection.timeout", timeOutInMilliseconds)
-          .setParam("http.socket.timeout", timeOutInMilliseconds)))
-      .build();
-  }
-
-  private static Response toResponse(io.restassured.response.Response response) {
-    final CaseInsensitiveHeaders mappedHeaders = new CaseInsensitiveHeaders();
-
-    response.headers().iterator().forEachRemaining(h -> {
-      mappedHeaders.add(h.getName(), h.getValue());
-    });
-
-    return new Response(response.statusCode(), response.body().print(),
-      response.contentType(), mappedHeaders, null);
+  public Response delete(URL location, int expectedStatusCode, String requestId) {
+    return toResponse(beginRequest(requestId)
+      .when().delete(location)
+      .then()
+      .log().all()
+      .statusCode(expectedStatusCode)
+      .extract().response());
   }
 }

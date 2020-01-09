@@ -48,11 +48,7 @@ public class PickSlipsTests extends APITests {
   private static final String CODE_KEY = "code";
 
   @Test
-  public void reportIsEmptyForNonExistentServicePointId()
-      throws InterruptedException,
-      MalformedURLException,
-      TimeoutException,
-      ExecutionException {
+  public void reportIsEmptyForNonExistentServicePointId() {
 
     final UUID servicePointId = servicePointsFixture.cd1().getId();
     final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
@@ -64,18 +60,14 @@ public class PickSlipsTests extends APITests {
         .forItem(smallAngryPlanet)
         .by(usersFixture.james()));
 
-    Response response = ResourceClient.forPickSlips(client).getById(UUID.randomUUID());
+    Response response = ResourceClient.forPickSlips().getById(UUID.randomUUID());
     assertThat(response.getStatusCode(), is(HTTP_OK));
 
     assertResponseHasItems(response, 0);
   }
 
   @Test
-  public void reportIsEmptyForWrongServicePointId()
-      throws InterruptedException,
-      MalformedURLException,
-      TimeoutException,
-      ExecutionException {
+  public void reportIsEmptyForWrongServicePointId() {
 
     final UUID servicePointId = servicePointsFixture.cd1().getId();
     final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
@@ -88,33 +80,25 @@ public class PickSlipsTests extends APITests {
         .by(usersFixture.james()));
 
     UUID differentServicePointId = servicePointsFixture.cd2().getId();
-    Response response = ResourceClient.forPickSlips(client).getById(differentServicePointId);
+    Response response = ResourceClient.forPickSlips().getById(differentServicePointId);
     assertThat(response.getStatusCode(), is(HTTP_OK));
 
     assertResponseHasItems(response, 0);
   }
 
   @Test
-  public void reportIsEmptyWhenThereAreNoPagedItems()
-      throws InterruptedException,
-      MalformedURLException,
-      TimeoutException,
-      ExecutionException {
+  public void reportIsEmptyWhenThereAreNoPagedItems() {
 
     final UUID servicePointId = servicePointsFixture.cd1().getId();
 
-    Response response = ResourceClient.forPickSlips(client).getById(servicePointId);
+    Response response = ResourceClient.forPickSlips().getById(servicePointId);
     assertThat(response.getStatusCode(), is(HTTP_OK));
 
     assertResponseHasItems(response, 0);
   }
 
   @Test
-  public void reportIsEmptyWhenPagedItemHasOpenRequestWithWrongStatus()
-      throws InterruptedException,
-      MalformedURLException,
-      TimeoutException,
-      ExecutionException {
+  public void reportIsEmptyWhenPagedItemHasOpenRequestWithWrongStatus() {
 
     final UUID servicePointId = servicePointsFixture.cd1().getId();
 
@@ -127,18 +111,14 @@ public class PickSlipsTests extends APITests {
         .forItem(smallAngryPlanet)
         .by(usersFixture.james()));
 
-    Response response = ResourceClient.forPickSlips(client).getById(servicePointId);
+    Response response = ResourceClient.forPickSlips().getById(servicePointId);
     assertThat(response.getStatusCode(), is(HTTP_OK));
 
     assertResponseHasItems(response, 0);
   }
 
   @Test
-  public void reportContainsPagedItemWithOpenUnfilledRequest()
-      throws InterruptedException,
-      MalformedURLException,
-      TimeoutException,
-      ExecutionException {
+  public void reportContainsPagedItemWithOpenUnfilledRequest() {
 
     UUID servicePointId = servicePointsFixture.cd1().getId();
     InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
@@ -150,7 +130,7 @@ public class PickSlipsTests extends APITests {
         .forItem(smallAngryPlanet)
         .by(usersFixture.james()));
 
-    Response response = ResourceClient.forPickSlips(client).getById(servicePointId);
+    Response response = ResourceClient.forPickSlips().getById(servicePointId);
     assertThat(response.getStatusCode(), is(HTTP_OK));
 
     assertResponseHasItems(response, 1);
@@ -158,11 +138,7 @@ public class PickSlipsTests extends APITests {
   }
 
   @Test
-  public void reportContainsPagedItemWithMultipleOpenUnfilledRequests()
-      throws InterruptedException,
-      MalformedURLException,
-      TimeoutException,
-      ExecutionException {
+  public void reportContainsPagedItemWithMultipleOpenUnfilledRequests() {
 
     UUID servicePointId = servicePointsFixture.cd1().getId();
     InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
@@ -187,7 +163,7 @@ public class PickSlipsTests extends APITests {
     requestsClient.replace(secondRequest.getId(),
         secondRequestBuilder.withRequestType(RequestType.PAGE.getValue()));
 
-    Response response = ResourceClient.forPickSlips(client).getById(servicePointId);
+    Response response = ResourceClient.forPickSlips().getById(servicePointId);
     assertThat(response.getStatusCode(), is(HTTP_OK));
 
     assertResponseHasItems(response, 1);
@@ -195,11 +171,7 @@ public class PickSlipsTests extends APITests {
   }
 
   @Test
-  public void multiBatchFetchingProcessesAllItemsAndRequests()
-      throws InterruptedException,
-      MalformedURLException,
-      TimeoutException,
-      ExecutionException {
+  public void multiBatchFetchingProcessesAllItemsAndRequests() {
 
     UUID servicePointId = servicePointsFixture.cd1().getId();
 
@@ -221,7 +193,7 @@ public class PickSlipsTests extends APITests {
 
     assertThat(expectedItemIds.size(), is(itemsCount));
 
-    Response response = ResourceClient.forPickSlips(client).getById(servicePointId);
+    Response response = ResourceClient.forPickSlips().getById(servicePointId);
     assertThat(response.getStatusCode(), is(HTTP_OK));
 
     assertResponseHasItems(response, itemsCount);
@@ -237,11 +209,7 @@ public class PickSlipsTests extends APITests {
   }
 
   @Test
-  public void reportIncludesItemsFromDifferentLocationsForSameServicePoint()
-      throws InterruptedException,
-      MalformedURLException,
-      TimeoutException,
-      ExecutionException {
+  public void reportIncludesItemsFromDifferentLocationsForSameServicePoint() {
 
     final UUID circDesk1 = servicePointsFixture.cd1().getId();
 
@@ -279,7 +247,7 @@ public class PickSlipsTests extends APITests {
         .forItem(planetThirdFloorCd1)
         .by(usersFixture.charlotte()));
 
-    Response response = ResourceClient.forPickSlips(client).getById(circDesk1);
+    Response response = ResourceClient.forPickSlips().getById(circDesk1);
     assertThat(response.getStatusCode(), is(HTTP_OK));
 
     assertResponseHasItems(response, 2);
@@ -287,11 +255,7 @@ public class PickSlipsTests extends APITests {
   }
 
   @Test
-  public void reportDoesNotIncludeItemsFromDifferentServicePoint()
-      throws InterruptedException,
-      MalformedURLException,
-      TimeoutException,
-      ExecutionException {
+  public void reportDoesNotIncludeItemsFromDifferentServicePoint() {
 
     final UUID circDesk1 = servicePointsFixture.cd1().getId();
 
@@ -330,7 +294,7 @@ public class PickSlipsTests extends APITests {
         .by(usersFixture.jessica()));
 
     // Report for Circ Desk 1
-    Response responseForCd1 = ResourceClient.forPickSlips(client).getById(circDesk1);
+    Response responseForCd1 = ResourceClient.forPickSlips().getById(circDesk1);
     assertThat(responseForCd1.getStatusCode(), is(HTTP_OK));
 
     assertResponseHasItems(responseForCd1, 1);
@@ -340,7 +304,7 @@ public class PickSlipsTests extends APITests {
 
     // Report for Circ Desk 4
     UUID circDesk4 = servicePointsFixture.cd4().getId();
-    Response responseForCd4 = ResourceClient.forPickSlips(client).getById(circDesk4);
+    Response responseForCd4 = ResourceClient.forPickSlips().getById(circDesk4);
     assertThat(responseForCd4.getStatusCode(), is(HTTP_OK));
 
     assertResponseHasItems(responseForCd4, 1);

@@ -1,26 +1,19 @@
 package api.loans;
 
+import static api.support.http.InterfaceUrls.circulationRulesUrl;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsNot.not;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 
-import java.net.MalformedURLException;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 import org.folio.circulation.support.http.client.IndividualResource;
-import org.folio.circulation.support.http.client.Response;
-import org.folio.circulation.support.http.client.ResponseHandler;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.junit.Test;
 
 import api.support.APITests;
 import api.support.builders.LoanBuilder;
-import api.support.http.InterfaceUrls;
 import io.vertx.core.json.JsonObject;
 
 public class LoanAPIPolicyTests extends APITests {
@@ -55,29 +48,23 @@ public class LoanAPIPolicyTests extends APITests {
 
   //TODO: Split into multiple tests
   @Test
-  public void canRetrieveLoanPolicyId()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
-
-
+  public void canRetrieveLoanPolicyId() {
     final UUID readingRoom = loanTypesFixture.readingRoom().getId();
 
     JsonObject itemJson1 = itemsFixture.basedUponInterestingTimes().getJson();
     JsonObject itemJson2 = itemsFixture.basedUponDunkirk().getJson();
     JsonObject itemJson3 = itemsFixture.basedUponInterestingTimes().getJson();
     JsonObject itemJson4 = itemsFixture.basedUponDunkirk().getJson();
-    JsonObject itemJson5 = itemsFixture.basedUponTemeraire(
-      builder -> builder.withTemporaryLoanType(readingRoom)).getJson();
+    JsonObject itemJson5 = itemsFixture.basedUponTemeraire(item -> item
+      .withTemporaryLoanType(readingRoom)).getJson();
 
     final IndividualResource alternative = patronGroupsFixture.alternative();
 
     JsonObject user1 = usersFixture.jessica().getJson();
 
-    JsonObject user2 = usersFixture.charlotte(
-      userBuilder -> userBuilder.inGroupFor(alternative))
-      .getJson();
+    JsonObject user2 = usersFixture.charlotte(user -> user
+      .inGroupFor(alternative))
+        .getJson();
 
     UUID group1 = UUID.fromString(user1.getString("patronGroup"));
 
@@ -105,14 +92,8 @@ public class LoanAPIPolicyTests extends APITests {
 
     circulationRulesFixture.updateCirculationRules(rules);
 
-    //Get the circulation rules
-    CompletableFuture<Response> getCompleted = new CompletableFuture<>();
-    client.get(InterfaceUrls.circulationRulesUrl(), ResponseHandler.any(getCompleted));
-    Response getResponse = getCompleted.get(5, TimeUnit.SECONDS);
+    String circulationRules = circulationRulesFixture.getCirculationRules();
 
-    JsonObject rulesJson = new JsonObject(getResponse.getBody());
-
-    String circulationRules = rulesJson.getString("rulesAsText");
     assertThat("Returned rules match submitted rules", circulationRules, is(rules));
 
     warmUpApplyEndpoint();
@@ -140,11 +121,7 @@ public class LoanAPIPolicyTests extends APITests {
   }
 
   private void testLoanPolicy(UUID id, UUID userId, UUID itemId, DateTime loanDate,
-    DateTime dueDate, String status, String policyName)
-    throws MalformedURLException,
-    InterruptedException,
-    ExecutionException,
-    TimeoutException {
+    DateTime dueDate, String status, String policyName) {
 
     IndividualResource loanResponse = loansFixture.createLoan(new LoanBuilder()
       .withId(id)
@@ -163,11 +140,7 @@ public class LoanAPIPolicyTests extends APITests {
     assertThat(policyJson.getString("name"), is(policyName));
   }
 
-  private void createLoanPolicies()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  private void createLoanPolicies() {
 
     JsonObject p1Json = new JsonObject()
        .put("name", "Policy 1")

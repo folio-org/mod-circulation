@@ -27,11 +27,7 @@ public class RequestsAPIRelatedRecordsTests extends APITests {
   private static final String TWO_COPY_NUMBER = "2";
 
   @Test
-  public void holdingIdAndInstanceIdIncludedWhenHoldingAndInstanceAreAvailable()
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException,
-    MalformedURLException {
+  public void holdingIdAndInstanceIdIncludedWhenHoldingAndInstanceAreAvailable() {
 
     final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
@@ -81,11 +77,7 @@ public class RequestsAPIRelatedRecordsTests extends APITests {
   }
 
   @Test
-  public void checkRelatedRecordsForMultipleRequests()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void checkRelatedRecordsForMultipleRequests() {
 
     final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet(
       itemBuilder -> itemBuilder.withCopyNumbers(asList(ONE_COPY_NUMBER, TWO_COPY_NUMBER))

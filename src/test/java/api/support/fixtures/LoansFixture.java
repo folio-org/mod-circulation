@@ -1,6 +1,8 @@
 package api.support.fixtures;
 
+import static api.support.APITestContext.circulationModuleUrl;
 import static api.support.APITestContext.getOkapiHeadersFromContext;
+import static api.support.MultipleJsonRecords.multipleRecordsFrom;
 import static api.support.http.AdditionalHttpStatusCodes.UNPROCESSABLE_ENTITY;
 import static api.support.http.CqlQuery.noQuery;
 import static api.support.http.InterfaceUrls.checkInByBarcodeUrl;
@@ -14,16 +16,19 @@ import static api.support.http.InterfaceUrls.renewByIdUrl;
 import static api.support.http.Limit.maximumLimit;
 import static api.support.http.Limit.noLimit;
 import static api.support.http.Offset.noOffset;
-import static org.folio.circulation.support.JsonArrayHelper.mapToList;
+import static java.net.HttpURLConnection.HTTP_OK;
 
-import org.folio.circulation.support.JsonPropertyWriter;
+import java.net.URL;
+import java.util.UUID;
+
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
 
 import api.support.CheckInByBarcodeResponse;
 import api.support.MultipleJsonRecords;
 import api.support.RestAssuredClient;
-import api.support.builders.BatchChangeDueDateRequestBuilder;
 import api.support.builders.CheckInByBarcodeRequestBuilder;
 import api.support.builders.CheckOutByBarcodeRequestBuilder;
 import api.support.builders.DeclareItemLostRequestBuilder;
@@ -33,21 +38,10 @@ import api.support.builders.OverrideRenewalByBarcodeRequestBuilder;
 import api.support.builders.RenewByBarcodeRequestBuilder;
 import api.support.builders.RenewByIdRequestBuilder;
 import api.support.http.CqlQuery;
-import api.support.http.InterfaceUrls;
 import api.support.http.Limit;
 import api.support.http.Offset;
 import api.support.http.OkapiHeaders;
-import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
-import java.net.MalformedURLException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.UUID;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeoutException;
-import java.util.stream.Stream;
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
 
 public class LoansFixture {
   private final UsersFixture usersFixture;
@@ -94,14 +88,14 @@ public class LoansFixture {
     return new IndividualResource(attemptToCreateLoan(builder, 201));
   }
 
-  public Response attemptToCreateLoan(
-    IndividualResource item, IndividualResource to) {
+  public Response attemptToCreateLoan(IndividualResource item,
+    IndividualResource to) {
 
     return attemptToCreateLoan(item, to, UNPROCESSABLE_ENTITY);
   }
 
-  public Response attemptToCreateLoan(
-    IndividualResource item, IndividualResource to, int expectedStatusCode) {
+  public Response attemptToCreateLoan(IndividualResource item,
+    IndividualResource to, int expectedStatusCode) {
 
     return attemptToCreateLoan(new LoanBuilder()
       .open()
@@ -109,15 +103,36 @@ public class LoansFixture {
       .withUserId(to.getId()), expectedStatusCode);
   }
 
-  public Response attemptToCreateLoan(
-    LoanBuilder loanBuilder, int expectedStatusCode) {
+  public Response attemptToCreateLoan(LoanBuilder loanBuilder,
+    int expectedStatusCode) {
 
     return restAssuredClient.post(loanBuilder.create(), loansUrl(),
       expectedStatusCode, "post-loan");
   }
 
+  public void createLoanAtSpecificLocation(UUID loanId, LoanBuilder loanBuilder) {
+    restAssuredClient.put(loanBuilder.create(), urlForLoan(loanId), 204,
+      "create-loan-at-specific-location");
+  }
+
+  public Response attemptToCreateLoanAtSpecificLocation(UUID loanId,
+    LoanBuilder loanBuilder) {
+
+    return restAssuredClient.put(loanBuilder.create(), urlForLoan(loanId),
+      "attempt-to-create-loan-at-specific-location");
+  }
+
+  public void replaceLoan(UUID loanId, JsonObject representation) {
+    restAssuredClient.put(representation, urlForLoan(loanId), 204, "replace-loan");
+  }
+
+  public Response attemptToReplaceLoan(UUID loanId, JsonObject representation) {
+    return restAssuredClient.put(representation, urlForLoan(loanId),
+      "replace-loan");
+  }
+
   public Response declareItemLost(UUID loanId,
-      DeclareItemLostRequestBuilder builder) {
+    DeclareItemLostRequestBuilder builder) {
 
     JsonObject request = builder.create();
 
@@ -125,28 +140,12 @@ public class LoansFixture {
       declareLoanItemLostURL(loanId.toString()), "declare-item-lost-request");
   }
 
-  public IndividualResource checkOutByBarcode(IndividualResource item)
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
-
+  public IndividualResource checkOutByBarcode(IndividualResource item) {
     return checkOutByBarcode(item, usersFixture.jessica());
   }
 
-  public Response batchChangeDueDate(BatchChangeDueDateRequestBuilder requestBuilder) {
-
-    return restAssuredClient.post(requestBuilder.create(),
-      InterfaceUrls.batchChangeDueDateUrl(), "batch-change-due-date-request");
-  }
-
-  public IndividualResource checkOutByBarcode(
-    IndividualResource item,
-    IndividualResource to)
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public IndividualResource checkOutByBarcode(IndividualResource item,
+    IndividualResource to) {
 
     return checkOutByBarcode(new CheckOutByBarcodeRequestBuilder()
       .forItem(item)
@@ -157,11 +156,7 @@ public class LoansFixture {
   public IndividualResource checkOutByBarcode(
     IndividualResource item,
     IndividualResource to,
-    DateTime loanDate)
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+    DateTime loanDate) {
 
     return checkOutByBarcode(new CheckOutByBarcodeRequestBuilder()
       .forItem(item)
@@ -310,11 +305,7 @@ public class LoansFixture {
       checkInByBarcodeUrl(), 200, "check-in-by-barcode-request"));
   }
 
-  public CheckInByBarcodeResponse checkInByBarcode(IndividualResource item)
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public CheckInByBarcodeResponse checkInByBarcode(IndividualResource item) {
 
     return checkInByBarcode(new CheckInByBarcodeRequestBuilder()
       .forItem(item)
@@ -345,16 +336,6 @@ public class LoansFixture {
       okapiHeaders);
   }
 
-
-  private IndividualResource defaultServicePoint()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
-
-    return servicePointsFixture.cd1();
-  }
-
   public IndividualResource overrideCheckOutByBarcode(
     OverrideCheckOutByBarcodeRequestBuilder builder) {
 
@@ -383,36 +364,49 @@ public class LoansFixture {
 
   public IndividualResource getLoanById(UUID id) {
     return new IndividualResource(restAssuredClient.get(
-      loansUrl(String.format("/%s", id)), 200, "get-loan-by-id"));
+      urlForLoan(id), 200, "get-loan-by-id"));
   }
 
-  public Response getLoans() {
+  public Response getLoanByLocation(IndividualResource response) {
+    return restAssuredClient.get(circulationModuleUrl(response.getLocation()),
+      HTTP_OK, "get-created-loan");
+  }
+
+  public MultipleJsonRecords getLoans() {
     return getLoans(noQuery());
   }
 
-  public Response getLoans(Limit limit) {
+  public MultipleJsonRecords getLoans(Limit limit) {
     return getLoans(noQuery(), limit, noOffset());
   }
 
-  public Response getLoans(Limit limit, Offset offset) {
+  public MultipleJsonRecords getLoans(Limit limit, Offset offset) {
     return getLoans(noQuery(), limit, offset);
   }
 
-  public Response getLoans(CqlQuery query) {
+  public MultipleJsonRecords getLoans(CqlQuery query) {
     return getLoans(query, noLimit(), noOffset());
   }
 
-  public Response getLoans(CqlQuery query, Limit limit, Offset offset) {
-    final HashMap<String, String> queryStringParameters = new HashMap<>();
-
-    Stream.of(query, limit, offset)
-      .forEach(parameter -> parameter.collectInto(queryStringParameters));
-
-    return restAssuredClient.get(loansUrl(), queryStringParameters, 200, "get-loans");
+  public MultipleJsonRecords getLoans(CqlQuery query, Limit limit, Offset offset) {
+    return multipleRecordsFrom(
+      restAssuredClient.get(loansUrl(), query, limit, offset, 200,
+      "get-loans"), "loans");
   }
 
   public MultipleJsonRecords getAllLoans() {
-    return new MultipleJsonRecords(
-      mapToList(getLoans(maximumLimit()).getJson(), "loans"));
+    return getLoans(noQuery(), maximumLimit(), noOffset());
+  }
+
+  public void deleteLoan(UUID loanId) {
+    restAssuredClient.delete(urlForLoan(loanId), 204, "delete-loan");
+  }
+
+  private URL urlForLoan(UUID id) {
+    return loansUrl(String.format("/%s", id));
+  }
+
+  private IndividualResource defaultServicePoint() {
+    return servicePointsFixture.cd1();
   }
 }

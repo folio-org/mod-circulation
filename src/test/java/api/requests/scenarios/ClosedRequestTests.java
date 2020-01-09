@@ -30,11 +30,7 @@ import io.vertx.core.json.JsonObject;
 public class ClosedRequestTests extends APITests {
 
   @Test
-  public void canCancelARequest()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void canCancelARequest() {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
 
@@ -70,11 +66,7 @@ public class ClosedRequestTests extends APITests {
   }
 
   @Test
-  public void cannotEditCancelledRequest()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void cannotEditCancelledRequest() {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
 
@@ -101,11 +93,7 @@ public class ClosedRequestTests extends APITests {
   }
 
   @Test
-  public void cannotEditFulfilledRequest()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void cannotEditFulfilledRequest() {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource jessica = usersFixture.jessica();
@@ -137,11 +125,7 @@ public class ClosedRequestTests extends APITests {
   }
 
   @Test
-  public void canCancelARequestLeavingEmptyQueueAndItemStatusChange()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void canCancelARequestLeavingEmptyQueueAndItemStatusChange() {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
 

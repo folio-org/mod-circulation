@@ -43,11 +43,15 @@ public class OverrideCheckOutByBarcodeTests extends APITests {
   @Test
   public void canOverrideCheckoutWhenItemIsNotLoanable()
     throws InterruptedException,
-    MalformedURLException,
     TimeoutException,
     ExecutionException {
 
-    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet(
+      item -> item
+        .withEnumeration("v.70:no.1-6")
+        .withChronology("1987:Jan.-June")
+        .withVolume("testVolume"));
+
     IndividualResource steve = usersFixture.steve();
     final UUID checkoutServicePointId = UUID.randomUUID();
 
@@ -123,6 +127,15 @@ public class OverrideCheckOutByBarcodeTests extends APITests {
     assertThat("item has contributors",
       loan.getJsonObject("item").containsKey("contributors"), is(true));
 
+    assertThat("has item enumeration",
+      loan.getJsonObject("item").getString("enumeration"), is("v.70:no.1-6"));
+
+    assertThat("has item chronology",
+      loan.getJsonObject("item").getString("chronology"), is("1987:Jan.-June"));
+
+    assertThat("has item volume",
+      loan.getJsonObject("item").getString("volume"), is("testVolume"));
+
     JsonArray contributors = loan.getJsonObject("item").getJsonArray("contributors");
 
     assertThat("item has a single contributor",
@@ -150,11 +163,7 @@ public class OverrideCheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void cannotOverrideCheckoutWhenItemIsLoanable()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void cannotOverrideCheckoutWhenItemIsLoanable() {
 
     LoanPolicyBuilder loanablePolicy = new LoanPolicyBuilder()
       .withName("Loanable Policy")
@@ -187,7 +196,6 @@ public class OverrideCheckOutByBarcodeTests extends APITests {
   @Test
   public void cannotOverrideCheckoutWhenDueDateIsNotPresent()
     throws InterruptedException,
-    MalformedURLException,
     TimeoutException,
     ExecutionException {
 
@@ -213,7 +221,6 @@ public class OverrideCheckOutByBarcodeTests extends APITests {
   @Test
   public void cannotOverrideCheckoutWhenDueDateIsBeforeLoanDate()
     throws InterruptedException,
-    MalformedURLException,
     TimeoutException,
     ExecutionException {
 
@@ -241,7 +248,6 @@ public class OverrideCheckOutByBarcodeTests extends APITests {
   @Test
   public void cannotOverrideCheckoutWhenDueDateIsTheSameAsLoanDate()
     throws InterruptedException,
-    MalformedURLException,
     TimeoutException,
     ExecutionException {
 
@@ -268,7 +274,6 @@ public class OverrideCheckOutByBarcodeTests extends APITests {
   @Test
   public void cannotOverrideCheckoutWhenCommentIsNotPresent()
     throws InterruptedException,
-    MalformedURLException,
     TimeoutException,
     ExecutionException {
 
@@ -294,7 +299,6 @@ public class OverrideCheckOutByBarcodeTests extends APITests {
   @Test
   public void canCreateRecallRequestAfterOverriddenCheckout()
     throws InterruptedException,
-    MalformedURLException,
     TimeoutException,
     ExecutionException {
 
@@ -323,11 +327,7 @@ public class OverrideCheckOutByBarcodeTests extends APITests {
     assertThat(placeRequestResponse.getStatusCode(), is(201));
   }
 
-  private void setNotLoanablePolicy()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  private void setNotLoanablePolicy() {
 
     LoanPolicyBuilder notLoanablePolicy = new LoanPolicyBuilder()
       .withName("Not Loanable Policy")

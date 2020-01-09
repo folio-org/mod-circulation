@@ -20,20 +20,12 @@ public class LoanTypesFixture {
       loanType -> getProperty(loanType, "name"));
   }
 
-  public IndividualResource readingRoom()
-    throws MalformedURLException,
-    InterruptedException,
-    ExecutionException,
-    TimeoutException {
+  public IndividualResource readingRoom() {
 
     return loanTypeRecordCreator.createIfAbsent(loanType("Reading Room"));
   }
 
-  public IndividualResource canCirculate()
-    throws MalformedURLException,
-    InterruptedException,
-    ExecutionException,
-    TimeoutException {
+  public IndividualResource canCirculate() {
 
     return loanTypeRecordCreator.createIfAbsent(loanType("Can Circulate"));
   }
@@ -46,11 +38,7 @@ public class LoanTypesFixture {
     return loanType;
   }
 
-  public void cleanUp()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void cleanUp() {
 
     loanTypeRecordCreator.cleanUp();
   }

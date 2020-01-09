@@ -20,11 +20,7 @@ public class LostItemFeePoliciesFixture {
       reason -> getProperty(reason, "name"));
   }
 
-  public IndividualResource facultyStandard()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public IndividualResource facultyStandard() {
 
     JsonObject itemAgedLostOverdue = new JsonObject();
     itemAgedLostOverdue.put("duration", 12);

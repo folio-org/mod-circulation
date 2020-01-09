@@ -1,35 +1,45 @@
 package api.support.fixtures;
 
 import static api.support.APITestContext.getOkapiHeadersFromContext;
+import static api.support.MultipleJsonRecords.multipleRecordsFrom;
+import static api.support.http.CqlQuery.noQuery;
+import static api.support.http.InterfaceUrls.requestQueueUrl;
+import static api.support.http.InterfaceUrls.requestsUrl;
+import static api.support.http.Limit.noLimit;
+import static api.support.http.Offset.noOffset;
+import static java.net.HttpURLConnection.HTTP_NO_CONTENT;
+import static java.net.HttpURLConnection.HTTP_OK;
+import static java.util.function.Function.identity;
 
-import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.UUID;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeoutException;
-import java.util.function.Function;
 
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 import org.joda.time.DateTime;
 
+import api.support.MultipleJsonRecords;
 import api.support.RestAssuredClient;
 import api.support.builders.MoveRequestBuilder;
 import api.support.builders.RequestBuilder;
-import api.support.http.InterfaceUrls;
+import api.support.http.CqlQuery;
+import api.support.http.Limit;
+import api.support.http.Offset;
 import api.support.http.ResourceClient;
 import io.vertx.core.json.JsonObject;
 
 public class RequestsFixture {
+  private final String REQUESTS_COLLECTION_PROPERTY_NAME = "requests";
+
   private final ResourceClient requestsClient;
   private final CancellationReasonsFixture cancellationReasonsFixture;
   private final ServicePointsFixture servicePointsFixture;
   private final RestAssuredClient restAssuredClient;
 
-  public RequestsFixture(
-    ResourceClient requestsClient,
-    CancellationReasonsFixture cancellationReasonsFixture,
-    ServicePointsFixture servicePointsFixture) {
+  public RequestsFixture(ResourceClient requestsClient,
+      CancellationReasonsFixture cancellationReasonsFixture,
+      ServicePointsFixture servicePointsFixture) {
 
     this.requestsClient = requestsClient;
     this.cancellationReasonsFixture = cancellationReasonsFixture;
@@ -37,32 +47,16 @@ public class RequestsFixture {
     restAssuredClient = new RestAssuredClient(getOkapiHeadersFromContext());
   }
 
-  public IndividualResource place(RequestBuilder requestToBuild)
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
-
+  public IndividualResource place(RequestBuilder requestToBuild) {
     return requestsClient.create(requestToBuild);
   }
 
-  public Response attemptPlace(RequestBuilder requestToBuild)
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
-
+  public Response attemptPlace(RequestBuilder requestToBuild) {
     return requestsClient.attemptCreate(requestToBuild);
   }
 
-  public IndividualResource placeHoldShelfRequest(
-    IndividualResource item,
-    IndividualResource by,
-    DateTime on)
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public IndividualResource placeHoldShelfRequest(IndividualResource item,
+      IndividualResource by, DateTime on) {
 
     return place(new RequestBuilder()
       .hold()
@@ -73,14 +67,8 @@ public class RequestsFixture {
       .withPickupServicePointId(servicePointsFixture.cd1().getId()));
   }
 
-  public IndividualResource placeDeliveryRequest(
-    IndividualResource item,
-    IndividualResource by,
-    DateTime on)
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public IndividualResource placeDeliveryRequest(IndividualResource item,
+      IndividualResource by, DateTime on) {
 
     return place(new RequestBuilder()
       .hold()
@@ -90,15 +78,8 @@ public class RequestsFixture {
       .withRequesterId(by.getId()));
   }
 
-  public IndividualResource placeHoldShelfRequest(
-      IndividualResource item,
-      IndividualResource by,
-      DateTime on,
-      UUID pickupServicePointId)
-          throws InterruptedException,
-          MalformedURLException,
-          TimeoutException,
-          ExecutionException {
+  public IndividualResource placeHoldShelfRequest(IndividualResource item,
+      IndividualResource by, DateTime on, UUID pickupServicePointId) {
 
     return place(new RequestBuilder()
         .hold()
@@ -109,17 +90,8 @@ public class RequestsFixture {
         .withPickupServicePointId(pickupServicePointId));
   }
 
-
-  public IndividualResource placeHoldShelfRequest(
-      IndividualResource item,
-      IndividualResource by,
-      DateTime on,
-      UUID pickupServicePointId,
-      String type)
-          throws InterruptedException,
-          MalformedURLException,
-          TimeoutException,
-          ExecutionException {
+  public IndividualResource placeHoldShelfRequest(IndividualResource item,
+      IndividualResource by, DateTime on, UUID pickupServicePointId, String type) {
 
     return place(new RequestBuilder()
         .hold()
@@ -131,15 +103,8 @@ public class RequestsFixture {
         .withPickupServicePointId(pickupServicePointId));
   }
 
-  public IndividualResource placeHoldShelfRequest(
-    IndividualResource item,
-    IndividualResource by,
-    DateTime on,
-    String type)
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public IndividualResource placeHoldShelfRequest(IndividualResource item,
+      IndividualResource by, DateTime on, String type) {
 
     return place(new RequestBuilder()
       .withRequestType(type)
@@ -149,16 +114,8 @@ public class RequestsFixture {
       .withRequesterId(by.getId()));
   }
 
-  public Response attemptPlaceHoldShelfRequest(
-      IndividualResource item,
-      IndividualResource by,
-      DateTime on,
-      UUID pickupServicePointId,
-      String type)
-          throws InterruptedException,
-          MalformedURLException,
-          TimeoutException,
-          ExecutionException {
+  public Response attemptPlaceHoldShelfRequest(IndividualResource item,
+      IndividualResource by, DateTime on, UUID pickupServicePointId, String type) {
 
     return attemptPlace(new RequestBuilder()
         .hold()
@@ -170,12 +127,22 @@ public class RequestsFixture {
         .withPickupServicePointId(pickupServicePointId));
   }
 
-  public void cancelRequest(IndividualResource request)
-    throws MalformedURLException,
-    InterruptedException,
-    ExecutionException,
-    TimeoutException {
+  public Response attemptToPlaceForInstance(JsonObject representation) {
+    return restAssuredClient.post(representation, requestsUrl("/instances"),
+      "attempt-to-create-instance-request");
+  }
 
+  public void replaceRequest(UUID id, RequestBuilder updatedRequest) {
+    restAssuredClient.put(updatedRequest.create(),
+      individualRequestUrl(id), HTTP_NO_CONTENT, "replace-request");
+  }
+
+  public Response attemptToReplaceRequest(UUID id, RequestBuilder updatedRequest) {
+    return restAssuredClient.put(updatedRequest.create(),
+      individualRequestUrl(id), "attempt-to-replace-request");
+  }
+
+  public void cancelRequest(IndividualResource request) {
     final IndividualResource courseReservesCancellationReason
       = cancellationReasonsFixture.courseReserves();
 
@@ -186,27 +153,55 @@ public class RequestsFixture {
     requestsClient.replace(request.getId(), cancelledRequestBySteve);
   }
 
-  public IndividualResource move(MoveRequestBuilder requestToBuild)
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
-    return requestsClient.move(requestToBuild);
+  public IndividualResource move(MoveRequestBuilder requestToBuild) {
+    final JsonObject representation = requestToBuild.create();
+
+    return new IndividualResource(restAssuredClient.post(representation,
+        requestsUrl(pathToMoveRequest(representation)), HTTP_OK, "move-request"));
   }
 
-  public Response attemptMove(MoveRequestBuilder requestToBuild)
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
-    return requestsClient.attemptMove(requestToBuild);
+  public Response attemptMove(MoveRequestBuilder requestToBuild) {
+    final JsonObject representation = requestToBuild.create();
+
+    return restAssuredClient.post(representation,
+      requestsUrl(pathToMoveRequest(representation)), "move-request");
+  }
+
+  public Response getById(UUID id) {
+    return requestsClient.getById(id);
+  }
+
+  public MultipleJsonRecords getAllRequests() {
+    return getRequests(noQuery(), noLimit(), noOffset());
+  }
+
+  public MultipleJsonRecords getRequests(CqlQuery query, Limit limit, Offset offset) {
+    return multipleRecordsFrom(restAssuredClient.get(requestsUrl(), query,
+      limit, offset, HTTP_OK, "get-requests"), REQUESTS_COLLECTION_PROPERTY_NAME);
   }
 
   //TODO: Replace return type with MultipleJsonRecords
   public MultipleRecords<JsonObject> getQueueFor(IndividualResource item) {
-    return MultipleRecords.from(
-        restAssuredClient.get(InterfaceUrls.requestQueueUrl(item.getId()),
-      200, "request-queue-request"),
-      Function.identity() ,"requests").value();
+    return MultipleRecords.from(restAssuredClient.get(
+        requestQueueUrl(item.getId()), HTTP_OK, "request-queue-request"),
+        identity(), REQUESTS_COLLECTION_PROPERTY_NAME).value();
+  }
+
+  public Response deleteAllRequests() {
+    return restAssuredClient.delete(requestsUrl(), HTTP_NO_CONTENT,
+      "delete-all-requests");
+  }
+
+  public void deleteRequest(UUID requestId) {
+    restAssuredClient.delete(individualRequestUrl(requestId),
+      HTTP_NO_CONTENT, "delete-a-request");
+  }
+
+  private URL individualRequestUrl(UUID requestId) {
+    return requestsUrl(String.format("/%s", requestId));
+  }
+
+  private String pathToMoveRequest(JsonObject representation) {
+    return String.format("/%s/move", representation.getString("id"));
   }
 }

@@ -29,11 +29,7 @@ import api.support.http.InventoryItemResource;
 public class CheckoutWithRequestScenarioTests extends APITests {
 
   @Test
-  public void canCheckoutPagedItem()
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException,
-    MalformedURLException {
+  public void canCheckoutPagedItem() {
 
     final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource charlotte = usersFixture.charlotte();
@@ -54,11 +50,7 @@ public class CheckoutWithRequestScenarioTests extends APITests {
   }
 
   @Test
-  public void checkingOutWithHoldRequestAppliesAlternatePeriod()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void checkingOutWithHoldRequestAppliesAlternatePeriod() {
 
     final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource charlotte = usersFixture.charlotte();
@@ -112,11 +104,7 @@ public class CheckoutWithRequestScenarioTests extends APITests {
   }
 
   @Test
-  public void checkingOutWithHoldRequestAppliesAlternatePeriodAndScheduledForFixedPolicy()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void checkingOutWithHoldRequestAppliesAlternatePeriodAndScheduledForFixedPolicy() {
 
     final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource charlotte = usersFixture.charlotte();

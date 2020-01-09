@@ -55,11 +55,7 @@ public class RequestsAPIUpdatingTests extends APITests {
   private static final String REQUEST_CANCELLATION = "Request cancellation";
 
   @Test
-  public void canReplaceAnExistingRequest()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void canReplaceAnExistingRequest() {
 
     final InventoryItemResource temeraire = itemsFixture.basedUponTemeraire();
 
@@ -146,11 +142,7 @@ public class RequestsAPIUpdatingTests extends APITests {
 
   //TODO: Check does not have pickup service point any more
   @Test
-  public void canReplaceAnExistingRequestWithDeliveryAddress()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void canReplaceAnExistingRequestWithDeliveryAddress() {
 
     final InventoryItemResource temeraire = itemsFixture.basedUponTemeraire();
 
@@ -211,11 +203,7 @@ public class RequestsAPIUpdatingTests extends APITests {
   }
 
   @Test
-  public void replacingAnExistingRequestRemovesItemInformationWhenItemDoesNotExist()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void replacingAnExistingRequestRemovesItemInformationWhenItemDoesNotExist() {
 
     final InventoryItemResource nod = itemsFixture.basedUponNod();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
@@ -249,11 +237,7 @@ public class RequestsAPIUpdatingTests extends APITests {
   }
 
   @Test
-  public void replacingAnExistingRequestRemovesRequesterInformationWhenUserDoesNotExist()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void replacingAnExistingRequestRemovesRequesterInformationWhenUserDoesNotExist() {
 
     final InventoryItemResource nod = itemsFixture.basedUponNod();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
@@ -284,11 +268,7 @@ public class RequestsAPIUpdatingTests extends APITests {
   }
 
   @Test
-  public void replacingAnExistingRequestRemovesRequesterBarcodeWhenNonePresent()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void replacingAnExistingRequestRemovesRequesterBarcodeWhenNonePresent() {
 
     final InventoryItemResource nod = itemsFixture.basedUponNod();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
@@ -335,11 +315,7 @@ public class RequestsAPIUpdatingTests extends APITests {
   }
 
   @Test
-  public void replacingAnExistingRequestIncludesRequesterMiddleNameWhenPresent()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void replacingAnExistingRequestIncludesRequesterMiddleNameWhenPresent() {
 
     final InventoryItemResource nod = itemsFixture.basedUponNod();
 
@@ -388,11 +364,7 @@ public class RequestsAPIUpdatingTests extends APITests {
   }
 
   @Test
-  public void replacingAnExistingRequestRemovesItemBarcodeWhenNonePresent()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void replacingAnExistingRequestRemovesItemBarcodeWhenNonePresent() {
 
     final InventoryItemResource temeraire = itemsFixture.basedUponTemeraire();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
@@ -432,11 +404,7 @@ public class RequestsAPIUpdatingTests extends APITests {
   }
 
   @Test
-  public void cannotReplaceAnExistingRequestWithServicePointThatIsNotForPickup()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void cannotReplaceAnExistingRequestWithServicePointThatIsNotForPickup() {
 
     final InventoryItemResource temeraire = itemsFixture.basedUponTemeraire();
 
@@ -462,11 +430,7 @@ public class RequestsAPIUpdatingTests extends APITests {
   }
 
   @Test
-  public void cannotReplaceAnExistingRequestWithUnknownPickupLocation()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void cannotReplaceAnExistingRequestWithUnknownPickupLocation() {
 
     final InventoryItemResource temeraire = itemsFixture.basedUponTemeraire();
 
@@ -496,11 +460,7 @@ public class RequestsAPIUpdatingTests extends APITests {
   }
 
   @Test
-  public void cancellationReasonPublicDescriptionIsUsedAsReasonForCancellationToken()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void cancellationReasonPublicDescriptionIsUsedAsReasonForCancellationToken() {
 
     UUID requestCancellationTemplateId = UUID.randomUUID();
     JsonObject requestCancellationConfiguration = new NoticeConfigurationBuilder()
@@ -558,11 +518,7 @@ public class RequestsAPIUpdatingTests extends APITests {
   }
 
   @Test
-  public void cancellationReasonNameIsUsedAsReasonForCancellationTokenWhenPublicDescriptionIsNotPresent()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void cancellationReasonNameIsUsedAsReasonForCancellationTokenWhenPublicDescriptionIsNotPresent() {
 
     UUID requestCancellationTemplateId = UUID.randomUUID();
     JsonObject requestCancellationConfiguration = new NoticeConfigurationBuilder()
@@ -620,11 +576,7 @@ public class RequestsAPIUpdatingTests extends APITests {
   }
 
   @Test
-  public void replacedRequestShouldOnlyIncludeStoredPropertiesInStorage()
-    throws InterruptedException,
-    MalformedURLException,
-    TimeoutException,
-    ExecutionException {
+  public void replacedRequestShouldOnlyIncludeStoredPropertiesInStorage() {
 
     final InventoryItemResource temeraire = itemsFixture.basedUponTemeraire();
 
@@ -690,11 +642,7 @@ public class RequestsAPIUpdatingTests extends APITests {
   }
 
   @Test
-  public void canReplaceRequestWithAnInactiveUser()
-    throws InterruptedException,
-    ExecutionException,
-    TimeoutException,
-    MalformedURLException {
+  public void canReplaceRequestWithAnInactiveUser() {
 
     final InventoryItemResource temeraire = itemsFixture.basedUponTemeraire();
 
