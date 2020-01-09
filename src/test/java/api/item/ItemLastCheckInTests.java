@@ -3,6 +3,7 @@ package api.item;
 import static api.support.APITestContext.getOkapiHeadersFromContext;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
+import static org.joda.time.DateTimeZone.UTC;
 import static org.junit.Assert.assertThat;
 
 import java.util.UUID;
@@ -11,7 +12,6 @@ import org.folio.circulation.support.ClockManager;
 import org.folio.circulation.support.JsonPropertyFetcher;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
 import org.junit.Test;
 
 import api.support.APITestContext;
@@ -21,13 +21,12 @@ import io.vertx.core.json.JsonObject;
 
 public class ItemLastCheckInTests extends APITests {
 
-  private DateTime checkInDateTime;
+  private static final DateTime checkInDateTime = new DateTime(2019, 4, 3, 2, 10, UTC);
 
   @Override
   public void beforeEach() throws InterruptedException {
 
     super.beforeEach();
-    checkInDateTime = DateTime.now(DateTimeZone.UTC);
     mockClockManagerToReturnFixedDateTime(checkInDateTime);
   }
 
@@ -40,13 +39,12 @@ public class ItemLastCheckInTests extends APITests {
   @Test
   public void checkedInItemWithLoanShouldHaveLastCheckedInFields() {
 
-    DateTime checkInDateTime = DateTime.now(DateTimeZone.UTC);
     IndividualResource item = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource user = usersFixture.jessica();
     UUID servicePointId = servicePointsFixture.cd1().getId();
 
-    loansFixture.checkOutByBarcode(item, user, new DateTime(DateTimeZone.UTC));
-    loansFixture.checkInByBarcode(item, checkInDateTime, servicePointId);
+    loansFixture.checkOutByBarcode(item, user);
+    loansFixture.checkInByBarcode(item, DateTime.now(UTC), servicePointId);
     JsonObject lastCheckIn = itemsClient.get(item.getId()).getJson()
       .getJsonObject("lastCheckIn");
 
@@ -132,7 +130,7 @@ public class ItemLastCheckInTests extends APITests {
 
     IndividualResource item = itemsFixture.basedUponSmallAngryPlanet();
     UUID servicePointId = servicePointsFixture.cd1().getId();
-    DateTime firstCheckInDateTime = DateTime.now(DateTimeZone.UTC);
+    DateTime firstCheckInDateTime = DateTime.now(UTC);
 
     loansFixture.checkInByBarcode(item, firstCheckInDateTime, servicePointId);
     JsonObject lastCheckIn = itemsClient.get(item.getId()).getJson()
