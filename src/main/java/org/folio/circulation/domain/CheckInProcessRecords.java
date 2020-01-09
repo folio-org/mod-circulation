@@ -4,6 +4,8 @@ import java.util.Optional;
 import java.util.UUID;
 
 import org.folio.circulation.domain.representations.CheckInByBarcodeRequest;
+import org.folio.circulation.support.ClockManager;
+import org.joda.time.DateTime;
 
 /**
  * The loan captures a snapshot of the item status
@@ -23,6 +25,7 @@ public class CheckInProcessRecords {
   private final ServicePoint checkInServicePoint;
   private final Request highestPriorityFulfillableRequest;
   private final String loggedInUserId;
+  private final DateTime checkInProcessedDateTime;
 
   public CheckInProcessRecords(CheckInByBarcodeRequest checkInRequest) {
     this(checkInRequest, null, null, null, null, null, null);
@@ -36,7 +39,6 @@ public class CheckInProcessRecords {
     ServicePoint checkInServicePoint,
     Request highestPriorityFulfillableRequest,
     String loggedInUserId) {
-
     this.checkInRequest = checkInRequest;
     this.item = item;
     this.loan = loan;
@@ -44,6 +46,7 @@ public class CheckInProcessRecords {
     this.checkInServicePoint = checkInServicePoint;
     this.highestPriorityFulfillableRequest = highestPriorityFulfillableRequest;
     this.loggedInUserId = loggedInUserId;
+    checkInProcessedDateTime = ClockManager.getClockManager().getDateTime();
   }
 
   public CheckInProcessRecords withItem(Item item) {
@@ -157,5 +160,9 @@ public class CheckInProcessRecords {
 
   public String getLoggedInUserId() {
     return loggedInUserId;
+  }
+
+  public DateTime getCheckInProcessedDateTime() {
+    return checkInProcessedDateTime;
   }
 }

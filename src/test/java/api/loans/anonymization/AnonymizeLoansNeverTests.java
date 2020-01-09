@@ -4,14 +4,11 @@ import static api.support.matchers.LoanMatchers.isAnonymized;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 
-import java.net.MalformedURLException;
 import java.util.UUID;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeoutException;
 
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.joda.time.DateTime;
-import org.joda.time.DateTimeUtils;
+import org.joda.time.DateTimeZone;
 import org.junit.Test;
 
 import api.support.builders.CheckOutByBarcodeRequestBuilder;
@@ -280,7 +277,9 @@ public class AnonymizeLoansNeverTests extends LoanAnonymizationTests {
     createClosedAccountWithFeeFines(loanResource, DateTime.now().minusMinutes(1));
     loansFixture.checkInByBarcode(item1);
 
-    DateTimeUtils.setCurrentMillisOffset(20*ONE_MINUTE_AND_ONE);
+    mockClockManagerToReturnFixedDateTime(
+      DateTime.now(DateTimeZone.UTC).plus(20 * ONE_MINUTE_AND_ONE));
+
     anonymizeLoansInTenant();
 
     assertThat(loansStorageClient.getById(loanID).getJson(),
