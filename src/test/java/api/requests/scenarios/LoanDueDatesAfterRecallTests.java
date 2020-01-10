@@ -5,37 +5,19 @@ import static api.support.fixtures.CalendarExamples.CASE_FRI_SAT_MON_SERVICE_POI
 import static api.support.fixtures.ConfigurationExample.timezoneConfigurationFor;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static java.lang.Boolean.TRUE;
-import static org.folio.circulation.domain.policy.DueDateManagement.KEEP_THE_CURRENT_DUE_DATE;
-import static org.folio.circulation.domain.policy.library.ClosedLibraryStrategyUtils.END_OF_A_DAY;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.notNullValue;
 
-import java.net.MalformedURLException;
+import static org.folio.circulation.domain.policy.DueDateManagement.KEEP_THE_CURRENT_DUE_DATE;
+import static org.folio.circulation.domain.policy.library.ClosedLibraryStrategyUtils.END_OF_A_DAY;
+
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.UUID;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeoutException;
-
-import org.folio.circulation.domain.policy.DueDateManagement;
-import org.folio.circulation.domain.policy.Period;
-import org.folio.circulation.support.ClockManager;
-import org.folio.circulation.support.http.client.IndividualResource;
-import org.folio.circulation.support.http.client.Response;
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeConstants;
-import org.joda.time.DateTimeZone;
-import org.joda.time.LocalTime;
-import org.joda.time.format.ISODateTimeFormat;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.junit.runner.RunWith;
 
 import api.support.APITests;
 import api.support.builders.LoanBuilder;
@@ -47,6 +29,22 @@ import junitparams.JUnitParamsRunner;
 import junitparams.Parameters;
 import junitparams.converters.Nullable;
 import junitparams.naming.TestCaseName;
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeConstants;
+import org.joda.time.DateTimeZone;
+import org.joda.time.LocalTime;
+import org.joda.time.format.ISODateTimeFormat;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
+import org.folio.circulation.domain.policy.DueDateManagement;
+import org.folio.circulation.domain.policy.Period;
+import org.folio.circulation.support.ClockManager;
+import org.folio.circulation.support.http.client.IndividualResource;
+import org.folio.circulation.support.http.client.Response;
 
 /**
  * Notes:<br>
@@ -277,7 +275,7 @@ public class LoanDueDatesAfterRecallTests extends APITests {
     final DateTime loanDate =
         new DateTime(2019, DateTimeConstants.JANUARY, 25, 10, 0, DateTimeZone.UTC);
 
-    freezeTime(loanDate);
+    mockClockManagerToReturnFixedDateTime(loanDate);
 
     final IndividualResource loan = loansFixture.createLoan(new LoanBuilder()
         .open()
@@ -434,7 +432,7 @@ public class LoanDueDatesAfterRecallTests extends APITests {
 
     final DateTime requestDate = DateTime.now(DateTimeZone.UTC);
 
-    freezeTime(requestDate);
+    mockClockManagerToReturnFixedDateTime(requestDate);
 
     requestsFixture.place(
       new RequestBuilder()
@@ -794,10 +792,5 @@ public class LoanDueDatesAfterRecallTests extends APITests {
     final String recalledRenewalDueDate = storedLoan.getString("dueDate");
     assertThat("due date after recall should not change the renewal due date",
         recalledRenewalDueDate, is(renewalDueDate));
-  }
-
-  private void freezeTime(DateTime dateTime) {
-    ClockManager.getClockManager().setClock(
-      Clock.fixed(Instant.ofEpochMilli(dateTime.getMillis()), ZoneOffset.UTC));
   }
 }

@@ -81,7 +81,8 @@ class CheckInProcessAdapter {
 
   CompletableFuture<Result<Loan>> checkInLoan(CheckInProcessRecords records) {
     return completedFuture(
-      loanCheckInService.checkIn(records.getLoan(), records.getCheckInRequest()));
+      loanCheckInService.checkIn(records.getLoan(), records.getCheckInProcessedDateTime(),
+        records.getCheckInRequest()));
   }
 
   CompletableFuture<Result<RequestQueue>> getRequestQueue(
@@ -93,7 +94,7 @@ class CheckInProcessAdapter {
   CompletableFuture<Result<Item>> updateItem(CheckInProcessRecords records) {
     return updateItem.onCheckIn(records.getItem(), records.getRequestQueue(),
       records.getCheckInServicePointId(), records.getLoggedInUserId(),
-      records.getCheckInRequest().getCheckInDate());
+     records.getCheckInProcessedDateTime());
   }
 
   CompletableFuture<Result<RequestQueue>> updateRequestQueue(
