@@ -9,6 +9,7 @@ import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 import static org.folio.circulation.support.http.CommonResponseInterpreters.noContentRecordInterpreter;
 
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -211,9 +212,10 @@ public class UpdateItem {
     if(loan.isClosed()) {
       return itemStatusOnCheckIn(requestQueue);
     }
-    else {
+    if(Objects.equals(loan.getItem().getStatus(), ItemStatus.DECLARED_LOST)) {
       return loan.getItem().getStatus();
     }
+    return  CHECKED_OUT;
   }
 
   private ItemStatus itemStatusOnCheckIn(RequestQueue requestQueue) {
