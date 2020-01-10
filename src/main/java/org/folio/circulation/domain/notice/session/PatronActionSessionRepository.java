@@ -1,7 +1,7 @@
 package org.folio.circulation.domain.notice.session;
 
 import static java.util.function.Function.identity;
-import static org.folio.circulation.support.CqlQuery.exactMatch;
+import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
 import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getUUIDProperty;
 import static org.folio.circulation.support.JsonPropertyWriter.write;
@@ -28,7 +28,7 @@ import org.folio.circulation.domain.UserRepository;
 import org.folio.circulation.domain.policy.LoanPolicyRepository;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
-import org.folio.circulation.support.CqlQuery;
+import org.folio.circulation.support.http.client.CqlQuery;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.http.client.ResponseInterpreter;
 

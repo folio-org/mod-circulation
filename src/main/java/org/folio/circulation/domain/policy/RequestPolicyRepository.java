@@ -20,7 +20,6 @@ import org.folio.circulation.support.ForwardOnFailure;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.SingleRecordFetcher;
 import org.folio.circulation.support.http.client.Response;
-import org.folio.circulation.support.http.client.ResponseHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -65,11 +64,7 @@ public class RequestPolicyRepository {
   }
 
   private CompletableFuture<Result<String>> lookupRequestPolicyId(
-    Item item,
-    User user) {
-
-    CompletableFuture<Result<String>> findRequestPolicyCompleted
-      = new CompletableFuture<>();
+    Item item, User user) {
 
     if(item.isNotFound()) {
       return completedFuture(failedDueToServerError(
@@ -81,29 +76,29 @@ public class RequestPolicyRepository {
     String loanTypeId = item.determineLoanTypeForItem();
     String locationId = item.getLocationId();
 
-    CompletableFuture<Response> circulationRulesResponse = new CompletableFuture<>();
-
     log.info(
       "Applying request rules for material type: {}, patron group: {}, loan type: {}, location: {}",
       materialTypeId, patronGroupId, loanTypeId, locationId);
 
-    circulationRequestRulesClient.applyRules(loanTypeId, locationId, materialTypeId,
-      patronGroupId, ResponseHandler.any(circulationRulesResponse));
+    CompletableFuture<Result<Response>> circulationRulesResponse =
+      circulationRequestRulesClient.applyRules(loanTypeId, locationId, materialTypeId,
+      patronGroupId);
 
-    circulationRulesResponse.thenAcceptAsync(response -> {
-      if (response.getStatusCode() == 404) {
-        findRequestPolicyCompleted.complete(
-          failedDueToServerError("Unable to find matching request rules"));
-      } else if (response.getStatusCode() != 200) {
-        findRequestPolicyCompleted.complete(failed(
-          new ForwardOnFailure(response)));
-      } else {
-        findRequestPolicyCompleted.complete(
-          succeeded(response.getJson().getString("requestPolicyId")));
-      }
-    });
-
-    return findRequestPolicyCompleted;
+    return circulationRulesResponse
+      .thenComposeAsync(r -> r.after(this::processRulesResponse));
   }
 
+  private CompletableFuture<Result<String>> processRulesResponse(Response response) {
+    final CompletableFuture<Result<String>> future = new CompletableFuture<>();
+
+    if (response.getStatusCode() == 404) {
+      future.complete(failedDueToServerError("Unable to find matching request rules"));
+    } else if (response.getStatusCode() != 200) {
+      future.complete(failed(new ForwardOnFailure(response)));
+    } else {
+      future.complete(succeeded(response.getJson().getString("requestPolicyId")));
+    }
+
+    return future;
+  }
 }
