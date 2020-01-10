@@ -1,5 +1,6 @@
 package api.support.fakes.processors;
 
+import static api.support.APITestContext.createWebClient;
 import static api.support.http.InterfaceUrls.holdingsStorageUrl;
 import static org.apache.commons.lang3.ObjectUtils.firstNonNull;
 import static org.folio.circulation.domain.representations.ItemProperties.HOLDINGS_RECORD_ID;
@@ -16,13 +17,11 @@ import org.apache.commons.lang3.tuple.ImmutableTriple;
 import org.apache.commons.lang3.tuple.Triple;
 import org.folio.circulation.domain.representations.ItemProperties;
 import org.folio.circulation.support.http.client.Response;
-import org.folio.circulation.support.http.client.ResponseHandler;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import api.support.APITestContext;
 import io.vertx.core.json.JsonObject;
 
 public final class StorageRecordPreProcessors {
@@ -120,20 +119,20 @@ public final class StorageRecordPreProcessors {
         }
       });
 
-      return newItem.put("effectiveCallNumberComponents", effectiveCallNumberComponents);
+      return newItem.put("effectiveCallNumberComponents",
+        effectiveCallNumberComponents);
     });
   }
 
   private static CompletableFuture<JsonObject> getHoldingById(String id) {
-    final CompletableFuture<Response> getCompleted = new CompletableFuture<>();
+    return createWebClient()
+      .get(holdingsStorageUrl("?query=id=" + id))
+      .thenApply(result -> result
+        .map(StorageRecordPreProcessors::getFirstHoldingsRecord)
+        .orElse(null));
+  }
 
-    APITestContext
-      .createClient(ex -> log.warn("Error: ", ex))
-      .get(holdingsStorageUrl("?query=id=" + id), ResponseHandler.json(getCompleted));
-
-    return getCompleted
-      .thenApply(response -> response.getJson().getJsonArray("holdingsRecords")
-        .getJsonObject(0)
-      );
+  private static JsonObject getFirstHoldingsRecord(Response response) {
+    return response.getJson().getJsonArray("holdingsRecords").getJsonObject(0);
   }
 }
