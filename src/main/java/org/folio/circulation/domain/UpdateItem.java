@@ -214,7 +214,7 @@ public class UpdateItem {
       return itemStatusOnCheckIn(requestQueue);
     }
     if(Objects.equals(loan.getItem().getStatus(), ItemStatus.DECLARED_LOST)) {
-      return DECLARED_LOST;
+      return loan.getItem().getStatus();
     }
     return  CHECKED_OUT;
   }
