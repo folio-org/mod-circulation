@@ -1,8 +1,8 @@
 package org.folio.circulation.domain;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
-import static org.folio.circulation.support.CqlQuery.exactMatch;
-import static org.folio.circulation.support.CqlQuery.exactMatchAny;
+import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
+import static org.folio.circulation.support.http.client.CqlQuery.exactMatchAny;
 import static org.folio.circulation.support.CqlSortBy.ascending;
 import static org.folio.circulation.support.Result.succeeded;
 
@@ -10,7 +10,7 @@ import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.support.Clients;
-import org.folio.circulation.support.CqlQuery;
+import org.folio.circulation.support.http.client.CqlQuery;
 import org.folio.circulation.support.Result;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
