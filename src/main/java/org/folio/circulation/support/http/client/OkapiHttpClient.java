@@ -7,7 +7,6 @@ import static org.folio.circulation.support.http.OkapiHeader.TOKEN;
 import static org.folio.circulation.support.http.OkapiHeader.USER_ID;
 
 import java.lang.invoke.MethodHandles;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.function.Consumer;
 
@@ -32,13 +31,8 @@ public class OkapiHttpClient {
   private final String requestId;
   private final Consumer<Throwable> exceptionHandler;
 
-  public OkapiHttpClient(
-    HttpClient httpClient,
-    URL okapiUrl,
-    String tenantId,
-    String token,
-    String userId,
-    String requestId,
+  public OkapiHttpClient(HttpClient httpClient, URL okapiUrl, String tenantId,
+    String token, String userId, String requestId,
     Consumer<Throwable> exceptionHandler) {
 
     this.client = httpClient;
@@ -50,9 +44,12 @@ public class OkapiHttpClient {
     this.exceptionHandler = exceptionHandler;
   }
 
-  public void post(
-    URL url,
-    Object body,
+  public VertxWebClientOkapiHttpClient toWebClient() {
+    return VertxWebClientOkapiHttpClient.createClientUsing(client, okapiUrl,
+      tenantId, token, userId, requestId);
+  }
+
+  public void post(URL url, Object body,
     Handler<HttpClientResponse> responseHandler) {
 
     HttpClientRequest request = client.postAbs(url.toString(), responseHandler);
@@ -78,17 +75,13 @@ public class OkapiHttpClient {
     }
   }
 
-  public void put(
-    URL url,
-    Object body,
+  public void put(URL url, Object body,
     Handler<HttpClientResponse> responseHandler) {
 
     put(url.toString(), body, responseHandler);
   }
 
-  public void put(
-    String url,
-    Object body,
+  public void put(String url, Object body,
     Handler<HttpClientResponse> responseHandler) {
 
     HttpClientRequest request = client.putAbs(url, responseHandler);
@@ -107,41 +100,11 @@ public class OkapiHttpClient {
     request.end(encodedBody);
   }
 
-  public void get(URL url, Handler<HttpClientResponse> responseHandler) {
-
-    get(url.toString(), responseHandler);
-  }
-
-  public void get(
-    URL url,
-    String query,
-    Handler<HttpClientResponse> responseHandler)
-    throws MalformedURLException {
-
-    get(new URL(url.getProtocol(), url.getHost(), url.getPort(),
-        url.getPath() + "?" + query),
-      responseHandler);
-  }
-
-  public void get(String url, Handler<HttpClientResponse> responseHandler) {
-    log.info("GET {}", url);
-
-    HttpClientRequest request = client.getAbs(url, responseHandler);
-
-    addStandardHeaders(request);
-
-    request.exceptionHandler(exceptionHandler::accept);
-
-    request.end();
-  }
-
   public void delete(URL url, Handler<HttpClientResponse> responseHandler) {
-
     delete(url.toString(), responseHandler);
   }
 
   public void delete(String url, Handler<HttpClientResponse> responseHandler) {
-
     HttpClientRequest request = client.deleteAbs(url, responseHandler);
 
     addStandardHeaders(request);
