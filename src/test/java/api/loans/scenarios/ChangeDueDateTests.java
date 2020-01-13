@@ -228,7 +228,7 @@ public class ChangeDueDateTests extends APITests {
   }
 
   @Test
-  public void itemStatusStayAsDeclaredLostWhenLoanChangedDueDate() {
+  public void itemIsStillDeclaredLostWhenLoanDueDateIsChanged() {
     final InventoryItemResource item = itemsFixture.basedUponNod();
 
     IndividualResource loan = loansFixture.checkOutByBarcode(item);
