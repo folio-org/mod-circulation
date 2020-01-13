@@ -13,7 +13,7 @@ import org.folio.circulation.domain.RequestStatus;
 import org.folio.circulation.domain.representations.ItemPickSlipRepresentation;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
-import org.folio.circulation.support.CqlQuery;
+import org.folio.circulation.support.http.client.CqlQuery;
 import org.folio.circulation.support.MultipleRecordFetcher;
 import org.folio.circulation.support.OkJsonResponseResult;
 import org.folio.circulation.support.Result;
@@ -32,7 +32,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 import static java.util.function.Function.identity;
-import static org.folio.circulation.support.CqlQuery.exactMatch;
+import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
 
 public class PickSlipsResource extends Resource {
   private static final String ID_KEY = "id";
