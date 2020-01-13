@@ -17,6 +17,9 @@
 * [Single circulation rules file](#single-circulation-rules-file)
 * [Loan Rules UX Design Video](#loan-rules-ux-design-video)
 
+This document describes the circulation rules that actually have been implemented in
+the mod-circulation back-end module.
+
 The circulation rules engine calculates the loan policies based on the patron's
 patron group and the item's material type, loan type, and location.
 
