@@ -27,9 +27,6 @@ import static org.folio.circulation.domain.ItemStatus.PAGED;
 import static org.folio.circulation.domain.RequestType.RECALL;
 import static org.folio.circulation.domain.representations.ItemProperties.CALL_NUMBER_COMPONENTS;
 
-import java.time.Clock;
-import java.time.Instant;
-import java.time.ZoneOffset;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -1528,7 +1525,7 @@ public class RequestsAPICreationTests extends APITests {
       "ItemCN",
       "ItemPrefix",
       "ItemSuffix",
-      "CopyNumbers");
+      "CopyNumber");
 
     InventoryItemResource item = itemsFixture.basedUponSmallAngryPlanet(itemBuilder, itemsFixture.thirdFloorHoldings());
     IndividualResource requester = usersFixture.steve();

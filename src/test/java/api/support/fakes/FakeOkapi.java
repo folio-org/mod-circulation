@@ -6,7 +6,6 @@ import static api.support.fakes.StorageSchema.validatorForLocationCampSchema;
 import static api.support.fakes.StorageSchema.validatorForLocationInstSchema;
 import static api.support.fakes.StorageSchema.validatorForLocationLibSchema;
 import static api.support.fakes.StorageSchema.validatorForStorageItemSchema;
-import static api.support.fakes.StorageSchema.validatorForStorageItemSchema;
 import static api.support.fakes.StorageSchema.validatorForStorageLoanSchema;
 import static api.support.fixtures.CalendarExamples.CASE_CALENDAR_IS_EMPTY_SERVICE_POINT_ID;
 import static api.support.fixtures.CalendarExamples.getCalendarById;
