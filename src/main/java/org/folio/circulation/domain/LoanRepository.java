@@ -27,9 +27,7 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
-import org.folio.circulation.domain.policy.LoanPolicy;
-import org.folio.circulation.domain.policy.LostItemPolicy;
-import org.folio.circulation.domain.policy.OverdueFinePolicy;
+import org.folio.circulation.domain.policy.Policy;
 import org.folio.circulation.domain.representations.LoanProperties;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
@@ -217,23 +215,11 @@ public class LoanRepository {
     removeOverdueFineProperties(storageLoan);
     removeLostItemProperties(storageLoan);
 
-    updateLastLoanPolicyUsedId(storageLoan, loan.getLoanPolicy());
-    updateOverdueFinePolicyId(storageLoan, loan.getOverdueFinePolicy());
-    updateLostItemPolicyId(storageLoan, loan.getLostItemPolicy());
+    updatePolicy(storageLoan, loan.getLoanPolicy(), "loanPolicyId");
+    updatePolicy(storageLoan, loan.getOverdueFinePolicy(), "overdueFinePolicyId");
+    updatePolicy(storageLoan, loan.getLostItemPolicy(), "lostItemPolicyId");
 
     return storageLoan;
-  }
-
-  private static void updateOverdueFinePolicyId(JsonObject storageLoan, OverdueFinePolicy overdueFinePolicy) {
-    if(nonNull(overdueFinePolicy) && overdueFinePolicy.getId() != null) {
-      storageLoan.put("overdueFinePolicyId", overdueFinePolicy.getId());
-    }
-  }
-
-  private static void updateLostItemPolicyId(JsonObject storageLoan, LostItemPolicy lostItemPolicy) {
-    if(nonNull(lostItemPolicy) && lostItemPolicy.getId() != null) {
-      storageLoan.put("lostItemPolicyId", lostItemPolicy.getId());
-    }
   }
 
   private static void removeLoanPolicyProperties(JsonObject storageLoan) {
@@ -258,11 +244,12 @@ public class LoanRepository {
     storageLoan.put(ITEM_STATUS, item.getStatus().getValue());
   }
 
-  private static void updateLastLoanPolicyUsedId(JsonObject storageLoan,
-                                                 LoanPolicy loanPolicy) {
+  private static void updatePolicy(JsonObject storageLoan,
+                                   Policy policy,
+                                   String policyName) {
 
-    if(nonNull(loanPolicy) && loanPolicy.getId() != null) {
-      storageLoan.put("loanPolicyId", loanPolicy.getId());
+    if (nonNull(policy) && policy.getId() != null) {
+      storageLoan.put(policyName, policy.getId());
     }
   }
 

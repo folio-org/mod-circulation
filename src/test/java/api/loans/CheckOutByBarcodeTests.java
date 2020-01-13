@@ -230,18 +230,18 @@ public class CheckOutByBarcodeTests extends APITests {
       .rolling(Period.days(30))
       .limitedBySchedule(dueDateLimitScheduleId);
 
-    final IndividualResource loanPolicyResource = loanPoliciesFixture.create(
+    final IndividualResource loanPolicy = loanPoliciesFixture.create(
       dueDateLimitedPolicy);
-    final IndividualResource overdueFinePolicyResource = overdueFinePoliciesFixture.facultyStandard();
-    final IndividualResource lostItemFeePolicyResource = lostItemFeePoliciesFixture.facultyStandard();
+    final IndividualResource overdueFinePolicy = overdueFinePoliciesFixture.facultyStandard();
+    final IndividualResource lostItemFeePolicy = lostItemFeePoliciesFixture.facultyStandard();
 
-    UUID dueDateLimitedPolicyId = loanPolicyResource.getId();
+    UUID dueDateLimitedPolicyId = loanPolicy.getId();
 
     useFallbackPolicies(dueDateLimitedPolicyId,
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
       noticePoliciesFixture.activeNotice().getId(),
-      overdueFinePolicyResource.getId(),
-      lostItemFeePolicyResource.getId());
+      overdueFinePolicy.getId(),
+      lostItemFeePolicy.getId());
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource steve = usersFixture.steve();
@@ -262,9 +262,9 @@ public class CheckOutByBarcodeTests extends APITests {
 
     loanHasPatronGroupProperties(loan, "Regular Group");
 
-    loanHasLoanPolicyProperties(loan, loanPolicyResource);
-    loanHasOverdueFinePolicyProperties(loan, overdueFinePolicyResource);
-    loanHasLostItemPolicyProperties(loan, lostItemFeePolicyResource);
+    loanHasLoanPolicyProperties(loan, loanPolicy);
+    loanHasOverdueFinePolicyProperties(loan, overdueFinePolicy);
+    loanHasLostItemPolicyProperties(loan, lostItemFeePolicy);
 
     assertThat("due date should be limited by schedule",
       loan.getString("dueDate"),

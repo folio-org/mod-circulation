@@ -4,31 +4,20 @@ import io.vertx.core.json.JsonObject;
 
 import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
 
-public class OverdueFinePolicy {
-  private final String id;
-  private final String name;
+public class OverdueFinePolicy extends Policy {
 
   private OverdueFinePolicy(String id) {
     this(id, null);
   }
 
   private OverdueFinePolicy(String id, String name) {
-    this.id = id;
-    this.name = name;
+    super(id, name);
   }
 
-  public String getId() {
-    return id;
-  }
-
-  public String getName() {
-    return name;
-  }
-
-  public static OverdueFinePolicy from(JsonObject lostItemPolicy) {
+  public static OverdueFinePolicy from(JsonObject overdueFinePolicy) {
     return new OverdueFinePolicy(
-      getProperty(lostItemPolicy, "id"),
-      getProperty(lostItemPolicy, "name")
+      getProperty(overdueFinePolicy, "id"),
+      getProperty(overdueFinePolicy, "name")
     );
   }
 
