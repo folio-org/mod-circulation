@@ -206,14 +206,14 @@ public class LoanRepository {
     JsonObject storageLoan = loan.asJson();
 
     keepPatronGroupIdAtCheckoutProperties(loan, storageLoan);
-    removeChangeMetadata(storageLoan);
+    removeProperty(storageLoan, "metadata");
     removeSummaryProperties(storageLoan);
     keepLatestItemStatus(item, storageLoan);
-    removeBorrowerProperties(storageLoan);
-    removeLoanPolicyProperties(storageLoan);
-    removeFeesAndFinesProperties(storageLoan);
-    removeOverdueFineProperties(storageLoan);
-    removeLostItemProperties(storageLoan);
+    removeProperty(storageLoan, LoanProperties.BORROWER);
+    removeProperty(storageLoan, LoanProperties.LOAN_POLICY);
+    removeProperty(storageLoan, LoanProperties.FEESANDFINES);
+    removeProperty(storageLoan, LoanProperties.OVERDUE_FINE_POLICY);
+    removeProperty(storageLoan, LoanProperties.LOST_ITEM_POLICY);
 
     updatePolicy(storageLoan, loan.getLoanPolicy(), "loanPolicyId");
     updatePolicy(storageLoan, loan.getOverdueFinePolicy(), "overdueFinePolicyId");
@@ -222,20 +222,9 @@ public class LoanRepository {
     return storageLoan;
   }
 
-  private static void removeLoanPolicyProperties(JsonObject storageLoan) {
-    storageLoan.remove(LoanProperties.LOAN_POLICY);
-  }
-
-  private static void removeOverdueFineProperties(JsonObject storageLoan) {
-    storageLoan.remove(LoanProperties.OVERDUE_FINE_POLICY);
-  }
-
-  private static void removeLostItemProperties(JsonObject storageLoan) {
-    storageLoan.remove(LoanProperties.LOST_ITEM_POLICY);
-  }
-
-  private static void removeBorrowerProperties(JsonObject storageLoan) {
-    storageLoan.remove(LoanProperties.BORROWER);
+  private static void removeProperty(JsonObject storageLoan,
+                                       String propertyName) {
+    storageLoan.remove(propertyName);
   }
 
   private static void keepLatestItemStatus(Item item, JsonObject storageLoan) {
@@ -251,14 +240,6 @@ public class LoanRepository {
     if (nonNull(policy) && policy.getId() != null) {
       storageLoan.put(policyName, policy.getId());
     }
-  }
-
-  private static void removeFeesAndFinesProperties(JsonObject storageLoan) {
-    storageLoan.remove(LoanProperties.FEESANDFINES);
-  }
-
-  private static void removeChangeMetadata(JsonObject storageLoan) {
-    storageLoan.remove("metadata");
   }
 
   private static void removeSummaryProperties(JsonObject storageLoan) {

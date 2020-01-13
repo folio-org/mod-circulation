@@ -229,7 +229,6 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   public Collection<Account> getAccounts() {
     return accounts;
   }
-
   @Override
   public String getItemId() {
     return getProperty(representation, "itemId");

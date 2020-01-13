@@ -467,6 +467,7 @@ public class LoanPolicy extends Policy{
     return loansPolicy.getString("profileId");
   }
 
+  @Override
   public String getName() {
     return representation.getString("name");
   }
@@ -564,6 +565,7 @@ public class LoanPolicy extends Policy{
     return period.getInteger(DURATION);
   }
 
+  @Override
   public String getId() {
     return representation.getString("id");
   }

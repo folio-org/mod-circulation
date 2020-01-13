@@ -1,32 +1,19 @@
 #%RAML 1.0
-title: Circulation
-version: v8.6
+title: Circulation Rules
+version: v1.1
 protocols: [ HTTP, HTTPS ]
 baseUri: http://localhost:9130
 
 documentation:
-  - title: Circulation Business Logic API
-    content: <b>API for loans and requests</b>
+  - title: Circulation Rules API
+    content: <b>API for circulation Rules</b>
 
 types:
-  loan: !include schema/circulation-rules.json
-  loans: !include loans.json
-  request: !include request.json
-  requests: !include requests.json
-  check-in-by-barcode-response: !include check-in-by-barcode-response.json
   error: !include raml-util/schemas/error.schema
   errors: !include raml-util/schemas/errors.schema
 
 traits:
   language: !include raml-util/traits/language.raml
-  pageable: !include raml-util/traits/pageable.raml
-  searchable: !include raml-util/traits/searchable.raml
-  validate: !include raml-util/traits/validation.raml
-
-resourceTypes:
-  collection: !include raml-util/rtypes/collection.raml
-  collection-get: !include raml-util/rtypes/collection-get.raml
-  collection-item: !include raml-util/rtypes/item-collection.raml
 
 /circulation:
   /rules:
