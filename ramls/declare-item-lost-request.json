@@ -4,12 +4,12 @@
   "description": "Request body schema for declare item lost API",
   "properties": {
     "declaredLostDateTime": {
-      "description": "The date and time when the item to be declared lost",
+      "description": "The date and time when the item is to be declared lost",
       "type": "string",
       "format": "date-time"
     },
     "comment": {
-      "description": "Comment to the declare item lost action stored in the loan history",
+      "description": "Comment explaining why the item has been declared lost",
       "type": "string"
     }
   },
