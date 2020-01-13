@@ -20,6 +20,8 @@ traits:
       post:
         is: [validate]
         body:
+          application/json:
+            type: !include declare-item-lost-request.json
         responses:
           204:
             description: "The loaned item has been successfully declared lost"
