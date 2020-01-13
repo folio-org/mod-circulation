@@ -27,7 +27,7 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
-import org.folio.circulation.domain.policy.Policy;
+import org.folio.circulation.domain.policy.CirculationPolicy;
 import org.folio.circulation.domain.representations.LoanProperties;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
@@ -234,7 +234,7 @@ public class LoanRepository {
   }
 
   private static void updatePolicy(JsonObject storageLoan,
-                                   Policy policy,
+                                   CirculationPolicy policy,
                                    String policyName) {
 
     if (nonNull(policy) && policy.getId() != null) {

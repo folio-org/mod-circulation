@@ -3,7 +3,7 @@ package org.folio.circulation.domain;
 import static java.util.Objects.isNull;
 
 import io.vertx.core.json.JsonObject;
-import org.folio.circulation.domain.policy.Policy;
+import org.folio.circulation.domain.policy.CirculationPolicy;
 import org.folio.circulation.domain.representations.ItemSummaryRepresentation;
 import org.folio.circulation.domain.representations.LoanProperties;
 import org.slf4j.Logger;
@@ -53,7 +53,7 @@ public class LoanRepresentation {
   }
 
   private void addPolicy(JsonObject extendedRepresentation,
-                         Policy policy,
+                         CirculationPolicy policy,
                          String policyName) {
     if (policy != null) {
       additionalPolicyProperties(extendedRepresentation, policy, policyName);
@@ -96,7 +96,7 @@ public class LoanRepresentation {
   }
 
   private void additionalPolicyProperties(JsonObject representation,
-                                          Policy policy,
+                                          CirculationPolicy policy,
                                           String policyName) {
     JsonObject summary = representation.containsKey(policyName)
       ? representation.getJsonObject(policyName)
