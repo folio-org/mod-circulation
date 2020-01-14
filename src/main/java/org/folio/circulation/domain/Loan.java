@@ -65,9 +65,8 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   private final Policies policies;
 
   private Loan(JsonObject representation, Item item, User user, User proxy,
-               ServicePoint checkinServicePoint, ServicePoint checkoutServicePoint,
-               DateTime originalDueDate, Policies policies,
-               Collection<Account> accounts) {
+    ServicePoint checkinServicePoint, ServicePoint checkoutServicePoint,
+    DateTime originalDueDate, Policies policies, Collection<Account> accounts) {
 
     this.policies = Optional.ofNullable(policies).orElse(new Policies());
 

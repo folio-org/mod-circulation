@@ -3,6 +3,11 @@ package org.folio.circulation.domain;
 import static java.lang.String.format;
 import static java.util.Objects.nonNull;
 import static java.util.concurrent.CompletableFuture.completedFuture;
+import static org.folio.circulation.domain.representations.LoanProperties.BORROWER;
+import static org.folio.circulation.domain.representations.LoanProperties.FEESANDFINES;
+import static org.folio.circulation.domain.representations.LoanProperties.LOAN_POLICY;
+import static org.folio.circulation.domain.representations.LoanProperties.LOST_ITEM_POLICY;
+import static org.folio.circulation.domain.representations.LoanProperties.OVERDUE_FINE_POLICY;
 import static org.folio.circulation.domain.representations.LoanProperties.PATRON_GROUP_AT_CHECKOUT;
 import static org.folio.circulation.domain.representations.LoanProperties.PATRON_GROUP_ID_AT_CHECKOUT;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
@@ -28,7 +33,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 import org.folio.circulation.domain.policy.CirculationPolicy;
-import org.folio.circulation.domain.representations.LoanProperties;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.http.client.CqlQuery;
@@ -209,11 +213,11 @@ public class LoanRepository {
     removeProperty(storageLoan, "metadata");
     removeSummaryProperties(storageLoan);
     keepLatestItemStatus(item, storageLoan);
-    removeProperty(storageLoan, LoanProperties.BORROWER);
-    removeProperty(storageLoan, LoanProperties.LOAN_POLICY);
-    removeProperty(storageLoan, LoanProperties.FEESANDFINES);
-    removeProperty(storageLoan, LoanProperties.OVERDUE_FINE_POLICY);
-    removeProperty(storageLoan, LoanProperties.LOST_ITEM_POLICY);
+    removeProperty(storageLoan, BORROWER);
+    removeProperty(storageLoan, LOAN_POLICY);
+    removeProperty(storageLoan, FEESANDFINES);
+    removeProperty(storageLoan, OVERDUE_FINE_POLICY);
+    removeProperty(storageLoan, LOST_ITEM_POLICY);
 
     updatePolicy(storageLoan, loan.getLoanPolicy(), "loanPolicyId");
     updatePolicy(storageLoan, loan.getOverdueFinePolicy(), "overdueFinePolicyId");
@@ -243,7 +247,7 @@ public class LoanRepository {
   }
 
   private static void removeSummaryProperties(JsonObject storageLoan) {
-    storageLoan.remove(LoanProperties.BORROWER);
+    storageLoan.remove(BORROWER);
     storageLoan.remove("item");
     storageLoan.remove("checkinServicePoint");
     storageLoan.remove("checkoutServicePoint");
