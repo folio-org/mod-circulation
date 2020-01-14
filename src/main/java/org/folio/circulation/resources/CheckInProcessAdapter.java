@@ -213,10 +213,6 @@ class CheckInProcessAdapter {
   }
 
   private boolean isInHouseUse(CheckInProcessRecords records) {
-    if (records.getItem() == null || records.getItem().isNotFound()) {
-      return false;
-    }
-
     if (records.getItem().getLocation() == null) {
       return false;
     }
