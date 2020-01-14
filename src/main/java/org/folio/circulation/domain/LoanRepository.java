@@ -52,6 +52,7 @@ public class LoanRepository {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
   private static final String ITEM_STATUS = "itemStatus";
   private static final String ITEM_ID = "itemId";
+  private static final Integer PAGE_LIMIT = 1000;
 
   public LoanRepository(Clients clients) {
     loansStorageClient = clients.loansStorage();
@@ -173,6 +174,39 @@ public class LoanRepository {
     return statusQuery
         .after(q -> loansStorageClient.getMany(q, fetchLoansLimit))
         .thenApply(result -> result.next(this::mapResponseToLoans));
+  }
+
+  private CompletableFuture<Result<MultipleRecords<Loan>>> queryLoanStorageWithPagination(
+    Result<CqlQuery> statusQuery) {
+
+    CompletableFuture<Result<MultipleRecords<Loan>>> future = new CompletableFuture<>();
+    fetchNextPage(future, statusQuery, 0);
+    return future;
+  }
+
+  private void fetchNextPage(
+    CompletableFuture<Result<MultipleRecords<Loan>>> future,
+    Result<CqlQuery> statusQuery, int currentPage) {
+
+    getLoansByQuery(statusQuery, currentPage)
+      .thenApply(result -> {
+          int totalRecords = result.value().getTotalRecords();
+          int pageOffset = currentPage + 1;
+          if (totalRecords >  pageOffset * PAGE_LIMIT) {
+            fetchNextPage(future, statusQuery, pageOffset);
+          } else {
+            future.complete(result);
+          }
+          return result;
+        }
+      );
+  }
+
+  private CompletableFuture<Result<MultipleRecords<Loan>>> getLoansByQuery(
+    Result<CqlQuery> queryResult, int pageOffset) {
+
+    return queryResult.after(q -> loansStorageClient.getMany(q, PAGE_LIMIT, pageOffset))
+      .thenApply(result -> result.next(this::mapResponseToLoans));
   }
 
   public CompletableFuture<Result<MultipleRecords<Loan>>> findClosedLoans(
@@ -343,7 +377,7 @@ public class LoanRepository {
     Result<CqlQuery> cqlQueryResult = statusQuery
       .combine(userIdQuery, CqlQuery::and);
 
-    return queryLoanStorage(Integer.MAX_VALUE, cqlQueryResult)
+    return queryLoanStorageWithPagination(cqlQueryResult)
       .thenComposeAsync(loans -> itemRepository.fetchItemsFor(loans, Loan::withItem));
   }
 }
