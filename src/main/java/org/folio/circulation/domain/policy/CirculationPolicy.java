@@ -5,7 +5,7 @@ public abstract class CirculationPolicy {
   private String id;
   private String name;
 
-  protected CirculationPolicy(){
+  protected CirculationPolicy() {
 
   }
 
