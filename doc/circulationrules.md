@@ -1,6 +1,8 @@
 # Circulation Rules
 
-<!-- ../../okapi/doc/md2toc -l 2 -h 3 circulationrules.md -->
+<!-- How to generate the table of contents using https://github.com/folio-org/okapi/blob/master/doc/md2toc :
+     ../../okapi/doc/md2toc -l 2 -h 3 circulationrules.md
+-->
 
 * [Line comment](#line-comment)
 * [Allowed characters for names](#allowed-characters-for-names)
