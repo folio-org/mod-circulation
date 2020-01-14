@@ -71,6 +71,8 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     this.policies = Optional.ofNullable(policies).orElse(new Policies());
 
     requireNonNull(this.policies.getLoanPolicy(), "loanPolicy cannot be null");
+    requireNonNull(this.policies.getOverdueFinePolicy(), "overdueFinePolicy cannot be null");
+    requireNonNull(this.policies.getLostItemPolicy(), "lostItemPolicy cannot be null");
 
     this.representation = representation;
     this.item = item;
