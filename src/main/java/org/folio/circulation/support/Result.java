@@ -7,6 +7,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.BiFunction;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -376,6 +377,18 @@ public interface Result<T> {
     return succeeded()
       ? value()
       : other;
+  }
+
+  default void applySideEffect(Consumer<T> onSuccess,
+    Consumer<HttpFailure> onFailure) {
+
+    if (succeeded()) {
+      onSuccess.accept(value());
+    }
+    else {
+      onFailure.accept(cause());
+    }
+
   }
 
   /**

@@ -2,11 +2,12 @@ package org.folio.circulation.domain.notice.schedule;
 
 import static java.util.function.Function.identity;
 import static org.folio.circulation.domain.notice.schedule.JsonScheduledNoticeMapper.mapToJson;
-import static org.folio.circulation.support.CqlQuery.exactMatch;
-import static org.folio.circulation.support.CqlQuery.exactMatchAny;
+import static org.folio.circulation.support.ResultBinding.flatMapResult;
 import static org.folio.circulation.support.http.CommonResponseInterpreters.noContentRecordInterpreter;
 import static org.folio.circulation.support.http.ResponseMapping.flatMapUsingJson;
 import static org.folio.circulation.support.http.ResponseMapping.forwardOnFailure;
+import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
+import static org.folio.circulation.support.http.client.CqlQuery.exactMatchAny;
 
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -15,9 +16,9 @@ import java.util.stream.Collectors;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
-import org.folio.circulation.support.CqlQuery;
 import org.folio.circulation.support.CqlSortBy;
 import org.folio.circulation.support.Result;
+import org.folio.circulation.support.http.client.CqlQuery;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.client.ResponseInterpreter;
 import org.joda.time.DateTime;
@@ -85,7 +86,7 @@ public class ScheduledNoticesRepository {
       .otherwise(forwardOnFailure());
 
     return scheduledNoticesStorageClient.delete(scheduledNotice.getId())
-      .thenApply(interpreter::apply);
+      .thenApply(flatMapResult(interpreter::apply));
   }
 
   CompletableFuture<Result<Response>> deleteByLoanId(String loanId) {

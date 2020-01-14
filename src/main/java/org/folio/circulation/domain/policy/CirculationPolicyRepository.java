@@ -20,7 +20,6 @@ import org.folio.circulation.support.ForwardOnFailure;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.SingleRecordFetcher;
 import org.folio.circulation.support.http.client.Response;
-import org.folio.circulation.support.http.client.ResponseHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -49,8 +48,7 @@ public abstract class CirculationPolicyRepository<T> {
   }
 
   public CompletableFuture<Result<T>> lookupPolicy(
-    Item item,
-    User user) {
+    Item item, User user) {
 
     return lookupPolicyId(item, user)
       .thenComposeAsync(r -> r.after(ruleMatchEntity -> lookupPolicy(
@@ -75,8 +73,6 @@ public abstract class CirculationPolicyRepository<T> {
   }
 
   public CompletableFuture<Result<CirculationRuleMatch>> lookupPolicyId(Item item, User user) {
-    CompletableFuture<Result<CirculationRuleMatch>> findLoanPolicyCompleted = new CompletableFuture<>();
-
     if (item.isNotFound()) {
       return completedFuture(failedDueToServerError(
         "Unable to apply circulation rules for unknown item"));
@@ -92,41 +88,42 @@ public abstract class CirculationPolicyRepository<T> {
     String materialTypeId = item.getMaterialTypeId();
     String patronGroupId = user.getPatronGroupId();
 
-    CompletableFuture<Response> circulationRulesResponse = new CompletableFuture<>();
-
     log.info(
       "Applying circulation rules for material type: {}, patron group: {}, loan type: {}, location: {}",
       materialTypeId, patronGroupId, loanTypeId, locationId);
 
-    circulationRulesClient.applyRules(loanTypeId, locationId, materialTypeId,
-      patronGroupId, ResponseHandler.any(circulationRulesResponse));
+    final CompletableFuture<Result<Response>> circulationRulesResponse =
+      circulationRulesClient.applyRules(loanTypeId, locationId, materialTypeId, patronGroupId);
 
-    circulationRulesResponse.thenAcceptAsync(response -> {
-      if (response.getStatusCode() == 404) {
-        findLoanPolicyCompleted.complete(failedDueToServerError(
-          "Unable to apply circulation rules"));
-      } else if (response.getStatusCode() != 200) {
-        findLoanPolicyCompleted.complete(failed(
-          new ForwardOnFailure(response)));
-      } else {
-        log.info("Rules response {}", response.getBody());
+    return circulationRulesResponse
+      .thenCompose(r -> r.after(this::processRulesResponse));
+  }
 
-        String policyId = fetchPolicyId(response.getJson());
-        boolean isItemTypePresent = response.getJson().getJsonObject(APPLIED_RULE_CONDITIONS)
-          .getBoolean("materialTypeMatch");
-        boolean isLoanTypePresent = response.getJson().getJsonObject(APPLIED_RULE_CONDITIONS)
-          .getBoolean("loanTypeMatch");
-        boolean isPatronGroupPresent = response.getJson().getJsonObject(APPLIED_RULE_CONDITIONS)
-          .getBoolean("patronGroupMatch");
+  private CompletableFuture<Result<CirculationRuleMatch>> processRulesResponse(Response response) {
+    final CompletableFuture<Result<CirculationRuleMatch>> future = new CompletableFuture<>();
 
-        log.info("Policy to fetch based upon rules {}", policyId);
+    if (response.getStatusCode() == 404) {
+      future.complete(failedDueToServerError("Unable to apply circulation rules"));
+    } else if (response.getStatusCode() != 200) {
+      future.complete(failed(new ForwardOnFailure(response)));
+    } else {
+      log.info("Rules response {}", response.getBody());
 
-        findLoanPolicyCompleted.complete(succeeded(new CirculationRuleMatch(
-          policyId, new AppliedRuleConditions(isItemTypePresent, isLoanTypePresent, isPatronGroupPresent))));
-      }
-    });
+      String policyId = fetchPolicyId(response.getJson());
+      boolean isItemTypePresent = response.getJson().getJsonObject(APPLIED_RULE_CONDITIONS)
+        .getBoolean("materialTypeMatch");
+      boolean isLoanTypePresent = response.getJson().getJsonObject(APPLIED_RULE_CONDITIONS)
+        .getBoolean("loanTypeMatch");
+      boolean isPatronGroupPresent = response.getJson().getJsonObject(APPLIED_RULE_CONDITIONS)
+        .getBoolean("patronGroupMatch");
 
-    return findLoanPolicyCompleted;
+      log.info("Policy to fetch based upon rules {}", policyId);
+
+      future.complete(succeeded(new CirculationRuleMatch(
+        policyId, new AppliedRuleConditions(isItemTypePresent, isLoanTypePresent, isPatronGroupPresent))));
+    }
+
+    return future;
   }
 
   protected abstract String getPolicyNotFoundErrorMessage(String policyId);
