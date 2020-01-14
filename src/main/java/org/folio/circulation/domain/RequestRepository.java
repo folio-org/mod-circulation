@@ -16,12 +16,12 @@ import java.util.concurrent.CompletableFuture;
 import org.folio.circulation.storage.RequestBatch;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
-import org.folio.circulation.support.http.client.CqlQuery;
 import org.folio.circulation.support.FetchSingleRecord;
 import org.folio.circulation.support.ItemRepository;
 import org.folio.circulation.support.RecordNotFoundFailure;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.SingleRecordFetcher;
+import org.folio.circulation.support.http.client.CqlQuery;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.client.ResponseInterpreter;
 
@@ -193,7 +193,7 @@ public class RequestRepository {
       .otherwise(forwardOnFailure());
 
     return requestsStorageClient.delete(request.getId())
-      .thenApply(interpreter::apply);
+      .thenApply(flatMapResult(interpreter::apply));
   }
 
   public CompletableFuture<Result<Request>> loadCancellationReason(Request request) {
