@@ -16,8 +16,10 @@ import java.util.concurrent.CompletableFuture;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.ServerErrorFailure;
 
+import io.vertx.core.AsyncResult;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpClient;
+import io.vertx.ext.web.client.HttpRequest;
 import io.vertx.ext.web.client.HttpResponse;
 import io.vertx.ext.web.client.WebClient;
 
@@ -50,33 +52,18 @@ public class VertxWebClientOkapiHttpClient {
     this.requestId = requestId;
   }
 
-  public CompletableFuture<Result<Response>> get(
-    String url, Integer timeoutInMilliseconds) {
+  public CompletableFuture<Result<Response>> get(String url,
+    Integer timeoutInMilliseconds) {
 
-    final CompletableFuture<Result<Response>> futureResponse
+    final CompletableFuture<AsyncResult<HttpResponse<Buffer>>> futureResponse
       = new CompletableFuture<>();
 
-    webClient
-      .getAbs(url)
-      .putHeader(ACCEPT, "application/json, text/plain")
-      .putHeader(OKAPI_URL, okapiUrl.toString())
-      .putHeader(TENANT, this.tenantId)
-      .putHeader(TOKEN, this.token)
-      .putHeader(USER_ID, this.userId)
-      .putHeader(REQUEST_ID, this.requestId)
+    withStandardHeaders(webClient.getAbs(url))
       .timeout(timeoutInMilliseconds)
-      .send(ar -> {
-        if (ar.succeeded()) {
-          final HttpResponse<Buffer> response = ar.result();
+      .send(futureResponse::complete);
 
-          futureResponse.complete(succeeded(responseFrom(url, response)));
-        }
-        else {
-          futureResponse.complete(failed(new ServerErrorFailure(ar.cause())));
-        }
-      });
-
-    return futureResponse;
+    return futureResponse
+      .thenApply(asyncResult -> mapAsyncResultToResult(url, asyncResult));
   }
 
   public CompletableFuture<Result<Response>> get(URL url) {
@@ -85,5 +72,41 @@ public class VertxWebClientOkapiHttpClient {
 
   public CompletableFuture<Result<Response>> get(String url) {
     return get(url, DEFAULT_TIMEOUT_IN_MILLISECONDS);
+  }
+
+  public CompletableFuture<Result<Response>> delete(String url) {
+    return delete(url, DEFAULT_TIMEOUT_IN_MILLISECONDS);
+  }
+
+  public CompletableFuture<Result<Response>> delete(String url,
+    int timeoutInMilliseconds) {
+
+    final CompletableFuture<AsyncResult<HttpResponse<Buffer>>> futureResponse
+      = new CompletableFuture<>();
+
+    withStandardHeaders(webClient.deleteAbs(url))
+      .timeout(timeoutInMilliseconds)
+      .send(futureResponse::complete);
+
+    return futureResponse
+      .thenApply(asyncResult -> mapAsyncResultToResult(url, asyncResult));
+  }
+
+  private HttpRequest<Buffer> withStandardHeaders(HttpRequest<Buffer> request) {
+    return request
+      .putHeader(ACCEPT, "application/json, text/plain")
+      .putHeader(OKAPI_URL, okapiUrl.toString())
+      .putHeader(TENANT, this.tenantId)
+      .putHeader(TOKEN, this.token)
+      .putHeader(USER_ID, this.userId)
+      .putHeader(REQUEST_ID, this.requestId);
+  }
+
+  private static Result<Response> mapAsyncResultToResult(String url,
+    AsyncResult<HttpResponse<Buffer>> asyncResult) {
+
+    return asyncResult.succeeded()
+      ? succeeded(responseFrom(url, asyncResult.result()))
+      : failed(new ServerErrorFailure(asyncResult.cause()));
   }
 }
