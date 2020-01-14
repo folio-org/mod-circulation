@@ -43,6 +43,7 @@ public class CheckInByBarcodeResponse {
       itemRepresentation.createItemSummary(records.getItem()));
 
     write(checkInResponseBody, "staffSlipContext", createCheckInContext(records));
+    write(checkInResponseBody, "inHouseUse", records.isInHouseUse());
 
     return new OkJsonResponseResult(checkInResponseBody);
   }

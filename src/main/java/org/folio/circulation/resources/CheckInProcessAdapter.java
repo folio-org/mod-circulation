@@ -206,4 +206,23 @@ class CheckInProcessAdapter {
     }
     return succeeded(records);
   }
+
+  public CheckInProcessRecords setInHouseUse(CheckInProcessRecords checkInProcessRecords) {
+    return checkInProcessRecords
+      .withInHouseUse(isInHouseUse(checkInProcessRecords));
+  }
+
+  private boolean isInHouseUse(CheckInProcessRecords records) {
+    if (records.getItem() == null || records.getItem().isNotFound()) {
+      return false;
+    }
+
+    if (records.getItem().getLocation() == null) {
+      return false;
+    }
+
+    return records.getItem().isAvailable()
+      && (records.getRequestQueue() == null || records.getRequestQueue().size() == 0)
+      && records.getItem().getLocation().homeLocationIsServedBy(records.getCheckInServicePointId());
+  }
 }
