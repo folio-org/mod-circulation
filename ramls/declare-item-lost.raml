@@ -1,0 +1,36 @@
+#%RAML 1.0
+title: Declare item lost
+version: v0.1
+protocols: [ HTTP, HTTPS ]
+baseUri: http://localhost:9130
+
+documentation:
+  - title: API for declaring loaned item lost
+    content: <b>Declare item lost API</b>
+
+types:
+  errors: !include raml-util/schemas/errors.schema
+
+traits:
+  validate: !include raml-util/traits/validation.raml
+
+/circulation:
+  /loans/{id}:
+    /declare-item-lost:
+      post:
+        is: [validate]
+        body:
+          application/json:
+            type: !include declare-item-lost-request.json
+        responses:
+          204:
+            description: "The loaned item has been successfully declared lost"
+          422:
+            description: "The loan is closed"
+          404:
+              description: "The loan is not found"
+          500:
+            description: "Internal server error, e.g. due to misconfiguration"
+            body:
+              text/plain:
+                example: "Internal server error, contact administrator"

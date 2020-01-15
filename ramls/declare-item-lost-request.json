@@ -1,0 +1,19 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "type": "object",
+  "description": "Request body schema for declare item lost API",
+  "properties": {
+    "declaredLostDateTime": {
+      "description": "The date and time when the item is to be declared lost",
+      "type": "string",
+      "format": "date-time"
+    },
+    "comment": {
+      "description": "Comment explaining why the item has been declared lost",
+      "type": "string"
+    }
+  },
+  "required": [
+    "declaredLostDateTime"
+  ]
+}
