@@ -3,9 +3,7 @@ package org.folio.circulation.domain;
 import static java.util.Objects.isNull;
 
 import io.vertx.core.json.JsonObject;
-import org.folio.circulation.domain.policy.LoanPolicy;
-import org.folio.circulation.domain.policy.LostItemPolicy;
-import org.folio.circulation.domain.policy.OverdueFinePolicy;
+import org.folio.circulation.domain.policy.CirculationPolicy;
 import org.folio.circulation.domain.representations.ItemSummaryRepresentation;
 import org.folio.circulation.domain.representations.LoanProperties;
 import org.slf4j.Logger;
@@ -14,6 +12,11 @@ import org.slf4j.LoggerFactory;
 import java.lang.invoke.MethodHandles;
 import java.util.Collection;
 
+import static org.folio.circulation.domain.representations.LoanProperties.BORROWER;
+import static org.folio.circulation.domain.representations.LoanProperties.LOAN_POLICY;
+import static org.folio.circulation.domain.representations.LoanProperties.LOST_ITEM_POLICY;
+import static org.folio.circulation.domain.representations.LoanProperties.OVERDUE_FINE_POLICY;
+import static org.folio.circulation.domain.representations.LoanProperties.PATRON_GROUP_ID_AT_CHECKOUT;
 import static org.folio.circulation.support.JsonPropertyWriter.write;
 
 public class LoanRepresentation {
@@ -38,65 +41,31 @@ public class LoanRepresentation {
       additionalBorrowerProperties(extendedRepresentation, loan.getUser());
     }else{
       //When there is no user, it means that the loan has been anonymized
-      extendedRepresentation.remove(LoanProperties.BORROWER);
+      extendedRepresentation.remove(BORROWER);
     }
 
-    if (loan.getLoanPolicy() != null) {
-      additionalLoanPolicyProperties(extendedRepresentation, loan.getLoanPolicy());
-    } else {
-      extendedRepresentation.remove(LoanProperties.LOAN_POLICY);
-    }
+    addPolicy(extendedRepresentation, loan.getLoanPolicy(), LOAN_POLICY);
 
-    if (loan.getOverdueFinePolicy() != null) {
-      additionalOverdueFinePolicyProperties(extendedRepresentation, loan.getOverdueFinePolicy());
-    } else {
-      extendedRepresentation.remove(LoanProperties.OVERDUE_FINE_POLICY);
-    }
+    addPolicy(extendedRepresentation, loan.getOverdueFinePolicy(), OVERDUE_FINE_POLICY);
 
-    if (loan.getLostItemPolicy() != null) {
-      additionalLostItemPolicyProperties(extendedRepresentation, loan.getLostItemPolicy());
-    } else {
-      extendedRepresentation.remove(LoanProperties.LOST_ITEM_POLICY);
-    }
+    addPolicy(extendedRepresentation, loan.getLostItemPolicy(), LOST_ITEM_POLICY);
 
     additionalAccountProperties(extendedRepresentation, loan.getAccounts());
 
-    extendedRepresentation.remove(LoanProperties.PATRON_GROUP_ID_AT_CHECKOUT);
+    extendedRepresentation.remove(PATRON_GROUP_ID_AT_CHECKOUT);
 
     return extendedRepresentation;
   }
 
-  private void additionalOverdueFinePolicyProperties(JsonObject loanRepresentation,
-                                                     OverdueFinePolicy overdueFinePolicy) {
-    if (overdueFinePolicy == null) {
-      log.info("Unable to add overdue fine policy properties to loan {}," +
-        " overdueFinePolicy is null", loanRepresentation.getString("id"));
-      return;
+  private void addPolicy(JsonObject extendedRepresentation,
+    CirculationPolicy policy, String policyName) {
+    if (policy != null) {
+      additionalPolicyProperties(extendedRepresentation, policy, policyName);
+    } else {
+      log.info("Unable to add {} properties to loan {}, {} is null",
+        policyName, extendedRepresentation.getString("id"), policyName);
+      extendedRepresentation.remove(policyName);
     }
-    addNameProperty(loanRepresentation, LoanProperties.OVERDUE_FINE_POLICY,
-      overdueFinePolicy.getName());
-  }
-
-  private void additionalLostItemPolicyProperties(JsonObject loanRepresentation,
-                                                  LostItemPolicy lostItemPolicy) {
-    if (lostItemPolicy == null) {
-      log.info("Unable to add lost item policy properties to loan {}," +
-        " lostItemPolicy is null", loanRepresentation.getString("id"));
-      return;
-    }
-    addNameProperty(loanRepresentation, LoanProperties.LOST_ITEM_POLICY,
-      lostItemPolicy.getName());
-  }
-
-  private void addNameProperty(JsonObject representation,
-                               String property,
-                               String propertyName) {
-    JsonObject summary = representation.containsKey(property)
-      ? representation.getJsonObject(property)
-      : new JsonObject();
-
-    summary.put("name", propertyName);
-    representation.put(property, summary);
   }
 
   public JsonObject extendedLoan(LoanAndRelatedRecords relatedRecords) {
@@ -130,15 +99,14 @@ public class LoanRepresentation {
     write(loanRepresentation, LoanProperties.FEESANDFINES, feesAndFinesSummary);
   }
 
-  private void additionalLoanPolicyProperties(JsonObject loanRepresentation,
-                                              LoanPolicy loanPolicy) {
-    if (loanPolicy == null) {
-      log.info("Unable to add loan policy properties to loan {}," + " loanPolicy is null",
-        loanRepresentation.getString("id"));
-      return;
-    }
-    addNameProperty(loanRepresentation, LoanProperties.LOAN_POLICY,
-      loanPolicy.getName());
+  private void additionalPolicyProperties(JsonObject representation,
+    CirculationPolicy policy, String policyName) {
+    JsonObject summary = representation.containsKey(policyName)
+      ? representation.getJsonObject(policyName)
+      : new JsonObject();
+
+    summary.put("name", policy.getName());
+    representation.put(policyName, summary);
   }
 
   private void addAdditionalServicePointProperties(
@@ -172,15 +140,15 @@ public class LoanRepresentation {
       return;
     }
 
-    JsonObject borrowerSummary = loanRepresentation.containsKey(LoanProperties.BORROWER)
-        ? loanRepresentation.getJsonObject(LoanProperties.BORROWER)
+    JsonObject borrowerSummary = loanRepresentation.containsKey(BORROWER)
+        ? loanRepresentation.getJsonObject(BORROWER)
         : new JsonObject();
     borrowerSummary.put("firstName", borrower.getFirstName());
     borrowerSummary.put("lastName", borrower.getLastName());
     borrowerSummary.put("middleName", borrower.getMiddleName());
     borrowerSummary.put("barcode", borrower.getBarcode());
 
-    loanRepresentation.put(LoanProperties.BORROWER, borrowerSummary);
+    loanRepresentation.put(BORROWER, borrowerSummary);
 
     additionalPatronGroupProperties(loanRepresentation, borrower.getPatronGroup());
   }

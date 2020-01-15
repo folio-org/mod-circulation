@@ -2,58 +2,35 @@ package org.folio.circulation.domain.policy;
 
 import io.vertx.core.json.JsonObject;
 
-import java.util.UUID;
-
 import static org.folio.circulation.support.JsonPropertyFetcher.getBooleanProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
 
-public class OverdueFinePolicy {
-  private final JsonObject representation;
+public class OverdueFinePolicy extends CirculationPolicy {
+  private Boolean gracePeriodRecall;
+  private Boolean countClosed;
 
-  public OverdueFinePolicy(JsonObject representation) {
-    this.representation = representation;
+  private OverdueFinePolicy(String id) {
+    this(id, null);
   }
 
-  private UUID id;
-  private String name;
-
-  public String getId() {
-    return getProperty(representation, "id");
+  private OverdueFinePolicy(String id, String name) {
+    super(id, name);
   }
 
-  public void setId(UUID id) {
-    this.id = id;
-  }
-
-  public String getName() {
-    return getProperty(representation, "name");
-  }
-
-  public boolean shouldIgnoreGracePeriodsForRecalls() {
-    return getBooleanProperty(representation, "gracePeriodRecall");
-  }
-
-  public boolean shouldCountClosed() {
-    return getBooleanProperty(representation, "countClosed");
-  }
-
-  public void setName(String name) {
-    this.name = name;
-  }
-
-  public static OverdueFinePolicy from(JsonObject representation) {
-    return new OverdueFinePolicy(representation);
+  public static OverdueFinePolicy from(JsonObject overdueFinePolicy) {
+    return new OverdueFinePolicy(
+      getProperty(overdueFinePolicy, "id"),
+      getProperty(overdueFinePolicy, "name")
+    );
   }
 
   public static OverdueFinePolicy unknown(String id) {
-    return new UnknownLoanPolicy(id);
+    return new OverdueFinePolicy.UnknownOverdueFinePolicy(id);
   }
 
-  //TODO: Improve this to be a proper null object
-  // requires significant rework of the loan policy interface
-  private static class UnknownLoanPolicy extends OverdueFinePolicy {
-    UnknownLoanPolicy(String id) {
-      super(new JsonObject().put("id", id));
+  private static class UnknownOverdueFinePolicy extends OverdueFinePolicy {
+    UnknownOverdueFinePolicy(String id) {
+      super(id);
     }
   }
 }

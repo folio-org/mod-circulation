@@ -461,7 +461,7 @@
           "methods": [
             "GET"
           ],
-          "pathPattern": "/circulation/rules/lost-item-all",
+          "pathPattern": "/circulation/rules/lost-item-policy-all",
           "permissionsRequired": [
             "circulation.rules.lost-item-all.get"
           ],
@@ -1162,7 +1162,9 @@
         "usergroups.item.get",
         "patron-action-session-storage.patron-action-sessions.item.post",
         "circulation.rules.overdue-fine-policy.get",
-        "circulation.rules.lost-item-policy.get"
+        "circulation.rules.lost-item-policy.get",
+        "overdue-fines-policies.collection.get",
+        "lost-item-fees-policies.collection.get"
       ],
       "visible": false
     },
@@ -1520,7 +1522,9 @@
         "usergroups.collection.get",
         "usergroups.item.get",
         "feefineactions.collection.get",
-        "feefineactions.item.get"
+        "feefineactions.item.get",
+        "overdue-fines-policies.collection.get",
+        "lost-item-fees-policies.collection.get"
       ],
       "visible": false
     },
@@ -1549,7 +1553,9 @@
         "inventory-storage.service-points.item.get",
         "accounts.collection.get",
         "usergroups.collection.get",
-        "usergroups.item.get"
+        "usergroups.item.get",
+        "overdue-fines-policies.collection.get",
+        "lost-item-fees-policies.collection.get"
       ],
       "visible": false
     },
