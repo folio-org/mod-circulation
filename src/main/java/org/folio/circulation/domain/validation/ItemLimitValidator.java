@@ -19,6 +19,7 @@ import org.folio.circulation.support.ValidationErrorFailure;
 public class ItemLimitValidator {
   private final Function<String, ValidationErrorFailure> itemLimitErrorFunction;
   private final LoanRepository loanRepository;
+  private final static int LOANS_LIMIT = 10000;
 
   public ItemLimitValidator(Function<String, ValidationErrorFailure> itemLimitErrorFunction,
     LoanRepository loanRepository) {
@@ -61,7 +62,7 @@ public class ItemLimitValidator {
     String loanTypeId = item.determineLoanTypeForItem();
     Integer itemLimit = records.getLoan().getLoanPolicy().getItemLimit();
 
-    return loanRepository.findOpenLoansByUserIdWithItem(records)
+    return loanRepository.findOpenLoansByUserIdWithItem(LOANS_LIMIT, records)
       .thenApply(r -> r.map(loans -> loans.getRecords().stream()
         .filter(loan -> isMaterialTypeMatchInRetrievedLoan(materialTypeId, loan))
         .filter(loan -> isLoanTypeMatchInRetrievedLoan(loanTypeId, loan))
