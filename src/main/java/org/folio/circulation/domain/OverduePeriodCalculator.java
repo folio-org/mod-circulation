@@ -4,7 +4,6 @@ import org.apache.commons.lang3.ObjectUtils;
 import org.folio.circulation.domain.policy.LoanPolicy;
 import org.folio.circulation.support.Result;
 import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
 import org.joda.time.LocalTime;
 
 import java.util.Collection;
@@ -19,16 +18,20 @@ import static org.joda.time.DateTimeConstants.MINUTES_PER_WEEK;
 import static org.joda.time.Minutes.minutesBetween;
 
 public class OverduePeriodCalculator {
-  private static final int MINUTES_PER_MONTH = MINUTES_PER_DAY * 31; //44640
+  static final int MINUTES_PER_MONTH = MINUTES_PER_DAY * 31; //44640
 
-  public CompletableFuture<Result<Integer>> calculateOverdueMinutes(Loan loan, CalendarRepository calendarRepository) {
+  public CompletableFuture<Result<Integer>> calculateOverdueMinutes(Loan loan, DateTime systemTime, CalendarRepository calendarRepository) {
     int gracePeriodMinutes = getGracePeriodMinutes(loan);
-    return getOverdueMinutes(loan, calendarRepository)
+    return getOverdueMinutes(loan, systemTime, calendarRepository)
         .thenApply(r -> r.next(overdueMinutes -> adjustOverdueMinutesWithGracePeriod(overdueMinutes, gracePeriodMinutes)));
   }
 
   private int getGracePeriodMinutes(Loan loan) {
     LoanPolicy loanPolicy = loan.getLoanPolicy();
+    if (loanPolicy == null) {
+      return 0;
+    }
+    
     int duration = loanPolicy.getGracePeriodDuration();
     if (duration <= 0 || shouldIgnoreGracePeriod(loan)) {
       return 0;
@@ -50,14 +53,14 @@ public class OverduePeriodCalculator {
     }
   }
 
-  private CompletableFuture<Result<Integer>> getOverdueMinutes(Loan loan, CalendarRepository calendarRepository) {
+  private CompletableFuture<Result<Integer>> getOverdueMinutes(Loan loan, DateTime systemTime, CalendarRepository calendarRepository) {
     final DateTime dueDate = loan.getDueDate();
-    final DateTime now = DateTime.now(DateTimeZone.UTC);
+//    final DateTime now = DateTime.now(DateTimeZone.UTC);
     if (loan.getOverdueFinePolicy().shouldCountClosed()) {
-      int overdueMinutes = dueDate.isBefore(now) ? minutesBetween(dueDate, now).getMinutes() : 0;
+      int overdueMinutes = dueDate.isBefore(systemTime) ? minutesBetween(dueDate, systemTime).getMinutes() : 0;
       return completedFuture(succeeded(overdueMinutes));
     } else {
-      return calendarRepository.fetchOpeningDays(dueDate.toLocalDate(), now.toLocalDate(), loan.getCheckoutServicePointId())
+      return calendarRepository.fetchOpeningDaysBetweenDates(dueDate.toLocalDate(), systemTime.toLocalDate(), loan.getCheckoutServicePointId())
       .thenApply(r -> r.next(this::getOpeningDaysDurationMinutes));
     }
   }
@@ -94,8 +97,9 @@ public class OverduePeriodCalculator {
   }
 
   private boolean shouldIgnoreGracePeriod(Loan loan) {
-    return loan.wasDueDateChangedByRecall() 
-        && loan.getOverdueFinePolicy().shouldIgnoreGracePeriodsForRecalls();
+    return loan.wasDueDateChangedByRecall()
+      && loan.getOverdueFinePolicy() != null
+      && loan.getOverdueFinePolicy().shouldIgnoreGracePeriodsForRecalls();
   }
 
 }

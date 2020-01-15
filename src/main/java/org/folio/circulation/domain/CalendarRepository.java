@@ -47,7 +47,7 @@ public class CalendarRepository {
       .fetch(path);
   }
 
-  public CompletableFuture<Result<List<OpeningDay>>> fetchOpeningDays(
+  public CompletableFuture<Result<List<OpeningDay>>> fetchOpeningDaysBetweenDates(
       LocalDate startDate, LocalDate endDate, String servicePointId) {
 
     String path = String.format(PERIODS_QUERY_PARAMS, servicePointId, startDate, endDate);
