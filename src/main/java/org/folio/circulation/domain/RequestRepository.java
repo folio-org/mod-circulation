@@ -9,7 +9,6 @@ import static org.folio.circulation.support.ResultBinding.flatMapResult;
 import static org.folio.circulation.support.ResultBinding.mapResult;
 import static org.folio.circulation.support.http.ResponseMapping.forwardOnFailure;
 import static org.folio.circulation.support.http.ResponseMapping.mapUsingJson;
-import static org.folio.circulation.support.http.client.Limit.limit;
 
 import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
@@ -23,6 +22,7 @@ import org.folio.circulation.support.RecordNotFoundFailure;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.SingleRecordFetcher;
 import org.folio.circulation.support.http.client.CqlQuery;
+import org.folio.circulation.support.http.client.Limit;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.client.ResponseInterpreter;
 
@@ -84,31 +84,18 @@ public class RequestRepository {
       .thenComposeAsync(result -> result.after(patronGroupRepository::findPatronGroupsForRequestsUsers));
   }
 
-  public CompletableFuture<Result<MultipleRecords<Request>>> findBy(
-    Result<CqlQuery> queryResult, Integer pageLimit) {
-    return requestsStorageClient.getMany(queryResult.value(), limit(pageLimit))
-      .thenApply(result -> result.next(this::mapResponseToRequests))
-      .thenComposeAsync(requests ->
-        itemRepository.fetchItemsFor(requests, Request::withItem))
-      .thenComposeAsync(result -> result.after(servicePointRepository::findServicePointsForRequests))
-      .thenComposeAsync(result -> result.after(userRepository::findUsersForRequests))
-      .thenComposeAsync(result -> result.after(patronGroupRepository::findPatronGroupsForRequestsUsers));
-  }
+  CompletableFuture<Result<MultipleRecords<Request>>> findBy(CqlQuery query,
+    Limit limit) {
 
-  //TODO: try to consolidate this further with above
-  CompletableFuture<Result<MultipleRecords<Request>>> findBy(
-    CqlQuery query, Integer pageLimit) {
-
-    return requestsStorageClient.getMany(query, limit(pageLimit))
-      .thenApply(result -> result.next(this::mapResponseToRequests))
+    return findByWithoutItems(query, limit)
       .thenComposeAsync(requests ->
         itemRepository.fetchItemsFor(requests, Request::withItem));
   }
 
   CompletableFuture<Result<MultipleRecords<Request>>> findByWithoutItems(
-    CqlQuery query, Integer pageLimit) {
+    CqlQuery query, Limit limit) {
 
-    return requestsStorageClient.getMany(query, limit(pageLimit))
+    return requestsStorageClient.getMany(query, limit)
       .thenApply(result -> result.next(this::mapResponseToRequests));
   }
 

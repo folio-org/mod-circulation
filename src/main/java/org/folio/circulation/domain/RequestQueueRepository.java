@@ -5,6 +5,7 @@ import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatchAny;
 import static org.folio.circulation.support.CqlSortBy.ascending;
 import static org.folio.circulation.support.Result.succeeded;
+import static org.folio.circulation.support.http.client.Limit.limit;
 
 import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
@@ -12,6 +13,7 @@ import java.util.concurrent.CompletableFuture;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.http.client.CqlQuery;
 import org.folio.circulation.support.Result;
+import org.folio.circulation.support.http.client.Limit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,7 +44,7 @@ public class RequestQueueRepository {
     final Result<CqlQuery> itemIdQuery = exactMatch("itemId", itemId);
     final Result<CqlQuery> statusQuery = exactMatchAny("status", RequestStatus.openStates());
 
-    final int maximumSupportedRequestQueueSize = 1000;
+    final Limit maximumSupportedRequestQueueSize = limit(1000);
 
     return itemIdQuery.combine(statusQuery, CqlQuery::and)
       .map(q -> q.sortBy(ascending("position")))
@@ -55,7 +57,7 @@ public class RequestQueueRepository {
     final Result<CqlQuery> itemIdQuery = exactMatch("itemId", itemId);
     final Result<CqlQuery> statusQuery = exactMatchAny("status", RequestStatus.openStates());
 
-    final int maximumSupportedRequestQueueSize = 1000;
+    final Limit maximumSupportedRequestQueueSize = limit(1000);
 
     return itemIdQuery.combine(statusQuery, CqlQuery::and)
       .map(q -> q.sortBy(ascending("position")))
