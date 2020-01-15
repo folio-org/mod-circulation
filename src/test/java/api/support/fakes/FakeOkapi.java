@@ -379,7 +379,7 @@ public class FakeOkapi extends AbstractVerticle {
   }
 
   private void forwardApplyingCirculationRulesRequest(RoutingContext context,
-                                                      String policyNamePartialPath) {
+    String policyNamePartialPath) {
 
     VertxWebClientOkapiHttpClient client = createWebClient();
 

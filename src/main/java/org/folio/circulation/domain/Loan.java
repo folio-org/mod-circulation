@@ -466,14 +466,21 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   private class Policies {
-    private LoanPolicy loanPolicy;
-    private OverdueFinePolicy overdueFinePolicy;
-    private LostItemPolicy lostItemPolicy;
+    private final LoanPolicy loanPolicy;
+    private final OverdueFinePolicy overdueFinePolicy;
+    private final LostItemPolicy lostItemPolicy;
 
     private Policies() {
       this.loanPolicy = LoanPolicy.unknown(null);
       this.overdueFinePolicy = OverdueFinePolicy.unknown(null);
       this.lostItemPolicy = LostItemPolicy.unknown(null);
+    }
+
+    private Policies(LoanPolicy loanPolicy, OverdueFinePolicy overdueFinePolicy,
+      LostItemPolicy lostItemPolicy) {
+      this.loanPolicy = loanPolicy;
+      this.overdueFinePolicy = overdueFinePolicy;
+      this.lostItemPolicy = lostItemPolicy;
     }
 
     public LoanPolicy getLoanPolicy() {
@@ -489,18 +496,15 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     }
 
     public Policies withLoanPolicy(LoanPolicy newLoanPolicy) {
-      loanPolicy = newLoanPolicy;
-      return this;
+      return new Policies(newLoanPolicy, overdueFinePolicy, lostItemPolicy);
     }
 
     public Policies withOverdueFinePolicy(OverdueFinePolicy newOverdueFinePolicy) {
-      overdueFinePolicy = newOverdueFinePolicy;
-      return this;
+      return new Policies(loanPolicy, newOverdueFinePolicy, lostItemPolicy);
     }
 
     public Policies withLostItemPolicy(LostItemPolicy newLostItemPolicy) {
-      lostItemPolicy = newLostItemPolicy;
-      return this;
+      return new Policies(loanPolicy, overdueFinePolicy, newLostItemPolicy);
     }
   }
 }
