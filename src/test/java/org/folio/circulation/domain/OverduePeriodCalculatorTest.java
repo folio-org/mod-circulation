@@ -20,7 +20,6 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
-import static org.folio.circulation.domain.OverduePeriodCalculator.MINUTES_PER_MONTH;
 import static org.junit.Assert.*;
 
 @RunWith(JUnitParamsRunner.class)
