@@ -24,6 +24,10 @@ public class Limit implements QueryParameter {
     return limit(1);
   }
 
+  public static Limit oneThousand() {
+    return limit(1000);
+  }
+
   private Limit(Integer value) {
     this.value = value;
   }

@@ -1,5 +1,7 @@
 package org.folio.circulation.domain.anonymization;
 
+import static org.folio.circulation.support.http.client.Limit.limit;
+
 import java.lang.invoke.MethodHandles;
 
 import org.folio.circulation.domain.anonymization.config.LoanAnonymizationConfiguration;
@@ -13,9 +15,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class LoanAnonymization {
-  public static final Limit FETCH_LOANS_LIMIT = Limit.limit(5000);
-  private final Logger log = LoggerFactory.getLogger(MethodHandles.lookup()
-    .lookupClass());
+  private final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
+
+  public static final Limit FETCH_LOANS_LIMIT = limit(5000);
+
   private final Clients clients;
   private LoanAnonymizationFinderService loansFinderService;
   private AnonymizationCheckersService anonymizationCheckersService;

@@ -34,7 +34,6 @@ import org.folio.circulation.support.http.client.Limit;
 import io.vertx.core.json.JsonObject;
 
 public class PatronActionSessionService {
-
   private static final Limit DEFAULT_SESSION_SIZE_LIMIT = limit(200);
 
   private static EnumMap<PatronActionType, NoticeEventType> actionToEventMap;
