@@ -140,7 +140,7 @@ public class UserRepository {
     String propertyName) {
 
     return CqlQuery.exactMatch("barcode", barcode)
-      .after(query -> usersStorageClient.getMany(query, Limit.limit(1)))
+      .after(query -> usersStorageClient.getMany(query, Limit.one()))
       .thenApply(result -> result.next(this::mapResponseToUsers)
         .map(MultipleRecords::getRecords)
         .map(users -> users.stream().findFirst())

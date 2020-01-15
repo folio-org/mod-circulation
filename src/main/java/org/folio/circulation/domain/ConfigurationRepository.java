@@ -22,7 +22,7 @@ public class ConfigurationRepository {
   private static final String MODULE_NAME_KEY = "module";
   private static final String CONFIG_NAME_KEY = "configName";
 
-  private static final Limit DEFAULT_PAGE_LIMIT = Limit.limit(1);
+  private static final Limit DEFAULT_PAGE_LIMIT = Limit.one();
 
   private final CollectionResourceClient configurationClient;
 

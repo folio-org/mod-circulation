@@ -20,6 +20,10 @@ public class Limit implements QueryParameter {
     return new Limit(null);
   }
 
+  public static Limit one() {
+    return limit(1);
+  }
+
   private Limit(Integer value) {
     this.value = value;
   }
