@@ -1,14 +1,15 @@
 package org.folio.circulation.domain.notice.session;
 
 import static java.util.function.Function.identity;
-import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
 import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getUUIDProperty;
 import static org.folio.circulation.support.JsonPropertyWriter.write;
 import static org.folio.circulation.support.Result.of;
+import static org.folio.circulation.support.ResultBinding.flatMapResult;
 import static org.folio.circulation.support.ResultBinding.mapResult;
 import static org.folio.circulation.support.http.ResponseMapping.flatMapUsingJson;
 import static org.folio.circulation.support.http.ResponseMapping.forwardOnFailure;
+import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
 import static org.folio.circulation.support.results.CommonFailures.failedDueToServerError;
 
 import java.util.List;
@@ -28,8 +29,8 @@ import org.folio.circulation.domain.UserRepository;
 import org.folio.circulation.domain.policy.LoanPolicyRepository;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
-import org.folio.circulation.support.http.client.CqlQuery;
 import org.folio.circulation.support.Result;
+import org.folio.circulation.support.http.client.CqlQuery;
 import org.folio.circulation.support.http.client.ResponseInterpreter;
 
 import io.vertx.core.json.JsonObject;
@@ -87,7 +88,7 @@ public class PatronActionSessionRepository {
       .otherwise(forwardOnFailure());
 
     return patronActionSessionsStorageClient.delete(record.getId().toString())
-      .thenApply(interpreter::apply);
+      .thenApply(flatMapResult(interpreter::apply));
   }
 
   private JsonObject mapToJson(PatronSessionRecord patronSessionRecord) {

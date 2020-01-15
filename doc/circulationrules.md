@@ -1,5 +1,27 @@
 # Circulation Rules
 
+<!-- How to generate the table of contents using https://github.com/folio-org/okapi/blob/master/doc/md2toc :
+     ../../okapi/doc/md2toc -l 2 -h 3 circulationrules.md
+-->
+
+* [Line comment](#line-comment)
+* [Allowed characters for names](#allowed-characters-for-names)
+* [Policies](#policies)
+* [Criteria type names](#criteria-type-names)
+* [Criterium](#criterium)
+    * ["!" and "all"](#-and-all)
+* [Criteria](#criteria)
+* [Multiple matching rules](#multiple-matching-rules)
+    * [Criterium type priority](#criterium-type-priority)
+    * [Rule specificity priority (number-of-criteria)](#rule-specificity-priority-number-of-criteria)
+    * [Line number priority](#line-number-priority)
+* [Fallback policy](#fallback-policy)
+* [Single circulation rules file](#single-circulation-rules-file)
+* [Loan Rules UX Design Video](#loan-rules-ux-design-video)
+
+This document describes the circulation rules that actually have been implemented in
+the mod-circulation back-end module.
+
 The circulation rules engine calculates the loan policies based on the patron's
 patron group and the item's material type, loan type, and location.
 
@@ -308,3 +330,43 @@ For `priority: first-line` it must be after the last rule.
 For one tenant there is only a single circulation rules file.
 
 It must have a single priority line and a single fallback-policy line.
+
+## Loan Rules UX Design Video
+
+The video from May 2017 explains the user experience (UX) design of the loan rules.
+The general principles still apply but note that some aspects have changed since then
+or haven't been implemented yet.
+
+[https://discuss.folio.org/t/loan-rules-ux-iteration-4/834](https://discuss.folio.org/t/loan-rules-ux-iteration-4/834)
+
+* 00:08 What is a loan policy?
+* 00:26 What does a loan policy contain?
+* 00:37 Can loan policies be combined?
+* 01:00 How are loan policies applied?
+* 01:09 Loan rules
+* 01:19 Loan rule criteria
+* 01:46 Criteria shorthand
+* 02:04 Combining criteria - Plus (+) and Colon (:)
+* 02:28 Using multiple criteria values
+* 02:56 Nesting criteria
+* 03:36 Modifiers - exclamation mark (!)
+* 04:00 Logic - Rule Priority
+* 05:32 Logic: 1. Priority of criteria in a rule
+* 06:43 Logic: 2. Specificity of a rule 
+* 06:57 Logic: 3. Line number of a rule
+* 07:32 Special selectors: The "all" selector
+* 08:33 Example of loan rules setup
+* 09:14 Demo: fallback-policy
+* 09:50 Demo: Section headlines (#)
+* 10:11 Demo: priority
+* 10:42 Demo: Sections, sub-sections, comments (/)
+* 11:12 Demo: Simple rules
+* 11:46 Demo: Nesting rules
+* 12:51 Demo: Exception - exclamation mark (!)
+* 13:32 Demo: Multiple names in a criterium
+* 13:58 Demo: Exceptions - "all" selector
+* 16:36 Demo: Auto-suggest
+* 19:34 Demo: Syntax error warnings
+* 20:16 Demo: Testing outcome of loan rules
+* 22:38 Demo: Editing policies in context
+* 23:34 Demo: Searching and filtering loan rules
