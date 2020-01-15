@@ -165,23 +165,27 @@ public class LoanRepository {
     return result.combineAfter(userRepository::getUser, Loan::withUser);
   }
 
-  public CompletableFuture<Result<MultipleRecords<Loan>>> findClosedLoans(int fetchLoansLimit) {
-    return queryLoanStorage(fetchLoansLimit, getStatusCQLQuery("Closed"));
+  public CompletableFuture<Result<MultipleRecords<Loan>>> findClosedLoans(
+    Limit limit) {
+
+    return queryLoanStorage(getStatusCQLQuery("Closed"), limit);
   }
 
   private CompletableFuture<Result<MultipleRecords<Loan>>> queryLoanStorage(
-      int fetchLoansLimit, Result<CqlQuery> statusQuery) {
+    Result<CqlQuery> statusQuery, Limit limit) {
 
     return statusQuery
-        .after(q -> loansStorageClient.getMany(q, Limit.limit(fetchLoansLimit)))
+        .after(q -> loansStorageClient.getMany(q, limit))
         .thenApply(result -> result.next(this::mapResponseToLoans));
   }
 
   public CompletableFuture<Result<MultipleRecords<Loan>>> findClosedLoans(
-      String userId, int fetchLoansLimit) {
+    String userId, Limit limit) {
+
     Result<CqlQuery> query = exactMatch("userId", userId);
     final Result<CqlQuery> statusQuery = getStatusCQLQuery("Closed");
-   return queryLoanStorage(fetchLoansLimit, statusQuery.combine(query, CqlQuery::and));
+
+   return queryLoanStorage(statusQuery.combine(query, CqlQuery::and), limit);
   }
 
   public CompletableFuture<Result<MultipleRecords<Loan>>> findBy(String query) {
@@ -283,7 +287,8 @@ public class LoanRepository {
     final Result<CqlQuery> statusQuery = getStatusCQLQuery("Open");
     final Result<CqlQuery> itemIdQuery = exactMatch(ITEM_ID, itemId);
 
-    return queryLoanStorage(1, statusQuery.combine(itemIdQuery, CqlQuery::and));
+    return queryLoanStorage(statusQuery.combine(itemIdQuery, CqlQuery::and),
+      Limit.one());
   }
 
   CompletableFuture<Result<MultipleRecords<Request>>> findOpenLoansFor(
@@ -309,8 +314,8 @@ public class LoanRepository {
     final Result<CqlQuery> statusQuery = getStatusCQLQuery("Open");
     final Result<CqlQuery> itemIdQuery = exactMatchAny(ITEM_ID, itemsToFetchLoansFor);
 
-    return queryLoanStorage(requests.size(), statusQuery.combine(
-        itemIdQuery, CqlQuery::and))
+    return queryLoanStorage(statusQuery.combine(
+        itemIdQuery, CqlQuery::and), Limit.limit(requests.size()))
       .thenApply(multipleLoansResult -> multipleLoansResult.next(
         loans -> matchLoansToRequests(multipleRequests, loans)));
   }

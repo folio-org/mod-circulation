@@ -8,12 +8,12 @@ import org.folio.circulation.domain.anonymization.service.LoanAnonymizationFinde
 import org.folio.circulation.domain.anonymization.service.LoansForBorrowerFinder;
 import org.folio.circulation.domain.anonymization.service.LoansForTenantFinder;
 import org.folio.circulation.support.Clients;
+import org.folio.circulation.support.http.client.Limit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class LoanAnonymization {
-
-  public static final int FETCH_LOANS_LIMIT = 5000;
+  public static final Limit FETCH_LOANS_LIMIT = Limit.limit(5000);
   private final Logger log = LoggerFactory.getLogger(MethodHandles.lookup()
     .lookupClass());
   private final Clients clients;
