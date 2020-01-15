@@ -6,7 +6,6 @@ import static java.util.function.Function.identity;
 import static org.folio.circulation.support.Result.ofAsync;
 import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.ResultBinding.mapResult;
-import static org.folio.circulation.support.http.client.Limit.limit;
 
 import java.lang.invoke.MethodHandles;
 import java.util.Collection;
@@ -27,7 +26,7 @@ import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.ServicePoint;
 import org.folio.circulation.domain.ServicePointRepository;
 import org.folio.circulation.support.http.client.CqlQuery;
-import org.folio.circulation.support.http.client.Limit;
+import org.folio.circulation.support.http.client.PageLimit;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.results.CommonFailures;
 import org.slf4j.Logger;
@@ -258,7 +257,7 @@ public class ItemRepository {
     log.info("Fetching item with barcode: {}", barcode);
 
     return CqlQuery.exactMatch("barcode", barcode)
-       .after(query -> itemsClient.getMany(query, Limit.one()))
+       .after(query -> itemsClient.getMany(query, PageLimit.one()))
       .thenApply(result -> result.next(this::mapMultipleToResult))
       .thenApply(r -> r.map(Item::from))
       .exceptionally(CommonFailures::failedDueToServerError);

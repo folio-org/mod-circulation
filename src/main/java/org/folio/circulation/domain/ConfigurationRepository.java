@@ -12,7 +12,7 @@ import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.http.client.CqlQuery;
-import org.folio.circulation.support.http.client.Limit;
+import org.folio.circulation.support.http.client.PageLimit;
 import org.joda.time.DateTimeZone;
 
 import io.vertx.core.json.JsonObject;
@@ -22,7 +22,7 @@ public class ConfigurationRepository {
   private static final String MODULE_NAME_KEY = "module";
   private static final String CONFIG_NAME_KEY = "configName";
 
-  private static final Limit DEFAULT_PAGE_LIMIT = Limit.one();
+  private static final PageLimit DEFAULT_PAGE_PAGE_LIMIT = PageLimit.one();
 
   private final CollectionResourceClient configurationClient;
 
@@ -50,7 +50,7 @@ public class ConfigurationRepository {
    */
   public CompletableFuture<Result<LoanAnonymizationConfiguration>> loanHistoryConfiguration() {
     return defineModuleNameAndConfigNameFilter("LOAN_HISTORY", "loan_history")
-      .after(query -> configurationClient.getMany(query, DEFAULT_PAGE_LIMIT))
+      .after(query -> configurationClient.getMany(query, DEFAULT_PAGE_PAGE_LIMIT))
       .thenApply(result -> result.next(response ->
         from(response, Configuration::new, CONFIGS_KEY)))
       .thenApply(r -> r.next(r1 -> r.map(MultipleRecords::getRecords)))
@@ -80,7 +80,7 @@ public class ConfigurationRepository {
     Function<MultipleRecords<Configuration>, T> searchStrategy) {
 
     return cqlQueryResult
-      .after(query -> configurationClient.getMany(query, DEFAULT_PAGE_LIMIT))
+      .after(query -> configurationClient.getMany(query, DEFAULT_PAGE_PAGE_LIMIT))
       .thenApply(result -> result.next(response ->
         from(response, Configuration::new, CONFIGS_KEY)))
       .thenApply(result -> result.map(searchStrategy));

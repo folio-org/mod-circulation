@@ -5,7 +5,7 @@ import static org.folio.circulation.support.CqlSortBy.ascending;
 import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatchAny;
-import static org.folio.circulation.support.http.client.Limit.oneThousand;
+import static org.folio.circulation.support.http.client.PageLimit.oneThousand;
 
 import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
@@ -13,14 +13,14 @@ import java.util.concurrent.CompletableFuture;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.http.client.CqlQuery;
-import org.folio.circulation.support.http.client.Limit;
+import org.folio.circulation.support.http.client.PageLimit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class RequestQueueRepository {
   private static final Logger LOG = LoggerFactory.getLogger(RequestQueueRepository.class);
 
-  public static final Limit MAXIMUM_SUPPORTED_REQUEST_QUEUE_SIZE = oneThousand();
+  public static final PageLimit MAXIMUM_SUPPORTED_REQUEST_QUEUE_SIZE = oneThousand();
   private final RequestRepository requestRepository;
 
   private RequestQueueRepository(RequestRepository requestRepository) {

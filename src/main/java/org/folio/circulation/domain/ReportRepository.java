@@ -1,7 +1,7 @@
 package org.folio.circulation.domain;
 
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
-import static org.folio.circulation.support.http.client.Limit.limit;
+import static org.folio.circulation.support.http.client.PageLimit.limit;
 import static org.folio.circulation.support.http.client.Offset.offset;
 
 import java.util.ArrayList;

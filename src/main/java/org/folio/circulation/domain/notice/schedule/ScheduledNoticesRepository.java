@@ -19,7 +19,7 @@ import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.CqlSortBy;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.http.client.CqlQuery;
-import org.folio.circulation.support.http.client.Limit;
+import org.folio.circulation.support.http.client.PageLimit;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.client.ResponseInterpreter;
 import org.joda.time.DateTime;
@@ -53,7 +53,7 @@ public class ScheduledNoticesRepository {
 
   public CompletableFuture<Result<MultipleRecords<ScheduledNotice>>> findNotices(
     DateTime timeLimit, boolean realTime, List<TriggeringEvent> triggeringEvents,
-    CqlSortBy cqlSortBy, Limit pageLimit) {
+    CqlSortBy cqlSortBy, PageLimit pageLimit) {
 
     List<String> triggeringEventRepresentations = triggeringEvents.stream()
       .map(TriggeringEvent::getRepresentation)
@@ -67,7 +67,7 @@ public class ScheduledNoticesRepository {
   }
 
   private CompletableFuture<Result<MultipleRecords<ScheduledNotice>>> findBy(
-    CqlQuery cqlQuery, Limit pageLimit) {
+    CqlQuery cqlQuery, PageLimit pageLimit) {
 
     return scheduledNoticesStorageClient.getMany(cqlQuery, pageLimit)
       .thenApply(r -> r.next(response ->

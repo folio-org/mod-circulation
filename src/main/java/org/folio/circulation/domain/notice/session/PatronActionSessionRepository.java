@@ -31,7 +31,7 @@ import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.http.client.CqlQuery;
-import org.folio.circulation.support.http.client.Limit;
+import org.folio.circulation.support.http.client.PageLimit;
 import org.folio.circulation.support.http.client.ResponseInterpreter;
 
 import io.vertx.core.json.JsonObject;
@@ -115,7 +115,7 @@ public class PatronActionSessionRepository {
   }
 
   public CompletableFuture<Result<MultipleRecords<PatronSessionRecord>>> findPatronActionSessions(
-    String patronId, PatronActionType actionType, Limit pageLimit) {
+    String patronId, PatronActionType actionType, PageLimit pageLimit) {
 
     Result<CqlQuery> sessionsQuery = exactMatch(PATRON_ID, patronId);
 
@@ -142,7 +142,7 @@ public class PatronActionSessionRepository {
   }
 
   private CompletableFuture<Result<MultipleRecords<PatronSessionRecord>>> findBy(
-    CqlQuery query, Limit pageLimit) {
+    CqlQuery query, PageLimit pageLimit) {
 
     return patronActionSessionsStorageClient.getMany(query, pageLimit)
       .thenApply(r -> r.next(response ->

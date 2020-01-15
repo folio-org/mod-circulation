@@ -7,7 +7,7 @@ import static org.folio.circulation.domain.RequestStatus.OPEN_AWAITING_PICKUP;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatchAny;
 import static org.folio.circulation.support.CqlSortBy.descending;
-import static org.folio.circulation.support.http.client.Limit.limit;
+import static org.folio.circulation.support.http.client.PageLimit.limit;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -36,7 +36,7 @@ import org.folio.circulation.support.ItemRepository;
 import org.folio.circulation.support.OkJsonResponseResult;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.RouteRegistration;
-import org.folio.circulation.support.http.client.Limit;
+import org.folio.circulation.support.http.client.PageLimit;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.server.WebContext;
 
@@ -227,7 +227,7 @@ public class RequestHoldShelfClearanceResource extends Resource {
 
   private CompletableFuture<Result<MultipleRecords<Request>>> findRequestsByCqlQuery(
     CollectionResourceClient client, Result<CqlQuery> cqlQueryResult,
-    Limit pageLimit) {
+    PageLimit pageLimit) {
 
     return cqlQueryResult
       .after(query -> client.getMany(query, pageLimit))

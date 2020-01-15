@@ -39,7 +39,7 @@ import org.folio.circulation.support.OkJsonResponseResult;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.RouteRegistration;
 import org.folio.circulation.support.http.client.CqlQuery;
-import org.folio.circulation.support.http.client.Limit;
+import org.folio.circulation.support.http.client.PageLimit;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.server.WebContext;
 
@@ -176,7 +176,7 @@ public class ItemsInTransitResource extends Resource {
       statusQuery.combine(
         itemIdQuery, CqlQuery::and)
         .after(q -> loansStorageClient.getMany(q,
-          Limit.limit(inTransitReportEntries.size())))
+          PageLimit.limit(inTransitReportEntries.size())))
         .thenApply(result -> result.next(this::mapResponseToLoans));
 
     return multipleRecordsLoans.thenCompose(multiLoanRecordsResult ->

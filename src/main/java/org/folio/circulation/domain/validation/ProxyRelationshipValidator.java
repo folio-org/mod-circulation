@@ -15,7 +15,7 @@ import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.http.client.CqlQuery;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.ValidationErrorFailure;
-import org.folio.circulation.support.http.client.Limit;
+import org.folio.circulation.support.http.client.PageLimit;
 
 public class ProxyRelationshipValidator {
   private final CollectionResourceClient proxyRelationshipsClient;
@@ -46,7 +46,7 @@ public class ProxyRelationshipValidator {
     UserRelatedRecord record) {
 
     return proxyRelationshipQuery(record.getProxyUserId(), record.getUserId())
-      .after(query -> proxyRelationshipsClient.getMany(query, Limit.oneThousand())
+      .after(query -> proxyRelationshipsClient.getMany(query, PageLimit.oneThousand())
       .thenApply(result -> result.next(
         response -> MultipleRecords.from(response, ProxyRelationship::new, "proxiesFor"))
       .map(MultipleRecords::getRecords)

@@ -38,7 +38,7 @@ import org.folio.circulation.support.MultipleRecordFetcher;
 import org.folio.circulation.support.RecordNotFoundFailure;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.SingleRecordFetcher;
-import org.folio.circulation.support.http.client.Limit;
+import org.folio.circulation.support.http.client.PageLimit;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.client.ResponseInterpreter;
 import org.folio.circulation.support.results.CommonFailures;
@@ -166,26 +166,26 @@ public class LoanRepository {
   }
 
   public CompletableFuture<Result<MultipleRecords<Loan>>> findClosedLoans(
-    Limit limit) {
+    PageLimit pageLimit) {
 
-    return queryLoanStorage(getStatusCQLQuery("Closed"), limit);
+    return queryLoanStorage(getStatusCQLQuery("Closed"), pageLimit);
   }
 
   private CompletableFuture<Result<MultipleRecords<Loan>>> queryLoanStorage(
-    Result<CqlQuery> statusQuery, Limit limit) {
+    Result<CqlQuery> statusQuery, PageLimit pageLimit) {
 
     return statusQuery
-        .after(q -> loansStorageClient.getMany(q, limit))
+        .after(q -> loansStorageClient.getMany(q, pageLimit))
         .thenApply(result -> result.next(this::mapResponseToLoans));
   }
 
   public CompletableFuture<Result<MultipleRecords<Loan>>> findClosedLoans(
-    String userId, Limit limit) {
+    String userId, PageLimit pageLimit) {
 
     Result<CqlQuery> query = exactMatch("userId", userId);
     final Result<CqlQuery> statusQuery = getStatusCQLQuery("Closed");
 
-   return queryLoanStorage(statusQuery.combine(query, CqlQuery::and), limit);
+   return queryLoanStorage(statusQuery.combine(query, CqlQuery::and), pageLimit);
   }
 
   public CompletableFuture<Result<MultipleRecords<Loan>>> findBy(String query) {
@@ -288,7 +288,7 @@ public class LoanRepository {
     final Result<CqlQuery> itemIdQuery = exactMatch(ITEM_ID, itemId);
 
     return queryLoanStorage(statusQuery.combine(itemIdQuery, CqlQuery::and),
-      Limit.one());
+      PageLimit.one());
   }
 
   CompletableFuture<Result<MultipleRecords<Request>>> findOpenLoansFor(
@@ -315,7 +315,7 @@ public class LoanRepository {
     final Result<CqlQuery> itemIdQuery = exactMatchAny(ITEM_ID, itemsToFetchLoansFor);
 
     return queryLoanStorage(statusQuery.combine(
-        itemIdQuery, CqlQuery::and), Limit.limit(requests.size()))
+        itemIdQuery, CqlQuery::and), PageLimit.limit(requests.size()))
       .thenApply(multipleLoansResult -> multipleLoansResult.next(
         loans -> matchLoansToRequests(multipleRequests, loans)));
   }

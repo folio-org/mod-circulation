@@ -11,7 +11,7 @@ import java.util.function.Consumer;
 
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.folio.circulation.support.http.client.CqlQuery;
-import org.folio.circulation.support.http.client.Limit;
+import org.folio.circulation.support.http.client.PageLimit;
 import org.folio.circulation.support.http.client.Offset;
 import org.folio.circulation.support.http.client.OkapiHttpClient;
 import org.folio.circulation.support.http.client.Response;
@@ -106,15 +106,15 @@ public class CollectionResourceClient {
   }
 
   public CompletableFuture<Result<Response>> getMany(CqlQuery cqlQuery,
-    Limit limit) {
+    PageLimit pageLimit) {
 
-    return getMany(cqlQuery, limit, noOffset());
+    return getMany(cqlQuery, pageLimit, noOffset());
   }
 
   public CompletableFuture<Result<Response>> getMany(CqlQuery cqlQuery,
-    Limit limit, Offset offset) {
+                                                     PageLimit pageLimit, Offset offset) {
 
-    return client.toWebClient().get(collectionRoot, cqlQuery, limit, offset);
+    return client.toWebClient().get(collectionRoot, cqlQuery, pageLimit, offset);
   }
 
   private static boolean isProvided(String query) {

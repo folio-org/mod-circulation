@@ -22,7 +22,7 @@ import org.folio.circulation.support.RecordNotFoundFailure;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.SingleRecordFetcher;
 import org.folio.circulation.support.http.client.CqlQuery;
-import org.folio.circulation.support.http.client.Limit;
+import org.folio.circulation.support.http.client.PageLimit;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.client.ResponseInterpreter;
 
@@ -85,17 +85,17 @@ public class RequestRepository {
   }
 
   CompletableFuture<Result<MultipleRecords<Request>>> findBy(CqlQuery query,
-    Limit limit) {
+    PageLimit pageLimit) {
 
-    return findByWithoutItems(query, limit)
+    return findByWithoutItems(query, pageLimit)
       .thenComposeAsync(requests ->
         itemRepository.fetchItemsFor(requests, Request::withItem));
   }
 
   CompletableFuture<Result<MultipleRecords<Request>>> findByWithoutItems(
-    CqlQuery query, Limit limit) {
+    CqlQuery query, PageLimit pageLimit) {
 
-    return requestsStorageClient.getMany(query, limit)
+    return requestsStorageClient.getMany(query, pageLimit)
       .thenApply(result -> result.next(this::mapResponseToRequests));
   }
 

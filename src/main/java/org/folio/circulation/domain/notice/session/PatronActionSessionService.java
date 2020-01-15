@@ -7,7 +7,7 @@ import static org.folio.circulation.support.AsyncCoordinationUtil.allOf;
 import static org.folio.circulation.support.Result.of;
 import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.ResultBinding.mapResult;
-import static org.folio.circulation.support.http.client.Limit.limit;
+import static org.folio.circulation.support.http.client.PageLimit.limit;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -29,12 +29,12 @@ import org.folio.circulation.domain.notice.PatronNoticeEventBuilder;
 import org.folio.circulation.domain.notice.PatronNoticeService;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.Result;
-import org.folio.circulation.support.http.client.Limit;
+import org.folio.circulation.support.http.client.PageLimit;
 
 import io.vertx.core.json.JsonObject;
 
 public class PatronActionSessionService {
-  private static final Limit DEFAULT_SESSION_SIZE_LIMIT = limit(200);
+  private static final PageLimit DEFAULT_SESSION_SIZE_PAGE_LIMIT = limit(200);
 
   private static EnumMap<PatronActionType, NoticeEventType> actionToEventMap;
 
@@ -76,7 +76,7 @@ public class PatronActionSessionService {
     PatronActionType actionType) {
 
     return patronActionSessionRepository.findPatronActionSessions(patronId,
-        actionType, DEFAULT_SESSION_SIZE_LIMIT)
+        actionType, DEFAULT_SESSION_SIZE_PAGE_LIMIT)
       .thenCompose(r -> r.after(this::sendNotices))
       .thenCompose(r -> r.after(records ->
         allOf(Objects.isNull(records)

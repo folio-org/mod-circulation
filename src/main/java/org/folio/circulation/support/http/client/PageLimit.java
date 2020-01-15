@@ -5,30 +5,30 @@ import static java.lang.Integer.MAX_VALUE;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.ext.web.client.HttpRequest;
 
-public class Limit implements QueryParameter {
+public class PageLimit implements QueryParameter {
   private final Integer value;
 
-  public static Limit limit(int limit) {
-    return new Limit(limit);
+  public static PageLimit limit(int limit) {
+    return new PageLimit(limit);
   }
 
-  public static Limit maximumLimit() {
+  public static PageLimit maximumLimit() {
     return limit(MAX_VALUE);
   }
 
-  public static Limit noLimit() {
-    return new Limit(null);
+  public static PageLimit noLimit() {
+    return new PageLimit(null);
   }
 
-  public static Limit one() {
+  public static PageLimit one() {
     return limit(1);
   }
 
-  public static Limit oneThousand() {
+  public static PageLimit oneThousand() {
     return limit(1000);
   }
 
-  private Limit(Integer value) {
+  private PageLimit(Integer value) {
     this.value = value;
   }
 

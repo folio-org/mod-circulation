@@ -5,8 +5,8 @@ import static org.apache.commons.collections4.ListUtils.partition;
 import static org.folio.circulation.domain.MultipleRecords.empty;
 import static org.folio.circulation.support.Result.of;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatchAny;
-import static org.folio.circulation.support.http.client.Limit.maximumLimit;
-import static org.folio.circulation.support.http.client.Limit.noLimit;
+import static org.folio.circulation.support.http.client.PageLimit.maximumLimit;
+import static org.folio.circulation.support.http.client.PageLimit.noLimit;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -17,7 +17,7 @@ import java.util.stream.Collectors;
 
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.support.http.client.CqlQuery;
-import org.folio.circulation.support.http.client.Limit;
+import org.folio.circulation.support.http.client.PageLimit;
 import org.folio.circulation.support.http.client.Response;
 
 import io.vertx.core.json.JsonObject;
@@ -96,9 +96,9 @@ public class MultipleRecordFetcher<T> {
   }
 
   private CompletableFuture<Result<MultipleRecords<T>>> findByQuery(
-    Result<CqlQuery> queryResult, Limit limit) {
+    Result<CqlQuery> queryResult, PageLimit pageLimit) {
 
-    return queryResult.after(query -> client.getMany(query, limit))
+    return queryResult.after(query -> client.getMany(query, pageLimit))
       .thenApply(result -> result.next(this::mapToRecords));
   }
 
