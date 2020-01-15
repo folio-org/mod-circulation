@@ -6,6 +6,11 @@ import io.vertx.core.buffer.Buffer;
 import io.vertx.ext.web.client.HttpRequest;
 
 public class PageLimit implements QueryParameter {
+  private static final PageLimit MAXIMUM_PAGE_LIMIT = limit(MAX_VALUE);
+  private static final PageLimit NO_PAGE_LIMIT = new PageLimit(null);
+  private static final PageLimit ONE = limit(1);
+  private static final PageLimit ONE_THOUSAND = limit(1000);
+  
   private final Integer value;
 
   public static PageLimit limit(int limit) {
@@ -13,19 +18,19 @@ public class PageLimit implements QueryParameter {
   }
 
   public static PageLimit maximumLimit() {
-    return limit(MAX_VALUE);
+    return MAXIMUM_PAGE_LIMIT;
   }
 
   public static PageLimit noLimit() {
-    return new PageLimit(null);
+    return NO_PAGE_LIMIT;
   }
 
   public static PageLimit one() {
-    return limit(1);
+    return ONE;
   }
 
   public static PageLimit oneThousand() {
-    return limit(1000);
+    return ONE_THOUSAND;
   }
 
   private PageLimit(Integer value) {
