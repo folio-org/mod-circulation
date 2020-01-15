@@ -91,11 +91,13 @@ public class MultipleRecordFetcher<T> {
 
   public CompletableFuture<Result<MultipleRecords<T>>> findByQuery(
     Result<CqlQuery> queryResult) {
+
     return findByQuery(queryResult, noLimit());
   }
 
   private CompletableFuture<Result<MultipleRecords<T>>> findByQuery(
     Result<CqlQuery> queryResult, Limit limit) {
+
     return queryResult.after(query -> client.getMany(query, limit))
       .thenApply(result -> result.next(this::mapToRecords));
   }

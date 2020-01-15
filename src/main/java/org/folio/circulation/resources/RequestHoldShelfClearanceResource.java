@@ -36,6 +36,7 @@ import org.folio.circulation.support.ItemRepository;
 import org.folio.circulation.support.OkJsonResponseResult;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.RouteRegistration;
+import org.folio.circulation.support.http.client.Limit;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.server.WebContext;
 
@@ -145,7 +146,7 @@ public class RequestHoldShelfClearanceResource extends Resource {
         Result<CqlQuery> cqlQueryResult = statusQuery
           .combine(itemIdsQuery, CqlQuery::and);
 
-        return findRequestsByCqlQuery(client, cqlQueryResult, batch.size());
+        return findRequestsByCqlQuery(client, cqlQueryResult, limit(batch.size()));
       })
       .map(CompletableFuture::join)
       .collect(Collectors.toList());
@@ -211,7 +212,7 @@ public class RequestHoldShelfClearanceResource extends Resource {
           .combine(notEmptyDateQuery, CqlQuery::and)
           .map(q -> q.sortBy(descending(REQUEST_CLOSED_DATE_KEY)));
 
-        return findRequestsByCqlQuery(client, cqlQueryResult, PAGE_REQUEST_LIMIT);
+        return findRequestsByCqlQuery(client, cqlQueryResult, limit(PAGE_REQUEST_LIMIT));
       }).map(CompletableFuture::join)
       .collect(Collectors.toList());
   }
@@ -225,10 +226,11 @@ public class RequestHoldShelfClearanceResource extends Resource {
   }
 
   private CompletableFuture<Result<MultipleRecords<Request>>> findRequestsByCqlQuery(
-    CollectionResourceClient client, Result<CqlQuery> cqlQueryResult, int limit) {
+    CollectionResourceClient client, Result<CqlQuery> cqlQueryResult,
+    Limit pageLimit) {
 
     return cqlQueryResult
-      .after(query -> client.getMany(query, limit(limit)))
+      .after(query -> client.getMany(query, pageLimit))
       .thenApply(result -> result.next(this::mapResponseToRequest));
   }
 

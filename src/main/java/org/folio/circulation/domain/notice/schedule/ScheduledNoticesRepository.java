@@ -8,7 +8,6 @@ import static org.folio.circulation.support.http.ResponseMapping.flatMapUsingJso
 import static org.folio.circulation.support.http.ResponseMapping.forwardOnFailure;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatchAny;
-import static org.folio.circulation.support.http.client.Limit.limit;
 
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -53,8 +52,8 @@ public class ScheduledNoticesRepository {
   }
 
   public CompletableFuture<Result<MultipleRecords<ScheduledNotice>>> findNotices(
-    DateTime timeLimit, boolean realTime,
-    List<TriggeringEvent> triggeringEvents, CqlSortBy cqlSortBy, int pageLimit) {
+    DateTime timeLimit, boolean realTime, List<TriggeringEvent> triggeringEvents,
+    CqlSortBy cqlSortBy, Limit pageLimit) {
 
     List<String> triggeringEventRepresentations = triggeringEvents.stream()
       .map(TriggeringEvent::getRepresentation)
@@ -68,9 +67,9 @@ public class ScheduledNoticesRepository {
   }
 
   private CompletableFuture<Result<MultipleRecords<ScheduledNotice>>> findBy(
-    CqlQuery cqlQuery, int pageLimit) {
+    CqlQuery cqlQuery, Limit pageLimit) {
 
-    return scheduledNoticesStorageClient.getMany(cqlQuery, limit(pageLimit))
+    return scheduledNoticesStorageClient.getMany(cqlQuery, pageLimit)
       .thenApply(r -> r.next(response ->
         MultipleRecords.from(response, identity(), "scheduledNotices")))
       .thenApply(r -> r.next(records -> records.flatMapRecords(

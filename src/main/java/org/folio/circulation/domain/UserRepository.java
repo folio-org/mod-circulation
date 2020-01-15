@@ -135,8 +135,7 @@ public class UserRepository {
     return getUserByBarcode(barcode, "userBarcode");
   }
 
-  private CompletableFuture<Result<User>> getUserByBarcode(
-    String barcode,
+  private CompletableFuture<Result<User>> getUserByBarcode(String barcode,
     String propertyName) {
 
     return CqlQuery.exactMatch("barcode", barcode)
