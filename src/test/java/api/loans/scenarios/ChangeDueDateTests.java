@@ -1,9 +1,7 @@
 package api.loans.scenarios;
 
-import static api.support.http.InterfaceUrls.loansUrl;
 import static api.support.matchers.PatronNoticeMatcher.hasEmailNoticeProperties;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
-import static java.net.HttpURLConnection.HTTP_NO_CONTENT;
 import static org.folio.circulation.support.JsonPropertyWriter.write;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.core.Is.is;
@@ -14,16 +12,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 import org.apache.commons.lang3.StringUtils;
 import org.awaitility.Awaitility;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
-import org.folio.circulation.support.http.client.ResponseHandler;
 import org.hamcrest.Matcher;
 import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
@@ -32,6 +26,7 @@ import org.joda.time.Period;
 import org.junit.Test;
 
 import api.support.APITests;
+import api.support.builders.DeclareItemLostRequestBuilder;
 import api.support.builders.ItemBuilder;
 import api.support.builders.LoanPolicyBuilder;
 import api.support.builders.NoticeConfigurationBuilder;
@@ -229,5 +224,67 @@ public class ChangeDueDateTests extends APITests {
     MatcherAssert.assertThat(sentNotices,
       hasItems(
         hasEmailNoticeProperties(steve.getId(), manualDueDateChangeTemplateId, noticeContextMatchers)));
+  }
+
+  @Test
+  public void itemIsStillDeclaredLostWhenLoanDueDateIsChanged() {
+    final InventoryItemResource item = itemsFixture.basedUponNod();
+
+    IndividualResource loan = loansFixture.checkOutByBarcode(item);
+
+    DateTime dateTime = DateTime.now();
+
+    final DeclareItemLostRequestBuilder builder = new DeclareItemLostRequestBuilder()
+      .forLoanId(loan.getId()).on(dateTime)
+      .withComment("test comment");
+
+    loansFixture.declareItemLost(loan.getId(), builder);
+
+    Response fetchedLoan = loansClient.getById(loan.getId());
+
+    JsonObject loanToChange = fetchedLoan.getJson().copy();
+
+    DateTime dueDate = DateTime.parse(loanToChange.getString("dueDate"));
+    DateTime newDueDate = dueDate.plus(Period.days(14));
+
+    write(loanToChange, "action", "dueDateChange");
+    write(loanToChange, "dueDate", newDueDate);
+
+    loansFixture.replaceLoan(loan.getId(), loanToChange);
+
+    Response updatedLoanResponse = loansClient.getById(loan.getId());
+
+    JsonObject updatedLoan = updatedLoanResponse.getJson();
+
+    assertThat("status is not open",
+      updatedLoan.getJsonObject("status").getString("name"), is("Open"));
+
+    assertThat("action is not change due date",
+      updatedLoan.getString("action"), is("dueDateChange"));
+
+    assertThat("should not contain a return date",
+      updatedLoan.containsKey("returnDate"), is(false));
+
+    assertThat("due date does not match",
+      updatedLoan.getString("dueDate"), isEquivalentTo(newDueDate));
+
+    assertThat("renewal count should not have changed",
+      updatedLoan.containsKey("renewalCount"), is(false));
+
+    JsonObject fetchedItem = itemsClient.getById(item.getId()).getJson();
+
+    assertThat("item status is not declared lost",
+      fetchedItem.getJsonObject("status").getString("name"), is("Declared lost"));
+
+    final JsonObject loanInStorage = loansStorageClient.getById(loan.getId()).getJson();
+
+    assertThat("item status snapshot in storage is not declared lost",
+      loanInStorage.getString("itemStatus"), is("Declared lost"));
+
+    assertThat("Should not contain check in service point summary",
+      loanInStorage.containsKey("checkinServicePoint"), is(false));
+
+    assertThat("Should not contain check out service point summary",
+      loanInStorage.containsKey("checkoutServicePoint"), is(false));
   }
 }
