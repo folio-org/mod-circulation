@@ -2,6 +2,7 @@ package api.support.matchers;
 
 import static org.hamcrest.core.StringContains.containsString;
 
+import org.folio.circulation.support.HttpFailure;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.ServerErrorFailure;
 import org.folio.circulation.support.ValidationErrorFailure;
@@ -83,6 +84,32 @@ public class FailureMatcher {
         }
         else {
           description.appendText("but is not an error failure");
+          return false;
+        }
+      }
+    };
+  }
+
+  public static Matcher<HttpFailure> isFailureContaining(String expectedReason) {
+    return new TypeSafeDiagnosingMatcher<HttpFailure>() {
+      @Override
+      public void describeTo(Description description) {
+        description.appendText(String.format("a failure: %s", expectedReason));
+      }
+
+      @Override
+      protected boolean matchesSafely(HttpFailure failure, Description description) {
+        if(failure instanceof ServerErrorFailure) {
+          final ServerErrorFailure cause = (ServerErrorFailure) failure;
+
+          final Matcher<String> matcher = containsString(expectedReason);
+
+          matcher.describeMismatch(cause.reason, description);
+
+          return matcher.matches(cause.reason);
+        }
+        else {
+          description.appendText("but is not a failure");
           return false;
         }
       }

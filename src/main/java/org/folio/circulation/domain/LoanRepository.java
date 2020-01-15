@@ -5,12 +5,13 @@ import static java.util.Objects.nonNull;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.domain.representations.LoanProperties.PATRON_GROUP_AT_CHECKOUT;
 import static org.folio.circulation.domain.representations.LoanProperties.PATRON_GROUP_ID_AT_CHECKOUT;
-import static org.folio.circulation.support.CqlQuery.exactMatch;
-import static org.folio.circulation.support.CqlQuery.exactMatchAny;
+import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
+import static org.folio.circulation.support.http.client.CqlQuery.exactMatchAny;
 import static org.folio.circulation.support.JsonPropertyWriter.write;
 import static org.folio.circulation.support.Result.failed;
 import static org.folio.circulation.support.Result.of;
 import static org.folio.circulation.support.Result.succeeded;
+import static org.folio.circulation.support.ResultBinding.flatMapResult;
 import static org.folio.circulation.support.ResultBinding.mapResult;
 import static org.folio.circulation.support.http.CommonResponseInterpreters.noContentRecordInterpreter;
 import static org.folio.circulation.support.http.ResponseMapping.forwardOnFailure;
@@ -32,7 +33,7 @@ import org.folio.circulation.domain.policy.OverdueFinePolicy;
 import org.folio.circulation.domain.representations.LoanProperties;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
-import org.folio.circulation.support.CqlQuery;
+import org.folio.circulation.support.http.client.CqlQuery;
 import org.folio.circulation.support.FetchSingleRecord;
 import org.folio.circulation.support.ItemRepository;
 import org.folio.circulation.support.MultipleRecordFetcher;
@@ -187,7 +188,7 @@ public class LoanRepository {
   public CompletableFuture<Result<MultipleRecords<Loan>>> findBy(String query) {
     //TODO: Should fetch users for all loans
     return loansStorageClient.getManyWithRawQueryStringParameters(query)
-      .thenApply(this::mapResponseToLoans)
+      .thenApply(flatMapResult(this::mapResponseToLoans))
       .thenComposeAsync(loans -> itemRepository.fetchItemsFor(loans, Loan::withItem));
   }
 

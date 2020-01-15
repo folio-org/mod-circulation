@@ -1,14 +1,15 @@
 package org.folio.circulation.support.http.client;
 
-import static io.vertx.core.http.HttpHeaders.CONTENT_TYPE;
 import static java.lang.String.format;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.http.HttpHeaders;
 
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.CaseInsensitiveHeaders;
 import io.vertx.core.http.HttpClientResponse;
 import io.vertx.core.json.JsonObject;
+import io.vertx.ext.web.client.HttpResponse;
 
 public class Response {
   protected final String body;
@@ -21,12 +22,8 @@ public class Response {
     this(statusCode, body, contentType, new CaseInsensitiveHeaders(), null);
   }
 
-  public Response(
-    int statusCode,
-    String body,
-    String contentType,
-    CaseInsensitiveHeaders headers,
-    String fromUrl) {
+  public Response(int statusCode, String body, String contentType,
+    CaseInsensitiveHeaders headers, String fromUrl) {
 
     this.statusCode = statusCode;
     this.body = body;
@@ -35,12 +32,21 @@ public class Response {
     this.fromUrl = fromUrl;
   }
 
+  static Response responseFrom(String url, HttpResponse<Buffer> response) {
+    final CaseInsensitiveHeaders headers = new CaseInsensitiveHeaders();
+
+    headers.addAll(response.headers());
+
+    return new Response(response.statusCode(), response.bodyAsString(),
+      headers.get(HttpHeaders.CONTENT_TYPE), headers, url);
+  }
+
   public static Response from(HttpClientResponse response, Buffer body) {
     return from(response, body, null);
   }
 
   public static Response from(HttpClientResponse response, Buffer body,
-                              String fromUrl) {
+    String fromUrl) {
 
     final CaseInsensitiveHeaders headers = new CaseInsensitiveHeaders();
 
@@ -48,7 +54,7 @@ public class Response {
 
     return new Response(response.statusCode(),
       BufferHelper.stringFromBuffer(body),
-      convertNullToEmpty(response.getHeader(CONTENT_TYPE)),
+      convertNullToEmpty(response.getHeader(io.vertx.core.http.HttpHeaders.CONTENT_TYPE)),
       headers, fromUrl);
   }
 

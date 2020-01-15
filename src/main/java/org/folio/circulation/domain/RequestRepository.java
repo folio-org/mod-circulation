@@ -5,6 +5,7 @@ import static org.folio.circulation.support.Result.failed;
 import static org.folio.circulation.support.Result.of;
 import static org.folio.circulation.support.Result.ofAsync;
 import static org.folio.circulation.support.Result.succeeded;
+import static org.folio.circulation.support.ResultBinding.flatMapResult;
 import static org.folio.circulation.support.ResultBinding.mapResult;
 import static org.folio.circulation.support.http.ResponseMapping.forwardOnFailure;
 import static org.folio.circulation.support.http.ResponseMapping.mapUsingJson;
@@ -15,12 +16,12 @@ import java.util.concurrent.CompletableFuture;
 import org.folio.circulation.storage.RequestBatch;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
-import org.folio.circulation.support.CqlQuery;
 import org.folio.circulation.support.FetchSingleRecord;
 import org.folio.circulation.support.ItemRepository;
 import org.folio.circulation.support.RecordNotFoundFailure;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.SingleRecordFetcher;
+import org.folio.circulation.support.http.client.CqlQuery;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.client.ResponseInterpreter;
 
@@ -74,7 +75,7 @@ public class RequestRepository {
 
   public CompletableFuture<Result<MultipleRecords<Request>>> findBy(String query) {
     return requestsStorageClient.getManyWithRawQueryStringParameters(query)
-      .thenApply(this::mapResponseToRequests)
+      .thenApply(flatMapResult(this::mapResponseToRequests))
       .thenComposeAsync(result -> itemRepository.fetchItemsFor(result, Request::withItem))
       .thenComposeAsync(result -> result.after(loanRepository::findOpenLoansFor))
       .thenComposeAsync(result -> result.after(servicePointRepository::findServicePointsForRequests))
@@ -192,7 +193,7 @@ public class RequestRepository {
       .otherwise(forwardOnFailure());
 
     return requestsStorageClient.delete(request.getId())
-      .thenApply(interpreter::apply);
+      .thenApply(flatMapResult(interpreter::apply));
   }
 
   public CompletableFuture<Result<Request>> loadCancellationReason(Request request) {

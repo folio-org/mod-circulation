@@ -10,12 +10,6 @@ import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static api.support.matchers.ValidationErrorMatchers.hasParameter;
 import static api.support.matchers.ValidationErrorMatchers.hasUUIDParameter;
 import static java.util.Arrays.asList;
-import static org.folio.HttpStatus.HTTP_BAD_REQUEST;
-import static org.folio.HttpStatus.HTTP_CREATED;
-import static org.folio.HttpStatus.HTTP_VALIDATION_ERROR;
-import static org.folio.circulation.domain.ItemStatus.PAGED;
-import static org.folio.circulation.domain.RequestType.RECALL;
-import static org.folio.circulation.domain.representations.ItemProperties.CALL_NUMBER_COMPONENTS;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.hasItems;
@@ -26,38 +20,20 @@ import static org.hamcrest.core.Is.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 import static org.junit.Assert.assertTrue;
 
-import java.net.MalformedURLException;
-import java.time.Clock;
-import java.time.Instant;
-import java.time.ZoneOffset;
+import static org.folio.HttpStatus.HTTP_BAD_REQUEST;
+import static org.folio.HttpStatus.HTTP_CREATED;
+import static org.folio.HttpStatus.HTTP_VALIDATION_ERROR;
+import static org.folio.circulation.domain.ItemStatus.PAGED;
+import static org.folio.circulation.domain.RequestType.RECALL;
+import static org.folio.circulation.domain.representations.ItemProperties.CALL_NUMBER_COMPONENTS;
+
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-
-import org.awaitility.Awaitility;
-import org.folio.circulation.domain.ItemStatus;
-import org.folio.circulation.domain.MultipleRecords;
-import org.folio.circulation.domain.RequestStatus;
-import org.folio.circulation.domain.RequestType;
-import org.folio.circulation.domain.policy.DueDateManagement;
-import org.folio.circulation.domain.policy.Period;
-import org.folio.circulation.support.ClockManager;
-import org.folio.circulation.support.http.client.IndividualResource;
-import org.folio.circulation.support.http.client.Response;
-import org.hamcrest.Matcher;
-import org.hamcrest.MatcherAssert;
-import org.hamcrest.Matchers;
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
-import org.joda.time.LocalDate;
-import org.junit.Test;
-import org.junit.runner.RunWith;
 
 import api.support.APITests;
 import api.support.builders.Address;
@@ -80,6 +56,25 @@ import api.support.http.ResourceClient;
 import io.vertx.core.json.JsonObject;
 import junitparams.JUnitParamsRunner;
 import junitparams.Parameters;
+import org.awaitility.Awaitility;
+import org.hamcrest.Matcher;
+import org.hamcrest.MatcherAssert;
+import org.hamcrest.Matchers;
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
+import org.joda.time.LocalDate;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
+import org.folio.circulation.domain.ItemStatus;
+import org.folio.circulation.domain.MultipleRecords;
+import org.folio.circulation.domain.RequestStatus;
+import org.folio.circulation.domain.RequestType;
+import org.folio.circulation.domain.policy.DueDateManagement;
+import org.folio.circulation.domain.policy.Period;
+import org.folio.circulation.support.ClockManager;
+import org.folio.circulation.support.http.client.IndividualResource;
+import org.folio.circulation.support.http.client.Response;
 
 @RunWith(JUnitParamsRunner.class)
 public class RequestsAPICreationTests extends APITests {
@@ -1574,7 +1569,7 @@ public class RequestsAPICreationTests extends APITests {
     IndividualResource loan = loansFixture.checkOutByBarcode(item, loanOwner, loanDate);
 
     DateTime requestDate = loanDate.plusDays(1);
-    mockClockManagerToReturnFixedTime(requestDate);
+    mockClockManagerToReturnFixedDateTime(requestDate);
 
     IndividualResource request = requestsFixture.place(new RequestBuilder()
       .withId(id)
@@ -1651,7 +1646,7 @@ public class RequestsAPICreationTests extends APITests {
     loansFixture.checkOutByBarcode(item, loanOwner, loanDate);
 
     DateTime requestDate = loanDate.plusDays(1);
-    mockClockManagerToReturnFixedTime(requestDate);
+    mockClockManagerToReturnFixedDateTime(requestDate);
 
     requestsFixture.place(new RequestBuilder()
       .withId(id)
@@ -1876,10 +1871,4 @@ public class RequestsAPICreationTests extends APITests {
       .withTags(new RequestBuilder.Tags(asList("new", "important")));
   }
 
-  private void mockClockManagerToReturnFixedTime(DateTime dateTime) {
-    ClockManager.getClockManager().setClock(
-      Clock.fixed(
-        Instant.ofEpochMilli(dateTime.getMillis()),
-        ZoneOffset.UTC));
-  }
 }

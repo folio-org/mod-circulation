@@ -1,4 +1,4 @@
-package org.folio.circulation.support;
+package org.folio.circulation.support.http.client;
 
 import static java.lang.String.format;
 import static java.lang.String.join;
@@ -16,6 +16,8 @@ import java.util.List;
 import java.util.Objects;
 
 import org.apache.commons.lang3.StringUtils;
+import org.folio.circulation.support.CqlSortBy;
+import org.folio.circulation.support.Result;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -52,21 +54,6 @@ public class CqlQuery {
     return Result.of(() -> new CqlQuery(format("%s<\"%s\"", index, value), none()));
   }
 
-  private static List<String> filterNullValues(Collection<String> values) {
-    return values.stream()
-      .filter(Objects::nonNull)
-      .map(String::toString)
-      .filter(StringUtils::isNotBlank)
-      .distinct()
-      .collect(toList());
-  }
-
-  private static List<String> wrapValuesInQuotes(List<String> values) {
-    return values.stream()
-      .map(value -> format("\"%s\"", value))
-      .collect(toList());
-  }
-
   private CqlQuery(String query, CqlSortBy sortBy) {
     this.query = query;
     this.sortBy = sortBy;
@@ -80,8 +67,8 @@ public class CqlQuery {
     return new CqlQuery(query, sortBy);
   }
 
-  Result<String> encode() {
-    final String sortedQuery = sortBy.applyTo(query);
+  public Result<String> encode() {
+    final String sortedQuery = asText();
 
     log.info("Encoding query {}", sortedQuery);
 
@@ -90,5 +77,20 @@ public class CqlQuery {
 
   String asText() {
     return sortBy.applyTo(query);
+  }
+
+  private static List<String> filterNullValues(Collection<String> values) {
+    return values.stream()
+      .filter(Objects::nonNull)
+      .map(String::toString)
+      .filter(StringUtils::isNotBlank)
+      .distinct()
+      .collect(toList());
+  }
+
+  private static List<String> wrapValuesInQuotes(List<String> values) {
+    return values.stream()
+      .map(value -> format("\"%s\"", value))
+      .collect(toList());
   }
 }
