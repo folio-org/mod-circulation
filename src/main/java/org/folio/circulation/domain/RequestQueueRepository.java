@@ -20,7 +20,7 @@ import org.slf4j.LoggerFactory;
 public class RequestQueueRepository {
   private static final Logger LOG = LoggerFactory.getLogger(RequestQueueRepository.class);
 
-  public static final PageLimit MAXIMUM_SUPPORTED_REQUEST_QUEUE_SIZE = oneThousand();
+  private static final PageLimit MAXIMUM_SUPPORTED_REQUEST_QUEUE_SIZE = oneThousand();
   private final RequestRepository requestRepository;
 
   private RequestQueueRepository(RequestRepository requestRepository) {
