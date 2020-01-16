@@ -30,11 +30,12 @@ public class ConfigurationRepository {
     configurationClient = clients.configurationStorageClient();
   }
 
-  public CompletableFuture<Result<Integer>> lookupSchedulerNoticesProcessingLimit() {
+  public CompletableFuture<Result<PageLimit>> lookupSchedulerNoticesProcessingLimit() {
     Result<CqlQuery> cqlQueryResult = defineModuleNameAndConfigNameFilter(
       "NOTIFICATION_SCHEDULER", "noticesLimit");
 
-    return lookupConfigurations(cqlQueryResult, applySearchSchedulerNoticesLimit());
+    return lookupConfigurations(cqlQueryResult, applySearchSchedulerNoticesLimit())
+      .thenApply(result -> result.map(PageLimit::limit));
   }
 
   public CompletableFuture<Result<Integer>> lookupSessionTimeout() {
