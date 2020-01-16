@@ -20,9 +20,7 @@ public class Offset implements QueryParameter {
 
   @Override
   public void writeTo(HttpRequest<Buffer> request) {
-    if (value != null) {
-      request.addQueryParam("offset", value.toString());
-    }
+    consume(request::addQueryParam);
   }
 
   @Override

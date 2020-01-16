@@ -99,7 +99,7 @@ public class CqlQuery implements QueryParameter {
 
   @Override
   public void writeTo(HttpRequest<Buffer> request) {
-    request.addQueryParam("query", asText());
+    consume(request::addQueryParam);
   }
 
   @Override

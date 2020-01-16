@@ -18,7 +18,7 @@ public class NamedQueryParameter implements QueryParameter {
 
   @Override
   public void writeTo(HttpRequest<Buffer> request) {
-    request.addQueryParam(name, value);
+    consume(request::addQueryParam);
   }
 
   @Override

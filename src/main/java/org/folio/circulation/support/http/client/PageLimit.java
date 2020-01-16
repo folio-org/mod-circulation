@@ -39,10 +39,7 @@ public class PageLimit implements QueryParameter {
 
   @Override
   public void writeTo(HttpRequest<Buffer> request) {
-    //TODO: Replace with null value pattern
-    if (value != null) {
-      request.addQueryParam("limit", value.toString());
-    }
+    consume(request::addQueryParam);
   }
 
   @Override
