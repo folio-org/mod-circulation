@@ -101,4 +101,9 @@ public class CqlQuery implements QueryParameter {
   public void writeTo(HttpRequest<Buffer> request) {
     request.addQueryParam("query", asText());
   }
+
+  @Override
+  public void consume(QueryStringParameterConsumer consumer) {
+    consumer.consume("query", asText());
+  }
 }

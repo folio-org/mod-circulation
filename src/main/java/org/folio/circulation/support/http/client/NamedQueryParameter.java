@@ -20,4 +20,9 @@ public class NamedQueryParameter implements QueryParameter {
   public void writeTo(HttpRequest<Buffer> request) {
     request.addQueryParam(name, value);
   }
+
+  @Override
+  public void consume(QueryStringParameterConsumer consumer) {
+    consumer.consume(name, value);
+  }
 }

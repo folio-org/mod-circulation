@@ -24,4 +24,11 @@ public class Offset implements QueryParameter {
       request.addQueryParam("offset", value.toString());
     }
   }
+
+  @Override
+  public void consume(QueryStringParameterConsumer consumer) {
+    if (value != null) {
+      consumer.consume("offset", value.toString());
+    }
+  }
 }

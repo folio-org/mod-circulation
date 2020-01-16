@@ -44,4 +44,11 @@ public class PageLimit implements QueryParameter {
       request.addQueryParam("limit", value.toString());
     }
   }
+
+  @Override
+  public void consume(QueryStringParameterConsumer consumer) {
+    if (value != null) {
+      consumer.consume("limit", value.toString());
+    }
+  }
 }
