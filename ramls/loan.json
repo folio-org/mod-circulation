@@ -68,73 +68,88 @@
     "item": {
       "description": "Additional information about the item",
       "type": "object",
+      "readonly": true,
       "properties": {
         "id": {
           "description": "ID of the item",
-          "type": "string"
+          "type": "string",
+          "readonly": true
         },
         "title": {
           "description": "The title of the item lent to the patron",
-          "type": "string"
+          "type": "string",
+          "readonly": true
         },
         "callNumber" : {
           "description" : "Deprecated call number from the holdings record, use callNumberComponents.callNumber instead",
-          "type": "string"
+          "type": "string",
+          "readonly": true
         },
         "materialType": {
           "description": "The material type from the item record",
           "type": "object",
+          "readonly": true,
           "properties": {
             "name": {
               "description": "Name of the material type",
-              "type": "string"
+              "type": "string",
+              "readonly": true
             }
           },
           "additionalProperties": false
         },
         "contributors": {
-            "description": "Contributors from the instance record",
-            "type": "array",
-            "items" : {
-              "type": "object",
-              "properties" : {
-                 "name" : {
-                    "description": "Name of the contributor",
-                    "type" : "string"
-                  }
-              },
-              "additionalProperties": false
+          "description": "Contributors from the instance record",
+          "type": "array",
+          "readonly": true,
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "description": "Name of the contributor",
+                "type": "string",
+                "readonly": true
+              }
+            },
+            "additionalProperties": false
           }
         },
         "holdingsRecordId": {
           "description": "The ID of the holdings for the item",
-          "type": "string"
+          "type": "string",
+          "readonly": true
         },
         "instanceId": {
           "description": "The ID of the instance for the item",
-          "type": "string"
+          "type": "string",
+          "readonly": true
         },
         "barcode": {
           "description": "The barcode of the item",
-          "type": "string"
+          "type": "string",
+          "readonly": true
         },
         "location": {
           "description": "The effective location of the item",
           "type": "object",
+          "readonly": true,
           "properties": {
             "name": {
               "description": "The name of the location",
-              "type": "string"
+              "type": "string",
+              "readonly": true
             }
           }
         },
         "status": {
           "description": "Overall status of the item",
           "type": "object",
+          "readonly": true,
           "properties": {
             "name": {
               "description": "Name of the item status",
-              "type": "string"
+              "type": "string",
+              "readonly": true
             },
             "date": {
               "type": "string",
@@ -148,33 +163,40 @@
         "inTransitDestinationServicePointId": {
           "description": "Service point an item is intended to be transited to (should only be present when in transit)",
           "type": "string",
-          "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
+          "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$",
+          "readonly": true
         },
         "inTransitDestinationServicePoint": {
           "description": "Service point an item is intended to be transited to (should only be present when in transit)",
           "type": "object",
+          "readonly": true,
           "properties": {
             "name": {
               "description": "Name of the service point",
-              "type": "string"
+              "type": "string",
+              "readonly": true
             }
           }
         },
         "enumeration": {
           "description": "Item`s enumeration",
-          "type": "string"
+          "type": "string",
+          "readonly": true
         },
         "chronology": {
           "description": "Item`s chronology",
-          "type": "string"
+          "type": "string",
+          "readonly": true
         },
         "volume": {
           "description": "Item`s volume",
-          "type": "string"
+          "type": "string",
+          "readonly": true
         },
         "callNumberComponents": {
           "description": "Elements of a full call number",
-          "$ref": "schema/call-number-components.json"
+          "$ref": "schema/call-number-components.json",
+          "readonly": true
         }
       },
       "additionalProperties": false
@@ -228,52 +250,64 @@
     "checkoutServicePoint": {
       "description": "The Service Point where the last checkout occurred",
       "type": "object",
+      "readonly": true,
       "properties": {
         "name": {
           "description": "The unique name of the service point",
-          "type": "string"
+          "type": "string",
+          "readonly": true
         },
         "code": {
           "description": "The short code for the service point",
-          "type": "string"
+          "type": "string",
+          "readonly": true
         },
         "discoveryDisplayName":{
           "description": "The human readable name",
-          "type": "string"
+          "type": "string",
+          "readonly": true
         },
         "shelvingLagTime": {
           "description": "The time to shelving",
-          "type": "integer"
+          "type": "integer",
+          "readonly": true
         },
         "pickupLocation": {
           "description": "Is this a pickup location",
-          "type": "boolean"
+          "type": "boolean",
+          "readonly": true
         }
       }
     },
     "checkinServicePoint": {
       "description": "The Service Point where the last checkout occurred",
       "type": "object",
+      "readonly": true,
       "properties": {
         "name": {
           "description": "Name of the service point",
-          "type": "string"
+          "type": "string",
+          "readonly": true
         },
         "code": {
           "description": "The short code for the service point",
-          "type": "string"
+          "type": "string",
+          "readonly": true
         },
         "discoveryDisplayName":{
           "description": "The human readable name",
-          "type": "string"
+          "type": "string",
+          "readonly": true
         },
         "shelvingLagTime": {
           "description": "The time to shelving",
-          "type": "integer"
+          "type": "integer",
+          "readonly": true
         },
         "pickupLocation": {
           "description": "Is this a pickup location",
-          "type": "boolean"
+          "type": "boolean",
+          "readonly": true
         }
       }
     },

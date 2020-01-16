@@ -91,7 +91,8 @@
         },
         "callNumber" : {
           "description" : "Deprecated call number from the holdings record, use callNumberComponents.callNumber instead",
-          "type": "string"
+          "type": "string",
+          "readonly": true
         },
         "holdingsRecordId": {
           "description": "The ID of the holdings for the item",
@@ -129,24 +130,28 @@
         "contributorNames": {
           "description": "A list of contributor names",
           "type": "array",
+          "readonly": true,
           "items": {
             "type": "object",
             "additionalProperties": false,
             "properties": {
               "name": {
                 "description": "The contributor name",
-                "type": "string"
+                "type": "string",
+                "readonly": true
               }
             }
           }
         },
         "copyNumber": {
           "type": "string",
-          "description": "Copy number for the item"
+          "description": "Copy number for the item",
+          "readonly": true
         },
         "enumeration": {
           "description": "The volume and/or issue number for the item",
-          "type": "string"
+          "type": "string",
+          "readonly": true
         },
         "volume": {
           "type": "string",
@@ -160,7 +165,8 @@
         },
         "callNumberComponents": {
           "description": "Elements of a full call number",
-          "$ref": "schema/call-number-components.json"
+          "$ref": "schema/call-number-components.json",
+          "readonly": true
         }
       },
       "additionalProperties": false
@@ -192,24 +198,29 @@
         },
         "patronGroupId": {
           "description": "UUID for the patron group that this user belongs to",
-          "type": "string"
+          "type": "string",
+          "readonly": true
         },
         "patronGroup": {
           "description": "record for the user's patron group",
           "type": "object",
           "additionalProperties": false,
+          "readonly": true,
           "properties": {
             "id": {
               "description": "ID of the patron group",
-              "type": "string"
+              "type": "string",
+              "readonly": true
             },
             "group": {
               "description": "The unique name of the patron group",
-              "type": "string"
+              "type": "string",
+              "readonly": true
             },
             "desc": {
               "description": "A description of the patron group",
-              "type": "string"
+              "type": "string",
+              "readonly": true
             }
           }
         }
@@ -243,24 +254,29 @@
         },
         "patronGroupId": {
           "description": "UUID for the patrongroup that this user belongs to",
-          "type": "string"
+          "type": "string",
+          "readonly": true
         },
         "patronGroup": {
           "description": "record for the user's patrongroup",
           "type": "object",
+          "readonly": true,
           "additionalProperties": false,
           "properties": {
             "id": {
               "description": "ID of the patrongroup",
-              "type": "string"
+              "type": "string",
+              "readonly": true
             },
             "group": {
               "description": "The unique name of the patrongroup",
-              "type": "string"
+              "type": "string",
+              "readonly": true
             },
             "desc": {
               "description": "A description of the patrongroup",
-              "type": "string"
+              "type": "string",
+              "readonly": true
             }
           }
         }
@@ -280,34 +296,42 @@
     "deliveryAddress": {
       "description": "Address the item is to be delivered to (derived from requester information)",
       "type": "object",
+      "readonly": true,
       "properties": {
         "addressLine1": {
           "description": "Address line 1",
-          "type": "string"
+          "type": "string",
+          "readonly": true
         },
         "addressLine2": {
           "description": "Address line 2",
-          "type": "string"
+          "type": "string",
+          "readonly": true
         },
         "city": {
           "description": "City name",
-          "type": "string"
+          "type": "string",
+          "readonly": true
         },
         "region": {
           "description": "Region",
-          "type": "string"
+          "type": "string",
+          "readonly": true
         },
         "postalCode": {
           "description": "Postal code",
-          "type": "string"
+          "type": "string",
+          "readonly": true
         },
         "countryId": {
           "description": "Country code",
-          "type": "string"
+          "type": "string",
+          "readonly": true
         },
         "addressTypeId": {
           "description": "Type of address (refers to address types)",
-          "type": "string"
+          "type": "string",
+          "readonly": true
         }
       },
       "additionalProperties": false
@@ -330,30 +354,37 @@
     "pickupServicePoint": {
       "description": "The full object of the Service Point record from pickupServicePointId",
       "additionalProperties": false,
+      "readonly": true,
       "properties": {
         "name": {
           "description": "Unique name for the service point",
-          "type": "string"
+          "type": "string",
+          "readonly": true
         },
         "code": {
           "description": "Unique code for the service point",
-          "type": "string"
+          "type": "string",
+          "readonly": true
         },
         "discoveryDisplayName": {
           "description": "Human-readable name for the service point",
-          "type": "string"
+          "type": "string",
+          "readonly": true
         },
         "description": {
           "description": "Description of the service point",
-          "type": "string"
+          "type": "string",
+          "readonly": true
         },
         "shelvingLagTime": {
           "description": "Shelving lag time",
-          "type": "integer"
+          "type": "integer",
+          "readonly": true
         },
         "pickupLocation": {
           "description": "Is this service point a pickup location?",
-          "type": "boolean"
+          "type": "boolean",
+          "readonly": true
         }
       }
     },
