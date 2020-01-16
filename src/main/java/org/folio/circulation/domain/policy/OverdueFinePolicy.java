@@ -6,8 +6,8 @@ import static org.folio.circulation.support.JsonPropertyFetcher.getBooleanProper
 import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
 
 public class OverdueFinePolicy extends CirculationPolicy {
-  private Boolean shouldIgnoreGracePeriodsForRecalls;
-  private Boolean shouldCountClosed;
+  private Boolean ignoreGracePeriodForRecalls;
+  private Boolean countClosed;
 
   private OverdueFinePolicy(String id) {
     this(id, null);
@@ -23,28 +23,28 @@ public class OverdueFinePolicy extends CirculationPolicy {
       getProperty(json, "name")
     );
 
-    overdueFinePolicy.setShouldCountClosed(
+    overdueFinePolicy.setCountClosed(
       getBooleanProperty(json, "countClosed"));
-    overdueFinePolicy.setShouldIgnoreGracePeriodsForRecalls(
+    overdueFinePolicy.setIgnoreGracePeriodForRecalls(
       getBooleanProperty(json, "gracePeriodRecall"));
 
     return overdueFinePolicy;
   }
 
-  public Boolean getShouldIgnoreGracePeriodsForRecalls() {
-    return shouldIgnoreGracePeriodsForRecalls;
+  public Boolean getIgnoreGracePeriodForRecalls() {
+    return ignoreGracePeriodForRecalls;
   }
 
-  public void setShouldIgnoreGracePeriodsForRecalls(Boolean shouldIgnoreGracePeriodsForRecalls) {
-    this.shouldIgnoreGracePeriodsForRecalls = shouldIgnoreGracePeriodsForRecalls;
+  public void setIgnoreGracePeriodForRecalls(Boolean ignoreGracePeriodForRecalls) {
+    this.ignoreGracePeriodForRecalls = ignoreGracePeriodForRecalls;
   }
 
-  public Boolean getShouldCountClosed() {
-    return shouldCountClosed;
+  public Boolean getCountClosed() {
+    return countClosed;
   }
 
-  public void setShouldCountClosed(Boolean shouldCountClosed) {
-    this.shouldCountClosed = shouldCountClosed;
+  public void setCountClosed(Boolean countClosed) {
+    this.countClosed = countClosed;
   }
 
   public static OverdueFinePolicy unknown(String id) {

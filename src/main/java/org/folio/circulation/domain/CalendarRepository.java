@@ -1,20 +1,22 @@
 package org.folio.circulation.domain;
 
+import static java.util.function.Function.identity;
 import static org.folio.circulation.domain.OpeningDay.createClosedDay;
+import static org.folio.circulation.support.ResultBinding.flatMapResult;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 import org.folio.circulation.AdjacentOpeningDays;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.FetchSingleRecord;
 import org.folio.circulation.support.Result;
+import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.server.ValidationError;
+import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
 
 import io.vertx.core.json.JsonArray;
@@ -26,7 +28,8 @@ public class CalendarRepository {
   private static final String OPENING_DAY = "openingDay";
   private static final String OPENING_DAYS = "openingDays";
   private static final String PATH_PARAM_WITH_QUERY = "%s/calculateopening?requestedDate=%s";
-  private static final String PERIODS_QUERY_PARAMS = "?servicePointId=%s&startDate=%s&endDate=%s";
+  private static final String PERIODS_QUERY_PARAMS =
+    "startDate=%sendDate=%s&servicePointId=%s&actualOpening=%s&includeClosedDays=%s";
 
   private final CollectionResourceClient calendarClient;
 
@@ -47,28 +50,33 @@ public class CalendarRepository {
       .fetch(path);
   }
 
-  public CompletableFuture<Result<List<OpeningDay>>> fetchOpeningDaysBetweenDates(
-      LocalDate startDate, LocalDate endDate, String servicePointId) {
+  public CompletableFuture<Result<List<OpeningDay>>> fetchOpeningPeriodsBetweenDates(
+      DateTime startDate, DateTime endDate, String servicePointId, boolean actualOpening, boolean includeClosedDays) {
 
-    String path = String.format(PERIODS_QUERY_PARAMS, servicePointId, startDate, endDate);
-    return FetchSingleRecord.<List<OpeningDay>>forRecord(OPENING_PERIODS)
-      .using(calendarClient)
-      .mapTo(this::createOpeningDaysForPeriod)
-      .whenNotFound(failedValidation(
-        new ValidationError("Calendar open periods are not found", Collections.emptyMap())))
-      .fetch(path);
+    String params = String.format(PERIODS_QUERY_PARAMS,
+      startDate.toLocalDate(), endDate.toLocalDate(), servicePointId, actualOpening, includeClosedDays);
+    return calendarClient.getManyWithRawQueryStringParameters(params)
+      .thenApply(flatMapResult(this::mapPeriodsResponseToOpeningDays));
   }
 
-  private List<OpeningDay> createOpeningDaysForPeriod(JsonObject jsonObject) {
-    if (jsonObject.isEmpty()) {
-      return Collections.emptyList();
-    }
-    JsonArray openingDaysJson = jsonObject.getJsonArray(OPENING_PERIODS);
-    return IntStream.range(0, openingDaysJson.size())
-      .mapToObj(openingDaysJson::getJsonObject)
-      .map(day -> new OpeningDay(day, OPENING_DAY))
-      .collect(Collectors.toList());
+  private Result<List<OpeningDay>> mapPeriodsResponseToOpeningDays(Response response) {
+    return MultipleRecords.from(response, OpeningDay::fromOpeningPeriod, OPENING_PERIODS)
+      .next(r -> Result.succeeded(r.toKeys(identity())));
   }
+
+//  private Result<List<OpeningDay>> mapPeriodsResponseToOpeningDays(Response response) {
+//    JsonObject responseJson = response.getJson();
+//    if (responseJson.isEmpty()) {
+//      return succeeded(Collections.emptyList());
+//    }
+//    JsonArray openingDaysJson = responseJson.getJsonArray(OPENING_PERIODS);
+//    List<OpeningDay> openingDays = IntStream.range(0, openingDaysJson.size())
+//      .mapToObj(openingDaysJson::getJsonObject)
+//      .map(OpeningDay::fromOpeningPeriod)
+//      .collect(Collectors.toList());
+//
+//    return succeeded(openingDays);
+//  }
 
   private AdjacentOpeningDays createOpeningDays(JsonObject jsonObject) {
     if (jsonObject.isEmpty()) {
