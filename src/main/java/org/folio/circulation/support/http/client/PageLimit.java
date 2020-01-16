@@ -10,7 +10,7 @@ public class PageLimit implements QueryParameter {
   private static final PageLimit NO_PAGE_LIMIT = new PageLimit(null);
   private static final PageLimit ONE = limit(1);
   private static final PageLimit ONE_THOUSAND = limit(1000);
-  
+
   private final Integer value;
 
   public static PageLimit limit(int limit) {
