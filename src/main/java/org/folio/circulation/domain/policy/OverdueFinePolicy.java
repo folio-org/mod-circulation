@@ -4,7 +4,7 @@ import io.vertx.core.json.JsonObject;
 
 import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
 
-public class OverdueFinePolicy extends CirculationPolicy {
+public class OverdueFinePolicy extends Policy {
 
   private OverdueFinePolicy(String id) {
     this(id, null);

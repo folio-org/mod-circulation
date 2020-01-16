@@ -1,15 +1,11 @@
 package org.folio.circulation.domain.policy;
 
-public abstract class CirculationPolicy {
+public abstract class Policy {
 
-  private String id;
-  private String name;
+  private final String id;
+  private final String name;
 
-  protected CirculationPolicy() {
-
-  }
-
-  protected CirculationPolicy(String id, String name) {
+  protected Policy(String id, String name) {
     this.id = id;
     this.name = name;
   }

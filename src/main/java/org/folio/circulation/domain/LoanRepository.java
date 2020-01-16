@@ -32,7 +32,7 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
-import org.folio.circulation.domain.policy.CirculationPolicy;
+import org.folio.circulation.domain.policy.Policy;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.http.client.CqlQuery;
@@ -237,9 +237,8 @@ public class LoanRepository {
     storageLoan.put(ITEM_STATUS, item.getStatus().getValue());
   }
 
-  private static void updatePolicy(JsonObject storageLoan,
-                                   CirculationPolicy policy,
-                                   String policyName) {
+  private static void updatePolicy(JsonObject storageLoan, Policy policy,
+    String policyName) {
 
     if (nonNull(policy) && policy.getId() != null) {
       storageLoan.put(policyName, policy.getId());

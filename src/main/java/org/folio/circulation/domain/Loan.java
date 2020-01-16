@@ -12,6 +12,7 @@ import static org.folio.circulation.domain.representations.LoanProperties.ACTION
 import static org.folio.circulation.domain.representations.LoanProperties.CHECKIN_SERVICE_POINT_ID;
 import static org.folio.circulation.domain.representations.LoanProperties.CHECKOUT_SERVICE_POINT_ID;
 import static org.folio.circulation.domain.representations.LoanProperties.DUE_DATE;
+import static org.folio.circulation.domain.representations.LoanProperties.LOAN_POLICY_ID;
 import static org.folio.circulation.domain.representations.LoanProperties.LOST_ITEM_POLICY_ID;
 import static org.folio.circulation.domain.representations.LoanProperties.OVERDUE_FINE_POLICY_ID;
 import static org.folio.circulation.domain.representations.LoanProperties.RETURN_DATE;
@@ -30,7 +31,6 @@ import static org.folio.circulation.support.results.CommonFailures.failedDueToSe
 
 import java.util.Collection;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.UUID;
 
 import org.apache.commons.lang3.StringUtils;
@@ -59,20 +59,15 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
 
   private final ServicePoint checkoutServicePoint;
   private final ServicePoint checkinServicePoint;
-
-  private final String overdueFinePolicyId;
-  private final String lostItemPolicyId;
   private final Policies policies;
 
   private Loan(JsonObject representation, Item item, User user, User proxy,
     ServicePoint checkinServicePoint, ServicePoint checkoutServicePoint,
     DateTime originalDueDate, Policies policies, Collection<Account> accounts) {
 
-    this.policies = Optional.ofNullable(policies).orElse(new Policies());
-
-    requireNonNull(this.policies.getLoanPolicy(), "loanPolicy cannot be null");
-    requireNonNull(this.policies.getOverdueFinePolicy(), "overdueFinePolicy cannot be null");
-    requireNonNull(this.policies.getLostItemPolicy(), "lostItemPolicy cannot be null");
+    requireNonNull(policies.getLoanPolicy(), "loanPolicy cannot be null");
+    requireNonNull(policies.getOverdueFinePolicy(), "overdueFinePolicy cannot be null");
+    requireNonNull(policies.getLostItemPolicy(), "lostItemPolicy cannot be null");
 
     this.representation = representation;
     this.item = item;
@@ -81,14 +76,12 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     this.accounts = accounts;
     this.checkinServicePoint = checkinServicePoint;
     this.checkoutServicePoint = checkoutServicePoint;
+    this.policies = policies;
 
     this.checkoutServicePointId = getProperty(representation, CHECKOUT_SERVICE_POINT_ID);
     this.checkinServicePointId = getProperty(representation, CHECKIN_SERVICE_POINT_ID);
 
     this.originalDueDate = originalDueDate == null ? getDueDate() : originalDueDate;
-
-    this.overdueFinePolicyId = getProperty(representation, OVERDUE_FINE_POLICY_ID);
-    this.lostItemPolicyId = getProperty(representation, LOST_ITEM_POLICY_ID);
 
     // TODO: Refuse if ID does not match property in representation,
     // and possibly convert isFound to unknown item class
@@ -109,8 +102,15 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
 
   public static Loan from(JsonObject representation) {
     defaultStatusAndAction(representation);
+    final LoanPolicy loanPolicy = LoanPolicy.unknown(
+      getProperty(representation, LOAN_POLICY_ID));
+    final OverdueFinePolicy overdueFinePolicy = OverdueFinePolicy.unknown(
+      getProperty(representation, OVERDUE_FINE_POLICY_ID));
+    final LostItemPolicy lostItemPolicy = LostItemPolicy.unknown(
+      getProperty(representation, LOST_ITEM_POLICY_ID));
+
     return new Loan(representation, null, null, null, null, null, null,
-      null, null);
+      new Policies(loanPolicy, overdueFinePolicy, lostItemPolicy), null);
   }
 
   JsonObject asJson() {
@@ -333,15 +333,15 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   public String getLoanPolicyId() {
-    return representation.getString("loanPolicyId");
+    return policies.getLoanPolicy().getId();
   }
 
   public String getOverdueFinePolicyId() {
-    return overdueFinePolicyId;
+    return policies.getOverdueFinePolicy().getId();
   }
 
   public String getLostItemPolicyId() {
-    return lostItemPolicyId;
+    return policies.getLostItemPolicy().getId();
   }
 
   public LoanPolicy getLoanPolicy() {
@@ -463,44 +463,5 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
 
   public void changeDeclaredLostDateTime(DateTime dateTime) {
     write(representation, LoanProperties.DECLARED_LOST_DATE, dateTime);
-  }
-
-  private class Policies {
-    private LoanPolicy loanPolicy;
-    private OverdueFinePolicy overdueFinePolicy;
-    private LostItemPolicy lostItemPolicy;
-
-    private Policies() {
-      this.loanPolicy = LoanPolicy.unknown(null);
-      this.overdueFinePolicy = OverdueFinePolicy.unknown(null);
-      this.lostItemPolicy = LostItemPolicy.unknown(null);
-    }
-
-    public LoanPolicy getLoanPolicy() {
-      return loanPolicy;
-    }
-
-    public OverdueFinePolicy getOverdueFinePolicy() {
-      return overdueFinePolicy;
-    }
-
-    public LostItemPolicy getLostItemPolicy() {
-      return lostItemPolicy;
-    }
-
-    public Policies withLoanPolicy(LoanPolicy newLoanPolicy) {
-      loanPolicy = newLoanPolicy;
-      return this;
-    }
-
-    public Policies withOverdueFinePolicy(OverdueFinePolicy newOverdueFinePolicy) {
-      overdueFinePolicy = newOverdueFinePolicy;
-      return this;
-    }
-
-    public Policies withLostItemPolicy(LostItemPolicy newLostItemPolicy) {
-      lostItemPolicy = newLostItemPolicy;
-      return this;
-    }
   }
 }
