@@ -67,7 +67,7 @@ type indicated by an `l`, `r`, `n`, `o`, `i`.
 They can be in any order, but must have one of each type.
 If the line matches then those policies are applied.
 
-Policies are optional.
+The list of policies (including the colon) is optional.
 
 ## Criteria type names
 
@@ -91,7 +91,7 @@ If it has one or more names of that type it matches any patron group listed. If 
 group is `visitor` or `undergrad` this rule matches:
 
 ```
-g visitor undergrad: policy-a
+g visitor undergrad: l loan-a r request-a n notice-a o overdue-a i lost-item-a
 ```
 
 ### "!" and "all"
@@ -100,12 +100,12 @@ If the criterium has one or more negated names (name with exclamation mark prepe
 any patron group that is not listed, for example this rule matches `staff` but neither `visitor` nor `undergrad`:
 
 ```
-g !visitor !undergrad: policy-b
+g !visitor !undergrad: l loan-b r request-b n notice-b o overdue-b i lost-item-b
 ```
 
 Use the keyword `all` for the name selection to match all patron groups, for example
 ```
-g all: policy-c
+g all: l loan-a r request-a n notice-b o overdue-b i lost-item-b
 ```
 This is needed to alter the rule priority, see below.
 
