@@ -2,9 +2,6 @@ package org.folio.circulation.support.http.client;
 
 import static java.lang.Integer.MAX_VALUE;
 
-import io.vertx.core.buffer.Buffer;
-import io.vertx.ext.web.client.HttpRequest;
-
 public class PageLimit implements QueryParameter {
   private static final PageLimit MAXIMUM_PAGE_LIMIT = limit(MAX_VALUE);
   private static final PageLimit NO_PAGE_LIMIT = new PageLimit(null);
@@ -35,11 +32,6 @@ public class PageLimit implements QueryParameter {
 
   private PageLimit(Integer value) {
     this.value = value;
-  }
-
-  @Override
-  public void writeTo(HttpRequest<Buffer> request) {
-    consume(request::addQueryParam);
   }
 
   @Override

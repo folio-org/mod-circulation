@@ -1,8 +1,5 @@
 package org.folio.circulation.support.http.client;
 
-import io.vertx.core.buffer.Buffer;
-import io.vertx.ext.web.client.HttpRequest;
-
 public class NamedQueryParameter implements QueryParameter {
   private final String name;
   private final String value;
@@ -14,11 +11,6 @@ public class NamedQueryParameter implements QueryParameter {
   private NamedQueryParameter(String name, String value) {
     this.name = name;
     this.value = value;
-  }
-
-  @Override
-  public void writeTo(HttpRequest<Buffer> request) {
-    consume(request::addQueryParam);
   }
 
   @Override

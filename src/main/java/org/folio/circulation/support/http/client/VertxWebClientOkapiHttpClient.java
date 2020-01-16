@@ -65,7 +65,7 @@ public class VertxWebClientOkapiHttpClient {
       webClient.getAbs(url));
 
     Stream.of(queryParameters)
-      .forEach(parameter -> parameter.writeTo(request));
+      .forEach(parameter -> parameter.consume(request::addQueryParam));
 
     request
       .timeout(timeout.toMillis())
@@ -108,7 +108,7 @@ public class VertxWebClientOkapiHttpClient {
       webClient.deleteAbs(url));
 
     Stream.of(queryParameters)
-      .forEach(parameter -> parameter.writeTo(request));
+      .forEach(parameter -> parameter.consume(request::addQueryParam));
 
     request
       .timeout(timeout.toMillis())

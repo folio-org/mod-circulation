@@ -1,8 +1,5 @@
 package org.folio.circulation.support.http.client;
 
-import io.vertx.core.buffer.Buffer;
-import io.vertx.ext.web.client.HttpRequest;
-
 public class Offset implements QueryParameter {
   private final Integer value;
 
@@ -16,11 +13,6 @@ public class Offset implements QueryParameter {
 
   private Offset(Integer value) {
     this.value = value;
-  }
-
-  @Override
-  public void writeTo(HttpRequest<Buffer> request) {
-    consume(request::addQueryParam);
   }
 
   @Override

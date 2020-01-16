@@ -21,9 +21,6 @@ import org.folio.circulation.support.Result;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.vertx.core.buffer.Buffer;
-import io.vertx.ext.web.client.HttpRequest;
-
 public class CqlQuery implements QueryParameter {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
@@ -95,11 +92,6 @@ public class CqlQuery implements QueryParameter {
     return values.stream()
       .map(value -> format("\"%s\"", value))
       .collect(toList());
-  }
-
-  @Override
-  public void writeTo(HttpRequest<Buffer> request) {
-    consume(request::addQueryParam);
   }
 
   @Override
