@@ -25,8 +25,12 @@ public class Clients {
   private final CollectionResourceClient loanTypesStorageClient;
   private final CollectionResourceClient proxiesForClient;
   private final CollectionResourceClient loanPoliciesStorageClient;
+  private final CollectionResourceClient overdueFinesPoliciesPoliciesStorageClient;
+  private final CollectionResourceClient lostItemPoliciesStorageClient;
   private final CollectionResourceClient fixedDueDateSchedulesStorageClient;
   private final CirculationRulesClient circulationLoanRulesClient;
+  private final CirculationRulesClient circulationOverdueFinesRulesClient;
+  private final CirculationRulesClient circulationLostItemRulesClient;
   private final CirculationRulesClient circulationRequestRulesClient;
   private final CirculationRulesClient circulationNoticeRulesClient;
   private final CollectionResourceClient circulationRulesStorageClient;
@@ -60,6 +64,8 @@ public class Clients {
       usersStorageClient = createUsersStorageClient(client, context);
       addressTypesStorageClient = createAddressTypesStorageClient(client, context);
       loansStorageClient = createLoansStorageClient(client, context);
+      overdueFinesPoliciesPoliciesStorageClient = createOverdueFinesPoliciesStorageClient(client, context);
+      lostItemPoliciesStorageClient = createLostItemPoliciesStorageClient(client, context);
       locationsStorageClient = createLocationsStorageClient(client, context);
       anonymizeStorageLoansClient = createAnonymizeStorageLoansClient(client, context);
       institutionsStorageClient = createInstitutionsStorageClient(client, context);
@@ -69,6 +75,8 @@ public class Clients {
       loanTypesStorageClient = createLoanTypesStorageClient(client, context);
       proxiesForClient = createProxyUsersStorageClient(client, context);
       circulationLoanRulesClient = createCirculationLoanRulesClient(client, context);
+      circulationOverdueFinesRulesClient = createCirculationOverdueFinesRulesClient(client, context);
+      circulationLostItemRulesClient = createCirculationLostItemRulesClient(client, context);
       circulationRequestRulesClient = createCirculationRequestRulesClient(client, context);
       circulationNoticeRulesClient = createCirculationNoticeRulesClient(client, context);
       circulationRulesStorageClient = createCirculationRulesStorageClient(client, context);
@@ -163,6 +171,14 @@ public class Clients {
     return loanPoliciesStorageClient;
   }
 
+  public CollectionResourceClient overdueFinesPoliciesStorage() {
+    return overdueFinesPoliciesPoliciesStorageClient;
+  }
+
+  public CollectionResourceClient lostItemPoliciesStorage() {
+    return lostItemPoliciesStorageClient;
+  }
+
   public CollectionResourceClient fixedDueDateSchedules() {
     return fixedDueDateSchedulesStorageClient;
   }
@@ -189,6 +205,14 @@ public class Clients {
 
   public CirculationRulesClient circulationLoanRules() {
     return circulationLoanRulesClient;
+  }
+
+  public CirculationRulesClient circulationOverdueFineRules() {
+    return circulationOverdueFinesRulesClient;
+  }
+
+  public CirculationRulesClient circulationLostItemRules() {
+    return circulationLostItemRulesClient;
   }
 
   public CirculationRulesClient circulationRequestRules(){
@@ -250,6 +274,22 @@ public class Clients {
     throws MalformedURLException {
 
     return new CirculationRulesClient(client, context, "/circulation/rules/loan-policy");
+  }
+
+  private static CirculationRulesClient createCirculationOverdueFinesRulesClient(
+          OkapiHttpClient client,
+          WebContext context)
+          throws MalformedURLException {
+
+    return new CirculationRulesClient(client, context, "/circulation/rules/overdue-fine-policy");
+  }
+
+  private static CirculationRulesClient createCirculationLostItemRulesClient(
+          OkapiHttpClient client,
+          WebContext context)
+          throws MalformedURLException {
+
+    return new CirculationRulesClient(client, context, "/circulation/rules/lost-item-policy");
   }
 
   private static CirculationRulesClient createCirculationRequestRulesClient(
@@ -410,6 +450,24 @@ public class Clients {
 
     return getCollectionResourceClient(client, context,
       "/loan-policy-storage/loan-policies");
+  }
+
+  private CollectionResourceClient createOverdueFinesPoliciesStorageClient(
+          OkapiHttpClient client,
+          WebContext context)
+          throws MalformedURLException {
+
+    return getCollectionResourceClient(client, context,
+            "/overdue-fines-policies");
+  }
+
+  private CollectionResourceClient createLostItemPoliciesStorageClient(
+          OkapiHttpClient client,
+          WebContext context)
+          throws MalformedURLException {
+
+    return getCollectionResourceClient(client, context,
+            "/lost-item-fees-policies");
   }
 
   private CollectionResourceClient createRequestPoliciesStorageClient(
