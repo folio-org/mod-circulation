@@ -37,7 +37,7 @@ import org.joda.time.DateTime;
 
 import io.vertx.core.json.JsonObject;
 
-public class LoanPolicy {
+public class LoanPolicy extends Policy {
   private static final String LOANS_POLICY_KEY = "loansPolicy";
   private static final String PERIOD_KEY = "period";
   private static final String RENEWAL_WOULD_NOT_CHANGE_THE_DUE_DATE = "renewal would not change the due date";
@@ -76,7 +76,7 @@ public class LoanPolicy {
     JsonObject representation,
     FixedDueDateSchedules fixedDueDateSchedules,
     FixedDueDateSchedules alternateRenewalFixedDueDateSchedules) {
-
+    super(getProperty(representation, "id"), getProperty(representation, "name"));
     this.representation = representation;
     this.fixedDueDateSchedules = fixedDueDateSchedules;
     this.alternateRenewalFixedDueDateSchedules = alternateRenewalFixedDueDateSchedules;
@@ -467,10 +467,6 @@ public class LoanPolicy {
     return loansPolicy.getString("profileId");
   }
 
-  public String getName() {
-    return representation.getString("name");
-  }
-
   private boolean isFixed(JsonObject loansPolicy) {
     return isProfile(loansPolicy, "Fixed");
   }
@@ -562,10 +558,6 @@ public class LoanPolicy {
       return 0;
     }
     return period.getInteger(DURATION);
-  }
-
-  public String getId() {
-    return representation.getString("id");
   }
 
   String getLoansFixedDueDateScheduleId() {

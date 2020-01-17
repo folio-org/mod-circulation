@@ -1,0 +1,23 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "title": "Circulation rule match schema",
+  "description": "Describes a matching rule within a set of rules",
+  "type": "object",
+  "properties": {
+    "ruleLine": {
+      "description": "Line number of the matching rule",
+      "type": "integer",
+      "minimum": 0
+    },
+    "overdueFinePolicyId": {
+      "description": "Overdue Fine policy id specified by the matching rule",
+      "type": "string",
+      "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[89abAB][a-fA-F0-9]{3}-[a-fA-F0-9]{12}$"
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "ruleLine",
+    "overdueFinePolicyId"
+  ]
+}
