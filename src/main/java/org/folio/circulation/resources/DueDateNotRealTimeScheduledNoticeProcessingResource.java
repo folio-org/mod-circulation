@@ -21,6 +21,7 @@ import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CqlSortBy;
 import org.folio.circulation.support.CqlSortClause;
 import org.folio.circulation.support.Result;
+import org.folio.circulation.support.http.client.PageLimit;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.LocalDate;
@@ -46,12 +47,12 @@ public class DueDateNotRealTimeScheduledNoticeProcessingResource extends Schedul
 
   @Override
   protected CompletableFuture<Result<MultipleRecords<ScheduledNotice>>> findNoticesToSend(
-    ScheduledNoticesRepository scheduledNoticesRepository, int limit) {
+    ScheduledNoticesRepository scheduledNoticesRepository, PageLimit pageLimit) {
 
     DateTime timeLimit = LocalDate.now().toDateTime(LocalTime.MIDNIGHT);
     return scheduledNoticesRepository.findNotices(timeLimit, false,
       Collections.singletonList(TriggeringEvent.DUE_DATE),
-      FETCH_NOTICES_SORT_CLAUSE, limit);
+      FETCH_NOTICES_SORT_CLAUSE, pageLimit);
   }
 
   @Override

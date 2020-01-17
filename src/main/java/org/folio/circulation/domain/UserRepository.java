@@ -24,6 +24,7 @@ import org.folio.circulation.support.http.client.CqlQuery;
 import org.folio.circulation.support.FetchSingleRecord;
 import org.folio.circulation.support.MultipleRecordFetcher;
 import org.folio.circulation.support.Result;
+import org.folio.circulation.support.http.client.PageLimit;
 import org.folio.circulation.support.http.client.Response;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -134,12 +135,11 @@ public class UserRepository {
     return getUserByBarcode(barcode, "userBarcode");
   }
 
-  private CompletableFuture<Result<User>> getUserByBarcode(
-    String barcode,
+  private CompletableFuture<Result<User>> getUserByBarcode(String barcode,
     String propertyName) {
 
     return CqlQuery.exactMatch("barcode", barcode)
-      .after(query -> usersStorageClient.getMany(query, 1))
+      .after(query -> usersStorageClient.getMany(query, PageLimit.one()))
       .thenApply(result -> result.next(this::mapResponseToUsers)
         .map(MultipleRecords::getRecords)
         .map(users -> users.stream().findFirst())

@@ -13,6 +13,7 @@ import org.folio.circulation.support.NoContentResult;
 import org.folio.circulation.support.ResponseWritableResult;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.RouteRegistration;
+import org.folio.circulation.support.http.client.PageLimit;
 import org.folio.circulation.support.http.server.WebContext;
 
 import io.vertx.core.http.HttpClient;
@@ -46,14 +47,15 @@ public abstract class ScheduledNoticeProcessingResource extends Resource {
       new ConfigurationRepository(clients);
 
     configurationRepository.lookupSchedulerNoticesProcessingLimit()
-      .thenCompose(r -> r.after(limit -> findNoticesToSend(scheduledNoticesRepository, limit)))
+      .thenCompose(r -> r.after(limit -> findNoticesToSend(scheduledNoticesRepository,
+        limit)))
       .thenCompose(r -> r.after(notices -> handleNotices(clients, notices)))
       .thenApply(this::createWritableResult)
       .thenAccept(result -> result.writeTo(routingContext.response()));
   }
 
   protected abstract CompletableFuture<Result<MultipleRecords<ScheduledNotice>>> findNoticesToSend(
-    ScheduledNoticesRepository scheduledNoticesRepository, int limit);
+          ScheduledNoticesRepository scheduledNoticesRepository, PageLimit pageLimit);
 
   protected abstract CompletableFuture<Result<MultipleRecords<ScheduledNotice>>> handleNotices(
     Clients clients, MultipleRecords<ScheduledNotice> noticesResult);

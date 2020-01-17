@@ -1,6 +1,6 @@
 package org.folio.circulation.domain.anonymization.service;
 
-import static org.folio.circulation.domain.anonymization.LoanAnonymization.FETCH_LOANS_LIMIT;
+import static org.folio.circulation.domain.anonymization.LoanAnonymization.FETCH_LOANS_PAGE_LIMIT;
 
 import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
@@ -21,7 +21,7 @@ public class LoansForTenantFinder extends DefaultLoansFinder {
 
   @Override
   public CompletableFuture<Result<Collection<Loan>>> findLoansToAnonymize() {
-    return loanRepository.findClosedLoans(FETCH_LOANS_LIMIT)
+    return loanRepository.findClosedLoans(FETCH_LOANS_PAGE_LIMIT)
       .thenCompose(this::fetchAdditionalLoanInfo);
   }
 }
