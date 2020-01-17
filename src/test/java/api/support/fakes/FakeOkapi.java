@@ -361,6 +361,14 @@ public class FakeOkapi extends AbstractVerticle {
       forwardApplyingCirculationRulesRequest(context, "loan-policy");
     });
 
+    router.get("/circulation/rules/overdue-fine-policy").handler(context -> {
+      forwardApplyingCirculationRulesRequest(context, "overdue-fine-policy");
+    });
+
+    router.get("/circulation/rules/lost-item-policy").handler(context -> {
+      forwardApplyingCirculationRulesRequest(context, "lost-item-policy");
+    });
+
     router.get("/circulation/rules/notice-policy").handler(context -> {
       forwardApplyingCirculationRulesRequest(context, "notice-policy");
     });

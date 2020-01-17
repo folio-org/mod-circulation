@@ -193,6 +193,8 @@ public class CheckOutCalculateDueDateShortTermTests extends APITests {
     final JsonObject loan = response.getJson();
 
     loanHasLoanPolicyProperties(loan, loanPolicy);
+    loanHasOverdueFinePolicyProperties(loan,  overdueFinePoliciesFixture.facultyStandard());
+    loanHasLostItemPolicyProperties(loan,  lostItemFeePoliciesFixture.facultyStandard());
 
     DateTime actualDueDate = getThresholdDateTime(DateTime.parse(loan.getString("dueDate")));
     DateTime thresholdDateTime = getThresholdDateTime(expectedDueDate);

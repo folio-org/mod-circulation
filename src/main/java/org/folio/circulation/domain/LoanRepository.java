@@ -3,6 +3,11 @@ package org.folio.circulation.domain;
 import static java.lang.String.format;
 import static java.util.Objects.nonNull;
 import static java.util.concurrent.CompletableFuture.completedFuture;
+import static org.folio.circulation.domain.representations.LoanProperties.BORROWER;
+import static org.folio.circulation.domain.representations.LoanProperties.FEESANDFINES;
+import static org.folio.circulation.domain.representations.LoanProperties.LOAN_POLICY;
+import static org.folio.circulation.domain.representations.LoanProperties.LOST_ITEM_POLICY;
+import static org.folio.circulation.domain.representations.LoanProperties.OVERDUE_FINE_POLICY;
 import static org.folio.circulation.domain.representations.LoanProperties.PATRON_GROUP_AT_CHECKOUT;
 import static org.folio.circulation.domain.representations.LoanProperties.PATRON_GROUP_ID_AT_CHECKOUT;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
@@ -27,8 +32,7 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
-import org.folio.circulation.domain.policy.LoanPolicy;
-import org.folio.circulation.domain.representations.LoanProperties;
+import org.folio.circulation.domain.policy.Policy;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.http.client.CqlQuery;
@@ -211,24 +215,25 @@ public class LoanRepository {
     JsonObject storageLoan = loan.asJson();
 
     keepPatronGroupIdAtCheckoutProperties(loan, storageLoan);
-    removeChangeMetadata(storageLoan);
+    removeProperty(storageLoan, "metadata");
     removeSummaryProperties(storageLoan);
     keepLatestItemStatus(item, storageLoan);
-    removeBorrowerProperties(storageLoan);
-    removeLoanPolicyProperties(storageLoan);
-    removeFeesAndFinesProperties(storageLoan);
+    removeProperty(storageLoan, BORROWER);
+    removeProperty(storageLoan, LOAN_POLICY);
+    removeProperty(storageLoan, FEESANDFINES);
+    removeProperty(storageLoan, OVERDUE_FINE_POLICY);
+    removeProperty(storageLoan, LOST_ITEM_POLICY);
 
-    updateLastLoanPolicyUsedId(storageLoan, loan.getLoanPolicy());
+    updatePolicy(storageLoan, loan.getLoanPolicy(), "loanPolicyId");
+    updatePolicy(storageLoan, loan.getOverdueFinePolicy(), "overdueFinePolicyId");
+    updatePolicy(storageLoan, loan.getLostItemPolicy(), "lostItemPolicyId");
 
     return storageLoan;
   }
 
-  private static void removeLoanPolicyProperties(JsonObject storageLoan) {
-    storageLoan.remove(LoanProperties.LOAN_POLICY);
-  }
-
-  private static void removeBorrowerProperties(JsonObject storageLoan) {
-    storageLoan.remove(LoanProperties.BORROWER);
+  private static void removeProperty(JsonObject storageLoan,
+                                       String propertyName) {
+    storageLoan.remove(propertyName);
   }
 
   private static void keepLatestItemStatus(Item item, JsonObject storageLoan) {
@@ -237,24 +242,16 @@ public class LoanRepository {
     storageLoan.put(ITEM_STATUS, item.getStatus().getValue());
   }
 
-  private static void updateLastLoanPolicyUsedId(JsonObject storageLoan,
-                                                 LoanPolicy loanPolicy) {
+  private static void updatePolicy(JsonObject storageLoan, Policy policy,
+    String policyName) {
 
-    if(nonNull(loanPolicy) && loanPolicy.getId() != null) {
-      storageLoan.put("loanPolicyId", loanPolicy.getId());
+    if (nonNull(policy) && policy.getId() != null) {
+      storageLoan.put(policyName, policy.getId());
     }
   }
 
-  private static void removeFeesAndFinesProperties(JsonObject storageLoan) {
-    storageLoan.remove(LoanProperties.FEESANDFINES);
-  }
-
-  private static void removeChangeMetadata(JsonObject storageLoan) {
-    storageLoan.remove("metadata");
-  }
-
   private static void removeSummaryProperties(JsonObject storageLoan) {
-    storageLoan.remove(LoanProperties.BORROWER);
+    storageLoan.remove(BORROWER);
     storageLoan.remove("item");
     storageLoan.remove("checkinServicePoint");
     storageLoan.remove("checkoutServicePoint");
