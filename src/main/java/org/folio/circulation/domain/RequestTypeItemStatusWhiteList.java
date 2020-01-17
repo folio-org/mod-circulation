@@ -33,6 +33,7 @@ public class RequestTypeItemStatusWhiteList {
     recallRules.put(ItemStatus.PAGED, true);
     recallRules.put(ItemStatus.ON_ORDER, true);
     recallRules.put(ItemStatus.IN_PROCESS, true);
+    recallRules.put(ItemStatus.DECLARED_LOST, false);
     recallRules.put(ItemStatus.NONE, false);
   }
 
@@ -47,6 +48,7 @@ public class RequestTypeItemStatusWhiteList {
     holdRules.put(ItemStatus.PAGED, true);
     holdRules.put(ItemStatus.ON_ORDER, true);
     holdRules.put(ItemStatus.IN_PROCESS, true);
+    holdRules.put(ItemStatus.DECLARED_LOST, false);
     holdRules.put(ItemStatus.NONE, true);
   }
 
@@ -61,6 +63,7 @@ public class RequestTypeItemStatusWhiteList {
     pageRules.put(ItemStatus.PAGED, false);
     pageRules.put(ItemStatus.ON_ORDER, false);
     pageRules.put(ItemStatus.IN_PROCESS, false);
+    pageRules.put(ItemStatus.DECLARED_LOST, false);
     pageRules.put(ItemStatus.NONE, false);
   }
 
@@ -75,6 +78,7 @@ public class RequestTypeItemStatusWhiteList {
     noneRules.put(ItemStatus.PAGED, false);
     noneRules.put(ItemStatus.ON_ORDER, false);
     noneRules.put(ItemStatus.IN_PROCESS, false);
+    noneRules.put(ItemStatus.DECLARED_LOST, false);
     noneRules.put(ItemStatus.NONE, false);
   }
 
