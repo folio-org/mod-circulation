@@ -19,7 +19,7 @@ import api.support.builders.RequestBuilder;
 public class InHouseUseCheckInTest extends APITests {
 
   @Test
-  public void setInHouseUseTrue() {
+  public void isInHouseUseWhenItemIsAvailableAndCheckInServingHomeLocation() {
     final UUID checkInServicePointId = servicePointsFixture.cd1().getId();
 
     final IndividualResource homeLocation = locationsFixture.basedUponExampleLocation(
@@ -37,7 +37,7 @@ public class InHouseUseCheckInTest extends APITests {
   }
 
   @Test
-  public void setInHouseUseTrueIfItemHasOnlyClosedRequests() {
+  public void isInHouseUseWhenItemHasClosedRequests() {
     final UUID checkInServicePointId = servicePointsFixture.cd1().getId();
 
     final IndividualResource homeLocation = locationsFixture.basedUponExampleLocation(
@@ -77,7 +77,7 @@ public class InHouseUseCheckInTest extends APITests {
   }
 
   @Test
-  public void setInHouseUseTrueIfServicePointIdsContainsCheckInServicePoint() {
+  public void isInHouseUseWhenCheckedInToServicePointServingHomeLocation() {
     final UUID itemServicePoint = servicePointsFixture.cd1().getId();
     final UUID checkInServicePoint = servicePointsFixture.cd4().getId();
 
@@ -97,7 +97,7 @@ public class InHouseUseCheckInTest extends APITests {
   }
 
   @Test
-  public void setInHouseUseFalseIfItemNotAvailable() {
+  public void isNotInHouseUseWhenItemWasNotAvailablePriorToCheckIn() {
     final UUID checkInServicePointId = servicePointsFixture.cd1().getId();
 
     final IndividualResource homeLocation = locationsFixture.basedUponExampleLocation(
@@ -123,7 +123,7 @@ public class InHouseUseCheckInTest extends APITests {
   }
 
   @Test
-  public void setInHouseUseFalseIfItemHasRequest() {
+  public void isNotInHouseUseWhenItemHasAnOpenRequest() {
     final UUID checkInServicePointId = servicePointsFixture.cd1().getId();
 
     final IndividualResource homeLocation = locationsFixture.basedUponExampleLocation(
@@ -149,7 +149,7 @@ public class InHouseUseCheckInTest extends APITests {
   }
 
   @Test
-  public void setInHouseUseFalseIfCheckInServicePointDoNotMatch() {
+  public void isNotInHouseUseWhenCheckInServicePointIsNotServingHomeLocation() {
     final UUID itemServicePointId = servicePointsFixture.cd1().getId();
     final UUID checkInServicePointId = servicePointsFixture.cd2().getId();
 

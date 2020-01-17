@@ -207,7 +207,7 @@ class CheckInProcessAdapter {
     return succeeded(records);
   }
 
-  public CheckInProcessRecords setInHouseUse(CheckInProcessRecords checkInProcessRecords) {
+  CheckInProcessRecords setInHouseUse(CheckInProcessRecords checkInProcessRecords) {
     return checkInProcessRecords
       .withInHouseUse(isInHouseUse(checkInProcessRecords));
   }

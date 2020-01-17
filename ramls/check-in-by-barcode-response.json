@@ -118,7 +118,7 @@
     },
     "inHouseUse": {
       "type": "boolean",
-      "description": "Defines whether the item is in-house use or not."
+      "description": "Defines whether the current check-in operation considered as in-house use or not."
     }
   },
   "additionalProperties": false
