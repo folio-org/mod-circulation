@@ -7,6 +7,8 @@ import org.folio.circulation.resources.CheckOutByBarcodeResource;
 import org.folio.circulation.resources.CirculationRulesResource;
 import org.folio.circulation.resources.DeclareLostResource;
 import org.folio.circulation.resources.EndPatronActionSessionResource;
+import org.folio.circulation.resources.LostItemCirculationRulesEngineResource;
+import org.folio.circulation.resources.OverdueFineCirculationRulesEngineResource;
 import org.folio.circulation.resources.PickSlipsResource;
 import org.folio.circulation.resources.ItemsInTransitResource;
 import org.folio.circulation.resources.ExpiredSessionProcessingResource;
@@ -90,6 +92,16 @@ public class CirculationVerticle extends AbstractVerticle {
       "/circulation/rules/loan-policy-all",
        client)
         .register(router);
+    new OverdueFineCirculationRulesEngineResource(
+            "/circulation/rules/overdue-fine-policy",
+            "/circulation/rules/overdue-fine-policy-all",
+            client)
+            .register(router);
+    new LostItemCirculationRulesEngineResource(
+            "/circulation/rules/lost-item-policy",
+            "/circulation/rules/lost-item-policy-all",
+            client)
+            .register(router);
     new RequestCirculationRulesEngineResource(
       "/circulation/rules/request-policy",
       "/circulation/rules/request-policy-all",

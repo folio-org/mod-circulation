@@ -57,6 +57,14 @@
       "loanPolicy": {
         "name" : "Can Circulate Rolling"
       },
+      "overdueFinePolicyId": "b59fe39f-efdc-4a88-993a-04fb405e5ecc",
+      "overdueFinePolicy": {
+        "name": "Overdue fine policy"
+      },
+      "lostItemPolicyId": "ea77439c-9ff5-4c37-8c92-0df02576c873",
+      "lostItemPolicy": {
+        "name": "Lost item policy"
+      },
       "borrower" : {
         "firstName" : "FirstName",
         "lastName" : "LastName",

@@ -986,7 +986,13 @@ public class LoanAPITests extends APITests {
 
     MultipleJsonRecords loans = loansFixture.getAllLoans();
 
-    loans.forEach(loanJson -> loanHasLoanPolicyProperties(loanJson, loanPolicy));
+    loans.forEach(loanJson -> {
+      loanHasLoanPolicyProperties(loanJson, loanPolicy);
+      loanHasOverdueFinePolicyProperties(loanJson,
+        overdueFinePoliciesFixture.facultyStandard());
+      loanHasLostItemPolicyProperties(loanJson,
+        lostItemFeePoliciesFixture.facultyStandard());
+    });
   }
 
   @Test

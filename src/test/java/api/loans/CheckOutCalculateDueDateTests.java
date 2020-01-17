@@ -105,6 +105,8 @@ public class CheckOutCalculateDueDateTests extends APITests {
     final JsonObject loan = response.getJson();
 
     loanHasLoanPolicyProperties(loan, loanPolicy);
+    loanHasOverdueFinePolicyProperties(loan,  overdueFinePoliciesFixture.facultyStandard());
+    loanHasLostItemPolicyProperties(loan,  lostItemFeePoliciesFixture.facultyStandard());
 
     assertThat(ERROR_MESSAGE_DUE_DATE + END_OF_CURRENT_YEAR_DUE_DATE,
       loan.getString(DUE_DATE_KEY), isEquivalentTo(expectedDateTime));
@@ -139,6 +141,8 @@ public class CheckOutCalculateDueDateTests extends APITests {
     final JsonObject loan = response.getJson();
 
     loanHasLoanPolicyProperties(loan, loanPolicy);
+    loanHasOverdueFinePolicyProperties(loan,  overdueFinePoliciesFixture.facultyStandard());
+    loanHasLostItemPolicyProperties(loan,  lostItemFeePoliciesFixture.facultyStandard());
 
     assertThat(ERROR_MESSAGE_DUE_DATE + END_OF_CURRENT_YEAR_DUE_DATE,
       loan.getString(DUE_DATE_KEY), isEquivalentTo(END_OF_CURRENT_YEAR_DUE_DATE));
@@ -178,6 +182,8 @@ public class CheckOutCalculateDueDateTests extends APITests {
     final JsonObject loan = response.getJson();
 
     loanHasLoanPolicyProperties(loan, loanPolicy);
+    loanHasOverdueFinePolicyProperties(loan,  overdueFinePoliciesFixture.facultyStandard());
+    loanHasLostItemPolicyProperties(loan,  lostItemFeePoliciesFixture.facultyStandard());
 
     assertThat(ERROR_MESSAGE_DUE_DATE + END_OF_CURRENT_YEAR_DUE_DATE,
       loan.getString(DUE_DATE_KEY), isEquivalentTo(END_OF_CURRENT_YEAR_DUE_DATE));
@@ -216,6 +222,8 @@ public class CheckOutCalculateDueDateTests extends APITests {
     final JsonObject loan = response.getJson();
 
     loanHasLoanPolicyProperties(loan, loanPolicy);
+    loanHasOverdueFinePolicyProperties(loan,  overdueFinePoliciesFixture.facultyStandard());
+    loanHasLostItemPolicyProperties(loan,  lostItemFeePoliciesFixture.facultyStandard());
 
     DateTime expectedDate =
       WEDNESDAY_DATE.toDateTime(END_OF_A_DAY, DateTimeZone.UTC);
@@ -257,6 +265,8 @@ public class CheckOutCalculateDueDateTests extends APITests {
     final JsonObject loan = response.getJson();
 
     loanHasLoanPolicyProperties(loan, loanPolicy);
+    loanHasOverdueFinePolicyProperties(loan,  overdueFinePoliciesFixture.facultyStandard());
+    loanHasLostItemPolicyProperties(loan,  lostItemFeePoliciesFixture.facultyStandard());
 
     DateTime expectedDate =
       WEDNESDAY_DATE.toDateTime(END_OF_A_DAY, DateTimeZone.UTC);
@@ -298,6 +308,8 @@ public class CheckOutCalculateDueDateTests extends APITests {
     final JsonObject loan = response.getJson();
 
     loanHasLoanPolicyProperties(loan, loanPolicy);
+    loanHasOverdueFinePolicyProperties(loan,  overdueFinePoliciesFixture.facultyStandard());
+    loanHasLostItemPolicyProperties(loan,  lostItemFeePoliciesFixture.facultyStandard());
 
     DateTime expectedDate =
       FRIDAY_DATE.toDateTime(END_OF_A_DAY, DateTimeZone.UTC);
@@ -339,6 +351,8 @@ public class CheckOutCalculateDueDateTests extends APITests {
     final JsonObject loan = response.getJson();
 
     loanHasLoanPolicyProperties(loan, loanPolicy);
+    loanHasOverdueFinePolicyProperties(loan,  overdueFinePoliciesFixture.facultyStandard());
+    loanHasLostItemPolicyProperties(loan,  lostItemFeePoliciesFixture.facultyStandard());
 
     DateTime expectedDate =
       FRIDAY_DATE.toDateTime(END_OF_A_DAY, DateTimeZone.UTC);
@@ -684,6 +698,8 @@ public class CheckOutCalculateDueDateTests extends APITests {
     final JsonObject loan = response.getJson();
 
     loanHasLoanPolicyProperties(loan, loanPolicy);
+    loanHasOverdueFinePolicyProperties(loan,  overdueFinePoliciesFixture.facultyStandard());
+    loanHasLostItemPolicyProperties(loan,  lostItemFeePoliciesFixture.facultyStandard());
 
     assertThat(ERROR_MESSAGE_DUE_DATE + duration,
       loan.getString(DUE_DATE_KEY), isEquivalentTo(loanDate.plusHours(duration)));
@@ -775,6 +791,8 @@ public class CheckOutCalculateDueDateTests extends APITests {
     final JsonObject loan = response.getJson();
 
     loanHasLoanPolicyProperties(loan, loanPolicy);
+    loanHasOverdueFinePolicyProperties(loan,  overdueFinePoliciesFixture.facultyStandard());
+    loanHasLostItemPolicyProperties(loan,  lostItemFeePoliciesFixture.facultyStandard());
 
     assertThat(ERROR_MESSAGE_DUE_DATE + duration,
       loan.getString(DUE_DATE_KEY), isEquivalentTo(loanDate.plusHours(duration)));
@@ -804,6 +822,8 @@ public class CheckOutCalculateDueDateTests extends APITests {
     final JsonObject loan = response.getJson();
 
     loanHasLoanPolicyProperties(loan, loanPolicy);
+    loanHasOverdueFinePolicyProperties(loan,  overdueFinePoliciesFixture.facultyStandard());
+    loanHasLostItemPolicyProperties(loan,  lostItemFeePoliciesFixture.facultyStandard());
 
     if (isIncludeTime) {
       checkDateTime(expectedDueDate, loan);

@@ -2,9 +2,11 @@ package api.support.fakes.processors;
 
 import static api.support.APITestContext.createWebClient;
 import static api.support.http.InterfaceUrls.holdingsStorageUrl;
+import static java.lang.String.format;
 import static org.apache.commons.lang3.ObjectUtils.firstNonNull;
 import static org.folio.circulation.domain.representations.ItemProperties.HOLDINGS_RECORD_ID;
 import static org.folio.circulation.support.JsonPropertyWriter.write;
+import static org.folio.circulation.support.http.client.NamedQueryParameter.namedParameter;
 
 import java.util.Arrays;
 import java.util.List;
@@ -126,7 +128,7 @@ public final class StorageRecordPreProcessors {
 
   private static CompletableFuture<JsonObject> getHoldingById(String id) {
     return createWebClient()
-      .get(holdingsStorageUrl("?query=id=" + id))
+      .get(holdingsStorageUrl(""), namedParameter("query", format("id==%s", id)))
       .thenApply(result -> result
         .map(StorageRecordPreProcessors::getFirstHoldingsRecord)
         .orElse(null));

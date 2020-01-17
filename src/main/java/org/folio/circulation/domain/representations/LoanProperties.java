@@ -16,6 +16,11 @@ public class LoanProperties {
   public static final String ACTION_COMMENT = "actionComment";
   public static final String BORROWER = "borrower";
   public static final String LOAN_POLICY = "loanPolicy";
+  public static final String OVERDUE_FINE_POLICY = "overdueFinePolicy";
+  public static final String LOST_ITEM_POLICY = "lostItemPolicy";
+  public static final String LOAN_POLICY_ID = "loanPolicyId";
+  public static final String OVERDUE_FINE_POLICY_ID = "overdueFinePolicyId";
+  public static final String LOST_ITEM_POLICY_ID = "lostItemPolicyId";
   public static final String FEESANDFINES = "feesAndFines";
   public static final String PATRON_GROUP_ID_AT_CHECKOUT = "patronGroupIdAtCheckout";
   public static final String PATRON_GROUP_AT_CHECKOUT = "patronGroupAtCheckout";
