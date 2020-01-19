@@ -7,7 +7,7 @@ import org.joda.time.LocalDate;
 
 public class OpeningDayPeriod {
   private static final String OPENING_DAY_KEY = "openingDay";
-  private static final String DATE_KEY = "openingDay";
+  private static final String DATE_KEY = "date";
 
   private final OpeningDay openingDay;
   private LocalDate date;

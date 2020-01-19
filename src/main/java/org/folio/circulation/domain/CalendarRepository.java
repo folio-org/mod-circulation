@@ -50,17 +50,17 @@ public class CalendarRepository {
       .fetch(path);
   }
 
-  public CompletableFuture<Result<List<OpeningDay>>> fetchOpeningPeriodsBetweenDates(
+  public CompletableFuture<Result<List<OpeningPeriod>>> fetchOpeningPeriodsBetweenDates(
       DateTime startDate, DateTime endDate, String servicePointId, boolean actualOpening, boolean includeClosedDays) {
 
     String params = String.format(PERIODS_QUERY_PARAMS,
       startDate.toLocalDate(), endDate.toLocalDate(), servicePointId, actualOpening, includeClosedDays);
     return calendarClient.getManyWithRawQueryStringParameters(params)
-      .thenApply(flatMapResult(this::mapPeriodsResponseToOpeningDays));
+      .thenApply(flatMapResult(this::createOpeningPeriods));
   }
 
-  private Result<List<OpeningDay>> mapPeriodsResponseToOpeningDays(Response response) {
-    return MultipleRecords.from(response, OpeningDay::fromOpeningPeriod, OPENING_PERIODS)
+  private Result<List<OpeningPeriod>> createOpeningPeriods(Response response) {
+    return MultipleRecords.from(response, OpeningPeriod::new, OPENING_PERIODS)
       .next(r -> Result.succeeded(r.toKeys(identity())));
   }
 

@@ -25,10 +25,13 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
+import static api.support.fixtures.OpeningPeriodsExamples.ONE;
+import static api.support.fixtures.OpeningPeriodsExamples.getOpeningPeriodsById;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.domain.OverduePeriodCalculator.countMinutes;
 import static org.junit.Assert.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -49,66 +52,12 @@ public class OverduePeriodCalculatorTest {
     CollectionResourceClient calendarClient = mock(CollectionResourceClient.class);
 
     when(clients.calendarStorageClient()).thenReturn(calendarClient);
-    when(calendarClient.getManyWithRawQueryStringParameters(any(String.class)))
+    when(calendarClient.getManyWithRawQueryStringParameters(anyString()))
       .thenAnswer(rq -> completedFuture(
         Result.succeeded(
           new Response(200,
-            "{\n" +
-              "  \"openingPeriods\": [\n" +
-              "    {\n" +
-              "      \"openingDay\": {\n" +
-              "        \"openingHour\": [\n" +
-              "          {\n" +
-              "            \"startTime\": \"07:30\",\n" +
-              "            \"endTime\": \"13:00\"\n" +
-              "          }\n" +
-              "        ],\n" +
-              "        \"allDay\": false,\n" +
-              "        \"open\": true,\n" +
-              "        \"exceptional\": false\n" +
-              "      },\n" +
-              "      \"date\": \"2020-01-03T00:00:00.000+0000\"\n" +
-              "    },\n" +
-              "    {\n" +
-              "      \"openingDay\": {\n" +
-              "        \"openingHour\": [\n" +
-              "          {\n" +
-              "            \"startTime\": \"07:00\",\n" +
-              "            \"endTime\": \"15:00\"\n" +
-              "          }\n" +
-              "        ],\n" +
-              "        \"allDay\": false,\n" +
-              "        \"open\": true,\n" +
-              "        \"exceptional\": false\n" +
-              "      },\n" +
-              "      \"date\": \"2020-01-04T00:00:00.000+0000\"\n" +
-              "    },\n" +
-              "    {\n" +
-              "      \"openingDay\": {\n" +
-              "        \"openingHour\": [\n" +
-              "          {\n" +
-              "            \"startTime\": \"07:00\",\n" +
-              "            \"endTime\": \"14:30\"\n" +
-              "          }\n" +
-              "        ],\n" +
-              "        \"allDay\": false,\n" +
-              "        \"open\": true,\n" +
-              "        \"exceptional\": false\n" +
-              "      },\n" +
-              "      \"date\": \"2020-01-05T00:00:00.000+0000\"\n" +
-              "    }\n" +
-              "  ],\n" +
-              "  \"totalRecords\": 29\n" +
-              "}",
+            getOpeningPeriodsById(ONE).toString(),
             ContentType.APPLICATION_JSON.toString()))));
-
-//    Clients clients = createServerErrorMockBatchRequestClient();
-//
-//    requestQueueRepository = spy(RequestQueueRepository.using(clients));
-//    requestRepository = mock(RequestRepository.class);
-//
-//    updateRequestQueue =
-//      new UpdateRequestQueue(requestQueueRepository, requestRepository, null, null);
   }
 
   @Test
@@ -245,12 +194,12 @@ public class OverduePeriodCalculatorTest {
   public void abc() throws ExecutionException, InterruptedException {
     final int expectedOverdueMinutes = 60;
 
-    LoanPolicy loanPolicy = createLoanPolicy(20, INTERVAL_HOURS);
+    LoanPolicy loanPolicy = createLoanPolicy(16, INTERVAL_HOURS);
     OverdueFinePolicy overdueFinePolicy = createOverdueFinePolicy(false, false);
     DateTime systemTime = DateTime.now(DateTimeZone.UTC);
     Loan loan =  new LoanBuilder()
       .withDueDate(systemTime.minusMinutes(expectedOverdueMinutes))
-      .withCheckoutServicePointId(UUID.randomUUID())
+      .withCheckoutServicePointId(UUID.fromString(ONE))
       .asDomainObject()
       .withLoanPolicy(loanPolicy)
       .withOverdueFinePolicy(overdueFinePolicy);

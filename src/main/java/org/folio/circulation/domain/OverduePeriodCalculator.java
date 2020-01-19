@@ -43,7 +43,7 @@ public class OverduePeriodCalculator {
     if (loanPolicy == null) {
       return ZERO_MINUTES;
     }
-    
+
     int duration = loanPolicy.getGracePeriodDuration();
     switch (loanPolicy.getGracePeriodInterval()) {
     case MONTHS:
@@ -80,9 +80,10 @@ public class OverduePeriodCalculator {
     }
   }
 
-  private static Result<Integer> getOpeningDaysDurationMinutes(List<OpeningDay> openingDays) {
+  private static Result<Integer> getOpeningDaysDurationMinutes(List<OpeningPeriod> openingDays) {
     return succeeded(
       openingDays.stream()
+        .map(OpeningPeriod::getOpeningDay)
         .map(OpeningDay::getOpeningHour)
         .flatMap(Collection::stream)
         .mapToInt(OverduePeriodCalculator::getOpeningHourDurationMinutes)
