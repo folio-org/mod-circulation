@@ -82,5 +82,4 @@ public class CalendarRepository {
     OpeningDay closedDay = createClosedDay();
     return new AdjacentOpeningDays(closedDay, closedDay, closedDay);
   }
-
 }

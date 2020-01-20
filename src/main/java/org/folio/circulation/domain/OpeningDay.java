@@ -72,7 +72,7 @@ public class OpeningDay {
     return new OpeningDay(openingHour, date, allDay, open);
   }
 
-  private static List<OpeningHour> fillOpeningDay(JsonObject representation) {
+  private List<OpeningHour> fillOpeningDay(JsonObject representation) {
     List<OpeningHour> dayPeriods = new ArrayList<>();
     JsonArray openingHourJson = representation.getJsonArray(OPENING_HOUR_KEY);
     if (Objects.isNull(openingHourJson)) {
