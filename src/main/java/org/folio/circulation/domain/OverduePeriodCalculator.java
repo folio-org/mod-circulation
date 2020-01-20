@@ -8,7 +8,6 @@ import org.folio.circulation.support.Result;
 import org.joda.time.DateTime;
 import org.joda.time.LocalTime;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
@@ -75,7 +74,7 @@ public class OverduePeriodCalculator {
       return completedFuture(succeeded(overdueMinutes));
     } else {
       return new CalendarRepository(clients)
-        .fetchOpeningPeriodsBetweenDates(dueDate, systemTime, loan.getCheckoutServicePointId(), false)
+        .fetchOpeningPeriodsBetweenDates(loan.getCheckoutServicePointId(), dueDate, systemTime, false)
       .thenApply(r -> r.next(OverduePeriodCalculator::getOpeningDaysDurationMinutes));
     }
   }
@@ -84,17 +83,22 @@ public class OverduePeriodCalculator {
     return succeeded(
       openingDays.stream()
         .map(OpeningPeriod::getOpeningDay)
-        .map(OpeningDay::getOpeningHour)
-        .flatMap(Collection::stream)
-        .mapToInt(OverduePeriodCalculator::getOpeningHourDurationMinutes)
+        .mapToInt(day -> day.getAllDay() ? MINUTES_PER_DAY : getOpeningDayDurationMinutes(day))
         .sum()
     );
+  }
+
+  private static int getOpeningDayDurationMinutes(OpeningDay openingDay) {
+    return openingDay.getOpeningHour()
+      .stream()
+      .mapToInt(OverduePeriodCalculator::getOpeningHourDurationMinutes)
+      .sum();
   }
 
   private static int getOpeningHourDurationMinutes(OpeningHour openingHour) {
     LocalTime startTime = openingHour.getStartTime();
     LocalTime endTime = openingHour.getEndTime();
-    if (ObjectUtils.allNotNull(startTime, endTime) && startTime.isBefore(endTime)) {
+    if (ObjectUtils.allNotNull(startTime, endTime) && endTime.isAfter(startTime)) {
       return getMinutesOfDay(endTime) - getMinutesOfDay(startTime);
     }
     return ZERO_MINUTES;

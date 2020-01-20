@@ -9,8 +9,8 @@ import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 
 public class OpeningPeriod {
-  private final static String OPENING_DAY_KEY = "openingDay";
-  private final static String DATE_KEY = "date";
+  private static final String OPENING_DAY_KEY = "openingDay";
+  private static final String DATE_KEY = "date";
   private static final String DATE_TIME_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSSZ";
   private static final DateTimeFormatter DATE_TIME_FORMATTER =
     DateTimeFormat.forPattern(DATE_TIME_FORMAT).withZoneUTC();
