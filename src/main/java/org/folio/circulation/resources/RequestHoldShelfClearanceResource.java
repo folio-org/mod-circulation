@@ -7,6 +7,7 @@ import static org.folio.circulation.domain.RequestStatus.OPEN_AWAITING_PICKUP;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatchAny;
 import static org.folio.circulation.support.CqlSortBy.descending;
+import static org.folio.circulation.support.http.client.PageLimit.limit;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -35,6 +36,7 @@ import org.folio.circulation.support.ItemRepository;
 import org.folio.circulation.support.OkJsonResponseResult;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.RouteRegistration;
+import org.folio.circulation.support.http.client.PageLimit;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.server.WebContext;
 
@@ -144,7 +146,7 @@ public class RequestHoldShelfClearanceResource extends Resource {
         Result<CqlQuery> cqlQueryResult = statusQuery
           .combine(itemIdsQuery, CqlQuery::and);
 
-        return findRequestsByCqlQuery(client, cqlQueryResult, batch.size());
+        return findRequestsByCqlQuery(client, cqlQueryResult, limit(batch.size()));
       })
       .map(CompletableFuture::join)
       .collect(Collectors.toList());
@@ -210,7 +212,7 @@ public class RequestHoldShelfClearanceResource extends Resource {
           .combine(notEmptyDateQuery, CqlQuery::and)
           .map(q -> q.sortBy(descending(REQUEST_CLOSED_DATE_KEY)));
 
-        return findRequestsByCqlQuery(client, cqlQueryResult, PAGE_REQUEST_LIMIT);
+        return findRequestsByCqlQuery(client, cqlQueryResult, limit(PAGE_REQUEST_LIMIT));
       }).map(CompletableFuture::join)
       .collect(Collectors.toList());
   }
@@ -223,15 +225,18 @@ public class RequestHoldShelfClearanceResource extends Resource {
       .collect(Collectors.toList());
   }
 
-  private CompletableFuture<Result<MultipleRecords<Request>>> findRequestsByCqlQuery(CollectionResourceClient client,
-                                                                                     Result<CqlQuery> cqlQueryResult, int limit) {
+  private CompletableFuture<Result<MultipleRecords<Request>>> findRequestsByCqlQuery(
+    CollectionResourceClient client, Result<CqlQuery> cqlQueryResult,
+    PageLimit pageLimit) {
+
     return cqlQueryResult
-      .after(query -> client.getMany(query, limit))
+      .after(query -> client.getMany(query, pageLimit))
       .thenApply(result -> result.next(this::mapResponseToRequest));
   }
 
   private Result<List<Result<Request>>> fetchItemToRequest(Result<List<Request>> requests,
-                                                           ItemRepository itemRepository) {
+    ItemRepository itemRepository) {
+
     return requests.map(r -> r.stream()
       .map(request -> fetchItem(itemRepository, request))
       .map(CompletableFuture::join)

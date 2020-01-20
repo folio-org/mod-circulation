@@ -3,6 +3,7 @@ package org.folio.circulation.support.http.client;
 import static java.lang.String.format;
 import static java.lang.String.join;
 import static java.lang.String.valueOf;
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.stream.Collectors.toList;
 import static org.folio.circulation.support.CqlSortBy.none;
 import static org.folio.circulation.support.Result.of;
@@ -10,7 +11,6 @@ import static org.folio.circulation.support.results.CommonFailures.failedDueToSe
 
 import java.lang.invoke.MethodHandles;
 import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
@@ -21,7 +21,7 @@ import org.folio.circulation.support.Result;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class CqlQuery {
+public class CqlQuery implements QueryParameter {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
   private final String query;
@@ -72,7 +72,7 @@ public class CqlQuery {
 
     log.info("Encoding query {}", sortedQuery);
 
-    return of(() -> URLEncoder.encode(sortedQuery, valueOf(StandardCharsets.UTF_8)));
+    return of(() -> URLEncoder.encode(sortedQuery, valueOf(UTF_8)));
   }
 
   String asText() {
@@ -92,5 +92,10 @@ public class CqlQuery {
     return values.stream()
       .map(value -> format("\"%s\"", value))
       .collect(toList());
+  }
+
+  @Override
+  public void consume(QueryStringParameterConsumer consumer) {
+    consumer.consume("query", asText());
   }
 }

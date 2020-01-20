@@ -93,6 +93,16 @@
       "type": "string",
       "format": "date-time"
     },
+    "overdueFinePolicyId": {
+      "description": "ID of last overdue fine policy used in relation to this loan",
+      "type": "string",
+      "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
+    },
+    "lostItemPolicyId": {
+      "description": "ID of last lost item policy used in relation to this loan",
+      "type": "string",
+      "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
+    },
     "metadata": {
       "description": "Metadata about creation and changes to loan, provided by the server (client should not provide)",
       "type": "object",

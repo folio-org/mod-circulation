@@ -29,6 +29,7 @@ import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.ServicePoint;
 import org.folio.circulation.domain.ServicePointRepository;
 import org.folio.circulation.support.http.client.CqlQuery;
+import org.folio.circulation.support.http.client.PageLimit;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.results.CommonFailures;
 
@@ -257,7 +258,7 @@ public class ItemRepository {
     log.info("Fetching item with barcode: {}", barcode);
 
     return CqlQuery.exactMatch("barcode", barcode)
-       .after(query -> itemsClient.getMany(query, 1))
+       .after(query -> itemsClient.getMany(query, PageLimit.one()))
       .thenApply(result -> result.next(this::mapMultipleToResult))
       .thenApply(r -> r.map(Item::from))
       .exceptionally(CommonFailures::failedDueToServerError);

@@ -7,10 +7,12 @@ import static com.github.tomakehurst.wiremock.client.WireMock.equalTo;
 import static com.github.tomakehurst.wiremock.client.WireMock.get;
 import static com.github.tomakehurst.wiremock.client.WireMock.noContent;
 import static com.github.tomakehurst.wiremock.client.WireMock.okJson;
-import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
+import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
+import static java.time.temporal.ChronoUnit.MILLIS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.folio.HttpStatus.HTTP_NO_CONTENT;
 import static org.folio.HttpStatus.HTTP_OK;
+import static org.folio.circulation.support.http.client.NamedQueryParameter.namedParameter;
 import static org.folio.circulation.support.http.client.VertxWebClientOkapiHttpClient.createClientUsing;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.instanceOf;
@@ -19,6 +21,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.time.Duration;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
@@ -70,13 +73,11 @@ public class VertxWebClientOkapiHttpClientTests {
 
     final String locationResponseHeader = "/a-different-location";
 
-    fakeWebServer.stubFor(matchingFolioHeaders(get(urlEqualTo("/record")))
-      .willReturn(okJson(new JsonObject().put("message", "hello").encodePrettily())
+    fakeWebServer.stubFor(matchingFolioHeaders(get(urlPathEqualTo("/record")))
+      .willReturn(okJson(dummyJsonBody())
         .withHeader("Location", locationResponseHeader)));
 
-    VertxWebClientOkapiHttpClient client =  createClientUsing(
-      vertxAssistant.createUsingVertx(Vertx::createHttpClient), okapiUrl,
-      tenantId, token, userId, requestId);
+    VertxWebClientOkapiHttpClient client = createClient();
 
     CompletableFuture<Result<Response>> getCompleted = client.get(
       fakeWebServer.url("/record"));
@@ -90,15 +91,35 @@ public class VertxWebClientOkapiHttpClientTests {
   }
 
   @Test
+  public void canGetJsonUsingQueryParameters()
+    throws InterruptedException, ExecutionException, TimeoutException {
+
+    fakeWebServer.stubFor(matchingFolioHeaders(get(urlPathEqualTo("/record")))
+      .withQueryParam("first-parameter", equalTo("foo"))
+      .withQueryParam("second-parameter", equalTo("bar"))
+      .willReturn(okJson(dummyJsonBody())));
+
+    VertxWebClientOkapiHttpClient client = createClient();
+
+    CompletableFuture<Result<Response>> getCompleted = client.get(
+      fakeWebServer.url("/record"), namedParameter("first-parameter", "foo"),
+        namedParameter("second-parameter", "bar"));
+
+    final Response response = getCompleted.get(2, SECONDS).value();
+
+    assertThat(response, hasStatus(HTTP_OK));
+    assertThat(response.getJson().getString("message"), is("hello"));
+    assertThat(response.getContentType(), is("application/json"));
+  }
+
+  @Test
   public void canDeleteAResource()
     throws InterruptedException, ExecutionException, TimeoutException {
 
-    fakeWebServer.stubFor(matchingFolioHeaders(delete(urlEqualTo("/record")))
+    fakeWebServer.stubFor(matchingFolioHeaders(delete(urlPathEqualTo("/record")))
       .willReturn(noContent()));
 
-    VertxWebClientOkapiHttpClient client =  createClientUsing(
-      vertxAssistant.createUsingVertx(Vertx::createHttpClient), okapiUrl,
-      tenantId, token, userId, requestId);
+    VertxWebClientOkapiHttpClient client = createClient();
 
     CompletableFuture<Result<Response>> getCompleted = client.delete(
       fakeWebServer.url("/record"));
@@ -109,18 +130,37 @@ public class VertxWebClientOkapiHttpClientTests {
   }
 
   @Test
+  public void canDeleteAResourceUsingQueryParameters()
+    throws InterruptedException, ExecutionException, TimeoutException {
+
+    fakeWebServer.stubFor(matchingFolioHeaders(delete(urlPathEqualTo("/record")))
+      .withQueryParam("first-parameter", equalTo("foo"))
+      .withQueryParam("second-parameter", equalTo("bar"))
+      .willReturn(noContent()));
+
+    VertxWebClientOkapiHttpClient client = createClient();
+
+    CompletableFuture<Result<Response>> deleteCompleted = client.delete(
+      fakeWebServer.url("/record"), namedParameter("first-parameter", "foo"),
+      namedParameter("second-parameter", "bar"));
+
+    final Response response = deleteCompleted.get(2, SECONDS).value();
+
+    assertThat(response, hasStatus(HTTP_NO_CONTENT));
+  }
+
+
+  @Test
   public void failsWhenGetTimesOut()
     throws InterruptedException, ExecutionException, TimeoutException {
 
-    fakeWebServer.stubFor(matchingFolioHeaders(get(urlEqualTo("/record")))
+    fakeWebServer.stubFor(matchingFolioHeaders(get(urlPathEqualTo("/record")))
       .willReturn(aResponse().withFixedDelay(1000)));
 
-    VertxWebClientOkapiHttpClient client =  createClientUsing(
-      vertxAssistant.createUsingVertx(Vertx::createHttpClient), okapiUrl,
-      tenantId, token, userId, requestId);
+    VertxWebClientOkapiHttpClient client = createClient();
 
     CompletableFuture<Result<Response>> getCompleted
-      = client.get(fakeWebServer.url("/record"), 500);
+      = client.get(fakeWebServer.url("/record"), Duration.of(500, MILLIS));
 
     final Result<Response> responseResult = getCompleted.get(1, SECONDS);
 
@@ -142,5 +182,16 @@ public class VertxWebClientOkapiHttpClientTests {
       .withHeader("X-Okapi-Token", equalTo(token))
       .withHeader("X-Okapi-User-Id", equalTo(userId))
       .withHeader("X-Okapi-Request-Id", equalTo(requestId));
+  }
+
+  private VertxWebClientOkapiHttpClient createClient() {
+    return createClientUsing(
+      vertxAssistant.createUsingVertx(Vertx::createHttpClient), okapiUrl,
+      tenantId, token, userId, requestId);
+  }
+
+  private String dummyJsonBody() {
+    return new JsonObject().put("message", "hello")
+      .encodePrettily();
   }
 }

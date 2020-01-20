@@ -1,5 +1,6 @@
 package org.folio.circulation.support.http.client;
 
+import static java.time.temporal.ChronoUnit.SECONDS;
 import static org.apache.http.HttpHeaders.ACCEPT;
 import static org.folio.circulation.support.Result.failed;
 import static org.folio.circulation.support.Result.succeeded;
@@ -11,7 +12,9 @@ import static org.folio.circulation.support.http.OkapiHeader.USER_ID;
 import static org.folio.circulation.support.http.client.Response.responseFrom;
 
 import java.net.URL;
+import java.time.Duration;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Stream;
 
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.ServerErrorFailure;
@@ -24,7 +27,7 @@ import io.vertx.ext.web.client.HttpResponse;
 import io.vertx.ext.web.client.WebClient;
 
 public class VertxWebClientOkapiHttpClient {
-  private static final int DEFAULT_TIMEOUT_IN_MILLISECONDS = 5000;
+  private static final Duration DEFAULT_TIMEOUT = Duration.of(5, SECONDS);
 
   private final WebClient webClient;
   private final URL okapiUrl;
@@ -53,39 +56,62 @@ public class VertxWebClientOkapiHttpClient {
   }
 
   public CompletableFuture<Result<Response>> get(String url,
-    Integer timeoutInMilliseconds) {
+    Duration timeout, QueryParameter... queryParameters) {
 
     final CompletableFuture<AsyncResult<HttpResponse<Buffer>>> futureResponse
       = new CompletableFuture<>();
 
-    withStandardHeaders(webClient.getAbs(url))
-      .timeout(timeoutInMilliseconds)
+    final HttpRequest<Buffer> request = withStandardHeaders(
+      webClient.getAbs(url));
+
+    Stream.of(queryParameters)
+      .forEach(parameter -> parameter.consume(request::addQueryParam));
+
+    request
+      .timeout(timeout.toMillis())
       .send(futureResponse::complete);
 
     return futureResponse
       .thenApply(asyncResult -> mapAsyncResultToResult(url, asyncResult));
   }
 
-  public CompletableFuture<Result<Response>> get(URL url) {
-    return get(url.toString());
+  public CompletableFuture<Result<Response>> get(URL url,
+    QueryParameter... queryParameters) {
+    return get(url.toString(), queryParameters);
   }
 
-  public CompletableFuture<Result<Response>> get(String url) {
-    return get(url, DEFAULT_TIMEOUT_IN_MILLISECONDS);
+  public CompletableFuture<Result<Response>> get(String url,
+    QueryParameter... queryParameters) {
+
+    return get(url, DEFAULT_TIMEOUT, queryParameters);
   }
 
-  public CompletableFuture<Result<Response>> delete(String url) {
-    return delete(url, DEFAULT_TIMEOUT_IN_MILLISECONDS);
+  public CompletableFuture<Result<Response>> delete(URL url,
+    QueryParameter... queryParameters) {
+
+    return delete(url.toString(), queryParameters);
   }
 
   public CompletableFuture<Result<Response>> delete(String url,
-    int timeoutInMilliseconds) {
+    QueryParameter... queryParameters) {
+
+    return delete(url, DEFAULT_TIMEOUT, queryParameters);
+  }
+
+  public CompletableFuture<Result<Response>> delete(String url,
+    Duration timeout, QueryParameter... queryParameters) {
 
     final CompletableFuture<AsyncResult<HttpResponse<Buffer>>> futureResponse
       = new CompletableFuture<>();
 
-    withStandardHeaders(webClient.deleteAbs(url))
-      .timeout(timeoutInMilliseconds)
+    final HttpRequest<Buffer> request = withStandardHeaders(
+      webClient.deleteAbs(url));
+
+    Stream.of(queryParameters)
+      .forEach(parameter -> parameter.consume(request::addQueryParam));
+
+    request
+      .timeout(timeout.toMillis())
       .send(futureResponse::complete);
 
     return futureResponse

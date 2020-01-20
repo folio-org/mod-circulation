@@ -1,22 +1,26 @@
 package org.folio.circulation.domain;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
-import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
-import static org.folio.circulation.support.http.client.CqlQuery.exactMatchAny;
 import static org.folio.circulation.support.CqlSortBy.ascending;
 import static org.folio.circulation.support.Result.succeeded;
+import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
+import static org.folio.circulation.support.http.client.CqlQuery.exactMatchAny;
+import static org.folio.circulation.support.http.client.PageLimit.oneThousand;
 
 import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.support.Clients;
-import org.folio.circulation.support.http.client.CqlQuery;
 import org.folio.circulation.support.Result;
+import org.folio.circulation.support.http.client.CqlQuery;
+import org.folio.circulation.support.http.client.PageLimit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class RequestQueueRepository {
   private static final Logger LOG = LoggerFactory.getLogger(RequestQueueRepository.class);
+
+  private static final PageLimit MAXIMUM_SUPPORTED_REQUEST_QUEUE_SIZE = oneThousand();
   private final RequestRepository requestRepository;
 
   private RequestQueueRepository(RequestRepository requestRepository) {
@@ -42,11 +46,10 @@ public class RequestQueueRepository {
     final Result<CqlQuery> itemIdQuery = exactMatch("itemId", itemId);
     final Result<CqlQuery> statusQuery = exactMatchAny("status", RequestStatus.openStates());
 
-    final int maximumSupportedRequestQueueSize = 1000;
-
     return itemIdQuery.combine(statusQuery, CqlQuery::and)
       .map(q -> q.sortBy(ascending("position")))
-      .after(query -> requestRepository.findBy(query, maximumSupportedRequestQueueSize))
+      .after(query -> requestRepository.findBy(query,
+        MAXIMUM_SUPPORTED_REQUEST_QUEUE_SIZE))
       .thenApply(r -> r.map(MultipleRecords::getRecords))
       .thenApply(r -> r.map(RequestQueue::new));
   }
@@ -55,11 +58,10 @@ public class RequestQueueRepository {
     final Result<CqlQuery> itemIdQuery = exactMatch("itemId", itemId);
     final Result<CqlQuery> statusQuery = exactMatchAny("status", RequestStatus.openStates());
 
-    final int maximumSupportedRequestQueueSize = 1000;
-
     return itemIdQuery.combine(statusQuery, CqlQuery::and)
       .map(q -> q.sortBy(ascending("position")))
-      .after(query -> requestRepository.findByWithoutItems(query, maximumSupportedRequestQueueSize))
+      .after(query -> requestRepository.findByWithoutItems(query,
+          MAXIMUM_SUPPORTED_REQUEST_QUEUE_SIZE))
       .thenApply(r -> r.map(MultipleRecords::getRecords))
       .thenApply(r -> r.map(RequestQueue::new));
   }
