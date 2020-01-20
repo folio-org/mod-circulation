@@ -25,7 +25,6 @@ public class OpeningDay {
   private static final String ALL_DAY_KEY = "allDay";
   private static final String OPEN_KEY = "open";
   private static final String OPENING_HOUR_KEY = "openingHour";
-  private static final String OPENING_DAY_KEY = "openingDay";
   private static final String EXCEPTIONAL_KEY = "exceptional";
   private static final String DATE_TIME_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSSZ";
   private static final DateTimeFormatter DATE_TIME_FORMATTER =
@@ -72,20 +71,6 @@ public class OpeningDay {
   public static OpeningDay createOpeningDay(List<OpeningHour> openingHour, LocalDate date, boolean allDay, boolean open) {
     return new OpeningDay(openingHour, date, allDay, open);
   }
-
-//  public static OpeningDay fromOpeningPeriod(JsonObject openingPeriodJson) {
-//    JsonObject openingDayJson = openingPeriodJson.getJsonObject(OPENING_DAY_KEY);
-//    String dateProperty = openingPeriodJson.getString(DATE_KEY);
-//    LocalDate date = null;
-//    if (dateProperty != null) {
-//      date = LocalDate.parse(dateProperty, DATE_TIME_FORMATTER);
-//    }
-//    boolean allDay = openingDayJson.getBoolean(ALL_DAY_KEY, false);
-//    boolean open = openingDayJson.getBoolean(OPEN_KEY, false);
-//    List<OpeningHour> openingHours = fillOpeningDay(openingDayJson);
-//
-//    return new OpeningDay(openingHours, date, allDay, open);
-//  }
 
   private static List<OpeningHour> fillOpeningDay(JsonObject representation) {
     List<OpeningHour> dayPeriods = new ArrayList<>();

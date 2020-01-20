@@ -75,7 +75,7 @@ public class OverduePeriodCalculator {
       return completedFuture(succeeded(overdueMinutes));
     } else {
       return new CalendarRepository(clients)
-        .fetchOpeningPeriodsBetweenDates(dueDate, systemTime, loan.getCheckoutServicePointId(), true, false)
+        .fetchOpeningPeriodsBetweenDates(dueDate, systemTime, loan.getCheckoutServicePointId(), false)
       .thenApply(r -> r.next(OverduePeriodCalculator::getOpeningDaysDurationMinutes));
     }
   }

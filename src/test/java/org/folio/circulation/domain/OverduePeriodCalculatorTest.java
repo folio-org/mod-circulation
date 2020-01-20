@@ -29,9 +29,9 @@ import static api.support.fixtures.OpeningPeriodsExamples.ONE;
 import static api.support.fixtures.OpeningPeriodsExamples.getOpeningPeriodsById;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.domain.OverduePeriodCalculator.countMinutes;
+import static org.folio.circulation.support.Result.succeeded;
 import static org.junit.Assert.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.matches;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -50,11 +50,10 @@ public class OverduePeriodCalculatorTest {
   public void setUp() {
     this.clients = mock(Clients.class);
     CollectionResourceClient calendarClient = mock(CollectionResourceClient.class);
-
     when(clients.calendarStorageClient()).thenReturn(calendarClient);
-    when(calendarClient.getManyWithRawQueryStringParameters(anyString()))
-      .thenAnswer(rq -> completedFuture(
-        Result.succeeded(
+
+    when(calendarClient.getManyWithRawQueryStringParameters(matches(patternFor(ONE))))
+      .thenAnswer(rq -> completedFuture(succeeded(
           new Response(200,
             getOpeningPeriodsById(ONE).toString(),
             ContentType.APPLICATION_JSON.toString()))));
@@ -229,5 +228,9 @@ public class OverduePeriodCalculatorTest {
       .create();
 
     return OverdueFinePolicy.from(json);
+  }
+
+  private static String patternFor(String servicePointId) {
+    return ".*" + servicePointId + ".*";
   }
 }

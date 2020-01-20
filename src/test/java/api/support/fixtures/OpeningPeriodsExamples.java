@@ -33,29 +33,18 @@ public class OpeningPeriodsExamples {
   private static final Map<String, OpeningPeriodsBuilder> fakeOpeningPeriods = new HashMap<>();
 
   static {
-    fakeOpeningPeriods.put(ONE,
-      new OpeningPeriodsBuilder(
-        Arrays.asList(
-          new OpeningPeriod(
-            new OpeningDay(
-              Arrays.asList(
-                new OpeningHour(OPENING_HOUR_1_START, OPENING_HOUR_1_END),
-                new OpeningHour(OPENING_HOUR_2_START, OPENING_HOUR_2_END)),
-              false, true, false
-            )
-            , DATE_1
-          ),
-          new OpeningPeriod(
-            new OpeningDay(
-              Arrays.asList(
-                new OpeningHour(OPENING_HOUR_3_START, OPENING_HOUR_3_END),
-                new OpeningHour(OPENING_HOUR_4_START, OPENING_HOUR_4_END)),
-              false, true, true
-            )
-            , DATE_2
-          )
-        )
-      ));
+    fakeOpeningPeriods.put(ONE, new OpeningPeriodsBuilder(
+      Arrays.asList(
+        new OpeningPeriod(DATE_1, new OpeningDay(Arrays.asList(
+            new OpeningHour(OPENING_HOUR_1_START, OPENING_HOUR_1_END),
+            new OpeningHour(OPENING_HOUR_2_START, OPENING_HOUR_2_END)),
+          false, true, false)),
+        new OpeningPeriod(DATE_2, new OpeningDay(Arrays.asList(
+            new OpeningHour(OPENING_HOUR_3_START, OPENING_HOUR_3_END),
+            new OpeningHour(OPENING_HOUR_4_START, OPENING_HOUR_4_END)),
+          false, true, true))
+      )
+    ));
   }
 
   public static OpeningPeriodsBuilder getOpeningPeriodsById(String servicePointId) {

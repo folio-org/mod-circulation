@@ -1,6 +1,5 @@
 package org.folio.circulation.domain;
 
-import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
@@ -8,12 +7,6 @@ import org.joda.time.LocalDate;
 import org.joda.time.LocalTime;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
-import java.util.stream.Collector;
 
 public class OpeningPeriod {
   private final static String OPENING_DAY_KEY = "openingDay";
@@ -33,7 +26,7 @@ public class OpeningPeriod {
     return date;
   }
 
-  public OpeningPeriod(OpeningDay openingDay, LocalDate date) {
+  public OpeningPeriod(LocalDate date, OpeningDay openingDay) {
     this.openingDay = openingDay;
     this.date = date;
   }

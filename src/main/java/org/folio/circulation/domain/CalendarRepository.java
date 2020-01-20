@@ -29,7 +29,7 @@ public class CalendarRepository {
   private static final String OPENING_DAYS = "openingDays";
   private static final String PATH_PARAM_WITH_QUERY = "%s/calculateopening?requestedDate=%s";
   private static final String PERIODS_QUERY_PARAMS =
-    "startDate=%sendDate=%s&servicePointId=%s&actualOpening=%s&includeClosedDays=%s";
+    "startDate=%sendDate=%s&servicePointId=%s&includeClosedDays=%s";
 
   private final CollectionResourceClient calendarClient;
 
@@ -51,10 +51,10 @@ public class CalendarRepository {
   }
 
   public CompletableFuture<Result<List<OpeningPeriod>>> fetchOpeningPeriodsBetweenDates(
-      DateTime startDate, DateTime endDate, String servicePointId, boolean actualOpening, boolean includeClosedDays) {
+      DateTime startDate, DateTime endDate, String servicePointId, boolean includeClosedDays) {
 
     String params = String.format(PERIODS_QUERY_PARAMS,
-      startDate.toLocalDate(), endDate.toLocalDate(), servicePointId, actualOpening, includeClosedDays);
+      startDate.toLocalDate(), endDate.toLocalDate(), servicePointId, includeClosedDays);
     return calendarClient.getManyWithRawQueryStringParameters(params)
       .thenApply(flatMapResult(this::createOpeningPeriods));
   }
