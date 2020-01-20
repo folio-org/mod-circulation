@@ -37,6 +37,7 @@ import java.util.concurrent.TimeUnit;
 
 import api.support.APITests;
 import api.support.builders.Address;
+import api.support.builders.DeclareItemLostRequestBuilder;
 import api.support.builders.HoldingBuilder;
 import api.support.builders.ItemBuilder;
 import api.support.builders.LoanPolicyBuilder;
@@ -1842,6 +1843,110 @@ public class RequestsAPICreationTests extends APITests {
     assertThat(postResponse, hasStatus(HTTP_VALIDATION_ERROR));
     assertThat(postResponse.getJson(), hasErrorWith(allOf(
       hasMessage("Patron blocked from requesting"))));
+  }
+
+  @Test
+  public void cannotCreateRecallRequestWithDeclaredLostItemStatus() {
+    final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
+    final DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
+
+    final IndividualResource item = itemsFixture
+      .basedUponSmallAngryPlanet(itemsFixture.addCallNumberStringComponents());
+
+    final JsonObject loanJson = loansFixture.checkOutByBarcode(item, usersFixture.jessica())
+      .getJson();
+
+    declareItemLost(loanJson);
+
+    final IndividualResource requester = usersFixture.steve();
+    final RequestBuilder requestBuilder = createRequestBuilder(item, requester,
+      pickupServicePointId, requestDate);
+
+    Response postResponse = requestsClient.attemptCreate(requestBuilder);
+
+    assertThat(postResponse, hasStatus(HTTP_VALIDATION_ERROR));
+    assertThat(postResponse.getJson(), hasErrorWith(allOf(
+      hasMessage("Recall requests are not allowed for this patron and item combination"))));
+  }
+
+  @Test
+  public void cannotCreateHoldRequestWithDeclaredLostItemStatus() {
+    final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
+    final DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
+
+    final IndividualResource item = itemsFixture
+      .basedUponSmallAngryPlanet(itemsFixture.addCallNumberStringComponents());
+
+    final JsonObject loanJson = loansFixture.checkOutByBarcode(item, usersFixture.jessica())
+      .getJson();
+
+    declareItemLost(loanJson);
+
+    final IndividualResource requester = usersFixture.steve();
+    final RequestBuilder requestBuilder = new RequestBuilder()
+      .withId(UUID.randomUUID())
+      .open()
+      .hold()
+      .forItem(item)
+      .by(requester)
+      .withRequestDate(requestDate)
+      .fulfilToHoldShelf()
+      .withRequestExpiration(new LocalDate(2017, 7, 30))
+      .withHoldShelfExpiration(new LocalDate(2017, 8, 31))
+      .withPickupServicePointId(pickupServicePointId)
+      .withTags(new RequestBuilder.Tags(asList("new", "important")));
+
+    Response postResponse = requestsClient.attemptCreate(requestBuilder);
+
+    assertThat(postResponse, hasStatus(HTTP_VALIDATION_ERROR));
+    assertThat(postResponse.getJson(), hasErrorWith(allOf(
+      hasMessage("Hold requests are not allowed for this patron and item combination"))));
+  }
+
+  @Test
+  public void cannotCreatePageRequestWithDeclaredLostItemStatus() {
+    final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
+    final DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
+
+    final IndividualResource item = itemsFixture
+      .basedUponSmallAngryPlanet(itemsFixture.addCallNumberStringComponents());
+
+    final JsonObject loanJson = loansFixture.checkOutByBarcode(item, usersFixture.jessica())
+      .getJson();
+
+    declareItemLost(loanJson);
+
+    final IndividualResource requester = usersFixture.steve();
+    final RequestBuilder requestBuilder = new RequestBuilder()
+      .withId(UUID.randomUUID())
+      .open()
+      .page()
+      .forItem(item)
+      .by(requester)
+      .withRequestDate(requestDate)
+      .fulfilToHoldShelf()
+      .withRequestExpiration(new LocalDate(2017, 7, 30))
+      .withHoldShelfExpiration(new LocalDate(2017, 8, 31))
+      .withPickupServicePointId(pickupServicePointId)
+      .withTags(new RequestBuilder.Tags(asList("new", "important")));
+
+    Response postResponse = requestsClient.attemptCreate(requestBuilder);
+
+    assertThat(postResponse, hasStatus(HTTP_VALIDATION_ERROR));
+    assertThat(postResponse.getJson(), hasErrorWith(allOf(
+      hasMessage("Page requests are not allowed for this patron and item combination"))));
+  }
+
+  private void declareItemLost(JsonObject loanJson) {
+    final UUID loanId = UUID.fromString(loanJson.getString("id"));
+    final String comment = "testing";
+    final DateTime dateTime = DateTime.now();
+
+    final DeclareItemLostRequestBuilder builder = new DeclareItemLostRequestBuilder()
+      .forLoanId(loanId).on(dateTime)
+      .withComment(comment);
+
+    loansFixture.declareItemLost(loanId, builder);
   }
 
   private UserManualBlockBuilder getManualBlockBuilder() {

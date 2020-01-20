@@ -30,8 +30,8 @@ public class LostItemPolicyRepository extends CirculationPolicyRepository<LostIt
           LoanAndRelatedRecords relatedRecords) {
 
     return Result.of(relatedRecords::getLoan)
-            .combineAfter(this::lookupPolicy, Loan::withLostItemPolicy)
-            .thenApply(mapResult(relatedRecords::withLoan));
+      .combineAfter(this::lookupPolicy, Loan::withLostItemPolicy)
+      .thenApply(mapResult(relatedRecords::withLoan));
   }
 
   @Override

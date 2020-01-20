@@ -52,6 +52,7 @@ public class OverduePeriodCalculatorTest {
   private static final String INTERVAL_DAYS = "Days";
   private static final String INTERVAL_HOURS = "Hours";
   private static final String INTERVAL_MINUTES = "Minutes";
+
   private static final String PERIODS_REQUEST_PARAMS_TEMPLATE =
     "servicePointId=%s&startDate=\\d{4}-\\d{2}-\\d{2}&endDate=\\d{4}-\\d{2}-\\d{2}&includeClosedDays=(true|false)";
 

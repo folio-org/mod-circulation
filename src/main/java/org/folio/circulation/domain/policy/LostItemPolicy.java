@@ -4,9 +4,9 @@ import io.vertx.core.json.JsonObject;
 
 import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
 
-public class LostItemPolicy extends CirculationPolicy {
+public class LostItemPolicy extends Policy {
 
-  private LostItemPolicy(String id){
+  private LostItemPolicy(String id) {
     this(id, null);
   }
 

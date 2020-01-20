@@ -3,11 +3,15 @@ package api.requests;
 import static junit.framework.TestCase.assertFalse;
 import static junit.framework.TestCase.assertTrue;
 
+import junitparams.JUnitParamsRunner;
+import junitparams.Parameters;
 import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.domain.RequestType;
 import org.folio.circulation.domain.RequestTypeItemStatusWhiteList;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 
+@RunWith(JUnitParamsRunner.class)
 public class RequestTypeItemStatusWhiteListTests {
 
   @Test
@@ -93,5 +97,17 @@ public class RequestTypeItemStatusWhiteListTests {
   @Test
   public void cannotCreateNoneRequestWhenItemStatusAwaitingDelivery() {
     assertFalse(RequestTypeItemStatusWhiteList.canCreateRequestForItem(ItemStatus.AWAITING_DELIVERY, RequestType.NONE));
+  }
+
+  @Test
+  @Parameters({
+    "",
+    "Hold",
+    "Recall",
+    "Page"
+  })
+  public void cannotCreateRequestWhenItemStatusDeclaredLostItem(String requestType) {
+    assertFalse(RequestTypeItemStatusWhiteList.canCreateRequestForItem(ItemStatus.DECLARED_LOST,
+      RequestType.from(requestType)));
   }
 }

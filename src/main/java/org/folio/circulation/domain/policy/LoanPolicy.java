@@ -37,7 +37,7 @@ import org.joda.time.DateTime;
 
 import io.vertx.core.json.JsonObject;
 
-public class LoanPolicy extends CirculationPolicy {
+public class LoanPolicy extends Policy {
   private static final String LOANS_POLICY_KEY = "loansPolicy";
   private static final String PERIOD_KEY = "period";
   private static final String RENEWAL_WOULD_NOT_CHANGE_THE_DUE_DATE = "renewal would not change the due date";

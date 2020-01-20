@@ -3,7 +3,7 @@ package org.folio.circulation.domain;
 import static java.util.Objects.isNull;
 
 import io.vertx.core.json.JsonObject;
-import org.folio.circulation.domain.policy.CirculationPolicy;
+import org.folio.circulation.domain.policy.Policy;
 import org.folio.circulation.domain.representations.ItemSummaryRepresentation;
 import org.folio.circulation.domain.representations.LoanProperties;
 import org.slf4j.Logger;
@@ -45,11 +45,8 @@ public class LoanRepresentation {
     }
 
     addPolicy(extendedRepresentation, loan.getLoanPolicy(), LOAN_POLICY);
-
     addPolicy(extendedRepresentation, loan.getOverdueFinePolicy(), OVERDUE_FINE_POLICY);
-
     addPolicy(extendedRepresentation, loan.getLostItemPolicy(), LOST_ITEM_POLICY);
-
     additionalAccountProperties(extendedRepresentation, loan.getAccounts());
 
     extendedRepresentation.remove(PATRON_GROUP_ID_AT_CHECKOUT);
@@ -57,8 +54,8 @@ public class LoanRepresentation {
     return extendedRepresentation;
   }
 
-  private void addPolicy(JsonObject extendedRepresentation,
-    CirculationPolicy policy, String policyName) {
+  private void addPolicy(JsonObject extendedRepresentation, Policy policy,
+    String policyName) {
     if (policy != null) {
       additionalPolicyProperties(extendedRepresentation, policy, policyName);
     } else {
@@ -100,7 +97,7 @@ public class LoanRepresentation {
   }
 
   private void additionalPolicyProperties(JsonObject representation,
-    CirculationPolicy policy, String policyName) {
+    Policy policy, String policyName) {
     JsonObject summary = representation.containsKey(policyName)
       ? representation.getJsonObject(policyName)
       : new JsonObject();

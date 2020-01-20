@@ -5,46 +5,36 @@ import io.vertx.core.json.JsonObject;
 import static org.folio.circulation.support.JsonPropertyFetcher.getBooleanProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
 
-public class OverdueFinePolicy extends CirculationPolicy {
+public class OverdueFinePolicy extends Policy {
   private Boolean ignoreGracePeriodForRecalls;
   private Boolean countClosed;
 
   private OverdueFinePolicy(String id) {
-    this(id, null);
+    this(id, null, null, null);
   }
 
-  private OverdueFinePolicy(String id, String name) {
+  private OverdueFinePolicy(
+    String id, String name, Boolean ignoreGracePeriodForRecalls, Boolean countClosed) {
     super(id, name);
+    this.ignoreGracePeriodForRecalls = ignoreGracePeriodForRecalls;
+    this.countClosed = countClosed;
   }
 
   public static OverdueFinePolicy from(JsonObject json) {
-    OverdueFinePolicy overdueFinePolicy = new OverdueFinePolicy(
+    return new OverdueFinePolicy(
       getProperty(json, "id"),
-      getProperty(json, "name")
+      getProperty(json, "name"),
+      getBooleanProperty(json, "gracePeriodRecall"),
+      getBooleanProperty(json, "countClosed")
     );
-
-    overdueFinePolicy.setCountClosed(
-      getBooleanProperty(json, "countClosed"));
-    overdueFinePolicy.setIgnoreGracePeriodForRecalls(
-      getBooleanProperty(json, "gracePeriodRecall"));
-
-    return overdueFinePolicy;
   }
 
   public Boolean getIgnoreGracePeriodForRecalls() {
     return ignoreGracePeriodForRecalls;
   }
 
-  public void setIgnoreGracePeriodForRecalls(Boolean ignoreGracePeriodForRecalls) {
-    this.ignoreGracePeriodForRecalls = ignoreGracePeriodForRecalls;
-  }
-
   public Boolean getCountClosed() {
     return countClosed;
-  }
-
-  public void setCountClosed(Boolean countClosed) {
-    this.countClosed = countClosed;
   }
 
   public static OverdueFinePolicy unknown(String id) {
