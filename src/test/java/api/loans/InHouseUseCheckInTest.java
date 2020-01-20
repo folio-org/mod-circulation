@@ -19,7 +19,7 @@ import api.support.builders.RequestBuilder;
 public class InHouseUseCheckInTest extends APITests {
 
   @Test
-  public void isInHouseUseWhenItemIsAvailableAndCheckInServingHomeLocation() {
+  public void isInHouseUseWhenCheckInServicePointIsPrimaryForHomeLocation() {
     final UUID checkInServicePointId = servicePointsFixture.cd1().getId();
 
     final IndividualResource homeLocation = locationsFixture.basedUponExampleLocation(
@@ -77,7 +77,7 @@ public class InHouseUseCheckInTest extends APITests {
   }
 
   @Test
-  public void isInHouseUseWhenCheckedInToServicePointServingHomeLocation() {
+  public void isInHouseUseWhenCheckInServicePointIsNonPrimaryForHomeLocation() {
     final UUID itemServicePoint = servicePointsFixture.cd1().getId();
     final UUID checkInServicePoint = servicePointsFixture.cd4().getId();
 
