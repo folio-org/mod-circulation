@@ -26,11 +26,7 @@
     <antlr4.version>4.7.2</antlr4.version>
     <drools.version>7.0.0.Final</drools.version>
     <rmb.version>24.0.0</rmb.version>
-<<<<<<< Updated upstream
-    <vertx.version>3.7.0</vertx.version>
-=======
-    <vertx.version>3.8.1</vertx.version>
->>>>>>> Stashed changes
+    <vertx.version>3.8.0</vertx.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
   </properties>
