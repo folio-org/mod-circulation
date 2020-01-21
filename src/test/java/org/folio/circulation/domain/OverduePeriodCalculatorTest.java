@@ -32,6 +32,7 @@ import static api.support.fixtures.OpeningPeriodsExamples.CASE_ALL_DAY_OPENINGS_
 import static api.support.fixtures.OpeningPeriodsExamples.CASE_ERROR_400_SERVICE_ID;
 import static api.support.fixtures.OpeningPeriodsExamples.CASE_ERROR_404_SERVICE_ID;
 import static api.support.fixtures.OpeningPeriodsExamples.CASE_ERROR_500_SERVICE_ID;
+import static api.support.fixtures.OpeningPeriodsExamples.CASE_MIXED_SERVICE_ID;
 import static api.support.fixtures.OpeningPeriodsExamples.CASE_NO_OPENING_DAYS_SERVICE_ID;
 import static api.support.fixtures.OpeningPeriodsExamples.CASE_NO_OPENING_HOURS_SERVICE_ID;
 import static api.support.fixtures.OpeningPeriodsExamples.CASE_TWO_OPENING_DAYS_SERVICE_ID;
@@ -90,6 +91,13 @@ public class OverduePeriodCalculatorTest {
       .thenAnswer(rq -> completedFuture(succeeded(
         new Response(200,
           getOpeningPeriodsById(CASE_ALL_DAY_OPENINGS_SERVICE_ID).toString(),
+          ContentType.APPLICATION_JSON.toString()))));
+
+    when(calendarClient.getManyWithRawQueryStringParameters(
+      matches(patternFor(CASE_MIXED_SERVICE_ID))))
+      .thenAnswer(rq -> completedFuture(succeeded(
+        new Response(200,
+          getOpeningPeriodsById(CASE_MIXED_SERVICE_ID).toString(),
           ContentType.APPLICATION_JSON.toString()))));
 
     when(calendarClient.getManyWithRawQueryStringParameters(
@@ -289,6 +297,25 @@ public class OverduePeriodCalculatorTest {
     Loan loan =  new LoanBuilder()
       .withDueDate(systemTime.minusMinutes(expectedOverdueMinutes))
       .withCheckoutServicePointId(UUID.fromString(CASE_ALL_DAY_OPENINGS_SERVICE_ID))
+      .asDomainObject()
+      .withLoanPolicy(loanPolicy)
+      .withOverdueFinePolicy(overdueFinePolicy);
+
+    CompletableFuture<Result<Integer>> future = countMinutes(loan, systemTime, clients);
+    int overdueMinutes = future.get().value();
+    assertEquals(expectedOverdueMinutes, overdueMinutes);
+  }
+
+  @Test
+  public void shouldNotCountClosedMixedCaseWithGracePeriod() throws ExecutionException, InterruptedException {
+    // (two all-days) + (10 hours of openings) - (1 day of grace period)
+    final int expectedOverdueMinutes = (24 * 2 + 10 - 24) * 60;
+    LoanPolicy loanPolicy = createLoanPolicy(1, INTERVAL_DAYS);
+    OverdueFinePolicy overdueFinePolicy = createOverdueFinePolicy(false, false);
+    DateTime systemTime = DateTime.now(DateTimeZone.UTC);
+    Loan loan =  new LoanBuilder()
+      .withDueDate(systemTime.minusMinutes(expectedOverdueMinutes))
+      .withCheckoutServicePointId(UUID.fromString(CASE_MIXED_SERVICE_ID))
       .asDomainObject()
       .withLoanPolicy(loanPolicy)
       .withOverdueFinePolicy(overdueFinePolicy);

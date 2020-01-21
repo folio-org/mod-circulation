@@ -18,12 +18,15 @@ public class OpeningPeriodsExamples {
   public static final String CASE_ALL_DAY_OPENINGS_SERVICE_ID = "22222222-2f09-4bc9-8924-3734882d44a3";
   public static final String CASE_NO_OPENING_HOURS_SERVICE_ID = "33333333-2f09-4bc9-8924-3734882d44a3";
   public static final String CASE_NO_OPENING_DAYS_SERVICE_ID = "44444444-2f09-4bc9-8924-3734882d44a3";
-  public static final String CASE_ERROR_400_SERVICE_ID = "55555555-2f09-4bc9-8924-3734882d44a3";
-  public static final String CASE_ERROR_404_SERVICE_ID = "66666666-2f09-4bc9-8924-3734882d44a3";
-  public static final String CASE_ERROR_500_SERVICE_ID = "77777777-2f09-4bc9-8924-3734882d44a3";
+  public static final String CASE_MIXED_SERVICE_ID = "55555555-2f09-4bc9-8924-3734882d44a3";
+
+  public static final String CASE_ERROR_400_SERVICE_ID = "66666666-2f09-4bc9-8924-3734882d44a3";
+  public static final String CASE_ERROR_404_SERVICE_ID = "77777777-2f09-4bc9-8924-3734882d44a3";
+  public static final String CASE_ERROR_500_SERVICE_ID = "88888888-2f09-4bc9-8924-3734882d44a3";
 
   public static final LocalDate MAY_FIRST = new LocalDate(2019, 5, 1);
   public static final LocalDate MAY_SECOND = new LocalDate(2019, 5, 2);
+  public static final LocalDate MAY_THIRD = new LocalDate(2019, 5, 3);
 
   public static final LocalTime OPENING_HOUR_1_START = new LocalTime(7, 0);
   public static final LocalTime OPENING_HOUR_1_END = new LocalTime(12, 0);
@@ -52,6 +55,20 @@ public class OpeningPeriodsExamples {
       new OpeningPeriod(MAY_SECOND, new OpeningDay(Collections.singletonList(
         new OpeningHour(ALL_DAY_OPENING_START, ALL_DAY_OPENING_END)),
         true, true, false)))));
+
+    fakeOpeningPeriods.put(CASE_MIXED_SERVICE_ID, new OpeningPeriodsBuilder(Arrays.asList(
+      new OpeningPeriod(MAY_FIRST, new OpeningDay(Arrays.asList(
+        new OpeningHour(OPENING_HOUR_1_START, OPENING_HOUR_1_END),
+        new OpeningHour(OPENING_HOUR_2_START, OPENING_HOUR_2_END)),
+        false, true, false)),
+      new OpeningPeriod(MAY_SECOND, new OpeningDay(Collections.singletonList(
+        new OpeningHour(ALL_DAY_OPENING_START, ALL_DAY_OPENING_END)),
+        true, true, false)),
+      new OpeningPeriod(MAY_THIRD, new OpeningDay(Arrays.asList(
+        // OpeningHours are ignored since allDay=true
+        new OpeningHour(OPENING_HOUR_1_START, OPENING_HOUR_1_END),
+        new OpeningHour(OPENING_HOUR_2_START, OPENING_HOUR_2_END)),
+        true, true, true)))));
 
     fakeOpeningPeriods.put(CASE_NO_OPENING_HOURS_SERVICE_ID, new OpeningPeriodsBuilder(Arrays.asList(
       new OpeningPeriod(MAY_FIRST, new OpeningDay(Collections.emptyList(), false, true, false)),
