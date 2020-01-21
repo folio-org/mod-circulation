@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
 public class NoticePolicyBuilder extends JsonBuilder implements Builder {
@@ -93,8 +92,8 @@ public class NoticePolicyBuilder extends JsonBuilder implements Builder {
     put(request, "name", this.name);
     put(request, "description", this.description);
     put(request, "active", this.active);
-    put(request, "loanNotices", new JsonArray(loanNotices));
-    put(request, "requestNotices", new JsonArray(requestNotices));
+    put(request, "loanNotices", loanNotices);
+    put(request, "requestNotices", requestNotices);
 
     return request;
   }
