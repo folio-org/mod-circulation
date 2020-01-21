@@ -58,7 +58,6 @@ public class LoanRepository {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
   private static final String ITEM_STATUS = "itemStatus";
   private static final String ITEM_ID = "itemId";
-  private static final Integer PAGE_LIMIT = 1000;
 
   public LoanRepository(Clients clients) {
     loansStorageClient = clients.loansStorage();
@@ -341,14 +340,14 @@ public class LoanRepository {
   }
 
   public CompletableFuture<Result<MultipleRecords<Loan>>> findOpenLoansByUserIdWithItem(
-    int loansLimit, LoanAndRelatedRecords loanAndRelatedRecords) {
+    PageLimit loansLimit, LoanAndRelatedRecords loanAndRelatedRecords) {
     String userId = loanAndRelatedRecords.getLoan().getUser().getId();
     final Result<CqlQuery> statusQuery = getStatusCQLQuery("Open");
     final Result<CqlQuery> userIdQuery = exactMatch("userId", userId);
     Result<CqlQuery> cqlQueryResult = statusQuery
       .combine(userIdQuery, CqlQuery::and);
 
-    return queryLoanStorage(loansLimit, cqlQueryResult)
+    return queryLoanStorage(cqlQueryResult, loansLimit)
       .thenComposeAsync(loans -> itemRepository.fetchItemsFor(loans, Loan::withItem));
   }
 }

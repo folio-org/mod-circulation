@@ -540,17 +540,17 @@ public class Text2DroolsTest {
       "c "+ FIRST_LIBRARY_ID + ": l policy-e r no-hold n basic-notice o overdue-e i lost-item",
       "b "+ FIRST_CAMPUS_ID + ": l policy-e r no-hold n basic-notice o overdue-f i lost-item")));
     assertThat(drools.overduePolicy(params("dvd",  "regular", "student",  "new"),
-      createLocation(SECOND_INSTITUTION_ID, SECOND_LIBRARY_ID, SECOND_CAMPUS_ID)),   is("overdue-a"));
+      createLocation(SECOND_INSTITUTION_ID, SECOND_LIBRARY_ID, SECOND_CAMPUS_ID)).getPolicyId(),   is("overdue-a"));
     assertThat(drools.overduePolicy(params("book", "regular", "student",  "new"),
-      createLocation(SECOND_INSTITUTION_ID, SECOND_LIBRARY_ID, SECOND_CAMPUS_ID)),   is("overdue-b"));
+      createLocation(SECOND_INSTITUTION_ID, SECOND_LIBRARY_ID, SECOND_CAMPUS_ID)).getPolicyId(),   is("overdue-b"));
     assertThat(drools.overduePolicy(params("book", "regular", "student",  "shelf"),
-      createLocation(SECOND_INSTITUTION_ID, SECOND_LIBRARY_ID, SECOND_CAMPUS_ID)), is("overdue-b"));
+      createLocation(SECOND_INSTITUTION_ID, SECOND_LIBRARY_ID, SECOND_CAMPUS_ID)).getPolicyId(), is("overdue-b"));
     assertThat(drools.overduePolicy(params("book", "regular", "student",  "old"),
-      createLocation(FIRST_INSTITUTION_ID, SECOND_LIBRARY_ID, SECOND_CAMPUS_ID)),   is("overdue-c"));
+      createLocation(FIRST_INSTITUTION_ID, SECOND_LIBRARY_ID, SECOND_CAMPUS_ID)).getPolicyId(),   is("overdue-c"));
     assertThat(drools.overduePolicy(params("book", "regular", "student",  "old"),
-      createLocation(FIRST_INSTITUTION_ID, FIRST_LIBRARY_ID, SECOND_CAMPUS_ID)),   is("overdue-e"));
+      createLocation(FIRST_INSTITUTION_ID, FIRST_LIBRARY_ID, SECOND_CAMPUS_ID)).getPolicyId(),   is("overdue-e"));
    assertThat(drools.overduePolicy(params("book", "regular", "student",  "old"),
-      createLocation(FIRST_INSTITUTION_ID, SECOND_LIBRARY_ID, FIRST_CAMPUS_ID)),   is("overdue-f"));
+      createLocation(FIRST_INSTITUTION_ID, SECOND_LIBRARY_ID, FIRST_CAMPUS_ID)).getPolicyId(),   is("overdue-f"));
   }
 
   @Test
@@ -565,17 +565,17 @@ public class Text2DroolsTest {
       "c "+ FIRST_LIBRARY_ID + ": l policy-e r no-hold n basic-notice o overdue-e i lost-item-e",
       "b "+ FIRST_CAMPUS_ID + ": l policy-e r no-hold n basic-notice o overdue-f i lost-item-f")));
     assertThat(drools.lostItemPolicy(params("dvd",  "regular", "student",  "new"),
-      createLocation(SECOND_INSTITUTION_ID, SECOND_LIBRARY_ID, SECOND_CAMPUS_ID)),   is("lost-item-a"));
+      createLocation(SECOND_INSTITUTION_ID, SECOND_LIBRARY_ID, SECOND_CAMPUS_ID)).getPolicyId(),   is("lost-item-a"));
     assertThat(drools.lostItemPolicy(params("book", "regular", "student",  "new"),
-      createLocation(SECOND_INSTITUTION_ID, SECOND_LIBRARY_ID, SECOND_CAMPUS_ID)),   is("lost-item-b"));
+      createLocation(SECOND_INSTITUTION_ID, SECOND_LIBRARY_ID, SECOND_CAMPUS_ID)).getPolicyId(),   is("lost-item-b"));
     assertThat(drools.lostItemPolicy(params("book", "regular", "student",  "shelf"),
-      createLocation(SECOND_INSTITUTION_ID, SECOND_LIBRARY_ID, SECOND_CAMPUS_ID)), is("lost-item-b"));
+      createLocation(SECOND_INSTITUTION_ID, SECOND_LIBRARY_ID, SECOND_CAMPUS_ID)).getPolicyId(), is("lost-item-b"));
     assertThat(drools.lostItemPolicy(params("book", "regular", "student",  "old"),
-      createLocation(FIRST_INSTITUTION_ID, SECOND_LIBRARY_ID, SECOND_CAMPUS_ID)),   is("lost-item-c"));
+      createLocation(FIRST_INSTITUTION_ID, SECOND_LIBRARY_ID, SECOND_CAMPUS_ID)).getPolicyId(),   is("lost-item-c"));
     assertThat(drools.lostItemPolicy(params("book", "regular", "student",  "old"),
-      createLocation(FIRST_INSTITUTION_ID, FIRST_LIBRARY_ID, SECOND_CAMPUS_ID)),   is("lost-item-e"));
+      createLocation(FIRST_INSTITUTION_ID, FIRST_LIBRARY_ID, SECOND_CAMPUS_ID)).getPolicyId(),   is("lost-item-e"));
     assertThat(drools.lostItemPolicy(params("book", "regular", "student",  "old"),
-      createLocation(FIRST_INSTITUTION_ID, SECOND_LIBRARY_ID, FIRST_CAMPUS_ID)),   is("lost-item-f"));
+      createLocation(FIRST_INSTITUTION_ID, SECOND_LIBRARY_ID, FIRST_CAMPUS_ID)).getPolicyId(),   is("lost-item-f"));
   }
 
   @Test

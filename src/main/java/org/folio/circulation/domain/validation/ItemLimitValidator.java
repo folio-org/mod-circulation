@@ -3,6 +3,7 @@ package org.folio.circulation.domain.validation;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.support.Result.ofAsync;
 import static org.folio.circulation.support.Result.succeeded;
+import static org.folio.circulation.support.http.client.PageLimit.limit;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
@@ -15,11 +16,12 @@ import org.folio.circulation.domain.LoanRepository;
 import org.folio.circulation.rules.AppliedRuleConditions;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.ValidationErrorFailure;
+import org.folio.circulation.support.http.client.PageLimit;
 
 public class ItemLimitValidator {
   private final Function<String, ValidationErrorFailure> itemLimitErrorFunction;
   private final LoanRepository loanRepository;
-  private final static int LOANS_LIMIT = 10000;
+  private static final PageLimit LOANS_PAGE_LIMIT = limit(10000);
 
   public ItemLimitValidator(Function<String, ValidationErrorFailure> itemLimitErrorFunction,
     LoanRepository loanRepository) {
@@ -62,7 +64,7 @@ public class ItemLimitValidator {
     String loanTypeId = item.determineLoanTypeForItem();
     Integer itemLimit = records.getLoan().getLoanPolicy().getItemLimit();
 
-    return loanRepository.findOpenLoansByUserIdWithItem(LOANS_LIMIT, records)
+    return loanRepository.findOpenLoansByUserIdWithItem(LOANS_PAGE_LIMIT, records)
       .thenApply(r -> r.map(loans -> loans.getRecords().stream()
         .filter(loan -> isMaterialTypeMatchInRetrievedLoan(materialTypeId, loan))
         .filter(loan -> isLoanTypeMatchInRetrievedLoan(loanTypeId, loan))

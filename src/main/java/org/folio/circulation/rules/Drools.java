@@ -75,7 +75,7 @@ public class Drools {
    * Calculate the loan policy for itemTypeName and loanTypeName.
    * @param params request parameters
    * @param location - location with institution, library and campus
-   * @return PolicyId object with the name of the loan policy and list of rule conditions
+   * @return CirculationRuleMatch object with the name of the loan policy and rule conditions
    */
   public CirculationRuleMatch loanPolicy(MultiMap params, Location location) {
     KieSession kieSession = createSession(params, location);
@@ -121,7 +121,7 @@ public class Drools {
    * Calculate the request policy for itemTypeName and loanType.
    * @param params request params
    * @param location - location with institution, library and campus
-   * @return PolicyId object with the name of the loan policy and list of rule conditions
+   * @return CirculationRuleMatch object with the name of the loan policy and rule conditions
    */
   public CirculationRuleMatch requestPolicy(MultiMap params, Location location) {
     KieSession kieSession = createSession(params, location);
@@ -161,7 +161,7 @@ public class Drools {
    * Calculate the notice policy for itemTypeName and requestTypeName.
    * @param params request params
    * @param location - location with institution, library and campus
-   * @return PolicyId object with the name of the loan policy and list of rule conditions
+   * @return CirculationRuleMatch object with the name of the loan policy and rule conditions
    */
   public CirculationRuleMatch noticePolicy(MultiMap params, Location location) {
     KieSession kieSession = createSession(params, location);
@@ -201,13 +201,14 @@ public class Drools {
    * Calculate the overdue fine policy for itemTypeName and requestTypeName.
    * @param params request params
    * @param location - location with institution, library and campus
-   * @return the name of the overdue fine policy
+   * @return CirculationRuleMatch object with the name of the loan policy and rule conditions
    */
-  public String overduePolicy(MultiMap params, Location location) {
+  public CirculationRuleMatch overduePolicy(MultiMap params, Location location) {
     KieSession kieSession = createSession(params, location);
     kieSession.fireAllRules();
     kieSession.dispose();
-    return match.overduePolicyId;
+    return new CirculationRuleMatch(match.overduePolicyId,
+      new AppliedRuleConditions(false, false, false));
   }
 
   /**
@@ -239,13 +240,14 @@ public class Drools {
    * Calculate the lost item fee policy for itemTypeName and requestTypeName.
    * @param params request params
    * @param location - location with institution, library and campus
-   * @return the name of the lost item fee fine policy
+   * @return CirculationRuleMatch object with the name of the loan policy and rule conditions
    */
-  public String lostItemPolicy(MultiMap params, Location location) {
+  public CirculationRuleMatch lostItemPolicy(MultiMap params, Location location) {
     KieSession kieSession = createSession(params, location);
     kieSession.fireAllRules();
     kieSession.dispose();
-    return match.lostItemPolicyId;
+    return new CirculationRuleMatch(match.lostItemPolicyId,
+      new AppliedRuleConditions(false, false, false));
   }
 
   /**

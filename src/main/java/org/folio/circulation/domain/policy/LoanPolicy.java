@@ -90,6 +90,7 @@ public class LoanPolicy extends Policy {
     FixedDueDateSchedules alternateRenewalFixedDueDateSchedules,
     AppliedRuleConditions ruleConditionsEntity) {
 
+    super(getProperty(representation, "id"), getProperty(representation, "name"));
     this.representation = representation;
     this.fixedDueDateSchedules = fixedDueDateSchedules;
     this.alternateRenewalFixedDueDateSchedules = alternateRenewalFixedDueDateSchedules;
