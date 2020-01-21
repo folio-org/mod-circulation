@@ -1,10 +1,9 @@
 package org.folio.circulation.support.http.server;
 
-import io.vertx.core.buffer.Buffer;
-import io.vertx.core.http.HttpClientResponse;
-import io.vertx.core.http.HttpServerResponse;
-import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.support.http.client.Response;
+
+import io.vertx.core.buffer.Buffer;
+import io.vertx.core.http.HttpServerResponse;
 
 public class ForwardResponse {
   private static final String CONTENT_TYPE_HEADER = "content-type";
@@ -13,27 +12,7 @@ public class ForwardResponse {
   private ForwardResponse() { }
 
   public static void forward(HttpServerResponse forwardTo,
-                             HttpClientResponse forwardFrom,
-                             String responseBody) {
-
-    forwardTo.setStatusCode(forwardFrom.statusCode());
-
-    if(StringUtils.isNotBlank(responseBody)) {
-      Buffer buffer = Buffer.buffer(responseBody, "UTF-8");
-
-      forwardTo.putHeader(CONTENT_TYPE_HEADER, forwardFrom.getHeader(CONTENT_TYPE_HEADER));
-      forwardTo.putHeader(CONTENT_LENGTH_HEADER, Integer.toString(buffer.length()));
-
-      forwardTo.write(buffer);
-      forwardTo.end();
-    }
-    else {
-      forwardTo.end();
-    }
-  }
-
-  public static void forward(HttpServerResponse forwardTo,
-                             Response forwardFrom) {
+    Response forwardFrom) {
 
     forwardTo.setStatusCode(forwardFrom.getStatusCode());
 
@@ -50,5 +29,4 @@ public class ForwardResponse {
       forwardTo.end();
     }
   }
-
 }
