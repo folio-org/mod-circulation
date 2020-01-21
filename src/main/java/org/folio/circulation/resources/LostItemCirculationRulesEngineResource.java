@@ -4,6 +4,7 @@ import io.vertx.core.MultiMap;
 import io.vertx.core.http.HttpClient;
 import io.vertx.core.json.JsonArray;
 import org.folio.circulation.domain.Location;
+import org.folio.circulation.rules.CirculationRuleMatch;
 import org.folio.circulation.rules.Drools;
 import org.folio.circulation.support.Result;
 
@@ -18,7 +19,7 @@ public class LostItemCirculationRulesEngineResource extends AbstractCirculationR
     }
 
     @Override
-    protected CompletableFuture<Result<String>> getPolicyId(MultiMap params, Drools drools, Location location) {
+    protected CompletableFuture<Result<CirculationRuleMatch>> getPolicyIdAndRuleMatch(MultiMap params, Drools drools, Location location) {
         return CompletableFuture.completedFuture(Result.succeeded(drools.lostItemPolicy(params, location)));
     }
 

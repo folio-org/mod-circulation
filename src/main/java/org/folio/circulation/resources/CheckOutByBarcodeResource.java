@@ -35,6 +35,7 @@ import org.folio.circulation.domain.representations.LoanProperties;
 import org.folio.circulation.domain.validation.AlreadyCheckedOutValidator;
 import org.folio.circulation.domain.validation.ExistingOpenLoanValidator;
 import org.folio.circulation.domain.validation.InactiveUserValidator;
+import org.folio.circulation.domain.validation.ItemLimitValidator;
 import org.folio.circulation.domain.validation.ItemNotFoundValidator;
 import org.folio.circulation.domain.validation.ItemStatusValidator;
 import org.folio.circulation.domain.validation.ProxyRelationshipValidator;
@@ -136,6 +137,9 @@ public class CheckOutByBarcodeResource extends Resource {
     final ExistingOpenLoanValidator openLoanValidator = new ExistingOpenLoanValidator(
       loanRepository, message -> singleValidationError(message, ITEM_BARCODE, itemBarcode));
 
+    final ItemLimitValidator itemLimitValidator = new ItemLimitValidator(
+      message -> singleValidationError(message, ITEM_BARCODE, itemBarcode), loanRepository);
+
     final UpdateItem updateItem = new UpdateItem(clients);
     final UpdateRequestQueue requestQueueUpdate = UpdateRequestQueue.using(clients);
 
@@ -161,6 +165,7 @@ public class CheckOutByBarcodeResource extends Resource {
       .thenCompose(r -> r.combineAfter(configurationRepository::findTimeZoneConfiguration,
         LoanAndRelatedRecords::withTimeZone))
       .thenComposeAsync(r -> r.after(loanPolicyRepository::lookupLoanPolicy))
+      .thenComposeAsync(r -> r.after(itemLimitValidator::refuseWhenItemLimitIsReached))
       .thenComposeAsync(r -> r.after(overdueFinePolicyRepository::lookupOverdueFinePolicy))
       .thenComposeAsync(r -> r.after(lostItemPolicyRepository::lookupLostItemPolicy))
       .thenComposeAsync(r -> r.after(relatedRecords -> checkOutStrategy.checkOut(relatedRecords, request, clients)))
