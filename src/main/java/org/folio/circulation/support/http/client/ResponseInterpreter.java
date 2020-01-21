@@ -68,6 +68,10 @@ public class ResponseInterpreter<T> {
     }
   }
 
+  public Result<T> flatMap(Result<Response> response) {
+    return response.next(this::apply);
+  }
+
   private static <R> Result<R> defaultUnexpectedResponseMapper(Response response) {
     final String diagnosticError = String.format(
       "HTTP request to \"%s\" failed, status code: %s, response: \"%s\"",

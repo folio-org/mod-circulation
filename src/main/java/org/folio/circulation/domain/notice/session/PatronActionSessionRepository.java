@@ -31,6 +31,7 @@ import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.http.client.CqlQuery;
+import org.folio.circulation.support.http.client.PageLimit;
 import org.folio.circulation.support.http.client.ResponseInterpreter;
 
 import io.vertx.core.json.JsonObject;
@@ -79,7 +80,7 @@ public class PatronActionSessionRepository {
       .flatMapOn(201, flatMapUsingJson(this::mapFromJson));
 
     return patronActionSessionsStorageClient.post(representation)
-      .thenApply(responseInterpreter::apply);
+      .thenApply(responseInterpreter::flatMap);
   }
 
   public CompletableFuture<Result<Void>> delete(PatronSessionRecord record) {
@@ -114,7 +115,7 @@ public class PatronActionSessionRepository {
   }
 
   public CompletableFuture<Result<MultipleRecords<PatronSessionRecord>>> findPatronActionSessions(
-    String patronId, PatronActionType actionType, int limit) {
+    String patronId, PatronActionType actionType, PageLimit pageLimit) {
 
     Result<CqlQuery> sessionsQuery = exactMatch(PATRON_ID, patronId);
 
@@ -124,7 +125,7 @@ public class PatronActionSessionRepository {
     }
 
     return sessionsQuery
-      .after(query -> findBy(query, limit))
+      .after(query -> findBy(query, pageLimit))
       .thenCompose(r -> r.combineAfter(
         () -> userRepository.getUser(patronId), this::setUserForLoans));
   }
@@ -140,8 +141,10 @@ public class PatronActionSessionRepository {
       sessionRecord.withLoan(sessionRecord.getLoan().withUser(user)));
   }
 
-  private CompletableFuture<Result<MultipleRecords<PatronSessionRecord>>> findBy(CqlQuery query, int limit) {
-    return patronActionSessionsStorageClient.getMany(query, limit)
+  private CompletableFuture<Result<MultipleRecords<PatronSessionRecord>>> findBy(
+    CqlQuery query, PageLimit pageLimit) {
+
+    return patronActionSessionsStorageClient.getMany(query, pageLimit)
       .thenApply(r -> r.next(response ->
         MultipleRecords.from(response, identity(), "patronActionSessions")))
       .thenApply(r -> r.next(records -> records.flatMapRecords(this::mapFromJson)))

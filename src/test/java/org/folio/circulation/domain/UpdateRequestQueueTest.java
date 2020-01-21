@@ -1,6 +1,7 @@
 package org.folio.circulation.domain;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
+import static org.folio.circulation.support.Result.of;
 import static org.folio.circulation.support.Result.succeeded;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
@@ -190,7 +191,7 @@ public class UpdateRequestQueueTest {
 
     when(clients.requestsBatchStorage()).thenReturn(requestBatchClient);
     when(requestBatchClient.post(any(JsonObject.class)))
-      .thenAnswer(rq -> completedFuture(serverErrorBatchResponse));
+      .thenAnswer(rq -> completedFuture(of(() -> serverErrorBatchResponse)));
 
     return clients;
   }

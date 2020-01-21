@@ -140,7 +140,7 @@ public class PatronNoticeService {
       mapToRecordInterpreter(null, 200, 201);
 
     return patronNoticeClient.post(body)
-      .thenApply(responseInterpreter::apply);
+      .thenApply(responseInterpreter::flatMap);
   }
 
   private static class NoticeEventGroupDefinition {

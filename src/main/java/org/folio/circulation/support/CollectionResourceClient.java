@@ -2,19 +2,17 @@ package org.folio.circulation.support;
 
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static org.apache.http.entity.ContentType.TEXT_PLAIN;
+import static org.folio.circulation.support.http.client.Offset.noOffset;
 
 import java.lang.invoke.MethodHandles;
 import java.net.URL;
-import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
-import java.util.function.Predicate;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.folio.circulation.support.http.client.CqlQuery;
+import org.folio.circulation.support.http.client.PageLimit;
+import org.folio.circulation.support.http.client.Offset;
 import org.folio.circulation.support.http.client.OkapiHttpClient;
 import org.folio.circulation.support.http.client.Response;
 import org.slf4j.Logger;
@@ -35,13 +33,8 @@ public class CollectionResourceClient {
     this.collectionRoot = collectionRoot;
   }
 
-  public CompletableFuture<Response> post(JsonObject resourceRepresentation) {
-    CompletableFuture<Response> future = new CompletableFuture<>();
-
-    client.post(collectionRoot, resourceRepresentation,
-      responseConversationHandler(future::complete));
-
-    return future;
+  public CompletableFuture<Result<Response>> post(JsonObject representation) {
+    return client.toWebClient().post(collectionRoot, representation);
   }
 
   public CompletableFuture<Response> put(JsonObject resourceRepresentation) {
@@ -53,12 +46,10 @@ public class CollectionResourceClient {
     return future;
   }
 
-  public CompletableFuture<Response> put(String id,
-    JsonObject resourceRepresentation) {
-
+  public CompletableFuture<Response> put(String id, JsonObject representation) {
     CompletableFuture<Response> future = new CompletableFuture<>();
 
-    client.put(individualRecordUrl(id), resourceRepresentation,
+    client.put(individualRecordUrl(id), representation,
       responseConversationHandler(future::complete));
 
     return future;
@@ -72,13 +63,8 @@ public class CollectionResourceClient {
     return internalDelete(collectionRoot.toString());
   }
 
-
   public CompletableFuture<Result<Response>> deleteMany(CqlQuery cqlQuery) {
-    return cqlQuery.encode().after(encodedQuery -> {
-      String url = getPagedCollectionUrl(encodedQuery, null, 0);
-
-      return internalDelete(url);
-    });
+      return client.toWebClient().delete(collectionRoot, cqlQuery);
   }
 
   private CompletableFuture<Result<Response>> internalDelete(String url) {
@@ -112,71 +98,20 @@ public class CollectionResourceClient {
     return client.toWebClient().get(url);
   }
 
-  public CompletableFuture<Result<Response>> getMany(
-    CqlQuery cqlQuery, Integer pageLimit) {
+  public CompletableFuture<Result<Response>> getMany(CqlQuery cqlQuery,
+    PageLimit pageLimit) {
 
-    return getMany(cqlQuery, pageLimit, 0);
+    return getMany(cqlQuery, pageLimit, noOffset());
   }
 
-  public CompletableFuture<Result<Response>> getMany(
-    CqlQuery cqlQuery, Integer pageLimit, Integer pageOffset) {
+  public CompletableFuture<Result<Response>> getMany(CqlQuery cqlQuery,
+                                                     PageLimit pageLimit, Offset offset) {
 
-    return cqlQuery.encode()
-      .map(encodedQuery -> getPagedCollectionUrl(encodedQuery, pageLimit, pageOffset))
-      .after(url -> client.toWebClient().get(url));
-  }
-
-  private String getPagedCollectionUrl(String encodedQuery, Integer pageLimit,
-    Integer pageOffset) {
-
-    return collectionRoot + createQueryString(encodedQuery, pageLimit, pageOffset);
+    return client.toWebClient().get(collectionRoot, cqlQuery, pageLimit, offset);
   }
 
   private static boolean isProvided(String query) {
     return isNotBlank(query);
-  }
-
-  /**
-   * Combine the optional parameters to a query string.
-   * <p>
-   * createQueryString("field%3Da", 5, 10) = "?query=field%3Da&limit=5&offset=10"
-   * <p>
-   * createQueryString(null, 5, null) = "?limit=5"
-   * <p>
-   * createQueryString(null, null, null) = ""
-   *
-   * @param urlEncodedCqlQuery  the URL encoded String for the query parameter, may be null or empty for none
-   * @param pageLimit  the value for the limit parameter, may be null for none
-   * @param pageOffset  the value for the offset parameter, may be null for none
-   * @return the query string, may be empty
-   */
-  static String createQueryString(String urlEncodedCqlQuery, Integer pageLimit,
-    Integer pageOffset) {
-
-    String queryParameter = prefixOnCondition(
-      "query=", urlEncodedCqlQuery, CollectionResourceClient::isProvided);
-
-    String limitParameter = prefixOnCondition(
-      "limit=", pageLimit, Objects::nonNull);
-
-    String offsetParameter = prefixOnCondition(
-      "offset=", pageOffset, Objects::nonNull);
-
-    final String queryStringParameters
-      = Stream.of(queryParameter, limitParameter, offsetParameter)
-      .filter(StringUtils::isNotBlank)
-      .collect(Collectors.joining("&"));
-
-    return prefixOnCondition(
-      "?", queryStringParameters, StringUtils::isNotBlank);
-  }
-
-  private static <T> String prefixOnCondition(String prefix, T value,
-    Predicate<T> condition) {
-
-    return condition.test(value)
-      ? prefix + value
-      : "";
   }
 
   //TODO: Replace with Consumer<Result<Response>>
