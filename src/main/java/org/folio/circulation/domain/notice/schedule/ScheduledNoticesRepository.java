@@ -48,7 +48,7 @@ public class ScheduledNoticesRepository {
       .flatMapOn(201, flatMapUsingJson(JsonScheduledNoticeMapper::mapFromJson));
 
     return scheduledNoticesStorageClient.post(representation)
-      .thenApply(interpreter::apply);
+      .thenApply(interpreter::flatMap);
   }
 
   public CompletableFuture<Result<MultipleRecords<ScheduledNotice>>> findNotices(

@@ -49,32 +49,6 @@ public class OkapiHttpClient {
       tenantId, token, userId, requestId);
   }
 
-  public void post(URL url, Object body,
-    Handler<HttpClientResponse> responseHandler) {
-
-    HttpClientRequest request = client.postAbs(url.toString(), responseHandler);
-
-    addJsonContentTypeHeader(request);
-
-    addStandardHeaders(request);
-
-    request.setTimeout(5000);
-
-    request.exceptionHandler(this.exceptionHandler::accept);
-
-    if(body != null) {
-      //TODO: Catch encoding exceptions here
-      String encodedBody = Json.encodePrettily(body);
-
-      log.info("POST {}, Request: {}", url, encodedBody);
-
-      request.end(encodedBody);
-    }
-    else {
-      request.end();
-    }
-  }
-
   public void put(URL url, Object body,
     Handler<HttpClientResponse> responseHandler) {
 

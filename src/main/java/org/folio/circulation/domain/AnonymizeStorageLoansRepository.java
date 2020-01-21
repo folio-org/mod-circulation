@@ -28,12 +28,13 @@ public class AnonymizeStorageLoansRepository {
   }
 
   private static ResponseInterpreter<LoanAnonymizationRecords>
-  createStorageLoanResponseInterpreter(LoanAnonymizationRecords records) {
+    createStorageLoanResponseInterpreter(LoanAnonymizationRecords records) {
 
     Function<Response, Result<LoanAnonymizationRecords>> mapper = mapUsingJson(
         response -> records.withAnonymizedLoans(
             toList(response.getJsonArray("anonymizedLoans")))
     );
+
     return new ResponseInterpreter<LoanAnonymizationRecords>().flatMapOn(200, mapper)
       .otherwise(forwardOnFailure());
   }
@@ -51,7 +52,6 @@ public class AnonymizeStorageLoansRepository {
       return completedFuture(succeeded(records));
     }
     return loanStorageClient.post(createRequestPayload(records))
-      .thenApply(createStorageLoanResponseInterpreter(records)::apply);
+      .thenApply(createStorageLoanResponseInterpreter(records)::flatMap);
   }
-
 }
