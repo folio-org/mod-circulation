@@ -80,7 +80,7 @@ public class PatronActionSessionRepository {
       .flatMapOn(201, flatMapUsingJson(this::mapFromJson));
 
     return patronActionSessionsStorageClient.post(representation)
-      .thenApply(responseInterpreter::apply);
+      .thenApply(responseInterpreter::flatMap);
   }
 
   public CompletableFuture<Result<Void>> delete(PatronSessionRecord record) {

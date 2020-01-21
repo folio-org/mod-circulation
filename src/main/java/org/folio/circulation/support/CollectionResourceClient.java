@@ -33,13 +33,8 @@ public class CollectionResourceClient {
     this.collectionRoot = collectionRoot;
   }
 
-  public CompletableFuture<Response> post(JsonObject resourceRepresentation) {
-    CompletableFuture<Response> future = new CompletableFuture<>();
-
-    client.post(collectionRoot, resourceRepresentation,
-      responseConversationHandler(future::complete));
-
-    return future;
+  public CompletableFuture<Result<Response>> post(JsonObject representation) {
+    return client.toWebClient().post(collectionRoot, representation);
   }
 
   public CompletableFuture<Response> put(JsonObject resourceRepresentation) {
@@ -51,12 +46,10 @@ public class CollectionResourceClient {
     return future;
   }
 
-  public CompletableFuture<Response> put(String id,
-    JsonObject resourceRepresentation) {
-
+  public CompletableFuture<Response> put(String id, JsonObject representation) {
     CompletableFuture<Response> future = new CompletableFuture<>();
 
-    client.put(individualRecordUrl(id), resourceRepresentation,
+    client.put(individualRecordUrl(id), representation,
       responseConversationHandler(future::complete));
 
     return future;
