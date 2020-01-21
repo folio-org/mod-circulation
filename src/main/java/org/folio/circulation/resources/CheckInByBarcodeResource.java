@@ -98,7 +98,9 @@ public class CheckInByBarcodeResource extends Resource {
         processAdapter::checkInLoan, CheckInProcessRecords::withLoan))
       .thenComposeAsync(loanCheckInResult -> loanCheckInResult.combineAfter(
         processAdapter::getRequestQueue, CheckInProcessRecords::withRequestQueue))
-      .thenComposeAsync(findRequestQueueResult -> findRequestQueueResult.combineAfter(
+      .thenApply(findRequestQueueResult -> findRequestQueueResult.map(
+        processAdapter::setInHouseUse))
+      .thenComposeAsync(inHouseUseResult -> inHouseUseResult.combineAfter(
         processAdapter::updateRequestQueue, CheckInProcessRecords::withRequestQueue))
       .thenApply(r -> r.map(records -> records.withLoggedInUserId(context.getUserId())))
       .thenComposeAsync(updateRequestQueueResult -> updateRequestQueueResult.combineAfter(
