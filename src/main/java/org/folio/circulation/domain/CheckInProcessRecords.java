@@ -26,9 +26,10 @@ public class CheckInProcessRecords {
   private final Request highestPriorityFulfillableRequest;
   private final String loggedInUserId;
   private final DateTime checkInProcessedDateTime;
+  private final boolean inHouseUse;
 
   public CheckInProcessRecords(CheckInByBarcodeRequest checkInRequest) {
-    this(checkInRequest, null, null, null, null, null, null);
+    this(checkInRequest, null, null, null, null, null, null, false);
   }
 
   private CheckInProcessRecords(
@@ -38,7 +39,8 @@ public class CheckInProcessRecords {
     RequestQueue requestQueue,
     ServicePoint checkInServicePoint,
     Request highestPriorityFulfillableRequest,
-    String loggedInUserId) {
+    String loggedInUserId,
+    boolean inHouseUse) {
     this.checkInRequest = checkInRequest;
     this.item = item;
     this.loan = loan;
@@ -47,6 +49,7 @@ public class CheckInProcessRecords {
     this.highestPriorityFulfillableRequest = highestPriorityFulfillableRequest;
     this.loggedInUserId = loggedInUserId;
     checkInProcessedDateTime = ClockManager.getClockManager().getDateTime();
+    this.inHouseUse = inHouseUse;
   }
 
   public CheckInProcessRecords withItem(Item item) {
@@ -64,7 +67,8 @@ public class CheckInProcessRecords {
       this.requestQueue,
       this.checkInServicePoint,
       this.highestPriorityFulfillableRequest,
-      this.loggedInUserId);
+      this.loggedInUserId,
+      this.inHouseUse);
   }
 
   public CheckInProcessRecords withLoan(Loan loan) {
@@ -75,7 +79,8 @@ public class CheckInProcessRecords {
       this.requestQueue,
       this.checkInServicePoint,
       this.highestPriorityFulfillableRequest,
-      loggedInUserId);
+      loggedInUserId,
+      this.inHouseUse);
   }
 
   public CheckInProcessRecords withRequestQueue(RequestQueue requestQueue) {
@@ -90,7 +95,8 @@ public class CheckInProcessRecords {
       requestQueue,
       this.checkInServicePoint,
       firstRequest,
-      loggedInUserId);
+      loggedInUserId,
+      this.inHouseUse);
   }
 
   public CheckInProcessRecords withCheckInServicePoint(ServicePoint checkInServicePoint) {
@@ -101,7 +107,8 @@ public class CheckInProcessRecords {
       this.requestQueue,
       checkInServicePoint,
       this.highestPriorityFulfillableRequest,
-      loggedInUserId);
+      loggedInUserId,
+      this.inHouseUse);
   }
 
   public CheckInProcessRecords withHighestPriorityFulfillableRequest(Request request) {
@@ -112,18 +119,36 @@ public class CheckInProcessRecords {
       this.requestQueue,
       this.checkInServicePoint,
       request,
-      loggedInUserId);
+      loggedInUserId,
+      this.inHouseUse);
   }
 
   public CheckInProcessRecords withLoggedInUserId(String userId) {
     return new CheckInProcessRecords(
-        this.checkInRequest,
-        this.item,
-        this.loan,
-        this.requestQueue,
-        this.checkInServicePoint,
-        this.highestPriorityFulfillableRequest,
-        userId);
+      this.checkInRequest,
+      this.item,
+      this.loan,
+      this.requestQueue,
+      this.checkInServicePoint,
+      this.highestPriorityFulfillableRequest,
+      userId,
+      this.inHouseUse);
+  }
+
+  public CheckInProcessRecords withInHouseUse(boolean inHouseUse) {
+    return new CheckInProcessRecords(
+      this.checkInRequest,
+      this.item,
+      this.loan,
+      this.requestQueue,
+      this.checkInServicePoint,
+      this.highestPriorityFulfillableRequest,
+      this.loggedInUserId,
+      inHouseUse);
+  }
+
+  public boolean isInHouseUse() {
+    return inHouseUse;
   }
 
   public String getCheckInRequestBarcode() {
