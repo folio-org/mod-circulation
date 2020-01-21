@@ -69,7 +69,7 @@ public class CollectionResourceClient {
   public CompletableFuture<Result<Response>> getManyWithRawQueryStringParameters(
     String rawQueryString) {
 
-    String url = isProvided(rawQueryString)
+    String url = isNotBlank(rawQueryString)
       ? String.format("%s?%s", collectionRoot, rawQueryString)
       : collectionRoot.toString();
 
@@ -86,10 +86,6 @@ public class CollectionResourceClient {
     PageLimit pageLimit, Offset offset) {
 
     return client.get(collectionRoot, cqlQuery, pageLimit, offset);
-  }
-
-  private static boolean isProvided(String query) {
-    return isNotBlank(query);
   }
 
   private String individualRecordUrl(String id) {
