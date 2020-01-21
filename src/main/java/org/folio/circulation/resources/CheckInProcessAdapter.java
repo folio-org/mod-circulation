@@ -206,4 +206,12 @@ class CheckInProcessAdapter {
     }
     return succeeded(records);
   }
+
+  CheckInProcessRecords setInHouseUse(CheckInProcessRecords checkInProcessRecords) {
+    return checkInProcessRecords
+      .withInHouseUse(loanCheckInService.isInHouseUse(
+        checkInProcessRecords.getItem(),
+        checkInProcessRecords.getRequestQueue(),
+        checkInProcessRecords.getCheckInRequest()));
+  }
 }
