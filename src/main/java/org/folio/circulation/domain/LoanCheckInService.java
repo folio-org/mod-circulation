@@ -21,7 +21,7 @@ public class LoanCheckInService {
     CheckInByBarcodeRequest checkInByBarcodeRequest) {
 
     return item.isAvailable()
-      && requestQueue.size() == 0
+      && requestQueue.getRequests().isEmpty()
       && item.getLocation().homeLocationIsServedBy(checkInByBarcodeRequest
       .getServicePointId());
   }

@@ -83,7 +83,7 @@ public class LoanCheckInServiceTest {
   public void isNotInHouseUseWhenItemIsRequested() {
     final UUID checkInServicePoint = UUID.randomUUID();
     JsonObject itemRepresentation = new ItemBuilder()
-      .checkOut()
+      .available()
       .create();
 
     JsonObject locationRepresentation = new LocationBuilder()
@@ -102,7 +102,7 @@ public class LoanCheckInServiceTest {
   }
 
   @Test
-  public void isNotInHouseUseIfServicePointIsNotServingHomeLocation() {
+  public void isNotInHouseUseWhenServicePointDoesNotServeHomeLocation() {
     JsonObject itemRepresentation = new ItemBuilder()
       .available()
       .create();
