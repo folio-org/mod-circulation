@@ -77,53 +77,7 @@ public class InHouseUseCheckInTest extends APITests {
   }
 
   @Test
-  public void isInHouseUseWhenCheckInServicePointIsNonPrimaryForHomeLocation() {
-    final UUID itemServicePoint = servicePointsFixture.cd1().getId();
-    final UUID checkInServicePoint = servicePointsFixture.cd4().getId();
-
-    final IndividualResource itemLocation = locationsFixture.basedUponExampleLocation(
-      builder -> builder.withPrimaryServicePoint(itemServicePoint)
-        .servedBy(checkInServicePoint));
-
-    final IndividualResource nod = itemsFixture.basedUponNod(
-      item -> item.withTemporaryLocation(itemLocation.getId()));
-
-    final CheckInByBarcodeResponse checkInResponse = loansFixture
-      .checkInByBarcode(nod, checkInServicePoint);
-
-    assertThat(checkInResponse.getJson().containsKey("loan"), is(false));
-    assertThat(checkInResponse.getJson().containsKey("item"), is(true));
-    assertThat(checkInResponse.getInHouseUse(), is(true));
-  }
-
-  @Test
-  public void isNotInHouseUseWhenItemWasNotAvailablePriorToCheckIn() {
-    final UUID checkInServicePointId = servicePointsFixture.cd1().getId();
-
-    final IndividualResource homeLocation = locationsFixture.basedUponExampleLocation(
-      builder -> builder.withPrimaryServicePoint(checkInServicePointId));
-
-    final IndividualResource nod = itemsFixture.basedUponNod(
-      item -> item
-        .withTemporaryLocation(homeLocation.getId()));
-
-    final IndividualResource checkOutResponse = loansFixture
-      .checkOutByBarcode(nod, usersFixture.james());
-
-    final String itemStatus = checkOutResponse.getJson().getJsonObject("item")
-      .getJsonObject("status").getString("name");
-    assertThat(itemStatus, is("Checked out"));
-
-    final CheckInByBarcodeResponse checkInResponse = loansFixture
-      .checkInByBarcode(nod, checkInServicePointId);
-
-    assertThat(checkInResponse.getJson().containsKey("loan"), is(true));
-    assertThat(checkInResponse.getJson().containsKey("item"), is(true));
-    assertThat(checkInResponse.getInHouseUse(), is(false));
-  }
-
-  @Test
-  public void isNotInHouseUseWhenItemHasAnOpenRequest() {
+  public void isNotInHouseUseWhenItemIsRequested() {
     final UUID checkInServicePointId = servicePointsFixture.cd1().getId();
 
     final IndividualResource homeLocation = locationsFixture.basedUponExampleLocation(

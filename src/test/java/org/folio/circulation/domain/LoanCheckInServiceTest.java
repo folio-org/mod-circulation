@@ -20,7 +20,7 @@ public class LoanCheckInServiceTest {
   private LoanCheckInService loanCheckInService = new LoanCheckInService();
 
   @Test
-  public void isInHouseUseIfRequestQueueEmptyAndSpIsPrimaryForHomeLocation() {
+  public void isInHouseUseWhenServicePointIsPrimaryForHomeLocation() {
     final UUID checkInServicePoint = UUID.randomUUID();
     JsonObject itemRepresentation = new ItemBuilder()
       .available()
@@ -35,31 +35,12 @@ public class LoanCheckInServiceTest {
     Item item = Item.from(itemRepresentation)
       .withLocation(Location.from(locationRepresentation));
 
-    assertTrue(loanCheckInService.isInHouseUse(item, getEmptyQueue(),
+    assertTrue(loanCheckInService.isInHouseUse(item, createEmptyQueue(),
       checkInRequest));
   }
 
   @Test
-  public void isInHouseUseIfRequestQueueNullAndSpIsPrimaryForHomeLocation() {
-    final UUID checkInServicePoint = UUID.randomUUID();
-    JsonObject itemRepresentation = new ItemBuilder()
-      .available()
-      .create();
-
-    JsonObject locationRepresentation = new LocationBuilder()
-      .withPrimaryServicePoint(checkInServicePoint)
-      .create();
-
-    CheckInByBarcodeRequest checkInRequest = getCheckInRequest(checkInServicePoint);;
-
-    Item item = Item.from(itemRepresentation)
-      .withLocation(Location.from(locationRepresentation));
-
-    assertTrue(loanCheckInService.isInHouseUse(item, null, checkInRequest));
-  }
-
-  @Test
-  public void isInHouseUseIfServicePointIsNotPrimaryForHomeLocation() {
+  public void isInHouseUseWhenNonPrimaryServicePointServesHomeLocation() {
     final UUID checkInServicePoint = UUID.randomUUID();
     JsonObject itemRepresentation = new ItemBuilder()
       .available()
@@ -70,16 +51,16 @@ public class LoanCheckInServiceTest {
       .servedBy(checkInServicePoint)
       .create();
 
-    CheckInByBarcodeRequest checkInRequest = getCheckInRequest(checkInServicePoint);;
+    CheckInByBarcodeRequest checkInRequest = getCheckInRequest(checkInServicePoint);
 
     Item item = Item.from(itemRepresentation)
       .withLocation(Location.from(locationRepresentation));
 
-    assertTrue(loanCheckInService.isInHouseUse(item, null, checkInRequest));
+    assertTrue(loanCheckInService.isInHouseUse(item, createEmptyQueue(), checkInRequest));
   }
 
   @Test
-  public void isNotInHouseUseIfItemUnavailable() {
+  public void isNotInHouseUseWhenItemIsUnavailable() {
     final UUID checkInServicePoint = UUID.randomUUID();
     JsonObject itemRepresentation = new ItemBuilder()
       .checkOut()
@@ -94,12 +75,12 @@ public class LoanCheckInServiceTest {
     Item item = Item.from(itemRepresentation)
       .withLocation(Location.from(locationRepresentation));
 
-    assertFalse(loanCheckInService.isInHouseUse(item, getEmptyQueue(),
+    assertFalse(loanCheckInService.isInHouseUse(item, createEmptyQueue(),
       checkInRequest));
   }
 
   @Test
-  public void isNotInHouseUseIfRequestQueueHasRequests() {
+  public void isNotInHouseUseWhenItemIsRequested() {
     final UUID checkInServicePoint = UUID.randomUUID();
     JsonObject itemRepresentation = new ItemBuilder()
       .checkOut()
@@ -120,6 +101,25 @@ public class LoanCheckInServiceTest {
     assertFalse(loanCheckInService.isInHouseUse(item, requestQueue, checkInRequest));
   }
 
+  @Test
+  public void isNotInHouseUseIfServicePointIsNotServingHomeLocation() {
+    JsonObject itemRepresentation = new ItemBuilder()
+      .available()
+      .create();
+
+    JsonObject locationRepresentation = new LocationBuilder()
+      .withPrimaryServicePoint(UUID.randomUUID())
+      .servedBy(UUID.randomUUID())
+      .create();
+
+    CheckInByBarcodeRequest checkInRequest = getCheckInRequest(UUID.randomUUID());
+
+    Item item = Item.from(itemRepresentation)
+      .withLocation(Location.from(locationRepresentation));
+
+    assertFalse(loanCheckInService.isInHouseUse(item, createEmptyQueue(), checkInRequest));
+  }
+
   private CheckInByBarcodeRequest getCheckInRequest(UUID checkInServicePoint) {
     JsonObject representation = new CheckInByBarcodeRequestBuilder()
       .withItemBarcode("barcode")
@@ -130,7 +130,7 @@ public class LoanCheckInServiceTest {
     return CheckInByBarcodeRequest.from(representation).value();
   }
 
-  private RequestQueue getEmptyQueue() {
+  private RequestQueue createEmptyQueue() {
     return new RequestQueue(Collections.emptyList());
   }
 }
