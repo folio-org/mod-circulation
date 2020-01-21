@@ -171,7 +171,7 @@ public class RequestRepository {
       .otherwise(forwardOnFailure());
 
     return requestsStorageClient.post(representation)
-      .thenApply(interpreter::apply)
+      .thenApply(interpreter::flatMap)
       .thenApply(mapResult(requestAndRelatedRecords::withRequest));
   }
 
@@ -210,7 +210,7 @@ public class RequestRepository {
 
     RequestBatch requestBatch = new RequestBatch(requests);
     return requestsBatchStorageClient.post(requestBatch.toJson())
-      .thenApply(interpreter::apply);
+      .thenApply(interpreter::flatMap);
   }
 
   //TODO: Check if need to request requester

@@ -324,6 +324,12 @@ public class LoansFixture {
       .at(servicePointId));
   }
 
+  public CheckInByBarcodeResponse checkInByBarcode(
+    IndividualResource item, UUID servicePointId) {
+
+    return checkInByBarcode(item, DateTime.now(DateTimeZone.UTC), servicePointId);
+  }
+
   public void checkInByBarcode(IndividualResource item, DateTime checkInDate,
       UUID servicePointId, OkapiHeaders okapiHeaders) {
 

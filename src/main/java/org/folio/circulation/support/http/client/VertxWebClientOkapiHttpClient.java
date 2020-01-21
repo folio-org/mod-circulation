@@ -22,6 +22,7 @@ import org.folio.circulation.support.ServerErrorFailure;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpClient;
+import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.client.HttpRequest;
 import io.vertx.ext.web.client.HttpResponse;
 import io.vertx.ext.web.client.WebClient;
@@ -53,6 +54,31 @@ public class VertxWebClientOkapiHttpClient {
     this.token = token;
     this.userId = userId;
     this.requestId = requestId;
+  }
+
+  public CompletableFuture<Result<Response>> post(URL url, JsonObject body) {
+    return post(url.toString(), body, DEFAULT_TIMEOUT);
+  }
+
+  public CompletableFuture<Result<Response>> post(String url, JsonObject body) {
+    return post(url, body, DEFAULT_TIMEOUT);
+  }
+
+  public CompletableFuture<Result<Response>> post(String url,
+    JsonObject body, Duration timeout) {
+
+    final CompletableFuture<AsyncResult<HttpResponse<Buffer>>> futureResponse
+      = new CompletableFuture<>();
+
+    final HttpRequest<Buffer> request = withStandardHeaders(
+      webClient.postAbs(url));
+
+    request
+      .timeout(timeout.toMillis())
+      .sendJsonObject(body, futureResponse::complete);
+
+    return futureResponse
+      .thenApply(asyncResult -> mapAsyncResultToResult(url, asyncResult));
   }
 
   public CompletableFuture<Result<Response>> get(String url,

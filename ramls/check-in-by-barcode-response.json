@@ -120,6 +120,10 @@
     "staffSlipContext": {
       "description": "Context for staff slip tokens",
       "type": "object"
+    },
+    "inHouseUse": {
+      "type": "boolean",
+      "description": "Defines whether the current check-in operation considered as in-house use or not."
     }
   },
   "additionalProperties": false
