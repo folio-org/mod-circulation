@@ -2,14 +2,18 @@ package org.folio.circulation.support.http.client;
 
 import static api.support.matchers.ResponseStatusCodeMatcher.hasStatus;
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
+import static com.github.tomakehurst.wiremock.client.WireMock.created;
 import static com.github.tomakehurst.wiremock.client.WireMock.delete;
 import static com.github.tomakehurst.wiremock.client.WireMock.equalTo;
+import static com.github.tomakehurst.wiremock.client.WireMock.equalToJson;
 import static com.github.tomakehurst.wiremock.client.WireMock.get;
 import static com.github.tomakehurst.wiremock.client.WireMock.noContent;
 import static com.github.tomakehurst.wiremock.client.WireMock.okJson;
+import static com.github.tomakehurst.wiremock.client.WireMock.post;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
 import static java.time.temporal.ChronoUnit.MILLIS;
 import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.folio.HttpStatus.HTTP_CREATED;
 import static org.folio.HttpStatus.HTTP_NO_CONTENT;
 import static org.folio.HttpStatus.HTTP_OK;
 import static org.folio.circulation.support.http.client.NamedQueryParameter.namedParameter;
@@ -68,13 +72,39 @@ public class VertxWebClientOkapiHttpClientTests {
   }
 
   @Test
+  public void canPostWithJson()
+    throws InterruptedException, ExecutionException, TimeoutException {
+
+    final String locationResponseHeader = "/a-different-location";
+
+    fakeWebServer.stubFor(matchingFolioHeaders(post(urlPathEqualTo("/record")))
+      .withHeader("Content-Type", equalTo("application/json"))
+      .withRequestBody(equalToJson(dummyJsonRequestBody().encodePrettily()))
+      .willReturn(created().withBody(dummyJsonResponseBody())
+        .withHeader("Content-Type", "application/json")
+        .withHeader("Location", locationResponseHeader)));
+
+    VertxWebClientOkapiHttpClient client = createClient();
+
+    CompletableFuture<Result<Response>> postCompleted = client.post(
+      fakeWebServer.url("/record"), dummyJsonRequestBody());
+
+    final Response response = postCompleted.get(2, SECONDS).value();
+
+    assertThat(response, hasStatus(HTTP_CREATED));
+    assertThat(response.getJson().getString("message"), is("hello"));
+    assertThat(response.getContentType(), is("application/json"));
+    assertThat(response.getHeader("location"), is(locationResponseHeader));
+  }
+
+  @Test
   public void canGetJson()
     throws InterruptedException, ExecutionException, TimeoutException {
 
     final String locationResponseHeader = "/a-different-location";
 
     fakeWebServer.stubFor(matchingFolioHeaders(get(urlPathEqualTo("/record")))
-      .willReturn(okJson(dummyJsonBody())
+      .willReturn(okJson(dummyJsonResponseBody())
         .withHeader("Location", locationResponseHeader)));
 
     VertxWebClientOkapiHttpClient client = createClient();
@@ -97,7 +127,7 @@ public class VertxWebClientOkapiHttpClientTests {
     fakeWebServer.stubFor(matchingFolioHeaders(get(urlPathEqualTo("/record")))
       .withQueryParam("first-parameter", equalTo("foo"))
       .withQueryParam("second-parameter", equalTo("bar"))
-      .willReturn(okJson(dummyJsonBody())));
+      .willReturn(okJson(dummyJsonResponseBody())));
 
     VertxWebClientOkapiHttpClient client = createClient();
 
@@ -149,7 +179,6 @@ public class VertxWebClientOkapiHttpClientTests {
     assertThat(response, hasStatus(HTTP_NO_CONTENT));
   }
 
-
   @Test
   public void failsWhenGetTimesOut()
     throws InterruptedException, ExecutionException, TimeoutException {
@@ -190,7 +219,11 @@ public class VertxWebClientOkapiHttpClientTests {
       tenantId, token, userId, requestId);
   }
 
-  private String dummyJsonBody() {
+  private JsonObject dummyJsonRequestBody() {
+    return new JsonObject().put("from", "James");
+  }
+
+  private String dummyJsonResponseBody() {
     return new JsonObject().put("message", "hello")
       .encodePrettily();
   }

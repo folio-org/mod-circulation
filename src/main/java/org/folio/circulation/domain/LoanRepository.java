@@ -77,7 +77,7 @@ public class LoanRepository {
       .otherwise(forwardOnFailure());
 
     return loansStorageClient.post(storageLoan)
-      .thenApply(interpreter::apply)
+      .thenApply(interpreter::flatMap)
       .thenApply(mapResult(loanAndRelatedRecords::withLoan));
   }
 
