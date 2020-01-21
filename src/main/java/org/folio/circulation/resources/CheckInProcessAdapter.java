@@ -209,16 +209,9 @@ class CheckInProcessAdapter {
 
   CheckInProcessRecords setInHouseUse(CheckInProcessRecords checkInProcessRecords) {
     return checkInProcessRecords
-      .withInHouseUse(isInHouseUse(checkInProcessRecords));
-  }
-
-  private boolean isInHouseUse(CheckInProcessRecords records) {
-    if (records.getItem().getLocation() == null) {
-      return false;
-    }
-
-    return records.getItem().isAvailable()
-      && (records.getRequestQueue() == null || records.getRequestQueue().size() == 0)
-      && records.getItem().getLocation().homeLocationIsServedBy(records.getCheckInServicePointId());
+      .withInHouseUse(loanCheckInService.isInHouseUse(
+        checkInProcessRecords.getItem(),
+        checkInProcessRecords.getRequestQueue(),
+        checkInProcessRecords.getCheckInRequest()));
   }
 }

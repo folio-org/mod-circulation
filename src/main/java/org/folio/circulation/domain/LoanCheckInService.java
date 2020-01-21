@@ -16,4 +16,13 @@ public class LoanCheckInService {
       : loan.checkIn(request.getCheckInDate(), systemDateTime,
         request.getServicePointId()));
   }
+
+  public boolean isInHouseUse(Item item, RequestQueue requestQueue,
+    CheckInByBarcodeRequest checkInByBarcodeRequest) {
+
+    return item.isAvailable()
+      && (requestQueue == null || requestQueue.size() == 0)
+      && item.getLocation().homeLocationIsServedBy(checkInByBarcodeRequest
+      .getServicePointId());
+  }
 }
