@@ -1,6 +1,8 @@
 package org.folio.circulation.domain;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
+import static org.folio.circulation.support.http.ResponseMapping.forwardOnFailure;
+import static org.folio.circulation.support.http.ResponseMapping.mapUsingJson;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
 import static org.folio.circulation.support.Result.succeeded;
 
@@ -12,10 +14,12 @@ import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
+import io.vertx.core.json.JsonObject;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.MultipleRecordFetcher;
 import org.folio.circulation.support.Result;
+import org.folio.circulation.support.http.client.ResponseInterpreter;
 
 public class AccountRepository {
 
@@ -109,5 +113,14 @@ public class AccountRepository {
 
   private MultipleRecordFetcher<FeeFineAction> createFeeFineActionFetcher() {
     return new MultipleRecordFetcher<>(feefineActionsStorageClient, "feefineactions", FeeFineAction::from);
+  }
+
+  public CompletableFuture<Result<Account>> create(JsonObject accountRepresentation) {
+    final ResponseInterpreter<Account> interpreter = new ResponseInterpreter<Account>()
+      .flatMapOn(201, mapUsingJson(Account::new))
+      .otherwise(forwardOnFailure());
+
+    return accountsStorageClient.post(accountRepresentation)
+      .thenApply(interpreter::flatMap);
   }
 }

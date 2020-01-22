@@ -44,6 +44,8 @@ public class Clients {
   private final CollectionResourceClient scheduledNoticesStorageClient;
   private final CollectionResourceClient accountsStorageClient;
   private final CollectionResourceClient feeFineActionsStorageClient;
+  private final CollectionResourceClient feeFineOwnerStorageClient;
+  private final CollectionResourceClient feeFineStorageClient;
   private final CollectionResourceClient anonymizeStorageLoansClient;
   private final CollectionResourceClient patronActionSessionsStorageClient;
   private final CollectionResourceClient patronExpiredSessionsStorageClient;
@@ -91,7 +93,9 @@ public class Clients {
       configurationStorageClient = createConfigurationStorageClient(client, context);
       scheduledNoticesStorageClient = createScheduledNoticesStorageClient(client, context);
       accountsStorageClient = createAccountsStorageClient(client, context);
-      feeFineActionsStorageClient = createFeeFineActionsStorageClient(client, context);
+      feeFineActionsStorageClient = createFeeFineActionsStorageClient(client,context);
+      feeFineOwnerStorageClient = createFeeFineOwnerStorageClient(client,context);
+      feeFineStorageClient = createFeeFineStorageClient(client,context);
       patronActionSessionsStorageClient = createPatronActionSessionsStorageClient(client, context);
       patronExpiredSessionsStorageClient = createPatronExpiredSessionsStorageClient(client, context);
       userManualBlocksStorageClient = createUserManualBlocksStorageClient(client, context);
@@ -247,6 +251,14 @@ public class Clients {
 
   public CollectionResourceClient feeFineActionsStorageClient() {
     return feeFineActionsStorageClient;
+  }
+
+  public CollectionResourceClient feeFineOwnerStorageClient() {
+    return feeFineOwnerStorageClient;
+  }
+
+  public CollectionResourceClient feeFineStorageClient() {
+    return feeFineStorageClient;
   }
 
   public CollectionResourceClient patronActionSessionsStorageClient() {
@@ -550,6 +562,21 @@ public class Clients {
 
     return getCollectionResourceClient(client, context, "/feefineactions");
   }
+
+  private CollectionResourceClient createFeeFineOwnerStorageClient(
+    OkapiHttpClient client,
+    WebContext context)
+    throws MalformedURLException {
+    return getCollectionResourceClient(client, context, "/owners");
+  }
+
+  private CollectionResourceClient createFeeFineStorageClient(
+    OkapiHttpClient client,
+    WebContext context)
+    throws MalformedURLException {
+    return getCollectionResourceClient(client, context, "/feefines");
+  }
+
 
   private CollectionResourceClient createPatronActionSessionsStorageClient(
     OkapiHttpClient client, WebContext context)

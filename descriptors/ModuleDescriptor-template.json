@@ -107,6 +107,22 @@
       ]
     },
     {
+      "id": "calculate-overdue-fine",
+      "version": "0.1",
+      "handlers": [
+        {
+          "methods": ["POST"],
+          "pathPattern": "/circulation/loans/{id}/calculate-overdue-fine",
+          "permissionsRequired": [
+            "circulation.loans.calculate-overdue-fine.post"
+          ],
+          "modulePermissions": [
+            "modperms.circulation.loans.calculate-overdue-fine.post"
+          ]
+        }
+      ]
+    },
+    {
       "id": "circulation",
       "version": "8.6",
       "handlers": [
@@ -908,6 +924,11 @@
       "description": "declares the loaned item lost"
     },
     {
+      "permissionName": "circulation.loans.calculate-overdue-fine.post",
+      "displayName": "circulation - calculate overdue fine",
+      "description": "Calculate overdue fine and create fee/fine record"
+    },
+    {
       "permissionName": "circulation.rules.get",
       "displayName": "Circulation - get circulation rules",
       "description": "Get circulation rules"
@@ -1310,7 +1331,7 @@
         "patron-notice.post"
       ],
       "visible": false
-},
+    },
     {
       "permissionName": "modperms.circulation.override-renewal-by-barcode.post",
       "displayName" : "module permissions for one op",
@@ -1838,6 +1859,17 @@
         "circulation-storage.loans.item.put",
         "users.item.get",
         "inventory-storage.items.item.put"
+      ],
+      "visible": false
+    },
+    {
+      "permissionName": "modperms.circulation.loans.calculate-overdue-fine.post",
+      "displayName": "module permissions for one op",
+      "description": "to reduce X-Okapi-Token size",
+      "subPermissions": [
+        "accounts.item.post",
+        "owners.collection.get",
+        "feefines.collection.get"
       ],
       "visible": false
     },

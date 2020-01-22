@@ -177,6 +177,10 @@ public class InterfaceUrls {
     return circulationModuleUrl(String.format("/circulation/loans/%s/declare-item-lost", loanId));
   }
 
+  public static URL calculateOverdueFineURL(String loanId) {
+    return circulationModuleUrl(String.format("/circulation/loans/%s/calculate-overdue-fine", loanId));
+  }
+
   public static URL endSessionUrl() {
     return circulationModuleUrl("/circulation/end-patron-action-session");
   }
