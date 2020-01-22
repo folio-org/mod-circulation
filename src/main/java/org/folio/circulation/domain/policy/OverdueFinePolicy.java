@@ -41,6 +41,11 @@ public class OverdueFinePolicy extends Policy {
     return new OverdueFinePolicy.UnknownOverdueFinePolicy(id);
   }
 
+  @Override
+  public boolean isUnknown() {
+    return this instanceof UnknownOverdueFinePolicy;
+  }
+
   private static class UnknownOverdueFinePolicy extends OverdueFinePolicy {
     UnknownOverdueFinePolicy(String id) {
       super(id);

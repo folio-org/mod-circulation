@@ -2,6 +2,7 @@ package org.folio.circulation.domain;
 
 import api.support.builders.LoanBuilder;
 import api.support.builders.LoanPolicyBuilder;
+import api.support.builders.OpeningPeriodsBuilder;
 import api.support.builders.OverdueFinePolicyBuilder;
 import io.vertx.core.json.JsonObject;
 import junitparams.JUnitParamsRunner;
@@ -20,25 +21,23 @@ import org.folio.circulation.support.ServerErrorFailure;
 import org.folio.circulation.support.http.client.Response;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
+import org.joda.time.LocalDate;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
-import static api.support.fixtures.OpeningPeriodsExamples.CASE_ALL_DAY_OPENINGS_SERVICE_ID;
-import static api.support.fixtures.OpeningPeriodsExamples.CASE_ERROR_400_SERVICE_ID;
-import static api.support.fixtures.OpeningPeriodsExamples.CASE_ERROR_404_SERVICE_ID;
-import static api.support.fixtures.OpeningPeriodsExamples.CASE_ERROR_500_SERVICE_ID;
-import static api.support.fixtures.OpeningPeriodsExamples.CASE_MIXED_SERVICE_ID;
-import static api.support.fixtures.OpeningPeriodsExamples.CASE_NO_OPENING_DAYS_SERVICE_ID;
-import static api.support.fixtures.OpeningPeriodsExamples.CASE_NO_OPENING_HOURS_SERVICE_ID;
-import static api.support.fixtures.OpeningPeriodsExamples.CASE_TWO_OPENING_DAYS_SERVICE_ID;
-import static api.support.fixtures.OpeningPeriodsExamples.getOpeningPeriodsById;
+import static api.support.fixtures.OpeningHourExamples.afterNoon;
+import static api.support.fixtures.OpeningHourExamples.allDay;
+import static api.support.fixtures.OpeningHourExamples.beforeNoon;
 import static java.util.concurrent.CompletableFuture.completedFuture;
-import static org.folio.circulation.domain.OverduePeriodCalculator.countMinutes;
 import static org.folio.circulation.support.Result.failed;
 import static org.folio.circulation.support.Result.succeeded;
 import static org.junit.Assert.*;
@@ -47,23 +46,67 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 @RunWith(JUnitParamsRunner.class)
-public class OverduePeriodCalculatorTest {
+public class OverduePeriodCalculatorServiceTest {
   private static final String INTERVAL_MONTHS = "Months";
   private static final String INTERVAL_WEEKS = "Weeks";
   private static final String INTERVAL_DAYS = "Days";
   private static final String INTERVAL_HOURS = "Hours";
   private static final String INTERVAL_MINUTES = "Minutes";
 
+  public static final String CASE_TWO_OPENING_DAYS_SERVICE_ID = "11111111-2f09-4bc9-8924-3734882d44a3";
+  public static final String CASE_ALL_DAY_OPENINGS_SERVICE_ID = "22222222-2f09-4bc9-8924-3734882d44a3";
+  public static final String CASE_NO_OPENING_HOURS_SERVICE_ID = "33333333-2f09-4bc9-8924-3734882d44a3";
+  public static final String CASE_NO_OPENING_DAYS_SERVICE_ID = "44444444-2f09-4bc9-8924-3734882d44a3";
+  public static final String CASE_MIXED_SERVICE_ID = "55555555-2f09-4bc9-8924-3734882d44a3";
+  public static final String CASE_ERROR_400_SERVICE_ID = "66666666-2f09-4bc9-8924-3734882d44a3";
+  public static final String CASE_ERROR_404_SERVICE_ID = "77777777-2f09-4bc9-8924-3734882d44a3";
+  public static final String CASE_ERROR_500_SERVICE_ID = "88888888-2f09-4bc9-8924-3734882d44a3";
+
+  public static final LocalDate MAY_FIRST = new LocalDate(2019, 5, 1);
+  public static final LocalDate MAY_SECOND = new LocalDate(2019, 5, 2);
+  public static final LocalDate MAY_THIRD = new LocalDate(2019, 5, 3);
+
   private static final String PERIODS_REQUEST_PARAMS_TEMPLATE =
     "servicePointId=%s&startDate=\\d{4}-\\d{2}-\\d{2}&endDate=\\d{4}-\\d{2}-\\d{2}&includeClosedDays=(true|false)";
 
-  private Clients clients;
+  private static final Map<String, OpeningPeriodsBuilder> openingPeriods = new HashMap<>();
+
+  static {
+    openingPeriods.put(CASE_TWO_OPENING_DAYS_SERVICE_ID, new OpeningPeriodsBuilder(Arrays.asList(
+      new OpeningPeriod(MAY_FIRST, new OpeningDay(
+        Arrays.asList(beforeNoon(), afterNoon()),false, true, false)),
+      new OpeningPeriod(MAY_SECOND, new OpeningDay(
+        Arrays.asList(beforeNoon(), afterNoon()),false, true, false)))));
+
+    openingPeriods.put(CASE_ALL_DAY_OPENINGS_SERVICE_ID, new OpeningPeriodsBuilder(Arrays.asList(
+      new OpeningPeriod(MAY_FIRST, new OpeningDay(
+        Collections.singletonList(allDay()),true, true, false)),
+      new OpeningPeriod(MAY_SECOND, new OpeningDay(
+        Collections.singletonList(allDay()),true, true, false)))));
+
+    openingPeriods.put(CASE_MIXED_SERVICE_ID, new OpeningPeriodsBuilder(Arrays.asList(
+      new OpeningPeriod(MAY_FIRST, new OpeningDay(
+        Arrays.asList(beforeNoon(), afterNoon()),false, true, false)),
+      new OpeningPeriod(MAY_SECOND, new OpeningDay(
+        Collections.singletonList(allDay()),true, true, false)),
+      new OpeningPeriod(MAY_THIRD, new OpeningDay(
+        Arrays.asList(beforeNoon(), afterNoon()),true, true, true)))));
+
+    openingPeriods.put(CASE_NO_OPENING_HOURS_SERVICE_ID, new OpeningPeriodsBuilder(Arrays.asList(
+      new OpeningPeriod(MAY_FIRST, new OpeningDay(Collections.emptyList(), false, true, false)),
+      new OpeningPeriod(MAY_SECOND, new OpeningDay(Collections.emptyList(),false, true, true)))));
+
+    openingPeriods.put(CASE_NO_OPENING_DAYS_SERVICE_ID, new OpeningPeriodsBuilder(Collections.emptyList()));
+  }
+
+  private OverduePeriodCalculatorService calculatorService;
 
   @Before
   public void setUp() {
-    this.clients = mock(Clients.class);
+    Clients clients = mock(Clients.class);
     CollectionResourceClient calendarClient = mock(CollectionResourceClient.class);
     when(clients.calendarStorageClient()).thenReturn(calendarClient);
+    this.calculatorService = OverduePeriodCalculatorService.using(clients);
 
     when(calendarClient.getManyWithRawQueryStringParameters(
       matches(patternFor(CASE_TWO_OPENING_DAYS_SERVICE_ID))))
@@ -126,8 +169,7 @@ public class OverduePeriodCalculatorTest {
       .withLoanPolicy(loanPolicy)
       .withOverdueFinePolicy(overdueFinePolicy);
 
-    CompletableFuture<Result<Integer>> future = countMinutes(loan, systemTime, null);
-    int overdueMinutes = future.get().value();
+    int overdueMinutes = calculatorService.getMinutes(loan, systemTime).get().value();
     assertEquals(expectedOverdueMinutes, overdueMinutes);
   }
 
@@ -143,8 +185,7 @@ public class OverduePeriodCalculatorTest {
       .withLoanPolicy(loanPolicy)
       .withOverdueFinePolicy(overdueFinePolicy);
 
-    CompletableFuture<Result<Integer>> future = countMinutes(loan, systemTime, null);
-    int overdueMinutes = future.get().value();
+    int overdueMinutes = calculatorService.getMinutes(loan, systemTime).get().value();
     assertEquals(expectedOverdueMinutes, overdueMinutes);
   }
 
@@ -158,8 +199,21 @@ public class OverduePeriodCalculatorTest {
       .asDomainObject()
       .withOverdueFinePolicy(overdueFinePolicy);
 
-    CompletableFuture<Result<Integer>> future = countMinutes(loan, systemTime, null);
-    int overdueMinutes = future.get().value();
+    int overdueMinutes = calculatorService.getMinutes(loan, systemTime).get().value();
+    assertEquals(expectedOverdueMinutes, overdueMinutes);
+  }
+
+  @Test
+  public void shouldCountClosedWithMissingOverdueFinePolicy() throws ExecutionException, InterruptedException {
+    final int expectedOverdueMinutes = 0;
+    DateTime systemTime = DateTime.now(DateTimeZone.UTC);
+    LoanPolicy loanPolicy = createLoanPolicy(5, INTERVAL_MINUTES);
+    Loan loan =  new LoanBuilder()
+      .withDueDate(systemTime.minusMinutes(expectedOverdueMinutes))
+      .asDomainObject()
+      .withLoanPolicy(loanPolicy);
+
+    int overdueMinutes = calculatorService.getMinutes(loan, systemTime).get().value();
     assertEquals(expectedOverdueMinutes, overdueMinutes);
   }
 
@@ -176,8 +230,7 @@ public class OverduePeriodCalculatorTest {
       .withLoanPolicy(loanPolicy)
       .withOverdueFinePolicy(overdueFinePolicy);
 
-    CompletableFuture<Result<Integer>> future = countMinutes(loan, systemTime, null);
-    int overdueMinutes = future.get().value();
+    int overdueMinutes = calculatorService.getMinutes(loan, systemTime).get().value();
     assertEquals(expectedOverdueMinutes, overdueMinutes);
   }
 
@@ -200,8 +253,7 @@ public class OverduePeriodCalculatorTest {
       .withLoanPolicy(loanPolicy)
       .withOverdueFinePolicy(overdueFinePolicy);
 
-    CompletableFuture<Result<Integer>> future = countMinutes(loan, systemTime, null);
-    int overdueMinutes = future.get().value();
+    int overdueMinutes = calculatorService.getMinutes(loan, systemTime).get().value();
     assertEquals(expectedResult, overdueMinutes);
   }
 
@@ -228,9 +280,7 @@ public class OverduePeriodCalculatorTest {
       .withLoanPolicy(loanPolicy)
       .withOverdueFinePolicy(overdueFinePolicy);
 
-    CompletableFuture<Result<Integer>> future = countMinutes(loan, systemTime, null);
-
-    int overdueMinutes = future.get().value();
+    int overdueMinutes = calculatorService.getMinutes(loan, systemTime).get().value();
     assertEquals(expectedOverdueMinutes, overdueMinutes);
   }
 
@@ -247,8 +297,7 @@ public class OverduePeriodCalculatorTest {
       .withLoanPolicy(loanPolicy)
       .withOverdueFinePolicy(overdueFinePolicy);
 
-    CompletableFuture<Result<Integer>> future = countMinutes(loan, systemTime, clients);
-    int overdueMinutes = future.get().value();
+    int overdueMinutes = calculatorService.getMinutes(loan, systemTime).get().value();
     assertEquals(expectedOverdueMinutes, overdueMinutes);
   }
 
@@ -265,8 +314,7 @@ public class OverduePeriodCalculatorTest {
       .withLoanPolicy(loanPolicy)
       .withOverdueFinePolicy(overdueFinePolicy);
 
-    CompletableFuture<Result<Integer>> future = countMinutes(loan, systemTime, clients);
-    int overdueMinutes = future.get().value();
+    int overdueMinutes = calculatorService.getMinutes(loan, systemTime).get().value();
     assertEquals(expectedOverdueMinutes, overdueMinutes);
   }
 
@@ -283,8 +331,7 @@ public class OverduePeriodCalculatorTest {
       .withLoanPolicy(loanPolicy)
       .withOverdueFinePolicy(overdueFinePolicy);
 
-    CompletableFuture<Result<Integer>> future = countMinutes(loan, systemTime, clients);
-    int overdueMinutes = future.get().value();
+    int overdueMinutes = calculatorService.getMinutes(loan, systemTime).get().value();
     assertEquals(expectedOverdueMinutes, overdueMinutes);
   }
 
@@ -301,8 +348,7 @@ public class OverduePeriodCalculatorTest {
       .withLoanPolicy(loanPolicy)
       .withOverdueFinePolicy(overdueFinePolicy);
 
-    CompletableFuture<Result<Integer>> future = countMinutes(loan, systemTime, clients);
-    int overdueMinutes = future.get().value();
+    int overdueMinutes = calculatorService.getMinutes(loan, systemTime).get().value();
     assertEquals(expectedOverdueMinutes, overdueMinutes);
   }
 
@@ -320,8 +366,7 @@ public class OverduePeriodCalculatorTest {
       .withLoanPolicy(loanPolicy)
       .withOverdueFinePolicy(overdueFinePolicy);
 
-    CompletableFuture<Result<Integer>> future = countMinutes(loan, systemTime, clients);
-    int overdueMinutes = future.get().value();
+    int overdueMinutes = calculatorService.getMinutes(loan, systemTime).get().value();
     assertEquals(expectedOverdueMinutes, overdueMinutes);
   }
 
@@ -337,7 +382,7 @@ public class OverduePeriodCalculatorTest {
       .withLoanPolicy(loanPolicy)
       .withOverdueFinePolicy(overdueFinePolicy);
 
-    CompletableFuture<Result<Integer>> future = countMinutes(loan, systemTime, clients);
+    CompletableFuture<Result<Integer>> future = calculatorService.getMinutes(loan, systemTime);
     Result<Integer> result = future.get();
     assertTrue(result.failed());
     assertTrue(result.cause() instanceof BadRequestFailure);
@@ -355,7 +400,7 @@ public class OverduePeriodCalculatorTest {
       .withLoanPolicy(loanPolicy)
       .withOverdueFinePolicy(overdueFinePolicy);
 
-    CompletableFuture<Result<Integer>> future = countMinutes(loan, systemTime, clients);
+    CompletableFuture<Result<Integer>> future = calculatorService.getMinutes(loan, systemTime);
     Result<Integer> result = future.get();
     assertTrue(result.failed());
     assertTrue(result.cause() instanceof RecordNotFoundFailure);
@@ -373,7 +418,7 @@ public class OverduePeriodCalculatorTest {
       .withLoanPolicy(loanPolicy)
       .withOverdueFinePolicy(overdueFinePolicy);
 
-    CompletableFuture<Result<Integer>> future = countMinutes(loan, systemTime, clients);
+    CompletableFuture<Result<Integer>> future = calculatorService.getMinutes(loan, systemTime);
     Result<Integer> result = future.get();
     assertTrue(result.failed());
     assertTrue(result.cause() instanceof ServerErrorFailure);
@@ -399,5 +444,9 @@ public class OverduePeriodCalculatorTest {
 
   private static String patternFor(String servicePointId) {
     return String.format(PERIODS_REQUEST_PARAMS_TEMPLATE, servicePointId);
+  }
+
+  public static JsonObject getOpeningPeriodsById(String servicePointId) {
+    return openingPeriods.get(servicePointId).create();
   }
 }

@@ -683,6 +683,11 @@ public class LoanPolicy extends Policy {
     return Collections.emptyList();
   }
 
+  @Override
+  public boolean  isUnknown() {
+    return this instanceof UnknownLoanPolicy;
+  }
+
   //TODO: Improve this to be a proper null object
   // requires significant rework of the loan policy interface
   private static class UnknownLoanPolicy extends LoanPolicy {

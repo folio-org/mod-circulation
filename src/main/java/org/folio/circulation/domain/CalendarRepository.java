@@ -2,6 +2,7 @@ package org.folio.circulation.domain;
 
 import static java.util.function.Function.identity;
 import static org.folio.circulation.domain.OpeningDay.createClosedDay;
+import static org.folio.circulation.domain.OpeningDay.fromJsonByDefaultKey;
 import static org.folio.circulation.support.ResultBinding.flatMapResult;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 
@@ -25,7 +26,6 @@ import io.vertx.core.json.JsonObject;
 public class CalendarRepository {
 
   private static final String OPENING_PERIODS = "openingPeriods";
-  private static final String OPENING_DAY = "openingDay";
   private static final String OPENING_DAYS = "openingDays";
   private static final String PATH_PARAM_WITH_QUERY = "%s/calculateopening?requestedDate=%s";
   private static final String PERIODS_QUERY_PARAMS = "servicePointId=%s&startDate=%s&endDate=%s&includeClosedDays=%s";
@@ -42,7 +42,7 @@ public class CalendarRepository {
     //TODO: Validation error should have parameters
     return FetchSingleRecord.<AdjacentOpeningDays>forRecord(OPENING_PERIODS)
       .using(calendarClient)
-      .mapTo(this::createOpeningDays)
+      .mapTo(this::convertToOpeningDays)
       .whenNotFound(failedValidation(
         new ValidationError("Calendar open periods are not found", Collections.emptyMap())))
       .fetch(path);
@@ -55,15 +55,15 @@ public class CalendarRepository {
       servicePointId, startDate.toLocalDate(), endDate.toLocalDate(), includeClosedDays);
 
     return calendarClient.getManyWithRawQueryStringParameters(params)
-      .thenApply(flatMapResult(this::createOpeningPeriods));
+      .thenApply(flatMapResult(this::convertToOpeningPeriods));
   }
 
-  private Result<List<OpeningPeriod>> createOpeningPeriods(Response response) {
+  private Result<List<OpeningPeriod>> convertToOpeningPeriods(Response response) {
     return MultipleRecords.from(response, OpeningPeriod::new, OPENING_PERIODS)
       .next(r -> Result.succeeded(r.toKeys(identity())));
   }
 
-  private AdjacentOpeningDays createOpeningDays(JsonObject jsonObject) {
+  private AdjacentOpeningDays convertToOpeningDays(JsonObject jsonObject) {
     if (jsonObject.isEmpty()) {
       return buildClosedOpeningDays();
     }
@@ -71,9 +71,9 @@ public class CalendarRepository {
     if (openingDaysJson.isEmpty()) {
       return buildClosedOpeningDays();
     }
-    OpeningDay previousDate = new OpeningDay(openingDaysJson.getJsonObject(0), OPENING_DAY);
-    OpeningDay requestedDate = new OpeningDay(openingDaysJson.getJsonObject(1), OPENING_DAY);
-    OpeningDay nextDate = new OpeningDay(openingDaysJson.getJsonObject(2), OPENING_DAY);
+    OpeningDay previousDate = fromJsonByDefaultKey(openingDaysJson.getJsonObject(0));
+    OpeningDay requestedDate = fromJsonByDefaultKey(openingDaysJson.getJsonObject(1));
+    OpeningDay nextDate = fromJsonByDefaultKey(openingDaysJson.getJsonObject(2));
 
     return new AdjacentOpeningDays(previousDate, requestedDate, nextDate);
   }

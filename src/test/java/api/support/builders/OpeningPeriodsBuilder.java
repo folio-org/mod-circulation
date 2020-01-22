@@ -30,8 +30,4 @@ public class OpeningPeriodsBuilder extends JsonBuilder implements Builder {
     return this.representation;
   }
 
-  @Override
-  public String toString() {
-    return this.representation.toString();
-  }
 }

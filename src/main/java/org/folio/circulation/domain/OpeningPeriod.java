@@ -15,8 +15,8 @@ public class OpeningPeriod {
   private static final DateTimeFormatter DATE_TIME_FORMATTER =
     DateTimeFormat.forPattern(DATE_TIME_FORMAT).withZoneUTC();
 
-  private OpeningDay openingDay;
-  private LocalDate date;
+  private final OpeningDay openingDay;
+  private final LocalDate date;
 
   public OpeningDay getOpeningDay() {
     return openingDay;
@@ -32,13 +32,9 @@ public class OpeningPeriod {
   }
 
   public OpeningPeriod(JsonObject jsonObject) {
-    JsonObject openingDayJson = jsonObject.getJsonObject(OPENING_DAY_KEY);
-    this.openingDay = new OpeningDay(openingDayJson);
-
+    this.openingDay = OpeningDay.fromJsonByDefaultKey(jsonObject);
     String dateProperty = jsonObject.getString(DATE_KEY);
-    if (dateProperty != null) {
-      this.date = LocalDate.parse(dateProperty, DATE_TIME_FORMATTER);
-    }
+    this.date = LocalDate.parse(dateProperty, DATE_TIME_FORMATTER);
   }
 
   public JsonObject toJson() {
