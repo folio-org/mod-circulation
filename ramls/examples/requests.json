@@ -20,12 +20,10 @@
       "holdShelfExpirationDate": "2017-09-01T22:25:37Z",
       "position": 1,
       "item": {
+        "status": "Checked out",
         "title": "Children of Time",
         "barcode": "760932543816",
-        "copyNumbers": [
-          "1",
-          "2"
-        ]
+        "copyNumber": "cp2"
       },
       "requester": {
         "firstName": "Stephen",

@@ -23,6 +23,7 @@ import static org.joda.time.DateTimeZone.UTC;
 import static org.junit.Assert.assertTrue;
 
 import java.net.HttpURLConnection;
+import java.util.List;
 import java.util.UUID;
 
 import org.folio.circulation.support.http.client.IndividualResource;
@@ -56,7 +57,7 @@ public class RequestsAPIRetrievalTests extends APITests {
         .withEnumeration("enumeration1")
         .withChronology("chronology")
         .withVolume("vol.1")
-        .withCopyNumbers(asList(ONE_COPY_NUMBER, TWO_COPY_NUMBER)));
+        .withCopyNumber(ONE_COPY_NUMBER));
 
     final IndividualResource sponsor = usersFixture.rebecca(user -> user
       .withPatronGroupId(facultyGroupId));
@@ -145,10 +146,10 @@ public class RequestsAPIRetrievalTests extends APITests {
 
     assertThat(itemSummary.getString("status"), is(CHECKED_OUT));
 
-    assertThat(itemSummary.containsKey("copyNumbers"), is(true));
+    assertThat(itemSummary.containsKey("copyNumber"), is(true));
 
-    assertThat(itemSummary.getJsonArray("copyNumbers"),
-      contains(ONE_COPY_NUMBER, TWO_COPY_NUMBER));
+    assertThat(itemSummary.getString("copyNumber"),
+      is(ONE_COPY_NUMBER));
 
     assertThat("has information taken from requesting user",
       representation.containsKey("requester"), is(true));

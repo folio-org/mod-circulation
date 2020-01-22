@@ -583,7 +583,7 @@ public class ItemsInTransitReportTests extends APITests {
       StringUtils.EMPTY,
       "ItemPrefix",
       "ItemSuffix",
-      Collections.singletonList(""))
+      "")
       .withEnumeration("smallAngryPlanetEnumeration")
       .withVolume("smallAngryPlanetVolume")
       .withYearCaption(Collections.singletonList("2019"))

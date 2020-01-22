@@ -92,11 +92,7 @@ public class RequestRepresentation {
 
     write(itemSummary, "callNumber", item.getCallNumber());
     write(itemSummary, CALL_NUMBER_COMPONENTS, createCallNumberComponents(item.getCallNumberComponents()));
-
-    JsonArray copyNumbers = item.getCopyNumbers();
-    if (copyNumbers != null) {
-      itemSummary.put("copyNumbers", copyNumbers);
-    }
+    write(itemSummary, "copyNumber", item.getCopyNumber());
   }
 
   private static JsonObject locationSummary(Location location) {
