@@ -699,7 +699,7 @@ public class LoanPolicy extends Policy {
   }
 
   @Override
-  public boolean  isUnknown() {
+  public boolean isUnknown() {
     return this instanceof UnknownLoanPolicy;
   }
 

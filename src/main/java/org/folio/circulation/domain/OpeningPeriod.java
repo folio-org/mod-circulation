@@ -5,15 +5,10 @@ import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.LocalDate;
 import org.joda.time.LocalTime;
-import org.joda.time.format.DateTimeFormat;
-import org.joda.time.format.DateTimeFormatter;
 
 public class OpeningPeriod {
   private static final String OPENING_DAY_KEY = "openingDay";
   private static final String DATE_KEY = "date";
-  private static final String DATE_TIME_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSSZ";
-  private static final DateTimeFormatter DATE_TIME_FORMATTER =
-    DateTimeFormat.forPattern(DATE_TIME_FORMAT).withZoneUTC();
 
   private final OpeningDay openingDay;
   private final LocalDate date;
@@ -34,13 +29,12 @@ public class OpeningPeriod {
   public OpeningPeriod(JsonObject jsonObject) {
     this.openingDay = OpeningDay.fromJsonByDefaultKey(jsonObject);
     String dateProperty = jsonObject.getString(DATE_KEY);
-    this.date = LocalDate.parse(dateProperty, DATE_TIME_FORMATTER);
+    this.date = DateTime.parse(dateProperty).toLocalDate();
   }
 
   public JsonObject toJson() {
-    DateTime dateTime = date.toDateTime(LocalTime.MIDNIGHT, DateTimeZone.UTC);
     return new JsonObject()
       .put(OPENING_DAY_KEY, openingDay.toJson())
-      .put(DATE_KEY, DATE_TIME_FORMATTER.print(dateTime));
+      .put(DATE_KEY, date.toDateTime(LocalTime.MIDNIGHT, DateTimeZone.UTC).toString());
   }
 }
