@@ -11,6 +11,7 @@ import java.net.URL;
 
 import org.folio.circulation.support.InvalidOkapiLocationException;
 import org.folio.circulation.support.http.client.OkapiHttpClient;
+import org.folio.circulation.support.http.client.VertxWebClientOkapiHttpClient;
 
 import io.vertx.core.http.HttpClient;
 import io.vertx.ext.web.RoutingContext;
@@ -85,10 +86,8 @@ public class WebContext {
       throw new InvalidOkapiLocationException(getOkapiLocation(), e);
     }
 
-    return new OkapiHttpClient(httpClient,
+    return VertxWebClientOkapiHttpClient.createClientUsing(httpClient,
       okapiUrl, getTenantId(), getOkapiToken(), getUserId(),
-      getRequestId(), exception -> ServerErrorResponse.internalError(routingContext.response(),
-        String.format("Failed to contact storage module: %s",
-          exception.toString())));
+      getRequestId());
   }
 }

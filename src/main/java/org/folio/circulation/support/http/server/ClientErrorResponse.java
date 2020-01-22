@@ -21,9 +21,4 @@ public class ClientErrorResponse {
     response.putHeader("content-type", ContentType.TEXT_PLAIN.toString());
     response.end(reason);
   }
-
-  public static void forbidden(HttpServerResponse response) {
-    response.setStatusCode(403);
-    response.end();
-  }
 }

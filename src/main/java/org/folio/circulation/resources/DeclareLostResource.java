@@ -7,9 +7,6 @@ import static org.folio.circulation.support.ValidationErrorFailure.singleValidat
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 
-import io.vertx.core.http.HttpClient;
-import io.vertx.ext.web.Router;
-import io.vertx.ext.web.RoutingContext;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanRepository;
 import org.folio.circulation.domain.representations.DeclareItemLostRequest;
@@ -18,6 +15,10 @@ import org.folio.circulation.support.ItemRepository;
 import org.folio.circulation.support.NoContentResult;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.http.server.WebContext;
+
+import io.vertx.core.http.HttpClient;
+import io.vertx.ext.web.Router;
+import io.vertx.ext.web.RoutingContext;
 
 public class DeclareLostResource extends Resource {
   public DeclareLostResource(HttpClient client) {
@@ -82,8 +83,11 @@ public class DeclareLostResource extends Resource {
       if (loan == null || loan.getItem() == null) {
         return null;
       }
+
+      //TODO: What should happen if updating the item fails?
       return itemRepository.updateItem(loan.getItem())
-        .thenCompose(x -> loanRepository.updateLoan(loan));
+        .thenCompose(result -> result.after(
+          response -> loanRepository.updateLoan(loan)));
     });
   }
 }
