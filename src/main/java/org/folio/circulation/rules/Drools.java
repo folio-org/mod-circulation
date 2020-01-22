@@ -2,17 +2,25 @@ package org.folio.circulation.rules;
 
 import static org.folio.circulation.resources.AbstractCirculationRulesEngineResource.ITEM_TYPE_ID_NAME;
 import static org.folio.circulation.resources.AbstractCirculationRulesEngineResource.LOAN_TYPE_ID_NAME;
-import static org.folio.circulation.resources.AbstractCirculationRulesEngineResource.PATRON_TYPE_ID_NAME;
 import static org.folio.circulation.resources.AbstractCirculationRulesEngineResource.LOCATION_ID_NAME;
+import static org.folio.circulation.resources.AbstractCirculationRulesEngineResource.PATRON_TYPE_ID_NAME;
 import static org.folio.circulation.support.JsonPropertyWriter.write;
 
-import org.folio.circulation.domain.Location;
+import java.util.List;
+import java.util.stream.Collectors;
+
+import org.drools.core.definitions.rule.impl.RuleImpl;
+import org.drools.core.event.DefaultAgendaEventListener;
+import org.drools.core.rule.RuleConditionElement;
 import org.kie.api.KieServices;
 import org.kie.api.builder.KieBuilder;
 import org.kie.api.builder.KieFileSystem;
 import org.kie.api.builder.Message.Level;
+import org.kie.api.event.rule.AfterMatchFiredEvent;
 import org.kie.api.runtime.KieContainer;
 import org.kie.api.runtime.KieSession;
+
+import org.folio.circulation.domain.Location;
 
 import io.vertx.core.MultiMap;
 import io.vertx.core.json.JsonArray;
@@ -67,13 +75,20 @@ public class Drools {
    * Calculate the loan policy for itemTypeName and loanTypeName.
    * @param params request parameters
    * @param location - location with institution, library and campus
-   * @return the name of the loan policy
+   * @return CirculationRuleMatch object with the name of the loan policy and rule conditions
    */
-  public String loanPolicy(MultiMap params, Location location) {
+  public CirculationRuleMatch loanPolicy(MultiMap params, Location location) {
     KieSession kieSession = createSession(params, location);
+    RuleEventListener ruleEventListener = new RuleEventListener();
+    kieSession.addEventListener(ruleEventListener);
     kieSession.fireAllRules();
     kieSession.dispose();
-    return match.loanPolicyId;
+    List<String> appliedRuleConditions = ruleEventListener.getRuleConditions();
+
+    return new CirculationRuleMatch(match.loanPolicyId, new AppliedRuleConditions(
+      isRuleItemTypePresent(appliedRuleConditions),
+      isRuleLoanTypePresent(appliedRuleConditions),
+      isRulePatronGroupPresent(appliedRuleConditions)));
   }
 
   /**
@@ -92,6 +107,7 @@ public class Drools {
       JsonObject json = new JsonObject();
 
       write(json, "loanPolicyId", match.loanPolicyId);
+
       writeLineMatch(json);
 
       array.add(json);
@@ -105,13 +121,14 @@ public class Drools {
    * Calculate the request policy for itemTypeName and loanType.
    * @param params request params
    * @param location - location with institution, library and campus
-   * @return the name of the request policy
+   * @return CirculationRuleMatch object with the name of the loan policy and rule conditions
    */
-  public String requestPolicy(MultiMap params, Location location) {
+  public CirculationRuleMatch requestPolicy(MultiMap params, Location location) {
     KieSession kieSession = createSession(params, location);
     kieSession.fireAllRules();
     kieSession.dispose();
-    return match.requestPolicyId;
+    return new CirculationRuleMatch(match.requestPolicyId,
+      new AppliedRuleConditions(false, false, false));
   }
 
    /**
@@ -144,13 +161,14 @@ public class Drools {
    * Calculate the notice policy for itemTypeName and requestTypeName.
    * @param params request params
    * @param location - location with institution, library and campus
-   * @return the name of the notice policy
+   * @return CirculationRuleMatch object with the name of the loan policy and rule conditions
    */
-  public String noticePolicy(MultiMap params, Location location) {
+  public CirculationRuleMatch noticePolicy(MultiMap params, Location location) {
     KieSession kieSession = createSession(params, location);
     kieSession.fireAllRules();
     kieSession.dispose();
-    return match.noticePolicyId;
+    return new CirculationRuleMatch(match.noticePolicyId,
+      new AppliedRuleConditions(false, false, false));
   }
 
    /**
@@ -183,13 +201,14 @@ public class Drools {
    * Calculate the overdue fine policy for itemTypeName and requestTypeName.
    * @param params request params
    * @param location - location with institution, library and campus
-   * @return the name of the overdue fine policy
+   * @return CirculationRuleMatch object with the name of the loan policy and rule conditions
    */
-  public String overduePolicy(MultiMap params, Location location) {
+  public CirculationRuleMatch overduePolicy(MultiMap params, Location location) {
     KieSession kieSession = createSession(params, location);
     kieSession.fireAllRules();
     kieSession.dispose();
-    return match.overduePolicyId;
+    return new CirculationRuleMatch(match.overduePolicyId,
+      new AppliedRuleConditions(false, false, false));
   }
 
   /**
@@ -221,13 +240,14 @@ public class Drools {
    * Calculate the lost item fee policy for itemTypeName and requestTypeName.
    * @param params request params
    * @param location - location with institution, library and campus
-   * @return the name of the lost item fee fine policy
+   * @return CirculationRuleMatch object with the name of the loan policy and rule conditions
    */
-  public String lostItemPolicy(MultiMap params, Location location) {
+  public CirculationRuleMatch lostItemPolicy(MultiMap params, Location location) {
     KieSession kieSession = createSession(params, location);
     kieSession.fireAllRules();
     kieSession.dispose();
-    return match.lostItemPolicyId;
+    return new CirculationRuleMatch(match.lostItemPolicyId,
+      new AppliedRuleConditions(false, false, false));
   }
 
   /**
@@ -269,7 +289,7 @@ public class Drools {
    * @return loan policy
    */
   public static String loanPolicy(String droolsFile, MultiMap params, Location location) {
-    return new Drools(droolsFile).loanPolicy(params, location);
+    return new Drools(droolsFile).loanPolicy(params, location).getPolicyId();
   }
 
   /**
@@ -280,6 +300,44 @@ public class Drools {
    * @return request policy
    */
   static String requestPolicy(String droolsFile, MultiMap params, Location location) {
-    return new Drools(droolsFile).requestPolicy(params, location);
+    return new Drools(droolsFile).requestPolicy(params, location).getPolicyId();
+  }
+
+  private boolean isRuleItemTypePresent(List<String> conditions) {
+    return conditions.contains("ItemType");
+  }
+
+  private boolean isRuleLoanTypePresent(List<String> conditions) {
+    return conditions.contains("LoanType");
+  }
+
+  private boolean isRulePatronGroupPresent(List<String> conditions) {
+    return conditions.contains("PatronGroup");
+  }
+
+  private class RuleEventListener extends DefaultAgendaEventListener {
+
+    private List<RuleConditionElement> ruleConditionElements;
+
+    @Override
+    public void afterMatchFired(AfterMatchFiredEvent event) {
+      RuleImpl rule = (RuleImpl) event.getMatch().getRule();
+      ruleConditionElements = rule.getLhs().getChildren();
+    }
+
+    public List<String> getRuleConditions() {
+
+      return ruleConditionElements.stream()
+        .map(Object::toString)
+        .map(this::getRuleConditionFromStringRuleRepresentation)
+        .collect(Collectors.toList());
+    }
+
+    private String getRuleConditionFromStringRuleRepresentation(String stringRepresentation) {
+      int endIndex = stringRepresentation.indexOf(']');
+      int startIndex = stringRepresentation.lastIndexOf('.') + 1;
+
+      return stringRepresentation.substring(startIndex, endIndex);
+    }
   }
 }
