@@ -7,7 +7,6 @@ import org.apache.http.HttpHeaders;
 
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.CaseInsensitiveHeaders;
-import io.vertx.core.http.HttpClientResponse;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.client.HttpResponse;
 
@@ -41,23 +40,6 @@ public class Response {
       headers.get(HttpHeaders.CONTENT_TYPE), headers, url);
   }
 
-  public static Response from(HttpClientResponse response, Buffer body) {
-    return from(response, body, null);
-  }
-
-  public static Response from(HttpClientResponse response, Buffer body,
-    String fromUrl) {
-
-    final CaseInsensitiveHeaders headers = new CaseInsensitiveHeaders();
-
-    headers.addAll(response.headers());
-
-    return new Response(response.statusCode(),
-      BufferHelper.stringFromBuffer(body),
-      convertNullToEmpty(response.getHeader(io.vertx.core.http.HttpHeaders.CONTENT_TYPE)),
-      headers, fromUrl);
-  }
-
   public boolean hasBody() {
     return StringUtils.isNotBlank(getBody());
   }
@@ -81,10 +63,6 @@ public class Response {
 
   public String getContentType() {
     return contentType;
-  }
-
-  private static String convertNullToEmpty(String text) {
-    return text != null ? text : "";
   }
 
   String getHeader(String name) {

@@ -25,7 +25,7 @@ import java.util.Objects;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.ValidationErrorFailure;
-import org.folio.circulation.support.http.client.VertxWebClientOkapiHttpClient;
+import org.folio.circulation.support.http.client.OkapiHttpClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -382,19 +382,13 @@ public class FakeOkapi extends AbstractVerticle {
   private void forwardApplyingCirculationRulesRequest(RoutingContext context,
     String policyNamePartialPath) {
 
-    VertxWebClientOkapiHttpClient client = createWebClient();
+    OkapiHttpClient client = createWebClient();
 
     client.get(String.format("http://localhost:%s/circulation/rules/%s?%s",
       circulationModulePort(), policyNamePartialPath, context.request().query()))
-      .thenAccept(result -> {
-        //TODO: Replace with better construct for applying a side effect
-        if (result.succeeded()) {
-          forward(context.response(), result.value());
-        }
-        else {
-          result.cause().writeTo(context.response());
-        }
-      });
+      .thenAccept(result -> result.applySideEffect(
+        response -> forward(context.response(), response),
+        cause -> cause.writeTo(context.response())));
   }
 
   @Override

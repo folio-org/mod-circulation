@@ -116,7 +116,7 @@ public class ItemRepository {
       location.getPrimaryServicePointId());
   }
 
-  public CompletableFuture<Response> updateItem(Item item) {
+  public CompletableFuture<Result<Response>> updateItem(Item item) {
     if (item == null) {
       return completedFuture(null);
     }

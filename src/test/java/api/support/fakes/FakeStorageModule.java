@@ -1,6 +1,7 @@
 package api.support.fakes;
 
 import static java.lang.String.format;
+import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 import static org.folio.circulation.support.results.CommonFailures.failedDueToServerError;
 
@@ -461,18 +462,24 @@ public class FakeStorageModule extends AbstractVerticle {
   private void checkTokenHeader(RoutingContext routingContext) {
     WebContext context = new WebContext(routingContext);
 
-    if(StringUtils.isBlank(context.getOkapiToken())) {
-      ClientErrorResponse.forbidden(routingContext.response());
+    if(isBlank(context.getOkapiToken())) {
+      forbidden(routingContext);
     }
     else {
       routingContext.next();
     }
   }
 
+  private void forbidden(RoutingContext routingContext) {
+    HttpServerResponse response = routingContext.response();
+    response.setStatusCode(403);
+    response.end();
+  }
+
   private void checkRequestIdHeader(RoutingContext routingContext) {
     WebContext context = new WebContext(routingContext);
 
-    if(StringUtils.isBlank(context.getRequestId())) {
+    if(isBlank(context.getRequestId())) {
       ClientErrorResponse.badRequest(routingContext.response(),
         "Request ID is expected for all requests during tests");
     }
