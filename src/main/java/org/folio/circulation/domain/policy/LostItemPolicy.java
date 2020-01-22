@@ -25,6 +25,10 @@ public class LostItemPolicy extends Policy {
     return new UnknownLostItemPolicy(id);
   }
 
+  public boolean isUnknown() {
+    return this instanceof UnknownLostItemPolicy;
+  }
+
   private static class UnknownLostItemPolicy extends LostItemPolicy {
     UnknownLostItemPolicy(String id) {
       super(id);

@@ -5,7 +5,8 @@ import io.vertx.core.json.JsonObject;
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.folio.circulation.support.JsonPropertyFetcher.*;
+import static org.folio.circulation.support.JsonPropertyFetcher.getBooleanProperty;
+import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
 
 public class OverdueFinePolicy extends Policy {
   public enum OverdueFineInterval {
@@ -80,7 +81,7 @@ public class OverdueFinePolicy extends Policy {
     return overdueFine;
   }
 
-  public void setOverdueFine(Double overdueFine) {
+  private void setOverdueFine(Double overdueFine) {
     this.overdueFine = overdueFine;
   }
 
@@ -88,7 +89,7 @@ public class OverdueFinePolicy extends Policy {
     return overdueFineInterval;
   }
 
-  public void setOverdueFineInterval(OverdueFineInterval overdueFineInterval) {
+  private void setOverdueFineInterval(OverdueFineInterval overdueFineInterval) {
     this.overdueFineInterval = overdueFineInterval;
   }
 
@@ -96,7 +97,7 @@ public class OverdueFinePolicy extends Policy {
     return maxOverdueFine;
   }
 
-  public void setMaxOverdueFine(Double maxOverdueFine) {
+  private void setMaxOverdueFine(Double maxOverdueFine) {
     this.maxOverdueFine = maxOverdueFine;
   }
 
@@ -104,7 +105,7 @@ public class OverdueFinePolicy extends Policy {
     return maxOverdueRecallFine;
   }
 
-  public void setMaxOverdueRecallFine(Double maxOverdueRecallFine) {
+  private void setMaxOverdueRecallFine(Double maxOverdueRecallFine) {
     this.maxOverdueRecallFine = maxOverdueRecallFine;
   }
 
@@ -125,5 +126,10 @@ public class OverdueFinePolicy extends Policy {
     UnknownOverdueFinePolicy(String id) {
       super(id);
     }
+  }
+
+  @Override
+  public boolean isUnknown() {
+    return false;
   }
 }

@@ -10,10 +10,9 @@ import static org.folio.circulation.domain.representations.HoldingsProperties.CO
 import static org.folio.circulation.domain.representations.InstanceProperties.CONTRIBUTORS;
 import static org.folio.circulation.domain.representations.ItemProperties.EFFECTIVE_LOCATION_ID;
 import static org.folio.circulation.domain.representations.ItemProperties.IN_TRANSIT_DESTINATION_SERVICE_POINT_ID;
-import static org.folio.circulation.domain.representations.ItemProperties.ITEM_COPY_NUMBERS_ID;
+import static org.folio.circulation.domain.representations.ItemProperties.ITEM_COPY_NUMBER_ID;
 import static org.folio.circulation.domain.representations.ItemProperties.TITLE_PROPERTY;
 import static org.folio.circulation.support.JsonArrayHelper.mapToList;
-import static org.folio.circulation.support.JsonPropertyFetcher.getArrayProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getNestedStringProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
 import static org.folio.circulation.support.JsonPropertyWriter.remove;
@@ -25,6 +24,7 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.domain.representations.ItemProperties;
 import org.folio.circulation.support.JsonArrayHelper;
 
@@ -208,15 +208,11 @@ public class Item {
     return getProperty(materialTypeRepresentation, "name");
   }
 
-  public JsonArray getCopyNumbers() {
-    return getEffectiveCopyNumbers(getArrayProperty(getItem(), ITEM_COPY_NUMBERS_ID));
-  }
-
-  private JsonArray getEffectiveCopyNumbers(JsonArray copyNumbers) {
-    if (copyNumbers == null || copyNumbers.isEmpty()) {
-      return new JsonArray().add(getProperty(holdingRepresentation, COPY_NUMBER_ID));
-    }
-    return copyNumbers;
+  public String getCopyNumber() {
+    return StringUtils.firstNonBlank(
+      getProperty(getItem(), ITEM_COPY_NUMBER_ID),
+      getProperty(holdingRepresentation, COPY_NUMBER_ID)
+    );
   }
 
   public String getMaterialTypeId() {

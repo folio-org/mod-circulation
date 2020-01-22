@@ -58,6 +58,7 @@ public class LoanPolicy extends Policy {
   private static final String INTERVAL_ID = "intervalId";
   private static final String DURATION = "duration";
   private static final String ALTERNATE_CHECKOUT_LOAN_PERIOD_KEY = "alternateCheckoutLoanPeriod";
+  private static final String GRACE_PERIOD_KEY = "gracePeriod";
 
   private static final String KEY_ERROR_TEXT = "the \"%s\" in the holds is not recognized";
   private static final String INTERVAL_ERROR_TEXT = "the interval \"%s\" in \"%s\" is not recognized";
@@ -547,6 +548,14 @@ public class LoanPolicy extends Policy {
     return getDuration("openingTimeOffset");
   }
 
+  public int getGracePeriodDuration() {
+    return getDuration(GRACE_PERIOD_KEY);
+  }
+
+  public LoanPolicyPeriod getGracePeriodInterval() {
+    return getPeriod(GRACE_PERIOD_KEY);
+  }
+
   public LoanPolicyPeriod getOffsetPeriodInterval() {
     return getPeriod("openingTimeOffset");
   }
@@ -687,6 +696,11 @@ public class LoanPolicy extends Policy {
     }
 
     return Collections.emptyList();
+  }
+
+  @Override
+  public boolean isUnknown() {
+    return this instanceof UnknownLoanPolicy;
   }
 
   //TODO: Improve this to be a proper null object

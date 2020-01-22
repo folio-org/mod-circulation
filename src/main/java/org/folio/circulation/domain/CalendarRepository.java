@@ -1,9 +1,13 @@
 package org.folio.circulation.domain;
 
+import static java.util.function.Function.identity;
 import static org.folio.circulation.domain.OpeningDay.createClosedDay;
+import static org.folio.circulation.domain.OpeningDay.fromJsonByDefaultKey;
+import static org.folio.circulation.support.ResultBinding.flatMapResult;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.AdjacentOpeningDays;
@@ -11,7 +15,9 @@ import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.FetchSingleRecord;
 import org.folio.circulation.support.Result;
+import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.server.ValidationError;
+import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
 
 import io.vertx.core.json.JsonArray;
@@ -19,10 +25,10 @@ import io.vertx.core.json.JsonObject;
 
 public class CalendarRepository {
 
-  private static final String RECORD_NAME = "openingPeriods";
-  private static final String OPENING_DAY = "openingDay";
+  private static final String OPENING_PERIODS = "openingPeriods";
   private static final String OPENING_DAYS = "openingDays";
   private static final String PATH_PARAM_WITH_QUERY = "%s/calculateopening?requestedDate=%s";
+  private static final String PERIODS_QUERY_PARAMS = "servicePointId=%s&startDate=%s&endDate=%s&includeClosedDays=%s";
 
   private final CollectionResourceClient calendarClient;
 
@@ -30,20 +36,34 @@ public class CalendarRepository {
     this.calendarClient = clients.calendarStorageClient();
   }
 
-
   public CompletableFuture<Result<AdjacentOpeningDays>> lookupOpeningDays(LocalDate requestedDate, String servicePointId) {
     String path = String.format(PATH_PARAM_WITH_QUERY, servicePointId, requestedDate);
 
     //TODO: Validation error should have parameters
-    return FetchSingleRecord.<AdjacentOpeningDays>forRecord(RECORD_NAME)
+    return FetchSingleRecord.<AdjacentOpeningDays>forRecord(OPENING_PERIODS)
       .using(calendarClient)
-      .mapTo(this::createOpeningDays)
+      .mapTo(this::convertToOpeningDays)
       .whenNotFound(failedValidation(
         new ValidationError("Calendar open periods are not found", Collections.emptyMap())))
       .fetch(path);
   }
 
-  private AdjacentOpeningDays createOpeningDays(JsonObject jsonObject) {
+  public CompletableFuture<Result<List<OpeningPeriod>>> fetchOpeningPeriodsBetweenDates(
+    String servicePointId, DateTime startDate, DateTime endDate, boolean includeClosedDays) {
+
+    String params = String.format(PERIODS_QUERY_PARAMS,
+      servicePointId, startDate.toLocalDate(), endDate.toLocalDate(), includeClosedDays);
+
+    return calendarClient.getManyWithRawQueryStringParameters(params)
+      .thenApply(flatMapResult(this::convertToOpeningPeriods));
+  }
+
+  private Result<List<OpeningPeriod>> convertToOpeningPeriods(Response response) {
+    return MultipleRecords.from(response, OpeningPeriod::new, OPENING_PERIODS)
+      .next(r -> Result.succeeded(r.toKeys(identity())));
+  }
+
+  private AdjacentOpeningDays convertToOpeningDays(JsonObject jsonObject) {
     if (jsonObject.isEmpty()) {
       return buildClosedOpeningDays();
     }
@@ -51,9 +71,9 @@ public class CalendarRepository {
     if (openingDaysJson.isEmpty()) {
       return buildClosedOpeningDays();
     }
-    OpeningDay previousDate = new OpeningDay(openingDaysJson.getJsonObject(0), OPENING_DAY);
-    OpeningDay requestedDate = new OpeningDay(openingDaysJson.getJsonObject(1), OPENING_DAY);
-    OpeningDay nextDate = new OpeningDay(openingDaysJson.getJsonObject(2), OPENING_DAY);
+    OpeningDay previousDate = fromJsonByDefaultKey(openingDaysJson.getJsonObject(0));
+    OpeningDay requestedDate = fromJsonByDefaultKey(openingDaysJson.getJsonObject(1));
+    OpeningDay nextDate = fromJsonByDefaultKey(openingDaysJson.getJsonObject(2));
 
     return new AdjacentOpeningDays(previousDate, requestedDate, nextDate);
   }

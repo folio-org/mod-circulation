@@ -4,7 +4,7 @@
   "provides": [
     {
       "id": "requests-reports",
-      "version": "0.5",
+      "version": "0.6",
       "handlers": [
         {
           "methods": [
@@ -58,7 +58,7 @@
     },
     {
       "id": "request-move",
-      "version": "0.5",
+      "version": "0.6",
       "handlers": [
         {
           "methods": [
@@ -124,7 +124,7 @@
     },
     {
       "id": "circulation",
-      "version": "8.6",
+      "version": "9.0",
       "handlers": [
         {
           "methods": [
@@ -760,7 +760,7 @@
     },
     {
       "id": "item-storage",
-      "version": "7.8"
+      "version": "8.0"
     },
     {
       "id": "instance-storage",
