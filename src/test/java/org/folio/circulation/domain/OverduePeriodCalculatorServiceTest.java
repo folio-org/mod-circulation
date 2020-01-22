@@ -337,9 +337,10 @@ public class OverduePeriodCalculatorServiceTest {
     int expectedOverdueMinutes = 10;
     DateTime systemTime = DateTime.now(DateTimeZone.UTC);
     LoanPolicy loanPolicy = createLoanPolicy(1, interval);
-    OverdueFinePolicy overdueFinePolicy = createOverdueFinePolicy(false, true);
+    OverdueFinePolicy overdueFinePolicy = createOverdueFinePolicy(true, true);
     Loan loan =  new LoanBuilder()
       .withDueDate(systemTime.minusMinutes(dueDateOffsetMinutes + expectedOverdueMinutes))
+      .withDueDateChangedByRecall(false)
       .asDomainObject()
       .withLoanPolicy(loanPolicy)
       .withOverdueFinePolicy(overdueFinePolicy);
