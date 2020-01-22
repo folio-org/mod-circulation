@@ -77,7 +77,7 @@ public class LoanRepository {
       .otherwise(forwardOnFailure());
 
     return loansStorageClient.post(storageLoan)
-      .thenApply(interpreter::apply)
+      .thenApply(interpreter::flatMap)
       .thenApply(mapResult(loanAndRelatedRecords::withLoan));
   }
 
@@ -96,7 +96,7 @@ public class LoanRepository {
     JsonObject storageLoan = mapToStorageRepresentation(loan, loan.getItem());
 
     return loansStorageClient.put(loan.getId(), storageLoan)
-      .thenApply(noContentRecordInterpreter(loan)::apply)
+      .thenApply(noContentRecordInterpreter(loan)::flatMap)
       .thenComposeAsync(r -> r.after(this::refreshLoanRepresentation));
   }
 
@@ -339,4 +339,15 @@ public class LoanRepository {
       .withLoan(loanMap.getOrDefault(request.getItemId(), null));
   }
 
+  public CompletableFuture<Result<MultipleRecords<Loan>>> findOpenLoansByUserIdWithItem(
+    PageLimit loansLimit, LoanAndRelatedRecords loanAndRelatedRecords) {
+    String userId = loanAndRelatedRecords.getLoan().getUser().getId();
+    final Result<CqlQuery> statusQuery = getStatusCQLQuery("Open");
+    final Result<CqlQuery> userIdQuery = exactMatch("userId", userId);
+    Result<CqlQuery> cqlQueryResult = statusQuery
+      .combine(userIdQuery, CqlQuery::and);
+
+    return queryLoanStorage(cqlQueryResult, loansLimit)
+      .thenComposeAsync(loans -> itemRepository.fetchItemsFor(loans, Loan::withItem));
+  }
 }

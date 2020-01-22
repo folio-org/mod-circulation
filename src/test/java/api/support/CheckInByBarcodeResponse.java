@@ -1,5 +1,6 @@
 package api.support;
 
+import static org.folio.circulation.support.JsonPropertyFetcher.getBooleanProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getObjectProperty;
 
 import org.folio.circulation.support.http.client.IndividualResource;
@@ -22,5 +23,9 @@ public class CheckInByBarcodeResponse extends IndividualResource {
 
   public JsonObject getStaffSlipContext() {
     return getObjectProperty(getJson(), "staffSlipContext");
+  }
+
+  public boolean getInHouseUse() {
+    return getBooleanProperty(getJson(), "inHouseUse");
   }
 }

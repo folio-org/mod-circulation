@@ -4,6 +4,7 @@ import io.vertx.core.json.JsonObject;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.domain.MultipleRecords;
+import org.folio.circulation.rules.AppliedRuleConditions;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.FetchSingleRecord;
 import org.folio.circulation.support.MultipleRecordFetcher;
@@ -41,7 +42,9 @@ public class OverdueFinePolicyRepository extends CirculationPolicyRepository<Ove
   }
 
   @Override
-  protected Result<OverdueFinePolicy> toPolicy(JsonObject representation) {
+  protected Result<OverdueFinePolicy> toPolicy(
+    JsonObject representation, AppliedRuleConditions ruleConditionsEntity) {
+
     return succeeded(OverdueFinePolicy.from((representation)));
   }
 

@@ -28,6 +28,7 @@ import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestQueue;
 import org.folio.circulation.domain.RequestStatus;
 import org.folio.circulation.domain.RequestType;
+import org.folio.circulation.rules.AppliedRuleConditions;
 import org.folio.circulation.support.ClockManager;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.ServerErrorFailure;
@@ -66,6 +67,7 @@ public class LoanPolicy extends Policy {
   private final JsonObject representation;
   private final FixedDueDateSchedules fixedDueDateSchedules;
   private final FixedDueDateSchedules alternateRenewalFixedDueDateSchedules;
+  private AppliedRuleConditions ruleConditionsEntity;
 
   private LoanPolicy(JsonObject representation) {
     this(representation,
@@ -81,6 +83,19 @@ public class LoanPolicy extends Policy {
     this.representation = representation;
     this.fixedDueDateSchedules = fixedDueDateSchedules;
     this.alternateRenewalFixedDueDateSchedules = alternateRenewalFixedDueDateSchedules;
+  }
+
+  LoanPolicy(
+    JsonObject representation,
+    FixedDueDateSchedules fixedDueDateSchedules,
+    FixedDueDateSchedules alternateRenewalFixedDueDateSchedules,
+    AppliedRuleConditions ruleConditionsEntity) {
+
+    super(getProperty(representation, "id"), getProperty(representation, "name"));
+    this.representation = representation;
+    this.fixedDueDateSchedules = fixedDueDateSchedules;
+    this.alternateRenewalFixedDueDateSchedules = alternateRenewalFixedDueDateSchedules;
+    this.ruleConditionsEntity = ruleConditionsEntity;
   }
 
   public static LoanPolicy from(JsonObject representation) {
@@ -694,5 +709,17 @@ public class LoanPolicy extends Policy {
     UnknownLoanPolicy(String id) {
       super(new JsonObject().put("id", id));
     }
+  }
+
+  public Integer getItemLimit() {
+    final JsonObject loansPolicy = getLoansPolicy();
+    if (loansPolicy == null) {
+      return null;
+    }
+    return getLoansPolicy().getInteger("itemLimit");
+  }
+
+  public AppliedRuleConditions getRuleConditions() {
+    return ruleConditionsEntity;
   }
 }

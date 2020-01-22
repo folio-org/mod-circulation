@@ -75,10 +75,10 @@ public class Clients {
       loanTypesStorageClient = createLoanTypesStorageClient(client, context);
       proxiesForClient = createProxyUsersStorageClient(client, context);
       circulationLoanRulesClient = createCirculationLoanRulesClient(client, context);
-      circulationOverdueFinesRulesClient = createCirculationOverdueFinesRulesClient(client, context);
-      circulationLostItemRulesClient = createCirculationLostItemRulesClient(client, context);
       circulationRequestRulesClient = createCirculationRequestRulesClient(client, context);
       circulationNoticeRulesClient = createCirculationNoticeRulesClient(client, context);
+      circulationOverdueFinesRulesClient = createCirculationOverdueFinesRulesClient(client, context);
+      circulationLostItemRulesClient = createCirculationLostItemRulesClient(client, context);
       circulationRulesStorageClient = createCirculationRulesStorageClient(client, context);
       loanPoliciesStorageClient = createLoanPoliciesStorageClient(client, context);
       requestPoliciesStorageClient = createRequestPoliciesStorageClient(client, context);
@@ -90,11 +90,11 @@ public class Clients {
       patronNoticeClient = createPatronNoticeClient(client, context);
       configurationStorageClient = createConfigurationStorageClient(client, context);
       scheduledNoticesStorageClient = createScheduledNoticesStorageClient(client, context);
-      accountsStorageClient = createAccountsStorageClient(client,context);
-      feeFineActionsStorageClient = createFeeFineActionsStorageClient(client,context);
-      patronActionSessionsStorageClient = createPatronActionSessionsStorageClient(client,context);
-      patronExpiredSessionsStorageClient = createPatronExpiredSessionsStorageClient(client,context);
-      userManualBlocksStorageClient = createUserManualBlocksStorageClient(client,context);
+      accountsStorageClient = createAccountsStorageClient(client, context);
+      feeFineActionsStorageClient = createFeeFineActionsStorageClient(client, context);
+      patronActionSessionsStorageClient = createPatronActionSessionsStorageClient(client, context);
+      patronExpiredSessionsStorageClient = createPatronExpiredSessionsStorageClient(client, context);
+      userManualBlocksStorageClient = createUserManualBlocksStorageClient(client, context);
     }
     catch(MalformedURLException e) {
       throw new InvalidOkapiLocationException(context.getOkapiLocation(), e);
@@ -113,7 +113,9 @@ public class Clients {
     return cancellationReasonStorageClient;
   }
 
-  public CollectionResourceClient requestPoliciesStorage() { return requestPoliciesStorageClient; }
+  public CollectionResourceClient requestPoliciesStorage() {
+    return requestPoliciesStorageClient;
+  }
 
   public CollectionResourceClient itemsStorage() {
     return itemsStorageClient;
@@ -260,8 +262,7 @@ public class Clients {
   }
 
   private static CollectionResourceClient getCollectionResourceClient(
-    OkapiHttpClient client,
-    WebContext context,
+    OkapiHttpClient client, WebContext context,
     String path)
     throws MalformedURLException {
 
@@ -269,183 +270,175 @@ public class Clients {
   }
 
   private static CirculationRulesClient createCirculationLoanRulesClient(
-    OkapiHttpClient client,
-    WebContext context)
+    OkapiHttpClient client, WebContext context)
     throws MalformedURLException {
 
-    return new CirculationRulesClient(client, context, "/circulation/rules/loan-policy");
+    return new CirculationRulesClient(client, context,
+      "/circulation/rules/loan-policy");
   }
 
   private static CirculationRulesClient createCirculationOverdueFinesRulesClient(
-          OkapiHttpClient client,
-          WebContext context)
-          throws MalformedURLException {
+    OkapiHttpClient client, WebContext context)
+    throws MalformedURLException {
 
-    return new CirculationRulesClient(client, context, "/circulation/rules/overdue-fine-policy");
+    return new CirculationRulesClient(client, context,
+      "/circulation/rules/overdue-fine-policy");
   }
 
   private static CirculationRulesClient createCirculationLostItemRulesClient(
-          OkapiHttpClient client,
-          WebContext context)
-          throws MalformedURLException {
+    OkapiHttpClient client, WebContext context)
+    throws MalformedURLException {
 
-    return new CirculationRulesClient(client, context, "/circulation/rules/lost-item-policy");
+    return new CirculationRulesClient(client, context,
+      "/circulation/rules/lost-item-policy");
   }
 
   private static CirculationRulesClient createCirculationRequestRulesClient(
-    OkapiHttpClient client,
-    WebContext context)
+    OkapiHttpClient client, WebContext context)
     throws MalformedURLException {
 
-    return new CirculationRulesClient(client, context, "/circulation/rules/request-policy");
+    return new CirculationRulesClient(client, context,
+      "/circulation/rules/request-policy");
   }
 
   private static CirculationRulesClient createCirculationNoticeRulesClient(
-    OkapiHttpClient client,
-    WebContext context)
+    OkapiHttpClient client, WebContext context)
     throws MalformedURLException {
 
-    return new CirculationRulesClient(client, context, "/circulation/rules/notice-policy");
+    return new CirculationRulesClient(client, context,
+      "/circulation/rules/notice-policy");
   }
 
   private static CollectionResourceClient createRequestsStorageClient(
-    OkapiHttpClient client,
-    WebContext context)
+    OkapiHttpClient client, WebContext context)
     throws MalformedURLException {
 
-    return getCollectionResourceClient(client, context, "/request-storage/requests");
+    return getCollectionResourceClient(client, context,
+      "/request-storage/requests");
   }
 
   private static CollectionResourceClient createRequestsBatchStorageClient(
-    OkapiHttpClient client, WebContext context) throws MalformedURLException {
+    OkapiHttpClient client, WebContext context)
+    throws MalformedURLException {
 
-    return getCollectionResourceClient(client, context, "/request-storage-batch/requests");
+    return getCollectionResourceClient(client, context,
+      "/request-storage-batch/requests");
   }
 
   private static CollectionResourceClient createCancellationReasonStorageClient(
-    OkapiHttpClient client,
-    WebContext context)
+    OkapiHttpClient client, WebContext context)
     throws MalformedURLException {
 
-    return getCollectionResourceClient(client, context, "/cancellation-reason-storage/cancellation-reasons");
+    return getCollectionResourceClient(client, context,
+      "/cancellation-reason-storage/cancellation-reasons");
   }
 
   private static CollectionResourceClient createItemsStorageClient(
-    OkapiHttpClient client,
-    WebContext context)
+    OkapiHttpClient client, WebContext context)
     throws MalformedURLException {
 
     return getCollectionResourceClient(client, context, "/item-storage/items");
   }
 
   private static CollectionResourceClient createHoldingsStorageClient(
-    OkapiHttpClient client,
-    WebContext context)
+    OkapiHttpClient client, WebContext context)
     throws MalformedURLException {
 
-    return new CollectionResourceClient(
-      client, context.getOkapiBasedUrl("/holdings-storage/holdings"));
+    return getCollectionResourceClient(client, context,
+      "/holdings-storage/holdings");
   }
 
   private static CollectionResourceClient createInstanceStorageClient(
-    OkapiHttpClient client,
-    WebContext context)
+    OkapiHttpClient client, WebContext context)
     throws MalformedURLException {
 
-    return new CollectionResourceClient(
-      client, context.getOkapiBasedUrl("/instance-storage/instances"));
+    return getCollectionResourceClient(client, context,
+      "/instance-storage/instances");
   }
 
   private static CollectionResourceClient createUsersStorageClient(
-    OkapiHttpClient client,
-    WebContext context)
+    OkapiHttpClient client, WebContext context)
     throws MalformedURLException {
 
     return getCollectionResourceClient(client, context, "/users");
   }
 
   private static CollectionResourceClient createAddressTypesStorageClient(
-    OkapiHttpClient client,
-    WebContext context)
+    OkapiHttpClient client, WebContext context)
     throws MalformedURLException {
+
     return getCollectionResourceClient(client, context, "/addresstypes");
   }
 
   private static CollectionResourceClient createLoansStorageClient(
-    OkapiHttpClient client,
-    WebContext context)
+    OkapiHttpClient client, WebContext context)
     throws MalformedURLException {
 
     return getCollectionResourceClient(client, context, "/loan-storage/loans");
   }
 
   private static CollectionResourceClient createAnonymizeStorageLoansClient(
-    OkapiHttpClient client,
-    WebContext context)
+    OkapiHttpClient client, WebContext context)
     throws MalformedURLException {
 
-    return getCollectionResourceClient(client, context, "/anonymize-storage-loans");
+    return getCollectionResourceClient(client, context,
+      "/anonymize-storage-loans");
   }
 
   private static CollectionResourceClient createLocationsStorageClient(
-    OkapiHttpClient client,
-    WebContext context)
+    OkapiHttpClient client, WebContext context)
     throws MalformedURLException {
 
     return getCollectionResourceClient(client, context, "/locations");
   }
 
   private static CollectionResourceClient createInstitutionsStorageClient(
-    OkapiHttpClient client,
-    WebContext context)
+    OkapiHttpClient client, WebContext context)
     throws MalformedURLException {
 
-    return getCollectionResourceClient(client, context, "/location-units/institutions");
+    return getCollectionResourceClient(client, context,
+      "/location-units/institutions");
   }
 
   private static CollectionResourceClient createCampusesStorageClient(
-    OkapiHttpClient client,
-    WebContext context)
+    OkapiHttpClient client, WebContext context)
     throws MalformedURLException {
 
-    return getCollectionResourceClient(client, context, "/location-units/campuses");
+    return getCollectionResourceClient(client, context,
+      "/location-units/campuses");
   }
 
   private static CollectionResourceClient createLibrariesStorageClient(
-    OkapiHttpClient client,
-    WebContext context)
+    OkapiHttpClient client, WebContext context)
     throws MalformedURLException {
 
-    return getCollectionResourceClient(client, context, "/location-units/libraries");
+    return getCollectionResourceClient(client, context,
+      "/location-units/libraries");
   }
 
   private CollectionResourceClient createProxyUsersStorageClient(
-    OkapiHttpClient client,
-    WebContext context)
+    OkapiHttpClient client, WebContext context)
     throws MalformedURLException {
 
     return getCollectionResourceClient(client, context, "/proxiesfor");
   }
 
   private CollectionResourceClient createMaterialTypesStorageClient(
-    OkapiHttpClient client,
-    WebContext context)
+    OkapiHttpClient client, WebContext context)
     throws MalformedURLException {
 
     return getCollectionResourceClient(client, context, "/material-types");
   }
 
   private CollectionResourceClient createLoanTypesStorageClient(
-    OkapiHttpClient client,
-    WebContext context)
+    OkapiHttpClient client, WebContext context)
     throws MalformedURLException {
 
     return getCollectionResourceClient(client, context, "/loan-types");
   }
 
   private CollectionResourceClient createLoanPoliciesStorageClient(
-    OkapiHttpClient client,
-    WebContext context)
+    OkapiHttpClient client, WebContext context)
     throws MalformedURLException {
 
     return getCollectionResourceClient(client, context,
@@ -453,26 +446,23 @@ public class Clients {
   }
 
   private CollectionResourceClient createOverdueFinesPoliciesStorageClient(
-          OkapiHttpClient client,
-          WebContext context)
-          throws MalformedURLException {
+    OkapiHttpClient client, WebContext context)
+    throws MalformedURLException {
 
     return getCollectionResourceClient(client, context,
             "/overdue-fines-policies");
   }
 
   private CollectionResourceClient createLostItemPoliciesStorageClient(
-          OkapiHttpClient client,
-          WebContext context)
-          throws MalformedURLException {
+    OkapiHttpClient client, WebContext context)
+    throws MalformedURLException {
 
     return getCollectionResourceClient(client, context,
             "/lost-item-fees-policies");
   }
 
   private CollectionResourceClient createRequestPoliciesStorageClient(
-    OkapiHttpClient client,
-    WebContext context)
+    OkapiHttpClient client, WebContext context)
     throws MalformedURLException {
 
     return getCollectionResourceClient(client, context,
@@ -480,8 +470,7 @@ public class Clients {
   }
 
   private CollectionResourceClient createFixedDueDateSchedulesStorageClient(
-    OkapiHttpClient client,
-    WebContext context)
+    OkapiHttpClient client, WebContext context)
     throws MalformedURLException {
 
     return getCollectionResourceClient(client, context,
@@ -490,8 +479,7 @@ public class Clients {
 
 
   private CollectionResourceClient createCirculationRulesStorageClient(
-    OkapiHttpClient client,
-    WebContext context)
+    OkapiHttpClient client, WebContext context)
     throws MalformedURLException {
 
     return getCollectionResourceClient(client, context,
@@ -499,86 +487,88 @@ public class Clients {
   }
 
   private CollectionResourceClient createServicePointsStorageClient(
-      OkapiHttpClient client,
-      WebContext context)
+    OkapiHttpClient client, WebContext context)
       throws MalformedURLException {
+
     return getCollectionResourceClient(client, context, "/service-points");
   }
 
   private CollectionResourceClient createPatronGroupsStorageClient(
-      OkapiHttpClient client,
-      WebContext context)
+    OkapiHttpClient client, WebContext context)
       throws MalformedURLException {
+
     return getCollectionResourceClient(client, context, "/groups");
   }
 
   private CollectionResourceClient createCalendarStorageClient(
-    OkapiHttpClient client,
-    WebContext context)
+    OkapiHttpClient client, WebContext context)
     throws MalformedURLException {
+
     return getCollectionResourceClient(client, context, "/calendar/periods");
   }
 
   private CollectionResourceClient createPatronNoticePolicesStorageClient(
-    OkapiHttpClient client,
-    WebContext context)
+    OkapiHttpClient client, WebContext context)
     throws MalformedURLException {
+
     return getCollectionResourceClient(client, context,
       "/patron-notice-policy-storage/patron-notice-policies");
   }
 
   private CollectionResourceClient createPatronNoticeClient(
-    OkapiHttpClient client,
-    WebContext context)
+    OkapiHttpClient client, WebContext context)
     throws MalformedURLException {
+
     return getCollectionResourceClient(client, context, "/patron-notice");
   }
 
-
   private CollectionResourceClient createConfigurationStorageClient(
-    OkapiHttpClient client,
-    WebContext context)
+    OkapiHttpClient client, WebContext context)
     throws MalformedURLException {
-    return getCollectionResourceClient(client, context, "/configurations/entries");
+
+    return getCollectionResourceClient(client, context,
+      "/configurations/entries");
   }
 
   private CollectionResourceClient createScheduledNoticesStorageClient(
-    OkapiHttpClient client,
-    WebContext context)
+    OkapiHttpClient client, WebContext context)
     throws MalformedURLException {
-    return getCollectionResourceClient(client, context, "/scheduled-notice-storage/scheduled-notices");
+
+    return getCollectionResourceClient(client, context,
+      "/scheduled-notice-storage/scheduled-notices");
   }
   private CollectionResourceClient createAccountsStorageClient(
-    OkapiHttpClient client,
-    WebContext context)
+    OkapiHttpClient client, WebContext context)
     throws MalformedURLException {
+
     return getCollectionResourceClient(client, context, "/accounts");
   }
 
   private CollectionResourceClient createFeeFineActionsStorageClient(
-      OkapiHttpClient client,
-      WebContext context)
+    OkapiHttpClient client, WebContext context)
       throws MalformedURLException {
+
     return getCollectionResourceClient(client, context, "/feefineactions");
   }
 
   private CollectionResourceClient createPatronActionSessionsStorageClient(
-    OkapiHttpClient client,
-    WebContext context)
+    OkapiHttpClient client, WebContext context)
     throws MalformedURLException {
-    return getCollectionResourceClient(client, context, "/patron-action-session-storage/patron-action-sessions");
+
+    return getCollectionResourceClient(client, context,
+      "/patron-action-session-storage/patron-action-sessions");
   }
 
   private CollectionResourceClient createPatronExpiredSessionsStorageClient(
-    OkapiHttpClient client,
-    WebContext context)
+    OkapiHttpClient client, WebContext context)
     throws MalformedURLException {
-    return getCollectionResourceClient(client, context, "/patron-action-session-storage");
+
+    return getCollectionResourceClient(client, context,
+      "/patron-action-session-storage");
   }
 
   private static CollectionResourceClient createUserManualBlocksStorageClient(
-    OkapiHttpClient client,
-    WebContext context)
+    OkapiHttpClient client, WebContext context)
     throws MalformedURLException {
 
     return getCollectionResourceClient(client, context, "/manualblocks");

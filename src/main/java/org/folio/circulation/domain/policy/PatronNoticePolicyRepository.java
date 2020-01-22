@@ -4,6 +4,7 @@ import java.util.function.Function;
 
 import org.folio.circulation.domain.notice.PatronNoticePolicy;
 import org.folio.circulation.domain.notice.PatronNoticePolicyMapper;
+import org.folio.circulation.rules.AppliedRuleConditions;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.Result;
 
@@ -30,7 +31,9 @@ public class PatronNoticePolicyRepository extends CirculationPolicyRepository<Pa
   }
 
   @Override
-  protected Result<PatronNoticePolicy> toPolicy(JsonObject representation) {
+  protected Result<PatronNoticePolicy> toPolicy(JsonObject representation,
+    AppliedRuleConditions ruleConditionsEntity) {
+
     return patronNoticePolicyMapper.apply(representation);
   }
 
