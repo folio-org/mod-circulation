@@ -78,6 +78,11 @@
             "name": {
               "description": "Name of the item status",
               "type": "string"
+            },
+            "date": {
+              "type": "string",
+              "description": "Date time when status was last changed",
+              "format": "date-time"
             }
           },
           "additionalProperties": false

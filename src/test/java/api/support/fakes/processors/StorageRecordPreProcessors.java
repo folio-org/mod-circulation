@@ -20,6 +20,7 @@ import org.apache.commons.lang3.tuple.Triple;
 import org.folio.circulation.domain.representations.ItemProperties;
 import org.folio.circulation.support.http.client.Response;
 import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,6 +35,8 @@ public final class StorageRecordPreProcessors {
     new ImmutableTriple<>("callNumberPrefix", "itemLevelCallNumberPrefix", "prefix"),
     new ImmutableTriple<>("callNumberSuffix", "itemLevelCallNumberSuffix", "suffix")
   );
+  // RMB uses ISO-8601 compatible date time format by default.
+  private static final String RMB_DATETIME_PATTERN = "yyyy-MM-dd'T'HH:mm:ss.SSS+0000";
 
   private StorageRecordPreProcessors() {
     throw new UnsupportedOperationException("Do not instantiate");
@@ -76,7 +79,9 @@ public final class StorageRecordPreProcessors {
       if (ObjectUtils.allNotNull(oldItemStatus, newItemStatus)) {
         if (!Objects.equals(oldItemStatus.getString("name"),
           newItemStatus.getString("name"))) {
-          write(newItemStatus, "date", new DateTime());
+          write(newItemStatus, "date",
+            DateTime.now(DateTimeZone.UTC).toString(RMB_DATETIME_PATTERN)
+          );
         }
       }
     }
@@ -111,7 +116,9 @@ public final class StorageRecordPreProcessors {
           holding.getString(holdingsPropertyName)
         );
 
-        effectiveCallNumberComponents.put(effectivePropertyName, propertyValue);
+        if (StringUtils.isNotBlank(propertyValue)) {
+          effectiveCallNumberComponents.put(effectivePropertyName, propertyValue);
+        }
       });
 
       return newItem.put("effectiveCallNumberComponents",
