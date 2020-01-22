@@ -10,11 +10,11 @@ public class OverdueFinePolicyBuilder extends JsonBuilder implements Builder  {
   private final String name;
   private final String description;
   private final JsonObject overdueFine;
-  private final boolean countClosed;
+  private final Boolean countClosed;
   private final double maxOverdueFine;
   private final boolean forgiveOverdueFine;
   private final JsonObject overdueRecallFine;
-  private final boolean gracePeriodRecall;
+  private final Boolean gracePeriodRecall;
   private final double maxOverdueRecallFine;
 
   public OverdueFinePolicyBuilder() {
@@ -36,11 +36,11 @@ public class OverdueFinePolicyBuilder extends JsonBuilder implements Builder  {
     String name,
     String description,
     JsonObject overdueFine,
-    boolean countClosed,
+    Boolean countClosed,
     double maxOverdueFine,
     boolean forgiveOverdueFine,
     JsonObject overdueRecallFine,
-    boolean gracePeriodRecall,
+    Boolean gracePeriodRecall,
     double maxOverdueRecallFine) {
 
     this.id = id;
@@ -100,7 +100,7 @@ public class OverdueFinePolicyBuilder extends JsonBuilder implements Builder  {
     );
   }
 
-  public OverdueFinePolicyBuilder withCountClosed(boolean countClosed) {
+  public OverdueFinePolicyBuilder withCountClosed(Boolean countClosed) {
     return new OverdueFinePolicyBuilder(
       this.id,
       this.name,
@@ -160,7 +160,7 @@ public class OverdueFinePolicyBuilder extends JsonBuilder implements Builder  {
     );
   }
 
-  public OverdueFinePolicyBuilder withGracePeriodRecall(boolean gracePeriodRecall) {
+  public OverdueFinePolicyBuilder withGracePeriodRecall(Boolean gracePeriodRecall) {
     return new OverdueFinePolicyBuilder(
       this.id,
       this.name,

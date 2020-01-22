@@ -22,6 +22,7 @@ import org.folio.circulation.support.http.client.Response;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.LocalDate;
+import org.joda.time.LocalTime;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -53,14 +54,15 @@ public class OverduePeriodCalculatorServiceTest {
   private static final String INTERVAL_HOURS = "Hours";
   private static final String INTERVAL_MINUTES = "Minutes";
 
-  public static final String CASE_TWO_OPENING_DAYS_SERVICE_ID = "11111111-2f09-4bc9-8924-3734882d44a3";
-  public static final String CASE_ALL_DAY_OPENINGS_SERVICE_ID = "22222222-2f09-4bc9-8924-3734882d44a3";
-  public static final String CASE_NO_OPENING_HOURS_SERVICE_ID = "33333333-2f09-4bc9-8924-3734882d44a3";
-  public static final String CASE_NO_OPENING_DAYS_SERVICE_ID = "44444444-2f09-4bc9-8924-3734882d44a3";
-  public static final String CASE_MIXED_SERVICE_ID = "55555555-2f09-4bc9-8924-3734882d44a3";
-  public static final String CASE_ERROR_400_SERVICE_ID = "66666666-2f09-4bc9-8924-3734882d44a3";
-  public static final String CASE_ERROR_404_SERVICE_ID = "77777777-2f09-4bc9-8924-3734882d44a3";
-  public static final String CASE_ERROR_500_SERVICE_ID = "88888888-2f09-4bc9-8924-3734882d44a3";
+  public static final String CASE_ERROR_400_SERVICE_ID = UUID.randomUUID().toString();
+  public static final String CASE_ERROR_404_SERVICE_ID = UUID.randomUUID().toString();
+  public static final String CASE_ERROR_500_SERVICE_ID = UUID.randomUUID().toString();
+  public static final String CASE_TWO_OPENING_DAYS_SERVICE_ID = UUID.randomUUID().toString();
+  public static final String CASE_ALL_DAY_OPENINGS_SERVICE_ID = UUID.randomUUID().toString();
+  public static final String CASE_NO_OPENING_HOURS_SERVICE_ID = UUID.randomUUID().toString();
+  public static final String CASE_NO_OPENING_DAYS_SERVICE_ID = UUID.randomUUID().toString();
+  public static final String CASE_NO_OPENING_HOUR_END_IS_BEFORE_START_SERVICE_ID = UUID.randomUUID().toString();
+  public static final String CASE_MIXED_SERVICE_ID = UUID.randomUUID().toString();
 
   public static final LocalDate MAY_FIRST = new LocalDate(2019, 5, 1);
   public static final LocalDate MAY_SECOND = new LocalDate(2019, 5, 2);
@@ -95,6 +97,12 @@ public class OverduePeriodCalculatorServiceTest {
     openingPeriods.put(CASE_NO_OPENING_HOURS_SERVICE_ID, new OpeningPeriodsBuilder(Arrays.asList(
       new OpeningPeriod(MAY_FIRST, new OpeningDay(Collections.emptyList(), false, true, false)),
       new OpeningPeriod(MAY_SECOND, new OpeningDay(Collections.emptyList(),false, true, true)))));
+
+    openingPeriods.put(CASE_NO_OPENING_HOUR_END_IS_BEFORE_START_SERVICE_ID,
+      new OpeningPeriodsBuilder(Collections.singletonList(
+        new OpeningPeriod(MAY_FIRST, new OpeningDay(Collections.singletonList(
+          new OpeningHour(new LocalTime(12, 0), LocalTime.MIDNIGHT)),
+          false, true, false)))));
 
     openingPeriods.put(CASE_NO_OPENING_DAYS_SERVICE_ID, new OpeningPeriodsBuilder(Collections.emptyList()));
   }
@@ -144,6 +152,13 @@ public class OverduePeriodCalculatorServiceTest {
           ContentType.APPLICATION_JSON.toString()))));
 
     when(calendarClient.getManyWithRawQueryStringParameters(
+      matches(patternFor(CASE_NO_OPENING_HOUR_END_IS_BEFORE_START_SERVICE_ID))))
+      .thenAnswer(rq -> completedFuture(succeeded(
+        new Response(200,
+          getOpeningPeriodsById(CASE_NO_OPENING_HOUR_END_IS_BEFORE_START_SERVICE_ID).toString(),
+          ContentType.APPLICATION_JSON.toString()))));
+
+    when(calendarClient.getManyWithRawQueryStringParameters(
       matches(patternFor(CASE_ERROR_400_SERVICE_ID))))
       .thenAnswer(rq -> completedFuture(failed(new BadRequestFailure("400"))));
 
@@ -174,6 +189,22 @@ public class OverduePeriodCalculatorServiceTest {
   }
 
   @Test
+  public void shouldCountClosedWithNullDueDate() throws ExecutionException, InterruptedException {
+    final int expectedOverdueMinutes = 0;
+    LoanPolicy loanPolicy = createLoanPolicy(1, INTERVAL_DAYS);
+    OverdueFinePolicy overdueFinePolicy = createOverdueFinePolicy(false, true);
+    DateTime systemTime = DateTime.now(DateTimeZone.UTC);
+    Loan loan =  new LoanBuilder()
+      .asDomainObject()
+      .withLoanPolicy(loanPolicy)
+      .withOverdueFinePolicy(overdueFinePolicy);
+
+    int overdueMinutes = calculatorService.getMinutes(loan, systemTime).get().value();
+    assertEquals(expectedOverdueMinutes, overdueMinutes);
+  }
+
+
+  @Test
   public void shouldCountClosedWithNoGracePeriod() throws ExecutionException, InterruptedException {
     final int expectedOverdueMinutes = 10;
     LoanPolicy loanPolicy = createLoanPolicy(null, null);
@@ -190,7 +221,39 @@ public class OverduePeriodCalculatorServiceTest {
   }
 
   @Test
-  public void shouldCountClosedWithMissingLoanPolicy() throws ExecutionException, InterruptedException {
+  public void nullCountClosed() throws ExecutionException, InterruptedException {
+    final int expectedOverdueMinutes = 0;
+    LoanPolicy loanPolicy = createLoanPolicy(1, INTERVAL_HOURS);
+    OverdueFinePolicy overdueFinePolicy = createOverdueFinePolicy(false, null);
+    DateTime systemTime = DateTime.now(DateTimeZone.UTC);
+    Loan loan =  new LoanBuilder()
+      .withDueDate(systemTime.minusMinutes(10))
+      .asDomainObject()
+      .withLoanPolicy(loanPolicy)
+      .withOverdueFinePolicy(overdueFinePolicy);
+
+    int overdueMinutes = calculatorService.getMinutes(loan, systemTime).get().value();
+    assertEquals(expectedOverdueMinutes, overdueMinutes);
+  }
+
+  @Test
+  public void shouldCountClosedWithNullGracePeriodRecall() throws ExecutionException, InterruptedException {
+    final int expectedOverdueMinutes = 3;
+    DateTime systemTime = DateTime.now(DateTimeZone.UTC);
+    LoanPolicy loanPolicy = createLoanPolicy(2, INTERVAL_MINUTES);
+    OverdueFinePolicy overdueFinePolicy = createOverdueFinePolicy(null, true);
+    Loan loan =  new LoanBuilder()
+      .withDueDate(systemTime.minusMinutes(5))
+      .asDomainObject()
+      .withLoanPolicy(loanPolicy)
+      .withOverdueFinePolicy(overdueFinePolicy);
+
+    int overdueMinutes = calculatorService.getMinutes(loan, systemTime).get().value();
+    assertEquals(expectedOverdueMinutes, overdueMinutes);
+  }
+
+  @Test
+  public void shouldCountClosedWithNoLoanPolicy() throws ExecutionException, InterruptedException {
     final int expectedOverdueMinutes = 10;
     DateTime systemTime = DateTime.now(DateTimeZone.UTC);
     OverdueFinePolicy overdueFinePolicy = createOverdueFinePolicy(false, true);
@@ -204,7 +267,7 @@ public class OverduePeriodCalculatorServiceTest {
   }
 
   @Test
-  public void shouldCountClosedWithMissingOverdueFinePolicy() throws ExecutionException, InterruptedException {
+  public void shouldCountClosedWithNoOverdueFinePolicy() throws ExecutionException, InterruptedException {
     final int expectedOverdueMinutes = 0;
     DateTime systemTime = DateTime.now(DateTimeZone.UTC);
     LoanPolicy loanPolicy = createLoanPolicy(5, INTERVAL_MINUTES);
@@ -249,6 +312,7 @@ public class OverduePeriodCalculatorServiceTest {
     OverdueFinePolicy overdueFinePolicy = createOverdueFinePolicy(false, true);
     Loan loan =  new LoanBuilder()
       .withDueDate(systemTime.minusMinutes(10))
+      .withDueDateChangedByRecall(false)
       .asDomainObject()
       .withLoanPolicy(loanPolicy)
       .withOverdueFinePolicy(overdueFinePolicy);
@@ -293,6 +357,23 @@ public class OverduePeriodCalculatorServiceTest {
     Loan loan =  new LoanBuilder()
       .withDueDate(systemTime.minusMinutes(expectedOverdueMinutes))
       .withCheckoutServicePointId(UUID.fromString(CASE_NO_OPENING_HOURS_SERVICE_ID))
+      .asDomainObject()
+      .withLoanPolicy(loanPolicy)
+      .withOverdueFinePolicy(overdueFinePolicy);
+
+    int overdueMinutes = calculatorService.getMinutes(loan, systemTime).get().value();
+    assertEquals(expectedOverdueMinutes, overdueMinutes);
+  }
+
+  @Test
+  public void shouldNotCountClosedOpeningHourStartIsBeforeEnd() throws ExecutionException, InterruptedException {
+    final int expectedOverdueMinutes = 0;
+    LoanPolicy loanPolicy = createLoanPolicy(1, INTERVAL_HOURS);
+    OverdueFinePolicy overdueFinePolicy = createOverdueFinePolicy(false, false);
+    DateTime systemTime = DateTime.now(DateTimeZone.UTC);
+    Loan loan =  new LoanBuilder()
+      .withDueDate(systemTime.minusMinutes(10))
+      .withCheckoutServicePointId(UUID.fromString(CASE_NO_OPENING_HOUR_END_IS_BEFORE_START_SERVICE_ID))
       .asDomainObject()
       .withLoanPolicy(loanPolicy)
       .withOverdueFinePolicy(overdueFinePolicy);
@@ -433,7 +514,7 @@ public class OverduePeriodCalculatorServiceTest {
     return LoanPolicy.from(builder.create());
   }
 
-  private OverdueFinePolicy createOverdueFinePolicy(boolean gracePeriodRecall, boolean countClosed) {
+  private OverdueFinePolicy createOverdueFinePolicy(Boolean gracePeriodRecall, Boolean countClosed) {
     JsonObject json = new OverdueFinePolicyBuilder()
       .withGracePeriodRecall(gracePeriodRecall)
       .withCountClosed(countClosed)

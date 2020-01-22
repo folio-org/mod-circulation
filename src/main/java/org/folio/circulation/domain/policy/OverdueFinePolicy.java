@@ -24,8 +24,8 @@ public class OverdueFinePolicy extends Policy {
     return new OverdueFinePolicy(
       getProperty(json, "id"),
       getProperty(json, "name"),
-      getBooleanProperty(json, "gracePeriodRecall"),
-      getBooleanProperty(json, "countClosed")
+      json.getBoolean("gracePeriodRecall"),
+      json.getBoolean("countClosed")
     );
   }
 
