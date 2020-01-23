@@ -21,7 +21,7 @@ import static org.joda.time.Minutes.minutesBetween;
 
 public class OverduePeriodCalculatorService {
   private static final int ZERO_MINUTES = 0;
-  private static final int MINUTES_PER_MONTH = MINUTES_PER_DAY * 31; //44640
+  private static final int MINUTES_PER_MONTH = 44640;
 
   private final CalendarRepository calendarRepository;
 

@@ -61,7 +61,7 @@ public class OverduePeriodCalculatorServiceTest {
   public static final String CASE_ALL_DAY_OPENINGS_SERVICE_ID = UUID.randomUUID().toString();
   public static final String CASE_NO_OPENING_HOURS_SERVICE_ID = UUID.randomUUID().toString();
   public static final String CASE_NO_OPENING_DAYS_SERVICE_ID = UUID.randomUUID().toString();
-  public static final String CASE_NO_OPENING_HOUR_END_IS_BEFORE_START_SERVICE_ID = UUID.randomUUID().toString();
+  public static final String CASE_OPENING_HOUR_END_IS_BEFORE_START_SERVICE_ID = UUID.randomUUID().toString();
   public static final String CASE_MIXED_SERVICE_ID = UUID.randomUUID().toString();
 
   public static final LocalDate MAY_FIRST = new LocalDate(2019, 5, 1);
@@ -98,7 +98,7 @@ public class OverduePeriodCalculatorServiceTest {
       new OpeningPeriod(MAY_FIRST, new OpeningDay(Collections.emptyList(), false, true, false)),
       new OpeningPeriod(MAY_SECOND, new OpeningDay(Collections.emptyList(),false, true, true)))));
 
-    openingPeriods.put(CASE_NO_OPENING_HOUR_END_IS_BEFORE_START_SERVICE_ID,
+    openingPeriods.put(CASE_OPENING_HOUR_END_IS_BEFORE_START_SERVICE_ID,
       new OpeningPeriodsBuilder(Collections.singletonList(
         new OpeningPeriod(MAY_FIRST, new OpeningDay(Collections.singletonList(
           new OpeningHour(new LocalTime(12, 0), LocalTime.MIDNIGHT)),
@@ -152,10 +152,10 @@ public class OverduePeriodCalculatorServiceTest {
           ContentType.APPLICATION_JSON.toString()))));
 
     when(calendarClient.getManyWithRawQueryStringParameters(
-      matches(patternFor(CASE_NO_OPENING_HOUR_END_IS_BEFORE_START_SERVICE_ID))))
+      matches(patternFor(CASE_OPENING_HOUR_END_IS_BEFORE_START_SERVICE_ID))))
       .thenAnswer(rq -> completedFuture(succeeded(
         new Response(200,
-          getOpeningPeriodsById(CASE_NO_OPENING_HOUR_END_IS_BEFORE_START_SERVICE_ID).toString(),
+          getOpeningPeriodsById(CASE_OPENING_HOUR_END_IS_BEFORE_START_SERVICE_ID).toString(),
           ContentType.APPLICATION_JSON.toString()))));
 
     when(calendarClient.getManyWithRawQueryStringParameters(
@@ -374,7 +374,7 @@ public class OverduePeriodCalculatorServiceTest {
     DateTime systemTime = DateTime.now(DateTimeZone.UTC);
     Loan loan =  new LoanBuilder()
       .withDueDate(systemTime.minusMinutes(10))
-      .withCheckoutServicePointId(UUID.fromString(CASE_NO_OPENING_HOUR_END_IS_BEFORE_START_SERVICE_ID))
+      .withCheckoutServicePointId(UUID.fromString(CASE_OPENING_HOUR_END_IS_BEFORE_START_SERVICE_ID))
       .asDomainObject()
       .withLoanPolicy(loanPolicy)
       .withOverdueFinePolicy(overdueFinePolicy);
