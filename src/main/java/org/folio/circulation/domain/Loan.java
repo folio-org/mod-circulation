@@ -153,12 +153,13 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     write(representation, "checkinServicePointId", servicePointId);
   }
 
-  private void changeItemStatusToDeclaredLost() {
+  public Loan changeItemStatus(ItemStatus itemStatus) {
     Item item = getItem();
     if (item != null) {
-      item.changeStatus(ItemStatus.DECLARED_LOST);
+      item.changeStatus(itemStatus);
     }
-    changeItemStatus(ItemStatus.DECLARED_LOST.getValue());
+    changeItemStatus(itemStatus.getValue());
+    return this;
   }
 
   private void changeStatus(String status) {
@@ -410,7 +411,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   public Loan declareItemLost(String comment, DateTime dateTime) {
     changeAction(DECLARED_LOST);
     changeActionComment(comment);
-    changeItemStatusToDeclaredLost();
+    changeItemStatus(ItemStatus.DECLARED_LOST);
     changeDeclaredLostDateTime(dateTime);
     return this;
   }

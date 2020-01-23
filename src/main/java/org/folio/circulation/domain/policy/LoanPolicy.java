@@ -1,6 +1,8 @@
 package org.folio.circulation.domain.policy;
 
 import static java.lang.String.format;
+import static org.folio.circulation.domain.ItemStatus.CHECKED_OUT;
+import static org.folio.circulation.domain.ItemStatus.DECLARED_LOST;
 import static org.folio.circulation.domain.RequestType.HOLD;
 import static org.folio.circulation.domain.RequestType.RECALL;
 import static org.folio.circulation.support.JsonPropertyFetcher.getBooleanProperty;
@@ -23,6 +25,7 @@ import java.util.Objects;
 import java.util.Optional;
 
 import org.apache.commons.lang3.StringUtils;
+import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestQueue;
@@ -62,6 +65,7 @@ public class LoanPolicy extends Policy {
   private static final String KEY_ERROR_TEXT = "the \"%s\" in the holds is not recognized";
   private static final String INTERVAL_ERROR_TEXT = "the interval \"%s\" in \"%s\" is not recognized";
   private static final String DURATION_ERROR_TEXT = "the duration \"%s\" in \"%s\" is invalid";
+  public static final String DECLARED_LOST_ITEM_RENEWED_ERROR = "item cannot be renewed: item is Declared lost";
 
   private final JsonObject representation;
   private final FixedDueDateSchedules fixedDueDateSchedules;
@@ -175,7 +179,11 @@ public class LoanPolicy extends Policy {
 
       errorWhenReachedRenewalLimit(loan, errors);
 
-      if(errors.isEmpty()) {
+      if (errors.isEmpty() && hasDeclaredLostItem(loan)) {
+        errors.add(loanPolicyValidationError(DECLARED_LOST_ITEM_RENEWED_ERROR));
+        return failedValidation(errors);
+      }
+      if (errors.isEmpty()) {
         return proposedDueDateResult.map(dueDate -> loan.renew(dueDate, getId()));
       }
       else {
@@ -229,11 +237,21 @@ public class LoanPolicy extends Policy {
         return processRenewal(proposedDueDateResult, loan, comment);
       }
 
+      if (hasDeclaredLostItem(loan)) {
+        return processRenewal(proposedDueDateResult, loan, comment)
+          .map(dueDate -> loan.changeItemStatus(CHECKED_OUT));
+      }
+
       return failedValidation(errorForNotMatchingOverrideCases());
 
     } catch (Exception e) {
       return failedDueToServerError(e);
     }
+  }
+
+  private boolean hasDeclaredLostItem(Loan loan) {
+    final Item item = loan.getItem();
+    return Objects.nonNull(item) && Objects.equals(item.getStatus(), DECLARED_LOST);
   }
 
   private Result<Loan> processRenewal(Result<DateTime> calculatedDueDate, Loan loan, String comment) {
@@ -269,7 +287,8 @@ public class LoanPolicy extends Policy {
       "item is not renewable, " +
       "reached number of renewals limit," +
       "renewal date falls outside of the date ranges in the loan policy, " +
-      "items cannot be renewed when there is an active recall request";
+      "items cannot be renewed when there is an active recall request" +
+      "item cannot be renewed: item is Declared lost";
 
     return loanPolicyValidationError(reason);
   }

@@ -1,5 +1,7 @@
 package org.folio.circulation.resources;
 
+import static org.folio.circulation.support.ResultBinding.mapResult;
+
 import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.domain.ConfigurationRepository;
@@ -73,12 +75,27 @@ public abstract class RenewalResource extends Resource {
       .thenCompose(r -> r.combineAfter(configurationRepository::findTimeZoneConfiguration,
         LoanAndRelatedRecords::withTimeZone))
       .thenComposeAsync(r -> r.after(records -> renewalStrategy.renew(records, bodyAsJson, clients)))
-      .thenComposeAsync(r -> r.after(loanRepository::updateLoan))
+      .thenComposeAsync(r -> r.after(relatedRecords -> updateLoanAndItemInStorage(relatedRecords,
+        itemRepository, loanRepository)))
       .thenApply(r -> r.next(scheduledNoticeService::rescheduleDueDateNotices))
       .thenApply(r -> r.next(loanNoticeSender::sendRenewalPatronNotice))
       .thenApply(r -> r.map(loanRepresentation::extendedLoan))
       .thenApply(LoanResponse::from)
       .thenAccept(result -> result.writeTo(routingContext.response()));
+  }
+
+  private CompletableFuture<Result<LoanAndRelatedRecords>> updateLoanAndItemInStorage(
+    LoanAndRelatedRecords relatedRecords, ItemRepository itemRepository,
+    LoanRepository loanRepository) {
+
+    Loan loan = relatedRecords.getLoan();
+    if (loan == null || loan.getItem() == null) {
+      return null;
+    }
+
+    return itemRepository.updateItem(loan.getItem())
+      .thenCompose(x -> loanRepository.updateLoan(loan))
+      .thenApply(mapResult(relatedRecords::withLoan));
   }
 
   protected abstract CompletableFuture<Result<Loan>> findLoan(

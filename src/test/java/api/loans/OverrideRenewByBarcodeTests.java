@@ -20,9 +20,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 import org.apache.commons.lang3.StringUtils;
 import org.awaitility.Awaitility;
@@ -483,14 +481,12 @@ public class OverrideRenewByBarcodeTests extends APITests {
         "item is not renewable, " +
         "reached number of renewals limit," +
         "renewal date falls outside of the date ranges in the loan policy, " +
-        "items cannot be renewed when there is an active recall request"))));
+        "items cannot be renewed when there is an active recall request" +
+        "item cannot be renewed: item is Declared lost"))));
   }
 
   @Test
-  public void renewalRemovesActionCommentAfterOverride() throws
-    InterruptedException,
-    ExecutionException,
-    TimeoutException {
+  public void renewalRemovesActionCommentAfterOverride() {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource jessica = usersFixture.jessica();
@@ -525,10 +521,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
   }
 
   @Test
-  public void checkInRemovesActionCommentAfterOverride() throws
-    InterruptedException,
-    ExecutionException,
-    TimeoutException {
+  public void checkInRemovesActionCommentAfterOverride() {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource jessica = usersFixture.jessica();
@@ -558,11 +551,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
   }
 
   @Test
-  public void cannotOverrideRenewalWhenItemIsNotLoanableAndNewDueDateIsNotSpecified() throws
-    InterruptedException,
-    ExecutionException,
-    TimeoutException {
-
+  public void cannotOverrideRenewalWhenItemIsNotLoanableAndNewDueDateIsNotSpecified() {
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource jessica = usersFixture.jessica();
 
@@ -589,10 +578,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
   }
 
   @Test
-  public void canOverrideRenewalWhenItemIsNotLoanableAndNewDueDateIsSpecified() throws
-    InterruptedException,
-    ExecutionException,
-    TimeoutException {
+  public void canOverrideRenewalWhenItemIsNotLoanableAndNewDueDateIsSpecified() {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource jessica = usersFixture.jessica();
@@ -629,10 +615,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
 
 
   @Test
-  public void cannotOverrideRenewalWhenDueDateIsEarlierOrSameAsCurrentLoanDueDate() throws
-    InterruptedException,
-    ExecutionException,
-    TimeoutException {
+  public void cannotOverrideRenewalWhenDueDateIsEarlierOrSameAsCurrentLoanDueDate() {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource jessica = usersFixture.jessica();
