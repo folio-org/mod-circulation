@@ -10,7 +10,7 @@ public class ItemProperties {
   public static final String PERMANENT_LOAN_TYPE_ID = "permanentLoanTypeId";
   public static final String MATERIAL_TYPE_ID = "materialTypeId";
   public static final String IN_TRANSIT_DESTINATION_SERVICE_POINT_ID = "inTransitDestinationServicePointId";
-  public static final String ITEM_COPY_NUMBERS_ID = "copyNumbers";
+  public static final String ITEM_COPY_NUMBER_ID = "copyNumber";
   public static final String EFFECTIVE_LOCATION_ID = "effectiveLocationId";
   public static final String STATUS_PROPERTY = "status";
   public static final String LAST_CHECK_IN = "lastCheckIn";

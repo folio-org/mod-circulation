@@ -10,7 +10,10 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.folio.circulation.domain.Location;
+import org.folio.circulation.rules.CirculationRuleMatch;
 import org.folio.circulation.rules.Drools;
 import org.folio.circulation.rules.Text2Drools;
 import org.folio.circulation.support.Clients;
@@ -22,8 +25,6 @@ import org.folio.circulation.support.ServerErrorFailure;
 import org.folio.circulation.support.http.server.ClientErrorResponse;
 import org.folio.circulation.support.http.server.ForwardResponse;
 import org.folio.circulation.support.http.server.WebContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import io.vertx.core.Handler;
 import io.vertx.core.MultiMap;
@@ -267,7 +268,7 @@ public abstract class AbstractCirculationRulesEngineResource extends Resource {
           .mapTo(Location::from)
           .whenNotFound(failed(new ServerErrorFailure("Can`t find location")))
           .fetch(request.params().get(LOCATION_ID_NAME))
-          .thenCompose(r -> r.after(location -> getPolicyId(request.params(), drools, location)))
+          .thenCompose(r -> r.after(location -> getPolicyIdAndRuleMatch(request.params(), drools, location)))
           .thenCompose(r -> r.after(this::buildJsonResult))
           .thenApply(OkJsonResponseResult::from)
           .thenAccept(result -> result.writeTo(routingContext.response()));
@@ -279,9 +280,16 @@ public abstract class AbstractCirculationRulesEngineResource extends Resource {
     });
   }
 
-  private CompletableFuture<Result<JsonObject>> buildJsonResult(String policyId){
-    return CompletableFuture.completedFuture(succeeded(new JsonObject().put(getPolicyIdKey(),
-      policyId)));
+  private CompletableFuture<Result<JsonObject>> buildJsonResult(CirculationRuleMatch entity) {
+    JsonObject appliedRuleConditions = new JsonObject()
+      .put("materialTypeMatch", entity.getAppliedRuleConditions().isItemTypePresent())
+      .put("loanTypeMatch", entity.getAppliedRuleConditions().isLoanTypePresent())
+      .put("patronGroupMatch", entity.getAppliedRuleConditions().isPatronGroupPresent());
+
+    return CompletableFuture.completedFuture(succeeded(new JsonObject()
+      .put(getPolicyIdKey(), entity.getPolicyId())
+      .put("appliedRuleConditions", appliedRuleConditions)
+    ));
   }
 
   private void applyAll(RoutingContext routingContext, Drools drools) {
@@ -341,7 +349,8 @@ public abstract class AbstractCirculationRulesEngineResource extends Resource {
         invalidUuid(request, LOCATION_ID_NAME);
   }
 
-  protected abstract CompletableFuture<Result<String>> getPolicyId(MultiMap params, Drools drools, Location location);
+  protected abstract CompletableFuture<Result<CirculationRuleMatch>> getPolicyIdAndRuleMatch(
+    MultiMap params, Drools drools, Location location);
 
   protected abstract String getPolicyIdKey();
 

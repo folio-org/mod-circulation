@@ -176,7 +176,7 @@ public class UpdateItem {
   private CompletableFuture<Result<Item>> storeItem(Item item) {
     return itemsStorageClient.put(item.getItemId(),
       new ItemSummaryRepresentation().createItemStorageRepresentation(item))
-      .thenApply(noContentRecordInterpreter(item)::apply);
+      .thenApply(noContentRecordInterpreter(item)::flatMap);
   }
 
   private CompletableFuture<Result<Boolean>> loanIsClosed(

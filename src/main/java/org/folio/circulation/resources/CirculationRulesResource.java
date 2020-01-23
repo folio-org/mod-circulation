@@ -115,13 +115,14 @@ public class CirculationRulesResource extends Resource {
     LoanCirculationRulesEngineResource.clearCache(new WebContext(routingContext).getTenantId());
     RequestCirculationRulesEngineResource.clearCache(new WebContext(routingContext).getTenantId());
 
-    loansRulesClient.put(rulesInput.copy()).thenAccept(response -> {
-      if (response.getStatusCode() == 204) {
-        SuccessResponse.noContent(routingContext.response());
-      } else {
-        ForwardResponse.forward(routingContext.response(), response);
-      }
-    });
+    loansRulesClient.put(rulesInput.copy()).thenAccept(result ->
+      result.applySideEffect(response -> {
+        if (response.getStatusCode() == 204) {
+          SuccessResponse.noContent(routingContext.response());
+        } else {
+          ForwardResponse.forward(routingContext.response(), response);
+        }
+    }, cause -> cause.writeTo(routingContext.response())));
   }
 
   private static void circulationRulesError(HttpServerResponse response, CirculationRulesException e) {

@@ -7,6 +7,24 @@
     "requestPolicyId": {
       "description": "ID of the request policy determined by the circulation rules",
       "type": "string"
+    },
+    "appliedRuleConditions": {
+      "description": "Addition information about conditions which were present in the applied rule",
+      "type": "object",
+      "properties": {
+        "materialTypeMatch": {
+          "description": "Indicates that ItemType was present in applied rule conditions",
+          "type": "boolean"
+        },
+        "loanTypeMatch": {
+          "description": "Indicates that LoanType was present in applied rule conditions",
+          "type": "boolean"
+        },
+        "patronGroupMatch": {
+          "description": "Indicates that PatronGroup was present in applied rule conditions",
+          "type": "boolean"
+        }
+      }
     }
   },
   "additionalProperties": false,

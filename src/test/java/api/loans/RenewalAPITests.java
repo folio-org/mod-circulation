@@ -28,7 +28,6 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -1233,7 +1232,7 @@ abstract class RenewalAPITests extends APITests {
       StringUtils.EMPTY,
       "ItemPrefix",
       "ItemSuffix",
-      Collections.singletonList(""));
+      "");
 
     InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet(itemBuilder, itemsFixture.thirdFloorHoldings());
     final IndividualResource steve = usersFixture.steve();

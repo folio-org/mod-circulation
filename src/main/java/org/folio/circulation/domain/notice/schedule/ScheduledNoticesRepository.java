@@ -76,12 +76,17 @@ public class ScheduledNoticesRepository {
         JsonScheduledNoticeMapper::mapFromJson)));
   }
 
-  public CompletableFuture<Result<ScheduledNotice>> update(ScheduledNotice scheduledNotice) {
-    return scheduledNoticesStorageClient.put(scheduledNotice.getId(), mapToJson(scheduledNotice))
-      .thenApply(noContentRecordInterpreter(scheduledNotice)::apply);
+  public CompletableFuture<Result<ScheduledNotice>> update(
+    ScheduledNotice scheduledNotice) {
+
+    return scheduledNoticesStorageClient.put(scheduledNotice.getId(),
+        mapToJson(scheduledNotice))
+      .thenApply(noContentRecordInterpreter(scheduledNotice)::flatMap);
   }
 
-  public CompletableFuture<Result<ScheduledNotice>> delete(ScheduledNotice scheduledNotice) {
+  public CompletableFuture<Result<ScheduledNotice>> delete(
+    ScheduledNotice scheduledNotice) {
+
     final ResponseInterpreter<ScheduledNotice> interpreter
       = noContentRecordInterpreter(scheduledNotice)
       .otherwise(forwardOnFailure());

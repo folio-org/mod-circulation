@@ -1,16 +1,19 @@
 package org.folio.circulation.resources;
 
+import static java.util.concurrent.CompletableFuture.completedFuture;
+
 import static org.folio.circulation.support.Result.succeeded;
 
-import org.folio.circulation.domain.Location;
-import org.folio.circulation.rules.Drools;
+import java.util.concurrent.CompletableFuture;
 
 import io.vertx.core.MultiMap;
 import io.vertx.core.http.HttpClient;
 import io.vertx.core.json.JsonArray;
-import org.folio.circulation.support.Result;
 
-import java.util.concurrent.CompletableFuture;
+import org.folio.circulation.domain.Location;
+import org.folio.circulation.rules.CirculationRuleMatch;
+import org.folio.circulation.rules.Drools;
+import org.folio.circulation.support.Result;
 
 /**
  * The circulation rules engine calculates the loan policy based on
@@ -23,8 +26,9 @@ public class NoticeCirculationRulesEngineResource extends AbstractCirculationRul
   }
 
   @Override
-  protected CompletableFuture<Result<String>> getPolicyId(MultiMap params, Drools drools, Location location) {
-    return CompletableFuture.completedFuture(succeeded(drools.noticePolicy(params, location)));
+  protected CompletableFuture<Result<CirculationRuleMatch>> getPolicyIdAndRuleMatch(
+    MultiMap params, Drools drools, Location location) {
+    return completedFuture(succeeded(drools.noticePolicy(params, location)));
   }
 
   @Override
@@ -34,6 +38,6 @@ public class NoticeCirculationRulesEngineResource extends AbstractCirculationRul
 
   @Override
   protected  CompletableFuture<Result<JsonArray>> getPolicies(MultiMap params, Drools drools, Location location) {
-    return CompletableFuture.completedFuture(succeeded(drools.noticePolicies(params, location)));
+    return completedFuture(succeeded(drools.noticePolicies(params, location)));
   }
 }

@@ -2,28 +2,20 @@ package api.requests;
 
 import static api.support.http.InterfaceUrls.requestsUrl;
 import static java.net.HttpURLConnection.HTTP_NOT_FOUND;
-import static java.net.HttpURLConnection.HTTP_NO_CONTENT;
 import static java.net.HttpURLConnection.HTTP_OK;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 
-import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
-import org.folio.circulation.support.JsonArrayHelper;
 import org.folio.circulation.support.http.client.Response;
-import org.folio.circulation.support.http.client.ResponseHandler;
 import org.junit.Test;
 
 import api.support.APITests;
 import api.support.MultipleJsonRecords;
 import api.support.builders.RequestBuilder;
 import api.support.http.InventoryItemResource;
-import io.vertx.core.json.JsonObject;
 
 public class RequestsAPIDeletionTests extends APITests {
   @Test
