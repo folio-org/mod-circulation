@@ -254,7 +254,7 @@ public abstract class APITests {
     itemsFixture.cleanUp();
 
     usersClient.deleteAllIndividually();
-//    templateClient.deleteAll();
+    templateClient.deleteAll();
 
     if (initialiseCirculationRules) {
       useDefaultRollingPolicyCirculationRules();

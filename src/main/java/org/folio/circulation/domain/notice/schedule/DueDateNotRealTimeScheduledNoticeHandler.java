@@ -45,8 +45,7 @@ public class DueDateNotRealTimeScheduledNoticeHandler {
   private final LoanRepository loanRepository;
   private final LoanPolicyRepository loanPolicyRepository;
   private final PatronNoticeService patronNoticeService;
-  private TemplateRepository templateRepository;
-  private static final String TEMPLATE_RECORD_TYPE = "template";
+  private final TemplateRepository templateRepository;
 
   public DueDateNotRealTimeScheduledNoticeHandler(
     DueDateScheduledNoticeHandler dueDateScheduledNoticeHandler,
@@ -87,25 +86,18 @@ public class DueDateNotRealTimeScheduledNoticeHandler {
       .thenApply(Result::combineAll);
   }
 
-  private CompletableFuture<Result<Pair<ScheduledNotice, LoanAndRelatedRecords>>> getContext(ScheduledNotice notice) {
+  private CompletableFuture<Result<Pair<ScheduledNotice, LoanAndRelatedRecords>>> getContext(
+    ScheduledNotice notice) {
 
     String templateId = notice.getConfiguration().getTemplateId();
 
     return templateRepository.findById(templateId)
-      .thenApply(r -> r.next(response -> failIfTemplateNotFound(response, templateId)))
+      .thenApply(r -> r.next(response -> templateRepository.failIfTemplateNotFound(response, templateId)))
       .thenCompose(r -> r.after(i -> loanRepository.getById(notice.getLoanId())))
       .thenCompose(r -> dueDateScheduledNoticeHandler.deleteNoticeIfLoanIsMissingOrIncomplete(r, notice))
       .thenApply(mapResult(LoanAndRelatedRecords::new))
       .thenCompose(r -> r.after(loanPolicyRepository::lookupLoanPolicy))
       .thenApply(mapResult(relatedRecords -> Pair.of(notice, relatedRecords)));
-  }
-
-  private Result<Response> failIfTemplateNotFound(Response response, String templateId) {
-    if (response.getStatusCode() == 404) {
-      return failed(new RecordNotFoundFailure(TEMPLATE_RECORD_TYPE, templateId));
-    } else {
-      return succeeded(response);
-    }
   }
 
   private CompletableFuture<Result<List<Pair<ScheduledNotice, LoanAndRelatedRecords>>>> sendGroupedNotice(

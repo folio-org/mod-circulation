@@ -370,7 +370,6 @@ public class DueDateScheduledNoticesProcessingTests extends APITests {
   public void noticeIsDeletedIfReferencedTemplateDoesNotExist() {
     DateTime beforeDueDateTime = dueDate.minus(beforePeriod.timePeriod()).plusSeconds(1);
 
-    templateClient.deleteAll();
     assertThat(scheduledNoticesClient.getAll(), hasSize(3));
 
     scheduledNoticeProcessingClient.runDueDateNoticesProcessing(beforeDueDateTime);

@@ -40,7 +40,7 @@ public class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests 
 
   @Before
   public void setUp() {
-    templateClient.create(new JsonObject().put("id", TEMPLATE_ID.toString()));
+    dummyNoticeTemplate();
   }
 
   @Test
@@ -106,6 +106,10 @@ public class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests 
     MatcherAssert.assertThat(sentNotices, hasItems(
       hasEmailNoticeProperties(james.getId(), TEMPLATE_ID, noticeToJamesContextMatcher),
       hasEmailNoticeProperties(rebecca.getId(), TEMPLATE_ID, noticeToRebeccaContextMatcher)));
+  }
+
+  private void dummyNoticeTemplate() {
+    templateClient.create(new JsonObject().put("id", TEMPLATE_ID.toString()));
   }
 
   @Test
@@ -441,7 +445,6 @@ public class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests 
 
   @Test
   public void noticeIsDeletedIfReferencedTemplateDoesNotExist() {
-
 
     JsonObject uponAtDueDateNoticeConfig = new NoticeConfigurationBuilder()
       .withTemplateId(TEMPLATE_ID)

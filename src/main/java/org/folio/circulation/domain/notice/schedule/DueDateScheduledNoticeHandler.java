@@ -94,7 +94,7 @@ public class DueDateScheduledNoticeHandler {
     String templateId = notice.getConfiguration().getTemplateId();
 
     return templateRepository.findById(templateId)
-      .thenApply(r -> r.next(response -> failIfTemplateNotFound(response, templateId)))
+      .thenApply(r -> r.next(response -> templateRepository.failIfTemplateNotFound(response, templateId)))
       .thenCompose(r -> r.after(i -> loanRepository.getById(notice.getLoanId())))
       .thenCompose(r -> deleteNoticeIfLoanIsMissingOrIncomplete(r, notice))
       .thenApply(r -> r.map(LoanAndRelatedRecords::new))
@@ -103,14 +103,6 @@ public class DueDateScheduledNoticeHandler {
       .thenCompose(r -> r.after(records -> sendNotice(records, notice)))
       .thenCompose(r -> r.after(relatedRecords -> updateNotice(relatedRecords, notice)))
       .thenApply(r -> r.mapFailure(this::handleFailure));
-  }
-
-  private Result<Response> failIfTemplateNotFound(Response response, String templateId) {
-    if (response.getStatusCode() == 404) {
-      return failed(new RecordNotFoundFailure(TEMPLATE_RECORD_TYPE, templateId));
-    } else {
-      return succeeded(response);
-    }
   }
 
   CompletableFuture<Result<Loan>> deleteNoticeIfLoanIsMissingOrIncomplete(
