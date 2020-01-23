@@ -36,7 +36,8 @@ public class DueDateScheduledNoticeHandler {
   private static final String ITEM_RECORD_TYPE = "item";
   private static final String LOAN_RECORD_TYPE = "loan";
   private static final String TEMPLATE_RECORD_TYPE = "template";
-  static final String[] REQUIRED_RECORD_TYPES = { USER_RECORD_TYPE, ITEM_RECORD_TYPE, LOAN_RECORD_TYPE };
+  static final String[] REQUIRED_RECORD_TYPES = {USER_RECORD_TYPE,
+    ITEM_RECORD_TYPE, LOAN_RECORD_TYPE, TEMPLATE_RECORD_TYPE};
 
   public static DueDateScheduledNoticeHandler using(Clients clients, DateTime systemTime) {
     return new DueDateScheduledNoticeHandler(
@@ -105,7 +106,7 @@ public class DueDateScheduledNoticeHandler {
   }
 
   private Result<Response> failIfTemplateNotFound(Response response, String templateId) {
-    if (response.getStatusCode() == 400) {
+    if (response.getStatusCode() == 404) {
       return failed(new RecordNotFoundFailure(TEMPLATE_RECORD_TYPE, templateId));
     } else {
       return succeeded(response);

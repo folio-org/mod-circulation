@@ -122,6 +122,9 @@ public abstract class APITests {
   protected final ResourceClient lostItemFeePolicyClient
     = ResourceClient.forLostItemFeePolicies();
 
+  protected final ResourceClient templateClient
+    = ResourceClient.forTemplates();
+
   private final ResourceClient instanceTypesClient
     = ResourceClient.forInstanceTypes();
 
@@ -251,6 +254,7 @@ public abstract class APITests {
     itemsFixture.cleanUp();
 
     usersClient.deleteAllIndividually();
+//    templateClient.deleteAll();
 
     if (initialiseCirculationRules) {
       useDefaultRollingPolicyCirculationRules();
@@ -278,6 +282,7 @@ public abstract class APITests {
     patronNoticesClient.deleteAll();
     scheduledNoticesClient.deleteAll();
     patronSessionRecordsClient.deleteAllIndividually();
+    templateClient.deleteAll();
 
     //TODO: Only cleans up reference records, move items, holdings records
     // and instances into here too

@@ -101,7 +101,7 @@ public class DueDateNotRealTimeScheduledNoticeHandler {
   }
 
   private Result<Response> failIfTemplateNotFound(Response response, String templateId) {
-    if (response.getStatusCode() == 400) {
+    if (response.getStatusCode() == 404) {
       return failed(new RecordNotFoundFailure(TEMPLATE_RECORD_TYPE, templateId));
     } else {
       return succeeded(response);

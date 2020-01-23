@@ -9,7 +9,6 @@ import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 
-import java.net.MalformedURLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -18,9 +17,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -42,7 +39,6 @@ import api.support.builders.ItemBuilder;
 import api.support.builders.NoticeConfigurationBuilder;
 import api.support.builders.NoticePolicyBuilder;
 import api.support.fixtures.ConfigurationExample;
-import api.support.fixtures.ItemExamples;
 import api.support.fixtures.TemplateContextMatchers;
 import api.support.http.InventoryItemResource;
 import io.vertx.core.json.JsonObject;
@@ -105,8 +101,8 @@ public class DueDateScheduledNoticesProcessingTests extends APITests {
   public void beforeNoticeShouldBeSentAndItsNextRunTimeShouldBeUpdated() {
 
     DateTime beforeDueDateTime = dueDate.minus(beforePeriod.timePeriod()).plusSeconds(1);
+    templateClient.create(new JsonObject().put("id", beforeTemplateId.toString()));
     scheduledNoticeProcessingClient.runDueDateNoticesProcessing(beforeDueDateTime);
-
     checkSentNotices(beforeTemplateId);
 
     DateTime expectedNewRunTimeForBeforeNotice = dueDate
@@ -123,6 +119,7 @@ public class DueDateScheduledNoticesProcessingTests extends APITests {
   public void beforeNoticeShouldBeSendAndDeletedWhenItsNextRunTimeIsAfterDueDate() {
 
     DateTime justBeforeDueDateTime = dueDate.minusSeconds(1);
+    templateClient.create(new JsonObject().put("id", beforeTemplateId.toString()));
     scheduledNoticeProcessingClient.runDueDateNoticesProcessing(justBeforeDueDateTime);
 
     checkSentNotices(beforeTemplateId);
@@ -137,6 +134,7 @@ public class DueDateScheduledNoticesProcessingTests extends APITests {
   public void uponAtNoticeShouldBeSentWhenProcessingJustAfterDueDate() {
 
     DateTime justAfterDueDateTime = dueDate.plusSeconds(1);
+    templateClient.create(new JsonObject().put("id", uponAtTemplateId.toString()));
     scheduledNoticeProcessingClient.runDueDateNoticesProcessing(justAfterDueDateTime);
 
     checkSentNotices(uponAtTemplateId);
@@ -151,6 +149,7 @@ public class DueDateScheduledNoticesProcessingTests extends APITests {
   public void afterRecurringNoticeShouldBeSentSeveralTimesBeforeLoanIsClosed() {
 
     DateTime justAfterDueDateTime = dueDate.plusSeconds(1);
+    templateClient.create(new JsonObject().put("id", afterTemplateId.toString()));
     scheduledNoticeProcessingClient.runDueDateNoticesProcessing(justAfterDueDateTime);
     //Clear all sent notices before actual test
     patronNoticesClient.deleteAll();
@@ -367,6 +366,18 @@ public class DueDateScheduledNoticesProcessingTests extends APITests {
     assertThat(unprocessedScheduledNotices, hasSize(expectedNumberOfUnprocessedNotices));
   }
 
+  @Test
+  public void noticeIsDeletedIfReferencedTemplateDoesNotExist() {
+    DateTime beforeDueDateTime = dueDate.minus(beforePeriod.timePeriod()).plusSeconds(1);
+
+    templateClient.deleteAll();
+    assertThat(scheduledNoticesClient.getAll(), hasSize(3));
+
+    scheduledNoticeProcessingClient.runDueDateNoticesProcessing(beforeDueDateTime);
+
+    assertThat(scheduledNoticesClient.getAll(), hasSize(2));
+  }
+
   private void createNotices(int numberOfNotices) {
 
     DateTime systemTime = DateTime.now(DateTimeZone.UTC);
@@ -492,6 +503,9 @@ public class DueDateScheduledNoticesProcessingTests extends APITests {
   }
 
   private JsonObject createFakeScheduledNotice(DateTime nextRunTime) {
+    String templateId = UUID.randomUUID().toString();
+    templateClient.create(new JsonObject().put("id", templateId));
+
     return new JsonObject()
       .put("id", UUID.randomUUID().toString())
       .put("loanId", loan.getId().toString())
@@ -500,7 +514,7 @@ public class DueDateScheduledNoticesProcessingTests extends APITests {
       .put("noticeConfig",
         new JsonObject()
           .put("timing", BEFORE_TIMING)
-          .put("templateId", UUID.randomUUID().toString())
+          .put("templateId",templateId)
           .put("format", "Email")
           .put("sendInRealTime", true)
       );

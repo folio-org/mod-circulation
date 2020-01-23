@@ -10,14 +10,11 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 
-import java.net.MalformedURLException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.awaitility.Awaitility;
@@ -27,6 +24,7 @@ import org.hamcrest.Matcher;
 import org.hamcrest.MatcherAssert;
 import org.joda.time.DateTime;
 import org.joda.time.LocalTime;
+import org.junit.Before;
 import org.junit.Test;
 
 import api.support.APITests;
@@ -37,12 +35,19 @@ import api.support.http.InventoryItemResource;
 import io.vertx.core.json.JsonObject;
 
 public class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests {
+
+  private final static UUID TEMPLATE_ID = UUID.randomUUID();
+
+  @Before
+  public void setUp() {
+    templateClient.create(new JsonObject().put("id", TEMPLATE_ID.toString()));
+  }
+
   @Test
   public void uponAtDueDateNoticesShouldBeSentInGroups() {
 
-    UUID templateId = UUID.randomUUID();
     JsonObject uponAtDueDateNoticeConfig = new NoticeConfigurationBuilder()
-      .withTemplateId(templateId)
+      .withTemplateId(TEMPLATE_ID)
       .withDueDateEvent()
       .withUponAtTiming()
       .sendInRealTime(false)
@@ -99,19 +104,18 @@ public class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests 
         loanPolicyMatcher);
 
     MatcherAssert.assertThat(sentNotices, hasItems(
-      hasEmailNoticeProperties(james.getId(), templateId, noticeToJamesContextMatcher),
-      hasEmailNoticeProperties(rebecca.getId(), templateId, noticeToRebeccaContextMatcher)));
+      hasEmailNoticeProperties(james.getId(), TEMPLATE_ID, noticeToJamesContextMatcher),
+      hasEmailNoticeProperties(rebecca.getId(), TEMPLATE_ID, noticeToRebeccaContextMatcher)));
   }
 
   @Test
   public void beforeRecurringNoticesAreRescheduled() {
 
-    UUID templateId = UUID.randomUUID();
     Period beforePeriod = Period.weeks(1);
     Period recurringPeriod = Period.days(1);
 
     JsonObject uponAtDueDateNoticeConfig = new NoticeConfigurationBuilder()
-      .withTemplateId(templateId)
+      .withTemplateId(TEMPLATE_ID)
       .withDueDateEvent()
       .withBeforeTiming(beforePeriod)
       .recurring(recurringPeriod)
@@ -249,10 +253,8 @@ public class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests 
   @Test
   public void noticeIsDeletedIfReferencedLoanDoesNotExist() {
 
-    UUID templateId = UUID.randomUUID();
-
     JsonObject uponAtDueDateNoticeConfig = new NoticeConfigurationBuilder()
-      .withTemplateId(templateId)
+      .withTemplateId(TEMPLATE_ID)
       .withDueDateEvent()
       .withUponAtTiming()
       .sendInRealTime(false)
@@ -363,10 +365,8 @@ public class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests 
   @Test
   public void missingReferencedEntitiesDoNotBlockProcessing() {
 
-    UUID templateId = UUID.randomUUID();
-
     JsonObject uponAtDueDateNoticeConfig = new NoticeConfigurationBuilder()
-      .withTemplateId(templateId)
+      .withTemplateId(TEMPLATE_ID)
       .withDueDateEvent()
       .withUponAtTiming()
       .sendInRealTime(false)
@@ -435,7 +435,44 @@ public class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests 
         loanPolicyMatcher);
 
     MatcherAssert.assertThat(sentNotices, hasItems(
-      hasEmailNoticeProperties(james.getId(), templateId, noticeToJamesContextMatcher),
-      hasEmailNoticeProperties(steve.getId(), templateId, noticeToSteveContextMatcher)));
+      hasEmailNoticeProperties(james.getId(), TEMPLATE_ID, noticeToJamesContextMatcher),
+      hasEmailNoticeProperties(steve.getId(), TEMPLATE_ID, noticeToSteveContextMatcher)));
+  }
+
+  @Test
+  public void noticeIsDeletedIfReferencedTemplateDoesNotExist() {
+
+
+    JsonObject uponAtDueDateNoticeConfig = new NoticeConfigurationBuilder()
+      .withTemplateId(TEMPLATE_ID)
+      .withDueDateEvent()
+      .withUponAtTiming()
+      .sendInRealTime(false)
+      .create();
+
+    NoticePolicyBuilder noticePolicy = new NoticePolicyBuilder()
+      .withName("Policy with due date notices")
+      .withLoanNotices(Collections.singletonList(uponAtDueDateNoticeConfig));
+
+    use(noticePolicy);
+
+    DateTime loanDate = new DateTime(2019, 8, 23, 10, 30);
+
+    IndividualResource james = usersFixture.james();
+    InventoryItemResource nod = itemsFixture.basedUponNod();
+    IndividualResource nodToJamesLoan = loansFixture.checkOutByBarcode(nod, james, loanDate);
+
+    templateClient.delete(TEMPLATE_ID);
+
+    Awaitility.await()
+      .atMost(1, TimeUnit.SECONDS)
+      .until(scheduledNoticesClient::getAll, hasSize(1));
+
+    DateTime dueDate = new DateTime(nodToJamesLoan.getJson().getString("dueDate"));
+    DateTime afterLoanDueDateTime = dueDate.plusDays(1);
+    scheduledNoticeProcessingClient.runDueDateNotRealTimeNoticesProcessing(afterLoanDueDateTime);
+
+    assertThat(scheduledNoticesClient.getAll(), hasSize(0));
+    assertThat(patronNoticesClient.getAll(), hasSize(0));
   }
 }
