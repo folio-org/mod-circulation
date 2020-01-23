@@ -64,6 +64,8 @@ public class ItemsInTransitReportTests extends APITests {
   private static final String SERVICE_POINT_NAME_2 = "Circ Desk 2";
   private static final String REQUEST_PATRON_GROUP_DESCRIPTION = "Regular group";
   private static final String SERVICE_POINT_CODE_2 = "cd2";
+  private static final String COPY_NUMBER = "copyNumber";
+  private static final String EFFECTIVE_CALL_NUMBER_COMPONENTS = "effectiveCallNumberComponents";
 
   @Override
   public void afterEach() {
@@ -491,6 +493,12 @@ public class ItemsInTransitReportTests extends APITests {
 
     assertThat(itemJson.getJsonArray(YEAR_CAPTION),
       is(smallAngryPlanetResponse.getJsonArray(YEAR_CAPTION)));
+
+    assertThat(itemJson.getString(COPY_NUMBER),
+      is(smallAngryPlanetResponse.getString(COPY_NUMBER)));
+
+    assertThat(smallAngryPlanetResponse.getJsonObject(EFFECTIVE_CALL_NUMBER_COMPONENTS),
+      is(itemJson.getJsonObject(EFFECTIVE_CALL_NUMBER_COMPONENTS)));
   }
 
   private void verifyLocation(JsonObject itemJson) {
@@ -563,7 +571,7 @@ public class ItemsInTransitReportTests extends APITests {
       .withEnumeration("nodeEnumeration")
       .withVolume("nodeVolume")
       .withYearCaption(Collections.singletonList("2017"))
-      .withCallNumber("222245", null, null);
+      .withCallNumber("222245", "PREFIX", "SUFFIX");
     return itemsFixture.basedUponNod(builder -> nodItemBuilder);
   }
 
@@ -580,13 +588,12 @@ public class ItemsInTransitReportTests extends APITests {
     return ItemExamples.basedUponSmallAngryPlanet(
       materialTypesFixture.book().getId(),
       loanTypesFixture.canCirculate().getId(),
-      StringUtils.EMPTY,
-      "ItemPrefix",
-      "ItemSuffix",
-      "")
+      "55555",
+      "PREFIX",
+      "SUFFIX",
+      "Copy 1")
       .withEnumeration("smallAngryPlanetEnumeration")
       .withVolume("smallAngryPlanetVolume")
-      .withYearCaption(Collections.singletonList("2019"))
-      .withCallNumber("55555", null, null);
+      .withYearCaption(Collections.singletonList("2019"));
   }
 }
