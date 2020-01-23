@@ -5,7 +5,8 @@
   "properties": {
     "destinationItemId": {
       "description": "UUID of the item the request should be moved to",
-      "type": "string"
+      "type": "string",
+      "$ref": "uuid.json"
     },
     "requestType": {
       "description": "Whether the item should be held upon return, recalled or paged for",

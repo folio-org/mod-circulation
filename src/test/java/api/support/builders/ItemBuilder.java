@@ -1,5 +1,6 @@
 package api.support.builders;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
@@ -34,14 +35,14 @@ public class ItemBuilder extends JsonBuilder implements Builder {
   private final String itemLevelCallNumberPrefix;
   private final String itemLevelCallNumberSuffix;
   private String enumeration;
-  private List<String> copyNumbers;
+  private String copyNumber;
   private List<String> yearCaption;
   private String volume;
   private final String chronology;
 
   public ItemBuilder() {
     this(UUID.randomUUID(), null, "565578437802", AVAILABLE,
-      null, null, null, null, null, null, null, null, null, null, null, null,
+      null, null, null, null, null, null, null, null, null, null, null, Collections.emptyList(),
       null);
   }
 
@@ -56,7 +57,7 @@ public class ItemBuilder extends JsonBuilder implements Builder {
     UUID permanentLoanTypeId,
     UUID temporaryLoanTypeId,
     String enumeration,
-    List<String> copyNumbers,
+    String copyNumber,
     String itemLevelCallNumber,
     String itemLevelCallNumberPrefix,
     String itemLevelCallNumberSuffix,
@@ -74,7 +75,7 @@ public class ItemBuilder extends JsonBuilder implements Builder {
     this.temporaryLoanTypeId = temporaryLoanTypeId;
     this.permanentLoanTypeId = permanentLoanTypeId;
     this.enumeration = enumeration;
-    this.copyNumbers = copyNumbers;
+    this.copyNumber = copyNumber;
     this.itemLevelCallNumber = itemLevelCallNumber;
     this.itemLevelCallNumberPrefix = itemLevelCallNumberPrefix;
     this.itemLevelCallNumberSuffix = itemLevelCallNumberSuffix;
@@ -96,7 +97,7 @@ public class ItemBuilder extends JsonBuilder implements Builder {
     put(itemRequest, "temporaryLocationId", temporaryLocationId);
     put(itemRequest, "status", status, new JsonObject().put("name", status));
     put(itemRequest, "enumeration", enumeration);
-    put(itemRequest, "copyNumbers", new JsonArray(copyNumbers));
+    put(itemRequest, "copyNumber", copyNumber);
     put(itemRequest, "itemLevelCallNumber", itemLevelCallNumber);
     put(itemRequest, "itemLevelCallNumberPrefix", itemLevelCallNumberPrefix);
     put(itemRequest, "itemLevelCallNumberSuffix", itemLevelCallNumberSuffix);
@@ -143,7 +144,7 @@ public class ItemBuilder extends JsonBuilder implements Builder {
       this.permanentLoanTypeId,
       this.temporaryLoanTypeId,
       this.enumeration,
-      this.copyNumbers,
+      this.copyNumber,
       this.itemLevelCallNumber,
       this.itemLevelCallNumberPrefix,
       this.itemLevelCallNumberSuffix,
@@ -164,7 +165,7 @@ public class ItemBuilder extends JsonBuilder implements Builder {
       this.permanentLoanTypeId,
       this.temporaryLoanTypeId,
       this.enumeration,
-      this.copyNumbers,
+      this.copyNumber,
       this.itemLevelCallNumber,
       this.itemLevelCallNumberPrefix,
       this.itemLevelCallNumberSuffix,
@@ -193,7 +194,7 @@ public class ItemBuilder extends JsonBuilder implements Builder {
       this.permanentLoanTypeId,
       this.temporaryLoanTypeId,
       this.enumeration,
-      this.copyNumbers,
+      this.copyNumber,
       this.itemLevelCallNumber,
       this.itemLevelCallNumberPrefix,
       this.itemLevelCallNumberSuffix,
@@ -222,7 +223,7 @@ public class ItemBuilder extends JsonBuilder implements Builder {
       this.permanentLoanTypeId,
       this.temporaryLoanTypeId,
       this.enumeration,
-      this.copyNumbers,
+      this.copyNumber,
       this.itemLevelCallNumber,
       this.itemLevelCallNumberPrefix,
       this.itemLevelCallNumberSuffix,
@@ -247,7 +248,7 @@ public class ItemBuilder extends JsonBuilder implements Builder {
       this.permanentLoanTypeId,
       this.temporaryLoanTypeId,
       this.enumeration,
-      this.copyNumbers,
+      this.copyNumber,
       this.itemLevelCallNumber,
       this.itemLevelCallNumberPrefix,
       this.itemLevelCallNumberSuffix,
@@ -268,7 +269,7 @@ public class ItemBuilder extends JsonBuilder implements Builder {
       this.permanentLoanTypeId,
       this.temporaryLoanTypeId,
       this.enumeration,
-      this.copyNumbers,
+      this.copyNumber,
       this.itemLevelCallNumber,
       this.itemLevelCallNumberPrefix,
       this.itemLevelCallNumberSuffix,
@@ -289,7 +290,7 @@ public class ItemBuilder extends JsonBuilder implements Builder {
       loanTypeId,
       this.temporaryLoanTypeId,
       this.enumeration,
-      this.copyNumbers,
+      this.copyNumber,
       this.itemLevelCallNumber,
       this.itemLevelCallNumberPrefix,
       this.itemLevelCallNumberSuffix,
@@ -310,7 +311,7 @@ public class ItemBuilder extends JsonBuilder implements Builder {
       this.permanentLoanTypeId,
       loanTypeId,
       this.enumeration,
-      this.copyNumbers,
+      this.copyNumber,
       this.itemLevelCallNumber,
       this.itemLevelCallNumberPrefix,
       this.itemLevelCallNumberSuffix,
@@ -331,7 +332,7 @@ public class ItemBuilder extends JsonBuilder implements Builder {
       this.permanentLoanTypeId,
       this.temporaryLoanTypeId,
       this.enumeration,
-      this.copyNumbers,
+      this.copyNumber,
       this.itemLevelCallNumber,
       this.itemLevelCallNumberPrefix,
       this.itemLevelCallNumberSuffix,
@@ -352,7 +353,7 @@ public class ItemBuilder extends JsonBuilder implements Builder {
       this.permanentLoanTypeId,
       this.temporaryLoanTypeId,
       enumeration,
-      this.copyNumbers,
+      this.copyNumber,
       this.itemLevelCallNumber,
       this.itemLevelCallNumberPrefix,
       this.itemLevelCallNumberSuffix,
@@ -361,7 +362,7 @@ public class ItemBuilder extends JsonBuilder implements Builder {
       this.chronology);
   }
 
-  public ItemBuilder withCopyNumbers(List<String> copyNumbers) {
+  public ItemBuilder withCopyNumber(String copyNumber) {
     return new ItemBuilder(
       this.id,
       this.holdingId,
@@ -373,7 +374,7 @@ public class ItemBuilder extends JsonBuilder implements Builder {
       this.permanentLoanTypeId,
       this.temporaryLoanTypeId,
       this.enumeration,
-      copyNumbers,
+      copyNumber,
       this.itemLevelCallNumber,
       this.itemLevelCallNumberPrefix,
       this.itemLevelCallNumberSuffix,
@@ -398,7 +399,7 @@ public class ItemBuilder extends JsonBuilder implements Builder {
       this.permanentLoanTypeId,
       this.temporaryLoanTypeId,
       this.enumeration,
-      this.copyNumbers,
+      this.copyNumber,
       itemLevelCallNumber,
       itemLevelCallNumberPrefix,
       itemLevelCallNumberSuffix,
@@ -419,7 +420,7 @@ public class ItemBuilder extends JsonBuilder implements Builder {
       this.permanentLoanTypeId,
       this.temporaryLoanTypeId,
       this.enumeration,
-      this.copyNumbers,
+      this.copyNumber,
       this.itemLevelCallNumber,
       this.itemLevelCallNumberPrefix,
       this.itemLevelCallNumberSuffix,
@@ -440,7 +441,7 @@ public class ItemBuilder extends JsonBuilder implements Builder {
         this.permanentLoanTypeId,
         this.temporaryLoanTypeId,
         this.enumeration,
-        this.copyNumbers,
+        this.copyNumber,
         this.itemLevelCallNumber,
         this.itemLevelCallNumberPrefix,
         this.itemLevelCallNumberSuffix,
@@ -461,7 +462,7 @@ public class ItemBuilder extends JsonBuilder implements Builder {
       this.permanentLoanTypeId,
       this.temporaryLoanTypeId,
       this.enumeration,
-      this.copyNumbers,
+      this.copyNumber,
       this.itemLevelCallNumber,
       this.itemLevelCallNumberPrefix,
       this.itemLevelCallNumberSuffix,

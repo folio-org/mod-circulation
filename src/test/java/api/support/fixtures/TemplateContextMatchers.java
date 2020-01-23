@@ -14,7 +14,6 @@ import static org.hamcrest.CoreMatchers.notNullValue;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
@@ -22,7 +21,6 @@ import org.folio.circulation.support.http.client.IndividualResource;
 import org.hamcrest.Matcher;
 
 import api.support.http.InventoryItemResource;
-import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
 public class TemplateContextMatchers {
@@ -57,7 +55,7 @@ public class TemplateContextMatchers {
     String callNumber = findRepresentationCallNumbers(itemResource, applyHoldingRecord, "callNumber");
     String callNumberPrefix = findRepresentationCallNumbers(itemResource, applyHoldingRecord, "callNumberPrefix");
     String callNumberSuffix = findRepresentationCallNumbers(itemResource, applyHoldingRecord, "callNumberSuffix");
-    String copyNumbers = findRepresentationCopyNumbers(itemResource, applyHoldingRecord);
+    String copyNumber = findRepresentationCopyNumber(itemResource, applyHoldingRecord);
 
     Map<String, Matcher<String>> tokenMatchers = new HashMap<>();
     tokenMatchers.put("item.title", notNullValue(String.class));
@@ -66,7 +64,7 @@ public class TemplateContextMatchers {
     tokenMatchers.put("item.callNumber", is(callNumber));
     tokenMatchers.put("item.callNumberPrefix", is(callNumberPrefix));
     tokenMatchers.put("item.callNumberSuffix", is(callNumberSuffix));
-    tokenMatchers.put("item.copy", is(copyNumbers));
+    tokenMatchers.put("item.copy", is(copyNumber));
     tokenMatchers.put("item.materialType", notNullValue(String.class));
     tokenMatchers.put("item.effectiveLocationSpecific", notNullValue(String.class));
     tokenMatchers.put("item.effectiveLocationLibrary", notNullValue(String.class));
@@ -90,14 +88,18 @@ public class TemplateContextMatchers {
       itemResource.getHoldingsRecord().getJson().getString(propertyName));
   }
 
-  private static String findRepresentationCopyNumbers(InventoryItemResource itemResource,
-                                                      boolean applyHoldingRecord) {
-    return applyHoldingRecord
-      ? findHoldingRepresentationCopyNumbers(itemResource)
-      : findItemRepresentationCopyNumbers(itemResource);
+  private static String findRepresentationCopyNumber(InventoryItemResource itemResource,
+                                                     boolean applyHoldingRecord) {
+    if (applyHoldingRecord) {
+      return itemResource.getJson().containsKey("copyNumber")
+        ? findItemRepresentationCopyNumber(itemResource)
+        : findHoldingRepresentationCopyNumber(itemResource);
+    }
+
+    return findItemRepresentationCopyNumber(itemResource);
   }
 
-  private static String findHoldingRepresentationCopyNumbers(InventoryItemResource itemResource) {
+  private static String findHoldingRepresentationCopyNumber(InventoryItemResource itemResource) {
     JsonObject holdingRepresentation = itemResource.getHoldingsRecord().getJson();
     String copyNumber = holdingRepresentation.getString("copyNumber");
     return StringUtils.isNotBlank(copyNumber)
@@ -105,11 +107,11 @@ public class TemplateContextMatchers {
       : StringUtils.EMPTY;
   }
 
-  private static String findItemRepresentationCopyNumbers(InventoryItemResource itemResource) {
-    JsonArray copyNumbers = itemResource.getResponse().getJson().getJsonArray("copyNumbers");
-    return copyNumbers.stream()
-      .map(Object::toString)
-      .collect(Collectors.joining("; "));
+  private static String findItemRepresentationCopyNumber(InventoryItemResource itemResource) {
+    String copyNumber = itemResource.getResponse().getJson().getString("copyNumber");
+    return StringUtils.isNotBlank(copyNumber)
+      ? copyNumber
+      : StringUtils.EMPTY;
   }
 
   public static Map<String, Matcher<String>> getLoanContextMatchers(
