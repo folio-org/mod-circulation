@@ -3,7 +3,6 @@ package org.folio.circulation.domain.notice.schedule;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.domain.notice.schedule.DueDateScheduledNoticeHandler.REQUIRED_RECORD_TYPES;
 import static org.folio.circulation.support.AsyncCoordinationUtil.allResultsOf;
-import static org.folio.circulation.support.Result.failed;
 import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.ResultBinding.mapResult;
 
@@ -18,12 +17,10 @@ import org.folio.circulation.domain.LoanRepository;
 import org.folio.circulation.domain.User;
 import org.folio.circulation.domain.notice.PatronNoticeService;
 import org.folio.circulation.domain.notice.TemplateContextUtil;
-import org.folio.circulation.domain.notice.TemplateRepository;
 import org.folio.circulation.domain.policy.LoanPolicyRepository;
 import org.folio.circulation.support.Clients;
-import org.folio.circulation.support.RecordNotFoundFailure;
+import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.Result;
-import org.folio.circulation.support.http.client.Response;
 import org.joda.time.DateTime;
 
 import io.vertx.core.json.JsonArray;
@@ -38,28 +35,27 @@ public class DueDateNotRealTimeScheduledNoticeHandler {
       new LoanRepository(clients),
       new LoanPolicyRepository(clients),
       PatronNoticeService.using(clients),
-      TemplateRepository.using(clients));
+      clients.templateNoticeClient());
   }
 
   private final DueDateScheduledNoticeHandler dueDateScheduledNoticeHandler;
   private final LoanRepository loanRepository;
   private final LoanPolicyRepository loanPolicyRepository;
   private final PatronNoticeService patronNoticeService;
-  private TemplateRepository templateRepository;
-  private static final String TEMPLATE_RECORD_TYPE = "template";
+  private final CollectionResourceClient templateNoticesClient;
 
   public DueDateNotRealTimeScheduledNoticeHandler(
     DueDateScheduledNoticeHandler dueDateScheduledNoticeHandler,
     LoanRepository loanRepository,
     LoanPolicyRepository loanPolicyRepository,
     PatronNoticeService patronNoticeService,
-    TemplateRepository templateRepository) {
+    CollectionResourceClient templateNoticesClient) {
 
     this.dueDateScheduledNoticeHandler = dueDateScheduledNoticeHandler;
     this.loanRepository = loanRepository;
     this.loanPolicyRepository = loanPolicyRepository;
     this.patronNoticeService = patronNoticeService;
-    this.templateRepository = templateRepository;
+    this.templateNoticesClient = templateNoticesClient;
   }
 
   public CompletableFuture<Result<Void>> handleNotices(
@@ -87,25 +83,19 @@ public class DueDateNotRealTimeScheduledNoticeHandler {
       .thenApply(Result::combineAll);
   }
 
-  private CompletableFuture<Result<Pair<ScheduledNotice, LoanAndRelatedRecords>>> getContext(ScheduledNotice notice) {
+  private CompletableFuture<Result<Pair<ScheduledNotice, LoanAndRelatedRecords>>> getContext(
+    ScheduledNotice notice) {
 
     String templateId = notice.getConfiguration().getTemplateId();
 
-    return templateRepository.findById(templateId)
-      .thenApply(r -> r.next(response -> failIfTemplateNotFound(response, templateId)))
+    return templateNoticesClient.get(templateId)
+      .thenApply(r -> r.next(
+        response -> dueDateScheduledNoticeHandler.failIfTemplateNotFound(response, templateId)))
       .thenCompose(r -> r.after(i -> loanRepository.getById(notice.getLoanId())))
       .thenCompose(r -> dueDateScheduledNoticeHandler.deleteNoticeIfLoanIsMissingOrIncomplete(r, notice))
       .thenApply(mapResult(LoanAndRelatedRecords::new))
       .thenCompose(r -> r.after(loanPolicyRepository::lookupLoanPolicy))
       .thenApply(mapResult(relatedRecords -> Pair.of(notice, relatedRecords)));
-  }
-
-  private Result<Response> failIfTemplateNotFound(Response response, String templateId) {
-    if (response.getStatusCode() == 404) {
-      return failed(new RecordNotFoundFailure(TEMPLATE_RECORD_TYPE, templateId));
-    } else {
-      return succeeded(response);
-    }
   }
 
   private CompletableFuture<Result<List<Pair<ScheduledNotice, LoanAndRelatedRecords>>>> sendGroupedNotice(

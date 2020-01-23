@@ -40,7 +40,7 @@ public class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests 
 
   @Before
   public void setUp() {
-    templateClient.create(new JsonObject().put("id", TEMPLATE_ID.toString()));
+    templateFixture.createDummyNoticeTemplate(TEMPLATE_ID);
   }
 
   @Test
@@ -442,7 +442,6 @@ public class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests 
   @Test
   public void noticeIsDeletedIfReferencedTemplateDoesNotExist() {
 
-
     JsonObject uponAtDueDateNoticeConfig = new NoticeConfigurationBuilder()
       .withTemplateId(TEMPLATE_ID)
       .withDueDateEvent()
@@ -462,7 +461,7 @@ public class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests 
     InventoryItemResource nod = itemsFixture.basedUponNod();
     IndividualResource nodToJamesLoan = loansFixture.checkOutByBarcode(nod, james, loanDate);
 
-    templateClient.delete(TEMPLATE_ID);
+    templateFixture.delete(TEMPLATE_ID);
 
     Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)

@@ -48,6 +48,7 @@ import api.support.fixtures.RequestQueueFixture;
 import api.support.fixtures.RequestsFixture;
 import api.support.fixtures.ScheduledNoticeProcessingClient;
 import api.support.fixtures.ServicePointsFixture;
+import api.support.fixtures.TemplateFixture;
 import api.support.fixtures.UserManualBlocksFixture;
 import api.support.fixtures.UsersFixture;
 import api.support.http.QueryStringParameter;
@@ -221,6 +222,8 @@ public abstract class APITests {
   protected final RequestQueueFixture requestQueueFixture =
     new RequestQueueFixture(restAssuredClient);
 
+  protected final TemplateFixture templateFixture = new TemplateFixture(templateClient);
+
   protected APITests() {
     this(true);
   }
@@ -254,7 +257,7 @@ public abstract class APITests {
     itemsFixture.cleanUp();
 
     usersClient.deleteAllIndividually();
-//    templateClient.deleteAll();
+    templateFixture.deleteAll();
 
     if (initialiseCirculationRules) {
       useDefaultRollingPolicyCirculationRules();

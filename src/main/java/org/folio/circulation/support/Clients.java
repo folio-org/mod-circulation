@@ -581,8 +581,7 @@ public class Clients {
   }
 
   private CollectionResourceClient createTemplateNoticeClient(
-    OkapiHttpClient client,
-    WebContext context)
+    OkapiHttpClient client, WebContext context)
     throws MalformedURLException {
 
     return getCollectionResourceClient(client, context, "/templates");

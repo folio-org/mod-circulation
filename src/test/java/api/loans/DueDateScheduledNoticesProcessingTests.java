@@ -101,7 +101,7 @@ public class DueDateScheduledNoticesProcessingTests extends APITests {
   public void beforeNoticeShouldBeSentAndItsNextRunTimeShouldBeUpdated() {
 
     DateTime beforeDueDateTime = dueDate.minus(beforePeriod.timePeriod()).plusSeconds(1);
-    templateClient.create(new JsonObject().put("id", beforeTemplateId.toString()));
+    templateFixture.createDummyNoticeTemplate(beforeTemplateId);
     scheduledNoticeProcessingClient.runDueDateNoticesProcessing(beforeDueDateTime);
     checkSentNotices(beforeTemplateId);
 
@@ -119,7 +119,7 @@ public class DueDateScheduledNoticesProcessingTests extends APITests {
   public void beforeNoticeShouldBeSendAndDeletedWhenItsNextRunTimeIsAfterDueDate() {
 
     DateTime justBeforeDueDateTime = dueDate.minusSeconds(1);
-    templateClient.create(new JsonObject().put("id", beforeTemplateId.toString()));
+    templateFixture.createDummyNoticeTemplate(beforeTemplateId);
     scheduledNoticeProcessingClient.runDueDateNoticesProcessing(justBeforeDueDateTime);
 
     checkSentNotices(beforeTemplateId);
@@ -134,7 +134,7 @@ public class DueDateScheduledNoticesProcessingTests extends APITests {
   public void uponAtNoticeShouldBeSentWhenProcessingJustAfterDueDate() {
 
     DateTime justAfterDueDateTime = dueDate.plusSeconds(1);
-    templateClient.create(new JsonObject().put("id", uponAtTemplateId.toString()));
+    templateFixture.createDummyNoticeTemplate(uponAtTemplateId);
     scheduledNoticeProcessingClient.runDueDateNoticesProcessing(justAfterDueDateTime);
 
     checkSentNotices(uponAtTemplateId);
@@ -149,7 +149,7 @@ public class DueDateScheduledNoticesProcessingTests extends APITests {
   public void afterRecurringNoticeShouldBeSentSeveralTimesBeforeLoanIsClosed() {
 
     DateTime justAfterDueDateTime = dueDate.plusSeconds(1);
-    templateClient.create(new JsonObject().put("id", afterTemplateId.toString()));
+    templateFixture.createDummyNoticeTemplate(afterTemplateId);
     scheduledNoticeProcessingClient.runDueDateNoticesProcessing(justAfterDueDateTime);
     //Clear all sent notices before actual test
     patronNoticesClient.deleteAll();
@@ -370,7 +370,6 @@ public class DueDateScheduledNoticesProcessingTests extends APITests {
   public void noticeIsDeletedIfReferencedTemplateDoesNotExist() {
     DateTime beforeDueDateTime = dueDate.minus(beforePeriod.timePeriod()).plusSeconds(1);
 
-    templateClient.deleteAll();
     assertThat(scheduledNoticesClient.getAll(), hasSize(3));
 
     scheduledNoticeProcessingClient.runDueDateNoticesProcessing(beforeDueDateTime);
@@ -503,8 +502,8 @@ public class DueDateScheduledNoticesProcessingTests extends APITests {
   }
 
   private JsonObject createFakeScheduledNotice(DateTime nextRunTime) {
-    String templateId = UUID.randomUUID().toString();
-    templateClient.create(new JsonObject().put("id", templateId));
+    UUID templateId = UUID.randomUUID();
+    templateFixture.createDummyNoticeTemplate(templateId);
 
     return new JsonObject()
       .put("id", UUID.randomUUID().toString())
@@ -514,7 +513,7 @@ public class DueDateScheduledNoticesProcessingTests extends APITests {
       .put("noticeConfig",
         new JsonObject()
           .put("timing", BEFORE_TIMING)
-          .put("templateId",templateId)
+          .put("templateId",templateId.toString())
           .put("format", "Email")
           .put("sendInRealTime", true)
       );
