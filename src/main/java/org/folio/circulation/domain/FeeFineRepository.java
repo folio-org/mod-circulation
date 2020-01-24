@@ -19,12 +19,15 @@ public class FeeFineRepository {
     feeFineStorageClient = clients.feeFineStorageClient();
   }
 
-  public CompletableFuture<Result<FeeFine>> getFeeFine(String feeFineType) {
-    return CqlQuery.exactMatch("feeFineType", feeFineType)
+  public CompletableFuture<Result<FeeFine>> getFeeFine(String feeFineOwnerId, String feeFineType) {
+    Result<CqlQuery> typeQuery = CqlQuery.exactMatch("feeFineType", feeFineType);
+    Result<CqlQuery> ownerQuery = CqlQuery.exactMatch("ownerId", feeFineOwnerId);
+
+    return typeQuery.combine(ownerQuery, CqlQuery::and)
       .after(q -> feeFineStorageClient.getMany(q, PageLimit.limit(PAGE_LIMIT)))
       .thenApply(r -> r.next(this::mapResponseToFeefines))
       .thenApply(r -> r.map(MultipleRecords::getRecords))
-      .thenApply(r -> r.map(col -> col.stream().findAny().orElse(new FeeFine())));
+      .thenApply(r -> r.map(col -> col.stream().findAny().orElse(null)));
   }
 
   private Result<MultipleRecords<FeeFine>> mapResponseToFeefines(Response response) {

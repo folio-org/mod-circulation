@@ -1,17 +1,9 @@
 package org.folio.circulation.resources;
 
-import static org.folio.circulation.domain.validation.CommonFailures.moreThanOneOpenLoanFailure;
-import static org.folio.circulation.domain.validation.CommonFailures.noItemFoundForBarcodeFailure;
-
-import org.folio.circulation.domain.AddressTypeRepository;
-import org.folio.circulation.domain.CheckInProcessRecords;
-import org.folio.circulation.domain.LoanCheckInService;
-import org.folio.circulation.domain.LoanRepository;
-import org.folio.circulation.domain.RequestQueueRepository;
-import org.folio.circulation.domain.ServicePointRepository;
-import org.folio.circulation.domain.UpdateItem;
-import org.folio.circulation.domain.UpdateRequestQueue;
-import org.folio.circulation.domain.UserRepository;
+import io.vertx.core.http.HttpClient;
+import io.vertx.ext.web.Router;
+import io.vertx.ext.web.RoutingContext;
+import org.folio.circulation.domain.*;
 import org.folio.circulation.domain.notice.PatronNoticeService;
 import org.folio.circulation.domain.notice.schedule.RequestScheduledNoticeService;
 import org.folio.circulation.domain.notice.session.PatronActionSessionService;
@@ -26,9 +18,8 @@ import org.folio.circulation.support.Result;
 import org.folio.circulation.support.RouteRegistration;
 import org.folio.circulation.support.http.server.WebContext;
 
-import io.vertx.core.http.HttpClient;
-import io.vertx.ext.web.Router;
-import io.vertx.ext.web.RoutingContext;
+import static org.folio.circulation.domain.validation.CommonFailures.moreThanOneOpenLoanFailure;
+import static org.folio.circulation.domain.validation.CommonFailures.noItemFoundForBarcodeFailure;
 
 public class CheckInByBarcodeResource extends Resource {
   public CheckInByBarcodeResource(HttpClient client) {
@@ -89,6 +80,9 @@ public class CheckInByBarcodeResource extends Resource {
     final PatronActionSessionService patronActionSessionService =
       PatronActionSessionService.using(clients);
 
+    final OverdueFineCalculatorService overdueFineCalculatorService =
+      OverdueFineCalculatorService.using(clients);
+
     checkInRequestResult
       .map(CheckInProcessRecords::new)
       .combineAfter(processAdapter::findItem, CheckInProcessRecords::withItem)
@@ -120,6 +114,7 @@ public class CheckInByBarcodeResource extends Resource {
         processAdapter::updateLoan, CheckInProcessRecords::withLoan))
       .thenComposeAsync(updateItemResult -> updateItemResult.after(
         patronActionSessionService::saveCheckInSessionRecord))
+      .thenComposeAsync(r -> r.after(overdueFineCalculatorService::calculateOverdueFine))
       .thenApply(r -> r.next(requestScheduledNoticeService::rescheduleRequestNotices))
       .thenApply(CheckInByBarcodeResponse::from)
       .thenAccept(r -> r.writeTo(routingContext.response()));

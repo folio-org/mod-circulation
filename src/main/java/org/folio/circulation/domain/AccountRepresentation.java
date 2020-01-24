@@ -3,11 +3,14 @@ package org.folio.circulation.domain;
 import io.vertx.core.json.JsonObject;
 import org.folio.circulation.support.JsonPropertyWriter;
 
+import java.util.UUID;
+
 public class AccountRepresentation extends JsonObject {
 
   public AccountRepresentation(Loan loan, Item item, FeeFineOwner feeFineOwner,
                                FeeFine feeFine, Double amount) {
     super();
+    JsonPropertyWriter.write(this, "id", UUID.randomUUID());
     JsonPropertyWriter.write(this, "ownerId", feeFineOwner.getId());
     JsonPropertyWriter.write(this, "feeFineId", feeFine.getId());
     JsonPropertyWriter.write(this, "amount", amount);
