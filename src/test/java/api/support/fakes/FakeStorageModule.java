@@ -113,10 +113,14 @@ public class FakeStorageModule extends AbstractVerticle {
   void register(Router router) {
     String pathTree = rootPath + "/*";
 
+    router.route(rootPath).handler(this::checkTokenHeader);
     router.route(pathTree).handler(this::checkTokenHeader);
+    router.route(rootPath).handler(this::checkRequestIdHeader);
     router.route(pathTree).handler(this::checkRequestIdHeader);
 
+    router.post(rootPath).handler(BodyHandler.create());
     router.post(pathTree).handler(BodyHandler.create());
+    router.put(rootPath).handler(BodyHandler.create());
     router.put(pathTree).handler(BodyHandler.create());
 
     router.post(rootPath).handler(this::checkRepresentationAgainstRecordSchema);
