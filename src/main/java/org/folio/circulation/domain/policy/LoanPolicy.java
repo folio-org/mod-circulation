@@ -240,7 +240,7 @@ public class LoanPolicy extends Policy {
 
       if (hasDeclaredLostItem(loan)) {
         return processRenewal(proposedDueDateResult, loan, comment)
-          .map(dueDate -> loan.changeItemStatus(CHECKED_OUT));
+          .map(dueDate -> loan.changeItemStatusForItemAndLoan(CHECKED_OUT));
       }
 
       return failedValidation(errorForNotMatchingOverrideCases());
