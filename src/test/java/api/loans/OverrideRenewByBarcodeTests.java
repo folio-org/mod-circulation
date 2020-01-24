@@ -707,7 +707,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
   }
 
   private void verifyRenewedLoan(IndividualResource smallAngryPlanet,
-                                 IndividualResource jessica, JsonObject renewedLoan) {
+    IndividualResource jessica, JsonObject renewedLoan) {
     assertThat("user ID should match barcode",
       renewedLoan.getString("userId"), is(jessica.getId().toString()));
 
