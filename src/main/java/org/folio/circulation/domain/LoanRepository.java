@@ -100,6 +100,30 @@ public class LoanRepository {
       .thenComposeAsync(r -> r.after(this::refreshLoanRepresentation));
   }
 
+  public CompletableFuture<Result<LoanAndRelatedRecords>> updateLoanAndItemInStorage(
+    LoanAndRelatedRecords relatedRecords) {
+
+    return updateLoanAndItemInStorage(relatedRecords.getLoan())
+      .thenApply(mapResult(relatedRecords::withLoan));
+  }
+
+  public CompletableFuture<Result<Loan>> updateLoanAndItemInStorage(Loan loan) {
+    if (loan == null || loan.getItem() == null) {
+      return completedFuture(succeeded(null));
+    }
+
+    //TODO: What should happen if updating the item fails?
+    return updateItem(loan.getItem())
+      .thenComposeAsync(response -> updateLoan(loan));
+  }
+
+  private CompletableFuture<Result<Response>> updateItem(Item item) {
+    if (!item.hasChanged()) {
+      return completedFuture(succeeded(null));
+    }
+    return itemRepository.updateItem(item);
+  }
+
   /**
    *
    * @param request the request to fetch the open loan for the same item for

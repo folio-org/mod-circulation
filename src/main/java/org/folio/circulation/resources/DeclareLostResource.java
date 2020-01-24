@@ -5,13 +5,11 @@ import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 
 import java.util.Objects;
-import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanRepository;
 import org.folio.circulation.domain.representations.DeclareItemLostRequest;
 import org.folio.circulation.support.Clients;
-import org.folio.circulation.support.ItemRepository;
 import org.folio.circulation.support.NoContentResult;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.http.server.WebContext;
@@ -25,9 +23,6 @@ public class DeclareLostResource extends Resource {
     super(client);
   }
 
-  private ItemRepository itemRepository;
-  private LoanRepository loanRepository;
-
   @Override
   public void register(Router router) {
     router.post("/circulation/loans/:id/declare-item-lost")
@@ -37,14 +32,13 @@ public class DeclareLostResource extends Resource {
   private void declareLost(RoutingContext routingContext) {
     final WebContext context = new WebContext(routingContext);
     final Clients clients = Clients.create(context, client);
-    loanRepository = new LoanRepository(clients);
-    itemRepository = new ItemRepository(clients, true, true, true);
+    final LoanRepository loanRepository = new LoanRepository(clients);
 
     validateDeclaredLostRequest(routingContext).after(request ->
       loanRepository.getById(request.getLoanId())
         .thenApply(this::refuseWhenLoanIsClosed)
         .thenApply(loan -> declareItemLost(loan, request)))
-      .thenApply(this::updateLoanAndItemInStorage)
+      .thenApply(r -> r.after(loanRepository::updateLoanAndItemInStorage))
       .thenCompose(r -> r.thenApply(NoContentResult::from))
       .thenAccept(result -> result.writeTo(routingContext.response()));
   }
@@ -73,21 +67,6 @@ public class DeclareLostResource extends Resource {
           singleValidationError("Loan is closed", "id", loan.getId()));
       }
       return succeeded(loan);
-    });
-  }
-
-  private CompletableFuture<Result<Loan>> updateLoanAndItemInStorage(
-    Result<Loan> loanResult) {
-
-    return loanResult.after(loan -> {
-      if (loan == null || loan.getItem() == null) {
-        return null;
-      }
-
-      //TODO: What should happen if updating the item fails?
-      return itemRepository.updateItem(loan.getItem())
-        .thenCompose(result -> result.after(
-          response -> loanRepository.updateLoan(loan)));
     });
   }
 }

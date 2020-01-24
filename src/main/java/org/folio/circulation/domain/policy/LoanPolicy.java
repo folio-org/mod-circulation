@@ -159,7 +159,11 @@ public class LoanPolicy extends Policy {
 
         isRenewalWithHoldRequest = true;
       }
-
+      if (hasDeclaredLostItem(loan)) {
+        errors.add(itemByIdValidationError(DECLARED_LOST_ITEM_RENEWED_ERROR,
+          loan.getItemId()));
+        return failedValidation(errors);
+      }
       final Result<DateTime> proposedDueDateResult =
         determineStrategy(null, true, isRenewalWithHoldRequest, systemDate)
           .calculateDueDate(loan);
@@ -179,11 +183,6 @@ public class LoanPolicy extends Policy {
 
       errorWhenReachedRenewalLimit(loan, errors);
 
-      if (hasDeclaredLostItem(loan)) {
-        errors.add(itemValidationError(DECLARED_LOST_ITEM_RENEWED_ERROR,
-          loan.getItemId()));
-        return failedValidation(errors);
-      }
       if (errors.isEmpty()) {
         return proposedDueDateResult.map(dueDate -> loan.renew(dueDate, getId()));
       }
@@ -252,7 +251,7 @@ public class LoanPolicy extends Policy {
 
   private boolean hasDeclaredLostItem(Loan loan) {
     final Item item = loan.getItem();
-    return Objects.nonNull(item) && Objects.equals(item.getStatus(), DECLARED_LOST);
+    return Objects.nonNull(item) && item.isInStatus(DECLARED_LOST);
   }
 
   private Result<Loan> processRenewal(Result<DateTime> calculatedDueDate, Loan loan, String comment) {
@@ -307,7 +306,7 @@ public class LoanPolicy extends Policy {
     return new ValidationError(message, parameters);
   }
 
-  private ValidationError itemValidationError(String reason, String itemId) {
+  private ValidationError itemByIdValidationError(String reason, String itemId) {
     return new ValidationError(reason, "itemId", itemId);
   }
 
