@@ -22,8 +22,10 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
+import api.support.builders.DeclareItemLostRequestBuilder;
 import org.apache.commons.lang3.StringUtils;
 import org.awaitility.Awaitility;
+import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
@@ -206,20 +208,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
       loansFixture.overrideRenewalByBarcode(smallAngryPlanet, jessica,
         OVERRIDE_COMMENT, newDueDate.toString()).getJson();
 
-    assertThat("user ID should match barcode",
-      renewedLoan.getString("userId"), is(jessica.getId().toString()));
-
-    assertThat("item ID should match barcode",
-      renewedLoan.getString("itemId"), is(smallAngryPlanet.getId().toString()));
-
-    assertThat("status should be open",
-      renewedLoan.getJsonObject("status").getString("name"), is("Open"));
-
-    assertThat("action should be renewed",
-      renewedLoan.getString("action"), is(RENEWED_THROUGH_OVERRIDE));
-
-    assertThat("'actionComment' field should contain comment specified for override",
-      renewedLoan.getString(ACTION_COMMENT_KEY), is(OVERRIDE_COMMENT));
+    verifyRenewedLoan(smallAngryPlanet, jessica, renewedLoan);
 
     assertThat("renewal count should be incremented",
       renewedLoan.getInteger("renewalCount"), is(1));
@@ -307,20 +296,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
 
     assertThat(renewedLoan.getString("id"), is(loanId.toString()));
 
-    assertThat("user ID should match barcode",
-      renewedLoan.getString("userId"), is(jessica.getId().toString()));
-
-    assertThat("item ID should match barcode",
-      renewedLoan.getString("itemId"), is(smallAngryPlanet.getId().toString()));
-
-    assertThat("status should be open",
-      renewedLoan.getJsonObject("status").getString("name"), is("Open"));
-
-    assertThat("action should be renewed",
-      renewedLoan.getString("action"), is(RENEWED_THROUGH_OVERRIDE));
-
-    assertThat("'actionComment' field should contain comment specified for override",
-      renewedLoan.getString(ACTION_COMMENT_KEY), is(OVERRIDE_COMMENT));
+    verifyRenewedLoan(smallAngryPlanet, jessica, renewedLoan);
 
     assertThat("renewal count should be incremented",
       renewedLoan.getInteger("renewalCount"), is(1));
@@ -384,20 +360,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
 
     assertThat(renewedLoan.getString("id"), is(loanId.toString()));
 
-    assertThat("user ID should match barcode",
-      renewedLoan.getString("userId"), is(jessica.getId().toString()));
-
-    assertThat("item ID should match barcode",
-      renewedLoan.getString("itemId"), is(smallAngryPlanet.getId().toString()));
-
-    assertThat("status should be open",
-      renewedLoan.getJsonObject("status").getString("name"), is("Open"));
-
-    assertThat("action should be renewed",
-      renewedLoan.getString("action"), is(RENEWED_THROUGH_OVERRIDE));
-
-    assertThat("'actionComment' field should contain comment specified for override",
-      renewedLoan.getString(ACTION_COMMENT_KEY), is(OVERRIDE_COMMENT));
+    verifyRenewedLoan(smallAngryPlanet, jessica, renewedLoan);
 
     assertThat("renewal count should be incremented",
       renewedLoan.getInteger("renewalCount"), is(1));
@@ -432,6 +395,57 @@ public class OverrideRenewByBarcodeTests extends APITests {
         OVERRIDE_COMMENT, null)
         .getJson();
 
+    verifyRenewedLoan(smallAngryPlanet, jessica, renewedLoan);
+
+    assertThat("renewal count should be incremented",
+      renewedLoan.getInteger("renewalCount"), is(2));
+
+    DateTime expectedDueDate = loanDate.plusWeeks(3);
+    assertThat("due date should be 3 weeks later",
+      renewedLoan.getString("dueDate"),
+      isEquivalentTo(expectedDueDate));
+  }
+
+  @Test
+  public void canOverrideRenewalWhenItemIsDeclaredLost() {
+    final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final IndividualResource jessica = usersFixture.jessica();
+    LoanPolicyBuilder limitedRenewalsPolicy = new LoanPolicyBuilder()
+      .withName("Limited Renewals policy")
+      .rolling(Period.weeks(1));
+
+    use(limitedRenewalsPolicy);
+
+    final DateTime loanDate = DateTime.now(DateTimeZone.UTC).minusWeeks(1);
+
+    final JsonObject loanJson = loansFixture.checkOutByBarcode(smallAngryPlanet,
+      usersFixture.jessica(), loanDate).getJson();
+
+    declareItemLost(loanJson);
+
+    loansFixture.attemptRenewal(422, smallAngryPlanet, jessica);
+
+    final JsonObject renewedLoan =
+      loansFixture.overrideRenewalByBarcode(smallAngryPlanet, jessica,
+        OVERRIDE_COMMENT, null).getJson();
+
+    verifyRenewedLoan(smallAngryPlanet, jessica, renewedLoan);
+
+    assertThat("renewal count should be incremented",
+      renewedLoan.getInteger("renewalCount"), is(1));
+
+    assertThat("item status should be changed",
+      renewedLoan.getJsonObject("item").getJsonObject("status").getString("name"),
+      is(ItemStatus.CHECKED_OUT.getValue()));
+
+    DateTime expectedDueDate = loanDate.plusWeeks(2);
+    assertThat("due date should be 2 weeks later",
+      renewedLoan.getString("dueDate"),
+      isEquivalentTo(expectedDueDate));
+  }
+
+  private void verifyRenewedLoan(IndividualResource smallAngryPlanet,
+    IndividualResource jessica, JsonObject renewedLoan) {
     assertThat("user ID should match barcode",
       renewedLoan.getString("userId"), is(jessica.getId().toString()));
 
@@ -446,14 +460,18 @@ public class OverrideRenewByBarcodeTests extends APITests {
 
     assertThat("'actionComment' field should contain comment specified for override",
       renewedLoan.getString(ACTION_COMMENT_KEY), is(OVERRIDE_COMMENT));
+  }
 
-    assertThat("renewal count should be incremented",
-      renewedLoan.getInteger("renewalCount"), is(2));
+  private void declareItemLost(JsonObject loanJson) {
+    final UUID loanId = UUID.fromString(loanJson.getString("id"));
+    final String comment = "testing";
+    final DateTime dateTime = DateTime.now(DateTimeZone.UTC);
 
-    DateTime expectedDueDate = loanDate.plusWeeks(3);
-    assertThat("due date should be 3 weeks later",
-      renewedLoan.getString("dueDate"),
-      isEquivalentTo(expectedDueDate));
+    final DeclareItemLostRequestBuilder builder = new DeclareItemLostRequestBuilder()
+      .forLoanId(loanId).on(dateTime)
+      .withComment(comment);
+
+    loansFixture.declareItemLost(loanId, builder);
   }
 
   @Test
@@ -481,7 +499,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
         "item is not renewable, " +
         "reached number of renewals limit," +
         "renewal date falls outside of the date ranges in the loan policy, " +
-        "items cannot be renewed when there is an active recall request" +
+        "items cannot be renewed when there is an active recall request, " +
         "item cannot be renewed: item is Declared lost"))));
   }
 

@@ -36,9 +36,11 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import api.support.builders.DeclareItemLostRequestBuilder;
 import org.apache.commons.lang3.StringUtils;
 import org.awaitility.Awaitility;
 import org.folio.circulation.domain.policy.DueDateManagement;
+import org.folio.circulation.domain.policy.LoanPolicy;
 import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
@@ -770,6 +772,36 @@ abstract class RenewalAPITests extends APITests {
   }
 
   @Test
+  public void cannotRenewWhenItemIsDeclaredLost() {
+
+    final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final IndividualResource jessica = usersFixture.jessica();
+
+    final JsonObject loanJson = loansFixture.checkOutByBarcode(smallAngryPlanet, usersFixture.jessica())
+      .getJson();
+
+    declareItemLost(loanJson);
+
+    final Response response = attemptRenewal(smallAngryPlanet, jessica);
+
+    assertThat(response.getJson(), hasErrorWith(allOf(
+      hasMessage("item cannot be renewed: item is Declared lost"),
+      hasUUIDParameter("itemId", smallAngryPlanet.getId()))));
+  }
+
+  private void declareItemLost(JsonObject loanJson) {
+    final UUID loanId = UUID.fromString(loanJson.getString("id"));
+    final String comment = "testing";
+    final DateTime dateTime = DateTime.now();
+
+    final DeclareItemLostRequestBuilder builder = new DeclareItemLostRequestBuilder()
+      .forLoanId(loanId).on(dateTime)
+      .withComment(comment);
+
+    loansFixture.declareItemLost(loanId, builder);
+  }
+
+  @Test
   public void cannotRenewWhenLoaneeCannotBeFound() {
 
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
@@ -1139,10 +1171,7 @@ abstract class RenewalAPITests extends APITests {
   }
 
   @Test
-  public void  canRenewFromCurrentDueDateWhenDueDateFallsWithinRangeOfAlternateDueDateLimit()
-    throws InterruptedException,
-    TimeoutException,
-    ExecutionException {
+  public void  canRenewFromCurrentDueDateWhenDueDateFallsWithinRangeOfAlternateDueDateLimit() {
 
     FixedDueDateSchedulesBuilder dueDateLimitSchedule = new FixedDueDateSchedulesBuilder()
       .withName("Alternate Due Date Limit")
@@ -1170,10 +1199,7 @@ abstract class RenewalAPITests extends APITests {
   }
 
   @Test
-  public void  canRenewWhenSystemDateFallsWithinAlternateScheduleAndDueDateDoesNot()
-    throws InterruptedException,
-    TimeoutException,
-    ExecutionException {
+  public void canRenewWhenSystemDateFallsWithinAlternateScheduleAndDueDateDoesNot() {
 
     FixedDueDateSchedulesBuilder dueDateLimitSchedule = new FixedDueDateSchedulesBuilder()
       .withName("Alternate Due Date Limit")

@@ -65,7 +65,7 @@ public class LoanPolicy extends Policy {
   private static final String KEY_ERROR_TEXT = "the \"%s\" in the holds is not recognized";
   private static final String INTERVAL_ERROR_TEXT = "the interval \"%s\" in \"%s\" is not recognized";
   private static final String DURATION_ERROR_TEXT = "the duration \"%s\" in \"%s\" is invalid";
-  public static final String DECLARED_LOST_ITEM_RENEWED_ERROR = "item cannot be renewed: item is Declared lost";
+  private static final String DECLARED_LOST_ITEM_RENEWED_ERROR = "item cannot be renewed: item is Declared lost";
 
   private final JsonObject representation;
   private final FixedDueDateSchedules fixedDueDateSchedules;
@@ -179,8 +179,9 @@ public class LoanPolicy extends Policy {
 
       errorWhenReachedRenewalLimit(loan, errors);
 
-      if (errors.isEmpty() && hasDeclaredLostItem(loan)) {
-        errors.add(loanPolicyValidationError(DECLARED_LOST_ITEM_RENEWED_ERROR));
+      if (hasDeclaredLostItem(loan)) {
+        errors.add(itemValidationError(DECLARED_LOST_ITEM_RENEWED_ERROR,
+          loan.getItemId()));
         return failedValidation(errors);
       }
       if (errors.isEmpty()) {
@@ -287,7 +288,7 @@ public class LoanPolicy extends Policy {
       "item is not renewable, " +
       "reached number of renewals limit," +
       "renewal date falls outside of the date ranges in the loan policy, " +
-      "items cannot be renewed when there is an active recall request" +
+      "items cannot be renewed when there is an active recall request, " +
       "item cannot be renewed: item is Declared lost";
 
     return loanPolicyValidationError(reason);
@@ -304,6 +305,10 @@ public class LoanPolicy extends Policy {
     parameters.put("loanPolicyId", getId());
     parameters.put("loanPolicyName", getName());
     return new ValidationError(message, parameters);
+  }
+
+  private ValidationError itemValidationError(String reason, String itemId) {
+    return new ValidationError(reason, "itemId", itemId);
   }
 
   private boolean isNotRenewable() {
