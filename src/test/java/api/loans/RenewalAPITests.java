@@ -789,18 +789,6 @@ abstract class RenewalAPITests extends APITests {
       hasUUIDParameter("itemId", smallAngryPlanet.getId()))));
   }
 
-  private void declareItemLost(JsonObject loanJson) {
-    final UUID loanId = UUID.fromString(loanJson.getString("id"));
-    final String comment = "testing";
-    final DateTime dateTime = DateTime.now();
-
-    final DeclareItemLostRequestBuilder builder = new DeclareItemLostRequestBuilder()
-      .forLoanId(loanId).on(dateTime)
-      .withComment(comment);
-
-    loansFixture.declareItemLost(loanId, builder);
-  }
-
   @Test
   public void cannotRenewWhenLoaneeCannotBeFound() {
 
@@ -1325,5 +1313,17 @@ abstract class RenewalAPITests extends APITests {
 
   private Matcher<ValidationError> hasLoanPolicyNameParameter(String policyName) {
     return hasParameter("loanPolicyName", policyName);
+  }
+
+  private void declareItemLost(JsonObject loanJson) {
+    final UUID loanId = UUID.fromString(loanJson.getString("id"));
+    final String comment = "testing";
+    final DateTime dateTime = DateTime.now();
+
+    final DeclareItemLostRequestBuilder builder = new DeclareItemLostRequestBuilder()
+      .forLoanId(loanId).on(dateTime)
+      .withComment(comment);
+
+    loansFixture.declareItemLost(loanId, builder);
   }
 }

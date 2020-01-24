@@ -6,10 +6,12 @@ import static org.folio.circulation.support.ValidationErrorFailure.singleValidat
 
 import java.util.Objects;
 
+import org.folio.circulation.LoanItemService;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanRepository;
 import org.folio.circulation.domain.representations.DeclareItemLostRequest;
 import org.folio.circulation.support.Clients;
+import org.folio.circulation.support.ItemRepository;
 import org.folio.circulation.support.NoContentResult;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.http.server.WebContext;
@@ -33,12 +35,14 @@ public class DeclareLostResource extends Resource {
     final WebContext context = new WebContext(routingContext);
     final Clients clients = Clients.create(context, client);
     final LoanRepository loanRepository = new LoanRepository(clients);
+    final ItemRepository itemRepository = new ItemRepository(clients, true, true, true);
+    final LoanItemService loanItemService = new LoanItemService(loanRepository, itemRepository);
 
     validateDeclaredLostRequest(routingContext).after(request ->
       loanRepository.getById(request.getLoanId())
         .thenApply(this::refuseWhenLoanIsClosed)
         .thenApply(loan -> declareItemLost(loan, request)))
-      .thenApply(r -> r.after(loanRepository::updateLoanAndItemInStorage))
+      .thenApply(r -> r.after(loanItemService::updateLoanAndItemInStorage))
       .thenCompose(r -> r.thenApply(NoContentResult::from))
       .thenAccept(result -> result.writeTo(routingContext.response()));
   }

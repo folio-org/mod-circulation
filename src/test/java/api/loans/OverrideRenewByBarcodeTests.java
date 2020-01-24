@@ -58,7 +58,6 @@ public class OverrideRenewByBarcodeTests extends APITests {
 
   @Test
   public void cannotOverrideRenewalWhenLoanPolicyDoesNotExist() {
-
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource jessica = usersFixture.jessica();
 
@@ -84,7 +83,6 @@ public class OverrideRenewByBarcodeTests extends APITests {
 
   @Test
   public void cannotOverrideRenewalWhenLoaneeCannotBeFound() {
-
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource steve = usersFixture.steve();
 
@@ -103,7 +101,6 @@ public class OverrideRenewByBarcodeTests extends APITests {
 
   @Test
   public void cannotOverrideRenewalWhenItemCannotBeFound() {
-
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource steve = usersFixture.steve();
 
@@ -121,7 +118,6 @@ public class OverrideRenewByBarcodeTests extends APITests {
 
   @Test
   public void cannotOverrideRenewalLoanForDifferentUser() {
-
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource james = usersFixture.james();
     final IndividualResource jessica = usersFixture.jessica();
@@ -139,7 +135,6 @@ public class OverrideRenewByBarcodeTests extends APITests {
 
   @Test
   public void cannotOverrideRenewalWhenCommentPropertyIsBlank() {
-
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource jessica = usersFixture.jessica();
     loansFixture.checkOutByBarcode(smallAngryPlanet, jessica);
@@ -154,7 +149,6 @@ public class OverrideRenewByBarcodeTests extends APITests {
 
   @Test
   public void canOverrideRenewalWhenItemIsNotRenewableAndNewDueDateIsNotSpecified() {
-
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource jessica = usersFixture.jessica();
 
@@ -181,7 +175,6 @@ public class OverrideRenewByBarcodeTests extends APITests {
 
   @Test
   public void canOverrideRenewalWhenItemIsNotRenewableAndNewDueDateIsSpecified() {
-
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource jessica = usersFixture.jessica();
 
@@ -224,7 +217,6 @@ public class OverrideRenewByBarcodeTests extends APITests {
 
   @Test
   public void canOverrideRenewalWhenDateFallsOutsideOfTheDateRangesInTheFixedLoanPolicyAndDueDateIsNotSpecified() {
-
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource jessica = usersFixture.jessica();
 
@@ -258,7 +250,6 @@ public class OverrideRenewByBarcodeTests extends APITests {
 
   @Test
   public void canOverrideRenewalWhenDateFallsOutsideOfTheDateRangesInTheFixedLoanPolicyAndDueDateIsSpecified() {
-
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource jessica = usersFixture.jessica();
 
@@ -316,7 +307,6 @@ public class OverrideRenewByBarcodeTests extends APITests {
 
   @Test
   public void canOverrideRenewalWhenDateFallsOutsideOfTheDateRangesInTheRollingLoanPolicy() {
-
     final DateTime renewalDate = DateTime.now();
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
@@ -372,7 +362,6 @@ public class OverrideRenewByBarcodeTests extends APITests {
 
   @Test
   public void canOverrideRenewalWhenLoanReachedRenewalLimitAndDueDateIsNotSpecified() {
-
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource jessica = usersFixture.jessica();
 
@@ -444,39 +433,8 @@ public class OverrideRenewByBarcodeTests extends APITests {
       isEquivalentTo(expectedDueDate));
   }
 
-  private void verifyRenewedLoan(IndividualResource smallAngryPlanet,
-    IndividualResource jessica, JsonObject renewedLoan) {
-    assertThat("user ID should match barcode",
-      renewedLoan.getString("userId"), is(jessica.getId().toString()));
-
-    assertThat("item ID should match barcode",
-      renewedLoan.getString("itemId"), is(smallAngryPlanet.getId().toString()));
-
-    assertThat("status should be open",
-      renewedLoan.getJsonObject("status").getString("name"), is("Open"));
-
-    assertThat("action should be renewed",
-      renewedLoan.getString("action"), is(RENEWED_THROUGH_OVERRIDE));
-
-    assertThat("'actionComment' field should contain comment specified for override",
-      renewedLoan.getString(ACTION_COMMENT_KEY), is(OVERRIDE_COMMENT));
-  }
-
-  private void declareItemLost(JsonObject loanJson) {
-    final UUID loanId = UUID.fromString(loanJson.getString("id"));
-    final String comment = "testing";
-    final DateTime dateTime = DateTime.now(DateTimeZone.UTC);
-
-    final DeclareItemLostRequestBuilder builder = new DeclareItemLostRequestBuilder()
-      .forLoanId(loanId).on(dateTime)
-      .withComment(comment);
-
-    loansFixture.declareItemLost(loanId, builder);
-  }
-
   @Test
   public void cannotOverrideRenewalWhenLoanDoesNotMatchAnyOfOverrideCases() {
-
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource jessica = usersFixture.jessica();
 
@@ -505,7 +463,6 @@ public class OverrideRenewByBarcodeTests extends APITests {
 
   @Test
   public void renewalRemovesActionCommentAfterOverride() {
-
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource jessica = usersFixture.jessica();
 
@@ -540,7 +497,6 @@ public class OverrideRenewByBarcodeTests extends APITests {
 
   @Test
   public void checkInRemovesActionCommentAfterOverride() {
-
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource jessica = usersFixture.jessica();
 
@@ -597,7 +553,6 @@ public class OverrideRenewByBarcodeTests extends APITests {
 
   @Test
   public void canOverrideRenewalWhenItemIsNotLoanableAndNewDueDateIsSpecified() {
-
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource jessica = usersFixture.jessica();
 
@@ -634,7 +589,6 @@ public class OverrideRenewByBarcodeTests extends APITests {
 
   @Test
   public void cannotOverrideRenewalWhenDueDateIsEarlierOrSameAsCurrentLoanDueDate() {
-
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource jessica = usersFixture.jessica();
 
@@ -658,7 +612,6 @@ public class OverrideRenewByBarcodeTests extends APITests {
 
   @Test
   public void renewalNoticeIsSentWhenPolicyDefinesRenewalNoticeConfiguration() {
-
     UUID renewalTemplateId = UUID.randomUUID();
     JsonObject renewalNoticeConfiguration = new NoticeConfigurationBuilder()
       .withTemplateId(renewalTemplateId)
@@ -751,5 +704,35 @@ public class OverrideRenewByBarcodeTests extends APITests {
   private void assertActionCommentIsAbsentInLoan(JsonObject loan) {
     assertThat("'actionComment' property should be absent in loan",
       loan.getString(ACTION_COMMENT_KEY), nullValue());
+  }
+
+  private void verifyRenewedLoan(IndividualResource smallAngryPlanet,
+                                 IndividualResource jessica, JsonObject renewedLoan) {
+    assertThat("user ID should match barcode",
+      renewedLoan.getString("userId"), is(jessica.getId().toString()));
+
+    assertThat("item ID should match barcode",
+      renewedLoan.getString("itemId"), is(smallAngryPlanet.getId().toString()));
+
+    assertThat("status should be open",
+      renewedLoan.getJsonObject("status").getString("name"), is("Open"));
+
+    assertThat("action should be renewed",
+      renewedLoan.getString("action"), is(RENEWED_THROUGH_OVERRIDE));
+
+    assertThat("'actionComment' field should contain comment specified for override",
+      renewedLoan.getString(ACTION_COMMENT_KEY), is(OVERRIDE_COMMENT));
+  }
+
+  private void declareItemLost(JsonObject loanJson) {
+    final UUID loanId = UUID.fromString(loanJson.getString("id"));
+    final String comment = "testing";
+    final DateTime dateTime = DateTime.now(DateTimeZone.UTC);
+
+    final DeclareItemLostRequestBuilder builder = new DeclareItemLostRequestBuilder()
+      .forLoanId(loanId).on(dateTime)
+      .withComment(comment);
+
+    loansFixture.declareItemLost(loanId, builder);
   }
 }
