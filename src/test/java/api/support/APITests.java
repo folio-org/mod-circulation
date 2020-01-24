@@ -257,7 +257,6 @@ public abstract class APITests {
     itemsFixture.cleanUp();
 
     usersClient.deleteAllIndividually();
-    templateFixture.deleteAll();
 
     if (initialiseCirculationRules) {
       useDefaultRollingPolicyCirculationRules();
@@ -285,7 +284,7 @@ public abstract class APITests {
     patronNoticesClient.deleteAll();
     scheduledNoticesClient.deleteAll();
     patronSessionRecordsClient.deleteAllIndividually();
-    templateClient.deleteAll();
+    templateFixture.deleteAll();
 
     //TODO: Only cleans up reference records, move items, holdings records
     // and instances into here too
