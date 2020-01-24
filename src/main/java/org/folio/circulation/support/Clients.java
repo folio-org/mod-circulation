@@ -48,6 +48,7 @@ public class Clients {
   private final CollectionResourceClient patronActionSessionsStorageClient;
   private final CollectionResourceClient patronExpiredSessionsStorageClient;
   private final CollectionResourceClient userManualBlocksStorageClient;
+  private final CollectionResourceClient templateNoticeClient;
 
   public static Clients create(WebContext context, HttpClient httpClient) {
     return new Clients(context.createHttpClient(httpClient), context);
@@ -95,6 +96,7 @@ public class Clients {
       patronActionSessionsStorageClient = createPatronActionSessionsStorageClient(client, context);
       patronExpiredSessionsStorageClient = createPatronExpiredSessionsStorageClient(client, context);
       userManualBlocksStorageClient = createUserManualBlocksStorageClient(client, context);
+      templateNoticeClient = createTemplateNoticeClient(client, context);
     }
     catch(MalformedURLException e) {
       throw new InvalidOkapiLocationException(context.getOkapiLocation(), e);
@@ -267,6 +269,10 @@ public class Clients {
     throws MalformedURLException {
 
     return new CollectionResourceClient(client, context.getOkapiBasedUrl(path));
+  }
+
+  public CollectionResourceClient templateNoticeClient() {
+    return templateNoticeClient;
   }
 
   private static CirculationRulesClient createCirculationLoanRulesClient(
@@ -572,5 +578,12 @@ public class Clients {
     throws MalformedURLException {
 
     return getCollectionResourceClient(client, context, "/manualblocks");
+  }
+
+  private CollectionResourceClient createTemplateNoticeClient(
+    OkapiHttpClient client, WebContext context)
+    throws MalformedURLException {
+
+    return getCollectionResourceClient(client, context, "/templates");
   }
 }
