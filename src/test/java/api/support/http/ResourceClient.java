@@ -7,7 +7,6 @@ import static api.support.http.Offset.noOffset;
 import static java.net.HttpURLConnection.HTTP_NO_CONTENT;
 import static org.folio.circulation.support.JsonArrayHelper.mapToList;
 
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.List;
 import java.util.UUID;
@@ -199,6 +198,10 @@ public class ResourceClient {
 
   public static ResourceClient forConfiguration() {
     return new ResourceClient(InterfaceUrls::configurationUrl, "configs");
+  }
+
+  public static ResourceClient forTemplates() {
+    return new ResourceClient(InterfaceUrls::templateUrl, "templates");
   }
 
   private ResourceClient(UrlMaker urlMaker, String collectionArrayPropertyName) {
