@@ -1,11 +1,11 @@
 package org.folio.circulation.domain.representations;
 
+import static org.folio.circulation.domain.representations.CallNumberComponentsRepresentation.createCallNumberComponents;
 import static org.folio.circulation.support.JsonPropertyWriter.write;
 import static org.folio.circulation.support.JsonPropertyWriter.writeNamedObject;
 
 import java.util.Optional;
 
-import org.folio.circulation.domain.CallNumberComponents;
 import org.folio.circulation.domain.InTransitReportEntry;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.ItemStatus;
@@ -45,6 +45,8 @@ public class ItemReportRepresentation {
       .map(ItemStatus::getValue).orElse(null));
     write(itemReport, "inTransitDestinationServicePointId", item.getInTransitDestinationServicePointId());
     write(itemReport, "copyNumber", item.getCopyNumber());
+    write(itemReport, "effectiveCallNumberComponents",
+      createCallNumberComponents(item.getCallNumberComponents()));
 
     final ServicePoint inTransitDestinationServicePoint = item.getInTransitDestinationServicePoint();
     if (inTransitDestinationServicePoint != null) {
@@ -69,22 +71,7 @@ public class ItemReportRepresentation {
       writeLastCheckIn(itemReport, lastCheckIn);
     }
 
-    final CallNumberComponents callNumberComponents = item.getCallNumberComponents();
-    if (callNumberComponents != null) {
-      writeCallNumberComponents(itemReport, callNumberComponents);
-    }
-
     return itemReport;
-  }
-
-  private void writeCallNumberComponents(JsonObject itemReport, CallNumberComponents components) {
-    final JsonObject componentsJson = new JsonObject();
-    write(componentsJson, "callNumber", components.getCallNumber());
-    write(componentsJson, "prefix", components.getPrefix());
-    write(componentsJson, "suffix", components.getSuffix());
-    if (!componentsJson.isEmpty()) {
-      write(itemReport, "effectiveCallNumberComponents", componentsJson);
-    }
   }
 
   private void writeLastCheckIn(JsonObject itemReport, LastCheckIn lastCheckIn) {
