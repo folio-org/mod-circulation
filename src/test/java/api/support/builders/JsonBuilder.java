@@ -1,13 +1,15 @@
 package api.support.builders;
 
-import io.vertx.core.json.JsonArray;
-import io.vertx.core.json.JsonObject;
+import java.util.List;
+import java.util.UUID;
+
 import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.ISODateTimeFormat;
 
-import java.util.UUID;
+import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
 
 public class JsonBuilder {
   protected void put(JsonObject representation, String property, String value) {
@@ -60,6 +62,12 @@ public class JsonBuilder {
 
     if(check != null) {
       representation.put(property, value);
+    }
+  }
+
+  protected <T> void put(JsonObject representation, String property, List<T> value) {
+    if(value != null) {
+      put(representation, property, new JsonArray(value));
     }
   }
 
