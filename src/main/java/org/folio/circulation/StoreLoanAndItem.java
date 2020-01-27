@@ -14,12 +14,11 @@ import org.folio.circulation.support.http.client.Response;
 
 import java.util.concurrent.CompletableFuture;
 
-public class LoanItemService {
-
+public class StoreLoanAndItem {
   private final LoanRepository loanRepository;
   private final ItemRepository itemRepository;
 
-  public LoanItemService(LoanRepository loanRepository, ItemRepository itemRepository) {
+  public StoreLoanAndItem(LoanRepository loanRepository, ItemRepository itemRepository) {
     this.loanRepository = loanRepository;
     this.itemRepository = itemRepository;
   }
@@ -45,6 +44,7 @@ public class LoanItemService {
     if (!item.hasChanged()) {
       return completedFuture(succeeded(null));
     }
+
     return itemRepository.updateItem(item);
   }
 }
