@@ -65,7 +65,7 @@ public class LoanPolicy extends Policy {
   private static final String KEY_ERROR_TEXT = "the \"%s\" in the holds is not recognized";
   private static final String INTERVAL_ERROR_TEXT = "the interval \"%s\" in \"%s\" is not recognized";
   private static final String DURATION_ERROR_TEXT = "the duration \"%s\" in \"%s\" is invalid";
-  private static final String DECLARED_LOST_ITEM_RENEWED_ERROR = "item cannot be renewed: item is Declared lost";
+  private static final String DECLARED_LOST_ITEM_RENEWED_ERROR = "Item not renewed: item is Declared lost";
 
   private final JsonObject representation;
   private final FixedDueDateSchedules fixedDueDateSchedules;
@@ -288,7 +288,7 @@ public class LoanPolicy extends Policy {
       "reached number of renewals limit," +
       "renewal date falls outside of the date ranges in the loan policy, " +
       "items cannot be renewed when there is an active recall request, " +
-      "item cannot be renewed: item is Declared lost";
+      "Item not renewed: item is Declared lost";
 
     return loanPolicyValidationError(reason);
   }

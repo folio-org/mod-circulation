@@ -456,7 +456,7 @@ public class RequestsAPILoanRenewalTests extends APITests {
         "reached number of renewals limit," +
         "renewal date falls outside of the date ranges in the loan policy, " +
         "items cannot be renewed when there is an active recall request, " +
-        "item cannot be renewed: item is Declared lost"))));
+        "Item not renewed: item is Declared lost"))));
   }
 
   @Test
