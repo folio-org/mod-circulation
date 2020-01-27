@@ -410,7 +410,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
     final JsonObject loanJson = loansFixture.checkOutByBarcode(smallAngryPlanet,
       usersFixture.jessica(), loanDate).getJson();
 
-    declareItemLost(loanJson);
+    loansFixture.declareItemLost(loanJson);
 
     loansFixture.attemptRenewal(422, smallAngryPlanet, jessica);
 
@@ -722,17 +722,5 @@ public class OverrideRenewByBarcodeTests extends APITests {
 
     assertThat("'actionComment' field should contain comment specified for override",
       renewedLoan.getString(ACTION_COMMENT_KEY), is(OVERRIDE_COMMENT));
-  }
-
-  private void declareItemLost(JsonObject loanJson) {
-    final UUID loanId = UUID.fromString(loanJson.getString("id"));
-    final String comment = "testing";
-    final DateTime dateTime = DateTime.now(DateTimeZone.UTC);
-
-    final DeclareItemLostRequestBuilder builder = new DeclareItemLostRequestBuilder()
-      .forLoanId(loanId).on(dateTime)
-      .withComment(comment);
-
-    loansFixture.declareItemLost(loanId, builder);
   }
 }

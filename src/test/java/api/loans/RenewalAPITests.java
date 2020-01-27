@@ -36,11 +36,9 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import api.support.builders.DeclareItemLostRequestBuilder;
 import org.apache.commons.lang3.StringUtils;
 import org.awaitility.Awaitility;
 import org.folio.circulation.domain.policy.DueDateManagement;
-import org.folio.circulation.domain.policy.LoanPolicy;
 import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
@@ -780,7 +778,7 @@ abstract class RenewalAPITests extends APITests {
     final JsonObject loanJson = loansFixture.checkOutByBarcode(smallAngryPlanet, usersFixture.jessica())
       .getJson();
 
-    declareItemLost(loanJson);
+    loansFixture.declareItemLost(loanJson);
 
     final Response response = attemptRenewal(smallAngryPlanet, jessica);
 
@@ -1313,17 +1311,5 @@ abstract class RenewalAPITests extends APITests {
 
   private Matcher<ValidationError> hasLoanPolicyNameParameter(String policyName) {
     return hasParameter("loanPolicyName", policyName);
-  }
-
-  private void declareItemLost(JsonObject loanJson) {
-    final UUID loanId = UUID.fromString(loanJson.getString("id"));
-    final String comment = "testing";
-    final DateTime dateTime = DateTime.now();
-
-    final DeclareItemLostRequestBuilder builder = new DeclareItemLostRequestBuilder()
-      .forLoanId(loanId).on(dateTime)
-      .withComment(comment);
-
-    loansFixture.declareItemLost(loanId, builder);
   }
 }
