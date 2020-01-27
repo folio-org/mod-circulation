@@ -54,28 +54,12 @@ public class InstanceBuilder extends JsonBuilder implements Builder {
       this.instanceTypeId);
   }
 
-  public InstanceBuilder withTitle(String title) {
-    return new InstanceBuilder(
-      this.id,
-      title,
-      this.contributors,
-      this.instanceTypeId);
-  }
-
   public Builder withInstanceTypeId(UUID instanceTypeId) {
     return new InstanceBuilder(
       this.id,
       this.title,
       this.contributors,
       instanceTypeId);
-  }
-
-  private InstanceBuilder withContributors(JsonArray contributors) {
-    return new InstanceBuilder(
-      this.id,
-      this.title,
-      contributors,
-      this.instanceTypeId);
   }
 
   public InstanceBuilder withContributor(String name, UUID typeId) {
@@ -85,5 +69,13 @@ public class InstanceBuilder extends JsonBuilder implements Builder {
     write(newContributor, "contributorNameTypeId", typeId);
 
     return withContributors(this.contributors.copy().add(newContributor));
+  }
+
+  private InstanceBuilder withContributors(JsonArray contributors) {
+    return new InstanceBuilder(
+      this.id,
+      this.title,
+      contributors,
+      this.instanceTypeId);
   }
 }
