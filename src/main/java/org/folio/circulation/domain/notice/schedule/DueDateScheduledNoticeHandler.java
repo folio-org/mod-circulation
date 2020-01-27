@@ -18,9 +18,11 @@ import org.folio.circulation.domain.notice.NoticeTiming;
 import org.folio.circulation.domain.notice.PatronNoticeService;
 import org.folio.circulation.domain.policy.LoanPolicyRepository;
 import org.folio.circulation.support.Clients;
+import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.HttpFailure;
 import org.folio.circulation.support.RecordNotFoundFailure;
 import org.folio.circulation.support.Result;
+import org.folio.circulation.support.http.client.Response;
 import org.joda.time.DateTime;
 
 import io.vertx.core.json.JsonObject;
@@ -33,7 +35,10 @@ public class DueDateScheduledNoticeHandler {
   private static final String USER_RECORD_TYPE = "user";
   private static final String ITEM_RECORD_TYPE = "item";
   private static final String LOAN_RECORD_TYPE = "loan";
-  static final String[] REQUIRED_RECORD_TYPES = { USER_RECORD_TYPE, ITEM_RECORD_TYPE, LOAN_RECORD_TYPE };
+  private static final String TEMPLATE_RECORD_TYPE = "template";
+  static final String[] REQUIRED_RECORD_TYPES = {USER_RECORD_TYPE,
+    ITEM_RECORD_TYPE, LOAN_RECORD_TYPE, TEMPLATE_RECORD_TYPE};
+  private final CollectionResourceClient templateNoticesClient;
 
   public static DueDateScheduledNoticeHandler using(Clients clients, DateTime systemTime) {
     return new DueDateScheduledNoticeHandler(
@@ -42,7 +47,7 @@ public class DueDateScheduledNoticeHandler {
       new ConfigurationRepository(clients),
       PatronNoticeService.using(clients),
       ScheduledNoticesRepository.using(clients),
-      systemTime);
+      systemTime, clients.templateNoticeClient());
   }
 
   private LoanRepository loanRepository;
@@ -56,7 +61,8 @@ public class DueDateScheduledNoticeHandler {
     LoanRepository loanRepository, LoanPolicyRepository loanPolicyRepository,
     ConfigurationRepository configurationRepository,
     PatronNoticeService patronNoticeService,
-    ScheduledNoticesRepository scheduledNoticesRepository, DateTime systemTime) {
+    ScheduledNoticesRepository scheduledNoticesRepository, DateTime systemTime,
+    CollectionResourceClient templateNoticesClient) {
 
     this.loanRepository = loanRepository;
     this.loanPolicyRepository = loanPolicyRepository;
@@ -64,6 +70,7 @@ public class DueDateScheduledNoticeHandler {
     this.patronNoticeService = patronNoticeService;
     this.scheduledNoticesRepository = scheduledNoticesRepository;
     this.systemTime = systemTime;
+    this.templateNoticesClient = templateNoticesClient;
   }
 
   public CompletableFuture<Result<Collection<ScheduledNotice>>> handleNotices(Collection<ScheduledNotice> scheduledNotices) {
@@ -82,7 +89,12 @@ public class DueDateScheduledNoticeHandler {
   }
 
   private CompletableFuture<Result<ScheduledNotice>> handleDueDateNotice(ScheduledNotice notice) {
-    return loanRepository.getById(notice.getLoanId())
+
+    String templateId = notice.getConfiguration().getTemplateId();
+
+    return templateNoticesClient.get(templateId)
+      .thenApply(r -> r.next(response -> failIfTemplateNotFound(response, templateId)))
+      .thenCompose(r -> r.after(i -> loanRepository.getById(notice.getLoanId())))
       .thenCompose(r -> deleteNoticeIfLoanIsMissingOrIncomplete(r, notice))
       .thenApply(r -> r.map(LoanAndRelatedRecords::new))
       .thenCompose(r -> r.after(loanPolicyRepository::lookupLoanPolicy))
@@ -92,11 +104,26 @@ public class DueDateScheduledNoticeHandler {
       .thenApply(r -> r.mapFailure(this::handleFailure));
   }
 
+  public Result<Response> failIfTemplateNotFound(
+    Response response, String templateId) {
+
+    if (response.getStatusCode() == 404) {
+      return failed(new RecordNotFoundFailure(TEMPLATE_RECORD_TYPE, templateId));
+    } else {
+      return succeeded(response);
+    }
+  }
+
   CompletableFuture<Result<Loan>> deleteNoticeIfLoanIsMissingOrIncomplete(
       Result<Loan> result, ScheduledNotice notice) {
 
     if (failedToFindRecordOfType(result, LOAN_RECORD_TYPE)) {
       return deleteInvalidNoticeAndFail(notice, LOAN_RECORD_TYPE, notice.getLoanId());
+    }
+
+    if (failedToFindRecordOfType(result, TEMPLATE_RECORD_TYPE)) {
+      return deleteInvalidNoticeAndFail(notice, TEMPLATE_RECORD_TYPE,
+        notice.getConfiguration().getTemplateId());
     }
 
     if (result.succeeded()) {
@@ -194,5 +221,4 @@ public class DueDateScheduledNoticeHandler {
     return failure instanceof RecordNotFoundFailure
         && StringUtils.equalsAny(((RecordNotFoundFailure) failure).getRecordType(), recordTypes);
   }
-  
 }
