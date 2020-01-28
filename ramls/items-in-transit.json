@@ -16,7 +16,7 @@
           "id": {
             "description": "UUID of the item",
             "type": "string",
-            "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
+            "$ref": "uuid.json"
           },
           "title": {
             "description": "title of the item (stored)",
@@ -81,7 +81,7 @@
               "id": {
                 "description": "UUID of the service point",
                 "type": "string",
-                "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
+                "$ref": "uuid.json"
               },
               "name": {
                 "description": "Name of the service point",
@@ -201,7 +201,7 @@
                   "id": {
                     "description": "UUID of the service point",
                     "type": "string",
-                    "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
+                    "$ref": "uuid.json"
                   },
                   "name": {
                     "type": "string",
@@ -210,6 +210,15 @@
                 }
               }
             }
+          },
+          "copyNumber": {
+            "type": "string",
+            "description": "Copy number is the piece identifier. The copy number reflects if the library has a copy of a single-volume monograph; one copy of a multi-volume, (e.g. Copy 1, or C.7.)"
+          },
+          "effectiveCallNumberComponents": {
+            "description": "Elements of a full call number",
+            "$ref": "schema/call-number-components.json",
+            "readonly": true
           }
         },
         "additionalProperties": false
