@@ -140,6 +140,18 @@ public class LoansFixture {
       declareLoanItemLostURL(loanId.toString()), "declare-item-lost-request");
   }
 
+  public Response declareItemLost(JsonObject loanJson) {
+    final UUID loanId = UUID.fromString(loanJson.getString("id"));
+    final String comment = "testing";
+    final DateTime dateTime = DateTime.now(DateTimeZone.UTC);
+
+    final DeclareItemLostRequestBuilder builder = new DeclareItemLostRequestBuilder()
+      .forLoanId(loanId).on(dateTime)
+      .withComment(comment);
+
+    return declareItemLost(loanId, builder);
+  }
+
   public IndividualResource checkOutByBarcode(IndividualResource item) {
     return checkOutByBarcode(item, usersFixture.jessica());
   }

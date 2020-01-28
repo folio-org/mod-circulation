@@ -1,24 +1,18 @@
 package org.folio.circulation.domain.policy;
 
 import static java.lang.String.format;
-import static org.folio.circulation.domain.RequestType.HOLD;
-import static org.folio.circulation.domain.RequestType.RECALL;
 import static org.folio.circulation.support.JsonPropertyFetcher.getBooleanProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getIntegerProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getNestedIntegerProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getNestedObjectProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getNestedStringProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
-import static org.folio.circulation.support.Result.failed;
 import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
-import static org.folio.circulation.support.results.CommonFailures.failedDueToServerError;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -28,10 +22,10 @@ import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestQueue;
 import org.folio.circulation.domain.RequestStatus;
 import org.folio.circulation.domain.RequestType;
+import org.folio.circulation.resources.RenewalValidator;
 import org.folio.circulation.rules.AppliedRuleConditions;
 import org.folio.circulation.support.ClockManager;
 import org.folio.circulation.support.Result;
-import org.folio.circulation.support.ServerErrorFailure;
 import org.folio.circulation.support.ValidationErrorFailure;
 import org.folio.circulation.support.http.server.ValidationError;
 import org.joda.time.DateTime;
@@ -41,19 +35,10 @@ import io.vertx.core.json.JsonObject;
 public class LoanPolicy extends Policy {
   private static final String LOANS_POLICY_KEY = "loansPolicy";
   private static final String PERIOD_KEY = "period";
-  private static final String RENEWAL_WOULD_NOT_CHANGE_THE_DUE_DATE = "renewal would not change the due date";
 
   private static final String REQUEST_MANAGEMENT_KEY = "requestManagement";
   private static final String HOLDS_KEY = "holds";
   private static final String ALTERNATE_RENEWAL_LOAN_PERIOD_KEY = "alternateRenewalLoanPeriod";
-  public static final String CAN_NOT_RENEW_ITEM_ERROR =
-    "Items with this loan policy cannot be renewed when there is an active, pending hold request";
-
-  private static final String FIXED_POLICY_HAS_ALTERNATE_RENEWAL_PERIOD_FOR_HOLDS =
-    "Item's loan policy has fixed profile but alternative renewal period for holds is specified";
-
-  private static final String FIXED_POLICY_HAS_ALTERNATE_RENEWAL_PERIOD =
-    "Item's loan policy has fixed profile but renewal period is specified";
 
   private static final String INTERVAL_ID = "intervalId";
   private static final String DURATION = "duration";
@@ -111,89 +96,13 @@ public class LoanPolicy extends Policy {
     return determineStrategy(requestQueue, false, false, systemTime).calculateDueDate(loan);
   }
 
-  public Result<Loan> renew(Loan loan, DateTime systemDate, RequestQueue requestQueue) {
-    //TODO: Create HttpResult wrapper that traps exceptions
-    try {
-      List<ValidationError> errors = new ArrayList<>();
-
-      Request firstRequest = requestQueue.getRequests().stream()
-        .findFirst().orElse(null);
-
-      if (hasRecallRequest(firstRequest)) {
-        String reason = "items cannot be renewed when there is an active recall request";
-        errors.add(errorForRecallRequest(reason, firstRequest.getId()));
-      }
-
-      if (isNotLoanable()) {
-        errors.add(loanPolicyValidationError("item is not loanable"));
-        return failedValidation(errors);
-      }
-      if (isNotRenewable()) {
-        errors.add(loanPolicyValidationError("loan is not renewable"));
-        return failedValidation(errors);
-      }
-      boolean isRenewalWithHoldRequest = false;
-      //Here can be either Hold request or null only
-      if (isHold(firstRequest)) {
-        if (!isHoldRequestRenewable()) {
-          errors.add(loanPolicyValidationError(CAN_NOT_RENEW_ITEM_ERROR));
-          return failedValidation(errors);
-        }
-
-        if (isFixed(getLoansPolicy())) {
-          if (hasAlternateRenewalLoanPeriodForHolds()) {
-            return failed(
-              new ServerErrorFailure(FIXED_POLICY_HAS_ALTERNATE_RENEWAL_PERIOD_FOR_HOLDS)
-            );
-          }
-          if (hasRenewalPeriod()) {
-            return failed(
-              new ServerErrorFailure(FIXED_POLICY_HAS_ALTERNATE_RENEWAL_PERIOD)
-            );
-          }
-        }
-
-        isRenewalWithHoldRequest = true;
-      }
-
-      final Result<DateTime> proposedDueDateResult =
-        determineStrategy(null, true, isRenewalWithHoldRequest, systemDate)
-          .calculateDueDate(loan);
-
-      //TODO: Need a more elegent way of combining validation errors
-      if(proposedDueDateResult.failed()) {
-        if (proposedDueDateResult.cause() instanceof ValidationErrorFailure) {
-          ValidationErrorFailure failureCause =
-            (ValidationErrorFailure) proposedDueDateResult.cause();
-
-          errors.addAll(failureCause.getErrors());
-        }
-      }
-      else {
-        errorWhenEarlierOrSameDueDate(loan, proposedDueDateResult.value(), errors);
-      }
-
-      errorWhenReachedRenewalLimit(loan, errors);
-
-      if(errors.isEmpty()) {
-        return proposedDueDateResult.map(dueDate -> loan.renew(dueDate, getId()));
-      }
-      else {
-        return failedValidation(errors);
-      }
-    }
-    catch(Exception e) {
-      return failedDueToServerError(e);
-    }
-  }
-
-  private boolean hasRenewalPeriod() {
+  public boolean hasRenewalPeriod() {
     return useDifferentPeriod()
       && getRenewalsPolicy() != null
       && getRenewalsPolicy().containsKey(PERIOD_KEY);
   }
 
-  private boolean isHoldRequestRenewable() {
+  public boolean isHoldRequestRenewable() {
     boolean renewItemsWithRequest = false;
     if (representation != null && representation.containsKey(REQUEST_MANAGEMENT_KEY)) {
       JsonObject requestManagement = representation.getJsonObject(REQUEST_MANAGEMENT_KEY);
@@ -203,116 +112,17 @@ public class LoanPolicy extends Policy {
     return renewItemsWithRequest;
   }
 
-  private boolean isHold(Request request) {
-    return request != null && request.getRequestType() == HOLD;
-  }
-
-  public Result<Loan> overrideRenewal(Loan loan, DateTime systemDate,
-                                      DateTime overrideDueDate, String comment,
-                                      boolean hasRecallRequest) {
-    try {
-      if (isNotLoanable() || isNotRenewable()) {
-        return overrideRenewalForDueDate(loan, overrideDueDate, comment);
-      }
-      final Result<DateTime> proposedDueDateResult =
-        determineStrategy(null, true, false, systemDate).calculateDueDate(loan);
-
-      if (proposedDueDateResult.failed()) {
-        return overrideRenewalForDueDate(loan, overrideDueDate, comment);
-      }
-
-      if (hasReachedRenewalLimit(loan)) {
-        return processRenewal(proposedDueDateResult, loan, comment);
-      }
-
-      if (hasRecallRequest) {
-        return processRenewal(proposedDueDateResult, loan, comment);
-      }
-
-      return failedValidation(errorForNotMatchingOverrideCases());
-
-    } catch (Exception e) {
-      return failedDueToServerError(e);
-    }
-  }
-
-  private Result<Loan> processRenewal(Result<DateTime> calculatedDueDate, Loan loan, String comment) {
-    return calculatedDueDate
-      .next(dueDate -> errorWhenEarlierOrSameDueDate(loan, dueDate))
-      .map(dueDate -> loan.overrideRenewal(dueDate, getId(), comment));
-  }
-
-  private Result<DateTime> errorWhenEarlierOrSameDueDate(Loan loan, DateTime proposedDueDate) {
-    if (isSameOrBefore(loan, proposedDueDate)) {
-      return failedValidation(loanPolicyValidationError(
-        RENEWAL_WOULD_NOT_CHANGE_THE_DUE_DATE));
-    }
-    return Result.succeeded(proposedDueDate);
-  }
-
-  private Result<Loan> overrideRenewalForDueDate(Loan loan, DateTime overrideDueDate, String comment) {
-    if (overrideDueDate == null) {
-      return failedValidation(errorForDueDate());
-    }
-    return succeeded(loan.overrideRenewal(overrideDueDate, getId(), comment));
-  }
-
-  private ValidationError errorForDueDate() {
-    return new ValidationError(
-      "New due date must be specified when due date calculation fails",
-      "dueDate", "null");
-  }
-
-  private ValidationError errorForNotMatchingOverrideCases() {
-    String reason = "Override renewal does not match any of expected cases: " +
-      "item is not loanable, " +
-      "item is not renewable, " +
-      "reached number of renewals limit," +
-      "renewal date falls outside of the date ranges in the loan policy, " +
-      "items cannot be renewed when there is an active recall request";
-
-    return loanPolicyValidationError(reason);
-  }
-
-  private ValidationError loanPolicyValidationError(String message) {
-    return loanPolicyValidationError(message, Collections.emptyMap());
-  }
-
-  public ValidationError loanPolicyValidationError(
-    String message, Map<String, String> additionalParameters) {
-
-    Map<String, String> parameters = new HashMap<>(additionalParameters);
-    parameters.put("loanPolicyId", getId());
-    parameters.put("loanPolicyName", getName());
-    return new ValidationError(message, parameters);
-  }
-
-  private boolean isNotRenewable() {
+  public boolean isNotRenewable() {
     return !getBooleanProperty(representation, "renewable");
   }
 
-  private void errorWhenReachedRenewalLimit(Loan loan, List<ValidationError> errors) {
+  public void errorWhenReachedRenewalLimit(Loan loan, List<ValidationError> errors) {
     if (hasReachedRenewalLimit(loan)) {
       errors.add(loanPolicyValidationError("loan at maximum renewal number"));
     }
   }
 
-  private void errorWhenEarlierOrSameDueDate(
-    Loan loan,
-    DateTime proposedDueDate,
-    List<ValidationError> errors) {
-
-    if(isSameOrBefore(loan, proposedDueDate)) {
-      errors.add(loanPolicyValidationError(RENEWAL_WOULD_NOT_CHANGE_THE_DUE_DATE));
-    }
-  }
-
-  private boolean isSameOrBefore(Loan loan, DateTime proposedDueDate) {
-    return proposedDueDate.isEqual(loan.getDueDate())
-      || proposedDueDate.isBefore(loan.getDueDate());
-  }
-
-  private boolean hasReachedRenewalLimit(Loan loan) {
+  public boolean hasReachedRenewalLimit(Loan loan) {
     return reachedNumberOfRenewalsLimit(loan) && !unlimitedRenewals();
   }
 
@@ -328,7 +138,7 @@ public class LoanPolicy extends Policy {
     return getIntegerProperty(getRenewalsPolicy(), "numberAllowed", 0);
   }
 
-  private DueDateStrategy determineStrategy(
+  public DueDateStrategy determineStrategy(
     RequestQueue requestQueue,
     boolean isRenewal,
     boolean isRenewalWithHoldRequest,
@@ -381,6 +191,10 @@ public class LoanPolicy extends Policy {
       return new UnknownDueDateStrategy(getId(), getName(),
         getProfileId(loansPolicy), isRenewal, this::loanPolicyValidationError);
     }
+  }
+
+  private ValidationError loanPolicyValidationError(String message) {
+    return RenewalValidator.loanPolicyValidationError(this, message);
   }
 
   private boolean isAlternatePeriod(RequestQueue requestQueue) {
@@ -446,7 +260,7 @@ public class LoanPolicy extends Policy {
     return result;
   }
 
-  private boolean hasAlternateRenewalLoanPeriodForHolds() {
+  public boolean hasAlternateRenewalLoanPeriodForHolds() {
     return getHolds().containsKey(ALTERNATE_RENEWAL_LOAN_PERIOD_KEY);
   }
 
@@ -480,6 +294,10 @@ public class LoanPolicy extends Policy {
 
   private String getProfileId(JsonObject loansPolicy) {
     return loansPolicy.getString("profileId");
+  }
+
+  public boolean isFixed() {
+    return isProfile(getLoansPolicy(), "Fixed");
   }
 
   private boolean isFixed(JsonObject loansPolicy) {
@@ -519,14 +337,6 @@ public class LoanPolicy extends Policy {
 
   public boolean isNotLoanable() {
     return !isLoanable();
-  }
-
-  private boolean hasRecallRequest(Request firstRequest) {
-    return firstRequest != null && firstRequest.getRequestType() == RECALL;
-  }
-
-  private ValidationError errorForRecallRequest(String reason, String requestId) {
-    return new ValidationError(reason, "request id", requestId);
   }
 
   public DueDateManagement getDueDateManagement() {
