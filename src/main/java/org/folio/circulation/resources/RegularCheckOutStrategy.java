@@ -2,6 +2,7 @@ package org.folio.circulation.resources;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequest.ITEM_BARCODE;
+import static org.folio.circulation.resources.RenewalValidator.loanPolicyValidationError;
 import static org.folio.circulation.support.Result.failed;
 import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
@@ -52,7 +53,7 @@ public class RegularCheckOutStrategy implements CheckOutStrategy {
       Map<String, String> parameters = new HashMap<>();
       parameters.put(ITEM_BARCODE, itemBarcode);
       return failed(singleValidationError(
-        loanPolicy.loanPolicyValidationError(
+        loanPolicyValidationError(loanPolicy,
           "Item is not loanable", parameters)));
     }
     return succeeded(relatedRecords);
@@ -66,5 +67,5 @@ public class RegularCheckOutStrategy implements CheckOutStrategy {
       .map(loan::changeDueDate)
       .map(loanAndRelatedRecords::withLoan);
   }
-  
+
 }

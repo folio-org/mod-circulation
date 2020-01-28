@@ -9,7 +9,7 @@ public class Policies {
   private final OverdueFinePolicy overdueFinePolicy;
   private final LostItemPolicy lostItemPolicy;
 
-  Policies(LoanPolicy loanPolicy, OverdueFinePolicy overdueFinePolicy,
+  public Policies(LoanPolicy loanPolicy, OverdueFinePolicy overdueFinePolicy,
     LostItemPolicy lostItemPolicy) {
     this.loanPolicy = loanPolicy;
     this.overdueFinePolicy = overdueFinePolicy;

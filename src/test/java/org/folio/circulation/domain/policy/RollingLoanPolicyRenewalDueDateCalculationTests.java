@@ -11,6 +11,7 @@ import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestQueue;
 import org.folio.circulation.domain.RequestType;
+import org.folio.circulation.resources.RegularRenewalStrategy;
 import org.folio.circulation.support.Result;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
@@ -35,6 +36,8 @@ public class RollingLoanPolicyRenewalDueDateCalculationTests {
   private static final String EXPECTED_REASON_OPEN_RECALL_REQUEST =
     "items cannot be renewed when there is an active recall request";
 
+  private RegularRenewalStrategy regularRenewalStrategy = new RegularRenewalStrategy();
+
   @Test
   @Parameters({
     "1",
@@ -51,11 +54,11 @@ public class RollingLoanPolicyRenewalDueDateCalculationTests {
 
     DateTime loanDate = new DateTime(2018, 3, 14, 11, 14, 54, DateTimeZone.UTC);
 
-    Loan loan = loanFor(loanDate, loanDate.plusMonths(duration));
+    Loan loan = loanFor(loanDate, loanDate.plusMonths(duration), loanPolicy);
 
     DateTime systemDate = new DateTime(2018, 6, 1, 21, 32, 11, DateTimeZone.UTC);
 
-    final Result<Loan> calculationResult = loanPolicy.renew(loan, systemDate, new RequestQueue(Collections.emptyList()));
+    final Result<Loan> calculationResult = regularRenewalStrategy.renew(loan, systemDate, new RequestQueue(Collections.emptyList()));
 
     assertThat(calculationResult.value().getDueDate(), is(systemDate.plusMonths(duration)));
   }
@@ -78,11 +81,11 @@ public class RollingLoanPolicyRenewalDueDateCalculationTests {
 
     DateTime loanDate = new DateTime(2018, 3, 14, 11, 14, 54, DateTimeZone.UTC);
 
-    Loan loan = loanFor(loanDate, loanDate.plusWeeks(duration));
+    Loan loan = loanFor(loanDate, loanDate.plusWeeks(duration), loanPolicy);
 
     DateTime systemDate = new DateTime(2018, 6, 1, 21, 32, 11, DateTimeZone.UTC);
 
-    final Result<Loan> calculationResult = loanPolicy.renew(loan, systemDate, new RequestQueue(Collections.emptyList()));
+    final Result<Loan> calculationResult = regularRenewalStrategy.renew(loan, systemDate, new RequestQueue(Collections.emptyList()));
 
     assertThat(calculationResult.value().getDueDate(), is(systemDate.plusWeeks(duration)));
   }
@@ -106,11 +109,11 @@ public class RollingLoanPolicyRenewalDueDateCalculationTests {
 
     DateTime loanDate = new DateTime(2018, 3, 14, 11, 14, 54, DateTimeZone.UTC);
 
-    Loan loan = loanFor(loanDate, loanDate.plusDays(duration));
+    Loan loan = loanFor(loanDate, loanDate.plusDays(duration), loanPolicy);
 
     DateTime systemDate = new DateTime(2018, 6, 1, 21, 32, 11, DateTimeZone.UTC);
 
-    final Result<Loan> calculationResult = loanPolicy.renew(loan, systemDate, new RequestQueue(Collections.emptyList()));
+    final Result<Loan> calculationResult = regularRenewalStrategy.renew(loan, systemDate, new RequestQueue(Collections.emptyList()));
 
     assertThat(calculationResult.value().getDueDate(), is(systemDate.plusDays(duration)));
   }
@@ -134,11 +137,11 @@ public class RollingLoanPolicyRenewalDueDateCalculationTests {
 
     DateTime loanDate = new DateTime(2018, 3, 14, 11, 14, 54, DateTimeZone.UTC);
 
-    Loan loan = loanFor(loanDate, loanDate.plusHours(duration));
+    Loan loan = loanFor(loanDate, loanDate.plusHours(duration), loanPolicy);
 
     DateTime systemDate = new DateTime(2018, 6, 1, 21, 32, 11, DateTimeZone.UTC);
 
-    final Result<Loan> calculationResult = loanPolicy.renew(loan, systemDate, new RequestQueue(Collections.emptyList()));
+    final Result<Loan> calculationResult = regularRenewalStrategy.renew(loan, systemDate, new RequestQueue(Collections.emptyList()));
 
     assertThat(calculationResult.value().getDueDate(), is(systemDate.plusHours(duration)));
   }
@@ -160,11 +163,11 @@ public class RollingLoanPolicyRenewalDueDateCalculationTests {
 
     DateTime loanDate = new DateTime(2018, 3, 14, 11, 14, 54, DateTimeZone.UTC);
 
-    Loan loan = loanFor(loanDate);
+    Loan loan = loanFor(loanDate, loanDate, loanPolicy);
 
     DateTime systemDate = new DateTime(2018, 6, 1, 21, 32, 11, DateTimeZone.UTC);
 
-    final Result<Loan> calculationResult = loanPolicy.renew(loan, systemDate, new RequestQueue(Collections.emptyList()));
+    final Result<Loan> calculationResult = regularRenewalStrategy.renew(loan, systemDate, new RequestQueue(Collections.emptyList()));
 
     assertThat(calculationResult.value().getDueDate(), is(systemDate.plusMinutes(duration)));
   }
@@ -178,9 +181,9 @@ public class RollingLoanPolicyRenewalDueDateCalculationTests {
 
     DateTime loanDate = new DateTime(2018, 3, 14, 11, 14, 54, DateTimeZone.UTC);
 
-    Loan loan = loanFor(loanDate);
+    Loan loan = loanFor(loanDate, loanDate, loanPolicy);
 
-    final Result<Loan> result = loanPolicy.renew(loan, DateTime.now(), new RequestQueue(Collections.emptyList()));
+    final Result<Loan> result = regularRenewalStrategy.renew(loan, DateTime.now(), new RequestQueue(Collections.emptyList()));
 
     assertThat(result, hasValidationFailure(
       "the interval \"Unknown\" in the loan policy is not recognised"));
@@ -199,9 +202,9 @@ public class RollingLoanPolicyRenewalDueDateCalculationTests {
 
     DateTime loanDate = new DateTime(2018, 3, 14, 11, 14, 54, DateTimeZone.UTC);
 
-    Loan loan = loanFor(loanDate);
+    Loan loan = loanFor(loanDate, loanDate, loanPolicy);
 
-    final Result<Loan> result = loanPolicy.renew(loan, DateTime.now(), new RequestQueue(Collections.emptyList()));
+    final Result<Loan> result = regularRenewalStrategy.renew(loan, DateTime.now(), new RequestQueue(Collections.emptyList()));
 
     assertThat(result, hasValidationFailure(
       "the loan period in the loan policy is not recognised"));
@@ -220,9 +223,9 @@ public class RollingLoanPolicyRenewalDueDateCalculationTests {
 
     DateTime loanDate = new DateTime(2018, 3, 14, 11, 14, 54, DateTimeZone.UTC);
 
-    Loan loan = loanFor(loanDate);
+    Loan loan = loanFor(loanDate, loanDate, loanPolicy);
 
-    final Result<Loan> result = loanPolicy.renew(loan, DateTime.now(), new RequestQueue(Collections.emptyList()));
+    final Result<Loan> result = regularRenewalStrategy.renew(loan, DateTime.now(), new RequestQueue(Collections.emptyList()));
 
     assertThat(result, hasValidationFailure(
       "the loan period in the loan policy is not recognised"));
@@ -241,9 +244,9 @@ public class RollingLoanPolicyRenewalDueDateCalculationTests {
 
     DateTime loanDate = new DateTime(2018, 3, 14, 11, 14, 54, DateTimeZone.UTC);
 
-    Loan loan = loanFor(loanDate);
+    Loan loan = loanFor(loanDate, loanDate, loanPolicy);
 
-    final Result<Loan> result = loanPolicy.renew(loan, DateTime.now(), new RequestQueue(Collections.emptyList()));
+    final Result<Loan> result = regularRenewalStrategy.renew(loan, DateTime.now(), new RequestQueue(Collections.emptyList()));
 
     assertThat(result, hasValidationFailure(
       "the loan period in the loan policy is not recognised"));
@@ -264,9 +267,9 @@ public class RollingLoanPolicyRenewalDueDateCalculationTests {
 
     DateTime loanDate = new DateTime(2018, 3, 14, 11, 14, 54, DateTimeZone.UTC);
 
-    Loan loan = loanFor(loanDate);
+    Loan loan = loanFor(loanDate, loanDate, loanPolicy);
 
-    final Result<Loan> result = loanPolicy.renew(loan, DateTime.now(), new RequestQueue(Collections.emptyList()));
+    final Result<Loan> result = regularRenewalStrategy.renew(loan, DateTime.now(), new RequestQueue(Collections.emptyList()));
 
     assertThat(result, hasValidationFailure(
       String.format("the duration \"%s\" in the loan policy is invalid", duration)));
@@ -288,9 +291,9 @@ public class RollingLoanPolicyRenewalDueDateCalculationTests {
 
     DateTime loanDate = new DateTime(2018, 3, 14, 11, 14, 54, DateTimeZone.UTC);
 
-    Loan loan = loanFor(loanDate, loanDate.plusDays(15));
+    Loan loan = loanFor(loanDate, loanDate.plusDays(15), loanPolicy);
 
-    final Result<Loan> result = loanPolicy.renew(loan, DateTime.now(), new RequestQueue(Collections.emptyList()));
+    final Result<Loan> result = regularRenewalStrategy.renew(loan, DateTime.now(), new RequestQueue(Collections.emptyList()));
 
     assertThat(result.value().getDueDate(),
       is(new DateTime(2018, 4, 10, 23, 59, 59, DateTimeZone.UTC)));
@@ -311,9 +314,9 @@ public class RollingLoanPolicyRenewalDueDateCalculationTests {
 
     DateTime loanDate = new DateTime(2018, 3, 11, 16, 21, 43, DateTimeZone.UTC);
 
-    Loan loan = loanFor(loanDate, loanDate.plusDays(6));
+    Loan loan = loanFor(loanDate, loanDate.plusDays(6), loanPolicy);
 
-    final Result<Loan> result = loanPolicy.renew(loan, DateTime.now(), new RequestQueue(Collections.emptyList()));
+    final Result<Loan> result = regularRenewalStrategy.renew(loan, DateTime.now(), new RequestQueue(Collections.emptyList()));
 
     assertThat(result.value().getDueDate(),
       is(new DateTime(2018, 3, 23, 16, 21, 43, DateTimeZone.UTC)));
@@ -336,9 +339,9 @@ public class RollingLoanPolicyRenewalDueDateCalculationTests {
 
     DateTime loanDate = new DateTime(2018, 4, 3, 9, 25, 43, DateTimeZone.UTC);
 
-    Loan loan = loanFor(loanDate);
+    Loan loan = loanFor(loanDate, loanDate, loanPolicy);
 
-    final Result<Loan> result = loanPolicy.renew(loan, DateTime.now(), new RequestQueue(Collections.emptyList()));
+    final Result<Loan> result = regularRenewalStrategy.renew(loan, DateTime.now(), new RequestQueue(Collections.emptyList()));
 
     assertThat(result, hasValidationFailure(
       EXPECTED_REASON_DATE_FALLS_OTSIDE_DATE_RANGES));
@@ -360,11 +363,11 @@ public class RollingLoanPolicyRenewalDueDateCalculationTests {
 
     DateTime loanDate = new DateTime(2018, 4, 3, 9, 25, 43, DateTimeZone.UTC);
 
-    Loan loan = loanFor(loanDate);
+    Loan loan = loanFor(loanDate, loanDate, loanPolicy);
 
     RequestQueue requestQueue = new RequestQueue(Collections.emptyList());
 
-    final Result<Loan> result = loanPolicy.renew(loan, DateTime.now(),requestQueue);
+    final Result<Loan> result = regularRenewalStrategy.renew(loan, DateTime.now(),requestQueue);
 
     assertThat(result, hasValidationFailure(
       EXPECTED_REASON_DATE_FALLS_OTSIDE_DATE_RANGES));
@@ -382,12 +385,12 @@ public class RollingLoanPolicyRenewalDueDateCalculationTests {
 
     DateTime loanDate = new DateTime(2018, 3, 2, 9, 10, 45, DateTimeZone.UTC);
 
-    Loan loan = loanFor(loanDate);
+    Loan loan = loanFor(loanDate, loanDate, loanPolicy);
 
     String requestId = UUID.randomUUID().toString();
     RequestQueue requestQueue = creteRequestQueue(requestId, RequestType.RECALL);
 
-    final Result<Loan> result = loanPolicy.renew(loan, DateTime.now(), requestQueue);
+    final Result<Loan> result = regularRenewalStrategy.renew(loan, DateTime.now(), requestQueue);
 
     assertThat(result, hasValidationFailure(
       EXPECTED_REASON_DATE_FALLS_OTSIDE_DATE_RANGES));
@@ -412,11 +415,12 @@ public class RollingLoanPolicyRenewalDueDateCalculationTests {
       .open()
       .withLoanDate(new DateTime(2018, 1, 20, 13, 45, 21, DateTimeZone.UTC))
       .withDueDate(initialDueDate)
-      .asDomainObject();
+      .asDomainObject()
+      .withLoanPolicy(loanPolicy);
 
     DateTime renewalDate = initialDueDate.minusDays(3);
 
-    final Result<Loan> result = loanPolicy.renew(loan, renewalDate, new RequestQueue(Collections.emptyList()));
+    final Result<Loan> result = regularRenewalStrategy.renew(loan, renewalDate, new RequestQueue(Collections.emptyList()));
 
     assertThat(result,
       hasValidationFailure("renewal would not change the due date"));
@@ -437,26 +441,28 @@ public class RollingLoanPolicyRenewalDueDateCalculationTests {
       .open()
       .withLoanDate(new DateTime(2018, 1, 20, 13, 45, 21, DateTimeZone.UTC))
       .withDueDate(initialDueDate)
-      .asDomainObject();
+      .asDomainObject()
+      .withLoanPolicy(loanPolicy);
 
     DateTime renewalDate = initialDueDate.minusDays(4);
 
-    final Result<Loan> result = loanPolicy.renew(loan, renewalDate, new RequestQueue(Collections.emptyList()));
+    final Result<Loan> result = regularRenewalStrategy.renew(loan, renewalDate, new RequestQueue(Collections.emptyList()));
 
     assertThat(result,
       hasValidationFailure("renewal would not change the due date"));
   }
 
-  private Loan loanFor(DateTime loanDate) {
-    return loanFor(loanDate, loanDate.plusWeeks(2));
+  private Loan loanFor(DateTime loanDate, LoanPolicy loanPolicy) {
+    return loanFor(loanDate, loanDate.plusWeeks(2), loanPolicy);
   }
 
-  private Loan loanFor(DateTime loanDate, DateTime dueDate) {
+  private Loan loanFor(DateTime loanDate, DateTime dueDate, LoanPolicy loanPolicy) {
     return new LoanBuilder()
       .open()
       .withLoanDate(loanDate)
       .withDueDate(dueDate)
-      .asDomainObject();
+      .asDomainObject()
+      .withLoanPolicy(loanPolicy);
   }
 
   private RequestQueue creteRequestQueue(String requestId, RequestType requestType) {
