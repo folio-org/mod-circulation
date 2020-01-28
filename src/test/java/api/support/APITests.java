@@ -48,6 +48,7 @@ import api.support.fixtures.RequestQueueFixture;
 import api.support.fixtures.RequestsFixture;
 import api.support.fixtures.ScheduledNoticeProcessingClient;
 import api.support.fixtures.ServicePointsFixture;
+import api.support.fixtures.TemplateFixture;
 import api.support.fixtures.UserManualBlocksFixture;
 import api.support.fixtures.UsersFixture;
 import api.support.http.QueryStringParameter;
@@ -121,6 +122,9 @@ public abstract class APITests {
 
   protected final ResourceClient lostItemFeePolicyClient
     = ResourceClient.forLostItemFeePolicies();
+
+  protected final ResourceClient templateClient
+    = ResourceClient.forTemplates();
 
   private final ResourceClient instanceTypesClient
     = ResourceClient.forInstanceTypes();
@@ -218,6 +222,8 @@ public abstract class APITests {
   protected final RequestQueueFixture requestQueueFixture =
     new RequestQueueFixture(restAssuredClient);
 
+  protected final TemplateFixture templateFixture = new TemplateFixture(templateClient);
+
   protected APITests() {
     this(true);
   }
@@ -278,6 +284,7 @@ public abstract class APITests {
     patronNoticesClient.deleteAll();
     scheduledNoticesClient.deleteAll();
     patronSessionRecordsClient.deleteAllIndividually();
+    templateFixture.deleteAll();
 
     //TODO: Only cleans up reference records, move items, holdings records
     // and instances into here too

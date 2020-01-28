@@ -57,7 +57,7 @@ public class RequestPolicyBuilder extends JsonBuilder implements Builder {
 
     JsonArray requestTypes = new JsonArray();
 
-    for(RequestType t : types){
+    for (RequestType t : types) {
       requestTypes.add(t.getValue());
     }
 
