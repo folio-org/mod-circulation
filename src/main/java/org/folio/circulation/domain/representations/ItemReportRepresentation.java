@@ -70,7 +70,6 @@ public class ItemReportRepresentation {
     if (lastCheckIn != null) {
       writeLastCheckIn(itemReport, lastCheckIn);
     }
-
     return itemReport;
   }
 
