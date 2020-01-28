@@ -37,7 +37,7 @@ class FixedScheduleRenewalDueDateStrategy extends DueDateStrategy {
   }
 
   @Override
-  Result<DateTime> calculateDueDate(Loan loan) {
+  public Result<DateTime> calculateDueDate(Loan loan) {
     logApplying("Fixed schedule renewal due date calculation");
 
     try {

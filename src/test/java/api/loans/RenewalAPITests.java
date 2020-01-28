@@ -783,7 +783,7 @@ abstract class RenewalAPITests extends APITests {
     final Response response = attemptRenewal(smallAngryPlanet, jessica);
 
     assertThat(response.getJson(), hasErrorWith(allOf(
-      hasMessage("Item not renewed: item is Declared lost"),
+      hasMessage("item is Declared lost"),
       hasUUIDParameter("itemId", smallAngryPlanet.getId()))));
   }
 

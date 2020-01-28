@@ -4,19 +4,18 @@ import static api.support.builders.FixedDueDateSchedule.wholeMonth;
 import static api.support.matchers.TextDateTimeMatcher.withinSecondsAfter;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
+import static org.folio.circulation.resources.RenewalValidator.CAN_NOT_RENEW_ITEM_ERROR;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 import static org.joda.time.DateTimeConstants.APRIL;
 
-import java.net.MalformedURLException;
 import java.time.LocalDate;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
-import org.folio.circulation.domain.policy.LoanPolicy;
 import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
@@ -108,7 +107,7 @@ public class RequestsAPILoanRenewalTests extends APITests {
     Response response = loansFixture.attemptRenewalById(smallAngryPlanet, rebecca);
 
     String message = response.getJson().getJsonArray("errors").getJsonObject(0).getString("message");
-    assertThat(message, is(LoanPolicy.CAN_NOT_RENEW_ITEM_ERROR));
+    assertThat(message, is(CAN_NOT_RENEW_ITEM_ERROR));
   }
 
   @Test
@@ -204,7 +203,7 @@ public class RequestsAPILoanRenewalTests extends APITests {
     Response response = loansFixture.attemptRenewal(smallAngryPlanet, rebecca);
 
     String message = response.getJson().getJsonArray("errors").getJsonObject(0).getString("message");
-    assertThat(message, is(LoanPolicy.CAN_NOT_RENEW_ITEM_ERROR));
+    assertThat(message, is(CAN_NOT_RENEW_ITEM_ERROR));
   }
 
   @Test
@@ -278,7 +277,7 @@ public class RequestsAPILoanRenewalTests extends APITests {
     Response response = loansFixture.attemptRenewalById(smallAngryPlanet, rebecca);
 
     String message = response.getJson().getJsonArray("errors").getJsonObject(0).getString("message");
-    assertThat(message, is(LoanPolicy.CAN_NOT_RENEW_ITEM_ERROR));
+    assertThat(message, is(CAN_NOT_RENEW_ITEM_ERROR));
   }
 
   @Test
@@ -302,7 +301,7 @@ public class RequestsAPILoanRenewalTests extends APITests {
     Response response = loansFixture.attemptRenewalById(smallAngryPlanet, rebecca);
 
     String message = response.getJson().getJsonArray("errors").getJsonObject(0).getString("message");
-    assertThat(message, is(LoanPolicy.CAN_NOT_RENEW_ITEM_ERROR));
+    assertThat(message, is(CAN_NOT_RENEW_ITEM_ERROR));
   }
 
   @Test
@@ -456,7 +455,7 @@ public class RequestsAPILoanRenewalTests extends APITests {
         "reached number of renewals limit," +
         "renewal date falls outside of the date ranges in the loan policy, " +
         "items cannot be renewed when there is an active recall request, " +
-        "Item not renewed: item is Declared lost"))));
+        "item is Declared lost"))));
   }
 
   @Test

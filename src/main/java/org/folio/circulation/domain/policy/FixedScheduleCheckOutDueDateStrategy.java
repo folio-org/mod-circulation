@@ -34,7 +34,7 @@ class FixedScheduleCheckOutDueDateStrategy extends DueDateStrategy {
   }
 
   @Override
-  Result<DateTime> calculateDueDate(Loan loan) {
+  public Result<DateTime> calculateDueDate(Loan loan) {
     final DateTime loanDate = loan.getLoanDate();
 
     logApplying("Fixed schedule check out due date calculation");

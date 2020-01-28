@@ -52,7 +52,7 @@ class RollingRenewalDueDateStrategy extends DueDateStrategy {
   }
 
   @Override
-  Result<DateTime> calculateDueDate(Loan loan) {
+  public Result<DateTime> calculateDueDate(Loan loan) {
     if(StringUtils.isBlank(renewFrom)) {
       return failedValidation(errorForPolicy(RENEW_FROM_UNRECOGNISED_MESSAGE));
     }

@@ -416,6 +416,10 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     return this;
   }
 
+  public boolean hasItemWithStatus(ItemStatus itemStatus) {
+    return Objects.nonNull(item) && item.isInStatus(itemStatus);
+  }
+
   private void incrementRenewalCount() {
     write(representation, "renewalCount", getRenewalCount() + 1);
   }
