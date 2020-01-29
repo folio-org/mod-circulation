@@ -587,10 +587,7 @@ public class ItemsInTransitReportTests extends APITests {
     return ItemExamples.basedUponSmallAngryPlanet(
       materialTypesFixture.book().getId(),
       loanTypesFixture.canCirculate().getId(),
-      "55555",
-      "PREFIX",
-      "SUFFIX",
-      "Copy 1")
+      "55555", "PREFIX", "SUFFIX", "Copy 1")
       .withEnumeration("smallAngryPlanetEnumeration")
       .withVolume("smallAngryPlanetVolume")
       .withYearCaption(Collections.singletonList("2019"));

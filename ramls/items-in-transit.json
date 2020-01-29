@@ -217,8 +217,7 @@
           },
           "effectiveCallNumberComponents": {
             "description": "Elements of a full call number",
-            "$ref": "schema/call-number-components.json",
-            "readonly": true
+            "$ref": "schema/call-number-components.json"
           }
         },
         "additionalProperties": false
