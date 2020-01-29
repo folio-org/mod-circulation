@@ -58,6 +58,12 @@
           "id": "c4c90014-c8c9-4ade-8f24-b5e313319f4b",
           "name": "Circ Desk 2"
         }
+      },
+      "copyNumber": "cp.1",
+      "effectiveCallNumberComponents": {
+        "callNumber": "TK5105.88815 . A58 2004 FT MEADE",
+        "prefix": "0001",
+        "suffix": "124"
       }
     }
   ],
