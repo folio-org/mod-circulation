@@ -18,5 +18,4 @@ public abstract class Policy {
     return name;
   }
 
-  public abstract boolean isUnknown();
 }

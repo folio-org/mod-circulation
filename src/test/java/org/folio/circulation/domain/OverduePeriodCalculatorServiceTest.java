@@ -35,9 +35,9 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
-import static api.support.fixtures.OpeningHourExamples.afterNoon;
+import static api.support.fixtures.OpeningHourExamples.afternoon;
 import static api.support.fixtures.OpeningHourExamples.allDay;
-import static api.support.fixtures.OpeningHourExamples.beforeNoon;
+import static api.support.fixtures.OpeningHourExamples.morning;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.support.Result.failed;
 import static org.folio.circulation.support.Result.succeeded;
@@ -76,9 +76,9 @@ public class OverduePeriodCalculatorServiceTest {
   static {
     openingPeriods.put(CASE_TWO_OPENING_DAYS_SERVICE_ID, new OpeningPeriodsBuilder(Arrays.asList(
       new OpeningPeriod(MAY_FIRST, new OpeningDay(
-        Arrays.asList(beforeNoon(), afterNoon()),false, true, false)),
+        Arrays.asList(morning(), afternoon()),false, true, false)),
       new OpeningPeriod(MAY_SECOND, new OpeningDay(
-        Arrays.asList(beforeNoon(), afterNoon()),false, true, false)))));
+        Arrays.asList(morning(), afternoon()),false, true, false)))));
 
     openingPeriods.put(CASE_ALL_DAY_OPENINGS_SERVICE_ID, new OpeningPeriodsBuilder(Arrays.asList(
       new OpeningPeriod(MAY_FIRST, new OpeningDay(
@@ -88,11 +88,11 @@ public class OverduePeriodCalculatorServiceTest {
 
     openingPeriods.put(CASE_MIXED_SERVICE_ID, new OpeningPeriodsBuilder(Arrays.asList(
       new OpeningPeriod(MAY_FIRST, new OpeningDay(
-        Arrays.asList(beforeNoon(), afterNoon()),false, true, false)),
+        Arrays.asList(morning(), afternoon()),false, true, false)),
       new OpeningPeriod(MAY_SECOND, new OpeningDay(
         Collections.singletonList(allDay()),true, true, false)),
       new OpeningPeriod(MAY_THIRD, new OpeningDay(
-        Arrays.asList(beforeNoon(), afterNoon()),true, true, true)))));
+        Arrays.asList(morning(), afternoon()),true, true, true)))));
 
     openingPeriods.put(CASE_NO_OPENING_HOURS_SERVICE_ID, new OpeningPeriodsBuilder(Arrays.asList(
       new OpeningPeriod(MAY_FIRST, new OpeningDay(Collections.emptyList(), false, true, false)),
@@ -328,8 +328,7 @@ public class OverduePeriodCalculatorServiceTest {
     "Days      | 1440",  // 60 * 24
     "Weeks     | 10080", // 60 * 24 * 7
     "Months    | 44640", // 60 * 24 * 31
-    "Incorrect | 0",
-    "Random    | 0"
+    "Random    | 1"
   })
   public void shouldCountClosedWithVariousGracePeriodIntervals(String interval, int dueDateOffsetMinutes)
     throws ExecutionException, InterruptedException {

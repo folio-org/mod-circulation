@@ -9,10 +9,6 @@ public class OverdueFinePolicy extends Policy {
   private Boolean ignoreGracePeriodForRecalls;
   private Boolean countClosed;
 
-  private OverdueFinePolicy(String id) {
-    this(id, null, null, null);
-  }
-
   private OverdueFinePolicy(
     String id, String name, Boolean ignoreGracePeriodForRecalls, Boolean countClosed) {
     super(id, name);
@@ -41,14 +37,9 @@ public class OverdueFinePolicy extends Policy {
     return new OverdueFinePolicy.UnknownOverdueFinePolicy(id);
   }
 
-  @Override
-  public boolean isUnknown() {
-    return this instanceof UnknownOverdueFinePolicy;
-  }
-
   private static class UnknownOverdueFinePolicy extends OverdueFinePolicy {
     UnknownOverdueFinePolicy(String id) {
-      super(id);
+      super(id, null, null, null);
     }
   }
 }
