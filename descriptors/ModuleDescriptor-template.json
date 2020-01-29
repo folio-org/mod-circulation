@@ -22,7 +22,7 @@
     },
     {
       "id": "inventory-reports",
-      "version": "0.3",
+      "version": "0.4",
       "handlers": [
         {
           "methods": [

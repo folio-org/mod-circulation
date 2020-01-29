@@ -5,6 +5,7 @@ import static org.junit.Assert.assertThat;
 
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.RequestQueue;
+import org.folio.circulation.resources.RegularRenewalStrategy;
 import org.folio.circulation.support.Result;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
@@ -38,6 +39,7 @@ public class UnknownLoanPolicyProfileTests {
 
   @Test
   public void shouldFailRenewalCalculationForNonRollingProfile() {
+    RegularRenewalStrategy regularRenewalStrategy = new RegularRenewalStrategy();
     LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
       .withName("Invalid Loan Policy")
       .withLoansProfile("Unknown profile")
@@ -48,9 +50,10 @@ public class UnknownLoanPolicyProfileTests {
     Loan loan = new LoanBuilder()
       .open()
       .withLoanDate(loanDate)
-      .asDomainObject();
+      .asDomainObject()
+      .withLoanPolicy(loanPolicy);
 
-    final Result<Loan> result = loanPolicy.renew(loan, DateTime.now(), new RequestQueue(Collections.emptyList()));
+    final Result<Loan> result = regularRenewalStrategy.renew(loan, DateTime.now(), new RequestQueue(Collections.emptyList()));
 
     assertThat(result, hasValidationFailure(
       "profile \"Unknown profile\" in the loan policy is not recognised"));

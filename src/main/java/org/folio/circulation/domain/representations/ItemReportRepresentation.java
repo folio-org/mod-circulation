@@ -1,5 +1,6 @@
 package org.folio.circulation.domain.representations;
 
+import static org.folio.circulation.domain.representations.CallNumberComponentsRepresentation.createCallNumberComponents;
 import static org.folio.circulation.support.JsonPropertyWriter.write;
 import static org.folio.circulation.support.JsonPropertyWriter.writeNamedObject;
 
@@ -43,6 +44,9 @@ public class ItemReportRepresentation {
     writeNamedObject(itemReport, "status", Optional.ofNullable(item.getStatus())
       .map(ItemStatus::getValue).orElse(null));
     write(itemReport, "inTransitDestinationServicePointId", item.getInTransitDestinationServicePointId());
+    write(itemReport, "copyNumber", item.getCopyNumber());
+    write(itemReport, "effectiveCallNumberComponents",
+      createCallNumberComponents(item.getCallNumberComponents()));
 
     final ServicePoint inTransitDestinationServicePoint = item.getInTransitDestinationServicePoint();
     if (inTransitDestinationServicePoint != null) {
