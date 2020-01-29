@@ -17,5 +17,4 @@ public abstract class Policy {
   public String getName() {
     return name;
   }
-
 }
