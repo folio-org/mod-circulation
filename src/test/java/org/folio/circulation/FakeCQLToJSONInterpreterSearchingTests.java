@@ -15,7 +15,7 @@ public class FakeCQLToJSONInterpreterSearchingTests {
 
   @Test
   public void canFilterBySinglePropertyContains() {
-    FakeCQLToJSONInterpreter interpreter = new FakeCQLToJSONInterpreter(true);
+    FakeCQLToJSONInterpreter interpreter = new FakeCQLToJSONInterpreter();
 
     Collection<JsonObject> records = new ArrayList<>();
 
@@ -30,7 +30,7 @@ public class FakeCQLToJSONInterpreterSearchingTests {
 
   @Test
   public void canFilterBySinglePropertyExactMatch() {
-    FakeCQLToJSONInterpreter interpreter = new FakeCQLToJSONInterpreter(true);
+    FakeCQLToJSONInterpreter interpreter = new FakeCQLToJSONInterpreter();
 
     Collection<JsonObject> records = new ArrayList<>();
 
@@ -46,7 +46,7 @@ public class FakeCQLToJSONInterpreterSearchingTests {
 
   @Test
   public void canFilterBySingleOptionalProperty() {
-    FakeCQLToJSONInterpreter interpreter = new FakeCQLToJSONInterpreter(true);
+    FakeCQLToJSONInterpreter interpreter = new FakeCQLToJSONInterpreter();
 
     Collection<JsonObject> records = new ArrayList<>();
 
@@ -61,7 +61,7 @@ public class FakeCQLToJSONInterpreterSearchingTests {
 
   @Test
   public void canFilterByMultipleProperties() {
-    FakeCQLToJSONInterpreter interpreter = new FakeCQLToJSONInterpreter(true);
+    FakeCQLToJSONInterpreter interpreter = new FakeCQLToJSONInterpreter();
 
     Collection<JsonObject> records = new ArrayList<>();
 
@@ -97,7 +97,7 @@ public class FakeCQLToJSONInterpreterSearchingTests {
 
   @Test
   public void canFilterByMultipleValues() {
-    FakeCQLToJSONInterpreter interpreter = new FakeCQLToJSONInterpreter(true);
+    FakeCQLToJSONInterpreter interpreter = new FakeCQLToJSONInterpreter();
 
     Collection<JsonObject> records = new ArrayList<>();
 
@@ -122,7 +122,7 @@ public class FakeCQLToJSONInterpreterSearchingTests {
 
   @Test
   public void canFilterBySingleValueWithBrackets() {
-    FakeCQLToJSONInterpreter interpreter = new FakeCQLToJSONInterpreter(true);
+    FakeCQLToJSONInterpreter interpreter = new FakeCQLToJSONInterpreter();
 
     Collection<JsonObject> records = new ArrayList<>();
 
@@ -143,7 +143,7 @@ public class FakeCQLToJSONInterpreterSearchingTests {
 
   @Test
   public void canFilterByCombinationOfSingleAndMultipleValues() {
-    FakeCQLToJSONInterpreter interpreter = new FakeCQLToJSONInterpreter(true);
+    FakeCQLToJSONInterpreter interpreter = new FakeCQLToJSONInterpreter();
 
     Collection<JsonObject> records = new ArrayList<>();
 

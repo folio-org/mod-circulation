@@ -1,4 +1,5 @@
 package api.support.fakes;
+import java.lang.invoke.MethodHandles;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
@@ -12,13 +13,11 @@ import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.ImmutableTriple;
 
 import io.vertx.core.json.JsonObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class FakeCQLToJSONInterpreter {
-  private final boolean diagnosticsEnabled;
-
-  public FakeCQLToJSONInterpreter(boolean diagnosticsEnabled) {
-    this.diagnosticsEnabled = diagnosticsEnabled;
-  }
+  private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
   public List<JsonObject> execute(Collection<JsonObject> records, String query) {
     ImmutablePair<String, String> queryAndSort = splitQueryAndSort(query);
@@ -234,8 +233,6 @@ public class FakeCQLToJSONInterpreter {
   }
 
   private void printDiagnostics(Supplier<String> diagnosticTextSupplier) {
-    if(diagnosticsEnabled) {
-      System.out.println(diagnosticTextSupplier.get());
-    }
+    log.debug("{}", diagnosticTextSupplier);
   }
 }
