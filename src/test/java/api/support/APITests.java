@@ -68,7 +68,7 @@ import org.folio.circulation.support.http.client.IndividualResource;
 public abstract class APITests {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
-  private final RestAssuredClient restAssuredClient = new RestAssuredClient(
+  protected final RestAssuredClient restAssuredClient = new RestAssuredClient(
     getOkapiHeadersFromContext());
 
   private final boolean initialiseCirculationRules;

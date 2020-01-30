@@ -34,6 +34,7 @@ import java.util.Objects;
 import java.util.UUID;
 
 import org.apache.commons.lang3.StringUtils;
+import org.folio.circulation.domain.loan.LoanClaimedReturned;
 import org.folio.circulation.domain.policy.LoanPolicy;
 import org.folio.circulation.domain.policy.LostItemPolicy;
 import org.folio.circulation.domain.policy.OverdueFinePolicy;
@@ -468,5 +469,9 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
 
   public void changeDeclaredLostDateTime(DateTime dateTime) {
     write(representation, LoanProperties.DECLARED_LOST_DATE, dateTime);
+  }
+
+  public void changeClaimedReturned(LoanClaimedReturned loanClaimedReturned) {
+    representation.put(LoanProperties.CLAIMED_RETURNED, loanClaimedReturned.toJson());
   }
 }

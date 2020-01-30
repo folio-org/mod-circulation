@@ -90,4 +90,8 @@ public class WebContext {
       okapiUrl, getTenantId(), getOkapiToken(), getUserId(),
       getRequestId());
   }
+
+  public RoutingContext getRoutingContext() {
+    return routingContext;
+  }
 }
