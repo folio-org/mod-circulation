@@ -5,6 +5,7 @@ import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 import static org.folio.circulation.support.results.CommonFailures.failedDueToServerError;
 
+import java.lang.invoke.MethodHandles;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -44,8 +45,11 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.BodyHandler;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class FakeStorageModule extends AbstractVerticle {
+  private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
   private static final Set<String> queries = Collections.synchronizedSet(new HashSet<>());
 
   private final String rootPath;
@@ -209,8 +213,7 @@ public class FakeStorageModule extends AbstractVerticle {
       if (constraint == null) {
         existingRecords.put(id, body);
 
-        System.out.println(
-          format("Created %s resource: %s", recordTypeName, id));
+        log.debug("Created {} resource: {}", recordTypeName, id);
 
         new CreatedJsonResponseResult(body, null)
           .writeTo(routingContext.response());
@@ -220,8 +223,7 @@ public class FakeStorageModule extends AbstractVerticle {
         if (checkConstraint.succeeded()) {
           existingRecords.put(id, body);
 
-          System.out.println(
-            format("Created %s resource: %s", recordTypeName, id));
+          log.debug("Created {} resource: {}", recordTypeName, id);
 
           new CreatedJsonResponseResult(body, null)
             .writeTo(routingContext.response());
@@ -257,8 +259,7 @@ public class FakeStorageModule extends AbstractVerticle {
       Map<String, JsonObject> resourcesForTenant = getResourcesForTenant(context);
 
       if (resourcesForTenant.containsKey(id)) {
-        System.out.println(
-          format("Replaced %s resource: %s", recordTypeName, id));
+        log.debug("Replaced {} resource: {}", recordTypeName, id);
 
         if (includeChangeMetadata) {
           final String fakeUserId = APITestContext.getUserId();
@@ -285,8 +286,7 @@ public class FakeStorageModule extends AbstractVerticle {
           }
         }
       } else {
-        System.out.println(
-          format("Created %s resource: %s", recordTypeName, id));
+        log.debug("Created {} resource: {}", recordTypeName, id);
 
         if (includeChangeMetadata) {
           final String fakeUserId = APITestContext.getUserId();
@@ -322,9 +322,8 @@ public class FakeStorageModule extends AbstractVerticle {
     if(resourcesForTenant.containsKey(id)) {
       final JsonObject resourceRepresentation = resourcesForTenant.get(id);
 
-      System.out.println(
-        format("Found %s resource: %s", recordTypeName,
-          resourceRepresentation.encodePrettily()));
+      log.debug("Found {} resource: {}", recordTypeName,
+        resourceRepresentation.encodePrettily());
 
       HttpServerResponse response = routingContext.response();
 
@@ -347,8 +346,8 @@ public class FakeStorageModule extends AbstractVerticle {
       response.end();
     }
     else {
-      System.out.println(
-        format("Failed to find %s resource: %s", recordTypeName, idParsingResult));
+      log.debug("Failed to find {} resource: {}", recordTypeName,
+        idParsingResult);
 
       ClientErrorResponse.notFound(routingContext.response());
     }
@@ -361,7 +360,7 @@ public class FakeStorageModule extends AbstractVerticle {
     Integer offset = context.getIntegerParameter("offset", 0);
     String query = context.getStringParameter("query", null);
 
-    System.out.println(format("Handling %s", routingContext.request().uri()));
+    log.debug("Handling {}", routingContext.request().uri());
 
     if(query != null) {
       queries.add(format("%s?%s", routingContext.request().path(), query));
@@ -369,7 +368,7 @@ public class FakeStorageModule extends AbstractVerticle {
 
     Map<String, JsonObject> resourcesForTenant = getResourcesForTenant(context);
 
-    List<JsonObject> filteredItems = new FakeCQLToJSONInterpreter(false)
+    List<JsonObject> filteredItems = new FakeCQLToJSONInterpreter()
       .execute(resourcesForTenant.values(), query);
 
     List<JsonObject> pagedItems = filteredItems.stream()
@@ -382,9 +381,7 @@ public class FakeStorageModule extends AbstractVerticle {
     result.put(collectionPropertyName, new JsonArray(pagedItems));
     result.put("totalRecords", filteredItems.size());
 
-    System.out.println(
-      format("Found %s resources: %s", recordTypeName,
-        result.encodePrettily()));
+    log.debug("Found {} resources: {}", recordTypeName, result.encodePrettily());
 
     HttpServerResponse response = routingContext.response();
 
@@ -423,7 +420,7 @@ public class FakeStorageModule extends AbstractVerticle {
 
     Map<String, JsonObject> resourcesForTenant = getResourcesForTenant(context);
 
-    new FakeCQLToJSONInterpreter(false)
+    new FakeCQLToJSONInterpreter()
       .execute(resourcesForTenant.values(), query)
       .forEach(item -> resourcesForTenant.remove(item.getString("id")));
 
@@ -603,14 +600,15 @@ public class FakeStorageModule extends AbstractVerticle {
     // as incorrectly formed query parameters will respond with all records
     // e.g. ?id=foo will be ignored
     final String rawQuery = routingContext.request().query();
-    System.out.println("Query: " + rawQuery);
+
+    log.debug("Query: {}", rawQuery);
 
     if (rawQuery == null) {
       routingContext.next();
       return;
     }
 
-    System.out.println("Split query parameters");
+    log.debug("Split query parameters");
 
     final List<String> unexpectedParameters = Arrays.stream(rawQuery.split("&"))
       .filter(queryParameter -> {
@@ -628,10 +626,10 @@ public class FakeStorageModule extends AbstractVerticle {
       return;
     }
 
-    System.out.println("Unexpected query parameters");
+    log.debug("Unexpected query parameters");
 
     unexpectedParameters
-      .forEach(queryParameter -> System.out.println(format("\"%s\"", queryParameter)));
+      .forEach(queryParameter -> log.debug("\"{}\"", queryParameter));
 
     ClientErrorResponse.badRequest(routingContext.response(),
       format("Unexpected query string parameters: %s",
