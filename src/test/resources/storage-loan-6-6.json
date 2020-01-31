@@ -107,7 +107,12 @@
           "description": "Staff member id who marked the loan as claimed returned",
           "$ref": "uuid.json"
         }
-      }
+      },
+      "additionalProperties": false,
+      "required": [
+        "dateTime",
+        "staffMemberId"
+      ]
     },
     "overdueFinePolicyId": {
       "description": "ID of last overdue fine policy used in relation to this loan",
