@@ -14,10 +14,6 @@ public class OpeningPeriod {
     return openingDay;
   }
 
-  public LocalDate getDate() {
-    return date;
-  }
-
   public OpeningPeriod(LocalDate date, OpeningDay openingDay) {
     this.openingDay = openingDay;
     this.date = date;
