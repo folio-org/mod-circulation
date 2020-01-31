@@ -1,6 +1,7 @@
 package api.loans;
 
 import static api.support.APITestContext.getOkapiHeadersFromContext;
+import static api.support.APITestContext.getUserId;
 import static api.support.http.InterfaceUrls.claimedReturnedURL;
 import static api.support.matchers.LoanMatchers.hasLoanProperty;
 import static api.support.matchers.LoanMatchers.hasOpenStatus;
@@ -119,7 +120,9 @@ public class ClaimedReturnedAPITests extends APITests {
     final JsonObject claimedReturned = actualLoan
       .getJsonObject(LoanProperties.CLAIMED_RETURNED);
 
-    assertThat(claimedReturned.getString("dateTime"), is(dateTime.toString()));
-    assertThat(claimedReturned.getString("staffMemberId"), is(APITestContext.getUserId()));
+    assertThat(claimedReturned
+        .getString(LoanProperties.ClaimedReturned.DATE_TIME), is(dateTime.toString()));
+    assertThat(claimedReturned
+        .getString(LoanProperties.ClaimedReturned.STAFF_MEMBER_ID), is(getUserId()));
   }
 }

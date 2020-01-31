@@ -1,5 +1,6 @@
 package org.folio.circulation.domain.loan;
 
+import org.folio.circulation.domain.representations.LoanProperties;
 import org.joda.time.DateTime;
 
 import io.vertx.core.json.JsonObject;
@@ -19,7 +20,7 @@ public class LoanClaimedReturned {
 
   public JsonObject toJson() {
     return new JsonObject()
-      .put("dateTime", dateTime.toString())
-      .put("staffMemberId", staffMemberId);
+      .put(LoanProperties.ClaimedReturned.DATE_TIME, dateTime.toString())
+      .put(LoanProperties.ClaimedReturned.STAFF_MEMBER_ID, staffMemberId);
   }
 }

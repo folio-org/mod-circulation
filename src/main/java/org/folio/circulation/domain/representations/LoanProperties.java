@@ -26,4 +26,11 @@ public class LoanProperties {
   public static final String PATRON_GROUP_AT_CHECKOUT = "patronGroupAtCheckout";
   public static final String DECLARED_LOST_DATE = "declaredLostDate";
   public static final String CLAIMED_RETURNED = "claimedReturned";
+
+  public static class ClaimedReturned {
+    private ClaimedReturned() {}
+
+    public static final String DATE_TIME = "dateTime";
+    public static final String STAFF_MEMBER_ID = "staffMemberId";
+  }
 }
