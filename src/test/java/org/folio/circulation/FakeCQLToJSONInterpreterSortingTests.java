@@ -74,7 +74,7 @@ public class FakeCQLToJSONInterpreterSortingTests {
     String property,
     Object... expectedSort) {
 
-    FakeCQLToJSONInterpreter interpreter = new FakeCQLToJSONInterpreter(true);
+    FakeCQLToJSONInterpreter interpreter = new FakeCQLToJSONInterpreter();
 
     List<JsonObject> sortedRecords =
       interpreter.execute(records, "id==12345 sortBy " + sortSpecification);
