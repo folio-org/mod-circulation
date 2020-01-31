@@ -1869,9 +1869,13 @@
       "displayName": "module permissions for one op",
       "description": "to reduce X-Okapi-Token size",
       "subPermissions": [
+        "circulation-storage.loans.item.get",
         "circulation-storage.loans.item.put",
-        "users.item.get",
-        "inventory-storage.items.item.put"
+        "inventory-storage.items.item.get",
+        "inventory-storage.items.item.put",
+        "inventory-storage.holdings.item.get",
+        "inventory-storage.instances.item.get",
+        "users.item.get"
       ],
       "visible": false
     },
