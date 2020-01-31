@@ -24,13 +24,11 @@ import java.util.concurrent.ExecutionException;
 import static api.support.fixtures.OpeningHourExamples.afternoon;
 import static api.support.fixtures.OpeningHourExamples.allDay;
 import static api.support.fixtures.OpeningHourExamples.morning;
-import static org.hamcrest.Matchers.is;
+import static org.folio.circulation.domain.OpeningDay.createOpeningDay;
 import static org.joda.time.DateTimeConstants.MINUTES_PER_DAY;
 import static org.joda.time.DateTimeConstants.MINUTES_PER_HOUR;
 import static org.joda.time.DateTimeConstants.MINUTES_PER_WEEK;
 import static org.junit.Assert.*;
-import static org.mockito.ArgumentMatchers.matches;
-import static org.mockito.Mockito.mock;
 
 @RunWith(JUnitParamsRunner.class)
 public class OverduePeriodCalculatorServiceTest {
@@ -166,9 +164,9 @@ public class OverduePeriodCalculatorServiceTest {
 
   private OpeningPeriod createOpeningPeriod(LocalDate date, boolean allDay) {
     return new OpeningPeriod(date,
-      new OpeningDay(
+      createOpeningDay(
         allDay ? Collections.singletonList(allDay()) : Arrays.asList(morning(), afternoon()),
-        allDay, true, false
+        null, allDay, true
       )
     );
   }
