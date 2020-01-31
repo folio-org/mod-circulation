@@ -13,6 +13,7 @@ import org.folio.circulation.domain.policy.Period;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.LocalDate;
+import org.joda.time.LocalTime;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -37,8 +38,8 @@ public class OverduePeriodCalculatorServiceTest {
 
   @Test
   @Parameters
-  public void preconditionsTest(DateTime systemTime, Loan loan) {
-    assertTrue(calculator.preconditionsAreNotMet(loan, systemTime));
+  public void preconditionsTest(DateTime systemTime, Loan loan, boolean expectedResult) {
+    assertEquals(expectedResult, calculator.preconditionsAreNotMet(loan, systemTime));
   }
 
   private Object[] parametersForPreconditionsTest() {
@@ -55,10 +56,16 @@ public class OverduePeriodCalculatorServiceTest {
       .asDomainObject()
       .withOverdueFinePolicy(createOverdueFinePolicy(null, null));
 
+    Loan allPreconditionsMet = new LoanBuilder()
+      .withDueDate(systemTime.minusDays(1))
+      .asDomainObject()
+      .withOverdueFinePolicy(createOverdueFinePolicy(null, true));
+
     return new Object[] {
-      new Object[] {systemTime, noDueDate},
-      new Object[] {systemTime, dueDateInFuture},
-      new Object[] {systemTime, nullCountClosed}
+      new Object[] {systemTime, noDueDate, true},
+      new Object[] {systemTime, dueDateInFuture, true},
+      new Object[] {systemTime, nullCountClosed, true},
+      new Object[] {systemTime, allPreconditionsMet, false}
     };
   }
 
@@ -87,45 +94,49 @@ public class OverduePeriodCalculatorServiceTest {
   private Object[] parametersForGetOpeningPeriodDurationTest() {
     List<OpeningPeriod> zeroPeriods = Collections.emptyList();
 
+    LocalTime now = LocalTime.now(DateTimeZone.UTC);
+
     LocalDate today = LocalDate.now(DateTimeZone.UTC);
     LocalDate yesterday = today.minusDays(1);
     LocalDate tomorrow = today.plusDays(1);
 
-    List<OpeningPeriod> threeDaysRegular = Arrays.asList(
+    List<OpeningPeriod> regular = Arrays.asList(
       createOpeningPeriod(yesterday, false),
       createOpeningPeriod(today, false),
       createOpeningPeriod(tomorrow, false));
 
-    List<OpeningPeriod> threeDaysAllDay = Arrays.asList(
+    List<OpeningPeriod> allDay = Arrays.asList(
       createOpeningPeriod(yesterday, true),
       createOpeningPeriod(today, true),
       createOpeningPeriod(tomorrow, true));
 
-    List<OpeningPeriod> threeDaysMixed = Arrays.asList(
+    List<OpeningPeriod> mixed = Arrays.asList(
       createOpeningPeriod(yesterday, false),
       createOpeningPeriod(today, true),
       createOpeningPeriod(tomorrow, false));
 
+
+    List<OpeningPeriod> invalid = Arrays.asList(
+      new OpeningPeriod(yesterday, createOpeningDay(
+        Collections.singletonList(new OpeningHour(null, null)),
+        yesterday, false, true)
+      ),
+      new OpeningPeriod(yesterday, createOpeningDay(
+        Collections.singletonList(new OpeningHour(now, now.minusHours(1))),
+        yesterday, false, true)
+      )
+    );
+
     return new Object[]{
       new Object[]{zeroPeriods, 0},
-      new Object[]{threeDaysRegular, MINUTES_PER_HOUR * 10 * 3},
-      new Object[]{threeDaysAllDay, MINUTES_PER_DAY * 3},
-      new Object[]{threeDaysMixed, MINUTES_PER_DAY + MINUTES_PER_HOUR * 10 * 2}
+      new Object[]{regular, MINUTES_PER_HOUR * 10 * 3},
+      new Object[]{allDay, MINUTES_PER_DAY * 3},
+      new Object[]{invalid, 0}
     };
   }
 
   @Test
-  @Parameters({
-    "11    | Minutes | 5 | null  | false | 6",
-    "255   | Hours   | 4 | null  | true  | 15",
-    "4350  | Days    | 3 | false | false | 30",
-    "20200 | Weeks   | 2 | false | true  | 40",
-    "44700 | Months  | 1 | true  | false | 60",
-    "5     | Minutes | 9 | false | false | 0",
-    "9     | Minutes | 9 | false | false | 0",
-    "11    | Random  | 9 | false | false | 2", // invalid intervals are treated as "Minutes"
-    "11    | Minutes | 9 | true  | true  | 11" // grace period is ignored
-  })
+  @Parameters
   public void gracePeriodAdjustmentTest(
     int overdueMinutes,
     String gracePeriodInterval,
@@ -142,6 +153,21 @@ public class OverduePeriodCalculatorServiceTest {
 
     int actualResult = calculator.adjustOverdueWithGracePeriod(loan, overdueMinutes).value();
     assertEquals(expectedResult, actualResult);
+  }
+
+  private Object[] parametersForGracePeriodAdjustmentTest() {
+    return new Object[]{
+      new Object[] {11, "Minutes", 5, null, false, 6},
+      new Object[] {255, "Hours", 4, null, true, 15},
+      new Object[] {4350, "Days", 3, false, false, 30},
+      new Object[] {20200, "Weeks", 2, false, true, 40},
+      new Object[] {44700, "Months", 1, true, false, 60},
+      new Object[] {5, "Minutes", 9, false, false, 0},
+      new Object[] {9, "Minutes", 9, false, false, 0},
+      new Object[] {11, "Random", 9, false, false, 2}, // invalid intervals are treated as "Minutes"
+      new Object[] {11, "Minutes", 9, true, true, 11},  // grace period is ignored
+
+    };
   }
 
   private LoanPolicy createLoanPolicy(Integer gracePeriodDuration, String gracePeriodInterval) {
