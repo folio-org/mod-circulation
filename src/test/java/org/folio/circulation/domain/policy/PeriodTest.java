@@ -11,21 +11,27 @@ import static org.junit.Assert.*;
 public class PeriodTest {
 
   @Test
-  @Parameters
+  @Parameters({
+    "Minutes | 6  | 6",
+    "Hours   | 5  | 300",
+    "Days    | 4  | 5760",
+    "Weeks   | 3  | 30240",
+    "Months  | 2  | 89280",
+    "Random  | 9  | 9"
+  })
   public void toMinutes(String interval, Integer duration, int expectedResult) {
     assertEquals(expectedResult, Period.from(duration, interval).toMinutes());
   }
 
-  private Object[] parametersForToMinutes() {
-    return new Object[]{
-      new Object[] {"Minutes", 6, 6},
-      new Object[] {"Hours", 5, 300},
-      new Object[] {"Days", 4, 5760},
-      new Object[] {"Weeks", 3, 30240},
-      new Object[] {"Months", 2, 89280},
-      new Object[] {"Random", 10, 10},
-      new Object[] {null, 10, 0},
-      new Object[] {"Minutes", null, 0},
-    };
+  @Test
+  public void toMinutesWithNullInterval() {
+    Period period = Period.from(10, null);
+    assertEquals(0, period.toMinutes());
+  }
+
+  @Test
+  public void toMinutesWithNullDuration() {
+    Period period = Period.from(null, "Minutes");
+    assertEquals(0, period.toMinutes());
   }
 }

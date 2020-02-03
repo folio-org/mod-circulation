@@ -34,16 +34,13 @@ public class OverduePeriodCalculatorService {
   }
 
   boolean preconditionsAreNotMet(Loan loan, DateTime systemTime) {
-    DateTime dueDate = loan.getDueDate();
-
-    return dueDate == null
-      || dueDate.isAfter(systemTime)
-      || loan.getOverdueFinePolicy().getCountClosed() == null;
+    return loan.isOverdue(systemTime)
+      || loan.getOverdueFinePolicy().getCountPeriodsWhenServicePointIsClosed() == null;
   }
 
   CompletableFuture<Result<Integer>> getOverdueMinutes(Loan loan, DateTime systemTime) {
     DateTime dueDate = loan.getDueDate();
-    boolean countClosed = loan.getOverdueFinePolicy().getCountClosed();
+    boolean countClosed = loan.getOverdueFinePolicy().getCountPeriodsWhenServicePointIsClosed();
     if (countClosed) {
       int overdueMinutes = minutesBetween(dueDate, systemTime).getMinutes();
       return completedFuture(succeeded(overdueMinutes));

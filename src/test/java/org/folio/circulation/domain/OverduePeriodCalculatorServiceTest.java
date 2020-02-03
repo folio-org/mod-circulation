@@ -37,36 +37,43 @@ public class OverduePeriodCalculatorServiceTest {
     new OverduePeriodCalculatorService(null);
 
   @Test
-  @Parameters
-  public void preconditionsTest(DateTime systemTime, Loan loan, boolean expectedResult) {
-    assertEquals(expectedResult, calculator.preconditionsAreNotMet(loan, systemTime));
+  public void preconditionsCheckLoanHasNoDueDate() {
+    DateTime systemTime = DateTime.now(DateTimeZone.UTC);
+    Loan loan = new LoanBuilder().asDomainObject();
+
+    assertFalse(calculator.preconditionsAreNotMet(loan, systemTime));
   }
 
-  private Object[] parametersForPreconditionsTest() {
+  @Test
+  public void preconditionsCheckLoanDueDateIsInFuture() {
     DateTime systemTime = DateTime.now(DateTimeZone.UTC);
-
-    Loan noDueDate = new LoanBuilder().asDomainObject();
-
-    Loan dueDateInFuture = new LoanBuilder()
+    Loan loan = new LoanBuilder()
       .withDueDate(systemTime.plusDays(1))
       .asDomainObject();
 
-    Loan nullCountClosed = new LoanBuilder()
+    assertFalse(calculator.preconditionsAreNotMet(loan, systemTime));
+  }
+
+  @Test
+  public void preconditionsCheckCountClosedIsNull() {
+    DateTime systemTime = DateTime.now(DateTimeZone.UTC);
+    Loan loan = new LoanBuilder()
       .withDueDate(systemTime.minusDays(1))
       .asDomainObject()
       .withOverdueFinePolicy(createOverdueFinePolicy(null, null));
 
-    Loan allPreconditionsMet = new LoanBuilder()
+    assertFalse(calculator.preconditionsAreNotMet(loan, systemTime));
+  }
+
+  @Test
+  public void allPreconditionsAreMet() {
+    DateTime systemTime = DateTime.now(DateTimeZone.UTC);
+    Loan loan = new LoanBuilder()
       .withDueDate(systemTime.minusDays(1))
       .asDomainObject()
       .withOverdueFinePolicy(createOverdueFinePolicy(null, true));
 
-    return new Object[] {
-      new Object[] {systemTime, noDueDate, true},
-      new Object[] {systemTime, dueDateInFuture, true},
-      new Object[] {systemTime, nullCountClosed, true},
-      new Object[] {systemTime, allPreconditionsMet, false}
-    };
+    assertTrue(calculator.preconditionsAreNotMet(loan, systemTime));
   }
 
   @Test

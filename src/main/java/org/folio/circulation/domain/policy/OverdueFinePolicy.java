@@ -6,13 +6,13 @@ import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
 
 public class OverdueFinePolicy extends Policy {
   private Boolean ignoreGracePeriodForRecalls;
-  private Boolean countClosed;
+  private Boolean countPeriodsWhenServicePointIsClosed;
 
   private OverdueFinePolicy(
-    String id, String name, Boolean ignoreGracePeriodForRecalls, Boolean countClosed) {
+    String id, String name, Boolean ignoreGracePeriodForRecalls, Boolean countPeriodsWhenServicePointIsClosed) {
     super(id, name);
     this.ignoreGracePeriodForRecalls = ignoreGracePeriodForRecalls;
-    this.countClosed = countClosed;
+    this.countPeriodsWhenServicePointIsClosed = countPeriodsWhenServicePointIsClosed;
   }
 
   public static OverdueFinePolicy from(JsonObject json) {
@@ -28,8 +28,8 @@ public class OverdueFinePolicy extends Policy {
     return ignoreGracePeriodForRecalls;
   }
 
-  public Boolean getCountClosed() {
-    return countClosed;
+  public Boolean getCountPeriodsWhenServicePointIsClosed() {
+    return countPeriodsWhenServicePointIsClosed;
   }
 
   public static OverdueFinePolicy unknown(String id) {

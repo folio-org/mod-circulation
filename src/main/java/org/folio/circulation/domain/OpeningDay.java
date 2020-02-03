@@ -39,6 +39,7 @@ public class OpeningDay {
 
   OpeningDay(JsonObject openingDayJson) {
     requireNonNull(openingDayJson, "Json object cannot be null");
+
     this.allDay = openingDayJson.getBoolean(ALL_DAY_KEY, false);
     this.open = openingDayJson.getBoolean(OPEN_KEY, false);
     this.openingHour = fillOpeningDay(openingDayJson);

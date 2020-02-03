@@ -33,6 +33,7 @@ import java.util.Collection;
 import java.util.Objects;
 import java.util.UUID;
 
+import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.domain.policy.LoanPolicy;
 import org.folio.circulation.domain.policy.LostItemPolicy;
@@ -42,6 +43,7 @@ import org.folio.circulation.support.Result;
 import org.joda.time.DateTime;
 
 import io.vertx.core.json.JsonObject;
+import org.joda.time.DateTimeZone;
 
 public class Loan implements ItemRelatedRecord, UserRelatedRecord {
 
@@ -468,5 +470,16 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
 
   public void changeDeclaredLostDateTime(DateTime dateTime) {
     write(representation, LoanProperties.DECLARED_LOST_DATE, dateTime);
+  }
+
+  public boolean isOverdue() {
+    return isOverdue(DateTime.now(DateTimeZone.UTC));
+  }
+
+  public boolean isOverdue(DateTime systemTime) {
+    DateTime dueDate = getDueDate();
+
+    return ObjectUtils.allNotNull(dueDate, systemTime)
+      && dueDate.isAfter(systemTime);
   }
 }
