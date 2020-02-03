@@ -1,12 +1,12 @@
 #%RAML 1.0
-title: Claimed returned
+title: Claim item returned
 version: v0.1
 protocols: [ HTTP, HTTPS ]
 baseUri: http://localhost:9130
 
 documentation:
   - title: API for declaring loaned item as claimed returned
-    content: <b>Claimed returned item API</b>
+    content: <b>Claim item returned API</b>
 
 types:
   errors: !include raml-util/schemas/errors.schema
@@ -14,12 +14,12 @@ types:
 traits:
   validate: !include raml-util/traits/validation.raml
 
-/circulation/loans/{id}/claimed-returned:
+/circulation/loans/{id}/claim-item-returned:
   post:
     is: [validate]
     body:
       application/json:
-        type: !include claimed-returned-request.json
+        type: !include claim-item-returned-request.json
     responses:
       204:
         description: "The loaned item has been successfully marked as claimed returned"

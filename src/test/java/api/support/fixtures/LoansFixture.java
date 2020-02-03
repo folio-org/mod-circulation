@@ -7,7 +7,7 @@ import static api.support.http.AdditionalHttpStatusCodes.UNPROCESSABLE_ENTITY;
 import static api.support.http.CqlQuery.noQuery;
 import static api.support.http.InterfaceUrls.checkInByBarcodeUrl;
 import static api.support.http.InterfaceUrls.checkOutByBarcodeUrl;
-import static api.support.http.InterfaceUrls.claimedReturnedURL;
+import static api.support.http.InterfaceUrls.claimItemReturnedURL;
 import static api.support.http.InterfaceUrls.declareLoanItemLostURL;
 import static api.support.http.InterfaceUrls.loansUrl;
 import static api.support.http.InterfaceUrls.overrideCheckOutByBarcodeUrl;
@@ -154,17 +154,17 @@ public class LoansFixture {
     return declareItemLost(loanId, builder);
   }
 
-  public Response claimedReturned(UUID loanId, DateTime dateTime, String comment) {
+  public Response claimItemReturned(UUID loanId, DateTime dateTime, String comment) {
     final JsonObject claimedReturnedRequest = new JsonObject()
       .put("dateTime", dateTime.toString());
     write(claimedReturnedRequest, "comment", comment);
 
     return restAssuredClient.post(claimedReturnedRequest,
-      claimedReturnedURL(loanId.toString()), "claimed-returned-request");
+      claimItemReturnedURL(loanId.toString()), "claimed-returned-request");
   }
 
-  public Response claimedReturned(UUID loanId, DateTime dateTime) {
-    return claimedReturned(loanId, dateTime, null);
+  public Response claimItemReturned(UUID loanId, DateTime dateTime) {
+    return claimItemReturned(loanId, dateTime, null);
   }
 
   public IndividualResource checkOutByBarcode(IndividualResource item) {

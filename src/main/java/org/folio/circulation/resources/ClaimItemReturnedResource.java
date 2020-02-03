@@ -10,7 +10,7 @@ import java.util.concurrent.CompletableFuture;
 
 import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.StoreLoanAndItem;
-import org.folio.circulation.domain.ClaimedReturnedRequest;
+import org.folio.circulation.domain.ClaimItemReturnedRequest;
 import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanRepository;
@@ -26,32 +26,32 @@ import io.vertx.core.http.HttpClient;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 
-public class ClaimedReturnedResource extends Resource {
-  public ClaimedReturnedResource(HttpClient client) {
+public class ClaimItemReturnedResource extends Resource {
+  public ClaimItemReturnedResource(HttpClient client) {
     super(client);
   }
 
   @Override
   public void register(Router router) {
-    new RouteRegistration("/circulation/loans/:id/claimed-returned", router)
-      .create(this::claimedReturned);
+    new RouteRegistration("/circulation/loans/:id/claim-item-returned", router)
+      .create(this::claimItemReturned);
   }
 
-  private void claimedReturned(RoutingContext routingContext) {
+  private void claimItemReturned(RoutingContext routingContext) {
     validateRequest(routingContext)
-      .after(this::processClaimedReturned)
+      .after(this::processClaimReturned)
       .thenApply(NoContentResult::from)
       .thenAccept(result -> result.writeTo(routingContext.response()));
   }
 
-  private CompletableFuture<Result<Loan>> processClaimedReturned(WebContext context) {
+  private CompletableFuture<Result<Loan>> processClaimReturned(WebContext context) {
     final Clients clients = Clients.create(context, client);
 
     final LoanRepository loanRepository = new LoanRepository(clients);
     final ItemRepository itemRepository = ItemRepository.fetchItemOnlyInstance(clients);
     final StoreLoanAndItem storeLoanAndItem = new StoreLoanAndItem(loanRepository, itemRepository);
 
-    final ClaimedReturnedRequest request = ClaimedReturnedRequest.from(context);
+    final ClaimItemReturnedRequest request = ClaimItemReturnedRequest.from(context);
 
     return succeeded(request)
       .after(req -> loanRepository.getById(req.getLoanId()))
@@ -61,7 +61,7 @@ public class ClaimedReturnedResource extends Resource {
   }
 
   private Result<Loan> makeLoanAndItemClaimedReturned(
-    Result<Loan> loanResult, ClaimedReturnedRequest request) {
+    Result<Loan> loanResult, ClaimItemReturnedRequest request) {
 
     return loanResult.next(loan -> {
       loan.changeAction(CLAIMED_RETURNED);

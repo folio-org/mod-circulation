@@ -107,17 +107,17 @@
       ]
     },
     {
-      "id": "claimed-returned",
+      "id": "claim-item-returned",
       "version": "0.1",
       "handlers": [
         {
           "methods": ["POST"],
-          "pathPattern": "/circulation/loans/{id}/claimed-returned",
+          "pathPattern": "/circulation/loans/{id}/claim-item-returned",
           "permissionsRequired": [
-            "circulation.loans.claimed-returned.post"
+            "circulation.loans.claim-item-returned.post"
           ],
           "modulePermissions": [
-            "modperms.circulation.loans.claimed-returned.post"
+            "modperms.circulation.loans.claim-item-returned.post"
           ]
         }
       ]
@@ -925,7 +925,7 @@
       "description": "declares the loaned item lost"
     },
     {
-      "permissionName": "circulation.loans.claimed-returned.post",
+      "permissionName": "circulation.loans.claim-item-returned.post",
       "displayName": "circulation - declare the loaned item as claimed returned",
       "description": "declares the loaned item as claimed returned"
     },
@@ -1051,7 +1051,7 @@
         "circulation.loans.item.put",
         "circulation.loans.item.delete",
         "circulation.loans.collection.delete",
-        "circulation.loans.claimed-returned.post",
+        "circulation.loans.claim-item-returned.post",
         "circulation.rules.put",
         "circulation.rules.get",
         "circulation.rules.loan-policy.get",
@@ -1865,7 +1865,7 @@
       "visible": false
     },
     {
-      "permissionName": "modperms.circulation.loans.claimed-returned.post",
+      "permissionName": "modperms.circulation.loans.claim-item-returned.post",
       "displayName": "module permissions for one op",
       "description": "to reduce X-Okapi-Token size",
       "subPermissions": [

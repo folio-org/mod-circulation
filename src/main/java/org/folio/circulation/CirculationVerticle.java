@@ -5,7 +5,7 @@ import java.lang.invoke.MethodHandles;
 import org.folio.circulation.resources.CheckInByBarcodeResource;
 import org.folio.circulation.resources.CheckOutByBarcodeResource;
 import org.folio.circulation.resources.CirculationRulesResource;
-import org.folio.circulation.resources.ClaimedReturnedResource;
+import org.folio.circulation.resources.ClaimItemReturnedResource;
 import org.folio.circulation.resources.DeclareLostResource;
 import org.folio.circulation.resources.DueDateNotRealTimeScheduledNoticeProcessingResource;
 import org.folio.circulation.resources.DueDateScheduledNoticeProcessingResource;
@@ -118,7 +118,7 @@ public class CirculationVerticle extends AbstractVerticle {
     new DeclareLostResource(client).register(router);
     new ScheduledAnonymizationProcessingResource(client).register(router);
     new EndPatronActionSessionResource(client).register(router);
-    new ClaimedReturnedResource(client).register(router);
+    new ClaimItemReturnedResource(client).register(router);
 
     server.requestHandler(router)
       .listen(config().getInteger("port"), result -> {

@@ -2,7 +2,7 @@ package api.loans;
 
 import static api.support.APITestContext.getOkapiHeadersFromContext;
 import static api.support.APITestContext.getUserId;
-import static api.support.http.InterfaceUrls.claimedReturnedURL;
+import static api.support.http.InterfaceUrls.claimItemReturnedURL;
 import static api.support.matchers.LoanMatchers.hasLoanProperty;
 import static api.support.matchers.LoanMatchers.hasOpenStatus;
 import static api.support.matchers.LoanMatchers.hasStatus;
@@ -21,13 +21,12 @@ import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Test;
 
-import api.support.APITestContext;
 import api.support.APITests;
 import api.support.RestAssuredClient;
 import api.support.http.InventoryItemResource;
 import io.vertx.core.json.JsonObject;
 
-public class ClaimedReturnedAPITests extends APITests {
+public class ClaimItemReturnedAPITests extends APITests {
   private InventoryItemResource item;
   private UUID loanId;
 
@@ -43,7 +42,7 @@ public class ClaimedReturnedAPITests extends APITests {
     final DateTime dateTime = DateTime.now();
 
     final Response response = loansFixture
-      .claimedReturned(loanId, dateTime, comment);
+      .claimItemReturned(loanId, dateTime, comment);
 
     assertLoanAndItem(response, comment, dateTime);
   }
@@ -52,7 +51,7 @@ public class ClaimedReturnedAPITests extends APITests {
   public void canMakeItemClaimedReturnedWithoutComment() {
     final DateTime dateTime = DateTime.now();
 
-    final Response response = loansFixture.claimedReturned(loanId, dateTime);
+    final Response response = loansFixture.claimItemReturned(loanId, dateTime);
 
     assertLoanAndItem(response, null, dateTime);
   }
@@ -63,7 +62,7 @@ public class ClaimedReturnedAPITests extends APITests {
 
     loansFixture.checkInByBarcode(item);
 
-    final Response response = loansFixture.claimedReturned(loanId, dateTime);
+    final Response response = loansFixture.claimItemReturned(loanId, dateTime);
 
     assertThat(response.getStatusCode(), is(422));
     assertThat(response.getJson(), hasErrorWith(hasMessage("Loan is closed")));
@@ -73,7 +72,7 @@ public class ClaimedReturnedAPITests extends APITests {
   @Test
   public void shouldFailWhenDateTimeIsMissed() {
     final Response response = restAssuredClient
-      .post(new JsonObject(), claimedReturnedURL(loanId.toString()), "claimed-returned-request");
+      .post(new JsonObject(), claimItemReturnedURL(loanId.toString()), "claimed-returned-request");
 
     assertThat(response.getStatusCode(), is(422));
     assertThat(response.getJson(), hasErrorWith(hasMessage("DateTime is a required field")));
@@ -89,7 +88,7 @@ public class ClaimedReturnedAPITests extends APITests {
       .put("dateTime", DateTime.now().toString());
 
     final Response response = restAssuredClient
-      .post(claimedReturnedRequest, claimedReturnedURL(loanId.toString()),
+      .post(claimedReturnedRequest, claimItemReturnedURL(loanId.toString()),
         "claimed-returned-request");
 
     assertThat(response.getStatusCode(), is(422));
@@ -102,7 +101,7 @@ public class ClaimedReturnedAPITests extends APITests {
     final UUID notExistentLoanId = UUID.randomUUID();
 
     final Response response = loansFixture
-      .claimedReturned(notExistentLoanId, DateTime.now());
+      .claimItemReturned(notExistentLoanId, DateTime.now());
 
     assertThat(response.getStatusCode(), is(404));
   }

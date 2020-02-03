@@ -7,13 +7,13 @@ import org.joda.time.DateTime;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.RoutingContext;
 
-public class ClaimedReturnedRequest {
+public class ClaimItemReturnedRequest {
   private final String loanId;
   private final String comment;
   private final LoanClaimedReturned loanClaimedReturned;
 
-  private ClaimedReturnedRequest(String loanId, DateTime dateTime, String comment,
-    String staffMemberId) {
+  private ClaimItemReturnedRequest(String loanId, DateTime dateTime, String comment,
+                                   String staffMemberId) {
 
     this.loanId = loanId;
     this.comment = comment;
@@ -32,13 +32,13 @@ public class ClaimedReturnedRequest {
     return loanClaimedReturned;
   }
 
-  public static ClaimedReturnedRequest from(WebContext webContext) {
+  public static ClaimItemReturnedRequest from(WebContext webContext) {
     final RoutingContext routingContext = webContext.getRoutingContext();
 
     final String loanId = routingContext.pathParam("id");
     final JsonObject body = routingContext.getBodyAsJson();
 
-    return new ClaimedReturnedRequest(
+    return new ClaimItemReturnedRequest(
       loanId,
       DateTime.parse(body.getString("dateTime")),
       body.getString("comment"),
