@@ -12,7 +12,6 @@ import org.folio.circulation.domain.policy.OverdueFinePolicy;
 import org.folio.circulation.domain.policy.Period;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
-import org.joda.time.LocalDate;
 import org.joda.time.LocalTime;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -25,7 +24,6 @@ import java.util.concurrent.ExecutionException;
 import static api.support.fixtures.OpeningHourExamples.afternoon;
 import static api.support.fixtures.OpeningHourExamples.allDay;
 import static api.support.fixtures.OpeningHourExamples.morning;
-import static org.folio.circulation.domain.OpeningDay.createOpeningDay;
 import static org.joda.time.DateTimeConstants.MINUTES_PER_DAY;
 import static org.joda.time.DateTimeConstants.MINUTES_PER_HOUR;
 import static org.joda.time.DateTimeConstants.MINUTES_PER_WEEK;
@@ -41,7 +39,7 @@ public class OverduePeriodCalculatorServiceTest {
     DateTime systemTime = DateTime.now(DateTimeZone.UTC);
     Loan loan = new LoanBuilder().asDomainObject();
 
-    assertTrue(calculator.preconditionsAreNotMet(loan, systemTime));
+    assertFalse(calculator.preconditionsAreMet(loan, systemTime, true));
   }
 
   @Test
@@ -51,7 +49,7 @@ public class OverduePeriodCalculatorServiceTest {
       .withDueDate(systemTime.plusDays(1))
       .asDomainObject();
 
-    assertTrue(calculator.preconditionsAreNotMet(loan, systemTime));
+    assertFalse(calculator.preconditionsAreMet(loan, systemTime, true));
   }
 
   @Test
@@ -59,10 +57,9 @@ public class OverduePeriodCalculatorServiceTest {
     DateTime systemTime = DateTime.now(DateTimeZone.UTC);
     Loan loan = new LoanBuilder()
       .withDueDate(systemTime.minusDays(1))
-      .asDomainObject()
-      .withOverdueFinePolicy(createOverdueFinePolicy(null, null));
+      .asDomainObject();
 
-    assertTrue(calculator.preconditionsAreNotMet(loan, systemTime));
+    assertFalse(calculator.preconditionsAreMet(loan, systemTime, null));
   }
 
   @Test
@@ -70,10 +67,9 @@ public class OverduePeriodCalculatorServiceTest {
     DateTime systemTime = DateTime.now(DateTimeZone.UTC);
     Loan loan = new LoanBuilder()
       .withDueDate(systemTime.minusDays(1))
-      .asDomainObject()
-      .withOverdueFinePolicy(createOverdueFinePolicy(null, true));
+      .asDomainObject();
 
-    assertFalse(calculator.preconditionsAreNotMet(loan, systemTime));
+    assertTrue(calculator.preconditionsAreMet(loan, systemTime, true));
   }
 
   @Test
@@ -83,61 +79,54 @@ public class OverduePeriodCalculatorServiceTest {
 
     Loan loan = new LoanBuilder()
       .withDueDate(systemTime.minusMinutes(expectedResult))
-      .asDomainObject()
-      .withOverdueFinePolicy(createOverdueFinePolicy(null, true));
+      .asDomainObject();
 
-    int actualResult = calculator.getOverdueMinutes(loan, systemTime).get().value();
+    int actualResult = calculator.getOverdueMinutes(loan, systemTime, true).get().value();
 
     assertEquals(expectedResult, actualResult);
   }
 
   @Test
   @Parameters
-  public void getOpeningPeriodDurationTest(List<OpeningPeriod> openingPeriods, int expectedResult) {
-    int actualResult = calculator.getOpeningPeriodsDurationMinutes(openingPeriods).value();
+  public void getOpeningDayDurationTest(List<OpeningDay> openingDays, int expectedResult) {
+    int actualResult = calculator.getOpeningDaysDurationMinutes(openingDays).value();
     assertEquals(expectedResult, actualResult);
   }
 
-  private Object[] parametersForGetOpeningPeriodDurationTest() {
-    List<OpeningPeriod> zeroPeriods = Collections.emptyList();
+  private Object[] parametersForGetOpeningDayDurationTest() {
+    List<OpeningDay> zeroDays = Collections.emptyList();
+
+    List<OpeningDay> regular = Arrays.asList(
+      createOpeningDay(false),
+      createOpeningDay(false),
+      createOpeningDay(false));
+
+    List<OpeningDay> allDay = Arrays.asList(
+      createOpeningDay(true),
+      createOpeningDay(true),
+      createOpeningDay(true));
+
+    List<OpeningDay> mixed = Arrays.asList(
+      createOpeningDay(false),
+      createOpeningDay(true),
+      createOpeningDay(false));
 
     LocalTime now = LocalTime.now(DateTimeZone.UTC);
 
-    LocalDate today = LocalDate.now(DateTimeZone.UTC);
-    LocalDate yesterday = today.minusDays(1);
-    LocalDate tomorrow = today.plusDays(1);
-
-    List<OpeningPeriod> regular = Arrays.asList(
-      createOpeningPeriod(yesterday, false),
-      createOpeningPeriod(today, false),
-      createOpeningPeriod(tomorrow, false));
-
-    List<OpeningPeriod> allDay = Arrays.asList(
-      createOpeningPeriod(yesterday, true),
-      createOpeningPeriod(today, true),
-      createOpeningPeriod(tomorrow, true));
-
-    List<OpeningPeriod> mixed = Arrays.asList(
-      createOpeningPeriod(yesterday, false),
-      createOpeningPeriod(today, true),
-      createOpeningPeriod(tomorrow, false));
-
-
-    List<OpeningPeriod> invalid = Arrays.asList(
-      new OpeningPeriod(yesterday, createOpeningDay(
+    List<OpeningDay> invalid = Arrays.asList(
+      OpeningDay.createOpeningDay(
         Collections.singletonList(new OpeningHour(null, null)),
-        yesterday, false, true)
-      ),
-      new OpeningPeriod(yesterday, createOpeningDay(
+        null, false, true),
+      OpeningDay.createOpeningDay(
         Collections.singletonList(new OpeningHour(now, now.minusHours(1))),
-        yesterday, false, true)
-      )
+        null, false, true)
     );
 
     return new Object[]{
-      new Object[]{zeroPeriods, 0},
+      new Object[]{zeroDays, 0},
       new Object[]{regular, MINUTES_PER_HOUR * 10 * 3},
       new Object[]{allDay, MINUTES_PER_DAY * 3},
+      new Object[]{mixed, MINUTES_PER_HOUR * 10 * 2 + MINUTES_PER_DAY},
       new Object[]{invalid, 0}
     };
   }
@@ -195,13 +184,11 @@ public class OverduePeriodCalculatorServiceTest {
     return OverdueFinePolicy.from(json);
   }
 
-  private OpeningPeriod createOpeningPeriod(LocalDate date, boolean allDay) {
-    return new OpeningPeriod(date,
-      createOpeningDay(
-        allDay ? Collections.singletonList(allDay()) : Arrays.asList(morning(), afternoon()),
-        null, allDay, true
-      )
-    );
+  private OpeningDay createOpeningDay(boolean allDay) {
+    return OpeningDay.createOpeningDay(
+      allDay ? Collections.singletonList(allDay()) : Arrays.asList(morning(), afternoon()),
+      null, allDay, true
+      );
   }
 
 }

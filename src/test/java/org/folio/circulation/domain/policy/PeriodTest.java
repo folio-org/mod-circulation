@@ -16,8 +16,7 @@ public class PeriodTest {
     "Hours   | 5  | 300",
     "Days    | 4  | 5760",
     "Weeks   | 3  | 30240",
-    "Months  | 2  | 89280",
-    "Random  | 9  | 9"
+    "Months  | 2  | 89280"
   })
   public void toMinutes(String interval, Integer duration, int expectedResult) {
     assertEquals(expectedResult, Period.from(duration, interval).toMinutes());
@@ -33,5 +32,12 @@ public class PeriodTest {
   public void toMinutesWithNullDuration() {
     Period period = Period.from(null, "Minutes");
     assertEquals(0, period.toMinutes());
+  }
+
+  @Test
+  public void toMinutesWithUnknownInterval() {
+    int durationMinutes = 10;
+    Period period = Period.from(durationMinutes, "Unknown interval");
+    assertEquals(durationMinutes, period.toMinutes());
   }
 }

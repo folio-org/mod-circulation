@@ -44,7 +44,6 @@ import org.folio.circulation.support.Result;
 import org.joda.time.DateTime;
 
 import io.vertx.core.json.JsonObject;
-import org.joda.time.DateTimeZone;
 
 public class Loan implements ItemRelatedRecord, UserRelatedRecord {
 
@@ -481,6 +480,6 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     DateTime dueDate = getDueDate();
 
     return ObjectUtils.allNotNull(dueDate, systemTime)
-      && dueDate.isAfter(systemTime);
+      && dueDate.isBefore(systemTime);
   }
 }
