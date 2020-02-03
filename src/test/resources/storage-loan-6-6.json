@@ -93,26 +93,10 @@
       "type": "string",
       "format": "date-time"
     },
-    "claimedReturned": {
-      "type": "object",
-      "description": "Holds info about loan claimed returned",
-      "properties": {
-        "dateTime": {
-          "description": "Date and time the item was claimed returned for this loan",
-          "type": "string",
-          "format": "date-time"
-        },
-        "staffMemberId": {
-          "type": "string",
-          "description": "Staff member id who marked the loan as claimed returned",
-          "$ref": "uuid.json"
-        }
-      },
-      "additionalProperties": false,
-      "required": [
-        "dateTime",
-        "staffMemberId"
-      ]
+    "claimedReturnedDate": {
+      "description": "Date and time the item was claimed returned for this loan",
+      "type": "string",
+      "format": "date-time"
     },
     "overdueFinePolicyId": {
       "description": "ID of last overdue fine policy used in relation to this loan",

@@ -45,14 +45,15 @@ public class ClaimItemReturnedResource extends Resource {
       .thenAccept(result -> result.writeTo(routingContext.response()));
   }
 
-  private CompletableFuture<Result<Loan>> processClaimReturned(WebContext context) {
+  private CompletableFuture<Result<Loan>> processClaimReturned(RoutingContext routingContext) {
+    final WebContext context = new WebContext(routingContext);
     final Clients clients = Clients.create(context, client);
 
     final LoanRepository loanRepository = new LoanRepository(clients);
     final ItemRepository itemRepository = ItemRepository.fetchItemOnlyInstance(clients);
     final StoreLoanAndItem storeLoanAndItem = new StoreLoanAndItem(loanRepository, itemRepository);
 
-    final ClaimItemReturnedRequest request = ClaimItemReturnedRequest.from(context);
+    final ClaimItemReturnedRequest request = ClaimItemReturnedRequest.from(routingContext);
 
     return succeeded(request)
       .after(req -> loanRepository.getById(req.getLoanId()))
@@ -71,20 +72,16 @@ public class ClaimItemReturnedResource extends Resource {
       }
 
       loan.changeItemStatusForItemAndLoan(ItemStatus.CLAIMED_RETURNED);
-      loan.changeClaimedReturned(request.getLoanClaimedReturned());
+      loan.changeClaimedReturnedDate(request.getItemClaimedReturnedDateTime());
 
       return succeeded(loan);
     });
   }
 
-  private Result<WebContext> validateRequest(RoutingContext routingContext) {
-    return succeeded(routingContext)
-      .failWhen(ctx -> succeeded(ctx.getBodyAsJson()
-          .getString(ITEM_CLAIMED_RETURNED_DATE) == null),
-        request -> singleValidationError("Item claimed returned date is a required field",
-          ITEM_CLAIMED_RETURNED_DATE, null))
-      .map(WebContext::new)
-      .failWhen(context -> succeeded(isBlank(context.getUserId())),
-        context -> singleValidationError("No okapi user id provided", USER_ID, null));
+  private Result<RoutingContext> validateRequest(RoutingContext routingContext) {
+    return succeeded(routingContext).failWhen(
+      ctx -> succeeded(ctx.getBodyAsJson().getString(ITEM_CLAIMED_RETURNED_DATE) == null),
+      request -> singleValidationError("Item claimed returned date is a required field",
+        ITEM_CLAIMED_RETURNED_DATE, null));
   }
 }
