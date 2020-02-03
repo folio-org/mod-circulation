@@ -39,16 +39,20 @@ public class OverduePeriodCalculatorService {
   }
 
   CompletableFuture<Result<Integer>> getOverdueMinutes(Loan loan, DateTime systemTime) {
-    DateTime dueDate = loan.getDueDate();
-    boolean countClosed = loan.getOverdueFinePolicy().getCountPeriodsWhenServicePointIsClosed();
-    if (countClosed) {
-      int overdueMinutes = minutesBetween(dueDate, systemTime).getMinutes();
-      return completedFuture(succeeded(overdueMinutes));
-    } else {
-      return calendarRepository
-        .fetchOpeningPeriodsBetweenDates(loan.getCheckoutServicePointId(), dueDate, systemTime, false)
-        .thenApply(r -> r.next(this::getOpeningPeriodsDurationMinutes));
-    }
+    return loan.getOverdueFinePolicy().getCountPeriodsWhenServicePointIsClosed()
+      ? minutesOverdueIncludingClosedDays(loan, systemTime)
+      : minutesOverdueExcludingClosedDays(loan, systemTime);
+  }
+
+  private CompletableFuture<Result<Integer>> minutesOverdueIncludingClosedDays(Loan loan, DateTime systemTime) {
+    int overdueMinutes = minutesBetween(loan.getDueDate(), systemTime).getMinutes();
+    return completedFuture(succeeded(overdueMinutes));
+  }
+
+  private CompletableFuture<Result<Integer>> minutesOverdueExcludingClosedDays(Loan loan, DateTime systemTime) {
+    return calendarRepository
+      .fetchOpeningPeriodsBetweenDates(loan.getCheckoutServicePointId(), loan.getDueDate(), systemTime, false)
+      .thenApply(r -> r.next(this::getOpeningPeriodsDurationMinutes));
   }
 
   Result<Integer> getOpeningPeriodsDurationMinutes(List<OpeningPeriod> openingPeriods) {

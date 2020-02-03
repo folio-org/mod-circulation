@@ -39,6 +39,7 @@ import org.folio.circulation.domain.policy.LoanPolicy;
 import org.folio.circulation.domain.policy.LostItemPolicy;
 import org.folio.circulation.domain.policy.OverdueFinePolicy;
 import org.folio.circulation.domain.representations.LoanProperties;
+import org.folio.circulation.support.ClockManager;
 import org.folio.circulation.support.Result;
 import org.joda.time.DateTime;
 
@@ -473,7 +474,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   public boolean isOverdue() {
-    return isOverdue(DateTime.now(DateTimeZone.UTC));
+    return isOverdue(ClockManager.getClockManager().getDateTime());
   }
 
   public boolean isOverdue(DateTime systemTime) {
