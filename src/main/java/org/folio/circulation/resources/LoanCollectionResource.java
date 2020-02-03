@@ -1,6 +1,7 @@
 package org.folio.circulation.resources;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
+import static org.folio.circulation.domain.ItemStatus.DECLARED_LOST;
 import static org.folio.circulation.domain.representations.LoanProperties.ITEM_ID;
 import static org.folio.circulation.support.Result.of;
 import static org.folio.circulation.support.Result.succeeded;
@@ -158,6 +159,7 @@ public class LoanCollectionResource extends CollectionResource {
       .thenApply(spLoanLocationValidator::checkServicePointLoanLocation)
       .thenApply(this::refuseWhenClosedAndNoCheckInServicePointId)
       .thenCombineAsync(itemRepository.fetchFor(loan), this::addItem)
+      .thenApply(this::refuseWhenItemHasDeclaredLostStatus)
       .thenCombineAsync(userRepository.getUser(loan.getUserId()), this::addUser)
       .thenApply(itemNotFoundValidator::refuseWhenItemNotFound)
       .thenComposeAsync(r -> r.after(proxyRelationshipValidator::refuseWhenInvalid))
@@ -344,5 +346,22 @@ public class LoanCollectionResource extends CollectionResource {
       () -> singleValidationError(
         String.format("No item with ID %s could be found", loan.getItemId()),
         ITEM_ID, loan.getItemId()));
+  }
+
+  private Result<LoanAndRelatedRecords> refuseWhenItemHasDeclaredLostStatus(
+    Result<LoanAndRelatedRecords> loanAndRelatedRecords) {
+
+    return loanAndRelatedRecords
+      .map(LoanAndRelatedRecords::getLoan)
+      .map(Loan::getItem)
+      .next(this::isValidStatus)
+      .next(v -> loanAndRelatedRecords);
+  }
+
+  private Result<Void> isValidStatus(Item item) {
+    if (item.isInStatus(DECLARED_LOST)) {
+      return failedValidation("item is Declared lost", ITEM_ID, item.getItemId());
+    }
+    return succeeded(null);
   }
 }
