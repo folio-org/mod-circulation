@@ -41,7 +41,7 @@ public class OverduePeriodCalculatorServiceTest {
     DateTime systemTime = DateTime.now(DateTimeZone.UTC);
     Loan loan = new LoanBuilder().asDomainObject();
 
-    assertFalse(calculator.preconditionsAreNotMet(loan, systemTime));
+    assertTrue(calculator.preconditionsAreNotMet(loan, systemTime));
   }
 
   @Test
@@ -51,7 +51,7 @@ public class OverduePeriodCalculatorServiceTest {
       .withDueDate(systemTime.plusDays(1))
       .asDomainObject();
 
-    assertFalse(calculator.preconditionsAreNotMet(loan, systemTime));
+    assertTrue(calculator.preconditionsAreNotMet(loan, systemTime));
   }
 
   @Test
@@ -62,7 +62,7 @@ public class OverduePeriodCalculatorServiceTest {
       .asDomainObject()
       .withOverdueFinePolicy(createOverdueFinePolicy(null, null));
 
-    assertFalse(calculator.preconditionsAreNotMet(loan, systemTime));
+    assertTrue(calculator.preconditionsAreNotMet(loan, systemTime));
   }
 
   @Test
@@ -73,7 +73,7 @@ public class OverduePeriodCalculatorServiceTest {
       .asDomainObject()
       .withOverdueFinePolicy(createOverdueFinePolicy(null, true));
 
-    assertTrue(calculator.preconditionsAreNotMet(loan, systemTime));
+    assertFalse(calculator.preconditionsAreNotMet(loan, systemTime));
   }
 
   @Test
