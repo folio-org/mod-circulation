@@ -1,8 +1,8 @@
 package api.support.builders;
 
-import io.vertx.core.json.JsonObject;
-
 import java.util.UUID;
+
+import io.vertx.core.json.JsonObject;
 
 public class OverdueFinePolicyBuilder extends JsonBuilder implements Builder  {
 
@@ -202,11 +202,11 @@ public class OverdueFinePolicyBuilder extends JsonBuilder implements Builder  {
     put(request, "description", this.description);
     put(request, "overdueFine", this.overdueFine);
     put(request, "countClosed", this.countClosed);
-    put(request, "maxOverdueFine", String.valueOf(this.maxOverdueFine));
+    put(request, "maxOverdueFine", this.maxOverdueFine);
     put(request, "forgiveOverdueFine", this.forgiveOverdueFine);
     put(request, "overdueRecallFine", this.overdueRecallFine);
     put(request, "gracePeriodRecall", this.gracePeriodRecall);
-    put(request, "maxOverdueRecallFine", String.valueOf(this.maxOverdueRecallFine));
+    put(request, "maxOverdueRecallFine", this.maxOverdueRecallFine);
     return request;
   }
 }

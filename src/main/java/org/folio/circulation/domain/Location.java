@@ -36,7 +36,7 @@ public class Location {
     return getProperty(representation, "id");
   }
 
-  private List<String> getServicePointIds() {
+  public List<String> getServicePointIds() {
     return getArrayProperty(representation, "servicePointIds")
       .stream()
       .map(String.class::cast)

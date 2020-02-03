@@ -92,10 +92,6 @@ public class InterfaceUrls {
     return APITestContext.viaOkapiModuleUrl("/users" + subPath);
   }
 
-  static URL calendarUrl(String subPath) {
-    return APITestContext.viaOkapiModuleUrl("/calendar/periods"+ subPath);
-  }
-
   static URL proxyRelationshipsUrl(String subPath) {
     return APITestContext.viaOkapiModuleUrl("/proxiesfor" + subPath);
   }
@@ -187,6 +183,14 @@ public class InterfaceUrls {
 
   public static URL feeFineActionsUrl(String subPath) {
     return APITestContext.viaOkapiModuleUrl("/feefineactions" + subPath);
+  }
+
+  public static URL feeFineOwnersUrl(String subPath) {
+    return APITestContext.viaOkapiModuleUrl("/owners" + subPath);
+  }
+
+  public static URL feeFinesUrl(String subPath) {
+    return APITestContext.viaOkapiModuleUrl("/feefines" + subPath);
   }
 
   public static URL circulationRulesUrl() {

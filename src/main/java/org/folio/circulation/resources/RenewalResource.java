@@ -7,6 +7,7 @@ import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.domain.LoanRepository;
 import org.folio.circulation.domain.LoanRepresentation;
+import org.folio.circulation.domain.OverdueFineCalculatorService;
 import org.folio.circulation.domain.RequestQueueRepository;
 import org.folio.circulation.domain.UserRepository;
 import org.folio.circulation.domain.notice.schedule.DueDateScheduledNoticeService;
@@ -57,6 +58,8 @@ public abstract class RenewalResource extends Resource {
     final DueDateScheduledNoticeService scheduledNoticeService = DueDateScheduledNoticeService.using(clients);
 
     final LoanNoticeSender loanNoticeSender = LoanNoticeSender.using(clients);
+    final OverdueFineCalculatorService overdueFineCalculatorService =
+      OverdueFineCalculatorService.using(clients);
 
     //TODO: Validation check for same user should be in the domain service
 
@@ -72,6 +75,7 @@ public abstract class RenewalResource extends Resource {
       .thenComposeAsync(r -> r.after(requestQueueRepository::get))
       .thenCompose(r -> r.combineAfter(configurationRepository::findTimeZoneConfiguration,
         LoanAndRelatedRecords::withTimeZone))
+      .thenCompose(r -> r.after(overdueFineCalculatorService::calculateOverdueFine))
       .thenComposeAsync(r -> r.after(records -> renewalStrategy.renew(records, bodyAsJson, clients)))
       .thenComposeAsync(r -> r.after(loanRepository::updateLoan))
       .thenApply(r -> r.next(scheduledNoticeService::rescheduleDueDateNotices))

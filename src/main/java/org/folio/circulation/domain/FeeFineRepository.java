@@ -1,14 +1,19 @@
 package org.folio.circulation.domain;
 
+import static org.folio.circulation.support.http.ResponseMapping.forwardOnFailure;
+import static org.folio.circulation.support.http.ResponseMapping.mapUsingJson;
+
+import java.util.concurrent.CompletableFuture;
+
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
-import org.folio.circulation.support.MultipleRecordFetcher;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.http.client.CqlQuery;
 import org.folio.circulation.support.http.client.PageLimit;
 import org.folio.circulation.support.http.client.Response;
+import org.folio.circulation.support.http.client.ResponseInterpreter;
 
-import java.util.concurrent.CompletableFuture;
+import io.vertx.core.json.JsonObject;
 
 public class FeeFineRepository {
   private static final Integer PAGE_LIMIT = 500;
@@ -34,7 +39,12 @@ public class FeeFineRepository {
     return MultipleRecords.from(response, FeeFine::from, "feefines");
   }
 
-  private MultipleRecordFetcher<FeeFine> createFeeFineStorageClient() {
-    return new MultipleRecordFetcher<>(feeFineStorageClient, "feefines", FeeFine::from);
+  public CompletableFuture<Result<FeeFine>> create(JsonObject feeFineRepresentation) {
+    final ResponseInterpreter<FeeFine> interpreter = new ResponseInterpreter<FeeFine>()
+      .flatMapOn(201, mapUsingJson(FeeFine::new))
+      .otherwise(forwardOnFailure());
+
+    return feeFineStorageClient.post(feeFineRepresentation)
+      .thenApply(interpreter::flatMap);
   }
 }

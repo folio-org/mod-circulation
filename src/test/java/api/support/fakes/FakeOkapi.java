@@ -30,6 +30,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import api.support.fakes.processors.StorageRecordPreProcessors;
+import api.support.fixtures.OpeningPeriodsExamples;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Future;
 import io.vertx.core.MultiMap;
@@ -224,6 +225,7 @@ public class FakeOkapi extends AbstractVerticle {
     registerCirculationRulesStorage(router);
     registerCalendar(router);
     registerLibraryHours(router);
+    registerOpeningHours(router);
     registerFakeStorageLoansAnonymize(router);
 
     new FakeStorageModuleBuilder()
@@ -320,6 +322,18 @@ public class FakeOkapi extends AbstractVerticle {
       .withRootPath("/patron-action-session-storage/patron-action-sessions")
       .create()
       .register(router);
+
+    new FakeStorageModuleBuilder()
+      .withCollectionPropertyName("owners")
+      .withRootPath("/owners")
+      .create()
+      .register(router);
+
+    new FakeStorageModuleBuilder()
+      .withRecordName("feefines")
+      .withRootPath("/feefines")
+      .withCollectionPropertyName("feefines")
+      .create().register(router);
 
     server.requestHandler(router::accept)
       .listen(PORT_TO_USE, result -> {
@@ -447,6 +461,16 @@ public class FakeOkapi extends AbstractVerticle {
       log.debug("/circulation-rules-storage GET returns {}", circulationRules);
       routingContext.response().setStatusCode(200).end(circulationRules);
     });
+  }
+
+  private void registerOpeningHours(Router router) {
+    router.get("/calendar/periods")
+      .handler(routingContext -> {
+        routingContext.response()
+          .setStatusCode(200)
+          .putHeader("content-type", "application/json")
+          .end(OpeningPeriodsExamples.oneDayPeriod().create().toString());
+      });
   }
 
   private void registerLibraryHours(Router router) {

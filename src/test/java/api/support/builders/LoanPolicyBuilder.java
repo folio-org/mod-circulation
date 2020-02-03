@@ -322,6 +322,31 @@ public class LoanPolicyBuilder extends JsonBuilder implements Builder {
       this.gracePeriod);
   }
 
+  public LoanPolicyBuilder withLoanPeriod(JsonObject loanPeriod) {
+    return new LoanPolicyBuilder(
+      this.id,
+      this.name,
+      this.description,
+      this.loanable,
+      this.profile,
+      loanPeriod,
+      this.fixedDueDateScheduleId,
+      this.closedLibraryDueDateManagementId,
+      this.openingTimeOffsetPeriod, this.unlimitedRenewals,
+      this.numberAllowed,
+      this.renewFrom,
+      this.renewWithDifferentPeriod,
+      this.differentRenewalPeriod,
+      this.alternateFixedDueDateScheduleId,
+      this.renewable,
+      this.recallsMinimumGuaranteedLoanPeriod,
+      this.recallsRecallReturnInterval,
+      this.holds,
+      this.alternateCheckoutLoanPeriod,
+      this.itemLimit,
+      this.gracePeriod);
+  }
+
   public LoanPolicyBuilder withLoansProfile(String profile) {
     return new LoanPolicyBuilder(
       this.id,
