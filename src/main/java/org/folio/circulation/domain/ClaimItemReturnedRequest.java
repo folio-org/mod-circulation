@@ -1,5 +1,8 @@
 package org.folio.circulation.domain;
 
+import static org.folio.circulation.domain.representations.ClaimItemReturnedProperties.COMMENT;
+import static org.folio.circulation.domain.representations.ClaimItemReturnedProperties.ITEM_CLAIMED_RETURNED_DATE;
+
 import org.folio.circulation.domain.loan.LoanClaimedReturned;
 import org.folio.circulation.support.http.server.WebContext;
 import org.joda.time.DateTime;
@@ -40,8 +43,8 @@ public class ClaimItemReturnedRequest {
 
     return new ClaimItemReturnedRequest(
       loanId,
-      DateTime.parse(body.getString("dateTime")),
-      body.getString("comment"),
+      DateTime.parse(body.getString(ITEM_CLAIMED_RETURNED_DATE)),
+      body.getString(COMMENT),
       webContext.getUserId());
   }
 }

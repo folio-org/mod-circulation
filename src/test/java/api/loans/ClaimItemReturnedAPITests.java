@@ -9,6 +9,7 @@ import static api.support.matchers.LoanMatchers.hasStatus;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static api.support.matchers.ValidationErrorMatchers.hasParameter;
+import static org.folio.circulation.domain.representations.ClaimItemReturnedProperties.ITEM_CLAIMED_RETURNED_DATE;
 import static org.folio.circulation.support.http.OkapiHeader.USER_ID;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
@@ -27,6 +28,8 @@ import api.support.http.InventoryItemResource;
 import io.vertx.core.json.JsonObject;
 
 public class ClaimItemReturnedAPITests extends APITests {
+  private static final String CLAIM_ITEM_RETURNED_REQUEST_NAME = "claim-item-returned-request";
+
   private InventoryItemResource item;
   private UUID loanId;
 
@@ -71,12 +74,13 @@ public class ClaimItemReturnedAPITests extends APITests {
 
   @Test
   public void shouldFailWhenDateTimeIsMissed() {
-    final Response response = restAssuredClient
-      .post(new JsonObject(), claimItemReturnedURL(loanId.toString()), "claimed-returned-request");
+    final Response response = restAssuredClient.post(new JsonObject(),
+      claimItemReturnedURL(loanId.toString()), CLAIM_ITEM_RETURNED_REQUEST_NAME);
 
     assertThat(response.getStatusCode(), is(422));
-    assertThat(response.getJson(), hasErrorWith(hasMessage("DateTime is a required field")));
-    assertThat(response.getJson(), hasErrorWith(hasParameter("dateTime", null)));
+    assertThat(response.getJson(),
+      hasErrorWith(hasMessage("Item claimed returned date is a required field")));
+    assertThat(response.getJson(), hasErrorWith(hasParameter(ITEM_CLAIMED_RETURNED_DATE, null)));
   }
 
   @Test
@@ -85,11 +89,10 @@ public class ClaimItemReturnedAPITests extends APITests {
       new RestAssuredClient(getOkapiHeadersFromContext().withUserId(null));
 
     final JsonObject claimedReturnedRequest = new JsonObject()
-      .put("dateTime", DateTime.now().toString());
+      .put(ITEM_CLAIMED_RETURNED_DATE, DateTime.now().toString());
 
-    final Response response = restAssuredClient
-      .post(claimedReturnedRequest, claimItemReturnedURL(loanId.toString()),
-        "claimed-returned-request");
+    final Response response = restAssuredClient.post(claimedReturnedRequest,
+      claimItemReturnedURL(loanId.toString()), CLAIM_ITEM_RETURNED_REQUEST_NAME);
 
     assertThat(response.getStatusCode(), is(422));
     assertThat(response.getJson(), hasErrorWith(hasMessage("No okapi user id provided")));

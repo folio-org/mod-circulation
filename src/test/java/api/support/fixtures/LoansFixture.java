@@ -18,6 +18,8 @@ import static api.support.http.Limit.maximumLimit;
 import static api.support.http.Limit.noLimit;
 import static api.support.http.Offset.noOffset;
 import static java.net.HttpURLConnection.HTTP_OK;
+import static org.folio.circulation.domain.representations.ClaimItemReturnedProperties.COMMENT;
+import static org.folio.circulation.domain.representations.ClaimItemReturnedProperties.ITEM_CLAIMED_RETURNED_DATE;
 import static org.folio.circulation.support.JsonPropertyWriter.write;
 
 import java.net.URL;
@@ -156,11 +158,11 @@ public class LoansFixture {
 
   public Response claimItemReturned(UUID loanId, DateTime dateTime, String comment) {
     final JsonObject claimedReturnedRequest = new JsonObject()
-      .put("dateTime", dateTime.toString());
-    write(claimedReturnedRequest, "comment", comment);
+      .put(ITEM_CLAIMED_RETURNED_DATE, dateTime.toString());
+    write(claimedReturnedRequest, COMMENT, comment);
 
     return restAssuredClient.post(claimedReturnedRequest,
-      claimItemReturnedURL(loanId.toString()), "claimed-returned-request");
+      claimItemReturnedURL(loanId.toString()), "claim-item-returned-request");
   }
 
   public Response claimItemReturned(UUID loanId, DateTime dateTime) {

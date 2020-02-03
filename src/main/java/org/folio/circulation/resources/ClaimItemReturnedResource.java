@@ -2,6 +2,7 @@ package org.folio.circulation.resources;
 
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.folio.circulation.domain.LoanAction.CLAIMED_RETURNED;
+import static org.folio.circulation.domain.representations.ClaimItemReturnedProperties.ITEM_CLAIMED_RETURNED_DATE;
 import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 import static org.folio.circulation.support.http.OkapiHeader.USER_ID;
@@ -78,8 +79,10 @@ public class ClaimItemReturnedResource extends Resource {
 
   private Result<WebContext> validateRequest(RoutingContext routingContext) {
     return succeeded(routingContext)
-      .failWhen(ctx -> succeeded(ctx.getBodyAsJson().getString("dateTime") == null),
-        request -> singleValidationError("DateTime is a required field", "dateTime", null))
+      .failWhen(ctx -> succeeded(ctx.getBodyAsJson()
+          .getString(ITEM_CLAIMED_RETURNED_DATE) == null),
+        request -> singleValidationError("Item claimed returned date is a required field",
+          ITEM_CLAIMED_RETURNED_DATE, null))
       .map(WebContext::new)
       .failWhen(context -> succeeded(isBlank(context.getUserId())),
         context -> singleValidationError("No okapi user id provided", USER_ID, null));

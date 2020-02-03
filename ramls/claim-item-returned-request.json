@@ -3,7 +3,7 @@
   "type": "object",
   "description": "Request body schema for claim item returned API",
   "properties": {
-    "dateTime": {
+    "itemClaimedReturnedDateTime": {
       "description": "The date and time when the item is to be claimed returned",
       "type": "string",
       "format": "date-time"
