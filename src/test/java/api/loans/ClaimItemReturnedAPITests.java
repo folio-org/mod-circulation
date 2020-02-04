@@ -37,7 +37,7 @@ public class ClaimItemReturnedAPITests extends APITests {
   }
 
   @Test
-  public void canMakeItemClaimedReturnedWithComment() {
+  public void canClaimItemReturnedWithComment() {
     final String comment = "testing";
     final DateTime dateTime = DateTime.now();
 
@@ -51,7 +51,7 @@ public class ClaimItemReturnedAPITests extends APITests {
   }
 
   @Test
-  public void canMakeItemClaimedReturnedWithoutComment() {
+  public void canClaimItemReturnedWithoutComment() {
     final DateTime dateTime = DateTime.now();
 
     final Response response = loansFixture
@@ -63,7 +63,7 @@ public class ClaimItemReturnedAPITests extends APITests {
   }
 
   @Test
-  public void shouldFailWhenLoanIsClosed() {
+  public void cannotClaimItemReturnedWhenLoanIsClosed() {
     final DateTime dateTime = DateTime.now();
 
     loansFixture.checkInByBarcode(item);
@@ -79,7 +79,7 @@ public class ClaimItemReturnedAPITests extends APITests {
   }
 
   @Test
-  public void shouldFailWhenItemClaimedReturnedDateIsMissed() {
+  public void cannotClaimItemReturnedWhenDateTimeIsNotProvided() {
     final Response response = loansFixture
       .claimItemReturned(new ClaimItemReturnedRequestBuilder()
         .forLoan(loanId)
@@ -92,7 +92,7 @@ public class ClaimItemReturnedAPITests extends APITests {
   }
 
   @Test
-  public void shouldFailIfLoanIsNotFound() {
+  public void cannotClaimItemReturnedWhenLoanIsNotFound() {
     final String notExistentLoanId = UUID.randomUUID().toString();
 
     final Response response = loansFixture
