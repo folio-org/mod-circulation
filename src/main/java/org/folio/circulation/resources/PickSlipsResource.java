@@ -10,6 +10,7 @@ import org.folio.circulation.domain.Location;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestStatus;
+import org.folio.circulation.domain.RequestType;
 import org.folio.circulation.domain.representations.ItemPickSlipRepresentation;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
@@ -44,6 +45,7 @@ public class PickSlipsResource extends Resource {
   private static final String INSTANCES_KEY = "instances";
   private static final String PICK_SLIPS_KEY = "pickSlips";
   private static final String STATUS_NAME_KEY = "status.name";
+  private static final String REQUEST_TYPE_KEY = "requestType";
   private static final String TOTAL_RECORDS_KEY = "totalRecords";
   private static final String HOLDINGS_RECORDS_KEY = "holdingsRecords";
   private static final String SERVICE_POINT_ID_PARAM = "servicePointId";
@@ -119,10 +121,12 @@ public class PickSlipsResource extends Resource {
         .map(Item::getItemId)
         .collect(Collectors.toSet());
 
-    final Result<CqlQuery> statusQuery = exactMatch(STATUS_KEY, RequestStatus.OPEN_NOT_YET_FILLED.getValue());
+    final Result<CqlQuery> requestTypeQuery = exactMatch(REQUEST_TYPE_KEY, RequestType.PAGE.getValue());
+    final Result<CqlQuery> requestStatusQuery = exactMatch(STATUS_KEY, RequestStatus.OPEN_NOT_YET_FILLED.getValue());
+    final Result<CqlQuery> combinedRequestQuery = requestTypeQuery.combine(requestStatusQuery, CqlQuery::and);
 
     return new MultipleRecordFetcher<>(client, REQUESTS_KEY, Request::from)
-      .findByIndexNameAndQuery(itemIds, ITEM_ID_KEY, statusQuery)
+      .findByIndexNameAndQuery(itemIds, ITEM_ID_KEY, combinedRequestQuery)
       .thenApply(r -> r.next(this::recordsToSet))
       .thenApply(r -> r.next(requests -> filterItemsByRequests(items, requests)));
   }
