@@ -1,18 +1,13 @@
 package org.folio.circulation.resources;
 
-import static org.apache.commons.lang3.StringUtils.isBlank;
-import static org.folio.circulation.domain.LoanAction.CLAIMED_RETURNED;
-import static org.folio.circulation.domain.representations.ClaimItemReturnedProperties.ITEM_CLAIMED_RETURNED_DATE;
+import static org.folio.circulation.domain.ClaimItemReturnedRequest.ITEM_CLAIMED_RETURNED_DATE;
 import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
-import static org.folio.circulation.support.http.OkapiHeader.USER_ID;
 
 import java.util.concurrent.CompletableFuture;
 
-import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.StoreLoanAndItem;
 import org.folio.circulation.domain.ClaimItemReturnedRequest;
-import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanRepository;
 import org.folio.circulation.domain.validation.LoanValidators;
@@ -65,17 +60,8 @@ public class ClaimItemReturnedResource extends Resource {
   private Result<Loan> makeLoanAndItemClaimedReturned(
     Result<Loan> loanResult, ClaimItemReturnedRequest request) {
 
-    return loanResult.next(loan -> {
-      loan.changeAction(CLAIMED_RETURNED);
-      if (StringUtils.isNotBlank(request.getComment())) {
-        loan.changeActionComment(request.getComment());
-      }
-
-      loan.changeItemStatusForItemAndLoan(ItemStatus.CLAIMED_RETURNED);
-      loan.changeClaimedReturnedDate(request.getItemClaimedReturnedDateTime());
-
-      return succeeded(loan);
-    });
+    return loanResult.map(loan -> loan
+      .claimItemReturned(request.getComment(), request.getItemClaimedReturnedDateTime()));
   }
 
   private Result<RoutingContext> validateRequest(RoutingContext routingContext) {

@@ -1,14 +1,14 @@
 package org.folio.circulation.domain;
 
-import static org.folio.circulation.domain.representations.ClaimItemReturnedProperties.COMMENT;
-import static org.folio.circulation.domain.representations.ClaimItemReturnedProperties.ITEM_CLAIMED_RETURNED_DATE;
-
 import org.joda.time.DateTime;
 
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.RoutingContext;
 
 public class ClaimItemReturnedRequest {
+  public static final String ITEM_CLAIMED_RETURNED_DATE = "itemClaimedReturnedDateTime";
+  public static final String COMMENT = "comment";
+
   private final String loanId;
   private final String comment;
   private final DateTime itemClaimedReturnedDateTime;
@@ -37,8 +37,7 @@ public class ClaimItemReturnedRequest {
     final JsonObject body = routingContext.getBodyAsJson();
 
     return new ClaimItemReturnedRequest(
-      loanId,
-      DateTime.parse(body.getString(ITEM_CLAIMED_RETURNED_DATE)),
+      loanId, DateTime.parse(body.getString(ITEM_CLAIMED_RETURNED_DATE)),
       body.getString(COMMENT));
   }
 }

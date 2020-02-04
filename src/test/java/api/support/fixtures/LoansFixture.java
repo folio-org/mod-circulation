@@ -18,8 +18,8 @@ import static api.support.http.Limit.maximumLimit;
 import static api.support.http.Limit.noLimit;
 import static api.support.http.Offset.noOffset;
 import static java.net.HttpURLConnection.HTTP_OK;
-import static org.folio.circulation.domain.representations.ClaimItemReturnedProperties.COMMENT;
-import static org.folio.circulation.domain.representations.ClaimItemReturnedProperties.ITEM_CLAIMED_RETURNED_DATE;
+import static org.folio.circulation.domain.ClaimItemReturnedRequest.COMMENT;
+import static org.folio.circulation.domain.ClaimItemReturnedRequest.ITEM_CLAIMED_RETURNED_DATE;
 import static org.folio.circulation.support.JsonPropertyWriter.write;
 
 import java.net.URL;
