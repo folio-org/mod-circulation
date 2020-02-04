@@ -56,15 +56,15 @@ public class CalendarRepository {
       servicePointId, startDate.toLocalDate(), endDate.toLocalDate(), includeClosedDays);
 
     return calendarClient.getManyWithRawQueryStringParameters(params)
-      .thenApply(flatMapResult(this::convertOpeningPeriodsToOpeningDays));
+      .thenApply(flatMapResult(this::getOpeningDaysFromOpeningPeriods));
   }
 
-  private Result<List<OpeningDay>> convertOpeningPeriodsToOpeningDays(Response response) {
-    return MultipleRecords.from(response, this::convertOpeningPeriodToOpeningDay, OPENING_PERIODS)
+  private Result<List<OpeningDay>> getOpeningDaysFromOpeningPeriods(Response periodsResponse) {
+    return MultipleRecords.from(periodsResponse, this::getOpeningDayFromOpeningPeriod, OPENING_PERIODS)
       .next(r -> Result.succeeded(r.toKeys(identity())));
   }
 
-  private OpeningDay convertOpeningPeriodToOpeningDay(JsonObject openingPeriod) {
+  private OpeningDay getOpeningDayFromOpeningPeriod(JsonObject openingPeriod) {
     return new OpeningDay(openingPeriod.getJsonObject(OPENING_DAY));
   }
 
