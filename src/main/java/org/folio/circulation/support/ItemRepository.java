@@ -364,7 +364,7 @@ public class ItemRepository {
       .thenComposeAsync(this::fetchLoanType);
   }
 
-  public static ItemRepository fetchItemOnlyInstance(Clients clients) {
+  public static ItemRepository noLocationMaterialTypeAndLoanTypeInstance(Clients clients) {
     return new ItemRepository(clients, false, false, false);
   }
 }

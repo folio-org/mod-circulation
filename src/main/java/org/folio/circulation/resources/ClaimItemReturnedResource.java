@@ -1,6 +1,7 @@
 package org.folio.circulation.resources;
 
 import static org.folio.circulation.domain.ClaimItemReturnedRequest.ITEM_CLAIMED_RETURNED_DATE;
+import static org.folio.circulation.support.ItemRepository.noLocationMaterialTypeAndLoanTypeInstance;
 import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 
@@ -45,7 +46,7 @@ public class ClaimItemReturnedResource extends Resource {
     final Clients clients = Clients.create(context, client);
 
     final LoanRepository loanRepository = new LoanRepository(clients);
-    final ItemRepository itemRepository = ItemRepository.fetchItemOnlyInstance(clients);
+    final ItemRepository itemRepository = noLocationMaterialTypeAndLoanTypeInstance(clients);
     final StoreLoanAndItem storeLoanAndItem = new StoreLoanAndItem(loanRepository, itemRepository);
 
     final ClaimItemReturnedRequest request = ClaimItemReturnedRequest.from(routingContext);
