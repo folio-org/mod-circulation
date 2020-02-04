@@ -6,9 +6,9 @@ import static org.folio.circulation.support.ValidationErrorFailure.singleValidat
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.support.Result;
 
-public class LoanValidators {
+public class LoanValidator {
 
-  private LoanValidators() {}
+  private LoanValidator() {}
 
   public static Result<Loan> refuseWhenLoanIsClosed(Result<Loan> loanResult) {
     return loanResult.failWhen(

@@ -1,6 +1,5 @@
 package api.loans;
 
-import static api.support.http.InterfaceUrls.claimItemReturnedURL;
 import static api.support.matchers.LoanMatchers.hasLoanProperty;
 import static api.support.matchers.LoanMatchers.hasOpenStatus;
 import static api.support.matchers.LoanMatchers.hasStatus;
@@ -12,7 +11,7 @@ import static org.folio.circulation.domain.representations.LoanProperties.ACTION
 import static org.folio.circulation.domain.representations.LoanProperties.ACTION_COMMENT;
 import static org.folio.circulation.domain.representations.LoanProperties.CLAIMED_RETURNED_DATE;
 import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.junit.MatcherAssert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 import java.util.UUID;
 
@@ -22,17 +21,19 @@ import org.junit.Before;
 import org.junit.Test;
 
 import api.support.APITests;
+import api.support.builders.ClaimItemReturnedRequestBuilder;
 import api.support.http.InventoryItemResource;
 import io.vertx.core.json.JsonObject;
 
 public class ClaimItemReturnedAPITests extends APITests {
   private InventoryItemResource item;
-  private UUID loanId;
+  private String loanId;
 
   @Before
   public void setUpItemAndLoan() {
     item = itemsFixture.basedUponSmallAngryPlanet();
-    loanId = loansFixture.checkOutByBarcode(item, usersFixture.charlotte()).getId();
+    loanId = loansFixture.checkOutByBarcode(item, usersFixture.charlotte())
+      .getId().toString();
   }
 
   @Test
@@ -41,7 +42,10 @@ public class ClaimItemReturnedAPITests extends APITests {
     final DateTime dateTime = DateTime.now();
 
     final Response response = loansFixture
-      .claimItemReturned(loanId, dateTime, comment);
+      .claimItemReturned(new ClaimItemReturnedRequestBuilder()
+        .forLoan(loanId)
+        .withItemClaimedReturnedDate(dateTime)
+        .withComment(comment));
 
     assertLoanAndItem(response, comment, dateTime);
   }
@@ -50,7 +54,10 @@ public class ClaimItemReturnedAPITests extends APITests {
   public void canMakeItemClaimedReturnedWithoutComment() {
     final DateTime dateTime = DateTime.now();
 
-    final Response response = loansFixture.claimItemReturned(loanId, dateTime);
+    final Response response = loansFixture
+      .claimItemReturned(new ClaimItemReturnedRequestBuilder()
+        .forLoan(loanId)
+        .withItemClaimedReturnedDate(dateTime));
 
     assertLoanAndItem(response, null, dateTime);
   }
@@ -61,17 +68,22 @@ public class ClaimItemReturnedAPITests extends APITests {
 
     loansFixture.checkInByBarcode(item);
 
-    final Response response = loansFixture.claimItemReturned(loanId, dateTime);
+    final Response response = loansFixture
+      .claimItemReturned(new ClaimItemReturnedRequestBuilder()
+        .forLoan(loanId)
+        .withItemClaimedReturnedDate(dateTime));
 
     assertThat(response.getStatusCode(), is(422));
     assertThat(response.getJson(), hasErrorWith(hasMessage("Loan is closed")));
-    assertThat(response.getJson(), hasErrorWith(hasParameter("id", loanId.toString())));
+    assertThat(response.getJson(), hasErrorWith(hasParameter("id", loanId)));
   }
 
   @Test
   public void shouldFailWhenItemClaimedReturnedDateIsMissed() {
-    final Response response = restAssuredClient.post(new JsonObject(),
-      claimItemReturnedURL(loanId.toString()), "claim-item-returned-request");
+    final Response response = loansFixture
+      .claimItemReturned(new ClaimItemReturnedRequestBuilder()
+        .forLoan(loanId)
+        .withItemClaimedReturnedDate(null));
 
     assertThat(response.getStatusCode(), is(422));
     assertThat(response.getJson(),
@@ -81,16 +93,17 @@ public class ClaimItemReturnedAPITests extends APITests {
 
   @Test
   public void shouldFailIfLoanIsNotFound() {
-    final UUID notExistentLoanId = UUID.randomUUID();
+    final String notExistentLoanId = UUID.randomUUID().toString();
 
     final Response response = loansFixture
-      .claimItemReturned(notExistentLoanId, DateTime.now());
+      .claimItemReturned(new ClaimItemReturnedRequestBuilder()
+        .forLoan(notExistentLoanId));
 
     assertThat(response.getStatusCode(), is(404));
   }
 
   private void assertLoanAndItem(Response response, String comment, DateTime dateTime) {
-    JsonObject actualLoan = loansClient.getById(loanId).getJson();
+    JsonObject actualLoan = loansClient.getById(UUID.fromString(loanId)).getJson();
     JsonObject actualItem = actualLoan.getJsonObject("item");
 
     assertThat(response.getStatusCode(), is(204));

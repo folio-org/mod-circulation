@@ -18,9 +18,6 @@ import static api.support.http.Limit.maximumLimit;
 import static api.support.http.Limit.noLimit;
 import static api.support.http.Offset.noOffset;
 import static java.net.HttpURLConnection.HTTP_OK;
-import static org.folio.circulation.domain.ClaimItemReturnedRequest.COMMENT;
-import static org.folio.circulation.domain.ClaimItemReturnedRequest.ITEM_CLAIMED_RETURNED_DATE;
-import static org.folio.circulation.support.JsonPropertyWriter.write;
 
 import java.net.URL;
 import java.util.UUID;
@@ -35,6 +32,7 @@ import api.support.MultipleJsonRecords;
 import api.support.RestAssuredClient;
 import api.support.builders.CheckInByBarcodeRequestBuilder;
 import api.support.builders.CheckOutByBarcodeRequestBuilder;
+import api.support.builders.ClaimItemReturnedRequestBuilder;
 import api.support.builders.DeclareItemLostRequestBuilder;
 import api.support.builders.LoanBuilder;
 import api.support.builders.OverrideCheckOutByBarcodeRequestBuilder;
@@ -156,17 +154,9 @@ public class LoansFixture {
     return declareItemLost(loanId, builder);
   }
 
-  public Response claimItemReturned(UUID loanId, DateTime dateTime, String comment) {
-    final JsonObject claimedReturnedRequest = new JsonObject()
-      .put(ITEM_CLAIMED_RETURNED_DATE, dateTime.toString());
-    write(claimedReturnedRequest, COMMENT, comment);
-
-    return restAssuredClient.post(claimedReturnedRequest,
-      claimItemReturnedURL(loanId.toString()), "claim-item-returned-request");
-  }
-
-  public Response claimItemReturned(UUID loanId, DateTime dateTime) {
-    return claimItemReturned(loanId, dateTime, null);
+  public Response claimItemReturned(ClaimItemReturnedRequestBuilder request) {
+    return restAssuredClient.post(request.create(),
+      claimItemReturnedURL(request.getLoanId()), "claim-item-returned-request");
   }
 
   public IndividualResource checkOutByBarcode(IndividualResource item) {

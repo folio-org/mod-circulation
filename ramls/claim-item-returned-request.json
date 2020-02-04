@@ -15,6 +15,6 @@
   },
   "additionalProperties": false,
   "required": [
-    "dateTime"
+    "itemClaimedReturnedDateTime"
   ]
 }

@@ -10,7 +10,7 @@ import org.folio.circulation.StoreLoanAndItem;
 import org.folio.circulation.domain.ClaimItemReturnedRequest;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanRepository;
-import org.folio.circulation.domain.validation.LoanValidators;
+import org.folio.circulation.domain.validation.LoanValidator;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.ItemRepository;
 import org.folio.circulation.support.NoContentResult;
@@ -52,7 +52,7 @@ public class ClaimItemReturnedResource extends Resource {
 
     return succeeded(request)
       .after(req -> loanRepository.getById(req.getLoanId()))
-      .thenApply(LoanValidators::refuseWhenLoanIsClosed)
+      .thenApply(LoanValidator::refuseWhenLoanIsClosed)
       .thenApply(loan -> makeLoanAndItemClaimedReturned(loan, request))
       .thenCompose(r -> r.after(storeLoanAndItem::updateLoanAndItemInStorage));
   }
