@@ -1,6 +1,7 @@
 package org.folio.circulation.resources;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
+import static org.folio.circulation.domain.ItemStatus.DECLARED_LOST;
 import static org.folio.circulation.domain.representations.LoanProperties.ITEM_ID;
 import static org.folio.circulation.support.Result.of;
 import static org.folio.circulation.support.Result.succeeded;
@@ -40,6 +41,7 @@ import org.folio.circulation.support.ItemRepository;
 import org.folio.circulation.support.NoContentResult;
 import org.folio.circulation.support.OkJsonResponseResult;
 import org.folio.circulation.support.Result;
+import org.folio.circulation.support.http.server.ValidationError;
 import org.folio.circulation.support.http.server.WebContext;
 
 import io.vertx.core.http.HttpClient;
@@ -158,6 +160,7 @@ public class LoanCollectionResource extends CollectionResource {
       .thenApply(spLoanLocationValidator::checkServicePointLoanLocation)
       .thenApply(this::refuseWhenClosedAndNoCheckInServicePointId)
       .thenCombineAsync(itemRepository.fetchFor(loan), this::addItem)
+      .thenApply(this::refuseWhenItemIsDeclaredLost)
       .thenCombineAsync(userRepository.getUser(loan.getUserId()), this::addUser)
       .thenApply(itemNotFoundValidator::refuseWhenItemNotFound)
       .thenComposeAsync(r -> r.after(proxyRelationshipValidator::refuseWhenInvalid))
@@ -344,5 +347,14 @@ public class LoanCollectionResource extends CollectionResource {
       () -> singleValidationError(
         String.format("No item with ID %s could be found", loan.getItemId()),
         ITEM_ID, loan.getItemId()));
+  }
+
+  private Result<LoanAndRelatedRecords> refuseWhenItemIsDeclaredLost(
+    Result<LoanAndRelatedRecords> loanAndRelatedRecords) {
+
+    return loanAndRelatedRecords.failWhen(
+      r -> of(() -> r.getLoan().getItem().isInStatus(DECLARED_LOST)),
+      r -> singleValidationError(new ValidationError("item is Declared lost", ITEM_ID,
+        r.getLoan().getItem().getItemId())));
   }
 }
