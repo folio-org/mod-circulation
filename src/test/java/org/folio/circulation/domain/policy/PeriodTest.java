@@ -36,8 +36,7 @@ public class PeriodTest {
 
   @Test
   public void toMinutesWithUnknownInterval() {
-    int durationMinutes = 10;
-    Period period = Period.from(durationMinutes, "Unknown interval");
-    assertEquals(durationMinutes, period.toMinutes());
+    Period period = Period.from(10, "Unknown interval");
+    assertEquals(0, period.toMinutes());
   }
 }

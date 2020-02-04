@@ -160,7 +160,7 @@ public class OverduePeriodCalculatorServiceTest {
       new Object[] {44700, "Months", 1, true, false, 60},
       new Object[] {5, "Minutes", 9, false, false, 0},
       new Object[] {9, "Minutes", 9, false, false, 0},
-      new Object[] {11, "Random", 9, false, false, 2}, // invalid intervals are treated as "Minutes"
+      new Object[] {11, "Unknown interval", 9, false, false, 11},
       new Object[] {11, "Minutes", 9, true, true, 11},  // grace period is ignored
 
     };

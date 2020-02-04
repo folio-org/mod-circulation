@@ -169,8 +169,9 @@ public class Period {
     case HOURS:
       return duration * MINUTES_PER_HOUR;
     case MINUTES:
-    default:
       return duration;
+    default:
+      return 0;
     }
   }
 
