@@ -63,23 +63,38 @@ public class ItemLimitValidator {
       : null;
     String loanTypeId = item.determineLoanTypeForItem();
     Integer itemLimit = records.getLoan().getLoanPolicy().getItemLimit();
+    AppliedRuleConditions ruleConditions = records.getLoan().getLoanPolicy().getRuleConditions();
 
     return loanRepository.findOpenLoansByUserIdWithItem(LOANS_PAGE_LIMIT, records)
-      .thenApply(r -> r.map(loans -> loans.getRecords().stream()
-        .filter(loan -> isMaterialTypeMatchInRetrievedLoan(materialTypeId, loan))
-        .filter(loan -> isLoanTypeMatchInRetrievedLoan(loanTypeId, loan))
+      .thenApply(r -> r.map(loanRecords -> loanRecords.getRecords().stream()
+        .filter(loanRecord -> isMaterialTypeMatchInRetrievedLoan(
+          materialTypeId, loanRecord, ruleConditions))
+        .filter(loanRecord -> isLoanTypeMatchInRetrievedLoan(
+          loanTypeId, loanRecord, ruleConditions))
         .count()))
       .thenApply(r -> r.map(loansCount -> loansCount >= itemLimit));
   }
 
-  private boolean isMaterialTypeMatchInRetrievedLoan(String expectedMaterialTypeId, Loan loan) {
+  private boolean isMaterialTypeMatchInRetrievedLoan(
+    String expectedMaterialTypeId, Loan loan, AppliedRuleConditions ruleConditions) {
+
+    if (!ruleConditions.isItemTypePresent()) {
+      return true;
+    }
+
     return expectedMaterialTypeId != null
       && expectedMaterialTypeId.equals(loan.getItem().getMaterialTypeId());
   }
 
-  private boolean isLoanTypeMatchInRetrievedLoan(String expectedLoanType, Loan loan) {
+  private boolean isLoanTypeMatchInRetrievedLoan(
+    String expectedLoanType, Loan loanRecord, AppliedRuleConditions ruleConditions) {
+
+    if (!ruleConditions.isLoanTypePresent()) {
+      return true;
+    }
+
     return expectedLoanType != null
-      && expectedLoanType.equals(loan.getItem().determineLoanTypeForItem());
+      && expectedLoanType.equals(loanRecord.getItem().determineLoanTypeForItem());
   }
 
   private String getErrorMessage(AppliedRuleConditions ruleConditionsEntity) {
