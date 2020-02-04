@@ -76,14 +76,14 @@ public class ItemLimitValidator {
   }
 
   private boolean isMaterialTypeMatchInRetrievedLoan(
-    String expectedMaterialTypeId, Loan loan, AppliedRuleConditions ruleConditions) {
+    String expectedMaterialTypeId, Loan loanRecord, AppliedRuleConditions ruleConditions) {
 
     if (!ruleConditions.isItemTypePresent()) {
       return true;
     }
 
     return expectedMaterialTypeId != null
-      && expectedMaterialTypeId.equals(loan.getItem().getMaterialTypeId());
+      && expectedMaterialTypeId.equals(loanRecord.getItem().getMaterialTypeId());
   }
 
   private boolean isLoanTypeMatchInRetrievedLoan(
