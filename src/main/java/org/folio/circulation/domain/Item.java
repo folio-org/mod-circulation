@@ -9,10 +9,12 @@ import static org.folio.circulation.domain.ItemStatus.PAGED;
 import static org.folio.circulation.domain.representations.HoldingsProperties.COPY_NUMBER_ID;
 import static org.folio.circulation.domain.representations.InstanceProperties.CONTRIBUTORS;
 import static org.folio.circulation.domain.representations.ItemProperties.EFFECTIVE_LOCATION_ID;
+import static org.folio.circulation.domain.representations.ItemProperties.IDENTIFIERS_PROPERTY;
 import static org.folio.circulation.domain.representations.ItemProperties.IN_TRANSIT_DESTINATION_SERVICE_POINT_ID;
 import static org.folio.circulation.domain.representations.ItemProperties.ITEM_COPY_NUMBER_ID;
 import static org.folio.circulation.domain.representations.ItemProperties.TITLE_PROPERTY;
 import static org.folio.circulation.support.JsonArrayHelper.mapToList;
+import static org.folio.circulation.support.JsonPropertyFetcher.getArrayProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getNestedStringProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
 import static org.folio.circulation.support.JsonPropertyWriter.remove;
@@ -133,6 +135,14 @@ public class Item {
     else {
       return null;
     }
+  }
+
+  public JsonArray getIdentifiers() {
+    if (instanceRepresentation != null && instanceRepresentation.containsKey(IDENTIFIERS_PROPERTY)) {
+      return getArrayProperty(instanceRepresentation, IDENTIFIERS_PROPERTY);
+    }
+
+    return getArrayProperty(getItem(), IDENTIFIERS_PROPERTY);
   }
 
   public JsonArray getContributorNames() {
