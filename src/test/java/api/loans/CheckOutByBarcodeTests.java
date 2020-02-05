@@ -1049,9 +1049,11 @@ public class CheckOutByBarcodeTests extends APITests {
     final UUID book = materialTypesFixture.book().getId();
     final UUID regular = patronGroupsFixture.regular().getId();
 
-    String nestedRule = "    t " + canCirculate + " + g " + regular +
+    String nestedRuleCanCirculate = "    t " + canCirculate + " + g " + regular +
       " : l " + loanPolicyWithItemLimitId + " r " + anyRequestPolicy + " n " + anyNoticePolicy  + " o " + anyOverdueFinePolicy + " i " + anyLostItemFeePolicy;
-    String rules = createRules("m " + book) + "\n" + nestedRule;
+    String nestedRuleReadingRoom = "    t " + readingRoom + " + g " + regular +
+      " : l " + loanPolicyWithItemLimitId + " r " + anyRequestPolicy + " n " + anyNoticePolicy  + " o " + anyOverdueFinePolicy + " i " + anyLostItemFeePolicy;
+    String rules = createRules("m " + book) + "\n" + nestedRuleCanCirculate + "\n" + nestedRuleReadingRoom;
     circulationRulesFixture.updateCirculationRules(rules);
 
     IndividualResource firstBookTypeItem = itemsFixture.basedUponNod(itemBuilder -> itemBuilder.withTemporaryLoanType(canCirculate));
@@ -1072,6 +1074,30 @@ public class CheckOutByBarcodeTests extends APITests {
     loansFixture.checkOutByBarcode(bookTypeItemReadingRoomLoanType, steve);
     bookTypeItemReadingRoomLoanType = itemsClient.get(bookTypeItemReadingRoomLoanType);
     assertThat(bookTypeItemReadingRoomLoanType, hasItemStatus(CHECKED_OUT));
+  }
+
+  @Test
+  public void cannotCheckOutWhenItemLimitIsReachedForBookMaterialTypeAndLoanTypeIsNotPresent() {
+
+    final UUID readingRoom = loanTypesFixture.readingRoom().getId();
+    final UUID canCirculate = loanTypesFixture.canCirculate().getId();
+    final UUID book = materialTypesFixture.book().getId();
+
+    circulationRulesFixture.updateCirculationRules(createRules("m " + book));
+
+    IndividualResource firstBookTypeItem = itemsFixture.basedUponNod(itemBuilder -> itemBuilder.withTemporaryLoanType(readingRoom));
+    IndividualResource secondBookTypeItem = itemsFixture.basedUponSmallAngryPlanet(itemBuilder -> itemBuilder.withTemporaryLoanType(canCirculate));
+    IndividualResource steve = usersFixture.steve();
+
+    loansFixture.checkOutByBarcode(firstBookTypeItem, steve);
+    firstBookTypeItem = itemsClient.get(firstBookTypeItem);
+    assertThat(firstBookTypeItem, hasItemStatus(CHECKED_OUT));
+
+    Response response = loansFixture.attemptCheckOutByBarcode(secondBookTypeItem, steve);
+    assertThat(response.getJson(), hasErrorWith(allOf(
+      hasMessage("Patron has reached maximum item limit of 1 items for material type"))));
+    secondBookTypeItem = itemsClient.get(secondBookTypeItem);
+    assertThat(secondBookTypeItem, hasItemStatus(AVAILABLE));
   }
 
   private IndividualResource prepareLoanPolicyWithItemLimit(int itemLimit) {

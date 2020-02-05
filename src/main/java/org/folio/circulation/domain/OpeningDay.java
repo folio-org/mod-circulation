@@ -28,7 +28,6 @@ public class OpeningDay {
   private static final String OPEN_KEY = "open";
   private static final String OPENING_HOUR_KEY = "openingHour";
   private static final String OPENING_DAY_KEY = "openingDay";
-  private static final String EXCEPTIONAL_KEY = "exceptional";
   private static final String DATE_TIME_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSSZ";
   private static final DateTimeFormatter DATE_TIME_FORMATTER =
     DateTimeFormat.forPattern(DATE_TIME_FORMAT).withZoneUTC();
@@ -37,10 +36,10 @@ public class OpeningDay {
   private LocalDate date;
   private boolean allDay;
   private boolean open;
-  private boolean exceptional;
 
   OpeningDay(JsonObject openingDayJson) {
     requireNonNull(openingDayJson, "Json object cannot be null");
+
     this.allDay = openingDayJson.getBoolean(ALL_DAY_KEY, false);
     this.open = openingDayJson.getBoolean(OPEN_KEY, false);
     this.openingHour = fillOpeningDay(openingDayJson);
@@ -48,7 +47,6 @@ public class OpeningDay {
     if (dateProperty != null) {
       this.date = LocalDate.parse(dateProperty, DATE_TIME_FORMATTER);
     }
-    this.exceptional = openingDayJson.getBoolean(EXCEPTIONAL_KEY, false);
   }
 
   public static OpeningDay fromJsonByKey(JsonObject jsonObject, String key) {
@@ -64,13 +62,6 @@ public class OpeningDay {
     this.date = date;
     this.allDay = allDay;
     this.open = open;
-  }
-
-  public OpeningDay(List<OpeningHour> openingHour, boolean allDay, boolean open, boolean exceptional) {
-    this.openingHour = openingHour;
-    this.allDay = allDay;
-    this.open = open;
-    this.exceptional = exceptional;
   }
 
   public static OpeningDay createOpeningDay(List<OpeningHour> openingHour, LocalDate date, boolean allDay, boolean open) {
@@ -113,16 +104,11 @@ public class OpeningDay {
   }
 
   public JsonObject toJson() {
-    JsonObject json = new JsonObject()
+    DateTime dateTime = date.toDateTime(LocalTime.MIDNIGHT, DateTimeZone.UTC);
+    return new JsonObject()
+      .put(DATE_KEY, DATE_TIME_FORMATTER.print(dateTime))
       .put(ALL_DAY_KEY, allDay)
       .put(OPEN_KEY, open)
-      .put(EXCEPTIONAL_KEY, exceptional)
       .put(OPENING_HOUR_KEY, openingHourToJsonArray());
-
-    if (date != null) {
-      DateTime dateTime = date.toDateTime(LocalTime.MIDNIGHT, DateTimeZone.UTC);
-      json.put(DATE_KEY, DATE_TIME_FORMATTER.print(dateTime));
-    }
-    return json;
   }
 }

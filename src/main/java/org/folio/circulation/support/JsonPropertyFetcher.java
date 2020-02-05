@@ -59,6 +59,11 @@ public class JsonPropertyFetcher {
     JsonObject representation,
     String objectName,
     String propertyName) {
+
+    if (representation == null) {
+      return null;
+    }
+
     if (representation.containsKey(objectName)) {
       final JsonObject object = representation.getJsonObject(objectName);
 

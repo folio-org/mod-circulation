@@ -90,7 +90,7 @@ public class OverdueFineCalculatorService {
       new ItemRepository(clients, true, false, false),
       new FeeFineOwnerRepository(clients),
       new FeeFineRepository(clients),
-      OverduePeriodCalculatorService.using(clients));
+      new OverduePeriodCalculatorService(new CalendarRepository(clients)));
   }
 
   public CompletableFuture<Result<CheckInProcessRecords>> calculateOverdueFine(

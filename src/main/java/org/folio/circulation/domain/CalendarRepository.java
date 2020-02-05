@@ -27,6 +27,7 @@ public class CalendarRepository {
 
   private static final String OPENING_PERIODS = "openingPeriods";
   private static final String OPENING_DAYS = "openingDays";
+  private static final String OPENING_DAY = "openingDay";
   private static final String PATH_PARAM_WITH_QUERY = "%s/calculateopening?requestedDate=%s";
   private static final String PERIODS_QUERY_PARAMS = "servicePointId=%s&startDate=%s&endDate=%s&includeClosedDays=%s";
 
@@ -48,19 +49,23 @@ public class CalendarRepository {
       .fetch(path);
   }
 
-  public CompletableFuture<Result<List<OpeningPeriod>>> fetchOpeningPeriodsBetweenDates(
+  public CompletableFuture<Result<List<OpeningDay>>> fetchOpeningDaysBetweenDates(
     String servicePointId, DateTime startDate, DateTime endDate, boolean includeClosedDays) {
 
     String params = String.format(PERIODS_QUERY_PARAMS,
       servicePointId, startDate.toLocalDate(), endDate.toLocalDate(), includeClosedDays);
 
     return calendarClient.getManyWithRawQueryStringParameters(params)
-      .thenApply(flatMapResult(this::convertToOpeningPeriods));
+      .thenApply(flatMapResult(this::getOpeningDaysFromOpeningPeriods));
   }
 
-  private Result<List<OpeningPeriod>> convertToOpeningPeriods(Response response) {
-    return MultipleRecords.from(response, OpeningPeriod::new, OPENING_PERIODS)
+  private Result<List<OpeningDay>> getOpeningDaysFromOpeningPeriods(Response periodsResponse) {
+    return MultipleRecords.from(periodsResponse, this::getOpeningDayFromOpeningPeriod, OPENING_PERIODS)
       .next(r -> Result.succeeded(r.toKeys(identity())));
+  }
+
+  private OpeningDay getOpeningDayFromOpeningPeriod(JsonObject openingPeriod) {
+    return new OpeningDay(openingPeriod.getJsonObject(OPENING_DAY));
   }
 
   private AdjacentOpeningDays convertToOpeningDays(JsonObject jsonObject) {

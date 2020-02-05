@@ -17,6 +17,4 @@ public abstract class Policy {
   public String getName() {
     return name;
   }
-
-  public abstract boolean isUnknown();
 }

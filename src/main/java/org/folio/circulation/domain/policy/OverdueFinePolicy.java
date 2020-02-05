@@ -5,7 +5,6 @@ import io.vertx.core.json.JsonObject;
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.folio.circulation.support.JsonPropertyFetcher.getBooleanProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
 
 public class OverdueFinePolicy extends Policy {
@@ -47,25 +46,21 @@ public class OverdueFinePolicy extends Policy {
   private Double maxOverdueFine;
   private Double maxOverdueRecallFine;
   private Boolean ignoreGracePeriodForRecalls;
-  private Boolean countClosed;
-
-  private OverdueFinePolicy(String id) {
-    this(id, null, null, null);
-  }
+  private Boolean countPeriodsWhenServicePointIsClosed;
 
   private OverdueFinePolicy(
-    String id, String name, Boolean ignoreGracePeriodForRecalls, Boolean countClosed) {
+    String id, String name, Boolean ignoreGracePeriodForRecalls, Boolean countPeriodsWhenServicePointIsClosed) {
     super(id, name);
     this.ignoreGracePeriodForRecalls = ignoreGracePeriodForRecalls;
-    this.countClosed = countClosed;
+    this.countPeriodsWhenServicePointIsClosed = countPeriodsWhenServicePointIsClosed;
   }
 
   public static OverdueFinePolicy from(JsonObject json) {
     OverdueFinePolicy overdueFinePolicy = new OverdueFinePolicy(
       getProperty(json, "id"),
       getProperty(json, "name"),
-      getBooleanProperty(json, "gracePeriodRecall"),
-      getBooleanProperty(json, "countClosed")
+      json.getBoolean("gracePeriodRecall"),
+      json.getBoolean("countClosed")
     );
 
     overdueFinePolicy.setOverdueFine(json.getJsonObject("overdueFine").getDouble("quantity"));
@@ -114,8 +109,8 @@ public class OverdueFinePolicy extends Policy {
     return ignoreGracePeriodForRecalls;
   }
 
-  public Boolean getCountClosed() {
-    return countClosed;
+  public Boolean getCountPeriodsWhenServicePointIsClosed() {
+    return countPeriodsWhenServicePointIsClosed;
   }
 
   public static OverdueFinePolicy unknown(String id) {
@@ -124,12 +119,7 @@ public class OverdueFinePolicy extends Policy {
 
   private static class UnknownOverdueFinePolicy extends OverdueFinePolicy {
     UnknownOverdueFinePolicy(String id) {
-      super(id);
+      super(id, null, null, null);
     }
-  }
-
-  @Override
-  public boolean isUnknown() {
-    return false;
   }
 }

@@ -341,7 +341,7 @@ public class LoanPolicy extends Policy {
   }
 
   public DueDateManagement getDueDateManagement() {
-    JsonObject loansPolicyObj = representation.getJsonObject(LOANS_POLICY_KEY);
+    JsonObject loansPolicyObj = getLoansPolicy();
     if (Objects.isNull(loansPolicyObj)) {
       return DueDateManagement.KEEP_THE_CURRENT_DUE_DATE_TIME;
     }
@@ -358,20 +358,16 @@ public class LoanPolicy extends Policy {
     return getDuration("openingTimeOffset");
   }
 
-  public int getGracePeriodDuration() {
-    return getDuration(GRACE_PERIOD_KEY);
-  }
-
-  public LoanPolicyPeriod getGracePeriodInterval() {
-    return getPeriod(GRACE_PERIOD_KEY);
-  }
-
   public LoanPolicyPeriod getOffsetPeriodInterval() {
     return getPeriod("openingTimeOffset");
   }
 
+  public Period getGracePeriod() {
+    return getPeriod(getLoansPolicy(), GRACE_PERIOD_KEY);
+  }
+
   private LoanPolicyPeriod getPeriod(String val) {
-    JsonObject loansPolicyObj = representation.getJsonObject(LOANS_POLICY_KEY);
+    JsonObject loansPolicyObj = getLoansPolicy();
     if (Objects.isNull(loansPolicyObj)) {
       return LoanPolicyPeriod.INCORRECT;
     }
@@ -506,11 +502,6 @@ public class LoanPolicy extends Policy {
     }
 
     return Collections.emptyList();
-  }
-
-  @Override
-  public boolean isUnknown() {
-    return this instanceof UnknownLoanPolicy;
   }
 
   //TODO: Improve this to be a proper null object
