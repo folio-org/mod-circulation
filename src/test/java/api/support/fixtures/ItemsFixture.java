@@ -4,7 +4,7 @@ import static java.util.function.Function.identity;
 import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
 import static org.folio.circulation.support.JsonPropertyWriter.write;
 import static org.hamcrest.core.Is.is;
-import static org.hamcrest.junit.MatcherAssert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 import java.net.MalformedURLException;
 import java.util.List;

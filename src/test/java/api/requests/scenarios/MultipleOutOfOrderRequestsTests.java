@@ -5,7 +5,7 @@ import static api.support.builders.RequestBuilder.OPEN_AWAITING_PICKUP;
 import static api.support.builders.RequestBuilder.OPEN_NOT_YET_FILLED;
 import static api.support.matchers.ItemStatusCodeMatcher.hasItemStatus;
 import static org.hamcrest.Matchers.is;
-import static org.hamcrest.junit.MatcherAssert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 import java.net.MalformedURLException;
 import java.util.concurrent.ExecutionException;

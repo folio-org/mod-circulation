@@ -3,7 +3,7 @@ package org.folio.circulation.domain.validation;
 import static api.support.matchers.FailureMatcher.isErrorFailureContaining;
 import static org.folio.circulation.support.Result.of;
 import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 import java.util.Arrays;
 import java.util.List;

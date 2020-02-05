@@ -10,7 +10,7 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.collection.IsEmptyCollection.empty;
 import static org.hamcrest.collection.IsIterableContainingInOrder.contains;
-import static org.hamcrest.junit.MatcherAssert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 public class RequestQueueTests {
 

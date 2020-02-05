@@ -8,7 +8,7 @@ import static org.folio.circulation.support.Result.of;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.ServerErrorFailure;
