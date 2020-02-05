@@ -16,6 +16,8 @@ import org.joda.time.format.DateTimeFormatter;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
+import static java.util.Objects.requireNonNull;
+
 public class OpeningDay {
   static OpeningDay createClosedDay() {
     return createOpeningDay(Collections.emptyList(), null, true, false);
@@ -25,6 +27,7 @@ public class OpeningDay {
   private static final String ALL_DAY_KEY = "allDay";
   private static final String OPEN_KEY = "open";
   private static final String OPENING_HOUR_KEY = "openingHour";
+  private static final String OPENING_DAY_KEY = "openingDay";
   private static final String DATE_TIME_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSSZ";
   private static final DateTimeFormatter DATE_TIME_FORMATTER =
     DateTimeFormat.forPattern(DATE_TIME_FORMAT).withZoneUTC();
@@ -34,15 +37,24 @@ public class OpeningDay {
   private boolean allDay;
   private boolean open;
 
-  OpeningDay(JsonObject jsonObject, String key) {
-    JsonObject openingDayJson = jsonObject.getJsonObject(key);
+  OpeningDay(JsonObject openingDayJson) {
+    requireNonNull(openingDayJson, "Json object cannot be null");
+
+    this.allDay = openingDayJson.getBoolean(ALL_DAY_KEY, false);
+    this.open = openingDayJson.getBoolean(OPEN_KEY, false);
+    this.openingHour = fillOpeningDay(openingDayJson);
     String dateProperty = openingDayJson.getString(DATE_KEY);
     if (dateProperty != null) {
       this.date = LocalDate.parse(dateProperty, DATE_TIME_FORMATTER);
     }
-    this.allDay = openingDayJson.getBoolean(ALL_DAY_KEY, false);
-    this.open = openingDayJson.getBoolean(OPEN_KEY, false);
-    this.openingHour = fillOpeningDay(openingDayJson);
+  }
+
+  public static OpeningDay fromJsonByKey(JsonObject jsonObject, String key) {
+    return new OpeningDay(jsonObject.getJsonObject(key));
+  }
+
+  public static OpeningDay fromJsonByDefaultKey(JsonObject jsonObject) {
+    return fromJsonByKey(jsonObject, OPENING_DAY_KEY);
   }
 
   private OpeningDay(List<OpeningHour> openingHour, LocalDate date, boolean allDay, boolean open) {

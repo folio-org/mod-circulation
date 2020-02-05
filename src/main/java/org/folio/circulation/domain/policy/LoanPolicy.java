@@ -43,6 +43,7 @@ public class LoanPolicy extends Policy {
   private static final String INTERVAL_ID = "intervalId";
   private static final String DURATION = "duration";
   private static final String ALTERNATE_CHECKOUT_LOAN_PERIOD_KEY = "alternateCheckoutLoanPeriod";
+  private static final String GRACE_PERIOD_KEY = "gracePeriod";
 
   private static final String KEY_ERROR_TEXT = "the \"%s\" in the holds is not recognized";
   private static final String INTERVAL_ERROR_TEXT = "the interval \"%s\" in \"%s\" is not recognized";
@@ -340,7 +341,7 @@ public class LoanPolicy extends Policy {
   }
 
   public DueDateManagement getDueDateManagement() {
-    JsonObject loansPolicyObj = representation.getJsonObject(LOANS_POLICY_KEY);
+    JsonObject loansPolicyObj = getLoansPolicy();
     if (Objects.isNull(loansPolicyObj)) {
       return DueDateManagement.KEEP_THE_CURRENT_DUE_DATE_TIME;
     }
@@ -361,8 +362,12 @@ public class LoanPolicy extends Policy {
     return getPeriod("openingTimeOffset");
   }
 
+  public Period getGracePeriod() {
+    return getPeriod(getLoansPolicy(), GRACE_PERIOD_KEY);
+  }
+
   private LoanPolicyPeriod getPeriod(String val) {
-    JsonObject loansPolicyObj = representation.getJsonObject(LOANS_POLICY_KEY);
+    JsonObject loansPolicyObj = getLoansPolicy();
     if (Objects.isNull(loansPolicyObj)) {
       return LoanPolicyPeriod.INCORRECT;
     }
