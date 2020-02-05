@@ -6,7 +6,6 @@ import java.util.UUID;
 
 import org.folio.circulation.support.http.client.IndividualResource;
 
-import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
 public class ItemBuilder extends JsonBuilder implements Builder {
@@ -102,7 +101,7 @@ public class ItemBuilder extends JsonBuilder implements Builder {
     put(itemRequest, "itemLevelCallNumberPrefix", itemLevelCallNumberPrefix);
     put(itemRequest, "itemLevelCallNumberSuffix", itemLevelCallNumberSuffix);
     put(itemRequest, "volume", volume);
-    put(itemRequest, "yearCaption", new JsonArray(yearCaption));
+    put(itemRequest, "yearCaption", yearCaption);
     put(itemRequest, "chronology", chronology);
 
     return itemRequest;

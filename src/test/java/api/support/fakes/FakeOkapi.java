@@ -32,8 +32,8 @@ import org.slf4j.LoggerFactory;
 import api.support.fakes.processors.StorageRecordPreProcessors;
 import api.support.fixtures.OpeningPeriodsExamples;
 import io.vertx.core.AbstractVerticle;
-import io.vertx.core.Future;
 import io.vertx.core.MultiMap;
+import io.vertx.core.Promise;
 import io.vertx.core.http.HttpServer;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
@@ -55,7 +55,7 @@ public class FakeOkapi extends AbstractVerticle {
   }
 
   @Override
-  public void start(Future<Void> startFuture) throws IOException {
+  public void start(Promise<Void> startFuture) throws IOException {
     log.debug("Starting fake loan storage module");
 
     Router router = Router.router(vertx);
@@ -324,6 +324,13 @@ public class FakeOkapi extends AbstractVerticle {
       .register(router);
 
     new FakeStorageModuleBuilder()
+      .withRecordName("template")
+      .withRootPath("/templates")
+      .withCollectionPropertyName("templates")
+      .create()
+      .register(router);
+
+    new FakeStorageModuleBuilder()
       .withCollectionPropertyName("owners")
       .withRootPath("/owners")
       .create()
@@ -335,7 +342,7 @@ public class FakeOkapi extends AbstractVerticle {
       .withCollectionPropertyName("feefines")
       .create().register(router);
 
-    server.requestHandler(router::accept)
+    server.requestHandler(router)
       .listen(PORT_TO_USE, result -> {
         if (result.succeeded()) {
           log.info("Listening on {}", server.actualPort());
@@ -406,7 +413,7 @@ public class FakeOkapi extends AbstractVerticle {
   }
 
   @Override
-  public void stop(Future<Void> stopFuture) {
+  public void stop(Promise<Void> stopFuture) {
     log.debug("Stopping fake okapi");
 
     if (server != null) {

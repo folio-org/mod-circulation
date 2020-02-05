@@ -208,6 +208,10 @@ public class ResourceClient {
     return new ResourceClient(InterfaceUrls::configurationUrl, "configs");
   }
 
+  public static ResourceClient forTemplates() {
+    return new ResourceClient(InterfaceUrls::templateUrl, "templates");
+  }
+
   private ResourceClient(UrlMaker urlMaker, String collectionArrayPropertyName) {
     this.urlMaker = urlMaker;
     this.collectionArrayPropertyName = collectionArrayPropertyName;

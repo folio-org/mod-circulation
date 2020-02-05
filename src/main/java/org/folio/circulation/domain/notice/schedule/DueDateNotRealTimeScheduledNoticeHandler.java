@@ -19,6 +19,7 @@ import org.folio.circulation.domain.notice.PatronNoticeService;
 import org.folio.circulation.domain.notice.TemplateContextUtil;
 import org.folio.circulation.domain.policy.LoanPolicyRepository;
 import org.folio.circulation.support.Clients;
+import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.Result;
 import org.joda.time.DateTime;
 
@@ -33,24 +34,28 @@ public class DueDateNotRealTimeScheduledNoticeHandler {
       DueDateScheduledNoticeHandler.using(clients, systemTime),
       new LoanRepository(clients),
       new LoanPolicyRepository(clients),
-      PatronNoticeService.using(clients));
+      PatronNoticeService.using(clients),
+      clients.templateNoticeClient());
   }
 
   private final DueDateScheduledNoticeHandler dueDateScheduledNoticeHandler;
   private final LoanRepository loanRepository;
   private final LoanPolicyRepository loanPolicyRepository;
   private final PatronNoticeService patronNoticeService;
+  private final CollectionResourceClient templateNoticesClient;
 
   public DueDateNotRealTimeScheduledNoticeHandler(
     DueDateScheduledNoticeHandler dueDateScheduledNoticeHandler,
     LoanRepository loanRepository,
     LoanPolicyRepository loanPolicyRepository,
-    PatronNoticeService patronNoticeService) {
+    PatronNoticeService patronNoticeService,
+    CollectionResourceClient templateNoticesClient) {
 
     this.dueDateScheduledNoticeHandler = dueDateScheduledNoticeHandler;
     this.loanRepository = loanRepository;
     this.loanPolicyRepository = loanPolicyRepository;
     this.patronNoticeService = patronNoticeService;
+    this.templateNoticesClient = templateNoticesClient;
   }
 
   public CompletableFuture<Result<Void>> handleNotices(
@@ -78,8 +83,15 @@ public class DueDateNotRealTimeScheduledNoticeHandler {
       .thenApply(Result::combineAll);
   }
 
-  private CompletableFuture<Result<Pair<ScheduledNotice, LoanAndRelatedRecords>>> getContext(ScheduledNotice notice) {
-    return loanRepository.getById(notice.getLoanId())
+  private CompletableFuture<Result<Pair<ScheduledNotice, LoanAndRelatedRecords>>> getContext(
+    ScheduledNotice notice) {
+
+    String templateId = notice.getConfiguration().getTemplateId();
+
+    return templateNoticesClient.get(templateId)
+      .thenApply(r -> r.next(
+        response -> dueDateScheduledNoticeHandler.failIfTemplateNotFound(response, templateId)))
+      .thenCompose(r -> r.after(i -> loanRepository.getById(notice.getLoanId())))
       .thenCompose(r -> dueDateScheduledNoticeHandler.deleteNoticeIfLoanIsMissingOrIncomplete(r, notice))
       .thenApply(mapResult(LoanAndRelatedRecords::new))
       .thenCompose(r -> r.after(loanPolicyRepository::lookupLoanPolicy))

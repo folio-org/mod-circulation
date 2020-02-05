@@ -5,6 +5,7 @@ import static org.junit.Assert.assertThat;
 
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.RequestQueue;
+import org.folio.circulation.resources.RegularRenewalStrategy;
 import org.folio.circulation.support.Result;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
@@ -51,6 +52,7 @@ public class InvalidLoanPolicyTests {
 
     representation.remove("loansPolicy");
 
+    RegularRenewalStrategy regularRenewalStrategy = new RegularRenewalStrategy();
     LoanPolicy loanPolicy = LoanPolicy.from(representation);
 
     DateTime loanDate = new DateTime(2018, 3, 14, 11, 14, 54, DateTimeZone.UTC);
@@ -58,9 +60,10 @@ public class InvalidLoanPolicyTests {
     Loan loan = new LoanBuilder()
       .open()
       .withLoanDate(loanDate)
-      .asDomainObject();
+      .asDomainObject()
+      .withLoanPolicy(loanPolicy);
 
-    final Result<Loan> result = loanPolicy.renew(loan, DateTime.now(), new RequestQueue(Collections.emptyList()));
+    final Result<Loan> result = regularRenewalStrategy.renew(loan, DateTime.now(), new RequestQueue(Collections.emptyList()));
 
     //TODO: This is fairly ugly, replace with a better message
     assertThat(result, hasValidationFailure(

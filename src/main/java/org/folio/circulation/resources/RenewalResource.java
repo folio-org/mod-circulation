@@ -2,6 +2,7 @@ package org.folio.circulation.resources;
 
 import java.util.concurrent.CompletableFuture;
 
+import org.folio.circulation.StoreLoanAndItem;
 import org.folio.circulation.domain.ConfigurationRepository;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
@@ -52,6 +53,7 @@ public abstract class RenewalResource extends Resource {
     final UserRepository userRepository = new UserRepository(clients);
     final RequestQueueRepository requestQueueRepository = RequestQueueRepository.using(clients);
     final LoanPolicyRepository loanPolicyRepository = new LoanPolicyRepository(clients);
+    final StoreLoanAndItem storeLoanAndItem = new StoreLoanAndItem(loanRepository, itemRepository);
 
     final LoanRepresentation loanRepresentation = new LoanRepresentation();
     final ConfigurationRepository configurationRepository = new ConfigurationRepository(clients);
@@ -77,7 +79,7 @@ public abstract class RenewalResource extends Resource {
         LoanAndRelatedRecords::withTimeZone))
       .thenCompose(r -> r.after(overdueFineCalculatorService::calculateOverdueFine))
       .thenComposeAsync(r -> r.after(records -> renewalStrategy.renew(records, bodyAsJson, clients)))
-      .thenComposeAsync(r -> r.after(loanRepository::updateLoan))
+      .thenComposeAsync(r -> r.after(storeLoanAndItem::updateLoanAndItemInStorage))
       .thenApply(r -> r.next(scheduledNoticeService::rescheduleDueDateNotices))
       .thenApply(r -> r.next(loanNoticeSender::sendRenewalPatronNotice))
       .thenApply(r -> r.map(loanRepresentation::extendedLoan))

@@ -777,6 +777,24 @@ abstract class RenewalAPITests extends APITests {
   }
 
   @Test
+  public void cannotRenewWhenItemIsDeclaredLost() {
+
+    final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final IndividualResource jessica = usersFixture.jessica();
+
+    final JsonObject loanJson = loansFixture.checkOutByBarcode(smallAngryPlanet, usersFixture.jessica())
+      .getJson();
+
+    loansFixture.declareItemLost(loanJson);
+
+    final Response response = attemptRenewal(smallAngryPlanet, jessica);
+
+    assertThat(response.getJson(), hasErrorWith(allOf(
+      hasMessage("item is Declared lost"),
+      hasUUIDParameter("itemId", smallAngryPlanet.getId()))));
+  }
+
+  @Test
   public void cannotRenewWhenLoaneeCannotBeFound() {
 
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
@@ -1146,10 +1164,7 @@ abstract class RenewalAPITests extends APITests {
   }
 
   @Test
-  public void  canRenewFromCurrentDueDateWhenDueDateFallsWithinRangeOfAlternateDueDateLimit()
-    throws InterruptedException,
-    TimeoutException,
-    ExecutionException {
+  public void  canRenewFromCurrentDueDateWhenDueDateFallsWithinRangeOfAlternateDueDateLimit() {
 
     FixedDueDateSchedulesBuilder dueDateLimitSchedule = new FixedDueDateSchedulesBuilder()
       .withName("Alternate Due Date Limit")
@@ -1177,10 +1192,7 @@ abstract class RenewalAPITests extends APITests {
   }
 
   @Test
-  public void  canRenewWhenSystemDateFallsWithinAlternateScheduleAndDueDateDoesNot()
-    throws InterruptedException,
-    TimeoutException,
-    ExecutionException {
+  public void canRenewWhenSystemDateFallsWithinAlternateScheduleAndDueDateDoesNot() {
 
     FixedDueDateSchedulesBuilder dueDateLimitSchedule = new FixedDueDateSchedulesBuilder()
       .withName("Alternate Due Date Limit")

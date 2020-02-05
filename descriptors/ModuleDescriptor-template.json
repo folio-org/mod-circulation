@@ -22,7 +22,7 @@
     },
     {
       "id": "inventory-reports",
-      "version": "0.3",
+      "version": "0.4",
       "handlers": [
         {
           "methods": [
@@ -615,7 +615,8 @@
             "circulation.rules.loan-policy.get",
             "configuration.entries.collection.get",
             "patron-notice.post",
-            "users.item.get"
+            "users.item.get",
+            "templates.item.get"
           ],
           "unit": "minute",
           "delay": "5"

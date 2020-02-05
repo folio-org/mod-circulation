@@ -1,8 +1,14 @@
 package api.loans.scenarios;
 
 import static api.support.matchers.PatronNoticeMatcher.hasEmailNoticeProperties;
+import static api.support.matchers.ResponseStatusCodeMatcher.hasStatus;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
+import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
+import static api.support.matchers.ValidationErrorMatchers.hasMessage;
+import static api.support.matchers.ValidationErrorMatchers.hasUUIDParameter;
+import static org.folio.HttpStatus.HTTP_VALIDATION_ERROR;
 import static org.folio.circulation.support.JsonPropertyWriter.write;
+import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
@@ -227,63 +233,52 @@ public class ChangeDueDateTests extends APITests {
   }
 
   @Test
-  public void itemIsStillDeclaredLostWhenLoanDueDateIsChanged() {
-    final InventoryItemResource item = itemsFixture.basedUponNod();
+  public void dueDateCannotBeChangedWhenItemIsDeclaredLost() {
+    final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final IndividualResource loan = loansFixture.checkOutByBarcode(smallAngryPlanet);
+    final JsonObject loanJson = loan.getJson();
 
-    IndividualResource loan = loansFixture.checkOutByBarcode(item);
-
-    DateTime dateTime = DateTime.now();
-
-    final DeclareItemLostRequestBuilder builder = new DeclareItemLostRequestBuilder()
-      .forLoanId(loan.getId()).on(dateTime)
-      .withComment("test comment");
-
-    loansFixture.declareItemLost(loan.getId(), builder);
+    loansFixture.declareItemLost(loanJson);
 
     Response fetchedLoan = loansClient.getById(loan.getId());
-
     JsonObject loanToChange = fetchedLoan.getJson().copy();
-
     DateTime dueDate = DateTime.parse(loanToChange.getString("dueDate"));
     DateTime newDueDate = dueDate.plus(Period.days(14));
-
     write(loanToChange, "action", "dueDateChange");
     write(loanToChange, "dueDate", newDueDate);
 
-    loansFixture.replaceLoan(loan.getId(), loanToChange);
+    Response response = loansFixture.attemptToReplaceLoan(loan.getId(), loanToChange);
+
+    assertThat(response, hasStatus(HTTP_VALIDATION_ERROR));
+    assertThat(response.getJson(), hasErrorWith(allOf(
+      hasMessage("item is Declared lost"),
+      hasUUIDParameter("itemId", smallAngryPlanet.getId()))));
 
     Response updatedLoanResponse = loansClient.getById(loan.getId());
-
     JsonObject updatedLoan = updatedLoanResponse.getJson();
 
-    assertThat("status is not open",
+    assertThat("status is open",
       updatedLoan.getJsonObject("status").getString("name"), is("Open"));
-
-    assertThat("action is not change due date",
-      updatedLoan.getString("action"), is("dueDateChange"));
-
+    assertThat("action is declaredLost",
+      updatedLoan.getString("action"), is("declaredLost"));
     assertThat("should not contain a return date",
       updatedLoan.containsKey("returnDate"), is(false));
-
-    assertThat("due date does not match",
-      updatedLoan.getString("dueDate"), isEquivalentTo(newDueDate));
-
+    assertThat("due date hasn't been changed",
+      updatedLoan.getString("dueDate"), isEquivalentTo(dueDate));
     assertThat("renewal count should not have changed",
       updatedLoan.containsKey("renewalCount"), is(false));
 
-    JsonObject fetchedItem = itemsClient.getById(item.getId()).getJson();
+    JsonObject fetchedItem = itemsClient.getById(smallAngryPlanet.getId()).getJson();
 
-    assertThat("item status is not declared lost",
+    assertThat("item status is declared lost",
       fetchedItem.getJsonObject("status").getString("name"), is("Declared lost"));
 
     final JsonObject loanInStorage = loansStorageClient.getById(loan.getId()).getJson();
 
-    assertThat("item status snapshot in storage is not declared lost",
+    assertThat("item status snapshot in storage is declared lost",
       loanInStorage.getString("itemStatus"), is("Declared lost"));
-
     assertThat("Should not contain check in service point summary",
       loanInStorage.containsKey("checkinServicePoint"), is(false));
-
     assertThat("Should not contain check out service point summary",
       loanInStorage.containsKey("checkoutServicePoint"), is(false));
   }

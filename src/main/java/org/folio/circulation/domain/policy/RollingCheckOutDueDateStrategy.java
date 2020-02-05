@@ -38,7 +38,7 @@ class RollingCheckOutDueDateStrategy extends DueDateStrategy {
   }
 
   @Override
-  Result<DateTime> calculateDueDate(Loan loan) {
+  public Result<DateTime> calculateDueDate(Loan loan) {
     final DateTime loanDate = loan.getLoanDate();
 
     return initialDueDate(loanDate)

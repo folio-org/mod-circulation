@@ -1,5 +1,6 @@
 package api.support.builders;
 
+import java.util.List;
 import java.util.UUID;
 
 import org.joda.time.DateTime;
@@ -67,6 +68,12 @@ public class JsonBuilder {
 
     if(check != null) {
       representation.put(property, value);
+    }
+  }
+
+  protected <T> void put(JsonObject representation, String property, List<T> value) {
+    if(value != null) {
+      put(representation, property, new JsonArray(value));
     }
   }
 

@@ -32,7 +32,7 @@ class UnknownDueDateStrategy extends DueDateStrategy {
   }
 
   @Override
-  Result<DateTime> calculateDueDate(Loan loan) {
+  public Result<DateTime> calculateDueDate(Loan loan) {
     if(isRenewal) {
       return failedValidation(errorForPolicy(
           format(RENEWAL_UNRECOGNISED_PROFILE_MESSAGE, profileId)));

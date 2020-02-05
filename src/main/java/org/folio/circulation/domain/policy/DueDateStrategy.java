@@ -10,7 +10,7 @@ import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-abstract class DueDateStrategy {
+public abstract class DueDateStrategy {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
   private final String loanPolicyId;
@@ -27,7 +27,7 @@ abstract class DueDateStrategy {
     this.errorForPolicy = errorForPolicy;
   }
 
-  abstract Result<DateTime> calculateDueDate(Loan loan);
+  public abstract Result<DateTime> calculateDueDate(Loan loan);
 
   ValidationError errorForPolicy(String reason) {
     return errorForPolicy.apply(reason);
