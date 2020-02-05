@@ -4,7 +4,7 @@ import static api.support.APITestContext.getOkapiHeadersFromContext;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.joda.time.DateTimeZone.UTC;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 import java.util.UUID;
 

@@ -4,7 +4,7 @@ import static java.util.Collections.singletonList;
 import static org.folio.circulation.domain.representations.RequestProperties.REQUEST_TYPE;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
-import static org.hamcrest.junit.MatcherAssert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 import java.net.MalformedURLException;
 import java.time.Clock;

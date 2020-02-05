@@ -3,7 +3,7 @@ package api.requests;
 import static java.net.HttpURLConnection.HTTP_OK;
 import static org.folio.circulation.support.JsonArrayHelper.toList;
 import static org.hamcrest.core.Is.is;
-import static org.hamcrest.junit.MatcherAssert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 import java.net.MalformedURLException;
 import java.util.List;

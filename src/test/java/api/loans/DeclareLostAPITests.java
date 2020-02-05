@@ -5,7 +5,7 @@ import static api.support.matchers.LoanMatchers.hasOpenStatus;
 import static api.support.matchers.LoanMatchers.hasStatus;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;
-import static org.hamcrest.junit.MatcherAssert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 import java.net.MalformedURLException;
 import java.util.UUID;

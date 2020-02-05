@@ -5,7 +5,7 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.results.ResultExamples.alreadyFailed;
 import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;

@@ -3,7 +3,7 @@ package api.requests;
 import static api.support.JsonCollectionAssistant.getRecordById;
 import static api.support.matchers.UUIDMatcher.is;
 import static org.hamcrest.core.Is.is;
-import static org.hamcrest.junit.MatcherAssert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 import java.util.List;
 import java.util.UUID;

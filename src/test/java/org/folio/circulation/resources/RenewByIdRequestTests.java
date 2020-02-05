@@ -8,7 +8,7 @@ import java.util.UUID;
 
 import static api.support.matchers.FailureMatchers.errorResultFor;
 import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 public class RenewByIdRequestTests {
   @Test
