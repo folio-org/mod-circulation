@@ -8,7 +8,7 @@ import static org.folio.circulation.resources.RenewalValidator.CAN_NOT_RENEW_ITE
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.Matchers.is;
-import static org.hamcrest.junit.MatcherAssert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.joda.time.DateTimeConstants.APRIL;
 
 import java.time.LocalDate;

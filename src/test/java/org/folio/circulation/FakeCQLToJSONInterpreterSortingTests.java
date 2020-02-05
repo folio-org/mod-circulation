@@ -11,7 +11,7 @@ import java.util.stream.Collectors;
 
 import static org.hamcrest.collection.IsIterableContainingInOrder.contains;
 import static org.hamcrest.core.Is.is;
-import static org.hamcrest.junit.MatcherAssert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 public class FakeCQLToJSONInterpreterSortingTests {
 

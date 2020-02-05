@@ -19,7 +19,7 @@ import static api.support.JsonCollectionAssistant.getRecordById;
 import static api.support.matchers.RequestItemMatcher.*;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.core.Is.is;
-import static org.hamcrest.junit.MatcherAssert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 public class RequestsAPILocationTests extends APITests {
   @Test
