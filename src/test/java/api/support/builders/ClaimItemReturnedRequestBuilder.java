@@ -1,7 +1,7 @@
 package api.support.builders;
 
-import static org.folio.circulation.domain.ClaimItemReturnedRequest.COMMENT;
-import static org.folio.circulation.domain.ClaimItemReturnedRequest.ITEM_CLAIMED_RETURNED_DATE;
+import static org.folio.circulation.resources.ClaimItemReturnedResource.COMMENT;
+import static org.folio.circulation.resources.ClaimItemReturnedResource.ITEM_CLAIMED_RETURNED_DATE;
 import static org.folio.circulation.support.JsonPropertyWriter.write;
 
 import org.joda.time.DateTime;
@@ -13,7 +13,6 @@ public class ClaimItemReturnedRequestBuilder implements Builder {
   private final DateTime itemClaimedReturnedDate;
   private final String comment;
   private final String loanId;
-
 
   public ClaimItemReturnedRequestBuilder() {
     this(null, DateTime.now(DateTimeZone.UTC), null);
