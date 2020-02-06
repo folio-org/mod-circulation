@@ -138,11 +138,8 @@ public class Item {
   }
 
   public JsonArray getIdentifiers() {
-    if (instanceRepresentation != null && instanceRepresentation.containsKey(IDENTIFIERS_PROPERTY)) {
-      return getArrayProperty(instanceRepresentation, IDENTIFIERS_PROPERTY);
-    }
-
-    return getArrayProperty(getItem(), IDENTIFIERS_PROPERTY);
+    // Use instance, this property is stored only
+    return getArrayProperty(instanceRepresentation, IDENTIFIERS_PROPERTY);
   }
 
   public JsonArray getContributorNames() {
