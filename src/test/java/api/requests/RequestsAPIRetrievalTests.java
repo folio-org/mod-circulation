@@ -13,6 +13,7 @@ import static java.lang.String.format;
 import static java.util.Arrays.asList;
 import static java.util.function.Function.identity;
 import static org.folio.circulation.domain.representations.ItemProperties.CALL_NUMBER_COMPONENTS;
+import static org.folio.circulation.domain.representations.ItemProperties.TITLE;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.emptyString;
@@ -144,7 +145,7 @@ public class RequestsAPIRetrievalTests extends APITests {
     final JsonObject itemSummary = representation.getJsonObject("item");
 
     assertThat("title is taken from item",
-      itemSummary.getString("title"), is("The Long Way to a Small, Angry Planet"));
+      itemSummary.getString(TITLE), is("The Long Way to a Small, Angry Planet"));
 
     assertThat("barcode is taken from item",
       itemSummary.getString("barcode"), is("036000291452"));

@@ -11,6 +11,7 @@ import static api.support.matchers.ValidationErrorMatchers.hasParameter;
 import static api.support.matchers.ValidationErrorMatchers.hasUUIDParameter;
 import static java.util.Arrays.asList;
 import static java.util.function.Function.identity;
+import static org.folio.circulation.domain.representations.ItemProperties.TITLE;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.hasItems;
@@ -138,7 +139,7 @@ public class RequestsAPICreationTests extends APITests {
 
     JsonObject requestItem = representation.getJsonObject("item");
     assertThat("title is taken from item",
-      requestItem.getString("title"),
+      requestItem.getString(TITLE),
       is("The Long Way to a Small, Angry Planet"));
 
     assertThat("barcode is taken from item",
