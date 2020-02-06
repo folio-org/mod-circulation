@@ -680,8 +680,8 @@ public class RequestsAPIUpdatingTests extends APITests {
   @Test
   public void canUpdateIdentifiersWhenTheyUpdatedOnInstance() {
     final UUID instanceId = UUID.randomUUID();
-    final UUID isbnIdentifierId = UUID.randomUUID();
-    final String isbnValue = "isbn";
+    final UUID isbnIdentifierId = identifierTypesFixture.isbn().getId();
+    final String isbnValue = "9780866989732";
 
     final InventoryItemResource item = itemsFixture.basedUponSmallAngryPlanet(
       identity(),

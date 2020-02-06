@@ -50,8 +50,8 @@ public class RequestsAPIRetrievalTests extends APITests {
   public void canGetARequestById() {
     UUID facultyGroupId = patronGroupsFixture.faculty().getId();
     UUID staffGroupId = patronGroupsFixture.staff().getId();
-    UUID isbnIdentifierId = UUID.randomUUID();
-    String isbnValue = "isbn";
+    UUID isbnIdentifierId = identifierTypesFixture.isbn().getId();
+    String isbnValue = "9780866989732";
 
     final InventoryItemResource smallAngryPlanet = itemsFixture
       .basedUponSmallAngryPlanet(

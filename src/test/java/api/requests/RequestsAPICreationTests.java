@@ -93,8 +93,8 @@ public class RequestsAPICreationTests extends APITests {
 
     UUID id = UUID.randomUUID();
     UUID pickupServicePointId = servicePointsFixture.cd1().getId();
-    UUID isbnIdentifierId = UUID.randomUUID();
-    String isbnValue = "isbn";
+    UUID isbnIdentifierId = identifierTypesFixture.isbn().getId();
+    String isbnValue = "9780866989732";
 
     IndividualResource item = itemsFixture.basedUponSmallAngryPlanet(
       identity(),

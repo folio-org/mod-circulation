@@ -239,6 +239,10 @@ public class InterfaceUrls {
     return APITestContext.viaOkapiModuleUrl("/manualblocks");
   }
 
+  static URL identifierTypesUrl(String subPath) {
+    return APITestContext.viaOkapiModuleUrl("/identifier-types" + subPath);
+  }
+
   static URL templateUrl(String templateId) {
     return APITestContext.viaOkapiModuleUrl("/templates");
   }

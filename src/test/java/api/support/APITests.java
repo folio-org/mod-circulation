@@ -31,6 +31,7 @@ import api.support.fixtures.CirculationRulesFixture;
 import api.support.fixtures.EndPatronSessionClient;
 import api.support.fixtures.ExpiredSessionProcessingClient;
 import api.support.fixtures.HoldingsFixture;
+import api.support.fixtures.IdentifierTypesFixture;
 import api.support.fixtures.InstancesFixture;
 import api.support.fixtures.ItemsFixture;
 import api.support.fixtures.LoanPoliciesFixture;
@@ -223,6 +224,7 @@ public abstract class APITests {
     new RequestQueueFixture(restAssuredClient);
 
   protected final TemplateFixture templateFixture = new TemplateFixture(templateClient);
+  protected final IdentifierTypesFixture identifierTypesFixture = new IdentifierTypesFixture();
 
   protected APITests() {
     this(true);

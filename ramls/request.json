@@ -175,7 +175,7 @@
         },
         "identifiers": {
           "type": "array",
-          "description": "An extensible set of name-value pairs of identifiers associated with the resource",
+          "description": "An extensible set of resource identifiers",
           "readonly": true,
           "items": {
             "type": "object",
