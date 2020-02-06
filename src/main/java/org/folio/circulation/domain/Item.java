@@ -129,12 +129,9 @@ public class Item {
       && instanceRepresentation.containsKey(TITLE)) {
 
       return getProperty(instanceRepresentation, TITLE);
-    } else if(getItem() != null) {
-      return getProperty(getItem(), TITLE);
     }
-    else {
-      return null;
-    }
+
+    return getProperty(getItem(), TITLE);
   }
 
   public JsonArray getIdentifiers() {
