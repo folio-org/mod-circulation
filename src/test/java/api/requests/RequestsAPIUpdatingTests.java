@@ -678,7 +678,7 @@ public class RequestsAPIUpdatingTests extends APITests {
   }
 
   @Test
-  public void canUpdateIdentifiersWhenTheyUpdatedOnInstance() {
+  public void instanceIdentifiersAreUpdatedWhenRequestIsUpdated() {
     final UUID instanceId = UUID.randomUUID();
     final UUID isbnIdentifierId = identifierTypesFixture.isbn().getId();
     final String isbnValue = "9780866989732";
