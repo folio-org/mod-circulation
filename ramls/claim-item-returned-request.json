@@ -1,0 +1,20 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "type": "object",
+  "description": "Request body schema for claim item returned API",
+  "properties": {
+    "itemClaimedReturnedDateTime": {
+      "description": "The date and time when the item is to be claimed returned",
+      "type": "string",
+      "format": "date-time"
+    },
+    "comment": {
+      "description": "Comment explaining why the item has been claimed returned",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "itemClaimedReturnedDateTime"
+  ]
+}

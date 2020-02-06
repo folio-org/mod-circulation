@@ -8,11 +8,11 @@ public class StorageSchema {
   private StorageSchema() { }
 
   public static JsonSchemaValidator validatorForStorageItemSchema() throws IOException {
-    return JsonSchemaValidator.fromResource("/item-storage-8-0.json");
+    return JsonSchemaValidator.fromResource("/item-storage-8-1.json");
   }
 
   public static JsonSchemaValidator validatorForStorageLoanSchema() throws IOException {
-    return JsonSchemaValidator.fromResource("/storage-loan-6-5.json");
+    return JsonSchemaValidator.fromResource("/storage-loan-6-6.json");
   }
 
   public static JsonSchemaValidator validatorForLocationInstSchema() throws IOException {

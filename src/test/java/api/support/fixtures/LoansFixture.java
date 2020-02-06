@@ -7,6 +7,7 @@ import static api.support.http.AdditionalHttpStatusCodes.UNPROCESSABLE_ENTITY;
 import static api.support.http.CqlQuery.noQuery;
 import static api.support.http.InterfaceUrls.checkInByBarcodeUrl;
 import static api.support.http.InterfaceUrls.checkOutByBarcodeUrl;
+import static api.support.http.InterfaceUrls.claimItemReturnedURL;
 import static api.support.http.InterfaceUrls.declareLoanItemLostURL;
 import static api.support.http.InterfaceUrls.loansUrl;
 import static api.support.http.InterfaceUrls.overrideCheckOutByBarcodeUrl;
@@ -31,6 +32,7 @@ import api.support.MultipleJsonRecords;
 import api.support.RestAssuredClient;
 import api.support.builders.CheckInByBarcodeRequestBuilder;
 import api.support.builders.CheckOutByBarcodeRequestBuilder;
+import api.support.builders.ClaimItemReturnedRequestBuilder;
 import api.support.builders.DeclareItemLostRequestBuilder;
 import api.support.builders.LoanBuilder;
 import api.support.builders.OverrideCheckOutByBarcodeRequestBuilder;
@@ -150,6 +152,11 @@ public class LoansFixture {
       .withComment(comment);
 
     return declareItemLost(loanId, builder);
+  }
+
+  public Response claimItemReturned(ClaimItemReturnedRequestBuilder request) {
+    return restAssuredClient.post(request.create(),
+      claimItemReturnedURL(request.getLoanId()), "claim-item-returned-request");
   }
 
   public IndividualResource checkOutByBarcode(IndividualResource item) {
