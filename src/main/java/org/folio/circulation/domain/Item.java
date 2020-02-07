@@ -9,10 +9,12 @@ import static org.folio.circulation.domain.ItemStatus.PAGED;
 import static org.folio.circulation.domain.representations.HoldingsProperties.COPY_NUMBER_ID;
 import static org.folio.circulation.domain.representations.InstanceProperties.CONTRIBUTORS;
 import static org.folio.circulation.domain.representations.ItemProperties.EFFECTIVE_LOCATION_ID;
+import static org.folio.circulation.domain.representations.ItemProperties.IDENTIFIERS;
 import static org.folio.circulation.domain.representations.ItemProperties.IN_TRANSIT_DESTINATION_SERVICE_POINT_ID;
 import static org.folio.circulation.domain.representations.ItemProperties.ITEM_COPY_NUMBER_ID;
-import static org.folio.circulation.domain.representations.ItemProperties.TITLE_PROPERTY;
+import static org.folio.circulation.domain.representations.ItemProperties.TITLE;
 import static org.folio.circulation.support.JsonArrayHelper.mapToList;
+import static org.folio.circulation.support.JsonPropertyFetcher.getArrayProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getNestedStringProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
 import static org.folio.circulation.support.JsonPropertyWriter.remove;
@@ -123,16 +125,11 @@ public class Item {
   }
 
   public String getTitle() {
-    if(instanceRepresentation != null
-      && instanceRepresentation.containsKey(TITLE_PROPERTY)) {
+    return getProperty(instanceRepresentation, TITLE);
+  }
 
-      return getProperty(instanceRepresentation, TITLE_PROPERTY);
-    } else if(getItem() != null) {
-      return getProperty(getItem(), TITLE_PROPERTY);
-    }
-    else {
-      return null;
-    }
+  public JsonArray getIdentifiers() {
+    return getArrayProperty(instanceRepresentation, IDENTIFIERS);
   }
 
   public JsonArray getContributorNames() {
