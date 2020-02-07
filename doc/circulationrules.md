@@ -198,7 +198,7 @@ The `criterium (…)` regulation contains the seven criterium types in any order
 
 This is an example for a complete priority line:
 
-`policy: number-of-criteria, criterium (t, s, c, b, a, m, g), last-line`
+`priority: number-of-criteria, criterium (t, s, c, b, a, m, g), last-line`
 
 For compatibility with former versions a priority line may contain only the seven criterium types:
 
