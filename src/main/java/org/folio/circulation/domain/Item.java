@@ -125,21 +125,11 @@ public class Item {
   }
 
   public String getTitle() {
-    if(instanceRepresentation != null
-      && instanceRepresentation.containsKey(TITLE)) {
-
-      return getProperty(instanceRepresentation, TITLE);
-    }
-
-    return getProperty(getItem(), TITLE);
+    return getProperty(instanceRepresentation, TITLE);
   }
 
   public JsonArray getIdentifiers() {
-    if (instanceRepresentation != null && instanceRepresentation.containsKey(IDENTIFIERS)) {
-      return getArrayProperty(instanceRepresentation, IDENTIFIERS);
-    }
-
-    return getArrayProperty(getItem(), IDENTIFIERS);
+    return getArrayProperty(instanceRepresentation, IDENTIFIERS);
   }
 
   public JsonArray getContributorNames() {
