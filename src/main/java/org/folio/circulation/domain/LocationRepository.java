@@ -3,8 +3,10 @@ package org.folio.circulation.domain;
 import static java.util.Objects.isNull;
 import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.toSet;
 import static org.folio.circulation.support.Result.ofAsync;
 import static org.folio.circulation.support.Result.succeeded;
+import static org.folio.circulation.support.ResultBinding.flatMapResult;
 import static org.folio.circulation.support.ResultBinding.mapResult;
 
 import java.util.Collection;
@@ -120,7 +122,7 @@ public class LocationRepository {
 
   }
 
-  private CompletableFuture<Result<Map<String, JsonObject>>> getLibraries(
+  public CompletableFuture<Result<Map<String, JsonObject>>> getLibraries(
           Collection<Location> locations) {
 
     final MultipleRecordFetcher<JsonObject> fetcher = new MultipleRecordFetcher<>(
@@ -166,6 +168,33 @@ public class LocationRepository {
     return fetcher.findByIds(institutionsIds)
       .thenApply(mapResult(records -> records.toMap(institution ->
         institution.getString("id"))));
+  }
+
+  public CompletableFuture<Result<Collection<Location>>> loadLibraries(Collection<Location> locations) {
+    return getLibraries(locations)
+      .thenApply(flatMapResult(libraries -> succeeded(
+        locations.stream()
+          .map(location -> location.withLibraryRepresentation(
+            libraries.getOrDefault(location.getLibraryId(), null)))
+          .collect(toSet()))));
+  }
+
+  public CompletableFuture<Result<Collection<Location>>> loadInstitutions(Collection<Location> locations) {
+    return getInstitutions(locations)
+      .thenApply(flatMapResult(institutions -> succeeded(
+        locations.stream()
+          .map(location -> location.withInstitutionRepresentation(
+            institutions.getOrDefault(location.getInstitutionId(), null)))
+          .collect(toSet()))));
+  }
+
+  public CompletableFuture<Result<Collection<Location>>> loadCampuses(Collection<Location> locations) {
+    return getCampuses(locations)
+      .thenApply(flatMapResult(campuses -> succeeded(
+        locations.stream()
+          .map(location -> location.withCampusRepresentation(
+            campuses.getOrDefault(location.getCampusId(), null)))
+          .collect(toSet()))));
   }
 
 }
