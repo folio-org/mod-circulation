@@ -1,11 +1,9 @@
 package org.folio.circulation.domain;
 
-import io.vertx.core.json.JsonArray;
-import io.vertx.core.json.JsonObject;
-
-import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import io.vertx.core.json.JsonObject;
 
 public class FeeFineOwner {
   private final JsonObject representation;

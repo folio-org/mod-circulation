@@ -18,7 +18,7 @@ public class OverdueFinePolicy extends Policy {
 
     private final String value;
 
-    private final static Map<String, OverdueFineInterval> CONSTANTS =
+    private static final Map<String, OverdueFineInterval> CONSTANTS =
       new HashMap<>();
 
     static {

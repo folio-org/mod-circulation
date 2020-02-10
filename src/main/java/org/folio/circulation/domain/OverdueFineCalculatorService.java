@@ -5,7 +5,7 @@ import static org.folio.circulation.support.Result.of;
 import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.ResultBinding.mapResult;
 
-import java.util.HashMap;
+import java.util.EnumMap;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
@@ -48,7 +48,8 @@ public class OverdueFineCalculatorService {
   }
 
   private static final String OVERDUE_FINE_TYPE = "Overdue fine";
-  private static final Map<OverdueFineInterval, Integer> MINUTES_IN_INTERVAL = new HashMap<>();
+  private static final Map<OverdueFineInterval, Integer> MINUTES_IN_INTERVAL =
+    new EnumMap<>(OverdueFineInterval.class);
   static {
     MINUTES_IN_INTERVAL.put(OverdueFineInterval.MINUTE, 1);
     MINUTES_IN_INTERVAL.put(OverdueFineInterval.HOUR, 60);
