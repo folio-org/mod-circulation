@@ -1,9 +1,18 @@
 package org.folio.circulation.resources;
 
-import io.vertx.core.http.HttpClient;
-import io.vertx.ext.web.Router;
-import io.vertx.ext.web.RoutingContext;
-import org.folio.circulation.domain.*;
+import static org.folio.circulation.domain.validation.CommonFailures.moreThanOneOpenLoanFailure;
+import static org.folio.circulation.domain.validation.CommonFailures.noItemFoundForBarcodeFailure;
+
+import org.folio.circulation.domain.AddressTypeRepository;
+import org.folio.circulation.domain.CheckInProcessRecords;
+import org.folio.circulation.domain.LoanCheckInService;
+import org.folio.circulation.domain.LoanRepository;
+import org.folio.circulation.domain.OverdueFineCalculatorService;
+import org.folio.circulation.domain.RequestQueueRepository;
+import org.folio.circulation.domain.ServicePointRepository;
+import org.folio.circulation.domain.UpdateItem;
+import org.folio.circulation.domain.UpdateRequestQueue;
+import org.folio.circulation.domain.UserRepository;
 import org.folio.circulation.domain.notice.PatronNoticeService;
 import org.folio.circulation.domain.notice.schedule.RequestScheduledNoticeService;
 import org.folio.circulation.domain.notice.session.PatronActionSessionService;
@@ -18,8 +27,9 @@ import org.folio.circulation.support.Result;
 import org.folio.circulation.support.RouteRegistration;
 import org.folio.circulation.support.http.server.WebContext;
 
-import static org.folio.circulation.domain.validation.CommonFailures.moreThanOneOpenLoanFailure;
-import static org.folio.circulation.domain.validation.CommonFailures.noItemFoundForBarcodeFailure;
+import io.vertx.core.http.HttpClient;
+import io.vertx.ext.web.Router;
+import io.vertx.ext.web.RoutingContext;
 
 public class CheckInByBarcodeResource extends Resource {
   public CheckInByBarcodeResource(HttpClient client) {
