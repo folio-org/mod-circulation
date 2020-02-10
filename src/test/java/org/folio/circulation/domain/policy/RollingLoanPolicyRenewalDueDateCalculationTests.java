@@ -25,7 +25,7 @@ import java.util.UUID;
 import static api.support.matchers.FailureMatcher.hasNumberOfFailureMessages;
 import static api.support.matchers.FailureMatcher.hasValidationFailure;
 import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 @RunWith(JUnitParamsRunner.class)
 public class RollingLoanPolicyRenewalDueDateCalculationTests {

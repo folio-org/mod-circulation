@@ -10,7 +10,7 @@ import org.junit.runner.RunWith;
 import java.util.UUID;
 
 import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 @RunWith(JUnitParamsRunner.class)
 public class ProxyRelationshipTests {

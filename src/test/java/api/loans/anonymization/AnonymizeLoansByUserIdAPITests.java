@@ -3,7 +3,7 @@ package api.loans.anonymization;
 import static api.support.matchers.LoanMatchers.hasOpenStatus;
 import static api.support.matchers.LoanMatchers.isAnonymized;
 import static org.hamcrest.Matchers.not;
-import static org.hamcrest.junit.MatcherAssert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 import java.net.MalformedURLException;
 import java.util.UUID;

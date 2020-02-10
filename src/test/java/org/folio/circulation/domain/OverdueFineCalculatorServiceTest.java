@@ -20,6 +20,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Stream;
 
+import api.support.builders.InstanceBuilder;
 import org.folio.circulation.domain.policy.OverdueFinePolicy;
 import org.folio.circulation.domain.policy.OverdueFinePolicyRepository;
 import org.folio.circulation.domain.representations.AccountRepresentation;
@@ -305,10 +306,10 @@ public class OverdueFineCalculatorServiceTest {
       .withBarcode(BARCODE)
       .withMaterialType(ITEM_MATERIAL_TYPE_ID)
       .create();
-    item.put(ItemProperties.TITLE_PROPERTY, TITLE);
     item.put("effectiveCallNumberComponents", new JsonObject().put("callNumber", CALL_NUMBER));
     return Item.from(item).withLocation(
-      Location.from(new LocationBuilder().withPrimaryServicePoint(SERVICE_POINT_ID).create()));
+      Location.from(new LocationBuilder().withPrimaryServicePoint(SERVICE_POINT_ID).create()))
+      .withInstance(new InstanceBuilder(TITLE, UUID.randomUUID()).create());
   }
 
   private OverdueFinePolicy createOverdueFinePolicy() {

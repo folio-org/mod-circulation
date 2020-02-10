@@ -941,7 +941,7 @@ public class CheckOutByBarcodeTests extends APITests {
 
     Response response = loansFixture.attemptCheckOutByBarcode(secondBookTypeItem, steve);
     assertThat(response.getJson(), hasErrorWith(allOf(
-      hasMessage("Patron has reached maximum item limit of 1 items for material type"))));
+      hasMessage("Patron has reached maximum limit of 1 items for material type"))));
     secondBookTypeItem = itemsClient.get(secondBookTypeItem);
     assertThat(secondBookTypeItem, hasItemStatus(AVAILABLE));
 
@@ -968,7 +968,7 @@ public class CheckOutByBarcodeTests extends APITests {
 
     Response response = loansFixture.attemptCheckOutByBarcode(secondBookTypeItem, steve);
     assertThat(response.getJson(), hasErrorWith(allOf(
-      hasMessage("Patron has reached maximum item limit of 1 items for loan type"))));
+      hasMessage("Patron has reached maximum limit of 1 items for loan type"))));
     secondBookTypeItem = itemsClient.get(secondBookTypeItem);
     assertThat(secondBookTypeItem, hasItemStatus(AVAILABLE));
 
@@ -996,7 +996,7 @@ public class CheckOutByBarcodeTests extends APITests {
 
     Response response = loansFixture.attemptCheckOutByBarcode(secondBookTypeItem, steve);
     assertThat(response.getJson(), hasErrorWith(allOf(
-      hasMessage("Patron has reached maximum item limit of 1 items for combination of material type and loan type"))));
+      hasMessage("Patron has reached maximum limit of 1 items for combination of material type and loan type"))));
     secondBookTypeItem = itemsClient.get(secondBookTypeItem);
     assertThat(secondBookTypeItem, hasItemStatus(AVAILABLE));
 
@@ -1027,7 +1027,7 @@ public class CheckOutByBarcodeTests extends APITests {
 
     Response response = loansFixture.attemptCheckOutByBarcode(secondBookTypeItem, steve);
     assertThat(response.getJson(), hasErrorWith(allOf(
-      hasMessage("Patron has reached maximum item limit of 1 items for combination of patron group, material type and loan type"))));
+      hasMessage("Patron has reached maximum limit of 1 items for combination of patron group, material type and loan type"))));
     secondBookTypeItem = itemsClient.get(secondBookTypeItem);
     assertThat(secondBookTypeItem, hasItemStatus(AVAILABLE));
 
@@ -1067,7 +1067,7 @@ public class CheckOutByBarcodeTests extends APITests {
 
     Response response = loansFixture.attemptCheckOutByBarcode(secondBookTypeItem, steve);
     assertThat(response.getJson(), hasErrorWith(allOf(
-      hasMessage("Patron has reached maximum item limit of 1 items for combination of patron group, material type and loan type"))));
+      hasMessage("Patron has reached maximum limit of 1 items for combination of patron group, material type and loan type"))));
     secondBookTypeItem = itemsClient.get(secondBookTypeItem);
     assertThat(secondBookTypeItem, hasItemStatus(AVAILABLE));
 
@@ -1095,7 +1095,7 @@ public class CheckOutByBarcodeTests extends APITests {
 
     Response response = loansFixture.attemptCheckOutByBarcode(secondBookTypeItem, steve);
     assertThat(response.getJson(), hasErrorWith(allOf(
-      hasMessage("Patron has reached maximum item limit of 1 items for material type"))));
+      hasMessage("Patron has reached maximum limit of 1 items for material type"))));
     secondBookTypeItem = itemsClient.get(secondBookTypeItem);
     assertThat(secondBookTypeItem, hasItemStatus(AVAILABLE));
   }

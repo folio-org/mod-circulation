@@ -212,6 +212,11 @@ public class ResourceClient {
     return new ResourceClient(InterfaceUrls::templateUrl, "templates");
   }
 
+  public static ResourceClient forIdentifierTypes() {
+    return new ResourceClient(InterfaceUrls::identifierTypesUrl,
+      "identifierTypes");
+  }
+
   private ResourceClient(UrlMaker urlMaker, String collectionArrayPropertyName) {
     this.urlMaker = urlMaker;
     this.collectionArrayPropertyName = collectionArrayPropertyName;

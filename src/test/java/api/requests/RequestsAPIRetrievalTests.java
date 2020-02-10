@@ -3,7 +3,6 @@ package api.requests;
 import static api.support.builders.ItemBuilder.CHECKED_OUT;
 import static api.support.http.CqlQuery.noQuery;
 import static api.support.http.CqlQuery.queryFromTemplate;
-import static api.support.http.InterfaceUrls.requestsUrl;
 import static api.support.http.Limit.limit;
 import static api.support.http.Limit.noLimit;
 import static api.support.http.Offset.noOffset;
@@ -12,22 +11,23 @@ import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static api.support.matchers.UUIDMatcher.is;
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
+import static java.util.function.Function.identity;
 import static org.folio.circulation.domain.representations.ItemProperties.CALL_NUMBER_COMPONENTS;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.emptyString;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.core.Is.is;
-import static org.hamcrest.junit.MatcherAssert.assertThat;
 import static org.joda.time.DateTimeZone.UTC;
 import static org.junit.Assert.assertTrue;
 
 import java.net.HttpURLConnection;
-import java.util.List;
 import java.util.UUID;
 
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
+import org.hamcrest.CoreMatchers;
 import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
 import org.junit.Test;
@@ -38,21 +38,26 @@ import api.support.builders.Address;
 import api.support.builders.ItemBuilder;
 import api.support.builders.RequestBuilder;
 import api.support.http.InventoryItemResource;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
 public class RequestsAPIRetrievalTests extends APITests {
   private static final String NEW_TAG = "new";
   private static final String IMPORTANT_TAG = "important";
   private static final String ONE_COPY_NUMBER = "1";
-  private static final String TWO_COPY_NUMBER = "2";
 
   @Test
   public void canGetARequestById() {
     UUID facultyGroupId = patronGroupsFixture.faculty().getId();
     UUID staffGroupId = patronGroupsFixture.staff().getId();
+    UUID isbnIdentifierId = identifierTypesFixture.isbn().getId();
+    String isbnValue = "9780866989732";
 
     final InventoryItemResource smallAngryPlanet = itemsFixture
-      .basedUponSmallAngryPlanet(itemBuilder -> itemBuilder
+      .basedUponSmallAngryPlanet(
+        identity(),
+        instanceBuilder -> instanceBuilder.addIdentifier(isbnIdentifierId, isbnValue),
+        itemBuilder -> itemBuilder
         .withCallNumber("itCn", "itCnPrefix", "itCnSuffix")
         .withEnumeration("enumeration1")
         .withChronology("chronology")
@@ -198,6 +203,14 @@ public class RequestsAPIRetrievalTests extends APITests {
     assertThat(tagsRepresentation.getJsonArray("tagList"), contains(NEW_TAG, IMPORTANT_TAG));
 
     requestHasCallNumberStringProperties(representation, "");
+
+    JsonArray identifiers = itemSummary.getJsonArray("identifiers");
+    assertThat(identifiers, CoreMatchers.notNullValue());
+    assertThat(identifiers.size(), is(1));
+    assertThat(identifiers.getJsonObject(0).getString("identifierTypeId"),
+      is(isbnIdentifierId.toString()));
+    assertThat(identifiers.getJsonObject(0).getString("value"),
+      is(isbnValue));
   }
 
   @Test

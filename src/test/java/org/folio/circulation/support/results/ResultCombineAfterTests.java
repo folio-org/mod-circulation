@@ -8,7 +8,7 @@ import static org.folio.circulation.support.results.ResultExamples.alreadyFailed
 import static org.folio.circulation.support.results.ResultExamples.shouldNotExecute;
 import static org.folio.circulation.support.results.ResultExamples.somethingWentWrong;
 import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 import java.util.concurrent.ExecutionException;
 

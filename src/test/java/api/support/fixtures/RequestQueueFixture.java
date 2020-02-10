@@ -3,7 +3,7 @@ package api.support.fixtures;
 import static api.support.http.InterfaceUrls.reorderQueueUrl;
 import static api.support.http.InterfaceUrls.requestQueueUrl;
 import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 import org.folio.circulation.support.http.client.Response;
 
