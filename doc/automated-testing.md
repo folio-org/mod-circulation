@@ -33,3 +33,13 @@ tests should also be updated, other the tests might produce false results.
 
 As the names include the interface version, the file should also be renamed. 
 And the paths in the `StorageSchema` class need to be changed.
+
+##### Test standards
+
+* assertThat import used is org.hamcrest.MatcherAssert.assertThat
+
+###### The reason behind why org.hamcrest.MatcherAssert.assertThat was chosen:
+
+* org.junit.Assert.assertThat() is deprecated as of JUnit 4.13.
+* custom hamcrest matchers may include more detailed information about what exactly was wrong
+* control version of Hamcrest

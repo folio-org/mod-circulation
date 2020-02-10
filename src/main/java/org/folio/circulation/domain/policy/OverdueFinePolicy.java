@@ -5,20 +5,31 @@ import io.vertx.core.json.JsonObject;
 import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
 
 public class OverdueFinePolicy extends Policy {
+  private Boolean ignoreGracePeriodForRecalls;
+  private Boolean countPeriodsWhenServicePointIsClosed;
 
-  private OverdueFinePolicy(String id) {
-    this(id, null);
-  }
-
-  private OverdueFinePolicy(String id, String name) {
+  private OverdueFinePolicy(
+    String id, String name, Boolean ignoreGracePeriodForRecalls, Boolean countPeriodsWhenServicePointIsClosed) {
     super(id, name);
+    this.ignoreGracePeriodForRecalls = ignoreGracePeriodForRecalls;
+    this.countPeriodsWhenServicePointIsClosed = countPeriodsWhenServicePointIsClosed;
   }
 
-  public static OverdueFinePolicy from(JsonObject overdueFinePolicy) {
+  public static OverdueFinePolicy from(JsonObject json) {
     return new OverdueFinePolicy(
-      getProperty(overdueFinePolicy, "id"),
-      getProperty(overdueFinePolicy, "name")
+      getProperty(json, "id"),
+      getProperty(json, "name"),
+      json.getBoolean("gracePeriodRecall"),
+      json.getBoolean("countClosed")
     );
+  }
+
+  public Boolean getIgnoreGracePeriodForRecalls() {
+    return ignoreGracePeriodForRecalls;
+  }
+
+  public Boolean getCountPeriodsWhenServicePointIsClosed() {
+    return countPeriodsWhenServicePointIsClosed;
   }
 
   public static OverdueFinePolicy unknown(String id) {
@@ -27,7 +38,7 @@ public class OverdueFinePolicy extends Policy {
 
   private static class UnknownOverdueFinePolicy extends OverdueFinePolicy {
     UnknownOverdueFinePolicy(String id) {
-      super(id);
+      super(id, null, null, null);
     }
   }
 }

@@ -5,6 +5,9 @@ import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
 import static org.folio.circulation.support.Result.failed;
 import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
+import static org.joda.time.DateTimeConstants.MINUTES_PER_DAY;
+import static org.joda.time.DateTimeConstants.MINUTES_PER_HOUR;
+import static org.joda.time.DateTimeConstants.MINUTES_PER_WEEK;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -22,7 +25,6 @@ import org.joda.time.DateTime;
 import io.vertx.core.json.JsonObject;
 
 public class Period {
-
   private static final String MONTHS = "Months";
   private static final String WEEKS = "Weeks";
   private static final String DAYS = "Days";
@@ -32,9 +34,9 @@ public class Period {
   private static final String DURATION_KEY = "duration";
   private static final String INTERVAL_ID_KEY = "intervalId";
 
+  private static final int MINUTES_PER_MONTH = MINUTES_PER_DAY * 31;
   private static final Set<String> SUPPORTED_INTERVAL_IDS = Collections.unmodifiableSet(
     new HashSet<>(Arrays.asList(MONTHS, WEEKS, DAYS, HOURS, MINUTES)));
-
 
   private final Integer duration;
   private final String interval;
@@ -151,4 +153,26 @@ public class Period {
         return org.joda.time.Period.minutes(duration);
     }
   }
+
+  public int toMinutes() {
+    if (duration == null || interval == null) {
+      return 0;
+    }
+
+    switch (interval) {
+    case MONTHS:
+      return duration * MINUTES_PER_MONTH;
+    case WEEKS:
+      return duration * MINUTES_PER_WEEK;
+    case DAYS:
+      return duration * MINUTES_PER_DAY;
+    case HOURS:
+      return duration * MINUTES_PER_HOUR;
+    case MINUTES:
+      return duration;
+    default:
+      return 0;
+    }
+  }
+
 }

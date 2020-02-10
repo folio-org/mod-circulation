@@ -5,12 +5,14 @@ import static java.util.Objects.nonNull;
 import static java.util.Objects.requireNonNull;
 import static org.folio.circulation.domain.LoanAction.CHECKED_IN;
 import static org.folio.circulation.domain.LoanAction.CHECKED_OUT;
+import static org.folio.circulation.domain.LoanAction.CLAIMED_RETURNED;
 import static org.folio.circulation.domain.LoanAction.DECLARED_LOST;
 import static org.folio.circulation.domain.LoanAction.RENEWED;
 import static org.folio.circulation.domain.LoanAction.RENEWED_THROUGH_OVERRIDE;
 import static org.folio.circulation.domain.representations.LoanProperties.ACTION_COMMENT;
 import static org.folio.circulation.domain.representations.LoanProperties.CHECKIN_SERVICE_POINT_ID;
 import static org.folio.circulation.domain.representations.LoanProperties.CHECKOUT_SERVICE_POINT_ID;
+import static org.folio.circulation.domain.representations.LoanProperties.CLAIMED_RETURNED_DATE;
 import static org.folio.circulation.domain.representations.LoanProperties.DUE_DATE;
 import static org.folio.circulation.domain.representations.LoanProperties.LOAN_POLICY_ID;
 import static org.folio.circulation.domain.representations.LoanProperties.LOST_ITEM_POLICY_ID;
@@ -33,11 +35,13 @@ import java.util.Collection;
 import java.util.Objects;
 import java.util.UUID;
 
+import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.domain.policy.LoanPolicy;
 import org.folio.circulation.domain.policy.LostItemPolicy;
 import org.folio.circulation.domain.policy.OverdueFinePolicy;
 import org.folio.circulation.domain.representations.LoanProperties;
+import org.folio.circulation.support.ClockManager;
 import org.folio.circulation.support.Result;
 import org.joda.time.DateTime;
 
@@ -468,5 +472,32 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
 
   public void changeDeclaredLostDateTime(DateTime dateTime) {
     write(representation, LoanProperties.DECLARED_LOST_DATE, dateTime);
+  }
+
+  public boolean isOverdue() {
+    return isOverdue(ClockManager.getClockManager().getDateTime());
+  }
+
+  public boolean isOverdue(DateTime systemTime) {
+    DateTime dueDate = getDueDate();
+
+    return ObjectUtils.allNotNull(dueDate, systemTime)
+      && dueDate.isBefore(systemTime);
+  }
+
+  public Loan claimItemReturned(String comment, DateTime claimedReturnedDate) {
+    changeAction(CLAIMED_RETURNED);
+    if (StringUtils.isNotBlank(comment)) {
+      changeActionComment(comment);
+    }
+
+    changeItemStatusForItemAndLoan(ItemStatus.CLAIMED_RETURNED);
+    changeClaimedReturnedDate(claimedReturnedDate);
+
+    return this;
+  }
+
+  private void changeClaimedReturnedDate(DateTime claimedReturnedDate) {
+    write(representation, CLAIMED_RETURNED_DATE, claimedReturnedDate);
   }
 }

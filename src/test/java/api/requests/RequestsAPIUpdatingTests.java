@@ -7,6 +7,7 @@ import static api.support.matchers.UUIDMatcher.is;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static api.support.matchers.ValidationErrorMatchers.hasUUIDParameter;
+import static java.util.function.Function.identity;
 import static org.folio.HttpStatus.HTTP_NO_CONTENT;
 import static org.folio.HttpStatus.HTTP_VALIDATION_ERROR;
 import static org.folio.circulation.domain.representations.RequestProperties.CANCELLATION_REASON_NAME;
@@ -14,25 +15,23 @@ import static org.folio.circulation.domain.representations.RequestProperties.CAN
 import static org.folio.circulation.support.JsonPropertyWriter.write;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.hasItems;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.core.Is.is;
-import static org.hamcrest.junit.MatcherAssert.assertThat;
 
 import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 import org.awaitility.Awaitility;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
+import org.hamcrest.CoreMatchers;
 import org.hamcrest.Matcher;
 import org.hamcrest.Matchers;
 import org.joda.time.DateTime;
@@ -48,6 +47,7 @@ import api.support.builders.RequestBuilder;
 import api.support.builders.UserBuilder;
 import api.support.fixtures.TemplateContextMatchers;
 import api.support.http.InventoryItemResource;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
 public class RequestsAPIUpdatingTests extends APITests {
@@ -675,5 +675,44 @@ public class RequestsAPIUpdatingTests extends APITests {
         .withTags(new RequestBuilder.Tags(Arrays.asList("new", "important"))));
 
     assertThat(putResponse, hasStatus(HTTP_NO_CONTENT));
+  }
+
+  @Test
+  public void instanceIdentifiersAreUpdatedWhenRequestIsUpdated() {
+    final UUID instanceId = UUID.randomUUID();
+    final UUID isbnIdentifierId = identifierTypesFixture.isbn().getId();
+    final String isbnValue = "9780866989732";
+
+    final InventoryItemResource item = itemsFixture.basedUponSmallAngryPlanet(
+      identity(),
+      instanceBuilder -> instanceBuilder.withId(instanceId),
+      identity());
+
+    IndividualResource request = requestsClient.create(
+      new RequestBuilder()
+        .page()
+        .forItem(item)
+        .by(usersFixture.steve())
+        .fulfilToHoldShelf()
+        .withPickupServicePointId(servicePointsFixture.cd1().getId()));
+
+    JsonObject updatedInstance = instancesClient.getById(instanceId).getJson().copy()
+      .put("identifiers", new JsonArray().add(new JsonObject()
+        .put("identifierTypeId", isbnIdentifierId.toString())
+        .put("value", isbnValue)));
+
+    instancesClient.replace(instanceId, updatedInstance);
+
+    requestsClient.replace(request.getId(), request.copyJson());
+
+    JsonArray identifiers = requestsClient.getById(request.getId())
+      .getJson().getJsonObject("item").getJsonArray("identifiers");
+
+    assertThat(identifiers, CoreMatchers.notNullValue());
+    assertThat(identifiers.size(), is(1));
+    assertThat(identifiers.getJsonObject(0).getString("identifierTypeId"),
+      is(isbnIdentifierId.toString()));
+    assertThat(identifiers.getJsonObject(0).getString("value"),
+      is(isbnValue));
   }
 }
