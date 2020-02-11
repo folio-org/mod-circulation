@@ -26,12 +26,12 @@ import io.vertx.core.json.JsonObject;
 public class MultipleRecordFetcher<T> {
   //Too many UUID values exceeds the allowed length of the HTTP request URL
   private static final int MAX_ID_VALUES_PER_CQL_SEARCH_QUERY = 50;
-  private final CollectionResourceClient client;
+  private final GetManyRecordsClient client;
   private final String recordsPropertyName;
   private final Function<JsonObject, T> recordMapper;
 
-  public MultipleRecordFetcher(CollectionResourceClient client,
-    String recordsPropertyName, Function<JsonObject, T> recordMapper) {
+  public MultipleRecordFetcher(GetManyRecordsClient client,
+                               String recordsPropertyName, Function<JsonObject, T> recordMapper) {
 
     this.client = client;
     this.recordsPropertyName = recordsPropertyName;

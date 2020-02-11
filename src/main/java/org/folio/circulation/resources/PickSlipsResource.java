@@ -11,13 +11,8 @@ import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestStatus;
 import org.folio.circulation.domain.representations.ItemPickSlipRepresentation;
-import org.folio.circulation.support.Clients;
-import org.folio.circulation.support.CollectionResourceClient;
+import org.folio.circulation.support.*;
 import org.folio.circulation.support.http.client.CqlQuery;
-import org.folio.circulation.support.MultipleRecordFetcher;
-import org.folio.circulation.support.OkJsonResponseResult;
-import org.folio.circulation.support.Result;
-import org.folio.circulation.support.RouteRegistration;
 import org.folio.circulation.support.http.server.WebContext;
 
 import java.util.Collection;
@@ -80,7 +75,7 @@ public class PickSlipsResource extends Resource {
   }
 
   private CompletableFuture<Result<Set<Location>>> fetchLocationsForServicePoint(
-    UUID servicePointId, CollectionResourceClient locationsStorageClient) {
+    UUID servicePointId, GetManyRecordsClient locationsStorageClient) {
 
     return new MultipleRecordFetcher<>(locationsStorageClient, LOCATIONS_KEY, Location::from)
       .findByQuery(exactMatch(PRIMARY_SERVICE_POINT_KEY, servicePointId.toString()))
@@ -88,7 +83,7 @@ public class PickSlipsResource extends Resource {
   }
 
   private CompletableFuture<Result<Set<Item>>> fetchPagedItemsByLocations(
-    Set<Location> locations, CollectionResourceClient itemStorageClient) {
+    Set<Location> locations, GetManyRecordsClient itemStorageClient) {
 
     Set<String> locationIds = locations.stream()
       .map(Location::getId)
@@ -113,7 +108,7 @@ public class PickSlipsResource extends Resource {
   }
 
   private CompletableFuture<Result<Set<Item>>> filterItemsByOpenUnfilledRequests(
-      Set<Item> items, CollectionResourceClient client) {
+      Set<Item> items, GetManyRecordsClient client) {
 
     Set<String> itemIds = items.stream()
         .map(Item::getItemId)
@@ -138,7 +133,7 @@ public class PickSlipsResource extends Resource {
   }
 
   private CompletableFuture<Result<Set<Item>>> fetchHoldings(
-    Set<Item> items, CollectionResourceClient client) {
+    Set<Item> items, GetManyRecordsClient client) {
 
       Set<String> holdingsIds = items.stream()
         .map(Item::getHoldingsRecordId)
@@ -156,7 +151,7 @@ public class PickSlipsResource extends Resource {
   }
 
   private CompletableFuture<Result<Set<Item>>> fetchInstances(
-    Set<Item> items, CollectionResourceClient client) {
+    Set<Item> items, GetManyRecordsClient client) {
 
       Set<String> instanceIds = items.stream()
         .map(Item::getInstanceId)

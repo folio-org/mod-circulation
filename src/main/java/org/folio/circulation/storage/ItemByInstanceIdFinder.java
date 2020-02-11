@@ -13,7 +13,7 @@ import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.MultipleRecords;
-import org.folio.circulation.support.CollectionResourceClient;
+import org.folio.circulation.support.GetManyRecordsClient;
 import org.folio.circulation.support.http.client.CqlQuery;
 import org.folio.circulation.support.ItemRepository;
 import org.folio.circulation.support.MultipleRecordFetcher;
@@ -23,10 +23,10 @@ import io.vertx.core.json.JsonObject;
 
 public class ItemByInstanceIdFinder {
 
-  private final CollectionResourceClient holdingsStorageClient;
+  private final GetManyRecordsClient holdingsStorageClient;
   private final ItemRepository itemRepository;
 
-  public ItemByInstanceIdFinder(CollectionResourceClient holdingsStorageClient,
+  public ItemByInstanceIdFinder(GetManyRecordsClient holdingsStorageClient,
                                 ItemRepository itemRepository) {
 
     this.holdingsStorageClient = holdingsStorageClient;

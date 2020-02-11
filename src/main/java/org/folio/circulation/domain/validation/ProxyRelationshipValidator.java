@@ -11,14 +11,14 @@ import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.ProxyRelationship;
 import org.folio.circulation.domain.UserRelatedRecord;
 import org.folio.circulation.support.Clients;
-import org.folio.circulation.support.CollectionResourceClient;
+import org.folio.circulation.support.GetManyRecordsClient;
 import org.folio.circulation.support.http.client.CqlQuery;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.ValidationErrorFailure;
 import org.folio.circulation.support.http.client.PageLimit;
 
 public class ProxyRelationshipValidator {
-  private final CollectionResourceClient proxyRelationshipsClient;
+  private final GetManyRecordsClient proxyRelationshipsClient;
   private Supplier<ValidationErrorFailure> invalidRelationshipErrorSupplier;
 
   public ProxyRelationshipValidator(

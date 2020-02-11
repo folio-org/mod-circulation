@@ -9,7 +9,7 @@ import java.util.function.Function;
 
 import org.folio.circulation.domain.anonymization.config.LoanAnonymizationConfiguration;
 import org.folio.circulation.support.Clients;
-import org.folio.circulation.support.CollectionResourceClient;
+import org.folio.circulation.support.GetManyRecordsClient;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.http.client.CqlQuery;
 import org.folio.circulation.support.http.client.PageLimit;
@@ -24,7 +24,7 @@ public class ConfigurationRepository {
 
   private static final PageLimit DEFAULT_PAGE_LIMIT = PageLimit.one();
 
-  private final CollectionResourceClient configurationClient;
+  private final GetManyRecordsClient configurationClient;
 
   public ConfigurationRepository(Clients clients) {
     configurationClient = clients.configurationStorageClient();

@@ -17,6 +17,7 @@ import java.util.stream.Collectors;
 import org.folio.circulation.domain.representations.AccountStorageRepresentation;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
+import org.folio.circulation.support.GetManyRecordsClient;
 import org.folio.circulation.support.MultipleRecordFetcher;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.http.client.ResponseInterpreter;
@@ -25,7 +26,7 @@ public class AccountRepository {
   private static final String LOAN_ID_FIELD_NAME = "loanId";
   private static final String ACCOUNT_ID_FIELD_NAME = "accountId";
   private final CollectionResourceClient accountsStorageClient;
-  private final CollectionResourceClient feefineActionsStorageClient;
+  private final GetManyRecordsClient feefineActionsStorageClient;
 
   public AccountRepository(Clients clients) {
     accountsStorageClient = clients.accountsStorageClient();

@@ -19,8 +19,8 @@ import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.rules.AppliedRuleConditions;
 import org.folio.circulation.support.Clients;
-import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.FetchSingleRecord;
+import org.folio.circulation.support.GetManyRecordsClient;
 import org.folio.circulation.support.MultipleRecordFetcher;
 import org.folio.circulation.support.Result;
 
@@ -28,7 +28,7 @@ import io.vertx.core.json.JsonObject;
 
 public class LoanPolicyRepository extends CirculationPolicyRepository<LoanPolicy> {
 
-  private final CollectionResourceClient fixedDueDateSchedulesStorageClient;
+  private final GetManyRecordsClient fixedDueDateSchedulesStorageClient;
 
   public LoanPolicyRepository(Clients clients) {
     super(clients.circulationLoanRules(), clients.loanPoliciesStorage());
