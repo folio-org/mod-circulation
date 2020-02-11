@@ -1,6 +1,7 @@
 package org.folio.circulation.support;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
+import static java.util.stream.Collectors.collectingAndThen;
 import static org.apache.commons.collections4.ListUtils.partition;
 import static org.folio.circulation.domain.MultipleRecords.empty;
 import static org.folio.circulation.support.Result.of;
@@ -41,28 +42,34 @@ public class MultipleRecordFetcher<T> {
 
   public CompletableFuture<Result<MultipleRecords<T>>> findByIds(
       Collection<String> ids) {
+
     return findByIndexName(ids, "id");
   }
 
   public CompletableFuture<Result<MultipleRecords<T>>> findByIndexName(
       Collection<String> ids, String indexName) {
+
     if (ids.isEmpty()) {
       return completedFuture(of(MultipleRecords::empty));
     }
+
     return findByBatchQueries(buildBatchQueriesByIndexName(ids, indexName));
   }
 
   public CompletableFuture<Result<MultipleRecords<T>>> findByIndexNameAndQuery(
       Collection<String> ids, String indexName, Result<CqlQuery> andQuery) {
+
     if (ids.isEmpty()) {
       return completedFuture(of(MultipleRecords::empty));
     }
+
     return findByBatchQueriesAndQuery(buildBatchQueriesByIndexName(ids, indexName),
       andQuery);
   }
 
   private CompletableFuture<Result<MultipleRecords<T>>> findByBatchQueriesAndQuery(
       List<Result<CqlQuery>> queries, Result<CqlQuery> andQuery) {
+
     return findByBatchQueries(queries.stream().map(query ->
       query.combine(andQuery, CqlQuery::and))
       .collect(Collectors.toList()));
@@ -79,6 +86,7 @@ public class MultipleRecordFetcher<T> {
 
   private CompletableFuture<Result<MultipleRecords<T>>> findByBatchQueries(
       List<Result<CqlQuery>> queries) {
+
     // NOTE: query limit is max value to ensure all records are returned
     List<CompletableFuture<Result<MultipleRecords<T>>>> results = queries.stream()
         .map(query -> findByQuery(query, maximumLimit()))
@@ -87,7 +95,7 @@ public class MultipleRecordFetcher<T> {
     return CompletableFuture.allOf(results.toArray(new CompletableFuture[0]))
       .thenApply(notUsed -> results.stream()
         .map(CompletableFuture::join)
-        .collect(Collectors.collectingAndThen(Collectors.toList(), this::aggregate)));
+        .collect(collectingAndThen(Collectors.toList(), this::aggregate)));
   }
 
   public CompletableFuture<Result<MultipleRecords<T>>> findByQuery(
