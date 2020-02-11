@@ -23,7 +23,8 @@ import org.folio.circulation.support.http.client.Response;
 import io.vertx.core.json.JsonObject;
 
 public class MultipleRecordFetcher<T> {
-  private static final int MAX_BATCH_SIZE = 50;
+  //Too many UUID values exceeds the allowed length of the HTTP request URL
+  private static final int MAX_ID_VALUES_PER_CQL_SEARCH_QUERY = 50;
   private final CollectionResourceClient client;
   private final String recordsPropertyName;
   private final Function<JsonObject, T> recordMapper;
@@ -70,7 +71,7 @@ public class MultipleRecordFetcher<T> {
   private List<Result<CqlQuery>> buildBatchQueriesByIndexName(
       Collection<String> ids, String indexName) {
 
-    return partition(new ArrayList<>(ids), MAX_BATCH_SIZE)
+    return partition(new ArrayList<>(ids), MAX_ID_VALUES_PER_CQL_SEARCH_QUERY)
       .stream()
       .map(partitionedIds -> exactMatchAny(indexName, partitionedIds))
       .collect(Collectors.toList());
