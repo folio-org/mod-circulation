@@ -1288,13 +1288,8 @@ abstract class RenewalAPITests extends APITests {
 
   @Test
   public void accountRecordIsCreatedWhenItemIsOverdue() throws InterruptedException {
-    JsonObject loanPeriod = new JsonObject();
-    loanPeriod.put("duration", 10);
-    loanPeriod.put("intervalId", "Days");
-    IndividualResource loanPolicy = loanPoliciesFixture.create(new LoanPolicyBuilder()
-      .withLoansProfile("Rolling")
-      .withName("10 days loan policy")
-      .withLoanPeriod(loanPeriod));
+    IndividualResource loanPolicy = loanPoliciesFixture.create(
+      new LoanPolicyBuilder().rolling(Period.from(10, "Days")));
 
     useFallbackPolicies(loanPolicy.getId(),
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
