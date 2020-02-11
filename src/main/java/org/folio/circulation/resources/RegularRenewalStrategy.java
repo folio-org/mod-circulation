@@ -4,6 +4,7 @@ import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.domain.RequestType.HOLD;
 import static org.folio.circulation.domain.RequestType.RECALL;
 import static org.folio.circulation.resources.RenewalValidator.CAN_NOT_RENEW_ITEM_ERROR;
+import static org.folio.circulation.resources.RenewalValidator.CLAIMED_RETURNED_RENEWED_ERROR;
 import static org.folio.circulation.resources.RenewalValidator.DECLARED_LOST_ITEM_RENEWED_ERROR;
 import static org.folio.circulation.resources.RenewalValidator.FIXED_POLICY_HAS_ALTERNATE_RENEWAL_PERIOD;
 import static org.folio.circulation.resources.RenewalValidator.FIXED_POLICY_HAS_ALTERNATE_RENEWAL_PERIOD_FOR_HOLDS;
@@ -104,6 +105,11 @@ public class RegularRenewalStrategy implements RenewalStrategy {
       }
       if (loan.hasItemWithStatus(ItemStatus.DECLARED_LOST)) {
         errors.add(itemByIdValidationError(DECLARED_LOST_ITEM_RENEWED_ERROR,
+          loan.getItemId()));
+        return failedValidation(errors);
+      }
+      if (loan.hasItemWithStatus(ItemStatus.CLAIMED_RETURNED)) {
+        errors.add(itemByIdValidationError(CLAIMED_RETURNED_RENEWED_ERROR,
           loan.getItemId()));
         return failedValidation(errors);
       }
