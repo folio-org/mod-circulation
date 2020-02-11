@@ -31,7 +31,7 @@ public class MultipleRecordFetcher<T> {
   private final Function<JsonObject, T> recordMapper;
 
   public MultipleRecordFetcher(GetManyRecordsClient client,
-                               String recordsPropertyName, Function<JsonObject, T> recordMapper) {
+      String recordsPropertyName, Function<JsonObject, T> recordMapper) {
 
     this.client = client;
     this.recordsPropertyName = recordsPropertyName;

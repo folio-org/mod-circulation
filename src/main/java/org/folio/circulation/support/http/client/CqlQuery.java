@@ -98,4 +98,25 @@ public class CqlQuery implements QueryParameter {
   public void consume(QueryStringParameterConsumer consumer) {
     consumer.consume("query", asText());
   }
+
+  @Override
+  public String toString() {
+    return String.format("A CQL query of \"%s\"", asText());
+  }
+
+  @Override
+  public boolean equals(Object other) {
+    if (this == other) return true;
+
+    if (other == null || getClass() != other.getClass()) return false;
+
+    CqlQuery otherCqlQuery = (CqlQuery) other;
+
+    return StringUtils.equals(asText(), otherCqlQuery.asText());
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(asText());
+  }
 }
