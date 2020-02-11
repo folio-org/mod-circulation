@@ -13,21 +13,18 @@ public class FeeFineBuilder extends JsonBuilder implements Builder {
   private Double defaultAmount;
   private String chargeNoticeId;
   private String actionNoticeId;
-  private JsonObject metadata;
 
   public FeeFineBuilder() {
   }
 
   public FeeFineBuilder(UUID id, UUID ownerId, String feeFineType, Double defaultAmount,
-                        String chargeNoticeId, String actionNoticeId,
-                        JsonObject metadata) {
+    String chargeNoticeId, String actionNoticeId) {
     this.id = id;
     this.ownerId = ownerId;
     this.feeFineType = feeFineType;
     this.defaultAmount = defaultAmount;
     this.chargeNoticeId = chargeNoticeId;
     this.actionNoticeId = actionNoticeId;
-    this.metadata = metadata;
   }
 
   @Override
@@ -40,37 +37,36 @@ public class FeeFineBuilder extends JsonBuilder implements Builder {
     write(object, "defaultAmount", defaultAmount);
     write(object, "chargeNoticeId", chargeNoticeId);
     write(object, "actionNoticeId", actionNoticeId);
-    write(object, "metadata", metadata);
 
     return object;
   }
 
   public FeeFineBuilder withId(UUID id) {
     return new FeeFineBuilder(id, ownerId, feeFineType, defaultAmount, chargeNoticeId,
-      actionNoticeId, metadata);
+      actionNoticeId);
   }
   public FeeFineBuilder withOwnerId(UUID ownerId) {
     return new FeeFineBuilder(id, ownerId, feeFineType, defaultAmount, chargeNoticeId,
-      actionNoticeId, metadata);
+      actionNoticeId);
   }
   public FeeFineBuilder withFeeFineType(String feeFineType) {
     return new FeeFineBuilder(id, ownerId, feeFineType, defaultAmount, chargeNoticeId,
-      actionNoticeId, metadata);
+      actionNoticeId);
   }
   public FeeFineBuilder withDefaultAmount(Double defaultAmount) {
     return new FeeFineBuilder(id, ownerId, feeFineType, defaultAmount, chargeNoticeId,
-      actionNoticeId, metadata);
+      actionNoticeId);
   }
   public FeeFineBuilder withChargeNoticeId(String chargeNoticeId) {
     return new FeeFineBuilder(id, ownerId, feeFineType, defaultAmount, chargeNoticeId,
-      actionNoticeId, metadata);
+      actionNoticeId);
   }
   public FeeFineBuilder withActionNoticeId(String actionNoticeId) {
     return new FeeFineBuilder(id, ownerId, feeFineType, defaultAmount, chargeNoticeId,
-      actionNoticeId, metadata);
+      actionNoticeId);
   }
   public FeeFineBuilder withMetadata(JsonObject metadata) {
     return new FeeFineBuilder(id, ownerId, feeFineType, defaultAmount, chargeNoticeId,
-      actionNoticeId, metadata);
+      actionNoticeId);
   }
 }
