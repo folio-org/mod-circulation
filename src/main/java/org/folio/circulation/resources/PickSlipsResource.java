@@ -5,6 +5,7 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import org.apache.commons.lang3.StringUtils;
+import org.folio.circulation.domain.AddressTypeRepository;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.domain.Location;
@@ -13,6 +14,7 @@ import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestStatus;
 import org.folio.circulation.domain.RequestType;
+import org.folio.circulation.domain.ServicePointRepository;
 import org.folio.circulation.domain.UserRepository;
 import org.folio.circulation.domain.notice.TemplateContextUtil;
 import org.folio.circulation.support.Clients;
@@ -23,12 +25,8 @@ import org.folio.circulation.support.OkJsonResponseResult;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.RouteRegistration;
 import org.folio.circulation.support.http.server.WebContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import java.lang.invoke.MethodHandles;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -36,6 +34,7 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
+import static java.util.Collections.emptyList;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.toMap;
@@ -45,8 +44,6 @@ import static org.folio.circulation.support.ResultBinding.flatMapResult;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
 
 public class PickSlipsResource extends Resource {
-  private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
-
   private static final String STATUS_KEY = "status";
   private static final String ITEM_ID_KEY = "itemId";
   private static final String REQUESTS_KEY = "requests";
@@ -75,14 +72,20 @@ public class PickSlipsResource extends Resource {
   private void getMany(RoutingContext routingContext) {
     final WebContext context = new WebContext(routingContext);
     final Clients clients = Clients.create(context, client);
-    final UserRepository userRepository = new UserRepository(clients);
 
-    UUID servicePointId = UUID.fromString(routingContext.request().getParam(SERVICE_POINT_ID_PARAM));
+    final UserRepository userRepository = new UserRepository(clients);
+    final AddressTypeRepository addressTypeRepository = new AddressTypeRepository(clients);
+    final ServicePointRepository servicePointRepository = new ServicePointRepository(clients);
+
+    final UUID servicePointId = UUID.fromString(
+      routingContext.request().getParam(SERVICE_POINT_ID_PARAM));
 
     fetchLocationsForServicePoint(servicePointId, clients)
       .thenComposeAsync(r -> r.after(locations -> fetchPagedItemsForLocations(locations, clients)))
       .thenComposeAsync(r -> r.after(items -> fetchOpenPageRequestsForItems(items, clients)))
       .thenComposeAsync(r -> r.after(userRepository::findUsersForRequests))
+      .thenComposeAsync(r -> r.after(addressTypeRepository::findAddressTypesForRequests))
+      .thenComposeAsync(r -> r.after(servicePointRepository::findServicePointsForRequests))
       .thenApply(flatMapResult(this::mapResultToJson))
       .thenApply(OkJsonResponseResult::from)
       .thenAccept(r -> r.writeTo(routingContext.response()));
@@ -106,11 +109,9 @@ public class PickSlipsResource extends Resource {
       .collect(toSet());
 
     if (locationIds.isEmpty()) {
-      log.info("No locations to search paged items for");
-      return completedFuture(succeeded(Collections.emptyList()));
+      return completedFuture(succeeded(emptyList()));
     }
 
-    // we already have locations, so no need to fetch them again
     final ItemRepository itemRepository = new ItemRepository(clients, false, true, true);
     Result<CqlQuery> statusQuery = exactMatch(STATUS_NAME_KEY, ItemStatus.PAGED.getValue());
     
@@ -131,11 +132,10 @@ public class PickSlipsResource extends Resource {
       .collect(toSet());
 
     if (locationsForItems.isEmpty()) {
-      log.info("No locations to load details for");
-      return completedFuture(succeeded(Collections.emptyList()));
+      return completedFuture(succeeded(emptyList()));
     }
 
-    LocationRepository locationRepository = LocationRepository.using(clients);
+    final LocationRepository locationRepository = LocationRepository.using(clients);
 
     return completedFuture(succeeded(locationsForItems))
       .thenComposeAsync(r -> r.after(locationRepository::loadLibraries))
@@ -144,7 +144,9 @@ public class PickSlipsResource extends Resource {
       .thenApply(flatMapResult(locations -> matchLocationsToItems(items, locations)));
   }
 
-  private Result<Collection<Item>> matchLocationsToItems(Collection<Item> items, Collection<Location> locations) {
+  private Result<Collection<Item>> matchLocationsToItems(
+    Collection<Item> items, Collection<Location> locations) {
+
     Map<String, Location> locationsMap = locations.stream()
       .collect(toMap(Location::getId, identity()));
 
@@ -164,7 +166,6 @@ public class PickSlipsResource extends Resource {
       .collect(toSet());
     
     if(itemIds.isEmpty()) {
-      log.info("No items to search requests for");
       return completedFuture(succeeded(MultipleRecords.empty()));
     }
 

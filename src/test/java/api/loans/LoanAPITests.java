@@ -1773,8 +1773,8 @@ public class LoanAPITests extends APITests {
       .getJsonObject(CALL_NUMBER_COMPONENTS);
 
     assertThat(callNumberComponents.getString("callNumber"), is("123456"));
-    assertFalse(callNumberComponents.containsKey("prefix"));
-    assertThat(callNumberComponents.getString("suffix"), is("CIRC"));
+    assertThat(callNumberComponents.getString("prefix"), is("PREFIX"));
+    assertThat(callNumberComponents.getString("suffix"), is("SUFFIX"));
   }
 
   protected void hasProperty(String property, JsonObject resource, String type,

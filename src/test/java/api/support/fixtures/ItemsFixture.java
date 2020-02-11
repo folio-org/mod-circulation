@@ -265,7 +265,8 @@ public class ItemsFixture {
       .withPermanentLocation(locationsFixture.thirdFloor())
       .withNoTemporaryLocation()
       .withCallNumber("123456")
-      .withCallNumberSuffix("CIRC");
+      .withCallNumberPrefix("PREFIX")
+      .withCallNumberSuffix("SUFFIX");
   }
 
   public IndividualResource setupDeclaredLostItem() {
