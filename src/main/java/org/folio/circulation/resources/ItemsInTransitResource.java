@@ -139,7 +139,7 @@ public class ItemsInTransitResource extends Resource {
     Result<CqlQuery> cqlQueryResult = statusQuery.combine(statusQuery, CqlQuery::and)
       .map(q -> q.sortBy(ascending("position")));
 
-    return fetcher.findByIndexNameAndQuery(mapToItemIdList(inTransitReportEntryList), ITEM_ID, cqlQueryResult)
+    return fetcher.findByIdIndexAndQuery(mapToItemIdList(inTransitReportEntryList), ITEM_ID, cqlQueryResult)
       .thenComposeAsync(requests ->
         itemRepository.fetchItemsFor(requests, Request::withItem))
       .thenComposeAsync(result -> result.after(servicePointRepository::findServicePointsForRequests))

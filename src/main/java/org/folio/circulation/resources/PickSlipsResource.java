@@ -97,7 +97,7 @@ public class PickSlipsResource extends Resource {
     final Result<CqlQuery> statusQuery = exactMatch(STATUS_NAME_KEY, ItemStatus.PAGED.getValue());
 
     return new MultipleRecordFetcher<>(itemStorageClient, ITEMS_KEY, Item::from)
-      .findByIndexNameAndQuery(locationIds, EFFECTIVE_LOCATION_ID_KEY, statusQuery)
+      .findByIdIndexAndQuery(locationIds, EFFECTIVE_LOCATION_ID_KEY, statusQuery)
       .thenApply(r -> r.next(this::recordsToSet))
       .thenApply(r -> r.next(items -> populateLocationsInItems(items, locations)));
   }
@@ -122,7 +122,7 @@ public class PickSlipsResource extends Resource {
     final Result<CqlQuery> statusQuery = exactMatch(STATUS_KEY, RequestStatus.OPEN_NOT_YET_FILLED.getValue());
 
     return new MultipleRecordFetcher<>(client, REQUESTS_KEY, Request::from)
-      .findByIndexNameAndQuery(itemIds, ITEM_ID_KEY, statusQuery)
+      .findByIdIndexAndQuery(itemIds, ITEM_ID_KEY, statusQuery)
       .thenApply(r -> r.next(this::recordsToSet))
       .thenApply(r -> r.next(requests -> filterItemsByRequests(items, requests)));
   }

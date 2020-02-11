@@ -30,10 +30,8 @@ public class MultipleRecordFetcher<T> {
   private final String recordsPropertyName;
   private final Function<JsonObject, T> recordMapper;
 
-  public MultipleRecordFetcher(
-    CollectionResourceClient client,
-    String recordsPropertyName,
-    Function<JsonObject, T> recordMapper) {
+  public MultipleRecordFetcher(CollectionResourceClient client,
+    String recordsPropertyName, Function<JsonObject, T> recordMapper) {
 
     this.client = client;
     this.recordsPropertyName = recordsPropertyName;
@@ -56,15 +54,15 @@ public class MultipleRecordFetcher<T> {
     return findByBatchQueries(buildBatchQueriesByIndexName(ids, indexName));
   }
 
-  public CompletableFuture<Result<MultipleRecords<T>>> findByIndexNameAndQuery(
+  public CompletableFuture<Result<MultipleRecords<T>>> findByIdIndexAndQuery(
       Collection<String> ids, String indexName, Result<CqlQuery> andQuery) {
 
     if (ids.isEmpty()) {
       return completedFuture(of(MultipleRecords::empty));
     }
 
-    return findByBatchQueriesAndQuery(buildBatchQueriesByIndexName(ids, indexName),
-      andQuery);
+    return findByBatchQueriesAndQuery(
+      buildBatchQueriesByIndexName(ids, indexName), andQuery);
   }
 
   private CompletableFuture<Result<MultipleRecords<T>>> findByBatchQueriesAndQuery(
