@@ -74,15 +74,6 @@ public class InstanceBuilder extends JsonBuilder implements Builder {
       this.identifiers);
   }
 
-  public InstanceBuilder withTitle(String title) {
-    return new InstanceBuilder(
-      this.id,
-      title,
-      this.contributors,
-      this.instanceTypeId,
-      this.identifiers);
-  }
-
   public Builder withInstanceTypeId(UUID instanceTypeId) {
     return new InstanceBuilder(
       this.id,
