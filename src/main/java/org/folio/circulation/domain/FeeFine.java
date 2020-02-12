@@ -3,29 +3,23 @@ package org.folio.circulation.domain;
 import io.vertx.core.json.JsonObject;
 
 public class FeeFine {
-  private final JsonObject representation;
+  private String id;
+  private String feeFineType;
 
-  public FeeFine() {
-    representation = null;
+  public FeeFine(String id, String feeFineType) {
+    this.id = id;
+    this.feeFineType = feeFineType;
   }
 
-  public FeeFine(JsonObject representation) {
-    this.representation = representation;
-  }
-
-  public static FeeFine from(JsonObject representation) {
-    return new FeeFine(representation);
+  public static FeeFine from(JsonObject jsonObject) {
+    return new FeeFine(jsonObject.getString("id"), jsonObject.getString("feeFineType"));
   }
 
   public String getId() {
-    return this.representation.getString("id");
+    return id;
   }
 
   public String getFeeFineType() {
-    return this.representation.getString("feeFineType");
-  }
-
-  public boolean isInitialized() {
-    return representation != null;
+    return feeFineType;
   }
 }

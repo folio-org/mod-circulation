@@ -6,35 +6,32 @@ import java.util.stream.Collectors;
 import io.vertx.core.json.JsonObject;
 
 public class FeeFineOwner {
-  private final JsonObject representation;
+  private String id;
+  private String owner;
+  private List<String> servicePoints;
 
-  public FeeFineOwner() {
-    representation = null;
+  public FeeFineOwner(String id, String owner, List<String> servicePoints) {
+    this.id = id;
+    this.owner = owner;
+    this.servicePoints = servicePoints;
   }
 
-  public FeeFineOwner(JsonObject representation) {
-    this.representation = representation;
-  }
-
-  public static FeeFineOwner from(JsonObject representation) {
-    return new FeeFineOwner(representation);
-  }
-
-  public List<String> getServicePoints() {
-    return representation.getJsonArray("servicePointOwner").stream()
-      .map(e -> ((JsonObject) e).getString("value"))
-    .collect(Collectors.toList());
+  public static FeeFineOwner from(JsonObject jsonObject) {
+    return new FeeFineOwner(jsonObject.getString("id"), jsonObject.getString("owner"),
+      jsonObject.getJsonArray("servicePointOwner").stream()
+        .map(e -> ((JsonObject) e).getString("value"))
+        .collect(Collectors.toList()));
   }
 
   public String getId() {
-    return this.representation.getString("id");
+    return id;
   }
 
   public String getOwner() {
-    return this.representation.getString("owner");
+    return owner;
   }
 
-  public boolean isInitialized() {
-    return representation != null;
+  public List<String> getServicePoints() {
+    return servicePoints;
   }
 }

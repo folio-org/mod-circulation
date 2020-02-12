@@ -41,7 +41,7 @@ public class FeeFineRepository {
 
   public CompletableFuture<Result<FeeFine>> create(JsonObject feeFineRepresentation) {
     final ResponseInterpreter<FeeFine> interpreter = new ResponseInterpreter<FeeFine>()
-      .flatMapOn(201, mapUsingJson(FeeFine::new))
+      .flatMapOn(201, mapUsingJson(FeeFine::from))
       .otherwise(forwardOnFailure());
 
     return feeFineStorageClient.post(feeFineRepresentation)
