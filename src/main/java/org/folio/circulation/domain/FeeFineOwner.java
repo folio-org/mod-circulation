@@ -3,6 +3,7 @@ package org.folio.circulation.domain;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
 public class FeeFineOwner {
@@ -18,7 +19,7 @@ public class FeeFineOwner {
 
   public static FeeFineOwner from(JsonObject jsonObject) {
     return new FeeFineOwner(jsonObject.getString("id"), jsonObject.getString("owner"),
-      jsonObject.getJsonArray("servicePointOwner").stream()
+      jsonObject.getJsonArray("servicePointOwner", new JsonArray()).stream()
         .map(e -> ((JsonObject) e).getString("value"))
         .collect(Collectors.toList()));
   }
