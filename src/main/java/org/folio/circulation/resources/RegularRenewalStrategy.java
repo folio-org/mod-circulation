@@ -108,11 +108,13 @@ public class RegularRenewalStrategy implements RenewalStrategy {
           loan.getItemId()));
         return failedValidation(errors);
       }
+
       if (loan.hasItemWithStatus(ItemStatus.CLAIMED_RETURNED)) {
         errors.add(itemByIdValidationError(CLAIMED_RETURNED_RENEWED_ERROR,
           loan.getItemId()));
         return failedValidation(errors);
       }
+
       final Result<DateTime> proposedDueDateResult =
         loanPolicy.determineStrategy(null, true, isRenewalWithHoldRequest, systemDate)
           .calculateDueDate(loan);
