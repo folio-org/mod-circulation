@@ -55,6 +55,7 @@ import org.junit.Test;
 
 import api.support.APITests;
 import api.support.builders.CheckOutByBarcodeRequestBuilder;
+import api.support.builders.ClaimItemReturnedRequestBuilder;
 import api.support.builders.FixedDueDateSchedule;
 import api.support.builders.FixedDueDateSchedulesBuilder;
 import api.support.builders.ItemBuilder;
@@ -784,6 +785,28 @@ abstract class RenewalAPITests extends APITests {
 
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("item is Declared lost"),
+      hasUUIDParameter("itemId", smallAngryPlanet.getId()))));
+  }
+
+  @Test
+  public void cannotRenewWhenItemIsClaimedReturned() {
+    final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final IndividualResource jessica = usersFixture.jessica();
+    final String comment = "testing";
+    final DateTime dateTime = DateTime.now();
+
+    final JsonObject loanJson = loansFixture.checkOutByBarcode(smallAngryPlanet, usersFixture.jessica())
+      .getJson();
+
+    loansFixture.claimItemReturned(new ClaimItemReturnedRequestBuilder()
+        .forLoan(loanJson.getString("id"))
+        .withItemClaimedReturnedDate(dateTime)
+        .withComment(comment));
+
+    final Response response = attemptRenewal(smallAngryPlanet, jessica);
+
+    assertThat(response.getJson(), hasErrorWith(allOf(
+      hasMessage("item is Claimed returned"),
       hasUUIDParameter("itemId", smallAngryPlanet.getId()))));
   }
 
