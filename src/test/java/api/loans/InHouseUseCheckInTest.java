@@ -4,7 +4,7 @@ import static api.support.http.CqlQuery.queryFromTemplate;
 import static api.support.http.Limit.noLimit;
 import static api.support.http.Offset.noOffset;
 import static org.hamcrest.core.Is.is;
-import static org.hamcrest.junit.MatcherAssert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 import java.util.UUID;
 

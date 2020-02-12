@@ -177,6 +177,10 @@ public class InterfaceUrls {
     return circulationModuleUrl(String.format("/circulation/loans/%s/declare-item-lost", loanId));
   }
 
+  public static URL claimItemReturnedURL(String loanId) {
+    return circulationModuleUrl(String.format("/circulation/loans/%s/claim-item-returned", loanId));
+  }
+
   public static URL endSessionUrl() {
     return circulationModuleUrl("/circulation/end-patron-action-session");
   }
@@ -237,6 +241,10 @@ public class InterfaceUrls {
 
   static URL userManualBlocksStorageUrl() {
     return APITestContext.viaOkapiModuleUrl("/manualblocks");
+  }
+
+  static URL identifierTypesUrl(String subPath) {
+    return APITestContext.viaOkapiModuleUrl("/identifier-types" + subPath);
   }
 
   static URL templateUrl(String templateId) {

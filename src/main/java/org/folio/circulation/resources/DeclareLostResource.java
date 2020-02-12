@@ -1,15 +1,12 @@
 package org.folio.circulation.resources;
 
-import static org.folio.circulation.support.Result.failed;
-import static org.folio.circulation.support.Result.succeeded;
-import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
-
 import java.util.Objects;
 
 import org.folio.circulation.StoreLoanAndItem;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanRepository;
 import org.folio.circulation.domain.representations.DeclareItemLostRequest;
+import org.folio.circulation.domain.validation.LoanValidator;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.ItemRepository;
 import org.folio.circulation.support.NoContentResult;
@@ -40,7 +37,7 @@ public class DeclareLostResource extends Resource {
 
     validateDeclaredLostRequest(routingContext).after(request ->
       loanRepository.getById(request.getLoanId())
-        .thenApply(this::refuseWhenLoanIsClosed)
+        .thenApply(LoanValidator::refuseWhenLoanIsClosed)
         .thenApply(loan -> declareItemLost(loan, request)))
       .thenApply(r -> r.after(storeLoanAndItem::updateLoanAndItemInStorage))
       .thenCompose(r -> r.thenApply(NoContentResult::from))
@@ -61,16 +58,5 @@ public class DeclareLostResource extends Resource {
 
     String loanId = routingContext.request().getParam("id");
     return DeclareItemLostRequest.from(routingContext.getBodyAsJson(), loanId);
-  }
-
-  private Result<Loan> refuseWhenLoanIsClosed(Result<Loan> loanResult) {
-
-    return loanResult.next(loan -> {
-      if (loan.isClosed()) {
-        return failed(
-          singleValidationError("Loan is closed", "id", loan.getId()));
-      }
-      return succeeded(loan);
-    });
   }
 }

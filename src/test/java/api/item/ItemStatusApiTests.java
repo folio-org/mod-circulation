@@ -4,7 +4,7 @@ import static api.support.matchers.TextDateTimeMatcher.withinSecondsAfter;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.joda.time.Seconds.seconds;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.joda.time.DateTime;

@@ -7,7 +7,7 @@ import static org.folio.circulation.support.results.ResultExamples.conditionFail
 import static org.folio.circulation.support.results.ResultExamples.throwOnExecution;
 import static org.folio.circulation.support.results.ResultExamples.somethingWentWrong;
 import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 import org.folio.circulation.support.Result;
 import org.junit.Test;

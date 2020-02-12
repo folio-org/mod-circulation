@@ -5,7 +5,7 @@ import static org.folio.circulation.support.Result.of;
 import static org.folio.circulation.support.Result.ofAsync;
 import static org.folio.circulation.support.results.ResultExamples.*;
 import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;

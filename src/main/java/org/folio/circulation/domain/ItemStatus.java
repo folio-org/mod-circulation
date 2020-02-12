@@ -15,7 +15,8 @@ public enum ItemStatus {
   PAGED("Paged"),
   ON_ORDER("On order"),
   IN_PROCESS("In process"),
-  DECLARED_LOST("Declared lost");
+  DECLARED_LOST("Declared lost"),
+  CLAIMED_RETURNED("Claimed returned");
 
   public static ItemStatus from(String value, String date) {
     return Arrays.stream(values())

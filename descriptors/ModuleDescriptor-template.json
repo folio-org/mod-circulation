@@ -4,7 +4,7 @@
   "provides": [
     {
       "id": "requests-reports",
-      "version": "0.6",
+      "version": "0.7",
       "handlers": [
         {
           "methods": [
@@ -58,7 +58,7 @@
     },
     {
       "id": "request-move",
-      "version": "0.6",
+      "version": "0.7",
       "handlers": [
         {
           "methods": [
@@ -107,8 +107,24 @@
       ]
     },
     {
+      "id": "claim-item-returned",
+      "version": "0.1",
+      "handlers": [
+        {
+          "methods": ["POST"],
+          "pathPattern": "/circulation/loans/{id}/claim-item-returned",
+          "permissionsRequired": [
+            "circulation.loans.claim-item-returned.post"
+          ],
+          "modulePermissions": [
+            "modperms.circulation.loans.claim-item-returned.post"
+          ]
+        }
+      ]
+    },
+    {
       "id": "circulation",
-      "version": "9.0",
+      "version": "9.1",
       "handlers": [
         {
           "methods": [
@@ -737,7 +753,7 @@
   "requires": [
     {
       "id": "loan-storage",
-      "version": "6.4"
+      "version": "6.6"
     },
     {
       "id": "circulation-rules-storage",
@@ -745,7 +761,7 @@
     },
     {
       "id": "item-storage",
-      "version": "8.0"
+      "version": "8.1"
     },
     {
       "id": "instance-storage",
@@ -757,11 +773,11 @@
     },
     {
       "id": "request-storage",
-      "version": "3.2"
+      "version": "3.3"
     },
     {
       "id": "request-storage-batch",
-      "version": "0.2"
+      "version": "0.3"
     },
     {
       "id": "users",
@@ -909,6 +925,11 @@
       "description": "declares the loaned item lost"
     },
     {
+      "permissionName": "circulation.loans.claim-item-returned.post",
+      "displayName": "circulation - declare the loaned item as claimed returned",
+      "description": "declares the loaned item as claimed returned"
+    },
+    {
       "permissionName": "circulation.rules.get",
       "displayName": "Circulation - get circulation rules",
       "description": "Get circulation rules"
@@ -1030,6 +1051,7 @@
         "circulation.loans.item.put",
         "circulation.loans.item.delete",
         "circulation.loans.collection.delete",
+        "circulation.loans.claim-item-returned.post",
         "circulation.rules.put",
         "circulation.rules.get",
         "circulation.rules.loan-policy.get",
@@ -1839,6 +1861,21 @@
         "circulation-storage.loans.item.put",
         "users.item.get",
         "inventory-storage.items.item.put"
+      ],
+      "visible": false
+    },
+    {
+      "permissionName": "modperms.circulation.loans.claim-item-returned.post",
+      "displayName": "module permissions for one op",
+      "description": "to reduce X-Okapi-Token size",
+      "subPermissions": [
+        "circulation-storage.loans.item.get",
+        "circulation-storage.loans.item.put",
+        "inventory-storage.items.item.get",
+        "inventory-storage.items.item.put",
+        "inventory-storage.holdings.item.get",
+        "inventory-storage.instances.item.get",
+        "users.item.get"
       ],
       "visible": false
     },

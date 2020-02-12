@@ -4,13 +4,10 @@ import static java.util.function.Function.identity;
 import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
 import static org.folio.circulation.support.JsonPropertyWriter.write;
 import static org.hamcrest.core.Is.is;
-import static org.hamcrest.junit.MatcherAssert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 
-import java.net.MalformedURLException;
 import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeoutException;
 import java.util.function.Function;
 
 import org.folio.circulation.domain.ItemStatus;
@@ -105,26 +102,20 @@ public class ItemsFixture {
   }
 
   public InventoryItemResource basedUponSmallAngryPlanet() {
-
     return basedUponSmallAngryPlanet(identity());
   }
 
   public InventoryItemResource basedUponSmallAngryPlanet(String barcode) {
-
     return basedUponSmallAngryPlanet(item -> item.withBarcode(barcode));
   }
 
-  public InventoryItemResource basedUponSmallAngryPlanet(
-    ItemBuilder itemBuilder,
+  public InventoryItemResource basedUponSmallAngryPlanet(ItemBuilder itemBuilder,
     HoldingBuilder holdingBuilder) {
 
-    return applyAdditionalProperties(
+    return basedUponSmallAngryPlanet(
+      holdings -> holdingBuilder,
       identity(),
-      identity(),
-      InstanceExamples.basedUponSmallAngryPlanet(booksInstanceTypeId(),
-        getPersonalContributorNameTypeId()),
-      holdingBuilder,
-      itemBuilder);
+      item -> itemBuilder);
   }
 
   public InventoryItemResource basedUponSmallAngryPlanet(
@@ -139,8 +130,18 @@ public class ItemsFixture {
     Function<HoldingBuilder, HoldingBuilder> additionalHoldingsRecordProperties,
     Function<ItemBuilder, ItemBuilder> additionalItemProperties) {
 
+    return basedUponSmallAngryPlanet(additionalHoldingsRecordProperties,
+      identity(), additionalItemProperties);
+  }
+
+  public InventoryItemResource basedUponSmallAngryPlanet(
+    Function<HoldingBuilder, HoldingBuilder> additionalHoldingsRecordProperties,
+    Function<InstanceBuilder, InstanceBuilder> additionalInstanceProperties,
+    Function<ItemBuilder, ItemBuilder> additionalItemProperties) {
+
     return applyAdditionalProperties(
       additionalHoldingsRecordProperties,
+      additionalInstanceProperties,
       additionalItemProperties,
       InstanceExamples.basedUponSmallAngryPlanet(booksInstanceTypeId(),
         getPersonalContributorNameTypeId()),
@@ -158,6 +159,7 @@ public class ItemsFixture {
     Function<ItemBuilder, ItemBuilder> additionalItemProperties) {
 
     return applyAdditionalProperties(
+      identity(),
       identity(),
       additionalItemProperties,
       InstanceExamples.basedUponNod(booksInstanceTypeId(),
@@ -178,6 +180,7 @@ public class ItemsFixture {
 
     return applyAdditionalProperties(
       additionalHoldingsRecordProperties,
+      identity(),
       additionalItemProperties,
       InstanceExamples.basedUponTemeraire(booksInstanceTypeId(),
         getPersonalContributorNameTypeId()),
@@ -202,6 +205,7 @@ public class ItemsFixture {
 
     return applyAdditionalProperties(
       identity(),
+      identity(),
       additionalItemProperties,
       InstanceExamples.basedUponUprooted(booksInstanceTypeId(),
         getPersonalContributorNameTypeId()),
@@ -220,6 +224,7 @@ public class ItemsFixture {
 
     return applyAdditionalProperties(
       identity(),
+      identity(),
       additionalItemProperties,
       InstanceExamples.basedUponInterestingTimes(booksInstanceTypeId(),
         getPersonalContributorNameTypeId()),
@@ -230,13 +235,14 @@ public class ItemsFixture {
 
   private InventoryItemResource applyAdditionalProperties(
     Function<HoldingBuilder, HoldingBuilder> additionalHoldingsRecordProperties,
+    Function<InstanceBuilder, InstanceBuilder> additionalInstanceProperties,
     Function<ItemBuilder, ItemBuilder> additionalItemProperties,
     InstanceBuilder instanceBuilder,
     HoldingBuilder holdingsRecordBuilder,
     ItemBuilder itemBuilder) {
 
     return create(
-      instanceBuilder,
+      additionalInstanceProperties.apply(instanceBuilder),
       additionalHoldingsRecordProperties.apply(holdingsRecordBuilder),
       additionalItemProperties.apply(itemBuilder));
   }

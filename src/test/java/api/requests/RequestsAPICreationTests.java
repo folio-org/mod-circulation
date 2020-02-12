@@ -10,14 +10,16 @@ import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static api.support.matchers.ValidationErrorMatchers.hasParameter;
 import static api.support.matchers.ValidationErrorMatchers.hasUUIDParameter;
 import static java.util.Arrays.asList;
+import static java.util.function.Function.identity;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.hasItems;
+import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.emptyString;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.core.Is.is;
-import static org.hamcrest.junit.MatcherAssert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertTrue;
 
 import static org.folio.HttpStatus.HTTP_BAD_REQUEST;
@@ -54,6 +56,7 @@ import api.support.fixtures.TemplateContextMatchers;
 import api.support.fixtures.UsersFixture;
 import api.support.http.InventoryItemResource;
 import api.support.http.ResourceClient;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import junitparams.JUnitParamsRunner;
 import junitparams.Parameters;
@@ -90,9 +93,13 @@ public class RequestsAPICreationTests extends APITests {
 
     UUID id = UUID.randomUUID();
     UUID pickupServicePointId = servicePointsFixture.cd1().getId();
+    UUID isbnIdentifierId = identifierTypesFixture.isbn().getId();
+    String isbnValue = "9780866989732";
 
-    IndividualResource item = itemsFixture
-      .basedUponSmallAngryPlanet(itemsFixture.addCallNumberStringComponents());
+    IndividualResource item = itemsFixture.basedUponSmallAngryPlanet(
+      identity(),
+      instanceBuilder -> instanceBuilder.addIdentifier(isbnIdentifierId, isbnValue),
+      itemsFixture.addCallNumberStringComponents());
 
     loansFixture.checkOutByBarcode(item, usersFixture.jessica());
 
@@ -189,6 +196,14 @@ public class RequestsAPICreationTests extends APITests {
     assertThat(requestItem.getString("enumeration"), is("enumeration1"));
     assertThat(requestItem.getString("chronology"), is("chronology"));
     assertThat(requestItem.getString("volume"), is("vol.1"));
+
+    JsonArray identifiers = requestItem.getJsonArray("identifiers");
+    assertThat(identifiers, notNullValue());
+    assertThat(identifiers.size(), is(1));
+    assertThat(identifiers.getJsonObject(0).getString("identifierTypeId"),
+      is(isbnIdentifierId.toString()));
+    assertThat(identifiers.getJsonObject(0).getString("value"),
+      is(isbnValue));
   }
 
   @Test

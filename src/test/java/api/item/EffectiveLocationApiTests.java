@@ -1,7 +1,7 @@
 package api.item;
 
 import static api.support.matchers.UUIDMatcher.is;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 import java.util.UUID;
 
