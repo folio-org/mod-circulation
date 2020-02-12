@@ -5,8 +5,8 @@ import static api.support.fixtures.OpeningHourExamples.afternoon;
 
 import java.util.Arrays;
 
+import api.support.OpeningPeriod;
 import org.folio.circulation.domain.OpeningDay;
-import org.folio.circulation.domain.OpeningPeriod;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 

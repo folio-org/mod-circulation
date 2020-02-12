@@ -1,8 +1,8 @@
 package api.support.builders;
 
+import api.support.OpeningPeriod;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
-import org.folio.circulation.domain.OpeningPeriod;
 
 import java.util.List;
 import java.util.stream.Collector;

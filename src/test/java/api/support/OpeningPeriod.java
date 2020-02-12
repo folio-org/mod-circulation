@@ -1,6 +1,7 @@
-package org.folio.circulation.domain;
+package api.support;
 
 import io.vertx.core.json.JsonObject;
+import org.folio.circulation.domain.OpeningDay;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.LocalDate;
