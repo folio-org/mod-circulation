@@ -7,7 +7,6 @@ import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static api.support.matchers.ValidationErrorMatchers.hasUUIDParameter;
 import static org.folio.HttpStatus.HTTP_NO_CONTENT;
-//import static org.folio.HttpStatus.HTTP_UNPROCESSABLE_ENTITY; // TODO
 import static org.folio.HttpStatus.HTTP_VALIDATION_ERROR;
 import static org.folio.circulation.support.JsonPropertyWriter.write;
 import static org.hamcrest.CoreMatchers.allOf;
@@ -102,7 +101,7 @@ public class ChangeDueDateTests extends APITests {
   }
 
   @Test
-  public void canManuallyChangeTheDueDateOfClaimedReturnedLoan() {
+  public void cannotManuallyChangeTheDueDateOfClaimedReturnedLoan() {
     final InventoryItemResource item = itemsFixture.basedUponNod();
 
     IndividualResource loan = loansFixture.checkOutByBarcode(item);
@@ -123,17 +122,11 @@ public class ChangeDueDateTests extends APITests {
     write(loanToChange, "action", "dueDateChange");
     write(loanToChange, "dueDate", newDueDate);
 
-    loansFixture.attemptToReplaceLoan(loan.getId(), loanToChange); // FIXME
+    Response updatedLoanResponse = loansFixture.attemptToReplaceLoan(loan.getId(), loanToChange);
 
-    Response updatedLoanResponse = loansClient.getById(loan.getId());
-
-    assertThat(updatedLoanResponse.getStatusCode(), is(422)); // TODO (hasStatus(HTTP_UNPROCESSABLE_ENTITY))
-
-    JsonObject updatedLoan = updatedLoanResponse.getJson();
-
-    // TODO validate message as well.
-    //assertThat("Should respond with appropriate due date change failed message",
-    //  updatedLoanResponse.getBody().contains("Due date change failed: item is claimed returned"), is(true));
+    assertThat(updatedLoanResponse.getStatusCode(), is(422));
+    assertThat("Should respond with appropriate due date change failed message",
+      updatedLoanResponse.getBody().contains("Due date change failed: item is claimed returned"), is(true));
   }
 
   @Test
