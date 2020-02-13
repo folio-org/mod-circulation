@@ -8,39 +8,6 @@ import java.util.Map;
 import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
 
 public class OverdueFinePolicy extends Policy {
-  public enum OverdueFineInterval {
-    MINUTE("minute"),
-    HOUR("hour"),
-    DAY("day"),
-    WEEK("week"),
-    MONTH("month"),
-    YEAR("year");
-
-    private final String value;
-
-    private static final Map<String, OverdueFineInterval> CONSTANTS =
-      new HashMap<>();
-
-    static {
-      for (OverdueFinePolicy.OverdueFineInterval c: values()) {
-        CONSTANTS.put(c.value, c);
-      }
-    }
-
-    OverdueFineInterval(String value) {
-      this.value = value;
-    }
-
-    public static OverdueFinePolicy.OverdueFineInterval fromValue(String value) {
-      OverdueFinePolicy.OverdueFineInterval constant = CONSTANTS.get(value);
-      if (constant == null) {
-        throw new IllegalArgumentException(value);
-      } else {
-        return constant;
-      }
-    }
-  }
-
   private Double overdueFine;
   private OverdueFineInterval overdueFineInterval;
   private Double maxOverdueFine;
@@ -104,7 +71,6 @@ public class OverdueFinePolicy extends Policy {
     this.maxOverdueRecallFine = maxOverdueRecallFine;
   }
 
-
   public Boolean getIgnoreGracePeriodForRecalls() {
     return ignoreGracePeriodForRecalls;
   }
@@ -120,6 +86,39 @@ public class OverdueFinePolicy extends Policy {
   private static class UnknownOverdueFinePolicy extends OverdueFinePolicy {
     UnknownOverdueFinePolicy(String id) {
       super(id, null, null, null);
+    }
+  }
+
+  public enum OverdueFineInterval {
+    MINUTE("minute"),
+    HOUR("hour"),
+    DAY("day"),
+    WEEK("week"),
+    MONTH("month"),
+    YEAR("year");
+
+    private final String value;
+
+    private static final Map<String, OverdueFineInterval> CONSTANTS =
+      new HashMap<>();
+
+    static {
+      for (OverdueFinePolicy.OverdueFineInterval c: values()) {
+        CONSTANTS.put(c.value, c);
+      }
+    }
+
+    OverdueFineInterval(String value) {
+      this.value = value;
+    }
+
+    public static OverdueFinePolicy.OverdueFineInterval fromValue(String value) {
+      OverdueFinePolicy.OverdueFineInterval constant = CONSTANTS.get(value);
+      if (constant == null) {
+        throw new IllegalArgumentException(value);
+      } else {
+        return constant;
+      }
     }
   }
 }
