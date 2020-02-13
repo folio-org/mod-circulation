@@ -6,6 +6,8 @@ import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static api.support.matchers.ValidationErrorMatchers.hasUUIDParameter;
+import static org.folio.HttpStatus.HTTP_NO_CONTENT;
+//import static org.folio.HttpStatus.HTTP_UNPROCESSABLE_ENTITY; // TODO
 import static org.folio.HttpStatus.HTTP_VALIDATION_ERROR;
 import static org.folio.circulation.support.JsonPropertyWriter.write;
 import static org.hamcrest.CoreMatchers.allOf;
@@ -32,7 +34,7 @@ import org.joda.time.Period;
 import org.junit.Test;
 
 import api.support.APITests;
-import api.support.builders.DeclareItemLostRequestBuilder;
+import api.support.builders.ClaimItemReturnedRequestBuilder;
 import api.support.builders.ItemBuilder;
 import api.support.builders.LoanPolicyBuilder;
 import api.support.builders.NoticeConfigurationBuilder;
@@ -44,6 +46,7 @@ import api.support.http.InventoryItemResource;
 import io.vertx.core.json.JsonObject;
 
 public class ChangeDueDateTests extends APITests {
+
   @Test
   public void canManuallyChangeTheDueDateOfLoan() {
     final InventoryItemResource item = itemsFixture.basedUponNod();
@@ -96,6 +99,41 @@ public class ChangeDueDateTests extends APITests {
 
     assertThat("Should not contain check out service point summary",
       loanInStorage.containsKey("checkoutServicePoint"), is(false));
+  }
+
+  @Test
+  public void canManuallyChangeTheDueDateOfClaimedReturnedLoan() {
+    final InventoryItemResource item = itemsFixture.basedUponNod();
+
+    IndividualResource loan = loansFixture.checkOutByBarcode(item);
+
+    final ClaimItemReturnedRequestBuilder claimedItemBuilder =
+     (new ClaimItemReturnedRequestBuilder()).forLoan(loan.getId().toString());
+
+    Response claimedLoan = loansFixture.claimItemReturned(claimedItemBuilder);
+    assertThat(claimedLoan, hasStatus(HTTP_NO_CONTENT));
+
+    Response fetchedLoan = loansClient.getById(loan.getId());
+
+    JsonObject loanToChange = fetchedLoan.getJson().copy();
+
+    final DateTime dueDate = DateTime.parse(loanToChange.getString("dueDate"));
+    final DateTime newDueDate = dueDate.plus(Period.days(14));
+
+    write(loanToChange, "action", "dueDateChange");
+    write(loanToChange, "dueDate", newDueDate);
+
+    loansFixture.attemptToReplaceLoan(loan.getId(), loanToChange); // FIXME
+
+    Response updatedLoanResponse = loansClient.getById(loan.getId());
+
+    assertThat(updatedLoanResponse.getStatusCode(), is(422)); // TODO (hasStatus(HTTP_UNPROCESSABLE_ENTITY))
+
+    JsonObject updatedLoan = updatedLoanResponse.getJson();
+
+    // TODO validate message as well.
+    //assertThat("Should respond with appropriate due date change failed message",
+    //  updatedLoanResponse.getBody().contains("Due date change failed: item is claimed returned"), is(true));
   }
 
   @Test

@@ -16,6 +16,7 @@ import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.domain.RequestQueue;
 import org.folio.circulation.domain.policy.LoanPolicy;
 import org.folio.circulation.domain.policy.library.ClosedLibraryStrategyService;
+import org.folio.circulation.domain.validation.LoanAndRelatedRecordsValidator;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.Result;
 import org.joda.time.DateTime;
@@ -29,16 +30,22 @@ import io.vertx.core.json.JsonObject;
  */
 public class RegularCheckOutStrategy implements CheckOutStrategy {
 
+  private static final String DUE_DATE = "dueDate";
+
   @Override
   public CompletableFuture<Result<LoanAndRelatedRecords>> checkOut(LoanAndRelatedRecords relatedRecords,
                                                                    JsonObject request,
                                                                    Clients clients) {
+    String dueDateParameter = request.getString(DUE_DATE);
+
     DateTime loanDate = relatedRecords.getLoan().getLoanDate();
     final ClosedLibraryStrategyService strategyService =
       ClosedLibraryStrategyService.using(clients, loanDate, false);
 
     return completedFuture(succeeded(relatedRecords))
       .thenApply(r -> r.next(this::refuseWhenItemIsNotLoanable))
+      .thenApply(r -> LoanAndRelatedRecordsValidator
+        .refuseWhenLoanDueDateUpdateOnClaimedReturned(r, dueDateParameter))
       .thenApply(r -> r.next(this::calculateDefaultInitialDueDate))
       .thenCompose(r -> r.after(strategyService::applyClosedLibraryDueDateManagement));
   }

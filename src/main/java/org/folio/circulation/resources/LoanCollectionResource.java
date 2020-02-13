@@ -32,6 +32,7 @@ import org.folio.circulation.domain.policy.OverdueFinePolicyRepository;
 import org.folio.circulation.domain.validation.AlreadyCheckedOutValidator;
 import org.folio.circulation.domain.validation.ItemNotFoundValidator;
 import org.folio.circulation.domain.validation.ItemStatusValidator;
+import org.folio.circulation.domain.validation.LoanAndRelatedRecordsValidator;
 import org.folio.circulation.domain.validation.ProxyRelationshipValidator;
 import org.folio.circulation.domain.validation.RequestedByAnotherPatronValidator;
 import org.folio.circulation.domain.validation.ServicePointLoanLocationValidator;
@@ -163,6 +164,8 @@ public class LoanCollectionResource extends CollectionResource {
       .thenApply(this::refuseWhenItemIsDeclaredLost)
       .thenCombineAsync(userRepository.getUser(loan.getUserId()), this::addUser)
       .thenApply(itemNotFoundValidator::refuseWhenItemNotFound)
+      .thenCombine(loanRepository.getById(loan.getId()), (r, l) ->
+        LoanAndRelatedRecordsValidator.refuseWhenLoanDueDateUpdateOnClaimedReturned(r, l))
       .thenComposeAsync(r -> r.after(proxyRelationshipValidator::refuseWhenInvalid))
       .thenCombineAsync(requestQueueRepository.get(loan.getItemId()), this::addRequestQueue)
       .thenComposeAsync(result -> result.after(requestQueueUpdate::onCheckIn))
