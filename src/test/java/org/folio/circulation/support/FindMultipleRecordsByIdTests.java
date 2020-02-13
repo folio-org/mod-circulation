@@ -1,5 +1,6 @@
 package org.folio.circulation.support;
 
+import static java.util.concurrent.TimeUnit.SECONDS;
 import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.toList;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatchAny;
@@ -13,12 +14,16 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeoutException;
 import java.util.stream.Stream;
 
+import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.support.http.client.CqlQuery;
 import org.folio.circulation.support.http.client.Response;
 import org.junit.Test;
@@ -76,6 +81,27 @@ public class FindMultipleRecordsByIdTests {
     assertThat(generatedCqlQuery.getAllValues().get(0), is(firstExpectedQuery));
     assertThat(generatedCqlQuery.getAllValues().get(1), is(secondExpectedQuery));
   }
+
+  @Test
+  public void SearchingForNoIdsAssumesNoRecordsWillBeFound() throws InterruptedException,
+      ExecutionException, TimeoutException {
+
+    final GetManyRecordsClient client = clientThatAlwaysReturnsCannedResponse();
+
+    final MultipleRecordFetcher<JsonObject> fetcher = new MultipleRecordFetcher<>(
+      client, "records", identity());
+
+    final CompletableFuture<Result<MultipleRecords<JsonObject>>> futureResult
+      = fetcher.findByIds(new ArrayList<>());
+
+    final MultipleRecords<JsonObject> result = futureResult.get(1, SECONDS).value();
+
+    assertThat("Should assume no records are found",
+        result.isEmpty(), is(true));
+
+    verify(client, times(0)).getMany(any(), any());
+  }
+
 
   private GetManyRecordsClient clientThatAlwaysReturnsCannedResponse() {
     final GetManyRecordsClient mock = mock(GetManyRecordsClient.class);
