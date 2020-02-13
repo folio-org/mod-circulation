@@ -48,21 +48,8 @@ public class LoanAndRelatedRecordsValidator {
     );
   }
 
-  public static Result<LoanAndRelatedRecords> refuseWhenLoanDueDateUpdateOnClaimedReturned(Result<LoanAndRelatedRecords> result, String dueDateParameter) {
-    DateTime dueDate = dueDateParameter == null
-      || dueDateParameter.isEmpty()
-      ? null : DateTime.parse(dueDateParameter);
-
-    return result.failWhen(
-      r -> succeeded(isClaimedReturnedOnDueDateChanged(
-        r.getLoan(), r.getLoan().getDueDate(), dueDate)),
-      LoanAndRelatedRecordsValidator::dueDateChangedFailedForClaimedReturned
-    );
-  }
-
   private static boolean isClaimedReturnedOnDueDateChanged(Loan loan, DateTime previous, DateTime upcoming) {
-    if (!loan.getItem().isClaimedReturned() || upcoming == null
-      || previous == null) {
+    if (!loan.getItem().isClaimedReturned()) {
       return false;
     }
 
