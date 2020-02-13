@@ -37,7 +37,7 @@ public class FeeFineRepository {
       .thenApply(r -> r.map(col -> col.stream().findFirst().orElse(null)));
   }
 
-  private Result<MultipleRecords<FeeFine>> mapResponseToFeefines(Response response) {
+  private Result<MultipleRecords<FeeFine>> mapResponseToFeeFines(Response response) {
     return MultipleRecords.from(response, FeeFine::from, "feefines");
   }
 
