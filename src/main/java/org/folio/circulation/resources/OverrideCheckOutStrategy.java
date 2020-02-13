@@ -11,7 +11,6 @@ import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
-import org.folio.circulation.domain.validation.LoanAndRelatedRecordsValidator;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.http.server.ValidationError;
@@ -59,8 +58,6 @@ public class OverrideCheckOutStrategy implements CheckOutStrategy {
 
     return completedFuture(succeeded(relatedRecords))
       .thenApply(r -> r.next(this::refuseWhenItemIsLoanable))
-      .thenApply(records -> LoanAndRelatedRecordsValidator
-        .refuseWhenLoanDueDateUpdateOnClaimedReturned(records, dueDateParameter))
       .thenApply(r -> r.next(records -> setDueDate(records, dueDate)))
       .thenApply(r -> r.next(records -> setLoanAction(records, comment)));
   }
