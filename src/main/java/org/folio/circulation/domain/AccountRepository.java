@@ -115,12 +115,12 @@ public class AccountRepository {
     return new MultipleRecordFetcher<>(feefineActionsStorageClient, "feefineactions", FeeFineAction::from);
   }
 
-  public CompletableFuture<Result<Account>> create(JsonObject accountRepresentation) {
+  public CompletableFuture<Result<Account>> create(Account account) {
     final ResponseInterpreter<Account> interpreter = new ResponseInterpreter<Account>()
       .flatMapOn(201, mapUsingJson(Account::new))
       .otherwise(forwardOnFailure());
 
-    return accountsStorageClient.post(accountRepresentation)
+    return accountsStorageClient.post(account.toJson())
       .thenApply(interpreter::flatMap);
   }
 }

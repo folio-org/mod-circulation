@@ -1,14 +1,26 @@
 package org.folio.circulation.domain;
 
-import static org.junit.Assert.assertEquals;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
-import static org.mockito.Mockito.when;
+import api.support.builders.CheckInByBarcodeRequestBuilder;
+import api.support.builders.FeeFineBuilder;
+import api.support.builders.FeeFineOwnerBuilder;
+import api.support.builders.InstanceBuilder;
+import api.support.builders.ItemBuilder;
+import api.support.builders.LoanBuilder;
+import api.support.builders.LocationBuilder;
+import api.support.builders.OverdueFinePolicyBuilder;
+import io.vertx.core.json.JsonObject;
+import org.folio.circulation.domain.policy.OverdueFinePolicy;
+import org.folio.circulation.domain.policy.OverdueFinePolicyRepository;
+import org.folio.circulation.domain.representations.CheckInByBarcodeRequest;
+import org.folio.circulation.support.ItemRepository;
+import org.folio.circulation.support.Result;
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+import org.mockito.ArgumentCaptor;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -20,30 +32,15 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Stream;
 
-import api.support.builders.InstanceBuilder;
-import org.folio.circulation.domain.policy.OverdueFinePolicy;
-import org.folio.circulation.domain.policy.OverdueFinePolicyRepository;
-import org.folio.circulation.domain.representations.AccountRepresentation;
-import org.folio.circulation.domain.representations.CheckInByBarcodeRequest;
-import org.folio.circulation.domain.representations.ItemProperties;
-import org.folio.circulation.support.ItemRepository;
-import org.folio.circulation.support.Result;
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.mockito.ArgumentCaptor;
-
-import api.support.builders.CheckInByBarcodeRequestBuilder;
-import api.support.builders.FeeFineBuilder;
-import api.support.builders.FeeFineOwnerBuilder;
-import api.support.builders.ItemBuilder;
-import api.support.builders.LoanBuilder;
-import api.support.builders.LocationBuilder;
-import api.support.builders.OverdueFinePolicyBuilder;
-import io.vertx.core.json.JsonObject;
+import static org.junit.Assert.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.when;
 
 @RunWith(value = Parameterized.class)
 public class OverdueFineCalculatorServiceTest {
@@ -167,23 +164,22 @@ public class OverdueFineCalculatorServiceTest {
     overdueFineCalculatorService.calculateOverdueFine(records).get();
     verify(accountRepository, times(1)).create(any());
 
-    ArgumentCaptor<AccountRepresentation> argument =
-      ArgumentCaptor.forClass(AccountRepresentation.class);
+    ArgumentCaptor<Account> argument = ArgumentCaptor.forClass(Account.class);
     verify(accountRepository).create(argument.capture());
-    assertEquals(FEE_FINE_OWNER_ID.toString(), argument.getValue().getString("ownerId"));
-    assertEquals(FEE_FINE_ID.toString(), argument.getValue().getString("feeFineId"));
-    assertEquals(correctOverdueFine, argument.getValue().getDouble("amount"));
-    assertEquals(correctOverdueFine, argument.getValue().getDouble("remaining"));
-    assertEquals(FEE_FINE_TYPE, argument.getValue().getString("feeFineType"));
-    assertEquals(FEE_FINE_OWNER, argument.getValue().getString("feeFineOwner"));
-    assertEquals(TITLE, argument.getValue().getString("title"));
-    assertEquals(BARCODE, argument.getValue().getString("barcode"));
-    assertEquals(CALL_NUMBER, argument.getValue().getString("callNumber"));
-    assertEquals(SERVICE_POINT_ID.toString(), argument.getValue().getString("location"));
-    assertEquals(ITEM_MATERIAL_TYPE_ID.toString(), argument.getValue().getString("materialTypeId"));
-    assertEquals(LOAN_ID.toString(), argument.getValue().getString("loanId"));
-    assertEquals(LOAN_USER_ID.toString(), argument.getValue().getString("userId"));
-    assertEquals(ITEM_ID.toString(), argument.getValue().getString("itemId"));
+    assertEquals(FEE_FINE_OWNER_ID.toString(), argument.getValue().getOwnerId());
+    assertEquals(FEE_FINE_ID.toString(), argument.getValue().getFeeFineId());
+    assertEquals(correctOverdueFine, argument.getValue().getAmount());
+    assertEquals(correctOverdueFine, argument.getValue().getRemaining());
+    assertEquals(FEE_FINE_TYPE, argument.getValue().getFeeFineType());
+    assertEquals(FEE_FINE_OWNER, argument.getValue().getFeeFineOwner());
+    assertEquals(TITLE, argument.getValue().getTitle());
+    assertEquals(BARCODE, argument.getValue().getBarcode());
+    assertEquals(CALL_NUMBER, argument.getValue().getCallNumber());
+    assertEquals(SERVICE_POINT_ID.toString(), argument.getValue().getLocation());
+    assertEquals(ITEM_MATERIAL_TYPE_ID.toString(), argument.getValue().getMaterialTypeId());
+    assertEquals(LOAN_ID.toString(), argument.getValue().getLoanId());
+    assertEquals(LOAN_USER_ID.toString(), argument.getValue().getUserId());
+    assertEquals(ITEM_ID.toString(), argument.getValue().getItemId());
   }
 
   @Test

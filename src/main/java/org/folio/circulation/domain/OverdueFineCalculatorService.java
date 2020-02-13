@@ -1,17 +1,7 @@
 package org.folio.circulation.domain;
 
-import static java.util.concurrent.CompletableFuture.completedFuture;
-import static org.folio.circulation.support.Result.of;
-import static org.folio.circulation.support.Result.succeeded;
-import static org.folio.circulation.support.ResultBinding.mapResult;
-
-import java.util.EnumMap;
-import java.util.Map;
-import java.util.concurrent.CompletableFuture;
-
 import org.folio.circulation.domain.policy.OverdueFinePolicy.OverdueFineInterval;
 import org.folio.circulation.domain.policy.OverdueFinePolicyRepository;
-import org.folio.circulation.domain.representations.AccountRepresentation;
 import org.folio.circulation.domain.representations.FeeFineRepresentation;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.ItemRepository;
@@ -19,6 +9,15 @@ import org.folio.circulation.support.Result;
 import org.folio.circulation.support.ResultBinding;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
+
+import java.util.EnumMap;
+import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+
+import static java.util.concurrent.CompletableFuture.completedFuture;
+import static org.folio.circulation.support.Result.of;
+import static org.folio.circulation.support.Result.succeeded;
+import static org.folio.circulation.support.ResultBinding.mapResult;
 
 public class OverdueFineCalculatorService {
   private static class CalculationParameters {
@@ -190,10 +189,9 @@ public class OverdueFineCalculatorService {
           return failure();
         }
 
-        AccountRepresentation accountRepresentation =
-          new AccountRepresentation(params.loan, params.item, params.feeFineOwner,
+        Account account = new Account(params.loan, params.item, params.feeFineOwner,
             params.feeFine, fineAmount);
-        return accountRepository.create(accountRepresentation);
+        return accountRepository.create(account);
       }));
   }
 
