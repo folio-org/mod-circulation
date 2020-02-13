@@ -26,6 +26,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.awaitility.Awaitility;
 import org.folio.circulation.domain.User;
+import org.folio.circulation.domain.representations.ItemProperties;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 import org.hamcrest.Matcher;
@@ -41,6 +42,8 @@ import api.support.APITests;
 import api.support.CheckInByBarcodeResponse;
 import api.support.builders.Address;
 import api.support.builders.CheckInByBarcodeRequestBuilder;
+import api.support.builders.FeeFineBuilder;
+import api.support.builders.FeeFineOwnerBuilder;
 import api.support.builders.NoticeConfigurationBuilder;
 import api.support.builders.NoticePolicyBuilder;
 import api.support.builders.RequestBuilder;
@@ -586,6 +589,82 @@ public class CheckInByBarcodeTests extends APITests {
     Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
       .until(patronNoticesClient::getAll, empty());
+  }
+
+  @Test
+  public void accountRecordIsCreatedWhenItemIsOverdue() throws InterruptedException {
+    useFallbackPolicies(loanPoliciesFixture.canCirculateRolling().getId(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
+      noticePoliciesFixture.activeNotice().getId(),
+      overdueFinePoliciesFixture.facultyStandardDoNotCountClosed().getId(),
+      lostItemFeePoliciesFixture.facultyStandard().getId());
+
+    final IndividualResource james = usersFixture.james();
+    final UUID checkInServicePointId = servicePointsFixture.cd1().getId();
+    final IndividualResource homeLocation = locationsFixture.basedUponExampleLocation(
+      item -> item.withPrimaryServicePoint(checkInServicePointId));
+    final IndividualResource nod = itemsFixture.basedUponNod(item ->
+      item.withPermanentLocation(homeLocation.getId()));
+
+    final IndividualResource loan = loansFixture.checkOutByBarcode(nod, james,
+      new DateTime(2020, 1, 1, 12, 0, 0, DateTimeZone.UTC));
+
+    JsonObject servicePointOwner = new JsonObject();
+    servicePointOwner.put("value", homeLocation.getJson().getString("primaryServicePoint"));
+    servicePointOwner.put("label", "label");
+    UUID ownerId = UUID.randomUUID();
+    feeFineOwnersClient.create(new FeeFineOwnerBuilder()
+      .withId(ownerId)
+      .withOwner("fee-fine-owner")
+      .withServicePointOwner(Collections.singletonList(servicePointOwner))
+    );
+
+    UUID feeFineId = UUID.randomUUID();
+    feeFinesClient.create(new FeeFineBuilder()
+      .withId(feeFineId)
+      .withFeeFineType("Overdue fine")
+      .withOwnerId(ownerId)
+    );
+
+    loansFixture.checkInByBarcode(new CheckInByBarcodeRequestBuilder()
+        .forItem(nod)
+        .on(new DateTime(2020, 1, 25, 12, 0, 0, DateTimeZone.UTC))
+        .at(checkInServicePointId));
+
+    TimeUnit.SECONDS.sleep(1);
+    List<JsonObject> createdAccounts = accountsClient.getAll();
+
+    assertThat("Fee/fine record should be created", createdAccounts, hasSize(1));
+
+    JsonObject account = createdAccounts.get(0);
+    assertThat("owner ID is included",
+      account.getString("ownerId"), is(ownerId.toString()));
+    assertThat("fee/fine ID is included",
+      account.getString("feeFineId"), is(feeFineId.toString()));
+    assertThat("amount is correct", account.getDouble("amount"), is(5.0));
+    assertThat("remaining is the same as amount",
+      account.getDouble("remaining"), is(5.0));
+    assertThat("correct fee/fine type is included",
+      account.getString("feeFineType"), is("Overdue fine"));
+    assertThat("fee/fine owner is included",
+      account.getString("feeFineOwner"), is("fee-fine-owner"));
+    assertThat("item's title is included",
+      account.getString("title"), is(loan.getJson().getJsonObject("item").getString("title")));
+    assertThat("item's barcode is included",
+      account.getString("barcode"), is(nod.getJson().getString("barcode")));
+    assertThat("call number from the item is included",
+      account.getString("callNumber"),
+      is(nod.getJson().getJsonObject("effectiveCallNumberComponents").getString("callNumber")));
+    assertThat("effective location ID is included",
+      account.getString("location"),
+      is(servicePointsFixture.cd1().getId()));
+    assertThat("item's material type is included",
+      account.getString("materialTypeId"),
+      is(nod.getJson().getString(ItemProperties.MATERIAL_TYPE_ID)));
+    assertThat("loan ID is included", account.getString("loanId"), is(loan.getId()));
+    assertThat("user ID is included",
+      account.getString("userId"), is(loan.getJson().getString("userId")));
+    assertThat("item ID is included", account.getString("itemId"), is(nod.getId()));
   }
 
   private void checkPatronNoticeEvent(
