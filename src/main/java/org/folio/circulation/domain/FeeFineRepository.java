@@ -24,7 +24,11 @@ public class FeeFineRepository {
     feeFineStorageClient = clients.feeFineStorageClient();
   }
 
-  public CompletableFuture<Result<FeeFine>> getFeeFine(String feeFineOwnerId, String feeFineType) {
+  public CompletableFuture<Result<FeeFine>> getOverdueFine(String feeFineOwnerId) {
+    return getFeeFine(feeFineOwnerId, FeeFine.OVERDUE_FINE_TYPE);
+  }
+
+  private CompletableFuture<Result<FeeFine>> getFeeFine(String feeFineOwnerId, String feeFineType) {
     Result<CqlQuery> typeQuery = CqlQuery.exactMatch("feeFineType", feeFineType);
     Result<CqlQuery> ownerQuery = CqlQuery.exactMatch("ownerId", feeFineOwnerId);
 

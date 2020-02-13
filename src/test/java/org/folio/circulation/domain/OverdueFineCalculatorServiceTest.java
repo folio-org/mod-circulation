@@ -158,7 +158,7 @@ public class OverdueFineCalculatorServiceTest {
     doReturn(CompletableFuture.completedFuture(Result.succeeded(createFeeFineOwner())))
       .when(feeFineOwnerRepository).getFeeFineOwner(SERVICE_POINT_ID.toString());
     doReturn(CompletableFuture.completedFuture(Result.succeeded(createFeeFine())))
-      .when(feeFineRepository).getFeeFine(eq(FEE_FINE_OWNER_ID.toString()), eq(FEE_FINE_TYPE));
+      .when(feeFineRepository).getOverdueFine(eq(FEE_FINE_OWNER_ID.toString()));
 
     CheckInProcessRecords records = new CheckInProcessRecords(
       CheckInByBarcodeRequest.from(createCheckInByBarcodeRequest()).value())
@@ -263,7 +263,7 @@ public class OverdueFineCalculatorServiceTest {
     doReturn(CompletableFuture.completedFuture(Result.succeeded(createFeeFineOwner())))
       .when(feeFineOwnerRepository).getFeeFineOwner(SERVICE_POINT_ID.toString());
     doReturn(CompletableFuture.completedFuture(Result.succeeded(null)))
-      .when(feeFineRepository).getFeeFine(eq(FEE_FINE_OWNER_ID.toString()), eq(FEE_FINE_TYPE));
+      .when(feeFineRepository).getOverdueFine(eq(FEE_FINE_OWNER_ID.toString()));
     doReturn(CompletableFuture.completedFuture(Result.succeeded(createFeeFine())))
       .when(feeFineRepository).create(any());
 

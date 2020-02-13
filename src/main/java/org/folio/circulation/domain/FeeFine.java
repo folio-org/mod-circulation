@@ -3,6 +3,8 @@ package org.folio.circulation.domain;
 import io.vertx.core.json.JsonObject;
 
 public class FeeFine {
+  public static final String OVERDUE_FINE_TYPE = "Overdue fine";
+
   private String id;
   private String feeFineType;
 

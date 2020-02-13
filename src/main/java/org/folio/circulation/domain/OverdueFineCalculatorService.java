@@ -47,7 +47,6 @@ public class OverdueFineCalculatorService {
     }
   }
 
-  private static final String OVERDUE_FINE_TYPE = "Overdue fine";
   private static final Map<OverdueFineInterval, Integer> MINUTES_IN_INTERVAL =
     new EnumMap<>(OverdueFineInterval.class);
   static {
@@ -161,12 +160,12 @@ public class OverdueFineCalculatorService {
     if (params.feeFineOwner == null) {
       return completedFuture(succeeded(params));
     }
-    return feeFineRepository.getFeeFine(params.feeFineOwner.getId(), OVERDUE_FINE_TYPE)
+    return feeFineRepository.getOverdueFine(params.feeFineOwner.getId())
       .thenApply(ResultBinding.mapResult(params::withFeeFine))
       .thenCompose(r -> r.after(updatedParams -> {
         if (updatedParams.feeFine == null) {
           FeeFineRepresentation feeFineRepresentation = new FeeFineRepresentation(
-            updatedParams.feeFineOwner.getId(), OVERDUE_FINE_TYPE
+            updatedParams.feeFineOwner.getId(), FeeFine.OVERDUE_FINE_TYPE
           );
           return feeFineRepository.create(feeFineRepresentation)
             .thenApply(ResultBinding.mapResult(params::withFeeFine));
