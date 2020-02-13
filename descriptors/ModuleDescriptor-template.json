@@ -1283,7 +1283,11 @@
         "patron-notice.post",
         "circulation.rules.notice-policy.get",
         "inventory-storage.loan-types.item.get",
-        "patron-action-session-storage.patron-action-sessions.item.post"
+        "patron-action-session-storage.patron-action-sessions.item.post",
+        "feefines.collection.get",
+        "feefines.item.post",
+        "owners.collection.get",
+        "accounts.item.post"
       ],
       "visible": false
     },
