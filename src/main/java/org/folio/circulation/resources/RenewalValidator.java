@@ -26,6 +26,7 @@ public final class RenewalValidator {
     "Item's loan policy has fixed profile but renewal period is specified";
 
   public static final String DECLARED_LOST_ITEM_RENEWED_ERROR = "item is Declared lost";
+  public static final String CLAIMED_RETURNED_RENEWED_ERROR = "item is Claimed returned";
 
   private RenewalValidator() {
 
