@@ -5,8 +5,8 @@ import io.vertx.core.json.JsonObject;
 public class FeeFine {
   public static final String OVERDUE_FINE_TYPE = "Overdue fine";
 
-  private String id;
-  private String feeFineType;
+  private final String id;
+  private final String feeFineType;
 
   public FeeFine(String id, String feeFineType) {
     this.id = id;

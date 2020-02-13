@@ -1,10 +1,10 @@
 package org.folio.circulation.domain;
 
-import static java.util.concurrent.CompletableFuture.completedFuture;
-import static org.folio.circulation.support.http.ResponseMapping.forwardOnFailure;
-import static org.folio.circulation.support.http.ResponseMapping.mapUsingJson;
-import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
-import static org.folio.circulation.support.Result.succeeded;
+import org.folio.circulation.support.Clients;
+import org.folio.circulation.support.CollectionResourceClient;
+import org.folio.circulation.support.MultipleRecordFetcher;
+import org.folio.circulation.support.Result;
+import org.folio.circulation.support.http.client.ResponseInterpreter;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -14,12 +14,11 @@ import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
-import io.vertx.core.json.JsonObject;
-import org.folio.circulation.support.Clients;
-import org.folio.circulation.support.CollectionResourceClient;
-import org.folio.circulation.support.MultipleRecordFetcher;
-import org.folio.circulation.support.Result;
-import org.folio.circulation.support.http.client.ResponseInterpreter;
+import static java.util.concurrent.CompletableFuture.completedFuture;
+import static org.folio.circulation.support.Result.succeeded;
+import static org.folio.circulation.support.http.ResponseMapping.forwardOnFailure;
+import static org.folio.circulation.support.http.ResponseMapping.mapUsingJson;
+import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
 
 public class AccountRepository {
 

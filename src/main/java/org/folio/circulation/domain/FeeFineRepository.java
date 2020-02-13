@@ -16,8 +16,6 @@ import org.folio.circulation.support.http.client.ResponseInterpreter;
 import io.vertx.core.json.JsonObject;
 
 public class FeeFineRepository {
-  private static final Integer PAGE_LIMIT = 500;
-
   private final CollectionResourceClient feeFineStorageClient;
 
   public FeeFineRepository(Clients clients) {
@@ -33,10 +31,10 @@ public class FeeFineRepository {
     Result<CqlQuery> ownerQuery = CqlQuery.exactMatch("ownerId", feeFineOwnerId);
 
     return typeQuery.combine(ownerQuery, CqlQuery::and)
-      .after(q -> feeFineStorageClient.getMany(q, PageLimit.limit(PAGE_LIMIT)))
+      .after(q -> feeFineStorageClient.getMany(q, PageLimit.limit(1)))
       .thenApply(r -> r.next(this::mapResponseToFeefines))
       .thenApply(r -> r.map(MultipleRecords::getRecords))
-      .thenApply(r -> r.map(col -> col.stream().findAny().orElse(null)));
+      .thenApply(r -> r.map(col -> col.stream().findFirst().orElse(null)));
   }
 
   private Result<MultipleRecords<FeeFine>> mapResponseToFeefines(Response response) {

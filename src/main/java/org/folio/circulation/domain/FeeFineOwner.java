@@ -7,9 +7,9 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
 public class FeeFineOwner {
-  private String id;
-  private String owner;
-  private List<String> servicePoints;
+  private final String id;
+  private final String owner;
+  private final List<String> servicePoints;
 
   public FeeFineOwner(String id, String owner, List<String> servicePoints) {
     this.id = id;
