@@ -127,6 +127,14 @@ public class ChangeDueDateTests extends APITests {
     assertThat(updatedLoanResponse.getStatusCode(), is(422));
     assertThat("Should respond with appropriate due date change failed message",
       updatedLoanResponse.getBody().contains("Due date change failed: item is claimed returned"), is(true));
+
+    fetchedLoan = loansClient.getById(loan.getId());
+    loanToChange = fetchedLoan.getJson().copy();
+
+    write(loanToChange, "action", "dueDateChange");
+    write(loanToChange, "dueDate", dueDate);
+
+    loansFixture.replaceLoan(loan.getId(), loanToChange);
   }
 
   @Test
