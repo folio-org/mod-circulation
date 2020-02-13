@@ -6,6 +6,7 @@ import static org.apache.commons.collections4.ListUtils.partition;
 import static org.folio.circulation.domain.MultipleRecords.empty;
 import static org.folio.circulation.support.Result.of;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatchAny;
+import static org.folio.circulation.support.http.client.CqlQuery.noQuery;
 import static org.folio.circulation.support.http.client.PageLimit.maximumLimit;
 import static org.folio.circulation.support.http.client.PageLimit.noLimit;
 
@@ -47,11 +48,7 @@ public class MultipleRecordFetcher<T> {
   public CompletableFuture<Result<MultipleRecords<T>>> findByIndexName(
       Collection<String> ids, String indexName) {
 
-    if (ids.isEmpty()) {
-      return completedFuture(of(MultipleRecords::empty));
-    }
-
-    return findByBatchQueries(buildBatchQueriesByIndexName(ids, indexName));
+    return findByIdIndexAndQuery(ids, indexName, noQuery());
   }
 
   public CompletableFuture<Result<MultipleRecords<T>>> findByIdIndexAndQuery(

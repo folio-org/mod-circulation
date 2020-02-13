@@ -27,6 +27,10 @@ public class CqlQuery implements QueryParameter {
   private final String query;
   private final CqlSortBy sortBy;
 
+  public static Result<CqlQuery> noQuery() {
+    return Result.of(() -> new CqlQuery("", none()));
+  }
+
   public static Result<CqlQuery> exactMatch(String index, String value) {
     return Result.of(() -> new CqlQuery(format("%s==\"%s\"", index, value), none()));
   }
@@ -60,6 +64,10 @@ public class CqlQuery implements QueryParameter {
   }
 
   public CqlQuery and(CqlQuery other) {
+    if (StringUtils.isBlank(other.asText())) {
+      return this;
+    }
+
     return new CqlQuery(format("%s and %s", asText(), other.asText()), sortBy);
   }
 
