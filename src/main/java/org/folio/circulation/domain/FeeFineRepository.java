@@ -32,7 +32,7 @@ public class FeeFineRepository {
 
     return typeQuery.combine(ownerQuery, CqlQuery::and)
       .after(q -> feeFineStorageClient.getMany(q, PageLimit.limit(1)))
-      .thenApply(r -> r.next(this::mapResponseToFeefines))
+      .thenApply(r -> r.next(this::mapResponseToFeeFines))
       .thenApply(r -> r.map(MultipleRecords::getRecords))
       .thenApply(r -> r.map(col -> col.stream().findFirst().orElse(null)));
   }
