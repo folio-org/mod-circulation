@@ -138,9 +138,9 @@ public class PickSlipsResource extends Resource {
     final LocationRepository locationRepository = LocationRepository.using(clients);
 
     return completedFuture(succeeded(locationsForItems))
-      .thenComposeAsync(r -> r.after(locationRepository::loadLibraries))
-      .thenComposeAsync(r -> r.after(locationRepository::loadInstitutions))
-      .thenComposeAsync(r -> r.after(locationRepository::loadCampuses))
+      .thenComposeAsync(r -> r.after(locationRepository::fetchLibraries))
+      .thenComposeAsync(r -> r.after(locationRepository::fetchInstitutions))
+      .thenComposeAsync(r -> r.after(locationRepository::fetchCampuses))
       .thenApply(flatMapResult(locations -> matchLocationsToItems(items, locations)));
   }
 

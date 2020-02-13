@@ -84,7 +84,7 @@ public class InstanceBuilder extends JsonBuilder implements Builder {
   }
 
   public InstanceBuilder withContributor(String name, UUID typeId) {
-    return withContributor(name, typeId, null);
+    return withContributor(name, typeId, false);
   }
 
   public InstanceBuilder withContributor(String name, UUID typeId, Boolean primary) {

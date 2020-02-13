@@ -362,7 +362,8 @@ public class PickSlipsTests extends APITests {
     assertThat(responseJson.getInteger(TOTAL_RECORDS), is(itemsCount));
   }
 
-  private void assertResponseContains(Response response, InventoryItemResource item, IndividualResource request, IndividualResource requester) {
+  private void assertResponseContains(Response response, InventoryItemResource item, IndividualResource request,
+      IndividualResource requester) {
     long count = getPickSlips(response).stream()
       .map(JsonObject.class::cast)
       .filter(ps ->

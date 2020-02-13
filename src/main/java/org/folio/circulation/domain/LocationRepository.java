@@ -170,7 +170,7 @@ public class LocationRepository {
         institution.getString("id"))));
   }
 
-  public CompletableFuture<Result<Collection<Location>>> loadLibraries(Collection<Location> locations) {
+  public CompletableFuture<Result<Collection<Location>>> fetchLibraries(Collection<Location> locations) {
     return getLibraries(locations)
       .thenApply(flatMapResult(libraries -> succeeded(
         locations.stream()
@@ -179,7 +179,7 @@ public class LocationRepository {
           .collect(toSet()))));
   }
 
-  public CompletableFuture<Result<Collection<Location>>> loadInstitutions(Collection<Location> locations) {
+  public CompletableFuture<Result<Collection<Location>>> fetchInstitutions(Collection<Location> locations) {
     return getInstitutions(locations)
       .thenApply(flatMapResult(institutions -> succeeded(
         locations.stream()
@@ -188,7 +188,7 @@ public class LocationRepository {
           .collect(toSet()))));
   }
 
-  public CompletableFuture<Result<Collection<Location>>> loadCampuses(Collection<Location> locations) {
+  public CompletableFuture<Result<Collection<Location>>> fetchCampuses(Collection<Location> locations) {
     return getCampuses(locations)
       .thenApply(flatMapResult(campuses -> succeeded(
         locations.stream()

@@ -42,7 +42,7 @@ public class AddressTypeRepository {
   public CompletableFuture<Result<MultipleRecords<Request>>> findAddressTypesForRequests(
     MultipleRecords<Request> requests) {
 
-    Set<String> addressTypeIds = new HashSet<>(requests.toKeys(Request::getDeliveryAddressTypeId));
+    Set<String> addressTypeIds = requests.toKeys(Request::getDeliveryAddressTypeId);
 
     return getAddressTypesByIds(addressTypeIds)
       .thenApply(r -> r.next(addressTypes -> matchAddressTypesToRequests(addressTypes, requests)));
