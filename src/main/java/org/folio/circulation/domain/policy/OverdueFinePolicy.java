@@ -72,37 +72,4 @@ public class OverdueFinePolicy extends Policy {
       super(id, null, null, null, null, null, null, null);
     }
   }
-
-  public enum OverdueFineInterval {
-    MINUTE("minute"),
-    HOUR("hour"),
-    DAY("day"),
-    WEEK("week"),
-    MONTH("month"),
-    YEAR("year");
-
-    private final String value;
-
-    private static final Map<String, OverdueFineInterval> CONSTANTS =
-      new HashMap<>();
-
-    static {
-      for (OverdueFinePolicy.OverdueFineInterval c: values()) {
-        CONSTANTS.put(c.value, c);
-      }
-    }
-
-    OverdueFineInterval(String value) {
-      this.value = value;
-    }
-
-    public static OverdueFinePolicy.OverdueFineInterval fromValue(String value) {
-      OverdueFinePolicy.OverdueFineInterval constant = CONSTANTS.get(value);
-      if (constant == null) {
-        throw new IllegalArgumentException(value);
-      } else {
-        return constant;
-      }
-    }
-  }
 }

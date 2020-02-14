@@ -5,12 +5,10 @@ import static org.folio.circulation.support.Result.of;
 import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.ResultBinding.mapResult;
 
-import java.util.EnumMap;
-import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
-import org.folio.circulation.domain.policy.OverdueFinePolicy.OverdueFineInterval;
+import org.folio.circulation.domain.policy.OverdueFineInterval;
 import org.folio.circulation.domain.policy.OverdueFinePolicyRepository;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.ItemRepository;
@@ -20,43 +18,6 @@ import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 
 public class OverdueFineCalculatorService {
-  private static class CalculationParameters {
-    Loan loan;
-    Item item;
-    FeeFineOwner feeFineOwner;
-    FeeFine feeFine;
-
-    CalculationParameters(Loan loan, Item item, FeeFineOwner feeFineOwner, FeeFine feeFine) {
-      this.loan = loan;
-      this.item = item;
-      this.feeFineOwner = feeFineOwner;
-      this.feeFine = feeFine;
-    }
-
-    CalculationParameters withItem(Item item) {
-      return new CalculationParameters(this.loan, item, this.feeFineOwner, this.feeFine);
-    }
-
-    CalculationParameters withOwner(FeeFineOwner feeFineOwner) {
-      return new CalculationParameters(this.loan, this.item, feeFineOwner, this.feeFine);
-    }
-
-    CalculationParameters withFeeFine(FeeFine feeFine) {
-      return new CalculationParameters(this.loan, this.item, this.feeFineOwner, feeFine);
-    }
-  }
-
-  private static final Map<OverdueFineInterval, Integer> MINUTES_IN_INTERVAL =
-    new EnumMap<>(OverdueFineInterval.class);
-  static {
-    MINUTES_IN_INTERVAL.put(OverdueFineInterval.MINUTE, 1);
-    MINUTES_IN_INTERVAL.put(OverdueFineInterval.HOUR, 60);
-    MINUTES_IN_INTERVAL.put(OverdueFineInterval.DAY, 1440);
-    MINUTES_IN_INTERVAL.put(OverdueFineInterval.WEEK, 10080);
-    MINUTES_IN_INTERVAL.put(OverdueFineInterval.MONTH, 44640);
-    MINUTES_IN_INTERVAL.put(OverdueFineInterval.YEAR, 525600);
-  }
-
   public static OverdueFineCalculatorService using(Clients clients) {
     return new OverdueFineCalculatorService(clients);
   }
@@ -134,7 +95,7 @@ public class OverdueFineCalculatorService {
       loan.getOverdueFinePolicy().getMaxOverdueFine();
     OverdueFineInterval interval = loan.getOverdueFinePolicy().getOverdueFineInterval();
     double overdueFine = loan.getOverdueFinePolicy().getOverdueFine() *
-      Math.ceil(overdueMinutes.doubleValue()/MINUTES_IN_INTERVAL.get(interval).doubleValue());
+      Math.ceil(overdueMinutes.doubleValue()/interval.getMinutes().doubleValue());
     if (maxFine > 0) {
       overdueFine = Math.min(overdueFine, maxFine);
     }
@@ -196,5 +157,31 @@ public class OverdueFineCalculatorService {
 
   private CompletableFuture<Result<Account>> failure() {
     return completedFuture(succeeded(Account.from(null)));
+  }
+
+  private static class CalculationParameters {
+    Loan loan;
+    Item item;
+    FeeFineOwner feeFineOwner;
+    FeeFine feeFine;
+
+    CalculationParameters(Loan loan, Item item, FeeFineOwner feeFineOwner, FeeFine feeFine) {
+      this.loan = loan;
+      this.item = item;
+      this.feeFineOwner = feeFineOwner;
+      this.feeFine = feeFine;
+    }
+
+    CalculationParameters withItem(Item item) {
+      return new CalculationParameters(this.loan, item, this.feeFineOwner, this.feeFine);
+    }
+
+    CalculationParameters withOwner(FeeFineOwner feeFineOwner) {
+      return new CalculationParameters(this.loan, this.item, feeFineOwner, this.feeFine);
+    }
+
+    CalculationParameters withFeeFine(FeeFine feeFine) {
+      return new CalculationParameters(this.loan, this.item, this.feeFineOwner, feeFine);
+    }
   }
 }
