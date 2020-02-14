@@ -53,12 +53,12 @@ public class LoanAndRelatedRecordsValidator {
       return false;
     }
 
-    return !previous.toString().equals(upcoming.toString());
+    return !previous.equals(upcoming);
   }
 
   private static ValidationErrorFailure dueDateChangedFailedForClaimedReturned(LoanAndRelatedRecords record) {
     return singleValidationError(
-      "Due date change failed: item is claimed returned", "id",
+      "item is claimed returned", "id",
       record.getLoan().getId());
   }
 }

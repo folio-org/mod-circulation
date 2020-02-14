@@ -33,7 +33,6 @@ public class RegularCheckOutStrategy implements CheckOutStrategy {
   public CompletableFuture<Result<LoanAndRelatedRecords>> checkOut(LoanAndRelatedRecords relatedRecords,
                                                                    JsonObject request,
                                                                    Clients clients) {
-
     DateTime loanDate = relatedRecords.getLoan().getLoanDate();
     final ClosedLibraryStrategyService strategyService =
       ClosedLibraryStrategyService.using(clients, loanDate, false);
