@@ -2,6 +2,7 @@ package api.requests;
 
 import static java.net.HttpURLConnection.HTTP_OK;
 import static java.util.stream.Collectors.joining;
+import static org.folio.circulation.support.JsonPropertyFetcher.getDateTimeProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getNestedStringProperty;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
@@ -45,15 +46,15 @@ public class PickSlipsTests extends APITests {
   private static final String REQUESTER_KEY = "requester";
 
   @Test
-  public void responseIsEmptyForNonExistentServicePointId() {
+  public void responseContainsNoPickSlipsForNonExistentServicePointId() {
     UUID servicePointId = servicePointsFixture.cd1().getId();
-    InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    InventoryItemResource item = itemsFixture.basedUponSmallAngryPlanet();
 
     requestsFixture.place(new RequestBuilder()
       .withStatus(RequestStatus.OPEN_NOT_YET_FILLED.getValue())
       .page()
       .withPickupServicePointId(servicePointId)
-      .forItem(smallAngryPlanet)
+      .forItem(item)
       .by(usersFixture.james()));
 
     Response response = ResourceClient.forPickSlips().getById(UUID.randomUUID());
@@ -62,26 +63,27 @@ public class PickSlipsTests extends APITests {
   }
 
   @Test
-  public void responseIsEmptyForWrongServicePointId() {
+  public void responseContainsNoPickSlipsForWrongServicePointId() {
     UUID servicePointId = servicePointsFixture.cd1().getId();
-    InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    InventoryItemResource item = itemsFixture.basedUponSmallAngryPlanet();
 
     requestsFixture.place(new RequestBuilder()
       .withStatus(RequestStatus.OPEN_NOT_YET_FILLED.getValue())
       .page()
       .withPickupServicePointId(servicePointId)
-      .forItem(smallAngryPlanet)
+      .forItem(item)
       .by(usersFixture.james()));
 
     UUID differentServicePointId = servicePointsFixture.cd2().getId();
-    Response response = ResourceClient.forPickSlips().getById(differentServicePointId);
+    Response response = ResourceClient.forPickSlips()
+      .getById(differentServicePointId);
 
     assertThat(response.getStatusCode(), is(HTTP_OK));
     assertResponseHasItems(response, 0);
   }
 
   @Test
-  public void responseIsEmptyWhenThereAreNoPagedItems() {
+  public void responseContainsNoPickSlipsWhenThereAreNoPagedItems() {
     UUID servicePointId = servicePointsFixture.cd1().getId();
     Response response = ResourceClient.forPickSlips().getById(servicePointId);
 
@@ -90,15 +92,15 @@ public class PickSlipsTests extends APITests {
   }
 
   @Test
-  public void responseIsEmptyWhenItemHasOpenPageRequestWithWrongStatus() {
+  public void responseContainsNoPickSlipsWhenItemHasOpenPageRequestWithWrongStatus() {
     UUID servicePointId = servicePointsFixture.cd1().getId();
-    InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    InventoryItemResource item = itemsFixture.basedUponSmallAngryPlanet();
 
     requestsFixture.place(new RequestBuilder()
       .page()
       .withStatus(RequestStatus.OPEN_AWAITING_PICKUP.getValue())
       .withPickupServicePointId(servicePointId)
-      .forItem(smallAngryPlanet)
+      .forItem(item)
       .by(usersFixture.james()));
 
     Response response = ResourceClient.forPickSlips().getById(servicePointId);
@@ -108,21 +110,22 @@ public class PickSlipsTests extends APITests {
   }
 
   @Test
-  public void responseContainsAllAvailableTokens() {
+  public void responseContainsPickSlipWithAllAvailableTokens() {
     IndividualResource servicePoint = servicePointsFixture.cd1();
     UUID servicePointId = servicePoint.getId();
     IndividualResource locationResource = locationsFixture.thirdFloor();
     IndividualResource addressTypeResource = addressTypesFixture.home();
     Address address = AddressExamples.mainStreet();
-    IndividualResource requesterResource = usersFixture.steve(builder -> builder.withAddress(address));
+    IndividualResource requesterResource =
+      usersFixture.steve(builder -> builder.withAddress(address));
     DateTime requestDate = new DateTime(2019, 7, 22, 10, 22, 54, DateTimeZone.UTC);
     LocalDate requestExpiration = new LocalDate(2019, 7, 30);
     LocalDate holdShelfExpiration = new LocalDate(2019, 8, 31);
     IndividualResource materialTypeResource = materialTypesFixture.book();
     IndividualResource loanTypeResource = loanTypesFixture.canCirculate();
 
-    InventoryItemResource itemResource = itemsFixture.basedUponSmallAngryPlanet(builder ->
-      builder.withEnumeration("v.70:no.7-12")
+    InventoryItemResource itemResource = itemsFixture.basedUponSmallAngryPlanet(
+      builder -> builder.withEnumeration("v.70:no.7-12")
         .withVolume("vol.1")
         .withChronology("1984:July-Dec.")
         .withYearCaption(Arrays.asList("1984", "1985"))
@@ -131,15 +134,14 @@ public class PickSlipsTests extends APITests {
         .withDescriptionOfPieces("Description of three pieces")
         .withPermanentLocation(locationResource)
         .withMaterialType(materialTypeResource.getId())
-        .withPermanentLoanType(loanTypeResource.getId())
-    );
+        .withPermanentLoanType(loanTypeResource.getId()));
 
     DateTime now = DateTime.now(UTC);
     loansFixture.checkOutByBarcode(itemResource, requesterResource);
     loansFixture.checkInByBarcode(itemResource, now, servicePointId);
     JsonObject lastCheckIn = itemsClient.get(itemResource.getId())
       .getJson().getJsonObject("lastCheckIn");
-    DateTime actualCheckinDateTime = JsonPropertyFetcher.getDateTimeProperty(lastCheckIn, "dateTime");
+    DateTime actualCheckinDateTime = getDateTimeProperty(lastCheckIn, "dateTime");
 
     IndividualResource requestResource = requestsFixture.place(new RequestBuilder()
       .withStatus(RequestStatus.OPEN_NOT_YET_FILLED.getValue())
@@ -178,7 +180,8 @@ public class PickSlipsTests extends APITests {
     assertEquals(item.getTitle(), itemContext.getString("title"));
     assertEquals(item.getBarcode(), itemContext.getString("barcode"));
     assertEquals(ItemStatus.PAGED.getValue(), itemContext.getString("status"));
-    assertEquals(item.getPrimaryContributorName(), itemContext.getString("primaryContributor"));
+    assertEquals(item.getPrimaryContributorName(),
+      itemContext.getString("primaryContributor"));
     assertEquals(contributorNames, itemContext.getString("allContributors"));
     assertEquals(item.getEnumeration(), itemContext.getString("enumeration"));
     assertEquals(item.getVolume(), itemContext.getString("volume"));
@@ -213,15 +216,20 @@ public class PickSlipsTests extends APITests {
 
     JsonObject requestContext = pickSlip.getJsonObject("request");
 
-    assertThat(requestContext.getString("deliveryAddressType"), is(addressTypeResource.getJson().getString("addressType")));
-    assertThat(requestContext.getString("requestExpirationDate"), is(requestExpiration.toDateTimeAtStartOfDay().toString()));
-    assertThat(requestContext.getString("holdShelfExpirationDate"), is(holdShelfExpiration.toDateTimeAtStartOfDay().toString()));
-    assertThat(requestContext.getString("requestID"), UUIDMatcher.is(requestResource.getId()));
-    assertThat(requestContext.getString("servicePointPickup"), is(servicePoint.getJson().getString("name")));
+    assertThat(requestContext.getString("deliveryAddressType"),
+      is(addressTypeResource.getJson().getString("addressType")));
+    assertThat(requestContext.getString("requestExpirationDate"),
+      is(requestExpiration.toDateTimeAtStartOfDay().toString()));
+    assertThat(requestContext.getString("holdShelfExpirationDate"),
+      is(holdShelfExpiration.toDateTimeAtStartOfDay().toString()));
+    assertThat(requestContext.getString("requestID"),
+      UUIDMatcher.is(requestResource.getId()));
+    assertThat(requestContext.getString("servicePointPickup"),
+      is(servicePoint.getJson().getString("name")));
   }
 
   @Test
-  public void responseContainsPickSlipForPageRequestOnly() {
+  public void responseContainsPickSlipsForRequestsOfTypePageOnly() {
     UUID servicePointId = servicePointsFixture.cd1().getId();
     InventoryItemResource item = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource james = usersFixture.james();
@@ -301,7 +309,7 @@ public class PickSlipsTests extends APITests {
   }
 
   @Test
-  public void responseDoesNotIncludeItemsFromDifferentServicePoint() {
+  public void responseDoesNotIncludePickSlipsFromDifferentServicePoint() {
     UUID circDesk1 = servicePointsFixture.cd1().getId();
     UUID circDesk4 = servicePointsFixture.cd4().getId();
 
@@ -362,8 +370,9 @@ public class PickSlipsTests extends APITests {
     assertThat(responseJson.getInteger(TOTAL_RECORDS), is(itemsCount));
   }
 
-  private void assertResponseContains(Response response, InventoryItemResource item, IndividualResource request,
-      IndividualResource requester) {
+  private void assertResponseContains(Response response, InventoryItemResource item,
+    IndividualResource request, IndividualResource requester) {
+
     long count = getPickSlips(response).stream()
       .map(JsonObject.class::cast)
       .filter(ps ->
@@ -376,11 +385,13 @@ public class PickSlipsTests extends APITests {
       .count();
 
     if (count == 0) {
-      fail("Response does not contain a pick slip with expected combination of item, request and requester");
+      fail("Response does not contain a pick slip with expected combination" +
+        " of item, request and requester");
     }
 
     if (count > 1) {
-      fail("Response contains multiple pick slips with expected combination of item, request and requester: " + count);
+      fail("Response contains multiple pick slips with expected combination" +
+        " of item, request and requester: " + count);
     }
   }
 
