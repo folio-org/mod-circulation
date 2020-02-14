@@ -2,27 +2,22 @@ package org.folio.circulation.domain.policy;
 
 import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import io.vertx.core.json.JsonObject;
 
 public class OverdueFinePolicy extends Policy {
   private final Double overdueFine;
   private final OverdueFineInterval overdueFineInterval;
-  private final Double maxOverdueFine;
-  private final Double maxOverdueRecallFine;
+  private final OverdueFinePolicyLimitInfo limitInfo;
   private final Boolean ignoreGracePeriodForRecalls;
   private final Boolean countPeriodsWhenServicePointIsClosed;
 
   private OverdueFinePolicy(String id, String name, Double overdueFine,
-    OverdueFineInterval overdueFineInterval, Double maxOverdueFine, Double maxOverdueRecallFine,
+    OverdueFineInterval overdueFineInterval, OverdueFinePolicyLimitInfo limitInfo,
     Boolean ignoreGracePeriodForRecalls, Boolean countPeriodsWhenServicePointIsClosed) {
     super(id, name);
     this.overdueFine = overdueFine;
     this.overdueFineInterval = overdueFineInterval;
-    this.maxOverdueFine = maxOverdueFine;
-    this.maxOverdueRecallFine = maxOverdueRecallFine;
+    this.limitInfo = limitInfo;
     this.ignoreGracePeriodForRecalls = ignoreGracePeriodForRecalls;
     this.countPeriodsWhenServicePointIsClosed = countPeriodsWhenServicePointIsClosed;
   }
@@ -33,8 +28,8 @@ public class OverdueFinePolicy extends Policy {
       getProperty(json, "name"),
       json.getJsonObject("overdueFine").getDouble("quantity"),
       OverdueFineInterval.fromValue(json.getJsonObject("overdueFine").getString("intervalId")),
-      json.getDouble("maxOverdueFine"),
-      json.getDouble("maxOverdueRecallFine"),
+      new OverdueFinePolicyLimitInfo(json.getDouble("maxOverdueFine"),
+        json.getDouble("maxOverdueRecallFine")),
       json.getBoolean("gracePeriodRecall"),
       json.getBoolean("countClosed"));
   }
@@ -48,11 +43,11 @@ public class OverdueFinePolicy extends Policy {
   }
 
   public Double getMaxOverdueFine() {
-    return maxOverdueFine;
+    return limitInfo.getMaxOverdueFine();
   }
 
   public Double getMaxOverdueRecallFine() {
-    return maxOverdueRecallFine;
+    return limitInfo.getMaxOverdueRecallFine();
   }
 
   public Boolean getIgnoreGracePeriodForRecalls() {
@@ -69,7 +64,7 @@ public class OverdueFinePolicy extends Policy {
 
   private static class UnknownOverdueFinePolicy extends OverdueFinePolicy {
     UnknownOverdueFinePolicy(String id) {
-      super(id, null, null, null, null, null, null, null);
+      super(id, null, null, null, null, null, null);
     }
   }
 }

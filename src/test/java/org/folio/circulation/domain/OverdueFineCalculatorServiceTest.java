@@ -22,6 +22,7 @@ import java.util.stream.Stream;
 
 import org.folio.circulation.domain.policy.OverdueFinePolicy;
 import org.folio.circulation.domain.policy.OverdueFinePolicyRepository;
+import org.folio.circulation.domain.representations.AccountStorageRepresentation;
 import org.folio.circulation.domain.representations.CheckInByBarcodeRequest;
 import org.folio.circulation.support.ItemRepository;
 import org.folio.circulation.support.Result;
@@ -165,22 +166,22 @@ public class OverdueFineCalculatorServiceTest {
     overdueFineCalculatorService.calculateOverdueFine(records).get();
     verify(accountRepository, times(1)).create(any());
 
-    ArgumentCaptor<Account> argument = ArgumentCaptor.forClass(Account.class);
+    ArgumentCaptor<AccountStorageRepresentation> argument = ArgumentCaptor.forClass(AccountStorageRepresentation.class);
     verify(accountRepository).create(argument.capture());
-    assertEquals(FEE_FINE_OWNER_ID.toString(), argument.getValue().getOwnerId());
-    assertEquals(FEE_FINE_ID.toString(), argument.getValue().getFeeFineId());
-    assertEquals(correctOverdueFine, argument.getValue().getAmount());
-    assertEquals(correctOverdueFine, argument.getValue().getRemaining());
-    assertEquals(FEE_FINE_TYPE, argument.getValue().getFeeFineType());
-    assertEquals(FEE_FINE_OWNER, argument.getValue().getFeeFineOwner());
-    assertEquals(TITLE, argument.getValue().getTitle());
-    assertEquals(BARCODE, argument.getValue().getBarcode());
-    assertEquals(CALL_NUMBER, argument.getValue().getCallNumber());
-    assertEquals(SERVICE_POINT_ID.toString(), argument.getValue().getLocation());
-    assertEquals(ITEM_MATERIAL_TYPE_ID.toString(), argument.getValue().getMaterialTypeId());
-    assertEquals(LOAN_ID.toString(), argument.getValue().getLoanId());
-    assertEquals(LOAN_USER_ID.toString(), argument.getValue().getUserId());
-    assertEquals(ITEM_ID.toString(), argument.getValue().getItemId());
+    assertEquals(FEE_FINE_OWNER_ID.toString(), argument.getValue().getString("ownerId"));
+    assertEquals(FEE_FINE_ID.toString(), argument.getValue().getString("feeFineId"));
+    assertEquals(correctOverdueFine, argument.getValue().getDouble("amount"));
+    assertEquals(correctOverdueFine, argument.getValue().getDouble("remaining"));
+    assertEquals(FEE_FINE_TYPE, argument.getValue().getString("feeFineType"));
+    assertEquals(FEE_FINE_OWNER, argument.getValue().getString("feeFineOwner"));
+    assertEquals(TITLE, argument.getValue().getString("title"));
+    assertEquals(BARCODE, argument.getValue().getString("barcode"));
+    assertEquals(CALL_NUMBER, argument.getValue().getString("callNumber"));
+    assertEquals(SERVICE_POINT_ID.toString(), argument.getValue().getString("location"));
+    assertEquals(ITEM_MATERIAL_TYPE_ID.toString(), argument.getValue().getString("materialTypeId"));
+    assertEquals(LOAN_ID.toString(), argument.getValue().getString("loanId"));
+    assertEquals(LOAN_USER_ID.toString(), argument.getValue().getString("userId"));
+    assertEquals(ITEM_ID.toString(), argument.getValue().getString("itemId"));
   }
 
   @Test

@@ -13,8 +13,6 @@ import org.folio.circulation.support.http.client.PageLimit;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.client.ResponseInterpreter;
 
-import io.vertx.core.json.JsonObject;
-
 public class FeeFineRepository {
   private final CollectionResourceClient feeFineStorageClient;
 

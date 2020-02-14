@@ -10,6 +10,7 @@ import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.domain.policy.OverdueFineInterval;
 import org.folio.circulation.domain.policy.OverdueFinePolicyRepository;
+import org.folio.circulation.domain.representations.AccountStorageRepresentation;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.ItemRepository;
 import org.folio.circulation.support.Result;
@@ -149,8 +150,8 @@ public class OverdueFineCalculatorService {
           return failure();
         }
 
-        Account account = new Account(params.loan, params.item, params.feeFineOwner,
-            params.feeFine, fineAmount);
+        AccountStorageRepresentation account = new AccountStorageRepresentation(params.loan,
+          params.item, params.feeFineOwner, params.feeFine, fineAmount);
         return accountRepository.create(account);
       }));
   }

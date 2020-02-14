@@ -14,6 +14,7 @@ import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
+import org.folio.circulation.domain.representations.AccountStorageRepresentation;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.MultipleRecordFetcher;
@@ -113,12 +114,12 @@ public class AccountRepository {
     return new MultipleRecordFetcher<>(feefineActionsStorageClient, "feefineactions", FeeFineAction::from);
   }
 
-  public CompletableFuture<Result<Account>> create(Account account) {
+  public CompletableFuture<Result<Account>> create(AccountStorageRepresentation account) {
     final ResponseInterpreter<Account> interpreter = new ResponseInterpreter<Account>()
       .flatMapOn(201, mapUsingJson(Account::from))
       .otherwise(forwardOnFailure());
 
-    return accountsStorageClient.post(account.toJson())
+    return accountsStorageClient.post(account)
       .thenApply(interpreter::flatMap);
   }
 }
