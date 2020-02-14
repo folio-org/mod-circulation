@@ -1,23 +1,23 @@
 package org.folio.circulation.domain;
 
+import static java.util.concurrent.CompletableFuture.completedFuture;
+import static org.folio.circulation.support.Result.of;
+import static org.folio.circulation.support.Result.succeeded;
+import static org.folio.circulation.support.ResultBinding.mapResult;
+
+import java.util.EnumMap;
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+
 import org.folio.circulation.domain.policy.OverdueFinePolicy.OverdueFineInterval;
 import org.folio.circulation.domain.policy.OverdueFinePolicyRepository;
-import org.folio.circulation.domain.representations.FeeFineRepresentation;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.ItemRepository;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.ResultBinding;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
-
-import java.util.EnumMap;
-import java.util.Map;
-import java.util.concurrent.CompletableFuture;
-
-import static java.util.concurrent.CompletableFuture.completedFuture;
-import static org.folio.circulation.support.Result.of;
-import static org.folio.circulation.support.Result.succeeded;
-import static org.folio.circulation.support.ResultBinding.mapResult;
 
 public class OverdueFineCalculatorService {
   private static class CalculationParameters {
@@ -163,10 +163,9 @@ public class OverdueFineCalculatorService {
       .thenApply(ResultBinding.mapResult(params::withFeeFine))
       .thenCompose(r -> r.after(updatedParams -> {
         if (updatedParams.feeFine == null) {
-          FeeFineRepresentation feeFineRepresentation = new FeeFineRepresentation(
-            updatedParams.feeFineOwner.getId(), FeeFine.OVERDUE_FINE_TYPE
-          );
-          return feeFineRepository.create(feeFineRepresentation)
+          FeeFine feeFine = new FeeFine(UUID.randomUUID().toString(),
+            updatedParams.feeFineOwner.getId(), FeeFine.OVERDUE_FINE_TYPE);
+          return feeFineRepository.create(feeFine)
             .thenApply(ResultBinding.mapResult(params::withFeeFine));
         }
         return completedFuture(succeeded(updatedParams));

@@ -41,12 +41,12 @@ public class FeeFineRepository {
     return MultipleRecords.from(response, FeeFine::from, "feefines");
   }
 
-  public CompletableFuture<Result<FeeFine>> create(JsonObject feeFineRepresentation) {
+  public CompletableFuture<Result<FeeFine>> create(FeeFine feeFine) {
     final ResponseInterpreter<FeeFine> interpreter = new ResponseInterpreter<FeeFine>()
       .flatMapOn(201, mapUsingJson(FeeFine::from))
       .otherwise(forwardOnFailure());
 
-    return feeFineStorageClient.post(feeFineRepresentation)
+    return feeFineStorageClient.post(feeFine.toJson())
       .thenApply(interpreter::flatMap);
   }
 }

@@ -1,14 +1,25 @@
 package org.folio.circulation.domain;
 
-import api.support.builders.CheckInByBarcodeRequestBuilder;
-import api.support.builders.FeeFineBuilder;
-import api.support.builders.FeeFineOwnerBuilder;
-import api.support.builders.InstanceBuilder;
-import api.support.builders.ItemBuilder;
-import api.support.builders.LoanBuilder;
-import api.support.builders.LocationBuilder;
-import api.support.builders.OverdueFinePolicyBuilder;
-import io.vertx.core.json.JsonObject;
+import static org.junit.Assert.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.when;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.stream.Stream;
+
 import org.folio.circulation.domain.policy.OverdueFinePolicy;
 import org.folio.circulation.domain.policy.OverdueFinePolicyRepository;
 import org.folio.circulation.domain.representations.CheckInByBarcodeRequest;
@@ -22,25 +33,15 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.mockito.ArgumentCaptor;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.stream.Stream;
-
-import static org.junit.Assert.assertEquals;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
-import static org.mockito.Mockito.when;
+import api.support.builders.CheckInByBarcodeRequestBuilder;
+import api.support.builders.FeeFineBuilder;
+import api.support.builders.FeeFineOwnerBuilder;
+import api.support.builders.InstanceBuilder;
+import api.support.builders.ItemBuilder;
+import api.support.builders.LoanBuilder;
+import api.support.builders.LocationBuilder;
+import api.support.builders.OverdueFinePolicyBuilder;
+import io.vertx.core.json.JsonObject;
 
 @RunWith(value = Parameterized.class)
 public class OverdueFineCalculatorServiceTest {
@@ -271,9 +272,9 @@ public class OverdueFineCalculatorServiceTest {
 
     verify(feeFineRepository, times(1)).create(any());
 
-    ArgumentCaptor<JsonObject> argument = ArgumentCaptor.forClass(JsonObject.class);
+    ArgumentCaptor<FeeFine> argument = ArgumentCaptor.forClass(FeeFine.class);
     verify(feeFineRepository).create(argument.capture());
-    assertEquals(FEE_FINE_TYPE, argument.getValue().getString("feeFineType"));
+    assertEquals(FEE_FINE_TYPE, argument.getValue().getFeeFineType());
 
     verify(accountRepository, times(1)).create(any());
   }
