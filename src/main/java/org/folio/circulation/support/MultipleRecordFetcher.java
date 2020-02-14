@@ -25,18 +25,30 @@ import org.folio.circulation.support.http.client.Response;
 import io.vertx.core.json.JsonObject;
 
 public class MultipleRecordFetcher<T> {
-  //Too many UUID values exceeds the allowed length of the HTTP request URL
-  private static final int MAX_ID_VALUES_PER_CQL_SEARCH_QUERY = 50;
+  private static final int DEFAULT_MAX_ID_VALUES_PER_CQL_SEARCH_QUERY = 50;
+
   private final GetManyRecordsClient client;
   private final String recordsPropertyName;
   private final Function<JsonObject, T> recordMapper;
 
+  //Too many UUID values exceeds the allowed length of the HTTP request URL
+  private final int maxValuesPerCqlSearchQuery;
+
   public MultipleRecordFetcher(GetManyRecordsClient client,
       String recordsPropertyName, Function<JsonObject, T> recordMapper) {
+
+    this(client, recordsPropertyName, recordMapper,
+      DEFAULT_MAX_ID_VALUES_PER_CQL_SEARCH_QUERY);
+  }
+
+  public MultipleRecordFetcher(GetManyRecordsClient client,
+    String recordsPropertyName, Function<JsonObject, T> recordMapper,
+    int maxValuesPerCqlSearchQuery) {
 
     this.client = client;
     this.recordsPropertyName = recordsPropertyName;
     this.recordMapper = recordMapper;
+    this.maxValuesPerCqlSearchQuery = maxValuesPerCqlSearchQuery;
   }
 
   public CompletableFuture<Result<MultipleRecords<T>>> findByIds(
@@ -73,7 +85,7 @@ public class MultipleRecordFetcher<T> {
   private List<Result<CqlQuery>> buildBatchQueriesByIndexName(
       Collection<String> ids, String indexName) {
 
-    return partition(new ArrayList<>(ids), MAX_ID_VALUES_PER_CQL_SEARCH_QUERY)
+    return partition(new ArrayList<>(ids), maxValuesPerCqlSearchQuery)
       .stream()
       .map(partitionedIds -> exactMatchAny(indexName, partitionedIds))
       .collect(Collectors.toList());

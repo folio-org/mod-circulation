@@ -43,7 +43,7 @@ public class FindMultipleRecordsByIdTests {
     final GetManyRecordsClient client = clientThatAlwaysReturnsCannedResponse();
 
     final MultipleRecordFetcher<JsonObject> fetcher = new MultipleRecordFetcher<>(
-      client, "records", identity());
+      client, "records", identity(), MAX_VALUES_PER_CQL_SEARCH_QUERY);
 
     final List<String> ids = generateIds(MAX_VALUES_PER_CQL_SEARCH_QUERY);
 
