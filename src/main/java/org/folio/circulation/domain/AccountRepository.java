@@ -115,7 +115,7 @@ public class AccountRepository {
 
   public CompletableFuture<Result<Account>> create(Account account) {
     final ResponseInterpreter<Account> interpreter = new ResponseInterpreter<Account>()
-      .flatMapOn(201, mapUsingJson(Account::new))
+      .flatMapOn(201, mapUsingJson(Account::from))
       .otherwise(forwardOnFailure());
 
     return accountsStorageClient.post(account.toJson())

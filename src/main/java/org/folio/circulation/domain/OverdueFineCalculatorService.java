@@ -195,6 +195,6 @@ public class OverdueFineCalculatorService {
   }
 
   private CompletableFuture<Result<Account>> failure() {
-    return completedFuture(succeeded(new Account(null)));
+    return completedFuture(succeeded(Account.from(null)));
   }
 }

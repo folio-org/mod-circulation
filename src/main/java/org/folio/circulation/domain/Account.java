@@ -56,39 +56,53 @@ public class Account {
     this.paymentStatus = "Outstanding";
   }
 
-  public Account(JsonObject representation) {
-    this.id = getProperty(representation, "id");
-    this.ownerId = getProperty(representation, "ownerId");
-    this.feeFineId = getProperty(representation, "feeFineId");
-    if (representation != null) {
-      this.amount = representation.getDouble("amount");
-      this.remaining = representation.getDouble("remaining");
-    }
-    else {
-      this.amount = null;
-      this.remaining = null;
-    }
-    this.feeFineType = getProperty(representation, "feeFineType");
-    this.feeFineOwner = getProperty(representation, "feeFineOwner");
-    this.title = getProperty(representation, "title");
-    this.barcode = getProperty(representation, "barcode");
-    this.callNumber = getProperty(representation, "callNumber");
-    this.location = getProperty(representation, "location");
-    this.materialTypeId = getProperty(representation, "materialTypeId");
-    this.loanId = getProperty(representation, "loanId");
-    this.userId = getProperty(representation, "userId");
-    this.itemId = getProperty(representation, "itemId");
-    this.status = getNestedStringProperty(representation, "status", "name");
-    this.paymentStatus = getNestedStringProperty(representation, "paymentStatus", "name");
-  }
-
-  private Account(JsonObject representation, Collection<FeeFineAction> actions) {
-    this(representation);
-    this.feeFineActions = actions == null ? new ArrayList<>() : actions;
+  public Account(String id, String ownerId, String feeFineId, Double amount, Double remaining,
+    String feeFineType, String feeFineOwner, String title, String barcode, String callNumber,
+    String location, String materialTypeId, String loanId, String userId, String itemId,
+    String status, String paymentStatus) {
+    this.id = id;
+    this.ownerId = ownerId;
+    this.feeFineId = feeFineId;
+    this.amount = amount;
+    this.remaining = remaining;
+    this.feeFineType = feeFineType;
+    this.feeFineOwner = feeFineOwner;
+    this.title = title;
+    this.barcode = barcode;
+    this.callNumber = callNumber;
+    this.location = location;
+    this.materialTypeId = materialTypeId;
+    this.loanId = loanId;
+    this.userId = userId;
+    this.itemId = itemId;
+    this.status = status;
+    this.paymentStatus = paymentStatus;
   }
 
   public static Account from(JsonObject representation) {
-    return new Account(representation);
+    return new Account(getProperty(representation, "id"),
+      getProperty(representation, "ownerId"),
+      getProperty(representation, "feeFineId"),
+      representation != null ? representation.getDouble("amount") : null,
+      representation != null ? representation.getDouble("remaining") : null,
+      getProperty(representation, "feeFineType"),
+      getProperty(representation, "feeFineOwner"),
+      getProperty(representation, "title"),
+      getProperty(representation, "barcode"),
+      getProperty(representation, "callNumber"),
+      getProperty(representation, "location"),
+      getProperty(representation, "materialTypeId"),
+      getProperty(representation, "loanId"),
+      getProperty(representation, "userId"),
+      getProperty(representation, "itemId"),
+      getNestedStringProperty(representation, "status", "name"),
+      getNestedStringProperty(representation, "paymentStatus", "name"));
+  }
+
+  private static Account from(JsonObject representation, Collection<FeeFineAction> actions) {
+    Account account = Account.from(representation);
+    account.setFeeFineActions(actions == null ? new ArrayList<>() : actions);
+    return account;
   }
 
   public JsonObject toJson() {
@@ -193,6 +207,10 @@ public class Account {
     return this.remaining;
   }
 
+  public void setFeeFineActions(Collection<FeeFineAction> feeFineActions) {
+    this.feeFineActions = feeFineActions;
+  }
+
   public Optional<DateTime> getClosedDate() {
     return feeFineActions.stream()
       .filter(ffa -> ffa.getBalance().equals(NumberUtils.DOUBLE_ZERO))
@@ -201,7 +219,7 @@ public class Account {
   }
 
   public Account withFeeFineActions(Collection<FeeFineAction> actions) {
-    return new Account(toJson(), actions);
+    return Account.from(toJson(), actions);
   }
 
   public boolean isClosed() {
