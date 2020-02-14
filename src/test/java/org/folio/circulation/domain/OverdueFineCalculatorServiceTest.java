@@ -166,8 +166,11 @@ public class OverdueFineCalculatorServiceTest {
     overdueFineCalculatorService.calculateOverdueFine(records).get();
     verify(accountRepository, times(1)).create(any());
 
-    ArgumentCaptor<AccountStorageRepresentation> argument = ArgumentCaptor.forClass(AccountStorageRepresentation.class);
+    ArgumentCaptor<AccountStorageRepresentation> argument =
+      ArgumentCaptor.forClass(AccountStorageRepresentation.class);
+
     verify(accountRepository).create(argument.capture());
+
     assertEquals(FEE_FINE_OWNER_ID.toString(), argument.getValue().getString("ownerId"));
     assertEquals(FEE_FINE_ID.toString(), argument.getValue().getString("feeFineId"));
     assertEquals(correctOverdueFine, argument.getValue().getDouble("amount"));

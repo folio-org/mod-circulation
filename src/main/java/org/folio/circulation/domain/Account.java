@@ -16,8 +16,7 @@ import io.vertx.core.json.JsonObject;
 
 public class Account {
   private final String id;
-  private final AccountFeeFineOwnerAndTypeInfo feeFineOwnerAndTypeInfo;
-  private final AccountLoanAndItemInfo loanAndItemInfo;
+  private final AccountRelatedRecordsInfo relatedRecordsInfo;
   private final Double amount;
   private final Double remaining;
   private final String status;
@@ -25,12 +24,10 @@ public class Account {
 
   private Collection<FeeFineAction> feeFineActions = new ArrayList<>();
 
-  public Account(String id, AccountFeeFineOwnerAndTypeInfo feeFineOwnerAndTypeInfo,
-    AccountLoanAndItemInfo loanAndItemInfo, Double amount, Double remaining,
-    String status, String paymentStatus) {
+  public Account(String id, AccountRelatedRecordsInfo relatedRecordsInfo, Double amount,
+    Double remaining, String status, String paymentStatus) {
     this.id = id;
-    this.feeFineOwnerAndTypeInfo = feeFineOwnerAndTypeInfo;
-    this.loanAndItemInfo = loanAndItemInfo;
+    this.relatedRecordsInfo = relatedRecordsInfo;
     this.amount = amount;
     this.remaining = remaining;
     this.status = status;
@@ -39,19 +36,24 @@ public class Account {
 
   public static Account from(JsonObject representation) {
     return new Account(getProperty(representation, "id"),
-      new AccountFeeFineOwnerAndTypeInfo(
-        getProperty(representation, "ownerId"),
-        getProperty(representation, "feeFineOwner"),
-        getProperty(representation, "feeFineId"),
-        getProperty(representation, "feeFineType")),
-      new AccountLoanAndItemInfo(getProperty(representation, "title"),
-        getProperty(representation, "barcode"),
-        getProperty(representation, "callNumber"),
-        getProperty(representation, "location"),
-        getProperty(representation, "materialTypeId"),
-        getProperty(representation, "loanId"),
-        getProperty(representation, "userId"),
-        getProperty(representation, "itemId")),
+      new AccountRelatedRecordsInfo(
+        new AccountFeeFineOwnerInfo(
+          getProperty(representation, "ownerId"),
+          getProperty(representation, "feeFineOwner")),
+        new AccountFeeFineTypeInfo(
+          getProperty(representation, "feeFineId"),
+          getProperty(representation, "feeFineType")),
+        new AccountLoanInfo(
+          getProperty(representation, "loanId"),
+          getProperty(representation, "userId")),
+        new AccountItemInfo(
+          getProperty(representation, "itemId"),
+          getProperty(representation, "title"),
+          getProperty(representation, "barcode"),
+          getProperty(representation, "callNumber"),
+          getProperty(representation, "location"),
+          getProperty(representation, "materialTypeId"))
+      ),
       representation != null ? representation.getDouble("amount") : null,
       representation != null ? representation.getDouble("remaining") : null,
       getNestedStringProperty(representation, "status", "name"),
@@ -68,20 +70,20 @@ public class Account {
     JsonObject jsonObject = new JsonObject();
 
     jsonObject.put("id", id);
-    jsonObject.put("ownerId", feeFineOwnerAndTypeInfo.getOwnerId());
-    jsonObject.put("feeFineId", feeFineOwnerAndTypeInfo.getFeeFineId());
+    jsonObject.put("ownerId", relatedRecordsInfo.getFeeFineOwnerInfo().getOwnerId());
+    jsonObject.put("feeFineId", relatedRecordsInfo.getFeeFineTypeInfo().getFeeFineId());
     jsonObject.put("amount", amount);
     jsonObject.put("remaining", remaining);
-    jsonObject.put("feeFineType", feeFineOwnerAndTypeInfo.getFeeFineType());
-    jsonObject.put("feeFineOwner", feeFineOwnerAndTypeInfo.getOwner());
-    jsonObject.put("title", loanAndItemInfo.getTitle());
-    jsonObject.put("barcode", loanAndItemInfo.getBarcode());
-    jsonObject.put("callNumber", loanAndItemInfo.getCallNumber());
-    jsonObject.put("location", loanAndItemInfo.getLocation());
-    jsonObject.put("materialTypeId", loanAndItemInfo.getMaterialTypeId());
-    jsonObject.put("loanId", loanAndItemInfo.getLoanId());
-    jsonObject.put("userId", loanAndItemInfo.getUserId());
-    jsonObject.put("itemId", loanAndItemInfo.getItemId());
+    jsonObject.put("feeFineType", relatedRecordsInfo.getFeeFineTypeInfo().getFeeFineType());
+    jsonObject.put("feeFineOwner", relatedRecordsInfo.getFeeFineOwnerInfo().getOwner());
+    jsonObject.put("title", relatedRecordsInfo.getItemInfo().getTitle());
+    jsonObject.put("barcode", relatedRecordsInfo.getItemInfo().getBarcode());
+    jsonObject.put("callNumber", relatedRecordsInfo.getItemInfo().getCallNumber());
+    jsonObject.put("location", relatedRecordsInfo.getItemInfo().getLocation());
+    jsonObject.put("materialTypeId", relatedRecordsInfo.getItemInfo().getMaterialTypeId());
+    jsonObject.put("loanId", relatedRecordsInfo.getLoanInfo().getLoanId());
+    jsonObject.put("userId", relatedRecordsInfo.getLoanInfo().getUserId());
+    jsonObject.put("itemId", relatedRecordsInfo.getItemInfo().getItemId());
 
     JsonObject paymentStatusJsonObject = new JsonObject();
     JsonPropertyWriter.write(paymentStatusJsonObject, "name", this.paymentStatus);
@@ -107,43 +109,43 @@ public class Account {
   }
 
   public String getFeeFineType() {
-    return feeFineOwnerAndTypeInfo.getFeeFineType();
+    return relatedRecordsInfo.getFeeFineTypeInfo().getFeeFineType();
   }
 
   public String getFeeFineOwner() {
-    return feeFineOwnerAndTypeInfo.getOwner();
+    return relatedRecordsInfo.getFeeFineOwnerInfo().getOwner();
   }
 
   public String getTitle() {
-    return loanAndItemInfo.getTitle();
+    return relatedRecordsInfo.getItemInfo().getTitle();
   }
 
   public String getBarcode() {
-    return loanAndItemInfo.getBarcode();
+    return relatedRecordsInfo.getItemInfo().getBarcode();
   }
 
   public String getCallNumber() {
-    return loanAndItemInfo.getCallNumber();
+    return relatedRecordsInfo.getItemInfo().getCallNumber();
   }
 
   public String getLocation() {
-    return loanAndItemInfo.getLocation();
+    return relatedRecordsInfo.getItemInfo().getLocation();
   }
 
   public String getMaterialTypeId() {
-    return loanAndItemInfo.getMaterialTypeId();
+    return relatedRecordsInfo.getItemInfo().getMaterialTypeId();
   }
 
   public String getLoanId() {
-    return loanAndItemInfo.getLoanId();
+    return relatedRecordsInfo.getLoanInfo().getLoanId();
   }
 
   public String getUserId() {
-    return loanAndItemInfo.getUserId();
+    return relatedRecordsInfo.getLoanInfo().getUserId();
   }
 
   public String getItemId() {
-    return loanAndItemInfo.getItemId();
+    return relatedRecordsInfo.getItemInfo().getItemId();
   }
 
   public String getStatus() {

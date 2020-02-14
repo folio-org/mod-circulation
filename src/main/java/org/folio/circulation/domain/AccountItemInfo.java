@@ -1,25 +1,24 @@
 package org.folio.circulation.domain;
 
-public class AccountLoanAndItemInfo {
+public class AccountItemInfo {
+  private final String itemId;
   private final String title;
   private final String barcode;
   private final String callNumber;
   private final String location;
   private final String materialTypeId;
-  private final String loanId;
-  private final String userId;
-  private final String itemId;
 
-  public AccountLoanAndItemInfo(String title, String barcode, String callNumber, String location,
-    String materialTypeId, String loanId, String userId, String itemId) {
+  public AccountItemInfo(String itemId, String title, String barcode, String callNumber, String location, String materialTypeId) {
+    this.itemId = itemId;
     this.title = title;
     this.barcode = barcode;
     this.callNumber = callNumber;
     this.location = location;
     this.materialTypeId = materialTypeId;
-    this.loanId = loanId;
-    this.userId = userId;
-    this.itemId = itemId;
+  }
+
+  public String getItemId() {
+    return itemId;
   }
 
   public String getTitle() {
@@ -40,17 +39,5 @@ public class AccountLoanAndItemInfo {
 
   public String getMaterialTypeId() {
     return materialTypeId;
-  }
-
-  public String getLoanId() {
-    return loanId;
-  }
-
-  public String getUserId() {
-    return userId;
-  }
-
-  public String getItemId() {
-    return itemId;
   }
 }

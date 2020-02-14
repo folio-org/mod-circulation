@@ -631,7 +631,10 @@ public class CheckInByBarcodeTests extends APITests {
         .on(new DateTime(2020, 1, 25, 12, 0, 0, DateTimeZone.UTC))
         .at(checkInServicePointId));
 
-    TimeUnit.SECONDS.sleep(1);
+    Awaitility.await()
+      .atMost(1, TimeUnit.SECONDS)
+      .until(accountsClient::getAll, hasSize(1));
+
     List<JsonObject> createdAccounts = accountsClient.getAll();
 
     assertThat("Fee/fine record should be created", createdAccounts, hasSize(1));

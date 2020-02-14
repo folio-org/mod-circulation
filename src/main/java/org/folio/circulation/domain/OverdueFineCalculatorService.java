@@ -56,7 +56,9 @@ public class OverdueFineCalculatorService {
 
   public CompletableFuture<Result<CheckInProcessRecords>> calculateOverdueFine(
     CheckInProcessRecords records) {
+
     Loan loan = records.getLoan();
+
     if (loan == null) {
       return completedFuture(of(() -> records));
     }
@@ -66,10 +68,13 @@ public class OverdueFineCalculatorService {
 
   public CompletableFuture<Result<LoanAndRelatedRecords>> calculateOverdueFine(
     LoanAndRelatedRecords records) {
+
     Loan loan = records.getLoan();
+
     if (loan == null) {
       return completedFuture(of(() -> records));
     }
+
     return calculateOverdueFine(loan).thenApply(mapResult(v -> records));
   }
 
@@ -94,12 +99,15 @@ public class OverdueFineCalculatorService {
     double maxFine = loan.wasDueDateChangedByRecall() ?
       loan.getOverdueFinePolicy().getMaxOverdueRecallFine() :
       loan.getOverdueFinePolicy().getMaxOverdueFine();
+
     OverdueFineInterval interval = loan.getOverdueFinePolicy().getOverdueFineInterval();
     double overdueFine = loan.getOverdueFinePolicy().getOverdueFine() *
       Math.ceil(overdueMinutes.doubleValue()/interval.getMinutes().doubleValue());
+
     if (maxFine > 0) {
       overdueFine = Math.min(overdueFine, maxFine);
     }
+
     return CompletableFuture.completedFuture(succeeded(overdueFine));
   }
 
@@ -134,8 +142,7 @@ public class OverdueFineCalculatorService {
       }));
   }
 
-  private CompletableFuture<Result<Account>> createFeeFineRecord(
-    Loan loan, Double fineAmount) {
+  private CompletableFuture<Result<Account>> createFeeFineRecord(Loan loan, Double fineAmount) {
     if (fineAmount <= 0) {
       return failure();
     }
@@ -161,10 +168,10 @@ public class OverdueFineCalculatorService {
   }
 
   private static class CalculationParameters {
-    Loan loan;
-    Item item;
-    FeeFineOwner feeFineOwner;
-    FeeFine feeFine;
+    final Loan loan;
+    final Item item;
+    final FeeFineOwner feeFineOwner;
+    final FeeFine feeFine;
 
     CalculationParameters(Loan loan, Item item, FeeFineOwner feeFineOwner, FeeFine feeFine) {
       this.loan = loan;

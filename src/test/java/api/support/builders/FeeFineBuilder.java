@@ -14,8 +14,7 @@ public class FeeFineBuilder extends JsonBuilder implements Builder {
   private String chargeNoticeId;
   private String actionNoticeId;
 
-  public FeeFineBuilder() {
-  }
+  public FeeFineBuilder() { }
 
   public FeeFineBuilder(UUID id, UUID ownerId, String feeFineType, Double defaultAmount,
     String chargeNoticeId, String actionNoticeId) {
