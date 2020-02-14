@@ -11,7 +11,10 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import api.support.APITests;
 import api.support.builders.Address;
@@ -20,7 +23,6 @@ import api.support.fixtures.AddressExamples;
 import api.support.http.InventoryItemResource;
 import api.support.http.ResourceClient;
 import api.support.matchers.UUIDMatcher;
-import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import org.folio.circulation.domain.CallNumberComponents;
 import org.folio.circulation.domain.Item;
@@ -28,7 +30,6 @@ import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.domain.Location;
 import org.folio.circulation.domain.User;
 import org.folio.circulation.support.JsonArrayHelper;
-import org.folio.circulation.support.JsonPropertyFetcher;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
@@ -160,7 +161,7 @@ public class PickSlipsTests extends APITests {
     assertThat(response.getStatusCode(), is(HTTP_OK));
     assertResponseHasItems(response, 1);
 
-    JsonObject pickSlip = getPickSlips(response).getJsonObject(0);
+    JsonObject pickSlip = getPickSlipsList(response).get(0);
     JsonObject itemContext = pickSlip.getJsonObject(ITEM_KEY);
 
     Item item = Item.from(itemResource.getJson())
@@ -373,8 +374,7 @@ public class PickSlipsTests extends APITests {
   private void assertResponseContains(Response response, InventoryItemResource item,
     IndividualResource request, IndividualResource requester) {
 
-    long count = getPickSlips(response).stream()
-      .map(JsonObject.class::cast)
+    long count = getPickSlipsStream(response)
       .filter(ps ->
         item.getBarcode().equals(
           getNestedStringProperty(ps, ITEM_KEY, "barcode"))
@@ -395,9 +395,13 @@ public class PickSlipsTests extends APITests {
     }
   }
 
-  private JsonArray getPickSlips(Response response) {
-    return response.getJson()
-      .getJsonArray(PICK_SLIPS_KEY);
+  private Stream<JsonObject> getPickSlipsStream(Response response) {
+    return JsonArrayHelper.toStream(response.getJson(), PICK_SLIPS_KEY);
+  }
+
+  private List<JsonObject> getPickSlipsList(Response response) {
+    return getPickSlipsStream(response)
+      .collect(Collectors.toList());
   }
 
   private String getName(JsonObject jsonObject) {
