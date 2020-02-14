@@ -16,6 +16,7 @@ public class BadRequestFailure implements HttpFailure {
     ClientErrorResponse.badRequest(response, reason);
   }
 
+  @Override
   public String getReason() {
     return reason;
   }

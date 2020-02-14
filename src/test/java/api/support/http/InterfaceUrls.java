@@ -250,4 +250,8 @@ public class InterfaceUrls {
   static URL templateUrl(String templateId) {
     return APITestContext.viaOkapiModuleUrl("/templates");
   }
+
+  public static URL checkInOperationStorage(String subPath) {
+    return APITestContext.viaOkapiModuleUrl("/check-in-operation-storage" + subPath);
+  }
 }

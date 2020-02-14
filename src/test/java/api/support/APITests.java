@@ -142,6 +142,9 @@ public abstract class APITests {
   protected final ResourceClient patronSessionRecordsClient =
     ResourceClient.forPatronSessionRecords();
 
+  protected final ResourceClient checkInOperationClient =
+    ResourceClient.forCheckInOperations();
+
   protected final EndPatronSessionClient endPatronSessionClient =
     new EndPatronSessionClient();
 
@@ -259,6 +262,8 @@ public abstract class APITests {
     itemsFixture.cleanUp();
 
     usersClient.deleteAllIndividually();
+
+    checkInOperationClient.deleteAll();
 
     if (initialiseCirculationRules) {
       useDefaultRollingPolicyCirculationRules();

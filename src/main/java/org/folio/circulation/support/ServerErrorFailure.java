@@ -21,6 +21,7 @@ public class ServerErrorFailure implements HttpFailure {
     ServerErrorResponse.internalError(response, reason);
   }
 
+  @Override
   public String getReason() {
     return reason;
   }

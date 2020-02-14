@@ -29,8 +29,12 @@ import org.folio.circulation.domain.notice.NoticeEventType;
 import org.folio.circulation.domain.notice.PatronNoticeEvent;
 import org.folio.circulation.domain.notice.PatronNoticeEventBuilder;
 import org.folio.circulation.domain.notice.PatronNoticeService;
+import org.folio.circulation.domain.policy.PatronNoticePolicyRepository;
+import org.folio.circulation.services.CheckInOperationService;
 import org.folio.circulation.storage.ItemByBarcodeInStorageFinder;
 import org.folio.circulation.storage.SingleOpenLoanForItemInStorageFinder;
+import org.folio.circulation.support.Clients;
+import org.folio.circulation.support.ItemRepository;
 import org.folio.circulation.support.Result;
 
 class CheckInProcessAdapter {
@@ -45,6 +49,7 @@ class CheckInProcessAdapter {
   private final PatronNoticeService patronNoticeService;
   private final UserRepository userRepository;
   private final AddressTypeRepository addressTypeRepository;
+  private final CheckInOperationService checkInOperationService;
 
   @SuppressWarnings("squid:S00107")
   CheckInProcessAdapter(
@@ -54,7 +59,9 @@ class CheckInProcessAdapter {
     RequestQueueRepository requestQueueRepository,
     UpdateItem updateItem, UpdateRequestQueue requestQueueUpdate,
     LoanRepository loanRepository, ServicePointRepository servicePointRepository,
-    PatronNoticeService patronNoticeService, UserRepository userRepository, AddressTypeRepository addressTypeRepository) {
+    PatronNoticeService patronNoticeService, UserRepository userRepository,
+    AddressTypeRepository addressTypeRepository,
+    CheckInOperationService checkInOperationService) {
 
     this.itemFinder = itemFinder;
     this.singleOpenLoanFinder = singleOpenLoanFinder;
@@ -67,6 +74,33 @@ class CheckInProcessAdapter {
     this.patronNoticeService = patronNoticeService;
     this.userRepository = userRepository;
     this.addressTypeRepository = addressTypeRepository;
+    this.checkInOperationService = checkInOperationService;
+  }
+
+  public static CheckInProcessAdapter newInstance(Clients clients) {
+    final LoanRepository loanRepository = new LoanRepository(clients);
+    final UserRepository userRepository = new UserRepository(clients);
+
+    final ItemRepository itemRepository = new ItemRepository(clients, true, true, true);
+
+    final ItemByBarcodeInStorageFinder itemFinder =
+      new ItemByBarcodeInStorageFinder(itemRepository);
+
+    final SingleOpenLoanForItemInStorageFinder singleOpenLoanFinder
+      = new SingleOpenLoanForItemInStorageFinder(loanRepository, userRepository, true);
+
+    return new CheckInProcessAdapter(itemFinder,
+      singleOpenLoanFinder,
+      new LoanCheckInService(),
+      RequestQueueRepository.using(clients),
+      new UpdateItem(clients),
+      UpdateRequestQueue.using(clients),
+      loanRepository,
+      new ServicePointRepository(clients),
+      new PatronNoticeService(new PatronNoticePolicyRepository(clients), clients),
+      userRepository,
+      new AddressTypeRepository(clients),
+      new CheckInOperationService(clients));
   }
 
   CompletableFuture<Result<Item>> findItem(CheckInProcessRecords records) {
@@ -213,5 +247,11 @@ class CheckInProcessAdapter {
         checkInProcessRecords.getItem(),
         checkInProcessRecords.getRequestQueue(),
         checkInProcessRecords.getCheckInRequest()));
+  }
+
+  public CompletableFuture<Result<CheckInProcessRecords>> logCheckInOperation(
+    CheckInProcessRecords checkInProcessRecords) {
+
+    return checkInOperationService.logCheckInOperation(checkInProcessRecords);
   }
 }

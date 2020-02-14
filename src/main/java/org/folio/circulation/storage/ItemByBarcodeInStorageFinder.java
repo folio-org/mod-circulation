@@ -1,38 +1,30 @@
 package org.folio.circulation.storage;
 
+import static org.folio.circulation.domain.validation.CommonFailures.noItemFoundForBarcodeFailure;
 import static org.folio.circulation.support.Result.of;
 
 import java.util.concurrent.CompletableFuture;
-import java.util.function.Supplier;
 
 import org.folio.circulation.domain.Item;
-import org.folio.circulation.support.HttpFailure;
-import org.folio.circulation.support.Result;
 import org.folio.circulation.support.ItemRepository;
+import org.folio.circulation.support.Result;
 
 public class ItemByBarcodeInStorageFinder {
   private final ItemRepository itemRepository;
-  private final Supplier<HttpFailure> itemNotFoundFailureSupplier;
 
-  public ItemByBarcodeInStorageFinder(
-    ItemRepository itemRepository,
-    Supplier<HttpFailure> itemNotFoundFailureSupplier) {
-
+  public ItemByBarcodeInStorageFinder(ItemRepository itemRepository) {
     this.itemRepository = itemRepository;
-    this.itemNotFoundFailureSupplier = itemNotFoundFailureSupplier;
   }
 
   public CompletableFuture<Result<Item>> findItemByBarcode(String itemBarcode) {
     return itemRepository.fetchByBarcode(itemBarcode)
-      .thenApply(itemResult -> failWhenNoItemFoundForBarcode(itemResult,
-        itemNotFoundFailureSupplier));
+      .thenApply(itemResult -> failWhenNoItemFoundForBarcode(itemResult, itemBarcode));
   }
 
   private static Result<Item> failWhenNoItemFoundForBarcode(
-    Result<Item> itemResult,
-    Supplier<HttpFailure> itemNotFoundFailureSupplier) {
+    Result<Item> itemResult, String itemBarcode) {
 
     return itemResult.failWhen(item -> of(item::isNotFound),
-      item -> itemNotFoundFailureSupplier.get());
+      item -> noItemFoundForBarcodeFailure(itemBarcode).get());
   }
 }

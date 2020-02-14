@@ -27,4 +27,9 @@ public class RecordNotFoundFailure implements HttpFailure {
     return String.format("%s record with ID \"%s\" cannot be found",
       recordType, id);
   }
+
+  @Override
+  public String getReason() {
+    return toString();
+  }
 }

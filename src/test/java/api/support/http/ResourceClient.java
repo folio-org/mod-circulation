@@ -3,6 +3,7 @@ package api.support.http;
 import static api.support.APITestContext.getOkapiHeadersFromContext;
 import static api.support.http.CqlQuery.noQuery;
 import static api.support.http.Limit.limit;
+import static api.support.http.Limit.noLimit;
 import static api.support.http.Offset.noOffset;
 import static java.net.HttpURLConnection.HTTP_NO_CONTENT;
 import static org.folio.circulation.support.JsonArrayHelper.mapToList;
@@ -10,10 +11,13 @@ import static org.folio.circulation.support.JsonArrayHelper.mapToList;
 import java.net.URL;
 import java.util.List;
 import java.util.UUID;
+import java.util.function.Function;
 
+import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 
+import api.support.MultipleJsonRecords;
 import api.support.RestAssuredClient;
 import api.support.builders.Builder;
 import io.vertx.core.json.JsonObject;
@@ -209,6 +213,11 @@ public class ResourceClient {
       "identifierTypes");
   }
 
+  public static ResourceClient forCheckInOperations() {
+    return new ResourceClient(InterfaceUrls::checkInOperationStorage,
+      "checkInOperations");
+  }
+
   private ResourceClient(UrlMaker urlMaker, String collectionArrayPropertyName) {
     this.urlMaker = urlMaker;
     this.collectionArrayPropertyName = collectionArrayPropertyName;
@@ -291,6 +300,13 @@ public class ResourceClient {
 
   public IndividualResource get(URL url) {
     return new IndividualResource(restAssuredClient.get(url, 200, "get-record"));
+  }
+
+  public MultipleJsonRecords getMany(CqlQuery query) {
+    Response response = restAssuredClient.get(urlMaker.combine(""), query,
+      noLimit(), noOffset(), 200, "get-many");
+
+    return MultipleJsonRecords.multipleRecordsFrom(response, collectionArrayPropertyName);
   }
 
   public Response attemptGet(IndividualResource resource) {

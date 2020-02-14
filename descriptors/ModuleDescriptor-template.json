@@ -846,6 +846,10 @@
     {
       "id": "patron-action-session-storage",
       "version": "0.1"
+    },
+    {
+      "id": "check-in-operation-storage",
+      "version": "0.1"
     }
   ],
   "permissionSets": [
@@ -1283,7 +1287,8 @@
         "patron-notice.post",
         "circulation.rules.notice-policy.get",
         "inventory-storage.loan-types.item.get",
-        "patron-action-session-storage.patron-action-sessions.item.post"
+        "patron-action-session-storage.patron-action-sessions.item.post",
+        "check-in-operation-storage.item.post"
       ],
       "visible": false
     },
