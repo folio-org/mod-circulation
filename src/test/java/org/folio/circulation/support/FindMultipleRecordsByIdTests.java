@@ -26,26 +26,34 @@ import java.util.stream.Stream;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.support.http.client.CqlQuery;
 import org.folio.circulation.support.http.client.Response;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnit;
+import org.mockito.junit.MockitoRule;
 
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import junitparams.JUnitParamsRunner;
+import junitparams.Parameters;
 
-@RunWith(MockitoJUnitRunner.class)
+@RunWith(JUnitParamsRunner.class)
 public class FindMultipleRecordsByIdTests {
-  final int MAX_VALUES_PER_CQL_SEARCH_QUERY = 50;
+  @Rule
+  public MockitoRule mockitoRule = MockitoJUnit.rule();
 
   @Test
-  public void canFetchSingleBatchOfRecordsById() {
+  public void shouldUseSingleCqlQueryForFindingSmallNumberOfRecordsById() {
+    final int MAX_VALUES_PER_CQL_SEARCH_QUERY = 50;
+
     final GetManyRecordsClient client = clientThatAlwaysReturnsCannedResponse();
 
     final MultipleRecordFetcher<JsonObject> fetcher = new MultipleRecordFetcher<>(
-      client, "records", identity(), MAX_VALUES_PER_CQL_SEARCH_QUERY);
+        client, "records", identity(),
+        MAX_VALUES_PER_CQL_SEARCH_QUERY);
 
-    final List<String> ids = generateIds(MAX_VALUES_PER_CQL_SEARCH_QUERY);
+    final List<String> ids = generateIds(10);
 
     fetcher.findByIds(ids);
 
@@ -59,14 +67,17 @@ public class FindMultipleRecordsByIdTests {
   }
 
   @Test
-  public void canFetchMultiplesBatchesOfRecordsById() {
+  @Parameters({ "50", "30" })
+  public void shouldUseMultipleCqlQueriesForFindingSmallNumberOfRecordsById(
+    int maximumValuesPerCqlQuery) {
+
     final GetManyRecordsClient client = clientThatAlwaysReturnsCannedResponse();
 
     final MultipleRecordFetcher<JsonObject> fetcher = new MultipleRecordFetcher<>(
-      client, "records", identity());
+      client, "records", identity(), maximumValuesPerCqlQuery);
 
-    final List<String> firstSetOfIds = generateIds(MAX_VALUES_PER_CQL_SEARCH_QUERY);
-    final List<String> secondSetOfIds = generateIds(MAX_VALUES_PER_CQL_SEARCH_QUERY);
+    final List<String> firstSetOfIds = generateIds(maximumValuesPerCqlQuery);
+    final List<String> secondSetOfIds = generateIds(maximumValuesPerCqlQuery);
 
     fetcher.findByIds(combineSetsOfIds(firstSetOfIds, secondSetOfIds));
 
@@ -83,8 +94,8 @@ public class FindMultipleRecordsByIdTests {
   }
 
   @Test
-  public void SearchingForNoIdsAssumesNoRecordsWillBeFound() throws InterruptedException,
-      ExecutionException, TimeoutException {
+  public void shouldAssumeNoRecordsAreFoundWhenSearchingForNoIds()
+      throws InterruptedException, ExecutionException, TimeoutException {
 
     final GetManyRecordsClient client = clientThatAlwaysReturnsCannedResponse();
 
@@ -94,14 +105,13 @@ public class FindMultipleRecordsByIdTests {
     final CompletableFuture<Result<MultipleRecords<JsonObject>>> futureResult
       = fetcher.findByIds(new ArrayList<>());
 
-    final MultipleRecords<JsonObject> result = futureResult.get(1, SECONDS).value();
+    final MultipleRecords<JsonObject> result = getFutureResultValue(futureResult);
 
     assertThat("Should assume no records are found",
         result.isEmpty(), is(true));
 
     verify(client, times(0)).getMany(any(), any());
   }
-
 
   private GetManyRecordsClient clientThatAlwaysReturnsCannedResponse() {
     final GetManyRecordsClient mock = mock(GetManyRecordsClient.class);
@@ -133,5 +143,11 @@ public class FindMultipleRecordsByIdTests {
 
     return Stream.concat(firstSetOfIds.stream(), secondSetOfIds.stream())
       .collect(toList());
+  }
+
+  private <T> T getFutureResultValue(CompletableFuture<Result<T>> futureResult)
+    throws InterruptedException, ExecutionException, TimeoutException {
+
+    return futureResult.get(1, SECONDS).value();
   }
 }
