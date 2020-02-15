@@ -34,7 +34,7 @@ public class ChangeDueDateValidator {
     return result.failWhen(
       r -> {
         Result<Loan> loanResult;
-        CompletableFuture<Result<Loan>> future = loanRepository.getById(r.getLoan().getId());
+        CompletableFuture<Result<Loan>> future = getExistingLoan(r);
 
         try {
           loanResult = future.get();
@@ -52,6 +52,12 @@ public class ChangeDueDateValidator {
       },
       ChangeDueDateValidator::dueDateChangedFailedForClaimedReturned
     );
+  }
+
+  private CompletableFuture<Result<Loan>> getExistingLoan(
+      LoanAndRelatedRecords loanAndRelatedRecords) {
+
+    return loanRepository.getById(loanAndRelatedRecords.getLoan().getId());
   }
 
   private static boolean isClaimedReturnedOnDueDateChanged(Loan loan, DateTime previous, DateTime upcoming) {
