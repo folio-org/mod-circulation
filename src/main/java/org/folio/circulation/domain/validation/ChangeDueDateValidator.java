@@ -60,7 +60,9 @@ public class ChangeDueDateValidator {
     return loanRepository.getById(loanAndRelatedRecords.getLoan().getId());
   }
 
-  private static boolean isClaimedReturnedOnDueDateChanged(Loan loan, DateTime previous, DateTime upcoming) {
+  private static boolean isClaimedReturnedOnDueDateChanged(Loan loan,
+      DateTime previous, DateTime upcoming) {
+
     if (!loan.getItem().isClaimedReturned()) {
       return false;
     }
@@ -68,9 +70,10 @@ public class ChangeDueDateValidator {
     return !previous.equals(upcoming);
   }
 
-  private static ValidationErrorFailure dueDateChangedFailedForClaimedReturned(LoanAndRelatedRecords record) {
-    return singleValidationError(
-      "item is claimed returned", "id",
+  private static ValidationErrorFailure dueDateChangedFailedForClaimedReturned(
+      LoanAndRelatedRecords record) {
+
+    return singleValidationError("item is claimed returned", "id",
       record.getLoan().getId());
   }
 }
