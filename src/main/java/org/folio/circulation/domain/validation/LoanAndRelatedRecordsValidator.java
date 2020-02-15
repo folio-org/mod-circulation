@@ -22,9 +22,15 @@ import org.slf4j.LoggerFactory;
 public class LoanAndRelatedRecordsValidator {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
-  private LoanAndRelatedRecordsValidator() {}
+  private final LoanRepository loanRepository;
 
-  public static Result<LoanAndRelatedRecords> refuseWhenLoanDueDateUpdateOnClaimedReturned(Result<LoanAndRelatedRecords> result, LoanRepository loanRepository) {
+  public LoanAndRelatedRecordsValidator(LoanRepository loanRepository) {
+    this.loanRepository = loanRepository;
+  }
+
+  public Result<LoanAndRelatedRecords> refuseWhenLoanDueDateUpdateOnClaimedReturned(
+    Result<LoanAndRelatedRecords> result) {
+
     return result.failWhen(
       r -> {
         Result<Loan> loanResult;

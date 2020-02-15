@@ -149,7 +149,11 @@ public class LoanCollectionResource extends CollectionResource {
     final ServicePointLoanLocationValidator spLoanLocationValidator =
         new ServicePointLoanLocationValidator();
 
-    final DueDateScheduledNoticeService scheduledNoticeService = DueDateScheduledNoticeService.using(clients);
+    final LoanAndRelatedRecordsValidator loanAndRelatedRecordsValidator
+        = new LoanAndRelatedRecordsValidator(loanRepository);
+
+    final DueDateScheduledNoticeService scheduledNoticeService
+        = DueDateScheduledNoticeService.using(clients);
 
     final LoanNoticeSender loanNoticeSender = LoanNoticeSender.using(clients);
 
@@ -164,8 +168,8 @@ public class LoanCollectionResource extends CollectionResource {
       .thenApply(this::refuseWhenItemIsDeclaredLost)
       .thenCombineAsync(userRepository.getUser(loan.getUserId()), this::addUser)
       .thenApply(itemNotFoundValidator::refuseWhenItemNotFound)
-      .thenApply(r -> LoanAndRelatedRecordsValidator.
-        refuseWhenLoanDueDateUpdateOnClaimedReturned(r, loanRepository))
+      .thenApply(r -> loanAndRelatedRecordsValidator.
+        refuseWhenLoanDueDateUpdateOnClaimedReturned(r))
       .thenComposeAsync(r -> r.after(proxyRelationshipValidator::refuseWhenInvalid))
       .thenCombineAsync(requestQueueRepository.get(loan.getItemId()), this::addRequestQueue)
       .thenComposeAsync(result -> result.after(requestQueueUpdate::onCheckIn))
