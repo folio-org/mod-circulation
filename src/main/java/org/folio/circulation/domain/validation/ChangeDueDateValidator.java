@@ -19,16 +19,16 @@ import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class LoanAndRelatedRecordsValidator {
+public class ChangeDueDateValidator {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
   private final LoanRepository loanRepository;
 
-  public LoanAndRelatedRecordsValidator(LoanRepository loanRepository) {
+  public ChangeDueDateValidator(LoanRepository loanRepository) {
     this.loanRepository = loanRepository;
   }
 
-  public Result<LoanAndRelatedRecords> refuseWhenLoanDueDateUpdateOnClaimedReturned(
+  public Result<LoanAndRelatedRecords> refuseDueDateChangeWhenClaimedReturned(
     Result<LoanAndRelatedRecords> result) {
 
     return result.failWhen(
@@ -50,7 +50,7 @@ public class LoanAndRelatedRecordsValidator {
 
         return succeeded(false);
       },
-      LoanAndRelatedRecordsValidator::dueDateChangedFailedForClaimedReturned
+      ChangeDueDateValidator::dueDateChangedFailedForClaimedReturned
     );
   }
 
