@@ -1,79 +1,62 @@
 package org.folio.circulation.domain.validation;
 
-import static org.apache.commons.lang3.exception.ExceptionUtils.getStackTrace;
-import static org.folio.circulation.support.Result.failed;
-import static org.folio.circulation.support.Result.succeeded;
-import static org.folio.circulation.support.results.CommonFailures.failedDueToServerError;
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 
-import java.lang.invoke.MethodHandles;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.domain.LoanRepository;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.ValidationErrorFailure;
-import org.joda.time.DateTime;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class ChangeDueDateValidator {
-  private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
-
   private final LoanRepository loanRepository;
 
   public ChangeDueDateValidator(LoanRepository loanRepository) {
     this.loanRepository = loanRepository;
   }
 
-  public Result<LoanAndRelatedRecords> refuseDueDateChangeWhenClaimedReturned(
-    Result<LoanAndRelatedRecords> result) {
+  public CompletableFuture<Result<LoanAndRelatedRecords>> refuseWhenClaimedReturned(
+      Result<LoanAndRelatedRecords> changedLoanResult) {
 
-    return result.failWhen(
-      r -> {
-        Result<Loan> loanResult;
-        CompletableFuture<Result<Loan>> future = getExistingLoan(r);
-
-        try {
-          loanResult = future.get();
-
-          if (loanResult.succeeded()) {
-            return succeeded(isClaimedReturnedOnDueDateChanged(
-              r.getLoan(), loanResult.value().getDueDate(), r.getLoan().getDueDate()));
-          }
-        } catch (ExecutionException | InterruptedException e) {
-          log.debug("Failed to fetch existing Loan for reason {} and stacktrace is {}", e.getMessage(), getStackTrace(e));
-          return failed(failedDueToServerError(e).cause());
-        }
-
-        return succeeded(false);
-      },
-      ChangeDueDateValidator::dueDateChangedFailedForClaimedReturned
-    );
+    return changedLoanResult
+      .map(LoanAndRelatedRecords::getLoan)
+      .afterWhen(this::itemIsClaimedReturned,
+        this::refuseWhenDueDateChanged, this::carryOn)
+      .thenApply(r -> r.next(existingLoan -> changedLoanResult));
   }
 
-  private CompletableFuture<Result<Loan>> getExistingLoan(
-      LoanAndRelatedRecords loanAndRelatedRecords) {
+  private CompletableFuture<Result<Boolean>> itemIsClaimedReturned(
+      Loan changedLoan) {
 
-    return loanRepository.getById(loanAndRelatedRecords.getLoan().getId());
+    return Result.ofAsync(() -> changedLoan.getItem().isClaimedReturned());
   }
 
-  private static boolean isClaimedReturnedOnDueDateChanged(Loan loan,
-      DateTime previous, DateTime upcoming) {
+  private CompletableFuture<Result<Loan>> refuseWhenDueDateChanged(
+      Loan changedLoan) {
 
-    if (!loan.getItem().isClaimedReturned()) {
-      return false;
-    }
-
-    return !previous.equals(upcoming);
+    return getExistingLoan(changedLoan)
+      .thenApply(r -> r.failWhen(
+        existingLoan -> dueDateHasChanged(existingLoan, changedLoan),
+        existingLoan -> dueDateChangedFailedForClaimedReturned(changedLoan)));
   }
 
-  private static ValidationErrorFailure dueDateChangedFailedForClaimedReturned(
-      LoanAndRelatedRecords record) {
+  private CompletableFuture<Result<Loan>> carryOn(Loan changedLoan) {
+    return Result.ofAsync(() -> changedLoan);
+  }
 
-    return singleValidationError("item is claimed returned", "id",
-      record.getLoan().getId());
+  private Result<Boolean> dueDateHasChanged(Loan existingLoan, Loan changedLoan) {
+    return Result.of(() ->
+        existingLoan != null
+            && !existingLoan.getDueDate().equals(changedLoan.getDueDate()));
+  }
+
+  private CompletableFuture<Result<Loan>> getExistingLoan(Loan loan) {
+    return loanRepository.getById(loan.getId());
+  }
+
+  private ValidationErrorFailure dueDateChangedFailedForClaimedReturned(Loan loan) {
+    return singleValidationError("item is claimed returned", "id", loan.getId());
   }
 }
