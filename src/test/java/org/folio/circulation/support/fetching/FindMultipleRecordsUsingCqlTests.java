@@ -1,4 +1,4 @@
-package org.folio.circulation.support;
+package org.folio.circulation.support.fetching;
 
 import static java.util.function.Function.identity;
 import static org.folio.circulation.support.http.client.PageLimit.noLimit;
@@ -10,6 +10,9 @@ import static org.mockito.Mockito.when;
 
 import java.util.concurrent.CompletableFuture;
 
+import org.folio.circulation.support.FindWithCqlQuery;
+import org.folio.circulation.support.GetManyRecordsClient;
+import org.folio.circulation.support.Result;
 import org.folio.circulation.support.http.client.CqlQuery;
 import org.folio.circulation.support.http.client.Response;
 import org.junit.Rule;
@@ -31,7 +34,7 @@ public class FindMultipleRecordsUsingCqlTests {
   public void shouldFetchRecordsInSinglePage() {
     final GetManyRecordsClient client = clientThatAlwaysReturnsCannedResponse();
 
-    final FindWithCqlQuery<JsonObject> fetcher = new MultipleRecordFetcher<>(
+    final FindWithCqlQuery<JsonObject> fetcher = new CqlQueryFinder<>(
       client, "records", identity(), 50);
 
     final Result<CqlQuery> query = CqlQuery.exactMatch("Status", "Open");

@@ -1,4 +1,4 @@
-package org.folio.circulation.support;
+package org.folio.circulation.support.fetching;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static java.util.function.Function.identity;
@@ -25,6 +25,9 @@ import java.util.concurrent.TimeoutException;
 import java.util.stream.Stream;
 
 import org.folio.circulation.domain.MultipleRecords;
+import org.folio.circulation.support.FindWithMultipleCqlIndexValues;
+import org.folio.circulation.support.GetManyRecordsClient;
+import org.folio.circulation.support.Result;
 import org.folio.circulation.support.http.client.CqlQuery;
 import org.folio.circulation.support.http.client.Response;
 import org.junit.Rule;
@@ -50,7 +53,7 @@ public class FindMultipleRecordsByIdTests {
 
     final GetManyRecordsClient client = clientThatAlwaysReturnsCannedResponse();
 
-    final FindWithMultipleCqlIndexValues<JsonObject> fetcher = new MultipleRecordFetcher<>(
+    final FindWithMultipleCqlIndexValues<JsonObject> fetcher = new CqlQueryFinder<>(
         client, "records", identity(),
         MAX_VALUES_PER_CQL_SEARCH_QUERY);
 
@@ -74,7 +77,7 @@ public class FindMultipleRecordsByIdTests {
 
     final GetManyRecordsClient client = clientThatAlwaysReturnsCannedResponse();
 
-    final FindWithMultipleCqlIndexValues<JsonObject> fetcher = new MultipleRecordFetcher<>(
+    final FindWithMultipleCqlIndexValues<JsonObject> fetcher = new CqlQueryFinder<>(
       client, "records", identity(), maximumValuesPerCqlQuery);
 
     final List<String> firstSetOfIds = generateIds(maximumValuesPerCqlQuery);

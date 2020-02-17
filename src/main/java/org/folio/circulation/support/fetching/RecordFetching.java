@@ -4,7 +4,6 @@ import java.util.function.Function;
 
 import org.folio.circulation.support.FindWithMultipleCqlIndexValues;
 import org.folio.circulation.support.GetManyRecordsClient;
-import org.folio.circulation.support.MultipleRecordFetcher;
 
 import io.vertx.core.json.JsonObject;
 
@@ -15,13 +14,13 @@ public class RecordFetching {
       GetManyRecordsClient client, String recordsPropertyName,
       Function<JsonObject, T> recordMapper) {
 
-    return new MultipleRecordFetcher<>(client, recordsPropertyName, recordMapper);
+    return new CqlQueryFinder<>(client, recordsPropertyName, recordMapper);
   }
 
-  public static <T> MultipleRecordFetcher<T> findWithCqlQuery(
+  public static <T> CqlQueryFinder<T> findWithCqlQuery(
     GetManyRecordsClient client, String recordsPropertyName,
     Function<JsonObject, T> recordMapper) {
 
-    return new MultipleRecordFetcher<>(client, recordsPropertyName, recordMapper);
+    return new CqlQueryFinder<>(client, recordsPropertyName, recordMapper);
   }
 }

@@ -1,4 +1,4 @@
-package org.folio.circulation.support;
+package org.folio.circulation.support.fetching;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.stream.Collectors.collectingAndThen;
@@ -18,13 +18,17 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.folio.circulation.domain.MultipleRecords;
+import org.folio.circulation.support.FindWithCqlQuery;
+import org.folio.circulation.support.FindWithMultipleCqlIndexValues;
+import org.folio.circulation.support.GetManyRecordsClient;
+import org.folio.circulation.support.Result;
 import org.folio.circulation.support.http.client.CqlQuery;
 import org.folio.circulation.support.http.client.PageLimit;
 import org.folio.circulation.support.http.client.Response;
 
 import io.vertx.core.json.JsonObject;
 
-public class MultipleRecordFetcher<T> implements FindWithMultipleCqlIndexValues<T>, FindWithCqlQuery<T> {
+public class CqlQueryFinder<T> implements FindWithMultipleCqlIndexValues<T>, FindWithCqlQuery<T> {
   private static final int DEFAULT_MAX_ID_VALUES_PER_CQL_SEARCH_QUERY = 50;
 
   private final GetManyRecordsClient client;
@@ -34,14 +38,14 @@ public class MultipleRecordFetcher<T> implements FindWithMultipleCqlIndexValues<
   //Too many UUID values exceeds the allowed length of the HTTP request URL
   private final int maxValuesPerCqlSearchQuery;
 
-  public MultipleRecordFetcher(GetManyRecordsClient client,
+  public CqlQueryFinder(GetManyRecordsClient client,
       String recordsPropertyName, Function<JsonObject, T> recordMapper) {
 
     this(client, recordsPropertyName, recordMapper,
       DEFAULT_MAX_ID_VALUES_PER_CQL_SEARCH_QUERY);
   }
 
-  public MultipleRecordFetcher(GetManyRecordsClient client,
+  public CqlQueryFinder(GetManyRecordsClient client,
     String recordsPropertyName, Function<JsonObject, T> recordMapper,
     int maxValuesPerCqlSearchQuery) {
 
@@ -115,7 +119,8 @@ public class MultipleRecordFetcher<T> implements FindWithMultipleCqlIndexValues<
     return findByQuery(queryResult, noLimit());
   }
 
-  private CompletableFuture<Result<MultipleRecords<T>>> findByQuery(
+  @Override
+  public CompletableFuture<Result<MultipleRecords<T>>> findByQuery(
     Result<CqlQuery> queryResult, PageLimit pageLimit) {
 
     return queryResult.after(query -> client.getMany(query, pageLimit))
