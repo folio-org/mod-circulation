@@ -251,7 +251,7 @@ public class InterfaceUrls {
     return APITestContext.viaOkapiModuleUrl("/templates");
   }
 
-  public static URL checkInOperationStorage(String subPath) {
-    return APITestContext.viaOkapiModuleUrl("/check-in-operation-storage" + subPath);
+  public static URL checkInStorage(String subPath) {
+    return APITestContext.viaOkapiModuleUrl("/check-in-storage/check-ins" + subPath);
   }
 }

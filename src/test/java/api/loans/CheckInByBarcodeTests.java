@@ -366,7 +366,7 @@ public class CheckInByBarcodeTests extends APITests {
       nod, new DateTime(2018, 3, 5, 14, 23, 41, DateTimeZone.UTC),
       checkInServicePointId);
 
-    verifyCheckInOperationsRecorded(nod.getId(), checkInServicePointId, 2);
+    verifyCheckInsRecorded(nod.getId(), checkInServicePointId, 2);
 
     assertThat("Response should not include a loan",
       checkInResponse.getJson().containsKey("loan"), is(false));
@@ -618,10 +618,10 @@ public class CheckInByBarcodeTests extends APITests {
   }
 
   private void verifyCheckInOperationRecorded(UUID itemId, UUID checkInServicePoint) {
-    verifyCheckInOperationsRecorded(itemId, checkInServicePoint, 1);
+    verifyCheckInsRecorded(itemId, checkInServicePoint, 1);
   }
 
-  private void verifyCheckInOperationsRecorded(
+  private void verifyCheckInsRecorded(
     UUID itemId, UUID checkInServicePoint, int expectedNumberOfRecords) {
     final CqlQuery query = CqlQuery.queryFromTemplate("itemId=%s", itemId);
     Awaitility.await()

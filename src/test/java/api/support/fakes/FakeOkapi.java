@@ -336,9 +336,9 @@ public class FakeOkapi extends AbstractVerticle {
       .register(router);
 
     new FakeStorageModuleBuilder()
-      .withRecordName("checkInOperations")
-      .withRootPath("/check-in-operation-storage")
-      .withCollectionPropertyName("checkInOperations")
+      .withRecordName("checkIns")
+      .withRootPath("/check-in-storage/check-ins")
+      .withCollectionPropertyName("checkIns")
       .create()
       .register(router);
 

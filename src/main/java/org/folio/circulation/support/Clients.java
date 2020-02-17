@@ -49,7 +49,7 @@ public class Clients {
   private final CollectionResourceClient patronExpiredSessionsStorageClient;
   private final CollectionResourceClient userManualBlocksStorageClient;
   private final CollectionResourceClient templateNoticeClient;
-  private final CollectionResourceClient checkInOperationStorageClient;
+  private final CollectionResourceClient checkInStorageClient;
 
   public static Clients create(WebContext context, HttpClient httpClient) {
     return new Clients(context.createHttpClient(httpClient), context);
@@ -98,7 +98,7 @@ public class Clients {
       patronExpiredSessionsStorageClient = createPatronExpiredSessionsStorageClient(client, context);
       userManualBlocksStorageClient = createUserManualBlocksStorageClient(client, context);
       templateNoticeClient = createTemplateNoticeClient(client, context);
-      checkInOperationStorageClient = createCheckInOperationStorageClient(client, context);
+      checkInStorageClient = createCheckInStorageClient(client, context);
     }
     catch(MalformedURLException e) {
       throw new InvalidOkapiLocationException(context.getOkapiLocation(), e);
@@ -265,8 +265,8 @@ public class Clients {
     return userManualBlocksStorageClient;
   }
 
-  public CollectionResourceClient checkInOperationStorageClient() {
-    return checkInOperationStorageClient;
+  public CollectionResourceClient checkInStorageClient() {
+    return checkInStorageClient;
   }
 
   private static CollectionResourceClient getCollectionResourceClient(
@@ -593,9 +593,9 @@ public class Clients {
     return getCollectionResourceClient(client, context, "/templates");
   }
 
-  private CollectionResourceClient createCheckInOperationStorageClient(
+  private CollectionResourceClient createCheckInStorageClient(
     OkapiHttpClient client, WebContext context) throws MalformedURLException {
 
-    return getCollectionResourceClient(client, context, "/check-in-operation-storage");
+    return getCollectionResourceClient(client, context, "/check-in-storage/check-ins");
   }
 }

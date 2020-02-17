@@ -7,7 +7,7 @@ import org.joda.time.DateTime;
 
 import io.vertx.core.json.JsonObject;
 
-public class CheckInOperation {
+public class CheckInLogRecord {
   private static final String ID = "id";
   private static final String OCCURRED_DATE_TIME = "occurredDateTime";
   private static final String ITEM_ID = "itemId";
@@ -20,7 +20,7 @@ public class CheckInOperation {
   private final String checkInServicePointId;
   private final String performedByUserId;
 
-  private CheckInOperation(Builder builder) {
+  private CheckInLogRecord(Builder builder) {
     this.id = builder.id;
     this.occurredDateTime = builder.occurredDateTime;
     this.itemId = builder.itemId;
@@ -60,14 +60,14 @@ public class CheckInOperation {
       return this;
     }
 
-    public CheckInOperation build() {
+    public CheckInLogRecord build() {
       if (!ObjectUtils.allNotNull(id, occurredDateTime, itemId,
         checkInServicePointId, performedByUserId)) {
 
         throw new IllegalStateException("All properties are required");
       }
 
-      return new CheckInOperation(this);
+      return new CheckInLogRecord(this);
     }
   }
 
@@ -84,7 +84,7 @@ public class CheckInOperation {
       .put(PERFORMED_BY_USER_ID, performedByUserId);
   }
 
-  public static CheckInOperation from(JsonObject json) {
+  public static CheckInLogRecord from(JsonObject json) {
     return builder()
       .withId(json.getString(ID))
       .withOccurredDateTime(DateTime.parse(json.getString(OCCURRED_DATE_TIME)))

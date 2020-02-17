@@ -30,7 +30,7 @@ import org.folio.circulation.domain.notice.PatronNoticeEvent;
 import org.folio.circulation.domain.notice.PatronNoticeEventBuilder;
 import org.folio.circulation.domain.notice.PatronNoticeService;
 import org.folio.circulation.domain.policy.PatronNoticePolicyRepository;
-import org.folio.circulation.services.CheckInOperationService;
+import org.folio.circulation.services.LogCheckInService;
 import org.folio.circulation.storage.ItemByBarcodeInStorageFinder;
 import org.folio.circulation.storage.SingleOpenLoanForItemInStorageFinder;
 import org.folio.circulation.support.Clients;
@@ -49,7 +49,7 @@ class CheckInProcessAdapter {
   private final PatronNoticeService patronNoticeService;
   private final UserRepository userRepository;
   private final AddressTypeRepository addressTypeRepository;
-  private final CheckInOperationService checkInOperationService;
+  private final LogCheckInService logCheckInService;
 
   @SuppressWarnings("squid:S00107")
   CheckInProcessAdapter(
@@ -61,7 +61,7 @@ class CheckInProcessAdapter {
     LoanRepository loanRepository, ServicePointRepository servicePointRepository,
     PatronNoticeService patronNoticeService, UserRepository userRepository,
     AddressTypeRepository addressTypeRepository,
-    CheckInOperationService checkInOperationService) {
+    LogCheckInService logCheckInService) {
 
     this.itemFinder = itemFinder;
     this.singleOpenLoanFinder = singleOpenLoanFinder;
@@ -74,7 +74,7 @@ class CheckInProcessAdapter {
     this.patronNoticeService = patronNoticeService;
     this.userRepository = userRepository;
     this.addressTypeRepository = addressTypeRepository;
-    this.checkInOperationService = checkInOperationService;
+    this.logCheckInService = logCheckInService;
   }
 
   public static CheckInProcessAdapter newInstance(Clients clients) {
@@ -100,7 +100,7 @@ class CheckInProcessAdapter {
       new PatronNoticeService(new PatronNoticePolicyRepository(clients), clients),
       userRepository,
       new AddressTypeRepository(clients),
-      new CheckInOperationService(clients));
+      new LogCheckInService(clients));
   }
 
   CompletableFuture<Result<Item>> findItem(CheckInProcessRecords records) {
@@ -252,6 +252,6 @@ class CheckInProcessAdapter {
   public CompletableFuture<Result<CheckInProcessRecords>> logCheckInOperation(
     CheckInProcessRecords checkInProcessRecords) {
 
-    return checkInOperationService.logCheckInOperation(checkInProcessRecords);
+    return logCheckInService.logCheckInOperation(checkInProcessRecords);
   }
 }

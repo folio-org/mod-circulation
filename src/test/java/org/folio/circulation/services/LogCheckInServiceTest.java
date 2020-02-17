@@ -33,21 +33,21 @@ import org.mockito.stubbing.Answer;
 import io.vertx.core.json.JsonObject;
 
 @RunWith(MockitoJUnitRunner.class)
-public class CheckInOperationServiceTest {
+public class LogCheckInServiceTest {
   private static final int CHECK_IN_SERVER_TIMEOUT = 200;
 
   @Mock
   private Clients clients;
   @Mock
   private CollectionResourceClient checkInStorageClient;
-  private CheckInOperationService checkInOperationService;
+  private LogCheckInService logCheckInService;
   private volatile Result<Response> spyLastResult;
 
   @Before
   public void setUp() {
-    when(clients.checkInOperationStorageClient())
+    when(clients.checkInStorageClient())
       .thenReturn(checkInStorageClient);
-    checkInOperationService = new CheckInOperationService(clients);
+    logCheckInService = new LogCheckInService(clients);
   }
 
   @Test
@@ -58,7 +58,7 @@ public class CheckInOperationServiceTest {
       .thenAnswer(checkInProcessTakesLongTime());
 
     final CompletableFuture<Result<CheckInProcessRecords>> logCheckInOperation =
-      checkInOperationService.logCheckInOperation(context);
+      logCheckInService.logCheckInOperation(context);
 
     final Result<CheckInProcessRecords> logResult = logCheckInOperation
       .getNow(Result.failed(new ServerErrorFailure("Uncompleted")));
@@ -87,7 +87,7 @@ public class CheckInOperationServiceTest {
       });
 
     final CompletableFuture<Result<CheckInProcessRecords>> logCheckInOperation =
-      checkInOperationService.logCheckInOperation(context);
+      logCheckInService.logCheckInOperation(context);
 
     final Result<CheckInProcessRecords> logResult = logCheckInOperation
       .getNow(Result.failed(new ServerErrorFailure("Uncompleted")));

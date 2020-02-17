@@ -848,7 +848,7 @@
       "version": "0.1"
     },
     {
-      "id": "check-in-operation-storage",
+      "id": "check-in-storage",
       "version": "0.1"
     }
   ],
@@ -1288,7 +1288,7 @@
         "circulation.rules.notice-policy.get",
         "inventory-storage.loan-types.item.get",
         "patron-action-session-storage.patron-action-sessions.item.post",
-        "check-in-operation-storage.item.post"
+        "check-in-storage.check-ins.item.post"
       ],
       "visible": false
     },

@@ -11,9 +11,7 @@ import static org.folio.circulation.support.JsonArrayHelper.mapToList;
 import java.net.URL;
 import java.util.List;
 import java.util.UUID;
-import java.util.function.Function;
 
-import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 
@@ -213,9 +211,9 @@ public class ResourceClient {
       "identifierTypes");
   }
 
-  public static ResourceClient forCheckInOperations() {
-    return new ResourceClient(InterfaceUrls::checkInOperationStorage,
-      "checkInOperations");
+  public static ResourceClient forCheckInStorage() {
+    return new ResourceClient(InterfaceUrls::checkInStorage,
+      "checkIns");
   }
 
   private ResourceClient(UrlMaker urlMaker, String collectionArrayPropertyName) {

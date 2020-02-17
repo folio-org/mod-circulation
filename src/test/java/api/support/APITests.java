@@ -143,7 +143,7 @@ public abstract class APITests {
     ResourceClient.forPatronSessionRecords();
 
   protected final ResourceClient checkInOperationClient =
-    ResourceClient.forCheckInOperations();
+    ResourceClient.forCheckInStorage();
 
   protected final EndPatronSessionClient endPatronSessionClient =
     new EndPatronSessionClient();
