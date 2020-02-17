@@ -592,7 +592,7 @@ public class CheckInByBarcodeTests extends APITests {
   }
 
   @Test
-  public void accountRecordIsCreatedWhenItemIsOverdue() throws InterruptedException {
+  public void overdueFineShouldBeChargedWhenItemIsOverdue() throws InterruptedException {
     useFallbackPolicies(loanPoliciesFixture.canCirculateRolling().getId(),
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
       noticePoliciesFixture.activeNotice().getId(),

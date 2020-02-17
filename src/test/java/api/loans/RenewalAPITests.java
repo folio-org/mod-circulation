@@ -1310,7 +1310,7 @@ abstract class RenewalAPITests extends APITests {
   }
 
   @Test
-  public void accountRecordIsCreatedWhenItemIsOverdue() throws InterruptedException {
+  public void overdueFineShouldBeChargedWhenItemIsOverdue() throws InterruptedException {
     IndividualResource loanPolicy = loanPoliciesFixture.create(
       new LoanPolicyBuilder().rolling(Period.from(10, "Days")));
 
