@@ -1283,7 +1283,11 @@
         "patron-notice.post",
         "circulation.rules.notice-policy.get",
         "inventory-storage.loan-types.item.get",
-        "patron-action-session-storage.patron-action-sessions.item.post"
+        "patron-action-session-storage.patron-action-sessions.item.post",
+        "feefines.collection.get",
+        "feefines.item.post",
+        "owners.collection.get",
+        "accounts.item.post"
       ],
       "visible": false
     },
@@ -1330,7 +1334,11 @@
         "circulation-storage.patron-notice-policies.item.get",
         "scheduled-notice-storage.scheduled-notices.collection.delete",
         "scheduled-notice-storage.scheduled-notices.item.post",
-        "patron-notice.post"
+        "patron-notice.post",
+        "feefines.collection.get",
+        "feefines.item.post",
+        "owners.collection.get",
+        "accounts.item.post"
       ],
       "visible": false
 },
@@ -1471,7 +1479,11 @@
         "circulation-storage.patron-notice-policies.item.get",
         "scheduled-notice-storage.scheduled-notices.collection.delete",
         "scheduled-notice-storage.scheduled-notices.item.post",
-        "patron-notice.post"
+        "patron-notice.post",
+        "feefines.collection.get",
+        "feefines.item.post",
+        "owners.collection.get",
+        "accounts.item.post"
       ],
       "visible": false
     },

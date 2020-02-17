@@ -176,9 +176,21 @@ public class OverduePeriodCalculatorServiceTest {
   }
 
   private OverdueFinePolicy createOverdueFinePolicy(Boolean gracePeriodRecall, Boolean countClosed) {
+    JsonObject overdueFineObject = new JsonObject();
+    overdueFineObject.put("quantity", 1);
+    overdueFineObject.put("intervalId", "minute");
+
+    JsonObject overdueRecallFineObject = new JsonObject();
+    overdueRecallFineObject.put("quantity", 1);
+    overdueRecallFineObject.put("intervalId", "minute");
+
     JsonObject json = new OverdueFinePolicyBuilder()
       .withGracePeriodRecall(gracePeriodRecall)
       .withCountClosed(countClosed)
+      .withOverdueFine(overdueFineObject)
+      .withOverdueRecallFine(overdueRecallFineObject)
+      .withMaxOverdueFine(5)
+      .withMaxOverdueRecallFine(5)
       .create();
 
     return OverdueFinePolicy.from(json);
