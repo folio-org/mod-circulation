@@ -127,9 +127,25 @@ public class ChangeDueDateTests extends APITests {
     assertThat(updatedLoanResponse.getStatusCode(), is(422));
     assertThat("Should respond with appropriate due date change failed message",
       updatedLoanResponse.getBody().contains("item is claimed returned"), is(true));
+  }
 
-    fetchedLoan = loansClient.getById(loan.getId());
-    loanToChange = fetchedLoan.getJson().copy();
+  @Test
+  public void canManuallyReapplyTheDueDateOfClaimedReturnedLoan() {
+    final InventoryItemResource item = itemsFixture.basedUponNod();
+
+    IndividualResource loan = loansFixture.checkOutByBarcode(item);
+
+    final ClaimItemReturnedRequestBuilder claimedItemBuilder =
+     (new ClaimItemReturnedRequestBuilder()).forLoan(loan.getId().toString());
+
+    Response claimedLoan = loansFixture.claimItemReturned(claimedItemBuilder);
+    assertThat(claimedLoan, hasStatus(HTTP_NO_CONTENT));
+
+    Response fetchedLoan = loansClient.getById(loan.getId());
+
+    JsonObject loanToChange = fetchedLoan.getJson().copy();
+
+    final DateTime dueDate = DateTime.parse(loanToChange.getString("dueDate"));
 
     write(loanToChange, "action", "dueDateChange");
     write(loanToChange, "dueDate", dueDate);
