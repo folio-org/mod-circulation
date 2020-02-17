@@ -102,7 +102,7 @@ public class OverdueFineCalculatorService {
 
     OverdueFineInterval interval = loan.getOverdueFinePolicy().getOverdueFineInterval();
     double overdueFine = loan.getOverdueFinePolicy().getOverdueFine() *
-      Math.ceil(overdueMinutes.doubleValue()/interval.getMinutes().doubleValue());
+      Math.ceil(overdueMinutes.doubleValue() / interval.getMinutes().doubleValue());
 
     if (maxFine > 0) {
       overdueFine = Math.min(overdueFine, maxFine);
