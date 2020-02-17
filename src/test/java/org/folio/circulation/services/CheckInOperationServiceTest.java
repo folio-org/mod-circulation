@@ -1,9 +1,12 @@
 package org.folio.circulation.services;
 
-import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.assertThat;
-import static org.junit.Assert.fail;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.UUID;
@@ -17,6 +20,8 @@ import org.folio.circulation.domain.representations.CheckInByBarcodeRequest;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.Result;
+import org.folio.circulation.support.ServerErrorFailure;
+import org.folio.circulation.support.http.client.Response;
 import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Test;
@@ -29,36 +34,75 @@ import io.vertx.core.json.JsonObject;
 
 @RunWith(MockitoJUnitRunner.class)
 public class CheckInOperationServiceTest {
+  private static final int CHECK_IN_SERVER_TIMEOUT = 200;
+
   @Mock
   private Clients clients;
   @Mock
   private CollectionResourceClient checkInStorageClient;
   private CheckInOperationService checkInOperationService;
+  private volatile Result<Response> spyLastResult;
 
   @Before
   public void setUp() {
     when(clients.checkInOperationStorageClient())
       .thenReturn(checkInStorageClient);
-
-    when(checkInStorageClient.post(any(JsonObject.class)))
-      .thenAnswer(emulateCheckInOperationStorageOutage());
     checkInOperationService = new CheckInOperationService(clients);
   }
 
   @Test
   public void logCheckInOperationIsNotBlocked() {
-    try {
-      final CheckInProcessRecords context = checkInProcessRecords();
+    final CheckInProcessRecords context = checkInProcessRecords();
 
-      Result<CheckInProcessRecords> result = checkInOperationService.logCheckInOperation(context)
-        .get(3000, TimeUnit.MILLISECONDS);
+    when(checkInStorageClient.post(any(JsonObject.class)))
+      .thenAnswer(checkInProcessTakesLongTime());
 
-      assertThat(result.succeeded(), is(true));
-      assertThat(result.value(), is(context));
-    } catch (Exception ex) {
-      ex.printStackTrace();
-      fail("Expecting that recording of check-in operation won't block check-in flow");
-    }
+    final CompletableFuture<Result<CheckInProcessRecords>> logCheckInOperation =
+      checkInOperationService.logCheckInOperation(context);
+
+    final Result<CheckInProcessRecords> logResult = logCheckInOperation
+      .getNow(Result.failed(new ServerErrorFailure("Uncompleted")));
+
+    assertThat(logResult.succeeded(), is(true));
+    assertThat(logResult.value(), is(context));
+
+    Awaitility.await()
+      .atMost(500, TimeUnit.MILLISECONDS)
+      .until(() -> spyLastResult != null && spyLastResult.value() != null);
+
+    verify(spyLastResult, times(1)).failed();
+    // Verify the logging is not executed for successful result.
+    verify(spyLastResult, never()).cause();
+  }
+
+  @Test
+  public void logCheckInOperationFailureDoNotStopCheckInFlow() {
+    final CheckInProcessRecords context = checkInProcessRecords();
+
+    when(checkInStorageClient.post(any(JsonObject.class)))
+      .thenAnswer(invocationOnMock -> {
+        final ServerErrorFailure serverError = spy(new ServerErrorFailure("Server error"));
+        spyLastResult = spy(Result.failed(serverError));
+        return CompletableFuture.completedFuture(spyLastResult);
+      });
+
+    final CompletableFuture<Result<CheckInProcessRecords>> logCheckInOperation =
+      checkInOperationService.logCheckInOperation(context);
+
+    final Result<CheckInProcessRecords> logResult = logCheckInOperation
+      .getNow(Result.failed(new ServerErrorFailure("Uncompleted")));
+
+    assertThat(logResult.succeeded(), is(true));
+    assertThat(logResult.value(), is(context));
+
+    Awaitility.await()
+      .atMost(500, TimeUnit.MILLISECONDS)
+      .until(() -> spyLastResult != null && spyLastResult.value() == null);
+
+    verify(spyLastResult, times(1)).failed();
+    // Verify the logging is not executed for successful result.
+    verify(spyLastResult, times(1)).cause();
+    verify(spyLastResult.cause(), times(1)).getReason();
   }
 
   private CheckInProcessRecords checkInProcessRecords() {
@@ -73,11 +117,16 @@ public class CheckInOperationServiceTest {
       .withLoggedInUserId(UUID.randomUUID().toString());
   }
 
-  private Answer<CompletableFuture<JsonObject>> emulateCheckInOperationStorageOutage() {
+  private Answer<CompletableFuture<Result<Response>>> checkInProcessTakesLongTime() {
     return invocationOnMock -> {
-      Thread.sleep(5000);
-      return CompletableFuture.completedFuture(invocationOnMock.getArgument(0));
+      Thread.sleep(CHECK_IN_SERVER_TIMEOUT);
+
+      final JsonObject json = invocationOnMock.getArgument(0);
+      final Response response = new Response(201, json.toString(),
+        "application/json");
+
+      spyLastResult = spy(Result.succeeded(response));
+      return CompletableFuture.completedFuture(spyLastResult);
     };
   }
-
 }
