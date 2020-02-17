@@ -100,7 +100,7 @@ public class LogCheckInServiceTest {
       .until(() -> spyLastResult != null && spyLastResult.value() == null);
 
     verify(spyLastResult, times(1)).failed();
-    // Verify the logging is not executed for successful result.
+    // Verify the logging is executed for the result.
     verify(spyLastResult, times(1)).cause();
     verify(spyLastResult.cause(), times(1)).getReason();
   }
