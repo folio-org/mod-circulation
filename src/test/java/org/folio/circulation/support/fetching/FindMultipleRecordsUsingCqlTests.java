@@ -1,6 +1,7 @@
 package org.folio.circulation.support.fetching;
 
 import static java.util.function.Function.identity;
+import static org.folio.circulation.support.fetching.RecordFetching.findWithCqlQuery;
 import static org.folio.circulation.support.http.client.PageLimit.noLimit;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -34,8 +35,8 @@ public class FindMultipleRecordsUsingCqlTests {
   public void shouldFetchRecordsInSinglePage() {
     final GetManyRecordsClient client = clientThatAlwaysReturnsCannedResponse();
 
-    final FindWithCqlQuery<JsonObject> fetcher = new CqlQueryFinder<>(
-      client, "records", identity(), 50);
+    final FindWithCqlQuery<JsonObject> fetcher = findWithCqlQuery(
+      client, "records", identity());
 
     final Result<CqlQuery> query = CqlQuery.exactMatch("Status", "Open");
 

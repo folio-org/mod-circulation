@@ -14,7 +14,8 @@ public class RecordFetching {
       GetManyRecordsClient client, String recordsPropertyName,
       Function<JsonObject, T> recordMapper) {
 
-    return new CqlQueryFinder<>(client, recordsPropertyName, recordMapper);
+    return new CqlIndexValuesFinder<>(
+      new CqlQueryFinder<>(client, recordsPropertyName, recordMapper));
   }
 
   public static <T> CqlQueryFinder<T> findWithCqlQuery(

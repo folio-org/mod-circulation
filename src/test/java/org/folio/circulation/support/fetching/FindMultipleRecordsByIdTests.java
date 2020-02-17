@@ -53,9 +53,8 @@ public class FindMultipleRecordsByIdTests {
 
     final GetManyRecordsClient client = clientThatAlwaysReturnsCannedResponse();
 
-    final FindWithMultipleCqlIndexValues<JsonObject> fetcher = new CqlQueryFinder<>(
-        client, "records", identity(),
-        MAX_VALUES_PER_CQL_SEARCH_QUERY);
+    final FindWithMultipleCqlIndexValues<JsonObject> fetcher = createRecordsFetcher(
+      client, MAX_VALUES_PER_CQL_SEARCH_QUERY);
 
     final List<String> ids = generateIds(10);
 
@@ -73,12 +72,12 @@ public class FindMultipleRecordsByIdTests {
   @Test
   @Parameters({ "50", "30" })
   public void shouldUseMultipleCqlQueriesForFindingSmallNumberOfRecordsById(
-    int maximumValuesPerCqlQuery) {
+      int maximumValuesPerCqlQuery) {
 
     final GetManyRecordsClient client = clientThatAlwaysReturnsCannedResponse();
 
-    final FindWithMultipleCqlIndexValues<JsonObject> fetcher = new CqlQueryFinder<>(
-      client, "records", identity(), maximumValuesPerCqlQuery);
+    final FindWithMultipleCqlIndexValues<JsonObject> fetcher = createRecordsFetcher(
+      client, maximumValuesPerCqlQuery);
 
     final List<String> firstSetOfIds = generateIds(maximumValuesPerCqlQuery);
     final List<String> secondSetOfIds = generateIds(maximumValuesPerCqlQuery);
@@ -117,8 +116,16 @@ public class FindMultipleRecordsByIdTests {
     verify(client, times(0)).getMany(any(), any());
   }
 
+  private CqlIndexValuesFinder<JsonObject> createRecordsFetcher(
+      GetManyRecordsClient client, int maximumValuesPerCqlQuery) {
+
+    return new CqlIndexValuesFinder<>(
+        new CqlQueryFinder<>(client, "records", identity()),
+        maximumValuesPerCqlQuery);
+  }
+
   private GetManyRecordsClient clientThatAlwaysReturnsCannedResponse() {
-    final GetManyRecordsClient mock = mock(GetManyRecordsClient.class);
+      final GetManyRecordsClient mock = mock(GetManyRecordsClient.class);
 
     when(mock.getMany(any(), any())).thenReturn(cannedResponse());
 
@@ -143,14 +150,14 @@ public class FindMultipleRecordsByIdTests {
   }
 
   private Collection<String> combineSetsOfIds(List<String> firstSetOfIds,
-    List<String> secondSetOfIds) {
+      List<String> secondSetOfIds) {
 
     return Stream.concat(firstSetOfIds.stream(), secondSetOfIds.stream())
       .collect(toList());
   }
 
   private <T> T getFutureResultValue(CompletableFuture<Result<T>> futureResult)
-    throws InterruptedException, ExecutionException, TimeoutException {
+      throws InterruptedException, ExecutionException, TimeoutException {
 
     return futureResult.get(1, SECONDS).value();
   }
