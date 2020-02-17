@@ -10,6 +10,7 @@ import java.util.stream.Collectors;
 
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.support.ClockManager;
+import org.folio.circulation.support.FindWithMultipleCqlIndexValues;
 import org.joda.time.DateTime;
 
 import org.folio.circulation.domain.UserManualBlock;
@@ -17,15 +18,14 @@ import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.RequestAndRelatedRecords;
 import org.folio.circulation.domain.User;
 import org.folio.circulation.support.HttpFailure;
-import org.folio.circulation.support.MultipleRecordFetcher;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.http.server.ValidationError;
 
 public class UserManualBlocksValidator {
-  private final MultipleRecordFetcher<UserManualBlock> userManualBlocksFetcher;
+  private final FindWithMultipleCqlIndexValues<UserManualBlock> userManualBlocksFetcher;
 
   public UserManualBlocksValidator(
-    MultipleRecordFetcher<UserManualBlock> userManualBlocksFetcher) {
+    FindWithMultipleCqlIndexValues<UserManualBlock> userManualBlocksFetcher) {
     this.userManualBlocksFetcher = userManualBlocksFetcher;
   }
 

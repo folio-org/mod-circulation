@@ -3,6 +3,7 @@ package org.folio.circulation.resources;
 import static org.folio.circulation.domain.representations.RequestProperties.PROXY_USER_ID;
 import static org.folio.circulation.support.JsonPropertyWriter.write;
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
+import static org.folio.circulation.support.fetching.RecordFetching.findWithMultipleCqlIndexValues;
 
 import org.folio.circulation.domain.ConfigurationRepository;
 import org.folio.circulation.domain.CreateRequestService;
@@ -32,8 +33,8 @@ import org.folio.circulation.domain.validation.ServicePointPickupLocationValidat
 import org.folio.circulation.domain.validation.UserManualBlocksValidator;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CreatedJsonResponseResult;
+import org.folio.circulation.support.FindWithMultipleCqlIndexValues;
 import org.folio.circulation.support.ItemRepository;
-import org.folio.circulation.support.MultipleRecordFetcher;
 import org.folio.circulation.support.NoContentResult;
 import org.folio.circulation.support.OkJsonResponseResult;
 import org.folio.circulation.support.http.server.WebContext;
@@ -67,8 +68,9 @@ public class RequestCollectionResource extends CollectionResource {
     final LoanPolicyRepository loanPolicyRepository = new LoanPolicyRepository(clients);
     final RequestNoticeSender requestNoticeSender = RequestNoticeSender.using(clients);
     final ConfigurationRepository configurationRepository = new ConfigurationRepository(clients);
-    final MultipleRecordFetcher<UserManualBlock> userManualBlocksValidator= new MultipleRecordFetcher<>
-      (clients.userManualBlocksStorageClient(), "manualblocks", UserManualBlock::from);
+    final FindWithMultipleCqlIndexValues<UserManualBlock> userManualBlocksValidator
+      = findWithMultipleCqlIndexValues(clients.userManualBlocksStorageClient(),
+        "manualblocks", UserManualBlock::from);
 
     final UpdateUponRequest updateUponRequest = new UpdateUponRequest(
         new UpdateItem(clients),
@@ -119,8 +121,9 @@ public class RequestCollectionResource extends CollectionResource {
     final LoanPolicyRepository loanPolicyRepository = new LoanPolicyRepository(clients);
     final RequestNoticeSender requestNoticeSender = RequestNoticeSender.using(clients);
     final ConfigurationRepository configurationRepository = new ConfigurationRepository(clients);
-    final MultipleRecordFetcher<UserManualBlock> userManualBlocksValidator = new MultipleRecordFetcher<>
-      (clients.userManualBlocksStorageClient(), "manualblocks", UserManualBlock::from);
+    final FindWithMultipleCqlIndexValues<UserManualBlock> userManualBlocksValidator
+        = findWithMultipleCqlIndexValues(clients.userManualBlocksStorageClient(),
+        "manualblocks", UserManualBlock::from);
 
     final UpdateItem updateItem = new UpdateItem(clients);
 

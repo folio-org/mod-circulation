@@ -1,19 +1,8 @@
 package org.folio.circulation.resources;
 
-import io.vertx.core.http.HttpClient;
-import io.vertx.core.json.JsonObject;
-import io.vertx.ext.web.Router;
-import io.vertx.ext.web.RoutingContext;
-import org.folio.circulation.domain.Item;
-import org.folio.circulation.domain.ItemStatus;
-import org.folio.circulation.domain.Location;
-import org.folio.circulation.domain.MultipleRecords;
-import org.folio.circulation.domain.Request;
-import org.folio.circulation.domain.RequestStatus;
-import org.folio.circulation.domain.representations.ItemPickSlipRepresentation;
-import org.folio.circulation.support.*;
-import org.folio.circulation.support.http.client.CqlQuery;
-import org.folio.circulation.support.http.server.WebContext;
+import static java.util.function.Function.identity;
+import static org.folio.circulation.support.fetching.RecordFetching.findWithMultipleCqlIndexValues;
+import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -26,8 +15,27 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
-import static java.util.function.Function.identity;
-import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
+import org.folio.circulation.domain.Item;
+import org.folio.circulation.domain.ItemStatus;
+import org.folio.circulation.domain.Location;
+import org.folio.circulation.domain.MultipleRecords;
+import org.folio.circulation.domain.Request;
+import org.folio.circulation.domain.RequestStatus;
+import org.folio.circulation.domain.representations.ItemPickSlipRepresentation;
+import org.folio.circulation.support.Clients;
+import org.folio.circulation.support.FindWithMultipleCqlIndexValues;
+import org.folio.circulation.support.GetManyRecordsClient;
+import org.folio.circulation.support.MultipleRecordFetcher;
+import org.folio.circulation.support.OkJsonResponseResult;
+import org.folio.circulation.support.Result;
+import org.folio.circulation.support.RouteRegistration;
+import org.folio.circulation.support.http.client.CqlQuery;
+import org.folio.circulation.support.http.server.WebContext;
+
+import io.vertx.core.http.HttpClient;
+import io.vertx.core.json.JsonObject;
+import io.vertx.ext.web.Router;
+import io.vertx.ext.web.RoutingContext;
 
 public class PickSlipsResource extends Resource {
   private static final String ID_KEY = "id";
@@ -91,13 +99,15 @@ public class PickSlipsResource extends Resource {
 
     final Result<CqlQuery> statusQuery = exactMatch(STATUS_NAME_KEY, ItemStatus.PAGED.getValue());
 
-    return new MultipleRecordFetcher<>(itemStorageClient, ITEMS_KEY, Item::from)
+    return findWithMultipleCqlIndexValues(itemStorageClient, ITEMS_KEY, Item::from)
       .findByIdIndexAndQuery(locationIds, EFFECTIVE_LOCATION_ID_KEY, statusQuery)
       .thenApply(r -> r.next(this::recordsToSet))
       .thenApply(r -> r.next(items -> populateLocationsInItems(items, locations)));
   }
 
-  private Result<Set<Item>> populateLocationsInItems(Set<Item> items, Set<Location> locations) {
+  private Result<Set<Item>> populateLocationsInItems(Set<Item> items,
+    Set<Location> locations) {
+
     Map<String, Location> locationMap = locations.stream()
         .collect(Collectors.toMap(Location::getId, identity()));
 
@@ -116,13 +126,15 @@ public class PickSlipsResource extends Resource {
 
     final Result<CqlQuery> statusQuery = exactMatch(STATUS_KEY, RequestStatus.OPEN_NOT_YET_FILLED.getValue());
 
-    return new MultipleRecordFetcher<>(client, REQUESTS_KEY, Request::from)
+    return findWithMultipleCqlIndexValues(client, REQUESTS_KEY, Request::from)
       .findByIdIndexAndQuery(itemIds, ITEM_ID_KEY, statusQuery)
       .thenApply(r -> r.next(this::recordsToSet))
       .thenApply(r -> r.next(requests -> filterItemsByRequests(items, requests)));
   }
 
-  private Result<Set<Item>> filterItemsByRequests(Set<Item> items, Set<Request> requests) {
+  private Result<Set<Item>> filterItemsByRequests(Set<Item> items,
+    Set<Request> requests) {
+
     Set<String> requestedItemIds = requests.stream()
         .map(Request::getItemId)
         .collect(Collectors.toSet());
@@ -140,8 +152,8 @@ public class PickSlipsResource extends Resource {
         .filter(Objects::nonNull)
         .collect(Collectors.toSet());
 
-      final MultipleRecordFetcher<JsonObject> fetcher
-        = new MultipleRecordFetcher<>(client, HOLDINGS_RECORDS_KEY, identity());
+      final FindWithMultipleCqlIndexValues<JsonObject> fetcher
+        = findWithMultipleCqlIndexValues(client, HOLDINGS_RECORDS_KEY, identity());
 
       return fetcher.findByIds(holdingsIds)
         .thenApply(r -> r.map(holdings -> items.stream()
@@ -158,8 +170,8 @@ public class PickSlipsResource extends Resource {
         .filter(Objects::nonNull)
         .collect(Collectors.toSet());
 
-      final MultipleRecordFetcher<JsonObject> fetcher
-        = new MultipleRecordFetcher<>(client, INSTANCES_KEY, identity());
+      final FindWithMultipleCqlIndexValues<JsonObject> fetcher
+        = findWithMultipleCqlIndexValues(client, INSTANCES_KEY, identity());
 
       return fetcher.findByIds(instanceIds)
         .thenApply(r -> r.map(instances -> items.stream()

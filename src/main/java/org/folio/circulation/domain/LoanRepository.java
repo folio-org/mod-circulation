@@ -10,17 +10,18 @@ import static org.folio.circulation.domain.representations.LoanProperties.LOST_I
 import static org.folio.circulation.domain.representations.LoanProperties.OVERDUE_FINE_POLICY;
 import static org.folio.circulation.domain.representations.LoanProperties.PATRON_GROUP_AT_CHECKOUT;
 import static org.folio.circulation.domain.representations.LoanProperties.PATRON_GROUP_ID_AT_CHECKOUT;
-import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
-import static org.folio.circulation.support.http.client.CqlQuery.exactMatchAny;
 import static org.folio.circulation.support.JsonPropertyWriter.write;
 import static org.folio.circulation.support.Result.failed;
 import static org.folio.circulation.support.Result.of;
 import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.ResultBinding.flatMapResult;
 import static org.folio.circulation.support.ResultBinding.mapResult;
+import static org.folio.circulation.support.fetching.RecordFetching.findWithMultipleCqlIndexValues;
 import static org.folio.circulation.support.http.CommonResponseInterpreters.noContentRecordInterpreter;
 import static org.folio.circulation.support.http.ResponseMapping.forwardOnFailure;
 import static org.folio.circulation.support.http.ResponseMapping.mapUsingJson;
+import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
+import static org.folio.circulation.support.http.client.CqlQuery.exactMatchAny;
 import static org.folio.circulation.support.results.CommonFailures.failedDueToServerError;
 
 import java.lang.invoke.MethodHandles;
@@ -35,13 +36,13 @@ import java.util.stream.Collectors;
 import org.folio.circulation.domain.policy.Policy;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
-import org.folio.circulation.support.http.client.CqlQuery;
 import org.folio.circulation.support.FetchSingleRecord;
+import org.folio.circulation.support.FindWithMultipleCqlIndexValues;
 import org.folio.circulation.support.ItemRepository;
-import org.folio.circulation.support.MultipleRecordFetcher;
 import org.folio.circulation.support.RecordNotFoundFailure;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.SingleRecordFetcher;
+import org.folio.circulation.support.http.client.CqlQuery;
 import org.folio.circulation.support.http.client.PageLimit;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.client.ResponseInterpreter;
@@ -200,8 +201,8 @@ public class LoanRepository {
   }
 
   public CompletableFuture<Result<MultipleRecords<Loan>>> findByIds(Collection<String> loanIds) {
-    MultipleRecordFetcher<Loan> fetcher =
-      new MultipleRecordFetcher<>(loansStorageClient, "loans", Loan::from);
+    FindWithMultipleCqlIndexValues<Loan> fetcher =
+      findWithMultipleCqlIndexValues(loansStorageClient, "loans", Loan::from);
 
     return fetcher.findByIds(loanIds)
       .thenComposeAsync(loans -> itemRepository.fetchItemsFor(loans, Loan::withItem));
@@ -322,15 +323,13 @@ public class LoanRepository {
   }
 
   private Result<MultipleRecords<Request>> matchLoansToRequests(
-    MultipleRecords<Request> requests,
-    MultipleRecords<Loan> loans) {
+    MultipleRecords<Request> requests, MultipleRecords<Loan> loans) {
 
     return of(() ->
       requests.mapRecords(request -> matchLoansToRequest(request, loans)));
   }
 
-  private Request matchLoansToRequest(
-    Request request,
+  private Request matchLoansToRequest(Request request,
     MultipleRecords<Loan> loans) {
 
     final Map<String, Loan> loanMap = loans.toMap(Loan::getItemId);
@@ -341,9 +340,12 @@ public class LoanRepository {
 
   public CompletableFuture<Result<MultipleRecords<Loan>>> findOpenLoansByUserIdWithItem(
     PageLimit loansLimit, LoanAndRelatedRecords loanAndRelatedRecords) {
+
     String userId = loanAndRelatedRecords.getLoan().getUser().getId();
+
     final Result<CqlQuery> statusQuery = getStatusCQLQuery("Open");
     final Result<CqlQuery> userIdQuery = exactMatch("userId", userId);
+
     Result<CqlQuery> cqlQueryResult = statusQuery
       .combine(userIdQuery, CqlQuery::and);
 

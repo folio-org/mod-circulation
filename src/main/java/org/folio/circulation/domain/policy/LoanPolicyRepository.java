@@ -5,6 +5,7 @@ import static org.folio.circulation.domain.policy.LoanPolicy.unknown;
 import static org.folio.circulation.support.Result.ofAsync;
 import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.ResultBinding.mapResult;
+import static org.folio.circulation.support.fetching.RecordFetching.findWithMultipleCqlIndexValues;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -20,8 +21,8 @@ import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.rules.AppliedRuleConditions;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.FetchSingleRecord;
+import org.folio.circulation.support.FindWithMultipleCqlIndexValues;
 import org.folio.circulation.support.GetManyRecordsClient;
-import org.folio.circulation.support.MultipleRecordFetcher;
 import org.folio.circulation.support.Result;
 
 import io.vertx.core.json.JsonObject;
@@ -78,14 +79,15 @@ public class LoanPolicyRepository extends CirculationPolicyRepository<LoanPolicy
             .distinct()
             .collect(Collectors.toSet());
 
-    final MultipleRecordFetcher<LoanPolicy> fetcher = createLoanPoliciesFetcher();
+    final FindWithMultipleCqlIndexValues<LoanPolicy> fetcher = createLoanPoliciesFetcher();
 
     return fetcher.findByIds(loansToFetch)
       .thenApply(mapResult(r -> r.toMap(LoanPolicy::getId)));
   }
 
-  private MultipleRecordFetcher<LoanPolicy> createLoanPoliciesFetcher() {
-    return new MultipleRecordFetcher<>(policyStorageClient, "loanPolicies", LoanPolicy::from);
+  private FindWithMultipleCqlIndexValues<LoanPolicy> createLoanPoliciesFetcher() {
+    return findWithMultipleCqlIndexValues(policyStorageClient, "loanPolicies",
+      LoanPolicy::from);
   }
 
   @Override
@@ -129,8 +131,8 @@ public class LoanPolicyRepository extends CirculationPolicyRepository<LoanPolicy
   private CompletableFuture<Result<Map<String, FixedDueDateSchedules>>> getSchedules(
     Collection<String> schedulesIds) {
 
-    final MultipleRecordFetcher<FixedDueDateSchedules> fetcher
-      = new MultipleRecordFetcher<>(fixedDueDateSchedulesStorageClient,
+    final FindWithMultipleCqlIndexValues<FixedDueDateSchedules> fetcher
+      = findWithMultipleCqlIndexValues(fixedDueDateSchedulesStorageClient,
         "fixedDueDateSchedules", FixedDueDateSchedules::from);
 
     return fetcher.findByIds(schedulesIds)

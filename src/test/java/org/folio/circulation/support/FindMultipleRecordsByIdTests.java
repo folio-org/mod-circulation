@@ -3,6 +3,7 @@ package org.folio.circulation.support;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.toList;
+import static org.folio.circulation.support.fetching.RecordFetching.findWithMultipleCqlIndexValues;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatchAny;
 import static org.folio.circulation.support.http.client.PageLimit.maximumLimit;
 import static org.hamcrest.CoreMatchers.is;
@@ -49,7 +50,7 @@ public class FindMultipleRecordsByIdTests {
 
     final GetManyRecordsClient client = clientThatAlwaysReturnsCannedResponse();
 
-    final MultipleRecordFetcher<JsonObject> fetcher = new MultipleRecordFetcher<>(
+    final FindWithMultipleCqlIndexValues<JsonObject> fetcher = new MultipleRecordFetcher<>(
         client, "records", identity(),
         MAX_VALUES_PER_CQL_SEARCH_QUERY);
 
@@ -73,7 +74,7 @@ public class FindMultipleRecordsByIdTests {
 
     final GetManyRecordsClient client = clientThatAlwaysReturnsCannedResponse();
 
-    final MultipleRecordFetcher<JsonObject> fetcher = new MultipleRecordFetcher<>(
+    final FindWithMultipleCqlIndexValues<JsonObject> fetcher = new MultipleRecordFetcher<>(
       client, "records", identity(), maximumValuesPerCqlQuery);
 
     final List<String> firstSetOfIds = generateIds(maximumValuesPerCqlQuery);
@@ -99,8 +100,8 @@ public class FindMultipleRecordsByIdTests {
 
     final GetManyRecordsClient client = clientThatAlwaysReturnsCannedResponse();
 
-    final MultipleRecordFetcher<JsonObject> fetcher = new MultipleRecordFetcher<>(
-      client, "records", identity());
+    final FindWithMultipleCqlIndexValues<JsonObject> fetcher
+      = findWithMultipleCqlIndexValues(client, "records", identity());
 
     final CompletableFuture<Result<MultipleRecords<JsonObject>>> futureResult
       = fetcher.findByIds(new ArrayList<>());

@@ -3,10 +3,10 @@ package org.folio.circulation.support;
 import static java.util.Objects.isNull;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.function.Function.identity;
-
 import static org.folio.circulation.support.Result.ofAsync;
 import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.ResultBinding.mapResult;
+import static org.folio.circulation.support.fetching.RecordFetching.findWithMultipleCqlIndexValues;
 
 import java.lang.invoke.MethodHandles;
 import java.util.Collection;
@@ -18,8 +18,6 @@ import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.ItemRelatedRecord;
 import org.folio.circulation.domain.Location;
@@ -32,6 +30,8 @@ import org.folio.circulation.support.http.client.CqlQuery;
 import org.folio.circulation.support.http.client.PageLimit;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.results.CommonFailures;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import io.vertx.core.json.JsonObject;
 
@@ -197,8 +197,8 @@ public class ItemRepository {
         .distinct()
         .collect(Collectors.toList());
 
-      final MultipleRecordFetcher<JsonObject> fetcher
-        = new MultipleRecordFetcher<>(instancesClient, "instances", identity());
+      final FindWithMultipleCqlIndexValues<JsonObject> fetcher
+        = findWithMultipleCqlIndexValues(instancesClient, "instances", identity());
 
       return fetcher.findByIds(instanceIds)
         .thenApply(r -> r.map(instances -> items.stream()
@@ -218,8 +218,8 @@ public class ItemRepository {
         .distinct()
         .collect(Collectors.toList());
 
-      final MultipleRecordFetcher<JsonObject> fetcher
-        = new MultipleRecordFetcher<>(holdingsClient, "holdingsRecords", identity());
+      final FindWithMultipleCqlIndexValues<JsonObject> fetcher
+        = findWithMultipleCqlIndexValues(holdingsClient, "holdingsRecords", identity());
 
       return fetcher.findByIds(holdingsIds)
         .thenApply(r -> r.map(holdings -> items.stream()
@@ -241,8 +241,9 @@ public class ItemRepository {
   private CompletableFuture<Result<Collection<Item>>> fetchItems(
     Collection<String> itemIds) {
 
-    final MultipleRecordFetcher<Item> fetcher
-      = new MultipleRecordFetcher<>(itemsClient, ITEMS_COLLECTION_PROPERTY_NAME , Item::from);
+    final FindWithMultipleCqlIndexValues<Item> fetcher
+      = findWithMultipleCqlIndexValues(itemsClient, ITEMS_COLLECTION_PROPERTY_NAME,
+        Item::from);
 
     return fetcher.findByIds(itemIds)
       .thenApply(r -> r.map(MultipleRecords::getRecords));
@@ -313,6 +314,7 @@ public class ItemRepository {
         matchItemToRecord(records, items, includeItemMap),
         records.getTotalRecords()));
   }
+
   public CompletableFuture<Result<Collection<Item>>> findByQuery(Result<CqlQuery> queryResult) {
     MultipleRecordFetcher<Item> fetcher
       = new MultipleRecordFetcher<>(itemsClient, ITEMS_COLLECTION_PROPERTY_NAME , Item::from);

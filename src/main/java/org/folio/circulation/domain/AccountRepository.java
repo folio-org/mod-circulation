@@ -4,6 +4,7 @@ import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.http.ResponseMapping.forwardOnFailure;
 import static org.folio.circulation.support.http.ResponseMapping.mapUsingJson;
+import static org.folio.circulation.support.fetching.RecordFetching.findWithMultipleCqlIndexValues;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
 
 import java.util.ArrayList;
@@ -17,6 +18,7 @@ import java.util.stream.Collectors;
 import org.folio.circulation.domain.representations.AccountStorageRepresentation;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
+import org.folio.circulation.support.FindWithMultipleCqlIndexValues;
 import org.folio.circulation.support.GetManyRecordsClient;
 import org.folio.circulation.support.MultipleRecordFetcher;
 import org.folio.circulation.support.Result;
@@ -111,8 +113,9 @@ public class AccountRepository {
     return new MultipleRecordFetcher<>(accountsStorageClient, "accounts", Account::from);
   }
 
-  private MultipleRecordFetcher<FeeFineAction> createFeeFineActionFetcher() {
-    return new MultipleRecordFetcher<>(feefineActionsStorageClient, "feefineactions", FeeFineAction::from);
+  private FindWithMultipleCqlIndexValues<FeeFineAction> createFeeFineActionFetcher() {
+    return findWithMultipleCqlIndexValues(feefineActionsStorageClient,
+      "feefineactions", FeeFineAction::from);
   }
 
   public CompletableFuture<Result<Account>> create(AccountStorageRepresentation account) {

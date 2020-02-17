@@ -7,6 +7,7 @@ import static org.folio.circulation.support.Result.ofAsync;
 import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.ResultBinding.mapResult;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
+import static org.folio.circulation.support.fetching.RecordFetching.findWithMultipleCqlIndexValues;
 
 import java.lang.invoke.MethodHandles;
 import java.util.ArrayList;
@@ -20,10 +21,10 @@ import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
-import org.folio.circulation.support.http.client.CqlQuery;
 import org.folio.circulation.support.FetchSingleRecord;
-import org.folio.circulation.support.MultipleRecordFetcher;
+import org.folio.circulation.support.FindWithMultipleCqlIndexValues;
 import org.folio.circulation.support.Result;
+import org.folio.circulation.support.http.client.CqlQuery;
 import org.folio.circulation.support.http.client.PageLimit;
 import org.folio.circulation.support.http.client.Response;
 import org.slf4j.Logger;
@@ -99,14 +100,15 @@ public class UserRepository {
         .distinct()
         .collect(Collectors.toList());
 
-    final MultipleRecordFetcher<User> fetcher = createUsersFetcher();
+    final FindWithMultipleCqlIndexValues<User> fetcher = createUsersFetcher();
 
     return fetcher.findByIds(usersToFetch)
       .thenApply(mapResult(users -> users.toMap(User::getId)));
   }
 
-  private MultipleRecordFetcher<User> createUsersFetcher() {
-    return new MultipleRecordFetcher<>(usersStorageClient, USERS_RECORD_PROPERTY, User::from);
+  private FindWithMultipleCqlIndexValues<User> createUsersFetcher() {
+    return findWithMultipleCqlIndexValues(usersStorageClient, USERS_RECORD_PROPERTY,
+      User::from);
   }
 
   //TODO: Replace this with validator
@@ -163,8 +165,9 @@ public class UserRepository {
       return completedFuture(succeeded(multipleRequests));
     }
 
-    final MultipleRecordFetcher<User> fetcher
-      = new MultipleRecordFetcher<>(usersStorageClient, USERS_RECORD_PROPERTY, User::from);
+    final FindWithMultipleCqlIndexValues<User> fetcher
+      = findWithMultipleCqlIndexValues(usersStorageClient, USERS_RECORD_PROPERTY,
+        User::from);
 
     return fetcher.findByIds(usersToFetch)
       .thenApply(multipleUsersResult -> multipleUsersResult.next(
