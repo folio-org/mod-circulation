@@ -9,14 +9,21 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
 public class FeeFineOwnerBuilder extends JsonBuilder implements Builder {
-  private UUID id;
-  private String owner;
-  private String desc;
-  private List<JsonObject> servicePointOwner;
-  private String defaultChargeNoticeId;
-  private String defaultActionNoticeId;
+  private final UUID id;
+  private final String owner;
+  private final String desc;
+  private final List<JsonObject> servicePointOwner;
+  private final String defaultChargeNoticeId;
+  private final String defaultActionNoticeId;
 
-  public FeeFineOwnerBuilder() { }
+  public FeeFineOwnerBuilder() {
+    this.id = null;
+    this.owner = null;
+    this.desc = null;
+    this.servicePointOwner = null;
+    this.defaultChargeNoticeId = null;
+    this.defaultActionNoticeId = null;
+  }
 
   public FeeFineOwnerBuilder(UUID id, String owner, String desc, List<JsonObject> servicePointOwner,
     String defaultChargeNoticeId, String defaultActionNoticeId) {

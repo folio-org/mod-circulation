@@ -7,14 +7,21 @@ import java.util.UUID;
 import io.vertx.core.json.JsonObject;
 
 public class FeeFineBuilder extends JsonBuilder implements Builder {
-  private UUID id;
-  private UUID ownerId;
-  private String feeFineType;
-  private Double defaultAmount;
-  private String chargeNoticeId;
-  private String actionNoticeId;
+  private final UUID id;
+  private final UUID ownerId;
+  private final String feeFineType;
+  private final Double defaultAmount;
+  private final String chargeNoticeId;
+  private final String actionNoticeId;
 
-  public FeeFineBuilder() { }
+  public FeeFineBuilder() {
+    this.id = null;
+    this.ownerId = null;
+    this.feeFineType = null;
+    this.defaultAmount = null;
+    this.chargeNoticeId = null;
+    this.actionNoticeId = null;
+  }
 
   public FeeFineBuilder(UUID id, UUID ownerId, String feeFineType, Double defaultAmount,
     String chargeNoticeId, String actionNoticeId) {
