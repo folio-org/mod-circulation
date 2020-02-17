@@ -17,7 +17,6 @@ public class FeeFineOwnerBuilder extends JsonBuilder implements Builder {
   private String defaultActionNoticeId;
 
   public FeeFineOwnerBuilder() { }
-  }
 
   public FeeFineOwnerBuilder(UUID id, String owner, String desc, List<JsonObject> servicePointOwner,
     String defaultChargeNoticeId, String defaultActionNoticeId) {
