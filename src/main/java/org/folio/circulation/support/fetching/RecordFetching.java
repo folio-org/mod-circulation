@@ -17,4 +17,11 @@ public class RecordFetching {
 
     return new MultipleRecordFetcher<>(client, recordsPropertyName, recordMapper);
   }
+
+  public static <T> MultipleRecordFetcher<T> findWithCqlQuery(
+    GetManyRecordsClient client, String recordsPropertyName,
+    Function<JsonObject, T> recordMapper) {
+
+    return new MultipleRecordFetcher<>(client, recordsPropertyName, recordMapper);
+  }
 }

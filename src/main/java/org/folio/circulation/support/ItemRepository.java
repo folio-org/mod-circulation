@@ -26,6 +26,7 @@ import org.folio.circulation.domain.MaterialTypeRepository;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.ServicePoint;
 import org.folio.circulation.domain.ServicePointRepository;
+import org.folio.circulation.support.fetching.RecordFetching;
 import org.folio.circulation.support.http.client.CqlQuery;
 import org.folio.circulation.support.http.client.PageLimit;
 import org.folio.circulation.support.http.client.Response;
@@ -316,8 +317,7 @@ public class ItemRepository {
   }
 
   public CompletableFuture<Result<Collection<Item>>> findByQuery(Result<CqlQuery> queryResult) {
-    MultipleRecordFetcher<Item> fetcher
-      = new MultipleRecordFetcher<>(itemsClient, ITEMS_COLLECTION_PROPERTY_NAME , Item::from);
+    FindWithCqlQuery<Item> fetcher = RecordFetching.findWithCqlQuery(itemsClient, ITEMS_COLLECTION_PROPERTY_NAME, Item::from);
 
     return fetcher.findByQuery(queryResult)
       .thenApply(mapResult(MultipleRecords::getRecords))

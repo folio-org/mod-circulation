@@ -2,6 +2,7 @@ package org.folio.circulation.resources;
 
 import static java.util.function.Function.identity;
 import static org.folio.circulation.support.fetching.RecordFetching.findWithMultipleCqlIndexValues;
+import static org.folio.circulation.support.fetching.RecordFetching.findWithCqlQuery;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
 
 import java.util.Collection;
@@ -25,7 +26,6 @@ import org.folio.circulation.domain.representations.ItemPickSlipRepresentation;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.FindWithMultipleCqlIndexValues;
 import org.folio.circulation.support.GetManyRecordsClient;
-import org.folio.circulation.support.MultipleRecordFetcher;
 import org.folio.circulation.support.OkJsonResponseResult;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.RouteRegistration;
@@ -85,7 +85,7 @@ public class PickSlipsResource extends Resource {
   private CompletableFuture<Result<Set<Location>>> fetchLocationsForServicePoint(
     UUID servicePointId, GetManyRecordsClient locationsStorageClient) {
 
-    return new MultipleRecordFetcher<>(locationsStorageClient, LOCATIONS_KEY, Location::from)
+    return findWithCqlQuery(locationsStorageClient, LOCATIONS_KEY, Location::from)
       .findByQuery(exactMatch(PRIMARY_SERVICE_POINT_KEY, servicePointId.toString()))
       .thenApply(r -> r.next(this::recordsToSet));
   }

@@ -5,6 +5,7 @@ import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.http.ResponseMapping.forwardOnFailure;
 import static org.folio.circulation.support.http.ResponseMapping.mapUsingJson;
 import static org.folio.circulation.support.fetching.RecordFetching.findWithMultipleCqlIndexValues;
+import static org.folio.circulation.support.fetching.RecordFetching.findWithCqlQuery;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
 
 import java.util.ArrayList;
@@ -20,13 +21,14 @@ import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.FindWithMultipleCqlIndexValues;
 import org.folio.circulation.support.GetManyRecordsClient;
-import org.folio.circulation.support.MultipleRecordFetcher;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.http.client.ResponseInterpreter;
 
 public class AccountRepository {
   private static final String LOAN_ID_FIELD_NAME = "loanId";
   private static final String ACCOUNT_ID_FIELD_NAME = "accountId";
+  private static final String ACCOUNTS_COLLECTION_PROPERTY_NAME = "accounts";
+
   private final CollectionResourceClient accountsStorageClient;
   private final GetManyRecordsClient feefineActionsStorageClient;
 
@@ -45,9 +47,8 @@ public class AccountRepository {
   }
 
   private CompletableFuture<Result<Collection<Account>>> fetchAccountsForLoan(String loanId) {
-
-    return createAccountsFetcher().findByQuery(
-      exactMatch(LOAN_ID_FIELD_NAME, loanId))
+    return findWithCqlQuery(accountsStorageClient, ACCOUNTS_COLLECTION_PROPERTY_NAME, Account::from)
+      .findByQuery(exactMatch(LOAN_ID_FIELD_NAME, loanId))
       .thenCompose(r -> r.after(this::findFeeFineActionsForAccounts))
       .thenApply(r -> r.map(MultipleRecords::getRecords));
   }
@@ -74,7 +75,9 @@ public class AccountRepository {
         .filter(Objects::nonNull)
         .collect(Collectors.toSet());
 
-    return createAccountsFetcher().findByIndexName(loanIds, LOAN_ID_FIELD_NAME)
+    return findWithMultipleCqlIndexValues(accountsStorageClient,
+        ACCOUNTS_COLLECTION_PROPERTY_NAME, Account::from)
+      .findByIndexName(loanIds, LOAN_ID_FIELD_NAME)
       .thenCompose(r -> r.after(this::findFeeFineActionsForAccounts))
       .thenComposeAsync(r -> r.after(multipleRecords -> completedFuture(succeeded(multipleRecords.getRecords()
         .stream()
@@ -94,7 +97,8 @@ public class AccountRepository {
                 new ArrayList<>())))));
   }
 
-  private CompletableFuture<Result<Map<String, List<FeeFineAction>>>> getFeeFineActionsForAccounts(Collection<Account> accounts) {
+  private CompletableFuture<Result<Map<String, List<FeeFineAction>>>> getFeeFineActionsForAccounts(
+    Collection<Account> accounts) {
 
     final Collection<String> loanIds =
     accounts.stream()
@@ -107,10 +111,6 @@ public class AccountRepository {
         .thenComposeAsync(r -> r.after(multipleRecords -> completedFuture(succeeded(
             multipleRecords.getRecords().stream().collect(
                 Collectors.groupingBy(FeeFineAction::getAccountId))))));
-  }
-
-  private MultipleRecordFetcher<Account> createAccountsFetcher() {
-    return new MultipleRecordFetcher<>(accountsStorageClient, "accounts", Account::from);
   }
 
   private FindWithMultipleCqlIndexValues<FeeFineAction> createFeeFineActionFetcher() {

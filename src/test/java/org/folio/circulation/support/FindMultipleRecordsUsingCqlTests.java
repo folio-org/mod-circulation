@@ -31,7 +31,7 @@ public class FindMultipleRecordsUsingCqlTests {
   public void shouldFetchRecordsInSinglePage() {
     final GetManyRecordsClient client = clientThatAlwaysReturnsCannedResponse();
 
-    final MultipleRecordFetcher<JsonObject> fetcher = new MultipleRecordFetcher<>(
+    final FindWithCqlQuery<JsonObject> fetcher = new MultipleRecordFetcher<>(
       client, "records", identity(), 50);
 
     final Result<CqlQuery> query = CqlQuery.exactMatch("Status", "Open");

@@ -24,7 +24,7 @@ import org.folio.circulation.support.http.client.Response;
 
 import io.vertx.core.json.JsonObject;
 
-public class MultipleRecordFetcher<T> implements FindWithMultipleCqlIndexValues<T> {
+public class MultipleRecordFetcher<T> implements FindWithMultipleCqlIndexValues<T>, FindWithCqlQuery<T> {
   private static final int DEFAULT_MAX_ID_VALUES_PER_CQL_SEARCH_QUERY = 50;
 
   private final GetManyRecordsClient client;
@@ -108,6 +108,7 @@ public class MultipleRecordFetcher<T> implements FindWithMultipleCqlIndexValues<
         .collect(collectingAndThen(Collectors.toList(), this::aggregate)));
   }
 
+  @Override
   public CompletableFuture<Result<MultipleRecords<T>>> findByQuery(
     Result<CqlQuery> queryResult) {
 
