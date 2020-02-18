@@ -7,24 +7,24 @@ import org.joda.time.DateTime;
 
 import io.vertx.core.json.JsonObject;
 
-public class CheckInLogRecord {
+public class CheckInRecord {
   private static final String ID = "id";
   private static final String OCCURRED_DATE_TIME = "occurredDateTime";
   private static final String ITEM_ID = "itemId";
-  private static final String CHECK_IN_SERVICE_POINT_ID = "checkInServicePointId";
+  private static final String SERVICE_POINT_ID = "servicePointId";
   private static final String PERFORMED_BY_USER_ID = "performedByUserId";
 
   private final String id;
   private final DateTime occurredDateTime;
   private final String itemId;
-  private final String checkInServicePointId;
+  private final String servicePointId;
   private final String performedByUserId;
 
-  private CheckInLogRecord(Builder builder) {
+  private CheckInRecord(Builder builder) {
     this.id = builder.id;
     this.occurredDateTime = builder.occurredDateTime;
     this.itemId = builder.itemId;
-    this.checkInServicePointId = builder.checkInServicePointId;
+    this.servicePointId = builder.checkInServicePointId;
     this.performedByUserId = builder.performedByUserId;
   }
 
@@ -50,8 +50,8 @@ public class CheckInLogRecord {
       return this;
     }
 
-    public Builder withCheckInServicePointId(String checkInServicePointId) {
-      this.checkInServicePointId = checkInServicePointId;
+    public Builder withServicePointId(String servicePointId) {
+      this.checkInServicePointId = servicePointId;
       return this;
     }
 
@@ -60,14 +60,14 @@ public class CheckInLogRecord {
       return this;
     }
 
-    public CheckInLogRecord build() {
+    public CheckInRecord build() {
       if (!ObjectUtils.allNotNull(id, occurredDateTime, itemId,
         checkInServicePointId, performedByUserId)) {
 
         throw new IllegalStateException("All properties are required");
       }
 
-      return new CheckInLogRecord(this);
+      return new CheckInRecord(this);
     }
   }
 
@@ -80,17 +80,7 @@ public class CheckInLogRecord {
       .put(ID, id)
       .put(OCCURRED_DATE_TIME, occurredDateTime.toString())
       .put(ITEM_ID, itemId)
-      .put(CHECK_IN_SERVICE_POINT_ID, checkInServicePointId)
+      .put(SERVICE_POINT_ID, servicePointId)
       .put(PERFORMED_BY_USER_ID, performedByUserId);
-  }
-
-  public static CheckInLogRecord from(JsonObject json) {
-    return builder()
-      .withId(json.getString(ID))
-      .withOccurredDateTime(DateTime.parse(json.getString(OCCURRED_DATE_TIME)))
-      .withItemId(json.getString(ITEM_ID))
-      .withCheckInServicePointId(json.getString(CHECK_IN_SERVICE_POINT_ID))
-      .withPerformedByUserId(json.getString(PERFORMED_BY_USER_ID))
-      .build();
   }
 }

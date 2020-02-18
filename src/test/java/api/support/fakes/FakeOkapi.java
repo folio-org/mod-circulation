@@ -2,6 +2,7 @@ package api.support.fakes;
 
 import static api.support.APITestContext.circulationModulePort;
 import static api.support.APITestContext.createWebClient;
+import static api.support.fakes.StorageSchema.validatorForCheckInStorageSchema;
 import static api.support.fakes.StorageSchema.validatorForLocationCampSchema;
 import static api.support.fakes.StorageSchema.validatorForLocationInstSchema;
 import static api.support.fakes.StorageSchema.validatorForLocationLibSchema;
@@ -339,6 +340,7 @@ public class FakeOkapi extends AbstractVerticle {
       .withRecordName("checkIns")
       .withRootPath("/check-in-storage/check-ins")
       .withCollectionPropertyName("checkIns")
+      .validateRecordsWith(validatorForCheckInStorageSchema())
       .create()
       .register(router);
 

@@ -47,16 +47,16 @@ public class CheckInByBarcodeResource extends Resource {
       .map(CheckInProcessRecords::new)
       .combineAfter(processAdapter::findItem, CheckInProcessRecords::withItem)
       .thenComposeAsync(findItemResult -> findItemResult.combineAfter(
-        processAdapter::findSingleOpenLoan, CheckInProcessRecords::withLoan))
-      .thenComposeAsync(findLoanResult -> findLoanResult.combineAfter(
-        processAdapter::checkInLoan, CheckInProcessRecords::withLoan))
-      .thenComposeAsync(loanCheckInResult -> loanCheckInResult.combineAfter(
         processAdapter::getRequestQueue, CheckInProcessRecords::withRequestQueue))
       .thenApply(findRequestQueueResult -> findRequestQueueResult.map(
         processAdapter::setInHouseUse))
       .thenApplyAsync(r -> r.map(records -> records.withLoggedInUserId(context.getUserId())))
-      .thenCompose(setUserResult -> setUserResult.after(processAdapter::logCheckInOperation))
-      .thenComposeAsync(logCheckIn -> logCheckIn.combineAfter(
+      .thenComposeAsync(setUserResult -> setUserResult.after(processAdapter::logCheckInOperation))
+      .thenComposeAsync(logCheckInResult -> logCheckInResult.combineAfter(
+        processAdapter::findSingleOpenLoan, CheckInProcessRecords::withLoan))
+      .thenComposeAsync(findLoanResult -> findLoanResult.combineAfter(
+        processAdapter::checkInLoan, CheckInProcessRecords::withLoan))
+      .thenComposeAsync(checkInLoan -> checkInLoan.combineAfter(
         processAdapter::updateRequestQueue, CheckInProcessRecords::withRequestQueue))
       .thenComposeAsync(updateRequestQueueResult -> updateRequestQueueResult.combineAfter(
         processAdapter::updateItem, CheckInProcessRecords::withItem))

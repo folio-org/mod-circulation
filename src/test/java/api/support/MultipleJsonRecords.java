@@ -3,7 +3,6 @@ package api.support;
 import static api.support.JsonCollectionAssistant.getRecordById;
 import static org.folio.circulation.support.JsonArrayHelper.mapToList;
 
-import java.util.Iterator;
 import java.util.List;
 import java.util.UUID;
 import java.util.function.Consumer;
@@ -13,7 +12,7 @@ import org.folio.circulation.support.http.client.Response;
 
 import io.vertx.core.json.JsonObject;
 
-public class MultipleJsonRecords implements Iterable<JsonObject> {
+public class MultipleJsonRecords {
   private final List<JsonObject> records;
   private final int totalRecords;
 
@@ -39,7 +38,6 @@ public class MultipleJsonRecords implements Iterable<JsonObject> {
     return records.stream();
   }
 
-  @Override
   public void forEach(Consumer<? super JsonObject> consumer) {
     records.forEach(consumer);
   }
@@ -54,10 +52,5 @@ public class MultipleJsonRecords implements Iterable<JsonObject> {
 
   public JsonObject getFirst() {
     return records.get(0);
-  }
-
-  @Override
-  public Iterator<JsonObject> iterator() {
-    return records.iterator();
   }
 }

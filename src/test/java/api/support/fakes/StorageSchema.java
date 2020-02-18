@@ -26,4 +26,8 @@ public class StorageSchema {
   public static JsonSchemaValidator validatorForLocationLibSchema() throws IOException {
     return JsonSchemaValidator.fromResource("/loclib.json");
   }
+
+  public static JsonSchemaValidator validatorForCheckInStorageSchema() throws IOException {
+    return JsonSchemaValidator.fromResource("/check-in-storage-0-1.json");
+  }
 }

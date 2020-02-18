@@ -360,13 +360,9 @@ public class CheckInByBarcodeTests extends APITests {
       new DateTime(2018, 3, 5, 14, 23, 41, DateTimeZone.UTC),
       checkInServicePointId);
 
-    verifyCheckInOperationRecorded(nod.getId(), checkInServicePointId);
-
     final CheckInByBarcodeResponse checkInResponse = loansFixture.checkInByBarcode(
       nod, new DateTime(2018, 3, 5, 14, 23, 41, DateTimeZone.UTC),
       checkInServicePointId);
-
-    verifyCheckInsRecorded(nod.getId(), checkInServicePointId, 2);
 
     assertThat("Response should not include a loan",
       checkInResponse.getJson().containsKey("loan"), is(false));
@@ -617,28 +613,22 @@ public class CheckInByBarcodeTests extends APITests {
         hasEmailNoticeProperties(requester.getId(), expectedTemplateId, noticeContextMatchers)));
   }
 
-  private void verifyCheckInOperationRecorded(UUID itemId, UUID checkInServicePoint) {
-    verifyCheckInsRecorded(itemId, checkInServicePoint, 1);
-  }
-
-  private void verifyCheckInsRecorded(
-    UUID itemId, UUID checkInServicePoint, int expectedNumberOfRecords) {
+  private void verifyCheckInOperationRecorded(UUID itemId, UUID servicePoint) {
     final CqlQuery query = CqlQuery.queryFromTemplate("itemId=%s", itemId);
     Awaitility.await()
       .atMost(2, TimeUnit.SECONDS)
-      .until(() -> checkInOperationClient.getMany(query).totalRecords() == expectedNumberOfRecords);
+      .until(() -> checkInOperationClient.getMany(query).totalRecords() == 1);
 
     final MultipleJsonRecords recordedOperations = checkInOperationClient.getMany(query);
 
-    assertThat(recordedOperations.totalRecords(), is(expectedNumberOfRecords));
+    assertThat(recordedOperations.totalRecords(), is(1));
 
-    for (JsonObject checkInOperation : recordedOperations) {
+    recordedOperations.forEach(checkInOperation -> {
       assertThat(checkInOperation.getString("occurredDateTime"),
         withinSecondsBeforeNow(Seconds.seconds(2)));
       assertThat(checkInOperation.getString("itemId"), is(itemId.toString()));
-      assertThat(checkInOperation.getString("checkInServicePointId"),
-        is(checkInServicePoint.toString()));
+      assertThat(checkInOperation.getString("servicePointId"), is(servicePoint.toString()));
       assertThat(checkInOperation.getString("performedByUserId"), is(getUserId()));
-    }
+    });
   }
 }
