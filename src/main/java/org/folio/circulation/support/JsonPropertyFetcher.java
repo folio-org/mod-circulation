@@ -154,6 +154,18 @@ public class JsonPropertyFetcher {
     }
   }
 
+  public static Double getDoubleProperty(
+    JsonObject representation,
+    String propertyName,
+    Double defaultValue) {
+
+    if (representation != null) {
+      return representation.getDouble(propertyName, defaultValue);
+    } else {
+      return defaultValue;
+    }
+  }
+
   public static void copyProperty(
     JsonObject from,
     JsonObject to,

@@ -1,5 +1,8 @@
 package org.folio.circulation.domain.policy;
 
+import static org.folio.circulation.support.JsonPropertyFetcher.getBooleanProperty;
+import static org.folio.circulation.support.JsonPropertyFetcher.getDoubleProperty;
+import static org.folio.circulation.support.JsonPropertyFetcher.getObjectProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
 
 import io.vertx.core.json.JsonObject;
@@ -26,12 +29,13 @@ public class OverdueFinePolicy extends Policy {
     return new OverdueFinePolicy(
       getProperty(json, "id"),
       getProperty(json, "name"),
-      json.getJsonObject("overdueFine").getDouble("quantity"),
-      OverdueFineInterval.fromValue(json.getJsonObject("overdueFine").getString("intervalId")),
-      new OverdueFinePolicyLimitInfo(json.getDouble("maxOverdueFine"),
-        json.getDouble("maxOverdueRecallFine")),
-      json.getBoolean("gracePeriodRecall"),
-      json.getBoolean("countClosed"));
+      getDoubleProperty(getObjectProperty(json, "overdueFine"), "quantity", null),
+      OverdueFineInterval.fromValue(
+        getProperty(getObjectProperty(json, "overdueFine"), "intervalId")),
+      new OverdueFinePolicyLimitInfo(getDoubleProperty(json, "maxOverdueFine", null),
+        getDoubleProperty(json, "maxOverdueRecallFine", null)),
+      getBooleanProperty(json, "gracePeriodRecall"),
+      getBooleanProperty(json, "countClosed"));
   }
 
   public Double getOverdueFine() {
