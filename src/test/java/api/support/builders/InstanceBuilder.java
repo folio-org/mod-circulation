@@ -84,10 +84,15 @@ public class InstanceBuilder extends JsonBuilder implements Builder {
   }
 
   public InstanceBuilder withContributor(String name, UUID typeId) {
+    return withContributor(name, typeId, false);
+  }
+
+  public InstanceBuilder withContributor(String name, UUID typeId, Boolean primary) {
     final JsonObject newContributor = new JsonObject();
 
     write(newContributor, "name", name);
     write(newContributor, "contributorNameTypeId", typeId);
+    write(newContributor, "primary", primary);
 
     return withContributors(this.contributors.copy().add(newContributor));
   }

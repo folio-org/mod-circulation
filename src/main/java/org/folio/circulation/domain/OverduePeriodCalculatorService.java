@@ -5,7 +5,7 @@ import org.folio.circulation.support.Result;
 import org.joda.time.DateTime;
 import org.joda.time.LocalTime;
 
-import java.util.List;
+import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
@@ -56,7 +56,7 @@ public class OverduePeriodCalculatorService {
       .thenApply(r -> r.next(this::getOpeningDaysDurationMinutes));
   }
 
-  Result<Integer> getOpeningDaysDurationMinutes(List<OpeningDay> openingDays) {
+  Result<Integer> getOpeningDaysDurationMinutes(Collection<OpeningDay> openingDays) {
     return succeeded(
       openingDays.stream()
         .mapToInt(day -> day.getAllDay() ? MINUTES_PER_DAY : getOpeningDayDurationMinutes(day))
