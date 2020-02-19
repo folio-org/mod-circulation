@@ -2,12 +2,12 @@ package org.folio.circulation.storage;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.function.Function.identity;
+import static org.folio.circulation.domain.validation.CommonFailures.moreThanOneOpenLoanFailure;
 import static org.folio.circulation.support.Result.of;
 
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
-import java.util.function.Supplier;
 
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Loan;
@@ -17,34 +17,30 @@ import org.folio.circulation.domain.User;
 import org.folio.circulation.domain.UserRepository;
 import org.folio.circulation.domain.validation.MoreThanOneLoanValidator;
 import org.folio.circulation.domain.validation.NoLoanValidator;
-import org.folio.circulation.support.HttpFailure;
 import org.folio.circulation.support.Result;
 
 public class SingleOpenLoanForItemInStorageFinder {
   private final LoanRepository loanRepository;
   private final UserRepository userRepository;
-  private final Supplier<HttpFailure> incorrectNumberOfLoansFailureSupplier;
   private final Boolean allowNoLoanToBeFound;
 
   public SingleOpenLoanForItemInStorageFinder(
     LoanRepository loanRepository,
     UserRepository userRepository,
-    Supplier<HttpFailure> incorrectNumberOfLoansFailureSupplier,
     boolean allowNoLoanToBeFound) {
 
     this.loanRepository = loanRepository;
     this.userRepository = userRepository;
-    this.incorrectNumberOfLoansFailureSupplier = incorrectNumberOfLoansFailureSupplier;
     this.allowNoLoanToBeFound = allowNoLoanToBeFound;
   }
 
   public CompletableFuture<Result<Loan>> findSingleOpenLoan(Item item) {
     //Use same error for no loans and more than one loan to maintain compatibility
     final MoreThanOneLoanValidator moreThanOneLoanValidator
-      = new MoreThanOneLoanValidator(incorrectNumberOfLoansFailureSupplier);
+      = new MoreThanOneLoanValidator(moreThanOneOpenLoanFailure(item.getBarcode()));
 
     final NoLoanValidator noLoanValidator
-      = new NoLoanValidator(incorrectNumberOfLoansFailureSupplier);
+      = new NoLoanValidator(moreThanOneOpenLoanFailure(item.getBarcode()));
 
     return loanRepository.findOpenLoans(item)
       .thenApply(moreThanOneLoanValidator::failWhenMoreThanOneLoan)

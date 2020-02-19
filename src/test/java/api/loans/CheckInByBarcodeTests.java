@@ -1,9 +1,11 @@
 package api.loans;
 
+import static api.support.APITestContext.getUserId;
 import static api.support.fixtures.AddressExamples.SiriusBlack;
 import static api.support.matchers.PatronNoticeMatcher.hasEmailNoticeProperties;
 import static api.support.matchers.ResponseStatusCodeMatcher.hasStatus;
 import static api.support.matchers.TextDateTimeMatcher.withinSecondsAfter;
+import static api.support.matchers.TextDateTimeMatcher.withinSecondsBeforeNow;
 import static api.support.matchers.UUIDMatcher.is;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
@@ -11,10 +13,10 @@ import static java.util.Arrays.asList;
 import static org.folio.HttpStatus.HTTP_VALIDATION_ERROR;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.notNullValue;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.core.Is.is;
-import static org.hamcrest.MatcherAssert.assertThat;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -40,6 +42,7 @@ import org.junit.Test;
 
 import api.support.APITests;
 import api.support.CheckInByBarcodeResponse;
+import api.support.MultipleJsonRecords;
 import api.support.builders.Address;
 import api.support.builders.CheckInByBarcodeRequestBuilder;
 import api.support.builders.FeeFineBuilder;
@@ -48,6 +51,7 @@ import api.support.builders.NoticeConfigurationBuilder;
 import api.support.builders.NoticePolicyBuilder;
 import api.support.builders.RequestBuilder;
 import api.support.fixtures.TemplateContextMatchers;
+import api.support.http.CqlQuery;
 import api.support.http.InventoryItemResource;
 import io.vertx.core.json.JsonObject;
 
@@ -152,6 +156,8 @@ public class CheckInByBarcodeTests extends APITests {
 
     assertThat("Checkin Service Point Id should be stored.",
       storedLoan.getString("checkinServicePointId"), is(checkInServicePointId));
+
+    verifyCheckInOperationRecorded(nod.getId(), checkInServicePointId);
   }
 
   @Test
@@ -687,5 +693,20 @@ public class CheckInByBarcodeTests extends APITests {
     MatcherAssert.assertThat(sentNotices,
       hasItems(
         hasEmailNoticeProperties(requester.getId(), expectedTemplateId, noticeContextMatchers)));
+  }
+
+  private void verifyCheckInOperationRecorded(UUID itemId, UUID servicePoint) {
+    final CqlQuery query = CqlQuery.queryFromTemplate("itemId=%s", itemId);
+    final MultipleJsonRecords recordedOperations = checkInOperationClient.getMany(query);
+
+    assertThat(recordedOperations.totalRecords(), is(1));
+
+    recordedOperations.forEach(checkInOperation -> {
+      assertThat(checkInOperation.getString("occurredDateTime"),
+        withinSecondsBeforeNow(Seconds.seconds(2)));
+      assertThat(checkInOperation.getString("itemId"), is(itemId.toString()));
+      assertThat(checkInOperation.getString("servicePointId"), is(servicePoint.toString()));
+      assertThat(checkInOperation.getString("performedByUserId"), is(getUserId()));
+    });
   }
 }

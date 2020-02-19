@@ -1,7 +1,5 @@
 package org.folio.circulation.storage;
 
-import static org.folio.circulation.domain.validation.CommonFailures.moreThanOneOpenLoanFailure;
-import static org.folio.circulation.domain.validation.CommonFailures.noItemFoundForBarcodeFailure;
 import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
@@ -38,18 +36,15 @@ public class SingleOpenLoanByUserAndItemBarcodeFinder {
     String userBarcode) {
 
     final ItemByBarcodeInStorageFinder itemFinder = new ItemByBarcodeInStorageFinder(
-      this.itemRepository, noItemFoundForBarcodeFailure(itemBarcode));
+      this.itemRepository);
 
     final SingleOpenLoanForItemInStorageFinder singleOpenLoanFinder
       = new SingleOpenLoanForItemInStorageFinder(this.loanRepository,
-      this.userRepository, moreThanOneOpenLoanFailure(itemBarcode), false);
-
-    final UserNotFoundValidator userNotFoundValidator = new UserNotFoundValidator(
-      userId -> singleValidationError("user is not found", "userId", userId));
+      this.userRepository, false);
 
     return itemFinder.findItemByBarcode(itemBarcode)
       .thenComposeAsync(itemResult -> itemResult.after(singleOpenLoanFinder::findSingleOpenLoan))
-      .thenApply(userNotFoundValidator::refuseWhenUserNotFound)
+      .thenApply(UserNotFoundValidator::refuseWhenUserNotFound)
       .thenComposeAsync(loanResult -> loanResult.after(refuseWhenUserDoesNotMatch(userBarcode)));
   }
 
