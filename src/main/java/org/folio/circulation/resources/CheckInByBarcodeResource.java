@@ -1,5 +1,7 @@
 package org.folio.circulation.resources;
 
+import static org.folio.circulation.domain.validation.UserNotFoundValidator.refuseWhenLoggedInUserNotPresent;
+
 import org.folio.circulation.domain.CheckInProcessRecords;
 import org.folio.circulation.domain.OverdueFineCalculatorService;
 import org.folio.circulation.domain.notice.schedule.RequestScheduledNoticeService;
@@ -47,7 +49,8 @@ public class CheckInByBarcodeResource extends Resource {
     final OverdueFineCalculatorService overdueFineCalculatorService =
       OverdueFineCalculatorService.using(clients);
 
-    checkInRequestResult
+    refuseWhenLoggedInUserNotPresent(context)
+      .next(notUsed -> checkInRequestResult)
       .map(CheckInProcessRecords::new)
       .combineAfter(processAdapter::findItem, CheckInProcessRecords::withItem)
       .thenComposeAsync(findItemResult -> findItemResult.combineAfter(

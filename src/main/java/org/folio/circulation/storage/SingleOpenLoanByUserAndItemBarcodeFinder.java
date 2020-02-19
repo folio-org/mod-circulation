@@ -42,12 +42,9 @@ public class SingleOpenLoanByUserAndItemBarcodeFinder {
       = new SingleOpenLoanForItemInStorageFinder(this.loanRepository,
       this.userRepository, false);
 
-    final UserNotFoundValidator userNotFoundValidator = new UserNotFoundValidator(
-      userId -> singleValidationError("user is not found", "userId", userId));
-
     return itemFinder.findItemByBarcode(itemBarcode)
       .thenComposeAsync(itemResult -> itemResult.after(singleOpenLoanFinder::findSingleOpenLoan))
-      .thenApply(userNotFoundValidator::refuseWhenUserNotFound)
+      .thenApply(UserNotFoundValidator::refuseWhenUserNotFound)
       .thenComposeAsync(loanResult -> loanResult.after(refuseWhenUserDoesNotMatch(userBarcode)));
   }
 

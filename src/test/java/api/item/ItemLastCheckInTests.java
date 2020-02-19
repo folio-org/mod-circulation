@@ -1,21 +1,26 @@
 package api.item;
 
 import static api.support.APITestContext.getOkapiHeadersFromContext;
+import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
+import static api.support.matchers.ValidationErrorMatchers.hasMessage;
+import static api.support.matchers.ValidationErrorMatchers.hasNullParameter;
+import static org.folio.circulation.support.http.OkapiHeader.USER_ID;
 import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.nullValue;
-import static org.joda.time.DateTimeZone.UTC;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.joda.time.DateTimeZone.UTC;
 
 import java.util.UUID;
 
 import org.folio.circulation.support.ClockManager;
 import org.folio.circulation.support.JsonPropertyFetcher;
 import org.folio.circulation.support.http.client.IndividualResource;
+import org.folio.circulation.support.http.client.Response;
 import org.joda.time.DateTime;
 import org.junit.Test;
 
 import api.support.APITestContext;
 import api.support.APITests;
+import api.support.builders.CheckInByBarcodeRequestBuilder;
 import api.support.http.OkapiHeaders;
 import io.vertx.core.json.JsonObject;
 
@@ -59,8 +64,7 @@ public class ItemLastCheckInTests extends APITests {
   }
 
   @Test
-  public void shouldNotFailCheckInWithEmptyLoggedInUserId() {
-
+  public void shouldFailCheckInWithEmptyLoggedInUserId() {
     IndividualResource item = itemsFixture.basedUponSmallAngryPlanet();
     UUID servicePointId = servicePointsFixture.cd1().getId();
 
@@ -68,18 +72,19 @@ public class ItemLastCheckInTests extends APITests {
       .withRequestId("check-in-by-barcode-request")
       .withUserId("");
 
-    loansFixture.checkInByBarcode(item, fixedCheckInDateTime, servicePointId, okapiHeaders);
+    Response response = loansFixture.attemptCheckInByBarcode(
+      new CheckInByBarcodeRequestBuilder()
+        .forItem(item)
+        .at(servicePointId)
+        .on(fixedCheckInDateTime), okapiHeaders);
 
-    JsonObject lastCheckIn = itemsClient.get(item.getId()).getJson()
-      .getJsonObject("lastCheckIn");
-
-    DateTime actualCheckinDateTime = JsonPropertyFetcher
-      .getDateTimeProperty(lastCheckIn, "dateTime");
-
-    assertThat(actualCheckinDateTime, is(fixedCheckInDateTime));
-    assertThat(lastCheckIn.getString("servicePointId"),
-      is(servicePointId.toString()));
-    assertThat(lastCheckIn.getString("staffMemberId"), is(nullValue()));
+    assertThat(response.getStatusCode(), is(422));
+    assertThat(response.getJson(), hasErrorWith(
+      hasMessage("No logged-in user present")
+    ));
+    assertThat(response.getJson(), hasErrorWith(
+      hasNullParameter(USER_ID)
+    ));
   }
 
   @Test

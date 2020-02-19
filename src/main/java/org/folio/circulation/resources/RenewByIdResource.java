@@ -39,9 +39,6 @@ public class RenewByIdResource extends RenewalResource {
       .map(RenewByIdRequest::getItemId)
       .orElse("unknown item ID");
 
-    final UserNotFoundValidator userNotFoundValidator = new UserNotFoundValidator(
-      userId -> singleValidationError("user is not found", "userId", userId));
-
     final SingleOpenLoanForItemInStorageFinder singleOpenLoanFinder
       = new SingleOpenLoanForItemInStorageFinder(loanRepository, userRepository, false);
 
@@ -51,7 +48,7 @@ public class RenewByIdResource extends RenewalResource {
     return requestResult
       .after(checkInRequest -> itemFinder.findItemById(itemId))
       .thenComposeAsync(itemResult -> itemResult.after(singleOpenLoanFinder::findSingleOpenLoan))
-      .thenApply(userNotFoundValidator::refuseWhenUserNotFound)
+      .thenApply(UserNotFoundValidator::refuseWhenUserNotFound)
       .thenApply(loanResult -> loanResult.combineToResult(requestResult,
         this::refuseWhenUserDoesNotMatch));
   }

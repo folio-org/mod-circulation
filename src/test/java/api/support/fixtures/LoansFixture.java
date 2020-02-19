@@ -310,11 +310,15 @@ public class LoansFixture {
       422, "renewal-by-id-request");
   }
 
-  public Response attemptCheckInByBarcode(
-    CheckInByBarcodeRequestBuilder builder) {
+  public Response attemptCheckInByBarcode(CheckInByBarcodeRequestBuilder builder) {
+    return attemptCheckInByBarcode(builder, getOkapiHeadersFromContext());
+  }
 
-    return restAssuredClient.post(builder.create(), checkInByBarcodeUrl(),
-        "check-in-by-barcode-request");
+  public Response attemptCheckInByBarcode(
+    CheckInByBarcodeRequestBuilder builder, OkapiHeaders okapiHeaders) {
+
+    return restAssuredClient
+      .post(builder.create(), checkInByBarcodeUrl(), okapiHeaders);
   }
 
   public CheckInByBarcodeResponse checkInByBarcode(

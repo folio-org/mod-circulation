@@ -31,7 +31,7 @@ public class CheckInRecord {
   }
 
   public static class Builder {
-    private String id = UUID.randomUUID().toString();
+    private String id;
     private DateTime occurredDateTime;
     private String itemId;
     private String checkInServicePointId;
@@ -66,7 +66,8 @@ public class CheckInRecord {
       if (!ObjectUtils.allNotNull(occurredDateTime, itemId,
         checkInServicePointId)) {
 
-        throw new IllegalStateException("OccurredDateTime, itemId and checkInServicePoint are required");
+        throw new IllegalStateException(
+          "occurredDateTime, itemId, checkInServicePoint and performedByUserId are required");
       }
 
       return new CheckInRecord(this);
@@ -81,10 +82,10 @@ public class CheckInRecord {
     JsonObject json = new JsonObject()
       .put(OCCURRED_DATE_TIME, occurredDateTime.toString())
       .put(ITEM_ID, itemId)
-      .put(SERVICE_POINT_ID, servicePointId);
+      .put(SERVICE_POINT_ID, servicePointId)
+      .put(PERFORMED_BY_USER_ID, performedByUserId);
 
     write(json, ID, id);
-    write(json, PERFORMED_BY_USER_ID, performedByUserId);
 
     return json;
   }
