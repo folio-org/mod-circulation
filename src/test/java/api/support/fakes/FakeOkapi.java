@@ -8,12 +8,6 @@ import static api.support.fakes.StorageSchema.validatorForLocationInstSchema;
 import static api.support.fakes.StorageSchema.validatorForLocationLibSchema;
 import static api.support.fakes.StorageSchema.validatorForStorageItemSchema;
 import static api.support.fakes.StorageSchema.validatorForStorageLoanSchema;
-import static api.support.fixtures.CalendarExamples.CASE_CALENDAR_IS_EMPTY_SERVICE_POINT_ID;
-import static api.support.fixtures.CalendarExamples.getCalendarById;
-import static api.support.fixtures.LibraryHoursExamples.CASE_CALENDAR_IS_UNAVAILABLE_SERVICE_POINT_ID;
-import static api.support.fixtures.LibraryHoursExamples.CASE_CLOSED_LIBRARY_IN_THU_SERVICE_POINT_ID;
-import static api.support.fixtures.LibraryHoursExamples.CASE_CLOSED_LIBRARY_SERVICE_POINT_ID;
-import static api.support.fixtures.LibraryHoursExamples.getLibraryHoursById;
 import static java.util.Arrays.asList;
 import static org.folio.circulation.support.http.server.ForwardResponse.forward;
 import static org.folio.circulation.support.results.CommonFailures.failedDueToServerError;
@@ -32,7 +26,6 @@ import org.slf4j.LoggerFactory;
 
 import api.support.fakes.processors.StorageRecordPreProcessors;
 import io.vertx.core.AbstractVerticle;
-import io.vertx.core.MultiMap;
 import io.vertx.core.Promise;
 import io.vertx.core.http.HttpServer;
 import io.vertx.core.json.JsonArray;
@@ -223,8 +216,9 @@ public class FakeOkapi extends AbstractVerticle {
       .create().register(router);
 
     registerCirculationRulesStorage(router);
-    registerCalendar(router);
-    registerLibraryHours(router);
+    FakeCalendarOkapi.registerCalendar(router);
+    FakeCalendarOkapi.registerLibraryHours(router);
+    FakeCalendarOkapi.registerOpeningHours(router);
     registerFakeStorageLoansAnonymize(router);
 
     new FakeStorageModuleBuilder()
@@ -343,6 +337,18 @@ public class FakeOkapi extends AbstractVerticle {
       .validateRecordsWith(validatorForCheckInStorageSchema())
       .create()
       .register(router);
+
+    new FakeStorageModuleBuilder()
+      .withCollectionPropertyName("owners")
+      .withRootPath("/owners")
+      .create()
+      .register(router);
+
+    new FakeStorageModuleBuilder()
+      .withRecordName("feefines")
+      .withRootPath("/feefines")
+      .withCollectionPropertyName("feefines")
+      .create().register(router);
 
     server.requestHandler(router)
       .listen(PORT_TO_USE, result -> {
@@ -470,95 +476,6 @@ public class FakeOkapi extends AbstractVerticle {
       log.debug("/circulation-rules-storage GET returns {}", circulationRules);
       routingContext.response().setStatusCode(200).end(circulationRules);
     });
-  }
-
-  private void registerLibraryHours(Router router) {
-    router.get("/calendar/periods/:id/period")
-      .handler(routingContext -> {
-        String servicePointId = routingContext.pathParam("id");
-        switch (servicePointId) {
-          case CASE_CALENDAR_IS_UNAVAILABLE_SERVICE_POINT_ID:
-            routingContext.response()
-              .putHeader("content-type", "application/json")
-              .setStatusCode(404)
-              .end();
-            break;
-
-          case CASE_CLOSED_LIBRARY_SERVICE_POINT_ID:
-            routingContext.response()
-              .setStatusCode(200)
-              .putHeader("content-type", "application/json")
-              .end(findFakeLibraryHoursById(servicePointId));
-            break;
-
-          case CASE_CLOSED_LIBRARY_IN_THU_SERVICE_POINT_ID:
-            routingContext.response()
-              .setStatusCode(200)
-              .putHeader("content-type", "application/json")
-              .end(findFakeLibraryHoursById(servicePointId));
-            break;
-
-          default:
-            routingContext.response()
-              .setStatusCode(200)
-              .putHeader("content-type", "application/json")
-              .end(findFakeLibraryHoursById(servicePointId));
-        }
-      });
-  }
-
-  private void registerCalendar(Router router) {
-    router.get("/calendar/periods/:id/calculateopening")
-      .handler(routingContext -> {
-        String servicePointId = routingContext.pathParam("id");
-        switch (servicePointId) {
-          case CASE_CALENDAR_IS_UNAVAILABLE_SERVICE_POINT_ID:
-            routingContext.response()
-              .putHeader("content-type", "application/json")
-              .setStatusCode(404)
-              .end();
-            break;
-
-          case CASE_CLOSED_LIBRARY_SERVICE_POINT_ID:
-            routingContext.response()
-              .putHeader("content-type", "application/json")
-              .setStatusCode(404)
-              .end();
-            break;
-
-          case CASE_CALENDAR_IS_EMPTY_SERVICE_POINT_ID:
-            routingContext.response()
-              .putHeader("content-type", "application/json")
-              .setStatusCode(200)
-              .end();
-            break;
-
-          case CASE_CLOSED_LIBRARY_IN_THU_SERVICE_POINT_ID:
-            routingContext.response()
-              .putHeader("content-type", "application/json")
-              .setStatusCode(404)
-              .end();
-            break;
-
-          default:
-            MultiMap queries = routingContext.queryParams();
-            routingContext.response()
-              .setStatusCode(200)
-              .putHeader("content-type", "application/json")
-              .end(findFakeCalendarById(servicePointId, queries));
-        }
-      });
-  }
-
-  private String findFakeLibraryHoursById(String servicePointId) {
-    log.debug(String.format("GET: /calendar/periods/%s/period", servicePointId));
-    return getLibraryHoursById(servicePointId).toString();
-  }
-
-  private String findFakeCalendarById(String servicePointId, MultiMap queries) {
-    log.debug(String.format("GET: /calendar/periods/%s/calculateopening, queries=%s",
-      servicePointId, queries));
-    return getCalendarById(servicePointId, queries).toString();
   }
 
   private JsonObject resetPositionsBeforeBatchUpdate(JsonObject batchUpdateRequest) {

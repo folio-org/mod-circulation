@@ -97,6 +97,8 @@ public abstract class APITests {
   protected final ResourceClient loansClient = ResourceClient.forLoans();
   protected final ResourceClient accountsClient = ResourceClient.forAccounts();
   protected final ResourceClient feeFineActionsClient = ResourceClient.forFeeFineActions();
+  protected final ResourceClient feeFineOwnersClient = ResourceClient.forFeeFineOwners();
+  protected final ResourceClient feeFinesClient = ResourceClient.forFeeFines();
 
   protected final ResourceClient loansStorageClient
     = ResourceClient.forLoansStorage();

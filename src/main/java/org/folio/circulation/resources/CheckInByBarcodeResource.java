@@ -1,6 +1,7 @@
 package org.folio.circulation.resources;
 
 import org.folio.circulation.domain.CheckInProcessRecords;
+import org.folio.circulation.domain.OverdueFineCalculatorService;
 import org.folio.circulation.domain.notice.schedule.RequestScheduledNoticeService;
 import org.folio.circulation.domain.notice.session.PatronActionSessionService;
 import org.folio.circulation.domain.representations.CheckInByBarcodeRequest;
@@ -43,6 +44,9 @@ public class CheckInByBarcodeResource extends Resource {
     final PatronActionSessionService patronActionSessionService =
       PatronActionSessionService.using(clients);
 
+    final OverdueFineCalculatorService overdueFineCalculatorService =
+      OverdueFineCalculatorService.using(clients);
+
     checkInRequestResult
       .map(CheckInProcessRecords::new)
       .combineAfter(processAdapter::findItem, CheckInProcessRecords::withItem)
@@ -75,6 +79,7 @@ public class CheckInByBarcodeResource extends Resource {
         processAdapter::updateLoan, CheckInProcessRecords::withLoan))
       .thenComposeAsync(updateItemResult -> updateItemResult.after(
         patronActionSessionService::saveCheckInSessionRecord))
+      .thenComposeAsync(r -> r.after(overdueFineCalculatorService::calculateOverdueFine))
       .thenApply(r -> r.next(requestScheduledNoticeService::rescheduleRequestNotices))
       .thenApply(CheckInByBarcodeResponse::from)
       .thenAccept(r -> r.writeTo(routingContext.response()));

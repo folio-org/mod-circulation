@@ -65,6 +65,14 @@ public class ResourceClient {
     return new ResourceClient(InterfaceUrls::feeFineActionsUrl, "feefineactions");
   }
 
+  public static ResourceClient forFeeFineOwners() {
+    return new ResourceClient(InterfaceUrls::feeFineOwnersUrl, "owners");
+  }
+
+  public static ResourceClient forFeeFines() {
+    return new ResourceClient(InterfaceUrls::feeFinesUrl, "feefines");
+  }
+
   public static ResourceClient forLoanPolicies() {
     return new ResourceClient(InterfaceUrls::loanPoliciesStorageUrl,
       "loanPolicies");
