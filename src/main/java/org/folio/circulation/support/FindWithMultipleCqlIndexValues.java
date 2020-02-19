@@ -11,12 +11,9 @@ public interface FindWithMultipleCqlIndexValues<T> {
     CompletableFuture<Result<MultipleRecords<T>>> findByIds(
       Collection<String> ids);
 
-    CompletableFuture<Result<MultipleRecords<T>>> findByIndexName(
-      Collection<String> ids, String indexName);
-
-    CompletableFuture<Result<MultipleRecords<T>>> findByIdIndexAndQuery(
+  CompletableFuture<Result<MultipleRecords<T>>> findByIdIndexAndQuery(
       Collection<String> ids, String indexName, Result<CqlQuery> andQuery);
 
   CompletableFuture<Result<MultipleRecords<T>>> find(
-    MultipleCqlIndexValuesCriteria criteria);
+      MultipleCqlIndexValuesCriteria criteria);
 }

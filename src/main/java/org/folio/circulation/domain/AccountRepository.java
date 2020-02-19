@@ -2,10 +2,11 @@ package org.folio.circulation.domain;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.support.Result.succeeded;
+import static org.folio.circulation.support.fetching.MultipleCqlIndexValuesCriteria.byIndex;
+import static org.folio.circulation.support.fetching.RecordFetching.findWithCqlQuery;
+import static org.folio.circulation.support.fetching.RecordFetching.findWithMultipleCqlIndexValues;
 import static org.folio.circulation.support.http.ResponseMapping.forwardOnFailure;
 import static org.folio.circulation.support.http.ResponseMapping.mapUsingJson;
-import static org.folio.circulation.support.fetching.RecordFetching.findWithMultipleCqlIndexValues;
-import static org.folio.circulation.support.fetching.RecordFetching.findWithCqlQuery;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
 
 import java.util.ArrayList;
@@ -13,6 +14,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
@@ -68,7 +70,7 @@ public class AccountRepository {
 
   private CompletableFuture<Result<Map<String, List<Account>>>> getAccountsForLoans(Collection<Loan> loans) {
 
-    final Collection<String> loanIds =
+    final Set<String> loanIds =
       loans.stream()
         .filter(Objects::nonNull)
         .map(Loan::getId)
@@ -77,7 +79,7 @@ public class AccountRepository {
 
     return findWithMultipleCqlIndexValues(accountsStorageClient,
         ACCOUNTS_COLLECTION_PROPERTY_NAME, Account::from)
-      .findByIndexName(loanIds, LOAN_ID_FIELD_NAME)
+      .find(byIndex(LOAN_ID_FIELD_NAME, loanIds))
       .thenCompose(r -> r.after(this::findFeeFineActionsForAccounts))
       .thenComposeAsync(r -> r.after(multipleRecords -> completedFuture(succeeded(multipleRecords.getRecords()
         .stream()
@@ -100,14 +102,14 @@ public class AccountRepository {
   private CompletableFuture<Result<Map<String, List<FeeFineAction>>>> getFeeFineActionsForAccounts(
     Collection<Account> accounts) {
 
-    final Collection<String> loanIds =
+    final Set<String> loanIds =
     accounts.stream()
       .filter(Objects::nonNull)
       .map(Account::getId)
       .filter(Objects::nonNull)
       .collect(Collectors.toSet());
 
-    return createFeeFineActionFetcher().findByIndexName(loanIds, ACCOUNT_ID_FIELD_NAME)
+    return createFeeFineActionFetcher().find(byIndex(ACCOUNT_ID_FIELD_NAME, loanIds))
         .thenComposeAsync(r -> r.after(multipleRecords -> completedFuture(succeeded(
             multipleRecords.getRecords().stream().collect(
                 Collectors.groupingBy(FeeFineAction::getAccountId))))));

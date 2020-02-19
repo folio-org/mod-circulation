@@ -9,7 +9,7 @@ import static org.folio.circulation.support.Result.of;
 import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
-import static org.folio.circulation.support.fetching.RecordFetching.findWithMultipleCqlIndexValues;
+import static org.folio.circulation.support.fetching.RecordFetching.findWithCqlQuery;
 import static org.folio.circulation.support.results.CommonFailures.failedDueToServerError;
 
 import java.lang.invoke.MethodHandles;
@@ -56,7 +56,7 @@ import org.folio.circulation.storage.ItemByInstanceIdFinder;
 import org.folio.circulation.support.BadRequestFailure;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CreatedJsonResponseResult;
-import org.folio.circulation.support.FindWithMultipleCqlIndexValues;
+import org.folio.circulation.support.FindWithCqlQuery;
 import org.folio.circulation.support.ForwardOnFailure;
 import org.folio.circulation.support.HttpFailure;
 import org.folio.circulation.support.ItemRepository;
@@ -226,8 +226,8 @@ public class RequestByInstanceIdResource extends Resource {
     final LoanRepository loanRepository = new LoanRepository(clients);
     final LoanPolicyRepository loanPolicyRepository = new LoanPolicyRepository(clients);
     final ConfigurationRepository configurationRepository = new ConfigurationRepository(clients);
-    final FindWithMultipleCqlIndexValues<UserManualBlock> userManualBlocksValidator
-      = findWithMultipleCqlIndexValues(clients.userManualBlocksStorageClient(),
+    final FindWithCqlQuery<UserManualBlock> userManualBlocksValidator
+      = findWithCqlQuery(clients.userManualBlocksStorageClient(),
         "manualblocks", UserManualBlock::from);
 
     final UpdateUponRequest updateUponRequest = new UpdateUponRequest(

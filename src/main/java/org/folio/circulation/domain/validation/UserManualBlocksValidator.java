@@ -2,30 +2,29 @@ package org.folio.circulation.domain.validation;
 
 import static org.folio.circulation.support.Result.of;
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
+import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
 
-import java.util.Arrays;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
-import org.folio.circulation.domain.Request;
-import org.folio.circulation.support.ClockManager;
-import org.folio.circulation.support.FindWithMultipleCqlIndexValues;
-import org.joda.time.DateTime;
-
-import org.folio.circulation.domain.UserManualBlock;
 import org.folio.circulation.domain.MultipleRecords;
+import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestAndRelatedRecords;
 import org.folio.circulation.domain.User;
+import org.folio.circulation.domain.UserManualBlock;
+import org.folio.circulation.support.ClockManager;
+import org.folio.circulation.support.FindWithCqlQuery;
 import org.folio.circulation.support.HttpFailure;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.http.server.ValidationError;
+import org.joda.time.DateTime;
 
 public class UserManualBlocksValidator {
-  private final FindWithMultipleCqlIndexValues<UserManualBlock> userManualBlocksFetcher;
+  private final FindWithCqlQuery<UserManualBlock> userManualBlocksFetcher;
 
   public UserManualBlocksValidator(
-    FindWithMultipleCqlIndexValues<UserManualBlock> userManualBlocksFetcher) {
+    FindWithCqlQuery<UserManualBlock> userManualBlocksFetcher) {
     this.userManualBlocksFetcher = userManualBlocksFetcher;
   }
 
@@ -36,7 +35,7 @@ public class UserManualBlocksValidator {
       .map(Request::getRequester).orElse(null);
 
     if (requester != null) {
-      return userManualBlocksFetcher.findByIndexName(Arrays.asList(requester.getId()), "userId")
+      return userManualBlocksFetcher.findByQuery(exactMatch("userId", requester.getId()))
         .thenApply(userManualBlockResult -> userManualBlockResult
           .failWhen(userManualBlockMultipleRecords -> of(() ->
                 isUserBlockedManually(userManualBlockMultipleRecords)), this::createUserBlockedValidationError)

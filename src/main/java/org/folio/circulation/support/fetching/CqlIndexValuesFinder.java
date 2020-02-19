@@ -47,13 +47,6 @@ public class CqlIndexValuesFinder<T> implements FindWithMultipleCqlIndexValues<T
   }
 
   @Override
-  public CompletableFuture<Result<MultipleRecords<T>>> findByIndexName(
-    Collection<String> values, String indexName) {
-
-    return find(byIndex(indexName, values));
-  }
-
-  @Override
   public CompletableFuture<Result<MultipleRecords<T>>> findByIdIndexAndQuery(
     Collection<String> values, String indexName, Result<CqlQuery> andQuery) {
 
