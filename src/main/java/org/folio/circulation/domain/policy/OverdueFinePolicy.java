@@ -26,7 +26,7 @@ public class OverdueFinePolicy extends Policy {
   }
 
   public static OverdueFinePolicy from(JsonObject json) {
-    String intervalID = getProperty(getObjectProperty(json, "overdueFine"), "intervalId");
+    String intervalId = getNestedStringProperty(json, "overdueFine", "intervalId");
 
     return new OverdueFinePolicy(
       getProperty(json, "id"),
