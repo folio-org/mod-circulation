@@ -50,7 +50,7 @@ public class OverdueFinePolicyTest {
   }
 
   @Test
-  public void shouldAcceptOverdueFinePolicyWithoutOverdueFineQuantity() {
+  public void shouldAcceptOverdueFinePolicyWithMissingOverdueFineQuantity() {
     JsonObject jsonObject = overdueFinePolicyJsonObject.copy();
     jsonObject.getJsonObject("overdueFine").remove("quantity");
 
@@ -60,7 +60,17 @@ public class OverdueFinePolicyTest {
   }
 
   @Test
-  public void shouldAcceptOverdueFinePolicyWithoutOverdueFineInterval() {
+  public void shouldAcceptOverdueFinePolicyWithNullOverdueFineQuantity() {
+    JsonObject jsonObject = overdueFinePolicyJsonObject.copy();
+    jsonObject.getJsonObject("overdueFine").put("quantity", (Double) null);
+
+    OverdueFinePolicy overdueFinePolicy = OverdueFinePolicy.from(jsonObject);
+
+    assertThat(overdueFinePolicy, notNullValue());
+  }
+
+  @Test
+  public void shouldAcceptOverdueFinePolicyWithMissingOverdueFineInterval() {
     JsonObject jsonObject = overdueFinePolicyJsonObject.copy();
     jsonObject.getJsonObject("overdueFine").remove("intervalId");
 
@@ -70,7 +80,17 @@ public class OverdueFinePolicyTest {
   }
 
   @Test
-  public void shouldAcceptOverdueFinePolicyWithoutOverdueFine() {
+  public void shouldAcceptOverdueFinePolicyWithNullOverdueFineInterval() {
+    JsonObject jsonObject = overdueFinePolicyJsonObject.copy();
+    jsonObject.getJsonObject("overdueFine").put("intervalId", (String) null);
+
+    OverdueFinePolicy overdueFinePolicy = OverdueFinePolicy.from(jsonObject);
+
+    assertThat(overdueFinePolicy, notNullValue());
+  }
+
+  @Test
+  public void shouldAcceptOverdueFinePolicyWithOverdueFineMissing() {
     JsonObject jsonObject = overdueFinePolicyJsonObject.copy();
     jsonObject.remove("overdueFine");
 
