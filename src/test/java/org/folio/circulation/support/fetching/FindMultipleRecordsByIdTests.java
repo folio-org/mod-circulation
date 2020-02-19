@@ -2,6 +2,7 @@ package org.folio.circulation.support.fetching;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static java.util.stream.Collectors.toList;
+import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatchAny;
 import static org.folio.circulation.support.http.client.PageLimit.maximumLimit;
 import static org.hamcrest.CoreMatchers.is;
@@ -98,6 +99,32 @@ public class FindMultipleRecordsByIdTests {
 
     assertThat(getCapturedQuery(generatedCqlQueries, 0), is(firstExpectedQuery));
     assertThat(getCapturedQuery(generatedCqlQueries, 1), is(secondExpectedQuery));
+  }
+
+  @Test
+  public void shouldIncludeAdditionalQuery() {
+    final FindWithCqlQuery<JsonObject> queryFinder = mock(FindWithCqlQuery.class);
+
+    when(queryFinder.findByQuery(any(), any())).thenReturn(
+      CompletableFuture.completedFuture(Result.succeeded(MultipleRecords.empty())));
+
+    final FindWithMultipleCqlIndexValues<JsonObject> fetcher
+      = new CqlIndexValuesFinder<>(queryFinder, 1);
+
+    final List<String> ids = generateIds(1);
+    final Result<CqlQuery> openStatusQuery = exactMatch("status", "Open");
+
+    fetcher.findByIdIndexAndQuery(ids, "itemId", openStatusQuery);
+
+    ArgumentCaptor<Result<CqlQuery>> generatedCqlQuery
+      = ArgumentCaptor.forClass(Result.class);
+
+    verify(queryFinder).findByQuery(generatedCqlQuery.capture(), eq(maximumLimit()));
+
+    final CqlQuery expectedQuery = exactMatchAny("itemId", ids).value()
+        .and(openStatusQuery.value());
+
+    assertThat(generatedCqlQuery.getValue().value(), is(expectedQuery));
   }
 
   @Test
