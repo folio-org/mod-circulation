@@ -88,7 +88,7 @@ public class ItemLastCheckInTests extends APITests {
     IndividualResource item = itemsFixture.basedUponSmallAngryPlanet();
     UUID servicePointId = servicePointsFixture.cd1().getId();
 
-    String invalidUuid = "00000000-0000-0000-0000-000000000000";
+    String invalidUuid = "a982bc60-c6e4-4159-b997-ad382a3cbd9b";
     final OkapiHeaders okapiHeaders = getOkapiHeadersFromContext()
       .withRequestId("check-in-by-barcode-request")
       .withUserId(invalidUuid);

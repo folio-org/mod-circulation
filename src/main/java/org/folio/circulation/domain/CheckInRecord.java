@@ -1,5 +1,7 @@
 package org.folio.circulation.domain;
 
+import static org.folio.circulation.support.JsonPropertyWriter.write;
+
 import java.util.UUID;
 
 import org.apache.commons.lang3.ObjectUtils;
@@ -61,10 +63,10 @@ public class CheckInRecord {
     }
 
     public CheckInRecord build() {
-      if (!ObjectUtils.allNotNull(id, occurredDateTime, itemId,
-        checkInServicePointId, performedByUserId)) {
+      if (!ObjectUtils.allNotNull(occurredDateTime, itemId,
+        checkInServicePointId)) {
 
-        throw new IllegalStateException("All properties are required");
+        throw new IllegalStateException("OccurredDateTime, itemId and checkInServicePoint are required");
       }
 
       return new CheckInRecord(this);
@@ -76,11 +78,14 @@ public class CheckInRecord {
   }
 
   public JsonObject toJson() {
-    return new JsonObject()
-      .put(ID, id)
+    JsonObject json = new JsonObject()
       .put(OCCURRED_DATE_TIME, occurredDateTime.toString())
       .put(ITEM_ID, itemId)
-      .put(SERVICE_POINT_ID, servicePointId)
-      .put(PERFORMED_BY_USER_ID, performedByUserId);
+      .put(SERVICE_POINT_ID, servicePointId);
+
+    write(json, ID, id);
+    write(json, PERFORMED_BY_USER_ID, performedByUserId);
+
+    return json;
   }
 }
