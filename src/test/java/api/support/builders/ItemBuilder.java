@@ -38,11 +38,13 @@ public class ItemBuilder extends JsonBuilder implements Builder {
   private List<String> yearCaption;
   private String volume;
   private final String chronology;
+  private String numberOfPieces;
+  private String descriptionOfPieces;
 
   public ItemBuilder() {
     this(UUID.randomUUID(), null, "565578437802", AVAILABLE,
       null, null, null, null, null, null, null, null, null, null, null, Collections.emptyList(),
-      null);
+      null, null, null);
   }
 
   private ItemBuilder(
@@ -62,7 +64,9 @@ public class ItemBuilder extends JsonBuilder implements Builder {
     String itemLevelCallNumberSuffix,
     String volume,
     List<String> yearCaption,
-    String chronology) {
+    String chronology,
+    String numberOfPieces,
+    String descriptionOfPieces) {
 
     this.id = id;
     this.holdingId = holdingId;
@@ -81,6 +85,8 @@ public class ItemBuilder extends JsonBuilder implements Builder {
     this.volume = volume;
     this.yearCaption = yearCaption;
     this.chronology = chronology;
+    this.numberOfPieces = numberOfPieces;
+    this.descriptionOfPieces = descriptionOfPieces;
   }
 
   public JsonObject create() {
@@ -103,6 +109,8 @@ public class ItemBuilder extends JsonBuilder implements Builder {
     put(itemRequest, "volume", volume);
     put(itemRequest, "yearCaption", yearCaption);
     put(itemRequest, "chronology", chronology);
+    put(itemRequest, "numberOfPieces", numberOfPieces);
+    put(itemRequest, "descriptionOfPieces", descriptionOfPieces);
 
     return itemRequest;
   }
@@ -149,7 +157,9 @@ public class ItemBuilder extends JsonBuilder implements Builder {
       this.itemLevelCallNumberSuffix,
       this.volume,
       this.yearCaption,
-      this.chronology);
+      this.chronology,
+      this.numberOfPieces,
+      this.descriptionOfPieces);
   }
 
   public ItemBuilder withBarcode(String barcode) {
@@ -170,7 +180,9 @@ public class ItemBuilder extends JsonBuilder implements Builder {
       this.itemLevelCallNumberSuffix,
       this.volume,
       this.yearCaption,
-      this.chronology);
+      this.chronology,
+      this.numberOfPieces,
+      this.descriptionOfPieces);
   }
 
   public ItemBuilder withNoBarcode() {
@@ -199,7 +211,9 @@ public class ItemBuilder extends JsonBuilder implements Builder {
       this.itemLevelCallNumberSuffix,
       this.volume,
       this.yearCaption,
-      this.chronology);
+      this.chronology,
+      this.numberOfPieces,
+      this.descriptionOfPieces);
   }
 
   public ItemBuilder withNoPermanentLocation() {
@@ -228,7 +242,9 @@ public class ItemBuilder extends JsonBuilder implements Builder {
       this.itemLevelCallNumberSuffix,
       this.volume,
       this.yearCaption,
-      this.chronology);
+      this.chronology,
+      this.numberOfPieces,
+      this.descriptionOfPieces);
   }
 
   public ItemBuilder withNoTemporaryLocation() {
@@ -253,7 +269,9 @@ public class ItemBuilder extends JsonBuilder implements Builder {
       this.itemLevelCallNumberSuffix,
       this.volume,
       this.yearCaption,
-      this.chronology);
+      this.chronology,
+      this.numberOfPieces,
+      this.descriptionOfPieces);
   }
 
   public ItemBuilder withMaterialType(UUID materialTypeId) {
@@ -274,7 +292,9 @@ public class ItemBuilder extends JsonBuilder implements Builder {
       this.itemLevelCallNumberSuffix,
       this.volume,
       this.yearCaption,
-      this.chronology);
+      this.chronology,
+      this.numberOfPieces,
+      this.descriptionOfPieces);
   }
 
   public ItemBuilder withPermanentLoanType(UUID loanTypeId) {
@@ -295,7 +315,9 @@ public class ItemBuilder extends JsonBuilder implements Builder {
       this.itemLevelCallNumberSuffix,
       this.volume,
       this.yearCaption,
-      this.chronology);
+      this.chronology,
+      this.numberOfPieces,
+      this.descriptionOfPieces);
   }
 
   public ItemBuilder withTemporaryLoanType(UUID loanTypeId) {
@@ -316,7 +338,9 @@ public class ItemBuilder extends JsonBuilder implements Builder {
       this.itemLevelCallNumberSuffix,
       this.volume,
       this.yearCaption,
-      this.chronology);
+      this.chronology,
+      this.numberOfPieces,
+      this.descriptionOfPieces);
   }
 
   public ItemBuilder withId(UUID id) {
@@ -337,7 +361,9 @@ public class ItemBuilder extends JsonBuilder implements Builder {
       this.itemLevelCallNumberSuffix,
       this.volume,
       this.yearCaption,
-      this.chronology);
+      this.chronology,
+      this.numberOfPieces,
+      this.descriptionOfPieces);
   }
 
   public ItemBuilder withEnumeration(String enumeration) {
@@ -358,7 +384,9 @@ public class ItemBuilder extends JsonBuilder implements Builder {
       this.itemLevelCallNumberSuffix,
       this.volume,
       this.yearCaption,
-      this.chronology);
+      this.chronology,
+      this.numberOfPieces,
+      this.descriptionOfPieces);
   }
 
   public ItemBuilder withCopyNumber(String copyNumber) {
@@ -379,7 +407,9 @@ public class ItemBuilder extends JsonBuilder implements Builder {
       this.itemLevelCallNumberSuffix,
       this.volume,
       this.yearCaption,
-      this.chronology);
+      this.chronology,
+      this.numberOfPieces,
+      this.descriptionOfPieces);
   }
 
   public ItemBuilder withCallNumber(
@@ -404,7 +434,9 @@ public class ItemBuilder extends JsonBuilder implements Builder {
       itemLevelCallNumberSuffix,
       this.volume,
       this.yearCaption,
-      this.chronology);
+      this.chronology,
+      this.numberOfPieces,
+      this.descriptionOfPieces);
   }
 
   public ItemBuilder withVolume(String volume) {
@@ -425,7 +457,9 @@ public class ItemBuilder extends JsonBuilder implements Builder {
       this.itemLevelCallNumberSuffix,
       volume,
       this.yearCaption,
-      this.chronology);
+      this.chronology,
+      this.numberOfPieces,
+      this.descriptionOfPieces);
   }
 
     public ItemBuilder withYearCaption(List<String> yearCaption) {
@@ -446,7 +480,9 @@ public class ItemBuilder extends JsonBuilder implements Builder {
         this.itemLevelCallNumberSuffix,
         this.volume,
         yearCaption,
-        this.chronology);
+        this.chronology,
+        this.numberOfPieces,
+        this.descriptionOfPieces);
     }
 
   public ItemBuilder withChronology(String chronology) {
@@ -467,6 +503,54 @@ public class ItemBuilder extends JsonBuilder implements Builder {
       this.itemLevelCallNumberSuffix,
       this.volume,
       this.yearCaption,
-      chronology);
+      chronology,
+      this.numberOfPieces,
+      this.descriptionOfPieces);
+  }
+
+  public ItemBuilder withNumberOfPieces(String numberOfPieces) {
+    return new ItemBuilder(
+      this.id,
+      this.holdingId,
+      this.barcode,
+      this.status,
+      this.permanentLocationId,
+      this.temporaryLocationId,
+      this.materialTypeId,
+      this.permanentLoanTypeId,
+      this.temporaryLoanTypeId,
+      this.enumeration,
+      this.copyNumber,
+      this.itemLevelCallNumber,
+      this.itemLevelCallNumberPrefix,
+      this.itemLevelCallNumberSuffix,
+      this.volume,
+      this.yearCaption,
+      this.chronology,
+      numberOfPieces,
+      this.descriptionOfPieces);
+  }
+
+  public ItemBuilder withDescriptionOfPieces(String descriptionOfPieces) {
+    return new ItemBuilder(
+      this.id,
+      this.holdingId,
+      this.barcode,
+      this.status,
+      this.permanentLocationId,
+      this.temporaryLocationId,
+      this.materialTypeId,
+      this.permanentLoanTypeId,
+      this.temporaryLoanTypeId,
+      this.enumeration,
+      this.copyNumber,
+      this.itemLevelCallNumber,
+      this.itemLevelCallNumberPrefix,
+      this.itemLevelCallNumberSuffix,
+      this.volume,
+      this.yearCaption,
+      this.chronology,
+      this.numberOfPieces,
+      descriptionOfPieces);
   }
 }

@@ -11,7 +11,7 @@ public class InstanceExamples {
 
     return new InstanceBuilder("The Long Way to a Small, Angry Planet",
       booksInstanceTypeId)
-      .withContributor("Chambers, Becky", personalContributorNameTypeId);
+      .withContributor("Chambers, Becky", personalContributorNameTypeId, true);
   }
 
   public static InstanceBuilder basedUponNod(

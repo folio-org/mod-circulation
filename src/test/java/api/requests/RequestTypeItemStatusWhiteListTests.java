@@ -110,4 +110,16 @@ public class RequestTypeItemStatusWhiteListTests {
     assertFalse(RequestTypeItemStatusWhiteList.canCreateRequestForItem(ItemStatus.DECLARED_LOST,
       RequestType.from(requestType)));
   }
+
+  @Test
+  @Parameters({
+    "",
+    "Hold",
+    "Recall",
+    "Page"
+  })
+  public void cannotCreateRequestWhenItemStatusClaimedReturned(String requestType) {
+    assertFalse(RequestTypeItemStatusWhiteList
+      .canCreateRequestForItem(ItemStatus.CLAIMED_RETURNED, RequestType.from(requestType)));
+  }
 }

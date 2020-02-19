@@ -10,9 +10,6 @@ import static api.support.fixtures.UserExamples.basedUponStevenJones;
 import static java.util.function.Function.identity;
 import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
 
-import java.net.MalformedURLException;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeoutException;
 import java.util.function.Function;
 
 import org.folio.circulation.support.http.client.IndividualResource;
