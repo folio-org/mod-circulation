@@ -5,8 +5,9 @@ import static java.util.stream.Collectors.collectingAndThen;
 import static org.apache.commons.collections4.ListUtils.partition;
 import static org.folio.circulation.domain.MultipleRecords.empty;
 import static org.folio.circulation.support.Result.of;
+import static org.folio.circulation.support.fetching.MultipleCqlIndexValuesCriteria.byId;
+import static org.folio.circulation.support.fetching.MultipleCqlIndexValuesCriteria.byIndex;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatchAny;
-import static org.folio.circulation.support.http.client.CqlQuery.noQuery;
 import static org.folio.circulation.support.http.client.PageLimit.maximumLimit;
 
 import java.util.ArrayList;
@@ -42,26 +43,33 @@ public class CqlIndexValuesFinder<T> implements FindWithMultipleCqlIndexValues<T
   public CompletableFuture<Result<MultipleRecords<T>>> findByIds(
     Collection<String> ids) {
 
-    return findByIndexName(ids, "id");
+    return find(byId(ids));
   }
 
   @Override
   public CompletableFuture<Result<MultipleRecords<T>>> findByIndexName(
-    Collection<String> ids, String indexName) {
+    Collection<String> values, String indexName) {
 
-    return findByIdIndexAndQuery(ids, indexName, noQuery());
+    return find(byIndex(indexName, values));
   }
 
   @Override
   public CompletableFuture<Result<MultipleRecords<T>>> findByIdIndexAndQuery(
-    Collection<String> ids, String indexName, Result<CqlQuery> andQuery) {
+    Collection<String> values, String indexName, Result<CqlQuery> andQuery) {
 
-    if (ids.isEmpty()) {
+    return find(byIndex(indexName, values)
+      .withQuery(andQuery));
+  }
+
+  private CompletableFuture<Result<MultipleRecords<T>>> find(
+    MultipleCqlIndexValuesCriteria criteria) {
+
+    if (criteria.values.isEmpty()) {
       return completedFuture(of(MultipleRecords::empty));
     }
 
-    return findByBatchQueriesAndQuery(
-      buildBatchQueriesByIndexName(ids, indexName), andQuery);
+    return findByBatchQueriesAndQuery(buildBatchQueriesByIndexName(
+        criteria.values, criteria.indexName), criteria.andQuery);
   }
 
   private CompletableFuture<Result<MultipleRecords<T>>> findByBatchQueriesAndQuery(
