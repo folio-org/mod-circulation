@@ -61,7 +61,8 @@ public class CqlIndexValuesFinder<T> implements FindWithMultipleCqlIndexValues<T
       .withQuery(andQuery));
   }
 
-  private CompletableFuture<Result<MultipleRecords<T>>> find(
+  @Override
+  public CompletableFuture<Result<MultipleRecords<T>>> find(
     MultipleCqlIndexValuesCriteria criteria) {
 
     if (criteria.values.isEmpty()) {
