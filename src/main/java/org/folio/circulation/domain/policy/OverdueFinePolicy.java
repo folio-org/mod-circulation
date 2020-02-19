@@ -3,6 +3,7 @@ package org.folio.circulation.domain.policy;
 import static org.folio.circulation.support.JsonPropertyFetcher.getBooleanProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getDoubleProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getObjectProperty;
+import static org.folio.circulation.support.JsonPropertyFetcher.getNestedStringProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
 
 import io.vertx.core.json.JsonObject;
@@ -32,7 +33,7 @@ public class OverdueFinePolicy extends Policy {
       getProperty(json, "id"),
       getProperty(json, "name"),
       getDoubleProperty(getObjectProperty(json, "overdueFine"), "quantity", null),
-      intervalID == null ? null : OverdueFineInterval.fromValue(intervalID),
+      intervalId == null ? null : OverdueFineInterval.fromValue(intervalId),
       new OverdueFinePolicyLimitInfo(getDoubleProperty(json, "maxOverdueFine", null),
         getDoubleProperty(json, "maxOverdueRecallFine", null)),
       getBooleanProperty(json, "gracePeriodRecall"),
