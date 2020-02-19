@@ -2,15 +2,12 @@ package org.folio.circulation.domain;
 
 import static org.folio.circulation.support.JsonPropertyWriter.write;
 
-import java.util.UUID;
-
 import org.apache.commons.lang3.ObjectUtils;
 import org.joda.time.DateTime;
 
 import io.vertx.core.json.JsonObject;
 
 public class CheckInRecord {
-  private static final String ID = "id";
   private static final String OCCURRED_DATE_TIME = "occurredDateTime";
   private static final String ITEM_ID = "itemId";
   private static final String SERVICE_POINT_ID = "servicePointId";
@@ -64,7 +61,7 @@ public class CheckInRecord {
 
     public CheckInRecord build() {
       if (!ObjectUtils.allNotNull(occurredDateTime, itemId,
-        checkInServicePointId)) {
+        checkInServicePointId, performedByUserId)) {
 
         throw new IllegalStateException(
           "occurredDateTime, itemId, checkInServicePoint and performedByUserId are required");
@@ -85,7 +82,7 @@ public class CheckInRecord {
       .put(SERVICE_POINT_ID, servicePointId)
       .put(PERFORMED_BY_USER_ID, performedByUserId);
 
-    write(json, ID, id);
+    write(json, "id", id);
 
     return json;
   }
