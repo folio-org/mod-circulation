@@ -64,7 +64,7 @@ public class ItemLastCheckInTests extends APITests {
   }
 
   @Test
-  public void shouldFailCheckInWithEmptyLoggedInUserId() {
+  public void cannotCheckInWhenNoLoggedInUser() {
     IndividualResource item = itemsFixture.basedUponSmallAngryPlanet();
     UUID servicePointId = servicePointsFixture.cd1().getId();
 
