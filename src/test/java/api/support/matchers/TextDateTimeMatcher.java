@@ -5,6 +5,7 @@ import static java.time.temporal.ChronoUnit.MILLIS;
 import java.time.Instant;
 import java.time.ZonedDateTime;
 
+import org.folio.circulation.support.ClockManager;
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
 import org.hamcrest.TypeSafeMatcher;
@@ -74,5 +75,28 @@ public class TextDateTimeMatcher {
           Seconds.secondsBetween(after, actual).isLessThan(seconds);
       }
     };
+  }
+
+  public static Matcher<String> withinSecondsBefore(Seconds seconds, DateTime before) {
+    return new TypeSafeMatcher<String>() {
+      @Override
+      public void describeTo(Description description) {
+        description.appendText(String.format(
+          "a date time within %s seconds before %s",
+          seconds.getSeconds(), before.toString()));
+      }
+
+      @Override
+      protected boolean matchesSafely(String textRepresentation) {
+        DateTime actual = DateTime.parse(textRepresentation);
+
+        return actual.isBefore(before) &&
+          Seconds.secondsBetween(actual, before).isLessThan(seconds);
+      }
+    };
+  }
+
+  public static Matcher<String> withinSecondsBeforeNow(Seconds seconds) {
+    return withinSecondsBefore(seconds, ClockManager.getClockManager().getDateTime());
   }
 }

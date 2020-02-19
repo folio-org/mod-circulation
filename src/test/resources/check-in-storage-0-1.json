@@ -1,0 +1,39 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "description": "Check-in operation",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Unique ID (generated UUID) of the check-in operation",
+      "$ref": "uuid.json"
+    },
+    "occurredDateTime": {
+      "type": "string",
+      "description": "Date and time when the check-in occurred",
+      "format": "date-time"
+    },
+    "itemId": {
+      "type": "string",
+      "description": "Id of item that has checked in",
+      "$ref": "uuid.json"
+    },
+    "servicePointId": {
+      "type": "string",
+      "description": "Service point where the item was checked in",
+      "$ref": "uuid.json"
+    },
+    "performedByUserId": {
+      "type": "string",
+      "description": "Id of user that has performed check-in operation",
+      "$ref": "uuid.json"
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "occurredDateTime",
+    "itemId",
+    "servicePointId",
+    "performedByUserId"
+  ]
+}

@@ -1,6 +1,5 @@
 package org.folio.circulation.resources;
 
-import static org.folio.circulation.domain.validation.CommonFailures.moreThanOneOpenLoanFailure;
 import static org.folio.circulation.domain.validation.CommonFailures.noItemFoundForIdFailure;
 import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
@@ -15,8 +14,8 @@ import org.folio.circulation.domain.UserRepository;
 import org.folio.circulation.domain.validation.UserNotFoundValidator;
 import org.folio.circulation.storage.ItemByIdInStorageFinder;
 import org.folio.circulation.storage.SingleOpenLoanForItemInStorageFinder;
-import org.folio.circulation.support.Result;
 import org.folio.circulation.support.ItemRepository;
+import org.folio.circulation.support.Result;
 
 import io.vertx.core.http.HttpClient;
 import io.vertx.core.json.JsonObject;
@@ -40,12 +39,8 @@ public class RenewByIdResource extends RenewalResource {
       .map(RenewByIdRequest::getItemId)
       .orElse("unknown item ID");
 
-    final UserNotFoundValidator userNotFoundValidator = new UserNotFoundValidator(
-      userId -> singleValidationError("user is not found", "userId", userId));
-
     final SingleOpenLoanForItemInStorageFinder singleOpenLoanFinder
-      = new SingleOpenLoanForItemInStorageFinder(loanRepository, userRepository,
-        moreThanOneOpenLoanFailure(itemId), false);
+      = new SingleOpenLoanForItemInStorageFinder(loanRepository, userRepository, false);
 
     final ItemByIdInStorageFinder itemFinder = new ItemByIdInStorageFinder(
       itemRepository, noItemFoundForIdFailure(itemId));
@@ -53,7 +48,7 @@ public class RenewByIdResource extends RenewalResource {
     return requestResult
       .after(checkInRequest -> itemFinder.findItemById(itemId))
       .thenComposeAsync(itemResult -> itemResult.after(singleOpenLoanFinder::findSingleOpenLoan))
-      .thenApply(userNotFoundValidator::refuseWhenUserNotFound)
+      .thenApply(UserNotFoundValidator::refuseWhenUserNotFound)
       .thenApply(loanResult -> loanResult.combineToResult(requestResult,
         this::refuseWhenUserDoesNotMatch));
   }
