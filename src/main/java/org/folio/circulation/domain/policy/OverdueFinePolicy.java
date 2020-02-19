@@ -26,12 +26,13 @@ public class OverdueFinePolicy extends Policy {
   }
 
   public static OverdueFinePolicy from(JsonObject json) {
+    String intervalID = getProperty(getObjectProperty(json, "overdueFine"), "intervalId");
+
     return new OverdueFinePolicy(
       getProperty(json, "id"),
       getProperty(json, "name"),
       getDoubleProperty(getObjectProperty(json, "overdueFine"), "quantity", null),
-      OverdueFineInterval.fromValue(
-        getProperty(getObjectProperty(json, "overdueFine"), "intervalId")),
+      intervalID == null ? null : OverdueFineInterval.fromValue(intervalID),
       new OverdueFinePolicyLimitInfo(getDoubleProperty(json, "maxOverdueFine", null),
         getDoubleProperty(json, "maxOverdueRecallFine", null)),
       getBooleanProperty(json, "gracePeriodRecall"),
