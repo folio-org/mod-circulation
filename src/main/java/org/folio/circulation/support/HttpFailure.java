@@ -4,6 +4,4 @@ import io.vertx.core.http.HttpServerResponse;
 
 public interface HttpFailure {
   void writeTo(HttpServerResponse response);
-
-  String getReason();
 }

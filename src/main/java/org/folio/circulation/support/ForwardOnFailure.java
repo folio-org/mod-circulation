@@ -19,11 +19,4 @@ public class ForwardOnFailure implements HttpFailure {
   public void writeTo(HttpServerResponse response) {
     ForwardResponse.forward(response, failureResponse);
   }
-
-  @Override
-  public String getReason() {
-    return failureResponse != null
-      ? failureResponse.getBody()
-      : "forward on failure";
-  }
 }

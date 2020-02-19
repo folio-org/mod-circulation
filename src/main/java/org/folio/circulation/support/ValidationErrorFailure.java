@@ -86,11 +86,6 @@ public class ValidationErrorFailure implements HttpFailure {
         .collect(Collectors.joining("%n")));
   }
 
-  @Override
-  public String getReason() {
-    return toString();
-  }
-
   public boolean hasErrorWithReason(String reason) {
     return errors.stream()
       .anyMatch(error -> StringUtils.equals(error.getMessage(), reason));
