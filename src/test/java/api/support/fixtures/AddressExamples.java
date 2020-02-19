@@ -23,4 +23,9 @@ public class AddressExamples {
     return new Address(HOME_ADDRESS_TYPE, "12 Grimmauld Place",
       null, "London", "London region", "123456", "UK");
   }
+
+  public static Address mainStreet() {
+    return new Address(HOME_ADDRESS_TYPE, "16 Main St",
+      "Apt 3a", "Northampton", "MA", "01060", "US");
+  }
 }

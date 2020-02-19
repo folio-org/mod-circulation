@@ -4,69 +4,198 @@
   "type": "object",
   "properties": {
     "pickSlips": {
-      "description": "A collection of current pick slips",
+      "description": "Collection of current pick slips",
       "id": "pickSlips",
       "type": "array",
       "items": {
-        "title": "A pick slip",
-        "description": "A pick slip representation of an item",
+        "title": "Pick slip",
+        "description": "Pick slip representation of item, request and requester",
         "type": "object",
         "properties": {
-          "id": {
-            "description": "ID of the item",
-            "type": "string",
-            "$ref": "uuid.json"
-          },
-          "title": {
-            "description": "The title of the item",
-            "type": "string"
-          },
-          "callNumber" : {
-            "description" : "The effective call number of the item",
-            "type": "string"
-          },
-          "holdingsRecordId": {
-            "description": "The ID of the holdings for the item",
-            "type": "string",
-            "$ref": "uuid.json"
-          },
-          "instanceId": {
-            "description": "The ID of the instance for the item",
-            "type": "string",
-            "$ref": "uuid.json"
-          },
-          "barcode": {
-            "description": "The barcode of the item",
-            "type": "string"
-          },
-          "status": {
-            "description": "The status of the item",
-            "type": "string"
-          },
-          "contributors": {
-            "description": "Contributors from the instance record",
-            "type": "array",
-            "items" : {
-              "type": "object",
-              "properties" : {
-                "name" : {
-                  "description": "Name of the contributor",
-                  "type" : "string"
-                }
-              },
-              "additionalProperties": false
-            }
-          },
-          "location": {
-            "description": "The effective location of the item",
+          "item": {
+            "description": "Pick slip representation of an item",
             "type": "object",
             "properties": {
-              "name": {
-                "description": "The name of the location",
+              "title": {
+                "description": "Primary title (or label) associated with an item",
                 "type": "string"
               },
-              "code": {
-                "description": "The code of the location",
+              "barcode": {
+                "description": "Unique inventory control number for physical resources, used largely for circulation purposes",
+                "type": "string"
+              },
+              "status": {
+                "description": "Name of the status of an item",
+                "type": "string",
+                "enum": [
+                  "Available",
+                  "Awaiting pickup",
+                  "Awaiting delivery",
+                  "Checked out",
+                  "In process",
+                  "In transit",
+                  "Missing",
+                  "On order",
+                  "Paged",
+                  "Declared lost",
+                  "Order closed"
+                ]
+              },
+              "primaryContributor": {
+                "description": "Primary contributor from an instance record",
+                "type": "string"
+              },
+              "allContributors": {
+                "description": "List of contributors from an instance record, separated by semicolon",
+                "type": "string"
+              },
+              "enumeration": {
+                "description": "Descriptive information for the numbering scheme of a serial",
+                "type": "string"
+              },
+              "volume": {
+                "description": "Volume is intended for monographs when a multipart monograph (e.g. a biography of George Bernard Shaw in three volumes)",
+                "type": "string"
+              },
+              "chronology": {
+                "description": "Descriptive information for the dating scheme of a serial",
+                "type": "string"
+              },
+              "yearCaption": {
+                "description": "In multipart monographs, a caption is a character(s) used to label a level of chronology, e.g., year 1985. A list of captions separated by semicolon.",
+                "type": "string"
+              },
+              "materialType": {
+                "description": "Name of the material type",
+                "type": "string"
+              },
+              "loanType": {
+                "description": "Name of the loan type",
+                "type": "string"
+              },
+              "copy": {
+                "description": "Copy number from item or holding record. The piece identifier, which reflects if the library has a copy of a single-volume monograph; one copy of a multi-volume, (e.g. Copy 1, or C.7.).",
+                "type": "string"
+              },
+              "numberOfPieces": {
+                "description": "Used when an item is checked out or returned to verify that all parts are present (e.g. 7 CDs in a set)",
+                "type": "string"
+              },
+              "descriptionOfPieces": {
+                "description": "Description of item pieces",
+                "type": "string"
+              },
+              "effectiveLocationSpecific": {
+                "description": "Name of the (shelf) location of the item",
+                "type": "string"
+              },
+              "effectiveLocationInstitution": {
+                "description": "First-level location unit, which location belongs to",
+                "type": "string"
+              },
+              "effectiveLocationCampus": {
+                "description": "Second-level location unit, which location belongs to",
+                "type": "string"
+              },
+              "effectiveLocationLibrary": {
+                "description": "Third-level location unit, which location belongs to",
+                "type": "string"
+              },
+              "callNumber": {
+                "type": "string",
+                "description": "Effective call number, an identifier assigned to the item or its holding"
+              },
+              "callNumberPrefix": {
+                "description": "The prefix of the effective call number, an identifier assigned to the item or its holding",
+                "type": "string"
+              },
+              "callNumberSuffix": {
+                "description": "The suffix of the effective call number, an identifier assigned to the item or its holding",
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          },
+          "request": {
+            "description": "Pick slip representation of a request",
+            "type": "object",
+            "properties": {
+              "requestID": {
+                "description": "UUID of the request",
+                "type": "string",
+                "$ref": "uuid.json"
+              },
+              "servicePointPickup": {
+                "description": "Name of the requested pick-up service point",
+                "type": "string"
+              },
+              "requestExpirationDate": {
+                "description": "Date when the request expires",
+                "type": "string",
+                "format": "date-time"
+              },
+              "holdShelfExpirationDate": {
+                "description": "Date when an item returned to the hold shelf expires",
+                "type": "string",
+                "format": "date-time"
+              },
+              "additionalInfo": {
+                "description": "Additional information about request cancellation",
+                "type": "string"
+              },
+              "reasonForCancellation": {
+                "description": "Name of the reason for request cancellation",
+                "type": "string"
+              },
+              "deliveryAddressType": {
+                "description": "Name of the delivery address type",
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          },
+          "requester": {
+            "description": "Pick slip representation of the requester (user)",
+            "type": "object",
+            "properties": {
+              "firstName": {
+                "description": "Requester's given name",
+                "type": "string"
+              },
+              "middleName": {
+                "description": "Requester's middle name (if any)",
+                "type": "string"
+              },
+              "lastName": {
+                "description": "Requester's surname",
+                "type": "string"
+              },
+              "barcode": {
+                "description": "Personal identifier assigned to the requester by the library",
+                "type": "string"
+              },
+              "addressLine1": {
+                "description": "Address Line 1 of the requested delivery address",
+                "type": "string"
+              },
+              "addressLine2": {
+                "description": "Address Line 2 of the requested delivery address",
+                "type": "string"
+              },
+              "city": {
+                "description": "City of the requested delivery address",
+                "type": "string"
+              },
+              "region": {
+                "description": "Region of the requested delivery address",
+                "type": "string"
+              },
+              "postalCode": {
+                "description": "Postal Code of the requested delivery address",
+                "type": "string"
+              },
+              "countryId": {
+                "description": "Country code of the requested delivery address",
                 "type": "string"
               }
             },
@@ -83,7 +212,7 @@
   },
   "additionalProperties": false,
   "required": [
-    "items",
+    "pickSlips",
     "totalRecords"
   ]
 }

@@ -157,9 +157,9 @@ public class RequestsAPICreationTests extends APITests {
       representation.getJsonObject("requester").getString("firstName"),
       is("Steven"));
 
-    assertThat("middle name is not taken from requesting user",
-      representation.getJsonObject("requester").containsKey("middleName"),
-      is(false));
+    assertThat("middle name is taken from requesting user",
+      representation.getJsonObject("requester").getString("middleName"),
+      is("Jacob"));
 
     assertThat("barcode is taken from requesting user",
       representation.getJsonObject("requester").getString("barcode"),
@@ -273,9 +273,9 @@ public class RequestsAPICreationTests extends APITests {
       representation.getJsonObject("requester").getString("firstName"),
       is("Steven"));
 
-    assertThat("middle name is not taken from requesting user",
-      representation.getJsonObject("requester").containsKey("middleName"),
-      is(false));
+    assertThat("middle name is taken from requesting user",
+      representation.getJsonObject("requester").getString("middleName"),
+      is("Jacob"));
 
     assertThat("barcode is taken from requesting user",
       representation.getJsonObject("requester").getString("barcode"),
