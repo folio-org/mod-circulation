@@ -697,10 +697,6 @@ public class CheckInByBarcodeTests extends APITests {
 
   private void verifyCheckInOperationRecorded(UUID itemId, UUID servicePoint) {
     final CqlQuery query = CqlQuery.queryFromTemplate("itemId=%s", itemId);
-    Awaitility.await()
-      .atMost(2, TimeUnit.SECONDS)
-      .until(() -> checkInOperationClient.getMany(query).totalRecords() == 1);
-
     final MultipleJsonRecords recordedOperations = checkInOperationClient.getMany(query);
 
     assertThat(recordedOperations.totalRecords(), is(1));

@@ -38,7 +38,7 @@ public class MultipleJsonRecords {
     return records.stream();
   }
 
-  public void forEach(Consumer<? super JsonObject> consumer) {
+  public void forEach(Consumer<JsonObject> consumer) {
     records.forEach(consumer);
   }
 
