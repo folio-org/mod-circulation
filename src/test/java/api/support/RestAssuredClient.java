@@ -133,6 +133,18 @@ public class RestAssuredClient {
       .extract().response());
   }
 
+  public Response post(JsonObject representation, URL location, OkapiHeaders okapiHeaders) {
+    return toResponse(given()
+      .log().all()
+      .spec(standardHeaders(okapiHeaders))
+      .spec(timeoutConfig())
+      .body(representation.encodePrettily())
+      .when().post(location)
+      .then()
+      .log().all()
+      .extract().response());
+  }
+
   public Response put(JsonObject representation, URL location, String requestId) {
     return toResponse(beginRequest(requestId)
       .body(representation.encodePrettily())

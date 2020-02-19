@@ -846,6 +846,10 @@
     {
       "id": "patron-action-session-storage",
       "version": "0.1"
+    },
+    {
+      "id": "check-in-storage",
+      "version": "0.1"
     }
   ],
   "permissionSets": [
@@ -1287,7 +1291,8 @@
         "feefines.collection.get",
         "feefines.item.post",
         "owners.collection.get",
-        "accounts.item.post"
+        "accounts.item.post",
+        "check-in-storage.check-ins.item.post"
       ],
       "visible": false
     },
