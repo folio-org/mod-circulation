@@ -32,6 +32,7 @@ import org.folio.circulation.domain.policy.OverdueFinePolicyRepository;
 import org.folio.circulation.domain.validation.AlreadyCheckedOutValidator;
 import org.folio.circulation.domain.validation.ItemNotFoundValidator;
 import org.folio.circulation.domain.validation.ItemStatusValidator;
+import org.folio.circulation.domain.validation.ChangeDueDateValidator;
 import org.folio.circulation.domain.validation.ProxyRelationshipValidator;
 import org.folio.circulation.domain.validation.RequestedByAnotherPatronValidator;
 import org.folio.circulation.domain.validation.ServicePointLoanLocationValidator;
@@ -148,7 +149,11 @@ public class LoanCollectionResource extends CollectionResource {
     final ServicePointLoanLocationValidator spLoanLocationValidator =
         new ServicePointLoanLocationValidator();
 
-    final DueDateScheduledNoticeService scheduledNoticeService = DueDateScheduledNoticeService.using(clients);
+    final ChangeDueDateValidator changeDueDateValidator
+        = new ChangeDueDateValidator(loanRepository);
+
+    final DueDateScheduledNoticeService scheduledNoticeService
+        = DueDateScheduledNoticeService.using(clients);
 
     final LoanNoticeSender loanNoticeSender = LoanNoticeSender.using(clients);
 
@@ -163,6 +168,7 @@ public class LoanCollectionResource extends CollectionResource {
       .thenApply(this::refuseWhenItemIsDeclaredLost)
       .thenCombineAsync(userRepository.getUser(loan.getUserId()), this::addUser)
       .thenApply(itemNotFoundValidator::refuseWhenItemNotFound)
+      .thenComposeAsync(changeDueDateValidator::refuseWhenClaimedReturned)
       .thenComposeAsync(r -> r.after(proxyRelationshipValidator::refuseWhenInvalid))
       .thenCombineAsync(requestQueueRepository.get(loan.getItemId()), this::addRequestQueue)
       .thenComposeAsync(result -> result.after(requestQueueUpdate::onCheckIn))
