@@ -22,7 +22,7 @@ public class ItemStatusValidator {
     this.itemStatusErrorFunction = itemStatusErrorFunction;
   }
 
-  private Result<LoanAndRelatedRecords> checkAndRefuseItem(
+  private Result<LoanAndRelatedRecords> refuseWhenItemIs(
     Result<LoanAndRelatedRecords> loanAndRelatedRecords, ItemStatus status) {
 
     return loanAndRelatedRecords.failWhen(
@@ -43,16 +43,16 @@ public class ItemStatusValidator {
     Result<LoanAndRelatedRecords> loanAndRelatedRecords) {
 
     return loanAndRelatedRecords
-      .next(p -> checkAndRefuseItem(loanAndRelatedRecords, MISSING))
-      .next(p -> checkAndRefuseItem(loanAndRelatedRecords, DECLARED_LOST));
+      .next(p -> refuseWhenItemIs(loanAndRelatedRecords, MISSING))
+      .next(p -> refuseWhenItemIs(loanAndRelatedRecords, DECLARED_LOST));
   }
 
   public Result<LoanAndRelatedRecords> refuseWhenItemIsNotAllowedForCheckOut(
     Result<LoanAndRelatedRecords> loanAndRelatedRecords) {
 
     return loanAndRelatedRecords
-      .next(p -> checkAndRefuseItem(loanAndRelatedRecords, MISSING))
-      .next(p -> checkAndRefuseItem(loanAndRelatedRecords, DECLARED_LOST))
-      .next(p -> checkAndRefuseItem(loanAndRelatedRecords, CLAIMED_RETURNED));
+      .next(p -> refuseWhenItemIs(loanAndRelatedRecords, MISSING))
+      .next(p -> refuseWhenItemIs(loanAndRelatedRecords, DECLARED_LOST))
+      .next(p -> refuseWhenItemIs(loanAndRelatedRecords, CLAIMED_RETURNED));
   }
 }
