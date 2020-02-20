@@ -5,6 +5,7 @@ import static java.util.function.Function.identity;
 import static org.folio.circulation.support.JsonKeys.byId;
 import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.ResultBinding.mapResult;
+import static org.folio.circulation.support.fetching.RecordFetching.findWithMultipleCqlIndexValues;
 
 import java.util.Collection;
 import java.util.List;
@@ -15,7 +16,7 @@ import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
-import org.folio.circulation.support.MultipleRecordFetcher;
+import org.folio.circulation.support.FindWithMultipleCqlIndexValues;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.SingleRecordFetcher;
 
@@ -49,8 +50,8 @@ public class MaterialTypeRepository {
       .distinct()
       .collect(Collectors.toList());
 
-    final MultipleRecordFetcher<JsonObject> fetcher = new MultipleRecordFetcher<>(
-      materialTypesStorageClient, "mtypes", identity());
+    final FindWithMultipleCqlIndexValues<JsonObject> fetcher
+      = findWithMultipleCqlIndexValues(materialTypesStorageClient, "mtypes", identity());
 
     return fetcher.findByIds(materialTypeIds)
       .thenApply(mapResult(materialTypes -> materialTypes.toMap(byId())));

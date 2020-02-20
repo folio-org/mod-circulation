@@ -1,14 +1,10 @@
 package org.folio.circulation.domain.policy;
 
-import io.vertx.core.json.JsonObject;
-import org.folio.circulation.domain.Loan;
-import org.folio.circulation.domain.LoanAndRelatedRecords;
-import org.folio.circulation.domain.MultipleRecords;
-import org.folio.circulation.rules.AppliedRuleConditions;
-import org.folio.circulation.support.Clients;
-import org.folio.circulation.support.FetchSingleRecord;
-import org.folio.circulation.support.MultipleRecordFetcher;
-import org.folio.circulation.support.Result;
+import static java.util.Objects.isNull;
+import static org.folio.circulation.support.Result.ofAsync;
+import static org.folio.circulation.support.Result.succeeded;
+import static org.folio.circulation.support.ResultBinding.mapResult;
+import static org.folio.circulation.support.fetching.RecordFetching.findWithMultipleCqlIndexValues;
 
 import java.util.Collection;
 import java.util.Map;
@@ -16,10 +12,16 @@ import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
-import static java.util.Objects.isNull;
-import static org.folio.circulation.support.Result.ofAsync;
-import static org.folio.circulation.support.Result.succeeded;
-import static org.folio.circulation.support.ResultBinding.mapResult;
+import org.folio.circulation.domain.Loan;
+import org.folio.circulation.domain.LoanAndRelatedRecords;
+import org.folio.circulation.domain.MultipleRecords;
+import org.folio.circulation.rules.AppliedRuleConditions;
+import org.folio.circulation.support.Clients;
+import org.folio.circulation.support.FetchSingleRecord;
+import org.folio.circulation.support.FindWithMultipleCqlIndexValues;
+import org.folio.circulation.support.Result;
+
+import io.vertx.core.json.JsonObject;
 
 public class LostItemPolicyRepository extends CirculationPolicyRepository<LostItemPolicy> {
 
@@ -72,15 +74,15 @@ public class LostItemPolicyRepository extends CirculationPolicyRepository<LostIt
       .filter(Objects::nonNull)
       .collect(Collectors.toSet());
 
-    final MultipleRecordFetcher<LostItemPolicy> fetcher = createLostItemPoliciesFetcher();
+    final FindWithMultipleCqlIndexValues<LostItemPolicy> fetcher = createLostItemPoliciesFetcher();
 
     return fetcher.findByIds(loansToFetch)
       .thenApply(mapResult(r -> r.toMap(LostItemPolicy::getId)));
   }
 
-  private MultipleRecordFetcher<LostItemPolicy> createLostItemPoliciesFetcher() {
-    return new MultipleRecordFetcher<>(policyStorageClient,
-      "lostItemFeePolicies", LostItemPolicy::from);
+  private FindWithMultipleCqlIndexValues<LostItemPolicy> createLostItemPoliciesFetcher() {
+    return findWithMultipleCqlIndexValues(policyStorageClient, "lostItemFeePolicies",
+      LostItemPolicy::from);
   }
 
   public CompletableFuture<Result<Loan>> findLostItemPolicyForLoan(

@@ -8,6 +8,7 @@ import static org.folio.circulation.support.Result.ofAsync;
 import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.ResultBinding.flatMapResult;
 import static org.folio.circulation.support.ResultBinding.mapResult;
+import static org.folio.circulation.support.fetching.RecordFetching.findWithMultipleCqlIndexValues;
 
 import java.util.Collection;
 import java.util.List;
@@ -18,7 +19,7 @@ import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
-import org.folio.circulation.support.MultipleRecordFetcher;
+import org.folio.circulation.support.FindWithMultipleCqlIndexValues;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.SingleRecordFetcher;
 
@@ -74,8 +75,8 @@ public class LocationRepository {
       .distinct()
       .collect(Collectors.toList());
 
-    final MultipleRecordFetcher<Location> fetcher = new MultipleRecordFetcher<>(
-      locationsStorageClient, "locations", Location::from);
+    final FindWithMultipleCqlIndexValues<Location> fetcher
+      = findWithMultipleCqlIndexValues(locationsStorageClient, "locations", Location::from);
 
     return fetcher.findByIds(locationIds)
       .thenCompose(this::loadLibrariesForLocations)
@@ -125,8 +126,8 @@ public class LocationRepository {
   public CompletableFuture<Result<Map<String, JsonObject>>> getLibraries(
           Collection<Location> locations) {
 
-    final MultipleRecordFetcher<JsonObject> fetcher = new MultipleRecordFetcher<>(
-            librariesStorageClient, "loclibs", identity());
+    final FindWithMultipleCqlIndexValues<JsonObject> fetcher
+      = findWithMultipleCqlIndexValues(librariesStorageClient, "loclibs", identity());
 
     List<String> libraryIds = locations.stream()
             .map(Location::getLibraryId)
@@ -141,8 +142,8 @@ public class LocationRepository {
   public CompletableFuture<Result<Map<String, JsonObject>>> getCampuses(
     Collection<Location> locations) {
 
-    final MultipleRecordFetcher<JsonObject> fetcher = new MultipleRecordFetcher<>(
-      campusesStorageClient, "loccamps", identity());
+    final FindWithMultipleCqlIndexValues<JsonObject> fetcher
+      = findWithMultipleCqlIndexValues(campusesStorageClient, "loccamps", identity());
 
     List<String> campusesIds = locations.stream()
       .map(Location::getCampusId)
@@ -157,8 +158,8 @@ public class LocationRepository {
   public CompletableFuture<Result<Map<String, JsonObject>>> getInstitutions(
     Collection<Location> locations) {
 
-    final MultipleRecordFetcher<JsonObject> fetcher = new MultipleRecordFetcher<>(
-      institutionsStorageClient, "locinsts", identity());
+    final FindWithMultipleCqlIndexValues<JsonObject> fetcher
+      = findWithMultipleCqlIndexValues(institutionsStorageClient, "locinsts", identity());
 
     List<String> institutionsIds = locations.stream()
       .map(Location::getInstitutionId)

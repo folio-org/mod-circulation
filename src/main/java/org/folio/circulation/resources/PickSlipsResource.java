@@ -1,9 +1,25 @@
 package org.folio.circulation.resources;
 
-import io.vertx.core.http.HttpClient;
-import io.vertx.core.json.JsonObject;
-import io.vertx.ext.web.Router;
-import io.vertx.ext.web.RoutingContext;
+import static java.util.Collections.emptyList;
+import static java.util.concurrent.CompletableFuture.completedFuture;
+import static java.util.function.Function.identity;
+import static java.util.stream.Collectors.toMap;
+import static java.util.stream.Collectors.toSet;
+import static org.folio.circulation.support.Result.succeeded;
+import static org.folio.circulation.support.ResultBinding.flatMapResult;
+import static org.folio.circulation.support.fetching.MultipleCqlIndexValuesCriteria.byIndex;
+import static org.folio.circulation.support.fetching.RecordFetching.findWithCqlQuery;
+import static org.folio.circulation.support.fetching.RecordFetching.findWithMultipleCqlIndexValues;
+import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
+
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
+
 import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.domain.AddressTypeRepository;
 import org.folio.circulation.domain.Item;
@@ -19,29 +35,16 @@ import org.folio.circulation.domain.UserRepository;
 import org.folio.circulation.domain.notice.TemplateContextUtil;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.ItemRepository;
-import org.folio.circulation.support.http.client.CqlQuery;
-import org.folio.circulation.support.MultipleRecordFetcher;
 import org.folio.circulation.support.OkJsonResponseResult;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.RouteRegistration;
+import org.folio.circulation.support.http.client.CqlQuery;
 import org.folio.circulation.support.http.server.WebContext;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
-import java.util.stream.Collectors;
-
-import static java.util.Collections.emptyList;
-import static java.util.concurrent.CompletableFuture.completedFuture;
-import static java.util.function.Function.identity;
-import static java.util.stream.Collectors.toMap;
-import static java.util.stream.Collectors.toSet;
-import static org.folio.circulation.support.Result.succeeded;
-import static org.folio.circulation.support.ResultBinding.flatMapResult;
-import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
+import io.vertx.core.http.HttpClient;
+import io.vertx.core.json.JsonObject;
+import io.vertx.ext.web.Router;
+import io.vertx.ext.web.RoutingContext;
 
 public class PickSlipsResource extends Resource {
   private static final String STATUS_KEY = "status";
@@ -94,7 +97,7 @@ public class PickSlipsResource extends Resource {
   private CompletableFuture<Result<MultipleRecords<Location>>> fetchLocationsForServicePoint(
     UUID servicePointId, Clients clients) {
 
-    return new MultipleRecordFetcher<>(clients.locationsStorage(), LOCATIONS_KEY, Location::from)
+    return findWithCqlQuery(clients.locationsStorage(), LOCATIONS_KEY, Location::from)
       .findByQuery(exactMatch(PRIMARY_SERVICE_POINT_KEY, servicePointId.toString()));
   }
 
@@ -114,7 +117,7 @@ public class PickSlipsResource extends Resource {
 
     final ItemRepository itemRepository = new ItemRepository(clients, false, true, true);
     Result<CqlQuery> statusQuery = exactMatch(STATUS_NAME_KEY, ItemStatus.PAGED.getValue());
-    
+
     return itemRepository.findByIndexNameAndQuery(locationIds, EFFECTIVE_LOCATION_ID_KEY, statusQuery)
       .thenComposeAsync(r -> r.after(items -> fetchLocationDetailsForItems(items, locations, clients)));
   }
@@ -164,7 +167,7 @@ public class PickSlipsResource extends Resource {
       .map(Item::getItemId)
       .filter(StringUtils::isNoneBlank)
       .collect(toSet());
-    
+
     if(itemIds.isEmpty()) {
       return completedFuture(succeeded(MultipleRecords.empty()));
     }
@@ -173,8 +176,8 @@ public class PickSlipsResource extends Resource {
     final Result<CqlQuery> statusQuery = exactMatch(STATUS_KEY, RequestStatus.OPEN_NOT_YET_FILLED.getValue());
     final Result<CqlQuery> statusAndTypeQuery = typeQuery.combine(statusQuery, CqlQuery::and);
 
-    return new MultipleRecordFetcher<>(clients.requestsStorage(), REQUESTS_KEY, Request::from)
-      .findByIndexNameAndQuery(itemIds, ITEM_ID_KEY, statusAndTypeQuery)
+    return findWithMultipleCqlIndexValues(clients.requestsStorage(), REQUESTS_KEY, Request::from)
+      .find(byIndex(ITEM_ID_KEY, itemIds).withQuery(statusAndTypeQuery))
       .thenApply(flatMapResult(requests -> matchItemsToRequests(requests, items)));
   }
 

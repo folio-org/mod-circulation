@@ -1,11 +1,5 @@
 package org.folio.circulation.domain;
 
-import org.folio.circulation.support.Clients;
-import org.folio.circulation.support.CollectionResourceClient;
-import org.folio.circulation.support.FetchSingleRecord;
-import org.folio.circulation.support.MultipleRecordFetcher;
-import org.folio.circulation.support.Result;
-
 import static java.util.Objects.isNull;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.domain.PatronGroup.unknown;
@@ -13,6 +7,7 @@ import static org.folio.circulation.support.Result.of;
 import static org.folio.circulation.support.Result.ofAsync;
 import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.ResultBinding.mapResult;
+import static org.folio.circulation.support.fetching.RecordFetching.findWithMultipleCqlIndexValues;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -22,6 +17,12 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
+
+import org.folio.circulation.support.Clients;
+import org.folio.circulation.support.CollectionResourceClient;
+import org.folio.circulation.support.FetchSingleRecord;
+import org.folio.circulation.support.FindWithMultipleCqlIndexValues;
+import org.folio.circulation.support.Result;
 
 
 public class PatronGroupRepository {
@@ -37,7 +38,7 @@ public class PatronGroupRepository {
     return result.after(request -> {
       final ArrayList<String> groupsToFetch = getGroupsFromUsers(request);
 
-      final MultipleRecordFetcher<PatronGroup> fetcher = createGroupsFetcher();
+      final FindWithMultipleCqlIndexValues<PatronGroup> fetcher = createGroupsFetcher();
 
       return fetcher.findByIds(groupsToFetch)
         .thenApply(multiplePatronGroupsResult -> multiplePatronGroupsResult.next(
@@ -56,7 +57,7 @@ public class PatronGroupRepository {
       .distinct()
       .collect(Collectors.toList());
 
-    final MultipleRecordFetcher<PatronGroup> fetcher = createGroupsFetcher();
+    final FindWithMultipleCqlIndexValues<PatronGroup> fetcher = createGroupsFetcher();
 
     return fetcher.findByIds(groupsToFetch)
       .thenApply(multiplePatronGroupsResult -> multiplePatronGroupsResult.next(
@@ -124,7 +125,7 @@ public class PatronGroupRepository {
 
   public CompletableFuture<Result<LoanAndRelatedRecords>> findPatronGroupForLoanAndRelatedRecords(
     LoanAndRelatedRecords loanAndRelatedRecords) {
-    final MultipleRecordFetcher<PatronGroup> fetcher = createGroupsFetcher();
+    final FindWithMultipleCqlIndexValues<PatronGroup> fetcher = createGroupsFetcher();
     return fetcher.findByIds(Collections.singleton(loanAndRelatedRecords.getLoan()
       .getUser().getPatronGroupId()))
       .thenApply(multiplePatronGroupsResult -> multiplePatronGroupsResult.next(
@@ -156,7 +157,7 @@ public class PatronGroupRepository {
       return completedFuture(succeeded(multipleLoans));
     }
 
-    final MultipleRecordFetcher<PatronGroup> fetcher = createGroupsFetcher();
+    final FindWithMultipleCqlIndexValues<PatronGroup> fetcher = createGroupsFetcher();
 
     return fetcher.findByIds(patronGroupsToFetch)
       .thenApply(mapResult(groups -> groups.toMap(PatronGroup::getId)))
@@ -170,8 +171,8 @@ public class PatronGroupRepository {
       .collect(Collectors.toList());
   }
 
-  private MultipleRecordFetcher<PatronGroup> createGroupsFetcher() {
-    return new MultipleRecordFetcher<>(patronGroupsStorageClient,
+  private FindWithMultipleCqlIndexValues<PatronGroup> createGroupsFetcher() {
+    return findWithMultipleCqlIndexValues(patronGroupsStorageClient,
       "usergroups", PatronGroup::from);
   }
 }

@@ -23,11 +23,11 @@ public class Clients {
   private final CollectionResourceClient librariesStorageClient;
   private final CollectionResourceClient materialTypesStorageClient;
   private final CollectionResourceClient loanTypesStorageClient;
-  private final CollectionResourceClient proxiesForClient;
+  private final GetManyRecordsClient proxiesForClient;
   private final CollectionResourceClient loanPoliciesStorageClient;
   private final CollectionResourceClient overdueFinesPoliciesPoliciesStorageClient;
   private final CollectionResourceClient lostItemPoliciesStorageClient;
-  private final CollectionResourceClient fixedDueDateSchedulesStorageClient;
+  private final GetManyRecordsClient fixedDueDateSchedulesStorageClient;
   private final CirculationRulesClient circulationLoanRulesClient;
   private final CirculationRulesClient circulationOverdueFinesRulesClient;
   private final CirculationRulesClient circulationLostItemRulesClient;
@@ -40,16 +40,16 @@ public class Clients {
   private final CollectionResourceClient patronGroupsStorageClient;
   private final CollectionResourceClient patronNoticePolicesStorageClient;
   private final CollectionResourceClient patronNoticeClient;
-  private final CollectionResourceClient configurationStorageClient;
+  private final GetManyRecordsClient configurationStorageClient;
   private final CollectionResourceClient scheduledNoticesStorageClient;
   private final CollectionResourceClient accountsStorageClient;
-  private final CollectionResourceClient feeFineActionsStorageClient;
+  private final GetManyRecordsClient feeFineActionsStorageClient;
   private final CollectionResourceClient feeFineOwnerStorageClient;
   private final CollectionResourceClient feeFineStorageClient;
   private final CollectionResourceClient anonymizeStorageLoansClient;
   private final CollectionResourceClient patronActionSessionsStorageClient;
   private final CollectionResourceClient patronExpiredSessionsStorageClient;
-  private final CollectionResourceClient userManualBlocksStorageClient;
+  private final GetManyRecordsClient userManualBlocksStorageClient;
   private final CollectionResourceClient templateNoticeClient;
   private final CollectionResourceClient checkInStorageClient;
 
@@ -189,7 +189,7 @@ public class Clients {
     return lostItemPoliciesStorageClient;
   }
 
-  public CollectionResourceClient fixedDueDateSchedules() {
+  public GetManyRecordsClient fixedDueDateSchedules() {
     return fixedDueDateSchedulesStorageClient;
   }
 
@@ -205,11 +205,11 @@ public class Clients {
     return calendarStorageClient;
   }
 
-  public CollectionResourceClient configurationStorageClient() {
+  public GetManyRecordsClient configurationStorageClient() {
     return configurationStorageClient;
   }
 
-  public CollectionResourceClient userProxies() {
+  public GetManyRecordsClient userProxies() {
     return proxiesForClient;
   }
 
@@ -253,7 +253,7 @@ public class Clients {
     return accountsStorageClient;
   }
 
-  public CollectionResourceClient feeFineActionsStorageClient() {
+  public GetManyRecordsClient feeFineActionsStorageClient() {
     return feeFineActionsStorageClient;
   }
 
@@ -273,7 +273,7 @@ public class Clients {
     return patronExpiredSessionsStorageClient;
   }
 
-  public CollectionResourceClient userManualBlocksStorageClient() {
+  public GetManyRecordsClient userManualBlocksStorageClient() {
     return userManualBlocksStorageClient;
   }
 
@@ -440,7 +440,7 @@ public class Clients {
       "/location-units/libraries");
   }
 
-  private CollectionResourceClient createProxyUsersStorageClient(
+  private GetManyRecordsClient createProxyUsersStorageClient(
     OkapiHttpClient client, WebContext context)
     throws MalformedURLException {
 
@@ -493,7 +493,7 @@ public class Clients {
       "/request-policy-storage/request-policies");
   }
 
-  private CollectionResourceClient createFixedDueDateSchedulesStorageClient(
+  private GetManyRecordsClient createFixedDueDateSchedulesStorageClient(
     OkapiHttpClient client, WebContext context)
     throws MalformedURLException {
 
@@ -546,7 +546,7 @@ public class Clients {
     return getCollectionResourceClient(client, context, "/patron-notice");
   }
 
-  private CollectionResourceClient createConfigurationStorageClient(
+  private GetManyRecordsClient createConfigurationStorageClient(
     OkapiHttpClient client, WebContext context)
     throws MalformedURLException {
 
@@ -561,6 +561,7 @@ public class Clients {
     return getCollectionResourceClient(client, context,
       "/scheduled-notice-storage/scheduled-notices");
   }
+
   private CollectionResourceClient createAccountsStorageClient(
     OkapiHttpClient client, WebContext context)
     throws MalformedURLException {
@@ -568,7 +569,7 @@ public class Clients {
     return getCollectionResourceClient(client, context, "/accounts");
   }
 
-  private CollectionResourceClient createFeeFineActionsStorageClient(
+  private GetManyRecordsClient createFeeFineActionsStorageClient(
     OkapiHttpClient client, WebContext context)
       throws MalformedURLException {
 
@@ -606,7 +607,7 @@ public class Clients {
       "/patron-action-session-storage");
   }
 
-  private static CollectionResourceClient createUserManualBlocksStorageClient(
+  private static GetManyRecordsClient createUserManualBlocksStorageClient(
     OkapiHttpClient client, WebContext context)
     throws MalformedURLException {
 

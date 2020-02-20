@@ -116,4 +116,33 @@ public class CqlQueryTests {
     assertThat(query.value().asText(), is("barcode==\"12345\" " +
       "sortBy position/sort.ascending lastTime/sort.descending"));
   }
+
+  @Test
+  public void shouldNotBeEqualToAnotherObject() {
+    final CqlQuery query = exactMatch("barcode", "12345").value();
+
+    assertThat(query.equals(5), is(false));
+  }
+
+  @Test
+  public void shouldNotBeEqualToNull() {
+    final CqlQuery query = exactMatch("barcode", "12345").value();
+
+    assertThat(query.equals(null), is(false));
+  }
+
+  @Test
+  public void shouldBeEqualToItself() {
+    final CqlQuery query = exactMatch("barcode", "12345").value();
+
+    assertThat(query.equals(query), is(true));
+  }
+
+  @Test
+  public void shouldBeEqualToQueryWithSameDefinition() {
+    final CqlQuery firstQuery = exactMatch("barcode", "12345").value();
+    final CqlQuery secondQuery = exactMatch("barcode", "12345").value();
+
+    assertThat(firstQuery.equals(secondQuery), is(true));
+  }
 }

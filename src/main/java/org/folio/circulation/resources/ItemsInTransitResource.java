@@ -2,10 +2,12 @@ package org.folio.circulation.resources;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.domain.ItemStatus.IN_TRANSIT;
+import static org.folio.circulation.domain.RequestStatus.openStates;
 import static org.folio.circulation.support.AsyncCoordinationUtil.allOf;
 import static org.folio.circulation.support.CqlSortBy.ascending;
 import static org.folio.circulation.support.Result.of;
 import static org.folio.circulation.support.Result.succeeded;
+import static org.folio.circulation.support.fetching.RecordFetching.findWithMultipleCqlIndexValues;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatchAny;
 
@@ -26,15 +28,14 @@ import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.PatronGroupRepository;
 import org.folio.circulation.domain.ReportRepository;
 import org.folio.circulation.domain.Request;
-import org.folio.circulation.domain.RequestStatus;
 import org.folio.circulation.domain.ServicePoint;
 import org.folio.circulation.domain.ServicePointRepository;
 import org.folio.circulation.domain.UserRepository;
 import org.folio.circulation.domain.representations.ItemReportRepresentation;
 import org.folio.circulation.support.Clients;
-import org.folio.circulation.support.CollectionResourceClient;
+import org.folio.circulation.support.FindWithMultipleCqlIndexValues;
+import org.folio.circulation.support.GetManyRecordsClient;
 import org.folio.circulation.support.ItemRepository;
-import org.folio.circulation.support.MultipleRecordFetcher;
 import org.folio.circulation.support.OkJsonResponseResult;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.RouteRegistration;
@@ -70,8 +71,8 @@ public class ItemsInTransitResource extends Resource {
     final WebContext context = new WebContext(routingContext);
     final Clients clients = Clients.create(context, client);
 
-    final CollectionResourceClient loansStorageClient = clients.loansStorage();
-    final CollectionResourceClient requestsStorageClient = clients.requestsStorage();
+    final GetManyRecordsClient loansStorageClient = clients.loansStorage();
+    final GetManyRecordsClient requestsStorageClient = clients.requestsStorage();
     final ItemRepository itemRepository = new ItemRepository(clients, true, true, true);
     final ServicePointRepository servicePointRepository = new ServicePointRepository(clients);
     final ReportRepository reportRepository = new ReportRepository(clients);
@@ -126,20 +127,22 @@ public class ItemsInTransitResource extends Resource {
           Item::updateLastCheckInServicePoint));
   }
 
-  private CompletableFuture<Result<List<InTransitReportEntry>>> findRequestsByItemsIds(CollectionResourceClient requestsStorageClient,
-                                                                                       ItemRepository itemRepository,
-                                                                                       ServicePointRepository servicePointRepository,
-                                                                                       UserRepository userRepository,
-                                                                                       PatronGroupRepository patronGroupRepository,
-                                                                                       List<InTransitReportEntry> inTransitReportEntryList) {
+  private CompletableFuture<Result<List<InTransitReportEntry>>> findRequestsByItemsIds(
+    GetManyRecordsClient requestsStorageClient, ItemRepository itemRepository,
+    ServicePointRepository servicePointRepository, UserRepository userRepository,
+    PatronGroupRepository patronGroupRepository,
+    List<InTransitReportEntry> inTransitReportEntryList) {
 
-    MultipleRecordFetcher<Request> fetcher = new MultipleRecordFetcher<>(requestsStorageClient, "requests", Request::from);
+    FindWithMultipleCqlIndexValues<Request> fetcher
+      = findWithMultipleCqlIndexValues(requestsStorageClient, "requests",
+        Request::from);
 
-    final Result<CqlQuery> statusQuery = exactMatchAny("status", RequestStatus.openStates());
+    final Result<CqlQuery> statusQuery = exactMatchAny("status", openStates());
+
     Result<CqlQuery> cqlQueryResult = statusQuery.combine(statusQuery, CqlQuery::and)
       .map(q -> q.sortBy(ascending("position")));
 
-    return fetcher.findByIndexNameAndQuery(mapToItemIdList(inTransitReportEntryList), ITEM_ID, cqlQueryResult)
+    return fetcher.findByIdIndexAndQuery(mapToItemIdList(inTransitReportEntryList), ITEM_ID, cqlQueryResult)
       .thenComposeAsync(requests ->
         itemRepository.fetchItemsFor(requests, Request::withItem))
       .thenComposeAsync(result -> result.after(servicePointRepository::findServicePointsForRequests))
@@ -152,7 +155,7 @@ public class ItemsInTransitResource extends Resource {
   }
 
   private CompletableFuture<Result<List<InTransitReportEntry>>> fetchLoans(
-    CollectionResourceClient loansStorageClient,
+    GetManyRecordsClient loansStorageClient,
     ServicePointRepository servicePointRepository,
     List<InTransitReportEntry> inTransitReportEntries,
     Comparator<InTransitReportEntry> sortByCheckinServicePointComparator) {

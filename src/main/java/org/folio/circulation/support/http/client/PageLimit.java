@@ -40,4 +40,13 @@ public class PageLimit implements QueryParameter {
       consumer.consume("limit", value.toString());
     }
   }
+
+  @Override
+  public String toString() {
+    if (value == null) {
+      return "No page limit";
+    }
+
+    return String.format("A page limit of \"%s\"", value);
+  }
 }
