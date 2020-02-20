@@ -1,5 +1,8 @@
 package org.folio.circulation.domain.validation;
 
+import static org.folio.circulation.domain.ItemStatus.CLAIMED_RETURNED;
+import static org.folio.circulation.domain.ItemStatus.DECLARED_LOST;
+import static org.folio.circulation.domain.ItemStatus.MISSING;
 import static org.folio.circulation.support.Result.succeeded;
 
 import org.folio.circulation.domain.Item;
@@ -40,14 +43,16 @@ public class ItemStatusValidator {
     Result<LoanAndRelatedRecords> loanAndRelatedRecords) {
 
     return loanAndRelatedRecords
-      .next(p -> checkAndRefuseItem(loanAndRelatedRecords, ItemStatus.MISSING))
-      .next(p -> checkAndRefuseItem(loanAndRelatedRecords, ItemStatus.DECLARED_LOST));
+      .next(p -> checkAndRefuseItem(loanAndRelatedRecords, MISSING))
+      .next(p -> checkAndRefuseItem(loanAndRelatedRecords, DECLARED_LOST));
   }
 
-  public Result<LoanAndRelatedRecords> refuseItemWithDeniedStatuses(
+  public Result<LoanAndRelatedRecords> refuseWhenItemIsNotAllowedForCheckOut(
     Result<LoanAndRelatedRecords> loanAndRelatedRecords) {
 
-    return refuseWhenItemIsMissing(loanAndRelatedRecords)
-      .next(p -> checkAndRefuseItem(loanAndRelatedRecords, ItemStatus.CLAIMED_RETURNED));
+    return loanAndRelatedRecords
+      .next(p -> checkAndRefuseItem(loanAndRelatedRecords, MISSING))
+      .next(p -> checkAndRefuseItem(loanAndRelatedRecords, DECLARED_LOST))
+      .next(p -> checkAndRefuseItem(loanAndRelatedRecords, CLAIMED_RETURNED));
   }
 }
