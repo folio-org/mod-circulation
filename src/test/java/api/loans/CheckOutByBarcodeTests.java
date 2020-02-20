@@ -43,6 +43,7 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import org.joda.time.DateTime;
 import org.joda.time.Seconds;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import org.folio.circulation.domain.policy.Period;
@@ -923,6 +924,7 @@ public class CheckOutByBarcodeTests extends APITests {
     loansFixture.checkOutByBarcode(secondItem, steve);
   }
 
+  @Ignore
   @Test
   public void canCheckOutVideoMaterialWhenItemLimitIsReachedForBookMaterialType() {
 
@@ -950,6 +952,7 @@ public class CheckOutByBarcodeTests extends APITests {
     assertThat(videoTypeItem, hasItemStatus(CHECKED_OUT));
   }
 
+  @Ignore
   @Test
   public void canCheckOutWhenItemLimitIsReachedForReadingRoomLoanType() {
 
@@ -977,6 +980,7 @@ public class CheckOutByBarcodeTests extends APITests {
     assertThat(videoTypeItem, hasItemStatus(CHECKED_OUT));
   }
 
+  @Ignore
   @Test
   public void canCheckOutWhenItemLimitIsReachedForBookMaterialTypeAndReadingRoomLoanType() {
 
@@ -1005,6 +1009,7 @@ public class CheckOutByBarcodeTests extends APITests {
     assertThat(videoTypeItem, hasItemStatus(CHECKED_OUT));
   }
 
+  @Ignore
   @Test
   public void canCheckOutWhenItemLimitIsReachedForBookMaterialTypeAndReadingRoomLoanTypeAndPatronGroup() {
 
@@ -1036,6 +1041,7 @@ public class CheckOutByBarcodeTests extends APITests {
     assertThat(videoTypeItem, hasItemStatus(CHECKED_OUT));
   }
 
+  @Ignore
   @Test
   public void canCheckOutWhenItemLimitIsReachedForBookMaterialTypeAndCanCirculateLoanTypeInMultipleLinesRules() {
 
@@ -1076,6 +1082,7 @@ public class CheckOutByBarcodeTests extends APITests {
     assertThat(bookTypeItemReadingRoomLoanType, hasItemStatus(CHECKED_OUT));
   }
 
+  @Ignore
   @Test
   public void cannotCheckOutWhenItemLimitIsReachedForBookMaterialTypeAndLoanTypeIsNotPresent() {
 
