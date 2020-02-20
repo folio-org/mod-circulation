@@ -36,9 +36,18 @@ public class ItemStatusValidator {
       });
   }
 
-  public Result<LoanAndRelatedRecords> refuseWhenItemStatusIsInvalid(Result<LoanAndRelatedRecords> loanAndRelatedRecords) {
+  public Result<LoanAndRelatedRecords> refuseWhenItemIsMissing(
+    Result<LoanAndRelatedRecords> loanAndRelatedRecords) {
+
     return loanAndRelatedRecords
       .next(p -> checkAndRefuseItem(loanAndRelatedRecords, ItemStatus.MISSING))
       .next(p -> checkAndRefuseItem(loanAndRelatedRecords, ItemStatus.DECLARED_LOST));
+  }
+
+  public Result<LoanAndRelatedRecords> refuseItemWithDeniedStatuses(
+    Result<LoanAndRelatedRecords> loanAndRelatedRecords) {
+
+    return refuseWhenItemIsMissing(loanAndRelatedRecords)
+      .next(p -> checkAndRefuseItem(loanAndRelatedRecords, ItemStatus.CLAIMED_RETURNED));
   }
 }

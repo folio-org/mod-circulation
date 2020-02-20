@@ -28,12 +28,14 @@ import static org.junit.Assert.assertTrue;
 import static org.folio.circulation.domain.representations.ItemProperties.CALL_NUMBER_COMPONENTS;
 
 import java.util.List;
+import java.util.Random;
 import java.util.UUID;
 
 import api.support.APITests;
 import api.support.builders.CheckOutByBarcodeRequestBuilder;
 import api.support.builders.FixedDueDateSchedule;
 import api.support.builders.FixedDueDateSchedulesBuilder;
+import api.support.builders.ItemBuilder;
 import api.support.builders.LoanBuilder;
 import api.support.builders.LoanPolicyBuilder;
 import api.support.builders.RequestBuilder;
@@ -449,6 +451,25 @@ public class CheckOutByBarcodeTests extends APITests {
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessageContaining("has the item status Declared lost"),
       hasItemBarcodeParameter(declaredLostItem))));
+  }
+
+  @Test
+  public void cannotCheckOutClaimedReturnedItem() {
+    final String barcode = String.valueOf(new Random().nextLong());
+    final InventoryItemResource claimedReturnedItem = itemsFixture
+      .basedUponSmallAngryPlanet((ItemBuilder itemBuilder) -> itemBuilder
+        .withBarcode(barcode)
+        .claimedReturned());
+
+    final Response response = loansFixture
+      .attemptCheckOutByBarcode(claimedReturnedItem, usersFixture.steve());
+
+    final String expectedMessage = String.format(
+      "%s (Book) (Barcode:%s) has the item status Claimed returned and cannot be checked out",
+      claimedReturnedItem.getInstance().getJson().getString("title"), barcode);
+
+    assertThat(response.getJson(), hasErrorWith(allOf(hasMessage(expectedMessage),
+      hasItemBarcodeParameter(claimedReturnedItem))));
   }
 
   @Test
