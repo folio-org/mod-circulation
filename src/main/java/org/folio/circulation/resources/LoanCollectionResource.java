@@ -105,7 +105,7 @@ public class LoanCollectionResource extends CollectionResource {
       .thenApply(itemNotFoundValidator::refuseWhenItemNotFound)
       .thenApply(this::refuseWhenHoldingDoesNotExist)
       .thenApply(alreadyCheckedOutValidator::refuseWhenItemIsAlreadyCheckedOut)
-      .thenApply(itemStatusValidator::refuseWhenItemStatusIsInvalid)
+      .thenApply(itemStatusValidator::refuseWhenItemIsMissing)
       .thenComposeAsync(r -> r.after(proxyRelationshipValidator::refuseWhenInvalid))
       .thenCombineAsync(requestQueueRepository.get(loan.getItemId()), this::addRequestQueue)
       .thenCombineAsync(userRepository.getUserFailOnNotFound(loan.getUserId()), this::addUser)

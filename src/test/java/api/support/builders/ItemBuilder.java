@@ -4,6 +4,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
+import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.support.http.client.IndividualResource;
 
 import io.vertx.core.json.JsonObject;
@@ -137,6 +138,10 @@ public class ItemBuilder extends JsonBuilder implements Builder {
 
   public ItemBuilder inProcess() {
     return withStatus(IN_PROCESS);
+  }
+
+  public ItemBuilder claimedReturned() {
+    return withStatus(ItemStatus.CLAIMED_RETURNED.getValue());
   }
 
   private ItemBuilder withStatus(String status) {
