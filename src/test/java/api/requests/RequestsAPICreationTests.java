@@ -39,6 +39,7 @@ import java.util.concurrent.TimeUnit;
 
 import api.support.APITests;
 import api.support.builders.Address;
+import api.support.builders.ClaimItemReturnedRequestBuilder;
 import api.support.builders.DeclareItemLostRequestBuilder;
 import api.support.builders.HoldingBuilder;
 import api.support.builders.ItemBuilder;
@@ -156,9 +157,9 @@ public class RequestsAPICreationTests extends APITests {
       representation.getJsonObject("requester").getString("firstName"),
       is("Steven"));
 
-    assertThat("middle name is not taken from requesting user",
-      representation.getJsonObject("requester").containsKey("middleName"),
-      is(false));
+    assertThat("middle name is taken from requesting user",
+      representation.getJsonObject("requester").getString("middleName"),
+      is("Jacob"));
 
     assertThat("barcode is taken from requesting user",
       representation.getJsonObject("requester").getString("barcode"),
@@ -272,9 +273,9 @@ public class RequestsAPICreationTests extends APITests {
       representation.getJsonObject("requester").getString("firstName"),
       is("Steven"));
 
-    assertThat("middle name is not taken from requesting user",
-      representation.getJsonObject("requester").containsKey("middleName"),
-      is(false));
+    assertThat("middle name is taken from requesting user",
+      representation.getJsonObject("requester").getString("middleName"),
+      is("Jacob"));
 
     assertThat("barcode is taken from requesting user",
       representation.getJsonObject("requester").getString("barcode"),
@@ -1916,6 +1917,42 @@ public class RequestsAPICreationTests extends APITests {
     assertThat(postResponse, hasStatus(HTTP_VALIDATION_ERROR));
     assertThat(postResponse.getJson(), hasErrorWith(allOf(
       hasMessage("Page requests are not allowed for this patron and item combination"))));
+  }
+
+  @Parameters({
+    "",
+    "Recall",
+    "Hold",
+    "Page"
+  })
+  @Test
+  public void cannotCreateRequestForClaimedReturnedItem(String requestType) {
+    final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
+    final IndividualResource item = itemsFixture.basedUponSmallAngryPlanet();
+
+    final IndividualResource checkOut = loansFixture
+      .checkOutByBarcode(item, usersFixture.jessica());
+
+    loansFixture.claimItemReturned(new ClaimItemReturnedRequestBuilder()
+        .forLoan(checkOut.getId().toString())
+        .withItemClaimedReturnedDate(DateTime.now(DateTimeZone.UTC)));
+
+    final IndividualResource requester = usersFixture.steve();
+    final RequestBuilder requestBuilder = new RequestBuilder()
+      .open()
+      .withRequestType(requestType)
+      .forItem(item)
+      .by(requester)
+      .fulfilToHoldShelf()
+      .withPickupServicePointId(pickupServicePointId);
+
+    Response postResponse = requestsClient.attemptCreate(requestBuilder);
+
+    assertThat(postResponse, hasStatus(HTTP_VALIDATION_ERROR));
+    assertThat(postResponse.getJson(), hasErrorWith(allOf(
+      hasMessage(requestType + " requests are not allowed for this patron and item combination"),
+      hasParameter("requestType", requestType)
+    )));
   }
 
   private void declareItemLost(JsonObject loanJson) {

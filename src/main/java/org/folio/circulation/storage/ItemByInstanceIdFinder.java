@@ -8,7 +8,7 @@ import static org.folio.circulation.support.fetching.RecordFetching.findWithCqlQ
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatchAny;
 
 import java.util.Collection;
-import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
@@ -52,7 +52,7 @@ public class ItemByInstanceIdFinder {
           "There are no holdings for this instance", "holdingsRecords", "null"));
       }
 
-      List<String> holdingsIds = holdingsRecords.toKeys(byId());
+      Set<String> holdingsIds = holdingsRecords.toKeys(byId());
 
       return itemRepository.findByQuery(exactMatchAny("holdingsRecordId", holdingsIds));
     });

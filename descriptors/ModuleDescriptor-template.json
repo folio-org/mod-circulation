@@ -40,7 +40,7 @@
     },
     {
       "id": "pick-slips",
-      "version": "0.1",
+      "version": "0.2",
       "handlers": [
         {
           "methods": [
@@ -1973,16 +1973,30 @@
       "subPermissions": [
         "inventory-storage.items.item.get",
         "inventory-storage.items.collection.get",
-        "inventory-storage.holdings.collection.get",
         "inventory-storage.holdings.item.get",
-        "inventory-storage.instances.collection.get",
+        "inventory-storage.holdings.collection.get",
         "inventory-storage.instances.item.get",
-        "inventory-storage.service-points.collection.get",
+        "inventory-storage.instances.collection.get",
+        "inventory-storage.material-types.item.get",
+        "inventory-storage.material-types.collection.get",
+        "inventory-storage.loan-types.item.get",
+        "inventory-storage.loan-types.collection.get",
         "inventory-storage.service-points.item.get",
+        "inventory-storage.service-points.collection.get",
         "inventory-storage.locations.item.get",
         "inventory-storage.locations.collection.get",
+        "inventory-storage.location-units.libraries.item.get",
+        "inventory-storage.location-units.libraries.collection.get",
+        "inventory-storage.location-units.campuses.item.get",
+        "inventory-storage.location-units.campuses.collection.get",
+        "inventory-storage.location-units.institutions.item.get",
+        "inventory-storage.location-units.institutions.collection.get",
         "circulation-storage.requests.item.get",
-        "circulation-storage.requests.collection.get"
+        "circulation-storage.requests.collection.get",
+        "users.item.get",
+        "users.collection.get",
+        "addresstypes.item.get",
+        "addresstypes.collection.get"
       ],
       "visible": false
     },

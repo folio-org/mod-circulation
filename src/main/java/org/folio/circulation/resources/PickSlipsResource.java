@@ -1,31 +1,40 @@
 package org.folio.circulation.resources;
 
+import static java.util.Collections.emptyList;
+import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.function.Function.identity;
-import static org.folio.circulation.support.fetching.RecordFetching.findWithMultipleCqlIndexValues;
+import static java.util.stream.Collectors.toMap;
+import static java.util.stream.Collectors.toSet;
+import static org.folio.circulation.support.Result.succeeded;
+import static org.folio.circulation.support.ResultBinding.flatMapResult;
+import static org.folio.circulation.support.fetching.MultipleCqlIndexValuesCriteria.byIndex;
 import static org.folio.circulation.support.fetching.RecordFetching.findWithCqlQuery;
+import static org.folio.circulation.support.fetching.RecordFetching.findWithMultipleCqlIndexValues;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
 
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
+import org.apache.commons.lang3.StringUtils;
+import org.folio.circulation.domain.AddressTypeRepository;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.domain.Location;
+import org.folio.circulation.domain.LocationRepository;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestStatus;
-import org.folio.circulation.domain.representations.ItemPickSlipRepresentation;
+import org.folio.circulation.domain.RequestType;
+import org.folio.circulation.domain.ServicePointRepository;
+import org.folio.circulation.domain.UserRepository;
+import org.folio.circulation.domain.notice.TemplateContextUtil;
 import org.folio.circulation.support.Clients;
-import org.folio.circulation.support.FindWithMultipleCqlIndexValues;
-import org.folio.circulation.support.GetManyRecordsClient;
+import org.folio.circulation.support.ItemRepository;
 import org.folio.circulation.support.OkJsonResponseResult;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.RouteRegistration;
@@ -38,17 +47,14 @@ import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 
 public class PickSlipsResource extends Resource {
-  private static final String ID_KEY = "id";
-  private static final String ITEMS_KEY = "items";
   private static final String STATUS_KEY = "status";
   private static final String ITEM_ID_KEY = "itemId";
   private static final String REQUESTS_KEY = "requests";
   private static final String LOCATIONS_KEY = "locations";
-  private static final String INSTANCES_KEY = "instances";
   private static final String PICK_SLIPS_KEY = "pickSlips";
   private static final String STATUS_NAME_KEY = "status.name";
+  private static final String REQUEST_TYPE_KEY = "requestType";
   private static final String TOTAL_RECORDS_KEY = "totalRecords";
-  private static final String HOLDINGS_RECORDS_KEY = "holdingsRecords";
   private static final String SERVICE_POINT_ID_PARAM = "servicePointId";
   private static final String EFFECTIVE_LOCATION_ID_KEY = "effectiveLocationId";
   private static final String PRIMARY_SERVICE_POINT_KEY = "primaryServicePoint";
@@ -67,140 +73,136 @@ public class PickSlipsResource extends Resource {
   }
 
   private void getMany(RoutingContext routingContext) {
-    final UUID servicePointId = UUID.fromString(routingContext.request().getParam(SERVICE_POINT_ID_PARAM));
-
     final WebContext context = new WebContext(routingContext);
     final Clients clients = Clients.create(context, client);
 
-    fetchLocationsForServicePoint(servicePointId, clients.locationsStorage())
-      .thenComposeAsync(r -> r.after(locations -> fetchPagedItemsByLocations(locations, clients.itemsStorage())))
-      .thenComposeAsync(r -> r.after(items -> filterItemsByOpenUnfilledRequests(items, clients.requestsStorage())))
-      .thenComposeAsync(r -> r.after(items -> fetchHoldings(items, clients.holdingsStorage())))
-      .thenComposeAsync(r -> r.after(items -> fetchInstances(items, clients.instancesStorage())))
-      .thenApply(r -> r.next(this::mapResultToJson))
+    final UserRepository userRepository = new UserRepository(clients);
+    final AddressTypeRepository addressTypeRepository = new AddressTypeRepository(clients);
+    final ServicePointRepository servicePointRepository = new ServicePointRepository(clients);
+
+    final UUID servicePointId = UUID.fromString(
+      routingContext.request().getParam(SERVICE_POINT_ID_PARAM));
+
+    fetchLocationsForServicePoint(servicePointId, clients)
+      .thenComposeAsync(r -> r.after(locations -> fetchPagedItemsForLocations(locations, clients)))
+      .thenComposeAsync(r -> r.after(items -> fetchOpenPageRequestsForItems(items, clients)))
+      .thenComposeAsync(r -> r.after(userRepository::findUsersForRequests))
+      .thenComposeAsync(r -> r.after(addressTypeRepository::findAddressTypesForRequests))
+      .thenComposeAsync(r -> r.after(servicePointRepository::findServicePointsForRequests))
+      .thenApply(flatMapResult(this::mapResultToJson))
       .thenApply(OkJsonResponseResult::from)
       .thenAccept(r -> r.writeTo(routingContext.response()));
   }
 
-  private CompletableFuture<Result<Set<Location>>> fetchLocationsForServicePoint(
-    UUID servicePointId, GetManyRecordsClient locationsStorageClient) {
+  private CompletableFuture<Result<MultipleRecords<Location>>> fetchLocationsForServicePoint(
+    UUID servicePointId, Clients clients) {
 
-    return findWithCqlQuery(locationsStorageClient, LOCATIONS_KEY, Location::from)
-      .findByQuery(exactMatch(PRIMARY_SERVICE_POINT_KEY, servicePointId.toString()))
-      .thenApply(r -> r.next(this::recordsToSet));
+    return findWithCqlQuery(clients.locationsStorage(), LOCATIONS_KEY, Location::from)
+      .findByQuery(exactMatch(PRIMARY_SERVICE_POINT_KEY, servicePointId.toString()));
   }
 
-  private CompletableFuture<Result<Set<Item>>> fetchPagedItemsByLocations(
-    Set<Location> locations, GetManyRecordsClient itemStorageClient) {
+  private CompletableFuture<Result<Collection<Item>>> fetchPagedItemsForLocations(
+    MultipleRecords<Location> multipleLocations, Clients clients) {
+
+    Collection<Location> locations = multipleLocations.getRecords();
 
     Set<String> locationIds = locations.stream()
       .map(Location::getId)
-      .collect(Collectors.toSet());
+      .filter(StringUtils::isNoneBlank)
+      .collect(toSet());
 
-    final Result<CqlQuery> statusQuery = exactMatch(STATUS_NAME_KEY, ItemStatus.PAGED.getValue());
+    if (locationIds.isEmpty()) {
+      return completedFuture(succeeded(emptyList()));
+    }
 
-    return findWithMultipleCqlIndexValues(itemStorageClient, ITEMS_KEY, Item::from)
-      .findByIdIndexAndQuery(locationIds, EFFECTIVE_LOCATION_ID_KEY, statusQuery)
-      .thenApply(r -> r.next(this::recordsToSet))
-      .thenApply(r -> r.next(items -> populateLocationsInItems(items, locations)));
+    final ItemRepository itemRepository = new ItemRepository(clients, false, true, true);
+    Result<CqlQuery> statusQuery = exactMatch(STATUS_NAME_KEY, ItemStatus.PAGED.getValue());
+
+    return itemRepository.findByIndexNameAndQuery(locationIds, EFFECTIVE_LOCATION_ID_KEY, statusQuery)
+      .thenComposeAsync(r -> r.after(items -> fetchLocationDetailsForItems(items, locations, clients)));
   }
 
-  private Result<Set<Item>> populateLocationsInItems(Set<Item> items,
-    Set<Location> locations) {
+  private CompletableFuture<Result<Collection<Item>>> fetchLocationDetailsForItems(
+    Collection<Item> items, Collection<Location> locationsForServicePoint, Clients clients) {
 
-    Map<String, Location> locationMap = locations.stream()
-        .collect(Collectors.toMap(Location::getId, identity()));
+    Set<String> locationIdsFromItems = items.stream()
+      .map(Item::getLocationId)
+      .filter(StringUtils::isNoneBlank)
+      .collect(toSet());
 
-    return Result.succeeded(
+    Set<Location> locationsForItems = locationsForServicePoint.stream()
+      .filter(location -> locationIdsFromItems.contains(location.getId()))
+      .collect(toSet());
+
+    if (locationsForItems.isEmpty()) {
+      return completedFuture(succeeded(emptyList()));
+    }
+
+    final LocationRepository locationRepository = LocationRepository.using(clients);
+
+    return completedFuture(succeeded(locationsForItems))
+      .thenComposeAsync(r -> r.after(locationRepository::fetchLibraries))
+      .thenComposeAsync(r -> r.after(locationRepository::fetchInstitutions))
+      .thenComposeAsync(r -> r.after(locationRepository::fetchCampuses))
+      .thenApply(flatMapResult(locations -> matchLocationsToItems(items, locations)));
+  }
+
+  private Result<Collection<Item>> matchLocationsToItems(
+    Collection<Item> items, Collection<Location> locations) {
+
+    Map<String, Location> locationsMap = locations.stream()
+      .collect(toMap(Location::getId, identity()));
+
+    return succeeded(
       items.stream()
-        .map(item -> item.withLocation(locationMap.get(item.getLocationId())))
-        .collect(Collectors.toSet()));
+        .map(item -> item.withLocation(locationsMap.getOrDefault(item.getLocationId(), null)))
+        .collect(toSet())
+    );
   }
 
-  private CompletableFuture<Result<Set<Item>>> filterItemsByOpenUnfilledRequests(
-      Set<Item> items, GetManyRecordsClient client) {
+  private CompletableFuture<Result<MultipleRecords<Request>>> fetchOpenPageRequestsForItems(
+    Collection<Item> items, Clients clients) {
 
     Set<String> itemIds = items.stream()
-        .map(Item::getItemId)
-        .collect(Collectors.toSet());
+      .map(Item::getItemId)
+      .filter(StringUtils::isNoneBlank)
+      .collect(toSet());
 
+    if(itemIds.isEmpty()) {
+      return completedFuture(succeeded(MultipleRecords.empty()));
+    }
+
+    final Result<CqlQuery> typeQuery = exactMatch(REQUEST_TYPE_KEY, RequestType.PAGE.getValue());
     final Result<CqlQuery> statusQuery = exactMatch(STATUS_KEY, RequestStatus.OPEN_NOT_YET_FILLED.getValue());
+    final Result<CqlQuery> statusAndTypeQuery = typeQuery.combine(statusQuery, CqlQuery::and);
 
-    return findWithMultipleCqlIndexValues(client, REQUESTS_KEY, Request::from)
-      .findByIdIndexAndQuery(itemIds, ITEM_ID_KEY, statusQuery)
-      .thenApply(r -> r.next(this::recordsToSet))
-      .thenApply(r -> r.next(requests -> filterItemsByRequests(items, requests)));
+    return findWithMultipleCqlIndexValues(clients.requestsStorage(), REQUESTS_KEY, Request::from)
+      .find(byIndex(ITEM_ID_KEY, itemIds).withQuery(statusAndTypeQuery))
+      .thenApply(flatMapResult(requests -> matchItemsToRequests(requests, items)));
   }
 
-  private Result<Set<Item>> filterItemsByRequests(Set<Item> items,
-    Set<Request> requests) {
+  private Result<MultipleRecords<Request>> matchItemsToRequests(
+    MultipleRecords<Request> requests, Collection<Item> items) {
 
-    Set<String> requestedItemIds = requests.stream()
-        .map(Request::getItemId)
-        .collect(Collectors.toSet());
+    Map<String, Item> itemMap = items.stream()
+      .collect(toMap(Item::getItemId, identity()));
 
-    return Result.succeeded(items.stream()
-      .filter(i -> requestedItemIds.contains(i.getItemId()))
-      .collect(Collectors.toSet()));
+    return succeeded(
+      requests.mapRecords(request ->
+        request.withItem(itemMap.getOrDefault(request.getItemId(), null))
+    ));
   }
 
-  private CompletableFuture<Result<Set<Item>>> fetchHoldings(
-    Set<Item> items, GetManyRecordsClient client) {
+  private Result<JsonObject> mapResultToJson(MultipleRecords<Request> requests) {
+    List<JsonObject> representations = requests.getRecords().stream()
+      .map(TemplateContextUtil::createStaffSlipContext)
+      .collect(Collectors.toList());
 
-      Set<String> holdingsIds = items.stream()
-        .map(Item::getHoldingsRecordId)
-        .filter(Objects::nonNull)
-        .collect(Collectors.toSet());
+    JsonObject jsonRepresentations = new JsonObject()
+      .put(PICK_SLIPS_KEY, representations)
+      .put(TOTAL_RECORDS_KEY, representations.size());
 
-      final FindWithMultipleCqlIndexValues<JsonObject> fetcher
-        = findWithMultipleCqlIndexValues(client, HOLDINGS_RECORDS_KEY, identity());
-
-      return fetcher.findByIds(holdingsIds)
-        .thenApply(r -> r.map(holdings -> items.stream()
-          .map(item -> item.withHoldingsRecord(
-            findById(item.getHoldingsRecordId(), holdings.getRecords()).orElse(null)))
-          .collect(Collectors.toSet())));
-  }
-
-  private CompletableFuture<Result<Set<Item>>> fetchInstances(
-    Set<Item> items, GetManyRecordsClient client) {
-
-      Set<String> instanceIds = items.stream()
-        .map(Item::getInstanceId)
-        .filter(Objects::nonNull)
-        .collect(Collectors.toSet());
-
-      final FindWithMultipleCqlIndexValues<JsonObject> fetcher
-        = findWithMultipleCqlIndexValues(client, INSTANCES_KEY, identity());
-
-      return fetcher.findByIds(instanceIds)
-        .thenApply(r -> r.map(instances -> items.stream()
-          .map(item -> item.withInstance(
-            findById(item.getInstanceId(), instances.getRecords()).orElse(null)))
-          .collect(Collectors.toSet())));
-  }
-
-  private Result<JsonObject> mapResultToJson(Set<Item> items) {
-    List<JsonObject> jsonItems = items.stream()
-        .map(item -> new ItemPickSlipRepresentation().create(item))
-        .collect(Collectors.toList());
-
-    JsonObject jsonResult = new JsonObject()
-        .put(PICK_SLIPS_KEY, jsonItems)
-        .put(TOTAL_RECORDS_KEY, jsonItems.size());
-
-    return Result.succeeded(jsonResult);
-  }
-
-  private <T> Result<Set<T>> recordsToSet(MultipleRecords<T> records) {
-    return Result.succeeded(
-      new HashSet<>(records.toKeys(identity())));
-  }
-
-  private Optional<JsonObject> findById(String id, Collection<JsonObject> collection) {
-    return collection.stream()
-      .filter(item -> item.getString(ID_KEY).equals(id))
-      .findFirst();
+    return succeeded(jsonRepresentations);
   }
 
 }

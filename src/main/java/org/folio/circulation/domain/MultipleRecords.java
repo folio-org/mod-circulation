@@ -10,6 +10,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -56,11 +57,11 @@ public class MultipleRecords<T> {
       wrappedRecords, totalRecords));
   }
 
-  public <R> List<R> toKeys(Function<T, R> keyMapper) {
+  public <R> Set<R> toKeys(Function<T, R> keyMapper) {
     return getRecords().stream()
       .map(keyMapper)
       .filter(Objects::nonNull)
-      .collect(Collectors.toList());
+      .collect(Collectors.toSet());
   }
 
   public Map<String, T> toMap(Function<T, String> keyMapper) {

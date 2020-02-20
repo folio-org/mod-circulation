@@ -6,8 +6,8 @@ import static org.folio.circulation.domain.OpeningDay.fromJsonByDefaultKey;
 import static org.folio.circulation.support.ResultBinding.flatMapResult;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 
+import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.AdjacentOpeningDays;
@@ -49,7 +49,7 @@ public class CalendarRepository {
       .fetch(path);
   }
 
-  public CompletableFuture<Result<List<OpeningDay>>> fetchOpeningDaysBetweenDates(
+  public CompletableFuture<Result<Collection<OpeningDay>>> fetchOpeningDaysBetweenDates(
     String servicePointId, DateTime startDate, DateTime endDate, boolean includeClosedDays) {
 
     String params = String.format(PERIODS_QUERY_PARAMS,
@@ -59,7 +59,7 @@ public class CalendarRepository {
       .thenApply(flatMapResult(this::getOpeningDaysFromOpeningPeriods));
   }
 
-  private Result<List<OpeningDay>> getOpeningDaysFromOpeningPeriods(Response periodsResponse) {
+  private Result<Collection<OpeningDay>> getOpeningDaysFromOpeningPeriods(Response periodsResponse) {
     return MultipleRecords.from(periodsResponse, this::getOpeningDayFromOpeningPeriod, OPENING_PERIODS)
       .next(r -> Result.succeeded(r.toKeys(identity())));
   }

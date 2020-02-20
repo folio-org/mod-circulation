@@ -6,6 +6,7 @@ import static org.folio.circulation.support.JsonPropertyWriter.write;
 
 import java.util.Optional;
 
+import org.apache.commons.lang3.ObjectUtils;
 import org.folio.circulation.domain.CallNumberComponents;
 import org.folio.circulation.domain.CheckInProcessRecords;
 import org.folio.circulation.domain.Item;
@@ -27,6 +28,7 @@ public class TemplateContextUtil {
   private static final String USER = "user";
   private static final String ITEM = "item";
   private static final String REQUEST = "request";
+  private static final String REQUESTER = "requester";
   private static final String LOAN = "loan";
 
   private static final String UNLIMITED = "unlimited";
@@ -67,30 +69,53 @@ public class TemplateContextUtil {
   }
 
   public static JsonObject createCheckInContext(CheckInProcessRecords records) {
-    JsonObject checkInContext = new JsonObject();
-
     Item item = records.getItem();
-    if (item != null) {
-      JsonObject itemContext = createItemContext(item);
+    Request firstRequest = records.getHighestPriorityFulfillableRequest();
+    JsonObject staffSlipContext = createStaffSlipContext(item, firstRequest);
+    JsonObject itemContext = staffSlipContext.getJsonObject(ITEM);
+
+    if (ObjectUtils.allNotNull(item, itemContext)) {
+      write(itemContext, "lastCheckedInDateTime", DateTime.now(DateTimeZone.UTC));
       if (item.getInTransitDestinationServicePoint() != null) {
         itemContext.put("fromServicePoint", records.getCheckInServicePoint().getName());
         itemContext.put("toServicePoint", item.getInTransitDestinationServicePoint().getName());
       }
-      write(itemContext, "lastCheckedInDateTime", DateTime.now(DateTimeZone.UTC));
-      checkInContext.put(ITEM, itemContext);
     }
 
-    Request firstRequest = records.getHighestPriorityFulfillableRequest();
-    if (firstRequest != null) {
-      checkInContext.put(REQUEST, createRequestContext(firstRequest));
+    return staffSlipContext;
+  }
 
-      User requester = firstRequest.getRequester();
+  public static JsonObject createStaffSlipContext(Request request) {
+    if (request == null) {
+      return new JsonObject();
+    }
+
+    return createStaffSlipContext(request.getItem(), request);
+  }
+
+  public static JsonObject createStaffSlipContext(
+    Item item, Request request) {
+
+    JsonObject staffSlipContext = new JsonObject();
+
+    if (item != null) {
+      JsonObject itemContext = createItemContext(item);
+      if (item.getLastCheckIn() != null) {
+        write(itemContext, "lastCheckedInDateTime", item.getLastCheckIn().getDateTime());
+      }
+      staffSlipContext.put(ITEM, itemContext);
+    }
+
+    if (request != null) {
+      staffSlipContext.put(REQUEST, createRequestContext(request));
+
+      User requester = request.getRequester();
       if (requester != null) {
-        checkInContext.put("requester", createUserContext(requester, firstRequest.getDeliveryAddressTypeId()));
+        staffSlipContext.put(REQUESTER, createUserContext(requester, request.getDeliveryAddressTypeId()));
       }
     }
 
-    return checkInContext;
+    return staffSlipContext;
   }
 
   public static JsonObject createUserContext(User user, String deliveryAddressTypeId) {
