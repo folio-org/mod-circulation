@@ -2,9 +2,10 @@ package org.folio.circulation.storage;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.function.Function.identity;
-import static org.folio.circulation.support.http.client.CqlQuery.exactMatchAny;
 import static org.folio.circulation.support.JsonKeys.byId;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
+import static org.folio.circulation.support.fetching.RecordFetching.findWithCqlQuery;
+import static org.folio.circulation.support.http.client.CqlQuery.exactMatchAny;
 
 import java.util.Collection;
 import java.util.Set;
@@ -13,20 +14,20 @@ import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.MultipleRecords;
-import org.folio.circulation.support.CollectionResourceClient;
-import org.folio.circulation.support.http.client.CqlQuery;
+import org.folio.circulation.support.FindWithCqlQuery;
+import org.folio.circulation.support.GetManyRecordsClient;
 import org.folio.circulation.support.ItemRepository;
-import org.folio.circulation.support.MultipleRecordFetcher;
 import org.folio.circulation.support.Result;
+import org.folio.circulation.support.http.client.CqlQuery;
 
 import io.vertx.core.json.JsonObject;
 
 public class ItemByInstanceIdFinder {
 
-  private final CollectionResourceClient holdingsStorageClient;
+  private final GetManyRecordsClient holdingsStorageClient;
   private final ItemRepository itemRepository;
 
-  public ItemByInstanceIdFinder(CollectionResourceClient holdingsStorageClient,
+  public ItemByInstanceIdFinder(GetManyRecordsClient holdingsStorageClient,
                                 ItemRepository itemRepository) {
 
     this.holdingsStorageClient = holdingsStorageClient;
@@ -35,8 +36,8 @@ public class ItemByInstanceIdFinder {
 
   public CompletableFuture<Result<Collection<Item>>> getItemsByInstanceId(UUID instanceId) {
 
-    final MultipleRecordFetcher<JsonObject> fetcher
-      = new MultipleRecordFetcher<>(holdingsStorageClient, "holdingsRecords", identity());
+    final FindWithCqlQuery<JsonObject> fetcher = findWithCqlQuery(
+      holdingsStorageClient, "holdingsRecords", identity());
 
     return fetcher.findByQuery(CqlQuery.exactMatch("instanceId", instanceId.toString()))
       .thenCompose(this::getItems);

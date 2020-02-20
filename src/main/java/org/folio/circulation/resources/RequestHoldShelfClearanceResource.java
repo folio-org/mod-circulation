@@ -30,7 +30,7 @@ import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestRepresentation;
 import org.folio.circulation.domain.ItemsReportFetcher;
 import org.folio.circulation.support.Clients;
-import org.folio.circulation.support.CollectionResourceClient;
+import org.folio.circulation.support.GetManyRecordsClient;
 import org.folio.circulation.support.http.client.CqlQuery;
 import org.folio.circulation.support.ItemRepository;
 import org.folio.circulation.support.OkJsonResponseResult;
@@ -84,7 +84,7 @@ public class RequestHoldShelfClearanceResource extends Resource {
     final Clients clients = Clients.create(context, client);
 
     final ItemRepository itemRepository = new ItemRepository(clients, false, false, false);
-    final CollectionResourceClient requestsStorage = clients.requestsStorage();
+    final GetManyRecordsClient requestsStorage = clients.requestsStorage();
     final ReportRepository reportRepository = new ReportRepository(clients);
 
     final String servicePointId = routingContext.request().getParam(SERVICE_POINT_ID_PARAM);
@@ -129,14 +129,14 @@ public class RequestHoldShelfClearanceResource extends Resource {
       .collect(Collectors.toList());
   }
 
-  private CompletableFuture<Result<HoldShelfClearanceRequestContext>> findAwaitingPickupRequestsByItemsIds(CollectionResourceClient client,
+  private CompletableFuture<Result<HoldShelfClearanceRequestContext>> findAwaitingPickupRequestsByItemsIds(GetManyRecordsClient client,
                                                                                                            List<List<String>> batchItemIds) {
     List<Result<MultipleRecords<Request>>> awaitingPickupRequests = findAwaitingPickupRequests(client, batchItemIds);
     return CompletableFuture.completedFuture(Result.succeeded(
       createHoldShelfClearanceRequestContext(batchItemIds, awaitingPickupRequests)));
   }
 
-  private List<Result<MultipleRecords<Request>>> findAwaitingPickupRequests(CollectionResourceClient client,
+  private List<Result<MultipleRecords<Request>>> findAwaitingPickupRequests(GetManyRecordsClient client,
                                                                             List<List<String>> batchItemIds) {
     return batchItemIds.stream()
       .map(batch -> {
@@ -170,7 +170,7 @@ public class RequestHoldShelfClearanceResource extends Resource {
       .withAwaitingPickupRequestItemIds(awaitingPickupRequestItemIds);
   }
 
-  private CompletableFuture<Result<HoldShelfClearanceRequestContext>> findExpiredOrCancelledRequestByItemIds(CollectionResourceClient client,
+  private CompletableFuture<Result<HoldShelfClearanceRequestContext>> findExpiredOrCancelledRequestByItemIds(GetManyRecordsClient client,
                                                                                                              HoldShelfClearanceRequestContext context) {
     List<Result<MultipleRecords<Request>>> requestList = findRequestsSortedByClosedDate(client, context.getAwaitingPickupItemIds());
     List<Request> firstRequestFromList = getFirstRequestFromList(requestList);
@@ -197,7 +197,7 @@ public class RequestHoldShelfClearanceResource extends Resource {
   /**
    * Find for each item ids requests sorted by awaitingPickupRequestClosedDate
    */
-  private List<Result<MultipleRecords<Request>>> findRequestsSortedByClosedDate(CollectionResourceClient client,
+  private List<Result<MultipleRecords<Request>>> findRequestsSortedByClosedDate(GetManyRecordsClient client,
                                                                                 List<String> itemIds) {
     return itemIds.stream()
       .filter(Objects::nonNull)
@@ -226,8 +226,8 @@ public class RequestHoldShelfClearanceResource extends Resource {
   }
 
   private CompletableFuture<Result<MultipleRecords<Request>>> findRequestsByCqlQuery(
-    CollectionResourceClient client, Result<CqlQuery> cqlQueryResult,
-    PageLimit pageLimit) {
+          GetManyRecordsClient client, Result<CqlQuery> cqlQueryResult,
+          PageLimit pageLimit) {
 
     return cqlQueryResult
       .after(query -> client.getMany(query, pageLimit))

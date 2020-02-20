@@ -2,6 +2,7 @@ package org.folio.circulation.domain;
 
 import static org.folio.circulation.support.Result.ofAsync;
 import static org.folio.circulation.support.Result.succeeded;
+import static org.folio.circulation.support.fetching.RecordFetching.findWithMultipleCqlIndexValues;
 
 import java.util.Collection;
 import java.util.Map;
@@ -11,7 +12,6 @@ import java.util.concurrent.CompletableFuture;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.FetchSingleRecord;
-import org.folio.circulation.support.MultipleRecordFetcher;
 import org.folio.circulation.support.Result;
 
 public class AddressTypeRepository {
@@ -33,8 +33,11 @@ public class AddressTypeRepository {
       .fetch(id);
   }
 
-  public CompletableFuture<Result<MultipleRecords<AddressType>>> getAddressTypesByIds(Collection<String> ids) {
-    return new MultipleRecordFetcher<>(addressTypesStorageClient, "addressTypes", AddressType::new)
+  public CompletableFuture<Result<MultipleRecords<AddressType>>> getAddressTypesByIds(
+      Collection<String> ids) {
+
+    return findWithMultipleCqlIndexValues(addressTypesStorageClient,
+        "addressTypes", AddressType::new)
       .findByIds(ids);
   }
 

@@ -14,7 +14,7 @@ import org.folio.circulation.support.http.client.Response;
 
 import io.vertx.core.json.JsonObject;
 
-public class CollectionResourceClient {
+public class CollectionResourceClient implements GetManyRecordsClient {
   private final OkapiHttpClient client;
   private final URL collectionRoot;
 
@@ -76,14 +76,16 @@ public class CollectionResourceClient {
     return client.get(url);
   }
 
+  @Override
   public CompletableFuture<Result<Response>> getMany(CqlQuery cqlQuery,
-    PageLimit pageLimit) {
+      PageLimit pageLimit) {
 
     return getMany(cqlQuery, pageLimit, noOffset());
   }
 
+  @Override
   public CompletableFuture<Result<Response>> getMany(CqlQuery cqlQuery,
-    PageLimit pageLimit, Offset offset) {
+      PageLimit pageLimit, Offset offset) {
 
     return client.get(collectionRoot, cqlQuery, pageLimit, offset);
   }

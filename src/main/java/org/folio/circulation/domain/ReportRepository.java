@@ -9,13 +9,13 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.support.Clients;
-import org.folio.circulation.support.CollectionResourceClient;
+import org.folio.circulation.support.GetManyRecordsClient;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.http.client.CqlQuery;
 
 public class ReportRepository {
 
-  private final CollectionResourceClient itemsClient;
+  private final GetManyRecordsClient itemsClient;
 
   private static final int PAGE_LIMIT = 100;
 

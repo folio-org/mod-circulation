@@ -3,6 +3,7 @@ package org.folio.circulation.domain;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.support.Result.ofAsync;
 import static org.folio.circulation.support.Result.succeeded;
+import static org.folio.circulation.support.fetching.RecordFetching.findWithMultipleCqlIndexValues;
 
 import java.lang.invoke.MethodHandles;
 import java.util.ArrayList;
@@ -17,7 +18,7 @@ import java.util.stream.Stream;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.FetchSingleRecord;
-import org.folio.circulation.support.MultipleRecordFetcher;
+import org.folio.circulation.support.FindWithMultipleCqlIndexValues;
 import org.folio.circulation.support.Result;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -50,11 +51,11 @@ public class ServicePointRepository {
         .whenNotFound(succeeded(null))
         .fetch(id);
   }
-  
+
   public CompletableFuture<Result<ServicePoint>> getServicePointForRequest(Request request) {
     return getServicePointById(request.getPickupServicePointId());
-  } 
-  
+  }
+
   public CompletableFuture<Result<Loan>> findServicePointsForLoan(Result<Loan> loanResult) {
     return fetchCheckInServicePoint(loanResult)
       .thenComposeAsync(this::fetchCheckOutServicePoint);
@@ -76,8 +77,8 @@ public class ServicePointRepository {
     MultipleRecords<Loan> multipleLoans) {
 
     Collection<Loan> loans = multipleLoans.getRecords();
-    
-    final List<String> servicePointsToFetch = 
+
+    final List<String> servicePointsToFetch =
         Stream.concat((loans.stream()
           .filter(Objects::nonNull)
           .map(Loan::getCheckInServicePointId)
@@ -91,14 +92,14 @@ public class ServicePointRepository {
        )
       .distinct()
       .collect(Collectors.toList());
-    
+
     if(servicePointsToFetch.isEmpty()) {
       log.info("No service points to query for loans");
       return completedFuture(succeeded(multipleLoans));
     }
 
-    final MultipleRecordFetcher<ServicePoint> fetcher = createServicePointsFetcher();
-    
+    final FindWithMultipleCqlIndexValues<ServicePoint> fetcher = createServicePointsFetcher();
+
     return fetcher.findByIds(servicePointsToFetch)
       .thenApply(multipleServicePointsResult -> multipleServicePointsResult.next(
           multipleServicePoints -> {
@@ -138,7 +139,7 @@ public class ServicePointRepository {
       return completedFuture(succeeded(multipleRequests));
     }
 
-    final MultipleRecordFetcher<ServicePoint> fetcher = createServicePointsFetcher();
+    final FindWithMultipleCqlIndexValues<ServicePoint> fetcher = createServicePointsFetcher();
 
     return fetcher.findByIds(servicePointsToFetch)
         .thenApply(multipleServicePointsResult -> multipleServicePointsResult.next(
@@ -148,9 +149,9 @@ public class ServicePointRepository {
             for(Request request : requests) {
               Request newRequest = null;
               boolean foundSP = false; //Have we found a matching service point for the request?
-              for(ServicePoint servicePoint : spCollection) { 
+              for(ServicePoint servicePoint : spCollection) {
                 if(request.getPickupServicePointId() != null &&
-                    request.getPickupServicePointId().equals(servicePoint.getId())) {                
+                    request.getPickupServicePointId().equals(servicePoint.getId())) {
                   newRequest = request.withPickupServicePoint(servicePoint);
                   foundSP = true;
                   break;
@@ -164,13 +165,13 @@ public class ServicePointRepository {
               newRequestList.add(newRequest);
             }
 
-            return succeeded(
-              new MultipleRecords<>(newRequestList, multipleRequests.getTotalRecords()));
+            return succeeded(new MultipleRecords<>(newRequestList,
+              multipleRequests.getTotalRecords()));
           }));
   }
 
-  private MultipleRecordFetcher<ServicePoint> createServicePointsFetcher() {
-    return new MultipleRecordFetcher<>(
-      servicePointsStorageClient, "servicepoints", ServicePoint::from);
+  private FindWithMultipleCqlIndexValues<ServicePoint> createServicePointsFetcher() {
+    return findWithMultipleCqlIndexValues(servicePointsStorageClient,
+      "servicepoints", ServicePoint::from);
   }
 }
