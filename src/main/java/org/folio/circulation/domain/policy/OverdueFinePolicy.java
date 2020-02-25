@@ -49,11 +49,11 @@ public class OverdueFinePolicy extends Policy {
   }
 
   public Double getMaxOverdueFine() {
-    return limitInfo.getMaxOverdueFine();
+    return limitInfo == null ? null : limitInfo.getMaxOverdueFine();
   }
 
   public Double getMaxOverdueRecallFine() {
-    return limitInfo.getMaxOverdueRecallFine();
+    return limitInfo == null ? null : limitInfo.getMaxOverdueRecallFine();
   }
 
   public Boolean getIgnoreGracePeriodForRecalls() {
@@ -70,7 +70,7 @@ public class OverdueFinePolicy extends Policy {
 
   private static class UnknownOverdueFinePolicy extends OverdueFinePolicy {
     UnknownOverdueFinePolicy(String id) {
-      super(id, null, null, null, null, null, null);
+      super(id, null, null, null, new OverdueFinePolicyLimitInfo(null, null), false, false);
     }
   }
 }
