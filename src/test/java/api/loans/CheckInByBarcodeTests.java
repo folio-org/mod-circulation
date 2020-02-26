@@ -701,12 +701,18 @@ public class CheckInByBarcodeTests extends APITests {
 
     assertThat(recordedOperations.totalRecords(), is(1));
 
+    final String itemEffectiveLocationId = itemsClient.getById(itemId).getJson()
+      .getString("effectiveLocationId");
+
     recordedOperations.forEach(checkInOperation -> {
       assertThat(checkInOperation.getString("occurredDateTime"),
         withinSecondsBeforeNow(Seconds.seconds(2)));
       assertThat(checkInOperation.getString("itemId"), is(itemId.toString()));
       assertThat(checkInOperation.getString("servicePointId"), is(servicePoint.toString()));
       assertThat(checkInOperation.getString("performedByUserId"), is(getUserId()));
+      assertThat(checkInOperation.getString("itemStatus"), is("Checked out"));
+      assertThat(checkInOperation.getString("itemLocationId"), is(itemEffectiveLocationId));
+      assertThat(checkInOperation.getInteger("requestQueueSize"), is(0));
     });
   }
 }
