@@ -1,7 +1,7 @@
 package org.folio.circulation.domain.policy;
 
 import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.notNullValue;
+import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 import java.util.UUID;
@@ -56,7 +56,7 @@ public class OverdueFinePolicyTest {
 
     OverdueFinePolicy overdueFinePolicy = OverdueFinePolicy.from(jsonObject);
 
-    assertThat(overdueFinePolicy, notNullValue());
+    checkAllFieldsAndAssertThatQuantityIsNull(overdueFinePolicy);
   }
 
   @Test
@@ -66,7 +66,7 @@ public class OverdueFinePolicyTest {
 
     OverdueFinePolicy overdueFinePolicy = OverdueFinePolicy.from(jsonObject);
 
-    assertThat(overdueFinePolicy, notNullValue());
+    checkAllFieldsAndAssertThatQuantityIsNull(overdueFinePolicy);
   }
 
   @Test
@@ -76,7 +76,7 @@ public class OverdueFinePolicyTest {
 
     OverdueFinePolicy overdueFinePolicy = OverdueFinePolicy.from(jsonObject);
 
-    assertThat(overdueFinePolicy, notNullValue());
+    checkAllFieldsAndAssertThatIntervalIsNull(overdueFinePolicy);
   }
 
   @Test
@@ -86,7 +86,7 @@ public class OverdueFinePolicyTest {
 
     OverdueFinePolicy overdueFinePolicy = OverdueFinePolicy.from(jsonObject);
 
-    assertThat(overdueFinePolicy, notNullValue());
+    checkAllFieldsAndAssertThatIntervalIsNull(overdueFinePolicy);
   }
 
   @Test
@@ -96,6 +96,99 @@ public class OverdueFinePolicyTest {
 
     OverdueFinePolicy overdueFinePolicy = OverdueFinePolicy.from(jsonObject);
 
-    assertThat(overdueFinePolicy, notNullValue());
+    checkAllFieldsAndAssertThatQuantityAndIntervalAreNull(overdueFinePolicy);
+  }
+
+  @Test
+  public void shouldAcceptOverdueFinePolicyWithOnlyIdAndName() {
+    OverdueFinePolicy overdueFinePolicy = OverdueFinePolicy.from(new JsonObject()
+      .put("id", overdueFinePolicyJsonObject.getString("id"))
+      .put("name", "Overdue Fine Policy"));
+
+    assertThatAllFieldsHaveDefaultValuesExceptIdAndName(overdueFinePolicy);
+  }
+
+  @Test
+  public void shouldAcceptOverdueFinePolicyWithOnlyId() {
+    OverdueFinePolicy overdueFinePolicy = OverdueFinePolicy.from(new JsonObject()
+      .put("id", overdueFinePolicyJsonObject.getString("id")));
+
+    assertThatAllFieldsHaveDefaultValuesExceptId(overdueFinePolicy);
+  }
+
+  @Test
+  public void unknownPolicyShouldBeInitializedWithDefaultValues() {
+    assertThatAllFieldsHaveDefaultValuesExceptId(OverdueFinePolicy.unknown(
+      overdueFinePolicyJsonObject.getString("id")));
+  }
+
+  private void checkAllFieldsAndAssertThatQuantityIsNull(OverdueFinePolicy overdueFinePolicy) {
+    assertThat(overdueFinePolicy.getId(), is(overdueFinePolicyJsonObject.getString("id")));
+    assertThat(overdueFinePolicy.getName(), is(overdueFinePolicyJsonObject.getString("name")));
+    assertThat(overdueFinePolicy.getOverdueFineInterval(), is(OverdueFineInterval.fromValue(
+      overdueFinePolicyJsonObject.getJsonObject("overdueFine").getString("intervalId"))));
+    assertThat(overdueFinePolicy.getOverdueFine(), nullValue());
+    assertThat(overdueFinePolicy.getMaxOverdueFine(),
+      is(overdueFinePolicyJsonObject.getDouble("maxOverdueFine")));
+    assertThat(overdueFinePolicy.getMaxOverdueRecallFine(),
+      is(overdueFinePolicyJsonObject.getDouble("maxOverdueRecallFine")));
+    assertThat(overdueFinePolicy.getIgnoreGracePeriodForRecalls(),
+      is(overdueFinePolicyJsonObject.getBoolean("gracePeriodRecall")));
+    assertThat(overdueFinePolicy.getCountPeriodsWhenServicePointIsClosed(),
+      is(overdueFinePolicyJsonObject.getBoolean("countClosed")));
+  }
+
+  private void checkAllFieldsAndAssertThatIntervalIsNull(OverdueFinePolicy overdueFinePolicy) {
+    assertThat(overdueFinePolicy.getId(), is(overdueFinePolicyJsonObject.getString("id")));
+    assertThat(overdueFinePolicy.getName(), is(overdueFinePolicyJsonObject.getString("name")));
+    assertThat(overdueFinePolicy.getOverdueFineInterval(), nullValue());
+    assertThat(overdueFinePolicy.getOverdueFine(),
+      is(overdueFinePolicyJsonObject.getJsonObject("overdueFine").getDouble("quantity")));
+    assertThat(overdueFinePolicy.getMaxOverdueFine(),
+      is(overdueFinePolicyJsonObject.getDouble("maxOverdueFine")));
+    assertThat(overdueFinePolicy.getMaxOverdueRecallFine(),
+      is(overdueFinePolicyJsonObject.getDouble("maxOverdueRecallFine")));
+    assertThat(overdueFinePolicy.getIgnoreGracePeriodForRecalls(),
+      is(overdueFinePolicyJsonObject.getBoolean("gracePeriodRecall")));
+    assertThat(overdueFinePolicy.getCountPeriodsWhenServicePointIsClosed(),
+      is(overdueFinePolicyJsonObject.getBoolean("countClosed")));
+  }
+
+  private void checkAllFieldsAndAssertThatQuantityAndIntervalAreNull(
+    OverdueFinePolicy overdueFinePolicy) {
+    assertThat(overdueFinePolicy.getId(), is(overdueFinePolicyJsonObject.getString("id")));
+    assertThat(overdueFinePolicy.getName(), is(overdueFinePolicyJsonObject.getString("name")));
+    assertThat(overdueFinePolicy.getOverdueFineInterval(), nullValue());
+    assertThat(overdueFinePolicy.getOverdueFine(), nullValue());
+    assertThat(overdueFinePolicy.getMaxOverdueFine(),
+      is(overdueFinePolicyJsonObject.getDouble("maxOverdueFine")));
+    assertThat(overdueFinePolicy.getMaxOverdueRecallFine(),
+      is(overdueFinePolicyJsonObject.getDouble("maxOverdueRecallFine")));
+    assertThat(overdueFinePolicy.getIgnoreGracePeriodForRecalls(),
+      is(overdueFinePolicyJsonObject.getBoolean("gracePeriodRecall")));
+    assertThat(overdueFinePolicy.getCountPeriodsWhenServicePointIsClosed(),
+      is(overdueFinePolicyJsonObject.getBoolean("countClosed")));
+  }
+
+  private void assertThatAllFieldsHaveDefaultValuesExceptIdAndName(OverdueFinePolicy overdueFinePolicy) {
+    assertThat(overdueFinePolicy.getId(), is(overdueFinePolicyJsonObject.getString("id")));
+    assertThat(overdueFinePolicy.getName(), is(overdueFinePolicyJsonObject.getString("name")));
+    assertThat(overdueFinePolicy.getOverdueFineInterval(), nullValue());
+    assertThat(overdueFinePolicy.getOverdueFine(), nullValue());
+    assertThat(overdueFinePolicy.getMaxOverdueFine(), nullValue());
+    assertThat(overdueFinePolicy.getMaxOverdueRecallFine(), nullValue());
+    assertThat(overdueFinePolicy.getIgnoreGracePeriodForRecalls(), is(false));
+    assertThat(overdueFinePolicy.getCountPeriodsWhenServicePointIsClosed(), is(false));
+  }
+
+  private void assertThatAllFieldsHaveDefaultValuesExceptId(OverdueFinePolicy overdueFinePolicy) {
+    assertThat(overdueFinePolicy.getId(), is(overdueFinePolicyJsonObject.getString("id")));
+    assertThat(overdueFinePolicy.getName(), nullValue());
+    assertThat(overdueFinePolicy.getOverdueFineInterval(), nullValue());
+    assertThat(overdueFinePolicy.getOverdueFine(), nullValue());
+    assertThat(overdueFinePolicy.getMaxOverdueFine(), nullValue());
+    assertThat(overdueFinePolicy.getMaxOverdueRecallFine(), nullValue());
+    assertThat(overdueFinePolicy.getIgnoreGracePeriodForRecalls(), is(false));
+    assertThat(overdueFinePolicy.getCountPeriodsWhenServicePointIsClosed(), is(false));
   }
 }

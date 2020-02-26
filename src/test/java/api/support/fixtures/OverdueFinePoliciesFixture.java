@@ -2,6 +2,8 @@ package api.support.fixtures;
 
 import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
 
+import java.util.UUID;
+
 import org.folio.circulation.support.http.client.IndividualResource;
 
 import api.support.builders.NoticePolicyBuilder;
@@ -63,6 +65,13 @@ public class OverdueFinePoliciesFixture {
       .withMaxOverdueRecallFine(50.00);
 
     return overdueFinePolicyRecordCreator.createIfAbsent(overdueFinePolicyBuilder);
+  }
+
+  public IndividualResource  noOverdueFine() {
+    JsonObject overdueFinePolicy = new JsonObject();
+    overdueFinePolicy.put("id", UUID.randomUUID().toString());
+    overdueFinePolicy.put("name", "No overdue fine policy");
+    return overdueFinePolicyRecordCreator.createIfAbsent(overdueFinePolicy);
   }
 
   public IndividualResource create(NoticePolicyBuilder noticePolicy) {
