@@ -9,6 +9,7 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.domain.policy.OverdueFineInterval;
+import org.folio.circulation.domain.policy.OverdueFinePolicy;
 import org.folio.circulation.domain.policy.OverdueFinePolicyRepository;
 import org.folio.circulation.domain.representations.AccountStorageRepresentation;
 import org.folio.circulation.support.Clients;
@@ -96,16 +97,26 @@ public class OverdueFineCalculatorService {
   }
 
   private CompletableFuture<Result<Double>> calculateOverdueFine(Loan loan, Integer overdueMinutes) {
-    double maxFine = loan.wasDueDateChangedByRecall() ?
-      loan.getOverdueFinePolicy().getMaxOverdueRecallFine() :
-      loan.getOverdueFinePolicy().getMaxOverdueFine();
+    double overdueFine = 0.0;
 
-    OverdueFineInterval interval = loan.getOverdueFinePolicy().getOverdueFineInterval();
-    double overdueFine = loan.getOverdueFinePolicy().getOverdueFine() *
-      Math.ceil(overdueMinutes.doubleValue() / interval.getMinutes().doubleValue());
+    OverdueFinePolicy overdueFinePolicy = loan.getOverdueFinePolicy();
+    if (overdueMinutes > 0 && overdueFinePolicy != null) {
+      Double maxFine = loan.wasDueDateChangedByRecall() ?
+        overdueFinePolicy.getMaxOverdueRecallFine() :
+        overdueFinePolicy.getMaxOverdueFine();
 
-    if (maxFine > 0) {
-      overdueFine = Math.min(overdueFine, maxFine);
+      OverdueFineInterval interval = overdueFinePolicy.getOverdueFineInterval();
+      Double overdueFinePerInterval = loan.getOverdueFinePolicy().getOverdueFine();
+
+      if (maxFine != null && interval != null && overdueFinePerInterval != null) {
+        double numberOfIntervals = Math.ceil(overdueMinutes.doubleValue() /
+          interval.getMinutes().doubleValue());
+        overdueFine = overdueFinePerInterval * numberOfIntervals;
+
+        if (maxFine > 0) {
+          overdueFine = Math.min(overdueFine, maxFine);
+        }
+      }
     }
 
     return CompletableFuture.completedFuture(succeeded(overdueFine));

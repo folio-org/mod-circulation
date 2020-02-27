@@ -70,7 +70,7 @@ public class OverdueFinePolicy extends Policy {
 
   private static class UnknownOverdueFinePolicy extends OverdueFinePolicy {
     UnknownOverdueFinePolicy(String id) {
-      super(id, null, null, null, null, null, null);
+      super(id, null, null, null, new OverdueFinePolicyLimitInfo(null, null), false, false);
     }
   }
 }
