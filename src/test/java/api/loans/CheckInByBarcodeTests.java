@@ -630,6 +630,7 @@ public class CheckInByBarcodeTests extends APITests {
       .withId(feeFineId)
       .withFeeFineType("Overdue fine")
       .withOwnerId(ownerId)
+      .withAutomatic(true)
     );
 
     loansFixture.checkInByBarcode(new CheckInByBarcodeRequestBuilder()
