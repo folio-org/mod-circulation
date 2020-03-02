@@ -16,6 +16,14 @@
       "description": "When the item was checked in",
       "type": "string",
       "format": "date-time"
+    },
+    "claimedReturnedResolvedBy": {
+      "description": "Defines who has resolved claimed returned item state",
+      "type": "string",
+      "enum": [
+        "Found by library",
+        "Returned by patron"
+      ]
     }
   },
   "additionalProperties": false,

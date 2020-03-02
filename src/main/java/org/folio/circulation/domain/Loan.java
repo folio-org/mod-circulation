@@ -150,7 +150,11 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   public void changeAction(LoanAction action) {
-    write(representation, LoanProperties.ACTION, action.getValue());
+    changeAction(action.getValue());
+  }
+
+  public void changeAction(String action) {
+    write(representation, LoanProperties.ACTION, action);
   }
 
   private void changeCheckInServicePointId(UUID servicePointId) {
@@ -401,8 +405,10 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     return this;
   }
 
-  Loan checkIn(DateTime returnDateTime, DateTime systemReturnDateTime, UUID servicePointId) {
-    changeAction(CHECKED_IN);
+  private Loan checkIn(String action, DateTime returnDateTime,
+                       DateTime systemReturnDateTime, UUID servicePointId) {
+
+    changeAction(action);
     removeActionComment();
     changeStatus("Closed");
     changeReturnDate(returnDateTime);
@@ -411,6 +417,19 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
 
     return this;
   }
+
+  Loan checkIn(DateTime returnDateTime, DateTime systemReturnDateTime, UUID servicePointId) {
+    return checkIn(CHECKED_IN.getValue(), returnDateTime, systemReturnDateTime,
+      servicePointId);
+  }
+
+  Loan resolveClaimedReturned(LoanAction.ResolveClaimedReturned action,
+                              DateTime returnDateTime, DateTime systemReturnDateTime, UUID servicePointId) {
+
+    return checkIn(action.getValue(), returnDateTime, systemReturnDateTime,
+      servicePointId);
+  }
+
 
   public Loan declareItemLost(String comment, DateTime dateTime) {
     changeAction(DECLARED_LOST);
