@@ -115,7 +115,7 @@ public class CheckInByBarcodeRequest {
     public static ClaimedReturnedResolvedBy from(String value) {
       return Arrays.stream(values())
         .filter(claimedReturnedResolvedBy -> claimedReturnedResolvedBy
-          .value.equals(value))
+          .getValue().equals(value))
         .findFirst()
         .orElse(null);
     }
