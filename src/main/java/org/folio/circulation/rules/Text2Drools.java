@@ -1,5 +1,7 @@
 package org.folio.circulation.rules;
 
+import static org.apache.commons.collections4.CollectionUtils.isNotEmpty;
+
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -16,6 +18,7 @@ import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
 import org.antlr.v4.runtime.tree.TerminalNode;
 import org.apache.commons.lang3.StringEscapeUtils;
+import org.folio.circulation.rules.CirculationRulesParser.CirculationRulesFileContext;
 import org.folio.circulation.rules.CirculationRulesParser.CriteriumContext;
 import org.folio.circulation.rules.CirculationRulesParser.CriteriumPriorityContext;
 import org.folio.circulation.rules.CirculationRulesParser.DedentContext;
@@ -25,7 +28,6 @@ import org.folio.circulation.rules.CirculationRulesParser.FallbackpolicyContext;
 import org.folio.circulation.rules.CirculationRulesParser.IndentContext;
 import org.folio.circulation.rules.CirculationRulesParser.LastLinePrioritiesContext;
 import org.folio.circulation.rules.CirculationRulesParser.LinePriorityContext;
-import org.folio.circulation.rules.CirculationRulesParser.CirculationRulesFileContext;
 import org.folio.circulation.rules.CirculationRulesParser.PoliciesContext;
 import org.folio.circulation.rules.CirculationRulesParser.PolicyContext;
 import org.folio.circulation.rules.CirculationRulesParser.SevenCriteriumLettersContext;
@@ -77,6 +79,9 @@ public class Text2Drools extends CirculationRulesBaseListener {
 
   */
 
+  private static final int FIRST_ELEMENT_OF_LIST = 0;
+  private static final int POLICY_ID_POSITION_NUMBER = 1;
+
   private StringBuilder drools = new StringBuilder(
       "package circulationrules\n" +
       "import org.folio.circulation.rules.*\n" +
@@ -102,6 +107,7 @@ public class Text2Drools extends CirculationRulesBaseListener {
   private int indentation = 0;
 
   private String[] policyTypes = {"l", "r", "n", "o", "i"};
+  private static Map<String, Set<String>> existingPolicyIds;
 
   private enum PriorityType {
     NONE,
@@ -129,14 +135,36 @@ public class Text2Drools extends CirculationRulesBaseListener {
   private Text2Drools() {
   }
 
+  /** Private constructor to be invoked from convert(String) only
+   *  with set of existing policies parameter.
+   *
+   */
+  private Text2Drools(Map<String, Set<String>> existingPoliciesIds) {
+    this.existingPolicyIds = existingPoliciesIds;
+  }
+
   /**
-   * Convert lcirculationoan rules from FOLIO text format into a Drools file.
+   * Convert circulation rules from FOLIO text format into a Drools file.
    * @param text String with a circulation rules file in FOLIO syntax.
    * @return Drools file
    */
   public static String convert(String text) {
     Text2Drools text2drools = new Text2Drools();
+    return getDroolsRepresentation(text, text2drools);
+  }
 
+  /**
+   * Convert circulation rules from FOLIO text format into a Drools file.
+   * @param text String with a circulation rules file in FOLIO syntax.
+   * @param existingPolicyIds Map with policy type key and set of ids value
+   * @return Drools file
+   */
+  public static String convert(String text, Map<String, Set<String>> existingPolicyIds) {
+    Text2Drools text2drools = new Text2Drools(existingPolicyIds);
+    return getDroolsRepresentation(text, text2drools);
+  }
+
+  private static String getDroolsRepresentation(String text, Text2Drools text2drools) {
     CharStream input = CharStreams.fromString(text);
     CirculationRulesLexer lexer = new CirculationRulesLexer(input);
     CommonTokenStream tokens = new CommonTokenStream(lexer);
@@ -225,7 +253,18 @@ public class Text2Drools extends CirculationRulesBaseListener {
           String.format("Must contain one of each policy type, missing type %s", policyType),
           token.getLine(), token.getCharPositionInLine());
       }
+      else if (!isPolicyExisting(policyType, policies)) {
+        throw new CirculationRulesException(
+          String.format("The policy %s does not exist", policyType),
+          token.getLine(), token.getCharPositionInLine());
+      }
     }
+  }
+
+  private boolean isPolicyExisting(String policyType, List<PolicyContext> policies) {
+    return existingPolicyIds != null && isNotEmpty(existingPolicyIds.get(policyType))
+        && existingPolicyIds.get(policyType).contains(
+          policies.get(FIRST_ELEMENT_OF_LIST).getChild(POLICY_ID_POSITION_NUMBER).getText());
   }
 
   private List<PolicyContext> filterPolicies(PoliciesContext policies, String policyType) {
