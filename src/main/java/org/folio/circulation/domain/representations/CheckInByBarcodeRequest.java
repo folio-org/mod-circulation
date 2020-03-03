@@ -19,23 +19,23 @@ public class CheckInByBarcodeRequest {
   private static final String ITEM_BARCODE = "itemBarcode";
   private static final String CHECK_IN_DATE = "checkInDate";
   private static final String SERVICE_POINT_ID = "servicePointId";
-  public static final String CLAIMED_RETURNED_RESOLVED_BY = "claimedReturnedResolvedBy";
+  public static final String CLAIMED_RETURNED_RESOLUTION = "claimedReturnedResolution";
 
   private final String itemBarcode;
   private final UUID servicePointId;
   private final DateTime checkInDate;
-  private final ClaimedReturnedResolvedBy claimedReturnedResolvedBy;
+  private final ClaimedReturnedResolution claimedReturnedResolution;
 
   private CheckInByBarcodeRequest(
     String itemBarcode,
     UUID servicePointId,
     DateTime checkInDate,
-    ClaimedReturnedResolvedBy claimedReturnedResolvedBy) {
+    ClaimedReturnedResolution claimedReturnedResolution) {
 
     this.itemBarcode = itemBarcode;
     this.servicePointId = servicePointId;
     this.checkInDate = checkInDate;
-    this.claimedReturnedResolvedBy = claimedReturnedResolvedBy;
+    this.claimedReturnedResolution = claimedReturnedResolution;
   }
 
   public static Result<CheckInByBarcodeRequest> from(JsonObject json) {
@@ -61,19 +61,18 @@ public class CheckInByBarcodeRequest {
     }
 
     final String claimedReturnedResolvedByString = json
-      .getString(CLAIMED_RETURNED_RESOLVED_BY);
-    final ClaimedReturnedResolvedBy claimedReturnedResolvedBy =
-      ClaimedReturnedResolvedBy.from(claimedReturnedResolvedByString);
+      .getString(CLAIMED_RETURNED_RESOLUTION);
+    final ClaimedReturnedResolution claimedReturnedResolution =
+      ClaimedReturnedResolution.from(claimedReturnedResolvedByString);
 
-    if (claimedReturnedResolvedByString != null
-      && claimedReturnedResolvedBy == null) {
+    if (claimedReturnedResolvedByString != null && claimedReturnedResolution == null) {
 
       return failedValidation("Unrecognized value provided for property",
-        CLAIMED_RETURNED_RESOLVED_BY, claimedReturnedResolvedByString);
+        CLAIMED_RETURNED_RESOLUTION, claimedReturnedResolvedByString);
     }
 
     return succeeded(new CheckInByBarcodeRequest(itemBarcode, servicePointId,
-      checkInDate, claimedReturnedResolvedBy));
+      checkInDate, claimedReturnedResolution));
   }
 
   public String getItemBarcode() {
@@ -88,17 +87,17 @@ public class CheckInByBarcodeRequest {
     return checkInDate;
   }
 
-  public ClaimedReturnedResolvedBy getClaimedReturnedResolvedBy() {
-    return claimedReturnedResolvedBy;
+  public ClaimedReturnedResolution getClaimedReturnedResolution() {
+    return claimedReturnedResolution;
   }
 
-  public enum ClaimedReturnedResolvedBy {
+  public enum ClaimedReturnedResolution {
     FOUND_BY_LIBRARY("Found by library"),
     RETURNED_BY_PATRON("Returned by patron");
 
     private final String value;
 
-    ClaimedReturnedResolvedBy(String value) {
+    ClaimedReturnedResolution(String value) {
       this.value = value;
     }
 
@@ -112,9 +111,9 @@ public class CheckInByBarcodeRequest {
      * @param value - Value to return enum for.
      * @return Returns matched instance or null if no such instance present.
      */
-    public static ClaimedReturnedResolvedBy from(String value) {
+    public static ClaimedReturnedResolution from(String value) {
       return Arrays.stream(values())
-        .filter(claimedReturnedResolvedBy -> claimedReturnedResolvedBy
+        .filter(claimedReturnedResolution -> claimedReturnedResolution
           .getValue().equals(value))
         .findFirst()
         .orElse(null);

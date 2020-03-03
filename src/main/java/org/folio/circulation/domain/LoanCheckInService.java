@@ -39,7 +39,7 @@ public class LoanCheckInService {
   private ResolveClaimedReturned getClaimedReturnedResolveAction(
     CheckInByBarcodeRequest request) {
 
-    switch (request.getClaimedReturnedResolvedBy()) {
+    switch (request.getClaimedReturnedResolution()) {
       case FOUND_BY_LIBRARY:
         return ResolveClaimedReturned.CHECKED_IN_FOUND_BY_LIBRARY;
       case RETURNED_BY_PATRON:
@@ -47,7 +47,7 @@ public class LoanCheckInService {
       default:
         throw new IllegalArgumentException(
           "No loan action to resolve claimed returned: "
-            + request.getClaimedReturnedResolvedBy());
+            + request.getClaimedReturnedResolution());
     }
   }
 }

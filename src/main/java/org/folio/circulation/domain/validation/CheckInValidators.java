@@ -1,6 +1,6 @@
 package org.folio.circulation.domain.validation;
 
-import static org.folio.circulation.domain.representations.CheckInByBarcodeRequest.CLAIMED_RETURNED_RESOLVED_BY;
+import static org.folio.circulation.domain.representations.CheckInByBarcodeRequest.CLAIMED_RETURNED_RESOLUTION;
 import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 
@@ -17,13 +17,13 @@ public final class CheckInValidators {
 
     return processRecordsResult.failWhen(
       processRecords -> succeeded(isClaimedReturnedNotResolved(processRecords)),
-      processRecords -> singleValidationError(String.format(
-        "Item has Claimed returned status but no '%s' present", CLAIMED_RETURNED_RESOLVED_BY),
-        CLAIMED_RETURNED_RESOLVED_BY, null));
+      processRecords -> singleValidationError(
+        "Item is claimed returned, a resolution is required to check in",
+        CLAIMED_RETURNED_RESOLUTION, null));
   }
 
   private static boolean isClaimedReturnedNotResolved(CheckInProcessRecords processRecords) {
     return processRecords.getItem().isClaimedReturned()
-      && processRecords.getCheckInRequest().getClaimedReturnedResolvedBy() == null;
+      && processRecords.getCheckInRequest().getClaimedReturnedResolution() == null;
   }
 }

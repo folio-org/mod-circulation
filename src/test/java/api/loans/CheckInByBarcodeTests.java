@@ -757,7 +757,7 @@ public class CheckInByBarcodeTests extends APITests {
     "Returned by patron, checkedInReturnedByPatron"
   })
   @Test
-  public void canResolveClaimedReturned(String resolvedBy, String expectedLoanAction) {
+  public void canResolveClaimedReturned(String resolution, String expectedLoanAction) {
     final UUID checkInServicePointId = servicePointsFixture.cd1().getId();
     final IndividualResource nod = itemsFixture.basedUponNod();
 
@@ -771,7 +771,7 @@ public class CheckInByBarcodeTests extends APITests {
       new CheckInByBarcodeRequestBuilder()
         .forItem(nod)
         .at(checkInServicePointId)
-        .claimedReturnedResolvedBy(resolvedBy));
+        .claimedReturnedResolution(resolution));
 
     JsonObject returnedLoan = checkInResponse.getLoan();
     JsonObject returnedItem = checkInResponse.getItem();
@@ -823,16 +823,16 @@ public class CheckInByBarcodeTests extends APITests {
     loansFixture.claimItemReturned(
       new ClaimItemReturnedRequestBuilder().forLoan(loan.getId()));
 
-    final String resolvedByValue = "Wrong resolved by value";
+    final String resolutionValue = "Wrong resolved by value";
     final Response checkInResponse = loansFixture.attemptCheckInByBarcode(
       new CheckInByBarcodeRequestBuilder()
         .forItem(nod)
         .at(checkInServicePointId)
-        .claimedReturnedResolvedBy(resolvedByValue));
+        .claimedReturnedResolution(resolutionValue));
 
     assertThat(checkInResponse.getJson(), hasErrorWith(allOf(
       hasMessage("Unrecognized value provided for property"),
-      hasParameter("claimedReturnedResolvedBy", resolvedByValue)
+      hasParameter("claimedReturnedResolution", resolutionValue)
     )));
   }
 
@@ -847,7 +847,7 @@ public class CheckInByBarcodeTests extends APITests {
       new CheckInByBarcodeRequestBuilder()
         .forItem(nod)
         .at(checkInServicePointId)
-        .claimedReturnedResolvedBy("Found by library"));
+        .claimedReturnedResolution("Found by library"));
 
     JsonObject returnedLoan = checkInResponse.getLoan();
     JsonObject returnedItem = checkInResponse.getItem();

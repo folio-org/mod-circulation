@@ -17,8 +17,8 @@
       "type": "string",
       "format": "date-time"
     },
-    "claimedReturnedResolvedBy": {
-      "description": "Defines who has resolved claimed returned item state",
+    "claimedReturnedResolution": {
+      "description": "Defines why the claimed returned state of item has been resolved",
       "type": "string",
       "enum": [
         "Found by library",

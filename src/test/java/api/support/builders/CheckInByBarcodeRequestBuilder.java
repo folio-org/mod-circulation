@@ -1,7 +1,5 @@
 package api.support.builders;
 
-import static org.folio.circulation.domain.representations.CheckInByBarcodeRequest.CLAIMED_RETURNED_RESOLVED_BY;
-
 import java.util.UUID;
 
 import org.folio.circulation.support.http.client.IndividualResource;
@@ -14,7 +12,7 @@ public class CheckInByBarcodeRequestBuilder extends JsonBuilder implements Build
   private final String itemBarcode;
   private final DateTime checkInDate;
   private final String servicePointId;
-  private final String claimedReturnedResolvedBy;
+  private final String claimedReturnedResolution;
 
   public CheckInByBarcodeRequestBuilder() {
     this(null, DateTime.now(DateTimeZone.UTC), null, null);
@@ -24,12 +22,12 @@ public class CheckInByBarcodeRequestBuilder extends JsonBuilder implements Build
     String itemBarcode,
     DateTime checkInDate,
     String servicePointId,
-    String claimedReturnedResolvedBy) {
+    String claimedReturnedResolution) {
 
     this.itemBarcode = itemBarcode;
     this.checkInDate = checkInDate;
     this.servicePointId = servicePointId;
-    this.claimedReturnedResolvedBy = claimedReturnedResolvedBy;
+    this.claimedReturnedResolution = claimedReturnedResolution;
   }
 
   @Override
@@ -39,7 +37,7 @@ public class CheckInByBarcodeRequestBuilder extends JsonBuilder implements Build
     put(request, "itemBarcode", this.itemBarcode);
     put(request, "checkInDate", this.checkInDate);
     put(request, "servicePointId", this.servicePointId);
-    put(request, CLAIMED_RETURNED_RESOLVED_BY, this.claimedReturnedResolvedBy);
+    put(request, "claimedReturnedResolution", this.claimedReturnedResolution);
 
     return request;
   }
@@ -53,7 +51,7 @@ public class CheckInByBarcodeRequestBuilder extends JsonBuilder implements Build
       itemBarcode,
       this.checkInDate,
       this.servicePointId,
-      this.claimedReturnedResolvedBy);
+      this.claimedReturnedResolution);
   }
 
   public CheckInByBarcodeRequestBuilder noItem() {
@@ -65,7 +63,7 @@ public class CheckInByBarcodeRequestBuilder extends JsonBuilder implements Build
       this.itemBarcode,
       this.checkInDate,
       this.servicePointId,
-      this.claimedReturnedResolvedBy);
+      this.claimedReturnedResolution);
   }
 
   public CheckInByBarcodeRequestBuilder on(DateTime checkInDate) {
@@ -73,7 +71,7 @@ public class CheckInByBarcodeRequestBuilder extends JsonBuilder implements Build
       this.itemBarcode,
       checkInDate,
       this.servicePointId,
-      this.claimedReturnedResolvedBy);
+      this.claimedReturnedResolution);
   }
 
   public CheckInByBarcodeRequestBuilder onNoOccasion() {
@@ -93,7 +91,7 @@ public class CheckInByBarcodeRequestBuilder extends JsonBuilder implements Build
       this.itemBarcode,
       this.checkInDate,
       servicePointId,
-      this.claimedReturnedResolvedBy);
+      this.claimedReturnedResolution);
   }
 
 
@@ -105,11 +103,11 @@ public class CheckInByBarcodeRequestBuilder extends JsonBuilder implements Build
     return record.getJson().getString("barcode");
   }
 
-  public CheckInByBarcodeRequestBuilder claimedReturnedResolvedBy(String resolvedBy) {
+  public CheckInByBarcodeRequestBuilder claimedReturnedResolution(String resolution) {
     return new CheckInByBarcodeRequestBuilder(
       this.itemBarcode,
       this.checkInDate,
       this.servicePointId,
-      resolvedBy);
+      resolution);
   }
 }
