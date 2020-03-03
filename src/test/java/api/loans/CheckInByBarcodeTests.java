@@ -807,7 +807,7 @@ public class CheckInByBarcodeTests extends APITests {
         .at(checkInServicePointId));
 
     assertThat(checkInResponse.getJson(), hasErrorWith(allOf(
-      hasMessage("Item has Claimed returned status but no 'claimedReturnedResolvedBy' present"),
+      hasMessage("Item is claimed returned, a resolution is required to check in"),
       hasNullParameter("claimedReturnedResolvedBy")
     )));
   }
