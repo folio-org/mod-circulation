@@ -5,6 +5,8 @@ import static org.folio.circulation.support.Result.of;
 import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.ResultBinding.mapResult;
 
+import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
 import org.apache.commons.lang3.ObjectUtils;
@@ -123,15 +125,21 @@ public class OverdueFineCalculatorService {
 
   private CompletableFuture<Result<CalculationParameters>> lookupItemRelatedRecords(
     CalculationParameters params) {
+
     return itemRepository.fetchItemRelatedRecords(succeeded(params.loan.getItem()))
       .thenApply(mapResult(params::withItem));
   }
 
   private CompletableFuture<Result<CalculationParameters>> lookupFeeFineOwner(
     CalculationParameters params) {
-    return feeFineOwnerRepository.getFeeFineOwner(
-      params.item.getLocation().getPrimaryServicePointId().toString())
-      .thenApply(mapResult(params::withOwner));
+
+    return Optional.ofNullable(params.item)
+      .map(Item::getLocation)
+      .map(Location::getPrimaryServicePointId)
+      .map(UUID::toString)
+      .map(id -> feeFineOwnerRepository.getFeeFineOwner(id)
+        .thenApply(mapResult(params::withOwner)))
+      .orElse(completedFuture(succeeded(params)));
   }
 
   private CompletableFuture<Result<CalculationParameters>> lookupFeeFine(
