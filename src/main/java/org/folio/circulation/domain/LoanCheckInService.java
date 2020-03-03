@@ -11,7 +11,7 @@ import org.joda.time.DateTime;
 public class LoanCheckInService {
 
   public Result<Loan> checkIn(Loan loan, DateTime systemDateTime,
-                              CheckInByBarcodeRequest request) {
+    CheckInByBarcodeRequest request) {
 
     if (loan == null) {
       return of(() -> null);
@@ -28,7 +28,7 @@ public class LoanCheckInService {
   }
 
   public boolean isInHouseUse(Item item, RequestQueue requestQueue,
-                              CheckInByBarcodeRequest checkInByBarcodeRequest) {
+    CheckInByBarcodeRequest checkInByBarcodeRequest) {
 
     return item.isAvailable()
       && requestQueue.getRequests().isEmpty()

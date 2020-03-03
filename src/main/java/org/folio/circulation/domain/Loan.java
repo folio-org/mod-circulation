@@ -406,7 +406,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   private Loan checkIn(String action, DateTime returnDateTime,
-                       DateTime systemReturnDateTime, UUID servicePointId) {
+    DateTime systemReturnDateTime, UUID servicePointId) {
 
     changeAction(action);
     removeActionComment();
@@ -424,7 +424,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   Loan resolveClaimedReturned(LoanAction.ResolveClaimedReturned action,
-                              DateTime returnDateTime, DateTime systemReturnDateTime, UUID servicePointId) {
+    DateTime returnDateTime, DateTime systemReturnDateTime, UUID servicePointId) {
 
     return checkIn(action.getValue(), returnDateTime, systemReturnDateTime,
       servicePointId);
