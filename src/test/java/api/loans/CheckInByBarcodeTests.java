@@ -759,7 +759,7 @@ public class CheckInByBarcodeTests extends APITests {
       assertThat(checkInOperation.getString("itemId"), is(itemId.toString()));
       assertThat(checkInOperation.getString("servicePointId"), is(servicePoint.toString()));
       assertThat(checkInOperation.getString("performedByUserId"), is(getUserId()));
-      assertThat(checkInOperation.getString("itemStatus"), is("Checked out"));
+      assertThat(checkInOperation.getString("itemStatusPriorToCheckIn"), is("Checked out"));
       assertThat(checkInOperation.getString("itemLocationId"), is(itemEffectiveLocationId));
       assertThat(checkInOperation.getInteger("requestQueueSize"), is(0));
     });

@@ -18,7 +18,7 @@ public class CheckInRecord {
   private final String itemId;
   private final String servicePointId;
   private final String performedByUserId;
-  private final String itemStatus;
+  private final String itemStatusPriorToCheckIn;
   private final String itemLocationId;
   private final Integer requestQueueSize;
 
@@ -28,7 +28,7 @@ public class CheckInRecord {
     this.itemId = builder.itemId;
     this.servicePointId = builder.checkInServicePointId;
     this.performedByUserId = builder.performedByUserId;
-    this.itemStatus = builder.itemStatus;
+    this.itemStatusPriorToCheckIn = builder.itemStatusPriorToCheckIn;
     this.itemLocationId = builder.itemLocationId;
     this.requestQueueSize = builder.requestQueueSize;
   }
@@ -39,7 +39,7 @@ public class CheckInRecord {
     private String itemId;
     private String checkInServicePointId;
     private String performedByUserId;
-    private String itemStatus;
+    private String itemStatusPriorToCheckIn;
     private String itemLocationId;
     private Integer requestQueueSize;
 
@@ -68,8 +68,8 @@ public class CheckInRecord {
       return this;
     }
 
-    public Builder withItemStatus(String itemStatus) {
-      this.itemStatus = itemStatus;
+    public Builder withItemStatusPriorToCheckIn(String itemStatus) {
+      this.itemStatusPriorToCheckIn = itemStatus;
       return this;
     }
 
@@ -107,7 +107,7 @@ public class CheckInRecord {
       .put(PERFORMED_BY_USER_ID, performedByUserId);
 
     write(json, "id", id);
-    write(json, "itemStatus", itemStatus);
+    write(json, "itemStatusPriorToCheckIn", itemStatusPriorToCheckIn);
     write(json, "itemLocationId", itemLocationId);
     write(json, "requestQueueSize", requestQueueSize);
 

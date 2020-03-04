@@ -18,7 +18,7 @@
       "description": "Id of item that has checked in",
       "$ref": "uuid.json"
     },
-    "itemStatus": {
+    "itemStatusPriorToCheckIn": {
       "type": "string",
       "description": "Item status on check-in"
     },

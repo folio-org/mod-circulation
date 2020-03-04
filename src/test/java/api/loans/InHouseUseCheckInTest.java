@@ -130,7 +130,7 @@ public class InHouseUseCheckInTest extends APITests {
   }
 
   private void verifyLastCheckInRecordedAsInHouse(UUID itemId, UUID servicePoint) {
-    final CqlQuery query = queryFromTemplate("itemId=%s and itemStatus=Available",
+    final CqlQuery query = queryFromTemplate("itemId=%s and itemStatusPriorToCheckIn=Available",
       itemId);
     final MultipleJsonRecords recordedOperations = checkInOperationClient.getMany(query);
 
@@ -146,7 +146,7 @@ public class InHouseUseCheckInTest extends APITests {
     assertThat(lastOperation.getString("itemId"), is(itemId.toString()));
     assertThat(lastOperation.getString("servicePointId"), is(servicePoint.toString()));
     assertThat(lastOperation.getString("performedByUserId"), is(getUserId()));
-    assertThat(lastOperation.getString("itemStatus"), is("Available"));
+    assertThat(lastOperation.getString("itemStatusPriorToCheckIn"), is("Available"));
     assertThat(lastOperation.getString("itemLocationId"), is(itemEffectiveLocationId));
     assertThat(lastOperation.getInteger("requestQueueSize"), is(0));
     assertTrue(isServedByServicePoint(UUID.fromString(itemEffectiveLocationId), servicePoint));
