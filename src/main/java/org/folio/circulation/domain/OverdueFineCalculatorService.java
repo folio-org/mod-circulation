@@ -10,6 +10,8 @@ import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.domain.policy.OverdueFineInterval;
 import org.folio.circulation.domain.policy.OverdueFinePolicy;
+import org.folio.circulation.domain.policy.OverdueFinePolicyFineInfo;
+import org.folio.circulation.domain.policy.OverdueFinePolicyLimitInfo;
 import org.folio.circulation.domain.policy.OverdueFinePolicyRepository;
 import org.folio.circulation.domain.representations.AccountStorageRepresentation;
 import org.folio.circulation.support.Clients;
@@ -101,20 +103,30 @@ public class OverdueFineCalculatorService {
 
     OverdueFinePolicy overdueFinePolicy = loan.getOverdueFinePolicy();
     if (overdueMinutes > 0 && overdueFinePolicy != null) {
-      Double maxFine = loan.wasDueDateChangedByRecall() ?
-        overdueFinePolicy.getMaxOverdueRecallFine() :
-        overdueFinePolicy.getMaxOverdueFine();
+      OverdueFinePolicyFineInfo fineInfo = overdueFinePolicy.getFineInfo();
+      OverdueFinePolicyLimitInfo limitInfo = overdueFinePolicy.getLimitInfo();
+      if (fineInfo != null && limitInfo != null) {
+        Double finePerInterval = loan.wasDueDateChangedByRecall() ?
+          fineInfo.getOverdueRecallFine() :
+          fineInfo.getOverdueFine();
 
-      OverdueFineInterval interval = overdueFinePolicy.getOverdueFineInterval();
-      Double overdueFinePerInterval = loan.getOverdueFinePolicy().getOverdueFine();
+        OverdueFineInterval interval = loan.wasDueDateChangedByRecall() ?
+          fineInfo.getOverdueRecallFineInterval() :
+          fineInfo.getOverdueFineInterval();
 
-      if (maxFine != null && interval != null && overdueFinePerInterval != null) {
-        double numberOfIntervals = Math.ceil(overdueMinutes.doubleValue() /
-          interval.getMinutes().doubleValue());
-        overdueFine = overdueFinePerInterval * numberOfIntervals;
+          Double maxFine = loan.wasDueDateChangedByRecall() ?
+          limitInfo.getMaxOverdueRecallFine() :
+          limitInfo.getMaxOverdueFine();
 
-        if (maxFine > 0) {
-          overdueFine = Math.min(overdueFine, maxFine);
+        if (maxFine != null && interval != null && finePerInterval != null) {
+          double numberOfIntervals = Math.ceil(overdueMinutes.doubleValue() /
+            interval.getMinutes().doubleValue());
+
+          overdueFine = finePerInterval * numberOfIntervals;
+
+          if (maxFine > 0) {
+            overdueFine = Math.min(overdueFine, maxFine);
+          }
         }
       }
     }

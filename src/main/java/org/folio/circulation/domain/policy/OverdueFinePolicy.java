@@ -9,18 +9,16 @@ import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
 import io.vertx.core.json.JsonObject;
 
 public class OverdueFinePolicy extends Policy {
-  private final Double overdueFine;
-  private final OverdueFineInterval overdueFineInterval;
+  private final OverdueFinePolicyFineInfo fineInfo;
   private final OverdueFinePolicyLimitInfo limitInfo;
   private final Boolean ignoreGracePeriodForRecalls;
   private final Boolean countPeriodsWhenServicePointIsClosed;
 
-  private OverdueFinePolicy(String id, String name, Double overdueFine,
-    OverdueFineInterval overdueFineInterval, OverdueFinePolicyLimitInfo limitInfo,
-    Boolean ignoreGracePeriodForRecalls, Boolean countPeriodsWhenServicePointIsClosed) {
+  private OverdueFinePolicy(String id, String name, OverdueFinePolicyFineInfo fineInfo,
+    OverdueFinePolicyLimitInfo limitInfo, Boolean ignoreGracePeriodForRecalls,
+    Boolean countPeriodsWhenServicePointIsClosed) {
     super(id, name);
-    this.overdueFine = overdueFine;
-    this.overdueFineInterval = overdueFineInterval;
+    this.fineInfo = fineInfo;
     this.limitInfo = limitInfo;
     this.ignoreGracePeriodForRecalls = ignoreGracePeriodForRecalls;
     this.countPeriodsWhenServicePointIsClosed = countPeriodsWhenServicePointIsClosed;
@@ -28,32 +26,29 @@ public class OverdueFinePolicy extends Policy {
 
   public static OverdueFinePolicy from(JsonObject json) {
     String intervalId = getNestedStringProperty(json, "overdueFine", "intervalId");
+    String recallIntervalId = getNestedStringProperty(json, "overdueRecallFine", "intervalId");
 
     return new OverdueFinePolicy(
       getProperty(json, "id"),
       getProperty(json, "name"),
-      getDoubleProperty(getObjectProperty(json, "overdueFine"), "quantity", null),
-      intervalId == null ? null : OverdueFineInterval.fromValue(intervalId),
+      new OverdueFinePolicyFineInfo(
+        getDoubleProperty(getObjectProperty(json, "overdueFine"), "quantity", null),
+        intervalId == null ? null : OverdueFineInterval.fromValue(intervalId),
+        getDoubleProperty(getObjectProperty(json, "overdueRecallFine"), "quantity", null),
+        recallIntervalId == null ? null : OverdueFineInterval.fromValue(recallIntervalId)
+      ),
       new OverdueFinePolicyLimitInfo(getDoubleProperty(json, "maxOverdueFine", null),
         getDoubleProperty(json, "maxOverdueRecallFine", null)),
       getBooleanProperty(json, "gracePeriodRecall"),
       getBooleanProperty(json, "countClosed"));
   }
 
-  public Double getOverdueFine() {
-    return overdueFine;
+  public OverdueFinePolicyFineInfo getFineInfo() {
+    return fineInfo;
   }
 
-  public OverdueFineInterval getOverdueFineInterval() {
-    return overdueFineInterval;
-  }
-
-  public Double getMaxOverdueFine() {
-    return limitInfo.getMaxOverdueFine();
-  }
-
-  public Double getMaxOverdueRecallFine() {
-    return limitInfo.getMaxOverdueRecallFine();
+  public OverdueFinePolicyLimitInfo getLimitInfo() {
+    return limitInfo;
   }
 
   public Boolean getIgnoreGracePeriodForRecalls() {
@@ -70,7 +65,8 @@ public class OverdueFinePolicy extends Policy {
 
   private static class UnknownOverdueFinePolicy extends OverdueFinePolicy {
     UnknownOverdueFinePolicy(String id) {
-      super(id, null, null, null, new OverdueFinePolicyLimitInfo(null, null), false, false);
+      super(id, null, new OverdueFinePolicyFineInfo(null, null, null, null),
+        new OverdueFinePolicyLimitInfo(null, null), false, false);
     }
   }
 }
