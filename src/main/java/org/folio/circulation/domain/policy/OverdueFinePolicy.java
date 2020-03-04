@@ -14,16 +14,19 @@ public class OverdueFinePolicy extends Policy {
   private final OverdueFinePolicyLimitInfo limitInfo;
   private final Boolean ignoreGracePeriodForRecalls;
   private final Boolean countPeriodsWhenServicePointIsClosed;
+  private final Boolean forgiveFineForRenewals;
 
   private OverdueFinePolicy(String id, String name, Double overdueFine,
     OverdueFineInterval overdueFineInterval, OverdueFinePolicyLimitInfo limitInfo,
-    Boolean ignoreGracePeriodForRecalls, Boolean countPeriodsWhenServicePointIsClosed) {
+    Boolean ignoreGracePeriodForRecalls, Boolean countPeriodsWhenServicePointIsClosed,
+    Boolean forgiveFineForRenewals) {
     super(id, name);
     this.overdueFine = overdueFine;
     this.overdueFineInterval = overdueFineInterval;
     this.limitInfo = limitInfo;
     this.ignoreGracePeriodForRecalls = ignoreGracePeriodForRecalls;
     this.countPeriodsWhenServicePointIsClosed = countPeriodsWhenServicePointIsClosed;
+    this.forgiveFineForRenewals = forgiveFineForRenewals;
   }
 
   public static OverdueFinePolicy from(JsonObject json) {
@@ -37,7 +40,8 @@ public class OverdueFinePolicy extends Policy {
       new OverdueFinePolicyLimitInfo(getDoubleProperty(json, "maxOverdueFine", null),
         getDoubleProperty(json, "maxOverdueRecallFine", null)),
       getBooleanProperty(json, "gracePeriodRecall"),
-      getBooleanProperty(json, "countClosed"));
+      getBooleanProperty(json, "countClosed"),
+      getBooleanProperty(json, "forgiveOverdueFine"));
   }
 
   public Double getOverdueFine() {
@@ -64,13 +68,21 @@ public class OverdueFinePolicy extends Policy {
     return countPeriodsWhenServicePointIsClosed;
   }
 
+  public boolean isUnknown() {
+    return this instanceof UnknownOverdueFinePolicy;
+  }
+
+  public Boolean getForgiveFineForRenewals() {
+    return forgiveFineForRenewals;
+  }
+
   public static OverdueFinePolicy unknown(String id) {
     return new OverdueFinePolicy.UnknownOverdueFinePolicy(id);
   }
 
   private static class UnknownOverdueFinePolicy extends OverdueFinePolicy {
     UnknownOverdueFinePolicy(String id) {
-      super(id, null, null, null, new OverdueFinePolicyLimitInfo(null, null), false, false);
+      super(id, null, null, null, new OverdueFinePolicyLimitInfo(null, null), false, false, null);
     }
   }
 }

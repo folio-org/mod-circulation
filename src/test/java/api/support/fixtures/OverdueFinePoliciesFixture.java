@@ -59,7 +59,7 @@ public class OverdueFinePoliciesFixture {
       .withOverdueFine(overdueFine)
       .withCountClosed(false)
       .withMaxOverdueFine(50.00)
-      .withForgiveOverdueFine(true)
+      .withForgiveOverdueFine(false)
       .withOverdueRecallFine(overdueRecallFine)
       .withGracePeriodRecall(false)
       .withMaxOverdueRecallFine(50.00);
