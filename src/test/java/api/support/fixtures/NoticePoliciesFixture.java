@@ -3,6 +3,8 @@ package api.support.fixtures;
 import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
 
 import java.net.MalformedURLException;
+import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
@@ -16,7 +18,7 @@ public class NoticePoliciesFixture {
 
   public NoticePoliciesFixture(ResourceClient noticePoliciesClient) {
     noticePolicyRecordCreator = new RecordCreator(noticePoliciesClient,
-      reason -> getProperty(reason, "name"));
+      reason -> getProperty(reason, "id"));
   }
 
   public IndividualResource inactiveNotice() {
@@ -38,4 +40,15 @@ public class NoticePoliciesFixture {
     return noticePolicyRecordCreator.createIfAbsent(noticePolicy);
   }
 
+  public void create(List<String> ids) {
+    ids.stream()
+      .map(id -> new NoticePolicyBuilder()
+        .withId(UUID.fromString(id)))
+        //.withName("Example NoticePolicy " + id))
+    .forEach(noticePolicyRecordCreator::createIfAbsent);
+  }
+
+  public void cleanUp() {
+    noticePolicyRecordCreator.cleanUp();
+  }
 }

@@ -43,6 +43,8 @@ import api.support.builders.UserBuilder;
 import api.support.http.InventoryItemResource;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+
+import org.folio.circulation.domain.policy.Policy;
 import org.joda.time.DateTime;
 import org.joda.time.Seconds;
 import org.junit.Test;
@@ -184,7 +186,16 @@ public class CheckOutByBarcodeTests extends APITests {
 
   @Test
   public void canCheckOutUsingFixedDueDateLoanPolicy() {
-    useExampleFixedPolicyCirculationRules();
+
+    IndividualResource loanPolicy = loanPoliciesFixture.canCirculateFixed();
+    IndividualResource overdueFinePolicy = overdueFinePoliciesFixture.facultyStandard();
+    IndividualResource lostItemFeePolicy = lostItemFeePoliciesFixture.facultyStandard();
+
+    useFallbackPolicies(loanPolicy.getId(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
+      noticePoliciesFixture.activeNotice().getId(),
+      overdueFinePolicy.getId(),
+      lostItemFeePolicy.getId());
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource steve = usersFixture.steve();
@@ -211,9 +222,9 @@ public class CheckOutByBarcodeTests extends APITests {
 
     loanHasPatronGroupProperties(loan, "Regular Group");
 
-    loanHasLoanPolicyProperties(loan, loanPoliciesFixture.canCirculateFixed());
-    loanHasOverdueFinePolicyProperties(loan,  overdueFinePoliciesFixture.facultyStandard());
-    loanHasLostItemPolicyProperties(loan,  lostItemFeePoliciesFixture.facultyStandard());
+    loanHasLoanPolicyProperties(loan, loanPolicy);
+    loanHasOverdueFinePolicyProperties(loan,  overdueFinePolicy);
+    loanHasLostItemPolicyProperties(loan,  lostItemFeePolicy);
 
     assertThat("due date should be based upon fixed due date schedule",
       loan.getString("dueDate"), isEquivalentTo(END_OF_CURRENT_YEAR_DUE_DATE));
@@ -883,7 +894,7 @@ public class CheckOutByBarcodeTests extends APITests {
 
   @Test
   public void checkOutDoesNotFailWhenCirculationRulesReferenceInvalidNoticePolicyId() {
-    setInvalidNoticePolicyReferenceInRules("some-notice-policy");
+    setInvalidNoticePolicyReferenceInRules(UUID.randomUUID().toString());
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource steve = usersFixture.steve();

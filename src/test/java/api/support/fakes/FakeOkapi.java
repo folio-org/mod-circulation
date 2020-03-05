@@ -150,7 +150,7 @@ public class FakeOkapi extends AbstractVerticle {
     new FakeStorageModuleBuilder()
       .withRecordName("notice policy")
       .withRootPath("/patron-notice-policy-storage/patron-notice-policies")
-      .withCollectionPropertyName("noticePolicies")
+      .withCollectionPropertyName("patronNoticePolicies")
       .withRequiredProperties("name", "active")
       .create().register(router);
 

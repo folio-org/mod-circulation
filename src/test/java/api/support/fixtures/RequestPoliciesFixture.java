@@ -2,10 +2,9 @@ package api.support.fixtures;
 
 import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
 
-import java.net.MalformedURLException;
 import java.util.ArrayList;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeoutException;
+import java.util.List;
+import java.util.UUID;
 
 import org.folio.circulation.domain.RequestType;
 import org.folio.circulation.support.http.client.IndividualResource;
@@ -18,7 +17,7 @@ public class RequestPoliciesFixture {
 
   public RequestPoliciesFixture(ResourceClient requestPoliciesClient) {
     requestPolicyRecordCreator = new RecordCreator(requestPoliciesClient,
-      reason -> getProperty(reason, "name"));
+      reason -> getProperty(reason, "id"));
   }
 
   public IndividualResource allowAllRequestPolicy() {
@@ -31,6 +30,30 @@ public class RequestPoliciesFixture {
     final RequestPolicyBuilder allowAllPolicy = new RequestPolicyBuilder(types);
 
     return requestPolicyRecordCreator.createIfAbsent(allowAllPolicy);
+  }
+
+  public IndividualResource allowAllRequestPolicy(UUID id, String name) {
+
+    ArrayList<RequestType> types = new ArrayList<>();
+    types.add(RequestType.HOLD);
+    types.add(RequestType.PAGE);
+    types.add(RequestType.RECALL);
+
+    final RequestPolicyBuilder allowAllPolicy = new RequestPolicyBuilder(types, id);
+
+    return requestPolicyRecordCreator.createIfAbsent(allowAllPolicy);
+  }
+
+  public void allowAllRequestPolicy(List<String> ids) {
+
+    ArrayList<RequestType> types = new ArrayList<>();
+    types.add(RequestType.HOLD);
+    types.add(RequestType.PAGE);
+    types.add(RequestType.RECALL);
+
+    ids.stream()
+      .map(id -> new RequestPolicyBuilder(types, UUID.fromString(id)))
+      .forEach(requestPolicyRecordCreator::createIfAbsent);
   }
 
   public IndividualResource customRequestPolicy(ArrayList<RequestType> types) {
@@ -75,5 +98,9 @@ public class RequestPoliciesFixture {
 
   public IndividualResource findRequestPolicy(String requestPolicyName) {
     return requestPolicyRecordCreator.getExistingRecord(requestPolicyName);
+  }
+
+  public void cleanUp() {
+    requestPolicyRecordCreator.cleanUp();
   }
 }

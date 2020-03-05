@@ -94,6 +94,26 @@ public class LostItemFeePolicyBuilder extends JsonBuilder implements Builder {
     );
   }
 
+  public LostItemFeePolicyBuilder withId(UUID id) {
+    return new LostItemFeePolicyBuilder(
+      id,
+      this.name,
+      this.description,
+      this.itemAgedLostOverdue,
+      this.patronBilledAfterAgedLost,
+      this.chargeAmountItem,
+      this.lostItemProcessingFee,
+      this.chargeAmountItemPatron,
+      this.chargeAmountItemSystem,
+      this.lostItemChargeFeeFine,
+      this.returnedLostItemProcessingFee,
+      this.replacedLostItemProcessingFee,
+      this.replacementProcessingFee,
+      this.replacementAllowed,
+      this.lostItemReturned
+    );
+  }
+
   public LostItemFeePolicyBuilder withDescription(String description) {
     return new LostItemFeePolicyBuilder(
       this.id,

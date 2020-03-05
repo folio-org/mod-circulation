@@ -14,6 +14,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.folio.circulation.rules.ItemLocation;
 import org.folio.circulation.rules.ItemType;
@@ -23,15 +25,33 @@ import org.folio.circulation.rules.Policy;
 import org.folio.circulation.support.http.client.Response;
 
 import api.support.RestAssuredClient;
+import api.support.builders.LoanPolicyBuilder;
+import api.support.builders.NoticePolicyBuilder;
+import api.support.builders.OverdueFinePolicyBuilder;
 import api.support.http.QueryStringParameter;
+import io.netty.util.internal.StringUtil;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
 public class CirculationRulesFixture {
   private final RestAssuredClient restAssuredClient;
+  private final LoanPoliciesFixture loanPoliciesFixture;
+  private final NoticePoliciesFixture noticePoliciesFixture;
+  private final RequestPoliciesFixture requestPoliciesFixture;
+  private final OverdueFinePoliciesFixture overdueFinePoliciesFixture;
+  private final LostItemFeePoliciesFixture lostItemFeePoliciesFixture;
 
-  public CirculationRulesFixture(RestAssuredClient restAssuredClient) {
+  public CirculationRulesFixture(RestAssuredClient restAssuredClient,
+    LoanPoliciesFixture loanPoliciesFixture, NoticePoliciesFixture noticePoliciesFixture,
+    RequestPoliciesFixture requestPoliciesFixture, OverdueFinePoliciesFixture overdueFinePoliciesFixture,
+    LostItemFeePoliciesFixture lostItemFeePoliciesFixture) {
+
     this.restAssuredClient = restAssuredClient;
+    this.loanPoliciesFixture = loanPoliciesFixture;
+    this.noticePoliciesFixture = noticePoliciesFixture;
+    this.requestPoliciesFixture = requestPoliciesFixture;
+    this.overdueFinePoliciesFixture = overdueFinePoliciesFixture;
+    this.lostItemFeePoliciesFixture = lostItemFeePoliciesFixture;
   }
 
   public String getCirculationRules() {
@@ -65,11 +85,28 @@ public class CirculationRulesFixture {
     JsonObject circulationRulesRequest = new JsonObject()
       .put("rulesAsText", rules);
 
-    final Response response = putRules(circulationRulesRequest.encodePrettily());
+    loanPoliciesFixture.create(getPolicyFromRule(rules, "l"));
+    noticePoliciesFixture.create(getPolicyFromRule(rules, "n"));
+    requestPoliciesFixture.allowAllRequestPolicy(getPolicyFromRule(rules, "r"));
+    overdueFinePoliciesFixture.create(getPolicyFromRule(rules, "o"));
+    lostItemFeePoliciesFixture.create(getPolicyFromRule(rules, "i"));
 
+    final Response response = putRules(circulationRulesRequest.encodePrettily());
     assertThat(String.format(
       "Failed to set circulation rules: %s", response.getBody()),
       response.getStatusCode(), is(204));
+  }
+
+  private List<String> getPolicyFromRule(String rules, String policyType) {
+    List<String> allMatches = new ArrayList<>();
+    String regex = String.format(
+      "(?<=\\b%s\\s)[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[89abAB][a-fA-F0-9]{3}-[a-fA-F0-9]{12}", policyType);
+    Matcher m = Pattern.compile(regex)
+      .matcher(rules);
+    while (m.find()) {
+      allMatches.add(m.group());
+    }
+    return allMatches;
   }
 
   public void updateCirculationRulesWithoutInvalidatingCache(String rules) {

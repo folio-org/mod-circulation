@@ -212,6 +212,12 @@ public class CheckOutCalculateDueDateTests extends APITests {
       createLoanPolicyEntryFixed("MOVE_TO_THE_END_OF_THE_PREVIOUS_OPEN_DAY: FIXED",
         fixedDueDateScheduleId,
         MOVE_TO_THE_END_OF_THE_PREVIOUS_OPEN_DAY.getValue()));
+    IndividualResource overdueFinePolicy = overdueFinePoliciesFixture.facultyStandard();
+    IndividualResource lostItemFeePolicy = lostItemFeePoliciesFixture.facultyStandard();
+    useFallbackPolicies(loanPolicy.getId(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
+      noticePoliciesFixture.activeNotice().getId(),
+      overdueFinePolicy.getId(), lostItemFeePolicy.getId());
 
     final IndividualResource response = loansFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
@@ -222,8 +228,8 @@ public class CheckOutCalculateDueDateTests extends APITests {
     final JsonObject loan = response.getJson();
 
     loanHasLoanPolicyProperties(loan, loanPolicy);
-    loanHasOverdueFinePolicyProperties(loan,  overdueFinePoliciesFixture.facultyStandard());
-    loanHasLostItemPolicyProperties(loan,  lostItemFeePoliciesFixture.facultyStandard());
+    loanHasOverdueFinePolicyProperties(loan, overdueFinePolicy);
+    loanHasLostItemPolicyProperties(loan,  lostItemFeePolicy);
 
     DateTime expectedDate =
       WEDNESDAY_DATE.toDateTime(END_OF_A_DAY, DateTimeZone.UTC);
@@ -687,6 +693,12 @@ public class CheckOutCalculateDueDateTests extends APITests {
       DueDateManagement.KEEP_THE_CURRENT_DUE_DATE_TIME.getValue(),
       duration, INTERVAL_HOURS);
     IndividualResource loanPolicy = createLoanPolicy(loanPolicyEntry);
+    IndividualResource overdueFinePolicy = overdueFinePoliciesFixture.facultyStandard();
+    IndividualResource lostItemFeePolicy = lostItemFeePoliciesFixture.facultyStandard();
+    useFallbackPolicies(loanPolicy.getId(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
+      noticePoliciesFixture.activeNotice().getId(),
+      overdueFinePolicy.getId(), lostItemFeePolicy.getId());
 
     final IndividualResource response = loansFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
@@ -698,8 +710,8 @@ public class CheckOutCalculateDueDateTests extends APITests {
     final JsonObject loan = response.getJson();
 
     loanHasLoanPolicyProperties(loan, loanPolicy);
-    loanHasOverdueFinePolicyProperties(loan,  overdueFinePoliciesFixture.facultyStandard());
-    loanHasLostItemPolicyProperties(loan,  lostItemFeePoliciesFixture.facultyStandard());
+    loanHasOverdueFinePolicyProperties(loan,  overdueFinePolicy);
+    loanHasLostItemPolicyProperties(loan,  lostItemFeePolicy);
 
     assertThat(ERROR_MESSAGE_DUE_DATE + duration,
       loan.getString(DUE_DATE_KEY), isEquivalentTo(loanDate.plusHours(duration)));
@@ -812,6 +824,17 @@ public class CheckOutCalculateDueDateTests extends APITests {
       dueDateManagement.getValue(), duration, interval);
     IndividualResource loanPolicy = createLoanPolicy(loanPolicyEntry);
 
+    IndividualResource overdueFinePolicy = overdueFinePoliciesFixture.facultyStandard();
+    IndividualResource lostItemFeePolicy = lostItemFeePoliciesFixture.facultyStandard();
+
+    useFallbackPolicies(
+      loanPolicy.getId(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
+      noticePoliciesFixture.activeNotice().getId(),
+      overdueFinePolicy.getId(),
+      lostItemFeePolicy.getId()
+    );
+
     final IndividualResource response = loansFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
         .forItem(smallAngryPlanet)
@@ -822,8 +845,8 @@ public class CheckOutCalculateDueDateTests extends APITests {
     final JsonObject loan = response.getJson();
 
     loanHasLoanPolicyProperties(loan, loanPolicy);
-    loanHasOverdueFinePolicyProperties(loan,  overdueFinePoliciesFixture.facultyStandard());
-    loanHasLostItemPolicyProperties(loan,  lostItemFeePoliciesFixture.facultyStandard());
+    loanHasOverdueFinePolicyProperties(loan,  overdueFinePolicy);
+    loanHasLostItemPolicyProperties(loan,  lostItemFeePolicy);
 
     if (isIncludeTime) {
       checkDateTime(expectedDueDate, loan);
@@ -1055,17 +1078,7 @@ public class CheckOutCalculateDueDateTests extends APITests {
 
   private IndividualResource createLoanPolicy(JsonObject loanPolicyEntry) {
 
-    IndividualResource loanPolicy = loanPoliciesFixture.create(loanPolicyEntry);
-
-    useFallbackPolicies(
-      loanPolicy.getId(),
-      requestPoliciesFixture.allowAllRequestPolicy().getId(),
-      noticePoliciesFixture.activeNotice().getId(),
-      overdueFinePoliciesFixture.facultyStandard().getId(),
-      lostItemFeePoliciesFixture.facultyStandard().getId()
-    );
-
-    return loanPolicy;
+    return loanPoliciesFixture.create(loanPolicyEntry);
   }
 
   private DateTime currentYearDateTime(int month, int day, int hour, int minute,
