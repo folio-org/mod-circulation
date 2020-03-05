@@ -189,7 +189,9 @@ public abstract class APITests {
 
   protected final CirculationRulesFixture circulationRulesFixture
     = new CirculationRulesFixture(
-        new RestAssuredClient(getOkapiHeadersFromContext()));
+        new RestAssuredClient(getOkapiHeadersFromContext()),
+    loanPoliciesFixture, noticePoliciesFixture, requestPoliciesFixture,
+    overdueFinePoliciesFixture, lostItemFeePoliciesFixture);
 
   protected final ItemsFixture itemsFixture = new ItemsFixture(
     materialTypesFixture, loanTypesFixture, locationsFixture,
@@ -306,6 +308,10 @@ public abstract class APITests {
     servicePointsFixture.cleanUp();
 
     loanPoliciesFixture.cleanUp();
+    noticePoliciesFixture.cleanUp();
+    requestPoliciesFixture.cleanUp();
+    overdueFinePoliciesFixture.cleanUp();
+    lostItemFeePoliciesFixture.cleanUp();
 
     usersFixture.cleanUp();
 

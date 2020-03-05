@@ -2,6 +2,9 @@ package api.support.fixtures;
 
 import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
 
+import java.util.List;
+import java.util.UUID;
+
 import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.joda.time.DateTime;
@@ -22,7 +25,7 @@ public class LoanPoliciesFixture {
     ResourceClient fixedDueDateScheduleClient) {
 
     loanPolicyRecordCreator = new RecordCreator(loanPoliciesClient,
-      reason -> getProperty(reason, "name"));
+      reason -> getProperty(reason, "id"));
 
     fixedDueDateScheduleRecordCreator = new RecordCreator(
       fixedDueDateScheduleClient, schedule -> getProperty(schedule, "name"));
@@ -50,6 +53,14 @@ public class LoanPoliciesFixture {
 
   public IndividualResource create(LoanPolicyBuilder builder) {
     return loanPolicyRecordCreator.createIfAbsent(builder);
+  }
+
+  public void create(List<String> ids) {
+    ids.stream()
+      .map(id -> new LoanPolicyBuilder()
+        .withId(UUID.fromString(id)))
+        //.withName("Example LoanPolicy " + id))
+      .forEach(loanPolicyRecordCreator::createIfAbsent);
   }
 
   public IndividualResource create(JsonObject policy) {

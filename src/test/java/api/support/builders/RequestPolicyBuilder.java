@@ -23,6 +23,11 @@ public class RequestPolicyBuilder extends JsonBuilder implements Builder {
     );
   }
 
+  public RequestPolicyBuilder(ArrayList<RequestType> requestTypes, UUID id) {
+
+    this(id, "Example Request Policy", "An example request policy", requestTypes);
+  }
+
   public RequestPolicyBuilder(ArrayList<RequestType> requestTypes, String name, String description) {
 
     this(UUID.randomUUID(),

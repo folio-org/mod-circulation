@@ -9,6 +9,8 @@ import io.vertx.core.json.JsonObject;
 import org.folio.circulation.support.http.client.IndividualResource;
 
 import java.net.MalformedURLException;
+import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
@@ -17,7 +19,7 @@ public class LostItemFeePoliciesFixture {
 
   public LostItemFeePoliciesFixture(ResourceClient lostItemFeePoliciesClient) {
     lostItemFeePolicyRecordCreator = new RecordCreator(lostItemFeePoliciesClient,
-      reason -> getProperty(reason, "name"));
+      reason -> getProperty(reason, "id"));
   }
 
   public IndividualResource facultyStandard() {
@@ -54,5 +56,23 @@ public class LostItemFeePoliciesFixture {
       .withLostItemReturned("Charge");
 
     return lostItemFeePolicyRecordCreator.createIfAbsent(undergradStandard);
+  }
+
+  public IndividualResource create(UUID id, String name) {
+    return lostItemFeePolicyRecordCreator.createIfAbsent(new LostItemFeePolicyBuilder()
+      .withId(id)
+      .withName(name));
+  }
+
+  public void create(List<String> ids) {
+    ids.stream()
+      .map(id -> new LostItemFeePolicyBuilder()
+        .withId(UUID.fromString(id)))
+//        .withName("Example LostItemFeePolicy " + id))
+      .forEach(lostItemFeePolicyRecordCreator::createIfAbsent);
+  }
+
+  public void cleanUp() {
+    lostItemFeePolicyRecordCreator.cleanUp();
   }
 }
