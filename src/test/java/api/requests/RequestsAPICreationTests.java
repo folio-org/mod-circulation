@@ -68,6 +68,7 @@ import org.hamcrest.Matchers;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.LocalDate;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -1674,6 +1675,7 @@ public class RequestsAPICreationTests extends APITests {
   }
 
   @Test
+  @Ignore
   public void requestCreationDoesNotFailWhenCirculationRulesReferenceInvalidNoticePolicyId() {
 
     setInvalidNoticePolicyReferenceInRules("some-invalid-policy");

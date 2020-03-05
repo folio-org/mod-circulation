@@ -85,11 +85,11 @@ public class CirculationRulesFixture {
     JsonObject circulationRulesRequest = new JsonObject()
       .put("rulesAsText", rules);
 
-    loanPoliciesFixture.create(getPolicyFromRule(rules, "l"));
-    noticePoliciesFixture.create(getPolicyFromRule(rules, "n"));
-    requestPoliciesFixture.allowAllRequestPolicy(getPolicyFromRule(rules, "r"));
-    overdueFinePoliciesFixture.create(getPolicyFromRule(rules, "o"));
-    lostItemFeePoliciesFixture.create(getPolicyFromRule(rules, "i"));
+//    loanPoliciesFixture.create(getPolicyFromRule(rules, "l"));
+//    noticePoliciesFixture.create(getPolicyFromRule(rules, "n"));
+//    requestPoliciesFixture.allowAllRequestPolicy(getPolicyFromRule(rules, "r"));
+//    overdueFinePoliciesFixture.create(getPolicyFromRule(rules, "o"));
+//    lostItemFeePoliciesFixture.create(getPolicyFromRule(rules, "i"));
 
     final Response response = putRules(circulationRulesRequest.encodePrettily());
     assertThat(String.format(

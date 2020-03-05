@@ -4,6 +4,8 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.StringContains.containsString;
 
+import java.util.UUID;
+
 import org.folio.circulation.resources.LoanCirculationRulesEngineResource;
 import org.folio.circulation.rules.Campus;
 import org.folio.circulation.rules.Institution;
@@ -16,6 +18,7 @@ import org.folio.circulation.rules.Policy;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import api.support.APITests;
@@ -36,7 +39,7 @@ public class CirculationRulesEngineAPITests extends APITests {
   private final IndividualResource fourthFloor = locationsFixture.fourthFloor();
 
   //Test data to work with our defined values
-  private ItemType m1 = new ItemType("96d4bdf1-5fc2-40ef-9ace-6d7e3e48ec4d");
+  private ItemType m1 = new ItemType(UUID.randomUUID().toString());
   private ItemType m2 = new ItemType("b6375fcb-caaf-4b94-944d-b1a6bb589425");
   private LoanType t1 = new LoanType("2e6f51b9-d00a-4f1d-9960-49b1977acfca");
   private LoanType t2 = new LoanType("220e2dad-e3c7-42f3-bb46-515ba29ba65f");

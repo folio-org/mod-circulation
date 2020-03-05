@@ -25,7 +25,7 @@ public class LoanPoliciesFixture {
     ResourceClient fixedDueDateScheduleClient) {
 
     loanPolicyRecordCreator = new RecordCreator(loanPoliciesClient,
-      reason -> getProperty(reason, "id"));
+      reason -> getProperty(reason, "name"));
 
     fixedDueDateScheduleRecordCreator = new RecordCreator(
       fixedDueDateScheduleClient, schedule -> getProperty(schedule, "name"));

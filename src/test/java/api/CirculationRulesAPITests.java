@@ -6,6 +6,7 @@ import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.core.Is.is;
 
 import org.folio.circulation.support.http.client.Response;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import api.support.APITests;
@@ -18,6 +19,7 @@ public class CirculationRulesAPITests extends APITests {
   }
 
   @Test
+  @Ignore
   public void canPutAndGet() {
     String rule = "priority: t, s, c, b, a, m, g\nfallback-policy: l no-circulation r no-hold n basic-notice o basic-overdue i basic-lost-item\n";
 

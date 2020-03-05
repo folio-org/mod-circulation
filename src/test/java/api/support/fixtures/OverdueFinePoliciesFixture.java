@@ -17,7 +17,7 @@ public class OverdueFinePoliciesFixture {
 
   public OverdueFinePoliciesFixture(ResourceClient overdueFinePoliciesClient) {
     overdueFinePolicyRecordCreator = new RecordCreator(overdueFinePoliciesClient,
-      reason -> getProperty(reason, "id"));
+      reason -> getProperty(reason, "name"));
   }
 
   public IndividualResource facultyStandard() {
