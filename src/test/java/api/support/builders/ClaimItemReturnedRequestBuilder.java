@@ -4,6 +4,8 @@ import static org.folio.circulation.resources.ClaimItemReturnedResource.COMMENT;
 import static org.folio.circulation.resources.ClaimItemReturnedResource.ITEM_CLAIMED_RETURNED_DATE;
 import static org.folio.circulation.support.JsonPropertyWriter.write;
 
+import java.util.UUID;
+
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 
@@ -36,6 +38,11 @@ public class ClaimItemReturnedRequestBuilder implements Builder {
 
   public ClaimItemReturnedRequestBuilder forLoan(String loanId) {
     return new ClaimItemReturnedRequestBuilder(loanId, this.itemClaimedReturnedDate, this.comment);
+  }
+
+  public ClaimItemReturnedRequestBuilder forLoan(UUID loanId) {
+    return new ClaimItemReturnedRequestBuilder(loanId.toString(),
+      this.itemClaimedReturnedDate, this.comment);
   }
 
   public String getLoanId() {
