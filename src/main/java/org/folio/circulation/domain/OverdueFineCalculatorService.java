@@ -126,6 +126,10 @@ public class OverdueFineCalculatorService {
   private CompletableFuture<Result<CalculationParameters>> lookupItemRelatedRecords(
     CalculationParameters params) {
 
+    if (params.feeFine == null) {
+      return completedFuture(succeeded(params));
+    }
+
     return itemRepository.fetchItemRelatedRecords(succeeded(params.loan.getItem()))
       .thenApply(mapResult(params::withItem));
   }
@@ -156,9 +160,9 @@ public class OverdueFineCalculatorService {
 
     return CompletableFuture.completedFuture(succeeded(
       new CalculationParameters(loan)))
+      .thenCompose(r -> r.after(this::lookupFeeFine))
       .thenCompose(r -> r.after(this::lookupItemRelatedRecords))
       .thenCompose(r -> r.after(this::lookupFeeFineOwner))
-      .thenCompose(r -> r.after(this::lookupFeeFine))
       .thenCompose(r -> r.after(params -> createAccount(fineAmount, params)));
   }
 

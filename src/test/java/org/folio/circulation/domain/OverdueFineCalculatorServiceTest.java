@@ -212,7 +212,7 @@ public class OverdueFineCalculatorServiceTest {
     when(overdueFinePolicyRepository.findOverdueFinePolicyForLoan(any()))
       .thenReturn(completedFuture(succeeded(loan)));
     when(overduePeriodCalculatorService.getMinutes(any(), any()))
-      .thenReturn(completedFuture(succeeded(5)));
+      .thenReturn(completedFuture(succeeded(periodCalculatorResult)));
     when(itemRepository.fetchItemRelatedRecords(any()))
       .thenReturn(completedFuture(Result.succeeded(null)));
     when(feeFineOwnerRepository.getFeeFineOwner(SERVICE_POINT_ID.toString()))
@@ -261,7 +261,7 @@ public class OverdueFineCalculatorServiceTest {
     when(overdueFinePolicyRepository.findOverdueFinePolicyForLoan(any()))
       .thenReturn(completedFuture(succeeded(loan)));
     when(overduePeriodCalculatorService.getMinutes(any(), any()))
-      .thenReturn(completedFuture(succeeded(5)));
+      .thenReturn(completedFuture(succeeded(periodCalculatorResult)));
     when(itemRepository.fetchItemRelatedRecords(any()))
       .thenReturn(completedFuture(succeeded(createItem())));
     when(feeFineRepository.getFeeFine(FEE_FINE_TYPE, true))
@@ -274,6 +274,8 @@ public class OverdueFineCalculatorServiceTest {
       .withLoan(loan);
 
     overdueFineCalculatorService.calculateOverdueFine(records).get();
+    verifyNoInteractions(itemRepository);
+    verifyNoInteractions(feeFineOwnerRepository);
     verifyNoInteractions(accountRepository);
   }
 
