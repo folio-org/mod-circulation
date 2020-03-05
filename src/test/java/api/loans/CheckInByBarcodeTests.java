@@ -813,7 +813,7 @@ public class CheckInByBarcodeTests extends APITests {
   }
 
   @Test
-  public void cannotResolveClaimedReturnedIfWrongResolvedByValueProvided() {
+  public void cannotResolveClaimedReturnedIfUnrecognisedResolutionProvided() {
     final UUID checkInServicePointId = servicePointsFixture.cd1().getId();
     final IndividualResource nod = itemsFixture.basedUponNod();
 
@@ -837,7 +837,7 @@ public class CheckInByBarcodeTests extends APITests {
   }
 
   @Test
-  public void claimedReturnedResolvedByPropertyIsIgnoredForCheckedOutItem() {
+  public void claimedReturnedResolvedByPropertyIsIgnoredForItemNotClaimedReturned() {
     final UUID checkInServicePointId = servicePointsFixture.cd1().getId();
     final IndividualResource nod = itemsFixture.basedUponNod();
 
