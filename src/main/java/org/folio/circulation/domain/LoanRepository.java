@@ -170,10 +170,14 @@ public class LoanRepository {
     return result.combineAfter(userRepository::getUser, Loan::withUser);
   }
 
-  public CompletableFuture<Result<MultipleRecords<Loan>>> findClosedLoans(
+  public CompletableFuture<Result<MultipleRecords<Loan>>> findLoansToAnonymize(
     PageLimit pageLimit) {
 
-    return queryLoanStorage(getStatusCQLQuery("Closed"), pageLimit);
+    // Are closed and not yet anonymized.
+    Result<CqlQuery> cqlQuery = getStatusCQLQuery("Closed")
+      .combine(CqlQuery.match("userId", ""), CqlQuery::and);
+
+    return queryLoanStorage(cqlQuery, pageLimit);
   }
 
   private CompletableFuture<Result<MultipleRecords<Loan>>> queryLoanStorage(

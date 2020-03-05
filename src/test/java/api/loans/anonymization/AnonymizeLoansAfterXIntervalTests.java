@@ -2,18 +2,21 @@ package api.loans.anonymization;
 
 import static api.support.matchers.LoanMatchers.hasOpenStatus;
 import static api.support.matchers.LoanMatchers.isAnonymized;
-import static org.hamcrest.Matchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.not;
 import static org.joda.time.DateTime.now;
 import static org.joda.time.DateTimeZone.UTC;
 
 import java.util.UUID;
 
+import org.folio.circulation.domain.representations.anonymization.LoanAnonymizationAPIResponse;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.junit.Test;
 
 import api.support.builders.CheckOutByBarcodeRequestBuilder;
 import api.support.builders.LoanHistoryConfigurationBuilder;
+import api.support.http.InventoryItemResource;
 
 public class AnonymizeLoansAfterXIntervalTests extends LoanAnonymizationTests {
 
@@ -362,6 +365,31 @@ public class AnonymizeLoansAfterXIntervalTests extends LoanAnonymizationTests {
   }
 
   @Test
+  public void doNotAnonymizeLoansTwice() {
+    createAnonymizeAfterIntervalConfiguration(1, "minute");
+
+    final InventoryItemResource nod = itemsFixture.basedUponNod();
+    final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+
+    final IndividualResource firstLoan = loansFixture.checkOutByBarcode(smallAngryPlanet, user);
+    final IndividualResource secondLoan = loansFixture.checkOutByBarcode(nod, usersFixture.rebecca());
+
+    loansFixture.checkInByBarcode(smallAngryPlanet);
+    loansFixture.checkInByBarcode(nod);
+
+    mockClockManagerToReturnFixedDateTime(now(UTC).plus(ONE_MINUTE_AND_ONE));
+    LoanAnonymizationAPIResponse firstAnonymization = anonymizeLoansInTenant();
+
+    assertThat(firstAnonymization.getAnonymizedLoans().size(), is(2));
+    assertThat(loansStorageClient.getById(firstLoan.getId()).getJson(), isAnonymized());
+    assertThat(loansStorageClient.getById(secondLoan.getId()).getJson(), isAnonymized());
+
+    LoanAnonymizationAPIResponse secondAnonymization = anonymizeLoansInTenant();
+
+    assertThat(secondAnonymization.getAnonymizedLoans().size(), is(0));
+  }
+
+  @Test
   public void testClosedLoansNotAnonymizedAfterIntervalNotPassed() {
 
     LoanHistoryConfigurationBuilder loanHistoryConfig = new LoanHistoryConfigurationBuilder().loanCloseAnonymizeAfterXInterval(1,
@@ -426,5 +454,10 @@ public class AnonymizeLoansAfterXIntervalTests extends LoanAnonymizationTests {
 
     assertThat(loansStorageClient.getById(loanID)
         .getJson(), not(isAnonymized()));
+  }
+
+  private void createAnonymizeAfterIntervalConfiguration(int duration, String intervalName) {
+    createConfiguration(new LoanHistoryConfigurationBuilder()
+      .loanCloseAnonymizeAfterXInterval(duration, intervalName));
   }
 }

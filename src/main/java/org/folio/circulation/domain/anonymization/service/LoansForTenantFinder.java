@@ -21,7 +21,7 @@ public class LoansForTenantFinder extends DefaultLoansFinder {
 
   @Override
   public CompletableFuture<Result<Collection<Loan>>> findLoansToAnonymize() {
-    return loanRepository.findClosedLoans(FETCH_LOANS_PAGE_LIMIT)
+    return loanRepository.findLoansToAnonymize(FETCH_LOANS_PAGE_LIMIT)
       .thenCompose(this::fetchAdditionalLoanInfo);
   }
 }
