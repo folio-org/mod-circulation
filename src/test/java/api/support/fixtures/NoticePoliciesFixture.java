@@ -18,7 +18,7 @@ public class NoticePoliciesFixture {
 
   public NoticePoliciesFixture(ResourceClient noticePoliciesClient) {
     noticePolicyRecordCreator = new RecordCreator(noticePoliciesClient,
-      reason -> getProperty(reason, "id"));
+      reason -> getProperty(reason, "name"));
   }
 
   public IndividualResource inactiveNotice() {

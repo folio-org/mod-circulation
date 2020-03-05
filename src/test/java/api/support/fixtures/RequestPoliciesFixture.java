@@ -17,7 +17,7 @@ public class RequestPoliciesFixture {
 
   public RequestPoliciesFixture(ResourceClient requestPoliciesClient) {
     requestPolicyRecordCreator = new RecordCreator(requestPoliciesClient,
-      reason -> getProperty(reason, "id"));
+      reason -> getProperty(reason, "name"));
   }
 
   public IndividualResource allowAllRequestPolicy() {

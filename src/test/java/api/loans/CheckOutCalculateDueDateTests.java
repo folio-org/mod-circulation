@@ -89,11 +89,7 @@ public class CheckOutCalculateDueDateTests extends APITests {
     UUID fixedDueDateScheduleId = loanPoliciesFixture
       .createExampleFixedDueDateSchedule().getId();
 
-    final IndividualResource loanPolicy = createLoanPolicy(
-            createLoanPolicyEntryFixed("Keep the current due date: FIXED",
-                    fixedDueDateScheduleId,
-                    DueDateManagement.KEEP_THE_CURRENT_DUE_DATE.getValue()));
-
+    JsonObject loanPolicy = useKeepCurrentDueDateFixedPolicy(fixedDueDateScheduleId);
 
     final IndividualResource response = loansFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
@@ -112,6 +108,18 @@ public class CheckOutCalculateDueDateTests extends APITests {
       loan.getString(DUE_DATE_KEY), isEquivalentTo(expectedDateTime));
   }
 
+  private JsonObject useKeepCurrentDueDateFixedPolicy(UUID fixedDueDateScheduleId) {
+    LoanPolicyBuilder loanPolicy = new LoanPolicyBuilder()
+      .withName("Keep the current due date: FIXED")
+      .withDescription("New LoanPolicy")
+      .fixed(fixedDueDateScheduleId)
+      .withClosedLibraryDueDateManagement(DueDateManagement.KEEP_THE_CURRENT_DUE_DATE.getValue())
+      .renewFromCurrentDueDate();
+
+    use(loanPolicy);
+    return loanPolicy.create();
+  }
+
   @Test
   public void testRespectUtcTimezoneForDueDateCalculations() throws Exception {
 
@@ -126,10 +134,7 @@ public class CheckOutCalculateDueDateTests extends APITests {
     UUID fixedDueDateScheduleId = loanPoliciesFixture
       .createExampleFixedDueDateSchedule().getId();
 
-    IndividualResource loanPolicy = createLoanPolicy(
-      createLoanPolicyEntryFixed("Keep the current due date: FIXED",
-        fixedDueDateScheduleId,
-        DueDateManagement.KEEP_THE_CURRENT_DUE_DATE.getValue()));
+    JsonObject loanPolicy = useKeepCurrentDueDateFixedPolicy(fixedDueDateScheduleId);
 
     final IndividualResource response = loansFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
@@ -167,10 +172,7 @@ public class CheckOutCalculateDueDateTests extends APITests {
     UUID fixedDueDateScheduleId = loanPoliciesFixture
       .createExampleFixedDueDateSchedule().getId();
 
-    IndividualResource loanPolicy = createLoanPolicy(
-      createLoanPolicyEntryFixed("Keep the current due date: FIXED",
-        fixedDueDateScheduleId,
-        DueDateManagement.KEEP_THE_CURRENT_DUE_DATE.getValue()));
+    JsonObject loanPolicy = useKeepCurrentDueDateFixedPolicy(fixedDueDateScheduleId);
 
     final IndividualResource response = loansFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
@@ -343,10 +345,8 @@ public class CheckOutCalculateDueDateTests extends APITests {
     UUID fixedDueDateScheduleId = loanPoliciesFixture
       .createExampleFixedDueDateSchedule().getId();
 
-    IndividualResource loanPolicy = createLoanPolicy(
-      createLoanPolicyEntryFixed("MOVE_TO_THE_END_OF_THE_NEXT_OPEN_DAY: FIXED",
-        fixedDueDateScheduleId,
-        MOVE_TO_THE_END_OF_THE_NEXT_OPEN_DAY.getValue()));
+    JsonObject loanPolicy = useKeepCurrentDueDateFixedPolicy(fixedDueDateScheduleId);
+
 
     final IndividualResource response = loansFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
@@ -736,7 +736,7 @@ public class CheckOutCalculateDueDateTests extends APITests {
     JsonObject loanPolicyEntry = createLoanPolicyEntry(loanPolicyName, false,
       DueDateManagement.KEEP_THE_CURRENT_DUE_DATE.getValue(),
       duration, "Minutes");
-    createLoanPolicy(loanPolicyEntry);
+    IndividualResource loanPolicy = createLoanPolicy(loanPolicyEntry);
 
     final Response response = loansFixture.attemptCheckOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()

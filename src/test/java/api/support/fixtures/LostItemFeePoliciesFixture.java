@@ -19,7 +19,7 @@ public class LostItemFeePoliciesFixture {
 
   public LostItemFeePoliciesFixture(ResourceClient lostItemFeePoliciesClient) {
     lostItemFeePolicyRecordCreator = new RecordCreator(lostItemFeePoliciesClient,
-      reason -> getProperty(reason, "id"));
+      reason -> getProperty(reason, "name"));
   }
 
   public IndividualResource facultyStandard() {
