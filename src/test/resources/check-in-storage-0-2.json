@@ -20,7 +20,7 @@
     },
     "itemStatusPriorToCheckIn": {
       "type": "string",
-      "description": "Item status on check-in"
+      "description": "Item status prior to check-in"
     },
     "requestQueueSize": {
       "type": "integer",
@@ -29,7 +29,7 @@
     },
     "itemLocationId": {
       "type": "string",
-      "description": "Effective location of the item",
+      "description": "Location of the item in check-in time",
       "$ref": "uuid.json"
     },
     "servicePointId": {

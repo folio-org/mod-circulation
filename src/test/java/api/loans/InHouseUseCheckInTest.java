@@ -40,7 +40,7 @@ public class InHouseUseCheckInTest extends APITests {
     assertThat(checkInResponse.getJson().containsKey("loan"), is(false));
     assertThat(checkInResponse.getJson().containsKey("item"), is(true));
     assertThat(checkInResponse.getInHouseUse(), is(true));
-    verifyLastCheckInRecordedAsInHouse(nod.getId(), checkInServicePointId);
+    verifyLastCheckInWasRecorded(nod.getId(), checkInServicePointId);
   }
 
   @Test
@@ -77,7 +77,7 @@ public class InHouseUseCheckInTest extends APITests {
     assertThat(checkInResponse.getJson().containsKey("loan"), is(false));
     assertThat(checkInResponse.getJson().containsKey("item"), is(true));
     assertThat(checkInResponse.getInHouseUse(), is(true));
-    verifyLastCheckInRecordedAsInHouse(nod.getId(), checkInServicePointId);
+    verifyLastCheckInWasRecorded(nod.getId(), checkInServicePointId);
 
     MultipleJsonRecords requestsForItem = requestsFixture.getRequests(
       queryFromTemplate("itemId=%s", nod.getId()), noLimit(), noOffset());
@@ -129,7 +129,7 @@ public class InHouseUseCheckInTest extends APITests {
     assertThat(checkInResponse.getInHouseUse(), is(false));
   }
 
-  private void verifyLastCheckInRecordedAsInHouse(UUID itemId, UUID servicePoint) {
+  private void verifyLastCheckInWasRecorded(UUID itemId, UUID servicePoint) {
     final CqlQuery query = queryFromTemplate("itemId=%s and itemStatusPriorToCheckIn=Available",
       itemId);
     final MultipleJsonRecords recordedOperations = checkInOperationClient.getMany(query);
