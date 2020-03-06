@@ -36,10 +36,35 @@ public class OverdueFinePoliciesFixture {
       .withOverdueFine(overdueFine)
       .withCountClosed(true)
       .withMaxOverdueFine(50.00)
-      .withForgiveOverdueFine(true)
+      .withForgiveOverdueFine(false)
       .withOverdueRecallFine(overdueRecallFine)
       .withGracePeriodRecall(false)
       .withMaxOverdueRecallFine(50.00);
+
+    return overdueFinePolicyRecordCreator.createIfAbsent(facultyStandard);
+  }
+
+  public IndividualResource facultyStandardShouldForgiveFine() {
+
+    JsonObject overdueFine = new JsonObject();
+    overdueFine.put("quantity", 5.0);
+    overdueFine.put("intervalId", "day");
+
+    JsonObject overdueRecallFine = new JsonObject();
+    overdueRecallFine.put("quantity", 1.0);
+    overdueRecallFine.put("intervalId", "hour");
+
+
+    final OverdueFinePolicyBuilder facultyStandard = new OverdueFinePolicyBuilder()
+        .withName("Faculty standard (should forgive overdue fine for renewals)")
+        .withDescription("This is description for Faculty standard (should forgive overdue fine for renewals)")
+        .withOverdueFine(overdueFine)
+        .withCountClosed(true)
+        .withMaxOverdueFine(50.00)
+        .withForgiveOverdueFine(true)
+        .withOverdueRecallFine(overdueRecallFine)
+        .withGracePeriodRecall(false)
+        .withMaxOverdueRecallFine(50.00);
 
     return overdueFinePolicyRecordCreator.createIfAbsent(facultyStandard);
   }

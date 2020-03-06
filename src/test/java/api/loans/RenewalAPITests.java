@@ -1392,7 +1392,7 @@ abstract class RenewalAPITests extends APITests {
     useFallbackPolicies(loanPolicy.getId(),
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
       noticePoliciesFixture.activeNotice().getId(),
-      overdueFinePoliciesFixture.facultyStandard().getId(), // forgiveOverdueFine = true
+      overdueFinePoliciesFixture.facultyStandardShouldForgiveFine().getId(),
       lostItemFeePoliciesFixture.facultyStandard().getId());
 
     final IndividualResource james = usersFixture.james();

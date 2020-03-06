@@ -347,7 +347,11 @@ public class OverdueFineCalculatorServiceTest {
   public void shouldNotCreateFeeFineForRenewalWhenShouldForgiveOverdueFine()
     throws ExecutionException, InterruptedException {
 
-    final Loan loan = createLoan(); // OverdueFinePolicy.forgiveOverdueFine is true
+    JsonObject overdueFinePolicyJson = createOverdueFinePolicyJson()
+        .put("forgiveOverdueFine", true);
+    OverdueFinePolicy overdueFinePolicy = createOverdueFinePolicy(overdueFinePolicyJson);
+    final Loan loan = createLoan()
+        .withOverdueFinePolicy(overdueFinePolicy);
 
     when(overdueFinePolicyRepository.findOverdueFinePolicyForLoan(any()))
       .thenReturn(completedFuture(succeeded(loan)));
@@ -370,13 +374,17 @@ public class OverdueFineCalculatorServiceTest {
   }
 
   private Loan createLoan() {
+    return createLoan(createOverdueFinePolicy());
+  }
+
+  private Loan createLoan(OverdueFinePolicy overdueFinePolicy) {
     return new LoanBuilder()
-      .withId(LOAN_ID)
-      .withUserId(LOAN_USER_ID)
-      .withDueDate(new DateTime(2020, 1, 1, 0, 0, 0, DateTimeZone.UTC))
-      .withDueDateChangedByRecall(dueDateChangedByRecall)
-      .asDomainObject()
-      .withOverdueFinePolicy(createOverdueFinePolicy());
+        .withId(LOAN_ID)
+        .withUserId(LOAN_USER_ID)
+        .withDueDate(new DateTime(2020, 1, 1, 0, 0, 0, DateTimeZone.UTC))
+        .withDueDateChangedByRecall(dueDateChangedByRecall)
+        .asDomainObject()
+        .withOverdueFinePolicy(overdueFinePolicy);
   }
 
   private Item createItem() {
@@ -392,6 +400,14 @@ public class OverdueFineCalculatorServiceTest {
   }
 
   private OverdueFinePolicy createOverdueFinePolicy() {
+    return OverdueFinePolicy.from(createOverdueFinePolicyJson());
+  }
+
+  private OverdueFinePolicy createOverdueFinePolicy(JsonObject policyJson) {
+    return OverdueFinePolicy.from(policyJson);
+  }
+
+  private JsonObject createOverdueFinePolicyJson() {
     JsonObject overdueFineObject = new JsonObject();
     overdueFineObject.put("quantity", overdueFine);
     overdueFineObject.put("intervalId", overdueFineInterval);
@@ -401,13 +417,13 @@ public class OverdueFineCalculatorServiceTest {
     overdueRecallFineObject.put("intervalId", overdueRecallFineInterval);
 
     JsonObject overdueFinePolicy = new OverdueFinePolicyBuilder()
-      .withOverdueFine(overdueFineObject)
-      .withOverdueRecallFine(overdueRecallFineObject)
-      .create();
+        .withOverdueFine(overdueFineObject)
+        .withOverdueRecallFine(overdueRecallFineObject)
+        .create();
     overdueFinePolicy.put("maxOverdueFine", maxOverdueFine);
     overdueFinePolicy.put("maxOverdueRecallFine", maxOverdueRecallFine);
 
-    return OverdueFinePolicy.from(overdueFinePolicy);
+    return overdueFinePolicy;
   }
 
   private FeeFineOwner createFeeFineOwner() {
