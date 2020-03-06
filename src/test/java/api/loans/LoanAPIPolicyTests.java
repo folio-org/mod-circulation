@@ -48,6 +48,8 @@ public class LoanAPIPolicyTests extends APITests {
   }
 
   //TODO: Split into multiple tests
+  //Ignored because of ids for r, n, o, i policies a not initialized.
+  //It will be cause of rule validation error CIRC-658
   @Ignore
   @Test
   public void canRetrieveLoanPolicyId() {

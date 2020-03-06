@@ -16,7 +16,6 @@ import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
 import org.antlr.v4.runtime.tree.TerminalNode;
 import org.apache.commons.lang3.StringEscapeUtils;
-import org.apache.logging.log4j.util.TriConsumer;
 import org.folio.circulation.rules.CirculationRulesParser.CirculationRulesFileContext;
 import org.folio.circulation.rules.CirculationRulesParser.CriteriumContext;
 import org.folio.circulation.rules.CirculationRulesParser.CriteriumPriorityContext;
@@ -104,7 +103,7 @@ public class Text2Drools extends CirculationRulesBaseListener {
   private int indentation = 0;
 
   private String[] policyTypes = {"l", "r", "n", "o", "i"};
-  private TriConsumer<String, List<PolicyContext>, Token> policyValidator =
+  private PolicyValidator<String, List<PolicyContext>, Token> policyValidator =
     (policyType, policies, token) -> {};
 
   private enum PriorityType {
@@ -138,7 +137,7 @@ public class Text2Drools extends CirculationRulesBaseListener {
    *
    */
   private Text2Drools(
-    TriConsumer<String, List<PolicyContext>, Token> policyValidator) {
+    PolicyValidator<String, List<PolicyContext>, Token> policyValidator) {
 
     this.policyValidator = policyValidator;
   }
@@ -160,7 +159,8 @@ public class Text2Drools extends CirculationRulesBaseListener {
    * @return Drools file
    */
   public static String convert(String text,
-      TriConsumer<String, List<PolicyContext>, Token> policyValidator) {
+    PolicyValidator<String, List<PolicyContext>, Token> policyValidator) {
+
     Text2Drools text2drools = new Text2Drools(policyValidator);
 
     return getDroolsRepresentation(text, text2drools);
@@ -255,7 +255,7 @@ public class Text2Drools extends CirculationRulesBaseListener {
           String.format("Must contain one of each policy type, missing type %s", policyType),
           token.getLine(), token.getCharPositionInLine());
       }
-      policyValidator.accept(policyType, policies, token);
+      policyValidator.validatePolicy(policyType, policies, token);
     }
   }
 

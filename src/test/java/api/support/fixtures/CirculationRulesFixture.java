@@ -31,23 +31,10 @@ import io.vertx.core.json.JsonObject;
 
 public class CirculationRulesFixture {
   private final RestAssuredClient restAssuredClient;
-  private final LoanPoliciesFixture loanPoliciesFixture;
-  private final NoticePoliciesFixture noticePoliciesFixture;
-  private final RequestPoliciesFixture requestPoliciesFixture;
-  private final OverdueFinePoliciesFixture overdueFinePoliciesFixture;
-  private final LostItemFeePoliciesFixture lostItemFeePoliciesFixture;
 
-  public CirculationRulesFixture(RestAssuredClient restAssuredClient,
-    LoanPoliciesFixture loanPoliciesFixture, NoticePoliciesFixture noticePoliciesFixture,
-    RequestPoliciesFixture requestPoliciesFixture, OverdueFinePoliciesFixture overdueFinePoliciesFixture,
-    LostItemFeePoliciesFixture lostItemFeePoliciesFixture) {
+  public CirculationRulesFixture(RestAssuredClient restAssuredClient) {
 
     this.restAssuredClient = restAssuredClient;
-    this.loanPoliciesFixture = loanPoliciesFixture;
-    this.noticePoliciesFixture = noticePoliciesFixture;
-    this.requestPoliciesFixture = requestPoliciesFixture;
-    this.overdueFinePoliciesFixture = overdueFinePoliciesFixture;
-    this.lostItemFeePoliciesFixture = lostItemFeePoliciesFixture;
   }
 
   public String getCirculationRules() {
