@@ -173,6 +173,30 @@ public class OverdueFinePolicyTest {
     assertThatAllFieldsHaveDefaultValuesExceptId();
   }
 
+  @Test
+  public void calculationParametersAreCorrectForValidJsonRepresentation() {
+    overdueFinePolicy = OverdueFinePolicy.from(overdueFinePolicyJsonObject);
+
+    OverdueFineCalculationParameters calculationParameters =
+      overdueFinePolicy.getCalculationParameters(false);
+    assertThat(calculationParameters.getFinePerInterval(), is(5.0));
+    assertThat(calculationParameters.getInterval(), is(OverdueFineInterval.MINUTE));
+    assertThat(calculationParameters.getMaxFine(), is(10.0));
+
+    OverdueFineCalculationParameters recallCalculationParameters =
+      overdueFinePolicy.getCalculationParameters(true);
+    assertThat(recallCalculationParameters.getFinePerInterval(), is(6.0));
+    assertThat(recallCalculationParameters.getInterval(), is(OverdueFineInterval.HOUR));
+    assertThat(recallCalculationParameters.getMaxFine(), is(12.0));
+  }
+
+  @Test
+  public void calculationParametersIsNullForUnknownPolicy() {
+    overdueFinePolicy = OverdueFinePolicy.unknown(overdueFinePolicyJsonObject.getString("id"));
+    assertThat(overdueFinePolicy.getCalculationParameters(false), nullValue());
+    assertThat(overdueFinePolicy.getCalculationParameters(true), nullValue());
+  }
+
   private void checkAllFieldsAndAssertThatQuantityIsNull() {
     checkId();
     checkName();

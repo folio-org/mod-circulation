@@ -2,9 +2,11 @@ package org.folio.circulation.domain.policy;
 
 import static org.folio.circulation.support.JsonPropertyFetcher.getBooleanProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getDoubleProperty;
-import static org.folio.circulation.support.JsonPropertyFetcher.getObjectProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getNestedStringProperty;
+import static org.folio.circulation.support.JsonPropertyFetcher.getObjectProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
+
+import org.apache.commons.lang3.ObjectUtils;
 
 import io.vertx.core.json.JsonObject;
 
@@ -41,6 +43,26 @@ public class OverdueFinePolicy extends Policy {
         getDoubleProperty(json, "maxOverdueRecallFine", null)),
       getBooleanProperty(json, "gracePeriodRecall"),
       getBooleanProperty(json, "countClosed"));
+  }
+
+  public OverdueFineCalculationParameters getCalculationParameters(boolean dueDateChangedByRecall) {
+    if (dueDateChangedByRecall) {
+      if (ObjectUtils.allNotNull(fineInfo.getOverdueRecallFine(),
+        fineInfo.getOverdueRecallFineInterval(), limitInfo.getMaxOverdueRecallFine())) {
+
+        return new OverdueFineCalculationParameters(fineInfo.getOverdueRecallFine(),
+          fineInfo.getOverdueRecallFineInterval(), limitInfo.getMaxOverdueRecallFine());
+      }
+    }
+    else {
+      if (ObjectUtils.allNotNull(fineInfo.getOverdueFine(), fineInfo.getOverdueFineInterval(),
+        limitInfo.getMaxOverdueFine())) {
+
+        return new OverdueFineCalculationParameters(fineInfo.getOverdueFine(),
+          fineInfo.getOverdueFineInterval(), limitInfo.getMaxOverdueFine());
+      }
+    }
+    return null;
   }
 
   public OverdueFinePolicyFineInfo getFineInfo() {

@@ -8,10 +8,9 @@ import static org.folio.circulation.support.ResultBinding.mapResult;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
+import org.folio.circulation.domain.policy.OverdueFineCalculationParameters;
 import org.folio.circulation.domain.policy.OverdueFineInterval;
 import org.folio.circulation.domain.policy.OverdueFinePolicy;
-import org.folio.circulation.domain.policy.OverdueFinePolicyFineInfo;
-import org.folio.circulation.domain.policy.OverdueFinePolicyLimitInfo;
 import org.folio.circulation.domain.policy.OverdueFinePolicyRepository;
 import org.folio.circulation.domain.representations.AccountStorageRepresentation;
 import org.folio.circulation.support.Clients;
@@ -103,20 +102,13 @@ public class OverdueFineCalculatorService {
 
     OverdueFinePolicy overdueFinePolicy = loan.getOverdueFinePolicy();
     if (overdueMinutes > 0 && overdueFinePolicy != null) {
-      OverdueFinePolicyFineInfo fineInfo = overdueFinePolicy.getFineInfo();
-      OverdueFinePolicyLimitInfo limitInfo = overdueFinePolicy.getLimitInfo();
-      if (fineInfo != null && limitInfo != null) {
-        Double finePerInterval = loan.wasDueDateChangedByRecall() ?
-          fineInfo.getOverdueRecallFine() :
-          fineInfo.getOverdueFine();
+      OverdueFineCalculationParameters calculationParameters =
+        overdueFinePolicy.getCalculationParameters(loan.wasDueDateChangedByRecall());
 
-        OverdueFineInterval interval = loan.wasDueDateChangedByRecall() ?
-          fineInfo.getOverdueRecallFineInterval() :
-          fineInfo.getOverdueFineInterval();
-
-          Double maxFine = loan.wasDueDateChangedByRecall() ?
-          limitInfo.getMaxOverdueRecallFine() :
-          limitInfo.getMaxOverdueFine();
+      if (calculationParameters != null) {
+        Double finePerInterval = calculationParameters.getFinePerInterval();
+        OverdueFineInterval interval = calculationParameters.getInterval();
+        Double maxFine = calculationParameters.getMaxFine();
 
         if (maxFine != null && interval != null && finePerInterval != null) {
           double numberOfIntervals = Math.ceil(overdueMinutes.doubleValue() /
