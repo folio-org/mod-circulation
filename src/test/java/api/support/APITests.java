@@ -22,6 +22,8 @@ import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import api.support.builders.LoanPolicyBuilder;
 import api.support.builders.NoticePolicyBuilder;
@@ -312,6 +314,7 @@ public abstract class APITests {
     requestPoliciesFixture.cleanUp();
     overdueFinePoliciesFixture.cleanUp();
     lostItemFeePoliciesFixture.cleanUp();
+    loanPolicyClient.deleteAll();
 
     usersFixture.cleanUp();
 
@@ -608,4 +611,16 @@ public abstract class APITests {
     ClockManager.getClockManager().setDefaultClock();
   }
 
+  protected List<String> getPolicyFromRule(String rules, String policyType) {
+    List<String> allMatches = new ArrayList<>();
+    String regex = String.format(
+      "(?<=\\b%s\\s)[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[89abAB][a-fA-F0-9]{3}-[a-fA-F0-9]{12}",
+      policyType);
+    Matcher m = Pattern.compile(regex)
+      .matcher(rules);
+    while (m.find()) {
+      allMatches.add(m.group());
+    }
+    return allMatches;
+  }
 }

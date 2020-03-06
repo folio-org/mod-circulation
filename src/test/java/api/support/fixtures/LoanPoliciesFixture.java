@@ -58,8 +58,8 @@ public class LoanPoliciesFixture {
   public void create(List<String> ids) {
     ids.stream()
       .map(id -> new LoanPolicyBuilder()
-        .withId(UUID.fromString(id)))
-        //.withName("Example LoanPolicy " + id))
+        .withId(UUID.fromString(id))
+        .withName("Example LoanPolicy " + id))
       .forEach(loanPolicyRecordCreator::createIfAbsent);
   }
 

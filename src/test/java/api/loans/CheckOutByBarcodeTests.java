@@ -509,30 +509,17 @@ public class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void cannotCheckOutWhenLoanPolicyDoesNotExist() {
+  public void cannotCreateCirculationRuleWhenLoanPolicyDoesNotExist() {
     final UUID nonExistentloanPolicyId = UUID.randomUUID();
 
-    useFallbackPolicies(nonExistentloanPolicyId,
-      requestPoliciesFixture.allowAllRequestPolicy().getId(),
-      noticePoliciesFixture.activeNotice().getId(),
-      overdueFinePoliciesFixture.facultyStandard().getId(),
-      lostItemFeePoliciesFixture.facultyStandard().getId());
+    String rule = circulationRulesFixture.soleFallbackPolicyRule(
+      nonExistentloanPolicyId.toString(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId().toString(),
+      noticePoliciesFixture.activeNotice().getId().toString(),
+      overdueFinePoliciesFixture.facultyStandard().getId().toString(),
+      lostItemFeePoliciesFixture.facultyStandard().getId().toString());
 
-    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
-    final IndividualResource steve = usersFixture.steve();
-
-    final DateTime loanDate = new DateTime(2018, 3, 18, 11, 43, 54, UTC);
-
-    final Response response = loansFixture.attemptCheckOutByBarcode(500,
-      new CheckOutByBarcodeRequestBuilder()
-        .forItem(smallAngryPlanet)
-        .to(steve)
-        .on(loanDate)
-        .at(UUID.randomUUID()));
-
-    assertThat(response.getBody(), is(String.format(
-      "Loan policy %s could not be found, please check circulation rules",
-      nonExistentloanPolicyId)));
+    circulationRulesFixture.attemptUpdateCirculationRules(rule, "l");
   }
 
   @Test
@@ -870,49 +857,16 @@ public class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  @Ignore
-  public void checkOutFailsWhenCirculationRulesReferenceInvalidLoanPolicyId() {
-    setInvalidLoanPolicyReferenceInRules(UUID.randomUUID().toString());
+  public void cannotUpdateCirculationRulesWithInvalidNoticePolicyId() {
 
-    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
-    final IndividualResource steve = usersFixture.steve();
+    String rule = circulationRulesFixture.soleFallbackPolicyRule(
+      loanPoliciesFixture.canCirculateFixed().getId().toString(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId().toString(),
+      UUID.randomUUID().toString(),
+      overdueFinePoliciesFixture.facultyStandard().getId().toString(),
+      lostItemFeePoliciesFixture.facultyStandard().getId().toString());
 
-    final DateTime loanDate = new DateTime(2018, 3, 18, 11, 43, 54, UTC);
-
-    final Response response = loansFixture.attemptCheckOutByBarcode(500,
-      new CheckOutByBarcodeRequestBuilder()
-        .forItem(smallAngryPlanet)
-        .to(steve)
-        .on(loanDate)
-        .at(servicePointsFixture.cd1()));
-
-    assertThat(response.getBody(),
-      is("Loan policy some-loan-policy could not be found, please check circulation rules"));
-
-    smallAngryPlanet = itemsClient.get(smallAngryPlanet);
-
-    assertThat(smallAngryPlanet, hasItemStatus(AVAILABLE));
-  }
-
-  @Test
-  public void checkOutDoesNotFailWhenCirculationRulesReferenceInvalidNoticePolicyId() {
-    setInvalidNoticePolicyReferenceInRules(UUID.randomUUID().toString());
-
-    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
-    final IndividualResource steve = usersFixture.steve();
-
-    final DateTime loanDate = new DateTime(2018, 3, 18, 11, 43, 54, UTC);
-
-    loansFixture.checkOutByBarcode(
-      new CheckOutByBarcodeRequestBuilder()
-        .forItem(smallAngryPlanet)
-        .to(steve)
-        .on(loanDate)
-        .at(servicePointsFixture.cd1()));
-
-    smallAngryPlanet = itemsClient.get(smallAngryPlanet);
-
-    assertThat(smallAngryPlanet, hasItemStatus(CHECKED_OUT));
+    circulationRulesFixture.attemptUpdateCirculationRules(rule, "n");
   }
 
   @Test

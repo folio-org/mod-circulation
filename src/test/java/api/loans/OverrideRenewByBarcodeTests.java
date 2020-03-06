@@ -57,31 +57,6 @@ public class OverrideRenewByBarcodeTests extends APITests {
   private static final String RENEWED_THROUGH_OVERRIDE = "renewedThroughOverride";
 
   @Test
-  public void cannotOverrideRenewalWhenLoanPolicyDoesNotExist() {
-    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
-    final IndividualResource jessica = usersFixture.jessica();
-
-    final UUID unknownLoanPolicyId = UUID.randomUUID();
-
-    loansFixture.checkOutByBarcode(smallAngryPlanet, jessica,
-      new DateTime(2018, DateTimeConstants.APRIL, 21, 11, 21, 43));
-
-    useFallbackPolicies(
-      unknownLoanPolicyId,
-      requestPoliciesFixture.allowAllRequestPolicy().getId(),
-      noticePoliciesFixture.activeNotice().getId(),
-      overdueFinePoliciesFixture.facultyStandard().getId(),
-      lostItemFeePoliciesFixture.facultyStandard().getId()
-    );
-
-    final Response response = loansFixture.attemptRenewal(500, smallAngryPlanet,
-      jessica);
-
-    assertThat(response.getBody(), is(String.format(
-      "Loan policy %s could not be found, please check circulation rules", unknownLoanPolicyId)));
-  }
-
-  @Test
   public void cannotOverrideRenewalWhenLoaneeCannotBeFound() {
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource steve = usersFixture.steve();

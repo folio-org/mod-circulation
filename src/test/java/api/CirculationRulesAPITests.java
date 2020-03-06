@@ -5,6 +5,8 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.core.Is.is;
 
+import java.util.UUID;
+
 import org.folio.circulation.support.http.client.Response;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -19,17 +21,25 @@ public class CirculationRulesAPITests extends APITests {
   }
 
   @Test
-  @Ignore
   public void canPutAndGet() {
-    String rule = "priority: t, s, c, b, a, m, g\nfallback-policy: l no-circulation r no-hold n basic-notice o basic-overdue i basic-lost-item\n";
+    UUID lp1 = UUID.randomUUID();
+    UUID lp2 = UUID.randomUUID();
+    UUID rp1 = UUID.randomUUID();
+    UUID rp2 = UUID.randomUUID();
+    UUID np1 = UUID.randomUUID();
+    UUID np2 = UUID.randomUUID();
+    UUID op1 = UUID.randomUUID();
+    UUID op2 = UUID.randomUUID();
+    UUID ip1 = UUID.randomUUID();
+    UUID ip2 = UUID.randomUUID();
 
-    circulationRulesFixture.updateCirculationRules(rule);
+    String rule = "priority: t, s, c, b, a, m, g\nfallback-policy: l " + lp1 + " r " + rp1 + " n " + np1 + " o " + op1 + " i " + ip1 + "\n";
+    setRules(rule);
 
     assertThat(getRulesText(), is(rule));
 
-    rule = "priority: t, s, c, b, a, m, g\nfallback-policy: l loan-forever r two-week-hold n two-week-notice o forever-overdue i forever-lost-item\n";
-
-    circulationRulesFixture.updateCirculationRules(rule);
+    rule = "priority: t, s, c, b, a, m, g\nfallback-policy: l " + lp2 + " r " + rp2 + " n " + np2 + " o " + op2 + " i " + ip2 + "\n";
+    setRules(rule);
 
     assertThat(getRulesText(), is(rule));
   }
@@ -69,4 +79,16 @@ public class CirculationRulesAPITests extends APITests {
     return text;
   }
 
+  private void setRules(String rules) {
+    createPoliciesIfDoNotExist(rules);
+    circulationRulesFixture.updateCirculationRules(rules);
+  }
+
+  private void createPoliciesIfDoNotExist(String rules) {
+    loanPoliciesFixture.create(getPolicyFromRule(rules, "l"));
+    noticePoliciesFixture.create(getPolicyFromRule(rules, "n"));
+    requestPoliciesFixture.allowAllRequestPolicy(getPolicyFromRule(rules, "r"));
+    overdueFinePoliciesFixture.create(getPolicyFromRule(rules, "o"));
+    lostItemFeePoliciesFixture.create(getPolicyFromRule(rules, "i"));
+  }
 }

@@ -18,7 +18,6 @@ import org.folio.circulation.rules.Policy;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import api.support.APITests;
@@ -32,7 +31,16 @@ public class CirculationRulesEngineAPITests extends APITests {
   }
 
   private void setRules(String rules) {
+    createPoliciesIfDoNotExist(rules);
     circulationRulesFixture.updateCirculationRules(rules);
+  }
+
+  private void createPoliciesIfDoNotExist(String rules) {
+    loanPoliciesFixture.create(getPolicyFromRule(rules, "l"));
+    noticePoliciesFixture.create(getPolicyFromRule(rules, "n"));
+    requestPoliciesFixture.allowAllRequestPolicy(getPolicyFromRule(rules, "r"));
+    overdueFinePoliciesFixture.create(getPolicyFromRule(rules, "o"));
+    lostItemFeePoliciesFixture.create(getPolicyFromRule(rules, "i"));
   }
 
   private final IndividualResource mainFloor = locationsFixture.mainFloor();

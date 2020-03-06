@@ -67,8 +67,8 @@ public class LostItemFeePoliciesFixture {
   public void create(List<String> ids) {
     ids.stream()
       .map(id -> new LostItemFeePolicyBuilder()
-        .withId(UUID.fromString(id)))
-//        .withName("Example LostItemFeePolicy " + id))
+        .withId(UUID.fromString(id))
+        .withName("Example LostItemFeePolicy " + id))
       .forEach(lostItemFeePolicyRecordCreator::createIfAbsent);
   }
 

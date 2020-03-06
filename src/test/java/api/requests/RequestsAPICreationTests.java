@@ -1675,27 +1675,6 @@ public class RequestsAPICreationTests extends APITests {
   }
 
   @Test
-  @Ignore
-  public void requestCreationDoesNotFailWhenCirculationRulesReferenceInvalidNoticePolicyId() {
-
-    setInvalidNoticePolicyReferenceInRules("some-invalid-policy");
-
-    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
-    final IndividualResource steve = usersFixture.steve();
-
-    final IndividualResource createdRequest = requestsFixture.place(new RequestBuilder()
-      .open()
-      .page()
-      .forItem(smallAngryPlanet)
-      .by(steve)
-      .withRequestDate(DateTime.now())
-      .fulfilToHoldShelf()
-      .withPickupServicePointId(servicePointsFixture.cd1().getId()));
-
-    assertThat(createdRequest.getResponse(), hasStatus(HTTP_CREATED));
-  }
-
-  @Test
   public void cannotCreateRequestWhenRequestorHasActiveRequestManualBlocks() {
 
     final IndividualResource item = itemsFixture.basedUponSmallAngryPlanet();
