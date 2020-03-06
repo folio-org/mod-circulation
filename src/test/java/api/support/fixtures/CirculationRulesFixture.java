@@ -7,8 +7,8 @@ import static api.support.http.api.support.NamedQueryStringParameter.namedParame
 import static java.util.Arrays.asList;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.CoreMatchers.nullValue;
-import static org.hamcrest.core.Is.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.core.Is.is;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -25,11 +25,7 @@ import org.folio.circulation.rules.Policy;
 import org.folio.circulation.support.http.client.Response;
 
 import api.support.RestAssuredClient;
-import api.support.builders.LoanPolicyBuilder;
-import api.support.builders.NoticePolicyBuilder;
-import api.support.builders.OverdueFinePolicyBuilder;
 import api.support.http.QueryStringParameter;
-import io.netty.util.internal.StringUtil;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
@@ -85,28 +81,19 @@ public class CirculationRulesFixture {
     JsonObject circulationRulesRequest = new JsonObject()
       .put("rulesAsText", rules);
 
-//    loanPoliciesFixture.create(getPolicyFromRule(rules, "l"));
-//    noticePoliciesFixture.create(getPolicyFromRule(rules, "n"));
-//    requestPoliciesFixture.allowAllRequestPolicy(getPolicyFromRule(rules, "r"));
-//    overdueFinePoliciesFixture.create(getPolicyFromRule(rules, "o"));
-//    lostItemFeePoliciesFixture.create(getPolicyFromRule(rules, "i"));
-
     final Response response = putRules(circulationRulesRequest.encodePrettily());
     assertThat(String.format(
       "Failed to set circulation rules: %s", response.getBody()),
       response.getStatusCode(), is(204));
   }
 
-  private List<String> getPolicyFromRule(String rules, String policyType) {
-    List<String> allMatches = new ArrayList<>();
-    String regex = String.format(
-      "(?<=\\b%s\\s)[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[89abAB][a-fA-F0-9]{3}-[a-fA-F0-9]{12}", policyType);
-    Matcher m = Pattern.compile(regex)
-      .matcher(rules);
-    while (m.find()) {
-      allMatches.add(m.group());
-    }
-    return allMatches;
+  public void attemptUpdateCirculationRules(String rules, String policyType) {
+    JsonObject circulationRulesRequest = new JsonObject()
+      .put("rulesAsText", rules);
+
+    final Response response = putRules(circulationRulesRequest.encodePrettily());
+    assertThat(String.format("The policy %s does not exist", policyType),
+      response.getStatusCode(), is(422));
   }
 
   public void updateCirculationRulesWithoutInvalidatingCache(String rules) {

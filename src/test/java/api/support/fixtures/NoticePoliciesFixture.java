@@ -43,8 +43,8 @@ public class NoticePoliciesFixture {
   public void create(List<String> ids) {
     ids.stream()
       .map(id -> new NoticePolicyBuilder()
-        .withId(UUID.fromString(id)))
-        //.withName("Example NoticePolicy " + id))
+        .withId(UUID.fromString(id))
+        .withName("Example NoticePolicy " + id))
     .forEach(noticePolicyRecordCreator::createIfAbsent);
   }
 
