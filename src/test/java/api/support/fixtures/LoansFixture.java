@@ -156,7 +156,12 @@ public class LoansFixture {
 
   public Response claimItemReturned(ClaimItemReturnedRequestBuilder request) {
     return restAssuredClient.post(request.create(),
-      claimItemReturnedURL(request.getLoanId()), "claim-item-returned-request");
+      claimItemReturnedURL(request.getLoanId()), 204, "claim-item-returned-request");
+  }
+
+  public Response attemptClaimItemReturned(ClaimItemReturnedRequestBuilder request) {
+    return restAssuredClient.post(request.create(),
+      claimItemReturnedURL(request.getLoanId()), "attempt-claim-item-returned-request");
   }
 
   public IndividualResource checkOutByBarcode(IndividualResource item) {

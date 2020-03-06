@@ -18,6 +18,9 @@ public class CheckInRecord {
   private final String itemId;
   private final String servicePointId;
   private final String performedByUserId;
+  private final String itemStatusPriorToCheckIn;
+  private final String itemLocationId;
+  private final Integer requestQueueSize;
 
   private CheckInRecord(Builder builder) {
     this.id = builder.id;
@@ -25,6 +28,9 @@ public class CheckInRecord {
     this.itemId = builder.itemId;
     this.servicePointId = builder.checkInServicePointId;
     this.performedByUserId = builder.performedByUserId;
+    this.itemStatusPriorToCheckIn = builder.itemStatusPriorToCheckIn;
+    this.itemLocationId = builder.itemLocationId;
+    this.requestQueueSize = builder.requestQueueSize;
   }
 
   public static class Builder {
@@ -33,6 +39,9 @@ public class CheckInRecord {
     private String itemId;
     private String checkInServicePointId;
     private String performedByUserId;
+    private String itemStatusPriorToCheckIn;
+    private String itemLocationId;
+    private Integer requestQueueSize;
 
     public Builder withId(String id) {
       this.id = id;
@@ -56,6 +65,21 @@ public class CheckInRecord {
 
     public Builder withPerformedByUserId(String performedByUserId) {
       this.performedByUserId = performedByUserId;
+      return this;
+    }
+
+    public Builder withItemStatusPriorToCheckIn(String itemStatus) {
+      this.itemStatusPriorToCheckIn = itemStatus;
+      return this;
+    }
+
+    public Builder withItemLocationId(String itemLocationId) {
+      this.itemLocationId = itemLocationId;
+      return this;
+    }
+
+    public Builder withRequestQueueSize(Integer queueSize) {
+      this.requestQueueSize = queueSize;
       return this;
     }
 
@@ -83,6 +107,9 @@ public class CheckInRecord {
       .put(PERFORMED_BY_USER_ID, performedByUserId);
 
     write(json, "id", id);
+    write(json, "itemStatusPriorToCheckIn", itemStatusPriorToCheckIn);
+    write(json, "itemLocationId", itemLocationId);
+    write(json, "requestQueueSize", requestQueueSize);
 
     return json;
   }

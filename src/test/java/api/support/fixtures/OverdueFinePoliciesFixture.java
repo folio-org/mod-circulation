@@ -68,6 +68,13 @@ public class OverdueFinePoliciesFixture {
     return overdueFinePolicyRecordCreator.createIfAbsent(overdueFinePolicyBuilder);
   }
 
+  public IndividualResource  noOverdueFine() {
+    JsonObject overdueFinePolicy = new JsonObject();
+    overdueFinePolicy.put("id", UUID.randomUUID().toString());
+    overdueFinePolicy.put("name", "No overdue fine policy");
+    return overdueFinePolicyRecordCreator.createIfAbsent(overdueFinePolicy);
+  }
+
   public IndividualResource create(OverdueFinePolicyBuilder overdueFinePolicyBuilder) {
     return overdueFinePolicyRecordCreator.createIfAbsent(overdueFinePolicyBuilder);
   }

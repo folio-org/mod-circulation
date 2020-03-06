@@ -24,6 +24,9 @@ public class LogCheckInService {
       .withItemId(checkInProcessRecords.getItem().getItemId())
       .withServicePointId(checkInProcessRecords.getCheckInServicePointId().toString())
       .withPerformedByUserId(checkInProcessRecords.getLoggedInUserId())
+      .withItemStatusPriorToCheckIn(checkInProcessRecords.getItem().getStatusName())
+      .withItemLocationId(checkInProcessRecords.getItem().getLocationId())
+      .withRequestQueueSize(checkInProcessRecords.getRequestQueue().size())
       .build();
 
     return checkInStorageRepository.createCheckInLogRecord(checkInRecord)

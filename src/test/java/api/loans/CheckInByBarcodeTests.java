@@ -9,8 +9,11 @@ import static api.support.matchers.TextDateTimeMatcher.withinSecondsBeforeNow;
 import static api.support.matchers.UUIDMatcher.is;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
+import static api.support.matchers.ValidationErrorMatchers.hasNullParameter;
+import static api.support.matchers.ValidationErrorMatchers.hasParameter;
 import static java.util.Arrays.asList;
 import static org.folio.HttpStatus.HTTP_VALIDATION_ERROR;
+import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -39,12 +42,14 @@ import org.joda.time.DateTimeZone;
 import org.joda.time.LocalDate;
 import org.joda.time.Seconds;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import api.support.APITests;
 import api.support.CheckInByBarcodeResponse;
 import api.support.MultipleJsonRecords;
 import api.support.builders.Address;
 import api.support.builders.CheckInByBarcodeRequestBuilder;
+import api.support.builders.ClaimItemReturnedRequestBuilder;
 import api.support.builders.FeeFineBuilder;
 import api.support.builders.FeeFineOwnerBuilder;
 import api.support.builders.NoticeConfigurationBuilder;
@@ -54,7 +59,10 @@ import api.support.fixtures.TemplateContextMatchers;
 import api.support.http.CqlQuery;
 import api.support.http.InventoryItemResource;
 import io.vertx.core.json.JsonObject;
+import junitparams.JUnitParamsRunner;
+import junitparams.Parameters;
 
+@RunWith(JUnitParamsRunner.class)
 public class CheckInByBarcodeTests extends APITests {
   @Test
   public void canCloseAnOpenLoanByCheckingInTheItem() {
@@ -157,7 +165,7 @@ public class CheckInByBarcodeTests extends APITests {
     assertThat("Checkin Service Point Id should be stored.",
       storedLoan.getString("checkinServicePointId"), is(checkInServicePointId));
 
-    verifyCheckInOperationRecorded(nod.getId(), checkInServicePointId);
+    verifyCheckInOperationRecorded(nod.getId(), checkInServicePointId, 0);
   }
 
   @Test
@@ -598,7 +606,7 @@ public class CheckInByBarcodeTests extends APITests {
   }
 
   @Test
-  public void overdueFineShouldBeChargedWhenItemIsOverdue() throws InterruptedException {
+  public void overdueFineShouldBeChargedWhenItemIsOverdue() {
     useFallbackPolicies(loanPoliciesFixture.canCirculateRolling().getId(),
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
       noticePoliciesFixture.activeNotice().getId(),
@@ -676,6 +684,55 @@ public class CheckInByBarcodeTests extends APITests {
     assertThat("item ID is included", account.getString("itemId"), is(nod.getId()));
   }
 
+  @Test
+  public void noOverdueFineShouldBeChargedForOverdueFinePolicyWithNoOverdueFine()
+    throws InterruptedException {
+
+    useFallbackPolicies(loanPoliciesFixture.canCirculateRolling().getId(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
+      noticePoliciesFixture.activeNotice().getId(),
+      overdueFinePoliciesFixture.noOverdueFine().getId(),
+      lostItemFeePoliciesFixture.facultyStandard().getId());
+
+    final IndividualResource james = usersFixture.james();
+    final UUID checkInServicePointId = servicePointsFixture.cd1().getId();
+    final IndividualResource homeLocation = locationsFixture.basedUponExampleLocation(
+      item -> item.withPrimaryServicePoint(checkInServicePointId));
+    final IndividualResource nod = itemsFixture.basedUponNod(item ->
+      item.withPermanentLocation(homeLocation.getId()));
+
+    loansFixture.checkOutByBarcode(nod, james,
+      new DateTime(2020, 1, 1, 12, 0, 0, DateTimeZone.UTC));
+
+    JsonObject servicePointOwner = new JsonObject();
+    servicePointOwner.put("value", homeLocation.getJson().getString("primaryServicePoint"));
+    servicePointOwner.put("label", "label");
+    UUID ownerId = UUID.randomUUID();
+    feeFineOwnersClient.create(new FeeFineOwnerBuilder()
+      .withId(ownerId)
+      .withOwner("fee-fine-owner")
+      .withServicePointOwner(Collections.singletonList(servicePointOwner))
+    );
+
+    UUID feeFineId = UUID.randomUUID();
+    feeFinesClient.create(new FeeFineBuilder()
+      .withId(feeFineId)
+      .withFeeFineType("Overdue fine")
+      .withOwnerId(ownerId)
+    );
+
+    loansFixture.checkInByBarcode(new CheckInByBarcodeRequestBuilder()
+      .forItem(nod)
+      .on(new DateTime(2020, 1, 25, 12, 0, 0, DateTimeZone.UTC))
+      .at(checkInServicePointId));
+
+    TimeUnit.SECONDS.sleep(1);
+
+    List<JsonObject> createdAccounts = accountsClient.getAll();
+
+    assertThat("Fee/fine record shouldn't be created", createdAccounts, empty());
+  }
+
   private void checkPatronNoticeEvent(
     IndividualResource request, IndividualResource requester,
     InventoryItemResource item, UUID expectedTemplateId) {
@@ -695,11 +752,162 @@ public class CheckInByBarcodeTests extends APITests {
         hasEmailNoticeProperties(requester.getId(), expectedTemplateId, noticeContextMatchers)));
   }
 
-  private void verifyCheckInOperationRecorded(UUID itemId, UUID servicePoint) {
+  @Parameters({
+    "Found by library, checkedInFoundByLibrary",
+    "Returned by patron, checkedInReturnedByPatron"
+  })
+  @Test
+  public void canResolveClaimedReturned(String resolution, String expectedLoanAction) {
+    final UUID checkInServicePointId = servicePointsFixture.cd1().getId();
+    final IndividualResource nod = itemsFixture.basedUponNod();
+
+    final IndividualResource loan = loansFixture
+      .checkOutByBarcode(nod, usersFixture.james());
+
+    loansFixture.claimItemReturned(
+      new ClaimItemReturnedRequestBuilder().forLoan(loan.getId()));
+
+    final CheckInByBarcodeResponse checkInResponse = loansFixture.checkInByBarcode(
+      new CheckInByBarcodeRequestBuilder()
+        .forItem(nod)
+        .at(checkInServicePointId)
+        .claimedReturnedResolution(resolution));
+
+    JsonObject returnedLoan = checkInResponse.getLoan();
+    JsonObject returnedItem = checkInResponse.getItem();
+
+    assertThat(returnedLoan, notNullValue());
+    assertThat(returnedItem, notNullValue());
+
+    assertThat(returnedLoan.getJsonObject("status").getString("name"), is("Closed"));
+    assertThat(returnedLoan.getString("action"), is(expectedLoanAction));
+    assertThat(returnedLoan.getJsonObject("item").getString("id"), is(nod.getId()));
+
+    assertThat(returnedItem.getString("id"), is(nod.getId()));
+
+    JsonObject updatedNod = itemsClient.getById(nod.getId()).getJson();
+    assertThat(updatedNod.getJsonObject("status").getString("name"),
+      is("Available"));
+  }
+
+  @Test
+  public void cannotResolveClaimedReturnedIfResolvedByPropertyMissing() {
+    final UUID checkInServicePointId = servicePointsFixture.cd1().getId();
+    final IndividualResource nod = itemsFixture.basedUponNod();
+
+    final IndividualResource loan = loansFixture
+      .checkOutByBarcode(nod, usersFixture.james());
+
+    loansFixture.claimItemReturned(
+      new ClaimItemReturnedRequestBuilder().forLoan(loan.getId()));
+
+    final Response checkInResponse = loansFixture.attemptCheckInByBarcode(
+      new CheckInByBarcodeRequestBuilder()
+        .forItem(nod)
+        .at(checkInServicePointId));
+
+    assertThat(checkInResponse.getJson(), hasErrorWith(allOf(
+      hasMessage("Item is claimed returned, a resolution is required to check in"),
+      hasNullParameter("claimedReturnedResolvedBy")
+    )));
+  }
+
+  @Test
+  public void cannotResolveClaimedReturnedIfUnrecognisedResolutionProvided() {
+    final UUID checkInServicePointId = servicePointsFixture.cd1().getId();
+    final IndividualResource nod = itemsFixture.basedUponNod();
+
+    final IndividualResource loan = loansFixture
+      .checkOutByBarcode(nod, usersFixture.james());
+
+    loansFixture.claimItemReturned(
+      new ClaimItemReturnedRequestBuilder().forLoan(loan.getId()));
+
+    final String resolutionValue = "Wrong resolved by value";
+    final Response checkInResponse = loansFixture.attemptCheckInByBarcode(
+      new CheckInByBarcodeRequestBuilder()
+        .forItem(nod)
+        .at(checkInServicePointId)
+        .claimedReturnedResolution(resolutionValue));
+
+    assertThat(checkInResponse.getJson(), hasErrorWith(allOf(
+      hasMessage("Unrecognized value provided for property"),
+      hasParameter("claimedReturnedResolution", resolutionValue)
+    )));
+  }
+
+  @Test
+  public void claimedReturnedResolvedByPropertyIsIgnoredForItemNotClaimedReturned() {
+    final UUID checkInServicePointId = servicePointsFixture.cd1().getId();
+    final IndividualResource nod = itemsFixture.basedUponNod();
+
+    loansFixture.checkOutByBarcode(nod, usersFixture.james());
+
+    final CheckInByBarcodeResponse checkInResponse = loansFixture.checkInByBarcode(
+      new CheckInByBarcodeRequestBuilder()
+        .forItem(nod)
+        .at(checkInServicePointId)
+        .claimedReturnedResolution("Found by library"));
+
+    JsonObject returnedLoan = checkInResponse.getLoan();
+    JsonObject returnedItem = checkInResponse.getItem();
+
+    assertThat(returnedLoan, notNullValue());
+    assertThat(returnedItem, notNullValue());
+
+    assertThat(returnedLoan.getJsonObject("status").getString("name"), is("Closed"));
+    assertThat(returnedLoan.getString("action"), is("checkedin"));
+    assertThat(returnedLoan.getJsonObject("item").getString("id"), is(nod.getId()));
+
+    assertThat(returnedItem.getString("id"), is(nod.getId()));
+
+    JsonObject updatedNod = itemsClient.getById(nod.getId()).getJson();
+    assertThat(updatedNod.getJsonObject("status").getString("name"),
+      is("Available"));
+  }
+
+  @Test
+  public void canStartFulfillmentOfRequestByCheckIn() {
+    final UUID checkInServicePointId = servicePointsFixture.cd1().getId();
+
+    final IndividualResource homeLocation = locationsFixture.basedUponExampleLocation(
+      item -> item.withPrimaryServicePoint(checkInServicePointId));
+
+    final IndividualResource nod = itemsFixture.basedUponNod(
+      item -> item.withTemporaryLocation(homeLocation.getId()));
+
+    loansFixture.checkOutByBarcode(nod, usersFixture.james());
+
+    final IndividualResource request = requestsFixture.place(new RequestBuilder()
+      .hold()
+      .withPickupServicePointId(checkInServicePointId)
+      .by(usersFixture.charlotte())
+      .forItem(nod)
+      .fulfilToHoldShelf());
+
+    final CheckInByBarcodeResponse checkInResponse = loansFixture
+      .checkInByBarcode(nod, checkInServicePointId);
+
+    assertThat(checkInResponse.getItem(), notNullValue());
+    assertThat(checkInResponse.getLoan(), notNullValue());
+
+    assertThat(requestsFixture.getById(request.getId()).getJson().getString("status"),
+      is("Open - Awaiting pickup")
+    );
+
+    verifyCheckInOperationRecorded(nod.getId(), checkInServicePointId, 1);
+  }
+
+  private void verifyCheckInOperationRecorded(UUID itemId, UUID servicePoint,
+    int queueSize) {
+
     final CqlQuery query = CqlQuery.queryFromTemplate("itemId=%s", itemId);
-    final MultipleJsonRecords recordedOperations = checkInOperationClient.getMany(query);
+    MultipleJsonRecords recordedOperations = checkInOperationClient.getMany(query);
 
     assertThat(recordedOperations.totalRecords(), is(1));
+
+    final String itemEffectiveLocationId = itemsClient.getById(itemId).getJson()
+      .getString("effectiveLocationId");
 
     recordedOperations.forEach(checkInOperation -> {
       assertThat(checkInOperation.getString("occurredDateTime"),
@@ -707,6 +915,9 @@ public class CheckInByBarcodeTests extends APITests {
       assertThat(checkInOperation.getString("itemId"), is(itemId.toString()));
       assertThat(checkInOperation.getString("servicePointId"), is(servicePoint.toString()));
       assertThat(checkInOperation.getString("performedByUserId"), is(getUserId()));
+      assertThat(checkInOperation.getString("itemStatusPriorToCheckIn"), is("Checked out"));
+      assertThat(checkInOperation.getString("itemLocationId"), is(itemEffectiveLocationId));
+      assertThat(checkInOperation.getInteger("requestQueueSize"), is(queueSize));
     });
   }
 }
