@@ -165,7 +165,7 @@ public class CheckInByBarcodeTests extends APITests {
     assertThat("Checkin Service Point Id should be stored.",
       storedLoan.getString("checkinServicePointId"), is(checkInServicePointId));
 
-    verifyCheckInOperationRecorded(nod.getId(), checkInServicePointId);
+    verifyCheckInOperationRecorded(nod.getId(), checkInServicePointId, 0);
   }
 
   @Test
@@ -866,11 +866,48 @@ public class CheckInByBarcodeTests extends APITests {
       is("Available"));
   }
 
-  private void verifyCheckInOperationRecorded(UUID itemId, UUID servicePoint) {
+  @Test
+  public void canStartFulfillmentOfRequestByCheckIn() {
+    final UUID checkInServicePointId = servicePointsFixture.cd1().getId();
+
+    final IndividualResource homeLocation = locationsFixture.basedUponExampleLocation(
+      item -> item.withPrimaryServicePoint(checkInServicePointId));
+
+    final IndividualResource nod = itemsFixture.basedUponNod(
+      item -> item.withTemporaryLocation(homeLocation.getId()));
+
+    loansFixture.checkOutByBarcode(nod, usersFixture.james());
+
+    final IndividualResource request = requestsFixture.place(new RequestBuilder()
+      .hold()
+      .withPickupServicePointId(checkInServicePointId)
+      .by(usersFixture.charlotte())
+      .forItem(nod)
+      .fulfilToHoldShelf());
+
+    final CheckInByBarcodeResponse checkInResponse = loansFixture
+      .checkInByBarcode(nod, checkInServicePointId);
+
+    assertThat(checkInResponse.getItem(), notNullValue());
+    assertThat(checkInResponse.getLoan(), notNullValue());
+
+    assertThat(requestsFixture.getById(request.getId()).getJson().getString("status"),
+      is("Open - Awaiting pickup")
+    );
+
+    verifyCheckInOperationRecorded(nod.getId(), checkInServicePointId, 1);
+  }
+
+  private void verifyCheckInOperationRecorded(UUID itemId, UUID servicePoint,
+    int queueSize) {
+
     final CqlQuery query = CqlQuery.queryFromTemplate("itemId=%s", itemId);
-    final MultipleJsonRecords recordedOperations = checkInOperationClient.getMany(query);
+    MultipleJsonRecords recordedOperations = checkInOperationClient.getMany(query);
 
     assertThat(recordedOperations.totalRecords(), is(1));
+
+    final String itemEffectiveLocationId = itemsClient.getById(itemId).getJson()
+      .getString("effectiveLocationId");
 
     recordedOperations.forEach(checkInOperation -> {
       assertThat(checkInOperation.getString("occurredDateTime"),
@@ -878,6 +915,9 @@ public class CheckInByBarcodeTests extends APITests {
       assertThat(checkInOperation.getString("itemId"), is(itemId.toString()));
       assertThat(checkInOperation.getString("servicePointId"), is(servicePoint.toString()));
       assertThat(checkInOperation.getString("performedByUserId"), is(getUserId()));
+      assertThat(checkInOperation.getString("itemStatusPriorToCheckIn"), is("Checked out"));
+      assertThat(checkInOperation.getString("itemLocationId"), is(itemEffectiveLocationId));
+      assertThat(checkInOperation.getInteger("requestQueueSize"), is(queueSize));
     });
   }
 }
