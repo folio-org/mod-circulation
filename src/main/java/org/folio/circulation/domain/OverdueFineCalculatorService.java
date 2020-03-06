@@ -82,17 +82,11 @@ public class OverdueFineCalculatorService {
       .thenApply(mapResult(r -> records));
   }
 
-  private CompletableFuture<Result<Loan>> createOverdueFineIfNecessary(Loan loan, Scenario scenario) {
-    CompletableFuture<Result<Loan>> loanFuture = completedFuture(succeeded(loan));
-
+  private CompletableFuture<Result<Void>> createOverdueFineIfNecessary(Loan loan, Scenario scenario) {
     if (scenario.shouldNotCreateFine.test(loan.getOverdueFinePolicy())) {
-      return loanFuture;
+      return completedFuture(succeeded(null));
     }
 
-    return loanFuture.thenCompose(r -> r.after(this::createOverdueFine));
-  }
-
-  private CompletableFuture<Result<Loan>> createOverdueFine(Loan loan) {
     return getOverdueMinutes(loan)
       .thenCompose(r -> r.after(minutes -> calculateOverdueFine(loan, minutes)))
       .thenCompose(r -> r.after(fine -> createFeeFineRecord(loan, fine)));
@@ -163,11 +157,9 @@ public class OverdueFineCalculatorService {
       }));
   }
 
-  private CompletableFuture<Result<Loan>> createFeeFineRecord(Loan loan, Double fineAmount) {
-    CompletableFuture<Result<Loan>> loanFuture = completedFuture(succeeded(loan));
-
+  private CompletableFuture<Result<Void>> createFeeFineRecord(Loan loan, Double fineAmount) {
     if (fineAmount <= 0) {
-      return loanFuture;
+      return completedFuture(succeeded(null));
     }
 
     return CompletableFuture.completedFuture(succeeded(
@@ -177,13 +169,13 @@ public class OverdueFineCalculatorService {
       .thenCompose(r -> r.after(this::lookupFeeFine))
       .thenCompose(r -> r.after(params -> {
         if (params.item == null || params.feeFineOwner == null || params.feeFine == null) {
-          return loanFuture;
+          return completedFuture(succeeded(null));
         }
 
         AccountStorageRepresentation account = new AccountStorageRepresentation(params.loan,
           params.item, params.feeFineOwner, params.feeFine, fineAmount);
         return accountRepository.create(account)
-          .thenCompose(res -> res.after(ac -> loanFuture));
+            .thenApply(mapResult(a -> null));
       }));
   }
 
