@@ -1352,7 +1352,7 @@ abstract class RenewalAPITests extends APITests {
     TimeUnit.SECONDS.sleep(1);
     List<JsonObject> createdAccounts = accountsClient.getAll();
 
-    org.hamcrest.junit.MatcherAssert.assertThat("Fee/fine record should be created", createdAccounts, hasSize(1));
+    assertThat("Fee/fine record should be created", createdAccounts, hasSize(1));
 
     JsonObject account = createdAccounts.get(0);
     assertThat("owner ID is included",
@@ -1382,6 +1382,25 @@ abstract class RenewalAPITests extends APITests {
     assertThat("user ID is included",
       account.getString("userId"), is(loan.getJson().getString("userId")));
     assertThat("item ID is included", account.getString("itemId"), UUIDMatcher.is(nod.getId()));
+
+    Awaitility.await()
+      .atMost(1, TimeUnit.SECONDS)
+      .until(feeFineActionsClient::getAll, hasSize(1));
+
+    List<JsonObject> createdFeeFineActions = feeFineActionsClient.getAll();
+    assertThat("Fee/fine action record should be created", createdFeeFineActions, hasSize(1));
+
+    JsonObject createdFeeFineAction = createdFeeFineActions.get(0);
+    assertThat("user ID is included",
+      createdFeeFineAction.getString("userId"), Is.is(loan.getJson().getString("userId")));
+    assertThat("account ID is included",
+      createdFeeFineAction.getString("accountId"), Is.is(account.getString("id")));
+    assertThat("balance is included",
+      createdFeeFineAction.getDouble("balance"), Is.is(account.getDouble("amount")));
+    assertThat("amountAction is included",
+      createdFeeFineAction.getDouble("amountAction"), Is.is(account.getDouble("amount")));
+    assertThat("typeAction is included",
+      createdFeeFineAction.getString("typeAction"), Is.is("Overdue fine"));
   }
 
   private void checkRenewalAttempt(DateTime expectedDueDate, UUID dueDateLimitedPolicyId) {

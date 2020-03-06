@@ -12,10 +12,12 @@ import org.folio.circulation.domain.policy.OverdueFineInterval;
 import org.folio.circulation.domain.policy.OverdueFinePolicy;
 import org.folio.circulation.domain.policy.OverdueFinePolicyRepository;
 import org.folio.circulation.domain.representations.AccountStorageRepresentation;
+import org.folio.circulation.domain.representations.FeeFineActionStorageRepresentation;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.ItemRepository;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.ResultBinding;
+import org.folio.circulation.support.http.server.WebContext;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 
@@ -30,6 +32,8 @@ public class OverdueFineCalculatorService {
   private FeeFineOwnerRepository feeFineOwnerRepository;
   private FeeFineRepository feeFineRepository;
   private OverduePeriodCalculatorService overduePeriodCalculatorService;
+  private UserRepository userRepository;
+  private FeeFineActionRepository feeFineActionRepository;
 
   public OverdueFineCalculatorService(
     OverdueFinePolicyRepository overdueFinePolicyRepository,
@@ -37,13 +41,17 @@ public class OverdueFineCalculatorService {
     ItemRepository itemRepository,
     FeeFineOwnerRepository feeFineOwnerRepository,
     FeeFineRepository feeFineRepository,
-    OverduePeriodCalculatorService overduePeriodCalculatorService) {
+    OverduePeriodCalculatorService overduePeriodCalculatorService,
+    UserRepository userRepository,
+    FeeFineActionRepository feeFineActionRepository) {
     this.overdueFinePolicyRepository = overdueFinePolicyRepository;
     this.accountRepository = accountRepository;
     this.itemRepository = itemRepository;
     this.feeFineOwnerRepository = feeFineOwnerRepository;
     this.feeFineRepository = feeFineRepository;
     this.overduePeriodCalculatorService = overduePeriodCalculatorService;
+    this.userRepository = userRepository;
+    this.feeFineActionRepository = feeFineActionRepository;
   }
 
   private OverdueFineCalculatorService(Clients clients) {
@@ -52,39 +60,43 @@ public class OverdueFineCalculatorService {
       new ItemRepository(clients, true, false, false),
       new FeeFineOwnerRepository(clients),
       new FeeFineRepository(clients),
-      new OverduePeriodCalculatorService(new CalendarRepository(clients)));
+      new OverduePeriodCalculatorService(new CalendarRepository(clients)),
+      new UserRepository(clients),
+      new FeeFineActionRepository(clients));
   }
 
   public CompletableFuture<Result<CheckInProcessRecords>> calculateOverdueFine(
-    CheckInProcessRecords records) {
+    CheckInProcessRecords records, WebContext context) {
 
     Loan loan = records.getLoan();
 
-    if (loan == null) {
+    if (loan == null || context == null) {
       return completedFuture(of(() -> records));
     }
 
-    return calculateOverdueFine(loan).thenApply(mapResult(v -> records));
+    return calculateOverdueFine(loan, context.getUserId()).thenApply(mapResult(v -> records));
   }
 
   public CompletableFuture<Result<LoanAndRelatedRecords>> calculateOverdueFine(
-    LoanAndRelatedRecords records) {
+    LoanAndRelatedRecords records, WebContext context) {
 
     Loan loan = records.getLoan();
 
-    if (loan == null) {
+    if (loan == null || context == null) {
       return completedFuture(of(() -> records));
     }
 
-    return calculateOverdueFine(loan).thenApply(mapResult(v -> records));
+    return calculateOverdueFine(loan, context.getUserId()).thenApply(mapResult(v -> records));
   }
 
-  private CompletableFuture<Result<Account>> calculateOverdueFine(Loan loan) {
+  private CompletableFuture<Result<Account>> calculateOverdueFine(Loan loan,
+    String loggedInUserId) {
+
     return completedFuture(succeeded(loan))
       .thenComposeAsync(overdueFinePolicyRepository::findOverdueFinePolicyForLoan)
       .thenCompose(r -> r.after(l -> getOverdueMinutes(l)
           .thenCompose(mr -> mr.after(minutes -> calculateOverdueFine(l, minutes)))
-          .thenCompose(fr -> fr.after(fine -> this.createFeeFineRecord(l, fine)))
+          .thenCompose(fr -> fr.after(fine -> this.createFeeFineRecord(l, fine, loggedInUserId)))
       ));
   }
 
@@ -153,24 +165,39 @@ public class OverdueFineCalculatorService {
       }));
   }
 
-  private CompletableFuture<Result<Account>> createFeeFineRecord(Loan loan, Double fineAmount) {
+  private CompletableFuture<Result<CalculationParameters>> lookupLoggedInUser(
+    CalculationParameters params, String loggedInUserId) {
+    return userRepository.getUser(loggedInUserId)
+      .thenApply(ResultBinding.mapResult(params::withLoggedInUser));
+  }
+
+  private CompletableFuture<Result<Account>> createFeeFineRecord(Loan loan, Double fineAmount,
+    String loggedInUserId) {
+
     if (fineAmount <= 0) {
       return failure();
     }
 
     return CompletableFuture.completedFuture(succeeded(
-      new CalculationParameters(loan, null, null, null)))
+      new CalculationParameters(loan, null, null, null, null)))
       .thenCompose(r -> r.after(this::lookupItemRelatedRecords))
       .thenCompose(r -> r.after(this::lookupFeeFineOwner))
       .thenCompose(r -> r.after(this::lookupFeeFine))
+      .thenCompose(r -> r.after(params -> this.lookupLoggedInUser(params, loggedInUserId)))
       .thenCompose(r -> r.after(params -> {
         if (params.item == null || params.feeFineOwner == null || params.feeFine == null) {
           return failure();
         }
 
-        AccountStorageRepresentation account = new AccountStorageRepresentation(params.loan,
-          params.item, params.feeFineOwner, params.feeFine, fineAmount);
-        return accountRepository.create(account);
+        AccountStorageRepresentation accountRepresentation =
+          new AccountStorageRepresentation(params.loan, params.item, params.feeFineOwner,
+            params.feeFine, fineAmount);
+
+        return accountRepository.create(accountRepresentation)
+          .thenCompose(rac -> rac.after(account -> feeFineActionRepository.create(
+            new FeeFineActionStorageRepresentation(account, params.feeFineOwner, params.feeFine,
+              account.getAmount(), account.getAmount(), params.loggedInUser))
+            .thenApply(rfa -> rfa.map(feeFineAction -> account))));
       }));
   }
 
@@ -183,24 +210,36 @@ public class OverdueFineCalculatorService {
     final Item item;
     final FeeFineOwner feeFineOwner;
     final FeeFine feeFine;
+    final User loggedInUser;
 
-    CalculationParameters(Loan loan, Item item, FeeFineOwner feeFineOwner, FeeFine feeFine) {
+    CalculationParameters(Loan loan, Item item, FeeFineOwner feeFineOwner, FeeFine feeFine,
+      User loggedInUser) {
+
       this.loan = loan;
       this.item = item;
       this.feeFineOwner = feeFineOwner;
       this.feeFine = feeFine;
+      this.loggedInUser = loggedInUser;
     }
 
     CalculationParameters withItem(Item item) {
-      return new CalculationParameters(this.loan, item, this.feeFineOwner, this.feeFine);
+      return new CalculationParameters(this.loan, item, this.feeFineOwner, this.feeFine,
+        this.loggedInUser);
     }
 
     CalculationParameters withOwner(FeeFineOwner feeFineOwner) {
-      return new CalculationParameters(this.loan, this.item, feeFineOwner, this.feeFine);
+      return new CalculationParameters(this.loan, this.item, feeFineOwner, this.feeFine,
+        this.loggedInUser);
     }
 
     CalculationParameters withFeeFine(FeeFine feeFine) {
-      return new CalculationParameters(this.loan, this.item, this.feeFineOwner, feeFine);
+      return new CalculationParameters(this.loan, this.item, this.feeFineOwner, feeFine,
+        this.loggedInUser);
+    }
+
+    CalculationParameters withLoggedInUser(User loggedInUser) {
+      return new CalculationParameters(this.loan, this.item, this.feeFineOwner, this.feeFine,
+        loggedInUser);
     }
   }
 }

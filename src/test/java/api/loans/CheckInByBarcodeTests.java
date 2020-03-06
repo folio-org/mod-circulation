@@ -674,6 +674,25 @@ public class CheckInByBarcodeTests extends APITests {
     assertThat("user ID is included",
       account.getString("userId"), is(loan.getJson().getString("userId")));
     assertThat("item ID is included", account.getString("itemId"), is(nod.getId()));
+
+    Awaitility.await()
+      .atMost(1, TimeUnit.SECONDS)
+      .until(feeFineActionsClient::getAll, hasSize(1));
+
+    List<JsonObject> createdFeeFineActions = feeFineActionsClient.getAll();
+    assertThat("Fee/fine action record should be created", createdFeeFineActions, hasSize(1));
+
+    JsonObject createdFeeFineAction = createdFeeFineActions.get(0);
+    assertThat("user ID is included",
+      createdFeeFineAction.getString("userId"), is(loan.getJson().getString("userId")));
+    assertThat("account ID is included",
+      createdFeeFineAction.getString("accountId"), is(account.getString("id")));
+    assertThat("balance is included",
+      createdFeeFineAction.getDouble("balance"), is(account.getDouble("amount")));
+    assertThat("amountAction is included",
+      createdFeeFineAction.getDouble("amountAction"), is(account.getDouble("amount")));
+    assertThat("typeAction is included",
+      createdFeeFineAction.getString("typeAction"), is("Overdue fine"));
   }
 
   @Test
@@ -721,8 +740,10 @@ public class CheckInByBarcodeTests extends APITests {
     TimeUnit.SECONDS.sleep(1);
 
     List<JsonObject> createdAccounts = accountsClient.getAll();
+    List<JsonObject> createdFeeFineActions = feeFineActionsClient.getAll();
 
     assertThat("Fee/fine record shouldn't be created", createdAccounts, empty());
+    assertThat("Fee/fine action record shouldn't be created", createdFeeFineActions, empty());
   }
 
   private void checkPatronNoticeEvent(
