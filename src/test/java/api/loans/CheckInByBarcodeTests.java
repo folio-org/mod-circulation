@@ -28,7 +28,6 @@ import java.util.concurrent.TimeUnit;
 
 import org.awaitility.Awaitility;
 import org.folio.circulation.domain.User;
-import org.folio.circulation.domain.representations.ItemProperties;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 import org.hamcrest.Matcher;
@@ -53,6 +52,7 @@ import api.support.builders.RequestBuilder;
 import api.support.fixtures.TemplateContextMatchers;
 import api.support.http.CqlQuery;
 import api.support.http.InventoryItemResource;
+import api.support.matchers.OverdueFineMatcher;
 import io.vertx.core.json.JsonObject;
 
 public class CheckInByBarcodeTests extends APITests {
@@ -646,34 +646,9 @@ public class CheckInByBarcodeTests extends APITests {
     assertThat("Fee/fine record should be created", createdAccounts, hasSize(1));
 
     JsonObject account = createdAccounts.get(0);
-    assertThat("owner ID is included",
-      account.getString("ownerId"), is(ownerId.toString()));
-    assertThat("fee/fine ID is included",
-      account.getString("feeFineId"), is(feeFineId.toString()));
-    assertThat("amount is correct", account.getDouble("amount"), is(5.0));
-    assertThat("remaining is the same as amount",
-      account.getDouble("remaining"), is(5.0));
-    assertThat("correct fee/fine type is included",
-      account.getString("feeFineType"), is("Overdue fine"));
-    assertThat("fee/fine owner is included",
-      account.getString("feeFineOwner"), is("fee-fine-owner"));
-    assertThat("item's title is included",
-      account.getString("title"), is(loan.getJson().getJsonObject("item").getString("title")));
-    assertThat("item's barcode is included",
-      account.getString("barcode"), is(nod.getJson().getString("barcode")));
-    assertThat("call number from the item is included",
-      account.getString("callNumber"),
-      is(nod.getJson().getJsonObject("effectiveCallNumberComponents").getString("callNumber")));
-    assertThat("effective location ID is included",
-      account.getString("location"),
-      is(servicePointsFixture.cd1().getId()));
-    assertThat("item's material type is included",
-      account.getString("materialTypeId"),
-      is(nod.getJson().getString(ItemProperties.MATERIAL_TYPE_ID)));
-    assertThat("loan ID is included", account.getString("loanId"), is(loan.getId()));
-    assertThat("user ID is included",
-      account.getString("userId"), is(loan.getJson().getString("userId")));
-    assertThat("item ID is included", account.getString("itemId"), is(nod.getId()));
+
+    assertThat(account, OverdueFineMatcher.isValidOverdueFine(loan, nod,
+      servicePointsFixture.cd1().getId(), ownerId, feeFineId, 5.0));
   }
 
   @Test
@@ -742,34 +717,9 @@ public class CheckInByBarcodeTests extends APITests {
     assertThat("Fee/fine record should be created", createdAccounts, hasSize(1));
 
     JsonObject account = createdAccounts.get(0);
-    assertThat("owner ID is included",
-      account.getString("ownerId"), is(ownerId.toString()));
-    assertThat("fee/fine ID is included",
-      account.getString("feeFineId"), is(feeFineId.toString()));
-    assertThat("amount is correct", account.getDouble("amount"), is(10.0));
-    assertThat("remaining is the same as amount",
-      account.getDouble("remaining"), is(10.0));
-    assertThat("correct fee/fine type is included",
-      account.getString("feeFineType"), is("Overdue fine"));
-    assertThat("fee/fine owner is included",
-      account.getString("feeFineOwner"), is("fee-fine-owner"));
-    assertThat("item's title is included",
-      account.getString("title"), is(loan.getJson().getJsonObject("item").getString("title")));
-    assertThat("item's barcode is included",
-      account.getString("barcode"), is(nod.getJson().getString("barcode")));
-    assertThat("call number from the item is included",
-      account.getString("callNumber"),
-      is(nod.getJson().getJsonObject("effectiveCallNumberComponents").getString("callNumber")));
-    assertThat("effective location ID is included",
-      account.getString("location"),
-      is(servicePointsFixture.cd1().getId()));
-    assertThat("item's material type is included",
-      account.getString("materialTypeId"),
-      is(nod.getJson().getString(ItemProperties.MATERIAL_TYPE_ID)));
-    assertThat("loan ID is included", account.getString("loanId"), is(loan.getId()));
-    assertThat("user ID is included",
-      account.getString("userId"), is(loan.getJson().getString("userId")));
-    assertThat("item ID is included", account.getString("itemId"), is(nod.getId()));
+
+    assertThat(account, OverdueFineMatcher.isValidOverdueFine(loan, nod,
+      servicePointsFixture.cd1().getId(), ownerId, feeFineId, 10.0));
   }
 
   @Test
