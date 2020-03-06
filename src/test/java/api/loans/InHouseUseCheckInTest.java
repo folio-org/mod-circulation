@@ -6,6 +6,7 @@ import static api.support.http.Limit.noLimit;
 import static api.support.http.Offset.noOffset;
 import static api.support.matchers.TextDateTimeMatcher.withinSecondsBeforeNow;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertTrue;
 
@@ -134,7 +135,7 @@ public class InHouseUseCheckInTest extends APITests {
       itemId);
     final MultipleJsonRecords recordedOperations = checkInOperationClient.getMany(query);
 
-    assertTrue(recordedOperations.totalRecords() > 0);
+    assertThat(recordedOperations.totalRecords(), greaterThan(0));
 
     final String itemEffectiveLocationId = itemsClient.getById(itemId).getJson()
       .getString("effectiveLocationId");
