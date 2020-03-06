@@ -1,15 +1,13 @@
 package org.folio.circulation.domain.representations;
 
-
 import java.util.UUID;
 
 import org.folio.circulation.domain.Account;
 import org.folio.circulation.domain.FeeFine;
 import org.folio.circulation.domain.FeeFineOwner;
 import org.folio.circulation.domain.User;
+import org.folio.circulation.support.ClockManager;
 import org.folio.circulation.support.JsonPropertyWriter;
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
 
 import io.vertx.core.json.JsonObject;
 
@@ -33,6 +31,6 @@ public class FeeFineActionStorageRepresentation extends JsonObject {
     this.put("amountAction", amount);
     this.put("notify", false);
     this.put("typeAction", feeFine.getFeeFineType());
-    JsonPropertyWriter.write(this, "dateAction", new DateTime(DateTimeZone.UTC));
+    JsonPropertyWriter.write(this, "dateAction", ClockManager.getClockManager().getDateTime());
   }
 }

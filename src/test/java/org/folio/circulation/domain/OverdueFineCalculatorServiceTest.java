@@ -142,9 +142,10 @@ public class OverdueFineCalculatorServiceTest {
     feeFineActionRepository = mock(FeeFineActionRepository.class);
 
     overdueFineCalculatorService = new OverdueFineCalculatorService(
-      overdueFinePolicyRepository, accountRepository, itemRepository,
-      feeFineOwnerRepository, feeFineRepository, overduePeriodCalculatorService, userRepository,
-      feeFineActionRepository);
+      new OverdueFineCalculatorService.Repos(
+        overdueFinePolicyRepository, accountRepository, itemRepository,
+        feeFineOwnerRepository, feeFineRepository, userRepository, feeFineActionRepository),
+      overduePeriodCalculatorService);
 
     context = mock(WebContext.class);
     when(context.getUserId()).thenReturn(LOGGED_IN_USER.getId());
