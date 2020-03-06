@@ -17,7 +17,7 @@ import org.joda.time.DateTime;
  *
  * Which requires passing the records between processes.
  */
-public class CheckInProcessRecords implements LoanRelatedRecord {
+public class CheckInProcessRecords {
   private final CheckInByBarcodeRequest checkInRequest;
   private final Item item;
   private final Loan loan;

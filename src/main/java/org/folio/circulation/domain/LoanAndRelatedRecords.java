@@ -2,7 +2,7 @@ package org.folio.circulation.domain;
 
 import org.joda.time.DateTimeZone;
 
-public class LoanAndRelatedRecords implements UserRelatedRecord, LoanRelatedRecord {
+public class LoanAndRelatedRecords implements UserRelatedRecord {
   private final Loan loan;
   private final RequestQueue requestQueue;
   private final DateTimeZone timeZone;
