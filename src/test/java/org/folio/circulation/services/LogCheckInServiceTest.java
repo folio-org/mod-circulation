@@ -5,11 +5,13 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
+import java.util.Collections;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.domain.CheckInProcessRecords;
 import org.folio.circulation.domain.Item;
+import org.folio.circulation.domain.RequestQueue;
 import org.folio.circulation.domain.representations.CheckInByBarcodeRequest;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
@@ -63,9 +65,14 @@ public class LogCheckInServiceTest {
       .put("itemBarcode", "barcode")
       .put("checkInDate", DateTime.now().toString());
 
+    JsonObject itemRepresentation = new JsonObject()
+      .put("id", UUID.randomUUID().toString())
+      .put("status", new JsonObject().put("name", "Available"));
+
     return new CheckInProcessRecords(
       CheckInByBarcodeRequest.from(requestRepresentation).value())
-      .withItem(Item.from(new JsonObject().put("id", UUID.randomUUID().toString())))
+      .withItem(Item.from(itemRepresentation))
+      .withRequestQueue(new RequestQueue(Collections.emptyList()))
       .withLoggedInUserId(UUID.randomUUID().toString());
   }
 }
