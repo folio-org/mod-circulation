@@ -3,6 +3,7 @@ package org.folio.circulation.resources;
 import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.mapping;
 import static java.util.stream.Collectors.toSet;
+import static org.apache.commons.collections4.CollectionUtils.isNotEmpty;
 import static org.apache.commons.lang3.exception.ExceptionUtils.getStackTrace;
 import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
 import static org.folio.circulation.support.Result.combine;
@@ -10,6 +11,7 @@ import static org.folio.circulation.support.http.server.ServerErrorResponse.inte
 
 import java.lang.invoke.MethodHandles;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
@@ -18,6 +20,7 @@ import java.util.function.Function;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.policy.Policy;
 import org.folio.circulation.rules.CirculationRulesException;
+import org.folio.circulation.rules.CirculationRulesParser;
 import org.folio.circulation.rules.Text2Drools;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
@@ -44,7 +47,8 @@ import io.vertx.ext.web.handler.BodyHandler;
  */
 public class CirculationRulesResource extends Resource {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
-
+  private static final int FIRST_ELEMENT_OF_LIST = 0;
+  private static final int POLICY_ID_POSITION_NUMBER = 1;
   private final String rootPath;
 
   /**
@@ -121,7 +125,14 @@ public class CirculationRulesResource extends Resource {
     try {
       // try to convert, do not safe if conversion fails
       rulesInput = routingContext.getBodyAsJson();
-      Text2Drools.convert(rulesInput.getString("rulesAsText"), existingPoliciesIds);
+      Text2Drools.convert(rulesInput.getString("rulesAsText"),
+        (policyType, policies, token) -> {
+          if (!isPolicyExisting(existingPoliciesIds, policyType, policies)) {
+             throw new CirculationRulesException(
+               String.format("The policy %s does not exist", policyType),
+               token.getLine(), token.getCharPositionInLine());
+          }
+        });
     } catch (CirculationRulesException e) {
       circulationRulesError(routingContext.response(), e);
       return;
@@ -143,6 +154,15 @@ public class CirculationRulesResource extends Resource {
           ForwardResponse.forward(routingContext.response(), response);
         }
       }, cause -> cause.writeTo(routingContext.response())));
+  }
+
+   private boolean isPolicyExisting(Map<String, Set<String>> existingPolicyIds,
+    String policyType, List<CirculationRulesParser.PolicyContext> policies) {
+
+    return existingPolicyIds != null && isNotEmpty(existingPolicyIds.get(policyType))
+        && existingPolicyIds.get(policyType).contains(
+          policies.get(FIRST_ELEMENT_OF_LIST)
+            .getChild(POLICY_ID_POSITION_NUMBER).getText());
   }
 
   private CompletableFuture<Result<Map<String, Set<String>>>> getExistingPolicyIds(Clients clients) {

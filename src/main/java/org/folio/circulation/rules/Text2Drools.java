@@ -1,7 +1,5 @@
 package org.folio.circulation.rules;
 
-import static org.apache.commons.collections4.CollectionUtils.isNotEmpty;
-
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -18,6 +16,7 @@ import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
 import org.antlr.v4.runtime.tree.TerminalNode;
 import org.apache.commons.lang3.StringEscapeUtils;
+import org.apache.logging.log4j.util.TriConsumer;
 import org.folio.circulation.rules.CirculationRulesParser.CirculationRulesFileContext;
 import org.folio.circulation.rules.CirculationRulesParser.CriteriumContext;
 import org.folio.circulation.rules.CirculationRulesParser.CriteriumPriorityContext;
@@ -79,8 +78,6 @@ public class Text2Drools extends CirculationRulesBaseListener {
 
   */
 
-  private static final int FIRST_ELEMENT_OF_LIST = 0;
-  private static final int POLICY_ID_POSITION_NUMBER = 1;
 
   private StringBuilder drools = new StringBuilder(
       "package circulationrules\n" +
@@ -107,7 +104,8 @@ public class Text2Drools extends CirculationRulesBaseListener {
   private int indentation = 0;
 
   private String[] policyTypes = {"l", "r", "n", "o", "i"};
-  private static Map<String, Set<String>> existingPolicyIds;
+  private TriConsumer<String, List<PolicyContext>, Token> policyValidator =
+    (policyType, policies, token) -> {};
 
   private enum PriorityType {
     NONE,
@@ -139,8 +137,10 @@ public class Text2Drools extends CirculationRulesBaseListener {
    *  with set of existing policies parameter.
    *
    */
-  private Text2Drools(Map<String, Set<String>> existingPoliciesIds) {
-    this.existingPolicyIds = existingPoliciesIds;
+  private Text2Drools(
+    TriConsumer<String, List<PolicyContext>, Token> policyValidator) {
+
+    this.policyValidator = policyValidator;
   }
 
   /**
@@ -156,11 +156,13 @@ public class Text2Drools extends CirculationRulesBaseListener {
   /**
    * Convert circulation rules from FOLIO text format into a Drools file.
    * @param text String with a circulation rules file in FOLIO syntax.
-   * @param existingPolicyIds Map with policy type key and set of ids value
+   * @param policyValidator function that validates policies ids
    * @return Drools file
    */
-  public static String convert(String text, Map<String, Set<String>> existingPolicyIds) {
-    Text2Drools text2drools = new Text2Drools(existingPolicyIds);
+  public static String convert(String text,
+      TriConsumer<String, List<PolicyContext>, Token> policyValidator) {
+    Text2Drools text2drools = new Text2Drools(policyValidator);
+
     return getDroolsRepresentation(text, text2drools);
   }
 
@@ -253,18 +255,8 @@ public class Text2Drools extends CirculationRulesBaseListener {
           String.format("Must contain one of each policy type, missing type %s", policyType),
           token.getLine(), token.getCharPositionInLine());
       }
-      else if (!isPolicyExisting(policyType, policies)) {
-        throw new CirculationRulesException(
-          String.format("The policy %s does not exist", policyType),
-          token.getLine(), token.getCharPositionInLine());
-      }
+      policyValidator.accept(policyType, policies, token);
     }
-  }
-
-  private boolean isPolicyExisting(String policyType, List<PolicyContext> policies) {
-    return existingPolicyIds != null && isNotEmpty(existingPolicyIds.get(policyType))
-        && existingPolicyIds.get(policyType).contains(
-          policies.get(FIRST_ELEMENT_OF_LIST).getChild(POLICY_ID_POSITION_NUMBER).getText());
   }
 
   private List<PolicyContext> filterPolicies(PoliciesContext policies, String policyType) {
