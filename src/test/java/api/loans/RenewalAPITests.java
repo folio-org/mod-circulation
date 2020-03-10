@@ -1345,6 +1345,7 @@ abstract class RenewalAPITests extends APITests {
       .withId(feeFineId)
       .withFeeFineType("Overdue fine")
       .withOwnerId(ownerId)
+      .withAutomatic(true)
     );
 
     loansFixture.renewLoan(nod, james);
