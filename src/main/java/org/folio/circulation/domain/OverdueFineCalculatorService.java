@@ -8,6 +8,7 @@ import static org.folio.circulation.support.ResultBinding.mapResult;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
+import org.folio.circulation.domain.policy.LoanPolicyRepository;
 import org.folio.circulation.domain.policy.OverdueFineInterval;
 import org.folio.circulation.domain.policy.OverdueFinePolicy;
 import org.folio.circulation.domain.policy.OverdueFinePolicyRepository;
@@ -52,7 +53,8 @@ public class OverdueFineCalculatorService {
       new ItemRepository(clients, true, false, false),
       new FeeFineOwnerRepository(clients),
       new FeeFineRepository(clients),
-      new OverduePeriodCalculatorService(new CalendarRepository(clients)));
+      new OverduePeriodCalculatorService(new CalendarRepository(clients),
+        new LoanPolicyRepository(clients)));
   }
 
   public CompletableFuture<Result<CheckInProcessRecords>> calculateOverdueFine(

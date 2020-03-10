@@ -1,11 +1,21 @@
 package org.folio.circulation.domain;
 
-import api.support.builders.LoanBuilder;
-import api.support.builders.LoanPolicyBuilder;
-import api.support.builders.OverdueFinePolicyBuilder;
-import io.vertx.core.json.JsonObject;
-import junitparams.JUnitParamsRunner;
-import junitparams.Parameters;
+import static api.support.fixtures.OpeningHourExamples.afternoon;
+import static api.support.fixtures.OpeningHourExamples.allDay;
+import static api.support.fixtures.OpeningHourExamples.morning;
+import static org.joda.time.DateTimeConstants.MINUTES_PER_DAY;
+import static org.joda.time.DateTimeConstants.MINUTES_PER_HOUR;
+import static org.joda.time.DateTimeConstants.MINUTES_PER_WEEK;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.stream.Stream;
+
 import org.apache.commons.lang3.ObjectUtils;
 import org.folio.circulation.domain.policy.LoanPolicy;
 import org.folio.circulation.domain.policy.OverdueFinePolicy;
@@ -16,23 +26,17 @@ import org.joda.time.LocalTime;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.concurrent.ExecutionException;
-
-import static api.support.fixtures.OpeningHourExamples.afternoon;
-import static api.support.fixtures.OpeningHourExamples.allDay;
-import static api.support.fixtures.OpeningHourExamples.morning;
-import static org.joda.time.DateTimeConstants.MINUTES_PER_DAY;
-import static org.joda.time.DateTimeConstants.MINUTES_PER_HOUR;
-import static org.joda.time.DateTimeConstants.MINUTES_PER_WEEK;
-import static org.junit.Assert.*;
+import api.support.builders.LoanBuilder;
+import api.support.builders.LoanPolicyBuilder;
+import api.support.builders.OverdueFinePolicyBuilder;
+import io.vertx.core.json.JsonObject;
+import junitparams.JUnitParamsRunner;
+import junitparams.Parameters;
 
 @RunWith(JUnitParamsRunner.class)
 public class OverduePeriodCalculatorServiceTest {
   private static final OverduePeriodCalculatorService calculator =
-    new OverduePeriodCalculatorService(null);
+    new OverduePeriodCalculatorService(null, null);
 
   @Test
   public void preconditionsCheckLoanHasNoDueDate() {
@@ -137,7 +141,7 @@ public class OverduePeriodCalculatorServiceTest {
     int overdueMinutes,
     String gracePeriodInterval,
     int gracePeriodDuration,
-    Boolean gracePeriodRecall,
+    Boolean ignoreGracePeriodForRecalls,
     boolean dueDateChangedByRecall,
     int expectedResult) {
 
@@ -145,25 +149,47 @@ public class OverduePeriodCalculatorServiceTest {
       .withDueDateChangedByRecall(dueDateChangedByRecall)
       .asDomainObject()
       .withLoanPolicy(createLoanPolicy(gracePeriodDuration, gracePeriodInterval))
-      .withOverdueFinePolicy(createOverdueFinePolicy(gracePeriodRecall, null));
+      .withOverdueFinePolicy(createOverdueFinePolicy(ignoreGracePeriodForRecalls, null));
 
     int actualResult = calculator.adjustOverdueWithGracePeriod(loan, overdueMinutes).value();
     assertEquals(expectedResult, actualResult);
   }
 
   private Object[] parametersForGracePeriodAdjustmentTest() {
-    return new Object[]{
-      new Object[] {11, "Minutes", 5, null, false, 6},
-      new Object[] {255, "Hours", 4, null, true, 15},
-      new Object[] {4350, "Days", 3, false, false, 30},
-      new Object[] {20200, "Weeks", 2, false, true, 40},
-      new Object[] {44700, "Months", 1, true, false, 60},
-      new Object[] {5, "Minutes", 9, false, false, 0},
-      new Object[] {9, "Minutes", 9, false, false, 0},
-      new Object[] {11, "Unknown interval", 9, false, false, 11},
-      new Object[] {11, "Minutes", 9, true, true, 11},  // grace period is ignored
+    Stream<Object> parametersStream = Arrays.stream(new GracePeriodParams[] {
+      new GracePeriodParams(10, "Minutes", 5, 12),
+      new GracePeriodParams(255, "Hours", 4, 5),
+      new GracePeriodParams(4350, "Days", 3, 4),
+      new GracePeriodParams(20200, "Weeks", 2, 3),
+      new GracePeriodParams(44700, "Months", 1, 2)
+    }).map(p -> new Object[]{
+      new Object[] {p.overdueMinutes, p.interval, p.gracePeriodLessThanOverdue, null, false,
+        p.overdueMinutes},
+      new Object[] {p.overdueMinutes, p.interval, p.gracePeriodLessThanOverdue, null, true,
+        p.overdueMinutes},
+      new Object[] {p.overdueMinutes, p.interval, p.gracePeriodLessThanOverdue, false, false,
+        p.overdueMinutes},
+      new Object[] {p.overdueMinutes, p.interval, p.gracePeriodLessThanOverdue, true, false,
+        p.overdueMinutes},
+      new Object[] {p.overdueMinutes, p.interval, p.gracePeriodLessThanOverdue, false, true,
+        p.overdueMinutes},
+      new Object[] {p.overdueMinutes, p.interval, p.gracePeriodLessThanOverdue, true, true,
+        p.overdueMinutes},
+      new Object[] {p.overdueMinutes, p.interval, p.gracePeriodGreaterThanOverdue, null, false,
+        p.overdueMinutes},
+      new Object[] {p.overdueMinutes, p.interval, p.gracePeriodGreaterThanOverdue, null, true, 0},
+      new Object[] {p.overdueMinutes, p.interval, p.gracePeriodGreaterThanOverdue, false, false,
+        p.overdueMinutes},
+      new Object[] {p.overdueMinutes, p.interval, p.gracePeriodGreaterThanOverdue, true, false,
+        p.overdueMinutes},
+      new Object[] {p.overdueMinutes, p.interval, p.gracePeriodGreaterThanOverdue, false, true, 0},
+      new Object[] {p.overdueMinutes, p.interval, p.gracePeriodGreaterThanOverdue, true, true,
+        p.overdueMinutes}
+    })
+      .flatMap(Arrays::stream);
 
-    };
+    return Stream.concat(parametersStream,
+      Stream.of(new Object[][] {{11, "Unknown interval", 9, false, false, 11}})).toArray();
   }
 
   private LoanPolicy createLoanPolicy(Integer gracePeriodDuration, String gracePeriodInterval) {
@@ -203,4 +229,35 @@ public class OverduePeriodCalculatorServiceTest {
       );
   }
 
+  private static final class GracePeriodParams {
+    private final int overdueMinutes;
+    private final String interval;
+    private final int gracePeriodLessThanOverdue;
+    private final int gracePeriodGreaterThanOverdue;
+
+    public GracePeriodParams(int overdueMinutes, String interval, int gracePeriodLessThanOverdue,
+      int gracePeriodGreaterThanOverdue) {
+
+      this.overdueMinutes = overdueMinutes;
+      this.interval = interval;
+      this.gracePeriodLessThanOverdue = gracePeriodLessThanOverdue;
+      this.gracePeriodGreaterThanOverdue = gracePeriodGreaterThanOverdue;
+    }
+
+    public int getOverdueMinutes() {
+      return overdueMinutes;
+    }
+
+    public String getInterval() {
+      return interval;
+    }
+
+    public int getGracePeriodLessThanOverdue() {
+      return gracePeriodLessThanOverdue;
+    }
+
+    public int getGracePeriodGreaterThanOverdue() {
+      return gracePeriodGreaterThanOverdue;
+    }
+  }
 }
