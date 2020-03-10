@@ -1,13 +1,14 @@
 package org.folio.circulation.domain;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
-import static org.folio.circulation.support.Result.of;
+import static org.apache.commons.lang3.BooleanUtils.isFalse;
 import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.ResultBinding.mapResult;
 
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Predicate;
 
 import org.apache.commons.lang3.ObjectUtils;
 import org.folio.circulation.domain.policy.OverdueFineInterval;
@@ -56,37 +57,44 @@ public class OverdueFineCalculatorService {
       new OverduePeriodCalculatorService(new CalendarRepository(clients)));
   }
 
-  public CompletableFuture<Result<CheckInProcessRecords>> calculateOverdueFine(
-    CheckInProcessRecords records) {
-
-    Loan loan = records.getLoan();
-
-    if (loan == null) {
-      return completedFuture(of(() -> records));
-    }
-
-    return calculateOverdueFine(loan).thenApply(mapResult(v -> records));
-  }
-
-  public CompletableFuture<Result<LoanAndRelatedRecords>> calculateOverdueFine(
+  public CompletableFuture<Result<LoanAndRelatedRecords>> createOverdueFineIfNecessary(
     LoanAndRelatedRecords records) {
 
-    Loan loan = records.getLoan();
-
-    if (loan == null) {
-      return completedFuture(of(() -> records));
-    }
-
-    return calculateOverdueFine(loan).thenApply(mapResult(v -> records));
+    return createOverdueFineIfNecessary(records.getLoan(), Scenario.RENEWAL)
+      .thenApply(mapResult(r -> records));
   }
 
-  private CompletableFuture<Result<Account>> calculateOverdueFine(Loan loan) {
-    return completedFuture(succeeded(loan))
-      .thenComposeAsync(overdueFinePolicyRepository::findOverdueFinePolicyForLoan)
-      .thenCompose(r -> r.after(l -> getOverdueMinutes(l)
-          .thenCompose(mr -> mr.after(minutes -> calculateOverdueFine(l, minutes)))
-          .thenCompose(fr -> fr.after(fine -> this.createFeeFineRecord(l, fine)))
-      ));
+  public CompletableFuture<Result<CheckInProcessRecords>> createOverdueFineIfNecessary(
+    CheckInProcessRecords records) {
+
+    return createOverdueFineIfNecessary(records.getLoan(), Scenario.CHECKIN)
+      .thenApply(mapResult(r -> records));
+  }
+
+  public CompletableFuture<Result<Loan>> createOverdueFineIfNecessary(Loan loan, Scenario scenario) {
+    Result<Loan> loanResult = succeeded(loan);
+    CompletableFuture<Result<Loan>> doNothing = completedFuture(loanResult);
+
+    if (loan == null || !loan.isOverdue()) {
+      return doNothing;
+    }
+
+    return overdueFinePolicyRepository.findOverdueFinePolicyForLoan(loanResult)
+      .thenCompose(r -> r.afterWhen(
+        l -> shouldCreateFine(l, scenario),
+        l -> createOverdueFine(l).thenApply(mapResult(res -> loan)),
+        l -> doNothing));
+  }
+
+  private CompletableFuture<Result<Boolean>> shouldCreateFine(Loan loan, Scenario scenario) {
+    return completedFuture(succeeded(
+      scenario.shouldCreateFine.test(loan.getOverdueFinePolicy())));
+  }
+
+  private CompletableFuture<Result<Void>> createOverdueFine(Loan loan) {
+    return getOverdueMinutes(loan)
+      .thenCompose(r -> r.after(minutes -> calculateOverdueFine(loan, minutes)))
+      .thenCompose(r -> r.after(fine -> createFeeFineRecord(loan, fine)));
   }
 
   private CompletableFuture<Result<Integer>> getOverdueMinutes(Loan loan) {
@@ -153,12 +161,12 @@ public class OverdueFineCalculatorService {
       .thenApply(mapResult(params::withFeeFine));
   }
 
-  private CompletableFuture<Result<Account>> createFeeFineRecord(Loan loan, Double fineAmount) {
+  private CompletableFuture<Result<Void>> createFeeFineRecord(Loan loan, Double fineAmount) {
     if (fineAmount <= 0) {
-      return failure();
+      return completedFuture(succeeded(null));
     }
 
-    return CompletableFuture.completedFuture(succeeded(
+    return completedFuture(succeeded(
       new CalculationParameters(loan)))
       .thenCompose(r -> r.after(this::lookupFeeFine))
       .thenCompose(r -> r.after(this::lookupItemRelatedRecords))
@@ -166,21 +174,18 @@ public class OverdueFineCalculatorService {
       .thenCompose(r -> r.after(params -> createAccount(fineAmount, params)));
   }
 
-  private CompletableFuture<Result<Account>> createAccount(Double fineAmount,
+  private CompletableFuture<Result<Void>> createAccount(Double fineAmount,
     CalculationParameters params) {
 
     if (params.isIncomplete()) {
-      return failure();
+      return completedFuture(succeeded(null));
     }
 
     AccountStorageRepresentation account = new AccountStorageRepresentation(params.loan,
       params.item, params.feeFineOwner, params.feeFine, fineAmount);
 
-    return accountRepository.create(account);
-  }
-
-  private CompletableFuture<Result<Account>> failure() {
-    return completedFuture(succeeded(Account.from(null)));
+    return accountRepository.create(account)
+      .thenApply(mapResult(a -> null));
   }
 
   private static class CalculationParameters {
@@ -218,6 +223,17 @@ public class OverdueFineCalculatorService {
 
     boolean isIncomplete() {
       return !isComplete();
+    }
+  }
+
+  enum Scenario {
+    CHECKIN(policy -> !policy.isUnknown()),
+    RENEWAL(policy -> !policy.isUnknown() && isFalse(policy.getForgiveFineForRenewals()));
+
+    private Predicate<OverdueFinePolicy> shouldCreateFine;
+
+    Scenario(Predicate<OverdueFinePolicy> shouldCreateFine) {
+      this.shouldCreateFine = shouldCreateFine;
     }
   }
 }

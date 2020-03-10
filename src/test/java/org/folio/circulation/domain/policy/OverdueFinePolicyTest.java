@@ -179,6 +179,7 @@ public class OverdueFinePolicyTest {
     assertThat(overdueFinePolicy.getMaxOverdueRecallFine(), nullValue());
     assertThat(overdueFinePolicy.getIgnoreGracePeriodForRecalls(), is(false));
     assertThat(overdueFinePolicy.getCountPeriodsWhenServicePointIsClosed(), is(false));
+    assertThat(overdueFinePolicy.getForgiveFineForRenewals(), is(false));
   }
 
   private void assertThatAllFieldsHaveDefaultValuesExceptId(OverdueFinePolicy overdueFinePolicy) {
@@ -190,5 +191,6 @@ public class OverdueFinePolicyTest {
     assertThat(overdueFinePolicy.getMaxOverdueRecallFine(), nullValue());
     assertThat(overdueFinePolicy.getIgnoreGracePeriodForRecalls(), is(false));
     assertThat(overdueFinePolicy.getCountPeriodsWhenServicePointIsClosed(), is(false));
+    assertThat(overdueFinePolicy.getForgiveFineForRenewals(), is(false));
   }
 }
