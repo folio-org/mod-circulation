@@ -638,6 +638,7 @@ public class CheckInByBarcodeTests extends APITests {
       .withId(feeFineId)
       .withFeeFineType("Overdue fine")
       .withOwnerId(ownerId)
+      .withAutomatic(true)
     );
 
     loansFixture.checkInByBarcode(new CheckInByBarcodeRequestBuilder()
@@ -682,6 +683,47 @@ public class CheckInByBarcodeTests extends APITests {
     assertThat("user ID is included",
       account.getString("userId"), is(loan.getJson().getString("userId")));
     assertThat("item ID is included", account.getString("itemId"), is(nod.getId()));
+  }
+
+  @Test
+  public void noOverdueFineShouldBeChargedWhenOverdueFineTypeIsNotFound()
+    throws InterruptedException {
+    useFallbackPolicies(loanPoliciesFixture.canCirculateRolling().getId(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
+      noticePoliciesFixture.activeNotice().getId(),
+      overdueFinePoliciesFixture.facultyStandardDoNotCountClosed().getId(),
+      lostItemFeePoliciesFixture.facultyStandard().getId());
+
+    final IndividualResource james = usersFixture.james();
+    final UUID checkInServicePointId = servicePointsFixture.cd1().getId();
+    final IndividualResource homeLocation = locationsFixture.basedUponExampleLocation(
+      item -> item.withPrimaryServicePoint(checkInServicePointId));
+    final IndividualResource nod = itemsFixture.basedUponNod(item ->
+      item.withPermanentLocation(homeLocation.getId()));
+
+    loansFixture.checkOutByBarcode(nod, james,
+      new DateTime(2020, 1, 1, 12, 0, 0, DateTimeZone.UTC));
+
+    JsonObject servicePointOwner = new JsonObject();
+    servicePointOwner.put("value", homeLocation.getJson().getString("primaryServicePoint"));
+    servicePointOwner.put("label", "label");
+    UUID ownerId = UUID.randomUUID();
+    feeFineOwnersClient.create(new FeeFineOwnerBuilder()
+      .withId(ownerId)
+      .withOwner("fee-fine-owner")
+      .withServicePointOwner(Collections.singletonList(servicePointOwner))
+    );
+
+    assertThat(feeFinesClient.getAll(), hasSize(0));
+
+    loansFixture.checkInByBarcode(new CheckInByBarcodeRequestBuilder()
+      .forItem(nod)
+      .on(new DateTime(2020, 1, 25, 12, 0, 0, DateTimeZone.UTC))
+      .at(checkInServicePointId));
+
+    TimeUnit.SECONDS.sleep(1);
+
+    assertThat("Overdue fine shouldn't have been created", accountsClient.getAll(), hasSize(0));
   }
 
   @Test
