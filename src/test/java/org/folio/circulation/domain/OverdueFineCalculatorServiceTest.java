@@ -1,10 +1,6 @@
 package org.folio.circulation.domain;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
-import static org.folio.circulation.domain.OverdueFineCalculatorService.Scenario.CHECKIN;
-import static org.folio.circulation.domain.OverdueFineCalculatorService.Scenario.RENEWAL;
-import static org.folio.circulation.support.Result.succeeded;
-import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.support.Result.succeeded;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
@@ -253,7 +249,6 @@ public class OverdueFineCalculatorServiceTest {
       .withLoan(loan);
 
     overdueFineCalculatorService.createOverdueFineIfNecessary(records).get();
-    verifyNoInteractions(feeFineRepository);
     verifyNoInteractions(accountRepository);
   }
 
@@ -277,7 +272,7 @@ public class OverdueFineCalculatorServiceTest {
       CheckInByBarcodeRequest.from(createCheckInByBarcodeRequest()).value())
       .withLoan(loan);
 
-    overdueFineCalculatorService.calculateOverdueFine(records).get();
+    overdueFineCalculatorService.createOverdueFineIfNecessary(records).get();
     verifyNoInteractions(itemRepository);
     verifyNoInteractions(feeFineOwnerRepository);
     verifyNoInteractions(accountRepository);

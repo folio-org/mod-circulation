@@ -1428,8 +1428,7 @@ abstract class RenewalAPITests extends APITests {
     TimeUnit.SECONDS.sleep(1);
     List<JsonObject> createdAccounts = accountsClient.getAll();
 
-    org.hamcrest.junit.MatcherAssert.assertThat("Fee/fine record shouldn't have been created",
-      createdAccounts, hasSize(0));
+    assertThat("Fee/fine record shouldn't have been created", createdAccounts, hasSize(0));
   }
 
   private void checkRenewalAttempt(DateTime expectedDueDate, UUID dueDateLimitedPolicyId) {
