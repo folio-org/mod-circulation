@@ -18,6 +18,20 @@
       "description": "Id of item that has checked in",
       "$ref": "uuid.json"
     },
+    "itemStatusPriorToCheckIn": {
+      "type": "string",
+      "description": "Item status prior to check-in"
+    },
+    "requestQueueSize": {
+      "type": "integer",
+      "description": "Request queue size for the item",
+      "minimum": 0
+    },
+    "itemLocationId": {
+      "type": "string",
+      "description": "Location of the item in check-in time",
+      "$ref": "uuid.json"
+    },
     "servicePointId": {
       "type": "string",
       "description": "Service point where the item was checked in",

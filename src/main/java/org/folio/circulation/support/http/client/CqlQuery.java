@@ -31,6 +31,17 @@ public class CqlQuery implements QueryParameter {
     return Result.of(() -> new CqlQuery("", none()));
   }
 
+  /**
+   * Builds query which matches records where the property is defined
+   * (i.e. is not null).
+   *
+   * @param index - The property name.
+   * @return Result with CqlQuery.
+   */
+  public static Result<CqlQuery> hasValue(String index) {
+    return of(() -> new CqlQuery(String.format("%s=\"\"", index), none()));
+  }
+
   public static Result<CqlQuery> exactMatch(String index, String value) {
     return Result.of(() -> new CqlQuery(format("%s==\"%s\"", index, value), none()));
   }

@@ -13,17 +13,14 @@ import io.vertx.core.json.JsonObject;
 public class OverdueFinePolicy extends Policy {
   private final OverdueFinePolicyFineInfo fineInfo;
   private final OverdueFinePolicyLimitInfo limitInfo;
-  private final Boolean ignoreGracePeriodForRecalls;
-  private final Boolean countPeriodsWhenServicePointIsClosed;
+  private final Flags flags;
 
   private OverdueFinePolicy(String id, String name, OverdueFinePolicyFineInfo fineInfo,
-    OverdueFinePolicyLimitInfo limitInfo, Boolean ignoreGracePeriodForRecalls,
-    Boolean countPeriodsWhenServicePointIsClosed) {
+    OverdueFinePolicyLimitInfo limitInfo, Flags flags) {
     super(id, name);
     this.fineInfo = fineInfo;
     this.limitInfo = limitInfo;
-    this.ignoreGracePeriodForRecalls = ignoreGracePeriodForRecalls;
-    this.countPeriodsWhenServicePointIsClosed = countPeriodsWhenServicePointIsClosed;
+    this.flags = flags;
   }
 
   public static OverdueFinePolicy from(JsonObject json) {
@@ -41,8 +38,10 @@ public class OverdueFinePolicy extends Policy {
       ),
       new OverdueFinePolicyLimitInfo(getDoubleProperty(json, "maxOverdueFine", null),
         getDoubleProperty(json, "maxOverdueRecallFine", null)),
-      getBooleanProperty(json, "gracePeriodRecall"),
-      getBooleanProperty(json, "countClosed"));
+      new Flags(
+        getBooleanProperty(json, "gracePeriodRecall"),
+        getBooleanProperty(json, "countClosed"),
+        getBooleanProperty(json, "forgiveOverdueFine")));
   }
 
   public OverdueFineCalculationParameters getCalculationParameters(boolean dueDateChangedByRecall) {
@@ -74,21 +73,43 @@ public class OverdueFinePolicy extends Policy {
   }
 
   public Boolean getIgnoreGracePeriodForRecalls() {
-    return ignoreGracePeriodForRecalls;
+    return flags.ignoreGracePeriodForRecalls;
   }
 
   public Boolean getCountPeriodsWhenServicePointIsClosed() {
-    return countPeriodsWhenServicePointIsClosed;
+    return flags.countPeriodsWhenServicePointIsClosed;
+  }
+
+  public Boolean getForgiveFineForRenewals() {
+    return flags.forgiveFineForRenewals;
   }
 
   public static OverdueFinePolicy unknown(String id) {
     return new OverdueFinePolicy.UnknownOverdueFinePolicy(id);
   }
 
+  public boolean isUnknown() {
+    return this instanceof UnknownOverdueFinePolicy;
+  }
+
   private static class UnknownOverdueFinePolicy extends OverdueFinePolicy {
     UnknownOverdueFinePolicy(String id) {
       super(id, null, new OverdueFinePolicyFineInfo(null, null, null, null),
-        new OverdueFinePolicyLimitInfo(null, null), false, false);
+        new OverdueFinePolicyLimitInfo(null, null),
+        new Flags(false, false, false));
+    }
+  }
+
+  private static class Flags {
+    private final boolean ignoreGracePeriodForRecalls;
+    private final boolean countPeriodsWhenServicePointIsClosed;
+    private final boolean forgiveFineForRenewals;
+
+    public Flags(boolean ignoreGracePeriodForRecalls, boolean countPeriodsWhenServicePointIsClosed,
+        boolean forgiveFineForRenewals) {
+      this.ignoreGracePeriodForRecalls = ignoreGracePeriodForRecalls;
+      this.countPeriodsWhenServicePointIsClosed = countPeriodsWhenServicePointIsClosed;
+      this.forgiveFineForRenewals = forgiveFineForRenewals;
     }
   }
 }

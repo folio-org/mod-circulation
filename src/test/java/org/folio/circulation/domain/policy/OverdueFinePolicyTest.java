@@ -348,5 +348,4 @@ public class OverdueFinePolicyTest {
     assertThat(overdueFinePolicy.getCountPeriodsWhenServicePointIsClosed(),
       is(overdueFinePolicyJsonObject.getBoolean("countClosed")));
   }
-
 }

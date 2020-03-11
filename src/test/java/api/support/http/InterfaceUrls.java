@@ -52,7 +52,7 @@ public class InterfaceUrls {
     return APITestContext.viaOkapiModuleUrl("/instance-storage/instances" + subPath);
   }
 
-  static URL loansStorageUrl(String subPath) {
+  public static URL loansStorageUrl(String subPath) {
     return APITestContext.viaOkapiModuleUrl("/loan-storage/loans" + subPath);
   }
 

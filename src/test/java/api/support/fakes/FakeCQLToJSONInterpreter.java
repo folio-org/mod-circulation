@@ -133,7 +133,7 @@ public class FakeCQLToJSONInterpreter {
         return true;
       }
       else {
-        propertyValue = getPropertyValue(record, field);
+        propertyValue = getPropertyValue(record, field, null);
 
         String cleanTerm = removeBrackets(term);
 
@@ -189,27 +189,24 @@ public class FakeCQLToJSONInterpreter {
   }
 
   private String getPropertyValue(JsonObject record, String field) {
-    //TODO: Should bomb if property does not exist
-    try {
-      if(field.contains(".")) {
-        String[] fields = field.split("\\.");
+    return getPropertyValue(record, field, "");
+  }
 
-        if(!record.containsKey(String.format("%s", fields[0]))) {
-          return null;
-        }
 
-        return record.getJsonObject(String.format("%s", fields[0]))
-          .getValue(String.format("%s", fields[1].trim()), "").toString();
+  private String getPropertyValue(JsonObject record, String field, String def) {
+    Object value = record.getValue(field);
+    if (field.contains(".")) {
+      String[] fields = field.split("\\.");
+      JsonObject currentObject = record;
+
+      for (int i = 0; i < fields.length - 1; i++) {
+        currentObject = currentObject.getJsonObject(fields[i], new JsonObject());
       }
-      else {
-        return record.getValue(String.format("%s", field.trim()), "").toString();
-      }
+
+      value = currentObject.getValue(fields[fields.length - 1]);
     }
-    catch(Exception e) {
-      throw new IllegalArgumentException(String.format(
-        "Cannot get value of %s from %s", field,
-        record.encodePrettily()));
-    }
+
+    return value == null ? def : value.toString();
   }
 
   private Predicate<JsonObject> consolidateToSinglePredicate(

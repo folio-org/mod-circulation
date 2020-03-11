@@ -37,6 +37,7 @@ import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.LocalDate;
 import org.joda.time.Seconds;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import api.support.APITests;
@@ -630,6 +631,7 @@ public class CheckInByBarcodeTests extends APITests {
       .withId(feeFineId)
       .withFeeFineType("Overdue fine")
       .withOwnerId(ownerId)
+      .withAutomatic(true)
     );
 
     loansFixture.checkInByBarcode(new CheckInByBarcodeRequestBuilder()
@@ -666,8 +668,11 @@ public class CheckInByBarcodeTests extends APITests {
     final IndividualResource nod = itemsFixture.basedUponNod(item ->
       item.withPermanentLocation(homeLocation.getId()));
 
-    final IndividualResource loan = loansFixture.checkOutByBarcode(nod, james,
-      new DateTime(2020, 1, 1, 12, 0, 0, DateTimeZone.UTC));
+    DateTime checkOutDate = new DateTime(DateTimeZone.UTC);
+    DateTime recallRequestExpirationDate = checkOutDate.plusDays(5);
+    DateTime checkInDate = checkOutDate.plusDays(10);
+
+    final IndividualResource loan = loansFixture.checkOutByBarcode(nod, james, checkOutDate);
 
     Address address = SiriusBlack();
     IndividualResource requester = usersFixture.steve(builder ->
@@ -679,10 +684,9 @@ public class CheckInByBarcodeTests extends APITests {
       .recall()
       .forItem(nod)
       .by(requester)
-      .withRequestDate(new DateTime(2020, 1, 1, 15, 0, 0, DateTimeZone.UTC))
       .fulfilToHoldShelf()
-      .withRequestExpiration(new LocalDate(2020, 1, 12))
-      .withHoldShelfExpiration(new LocalDate(2020, 1, 12))
+      .withRequestExpiration(new LocalDate(recallRequestExpirationDate))
+      .withHoldShelfExpiration(new LocalDate(recallRequestExpirationDate))
       .withPickupServicePointId(UUID.fromString(homeLocation.getJson().getString("primaryServicePoint")))
       .withTags(new RequestBuilder.Tags(asList("new", "important"))));
 
@@ -701,11 +705,12 @@ public class CheckInByBarcodeTests extends APITests {
       .withId(feeFineId)
       .withFeeFineType("Overdue fine")
       .withOwnerId(ownerId)
+      .withAutomatic(true)
     );
 
     loansFixture.checkInByBarcode(new CheckInByBarcodeRequestBuilder()
       .forItem(nod)
-      .on(new DateTime(2020, 3, 10, 12, 0, 0, DateTimeZone.UTC))
+      .on(checkInDate)
       .at(checkInServicePointId));
 
     Awaitility.await()
