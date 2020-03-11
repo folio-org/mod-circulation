@@ -124,7 +124,7 @@
     },
     {
       "id": "circulation",
-      "version": "9.1",
+      "version": "9.2",
       "handlers": [
         {
           "methods": [
@@ -849,7 +849,7 @@
     },
     {
       "id": "check-in-storage",
-      "version": "0.1"
+      "version": "0.2"
     }
   ],
   "permissionSets": [

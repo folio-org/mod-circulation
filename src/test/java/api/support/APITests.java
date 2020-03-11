@@ -79,7 +79,7 @@ public abstract class APITests {
   private final ResourceClient institutionsClient = ResourceClient.forInstitutions();
   private final ResourceClient campusesClient = ResourceClient.forCampuses();
   private final ResourceClient librariesClient = ResourceClient.forLibraries();
-  private final ResourceClient locationsClient = ResourceClient.forLocations();
+  protected final ResourceClient locationsClient = ResourceClient.forLocations();
 
   protected final ResourceClient configClient = ResourceClient.forConfiguration();
 
@@ -258,6 +258,8 @@ public abstract class APITests {
     holdingsClient.deleteAll();
     instancesClient.deleteAll();
     configClient.deleteAll();
+    accountsClient.deleteAll();
+    feeFinesClient.deleteAll();
 
     //TODO: Only cleans up reference records, move items, holdings records
     // and instances into here too

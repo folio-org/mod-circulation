@@ -7,6 +7,11 @@ import static api.support.http.InterfaceUrls.circulationAnonymizeLoansURL;
 import java.net.URL;
 import java.util.UUID;
 
+import org.folio.circulation.domain.representations.anonymization.LoanAnonymizationAPIResponse;
+import org.folio.circulation.support.http.client.IndividualResource;
+import org.folio.circulation.support.http.client.Response;
+import org.joda.time.DateTime;
+
 import api.support.APITests;
 import api.support.builders.AccountBuilder;
 import api.support.builders.ConfigRecordBuilder;
@@ -14,11 +19,6 @@ import api.support.builders.FeefineActionsBuilder;
 import api.support.builders.LoanHistoryConfigurationBuilder;
 import api.support.http.InventoryItemResource;
 import api.support.http.TimedTaskClient;
-import io.vertx.core.json.JsonObject;
-import org.joda.time.DateTime;
-
-import org.folio.circulation.support.http.client.IndividualResource;
-import org.folio.circulation.support.http.client.Response;
 
 abstract class LoanAnonymizationTests extends APITests {
   protected static final int ONE_MINUTE_AND_ONE = 60001;
@@ -42,34 +42,20 @@ abstract class LoanAnonymizationTests extends APITests {
     mockClockManagerToReturnDefaultDateTime();
   }
 
-  void anonymizeLoansInTenant() {
-
-    anonymizeLoans(circulationAnonymizeLoansInTenantURL());
+  LoanAnonymizationAPIResponse anonymizeLoansInTenant() {
+    return anonymizeLoans(circulationAnonymizeLoansInTenantURL())
+      .getJson().mapTo(LoanAnonymizationAPIResponse.class);
   }
 
   void anonymizeLoansForUser(UUID userId) {
     anonymizeLoans(circulationAnonymizeLoansURL(userId.toString()));
   }
 
-  private void anonymizeLoans(URL url) {
+  private Response anonymizeLoans(URL url) {
     final TimedTaskClient timedTaskClient = new TimedTaskClient(
       getOkapiHeadersFromContext());
 
-    Response response = timedTaskClient.start(url, 200, "anonymize-loans");
-
-    response.getJson()
-      .getJsonArray("anonymizedLoans")
-      .forEach(this::fakeAnonymizeLoan);
-  }
-
-  private void fakeAnonymizeLoan(Object id) {
-    JsonObject payload = loansStorageClient.get(UUID.fromString(id.toString()))
-      .getJson();
-
-    payload.remove("userId");
-    payload.remove("borrower");
-
-    loansStorageClient.attemptReplace(UUID.fromString(id.toString()), payload);
+    return timedTaskClient.start(url, 200, "anonymize-loans");
   }
 
   void createOpenAccountWithFeeFines(IndividualResource loanResource) {

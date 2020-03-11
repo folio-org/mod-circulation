@@ -20,4 +20,19 @@ public enum LoanAction {
   public String getValue() {
     return value;
   }
+
+  public enum ResolveClaimedReturned {
+    CHECKED_IN_RETURNED_BY_PATRON("checkedInReturnedByPatron"),
+    CHECKED_IN_FOUND_BY_LIBRARY("checkedInFoundByLibrary");
+
+    private final String value;
+
+    ResolveClaimedReturned(String value) {
+      this.value = value;
+    }
+
+    public String getValue() {
+      return value;
+    }
+  }
 }
