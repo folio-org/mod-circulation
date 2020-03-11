@@ -37,7 +37,6 @@ import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.LocalDate;
 import org.joda.time.Seconds;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import api.support.APITests;
@@ -651,6 +650,26 @@ public class CheckInByBarcodeTests extends APITests {
 
     assertThat(account, OverdueFineMatcher.isValidOverdueFine(loan, nod,
       servicePointsFixture.cd1().getId(), ownerId, feeFineId, 5.0));
+
+    Awaitility.await()
+      .atMost(1, TimeUnit.SECONDS)
+      .until(feeFineActionsClient::getAll, hasSize(1));
+
+    List<JsonObject> createdFeeFineActions = feeFineActionsClient.getAll();
+    assertThat("Fee/fine action record should be created", createdFeeFineActions, hasSize(1));
+
+    JsonObject createdFeeFineAction = createdFeeFineActions.get(0);
+    assertThat("user ID is included",
+      createdFeeFineAction.getString("userId"), is(loan.getJson().getString("userId")));
+    assertThat("account ID is included",
+      createdFeeFineAction.getString("accountId"), is(account.getString("id")));
+    assertThat("balance is included",
+      createdFeeFineAction.getDouble("balance"), is(account.getDouble("amount")));
+    assertThat("amountAction is included",
+      createdFeeFineAction.getDouble("amountAction"), is(account.getDouble("amount")));
+    assertThat("typeAction is included",
+      createdFeeFineAction.getString("typeAction"), is("Overdue fine"));
+
   }
 
   @Test
@@ -772,8 +791,10 @@ public class CheckInByBarcodeTests extends APITests {
     TimeUnit.SECONDS.sleep(1);
 
     List<JsonObject> createdAccounts = accountsClient.getAll();
+    List<JsonObject> createdFeeFineActions = feeFineActionsClient.getAll();
 
     assertThat("Fee/fine record shouldn't be created", createdAccounts, empty());
+    assertThat("Fee/fine action record shouldn't be created", createdFeeFineActions, empty());
   }
 
   private void checkPatronNoticeEvent(

@@ -77,7 +77,8 @@ public abstract class RenewalResource extends Resource {
       .thenComposeAsync(r -> r.after(requestQueueRepository::get))
       .thenCompose(r -> r.combineAfter(configurationRepository::findTimeZoneConfiguration,
         LoanAndRelatedRecords::withTimeZone))
-      .thenCompose(r -> r.after(overdueFineCalculatorService::createOverdueFineIfNecessary))
+      .thenCompose(r -> r.after(
+        records -> overdueFineCalculatorService.createOverdueFineIfNecessary(records, context)))
       .thenComposeAsync(r -> r.after(records -> renewalStrategy.renew(records, bodyAsJson, clients)))
       .thenComposeAsync(r -> r.after(storeLoanAndItem::updateLoanAndItemInStorage))
       .thenApply(r -> r.next(scheduledNoticeService::rescheduleDueDateNotices))
