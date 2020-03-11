@@ -1345,6 +1345,7 @@ abstract class RenewalAPITests extends APITests {
       .withId(feeFineId)
       .withFeeFineType("Overdue fine")
       .withOwnerId(ownerId)
+      .withAutomatic(true)
     );
 
     loansFixture.renewLoan(nod, james);
@@ -1382,6 +1383,52 @@ abstract class RenewalAPITests extends APITests {
     assertThat("user ID is included",
       account.getString("userId"), is(loan.getJson().getString("userId")));
     assertThat("item ID is included", account.getString("itemId"), UUIDMatcher.is(nod.getId()));
+  }
+
+  @Test
+  public void overdueFineShouldNotBeChargedWhenShouldBeForgiven() throws InterruptedException {
+    IndividualResource loanPolicy = loanPoliciesFixture.create(
+      new LoanPolicyBuilder().rolling(Period.from(10, "Days")));
+
+    useFallbackPolicies(loanPolicy.getId(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
+      noticePoliciesFixture.activeNotice().getId(),
+      overdueFinePoliciesFixture.facultyStandardShouldForgiveFine().getId(),
+      lostItemFeePoliciesFixture.facultyStandard().getId());
+
+    final IndividualResource james = usersFixture.james();
+    final UUID checkInServicePointId = servicePointsFixture.cd1().getId();
+    final IndividualResource homeLocation = locationsFixture.basedUponExampleLocation(
+      item -> item.withPrimaryServicePoint(checkInServicePointId));
+    final IndividualResource nod = itemsFixture.basedUponNod(item ->
+      item.withPermanentLocation(homeLocation.getId()));
+
+    loansFixture.checkOutByBarcode(nod, james,
+      new DateTime(2020, 1, 1, 12, 0, 0, DateTimeZone.UTC));
+
+    JsonObject servicePointOwner = new JsonObject();
+    servicePointOwner.put("value", homeLocation.getJson().getString("primaryServicePoint"));
+    servicePointOwner.put("label", "label");
+    UUID ownerId = UUID.randomUUID();
+    feeFineOwnersClient.create(new FeeFineOwnerBuilder()
+      .withId(ownerId)
+      .withOwner("fee-fine-owner")
+      .withServicePointOwner(Collections.singletonList(servicePointOwner))
+    );
+
+    UUID feeFineId = UUID.randomUUID();
+    feeFinesClient.create(new FeeFineBuilder()
+      .withId(feeFineId)
+      .withFeeFineType("Overdue fine")
+      .withOwnerId(ownerId)
+    );
+
+    loansFixture.renewLoan(nod, james);
+
+    TimeUnit.SECONDS.sleep(1);
+    List<JsonObject> createdAccounts = accountsClient.getAll();
+
+    assertThat("Fee/fine record shouldn't have been created", createdAccounts, hasSize(0));
   }
 
   private void checkRenewalAttempt(DateTime expectedDueDate, UUID dueDateLimitedPolicyId) {
