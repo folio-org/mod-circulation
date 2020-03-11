@@ -11,6 +11,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.Predicate;
 
 import org.apache.commons.lang3.ObjectUtils;
+import org.folio.circulation.domain.policy.LoanPolicyRepository;
 import org.folio.circulation.domain.policy.OverdueFineCalculationParameters;
 import org.folio.circulation.domain.policy.OverdueFineInterval;
 import org.folio.circulation.domain.policy.OverdueFinePolicy;
@@ -48,7 +49,8 @@ public class OverdueFineCalculatorService {
         new FeeFineRepository(clients),
         new UserRepository(clients),
         new FeeFineActionRepository(clients)),
-      new OverduePeriodCalculatorService(new CalendarRepository(clients))
+      new OverduePeriodCalculatorService(new CalendarRepository(clients),
+        new LoanPolicyRepository(clients))
     );
   }
 
