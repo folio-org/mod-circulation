@@ -110,9 +110,9 @@ public class OverdueFineCalculatorServiceTest {
         parameters.add(new Object[]
           {false, 1.0, interval, 10.0, 1.0, interval, 10.0, 15 * minutesInInterval, 10.0});
         parameters.add(new Object[]
-          {true, 1.0, interval, 10.0, 1.0, interval, 10.0, 5 * minutesInInterval, 5.0});
+          {true, 1.0, interval, 10.0, 3.0, interval, 30.0, 5 * minutesInInterval, 15.0});
         parameters.add(new Object[]
-          {true, 1.0, interval, 10.0, 1.0, interval, 10.0, 15 * minutesInInterval, 10.0});
+          {true, 1.0, interval, 10.0, 3.0, interval, 30.0, 15 * minutesInInterval, 30.0});
       });
     return parameters;
   }

@@ -11,6 +11,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.Predicate;
 
 import org.apache.commons.lang3.ObjectUtils;
+import org.folio.circulation.domain.policy.OverdueFineCalculationParameters;
 import org.folio.circulation.domain.policy.OverdueFineInterval;
 import org.folio.circulation.domain.policy.OverdueFinePolicy;
 import org.folio.circulation.domain.policy.OverdueFinePolicyRepository;
@@ -110,20 +111,23 @@ public class OverdueFineCalculatorService {
 
     OverdueFinePolicy overdueFinePolicy = loan.getOverdueFinePolicy();
     if (overdueMinutes > 0 && overdueFinePolicy != null) {
-      Double maxFine = loan.wasDueDateChangedByRecall() ?
-        overdueFinePolicy.getMaxOverdueRecallFine() :
-        overdueFinePolicy.getMaxOverdueFine();
+      OverdueFineCalculationParameters calculationParameters =
+        overdueFinePolicy.getCalculationParameters(loan.wasDueDateChangedByRecall());
 
-      OverdueFineInterval interval = overdueFinePolicy.getOverdueFineInterval();
-      Double overdueFinePerInterval = loan.getOverdueFinePolicy().getOverdueFine();
+      if (calculationParameters != null) {
+        Double finePerInterval = calculationParameters.getFinePerInterval();
+        OverdueFineInterval interval = calculationParameters.getInterval();
+        Double maxFine = calculationParameters.getMaxFine();
 
-      if (maxFine != null && interval != null && overdueFinePerInterval != null) {
-        double numberOfIntervals = Math.ceil(overdueMinutes.doubleValue() /
-          interval.getMinutes().doubleValue());
-        overdueFine = overdueFinePerInterval * numberOfIntervals;
+        if (maxFine != null && interval != null && finePerInterval != null) {
+          double numberOfIntervals = Math.ceil(overdueMinutes.doubleValue() /
+            interval.getMinutes().doubleValue());
 
-        if (maxFine > 0) {
-          overdueFine = Math.min(overdueFine, maxFine);
+          overdueFine = finePerInterval * numberOfIntervals;
+
+          if (maxFine > 0) {
+            overdueFine = Math.min(overdueFine, maxFine);
+          }
         }
       }
     }
