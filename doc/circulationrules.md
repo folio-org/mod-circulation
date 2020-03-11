@@ -117,7 +117,12 @@ This is needed to alter the rule priority, see below.
 
 Criteria can be combined in two ways:
 
-Concatenating them into one line using `+` as separator like `g visitor + t rare: policy-a`
+Concatenating them into one line using `+` as separator like
+
+```
+g visitor + t rare: l loan-policy-a r request-policy-a n notice-policy-a o overdue i lost-item
+```
+
 matches if the patron group is `visitor` and the loan type is `rare`.
 
 To avoid long lines one may replace the `+` by a line break followed by an indentation like
