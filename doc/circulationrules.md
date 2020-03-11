@@ -55,6 +55,10 @@ they work the same way as the loan policies.
 A hash "#" or a slash "/" starts a line comment; all characters from that position
 until the end of the line are ignored.
 
+A hash starts a section title. Use the "filter rules" search box of the circulation
+rules editor to temporarily show only the sections that contain the search box text
+in their section title.
+
 ## Allowed characters for names
 
 A name of a loan policy, a patron group, a material type, a loan type or a location
