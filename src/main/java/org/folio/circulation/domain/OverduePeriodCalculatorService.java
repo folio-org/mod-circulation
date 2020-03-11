@@ -95,9 +95,14 @@ public class OverduePeriodCalculatorService {
   }
 
   Result<Integer> adjustOverdueWithGracePeriod(Loan loan, int overdueMinutes) {
-    int result = shouldIgnoreGracePeriod(loan)
-      ? overdueMinutes
-      : overdueMinutes > getGracePeriodMinutes(loan) ? overdueMinutes : ZERO_MINUTES;
+    int result;
+
+    if (shouldIgnoreGracePeriod(loan)) {
+      result = overdueMinutes;
+    }
+    else {
+      result = overdueMinutes > getGracePeriodMinutes(loan) ? overdueMinutes : ZERO_MINUTES;
+    }
 
     return Result.succeeded(result);
   }
