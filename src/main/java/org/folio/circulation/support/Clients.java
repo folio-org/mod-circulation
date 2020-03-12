@@ -43,7 +43,7 @@ public class Clients {
   private final GetManyRecordsClient configurationStorageClient;
   private final CollectionResourceClient scheduledNoticesStorageClient;
   private final CollectionResourceClient accountsStorageClient;
-  private final GetManyRecordsClient feeFineActionsStorageClient;
+  private final CollectionResourceClient feeFineActionsStorageClient;
   private final CollectionResourceClient feeFineOwnerStorageClient;
   private final CollectionResourceClient feeFineStorageClient;
   private final CollectionResourceClient anonymizeStorageLoansClient;
@@ -253,7 +253,7 @@ public class Clients {
     return accountsStorageClient;
   }
 
-  public GetManyRecordsClient feeFineActionsStorageClient() {
+  public CollectionResourceClient feeFineActionsStorageClient() {
     return feeFineActionsStorageClient;
   }
 
@@ -569,7 +569,7 @@ public class Clients {
     return getCollectionResourceClient(client, context, "/accounts");
   }
 
-  private GetManyRecordsClient createFeeFineActionsStorageClient(
+  private CollectionResourceClient createFeeFineActionsStorageClient(
     OkapiHttpClient client, WebContext context)
       throws MalformedURLException {
 

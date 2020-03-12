@@ -55,6 +55,10 @@ they work the same way as the loan policies.
 A hash "#" or a slash "/" starts a line comment; all characters from that position
 until the end of the line are ignored.
 
+A hash starts a section title. Use the "filter rules" search box of the circulation
+rules editor to temporarily show only the sections that contain the search box text
+in their section title.
+
 ## Allowed characters for names
 
 A name of a loan policy, a patron group, a material type, a loan type or a location
@@ -113,7 +117,12 @@ This is needed to alter the rule priority, see below.
 
 Criteria can be combined in two ways:
 
-Concatenating them into one line using `+` as separator like `g visitor + t rare: policy-a`
+Concatenating them into one line using `+` as separator like
+
+```
+g visitor + t rare: l loan-policy-a r request-policy-a n notice-policy-a o overdue i lost-item
+```
+
 matches if the patron group is `visitor` and the loan type is `rare`.
 
 To avoid long lines one may replace the `+` by a line break followed by an indentation like
