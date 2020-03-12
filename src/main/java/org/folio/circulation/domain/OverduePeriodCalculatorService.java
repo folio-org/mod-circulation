@@ -108,10 +108,14 @@ public class OverduePeriodCalculatorService {
   }
 
   private boolean shouldIgnoreGracePeriod(Loan loan) {
+    if (!loan.wasDueDateChangedByRecall()) {
+      return false;
+    }
+
     Boolean ignoreGracePeriodForRecalls = loan.getOverdueFinePolicy()
       .getIgnoreGracePeriodForRecalls();
 
-    if (!loan.wasDueDateChangedByRecall() || ignoreGracePeriodForRecalls == null) {
+    if (ignoreGracePeriodForRecalls == null) {
       return true;
     }
 
