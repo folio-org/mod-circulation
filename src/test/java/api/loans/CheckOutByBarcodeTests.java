@@ -44,10 +44,9 @@ import api.support.http.InventoryItemResource;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
-import org.folio.circulation.domain.policy.Policy;
+import org.hamcrest.core.Is;
 import org.joda.time.DateTime;
 import org.joda.time.Seconds;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import org.folio.circulation.domain.policy.Period;
@@ -519,7 +518,10 @@ public class CheckOutByBarcodeTests extends APITests {
       overdueFinePoliciesFixture.facultyStandard().getId().toString(),
       lostItemFeePoliciesFixture.facultyStandard().getId().toString());
 
-    circulationRulesFixture.attemptUpdateCirculationRules(rule, "l");
+    Response response = circulationRulesFixture
+      .attemptUpdateCirculationRules(rule, "l");
+    assertThat("The policy l does not exist",
+      response.getStatusCode(), Is.is(422));
   }
 
   @Test
@@ -866,7 +868,10 @@ public class CheckOutByBarcodeTests extends APITests {
       overdueFinePoliciesFixture.facultyStandard().getId().toString(),
       lostItemFeePoliciesFixture.facultyStandard().getId().toString());
 
-    circulationRulesFixture.attemptUpdateCirculationRules(rule, "n");
+    Response response = circulationRulesFixture
+      .attemptUpdateCirculationRules(rule, "n");
+    assertThat("The policy n does not exist",
+      response.getStatusCode(), Is.is(422));
   }
 
   @Test

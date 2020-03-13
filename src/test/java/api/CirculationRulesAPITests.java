@@ -15,6 +15,10 @@ import api.support.APITests;
 import io.vertx.core.json.JsonObject;
 
 public class CirculationRulesAPITests extends APITests {
+
+  private static final String CIRCULATION_RULE_TEMPLATE =
+    "priority: t, s, c, b, a, m, g\nfallback-policy: l %s r %s n %s o %s i %s \n";
+
   @Test
   public void canGet() {
     getRulesText();
@@ -33,12 +37,12 @@ public class CirculationRulesAPITests extends APITests {
     UUID ip1 = UUID.randomUUID();
     UUID ip2 = UUID.randomUUID();
 
-    String rule = "priority: t, s, c, b, a, m, g\nfallback-policy: l " + lp1 + " r " + rp1 + " n " + np1 + " o " + op1 + " i " + ip1 + "\n";
+    String rule = String.format(CIRCULATION_RULE_TEMPLATE, lp1, rp1, np1, op1, ip1);
     setRules(rule);
 
     assertThat(getRulesText(), is(rule));
 
-    rule = "priority: t, s, c, b, a, m, g\nfallback-policy: l " + lp2 + " r " + rp2 + " n " + np2 + " o " + op2 + " i " + ip2 + "\n";
+    rule = String.format(CIRCULATION_RULE_TEMPLATE, lp2, rp2, np2, op2, ip2);
     setRules(rule);
 
     assertThat(getRulesText(), is(rule));
