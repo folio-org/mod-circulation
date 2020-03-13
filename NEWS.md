@@ -1,3 +1,37 @@
+## 18.0.0 2020-03-12
+
+* Charges overdue fines according to policy (CIRC-524, CIRC-548, CIRC-591, CIRC-656, CIRC-677, CIRC-678, CIRC-680, CIRC-682)
+* Can declare items lost (CIRC-567, CIRC-578, CIRC-614, CIRC-615, CIRC-616, CIRC-618, CIRC-625)
+* Can claim an item has been returned (CIRC-626, CIRC-637, CIRC-638, CIRC-639, CIRC-645, CIRC-660)
+* Blocks patrons from borrowing more items according to item limit policy (CIRC-558)
+* Sends patron notices at the end of a check-in session (CIRC-559, CIRC-560, CIRC-568)
+* Sends pickup reminder, hold shelf expiration and request expiration notices irrespective of order of notices set up in policy (CIRC-605, CIRC-606)
+* Ignores or deletes invalid notices when sending patron notices (CIRC-582, CIRC-620)
+* Informs the client when a check-in is considered in-house use (CIRC-622)
+* Stores a record of each check in (CIRC-643, CIRC-665)
+* Does not attempt to anonymize loans more than once (CIRC-666)
+* Uses system date for when item was last checked in (CIRC-607)
+* Can search for requests using item’s ISBN (CIRC-623)
+* Includes effective call number in hold shelf report (CIRC-546)
+* Includes extra properties in in-transit report (CIRC-556, CIRC-575)
+* Provide item’s enumeration, chronology and volume for loans (CIRC-593)
+* Uses Vert.x web client instead of HTTP client (CIRC-308)
+* Upgrades to `Vert.x 3.8.4`
+* Provides `circulation 9.2`
+* Provides `circulation-rules 1.1`
+* Provides `requests-reports 0.7`
+* Provides `inventory-reports 0.4`
+* Provides `pink-slips 0.2`
+* Provides `request-move 0.7`
+* Provides `declare-item-lost 0.1`
+* Provides `claim-item-returned 0.1`
+* Provides `patron-action-session 0.2`
+* Requires `loan-storage 6.6`
+* Requires `item-storage 8.1`
+* Requires `request-storage 3.3`
+* Requires `request-storage-batch 0.3`
+* Requires `check-in-storage 0.2`
+
 ## 17.0.0 2019-12-02
 
 * Introduces ability to reorder requests in an item’s queue (CIRC-446, CIRC-455, CIRC-531)
