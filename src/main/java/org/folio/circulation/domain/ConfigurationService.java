@@ -76,7 +76,7 @@ class ConfigurationService {
   }
 
   private Integer findTimeoutDuration(JsonObject configJson) {
-    return configJson.getInteger(CHECKOUT_TIMEOUT_DURATION_KEY, DEFAULT_CHECKOUT_TIMEOUT_DURATION_IN_MINUTES);
+    return Integer.parseInt(configJson.getValue(CHECKOUT_TIMEOUT_DURATION_KEY, DEFAULT_CHECKOUT_TIMEOUT_DURATION_IN_MINUTES).toString());
   }
 
   private Integer applySchedulerNoticesLimit(Configuration config) {
