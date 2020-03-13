@@ -103,8 +103,7 @@ public class Text2Drools extends CirculationRulesBaseListener {
   private int indentation = 0;
 
   private String[] policyTypes = {"l", "r", "n", "o", "i"};
-  private PolicyValidator<String, List<PolicyContext>, Token> policyValidator =
-    (policyType, policies, token) -> {};
+  private PolicyValidator policyValidator = (policyType, policies, token) -> {};
 
   private enum PriorityType {
     NONE,
@@ -136,9 +135,7 @@ public class Text2Drools extends CirculationRulesBaseListener {
    *  with set of existing policies parameter.
    *
    */
-  private Text2Drools(
-    PolicyValidator<String, List<PolicyContext>, Token> policyValidator) {
-
+  private Text2Drools(PolicyValidator policyValidator) {
     this.policyValidator = policyValidator;
   }
 
@@ -159,7 +156,7 @@ public class Text2Drools extends CirculationRulesBaseListener {
    * @return Drools file
    */
   public static String convert(String text,
-    PolicyValidator<String, List<PolicyContext>, Token> policyValidator) {
+    PolicyValidator policyValidator) {
 
     Text2Drools text2drools = new Text2Drools(policyValidator);
 

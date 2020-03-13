@@ -17,6 +17,8 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
+import org.antlr.v4.runtime.Token;
+import org.apache.commons.collections4.MapUtils;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.policy.Policy;
 import org.folio.circulation.rules.CirculationRulesException;
@@ -107,32 +109,29 @@ public class CirculationRulesResource extends Resource {
   @SuppressWarnings("squid:S2147")
   private void put(RoutingContext routingContext) {
     final Clients clients = Clients.create(new WebContext(routingContext), client);
+    CollectionResourceClient loansRulesClient = clients.circulationRulesStorage();
 
-    if (clients.circulationRulesStorage() == null) {
+    if (loansRulesClient == null) {
       internalError(routingContext.response(),
         "Cannot initialise client to storage interface");
       return;
     }
 
-    getExistingPolicyIds(clients)
+    getExistingIdsOfSpecificPolicy(clients)
       .thenAccept(result -> proceedWithUpdate(result.value(), routingContext, clients));
   }
 
   private void proceedWithUpdate(
-    Map<String, Set<String>> existingPoliciesIds, RoutingContext routingContext, Clients clients) {
+    Map<String, Set<String>> existingPoliciesIds, RoutingContext routingContext,
+    Clients clients) {
 
     JsonObject rulesInput;
     try {
       // try to convert, do not safe if conversion fails
       rulesInput = routingContext.getBodyAsJson();
       Text2Drools.convert(rulesInput.getString("rulesAsText"),
-        (policyType, policies, token) -> {
-          if (!isPolicyExisting(existingPoliciesIds, policyType, policies)) {
-             throw new CirculationRulesException(
-               String.format("The policy %s does not exist", policyType),
-               token.getLine(), token.getCharPositionInLine());
-          }
-        });
+        (policyType, policies, token) -> validatePolicy(
+          existingPoliciesIds, policyType, policies, token));
     } catch (CirculationRulesException e) {
       circulationRulesError(routingContext.response(), e);
       return;
@@ -156,16 +155,24 @@ public class CirculationRulesResource extends Resource {
       }, cause -> cause.writeTo(routingContext.response())));
   }
 
-   private boolean isPolicyExisting(Map<String, Set<String>> existingPolicyIds,
+  private void validatePolicy(Map<String, Set<String>> existingPoliciesIds, String policyType, List<CirculationRulesParser.PolicyContext> policies, Token token) {
+    if (!policyExists(existingPoliciesIds, policyType, policies)) {
+       throw new CirculationRulesException(
+         String.format("The policy %s does not exist", policyType),
+         token.getLine(), token.getCharPositionInLine());
+    }
+  }
+
+  private boolean policyExists(Map<String, Set<String>> existingPolicyIds,
     String policyType, List<CirculationRulesParser.PolicyContext> policies) {
 
-    return existingPolicyIds != null && isNotEmpty(existingPolicyIds.get(policyType))
+    return MapUtils.isNotEmpty(existingPolicyIds) && isNotEmpty(existingPolicyIds.get(policyType))
         && existingPolicyIds.get(policyType).contains(
           policies.get(FIRST_ELEMENT_OF_LIST)
             .getChild(POLICY_ID_POSITION_NUMBER).getText());
   }
 
-  private CompletableFuture<Result<Map<String, Set<String>>>> getExistingPolicyIds(Clients clients) {
+  private CompletableFuture<Result<Map<String, Set<String>>>> getExistingIdsOfSpecificPolicy(Clients clients) {
 
     CollectionResourceClient loanPolicyClient = clients.loanPoliciesStorage();
     CollectionResourceClient noticePolicyClient = clients.patronNoticePolicesStorageClient();
@@ -175,19 +182,24 @@ public class CirculationRulesResource extends Resource {
     Map<String, Set<String>> ids = new HashMap<>();
 
     return Result.ofAsync(() -> ids)
-      .thenCombineAsync(getExistingPolicyIds(loanPolicyClient, "loanPolicies", "l"),
+      .thenCombineAsync(
+        getExistingIdsOfSpecificPolicy(loanPolicyClient, "loanPolicies", "l"),
         (resultTotalIds, resultNewIds) -> combine(resultTotalIds, resultNewIds,
           this::getTotalMap))
-      .thenCombineAsync(getExistingPolicyIds(noticePolicyClient, "patronNoticePolicies", "n"),
+      .thenCombineAsync(
+        getExistingIdsOfSpecificPolicy(noticePolicyClient, "patronNoticePolicies", "n"),
         (resultTotalIds, resultNewIds) -> combine(resultTotalIds, resultNewIds,
           this::getTotalMap))
-      .thenCombineAsync(getExistingPolicyIds(requestPolicyClient, "requestPolicies", "r"),
+      .thenCombineAsync(
+        getExistingIdsOfSpecificPolicy(requestPolicyClient, "requestPolicies", "r"),
         (resultTotalIds, resultNewIds) -> combine(resultTotalIds, resultNewIds,
           this::getTotalMap))
-      .thenCombineAsync(getExistingPolicyIds(overdueFinePolicyClient, "overdueFinePolicies", "o"),
+      .thenCombineAsync(
+        getExistingIdsOfSpecificPolicy(overdueFinePolicyClient, "overdueFinePolicies", "o"),
         (resultTotalIds, resultNewIds) -> combine(resultTotalIds, resultNewIds,
           this::getTotalMap))
-      .thenCombineAsync(getExistingPolicyIds(lostItemFeePolicyClient, "lostItemFeePolicies", "i"),
+      .thenCombineAsync(
+        getExistingIdsOfSpecificPolicy(lostItemFeePolicyClient, "lostItemFeePolicies", "i"),
         (resultTotalIds, resultNewIds) -> combine(resultTotalIds, resultNewIds,
           this::getTotalMap));
   }
@@ -198,26 +210,19 @@ public class CirculationRulesResource extends Resource {
     return totalMap;
   }
 
-  private CompletableFuture<Result<Map<String, Set<String>>>> getExistingPolicyIds(
+  private CompletableFuture<Result<Map<String, Set<String>>>> getExistingIdsOfSpecificPolicy(
     CollectionResourceClient client, String entityName, String policyType) {
 
     return client.get()
-      .thenApply(r -> r.next(response -> mapResponseToPolicy(response, entityName)))
+      .thenApply(r -> r.next(response -> mapResponseToIds(response, entityName)))
       .thenApply(r -> r.map(MultipleRecords::getRecords))
       .thenApply(r -> r.map(collection -> collection.stream()
-        .map(Policy::getId).collect(groupingBy((id) -> policyType,
-          mapping(Function.identity(), toSet())))));
+        .collect(groupingBy((id) -> policyType, mapping(Function.identity(), toSet())))));
   }
 
-  private Result<MultipleRecords<Policy>> mapResponseToPolicy(
+  private Result<MultipleRecords<String>> mapResponseToIds(
     Response response, String entityName) {
-    return MultipleRecords.from(response, v -> from(v, entityName), entityName);
-  }
-
-  private static Policy from(JsonObject json, String entityName) {
-    return new PolicyEntity(
-      getProperty(json, "id"),
-      entityName);
+    return MultipleRecords.from(response, v -> getProperty(v, "id"), entityName);
   }
 
   private static void circulationRulesError(HttpServerResponse response, CirculationRulesException e) {
@@ -232,12 +237,5 @@ public class CirculationRulesResource extends Resource {
     JsonObject body = new JsonObject();
     body.put("message", e.getMessage());  // already contains line and column number
     new JsonResponseResult(422, body, null).writeTo(response);
-  }
-
-  private static class PolicyEntity extends Policy {
-
-    protected PolicyEntity(String id, String name) {
-      super(id, name);
-    }
   }
 }

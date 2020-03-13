@@ -1,6 +1,6 @@
 package api.support.builders;
 
-import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 import org.folio.circulation.domain.RequestType;
@@ -12,9 +12,9 @@ public class RequestPolicyBuilder extends JsonBuilder implements Builder {
   private final UUID id;
   private final String name;
   private final String description;
-  private final ArrayList<RequestType> types;
+  private final List<RequestType> types;
 
-  public RequestPolicyBuilder(ArrayList<RequestType> requestTypes) {
+  public RequestPolicyBuilder(List<RequestType> requestTypes) {
 
     this(UUID.randomUUID(),
       "Example Request Policy",
@@ -23,12 +23,12 @@ public class RequestPolicyBuilder extends JsonBuilder implements Builder {
     );
   }
 
-  public RequestPolicyBuilder(ArrayList<RequestType> requestTypes, UUID id) {
+  public RequestPolicyBuilder(List<RequestType> requestTypes, UUID id) {
 
     this(id, "Example Request Policy" + id.toString(), "An example request policy", requestTypes);
   }
 
-  public RequestPolicyBuilder(ArrayList<RequestType> requestTypes, String name, String description) {
+  public RequestPolicyBuilder(List<RequestType> requestTypes, String name, String description) {
 
     this(UUID.randomUUID(),
       name,
@@ -41,7 +41,7 @@ public class RequestPolicyBuilder extends JsonBuilder implements Builder {
     UUID id,
     String name,
     String description,
-    ArrayList<RequestType> types) {
+    List<RequestType> types) {
 
     this.id = id;
     this.name = name;

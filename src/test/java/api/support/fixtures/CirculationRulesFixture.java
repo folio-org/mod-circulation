@@ -74,13 +74,13 @@ public class CirculationRulesFixture {
       response.getStatusCode(), is(204));
   }
 
-  public void attemptUpdateCirculationRules(String rules, String policyType) {
+  public Response attemptUpdateCirculationRules(
+    String rules, String policyType) {
+
     JsonObject circulationRulesRequest = new JsonObject()
       .put("rulesAsText", rules);
 
-    final Response response = putRules(circulationRulesRequest.encodePrettily());
-    assertThat(String.format("The policy %s does not exist", policyType),
-      response.getStatusCode(), is(422));
+    return putRules(circulationRulesRequest.encodePrettily());
   }
 
   public void updateCirculationRulesWithoutInvalidatingCache(String rules) {
