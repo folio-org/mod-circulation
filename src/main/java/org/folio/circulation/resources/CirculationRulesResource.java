@@ -121,9 +121,8 @@ public class CirculationRulesResource extends Resource {
       .thenAccept(result -> proceedWithUpdate(result.value(), routingContext, clients));
   }
 
-  private void proceedWithUpdate(
-    Map<String, Set<String>> existingPoliciesIds, RoutingContext routingContext,
-    Clients clients) {
+  private void proceedWithUpdate(Map<String, Set<String>> existingPoliciesIds, 
+    RoutingContext routingContext, Clients clients) {
 
     JsonObject rulesInput;
     try {
