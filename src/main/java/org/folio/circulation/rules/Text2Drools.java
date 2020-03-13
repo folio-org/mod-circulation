@@ -155,8 +155,7 @@ public class Text2Drools extends CirculationRulesBaseListener {
    * @param policyValidator function that validates policies ids
    * @return Drools file
    */
-  public static String convert(String text,
-    PolicyValidator policyValidator) {
+  public static String convert(String text, PolicyValidator policyValidator) {
 
     Text2Drools text2drools = new Text2Drools(policyValidator);
 
