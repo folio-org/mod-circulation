@@ -155,7 +155,9 @@ public class CirculationRulesResource extends Resource {
       }, cause -> cause.writeTo(routingContext.response())));
   }
 
-  private void validatePolicy(Map<String, Set<String>> existingPoliciesIds, String policyType, List<CirculationRulesParser.PolicyContext> policies, Token token) {
+  private void validatePolicy(Map<String, Set<String>> existingPoliciesIds,
+    String policyType, List<CirculationRulesParser.PolicyContext> policies, Token token) {
+
     if (!policyExists(existingPoliciesIds, policyType, policies)) {
        throw new CirculationRulesException(
          String.format("The policy %s does not exist", policyType),

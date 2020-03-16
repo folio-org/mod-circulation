@@ -516,6 +516,33 @@ abstract class RenewalAPITests extends APITests {
   }
 
   @Test
+  public void cannotRenewWhenLoanPolicyDoesNotExist() {
+
+    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final IndividualResource jessica = usersFixture.jessica();
+
+    final UUID unknownLoanPolicyId = UUID.randomUUID();
+
+    loansFixture.checkOutByBarcode(smallAngryPlanet, jessica,
+      new DateTime(2018, 4, 21, 11, 21, 43, DateTimeZone.UTC));
+
+    loanPoliciesFixture.create(unknownLoanPolicyId);
+    useFallbackPolicies(
+      unknownLoanPolicyId,
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
+      noticePoliciesFixture.activeNotice().getId(),
+      overdueFinePoliciesFixture.facultyStandard().getId(),
+      lostItemFeePoliciesFixture.facultyStandard().getId()
+    );
+    loanPoliciesFixture.cleanUp();
+
+    final Response response = loansFixture.attemptRenewal(500, smallAngryPlanet, jessica);
+
+    assertThat(response.getBody(), is(String.format(
+      "Loan policy %s could not be found, please check circulation rules", unknownLoanPolicyId)));
+  }
+
+  @Test
   public void canRenewLoanWithAnotherLoanPolicyName() {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();

@@ -859,22 +859,6 @@ public class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void cannotUpdateCirculationRulesWithInvalidNoticePolicyId() {
-
-    String rule = circulationRulesFixture.soleFallbackPolicyRule(
-      loanPoliciesFixture.canCirculateFixed().getId().toString(),
-      requestPoliciesFixture.allowAllRequestPolicy().getId().toString(),
-      UUID.randomUUID().toString(),
-      overdueFinePoliciesFixture.facultyStandard().getId().toString(),
-      lostItemFeePoliciesFixture.facultyStandard().getId().toString());
-
-    Response response = circulationRulesFixture
-      .attemptUpdateCirculationRules(rule, "n");
-    assertThat("The policy n does not exist",
-      response.getStatusCode(), Is.is(422));
-  }
-
-  @Test
   public void cannotCheckOutWhenItemIsNotLoanable() {
     IndividualResource notLoanablePolicy = loanPoliciesFixture.create(
       new LoanPolicyBuilder()
@@ -896,6 +880,57 @@ public class CheckOutByBarcodeTests extends APITests {
       hasMessage("Item is not loanable"),
       hasItemBarcodeParameter(nod),
       hasLoanPolicyParameters(notLoanablePolicy))));
+  }
+
+  @Test
+  public void checkOutFailsWhenCirculationRulesReferenceInvalidLoanPolicyId() {
+    UUID invalidLoanPolicyId = UUID.randomUUID();
+    loanPoliciesFixture.create(invalidLoanPolicyId);
+    setInvalidLoanPolicyReferenceInRules(invalidLoanPolicyId.toString());
+    loanPoliciesFixture.cleanUp();
+
+    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final IndividualResource steve = usersFixture.steve();
+
+    final DateTime loanDate = new DateTime(2018, 3, 18, 11, 43, 54, UTC);
+
+    final Response response = loansFixture.attemptCheckOutByBarcode(500,
+      new CheckOutByBarcodeRequestBuilder()
+        .forItem(smallAngryPlanet)
+        .to(steve)
+        .on(loanDate)
+        .at(servicePointsFixture.cd1()));
+
+    assertThat(response.getBody(),
+      is("Loan policy " + invalidLoanPolicyId + " could not be found, please check circulation rules"));
+
+    smallAngryPlanet = itemsClient.get(smallAngryPlanet);
+
+    assertThat(smallAngryPlanet, hasItemStatus(AVAILABLE));
+  }
+
+  @Test
+  public void checkOutDoesNotFailWhenCirculationRulesReferenceInvalidNoticePolicyId() {
+    UUID invalidNoticePolicyId = UUID.randomUUID();
+    noticePoliciesFixture.create(invalidNoticePolicyId);
+    setInvalidNoticePolicyReferenceInRules(invalidNoticePolicyId.toString());
+    noticePoliciesFixture.cleanUp();
+
+    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final IndividualResource steve = usersFixture.steve();
+
+    final DateTime loanDate = new DateTime(2018, 3, 18, 11, 43, 54, UTC);
+
+    loansFixture.checkOutByBarcode(
+      new CheckOutByBarcodeRequestBuilder()
+        .forItem(smallAngryPlanet)
+        .to(steve)
+        .on(loanDate)
+        .at(servicePointsFixture.cd1()));
+
+    smallAngryPlanet = itemsClient.get(smallAngryPlanet);
+
+    assertThat(smallAngryPlanet, hasItemStatus(CHECKED_OUT));
   }
 
   @Test

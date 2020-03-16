@@ -63,6 +63,13 @@ public class LoanPoliciesFixture {
       .forEach(loanPolicyRecordCreator::createIfAbsent);
   }
 
+  public void create(UUID id) {
+    loanPolicyRecordCreator.createIfAbsent(
+      new LoanPolicyBuilder()
+      .withId(id)
+      .withName("Example LoanPolicy " + id));
+  }
+
   public IndividualResource create(JsonObject policy) {
     return loanPolicyRecordCreator.createIfAbsent(policy);
   }

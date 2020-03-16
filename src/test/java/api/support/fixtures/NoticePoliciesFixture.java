@@ -48,6 +48,13 @@ public class NoticePoliciesFixture {
     .forEach(noticePolicyRecordCreator::createIfAbsent);
   }
 
+  public void create(UUID id) {
+    noticePolicyRecordCreator.createIfAbsent(
+      new NoticePolicyBuilder()
+      .withId(id)
+      .withName("Example NoticePolicy " + id));
+  }
+
   public void cleanUp() {
     noticePolicyRecordCreator.cleanUp();
   }
