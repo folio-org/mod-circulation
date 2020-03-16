@@ -17,6 +17,7 @@ public class ConfigurationServiceTest {
 
   private static final String US_LOCALE = "en-US";
   private static final String VALUE = "value";
+  private static final Integer DEFAULT_TIMEOUT_CONFIGURATION = 3;
 
   private static ConfigurationService service;
 
@@ -67,34 +68,34 @@ public class ConfigurationServiceTest {
   @Test
   public void shouldCorrectParseIfCheckoutTimeoutDurationIsInteger() {
     JsonObject jsonConfig = new JsonObject()
-      .put("value", getJsonConfigWithCheckoutTimeoutDurationAsInteger());
+      .put(VALUE, getJsonConfigWithCheckoutTimeoutDurationAsInteger());
     List<Configuration> records = Collections.singletonList(new Configuration(jsonConfig));
 
-    Integer expectedSessionTimeout = service.findSessionTimeout(records);
+    Integer actualSessionTimeout = service.findSessionTimeout(records);
 
-    assertEquals(expectedSessionTimeout, new Integer(1));
+    assertEquals(actualSessionTimeout, new Integer(1));
   }
 
   @Test
   public void shouldCorrectParseIfCheckoutTimeoutDurationIsString() {
     JsonObject jsonConfig = new JsonObject()
-      .put(VALUE, getJsonConfigWithCheckoutTimeoutDurationAsString());
+      .put(VALUE, getJsonConfigWithCheckoutTimeoutDurationAsString("1"));
     List<Configuration> records = Collections.singletonList(new Configuration(jsonConfig));
 
-    Integer expectedSessionTimeout = service.findSessionTimeout(records);
+    Integer actualSessionTimeout = service.findSessionTimeout(records);
 
-    assertEquals(expectedSessionTimeout, new Integer(1));
+    assertEquals(actualSessionTimeout, new Integer(1));
   }
 
   @Test
   public void shouldCorrectParseIfCheckoutTimeoutDurationIsWrongString() {
     JsonObject jsonConfig = new JsonObject()
-      .put("value", getJsonConfigWithCheckoutTimeoutDurationAsWrongValue());
+      .put(VALUE, getJsonConfigWithCheckoutTimeoutDurationAsString("test"));
     List<Configuration> records = Collections.singletonList(new Configuration(jsonConfig));
 
-    Integer expectedSessionTimeout = service.findSessionTimeout(records);
+    Integer actualSessionTimeout = service.findSessionTimeout(records);
 
-    assertEquals(expectedSessionTimeout, new Integer(3));
+    assertEquals(actualSessionTimeout, DEFAULT_TIMEOUT_CONFIGURATION);
   }
 
   private JsonObject getJsonObject(String timeZoneValue) {
@@ -109,16 +110,9 @@ public class ConfigurationServiceTest {
     return encodedValue.toString();
   }
 
-  private String getJsonConfigWithCheckoutTimeoutDurationAsString() {
+  private String getJsonConfigWithCheckoutTimeoutDurationAsString(String checkoutTimeoutDuration) {
     final JsonObject encodedValue = new JsonObject();
-    write(encodedValue, "checkoutTimeoutDuration", "1");
-    write(encodedValue, "checkoutTimeout", true);
-    return encodedValue.toString();
-  }
-
-  private String getJsonConfigWithCheckoutTimeoutDurationAsWrongValue() {
-    final JsonObject encodedValue = new JsonObject();
-    write(encodedValue, "checkoutTimeoutDuration", "test");
+    write(encodedValue, "checkoutTimeoutDuration", checkoutTimeoutDuration);
     write(encodedValue, "checkoutTimeout", true);
     return encodedValue.toString();
   }
