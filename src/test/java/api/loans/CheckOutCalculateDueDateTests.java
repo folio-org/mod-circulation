@@ -1098,4 +1098,15 @@ public class CheckOutCalculateDueDateTests extends APITests {
     use(loanPolicy);
     return loanPolicy.create();
   }
+
+  private void loanHasLoanPolicyProperties(JsonObject loan, JsonObject loanPolicy) {
+
+    hasProperty("loanPolicyId", loan, "loan", loanPolicy.getString("id"));
+    hasProperty("loanPolicy", loan, "loan");
+
+    JsonObject loanPolicyObject = loan.getJsonObject("loanPolicy");
+
+    hasProperty("name", loanPolicyObject, "loan policy",
+      loanPolicy.getString("name"));
+  }
 }
