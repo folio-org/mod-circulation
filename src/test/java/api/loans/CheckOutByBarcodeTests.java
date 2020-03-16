@@ -16,20 +16,26 @@ import static api.support.matchers.UUIDMatcher.is;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static api.support.matchers.ValidationErrorMatchers.hasMessageContaining;
+import static org.folio.circulation.domain.representations.ItemProperties.CALL_NUMBER_COMPONENTS;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
 import static org.joda.time.DateTimeZone.UTC;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
-
-import static org.folio.circulation.domain.representations.ItemProperties.CALL_NUMBER_COMPONENTS;
 
 import java.util.List;
 import java.util.Random;
 import java.util.UUID;
+
+import org.folio.circulation.domain.policy.Period;
+import org.folio.circulation.support.http.client.IndividualResource;
+import org.folio.circulation.support.http.client.Response;
+import org.hamcrest.core.Is;
+import org.joda.time.DateTime;
+import org.joda.time.Seconds;
+import org.junit.Test;
 
 import api.support.APITests;
 import api.support.builders.CheckOutByBarcodeRequestBuilder;
@@ -43,15 +49,6 @@ import api.support.builders.UserBuilder;
 import api.support.http.InventoryItemResource;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
-
-import org.hamcrest.core.Is;
-import org.joda.time.DateTime;
-import org.joda.time.Seconds;
-import org.junit.Test;
-
-import org.folio.circulation.domain.policy.Period;
-import org.folio.circulation.support.http.client.IndividualResource;
-import org.folio.circulation.support.http.client.Response;
 
 public class CheckOutByBarcodeTests extends APITests {
   @Test
@@ -885,9 +882,9 @@ public class CheckOutByBarcodeTests extends APITests {
   @Test
   public void checkOutFailsWhenCirculationRulesReferenceInvalidLoanPolicyId() {
     UUID invalidLoanPolicyId = UUID.randomUUID();
-    loanPoliciesFixture.create(invalidLoanPolicyId);
+    IndividualResource record = loanPoliciesFixture.create(invalidLoanPolicyId);
     setInvalidLoanPolicyReferenceInRules(invalidLoanPolicyId.toString());
-    loanPoliciesFixture.cleanUp();
+    loanPoliciesFixture.delete(record);
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource steve = usersFixture.steve();
@@ -912,9 +909,9 @@ public class CheckOutByBarcodeTests extends APITests {
   @Test
   public void checkOutDoesNotFailWhenCirculationRulesReferenceInvalidNoticePolicyId() {
     UUID invalidNoticePolicyId = UUID.randomUUID();
-    noticePoliciesFixture.create(invalidNoticePolicyId);
+    IndividualResource record = noticePoliciesFixture.create(invalidNoticePolicyId);
     setInvalidNoticePolicyReferenceInRules(invalidNoticePolicyId.toString());
-    noticePoliciesFixture.cleanUp();
+    noticePoliciesFixture.delete(record);
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource steve = usersFixture.steve();

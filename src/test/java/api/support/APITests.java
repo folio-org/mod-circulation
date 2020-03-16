@@ -520,17 +520,6 @@ public abstract class APITests {
       loanPolicy.getJson().getString("name"));
   }
 
-  protected void loanHasLoanPolicyProperties(JsonObject loan, JsonObject loanPolicy) {
-
-    hasProperty("loanPolicyId", loan, "loan", loanPolicy.getString("id"));
-    hasProperty("loanPolicy", loan, "loan");
-
-    JsonObject loanPolicyObject = loan.getJsonObject("loanPolicy");
-
-    hasProperty("name", loanPolicyObject, "loan policy",
-      loanPolicy.getString("name"));
-  }
-
   protected void loanHasOverdueFinePolicyProperties(JsonObject loan, IndividualResource loanPolicy) {
     hasProperty("overdueFinePolicyId", loan, "loan", loanPolicy.getId().toString());
     hasProperty("overdueFinePolicy", loan, "loan");

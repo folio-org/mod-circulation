@@ -36,6 +36,10 @@ public class LoanPoliciesFixture {
     fixedDueDateScheduleRecordCreator.cleanUp();
   }
 
+  public void delete(IndividualResource record) {
+    loanPolicyRecordCreator.delete(record);
+  }
+
   public IndividualResource createExampleFixedDueDateSchedule() {
     final int currentYear = DateTime.now(DateTimeZone.UTC).getYear();
 
@@ -63,8 +67,8 @@ public class LoanPoliciesFixture {
       .forEach(loanPolicyRecordCreator::createIfAbsent);
   }
 
-  public void create(UUID id) {
-    loanPolicyRecordCreator.createIfAbsent(
+  public IndividualResource create(UUID id) {
+    return loanPolicyRecordCreator.createIfAbsent(
       new LoanPolicyBuilder()
       .withId(id)
       .withName("Example LoanPolicy " + id));
