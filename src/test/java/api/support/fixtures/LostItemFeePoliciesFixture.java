@@ -64,6 +64,13 @@ public class LostItemFeePoliciesFixture {
       .withName(name));
   }
 
+  public IndividualResource create(UUID id) {
+    return lostItemFeePolicyRecordCreator.createIfAbsent(
+      new LostItemFeePolicyBuilder()
+      .withId(id)
+      .withName("Example lostItemPolicy " + id));
+  }
+
   public void create(List<String> ids) {
     ids.stream()
       .map(id -> new LostItemFeePolicyBuilder()
