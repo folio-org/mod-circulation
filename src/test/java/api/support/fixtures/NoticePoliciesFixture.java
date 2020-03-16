@@ -40,19 +40,11 @@ public class NoticePoliciesFixture {
     return noticePolicyRecordCreator.createIfAbsent(noticePolicy);
   }
 
-  public void create(List<String> ids) {
-    ids.stream()
-      .map(id -> new NoticePolicyBuilder()
-        .withId(UUID.fromString(id))
-        .withName("Example NoticePolicy " + id))
-    .forEach(noticePolicyRecordCreator::createIfAbsent);
-  }
-
   public IndividualResource create(UUID id) {
     return noticePolicyRecordCreator.createIfAbsent(
       new NoticePolicyBuilder()
-      .withId(id)
-      .withName("Example NoticePolicy " + id));
+        .withId(id)
+        .withName("Example NoticePolicy " + id));
   }
 
   public void cleanUp() {

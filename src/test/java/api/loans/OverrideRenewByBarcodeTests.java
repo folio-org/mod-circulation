@@ -66,7 +66,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
     loansFixture.checkOutByBarcode(smallAngryPlanet, jessica,
       new DateTime(2018, DateTimeConstants.APRIL, 21, 11, 21, 43));
 
-    loanPoliciesFixture.create(unknownLoanPolicyId);
+    IndividualResource record = loanPoliciesFixture.create(unknownLoanPolicyId);
     useFallbackPolicies(
       unknownLoanPolicyId,
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
@@ -74,7 +74,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
       overdueFinePoliciesFixture.facultyStandard().getId(),
       lostItemFeePoliciesFixture.facultyStandard().getId()
     );
-    loanPoliciesFixture.cleanUp();
+    loanPoliciesFixture.delete(record);
 
     final Response response = loansFixture.attemptRenewal(500, smallAngryPlanet,
       jessica);

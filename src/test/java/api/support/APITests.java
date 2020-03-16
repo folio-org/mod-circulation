@@ -596,17 +596,4 @@ public abstract class APITests {
   protected void mockClockManagerToReturnDefaultDateTime() {
     ClockManager.getClockManager().setDefaultClock();
   }
-
-  protected List<String> getPolicyFromRule(String rules, String policyType) {
-    List<String> allMatches = new ArrayList<>();
-    String regex = String.format(
-      "(?<=\\b%s\\s)[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[89abAB][a-fA-F0-9]{3}-[a-fA-F0-9]{12}",
-      policyType);
-    Matcher m = Pattern.compile(regex)
-      .matcher(rules);
-    while (m.find()) {
-      allMatches.add(m.group());
-    }
-    return allMatches;
-  }
 }

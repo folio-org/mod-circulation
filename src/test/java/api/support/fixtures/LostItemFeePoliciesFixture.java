@@ -71,14 +71,6 @@ public class LostItemFeePoliciesFixture {
       .withName("Example lostItemPolicy " + id));
   }
 
-  public void create(List<String> ids) {
-    ids.stream()
-      .map(id -> new LostItemFeePolicyBuilder()
-        .withId(UUID.fromString(id))
-        .withName("Example LostItemFeePolicy " + id))
-      .forEach(lostItemFeePolicyRecordCreator::createIfAbsent);
-  }
-
   public void cleanUp() {
     lostItemFeePolicyRecordCreator.cleanUp();
   }

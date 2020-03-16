@@ -75,14 +75,6 @@ public class OverdueFinePoliciesFixture {
     return overdueFinePolicyRecordCreator.createIfAbsent(overdueFinePolicy);
   }
 
-  public void create(List<String> ids) {
-    ids.stream()
-      .map(id -> new OverdueFinePolicyBuilder()
-        .withId(UUID.fromString(id))
-        .withName("Example OverdueFinePolicy " + id))
-      .forEach(overdueFinePolicyRecordCreator::createIfAbsent);
-  }
-
   public void create(UUID id) {
     overdueFinePolicyRecordCreator.createIfAbsent(
       new OverdueFinePolicyBuilder()

@@ -103,7 +103,7 @@ public class Text2Drools extends CirculationRulesBaseListener {
   private int indentation = 0;
 
   private String[] policyTypes = {"l", "r", "n", "o", "i"};
-  private PolicyValidator policyValidator = (policyType, policies, token) -> {};
+  private final PolicyValidator policyValidator;
 
   private enum PriorityType {
     NONE,
@@ -127,10 +127,6 @@ public class Text2Drools extends CirculationRulesBaseListener {
 
   private Map<String,Integer> criteriumPriority = new HashMap<>(7);
 
-  /** Private constructor to be invoked from convert(String) only. */
-  private Text2Drools() {
-  }
-
   /** Private constructor to be invoked from convert(String) only
    *  with set of existing policies parameter.
    *
@@ -145,7 +141,7 @@ public class Text2Drools extends CirculationRulesBaseListener {
    * @return Drools file
    */
   public static String convert(String text) {
-    Text2Drools text2drools = new Text2Drools();
+    Text2Drools text2drools = new Text2Drools((policyType, policies, token) -> {});
     return getDroolsRepresentation(text, text2drools);
   }
 

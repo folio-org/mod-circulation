@@ -20,7 +20,6 @@ import java.util.function.Function;
 import org.antlr.v4.runtime.Token;
 import org.apache.commons.collections4.MapUtils;
 import org.folio.circulation.domain.MultipleRecords;
-import org.folio.circulation.domain.policy.Policy;
 import org.folio.circulation.rules.CirculationRulesException;
 import org.folio.circulation.rules.CirculationRulesParser;
 import org.folio.circulation.rules.Text2Drools;
@@ -117,11 +116,11 @@ public class CirculationRulesResource extends Resource {
       return;
     }
 
-    getExistingIdsOfSpecificPolicy(clients)
+    getPolicyIdsByType(clients)
       .thenAccept(result -> proceedWithUpdate(result.value(), routingContext, clients));
   }
 
-  private void proceedWithUpdate(Map<String, Set<String>> existingPoliciesIds, 
+  private void proceedWithUpdate(Map<String, Set<String>> existingPoliciesIds,
     RoutingContext routingContext, Clients clients) {
 
     JsonObject rulesInput;
@@ -173,7 +172,7 @@ public class CirculationRulesResource extends Resource {
             .getChild(POLICY_ID_POSITION_NUMBER).getText());
   }
 
-  private CompletableFuture<Result<Map<String, Set<String>>>> getExistingIdsOfSpecificPolicy(Clients clients) {
+  private CompletableFuture<Result<Map<String, Set<String>>>> getPolicyIdsByType(Clients clients) {
 
     CollectionResourceClient loanPolicyClient = clients.loanPoliciesStorage();
     CollectionResourceClient noticePolicyClient = clients.patronNoticePolicesStorageClient();
@@ -184,23 +183,23 @@ public class CirculationRulesResource extends Resource {
 
     return Result.ofAsync(() -> ids)
       .thenCombineAsync(
-        getExistingIdsOfSpecificPolicy(loanPolicyClient, "loanPolicies", "l"),
+        getPolicyIdsByType(loanPolicyClient, "loanPolicies", "l"),
         (resultTotalIds, resultNewIds) -> combine(resultTotalIds, resultNewIds,
           this::getTotalMap))
       .thenCombineAsync(
-        getExistingIdsOfSpecificPolicy(noticePolicyClient, "patronNoticePolicies", "n"),
+        getPolicyIdsByType(noticePolicyClient, "patronNoticePolicies", "n"),
         (resultTotalIds, resultNewIds) -> combine(resultTotalIds, resultNewIds,
           this::getTotalMap))
       .thenCombineAsync(
-        getExistingIdsOfSpecificPolicy(requestPolicyClient, "requestPolicies", "r"),
+        getPolicyIdsByType(requestPolicyClient, "requestPolicies", "r"),
         (resultTotalIds, resultNewIds) -> combine(resultTotalIds, resultNewIds,
           this::getTotalMap))
       .thenCombineAsync(
-        getExistingIdsOfSpecificPolicy(overdueFinePolicyClient, "overdueFinePolicies", "o"),
+        getPolicyIdsByType(overdueFinePolicyClient, "overdueFinePolicies", "o"),
         (resultTotalIds, resultNewIds) -> combine(resultTotalIds, resultNewIds,
           this::getTotalMap))
       .thenCombineAsync(
-        getExistingIdsOfSpecificPolicy(lostItemFeePolicyClient, "lostItemFeePolicies", "i"),
+        getPolicyIdsByType(lostItemFeePolicyClient, "lostItemFeePolicies", "i"),
         (resultTotalIds, resultNewIds) -> combine(resultTotalIds, resultNewIds,
           this::getTotalMap));
   }
@@ -211,7 +210,7 @@ public class CirculationRulesResource extends Resource {
     return totalMap;
   }
 
-  private CompletableFuture<Result<Map<String, Set<String>>>> getExistingIdsOfSpecificPolicy(
+  private CompletableFuture<Result<Map<String, Set<String>>>> getPolicyIdsByType(
     CollectionResourceClient client, String entityName, String policyType) {
 
     return client.get()

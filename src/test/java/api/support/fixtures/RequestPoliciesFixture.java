@@ -32,18 +32,6 @@ public class RequestPoliciesFixture {
     return requestPolicyRecordCreator.createIfAbsent(allowAllPolicy);
   }
 
-  public void allowAllRequestPolicy(List<String> ids) {
-
-    List<RequestType> types = new ArrayList<>();
-    types.add(RequestType.HOLD);
-    types.add(RequestType.PAGE);
-    types.add(RequestType.RECALL);
-
-    ids.stream()
-      .map(id -> new RequestPolicyBuilder(types, UUID.fromString(id)))
-      .forEach(requestPolicyRecordCreator::createIfAbsent);
-  }
-
   public void allowAllRequestPolicy(UUID id) {
 
     List<RequestType> types = new ArrayList<>();
