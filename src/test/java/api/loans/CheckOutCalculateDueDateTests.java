@@ -1086,8 +1086,8 @@ public class CheckOutCalculateDueDateTests extends APITests {
       .withMillisOfSecond(0);
   }
 
-  private JsonObject useFixedPolicy(
-    UUID fixedDueDateScheduleId, DueDateManagement dueDateManagement) {
+  private JsonObject useFixedPolicy(UUID fixedDueDateScheduleId, 
+    DueDateManagement dueDateManagement) {
     LoanPolicyBuilder loanPolicy = new LoanPolicyBuilder()
       .withName("MOVE_TO_THE_END_OF_THE_PREVIOUS_OPEN_DAY: FIXED")
       .withDescription("New LoanPolicy")
