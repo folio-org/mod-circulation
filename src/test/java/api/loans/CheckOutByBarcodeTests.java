@@ -505,23 +505,6 @@ public class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void cannotCreateCirculationRuleWhenLoanPolicyDoesNotExist() {
-    final UUID nonExistentloanPolicyId = UUID.randomUUID();
-
-    String rule = circulationRulesFixture.soleFallbackPolicyRule(
-      nonExistentloanPolicyId.toString(),
-      requestPoliciesFixture.allowAllRequestPolicy().getId().toString(),
-      noticePoliciesFixture.activeNotice().getId().toString(),
-      overdueFinePoliciesFixture.facultyStandard().getId().toString(),
-      lostItemFeePoliciesFixture.facultyStandard().getId().toString());
-
-    Response response = circulationRulesFixture
-      .attemptUpdateCirculationRules(rule, "l");
-    assertThat("The policy l does not exist",
-      response.getStatusCode(), Is.is(422));
-  }
-
-  @Test
   public void cannotCheckOutWhenServicePointOfCheckoutNotPresent() {
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource james = usersFixture.james();

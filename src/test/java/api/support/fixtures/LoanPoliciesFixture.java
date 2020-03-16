@@ -59,14 +59,6 @@ public class LoanPoliciesFixture {
     return loanPolicyRecordCreator.createIfAbsent(builder);
   }
 
-  public void create(List<String> ids) {
-    ids.stream()
-      .map(id -> new LoanPolicyBuilder()
-        .withId(UUID.fromString(id))
-        .withName("Example LoanPolicy " + id))
-      .forEach(loanPolicyRecordCreator::createIfAbsent);
-  }
-
   public IndividualResource create(UUID id) {
     return loanPolicyRecordCreator.createIfAbsent(
       new LoanPolicyBuilder()

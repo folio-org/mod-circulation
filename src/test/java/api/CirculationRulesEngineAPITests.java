@@ -31,11 +31,6 @@ public class CirculationRulesEngineAPITests extends APITests {
   }
 
   private void setRules(String rules) {
-    loanPoliciesFixture.create(getPolicyFromRule(rules, "l"));
-    noticePoliciesFixture.create(getPolicyFromRule(rules, "n"));
-    requestPoliciesFixture.allowAllRequestPolicy(getPolicyFromRule(rules, "r"));
-    overdueFinePoliciesFixture.create(getPolicyFromRule(rules, "o"));
-    lostItemFeePoliciesFixture.create(getPolicyFromRule(rules, "i"));
     circulationRulesFixture.updateCirculationRules(rules);
   }
 
@@ -117,6 +112,24 @@ public class CirculationRulesEngineAPITests extends APITests {
   public void setUp() {
     LoanCirculationRulesEngineResource.dropCache();
     LoanCirculationRulesEngineResource.setCacheTime(1000000, 1000000);  // 1000 seconds
+    setPoliciesIdsToTheFixture();
+  }
+
+  private void setPoliciesIdsToTheFixture() {
+    loanPoliciesFixture.create(UUID.fromString(lp1.toString()));
+    loanPoliciesFixture.create(UUID.fromString(lp2.toString()));
+    loanPoliciesFixture.create(UUID.fromString(lp3.toString()));
+    loanPoliciesFixture.create(UUID.fromString(lp4.toString()));
+    loanPoliciesFixture.create(UUID.fromString(lp6.toString()));
+    loanPoliciesFixture.create(UUID.fromString(lp7.toString()));
+    noticePoliciesFixture.create(UUID.fromString(np1.toString()));
+    noticePoliciesFixture.create(UUID.fromString(np2.toString()));
+    requestPoliciesFixture.allowAllRequestPolicy(UUID.fromString(rp1.toString()));
+    requestPoliciesFixture.allowAllRequestPolicy(UUID.fromString(rp2.toString()));
+    overdueFinePoliciesFixture.create(UUID.fromString(op1.toString()));
+    overdueFinePoliciesFixture.create(UUID.fromString(op2.toString()));
+    lostItemFeePoliciesFixture.create(UUID.fromString(lip1.toString()));
+    lostItemFeePoliciesFixture.create(UUID.fromString(lip2.toString()));
   }
 
   @Test
