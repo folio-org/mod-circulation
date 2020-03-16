@@ -80,7 +80,7 @@ class ConfigurationService {
       return Integer.parseInt(configJson
         .getValue(CHECKOUT_TIMEOUT_DURATION_KEY, DEFAULT_CHECKOUT_TIMEOUT_DURATION_IN_MINUTES).toString());
     } catch (NumberFormatException e) {
-      log.debug("Can't parse property {} {}. Will be returned default value: {}",
+      log.warn("Can't parse property {} {}. Will be returned default value: {}",
         CHECKOUT_TIMEOUT_DURATION_KEY, e.getMessage(),
         DEFAULT_CHECKOUT_TIMEOUT_DURATION_IN_MINUTES);
       return DEFAULT_CHECKOUT_TIMEOUT_DURATION_IN_MINUTES;
