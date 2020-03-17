@@ -21,6 +21,7 @@ public class ConfigurationServiceTest {
 
   private static ConfigurationService service;
 
+
   @BeforeClass
   public static void before() {
     service = new ConfigurationService();
@@ -66,7 +67,7 @@ public class ConfigurationServiceTest {
   }
 
   @Test
-  public void shouldCorrectParseIfCheckoutTimeoutDurationIsInteger() {
+  public void shouldUseConfiguredCheckoutTimeoutDurationWhenAnInteger() {
     JsonObject jsonConfig = new JsonObject()
       .put(VALUE, getJsonConfigWithCheckoutTimeoutDurationAsInteger());
     List<Configuration> records = Collections.singletonList(new Configuration(jsonConfig));
@@ -77,7 +78,7 @@ public class ConfigurationServiceTest {
   }
 
   @Test
-  public void shouldCorrectParseIfCheckoutTimeoutDurationIsString() {
+  public void shouldUseConfiguredCheckoutTimeoutDurationWhenIsAnIntegerString() {
     JsonObject jsonConfig = new JsonObject()
       .put(VALUE, getJsonConfigWithCheckoutTimeoutDurationAsString("1"));
     List<Configuration> records = Collections.singletonList(new Configuration(jsonConfig));
@@ -95,7 +96,7 @@ public class ConfigurationServiceTest {
 
     Integer actualSessionTimeout = service.findSessionTimeout(records);
 
-    assertEquals(actualSessionTimeout, DEFAULT_TIMEOUT_CONFIGURATION);
+    assertEquals(DEFAULT_TIMEOUT_CONFIGURATION, actualSessionTimeout);
   }
 
   private JsonObject getJsonObject(String timeZoneValue) {
