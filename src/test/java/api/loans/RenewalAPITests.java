@@ -48,7 +48,6 @@ import org.folio.circulation.support.http.server.ValidationError;
 import org.hamcrest.Matcher;
 import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
-import org.hamcrest.core.Is;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeConstants;
 import org.joda.time.DateTimeUtils;
@@ -525,7 +524,9 @@ abstract class RenewalAPITests extends APITests {
     loansFixture.checkOutByBarcode(smallAngryPlanet, jessica,
       new DateTime(2018, 4, 21, 11, 21, 43, DateTimeZone.UTC));
 
-    IndividualResource record = loanPoliciesFixture.create(unknownLoanPolicyId);
+    IndividualResource record = loanPoliciesFixture.create(new LoanPolicyBuilder()
+      .withId(unknownLoanPolicyId)
+      .withName("Example loanPolicy"));
     useFallbackPolicies(
       unknownLoanPolicyId,
       requestPoliciesFixture.allowAllRequestPolicy().getId(),

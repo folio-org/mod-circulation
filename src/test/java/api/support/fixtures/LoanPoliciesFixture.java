@@ -59,13 +59,6 @@ public class LoanPoliciesFixture {
     return loanPolicyRecordCreator.createIfAbsent(builder);
   }
 
-  public IndividualResource create(UUID id) {
-    return loanPolicyRecordCreator.createIfAbsent(
-      new LoanPolicyBuilder()
-      .withId(id)
-      .withName("Example LoanPolicy " + id));
-  }
-
   public IndividualResource create(JsonObject policy) {
     return loanPolicyRecordCreator.createIfAbsent(policy);
   }

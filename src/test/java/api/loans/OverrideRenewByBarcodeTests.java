@@ -22,7 +22,6 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
-import api.support.builders.DeclareItemLostRequestBuilder;
 import org.apache.commons.lang3.StringUtils;
 import org.awaitility.Awaitility;
 import org.folio.circulation.domain.ItemStatus;
@@ -66,7 +65,9 @@ public class OverrideRenewByBarcodeTests extends APITests {
     loansFixture.checkOutByBarcode(smallAngryPlanet, jessica,
       new DateTime(2018, DateTimeConstants.APRIL, 21, 11, 21, 43));
 
-    IndividualResource record = loanPoliciesFixture.create(unknownLoanPolicyId);
+    IndividualResource record = loanPoliciesFixture.create(new LoanPolicyBuilder()
+      .withId(unknownLoanPolicyId)
+      .withName("Example loanPolicy"));
     useFallbackPolicies(
       unknownLoanPolicyId,
       requestPoliciesFixture.allowAllRequestPolicy().getId(),

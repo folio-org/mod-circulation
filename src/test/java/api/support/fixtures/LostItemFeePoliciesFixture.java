@@ -64,11 +64,8 @@ public class LostItemFeePoliciesFixture {
       .withName(name));
   }
 
-  public IndividualResource create(UUID id) {
-    return lostItemFeePolicyRecordCreator.createIfAbsent(
-      new LostItemFeePolicyBuilder()
-      .withId(id)
-      .withName("Example lostItemPolicy " + id));
+  public IndividualResource create(LostItemFeePolicyBuilder lostItemFeePolicyBuilder) {
+    return lostItemFeePolicyRecordCreator.createIfAbsent(lostItemFeePolicyBuilder);
   }
 
   public void cleanUp() {

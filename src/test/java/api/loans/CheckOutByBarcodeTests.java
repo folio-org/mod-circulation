@@ -32,7 +32,6 @@ import java.util.UUID;
 import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
-import org.hamcrest.core.Is;
 import org.joda.time.DateTime;
 import org.joda.time.Seconds;
 import org.junit.Test;
@@ -44,6 +43,7 @@ import api.support.builders.FixedDueDateSchedulesBuilder;
 import api.support.builders.ItemBuilder;
 import api.support.builders.LoanBuilder;
 import api.support.builders.LoanPolicyBuilder;
+import api.support.builders.NoticePolicyBuilder;
 import api.support.builders.RequestBuilder;
 import api.support.builders.UserBuilder;
 import api.support.http.InventoryItemResource;
@@ -505,6 +505,36 @@ public class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
+  public void cannotCheckOutWhenLoanPolicyDoesNotExist() {
+    final UUID nonExistentloanPolicyId = UUID.randomUUID();
+    IndividualResource record = loanPoliciesFixture.create(new LoanPolicyBuilder()
+      .withId(nonExistentloanPolicyId)
+      .withName("Example LoanPolicy"));
+    useFallbackPolicies(nonExistentloanPolicyId,
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
+      noticePoliciesFixture.activeNotice().getId(),
+      overdueFinePoliciesFixture.facultyStandard().getId(),
+      lostItemFeePoliciesFixture.facultyStandard().getId());
+    loanPoliciesFixture.delete(record);
+
+    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final IndividualResource steve = usersFixture.steve();
+
+    final DateTime loanDate = new DateTime(2018, 3, 18, 11, 43, 54, UTC);
+
+    final Response response = loansFixture.attemptCheckOutByBarcode(500,
+      new CheckOutByBarcodeRequestBuilder()
+        .forItem(smallAngryPlanet)
+        .to(steve)
+        .on(loanDate)
+        .at(UUID.randomUUID()));
+
+    assertThat(response.getBody(), is(String.format(
+      "Loan policy %s could not be found, please check circulation rules",
+      nonExistentloanPolicyId)));
+  }
+
+  @Test
   public void cannotCheckOutWhenServicePointOfCheckoutNotPresent() {
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource james = usersFixture.james();
@@ -865,7 +895,9 @@ public class CheckOutByBarcodeTests extends APITests {
   @Test
   public void checkOutFailsWhenCirculationRulesReferenceInvalidLoanPolicyId() {
     UUID invalidLoanPolicyId = UUID.randomUUID();
-    IndividualResource record = loanPoliciesFixture.create(invalidLoanPolicyId);
+    IndividualResource record = loanPoliciesFixture.create(new LoanPolicyBuilder()
+      .withId(invalidLoanPolicyId)
+      .withName("Example loanPolicy"));
     setInvalidLoanPolicyReferenceInRules(invalidLoanPolicyId.toString());
     loanPoliciesFixture.delete(record);
 
@@ -892,7 +924,9 @@ public class CheckOutByBarcodeTests extends APITests {
   @Test
   public void checkOutDoesNotFailWhenCirculationRulesReferenceInvalidNoticePolicyId() {
     UUID invalidNoticePolicyId = UUID.randomUUID();
-    IndividualResource record = noticePoliciesFixture.create(invalidNoticePolicyId);
+    IndividualResource record = noticePoliciesFixture.create(new NoticePolicyBuilder()
+      .withId(invalidNoticePolicyId)
+      .withName("Example loanPolicy"));
     setInvalidNoticePolicyReferenceInRules(invalidNoticePolicyId.toString());
     noticePoliciesFixture.delete(record);
 

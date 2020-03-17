@@ -8,10 +8,13 @@ import static org.hamcrest.core.Is.is;
 import java.util.UUID;
 
 import org.folio.circulation.support.http.client.Response;
-import org.hamcrest.core.Is;
 import org.junit.Test;
 
 import api.support.APITests;
+import api.support.builders.LoanPolicyBuilder;
+import api.support.builders.LostItemFeePolicyBuilder;
+import api.support.builders.NoticePolicyBuilder;
+import api.support.builders.OverdueFinePolicyBuilder;
 import io.vertx.core.json.JsonObject;
 
 public class CirculationRulesAPITests extends APITests {
@@ -37,16 +40,33 @@ public class CirculationRulesAPITests extends APITests {
     UUID ip1 = UUID.randomUUID();
     UUID ip2 = UUID.randomUUID();
 
-    loanPoliciesFixture.create(lp1);
-    noticePoliciesFixture.create(np1);
+    loanPoliciesFixture.create(new LoanPolicyBuilder()
+      .withId(lp1)
+      .withName("Example LoanPolicy " + lp1));
+    noticePoliciesFixture.create(new NoticePolicyBuilder()
+      .withId(np1)
+      .withName("Example NoticePolicy " + np1));
     requestPoliciesFixture.allowAllRequestPolicy(rp1);
-    overdueFinePoliciesFixture.create(op1);
-    lostItemFeePoliciesFixture.create(ip1);
-    loanPoliciesFixture.create(lp2);
-    noticePoliciesFixture.create(np2);
+    overdueFinePoliciesFixture.create(new OverdueFinePolicyBuilder()
+      .withId(op1)
+      .withName("Example OverdueFinePolicy " + op1));
+    lostItemFeePoliciesFixture.create(new LostItemFeePolicyBuilder()
+      .withId(ip1)
+      .withName("Example lostItemPolicy " + ip1));
+
+    loanPoliciesFixture.create(new LoanPolicyBuilder()
+      .withId(lp2)
+      .withName("Example LoanPolicy " + lp2));
+    noticePoliciesFixture.create(new NoticePolicyBuilder()
+      .withId(np2)
+      .withName("Example NoticePolicy " + np2));
     requestPoliciesFixture.allowAllRequestPolicy(rp2);
-    overdueFinePoliciesFixture.create(op2);
-    lostItemFeePoliciesFixture.create(ip2);
+    overdueFinePoliciesFixture.create(new OverdueFinePolicyBuilder()
+      .withId(op2)
+      .withName("Example OverdueFinePolicy " + op2));
+    lostItemFeePoliciesFixture.create(new LostItemFeePolicyBuilder()
+      .withId(ip2)
+      .withName("Example lostItemPolicy " + ip2));
 
     String rule = String.format(CIRCULATION_RULE_TEMPLATE, lp1, rp1, np1, op1, ip1);
     setRules(rule);
@@ -71,8 +91,10 @@ public class CirculationRulesAPITests extends APITests {
 
     Response response = circulationRulesFixture
       .attemptUpdateCirculationRules(rule, "l");
-    assertThat("The policy l does not exist",
-      response.getStatusCode(), Is.is(422));
+
+    assertThat(response.getStatusCode(), is(422));
+    assertThat(response.getJson().getString("message"),
+      is("The policy l does not exist"));
   }
 
   @Test
@@ -87,8 +109,10 @@ public class CirculationRulesAPITests extends APITests {
 
     Response response = circulationRulesFixture
       .attemptUpdateCirculationRules(rule, "n");
-    assertThat("The policy n does not exist",
-      response.getStatusCode(), Is.is(422));
+
+    assertThat(response.getStatusCode(), is(422));
+    assertThat(response.getJson().getString("message"),
+      is("The policy n does not exist"));
   }
 
   @Test
@@ -103,8 +127,10 @@ public class CirculationRulesAPITests extends APITests {
 
     Response response = circulationRulesFixture
       .attemptUpdateCirculationRules(rule, "r");
-    assertThat("The policy r does not exist",
-      response.getStatusCode(), Is.is(422));
+
+    assertThat(response.getStatusCode(), is(422));
+    assertThat(response.getJson().getString("message"),
+      is("The policy r does not exist"));
   }
 
   @Test
@@ -119,8 +145,10 @@ public class CirculationRulesAPITests extends APITests {
 
     Response response = circulationRulesFixture
       .attemptUpdateCirculationRules(rule, "o");
-    assertThat("The policy o does not exist",
-      response.getStatusCode(), Is.is(422));
+
+    assertThat(response.getStatusCode(), is(422));
+    assertThat(response.getJson().getString("message"),
+      is("The policy o does not exist"));
   }
 
   @Test
@@ -135,8 +163,10 @@ public class CirculationRulesAPITests extends APITests {
 
     Response response = circulationRulesFixture
       .attemptUpdateCirculationRules(rule, "i");
-    assertThat("The policy i does not exist",
-      response.getStatusCode(), Is.is(422));
+
+    assertThat(response.getStatusCode(), is(422));
+    assertThat(response.getJson().getString("message"),
+      is("The policy i does not exist"));
   }
 
   @Test
