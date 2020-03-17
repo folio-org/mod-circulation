@@ -260,6 +260,8 @@ public abstract class APITests {
     holdingsClient.deleteAll();
     instancesClient.deleteAll();
     configClient.deleteAll();
+    accountsClient.deleteAll();
+    feeFinesClient.deleteAll();
 
     //TODO: Only cleans up reference records, move items, holdings records
     // and instances into here too

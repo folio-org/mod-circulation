@@ -42,7 +42,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.awaitility.Awaitility;
 import org.folio.circulation.domain.policy.DueDateManagement;
 import org.folio.circulation.domain.policy.Period;
-import org.folio.circulation.domain.representations.ItemProperties;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.server.ValidationError;
@@ -72,7 +71,7 @@ import api.support.fixtures.ConfigurationExample;
 import api.support.fixtures.ItemExamples;
 import api.support.fixtures.TemplateContextMatchers;
 import api.support.http.InventoryItemResource;
-import api.support.matchers.UUIDMatcher;
+import api.support.matchers.OverdueFineMatcher;
 import io.vertx.core.json.JsonObject;
 
 abstract class RenewalAPITests extends APITests {
@@ -1348,6 +1347,7 @@ abstract class RenewalAPITests extends APITests {
       .withId(feeFineId)
       .withFeeFineType("Overdue fine")
       .withOwnerId(ownerId)
+      .withAutomatic(true)
     );
 
     loansFixture.renewLoan(nod, james);
@@ -1355,36 +1355,77 @@ abstract class RenewalAPITests extends APITests {
     TimeUnit.SECONDS.sleep(1);
     List<JsonObject> createdAccounts = accountsClient.getAll();
 
-    org.hamcrest.junit.MatcherAssert.assertThat("Fee/fine record should be created", createdAccounts, hasSize(1));
+    assertThat("Fee/fine record should be created", createdAccounts, hasSize(1));
 
     JsonObject account = createdAccounts.get(0);
-    assertThat("owner ID is included",
-      account.getString("ownerId"), is(ownerId.toString()));
-    assertThat("fee/fine ID is included",
-      account.getString("feeFineId"), is(feeFineId.toString()));
-    assertThat("amount is correct", account.getDouble("amount"), is(5.0));
-    assertThat("remaining is the same as amount",
-      account.getDouble("remaining"), is(5.0));
-    assertThat("correct fee/fine type is included",
-      account.getString("feeFineType"), is("Overdue fine"));
-    assertThat("fee/fine owner is included",
-      account.getString("feeFineOwner"), is("fee-fine-owner"));
-    assertThat("item's title is included",
-      account.getString("title"), is(loan.getJson().getJsonObject("item").getString("title")));
-    assertThat("item's barcode is included",
-      account.getString("barcode"), is(nod.getJson().getString("barcode")));
-    assertThat("call number from the item is included",
-      account.getString("callNumber"),
-      is(nod.getJson().getJsonObject("effectiveCallNumberComponents").getString("callNumber")));
-    assertThat("effective location ID is included",
-      account.getString("location"), UUIDMatcher.is(servicePointsFixture.cd1().getId()));
-    assertThat("item's material type is included",
-      account.getString("materialTypeId"),
-      is(nod.getJson().getString(ItemProperties.MATERIAL_TYPE_ID)));
-    assertThat("loan ID is included", account.getString("loanId"), UUIDMatcher.is(loan.getId()));
+
+    assertThat(account, OverdueFineMatcher.isValidOverdueFine(loan, nod,
+      servicePointsFixture.cd1().getId(), ownerId, feeFineId, 5.0));
+
+    Awaitility.await()
+      .atMost(1, TimeUnit.SECONDS)
+      .until(feeFineActionsClient::getAll, hasSize(1));
+
+    List<JsonObject> createdFeeFineActions = feeFineActionsClient.getAll();
+    assertThat("Fee/fine action record should be created", createdFeeFineActions, hasSize(1));
+
+    JsonObject createdFeeFineAction = createdFeeFineActions.get(0);
     assertThat("user ID is included",
-      account.getString("userId"), is(loan.getJson().getString("userId")));
-    assertThat("item ID is included", account.getString("itemId"), UUIDMatcher.is(nod.getId()));
+      createdFeeFineAction.getString("userId"), Is.is(loan.getJson().getString("userId")));
+    assertThat("account ID is included",
+      createdFeeFineAction.getString("accountId"), Is.is(account.getString("id")));
+    assertThat("balance is included",
+      createdFeeFineAction.getDouble("balance"), Is.is(account.getDouble("amount")));
+    assertThat("amountAction is included",
+      createdFeeFineAction.getDouble("amountAction"), Is.is(account.getDouble("amount")));
+    assertThat("typeAction is included",
+      createdFeeFineAction.getString("typeAction"), Is.is("Overdue fine"));
+  }
+
+  @Test
+  public void overdueFineShouldNotBeChargedWhenShouldBeForgiven() throws InterruptedException {
+    IndividualResource loanPolicy = loanPoliciesFixture.create(
+      new LoanPolicyBuilder().rolling(Period.from(10, "Days")));
+
+    useFallbackPolicies(loanPolicy.getId(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
+      noticePoliciesFixture.activeNotice().getId(),
+      overdueFinePoliciesFixture.facultyStandardShouldForgiveFine().getId(),
+      lostItemFeePoliciesFixture.facultyStandard().getId());
+
+    final IndividualResource james = usersFixture.james();
+    final UUID checkInServicePointId = servicePointsFixture.cd1().getId();
+    final IndividualResource homeLocation = locationsFixture.basedUponExampleLocation(
+      item -> item.withPrimaryServicePoint(checkInServicePointId));
+    final IndividualResource nod = itemsFixture.basedUponNod(item ->
+      item.withPermanentLocation(homeLocation.getId()));
+
+    loansFixture.checkOutByBarcode(nod, james,
+      new DateTime(2020, 1, 1, 12, 0, 0, DateTimeZone.UTC));
+
+    JsonObject servicePointOwner = new JsonObject();
+    servicePointOwner.put("value", homeLocation.getJson().getString("primaryServicePoint"));
+    servicePointOwner.put("label", "label");
+    UUID ownerId = UUID.randomUUID();
+    feeFineOwnersClient.create(new FeeFineOwnerBuilder()
+      .withId(ownerId)
+      .withOwner("fee-fine-owner")
+      .withServicePointOwner(Collections.singletonList(servicePointOwner))
+    );
+
+    UUID feeFineId = UUID.randomUUID();
+    feeFinesClient.create(new FeeFineBuilder()
+      .withId(feeFineId)
+      .withFeeFineType("Overdue fine")
+      .withOwnerId(ownerId)
+    );
+
+    loansFixture.renewLoan(nod, james);
+
+    TimeUnit.SECONDS.sleep(1);
+    List<JsonObject> createdAccounts = accountsClient.getAll();
+
+    assertThat("Fee/fine record shouldn't have been created", createdAccounts, hasSize(0));
   }
 
   private void checkRenewalAttempt(DateTime expectedDueDate, UUID dueDateLimitedPolicyId) {
