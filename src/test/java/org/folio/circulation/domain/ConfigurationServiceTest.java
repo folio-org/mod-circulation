@@ -88,7 +88,7 @@ public class ConfigurationServiceTest {
   }
 
   @Test
-  public void shouldCorrectParseIfCheckoutTimeoutDurationIsWrongString() {
+  public void shouldUseDefaultCheckoutTimeoutDurationWhenConfiguredValueIsNotAnInteger() {
     JsonObject jsonConfig = new JsonObject()
       .put(VALUE, getJsonConfigWithCheckoutTimeoutDurationAsString("test"));
     List<Configuration> records = Collections.singletonList(new Configuration(jsonConfig));
