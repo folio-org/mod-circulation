@@ -40,13 +40,6 @@ public class NoticePoliciesFixture {
     return noticePolicyRecordCreator.createIfAbsent(noticePolicy);
   }
 
-  public IndividualResource create(UUID id) {
-    return noticePolicyRecordCreator.createIfAbsent(
-      new NoticePolicyBuilder()
-        .withId(id)
-        .withName("Example NoticePolicy " + id));
-  }
-
   public void cleanUp() {
     noticePolicyRecordCreator.cleanUp();
   }

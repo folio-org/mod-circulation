@@ -75,15 +75,12 @@ public class OverdueFinePoliciesFixture {
     return overdueFinePolicyRecordCreator.createIfAbsent(overdueFinePolicy);
   }
 
-  public void create(UUID id) {
-    overdueFinePolicyRecordCreator.createIfAbsent(
-      new OverdueFinePolicyBuilder()
-        .withId(id)
-        .withName("Example OverdueFinePolicy " + id));
-  }
-
   public IndividualResource create(NoticePolicyBuilder noticePolicy) {
     return overdueFinePolicyRecordCreator.createIfAbsent(noticePolicy);
+  }
+
+  public IndividualResource create(OverdueFinePolicyBuilder overdueFinePolicyBuilder) {
+    return overdueFinePolicyRecordCreator.createIfAbsent(overdueFinePolicyBuilder);
   }
 
   public void cleanUp() {

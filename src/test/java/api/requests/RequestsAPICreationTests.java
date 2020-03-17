@@ -1676,9 +1676,11 @@ public class RequestsAPICreationTests extends APITests {
   public void requestCreationDoesNotFailWhenCirculationRulesReferenceInvalidNoticePolicyId() {
 
     UUID invalidNoticePolicyId = UUID.randomUUID();
-    noticePoliciesFixture.create(invalidNoticePolicyId);
+    IndividualResource record = noticePoliciesFixture.create(new NoticePolicyBuilder()
+      .withId(invalidNoticePolicyId)
+      .withName("Example NoticePolicy"));
     setInvalidNoticePolicyReferenceInRules(invalidNoticePolicyId.toString());
-    noticePoliciesFixture.cleanUp();
+    noticePoliciesFixture.delete(record);
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource steve = usersFixture.steve();
