@@ -525,6 +525,9 @@ abstract class RenewalAPITests extends APITests {
     loansFixture.checkOutByBarcode(smallAngryPlanet, jessica,
       new DateTime(2018, 4, 21, 11, 21, 43, DateTimeZone.UTC));
 
+    IndividualResource record = loanPoliciesFixture.create(new LoanPolicyBuilder()
+      .withId(unknownLoanPolicyId)
+      .withName("Example loanPolicy"));
     useFallbackPolicies(
       unknownLoanPolicyId,
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
@@ -532,6 +535,7 @@ abstract class RenewalAPITests extends APITests {
       overdueFinePoliciesFixture.facultyStandard().getId(),
       lostItemFeePoliciesFixture.facultyStandard().getId()
     );
+    loanPoliciesFixture.delete(record);
 
     final Response response = loansFixture.attemptRenewal(500, smallAngryPlanet, jessica);
 
