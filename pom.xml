@@ -188,11 +188,6 @@
       <!--</exclusions>-->
     <!--</dependency>-->
     <dependency>
-      <groupId>org.jacoco</groupId>
-      <artifactId>jacoco-maven-plugin</artifactId>
-      <version>0.8.3</version>
-    </dependency>
-    <dependency>
       <groupId>org.mockito</groupId>
       <artifactId>mockito-core</artifactId>
       <version>3.1.0</version>
@@ -394,14 +389,6 @@
           <tagNameFormat>v@{project.version}</tagNameFormat>
           <pushChanges>false</pushChanges>
           <localCheckout>true</localCheckout>
-        </configuration>
-      </plugin>
-      <plugin>
-        <groupId>org.jacoco</groupId>
-        <artifactId>jacoco-maven-plugin</artifactId>
-        <version>0.8.3</version>
-        <configuration>
-          <excludes>**org.drools**</excludes>
         </configuration>
       </plugin>
       <plugin>
