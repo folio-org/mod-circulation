@@ -150,7 +150,7 @@ public class FakeOkapi extends AbstractVerticle {
     new FakeStorageModuleBuilder()
       .withRecordName("notice policy")
       .withRootPath("/patron-notice-policy-storage/patron-notice-policies")
-      .withCollectionPropertyName("noticePolicies")
+      .withCollectionPropertyName("patronNoticePolicies")
       .withRequiredProperties("name", "active")
       .create().register(router);
 
@@ -438,26 +438,7 @@ public class FakeOkapi extends AbstractVerticle {
 
   private void registerFakeStorageLoansAnonymize(Router router) {
     router.post("/anonymize-storage-loans")
-      .handler(routingContext -> {
-        routingContext.request()
-          .bodyHandler(body -> {
-            JsonObject responseBody = new JsonObject();
-            JsonArray providedLoanIds = body.toJsonObject()
-              .getJsonArray("loanIds");
-
-            providedLoanIds = Objects.isNull(providedLoanIds)
-              ? new JsonArray()
-              : providedLoanIds;
-
-            responseBody.put("anonymizedLoans", providedLoanIds);
-            responseBody.put("notAnonymizedLoans", new JsonArray());
-
-            routingContext.response()
-              .putHeader("Content-type", "application/json")
-              .setStatusCode(200)
-              .end(responseBody.encode());
-          });
-      });
+      .handler(new FakeLoanAnonymizationResource());
   }
 
   private void registerCirculationRulesStorage(Router router) {

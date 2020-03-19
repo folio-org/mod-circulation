@@ -1,6 +1,7 @@
 package org.folio.circulation.domain;
 
 import org.apache.commons.lang3.ObjectUtils;
+import org.folio.circulation.domain.policy.LoanPolicyRepository;
 import org.folio.circulation.support.Result;
 import org.joda.time.DateTime;
 import org.joda.time.LocalTime;
@@ -19,17 +20,24 @@ public class OverduePeriodCalculatorService {
   private static final int ZERO_MINUTES = 0;
 
   private final CalendarRepository calendarRepository;
+  private final LoanPolicyRepository loanPolicyRepository;
 
-  public OverduePeriodCalculatorService(CalendarRepository calendarRepository) {
+  public OverduePeriodCalculatorService(CalendarRepository calendarRepository,
+    LoanPolicyRepository loanPolicyRepository) {
+
     this.calendarRepository = calendarRepository;
+    this.loanPolicyRepository = loanPolicyRepository;
   }
 
   public CompletableFuture<Result<Integer>> getMinutes(Loan loan, DateTime systemTime) {
     final Boolean shouldCountClosedPeriods = loan.getOverdueFinePolicy().getCountPeriodsWhenServicePointIsClosed();
 
     if (preconditionsAreMet(loan, systemTime, shouldCountClosedPeriods)) {
-      return getOverdueMinutes(loan, systemTime, shouldCountClosedPeriods)
-        .thenApply(flatMapResult(om -> adjustOverdueWithGracePeriod(loan, om)));
+      return completedFuture(loan)
+        .thenComposeAsync(loanPolicyRepository::lookupPolicy)
+        .thenApply(r -> r.map(loan::withLoanPolicy))
+        .thenCompose(r -> r.after(l -> getOverdueMinutes(l, systemTime, shouldCountClosedPeriods)
+            .thenApply(flatMapResult(om -> adjustOverdueWithGracePeriod(l, om)))));
     }
 
     return completedFuture(succeeded(ZERO_MINUTES));
@@ -87,19 +95,31 @@ public class OverduePeriodCalculatorService {
   }
 
   Result<Integer> adjustOverdueWithGracePeriod(Loan loan, int overdueMinutes) {
-    int result = shouldIgnoreGracePeriod(loan)
-      ? overdueMinutes
-      : Math.max(overdueMinutes - getGracePeriodMinutes(loan), ZERO_MINUTES);
+    int result;
+
+    if (shouldIgnoreGracePeriod(loan)) {
+      result = overdueMinutes;
+    }
+    else {
+      result = overdueMinutes > getGracePeriodMinutes(loan) ? overdueMinutes : ZERO_MINUTES;
+    }
 
     return Result.succeeded(result);
   }
 
   private boolean shouldIgnoreGracePeriod(Loan loan) {
-    Boolean ignoreGracePeriodForRecalls = loan.getOverdueFinePolicy().getIgnoreGracePeriodForRecalls();
+    if (!loan.wasDueDateChangedByRecall()) {
+      return false;
+    }
 
-    return ignoreGracePeriodForRecalls != null
-      && ignoreGracePeriodForRecalls
-      && loan.wasDueDateChangedByRecall();
+    Boolean ignoreGracePeriodForRecalls = loan.getOverdueFinePolicy()
+      .getIgnoreGracePeriodForRecalls();
+
+    if (ignoreGracePeriodForRecalls == null) {
+      return true;
+    }
+
+    return ignoreGracePeriodForRecalls;
   }
 
   private int getGracePeriodMinutes(Loan loan) {

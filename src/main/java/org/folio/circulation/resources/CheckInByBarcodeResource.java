@@ -84,7 +84,8 @@ public class CheckInByBarcodeResource extends Resource {
         processAdapter::updateLoan, CheckInProcessRecords::withLoan))
       .thenComposeAsync(updateItemResult -> updateItemResult.after(
         patronActionSessionService::saveCheckInSessionRecord))
-      .thenComposeAsync(r -> r.after(overdueFineCalculatorService::createOverdueFineIfNecessary))
+      .thenComposeAsync(r -> r.after(
+        records -> overdueFineCalculatorService.createOverdueFineIfNecessary(records, context)))
       .thenApply(r -> r.next(requestScheduledNoticeService::rescheduleRequestNotices))
       .thenApply(CheckInByBarcodeResponse::from)
       .thenAccept(r -> r.writeTo(routingContext.response()));
