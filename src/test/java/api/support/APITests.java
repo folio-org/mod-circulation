@@ -22,6 +22,8 @@ import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import api.support.builders.LoanPolicyBuilder;
 import api.support.builders.NoticePolicyBuilder;
@@ -189,7 +191,7 @@ public abstract class APITests {
 
   protected final CirculationRulesFixture circulationRulesFixture
     = new CirculationRulesFixture(
-        new RestAssuredClient(getOkapiHeadersFromContext()));
+      new RestAssuredClient(getOkapiHeadersFromContext()));
 
   protected final ItemsFixture itemsFixture = new ItemsFixture(
     materialTypesFixture, loanTypesFixture, locationsFixture,
@@ -308,6 +310,11 @@ public abstract class APITests {
     servicePointsFixture.cleanUp();
 
     loanPoliciesFixture.cleanUp();
+    noticePoliciesFixture.cleanUp();
+    requestPoliciesFixture.cleanUp();
+    overdueFinePoliciesFixture.cleanUp();
+    lostItemFeePoliciesFixture.cleanUp();
+    loanPolicyClient.deleteAll();
 
     usersFixture.cleanUp();
 
@@ -591,5 +598,4 @@ public abstract class APITests {
   protected void mockClockManagerToReturnDefaultDateTime() {
     ClockManager.getClockManager().setDefaultClock();
   }
-
 }
