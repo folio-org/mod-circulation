@@ -8,6 +8,7 @@ import java.util.Collections;
 import api.support.builders.ConfigRecordBuilder;
 import api.support.builders.ConfigurationBuilder;
 import io.vertx.core.json.JsonObject;
+import java.util.List;
 import org.joda.time.DateTimeZone;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -15,8 +16,11 @@ import org.junit.Test;
 public class ConfigurationServiceTest {
 
   private static final String US_LOCALE = "en-US";
+  private static final String VALUE = "value";
+  private static final Integer DEFAULT_TIMEOUT_CONFIGURATION = 3;
 
   private static ConfigurationService service;
+
 
   @BeforeClass
   public static void before() {
@@ -62,6 +66,39 @@ public class ConfigurationServiceTest {
     assertEquals(DateTimeZone.UTC, service.findDateTimeZone(jsonObject));
   }
 
+  @Test
+  public void shouldUseConfiguredCheckoutTimeoutDurationWhenAnInteger() {
+    JsonObject jsonConfig = new JsonObject()
+      .put(VALUE, getJsonConfigWithCheckoutTimeoutDurationAsInteger());
+    List<Configuration> records = Collections.singletonList(new Configuration(jsonConfig));
+
+    Integer actualSessionTimeout = service.findSessionTimeout(records);
+
+    assertEquals(actualSessionTimeout, new Integer(1));
+  }
+
+  @Test
+  public void shouldUseConfiguredCheckoutTimeoutDurationWhenIsAnIntegerString() {
+    JsonObject jsonConfig = new JsonObject()
+      .put(VALUE, getJsonConfigWithCheckoutTimeoutDurationAsString("1"));
+    List<Configuration> records = Collections.singletonList(new Configuration(jsonConfig));
+
+    Integer actualSessionTimeout = service.findSessionTimeout(records);
+
+    assertEquals(actualSessionTimeout, new Integer(1));
+  }
+
+  @Test
+  public void shouldUseDefaultCheckoutTimeoutDurationWhenConfiguredValueIsNotAnInteger() {
+    JsonObject jsonConfig = new JsonObject()
+      .put(VALUE, getJsonConfigWithCheckoutTimeoutDurationAsString("test"));
+    List<Configuration> records = Collections.singletonList(new Configuration(jsonConfig));
+
+    Integer actualSessionTimeout = service.findSessionTimeout(records);
+
+    assertEquals(DEFAULT_TIMEOUT_CONFIGURATION, actualSessionTimeout);
+  }
+
   private JsonObject getJsonObject(String timeZoneValue) {
     ConfigRecordBuilder config = new ConfigRecordBuilder(timeZoneValue);
     return new ConfigurationBuilder(Collections.singletonList(config)).create();
@@ -71,6 +108,20 @@ public class ConfigurationServiceTest {
     final JsonObject encodedValue = new JsonObject();
     write(encodedValue, "locale", US_LOCALE);
     write(encodedValue, "timezone", timezone);
+    return encodedValue.toString();
+  }
+
+  private String getJsonConfigWithCheckoutTimeoutDurationAsString(String checkoutTimeoutDuration) {
+    final JsonObject encodedValue = new JsonObject();
+    write(encodedValue, "checkoutTimeoutDuration", checkoutTimeoutDuration);
+    write(encodedValue, "checkoutTimeout", true);
+    return encodedValue.toString();
+  }
+
+  private String getJsonConfigWithCheckoutTimeoutDurationAsInteger() {
+    final JsonObject encodedValue = new JsonObject();
+    write(encodedValue, "checkoutTimeoutDuration", 1);
+    write(encodedValue, "checkoutTimeout", true);
     return encodedValue.toString();
   }
 }
