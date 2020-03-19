@@ -51,7 +51,6 @@ public class ItemStatusValidator {
     Result<LoanAndRelatedRecords> loanAndRelatedRecords) {
 
     return loanAndRelatedRecords
-      .next(p -> refuseWhenItemIs(loanAndRelatedRecords, MISSING))
       .next(p -> refuseWhenItemIs(loanAndRelatedRecords, DECLARED_LOST))
       .next(p -> refuseWhenItemIs(loanAndRelatedRecords, CLAIMED_RETURNED));
   }

@@ -10,6 +10,7 @@ import static api.support.matchers.CheckOutByBarcodeResponseMatchers.hasProxyUse
 import static api.support.matchers.CheckOutByBarcodeResponseMatchers.hasServicePointParameter;
 import static api.support.matchers.CheckOutByBarcodeResponseMatchers.hasUserBarcodeParameter;
 import static api.support.matchers.ItemStatusCodeMatcher.hasItemStatus;
+import static api.support.matchers.JsonPathMatchers.hasJsonPath;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static api.support.matchers.TextDateTimeMatcher.withinSecondsAfter;
 import static api.support.matchers.UUIDMatcher.is;
@@ -417,16 +418,43 @@ public class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void cannotCheckOutWhenItemIsMissing() {
+  public void canCheckOutMissingItem() {
     final IndividualResource missingItem = setupMissingItem(itemsFixture);
     final IndividualResource steve = usersFixture.steve();
 
-    final Response response = loansFixture.attemptCheckOutByBarcode(
+    final IndividualResource response = loansFixture.checkOutByBarcode(
       missingItem, steve);
 
-    assertThat(response.getJson(), hasErrorWith(allOf(
-      hasMessageContaining("has the item status Missing"),
-      hasItemBarcodeParameter(missingItem))));
+    assertThat(response.getJson(), hasJsonPath("status.name", "Open"));
+    assertThat(response.getJson(), hasJsonPath("borrower", notNullValue()));
+    assertThat(response.getJson(), hasJsonPath("item", notNullValue()));
+    assertThat(response.getJson(), hasJsonPath("item.status.name", CHECKED_OUT));
+    assertThat(response.getJson(), hasJsonPath("itemId", missingItem.getId().toString()));
+
+    assertThat(itemsClient.getById(missingItem.getId()).getJson(),
+      hasJsonPath("status.name", CHECKED_OUT));
+  }
+
+  @Test
+  public void canCheckOutMissingDiscoverySuppressedItem() {
+    final IndividualResource missingSuppressedItem = itemsFixture.basedUponSmallAngryPlanet(
+      itemBuilder -> itemBuilder.missing().withDiscoverySuppress(true));
+    final IndividualResource steve = usersFixture.steve();
+
+    final IndividualResource response = loansFixture.checkOutByBarcode(
+      missingSuppressedItem, steve);
+
+    assertThat(response.getJson(), hasJsonPath("status.name", "Open"));
+    assertThat(response.getJson(), hasJsonPath("borrower", notNullValue()));
+    assertThat(response.getJson(), hasJsonPath("item", notNullValue()));
+    assertThat(response.getJson(), hasJsonPath("item.status.name", CHECKED_OUT));
+    assertThat(response.getJson(), hasJsonPath("itemId", missingSuppressedItem.getId().toString()));
+
+    final JsonObject itemFromStorage = itemsClient
+      .getById(missingSuppressedItem.getId()).getJson();
+
+    assertThat(itemFromStorage, hasJsonPath("status.name", CHECKED_OUT));
+    assertThat(itemFromStorage, hasJsonPath("discoverySuppress", true));
   }
 
   @Test
