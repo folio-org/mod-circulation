@@ -74,7 +74,7 @@ public class OverdueFineCalculatorService {
     Result<Loan> loanResult = succeeded(loan);
     CompletableFuture<Result<Loan>> doNothing = completedFuture(loanResult);
 
-    if (loan == null || !loan.isOverdue()) {
+    if (loan == null || !loan.isOverdue(loan.getReturnDate())) {
       return doNothing;
     }
 

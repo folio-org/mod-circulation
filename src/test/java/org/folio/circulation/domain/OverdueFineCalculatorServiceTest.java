@@ -5,7 +5,6 @@ import static org.folio.circulation.support.Result.succeeded;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -164,9 +163,7 @@ public class OverdueFineCalculatorServiceTest {
   @Test
   public void shouldCreateFeeFineRecordWhenAmountIsPositive()
     throws ExecutionException, InterruptedException {
-
-    Loan loan = spy(createLoan());
-    when(loan.isOverdue(any())).thenReturn(true);
+    Loan loan = createLoan();
 
     when(overdueFinePolicyRepository.findOverdueFinePolicyForLoan(any()))
       .thenReturn(completedFuture(succeeded(loan)));
