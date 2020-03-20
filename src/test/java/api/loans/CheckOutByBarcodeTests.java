@@ -436,28 +436,6 @@ public class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void canCheckOutMissingDiscoverySuppressedItem() {
-    final IndividualResource missingSuppressedItem = itemsFixture.basedUponSmallAngryPlanet(
-      itemBuilder -> itemBuilder.missing().withDiscoverySuppress(true));
-    final IndividualResource steve = usersFixture.steve();
-
-    final IndividualResource response = loansFixture.checkOutByBarcode(
-      missingSuppressedItem, steve);
-
-    assertThat(response.getJson(), hasJsonPath("status.name", "Open"));
-    assertThat(response.getJson(), hasJsonPath("borrower", notNullValue()));
-    assertThat(response.getJson(), hasJsonPath("item", notNullValue()));
-    assertThat(response.getJson(), hasJsonPath("item.status.name", CHECKED_OUT));
-    assertThat(response.getJson(), hasJsonPath("itemId", missingSuppressedItem.getId().toString()));
-
-    final JsonObject itemFromStorage = itemsClient
-      .getById(missingSuppressedItem.getId()).getJson();
-
-    assertThat(itemFromStorage, hasJsonPath("status.name", CHECKED_OUT));
-    assertThat(itemFromStorage, hasJsonPath("discoverySuppress", true));
-  }
-
-  @Test
   public void cannotCheckOutWhenOpenLoanAlreadyExists() {
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource jessica = usersFixture.jessica();
