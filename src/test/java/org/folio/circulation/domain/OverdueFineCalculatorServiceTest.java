@@ -412,6 +412,8 @@ public class OverdueFineCalculatorServiceTest {
       .withId(LOAN_ID)
       .withUserId(LOAN_USER_ID)
       .withDueDate(new DateTime(2020, 1, 1, 0, 0, 0, DateTimeZone.UTC))
+      .withStatus("Closed")
+      .withReturnDate(new DateTime(2020, 3, 1, 0, 0, 0, DateTimeZone.UTC))
       .withDueDateChangedByRecall(dueDateChangedByRecall)
       .asDomainObject()
       .withOverdueFinePolicy(overdueFinePolicy);
