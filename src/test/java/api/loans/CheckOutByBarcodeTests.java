@@ -10,7 +10,7 @@ import static api.support.matchers.CheckOutByBarcodeResponseMatchers.hasProxyUse
 import static api.support.matchers.CheckOutByBarcodeResponseMatchers.hasServicePointParameter;
 import static api.support.matchers.CheckOutByBarcodeResponseMatchers.hasUserBarcodeParameter;
 import static api.support.matchers.ItemStatusCodeMatcher.hasItemStatus;
-import static api.support.matchers.JsonPathMatchers.hasJsonPath;
+import static api.support.matchers.JsonObjectMatcher.hasJsonPath;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static api.support.matchers.TextDateTimeMatcher.withinSecondsAfter;
 import static api.support.matchers.UUIDMatcher.is;
