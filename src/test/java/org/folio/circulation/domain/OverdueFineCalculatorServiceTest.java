@@ -189,7 +189,7 @@ public class OverdueFineCalculatorServiceTest {
       .thenReturn(completedFuture(succeeded(loan)));
     when(overduePeriodCalculatorService.getMinutes(any(), any()))
       .thenReturn(completedFuture(succeeded(periodCalculatorResult)));
-    when(itemRepository.fetchItemRelatedRecords(       any()))
+    when(itemRepository.fetchItemRelatedRecords(any()))
       .thenReturn(completedFuture(succeeded(createItem())));
     when(feeFineOwnerRepository.getFeeFineOwner(SERVICE_POINT_ID.toString()))
       .thenReturn(completedFuture(succeeded(createFeeFineOwner())));
