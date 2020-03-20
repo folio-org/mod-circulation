@@ -57,6 +57,7 @@ public class OverdueFineCalculatorServiceTest {
   private static final UUID FEE_FINE_ID = UUID.randomUUID();
   private static final UUID ACCOUNT_ID = UUID.randomUUID();
   private static final String FEE_FINE_TYPE = "Overdue fine";
+  private static final String ITEM_MATERIAL_TYPE_NAME = "book";
   private static final String TITLE = "title";
   private static final String BARCODE = "barcode";
   private static final String CALL_NUMBER = "call-number";
@@ -199,6 +200,7 @@ public class OverdueFineCalculatorServiceTest {
     assertEquals(BARCODE, account.getValue().getString("barcode"));
     assertEquals(CALL_NUMBER, account.getValue().getString("callNumber"));
     assertEquals(SERVICE_POINT_ID.toString(), account.getValue().getString("location"));
+    assertEquals(ITEM_MATERIAL_TYPE_NAME, account.getValue().getString("materialType"));
     assertEquals(ITEM_MATERIAL_TYPE_ID.toString(), account.getValue().getString("materialTypeId"));
     assertEquals(LOAN_ID.toString(), account.getValue().getString("loanId"));
     assertEquals(LOAN_USER_ID.toString(), account.getValue().getString("userId"));
@@ -424,9 +426,16 @@ public class OverdueFineCalculatorServiceTest {
       .withMaterialType(ITEM_MATERIAL_TYPE_ID)
       .create();
     item.put("effectiveCallNumberComponents", new JsonObject().put("callNumber", CALL_NUMBER));
-    return Item.from(item).withLocation(
-      Location.from(new LocationBuilder().withPrimaryServicePoint(SERVICE_POINT_ID).create()))
-      .withInstance(new InstanceBuilder(TITLE, UUID.randomUUID()).create());
+
+    JsonObject materialType = new JsonObject()
+      .put("id", ITEM_MATERIAL_TYPE_ID.toString())
+      .put("name", ITEM_MATERIAL_TYPE_NAME);
+
+    return Item.from(item)
+      .withLocation(
+        Location.from(new LocationBuilder().withPrimaryServicePoint(SERVICE_POINT_ID).create()))
+      .withInstance(new InstanceBuilder(TITLE, UUID.randomUUID()).create())
+      .withMaterialType(materialType);
   }
 
   private OverdueFinePolicy createOverdueFinePolicy() {
