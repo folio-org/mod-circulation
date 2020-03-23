@@ -57,6 +57,11 @@ public class OverdueFineCalculatorService {
   public CompletableFuture<Result<LoanAndRelatedRecords>> createOverdueFineIfNecessary(
     LoanAndRelatedRecords records, WebContext context) {
 
+    Loan loan = records.getLoan();
+    if (loan == null || !loan.isOverdue()) {
+      return completedFuture(succeeded(records));
+    }
+
     return createOverdueFineIfNecessary(records.getLoan(), Scenario.RENEWAL, context.getUserId())
       .thenApply(mapResult(r -> records));
   }
@@ -64,25 +69,25 @@ public class OverdueFineCalculatorService {
   public CompletableFuture<Result<CheckInProcessRecords>> createOverdueFineIfNecessary(
     CheckInProcessRecords records, WebContext context) {
 
-    return createOverdueFineIfNecessary(records.getLoan(), Scenario.CHECKIN, context.getUserId())
+    Loan loan = records.getLoan();
+    if (loan == null || !loan.isOverdue(loan.getReturnDate())) {
+      return completedFuture(succeeded(records));
+    }
+
+    return createOverdueFineIfNecessary(loan, Scenario.CHECKIN, context.getUserId())
       .thenApply(mapResult(r -> records));
   }
 
-  public CompletableFuture<Result<Loan>> createOverdueFineIfNecessary(Loan loan,
+  private CompletableFuture<Result<Loan>> createOverdueFineIfNecessary(Loan loan,
     Scenario scenario, String loggedInUserId) {
 
     Result<Loan> loanResult = succeeded(loan);
-    CompletableFuture<Result<Loan>> doNothing = completedFuture(loanResult);
-
-    if (loan == null || !loan.isOverdue()) {
-      return doNothing;
-    }
 
     return repos.overdueFinePolicyRepository.findOverdueFinePolicyForLoan(loanResult)
       .thenCompose(r -> r.afterWhen(
         l -> shouldCreateFine(l, scenario),
         l -> createOverdueFine(l, loggedInUserId).thenApply(mapResult(res -> loan)),
-        l -> doNothing));
+        l -> completedFuture(loanResult)));
   }
 
   private CompletableFuture<Result<Boolean>> shouldCreateFine(Loan loan, Scenario scenario) {

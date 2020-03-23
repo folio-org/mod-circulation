@@ -84,6 +84,7 @@ public class OverdueFineCalculatorServiceTest {
   private FeeFineRepository feeFineRepository;
   private UserRepository userRepository;
   private FeeFineActionRepository feeFineActionRepository;
+  private Boolean renewal;
   private Boolean dueDateChangedByRecall;
   private Double overdueFine;
   private String overdueFineInterval;
@@ -95,9 +96,10 @@ public class OverdueFineCalculatorServiceTest {
   private Double correctOverdueFine;
 
   public OverdueFineCalculatorServiceTest(
-    Boolean dueDateChangedByRecall, Double overdueFine, String overdueFineInterval,
+    Boolean renewal, Boolean dueDateChangedByRecall, Double overdueFine, String overdueFineInterval,
     Double maxOverdueFine, Double overdueRecallFine, String overdueRecallFineInterval,
     Double maxOverdueRecallFine, Integer periodCalculatorResult, Double correctOverdueFine) {
+    this.renewal = renewal;
     this.dueDateChangedByRecall = dueDateChangedByRecall;
     this.overdueFine = overdueFine;
     this.overdueFineInterval = overdueFineInterval;
@@ -116,13 +118,21 @@ public class OverdueFineCalculatorServiceTest {
       .forEach(interval -> {
         int minutesInInterval = MINUTES_IN_INTERVAL.get(interval);
         parameters.add(new Object[]
-          {false, 1.0, interval, 10.0, 1.0, interval, 10.0, 5 * minutesInInterval, 5.0});
+          {false, false, 1.0, interval, 10.0, 1.0, interval, 10.0, 5 * minutesInInterval, 5.0});
         parameters.add(new Object[]
-          {false, 1.0, interval, 10.0, 1.0, interval, 10.0, 15 * minutesInInterval, 10.0});
+          {false, false, 1.0, interval, 10.0, 1.0, interval, 10.0, 15 * minutesInInterval, 10.0});
         parameters.add(new Object[]
-          {true, 1.0, interval, 10.0, 3.0, interval, 30.0, 5 * minutesInInterval, 15.0});
+          {false, true, 1.0, interval, 10.0, 3.0, interval, 30.0, 5 * minutesInInterval, 15.0});
         parameters.add(new Object[]
-          {true, 1.0, interval, 10.0, 3.0, interval, 30.0, 15 * minutesInInterval, 30.0});
+          {false, true, 1.0, interval, 10.0, 3.0, interval, 30.0, 15 * minutesInInterval, 30.0});
+        parameters.add(new Object[]
+          {true, false, 1.0, interval, 10.0, 1.0, interval, 10.0, 5 * minutesInInterval, 5.0});
+        parameters.add(new Object[]
+          {true, false, 1.0, interval, 10.0, 1.0, interval, 10.0, 15 * minutesInInterval, 10.0});
+        parameters.add(new Object[]
+          {true, true, 1.0, interval, 10.0, 3.0, interval, 30.0, 5 * minutesInInterval, 15.0});
+        parameters.add(new Object[]
+          {true, true, 1.0, interval, 10.0, 3.0, interval, 30.0, 15 * minutesInInterval, 30.0});
       });
     return parameters;
   }
@@ -151,11 +161,21 @@ public class OverdueFineCalculatorServiceTest {
   }
 
   @Test
-  public void shouldNotCreateFeeFineRecordWhenLoanIsNotProvided() {
-    CheckInProcessRecords records = mock(CheckInProcessRecords.class);
-    when(records.getLoan()).thenReturn(null);
+  public void shouldNotCreateFeeFineRecordWhenLoanIsNotProvided()
+    throws ExecutionException, InterruptedException {
 
-    overdueFineCalculatorService.createOverdueFineIfNecessary(records, context);
+    if (renewal) {
+      LoanAndRelatedRecords records = mock(LoanAndRelatedRecords.class);
+      when(records.getLoan()).thenReturn(null);
+
+      overdueFineCalculatorService.createOverdueFineIfNecessary(records, context).get();
+    }
+    else {
+      CheckInProcessRecords records = mock(CheckInProcessRecords.class);
+      when(records.getLoan()).thenReturn(null);
+
+      overdueFineCalculatorService.createOverdueFineIfNecessary(records, context).get();
+    }
 
     verifyNoInteractions(accountRepository);
     verifyNoInteractions(feeFineActionRepository);
@@ -178,11 +198,19 @@ public class OverdueFineCalculatorServiceTest {
       .thenReturn(completedFuture(succeeded(createFeeFine())));
     when(accountRepository.create(any())).thenReturn(completedFuture(succeeded(createAccount())));
 
-    CheckInProcessRecords records = new CheckInProcessRecords(
-      CheckInByBarcodeRequest.from(createCheckInByBarcodeRequest()).value())
-      .withLoan(loan);
+    if (renewal) {
+      LoanAndRelatedRecords records = new LoanAndRelatedRecords(loan);
 
-    overdueFineCalculatorService.createOverdueFineIfNecessary(records, context).get();
+      overdueFineCalculatorService.createOverdueFineIfNecessary(records, context).get();
+    }
+    else {
+      CheckInProcessRecords records = new CheckInProcessRecords(
+        CheckInByBarcodeRequest.from(createCheckInByBarcodeRequest()).value())
+        .withLoan(loan);
+
+      overdueFineCalculatorService.createOverdueFineIfNecessary(records, context).get();
+    }
+
     verify(accountRepository, times(1)).create(any());
 
     ArgumentCaptor<AccountStorageRepresentation> account =
@@ -232,11 +260,19 @@ public class OverdueFineCalculatorServiceTest {
     when(overduePeriodCalculatorService.getMinutes(any(), any()))
       .thenReturn(completedFuture(succeeded(0)));
 
-    CheckInProcessRecords records = new CheckInProcessRecords(
-      CheckInByBarcodeRequest.from(createCheckInByBarcodeRequest()).value())
-      .withLoan(loan);
+    if (renewal) {
+      LoanAndRelatedRecords records = new LoanAndRelatedRecords(loan);
 
-    overdueFineCalculatorService.createOverdueFineIfNecessary(records, context).get();
+      overdueFineCalculatorService.createOverdueFineIfNecessary(records, context).get();
+    }
+    else {
+      CheckInProcessRecords records = new CheckInProcessRecords(
+        CheckInByBarcodeRequest.from(createCheckInByBarcodeRequest()).value())
+        .withLoan(loan);
+
+      overdueFineCalculatorService.createOverdueFineIfNecessary(records, context).get();
+    }
+
     verifyNoInteractions(accountRepository);
     verifyNoInteractions(feeFineActionRepository);
   }
@@ -257,11 +293,19 @@ public class OverdueFineCalculatorServiceTest {
     when(feeFineRepository.getFeeFine(FEE_FINE_TYPE, true))
       .thenReturn(completedFuture(succeeded(createFeeFine())));
 
-    CheckInProcessRecords records = new CheckInProcessRecords(
-      CheckInByBarcodeRequest.from(createCheckInByBarcodeRequest()).value())
-      .withLoan(loan);
+    if (renewal) {
+      LoanAndRelatedRecords records = new LoanAndRelatedRecords(loan);
 
-    overdueFineCalculatorService.createOverdueFineIfNecessary(records, context).get();
+      overdueFineCalculatorService.createOverdueFineIfNecessary(records, context).get();
+    }
+    else {
+      CheckInProcessRecords records = new CheckInProcessRecords(
+        CheckInByBarcodeRequest.from(createCheckInByBarcodeRequest()).value())
+        .withLoan(loan);
+
+      overdueFineCalculatorService.createOverdueFineIfNecessary(records, context).get();
+    }
+
     verifyNoInteractions(feeFineOwnerRepository);
     verifyNoInteractions(accountRepository);
     verifyNoInteractions(feeFineActionRepository);
@@ -283,11 +327,19 @@ public class OverdueFineCalculatorServiceTest {
     when(feeFineOwnerRepository.getFeeFineOwner(SERVICE_POINT_ID.toString()))
       .thenReturn(completedFuture(succeeded(null)));
 
-    CheckInProcessRecords records = new CheckInProcessRecords(
-      CheckInByBarcodeRequest.from(createCheckInByBarcodeRequest()).value())
-      .withLoan(loan);
+    if (renewal) {
+      LoanAndRelatedRecords records = new LoanAndRelatedRecords(loan);
 
-    overdueFineCalculatorService.createOverdueFineIfNecessary(records, context).get();
+      overdueFineCalculatorService.createOverdueFineIfNecessary(records, context).get();
+    }
+    else {
+      CheckInProcessRecords records = new CheckInProcessRecords(
+        CheckInByBarcodeRequest.from(createCheckInByBarcodeRequest()).value())
+        .withLoan(loan);
+
+      overdueFineCalculatorService.createOverdueFineIfNecessary(records, context).get();
+    }
+
     verifyNoInteractions(accountRepository);
   }
 
@@ -307,11 +359,19 @@ public class OverdueFineCalculatorServiceTest {
     when(feeFineOwnerRepository.getFeeFineOwner(SERVICE_POINT_ID.toString()))
       .thenReturn(completedFuture(succeeded(createFeeFineOwner())));
 
-    CheckInProcessRecords records = new CheckInProcessRecords(
-      CheckInByBarcodeRequest.from(createCheckInByBarcodeRequest()).value())
-      .withLoan(loan);
+    if (renewal) {
+      LoanAndRelatedRecords records = new LoanAndRelatedRecords(loan);
 
-    overdueFineCalculatorService.createOverdueFineIfNecessary(records, context).get();
+      overdueFineCalculatorService.createOverdueFineIfNecessary(records, context).get();
+    }
+    else {
+      CheckInProcessRecords records = new CheckInProcessRecords(
+        CheckInByBarcodeRequest.from(createCheckInByBarcodeRequest()).value())
+        .withLoan(loan);
+
+      overdueFineCalculatorService.createOverdueFineIfNecessary(records, context).get();
+    }
+
     verifyNoInteractions(itemRepository);
     verifyNoInteractions(feeFineOwnerRepository);
     verifyNoInteractions(accountRepository);
@@ -326,11 +386,18 @@ public class OverdueFineCalculatorServiceTest {
     when(overdueFinePolicyRepository.findOverdueFinePolicyForLoan(any()))
       .thenReturn(completedFuture(succeeded(loan)));
 
-    CheckInProcessRecords records = new CheckInProcessRecords(
-      CheckInByBarcodeRequest.from(createCheckInByBarcodeRequest()).value())
-      .withLoan(loan);
+    if (renewal) {
+      LoanAndRelatedRecords records = new LoanAndRelatedRecords(loan);
 
-    overdueFineCalculatorService.createOverdueFineIfNecessary(records, context).get();
+      overdueFineCalculatorService.createOverdueFineIfNecessary(records, context).get();
+    }
+    else {
+      CheckInProcessRecords records = new CheckInProcessRecords(
+        CheckInByBarcodeRequest.from(createCheckInByBarcodeRequest()).value())
+        .withLoan(loan);
+
+      overdueFineCalculatorService.createOverdueFineIfNecessary(records, context).get();
+    }
 
     verifyNoInteractions(feeFineRepository);
     verifyNoInteractions(itemRepository);
@@ -342,11 +409,18 @@ public class OverdueFineCalculatorServiceTest {
   public void shouldNotCreateFeeFineRecordWhenLoanIsNull()
     throws ExecutionException, InterruptedException {
 
-    CheckInProcessRecords records = new CheckInProcessRecords(
-      CheckInByBarcodeRequest.from(createCheckInByBarcodeRequest()).value())
-      .withLoan(null);
+    if (renewal) {
+      LoanAndRelatedRecords records = new LoanAndRelatedRecords(null);
 
-    overdueFineCalculatorService.createOverdueFineIfNecessary(records, context).get();
+      overdueFineCalculatorService.createOverdueFineIfNecessary(records, context).get();
+    }
+    else {
+      CheckInProcessRecords records = new CheckInProcessRecords(
+        CheckInByBarcodeRequest.from(createCheckInByBarcodeRequest()).value())
+        .withLoan(null);
+
+      overdueFineCalculatorService.createOverdueFineIfNecessary(records, context).get();
+    }
 
     verifyNoInteractions(feeFineRepository);
     verifyNoInteractions(overdueFinePolicyRepository);
@@ -362,11 +436,18 @@ public class OverdueFineCalculatorServiceTest {
     DateTime dueDateInFuture = DateTime.now(DateTimeZone.UTC).plusDays(1);
     final Loan loan = createLoan().changeDueDate(dueDateInFuture);
 
-    CheckInProcessRecords records = new CheckInProcessRecords(
-      CheckInByBarcodeRequest.from(createCheckInByBarcodeRequest()).value())
-      .withLoan(loan);
+    if (renewal) {
+      LoanAndRelatedRecords records = new LoanAndRelatedRecords(loan);
 
-    overdueFineCalculatorService.createOverdueFineIfNecessary(records, context).get();
+      overdueFineCalculatorService.createOverdueFineIfNecessary(records, context).get();
+    }
+    else {
+      CheckInProcessRecords records = new CheckInProcessRecords(
+        CheckInByBarcodeRequest.from(createCheckInByBarcodeRequest()).value())
+        .withLoan(loan);
+
+      overdueFineCalculatorService.createOverdueFineIfNecessary(records, context).get();
+    }
 
     verifyNoInteractions(feeFineRepository);
     verifyNoInteractions(overdueFinePolicyRepository);
@@ -414,6 +495,8 @@ public class OverdueFineCalculatorServiceTest {
       .withId(LOAN_ID)
       .withUserId(LOAN_USER_ID)
       .withDueDate(new DateTime(2020, 1, 1, 0, 0, 0, DateTimeZone.UTC))
+      .withStatus("Closed")
+      .withReturnDate(new DateTime(2020, 3, 1, 0, 0, 0, DateTimeZone.UTC))
       .withDueDateChangedByRecall(dueDateChangedByRecall)
       .asDomainObject()
       .withOverdueFinePolicy(overdueFinePolicy);
@@ -461,6 +544,7 @@ public class OverdueFineCalculatorServiceTest {
       .create();
     overdueFinePolicy.put("maxOverdueFine", maxOverdueFine);
     overdueFinePolicy.put("maxOverdueRecallFine", maxOverdueRecallFine);
+    overdueFinePolicy.put("forgiveOverdueFine", false);
 
     return overdueFinePolicy;
   }
