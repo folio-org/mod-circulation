@@ -58,7 +58,7 @@ public class OverdueFineCalculatorService {
     LoanAndRelatedRecords records, WebContext context) {
 
     Loan loan = records.getLoan();
-    if (loan == null || !loan.isOverdue(DateTime.now(DateTimeZone.UTC))) {
+    if (loan == null || !loan.isOverdue()) {
       return completedFuture(succeeded(records));
     }
 

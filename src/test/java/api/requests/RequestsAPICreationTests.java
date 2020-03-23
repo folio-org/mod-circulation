@@ -89,6 +89,12 @@ public class RequestsAPICreationTests extends APITests {
   private static final String RECALL_REQUEST_EVENT = "Recall request";
   private static final String ITEM_RECALLED = "Item recalled";
 
+  @Override
+  public void afterEach() {
+    super.afterEach();
+    mockClockManagerToReturnDefaultDateTime();
+  }
+
   @Test
   public void canCreateARequest() {
 
