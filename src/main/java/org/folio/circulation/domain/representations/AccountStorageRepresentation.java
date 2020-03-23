@@ -26,6 +26,7 @@ public class AccountStorageRepresentation extends JsonObject {
     this.put("barcode", item.getBarcode());
     this.put("callNumber", item.getCallNumber());
     this.put("location", item.getLocation().getPrimaryServicePointId().toString());
+    this.put("materialType", item.getMaterialTypeName());
     this.put("materialTypeId", item.getMaterialTypeId());
     this.put("loanId", loan.getId());
     this.put("userId", loan.getUserId());

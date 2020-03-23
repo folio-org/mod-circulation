@@ -76,7 +76,15 @@ class ConfigurationService {
   }
 
   private Integer findTimeoutDuration(JsonObject configJson) {
-    return configJson.getInteger(CHECKOUT_TIMEOUT_DURATION_KEY, DEFAULT_CHECKOUT_TIMEOUT_DURATION_IN_MINUTES);
+    try {
+      return Integer.parseInt(configJson
+        .getValue(CHECKOUT_TIMEOUT_DURATION_KEY, DEFAULT_CHECKOUT_TIMEOUT_DURATION_IN_MINUTES).toString());
+    } catch (NumberFormatException e) {
+      log.warn("Can't parse property {} {}. Will be returned default value: {}",
+        CHECKOUT_TIMEOUT_DURATION_KEY, e.getMessage(),
+        DEFAULT_CHECKOUT_TIMEOUT_DURATION_IN_MINUTES);
+      return DEFAULT_CHECKOUT_TIMEOUT_DURATION_IN_MINUTES;
+    }
   }
 
   private Integer applySchedulerNoticesLimit(Configuration config) {

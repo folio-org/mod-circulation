@@ -1,8 +1,9 @@
 package api.support.matchers;
 
-import static com.jayway.jsonpath.matchers.JsonPathMatchers.hasJsonPath;
+import static org.hamcrest.CoreMatchers.is;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -16,6 +17,15 @@ import io.vertx.core.json.JsonObject;
 
 public class JsonObjectMatcher extends TypeSafeDiagnosingMatcher<JsonObject> {
 
+  public static <T> Matcher<JsonObject> hasJsonPath(String jsonPath, Matcher<T> valueMatcher) {
+    return new JsonObjectMatcher(Collections.singletonList(
+      com.jayway.jsonpath.matchers.JsonPathMatchers.hasJsonPath(jsonPath, valueMatcher)));
+  }
+
+  public static <T> Matcher<JsonObject> hasJsonPath(String jsonPath, T expectedValue) {
+    return hasJsonPath(jsonPath, is(expectedValue));
+  }
+
   @SafeVarargs
   public static Matcher<JsonObject> allOfPaths(Matcher<? super String>... jsonPathMatchers) {
     return new JsonObjectMatcher(Arrays.asList(jsonPathMatchers));
@@ -26,15 +36,12 @@ public class JsonObjectMatcher extends TypeSafeDiagnosingMatcher<JsonObject> {
   }
 
   public static Matcher<JsonObject> allOfPaths(Map<String, Matcher<String>> jsonPathMatchers) {
-    List<Matcher<? super String>> matchers = jsonPathMatchers.entrySet().stream()
-      .map(e -> hasJsonPath(e.getKey(), e.getValue()))
-      .collect(Collectors.toList());
-    return JsonObjectMatcher.allOfPaths(matchers);
+    return JsonObjectMatcher.allOfPaths(toStringMatcher(jsonPathMatchers));
   }
 
   public static Matcher<? super String> toStringMatcher(Map<String, Matcher<String>> jsonPathMatchers) {
     List<Matcher<? super String>> matchers = jsonPathMatchers.entrySet().stream()
-      .map(e -> hasJsonPath(e.getKey(), e.getValue()))
+      .map(e -> com.jayway.jsonpath.matchers.JsonPathMatchers.hasJsonPath(e.getKey(), e.getValue()))
       .collect(Collectors.toList());
     return CoreMatchers.allOf(matchers);
   }
