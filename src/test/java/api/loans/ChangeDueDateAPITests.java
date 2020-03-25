@@ -1,5 +1,6 @@
 package api.loans;
 
+import static api.support.matchers.PatronNoticeMatcher.hasEmailNoticeProperties;
 import static api.support.matchers.ResponseStatusCodeMatcher.hasStatus;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
@@ -9,13 +10,22 @@ import static org.folio.HttpStatus.HTTP_NOT_FOUND;
 import static org.folio.HttpStatus.HTTP_NO_CONTENT;
 import static org.folio.circulation.domain.representations.LoanProperties.ITEM_ID;
 import static org.folio.circulation.resources.ChangeDueDateResource.DUE_DATE;
+import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
+import org.awaitility.Awaitility;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
+import org.hamcrest.Matcher;
+import org.hamcrest.Matchers;
 import org.joda.time.DateTime;
 import org.joda.time.Period;
 import org.junit.Before;
@@ -24,7 +34,11 @@ import org.junit.Test;
 import api.support.APITests;
 import api.support.builders.ChangeDueDateRequestBuilder;
 import api.support.builders.ClaimItemReturnedRequestBuilder;
+import api.support.builders.LoanPolicyBuilder;
+import api.support.builders.NoticeConfigurationBuilder;
+import api.support.builders.NoticePolicyBuilder;
 import api.support.builders.RequestBuilder;
+import api.support.fixtures.TemplateContextMatchers;
 import api.support.http.InventoryItemResource;
 import io.vertx.core.json.JsonObject;
 
@@ -167,6 +181,67 @@ public class ChangeDueDateAPITests extends APITests {
 
     assertThat("due date is not updated",
       updatedLoan.getString("dueDate"), isEquivalentTo(newDueDate));
+  }
+
+  @Test
+  public void changeDueDateNoticeIsSentWhenPolicyIsDefined() {
+    UUID templateId = UUID.randomUUID();
+
+    JsonObject changeNoticeConfiguration = new NoticeConfigurationBuilder()
+      .withTemplateId(templateId)
+      .withManualDueDateChangeEvent()
+      .create();
+
+    JsonObject checkInNoticeConfiguration = new NoticeConfigurationBuilder()
+      .withTemplateId(UUID.randomUUID())
+      .withCheckInEvent()
+      .create();
+
+    IndividualResource noticePolicy = noticePoliciesFixture.create(
+      new NoticePolicyBuilder()
+        .withName("Policy with manual due date change notice")
+        .withLoanNotices(Arrays.asList(
+          changeNoticeConfiguration, checkInNoticeConfiguration)));
+
+    int renewalLimit = 3;
+    IndividualResource policyWithLimitedRenewals = loanPoliciesFixture.create(
+      new LoanPolicyBuilder()
+        .withName("Limited renewals loan policy")
+        .rolling(org.folio.circulation.domain.policy.Period.months(1))
+        .limitedRenewals(renewalLimit));
+
+    useFallbackPolicies(
+      policyWithLimitedRenewals.getId(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
+      noticePolicy.getId(),
+      overdueFinePoliciesFixture.facultyStandard().getId(),
+      lostItemFeePoliciesFixture.facultyStandard().getId());
+
+    IndividualResource steve = usersFixture.steve();
+
+    DateTime newDueDate = dueDate.plus(Period.weeks(2));
+
+    loansFixture.changeDueDate(new ChangeDueDateRequestBuilder()
+      .forLoan(loan.getId())
+      .withDueDate(newDueDate));
+
+    IndividualResource loanAfterUpdate = loansClient.get(loan);
+
+    Awaitility.await()
+      .atMost(1, TimeUnit.SECONDS)
+      .until(patronNoticesClient::getAll, Matchers.hasSize(1));
+
+    List<JsonObject> sentNotices = patronNoticesClient.getAll();
+
+    Map<String, Matcher<String>> matchers = new HashMap<>();
+    matchers.putAll(TemplateContextMatchers.getUserContextMatchers(steve));
+    matchers.putAll(TemplateContextMatchers.getItemContextMatchers(item, true));
+    matchers.putAll(TemplateContextMatchers.getLoanContextMatchers(loanAfterUpdate));
+    matchers.putAll(TemplateContextMatchers.getLoanPolicyContextMatchers(
+      renewalLimit, renewalLimit));
+
+    assertThat(sentNotices, hasItems(
+      hasEmailNoticeProperties(steve.getId(), templateId, matchers)));
   }
 
   private void assertResponseOf(Response response, int code,

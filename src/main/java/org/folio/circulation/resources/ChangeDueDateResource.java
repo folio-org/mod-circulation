@@ -52,13 +52,16 @@ public class ChangeDueDateResource extends Resource {
     final LoanRepository loanRepository = new LoanRepository(clients);
     final StoreLoan storeLoan = new StoreLoan(loanRepository);
 
+    final LoanNoticeSender loanNoticeSender = LoanNoticeSender.using(clients);
+
     return succeeded(request)
       .after(req -> loanRepository.getById(req.getLoanId()))
       .thenApply(LoanValidator::refuseWhenLoanIsClosed)
       .thenApply(LoanValidator::refuseWhenItemIsDeclaredLost)
       .thenApply(LoanValidator::refuseWhenItemIsClaimedReturned)
       .thenApply(loan -> makeLoanChangeDueDateReturned(loan, request))
-      .thenCompose(r -> r.after(storeLoan::updateLoanInStorage));
+      .thenCompose(r -> r.after(storeLoan::updateLoanInStorage))
+      .thenComposeAsync(r -> r.after(loanNoticeSender::sendManualDueDateChangeNotice));
   }
 
   private Result<Loan> makeLoanChangeDueDateReturned(
