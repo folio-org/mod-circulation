@@ -1,6 +1,7 @@
 package org.folio.circulation.domain;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
+import static org.folio.circulation.support.JsonPropertyFetcher.getDateTimeProperty;
 import static org.folio.circulation.support.Result.succeeded;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
@@ -49,6 +50,8 @@ import io.vertx.core.json.JsonObject;
 public class OverdueFineCalculatorServiceTest {
   private static final UUID LOAN_ID = UUID.randomUUID();
   private static final UUID LOAN_USER_ID = UUID.randomUUID();
+  private static final DateTime DUE_DATE = new DateTime(2020, 1, 1, 0, 0, 0, DateTimeZone.UTC);
+  private static final DateTime RETURNED_DATE = new DateTime(2020, 3, 1, 0, 0, 0, DateTimeZone.UTC);
   private static final UUID ITEM_ID = UUID.randomUUID();
   private static final UUID ITEM_MATERIAL_TYPE_ID = UUID.randomUUID();
   private static final UUID FEE_FINE_OWNER_ID = UUID.randomUUID();
@@ -233,6 +236,8 @@ public class OverdueFineCalculatorServiceTest {
     assertEquals(LOAN_ID.toString(), account.getValue().getString("loanId"));
     assertEquals(LOAN_USER_ID.toString(), account.getValue().getString("userId"));
     assertEquals(ITEM_ID.toString(), account.getValue().getString("itemId"));
+    assertEquals(DUE_DATE, getDateTimeProperty(account.getValue(), "dueDate"));
+    assertEquals(RETURNED_DATE, getDateTimeProperty(account.getValue(), "returnedDate"));
 
     ArgumentCaptor<FeeFineActionStorageRepresentation> feeFineAction =
       ArgumentCaptor.forClass(FeeFineActionStorageRepresentation.class);
@@ -481,7 +486,7 @@ public class OverdueFineCalculatorServiceTest {
   private JsonObject createCheckInByBarcodeRequest() {
     return new CheckInByBarcodeRequestBuilder()
       .withItemBarcode(BARCODE)
-      .on(new DateTime(2020, 1, 1, 0, 0, 0, DateTimeZone.UTC))
+      .on(DUE_DATE)
       .at(UUID.randomUUID().toString())
       .create();
   }
@@ -494,9 +499,9 @@ public class OverdueFineCalculatorServiceTest {
     return new LoanBuilder()
       .withId(LOAN_ID)
       .withUserId(LOAN_USER_ID)
-      .withDueDate(new DateTime(2020, 1, 1, 0, 0, 0, DateTimeZone.UTC))
+      .withDueDate(DUE_DATE)
       .withStatus("Closed")
-      .withReturnDate(new DateTime(2020, 3, 1, 0, 0, 0, DateTimeZone.UTC))
+      .withReturnDate(RETURNED_DATE)
       .withDueDateChangedByRecall(dueDateChangedByRecall)
       .asDomainObject()
       .withOverdueFinePolicy(overdueFinePolicy);

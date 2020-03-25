@@ -612,7 +612,7 @@ public class CheckInByBarcodeTests extends APITests {
     final IndividualResource nod = itemsFixture.basedUponNod(item ->
       item.withPermanentLocation(homeLocation.getId()));
 
-    final IndividualResource loan = loansFixture.checkOutByBarcode(nod, james,
+    final IndividualResource checkedOutLoan = loansFixture.checkOutByBarcode(nod, james,
       new DateTime(2020, 1, 1, 12, 0, 0, DateTimeZone.UTC));
 
     JsonObject servicePointOwner = new JsonObject();
@@ -633,10 +633,12 @@ public class CheckInByBarcodeTests extends APITests {
       .withAutomatic(true)
     );
 
-    loansFixture.checkInByBarcode(new CheckInByBarcodeRequestBuilder()
+    CheckInByBarcodeResponse checkInResponse = loansFixture.checkInByBarcode(
+      new CheckInByBarcodeRequestBuilder()
         .forItem(nod)
         .on(new DateTime(2020, 1, 25, 12, 0, 0, DateTimeZone.UTC))
         .at(checkInServicePointId));
+    JsonObject checkedInLoan = checkInResponse.getLoan();
 
     Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
@@ -648,7 +650,7 @@ public class CheckInByBarcodeTests extends APITests {
 
     JsonObject account = createdAccounts.get(0);
 
-    assertThat(account, OverdueFineMatcher.isValidOverdueFine(loan, nod,
+    assertThat(account, OverdueFineMatcher.isValidOverdueFine(checkedInLoan, nod,
       servicePointsFixture.cd1().getId(), ownerId, feeFineId, 5.0));
 
     Awaitility.await()
@@ -660,7 +662,7 @@ public class CheckInByBarcodeTests extends APITests {
 
     JsonObject createdFeeFineAction = createdFeeFineActions.get(0);
     assertThat("user ID is included",
-      createdFeeFineAction.getString("userId"), is(loan.getJson().getString("userId")));
+      createdFeeFineAction.getString("userId"), is(checkedInLoan.getString("userId")));
     assertThat("account ID is included",
       createdFeeFineAction.getString("accountId"), is(account.getString("id")));
     assertThat("balance is included",
@@ -691,7 +693,7 @@ public class CheckInByBarcodeTests extends APITests {
     DateTime recallRequestExpirationDate = checkOutDate.plusDays(5);
     DateTime checkInDate = checkOutDate.plusDays(10);
 
-    final IndividualResource loan = loansFixture.checkOutByBarcode(nod, james, checkOutDate);
+    loansFixture.checkOutByBarcode(nod, james, checkOutDate);
 
     Address address = SiriusBlack();
     IndividualResource requester = usersFixture.steve(builder ->
@@ -727,10 +729,11 @@ public class CheckInByBarcodeTests extends APITests {
       .withAutomatic(true)
     );
 
-    loansFixture.checkInByBarcode(new CheckInByBarcodeRequestBuilder()
+    CheckInByBarcodeResponse checkInResponse = loansFixture.checkInByBarcode(new CheckInByBarcodeRequestBuilder()
       .forItem(nod)
       .on(checkInDate)
       .at(checkInServicePointId));
+    JsonObject checkedInLoan = checkInResponse.getLoan();
 
     Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
@@ -742,7 +745,7 @@ public class CheckInByBarcodeTests extends APITests {
 
     JsonObject account = createdAccounts.get(0);
 
-    assertThat(account, OverdueFineMatcher.isValidOverdueFine(loan, nod,
+    assertThat(account, OverdueFineMatcher.isValidOverdueFine(checkedInLoan, nod,
       servicePointsFixture.cd1().getId(), ownerId, feeFineId, 10.0));
   }
 
