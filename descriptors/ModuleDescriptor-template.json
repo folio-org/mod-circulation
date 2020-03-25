@@ -107,6 +107,22 @@
       ]
     },
     {
+      "id": "change-due-date",
+      "version": "0.1",
+      "handlers": [
+        {
+          "methods": ["POST"],
+          "pathPattern": "/circulation/loans/{id}/change-due-date",
+          "permissionsRequired": [
+            "circulation.loans.change-due-date.post"
+          ],
+          "modulePermissions": [
+            "modperms.circulation.loans.change-due-date.post"
+          ]
+        }
+      ]
+    },
+    {
       "id": "claim-item-returned",
       "version": "0.1",
       "handlers": [
@@ -929,6 +945,11 @@
       "description": "declares the loaned item lost"
     },
     {
+      "permissionName": "circulation.loans.change-due-date.post",
+      "displayName": "circulation - change loan due date",
+      "description": "changes the due date of the loan"
+    },
+    {
       "permissionName": "circulation.loans.claim-item-returned.post",
       "displayName": "circulation - declare the loaned item as claimed returned",
       "description": "declares the loaned item as claimed returned"
@@ -1055,6 +1076,7 @@
         "circulation.loans.item.put",
         "circulation.loans.item.delete",
         "circulation.loans.collection.delete",
+        "circulation.loans.change-due-date.post",
         "circulation.loans.claim-item-returned.post",
         "circulation.rules.put",
         "circulation.rules.get",
@@ -1878,6 +1900,17 @@
         "circulation-storage.loans.item.put",
         "users.item.get",
         "inventory-storage.items.item.put"
+      ],
+      "visible": false
+    },
+    {
+      "permissionName": "modperms.circulation.loans.change-due-date.post",
+      "displayName": "module permissions for one op",
+      "description": "to reduce X-Okapi-Token size",
+      "subPermissions": [
+        "circulation-storage.loans.item.put",
+        "inventory-storage.items.item.put",
+        "users.item.get"
       ],
       "visible": false
     },

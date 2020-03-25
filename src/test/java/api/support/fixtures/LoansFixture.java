@@ -7,6 +7,7 @@ import static api.support.http.AdditionalHttpStatusCodes.UNPROCESSABLE_ENTITY;
 import static api.support.http.CqlQuery.noQuery;
 import static api.support.http.InterfaceUrls.checkInByBarcodeUrl;
 import static api.support.http.InterfaceUrls.checkOutByBarcodeUrl;
+import static api.support.http.InterfaceUrls.changeDueDateURL;
 import static api.support.http.InterfaceUrls.claimItemReturnedURL;
 import static api.support.http.InterfaceUrls.declareLoanItemLostURL;
 import static api.support.http.InterfaceUrls.loansUrl;
@@ -30,6 +31,7 @@ import org.joda.time.DateTimeZone;
 import api.support.CheckInByBarcodeResponse;
 import api.support.MultipleJsonRecords;
 import api.support.RestAssuredClient;
+import api.support.builders.ChangeDueDateRequestBuilder;
 import api.support.builders.CheckInByBarcodeRequestBuilder;
 import api.support.builders.CheckOutByBarcodeRequestBuilder;
 import api.support.builders.ClaimItemReturnedRequestBuilder;
@@ -152,6 +154,16 @@ public class LoansFixture {
       .withComment(comment);
 
     return declareItemLost(loanId, builder);
+  }
+
+  public Response changeDueDate(ChangeDueDateRequestBuilder request) {
+    return restAssuredClient.post(request.create(),
+      changeDueDateURL(request.getLoanId()), 204, "change-due-date-request");
+  }
+
+  public Response attemptChangeDueDate(ChangeDueDateRequestBuilder request) {
+    return restAssuredClient.post(request.create(),
+        changeDueDateURL(request.getLoanId()), "change-due-date-request");
   }
 
   public Response claimItemReturned(ClaimItemReturnedRequestBuilder request) {
