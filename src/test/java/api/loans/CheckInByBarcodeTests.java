@@ -2,6 +2,7 @@ package api.loans;
 
 import static api.support.APITestContext.getUserId;
 import static api.support.fixtures.AddressExamples.SiriusBlack;
+import static api.support.matchers.OverdueFineMatcher.isValidOverdueFine;
 import static api.support.matchers.PatronNoticeMatcher.hasEmailNoticeProperties;
 import static api.support.matchers.ResponseStatusCodeMatcher.hasStatus;
 import static api.support.matchers.TextDateTimeMatcher.withinSecondsAfter;
@@ -650,7 +651,7 @@ public class CheckInByBarcodeTests extends APITests {
 
     JsonObject account = createdAccounts.get(0);
 
-    assertThat(account, OverdueFineMatcher.isValidOverdueFine(checkedInLoan, nod,
+    assertThat(account, isValidOverdueFine(checkedInLoan, nod,
       servicePointsFixture.cd1().getId(), ownerId, feeFineId, 5.0));
 
     Awaitility.await()
@@ -729,7 +730,8 @@ public class CheckInByBarcodeTests extends APITests {
       .withAutomatic(true)
     );
 
-    CheckInByBarcodeResponse checkInResponse = loansFixture.checkInByBarcode(new CheckInByBarcodeRequestBuilder()
+    CheckInByBarcodeResponse checkInResponse = loansFixture.checkInByBarcode(
+      new CheckInByBarcodeRequestBuilder()
       .forItem(nod)
       .on(checkInDate)
       .at(checkInServicePointId));
@@ -745,8 +747,8 @@ public class CheckInByBarcodeTests extends APITests {
 
     JsonObject account = createdAccounts.get(0);
 
-    assertThat(account, OverdueFineMatcher.isValidOverdueFine(checkedInLoan, nod,
-      servicePointsFixture.cd1().getId(), ownerId, feeFineId, 10.0));
+    assertThat(account, isValidOverdueFine(checkedInLoan, nod, servicePointsFixture.cd1().getId(),
+      ownerId, feeFineId, 10.0));
   }
 
   @Test
