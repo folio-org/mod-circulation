@@ -51,18 +51,6 @@ public class LoanNoticeSender {
       }));
   }
 
-  public CompletableFuture<Result<Loan>> sendManualDueDateChangeNotice(Loan loan) {
-    if (loan.getUser() == null) {
-      return completedFuture(succeeded(loan));
-    }
-
-    return loanPolicyRepository.findPolicyForLoan(Result.of(() -> loan))
-      .thenApply(r -> r.next(l -> {
-        sendLoanNotice(l, NoticeEventType.MANUAL_DUE_DATE_CHANGE);
-        return succeeded(l);
-      }));
-  }
-
   private void sendLoanNotice(LoanAndRelatedRecords records, NoticeEventType eventType) {
     sendLoanNotice(records.getLoan(), eventType);
   }

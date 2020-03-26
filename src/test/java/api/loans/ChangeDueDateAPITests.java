@@ -21,6 +21,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
+import org.apache.commons.lang3.StringUtils;
 import org.awaitility.Awaitility;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
@@ -34,10 +35,12 @@ import org.junit.Test;
 import api.support.APITests;
 import api.support.builders.ChangeDueDateRequestBuilder;
 import api.support.builders.ClaimItemReturnedRequestBuilder;
+import api.support.builders.ItemBuilder;
 import api.support.builders.LoanPolicyBuilder;
 import api.support.builders.NoticeConfigurationBuilder;
 import api.support.builders.NoticePolicyBuilder;
 import api.support.builders.RequestBuilder;
+import api.support.fixtures.ItemExamples;
 import api.support.fixtures.TemplateContextMatchers;
 import api.support.http.InventoryItemResource;
 import io.vertx.core.json.JsonObject;
@@ -217,7 +220,20 @@ public class ChangeDueDateAPITests extends APITests {
       overdueFinePoliciesFixture.facultyStandard().getId(),
       lostItemFeePoliciesFixture.facultyStandard().getId());
 
+    ItemBuilder itemBuilder = ItemExamples.basedUponSmallAngryPlanet(
+      materialTypesFixture.book().getId(),
+      loanTypesFixture.canCirculate().getId(),
+      StringUtils.EMPTY,
+      "ItemPrefix",
+      "ItemSuffix",
+      "");
+
+    InventoryItemResource smallAngryPlanet =
+      itemsFixture.basedUponSmallAngryPlanet(itemBuilder, itemsFixture.thirdFloorHoldings());
+
     IndividualResource steve = usersFixture.steve();
+
+    IndividualResource loan = loansFixture.checkOutByBarcode(smallAngryPlanet, steve);
 
     DateTime newDueDate = dueDate.plus(Period.weeks(2));
 
@@ -235,7 +251,7 @@ public class ChangeDueDateAPITests extends APITests {
 
     Map<String, Matcher<String>> matchers = new HashMap<>();
     matchers.putAll(TemplateContextMatchers.getUserContextMatchers(steve));
-    matchers.putAll(TemplateContextMatchers.getItemContextMatchers(item, true));
+    matchers.putAll(TemplateContextMatchers.getItemContextMatchers(smallAngryPlanet, true));
     matchers.putAll(TemplateContextMatchers.getLoanContextMatchers(loanAfterUpdate));
     matchers.putAll(TemplateContextMatchers.getLoanPolicyContextMatchers(
       renewalLimit, renewalLimit));

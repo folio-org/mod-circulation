@@ -6,9 +6,10 @@ import static org.folio.circulation.support.ValidationErrorFailure.singleValidat
 
 import java.util.concurrent.CompletableFuture;
 
-import org.folio.circulation.StoreLoan;
 import org.folio.circulation.domain.Loan;
+import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.domain.LoanRepository;
+import org.folio.circulation.domain.notice.schedule.DueDateScheduledNoticeService;
 import org.folio.circulation.domain.representations.ChangeDueDateRequest;
 import org.folio.circulation.domain.validation.LoanValidator;
 import org.folio.circulation.support.Clients;
@@ -38,33 +39,36 @@ public class ChangeDueDateResource extends Resource {
 
   private void changeDueDate(RoutingContext routingContext) {
     createChangeDueDateRequest(routingContext)
-      .after(request -> processChangeDueDateReturned(request, routingContext))
+      .after(r -> processChangeDueDate(r, routingContext))
       .thenApply(NoContentResult::from)
-      .thenAccept(result -> result.writeTo(routingContext.response()));
+      .thenAccept(r -> r.writeTo(routingContext.response()));
   }
 
-  private CompletableFuture<Result<Loan>> processChangeDueDateReturned(
+  private CompletableFuture<Result<LoanAndRelatedRecords>> processChangeDueDate(
     final ChangeDueDateRequest request, RoutingContext routingContext) {
 
     final WebContext context = new WebContext(routingContext);
     final Clients clients = Clients.create(context, client);
 
     final LoanRepository loanRepository = new LoanRepository(clients);
-    final StoreLoan storeLoan = new StoreLoan(loanRepository);
+
+    final DueDateScheduledNoticeService scheduledNoticeService
+      = DueDateScheduledNoticeService.using(clients);
 
     final LoanNoticeSender loanNoticeSender = LoanNoticeSender.using(clients);
-
     return succeeded(request)
-      .after(req -> loanRepository.getById(req.getLoanId()))
+      .after(r -> loanRepository.getById(r.getLoanId()))
       .thenApply(LoanValidator::refuseWhenLoanIsClosed)
       .thenApply(LoanValidator::refuseWhenItemIsDeclaredLost)
       .thenApply(LoanValidator::refuseWhenItemIsClaimedReturned)
-      .thenApply(loan -> makeLoanChangeDueDateReturned(loan, request))
-      .thenCompose(r -> r.after(storeLoan::updateLoanInStorage))
-      .thenComposeAsync(r -> r.after(loanNoticeSender::sendManualDueDateChangeNotice));
+      .thenApply(r -> changeDueDate(r, request))
+      .thenApply(r -> toLoanAndRelatedRecords(r))
+      .thenComposeAsync(r -> r.after(loanRepository::updateLoan))
+      .thenApply(r -> r.next(scheduledNoticeService::rescheduleDueDateNotices))
+      .thenCompose(r -> r.after(loanNoticeSender::sendManualDueDateChangeNotice));
   }
 
-  private Result<Loan> makeLoanChangeDueDateReturned(
+  private Result<Loan> changeDueDate(
     Result<Loan> loanResult, ChangeDueDateRequest request) {
 
     return loanResult.map(loan -> loan
@@ -85,5 +89,12 @@ public class ChangeDueDateResource extends Resource {
     return succeeded(new ChangeDueDateRequest(
       loanId, DateTime.parse(body.getString(DUE_DATE))
     ));
+  }
+
+  private Result<LoanAndRelatedRecords> toLoanAndRelatedRecords(
+      Result<Loan> loanResult) {
+
+    return loanResult.next(
+      loan -> succeeded(new LoanAndRelatedRecords(loan)));
   }
 }
