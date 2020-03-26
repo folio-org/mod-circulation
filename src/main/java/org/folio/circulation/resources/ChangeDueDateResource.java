@@ -62,7 +62,7 @@ public class ChangeDueDateResource extends Resource {
       .thenApply(LoanValidator::refuseWhenItemIsDeclaredLost)
       .thenApply(LoanValidator::refuseWhenItemIsClaimedReturned)
       .thenApply(r -> changeDueDate(r, request))
-      .thenApply(r -> toLoanAndRelatedRecords(r))
+      .thenApply(this::toLoanAndRelatedRecords)
       .thenComposeAsync(r -> r.after(loanRepository::updateLoan))
       .thenApply(r -> r.next(scheduledNoticeService::rescheduleDueDateNotices))
       .thenCompose(r -> r.after(loanNoticeSender::sendManualDueDateChangeNotice));
