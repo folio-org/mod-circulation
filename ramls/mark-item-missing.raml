@@ -1,0 +1,34 @@
+#%RAML 1.0
+title: Mark an item missing
+version: v0.1
+protocols: [ HTTP, HTTPS ]
+baseUri: http://localhost:9130
+
+documentation:
+  - title: API for marking an item missing
+    content: <b>Mark an item missing API</b>
+
+types:
+  errors: !include raml-util/schemas/errors.schema
+
+traits:
+  validate: !include raml-util/traits/validation.raml
+
+/circulation/loans/{id}/mark-item-missing:
+  post:
+    is: [validate]
+    body:
+      application/json:
+        type: !include mark-item-missing-request.json
+    responses:
+      204:
+        description: "The loaned item has been successfully marked missing"
+      422:
+        description: "The loan is closed"
+      404:
+        description: "The loan is not found"
+      500:
+        description: "Internal server error, e.g. due to misconfiguration"
+        body:
+          text/plain:
+            example: "Internal server error, contact administrator"

@@ -10,6 +10,7 @@ import static api.support.http.InterfaceUrls.checkOutByBarcodeUrl;
 import static api.support.http.InterfaceUrls.claimItemReturnedURL;
 import static api.support.http.InterfaceUrls.declareLoanItemLostURL;
 import static api.support.http.InterfaceUrls.loansUrl;
+import static api.support.http.InterfaceUrls.markItemMissingURL;
 import static api.support.http.InterfaceUrls.overrideCheckOutByBarcodeUrl;
 import static api.support.http.InterfaceUrls.overrideRenewalByBarcodeUrl;
 import static api.support.http.InterfaceUrls.renewByBarcodeUrl;
@@ -22,6 +23,7 @@ import static java.net.HttpURLConnection.HTTP_OK;
 import java.net.URL;
 import java.util.UUID;
 
+import api.support.builders.MarkItemMissingRequestBuilder;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 import org.joda.time.DateTime;
@@ -162,6 +164,16 @@ public class LoansFixture {
   public Response attemptClaimItemReturned(ClaimItemReturnedRequestBuilder request) {
     return restAssuredClient.post(request.create(),
       claimItemReturnedURL(request.getLoanId()), "attempt-claim-item-returned-request");
+  }
+
+  public Response markItemMissing(MarkItemMissingRequestBuilder request) {
+    return restAssuredClient.post(request.create(),
+      markItemMissingURL(request.getLoanId()), 204, "mark-item-missing-request");
+}
+
+  public Response attemptMarkItemMissing(MarkItemMissingRequestBuilder request) {
+    return restAssuredClient.post(request.create(),
+      markItemMissingURL(request.getLoanId()), "attempt-mark-item-missing-request");
   }
 
   public IndividualResource checkOutByBarcode(IndividualResource item) {

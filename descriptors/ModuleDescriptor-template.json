@@ -123,6 +123,22 @@
       ]
     },
     {
+      "id": "mark-item-missing",
+      "version": "0.1",
+      "handlers": [
+        {
+          "methods": ["POST"],
+          "pathPattern": "/circulation/loans/{id}/mark-item-missing",
+          "permissionsRequired": [
+            "circulation.loans.mark-item-missing.post"
+          ],
+          "modulePermissions": [
+            "modperms.circulation.loans.mark-item-missing.post"
+          ]
+        }
+      ]
+    },
+    {
       "id": "circulation",
       "version": "9.2",
       "handlers": [
@@ -934,6 +950,11 @@
       "description": "declares the loaned item as claimed returned"
     },
     {
+      "permissionName": "circulation.loans.mark-item-missing.post",
+      "displayName": "circulation -  declare the loaned item as marked missing",
+      "description": "declare the loaned item as marked missing"
+    },
+    {
       "permissionName": "circulation.rules.get",
       "displayName": "Circulation - get circulation rules",
       "description": "Get circulation rules"
@@ -1056,6 +1077,7 @@
         "circulation.loans.item.delete",
         "circulation.loans.collection.delete",
         "circulation.loans.claim-item-returned.post",
+        "circulation.loans.mark-item-missing.post",
         "circulation.rules.put",
         "circulation.rules.get",
         "circulation.rules.loan-policy.get",
@@ -1883,6 +1905,21 @@
     },
     {
       "permissionName": "modperms.circulation.loans.claim-item-returned.post",
+      "displayName": "module permissions for one op",
+      "description": "to reduce X-Okapi-Token size",
+      "subPermissions": [
+        "circulation-storage.loans.item.get",
+        "circulation-storage.loans.item.put",
+        "inventory-storage.items.item.get",
+        "inventory-storage.items.item.put",
+        "inventory-storage.holdings.item.get",
+        "inventory-storage.instances.item.get",
+        "users.item.get"
+      ],
+      "visible": false
+    },
+    {
+      "permissionName": "modperms.circulation.loans.mark-item-missing.post",
       "displayName": "module permissions for one op",
       "description": "to reduce X-Okapi-Token size",
       "subPermissions": [

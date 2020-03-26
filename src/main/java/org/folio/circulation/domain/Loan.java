@@ -7,6 +7,7 @@ import static org.folio.circulation.domain.LoanAction.CHECKED_IN;
 import static org.folio.circulation.domain.LoanAction.CHECKED_OUT;
 import static org.folio.circulation.domain.LoanAction.CLAIMED_RETURNED;
 import static org.folio.circulation.domain.LoanAction.DECLARED_LOST;
+import static org.folio.circulation.domain.LoanAction.MISSING;
 import static org.folio.circulation.domain.LoanAction.RENEWED;
 import static org.folio.circulation.domain.LoanAction.RENEWED_THROUGH_OVERRIDE;
 import static org.folio.circulation.domain.representations.LoanProperties.ACTION_COMMENT;
@@ -49,6 +50,7 @@ import io.vertx.core.json.JsonObject;
 
 public class Loan implements ItemRelatedRecord, UserRelatedRecord {
 
+  public static final String CLOSED_STATUS = "Closed";
   private final JsonObject representation;
   private final Item item;
   private final User user;
@@ -518,5 +520,13 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
 
   private void changeClaimedReturnedDate(DateTime claimedReturnedDate) {
     write(representation, CLAIMED_RETURNED_DATE, claimedReturnedDate);
+  }
+
+  public Loan markItemMissing(String comment) {
+    changeAction(MISSING);
+    changeActionComment(comment);
+    changeItemStatusForItemAndLoan(ItemStatus.MISSING);
+    changeStatus(CLOSED_STATUS);
+    return this;
   }
 }
