@@ -652,7 +652,7 @@ public class CheckInByBarcodeTests extends APITests {
     JsonObject account = createdAccounts.get(0);
 
     assertThat(account, isValidOverdueFine(checkedInLoan, nod,
-      servicePointsFixture.cd1().getId(), ownerId, feeFineId, 5.0));
+      homeLocation.getJson().getString("name"), ownerId, feeFineId, 5.0));
 
     Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
@@ -738,7 +738,7 @@ public class CheckInByBarcodeTests extends APITests {
     JsonObject account = createdAccounts.get(0);
 
     assertThat(account, isValidOverdueFine(checkedInLoan, nod,
-      checkInServicePointId, servicePointOwnerId, feeFineId, 5.0));
+      homeLocation.getJson().getString("name"), servicePointOwnerId, feeFineId, 5.0));
   }
 
   @Test
@@ -864,8 +864,8 @@ public class CheckInByBarcodeTests extends APITests {
 
     JsonObject account = createdAccounts.get(0);
 
-    assertThat(account, isValidOverdueFine(checkedInLoan, nod, servicePointsFixture.cd1().getId(),
-      ownerId, feeFineId, 10.0));
+    assertThat(account, isValidOverdueFine(checkedInLoan, nod,
+      homeLocation.getJson().getString("name"), ownerId, feeFineId, 10.0));
   }
 
   @Test
