@@ -1,6 +1,5 @@
 package org.folio.circulation.resources;
 
-import static org.folio.circulation.domain.validation.NotInItemStatusValidator.refuseWhenItemIsNotClaimedReturned;
 import static org.folio.circulation.support.Result.failed;
 import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
@@ -11,12 +10,12 @@ import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.representations.ChangeItemStatusRequest;
+import org.folio.circulation.domain.validation.NotInItemStatusValidator;
 import org.folio.circulation.support.Result;
 
 import java.util.concurrent.CompletableFuture;
 
 public class MarkItemMissingResource extends ChangeStatusResource {
-  public static final String COMMENT = "comment";
 
   public MarkItemMissingResource(HttpClient client) {
     super(client);
@@ -24,14 +23,14 @@ public class MarkItemMissingResource extends ChangeStatusResource {
 
   @Override
   public void register(Router router) {
-    router.post("/circulation/loans/:id/mark-item-missing")
-      .handler(this::changeItemStatus);
+    register(router, "/circulation/loans/:id/mark-item-missing");
   }
 
-  protected CompletableFuture<Result<Loan>> validate(Result<Loan> loanResult){
+  @Override
+  protected CompletableFuture<Result<Loan>> validate(Result<Loan> loanResult) {
     return super.validate(loanResult)
-      .thenApply(loan-> refuseWhenItemIsNotClaimedReturned(loan));
-}
+      .thenApply(NotInItemStatusValidator::refuseWhenItemIsNotClaimedReturned);
+  }
 
   @Override
   protected Loan changeLoanAndItemStatus(Loan loan, ChangeItemStatusRequest request) {

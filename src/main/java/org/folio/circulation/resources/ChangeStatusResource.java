@@ -6,6 +6,7 @@ import static org.folio.circulation.support.ItemRepository.noLocationMaterialTyp
 import static org.folio.circulation.support.Result.succeeded;
 
 import io.vertx.core.http.HttpClient;
+import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import org.folio.circulation.StoreLoanAndItem;
 import org.folio.circulation.domain.Loan;
@@ -15,6 +16,7 @@ import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.ItemRepository;
 import org.folio.circulation.support.NoContentResult;
 import org.folio.circulation.support.Result;
+import org.folio.circulation.support.RouteRegistration;
 import org.folio.circulation.support.http.server.WebContext;
 
 import java.util.concurrent.CompletableFuture;
@@ -24,6 +26,11 @@ public abstract class ChangeStatusResource extends Resource {
 
   public ChangeStatusResource(HttpClient client) {
     super(client);
+  }
+
+  public void register(Router router, String path) {
+    new RouteRegistration(path, router)
+      .create(this::changeItemStatus);
   }
 
   protected void changeItemStatus(RoutingContext routingContext) {

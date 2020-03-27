@@ -8,7 +8,6 @@ import org.folio.circulation.domain.ClaimItemReturnedRequest;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.representations.ChangeItemStatusRequest;
 import org.folio.circulation.support.Result;
-import org.folio.circulation.support.RouteRegistration;
 import org.joda.time.DateTime;
 
 import io.vertx.core.http.HttpClient;
@@ -25,8 +24,7 @@ public class ClaimItemReturnedResource extends ChangeStatusResource {
 
   @Override
   public void register(Router router) {
-    new RouteRegistration("/circulation/loans/:id/claim-item-returned", router)
-      .create(this::changeItemStatus);
+    register(router, "/circulation/loans/:id/claim-item-returned");
   }
 
   @Override
