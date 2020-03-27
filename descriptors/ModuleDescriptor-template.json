@@ -1190,6 +1190,7 @@
         "patron-action-session-storage.patron-action-sessions.item.post",
         "circulation.rules.overdue-fine-policy.get",
         "circulation.rules.lost-item-policy.get",
+        "overdue-fines-policies.item.get",
         "overdue-fines-policies.collection.get",
         "lost-item-fees-policies.collection.get"
       ],
