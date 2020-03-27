@@ -53,6 +53,7 @@ public class OverdueFineCalculatorServiceTest {
   private static final UUID ITEM_MATERIAL_TYPE_ID = UUID.randomUUID();
   private static final UUID FEE_FINE_OWNER_ID = UUID.randomUUID();
   private static final String FEE_FINE_OWNER = "fee-fine-owner";
+  private static final String LOCATION_NAME = "location-name";
   private static final UUID SERVICE_POINT_ID = UUID.randomUUID();
   private static final UUID FEE_FINE_ID = UUID.randomUUID();
   private static final UUID ACCOUNT_ID = UUID.randomUUID();
@@ -227,7 +228,7 @@ public class OverdueFineCalculatorServiceTest {
     assertEquals(TITLE, account.getValue().getString("title"));
     assertEquals(BARCODE, account.getValue().getString("barcode"));
     assertEquals(CALL_NUMBER, account.getValue().getString("callNumber"));
-    assertEquals(SERVICE_POINT_ID.toString(), account.getValue().getString("location"));
+    assertEquals(LOCATION_NAME, account.getValue().getString("location"));
     assertEquals(ITEM_MATERIAL_TYPE_NAME, account.getValue().getString("materialType"));
     assertEquals(ITEM_MATERIAL_TYPE_ID.toString(), account.getValue().getString("materialTypeId"));
     assertEquals(LOAN_ID.toString(), account.getValue().getString("loanId"));
@@ -516,7 +517,10 @@ public class OverdueFineCalculatorServiceTest {
 
     return Item.from(item)
       .withLocation(
-        Location.from(new LocationBuilder().withPrimaryServicePoint(SERVICE_POINT_ID).create()))
+        Location.from(new LocationBuilder()
+          .withName(LOCATION_NAME)
+          .withPrimaryServicePoint(SERVICE_POINT_ID)
+          .create()))
       .withInstance(new InstanceBuilder(TITLE, UUID.randomUUID()).create())
       .withMaterialType(materialType);
   }
@@ -570,7 +574,7 @@ public class OverdueFineCalculatorServiceTest {
         new AccountFeeFineTypeInfo(FEE_FINE_ID.toString(), FEE_FINE_TYPE),
         new AccountLoanInfo(LOAN_ID.toString(), LOAN_USER_ID.toString()),
         new AccountItemInfo(ITEM_ID.toString(), TITLE, BARCODE, CALL_NUMBER,
-          SERVICE_POINT_ID.toString(), ITEM_MATERIAL_TYPE_ID.toString())
+          LOCATION_NAME, ITEM_MATERIAL_TYPE_ID.toString())
       ),
       correctOverdueFine, correctOverdueFine, "Open", "Outstanding"
       );
