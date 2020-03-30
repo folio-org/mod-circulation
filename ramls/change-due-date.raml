@@ -21,7 +21,7 @@ traits:
       application/json:
         type: !include change-due-date-request.json
     responses:
-      204:
+      201:
         description: "The due date for the loaned item has been successfully updated"
       422:
         description: "Unable to change the due date for the loan"
