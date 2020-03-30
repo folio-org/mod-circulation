@@ -4,7 +4,7 @@ import static api.support.builders.RequestBuilder.OPEN_NOT_YET_FILLED;
 import static api.support.http.CqlQuery.exactMatch;
 import static api.support.http.Limit.limit;
 import static api.support.http.Offset.noOffset;
-import static api.support.matchers.JsonObjectMatcher.hasJsonPath;
+import static api.support.matchers.JsonObjectMatcher.allOfPaths;
 import static api.support.matchers.PatronNoticeMatcher.hasEmailNoticeProperties;
 import static api.support.matchers.ResponseStatusCodeMatcher.hasStatus;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
@@ -13,6 +13,7 @@ import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static api.support.matchers.ValidationErrorMatchers.hasParameter;
 import static api.support.matchers.ValidationErrorMatchers.hasUUIDParameter;
+import static com.jayway.jsonpath.matchers.JsonPathMatchers.hasJsonPath;
 import static java.util.Arrays.asList;
 import static java.util.function.Function.identity;
 import static org.folio.HttpStatus.HTTP_BAD_REQUEST;
@@ -1984,8 +1985,10 @@ public class RequestsAPICreationTests extends APITests {
       final JsonObject actualRequest = foundRequests.get(expectedRequest.getId().toString());
 
       assertThat(actualRequest, notNullValue());
-      assertThat(actualRequest, hasJsonPath("requestType", "Page"));
-      assertThat(actualRequest, hasJsonPath("status", "Open - Not yet filled"));
+      assertThat(actualRequest, allOfPaths(
+        hasJsonPath("requestType", is("Page")),
+        hasJsonPath("status", is("Open - Not yet filled"))
+      ));
     });
   }
 
