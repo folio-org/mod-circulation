@@ -11,6 +11,7 @@ import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.domain.LoanRepository;
 import org.folio.circulation.domain.notice.schedule.DueDateScheduledNoticeService;
 import org.folio.circulation.domain.representations.ChangeDueDateRequest;
+import org.folio.circulation.domain.validation.ItemStatusValidator;
 import org.folio.circulation.domain.validation.LoanValidator;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.NoContentResult;
@@ -59,20 +60,26 @@ public class ChangeDueDateResource extends Resource {
     return succeeded(request)
       .after(r -> loanRepository.getById(r.getLoanId()))
       .thenApply(LoanValidator::refuseWhenLoanIsClosed)
-      .thenApply(LoanValidator::refuseWhenItemIsDeclaredLost)
-      .thenApply(LoanValidator::refuseWhenItemIsClaimedReturned)
-      .thenApply(r -> changeDueDate(r, request))
       .thenApply(this::toLoanAndRelatedRecords)
+      .thenApply(ItemStatusValidator::refuseWhenItemIsDeclaredLost)
+      .thenApply(ItemStatusValidator::refuseWhenItemIsClaimedReturned)
+      .thenApply(r -> changeDueDate(r, request))
       .thenComposeAsync(r -> r.after(loanRepository::updateLoan))
       .thenApply(r -> r.next(scheduledNoticeService::rescheduleDueDateNotices))
       .thenCompose(r -> r.after(loanNoticeSender::sendManualDueDateChangeNotice));
   }
 
-  private Result<Loan> changeDueDate(
-    Result<Loan> loanResult, ChangeDueDateRequest request) {
+  private Result<LoanAndRelatedRecords> changeDueDate(
+    Result<LoanAndRelatedRecords> loanResult, ChangeDueDateRequest request) {
 
-    return loanResult.map(loan -> loan
-      .changeDueDate(request.getDueDate()));
+    return loanResult.map(l -> changeDueDate(l, request.getDueDate()));
+  }
+
+  private LoanAndRelatedRecords changeDueDate(
+    LoanAndRelatedRecords loanAndRelatedRecords, DateTime dueDate) {
+
+    loanAndRelatedRecords.getLoan().changeDueDate(dueDate);
+    return loanAndRelatedRecords;
   }
 
   private Result<ChangeDueDateRequest> createChangeDueDateRequest(
