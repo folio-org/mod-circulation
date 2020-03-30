@@ -13,6 +13,10 @@ public class CqlQuery implements QueryStringParameter {
     return new CqlQuery(String.format(queryTemplate, parameters));
   }
 
+  public static CqlQuery exactMatch(String indexName, String value) {
+    return queryFromTemplate("%s==\"%s\"", indexName, value);
+  }
+
   public static CqlQuery noQuery() {
     return new CqlQuery(null);
   }

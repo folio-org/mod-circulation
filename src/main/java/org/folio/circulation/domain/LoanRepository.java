@@ -53,6 +53,8 @@ import org.slf4j.LoggerFactory;
 import io.vertx.core.json.JsonObject;
 
 public class LoanRepository {
+  private static final String RECORDS_PROPERTY_NAME = "loans";
+
   private final CollectionResourceClient loansStorageClient;
   private final ItemRepository itemRepository;
   private final UserRepository userRepository;
@@ -205,14 +207,14 @@ public class LoanRepository {
 
   public CompletableFuture<Result<MultipleRecords<Loan>>> findByIds(Collection<String> loanIds) {
     FindWithMultipleCqlIndexValues<Loan> fetcher =
-      findWithMultipleCqlIndexValues(loansStorageClient, "loans", Loan::from);
+      findWithMultipleCqlIndexValues(loansStorageClient, RECORDS_PROPERTY_NAME, Loan::from);
 
     return fetcher.findByIds(loanIds)
       .thenComposeAsync(loans -> itemRepository.fetchItemsFor(loans, Loan::withItem));
   }
 
   private Result<MultipleRecords<Loan>> mapResponseToLoans(Response response) {
-    return MultipleRecords.from(response, Loan::from, "loans");
+    return MultipleRecords.from(response, Loan::from, RECORDS_PROPERTY_NAME);
   }
 
   private static JsonObject mapToStorageRepresentation(Loan loan, Item item) {
@@ -312,11 +314,10 @@ public class LoanRepository {
       return completedFuture(succeeded(multipleRequests));
     }
 
-    final Result<CqlQuery> statusQuery = getStatusCQLQuery("Open");
-    final Result<CqlQuery> itemIdQuery = exactMatchAny(ITEM_ID, itemsToFetchLoansFor);
+    final FindWithMultipleCqlIndexValues<Loan> fetcher =
+      findWithMultipleCqlIndexValues(loansStorageClient, RECORDS_PROPERTY_NAME, Loan::from);
 
-    return queryLoanStorage(statusQuery.combine(
-        itemIdQuery, CqlQuery::and), PageLimit.limit(requests.size()))
+    return fetcher.findByIdIndexAndQuery(itemsToFetchLoansFor, ITEM_ID, getStatusCQLQuery("Open"))
       .thenApply(multipleLoansResult -> multipleLoansResult.next(
         loans -> matchLoansToRequests(multipleRequests, loans)));
   }
