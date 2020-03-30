@@ -85,7 +85,7 @@ public class ResourceClient {
 
   public static ResourceClient forNoticePolicies() {
     return new ResourceClient(InterfaceUrls::noticePoliciesStorageUrl,
-      "noticePolicies");
+      "patronNoticePolicies");
   }
 
   public static ResourceClient forOverdueFinePolicies() {

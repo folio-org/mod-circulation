@@ -70,6 +70,21 @@ public class OverdueFinePolicyBuilder extends JsonBuilder implements Builder  {
     );
   }
 
+  public OverdueFinePolicyBuilder withId(UUID id) {
+    return new OverdueFinePolicyBuilder(
+      id,
+      this.name,
+      this.description,
+      this.overdueFine,
+      this.countClosed,
+      this.maxOverdueFine,
+      this.forgiveOverdueFine,
+      this.overdueRecallFine,
+      this.gracePeriodRecall,
+      this.maxOverdueRecallFine
+    );
+  }
+
   public OverdueFinePolicyBuilder withDescription(String description) {
     return new OverdueFinePolicyBuilder(
       this.id,

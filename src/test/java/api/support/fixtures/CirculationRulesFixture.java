@@ -7,13 +7,15 @@ import static api.support.http.api.support.NamedQueryStringParameter.namedParame
 import static java.util.Arrays.asList;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.CoreMatchers.nullValue;
-import static org.hamcrest.core.Is.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.core.Is.is;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.folio.circulation.rules.ItemLocation;
 import org.folio.circulation.rules.ItemType;
@@ -31,6 +33,7 @@ public class CirculationRulesFixture {
   private final RestAssuredClient restAssuredClient;
 
   public CirculationRulesFixture(RestAssuredClient restAssuredClient) {
+
     this.restAssuredClient = restAssuredClient;
   }
 
@@ -66,10 +69,18 @@ public class CirculationRulesFixture {
       .put("rulesAsText", rules);
 
     final Response response = putRules(circulationRulesRequest.encodePrettily());
-
     assertThat(String.format(
       "Failed to set circulation rules: %s", response.getBody()),
       response.getStatusCode(), is(204));
+  }
+
+  public Response attemptUpdateCirculationRules(
+    String rules, String policyType) {
+
+    JsonObject circulationRulesRequest = new JsonObject()
+      .put("rulesAsText", rules);
+
+    return putRules(circulationRulesRequest.encodePrettily());
   }
 
   public void updateCirculationRulesWithoutInvalidatingCache(String rules) {

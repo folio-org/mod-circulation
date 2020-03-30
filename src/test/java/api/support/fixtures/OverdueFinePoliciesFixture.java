@@ -2,6 +2,7 @@ package api.support.fixtures;
 
 import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
 
+import java.util.List;
 import java.util.UUID;
 
 import org.folio.circulation.support.http.client.IndividualResource;
@@ -101,5 +102,13 @@ public class OverdueFinePoliciesFixture {
 
   public IndividualResource create(NoticePolicyBuilder noticePolicy) {
     return overdueFinePolicyRecordCreator.createIfAbsent(noticePolicy);
+  }
+
+  public IndividualResource create(OverdueFinePolicyBuilder overdueFinePolicyBuilder) {
+    return overdueFinePolicyRecordCreator.createIfAbsent(overdueFinePolicyBuilder);
+  }
+
+  public void cleanUp() {
+    overdueFinePolicyRecordCreator.cleanUp();
   }
 }

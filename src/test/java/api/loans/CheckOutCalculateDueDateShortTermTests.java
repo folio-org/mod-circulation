@@ -180,6 +180,12 @@ public class CheckOutCalculateDueDateShortTermTests extends APITests {
 
     JsonObject loanPolicyEntry = createLoanPolicyEntry(duration, interval);
     final IndividualResource loanPolicy = createLoanPolicy(loanPolicyEntry);
+    UUID requestPolicyId = requestPoliciesFixture.allowAllRequestPolicy().getId();
+    UUID noticePolicyId = noticePoliciesFixture.activeNotice().getId();
+    IndividualResource overdueFinePolicy = overdueFinePoliciesFixture.facultyStandard();
+    IndividualResource lostItemFeePolicy = lostItemFeePoliciesFixture.facultyStandard();
+    useFallbackPolicies(loanPolicy.getId(), requestPolicyId, noticePolicyId,
+      overdueFinePolicy.getId(), lostItemFeePolicy.getId());
 
     DateTimeUtils.setCurrentMillisFixed(loanDate.getMillis());
     final IndividualResource response = loansFixture.checkOutByBarcode(
@@ -193,8 +199,8 @@ public class CheckOutCalculateDueDateShortTermTests extends APITests {
     final JsonObject loan = response.getJson();
 
     loanHasLoanPolicyProperties(loan, loanPolicy);
-    loanHasOverdueFinePolicyProperties(loan,  overdueFinePoliciesFixture.facultyStandard());
-    loanHasLostItemPolicyProperties(loan,  lostItemFeePoliciesFixture.facultyStandard());
+    loanHasOverdueFinePolicyProperties(loan,  overdueFinePolicy);
+    loanHasLostItemPolicyProperties(loan,  lostItemFeePolicy);
 
     DateTime actualDueDate = getThresholdDateTime(DateTime.parse(loan.getString("dueDate")));
     DateTime thresholdDateTime = getThresholdDateTime(expectedDueDate);
@@ -212,14 +218,7 @@ public class CheckOutCalculateDueDateShortTermTests extends APITests {
 
   private IndividualResource createLoanPolicy(JsonObject loanPolicyEntry) {
 
-    IndividualResource loanPolicy = loanPoliciesFixture.create(loanPolicyEntry);
-    UUID requestPolicyId = requestPoliciesFixture.allowAllRequestPolicy().getId();
-    UUID noticePolicyId = noticePoliciesFixture.activeNotice().getId();
-    UUID overdueFinePolicyId = overdueFinePoliciesFixture.facultyStandard().getId();
-    UUID lostItemFeePolicyId = lostItemFeePoliciesFixture.facultyStandard().getId();
-    useFallbackPolicies(loanPolicy.getId(), requestPolicyId, noticePolicyId, overdueFinePolicyId, lostItemFeePolicyId);
-
-    return loanPolicy;
+    return loanPoliciesFixture.create(loanPolicyEntry);
   }
 
   /**

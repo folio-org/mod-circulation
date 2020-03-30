@@ -2,10 +2,9 @@ package api.support.fixtures;
 
 import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
 
-import java.net.MalformedURLException;
 import java.util.ArrayList;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeoutException;
+import java.util.List;
+import java.util.UUID;
 
 import org.folio.circulation.domain.RequestType;
 import org.folio.circulation.support.http.client.IndividualResource;
@@ -31,6 +30,17 @@ public class RequestPoliciesFixture {
     final RequestPolicyBuilder allowAllPolicy = new RequestPolicyBuilder(types);
 
     return requestPolicyRecordCreator.createIfAbsent(allowAllPolicy);
+  }
+
+  public void allowAllRequestPolicy(UUID id) {
+
+    List<RequestType> types = new ArrayList<>();
+    types.add(RequestType.HOLD);
+    types.add(RequestType.PAGE);
+    types.add(RequestType.RECALL);
+
+    requestPolicyRecordCreator.createIfAbsent(
+      new RequestPolicyBuilder(types, id));
   }
 
   public IndividualResource customRequestPolicy(ArrayList<RequestType> types) {
@@ -75,5 +85,9 @@ public class RequestPoliciesFixture {
 
   public IndividualResource findRequestPolicy(String requestPolicyName) {
     return requestPolicyRecordCreator.getExistingRecord(requestPolicyName);
+  }
+
+  public void cleanUp() {
+    requestPolicyRecordCreator.cleanUp();
   }
 }

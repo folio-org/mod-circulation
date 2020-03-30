@@ -4,6 +4,8 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.StringContains.containsString;
 
+import java.util.UUID;
+
 import org.folio.circulation.resources.LoanCirculationRulesEngineResource;
 import org.folio.circulation.rules.Campus;
 import org.folio.circulation.rules.Institution;
@@ -19,6 +21,10 @@ import org.junit.Before;
 import org.junit.Test;
 
 import api.support.APITests;
+import api.support.builders.LoanPolicyBuilder;
+import api.support.builders.LostItemFeePolicyBuilder;
+import api.support.builders.NoticePolicyBuilder;
+import api.support.builders.OverdueFinePolicyBuilder;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
@@ -110,6 +116,48 @@ public class CirculationRulesEngineAPITests extends APITests {
   public void setUp() {
     LoanCirculationRulesEngineResource.dropCache();
     LoanCirculationRulesEngineResource.setCacheTime(1000000, 1000000);  // 1000 seconds
+    setPoliciesIdsToTheFixture();
+  }
+
+  private void setPoliciesIdsToTheFixture() {
+    loanPoliciesFixture.create(new LoanPolicyBuilder()
+      .withId(UUID.fromString(lp1.toString()))
+      .withName("Example LoanPolicy " + lp1));
+    loanPoliciesFixture.create(new LoanPolicyBuilder()
+      .withId(UUID.fromString(lp2.toString()))
+      .withName("Example LoanPolicy " + lp2));
+    loanPoliciesFixture.create(new LoanPolicyBuilder()
+      .withId(UUID.fromString(lp3.toString()))
+      .withName("Example LoanPolicy " + lp3));
+    loanPoliciesFixture.create(new LoanPolicyBuilder()
+      .withId(UUID.fromString(lp4.toString()))
+      .withName("Example LoanPolicy " + lp4));
+    loanPoliciesFixture.create(new LoanPolicyBuilder()
+      .withId(UUID.fromString(lp6.toString()))
+      .withName("Example LoanPolicy " + lp6));
+    loanPoliciesFixture.create(new LoanPolicyBuilder()
+      .withId(UUID.fromString(lp7.toString()))
+      .withName("Example LoanPolicy " + lp7));
+    noticePoliciesFixture.create(new NoticePolicyBuilder()
+      .withId(UUID.fromString(np1.toString()))
+      .withName("Example NoticePolicy " + np1));
+    noticePoliciesFixture.create(new NoticePolicyBuilder()
+      .withId(UUID.fromString(np2.toString()))
+      .withName("Example NoticePolicy " + np2));
+    requestPoliciesFixture.allowAllRequestPolicy(UUID.fromString(rp1.toString()));
+    requestPoliciesFixture.allowAllRequestPolicy(UUID.fromString(rp2.toString()));
+    overdueFinePoliciesFixture.create(new OverdueFinePolicyBuilder()
+      .withId(UUID.fromString(op1.toString()))
+      .withName("Example OverdueFinePolicy " + op1));
+    overdueFinePoliciesFixture.create(new OverdueFinePolicyBuilder()
+      .withId(UUID.fromString(op2.toString()))
+      .withName("Example OverdueFinePolicy " + op2));
+    lostItemFeePoliciesFixture.create(new LostItemFeePolicyBuilder()
+      .withId(UUID.fromString(lip1.toString()))
+      .withName("Example lostItemPolicy " + lip1));
+    lostItemFeePoliciesFixture.create(new LostItemFeePolicyBuilder()
+      .withId(UUID.fromString(lip2.toString()))
+      .withName("Example lostItemPolicy " + lip2));
   }
 
   @Test

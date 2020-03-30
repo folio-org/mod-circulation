@@ -61,6 +61,16 @@ public class NoticePolicyBuilder extends JsonBuilder implements Builder {
       this.requestNotices);
   }
 
+  public NoticePolicyBuilder withId(UUID id) {
+    return new NoticePolicyBuilder(
+      id,
+      this.name,
+      this.description,
+      this.active,
+      this.loanNotices,
+      this.requestNotices);
+  }
+
   public NoticePolicyBuilder withLoanNotices(List<JsonObject> loanNotices) {
     return new NoticePolicyBuilder(
       this.id,

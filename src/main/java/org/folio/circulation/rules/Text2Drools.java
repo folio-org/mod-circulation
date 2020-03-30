@@ -16,6 +16,7 @@ import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
 import org.antlr.v4.runtime.tree.TerminalNode;
 import org.apache.commons.lang3.StringEscapeUtils;
+import org.folio.circulation.rules.CirculationRulesParser.CirculationRulesFileContext;
 import org.folio.circulation.rules.CirculationRulesParser.CriteriumContext;
 import org.folio.circulation.rules.CirculationRulesParser.CriteriumPriorityContext;
 import org.folio.circulation.rules.CirculationRulesParser.DedentContext;
@@ -25,7 +26,6 @@ import org.folio.circulation.rules.CirculationRulesParser.FallbackpolicyContext;
 import org.folio.circulation.rules.CirculationRulesParser.IndentContext;
 import org.folio.circulation.rules.CirculationRulesParser.LastLinePrioritiesContext;
 import org.folio.circulation.rules.CirculationRulesParser.LinePriorityContext;
-import org.folio.circulation.rules.CirculationRulesParser.CirculationRulesFileContext;
 import org.folio.circulation.rules.CirculationRulesParser.PoliciesContext;
 import org.folio.circulation.rules.CirculationRulesParser.PolicyContext;
 import org.folio.circulation.rules.CirculationRulesParser.SevenCriteriumLettersContext;
@@ -77,6 +77,7 @@ public class Text2Drools extends CirculationRulesBaseListener {
 
   */
 
+
   private StringBuilder drools = new StringBuilder(
       "package circulationrules\n" +
       "import org.folio.circulation.rules.*\n" +
@@ -102,6 +103,7 @@ public class Text2Drools extends CirculationRulesBaseListener {
   private int indentation = 0;
 
   private String[] policyTypes = {"l", "r", "n", "o", "i"};
+  private final PolicyValidator policyValidator;
 
   private enum PriorityType {
     NONE,
@@ -125,18 +127,38 @@ public class Text2Drools extends CirculationRulesBaseListener {
 
   private Map<String,Integer> criteriumPriority = new HashMap<>(7);
 
-  /** Private constructor to be invoked from convert(String) only. */
-  private Text2Drools() {
+  /** Private constructor to be invoked from convert(String) only
+   *  with set of existing policies parameter.
+   *
+   */
+  private Text2Drools(PolicyValidator policyValidator) {
+    this.policyValidator = policyValidator;
   }
 
   /**
-   * Convert lcirculationoan rules from FOLIO text format into a Drools file.
+   * Convert circulation rules from FOLIO text format into a Drools file.
    * @param text String with a circulation rules file in FOLIO syntax.
    * @return Drools file
    */
   public static String convert(String text) {
-    Text2Drools text2drools = new Text2Drools();
+    Text2Drools text2drools = new Text2Drools((policyType, policies, token) -> {});
+    return getDroolsRepresentation(text, text2drools);
+  }
 
+  /**
+   * Convert circulation rules from FOLIO text format into a Drools file.
+   * @param text String with a circulation rules file in FOLIO syntax.
+   * @param policyValidator function that validates policies ids
+   * @return Drools file
+   */
+  public static String convert(String text, PolicyValidator policyValidator) {
+
+    Text2Drools text2drools = new Text2Drools(policyValidator);
+
+    return getDroolsRepresentation(text, text2drools);
+  }
+
+  private static String getDroolsRepresentation(String text, Text2Drools text2drools) {
     CharStream input = CharStreams.fromString(text);
     CirculationRulesLexer lexer = new CirculationRulesLexer(input);
     CommonTokenStream tokens = new CommonTokenStream(lexer);
@@ -225,6 +247,7 @@ public class Text2Drools extends CirculationRulesBaseListener {
           String.format("Must contain one of each policy type, missing type %s", policyType),
           token.getLine(), token.getCharPositionInLine());
       }
+      policyValidator.validatePolicy(policyType, policies, token);
     }
   }
 
