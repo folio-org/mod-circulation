@@ -1,6 +1,9 @@
 package api.requests;
 
 import static api.support.builders.RequestBuilder.OPEN_NOT_YET_FILLED;
+import static api.support.http.CqlQuery.exactMatch;
+import static api.support.http.Limit.limit;
+import static api.support.http.Offset.noOffset;
 import static api.support.matchers.JsonObjectMatcher.hasJsonPath;
 import static api.support.matchers.PatronNoticeMatcher.hasEmailNoticeProperties;
 import static api.support.matchers.ResponseStatusCodeMatcher.hasStatus;
@@ -76,10 +79,7 @@ import api.support.fixtures.LoansFixture;
 import api.support.fixtures.RequestsFixture;
 import api.support.fixtures.TemplateContextMatchers;
 import api.support.fixtures.UsersFixture;
-import api.support.http.CqlQuery;
 import api.support.http.InventoryItemResource;
-import api.support.http.Limit;
-import api.support.http.Offset;
 import api.support.http.ResourceClient;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
@@ -1973,23 +1973,12 @@ public class RequestsAPICreationTests extends APITests {
 
   @Test
   public void canFetchHundredRequests() {
-    UUID pickupServicePointId = servicePointsFixture.cd1().getId();
-    final List<IndividualResource> createdRequests =
-      IntStream.range(0, 100).mapToObj(notUsed -> requestsFixture.place(
-        new RequestBuilder()
-          .open()
-          .page()
-          .forItem(itemsFixture.basedUponSmallAngryPlanet())
-          .by(usersFixture.charlotte())
-          .fulfilToHoldShelf()
-          .withPickupServicePointId(pickupServicePointId)))
-        .collect(Collectors.toList());
+    final List<IndividualResource> createdRequests = createOneHundredRequests();
 
-    final Map<String, JsonObject> foundRequests =
-      requestsFixture.getRequests(CqlQuery.exactMatch("requestType", "Page"),
-        Limit.limit(100), Offset.noOffset())
-        .stream()
-        .collect(Collectors.toMap(json -> json.getString("id"), identity()));
+    final Map<String, JsonObject> foundRequests = requestsFixture
+      .getRequests(exactMatch("requestType", "Page"), limit(100), noOffset())
+      .stream()
+      .collect(Collectors.toMap(json -> json.getString("id"), identity()));
 
     createdRequests.forEach(expectedRequest -> {
       final JsonObject actualRequest = foundRequests.get(expectedRequest.getId().toString());
@@ -1998,6 +1987,20 @@ public class RequestsAPICreationTests extends APITests {
       assertThat(actualRequest, hasJsonPath("requestType", "Page"));
       assertThat(actualRequest, hasJsonPath("status", "Open - Not yet filled"));
     });
+  }
+
+  private List<IndividualResource> createOneHundredRequests() {
+    final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
+
+    return IntStream.range(0, 100).mapToObj(notUsed -> requestsFixture.place(
+      new RequestBuilder()
+        .open()
+        .page()
+        .forItem(itemsFixture.basedUponSmallAngryPlanet())
+        .by(usersFixture.charlotte())
+        .fulfilToHoldShelf()
+        .withPickupServicePointId(pickupServicePointId)))
+      .collect(Collectors.toList());
   }
 
   private void declareItemLost(JsonObject loanJson) {
