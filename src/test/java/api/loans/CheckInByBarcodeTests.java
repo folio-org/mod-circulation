@@ -649,7 +649,7 @@ public class CheckInByBarcodeTests extends APITests {
     JsonObject account = createdAccounts.get(0);
 
     assertThat(account, OverdueFineMatcher.isValidOverdueFine(loan, nod,
-      servicePointsFixture.cd1().getId(), ownerId, feeFineId, 5.0));
+      homeLocation.getJson().getString("name"), ownerId, feeFineId, 5.0));
 
     Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
@@ -743,7 +743,7 @@ public class CheckInByBarcodeTests extends APITests {
     JsonObject account = createdAccounts.get(0);
 
     assertThat(account, OverdueFineMatcher.isValidOverdueFine(loan, nod,
-      servicePointsFixture.cd1().getId(), ownerId, feeFineId, 10.0));
+      homeLocation.getJson().getString("name"), ownerId, feeFineId, 10.0));
   }
 
   @Test
