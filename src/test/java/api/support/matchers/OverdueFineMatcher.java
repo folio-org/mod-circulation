@@ -16,7 +16,7 @@ public class OverdueFineMatcher {
   public static Matcher<JsonObject> isValidOverdueFine(IndividualResource loan,
     IndividualResource item, String location, UUID ownerId, UUID feeFineId, Double amount) {
     return JsonObjectMatcher.allOfPaths(
-      hasJsonPath("ownerId", is(ownerId.toString())),
+      hasJsonPath("ownerId", UUIDMatcher.is(ownerId)),
       hasJsonPath("feeFineId", is(feeFineId.toString())),
       hasJsonPath("amount", is(amount)),
       hasJsonPath("remaining", is(amount)),
