@@ -1,3 +1,8 @@
+## 18.0.1 2020-03-31
+
+* Fetches loans related to requests in batches partitioned by `itemId` (CIRC-699)
+* Disallows policies that cannot be found from being referenced in rules (CIRC-658)
+
 ## 18.0.0 2020-03-12
 
 * Charges overdue fines according to policy (CIRC-524, CIRC-548, CIRC-591, CIRC-656, CIRC-677, CIRC-678, CIRC-680, CIRC-682)
