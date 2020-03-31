@@ -1,6 +1,10 @@
 package api.requests;
 
 import static api.support.builders.RequestBuilder.OPEN_NOT_YET_FILLED;
+import static api.support.http.CqlQuery.exactMatch;
+import static api.support.http.Limit.limit;
+import static api.support.http.Offset.noOffset;
+import static api.support.matchers.JsonObjectMatcher.allOfPaths;
 import static api.support.matchers.PatronNoticeMatcher.hasEmailNoticeProperties;
 import static api.support.matchers.ResponseStatusCodeMatcher.hasStatus;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
@@ -9,6 +13,7 @@ import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static api.support.matchers.ValidationErrorMatchers.hasParameter;
 import static api.support.matchers.ValidationErrorMatchers.hasUUIDParameter;
+import static com.jayway.jsonpath.matchers.JsonPathMatchers.hasJsonPath;
 import static java.util.Arrays.asList;
 import static java.util.function.Function.identity;
 import static org.folio.HttpStatus.HTTP_BAD_REQUEST;
@@ -35,6 +40,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import org.awaitility.Awaitility;
 import org.folio.circulation.domain.ItemStatus;
@@ -1963,6 +1970,40 @@ public class RequestsAPICreationTests extends APITests {
       hasMessage(requestType + " requests are not allowed for this patron and item combination"),
       hasParameter("requestType", requestType)
     )));
+  }
+
+  @Test
+  public void canFetchHundredRequests() {
+    final List<IndividualResource> createdRequests = createOneHundredRequests();
+
+    final Map<String, JsonObject> foundRequests = requestsFixture
+      .getRequests(exactMatch("requestType", "Page"), limit(100), noOffset())
+      .stream()
+      .collect(Collectors.toMap(json -> json.getString("id"), identity()));
+
+    createdRequests.forEach(expectedRequest -> {
+      final JsonObject actualRequest = foundRequests.get(expectedRequest.getId().toString());
+
+      assertThat(actualRequest, notNullValue());
+      assertThat(actualRequest, allOfPaths(
+        hasJsonPath("requestType", is("Page")),
+        hasJsonPath("status", is("Open - Not yet filled"))
+      ));
+    });
+  }
+
+  private List<IndividualResource> createOneHundredRequests() {
+    final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
+
+    return IntStream.range(0, 100).mapToObj(notUsed -> requestsFixture.place(
+      new RequestBuilder()
+        .open()
+        .page()
+        .forItem(itemsFixture.basedUponSmallAngryPlanet())
+        .by(usersFixture.charlotte())
+        .fulfilToHoldShelf()
+        .withPickupServicePointId(pickupServicePointId)))
+      .collect(Collectors.toList());
   }
 
   private void declareItemLost(JsonObject loanJson) {
