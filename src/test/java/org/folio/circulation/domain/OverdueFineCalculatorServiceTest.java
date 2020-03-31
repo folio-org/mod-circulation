@@ -194,7 +194,7 @@ public class OverdueFineCalculatorServiceTest {
       .thenReturn(completedFuture(succeeded(periodCalculatorResult)));
     when(itemRepository.fetchItemRelatedRecords(any()))
       .thenReturn(completedFuture(succeeded(createItem())));
-    when(feeFineOwnerRepository.getFeeFineOwner(SERVICE_POINT_ID.toString()))
+    when(feeFineOwnerRepository.findOwnerForServicePoint(SERVICE_POINT_ID.toString()))
       .thenReturn(completedFuture(succeeded(createFeeFineOwner())));
     when(feeFineRepository.getFeeFine(FEE_FINE_TYPE, true))
       .thenReturn(completedFuture(succeeded(createFeeFine())));
@@ -291,7 +291,7 @@ public class OverdueFineCalculatorServiceTest {
       .thenReturn(completedFuture(succeeded(periodCalculatorResult)));
     when(itemRepository.fetchItemRelatedRecords(any()))
       .thenReturn(completedFuture(succeeded(null)));
-    when(feeFineOwnerRepository.getFeeFineOwner(SERVICE_POINT_ID.toString()))
+    when(feeFineOwnerRepository.findOwnerForServicePoint(SERVICE_POINT_ID.toString()))
       .thenReturn(completedFuture(succeeded(createFeeFineOwner())));
     when(feeFineRepository.getFeeFine(FEE_FINE_TYPE, true))
       .thenReturn(completedFuture(succeeded(createFeeFine())));
@@ -327,7 +327,7 @@ public class OverdueFineCalculatorServiceTest {
       .thenReturn(completedFuture(succeeded(createItem())));
     when(feeFineRepository.getFeeFine(FEE_FINE_TYPE, true))
       .thenReturn(completedFuture(succeeded(createFeeFine())));
-    when(feeFineOwnerRepository.getFeeFineOwner(SERVICE_POINT_ID.toString()))
+    when(feeFineOwnerRepository.findOwnerForServicePoint(SERVICE_POINT_ID.toString()))
       .thenReturn(completedFuture(succeeded(null)));
 
     if (renewal) {
@@ -359,7 +359,7 @@ public class OverdueFineCalculatorServiceTest {
       .thenReturn(completedFuture(succeeded(createItem())));
     when(feeFineRepository.getFeeFine(FEE_FINE_TYPE, true))
       .thenReturn(completedFuture(succeeded(null)));
-    when(feeFineOwnerRepository.getFeeFineOwner(SERVICE_POINT_ID.toString()))
+    when(feeFineOwnerRepository.findOwnerForServicePoint(SERVICE_POINT_ID.toString()))
       .thenReturn(completedFuture(succeeded(createFeeFineOwner())));
 
     if (renewal) {

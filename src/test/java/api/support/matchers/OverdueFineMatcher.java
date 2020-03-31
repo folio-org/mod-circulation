@@ -23,7 +23,7 @@ public class OverdueFineMatcher {
     IndividualResource item, UUID servicePointId, UUID ownerId, UUID feeFineId, Double amount) {
 
     List<Matcher<? super String>> matchers = new ArrayList<>(Arrays.asList(
-      hasJsonPath("ownerId", is(ownerId.toString())),
+      hasJsonPath("ownerId", UUIDMatcher.is(ownerId)),
       hasJsonPath("feeFineId", is(feeFineId.toString())),
       hasJsonPath("amount", is(amount)),
       hasJsonPath("remaining", is(amount)),

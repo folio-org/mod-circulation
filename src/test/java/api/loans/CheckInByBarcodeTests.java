@@ -672,7 +672,6 @@ public class CheckInByBarcodeTests extends APITests {
       createdFeeFineAction.getDouble("amountAction"), is(account.getDouble("amount")));
     assertThat("typeAction is included",
       createdFeeFineAction.getString("typeAction"), is("Overdue fine"));
-
   }
 
   @Test
