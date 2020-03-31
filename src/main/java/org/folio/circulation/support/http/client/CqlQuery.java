@@ -134,6 +134,10 @@ public class CqlQuery implements QueryParameter {
     return StringUtils.equals(asText(), otherCqlQuery.asText());
   }
 
+  public static Result<CqlQuery> from(String query) {
+    return Result.of(() -> new CqlQuery(query, none()));
+  }
+
   @Override
   public int hashCode() {
     return Objects.hash(asText());

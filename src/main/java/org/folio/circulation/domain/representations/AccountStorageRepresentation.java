@@ -1,5 +1,7 @@
 package org.folio.circulation.domain.representations;
 
+import static org.folio.circulation.support.JsonPropertyWriter.write;
+
 import java.util.UUID;
 
 import org.folio.circulation.domain.FeeFine;
@@ -31,6 +33,8 @@ public class AccountStorageRepresentation extends JsonObject {
     this.put("loanId", loan.getId());
     this.put("userId", loan.getUserId());
     this.put("itemId", item.getItemId());
+    write(this, "dueDate", loan.getDueDate());
+    write(this, "returnedDate", loan.getReturnDate());
 
     JsonObject paymentStatus = new JsonObject();
     JsonPropertyWriter.write(paymentStatus, "name", "Outstanding");
