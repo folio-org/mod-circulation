@@ -1192,6 +1192,7 @@
         "circulation.rules.lost-item-policy.get",
         "overdue-fines-policies.item.get",
         "overdue-fines-policies.collection.get",
+        "lost-item-fees-policies.item.get",
         "lost-item-fees-policies.collection.get"
       ],
       "visible": false
