@@ -156,7 +156,7 @@ public class OverdueFineCalculatorService {
       .map(Item::getLocation)
       .map(Location::getPrimaryServicePointId)
       .map(UUID::toString)
-      .map(id -> repos.feeFineOwnerRepository.getFeeFineOwner(id)
+      .map(id -> repos.feeFineOwnerRepository.findOwnerForServicePoint(id)
         .thenApply(mapResult(params::withOwner)))
       .orElse(completedFuture(succeeded(params)));
   }
