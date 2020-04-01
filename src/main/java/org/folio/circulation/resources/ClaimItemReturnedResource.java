@@ -6,37 +6,28 @@ import static org.folio.circulation.support.ValidationErrorFailure.singleValidat
 
 import org.folio.circulation.domain.ClaimItemReturnedRequest;
 import org.folio.circulation.domain.Loan;
-import org.folio.circulation.domain.representations.ChangeItemStatusRequest;
 import org.folio.circulation.support.Result;
 import org.joda.time.DateTime;
 
 import io.vertx.core.http.HttpClient;
 import io.vertx.core.json.JsonObject;
-import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 
-public class ClaimItemReturnedResource extends ChangeStatusResource {
+public class ClaimItemReturnedResource extends ChangeStatusResource<ClaimItemReturnedRequest> {
   public static final String ITEM_CLAIMED_RETURNED_DATE = "itemClaimedReturnedDateTime";
 
   public ClaimItemReturnedResource(HttpClient client) {
-    super(client);
+    super(client, "/circulation/loans/:id/claim-item-returned");
   }
 
   @Override
-  public void register(Router router) {
-    register(router, "/circulation/loans/:id/claim-item-returned");
+  protected Loan changeLoanAndItemStatus(Loan loan, ClaimItemReturnedRequest request) {
+    return loan.claimItemReturned(request.getComment(), request
+      .getItemClaimedReturnedDateTime());
   }
 
   @Override
-  protected Loan changeLoanAndItemStatus(Loan loan, ChangeItemStatusRequest request) {
-    ClaimItemReturnedRequest claimItemReturnedRequest= (ClaimItemReturnedRequest) request;
-
-    return loan.claimItemReturned(request.getComment(), claimItemReturnedRequest
-        .getItemClaimedReturnedDateTime());
-  }
-
-  @Override
-  protected Result<ChangeItemStatusRequest> createItemStatusChangeRequest(RoutingContext routingContext) {
+  protected Result<ClaimItemReturnedRequest> createItemStatusChangeRequest(RoutingContext routingContext) {
     final String loanId = routingContext.pathParam("id");
     final JsonObject body = routingContext.getBodyAsJson();
 

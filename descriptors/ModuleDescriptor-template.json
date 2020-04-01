@@ -123,17 +123,17 @@
       ]
     },
     {
-      "id": "mark-item-missing",
+      "id": "resolve-claim-as-missing",
       "version": "0.1",
       "handlers": [
         {
           "methods": ["POST"],
-          "pathPattern": "/circulation/loans/{id}/mark-item-missing",
+          "pathPattern": "/circulation/loans/{id}/resolve-claim-as-missing",
           "permissionsRequired": [
-            "circulation.loans.mark-item-missing.post"
+            "circulation.loans.resolve-claim-as-missing.post"
           ],
           "modulePermissions": [
-            "modperms.circulation.loans.mark-item-missing.post"
+            "modperms.circulation.loans.resolve-claim-as-missing.post"
           ]
         }
       ]
@@ -950,9 +950,9 @@
       "description": "declares the loaned item as claimed returned"
     },
     {
-      "permissionName": "circulation.loans.mark-item-missing.post",
-      "displayName": "circulation -  declare the loaned item as marked missing",
-      "description": "declare the loaned item as marked missing"
+      "permissionName": "circulation.loans.resolve-claim-as-missing.post",
+      "displayName": "circulation -  declare the claimed returned loaned item as missing",
+      "description": "declare the claimed returned loaned item as missing"
     },
     {
       "permissionName": "circulation.rules.get",
@@ -1077,7 +1077,7 @@
         "circulation.loans.item.delete",
         "circulation.loans.collection.delete",
         "circulation.loans.claim-item-returned.post",
-        "circulation.loans.mark-item-missing.post",
+        "circulation.loans.resolve-claim-as-missing.post",
         "circulation.rules.put",
         "circulation.rules.get",
         "circulation.rules.loan-policy.get",
@@ -1919,7 +1919,7 @@
       "visible": false
     },
     {
-      "permissionName": "modperms.circulation.loans.mark-item-missing.post",
+      "permissionName": "modperms.circulation.loans.resolve-claim-as-missing.post",
       "displayName": "module permissions for one op",
       "description": "to reduce X-Okapi-Token size",
       "subPermissions": [

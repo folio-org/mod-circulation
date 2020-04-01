@@ -8,13 +8,13 @@ import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static api.support.matchers.ValidationErrorMatchers.hasParameter;
 import static org.folio.circulation.domain.representations.LoanProperties.ACTION;
 import static org.folio.circulation.domain.representations.LoanProperties.ACTION_COMMENT;
-import static org.folio.circulation.resources.MarkItemMissingResource.COMMENT;
+import static org.folio.circulation.resources.ResolveClaimAsMissingResource.COMMENT;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 import api.support.APITests;
 import api.support.builders.ClaimItemReturnedRequestBuilder;
-import api.support.builders.MarkItemMissingRequestBuilder;
+import api.support.builders.ResolveClaimAsMissingRequestBuilder;
 import api.support.http.InventoryItemResource;
 import io.vertx.core.json.JsonObject;
 import org.folio.circulation.support.http.client.Response;
@@ -24,7 +24,7 @@ import org.junit.Test;
 
 import java.util.UUID;
 
-public class MarkItemMissingAPITests extends APITests {
+public class ResolveClaimAsMissingApiTest extends APITests {
   private InventoryItemResource item;
   private String loanId;
 
@@ -36,7 +36,7 @@ public class MarkItemMissingAPITests extends APITests {
   }
 
   @Test
-  public void canMarkItemMissing() {
+  public void canResolveClaimedReturnedItemAsMissing() {
     final String comment = "testing";
 
     loansFixture.claimItemReturned(new ClaimItemReturnedRequestBuilder()
@@ -44,7 +44,7 @@ public class MarkItemMissingAPITests extends APITests {
       .withItemClaimedReturnedDate(DateTime.now()));
 
     final Response response = loansFixture
-      .markItemMissing(new MarkItemMissingRequestBuilder()
+      .resolveClaimAsMissing(new ResolveClaimAsMissingRequestBuilder()
         .forLoan(loanId)
         .withComment(comment));
 
@@ -52,9 +52,9 @@ public class MarkItemMissingAPITests extends APITests {
   }
 
   @Test
-  public void cannotMarkItemMissingWhenItemHasNotClaimedReturnStatus() {
+  public void cannotResolveClaimAsMissingWhenItemHasNotClaimedReturnStatus() {
     final Response response = loansFixture
-      .attemptMarkItemMissing(new MarkItemMissingRequestBuilder()
+      .attemptResolveClaimAsMissing(new ResolveClaimAsMissingRequestBuilder()
         .forLoan(loanId)
         .withComment("testing"));
 
@@ -64,11 +64,11 @@ public class MarkItemMissingAPITests extends APITests {
   }
 
   @Test
-  public void cannotMarkItemMissingWhenLoanIsClosed() {
+  public void cannotResolveClaimAsMissingWhenLoanIsClosed() {
     loansFixture.checkInByBarcode(item);
 
     final Response response = loansFixture
-      .attemptMarkItemMissing(new MarkItemMissingRequestBuilder()
+      .attemptResolveClaimAsMissing(new ResolveClaimAsMissingRequestBuilder()
         .forLoan(loanId)
         .withComment("testing"));
 
@@ -78,9 +78,9 @@ public class MarkItemMissingAPITests extends APITests {
   }
 
   @Test
-  public void cannotMarkItemMissingWhenCommentIsNotProvided() {
+  public void cannotResolveClaimAsMissingWhenCommentIsNotProvided() {
     final Response response = loansFixture
-      .attemptMarkItemMissing(new MarkItemMissingRequestBuilder()
+      .attemptResolveClaimAsMissing(new ResolveClaimAsMissingRequestBuilder()
         .forLoan(loanId));
 
     assertThat(response.getStatusCode(), is(422));
@@ -90,11 +90,11 @@ public class MarkItemMissingAPITests extends APITests {
   }
 
   @Test
-  public void cannotMarkedItemMissingWhenLoanIsNotFound() {
+  public void cannotResolveClaimAsMissingWhenLoanIsNotFound() {
     final String notExistentLoanId = UUID.randomUUID().toString();
 
     final Response response = loansFixture
-      .attemptMarkItemMissing(new MarkItemMissingRequestBuilder()
+      .attemptResolveClaimAsMissing(new ResolveClaimAsMissingRequestBuilder()
         .forLoan(notExistentLoanId)
         .withComment("testing"));
 

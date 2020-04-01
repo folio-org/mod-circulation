@@ -10,7 +10,7 @@ import static api.support.http.InterfaceUrls.checkOutByBarcodeUrl;
 import static api.support.http.InterfaceUrls.claimItemReturnedURL;
 import static api.support.http.InterfaceUrls.declareLoanItemLostURL;
 import static api.support.http.InterfaceUrls.loansUrl;
-import static api.support.http.InterfaceUrls.markItemMissingURL;
+import static api.support.http.InterfaceUrls.resolveClaimAsMissingUrl;
 import static api.support.http.InterfaceUrls.overrideCheckOutByBarcodeUrl;
 import static api.support.http.InterfaceUrls.overrideRenewalByBarcodeUrl;
 import static api.support.http.InterfaceUrls.renewByBarcodeUrl;
@@ -23,7 +23,7 @@ import static java.net.HttpURLConnection.HTTP_OK;
 import java.net.URL;
 import java.util.UUID;
 
-import api.support.builders.MarkItemMissingRequestBuilder;
+import api.support.builders.ResolveClaimAsMissingRequestBuilder;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 import org.joda.time.DateTime;
@@ -166,14 +166,14 @@ public class LoansFixture {
       claimItemReturnedURL(request.getLoanId()), "attempt-claim-item-returned-request");
   }
 
-  public Response markItemMissing(MarkItemMissingRequestBuilder request) {
+  public Response resolveClaimAsMissing(ResolveClaimAsMissingRequestBuilder request) {
     return restAssuredClient.post(request.create(),
-      markItemMissingURL(request.getLoanId()), 204, "mark-item-missing-request");
+      resolveClaimAsMissingUrl(request.getLoanId()), 204, "resolve-claim-as-missing-request");
 }
 
-  public Response attemptMarkItemMissing(MarkItemMissingRequestBuilder request) {
+  public Response attemptResolveClaimAsMissing(ResolveClaimAsMissingRequestBuilder request) {
     return restAssuredClient.post(request.create(),
-      markItemMissingURL(request.getLoanId()), "attempt-mark-item-missing-request");
+      resolveClaimAsMissingUrl(request.getLoanId()), "attempt-resolve-claim-as-missing-request");
   }
 
   public IndividualResource checkOutByBarcode(IndividualResource item) {

@@ -1,35 +1,26 @@
 package org.folio.circulation.resources;
 
+import static org.folio.circulation.domain.validation.NotInItemStatusValidator.refuseWhenItemIsNotClaimedReturned;
 import static org.folio.circulation.support.Result.failed;
 import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 
 import io.vertx.core.http.HttpClient;
 import io.vertx.core.json.JsonObject;
-import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.representations.ChangeItemStatusRequest;
-import org.folio.circulation.domain.validation.NotInItemStatusValidator;
 import org.folio.circulation.support.Result;
 
-import java.util.concurrent.CompletableFuture;
+public class ResolveClaimAsMissingResource extends ChangeStatusResource<ChangeItemStatusRequest> {
 
-public class MarkItemMissingResource extends ChangeStatusResource {
-
-  public MarkItemMissingResource(HttpClient client) {
-    super(client);
+  public ResolveClaimAsMissingResource(HttpClient client) {
+    super(client, "/circulation/loans/:id/resolve-claim-as-missing");
   }
 
   @Override
-  public void register(Router router) {
-    register(router, "/circulation/loans/:id/mark-item-missing");
-  }
-
-  @Override
-  protected CompletableFuture<Result<Loan>> validate(Result<Loan> loanResult) {
-    return super.validate(loanResult)
-      .thenApply(NotInItemStatusValidator::refuseWhenItemIsNotClaimedReturned);
+  protected Result<Loan> additionalValidation(Result<Loan> loanResult) {
+    return refuseWhenItemIsNotClaimedReturned(loanResult);
   }
 
   @Override

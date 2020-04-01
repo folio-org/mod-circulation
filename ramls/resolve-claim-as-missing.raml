@@ -5,8 +5,8 @@ protocols: [ HTTP, HTTPS ]
 baseUri: http://localhost:9130
 
 documentation:
-  - title: API for marking an item missing
-    content: <b>Mark an item missing API</b>
+  - title: API for resolving claim as missing
+    content: <b>Resolve claim as missing API</b>
 
 types:
   errors: !include raml-util/schemas/errors.schema
@@ -14,15 +14,15 @@ types:
 traits:
   validate: !include raml-util/traits/validation.raml
 
-/circulation/loans/{id}/mark-item-missing:
+/circulation/loans/{id}/resolve-claim-as-missing:
   post:
     is: [validate]
     body:
       application/json:
-        type: !include mark-item-missing-request.json
+        type: !include resolve-claim-as-missing-request.json
     responses:
       204:
-        description: "The loaned item has been successfully marked missing"
+        description: "The loaned claimed returned item has been successfully marked as missing"
       422:
         description: "The loan is closed"
       404:

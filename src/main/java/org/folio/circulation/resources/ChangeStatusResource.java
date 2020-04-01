@@ -21,16 +21,17 @@ import org.folio.circulation.support.http.server.WebContext;
 
 import java.util.concurrent.CompletableFuture;
 
-public abstract class ChangeStatusResource extends Resource {
+public abstract class ChangeStatusResource<T extends ChangeItemStatusRequest> extends Resource {
   public static final String COMMENT = "comment";
+  private final String path;
 
-  public ChangeStatusResource(HttpClient client) {
+  public ChangeStatusResource(HttpClient client, String path) {
     super(client);
+    this.path = path;
   }
 
-  public void register(Router router, String path) {
-    new RouteRegistration(path, router)
-      .create(this::changeItemStatus);
+  public void register(Router router) {
+    new RouteRegistration(path, router).create(this::changeItemStatus);
   }
 
   protected void changeItemStatus(RoutingContext routingContext) {
@@ -40,18 +41,29 @@ public abstract class ChangeStatusResource extends Resource {
       .thenAccept(result -> result.writeTo(routingContext.response()));
   }
 
-  protected CompletableFuture<Result<Loan>> validate(Result<Loan> loanResult){
+  private CompletableFuture<Result<Loan>> validate(Result<Loan> loanResult){
     return completedFuture(succeeded(loanResult))
-      .thenApply(loan -> refuseWhenLoanIsClosed(loanResult));
+      .thenApply(loan -> refuseWhenLoanIsClosed(loanResult))
+      .thenApply(this::additionalValidation);
   }
 
-  protected abstract Loan changeLoanAndItemStatus(Loan loan, ChangeItemStatusRequest request);
+  /**
+   * Additional validation for a case. Note: validation whether the loan is closed
+   * or not is executed within separate method.
+   *
+   * @param loanResult - loan
+   * @return result.
+   */
+  protected Result<Loan> additionalValidation(Result<Loan> loanResult) {
+    return loanResult;
+  }
 
-  protected abstract Result<ChangeItemStatusRequest> createItemStatusChangeRequest(
-    RoutingContext routingContext);
+  protected abstract Loan changeLoanAndItemStatus(Loan loan, T request);
+
+  protected abstract Result<T> createItemStatusChangeRequest(RoutingContext routingContext);
 
   private CompletableFuture<Result<Loan>> changeItemStatus(
-    final ChangeItemStatusRequest request, RoutingContext routingContext) {
+    final T request, RoutingContext routingContext) {
 
     final WebContext context = new WebContext(routingContext);
     final Clients clients = Clients.create(context, client);
@@ -67,9 +79,7 @@ public abstract class ChangeStatusResource extends Resource {
       .thenCompose(r -> r.after(storeLoanAndItem::updateLoanAndItemInStorage));
   }
 
-  private Result<Loan> changeLoanAndItemStatus(Result<Loan> loanResult,
-    ChangeItemStatusRequest request) {
-
+  private Result<Loan> changeLoanAndItemStatus(Result<Loan> loanResult, T request) {
     return loanResult.next(loan -> Result.of(() ->
       changeLoanAndItemStatus(loan, request)));
   }
