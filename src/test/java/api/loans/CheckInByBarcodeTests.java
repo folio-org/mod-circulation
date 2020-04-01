@@ -709,7 +709,7 @@ public class CheckInByBarcodeTests extends APITests {
     UUID servicePointOwnerId = UUID.randomUUID();
     feeFineOwnersClient.create(new FeeFineOwnerBuilder()
       .withId(servicePointOwnerId)
-      .withOwner("fee-fine-owner-11")
+      .withOwner("fee-fine-owner")
       .withServicePointOwner(Collections.singletonList(servicePointOwner))
     );
 
