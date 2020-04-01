@@ -675,6 +675,124 @@ public class CheckInByBarcodeTests extends APITests {
   }
 
   @Test
+  public void overdueFineIsChargedForCorrectOwnerWhenMultipleOwnersExist() {
+    useFallbackPolicies(loanPoliciesFixture.canCirculateRolling().getId(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
+      noticePoliciesFixture.activeNotice().getId(),
+      overdueFinePoliciesFixture.facultyStandardDoNotCountClosed().getId(),
+      lostItemFeePoliciesFixture.facultyStandard().getId());
+
+    final IndividualResource james = usersFixture.james();
+    final UUID checkInServicePointId = servicePointsFixture.cd1().getId();
+    final IndividualResource homeLocation = locationsFixture.basedUponExampleLocation(
+      item -> item.withPrimaryServicePoint(checkInServicePointId));
+    final IndividualResource nod = itemsFixture.basedUponNod(item ->
+      item.withPermanentLocation(homeLocation.getId()));
+
+    final IndividualResource checkedOutLoan = loansFixture.checkOutByBarcode(nod, james,
+      new DateTime(2020, 1, 1, 12, 0, 0, DateTimeZone.UTC));
+
+    for (int i = 0; i < 10; i++) {
+      feeFineOwnersClient.create(new FeeFineOwnerBuilder()
+        .withId(UUID.randomUUID())
+        .withOwner("fee-fine-owner-" + i)
+      );
+    }
+
+    Awaitility.await()
+      .atMost(3, TimeUnit.SECONDS)
+      .until(feeFineOwnersClient::getAll, hasSize(10));
+
+    JsonObject servicePointOwner = new JsonObject();
+    servicePointOwner.put("value", homeLocation.getJson().getString("primaryServicePoint"));
+    servicePointOwner.put("label", "label");
+    UUID servicePointOwnerId = UUID.randomUUID();
+    feeFineOwnersClient.create(new FeeFineOwnerBuilder()
+      .withId(servicePointOwnerId)
+      .withOwner("fee-fine-owner-11")
+      .withServicePointOwner(Collections.singletonList(servicePointOwner))
+    );
+
+    UUID feeFineId = UUID.randomUUID();
+    feeFinesClient.create(new FeeFineBuilder()
+      .withId(feeFineId)
+      .withFeeFineType("Overdue fine")
+      .withAutomatic(true)
+    );
+
+    CheckInByBarcodeResponse checkInResponse = loansFixture.checkInByBarcode(
+      new CheckInByBarcodeRequestBuilder()
+        .forItem(nod)
+        .on(new DateTime(2020, 1, 25, 12, 0, 0, DateTimeZone.UTC))
+        .at(checkInServicePointId));
+    JsonObject checkedInLoan = checkInResponse.getLoan();
+
+    Awaitility.await()
+      .atMost(3, TimeUnit.SECONDS)
+      .until(accountsClient::getAll, hasSize(1));
+
+    List<JsonObject> createdAccounts = accountsClient.getAll();
+
+    assertThat("Fee/fine record should be created", createdAccounts, hasSize(1));
+
+    JsonObject account = createdAccounts.get(0);
+
+    assertThat(account, isValidOverdueFine(checkedInLoan, nod,
+      homeLocation.getJson().getString("name"), servicePointOwnerId, feeFineId, 5.0));
+  }
+
+  @Test
+  public void overdueFineIsNotCreatedWhenThereIsNoOwnerForServicePoint() {
+    useFallbackPolicies(loanPoliciesFixture.canCirculateRolling().getId(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
+      noticePoliciesFixture.activeNotice().getId(),
+      overdueFinePoliciesFixture.facultyStandardDoNotCountClosed().getId(),
+      lostItemFeePoliciesFixture.facultyStandard().getId());
+
+    final IndividualResource james = usersFixture.james();
+    final UUID checkInServicePointId = servicePointsFixture.cd1().getId();
+    final IndividualResource homeLocation = locationsFixture.basedUponExampleLocation(
+      item -> item.withPrimaryServicePoint(checkInServicePointId));
+    final IndividualResource nod = itemsFixture.basedUponNod(item ->
+      item.withPermanentLocation(homeLocation.getId()));
+
+    final IndividualResource checkedOutLoan = loansFixture.checkOutByBarcode(nod, james,
+      new DateTime(2020, 1, 1, 12, 0, 0, DateTimeZone.UTC));
+
+    final UUID servicePointForOwner = servicePointsFixture.cd2().getId();
+
+    JsonObject servicePointOwner = new JsonObject();
+    servicePointOwner.put("value", servicePointForOwner.toString());
+    servicePointOwner.put("label", "label");
+    UUID ownerId = UUID.randomUUID();
+    feeFineOwnersClient.create(new FeeFineOwnerBuilder()
+      .withId(ownerId)
+      .withOwner("fee-fine-owner")
+      .withServicePointOwner(Collections.singletonList(servicePointOwner))
+    );
+
+    UUID feeFineId = UUID.randomUUID();
+    feeFinesClient.create(new FeeFineBuilder()
+      .withId(feeFineId)
+      .withFeeFineType("Overdue fine")
+      .withOwnerId(ownerId)
+      .withAutomatic(true)
+    );
+
+    CheckInByBarcodeResponse checkInResponse = loansFixture.checkInByBarcode(
+      new CheckInByBarcodeRequestBuilder()
+        .forItem(nod)
+        .on(new DateTime(2020, 1, 25, 12, 0, 0, DateTimeZone.UTC))
+        .at(checkInServicePointId));
+
+    Awaitility.waitAtMost(1, TimeUnit.SECONDS);
+
+    List<JsonObject> createdAccounts = accountsClient.getAll();
+
+    assertThat("No fee/fine records should have been created", createdAccounts, hasSize(0));
+  }
+
+  @Test
   public void overdueRecallFineShouldBeChargedWhenItemIsOverdueAfterRecall() {
     useFallbackPolicies(loanPoliciesFixture.canCirculateRolling().getId(),
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
