@@ -46,6 +46,12 @@ public class CqlQuery implements QueryParameter {
     return Result.of(() -> new CqlQuery(format("%s==\"%s\"", index, value), none()));
   }
 
+  public static Result<CqlQuery> exactMatchWithinArray(String arrayName, String key, String value) {
+    final String query = format("%s==\"*\\\"%s\\\": \\\"%s\\\"*\"", arrayName, key, value);
+
+    return Result.of(() -> new CqlQuery(query, none()));
+  }
+
   public static Result<CqlQuery> exactMatchAny(String indexName, Collection<String> values) {
     final List<String> filteredValues = filterNullValues(values);
 
