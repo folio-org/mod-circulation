@@ -46,12 +46,6 @@ public class CqlQuery implements QueryParameter {
     return Result.of(() -> new CqlQuery(format("%s==\"%s\"", index, value), none()));
   }
 
-  public static Result<CqlQuery> exactMatchWithinArray(String arrayName, String key, String value) {
-    final String query = format("%s==\"*\\\"%s\\\": \\\"%s\\\"*\"", arrayName, key, value);
-
-    return Result.of(() -> new CqlQuery(query, none()));
-  }
-
   public static Result<CqlQuery> exactMatchAny(String indexName, Collection<String> values) {
     final List<String> filteredValues = filterNullValues(values);
 
@@ -73,6 +67,10 @@ public class CqlQuery implements QueryParameter {
 
   public static Result<CqlQuery> lessThan(String index, Object value) {
     return Result.of(() -> new CqlQuery(format("%s<\"%s\"", index, value), none()));
+  }
+
+  public static Result<CqlQuery> notEqual(String index, Object value) {
+    return Result.of(() -> new CqlQuery(format("%s<>\"%s\"", index, value), none()));
   }
 
   private CqlQuery(String query, CqlSortBy sortBy) {
@@ -138,10 +136,6 @@ public class CqlQuery implements QueryParameter {
     CqlQuery otherCqlQuery = (CqlQuery) other;
 
     return StringUtils.equals(asText(), otherCqlQuery.asText());
-  }
-
-  public static Result<CqlQuery> from(String query) {
-    return Result.of(() -> new CqlQuery(query, none()));
   }
 
   @Override
