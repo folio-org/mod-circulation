@@ -1,6 +1,7 @@
 package org.folio.circulation.domain;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
+import static org.folio.circulation.support.JsonPropertyFetcher.getDateTimeProperty;
 import static org.folio.circulation.support.Result.succeeded;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
@@ -49,10 +50,13 @@ import io.vertx.core.json.JsonObject;
 public class OverdueFineCalculatorServiceTest {
   private static final UUID LOAN_ID = UUID.randomUUID();
   private static final UUID LOAN_USER_ID = UUID.randomUUID();
+  private static final DateTime DUE_DATE = new DateTime(2020, 1, 1, 0, 0, 0, DateTimeZone.UTC);
+  private static final DateTime RETURNED_DATE = new DateTime(2020, 3, 1, 0, 0, 0, DateTimeZone.UTC);
   private static final UUID ITEM_ID = UUID.randomUUID();
   private static final UUID ITEM_MATERIAL_TYPE_ID = UUID.randomUUID();
   private static final UUID FEE_FINE_OWNER_ID = UUID.randomUUID();
   private static final String FEE_FINE_OWNER = "fee-fine-owner";
+  private static final String LOCATION_NAME = "location-name";
   private static final UUID SERVICE_POINT_ID = UUID.randomUUID();
   private static final UUID FEE_FINE_ID = UUID.randomUUID();
   private static final UUID ACCOUNT_ID = UUID.randomUUID();
@@ -192,7 +196,7 @@ public class OverdueFineCalculatorServiceTest {
       .thenReturn(completedFuture(succeeded(periodCalculatorResult)));
     when(itemRepository.fetchItemRelatedRecords(any()))
       .thenReturn(completedFuture(succeeded(createItem())));
-    when(feeFineOwnerRepository.getFeeFineOwner(SERVICE_POINT_ID.toString()))
+    when(feeFineOwnerRepository.findOwnerForServicePoint(SERVICE_POINT_ID.toString()))
       .thenReturn(completedFuture(succeeded(createFeeFineOwner())));
     when(feeFineRepository.getFeeFine(FEE_FINE_TYPE, true))
       .thenReturn(completedFuture(succeeded(createFeeFine())));
@@ -227,12 +231,14 @@ public class OverdueFineCalculatorServiceTest {
     assertEquals(TITLE, account.getValue().getString("title"));
     assertEquals(BARCODE, account.getValue().getString("barcode"));
     assertEquals(CALL_NUMBER, account.getValue().getString("callNumber"));
-    assertEquals(SERVICE_POINT_ID.toString(), account.getValue().getString("location"));
+    assertEquals(LOCATION_NAME, account.getValue().getString("location"));
     assertEquals(ITEM_MATERIAL_TYPE_NAME, account.getValue().getString("materialType"));
     assertEquals(ITEM_MATERIAL_TYPE_ID.toString(), account.getValue().getString("materialTypeId"));
     assertEquals(LOAN_ID.toString(), account.getValue().getString("loanId"));
     assertEquals(LOAN_USER_ID.toString(), account.getValue().getString("userId"));
     assertEquals(ITEM_ID.toString(), account.getValue().getString("itemId"));
+    assertEquals(DUE_DATE, getDateTimeProperty(account.getValue(), "dueDate"));
+    assertEquals(RETURNED_DATE, getDateTimeProperty(account.getValue(), "returnedDate"));
 
     ArgumentCaptor<FeeFineActionStorageRepresentation> feeFineAction =
       ArgumentCaptor.forClass(FeeFineActionStorageRepresentation.class);
@@ -288,7 +294,7 @@ public class OverdueFineCalculatorServiceTest {
       .thenReturn(completedFuture(succeeded(periodCalculatorResult)));
     when(itemRepository.fetchItemRelatedRecords(any()))
       .thenReturn(completedFuture(succeeded(null)));
-    when(feeFineOwnerRepository.getFeeFineOwner(SERVICE_POINT_ID.toString()))
+    when(feeFineOwnerRepository.findOwnerForServicePoint(SERVICE_POINT_ID.toString()))
       .thenReturn(completedFuture(succeeded(createFeeFineOwner())));
     when(feeFineRepository.getFeeFine(FEE_FINE_TYPE, true))
       .thenReturn(completedFuture(succeeded(createFeeFine())));
@@ -324,7 +330,7 @@ public class OverdueFineCalculatorServiceTest {
       .thenReturn(completedFuture(succeeded(createItem())));
     when(feeFineRepository.getFeeFine(FEE_FINE_TYPE, true))
       .thenReturn(completedFuture(succeeded(createFeeFine())));
-    when(feeFineOwnerRepository.getFeeFineOwner(SERVICE_POINT_ID.toString()))
+    when(feeFineOwnerRepository.findOwnerForServicePoint(SERVICE_POINT_ID.toString()))
       .thenReturn(completedFuture(succeeded(null)));
 
     if (renewal) {
@@ -356,7 +362,7 @@ public class OverdueFineCalculatorServiceTest {
       .thenReturn(completedFuture(succeeded(createItem())));
     when(feeFineRepository.getFeeFine(FEE_FINE_TYPE, true))
       .thenReturn(completedFuture(succeeded(null)));
-    when(feeFineOwnerRepository.getFeeFineOwner(SERVICE_POINT_ID.toString()))
+    when(feeFineOwnerRepository.findOwnerForServicePoint(SERVICE_POINT_ID.toString()))
       .thenReturn(completedFuture(succeeded(createFeeFineOwner())));
 
     if (renewal) {
@@ -481,7 +487,7 @@ public class OverdueFineCalculatorServiceTest {
   private JsonObject createCheckInByBarcodeRequest() {
     return new CheckInByBarcodeRequestBuilder()
       .withItemBarcode(BARCODE)
-      .on(new DateTime(2020, 1, 1, 0, 0, 0, DateTimeZone.UTC))
+      .on(DUE_DATE)
       .at(UUID.randomUUID().toString())
       .create();
   }
@@ -494,9 +500,9 @@ public class OverdueFineCalculatorServiceTest {
     return new LoanBuilder()
       .withId(LOAN_ID)
       .withUserId(LOAN_USER_ID)
-      .withDueDate(new DateTime(2020, 1, 1, 0, 0, 0, DateTimeZone.UTC))
+      .withDueDate(DUE_DATE)
       .withStatus("Closed")
-      .withReturnDate(new DateTime(2020, 3, 1, 0, 0, 0, DateTimeZone.UTC))
+      .withReturnDate(RETURNED_DATE)
       .withDueDateChangedByRecall(dueDateChangedByRecall)
       .asDomainObject()
       .withOverdueFinePolicy(overdueFinePolicy);
@@ -516,7 +522,10 @@ public class OverdueFineCalculatorServiceTest {
 
     return Item.from(item)
       .withLocation(
-        Location.from(new LocationBuilder().withPrimaryServicePoint(SERVICE_POINT_ID).create()))
+        Location.from(new LocationBuilder()
+          .withName(LOCATION_NAME)
+          .withPrimaryServicePoint(SERVICE_POINT_ID)
+          .create()))
       .withInstance(new InstanceBuilder(TITLE, UUID.randomUUID()).create())
       .withMaterialType(materialType);
   }
@@ -570,7 +579,7 @@ public class OverdueFineCalculatorServiceTest {
         new AccountFeeFineTypeInfo(FEE_FINE_ID.toString(), FEE_FINE_TYPE),
         new AccountLoanInfo(LOAN_ID.toString(), LOAN_USER_ID.toString()),
         new AccountItemInfo(ITEM_ID.toString(), TITLE, BARCODE, CALL_NUMBER,
-          SERVICE_POINT_ID.toString(), ITEM_MATERIAL_TYPE_ID.toString())
+          LOCATION_NAME, ITEM_MATERIAL_TYPE_ID.toString())
       ),
       correctOverdueFine, correctOverdueFine, "Open", "Outstanding"
       );
