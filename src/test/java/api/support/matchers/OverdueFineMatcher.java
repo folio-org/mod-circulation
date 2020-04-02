@@ -35,8 +35,6 @@ public class OverdueFineMatcher {
         .getString("callNumber"))),
       hasJsonPath("location", UUIDMatcher.is(servicePointId)),
       hasJsonPath("materialTypeId", is(item.getJson().getString(ItemProperties.MATERIAL_TYPE_ID))),
-      hasJsonPath("materialType", is(loan.getJsonObject("item")
-        .getJsonObject("materialType").getString("name"))),
       hasJsonPath("loanId", UUIDMatcher.is(getUUIDProperty(loan, "id"))),
       hasJsonPath("userId", is(loan.getString("userId"))),
       hasJsonPath("itemId", UUIDMatcher.is(item.getId())),
