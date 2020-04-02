@@ -1,4 +1,9 @@
-## 18.1.0 2020-04-02
+## 18.0.3 2020-04-02
+
+* Increases page limit for fetching fee/fine owners (CIRC-702)
+* Adds due date and returned date to "Fee/Fine Details" page (CIRC-694)
+
+## 18.0.2 2020-04-02
 
 * Adds permissions for fetching lost fee and late fine policies when checking out (CIRC-700)
 
