@@ -2,6 +2,7 @@ package api.loans;
 
 import static api.support.APITestContext.getUserId;
 import static api.support.fixtures.AddressExamples.SiriusBlack;
+import static api.support.matchers.OverdueFineMatcher.isValidOverdueFine;
 import static api.support.matchers.PatronNoticeMatcher.hasEmailNoticeProperties;
 import static api.support.matchers.ResponseStatusCodeMatcher.hasStatus;
 import static api.support.matchers.TextDateTimeMatcher.withinSecondsAfter;
@@ -612,7 +613,7 @@ public class CheckInByBarcodeTests extends APITests {
     final IndividualResource nod = itemsFixture.basedUponNod(item ->
       item.withPermanentLocation(homeLocation.getId()));
 
-    final IndividualResource loan = loansFixture.checkOutByBarcode(nod, james,
+    final IndividualResource checkedOutLoan = loansFixture.checkOutByBarcode(nod, james,
       new DateTime(2020, 1, 1, 12, 0, 0, DateTimeZone.UTC));
 
     JsonObject servicePointOwner = new JsonObject();
@@ -633,10 +634,12 @@ public class CheckInByBarcodeTests extends APITests {
       .withAutomatic(true)
     );
 
-    loansFixture.checkInByBarcode(new CheckInByBarcodeRequestBuilder()
+    CheckInByBarcodeResponse checkInResponse = loansFixture.checkInByBarcode(
+      new CheckInByBarcodeRequestBuilder()
         .forItem(nod)
         .on(new DateTime(2020, 1, 25, 12, 0, 0, DateTimeZone.UTC))
         .at(checkInServicePointId));
+    JsonObject checkedInLoan = checkInResponse.getLoan();
 
     Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
@@ -648,7 +651,7 @@ public class CheckInByBarcodeTests extends APITests {
 
     JsonObject account = createdAccounts.get(0);
 
-    assertThat(account, OverdueFineMatcher.isValidOverdueFine(loan, nod,
+    assertThat(account, isValidOverdueFine(checkedInLoan, nod,
       servicePointsFixture.cd1().getId(), ownerId, feeFineId, 5.0));
 
     Awaitility.await()
@@ -660,7 +663,7 @@ public class CheckInByBarcodeTests extends APITests {
 
     JsonObject createdFeeFineAction = createdFeeFineActions.get(0);
     assertThat("user ID is included",
-      createdFeeFineAction.getString("userId"), is(loan.getJson().getString("userId")));
+      createdFeeFineAction.getString("userId"), is(checkedInLoan.getString("userId")));
     assertThat("account ID is included",
       createdFeeFineAction.getString("accountId"), is(account.getString("id")));
     assertThat("balance is included",
@@ -669,7 +672,124 @@ public class CheckInByBarcodeTests extends APITests {
       createdFeeFineAction.getDouble("amountAction"), is(account.getDouble("amount")));
     assertThat("typeAction is included",
       createdFeeFineAction.getString("typeAction"), is("Overdue fine"));
+  }
 
+  @Test
+  public void overdueFineIsChargedForCorrectOwnerWhenMultipleOwnersExist() {
+    useFallbackPolicies(loanPoliciesFixture.canCirculateRolling().getId(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
+      noticePoliciesFixture.activeNotice().getId(),
+      overdueFinePoliciesFixture.facultyStandardDoNotCountClosed().getId(),
+      lostItemFeePoliciesFixture.facultyStandard().getId());
+
+    final IndividualResource james = usersFixture.james();
+    final UUID checkInServicePointId = servicePointsFixture.cd1().getId();
+    final IndividualResource homeLocation = locationsFixture.basedUponExampleLocation(
+      item -> item.withPrimaryServicePoint(checkInServicePointId));
+    final IndividualResource nod = itemsFixture.basedUponNod(item ->
+      item.withPermanentLocation(homeLocation.getId()));
+
+    final IndividualResource checkedOutLoan = loansFixture.checkOutByBarcode(nod, james,
+      new DateTime(2020, 1, 1, 12, 0, 0, DateTimeZone.UTC));
+
+    for (int i = 0; i < 10; i++) {
+      feeFineOwnersClient.create(new FeeFineOwnerBuilder()
+        .withId(UUID.randomUUID())
+        .withOwner("fee-fine-owner-" + i)
+      );
+    }
+
+    Awaitility.await()
+      .atMost(3, TimeUnit.SECONDS)
+      .until(feeFineOwnersClient::getAll, hasSize(10));
+
+    JsonObject servicePointOwner = new JsonObject();
+    servicePointOwner.put("value", homeLocation.getJson().getString("primaryServicePoint"));
+    servicePointOwner.put("label", "label");
+    UUID servicePointOwnerId = UUID.randomUUID();
+    feeFineOwnersClient.create(new FeeFineOwnerBuilder()
+      .withId(servicePointOwnerId)
+      .withOwner("fee-fine-owner")
+      .withServicePointOwner(Collections.singletonList(servicePointOwner))
+    );
+
+    UUID feeFineId = UUID.randomUUID();
+    feeFinesClient.create(new FeeFineBuilder()
+      .withId(feeFineId)
+      .withFeeFineType("Overdue fine")
+      .withAutomatic(true)
+    );
+
+    CheckInByBarcodeResponse checkInResponse = loansFixture.checkInByBarcode(
+      new CheckInByBarcodeRequestBuilder()
+        .forItem(nod)
+        .on(new DateTime(2020, 1, 25, 12, 0, 0, DateTimeZone.UTC))
+        .at(checkInServicePointId));
+    JsonObject checkedInLoan = checkInResponse.getLoan();
+
+    Awaitility.await()
+      .atMost(3, TimeUnit.SECONDS)
+      .until(accountsClient::getAll, hasSize(1));
+
+    List<JsonObject> createdAccounts = accountsClient.getAll();
+
+    assertThat("Fee/fine record should be created", createdAccounts, hasSize(1));
+
+    JsonObject account = createdAccounts.get(0);
+
+    assertThat(account, isValidOverdueFine(checkedInLoan, nod,
+      checkInServicePointId, servicePointOwnerId, feeFineId, 5.0));
+  }
+
+  @Test
+  public void overdueFineIsNotCreatedWhenThereIsNoOwnerForServicePoint() {
+    useFallbackPolicies(loanPoliciesFixture.canCirculateRolling().getId(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
+      noticePoliciesFixture.activeNotice().getId(),
+      overdueFinePoliciesFixture.facultyStandardDoNotCountClosed().getId(),
+      lostItemFeePoliciesFixture.facultyStandard().getId());
+
+    final IndividualResource james = usersFixture.james();
+    final UUID checkInServicePointId = servicePointsFixture.cd1().getId();
+    final IndividualResource homeLocation = locationsFixture.basedUponExampleLocation(
+      item -> item.withPrimaryServicePoint(checkInServicePointId));
+    final IndividualResource nod = itemsFixture.basedUponNod(item ->
+      item.withPermanentLocation(homeLocation.getId()));
+
+    final IndividualResource checkedOutLoan = loansFixture.checkOutByBarcode(nod, james,
+      new DateTime(2020, 1, 1, 12, 0, 0, DateTimeZone.UTC));
+
+    final UUID servicePointForOwner = servicePointsFixture.cd2().getId();
+
+    JsonObject servicePointOwner = new JsonObject();
+    servicePointOwner.put("value", servicePointForOwner.toString());
+    servicePointOwner.put("label", "label");
+    UUID ownerId = UUID.randomUUID();
+    feeFineOwnersClient.create(new FeeFineOwnerBuilder()
+      .withId(ownerId)
+      .withOwner("fee-fine-owner")
+      .withServicePointOwner(Collections.singletonList(servicePointOwner))
+    );
+
+    UUID feeFineId = UUID.randomUUID();
+    feeFinesClient.create(new FeeFineBuilder()
+      .withId(feeFineId)
+      .withFeeFineType("Overdue fine")
+      .withOwnerId(ownerId)
+      .withAutomatic(true)
+    );
+
+    CheckInByBarcodeResponse checkInResponse = loansFixture.checkInByBarcode(
+      new CheckInByBarcodeRequestBuilder()
+        .forItem(nod)
+        .on(new DateTime(2020, 1, 25, 12, 0, 0, DateTimeZone.UTC))
+        .at(checkInServicePointId));
+
+    Awaitility.waitAtMost(1, TimeUnit.SECONDS);
+
+    List<JsonObject> createdAccounts = accountsClient.getAll();
+
+    assertThat("No fee/fine records should have been created", createdAccounts, hasSize(0));
   }
 
   @Test
@@ -691,7 +811,7 @@ public class CheckInByBarcodeTests extends APITests {
     DateTime recallRequestExpirationDate = checkOutDate.plusDays(5);
     DateTime checkInDate = checkOutDate.plusDays(10);
 
-    final IndividualResource loan = loansFixture.checkOutByBarcode(nod, james, checkOutDate);
+    loansFixture.checkOutByBarcode(nod, james, checkOutDate);
 
     Address address = SiriusBlack();
     IndividualResource requester = usersFixture.steve(builder ->
@@ -727,10 +847,12 @@ public class CheckInByBarcodeTests extends APITests {
       .withAutomatic(true)
     );
 
-    loansFixture.checkInByBarcode(new CheckInByBarcodeRequestBuilder()
+    CheckInByBarcodeResponse checkInResponse = loansFixture.checkInByBarcode(
+      new CheckInByBarcodeRequestBuilder()
       .forItem(nod)
       .on(checkInDate)
       .at(checkInServicePointId));
+    JsonObject checkedInLoan = checkInResponse.getLoan();
 
     Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
@@ -742,8 +864,8 @@ public class CheckInByBarcodeTests extends APITests {
 
     JsonObject account = createdAccounts.get(0);
 
-    assertThat(account, OverdueFineMatcher.isValidOverdueFine(loan, nod,
-      servicePointsFixture.cd1().getId(), ownerId, feeFineId, 10.0));
+    assertThat(account, isValidOverdueFine(checkedInLoan, nod, servicePointsFixture.cd1().getId(),
+      ownerId, feeFineId, 10.0));
   }
 
   @Test

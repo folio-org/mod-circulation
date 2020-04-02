@@ -7,6 +7,7 @@ import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatchAny;
 import static org.folio.circulation.support.http.client.CqlQuery.greaterThan;
 import static org.folio.circulation.support.http.client.CqlQuery.lessThan;
+import static org.folio.circulation.support.http.client.CqlQuery.notEqual;
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.is;
 import static org.joda.time.DateTime.now;
@@ -104,6 +105,14 @@ public class CqlQueryTests {
     Result<CqlQuery> query = greaterThan("lastTime", dateTime);
 
     assertThat(query.value().asText(), is(format("lastTime>\"%s\"", dateTime)));
+  }
+
+  @Test
+  public void canApplyNotEqualOperator() {
+    DateTime dateTime = now(UTC);
+    Result<CqlQuery> query = notEqual("lastTime", dateTime);
+
+    assertThat(query.value().asText(), is(format("lastTime<>\"%s\"", dateTime)));
   }
 
   @Test
