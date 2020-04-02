@@ -738,7 +738,7 @@ public class CheckInByBarcodeTests extends APITests {
     JsonObject account = createdAccounts.get(0);
 
     assertThat(account, isValidOverdueFine(checkedInLoan, nod,
-      homeLocation.getJson().getString("name"), servicePointOwnerId, feeFineId, 5.0));
+      checkInServicePointId, servicePointOwnerId, feeFineId, 5.0));
   }
 
   @Test
