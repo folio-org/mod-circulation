@@ -6,7 +6,6 @@ import static org.folio.circulation.support.Result.succeeded;
 
 import java.util.concurrent.CompletableFuture;
 
-import org.apache.commons.lang.StringUtils;
 import org.folio.circulation.domain.notice.schedule.DueDateScheduledNoticeService;
 import org.folio.circulation.domain.policy.LoanPolicy;
 import org.folio.circulation.domain.policy.LoanPolicyRepository;
