@@ -1,3 +1,7 @@
+## 18.1.0 2020-04-02
+
+* Adds permissions for fetching lost fee and late fine policies when checking out (CIRC-700)
+
 ## 18.0.1 2020-03-31
 
 * Fetches loans related to requests in batches partitioned by `itemId` (CIRC-699)
