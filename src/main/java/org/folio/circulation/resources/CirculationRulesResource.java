@@ -28,6 +28,7 @@ import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.JsonResponseResult;
 import org.folio.circulation.support.OkJsonResponseResult;
 import org.folio.circulation.support.Result;
+import org.folio.circulation.support.http.client.PageLimit;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.server.ForwardResponse;
 import org.folio.circulation.support.http.server.SuccessResponse;
@@ -50,6 +51,7 @@ public class CirculationRulesResource extends Resource {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
   private static final int FIRST_ELEMENT_OF_LIST = 0;
   private static final int POLICY_ID_POSITION_NUMBER = 1;
+  private static final PageLimit POLICY_PAGE_LIMIT = PageLimit.limit(1000);
   private final String rootPath;
 
   /**
@@ -213,7 +215,7 @@ public class CirculationRulesResource extends Resource {
   private CompletableFuture<Result<Map<String, Set<String>>>> getPolicyIdsByType(
     CollectionResourceClient client, String entityName, String policyType) {
 
-    return client.get()
+    return client.get(POLICY_PAGE_LIMIT)
       .thenApply(r -> r.next(response -> mapResponseToIds(response, entityName)))
       .thenApply(r -> r.map(MultipleRecords::getRecords))
       .thenApply(r -> r.map(collection -> collection.stream()
