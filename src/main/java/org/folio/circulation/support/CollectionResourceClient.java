@@ -53,6 +53,10 @@ public class CollectionResourceClient implements GetManyRecordsClient {
     return client.get(collectionRoot.toString());
   }
 
+  public CompletableFuture<Result<Response>> get(PageLimit pageLimit) {
+    return client.get(collectionRoot, pageLimit);
+  }
+
   public CompletableFuture<Result<Response>> get(String id) {
     return client.get(individualRecordUrl(id));
   }
