@@ -1,3 +1,7 @@
+## 18.0.3 2020-04-03
+
+* Fetches 1000 policies when checking if policies used in rules exist (CIRC-705)
+
 ## 18.0.3 2020-04-02
 
 * Increases page limit for fetching fee/fine owners (CIRC-702)
