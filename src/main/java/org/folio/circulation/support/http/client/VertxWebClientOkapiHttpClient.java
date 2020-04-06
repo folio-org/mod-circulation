@@ -1,6 +1,6 @@
 package org.folio.circulation.support.http.client;
 
-import static java.time.temporal.ChronoUnit.SECONDS;
+import static java.time.temporal.ChronoUnit.MINUTES;
 import static org.apache.http.HttpHeaders.ACCEPT;
 import static org.folio.circulation.support.Result.failed;
 import static org.folio.circulation.support.Result.succeeded;
@@ -28,7 +28,7 @@ import io.vertx.ext.web.client.HttpResponse;
 import io.vertx.ext.web.client.WebClient;
 
 public class VertxWebClientOkapiHttpClient implements OkapiHttpClient {
-  private static final Duration DEFAULT_TIMEOUT = Duration.of(20, SECONDS);
+  private static final Duration DEFAULT_TIMEOUT = Duration.of(5, MINUTES);
 
   private final WebClient webClient;
   private final URL okapiUrl;
