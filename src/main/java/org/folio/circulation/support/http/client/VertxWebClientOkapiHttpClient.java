@@ -32,14 +32,13 @@ public class VertxWebClientOkapiHttpClient implements OkapiHttpClient {
 
   private final WebClient webClient;
   private final URL okapiUrl;
-  private String tenantId;
-  private String token;
+  private final String tenantId;
+  private final String token;
   private final String userId;
-  private String requestId;
+  private final String requestId;
 
-  public static OkapiHttpClient createClientUsing(
-    HttpClient httpClient, URL okapiUrl, String tenantId, String token,
-    String userId, String requestId) {
+  public static OkapiHttpClient createClientUsing(HttpClient httpClient,
+    URL okapiUrl, String tenantId, String token, String userId, String requestId) {
 
     return new VertxWebClientOkapiHttpClient(WebClient.wrap(httpClient),
       okapiUrl, tenantId, token, userId, requestId);
