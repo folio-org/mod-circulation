@@ -1,3 +1,7 @@
+## 18.0.6 2020-04-06
+
+* Extends default HTTP request timeout to 5 minutes (CIRC-710)
+
 ## 18.0.5 2020-04-06
 
 * Extends default HTTP request timeout to 20 seconds (CIRC-709)
