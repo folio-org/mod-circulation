@@ -1,4 +1,8 @@
-## 18.0.3 2020-04-03
+## 18.0.5 2020-04-06
+
+* Extends default HTTP request timeout to 20 seconds (CIRC-709)
+
+## 18.0.4 2020-04-03
 
 * Fetches 1000 policies when checking if policies used in rules exist (CIRC-705)
 
