@@ -28,7 +28,7 @@ import io.vertx.ext.web.client.HttpResponse;
 import io.vertx.ext.web.client.WebClient;
 
 public class VertxWebClientOkapiHttpClient implements OkapiHttpClient {
-  private static final Duration DEFAULT_TIMEOUT = Duration.of(5, SECONDS);
+  private static final Duration DEFAULT_TIMEOUT = Duration.of(20, SECONDS);
 
   private final WebClient webClient;
   private final URL okapiUrl;
