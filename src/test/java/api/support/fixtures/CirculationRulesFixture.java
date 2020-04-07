@@ -74,8 +74,7 @@ public class CirculationRulesFixture {
       response.getStatusCode(), is(204));
   }
 
-  public Response attemptUpdateCirculationRules(
-    String rules, String policyType) {
+  public Response attemptUpdateCirculationRules(String rules) {
 
     JsonObject circulationRulesRequest = new JsonObject()
       .put("rulesAsText", rules);
