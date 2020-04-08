@@ -1,3 +1,7 @@
+## 18.0.7 2020-04-08
+
+* Location name is displayed on Fee/Fine details page (CIRC-698)
+
 ## 18.0.6 2020-04-06
 
 * Extends default HTTP request timeout to 5 minutes (CIRC-710)
