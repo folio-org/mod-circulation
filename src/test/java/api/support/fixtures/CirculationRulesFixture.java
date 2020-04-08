@@ -94,7 +94,7 @@ public class CirculationRulesFixture {
       .statusCode(204);
   }
 
-  private String soleFallbackPolicyRule(UUID loanPolicyId, UUID requestPolicyId,
+  public String soleFallbackPolicyRule(UUID loanPolicyId, UUID requestPolicyId,
       UUID noticePolicyId, UUID overdueFinePolicyId, UUID lostItemFeePolicyId) {
 
     return soleFallbackPolicyRule(loanPolicyId.toString(),
