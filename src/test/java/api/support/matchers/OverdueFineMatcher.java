@@ -20,7 +20,7 @@ import io.vertx.core.json.JsonObject;
 public class OverdueFineMatcher {
 
   public static Matcher<JsonObject> isValidOverdueFine(JsonObject loan,
-    IndividualResource item, UUID servicePointId, UUID ownerId, UUID feeFineId, Double amount) {
+    IndividualResource item, String location, UUID ownerId, UUID feeFineId, Double amount) {
 
     List<Matcher<? super String>> matchers = new ArrayList<>(Arrays.asList(
       hasJsonPath("ownerId", UUIDMatcher.is(ownerId)),
@@ -33,7 +33,7 @@ public class OverdueFineMatcher {
       hasJsonPath("barcode", is(item.getJson().getString("barcode"))),
       hasJsonPath("callNumber", is(item.getJson().getJsonObject("effectiveCallNumberComponents")
         .getString("callNumber"))),
-      hasJsonPath("location", UUIDMatcher.is(servicePointId)),
+      hasJsonPath("location", is(location)),
       hasJsonPath("materialTypeId", is(item.getJson().getString(ItemProperties.MATERIAL_TYPE_ID))),
       hasJsonPath("loanId", UUIDMatcher.is(getUUIDProperty(loan, "id"))),
       hasJsonPath("userId", is(loan.getString("userId"))),
