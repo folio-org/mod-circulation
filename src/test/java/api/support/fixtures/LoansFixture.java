@@ -138,8 +138,17 @@ public class LoansFixture {
 
     JsonObject request = builder.create();
 
-    return restAssuredClient.post(request,
-      declareLoanItemLostURL(loanId.toString()), "declare-item-lost-request");
+    return restAssuredClient.post(request, declareLoanItemLostURL(loanId.toString()),
+      204, "declare-item-lost-request");
+  }
+
+  public Response attemptDeclareItemLost(
+    UUID loanId, DeclareItemLostRequestBuilder builder) {
+
+    JsonObject request = builder.create();
+
+    return restAssuredClient.post(request, declareLoanItemLostURL(loanId.toString()),
+      "attempt-declare-item-lost-request");
   }
 
   public Response declareItemLost(JsonObject loanJson) {

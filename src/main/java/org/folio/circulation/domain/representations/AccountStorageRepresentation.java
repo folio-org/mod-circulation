@@ -2,6 +2,7 @@ package org.folio.circulation.domain.representations;
 
 import static org.folio.circulation.support.JsonPropertyWriter.write;
 
+import java.math.BigDecimal;
 import java.util.UUID;
 
 import org.folio.circulation.domain.FeeFine;
@@ -43,5 +44,11 @@ public class AccountStorageRepresentation extends JsonObject {
     JsonObject status = new JsonObject();
     JsonPropertyWriter.write(status, "name", "Open");
     this.put("status", status);
+  }
+
+  public AccountStorageRepresentation(Loan loan, Item item, FeeFineOwner feeFineOwner,
+    FeeFine feeFine, BigDecimal amount) {
+
+    this(loan, item, feeFineOwner, feeFine, amount.doubleValue());
   }
 }
