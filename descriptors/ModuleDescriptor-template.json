@@ -1242,7 +1242,8 @@
         "inventory-storage.loan-types.item.get",
         "scheduled-notice-storage.scheduled-notices.item.post",
         "usergroups.collection.get",
-        "usergroups.item.get"
+        "usergroups.item.get",
+        "lost-item-fees-policies.collection.get"
       ],
       "visible": false
     },
