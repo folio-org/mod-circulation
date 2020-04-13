@@ -18,6 +18,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.core.Is.is;
+import static org.hamcrest.core.IsNot.not;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -67,7 +68,9 @@ public class CheckInByBarcodeTests extends APITests {
     final IndividualResource homeLocation = locationsFixture.basedUponExampleLocation(
       item -> item.withPrimaryServicePoint(checkInServicePointId));
 
-    final IndividualResource nod = itemsFixture.basedUponNod(
+    final String anotherLocationId = locationsFixture.thirdFloor().getId().toString();
+
+    IndividualResource nod = itemsFixture.basedUponNod(
       item -> item
         .withTemporaryLocation(homeLocation.getId())
         .withEnumeration("v.70:no.1-6")
@@ -78,6 +81,12 @@ public class CheckInByBarcodeTests extends APITests {
       new DateTime(2018, 3, 1, 13, 25, 46, DateTimeZone.UTC));
 
     DateTime expectedSystemReturnDate = DateTime.now(DateTimeZone.UTC);
+    // Change the item's effective location to verify itemEffectiveLocationIdAtCheckOut is unchanged
+    JsonObject update = nod.getJson();
+    update.put("temporaryLocationId", anotherLocationId);
+    itemsFixture.updateItem(nod.getId(), update);
+
+    nod = new IndividualResource( itemsFixture.getItem(nod.getId()) );
 
     final CheckInByBarcodeResponse checkInResponse = loansFixture.checkInByBarcode(
       new CheckInByBarcodeRequestBuilder()
@@ -129,6 +138,13 @@ public class CheckInByBarcodeTests extends APITests {
 
     assertThat("ID should be included for item",
       itemFromResponse.getString("id"), is(nod.getId()));
+
+    assertThat("New location should not equal old location",
+      homeLocation.getId().toString(), not(anotherLocationId));
+    assertThat("The item's temporary location ID should be updated",
+      nod.getJson().getString("temporaryLocationId"), is(anotherLocationId));
+    assertThat("itemEffectiveLocationIdAtCheckOut should match the original location ID at checkout",
+      loanRepresentation.getString("itemEffectiveLocationIdAtCheckOut"), is(homeLocation.getId().toString()));
 
     assertThat("barcode is included for item",
       itemFromResponse.getString("barcode"), is("565578437802"));
