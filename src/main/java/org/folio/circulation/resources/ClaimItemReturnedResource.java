@@ -46,7 +46,7 @@ public class ClaimItemReturnedResource extends Resource {
     final ChangeItemStatusService changeItemStatusService =
       new ChangeItemStatusService(clients);
 
-    return changeItemStatusService.getLoan(request)
+    return changeItemStatusService.getOpenLoan(request)
       .thenApply(loan -> declareLoanClaimedReturned(loan, request))
       .thenCompose(changeItemStatusService::updateLoanAndItem);
   }

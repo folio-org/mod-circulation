@@ -22,7 +22,7 @@ public class ChangeItemStatusService {
       noLocationMaterialTypeAndLoanTypeInstance(clients));
   }
 
-  public <T extends ChangeItemStatusRequest> CompletableFuture<Result<Loan>> getLoan(T request) {
+  public <T extends ChangeItemStatusRequest> CompletableFuture<Result<Loan>> getOpenLoan(T request) {
     return loanRepository.getById(request.getLoanId())
       .thenApply(LoanValidator::refuseWhenLoanIsClosed);
   }
