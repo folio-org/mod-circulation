@@ -18,8 +18,7 @@ public class ChangeDueDateRequestBuilder implements Builder {
     this(null, DateTime.now(DateTimeZone.UTC));
   }
 
-  private ChangeDueDateRequestBuilder(
-    String loanId, DateTime dueDate) {
+  private ChangeDueDateRequestBuilder(String loanId, DateTime dueDate) {
 
     this.dueDate = dueDate;
     this.loanId = loanId;

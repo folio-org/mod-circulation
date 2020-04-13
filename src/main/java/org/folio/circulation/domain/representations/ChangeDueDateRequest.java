@@ -24,16 +24,8 @@ public class ChangeDueDateRequest {
   public static Result<ChangeDueDateRequest> from(JsonObject json,
       String loanId) {
 
-    final DateTime dueDate;
-    try {
-      dueDate = getDateTimeProperty(json, DUE_DATE);
-    } catch (Exception e) {
-        return failedValidation(
-          e.getMessage(), DUE_DATE,
-          getProperty(json, DUE_DATE));
-      }
-
-    return succeeded(new ChangeDueDateRequest(loanId, dueDate));
+    return Result.of(() -> getDateTimeProperty(json, DUE_DATE))
+      .map(dueDate -> new ChangeDueDateRequest(loanId, dueDate));
   }
 
   public String getLoanId() {
