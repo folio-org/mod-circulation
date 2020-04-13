@@ -174,7 +174,7 @@ public class CirculationRulesAPITests extends APITests {
   public void canUpdateCirculationRulesWithTwentyExistingLoanPolicies() {
 
     Set<UUID> loanPolicyIds = getSetOfPolicyIds(20);
-    addPoliciesToLoanPolicyFixture(loanPolicyIds);
+    createLoanPolicies(loanPolicyIds);
 
     loanPolicyIds.forEach(loanPolicyId -> {
       String rule = circulationRulesFixture.soleFallbackPolicyRule(
@@ -193,7 +193,7 @@ public class CirculationRulesAPITests extends APITests {
   public void canUpdateCirculationRulesWithTwentyExistingNoticePolicies() {
 
     Set<UUID> noticePolicyIds = getSetOfPolicyIds(20);
-    addPoliciesToNoticePolicyFixture(noticePolicyIds);
+    createNoticePolicies(noticePolicyIds);
 
     noticePolicyIds.forEach(noticePolicyId -> {
       String rule = circulationRulesFixture.soleFallbackPolicyRule(
@@ -235,7 +235,7 @@ public class CirculationRulesAPITests extends APITests {
   public void canUpdateCirculationRulesWithTwentyExistingOverdueFinePolicies() {
 
     Set<UUID> overdueFinePolicyIds = getSetOfPolicyIds(20);
-    addPoliciesToOverdueFinePolicyFixture(overdueFinePolicyIds);
+    createOverdueFinePolicies(overdueFinePolicyIds);
 
     overdueFinePolicyIds.forEach(overdueFinePolicyId -> {
       String rule = circulationRulesFixture.soleFallbackPolicyRule(
@@ -255,7 +255,7 @@ public class CirculationRulesAPITests extends APITests {
   public void canUpdateCirculationRulesWithTwentyExistingLostItemFeePolicies() {
 
     Set<UUID> lostItemFeePolicyIds = getSetOfPolicyIds(20);
-    addPoliciesToLostItemFeePolicyFixture(lostItemFeePolicyIds);
+    createLostItemFeePolicies(lostItemFeePolicyIds);
 
     lostItemFeePolicyIds.forEach(lostItemFeePolicyId -> {
       String rule = circulationRulesFixture.soleFallbackPolicyRule(
@@ -318,28 +318,28 @@ public class CirculationRulesAPITests extends APITests {
     return ids;
   }
 
-  private void addPoliciesToLoanPolicyFixture(Set<UUID> lpIds) {
+  private void createLoanPolicies(Set<UUID> lpIds) {
     lpIds.forEach(id -> loanPoliciesFixture.create(
       new LoanPolicyBuilder()
         .withId(id)
         .withName("Example LoanPolicy " + id)));
   }
 
-  private void addPoliciesToNoticePolicyFixture(Set<UUID> lpIds) {
+  private void createNoticePolicies(Set<UUID> lpIds) {
     lpIds.forEach(id -> noticePoliciesFixture.create(
       new NoticePolicyBuilder()
         .withId(id)
         .withName("Example NoticePolicy " + id)));
   }
 
-  private void addPoliciesToOverdueFinePolicyFixture(Set<UUID> ofpIds) {
+  private void createOverdueFinePolicies(Set<UUID> ofpIds) {
     ofpIds.forEach(id -> overdueFinePoliciesFixture.create(
       new OverdueFinePolicyBuilder()
         .withId(id)
         .withName("Example OverdueFinePolicy " + id)));
   }
 
-  private void addPoliciesToLostItemFeePolicyFixture(Set<UUID> ofpIds) {
+  private void createLostItemFeePolicies(Set<UUID> ofpIds) {
     ofpIds.forEach(id -> lostItemFeePoliciesFixture.create(
       new LostItemFeePolicyBuilder()
         .withId(id)
