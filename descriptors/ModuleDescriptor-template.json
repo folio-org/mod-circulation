@@ -1208,6 +1208,7 @@
         "circulation.rules.loan-policy.get",
         "circulation.rules.request-policy.get",
         "circulation.rules.overdue-fine-policy.get",
+        "lost-item-fees-policies.collection.get",
         "circulation-storage.requests.collection.get",
         "circulation-storage.requests.item.put",
         "circulation-storage.request-batch.item.post",
@@ -1242,8 +1243,7 @@
         "inventory-storage.loan-types.item.get",
         "scheduled-notice-storage.scheduled-notices.item.post",
         "usergroups.collection.get",
-        "usergroups.item.get",
-        "lost-item-fees-policies.collection.get"
+        "usergroups.item.get"
       ],
       "visible": false
     },
