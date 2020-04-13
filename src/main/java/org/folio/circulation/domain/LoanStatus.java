@@ -16,6 +16,13 @@ public enum LoanStatus {
     return value;
   }
 
+  /**
+   * Returns enum constant that associated with the given value.
+   *
+   * @param value - Value of a constant.
+   * @return LoanStatus enum constant or null if there is no such constant with
+   * the given value
+   */
   public static LoanStatus fromValue(String value) {
     return Arrays.stream(values())
       .filter(enumElement -> enumElement.getValue().equals(value))

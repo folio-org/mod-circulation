@@ -188,15 +188,13 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
       return failedDueToServerError("Loan does not have a status");
     }
 
-    switch (getStatus()) {
-      case OPEN:
-      case CLOSED:
-        return succeeded(null);
-
-      default:
-        return failedValidation("Loan status must be \"Open\" or \"Closed\"",
-          STATUS, getStatusName());
+    // Provided status name is not present in the enum
+    if (getStatus() == null) {
+      return failedValidation("Loan status must be \"Open\" or \"Closed\"",
+        STATUS, getStatusName());
     }
+
+    return succeeded(null);
   }
 
   public Result<Void> openLoanHasUserId() {
