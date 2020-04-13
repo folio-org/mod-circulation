@@ -7,7 +7,7 @@ import org.folio.circulation.support.http.client.Response;
 
 import api.support.RestAssuredClient;
 import api.support.builders.ClaimItemReturnedRequestBuilder;
-import api.support.builders.DeclareItemClaimedReturnedAsMissingRequestBuilder;
+import api.support.builders.DeclareClaimedReturnedItemAsMissingRequestBuilder;
 
 public class ClaimItemReturnedFixture {
   private final RestAssuredClient restAssuredClient;
@@ -26,19 +26,19 @@ public class ClaimItemReturnedFixture {
       claimItemReturnedURL(request.getLoanId()), "attempt-claim-item-returned-request");
   }
 
-  public Response declareItemClaimedReturnedAsMissing(
-    DeclareItemClaimedReturnedAsMissingRequestBuilder request) {
+  public Response declareClaimedReturnedItemAsMissing(
+    DeclareClaimedReturnedItemAsMissingRequestBuilder request) {
 
     return restAssuredClient.post(request.create(),
       declareClaimedReturnedItemAsMissingUrl(request.getLoanId()), 204,
-      "declare-item-claimed-returned-as-missing-request");
+      "declare-claimed-returned-item-as-missing-request");
   }
 
-  public Response attemptDeclareItemClaimedReturnedAsMissing(
-    DeclareItemClaimedReturnedAsMissingRequestBuilder request) {
+  public Response attemptDeclareClaimedReturnedItemAsMissing(
+    DeclareClaimedReturnedItemAsMissingRequestBuilder request) {
 
     return restAssuredClient.post(request.create(),
       declareClaimedReturnedItemAsMissingUrl(request.getLoanId()),
-      "attempt-declare-item-claimed-returned-as-missing-request");
+      "attempt-declare-claimed-returned-item-as-missing-request");
   }
 }

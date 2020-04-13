@@ -1,14 +1,14 @@
 package org.folio.circulation.resources;
 
-import static org.folio.circulation.domain.ClaimItemReturnedRequest.ITEM_CLAIMED_RETURNED_DATE;
 import static org.folio.circulation.support.Result.failed;
 import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 
 import java.util.concurrent.CompletableFuture;
 
-import org.folio.circulation.domain.ClaimItemReturnedRequest;
 import org.folio.circulation.domain.Loan;
+import org.folio.circulation.domain.representations.ChangeItemStatusRequest;
+import org.folio.circulation.domain.validation.NotInItemStatusValidator;
 import org.folio.circulation.services.ChangeItemStatusService;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.NoContentResult;
@@ -21,51 +21,52 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 
-public class ClaimItemReturnedResource extends Resource {
-  public ClaimItemReturnedResource(HttpClient client) {
+public class DeclareClaimedReturnedItemAsMissingResource extends Resource {
+
+  public DeclareClaimedReturnedItemAsMissingResource(HttpClient client) {
     super(client);
   }
 
   @Override
   public void register(Router router) {
-    new RouteRegistration("/circulation/loans/:id/claim-item-returned", router)
-      .create(this::claimItemReturned);
+    new RouteRegistration("/circulation/loans/:id/declare-claimed-returned-item-as-missing", router)
+      .create(this::declareClaimedReturnedItemAsMissing);
   }
 
-  private void claimItemReturned(RoutingContext routingContext) {
+  private void declareClaimedReturnedItemAsMissing(RoutingContext routingContext) {
     createRequest(routingContext)
-      .after(request -> processClaimItemReturned(routingContext, request))
+      .after(request -> processDeclareClaimedReturnedItemAsMissing(routingContext, request))
       .thenApply(NoContentResult::from)
       .thenAccept(result -> result.writeTo(routingContext.response()));
   }
 
-  private CompletableFuture<Result<Loan>> processClaimItemReturned(
-    RoutingContext routingContext, ClaimItemReturnedRequest request) {
+  private CompletableFuture<Result<Loan>> processDeclareClaimedReturnedItemAsMissing(
+    RoutingContext routingContext, ChangeItemStatusRequest request) {
 
     final Clients clients = Clients.create(new WebContext(routingContext), client);
     final ChangeItemStatusService changeItemStatusService =
       new ChangeItemStatusService(clients);
 
     return changeItemStatusService.getLoan(request)
-      .thenApply(loan -> declareLoanClaimedReturned(loan, request))
+      .thenApply(NotInItemStatusValidator::refuseWhenItemIsNotClaimedReturned)
+      .thenApply(loanResult -> declareLoanMissing(loanResult, request))
       .thenCompose(changeItemStatusService::updateLoanAndItem);
   }
 
-  private Result<Loan> declareLoanClaimedReturned(Result<Loan> loanResult, ClaimItemReturnedRequest request) {
-    return loanResult.map(loan -> loan
-      .claimItemReturned(request.getComment(), request.getItemClaimedReturnedDateTime()));
+  private Result<Loan> declareLoanMissing(Result<Loan> loanResult, ChangeItemStatusRequest request) {
+    return loanResult.map(loan -> loan.markItemMissing(request.getComment()));
   }
 
-  private Result<ClaimItemReturnedRequest> createRequest(RoutingContext routingContext) {
+  private Result<ChangeItemStatusRequest> createRequest(RoutingContext routingContext) {
     final String loanId = routingContext.pathParam("id");
     final JsonObject body = routingContext.getBodyAsJson();
-    final ClaimItemReturnedRequest request = ClaimItemReturnedRequest.from(loanId, body);
 
-    if (request.getItemClaimedReturnedDateTime() == null) {
-      return failed(singleValidationError("Item claimed returned date is a required field",
-        ITEM_CLAIMED_RETURNED_DATE, null));
+    final ChangeItemStatusRequest request = ChangeItemStatusRequest.from(loanId, body);
+    if (request.getComment() == null) {
+      return failed(singleValidationError("Comment is a required field",
+        ChangeItemStatusRequest.COMMENT, null));
     }
 
-    return succeeded(ClaimItemReturnedRequest.from(loanId, body));
+    return succeeded(request);
   }
 }

@@ -1,6 +1,6 @@
 #%RAML 1.0
 title: Claim item returned
-version: v0.1
+version: v0.2
 protocols: [ HTTP, HTTPS ]
 baseUri: http://localhost:9130
 
@@ -33,12 +33,12 @@ traits:
           body:
             text/plain:
               example: "Internal server error, contact administrator"
-  /declare-item-claimed-returned-as-missing:
+  /declare-claimed-returned-item-as-missing:
     post:
       is: [validate]
       body:
         application/json:
-          type: !include declare-item-claimed-returned-as-missing-request.json
+          type: !include declare-claimed-returned-item-as-missing-request.json
       responses:
         204:
           description: "The loaned claimed returned item has been successfully marked as missing"

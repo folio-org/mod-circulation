@@ -6,9 +6,9 @@ import static api.support.matchers.LoanMatchers.isClosed;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static api.support.matchers.ValidationErrorMatchers.hasParameter;
+import static org.folio.circulation.domain.representations.ChangeItemStatusRequest.COMMENT;
 import static org.folio.circulation.domain.representations.LoanProperties.ACTION;
 import static org.folio.circulation.domain.representations.LoanProperties.ACTION_COMMENT;
-import static org.folio.circulation.resources.DeclareItemClaimedReturnedAsMissingResource.COMMENT;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
@@ -21,11 +21,11 @@ import org.junit.Test;
 
 import api.support.APITests;
 import api.support.builders.ClaimItemReturnedRequestBuilder;
-import api.support.builders.DeclareItemClaimedReturnedAsMissingRequestBuilder;
+import api.support.builders.DeclareClaimedReturnedItemAsMissingRequestBuilder;
 import api.support.http.InventoryItemResource;
 import io.vertx.core.json.JsonObject;
 
-public class DeclareItemClaimedReturnedAsMissingApiTests extends APITests {
+public class DeclareClaimedReturnedItemAsMissingApiTests extends APITests {
   private InventoryItemResource item;
   private String loanId;
 
@@ -37,15 +37,15 @@ public class DeclareItemClaimedReturnedAsMissingApiTests extends APITests {
   }
 
   @Test
-  public void canResolveClaimedReturnedItemAsMissing() {
+  public void canDeclareItemMissingWhenClaimedReturned() {
     final String comment = "testing";
 
     claimItemReturnedFixture.claimItemReturned(new ClaimItemReturnedRequestBuilder()
       .forLoan(loanId)
       .withItemClaimedReturnedDate(DateTime.now()));
 
-    claimItemReturnedFixture.declareItemClaimedReturnedAsMissing(
-      new DeclareItemClaimedReturnedAsMissingRequestBuilder()
+    claimItemReturnedFixture.declareClaimedReturnedItemAsMissing(
+      new DeclareClaimedReturnedItemAsMissingRequestBuilder()
         .forLoan(loanId)
         .withComment(comment));
 
@@ -54,9 +54,9 @@ public class DeclareItemClaimedReturnedAsMissingApiTests extends APITests {
   }
 
   @Test
-  public void cannotResolveClaimAsMissingWhenItemHasNotClaimedReturnStatus() {
+  public void cannotDeclareItemMissingWhenIsNotClaimedReturned() {
     final Response response = claimItemReturnedFixture
-      .attemptDeclareItemClaimedReturnedAsMissing(new DeclareItemClaimedReturnedAsMissingRequestBuilder()
+      .attemptDeclareClaimedReturnedItemAsMissing(new DeclareClaimedReturnedItemAsMissingRequestBuilder()
         .forLoan(loanId)
         .withComment("testing"));
 
@@ -66,12 +66,12 @@ public class DeclareItemClaimedReturnedAsMissingApiTests extends APITests {
   }
 
   @Test
-  public void cannotResolveClaimAsMissingWhenLoanIsClosed() {
+  public void cannotDeclareItemMissingWhenLoanIsClosed() {
     loansFixture.checkInByBarcode(item);
 
     final Response response = claimItemReturnedFixture
-      .attemptDeclareItemClaimedReturnedAsMissing(
-        new DeclareItemClaimedReturnedAsMissingRequestBuilder()
+      .attemptDeclareClaimedReturnedItemAsMissing(
+        new DeclareClaimedReturnedItemAsMissingRequestBuilder()
           .forLoan(loanId)
           .withComment("testing"));
 
@@ -81,10 +81,10 @@ public class DeclareItemClaimedReturnedAsMissingApiTests extends APITests {
   }
 
   @Test
-  public void cannotResolveClaimAsMissingWhenCommentIsNotProvided() {
+  public void cannotDeclareItemMissingWhenCommentIsNotProvided() {
     final Response response = claimItemReturnedFixture
-      .attemptDeclareItemClaimedReturnedAsMissing(
-        new DeclareItemClaimedReturnedAsMissingRequestBuilder()
+      .attemptDeclareClaimedReturnedItemAsMissing(
+        new DeclareClaimedReturnedItemAsMissingRequestBuilder()
           .forLoan(loanId));
 
     assertThat(response.getStatusCode(), is(422));
@@ -94,12 +94,12 @@ public class DeclareItemClaimedReturnedAsMissingApiTests extends APITests {
   }
 
   @Test
-  public void cannotResolveClaimAsMissingWhenLoanIsNotFound() {
+  public void cannotDeclareItemMissingWhenLoanIsNotFound() {
     final String notExistentLoanId = UUID.randomUUID().toString();
 
     final Response response = claimItemReturnedFixture
-      .attemptDeclareItemClaimedReturnedAsMissing(
-        new DeclareItemClaimedReturnedAsMissingRequestBuilder()
+      .attemptDeclareClaimedReturnedItemAsMissing(
+        new DeclareClaimedReturnedItemAsMissingRequestBuilder()
           .forLoan(notExistentLoanId)
           .withComment("testing"));
 
