@@ -50,7 +50,6 @@ import io.vertx.core.json.JsonObject;
 
 public class Loan implements ItemRelatedRecord, UserRelatedRecord {
 
-  public static final String CLOSED_STATUS = "Closed";
   private final JsonObject representation;
   private final Item item;
   private final User user;
@@ -172,8 +171,8 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     return this;
   }
 
-  private void changeStatus(String status) {
-    representation.put(STATUS, new JsonObject().put("name", status));
+  private void changeStatus(LoanStatus status) {
+    representation.put(STATUS, new JsonObject().put("name", status.getValue()));
   }
 
   public void changeActionComment(String comment) {
@@ -190,18 +189,18 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     }
 
     switch (getStatus()) {
-    case "Open":
-    case "Closed":
-      return succeeded(null);
+      case OPEN:
+      case CLOSED:
+        return succeeded(null);
 
-    default:
-      return failedValidation("Loan status must be \"Open\" or \"Closed\"",
-        STATUS, getStatus());
+      default:
+        return failedValidation("Loan status must be \"Open\" or \"Closed\"",
+          STATUS, getStatusName());
     }
   }
 
   public Result<Void> openLoanHasUserId() {
-    if (Objects.equals(getStatus(), "Open") && getUserId() == null) {
+    if (isOpen() && getUserId() == null) {
       return failedValidation("Open loan must have a user ID",
         USER_ID, getUserId());
     } else {
@@ -219,18 +218,22 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   public boolean isClosed() {
-    return StringUtils.equals(getStatus(), "Closed");
+    return getStatus() == LoanStatus.CLOSED;
   }
 
   public boolean isOpen() {
-    return StringUtils.equals(getStatus(), "Open");
+    return getStatus() == LoanStatus.OPEN;
   }
 
   public boolean wasDueDateChangedByRecall() {
     return getBooleanProperty(representation, "dueDateChangedByRecall");
   }
 
-  private String getStatus() {
+  private LoanStatus getStatus() {
+    return LoanStatus.fromValue(getStatusName());
+  }
+
+  private String getStatusName() {
     return getNestedStringProperty(representation, STATUS, "name");
   }
 
@@ -412,7 +415,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
 
     changeAction(action);
     removeActionComment();
-    changeStatus("Closed");
+    closeLoan();
     changeReturnDate(returnDateTime);
     changeSystemReturnDate(systemReturnDateTime);
     changeCheckInServicePointId(servicePointId);
@@ -522,11 +525,16 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     write(representation, CLAIMED_RETURNED_DATE, claimedReturnedDate);
   }
 
+  public Loan closeLoan() {
+    changeStatus(LoanStatus.CLOSED);
+    return this;
+  }
+
   public Loan markItemMissing(String comment) {
     changeAction(MISSING);
     changeActionComment(comment);
     changeItemStatusForItemAndLoan(ItemStatus.MISSING);
-    changeStatus(CLOSED_STATUS);
-    return this;
+
+    return closeLoan();
   }
 }

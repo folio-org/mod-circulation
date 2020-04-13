@@ -7,10 +7,8 @@ import static api.support.http.AdditionalHttpStatusCodes.UNPROCESSABLE_ENTITY;
 import static api.support.http.CqlQuery.noQuery;
 import static api.support.http.InterfaceUrls.checkInByBarcodeUrl;
 import static api.support.http.InterfaceUrls.checkOutByBarcodeUrl;
-import static api.support.http.InterfaceUrls.claimItemReturnedURL;
 import static api.support.http.InterfaceUrls.declareLoanItemLostURL;
 import static api.support.http.InterfaceUrls.loansUrl;
-import static api.support.http.InterfaceUrls.resolveClaimAsMissingUrl;
 import static api.support.http.InterfaceUrls.overrideCheckOutByBarcodeUrl;
 import static api.support.http.InterfaceUrls.overrideRenewalByBarcodeUrl;
 import static api.support.http.InterfaceUrls.renewByBarcodeUrl;
@@ -23,7 +21,6 @@ import static java.net.HttpURLConnection.HTTP_OK;
 import java.net.URL;
 import java.util.UUID;
 
-import api.support.builders.ResolveClaimAsMissingRequestBuilder;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 import org.joda.time.DateTime;
@@ -34,7 +31,6 @@ import api.support.MultipleJsonRecords;
 import api.support.RestAssuredClient;
 import api.support.builders.CheckInByBarcodeRequestBuilder;
 import api.support.builders.CheckOutByBarcodeRequestBuilder;
-import api.support.builders.ClaimItemReturnedRequestBuilder;
 import api.support.builders.DeclareItemLostRequestBuilder;
 import api.support.builders.LoanBuilder;
 import api.support.builders.OverrideCheckOutByBarcodeRequestBuilder;
@@ -154,26 +150,6 @@ public class LoansFixture {
       .withComment(comment);
 
     return declareItemLost(loanId, builder);
-  }
-
-  public Response claimItemReturned(ClaimItemReturnedRequestBuilder request) {
-    return restAssuredClient.post(request.create(),
-      claimItemReturnedURL(request.getLoanId()), 204, "claim-item-returned-request");
-  }
-
-  public Response attemptClaimItemReturned(ClaimItemReturnedRequestBuilder request) {
-    return restAssuredClient.post(request.create(),
-      claimItemReturnedURL(request.getLoanId()), "attempt-claim-item-returned-request");
-  }
-
-  public Response resolveClaimAsMissing(ResolveClaimAsMissingRequestBuilder request) {
-    return restAssuredClient.post(request.create(),
-      resolveClaimAsMissingUrl(request.getLoanId()), 204, "resolve-claim-as-missing-request");
-}
-
-  public Response attemptResolveClaimAsMissing(ResolveClaimAsMissingRequestBuilder request) {
-    return restAssuredClient.post(request.create(),
-      resolveClaimAsMissingUrl(request.getLoanId()), "attempt-resolve-claim-as-missing-request");
   }
 
   public IndividualResource checkOutByBarcode(IndividualResource item) {

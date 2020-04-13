@@ -177,8 +177,9 @@ public class InterfaceUrls {
     return circulationModuleUrl(String.format("/circulation/loans/%s/claim-item-returned", loanId));
   }
 
-  public static URL resolveClaimAsMissingUrl(String loanId) {
-    return circulationModuleUrl(String.format("/circulation/loans/%s/resolve-claim-as-missing", loanId));
+  public static URL declareClaimedReturnedItemAsMissingUrl(String loanId) {
+    return circulationModuleUrl(String.format(
+      "/circulation/loans/%s/declare-item-claimed-returned-as-missing", loanId));
   }
 
   public static URL endSessionUrl() {

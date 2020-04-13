@@ -12,10 +12,10 @@ import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.representations.ChangeItemStatusRequest;
 import org.folio.circulation.support.Result;
 
-public class ResolveClaimAsMissingResource extends ChangeStatusResource<ChangeItemStatusRequest> {
+public class DeclareItemClaimedReturnedAsMissingResource extends ChangeStatusResource<ChangeItemStatusRequest> {
 
-  public ResolveClaimAsMissingResource(HttpClient client) {
-    super(client, "/circulation/loans/:id/resolve-claim-as-missing");
+  public DeclareItemClaimedReturnedAsMissingResource(HttpClient client) {
+    super(client, "/circulation/loans/:id/declare-item-claimed-returned-as-missing");
   }
 
   @Override

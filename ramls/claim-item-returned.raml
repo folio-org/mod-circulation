@@ -14,21 +14,40 @@ types:
 traits:
   validate: !include raml-util/traits/validation.raml
 
-/circulation/loans/{id}/claim-item-returned:
-  post:
-    is: [validate]
-    body:
-      application/json:
-        type: !include claim-item-returned-request.json
-    responses:
-      204:
-        description: "The loaned item has been successfully marked as claimed returned"
-      422:
-        description: "The loan is closed"
-      404:
-        description: "The loan is not found"
-      500:
-        description: "Internal server error, e.g. due to misconfiguration"
-        body:
-          text/plain:
-            example: "Internal server error, contact administrator"
+/circulation/loans/{id}:
+  /claim-item-returned:
+    post:
+      is: [validate]
+      body:
+        application/json:
+          type: !include claim-item-returned-request.json
+      responses:
+        204:
+          description: "The loaned item has been successfully marked as claimed returned"
+        422:
+          description: "The loan is closed"
+        404:
+          description: "The loan is not found"
+        500:
+          description: "Internal server error, e.g. due to misconfiguration"
+          body:
+            text/plain:
+              example: "Internal server error, contact administrator"
+  /declare-item-claimed-returned-as-missing:
+    post:
+      is: [validate]
+      body:
+        application/json:
+          type: !include declare-item-claimed-returned-as-missing-request.json
+      responses:
+        204:
+          description: "The loaned claimed returned item has been successfully marked as missing"
+        422:
+          description: "The loan is closed"
+        404:
+          description: "The loan is not found"
+        500:
+          description: "Internal server error, e.g. due to misconfiguration"
+          body:
+            text/plain:
+              example: "Internal server error, contact administrator"

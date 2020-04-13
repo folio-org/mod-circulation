@@ -1949,7 +1949,7 @@ public class RequestsAPICreationTests extends APITests {
     final IndividualResource checkOut = loansFixture
       .checkOutByBarcode(item, usersFixture.jessica());
 
-    loansFixture.claimItemReturned(new ClaimItemReturnedRequestBuilder()
+    claimItemReturnedFixture.claimItemReturned(new ClaimItemReturnedRequestBuilder()
         .forLoan(checkOut.getId().toString())
         .withItemClaimedReturnedDate(DateTime.now(DateTimeZone.UTC)));
 
