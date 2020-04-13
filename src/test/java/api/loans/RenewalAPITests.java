@@ -1360,7 +1360,7 @@ abstract class RenewalAPITests extends APITests {
 
     JsonObject account = createdAccounts.get(0);
 
-    assertThat(account, OverdueFineMatcher.isValidOverdueFine(loan, nod,
+    assertThat(account, OverdueFineMatcher.isValidOverdueFine(loan.getJson(), nod,
       homeLocation.getJson().getString("name"), ownerId, feeFineId, 5.0));
 
     Awaitility.await()
