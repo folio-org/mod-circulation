@@ -9,7 +9,8 @@ public enum LoanAction {
   CHECKED_OUT_THROUGH_OVERRIDE("checkedOutThroughOverride"),
   RECALLREQUESTED("recallrequested"),
   HOLDREQUESTED("holdrequested"),
-  CLAIMED_RETURNED("claimedReturned");
+  CLAIMED_RETURNED("claimedReturned"),
+  MISSING("markedMissing");
 
   private final String value;
 
