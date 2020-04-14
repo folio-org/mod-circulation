@@ -808,7 +808,7 @@ abstract class RenewalAPITests extends APITests {
     final JsonObject loanJson = loansFixture.checkOutByBarcode(smallAngryPlanet, usersFixture.jessica())
       .getJson();
 
-    loansFixture.claimItemReturned(new ClaimItemReturnedRequestBuilder()
+    claimItemReturnedFixture.claimItemReturned(new ClaimItemReturnedRequestBuilder()
         .forLoan(loanJson.getString("id"))
         .withItemClaimedReturnedDate(dateTime)
         .withComment(comment));
