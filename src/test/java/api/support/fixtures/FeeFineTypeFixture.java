@@ -1,6 +1,5 @@
 package api.support.fixtures;
 
-import org.folio.circulation.domain.FeeFine;
 import org.folio.circulation.support.http.client.IndividualResource;
 
 import api.support.builders.FeeFineBuilder;
@@ -13,13 +12,13 @@ public final class FeeFineTypeFixture extends RecordCreator {
 
   public IndividualResource lostItemFee() {
     return createIfAbsent(new FeeFineBuilder()
-      .withFeeFineType(FeeFine.LOST_ITEM_FEE)
+      .withFeeFineType("Lost item fee")
       .withAutomatic(true));
   }
 
   public IndividualResource lostItemProcessingFee() {
     return createIfAbsent(new FeeFineBuilder()
-      .withFeeFineType(FeeFine.LOST_ITEM_PROCESSING_FEE)
+      .withFeeFineType("Lost item processing fee")
       .withAutomatic(true));
   }
 }

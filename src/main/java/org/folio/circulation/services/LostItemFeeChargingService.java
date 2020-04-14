@@ -1,8 +1,8 @@
 package org.folio.circulation.services;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
-import static org.folio.circulation.domain.FeeFine.LOST_ITEM_FEE;
-import static org.folio.circulation.domain.FeeFine.LOST_ITEM_PROCESSING_FEE;
+import static org.folio.circulation.domain.FeeFine.LOST_ITEM_FEE_TYPE;
+import static org.folio.circulation.domain.FeeFine.LOST_ITEM_PROCESSING_FEE_TYPE;
 import static org.folio.circulation.support.Result.failed;
 import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
@@ -34,7 +34,7 @@ import org.slf4j.LoggerFactory;
 public class LostItemFeeChargingService {
   private static final Logger log = LoggerFactory.getLogger(LostItemFeeChargingService.class);
   private static final List<String> FEE_TYPES_TO_RETRIEVE = Arrays.asList(
-    LOST_ITEM_FEE, LOST_ITEM_PROCESSING_FEE);
+    LOST_ITEM_FEE_TYPE, LOST_ITEM_PROCESSING_FEE_TYPE);
 
   private final LostItemPolicyRepository lostItemPolicyRepository;
   private final FeeFineOwnerRepository feeFineOwnerRepository;
@@ -82,7 +82,7 @@ public class LostItemFeeChargingService {
             log.debug("Charging lost item fee");
 
             final Result<AccountStorageRepresentation> lostItemFeeResult =
-              getFeeFineOfType(feeFines, LOST_ITEM_FEE)
+              getFeeFineOfType(feeFines, LOST_ITEM_FEE_TYPE)
                 .map(createAccount(loan, owner, policy.getChargeAmountItem().getAmount()));
 
             accountsToCreate.add(lostItemFeeResult);
@@ -92,7 +92,7 @@ public class LostItemFeeChargingService {
             log.debug("Charging lost item processing fee");
 
             final Result<AccountStorageRepresentation> processingFeeResult =
-              getFeeFineOfType(feeFines, LOST_ITEM_PROCESSING_FEE)
+              getFeeFineOfType(feeFines, LOST_ITEM_PROCESSING_FEE_TYPE)
                 .map(createAccount(loan, owner, policy.getLostItemProcessingFee()));
 
             accountsToCreate.add(processingFeeResult);
