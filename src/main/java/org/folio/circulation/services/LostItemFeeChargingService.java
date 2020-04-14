@@ -67,8 +67,8 @@ public class LostItemFeeChargingService {
     final FeeFineOwner owner, Loan loan) {
 
     if (owner == null) {
-      log.warn("Can not find owner for service point {}, no fee will be charged",
-        loan.getItem().getLocation().getPrimaryServicePointId());
+      log.warn("Cannot find owner for service point [{}], no fee will be charged for loan [{}]",
+        loan.getItem().getLocation().getPrimaryServicePointId(), loan.getId());
 
       return completedFuture(succeeded(Collections.emptyList()));
     }

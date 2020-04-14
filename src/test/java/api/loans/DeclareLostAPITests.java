@@ -135,7 +135,7 @@ public class DeclareLostAPITests extends APITests {
   }
 
   @Test
-  public void canAssignProcessingAndItemFee() {
+  public void shouldChargeProcessingAndItemFeesWhenBothDefined() {
     final double expectedProcessingFee = 10.0;
     final double expectedItemFee = 20.0;
     final String expectedOwnerId = feeFineOwnerFixture.cd1Owner().getId().toString();
@@ -164,7 +164,7 @@ public class DeclareLostAPITests extends APITests {
   }
 
   @Test
-  public void canAssignItemFeeOnly() {
+  public void shouldChargeItemFeeOnlyWhenNoProcessingFeeDefined() {
     final double expectedItemFee = 20.0;
     final String expectedOwnerId = feeFineOwnerFixture.cd1Owner().getId().toString();
 
@@ -188,7 +188,7 @@ public class DeclareLostAPITests extends APITests {
   }
 
   @Test
-  public void canAssignProcessingFeeOnly() {
+  public void shouldChargeProcessingFeeOnlyWhenNoItemCostDefined() {
     final double expectedProcessingFee = 10.0;
     final String expectedOwnerId = feeFineOwnerFixture.cd1Owner().getId().toString();
 
@@ -213,7 +213,7 @@ public class DeclareLostAPITests extends APITests {
   }
 
   @Test
-  public void shouldNotAssignFeesWhenUnknownPolicy() {
+  public void shouldNotChargeFeesWhenPolicyIsUnknown() {
     final InventoryItemResource item = itemsFixture.basedUponNod();
     final IndividualResource loan = loansFixture.checkOutByBarcode(item, usersFixture.charlotte());
 
@@ -232,7 +232,7 @@ public class DeclareLostAPITests extends APITests {
   }
 
   @Test
-  public void shouldNotAssignFeesWhenNoOwnerConfigured() {
+  public void shouldNotChargeFeesWhenNoOwnerForItemsPrimaryServicePoint() {
     feeFineOwnerFixture.delete(feeFineOwnerFixture.cd1Owner());
 
     final InventoryItemResource item = itemsFixture.basedUponNod();
@@ -245,7 +245,7 @@ public class DeclareLostAPITests extends APITests {
   }
 
   @Test
-  public void cannotDeclareItemLostWhenNoAutomatedLostItemFee() {
+  public void cannotDeclareItemLostWhenNoAutomatedLostItemFeeTypeIsDefined() {
     feeFineTypeFixture.delete(feeFineTypeFixture.lostItemFee());
 
     final InventoryItemResource item = itemsFixture.basedUponNod();
@@ -261,7 +261,7 @@ public class DeclareLostAPITests extends APITests {
   }
 
   @Test
-  public void cannotDeclareItemLostWhenNoAutomatedLostItemProcessingFee() {
+  public void cannotDeclareItemLostWhenNoAutomatedLostItemProcessingFeeTypeIsDefined() {
     feeFineTypeFixture.delete(feeFineTypeFixture.lostItemProcessingFee());
 
     final InventoryItemResource item = itemsFixture.basedUponNod();

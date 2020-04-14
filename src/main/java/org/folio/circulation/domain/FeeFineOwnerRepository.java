@@ -2,7 +2,6 @@ package org.folio.circulation.domain;
 
 import static org.folio.circulation.support.http.client.PageLimit.one;
 
-import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.support.Clients;
@@ -10,6 +9,7 @@ import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.http.client.CqlQuery;
 import org.folio.circulation.support.http.client.Response;
+import org.folio.circulation.support.utils.CollectionUtil;
 
 public class FeeFineOwnerRepository {
   public static final String SERVICE_POINT_OWNER_KEY = "servicePointOwner";
@@ -25,13 +25,7 @@ public class FeeFineOwnerRepository {
       .after(query -> feeFineOwnerStorageClient.getMany(query, one()))
       .thenApply(r -> r.next(this::mapResponseToOwners))
       .thenApply(r -> r.map(MultipleRecords::getRecords))
-      .thenApply(r -> r.map(this::firstOrNull));
-  }
-
-  private <T> T firstOrNull(Collection<T> collection) {
-    return collection.stream()
-      .findFirst()
-      .orElse(null);
+      .thenApply(r -> r.map(CollectionUtil::firstOrNull));
   }
 
   private Result<MultipleRecords<FeeFineOwner>> mapResponseToOwners(Response response) {
