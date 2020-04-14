@@ -118,7 +118,7 @@ public class LostItemFeeChargingService {
   }
 
   private boolean shouldChargeProcessingFee(LostItemPolicy policy) {
-    return policy.isChargeAmountItemPatron()
+    return policy.shouldChargeProcessingFee()
       && isGreaterThanZero(policy.getLostItemProcessingFee());
   }
 

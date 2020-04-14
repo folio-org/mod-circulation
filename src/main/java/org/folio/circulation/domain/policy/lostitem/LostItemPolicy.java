@@ -39,7 +39,8 @@ public class LostItemPolicy extends Policy {
     return chargeAmountItem;
   }
 
-  public boolean isChargeAmountItemPatron() {
+  public boolean shouldChargeProcessingFee() {
+    // Renamed to better describe intent. Fee/fines domain name quite unclear.
     return chargeAmountItemPatron;
   }
 
