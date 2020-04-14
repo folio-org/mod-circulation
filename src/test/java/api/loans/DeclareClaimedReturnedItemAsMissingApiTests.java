@@ -9,6 +9,7 @@ import static api.support.matchers.ValidationErrorMatchers.hasParameter;
 import static org.folio.circulation.domain.representations.ChangeItemStatusRequest.COMMENT;
 import static org.folio.circulation.domain.representations.LoanProperties.ACTION;
 import static org.folio.circulation.domain.representations.LoanProperties.ACTION_COMMENT;
+import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
@@ -61,8 +62,9 @@ public class DeclareClaimedReturnedItemAsMissingApiTests extends APITests {
         .withComment("testing"));
 
     assertThat(response.getStatusCode(), is(422));
-    assertThat(response.getJson(), hasErrorWith(hasMessage("Item is not Claimed returned")));
-    assertThat(response.getJson(), hasErrorWith(hasParameter("id", item.getId().toString())));
+    assertThat(response.getJson(), hasErrorWith(allOf(
+      hasMessage("Item is not Claimed returned"),
+      hasParameter("itemId", item.getId().toString()))));
   }
 
   @Test

@@ -5,11 +5,12 @@ import static api.support.matchers.LoanMatchers.hasOpenStatus;
 import static api.support.matchers.LoanMatchers.hasStatus;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
+import static api.support.matchers.ValidationErrorMatchers.hasNullParameter;
 import static api.support.matchers.ValidationErrorMatchers.hasParameter;
 import static org.folio.circulation.domain.representations.LoanProperties.ACTION;
 import static org.folio.circulation.domain.representations.LoanProperties.ACTION_COMMENT;
 import static org.folio.circulation.domain.representations.LoanProperties.CLAIMED_RETURNED_DATE;
-import static org.folio.circulation.domain.ClaimItemReturnedRequest.ITEM_CLAIMED_RETURNED_DATE;
+import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
@@ -86,9 +87,9 @@ public class ClaimItemReturnedAPITests extends APITests {
         .withItemClaimedReturnedDate(null));
 
     assertThat(response.getStatusCode(), is(422));
-    assertThat(response.getJson(),
-      hasErrorWith(hasMessage("Item claimed returned date is a required field")));
-    assertThat(response.getJson(), hasErrorWith(hasParameter(ITEM_CLAIMED_RETURNED_DATE, null)));
+    assertThat(response.getJson(), hasErrorWith(allOf(
+      hasMessage("Item claimed returned date is a required field"),
+      hasNullParameter("itemClaimedReturnedDate"))));
   }
 
   @Test

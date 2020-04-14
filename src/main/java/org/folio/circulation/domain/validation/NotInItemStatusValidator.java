@@ -25,6 +25,6 @@ public final class NotInItemStatusValidator {
     return loanResult.failWhen(
       records -> succeeded(!loanResult.value().getItem().isInStatus(status)),
       loan -> singleValidationError(String.format("Item is not %s",
-        status.getValue()), "id", loanResult.value().getItem().getItemId()));
+        status.getValue()), "itemId", loanResult.value().getItem().getItemId()));
   }
 }
