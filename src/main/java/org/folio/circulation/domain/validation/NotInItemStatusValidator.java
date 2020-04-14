@@ -10,7 +10,7 @@ import org.folio.circulation.support.Result;
 
 public final class NotInItemStatusValidator {
 
-  private NotInItemStatusValidator(){ }
+  private NotInItemStatusValidator() {}
 
   public static Result<Loan> refuseWhenItemIsNotClaimedReturned(
     Result<Loan> loanAndRelatedRecords) {
@@ -23,7 +23,7 @@ public final class NotInItemStatusValidator {
     Result<Loan> loanResult, ItemStatus status) {
 
     return loanResult.failWhen(
-      records -> succeeded(!loanResult.value().getItem().isInStatus(status)),
+      records -> succeeded(loanResult.value().getItem().isNotInStatus(status)),
       loan -> singleValidationError(String.format("Item is not %s",
         status.getValue()), "itemId", loanResult.value().getItem().getItemId()));
   }

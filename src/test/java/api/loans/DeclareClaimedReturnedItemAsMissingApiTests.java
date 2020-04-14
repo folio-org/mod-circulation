@@ -78,8 +78,9 @@ public class DeclareClaimedReturnedItemAsMissingApiTests extends APITests {
           .withComment("testing"));
 
     assertThat(response.getStatusCode(), is(422));
-    assertThat(response.getJson(), hasErrorWith(hasMessage("Loan is closed")));
-    assertThat(response.getJson(), hasErrorWith(hasParameter("id", loanId)));
+    assertThat(response.getJson(), hasErrorWith(allOf(
+      hasMessage("Loan is closed"),
+      hasParameter("loanId", loanId))));
   }
 
   @Test
