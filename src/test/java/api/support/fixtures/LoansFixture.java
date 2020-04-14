@@ -8,7 +8,6 @@ import static api.support.http.CqlQuery.noQuery;
 import static api.support.http.InterfaceUrls.checkInByBarcodeUrl;
 import static api.support.http.InterfaceUrls.checkOutByBarcodeUrl;
 import static api.support.http.InterfaceUrls.claimItemReturnedURL;
-import static api.support.http.InterfaceUrls.declareLoanItemLostURL;
 import static api.support.http.InterfaceUrls.loansUrl;
 import static api.support.http.InterfaceUrls.overrideCheckOutByBarcodeUrl;
 import static api.support.http.InterfaceUrls.overrideRenewalByBarcodeUrl;
@@ -33,7 +32,6 @@ import api.support.RestAssuredClient;
 import api.support.builders.CheckInByBarcodeRequestBuilder;
 import api.support.builders.CheckOutByBarcodeRequestBuilder;
 import api.support.builders.ClaimItemReturnedRequestBuilder;
-import api.support.builders.DeclareItemLostRequestBuilder;
 import api.support.builders.LoanBuilder;
 import api.support.builders.OverrideCheckOutByBarcodeRequestBuilder;
 import api.support.builders.OverrideRenewalByBarcodeRequestBuilder;
@@ -131,36 +129,6 @@ public class LoansFixture {
   public Response attemptToReplaceLoan(UUID loanId, JsonObject representation) {
     return restAssuredClient.put(representation, urlForLoan(loanId),
       "replace-loan");
-  }
-
-  public Response declareItemLost(UUID loanId,
-    DeclareItemLostRequestBuilder builder) {
-
-    JsonObject request = builder.create();
-
-    return restAssuredClient.post(request, declareLoanItemLostURL(loanId.toString()),
-      204, "declare-item-lost-request");
-  }
-
-  public Response attemptDeclareItemLost(
-    UUID loanId, DeclareItemLostRequestBuilder builder) {
-
-    JsonObject request = builder.create();
-
-    return restAssuredClient.post(request, declareLoanItemLostURL(loanId.toString()),
-      "attempt-declare-item-lost-request");
-  }
-
-  public Response declareItemLost(JsonObject loanJson) {
-    final UUID loanId = UUID.fromString(loanJson.getString("id"));
-    final String comment = "testing";
-    final DateTime dateTime = DateTime.now(DateTimeZone.UTC);
-
-    final DeclareItemLostRequestBuilder builder = new DeclareItemLostRequestBuilder()
-      .forLoanId(loanId).on(dateTime)
-      .withComment(comment);
-
-    return declareItemLost(loanId, builder);
   }
 
   public Response claimItemReturned(ClaimItemReturnedRequestBuilder request) {

@@ -8,7 +8,7 @@ import io.vertx.core.json.JsonObject;
 import org.joda.time.DateTime;
 
 public class DeclareItemLostRequestBuilder extends JsonBuilder implements Builder {
-  private final UUID loanId;
+  private final String loanId;
   private final DateTime dateTime;
   private final String comment;
 
@@ -16,7 +16,7 @@ public class DeclareItemLostRequestBuilder extends JsonBuilder implements Builde
     this(null, DateTime.now(), null);
   }
 
-  public UUID getLoanId() {
+  public String getLoanId() {
     return loanId;
   }
 
@@ -28,7 +28,7 @@ public class DeclareItemLostRequestBuilder extends JsonBuilder implements Builde
     return comment;
   }
 
-  public DeclareItemLostRequestBuilder(UUID loanId, DateTime dateTime,
+  public DeclareItemLostRequestBuilder(String loanId, DateTime dateTime,
     String comment) {
     this.loanId = loanId;
     this.dateTime = dateTime;
@@ -46,7 +46,7 @@ public class DeclareItemLostRequestBuilder extends JsonBuilder implements Builde
   }
 
    public DeclareItemLostRequestBuilder forLoanId(UUID id) {
-    return new DeclareItemLostRequestBuilder(id, dateTime, comment);
+    return new DeclareItemLostRequestBuilder(id.toString(), dateTime, comment);
   }
 
   public DeclareItemLostRequestBuilder on(DateTime dateTime) {

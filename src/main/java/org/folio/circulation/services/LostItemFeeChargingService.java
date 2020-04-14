@@ -3,6 +3,7 @@ package org.folio.circulation.services;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.domain.FeeFine.LOST_ITEM_FEE;
 import static org.folio.circulation.domain.FeeFine.LOST_ITEM_PROCESSING_FEE;
+import static org.folio.circulation.support.Result.failed;
 import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 
@@ -13,6 +14,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Function;
 
 import org.folio.circulation.domain.AccountRepository;
 import org.folio.circulation.domain.FeeFine;
@@ -20,8 +22,8 @@ import org.folio.circulation.domain.FeeFineOwner;
 import org.folio.circulation.domain.FeeFineOwnerRepository;
 import org.folio.circulation.domain.FeeFineRepository;
 import org.folio.circulation.domain.Loan;
-import org.folio.circulation.domain.policy.LostItemPolicy;
-import org.folio.circulation.domain.policy.LostItemPolicyChargeAmountType;
+import org.folio.circulation.domain.policy.lostitem.LostItemPolicy;
+import org.folio.circulation.domain.policy.lostitem.ChargeAmountType;
 import org.folio.circulation.domain.policy.LostItemPolicyRepository;
 import org.folio.circulation.domain.representations.AccountStorageRepresentation;
 import org.folio.circulation.support.Clients;
@@ -29,8 +31,8 @@ import org.folio.circulation.support.Result;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class DeclaredLostFeeFineService {
-  private static final Logger log = LoggerFactory.getLogger(DeclaredLostFeeFineService.class);
+public class LostItemFeeChargingService {
+  private static final Logger log = LoggerFactory.getLogger(LostItemFeeChargingService.class);
   private static final List<String> FEE_TYPES_TO_RETRIEVE = Arrays.asList(
     LOST_ITEM_FEE, LOST_ITEM_PROCESSING_FEE);
 
@@ -39,14 +41,14 @@ public class DeclaredLostFeeFineService {
   private final FeeFineRepository feeFineRepository;
   private final AccountRepository accountRepository;
 
-  public DeclaredLostFeeFineService(Clients clients) {
+  public LostItemFeeChargingService(Clients clients) {
     this.lostItemPolicyRepository = new LostItemPolicyRepository(clients);
     this.feeFineOwnerRepository = new FeeFineOwnerRepository(clients);
     this.feeFineRepository = new FeeFineRepository(clients);
     this.accountRepository = new AccountRepository(clients);
   }
 
-  public CompletableFuture<Result<Loan>> chargeFeeFines(Result<Loan> loanResult) {
+  public CompletableFuture<Result<Loan>> chargeLostItemFees(Result<Loan> loanResult) {
     return lostItemPolicyRepository.findLostItemPolicyForLoan(loanResult)
       .thenCompose(loanWithPolicyResult -> loanWithPolicyResult.after(loan -> {
         if (!shouldChargeAnyFee(loan.getLostItemPolicy())) {
@@ -72,39 +74,46 @@ public class DeclaredLostFeeFineService {
     }
 
     return feeFineRepository.getAutomaticFeeFines(FEE_TYPES_TO_RETRIEVE)
-      .thenApply(result -> refuseWhenFeeFineOfTypeNotFound(result, LOST_ITEM_FEE))
-      .thenApply(result -> refuseWhenFeeFineOfTypeNotFound(result, LOST_ITEM_PROCESSING_FEE))
       .thenApply(feeFinesResult -> feeFinesResult.next(feeFines -> {
           final LostItemPolicy policy = loan.getLostItemPolicy();
-          final List<AccountStorageRepresentation> accountsToCreate = new ArrayList<>();
-
-          final FeeFine lostItemFee = getFeeFineOfType(feeFines, LOST_ITEM_FEE);
-          final FeeFine lostItemProcessingFee = getFeeFineOfType(feeFines, LOST_ITEM_PROCESSING_FEE);
+          final List<Result<AccountStorageRepresentation>> accountsToCreate = new ArrayList<>();
 
           if (shouldChargeItemFee(policy)) {
             log.debug("Charging lost item fee");
 
-            accountsToCreate.add(new AccountStorageRepresentation(loan, loan.getItem(),
-              owner, lostItemFee, policy.getChargeAmountItem().getAmount()));
+            final Result<AccountStorageRepresentation> lostItemFeeResult =
+              getFeeFineOfType(feeFines, LOST_ITEM_FEE)
+                .map(createAccount(loan, owner, policy.getChargeAmountItem().getAmount()));
+
+            accountsToCreate.add(lostItemFeeResult);
           }
 
           if (shouldChargeProcessingFee(policy)) {
             log.debug("Charging lost item processing fee");
 
-            accountsToCreate.add(new AccountStorageRepresentation(loan, loan.getItem(),
-              owner, lostItemProcessingFee, policy.getLostItemProcessingFee()));
+            final Result<AccountStorageRepresentation> processingFeeResult =
+              getFeeFineOfType(feeFines, LOST_ITEM_PROCESSING_FEE)
+                .map(createAccount(loan, owner, policy.getLostItemProcessingFee()));
+
+            accountsToCreate.add(processingFeeResult);
           }
 
           log.debug("Total accounts created {}", accountsToCreate.size());
-
-          return succeeded(accountsToCreate);
+          return Result.combineAll(accountsToCreate);
         }
       ));
   }
 
+  private Function<FeeFine, AccountStorageRepresentation> createAccount(
+    Loan loan, FeeFineOwner owner, BigDecimal amount) {
+
+    return feeFine -> new AccountStorageRepresentation(loan, loan.getItem(),
+      owner, feeFine, amount);
+  }
+
   private boolean shouldChargeItemFee(LostItemPolicy policy) {
     // Set cost fee is only supported now
-    return policy.getChargeAmountItem().getChargeType() == LostItemPolicyChargeAmountType.SET_COST
+    return policy.getChargeAmountItem().getChargeType() == ChargeAmountType.SET_COST
       && isGreaterThanZero(policy.getChargeAmountItem().getAmount());
   }
 
@@ -128,19 +137,16 @@ public class DeclaredLostFeeFineService {
     return feeFineOwnerRepository.findOwnerForServicePoint(servicePointId);
   }
 
-  private FeeFine getFeeFineOfType(Collection<FeeFine> feeFines, String type) {
+  private Result<FeeFine> getFeeFineOfType(Collection<FeeFine> feeFines, String type) {
     return feeFines.stream()
       .filter(feeFine -> feeFine.getFeeFineType().equals(type))
       .findFirst()
-      .orElse(null);
+      .map(Result::succeeded)
+      .orElse(createFeeFineNotFoundResult(type));
   }
 
-  private Result<Collection<FeeFine>> refuseWhenFeeFineOfTypeNotFound(
-    Result<Collection<FeeFine>> feeFinesResult, String type) {
-
-    return feeFinesResult.failWhen(
-      feeFines -> Result.succeeded(getFeeFineOfType(feeFines, type) == null),
-      feeFines -> singleValidationError("Expected automated fee of type " + type,
-        "feeFineType", type));
+  private Result<FeeFine> createFeeFineNotFoundResult(String type) {
+    return failed(singleValidationError("Expected automated fee of type " + type,
+      "feeFineType", type));
   }
 }

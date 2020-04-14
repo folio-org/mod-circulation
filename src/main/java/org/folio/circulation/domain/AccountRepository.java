@@ -25,8 +25,8 @@ import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.FindWithMultipleCqlIndexValues;
 import org.folio.circulation.support.GetManyRecordsClient;
 import org.folio.circulation.support.Result;
-import org.folio.circulation.support.ServerErrorFailure;
 import org.folio.circulation.support.http.client.ResponseInterpreter;
+import org.folio.circulation.support.results.CommonFailures;
 
 public class AccountRepository {
   private static final String LOAN_ID_FIELD_NAME = "loanId";
@@ -136,6 +136,6 @@ public class AccountRepository {
       .map(this::create)
       .toArray(CompletableFuture[]::new))
       .thenApply(Result::succeeded)
-      .exceptionally(error -> Result.failed(new ServerErrorFailure(error)));
+      .exceptionally(CommonFailures::failedDueToServerError);
   }
 }

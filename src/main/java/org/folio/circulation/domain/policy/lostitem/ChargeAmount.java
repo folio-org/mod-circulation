@@ -1,6 +1,6 @@
-package org.folio.circulation.domain.policy;
+package org.folio.circulation.domain.policy.lostitem;
 
-import static org.folio.circulation.domain.policy.LostItemPolicyChargeAmountType.forValue;
+import static org.folio.circulation.domain.policy.lostitem.ChargeAmountType.forValue;
 import static org.folio.circulation.support.JsonPropertyFetcher.getBigDecimalProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
 
@@ -8,17 +8,17 @@ import java.math.BigDecimal;
 
 import io.vertx.core.json.JsonObject;
 
-public class LostItemPolicyChargeAmountItem {
+public class ChargeAmount {
   private final BigDecimal amount;
-  private final LostItemPolicyChargeAmountType chargeType;
+  private final ChargeAmountType chargeType;
 
-  public LostItemPolicyChargeAmountItem(BigDecimal amount, LostItemPolicyChargeAmountType chargeType) {
+  public ChargeAmount(BigDecimal amount, ChargeAmountType chargeType) {
     this.amount = amount;
     this.chargeType = chargeType;
   }
 
-  public static LostItemPolicyChargeAmountItem from(JsonObject chargeAmountType) {
-    return new LostItemPolicyChargeAmountItem(
+  public static ChargeAmount from(JsonObject chargeAmountType) {
+    return new ChargeAmount(
       getBigDecimalProperty(chargeAmountType, "amount"),
       forValue(getProperty(chargeAmountType, "chargeType")));
   }
@@ -27,7 +27,7 @@ public class LostItemPolicyChargeAmountItem {
     return amount;
   }
 
-  public LostItemPolicyChargeAmountType getChargeType() {
+  public ChargeAmountType getChargeType() {
     return chargeType;
   }
 }

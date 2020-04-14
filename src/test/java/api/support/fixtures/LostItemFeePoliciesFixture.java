@@ -33,7 +33,7 @@ public class LostItemFeePoliciesFixture {
     patronBilledAfterAgedLost.put("intervalId", "Months");
 
     JsonObject chargeAmountItem = new JsonObject();
-    chargeAmountItem.put("chargeType", "Actual cost");
+    chargeAmountItem.put("chargeType", "anotherCost");
     chargeAmountItem.put("amount", 5.00);
 
     JsonObject lostItemChargeFeeFine = new JsonObject();

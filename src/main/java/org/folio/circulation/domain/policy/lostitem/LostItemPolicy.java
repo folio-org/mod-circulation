@@ -1,4 +1,4 @@
-package org.folio.circulation.domain.policy;
+package org.folio.circulation.domain.policy.lostitem;
 
 import static org.folio.circulation.support.JsonPropertyFetcher.getBigDecimalProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getBooleanProperty;
@@ -7,14 +7,16 @@ import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
 
 import java.math.BigDecimal;
 
+import org.folio.circulation.domain.policy.Policy;
+
 import io.vertx.core.json.JsonObject;
 
 public class LostItemPolicy extends Policy {
-  private final LostItemPolicyChargeAmountItem chargeAmountItem;
+  private final ChargeAmount chargeAmountItem;
   private final boolean chargeAmountItemPatron;
   private final BigDecimal lostItemProcessingFee;
 
-  private LostItemPolicy(String id, String name, LostItemPolicyChargeAmountItem chargeAmountItem,
+  private LostItemPolicy(String id, String name, ChargeAmount chargeAmountItem,
     boolean chargeAmountItemPatron, BigDecimal lostItemProcessingFee) {
 
     super(id, name);
@@ -27,13 +29,13 @@ public class LostItemPolicy extends Policy {
     return new LostItemPolicy(
       getProperty(lostItemPolicy, "id"),
       getProperty(lostItemPolicy, "name"),
-      LostItemPolicyChargeAmountItem.from(getObjectProperty(lostItemPolicy, "chargeAmountItem")),
+      ChargeAmount.from(getObjectProperty(lostItemPolicy, "chargeAmountItem")),
       getBooleanProperty(lostItemPolicy, "chargeAmountItemPatron"),
       getBigDecimalProperty(lostItemPolicy, "lostItemProcessingFee")
     );
   }
 
-  public LostItemPolicyChargeAmountItem getChargeAmountItem() {
+  public ChargeAmount getChargeAmountItem() {
     return chargeAmountItem;
   }
 
@@ -51,7 +53,7 @@ public class LostItemPolicy extends Policy {
 
   private static class UnknownLostItemPolicy extends LostItemPolicy {
     UnknownLostItemPolicy(String id) {
-      super(id, null, new LostItemPolicyChargeAmountItem(null, null),
+      super(id, null, new ChargeAmount(null, null),
         false, null);
     }
   }

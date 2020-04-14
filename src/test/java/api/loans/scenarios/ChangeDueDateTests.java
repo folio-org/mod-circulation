@@ -294,7 +294,7 @@ public class ChangeDueDateTests extends APITests {
     final IndividualResource loan = loansFixture.checkOutByBarcode(smallAngryPlanet);
     final JsonObject loanJson = loan.getJson();
 
-    loansFixture.declareItemLost(loanJson);
+    declareLostFixtures.declareItemLost(loanJson);
 
     Response fetchedLoan = loansClient.getById(loan.getId());
     JsonObject loanToChange = fetchedLoan.getJson().copy();

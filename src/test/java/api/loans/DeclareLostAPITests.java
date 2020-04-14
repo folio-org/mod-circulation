@@ -58,7 +58,7 @@ public class DeclareLostAPITests extends APITests {
         .forLoanId(loanId).on(dateTime)
         .withComment(comment);
 
-    Response response = loansFixture.declareItemLost(loanId, builder);
+    Response response = declareLostFixtures.declareItemLost(builder);
 
     JsonObject actualLoan = loansClient.getById(loanId).getJson();
     JsonObject actualItem = actualLoan.getJsonObject("item");
@@ -81,7 +81,7 @@ public class DeclareLostAPITests extends APITests {
         .forLoanId(loanId).on(dateTime)
         .withNoComment();
 
-    Response response = loansFixture.declareItemLost(loanId, builder);
+    Response response = declareLostFixtures.declareItemLost(builder);
 
     JsonObject actualLoan = loansFixture.getLoanById(loanId).getJson();
     JsonObject actualItem = actualLoan.getJsonObject("item");
@@ -107,7 +107,7 @@ public class DeclareLostAPITests extends APITests {
         .forLoanId(loanId).on(dateTime)
         .withNoComment();
 
-    Response response = loansFixture.attemptDeclareItemLost(loanId, builder);
+    Response response = declareLostFixtures.attemptDeclareItemLost(builder);
 
     JsonObject actualLoan = loansFixture.getLoanById(loanId).getJson();
     JsonObject actualItem = actualLoan.getJsonObject("item");
@@ -123,12 +123,11 @@ public class DeclareLostAPITests extends APITests {
   public void shouldReturn404IfLoanIsNotFound() {
     final UUID loanId = UUID.randomUUID();
 
-    final DeclareItemLostRequestBuilder builder
-      = new DeclareItemLostRequestBuilder()
+    final DeclareItemLostRequestBuilder builder = new DeclareItemLostRequestBuilder()
       .forLoanId(loanId)
       .on(DateTime.now()).withNoComment();
 
-    Response response = loansFixture.attemptDeclareItemLost(loanId, builder);
+    Response response = declareLostFixtures.attemptDeclareItemLost(builder);
 
     assertThat(response.getStatusCode(), is(404));
   }
@@ -153,7 +152,7 @@ public class DeclareLostAPITests extends APITests {
     final InventoryItemResource item = itemsFixture.basedUponNod();
     final IndividualResource loan = loansFixture.checkOutByBarcode(item, usersFixture.charlotte());
 
-    loansFixture.declareItemLost(loan.getId(), new DeclareItemLostRequestBuilder()
+    declareLostFixtures.declareItemLost(new DeclareItemLostRequestBuilder()
       .forLoanId(loan.getId()));
 
     assertThat(getAccountsForLoan(loan.getId()), assignedFeesMatcher);
@@ -172,7 +171,7 @@ public class DeclareLostAPITests extends APITests {
     assertThat(loansStorageClient.getById(loan.getId()).getJson().getString("lostItemPolicyId"),
       nullValue());
 
-    loansFixture.declareItemLost(loan.getId(), new DeclareItemLostRequestBuilder()
+    declareLostFixtures.declareItemLost(new DeclareItemLostRequestBuilder()
       .forLoanId(loan.getId()));
 
     assertThat(getAccountsForLoan(loan.getId()), hasSize(0));
@@ -183,7 +182,7 @@ public class DeclareLostAPITests extends APITests {
     final InventoryItemResource item = itemsFixture.basedUponNod();
     final IndividualResource loan = loansFixture.checkOutByBarcode(item, usersFixture.charlotte());
 
-    loansFixture.declareItemLost(loan.getId(), new DeclareItemLostRequestBuilder()
+    declareLostFixtures.declareItemLost(new DeclareItemLostRequestBuilder()
       .forLoanId(loan.getId()));
 
     assertThat(getAccountsForLoan(loan.getId()), hasSize(0));
@@ -197,7 +196,7 @@ public class DeclareLostAPITests extends APITests {
     final InventoryItemResource item = itemsFixture.basedUponNod();
     final IndividualResource loan = loansFixture.checkOutByBarcode(item, usersFixture.charlotte());
 
-    final Response response = loansFixture.attemptDeclareItemLost(loan.getId(),
+    final Response response = declareLostFixtures.attemptDeclareItemLost(
       new DeclareItemLostRequestBuilder()
         .forLoanId(loan.getId()));
 
@@ -214,7 +213,7 @@ public class DeclareLostAPITests extends APITests {
     final InventoryItemResource item = itemsFixture.basedUponNod();
     final IndividualResource loan = loansFixture.checkOutByBarcode(item, usersFixture.charlotte());
 
-    final Response response = loansFixture.attemptDeclareItemLost(loan.getId(),
+    final Response response = declareLostFixtures.attemptDeclareItemLost(
       new DeclareItemLostRequestBuilder()
         .forLoanId(loan.getId()));
 

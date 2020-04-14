@@ -2012,7 +2012,7 @@ public class RequestsAPICreationTests extends APITests {
       .forLoanId(loanId).on(dateTime)
       .withComment(comment);
 
-    loansFixture.declareItemLost(loanId, builder);
+    declareLostFixtures.declareItemLost(builder);
   }
 
   private UserManualBlockBuilder getManualBlockBuilder() {

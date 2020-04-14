@@ -37,6 +37,7 @@ import api.support.builders.NoticePolicyBuilder;
 import api.support.fixtures.AddressTypesFixture;
 import api.support.fixtures.CancellationReasonsFixture;
 import api.support.fixtures.CirculationRulesFixture;
+import api.support.fixtures.DeclareLostFixtures;
 import api.support.fixtures.EndPatronSessionClient;
 import api.support.fixtures.ExpiredSessionProcessingClient;
 import api.support.fixtures.FeeFineFixture;
@@ -233,6 +234,7 @@ public abstract class APITests {
   protected final IdentifierTypesFixture identifierTypesFixture = new IdentifierTypesFixture();
   protected final FeeFineOwnerFixture feeFineOwnerFixture = new FeeFineOwnerFixture(feeFineOwnersClient);
   protected final FeeFineFixture feeFineFixture = new FeeFineFixture(feeFinesClient);
+  protected final DeclareLostFixtures declareLostFixtures = new DeclareLostFixtures();
 
   protected APITests() {
     this(true);

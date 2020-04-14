@@ -38,7 +38,7 @@ import java.util.UUID;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.domain.policy.LoanPolicy;
-import org.folio.circulation.domain.policy.LostItemPolicy;
+import org.folio.circulation.domain.policy.lostitem.LostItemPolicy;
 import org.folio.circulation.domain.policy.OverdueFinePolicy;
 import org.folio.circulation.domain.representations.LoanProperties;
 import org.folio.circulation.support.ClockManager;

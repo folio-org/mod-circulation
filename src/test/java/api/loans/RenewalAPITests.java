@@ -789,7 +789,7 @@ abstract class RenewalAPITests extends APITests {
     final JsonObject loanJson = loansFixture.checkOutByBarcode(smallAngryPlanet, usersFixture.jessica())
       .getJson();
 
-    loansFixture.declareItemLost(loanJson);
+    declareLostFixtures.declareItemLost(loanJson);
 
     final Response response = attemptRenewal(smallAngryPlanet, jessica);
 
@@ -1096,10 +1096,7 @@ abstract class RenewalAPITests extends APITests {
   }
 
   @Test
-  public void canRenewWhenCurrentDueDateFallsWithinLimitingDueDateSchedule() throws
-    InterruptedException,
-    ExecutionException,
-    TimeoutException {
+  public void canRenewWhenCurrentDueDateFallsWithinLimitingDueDateSchedule() {
 
     FixedDueDateSchedulesBuilder fixedDueDateSchedules = new FixedDueDateSchedulesBuilder()
       .withName("Fixed Due Date Schedule")
@@ -1126,10 +1123,7 @@ abstract class RenewalAPITests extends APITests {
   }
 
   @Test
-  public void canRenewWhenSystemDateFallsWithinLimitingDueDateSchedule() throws
-    InterruptedException,
-    ExecutionException,
-    TimeoutException {
+  public void canRenewWhenSystemDateFallsWithinLimitingDueDateSchedule() {
 
     FixedDueDateSchedulesBuilder fixedDueDateSchedules = new FixedDueDateSchedulesBuilder()
       .withName("Fixed Due Date Schedule")
