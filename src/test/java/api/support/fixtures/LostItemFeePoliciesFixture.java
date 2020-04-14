@@ -3,7 +3,6 @@ package api.support.fixtures;
 import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
 
 import java.util.UUID;
-import java.util.function.UnaryOperator;
 
 import org.folio.circulation.support.http.client.IndividualResource;
 
@@ -20,10 +19,10 @@ public class LostItemFeePoliciesFixture {
   }
 
   public IndividualResource facultyStandard() {
-    return facultyStandard(UnaryOperator.identity());
+    return create(facultyStandardPolicy());
   }
 
-  public IndividualResource facultyStandard(UnaryOperator<LostItemFeePolicyBuilder> builder) {
+  public LostItemFeePolicyBuilder facultyStandardPolicy() {
     JsonObject itemAgedLostOverdue = new JsonObject();
     itemAgedLostOverdue.put("duration", 12);
     itemAgedLostOverdue.put("intervalId", "Months");
@@ -40,7 +39,7 @@ public class LostItemFeePoliciesFixture {
     lostItemChargeFeeFine.put("duration", "6");
     lostItemChargeFeeFine.put("intervalId", "Months");
 
-    final LostItemFeePolicyBuilder undergradStandard = new LostItemFeePolicyBuilder()
+    return new LostItemFeePolicyBuilder()
       .withName("Undergrad standard")
       .withDescription("This is description for undergrad standard")
       .withItemAgedLostOverdue(itemAgedLostOverdue)
@@ -54,8 +53,6 @@ public class LostItemFeePoliciesFixture {
       .withReplacedLostItemProcessingFee(true)
       .withReplacementAllowed(true)
       .withLostItemReturned("Charge");
-
-    return lostItemFeePolicyRecordCreator.createIfAbsent(builder.apply(undergradStandard));
   }
 
   public IndividualResource create(UUID id, String name) {

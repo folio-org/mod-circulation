@@ -40,7 +40,7 @@ import api.support.fixtures.CirculationRulesFixture;
 import api.support.fixtures.DeclareLostFixtures;
 import api.support.fixtures.EndPatronSessionClient;
 import api.support.fixtures.ExpiredSessionProcessingClient;
-import api.support.fixtures.FeeFineFixture;
+import api.support.fixtures.FeeFineTypeFixture;
 import api.support.fixtures.FeeFineOwnerFixture;
 import api.support.fixtures.HoldingsFixture;
 import api.support.fixtures.IdentifierTypesFixture;
@@ -232,8 +232,9 @@ public abstract class APITests {
 
   protected final TemplateFixture templateFixture = new TemplateFixture(templateClient);
   protected final IdentifierTypesFixture identifierTypesFixture = new IdentifierTypesFixture();
-  protected final FeeFineOwnerFixture feeFineOwnerFixture = new FeeFineOwnerFixture(feeFineOwnersClient);
-  protected final FeeFineFixture feeFineFixture = new FeeFineFixture(feeFinesClient);
+  protected final FeeFineOwnerFixture feeFineOwnerFixture =
+    new FeeFineOwnerFixture(feeFineOwnersClient, servicePointsFixture);
+  protected final FeeFineTypeFixture feeFineTypeFixture = new FeeFineTypeFixture(feeFinesClient);
   protected final DeclareLostFixtures declareLostFixtures = new DeclareLostFixtures();
 
   protected APITests() {
@@ -330,7 +331,7 @@ public abstract class APITests {
     userManualBlocksFixture.cleanUp();
 
     feeFineOwnerFixture.cleanUp();
-    feeFineFixture.cleanUp();
+    feeFineTypeFixture.cleanUp();
     accountsClient.deleteAll();
   }
 

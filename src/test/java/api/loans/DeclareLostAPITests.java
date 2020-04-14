@@ -1,6 +1,7 @@
 package api.loans;
 
 import static api.support.http.CqlQuery.exactMatch;
+import static api.support.matchers.JsonObjectMatcher.hasJsonPath;
 import static api.support.matchers.LoanMatchers.hasLoanProperty;
 import static api.support.matchers.LoanMatchers.hasOpenStatus;
 import static api.support.matchers.LoanMatchers.hasStatus;
@@ -8,10 +9,12 @@ import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static api.support.matchers.ValidationErrorMatchers.hasParameter;
 import static org.hamcrest.CoreMatchers.allOf;
+import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.everyItem;
 import static org.hamcrest.Matchers.hasSize;
 
 import java.util.List;
@@ -21,18 +24,18 @@ import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
-import org.hamcrest.Matcher;
 import org.joda.time.DateTime;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import api.support.APITests;
 import api.support.builders.DeclareItemLostRequestBuilder;
+import api.support.builders.LostItemFeePolicyBuilder;
 import api.support.http.InventoryItemResource;
 import io.vertx.core.json.JsonObject;
 import junitparams.JUnitParamsRunner;
 import junitparams.Parameters;
-import junitparams.naming.TestCaseName;
+import junitparams.converters.Nullable;
 
 @RunWith(JUnitParamsRunner.class)
 public class DeclareLostAPITests extends APITests {
@@ -46,6 +49,7 @@ public class DeclareLostAPITests extends APITests {
 
     loanJson = loansFixture.checkOutByBarcode(item,
       usersFixture.charlotte()).getJson();
+    createFeeFineTypesAndOwner();
   }
 
   @Test
@@ -55,8 +59,8 @@ public class DeclareLostAPITests extends APITests {
     DateTime dateTime = DateTime.now();
 
     final DeclareItemLostRequestBuilder builder = new DeclareItemLostRequestBuilder()
-        .forLoanId(loanId).on(dateTime)
-        .withComment(comment);
+      .forLoanId(loanId).on(dateTime)
+      .withComment(comment);
 
     Response response = declareLostFixtures.declareItemLost(builder);
 
@@ -76,10 +80,9 @@ public class DeclareLostAPITests extends APITests {
     UUID loanId = UUID.fromString(loanJson.getString("id"));
     DateTime dateTime = DateTime.now();
 
-    final DeclareItemLostRequestBuilder builder
-      = new DeclareItemLostRequestBuilder()
-        .forLoanId(loanId).on(dateTime)
-        .withNoComment();
+    final DeclareItemLostRequestBuilder builder = new DeclareItemLostRequestBuilder()
+      .forLoanId(loanId).on(dateTime)
+      .withNoComment();
 
     Response response = declareLostFixtures.declareItemLost(builder);
 
@@ -102,10 +105,9 @@ public class DeclareLostAPITests extends APITests {
 
     loansFixture.checkInByBarcode(item);
 
-    final DeclareItemLostRequestBuilder builder
-      = new DeclareItemLostRequestBuilder()
-        .forLoanId(loanId).on(dateTime)
-        .withNoComment();
+    final DeclareItemLostRequestBuilder builder = new DeclareItemLostRequestBuilder()
+      .forLoanId(loanId).on(dateTime)
+      .withNoComment();
 
     Response response = declareLostFixtures.attemptDeclareItemLost(builder);
 
@@ -133,29 +135,81 @@ public class DeclareLostAPITests extends APITests {
   }
 
   @Test
-  @Parameters(source = DeclareLostFeeDataProvider.class, method = "feeDataProvider")
-  @TestCaseName("[{index}] Charge processing fee: {0}, Processing fee: {1}, Item fee: [{2}] => {3}")
-  public void lostItemFeeProperlyAssigned(boolean chargeProcessingFee, Double processingFee,
-    JsonObject itemCharge, Matcher<List<JsonObject>> assignedFeesMatcher) {
+  public void canAssignProcessingAndItemFee() {
+    final double expectedProcessingFee = 10.0;
+    final double expectedItemFee = 20.0;
+    final String expectedOwnerId = feeFineOwnerFixture.cd1Owner().getId().toString();
 
-    // Set-up reference data
-    feeFineOwnerFixture.create(servicePointsFixture.cd1().getId());
-    feeFineFixture.lostItemFee();
-    feeFineFixture.lostItemProcessingFee();
-
-    useLostItemPolicy(lostItemFeePoliciesFixture.facultyStandard(builder -> builder
+    final LostItemFeePolicyBuilder lostItemPolicy = lostItemFeePoliciesFixture
+      .facultyStandardPolicy()
       .withName("Declared lost fee test policy")
-      .withChargeAmountItemPatron(chargeProcessingFee)
-      .withLostItemProcessingFee(processingFee)
-      .withChargeAmountItem(itemCharge)).getId());
+      .withChargeAmountItemPatron(true)
+      .withLostItemProcessingFee(expectedProcessingFee)
+      .withChargeAmountItem("anotherCost", expectedItemFee);
 
-    final InventoryItemResource item = itemsFixture.basedUponNod();
-    final IndividualResource loan = loansFixture.checkOutByBarcode(item, usersFixture.charlotte());
+    useLostItemPolicy(lostItemFeePoliciesFixture.create(lostItemPolicy).getId());
 
-    declareLostFixtures.declareItemLost(new DeclareItemLostRequestBuilder()
-      .forLoanId(loan.getId()));
+    final UUID loanId = createLoanAndDeclareItLost();
 
-    assertThat(getAccountsForLoan(loan.getId()), assignedFeesMatcher);
+    final List<JsonObject> accountsForLoan = getAccountsForLoan(loanId);
+    assertThat(accountsForLoan, hasSize(2));
+    assertThat(accountsForLoan, everyItem(hasJsonPath("ownerId", expectedOwnerId)));
+
+    assertThat(accountsForLoan, hasItem(allOf(
+      hasJsonPath("feeFineType", "Lost item fee"),
+      hasJsonPath("amount", expectedItemFee))));
+    assertThat(accountsForLoan, hasItem(allOf(
+      hasJsonPath("feeFineType", "Lost item processing fee"),
+      hasJsonPath("amount", expectedProcessingFee))));
+  }
+
+  @Test
+  public void canAssignItemFeeOnly() {
+    final double expectedItemFee = 20.0;
+    final String expectedOwnerId = feeFineOwnerFixture.cd1Owner().getId().toString();
+
+    final LostItemFeePolicyBuilder lostItemPolicy = lostItemFeePoliciesFixture
+      .facultyStandardPolicy()
+      .withName("Declared lost fee test policy")
+      .withChargeAmountItemPatron(false)
+      .withChargeAmountItem("anotherCost", expectedItemFee);
+
+    useLostItemPolicy(lostItemFeePoliciesFixture.create(lostItemPolicy).getId());
+
+    final UUID loanId = createLoanAndDeclareItLost();
+
+    final List<JsonObject> accountsForLoan = getAccountsForLoan(loanId);
+    assertThat(accountsForLoan, hasSize(1));
+    assertThat(accountsForLoan, everyItem(hasJsonPath("ownerId", expectedOwnerId)));
+
+    assertThat(accountsForLoan, hasItem(allOf(
+      hasJsonPath("feeFineType", "Lost item fee"),
+      hasJsonPath("amount", expectedItemFee))));
+  }
+
+  @Test
+  public void canAssignProcessingFeeOnly() {
+    final double expectedProcessingFee = 10.0;
+    final String expectedOwnerId = feeFineOwnerFixture.cd1Owner().getId().toString();
+
+    final LostItemFeePolicyBuilder lostItemPolicy = lostItemFeePoliciesFixture
+      .facultyStandardPolicy()
+      .withName("Declared lost fee test policy")
+      .withChargeAmountItemPatron(true)
+      .withLostItemProcessingFee(expectedProcessingFee)
+      .withChargeAmountItem("anotherCost", 0.0);
+
+    useLostItemPolicy(lostItemFeePoliciesFixture.create(lostItemPolicy).getId());
+
+    final UUID loanId = createLoanAndDeclareItLost();
+
+    final List<JsonObject> accountsForLoan = getAccountsForLoan(loanId);
+    assertThat(accountsForLoan, hasSize(1));
+    assertThat(accountsForLoan, everyItem(hasJsonPath("ownerId", expectedOwnerId)));
+
+    assertThat(accountsForLoan, hasItem(allOf(
+      hasJsonPath("feeFineType", "Lost item processing fee"),
+      hasJsonPath("amount", expectedProcessingFee))));
   }
 
   @Test
@@ -179,6 +233,8 @@ public class DeclareLostAPITests extends APITests {
 
   @Test
   public void shouldNotAssignFeesWhenNoOwnerConfigured() {
+    feeFineOwnerFixture.delete(feeFineOwnerFixture.cd1Owner());
+
     final InventoryItemResource item = itemsFixture.basedUponNod();
     final IndividualResource loan = loansFixture.checkOutByBarcode(item, usersFixture.charlotte());
 
@@ -190,8 +246,7 @@ public class DeclareLostAPITests extends APITests {
 
   @Test
   public void cannotDeclareItemLostWhenNoAutomatedLostItemFee() {
-    feeFineOwnerFixture.create(servicePointsFixture.cd1().getId());
-    feeFineFixture.lostItemProcessingFee();
+    feeFineTypeFixture.delete(feeFineTypeFixture.lostItemFee());
 
     final InventoryItemResource item = itemsFixture.basedUponNod();
     final IndividualResource loan = loansFixture.checkOutByBarcode(item, usersFixture.charlotte());
@@ -207,8 +262,7 @@ public class DeclareLostAPITests extends APITests {
 
   @Test
   public void cannotDeclareItemLostWhenNoAutomatedLostItemProcessingFee() {
-    feeFineOwnerFixture.create(servicePointsFixture.cd1().getId());
-    feeFineFixture.lostItemFee();
+    feeFineTypeFixture.delete(feeFineTypeFixture.lostItemProcessingFee());
 
     final InventoryItemResource item = itemsFixture.basedUponNod();
     final IndividualResource loan = loansFixture.checkOutByBarcode(item, usersFixture.charlotte());
@@ -222,8 +276,123 @@ public class DeclareLostAPITests extends APITests {
       hasParameter("feeFineType", "Lost item processing fee"))));
   }
 
+  @Test
+  @Parameters( {
+    "0",
+    "10.00"
+  })
+  public void shouldNotAssignProcessingFeeIfDisabled(double processingFee) {
+    final LostItemFeePolicyBuilder lostItemPolicy = lostItemFeePoliciesFixture
+      .facultyStandardPolicy()
+      .withName("Declared lost fee test policy")
+      .withChargeAmountItemPatron(false)
+      .withLostItemProcessingFee(processingFee)
+      .withNoChargeAmountItem();
+
+    useLostItemPolicy(lostItemFeePoliciesFixture.create(lostItemPolicy).getId());
+
+    final UUID loan = createLoanAndDeclareItLost();
+
+    assertNoFeeAssignedForLoan(loan);
+  }
+
+  @Test
+  @Parameters( {
+    "null",
+    "0.0"
+  })
+  public void shouldNotAssignItemAnotherCostFeeIfAmountMissing(@Nullable Double itemFee) {
+    final LostItemFeePolicyBuilder lostItemPolicy = lostItemFeePoliciesFixture
+      .facultyStandardPolicy()
+      .withName("Declared lost fee test policy")
+      .withChargeAmountItemPatron(false)
+      .withChargeAmountItem("anotherCost", itemFee);
+
+    useLostItemPolicy(lostItemFeePoliciesFixture.create(lostItemPolicy).getId());
+
+    final UUID loan = createLoanAndDeclareItLost();
+
+    assertNoFeeAssignedForLoan(loan);
+  }
+
+  @Test
+  @Parameters( {
+    "actualCost",
+    "null",
+    "someNewCostType"
+  })
+  public void shouldNotAssignFeeIfChargeTypeNotAnotherCost(@Nullable String chargeType) {
+    final LostItemFeePolicyBuilder lostItemPolicy = lostItemFeePoliciesFixture
+      .facultyStandardPolicy()
+      .withName("Declared lost fee test policy")
+      .withChargeAmountItemPatron(false)
+      .withChargeAmountItem(chargeType, 10.0);
+
+    useLostItemPolicy(lostItemFeePoliciesFixture.create(lostItemPolicy).getId());
+
+    final UUID loan = createLoanAndDeclareItLost();
+
+    assertNoFeeAssignedForLoan(loan);
+  }
+
+  @Test
+  @Parameters( {
+    "null",
+    "0.0"
+  })
+  public void shouldNotAssignItemProcessingFeeIfAmountMissing(@Nullable Double processingFee) {
+    final LostItemFeePolicyBuilder lostItemPolicy = lostItemFeePoliciesFixture
+      .facultyStandardPolicy()
+      .withName("Declared lost fee test policy")
+      .withChargeAmountItemPatron(true)
+      .withLostItemProcessingFee(processingFee)
+      .withNoChargeAmountItem();
+
+    useLostItemPolicy(lostItemFeePoliciesFixture.create(lostItemPolicy).getId());
+
+    final UUID loan = createLoanAndDeclareItLost();
+
+    assertNoFeeAssignedForLoan(loan);
+  }
+
+  @Test
+  public void canDeclareItemLostIfLostPolicyChargeAmountMissing() {
+    final LostItemFeePolicyBuilder lostItemPolicy = lostItemFeePoliciesFixture
+      .facultyStandardPolicy()
+      .withName("Declared lost fee test policy")
+      .withChargeAmountItemPatron(false)
+      .withChargeAmountItem(null);
+
+    useLostItemPolicy(lostItemFeePoliciesFixture.create(lostItemPolicy).getId());
+
+    final UUID loan = createLoanAndDeclareItLost();
+
+    assertNoFeeAssignedForLoan(loan);
+  }
+
   private List<JsonObject> getAccountsForLoan(UUID loanId) {
     return accountsClient.getMany(exactMatch("loanId", loanId.toString()))
       .stream().collect(Collectors.toList());
+  }
+
+  private UUID createLoanAndDeclareItLost() {
+    final InventoryItemResource item = itemsFixture.basedUponNod();
+    final IndividualResource loan = loansFixture.checkOutByBarcode(item, usersFixture.charlotte());
+
+    declareLostFixtures.declareItemLost(new DeclareItemLostRequestBuilder()
+      .forLoanId(loan.getId()));
+
+    return loan.getId();
+  }
+
+  private void createFeeFineTypesAndOwner() {
+    // Set-up reference data
+    feeFineOwnerFixture.cd1Owner();
+    feeFineTypeFixture.lostItemFee();
+    feeFineTypeFixture.lostItemProcessingFee();
+  }
+
+  private void assertNoFeeAssignedForLoan(UUID loan) {
+    assertThat(getAccountsForLoan(loan), hasSize(0));
   }
 }
