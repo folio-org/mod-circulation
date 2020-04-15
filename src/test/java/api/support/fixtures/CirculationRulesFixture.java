@@ -74,8 +74,7 @@ public class CirculationRulesFixture {
       response.getStatusCode(), is(204));
   }
 
-  public Response attemptUpdateCirculationRules(
-    String rules, String policyType) {
+  public Response attemptUpdateCirculationRules(String rules) {
 
     JsonObject circulationRulesRequest = new JsonObject()
       .put("rulesAsText", rules);
@@ -95,7 +94,7 @@ public class CirculationRulesFixture {
       .statusCode(204);
   }
 
-  private String soleFallbackPolicyRule(UUID loanPolicyId, UUID requestPolicyId,
+  public String soleFallbackPolicyRule(UUID loanPolicyId, UUID requestPolicyId,
       UUID noticePolicyId, UUID overdueFinePolicyId, UUID lostItemFeePolicyId) {
 
     return soleFallbackPolicyRule(loanPolicyId.toString(),

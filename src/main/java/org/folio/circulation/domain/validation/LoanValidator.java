@@ -13,7 +13,7 @@ public class LoanValidator {
   public static Result<Loan> refuseWhenLoanIsClosed(Result<Loan> loanResult) {
     return loanResult.failWhen(
       loan -> succeeded(loan.isClosed()),
-      loan -> singleValidationError("Loan is closed", "id", loan.getId())
+      loan -> singleValidationError("Loan is closed", "loanId", loan.getId())
     );
   }
 }

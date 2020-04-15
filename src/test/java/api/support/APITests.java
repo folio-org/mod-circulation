@@ -22,14 +22,13 @@ import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import api.support.builders.LoanPolicyBuilder;
 import api.support.builders.NoticePolicyBuilder;
 import api.support.fixtures.AddressTypesFixture;
 import api.support.fixtures.CancellationReasonsFixture;
 import api.support.fixtures.CirculationRulesFixture;
+import api.support.fixtures.ClaimItemReturnedFixture;
 import api.support.fixtures.EndPatronSessionClient;
 import api.support.fixtures.ExpiredSessionProcessingClient;
 import api.support.fixtures.HoldingsFixture;
@@ -232,6 +231,8 @@ public abstract class APITests {
 
   protected final TemplateFixture templateFixture = new TemplateFixture(templateClient);
   protected final IdentifierTypesFixture identifierTypesFixture = new IdentifierTypesFixture();
+  protected final ClaimItemReturnedFixture claimItemReturnedFixture =
+    new ClaimItemReturnedFixture(restAssuredClient);
 
   protected APITests() {
     this(true);
