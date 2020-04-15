@@ -18,7 +18,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.awaitility.Awaitility;
@@ -71,7 +70,7 @@ public class FeeFineScheduledNoticesProcessingTests extends APITests {
   }
 
   @Test
-  public void oneTimeUponAtNoticeIsSentAndDeleted() {
+  public void uponAtNoticeIsSentAndDeleted() {
     final NoticeTiming timing = UPON_AT;
     createOverdueFineViaCheckin(createNoticeConfig(OVERDUE_FINE_RETURNED, timing, false));
 
@@ -81,21 +80,6 @@ public class FeeFineScheduledNoticesProcessingTests extends APITests {
 
     checkSentNotice(TEMPLATE_IDS.get(timing));
     checkNumberOfScheduledNotices(0);
-  }
-
-  @Test
-  public void recurringUponAtNoticeIsSentAndRescheduled() {
-    final NoticeTiming timing = UPON_AT;
-    createOverdueFineViaCheckin(createNoticeConfig(OVERDUE_FINE_RETURNED, timing, true));
-
-    checkScheduledNotice(TriggeringEvent.OVERDUE_FINE_RETURNED, timing, true, actionDateTime);
-
-    scheduledNoticeProcessingClient.runFeeFineNoticesProcessing(actionDateTime.plusMinutes(1));
-
-    checkSentNotice(TEMPLATE_IDS.get(timing));
-    checkNumberOfScheduledNotices(1);
-    checkScheduledNotice(TriggeringEvent.OVERDUE_FINE_RETURNED, timing, true,
-      actionDateTime.plus(RECURRING_PERIOD.timePeriod()));
   }
 
   @Test
@@ -130,26 +114,26 @@ public class FeeFineScheduledNoticesProcessingTests extends APITests {
 
   @Test
   public void recurringNoticeIsRescheduledCorrectlyWhenNextCalculatedRunTimeIsBeforeNow() {
-    final NoticeTiming timing = UPON_AT;
+    final NoticeTiming timing = AFTER;
     createOverdueFineViaCheckin(createNoticeConfig(OVERDUE_FINE_RETURNED, timing, true));
 
-    checkScheduledNotice(TriggeringEvent.OVERDUE_FINE_RETURNED, timing, true, actionDateTime);
+    DateTime firstScheduledRunTime = actionDateTime.plus(AFTER_PERIOD.timePeriod());
 
-    final DateTime now = ClockManager.getClockManager().getDateTime();
+    checkScheduledNotice(TriggeringEvent.OVERDUE_FINE_RETURNED, timing, true, firstScheduledRunTime);
 
-    mockClockManagerToReturnFixedDateTime(now);
+    DateTime fakeProcessingTime = firstScheduledRunTime
+      .plus(RECURRING_PERIOD.timePeriod()) // first planned recurrence time
+      .plusHours(1);
 
-    DateTime nowPlusRecurringPeriod = now.plus(RECURRING_PERIOD.timePeriod());
-    DateTime processingTime = nowPlusRecurringPeriod.plusHours(1);
-
-    scheduledNoticeProcessingClient.runFeeFineNoticesProcessing(processingTime);
-
+    mockClockManagerToReturnFixedDateTime(fakeProcessingTime);
+    scheduledNoticeProcessingClient.runFeeFineNoticesProcessing(fakeProcessingTime);
     mockClockManagerToReturnDefaultDateTime();
+
+    DateTime expectedNextRunTime = fakeProcessingTime.plus(RECURRING_PERIOD.timePeriod());
 
     checkSentNotice(TEMPLATE_IDS.get(timing));
     checkNumberOfScheduledNotices(1);
-    checkScheduledNotice(TriggeringEvent.OVERDUE_FINE_RETURNED, timing, true,
-      nowPlusRecurringPeriod);
+    checkScheduledNotice(TriggeringEvent.OVERDUE_FINE_RETURNED, timing, true, expectedNextRunTime);
   }
 
   @Test
@@ -181,7 +165,7 @@ public class FeeFineScheduledNoticesProcessingTests extends APITests {
   }
 
   @Test
-  public void oneTimeNoticeIsDiscardedWhenAccountIsClosed() {
+  public void noticeIsDiscardedWhenAccountIsClosed() {
     final NoticeTiming timing = UPON_AT;
     createOverdueFineViaCheckin(createNoticeConfig(OVERDUE_FINE_RETURNED, timing, false));
 
@@ -198,7 +182,11 @@ public class FeeFineScheduledNoticesProcessingTests extends APITests {
   }
 
   public void createOverdueFineViaCheckin(JsonObject... patronNoticeConfigs) {
-    use(createPatronNoticePolicy(patronNoticeConfigs));
+    NoticePolicyBuilder noticePolicyBuilder = new NoticePolicyBuilder()
+      .withName("Patron notice policy with fee/fine notices")
+      .withFeeFineNotices(Arrays.asList(patronNoticeConfigs));
+
+    use(noticePolicyBuilder);
 
     templateFixture.createDummyNoticeTemplate(TEMPLATE_IDS.get(UPON_AT));
     templateFixture.createDummyNoticeTemplate(TEMPLATE_IDS.get(AFTER));
@@ -275,12 +263,6 @@ public class FeeFineScheduledNoticesProcessingTests extends APITests {
     }
 
     return builder.create();
-  }
-
-  private NoticePolicyBuilder createPatronNoticePolicy(JsonObject... noticeConfigs) {
-    return new NoticePolicyBuilder()
-      .withName("Patron notice policy with fee/fine notices")
-      .withFeeFineNotices(Arrays.asList(noticeConfigs));
   }
 
   private void checkScheduledNotice(TriggeringEvent triggeringEvent,
