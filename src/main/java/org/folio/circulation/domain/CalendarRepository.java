@@ -27,7 +27,6 @@ public class CalendarRepository {
 
   private static final String OPENING_PERIODS = "openingPeriods";
   private static final String OPENING_DAYS = "openingDays";
-  private static final String OPENING_DAY = "openingDay";
   private static final String PATH_PARAM_WITH_QUERY = "%s/calculateopening?requestedDate=%s";
   private static final String PERIODS_QUERY_PARAMS = "servicePointId=%s&startDate=%s&endDate=%s&includeClosedDays=%s";
 
