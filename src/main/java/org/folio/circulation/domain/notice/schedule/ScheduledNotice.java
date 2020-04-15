@@ -3,28 +3,23 @@ package org.folio.circulation.domain.notice.schedule;
 import org.joda.time.DateTime;
 
 public class ScheduledNotice {
-
   private final String id;
-  private final String loanId;
-  private final String requestId;
-  private final String recipientUserId;
   private final TriggeringEvent triggeringEvent;
   private final DateTime nextRunTime;
   private final ScheduledNoticeConfig configuration;
+  private final ReferencedIds referencedIds;
+
   public ScheduledNotice(String id,
-                         String loanId,
-                         String requestId,
-                         String recipientUserId,
-                         TriggeringEvent triggeringEvent,
-                         DateTime nextRunTime,
-                         ScheduledNoticeConfig configuration) {
+    TriggeringEvent triggeringEvent,
+    DateTime nextRunTime,
+    ScheduledNoticeConfig configuration,
+    ReferencedIds referencedIds) {
+
     this.id = id;
-    this.loanId = loanId;
-    this.requestId = requestId;
-    this.recipientUserId = recipientUserId;
     this.triggeringEvent = triggeringEvent;
     this.nextRunTime = nextRunTime;
     this.configuration = configuration;
+    this.referencedIds = referencedIds;
   }
 
   public String getId() {
@@ -32,15 +27,19 @@ public class ScheduledNotice {
   }
 
   public String getLoanId() {
-    return loanId;
+    return referencedIds.loanId;
   }
 
   public String getRequestId() {
-    return requestId;
+    return referencedIds.requestId;
+  }
+
+  public String getFeeFineActionId() {
+    return referencedIds.feeFineActionId;
   }
 
   public String getRecipientUserId() {
-    return recipientUserId;
+    return referencedIds.userId;
   }
 
   public TriggeringEvent getTriggeringEvent() {
@@ -56,6 +55,21 @@ public class ScheduledNotice {
   }
 
   public ScheduledNotice withNextRunTime(DateTime nextRunTime) {
-    return new ScheduledNotice(id, loanId, requestId, recipientUserId, triggeringEvent, nextRunTime, configuration);
+    return new ScheduledNotice(id, triggeringEvent,
+      nextRunTime, configuration, referencedIds);
+  }
+
+  public static class ReferencedIds {
+    private final String userId;
+    private final String loanId;
+    private final String requestId;
+    private final String feeFineActionId;
+
+    public ReferencedIds(String userId, String loanId, String requestId, String feeFineActionId) {
+      this.userId = userId;
+      this.loanId = loanId;
+      this.requestId = requestId;
+      this.feeFineActionId = feeFineActionId;
+    }
   }
 }

@@ -53,6 +53,18 @@ public class ScheduledNoticeProcessingClient {
       "request-scheduled-notices-processing-request");
   }
 
+  public void runFeeFineNoticesProcessing(DateTime mockSystemTime) {
+    runWithFrozenTime(this::runFeeFineNoticesProcessing, mockSystemTime);
+  }
+
+  public void runFeeFineNoticesProcessing() {
+    URL url = circulationModuleUrl(
+      "/circulation/fee-fine-scheduled-notices-processing");
+
+    timedTaskClient.start(url, 204,
+      "fee-fine-scheduled-notices-processing-request");
+  }
+
   private void runWithFrozenTime(Runnable runnable, DateTime mockSystemTime) {
     try {
       DateTimeUtils.setCurrentMillisFixed(mockSystemTime.getMillis());

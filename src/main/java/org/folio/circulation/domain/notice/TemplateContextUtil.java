@@ -4,11 +4,18 @@ import static java.lang.Math.max;
 import static java.util.stream.Collectors.joining;
 import static org.folio.circulation.support.JsonPropertyWriter.write;
 
+import java.util.Arrays;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.ObjectUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
+import org.folio.circulation.domain.Account;
 import org.folio.circulation.domain.CallNumberComponents;
 import org.folio.circulation.domain.CheckInProcessRecords;
+import org.folio.circulation.domain.FeeFineAction;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.Location;
@@ -30,6 +37,9 @@ public class TemplateContextUtil {
   private static final String REQUEST = "request";
   private static final String REQUESTER = "requester";
   private static final String LOAN = "loan";
+
+  private static final String PATRON_COMMENTS_KEY = "PATRON";
+  private static final String STAFF_COMMENTS_KEY = "STAFF";
 
   private static final String UNLIMITED = "unlimited";
 
@@ -246,5 +256,31 @@ public class TemplateContextUtil {
     }
 
     return loanContext;
+  }
+
+  public static JsonObject createFeeFineNoticeContext(Account account, FeeFineAction action) {
+    return new JsonObject().put("fee", new JsonObject()
+      .put("owner", account.getFeeFineOwner())
+      .put("type", account.getFeeFineType())
+      .put("amount", account.getAmount())
+      .put("actionType", action.getTypeAction())
+      .put("actionAmount", action.getAmountAction())
+      .put("actionDateTime", action.getDateAction().toString())
+      .put("balance", action.getBalance())
+      .put("actionAdditionalInfo", getCommentsFromFeeFineAction(action, PATRON_COMMENTS_KEY))
+      .put("reasonForCancellation", getCommentsFromFeeFineAction(action, STAFF_COMMENTS_KEY)));
+  }
+
+  private static String getCommentsFromFeeFineAction(FeeFineAction action, String commentsKey){
+    String comments = Optional.ofNullable(action.getComments()).orElse(StringUtils.EMPTY);
+    return parseFeeFineComments(comments).getOrDefault(commentsKey, StringUtils.EMPTY);
+  }
+
+  private static Map<String, String> parseFeeFineComments(String comments) {
+    return Arrays.stream(comments.split(" \n "))
+      .map(s -> s.split(" : "))
+      .filter(arr -> arr.length == 2)
+      .map(strings -> Pair.of(strings[0], strings[1]))
+      .collect(Collectors.toMap(Pair::getKey, Pair::getValue, (s, s2) -> s));
   }
 }

@@ -29,6 +29,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.awaitility.Awaitility;
 import org.folio.circulation.domain.User;
+import org.folio.circulation.domain.notice.schedule.TriggeringEvent;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 import org.hamcrest.Matcher;

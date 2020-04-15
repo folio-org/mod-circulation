@@ -1,9 +1,14 @@
 package org.folio.circulation.domain;
 
+import static java.util.Objects.isNull;
+import static org.folio.circulation.support.Result.ofAsync;
+import static org.folio.circulation.support.Result.succeeded;
+
 import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
+import org.folio.circulation.support.FetchSingleRecord;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.http.client.CqlQuery;
 import org.folio.circulation.support.http.client.PageLimit;
@@ -30,6 +35,18 @@ public class FeeFineOwnerRepository {
         .findAny()
         .orElse(null))
       );
+  }
+
+  public CompletableFuture<Result<FeeFineOwner>> findById(String id) {
+    if(isNull(id)) {
+      return ofAsync(() -> null);
+    }
+
+    return FetchSingleRecord.<FeeFineOwner>forRecord("feeFineOwner")
+      .using(feeFineOwnerStorageClient)
+      .mapTo(FeeFineOwner::from)
+      .whenNotFound(succeeded(null))
+      .fetch(id);
   }
 
   private Result<MultipleRecords<FeeFineOwner>> mapResponseToOwners(Response response) {
