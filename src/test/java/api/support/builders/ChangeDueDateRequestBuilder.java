@@ -1,10 +1,10 @@
 package api.support.builders;
 
 import static org.folio.circulation.resources.ChangeDueDateResource.DUE_DATE;
+import static org.folio.circulation.support.JsonPropertyWriter.write;
 
 import java.util.UUID;
 
-import org.folio.circulation.support.JsonPropertyWriter;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 
@@ -47,7 +47,7 @@ public class ChangeDueDateRequestBuilder implements Builder {
   @Override
   public JsonObject create() {
     final JsonObject request = new JsonObject();
-    JsonPropertyWriter.write(request, DUE_DATE, dueDate);
+    write(request, DUE_DATE, dueDate);
     return request;
   }
 }
