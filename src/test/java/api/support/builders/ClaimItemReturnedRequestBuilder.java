@@ -1,7 +1,5 @@
 package api.support.builders;
 
-import static org.folio.circulation.resources.ClaimItemReturnedResource.COMMENT;
-import static org.folio.circulation.resources.ClaimItemReturnedResource.ITEM_CLAIMED_RETURNED_DATE;
 import static org.folio.circulation.support.JsonPropertyWriter.write;
 
 import java.util.UUID;
@@ -54,9 +52,9 @@ public class ClaimItemReturnedRequestBuilder implements Builder {
     final JsonObject request = new JsonObject();
 
     if (itemClaimedReturnedDate != null) {
-      request.put(ITEM_CLAIMED_RETURNED_DATE, itemClaimedReturnedDate.toString());
+      request.put("itemClaimedReturnedDateTime", itemClaimedReturnedDate.toString());
     }
-    write(request, COMMENT, comment);
+    write(request, "comment", comment);
 
     return request;
   }

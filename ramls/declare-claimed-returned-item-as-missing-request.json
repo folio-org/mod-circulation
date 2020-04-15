@@ -1,0 +1,15 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "type": "object",
+  "description": "Request body schema for resolving claim as missing API",
+  "properties": {
+    "comment": {
+      "description": "Comment explaining why the item has been marked missing",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "comment"
+  ]
+}
