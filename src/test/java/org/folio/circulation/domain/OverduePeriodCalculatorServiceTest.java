@@ -22,6 +22,8 @@ import org.folio.circulation.domain.policy.OverdueFinePolicy;
 import org.folio.circulation.domain.policy.Period;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
+import org.joda.time.LocalDate;
+import org.joda.time.LocalDateTime;
 import org.joda.time.LocalTime;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -93,7 +95,12 @@ public class OverduePeriodCalculatorServiceTest {
   @Test
   @Parameters
   public void getOpeningDayDurationTest(List<OpeningDay> openingDays, int expectedResult) {
-    int actualResult = calculator.getOpeningDaysDurationMinutes(openingDays).value();
+
+    LocalDateTime dueDate = new LocalDateTime("2020-04-08T14:00:00.000");
+    LocalDateTime returnDate = new LocalDateTime("2020-04-10T15:00:00.000");
+
+    int actualResult = calculator.getOpeningDaysDurationMinutes(
+      openingDays, dueDate, returnDate).value();
     assertEquals(expectedResult, actualResult);
   }
 
@@ -101,36 +108,36 @@ public class OverduePeriodCalculatorServiceTest {
     List<OpeningDay> zeroDays = Collections.emptyList();
 
     List<OpeningDay> regular = Arrays.asList(
-      createOpeningDay(false),
-      createOpeningDay(false),
-      createOpeningDay(false));
+      createOpeningDay(false, new LocalDate("2020-04-08")),
+      createOpeningDay(false, new LocalDate("2020-04-09")),
+      createOpeningDay(false, new LocalDate("2020-04-10")));
 
     List<OpeningDay> allDay = Arrays.asList(
-      createOpeningDay(true),
-      createOpeningDay(true),
-      createOpeningDay(true));
+      createOpeningDay(true, new LocalDate("2020-04-08")),
+      createOpeningDay(true, new LocalDate("2020-04-09")),
+      createOpeningDay(true, new LocalDate("2020-04-10")));
 
     List<OpeningDay> mixed = Arrays.asList(
-      createOpeningDay(false),
-      createOpeningDay(true),
-      createOpeningDay(false));
+      createOpeningDay(false, new LocalDate("2020-04-08")),
+      createOpeningDay(true, new LocalDate("2020-04-09")),
+      createOpeningDay(false, new LocalDate("2020-04-10")));
 
     LocalTime now = LocalTime.now(DateTimeZone.UTC);
 
     List<OpeningDay> invalid = Arrays.asList(
       OpeningDay.createOpeningDay(
         Collections.singletonList(new OpeningHour(null, null)),
-        null, false, true),
+        new LocalDate("2020-04-08"), false, true),
       OpeningDay.createOpeningDay(
         Collections.singletonList(new OpeningHour(now, now.minusHours(1))),
-        null, false, true)
+        new LocalDate("2020-04-09"), false, true)
     );
 
     return new Object[]{
       new Object[]{zeroDays, 0},
-      new Object[]{regular, MINUTES_PER_HOUR * 10 * 3},
-      new Object[]{allDay, MINUTES_PER_DAY * 3},
-      new Object[]{mixed, MINUTES_PER_HOUR * 10 * 2 + MINUTES_PER_DAY},
+      new Object[]{regular, MINUTES_PER_HOUR * 21},
+      new Object[]{allDay, MINUTES_PER_HOUR * 49 - 2},
+      new Object[]{mixed, MINUTES_PER_HOUR * 35 - 1},
       new Object[]{invalid, 0}
     };
   }
@@ -219,10 +226,10 @@ public class OverduePeriodCalculatorServiceTest {
     return OverdueFinePolicy.from(json);
   }
 
-  private OpeningDay createOpeningDay(boolean allDay) {
+  private OpeningDay createOpeningDay(boolean allDay, LocalDate date) {
     return OpeningDay.createOpeningDay(
       allDay ? Collections.singletonList(allDay()) : Arrays.asList(morning(), afternoon()),
-      null, allDay, true
+      date, allDay, true
       );
   }
 

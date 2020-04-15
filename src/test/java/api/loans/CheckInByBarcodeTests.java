@@ -53,7 +53,6 @@ import api.support.builders.RequestBuilder;
 import api.support.fixtures.TemplateContextMatchers;
 import api.support.http.CqlQuery;
 import api.support.http.InventoryItemResource;
-import api.support.matchers.OverdueFineMatcher;
 import io.vertx.core.json.JsonObject;
 
 public class CheckInByBarcodeTests extends APITests {
@@ -807,9 +806,10 @@ public class CheckInByBarcodeTests extends APITests {
     final IndividualResource nod = itemsFixture.basedUponNod(item ->
       item.withPermanentLocation(homeLocation.getId()));
 
-    DateTime checkOutDate = new DateTime(DateTimeZone.UTC);
+    DateTime checkOutDate = new DateTime(2020, 1, 15, 0, 0, 0, DateTimeZone.UTC);
     DateTime recallRequestExpirationDate = checkOutDate.plusDays(5);
     DateTime checkInDate = checkOutDate.plusDays(10);
+    mockClockManagerToReturnFixedDateTime(new DateTime(2020, 1, 18, 0, 0, 0, DateTimeZone.UTC));
 
     loansFixture.checkOutByBarcode(nod, james, checkOutDate);
 
@@ -857,6 +857,8 @@ public class CheckInByBarcodeTests extends APITests {
     Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
       .until(accountsClient::getAll, hasSize(1));
+
+    mockClockManagerToReturnDefaultDateTime();
 
     List<JsonObject> createdAccounts = accountsClient.getAll();
 

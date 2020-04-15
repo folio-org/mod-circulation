@@ -53,7 +53,7 @@ public class CalendarRepository {
     String servicePointId, DateTime startDate, DateTime endDate, boolean includeClosedDays) {
 
     String params = String.format(PERIODS_QUERY_PARAMS,
-      servicePointId, startDate.toLocalDate(), endDate.toLocalDate(), includeClosedDays);
+      servicePointId, startDate.toLocalDate(), endDate.toLocalDate().plusDays(1), includeClosedDays);
 
     return calendarClient.getManyWithRawQueryStringParameters(params)
       .thenApply(flatMapResult(this::getOpeningDaysFromOpeningPeriods));
@@ -65,7 +65,7 @@ public class CalendarRepository {
   }
 
   private OpeningDay getOpeningDayFromOpeningPeriod(JsonObject openingPeriod) {
-    return new OpeningDay(openingPeriod.getJsonObject(OPENING_DAY));
+    return OpeningDay.fromOpeningPeriodJson(openingPeriod);
   }
 
   private AdjacentOpeningDays convertToOpeningDays(JsonObject jsonObject) {
