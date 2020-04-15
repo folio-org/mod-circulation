@@ -5,6 +5,8 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.core.Is.is;
 
+import java.util.HashSet;
+import java.util.Set;
 import java.util.UUID;
 
 import org.folio.circulation.support.http.client.Response;
@@ -83,14 +85,14 @@ public class CirculationRulesAPITests extends APITests {
   public void cannotUpdateCirculationRulesWithInvalidLoanPolicyId() {
 
     String rule = circulationRulesFixture.soleFallbackPolicyRule(
-      UUID.randomUUID().toString(),
-      requestPoliciesFixture.allowAllRequestPolicy().getId().toString(),
-      noticePoliciesFixture.activeNotice().getId().toString(),
-      overdueFinePoliciesFixture.facultyStandard().getId().toString(),
-      lostItemFeePoliciesFixture.facultyStandard().getId().toString());
+      UUID.randomUUID(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
+      noticePoliciesFixture.activeNotice().getId(),
+      overdueFinePoliciesFixture.facultyStandard().getId(),
+      lostItemFeePoliciesFixture.facultyStandard().getId());
 
     Response response = circulationRulesFixture
-      .attemptUpdateCirculationRules(rule, "l");
+      .attemptUpdateCirculationRules(rule);
 
     assertThat(response.getStatusCode(), is(422));
     assertThat(response.getJson().getString("message"),
@@ -101,14 +103,14 @@ public class CirculationRulesAPITests extends APITests {
   public void cannotUpdateCirculationRulesWithInvalidNoticePolicyId() {
 
     String rule = circulationRulesFixture.soleFallbackPolicyRule(
-      loanPoliciesFixture.canCirculateFixed().getId().toString(),
-      requestPoliciesFixture.allowAllRequestPolicy().getId().toString(),
-      UUID.randomUUID().toString(),
-      overdueFinePoliciesFixture.facultyStandard().getId().toString(),
-      lostItemFeePoliciesFixture.facultyStandard().getId().toString());
+      loanPoliciesFixture.canCirculateFixed().getId(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
+      UUID.randomUUID(),
+      overdueFinePoliciesFixture.facultyStandard().getId(),
+      lostItemFeePoliciesFixture.facultyStandard().getId());
 
     Response response = circulationRulesFixture
-      .attemptUpdateCirculationRules(rule, "n");
+      .attemptUpdateCirculationRules(rule);
 
     assertThat(response.getStatusCode(), is(422));
     assertThat(response.getJson().getString("message"),
@@ -119,14 +121,14 @@ public class CirculationRulesAPITests extends APITests {
   public void cannotUpdateCirculationRulesWithInvalidRequestPolicyId() {
 
     String rule = circulationRulesFixture.soleFallbackPolicyRule(
-      loanPoliciesFixture.canCirculateFixed().getId().toString(),
-      UUID.randomUUID().toString(),
-      noticePoliciesFixture.activeNotice().getId().toString(),
-      overdueFinePoliciesFixture.facultyStandard().getId().toString(),
-      lostItemFeePoliciesFixture.facultyStandard().getId().toString());
+      loanPoliciesFixture.canCirculateFixed().getId(),
+      UUID.randomUUID(),
+      noticePoliciesFixture.activeNotice().getId(),
+      overdueFinePoliciesFixture.facultyStandard().getId(),
+      lostItemFeePoliciesFixture.facultyStandard().getId());
 
     Response response = circulationRulesFixture
-      .attemptUpdateCirculationRules(rule, "r");
+      .attemptUpdateCirculationRules(rule);
 
     assertThat(response.getStatusCode(), is(422));
     assertThat(response.getJson().getString("message"),
@@ -137,14 +139,14 @@ public class CirculationRulesAPITests extends APITests {
   public void cannotUpdateCirculationRulesWithOverdueFinePolicyId() {
 
     String rule = circulationRulesFixture.soleFallbackPolicyRule(
-      loanPoliciesFixture.canCirculateFixed().getId().toString(),
-      requestPoliciesFixture.allowAllRequestPolicy().getId().toString(),
-      noticePoliciesFixture.activeNotice().getId().toString(),
-      UUID.randomUUID().toString(),
-      lostItemFeePoliciesFixture.facultyStandard().getId().toString());
+      loanPoliciesFixture.canCirculateFixed().getId(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
+      noticePoliciesFixture.activeNotice().getId(),
+      UUID.randomUUID(),
+      lostItemFeePoliciesFixture.facultyStandard().getId());
 
     Response response = circulationRulesFixture
-      .attemptUpdateCirculationRules(rule, "o");
+      .attemptUpdateCirculationRules(rule);
 
     assertThat(response.getStatusCode(), is(422));
     assertThat(response.getJson().getString("message"),
@@ -155,18 +157,128 @@ public class CirculationRulesAPITests extends APITests {
   public void cannotUpdateCirculationRulesWithLostItemPolicyId() {
 
     String rule = circulationRulesFixture.soleFallbackPolicyRule(
-      loanPoliciesFixture.canCirculateFixed().getId().toString(),
-      requestPoliciesFixture.allowAllRequestPolicy().getId().toString(),
-      noticePoliciesFixture.activeNotice().getId().toString(),
-      overdueFinePoliciesFixture.facultyStandard().getId().toString(),
-      UUID.randomUUID().toString());
+      loanPoliciesFixture.canCirculateFixed().getId(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
+      noticePoliciesFixture.activeNotice().getId(),
+      overdueFinePoliciesFixture.facultyStandard().getId(),
+      UUID.randomUUID());
 
-    Response response = circulationRulesFixture
-      .attemptUpdateCirculationRules(rule, "i");
+    Response response = circulationRulesFixture.attemptUpdateCirculationRules(rule);
 
     assertThat(response.getStatusCode(), is(422));
     assertThat(response.getJson().getString("message"),
       is("The policy i does not exist"));
+  }
+
+  @Test
+  public void canUpdateCirculationRulesWithTwentyExistingLoanPolicies() {
+
+    Set<UUID> loanPolicyIds = getSetOfPolicyIds(20);
+    createLoanPolicies(loanPolicyIds);
+
+    loanPolicyIds.forEach(loanPolicyId -> {
+      String rule = circulationRulesFixture.soleFallbackPolicyRule(
+        loanPolicyId, requestPoliciesFixture.allowAllRequestPolicy().getId(),
+        noticePoliciesFixture.activeNotice().getId(),
+        overdueFinePoliciesFixture.facultyStandard().getId(),
+        lostItemFeePoliciesFixture.facultyStandard().getId());
+
+      Response response = circulationRulesFixture.attemptUpdateCirculationRules(rule);
+
+      assertThat(String.format(
+        "Failed to set circulation rules: %s", response.getBody()),
+        response.getStatusCode(), is(204));
+    });
+  }
+
+  @Test
+  public void canUpdateCirculationRulesWithTwentyExistingNoticePolicies() {
+
+    Set<UUID> noticePolicyIds = getSetOfPolicyIds(20);
+    createNoticePolicies(noticePolicyIds);
+
+    noticePolicyIds.forEach(noticePolicyId -> {
+      String rule = circulationRulesFixture.soleFallbackPolicyRule(
+        loanPoliciesFixture.canCirculateFixed().getId(),
+        requestPoliciesFixture.allowAllRequestPolicy().getId(),
+        noticePolicyId,
+        overdueFinePoliciesFixture.facultyStandard().getId(),
+        lostItemFeePoliciesFixture.facultyStandard().getId());
+
+      Response response = circulationRulesFixture.attemptUpdateCirculationRules(rule);
+
+      assertThat(String.format(
+        "Failed to set circulation rules: %s", response.getBody()),
+        response.getStatusCode(), is(204));
+    });
+  }
+
+  @Test
+  public void canUpdateCirculationRulesWithTwentyExistingRequestPolicies() {
+
+    Set<UUID> requestPolicyIds = getSetOfPolicyIds(20);
+    requestPolicyIds.forEach(requestPoliciesFixture::allowAllRequestPolicy);
+
+    requestPolicyIds.forEach(requestPolicyId -> {
+      UUID allowAllRequestPolicyId = requestPoliciesFixture.allowAllRequestPolicy(
+        requestPolicyId).getId();
+      String rule = circulationRulesFixture.soleFallbackPolicyRule(
+        loanPoliciesFixture.canCirculateFixed().getId(),
+        allowAllRequestPolicyId,
+        noticePoliciesFixture.activeNotice().getId(),
+        overdueFinePoliciesFixture.facultyStandard().getId(),
+        lostItemFeePoliciesFixture.facultyStandard().getId());
+
+      Response response = circulationRulesFixture.attemptUpdateCirculationRules(rule);
+
+      assertThat(String.format(
+        "Failed to set circulation rules: %s", response.getBody()),
+        response.getStatusCode(), is(204));
+    });
+  }
+
+  @Test
+  public void canUpdateCirculationRulesWithTwentyExistingOverdueFinePolicies() {
+
+    Set<UUID> overdueFinePolicyIds = getSetOfPolicyIds(20);
+    createOverdueFinePolicies(overdueFinePolicyIds);
+
+    overdueFinePolicyIds.forEach(overdueFinePolicyId -> {
+      String rule = circulationRulesFixture.soleFallbackPolicyRule(
+        loanPoliciesFixture.canCirculateFixed().getId(),
+        requestPoliciesFixture.allowAllRequestPolicy().getId(),
+        noticePoliciesFixture.activeNotice().getId(),
+        overdueFinePolicyId,
+        lostItemFeePoliciesFixture.facultyStandard().getId());
+
+      Response response = circulationRulesFixture.attemptUpdateCirculationRules(rule);
+
+      assertThat(String.format(
+        "Failed to set circulation rules: %s", response.getBody()),
+        response.getStatusCode(), is(204));
+    });
+  }
+
+  @Test
+  public void canUpdateCirculationRulesWithTwentyExistingLostItemFeePolicies() {
+
+    Set<UUID> lostItemFeePolicyIds = getSetOfPolicyIds(20);
+    createLostItemFeePolicies(lostItemFeePolicyIds);
+
+    lostItemFeePolicyIds.forEach(lostItemFeePolicyId -> {
+      String rule = circulationRulesFixture.soleFallbackPolicyRule(
+        loanPoliciesFixture.canCirculateFixed().getId(),
+        requestPoliciesFixture.allowAllRequestPolicy().getId(),
+        noticePoliciesFixture.activeNotice().getId(),
+        overdueFinePoliciesFixture.facultyStandard().getId(),
+        lostItemFeePolicyId);
+
+      Response response = circulationRulesFixture.attemptUpdateCirculationRules(rule);
+
+      assertThat(String.format(
+        "Failed to set circulation rules: %s", response.getBody()),
+        response.getStatusCode(), is(204));
+    });
   }
 
   @Test
@@ -206,5 +318,41 @@ public class CirculationRulesAPITests extends APITests {
 
   private void setRules(String rules) {
     circulationRulesFixture.updateCirculationRules(rules);
+  }
+
+  private Set<UUID> getSetOfPolicyIds(int numberOfPolicies) {
+    Set<UUID> ids = new HashSet<>();
+    for (int i = 0; i < numberOfPolicies; i++) {
+      ids.add(UUID.randomUUID());
+    }
+    return ids;
+  }
+
+  private void createLoanPolicies(Set<UUID> ids) {
+    ids.forEach(id -> loanPoliciesFixture.create(
+      new LoanPolicyBuilder()
+        .withId(id)
+        .withName("Example LoanPolicy " + id)));
+  }
+
+  private void createNoticePolicies(Set<UUID> ids) {
+    ids.forEach(id -> noticePoliciesFixture.create(
+      new NoticePolicyBuilder()
+        .withId(id)
+        .withName("Example NoticePolicy " + id)));
+  }
+
+  private void createOverdueFinePolicies(Set<UUID> ids) {
+    ids.forEach(id -> overdueFinePoliciesFixture.create(
+      new OverdueFinePolicyBuilder()
+        .withId(id)
+        .withName("Example OverdueFinePolicy " + id)));
+  }
+
+  private void createLostItemFeePolicies(Set<UUID> ids) {
+    ids.forEach(id -> lostItemFeePoliciesFixture.create(
+      new LostItemFeePolicyBuilder()
+        .withId(id)
+        .withName("Example LostItemFeePolicy " + id)));
   }
 }
