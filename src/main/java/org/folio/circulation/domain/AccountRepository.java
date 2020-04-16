@@ -1,6 +1,5 @@
 package org.folio.circulation.domain;
 
-import static java.util.concurrent.CompletableFuture.allOf;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.fetching.MultipleCqlIndexValuesCriteria.byIndex;
@@ -26,7 +25,6 @@ import org.folio.circulation.support.FindWithMultipleCqlIndexValues;
 import org.folio.circulation.support.GetManyRecordsClient;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.http.client.ResponseInterpreter;
-import org.folio.circulation.support.results.CommonFailures;
 
 public class AccountRepository {
   private static final String LOAN_ID_FIELD_NAME = "loanId";
@@ -129,13 +127,5 @@ public class AccountRepository {
 
     return accountsStorageClient.post(account)
       .thenApply(interpreter::flatMap);
-  }
-
-  public CompletableFuture<Result<Void>> createAll(Collection<AccountStorageRepresentation> accounts) {
-    return allOf(accounts.stream()
-      .map(this::create)
-      .toArray(CompletableFuture[]::new))
-      .thenApply(Result::succeeded)
-      .exceptionally(CommonFailures::failedDueToServerError);
   }
 }
