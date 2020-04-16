@@ -41,21 +41,23 @@ public class FeeFineScheduledNoticeService {
     this.noticePolicyRepository = noticePolicyRepository;
   }
 
-  public CompletableFuture<Result<CheckInProcessRecords>> scheduleNotice(
+  public Result<CheckInProcessRecords> scheduleNotices(
     CheckInProcessRecords records, FeeFineAction action) {
 
-    return scheduleNotice(records.getLoan(), action, OVERDUE_FINE_RETURNED)
-      .thenApply(res -> succeeded(records));
+    scheduleNotices(records.getLoan(), action, OVERDUE_FINE_RETURNED);
+
+    return succeeded(records);
   }
 
-  public CompletableFuture<Result<LoanAndRelatedRecords>> scheduleNotice(
+  public Result<LoanAndRelatedRecords> scheduleNotices(
     LoanAndRelatedRecords records, FeeFineAction action) {
 
-    return scheduleNotice(records.getLoan(), action, OVERDUE_FINE_RENEWED)
-      .thenApply(res -> succeeded(records));
+    scheduleNotices(records.getLoan(), action, OVERDUE_FINE_RENEWED);
+
+    return succeeded(records);
   }
 
-  private CompletableFuture<Result<List<ScheduledNotice>>> scheduleNotice(
+  private CompletableFuture<Result<List<ScheduledNotice>>> scheduleNotices(
     Loan loan, FeeFineAction action, NoticeEventType eventType) {
 
     if (action == null) {

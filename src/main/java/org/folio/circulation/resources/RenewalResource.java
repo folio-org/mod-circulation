@@ -91,8 +91,8 @@ public abstract class RenewalResource extends Resource {
 
     return OverdueFineCalculatorService.using(clients)
       .createOverdueFineIfNecessary(records, context.getUserId())
-      .thenCompose(r -> r.after(action -> FeeFineScheduledNoticeService.using(clients)
-        .scheduleNotice(records, action)));
+      .thenApply(r -> r.next(action ->
+        FeeFineScheduledNoticeService.using(clients).scheduleNotices(records, action)));
   }
 
   protected abstract CompletableFuture<Result<Loan>> findLoan(

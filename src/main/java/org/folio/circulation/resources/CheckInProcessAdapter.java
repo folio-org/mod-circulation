@@ -270,7 +270,6 @@ class CheckInProcessAdapter {
     CheckInProcessRecords records, WebContext context) {
 
     return overdueFineCalculatorService.createOverdueFineIfNecessary(records, context.getUserId())
-      .thenCompose(r -> r.after(action ->
-        feeFineScheduledNoticeService.scheduleNotice(records, action)));
+      .thenApply(r -> r.next(action -> feeFineScheduledNoticeService.scheduleNotices(records, action)));
   }
 }
