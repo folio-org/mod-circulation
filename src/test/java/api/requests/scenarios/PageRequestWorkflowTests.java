@@ -42,7 +42,7 @@ public class PageRequestWorkflowTests extends APITests {
       .withRequesterId(jessica.getId())
       .withPickupServicePointId(servicePointsFixture.cd1().getId()));
 
-    loansFixture.checkOutByBarcode(smallAngryPlanet, jessica);
+      checkOutFixture.checkOutByBarcode(smallAngryPlanet, jessica);
 
     Response getByIdResponse = requestsClient.getById(requestByJessica.getId());
 
@@ -70,7 +70,7 @@ public class PageRequestWorkflowTests extends APITests {
       .withRequesterId(jessica.getId())
       .withPickupServicePointId(servicePointsFixture.cd1().getId()));
 
-    Response response = loansFixture.attemptCheckOutByBarcode(smallAngryPlanet, rebecca);
+    Response response = checkOutFixture.attemptCheckOutByBarcode(smallAngryPlanet, rebecca);
 
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("The Long Way to a Small, Angry Planet (Barcode: 036000291452) " +

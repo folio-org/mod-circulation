@@ -2,14 +2,11 @@ package api.requests;
 
 import static java.net.HttpURLConnection.HTTP_OK;
 import static org.folio.circulation.support.JsonArrayHelper.toList;
-import static org.hamcrest.core.Is.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.core.Is.is;
 
-import java.net.MalformedURLException;
 import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeoutException;
 
 import org.folio.circulation.domain.RequestStatus;
 import org.folio.circulation.support.http.client.IndividualResource;
@@ -57,7 +54,7 @@ public class HoldShelfClearanceReportTests extends APITests {
     final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
-    loansFixture.checkOutByBarcode(smallAngryPlanet, usersFixture.james());
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet, usersFixture.james());
     requestsFixture.place(new RequestBuilder()
       .open()
       .hold()
@@ -79,7 +76,7 @@ public class HoldShelfClearanceReportTests extends APITests {
     final InventoryItemResource temeraire = itemsFixture.basedUponTemeraire();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
-    loansFixture.checkOutByBarcode(temeraire, usersFixture.charlotte());
+    checkOutFixture.checkOutByBarcode(temeraire, usersFixture.charlotte());
     requestsClient.create(new RequestBuilder()
       .open()
       .hold()
@@ -88,7 +85,7 @@ public class HoldShelfClearanceReportTests extends APITests {
       .by(usersFixture.steve()));
     loansFixture.checkInByBarcode(temeraire);
 
-    loansFixture.checkOutByBarcode(smallAngryPlanet, usersFixture.james());
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet, usersFixture.james());
     requestsClient.create(new RequestBuilder()
       .open()
       .hold()
@@ -116,7 +113,7 @@ public class HoldShelfClearanceReportTests extends APITests {
     final IndividualResource steve = usersFixture.steve();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
-    loansFixture.checkOutByBarcode(temeraire, usersFixture.charlotte());
+    checkOutFixture.checkOutByBarcode(temeraire, usersFixture.charlotte());
     RequestBuilder requestBuilderOnTemeraire = new RequestBuilder()
       .open()
       .hold()
@@ -130,7 +127,7 @@ public class HoldShelfClearanceReportTests extends APITests {
         .put(CLOSED_DATE_KEY, "2018-02-11T14:45:23.000+0000")
     );
 
-    loansFixture.checkOutByBarcode(smallAngryPlanet, usersFixture.james());
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet, usersFixture.james());
     RequestBuilder requestBuilderOnSmallAngryPlanet = new RequestBuilder()
       .open()
       .hold()
@@ -169,7 +166,7 @@ public class HoldShelfClearanceReportTests extends APITests {
     final IndividualResource rebecca = usersFixture.rebecca();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
-    loansFixture.checkOutByBarcode(temeraire, usersFixture.charlotte());
+    checkOutFixture.checkOutByBarcode(temeraire, usersFixture.charlotte());
     RequestBuilder requestBuilderOnTemeraire = new RequestBuilder()
       .open()
       .hold()
@@ -181,7 +178,7 @@ public class HoldShelfClearanceReportTests extends APITests {
     requestsClient.replace(requestOnTemeraire.getId(),
       requestBuilderOnTemeraire.withStatus(RequestStatus.CLOSED_CANCELLED.getValue()));
 
-    loansFixture.checkOutByBarcode(smallAngryPlanet, usersFixture.james());
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet, usersFixture.james());
     RequestBuilder requestBuilderOnSmallAngryPlanet = new RequestBuilder()
       .open()
       .hold()
@@ -207,7 +204,7 @@ public class HoldShelfClearanceReportTests extends APITests {
     final IndividualResource rebecca = usersFixture.rebecca();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
-    loansFixture.checkOutByBarcode(temeraire, usersFixture.charlotte());
+    checkOutFixture.checkOutByBarcode(temeraire, usersFixture.charlotte());
     requestsClient.create(new RequestBuilder()
       .open()
       .hold()
@@ -216,7 +213,7 @@ public class HoldShelfClearanceReportTests extends APITests {
       .by(usersFixture.steve()));
     loansFixture.checkInByBarcode(temeraire);
 
-    loansFixture.checkOutByBarcode(smallAngryPlanet, usersFixture.james());
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet, usersFixture.james());
     RequestBuilder requestBuilderOnItem = new RequestBuilder()
       .open()
       .hold()
@@ -243,7 +240,7 @@ public class HoldShelfClearanceReportTests extends APITests {
     final String earlierAwaitingPickupRequestClosedDate = "2019-03-11T15:45:23.000+0000";
     final String laterAwaitingPickupRequestClosedDate = "2018-03-11T10:45:00.000+0000";
 
-    loansFixture.checkOutByBarcode(smallAngryPlanet, usersFixture.james());
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet, usersFixture.james());
 
     // first request
     RequestBuilder firstRequestBuilderOnItem = new RequestBuilder()
@@ -287,7 +284,7 @@ public class HoldShelfClearanceReportTests extends APITests {
     final String awaitingPickupRequestClosedDate = "2019-03-11T15:45:23.000+0000";
     final String emptyRequestClosedDate = "";
 
-    loansFixture.checkOutByBarcode(smallAngryPlanet, usersFixture.james());
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet, usersFixture.james());
 
     // first request
     RequestBuilder firstRequestBuilderOnItem = new RequestBuilder()
@@ -327,7 +324,7 @@ public class HoldShelfClearanceReportTests extends APITests {
     final InventoryItemResource temeraire = itemsFixture.basedUponTemeraire();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
-    loansFixture.checkOutByBarcode(temeraire, usersFixture.charlotte());
+    checkOutFixture.checkOutByBarcode(temeraire, usersFixture.charlotte());
     RequestBuilder requestBuilder = new RequestBuilder()
       .open()
       .hold()

@@ -29,6 +29,7 @@ import api.support.builders.LoanPolicyBuilder;
 import api.support.builders.NoticePolicyBuilder;
 import api.support.fixtures.AddressTypesFixture;
 import api.support.fixtures.CancellationReasonsFixture;
+import api.support.fixtures.CheckOutFixture;
 import api.support.fixtures.CirculationRulesFixture;
 import api.support.fixtures.EndPatronSessionClient;
 import api.support.fixtures.ExpiredSessionProcessingClient;
@@ -210,6 +211,9 @@ public abstract class APITests {
     patronGroupsFixture);
 
   protected final LoansFixture loansFixture = new LoansFixture(
+          usersFixture, servicePointsFixture);
+
+  protected final CheckOutFixture checkOutFixture = new CheckOutFixture(
           usersFixture, servicePointsFixture);
 
   protected final CancellationReasonsFixture cancellationReasonsFixture

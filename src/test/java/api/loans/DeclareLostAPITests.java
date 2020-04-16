@@ -31,7 +31,7 @@ public class DeclareLostAPITests extends APITests {
     super.beforeEach();
     item = itemsFixture.basedUponSmallAngryPlanet();
 
-    loanJson = loansFixture.checkOutByBarcode(item,
+    loanJson = checkOutFixture.checkOutByBarcode(item,
       usersFixture.charlotte()).getJson();
   }
 

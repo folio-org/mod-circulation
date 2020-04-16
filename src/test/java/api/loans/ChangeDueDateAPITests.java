@@ -53,7 +53,7 @@ public class ChangeDueDateAPITests extends APITests {
   @Before
   public void setUpItemAndLoan() {
     item = itemsFixture.basedUponNod();
-    loan = loansFixture.checkOutByBarcode(item);
+    loan = checkOutFixture.checkOutByBarcode(item);
     dueDate = DateTime.parse(loan.getJson().getString("dueDate"));
   }
 
@@ -233,7 +233,7 @@ public class ChangeDueDateAPITests extends APITests {
 
     IndividualResource steve = usersFixture.steve();
 
-    IndividualResource loan = loansFixture.checkOutByBarcode(smallAngryPlanet, steve);
+    IndividualResource loan = checkOutFixture.checkOutByBarcode(smallAngryPlanet, steve);
 
     DateTime newDueDate = dueDate.plus(Period.weeks(2));
 

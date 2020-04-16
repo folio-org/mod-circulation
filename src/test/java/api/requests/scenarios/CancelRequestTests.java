@@ -30,7 +30,7 @@ public class CancelRequestTests extends APITests {
     final IndividualResource james = usersFixture.james();
     final IndividualResource jessica = usersFixture.jessica();
 
-    loansFixture.checkOutByBarcode(smallAngryPlanet, james);
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet, james);
 
     final IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
       smallAngryPlanet, jessica, DateTime.now(UTC).minusHours(5));
@@ -62,7 +62,7 @@ public class CancelRequestTests extends APITests {
     IndividualResource charlotte = usersFixture.charlotte();
     IndividualResource rebecca = usersFixture.rebecca();
 
-    loansFixture.checkOutByBarcode(smallAngryPlanet, james);
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet, james);
 
     final IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
       smallAngryPlanet, jessica, DateTime.now(UTC).minusHours(5));
@@ -106,7 +106,7 @@ public class CancelRequestTests extends APITests {
     IndividualResource charlotte = usersFixture.charlotte();
     IndividualResource rebecca = usersFixture.rebecca();
 
-    loansFixture.checkOutByBarcode(smallAngryPlanet, james);
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet, james);
 
     final IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
       smallAngryPlanet, jessica, DateTime.now(UTC).minusHours(5));
@@ -150,7 +150,7 @@ public class CancelRequestTests extends APITests {
     IndividualResource charlotte = usersFixture.charlotte();
     IndividualResource rebecca = usersFixture.rebecca();
 
-    loansFixture.checkOutByBarcode(smallAngryPlanet, james);
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet, james);
 
     final IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
       smallAngryPlanet, jessica, DateTime.now(UTC).minusHours(5));
@@ -215,7 +215,7 @@ public class CancelRequestTests extends APITests {
     IndividualResource requesterId = usersFixture.rebecca();
     final InventoryItemResource nod = itemsFixture.basedUponNod();
 
-    loansFixture.checkOutByBarcode(nod, requesterId);
+    checkOutFixture.checkOutByBarcode(nod, requesterId);
 
     IndividualResource firstHoldRequest = holdRequestWithNoPosition(nod,
       usersFixture.steve());

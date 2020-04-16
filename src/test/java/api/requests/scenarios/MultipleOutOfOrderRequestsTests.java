@@ -30,7 +30,7 @@ public class MultipleOutOfOrderRequestsTests extends APITests {
     IndividualResource jessica = usersFixture.jessica();
     IndividualResource steve = usersFixture.steve();
 
-    loansFixture.checkOutByBarcode(smallAngryPlanet, james);
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet, james);
 
     IndividualResource requestBySteve = requestsFixture.placeHoldShelfRequest(
       smallAngryPlanet, steve, new DateTime(2018, 1, 10, 15, 34, 21, DateTimeZone.UTC));

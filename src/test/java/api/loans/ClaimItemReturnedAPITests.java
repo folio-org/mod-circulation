@@ -32,7 +32,7 @@ public class ClaimItemReturnedAPITests extends APITests {
   @Before
   public void setUpItemAndLoan() {
     item = itemsFixture.basedUponSmallAngryPlanet();
-    loanId = loansFixture.checkOutByBarcode(item, usersFixture.charlotte())
+    loanId = checkOutFixture.checkOutByBarcode(item, usersFixture.charlotte())
       .getId().toString();
   }
 

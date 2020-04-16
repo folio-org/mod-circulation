@@ -48,7 +48,7 @@ public class ItemLastCheckInTests extends APITests {
     IndividualResource user = usersFixture.jessica();
     UUID servicePointId = servicePointsFixture.cd1().getId();
 
-    loansFixture.checkOutByBarcode(item, user);
+    checkOutFixture.checkOutByBarcode(item, user);
     loansFixture.checkInByBarcode(item, DateTime.now(UTC), servicePointId);
     JsonObject lastCheckIn = itemsClient.get(item.getId()).getJson()
       .getJsonObject("lastCheckIn");

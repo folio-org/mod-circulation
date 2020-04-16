@@ -90,7 +90,7 @@ public class MoveRequestTests extends APITests {
     assertThat(itemCopyA.getJson().getJsonObject("status").getString("name"), is(ItemStatus.AVAILABLE.getValue()));
     assertThat(itemCopyB.getJson().getJsonObject("status").getString("name"), is(ItemStatus.AVAILABLE.getValue()));
 
-    IndividualResource itemCopyALoan = loansFixture.checkOutByBarcode(itemCopyA, james, DateTime.now(DateTimeZone.UTC));
+    IndividualResource itemCopyALoan = checkOutFixture.checkOutByBarcode(itemCopyA, james, DateTime.now(DateTimeZone.UTC));
     assertThat(itemCopyALoan.getJson().getString("userId"), is(james.getId().toString()));
 
     assertThat(itemCopyALoan.getJson().getString("itemId"), is(itemCopyA.getId().toString()));
@@ -170,7 +170,7 @@ public class MoveRequestTests extends APITests {
     IndividualResource jessica = usersFixture.jessica();
 
     // james checks out basedUponSmallAngryPlanet
-    loansFixture.checkOutByBarcode(smallAngryPlanet, james);
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet, james);
 
     // make requests for smallAngryPlanet
     IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
@@ -218,10 +218,10 @@ public class MoveRequestTests extends APITests {
     IndividualResource rebecca = usersFixture.rebecca();
 
     // james checks out basedUponSmallAngryPlanet
-    loansFixture.checkOutByBarcode(smallAngryPlanet, james);
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet, james);
 
     // charlotte checks out basedinterestingTimes
-    loansFixture.checkOutByBarcode(interestingTimes, charlotte);
+    checkOutFixture.checkOutByBarcode(interestingTimes, charlotte);
 
     // make requests for smallAngryPlanet
     IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
@@ -296,10 +296,10 @@ public class MoveRequestTests extends APITests {
     IndividualResource charlotte = usersFixture.charlotte();
 
     // james checks out basedUponSmallAngryPlanet
-    loansFixture.checkOutByBarcode(smallAngryPlanet, james);
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet, james);
 
     // charlotte checks out basedinterestingTimes
-    loansFixture.checkOutByBarcode(interestingTimes, charlotte);
+    checkOutFixture.checkOutByBarcode(interestingTimes, charlotte);
 
     // make requests for smallAngryPlanet
     IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
@@ -377,7 +377,7 @@ public class MoveRequestTests extends APITests {
     IndividualResource charlotte = usersFixture.charlotte();
 
     // charlotte checks out basedinterestingTimes
-    loansFixture.checkOutByBarcode(interestingTimes, charlotte);
+    checkOutFixture.checkOutByBarcode(interestingTimes, charlotte);
 
     // make requests for smallAngryPlanet
     IndividualResource requestByJessica = requestsFixture.place(new RequestBuilder()
@@ -413,10 +413,10 @@ public class MoveRequestTests extends APITests {
     IndividualResource charlotte = usersFixture.charlotte();
 
     // james checks out basedUponSmallAngryPlanet
-    loansFixture.checkOutByBarcode(smallAngryPlanet, james);
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet, james);
 
     // charlotte checks out basedUponSmallAngryPlanet
-    loansFixture.checkOutByBarcode(interestingTimes, charlotte);
+    checkOutFixture.checkOutByBarcode(interestingTimes, charlotte);
 
     // make requests for smallAngryPlanet
     IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
@@ -457,10 +457,10 @@ public class MoveRequestTests extends APITests {
     IndividualResource rebecca = usersFixture.rebecca();
 
     // james checks out basedUponSmallAngryPlanet
-    loansFixture.checkOutByBarcode(smallAngryPlanet, james);
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet, james);
 
     // charlotte checks out basedinterestingTimes
-    loansFixture.checkOutByBarcode(interestingTimes, charlotte);
+    checkOutFixture.checkOutByBarcode(interestingTimes, charlotte);
 
     // make requests for smallAngryPlanet
     IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
@@ -536,10 +536,10 @@ public class MoveRequestTests extends APITests {
     IndividualResource rebecca = usersFixture.rebecca();
 
     // james checks out basedUponSmallAngryPlanet
-    loansFixture.checkOutByBarcode(smallAngryPlanet, james);
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet, james);
 
     // charlotte checks out basedinterestingTimes
-    loansFixture.checkOutByBarcode(interestingTimes, charlotte);
+    checkOutFixture.checkOutByBarcode(interestingTimes, charlotte);
 
     // make requests for smallAngryPlanet
     IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
@@ -618,10 +618,10 @@ public class MoveRequestTests extends APITests {
     IndividualResource rebecca = usersFixture.rebecca();
 
     // james checks out basedUponSmallAngryPlanet
-    loansFixture.checkOutByBarcode(smallAngryPlanet, james);
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet, james);
 
     // charlotte checks out basedinterestingTimes
-    loansFixture.checkOutByBarcode(interestingTimes, charlotte);
+    checkOutFixture.checkOutByBarcode(interestingTimes, charlotte);
 
     // make requests for smallAngryPlanet
     IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
@@ -719,7 +719,7 @@ public class MoveRequestTests extends APITests {
     IndividualResource jessica = usersFixture.jessica();
 
     // James Checks out Item Copy A
-    loansFixture.checkOutByBarcode(itemCopyA, james, DateTime.now(DateTimeZone.UTC));
+    checkOutFixture.checkOutByBarcode(itemCopyA, james, DateTime.now(DateTimeZone.UTC));
 
     // Steve requests Item Copy A
     IndividualResource stevesRequest = requestsFixture.placeHoldShelfRequest(
@@ -799,7 +799,7 @@ public class MoveRequestTests extends APITests {
         IndividualResource steve = usersFixture.steve(); //walker
         IndividualResource jessica = usersFixture.jessica(); //McKenzie
 
-        loansFixture.checkOutByBarcode(itemCopyA, james, DateTime.now(DateTimeZone.UTC));
+        checkOutFixture.checkOutByBarcode(itemCopyA, james, DateTime.now(DateTimeZone.UTC));
 
         assertThat(itemsClient.get(itemCopyA).getJson().getJsonObject("status").getString("name"), is(ItemStatus.CHECKED_OUT.getValue()));
 
@@ -867,8 +867,8 @@ public class MoveRequestTests extends APITests {
     IndividualResource steveUser = usersFixture.steve();
 
     // James and Jessica check out items, so loans will be get created
-    loansFixture.checkOutByBarcode(smallAngryPlanetItem, jamesUser);
-    loansFixture.checkOutByBarcode(interestingTimesItem, jessicaUser);
+    checkOutFixture.checkOutByBarcode(smallAngryPlanetItem, jamesUser);
+    checkOutFixture.checkOutByBarcode(interestingTimesItem, jessicaUser);
 
     // Have to mock system clocks to demonstrate a delay between the requests
     // So the dueDates will be recalculated
@@ -945,9 +945,9 @@ public class MoveRequestTests extends APITests {
 
     final DateTime loanDate = DateTime.now(DateTimeZone.UTC).minusDays(3);
 
-    loansFixture.checkOutByBarcode(sourceItem, steve, loanDate);
+    checkOutFixture.checkOutByBarcode(sourceItem, steve, loanDate);
 
-    final IndividualResource loan = loansFixture.checkOutByBarcode(
+    final IndividualResource loan = checkOutFixture.checkOutByBarcode(
       destinationItem, steve, loanDate);
 
     final String originalDueDate = loan.getJson().getString("dueDate");

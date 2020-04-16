@@ -45,7 +45,7 @@ public class RequestsAPILoanRenewalTests extends APITests {
     final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource rebecca = usersFixture.rebecca();
 
-    loansFixture.checkOutByBarcode(smallAngryPlanet, rebecca);
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet, rebecca);
     UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
     requestsFixture.place(new RequestBuilder()
@@ -68,7 +68,7 @@ public class RequestsAPILoanRenewalTests extends APITests {
     final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource rebecca = usersFixture.rebecca();
 
-    loansFixture.checkOutByBarcode(smallAngryPlanet, rebecca);
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet, rebecca);
 
     useRollingPolicyWithRenewingAllowedForHoldingRequest();
 
@@ -97,7 +97,7 @@ public class RequestsAPILoanRenewalTests extends APITests {
 
     loanPolicyWithRollingProfileAndRenewingIsForbiddenWhenHoldIsPending();
 
-    loansFixture.checkOutByBarcode(smallAngryPlanet, rebecca);
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet, rebecca);
     requestsFixture.place(new RequestBuilder()
       .hold()
       .forItem(smallAngryPlanet)
@@ -117,7 +117,7 @@ public class RequestsAPILoanRenewalTests extends APITests {
     final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource rebecca = usersFixture.rebecca();
 
-    loansFixture.checkOutByBarcode(smallAngryPlanet, rebecca);
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet, rebecca);
 
     final LoanPolicyBuilder rollingPolicy = new LoanPolicyBuilder()
       .withName("Can Circulate Rolling with holding renewal only")
@@ -152,7 +152,7 @@ public class RequestsAPILoanRenewalTests extends APITests {
     final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource rebecca = usersFixture.rebecca();
 
-    loansFixture.checkOutByBarcode(smallAngryPlanet, rebecca);
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet, rebecca);
 
     final LoanPolicyBuilder rollingPolicy = new LoanPolicyBuilder()
       .withName("Can Circulate Rolling with holding renewals policy")
@@ -189,7 +189,7 @@ public class RequestsAPILoanRenewalTests extends APITests {
     final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource rebecca = usersFixture.rebecca();
 
-    loansFixture.checkOutByBarcode(smallAngryPlanet, rebecca);
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet, rebecca);
 
     loanPolicyWithFixedProfileAndRenewingIsForbiddenWhenHoldIsPending();
 
@@ -213,7 +213,7 @@ public class RequestsAPILoanRenewalTests extends APITests {
     final IndividualResource rebecca = usersFixture.rebecca();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
-    loansFixture.checkOutByBarcode(smallAngryPlanet, rebecca);
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet, rebecca);
 
     requestsFixture.place(new RequestBuilder()
       .recall()
@@ -235,7 +235,7 @@ public class RequestsAPILoanRenewalTests extends APITests {
     final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource rebecca = usersFixture.rebecca();
 
-    loansFixture.checkOutByBarcode(smallAngryPlanet, rebecca);
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet, rebecca);
 
     useRollingPolicyWithRenewingAllowedForHoldingRequest();
 
@@ -263,7 +263,7 @@ public class RequestsAPILoanRenewalTests extends APITests {
     final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource rebecca = usersFixture.rebecca();
 
-    loansFixture.checkOutByBarcode(smallAngryPlanet, rebecca);
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet, rebecca);
 
     loanPolicyWithRollingProfileAndRenewingIsForbiddenWhenHoldIsPending();
 
@@ -287,7 +287,7 @@ public class RequestsAPILoanRenewalTests extends APITests {
     final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource rebecca = usersFixture.rebecca();
 
-    loansFixture.checkOutByBarcode(smallAngryPlanet, rebecca);
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet, rebecca);
 
     loanPolicyWithFixedProfileAndRenewingIsForbiddenWhenHoldIsPending();
 
@@ -313,7 +313,7 @@ public class RequestsAPILoanRenewalTests extends APITests {
     final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource rebecca = usersFixture.rebecca();
 
-    loansFixture.checkOutByBarcode(smallAngryPlanet, rebecca);
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet, rebecca);
 
     IndividualResource schedule = loanPoliciesFixture.createSchedule(new FixedDueDateSchedulesBuilder()
       .withId(UUID.randomUUID())
@@ -356,7 +356,7 @@ public class RequestsAPILoanRenewalTests extends APITests {
     final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource rebecca = usersFixture.rebecca();
 
-    loansFixture.checkOutByBarcode(smallAngryPlanet, rebecca);
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet, rebecca);
 
     IndividualResource schedule = loanPoliciesFixture.createSchedule(new FixedDueDateSchedulesBuilder()
       .withId(UUID.randomUUID())
@@ -396,7 +396,7 @@ public class RequestsAPILoanRenewalTests extends APITests {
     final IndividualResource rebecca = usersFixture.rebecca();
 
     DateTime loanDate = new DateTime(2018, APRIL, 21, 11, 21, 43);
-    loansFixture.checkOutByBarcode(smallAngryPlanet, rebecca, loanDate);
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet, rebecca, loanDate);
 
     requestsFixture.place(new RequestBuilder()
       .recall()
@@ -428,7 +428,7 @@ public class RequestsAPILoanRenewalTests extends APITests {
     final IndividualResource rebecca = usersFixture.rebecca();
 
     DateTime loanDate = new DateTime(2018, APRIL, 21, 11, 21, 43);
-    loansFixture.checkOutByBarcode(smallAngryPlanet, rebecca, loanDate);
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet, rebecca, loanDate);
 
     requestsFixture.place(new RequestBuilder()
       .hold()
@@ -465,7 +465,7 @@ public class RequestsAPILoanRenewalTests extends APITests {
     final IndividualResource rebecca = usersFixture.rebecca();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
-    loansFixture.checkOutByBarcode(smallAngryPlanet, rebecca);
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet, rebecca);
 
     LoanPolicyBuilder limitedRenewalsPolicy = new LoanPolicyBuilder()
       .withName("Non Renewable Policy")
@@ -493,7 +493,7 @@ public class RequestsAPILoanRenewalTests extends APITests {
     final IndividualResource rebecca = usersFixture.rebecca();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
-    loansFixture.checkOutByBarcode(smallAngryPlanet, rebecca);
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet, rebecca);
 
     requestsFixture.place(new RequestBuilder()
       .recall()
@@ -523,7 +523,7 @@ public class RequestsAPILoanRenewalTests extends APITests {
     final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource rebecca = usersFixture.rebecca();
 
-    loansFixture.checkOutByBarcode(smallAngryPlanet, rebecca);
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet, rebecca);
 
     IndividualResource schedule = loanPoliciesFixture.createSchedule(new FixedDueDateSchedulesBuilder()
       .withId(UUID.randomUUID())
@@ -569,7 +569,7 @@ public class RequestsAPILoanRenewalTests extends APITests {
     final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource rebecca = usersFixture.rebecca();
 
-    loansFixture.checkOutByBarcode(smallAngryPlanet, rebecca);
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet, rebecca);
 
     IndividualResource schedule = loanPoliciesFixture.createSchedule(new FixedDueDateSchedulesBuilder()
       .withId(UUID.randomUUID())

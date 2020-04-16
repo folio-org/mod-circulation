@@ -405,7 +405,7 @@ public class CheckOutCalculateOffsetTimeTests extends APITests {
       createLoanPolicyOffsetTimeEntry(duration, INTERVAL_HOURS, offsetDuration, OFFSET_INTERVAL_MINUTES);
     createLoanPolicy(loanPolicyEntry);
 
-    JsonObject response = loansFixture.attemptCheckOutByBarcode(
+    JsonObject response = checkOutFixture.attemptCheckOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
         .forItem(smallAngryPlanet)
         .to(steve)
@@ -434,7 +434,7 @@ public class CheckOutCalculateOffsetTimeTests extends APITests {
       createLoanPolicyOffsetTimeEntry(duration, interval, offsetDuration, offsetInterval);
     IndividualResource loanPolicy = createLoanPolicy(loanPolicyEntry);
 
-    final IndividualResource response = loansFixture.checkOutByBarcode(
+    final IndividualResource response = checkOutFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
         .forItem(smallAngryPlanet)
         .to(steve)

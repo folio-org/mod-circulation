@@ -32,7 +32,7 @@ public class AnonymizeLoansImmediatelyAPITests extends LoanAnonymizationTests {
       .feeFineCloseAnonymizeImmediately();
     createConfiguration(loanHistoryConfig);
 
-    IndividualResource loanResource = loansFixture.checkOutByBarcode(new CheckOutByBarcodeRequestBuilder().forItem(item1)
+    IndividualResource loanResource = checkOutFixture.checkOutByBarcode(new CheckOutByBarcodeRequestBuilder().forItem(item1)
       .to(user)
       .at(servicePoint.getId()));
     UUID loanID = loanResource.getId();
@@ -62,7 +62,7 @@ public class AnonymizeLoansImmediatelyAPITests extends LoanAnonymizationTests {
       .feeFineCloseAnonymizeImmediately();
     createConfiguration(loanHistoryConfig);
 
-    IndividualResource loanResource = loansFixture.checkOutByBarcode(new CheckOutByBarcodeRequestBuilder().forItem(item1)
+    IndividualResource loanResource = checkOutFixture.checkOutByBarcode(new CheckOutByBarcodeRequestBuilder().forItem(item1)
       .to(user)
       .at(servicePoint.getId()));
     UUID loanID = loanResource.getId();
@@ -94,7 +94,7 @@ public class AnonymizeLoansImmediatelyAPITests extends LoanAnonymizationTests {
       .feeFineCloseAnonymizeNever();
     createConfiguration(loanHistoryConfig);
 
-    IndividualResource loanResource = loansFixture.checkOutByBarcode(new CheckOutByBarcodeRequestBuilder().forItem(item1)
+    IndividualResource loanResource = checkOutFixture.checkOutByBarcode(new CheckOutByBarcodeRequestBuilder().forItem(item1)
       .to(user)
       .at(servicePoint.getId()));
     UUID loanID = loanResource.getId();
@@ -125,7 +125,7 @@ public class AnonymizeLoansImmediatelyAPITests extends LoanAnonymizationTests {
       .feeFineCloseAnonymizeNever();
     createConfiguration(loanHistoryConfig);
 
-    IndividualResource loanResource = loansFixture.checkOutByBarcode(new CheckOutByBarcodeRequestBuilder().forItem(item1)
+    IndividualResource loanResource = checkOutFixture.checkOutByBarcode(new CheckOutByBarcodeRequestBuilder().forItem(item1)
       .to(user)
       .at(servicePoint.getId()));
     UUID loanID = loanResource.getId();
@@ -155,7 +155,7 @@ public class AnonymizeLoansImmediatelyAPITests extends LoanAnonymizationTests {
       .feeFineCloseAnonymizeAfterXInterval(1, "minute");
     createConfiguration(loanHistoryConfig);
 
-    IndividualResource loanResource = loansFixture.checkOutByBarcode(new CheckOutByBarcodeRequestBuilder().forItem(item1)
+    IndividualResource loanResource = checkOutFixture.checkOutByBarcode(new CheckOutByBarcodeRequestBuilder().forItem(item1)
       .to(user)
       .at(servicePoint.getId()));
     UUID loanID = loanResource.getId();
@@ -187,7 +187,7 @@ public class AnonymizeLoansImmediatelyAPITests extends LoanAnonymizationTests {
       .feeFineCloseAnonymizeAfterXInterval(1, "minute");
     createConfiguration(loanHistoryConfig);
 
-    IndividualResource loanResource = loansFixture.checkOutByBarcode(new CheckOutByBarcodeRequestBuilder().forItem(item1)
+    IndividualResource loanResource = checkOutFixture.checkOutByBarcode(new CheckOutByBarcodeRequestBuilder().forItem(item1)
       .to(user)
       .at(servicePoint.getId()));
     UUID loanID = loanResource.getId();

@@ -48,7 +48,7 @@ public class ServicePointCheckInTests extends APITests {
 
     final IndividualResource requestServicePoint = checkInServicePoint;
 
-    final IndividualResource loan = loansFixture.checkOutByBarcode(nod, james);
+    final IndividualResource loan = checkOutFixture.checkOutByBarcode(nod, james);
 
     final IndividualResource request = requestsFixture.place(
       new RequestBuilder()
@@ -143,7 +143,7 @@ public class ServicePointCheckInTests extends APITests {
     final InventoryItemResource nod = itemsFixture.basedUponNod(builder ->
       builder.withPermanentLocation(homeLocation.getId()));
 
-    final IndividualResource loan = loansFixture.checkOutByBarcode(nod, james);
+    final IndividualResource loan = checkOutFixture.checkOutByBarcode(nod, james);
 
     final IndividualResource request = requestsFixture.placeHoldShelfRequest(nod, jessica,
         DateTime.now(DateTimeZone.UTC), requestServicePoint.getId());

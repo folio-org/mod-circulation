@@ -38,7 +38,7 @@ public class HoldShelfFulfillmentTests extends APITests {
     IndividualResource james = usersFixture.james();
     IndividualResource jessica = usersFixture.jessica();
 
-    loansFixture.checkOutByBarcode(smallAngryPlanet, james);
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet, james);
 
     IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
       smallAngryPlanet, jessica, DateTime.now(DateTimeZone.UTC),
@@ -69,7 +69,7 @@ public class HoldShelfFulfillmentTests extends APITests {
     IndividualResource james = usersFixture.james();
     IndividualResource jessica = usersFixture.jessica();
 
-    loansFixture.checkOutByBarcode(smallAngryPlanet, james);
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet, james);
 
     IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
       smallAngryPlanet, jessica,
@@ -79,7 +79,7 @@ public class HoldShelfFulfillmentTests extends APITests {
     loansFixture.checkInByBarcode(smallAngryPlanet,
       DateTime.now(DateTimeZone.UTC), pickupServicePoint.getId());
 
-    loansFixture.checkOutByBarcode(smallAngryPlanet, jessica);
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet, jessica);
 
     Response request = requestsClient.getById(requestByJessica.getId());
 
@@ -100,7 +100,7 @@ public class HoldShelfFulfillmentTests extends APITests {
     IndividualResource james = usersFixture.james();
     IndividualResource jessica = usersFixture.jessica();
 
-    loansFixture.checkOutByBarcode(smallAngryPlanet, james);
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet, james);
 
     IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
       smallAngryPlanet, jessica, DateTime.now(DateTimeZone.UTC),
@@ -134,7 +134,7 @@ public class HoldShelfFulfillmentTests extends APITests {
     IndividualResource james = usersFixture.james();
     IndividualResource jessica = usersFixture.jessica();
 
-    loansFixture.checkOutByBarcode(smallAngryPlanet, james);
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet, james);
 
     IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
       smallAngryPlanet, jessica,
@@ -144,7 +144,7 @@ public class HoldShelfFulfillmentTests extends APITests {
     loansFixture.checkInByBarcode(smallAngryPlanet,
       DateTime.now(DateTimeZone.UTC), checkInServicePoint.getId());
 
-    loansFixture.checkOutByBarcode(smallAngryPlanet, jessica);
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet, jessica);
 
     Response request = requestsClient.getById(requestByJessica.getId());
 
@@ -165,7 +165,7 @@ public class HoldShelfFulfillmentTests extends APITests {
     IndividualResource james = usersFixture.james();
     IndividualResource jessica = usersFixture.jessica();
 
-    loansFixture.checkOutByBarcode(smallAngryPlanet, james);
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet, james);
 
     IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
       smallAngryPlanet, jessica, DateTime.now(DateTimeZone.UTC),
@@ -198,14 +198,14 @@ public class HoldShelfFulfillmentTests extends APITests {
     IndividualResource jessica = usersFixture.jessica();
     IndividualResource rebecca = usersFixture.rebecca();
 
-    loansFixture.checkOutByBarcode(smallAngryPlanet, james);
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet, james);
 
     IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
       smallAngryPlanet, jessica, new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC));
 
     loansFixture.checkInByBarcode(smallAngryPlanet);
 
-    Response response = loansFixture.attemptCheckOutByBarcode(smallAngryPlanet, rebecca);
+    Response response = checkOutFixture.attemptCheckOutByBarcode(smallAngryPlanet, rebecca);
 
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("The Long Way to a Small, Angry Planet (Barcode: 036000291452) " +
@@ -233,7 +233,7 @@ public class HoldShelfFulfillmentTests extends APITests {
     IndividualResource jessica = usersFixture.jessica();
     IndividualResource rebecca = usersFixture.rebecca();
 
-    loansFixture.checkOutByBarcode(smallAngryPlanet, james);
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet, james);
 
     IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
       smallAngryPlanet, jessica, DateTime.now(DateTimeZone.UTC),
@@ -244,7 +244,7 @@ public class HoldShelfFulfillmentTests extends APITests {
         .forItem(smallAngryPlanet)
         .at(checkInServicePoint.getId()));
 
-    Response response = loansFixture.attemptCheckOutByBarcode(smallAngryPlanet, rebecca);
+    Response response = checkOutFixture.attemptCheckOutByBarcode(smallAngryPlanet, rebecca);
 
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("The Long Way to a Small, Angry Planet (Barcode: 036000291452) " +

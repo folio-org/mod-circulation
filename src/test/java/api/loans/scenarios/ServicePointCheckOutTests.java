@@ -43,7 +43,7 @@ public class ServicePointCheckOutTests extends APITests {
     final IndividualResource nod = itemsFixture.basedUponNod(builder ->
       builder.withPermanentLocation(homeLocation.getId()));
 
-    loansFixture.checkOutByBarcode(nod, james);
+      checkOutFixture.checkOutByBarcode(nod, james);
 
     final IndividualResource request = requestsFixture.placeHoldShelfRequest(nod, jessica,
         DateTime.now(DateTimeZone.UTC), requestServicePoint.getId());
@@ -74,7 +74,7 @@ public class ServicePointCheckOutTests extends APITests {
     assertThat("extended destination properties should include name",
         destinationServicePoint.getString("name"), is("Circ Desk 4"));
 
-    final IndividualResource checkOutResponse = loansFixture.checkOutByBarcode(
+    final IndividualResource checkOutResponse = checkOutFixture.checkOutByBarcode(
         new CheckOutByBarcodeRequestBuilder()
           .forItem(nod)
           .to(jessica)

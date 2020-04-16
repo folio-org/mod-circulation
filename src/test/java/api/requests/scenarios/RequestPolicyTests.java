@@ -59,7 +59,7 @@ public class RequestPolicyTests extends APITests {
     //setting up a checked-out library item to perform recall
     final IndividualResource checkedOutItem = itemsFixture.basedUponSmallAngryPlanet();
 
-    loansFixture.checkOutByBarcode(checkedOutItem, usersFixture.jessica());
+    checkOutFixture.checkOutByBarcode(checkedOutItem, usersFixture.jessica());
 
     //an undergraduate student attempts to place a Recall request
     final IndividualResource recallRequest = requestsClient.create(new RequestBuilder()
@@ -104,7 +104,7 @@ public class RequestPolicyTests extends APITests {
     //setting up a checked-out library item to perform recall
     final IndividualResource checkedOutItem = itemsFixture.basedUponSmallAngryPlanet();
 
-    loansFixture.checkOutByBarcode(checkedOutItem, usersFixture.jessica());
+    checkOutFixture.checkOutByBarcode(checkedOutItem, usersFixture.jessica());
 
     final Response recallResponse = requestsClient.attemptCreate(new RequestBuilder()
       .recall()
@@ -141,7 +141,7 @@ public class RequestPolicyTests extends APITests {
     //setting up a checked-out library item of material type BOOK to perform a HOLD
     final IndividualResource checkedOutItem = itemsFixture.basedUponUprooted();
 
-    loansFixture.checkOutByBarcode(checkedOutItem, usersFixture.jessica());
+    checkOutFixture.checkOutByBarcode(checkedOutItem, usersFixture.jessica());
 
     //an undergraduate student attempts to place a HOLD request
     final IndividualResource recallRequest = requestsClient.create(new RequestBuilder()
@@ -185,7 +185,7 @@ public class RequestPolicyTests extends APITests {
     //setting up a checked-out library item to perform HOLD
     final IndividualResource checkedOutItem = itemsFixture.basedUponSmallAngryPlanet();
 
-    loansFixture.checkOutByBarcode(checkedOutItem, usersFixture.jessica());
+    checkOutFixture.checkOutByBarcode(checkedOutItem, usersFixture.jessica());
 
     final Response holdResponse = requestsClient.attemptCreate(new RequestBuilder()
       .hold()
@@ -287,7 +287,7 @@ public class RequestPolicyTests extends APITests {
     //setting up a checked-out library item to perform recall
     final IndividualResource checkedOutItem = itemsFixture.basedUponSmallAngryPlanet();
 
-    loansFixture.checkOutByBarcode(checkedOutItem, usersFixture.jessica());
+    checkOutFixture.checkOutByBarcode(checkedOutItem, usersFixture.jessica());
 
     //an undergraduate student attempts to place a Recall request
     final IndividualResource recallRequest = requestsClient.create(new RequestBuilder()

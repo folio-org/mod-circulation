@@ -1,15 +1,12 @@
 package api.requests.scenarios;
 
 import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.contains;
 
 import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
 import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 
 import org.folio.circulation.domain.MultipleRecords;
@@ -34,7 +31,7 @@ public class RequestQueueTests extends APITests {
     IndividualResource charlotte = usersFixture.charlotte();
     IndividualResource rebecca = usersFixture.rebecca();
 
-    loansFixture.checkOutByBarcode(smallAngryPlanet, james);
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet, james);
 
     IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
       smallAngryPlanet, jessica, new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC));
@@ -50,7 +47,7 @@ public class RequestQueueTests extends APITests {
 
     loansFixture.checkInByBarcode(smallAngryPlanet);
 
-    loansFixture.checkOutByBarcode(smallAngryPlanet, jessica);
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet, jessica);
 
     requestByJessica = requestsClient.get(requestByJessica);
 
@@ -95,7 +92,7 @@ public class RequestQueueTests extends APITests {
     IndividualResource charlotte = usersFixture.charlotte();
     IndividualResource rebecca = usersFixture.rebecca();
 
-    loansFixture.checkOutByBarcode(smallAngryPlanet, james);
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet, james);
 
     IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
       smallAngryPlanet, jessica, new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC));
@@ -144,7 +141,7 @@ public class RequestQueueTests extends APITests {
     IndividualResource charlotte = usersFixture.charlotte();
     IndividualResource rebecca = usersFixture.rebecca();
 
-    loansFixture.checkOutByBarcode(smallAngryPlanet, james);
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet, james);
 
     IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
       smallAngryPlanet, jessica, new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC));

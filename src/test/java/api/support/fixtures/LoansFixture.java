@@ -5,9 +5,8 @@ import static api.support.APITestContext.getOkapiHeadersFromContext;
 import static api.support.MultipleJsonRecords.multipleRecordsFrom;
 import static api.support.http.AdditionalHttpStatusCodes.UNPROCESSABLE_ENTITY;
 import static api.support.http.CqlQuery.noQuery;
-import static api.support.http.InterfaceUrls.checkInByBarcodeUrl;
-import static api.support.http.InterfaceUrls.checkOutByBarcodeUrl;
 import static api.support.http.InterfaceUrls.changeDueDateURL;
+import static api.support.http.InterfaceUrls.checkInByBarcodeUrl;
 import static api.support.http.InterfaceUrls.claimItemReturnedURL;
 import static api.support.http.InterfaceUrls.declareLoanItemLostURL;
 import static api.support.http.InterfaceUrls.loansUrl;
@@ -33,7 +32,6 @@ import api.support.MultipleJsonRecords;
 import api.support.RestAssuredClient;
 import api.support.builders.ChangeDueDateRequestBuilder;
 import api.support.builders.CheckInByBarcodeRequestBuilder;
-import api.support.builders.CheckOutByBarcodeRequestBuilder;
 import api.support.builders.ClaimItemReturnedRequestBuilder;
 import api.support.builders.DeclareItemLostRequestBuilder;
 import api.support.builders.LoanBuilder;
@@ -174,67 +172,6 @@ public class LoansFixture {
   public Response attemptClaimItemReturned(ClaimItemReturnedRequestBuilder request) {
     return restAssuredClient.post(request.create(),
       claimItemReturnedURL(request.getLoanId()), "attempt-claim-item-returned-request");
-  }
-
-  public IndividualResource checkOutByBarcode(IndividualResource item) {
-    return checkOutByBarcode(item, usersFixture.jessica());
-  }
-
-  public IndividualResource checkOutByBarcode(IndividualResource item,
-    IndividualResource to) {
-
-    return checkOutByBarcode(new CheckOutByBarcodeRequestBuilder()
-      .forItem(item)
-      .to(to)
-      .at(defaultServicePoint()));
-  }
-
-  public IndividualResource checkOutByBarcode(
-    IndividualResource item,
-    IndividualResource to,
-    DateTime loanDate) {
-
-    return checkOutByBarcode(new CheckOutByBarcodeRequestBuilder()
-      .forItem(item)
-      .to(to)
-      .on(loanDate)
-      .at(defaultServicePoint()));
-  }
-
-  public IndividualResource checkOutByBarcode(
-    CheckOutByBarcodeRequestBuilder builder) {
-
-    JsonObject request = builder.create();
-
-    return new IndividualResource(
-      restAssuredClient.post(request, checkOutByBarcodeUrl(), 201,
-        "check-out-by-barcode-request"));
-  }
-
-  public Response attemptCheckOutByBarcode(
-    IndividualResource item,
-    IndividualResource to) {
-
-    return attemptCheckOutByBarcode(new CheckOutByBarcodeRequestBuilder()
-      .forItem(item)
-      .to(to)
-      .at(UUID.randomUUID()));
-  }
-
-  public Response attemptCheckOutByBarcode(
-    CheckOutByBarcodeRequestBuilder builder) {
-
-    return attemptCheckOutByBarcode(422, builder);
-  }
-
-  public Response attemptCheckOutByBarcode(
-    int expectedStatusCode,
-    CheckOutByBarcodeRequestBuilder builder) {
-
-    JsonObject request = builder.create();
-
-    return restAssuredClient.post(request, checkOutByBarcodeUrl(),
-      expectedStatusCode, "check-out-by-barcode-request");
   }
 
   public IndividualResource renewLoan(

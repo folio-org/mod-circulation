@@ -69,7 +69,7 @@ public class InHouseUseCheckInTest extends APITests {
     requestsFixture.cancelRequest(recallRequest);
 
     // Fulfill the page request
-    loansFixture.checkOutByBarcode(nod, usersFixture.james());
+    checkOutFixture.checkOutByBarcode(nod, usersFixture.james());
     loansFixture.checkInByBarcode(nod, checkInServicePointId);
 
     final CheckInByBarcodeResponse checkInResponse = loansFixture

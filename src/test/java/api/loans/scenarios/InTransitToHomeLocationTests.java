@@ -45,7 +45,7 @@ public class InTransitToHomeLocationTests extends APITests {
 
     final IndividualResource otherServicePoint = servicePointsFixture.cd2();
 
-    final IndividualResource loan = loansFixture.checkOutByBarcode(nod, james);
+    final IndividualResource loan = checkOutFixture.checkOutByBarcode(nod, james);
 
     final CheckInByBarcodeResponse checkInResponse = loansFixture.checkInByBarcode(
       new CheckInByBarcodeRequestBuilder()
@@ -139,7 +139,7 @@ public class InTransitToHomeLocationTests extends APITests {
 
     final IndividualResource otherServicePoint = servicePointsFixture.cd2();
 
-    final IndividualResource loan = loansFixture.checkOutByBarcode(nod, james);
+    final IndividualResource loan = checkOutFixture.checkOutByBarcode(nod, james);
 
     loansFixture.checkInByBarcode(
       new CheckInByBarcodeRequestBuilder()
@@ -216,7 +216,7 @@ public class InTransitToHomeLocationTests extends APITests {
 
     final IndividualResource otherServicePoint = servicePointsFixture.cd3();
 
-    final IndividualResource loan = loansFixture.checkOutByBarcode(nod, james);
+    final IndividualResource loan = checkOutFixture.checkOutByBarcode(nod, james);
 
     loansFixture.checkInByBarcode(
       new CheckInByBarcodeRequestBuilder()
@@ -289,7 +289,7 @@ public class InTransitToHomeLocationTests extends APITests {
     final IndividualResource nod = itemsFixture.basedUponNod(builder ->
       builder.withTemporaryLocation(homeLocation.getId()));
 
-    final IndividualResource loan = loansFixture.checkOutByBarcode(nod, james);
+    final IndividualResource loan = checkOutFixture.checkOutByBarcode(nod, james);
 
     final CheckInByBarcodeResponse checkInResponse = loansFixture.checkInByBarcode(
       new CheckInByBarcodeRequestBuilder()
@@ -363,7 +363,7 @@ public class InTransitToHomeLocationTests extends APITests {
     final IndividualResource nod = itemsFixture.basedUponNod(builder ->
       builder.withTemporaryLocation(homeLocation.getId()));
 
-    final IndividualResource loan = loansFixture.checkOutByBarcode(nod, james);
+    final IndividualResource loan = checkOutFixture.checkOutByBarcode(nod, james);
 
     final CheckInByBarcodeResponse checkInResponse = loansFixture.checkInByBarcode(
       new CheckInByBarcodeRequestBuilder()
@@ -437,7 +437,7 @@ public class InTransitToHomeLocationTests extends APITests {
 
     final IndividualResource firstOtherServicePoint = servicePointsFixture.cd2();
 
-    final IndividualResource loan = loansFixture.checkOutByBarcode(nod, james);
+    final IndividualResource loan = checkOutFixture.checkOutByBarcode(nod, james);
 
     loansFixture.checkInByBarcode(
       new CheckInByBarcodeRequestBuilder()
@@ -528,7 +528,7 @@ public class InTransitToHomeLocationTests extends APITests {
 
     final IndividualResource otherServicePoint = servicePointsFixture.cd2();
 
-    final IndividualResource loan = loansFixture.checkOutByBarcode(nod, james);
+    final IndividualResource loan = checkOutFixture.checkOutByBarcode(nod, james);
 
     requestsFixture.placeHoldShelfRequest(
       nod, jessica, DateTime.now(DateTimeZone.UTC), otherServicePoint.getId());

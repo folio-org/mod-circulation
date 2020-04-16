@@ -138,7 +138,7 @@ public class PickSlipsTests extends APITests {
         .withPermanentLoanType(loanTypeResource.getId()));
 
     DateTime now = DateTime.now(UTC);
-    loansFixture.checkOutByBarcode(itemResource, requesterResource);
+    checkOutFixture.checkOutByBarcode(itemResource, requesterResource);
     loansFixture.checkInByBarcode(itemResource, now, servicePointId);
     JsonObject lastCheckIn = itemsClient.get(itemResource.getId())
       .getJson().getJsonObject("lastCheckIn");

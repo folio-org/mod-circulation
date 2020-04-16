@@ -85,7 +85,7 @@ public class DueDateScheduledNoticesProcessingTests extends APITests {
     item = itemsFixture.basedUponSmallAngryPlanet(itemBuilder, holdingBuilder);
     borrower = usersFixture.steve();
 
-    loan = loansFixture.checkOutByBarcode(
+    loan = checkOutFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
         .forItem(item)
         .to(borrower)

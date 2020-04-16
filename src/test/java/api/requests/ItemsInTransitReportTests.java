@@ -92,7 +92,7 @@ public class ItemsInTransitReportTests extends APITests {
     final DateTime requestDate = new DateTime(2019, 7, 5, 10, 0, UTC);
     final LocalDate requestExpirationDate = new LocalDate(2019, 7, 11);
 
-    loansFixture.checkOutByBarcode(smallAngryPlanet);
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet);
     createRequest(smallAngryPlanet, steve, secondServicePointId, requestDate, requestExpirationDate);
 
     mockClockManagerToReturnFixedDateTime(checkInDate);
@@ -132,8 +132,8 @@ public class ItemsInTransitReportTests extends APITests {
     final DateTime requestDate2 = new DateTime(2019, 10, 8, 11, 0);
     final LocalDate requestExpirationDate2 = new LocalDate(2020, 1, 12);
 
-    loansFixture.checkOutByBarcode(smallAngryPlanet);
-    loansFixture.checkOutByBarcode(nod);
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet);
+    checkOutFixture.checkOutByBarcode(nod);
 
     createRequest(smallAngryPlanet, steve, secondServicePointId, requestDate1, requestExpirationDate1);
     createRequest(nod, rebecca, secondServicePointId, requestDate2, requestExpirationDate2);
@@ -181,8 +181,8 @@ public class ItemsInTransitReportTests extends APITests {
     final UUID firstServicePointId = servicePointsFixture.cd1().getId();
     final UUID secondServicePointId = servicePointsFixture.cd2().getId();
 
-    loansFixture.checkOutByBarcode(smallAngryPlanet);
-    loansFixture.checkOutByBarcode(nod);
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet);
+    checkOutFixture.checkOutByBarcode(nod);
 
     createRequest(smallAngryPlanet, steve, secondServicePointId, requestDate, requestExpirationDate);
 
@@ -222,8 +222,8 @@ public class ItemsInTransitReportTests extends APITests {
     final LocalDate requestExpirationDate1 = new LocalDate(2019, 7, 11);
     final LocalDate requestExpirationDate2 = new LocalDate(2020, 1, 12);
 
-    loansFixture.checkOutByBarcode(smallAngryPlanet);
-    loansFixture.checkOutByBarcode(nod);
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet);
+    checkOutFixture.checkOutByBarcode(nod);
 
     createRequest(smallAngryPlanet, steve, firstServicePointId, requestDate1, requestExpirationDate1);
     createRequest(nod, rebecca, secondServicePointId, requestDate2, requestExpirationDate2);
@@ -284,8 +284,8 @@ public class ItemsInTransitReportTests extends APITests {
     final LocalDate requestNodeExpirationDate1 = new LocalDate(2020, 1, 12);
     final LocalDate requestNodeExpirationDate2 = new LocalDate(2020, 10, 10);
 
-    loansFixture.checkOutByBarcode(smallAngryPlanet);
-    loansFixture.checkOutByBarcode(nod);
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet);
+    checkOutFixture.checkOutByBarcode(nod);
 
     createRequest(smallAngryPlanet, steve, firstServicePointId, requestSmallAngryPlanetDate1, requestSmallAngryPlanetExpirationDate1);
     createRequest(smallAngryPlanet, rebecca, firstServicePointId, requestSmallAngryPlanetDate2, requestSmallAngryPlanetExpirationDate2);
@@ -337,8 +337,8 @@ public class ItemsInTransitReportTests extends APITests {
 
     final String checkInServicePointDiscoveryName = "Circulation Desk -- Back Entrance";
 
-    loansFixture.checkOutByBarcode(smallAngryPlanet);
-    loansFixture.checkOutByBarcode(nod);
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet);
+    checkOutFixture.checkOutByBarcode(nod);
 
     mockClockManagerToReturnFixedDateTime(checkInDate1);
     loansFixture.checkInByBarcode(new CheckInByBarcodeRequestBuilder()
@@ -391,9 +391,9 @@ public class ItemsInTransitReportTests extends APITests {
     final LocalDate requestExpirationDate1 = new LocalDate(2019, 7, 11);
     final LocalDate requestExpirationDate2 = new LocalDate(2020, 1, 12);
 
-    loansFixture.checkOutByBarcode(smallAngryPlanet);
-    loansFixture.checkOutByBarcode(nod);
-    loansFixture.checkOutByBarcode(smallAngryPlanetWithFourthCheckInServicePoint);
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet);
+    checkOutFixture.checkOutByBarcode(nod);
+    checkOutFixture.checkOutByBarcode(smallAngryPlanetWithFourthCheckInServicePoint);
 
     createRequest(smallAngryPlanet, steve, firstServicePointId, requestDate1, requestExpirationDate1);
     createRequest(nod, rebecca, secondServicePointId, requestDate2, requestExpirationDate2);
