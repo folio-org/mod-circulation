@@ -61,7 +61,7 @@ public class ChangeDueDateAPITests extends APITests {
   public void canChangeTheDueDate() {
     final DateTime newDueDate = dueDate.plus(Period.days(14));
 
-    loansFixture.changeDueDate(new ChangeDueDateRequestBuilder()
+    changeDueDateFixture.changeDueDate(new ChangeDueDateRequestBuilder()
       .forLoan(loan.getId())
       .withDueDate(newDueDate));
 
@@ -75,7 +75,7 @@ public class ChangeDueDateAPITests extends APITests {
 
   @Test
   public void cannotChangeDueDateWhenDueDateIsNotProvided() {
-    final Response response = loansFixture
+    final Response response = changeDueDateFixture
       .attemptChangeDueDate(new ChangeDueDateRequestBuilder()
         .forLoan(loan.getId())
         .withDueDate(null));
@@ -89,7 +89,7 @@ public class ChangeDueDateAPITests extends APITests {
     final String nonExistentLoanId = UUID.randomUUID().toString();
     final DateTime newDueDate = dueDate.plus(Period.days(14));
 
-    final Response response = loansFixture
+    final Response response = changeDueDateFixture
       .attemptChangeDueDate(new ChangeDueDateRequestBuilder()
         .forLoan(nonExistentLoanId)
         .withDueDate(newDueDate));
@@ -103,7 +103,7 @@ public class ChangeDueDateAPITests extends APITests {
 
     checkInFixture.checkInByBarcode(item);
 
-    final Response response = loansFixture
+    final Response response = changeDueDateFixture
       .attemptChangeDueDate(new ChangeDueDateRequestBuilder()
         .forLoan(loan.getId())
         .withDueDate(newDueDate));
@@ -119,7 +119,7 @@ public class ChangeDueDateAPITests extends APITests {
     assertThat(loansFixture.declareItemLost(loan.getJson()),
       hasStatus(HTTP_NO_CONTENT));
 
-    final Response response = loansFixture
+    final Response response = changeDueDateFixture
       .attemptChangeDueDate(new ChangeDueDateRequestBuilder()
         .forLoan(loan.getId())
         .withDueDate(newDueDate));
@@ -139,7 +139,7 @@ public class ChangeDueDateAPITests extends APITests {
 
     (new ChangeDueDateRequestBuilder()).forLoan(loan.getId().toString());
 
-    final Response response = loansFixture
+    final Response response = changeDueDateFixture
       .attemptChangeDueDate(new ChangeDueDateRequestBuilder()
         .forLoan(loan.getId())
         .withDueDate(newDueDate));
@@ -155,7 +155,7 @@ public class ChangeDueDateAPITests extends APITests {
         .forLoan(loan.getId().toString())
       ), hasStatus(HTTP_NO_CONTENT));
 
-    final Response response = loansFixture
+    final Response response = changeDueDateFixture
       .attemptChangeDueDate(new ChangeDueDateRequestBuilder()
         .forLoan(loan.getId())
         .withDueDate(dueDate));
@@ -174,7 +174,7 @@ public class ChangeDueDateAPITests extends APITests {
       .by(usersFixture.steve())
       .fulfilToHoldShelf(servicePointsFixture.cd1()));
 
-    loansFixture.changeDueDate(new ChangeDueDateRequestBuilder()
+    changeDueDateFixture.changeDueDate(new ChangeDueDateRequestBuilder()
       .forLoan(loan.getId())
       .withDueDate(newDueDate));
 
@@ -237,7 +237,7 @@ public class ChangeDueDateAPITests extends APITests {
 
     DateTime newDueDate = dueDate.plus(Period.weeks(2));
 
-    loansFixture.changeDueDate(new ChangeDueDateRequestBuilder()
+    changeDueDateFixture.changeDueDate(new ChangeDueDateRequestBuilder()
       .forLoan(loan.getId())
       .withDueDate(newDueDate));
 

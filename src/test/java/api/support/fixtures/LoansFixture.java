@@ -146,16 +146,6 @@ public class LoansFixture {
     return declareItemLost(loanId, builder);
   }
 
-  public Response changeDueDate(ChangeDueDateRequestBuilder request) {
-    return restAssuredClient.post(request.create(),
-      changeDueDateURL(request.getLoanId()), 204, "change-due-date-request");
-  }
-
-  public Response attemptChangeDueDate(ChangeDueDateRequestBuilder request) {
-    return restAssuredClient.post(request.create(),
-        changeDueDateURL(request.getLoanId()), "change-due-date-request");
-  }
-
   public Response claimItemReturned(ClaimItemReturnedRequestBuilder request) {
     return restAssuredClient.post(request.create(),
       claimItemReturnedURL(request.getLoanId()), 204, "claim-item-returned-request");

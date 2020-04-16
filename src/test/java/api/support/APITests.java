@@ -29,6 +29,7 @@ import api.support.builders.LoanPolicyBuilder;
 import api.support.builders.NoticePolicyBuilder;
 import api.support.fixtures.AddressTypesFixture;
 import api.support.fixtures.CancellationReasonsFixture;
+import api.support.fixtures.ChangeDueDateFixture;
 import api.support.fixtures.CheckInFixture;
 import api.support.fixtures.CheckOutFixture;
 import api.support.fixtures.CirculationRulesFixture;
@@ -219,6 +220,8 @@ public abstract class APITests {
   
   protected final CheckInFixture checkInFixture = new CheckInFixture(
           servicePointsFixture);
+  
+  protected final ChangeDueDateFixture changeDueDateFixture = new ChangeDueDateFixture();
 
   protected final CancellationReasonsFixture cancellationReasonsFixture
     = new CancellationReasonsFixture(ResourceClient.forCancellationReasons());
