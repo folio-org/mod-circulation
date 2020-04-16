@@ -26,8 +26,7 @@ import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 
 public class ChangeDueDateResource extends Resource {
-  //public static final String DUE_DATE = "dueDate";
-
+  
   public ChangeDueDateResource(HttpClient client) {
     super(client);
   }

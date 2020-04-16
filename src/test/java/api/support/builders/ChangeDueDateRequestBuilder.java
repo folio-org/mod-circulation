@@ -1,7 +1,7 @@
 package api.support.builders;
 
-import static org.folio.circulation.resources.ChangeDueDateResource.DUE_DATE;
 import static org.folio.circulation.support.JsonPropertyWriter.write;
+import static org.folio.circulation.domain.representations.ChangeDueDateRequest.DUE_DATE;
 
 import java.util.UUID;
 
