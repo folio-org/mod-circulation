@@ -49,12 +49,29 @@ public class OpeningDay {
     }
   }
 
+  private OpeningDay(JsonObject openingDay, LocalDate date) {
+    this.openingHour = fillOpeningDay(openingDay);
+    this.allDay = openingDay.getBoolean(ALL_DAY_KEY, false);
+    this.open = openingDay.getBoolean(OPEN_KEY, false);
+    this.date = date;
+  }
+
   public static OpeningDay fromJsonByKey(JsonObject jsonObject, String key) {
     return new OpeningDay(jsonObject.getJsonObject(key));
   }
 
   public static OpeningDay fromJsonByDefaultKey(JsonObject jsonObject) {
     return fromJsonByKey(jsonObject, OPENING_DAY_KEY);
+  }
+
+  public static OpeningDay fromOpeningPeriodJson(JsonObject openingPeriod) {
+    JsonObject openingDay = openingPeriod.getJsonObject(OPENING_DAY_KEY);
+    String dateProperty = openingPeriod.getString(DATE_KEY);
+    LocalDate date = null;
+    if (dateProperty != null) {
+      date = LocalDate.parse(dateProperty, DATE_TIME_FORMATTER);
+    }
+    return new OpeningDay(openingDay, date);
   }
 
   private OpeningDay(List<OpeningHour> openingHour, LocalDate date, boolean allDay, boolean open) {
