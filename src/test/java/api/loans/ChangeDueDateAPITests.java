@@ -9,7 +9,7 @@ import static api.support.matchers.ValidationErrorMatchers.hasParameter;
 import static org.folio.HttpStatus.HTTP_NOT_FOUND;
 import static org.folio.HttpStatus.HTTP_NO_CONTENT;
 import static org.folio.circulation.domain.representations.LoanProperties.ITEM_ID;
-import static org.folio.circulation.resources.ChangeDueDateResource.DUE_DATE;
+import static org.folio.circulation.domain.representations.ChangeDueDateRequest.DUE_DATE;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
