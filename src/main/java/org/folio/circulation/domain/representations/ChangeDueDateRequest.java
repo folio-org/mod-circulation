@@ -11,7 +11,7 @@ import org.joda.time.DateTime;
 import io.vertx.core.json.JsonObject;
 
 public class ChangeDueDateRequest {
-  private static final String DUE_DATE = "dueDate";
+  public static final String DUE_DATE = "dueDate";
 
   private final String loanId;
   private final DateTime dueDate;

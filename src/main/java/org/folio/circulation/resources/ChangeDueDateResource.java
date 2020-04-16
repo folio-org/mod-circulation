@@ -26,7 +26,7 @@ import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 
 public class ChangeDueDateResource extends Resource {
-  public static final String DUE_DATE = "dueDate";
+  //public static final String DUE_DATE = "dueDate";
 
   public ChangeDueDateResource(HttpClient client) {
     super(client);
@@ -88,13 +88,13 @@ public class ChangeDueDateResource extends Resource {
     final String loanId = routingContext.pathParam("id");
     final JsonObject body = routingContext.getBodyAsJson();
 
-    if (!body.containsKey(DUE_DATE)) {
+    if (!body.containsKey(ChangeDueDateRequest.DUE_DATE)) {
       return failed(singleValidationError("Due date is a required field",
-        DUE_DATE, null));
+      ChangeDueDateRequest.DUE_DATE, null));
     }
 
     return succeeded(new ChangeDueDateRequest(
-      loanId, DateTime.parse(body.getString(DUE_DATE))
+      loanId, DateTime.parse(body.getString(ChangeDueDateRequest.DUE_DATE))
     ));
   }
 
