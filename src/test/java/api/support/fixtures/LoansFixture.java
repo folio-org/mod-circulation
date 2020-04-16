@@ -9,7 +9,6 @@ import static api.support.http.InterfaceUrls.changeDueDateURL;
 import static api.support.http.InterfaceUrls.claimItemReturnedURL;
 import static api.support.http.InterfaceUrls.declareLoanItemLostURL;
 import static api.support.http.InterfaceUrls.loansUrl;
-import static api.support.http.InterfaceUrls.overrideCheckOutByBarcodeUrl;
 import static api.support.http.InterfaceUrls.overrideRenewalByBarcodeUrl;
 import static api.support.http.InterfaceUrls.renewByBarcodeUrl;
 import static api.support.http.InterfaceUrls.renewByIdUrl;
@@ -32,7 +31,6 @@ import api.support.builders.ChangeDueDateRequestBuilder;
 import api.support.builders.ClaimItemReturnedRequestBuilder;
 import api.support.builders.DeclareItemLostRequestBuilder;
 import api.support.builders.LoanBuilder;
-import api.support.builders.OverrideCheckOutByBarcodeRequestBuilder;
 import api.support.builders.OverrideRenewalByBarcodeRequestBuilder;
 import api.support.builders.RenewByBarcodeRequestBuilder;
 import api.support.builders.RenewByIdRequestBuilder;
@@ -256,32 +254,6 @@ public class LoansFixture {
 
     return restAssuredClient.post(request, renewByIdUrl(),
       422, "renewal-by-id-request");
-  }
-
-  public IndividualResource overrideCheckOutByBarcode(
-    OverrideCheckOutByBarcodeRequestBuilder builder) {
-
-    JsonObject request = builder.create();
-
-    return new IndividualResource(
-      restAssuredClient.post(request, overrideCheckOutByBarcodeUrl(), 201,
-        "override-check-out-by-barcode-request"));
-  }
-
-  public Response attemptOverrideCheckOutByBarcode(
-    OverrideCheckOutByBarcodeRequestBuilder builder) {
-
-    return attemptOverrideCheckOutByBarcode(422, builder);
-  }
-
-  public Response attemptOverrideCheckOutByBarcode(
-    int expectedStatusCode,
-    OverrideCheckOutByBarcodeRequestBuilder builder) {
-
-    JsonObject request = builder.create();
-
-    return restAssuredClient.post(request, overrideCheckOutByBarcodeUrl(),
-      expectedStatusCode, "override-check-out-by-barcode-request");
   }
 
   public IndividualResource getLoanById(UUID id) {

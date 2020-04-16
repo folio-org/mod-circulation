@@ -56,7 +56,7 @@ public class OverrideCheckOutByBarcodeTests extends APITests {
     final UUID checkoutServicePointId = UUID.randomUUID();
 
     setNotLoanablePolicy();
-    IndividualResource response = loansFixture.overrideCheckOutByBarcode(
+    IndividualResource response = checkOutFixture.overrideCheckOutByBarcode(
       new OverrideCheckOutByBarcodeRequestBuilder()
         .forItem(smallAngryPlanet)
         .to(steve)
@@ -179,7 +179,7 @@ public class OverrideCheckOutByBarcodeTests extends APITests {
     IndividualResource steve = usersFixture.steve();
     final UUID checkoutServicePointId = UUID.randomUUID();
 
-    Response response = loansFixture.attemptOverrideCheckOutByBarcode(
+    Response response = checkOutFixture.attemptOverrideCheckOutByBarcode(
       new OverrideCheckOutByBarcodeRequestBuilder()
         .forItem(smallAngryPlanet)
         .to(steve)
@@ -204,7 +204,7 @@ public class OverrideCheckOutByBarcodeTests extends APITests {
     final UUID checkoutServicePointId = UUID.randomUUID();
 
     setNotLoanablePolicy();
-    Response response = loansFixture.attemptOverrideCheckOutByBarcode(
+    Response response = checkOutFixture.attemptOverrideCheckOutByBarcode(
       new OverrideCheckOutByBarcodeRequestBuilder()
         .forItem(smallAngryPlanet)
         .to(steve)
@@ -230,7 +230,7 @@ public class OverrideCheckOutByBarcodeTests extends APITests {
 
     setNotLoanablePolicy();
     DateTime invalidDueDate = TEST_LOAN_DATE.minusDays(2);
-    Response response = loansFixture.attemptOverrideCheckOutByBarcode(
+    Response response = checkOutFixture.attemptOverrideCheckOutByBarcode(
       new OverrideCheckOutByBarcodeRequestBuilder()
         .forItem(smallAngryPlanet)
         .to(steve)
@@ -256,7 +256,7 @@ public class OverrideCheckOutByBarcodeTests extends APITests {
     final UUID checkoutServicePointId = UUID.randomUUID();
 
     setNotLoanablePolicy();
-    Response response = loansFixture.attemptOverrideCheckOutByBarcode(
+    Response response = checkOutFixture.attemptOverrideCheckOutByBarcode(
       new OverrideCheckOutByBarcodeRequestBuilder()
         .forItem(smallAngryPlanet)
         .to(steve)
@@ -282,7 +282,7 @@ public class OverrideCheckOutByBarcodeTests extends APITests {
     final UUID checkoutServicePointId = UUID.randomUUID();
 
     setNotLoanablePolicy();
-    Response response = loansFixture.attemptOverrideCheckOutByBarcode(
+    Response response = checkOutFixture.attemptOverrideCheckOutByBarcode(
       new OverrideCheckOutByBarcodeRequestBuilder()
         .forItem(smallAngryPlanet)
         .to(steve)
@@ -309,7 +309,7 @@ public class OverrideCheckOutByBarcodeTests extends APITests {
 
     setNotLoanablePolicy();
 
-    loansFixture.overrideCheckOutByBarcode(
+    checkOutFixture.overrideCheckOutByBarcode(
       new OverrideCheckOutByBarcodeRequestBuilder()
         .forItem(smallAngryPlanet)
         .to(steve)

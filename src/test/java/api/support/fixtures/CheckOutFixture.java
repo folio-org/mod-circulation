@@ -2,6 +2,7 @@ package api.support.fixtures;
 
 import static api.support.APITestContext.getOkapiHeadersFromContext;
 import static api.support.http.InterfaceUrls.checkOutByBarcodeUrl;
+import static api.support.http.InterfaceUrls.overrideCheckOutByBarcodeUrl;
 
 import java.util.UUID;
 
@@ -12,6 +13,8 @@ import org.joda.time.DateTime;
 import api.support.RestAssuredClient;
 import api.support.builders.CheckOutByBarcodeRequestBuilder;
 import io.vertx.core.json.JsonObject;
+
+import api.support.builders.OverrideCheckOutByBarcodeRequestBuilder;
 
 public class CheckOutFixture {
   private final UsersFixture usersFixture;
@@ -86,6 +89,32 @@ public class CheckOutFixture {
 
     return restAssuredClient.post(request, checkOutByBarcodeUrl(),
       expectedStatusCode, "check-out-by-barcode-request");
+  }
+
+  public IndividualResource overrideCheckOutByBarcode(
+    OverrideCheckOutByBarcodeRequestBuilder builder) {
+
+    JsonObject request = builder.create();
+
+    return new IndividualResource(
+      restAssuredClient.post(request, overrideCheckOutByBarcodeUrl(), 201,
+        "override-check-out-by-barcode-request"));
+  }
+
+  public Response attemptOverrideCheckOutByBarcode(
+    OverrideCheckOutByBarcodeRequestBuilder builder) {
+
+    return attemptOverrideCheckOutByBarcode(422, builder);
+  }
+
+  public Response attemptOverrideCheckOutByBarcode(
+    int expectedStatusCode,
+    OverrideCheckOutByBarcodeRequestBuilder builder) {
+
+    JsonObject request = builder.create();
+
+    return restAssuredClient.post(request, overrideCheckOutByBarcodeUrl(),
+      expectedStatusCode, "override-check-out-by-barcode-request");
   }
 
   private IndividualResource defaultServicePoint() {
