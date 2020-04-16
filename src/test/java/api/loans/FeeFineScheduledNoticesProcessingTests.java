@@ -3,9 +3,10 @@ package api.loans;
 import static api.support.matchers.PatronNoticeMatcher.hasNoticeProperties;
 import static api.support.matchers.ScheduledNoticeMatchers.hasScheduledFeeFineNotice;
 import static java.util.UUID.randomUUID;
-import static org.folio.circulation.domain.notice.NoticeEventType.OVERDUE_FINE_RETURNED;
 import static org.folio.circulation.domain.notice.NoticeTiming.AFTER;
 import static org.folio.circulation.domain.notice.NoticeTiming.UPON_AT;
+import static org.folio.circulation.domain.notice.schedule.TriggeringEvent.OVERDUE_FINE_RENEWED;
+import static org.folio.circulation.domain.notice.schedule.TriggeringEvent.OVERDUE_FINE_RETURNED;
 import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -27,15 +28,16 @@ import org.folio.circulation.domain.notice.NoticeEventType;
 import org.folio.circulation.domain.notice.NoticeTiming;
 import org.folio.circulation.domain.notice.schedule.TriggeringEvent;
 import org.folio.circulation.domain.policy.Period;
+import org.folio.circulation.support.ClockManager;
 import org.folio.circulation.support.JsonPropertyWriter;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.hamcrest.Matcher;
 import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 
 import api.support.APITests;
-import api.support.CheckInByBarcodeResponse;
 import api.support.builders.CheckInByBarcodeRequestBuilder;
 import api.support.builders.FeeFineBuilder;
 import api.support.builders.FeeFineOwnerBuilder;
@@ -44,82 +46,89 @@ import api.support.builders.NoticePolicyBuilder;
 import api.support.fixtures.TemplateContextMatchers;
 import io.vertx.core.json.JsonObject;
 
+@RunWith(value = Parameterized.class)
 public class FeeFineScheduledNoticesProcessingTests extends APITests {
-  private static final Map<NoticeTiming, UUID> TEMPLATE_IDS;
   private static final Period AFTER_PERIOD = Period.days(1);
   private static final Period RECURRING_PERIOD = Period.hours(6);
-  private static final DateTime CHECK_OUT_DATE = new DateTime(2019, 3, 18, 11, 43, 54, DateTimeZone.UTC);
-  private static final DateTime CHECKIN_DATE = new DateTime(2019, 4, 18, 11, 43, 54, DateTimeZone.UTC);
   private static final String OVERDUE_FINE = "Overdue fine";
+  private static final Map<NoticeTiming, UUID> TEMPLATE_IDS = new HashMap<>();
 
   private Account account;
   private FeeFineAction action;
   private DateTime actionDateTime;
-  private UUID userId;
   private UUID loanId;
+  private UUID userId;
   private UUID actionId;
   private UUID accountId;
 
+  private final TriggeringEvent triggeringEvent;
+
+  public FeeFineScheduledNoticesProcessingTests(TriggeringEvent triggeringEvent) {
+    this.triggeringEvent = triggeringEvent;
+  }
+
   static {
-    TEMPLATE_IDS = new HashMap<>();
     TEMPLATE_IDS.put(UPON_AT, randomUUID());
     TEMPLATE_IDS.put(AFTER, randomUUID());
   }
 
+  @Parameterized.Parameters
+  public static Object[] parameters() {
+    return new Object[]{OVERDUE_FINE_RETURNED, OVERDUE_FINE_RENEWED};
+  }
+
   @Test
   public void uponAtNoticeIsSentAndDeleted() {
-    final NoticeTiming timing = UPON_AT;
-    createOverdueFineViaCheckin(createNoticeConfig(OVERDUE_FINE_RETURNED, timing, false));
+    generateOverdueFine(createNoticeConfig(UPON_AT, false));
 
-    checkScheduledNotice(TriggeringEvent.OVERDUE_FINE_RETURNED, timing, false, actionDateTime);
+    checkNumberOfScheduledNotices(1);
+    checkScheduledNotice(UPON_AT, false, actionDateTime);
 
     scheduledNoticeProcessingClient.runFeeFineNoticesProcessing(actionDateTime.plusMinutes(1));
 
-    checkSentNotice(TEMPLATE_IDS.get(timing));
+    checkSentNotice(TEMPLATE_IDS.get(UPON_AT));
     checkNumberOfScheduledNotices(0);
   }
 
   @Test
   public void oneTimeAfterNoticeIsSentAndDeleted() {
-    final NoticeTiming timing = AFTER;
-    createOverdueFineViaCheckin(createNoticeConfig(OVERDUE_FINE_RETURNED, timing, false));
+    generateOverdueFine(createNoticeConfig(AFTER, false));
     DateTime nextRunTime = actionDateTime.plus(AFTER_PERIOD.timePeriod());
 
-    checkScheduledNotice(TriggeringEvent.OVERDUE_FINE_RETURNED, timing, false, nextRunTime);
+    checkNumberOfScheduledNotices(1);
+    checkScheduledNotice(AFTER, false, nextRunTime);
 
     scheduledNoticeProcessingClient.runFeeFineNoticesProcessing(nextRunTime.plusMinutes(1));
 
-    checkSentNotice(TEMPLATE_IDS.get(timing));
+    checkSentNotice(TEMPLATE_IDS.get(AFTER));
     checkNumberOfScheduledNotices(0);
   }
 
   @Test
   public void recurringAfterNoticeIsSentAndRescheduled() {
-    final NoticeTiming timing = AFTER;
-    createOverdueFineViaCheckin(createNoticeConfig(OVERDUE_FINE_RETURNED, timing, true));
+    generateOverdueFine(createNoticeConfig(AFTER, true));
     DateTime nextRunTime = actionDateTime.plus(AFTER_PERIOD.timePeriod());
 
-    checkScheduledNotice(TriggeringEvent.OVERDUE_FINE_RETURNED, timing, true, nextRunTime);
+    checkNumberOfScheduledNotices(1);
+    checkScheduledNotice(AFTER, true, nextRunTime);
 
     scheduledNoticeProcessingClient.runFeeFineNoticesProcessing(nextRunTime.plusMinutes(1));
 
-    checkSentNotice(TEMPLATE_IDS.get(timing));
+    checkSentNotice(TEMPLATE_IDS.get(AFTER));
     checkNumberOfScheduledNotices(1);
-    checkScheduledNotice(TriggeringEvent.OVERDUE_FINE_RETURNED, timing, true,
-      nextRunTime.plus(RECURRING_PERIOD.timePeriod()));
+    checkScheduledNotice(AFTER, true, nextRunTime.plus(RECURRING_PERIOD.timePeriod()));
   }
 
   @Test
   public void recurringNoticeIsRescheduledCorrectlyWhenNextCalculatedRunTimeIsBeforeNow() {
-    final NoticeTiming timing = AFTER;
-    createOverdueFineViaCheckin(createNoticeConfig(OVERDUE_FINE_RETURNED, timing, true));
-
+    generateOverdueFine(createNoticeConfig(AFTER, true));
     DateTime firstScheduledRunTime = actionDateTime.plus(AFTER_PERIOD.timePeriod());
 
-    checkScheduledNotice(TriggeringEvent.OVERDUE_FINE_RETURNED, timing, true, firstScheduledRunTime);
+    checkNumberOfScheduledNotices(1);
+    checkScheduledNotice(AFTER, true, firstScheduledRunTime);
 
     DateTime fakeProcessingTime = firstScheduledRunTime
-      .plus(RECURRING_PERIOD.timePeriod()) // first planned recurrence time
+      .plus(RECURRING_PERIOD.timePeriod())
       .plusHours(1);
 
     mockClockManagerToReturnFixedDateTime(fakeProcessingTime);
@@ -128,39 +137,39 @@ public class FeeFineScheduledNoticesProcessingTests extends APITests {
 
     DateTime expectedNextRunTime = fakeProcessingTime.plus(RECURRING_PERIOD.timePeriod());
 
-    checkSentNotice(TEMPLATE_IDS.get(timing));
+    checkSentNotice(TEMPLATE_IDS.get(AFTER));
     checkNumberOfScheduledNotices(1);
-    checkScheduledNotice(TriggeringEvent.OVERDUE_FINE_RETURNED, timing, true, expectedNextRunTime);
+    checkScheduledNotice(AFTER, true, expectedNextRunTime);
   }
 
   @Test
   public void multipleScheduledNoticesAreSentDuringSingleProcessingIteration() {
-    createOverdueFineViaCheckin(
-      createNoticeConfig(OVERDUE_FINE_RETURNED, UPON_AT, false),
-      createNoticeConfig(OVERDUE_FINE_RETURNED, AFTER, false),
-      createNoticeConfig(OVERDUE_FINE_RETURNED, AFTER, true)
+    generateOverdueFine(
+      createNoticeConfig(UPON_AT, false),
+      createNoticeConfig(AFTER, false),
+      createNoticeConfig(AFTER, true)
     );
 
     DateTime firstAfterRunTime = actionDateTime.plus(AFTER_PERIOD.timePeriod());
 
-    checkScheduledNotice(TriggeringEvent.OVERDUE_FINE_RETURNED, UPON_AT, false, actionDateTime);
-    checkScheduledNotice(TriggeringEvent.OVERDUE_FINE_RETURNED, AFTER, false, firstAfterRunTime);
-    checkScheduledNotice(TriggeringEvent.OVERDUE_FINE_RETURNED, AFTER, true, firstAfterRunTime);
+    checkNumberOfScheduledNotices(3);
+    checkScheduledNotice(UPON_AT, false, actionDateTime);
+    checkScheduledNotice(AFTER, false, firstAfterRunTime);
+    checkScheduledNotice(AFTER, true, firstAfterRunTime);
 
     scheduledNoticeProcessingClient.runFeeFineNoticesProcessing(firstAfterRunTime.plusMinutes(1));
 
     checkSentNotice(TEMPLATE_IDS.get(UPON_AT), TEMPLATE_IDS.get(AFTER), TEMPLATE_IDS.get(AFTER));
     checkNumberOfScheduledNotices(1);
-    checkScheduledNotice(TriggeringEvent.OVERDUE_FINE_RETURNED, AFTER, true,
-      firstAfterRunTime.plus(RECURRING_PERIOD.timePeriod()));
+    checkScheduledNotice(AFTER, true, firstAfterRunTime.plus(RECURRING_PERIOD.timePeriod()));
   }
 
   @Test
   public void noticeIsDiscardedWhenReferencedActionDoesNotExist() {
-    final NoticeTiming timing = UPON_AT;
-    createOverdueFineViaCheckin(createNoticeConfig(OVERDUE_FINE_RETURNED, timing, false));
+    generateOverdueFine(createNoticeConfig(UPON_AT, false));
 
-    checkScheduledNotice(TriggeringEvent.OVERDUE_FINE_RETURNED, timing, false, actionDateTime);
+    checkNumberOfScheduledNotices(1);
+    checkScheduledNotice(UPON_AT, false, actionDateTime);
 
     feeFineActionsClient.delete(actionId);
     scheduledNoticeProcessingClient.runFeeFineNoticesProcessing(actionDateTime.plusMinutes(1));
@@ -171,10 +180,10 @@ public class FeeFineScheduledNoticesProcessingTests extends APITests {
 
   @Test
   public void noticeIsDiscardedWhenReferencedAccountDoesNotExist() {
-    final NoticeTiming timing = UPON_AT;
-    createOverdueFineViaCheckin(createNoticeConfig(OVERDUE_FINE_RETURNED, timing, false));
+    generateOverdueFine(createNoticeConfig(UPON_AT, false));
 
-    checkScheduledNotice(TriggeringEvent.OVERDUE_FINE_RETURNED, timing, false, actionDateTime);
+    checkNumberOfScheduledNotices(1);
+    checkScheduledNotice(UPON_AT, false, actionDateTime);
 
     accountsClient.delete(accountId);
     scheduledNoticeProcessingClient.runFeeFineNoticesProcessing(actionDateTime.plusMinutes(1));
@@ -185,10 +194,10 @@ public class FeeFineScheduledNoticesProcessingTests extends APITests {
 
   @Test
   public void noticeIsDiscardedWhenAccountIsClosed() {
-    final NoticeTiming timing = UPON_AT;
-    createOverdueFineViaCheckin(createNoticeConfig(OVERDUE_FINE_RETURNED, timing, false));
+    generateOverdueFine(createNoticeConfig(UPON_AT, false));
 
-    checkScheduledNotice(TriggeringEvent.OVERDUE_FINE_RETURNED, timing, false, actionDateTime);
+    checkNumberOfScheduledNotices(1);
+    checkScheduledNotice(UPON_AT, false, actionDateTime);
 
     JsonObject closedAccountJson = account.toJson();
     JsonPropertyWriter.writeNamedObject(closedAccountJson, "status", "Closed");
@@ -200,7 +209,7 @@ public class FeeFineScheduledNoticesProcessingTests extends APITests {
     checkNumberOfScheduledNotices(0);
   }
 
-  public void createOverdueFineViaCheckin(JsonObject... patronNoticeConfigs) {
+  public void generateOverdueFine(JsonObject... patronNoticeConfigs) {
     NoticePolicyBuilder noticePolicyBuilder = new NoticePolicyBuilder()
       .withName("Patron notice policy with fee/fine notices")
       .withFeeFineNotices(Arrays.asList(patronNoticeConfigs));
@@ -210,39 +219,45 @@ public class FeeFineScheduledNoticesProcessingTests extends APITests {
     templateFixture.createDummyNoticeTemplate(TEMPLATE_IDS.get(UPON_AT));
     templateFixture.createDummyNoticeTemplate(TEMPLATE_IDS.get(AFTER));
 
-    final UUID checkInServicePointId = servicePointsFixture.cd1().getId();
-    final IndividualResource homeLocation = locationsFixture.basedUponExampleLocation(
+    UUID checkInServicePointId = servicePointsFixture.cd1().getId();
+    IndividualResource location = locationsFixture.basedUponExampleLocation(
       builder -> builder.withPrimaryServicePoint(checkInServicePointId));
-    final IndividualResource borrower = usersFixture.james();
-    userId = borrower.getId();
-    final IndividualResource item = itemsFixture.basedUponNod(builder ->
-      builder.withPermanentLocation(homeLocation.getId()));
+    IndividualResource user = usersFixture.james();
+    userId = user.getId();
+    IndividualResource item = itemsFixture.basedUponNod(builder ->
+      builder.withPermanentLocation(location.getId()));
 
     JsonObject servicePointOwner = new JsonObject()
-      .put("value", homeLocation.getJson().getString("primaryServicePoint"))
+      .put("value", checkInServicePointId.toString())
       .put("label", "Service Desk 1");
 
     feeFineOwnersClient.create(new FeeFineOwnerBuilder()
       .withId(randomUUID())
       .withOwner("test owner")
-      .withServicePointOwner(Collections.singletonList(servicePointOwner))
-    );
+      .withServicePointOwner(Collections.singletonList(servicePointOwner)));
 
     feeFinesClient.create(new FeeFineBuilder()
       .withId(randomUUID())
       .withFeeFineType(OVERDUE_FINE)
-      .withAutomatic(true)
-    );
+      .withAutomatic(true));
 
-    loansFixture.checkOutByBarcode(item, borrower, CHECK_OUT_DATE);
+    final DateTime checkOutDate = ClockManager.getClockManager().getDateTime().minusYears(1);
+    final DateTime checkInDate = checkOutDate.plusMonths(1);
 
-    CheckInByBarcodeResponse checkInResponse = loansFixture.checkInByBarcode(
-      new CheckInByBarcodeRequestBuilder()
+    IndividualResource checkOutResponse = loansFixture.checkOutByBarcode(item, user, checkOutDate);
+    loanId = UUID.fromString(checkOutResponse.getJson().getString("id"));
+
+    switch (triggeringEvent) {
+    case OVERDUE_FINE_RETURNED:
+      loansFixture.checkInByBarcode(new CheckInByBarcodeRequestBuilder()
         .forItem(item)
-        .on(CHECKIN_DATE)
+        .on(checkInDate)
         .at(checkInServicePointId));
-
-    loanId = UUID.fromString(checkInResponse.getLoan().getString("id"));
+      break;
+    case OVERDUE_FINE_RENEWED:
+      loansFixture.renewLoan(item, user);
+      break;
+    }
 
     List<JsonObject> accounts = Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
@@ -260,19 +275,13 @@ public class FeeFineScheduledNoticesProcessingTests extends APITests {
     action = FeeFineAction.from(actions.get(0));
     actionId = UUID.fromString(action.getId());
     actionDateTime = action.getDateAction();
-
-    Awaitility.await()
-      .atMost(1, TimeUnit.SECONDS)
-      .until(scheduledNoticesClient::getAll, hasSize(patronNoticeConfigs.length));
   }
 
-  private JsonObject createNoticeConfig(
-    NoticeEventType eventType, NoticeTiming timing, boolean isRecurring) {
-
+  private JsonObject createNoticeConfig(NoticeTiming timing, boolean isRecurring) {
     JsonObject timingPeriod = timing == AFTER ? AFTER_PERIOD.asJson() : null;
 
     NoticeConfigurationBuilder builder = new NoticeConfigurationBuilder()
-      .withEventType(eventType.getRepresentation())
+      .withEventType(NoticeEventType.from(triggeringEvent.getRepresentation()).getRepresentation())
       .withTemplateId(TEMPLATE_IDS.get(timing))
       .withTiming(timing.getRepresentation(), timingPeriod)
       .sendInRealTime(true);
@@ -284,10 +293,8 @@ public class FeeFineScheduledNoticesProcessingTests extends APITests {
     return builder.create();
   }
 
-  private void checkScheduledNotice(TriggeringEvent triggeringEvent,
-    NoticeTiming timing, Boolean isRecurring, DateTime nextRunTime) {
-
-    Period expectedRecurringPeriod = isRecurring ? RECURRING_PERIOD : null;
+  private void checkScheduledNotice(NoticeTiming timing, Boolean recurring, DateTime nextRunTime) {
+    Period expectedRecurringPeriod = recurring ? RECURRING_PERIOD : null;
 
     assertThat(scheduledNoticesClient.getAll(), hasItems(
       hasScheduledFeeFineNotice(
