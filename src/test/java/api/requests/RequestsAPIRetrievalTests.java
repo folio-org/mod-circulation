@@ -433,7 +433,7 @@ public class RequestsAPIRetrievalTests extends APITests {
       .deliverToAddress(workAddressType.getId())
       .by(charlotte));
 
-    loansFixture.checkInByBarcode(smallAngryPlanet);
+      checkInFixture.checkInByBarcode(smallAngryPlanet);
 
     final MultipleJsonRecords allRequests = requestsFixture.getAllRequests();
 

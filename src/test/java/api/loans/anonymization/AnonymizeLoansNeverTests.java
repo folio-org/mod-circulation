@@ -1,8 +1,8 @@
 package api.loans.anonymization;
 
 import static api.support.matchers.LoanMatchers.isAnonymized;
-import static org.hamcrest.Matchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.not;
 
 import java.util.UUID;
 
@@ -41,7 +41,7 @@ public class AnonymizeLoansNeverTests extends LoanAnonymizationTests {
     UUID loanID = loanResource.getId();
 
     createOpenAccountWithFeeFines(loanResource);
-    loansFixture.checkInByBarcode(item1);
+    checkInFixture.checkInByBarcode(item1);
 
     anonymizeLoansInTenant();
 
@@ -74,7 +74,7 @@ public class AnonymizeLoansNeverTests extends LoanAnonymizationTests {
     UUID loanID = loanResource.getId();
 
     createClosedAccountWithFeeFines(loanResource, DateTime.now().minusMinutes(1));
-    loansFixture.checkInByBarcode(item1);
+    checkInFixture.checkInByBarcode(item1);
 
     anonymizeLoansInTenant();
 
@@ -107,7 +107,7 @@ public class AnonymizeLoansNeverTests extends LoanAnonymizationTests {
     UUID loanID = loanResource.getId();
 
     createOpenAccountWithFeeFines(loanResource);
-    loansFixture.checkInByBarcode(item1);
+    checkInFixture.checkInByBarcode(item1);
 
     anonymizeLoansInTenant();
 
@@ -140,7 +140,7 @@ public class AnonymizeLoansNeverTests extends LoanAnonymizationTests {
     UUID loanID = loanResource.getId();
 
     createClosedAccountWithFeeFines(loanResource, DateTime.now().minusMinutes(1));
-    loansFixture.checkInByBarcode(item1);
+    checkInFixture.checkInByBarcode(item1);
 
     anonymizeLoansInTenant();
 
@@ -173,7 +173,7 @@ public class AnonymizeLoansNeverTests extends LoanAnonymizationTests {
     UUID loanID = loanResource.getId();
 
     createOpenAccountWithFeeFines(loanResource);
-    loansFixture.checkInByBarcode(item1);
+    checkInFixture.checkInByBarcode(item1);
 
     anonymizeLoansInTenant();
 
@@ -206,7 +206,7 @@ public class AnonymizeLoansNeverTests extends LoanAnonymizationTests {
     UUID loanID = loanResource.getId();
 
     createClosedAccountWithFeeFines(loanResource, DateTime.now().minusMinutes(1));
-    loansFixture.checkInByBarcode(item1);
+    checkInFixture.checkInByBarcode(item1);
 
     anonymizeLoansInTenant();
 
@@ -240,7 +240,7 @@ public class AnonymizeLoansNeverTests extends LoanAnonymizationTests {
     UUID loanID = loanResource.getId();
 
     createOpenAccountWithFeeFines(loanResource);
-    loansFixture.checkInByBarcode(item1);
+    checkInFixture.checkInByBarcode(item1);
 
     anonymizeLoansInTenant();
 
@@ -275,7 +275,7 @@ public class AnonymizeLoansNeverTests extends LoanAnonymizationTests {
     UUID loanID = loanResource.getId();
 
     createClosedAccountWithFeeFines(loanResource, DateTime.now().minusMinutes(1));
-    loansFixture.checkInByBarcode(item1);
+    checkInFixture.checkInByBarcode(item1);
 
     mockClockManagerToReturnFixedDateTime(
       DateTime.now(DateTimeZone.UTC).plus(20 * ONE_MINUTE_AND_ONE));
@@ -300,7 +300,7 @@ public class AnonymizeLoansNeverTests extends LoanAnonymizationTests {
         .at(servicePoint.getId()));
     UUID loanID = loanResource.getId();
 
-    loansFixture.checkInByBarcode(item1);
+    checkInFixture.checkInByBarcode(item1);
 
     anonymizeLoansInTenant();
 
@@ -323,7 +323,7 @@ public class AnonymizeLoansNeverTests extends LoanAnonymizationTests {
         .at(servicePoint.getId()));
     UUID loanID = loanResource.getId();
 
-    loansFixture.checkInByBarcode(item1);
+    checkInFixture.checkInByBarcode(item1);
 
     anonymizeLoansInTenant();
 
@@ -344,7 +344,7 @@ public class AnonymizeLoansNeverTests extends LoanAnonymizationTests {
         .at(servicePoint.getId()));
     UUID loanID = loanResource.getId();
 
-    loansFixture.checkInByBarcode(item1);
+    checkInFixture.checkInByBarcode(item1);
 
     anonymizeLoansInTenant();
 

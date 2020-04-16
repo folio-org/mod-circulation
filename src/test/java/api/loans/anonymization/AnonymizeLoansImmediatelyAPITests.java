@@ -38,7 +38,7 @@ public class AnonymizeLoansImmediatelyAPITests extends LoanAnonymizationTests {
     UUID loanID = loanResource.getId();
 
     createOpenAccountWithFeeFines(loanResource);
-    loansFixture.checkInByBarcode(item1);
+    checkInFixture.checkInByBarcode(item1);
 
     anonymizeLoansInTenant();
 
@@ -70,7 +70,7 @@ public class AnonymizeLoansImmediatelyAPITests extends LoanAnonymizationTests {
     createClosedAccountWithFeeFines(loanResource,
       DateTime.now(DateTimeZone.UTC));
 
-    loansFixture.checkInByBarcode(item1);
+    checkInFixture.checkInByBarcode(item1);
 
     anonymizeLoansInTenant();
 
@@ -101,7 +101,7 @@ public class AnonymizeLoansImmediatelyAPITests extends LoanAnonymizationTests {
 
     createOpenAccountWithFeeFines(loanResource);
 
-    loansFixture.checkInByBarcode(item1);
+    checkInFixture.checkInByBarcode(item1);
 
     anonymizeLoansInTenant();
 
@@ -162,7 +162,7 @@ public class AnonymizeLoansImmediatelyAPITests extends LoanAnonymizationTests {
 
     createClosedAccountWithFeeFines(loanResource, DateTime.now(DateTimeZone.UTC));
 
-    loansFixture.checkInByBarcode(item1);
+    checkInFixture.checkInByBarcode(item1);
 
     anonymizeLoansInTenant();
 
@@ -194,7 +194,7 @@ public class AnonymizeLoansImmediatelyAPITests extends LoanAnonymizationTests {
 
     createClosedAccountWithFeeFines(loanResource, DateTime.now(DateTimeZone.UTC));
 
-    loansFixture.checkInByBarcode(item1);
+    checkInFixture.checkInByBarcode(item1);
 
     mockClockManagerToReturnFixedDateTime(
       DateTime.now(DateTimeZone.UTC).plus(ONE_MINUTE_AND_ONE));

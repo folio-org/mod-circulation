@@ -51,7 +51,7 @@ public class RequestsAPILoanHistoryTests extends APITests {
 
     UUID closedLoanId = checkOutFixture.checkOutByBarcode(smallAngryPlanet).getId();
 
-    loansFixture.checkInByBarcode(smallAngryPlanet);
+    checkInFixture.checkInByBarcode(smallAngryPlanet);
 
     checkOutFixture.checkOutByBarcode(smallAngryPlanet);
 
@@ -79,7 +79,7 @@ public class RequestsAPILoanHistoryTests extends APITests {
 
     UUID closedLoanId = checkOutFixture.checkOutByBarcode(smallAngryPlanet).getId();
 
-    loansFixture.checkInByBarcode(smallAngryPlanet);
+    checkInFixture.checkInByBarcode(smallAngryPlanet);
 
     checkOutFixture.checkOutByBarcode(smallAngryPlanet);
 

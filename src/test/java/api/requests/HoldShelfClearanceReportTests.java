@@ -83,7 +83,7 @@ public class HoldShelfClearanceReportTests extends APITests {
       .withPickupServicePointId(pickupServicePointId)
       .forItem(temeraire)
       .by(usersFixture.steve()));
-    loansFixture.checkInByBarcode(temeraire);
+    checkInFixture.checkInByBarcode(temeraire);
 
     checkOutFixture.checkOutByBarcode(smallAngryPlanet, usersFixture.james());
     requestsClient.create(new RequestBuilder()
@@ -92,7 +92,7 @@ public class HoldShelfClearanceReportTests extends APITests {
       .withPickupServicePointId(pickupServicePointId)
       .forItem(smallAngryPlanet)
       .by(usersFixture.rebecca()));
-    loansFixture.checkInByBarcode(smallAngryPlanet);
+    checkInFixture.checkInByBarcode(smallAngryPlanet);
 
     Response response = ResourceClient.forRequestReport().getById(pickupServicePointId);
     assertThat(response.getStatusCode(), is(HTTP_OK));
@@ -121,7 +121,7 @@ public class HoldShelfClearanceReportTests extends APITests {
       .forItem(temeraire)
       .by(steve);
     IndividualResource requestOnTemeraire = requestsClient.create(requestBuilderOnTemeraire);
-    loansFixture.checkInByBarcode(temeraire);
+    checkInFixture.checkInByBarcode(temeraire);
     requestsClient.replace(requestOnTemeraire.getId(),
       requestBuilderOnTemeraire.withStatus(RequestStatus.CLOSED_CANCELLED.getValue()).create()
         .put(CLOSED_DATE_KEY, "2018-02-11T14:45:23.000+0000")
@@ -135,7 +135,7 @@ public class HoldShelfClearanceReportTests extends APITests {
       .forItem(smallAngryPlanet)
       .by(rebecca);
     IndividualResource requestOnSmallAngryPlanet = requestsClient.create(requestBuilderOnSmallAngryPlanet);
-    loansFixture.checkInByBarcode(smallAngryPlanet);
+    checkInFixture.checkInByBarcode(smallAngryPlanet);
     requestsClient.replace(requestOnSmallAngryPlanet.getId(),
       requestBuilderOnSmallAngryPlanet
         .withStatus(RequestStatus.CLOSED_PICKUP_EXPIRED.getValue()).create()
@@ -174,7 +174,7 @@ public class HoldShelfClearanceReportTests extends APITests {
       .forItem(temeraire)
       .by(usersFixture.steve());
     IndividualResource requestOnTemeraire = requestsClient.create(requestBuilderOnTemeraire);
-    loansFixture.checkInByBarcode(temeraire);
+    checkInFixture.checkInByBarcode(temeraire);
     requestsClient.replace(requestOnTemeraire.getId(),
       requestBuilderOnTemeraire.withStatus(RequestStatus.CLOSED_CANCELLED.getValue()));
 
@@ -186,7 +186,7 @@ public class HoldShelfClearanceReportTests extends APITests {
       .forItem(smallAngryPlanet)
       .by(rebecca);
     IndividualResource requestOnSmallAngryPlanet = requestsClient.create(requestBuilderOnSmallAngryPlanet);
-    loansFixture.checkInByBarcode(smallAngryPlanet);
+    checkInFixture.checkInByBarcode(smallAngryPlanet);
     requestsClient.replace(requestOnSmallAngryPlanet.getId(),
       requestBuilderOnSmallAngryPlanet.withStatus(RequestStatus.CLOSED_CANCELLED.getValue()).create()
         .put(CLOSED_DATE_KEY, "2018-02-11T14:45:23.000+0000"));
@@ -211,7 +211,7 @@ public class HoldShelfClearanceReportTests extends APITests {
       .withPickupServicePointId(pickupServicePointId)
       .forItem(temeraire)
       .by(usersFixture.steve()));
-    loansFixture.checkInByBarcode(temeraire);
+    checkInFixture.checkInByBarcode(temeraire);
 
     checkOutFixture.checkOutByBarcode(smallAngryPlanet, usersFixture.james());
     RequestBuilder requestBuilderOnItem = new RequestBuilder()
@@ -221,7 +221,7 @@ public class HoldShelfClearanceReportTests extends APITests {
       .forItem(smallAngryPlanet)
       .by(rebecca);
     IndividualResource request = requestsClient.create(requestBuilderOnItem);
-    loansFixture.checkInByBarcode(smallAngryPlanet);
+    checkInFixture.checkInByBarcode(smallAngryPlanet);
     requestsClient.replace(request.getId(),
       requestBuilderOnItem.withStatus(RequestStatus.CLOSED_PICKUP_EXPIRED.getValue()).create()
         .put(CLOSED_DATE_KEY, "2018-03-11T15:45:23.000+0000"));
@@ -260,7 +260,7 @@ public class HoldShelfClearanceReportTests extends APITests {
       .by(usersFixture.steve());
     IndividualResource secondRequest = requestsClient.create(secondRequestBuilderOnItem);
 
-    loansFixture.checkInByBarcode(smallAngryPlanet);
+    checkInFixture.checkInByBarcode(smallAngryPlanet);
 
     // change "awaitingPickupRequestClosedDate" for the request to the same item
     requestsClient.replace(firstRequest.getId(),
@@ -304,7 +304,7 @@ public class HoldShelfClearanceReportTests extends APITests {
       .by(usersFixture.steve());
     IndividualResource secondRequest = requestsClient.create(secondRequestBuilderOnItem);
 
-    loansFixture.checkInByBarcode(smallAngryPlanet);
+    checkInFixture.checkInByBarcode(smallAngryPlanet);
 
     // change "awaitingPickupRequestClosedDate" for the request to the same item
     requestsClient.replace(firstRequest.getId(),
@@ -376,7 +376,7 @@ public class HoldShelfClearanceReportTests extends APITests {
     IndividualResource secondRequest = requestsClient.create(secondRequestBuilderOnItem);
 
     // #3 check-in item in SP1
-    loansFixture.checkInByBarcode(smallAngryPlanet);
+    checkInFixture.checkInByBarcode(smallAngryPlanet);
 
     // #4 expire request1 in SP1
     requestsClient.replace(firstRequest.getId(),
@@ -393,7 +393,7 @@ public class HoldShelfClearanceReportTests extends APITests {
     assertThat(response.getJson().getInteger(TOTAL_RECORDS), is(0));
 
     // #7 check-in item in SP2
-    loansFixture.checkInByBarcode(new CheckInByBarcodeRequestBuilder()
+    checkInFixture.checkInByBarcode(new CheckInByBarcodeRequestBuilder()
       .forItem(smallAngryPlanet)
       .on(DateTime.now(DateTimeZone.UTC))
       .at(secondServicePointId));
@@ -457,7 +457,7 @@ public class HoldShelfClearanceReportTests extends APITests {
     requestsClient.create(secondRequestBuilderOnItem);
 
     // #3 check-in item in SP1
-    loansFixture.checkInByBarcode(smallAngryPlanet);
+    checkInFixture.checkInByBarcode(smallAngryPlanet);
 
     // #4 cancel request1 in SP1
     requestsClient.replace(firstRequest.getId(),
@@ -474,7 +474,7 @@ public class HoldShelfClearanceReportTests extends APITests {
     assertThat(response.getJson().getInteger(TOTAL_RECORDS), is(0));
 
     // #7 check-in item in SP2
-    loansFixture.checkInByBarcode(new CheckInByBarcodeRequestBuilder()
+    checkInFixture.checkInByBarcode(new CheckInByBarcodeRequestBuilder()
       .forItem(smallAngryPlanet)
       .on(DateTime.now(DateTimeZone.UTC))
       .at(secondServicePointId));
@@ -510,7 +510,7 @@ public class HoldShelfClearanceReportTests extends APITests {
     requestsClient.create(fourthRequestBuilderOnItem);
 
     // #3 check-in item in SP1
-    loansFixture.checkInByBarcode(nod);
+    checkInFixture.checkInByBarcode(nod);
 
     // #4 cancel request1 in SP1
     requestsClient.replace(thirdRequest.getId(),
@@ -527,7 +527,7 @@ public class HoldShelfClearanceReportTests extends APITests {
     assertThat(response.getJson().getInteger(TOTAL_RECORDS), is(0));
 
     // #7 check-in item in SP2
-    loansFixture.checkInByBarcode(new CheckInByBarcodeRequestBuilder()
+    checkInFixture.checkInByBarcode(new CheckInByBarcodeRequestBuilder()
       .forItem(nod)
       .on(DateTime.now(DateTimeZone.UTC))
       .at(secondServicePointId));

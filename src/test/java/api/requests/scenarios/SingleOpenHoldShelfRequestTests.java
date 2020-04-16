@@ -43,7 +43,7 @@ public class SingleOpenHoldShelfRequestTests extends APITests {
     IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
       smallAngryPlanet, jessica, new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC));
 
-    loansFixture.checkInByBarcode(smallAngryPlanet);
+    checkInFixture.checkInByBarcode(smallAngryPlanet);
 
     Response request = requestsClient.getById(requestByJessica.getId());
 
@@ -69,7 +69,7 @@ public class SingleOpenHoldShelfRequestTests extends APITests {
     IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
       smallAngryPlanet, jessica, new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC));
 
-    loansFixture.checkInByBarcode(smallAngryPlanet);
+    checkInFixture.checkInByBarcode(smallAngryPlanet);
 
     checkOutFixture.checkOutByBarcode(smallAngryPlanet, jessica);
 
@@ -97,7 +97,7 @@ public class SingleOpenHoldShelfRequestTests extends APITests {
     IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
       smallAngryPlanet, jessica, new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC));
 
-    loansFixture.checkInByBarcode(smallAngryPlanet);
+    checkInFixture.checkInByBarcode(smallAngryPlanet);
 
     Response response = checkOutFixture.attemptCheckOutByBarcode(smallAngryPlanet, rebecca);
 
@@ -130,11 +130,11 @@ public class SingleOpenHoldShelfRequestTests extends APITests {
     requestsFixture.placeHoldShelfRequest(smallAngryPlanet, jessica,
       new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC));
 
-    loansFixture.checkInByBarcode(smallAngryPlanet);
+    checkInFixture.checkInByBarcode(smallAngryPlanet);
 
     checkOutFixture.checkOutByBarcode(smallAngryPlanet, jessica);
 
-    loansFixture.checkInByBarcode(smallAngryPlanet);
+    checkInFixture.checkInByBarcode(smallAngryPlanet);
 
     smallAngryPlanet = itemsClient.get(smallAngryPlanet);
 
@@ -154,7 +154,7 @@ public class SingleOpenHoldShelfRequestTests extends APITests {
     IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
       smallAngryPlanet, jessica, new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC));
 
-    loansFixture.checkInByBarcode(smallAngryPlanet);
+    checkInFixture.checkInByBarcode(smallAngryPlanet);
 
     checkOutFixture.checkOutByBarcode(smallAngryPlanet, jessica);
 
@@ -164,7 +164,7 @@ public class SingleOpenHoldShelfRequestTests extends APITests {
 
     assertThat(request.getJson().getString("status"), is(CLOSED_FILLED));
 
-    loansFixture.checkInByBarcode(smallAngryPlanet);
+    checkInFixture.checkInByBarcode(smallAngryPlanet);
 
     checkOutFixture.checkOutByBarcode(smallAngryPlanet, steve);
 
@@ -192,7 +192,7 @@ public class SingleOpenHoldShelfRequestTests extends APITests {
 
     removeServicePoint(holdRequest.getId());
 
-    Response response = loansFixture.attemptCheckInByBarcode(new CheckInByBarcodeRequestBuilder()
+    Response response = checkInFixture.attemptCheckInByBarcode(new CheckInByBarcodeRequestBuilder()
         .forItem(smallAngryPlanet)
         .at(checkInServicePoint.getId()));
 

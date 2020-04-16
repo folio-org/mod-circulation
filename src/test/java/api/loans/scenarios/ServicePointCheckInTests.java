@@ -12,11 +12,8 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.IsNull.notNullValue;
 
-import java.net.MalformedURLException;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeoutException;
 
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
@@ -61,7 +58,7 @@ public class ServicePointCheckInTests extends APITests {
 
     final DateTime beforeCheckIn = DateTime.now(DateTimeZone.UTC);
 
-    final CheckInByBarcodeResponse checkInResponse = loansFixture.checkInByBarcode(
+    final CheckInByBarcodeResponse checkInResponse = checkInFixture.checkInByBarcode(
       new CheckInByBarcodeRequestBuilder()
         .forItem(nod)
         .at(checkInServicePoint.getId()));
@@ -150,7 +147,7 @@ public class ServicePointCheckInTests extends APITests {
 
     final DateTime beforeCheckIn = DateTime.now(DateTimeZone.UTC);
 
-    final CheckInByBarcodeResponse checkInResponse = loansFixture.checkInByBarcode(
+    final CheckInByBarcodeResponse checkInResponse = checkInFixture.checkInByBarcode(
       new CheckInByBarcodeRequestBuilder()
         .forItem(nod)
         .at(checkInServicePoint.getId()));

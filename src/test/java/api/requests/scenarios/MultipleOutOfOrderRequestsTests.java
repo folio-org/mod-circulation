@@ -4,12 +4,8 @@ import static api.support.builders.ItemBuilder.AWAITING_PICKUP;
 import static api.support.builders.RequestBuilder.OPEN_AWAITING_PICKUP;
 import static api.support.builders.RequestBuilder.OPEN_NOT_YET_FILLED;
 import static api.support.matchers.ItemStatusCodeMatcher.hasItemStatus;
-import static org.hamcrest.Matchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
-
-import java.net.MalformedURLException;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeoutException;
+import static org.hamcrest.Matchers.is;
 
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.joda.time.DateTime;
@@ -38,7 +34,7 @@ public class MultipleOutOfOrderRequestsTests extends APITests {
     IndividualResource oldestRequestByJessica = requestsFixture.placeHoldShelfRequest(
       smallAngryPlanet, jessica, new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC));
 
-    loansFixture.checkInByBarcode(smallAngryPlanet);
+      checkInFixture.checkInByBarcode(smallAngryPlanet);
 
     oldestRequestByJessica = requestsClient.get(oldestRequestByJessica);
 

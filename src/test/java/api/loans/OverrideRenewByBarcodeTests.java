@@ -523,7 +523,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
         OVERRIDE_COMMENT, newDueDate.toString()).getJson();
     assertLoanHasActionComment(loanAfterOverride, OVERRIDE_COMMENT);
 
-    JsonObject loanAfterCheckIn = loansFixture.checkInByBarcode(smallAngryPlanet).getLoan();
+    JsonObject loanAfterCheckIn = checkInFixture.checkInByBarcode(smallAngryPlanet).getLoan();
     assertActionCommentIsAbsentInLoan(loanAfterCheckIn);
   }
 

@@ -53,7 +53,6 @@ import api.support.builders.RequestBuilder;
 import api.support.fixtures.TemplateContextMatchers;
 import api.support.http.CqlQuery;
 import api.support.http.InventoryItemResource;
-import api.support.matchers.OverdueFineMatcher;
 import io.vertx.core.json.JsonObject;
 
 public class CheckInByBarcodeTests extends APITests {
@@ -79,7 +78,7 @@ public class CheckInByBarcodeTests extends APITests {
 
     DateTime expectedSystemReturnDate = DateTime.now(DateTimeZone.UTC);
 
-    final CheckInByBarcodeResponse checkInResponse = loansFixture.checkInByBarcode(
+    final CheckInByBarcodeResponse checkInResponse = checkInFixture.checkInByBarcode(
       new CheckInByBarcodeRequestBuilder()
         .forItem(nod)
         .on(new DateTime(2018, 3, 5, 14 ,23, 41, DateTimeZone.UTC))
@@ -188,7 +187,7 @@ public class CheckInByBarcodeTests extends APITests {
       .withTags(new RequestBuilder.Tags(asList("new", "important"))));
 
     DateTime checkInDate = new DateTime(2019, 7, 25, 14, 23, 41, DateTimeZone.UTC);
-    CheckInByBarcodeResponse response = loansFixture.checkInByBarcode(item, checkInDate, servicePoint.getId());
+    CheckInByBarcodeResponse response = checkInFixture.checkInByBarcode(item, checkInDate, servicePoint.getId());
 
     User requesterUser = new User(requester.getJson());
     JsonObject staffSlipContext = response.getStaffSlipContext();
@@ -215,7 +214,7 @@ public class CheckInByBarcodeTests extends APITests {
 
   @Test
   public void cannotCheckInItemThatCannotBeFoundByBarcode() {
-    final Response response = loansFixture.attemptCheckInByBarcode(
+    final Response response = checkInFixture.attemptCheckInByBarcode(
       new CheckInByBarcodeRequestBuilder()
         .withItemBarcode("543593485458")
         .on(DateTime.now())
@@ -237,7 +236,7 @@ public class CheckInByBarcodeTests extends APITests {
 
     checkOutFixture.checkOutByBarcode(nod, james, loanDate);
 
-    final Response response = loansFixture.attemptCheckInByBarcode(
+    final Response response = checkInFixture.attemptCheckInByBarcode(
       new CheckInByBarcodeRequestBuilder()
         .forItem(nod)
         .on(DateTime.now())
@@ -259,7 +258,7 @@ public class CheckInByBarcodeTests extends APITests {
 
     checkOutFixture.checkOutByBarcode(nod, james, loanDate);
 
-    final Response response = loansFixture.attemptCheckInByBarcode(
+    final Response response = checkInFixture.attemptCheckInByBarcode(
       new CheckInByBarcodeRequestBuilder()
         .noItem()
         .on(DateTime.now())
@@ -281,7 +280,7 @@ public class CheckInByBarcodeTests extends APITests {
 
     checkOutFixture.checkOutByBarcode(nod, james, loanDate);
 
-    final Response response = loansFixture.attemptCheckInByBarcode(
+    final Response response = checkInFixture.attemptCheckInByBarcode(
       new CheckInByBarcodeRequestBuilder()
         .forItem(nod)
         .onNoOccasion()
@@ -308,7 +307,7 @@ public class CheckInByBarcodeTests extends APITests {
         .withChronology("1987:Jan.-June")
         .withVolume("testVolume"));
 
-    final CheckInByBarcodeResponse checkInResponse = loansFixture.checkInByBarcode(
+    final CheckInByBarcodeResponse checkInResponse = checkInFixture.checkInByBarcode(
       nod, new DateTime(2018, 3, 5, 14, 23, 41, DateTimeZone.UTC),
       checkInServicePointId);
 
@@ -360,11 +359,11 @@ public class CheckInByBarcodeTests extends APITests {
 
         checkOutFixture.checkOutByBarcode(nod, james, loanDate);
 
-    loansFixture.checkInByBarcode(nod,
+    checkInFixture.checkInByBarcode(nod,
       new DateTime(2018, 3, 5, 14, 23, 41, DateTimeZone.UTC),
       checkInServicePointId);
 
-    final CheckInByBarcodeResponse checkInResponse = loansFixture.checkInByBarcode(
+    final CheckInByBarcodeResponse checkInResponse = checkInFixture.checkInByBarcode(
       nod, new DateTime(2018, 3, 5, 14, 23, 41, DateTimeZone.UTC),
       checkInServicePointId);
 
@@ -429,7 +428,7 @@ public class CheckInByBarcodeTests extends APITests {
       checkOutFixture.checkOutByBarcode(nod, james, loanDate);
 
     DateTime checkInDate = new DateTime(2018, 3, 5, 14, 23, 41, DateTimeZone.UTC);
-    final CheckInByBarcodeResponse checkInResponse = loansFixture.checkInByBarcode(
+    final CheckInByBarcodeResponse checkInResponse = checkInFixture.checkInByBarcode(
       new CheckInByBarcodeRequestBuilder()
         .forItem(nod)
         .on(checkInDate)
@@ -470,7 +469,7 @@ public class CheckInByBarcodeTests extends APITests {
     final IndividualResource nod = itemsFixture.basedUponNod(
       builder -> builder.withTemporaryLocation(homeLocation.getId()));
 
-    final CheckInByBarcodeResponse checkInResponse = loansFixture.checkInByBarcode(
+    final CheckInByBarcodeResponse checkInResponse = checkInFixture.checkInByBarcode(
       nod, new DateTime(2018, 3, 5, 14, 23, 41, DateTimeZone.UTC),
       checkInServicePointId);
 
@@ -517,7 +516,7 @@ public class CheckInByBarcodeTests extends APITests {
     use(noticePolicy);
 
     DateTime checkInDate = new DateTime(2019, 7, 25, 14, 23, 41, DateTimeZone.UTC);
-    loansFixture.checkInByBarcode(item, checkInDate, servicePointId);
+    checkInFixture.checkInByBarcode(item, checkInDate, servicePointId);
 
     checkPatronNoticeEvent(request, requester, item, availableNoticeTemplateId);
   }
@@ -552,7 +551,7 @@ public class CheckInByBarcodeTests extends APITests {
 
     use(noticePolicy);
 
-    loansFixture.checkInByBarcode(item,
+    checkInFixture.checkInByBarcode(item,
       new DateTime(2019, 5, 10, 14, 23, 41, DateTimeZone.UTC),
       servicePointId);
 
@@ -585,14 +584,14 @@ public class CheckInByBarcodeTests extends APITests {
 
     DateTime checkInDate = new DateTime(2019, 10, 10, 12, 30);
 
-    loansFixture.checkInByBarcode(requestedItem, checkInDate, pickupServicePointId);
+    checkInFixture.checkInByBarcode(requestedItem, checkInDate, pickupServicePointId);
     Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
       .until(patronNoticesClient::getAll, hasSize(1));
     patronNoticesClient.deleteAll();
 
     //Check-in again and verify no notice are sent
-    loansFixture.checkInByBarcode(requestedItem, checkInDate, pickupServicePointId);
+    checkInFixture.checkInByBarcode(requestedItem, checkInDate, pickupServicePointId);
     Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
       .until(patronNoticesClient::getAll, empty());
@@ -634,7 +633,7 @@ public class CheckInByBarcodeTests extends APITests {
       .withAutomatic(true)
     );
 
-    CheckInByBarcodeResponse checkInResponse = loansFixture.checkInByBarcode(
+    CheckInByBarcodeResponse checkInResponse = checkInFixture.checkInByBarcode(
       new CheckInByBarcodeRequestBuilder()
         .forItem(nod)
         .on(new DateTime(2020, 1, 25, 12, 0, 0, DateTimeZone.UTC))
@@ -720,7 +719,7 @@ public class CheckInByBarcodeTests extends APITests {
       .withAutomatic(true)
     );
 
-    CheckInByBarcodeResponse checkInResponse = loansFixture.checkInByBarcode(
+    CheckInByBarcodeResponse checkInResponse = checkInFixture.checkInByBarcode(
       new CheckInByBarcodeRequestBuilder()
         .forItem(nod)
         .on(new DateTime(2020, 1, 25, 12, 0, 0, DateTimeZone.UTC))
@@ -779,7 +778,7 @@ public class CheckInByBarcodeTests extends APITests {
       .withAutomatic(true)
     );
 
-    CheckInByBarcodeResponse checkInResponse = loansFixture.checkInByBarcode(
+    CheckInByBarcodeResponse checkInResponse = checkInFixture.checkInByBarcode(
       new CheckInByBarcodeRequestBuilder()
         .forItem(nod)
         .on(new DateTime(2020, 1, 25, 12, 0, 0, DateTimeZone.UTC))
@@ -847,7 +846,7 @@ public class CheckInByBarcodeTests extends APITests {
       .withAutomatic(true)
     );
 
-    CheckInByBarcodeResponse checkInResponse = loansFixture.checkInByBarcode(
+    CheckInByBarcodeResponse checkInResponse = checkInFixture.checkInByBarcode(
       new CheckInByBarcodeRequestBuilder()
       .forItem(nod)
       .on(checkInDate)
@@ -905,7 +904,7 @@ public class CheckInByBarcodeTests extends APITests {
       .withOwnerId(ownerId)
     );
 
-    loansFixture.checkInByBarcode(new CheckInByBarcodeRequestBuilder()
+    checkInFixture.checkInByBarcode(new CheckInByBarcodeRequestBuilder()
       .forItem(nod)
       .on(new DateTime(2020, 1, 25, 12, 0, 0, DateTimeZone.UTC))
       .at(checkInServicePointId));

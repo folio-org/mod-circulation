@@ -44,7 +44,7 @@ public class HoldShelfFulfillmentTests extends APITests {
       smallAngryPlanet, jessica, DateTime.now(DateTimeZone.UTC),
       pickupServicePoint.getId());
 
-    loansFixture.checkInByBarcode(smallAngryPlanet,
+    checkInFixture.checkInByBarcode(smallAngryPlanet,
       DateTime.now(DateTimeZone.UTC), pickupServicePoint.getId());
 
     Response request = requestsClient.getById(requestByJessica.getId());
@@ -76,7 +76,7 @@ public class HoldShelfFulfillmentTests extends APITests {
       new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC),
       pickupServicePoint.getId());
 
-    loansFixture.checkInByBarcode(smallAngryPlanet,
+    checkInFixture.checkInByBarcode(smallAngryPlanet,
       DateTime.now(DateTimeZone.UTC), pickupServicePoint.getId());
 
     checkOutFixture.checkOutByBarcode(smallAngryPlanet, jessica);
@@ -106,7 +106,7 @@ public class HoldShelfFulfillmentTests extends APITests {
       smallAngryPlanet, jessica, DateTime.now(DateTimeZone.UTC),
       pickupServicePoint.getId());
 
-    loansFixture.checkInByBarcode(smallAngryPlanet,
+    checkInFixture.checkInByBarcode(smallAngryPlanet,
       DateTime.now(DateTimeZone.UTC), checkInServicePoint.getId());
 
     Response request = requestsClient.getById(requestByJessica.getId());
@@ -141,7 +141,7 @@ public class HoldShelfFulfillmentTests extends APITests {
       new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC),
       pickupServicePoint.getId());
 
-    loansFixture.checkInByBarcode(smallAngryPlanet,
+    checkInFixture.checkInByBarcode(smallAngryPlanet,
       DateTime.now(DateTimeZone.UTC), checkInServicePoint.getId());
 
     checkOutFixture.checkOutByBarcode(smallAngryPlanet, jessica);
@@ -171,10 +171,10 @@ public class HoldShelfFulfillmentTests extends APITests {
       smallAngryPlanet, jessica, DateTime.now(DateTimeZone.UTC),
       pickupServicePoint.getId());
 
-    loansFixture.checkInByBarcode(smallAngryPlanet,
+    checkInFixture.checkInByBarcode(smallAngryPlanet,
       DateTime.now(DateTimeZone.UTC), checkInServicePoint.getId());
 
-    loansFixture.checkInByBarcode(smallAngryPlanet,
+    checkInFixture.checkInByBarcode(smallAngryPlanet,
       DateTime.now(DateTimeZone.UTC), pickupServicePoint.getId());
 
     Response request = requestsClient.getById(requestByJessica.getId());
@@ -203,7 +203,7 @@ public class HoldShelfFulfillmentTests extends APITests {
     IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
       smallAngryPlanet, jessica, new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC));
 
-    loansFixture.checkInByBarcode(smallAngryPlanet);
+    checkInFixture.checkInByBarcode(smallAngryPlanet);
 
     Response response = checkOutFixture.attemptCheckOutByBarcode(smallAngryPlanet, rebecca);
 
@@ -239,7 +239,7 @@ public class HoldShelfFulfillmentTests extends APITests {
       smallAngryPlanet, jessica, DateTime.now(DateTimeZone.UTC),
       requestServicePoint.getId());
 
-    loansFixture.checkInByBarcode(
+    checkInFixture.checkInByBarcode(
       new CheckInByBarcodeRequestBuilder()
         .forItem(smallAngryPlanet)
         .at(checkInServicePoint.getId()));

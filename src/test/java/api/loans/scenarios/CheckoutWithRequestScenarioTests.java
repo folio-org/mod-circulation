@@ -4,14 +4,11 @@ import static api.support.builders.FixedDueDateSchedule.wholeMonth;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static org.folio.circulation.domain.policy.DueDateManagement.KEEP_THE_CURRENT_DUE_DATE;
 import static org.folio.circulation.domain.policy.Period.weeks;
-import static org.hamcrest.Matchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
 import static org.joda.time.DateTimeConstants.SEPTEMBER;
 
-import java.net.MalformedURLException;
 import java.util.UUID;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeoutException;
 
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
@@ -84,7 +81,7 @@ public class CheckoutWithRequestScenarioTests extends APITests {
       .withPickupServicePointId(pickupServicePointId)
       .by(james));
 
-    loansFixture.checkInByBarcode(smallAngryPlanet);
+    checkInFixture.checkInByBarcode(smallAngryPlanet);
 
     final DateTime loanDate = new DateTime(2019, 5, 5, 11, 32, 12, DateTimeZone.UTC);
 
@@ -147,7 +144,7 @@ public class CheckoutWithRequestScenarioTests extends APITests {
       .withPickupServicePointId(pickupServicePointId)
       .by(james));
 
-    loansFixture.checkInByBarcode(smallAngryPlanet);
+    checkInFixture.checkInByBarcode(smallAngryPlanet);
 
     final IndividualResource loan = checkOutFixture.checkOutByBarcode(new CheckOutByBarcodeRequestBuilder()
       .forItem(smallAngryPlanet)

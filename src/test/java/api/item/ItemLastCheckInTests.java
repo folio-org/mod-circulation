@@ -49,7 +49,7 @@ public class ItemLastCheckInTests extends APITests {
     UUID servicePointId = servicePointsFixture.cd1().getId();
 
     checkOutFixture.checkOutByBarcode(item, user);
-    loansFixture.checkInByBarcode(item, DateTime.now(UTC), servicePointId);
+    checkInFixture.checkInByBarcode(item, DateTime.now(UTC), servicePointId);
     JsonObject lastCheckIn = itemsClient.get(item.getId()).getJson()
       .getJsonObject("lastCheckIn");
 
@@ -72,7 +72,7 @@ public class ItemLastCheckInTests extends APITests {
       .withRequestId("check-in-by-barcode-request")
       .withUserId("");
 
-    Response response = loansFixture.attemptCheckInByBarcode(
+    Response response = checkInFixture.attemptCheckInByBarcode(
       new CheckInByBarcodeRequestBuilder()
         .forItem(item)
         .at(servicePointId)
@@ -98,7 +98,7 @@ public class ItemLastCheckInTests extends APITests {
       .withRequestId("check-in-by-barcode-request")
       .withUserId(invalidUuid);
 
-    loansFixture.checkInByBarcode(item, fixedCheckInDateTime, servicePointId, okapiHeaders);
+    checkInFixture.checkInByBarcode(item, fixedCheckInDateTime, servicePointId, okapiHeaders);
 
     JsonObject lastCheckIn = itemsClient.get(item.getId()).getJson()
       .getJsonObject("lastCheckIn");
@@ -118,7 +118,7 @@ public class ItemLastCheckInTests extends APITests {
     IndividualResource item = itemsFixture.basedUponSmallAngryPlanet();
     UUID servicePointId = servicePointsFixture.cd1().getId();
 
-    loansFixture.checkInByBarcode(item, fixedCheckInDateTime, servicePointId);
+    checkInFixture.checkInByBarcode(item, fixedCheckInDateTime, servicePointId);
 
     JsonObject lastCheckIn = itemsClient.get(item.getId()).getJson()
       .getJsonObject("lastCheckIn");
@@ -138,7 +138,7 @@ public class ItemLastCheckInTests extends APITests {
     UUID servicePointId = servicePointsFixture.cd1().getId();
     DateTime firstCheckInDateTime = DateTime.now(UTC);
 
-    loansFixture.checkInByBarcode(item, firstCheckInDateTime, servicePointId);
+    checkInFixture.checkInByBarcode(item, firstCheckInDateTime, servicePointId);
     JsonObject lastCheckIn = itemsClient.get(item.getId()).getJson()
       .getJsonObject("lastCheckIn");
 
@@ -158,7 +158,7 @@ public class ItemLastCheckInTests extends APITests {
       .withRequestId("check-in-by-barcode-request")
       .withUserId(randomUserId);
 
-    loansFixture.checkInByBarcode(item, secondCheckInDateTime, servicePointId2,
+    checkInFixture.checkInByBarcode(item, secondCheckInDateTime, servicePointId2,
       okapiHeaders);
 
     lastCheckIn = itemsClient.get(item.getId()).getJson()
@@ -180,7 +180,7 @@ public class ItemLastCheckInTests extends APITests {
     DateTime checkInDateTimeInPast = ClockManager.getClockManager().getDateTime()
       .minusHours(1);
 
-    loansFixture.checkInByBarcode(item, checkInDateTimeInPast, servicePointId);
+    checkInFixture.checkInByBarcode(item, checkInDateTimeInPast, servicePointId);
     JsonObject lastCheckIn = itemsClient.get(item.getId()).getJson()
       .getJsonObject("lastCheckIn");
 

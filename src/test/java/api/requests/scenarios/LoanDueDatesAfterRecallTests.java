@@ -382,7 +382,7 @@ public class LoanDueDatesAfterRecallTests extends APITests {
     requestsFixture.placeHoldShelfRequest(smallAngryPlanet, jessica,
       DateTime.now(DateTimeZone.UTC), requestServicePoint.getId(), "Recall");
 
-    loansFixture.checkInByBarcode(smallAngryPlanet);
+    checkInFixture.checkInByBarcode(smallAngryPlanet);
 
     final IndividualResource loan = checkOutFixture.checkOutByBarcode(
       smallAngryPlanet, steve, DateTime.now(DateTimeZone.UTC));

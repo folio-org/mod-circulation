@@ -9,12 +9,8 @@ import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static api.support.matchers.ValidationErrorMatchers.hasUUIDParameter;
 import static org.hamcrest.CoreMatchers.allOf;
-import static org.hamcrest.core.Is.is;
 import static org.hamcrest.MatcherAssert.assertThat;
-
-import java.net.MalformedURLException;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeoutException;
+import static org.hamcrest.core.Is.is;
 
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
@@ -107,7 +103,7 @@ public class ClosedRequestTests extends APITests {
       requestsFixture.placeHoldShelfRequest(smallAngryPlanet,
         steve, requestDate);
 
-    loansFixture.checkInByBarcode(smallAngryPlanet);
+    checkInFixture.checkInByBarcode(smallAngryPlanet);
 
     checkOutFixture.checkOutByBarcode(smallAngryPlanet, steve,
       new DateTime(2018, 7, 5, 14, 48, 23, DateTimeZone.UTC));

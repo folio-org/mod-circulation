@@ -52,7 +52,7 @@ public class MultipleMixedFulfilmentRequestsTests extends APITests {
     IndividualResource requestBySteve = requestsFixture.placeHoldShelfRequest(
       smallAngryPlanet, steve, DATE_TIME_2018);
 
-    loansFixture.checkInByBarcode(smallAngryPlanet);
+    checkInFixture.checkInByBarcode(smallAngryPlanet);
 
     Response response = checkOutFixture.attemptCheckOutByBarcode(smallAngryPlanet, jessica);
     assertResponseContainsItemCantBeCheckedOutError(jessica, response);
@@ -88,11 +88,11 @@ public class MultipleMixedFulfilmentRequestsTests extends APITests {
     IndividualResource requestBySteve = requestsFixture.placeHoldShelfRequest(
       smallAngryPlanet, steve, DATE_TIME_2018);
 
-    loansFixture.checkInByBarcode(smallAngryPlanet);
+    checkInFixture.checkInByBarcode(smallAngryPlanet);
 
     checkOutFixture.checkOutByBarcode(smallAngryPlanet, jessica);
 
-    loansFixture.checkInByBarcode(smallAngryPlanet);
+    checkInFixture.checkInByBarcode(smallAngryPlanet);
 
     assertRequestHasStatus(requestByJessica, CLOSED_FILLED);
 
@@ -125,7 +125,7 @@ public class MultipleMixedFulfilmentRequestsTests extends APITests {
     IndividualResource requestBySteve = requestsFixture.placeHoldShelfRequest(
       smallAngryPlanet, steve, DATE_TIME_2018);
 
-    loansFixture.checkInByBarcode(smallAngryPlanet);
+    checkInFixture.checkInByBarcode(smallAngryPlanet);
 
     assertRequestHasStatus(requestByJessica, OPEN_AWAITING_PICKUP);
 
@@ -158,7 +158,7 @@ public class MultipleMixedFulfilmentRequestsTests extends APITests {
     IndividualResource requestBySteve = requestsFixture.placeHoldShelfRequest(
       smallAngryPlanet, steve, DATE_TIME_2018);
 
-    loansFixture.checkInByBarcode(smallAngryPlanet);
+    checkInFixture.checkInByBarcode(smallAngryPlanet);
 
     checkOutFixture.checkOutByBarcode(smallAngryPlanet, rebecca);
 

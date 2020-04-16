@@ -96,7 +96,7 @@ public class ItemsInTransitReportTests extends APITests {
     createRequest(smallAngryPlanet, steve, secondServicePointId, requestDate, requestExpirationDate);
 
     mockClockManagerToReturnFixedDateTime(checkInDate);
-    loansFixture.checkInByBarcode(new CheckInByBarcodeRequestBuilder()
+    checkInFixture.checkInByBarcode(new CheckInByBarcodeRequestBuilder()
       .forItem(smallAngryPlanet)
       .on(checkInDate)
       .at(firstServicePointId));
@@ -139,13 +139,13 @@ public class ItemsInTransitReportTests extends APITests {
     createRequest(nod, rebecca, secondServicePointId, requestDate2, requestExpirationDate2);
 
     mockClockManagerToReturnFixedDateTime(checkInDate1);
-    loansFixture.checkInByBarcode(new CheckInByBarcodeRequestBuilder()
+    checkInFixture.checkInByBarcode(new CheckInByBarcodeRequestBuilder()
       .forItem(smallAngryPlanet)
       .on(checkInDate1)
       .at(firsServicePointId));
 
     mockClockManagerToReturnFixedDateTime(checkInDate2);
-    loansFixture.checkInByBarcode(new CheckInByBarcodeRequestBuilder()
+    checkInFixture.checkInByBarcode(new CheckInByBarcodeRequestBuilder()
       .forItem(nod)
       .on(checkInDate2)
       .at(firsServicePointId));
@@ -187,7 +187,7 @@ public class ItemsInTransitReportTests extends APITests {
     createRequest(smallAngryPlanet, steve, secondServicePointId, requestDate, requestExpirationDate);
 
     mockClockManagerToReturnFixedDateTime(checkInDate);
-    loansFixture.checkInByBarcode(new CheckInByBarcodeRequestBuilder()
+    checkInFixture.checkInByBarcode(new CheckInByBarcodeRequestBuilder()
       .forItem(smallAngryPlanet)
       .on(checkInDate)
       .at(firstServicePointId));
@@ -229,13 +229,13 @@ public class ItemsInTransitReportTests extends APITests {
     createRequest(nod, rebecca, secondServicePointId, requestDate2, requestExpirationDate2);
 
     mockClockManagerToReturnFixedDateTime(checkInDate1);
-    loansFixture.checkInByBarcode(new CheckInByBarcodeRequestBuilder()
+    checkInFixture.checkInByBarcode(new CheckInByBarcodeRequestBuilder()
       .forItem(smallAngryPlanet)
       .on(checkInDate1)
       .at(secondServicePointId));
 
     mockClockManagerToReturnFixedDateTime(checkInDate2);
-    loansFixture.checkInByBarcode(new CheckInByBarcodeRequestBuilder()
+    checkInFixture.checkInByBarcode(new CheckInByBarcodeRequestBuilder()
       .forItem(nod)
       .on(checkInDate2)
       .at(firstServicePointId));
@@ -294,13 +294,13 @@ public class ItemsInTransitReportTests extends APITests {
     createRequest(nod, steve, secondServicePointId, requestNodeDate2, requestNodeExpirationDate2);
 
     mockClockManagerToReturnFixedDateTime(checkInDate1);
-    loansFixture.checkInByBarcode(new CheckInByBarcodeRequestBuilder()
+    checkInFixture.checkInByBarcode(new CheckInByBarcodeRequestBuilder()
       .forItem(smallAngryPlanet)
       .on(checkInDate1)
       .at(secondServicePointId));
 
     mockClockManagerToReturnFixedDateTime(checkInDate2);
-    loansFixture.checkInByBarcode(new CheckInByBarcodeRequestBuilder()
+    checkInFixture.checkInByBarcode(new CheckInByBarcodeRequestBuilder()
       .forItem(nod)
       .on(checkInDate2)
       .at(firstServicePointId));
@@ -341,13 +341,13 @@ public class ItemsInTransitReportTests extends APITests {
     checkOutFixture.checkOutByBarcode(nod);
 
     mockClockManagerToReturnFixedDateTime(checkInDate1);
-    loansFixture.checkInByBarcode(new CheckInByBarcodeRequestBuilder()
+    checkInFixture.checkInByBarcode(new CheckInByBarcodeRequestBuilder()
       .forItem(smallAngryPlanet)
       .on(checkInDate1)
       .at(secondServicePointId));
 
     mockClockManagerToReturnFixedDateTime(checkInDate2);
-    loansFixture.checkInByBarcode(new CheckInByBarcodeRequestBuilder()
+    checkInFixture.checkInByBarcode(new CheckInByBarcodeRequestBuilder()
       .forItem(nod)
       .on(checkInDate2)
       .at(secondServicePointId));
@@ -399,19 +399,19 @@ public class ItemsInTransitReportTests extends APITests {
     createRequest(nod, rebecca, secondServicePointId, requestDate2, requestExpirationDate2);
 
     mockClockManagerToReturnFixedDateTime(checkInDate3);
-    loansFixture.checkInByBarcode(new CheckInByBarcodeRequestBuilder()
+    checkInFixture.checkInByBarcode(new CheckInByBarcodeRequestBuilder()
       .forItem(smallAngryPlanetWithFourthCheckInServicePoint)
       .on(checkInDate3)
       .at(fourthServicePointId));
 
     mockClockManagerToReturnFixedDateTime(checkInDate2);
-    loansFixture.checkInByBarcode(new CheckInByBarcodeRequestBuilder()
+    checkInFixture.checkInByBarcode(new CheckInByBarcodeRequestBuilder()
       .forItem(nod)
       .on(checkInDate2)
       .at(firstServicePointId));
 
     mockClockManagerToReturnFixedDateTime(checkInDate1);
-    loansFixture.checkInByBarcode(new CheckInByBarcodeRequestBuilder()
+    checkInFixture.checkInByBarcode(new CheckInByBarcodeRequestBuilder()
       .forItem(smallAngryPlanet)
       .on(checkInDate1)
       .at(secondServicePointId));

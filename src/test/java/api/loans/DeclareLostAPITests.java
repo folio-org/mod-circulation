@@ -7,10 +7,7 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
 
-import java.net.MalformedURLException;
 import java.util.UUID;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeoutException;
 
 import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.support.http.client.Response;
@@ -87,7 +84,7 @@ public class DeclareLostAPITests extends APITests {
     UUID loanId = UUID.fromString(loanJson.getString("id"));
     DateTime dateTime = DateTime.now();
 
-    loansFixture.checkInByBarcode(item);
+    checkInFixture.checkInByBarcode(item);
 
     final DeclareItemLostRequestBuilder builder
       = new DeclareItemLostRequestBuilder()

@@ -66,7 +66,7 @@ public class ClaimItemReturnedAPITests extends APITests {
   public void cannotClaimItemReturnedWhenLoanIsClosed() {
     final DateTime dateTime = DateTime.now();
 
-    loansFixture.checkInByBarcode(item);
+    checkInFixture.checkInByBarcode(item);
 
     final Response response = loansFixture
       .attemptClaimItemReturned(new ClaimItemReturnedRequestBuilder()

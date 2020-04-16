@@ -34,7 +34,7 @@ public class SingleOpenDeliveryRequestTests extends APITests {
     IndividualResource requestByJessica = requestsFixture.placeDeliveryRequest(
       smallAngryPlanet, jessica, new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC));
 
-    loansFixture.checkInByBarcode(smallAngryPlanet);
+    checkInFixture.checkInByBarcode(smallAngryPlanet);
 
     validateRequestStatusAndPosition(requestByJessica, OPEN_AWAITING_DELIVERY, 1);
 
@@ -53,7 +53,7 @@ public class SingleOpenDeliveryRequestTests extends APITests {
     IndividualResource requestByJessica = requestsFixture.placeDeliveryRequest(
       smallAngryPlanet, jessica, new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC));
 
-    loansFixture.checkInByBarcode(smallAngryPlanet);
+    checkInFixture.checkInByBarcode(smallAngryPlanet);
 
     checkOutFixture.checkOutByBarcode(smallAngryPlanet, jessica);
 
@@ -74,7 +74,7 @@ public class SingleOpenDeliveryRequestTests extends APITests {
     IndividualResource requestByJessica = requestsFixture.placeDeliveryRequest(
       smallAngryPlanet, jessica, new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC));
 
-    loansFixture.checkInByBarcode(smallAngryPlanet);
+    checkInFixture.checkInByBarcode(smallAngryPlanet);
 
     Response response = checkOutFixture.attemptCheckOutByBarcode(smallAngryPlanet, rebecca);
     assertThat(response.getStatusCode(), equalTo(422));
@@ -97,12 +97,12 @@ public class SingleOpenDeliveryRequestTests extends APITests {
     IndividualResource requestByJessica = requestsFixture.placeDeliveryRequest(
       smallAngryPlanet, jessica, new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC));
 
-    loansFixture.checkInByBarcode(smallAngryPlanet);
+    checkInFixture.checkInByBarcode(smallAngryPlanet);
 
     validateRequestStatusAndPosition(requestByJessica, OPEN_AWAITING_DELIVERY, 1);
     validateItemStatus(smallAngryPlanet, AWAITING_DELIVERY);
 
-    loansFixture.checkInByBarcode(smallAngryPlanet);
+    checkInFixture.checkInByBarcode(smallAngryPlanet);
 
     validateRequestStatusAndPosition(requestByJessica, OPEN_AWAITING_DELIVERY, 1);
     validateItemStatus(smallAngryPlanet, AWAITING_DELIVERY);
@@ -121,7 +121,7 @@ public class SingleOpenDeliveryRequestTests extends APITests {
 
     requestsFixture.cancelRequest(requestByJessica);
 
-    loansFixture.checkInByBarcode(smallAngryPlanet);
+    checkInFixture.checkInByBarcode(smallAngryPlanet);
 
     validateRequestStatus(requestByJessica, CLOSED_CANCELLED);
     validateItemStatus(smallAngryPlanet, AVAILABLE);

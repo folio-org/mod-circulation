@@ -45,7 +45,7 @@ public class RequestQueueTests extends APITests {
     IndividualResource requestByRebecca = requestsFixture.placeHoldShelfRequest(
       smallAngryPlanet, rebecca, new DateTime(2018, 2, 4, 7, 4, 53, DateTimeZone.UTC));
 
-    loansFixture.checkInByBarcode(smallAngryPlanet);
+      checkInFixture.checkInByBarcode(smallAngryPlanet);
 
     checkOutFixture.checkOutByBarcode(smallAngryPlanet, jessica);
 

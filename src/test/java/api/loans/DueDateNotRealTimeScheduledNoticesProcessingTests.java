@@ -6,8 +6,8 @@ import static api.support.matchers.JsonObjectMatcher.toStringMatcher;
 import static api.support.matchers.PatronNoticeMatcher.hasEmailNoticeProperties;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.hasSize;
 import static org.junit.Assert.assertTrue;
 
 import java.util.Arrays;
@@ -185,7 +185,7 @@ public class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests 
 
     DateTime dueDate = new DateTime(nodToJamesLoan.getJson().getString("dueDate"));
 
-    loansFixture.checkInByBarcode(nod);
+    checkInFixture.checkInByBarcode(nod);
 
     DateTime timeForNoticeToBeSent = dueDate.minusWeeks(1);
     DateTime nextDayAfterBeforeNoticeShouldBeSend = timeForNoticeToBeSent.withTime(LocalTime.MIDNIGHT).plusDays(1);

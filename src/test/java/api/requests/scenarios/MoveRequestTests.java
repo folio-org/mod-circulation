@@ -558,7 +558,7 @@ public class MoveRequestTests extends APITests {
     IndividualResource requestByJames = requestsFixture.placeHoldShelfRequest(
       interestingTimes, james, DateTime.now(DateTimeZone.UTC).minusHours(1));
 
-    loansFixture.checkInByBarcode(interestingTimes);
+    checkInFixture.checkInByBarcode(interestingTimes);
 
     // move jessica's hold shelf request from smallAngryPlanet to interestingTimes
     IndividualResource moveRequest = requestsFixture.move(new MoveRequestBuilder(

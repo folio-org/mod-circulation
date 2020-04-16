@@ -139,7 +139,7 @@ public class PickSlipsTests extends APITests {
 
     DateTime now = DateTime.now(UTC);
     checkOutFixture.checkOutByBarcode(itemResource, requesterResource);
-    loansFixture.checkInByBarcode(itemResource, now, servicePointId);
+    checkInFixture.checkInByBarcode(itemResource, now, servicePointId);
     JsonObject lastCheckIn = itemsClient.get(itemResource.getId())
       .getJson().getJsonObject("lastCheckIn");
     DateTime actualCheckinDateTime = getDateTimeProperty(lastCheckIn, "dateTime");

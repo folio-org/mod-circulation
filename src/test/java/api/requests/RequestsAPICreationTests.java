@@ -73,9 +73,9 @@ import api.support.builders.NoticePolicyBuilder;
 import api.support.builders.RequestBuilder;
 import api.support.builders.UserBuilder;
 import api.support.builders.UserManualBlockBuilder;
+import api.support.fixtures.CheckInFixture;
 import api.support.fixtures.ItemExamples;
 import api.support.fixtures.ItemsFixture;
-import api.support.fixtures.LoansFixture;
 import api.support.fixtures.RequestsFixture;
 import api.support.fixtures.TemplateContextMatchers;
 import api.support.fixtures.UsersFixture;
@@ -975,7 +975,7 @@ public class RequestsAPICreationTests extends APITests {
     final IndividualResource servicePoint = servicePointsFixture.cd1();
 
     final IndividualResource awaitingPickupItem = setupItemAwaitingPickup(servicePoint, requestsClient, itemsClient,
-      itemsFixture, usersFixture, loansFixture);
+      itemsFixture, usersFixture, checkInFixture);
     //attempt to place a PAGED request
     final Response pagedRequest2 = requestsClient.attemptCreate(new RequestBuilder()
       .page()
@@ -1014,7 +1014,7 @@ public class RequestsAPICreationTests extends APITests {
 
     final IndividualResource intransitItem = setupItemInTransit(requestPickupServicePoint, servicePointsFixture.cd2(),
       itemsFixture, requestsClient,
-      usersFixture, requestsFixture, loansFixture);
+      usersFixture, requestsFixture, checkInFixture);
 
     //attempt to create a Paged request for this IN_TRANSIT item
     final Response pagedRequest2 = requestsClient.attemptCreate(new RequestBuilder()
@@ -1054,7 +1054,7 @@ public class RequestsAPICreationTests extends APITests {
     //Setting up an item with AWAITING_PICKUP status
     final IndividualResource servicePoint = servicePointsFixture.cd1();
     final IndividualResource awaitingPickupItem = setupItemAwaitingPickup(servicePoint, requestsClient, itemsClient,
-      itemsFixture, usersFixture, loansFixture);
+      itemsFixture, usersFixture, checkInFixture);
 
     // create a recall request
     final IndividualResource recallRequest = requestsClient.create(new RequestBuilder()
@@ -1075,7 +1075,7 @@ public class RequestsAPICreationTests extends APITests {
 
     final IndividualResource intransitItem = setupItemInTransit(requestPickupServicePoint, servicePointsFixture.cd2(),
       itemsFixture, requestsClient,
-      usersFixture, requestsFixture, loansFixture);
+      usersFixture, requestsFixture, checkInFixture);
     //create a Recall request
     final IndividualResource recallRequest = requestsClient.create(new RequestBuilder()
       .recall()
@@ -1168,7 +1168,7 @@ public class RequestsAPICreationTests extends APITests {
     //Setting up an item with AWAITING_PICKUP status
     final IndividualResource servicePoint = servicePointsFixture.cd1();
     final IndividualResource awaitingPickupItem = setupItemAwaitingPickup(servicePoint, requestsClient, itemsClient,
-      itemsFixture, usersFixture, loansFixture);
+      itemsFixture, usersFixture, checkInFixture);
     // create a hold request
     final IndividualResource holdRequest = requestsClient.create(new RequestBuilder()
       .hold()
@@ -1188,7 +1188,7 @@ public class RequestsAPICreationTests extends APITests {
 
     final IndividualResource intransitItem = setupItemInTransit(requestPickupServicePoint, servicePointsFixture.cd2(),
       itemsFixture, requestsClient,
-      usersFixture, requestsFixture, loansFixture);
+      usersFixture, requestsFixture, checkInFixture);
 
     //create a Hold request
     final IndividualResource holdRequest = requestsClient.create(new RequestBuilder()
@@ -1328,7 +1328,7 @@ public class RequestsAPICreationTests extends APITests {
   }
 
   public static IndividualResource setupItemAwaitingPickup(IndividualResource requestPickupServicePoint, ResourceClient requestsClient, ResourceClient itemsClient,
-                                                           ItemsFixture itemsFixture, UsersFixture usersFixture, LoansFixture loansFixture) {
+                                                           ItemsFixture itemsFixture, UsersFixture usersFixture, CheckInFixture checkInFixture) {
 
     //Setting up an item with AWAITING_PICKUP status
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
@@ -1339,7 +1339,7 @@ public class RequestsAPICreationTests extends APITests {
       .withPickupServicePointId(requestPickupServicePoint.getId())
       .by(usersFixture.james()));
 
-    loansFixture.checkInByBarcode(smallAngryPlanet, DateTime.now(DateTimeZone.UTC), requestPickupServicePoint.getId());
+    checkInFixture.checkInByBarcode(smallAngryPlanet, DateTime.now(DateTimeZone.UTC), requestPickupServicePoint.getId());
 
     Response pagedRequestRecord = itemsClient.getById(smallAngryPlanet.getId());
     assertThat(pagedRequestRecord.getJson().getJsonObject("status").getString("name"), is(ItemStatus.AWAITING_PICKUP.getValue()));
@@ -1349,7 +1349,7 @@ public class RequestsAPICreationTests extends APITests {
 
   public static IndividualResource setupItemInTransit(IndividualResource requestPickupServicePoint, IndividualResource pickupServicePoint,
                                                       ItemsFixture itemsFixture, ResourceClient requestsClient,
-                                                      UsersFixture usersFixture, RequestsFixture requestsFixture, LoansFixture loansFixture) {
+                                                      UsersFixture usersFixture, RequestsFixture requestsFixture, CheckInFixture checkInFixture) {
 
     //In order to get the item into the IN_TRANSIT state, for now we need to go the round-about route of delivering it to the unintended pickup location first
     //then check it in at the intended pickup location.
@@ -1366,7 +1366,7 @@ public class RequestsAPICreationTests extends APITests {
     assertThat(firstRequest.getJson().getString("status"), is(RequestStatus.OPEN_NOT_YET_FILLED.getValue()));
 
     //check it it at the "wrong" or unintended pickup location
-    loansFixture.checkInByBarcode(smallAngryPlanet, DateTime.now(DateTimeZone.UTC), pickupServicePoint.getId());
+    checkInFixture.checkInByBarcode(smallAngryPlanet, DateTime.now(DateTimeZone.UTC), pickupServicePoint.getId());
 
     MultipleRecords<JsonObject> requests = requestsFixture.getQueueFor(smallAngryPlanet);
     JsonObject pagedRequestRecord = requests.getRecords().iterator().next();

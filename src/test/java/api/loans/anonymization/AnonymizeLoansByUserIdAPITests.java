@@ -55,7 +55,7 @@ public class AnonymizeLoansByUserIdAPITests extends LoanAnonymizationTests {
     UUID loanId1 = loanResource1.getId();
     UUID loanId2 = loanResource2.getId();
 
-    loansFixture.checkInByBarcode(item1);
+    checkInFixture.checkInByBarcode(item1);
 
     Response storageLoan = loansStorageClient.getById(loanId1);
     assertThat(storageLoan.getJson(), not(isAnonymized()));
@@ -79,7 +79,7 @@ public class AnonymizeLoansByUserIdAPITests extends LoanAnonymizationTests {
       .at(servicePoint.getId()));
     UUID loanID = loanResource.getId();
 
-    loansFixture.checkInByBarcode(item1);
+    checkInFixture.checkInByBarcode(item1);
 
     anonymizeLoansForUser(user.getId());
 
@@ -98,7 +98,7 @@ public class AnonymizeLoansByUserIdAPITests extends LoanAnonymizationTests {
 
     createClosedAccountWithFeeFines(loanResource, DateTime.now());
 
-    loansFixture.checkInByBarcode(item1);
+    checkInFixture.checkInByBarcode(item1);
 
     anonymizeLoansForUser(user.getId());
 
@@ -125,8 +125,8 @@ public class AnonymizeLoansByUserIdAPITests extends LoanAnonymizationTests {
 
     createOpenAccountWithFeeFines(loanResource1);
 
-    loansFixture.checkInByBarcode(item1);
-    loansFixture.checkInByBarcode(item2);
+    checkInFixture.checkInByBarcode(item1);
+    checkInFixture.checkInByBarcode(item2);
 
     anonymizeLoansForUser(user.getId());
 
@@ -148,7 +148,7 @@ public class AnonymizeLoansByUserIdAPITests extends LoanAnonymizationTests {
 
     createOpenAccountWithFeeFines(loanResource);
 
-    loansFixture.checkInByBarcode(item1);
+    checkInFixture.checkInByBarcode(item1);
 
     anonymizeLoansForUser(user.getId());
 

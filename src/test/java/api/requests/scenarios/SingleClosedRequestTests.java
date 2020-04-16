@@ -40,7 +40,7 @@ public class SingleClosedRequestTests extends APITests {
       .withItemId(smallAngryPlanet.getId())
       .withRequesterId(jessica.getId()));
 
-    loansFixture.checkInByBarcode(smallAngryPlanet);
+    checkInFixture.checkInByBarcode(smallAngryPlanet);
 
     checkOutFixture.checkOutByBarcode(smallAngryPlanet, jessica);
 
@@ -76,7 +76,7 @@ public class SingleClosedRequestTests extends APITests {
       .withItemId(smallAngryPlanet.getId())
       .withRequesterId(jessica.getId()));
 
-    loansFixture.checkInByBarcode(smallAngryPlanet);
+    checkInFixture.checkInByBarcode(smallAngryPlanet);
 
     checkOutFixture.checkOutByBarcode(smallAngryPlanet, steve);
 

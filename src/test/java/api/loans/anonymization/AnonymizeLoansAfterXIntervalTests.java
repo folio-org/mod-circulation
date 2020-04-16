@@ -122,7 +122,7 @@ public class AnonymizeLoansAfterXIntervalTests extends LoanAnonymizationTests {
 
     createClosedAccountWithFeeFines(loanResource, now());
 
-    loansFixture.checkInByBarcode(item1);
+    checkInFixture.checkInByBarcode(item1);
 
     anonymizeLoansInTenant();
 
@@ -156,7 +156,7 @@ public class AnonymizeLoansAfterXIntervalTests extends LoanAnonymizationTests {
 
     createClosedAccountWithFeeFines(loanResource, now(UTC));
 
-    loansFixture.checkInByBarcode(item1);
+    checkInFixture.checkInByBarcode(item1);
 
     anonymizeLoansInTenant();
 
@@ -226,7 +226,7 @@ public class AnonymizeLoansAfterXIntervalTests extends LoanAnonymizationTests {
     createClosedAccountWithFeeFines(loanResource, now());
     createClosedAccountWithFeeFines(loanResource, now());
 
-    loansFixture.checkInByBarcode(item1);
+    checkInFixture.checkInByBarcode(item1);
 
     mockClockManagerToReturnFixedDateTime(
       now(UTC).plus(20 * ONE_MINUTE_AND_ONE));
@@ -263,7 +263,7 @@ public class AnonymizeLoansAfterXIntervalTests extends LoanAnonymizationTests {
 
     createClosedAccountWithFeeFines(loanResource, now(UTC));
 
-    loansFixture.checkInByBarcode(item1);
+    checkInFixture.checkInByBarcode(item1);
 
     anonymizeLoansInTenant();
 
@@ -297,7 +297,7 @@ public class AnonymizeLoansAfterXIntervalTests extends LoanAnonymizationTests {
 
     createClosedAccountWithFeeFines(loanResource, now(UTC));
 
-    loansFixture.checkInByBarcode(item1);
+    checkInFixture.checkInByBarcode(item1);
 
     mockClockManagerToReturnFixedDateTime(now(UTC).plus(ONE_MINUTE_AND_ONE));
 
@@ -333,7 +333,7 @@ public class AnonymizeLoansAfterXIntervalTests extends LoanAnonymizationTests {
 
     createClosedAccountWithFeeFines(loanResource, now());
 
-    loansFixture.checkInByBarcode(item1);
+    checkInFixture.checkInByBarcode(item1);
 
     anonymizeLoansInTenant();
 
@@ -358,7 +358,7 @@ public class AnonymizeLoansAfterXIntervalTests extends LoanAnonymizationTests {
 
     UUID loanID = loanResource1.getId();
 
-    loansFixture.checkInByBarcode(item1);
+    checkInFixture.checkInByBarcode(item1);
 
     mockClockManagerToReturnFixedDateTime(now(UTC).plus(ONE_MINUTE_AND_ONE));
     anonymizeLoansInTenant();
@@ -379,8 +379,8 @@ public class AnonymizeLoansAfterXIntervalTests extends LoanAnonymizationTests {
     final IndividualResource firstLoan = checkOutFixture.checkOutByBarcode(smallAngryPlanet, user);
     final IndividualResource secondLoan = checkOutFixture.checkOutByBarcode(nod, usersFixture.rebecca());
 
-    loansFixture.checkInByBarcode(smallAngryPlanet);
-    loansFixture.checkInByBarcode(nod);
+    checkInFixture.checkInByBarcode(smallAngryPlanet);
+    checkInFixture.checkInByBarcode(nod);
 
     setNextAnonymizationDateTime(ONE_MINUTE_AND_ONE);
 
@@ -409,8 +409,8 @@ public class AnonymizeLoansAfterXIntervalTests extends LoanAnonymizationTests {
     final IndividualResource thirdLoan = checkOutFixture.checkOutByBarcode(temeraire, usersFixture.james());
     final IndividualResource fourthLoan = checkOutFixture.checkOutByBarcode(dunkirk, usersFixture.steve());
 
-    loansFixture.checkInByBarcode(smallAngryPlanet);
-    loansFixture.checkInByBarcode(nod);
+    checkInFixture.checkInByBarcode(smallAngryPlanet);
+    checkInFixture.checkInByBarcode(nod);
 
     setNextAnonymizationDateTime(ONE_MINUTE_AND_ONE);
 
@@ -419,8 +419,8 @@ public class AnonymizeLoansAfterXIntervalTests extends LoanAnonymizationTests {
     assertThat(loansStorageClient.getById(firstLoan.getId()).getJson(), isAnonymized());
     assertThat(loansStorageClient.getById(secondLoan.getId()).getJson(), isAnonymized());
 
-    loansFixture.checkInByBarcode(temeraire);
-    loansFixture.checkInByBarcode(dunkirk);
+    checkInFixture.checkInByBarcode(temeraire);
+    checkInFixture.checkInByBarcode(dunkirk);
 
     setNextAnonymizationDateTime(ONE_MINUTE_AND_ONE);
 
@@ -442,7 +442,7 @@ public class AnonymizeLoansAfterXIntervalTests extends LoanAnonymizationTests {
         .at(servicePoint.getId()));
     UUID loanID = loanResource.getId();
 
-    loansFixture.checkInByBarcode(item1);
+    checkInFixture.checkInByBarcode(item1);
 
     anonymizeLoansInTenant();
 
@@ -464,7 +464,7 @@ public class AnonymizeLoansAfterXIntervalTests extends LoanAnonymizationTests {
 
 
     createClosedAccountWithFeeFines(loanResource, now());
-    loansFixture.checkInByBarcode(item1);
+    checkInFixture.checkInByBarcode(item1);
 
     anonymizeLoansInTenant();
 
@@ -489,7 +489,7 @@ public class AnonymizeLoansAfterXIntervalTests extends LoanAnonymizationTests {
 
     mockClockManagerToReturnFixedDateTime(now(UTC).plus(ONE_MINUTE_AND_ONE));
 
-    loansFixture.checkInByBarcode(item1);
+    checkInFixture.checkInByBarcode(item1);
 
     anonymizeLoansInTenant();
 

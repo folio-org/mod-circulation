@@ -101,7 +101,7 @@ public class ChangeDueDateAPITests extends APITests {
   public void cannotChangeDueDateWhenClosed() {
     final DateTime newDueDate = dueDate.plus(Period.days(14));
 
-    loansFixture.checkInByBarcode(item);
+    checkInFixture.checkInByBarcode(item);
 
     final Response response = loansFixture
       .attemptChangeDueDate(new ChangeDueDateRequestBuilder()
