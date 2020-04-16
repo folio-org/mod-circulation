@@ -1,5 +1,6 @@
 package org.folio.circulation.domain.notice.schedule;
 
+import static org.folio.circulation.domain.notice.schedule.TriggeringEvent.DUE_DATE;
 import static org.folio.circulation.support.Result.succeeded;
 
 import java.util.List;
@@ -66,7 +67,7 @@ public class DueDateScheduledNoticeService {
       .setRecipientUserId(loan.getUserId())
       .setNextRunTime(determineNextRunTime(configuration, loan))
       .setNoticeConfig(createScheduledNoticeConfig(configuration))
-      .setTriggeringEvent(TriggeringEvent.DUE_DATE)
+      .setTriggeringEvent(DUE_DATE)
       .build();
   }
 
@@ -102,7 +103,7 @@ public class DueDateScheduledNoticeService {
     Loan loan = relatedRecords.getLoan();
 
     if (!loan.isClosed()) {
-      scheduledNoticesRepository.deleteByLoanId(loan.getId())
+      scheduledNoticesRepository.deleteByLoanIdAndTriggeringEvent(loan.getId(), DUE_DATE)
         .thenAccept(r -> r.next(v -> scheduleNoticesForLoanDueDate(loan)));
     }
 

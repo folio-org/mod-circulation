@@ -269,7 +269,8 @@ class CheckInProcessAdapter {
   CompletableFuture<Result<CheckInProcessRecords>> createOverdueFineIfNecessary(
     CheckInProcessRecords records, WebContext context) {
 
-      return overdueFineCalculatorService.createOverdueFineIfNecessary(records, context.getUserId())
-        .thenCompose(r -> r.after(action -> feeFineScheduledNoticeService.scheduleNotice(records, action)));
+    return overdueFineCalculatorService.createOverdueFineIfNecessary(records, context.getUserId())
+      .thenCompose(r -> r.after(action ->
+        feeFineScheduledNoticeService.scheduleNotice(records, action)));
   }
 }

@@ -3,6 +3,7 @@ package api.loans;
 import static api.support.matchers.ScheduledNoticeMatchers.hasScheduledFeeFineNotice;
 import static java.util.UUID.fromString;
 import static java.util.UUID.randomUUID;
+import static org.folio.circulation.domain.notice.schedule.TriggeringEvent.OVERDUE_FINE_RENEWED;
 import static org.folio.circulation.domain.notice.schedule.TriggeringEvent.OVERDUE_FINE_RETURNED;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -130,94 +131,94 @@ public class FeeFineScheduledNoticesTests extends APITests {
     );
   }
 
-//  @Test
-//  public void overdueFineNoticesAreScheduledOnRenewalWhenConfiguredInPatronNoticePolicy() {
-//    UUID uponAtTemplateId = randomUUID();
-//    UUID afterTemplateId = randomUUID();
-//    Period afterPeriod = Period.days(3);
-//    Period afterRecurringPeriod = Period.hours(4);
-//
-//    JsonObject uponAtNoticeConfiguration = new NoticeConfigurationBuilder()
-//      .withTemplateId(uponAtTemplateId)
-//      .withOverdueFineRenewedEvent()
-//      .withUponAtTiming()
-//      .sendInRealTime(true)
-//      .create();
-//
-//    JsonObject afterNoticeConfiguration = new NoticeConfigurationBuilder()
-//      .withTemplateId(afterTemplateId)
-//      .withOverdueFineRenewedEvent()
-//      .withAfterTiming(afterPeriod)
-//      .recurring(afterRecurringPeriod)
-//      .sendInRealTime(true)
-//      .create();
-//
-//    NoticePolicyBuilder patronNoticePolicy = new NoticePolicyBuilder()
-//      .withName("Test policy")
-//      .withFeeFineNotices(Arrays.asList(
-//        uponAtNoticeConfiguration,
-//        afterNoticeConfiguration));
-//
-//    use(patronNoticePolicy);
-//
-//    final IndividualResource james = usersFixture.james();
-//    final UUID checkInServicePointId = servicePointsFixture.cd1().getId();
-//    final IndividualResource homeLocation = locationsFixture.basedUponExampleLocation(
-//      item -> item.withPrimaryServicePoint(checkInServicePointId));
-//    final IndividualResource nod = itemsFixture.basedUponNod(item ->
-//      item.withPermanentLocation(homeLocation.getId()));
-//
-//    loansFixture.checkOutByBarcode(nod, james,
-//      new DateTime(2018, 1, 1, 12, 0, 0, DateTimeZone.UTC));
-//
-//    JsonObject servicePointOwner = new JsonObject();
-//    servicePointOwner.put("value", homeLocation.getJson().getString("primaryServicePoint"));
-//    servicePointOwner.put("label", "label");
-//    UUID ownerId = randomUUID();
-//    feeFineOwnersClient.create(new FeeFineOwnerBuilder()
-//      .withId(ownerId)
-//      .withOwner("fee-fine-owner")
-//      .withServicePointOwner(Collections.singletonList(servicePointOwner))
-//    );
-//
-//    feeFinesClient.create(new FeeFineBuilder()
-//      .withId(randomUUID())
-//      .withFeeFineType("Overdue fine")
-//      .withOwnerId(ownerId)
-//      .withAutomatic(true)
-//    );
-//
-//    IndividualResource renewedLoan = loansFixture.renewLoan(nod, james);
-//
-//    Awaitility.await()
-//      .atMost(1, TimeUnit.SECONDS)
-//      .until(feeFineActionsClient::getAll, hasSize(1));
-//
-//    List<JsonObject> createdFeeFineActions = feeFineActionsClient.getAll();
-//    assertThat("Fee/fine action record should have been created", createdFeeFineActions, hasSize(1));
-//    FeeFineAction action = FeeFineAction.from(createdFeeFineActions.get(0));
-//
-//    Awaitility.await()
-//      .atMost(1, TimeUnit.SECONDS)
-//      .until(scheduledNoticesClient::getAll, hasSize(2));
-//
-//    UUID loanId = renewedLoan.getId();
-//    DateTime actionDateTime = action.getDateAction();
-//    UUID actionId = fromString(action.getId());
-//    UUID userId = james.getId();
-//
-//    List<JsonObject> scheduledNotices = scheduledNoticesClient.getAll();
-//
-//    assertThat(scheduledNotices, hasItems(
-//      hasScheduledFeeFineNotice(
-//        actionId, loanId, userId, uponAtTemplateId,
-//        OVERDUE_FINE_RENEWED, actionDateTime,
-//        NoticeTiming.UPON_AT, null, true),
-//      hasScheduledFeeFineNotice(
-//        actionId, loanId, userId, afterTemplateId,
-//        OVERDUE_FINE_RENEWED, actionDateTime.plus(afterPeriod.timePeriod()),
-//        NoticeTiming.AFTER, afterRecurringPeriod, true)
-//    ));
-//  }
+  @Test
+  public void overdueFineNoticesAreScheduledOnRenewalWhenConfiguredInPatronNoticePolicy() {
+    UUID uponAtTemplateId = randomUUID();
+    UUID afterTemplateId = randomUUID();
+    Period afterPeriod = Period.days(3);
+    Period afterRecurringPeriod = Period.hours(4);
+
+    JsonObject uponAtNoticeConfiguration = new NoticeConfigurationBuilder()
+      .withTemplateId(uponAtTemplateId)
+      .withOverdueFineRenewedEvent()
+      .withUponAtTiming()
+      .sendInRealTime(true)
+      .create();
+
+    JsonObject afterNoticeConfiguration = new NoticeConfigurationBuilder()
+      .withTemplateId(afterTemplateId)
+      .withOverdueFineRenewedEvent()
+      .withAfterTiming(afterPeriod)
+      .recurring(afterRecurringPeriod)
+      .sendInRealTime(true)
+      .create();
+
+    NoticePolicyBuilder patronNoticePolicy = new NoticePolicyBuilder()
+      .withName("Test policy")
+      .withFeeFineNotices(Arrays.asList(
+        uponAtNoticeConfiguration,
+        afterNoticeConfiguration));
+
+    use(patronNoticePolicy);
+
+    final IndividualResource james = usersFixture.james();
+    final UUID checkInServicePointId = servicePointsFixture.cd1().getId();
+    final IndividualResource homeLocation = locationsFixture.basedUponExampleLocation(
+      item -> item.withPrimaryServicePoint(checkInServicePointId));
+    final IndividualResource nod = itemsFixture.basedUponNod(item ->
+      item.withPermanentLocation(homeLocation.getId()));
+
+    loansFixture.checkOutByBarcode(nod, james,
+      new DateTime(2018, 1, 1, 12, 0, 0, DateTimeZone.UTC));
+
+    JsonObject servicePointOwner = new JsonObject();
+    servicePointOwner.put("value", homeLocation.getJson().getString("primaryServicePoint"));
+    servicePointOwner.put("label", "label");
+    UUID ownerId = randomUUID();
+    feeFineOwnersClient.create(new FeeFineOwnerBuilder()
+      .withId(ownerId)
+      .withOwner("fee-fine-owner")
+      .withServicePointOwner(Collections.singletonList(servicePointOwner))
+    );
+
+    feeFinesClient.create(new FeeFineBuilder()
+      .withId(randomUUID())
+      .withFeeFineType("Overdue fine")
+      .withOwnerId(ownerId)
+      .withAutomatic(true)
+    );
+
+    IndividualResource renewedLoan = loansFixture.renewLoan(nod, james);
+
+    Awaitility.await()
+      .atMost(1, TimeUnit.SECONDS)
+      .until(feeFineActionsClient::getAll, hasSize(1));
+
+    List<JsonObject> createdFeeFineActions = feeFineActionsClient.getAll();
+    assertThat("Fee/fine action record should have been created", createdFeeFineActions, hasSize(1));
+    FeeFineAction action = FeeFineAction.from(createdFeeFineActions.get(0));
+
+    Awaitility.await()
+      .atMost(1, TimeUnit.SECONDS)
+      .until(scheduledNoticesClient::getAll, hasSize(2));
+
+    UUID loanId = renewedLoan.getId();
+    DateTime actionDateTime = action.getDateAction();
+    UUID actionId = fromString(action.getId());
+    UUID userId = james.getId();
+
+    List<JsonObject> scheduledNotices = scheduledNoticesClient.getAll();
+
+    assertThat(scheduledNotices, hasItems(
+      hasScheduledFeeFineNotice(
+        actionId, loanId, userId, uponAtTemplateId,
+        OVERDUE_FINE_RENEWED, actionDateTime,
+        NoticeTiming.UPON_AT, null, true),
+      hasScheduledFeeFineNotice(
+        actionId, loanId, userId, afterTemplateId,
+        OVERDUE_FINE_RENEWED, actionDateTime.plus(afterPeriod.timePeriod()),
+        NoticeTiming.AFTER, afterRecurringPeriod, true)
+    ));
+  }
 
 }

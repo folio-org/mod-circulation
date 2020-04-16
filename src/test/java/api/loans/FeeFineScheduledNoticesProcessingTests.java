@@ -27,12 +27,9 @@ import org.folio.circulation.domain.notice.NoticeEventType;
 import org.folio.circulation.domain.notice.NoticeTiming;
 import org.folio.circulation.domain.notice.schedule.TriggeringEvent;
 import org.folio.circulation.domain.policy.Period;
-import org.folio.circulation.support.ClockManager;
 import org.folio.circulation.support.JsonPropertyWriter;
 import org.folio.circulation.support.http.client.IndividualResource;
-import org.hamcrest.CoreMatchers;
 import org.hamcrest.Matcher;
-import org.hamcrest.Matchers;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.junit.Test;
@@ -134,6 +131,28 @@ public class FeeFineScheduledNoticesProcessingTests extends APITests {
     checkSentNotice(TEMPLATE_IDS.get(timing));
     checkNumberOfScheduledNotices(1);
     checkScheduledNotice(TriggeringEvent.OVERDUE_FINE_RETURNED, timing, true, expectedNextRunTime);
+  }
+
+  @Test
+  public void multipleScheduledNoticesAreSentDuringSingleProcessingIteration() {
+    createOverdueFineViaCheckin(
+      createNoticeConfig(OVERDUE_FINE_RETURNED, UPON_AT, false),
+      createNoticeConfig(OVERDUE_FINE_RETURNED, AFTER, false),
+      createNoticeConfig(OVERDUE_FINE_RETURNED, AFTER, true)
+    );
+
+    DateTime firstAfterRunTime = actionDateTime.plus(AFTER_PERIOD.timePeriod());
+
+    checkScheduledNotice(TriggeringEvent.OVERDUE_FINE_RETURNED, UPON_AT, false, actionDateTime);
+    checkScheduledNotice(TriggeringEvent.OVERDUE_FINE_RETURNED, AFTER, false, firstAfterRunTime);
+    checkScheduledNotice(TriggeringEvent.OVERDUE_FINE_RETURNED, AFTER, true, firstAfterRunTime);
+
+    scheduledNoticeProcessingClient.runFeeFineNoticesProcessing(firstAfterRunTime.plusMinutes(1));
+
+    checkSentNotice(TEMPLATE_IDS.get(UPON_AT), TEMPLATE_IDS.get(AFTER), TEMPLATE_IDS.get(AFTER));
+    checkNumberOfScheduledNotices(1);
+    checkScheduledNotice(TriggeringEvent.OVERDUE_FINE_RETURNED, AFTER, true,
+      firstAfterRunTime.plus(RECURRING_PERIOD.timePeriod()));
   }
 
   @Test
