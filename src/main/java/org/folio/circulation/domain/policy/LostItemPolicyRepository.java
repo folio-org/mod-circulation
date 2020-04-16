@@ -94,7 +94,7 @@ public class LostItemPolicyRepository extends CirculationPolicyRepository<LostIt
         .thenApply(result -> result.map(loan::withLostItemPolicy)));
   }
 
-  private CompletableFuture<Result<LostItemPolicy>> getLostItemPolicyById(
+  public CompletableFuture<Result<LostItemPolicy>> getLostItemPolicyById(
     String lostItemPolicyId) {
 
     if (isNull(lostItemPolicyId)) {

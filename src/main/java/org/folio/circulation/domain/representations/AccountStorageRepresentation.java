@@ -51,4 +51,8 @@ public class AccountStorageRepresentation extends JsonObject {
 
     this(loan, item, feeFineOwner, feeFine, amount.doubleValue());
   }
+
+  public String getId() {
+    return getString("id");
+  }
 }

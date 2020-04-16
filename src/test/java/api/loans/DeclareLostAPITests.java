@@ -1,21 +1,23 @@
 package api.loans;
 
 import static api.support.http.CqlQuery.exactMatch;
+import static api.support.http.CqlQuery.queryFromTemplate;
 import static api.support.matchers.JsonObjectMatcher.hasJsonPath;
 import static api.support.matchers.LoanMatchers.hasLoanProperty;
 import static api.support.matchers.LoanMatchers.hasOpenStatus;
 import static api.support.matchers.LoanMatchers.hasStatus;
+import static api.support.matchers.TextDateTimeMatcher.withinSecondsBeforeNow;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static api.support.matchers.ValidationErrorMatchers.hasParameter;
 import static org.hamcrest.CoreMatchers.allOf;
-import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.everyItem;
 import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.notNullValue;
+import static org.joda.time.Seconds.seconds;
 
 import java.util.List;
 import java.util.UUID;
@@ -24,6 +26,7 @@ import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
+import org.hamcrest.Matcher;
 import org.joda.time.DateTime;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -99,7 +102,6 @@ public class DeclareLostAPITests extends APITests {
 
   @Test
   public void cannotDeclareItemLostForAClosedLoan() {
-
     UUID loanId = UUID.fromString(loanJson.getString("id"));
     DateTime dateTime = DateTime.now();
 
@@ -151,16 +153,17 @@ public class DeclareLostAPITests extends APITests {
 
     final UUID loanId = createLoanAndDeclareItLost();
 
-    final List<JsonObject> accountsForLoan = getAccountsForLoan(loanId);
-    assertThat(accountsForLoan, hasSize(2));
-    assertThat(accountsForLoan, everyItem(hasJsonPath("ownerId", expectedOwnerId)));
-
-    assertThat(accountsForLoan, hasItem(allOf(
+    verifyAccountAndAction(loanId, "Lost item fee", allOf(
+      hasJsonPath("ownerId", expectedOwnerId),
       hasJsonPath("feeFineType", "Lost item fee"),
-      hasJsonPath("amount", expectedItemFee))));
-    assertThat(accountsForLoan, hasItem(allOf(
+      hasJsonPath("amount", expectedItemFee)
+    ));
+
+    verifyAccountAndAction(loanId, "Lost item processing fee", allOf(
+      hasJsonPath("ownerId", expectedOwnerId),
       hasJsonPath("feeFineType", "Lost item processing fee"),
-      hasJsonPath("amount", expectedProcessingFee))));
+      hasJsonPath("amount", expectedProcessingFee)
+    ));
   }
 
   @Test
@@ -178,13 +181,11 @@ public class DeclareLostAPITests extends APITests {
 
     final UUID loanId = createLoanAndDeclareItLost();
 
-    final List<JsonObject> accountsForLoan = getAccountsForLoan(loanId);
-    assertThat(accountsForLoan, hasSize(1));
-    assertThat(accountsForLoan, everyItem(hasJsonPath("ownerId", expectedOwnerId)));
-
-    assertThat(accountsForLoan, hasItem(allOf(
+    verifyAccountAndAction(loanId, "Lost item fee", allOf(
+      hasJsonPath("ownerId", expectedOwnerId),
       hasJsonPath("feeFineType", "Lost item fee"),
-      hasJsonPath("amount", expectedItemFee))));
+      hasJsonPath("amount", expectedItemFee)
+    ));
   }
 
   @Test
@@ -203,13 +204,11 @@ public class DeclareLostAPITests extends APITests {
 
     final UUID loanId = createLoanAndDeclareItLost();
 
-    final List<JsonObject> accountsForLoan = getAccountsForLoan(loanId);
-    assertThat(accountsForLoan, hasSize(1));
-    assertThat(accountsForLoan, everyItem(hasJsonPath("ownerId", expectedOwnerId)));
-
-    assertThat(accountsForLoan, hasItem(allOf(
+    verifyAccountAndAction(loanId, "Lost item processing fee", allOf(
+      hasJsonPath("ownerId", expectedOwnerId),
       hasJsonPath("feeFineType", "Lost item processing fee"),
-      hasJsonPath("amount", expectedProcessingFee))));
+      hasJsonPath("amount", expectedProcessingFee)
+    ));
   }
 
   @Test
@@ -375,11 +374,18 @@ public class DeclareLostAPITests extends APITests {
       .stream().collect(Collectors.toList());
   }
 
+  private JsonObject getAccountForLoan(UUID loanId, String feeType) {
+    return accountsClient.getMany(queryFromTemplate("loanId==%s and feeFineType==%s",
+      loanId.toString(), feeType))
+      .getFirst();
+  }
+
   private UUID createLoanAndDeclareItLost() {
     final InventoryItemResource item = itemsFixture.basedUponNod();
     final IndividualResource loan = loansFixture.checkOutByBarcode(item, usersFixture.charlotte());
 
     declareLostFixtures.declareItemLost(new DeclareItemLostRequestBuilder()
+      .withServicePointId(servicePointsFixture.cd2().getId())
       .forLoanId(loan.getId()));
 
     return loan.getId();
@@ -394,5 +400,32 @@ public class DeclareLostAPITests extends APITests {
 
   private void assertNoFeeAssignedForLoan(UUID loan) {
     assertThat(getAccountsForLoan(loan), hasSize(0));
+  }
+
+  private void verifyAccountAndAction(UUID loanId, String feeType,
+    Matcher<JsonObject> accountMatcher) {
+
+    final JsonObject account = getAccountForLoan(loanId, feeType);
+
+    assertThat(account, accountMatcher);
+
+    if (account == null) {
+      return;
+    }
+
+    final JsonObject action = feeFineActionsClient
+      .getMany(queryFromTemplate("accountId==%s", account.getString("id")))
+      .getFirst();
+
+    assertThat(action, notNullValue());
+    assertThat(action, allOf(
+      hasJsonPath("amountAction", account.getDouble("amount")),
+      hasJsonPath("balance", account.getDouble("amount")),
+      hasJsonPath("userId", account.getString("userId")),
+      hasJsonPath("createdAt", servicePointsFixture.cd2().getJson().getString("name")),
+      hasJsonPath("source", "Admin, Admin"),
+      hasJsonPath("typeAction", feeType),
+      hasJsonPath("dateAction", withinSecondsBeforeNow(seconds(1)))
+    ));
   }
 }

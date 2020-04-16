@@ -282,6 +282,8 @@ public abstract class APITests {
     if (initialiseCirculationRules) {
       useDefaultRollingPolicyCirculationRules();
     }
+
+    usersFixture.defaultAdmin();
   }
 
   @AfterClass
