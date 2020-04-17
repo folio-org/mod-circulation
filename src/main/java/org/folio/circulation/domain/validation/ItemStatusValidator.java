@@ -58,21 +58,17 @@ public class ItemStatusValidator {
       .next(p -> refuseWhenItemIs(loanAndRelatedRecords, CLAIMED_RETURNED));
   }
 
-  public static Result<LoanAndRelatedRecords> refuseWhenItemIsDeclaredLost(
-    Result<LoanAndRelatedRecords> loanResult) {
+  public Result<LoanAndRelatedRecords> refuseWhenItemIsDeclaredLost(
+    Result<LoanAndRelatedRecords> loanAndRelatedRecords) {
 
-    return loanResult.failWhen(
-      l -> succeeded(l.getLoan().getItem().isInStatus(DECLARED_LOST)),
-      l -> singleValidationError(new ValidationError("item is Declared lost",
-         ITEM_ID, l.getLoan().getItem().getItemId())));
+    return loanAndRelatedRecords
+      .next(p -> refuseWhenItemIs(loanAndRelatedRecords, DECLARED_LOST));
   }
 
-  public static Result<LoanAndRelatedRecords> refuseWhenItemIsClaimedReturned(
-    Result<LoanAndRelatedRecords> loanResult) {
+  public Result<LoanAndRelatedRecords> refuseWhenItemIsClaimedReturned(
+    Result<LoanAndRelatedRecords> loanAndRelatedRecords) {
 
-    return loanResult.failWhen(
-      l -> succeeded(l.getLoan().getItem().isInStatus(CLAIMED_RETURNED)),
-      l -> singleValidationError(new ValidationError("item is Claimed returned",
-         ITEM_ID, l.getLoan().getItem().getItemId())));
+    return loanAndRelatedRecords
+      .next(p -> refuseWhenItemIs(loanAndRelatedRecords, CLAIMED_RETURNED));
   }
 }

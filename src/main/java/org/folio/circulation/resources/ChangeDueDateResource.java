@@ -54,14 +54,17 @@ public class ChangeDueDateResource extends Resource {
 
     final DueDateScheduledNoticeService scheduledNoticeService
       = DueDateScheduledNoticeService.using(clients);
+    
+    final ItemStatusValidator itemStatusValidator = new ItemStatusValidator(
+      message -> singleValidationError(message, "itemId", request.getLoanId()));
 
     final LoanNoticeSender loanNoticeSender = LoanNoticeSender.using(clients);
     return succeeded(request)
       .after(r -> loanRepository.getById(r.getLoanId()))
       .thenApply(LoanValidator::refuseWhenLoanIsClosed)
       .thenApply(this::toLoanAndRelatedRecords)
-      .thenApply(ItemStatusValidator::refuseWhenItemIsDeclaredLost)
-      .thenApply(ItemStatusValidator::refuseWhenItemIsClaimedReturned)
+      .thenApply(itemStatusValidator::refuseWhenItemIsDeclaredLost)
+      .thenApply(itemStatusValidator::refuseWhenItemIsClaimedReturned)
       .thenApply(r -> changeDueDate(r, request))
       .thenComposeAsync(r -> r.after(loanRepository::updateLoan))
       .thenApply(r -> r.next(scheduledNoticeService::rescheduleDueDateNotices))
