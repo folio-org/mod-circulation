@@ -1,5 +1,6 @@
 package org.folio.circulation.resources;
 
+import static org.folio.circulation.domain.representations.ChangeDueDateRequest.DUE_DATE;
 import static org.folio.circulation.support.Result.failed;
 import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
@@ -26,77 +27,68 @@ import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 
 public class ChangeDueDateResource extends Resource {
-  
+
   public ChangeDueDateResource(HttpClient client) {
     super(client);
   }
 
   @Override
   public void register(Router router) {
-    new RouteRegistration("/circulation/loans/:id/change-due-date", router)
-      .create(this::changeDueDate);
+    new RouteRegistration("/circulation/loans/:id/change-due-date", router).create(this::changeDueDate);
   }
 
   private void changeDueDate(RoutingContext routingContext) {
-    createChangeDueDateRequest(routingContext)
-      .after(r -> processChangeDueDate(r, routingContext))
-      .thenApply(NoContentResult::from)
-      .thenAccept(r -> r.writeTo(routingContext.response()));
+    createChangeDueDateRequest(routingContext).after(r -> processChangeDueDate(r, routingContext))
+        .thenApply(NoContentResult::from).thenAccept(r -> r.writeTo(routingContext.response()));
   }
 
-  private CompletableFuture<Result<LoanAndRelatedRecords>> processChangeDueDate(
-    final ChangeDueDateRequest request, RoutingContext routingContext) {
+  private CompletableFuture<Result<LoanAndRelatedRecords>> processChangeDueDate(final ChangeDueDateRequest request,
+      RoutingContext routingContext) {
 
     final WebContext context = new WebContext(routingContext);
     final Clients clients = Clients.create(context, client);
 
     final LoanRepository loanRepository = new LoanRepository(clients);
 
-    final DueDateScheduledNoticeService scheduledNoticeService
-      = DueDateScheduledNoticeService.using(clients);
-    
+    final DueDateScheduledNoticeService scheduledNoticeService = DueDateScheduledNoticeService.using(clients);
+
     final ItemStatusValidator itemStatusValidator = new ItemStatusValidator(
-      message -> singleValidationError(message, "itemId", request.getLoanId()));
+        message -> singleValidationError(message, "itemId", request.getLoanId()));
 
     final LoanNoticeSender loanNoticeSender = LoanNoticeSender.using(clients);
-    return succeeded(request)
-      .after(r -> loanRepository.getById(r.getLoanId()))
-      .thenApply(LoanValidator::refuseWhenLoanIsClosed)
-      .thenApply(this::toLoanAndRelatedRecords)
-      .thenApply(itemStatusValidator::refuseWhenItemIsDeclaredLost)
-      .thenApply(itemStatusValidator::refuseWhenItemIsClaimedReturned)
-      .thenApply(r -> changeDueDate(r, request))
-      .thenComposeAsync(r -> r.after(loanRepository::updateLoan))
-      .thenApply(r -> r.next(scheduledNoticeService::rescheduleDueDateNotices))
-      .thenCompose(r -> r.after(loanNoticeSender::sendManualDueDateChangeNotice));
+    return succeeded(request).after(r -> loanRepository.getById(r.getLoanId()))
+        .thenApply(LoanValidator::refuseWhenLoanIsClosed).thenApply(this::toLoanAndRelatedRecords)
+        .thenApply(itemStatusValidator::refuseWhenItemIsDeclaredLost)
+        .thenApply(itemStatusValidator::refuseWhenItemIsClaimedReturned).thenApply(r -> changeDueDate(r, request))
+        .thenComposeAsync(r -> r.after(loanRepository::updateLoan))
+        .thenApply(r -> r.next(scheduledNoticeService::rescheduleDueDateNotices))
+        .thenCompose(r -> r.after(loanNoticeSender::sendManualDueDateChangeNotice));
   }
 
-  private Result<LoanAndRelatedRecords> changeDueDate(
-    Result<LoanAndRelatedRecords> loanResult, ChangeDueDateRequest request) {
+  private Result<LoanAndRelatedRecords> changeDueDate(Result<LoanAndRelatedRecords> loanResult,
+      ChangeDueDateRequest request) {
 
     return loanResult.map(l -> changeDueDate(l, request.getDueDate()));
   }
 
-  private LoanAndRelatedRecords changeDueDate(
-    LoanAndRelatedRecords loanAndRelatedRecords, DateTime dueDate) {
+  private LoanAndRelatedRecords changeDueDate(LoanAndRelatedRecords loanAndRelatedRecords, DateTime dueDate) {
 
     loanAndRelatedRecords.getLoan().changeDueDate(dueDate);
     return loanAndRelatedRecords;
   }
 
-  private Result<ChangeDueDateRequest> createChangeDueDateRequest(
-    RoutingContext routingContext) {
+  private Result<ChangeDueDateRequest> createChangeDueDateRequest(RoutingContext routingContext) {
 
     final String loanId = routingContext.pathParam("id");
     final JsonObject body = routingContext.getBodyAsJson();
 
-    if (!body.containsKey(ChangeDueDateRequest.DUE_DATE)) {
+    if (!body.containsKey(DUE_DATE)) {
       return failed(singleValidationError("Due date is a required field",
-      ChangeDueDateRequest.DUE_DATE, null));
+      DUE_DATE, null));
     }
 
     return succeeded(new ChangeDueDateRequest(
-      loanId, DateTime.parse(body.getString(ChangeDueDateRequest.DUE_DATE))
+      loanId, DateTime.parse(body.getString(DUE_DATE))
     ));
   }
 
