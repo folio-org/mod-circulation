@@ -12,7 +12,7 @@ public class LostItemFeePolicyBuilder extends JsonBuilder implements Builder {
   private final JsonObject itemAgedLostOverdue;
   private final JsonObject patronBilledAfterAgedLost;
   private final JsonObject chargeAmountItem;
-  private final double lostItemProcessingFee;
+  private final Double lostItemProcessingFee;
   private final boolean chargeAmountItemPatron;
   private final boolean chargeAmountItemSystem;
   private final JsonObject lostItemChargeFeeFine;
@@ -48,7 +48,7 @@ public class LostItemFeePolicyBuilder extends JsonBuilder implements Builder {
     JsonObject itemAgedLostOverdue,
     JsonObject patronBilledAfterAgedLost,
     JsonObject chargeAmountItem,
-    double lostItemProcessingFee,
+    Double lostItemProcessingFee,
     boolean chargeAmountItemPatron,
     boolean chargeAmountItemSystem,
     JsonObject lostItemChargeFeeFine,
@@ -194,7 +194,17 @@ public class LostItemFeePolicyBuilder extends JsonBuilder implements Builder {
     );
   }
 
-  public LostItemFeePolicyBuilder withLostItemProcessingFee(double lostItemProcessingFee) {
+  public LostItemFeePolicyBuilder withNoChargeAmountItem() {
+    return withChargeAmountItem(new JsonObject().put("amount", 0.0));
+  }
+
+  public LostItemFeePolicyBuilder withChargeAmountItem(String chargeType, Double amount) {
+    return withChargeAmountItem(new JsonObject()
+      .put("amount", amount)
+      .put("chargeType", chargeType));
+  }
+
+  public LostItemFeePolicyBuilder withLostItemProcessingFee(Double lostItemProcessingFee) {
     return new LostItemFeePolicyBuilder(
       this.id,
       this.name,
@@ -214,7 +224,7 @@ public class LostItemFeePolicyBuilder extends JsonBuilder implements Builder {
     );
   }
 
-  public LostItemFeePolicyBuilder withChargeAmountItemPatron(boolean chargeAmountItemPatron) {
+  public LostItemFeePolicyBuilder chargeProcessingFee() {
     return new LostItemFeePolicyBuilder(
       this.id,
       this.name,
@@ -223,7 +233,27 @@ public class LostItemFeePolicyBuilder extends JsonBuilder implements Builder {
       this.patronBilledAfterAgedLost,
       this.chargeAmountItem,
       this.lostItemProcessingFee,
-      chargeAmountItemPatron,
+      true,
+      this.chargeAmountItemSystem,
+      this.lostItemChargeFeeFine,
+      this.returnedLostItemProcessingFee,
+      this.replacedLostItemProcessingFee,
+      this.replacementProcessingFee,
+      this.replacementAllowed,
+      this.lostItemReturned
+    );
+  }
+
+  public LostItemFeePolicyBuilder doNotChargeProcessingFee() {
+    return new LostItemFeePolicyBuilder(
+      this.id,
+      this.name,
+      this.description,
+      this.itemAgedLostOverdue,
+      this.patronBilledAfterAgedLost,
+      this.chargeAmountItem,
+      this.lostItemProcessingFee,
+      false,
       this.chargeAmountItemSystem,
       this.lostItemChargeFeeFine,
       this.returnedLostItemProcessingFee,
@@ -387,7 +417,7 @@ public class LostItemFeePolicyBuilder extends JsonBuilder implements Builder {
     put(request, "itemAgedLostOverdue", this.itemAgedLostOverdue);
     put(request, "patronBilledAfterAgedLost", this.patronBilledAfterAgedLost);
     put(request, "chargeAmountItem", this.chargeAmountItem);
-    put(request, "lostItemProcessingFee", String.valueOf(this.lostItemProcessingFee));
+    put(request, "lostItemProcessingFee", this.lostItemProcessingFee);
     put(request, "chargeAmountItemPatron", this.chargeAmountItemPatron);
     put(request, "chargeAmountItemSystem", this.chargeAmountItemSystem);
     put(request, "lostItemChargeFeeFine", this.lostItemChargeFeeFine);

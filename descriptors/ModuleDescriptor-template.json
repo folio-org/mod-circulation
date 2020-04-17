@@ -92,7 +92,7 @@
     },
     {
       "id": "declare-item-lost",
-      "version": "0.1",
+      "version": "0.2",
       "handlers": [
         {
           "methods": ["POST"],
@@ -124,7 +124,7 @@
     },
     {
       "id": "claim-item-returned",
-      "version": "0.1",
+      "version": "0.2",
       "handlers": [
         {
           "methods": ["POST"],
@@ -134,6 +134,16 @@
           ],
           "modulePermissions": [
             "modperms.circulation.loans.claim-item-returned.post"
+          ]
+        },
+        {
+          "methods": ["POST"],
+          "pathPattern": "/circulation/loans/{id}/declare-claimed-returned-item-as-missing",
+          "permissionsRequired": [
+            "circulation.loans.declare-claimed-returned-item-as-missing.post"
+          ],
+          "modulePermissions": [
+            "modperms.circulation.loans.declare-claimed-returned-item-as-missing.post"
           ]
         }
       ]
@@ -955,6 +965,11 @@
       "description": "declares the loaned item as claimed returned"
     },
     {
+      "permissionName": "circulation.loans.declare-claimed-returned-item-as-missing.post",
+      "displayName": "circulation -  declare the claimed returned loaned item as missing",
+      "description": "declare the claimed returned loaned item as missing"
+    },
+    {
       "permissionName": "circulation.rules.get",
       "displayName": "Circulation - get circulation rules",
       "description": "Get circulation rules"
@@ -1078,6 +1093,7 @@
         "circulation.loans.collection.delete",
         "circulation.loans.change-due-date.post",
         "circulation.loans.claim-item-returned.post",
+        "circulation.loans.declare-claimed-returned-item-as-missing.post",
         "circulation.rules.put",
         "circulation.rules.get",
         "circulation.rules.loan-policy.get",
@@ -1229,6 +1245,8 @@
         "circulation-storage.loans.collection.get",
         "circulation.rules.loan-policy.get",
         "circulation.rules.request-policy.get",
+        "circulation.rules.overdue-fine-policy.get",
+        "lost-item-fees-policies.collection.get",
         "circulation-storage.requests.collection.get",
         "circulation-storage.requests.item.put",
         "circulation-storage.request-batch.item.post",
@@ -1899,9 +1917,26 @@
       "displayName": "module permissions for one op",
       "description": "to reduce X-Okapi-Token size",
       "subPermissions": [
+        "circulation-storage.loans.item.get",
         "circulation-storage.loans.item.put",
+        "inventory-storage.items.item.get",
+        "inventory-storage.items.item.put",
+        "inventory-storage.holdings.item.get",
+        "inventory-storage.instances.item.get",
+        "inventory-storage.locations.item.get",
+        "inventory-storage.location-units.libraries.item.get",
+        "inventory-storage.location-units.campuses.item.get",
+        "inventory-storage.location-units.institutions.item.get",
+        "inventory-storage.service-points.item.get",
+        "inventory-storage.material-types.item.get",
+        "inventory-storage.loan-types.item.get",
+        "inventory-storage.service-points.item.get",
+        "lost-item-fees-policies.item.get",
+        "owners.collection.get",
+        "feefines.collection.get",
+        "accounts.item.post",
         "users.item.get",
-        "inventory-storage.items.item.put"
+        "feefineactions.item.post"
       ],
       "visible": false
     },
@@ -1926,6 +1961,21 @@
     },
     {
       "permissionName": "modperms.circulation.loans.claim-item-returned.post",
+      "displayName": "module permissions for one op",
+      "description": "to reduce X-Okapi-Token size",
+      "subPermissions": [
+        "circulation-storage.loans.item.get",
+        "circulation-storage.loans.item.put",
+        "inventory-storage.items.item.get",
+        "inventory-storage.items.item.put",
+        "inventory-storage.holdings.item.get",
+        "inventory-storage.instances.item.get",
+        "users.item.get"
+      ],
+      "visible": false
+    },
+    {
+      "permissionName": "modperms.circulation.loans.declare-claimed-returned-item-as-missing.post",
       "displayName": "module permissions for one op",
       "description": "to reduce X-Okapi-Token size",
       "subPermissions": [

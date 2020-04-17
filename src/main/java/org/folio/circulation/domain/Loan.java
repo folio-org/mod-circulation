@@ -7,6 +7,7 @@ import static org.folio.circulation.domain.LoanAction.CHECKED_IN;
 import static org.folio.circulation.domain.LoanAction.CHECKED_OUT;
 import static org.folio.circulation.domain.LoanAction.CLAIMED_RETURNED;
 import static org.folio.circulation.domain.LoanAction.DECLARED_LOST;
+import static org.folio.circulation.domain.LoanAction.MISSING;
 import static org.folio.circulation.domain.LoanAction.RENEWED;
 import static org.folio.circulation.domain.LoanAction.RENEWED_THROUGH_OVERRIDE;
 import static org.folio.circulation.domain.representations.LoanProperties.ACTION_COMMENT;
@@ -38,7 +39,7 @@ import java.util.UUID;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.domain.policy.LoanPolicy;
-import org.folio.circulation.domain.policy.LostItemPolicy;
+import org.folio.circulation.domain.policy.lostitem.LostItemPolicy;
 import org.folio.circulation.domain.policy.OverdueFinePolicy;
 import org.folio.circulation.domain.representations.LoanProperties;
 import org.folio.circulation.support.ClockManager;
@@ -170,8 +171,8 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     return this;
   }
 
-  private void changeStatus(String status) {
-    representation.put(STATUS, new JsonObject().put("name", status));
+  private void changeStatus(LoanStatus status) {
+    representation.put(STATUS, new JsonObject().put("name", status.getValue()));
   }
 
   public void changeActionComment(String comment) {
@@ -187,19 +188,17 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
       return failedDueToServerError("Loan does not have a status");
     }
 
-    switch (getStatus()) {
-    case "Open":
-    case "Closed":
-      return succeeded(null);
-
-    default:
+    // Provided status name is not present in the enum
+    if (getStatus() == null) {
       return failedValidation("Loan status must be \"Open\" or \"Closed\"",
-        STATUS, getStatus());
+        STATUS, getStatusName());
     }
+
+    return succeeded(null);
   }
 
   public Result<Void> openLoanHasUserId() {
-    if (Objects.equals(getStatus(), "Open") && getUserId() == null) {
+    if (isOpen() && getUserId() == null) {
       return failedValidation("Open loan must have a user ID",
         USER_ID, getUserId());
     } else {
@@ -217,18 +216,22 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   public boolean isClosed() {
-    return StringUtils.equals(getStatus(), "Closed");
+    return getStatus() == LoanStatus.CLOSED;
   }
 
   public boolean isOpen() {
-    return StringUtils.equals(getStatus(), "Open");
+    return getStatus() == LoanStatus.OPEN;
   }
 
   public boolean wasDueDateChangedByRecall() {
     return getBooleanProperty(representation, "dueDateChangedByRecall");
   }
 
-  private String getStatus() {
+  private LoanStatus getStatus() {
+    return LoanStatus.fromValue(getStatusName());
+  }
+
+  private String getStatusName() {
     return getNestedStringProperty(representation, STATUS, "name");
   }
 
@@ -410,7 +413,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
 
     changeAction(action);
     removeActionComment();
-    changeStatus("Closed");
+    closeLoan();
     changeReturnDate(returnDateTime);
     changeSystemReturnDate(systemReturnDateTime);
     changeCheckInServicePointId(servicePointId);
@@ -518,5 +521,18 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
 
   private void changeClaimedReturnedDate(DateTime claimedReturnedDate) {
     write(representation, CLAIMED_RETURNED_DATE, claimedReturnedDate);
+  }
+
+  public Loan closeLoan() {
+    changeStatus(LoanStatus.CLOSED);
+    return this;
+  }
+
+  public Loan markItemMissing(String comment) {
+    changeAction(MISSING);
+    changeActionComment(comment);
+    changeItemStatusForItemAndLoan(ItemStatus.MISSING);
+
+    return closeLoan();
   }
 }

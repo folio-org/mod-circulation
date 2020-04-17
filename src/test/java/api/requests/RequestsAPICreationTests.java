@@ -1948,7 +1948,7 @@ public class RequestsAPICreationTests extends APITests {
     final IndividualResource checkOut = checkOutFixture
       .checkOutByBarcode(item, usersFixture.jessica());
 
-    loansFixture.claimItemReturned(new ClaimItemReturnedRequestBuilder()
+    claimItemReturnedFixture.claimItemReturned(new ClaimItemReturnedRequestBuilder()
         .forLoan(checkOut.getId().toString())
         .withItemClaimedReturnedDate(DateTime.now(DateTimeZone.UTC)));
 
@@ -2011,7 +2011,7 @@ public class RequestsAPICreationTests extends APITests {
       .forLoanId(loanId).on(dateTime)
       .withComment(comment);
 
-    loansFixture.declareItemLost(loanId, builder);
+    declareLostFixtures.declareItemLost(builder);
   }
 
   private UserManualBlockBuilder getManualBlockBuilder() {

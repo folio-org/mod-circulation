@@ -40,8 +40,12 @@ import api.support.fixtures.ChangeDueDateFixture;
 import api.support.fixtures.CheckInFixture;
 import api.support.fixtures.CheckOutFixture;
 import api.support.fixtures.CirculationRulesFixture;
+import api.support.fixtures.ClaimItemReturnedFixture;
+import api.support.fixtures.DeclareLostFixtures;
 import api.support.fixtures.EndPatronSessionClient;
 import api.support.fixtures.ExpiredSessionProcessingClient;
+import api.support.fixtures.FeeFineTypeFixture;
+import api.support.fixtures.FeeFineOwnerFixture;
 import api.support.fixtures.HoldingsFixture;
 import api.support.fixtures.IdentifierTypesFixture;
 import api.support.fixtures.InstancesFixture;
@@ -240,6 +244,12 @@ public abstract class APITests {
 
   protected final TemplateFixture templateFixture = new TemplateFixture(templateClient);
   protected final IdentifierTypesFixture identifierTypesFixture = new IdentifierTypesFixture();
+  protected final FeeFineOwnerFixture feeFineOwnerFixture =
+    new FeeFineOwnerFixture(feeFineOwnersClient, servicePointsFixture);
+  protected final FeeFineTypeFixture feeFineTypeFixture = new FeeFineTypeFixture(feeFinesClient);
+  protected final DeclareLostFixtures declareLostFixtures = new DeclareLostFixtures();
+  protected final ClaimItemReturnedFixture claimItemReturnedFixture =
+    new ClaimItemReturnedFixture(restAssuredClient);
 
   protected APITests() {
     this(true);
@@ -283,6 +293,8 @@ public abstract class APITests {
     if (initialiseCirculationRules) {
       useDefaultRollingPolicyCirculationRules();
     }
+
+    usersFixture.defaultAdmin();
   }
 
   @AfterClass
@@ -333,6 +345,10 @@ public abstract class APITests {
     cancellationReasonsFixture.cleanUp();
     instancesFixture.cleanUp();
     userManualBlocksFixture.cleanUp();
+
+    feeFineOwnerFixture.cleanUp();
+    feeFineTypeFixture.cleanUp();
+    accountsClient.deleteAll();
   }
 
   //Needs to be done each time as some tests manipulate the rules
@@ -440,6 +456,13 @@ public abstract class APITests {
       noticePoliciesFixture.create(noticePolicy).getId(),
       overdueFinePoliciesFixture.facultyStandard().getId(),
       lostItemFeePoliciesFixture.facultyStandard().getId());
+  }
+
+  protected void useLostItemPolicy(UUID id) {
+    useFallbackPolicies(loanPoliciesFixture.canCirculateRolling().getId(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
+      noticePoliciesFixture.activeNotice().getId(),
+      overdueFinePoliciesFixture.facultyStandard().getId(), id);
   }
 
   /**

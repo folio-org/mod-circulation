@@ -16,12 +16,15 @@ public class DeclareItemLostRequest {
   private final String loanId;
   private final DateTime declaredLostDateTime;
   private final String comment;
+  private final String servicePointId;
 
   private DeclareItemLostRequest(String comment, DateTime declaredLostDateTime,
-    String loanId) {
+    String loanId, String servicePointId) {
+
     this.comment = comment;
     this.declaredLostDateTime = declaredLostDateTime;
     this.loanId = loanId;
+    this.servicePointId = servicePointId;
   }
 
   public static Result<DeclareItemLostRequest> from(JsonObject json,
@@ -37,7 +40,8 @@ public class DeclareItemLostRequest {
           getProperty(json, DECLARED_LOST_DATETIME));
       }
 
-    return succeeded(new DeclareItemLostRequest(comment, dateTime, loanId));
+    return succeeded(new DeclareItemLostRequest(comment, dateTime, loanId,
+      getProperty(json, "servicePointId")));
   }
 
   public String getComment() {
@@ -50,5 +54,9 @@ public class DeclareItemLostRequest {
 
   public String getLoanId() {
     return loanId;
+  }
+
+  public String getServicePointId() {
+    return servicePointId;
   }
 }

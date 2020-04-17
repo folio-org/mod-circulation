@@ -413,7 +413,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
     final JsonObject loanJson = checkOutFixture.checkOutByBarcode(smallAngryPlanet,
       usersFixture.jessica(), loanDate).getJson();
 
-    loansFixture.declareItemLost(loanJson);
+    declareLostFixtures.declareItemLost(loanJson);
 
     loansFixture.attemptRenewal(422, smallAngryPlanet, jessica);
 

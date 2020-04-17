@@ -109,7 +109,7 @@ public class ChangeDueDateTests extends APITests {
     final ClaimItemReturnedRequestBuilder claimedItemBuilder =
      (new ClaimItemReturnedRequestBuilder()).forLoan(loan.getId().toString());
 
-    Response claimedLoan = loansFixture.claimItemReturned(claimedItemBuilder);
+    Response claimedLoan = claimItemReturnedFixture.claimItemReturned(claimedItemBuilder);
     assertThat(claimedLoan, hasStatus(HTTP_NO_CONTENT));
 
     Response fetchedLoan = loansClient.getById(loan.getId());
@@ -139,7 +139,7 @@ public class ChangeDueDateTests extends APITests {
     final ClaimItemReturnedRequestBuilder claimedItemBuilder =
      (new ClaimItemReturnedRequestBuilder()).forLoan(loan.getId().toString());
 
-    Response claimedLoan = loansFixture.claimItemReturned(claimedItemBuilder);
+    Response claimedLoan = claimItemReturnedFixture.claimItemReturned(claimedItemBuilder);
     assertThat(claimedLoan, hasStatus(HTTP_NO_CONTENT));
 
     Response fetchedLoan = loansClient.getById(loan.getId());
@@ -294,7 +294,7 @@ public class ChangeDueDateTests extends APITests {
     final IndividualResource loan = checkOutFixture.checkOutByBarcode(smallAngryPlanet);
     final JsonObject loanJson = loan.getJson();
 
-    loansFixture.declareItemLost(loanJson);
+    declareLostFixtures.declareItemLost(loanJson);
 
     Response fetchedLoan = loansClient.getById(loan.getId());
     JsonObject loanToChange = fetchedLoan.getJson().copy();

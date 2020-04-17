@@ -39,13 +39,11 @@ import io.vertx.core.json.JsonObject;
 
 public class LoansFixture {
 
-  private final ServicePointsFixture servicePointsFixture;
   private final RestAssuredClient restAssuredClient;
 
   public LoansFixture(
     ServicePointsFixture servicePointsFixture) {
 
-    this.servicePointsFixture = servicePointsFixture;
     restAssuredClient = new RestAssuredClient(getOkapiHeadersFromContext());
   }
 
@@ -288,7 +286,4 @@ public class LoansFixture {
     return loansUrl(String.format("/%s", id));
   }
 
-  private IndividualResource defaultServicePoint() {
-    return servicePointsFixture.cd1();
-  }
 }
