@@ -5,12 +5,11 @@ import static api.support.APITestContext.getOkapiHeadersFromContext;
 import static api.support.APITestContext.undeployVerticles;
 import static api.support.http.InterfaceUrls.circulationRulesUrl;
 import static api.support.http.api.support.NamedQueryStringParameter.namedParameter;
+import static org.folio.circulation.domain.representations.LoanProperties.PATRON_GROUP_AT_CHECKOUT;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.core.Is.is;
-import static org.hamcrest.MatcherAssert.assertThat;
-
-import static org.folio.circulation.domain.representations.LoanProperties.PATRON_GROUP_AT_CHECKOUT;
 
 import java.lang.invoke.MethodHandles;
 import java.net.URL;
@@ -23,14 +22,27 @@ import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
+import org.folio.circulation.support.ClockManager;
+import org.folio.circulation.support.http.client.IndividualResource;
+import org.joda.time.DateTime;
+import org.junit.After;
+import org.junit.AfterClass;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import api.support.builders.LoanPolicyBuilder;
 import api.support.builders.NoticePolicyBuilder;
 import api.support.fixtures.AddressTypesFixture;
 import api.support.fixtures.CancellationReasonsFixture;
 import api.support.fixtures.CirculationRulesFixture;
 import api.support.fixtures.ClaimItemReturnedFixture;
+import api.support.fixtures.DeclareLostFixtures;
 import api.support.fixtures.EndPatronSessionClient;
 import api.support.fixtures.ExpiredSessionProcessingClient;
+import api.support.fixtures.FeeFineTypeFixture;
+import api.support.fixtures.FeeFineOwnerFixture;
 import api.support.fixtures.HoldingsFixture;
 import api.support.fixtures.IdentifierTypesFixture;
 import api.support.fixtures.InstancesFixture;
@@ -56,16 +68,6 @@ import api.support.fixtures.UsersFixture;
 import api.support.http.QueryStringParameter;
 import api.support.http.ResourceClient;
 import io.vertx.core.json.JsonObject;
-import org.joda.time.DateTime;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import org.folio.circulation.support.ClockManager;
-import org.folio.circulation.support.http.client.IndividualResource;
 
 public abstract class APITests {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
@@ -231,6 +233,10 @@ public abstract class APITests {
 
   protected final TemplateFixture templateFixture = new TemplateFixture(templateClient);
   protected final IdentifierTypesFixture identifierTypesFixture = new IdentifierTypesFixture();
+  protected final FeeFineOwnerFixture feeFineOwnerFixture =
+    new FeeFineOwnerFixture(feeFineOwnersClient, servicePointsFixture);
+  protected final FeeFineTypeFixture feeFineTypeFixture = new FeeFineTypeFixture(feeFinesClient);
+  protected final DeclareLostFixtures declareLostFixtures = new DeclareLostFixtures();
   protected final ClaimItemReturnedFixture claimItemReturnedFixture =
     new ClaimItemReturnedFixture(restAssuredClient);
 
@@ -276,6 +282,8 @@ public abstract class APITests {
     if (initialiseCirculationRules) {
       useDefaultRollingPolicyCirculationRules();
     }
+
+    usersFixture.defaultAdmin();
   }
 
   @AfterClass
@@ -326,6 +334,10 @@ public abstract class APITests {
     cancellationReasonsFixture.cleanUp();
     instancesFixture.cleanUp();
     userManualBlocksFixture.cleanUp();
+
+    feeFineOwnerFixture.cleanUp();
+    feeFineTypeFixture.cleanUp();
+    accountsClient.deleteAll();
   }
 
   //Needs to be done each time as some tests manipulate the rules
@@ -433,6 +445,13 @@ public abstract class APITests {
       noticePoliciesFixture.create(noticePolicy).getId(),
       overdueFinePoliciesFixture.facultyStandard().getId(),
       lostItemFeePoliciesFixture.facultyStandard().getId());
+  }
+
+  protected void useLostItemPolicy(UUID id) {
+    useFallbackPolicies(loanPoliciesFixture.canCirculateRolling().getId(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
+      noticePoliciesFixture.activeNotice().getId(),
+      overdueFinePoliciesFixture.facultyStandard().getId(), id);
   }
 
   /**
