@@ -192,7 +192,7 @@ public class OverdueFineCalculatorService {
         params.feeFine, fineAmount);
 
     return repos.accountRepository.create(accountRepresentation)
-      .thenCompose(rac -> rac.after(account -> this.createFeeFineAction(account, params)));
+      .thenCompose(rac -> rac.after(account -> createFeeFineAction(account, params)));
   }
 
   private CompletableFuture<Result<FeeFineAction>> createFeeFineAction(
