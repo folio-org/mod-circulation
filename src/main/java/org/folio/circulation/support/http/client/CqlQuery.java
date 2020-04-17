@@ -42,6 +42,10 @@ public class CqlQuery implements QueryParameter {
     return of(() -> new CqlQuery(String.format("%s=\"\"", index), none()));
   }
 
+  public static Result<CqlQuery> match(String index, String value) {
+    return Result.of(() -> new CqlQuery(format("%s=\"%s\"", index, value), none()));
+  }
+
   public static Result<CqlQuery> exactMatch(String index, String value) {
     return Result.of(() -> new CqlQuery(format("%s==\"%s\"", index, value), none()));
   }

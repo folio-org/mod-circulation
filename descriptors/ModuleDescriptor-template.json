@@ -92,7 +92,7 @@
     },
     {
       "id": "declare-item-lost",
-      "version": "0.1",
+      "version": "0.2",
       "handlers": [
         {
           "methods": ["POST"],
@@ -1895,9 +1895,26 @@
       "displayName": "module permissions for one op",
       "description": "to reduce X-Okapi-Token size",
       "subPermissions": [
+        "circulation-storage.loans.item.get",
         "circulation-storage.loans.item.put",
+        "inventory-storage.items.item.get",
+        "inventory-storage.items.item.put",
+        "inventory-storage.holdings.item.get",
+        "inventory-storage.instances.item.get",
+        "inventory-storage.locations.item.get",
+        "inventory-storage.location-units.libraries.item.get",
+        "inventory-storage.location-units.campuses.item.get",
+        "inventory-storage.location-units.institutions.item.get",
+        "inventory-storage.service-points.item.get",
+        "inventory-storage.material-types.item.get",
+        "inventory-storage.loan-types.item.get",
+        "inventory-storage.service-points.item.get",
+        "lost-item-fees-policies.item.get",
+        "owners.collection.get",
+        "feefines.collection.get",
+        "accounts.item.post",
         "users.item.get",
-        "inventory-storage.items.item.put"
+        "feefineactions.item.post"
       ],
       "visible": false
     },

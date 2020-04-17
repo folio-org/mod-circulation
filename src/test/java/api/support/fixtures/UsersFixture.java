@@ -14,6 +14,7 @@ import java.util.function.Function;
 
 import org.folio.circulation.support.http.client.IndividualResource;
 
+import api.support.APITestContext;
 import api.support.builders.UserBuilder;
 import api.support.http.ResourceClient;
 
@@ -115,5 +116,12 @@ public class UsersFixture {
   public void remove(IndividualResource user) {
 
     userRecordCreator.delete(user);
+  }
+
+  public IndividualResource defaultAdmin() {
+    return userRecordCreator.createIfAbsent(new UserBuilder()
+      .withName("Admin", "Admin")
+      .withNoBarcode()
+      .withId(APITestContext.getUserId()));
   }
 }

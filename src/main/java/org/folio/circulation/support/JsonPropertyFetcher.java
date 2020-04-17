@@ -1,5 +1,6 @@
 package org.folio.circulation.support;
 
+import java.math.BigDecimal;
 import java.util.UUID;
 
 import org.joda.time.DateTime;
@@ -163,6 +164,17 @@ public class JsonPropertyFetcher {
       return representation.getDouble(propertyName, defaultValue);
     } else {
       return defaultValue;
+    }
+  }
+
+  public static BigDecimal getBigDecimalProperty(
+    JsonObject representation, String propertyName) {
+
+    if (representation != null && representation.getValue(propertyName) != null) {
+      // the property can be either a number or a string
+      return new BigDecimal(representation.getValue(propertyName).toString());
+    } else {
+      return null;
     }
   }
 

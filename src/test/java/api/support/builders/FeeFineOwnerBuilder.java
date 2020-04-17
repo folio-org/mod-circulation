@@ -2,8 +2,10 @@ package api.support.builders;
 
 import static org.folio.circulation.support.JsonPropertyWriter.write;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
@@ -66,6 +68,16 @@ public class FeeFineOwnerBuilder extends JsonBuilder implements Builder {
     return new FeeFineOwnerBuilder(id, owner, desc, servicePointOwner, defaultChargeNoticeId,
       defaultActionNoticeId);
   }
+
+  public FeeFineOwnerBuilder withServicePointOwner(UUID ... servicePointIds) {
+    final List<JsonObject> servicePointOwners = Arrays.stream(servicePointIds)
+      .map(UUID::toString)
+      .map(id -> new JsonObject().put("value", id))
+      .collect(Collectors.toList());
+
+    return withServicePointOwner(servicePointOwners);
+  }
+
   public FeeFineOwnerBuilder withDefaultChargeNoticeId(String defaultChargeNoticeId) {
     return new FeeFineOwnerBuilder(id, owner, desc, servicePointOwner, defaultChargeNoticeId,
       defaultActionNoticeId);
