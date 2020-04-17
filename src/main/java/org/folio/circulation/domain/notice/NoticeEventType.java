@@ -3,6 +3,7 @@ package org.folio.circulation.domain.notice;
 import java.util.Arrays;
 import java.util.Objects;
 
+// TODO: duplicates TriggeringEvent, remove
 public enum NoticeEventType {
 
   CHECK_IN("Check in"),

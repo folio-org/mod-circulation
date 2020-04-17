@@ -61,15 +61,15 @@ public class FeeFineScheduledNoticesTests extends APITests {
   private UUID actionId;
   private UUID accountId;
 
+  static {
+    TEMPLATE_IDS.put(UPON_AT, randomUUID());
+    TEMPLATE_IDS.put(AFTER, randomUUID());
+  }
+
   private final TriggeringEvent triggeringEvent;
 
   public FeeFineScheduledNoticesTests(TriggeringEvent triggeringEvent) {
     this.triggeringEvent = triggeringEvent;
-  }
-
-  static {
-    TEMPLATE_IDS.put(UPON_AT, randomUUID());
-    TEMPLATE_IDS.put(AFTER, randomUUID());
   }
 
   @Parameterized.Parameters
