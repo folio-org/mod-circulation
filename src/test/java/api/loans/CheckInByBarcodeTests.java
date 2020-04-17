@@ -70,7 +70,7 @@ public class CheckInByBarcodeTests extends APITests {
 
     final String anotherLocationId = locationsFixture.thirdFloor().getId().toString();
 
-    IndividualResource nod = itemsFixture.basedUponNod(
+    final IndividualResource nod = itemsFixture.basedUponNod(
       item -> item
         .withTemporaryLocation(homeLocation.getId())
         .withEnumeration("v.70:no.1-6")
@@ -85,8 +85,6 @@ public class CheckInByBarcodeTests extends APITests {
     JsonObject update = nod.getJson();
     update.put("temporaryLocationId", anotherLocationId);
     itemsFixture.updateItem(nod.getId(), update);
-
-    nod = new IndividualResource( itemsFixture.getItem(nod.getId()) );
 
     final CheckInByBarcodeResponse checkInResponse = loansFixture.checkInByBarcode(
       new CheckInByBarcodeRequestBuilder()
@@ -139,13 +137,6 @@ public class CheckInByBarcodeTests extends APITests {
     assertThat("ID should be included for item",
       itemFromResponse.getString("id"), is(nod.getId()));
 
-    assertThat("New location should not equal old location",
-      homeLocation.getId().toString(), not(anotherLocationId));
-    assertThat("The item's temporary location ID should be updated",
-      nod.getJson().getString("temporaryLocationId"), is(anotherLocationId));
-    assertThat("itemEffectiveLocationIdAtCheckOut should match the original location ID at checkout",
-      loanRepresentation.getString("itemEffectiveLocationIdAtCheckOut"), is(homeLocation.getId().toString()));
-
     assertThat("barcode is included for item",
       itemFromResponse.getString("barcode"), is("565578437802"));
 
@@ -162,6 +153,13 @@ public class CheckInByBarcodeTests extends APITests {
 
     assertThat("item status is not available",
       updatedNod.getJsonObject("status").getString("name"), is("Available"));
+
+    assertThat("New location should not equal old location",
+      homeLocation.getId().toString(), not(anotherLocationId));
+    assertThat("The item's temporary location ID should be updated",
+      updatedNod.getString("temporaryLocationId"), is(anotherLocationId));
+    assertThat("itemEffectiveLocationIdAtCheckOut should match the original location ID at checkout",
+      loanRepresentation.getString("itemEffectiveLocationIdAtCheckOut"), is(homeLocation.getId().toString()));
 
     final JsonObject storedLoan = loansStorageClient.getById(loan.getId()).getJson();
 
