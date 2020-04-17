@@ -17,6 +17,7 @@ import api.support.http.OkapiHeaders;
 import io.vertx.core.json.JsonObject;
 
 public class CheckInFixture {
+
   private final ServicePointsFixture servicePointsFixture;
   private final RestAssuredClient restAssuredClient;
 
@@ -27,12 +28,15 @@ public class CheckInFixture {
     restAssuredClient = new RestAssuredClient(getOkapiHeadersFromContext());
   }
 
-  public Response attemptCheckInByBarcode(CheckInByBarcodeRequestBuilder builder) {
+  public Response attemptCheckInByBarcode(
+    CheckInByBarcodeRequestBuilder builder) {
+
     return attemptCheckInByBarcode(builder, getOkapiHeadersFromContext());
   }
 
   public Response attemptCheckInByBarcode(
-    CheckInByBarcodeRequestBuilder builder, OkapiHeaders okapiHeaders) {
+    CheckInByBarcodeRequestBuilder builder, 
+    OkapiHeaders okapiHeaders) {
 
     return restAssuredClient
       .post(builder.create(), checkInByBarcodeUrl(), okapiHeaders);
@@ -65,13 +69,17 @@ public class CheckInFixture {
   }
 
   public CheckInByBarcodeResponse checkInByBarcode(
-    IndividualResource item, UUID servicePointId) {
+    IndividualResource item, 
+    UUID servicePointId) {
 
     return checkInByBarcode(item, DateTime.now(DateTimeZone.UTC), servicePointId);
   }
 
-  public void checkInByBarcode(IndividualResource item, DateTime checkInDate,
-      UUID servicePointId, OkapiHeaders okapiHeaders) {
+  public void checkInByBarcode(
+    IndividualResource item, 
+    DateTime checkInDate,
+    UUID servicePointId, 
+    OkapiHeaders okapiHeaders) {
 
     final JsonObject representation = new CheckInByBarcodeRequestBuilder()
       .forItem(item)

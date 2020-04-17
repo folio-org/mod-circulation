@@ -30,11 +30,14 @@ public class CheckOutFixture {
     restAssuredClient = new RestAssuredClient(getOkapiHeadersFromContext());
   }
 
-  public IndividualResource checkOutByBarcode(IndividualResource item) {
+  public IndividualResource checkOutByBarcode(
+    IndividualResource item) {
+
     return checkOutByBarcode(item, usersFixture.jessica());
   }
 
-  public IndividualResource checkOutByBarcode(IndividualResource item,
+  public IndividualResource checkOutByBarcode(
+    IndividualResource item,
     IndividualResource to) {
 
     return checkOutByBarcode(new CheckOutByBarcodeRequestBuilder()

@@ -224,9 +224,9 @@ public class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests 
       String baseBarcode = Integer.toString(i);
       checkOutFixture.checkOutByBarcode(
         itemsFixture.basedUponNod(b -> b.withBarcode(baseBarcode + "1")), james);
-        checkOutFixture.checkOutByBarcode(
+      checkOutFixture.checkOutByBarcode(
         itemsFixture.basedUponNod((b -> b.withBarcode(baseBarcode + "2"))), steve);
-        checkOutFixture.checkOutByBarcode(
+      checkOutFixture.checkOutByBarcode(
         itemsFixture.basedUponNod((b -> b.withBarcode(baseBarcode + "3"))), rebecca);
     }
 

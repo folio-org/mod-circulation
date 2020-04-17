@@ -16,12 +16,16 @@ public class ChangeDueDateFixture {
     restAssuredClient = new RestAssuredClient(getOkapiHeadersFromContext());
   }
 
-  public Response changeDueDate(ChangeDueDateRequestBuilder request) {
+  public Response changeDueDate(
+    ChangeDueDateRequestBuilder request) {
+
     return restAssuredClient.post(request.create(),
       changeDueDateURL(request.getLoanId()), 204, "change-due-date-request");
   }
 
-  public Response attemptChangeDueDate(ChangeDueDateRequestBuilder request) {
+  public Response attemptChangeDueDate(
+    ChangeDueDateRequestBuilder request) {
+
     return restAssuredClient.post(request.create(),
         changeDueDateURL(request.getLoanId()), "change-due-date-request");
   }

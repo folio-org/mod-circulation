@@ -180,7 +180,7 @@ public class DueDateScheduledNoticesProcessingTests extends APITests {
       null,
       secondRecurringRunTime);
 
-      checkInFixture.checkInByBarcode(item);
+    checkInFixture.checkInByBarcode(item);
     //Clear sent notices again
     patronNoticesClient.deleteAll();
 

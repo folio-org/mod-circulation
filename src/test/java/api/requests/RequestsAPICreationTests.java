@@ -1311,7 +1311,7 @@ public class RequestsAPICreationTests extends APITests {
   }
 
   public static IndividualResource setupPagedItem(IndividualResource requestPickupServicePoint, ItemsFixture itemsFixture,
-                                                  ResourceClient requestClient, UsersFixture usersFixture) {
+    ResourceClient requestClient, UsersFixture usersFixture) {
 
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
 
@@ -1328,7 +1328,7 @@ public class RequestsAPICreationTests extends APITests {
   }
 
   public static IndividualResource setupItemAwaitingPickup(IndividualResource requestPickupServicePoint, ResourceClient requestsClient, ResourceClient itemsClient,
-                                                           ItemsFixture itemsFixture, UsersFixture usersFixture, CheckInFixture checkInFixture) {
+    ItemsFixture itemsFixture, UsersFixture usersFixture, CheckInFixture checkInFixture) {
 
     //Setting up an item with AWAITING_PICKUP status
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
@@ -1347,9 +1347,8 @@ public class RequestsAPICreationTests extends APITests {
     return smallAngryPlanet;
   }
 
-  public static IndividualResource setupItemInTransit(IndividualResource requestPickupServicePoint, IndividualResource pickupServicePoint,
-                                                      ItemsFixture itemsFixture, ResourceClient requestsClient,
-                                                      UsersFixture usersFixture, RequestsFixture requestsFixture, CheckInFixture checkInFixture) {
+  public static IndividualResource setupItemInTransit(IndividualResource requestPickupServicePoint, IndividualResource pickupServicePoint, ItemsFixture itemsFixture, 
+    ResourceClient requestsClient, UsersFixture usersFixture, RequestsFixture requestsFixture, CheckInFixture checkInFixture) {
 
     //In order to get the item into the IN_TRANSIT state, for now we need to go the round-about route of delivering it to the unintended pickup location first
     //then check it in at the intended pickup location.
@@ -2016,6 +2015,7 @@ public class RequestsAPICreationTests extends APITests {
   }
 
   private UserManualBlockBuilder getManualBlockBuilder() {
+
     return new UserManualBlockBuilder()
       .withType("Manual")
       .withDesc("Display description")
@@ -2025,9 +2025,10 @@ public class RequestsAPICreationTests extends APITests {
   }
 
   private RequestBuilder createRequestBuilder(IndividualResource item,
-                                              IndividualResource requester,
-                                              UUID pickupServicePointId,
-                                              DateTime requestDate) {
+    IndividualResource requester,
+    UUID pickupServicePointId,
+    DateTime requestDate) {
+
     return new RequestBuilder()
       .withId(UUID.randomUUID())
       .open()

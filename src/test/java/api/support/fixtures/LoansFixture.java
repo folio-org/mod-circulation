@@ -5,7 +5,6 @@ import static api.support.APITestContext.getOkapiHeadersFromContext;
 import static api.support.MultipleJsonRecords.multipleRecordsFrom;
 import static api.support.http.AdditionalHttpStatusCodes.UNPROCESSABLE_ENTITY;
 import static api.support.http.CqlQuery.noQuery;
-import static api.support.http.InterfaceUrls.changeDueDateURL;
 import static api.support.http.InterfaceUrls.claimItemReturnedURL;
 import static api.support.http.InterfaceUrls.declareLoanItemLostURL;
 import static api.support.http.InterfaceUrls.loansUrl;
@@ -27,7 +26,6 @@ import org.joda.time.DateTimeZone;
 
 import api.support.MultipleJsonRecords;
 import api.support.RestAssuredClient;
-import api.support.builders.ChangeDueDateRequestBuilder;
 import api.support.builders.ClaimItemReturnedRequestBuilder;
 import api.support.builders.DeclareItemLostRequestBuilder;
 import api.support.builders.LoanBuilder;

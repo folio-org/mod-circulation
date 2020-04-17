@@ -38,7 +38,7 @@ public class CheckoutWithRequestScenarioTests extends APITests {
       .withPickupServicePointId(pickupServicePointId)
       .by(charlotte));
 
-      checkOutFixture.checkOutByBarcode(smallAngryPlanet, charlotte);
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet, charlotte);
 
     Response changedItem = itemsClient.getById(smallAngryPlanet.getId());
 
@@ -67,7 +67,7 @@ public class CheckoutWithRequestScenarioTests extends APITests {
       overdueFinePoliciesFixture.facultyStandard().getId(),
       lostItemFeePoliciesFixture.facultyStandard().getId());
 
-      checkOutFixture.checkOutByBarcode(smallAngryPlanet, usersFixture.steve());
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet, usersFixture.steve());
 
     requestsClient.create(new RequestBuilder()
       .hold()
