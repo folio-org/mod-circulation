@@ -21,24 +21,18 @@ public class CheckOutFixture {
   private final ServicePointsFixture servicePointsFixture;
   private final RestAssuredClient restAssuredClient;
 
-  public CheckOutFixture(
-    UsersFixture usersFixture,
-    ServicePointsFixture servicePointsFixture) {
-
+  public CheckOutFixture(UsersFixture usersFixture, ServicePointsFixture servicePointsFixture) {
     this.usersFixture = usersFixture;
     this.servicePointsFixture = servicePointsFixture;
     restAssuredClient = new RestAssuredClient(getOkapiHeadersFromContext());
   }
 
-  public IndividualResource checkOutByBarcode(
-    IndividualResource item) {
+  public IndividualResource checkOutByBarcode(IndividualResource item) {
 
     return checkOutByBarcode(item, usersFixture.jessica());
   }
 
-  public IndividualResource checkOutByBarcode(
-    IndividualResource item,
-    IndividualResource to) {
+  public IndividualResource checkOutByBarcode(IndividualResource item, IndividualResource to) {
 
     return checkOutByBarcode(new CheckOutByBarcodeRequestBuilder()
       .forItem(item)
@@ -46,10 +40,8 @@ public class CheckOutFixture {
       .at(defaultServicePoint()));
   }
 
-  public IndividualResource checkOutByBarcode(
-    IndividualResource item,
-    IndividualResource to,
-    DateTime loanDate) {
+  public IndividualResource checkOutByBarcode(IndividualResource item,
+    IndividualResource to, DateTime loanDate) {
 
     return checkOutByBarcode(new CheckOutByBarcodeRequestBuilder()
       .forItem(item)
@@ -58,9 +50,7 @@ public class CheckOutFixture {
       .at(defaultServicePoint()));
   }
 
-  public IndividualResource checkOutByBarcode(
-    CheckOutByBarcodeRequestBuilder builder) {
-
+  public IndividualResource checkOutByBarcode(CheckOutByBarcodeRequestBuilder builder) {
     JsonObject request = builder.create();
 
     return new IndividualResource(
@@ -68,24 +58,18 @@ public class CheckOutFixture {
         "check-out-by-barcode-request"));
   }
 
-  public Response attemptCheckOutByBarcode(
-    IndividualResource item,
-    IndividualResource to) {
-
+  public Response attemptCheckOutByBarcode(IndividualResource item, IndividualResource to) {
     return attemptCheckOutByBarcode(new CheckOutByBarcodeRequestBuilder()
       .forItem(item)
       .to(to)
       .at(UUID.randomUUID()));
   }
 
-  public Response attemptCheckOutByBarcode(
-    CheckOutByBarcodeRequestBuilder builder) {
-
+  public Response attemptCheckOutByBarcode(CheckOutByBarcodeRequestBuilder builder) {
     return attemptCheckOutByBarcode(422, builder);
   }
 
-  public Response attemptCheckOutByBarcode(
-    int expectedStatusCode,
+  public Response attemptCheckOutByBarcode(int expectedStatusCode,
     CheckOutByBarcodeRequestBuilder builder) {
 
     JsonObject request = builder.create();
@@ -110,8 +94,7 @@ public class CheckOutFixture {
     return attemptOverrideCheckOutByBarcode(422, builder);
   }
 
-  public Response attemptOverrideCheckOutByBarcode(
-    int expectedStatusCode,
+  public Response attemptOverrideCheckOutByBarcode(int expectedStatusCode,
     OverrideCheckOutByBarcodeRequestBuilder builder) {
 
     JsonObject request = builder.create();
@@ -123,5 +106,4 @@ public class CheckOutFixture {
   private IndividualResource defaultServicePoint() {
     return servicePointsFixture.cd1();
   }
-
 }
