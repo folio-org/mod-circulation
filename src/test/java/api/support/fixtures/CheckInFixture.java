@@ -17,50 +17,40 @@ import api.support.http.OkapiHeaders;
 import io.vertx.core.json.JsonObject;
 
 public class CheckInFixture {
-
   private final ServicePointsFixture servicePointsFixture;
   private final RestAssuredClient restAssuredClient;
 
-  public CheckInFixture(
-    ServicePointsFixture servicePointsFixture) {
+  public CheckInFixture(ServicePointsFixture servicePointsFixture) {
 
     this.servicePointsFixture = servicePointsFixture;
     restAssuredClient = new RestAssuredClient(getOkapiHeadersFromContext());
   }
 
-  public Response attemptCheckInByBarcode(
-    CheckInByBarcodeRequestBuilder builder) {
+  public Response attemptCheckInByBarcode(CheckInByBarcodeRequestBuilder builder) {
 
     return attemptCheckInByBarcode(builder, getOkapiHeadersFromContext());
   }
 
-  public Response attemptCheckInByBarcode(
-    CheckInByBarcodeRequestBuilder builder, 
+  public Response attemptCheckInByBarcode(CheckInByBarcodeRequestBuilder builder,
     OkapiHeaders okapiHeaders) {
 
-    return restAssuredClient
-      .post(builder.create(), checkInByBarcodeUrl(), okapiHeaders);
+    return restAssuredClient.post(builder.create(), checkInByBarcodeUrl(), okapiHeaders);
   }
 
-  public CheckInByBarcodeResponse checkInByBarcode(
-    CheckInByBarcodeRequestBuilder builder) {
-
+  public CheckInByBarcodeResponse checkInByBarcode(CheckInByBarcodeRequestBuilder builder) {
     return new CheckInByBarcodeResponse(restAssuredClient.post(builder.create(),
       checkInByBarcodeUrl(), 200, "check-in-by-barcode-request"));
   }
 
   public CheckInByBarcodeResponse checkInByBarcode(IndividualResource item) {
-
     return checkInByBarcode(new CheckInByBarcodeRequestBuilder()
       .forItem(item)
       .on(DateTime.now(DateTimeZone.UTC))
       .at(defaultServicePoint()));
   }
 
-  public CheckInByBarcodeResponse checkInByBarcode(
-    IndividualResource item,
-    DateTime checkInDate,
-    UUID servicePointId) {
+  public CheckInByBarcodeResponse checkInByBarcode(IndividualResource item,
+    DateTime checkInDate, UUID servicePointId) {
 
     return checkInByBarcode(new CheckInByBarcodeRequestBuilder()
       .forItem(item)
@@ -68,26 +58,21 @@ public class CheckInFixture {
       .at(servicePointId));
   }
 
-  public CheckInByBarcodeResponse checkInByBarcode(
-    IndividualResource item, 
+  public CheckInByBarcodeResponse checkInByBarcode(IndividualResource item,
     UUID servicePointId) {
 
     return checkInByBarcode(item, DateTime.now(DateTimeZone.UTC), servicePointId);
   }
 
-  public void checkInByBarcode(
-    IndividualResource item, 
-    DateTime checkInDate,
-    UUID servicePointId, 
-    OkapiHeaders okapiHeaders) {
+  public void checkInByBarcode(IndividualResource item, DateTime checkInDate,
+    UUID servicePointId, OkapiHeaders okapiHeaders) {
 
     final JsonObject representation = new CheckInByBarcodeRequestBuilder()
       .forItem(item)
       .on(checkInDate)
       .at(servicePointId).create();
 
-    restAssuredClient.post(representation, checkInByBarcodeUrl(), 200,
-      okapiHeaders);
+    restAssuredClient.post(representation, checkInByBarcodeUrl(), 200, okapiHeaders);
   }
 
   private IndividualResource defaultServicePoint() {
