@@ -789,7 +789,7 @@ abstract class RenewalAPITests extends APITests {
     final JsonObject loanJson = loansFixture.checkOutByBarcode(smallAngryPlanet, usersFixture.jessica())
       .getJson();
 
-    loansFixture.declareItemLost(loanJson);
+    declareLostFixtures.declareItemLost(loanJson);
 
     final Response response = attemptRenewal(smallAngryPlanet, jessica);
 

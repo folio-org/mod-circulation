@@ -15,6 +15,7 @@ import java.util.stream.Collectors;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.domain.MultipleRecords;
+import org.folio.circulation.domain.policy.lostitem.LostItemPolicy;
 import org.folio.circulation.rules.AppliedRuleConditions;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.FetchSingleRecord;
@@ -93,7 +94,7 @@ public class LostItemPolicyRepository extends CirculationPolicyRepository<LostIt
         .thenApply(result -> result.map(loan::withLostItemPolicy)));
   }
 
-  private CompletableFuture<Result<LostItemPolicy>> getLostItemPolicyById(
+  public CompletableFuture<Result<LostItemPolicy>> getLostItemPolicyById(
     String lostItemPolicyId) {
 
     if (isNull(lostItemPolicyId)) {

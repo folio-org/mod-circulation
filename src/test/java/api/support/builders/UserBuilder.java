@@ -23,11 +23,12 @@ public class UserBuilder extends JsonBuilder implements Builder {
   private final Collection<Address> addresses;
 
   public UserBuilder() {
-    this("sjones", "Jones", "Steven", null, "785493025613",
+    this(UUID.randomUUID(), "sjones", "Jones", "Steven", null, "785493025613",
       null, true, null, new ArrayList<>());
   }
 
   private UserBuilder(
+    UUID id,
     String username,
     String lastName,
     String firstName,
@@ -38,7 +39,7 @@ public class UserBuilder extends JsonBuilder implements Builder {
     DateTime expirationDate,
     Collection<Address> addresses) {
 
-    this.id = UUID.randomUUID();
+    this.id = id;
     this.username = username;
 
     this.lastName = lastName;
@@ -110,6 +111,7 @@ public class UserBuilder extends JsonBuilder implements Builder {
 
   public UserBuilder withName(String lastName, String firstName) {
     return new UserBuilder(
+      this.id,
       firstName.substring(0, 1).concat(lastName).toLowerCase(),
       lastName,
       firstName,
@@ -123,6 +125,7 @@ public class UserBuilder extends JsonBuilder implements Builder {
 
   public UserBuilder withName(String lastName, String firstName, String middleName) {
     return new UserBuilder(
+      this.id,
       this.username,
       lastName,
       firstName,
@@ -136,6 +139,7 @@ public class UserBuilder extends JsonBuilder implements Builder {
 
   public UserBuilder withNoPersonalDetails() {
     return new UserBuilder(
+      this.id,
       this.username,
       null,
       null,
@@ -149,6 +153,7 @@ public class UserBuilder extends JsonBuilder implements Builder {
 
   public UserBuilder withBarcode(String barcode) {
     return new UserBuilder(
+      this.id,
       this.username,
       this.lastName,
       this.firstName,
@@ -162,6 +167,7 @@ public class UserBuilder extends JsonBuilder implements Builder {
 
   public UserBuilder withNoBarcode() {
     return new UserBuilder(
+      this.id,
       this.username,
       this.lastName,
       this.firstName,
@@ -175,6 +181,7 @@ public class UserBuilder extends JsonBuilder implements Builder {
 
   public UserBuilder withUsername(String username) {
     return new UserBuilder(
+      this.id,
       username,
       this.lastName,
       this.firstName,
@@ -192,6 +199,7 @@ public class UserBuilder extends JsonBuilder implements Builder {
 
   public UserBuilder withPatronGroupId(UUID patronGroupId) {
     return new UserBuilder(
+      this.id,
       this.username,
       this.lastName,
       this.firstName,
@@ -217,6 +225,7 @@ public class UserBuilder extends JsonBuilder implements Builder {
 
   private UserBuilder withActive(Boolean active) {
     return new UserBuilder(
+      this.id,
       this.username,
       this.lastName,
       this.firstName,
@@ -230,6 +239,7 @@ public class UserBuilder extends JsonBuilder implements Builder {
 
   public UserBuilder expires(DateTime newExpirationDate) {
     return new UserBuilder(
+      this.id,
       this.username,
       this.lastName,
       this.firstName,
@@ -243,6 +253,7 @@ public class UserBuilder extends JsonBuilder implements Builder {
 
   public UserBuilder noExpiration() {
     return new UserBuilder(
+      this.id,
       this.username,
       this.lastName,
       this.firstName,
@@ -269,6 +280,7 @@ public class UserBuilder extends JsonBuilder implements Builder {
 
   private UserBuilder withAddresses(ArrayList<Address> newAddresses) {
     return new UserBuilder(
+      this.id,
       this.username,
       this.lastName,
       this.firstName,
@@ -278,5 +290,19 @@ public class UserBuilder extends JsonBuilder implements Builder {
       this.active,
       this.expirationDate,
       newAddresses);
+  }
+
+  public UserBuilder withId(String id) {
+    return new UserBuilder(
+      UUID.fromString(id),
+      this.username,
+      this.lastName,
+      this.firstName,
+      this.middleName,
+      this.barcode,
+      this.patronGroupId,
+      this.active,
+      this.expirationDate,
+      this.addresses);
   }
 }

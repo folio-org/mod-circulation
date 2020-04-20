@@ -2,17 +2,13 @@ package api.support.fixtures;
 
 import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
 
-import api.support.builders.LostItemFeePolicyBuilder;
-import api.support.builders.NoticePolicyBuilder;
-import api.support.http.ResourceClient;
-import io.vertx.core.json.JsonObject;
+import java.util.UUID;
+
 import org.folio.circulation.support.http.client.IndividualResource;
 
-import java.net.MalformedURLException;
-import java.util.List;
-import java.util.UUID;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeoutException;
+import api.support.builders.LostItemFeePolicyBuilder;
+import api.support.http.ResourceClient;
+import io.vertx.core.json.JsonObject;
 
 public class LostItemFeePoliciesFixture {
   private final RecordCreator lostItemFeePolicyRecordCreator;
@@ -23,7 +19,10 @@ public class LostItemFeePoliciesFixture {
   }
 
   public IndividualResource facultyStandard() {
+    return create(facultyStandardPolicy());
+  }
 
+  public LostItemFeePolicyBuilder facultyStandardPolicy() {
     JsonObject itemAgedLostOverdue = new JsonObject();
     itemAgedLostOverdue.put("duration", 12);
     itemAgedLostOverdue.put("intervalId", "Months");
@@ -33,29 +32,27 @@ public class LostItemFeePoliciesFixture {
     patronBilledAfterAgedLost.put("intervalId", "Months");
 
     JsonObject chargeAmountItem = new JsonObject();
-    chargeAmountItem.put("chargeType", "Actual cost");
+    chargeAmountItem.put("chargeType", "anotherCost");
     chargeAmountItem.put("amount", 5.00);
 
     JsonObject lostItemChargeFeeFine = new JsonObject();
     lostItemChargeFeeFine.put("duration", "6");
     lostItemChargeFeeFine.put("intervalId", "Months");
 
-    final LostItemFeePolicyBuilder undergradStandard = new LostItemFeePolicyBuilder()
+    return new LostItemFeePolicyBuilder()
       .withName("Undergrad standard")
       .withDescription("This is description for undergrad standard")
       .withItemAgedLostOverdue(itemAgedLostOverdue)
       .withPatronBilledAfterAgedLost(patronBilledAfterAgedLost)
       .withChargeAmountItem(chargeAmountItem)
       .withLostItemProcessingFee(5.00)
-      .withChargeAmountItemPatron(true)
+      .chargeProcessingFee()
       .withChargeAmountItemSystem(true)
       .withLostItemChargeFeeFine(lostItemChargeFeeFine)
       .withReturnedLostItemProcessingFee(true)
       .withReplacedLostItemProcessingFee(true)
       .withReplacementAllowed(true)
       .withLostItemReturned("Charge");
-
-    return lostItemFeePolicyRecordCreator.createIfAbsent(undergradStandard);
   }
 
   public IndividualResource create(UUID id, String name) {
