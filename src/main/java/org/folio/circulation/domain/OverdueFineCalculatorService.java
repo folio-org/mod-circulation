@@ -198,9 +198,11 @@ public class OverdueFineCalculatorService {
   private CompletableFuture<Result<FeeFineAction>> createFeeFineAction(
     Account account, CalculationParameters params) {
 
-    return repos.feeFineActionRepository.create(new FeeFineActionStorageRepresentation(account,
-      params.feeFineOwner, params.feeFine, account.getAmount(), account.getAmount(),
-      params.loggedInUser));
+    return repos.feeFineActionRepository.create(FeeFineActionStorageRepresentation.builder()
+      .useAccount(account)
+      .withCreatedAt(params.feeFineOwner.getOwner())
+      .withCreatedBy(params.loggedInUser)
+      .build());
   }
 
   private static class CalculationParameters {
