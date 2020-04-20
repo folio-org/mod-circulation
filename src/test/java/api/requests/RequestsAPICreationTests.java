@@ -1347,7 +1347,7 @@ public class RequestsAPICreationTests extends APITests {
     return smallAngryPlanet;
   }
 
-  public static IndividualResource setupItemInTransit(IndividualResource requestPickupServicePoint, IndividualResource pickupServicePoint, ItemsFixture itemsFixture, 
+  public static IndividualResource setupItemInTransit(IndividualResource requestPickupServicePoint, IndividualResource pickupServicePoint, ItemsFixture itemsFixture,
     ResourceClient requestsClient, UsersFixture usersFixture, RequestsFixture requestsFixture, CheckInFixture checkInFixture) {
 
     //In order to get the item into the IN_TRANSIT state, for now we need to go the round-about route of delivering it to the unintended pickup location first
@@ -2025,8 +2025,7 @@ public class RequestsAPICreationTests extends APITests {
   }
 
   private RequestBuilder createRequestBuilder(IndividualResource item,
-    IndividualResource requester,
-    UUID pickupServicePointId,
+    IndividualResource requester, UUID pickupServicePointId,
     DateTime requestDate) {
 
     return new RequestBuilder()
@@ -2042,5 +2041,4 @@ public class RequestsAPICreationTests extends APITests {
       .withPickupServicePointId(pickupServicePointId)
       .withTags(new RequestBuilder.Tags(asList("new", "important")));
   }
-
 }
