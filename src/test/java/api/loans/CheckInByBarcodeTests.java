@@ -925,7 +925,7 @@ public class CheckInByBarcodeTests extends APITests {
   }
 
   @Test
-  public void overdueFineShouldBeChargedWhenItemIsOverdueForSevenHours() {
+  public void overdueFineCalculatedCorrectlyWhenHourlyFeeFinePolicyIsApplied() {
 
     useFallbackPolicies(loanPoliciesFixture.create(new LoanPolicyBuilder()
         .withId(UUID.randomUUID())
