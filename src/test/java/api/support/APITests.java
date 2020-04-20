@@ -214,14 +214,14 @@ public abstract class APITests {
     patronGroupsFixture);
 
   protected final LoansFixture loansFixture = new LoansFixture(
-    servicePointsFixture);
+  );
 
   protected final CheckOutFixture checkOutFixture = new CheckOutFixture(
     usersFixture, servicePointsFixture);
-  
+
   protected final CheckInFixture checkInFixture = new CheckInFixture(
     servicePointsFixture);
-  
+
   protected final ChangeDueDateFixture changeDueDateFixture = new ChangeDueDateFixture();
 
   protected final CancellationReasonsFixture cancellationReasonsFixture

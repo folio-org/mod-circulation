@@ -38,19 +38,13 @@ import api.support.http.Offset;
 import io.vertx.core.json.JsonObject;
 
 public class LoansFixture {
-
   private final RestAssuredClient restAssuredClient;
 
-  public LoansFixture(
-    ServicePointsFixture servicePointsFixture) {
-
+  public LoansFixture() {
     restAssuredClient = new RestAssuredClient(getOkapiHeadersFromContext());
   }
 
-  public IndividualResource createLoan(
-    IndividualResource item,
-    IndividualResource to) {
-
+  public IndividualResource createLoan(IndividualResource item, IndividualResource to) {
     DateTime loanDate = DateTime.now();
 
     return createLoan(new LoanBuilder()
@@ -61,9 +55,7 @@ public class LoansFixture {
       .withDueDate(loanDate.plusWeeks(3)));
   }
 
-  public IndividualResource createLoan(
-    IndividualResource item,
-    IndividualResource to,
+  public IndividualResource createLoan(IndividualResource item, IndividualResource to,
     DateTime loanDate) {
 
     return createLoan(new LoanBuilder()
@@ -78,14 +70,12 @@ public class LoansFixture {
     return new IndividualResource(attemptToCreateLoan(builder, 201));
   }
 
-  public Response attemptToCreateLoan(IndividualResource item,
-    IndividualResource to) {
-
+  public Response attemptToCreateLoan(IndividualResource item, IndividualResource to) {
     return attemptToCreateLoan(item, to, UNPROCESSABLE_ENTITY);
   }
 
-  public Response attemptToCreateLoan(IndividualResource item,
-    IndividualResource to, int expectedStatusCode) {
+  public Response attemptToCreateLoan(IndividualResource item, IndividualResource to,
+    int expectedStatusCode) {
 
     return attemptToCreateLoan(new LoanBuilder()
       .open()
@@ -93,9 +83,7 @@ public class LoansFixture {
       .withUserId(to.getId()), expectedStatusCode);
   }
 
-  public Response attemptToCreateLoan(LoanBuilder loanBuilder,
-    int expectedStatusCode) {
-
+  public Response attemptToCreateLoan(LoanBuilder loanBuilder, int expectedStatusCode) {
     return restAssuredClient.post(loanBuilder.create(), loansUrl(),
       expectedStatusCode, "post-loan");
   }
@@ -105,9 +93,7 @@ public class LoansFixture {
       "create-loan-at-specific-location");
   }
 
-  public Response attemptToCreateLoanAtSpecificLocation(UUID loanId,
-    LoanBuilder loanBuilder) {
-
+  public Response attemptToCreateLoanAtSpecificLocation(UUID loanId, LoanBuilder loanBuilder) {
     return restAssuredClient.put(loanBuilder.create(), urlForLoan(loanId),
       "attempt-to-create-loan-at-specific-location");
   }
@@ -117,8 +103,7 @@ public class LoansFixture {
   }
 
   public Response attemptToReplaceLoan(UUID loanId, JsonObject representation) {
-    return restAssuredClient.put(representation, urlForLoan(loanId),
-      "replace-loan");
+    return restAssuredClient.put(representation, urlForLoan(loanId), "replace-loan");
   }
 
   public Response declareItemLost(UUID loanId,
@@ -126,8 +111,8 @@ public class LoansFixture {
 
     JsonObject request = builder.create();
 
-    return restAssuredClient.post(request,
-      declareLoanItemLostURL(loanId.toString()), "declare-item-lost-request");
+    return restAssuredClient.post(request, declareLoanItemLostURL(loanId.toString()),
+      "declare-item-lost-request");
   }
 
   public Response declareItemLost(JsonObject loanJson) {
@@ -147,29 +132,20 @@ public class LoansFixture {
       claimItemReturnedURL(request.getLoanId()), 204, "claim-item-returned-request");
   }
 
-  public Response attemptClaimItemReturned(ClaimItemReturnedRequestBuilder request) {
-    return restAssuredClient.post(request.create(),
-      claimItemReturnedURL(request.getLoanId()), "attempt-claim-item-returned-request");
-  }
-
-  public IndividualResource renewLoan(
-    IndividualResource item,
-    IndividualResource user) {
-
+  public IndividualResource renewLoan(IndividualResource item, IndividualResource user) {
     JsonObject request = new RenewByBarcodeRequestBuilder()
       .forItem(item)
       .forUser(user)
       .create();
 
-    return new IndividualResource(restAssuredClient.post(request,
-      renewByBarcodeUrl(), 200, "renewal-by-barcode-request"));
+    return new IndividualResource(restAssuredClient.post(request, renewByBarcodeUrl(),
+      200, "renewal-by-barcode-request"));
   }
 
   public IndividualResource overrideRenewalByBarcode(IndividualResource item,
       IndividualResource user, String comment, String dueDate) {
 
-    JsonObject request =
-      new OverrideRenewalByBarcodeRequestBuilder()
+    JsonObject request = new OverrideRenewalByBarcodeRequestBuilder()
         .forItem(item)
         .forUser(user)
         .withComment(comment)
@@ -180,9 +156,7 @@ public class LoansFixture {
       overrideRenewalByBarcodeUrl(), 200, "override-renewal-by-barcode-request"));
   }
 
-  public IndividualResource renewLoanById(IndividualResource item,
-      IndividualResource user) {
-
+  public IndividualResource renewLoanById(IndividualResource item, IndividualResource user) {
     JsonObject request = new RenewByIdRequestBuilder()
       .forItem(item)
       .forUser(user)
@@ -208,43 +182,37 @@ public class LoansFixture {
       expectedStatusCode, "renewal-by-barcode-request");
   }
 
-  public Response attemptOverride(
-    IndividualResource item,
-    IndividualResource user, String comment, String dueDate) {
+  public Response attemptOverride(IndividualResource item, IndividualResource user,
+    String comment, String dueDate) {
 
     return attemptOverride(422, item, user, comment, dueDate);
   }
 
   public Response attemptOverride(int expectedStatusCode, IndividualResource item,
-      IndividualResource user, String comment, String dueDate) {
+    IndividualResource user, String comment, String dueDate) {
 
-    JsonObject request =
-      new OverrideRenewalByBarcodeRequestBuilder()
-        .forItem(item)
-        .forUser(user)
-        .withComment(comment)
-        .withDueDate(dueDate)
-        .create();
+    JsonObject request = new OverrideRenewalByBarcodeRequestBuilder()
+      .forItem(item)
+      .forUser(user)
+      .withComment(comment)
+      .withDueDate(dueDate)
+      .create();
 
     return restAssuredClient.post(request, overrideRenewalByBarcodeUrl(),
       expectedStatusCode, "override-renewal-by-barcode-request");
   }
 
-  public Response attemptRenewalById(IndividualResource item,
-      IndividualResource user) {
-
+  public Response attemptRenewalById(IndividualResource item, IndividualResource user) {
     JsonObject request = new RenewByIdRequestBuilder()
       .forItem(item)
       .forUser(user)
       .create();
 
-    return restAssuredClient.post(request, renewByIdUrl(),
-      422, "renewal-by-id-request");
+    return restAssuredClient.post(request, renewByIdUrl(), 422, "renewal-by-id-request");
   }
 
   public IndividualResource getLoanById(UUID id) {
-    return new IndividualResource(restAssuredClient.get(
-      urlForLoan(id), 200, "get-loan-by-id"));
+    return new IndividualResource(restAssuredClient.get(urlForLoan(id), 200, "get-loan-by-id"));
   }
 
   public Response getLoanByLocation(IndividualResource response) {
@@ -285,5 +253,4 @@ public class LoansFixture {
   private URL urlForLoan(UUID id) {
     return loansUrl(String.format("/%s", id));
   }
-
 }
