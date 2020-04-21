@@ -204,6 +204,10 @@ public class LostItemFeePolicyBuilder extends JsonBuilder implements Builder {
       .put("chargeType", chargeType));
   }
 
+  public LostItemFeePolicyBuilder withSetCostCharge(Double amount) {
+    return withChargeAmountItem("anotherCost", amount);
+  }
+
   public LostItemFeePolicyBuilder withLostItemProcessingFee(Double lostItemProcessingFee) {
     return new LostItemFeePolicyBuilder(
       this.id,

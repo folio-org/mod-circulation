@@ -29,7 +29,7 @@ import org.folio.circulation.domain.ServicePointRepository;
 import org.folio.circulation.domain.User;
 import org.folio.circulation.domain.UserRepository;
 import org.folio.circulation.domain.policy.LostItemPolicyRepository;
-import org.folio.circulation.domain.policy.lostitem.ChargeAmountType;
+import org.folio.circulation.domain.policy.lostitem.ChargeFee;
 import org.folio.circulation.domain.policy.lostitem.LostItemPolicy;
 import org.folio.circulation.domain.representations.DeclareItemLostRequest;
 import org.folio.circulation.support.Clients;
@@ -128,7 +128,7 @@ public class LostItemFeeChargingService {
 
         final Result<FeeFineAccountAndAction> lostItemFeeResult =
           getFeeFineOfType(feeFines, LOST_ITEM_FEE_TYPE)
-            .map(createAccountAndAction(context, policy.getChargeAmountItem().getAmount()));
+            .map(createAccountAndAction(context, policy.getSetCostChargeFee()));
 
         accountsToCreate.add(lostItemFeeResult);
       }
@@ -153,10 +153,10 @@ public class LostItemFeeChargingService {
   }
 
   private Function<FeeFine, FeeFineAccountAndAction> createAccountAndAction(
-    ReferenceDataContext context, BigDecimal amount) {
+    ReferenceDataContext context, ChargeFee fee) {
 
     return feeFine -> FeeFineAccountAndAction.builder()
-      .withAmount(amount)
+      .withAmount(fee.getAmount())
       .withCreatedAt(getFeeFineActionCreatedAt(context))
       .withCreatedBy(context.staffUser)
       .withFeeFine(feeFine)
@@ -174,13 +174,12 @@ public class LostItemFeeChargingService {
 
   private boolean shouldChargeItemFee(LostItemPolicy policy) {
     // Set cost fee is only supported now
-    return policy.getChargeAmountItem().getChargeType() == ChargeAmountType.SET_COST
-      && isGreaterThanZero(policy.getChargeAmountItem().getAmount());
+    return isGreaterThanZero(policy.getSetCostChargeFee().getAmount());
   }
 
   private boolean shouldChargeProcessingFee(LostItemPolicy policy) {
     return policy.shouldChargeProcessingFee()
-      && isGreaterThanZero(policy.getLostItemProcessingFee());
+      && isGreaterThanZero(policy.getLostItemProcessingFee().getAmount());
   }
 
   private boolean shouldChargeAnyFee(LostItemPolicy policy) {

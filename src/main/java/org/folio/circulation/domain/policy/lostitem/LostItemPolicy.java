@@ -5,38 +5,45 @@ import static org.folio.circulation.support.JsonPropertyFetcher.getBooleanProper
 import static org.folio.circulation.support.JsonPropertyFetcher.getObjectProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
 
-import java.math.BigDecimal;
-
 import org.folio.circulation.domain.policy.Policy;
 
 import io.vertx.core.json.JsonObject;
 
 public class LostItemPolicy extends Policy {
-  private final ChargeAmount chargeAmountItem;
+  private final SetCostChargeFee setCostChargeFee;
   private final boolean chargeAmountItemPatron;
-  private final BigDecimal lostItemProcessingFee;
+  private final ProcessingChargeFee processingChargeFee;
 
-  private LostItemPolicy(String id, String name, ChargeAmount chargeAmountItem,
-    boolean chargeAmountItemPatron, BigDecimal lostItemProcessingFee) {
+  private LostItemPolicy(String id, String name, SetCostChargeFee setCostChargeFee,
+    boolean chargeAmountItemPatron, ProcessingChargeFee processingChargeFee) {
 
     super(id, name);
-    this.chargeAmountItem = chargeAmountItem;
+    this.setCostChargeFee = setCostChargeFee;
     this.chargeAmountItemPatron = chargeAmountItemPatron;
-    this.lostItemProcessingFee = lostItemProcessingFee;
+    this.processingChargeFee = processingChargeFee;
   }
 
   public static LostItemPolicy from(JsonObject lostItemPolicy) {
+    final ProcessingChargeFee lostItemProcessingFee =
+      new ProcessingChargeFee(getBigDecimalProperty(lostItemPolicy, "lostItemProcessingFee"));
+    final SetCostChargeFee setCostCharge = SetCostChargeFee
+      .from(getObjectProperty(lostItemPolicy, "chargeAmountItem"));
+
     return new LostItemPolicy(
       getProperty(lostItemPolicy, "id"),
       getProperty(lostItemPolicy, "name"),
-      ChargeAmount.from(getObjectProperty(lostItemPolicy, "chargeAmountItem")),
+      setCostCharge,
       getBooleanProperty(lostItemPolicy, "chargeAmountItemPatron"),
-      getBigDecimalProperty(lostItemPolicy, "lostItemProcessingFee")
+      lostItemProcessingFee
     );
   }
 
-  public ChargeAmount getChargeAmountItem() {
-    return chargeAmountItem;
+  /**
+   * Returns wrapper around chargeItem object. SetCostChargeFee#getAmount is null
+   * when chargeItem is not of anotherCost type.
+   */
+  public SetCostChargeFee getSetCostChargeFee() {
+    return setCostChargeFee;
   }
 
   public boolean shouldChargeProcessingFee() {
@@ -44,8 +51,12 @@ public class LostItemPolicy extends Policy {
     return chargeAmountItemPatron;
   }
 
-  public BigDecimal getLostItemProcessingFee() {
-    return lostItemProcessingFee;
+  /**
+   * Returns wrapper around processing fee amount. ProcessingChargeFee#getAmount
+   * is null when no fee defined.
+   */
+  public ProcessingChargeFee getLostItemProcessingFee() {
+    return processingChargeFee;
   }
 
   public static LostItemPolicy unknown(String id) {
@@ -54,8 +65,8 @@ public class LostItemPolicy extends Policy {
 
   private static class UnknownLostItemPolicy extends LostItemPolicy {
     UnknownLostItemPolicy(String id) {
-      super(id, null, new ChargeAmount(null, null),
-        false, null);
+      super(id, null, new SetCostChargeFee(null),
+        false, new ProcessingChargeFee(null));
     }
   }
 }
