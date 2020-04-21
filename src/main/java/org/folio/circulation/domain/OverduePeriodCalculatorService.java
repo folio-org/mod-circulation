@@ -1,20 +1,20 @@
 package org.folio.circulation.domain;
 
-import org.apache.commons.lang3.ObjectUtils;
-import org.folio.circulation.domain.policy.LoanPolicyRepository;
-import org.folio.circulation.support.Result;
-import org.joda.time.DateTime;
-import org.joda.time.LocalTime;
+import static java.util.concurrent.CompletableFuture.completedFuture;
+import static org.apache.commons.lang3.ObjectUtils.allNotNull;
+import static org.folio.circulation.support.Result.succeeded;
+import static org.folio.circulation.support.ResultBinding.flatMapResult;
+import static org.joda.time.DateTimeConstants.MINUTES_PER_HOUR;
+import static org.joda.time.Minutes.minutesBetween;
 
 import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
 
-import static java.util.concurrent.CompletableFuture.completedFuture;
-import static org.folio.circulation.support.Result.succeeded;
-import static org.folio.circulation.support.ResultBinding.flatMapResult;
-import static org.joda.time.DateTimeConstants.MINUTES_PER_DAY;
-import static org.joda.time.DateTimeConstants.MINUTES_PER_HOUR;
-import static org.joda.time.Minutes.minutesBetween;
+import org.folio.circulation.domain.policy.LoanPolicyRepository;
+import org.folio.circulation.support.Result;
+import org.joda.time.DateTime;
+import org.joda.time.LocalDate;
+import org.joda.time.LocalDateTime;
 
 public class OverduePeriodCalculatorService {
   private static final int ZERO_MINUTES = 0;
@@ -58,39 +58,62 @@ public class OverduePeriodCalculatorService {
     return completedFuture(succeeded(overdueMinutes));
   }
 
-  private CompletableFuture<Result<Integer>> minutesOverdueExcludingClosedPeriods(Loan loan, DateTime systemTime) {
+  private CompletableFuture<Result<Integer>> minutesOverdueExcludingClosedPeriods(Loan loan, DateTime returnDate) {
+    DateTime dueDate = loan.getDueDate();
     return calendarRepository
-      .fetchOpeningDaysBetweenDates(loan.getCheckoutServicePointId(), loan.getDueDate(), systemTime, false)
-      .thenApply(r -> r.next(this::getOpeningDaysDurationMinutes));
+      .fetchOpeningDaysBetweenDates(loan.getCheckoutServicePointId(), dueDate, returnDate, false)
+      .thenApply(r -> r.next(openingDays -> getOpeningDaysDurationMinutes(
+        openingDays, dueDate.toLocalDateTime(), returnDate.toLocalDateTime())));
   }
 
-  Result<Integer> getOpeningDaysDurationMinutes(Collection<OpeningDay> openingDays) {
+  Result<Integer> getOpeningDaysDurationMinutes(
+    Collection<OpeningDay> openingDays, LocalDateTime dueDate, LocalDateTime returnDate) {
+
     return succeeded(
       openingDays.stream()
-        .mapToInt(day -> day.getAllDay() ? MINUTES_PER_DAY : getOpeningDayDurationMinutes(day))
-        .sum()
-    );
+        .mapToInt(day -> getOpeningDayDurationMinutes(day, dueDate, returnDate))
+        .sum());
   }
 
-  private int getOpeningDayDurationMinutes(OpeningDay openingDay) {
+  private int getOpeningDayDurationMinutes(
+    OpeningDay openingDay, LocalDateTime dueDate, LocalDateTime systemTime) {
+
+    LocalDate date = openingDay.getDate();
+
     return openingDay.getOpeningHour()
       .stream()
-      .mapToInt(this::getOpeningHourDurationMinutes)
+      .mapToInt(openingHour -> getOpeningHourDurationMinutes(
+        openingHour, date, dueDate, systemTime))
       .sum();
   }
 
-  private int getOpeningHourDurationMinutes(OpeningHour openingHour) {
-    LocalTime startTime = openingHour.getStartTime();
-    LocalTime endTime = openingHour.getEndTime();
+  private int getOpeningHourDurationMinutes(OpeningHour openingHour,
+    LocalDate datePart, LocalDateTime dueDate, LocalDateTime returnDate) {
 
-    if (ObjectUtils.allNotNull(startTime, endTime) && endTime.isAfter(startTime)) {
-      return getMinutesOfDay(endTime) - getMinutesOfDay(startTime);
+    if (allNotNull(datePart, dueDate, openingHour.getStartTime(), openingHour.getEndTime())) {
+
+      LocalDateTime startTime =  datePart.toLocalDateTime(openingHour.getStartTime());
+      LocalDateTime endTime = datePart.toLocalDateTime(openingHour.getEndTime());
+
+      if (dueDate.isAfter(startTime) && dueDate.isBefore(endTime)) {
+        startTime = dueDate;
+      }
+
+      if (returnDate.isAfter(startTime) && returnDate.isBefore(endTime)) {
+        endTime = returnDate;
+      }
+
+      if (endTime.isAfter(startTime) && endTime.isAfter(dueDate)
+        && startTime.isBefore(returnDate)) {
+
+        return getMinutesOfDay(endTime) - getMinutesOfDay(startTime);
+      }
     }
 
     return ZERO_MINUTES;
   }
 
-  private int getMinutesOfDay(LocalTime time) {
+  private int getMinutesOfDay(LocalDateTime time) {
     return time.getHourOfDay() * MINUTES_PER_HOUR + time.getMinuteOfHour();
   }
 
