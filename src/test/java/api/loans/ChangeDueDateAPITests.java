@@ -149,7 +149,7 @@ public class ChangeDueDateAPITests extends APITests {
   }
 
   @Test
-  public void cannotReapplyDueDateWhenClaimedReturned() {
+  public void cannotChangeDueDateToSameDateWhenItemIsClaimedReturned() {
     assertThat(loansFixture.claimItemReturned(
       new ClaimItemReturnedRequestBuilder()
         .forLoan(loan.getId().toString())
