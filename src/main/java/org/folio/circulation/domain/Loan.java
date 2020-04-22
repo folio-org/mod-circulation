@@ -176,11 +176,15 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   public void changeActionComment(String comment) {
-    representation.put(ACTION_COMMENT, comment);
+    if (comment != null) {
+      representation.put(ACTION_COMMENT, comment);
+    } else {
+      representation.remove(ACTION_COMMENT);
+    }
   }
 
   private void removeActionComment() {
-    representation.remove(ACTION_COMMENT);
+    changeActionComment(null);
   }
 
   public Result<Void> isValidStatus() {
@@ -408,12 +412,10 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     return this;
   }
 
-  private Loan checkIn(String action, DateTime returnDateTime,
+  private Loan checkIn(LoanAction action, DateTime returnDateTime,
     DateTime systemReturnDateTime, UUID servicePointId) {
 
-    changeAction(action);
-    removeActionComment();
-    closeLoan();
+    closeLoan(action);
     changeReturnDate(returnDateTime);
     changeSystemReturnDate(systemReturnDateTime);
     changeCheckInServicePointId(servicePointId);
@@ -422,15 +424,14 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   Loan checkIn(DateTime returnDateTime, DateTime systemReturnDateTime, UUID servicePointId) {
-    return checkIn(CHECKED_IN.getValue(), returnDateTime, systemReturnDateTime,
+    return checkIn(CHECKED_IN, returnDateTime, systemReturnDateTime,
       servicePointId);
   }
 
-  Loan resolveClaimedReturned(LoanAction.ResolveClaimedReturned action,
+  Loan resolveClaimedReturned(LoanAction resolveAction,
     DateTime returnDateTime, DateTime systemReturnDateTime, UUID servicePointId) {
 
-    return checkIn(action.getValue(), returnDateTime, systemReturnDateTime,
-      servicePointId);
+    return checkIn(resolveAction, returnDateTime, systemReturnDateTime, servicePointId);
   }
 
 
@@ -523,16 +524,20 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     write(representation, CLAIMED_RETURNED_DATE, claimedReturnedDate);
   }
 
-  public Loan closeLoan() {
+  public Loan closeLoan(LoanAction action) {
+    return closeLoan(action, null);
+  }
+
+  public Loan closeLoan(LoanAction action, String comment) {
+    changeAction(action);
+    changeActionComment(comment);
     changeStatus(LoanStatus.CLOSED);
     return this;
   }
 
   public Loan markItemMissing(String comment) {
-    changeAction(MISSING);
-    changeActionComment(comment);
     changeItemStatusForItemAndLoan(ItemStatus.MISSING);
 
-    return closeLoan();
+    return closeLoan(MISSING, comment);
   }
 }

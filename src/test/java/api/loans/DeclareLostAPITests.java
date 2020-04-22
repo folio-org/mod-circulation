@@ -6,10 +6,12 @@ import static api.support.matchers.JsonObjectMatcher.hasJsonPath;
 import static api.support.matchers.LoanMatchers.hasLoanProperty;
 import static api.support.matchers.LoanMatchers.hasOpenStatus;
 import static api.support.matchers.LoanMatchers.hasStatus;
+import static api.support.matchers.LoanMatchers.isClosed;
 import static api.support.matchers.TextDateTimeMatcher.withinSecondsBeforeNow;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static api.support.matchers.ValidationErrorMatchers.hasParameter;
+import static com.jayway.jsonpath.matchers.JsonPathMatchers.hasNoJsonPath;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;
@@ -151,15 +153,16 @@ public class DeclareLostAPITests extends APITests {
 
     useLostItemPolicy(lostItemFeePoliciesFixture.create(lostItemPolicy).getId());
 
-    final UUID loanId = createLoanAndDeclareItLost();
+    final IndividualResource loan = createLoanAndDeclareItLost();
 
-    verifyAccountAndAction(loanId, "Lost item fee", allOf(
+    assertThat(loan.getJson(), hasOpenStatus());
+    verifyAccountAndAction(loan.getId(), "Lost item fee", allOf(
       hasJsonPath("ownerId", expectedOwnerId),
       hasJsonPath("feeFineType", "Lost item fee"),
       hasJsonPath("amount", expectedItemFee)
     ));
 
-    verifyAccountAndAction(loanId, "Lost item processing fee", allOf(
+    verifyAccountAndAction(loan.getId(), "Lost item processing fee", allOf(
       hasJsonPath("ownerId", expectedOwnerId),
       hasJsonPath("feeFineType", "Lost item processing fee"),
       hasJsonPath("amount", expectedProcessingFee)
@@ -179,9 +182,10 @@ public class DeclareLostAPITests extends APITests {
 
     useLostItemPolicy(lostItemFeePoliciesFixture.create(lostItemPolicy).getId());
 
-    final UUID loanId = createLoanAndDeclareItLost();
+    final IndividualResource loan = createLoanAndDeclareItLost();
 
-    verifyAccountAndAction(loanId, "Lost item fee", allOf(
+    assertThat(loan.getJson(), hasOpenStatus());
+    verifyAccountAndAction(loan.getId(), "Lost item fee", allOf(
       hasJsonPath("ownerId", expectedOwnerId),
       hasJsonPath("feeFineType", "Lost item fee"),
       hasJsonPath("amount", expectedItemFee)
@@ -202,9 +206,10 @@ public class DeclareLostAPITests extends APITests {
 
     useLostItemPolicy(lostItemFeePoliciesFixture.create(lostItemPolicy).getId());
 
-    final UUID loanId = createLoanAndDeclareItLost();
+    final IndividualResource loan = createLoanAndDeclareItLost();
 
-    verifyAccountAndAction(loanId, "Lost item processing fee", allOf(
+    assertThat(loan.getJson(), hasOpenStatus());
+    verifyAccountAndAction(loan.getId(), "Lost item processing fee", allOf(
       hasJsonPath("ownerId", expectedOwnerId),
       hasJsonPath("feeFineType", "Lost item processing fee"),
       hasJsonPath("amount", expectedProcessingFee)
@@ -227,6 +232,7 @@ public class DeclareLostAPITests extends APITests {
     declareLostFixtures.declareItemLost(new DeclareItemLostRequestBuilder()
       .forLoanId(loan.getId()));
 
+    assertThat(loansFixture.getLoanById(loan.getId()).getJson(), hasOpenStatus());
     assertThat(getAccountsForLoan(loan.getId()), hasSize(0));
   }
 
@@ -240,6 +246,7 @@ public class DeclareLostAPITests extends APITests {
     declareLostFixtures.declareItemLost(new DeclareItemLostRequestBuilder()
       .forLoanId(loan.getId()));
 
+    assertThat(loansFixture.getLoanById(loan.getId()).getJson(), hasOpenStatus());
     assertThat(getAccountsForLoan(loan.getId()), hasSize(0));
   }
 
@@ -254,6 +261,7 @@ public class DeclareLostAPITests extends APITests {
       new DeclareItemLostRequestBuilder()
         .forLoanId(loan.getId()));
 
+    assertThat(loansFixture.getLoanById(loan.getId()).getJson(), hasOpenStatus());
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("Expected automated fee of type Lost item fee"),
       hasParameter("feeFineType", "Lost item fee"))));
@@ -270,6 +278,7 @@ public class DeclareLostAPITests extends APITests {
       new DeclareItemLostRequestBuilder()
         .forLoanId(loan.getId()));
 
+    assertThat(loansFixture.getLoanById(loan.getId()).getJson(), hasOpenStatus());
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("Expected automated fee of type Lost item processing fee"),
       hasParameter("feeFineType", "Lost item processing fee"))));
@@ -290,9 +299,10 @@ public class DeclareLostAPITests extends APITests {
 
     useLostItemPolicy(lostItemFeePoliciesFixture.create(lostItemPolicy).getId());
 
-    final UUID loan = createLoanAndDeclareItLost();
+    final IndividualResource loan = createLoanAndDeclareItLost();
 
-    assertNoFeeAssignedForLoan(loan);
+    verifyLoanIsClosed(loan.getId());
+    assertNoFeeAssignedForLoan(loan.getId());
   }
 
   @Test
@@ -309,9 +319,10 @@ public class DeclareLostAPITests extends APITests {
 
     useLostItemPolicy(lostItemFeePoliciesFixture.create(lostItemPolicy).getId());
 
-    final UUID loan = createLoanAndDeclareItLost();
+    final IndividualResource loan = createLoanAndDeclareItLost();
 
-    assertNoFeeAssignedForLoan(loan);
+    verifyLoanIsClosed(loan.getId());
+    assertNoFeeAssignedForLoan(loan.getId());
   }
 
   @Test
@@ -329,9 +340,11 @@ public class DeclareLostAPITests extends APITests {
 
     useLostItemPolicy(lostItemFeePoliciesFixture.create(lostItemPolicy).getId());
 
-    final UUID loan = createLoanAndDeclareItLost();
+    final IndividualResource loan = createLoanAndDeclareItLost();
 
-    assertNoFeeAssignedForLoan(loan);
+    // Loan have not to be closed because it requires manual processing.
+    assertThat(loan.getJson(), hasOpenStatus());
+    assertNoFeeAssignedForLoan(loan.getId());
   }
 
   @Test
@@ -349,9 +362,10 @@ public class DeclareLostAPITests extends APITests {
 
     useLostItemPolicy(lostItemFeePoliciesFixture.create(lostItemPolicy).getId());
 
-    final UUID loan = createLoanAndDeclareItLost();
+    final IndividualResource loan = createLoanAndDeclareItLost();
 
-    assertNoFeeAssignedForLoan(loan);
+    verifyLoanIsClosed(loan.getId());
+    assertNoFeeAssignedForLoan(loan.getId());
   }
 
   @Test
@@ -364,9 +378,10 @@ public class DeclareLostAPITests extends APITests {
 
     useLostItemPolicy(lostItemFeePoliciesFixture.create(lostItemPolicy).getId());
 
-    final UUID loan = createLoanAndDeclareItLost();
+    final IndividualResource loan = createLoanAndDeclareItLost();
 
-    assertNoFeeAssignedForLoan(loan);
+    assertThat(loan.getJson(), hasOpenStatus());
+    assertNoFeeAssignedForLoan(loan.getId());
   }
 
   private List<JsonObject> getAccountsForLoan(UUID loanId) {
@@ -380,7 +395,7 @@ public class DeclareLostAPITests extends APITests {
       .getFirst();
   }
 
-  private UUID createLoanAndDeclareItLost() {
+  private IndividualResource createLoanAndDeclareItLost() {
     final InventoryItemResource item = itemsFixture.basedUponNod();
     final IndividualResource loan = loansFixture.checkOutByBarcode(item, usersFixture.charlotte());
 
@@ -388,7 +403,7 @@ public class DeclareLostAPITests extends APITests {
       .withServicePointId(servicePointsFixture.cd2().getId())
       .forLoanId(loan.getId()));
 
-    return loan.getId();
+    return loansFixture.getLoanById(loan.getId());
   }
 
   private void createFeeFineTypesAndOwner() {
@@ -426,6 +441,18 @@ public class DeclareLostAPITests extends APITests {
       hasJsonPath("source", "Admin, Admin"),
       hasJsonPath("typeAction", feeType),
       hasJsonPath("dateAction", withinSecondsBeforeNow(seconds(1)))
+    ));
+  }
+
+  private void verifyLoanIsClosed(UUID loanId) {
+    final JsonObject loanFromStorage = loansFixture.getLoanById(loanId).getJson();
+
+    assertThat(loanFromStorage, allOf(
+      isClosed(),
+      hasJsonPath("action", "closedLoan"),
+      hasNoJsonPath("actionComment"),
+      hasNoJsonPath("returnDate"),
+      hasNoJsonPath("checkinServicePointId")
     ));
   }
 }

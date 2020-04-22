@@ -3,6 +3,8 @@ package org.folio.circulation.services;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.domain.FeeFine.LOST_ITEM_FEE_TYPE;
 import static org.folio.circulation.domain.FeeFine.LOST_ITEM_PROCESSING_FEE_TYPE;
+import static org.folio.circulation.domain.LoanAction.CLOSED_LOAN;
+import static org.folio.circulation.domain.policy.lostitem.ChargeAmountType.SET_COST;
 import static org.folio.circulation.support.Result.combineAll;
 import static org.folio.circulation.support.Result.failed;
 import static org.folio.circulation.support.Result.succeeded;
@@ -29,7 +31,6 @@ import org.folio.circulation.domain.ServicePointRepository;
 import org.folio.circulation.domain.User;
 import org.folio.circulation.domain.UserRepository;
 import org.folio.circulation.domain.policy.LostItemPolicyRepository;
-import org.folio.circulation.domain.policy.lostitem.ChargeAmountType;
 import org.folio.circulation.domain.policy.lostitem.LostItemPolicy;
 import org.folio.circulation.domain.representations.DeclareItemLostRequest;
 import org.folio.circulation.support.Clients;
@@ -67,9 +68,9 @@ public class LostItemFeeChargingService {
     return lostItemPolicyRepository.getLostItemPolicyById(loan.getLostItemPolicyId())
       .thenApply(result -> result.map(referenceDataContext::withLostItemPolicy))
       .thenCompose(refDataResult -> refDataResult.after(referenceData -> {
-        if (!shouldChargeAnyFee(referenceData.lostItemPolicy)) {
-          log.debug("No fee is going to be charged, skipping logic, loan id {}", loan.getId());
-          return completedFuture(succeeded(loan));
+        if (shouldCloseLoan(referenceData.lostItemPolicy)) {
+          log.debug("Loan [{}] can be closed because no fee will be charged", loan.getId());
+          return closeLoan(loan);
         }
 
         return fetchFeeFineOwner(referenceData)
@@ -80,6 +81,18 @@ public class LostItemFeeChargingService {
           .thenCompose(r -> r.after(feeFineService::createAccountsAndActions))
           .thenApply(r -> r.map(notUsed -> loan));
       }));
+  }
+
+
+  private CompletableFuture<Result<Loan>> closeLoan(Loan loan) {
+    return completedFuture(succeeded(loan.closeLoan(CLOSED_LOAN)));
+  }
+
+  private boolean shouldCloseLoan(LostItemPolicy policy) {
+    // Can close a loan if set cost is used, actual cost requires manual processing
+    return !shouldChargeProcessingFee(policy)
+      && policy.getChargeAmountItem().getChargeType() == SET_COST
+      && !isGreaterThanZero(policy.getChargeAmountItem().getAmount());
   }
 
   private CompletableFuture<Result<ReferenceDataContext>> fetchStaffUser(
@@ -174,17 +187,13 @@ public class LostItemFeeChargingService {
 
   private boolean shouldChargeItemFee(LostItemPolicy policy) {
     // Set cost fee is only supported now
-    return policy.getChargeAmountItem().getChargeType() == ChargeAmountType.SET_COST
+    return policy.getChargeAmountItem().getChargeType() == SET_COST
       && isGreaterThanZero(policy.getChargeAmountItem().getAmount());
   }
 
   private boolean shouldChargeProcessingFee(LostItemPolicy policy) {
     return policy.shouldChargeProcessingFee()
       && isGreaterThanZero(policy.getLostItemProcessingFee());
-  }
-
-  private boolean shouldChargeAnyFee(LostItemPolicy policy) {
-    return shouldChargeItemFee(policy) || shouldChargeProcessingFee(policy);
   }
 
   private boolean isGreaterThanZero(BigDecimal numberToCompare) {
