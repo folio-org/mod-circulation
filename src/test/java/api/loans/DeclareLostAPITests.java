@@ -50,10 +50,13 @@ public class DeclareLostAPITests extends APITests {
   @Override
   public void beforeEach() throws InterruptedException {
     super.beforeEach();
-    item = itemsFixture.basedUponSmallAngryPlanet();
 
+    useLostItemPolicy(lostItemFeePoliciesFixture.chargeSetCostFee().getId());
+
+    item = itemsFixture.basedUponSmallAngryPlanet();
     loanJson = loansFixture.checkOutByBarcode(item,
       usersFixture.charlotte()).getJson();
+
     createFeeFineTypesAndOwner();
   }
 
@@ -232,22 +235,25 @@ public class DeclareLostAPITests extends APITests {
     declareLostFixtures.declareItemLost(new DeclareItemLostRequestBuilder()
       .forLoanId(loan.getId()));
 
-    assertThat(loansFixture.getLoanById(loan.getId()).getJson(), hasOpenStatus());
+    verifyLoanIsClosed(loan.getId());
     assertThat(getAccountsForLoan(loan.getId()), hasSize(0));
   }
 
   @Test
-  public void shouldNotChargeFeesWhenNoOwnerForItemsPrimaryServicePoint() {
+  public void cannotDeclareLostWhenNoOwnerForItemsPrimaryServicePoint() {
     feeFineOwnerFixture.delete(feeFineOwnerFixture.cd1Owner());
 
     final InventoryItemResource item = itemsFixture.basedUponNod();
     final IndividualResource loan = loansFixture.checkOutByBarcode(item, usersFixture.charlotte());
 
-    declareLostFixtures.declareItemLost(new DeclareItemLostRequestBuilder()
-      .forLoanId(loan.getId()));
+    final Response response = declareLostFixtures.attemptDeclareItemLost(
+      new DeclareItemLostRequestBuilder()
+        .forLoanId(loan.getId()));
 
-    assertThat(loansFixture.getLoanById(loan.getId()).getJson(), hasOpenStatus());
-    assertThat(getAccountsForLoan(loan.getId()), hasSize(0));
+    assertThat(response.getJson(), hasErrorWith(allOf(
+      hasMessage("No fee/fine owner found for item's effective location"),
+      hasParameter("servicePointId", servicePointsFixture.cd1().getId().toString())
+    )));
   }
 
   @Test
@@ -380,7 +386,7 @@ public class DeclareLostAPITests extends APITests {
 
     final IndividualResource loan = createLoanAndDeclareItLost();
 
-    assertThat(loan.getJson(), hasOpenStatus());
+    verifyLoanIsClosed(loan.getId());
     assertNoFeeAssignedForLoan(loan.getId());
   }
 
