@@ -3,7 +3,6 @@ package org.folio.circulation.domain;
 import static java.util.function.Function.identity;
 import static org.folio.circulation.domain.OpeningDay.createClosedDay;
 import static org.folio.circulation.domain.OpeningDay.fromJsonByDefaultKey;
-import static org.folio.circulation.support.ResultBinding.flatMapResult;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 
 import java.util.Collection;
@@ -18,6 +17,7 @@ import org.folio.circulation.support.Result;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.server.ValidationError;
 import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
 import org.joda.time.LocalDate;
 
 import io.vertx.core.json.JsonArray;
@@ -31,9 +31,11 @@ public class CalendarRepository {
   private static final String PERIODS_QUERY_PARAMS = "servicePointId=%s&startDate=%s&endDate=%s&includeClosedDays=%s";
 
   private final CollectionResourceClient calendarClient;
+  private final ConfigurationRepository configurationRepository;
 
   public CalendarRepository(Clients clients) {
     this.calendarClient = clients.calendarStorageClient();
+    this.configurationRepository = new ConfigurationRepository(clients);
   }
 
   public CompletableFuture<Result<AdjacentOpeningDays>> lookupOpeningDays(LocalDate requestedDate, String servicePointId) {
@@ -55,16 +57,22 @@ public class CalendarRepository {
       servicePointId, startDate.toLocalDate(), endDate.toLocalDate().plusDays(1), includeClosedDays);
 
     return calendarClient.getManyWithRawQueryStringParameters(params)
-      .thenApply(flatMapResult(this::getOpeningDaysFromOpeningPeriods));
+      .thenCombineAsync(configurationRepository.findTimeZoneConfiguration(),
+        Result.combined(this::getOpeningDaysFromOpeningPeriods));
   }
 
-  private Result<Collection<OpeningDay>> getOpeningDaysFromOpeningPeriods(Response periodsResponse) {
-    return MultipleRecords.from(periodsResponse, this::getOpeningDayFromOpeningPeriod, OPENING_PERIODS)
+  private Result<Collection<OpeningDay>> getOpeningDaysFromOpeningPeriods(
+    Response periodsResponse, DateTimeZone zone) {
+
+    return MultipleRecords.from(periodsResponse, openingPeriod ->
+        getOpeningDayFromOpeningPeriod(openingPeriod, zone), OPENING_PERIODS)
       .next(r -> Result.succeeded(r.toKeys(identity())));
   }
 
-  private OpeningDay getOpeningDayFromOpeningPeriod(JsonObject openingPeriod) {
-    return OpeningDay.fromOpeningPeriodJson(openingPeriod);
+  private OpeningDay getOpeningDayFromOpeningPeriod(
+    JsonObject openingPeriod, DateTimeZone zone) {
+
+    return OpeningDay.fromOpeningPeriodJson(openingPeriod, zone);
   }
 
   private AdjacentOpeningDays convertToOpeningDays(JsonObject jsonObject) {
