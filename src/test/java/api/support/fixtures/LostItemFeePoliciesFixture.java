@@ -12,18 +12,27 @@ import io.vertx.core.json.JsonObject;
 
 public class LostItemFeePoliciesFixture {
   private final RecordCreator lostItemFeePolicyRecordCreator;
+  private final FeeFineTypeFixture feeFineTypeFixture;
+  private final FeeFineOwnerFixture feeFineOwnerFixture;
 
-  public LostItemFeePoliciesFixture(ResourceClient lostItemFeePoliciesClient) {
+  public LostItemFeePoliciesFixture(
+    ResourceClient lostItemFeePoliciesClient, FeeFineOwnerFixture feeFineOwnerFixture,
+    FeeFineTypeFixture feeFineTypeFixture) {
+
     lostItemFeePolicyRecordCreator = new RecordCreator(lostItemFeePoliciesClient,
       reason -> getProperty(reason, "name"));
+    this.feeFineOwnerFixture = feeFineOwnerFixture;
+    this.feeFineTypeFixture = feeFineTypeFixture;
   }
 
   public IndividualResource facultyStandard() {
     return create(facultyStandardPolicy());
   }
 
-  public IndividualResource chargeSetCostFee() {
-    return create(chargeSetCostFeePolicy());
+  public IndividualResource chargeFee() {
+    createReferenceData();
+
+    return create(chargeFeePolicy());
   }
 
   public LostItemFeePolicyBuilder facultyStandardPolicy() {
@@ -54,7 +63,7 @@ public class LostItemFeePoliciesFixture {
       .withLostItemReturned("Charge");
   }
 
-  public LostItemFeePolicyBuilder chargeSetCostFeePolicy() {
+  private LostItemFeePolicyBuilder chargeFeePolicy() {
     JsonObject itemAgedLostOverdue = new JsonObject();
     itemAgedLostOverdue.put("duration", 12);
     itemAgedLostOverdue.put("intervalId", "Months");
@@ -94,5 +103,11 @@ public class LostItemFeePoliciesFixture {
 
   public void cleanUp() {
     lostItemFeePolicyRecordCreator.cleanUp();
+  }
+
+  private void createReferenceData() {
+    feeFineTypeFixture.lostItemProcessingFee();
+    feeFineTypeFixture.lostItemFee();
+    feeFineOwnerFixture.cd1Owner();
   }
 }

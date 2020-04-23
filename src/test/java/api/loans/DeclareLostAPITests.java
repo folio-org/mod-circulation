@@ -51,7 +51,7 @@ public class DeclareLostAPITests extends APITests {
   public void beforeEach() throws InterruptedException {
     super.beforeEach();
 
-    useLostItemPolicy(lostItemFeePoliciesFixture.chargeSetCostFee().getId());
+    useLostItemPolicy(lostItemFeePoliciesFixture.chargeFee().getId());
 
     item = itemsFixture.basedUponSmallAngryPlanet();
     loanJson = loansFixture.checkOutByBarcode(item,
