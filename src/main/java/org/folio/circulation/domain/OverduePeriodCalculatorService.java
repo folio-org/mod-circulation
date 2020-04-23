@@ -5,6 +5,7 @@ import static org.apache.commons.lang3.ObjectUtils.allNotNull;
 import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.ResultBinding.flatMapResult;
 import static org.joda.time.DateTimeConstants.MINUTES_PER_HOUR;
+import static org.joda.time.DateTimeZone.UTC;
 import static org.joda.time.Minutes.minutesBetween;
 
 import java.util.Collection;
@@ -13,8 +14,8 @@ import java.util.concurrent.CompletableFuture;
 import org.folio.circulation.domain.policy.LoanPolicyRepository;
 import org.folio.circulation.support.Result;
 import org.joda.time.DateTime;
-import org.joda.time.LocalDate;
 import org.joda.time.LocalDateTime;
+import org.joda.time.Period;
 
 public class OverduePeriodCalculatorService {
   private static final int ZERO_MINUTES = 0;
@@ -78,22 +79,24 @@ public class OverduePeriodCalculatorService {
   private int getOpeningDayDurationMinutes(
     OpeningDay openingDay, LocalDateTime dueDate, LocalDateTime systemTime) {
 
-    LocalDate date = openingDay.getDate();
+    DateTime datePart = openingDay.getDayWithTimeZone();
 
     return openingDay.getOpeningHour()
       .stream()
       .mapToInt(openingHour -> getOpeningHourDurationMinutes(
-        openingHour, date, dueDate, systemTime))
+        openingHour, datePart, dueDate, systemTime))
       .sum();
   }
 
   private int getOpeningHourDurationMinutes(OpeningHour openingHour,
-    LocalDate datePart, LocalDateTime dueDate, LocalDateTime returnDate) {
+    DateTime datePart, LocalDateTime dueDate, LocalDateTime returnDate) {
 
     if (allNotNull(datePart, dueDate, openingHour.getStartTime(), openingHour.getEndTime())) {
 
-      LocalDateTime startTime =  datePart.toLocalDateTime(openingHour.getStartTime());
-      LocalDateTime endTime = datePart.toLocalDateTime(openingHour.getEndTime());
+      LocalDateTime startTime =  datePart.withTime(openingHour.getStartTime())
+        .withZone(UTC).toLocalDateTime();
+      LocalDateTime endTime = datePart.withTime(openingHour.getEndTime())
+        .withZone(UTC).toLocalDateTime();
 
       if (dueDate.isAfter(startTime) && dueDate.isBefore(endTime)) {
         startTime = dueDate;
@@ -106,15 +109,16 @@ public class OverduePeriodCalculatorService {
       if (endTime.isAfter(startTime) && endTime.isAfter(dueDate)
         && startTime.isBefore(returnDate)) {
 
-        return getMinutesOfDay(endTime) - getMinutesOfDay(startTime);
+        return calculateDiffInMinutes(startTime, endTime);
       }
     }
 
     return ZERO_MINUTES;
   }
 
-  private int getMinutesOfDay(LocalDateTime time) {
-    return time.getHourOfDay() * MINUTES_PER_HOUR + time.getMinuteOfHour();
+  private int calculateDiffInMinutes(LocalDateTime start, LocalDateTime end) {
+    Period period = new Period(start, end);
+    return period.getHours() * MINUTES_PER_HOUR + period.getMinutes();
   }
 
   Result<Integer> adjustOverdueWithGracePeriod(Loan loan, int overdueMinutes) {
