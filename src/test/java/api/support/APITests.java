@@ -338,6 +338,7 @@ public abstract class APITests {
 
     feeFineOwnerFixture.cleanUp();
     feeFineTypeFixture.cleanUp();
+    feeFineActionsClient.deleteAll();
     accountsClient.deleteAll();
   }
 
