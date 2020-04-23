@@ -1,5 +1,6 @@
 package api.support.matchers;
 
+import static api.support.matchers.JsonObjectMatcher.hasJsonPath;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
 
@@ -103,5 +104,9 @@ public class LoanMatchers {
 
       }
     };
+  }
+
+  public static Matcher<JsonObject> hasItem() {
+    return hasJsonPath("item", notNullValue());
   }
 }

@@ -5,6 +5,7 @@ import static api.support.matchers.ItemMatchers.awaitingPickup;
 import static api.support.matchers.ItemMatchers.inTransit;
 import static api.support.matchers.ItemMatchers.withdrawn;
 import static api.support.matchers.JsonObjectMatcher.hasJsonPath;
+import static api.support.matchers.LoanMatchers.hasItem;
 import static com.jayway.jsonpath.matchers.JsonPathMatchers.hasNoJsonPath;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -31,7 +32,7 @@ public class CheckInWithdrawnItemTest extends APITests {
 
     assertThat(response.getJson(), allOf(
       hasNoJsonPath("loan"),
-      hasJsonPath("item.status.name", "Available")
+      hasItem()
     ));
 
     assertThat(itemsClient.getById(item.getId()).getJson(), available());
@@ -49,7 +50,7 @@ public class CheckInWithdrawnItemTest extends APITests {
 
     assertThat(response.getJson(), allOf(
       hasNoJsonPath("loan"),
-      hasJsonPath("item.status.name", "In transit")
+      hasItem()
     ));
 
     assertThat(itemsClient.getById(item.getId()).getJson(), inTransit());
@@ -73,7 +74,7 @@ public class CheckInWithdrawnItemTest extends APITests {
 
     assertThat(response.getJson(), allOf(
       hasNoJsonPath("loan"),
-      hasJsonPath("item.status.name", "Awaiting pickup")
+      hasItem()
     ));
 
     assertThat(itemsClient.getById(item.getId()).getJson(), awaitingPickup());
@@ -101,7 +102,7 @@ public class CheckInWithdrawnItemTest extends APITests {
 
     assertThat(response.getJson(), allOf(
       hasNoJsonPath("loan"),
-      hasJsonPath("item.status.name", "In transit")
+     hasItem()
     ));
 
     assertThat(itemsClient.getById(item.getId()).getJson(), inTransit());
