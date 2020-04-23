@@ -1,5 +1,9 @@
 package api.loans.scenarios;
 
+import static api.support.matchers.ItemMatchers.available;
+import static api.support.matchers.ItemMatchers.awaitingPickup;
+import static api.support.matchers.ItemMatchers.inTransit;
+import static api.support.matchers.ItemMatchers.withdrawn;
 import static api.support.matchers.JsonObjectMatcher.hasJsonPath;
 import static com.jayway.jsonpath.matchers.JsonPathMatchers.hasNoJsonPath;
 import static org.hamcrest.CoreMatchers.allOf;
@@ -21,7 +25,7 @@ public class CheckInWithdrawnItemTest extends APITests {
     final InventoryItemResource item = itemsFixture
       .basedUponSmallAngryPlanet(ItemBuilder::withdrawn);
 
-    assertThat(item.getJson(), hasJsonPath("status.name", "Withdrawn"));
+    assertThat(item.getJson(), withdrawn());
 
     final CheckInByBarcodeResponse response = loansFixture.checkInByBarcode(item);
 
@@ -30,8 +34,7 @@ public class CheckInWithdrawnItemTest extends APITests {
       hasJsonPath("item.status.name", "Available")
     ));
 
-    assertThat(itemsClient.getById(item.getId()).getJson(),
-      hasJsonPath("status.name", "Available"));
+    assertThat(itemsClient.getById(item.getId()).getJson(), available());
   }
 
   @Test
@@ -39,7 +42,7 @@ public class CheckInWithdrawnItemTest extends APITests {
     final InventoryItemResource item = itemsFixture
       .basedUponSmallAngryPlanet(ItemBuilder::withdrawn);
 
-    assertThat(item.getJson(), hasJsonPath("status.name", "Withdrawn"));
+    assertThat(item.getJson(), withdrawn());
 
     final CheckInByBarcodeResponse response = loansFixture.checkInByBarcode(item,
       servicePointsFixture.cd2().getId());
@@ -49,8 +52,7 @@ public class CheckInWithdrawnItemTest extends APITests {
       hasJsonPath("item.status.name", "In transit")
     ));
 
-    assertThat(itemsClient.getById(item.getId()).getJson(),
-      hasJsonPath("status.name", "In transit"));
+    assertThat(itemsClient.getById(item.getId()).getJson(), inTransit());
   }
 
   @Test
@@ -74,8 +76,7 @@ public class CheckInWithdrawnItemTest extends APITests {
       hasJsonPath("item.status.name", "Awaiting pickup")
     ));
 
-    assertThat(itemsClient.getById(item.getId()).getJson(),
-      hasJsonPath("status.name", "Awaiting pickup"));
+    assertThat(itemsClient.getById(item.getId()).getJson(), awaitingPickup());
 
     assertThat(requestsFixture.getById(request.getId()).getJson(),
       hasJsonPath("status", "Open - Awaiting pickup"));
@@ -103,8 +104,7 @@ public class CheckInWithdrawnItemTest extends APITests {
       hasJsonPath("item.status.name", "In transit")
     ));
 
-    assertThat(itemsClient.getById(item.getId()).getJson(),
-      hasJsonPath("status.name", "In transit"));
+    assertThat(itemsClient.getById(item.getId()).getJson(), inTransit());
 
     assertThat(requestsFixture.getById(request.getId()).getJson(),
       hasJsonPath("status", "Open - In transit"));
