@@ -8,12 +8,14 @@ import java.util.concurrent.CompletableFuture;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.Result;
+import org.folio.circulation.support.ResultBinding;
 import org.folio.circulation.support.http.client.CqlQuery;
 import org.folio.circulation.support.http.client.PageLimit;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.client.ResponseInterpreter;
 
 public class FeeFineRepository {
+
   private final CollectionResourceClient feeFineStorageClient;
 
   public FeeFineRepository(Clients clients) {
@@ -25,10 +27,31 @@ public class FeeFineRepository {
     Result<CqlQuery> automaticQuery = CqlQuery.exactMatch("automatic", Boolean.toString(automatic));
 
     return typeQuery.combine(automaticQuery, CqlQuery::and)
-      .after(q -> feeFineStorageClient.getMany(q, PageLimit.one()))
-      .thenApply(r -> r.next(this::mapResponseToFeeFines))
-      .thenApply(r -> r.map(MultipleRecords::getRecords))
-      .thenApply(r -> r.map(col -> col.stream().findFirst().orElse(null)));
+            .after(q -> feeFineStorageClient.getMany(q, PageLimit.one()))
+            .thenApply(r -> r.next(this::mapResponseToFeeFines))
+            .thenApply(r -> r.map(MultipleRecords::getRecords))
+            .thenApply(r -> r.map(col -> col.stream().findFirst().orElse(null)));
+  }
+
+  public CompletableFuture<Result<FeeFine>> getLostFeeFine(String feeFineId) {
+    return getFeeFineById(feeFineId, FeeFine.LOST_ITEM_FEE_TYPE);
+
+  }
+
+  public CompletableFuture<Result<Boolean>> isAutomatic(String feeFineId) {
+    return getFeeFineById(feeFineId, FeeFine.LOST_ITEM_FEE_TYPE)
+            .thenApply(ResultBinding.mapResult(FeeFine::isAutomatic));
+  }
+
+  private CompletableFuture<Result<FeeFine>> getFeeFineById(String feeFineId, String feeFineType) {
+    Result<CqlQuery> typeQuery = CqlQuery.exactMatch("feeFineType", feeFineType);
+    Result<CqlQuery> IdQuery = CqlQuery.exactMatch("feeFineId", feeFineId);
+
+    return typeQuery.combine(IdQuery, CqlQuery::and)
+            .after(q -> feeFineStorageClient.getMany(q, PageLimit.limit(1)))
+            .thenApply(r -> r.next(this::mapResponseToFeeFines))
+            .thenApply(r -> r.map(MultipleRecords::getRecords))
+            .thenApply(r -> r.map(col -> col.stream().findFirst().orElse(null)));
   }
 
   private Result<MultipleRecords<FeeFine>> mapResponseToFeeFines(Response response) {
@@ -37,10 +60,10 @@ public class FeeFineRepository {
 
   public CompletableFuture<Result<FeeFine>> create(FeeFine feeFine) {
     final ResponseInterpreter<FeeFine> interpreter = new ResponseInterpreter<FeeFine>()
-      .flatMapOn(201, mapUsingJson(FeeFine::from))
-      .otherwise(forwardOnFailure());
+            .flatMapOn(201, mapUsingJson(FeeFine::from))
+            .otherwise(forwardOnFailure());
 
     return feeFineStorageClient.post(feeFine.toJson())
-      .thenApply(interpreter::flatMap);
+            .thenApply(interpreter::flatMap);
   }
 }

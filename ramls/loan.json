@@ -201,6 +201,7 @@
           },
           "additionalProperties": false
         },
+  
         "inTransitDestinationServicePointId": {
           "description": "Service point an item is intended to be transited to (should only be present when in transit)",
           "type": "string",

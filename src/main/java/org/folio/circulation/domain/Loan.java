@@ -21,6 +21,9 @@ import static org.folio.circulation.domain.representations.LoanProperties.RETURN
 import static org.folio.circulation.domain.representations.LoanProperties.STATUS;
 import static org.folio.circulation.domain.representations.LoanProperties.SYSTEM_RETURN_DATE;
 import static org.folio.circulation.domain.representations.LoanProperties.USER_ID;
+import static org.folio.circulation.domain.representations.LoanProperties.AGED_TO_LOST_DELAYED_BILLING;
+import static org.folio.circulation.domain.representations.LoanProperties.DATE_LOST_ITEM_SHOULD_BE_BILLED;
+import static org.folio.circulation.domain.representations.LoanProperties.LOST_ITEM_HAS_BEEN_BILLED;
 import static org.folio.circulation.support.JsonPropertyFetcher.getBooleanProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getDateTimeProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getIntegerProperty;
@@ -66,8 +69,8 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   private final Policies policies;
 
   private Loan(JsonObject representation, Item item, User user, User proxy,
-    ServicePoint checkinServicePoint, ServicePoint checkoutServicePoint,
-    DateTime originalDueDate, Policies policies, Collection<Account> accounts) {
+          ServicePoint checkinServicePoint, ServicePoint checkoutServicePoint,
+          DateTime originalDueDate, Policies policies, Collection<Account> accounts) {
 
     requireNonNull(policies.getLoanPolicy(), "loanPolicy cannot be null");
     requireNonNull(policies.getOverdueFinePolicy(), "overdueFinePolicy cannot be null");
@@ -107,14 +110,14 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   public static Loan from(JsonObject representation) {
     defaultStatusAndAction(representation);
     final LoanPolicy loanPolicy = LoanPolicy.unknown(
-      getProperty(representation, LOAN_POLICY_ID));
+            getProperty(representation, LOAN_POLICY_ID));
     final OverdueFinePolicy overdueFinePolicy = OverdueFinePolicy.unknown(
-      getProperty(representation, OVERDUE_FINE_POLICY_ID));
+            getProperty(representation, OVERDUE_FINE_POLICY_ID));
     final LostItemPolicy lostItemPolicy = LostItemPolicy.unknown(
-      getProperty(representation, LOST_ITEM_POLICY_ID));
+            getProperty(representation, LOST_ITEM_POLICY_ID));
 
     return new Loan(representation, null, null, null, null, null, null,
-      new Policies(loanPolicy, overdueFinePolicy, lostItemPolicy), null);
+            new Policies(loanPolicy, overdueFinePolicy, lostItemPolicy), null);
   }
 
   JsonObject asJson() {
@@ -147,6 +150,24 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
 
   private void changeSystemReturnDate(DateTime systemReturnDate) {
     write(representation, SYSTEM_RETURN_DATE, systemReturnDate);
+  }
+
+  private void updateBilledLostItemFlag(String lostItemHasBeenBilled) {
+    write(representation.getJsonObject(AGED_TO_LOST_DELAYED_BILLING), LOST_ITEM_HAS_BEEN_BILLED, lostItemHasBeenBilled);
+  }
+
+  public Loan updateBilledLostItemFlagForLoan(String lostItemHasBeenBilled) {
+    updateBilledLostItemFlag(lostItemHasBeenBilled);
+    return this;
+  }
+
+  private void updateDateBilledLostItem(DateTime dateBilledLostItem) {
+    write(representation.getJsonObject(AGED_TO_LOST_DELAYED_BILLING), DATE_LOST_ITEM_SHOULD_BE_BILLED, dateBilledLostItem);
+  }
+
+  public Loan updateDateBilledLostItemForLoan(DateTime dateBilledLostItem) {
+    updateDateBilledLostItem(dateBilledLostItem);
+    return this;
   }
 
   public void changeAction(LoanAction action) {
@@ -188,20 +209,20 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     }
 
     switch (getStatus()) {
-    case "Open":
-    case "Closed":
-      return succeeded(null);
+      case "Open":
+      case "Closed":
+        return succeeded(null);
 
-    default:
-      return failedValidation("Loan status must be \"Open\" or \"Closed\"",
-        STATUS, getStatus());
+      default:
+        return failedValidation("Loan status must be \"Open\" or \"Closed\"",
+                STATUS, getStatus());
     }
   }
 
   public Result<Void> openLoanHasUserId() {
     if (Objects.equals(getStatus(), "Open") && getUserId() == null) {
       return failedValidation("Open loan must have a user ID",
-        USER_ID, getUserId());
+              USER_ID, getUserId());
     } else {
       return succeeded(null);
     }
@@ -210,7 +231,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   public Result<Void> closedLoanHasCheckInServicePointId() {
     if (isClosed() && getCheckInServicePointId() == null) {
       return failedValidation("A Closed loan must have a Checkin Service Point",
-          CHECKIN_SERVICE_POINT_ID, getCheckInServicePointId());
+              CHECKIN_SERVICE_POINT_ID, getCheckInServicePointId());
     } else {
       return succeeded(null);
     }
@@ -239,6 +260,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   public Collection<Account> getAccounts() {
     return accounts;
   }
+
   @Override
   public String getItemId() {
     return getProperty(representation, "itemId");
@@ -264,12 +286,12 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
 
   Loan replaceRepresentation(JsonObject newRepresentation) {
     return new Loan(newRepresentation, item, user, proxy, checkinServicePoint,
-      checkoutServicePoint, originalDueDate, policies, accounts);
+            checkoutServicePoint, originalDueDate, policies, accounts);
   }
 
   public Loan withItem(Item item) {
     return new Loan(representation, item, user, proxy, checkinServicePoint,
-      checkoutServicePoint, originalDueDate, policies, accounts);
+            checkoutServicePoint, originalDueDate, policies, accounts);
   }
 
   public User getUser() {
@@ -278,17 +300,17 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
 
   public Loan withUser(User newUser) {
     return new Loan(representation, item, newUser, proxy, checkinServicePoint,
-      checkoutServicePoint, originalDueDate, policies, accounts);
+            checkoutServicePoint, originalDueDate, policies, accounts);
   }
 
   Loan withPatronGroupAtCheckout(PatronGroup patronGroup) {
     if (nonNull(patronGroup)) {
       JsonObject patronGroupAtCheckout = new JsonObject()
-        .put("id", patronGroup.getId())
-        .put("name", patronGroup.getGroup());
+              .put("id", patronGroup.getId())
+              .put("name", patronGroup.getGroup());
 
       write(representation, LoanProperties.PATRON_GROUP_AT_CHECKOUT,
-        patronGroupAtCheckout);
+              patronGroupAtCheckout);
     }
     return this;
   }
@@ -299,46 +321,46 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
 
   Loan withProxy(User newProxy) {
     return new Loan(representation, item, user, newProxy, checkinServicePoint,
-      checkoutServicePoint, originalDueDate, policies, accounts);
+            checkoutServicePoint, originalDueDate, policies, accounts);
   }
 
   Loan withCheckinServicePoint(ServicePoint newCheckinServicePoint) {
     return new Loan(representation, item, user, proxy, newCheckinServicePoint,
-      checkoutServicePoint, originalDueDate, policies, accounts);
+            checkoutServicePoint, originalDueDate, policies, accounts);
   }
 
   Loan withCheckoutServicePoint(ServicePoint newCheckoutServicePoint) {
     return new Loan(representation, item, user, proxy, checkinServicePoint,
-      newCheckoutServicePoint, originalDueDate, policies, accounts);
+            newCheckoutServicePoint, originalDueDate, policies, accounts);
   }
 
   public Loan withAccounts(Collection<Account> newAccounts) {
     return new Loan(representation, item, user, proxy, checkinServicePoint,
-      checkoutServicePoint, originalDueDate, policies, newAccounts);
+            checkoutServicePoint, originalDueDate, policies, newAccounts);
   }
 
   public Loan withLoanPolicy(LoanPolicy newLoanPolicy) {
     requireNonNull(newLoanPolicy, "newLoanPolicy cannot be null");
 
     return new Loan(representation, item, user, proxy, checkinServicePoint,
-      checkoutServicePoint, originalDueDate,
-      policies.withLoanPolicy(newLoanPolicy), accounts);
+            checkoutServicePoint, originalDueDate,
+            policies.withLoanPolicy(newLoanPolicy), accounts);
   }
 
   public Loan withOverdueFinePolicy(OverdueFinePolicy newOverdueFinePolicy) {
     requireNonNull(newOverdueFinePolicy, "newOverdueFinePolicy cannot be null");
 
     return new Loan(representation, item, user, proxy, checkinServicePoint,
-      checkoutServicePoint, originalDueDate,
-      policies.withOverdueFinePolicy(newOverdueFinePolicy), accounts);
+            checkoutServicePoint, originalDueDate,
+            policies.withOverdueFinePolicy(newOverdueFinePolicy), accounts);
   }
 
   public Loan withLostItemPolicy(LostItemPolicy newLostItemPolicy) {
     requireNonNull(newLostItemPolicy, "newLostItemPolicy cannot be null");
 
     return new Loan(representation, item, user, proxy, checkinServicePoint,
-      checkoutServicePoint, originalDueDate,
-      policies.withLostItemPolicy(newLostItemPolicy), accounts);
+            checkoutServicePoint, originalDueDate,
+            policies.withLostItemPolicy(newLostItemPolicy), accounts);
   }
 
   public String getLoanPolicyId() {
@@ -380,7 +402,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   String getPatronGroupIdAtCheckout() {
-    return  getProperty(representation, "patronGroupIdAtCheckout");
+    return getProperty(representation, "patronGroupIdAtCheckout");
   }
 
   public Loan renew(DateTime dueDate, String basedUponLoanPolicyId) {
@@ -394,8 +416,8 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   public Loan overrideRenewal(DateTime dueDate,
-                              String basedUponLoanPolicyId,
-                              String actionComment) {
+          String basedUponLoanPolicyId,
+          String actionComment) {
     changeAction(RENEWED_THROUGH_OVERRIDE);
     setLoanPolicyId(basedUponLoanPolicyId);
     changeDueDate(dueDate);
@@ -406,7 +428,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   private Loan checkIn(String action, DateTime returnDateTime,
-    DateTime systemReturnDateTime, UUID servicePointId) {
+          DateTime systemReturnDateTime, UUID servicePointId) {
 
     changeAction(action);
     removeActionComment();
@@ -420,16 +442,15 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
 
   Loan checkIn(DateTime returnDateTime, DateTime systemReturnDateTime, UUID servicePointId) {
     return checkIn(CHECKED_IN.getValue(), returnDateTime, systemReturnDateTime,
-      servicePointId);
+            servicePointId);
   }
 
   Loan resolveClaimedReturned(LoanAction.ResolveClaimedReturned action,
-    DateTime returnDateTime, DateTime systemReturnDateTime, UUID servicePointId) {
+          DateTime returnDateTime, DateTime systemReturnDateTime, UUID servicePointId) {
 
     return checkIn(action.getValue(), returnDateTime, systemReturnDateTime,
-      servicePointId);
+            servicePointId);
   }
-
 
   public Loan declareItemLost(String comment, DateTime dateTime) {
     changeAction(DECLARED_LOST);
@@ -501,7 +522,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     DateTime dueDate = getDueDate();
 
     return ObjectUtils.allNotNull(dueDate, systemTime)
-      && dueDate.isBefore(systemTime);
+            && dueDate.isBefore(systemTime);
   }
 
   public Loan claimItemReturned(String comment, DateTime claimedReturnedDate) {
@@ -519,4 +540,31 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   private void changeClaimedReturnedDate(DateTime claimedReturnedDate) {
     write(representation, CLAIMED_RETURNED_DATE, claimedReturnedDate);
   }
+
+  private String getBilledLostItemFlag() {
+    return getProperty(representation.getJsonObject(AGED_TO_LOST_DELAYED_BILLING),
+            LOST_ITEM_HAS_BEEN_BILLED);
+  }
+  
+   public DateTime getDateLostItemShouldBeBilled() {
+        return getDateTimeProperty(representation.getJsonObject(AGED_TO_LOST_DELAYED_BILLING),
+                DATE_LOST_ITEM_SHOULD_BE_BILLED);
+    }
+
+
+  public String getLostItemHasBeenBilled() {
+    String lostItemHasBeenBilled = "";
+    if ((getBilledLostItemFlag() == null) && (getBilledLostItemFlag().isEmpty())) {
+      lostItemHasBeenBilled = "";
+    } else {
+      if (StringUtils.equalsIgnoreCase(getBilledLostItemFlag(), "True")) {
+        lostItemHasBeenBilled = "true";
+      } else {
+        lostItemHasBeenBilled = "false";
+      }
+
+    }
+    return lostItemHasBeenBilled;
+  }
+
 }

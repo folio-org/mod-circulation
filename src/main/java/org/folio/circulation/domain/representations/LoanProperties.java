@@ -1,6 +1,7 @@
 package org.folio.circulation.domain.representations;
 
 public class LoanProperties {
+
   private LoanProperties() { }
 
   public static final String ITEM_ID = "itemId";
@@ -26,4 +27,9 @@ public class LoanProperties {
   public static final String PATRON_GROUP_AT_CHECKOUT = "patronGroupAtCheckout";
   public static final String DECLARED_LOST_DATE = "declaredLostDate";
   public static final String CLAIMED_RETURNED_DATE = "claimedReturnedDate";
+  public static final String AGED_TO_LOST_DELAYED_BILLING = "agedToLostDelayedBilling";
+  public static final String LOST_ITEM_HAS_BEEN_BILLED = "lostItemHasBeenBilled";
+  public static final String DATE_LOST_ITEM_SHOULD_BE_BILLED = "dateLostItemShouldBeBilled";
+
+
 }
