@@ -13,9 +13,8 @@ public enum LoanAction {
   MISSING("markedMissing"),
   CLOSED_LOAN("closedLoan"),
 
-  //Resolve claimed return actions:
-  CLAIM_RETURNED_BY_PATRON("checkedInReturnedByPatron"),
-  CLAIM_FOUND_BY_LIBRARY("checkedInFoundByLibrary");
+  RESOLVE_CLAIM_AS_RETURNED_BY_PATRON("checkedInReturnedByPatron"),
+  RESOLVE_CLAIM_AS_FOUND_BY_LIBRARY("checkedInFoundByLibrary");
 
 
   private final String value;

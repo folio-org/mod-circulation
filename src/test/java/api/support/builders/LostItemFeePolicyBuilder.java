@@ -195,7 +195,7 @@ public class LostItemFeePolicyBuilder extends JsonBuilder implements Builder {
   }
 
   public LostItemFeePolicyBuilder withNoChargeAmountItem() {
-    return withChargeAmountItem("anotherCost", 0.0);
+    return withChargeAmountItem(null);
   }
 
   public LostItemFeePolicyBuilder withChargeAmountItem(String chargeType, Double amount) {

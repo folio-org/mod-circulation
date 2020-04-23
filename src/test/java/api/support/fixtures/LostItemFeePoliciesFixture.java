@@ -15,9 +15,8 @@ public class LostItemFeePoliciesFixture {
   private final FeeFineTypeFixture feeFineTypeFixture;
   private final FeeFineOwnerFixture feeFineOwnerFixture;
 
-  public LostItemFeePoliciesFixture(
-    ResourceClient lostItemFeePoliciesClient, FeeFineOwnerFixture feeFineOwnerFixture,
-    FeeFineTypeFixture feeFineTypeFixture) {
+  public LostItemFeePoliciesFixture(ResourceClient lostItemFeePoliciesClient,
+    FeeFineOwnerFixture feeFineOwnerFixture, FeeFineTypeFixture feeFineTypeFixture) {
 
     lostItemFeePolicyRecordCreator = new RecordCreator(lostItemFeePoliciesClient,
       reason -> getProperty(reason, "name"));
