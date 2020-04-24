@@ -1,21 +1,27 @@
 package org.folio.circulation.domain.policy.lostitem;
 
+import static java.util.Optional.ofNullable;
+import static org.folio.circulation.domain.policy.lostitem.ChargeAmountType.SET_COST;
+import static org.folio.circulation.domain.policy.lostitem.ChargeAmountType.forValue;
 import static org.folio.circulation.support.JsonPropertyFetcher.getBigDecimalProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getBooleanProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getObjectProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
+
+import java.math.BigDecimal;
+import java.util.Optional;
 
 import org.folio.circulation.domain.policy.Policy;
 
 import io.vertx.core.json.JsonObject;
 
 public class LostItemPolicy extends Policy {
-  private final SetCostChargeFee setCostChargeFee;
+  private final ItemFee setCostChargeFee;
   private final boolean chargeAmountItemPatron;
-  private final ProcessingChargeFee processingChargeFee;
+  private final ItemFee processingChargeFee;
 
-  private LostItemPolicy(String id, String name, SetCostChargeFee setCostChargeFee,
-    boolean chargeAmountItemPatron, ProcessingChargeFee processingChargeFee) {
+  private LostItemPolicy(String id, String name, ItemFee setCostChargeFee,
+    boolean chargeAmountItemPatron, ItemFee processingChargeFee) {
 
     super(id, name);
     this.setCostChargeFee = setCostChargeFee;
@@ -24,26 +30,35 @@ public class LostItemPolicy extends Policy {
   }
 
   public static LostItemPolicy from(JsonObject lostItemPolicy) {
-    final ProcessingChargeFee lostItemProcessingFee =
-      new ProcessingChargeFee(getBigDecimalProperty(lostItemPolicy, "lostItemProcessingFee"));
-    final SetCostChargeFee setCostCharge = SetCostChargeFee
-      .from(getObjectProperty(lostItemPolicy, "chargeAmountItem"));
-
     return new LostItemPolicy(
       getProperty(lostItemPolicy, "id"),
       getProperty(lostItemPolicy, "name"),
-      setCostCharge,
+      getSetCostFee(lostItemPolicy),
       getBooleanProperty(lostItemPolicy, "chargeAmountItemPatron"),
-      lostItemProcessingFee
+      getProcessingFee(lostItemPolicy)
     );
   }
 
-  /**
-   * Returns wrapper around chargeItem object. SetCostChargeFee#getAmount is null
-   * when chargeItem is not of anotherCost type.
-   */
-  public SetCostChargeFee getSetCostChargeFee() {
-    return setCostChargeFee;
+  private static ItemFee getProcessingFee(JsonObject policy) {
+    final BigDecimal amount = getBigDecimalProperty(policy, "lostItemProcessingFee");
+    return amount != null
+      ? new ItemFee(amount)
+      : null;
+  }
+
+  private static ItemFee getSetCostFee(JsonObject policy) {
+    final JsonObject chargeAmountItem = getObjectProperty(policy, "chargeAmountItem");
+    final ChargeAmountType chargeType = forValue(getProperty(chargeAmountItem, "chargeType"));
+
+    if (chargeAmountItem == null || chargeType != SET_COST) {
+      return null;
+    }
+
+    return new ItemFee(getBigDecimalProperty(chargeAmountItem, "amount"));
+  }
+
+  public Optional<ItemFee> getSetCostChargeFee() {
+    return ofNullable(setCostChargeFee);
   }
 
   public boolean shouldChargeProcessingFee() {
@@ -51,12 +66,8 @@ public class LostItemPolicy extends Policy {
     return chargeAmountItemPatron;
   }
 
-  /**
-   * Returns wrapper around processing fee amount. ProcessingChargeFee#getAmount
-   * is null when no fee defined.
-   */
-  public ProcessingChargeFee getLostItemProcessingFee() {
-    return processingChargeFee;
+  public Optional<ItemFee> getLostItemProcessingFee() {
+    return ofNullable(processingChargeFee);
   }
 
   public static LostItemPolicy unknown(String id) {
@@ -65,8 +76,7 @@ public class LostItemPolicy extends Policy {
 
   private static class UnknownLostItemPolicy extends LostItemPolicy {
     UnknownLostItemPolicy(String id) {
-      super(id, null, new SetCostChargeFee(null),
-        false, new ProcessingChargeFee(null));
+      super(id, null, null, false, null);
     }
   }
 }
