@@ -1971,20 +1971,14 @@ public class RequestsAPICreationTests extends APITests {
     )));
   }
 
-  @Parameters({
-    "",
-    "Recall",
-    "Hold",
-    "Page"
-  })
   @Test
-  public void cannotCreateRequestForWithdrawnItem(String requestType) {
+  public void cannotCreateRecallRequestForWithdrawnItem() {
     final IndividualResource withdrawnItem = itemsFixture
       .basedUponSmallAngryPlanet(ItemBuilder::withdrawn);
 
     final Response response = requestsClient.attemptCreate(new RequestBuilder()
       .open()
-      .withRequestType(requestType)
+      .recall()
       .forItem(withdrawnItem)
       .by(usersFixture.steve())
       .fulfilToHoldShelf()
@@ -1992,8 +1986,8 @@ public class RequestsAPICreationTests extends APITests {
 
     assertThat(response, hasStatus(HTTP_VALIDATION_ERROR));
     assertThat(response.getJson(), hasErrorWith(allOf(
-      hasMessage(requestType + " requests are not allowed for this patron and item combination"),
-      hasParameter("requestType", requestType)
+      hasMessage("Recall requests are not allowed for this patron and item combination"),
+      hasParameter("requestType", "Recall")
     )));
   }
 

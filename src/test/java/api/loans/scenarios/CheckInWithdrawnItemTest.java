@@ -6,6 +6,8 @@ import static api.support.matchers.ItemMatchers.inTransit;
 import static api.support.matchers.ItemMatchers.withdrawn;
 import static api.support.matchers.JsonObjectMatcher.hasJsonPath;
 import static api.support.matchers.LoanMatchers.hasItem;
+import static api.support.matchers.RequestMatchers.openAwaitingPickup;
+import static api.support.matchers.RequestMatchers.openInTransit;
 import static com.jayway.jsonpath.matchers.JsonPathMatchers.hasNoJsonPath;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -28,12 +30,7 @@ public class CheckInWithdrawnItemTest extends APITests {
 
     assertThat(item.getJson(), withdrawn());
 
-    final CheckInByBarcodeResponse response = loansFixture.checkInByBarcode(item);
-
-    assertThat(response.getJson(), allOf(
-      hasNoJsonPath("loan"),
-      hasItem()
-    ));
+    loansFixture.checkInByBarcode(item);
 
     assertThat(itemsClient.getById(item.getId()).getJson(), available());
   }
@@ -45,13 +42,7 @@ public class CheckInWithdrawnItemTest extends APITests {
 
     assertThat(item.getJson(), withdrawn());
 
-    final CheckInByBarcodeResponse response = loansFixture.checkInByBarcode(item,
-      servicePointsFixture.cd2().getId());
-
-    assertThat(response.getJson(), allOf(
-      hasNoJsonPath("loan"),
-      hasItem()
-    ));
+    loansFixture.checkInByBarcode(item, servicePointsFixture.cd2().getId());
 
     assertThat(itemsClient.getById(item.getId()).getJson(), inTransit());
   }
@@ -70,17 +61,11 @@ public class CheckInWithdrawnItemTest extends APITests {
     itemsClient.replace(item.getId(), item.getJson().copy()
       .put("status", new JsonObject().put("name", "Withdrawn")));
 
-    final CheckInByBarcodeResponse response = loansFixture.checkInByBarcode(item);
-
-    assertThat(response.getJson(), allOf(
-      hasNoJsonPath("loan"),
-      hasItem()
-    ));
+    loansFixture.checkInByBarcode(item);
 
     assertThat(itemsClient.getById(item.getId()).getJson(), awaitingPickup());
 
-    assertThat(requestsFixture.getById(request.getId()).getJson(),
-      hasJsonPath("status", "Open - Awaiting pickup"));
+    assertThat(requestsFixture.getById(request.getId()).getJson(), openAwaitingPickup());
   }
 
   @Test
@@ -97,17 +82,10 @@ public class CheckInWithdrawnItemTest extends APITests {
     itemsClient.replace(item.getId(), item.getJson().copy()
       .put("status", new JsonObject().put("name", "Withdrawn")));
 
-    final CheckInByBarcodeResponse response = loansFixture.checkInByBarcode(item,
-      servicePointsFixture.cd2().getId());
-
-    assertThat(response.getJson(), allOf(
-      hasNoJsonPath("loan"),
-     hasItem()
-    ));
+    loansFixture.checkInByBarcode(item, servicePointsFixture.cd2().getId());
 
     assertThat(itemsClient.getById(item.getId()).getJson(), inTransit());
 
-    assertThat(requestsFixture.getById(request.getId()).getJson(),
-      hasJsonPath("status", "Open - In transit"));
+    assertThat(requestsFixture.getById(request.getId()).getJson(), openInTransit());
   }
 }

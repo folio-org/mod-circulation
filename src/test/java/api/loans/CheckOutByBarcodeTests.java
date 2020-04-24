@@ -13,8 +13,7 @@ import static api.support.matchers.ItemMatchers.checkedOut;
 import static api.support.matchers.ItemMatchers.withdrawn;
 import static api.support.matchers.ItemStatusCodeMatcher.hasItemStatus;
 import static api.support.matchers.JsonObjectMatcher.hasJsonPath;
-import static api.support.matchers.LoanMatchers.hasItem;
-import static api.support.matchers.LoanMatchers.hasOpenStatus;
+import static api.support.matchers.LoanMatchers.isOpen;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static api.support.matchers.TextDateTimeMatcher.withinSecondsAfter;
 import static api.support.matchers.UUIDMatcher.is;
@@ -1163,11 +1162,9 @@ public class CheckOutByBarcodeTests extends APITests {
       .checkOutByBarcode(withdrawnItem, usersFixture.steve());
 
     assertThat(response.getJson(), allOf(
-      hasOpenStatus(),
-      hasItem(),
+      isOpen(),
       hasJsonPath("action", "checkedout"),
-      hasJsonPath("itemId", withdrawnItem.getId().toString()),
-      hasJsonPath("item.id", withdrawnItem.getId().toString())
+      hasJsonPath("itemId", withdrawnItem.getId().toString())
     ));
 
     assertThat(itemsClient.getById(withdrawnItem.getId()).getJson(), checkedOut());

@@ -2,7 +2,18 @@ package org.folio.circulation.domain;
 
 import static junit.framework.TestCase.assertFalse;
 import static junit.framework.TestCase.assertTrue;
+import static org.folio.circulation.domain.ItemStatus.AVAILABLE;
+import static org.folio.circulation.domain.ItemStatus.AWAITING_DELIVERY;
+import static org.folio.circulation.domain.ItemStatus.CHECKED_OUT;
+import static org.folio.circulation.domain.ItemStatus.CLAIMED_RETURNED;
+import static org.folio.circulation.domain.ItemStatus.DECLARED_LOST;
+import static org.folio.circulation.domain.ItemStatus.IN_PROCESS;
+import static org.folio.circulation.domain.ItemStatus.ON_ORDER;
+import static org.folio.circulation.domain.ItemStatus.PAGED;
 import static org.folio.circulation.domain.ItemStatus.WITHDRAWN;
+import static org.folio.circulation.domain.RequestType.HOLD;
+import static org.folio.circulation.domain.RequestType.PAGE;
+import static org.folio.circulation.domain.RequestType.RECALL;
 import static org.folio.circulation.domain.RequestTypeItemStatusWhiteList.canCreateRequestForItem;
 
 import org.junit.Test;
@@ -16,87 +27,87 @@ public class RequestTypeItemStatusWhiteListTests {
 
   @Test
   public void canCreateHoldRequestWhenItemStatusCheckedOut() {
-    assertTrue(canCreateRequestForItem(ItemStatus.CHECKED_OUT, RequestType.HOLD));
+    assertTrue(canCreateRequestForItem(CHECKED_OUT, HOLD));
   }
 
   @Test
   public void canCreateRecallRequestWhenItemStatusCheckedOut() {
-    assertTrue(canCreateRequestForItem(ItemStatus.CHECKED_OUT, RequestType.RECALL));
+    assertTrue(canCreateRequestForItem(CHECKED_OUT, RECALL));
   }
 
   @Test
   public void cannotCreatePagedRequestWhenItemStatusCheckedOut() {
-    assertFalse(canCreateRequestForItem(ItemStatus.CHECKED_OUT, RequestType.PAGE));
+    assertFalse(canCreateRequestForItem(CHECKED_OUT, PAGE));
   }
 
   @Test
   public void cannotCreateNoneRequestWhenItemStatusIsAnything() {
-    assertFalse(canCreateRequestForItem(ItemStatus.CHECKED_OUT, RequestType.NONE));
+    assertFalse(canCreateRequestForItem(CHECKED_OUT, RequestType.NONE));
   }
 
   @Test
   public void canCreateHoldRequestWhenItemStatusOnOrder() {
-    assertTrue(canCreateRequestForItem(ItemStatus.ON_ORDER, RequestType.HOLD));
+    assertTrue(canCreateRequestForItem(ON_ORDER, HOLD));
   }
 
   @Test
   public void canCreateRecallRequestWhenItemStatusOnOrder() {
-    assertTrue(canCreateRequestForItem(ItemStatus.ON_ORDER, RequestType.RECALL));
+    assertTrue(canCreateRequestForItem(ON_ORDER, RECALL));
   }
 
   @Test
   public void cannotCreatePagedRequestWhenItemStatusOnOrder() {
-    assertFalse(canCreateRequestForItem(ItemStatus.ON_ORDER, RequestType.PAGE));
+    assertFalse(canCreateRequestForItem(ON_ORDER, PAGE));
   }
 
   @Test
   public void canCreateHoldRequestWhenItemStatusInProcess() {
-    assertTrue(canCreateRequestForItem(ItemStatus.IN_PROCESS, RequestType.HOLD));
+    assertTrue(canCreateRequestForItem(IN_PROCESS, HOLD));
   }
 
   @Test
   public void canCreateRecallRequestWhenItemStatusInProcess() {
-    assertTrue(canCreateRequestForItem(ItemStatus.IN_PROCESS, RequestType.RECALL));
+    assertTrue(canCreateRequestForItem(IN_PROCESS, RECALL));
   }
 
   @Test
   public void cannotCreatePagedRequestWhenItemStatusInProcess() {
-    assertFalse(canCreateRequestForItem(ItemStatus.IN_PROCESS, RequestType.PAGE));
+    assertFalse(canCreateRequestForItem(IN_PROCESS, PAGE));
   }
 
   @Test
   public void canCreateRecallRequestWhenItemStatusPaged() {
-    assertTrue(canCreateRequestForItem(ItemStatus.PAGED, RequestType.RECALL));
+    assertTrue(canCreateRequestForItem(PAGED, RECALL));
   }
 
   @Test
   public void cannotCreatePagedRequestWhenItemStatusIsNone() {
-    assertFalse(canCreateRequestForItem(ItemStatus.NONE, RequestType.PAGE));
+    assertFalse(canCreateRequestForItem(ItemStatus.NONE, PAGE));
   }
 
   @Test
   public void canCreatePagedRequestWhenItemStatusIsAvailable() {
-    assertTrue(canCreateRequestForItem(ItemStatus.AVAILABLE, RequestType.PAGE));
+    assertTrue(canCreateRequestForItem(AVAILABLE, PAGE));
   }
 
   @Test
   public void canCreateHoldRequestWhenItemStatusAwaitingDelivery() {
-    assertTrue(canCreateRequestForItem(ItemStatus.AWAITING_DELIVERY, RequestType.HOLD));
+    assertTrue(canCreateRequestForItem(AWAITING_DELIVERY, HOLD));
   }
 
   @Test
   public void canCreateRecallRequestWhenItemStatusAwaitingDelivery() {
-    assertTrue(canCreateRequestForItem(ItemStatus.AWAITING_DELIVERY, RequestType.RECALL));
+    assertTrue(canCreateRequestForItem(AWAITING_DELIVERY, RECALL));
   }
 
   @Test
   public void cannotCreatePagedRequestWhenItemStatusAwaitingDelivery() {
-    assertFalse(canCreateRequestForItem(ItemStatus.AWAITING_DELIVERY, RequestType.PAGE));
+    assertFalse(canCreateRequestForItem(AWAITING_DELIVERY, PAGE));
   }
 
   @Test
   public void cannotCreateNoneRequestWhenItemStatusAwaitingDelivery() {
-    assertFalse(canCreateRequestForItem(ItemStatus.AWAITING_DELIVERY, RequestType.NONE));
+    assertFalse(canCreateRequestForItem(AWAITING_DELIVERY, RequestType.NONE));
   }
 
   @Test
@@ -107,8 +118,7 @@ public class RequestTypeItemStatusWhiteListTests {
     "Page"
   })
   public void cannotCreateRequestWhenItemStatusDeclaredLostItem(String requestType) {
-    assertFalse(canCreateRequestForItem(ItemStatus.DECLARED_LOST,
-      RequestType.from(requestType)));
+    assertFalse(canCreateRequestForItem(DECLARED_LOST, RequestType.from(requestType)));
   }
 
   @Test
@@ -119,7 +129,7 @@ public class RequestTypeItemStatusWhiteListTests {
     "Page"
   })
   public void cannotCreateRequestWhenItemStatusClaimedReturned(String requestType) {
-    assertFalse(canCreateRequestForItem(ItemStatus.CLAIMED_RETURNED, RequestType.from(requestType)));
+    assertFalse(canCreateRequestForItem(CLAIMED_RETURNED, RequestType.from(requestType)));
   }
 
   @Test

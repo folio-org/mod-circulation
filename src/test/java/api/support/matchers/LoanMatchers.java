@@ -10,7 +10,7 @@ import org.hamcrest.Matcher;
 import org.hamcrest.TypeSafeDiagnosingMatcher;
 
 public class LoanMatchers {
-  public static TypeSafeDiagnosingMatcher<JsonObject> hasOpenStatus() {
+  public static TypeSafeDiagnosingMatcher<JsonObject> isOpen() {
     return hasStatus("Open");
   }
 
