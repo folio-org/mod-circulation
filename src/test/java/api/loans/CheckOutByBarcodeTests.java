@@ -9,8 +9,8 @@ import static api.support.matchers.CheckOutByBarcodeResponseMatchers.hasLoanPoli
 import static api.support.matchers.CheckOutByBarcodeResponseMatchers.hasProxyUserBarcodeParameter;
 import static api.support.matchers.CheckOutByBarcodeResponseMatchers.hasServicePointParameter;
 import static api.support.matchers.CheckOutByBarcodeResponseMatchers.hasUserBarcodeParameter;
-import static api.support.matchers.ItemMatchers.checkedOut;
-import static api.support.matchers.ItemMatchers.withdrawn;
+import static api.support.matchers.ItemMatchers.isCheckedOut;
+import static api.support.matchers.ItemMatchers.isWithdrawn;
 import static api.support.matchers.ItemStatusCodeMatcher.hasItemStatus;
 import static api.support.matchers.JsonObjectMatcher.hasJsonPath;
 import static api.support.matchers.LoanMatchers.isOpen;
@@ -1156,7 +1156,7 @@ public class CheckOutByBarcodeTests extends APITests {
     final IndividualResource withdrawnItem = itemsFixture
       .basedUponSmallAngryPlanet(ItemBuilder::withdrawn);
 
-    assertThat(withdrawnItem.getJson(), withdrawn());
+    assertThat(withdrawnItem.getJson(), isWithdrawn());
 
     final IndividualResource response = loansFixture
       .checkOutByBarcode(withdrawnItem, usersFixture.steve());
@@ -1167,7 +1167,7 @@ public class CheckOutByBarcodeTests extends APITests {
       hasJsonPath("itemId", withdrawnItem.getId().toString())
     ));
 
-    assertThat(itemsClient.getById(withdrawnItem.getId()).getJson(), checkedOut());
+    assertThat(itemsClient.getById(withdrawnItem.getId()).getJson(), isCheckedOut());
   }
 
   private IndividualResource prepareLoanPolicyWithItemLimit(int itemLimit) {

@@ -1,22 +1,17 @@
 package api.loans.scenarios;
 
-import static api.support.matchers.ItemMatchers.available;
-import static api.support.matchers.ItemMatchers.awaitingPickup;
-import static api.support.matchers.ItemMatchers.inTransit;
-import static api.support.matchers.ItemMatchers.withdrawn;
-import static api.support.matchers.JsonObjectMatcher.hasJsonPath;
-import static api.support.matchers.LoanMatchers.hasItem;
-import static api.support.matchers.RequestMatchers.openAwaitingPickup;
-import static api.support.matchers.RequestMatchers.openInTransit;
-import static com.jayway.jsonpath.matchers.JsonPathMatchers.hasNoJsonPath;
-import static org.hamcrest.CoreMatchers.allOf;
+import static api.support.matchers.ItemMatchers.isAvailable;
+import static api.support.matchers.ItemMatchers.isAwaitingPickup;
+import static api.support.matchers.ItemMatchers.isInTransit;
+import static api.support.matchers.ItemMatchers.isWithdrawn;
+import static api.support.matchers.RequestMatchers.isOpenAwaitingPickup;
+import static api.support.matchers.RequestMatchers.isOpenInTransit;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.junit.Test;
 
 import api.support.APITests;
-import api.support.CheckInByBarcodeResponse;
 import api.support.builders.ItemBuilder;
 import api.support.builders.RequestBuilder;
 import api.support.http.InventoryItemResource;
@@ -28,11 +23,11 @@ public class CheckInWithdrawnItemTest extends APITests {
     final InventoryItemResource item = itemsFixture
       .basedUponSmallAngryPlanet(ItemBuilder::withdrawn);
 
-    assertThat(item.getJson(), withdrawn());
+    assertThat(item.getJson(), isWithdrawn());
 
     loansFixture.checkInByBarcode(item);
 
-    assertThat(itemsClient.getById(item.getId()).getJson(), available());
+    assertThat(itemsClient.getById(item.getId()).getJson(), isAvailable());
   }
 
   @Test
@@ -40,11 +35,11 @@ public class CheckInWithdrawnItemTest extends APITests {
     final InventoryItemResource item = itemsFixture
       .basedUponSmallAngryPlanet(ItemBuilder::withdrawn);
 
-    assertThat(item.getJson(), withdrawn());
+    assertThat(item.getJson(), isWithdrawn());
 
     loansFixture.checkInByBarcode(item, servicePointsFixture.cd2().getId());
 
-    assertThat(itemsClient.getById(item.getId()).getJson(), inTransit());
+    assertThat(itemsClient.getById(item.getId()).getJson(), isInTransit());
   }
 
   @Test
@@ -63,9 +58,9 @@ public class CheckInWithdrawnItemTest extends APITests {
 
     loansFixture.checkInByBarcode(item);
 
-    assertThat(itemsClient.getById(item.getId()).getJson(), awaitingPickup());
+    assertThat(itemsClient.getById(item.getId()).getJson(), isAwaitingPickup());
 
-    assertThat(requestsFixture.getById(request.getId()).getJson(), openAwaitingPickup());
+    assertThat(requestsFixture.getById(request.getId()).getJson(), isOpenAwaitingPickup());
   }
 
   @Test
@@ -84,8 +79,8 @@ public class CheckInWithdrawnItemTest extends APITests {
 
     loansFixture.checkInByBarcode(item, servicePointsFixture.cd2().getId());
 
-    assertThat(itemsClient.getById(item.getId()).getJson(), inTransit());
+    assertThat(itemsClient.getById(item.getId()).getJson(), isInTransit());
 
-    assertThat(requestsFixture.getById(request.getId()).getJson(), openInTransit());
+    assertThat(requestsFixture.getById(request.getId()).getJson(), isOpenInTransit());
   }
 }

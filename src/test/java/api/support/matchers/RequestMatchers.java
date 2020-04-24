@@ -11,11 +11,11 @@ public final class RequestMatchers {
 
   private RequestMatchers() {}
 
-  public static Matcher<JsonObject> openAwaitingPickup() {
+  public static Matcher<JsonObject> isOpenAwaitingPickup() {
     return hasStatus("Open - Awaiting pickup");
   }
 
-  public static Matcher<JsonObject> openInTransit() {
+  public static Matcher<JsonObject> isOpenInTransit() {
     return hasStatus("Open - In transit");
   }
 
