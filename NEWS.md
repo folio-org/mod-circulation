@@ -1,3 +1,7 @@
+## 18.0.8 2020-04-24
+
+* Fix issue with overdue fine calculating when closed time is not counting (CIRC-723)
+
 ## 18.0.7 2020-04-08
 
 * Location name is displayed on Fee/Fine details page (CIRC-698)
