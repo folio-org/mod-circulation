@@ -30,10 +30,12 @@ import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 import org.hamcrest.Matcher;
 import org.joda.time.DateTime;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import api.support.APITests;
+import api.support.CheckInByBarcodeResponse;
 import api.support.builders.DeclareItemLostRequestBuilder;
 import api.support.builders.LostItemFeePolicyBuilder;
 import api.support.http.InventoryItemResource;
@@ -44,35 +46,27 @@ import junitparams.converters.Nullable;
 
 @RunWith(JUnitParamsRunner.class)
 public class DeclareLostAPITests extends APITests {
-  private InventoryItemResource item;
-  private JsonObject loanJson;
 
-  @Override
-  public void beforeEach() throws InterruptedException {
-    super.beforeEach();
-
+  @Before
+  public void activatePolicy() {
     useLostItemPolicy(lostItemFeePoliciesFixture.chargeFee().getId());
-
-    item = itemsFixture.basedUponSmallAngryPlanet();
-    loanJson = loansFixture.checkOutByBarcode(item,
-      usersFixture.charlotte()).getJson();
-
-    createFeeFineTypesAndOwner();
   }
 
   @Test
   public void canDeclareItemLostWithComment() {
-    UUID loanId = UUID.fromString(loanJson.getString("id"));
+    final IndividualResource checkIn = loansFixture
+      .checkOutByBarcode(itemsFixture.basedUponNod(), usersFixture.jessica());
+
     String comment = "testing";
     DateTime dateTime = DateTime.now();
 
     final DeclareItemLostRequestBuilder builder = new DeclareItemLostRequestBuilder()
-      .forLoanId(loanId).on(dateTime)
+      .forLoanId(checkIn.getId()).on(dateTime)
       .withComment(comment);
 
     Response response = declareLostFixtures.declareItemLost(builder);
 
-    JsonObject actualLoan = loansClient.getById(loanId).getJson();
+    JsonObject actualLoan = loansClient.getById(checkIn.getId()).getJson();
     JsonObject actualItem = actualLoan.getJsonObject("item");
 
     assertThat(response.getStatusCode(), is(204));
@@ -85,16 +79,18 @@ public class DeclareLostAPITests extends APITests {
 
   @Test
   public void canDeclareItemLostWithoutComment() {
-    UUID loanId = UUID.fromString(loanJson.getString("id"));
+    final IndividualResource checkIn = loansFixture
+      .checkOutByBarcode(itemsFixture.basedUponNod(), usersFixture.jessica());
+
     DateTime dateTime = DateTime.now();
 
     final DeclareItemLostRequestBuilder builder = new DeclareItemLostRequestBuilder()
-      .forLoanId(loanId).on(dateTime)
+      .forLoanId(checkIn.getId()).on(dateTime)
       .withNoComment();
 
     Response response = declareLostFixtures.declareItemLost(builder);
 
-    JsonObject actualLoan = loansFixture.getLoanById(loanId).getJson();
+    JsonObject actualLoan = loansFixture.getLoanById(checkIn.getId()).getJson();
     JsonObject actualItem = actualLoan.getJsonObject("item");
 
     assertThat(response.getStatusCode(), is(204));
@@ -107,18 +103,17 @@ public class DeclareLostAPITests extends APITests {
 
   @Test
   public void cannotDeclareItemLostForAClosedLoan() {
-    UUID loanId = UUID.fromString(loanJson.getString("id"));
-    DateTime dateTime = DateTime.now();
+    final InventoryItemResource item = itemsFixture.basedUponSmallAngryPlanet();
 
+    final IndividualResource checkIn = loansFixture.checkOutByBarcode(item, usersFixture.jessica());
     loansFixture.checkInByBarcode(item);
 
     final DeclareItemLostRequestBuilder builder = new DeclareItemLostRequestBuilder()
-      .forLoanId(loanId).on(dateTime)
-      .withNoComment();
+      .forLoanId(checkIn.getId());
 
     Response response = declareLostFixtures.attemptDeclareItemLost(builder);
 
-    JsonObject actualLoan = loansFixture.getLoanById(loanId).getJson();
+    JsonObject actualLoan = loansFixture.getLoanById(checkIn.getId()).getJson();
     JsonObject actualItem = actualLoan.getJsonObject("item");
 
     assertThat(response.getStatusCode(), is(422));
