@@ -9,8 +9,11 @@ import static api.support.matchers.CheckOutByBarcodeResponseMatchers.hasLoanPoli
 import static api.support.matchers.CheckOutByBarcodeResponseMatchers.hasProxyUserBarcodeParameter;
 import static api.support.matchers.CheckOutByBarcodeResponseMatchers.hasServicePointParameter;
 import static api.support.matchers.CheckOutByBarcodeResponseMatchers.hasUserBarcodeParameter;
+import static api.support.matchers.ItemMatchers.isCheckedOut;
+import static api.support.matchers.ItemMatchers.isWithdrawn;
 import static api.support.matchers.ItemStatusCodeMatcher.hasItemStatus;
 import static api.support.matchers.JsonObjectMatcher.hasJsonPath;
+import static api.support.matchers.LoanMatchers.isOpen;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static api.support.matchers.TextDateTimeMatcher.withinSecondsAfter;
 import static api.support.matchers.UUIDMatcher.is;
@@ -1146,6 +1149,25 @@ public class CheckOutByBarcodeTests extends APITests {
       hasMessage("Patron has reached maximum limit of 1 items for material type"))));
     secondBookTypeItem = itemsClient.get(secondBookTypeItem);
     assertThat(secondBookTypeItem, hasItemStatus(AVAILABLE));
+  }
+
+  @Test
+  public void canCheckOutWithdrawnItem() {
+    final IndividualResource withdrawnItem = itemsFixture
+      .basedUponSmallAngryPlanet(ItemBuilder::withdrawn);
+
+    assertThat(withdrawnItem.getJson(), isWithdrawn());
+
+    final IndividualResource response = loansFixture
+      .checkOutByBarcode(withdrawnItem, usersFixture.steve());
+
+    assertThat(response.getJson(), allOf(
+      isOpen(),
+      hasJsonPath("action", "checkedout"),
+      hasJsonPath("itemId", withdrawnItem.getId().toString())
+    ));
+
+    assertThat(itemsClient.getById(withdrawnItem.getId()).getJson(), isCheckedOut());
   }
 
   private IndividualResource prepareLoanPolicyWithItemLimit(int itemLimit) {

@@ -35,6 +35,7 @@ public class RequestTypeItemStatusWhiteList {
     recallRules.put(ItemStatus.IN_PROCESS, true);
     recallRules.put(ItemStatus.DECLARED_LOST, false);
     recallRules.put(ItemStatus.CLAIMED_RETURNED, false);
+    recallRules.put(ItemStatus.WITHDRAWN, false);
     recallRules.put(ItemStatus.NONE, false);
   }
 
@@ -51,6 +52,7 @@ public class RequestTypeItemStatusWhiteList {
     holdRules.put(ItemStatus.IN_PROCESS, true);
     holdRules.put(ItemStatus.DECLARED_LOST, false);
     holdRules.put(ItemStatus.CLAIMED_RETURNED, false);
+    holdRules.put(ItemStatus.WITHDRAWN, false);
     holdRules.put(ItemStatus.NONE, true);
   }
 
@@ -67,6 +69,7 @@ public class RequestTypeItemStatusWhiteList {
     pageRules.put(ItemStatus.IN_PROCESS, false);
     pageRules.put(ItemStatus.DECLARED_LOST, false);
     pageRules.put(ItemStatus.CLAIMED_RETURNED, false);
+    pageRules.put(ItemStatus.WITHDRAWN, false);
     pageRules.put(ItemStatus.NONE, false);
   }
 
@@ -83,6 +86,7 @@ public class RequestTypeItemStatusWhiteList {
     noneRules.put(ItemStatus.IN_PROCESS, false);
     noneRules.put(ItemStatus.DECLARED_LOST, false);
     noneRules.put(ItemStatus.CLAIMED_RETURNED, false);
+    noneRules.put(ItemStatus.WITHDRAWN, false);
     noneRules.put(ItemStatus.NONE, false);
   }
 
