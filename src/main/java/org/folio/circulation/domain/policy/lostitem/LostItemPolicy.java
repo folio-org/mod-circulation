@@ -16,17 +16,17 @@ import org.folio.circulation.domain.policy.Policy;
 import io.vertx.core.json.JsonObject;
 
 public class LostItemPolicy extends Policy {
-  private final ItemFee setCostChargeFee;
+  private final ItemFee setCostFee;
   private final boolean chargeAmountItemPatron;
-  private final ItemFee processingChargeFee;
+  private final ItemFee itemProcessingFee;
 
-  private LostItemPolicy(String id, String name, ItemFee setCostChargeFee,
-    boolean chargeAmountItemPatron, ItemFee processingChargeFee) {
+  private LostItemPolicy(String id, String name, ItemFee setCostFee,
+    boolean chargeAmountItemPatron, ItemFee itemProcessingFee) {
 
     super(id, name);
-    this.setCostChargeFee = setCostChargeFee;
+    this.setCostFee = setCostFee;
     this.chargeAmountItemPatron = chargeAmountItemPatron;
-    this.processingChargeFee = processingChargeFee;
+    this.itemProcessingFee = itemProcessingFee;
   }
 
   public static LostItemPolicy from(JsonObject lostItemPolicy) {
@@ -57,8 +57,8 @@ public class LostItemPolicy extends Policy {
     return new ItemFee(getBigDecimalProperty(chargeAmountItem, "amount"));
   }
 
-  public Optional<ItemFee> getSetCostChargeFee() {
-    return ofNullable(setCostChargeFee);
+  public Optional<ItemFee> getSetCostFee() {
+    return ofNullable(setCostFee);
   }
 
   public boolean shouldChargeProcessingFee() {
@@ -66,8 +66,8 @@ public class LostItemPolicy extends Policy {
     return chargeAmountItemPatron;
   }
 
-  public Optional<ItemFee> getLostItemProcessingFee() {
-    return ofNullable(processingChargeFee);
+  public Optional<ItemFee> getItemProcessingFee() {
+    return ofNullable(itemProcessingFee);
   }
 
   public static LostItemPolicy unknown(String id) {

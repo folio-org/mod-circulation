@@ -129,7 +129,7 @@ public class LostItemFeeChargingService {
 
         final Result<FeeFineAccountAndAction> lostItemFeeResult =
           getFeeFineOfType(feeFines, LOST_ITEM_FEE_TYPE)
-            .map(createAccountAndAction(context, policy.getSetCostChargeFee()));
+            .map(createAccountAndAction(context, policy.getSetCostFee()));
 
         accountsToCreate.add(lostItemFeeResult);
       }
@@ -139,7 +139,7 @@ public class LostItemFeeChargingService {
 
         final Result<FeeFineAccountAndAction> processingFeeResult =
           getFeeFineOfType(feeFines, LOST_ITEM_PROCESSING_FEE_TYPE)
-            .map(createAccountAndAction(context, policy.getLostItemProcessingFee()));
+            .map(createAccountAndAction(context, policy.getItemProcessingFee()));
 
         accountsToCreate.add(processingFeeResult);
       }
@@ -176,14 +176,14 @@ public class LostItemFeeChargingService {
 
   private boolean shouldChargeItemFee(LostItemPolicy policy) {
     // Set cost fee is only supported now
-    return policy.getSetCostChargeFee()
+    return policy.getSetCostFee()
       .filter(ItemFee::isChargeable)
       .isPresent();
   }
 
   private boolean shouldChargeProcessingFee(LostItemPolicy policy) {
     return policy.shouldChargeProcessingFee()
-      && policy.getLostItemProcessingFee().filter(ItemFee::isChargeable).isPresent();
+      && policy.getItemProcessingFee().filter(ItemFee::isChargeable).isPresent();
   }
 
   private boolean shouldChargeAnyFee(LostItemPolicy policy) {
