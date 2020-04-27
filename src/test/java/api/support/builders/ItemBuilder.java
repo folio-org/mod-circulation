@@ -144,6 +144,10 @@ public class ItemBuilder extends JsonBuilder implements Builder {
     return withStatus(ItemStatus.CLAIMED_RETURNED.getValue());
   }
 
+  public ItemBuilder withdrawn() {
+    return withStatus("Withdrawn");
+  }
+
   private ItemBuilder withStatus(String status) {
     return new ItemBuilder(
       this.id,
