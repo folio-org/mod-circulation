@@ -176,15 +176,11 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   public void changeActionComment(String comment) {
-    if (comment != null) {
-      representation.put(ACTION_COMMENT, comment);
-    } else {
-      representation.remove(ACTION_COMMENT);
-    }
+    representation.put(ACTION_COMMENT, comment);
   }
 
   private void removeActionComment() {
-    changeActionComment(null);
+    representation.remove(ACTION_COMMENT);
   }
 
   public Result<Void> isValidStatus() {
@@ -525,13 +521,20 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   public Loan closeLoan(LoanAction action) {
-    return closeLoan(action, null);
+    changeStatus(LoanStatus.CLOSED);
+
+    changeAction(action);
+    removeActionComment();
+
+    return this;
   }
 
   public Loan closeLoan(LoanAction action, String comment) {
+    changeStatus(LoanStatus.CLOSED);
+
     changeAction(action);
     changeActionComment(comment);
-    changeStatus(LoanStatus.CLOSED);
+
     return this;
   }
 
