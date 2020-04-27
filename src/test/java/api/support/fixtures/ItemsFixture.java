@@ -52,16 +52,6 @@ public class ItemsFixture {
       contributorNameTypesClient, nameType -> getProperty(nameType, "name"));
   }
 
-  public Response updateItem(UUID itemId, JsonObject update) {
-
-    return itemsClient.attemptReplace(itemId, update);
-  }
-
-  public Response getItem(UUID itemId) {
-
-    return itemsClient.getById(itemId);
-  }
-
   public void cleanUp() {
 
     //TODO: Also clean up created instances, holdings record and items

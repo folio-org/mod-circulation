@@ -70,8 +70,6 @@ public class CheckInByBarcodeTests extends APITests {
     final IndividualResource homeLocation = locationsFixture.basedUponExampleLocation(
       item -> item.withPrimaryServicePoint(checkInServicePointId));
 
-    final String anotherLocationId = locationsFixture.thirdFloor().getId().toString();
-
     final IndividualResource nod = itemsFixture.basedUponNod(
       item -> item
         .withTemporaryLocation(homeLocation.getId())
@@ -83,10 +81,6 @@ public class CheckInByBarcodeTests extends APITests {
       new DateTime(2018, 3, 1, 13, 25, 46, DateTimeZone.UTC));
 
     DateTime expectedSystemReturnDate = DateTime.now(DateTimeZone.UTC);
-    // Change the item's effective location to verify itemEffectiveLocationIdAtCheckOut is unchanged
-    JsonObject update = nod.getJson();
-    update.put("temporaryLocationId", anotherLocationId);
-    itemsFixture.updateItem(nod.getId(), update);
 
     final CheckInByBarcodeResponse checkInResponse = loansFixture.checkInByBarcode(
       new CheckInByBarcodeRequestBuilder()
@@ -156,13 +150,6 @@ public class CheckInByBarcodeTests extends APITests {
     assertThat("item status is not available",
       updatedNod.getJsonObject("status").getString("name"), is("Available"));
 
-    assertThat("New location should not equal old location",
-      homeLocation.getId().toString(), not(anotherLocationId));
-    assertThat("The item's temporary location ID should be updated",
-      updatedNod.getString("temporaryLocationId"), is(anotherLocationId));
-    assertThat("itemEffectiveLocationIdAtCheckOut should match the original location ID at checkout",
-      loanRepresentation.getString("itemEffectiveLocationIdAtCheckOut"), is(homeLocation.getId().toString()));
-
     final JsonObject storedLoan = loansStorageClient.getById(loan.getId()).getJson();
 
     assertThat("stored loan status is not closed",
@@ -176,6 +163,49 @@ public class CheckInByBarcodeTests extends APITests {
 
     verifyCheckInOperationRecorded(nod.getId(), checkInServicePointId);
   }
+
+@Test
+public void verifyItemEffectiveLocationIdAtCheckOut() {
+
+  final IndividualResource james = usersFixture.james();
+
+  final UUID checkInServicePointId = servicePointsFixture.cd1().getId();
+
+  final IndividualResource homeLocation = locationsFixture.basedUponExampleLocation(
+    item -> item.withPrimaryServicePoint(checkInServicePointId));
+
+  final String anotherLocationId = locationsFixture.thirdFloor().getId().toString();
+
+  final IndividualResource nod = itemsFixture.basedUponNod(
+    item -> item
+      .withTemporaryLocation(homeLocation.getId())
+      .withEnumeration("v.70:no.1-6")
+      .withChronology("1987:Jan.-June")
+      .withVolume("testVolume"));
+
+  loansFixture.checkOutByBarcode(nod, james, new DateTime(2018, 3, 1, 13, 25, 46, DateTimeZone.UTC));
+
+  // Change the item's effective location to verify itemEffectiveLocationIdAtCheckOut is unchanged
+  JsonObject update = nod.getJson();
+  update.put("temporaryLocationId", anotherLocationId);
+  itemsClient.attemptReplace(nod.getId(), update);
+
+  final CheckInByBarcodeResponse checkInResponse = loansFixture.checkInByBarcode(
+    new CheckInByBarcodeRequestBuilder()
+      .forItem(nod)
+      .on(new DateTime(2018, 3, 5, 14 ,23, 41, DateTimeZone.UTC))
+      .at(checkInServicePointId));
+
+  JsonObject loanRepresentation = checkInResponse.getLoan();
+  JsonObject updatedNod = itemsClient.getById(nod.getId()).getJson();
+
+  assertThat("New location should not equal old location",
+    homeLocation.getId().toString(), not(anotherLocationId));
+  assertThat("The item's temporary location ID should be updated",
+    updatedNod.getString("temporaryLocationId"), is(anotherLocationId));
+  assertThat("itemEffectiveLocationIdAtCheckOut should match the original location ID at checkout",
+    loanRepresentation.getString("itemEffectiveLocationIdAtCheckOut"), is(homeLocation.getId().toString()));
+}
 
   @Test
   public void canCreateStaffSlipContextOnCheckInByBarcode() {

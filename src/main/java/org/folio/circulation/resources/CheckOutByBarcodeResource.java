@@ -156,7 +156,6 @@ public class CheckOutByBarcodeResource extends Resource {
       .thenApply(inactiveUserValidator::refuseWhenUserIsInactive)
       .thenApply(inactiveProxyUserValidator::refuseWhenUserIsInactive)
       .thenCombineAsync(itemRepository.fetchByBarcode(itemBarcode), this::addItem)
-      .thenComposeAsync(r -> r.after(this::addItemLocationIdAtCheckout))
       .thenApply(itemNotFoundValidator::refuseWhenItemNotFound)
       .thenApply(alreadyCheckedOutValidator::refuseWhenItemIsAlreadyCheckedOut)
       .thenApply(itemStatusValidator::refuseWhenItemIsNotAllowedForCheckOut)
@@ -170,6 +169,7 @@ public class CheckOutByBarcodeResource extends Resource {
       .thenComposeAsync(r -> r.after(itemLimitValidator::refuseWhenItemLimitIsReached))
       .thenComposeAsync(r -> r.after(overdueFinePolicyRepository::lookupOverdueFinePolicy))
       .thenComposeAsync(r -> r.after(lostItemPolicyRepository::lookupLostItemPolicy))
+      .thenApply(r -> r.next(this::addItemLocationIdAtCheckout))
       .thenComposeAsync(r -> r.after(relatedRecords -> checkOutStrategy.checkOut(relatedRecords, request, clients)))
       .thenComposeAsync(r -> r.after(requestQueueUpdate::onCheckOut))
       .thenComposeAsync(r -> r.after(updateItem::onCheckOut))
@@ -228,9 +228,9 @@ public class CheckOutByBarcodeResource extends Resource {
       LoanAndRelatedRecords::withItem);
   }
 
-  private CompletableFuture<Result<LoanAndRelatedRecords>> addItemLocationIdAtCheckout(
+  private Result<LoanAndRelatedRecords> addItemLocationIdAtCheckout(
     LoanAndRelatedRecords relatedRecords) {
 
-    return completedFuture(succeeded(relatedRecords.withItemEffectiveLocationIdAtCheckOut()));
+    return succeeded(relatedRecords.withItemEffectiveLocationIdAtCheckOut());
   }
 }
