@@ -86,13 +86,15 @@ public class RequestScheduledNoticeHandler {
       return scheduledNoticesRepository.delete(notice);
     }
 
-    ScheduledNotice nextRecurringNotice = getNextRecurringNotice(notice, noticeConfig);
+    ScheduledNotice nextRecurringNotice = updateNoticeNextRunTime(notice, noticeConfig);
     return nextRecurringNoticeIsNotRelevant(nextRecurringNotice, request) ?
       scheduledNoticesRepository.delete(notice) :
       scheduledNoticesRepository.update(nextRecurringNotice);
   }
 
-  private ScheduledNotice getNextRecurringNotice(ScheduledNotice notice, ScheduledNoticeConfig noticeConfig) {
+  private ScheduledNotice updateNoticeNextRunTime(
+    ScheduledNotice notice, ScheduledNoticeConfig noticeConfig) {
+
     final DateTime systemTime = DateTime.now(DateTimeZone.UTC);
 
     DateTime recurringNoticeNextRunTime = notice.getNextRunTime()
