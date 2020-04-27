@@ -1,6 +1,7 @@
 package org.folio.circulation.domain;
 
-import static org.folio.circulation.domain.LoanAction.ResolveClaimedReturned;
+import static org.folio.circulation.domain.LoanAction.RESOLVE_CLAIM_AS_FOUND_BY_LIBRARY;
+import static org.folio.circulation.domain.LoanAction.RESOLVE_CLAIM_AS_RETURNED_BY_PATRON;
 import static org.folio.circulation.support.Result.failed;
 import static org.folio.circulation.support.Result.of;
 import static org.folio.circulation.support.Result.succeeded;
@@ -38,14 +39,14 @@ public class LoanCheckInService {
       .getServicePointId());
   }
 
-  private Result<ResolveClaimedReturned> getClaimedReturnedResolveAction(
+  private Result<LoanAction> getClaimedReturnedResolveAction(
     CheckInByBarcodeRequest request) {
 
     switch (request.getClaimedReturnedResolution()) {
       case FOUND_BY_LIBRARY:
-        return succeeded(ResolveClaimedReturned.CHECKED_IN_FOUND_BY_LIBRARY);
+        return succeeded(RESOLVE_CLAIM_AS_FOUND_BY_LIBRARY);
       case RETURNED_BY_PATRON:
-        return succeeded(ResolveClaimedReturned.CHECKED_IN_RETURNED_BY_PATRON);
+        return succeeded(RESOLVE_CLAIM_AS_RETURNED_BY_PATRON);
       default:
         return failed(new ServerErrorFailure("No loan action to resolve claimed returned: "
           + request.getClaimedReturnedResolution()));
