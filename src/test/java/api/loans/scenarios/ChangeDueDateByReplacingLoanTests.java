@@ -44,8 +44,7 @@ import api.support.fixtures.TemplateContextMatchers;
 import api.support.http.InventoryItemResource;
 import io.vertx.core.json.JsonObject;
 
-public class ChangeDueDateTests extends APITests {
-
+public class ChangeDueDateByReplacingLoanTests extends APITests {
   @Test
   public void canManuallyChangeTheDueDateOfLoan() {
     final InventoryItemResource item = itemsFixture.basedUponNod();

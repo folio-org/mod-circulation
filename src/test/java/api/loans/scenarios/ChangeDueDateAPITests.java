@@ -1,4 +1,4 @@
-package api.loans;
+package api.loans.scenarios;
 
 import static api.support.fixtures.TemplateContextMatchers.getItemContextMatchers;
 import static api.support.fixtures.TemplateContextMatchers.getLoanContextMatchers;
