@@ -1,18 +1,23 @@
 package api.loans;
 
+import static api.support.fixtures.TemplateContextMatchers.getItemContextMatchers;
+import static api.support.fixtures.TemplateContextMatchers.getLoanContextMatchers;
+import static api.support.fixtures.TemplateContextMatchers.getLoanPolicyContextMatchers;
+import static api.support.fixtures.TemplateContextMatchers.getUserContextMatchers;
 import static api.support.matchers.PatronNoticeMatcher.hasEmailNoticeProperties;
 import static api.support.matchers.ResponseStatusCodeMatcher.hasStatus;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
-import static api.support.matchers.ValidationErrorMatchers.hasParameter;
+import static api.support.matchers.ValidationErrorMatchers.hasNullParameter;
+import static api.support.matchers.ValidationErrorMatchers.hasUUIDParameter;
+import static org.apache.commons.lang3.StringUtils.EMPTY;
 import static org.folio.HttpStatus.HTTP_NOT_FOUND;
-import static org.folio.HttpStatus.HTTP_NO_CONTENT;
-import static org.folio.circulation.domain.representations.LoanProperties.ITEM_ID;
-import static org.folio.circulation.domain.representations.ChangeDueDateRequest.DUE_DATE;
+import static org.folio.HttpStatus.HTTP_VALIDATION_ERROR;
+import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.hasItems;
-import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.joda.time.Period.weeks;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -21,7 +26,6 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
-import org.apache.commons.lang3.StringUtils;
 import org.awaitility.Awaitility;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
@@ -41,7 +45,6 @@ import api.support.builders.NoticeConfigurationBuilder;
 import api.support.builders.NoticePolicyBuilder;
 import api.support.builders.RequestBuilder;
 import api.support.fixtures.ItemExamples;
-import api.support.fixtures.TemplateContextMatchers;
 import api.support.http.InventoryItemResource;
 import io.vertx.core.json.JsonObject;
 
@@ -80,8 +83,11 @@ public class ChangeDueDateAPITests extends APITests {
         .forLoan(loan.getId())
         .withDueDate(null));
 
-    assertResponseOf(response, 422, DUE_DATE);
-    assertResponseMessage(response, "Due date is a required field");
+    assertThat(response, hasStatus(HTTP_VALIDATION_ERROR));
+
+    assertThat(response.getJson(), hasErrorWith(allOf(
+      hasMessage("Due date is a required field"),
+      hasNullParameter("dueDate"))));
   }
 
   @Test
@@ -108,60 +114,50 @@ public class ChangeDueDateAPITests extends APITests {
         .forLoan(loan.getId())
         .withDueDate(newDueDate));
 
-    assertResponseOf(response, 422, "loanId", loan.getId());
-    assertResponseMessage(response, "Loan is closed");
+    assertThat(response, hasStatus(HTTP_VALIDATION_ERROR));
+
+    assertThat(response.getJson(), hasErrorWith(allOf(
+      hasMessage("Loan is closed"),
+      hasUUIDParameter("loanId", loan.getId()))));
   }
 
   @Test
   public void cannotChangeDueDateWhenDeclaredLost() {
     final DateTime newDueDate = dueDate.plus(Period.days(14));
 
-    assertThat(loansFixture.declareItemLost(loan.getJson()),
-      hasStatus(HTTP_NO_CONTENT));
+    loansFixture.declareItemLost(loan.getJson());
 
     final Response response = changeDueDateFixture
       .attemptChangeDueDate(new ChangeDueDateRequestBuilder()
         .forLoan(loan.getId())
         .withDueDate(newDueDate));
 
-    assertResponseOf(response, 422, ITEM_ID, item.getId());
-    assertResponseMessage(response, "item is Declared lost");
+    assertThat(response, hasStatus(HTTP_VALIDATION_ERROR));
+
+    assertThat(response.getJson(), hasErrorWith(allOf(
+      hasMessage("item is Declared lost"),
+      hasUUIDParameter("itemId", item.getId()))));
   }
 
   @Test
   public void cannotChangeDueDateWhenClaimedReturned() {
     final DateTime newDueDate = dueDate.plus(Period.days(14));
 
-    assertThat(loansFixture.claimItemReturned(
-      new ClaimItemReturnedRequestBuilder()
-        .forLoan(loan.getId().toString())
-       ), hasStatus(HTTP_NO_CONTENT));
+    loansFixture.claimItemReturned(new ClaimItemReturnedRequestBuilder()
+      .forLoan(loan.getId().toString()));
 
-    (new ChangeDueDateRequestBuilder()).forLoan(loan.getId().toString());
+    new ChangeDueDateRequestBuilder().forLoan(loan.getId().toString());
 
     final Response response = changeDueDateFixture
       .attemptChangeDueDate(new ChangeDueDateRequestBuilder()
         .forLoan(loan.getId())
         .withDueDate(newDueDate));
 
-    assertResponseOf(response, 422, ITEM_ID, item.getId());
-    assertResponseMessage(response, "item is Claimed returned");
-  }
+    assertThat(response, hasStatus(HTTP_VALIDATION_ERROR));
 
-  @Test
-  public void cannotChangeDueDateToSameDateWhenItemIsClaimedReturned() {
-    assertThat(loansFixture.claimItemReturned(
-      new ClaimItemReturnedRequestBuilder()
-        .forLoan(loan.getId().toString())
-      ), hasStatus(HTTP_NO_CONTENT));
-
-    final Response response = changeDueDateFixture
-      .attemptChangeDueDate(new ChangeDueDateRequestBuilder()
-        .forLoan(loan.getId())
-        .withDueDate(dueDate));
-
-    assertResponseOf(response, 422, ITEM_ID, item.getId());
-    assertResponseMessage(response, "item is Claimed returned");
+    assertThat(response.getJson(), hasErrorWith(allOf(
+      hasMessage("item is Claimed returned"),
+      hasUUIDParameter("itemId", item.getId()))));
   }
 
   @Test
@@ -182,7 +178,7 @@ public class ChangeDueDateAPITests extends APITests {
 
     JsonObject updatedLoan = response.getJson();
 
-    assertThat("due date is not updated",
+    assertThat("due date should have been updated",
       updatedLoan.getString("dueDate"), isEquivalentTo(newDueDate));
   }
 
@@ -221,21 +217,17 @@ public class ChangeDueDateAPITests extends APITests {
       lostItemFeePoliciesFixture.facultyStandard().getId());
 
     ItemBuilder itemBuilder = ItemExamples.basedUponSmallAngryPlanet(
-      materialTypesFixture.book().getId(),
-      loanTypesFixture.canCirculate().getId(),
-      StringUtils.EMPTY,
-      "ItemPrefix",
-      "ItemSuffix",
-      "");
+      materialTypesFixture.book().getId(), loanTypesFixture.canCirculate().getId(),
+      EMPTY, "ItemPrefix", "ItemSuffix", "");
 
-    InventoryItemResource smallAngryPlanet =
-      itemsFixture.basedUponSmallAngryPlanet(itemBuilder, itemsFixture.thirdFloorHoldings());
+    InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet(
+      itemBuilder, itemsFixture.thirdFloorHoldings());
 
     IndividualResource steve = usersFixture.steve();
 
     IndividualResource loan = checkOutFixture.checkOutByBarcode(smallAngryPlanet, steve);
 
-    DateTime newDueDate = dueDate.plus(Period.weeks(2));
+    DateTime newDueDate = dueDate.plus(weeks(2));
 
     changeDueDateFixture.changeDueDate(new ChangeDueDateRequestBuilder()
       .forLoan(loan.getId())
@@ -250,36 +242,13 @@ public class ChangeDueDateAPITests extends APITests {
     List<JsonObject> sentNotices = patronNoticesClient.getAll();
 
     Map<String, Matcher<String>> matchers = new HashMap<>();
-    matchers.putAll(TemplateContextMatchers.getUserContextMatchers(steve));
-    matchers.putAll(TemplateContextMatchers.getItemContextMatchers(smallAngryPlanet, true));
-    matchers.putAll(TemplateContextMatchers.getLoanContextMatchers(loanAfterUpdate));
-    matchers.putAll(TemplateContextMatchers.getLoanPolicyContextMatchers(
-      renewalLimit, renewalLimit));
+
+    matchers.putAll(getUserContextMatchers(steve));
+    matchers.putAll(getItemContextMatchers(smallAngryPlanet, true));
+    matchers.putAll(getLoanContextMatchers(loanAfterUpdate));
+    matchers.putAll(getLoanPolicyContextMatchers(renewalLimit, renewalLimit));
 
     assertThat(sentNotices, hasItems(
       hasEmailNoticeProperties(steve.getId(), templateId, matchers)));
-  }
-
-  private void assertResponseOf(Response response, int code,
-      String key) {
-
-    assertResponseOf(response, code, key, (String) null);
-  }
-
-  private void assertResponseOf(Response response, int code,
-      String key, UUID value) {
-
-    assertResponseOf(response, code, key, value.toString());
-  }
-
-  private void assertResponseOf(Response response, int code,
-      String key, String value) {
-
-    assertThat(response.getStatusCode(), is(code));
-    assertThat(response.getJson(), hasErrorWith(hasParameter(key, value)));
-  }
-
-  private void assertResponseMessage(Response response, String message) {
-    assertThat(response.getJson(), hasErrorWith(hasMessage(message)));
   }
 }
