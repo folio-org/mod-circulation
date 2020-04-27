@@ -1,11 +1,13 @@
 package org.folio.circulation.domain.policy.lostitem;
 
+import static java.util.Optional.ofNullable;
 import static org.folio.circulation.support.JsonPropertyFetcher.getBigDecimalProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getBooleanProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getObjectProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
 
 import java.math.BigDecimal;
+import java.util.Optional;
 
 import org.folio.circulation.domain.policy.Policy;
 
@@ -35,8 +37,8 @@ public class LostItemPolicy extends Policy {
     );
   }
 
-  public ChargeAmount getChargeAmountItem() {
-    return chargeAmountItem;
+  public Optional<ChargeAmount> getChargeAmountItem() {
+    return ofNullable(chargeAmountItem);
   }
 
   public boolean shouldChargeProcessingFee() {
@@ -54,8 +56,7 @@ public class LostItemPolicy extends Policy {
 
   private static class UnknownLostItemPolicy extends LostItemPolicy {
     UnknownLostItemPolicy(String id) {
-      super(id, null, new ChargeAmount(null, null),
-        false, null);
+      super(id, null, null, false, null);
     }
   }
 }

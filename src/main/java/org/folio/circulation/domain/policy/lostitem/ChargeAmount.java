@@ -2,7 +2,6 @@ package org.folio.circulation.domain.policy.lostitem;
 
 import static org.folio.circulation.domain.policy.lostitem.ChargeAmountType.forValue;
 import static org.folio.circulation.support.JsonPropertyFetcher.getBigDecimalProperty;
-import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
 
 import java.math.BigDecimal;
 
@@ -18,9 +17,12 @@ public class ChargeAmount {
   }
 
   public static ChargeAmount from(JsonObject chargeAmountType) {
-    return new ChargeAmount(
-      getBigDecimalProperty(chargeAmountType, "amount"),
-      forValue(getProperty(chargeAmountType, "chargeType")));
+    if (chargeAmountType == null) {
+      return null;
+    }
+
+    return new ChargeAmount(getBigDecimalProperty(chargeAmountType, "amount"),
+      forValue(chargeAmountType.getString("chargeType")));
   }
 
   public BigDecimal getAmount() {
