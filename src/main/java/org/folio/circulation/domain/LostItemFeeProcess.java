@@ -1,13 +1,17 @@
 package org.folio.circulation.domain;
 
+import java.util.Optional;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.support.Result.of;
 import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.ResultBinding.mapResult;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import static java.util.concurrent.CompletableFuture.completedFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 import static org.apache.commons.lang3.BooleanUtils.isFalse;
+import org.apache.commons.lang3.ObjectUtils;
 import org.folio.circulation.domain.policy.Charge;
 import org.folio.circulation.domain.policy.LoanPolicyRepository;
 import org.folio.circulation.domain.policy.OverdueFineInterval;
@@ -15,11 +19,15 @@ import org.folio.circulation.domain.policy.OverdueFinePolicy;
 import org.folio.circulation.domain.policy.LostItemPolicy;
 import org.folio.circulation.domain.policy.OverdueFinePolicyRepository;
 import org.folio.circulation.domain.policy.LostItemPolicyRepository;
+import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.domain.representations.AccountStorageRepresentation;
+import org.folio.circulation.domain.representations.FeeFineActionStorageRepresentation;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.ItemRepository;
 import org.folio.circulation.support.Result;
+import static org.folio.circulation.support.Result.succeeded;
 import org.folio.circulation.support.ResultBinding;
+import static org.folio.circulation.support.ResultBinding.mapResult;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 
@@ -46,7 +54,7 @@ public class LostItemFeeProcess {
                     new ItemRepository(clients, true, false, false),
                     new FeeFineOwnerRepository(clients),
                     new FeeFineRepository(clients),
-                    new UserRepository(clients),
+                    new FeeFineActionRepository(clients),
                     new LostItemPolicyRepository(clients)),
             new OverduePeriodCalculatorService(new CalendarRepository(clients),
                     new LoanPolicyRepository(clients))
@@ -56,13 +64,12 @@ public class LostItemFeeProcess {
   public CompletableFuture<Result<LoanAndRelatedRecords>> processLostItemFee(LoanAndRelatedRecords records) {
     Loan loan = records.getLoan();
     if (loan == null) {
-      return completedFuture(of(() -> records));
+      return completedFuture(succeeded(records));
     }
 
     return createLostItemFeeIfNecessary(loan).thenApply(mapResult(v -> records));
   }
 
-  //Este metodo enviará a los posibles escenarios
   private CompletableFuture<Result<Loan>> createLostItemFeeIfNecessary(Loan loan) {
     Result<Loan> loanResult = succeeded(loan);
 
@@ -71,32 +78,68 @@ public class LostItemFeeProcess {
       return completedFuture(loanResult);
     }
 
-    //cuando es falsa entra a escenario AGE TO LOST
     if (loan != null && ((loan.getLostItemHasBeenBilled() != null)
             || (loan.getLostItemHasBeenBilled().equalsIgnoreCase("false")))) {
       if (loan != null && loan.getReturnDate() != null) {
         loan.updateBilledLostItemFlagForLoan("");
         return completedFuture(loanResult);
       }
+      //AGE TO LOST
       return repos.lostItemPolicyRepository.findLostItemPolicyForLoan(loanResult)
               .thenCompose(r -> r.afterWhen(
-              l -> shouldCreateFee(l, ScenarioFee.AGE_TO_LOST),
-              l -> createLostItemFee(l).thenApply(mapResult(res -> loan)),
+              l -> shouldCreateLostItemFee(l, ScenarioProcess.AGE_TO_LOST),
+              l -> createLostItemFee(l, ScenarioProcess.AGE_TO_LOST).thenApply(mapResult(res -> loan)),
+              //  l -> createLostItemProcessingFee(l).thenApply(mapResult(res->loan)),
               l -> completedFuture(loanResult)));
     }
 
-    //Aquí debe validar si es AFTER o IMMEDIATLY
+    DateTime systemTime = DateTime.now(DateTimeZone.UTC);
+    if (loan.getDateLostItemShouldBeBilled().isAfter(systemTime)) {
+      loan.updateBilledLostItemFlagForLoan("true");
+      loan.updateDateBilledLostItemForLoan(null);
+    }
+    //PATRON_BILLING_IMMEDIATLY
     return repos.lostItemPolicyRepository.findLostItemPolicyForLoan(loanResult)
             .thenCompose(r -> r.afterWhen(
-            l -> shouldCreateFee(l, ScenarioFee.PATRON_BILLED_AFTER),
-            l -> createLostItemFee(l).thenApply(mapResult(res -> loan)),
+            l -> shouldCreateLostItemFee(l, ScenarioProcess.PATRON_BILLING_IMMEDIATELY),
+            l -> createLostItemFee(l, ScenarioProcess.AGE_TO_LOST).thenApply(mapResult(res -> loan)),
+            //  l -> createLostItemProcessingFee(l).thenApply(mapResult(res->loan)),
             l -> completedFuture(loanResult)));
   }
 
-  private CompletableFuture<Result<Boolean>> shouldCreateFee(Loan loan, ScenarioFee scenario) {
+  private CompletableFuture<Result<Loan>> createLostItemFeeIfNecessary(Loan loan,
+          ScenarioProcess scenario) {
+
+    Result<Loan> loanResult = succeeded(loan);
+
+    return repos.overdueFinePolicyRepository.findOverdueFinePolicyForLoan(loanResult)
+            .thenCompose(r -> r.afterWhen(
+            l -> shouldCreateLostItemFee(l, scenario),
+            l -> createLostItemFee(l, scenario).thenApply(mapResult(res -> loan)),
+            l -> completedFuture(loanResult)));
+  }
+
+  private CompletableFuture<Result<Boolean>> shouldCreateLostItemFee(Loan loan, ScenarioProcess scenario) {
     return completedFuture(succeeded(
-            //test de predicates
-            scenario.shouldCreateFee.test(loan.getLostItemPolicy())));
+            scenario.shouldCreateFee.test(loan)
+            && LostItemBilledUtils.shouldCreateLostItemFee(loan.getLostItemPolicy())));
+  }
+
+  private CompletableFuture<Result<Boolean>> shouldCreateLostItemProcessingFee(Loan loan, ScenarioProcess scenario) {
+    return completedFuture(succeeded(
+            scenario.shouldCreateFee.test(loan)
+            && LostItemBilledUtils.shouldCreateLostItemFee(loan.getLostItemPolicy())));
+  }
+
+  private CompletableFuture<Result<Void>> createLostItemFee(Loan loan, ScenarioProcess scenario) {
+
+    return completedFuture(loan.getLostItemPolicy().getChargeAmountItem().getAmount())
+            .thenCompose(fine -> createFeeFineRecord(loan, fine));
+  }
+
+  private CompletableFuture<Result<Void>> createLostItemProcessingFee(Loan loan, ScenarioProcess scenario) {
+    return completedFuture((loan.getLostItemPolicy().getLostItemProcessingFee()))
+            .thenCompose(fine -> createFeeFineRecord(loan, fine));
   }
 
   private CompletableFuture<Result<Integer>> getOverdueMinutes(Loan loan) {
@@ -107,75 +150,97 @@ public class LostItemFeeProcess {
     return overduePeriodCalculatorService.getMinutes(loan, systemTime);
   }
 
-  private CompletableFuture<Result<Loan>> createLostItemFee(Loan loan) {
-      //primera condición del AGE TO LOST
-        DateTime systemTime = DateTime.now(DateTimeZone.UTC);
-        if (loan.getDateLostItemShouldBeBilled().isAfter(systemTime)) {
-          loan.updateBilledLostItemFlagForLoan("true");
-          loan.updateDateBilledLostItemForLoan(null);
-          //Falta salvar                  
-          //if (){          
-        }
-      
-    
-    
-    return overduePeriodCalculatorService.getMinutes(loan, systemTime);
-  }
-
-  private CompletableFuture<Result<String>> validateLostItemFeeType(Loan loan) {
-    String chargeTypeLostItemFee = "";
+  private CompletableFuture<Result<Boolean>> continueAgeToLostProcess(Loan loan, Integer overdueAgeToLostMinutes) {
+    Boolean itemAgeToLost = false;
     LostItemPolicy lostItemPolicy = loan.getLostItemPolicy();
-    if (lostItemPolicy != null && lostItemPolicy.getChargeAmountItemPatron()) {
-      if (lostItemPolicy.getChargeAmountItem().getChargeType().equals(Charge.ACTUAL_COST)) {
-        if (lostItemPolicy.getChargeAmountItemSystem()) {
-          createFeeFineRecord(loan, Double.NaN);
-        } else {
+    if (overdueAgeToLostMinutes > 0 && lostItemPolicy != null) {
+      Period patronBilledAfterAgedLost = lostItemPolicy.getPatronBilledAfterAgedLost();
+
+      if (patronBilledAfterAgedLost != null) {
+
+        Integer intervalMinutes = patronBilledAfterAgedLost.toMinutes();
+
+        if (overdueAgeToLostMinutes > intervalMinutes) {
+          itemAgeToLost = true;
         }
       }
     }
-    return CompletableFuture.completedFuture(succeeded(chargeTypeLostItemFee));
+    return CompletableFuture.completedFuture(succeeded(itemAgeToLost));
   }
 
-  private CompletableFuture<Result<CalculationParameters>> lookupItemRelatedRecords(CalculationParameters params) {
-    return repos.itemRepository.fetchItemRelatedRecords(succeeded(params.loan.getItem())).thenApply(ResultBinding.mapResult(params::withItem));
-  }
+  private CompletableFuture<Result<CalculationParameters>> lookupItemRelatedRecords(
+          CalculationParameters params) {
 
-  private CompletableFuture<Result<CalculationParameters>> lookupFeeFineOwner(CalculationParameters params) {
-    return repos.feeFineOwnerRepository.getFeeFineOwner(params.item.getLocation().getPrimaryServicePointId().toString()).thenApply(ResultBinding.mapResult(params::withOwner));
-  }
-
-  private CompletableFuture<Result<CalculationParameters>> lookupLostItemFee(CalculationParameters params) {
-    if (params.feeFineOwner == null) {
+    if (params.feeFine == null) {
       return completedFuture(succeeded(params));
     }
-    //buscar la lostItemFee
-    return repos.feeFineRepository.getOverdueFine(params.feeFineOwner.getId())
-            .thenApply(ResultBinding.mapResult(params::withFeeFine))
-            .thenCompose(r -> r.after(updatedParams -> {
-      if (updatedParams.feeFine == null) {
-        FeeFine feeFine = new FeeFine(UUID.randomUUID().toString(), updatedParams.feeFineOwner.getId(), FeeFine.LOST_ITEM_FEE_TYPE);
-        return repos.feeFineRepository.create(feeFine)
-                .thenApply(ResultBinding.mapResult(params::withFeeFine));
-      }
-      return completedFuture(succeeded(updatedParams));
-    }));
+
+    return repos.itemRepository.fetchItemRelatedRecords(succeeded(params.loan.getItem()))
+            .thenApply(mapResult(params::withItem));
   }
 
-  private CompletableFuture<Result<Account>> createFeeFineRecord(Loan loan, Double fineAmount) {
+  private CompletableFuture<Result<CalculationParameters>> lookupFeeFineOwner(
+          CalculationParameters params) {
+
+    return Optional.ofNullable(params.item)
+            .map(Item::getLocation)
+            .map(Location::getPrimaryServicePointId)
+            .map(UUID::toString)
+            .map(id -> repos.feeFineOwnerRepository.getFeeFineOwner(id)
+            .thenApply(mapResult(params::withOwner)))
+            .orElse(completedFuture(succeeded(params)));
+  }
+
+  private CompletableFuture<Result<CalculationParameters>> lookupLostItemFee(
+          CalculationParameters params) {
+
+    return repos.feeFineRepository.getFeeFine(FeeFine.LOST_ITEM_FEE_TYPE, true)
+            .thenApply(mapResult(params::withFeeFine));
+  }
+
+  private CompletableFuture<Result<CalculationParameters>> lookupLostItemProcessingFee(
+          CalculationParameters params) {
+
+    return repos.feeFineRepository.getFeeFine(FeeFine.LOST_ITEM_PROC_FEE_TYPE, true)
+            .thenApply(mapResult(params::withFeeFine));
+  }
+
+  private CompletableFuture<Result<Void>> createFeeFineRecord(Loan loan, Double fineAmount) {
+
     if (fineAmount <= 0) {
-      return failure();
+      return completedFuture(succeeded(null));
     }
-    return CompletableFuture.completedFuture(succeeded(new CalculationParameters(loan, null, null, null))).thenCompose(r -> r.after(this::lookupItemRelatedRecords)).thenCompose(r -> r.after(this::lookupFeeFineOwner)).thenCompose(r -> r.after(this::lookupLostItemFee)).thenCompose(r -> r.after(params -> {
-      if (params.item == null || params.feeFineOwner == null || params.feeFine == null) {
-        return failure();
-      }
-      AccountStorageRepresentation account = new AccountStorageRepresentation(params.loan, params.item, params.feeFineOwner, params.feeFine, fineAmount);
-      return repos.accountRepository.create(account);
-    }));
+
+    return completedFuture(succeeded(
+            new CalculationParameters(loan)))
+            .thenCompose(r -> r.after(this::lookupLostItemFee))
+            .thenCompose(r -> r.after(this::lookupItemRelatedRecords))
+            .thenCompose(r -> r.after(this::lookupFeeFineOwner))
+            .thenCompose(r -> r.after(params -> createAccount(fineAmount, params)));
   }
 
-  private CompletableFuture<Result<Account>> failure() {
-    return completedFuture(succeeded(Account.from(null)));
+  private CompletableFuture<Result<Void>> createAccount(Double fineAmount,
+          CalculationParameters params) {
+
+    if (params.isIncomplete()) {
+      return completedFuture(succeeded(null));
+    }
+
+    AccountStorageRepresentation accountRepresentation
+            = new AccountStorageRepresentation(params.loan, params.item, params.feeFineOwner,
+                    params.feeFine, fineAmount);
+
+    return repos.accountRepository.create(accountRepresentation)
+            .thenCompose(rac -> rac.after(account -> this.createFeeFineAction(account, params)
+            .thenApply(rfa -> rfa.map(feeFineAction -> null))));
+  }
+
+  private CompletableFuture<Result<FeeFineAction>> createFeeFineAction(
+          Account account, CalculationParameters params) {
+
+    return repos.feeFineActionRepository.create(new FeeFineActionStorageRepresentation(account,
+            params.feeFineOwner, params.feeFine, account.getAmount(), account.getAmount(),
+            params.loggedInUser));
   }
 
   private static class CalculationParameters {
@@ -184,54 +249,66 @@ public class LostItemFeeProcess {
     final Item item;
     final FeeFineOwner feeFineOwner;
     final FeeFine feeFine;
+    final User loggedInUser;
 
-    CalculationParameters(Loan loan, Item item, FeeFineOwner feeFineOwner, FeeFine feeFine) {
+    CalculationParameters(Loan loan) {
+      this(loan, null, null, null, null);
+    }
+
+    CalculationParameters(Loan loan, Item item, FeeFineOwner feeFineOwner, FeeFine feeFine,
+            User loggedInUser) {
+
       this.loan = loan;
       this.item = item;
       this.feeFineOwner = feeFineOwner;
       this.feeFine = feeFine;
+      this.loggedInUser = loggedInUser;
     }
 
     CalculationParameters withItem(Item item) {
-      return new CalculationParameters(this.loan, item, this.feeFineOwner, this.feeFine);
+      return new CalculationParameters(this.loan, item, this.feeFineOwner, this.feeFine,
+              this.loggedInUser);
     }
 
     CalculationParameters withOwner(FeeFineOwner feeFineOwner) {
-      return new CalculationParameters(this.loan, this.item, feeFineOwner, this.feeFine);
+      return new CalculationParameters(this.loan, this.item, feeFineOwner, this.feeFine,
+              this.loggedInUser);
     }
 
     CalculationParameters withFeeFine(FeeFine feeFine) {
-      return new CalculationParameters(this.loan, this.item, this.feeFineOwner, feeFine);
+      return new CalculationParameters(this.loan, this.item, this.feeFineOwner, feeFine,
+              this.loggedInUser);
+    }
+
+    CalculationParameters withLoggedInUser(User loggedInUser) {
+      return new CalculationParameters(this.loan, this.item, this.feeFineOwner, this.feeFine,
+              loggedInUser);
+    }
+
+    boolean isComplete() {
+      return ObjectUtils.allNotNull(loan, item, feeFineOwner, feeFine);
+    }
+
+    boolean isIncomplete() {
+      return !isComplete();
     }
   }
 
-  enum ScenarioFee {
+  enum ScenarioProcess {
     AGE_TO_LOST(loan -> loan.getLostItemHasBeenBilled().equals("false")),
     PATRON_BILLED_AFTER(loan -> loan.getLostItemPolicy().getPatronBilledAfterAgedLost().toMinutes() > 0),
     PATRON_BILLING_IMMEDIATELY(loan -> loan.getLostItemPolicy().getPatronBilledAfterAgedLost().toMinutes() == 0);
 
     private Predicate<Loan> shouldCreateFee;
 
-    ScenarioFee(Predicate<Loan> shouldCreateFee) {
+    ScenarioProcess(Predicate<Loan> shouldCreateFee) {
       this.shouldCreateFee = shouldCreateFee;
     }
   }
 
-  public static class lostItemBilledUtils {
+  public static class LostItemBilledUtils {
 
-    public static Predicate<Loan> billedFilter() {
-      return (Loan l) -> {
-        return l.getLostItemHasBeenBilled().equals("true");
-      };
-    }
-
-    public static Predicate<Loan> returnedFilter() {
-      return (Loan l) -> {
-        return (l.getReturnDate() != null);
-      };
-    }
-
-    public static boolean shouldCreateLostItemProcessingFee(LostItemPolicy policy) {
+    private static boolean shouldCreateLostItemProcessingFee(LostItemPolicy policy) {
 
       Predicate<LostItemPolicy> p1 = (LostItemPolicy p) -> p.getChargeAmountItem().getChargeType().equals(Charge.ACTUAL_COST);
       Predicate<LostItemPolicy> p2 = (LostItemPolicy p) -> (p.getChargeAmountItem().getAmount() > 0);
@@ -242,7 +319,7 @@ public class LostItemFeeProcess {
       return ptotal.test(policy);
     }
 
-    public static boolean shouldCreateLostItemFee(LostItemPolicy policy) {
+    private static boolean shouldCreateLostItemFee(LostItemPolicy policy) {
 
       Predicate<LostItemPolicy> p1 = (LostItemPolicy p) -> (p.getChargeAmountItem().getAmount() > 0);
       Predicate<LostItemPolicy> p2 = (LostItemPolicy p) -> p.getChargeAmountItemPatron();
@@ -261,20 +338,21 @@ public class LostItemFeeProcess {
     private final ItemRepository itemRepository;
     private final FeeFineOwnerRepository feeFineOwnerRepository;
     private final FeeFineRepository feeFineRepository;
-    private final UserRepository userRepository;
+    private final FeeFineActionRepository feeFineActionRepository;
     private final LostItemPolicyRepository lostItemPolicyRepository;
 
     Repos(OverdueFinePolicyRepository overdueFinePolicyRepository,
             AccountRepository accountRepository, ItemRepository itemRepository,
             FeeFineOwnerRepository feeFineOwnerRepository, FeeFineRepository feeFineRepository,
-            UserRepository userRepository, LostItemPolicyRepository lostItemPolicyRepository) {
+            FeeFineActionRepository feeFineActionRepository,
+            LostItemPolicyRepository lostItemPolicyRepository) {
 
       this.overdueFinePolicyRepository = overdueFinePolicyRepository;
       this.accountRepository = accountRepository;
       this.itemRepository = itemRepository;
       this.feeFineOwnerRepository = feeFineOwnerRepository;
       this.feeFineRepository = feeFineRepository;
-      this.userRepository = userRepository;
+      this.feeFineActionRepository = feeFineActionRepository;
       this.lostItemPolicyRepository = lostItemPolicyRepository;
     }
   }
