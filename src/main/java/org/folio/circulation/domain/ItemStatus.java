@@ -16,7 +16,8 @@ public enum ItemStatus {
   ON_ORDER("On order"),
   IN_PROCESS("In process"),
   DECLARED_LOST("Declared lost"),
-  CLAIMED_RETURNED("Claimed returned");
+  CLAIMED_RETURNED("Claimed returned"),
+  WITHDRAWN("Withdrawn");
 
   public static ItemStatus from(String value, String date) {
     return Arrays.stream(values())

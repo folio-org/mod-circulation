@@ -1,6 +1,6 @@
 package api.loans.anonymization;
 
-import static api.support.matchers.LoanMatchers.hasOpenStatus;
+import static api.support.matchers.LoanMatchers.isOpen;
 import static api.support.matchers.LoanMatchers.isAnonymized;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasItems;
@@ -85,7 +85,7 @@ public class AnonymizeLoansAfterXIntervalTests extends LoanAnonymizationTests {
     createClosedAccountWithFeeFines(loanResource,
       now(UTC).minusMinutes(1));
 
-    assertThat(loanResource.getJson(), hasOpenStatus());
+    assertThat(loanResource.getJson(), isOpen());
 
     mockClockManagerToReturnFixedDateTime(
       now(UTC).plus(ONE_MINUTE_AND_ONE));
