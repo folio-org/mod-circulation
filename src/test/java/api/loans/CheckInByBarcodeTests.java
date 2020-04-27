@@ -956,7 +956,7 @@ public class CheckInByBarcodeTests extends APITests {
     DateTime checkOutDate = new DateTime(2020, 1, 18, 18, 0, 0, DateTimeZone.UTC);
     DateTime checkInDate = new DateTime(2020, 1, 22, 15, 30, 0, DateTimeZone.UTC);
 
-    loansFixture.checkOutByBarcode(nod, james, checkOutDate);
+    checkOutFixture.checkOutByBarcode(nod, james, checkOutDate);
 
     JsonObject servicePointOwner = new JsonObject();
     servicePointOwner.put("value", homeLocation.getJson().getString("primaryServicePoint"));
@@ -975,11 +975,12 @@ public class CheckInByBarcodeTests extends APITests {
       .withAutomatic(true)
       .withDefaultAmount(1.0));
 
-    CheckInByBarcodeResponse checkInResponse = loansFixture.checkInByBarcode(
+    CheckInByBarcodeResponse checkInResponse = checkInFixture.checkInByBarcode(
       new CheckInByBarcodeRequestBuilder()
         .forItem(nod)
         .on(checkInDate)
         .at(checkInServicePointId));
+
     JsonObject checkedInLoan = checkInResponse.getLoan();
 
     Awaitility.await()
