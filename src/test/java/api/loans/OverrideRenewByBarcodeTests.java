@@ -406,7 +406,9 @@ public class OverrideRenewByBarcodeTests extends APITests {
       .withName("Limited Renewals policy")
       .rolling(Period.weeks(1));
 
-    use(limitedRenewalsPolicy);
+    use(new CirculationPolicies()
+      .withLoanPolicy(loanPoliciesFixture.create(limitedRenewalsPolicy).getId())
+      .withLostItemPolicy(lostItemFeePoliciesFixture.chargeFee().getId()));
 
     final DateTime loanDate = DateTime.now(DateTimeZone.UTC).minusWeeks(1);
 

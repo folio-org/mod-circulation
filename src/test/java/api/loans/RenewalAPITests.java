@@ -782,12 +782,14 @@ abstract class RenewalAPITests extends APITests {
 
   @Test
   public void cannotRenewWhenItemIsDeclaredLost() {
-
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource jessica = usersFixture.jessica();
 
-    final JsonObject loanJson = checkOutFixture.checkOutByBarcode(smallAngryPlanet, usersFixture.jessica())
-      .getJson();
+    useLostItemPolicy(lostItemFeePoliciesFixture.chargeFee().getId());
+
+    final JsonObject loanJson = checkOutFixture.checkOutByBarcode(smallAngryPlanet,
+      usersFixture.jessica())
+        .getJson();
 
     declareLostFixtures.declareItemLost(loanJson);
 
@@ -805,8 +807,9 @@ abstract class RenewalAPITests extends APITests {
     final String comment = "testing";
     final DateTime dateTime = DateTime.now();
 
-    final JsonObject loanJson = checkOutFixture.checkOutByBarcode(smallAngryPlanet, usersFixture.jessica())
-      .getJson();
+    final JsonObject loanJson = checkOutFixture.checkOutByBarcode(smallAngryPlanet,
+      usersFixture.jessica())
+        .getJson();
 
     claimItemReturnedFixture.claimItemReturned(new ClaimItemReturnedRequestBuilder()
         .forLoan(loanJson.getString("id"))
@@ -1273,7 +1276,9 @@ abstract class RenewalAPITests extends APITests {
       "ItemSuffix",
       "");
 
-    InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet(itemBuilder, itemsFixture.thirdFloorHoldings());
+    InventoryItemResource smallAngryPlanet
+      = itemsFixture.basedUponSmallAngryPlanet(itemBuilder, itemsFixture.thirdFloorHoldings());
+
     final IndividualResource steve = usersFixture.steve();
 
     final DateTime loanDate =

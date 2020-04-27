@@ -290,6 +290,8 @@ public class ChangeDueDateTests extends APITests {
 
   @Test
   public void dueDateCannotBeChangedWhenItemIsDeclaredLost() {
+    useLostItemPolicy(lostItemFeePoliciesFixture.chargeFee().getId());
+
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource loan = checkOutFixture.checkOutByBarcode(smallAngryPlanet);
     final JsonObject loanJson = loan.getJson();

@@ -1,7 +1,7 @@
 package api.loans;
 
 import static api.support.matchers.LoanMatchers.hasLoanProperty;
-import static api.support.matchers.LoanMatchers.hasOpenStatus;
+import static api.support.matchers.LoanMatchers.isOpen;
 import static api.support.matchers.LoanMatchers.hasStatus;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
@@ -110,7 +110,7 @@ public class ClaimItemReturnedAPITests extends APITests {
 
     assertThat(response.getStatusCode(), is(204));
     assertThat(actualItem, hasStatus("Claimed returned"));
-    assertThat(actualLoan, hasOpenStatus());
+    assertThat(actualLoan, isOpen());
     assertThat(actualLoan, hasLoanProperty(ACTION, "claimedReturned"));
     assertThat(actualLoan, hasLoanProperty(ACTION_COMMENT, comment));
     assertThat(actualLoan, hasLoanProperty(CLAIMED_RETURNED_DATE, dateTime.toString()));

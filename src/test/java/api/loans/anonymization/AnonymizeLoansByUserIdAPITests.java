@@ -1,14 +1,11 @@
 package api.loans.anonymization;
 
-import static api.support.matchers.LoanMatchers.hasOpenStatus;
+import static api.support.matchers.LoanMatchers.isOpen;
 import static api.support.matchers.LoanMatchers.isAnonymized;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
 
-import java.net.MalformedURLException;
 import java.util.UUID;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeoutException;
 
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
@@ -30,7 +27,7 @@ public class AnonymizeLoansByUserIdAPITests extends LoanAnonymizationTests {
       .at(servicePoint.getId()));
     UUID loanID = loanResource.getId();
 
-    assertThat(loanResource.getJson(), hasOpenStatus());
+    assertThat(loanResource.getJson(), isOpen());
 
     anonymizeLoansForUser(user.getId());
 
