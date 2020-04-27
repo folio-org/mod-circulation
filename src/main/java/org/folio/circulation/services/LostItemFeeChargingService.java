@@ -182,8 +182,7 @@ public class LostItemFeeChargingService {
   }
 
   private boolean shouldChargeProcessingFee(LostItemPolicy policy) {
-    return policy.shouldChargeProcessingFee()
-      && policy.getItemProcessingFee().filter(ItemFee::isChargeable).isPresent();
+    return policy.getItemProcessingFee().filter(ItemFee::isChargeable).isPresent();
   }
 
   private boolean shouldChargeAnyFee(LostItemPolicy policy) {

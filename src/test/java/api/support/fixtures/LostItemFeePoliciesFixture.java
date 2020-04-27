@@ -31,20 +31,15 @@ public class LostItemFeePoliciesFixture {
     patronBilledAfterAgedLost.put("duration", 12);
     patronBilledAfterAgedLost.put("intervalId", "Months");
 
-    JsonObject lostItemChargeFeeFine = new JsonObject();
-    lostItemChargeFeeFine.put("duration", "6");
-    lostItemChargeFeeFine.put("intervalId", "Months");
-
     return new LostItemFeePolicyBuilder()
       .withName("Undergrad standard")
       .withDescription("This is description for undergrad standard")
       .withItemAgedLostOverdue(itemAgedLostOverdue)
       .withPatronBilledAfterAgedLost(patronBilledAfterAgedLost)
-      .withSetCostCharge(5.00)
+      .withSetCost(5.00)
       .withLostItemProcessingFee(5.00)
       .chargeProcessingFee()
       .withChargeAmountItemSystem(true)
-      .withLostItemChargeFeeFine(lostItemChargeFeeFine)
       .withReturnedLostItemProcessingFee(true)
       .withReplacedLostItemProcessingFee(true)
       .withReplacementAllowed(true)

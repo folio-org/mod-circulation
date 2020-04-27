@@ -17,15 +17,11 @@ import io.vertx.core.json.JsonObject;
 
 public class LostItemPolicy extends Policy {
   private final ItemFee setCostFee;
-  private final boolean chargeAmountItemPatron;
   private final ItemFee itemProcessingFee;
 
-  private LostItemPolicy(String id, String name, ItemFee setCostFee,
-    boolean chargeAmountItemPatron, ItemFee itemProcessingFee) {
-
+  private LostItemPolicy(String id, String name, ItemFee setCostFee, ItemFee itemProcessingFee) {
     super(id, name);
     this.setCostFee = setCostFee;
-    this.chargeAmountItemPatron = chargeAmountItemPatron;
     this.itemProcessingFee = itemProcessingFee;
   }
 
@@ -34,14 +30,15 @@ public class LostItemPolicy extends Policy {
       getProperty(lostItemPolicy, "id"),
       getProperty(lostItemPolicy, "name"),
       getSetCostFee(lostItemPolicy),
-      getBooleanProperty(lostItemPolicy, "chargeAmountItemPatron"),
       getProcessingFee(lostItemPolicy)
     );
   }
 
   private static ItemFee getProcessingFee(JsonObject policy) {
+    final boolean chargeProcessingFee = getBooleanProperty(policy, "chargeAmountItemPatron");
     final BigDecimal amount = getBigDecimalProperty(policy, "lostItemProcessingFee");
-    return amount != null
+
+    return amount != null && chargeProcessingFee
       ? new ItemFee(amount)
       : null;
   }
@@ -61,11 +58,6 @@ public class LostItemPolicy extends Policy {
     return ofNullable(setCostFee);
   }
 
-  public boolean shouldChargeProcessingFee() {
-    // Renamed to better describe intent. Fee/fines domain name quite unclear.
-    return chargeAmountItemPatron;
-  }
-
   public Optional<ItemFee> getItemProcessingFee() {
     return ofNullable(itemProcessingFee);
   }
@@ -76,7 +68,7 @@ public class LostItemPolicy extends Policy {
 
   private static class UnknownLostItemPolicy extends LostItemPolicy {
     UnknownLostItemPolicy(String id) {
-      super(id, null, null, false, null);
+      super(id, null, null, null);
     }
   }
 }
