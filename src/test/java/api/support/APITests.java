@@ -187,9 +187,6 @@ public abstract class APITests {
   protected final OverdueFinePoliciesFixture overdueFinePoliciesFixture
     = new OverdueFinePoliciesFixture(overdueFinePolicyClient);
 
-  protected final LostItemFeePoliciesFixture lostItemFeePoliciesFixture
-    = new LostItemFeePoliciesFixture(lostItemFeePolicyClient);
-
   protected final CirculationRulesFixture circulationRulesFixture
     = new CirculationRulesFixture(
       new RestAssuredClient(getOkapiHeadersFromContext()));
@@ -233,9 +230,13 @@ public abstract class APITests {
 
   protected final TemplateFixture templateFixture = new TemplateFixture(templateClient);
   protected final IdentifierTypesFixture identifierTypesFixture = new IdentifierTypesFixture();
+
   protected final FeeFineOwnerFixture feeFineOwnerFixture =
     new FeeFineOwnerFixture(feeFineOwnersClient, servicePointsFixture);
   protected final FeeFineTypeFixture feeFineTypeFixture = new FeeFineTypeFixture(feeFinesClient);
+  protected final LostItemFeePoliciesFixture lostItemFeePoliciesFixture
+    = new LostItemFeePoliciesFixture(lostItemFeePolicyClient, feeFineOwnerFixture, feeFineTypeFixture);
+
   protected final DeclareLostFixtures declareLostFixtures = new DeclareLostFixtures();
   protected final ClaimItemReturnedFixture claimItemReturnedFixture =
     new ClaimItemReturnedFixture(restAssuredClient);
@@ -337,6 +338,7 @@ public abstract class APITests {
 
     feeFineOwnerFixture.cleanUp();
     feeFineTypeFixture.cleanUp();
+    feeFineActionsClient.deleteAll();
     accountsClient.deleteAll();
   }
 
@@ -414,6 +416,14 @@ public abstract class APITests {
       noticePoliciesFixture.activeNotice().getId(),
       overdueFinePoliciesFixture.facultyStandard().getId(),
       lostItemFeePoliciesFixture.facultyStandard().getId());
+  }
+
+  protected void use(CirculationPolicies policies) {
+    useFallbackPolicies(policies.loanPolicy,
+      policies.requestPolicy,
+      policies.noticePolicy,
+      policies.overduePolicy,
+      policies.lostItemPolicy);
   }
 
   /**
@@ -618,5 +628,46 @@ public abstract class APITests {
 
   protected void mockClockManagerToReturnDefaultDateTime() {
     ClockManager.getClockManager().setDefaultClock();
+  }
+
+  public class CirculationPolicies {
+    private UUID loanPolicy;
+    private UUID requestPolicy;
+    private UUID noticePolicy;
+    private UUID overduePolicy;
+    private UUID lostItemPolicy;
+
+    public CirculationPolicies() {
+      loanPolicy = loanPoliciesFixture.canCirculateRolling().getId();
+      requestPolicy = requestPoliciesFixture.allowAllRequestPolicy().getId();
+      noticePolicy = noticePoliciesFixture.activeNotice().getId();
+      overduePolicy = overdueFinePoliciesFixture.facultyStandard().getId();
+      lostItemPolicy = lostItemFeePoliciesFixture.facultyStandard().getId();
+    }
+
+    public CirculationPolicies withLoanPolicy(UUID loanPolicy) {
+      this.loanPolicy = loanPolicy;
+      return this;
+    }
+
+    public CirculationPolicies withRequestPolicy(UUID requestPolicy) {
+      this.requestPolicy = requestPolicy;
+      return this;
+    }
+
+    public CirculationPolicies withNoticePolicy(UUID noticePolicy) {
+      this.noticePolicy = noticePolicy;
+      return this;
+    }
+
+    public CirculationPolicies withOverduePolicy(UUID overduePolicy) {
+      this.overduePolicy = overduePolicy;
+      return this;
+    }
+
+    public CirculationPolicies withLostItemPolicy(UUID lostItemPolicy) {
+      this.lostItemPolicy = lostItemPolicy;
+      return this;
+    }
   }
 }
