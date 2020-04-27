@@ -786,6 +786,8 @@ abstract class RenewalAPITests extends APITests {
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource jessica = usersFixture.jessica();
 
+    useLostItemPolicy(lostItemFeePoliciesFixture.chargeFee().getId());
+
     final JsonObject loanJson = loansFixture.checkOutByBarcode(smallAngryPlanet, usersFixture.jessica())
       .getJson();
 

@@ -10,7 +10,12 @@ public enum LoanAction {
   RECALLREQUESTED("recallrequested"),
   HOLDREQUESTED("holdrequested"),
   CLAIMED_RETURNED("claimedReturned"),
-  MISSING("markedMissing");
+  MISSING("markedMissing"),
+  CLOSED_LOAN("closedLoan"),
+
+  RESOLVE_CLAIM_AS_RETURNED_BY_PATRON("checkedInReturnedByPatron"),
+  RESOLVE_CLAIM_AS_FOUND_BY_LIBRARY("checkedInFoundByLibrary");
+
 
   private final String value;
 
@@ -20,20 +25,5 @@ public enum LoanAction {
 
   public String getValue() {
     return value;
-  }
-
-  public enum ResolveClaimedReturned {
-    CHECKED_IN_RETURNED_BY_PATRON("checkedInReturnedByPatron"),
-    CHECKED_IN_FOUND_BY_LIBRARY("checkedInFoundByLibrary");
-
-    private final String value;
-
-    ResolveClaimedReturned(String value) {
-      this.value = value;
-    }
-
-    public String getValue() {
-      return value;
-    }
   }
 }
