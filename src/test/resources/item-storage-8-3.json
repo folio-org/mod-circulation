@@ -69,6 +69,12 @@
           "type": "string",
           "description": "Effective Call Number Suffix is the suffix of the identifier assigned to an item or its holding and associated with the item.",
           "readonly": true
+        },
+        "typeId": {
+          "type": "string",
+          "description": "Effective Call Number Type Id is the call number type id of the item, if available, otherwise that of the holding.",
+          "$ref": "uuid.json",
+          "readonly": true
         }
       },
       "additionalProperties": false
@@ -106,6 +112,7 @@
       "description": "Number of pieces. Used when an item is checked out or returned to verify that all parts are present (e.g. 7 CDs in a set)."
     },
     "descriptionOfPieces": {
+      "description": "Description of item pieces.",
       "type": "string"
     },
     "numberOfMissingPieces": {
@@ -121,9 +128,11 @@
       "description": "Date when the piece(s) went missing."
     },
     "itemDamagedStatusId": {
+      "description": "Item dame status id identifier.",
       "type": "string"
     },
     "itemDamagedStatusDate": {
+      "description": "Date and time when the item was damaged.",
       "type": "string"
     },
     "notes": {
@@ -223,7 +232,8 @@
             "Paged",
             "Declared lost",
             "Order closed",
-            "Claimed returned"
+            "Claimed returned",
+            "Withdrawn"
           ]
         },
         "date": {
@@ -259,11 +269,12 @@
     "effectiveLocationId": {
       "type": "string",
       "description": "Read only current home location for the item.",
-      "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$",
+      "$ref": "uuid.json",
       "readonly": true
     },
     "electronicAccess": {
       "type": "array",
+      "description": "References for accessing the item by URL.",
       "items": {
         "type": "object",
         "properties": {
@@ -324,6 +335,7 @@
     },
     "holdingsRecord2": {
       "type": "object",
+      "description": "Item associated holdings record object.",
       "folio:$ref": "holdingsrecord.json",
       "readonly": true,
       "folio:isVirtual": true,
@@ -345,12 +357,12 @@
         "servicePointId": {
           "type": "string",
           "description": "Service point ID being used by a staff member when item was scanned in Check in app.",
-          "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
+          "$ref": "uuid.json"
         },
         "staffMemberId": {
           "type": "string",
           "description": "ID a staff member who scanned the item",
-          "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
+          "$ref": "uuid.json"
         }
       }
     }
