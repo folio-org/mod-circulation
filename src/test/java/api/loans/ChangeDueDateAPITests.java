@@ -108,7 +108,7 @@ public class ChangeDueDateAPITests extends APITests {
         .forLoan(loan.getId())
         .withDueDate(newDueDate));
 
-    assertResponseOf(response, 422, "id", loan.getId());
+    assertResponseOf(response, 422, "loanId", loan.getId());
     assertResponseMessage(response, "Loan is closed");
   }
 
