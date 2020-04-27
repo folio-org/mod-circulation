@@ -4,7 +4,7 @@ import static api.support.http.CqlQuery.exactMatch;
 import static api.support.http.CqlQuery.queryFromTemplate;
 import static api.support.matchers.JsonObjectMatcher.hasJsonPath;
 import static api.support.matchers.LoanMatchers.hasLoanProperty;
-import static api.support.matchers.LoanMatchers.hasOpenStatus;
+import static api.support.matchers.LoanMatchers.isOpen;
 import static api.support.matchers.LoanMatchers.hasStatus;
 import static api.support.matchers.LoanMatchers.isClosed;
 import static api.support.matchers.TextDateTimeMatcher.withinSecondsBeforeNow;
@@ -71,7 +71,7 @@ public class DeclareLostAPITests extends APITests {
 
     assertThat(response.getStatusCode(), is(204));
     assertThat(actualItem, hasStatus("Declared lost"));
-    assertThat(actualLoan, hasOpenStatus());
+    assertThat(actualLoan, isOpen());
     assertThat(actualLoan, hasLoanProperty("action", "declaredLost"));
     assertThat(actualLoan, hasLoanProperty("actionComment", comment));
     assertThat(actualLoan, hasLoanProperty("declaredLostDate", dateTime.toString()));
@@ -95,7 +95,7 @@ public class DeclareLostAPITests extends APITests {
 
     assertThat(response.getStatusCode(), is(204));
     assertThat(actualItem, hasStatus("Declared lost"));
-    assertThat(actualLoan, hasOpenStatus());
+    assertThat(actualLoan, isOpen());
     assertThat(actualLoan, hasLoanProperty("action", "declaredLost"));
     assertThat(actualLoan, hasLoanProperty("actionComment", StringUtils.EMPTY));
     assertThat(actualLoan, hasLoanProperty("declaredLostDate", dateTime.toString()));
