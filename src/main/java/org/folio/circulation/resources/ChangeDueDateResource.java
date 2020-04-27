@@ -1,12 +1,14 @@
 package org.folio.circulation.resources;
 
 import static org.folio.circulation.domain.representations.ChangeDueDateRequest.DUE_DATE;
+import static org.folio.circulation.domain.representations.LoanProperties.ITEM_ID;
 import static org.folio.circulation.support.Result.failed;
 import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 
 import java.util.concurrent.CompletableFuture;
 
+import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.domain.LoanRepository;
@@ -18,6 +20,7 @@ import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.NoContentResult;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.RouteRegistration;
+import org.folio.circulation.support.ValidationErrorFailure;
 import org.folio.circulation.support.http.server.WebContext;
 import org.joda.time.DateTime;
 
@@ -54,7 +57,7 @@ public class ChangeDueDateResource extends Resource {
       = DueDateScheduledNoticeService.using(clients);
 
     final ItemStatusValidator itemStatusValidator = new ItemStatusValidator(
-        message -> singleValidationError(message, "itemId", request.getLoanId()));
+        ChangeDueDateResource::errorWhenInIncorrectStatus);
 
     final LoanNoticeSender loanNoticeSender = LoanNoticeSender.using(clients);
     return succeeded(request).after(r -> loanRepository.getById(r.getLoanId()))
@@ -95,5 +98,11 @@ public class ChangeDueDateResource extends Resource {
 
   private Result<LoanAndRelatedRecords> toLoanAndRelatedRecords(Result<Loan> loanResult) {
     return loanResult.next(loan -> succeeded(new LoanAndRelatedRecords(loan)));
+  }
+
+  private static ValidationErrorFailure errorWhenInIncorrectStatus(Item item) {
+    String message = String.format("item is %s", item.getStatusName());
+
+    return singleValidationError(message, ITEM_ID, item.getItemId());
   }
 }
