@@ -2,6 +2,7 @@ package org.folio.circulation.resources;
 
 import static org.folio.circulation.domain.representations.ChangeDueDateRequest.DUE_DATE;
 import static org.folio.circulation.domain.representations.LoanProperties.ITEM_ID;
+import static org.folio.circulation.support.JsonPropertyFetcher.getDateTimeProperty;
 import static org.folio.circulation.support.Result.failed;
 import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
@@ -41,8 +42,10 @@ public class ChangeDueDateResource extends Resource {
   }
 
   private void changeDueDate(RoutingContext routingContext) {
-    createChangeDueDateRequest(routingContext).after(r -> processChangeDueDate(r, routingContext))
-        .thenApply(NoContentResult::from).thenAccept(r -> r.writeTo(routingContext.response()));
+    createChangeDueDateRequest(routingContext)
+      .after(r -> processChangeDueDate(r, routingContext))
+      .thenApply(NoContentResult::from)
+      .thenAccept(r -> r.writeTo(routingContext.response()));
   }
 
   private CompletableFuture<Result<LoanAndRelatedRecords>> processChangeDueDate(
@@ -60,7 +63,9 @@ public class ChangeDueDateResource extends Resource {
         ChangeDueDateResource::errorWhenInIncorrectStatus);
 
     final LoanNoticeSender loanNoticeSender = LoanNoticeSender.using(clients);
-    return succeeded(request).after(r -> loanRepository.getById(r.getLoanId()))
+
+    return succeeded(request)
+      .after(r -> loanRepository.getById(r.getLoanId()))
       .thenApply(LoanValidator::refuseWhenLoanIsClosed)
       .thenApply(this::toLoanAndRelatedRecords)
       .thenApply(itemStatusValidator::refuseWhenItemIsDeclaredLost)
@@ -89,11 +94,10 @@ public class ChangeDueDateResource extends Resource {
     final JsonObject body = routingContext.getBodyAsJson();
 
     if (!body.containsKey(DUE_DATE)) {
-      return failed(singleValidationError("Due date is a required field",
-      DUE_DATE, null));
+      return failed(singleValidationError("Due date is required", DUE_DATE, null));
     }
 
-    return succeeded(new ChangeDueDateRequest(loanId, DateTime.parse(body.getString(DUE_DATE))));
+    return Result.of(() -> new ChangeDueDateRequest(loanId, getDateTimeProperty(body, DUE_DATE)));
   }
 
   private Result<LoanAndRelatedRecords> toLoanAndRelatedRecords(Result<Loan> loanResult) {
