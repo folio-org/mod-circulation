@@ -332,12 +332,12 @@ public class DeclareLostAPITests extends APITests {
   }
 
   @Test
-  public void shouldNotAssignFeeIfChargeTypeIsActualCost() {
+  public void shouldNotAutomaticallyChargeActualCostFeeToPatron() {
     final LostItemFeePolicyBuilder lostItemPolicy = lostItemFeePoliciesFixture
       .facultyStandardPolicy()
       .withName("Declared lost fee test policy")
       .doNotChargeProcessingFee()
-      .withChargeAmountItem("actualCost", 10.0);
+      .withActualCost(10.0);
 
     useLostItemPolicy(lostItemFeePoliciesFixture.create(lostItemPolicy).getId());
 

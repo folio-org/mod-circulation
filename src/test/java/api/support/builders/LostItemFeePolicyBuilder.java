@@ -198,7 +198,7 @@ public class LostItemFeePolicyBuilder extends JsonBuilder implements Builder {
     return withChargeAmountItem(null);
   }
 
-  public LostItemFeePolicyBuilder withChargeAmountItem(String chargeType, Double amount) {
+  private LostItemFeePolicyBuilder withChargeAmountItem(String chargeType, Double amount) {
     return withChargeAmountItem(new JsonObject()
       .put("amount", amount)
       .put("chargeType", chargeType));
@@ -206,6 +206,10 @@ public class LostItemFeePolicyBuilder extends JsonBuilder implements Builder {
 
   public LostItemFeePolicyBuilder withSetCost(Double amount) {
     return withChargeAmountItem("anotherCost", amount);
+  }
+
+  public LostItemFeePolicyBuilder withActualCost(Double amount) {
+    return withChargeAmountItem("actualCost", amount);
   }
 
   public LostItemFeePolicyBuilder withLostItemProcessingFee(Double lostItemProcessingFee) {
