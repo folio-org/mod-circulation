@@ -81,7 +81,7 @@ public class LoanDueDatesAfterRecallTests extends APITests {
     final IndividualResource steve = usersFixture.steve();
     final IndividualResource jessica = usersFixture.jessica();
 
-    final IndividualResource loan = loansFixture.checkOutByBarcode(
+    final IndividualResource loan = checkOutFixture.checkOutByBarcode(
       smallAngryPlanet, steve, DateTime.now(DateTimeZone.UTC));
 
     final String originalDueDate = loan.getJson().getString("dueDate");
@@ -117,7 +117,7 @@ public class LoanDueDatesAfterRecallTests extends APITests {
 
     setFallbackPolicies(canCirculateRollingPolicy);
 
-    final IndividualResource loan = loansFixture.checkOutByBarcode(
+    final IndividualResource loan = checkOutFixture.checkOutByBarcode(
       smallAngryPlanet, steve, DateTime.now(DateTimeZone.UTC));
 
     final String originalDueDate = loan.getJson().getString("dueDate");
@@ -156,7 +156,7 @@ public class LoanDueDatesAfterRecallTests extends APITests {
     // We use the loan date to calculate the MGD
     final DateTime loanDate = DateTime.now(DateTimeZone.UTC);
 
-    final IndividualResource loan = loansFixture.checkOutByBarcode(
+    final IndividualResource loan = checkOutFixture.checkOutByBarcode(
       smallAngryPlanet, steve, loanDate);
 
     final String originalDueDate = loan.getJson().getString("dueDate");
@@ -194,7 +194,7 @@ public class LoanDueDatesAfterRecallTests extends APITests {
     // We use the loan date to calculate the minimum guaranteed due date (MGD)
     final DateTime loanDate = DateTime.now(DateTimeZone.UTC);
 
-    final IndividualResource loan = loansFixture.checkOutByBarcode(
+    final IndividualResource loan = checkOutFixture.checkOutByBarcode(
       smallAngryPlanet, steve, loanDate);
 
     final String originalDueDate = loan.getJson().getString("dueDate");
@@ -232,7 +232,7 @@ public class LoanDueDatesAfterRecallTests extends APITests {
     // We use the loan date to calculate the minimum guaranteed due date (MGD)
     final DateTime loanDate = DateTime.now(DateTimeZone.UTC);
 
-    final IndividualResource loan = loansFixture.checkOutByBarcode(
+    final IndividualResource loan = checkOutFixture.checkOutByBarcode(
       smallAngryPlanet, steve, loanDate);
 
     final String originalDueDate = loan.getJson().getString("dueDate");
@@ -339,7 +339,7 @@ public class LoanDueDatesAfterRecallTests extends APITests {
     // We use the loan date to calculate the minimum guaranteed due date (MGD)
     final DateTime loanDate = DateTime.now(DateTimeZone.UTC);
 
-    loansFixture.checkOutByBarcode(smallAngryPlanet, steve, loanDate);
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet, steve, loanDate);
 
     final Response response = requestsFixture.attemptPlaceHoldShelfRequest(smallAngryPlanet, jessica,
         DateTime.now(DateTimeZone.UTC), requestServicePoint.getId(), "Recall");
@@ -373,7 +373,7 @@ public class LoanDueDatesAfterRecallTests extends APITests {
 
     setFallbackPolicies(canCirculateRollingPolicy);
 
-    loansFixture.checkOutByBarcode(smallAngryPlanet, charlotte,
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet, charlotte,
       DateTime.now(DateTimeZone.UTC));
 
     requestsFixture.placeHoldShelfRequest(smallAngryPlanet, steve,
@@ -382,9 +382,9 @@ public class LoanDueDatesAfterRecallTests extends APITests {
     requestsFixture.placeHoldShelfRequest(smallAngryPlanet, jessica,
       DateTime.now(DateTimeZone.UTC), requestServicePoint.getId(), "Recall");
 
-    loansFixture.checkInByBarcode(smallAngryPlanet);
+    checkInFixture.checkInByBarcode(smallAngryPlanet);
 
-    final IndividualResource loan = loansFixture.checkOutByBarcode(
+    final IndividualResource loan = checkOutFixture.checkOutByBarcode(
       smallAngryPlanet, steve, DateTime.now(DateTimeZone.UTC));
 
     final JsonObject storedLoan = loansStorageClient.getById(loan.getId()).getJson();
@@ -425,7 +425,7 @@ public class LoanDueDatesAfterRecallTests extends APITests {
 
     final DateTime loanDate = DateTime.now(DateTimeZone.UTC).minusDays(3);
 
-    final IndividualResource loan = loansFixture.checkOutByBarcode(
+    final IndividualResource loan = checkOutFixture.checkOutByBarcode(
       smallAngryPlanet, steve, loanDate);
 
     final String originalDueDate = loan.getJson().getString("dueDate");
@@ -480,7 +480,7 @@ public class LoanDueDatesAfterRecallTests extends APITests {
     requestsFixture.placeHoldShelfRequest(smallAngryPlanet, james,
         DateTime.now(DateTimeZone.UTC), requestServicePoint.getId(), "Recall");
 
-    final IndividualResource loan = loansFixture.checkOutByBarcode(
+    final IndividualResource loan = checkOutFixture.checkOutByBarcode(
       smallAngryPlanet, jessica, ClockManager.getClockManager().getDateTime());
 
     // Recalled is applied when loaned, so the due date should be 2 weeks, not 3 weeks
@@ -527,7 +527,7 @@ public class LoanDueDatesAfterRecallTests extends APITests {
     requestsFixture.placeHoldShelfRequest(smallAngryPlanet, james,
         DateTime.now(DateTimeZone.UTC), requestServicePoint.getId(), "Recall");
 
-    final IndividualResource loan = loansFixture.checkOutByBarcode(
+    final IndividualResource loan = checkOutFixture.checkOutByBarcode(
       smallAngryPlanet, jessica, ClockManager.getClockManager().getDateTime());
 
     // Recalled is applied when loaned, so the due date should be 2 weeks, not 3 weeks
@@ -569,7 +569,7 @@ public class LoanDueDatesAfterRecallTests extends APITests {
 
     setFallbackPolicies(canCirculateRollingPolicy);
 
-    final IndividualResource loan = loansFixture.checkOutByBarcode(
+    final IndividualResource loan = checkOutFixture.checkOutByBarcode(
       smallAngryPlanet, steve, ClockManager.getClockManager().getDateTime());
 
     final String originalDueDate = loan.getJson().getString("dueDate");
@@ -616,7 +616,7 @@ public class LoanDueDatesAfterRecallTests extends APITests {
 
     setFallbackPolicies(canCirculateRollingPolicy);
 
-    final IndividualResource loan = loansFixture.checkOutByBarcode(
+    final IndividualResource loan = checkOutFixture.checkOutByBarcode(
       smallAngryPlanet, steve, ClockManager.getClockManager().getDateTime());
 
     final String originalDueDate = loan.getJson().getString("dueDate");
@@ -663,7 +663,7 @@ public class LoanDueDatesAfterRecallTests extends APITests {
 
     setFallbackPolicies(canCirculateRollingPolicy);
 
-    final IndividualResource loan = loansFixture.checkOutByBarcode(
+    final IndividualResource loan = checkOutFixture.checkOutByBarcode(
       smallAngryPlanet, steve, DateTime.now(DateTimeZone.UTC));
 
     final String originalDueDate = loan.getJson().getString("dueDate");
@@ -710,7 +710,7 @@ public class LoanDueDatesAfterRecallTests extends APITests {
 
     setFallbackPolicies(canCirculateRollingPolicy);
 
-    final IndividualResource loan = loansFixture.checkOutByBarcode(
+    final IndividualResource loan = checkOutFixture.checkOutByBarcode(
       smallAngryPlanet, steve, DateTime.now(DateTimeZone.UTC));
 
     final String originalDueDate = loan.getJson().getString("dueDate");
@@ -759,7 +759,7 @@ public class LoanDueDatesAfterRecallTests extends APITests {
 
     setFallbackPolicies(canCirculateRollingPolicy);
 
-    final IndividualResource loan = loansFixture.checkOutByBarcode(
+    final IndividualResource loan = checkOutFixture.checkOutByBarcode(
       smallAngryPlanet, jessica, ClockManager.getClockManager().getDateTime());
 
     final String originalDueDate = loan.getJson().getString("dueDate");

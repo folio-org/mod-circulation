@@ -58,7 +58,7 @@ public class CheckOutByBarcodeFixedDueDateScenariosTest extends APITests {
 
     use(loanPolicy);
 
-    IndividualResource loan = loansFixture.checkOutByBarcode(
+    IndividualResource loan = checkOutFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
         .forItem(smallAngryPlanet)
         .to(jessica)
@@ -98,7 +98,7 @@ public class CheckOutByBarcodeFixedDueDateScenariosTest extends APITests {
 
     use(loanPolicy);
 
-    IndividualResource loan = loansFixture.checkOutByBarcode(
+    IndividualResource loan = checkOutFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
         .forItem(smallAngryPlanet)
         .to(jessica)
@@ -140,7 +140,7 @@ public class CheckOutByBarcodeFixedDueDateScenariosTest extends APITests {
 
     use(loanPolicy);
 
-    IndividualResource loan = loansFixture.checkOutByBarcode(
+    IndividualResource loan = checkOutFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
         .forItem(smallAngryPlanet)
         .to(jessica)

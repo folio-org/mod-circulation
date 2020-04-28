@@ -39,7 +39,7 @@ public class PatronNoticeMatcher {
   public static Matcher<JsonObject> hasNoticeProperties(
     UUID expectedRecipientId, UUID expectedTemplateId,
     String expectedDeliveryChannel, String expectedOutputFormat,
-    Matcher<? super String> contextMatcher) {
+    Matcher<?> contextMatcher) {
 
     return JsonObjectMatcher.allOfPaths(
       hasJsonPath(RECIPIENT_ID, UUIDMatcher.is(expectedRecipientId)),

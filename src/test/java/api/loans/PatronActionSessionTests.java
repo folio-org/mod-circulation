@@ -14,15 +14,22 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.hasSize;
 
-import java.net.MalformedURLException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+
+import org.apache.commons.lang3.tuple.Pair;
+import org.awaitility.Awaitility;
+import org.folio.circulation.support.http.client.IndividualResource;
+import org.folio.circulation.support.http.client.Response;
+import org.hamcrest.Matcher;
+import org.hamcrest.MatcherAssert;
+import org.hamcrest.Matchers;
+import org.junit.Before;
+import org.junit.Test;
 
 import api.support.APITests;
 import api.support.builders.CheckInByBarcodeRequestBuilder;
@@ -31,16 +38,6 @@ import api.support.builders.NoticePolicyBuilder;
 import api.support.http.InventoryItemResource;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
-import org.apache.commons.lang3.tuple.Pair;
-import org.awaitility.Awaitility;
-import org.hamcrest.Matcher;
-import org.hamcrest.MatcherAssert;
-import org.hamcrest.Matchers;
-import org.junit.Before;
-import org.junit.Test;
-
-import org.folio.circulation.support.http.client.IndividualResource;
-import org.folio.circulation.support.http.client.Response;
 
 public class PatronActionSessionTests extends APITests {
 
@@ -111,8 +108,8 @@ public class PatronActionSessionTests extends APITests {
     IndividualResource james = usersFixture.james();
     InventoryItemResource nod = itemsFixture.basedUponNod();
     InventoryItemResource interestingTimes = itemsFixture.basedUponInterestingTimes();
-    IndividualResource nodToJamesLoan = loansFixture.checkOutByBarcode(nod, james);
-    IndividualResource interestingTimesToJamesLoan = loansFixture.checkOutByBarcode(interestingTimes, james);
+    IndividualResource nodToJamesLoan = checkOutFixture.checkOutByBarcode(nod, james);
+    IndividualResource interestingTimesToJamesLoan = checkOutFixture.checkOutByBarcode(interestingTimes, james);
 
     assertThat(patronSessionRecordsClient.getAll(), Matchers.hasSize(2));
 
@@ -141,7 +138,7 @@ public class PatronActionSessionTests extends APITests {
     IndividualResource patronForCheckOut = usersFixture.james();
     IndividualResource otherPatron = usersFixture.jessica();
 
-    loansFixture.checkOutByBarcode(itemsFixture.basedUponNod(), patronForCheckOut);
+    checkOutFixture.checkOutByBarcode(itemsFixture.basedUponNod(), patronForCheckOut);
     endPatronSessionClient.endCheckOutSession(otherPatron.getId());
 
     //Waits to ensure check-out session records are not deleted and no notices are sent
@@ -156,7 +153,7 @@ public class PatronActionSessionTests extends APITests {
 
     IndividualResource james = usersFixture.james();
 
-    loansFixture.checkOutByBarcode(itemsFixture.basedUponNod(), james);
+    checkOutFixture.checkOutByBarcode(itemsFixture.basedUponNod(), james);
     assertThat(patronSessionRecordsClient.getAll(), hasSize(1));
 
     endPatronSessionClient.endCheckInSession(james.getId());
@@ -174,8 +171,8 @@ public class PatronActionSessionTests extends APITests {
     UUID checkInServicePointId = servicePointsFixture.cd1().getId();
     InventoryItemResource nod = itemsFixture.basedUponNod();
 
-    IndividualResource loan = loansFixture.checkOutByBarcode(nod, james);
-    loansFixture.checkInByBarcode(
+    IndividualResource loan = checkOutFixture.checkOutByBarcode(nod, james);
+    checkInFixture.checkInByBarcode(
       new CheckInByBarcodeRequestBuilder()
         .forItem(nod)
         .at(checkInServicePointId));
@@ -196,7 +193,7 @@ public class PatronActionSessionTests extends APITests {
     UUID checkInServicePointId = servicePointsFixture.cd1().getId();
     InventoryItemResource nod = itemsFixture.basedUponNod();
 
-    loansFixture.checkInByBarcode(
+    checkInFixture.checkInByBarcode(
       new CheckInByBarcodeRequestBuilder()
         .forItem(nod)
         .at(checkInServicePointId));
@@ -211,8 +208,8 @@ public class PatronActionSessionTests extends APITests {
     UUID checkInServicePointId = servicePointsFixture.cd1().getId();
     InventoryItemResource nod = itemsFixture.basedUponNod();
 
-    loansFixture.checkOutByBarcode(nod, steve);
-    loansFixture.checkInByBarcode(
+    checkOutFixture.checkOutByBarcode(nod, steve);
+    checkInFixture.checkInByBarcode(
       new CheckInByBarcodeRequestBuilder()
         .forItem(nod)
         .at(checkInServicePointId));

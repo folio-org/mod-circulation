@@ -33,7 +33,7 @@ public class ClaimItemReturnedAPITests extends APITests {
   @Before
   public void setUpItemAndLoan() {
     item = itemsFixture.basedUponSmallAngryPlanet();
-    loanId = loansFixture.checkOutByBarcode(item, usersFixture.charlotte())
+    loanId = checkOutFixture.checkOutByBarcode(item, usersFixture.charlotte())
       .getId().toString();
   }
 
@@ -67,7 +67,7 @@ public class ClaimItemReturnedAPITests extends APITests {
   public void cannotClaimItemReturnedWhenLoanIsClosed() {
     final DateTime dateTime = DateTime.now();
 
-    loansFixture.checkInByBarcode(item);
+    checkInFixture.checkInByBarcode(item);
 
     final Response response = claimItemReturnedFixture
       .attemptClaimItemReturned(new ClaimItemReturnedRequestBuilder()

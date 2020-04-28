@@ -9,12 +9,8 @@ import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static api.support.matchers.ValidationErrorMatchers.hasUUIDParameter;
 import static org.hamcrest.CoreMatchers.allOf;
-import static org.hamcrest.core.Is.is;
 import static org.hamcrest.MatcherAssert.assertThat;
-
-import java.net.MalformedURLException;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeoutException;
+import static org.hamcrest.core.Is.is;
 
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
@@ -34,7 +30,7 @@ public class ClosedRequestTests extends APITests {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
 
-    loansFixture.checkOutByBarcode(smallAngryPlanet, usersFixture.jessica());
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet, usersFixture.jessica());
 
     IndividualResource requester = usersFixture.steve();
 
@@ -70,7 +66,7 @@ public class ClosedRequestTests extends APITests {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
 
-    loansFixture.checkOutByBarcode(smallAngryPlanet, usersFixture.jessica());
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet, usersFixture.jessica());
 
     DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
 
@@ -99,7 +95,7 @@ public class ClosedRequestTests extends APITests {
     final IndividualResource jessica = usersFixture.jessica();
     final IndividualResource steve = usersFixture.steve();
 
-    loansFixture.checkOutByBarcode(smallAngryPlanet, jessica);
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet, jessica);
 
     DateTime requestDate = new DateTime(2018, 6, 22, 10, 22, 54, DateTimeZone.UTC);
 
@@ -107,9 +103,9 @@ public class ClosedRequestTests extends APITests {
       requestsFixture.placeHoldShelfRequest(smallAngryPlanet,
         steve, requestDate);
 
-    loansFixture.checkInByBarcode(smallAngryPlanet);
+    checkInFixture.checkInByBarcode(smallAngryPlanet);
 
-    loansFixture.checkOutByBarcode(smallAngryPlanet, steve,
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet, steve,
       new DateTime(2018, 7, 5, 14, 48, 23, DateTimeZone.UTC));
 
     Response response = requestsClient.attemptReplace(request.getId(),

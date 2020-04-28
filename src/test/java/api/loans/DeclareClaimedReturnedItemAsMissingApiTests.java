@@ -33,7 +33,7 @@ public class DeclareClaimedReturnedItemAsMissingApiTests extends APITests {
   @Before
   public void setUpItemAndLoan() {
     item = itemsFixture.basedUponSmallAngryPlanet();
-    loanId = loansFixture.checkOutByBarcode(item, usersFixture.charlotte())
+    loanId = checkOutFixture.checkOutByBarcode(item, usersFixture.charlotte())
       .getId().toString();
   }
 
@@ -69,7 +69,7 @@ public class DeclareClaimedReturnedItemAsMissingApiTests extends APITests {
 
   @Test
   public void cannotDeclareItemMissingWhenLoanIsClosed() {
-    loansFixture.checkInByBarcode(item);
+    checkInFixture.checkInByBarcode(item);
 
     final Response response = claimItemReturnedFixture
       .attemptDeclareClaimedReturnedItemAsMissing(

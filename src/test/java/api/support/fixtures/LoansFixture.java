@@ -5,12 +5,7 @@ import static api.support.APITestContext.getOkapiHeadersFromContext;
 import static api.support.MultipleJsonRecords.multipleRecordsFrom;
 import static api.support.http.AdditionalHttpStatusCodes.UNPROCESSABLE_ENTITY;
 import static api.support.http.CqlQuery.noQuery;
-import static api.support.http.InterfaceUrls.checkInByBarcodeUrl;
-import static api.support.http.InterfaceUrls.checkOutByBarcodeUrl;
-import static api.support.http.InterfaceUrls.declareLoanItemLostURL;
-import static api.support.http.InterfaceUrls.claimItemReturnedURL;
 import static api.support.http.InterfaceUrls.loansUrl;
-import static api.support.http.InterfaceUrls.overrideCheckOutByBarcodeUrl;
 import static api.support.http.InterfaceUrls.overrideRenewalByBarcodeUrl;
 import static api.support.http.InterfaceUrls.renewByBarcodeUrl;
 import static api.support.http.InterfaceUrls.renewByIdUrl;
@@ -25,44 +20,26 @@ import java.util.UUID;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
 
-import api.support.CheckInByBarcodeResponse;
 import api.support.MultipleJsonRecords;
 import api.support.RestAssuredClient;
-import api.support.builders.CheckInByBarcodeRequestBuilder;
-import api.support.builders.CheckOutByBarcodeRequestBuilder;
-import api.support.builders.ClaimItemReturnedRequestBuilder;
-import api.support.builders.DeclareItemLostRequestBuilder;
 import api.support.builders.LoanBuilder;
-import api.support.builders.OverrideCheckOutByBarcodeRequestBuilder;
 import api.support.builders.OverrideRenewalByBarcodeRequestBuilder;
 import api.support.builders.RenewByBarcodeRequestBuilder;
 import api.support.builders.RenewByIdRequestBuilder;
 import api.support.http.CqlQuery;
 import api.support.http.Limit;
 import api.support.http.Offset;
-import api.support.http.OkapiHeaders;
 import io.vertx.core.json.JsonObject;
 
 public class LoansFixture {
-  private final UsersFixture usersFixture;
-  private final ServicePointsFixture servicePointsFixture;
   private final RestAssuredClient restAssuredClient;
 
-  public LoansFixture(
-    UsersFixture usersFixture,
-    ServicePointsFixture servicePointsFixture) {
-
-    this.usersFixture = usersFixture;
-    this.servicePointsFixture = servicePointsFixture;
+  public LoansFixture() {
     restAssuredClient = new RestAssuredClient(getOkapiHeadersFromContext());
   }
 
-  public IndividualResource createLoan(
-    IndividualResource item,
-    IndividualResource to) {
-
+  public IndividualResource createLoan(IndividualResource item, IndividualResource to) {
     DateTime loanDate = DateTime.now();
 
     return createLoan(new LoanBuilder()
@@ -73,9 +50,7 @@ public class LoansFixture {
       .withDueDate(loanDate.plusWeeks(3)));
   }
 
-  public IndividualResource createLoan(
-    IndividualResource item,
-    IndividualResource to,
+  public IndividualResource createLoan(IndividualResource item, IndividualResource to,
     DateTime loanDate) {
 
     return createLoan(new LoanBuilder()
@@ -90,14 +65,12 @@ public class LoansFixture {
     return new IndividualResource(attemptToCreateLoan(builder, 201));
   }
 
-  public Response attemptToCreateLoan(IndividualResource item,
-    IndividualResource to) {
-
+  public Response attemptToCreateLoan(IndividualResource item, IndividualResource to) {
     return attemptToCreateLoan(item, to, UNPROCESSABLE_ENTITY);
   }
 
-  public Response attemptToCreateLoan(IndividualResource item,
-    IndividualResource to, int expectedStatusCode) {
+  public Response attemptToCreateLoan(IndividualResource item, IndividualResource to,
+    int expectedStatusCode) {
 
     return attemptToCreateLoan(new LoanBuilder()
       .open()
@@ -105,9 +78,7 @@ public class LoansFixture {
       .withUserId(to.getId()), expectedStatusCode);
   }
 
-  public Response attemptToCreateLoan(LoanBuilder loanBuilder,
-    int expectedStatusCode) {
-
+  public Response attemptToCreateLoan(LoanBuilder loanBuilder, int expectedStatusCode) {
     return restAssuredClient.post(loanBuilder.create(), loansUrl(),
       expectedStatusCode, "post-loan");
   }
@@ -117,9 +88,7 @@ public class LoansFixture {
       "create-loan-at-specific-location");
   }
 
-  public Response attemptToCreateLoanAtSpecificLocation(UUID loanId,
-    LoanBuilder loanBuilder) {
-
+  public Response attemptToCreateLoanAtSpecificLocation(UUID loanId, LoanBuilder loanBuilder) {
     return restAssuredClient.put(loanBuilder.create(), urlForLoan(loanId),
       "attempt-to-create-loan-at-specific-location");
   }
@@ -129,89 +98,23 @@ public class LoansFixture {
   }
 
   public Response attemptToReplaceLoan(UUID loanId, JsonObject representation) {
-    return restAssuredClient.put(representation, urlForLoan(loanId),
-      "replace-loan");
+    return restAssuredClient.put(representation, urlForLoan(loanId), "replace-loan");
   }
 
-  public IndividualResource checkOutByBarcode(IndividualResource item) {
-    return checkOutByBarcode(item, usersFixture.jessica());
-  }
-
-  public IndividualResource checkOutByBarcode(IndividualResource item,
-    IndividualResource to) {
-
-    return checkOutByBarcode(new CheckOutByBarcodeRequestBuilder()
-      .forItem(item)
-      .to(to)
-      .at(defaultServicePoint()));
-  }
-
-  public IndividualResource checkOutByBarcode(
-    IndividualResource item,
-    IndividualResource to,
-    DateTime loanDate) {
-
-    return checkOutByBarcode(new CheckOutByBarcodeRequestBuilder()
-      .forItem(item)
-      .to(to)
-      .on(loanDate)
-      .at(defaultServicePoint()));
-  }
-
-  public IndividualResource checkOutByBarcode(
-    CheckOutByBarcodeRequestBuilder builder) {
-
-    JsonObject request = builder.create();
-
-    return new IndividualResource(
-      restAssuredClient.post(request, checkOutByBarcodeUrl(), 201,
-        "check-out-by-barcode-request"));
-  }
-
-  public Response attemptCheckOutByBarcode(
-    IndividualResource item,
-    IndividualResource to) {
-
-    return attemptCheckOutByBarcode(new CheckOutByBarcodeRequestBuilder()
-      .forItem(item)
-      .to(to)
-      .at(UUID.randomUUID()));
-  }
-
-  public Response attemptCheckOutByBarcode(
-    CheckOutByBarcodeRequestBuilder builder) {
-
-    return attemptCheckOutByBarcode(422, builder);
-  }
-
-  public Response attemptCheckOutByBarcode(
-    int expectedStatusCode,
-    CheckOutByBarcodeRequestBuilder builder) {
-
-    JsonObject request = builder.create();
-
-    return restAssuredClient.post(request, checkOutByBarcodeUrl(),
-      expectedStatusCode, "check-out-by-barcode-request");
-  }
-
-  public IndividualResource renewLoan(
-    IndividualResource item,
-    IndividualResource user) {
-
+  public IndividualResource renewLoan(IndividualResource item, IndividualResource user) {
     JsonObject request = new RenewByBarcodeRequestBuilder()
       .forItem(item)
       .forUser(user)
       .create();
 
-    return new IndividualResource(restAssuredClient.post(request,
-      renewByBarcodeUrl(), 200, "renewal-by-barcode-request"));
+    return new IndividualResource(restAssuredClient.post(request, renewByBarcodeUrl(),
+      200, "renewal-by-barcode-request"));
   }
 
   public IndividualResource overrideRenewalByBarcode(IndividualResource item,
       IndividualResource user, String comment, String dueDate) {
 
-    JsonObject request =
-      new OverrideRenewalByBarcodeRequestBuilder()
+    JsonObject request = new OverrideRenewalByBarcodeRequestBuilder()
         .forItem(item)
         .forUser(user)
         .withComment(comment)
@@ -222,9 +125,7 @@ public class LoansFixture {
       overrideRenewalByBarcodeUrl(), 200, "override-renewal-by-barcode-request"));
   }
 
-  public IndividualResource renewLoanById(IndividualResource item,
-      IndividualResource user) {
-
+  public IndividualResource renewLoanById(IndividualResource item, IndividualResource user) {
     JsonObject request = new RenewByIdRequestBuilder()
       .forItem(item)
       .forUser(user)
@@ -250,124 +151,37 @@ public class LoansFixture {
       expectedStatusCode, "renewal-by-barcode-request");
   }
 
-  public Response attemptOverride(
-    IndividualResource item,
-    IndividualResource user, String comment, String dueDate) {
+  public Response attemptOverride(IndividualResource item, IndividualResource user,
+    String comment, String dueDate) {
 
     return attemptOverride(422, item, user, comment, dueDate);
   }
 
   public Response attemptOverride(int expectedStatusCode, IndividualResource item,
-      IndividualResource user, String comment, String dueDate) {
+    IndividualResource user, String comment, String dueDate) {
 
-    JsonObject request =
-      new OverrideRenewalByBarcodeRequestBuilder()
-        .forItem(item)
-        .forUser(user)
-        .withComment(comment)
-        .withDueDate(dueDate)
-        .create();
+    JsonObject request = new OverrideRenewalByBarcodeRequestBuilder()
+      .forItem(item)
+      .forUser(user)
+      .withComment(comment)
+      .withDueDate(dueDate)
+      .create();
 
     return restAssuredClient.post(request, overrideRenewalByBarcodeUrl(),
       expectedStatusCode, "override-renewal-by-barcode-request");
   }
 
-  public Response attemptRenewalById(IndividualResource item,
-      IndividualResource user) {
-
+  public Response attemptRenewalById(IndividualResource item, IndividualResource user) {
     JsonObject request = new RenewByIdRequestBuilder()
       .forItem(item)
       .forUser(user)
       .create();
 
-    return restAssuredClient.post(request, renewByIdUrl(),
-      422, "renewal-by-id-request");
-  }
-
-  public Response attemptCheckInByBarcode(CheckInByBarcodeRequestBuilder builder) {
-    return attemptCheckInByBarcode(builder, getOkapiHeadersFromContext());
-  }
-
-  public Response attemptCheckInByBarcode(
-    CheckInByBarcodeRequestBuilder builder, OkapiHeaders okapiHeaders) {
-
-    return restAssuredClient
-      .post(builder.create(), checkInByBarcodeUrl(), okapiHeaders);
-  }
-
-  public CheckInByBarcodeResponse checkInByBarcode(
-    CheckInByBarcodeRequestBuilder builder) {
-
-    return new CheckInByBarcodeResponse(restAssuredClient.post(builder.create(),
-      checkInByBarcodeUrl(), 200, "check-in-by-barcode-request"));
-  }
-
-  public CheckInByBarcodeResponse checkInByBarcode(IndividualResource item) {
-
-    return checkInByBarcode(new CheckInByBarcodeRequestBuilder()
-      .forItem(item)
-      .on(DateTime.now(DateTimeZone.UTC))
-      .at(defaultServicePoint()));
-  }
-
-  public CheckInByBarcodeResponse checkInByBarcode(
-    IndividualResource item,
-    DateTime checkInDate,
-    UUID servicePointId) {
-
-    return checkInByBarcode(new CheckInByBarcodeRequestBuilder()
-      .forItem(item)
-      .on(checkInDate)
-      .at(servicePointId));
-  }
-
-  public CheckInByBarcodeResponse checkInByBarcode(
-    IndividualResource item, UUID servicePointId) {
-
-    return checkInByBarcode(item, DateTime.now(DateTimeZone.UTC), servicePointId);
-  }
-
-  public void checkInByBarcode(IndividualResource item, DateTime checkInDate,
-      UUID servicePointId, OkapiHeaders okapiHeaders) {
-
-    final JsonObject representation = new CheckInByBarcodeRequestBuilder()
-      .forItem(item)
-      .on(checkInDate)
-      .at(servicePointId).create();
-
-    restAssuredClient.post(representation, checkInByBarcodeUrl(), 200,
-      okapiHeaders);
-  }
-
-  public IndividualResource overrideCheckOutByBarcode(
-    OverrideCheckOutByBarcodeRequestBuilder builder) {
-
-    JsonObject request = builder.create();
-
-    return new IndividualResource(
-      restAssuredClient.post(request, overrideCheckOutByBarcodeUrl(), 201,
-        "override-check-out-by-barcode-request"));
-  }
-
-  public Response attemptOverrideCheckOutByBarcode(
-    OverrideCheckOutByBarcodeRequestBuilder builder) {
-
-    return attemptOverrideCheckOutByBarcode(422, builder);
-  }
-
-  public Response attemptOverrideCheckOutByBarcode(
-    int expectedStatusCode,
-    OverrideCheckOutByBarcodeRequestBuilder builder) {
-
-    JsonObject request = builder.create();
-
-    return restAssuredClient.post(request, overrideCheckOutByBarcodeUrl(),
-      expectedStatusCode, "override-check-out-by-barcode-request");
+    return restAssuredClient.post(request, renewByIdUrl(), 422, "renewal-by-id-request");
   }
 
   public IndividualResource getLoanById(UUID id) {
-    return new IndividualResource(restAssuredClient.get(
-      urlForLoan(id), 200, "get-loan-by-id"));
+    return new IndividualResource(restAssuredClient.get(urlForLoan(id), 200, "get-loan-by-id"));
   }
 
   public Response getLoanByLocation(IndividualResource response) {
@@ -407,9 +221,5 @@ public class LoansFixture {
 
   private URL urlForLoan(UUID id) {
     return loansUrl(String.format("/%s", id));
-  }
-
-  private IndividualResource defaultServicePoint() {
-    return servicePointsFixture.cd1();
   }
 }

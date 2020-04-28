@@ -25,7 +25,7 @@ public class CheckInWithdrawnItemTest extends APITests {
 
     assertThat(item.getJson(), isWithdrawn());
 
-    loansFixture.checkInByBarcode(item);
+    checkInFixture.checkInByBarcode(item);
 
     assertThat(itemsClient.getById(item.getId()).getJson(), isAvailable());
   }
@@ -37,7 +37,7 @@ public class CheckInWithdrawnItemTest extends APITests {
 
     assertThat(item.getJson(), isWithdrawn());
 
-    loansFixture.checkInByBarcode(item, servicePointsFixture.cd2().getId());
+    checkInFixture.checkInByBarcode(item, servicePointsFixture.cd2().getId());
 
     assertThat(itemsClient.getById(item.getId()).getJson(), isInTransit());
   }
@@ -56,7 +56,7 @@ public class CheckInWithdrawnItemTest extends APITests {
     itemsClient.replace(item.getId(), item.getJson().copy()
       .put("status", new JsonObject().put("name", "Withdrawn")));
 
-    loansFixture.checkInByBarcode(item);
+    checkInFixture.checkInByBarcode(item);
 
     assertThat(itemsClient.getById(item.getId()).getJson(), isAwaitingPickup());
 
@@ -77,7 +77,7 @@ public class CheckInWithdrawnItemTest extends APITests {
     itemsClient.replace(item.getId(), item.getJson().copy()
       .put("status", new JsonObject().put("name", "Withdrawn")));
 
-    loansFixture.checkInByBarcode(item, servicePointsFixture.cd2().getId());
+    checkInFixture.checkInByBarcode(item, servicePointsFixture.cd2().getId());
 
     assertThat(itemsClient.getById(item.getId()).getJson(), isInTransit());
 

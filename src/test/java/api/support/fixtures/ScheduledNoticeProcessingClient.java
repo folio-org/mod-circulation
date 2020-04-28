@@ -2,8 +2,12 @@ package api.support.fixtures;
 
 import static api.support.APITestContext.circulationModuleUrl;
 import static api.support.APITestContext.getOkapiHeadersFromContext;
+import static org.folio.circulation.support.ClockManager.getClockManager;
 
 import java.net.URL;
+import java.time.Clock;
+import java.time.Instant;
+import java.time.ZoneOffset;
 
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeUtils;
@@ -53,6 +57,18 @@ public class ScheduledNoticeProcessingClient {
       "request-scheduled-notices-processing-request");
   }
 
+  public void runFeeFineNoticesProcessing(DateTime mockSystemTime) {
+    runWithFrozenClock(this::runFeeFineNoticesProcessing, mockSystemTime);
+  }
+
+  public void runFeeFineNoticesProcessing() {
+    URL url = circulationModuleUrl(
+      "/circulation/fee-fine-scheduled-notices-processing");
+
+    timedTaskClient.start(url, 204,
+      "fee-fine-scheduled-notices-processing-request");
+  }
+
   private void runWithFrozenTime(Runnable runnable, DateTime mockSystemTime) {
     try {
       DateTimeUtils.setCurrentMillisFixed(mockSystemTime.getMillis());
@@ -61,4 +77,17 @@ public class ScheduledNoticeProcessingClient {
       DateTimeUtils.setCurrentMillisSystem();
     }
   }
+
+    private void runWithFrozenClock(Runnable runnable, DateTime mockSystemTime) {
+    try {
+      getClockManager().setClock(
+        Clock.fixed(
+          Instant.ofEpochMilli(mockSystemTime.getMillis()),
+          ZoneOffset.UTC));
+      runnable.run();
+    } finally {
+      getClockManager().setDefaultClock();
+    }
+  }
+
 }

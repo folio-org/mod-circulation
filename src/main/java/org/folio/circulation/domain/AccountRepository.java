@@ -1,6 +1,8 @@
 package org.folio.circulation.domain;
 
+import static java.util.Objects.isNull;
 import static java.util.concurrent.CompletableFuture.completedFuture;
+import static org.folio.circulation.support.Result.ofAsync;
 import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.fetching.MultipleCqlIndexValuesCriteria.byIndex;
 import static org.folio.circulation.support.fetching.RecordFetching.findWithCqlQuery;
@@ -21,6 +23,7 @@ import java.util.stream.Collectors;
 import org.folio.circulation.domain.representations.AccountStorageRepresentation;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
+import org.folio.circulation.support.FetchSingleRecord;
 import org.folio.circulation.support.FindWithMultipleCqlIndexValues;
 import org.folio.circulation.support.GetManyRecordsClient;
 import org.folio.circulation.support.Result;
@@ -118,6 +121,18 @@ public class AccountRepository {
   private FindWithMultipleCqlIndexValues<FeeFineAction> createFeeFineActionFetcher() {
     return findWithMultipleCqlIndexValues(feefineActionsStorageClient,
       "feefineactions", FeeFineAction::from);
+  }
+
+  public CompletableFuture<Result<Account>> findById(String id) {
+    if(isNull(id)) {
+      return ofAsync(() -> null);
+    }
+
+    return FetchSingleRecord.<Account>forRecord("account")
+      .using(accountsStorageClient)
+      .mapTo(Account::from)
+      .whenNotFound(succeeded(null))
+      .fetch(id);
   }
 
   public CompletableFuture<Result<Account>> create(AccountStorageRepresentation account) {
