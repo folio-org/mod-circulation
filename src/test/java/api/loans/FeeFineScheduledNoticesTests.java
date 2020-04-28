@@ -135,9 +135,7 @@ public class FeeFineScheduledNoticesTests extends APITests {
     DateTime fakeNow = rightAfter(
       expectedFirstRunTime.plus(RECURRING_PERIOD.timePeriod()));
 
-    mockClockManagerToReturnFixedDateTime(fakeNow);
     scheduledNoticeProcessingClient.runFeeFineNoticesProcessing(fakeNow);
-    mockClockManagerToReturnDefaultDateTime();
 
     DateTime expectedNextRunTime = fakeNow.plus(RECURRING_PERIOD.timePeriod());
 
