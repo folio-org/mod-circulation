@@ -1,7 +1,6 @@
 package api.support.builders;
 
 import static org.folio.circulation.support.JsonPropertyWriter.write;
-import static org.folio.circulation.domain.representations.ChangeDueDateRequest.DUE_DATE;
 
 import java.util.UUID;
 
@@ -47,7 +46,7 @@ public class ChangeDueDateRequestBuilder implements Builder {
   @Override
   public JsonObject create() {
     final JsonObject request = new JsonObject();
-    write(request, DUE_DATE, dueDate);
+    write(request, "dueDate", dueDate);
     return request;
   }
 }
