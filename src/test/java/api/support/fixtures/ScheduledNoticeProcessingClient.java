@@ -2,8 +2,12 @@ package api.support.fixtures;
 
 import static api.support.APITestContext.circulationModuleUrl;
 import static api.support.APITestContext.getOkapiHeadersFromContext;
+import static org.folio.circulation.support.ClockManager.getClockManager;
 
 import java.net.URL;
+import java.time.Clock;
+import java.time.Instant;
+import java.time.ZoneOffset;
 
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeUtils;
@@ -54,7 +58,7 @@ public class ScheduledNoticeProcessingClient {
   }
 
   public void runFeeFineNoticesProcessing(DateTime mockSystemTime) {
-    runWithFrozenTime(this::runFeeFineNoticesProcessing, mockSystemTime);
+    runWithFrozenClock(this::runFeeFineNoticesProcessing, mockSystemTime);
   }
 
   public void runFeeFineNoticesProcessing() {
@@ -73,4 +77,17 @@ public class ScheduledNoticeProcessingClient {
       DateTimeUtils.setCurrentMillisSystem();
     }
   }
+
+    private void runWithFrozenClock(Runnable runnable, DateTime mockSystemTime) {
+    try {
+      getClockManager().setClock(
+        Clock.fixed(
+          Instant.ofEpochMilli(mockSystemTime.getMillis()),
+          ZoneOffset.UTC));
+      runnable.run();
+    } finally {
+      getClockManager().setDefaultClock();
+    }
+  }
+
 }

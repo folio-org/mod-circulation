@@ -11,11 +11,10 @@ import org.folio.circulation.domain.notice.schedule.ScheduledNotice;
 import org.folio.circulation.domain.notice.schedule.ScheduledNoticesRepository;
 import org.folio.circulation.domain.notice.schedule.TriggeringEvent;
 import org.folio.circulation.support.Clients;
+import org.folio.circulation.support.ClockManager;
 import org.folio.circulation.support.CqlSortBy;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.http.client.PageLimit;
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
 
 import io.vertx.core.http.HttpClient;
 
@@ -30,7 +29,7 @@ public class FeeFineScheduledNoticeProcessingResource extends ScheduledNoticePro
     ScheduledNoticesRepository scheduledNoticesRepository, PageLimit pageLimit) {
 
     return scheduledNoticesRepository.findNotices(
-      DateTime.now(DateTimeZone.UTC), true,
+      ClockManager.getClockManager().getDateTime(), true,
       Arrays.asList(TriggeringEvent.OVERDUE_FINE_RETURNED, TriggeringEvent.OVERDUE_FINE_RENEWED),
       CqlSortBy.ascending("nextRunTime"), pageLimit);
   }

@@ -91,9 +91,10 @@ public class FeeFineScheduledNoticeHandler {
   private ScheduledNotice getNextRecurringNotice(ScheduledNotice notice) {
     Period recurringPeriod = notice.getConfiguration().getRecurringPeriod().timePeriod();
     DateTime nextRunTime = notice.getNextRunTime().plus(recurringPeriod);
+    DateTime now = getClockManager().getDateTime();
 
-    if (nextRunTime.isBeforeNow()) {
-      nextRunTime = getClockManager().getDateTime().plus(recurringPeriod);
+    if (nextRunTime.isBefore(now)) {
+      nextRunTime = now.plus(recurringPeriod);
     }
 
     return notice.withNextRunTime(nextRunTime);
