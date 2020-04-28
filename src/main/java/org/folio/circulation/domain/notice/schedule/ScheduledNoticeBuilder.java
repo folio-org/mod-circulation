@@ -3,10 +3,10 @@ package org.folio.circulation.domain.notice.schedule;
 import org.joda.time.DateTime;
 
 public class ScheduledNoticeBuilder {
-
   private String id;
   private String loanId;
   private String requestId;
+  private String feeFineActionId;
   private String recipientUserId;
   private TriggeringEvent triggeringEvent;
   private DateTime nextRunTime;
@@ -24,6 +24,11 @@ public class ScheduledNoticeBuilder {
 
   public ScheduledNoticeBuilder setRequestId(String requestId) {
     this.requestId = requestId;
+    return this;
+  }
+
+  public ScheduledNoticeBuilder setFeeFineActionId(String feeFineActionId) {
+    this.feeFineActionId = feeFineActionId;
     return this;
   }
 
@@ -48,6 +53,7 @@ public class ScheduledNoticeBuilder {
   }
 
   public ScheduledNotice build() {
-    return new ScheduledNotice(id, loanId, requestId, recipientUserId, triggeringEvent, nextRunTime, noticeConfig);
+    return new ScheduledNotice(id, loanId, requestId, recipientUserId, feeFineActionId,
+      triggeringEvent, nextRunTime, noticeConfig);
   }
 }

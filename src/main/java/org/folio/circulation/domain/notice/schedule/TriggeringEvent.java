@@ -7,7 +7,9 @@ public enum  TriggeringEvent {
 
   HOLD_EXPIRATION("Hold expiration"),
   REQUEST_EXPIRATION("Request expiration"),
-  DUE_DATE("Due date");
+  DUE_DATE("Due date"),
+  OVERDUE_FINE_RETURNED("Overdue fine returned"),
+  OVERDUE_FINE_RENEWED("Overdue fine renewed");
 
   private String representation;
 

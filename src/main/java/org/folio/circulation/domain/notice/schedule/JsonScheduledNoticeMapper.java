@@ -23,6 +23,7 @@ public class JsonScheduledNoticeMapper {
   private static final String ID = "id";
   private static final String LOAN_ID = "loanId";
   private static final String REQUEST_ID = "requestId";
+  private static final String FEE_FINE_ACTION_ID = "feeFineActionId";
   private static final String RECIPIENT_USER_ID = "recipientUserId";
   private static final String NEXT_RUN_TIME = "nextRunTime";
   private static final String TRIGGERING_EVENT = "triggeringEvent";
@@ -41,6 +42,7 @@ public class JsonScheduledNoticeMapper {
       .map(b -> b.setId(getProperty(jsonObject, ID)))
       .map(b -> b.setLoanId(getProperty(jsonObject, LOAN_ID)))
       .map(b -> b.setRequestId(getProperty(jsonObject, REQUEST_ID)))
+      .map(b -> b.setFeeFineActionId(getProperty(jsonObject, FEE_FINE_ACTION_ID)))
       .map(b -> b.setRecipientUserId(getProperty(jsonObject, RECIPIENT_USER_ID)))
       .map(b -> b.setNextRunTime(getDateTimeProperty(jsonObject, NEXT_RUN_TIME)))
       .map(b -> b.setTriggeringEvent(from(getProperty(jsonObject, TRIGGERING_EVENT))))
@@ -79,6 +81,7 @@ public class JsonScheduledNoticeMapper {
       .put(ID, notice.getId())
       .put(LOAN_ID, notice.getLoanId())
       .put(REQUEST_ID, notice.getRequestId())
+      .put(FEE_FINE_ACTION_ID, notice.getFeeFineActionId())
       .put(RECIPIENT_USER_ID, notice.getRecipientUserId())
       .put(TRIGGERING_EVENT, notice.getTriggeringEvent().getRepresentation())
       .put(NEXT_RUN_TIME, notice.getNextRunTime().withZone(DateTimeZone.UTC).toString())
