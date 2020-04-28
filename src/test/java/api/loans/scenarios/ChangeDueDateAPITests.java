@@ -4,6 +4,7 @@ import static api.support.fixtures.TemplateContextMatchers.getItemContextMatcher
 import static api.support.fixtures.TemplateContextMatchers.getLoanContextMatchers;
 import static api.support.fixtures.TemplateContextMatchers.getLoanPolicyContextMatchers;
 import static api.support.fixtures.TemplateContextMatchers.getUserContextMatchers;
+import static api.support.matchers.LoanMatchers.isOpen;
 import static api.support.matchers.PatronNoticeMatcher.hasEmailNoticeProperties;
 import static api.support.matchers.ResponseStatusCodeMatcher.hasStatus;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
@@ -41,6 +42,7 @@ import api.support.builders.ChangeDueDateRequestBuilder;
 import api.support.builders.ClaimItemReturnedRequestBuilder;
 import api.support.builders.ItemBuilder;
 import api.support.builders.LoanPolicyBuilder;
+import api.support.builders.LostItemFeePolicyBuilder;
 import api.support.builders.NoticeConfigurationBuilder;
 import api.support.builders.NoticePolicyBuilder;
 import api.support.builders.RequestBuilder;
@@ -55,6 +57,8 @@ public class ChangeDueDateAPITests extends APITests {
 
   @Before
   public void setUpItemAndLoan() {
+    chargeFeesForLostItemToKeepLoanOpen();
+
     item = itemsFixture.basedUponNod();
     loan = checkOutFixture.checkOutByBarcode(item);
     dueDate = DateTime.parse(loan.getJson().getString("dueDate"));
@@ -104,7 +108,7 @@ public class ChangeDueDateAPITests extends APITests {
   }
 
   @Test
-  public void cannotChangeDueDateWhenClosed() {
+  public void cannotChangeDueDateWhenLoanIsClosed() {
     final DateTime newDueDate = dueDate.plus(Period.days(14));
 
     checkInFixture.checkInByBarcode(item);
@@ -125,7 +129,11 @@ public class ChangeDueDateAPITests extends APITests {
   public void cannotChangeDueDateWhenDeclaredLost() {
     final DateTime newDueDate = dueDate.plus(Period.days(14));
 
-    loansFixture.declareItemLost(loan.getJson());
+    declareLostFixtures.declareItemLost(loan.getJson());
+
+    final JsonObject updatedLoan = loansFixture.getLoanById(loan.getId()).getJson();
+
+    assertThat(updatedLoan, isOpen());
 
     final Response response = changeDueDateFixture
       .attemptChangeDueDate(new ChangeDueDateRequestBuilder()
@@ -250,5 +258,20 @@ public class ChangeDueDateAPITests extends APITests {
 
     assertThat(sentNotices, hasItems(
       hasEmailNoticeProperties(steve.getId(), templateId, matchers)));
+  }
+
+  private void chargeFeesForLostItemToKeepLoanOpen() {
+    feeFineTypeFixture.lostItemProcessingFee();
+    feeFineTypeFixture.lostItemFee();
+    feeFineOwnerFixture.cd1Owner();
+
+    final LostItemFeePolicyBuilder lostItemPolicy = lostItemFeePoliciesFixture
+      .facultyStandardPolicy()
+      .withName("Declared lost fee test policy")
+      .chargeProcessingFee()
+      .withLostItemProcessingFee(5.00)
+      .withChargeAmountItem("anotherCost", 10.00);
+
+    useLostItemPolicy(lostItemFeePoliciesFixture.create(lostItemPolicy).getId());
   }
 }
