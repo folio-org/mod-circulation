@@ -94,7 +94,8 @@ public class ChangeDueDateResource extends Resource {
     final JsonObject body = routingContext.getBodyAsJson();
 
     if (!body.containsKey(DUE_DATE)) {
-      return failed(singleValidationError("Due date is required", DUE_DATE, null));
+      return failed(singleValidationError(
+        "A new due date is required in order to change the due date", DUE_DATE, null));
     }
 
     return Result.of(() -> new ChangeDueDateRequest(loanId, getDateTimeProperty(body, DUE_DATE)));

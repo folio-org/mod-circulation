@@ -90,7 +90,7 @@ public class ChangeDueDateAPITests extends APITests {
     assertThat(response, hasStatus(HTTP_VALIDATION_ERROR));
 
     assertThat(response.getJson(), hasErrorWith(allOf(
-      hasMessage("Due date is a required field"),
+      hasMessage("A new due date is required in order to change the due date"),
       hasNullParameter("dueDate"))));
   }
 
