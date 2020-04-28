@@ -3,22 +3,19 @@ package api.loans;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.empty;
 
-import java.net.MalformedURLException;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+
+import org.awaitility.Awaitility;
+import org.folio.circulation.domain.notice.session.PatronActionType;
+import org.folio.circulation.support.http.client.IndividualResource;
+import org.hamcrest.Matchers;
+import org.junit.Test;
 
 import api.support.APITests;
 import api.support.builders.EndSessionBuilder;
 import api.support.http.InventoryItemResource;
 import io.vertx.core.json.JsonObject;
-import org.awaitility.Awaitility;
-import org.hamcrest.Matchers;
-import org.junit.Test;
-
-import org.folio.circulation.domain.notice.session.PatronActionType;
-import org.folio.circulation.support.http.client.IndividualResource;
 
 public class EndExpiredPatronActionSessionTests extends APITests {
 
@@ -26,8 +23,8 @@ public class EndExpiredPatronActionSessionTests extends APITests {
   public void expiredEndSessionAfterCheckOut() {
 
     IndividualResource james = usersFixture.james();
-    loansFixture.checkOutByBarcode(itemsFixture.basedUponNod(), james);
-    loansFixture.checkOutByBarcode(itemsFixture.basedUponInterestingTimes(), james);
+    checkOutFixture.checkOutByBarcode(itemsFixture.basedUponNod(), james);
+    checkOutFixture.checkOutByBarcode(itemsFixture.basedUponInterestingTimes(), james);
     expiredEndSessionClient.deleteAll();
 
     List<JsonObject> sessions = patronSessionRecordsClient.getAll();
@@ -55,10 +52,10 @@ public class EndExpiredPatronActionSessionTests extends APITests {
     InventoryItemResource nod = itemsFixture.basedUponNod();
     InventoryItemResource interestingTimes = itemsFixture.basedUponInterestingTimes();
 
-    loansFixture.checkOutByBarcode(nod, james);
-    loansFixture.checkOutByBarcode(interestingTimes, james);
-    loansFixture.checkInByBarcode(nod);
-    loansFixture.checkInByBarcode(interestingTimes);
+    checkOutFixture.checkOutByBarcode(nod, james);
+    checkOutFixture.checkOutByBarcode(interestingTimes, james);
+    checkInFixture.checkInByBarcode(nod);
+    checkInFixture.checkInByBarcode(interestingTimes);
     expiredEndSessionClient.deleteAll();
 
     List<JsonObject> sessions = patronSessionRecordsClient.getAll();
@@ -88,9 +85,9 @@ public class EndExpiredPatronActionSessionTests extends APITests {
     InventoryItemResource nod = itemsFixture.basedUponNod();
     InventoryItemResource interestingTimes = itemsFixture.basedUponInterestingTimes();
 
-    loansFixture.checkOutByBarcode(nod, james);
-    loansFixture.checkOutByBarcode(interestingTimes, james);
-    loansFixture.checkInByBarcode(nod);
+    checkOutFixture.checkOutByBarcode(nod, james);
+    checkOutFixture.checkOutByBarcode(interestingTimes, james);
+    checkInFixture.checkInByBarcode(nod);
     expiredEndSessionClient.deleteAll();
 
     List<JsonObject> sessions = patronSessionRecordsClient.getAll();
@@ -117,8 +114,8 @@ public class EndExpiredPatronActionSessionTests extends APITests {
   public void noExpiredEndSessionAfterCheckOut() {
 
     IndividualResource james = usersFixture.james();
-    loansFixture.checkOutByBarcode(itemsFixture.basedUponNod(), james);
-    loansFixture.checkOutByBarcode(itemsFixture.basedUponInterestingTimes(), james);
+    checkOutFixture.checkOutByBarcode(itemsFixture.basedUponNod(), james);
+    checkOutFixture.checkOutByBarcode(itemsFixture.basedUponInterestingTimes(), james);
     expiredEndSessionClient.deleteAll();
 
     List<JsonObject> sessions = patronSessionRecordsClient.getAll();
@@ -139,10 +136,10 @@ public class EndExpiredPatronActionSessionTests extends APITests {
     InventoryItemResource nod = itemsFixture.basedUponNod();
     InventoryItemResource interestingTimes = itemsFixture.basedUponInterestingTimes();
 
-    loansFixture.checkOutByBarcode(nod, james);
-    loansFixture.checkOutByBarcode(interestingTimes, james);
-    loansFixture.checkInByBarcode(nod);
-    loansFixture.checkInByBarcode(interestingTimes);
+    checkOutFixture.checkOutByBarcode(nod, james);
+    checkOutFixture.checkOutByBarcode(interestingTimes, james);
+    checkInFixture.checkInByBarcode(nod);
+    checkInFixture.checkInByBarcode(interestingTimes);
     expiredEndSessionClient.deleteAll();
 
     List<JsonObject> sessions = patronSessionRecordsClient.getAll();
@@ -162,10 +159,10 @@ public class EndExpiredPatronActionSessionTests extends APITests {
     IndividualResource james = usersFixture.james();
     InventoryItemResource nod = itemsFixture.basedUponNod();
     InventoryItemResource interestingTimes = itemsFixture.basedUponInterestingTimes();
-    loansFixture.checkOutByBarcode(itemsFixture.basedUponNod(), james);
-    loansFixture.checkOutByBarcode(itemsFixture.basedUponInterestingTimes(), james);
-    loansFixture.checkInByBarcode(nod);
-    loansFixture.checkInByBarcode(interestingTimes);
+    checkOutFixture.checkOutByBarcode(itemsFixture.basedUponNod(), james);
+    checkOutFixture.checkOutByBarcode(itemsFixture.basedUponInterestingTimes(), james);
+    checkInFixture.checkInByBarcode(nod);
+    checkInFixture.checkInByBarcode(interestingTimes);
     expiredEndSessionClient.deleteAll();
 
     List<JsonObject> sessions = patronSessionRecordsClient.getAll();

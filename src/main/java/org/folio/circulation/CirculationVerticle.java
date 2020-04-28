@@ -2,6 +2,7 @@ package org.folio.circulation;
 
 import java.lang.invoke.MethodHandles;
 
+import org.folio.circulation.resources.ChangeDueDateResource;
 import org.folio.circulation.resources.DeclareClaimedReturnedItemAsMissingResource;
 import org.folio.circulation.resources.CheckInByBarcodeResource;
 import org.folio.circulation.resources.CheckOutByBarcodeResource;
@@ -120,6 +121,7 @@ public class CirculationVerticle extends AbstractVerticle {
     new ScheduledAnonymizationProcessingResource(client).register(router);
     new EndPatronActionSessionResource(client).register(router);
     new ClaimItemReturnedResource(client).register(router);
+    new ChangeDueDateResource(client).register(router);
     new DeclareClaimedReturnedItemAsMissingResource(client).register(router);
 
     server.requestHandler(router)

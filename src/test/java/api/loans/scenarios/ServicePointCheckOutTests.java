@@ -7,10 +7,6 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.IsNull.notNullValue;
 
-import java.net.MalformedURLException;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeoutException;
-
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 import org.hamcrest.junit.MatcherAssert;
@@ -43,12 +39,12 @@ public class ServicePointCheckOutTests extends APITests {
     final IndividualResource nod = itemsFixture.basedUponNod(builder ->
       builder.withPermanentLocation(homeLocation.getId()));
 
-    loansFixture.checkOutByBarcode(nod, james);
+    checkOutFixture.checkOutByBarcode(nod, james);
 
     final IndividualResource request = requestsFixture.placeHoldShelfRequest(nod, jessica,
         DateTime.now(DateTimeZone.UTC), requestServicePoint.getId());
 
-    final CheckInByBarcodeResponse checkInResponse = loansFixture.checkInByBarcode(
+    final CheckInByBarcodeResponse checkInResponse = checkInFixture.checkInByBarcode(
         new CheckInByBarcodeRequestBuilder()
           .forItem(nod)
           .at(checkInServicePoint.getId()));
@@ -74,7 +70,7 @@ public class ServicePointCheckOutTests extends APITests {
     assertThat("extended destination properties should include name",
         destinationServicePoint.getString("name"), is("Circ Desk 4"));
 
-    final IndividualResource checkOutResponse = loansFixture.checkOutByBarcode(
+    final IndividualResource checkOutResponse = checkOutFixture.checkOutByBarcode(
         new CheckOutByBarcodeRequestBuilder()
           .forItem(nod)
           .to(jessica)

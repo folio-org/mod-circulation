@@ -1,25 +1,25 @@
 package api.requests;
 
-import api.support.APITests;
-import api.support.builders.RequestBuilder;
-import api.support.http.InventoryItemResource;
-import io.vertx.core.json.JsonObject;
+import static api.support.JsonCollectionAssistant.getRecordById;
+import static api.support.matchers.RequestItemMatcher.hasItemLocationProperties;
+import static api.support.matchers.RequestItemMatcher.hasLibraryName;
+import static api.support.matchers.RequestItemMatcher.hasLocationCode;
+import static api.support.matchers.RequestItemMatcher.hasLocationName;
+import static org.hamcrest.CoreMatchers.allOf;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.core.Is.is;
+
+import java.util.List;
+import java.util.UUID;
+
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 import org.junit.Test;
 
-import java.net.MalformedURLException;
-import java.util.List;
-import java.util.UUID;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeoutException;
-
-
-import static api.support.JsonCollectionAssistant.getRecordById;
-import static api.support.matchers.RequestItemMatcher.*;
-import static org.hamcrest.CoreMatchers.allOf;
-import static org.hamcrest.core.Is.is;
-import static org.hamcrest.MatcherAssert.assertThat;
+import api.support.APITests;
+import api.support.builders.RequestBuilder;
+import api.support.http.InventoryItemResource;
+import io.vertx.core.json.JsonObject;
 
 public class RequestsAPILocationTests extends APITests {
   @Test
@@ -39,7 +39,7 @@ public class RequestsAPILocationTests extends APITests {
         .withTemporaryLocation(secondFloorEconomics)
     );
 
-    loansFixture.checkOutByBarcode(smallAngryPlanet, usersFixture.jessica());
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet, usersFixture.jessica());
 
     IndividualResource requester = usersFixture.steve();
 
@@ -88,7 +88,7 @@ public class RequestsAPILocationTests extends APITests {
       itemBuilder -> itemBuilder
         .withPermanentLocation(thirdFloor));
 
-    loansFixture.checkOutByBarcode(smallAngryPlanet, usersFixture.james());
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet, usersFixture.james());
 
     IndividualResource firstRequest = requestsFixture.place(new RequestBuilder()
       .open()
@@ -105,7 +105,7 @@ public class RequestsAPILocationTests extends APITests {
         .withNoPermanentLocation()
         .withNoTemporaryLocation());
 
-    loansFixture.checkOutByBarcode(temeraire, usersFixture.jessica());
+    checkOutFixture.checkOutByBarcode(temeraire, usersFixture.jessica());
 
     IndividualResource secondRequest = requestsFixture.place(new RequestBuilder()
       .open()

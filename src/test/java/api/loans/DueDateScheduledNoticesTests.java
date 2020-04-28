@@ -3,17 +3,13 @@ package api.loans;
 import static api.support.matchers.ScheduledNoticeMatchers.hasScheduledLoanNotice;
 import static org.folio.circulation.support.JsonPropertyFetcher.getDateTimeProperty;
 import static org.hamcrest.CoreMatchers.hasItems;
-import static org.hamcrest.Matchers.hasSize;
-import static org.hamcrest.Matchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.hasSize;
 
-import java.net.MalformedURLException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 import org.awaitility.Awaitility;
 import org.folio.circulation.domain.policy.Period;
@@ -87,7 +83,7 @@ public class DueDateScheduledNoticesTests extends APITests {
     final DateTime loanDate =
       new DateTime(2018, 3, 18, 11, 43, 54, DateTimeZone.UTC);
 
-    final IndividualResource loan = loansFixture.checkOutByBarcode(
+    final IndividualResource loan = checkOutFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
         .forItem(smallAngryPlanet)
         .to(steve)
@@ -152,7 +148,7 @@ public class DueDateScheduledNoticesTests extends APITests {
     final DateTime loanDate =
       new DateTime(2018, 3, 18, 11, 43, 54, DateTimeZone.UTC);
 
-    final IndividualResource loan = loansFixture.checkOutByBarcode(
+    final IndividualResource loan = checkOutFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
         .forItem(smallAngryPlanet)
         .to(steve)
@@ -206,7 +202,7 @@ public class DueDateScheduledNoticesTests extends APITests {
     final DateTime loanDate =
       new DateTime(2018, 3, 18, 11, 43, 54, DateTimeZone.UTC);
 
-    loansFixture.checkOutByBarcode(
+      checkOutFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
         .forItem(smallAngryPlanet)
         .to(steve)
@@ -265,8 +261,8 @@ public class DueDateScheduledNoticesTests extends APITests {
     IndividualResource item = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource borrower = usersFixture.steve();
 
-    final IndividualResource loan = loansFixture.checkOutByBarcode(item, borrower);
-    loansFixture.checkOutByBarcode(itemsFixture.basedUponNod(), usersFixture.jessica());
+    final IndividualResource loan = checkOutFixture.checkOutByBarcode(item, borrower);
+    checkOutFixture.checkOutByBarcode(itemsFixture.basedUponNod(), usersFixture.jessica());
 
     Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
@@ -347,9 +343,9 @@ public class DueDateScheduledNoticesTests extends APITests {
     IndividualResource item = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource borrower = usersFixture.steve();
 
-    final IndividualResource loan = loansFixture.checkOutByBarcode(item, borrower);
+    final IndividualResource loan = checkOutFixture.checkOutByBarcode(item, borrower);
     DateTime dueDate = getDateTimeProperty(loan.getJson(), "dueDate");
-    loansFixture.checkOutByBarcode(itemsFixture.basedUponNod(), usersFixture.jessica());
+    checkOutFixture.checkOutByBarcode(itemsFixture.basedUponNod(), usersFixture.jessica());
 
     Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
@@ -431,8 +427,8 @@ public class DueDateScheduledNoticesTests extends APITests {
     IndividualResource item = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource borrower = usersFixture.steve();
 
-    final IndividualResource loan = loansFixture.checkOutByBarcode(item, borrower);
-    loansFixture.checkOutByBarcode(itemsFixture.basedUponNod(), usersFixture.jessica());
+    final IndividualResource loan = checkOutFixture.checkOutByBarcode(item, borrower);
+    checkOutFixture.checkOutByBarcode(itemsFixture.basedUponNod(), usersFixture.jessica());
 
     Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
@@ -514,8 +510,8 @@ public class DueDateScheduledNoticesTests extends APITests {
     IndividualResource item = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource borrower = usersFixture.steve();
 
-    IndividualResource loan = loansFixture.checkOutByBarcode(item, borrower);
-    loansFixture.checkOutByBarcode(itemsFixture.basedUponNod(), usersFixture.jessica());
+    IndividualResource loan = checkOutFixture.checkOutByBarcode(item, borrower);
+    checkOutFixture.checkOutByBarcode(itemsFixture.basedUponNod(), usersFixture.jessica());
 
     Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)

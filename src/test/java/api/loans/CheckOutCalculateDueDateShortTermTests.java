@@ -188,7 +188,7 @@ public class CheckOutCalculateDueDateShortTermTests extends APITests {
       overdueFinePolicy.getId(), lostItemFeePolicy.getId());
 
     DateTimeUtils.setCurrentMillisFixed(loanDate.getMillis());
-    final IndividualResource response = loansFixture.checkOutByBarcode(
+    final IndividualResource response = checkOutFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
         .forItem(smallAngryPlanet)
         .to(steve)

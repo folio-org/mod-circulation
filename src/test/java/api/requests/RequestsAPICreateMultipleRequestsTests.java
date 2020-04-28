@@ -3,10 +3,7 @@ package api.requests;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
-import java.net.MalformedURLException;
 import java.util.UUID;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeoutException;
 
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
@@ -24,7 +21,7 @@ public class RequestsAPICreateMultipleRequestsTests extends APITests {
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
-    loansFixture.checkOutByBarcode(smallAngryPlanet, usersFixture.steve());
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet, usersFixture.steve());
 
     final IndividualResource firstRequest = requestsClient.create(new RequestBuilder()
       .hold()
@@ -55,7 +52,7 @@ public class RequestsAPICreateMultipleRequestsTests extends APITests {
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
-    loansFixture.checkOutByBarcode(smallAngryPlanet, usersFixture.rebecca());
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet, usersFixture.rebecca());
 
     final IndividualResource firstRequest = requestsClient.create(new RequestBuilder()
       .hold()
@@ -86,7 +83,7 @@ public class RequestsAPICreateMultipleRequestsTests extends APITests {
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
-    loansFixture.checkOutByBarcode(smallAngryPlanet, usersFixture.rebecca());
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet, usersFixture.rebecca());
 
     final IndividualResource firstRequest = requestsClient.create(new RequestBuilder()
       .hold()
@@ -120,7 +117,7 @@ public class RequestsAPICreateMultipleRequestsTests extends APITests {
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
-    loansFixture.checkOutByBarcode(smallAngryPlanet, usersFixture.steve());
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet, usersFixture.steve());
 
     final IndividualResource firstRequest = requestsClient.createAtSpecificLocation(
       new RequestBuilder()

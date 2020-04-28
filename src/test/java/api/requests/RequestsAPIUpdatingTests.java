@@ -59,7 +59,7 @@ public class RequestsAPIUpdatingTests extends APITests {
 
     final InventoryItemResource temeraire = itemsFixture.basedUponTemeraire();
 
-    loansFixture.checkOutByBarcode(temeraire);
+    checkOutFixture.checkOutByBarcode(temeraire);
 
     final IndividualResource steve = usersFixture.steve();
 
@@ -146,7 +146,7 @@ public class RequestsAPIUpdatingTests extends APITests {
 
     final InventoryItemResource temeraire = itemsFixture.basedUponTemeraire();
 
-    loansFixture.checkOutByBarcode(temeraire);
+    checkOutFixture.checkOutByBarcode(temeraire);
 
     final IndividualResource workAddressType = addressTypesFixture.work();
 
@@ -208,7 +208,7 @@ public class RequestsAPIUpdatingTests extends APITests {
     final InventoryItemResource nod = itemsFixture.basedUponNod();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
-    loansFixture.checkOutByBarcode(nod);
+    checkOutFixture.checkOutByBarcode(nod);
 
     IndividualResource createdRequest = requestsClient.create(
       new RequestBuilder()
@@ -242,7 +242,7 @@ public class RequestsAPIUpdatingTests extends APITests {
     final InventoryItemResource nod = itemsFixture.basedUponNod();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
-    loansFixture.checkOutByBarcode(nod);
+    checkOutFixture.checkOutByBarcode(nod);
 
     IndividualResource requester = usersFixture.steve();
 
@@ -273,7 +273,7 @@ public class RequestsAPIUpdatingTests extends APITests {
     final InventoryItemResource nod = itemsFixture.basedUponNod();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
-    loansFixture.checkOutByBarcode(nod);
+    checkOutFixture.checkOutByBarcode(nod);
 
     final IndividualResource steve = usersFixture.steve();
 
@@ -319,7 +319,7 @@ public class RequestsAPIUpdatingTests extends APITests {
 
     final InventoryItemResource nod = itemsFixture.basedUponNod();
 
-    loansFixture.checkOutByBarcode(nod);
+    checkOutFixture.checkOutByBarcode(nod);
 
     final IndividualResource steve = usersFixture.steve();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
@@ -369,7 +369,7 @@ public class RequestsAPIUpdatingTests extends APITests {
     final InventoryItemResource temeraire = itemsFixture.basedUponTemeraire();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
-    loansFixture.checkOutByBarcode(temeraire);
+    checkOutFixture.checkOutByBarcode(temeraire);
 
     IndividualResource createdRequest = requestsClient.create(new RequestBuilder()
       .recall()
@@ -408,7 +408,7 @@ public class RequestsAPIUpdatingTests extends APITests {
 
     final InventoryItemResource temeraire = itemsFixture.basedUponTemeraire();
 
-    loansFixture.checkOutByBarcode(temeraire);
+    checkOutFixture.checkOutByBarcode(temeraire);
 
     final IndividualResource exampleServicePoint = servicePointsFixture.cd1();
 
@@ -434,7 +434,7 @@ public class RequestsAPIUpdatingTests extends APITests {
 
     final InventoryItemResource temeraire = itemsFixture.basedUponTemeraire();
 
-    loansFixture.checkOutByBarcode(temeraire);
+    checkOutFixture.checkOutByBarcode(temeraire);
 
     final IndividualResource exampleServicePoint = servicePointsFixture.cd1();
 
@@ -580,7 +580,7 @@ public class RequestsAPIUpdatingTests extends APITests {
 
     final InventoryItemResource temeraire = itemsFixture.basedUponTemeraire();
 
-    loansFixture.checkOutByBarcode(temeraire);
+    checkOutFixture.checkOutByBarcode(temeraire);
 
     final IndividualResource steve = usersFixture.steve();
     final IndividualResource charlotte = usersFixture.charlotte();
@@ -646,7 +646,7 @@ public class RequestsAPIUpdatingTests extends APITests {
 
     final InventoryItemResource temeraire = itemsFixture.basedUponTemeraire();
 
-    loansFixture.checkOutByBarcode(temeraire);
+    checkOutFixture.checkOutByBarcode(temeraire);
 
     final IndividualResource steve = usersFixture.steve();
 

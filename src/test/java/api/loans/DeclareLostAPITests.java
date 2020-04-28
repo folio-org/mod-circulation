@@ -45,7 +45,6 @@ import junitparams.converters.Nullable;
 
 @RunWith(JUnitParamsRunner.class)
 public class DeclareLostAPITests extends APITests {
-
   @Before
   public void activatePolicy() {
     useLostItemPolicy(lostItemFeePoliciesFixture.chargeFee().getId());
@@ -53,7 +52,7 @@ public class DeclareLostAPITests extends APITests {
 
   @Test
   public void canDeclareItemLostWithComment() {
-    final IndividualResource checkOut = loansFixture
+    final IndividualResource checkOut = checkOutFixture
       .checkOutByBarcode(itemsFixture.basedUponNod(), usersFixture.jessica());
 
     String comment = "testing";
@@ -78,7 +77,7 @@ public class DeclareLostAPITests extends APITests {
 
   @Test
   public void canDeclareItemLostWithoutComment() {
-    final IndividualResource checkOut = loansFixture
+    final IndividualResource checkOut = checkOutFixture
       .checkOutByBarcode(itemsFixture.basedUponNod(), usersFixture.jessica());
 
     DateTime dateTime = DateTime.now();
@@ -104,15 +103,16 @@ public class DeclareLostAPITests extends APITests {
   public void cannotDeclareItemLostForAClosedLoan() {
     final InventoryItemResource item = itemsFixture.basedUponSmallAngryPlanet();
 
-    final IndividualResource checkOut = loansFixture.checkOutByBarcode(item, usersFixture.jessica());
-    loansFixture.checkInByBarcode(item);
+    final IndividualResource loan = checkOutFixture.checkOutByBarcode(item, usersFixture.jessica());
+
+    checkInFixture.checkInByBarcode(item);
 
     final DeclareItemLostRequestBuilder builder = new DeclareItemLostRequestBuilder()
-      .forLoanId(checkOut.getId());
+      .forLoanId(loan.getId());
 
     Response response = declareLostFixtures.attemptDeclareItemLost(builder);
 
-    JsonObject actualLoan = loansFixture.getLoanById(checkOut.getId()).getJson();
+    JsonObject actualLoan = loansFixture.getLoanById(loan.getId()).getJson();
     JsonObject actualItem = actualLoan.getJsonObject("item");
 
     assertThat(response.getStatusCode(), is(422));
@@ -219,7 +219,7 @@ public class DeclareLostAPITests extends APITests {
   @Test
   public void shouldNotChargeFeesWhenPolicyIsUnknown() {
     final InventoryItemResource item = itemsFixture.basedUponNod();
-    final IndividualResource loan = loansFixture.checkOutByBarcode(item, usersFixture.charlotte());
+    final IndividualResource loan = checkOutFixture.checkOutByBarcode(item, usersFixture.charlotte());
 
     final JsonObject loanWithoutLostPolicy = loansStorageClient.getById(loan.getId())
       .getJson().copy();
@@ -242,7 +242,7 @@ public class DeclareLostAPITests extends APITests {
     feeFineOwnerFixture.delete(feeFineOwnerFixture.cd1Owner());
 
     final InventoryItemResource item = itemsFixture.basedUponNod();
-    final IndividualResource loan = loansFixture.checkOutByBarcode(item, usersFixture.charlotte());
+    final IndividualResource loan = checkOutFixture.checkOutByBarcode(item, usersFixture.charlotte());
 
     final Response response = declareLostFixtures.attemptDeclareItemLost(
       new DeclareItemLostRequestBuilder()
@@ -259,7 +259,7 @@ public class DeclareLostAPITests extends APITests {
     feeFineTypeFixture.delete(feeFineTypeFixture.lostItemFee());
 
     final InventoryItemResource item = itemsFixture.basedUponNod();
-    final IndividualResource loan = loansFixture.checkOutByBarcode(item, usersFixture.charlotte());
+    final IndividualResource loan = checkOutFixture.checkOutByBarcode(item, usersFixture.charlotte());
 
     final Response response = declareLostFixtures.attemptDeclareItemLost(
       new DeclareItemLostRequestBuilder()
@@ -277,7 +277,7 @@ public class DeclareLostAPITests extends APITests {
     feeFineTypeFixture.delete(feeFineTypeFixture.lostItemProcessingFee());
 
     final InventoryItemResource item = itemsFixture.basedUponNod();
-    final IndividualResource loan = loansFixture.checkOutByBarcode(item, usersFixture.charlotte());
+    final IndividualResource loan = checkOutFixture.checkOutByBarcode(item, usersFixture.charlotte());
 
     final Response response = declareLostFixtures.attemptDeclareItemLost(
       new DeclareItemLostRequestBuilder()
@@ -403,20 +403,13 @@ public class DeclareLostAPITests extends APITests {
 
   private IndividualResource declareItemLost() {
     final InventoryItemResource item = itemsFixture.basedUponNod();
-    final IndividualResource loan = loansFixture.checkOutByBarcode(item, usersFixture.charlotte());
+    final IndividualResource loan = checkOutFixture.checkOutByBarcode(item, usersFixture.charlotte());
 
     declareLostFixtures.declareItemLost(new DeclareItemLostRequestBuilder()
       .withServicePointId(servicePointsFixture.cd2().getId())
       .forLoanId(loan.getId()));
 
     return loansFixture.getLoanById(loan.getId());
-  }
-
-  private void createFeeFineTypesAndOwner() {
-    // Set-up reference data
-    feeFineOwnerFixture.cd1Owner();
-    feeFineTypeFixture.lostItemFee();
-    feeFineTypeFixture.lostItemProcessingFee();
   }
 
   private void assertNoFeeAssignedForLoan(UUID loan) {
