@@ -151,7 +151,7 @@ public class ChangeDueDateAPITests extends APITests {
   public void cannotChangeDueDateWhenClaimedReturned() {
     final DateTime newDueDate = dueDate.plus(Period.days(14));
 
-    loansFixture.claimItemReturned(new ClaimItemReturnedRequestBuilder()
+    claimItemReturnedFixture.claimItemReturned(new ClaimItemReturnedRequestBuilder()
       .forLoan(loan.getId().toString()));
 
     new ChangeDueDateRequestBuilder().forLoan(loan.getId().toString());

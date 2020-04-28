@@ -5,8 +5,6 @@ import static api.support.APITestContext.getOkapiHeadersFromContext;
 import static api.support.MultipleJsonRecords.multipleRecordsFrom;
 import static api.support.http.AdditionalHttpStatusCodes.UNPROCESSABLE_ENTITY;
 import static api.support.http.CqlQuery.noQuery;
-import static api.support.http.InterfaceUrls.claimItemReturnedURL;
-import static api.support.http.InterfaceUrls.declareLoanItemLostURL;
 import static api.support.http.InterfaceUrls.loansUrl;
 import static api.support.http.InterfaceUrls.overrideRenewalByBarcodeUrl;
 import static api.support.http.InterfaceUrls.renewByBarcodeUrl;
@@ -22,12 +20,9 @@ import java.util.UUID;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
 
 import api.support.MultipleJsonRecords;
 import api.support.RestAssuredClient;
-import api.support.builders.ClaimItemReturnedRequestBuilder;
-import api.support.builders.DeclareItemLostRequestBuilder;
 import api.support.builders.LoanBuilder;
 import api.support.builders.OverrideRenewalByBarcodeRequestBuilder;
 import api.support.builders.RenewByBarcodeRequestBuilder;
@@ -104,32 +99,6 @@ public class LoansFixture {
 
   public Response attemptToReplaceLoan(UUID loanId, JsonObject representation) {
     return restAssuredClient.put(representation, urlForLoan(loanId), "replace-loan");
-  }
-
-  public Response declareItemLost(UUID loanId,
-    DeclareItemLostRequestBuilder builder) {
-
-    JsonObject request = builder.create();
-
-    return restAssuredClient.post(request, declareLoanItemLostURL(loanId.toString()),
-      "declare-item-lost-request");
-  }
-
-  public Response declareItemLost(JsonObject loanJson) {
-    final UUID loanId = UUID.fromString(loanJson.getString("id"));
-    final String comment = "testing";
-    final DateTime dateTime = DateTime.now(DateTimeZone.UTC);
-
-    final DeclareItemLostRequestBuilder builder = new DeclareItemLostRequestBuilder()
-      .forLoanId(loanId).on(dateTime)
-      .withComment(comment);
-
-    return declareItemLost(loanId, builder);
-  }
-
-  public Response claimItemReturned(ClaimItemReturnedRequestBuilder request) {
-    return restAssuredClient.post(request.create(),
-      claimItemReturnedURL(request.getLoanId()), 204, "claim-item-returned-request");
   }
 
   public IndividualResource renewLoan(IndividualResource item, IndividualResource user) {
