@@ -248,12 +248,12 @@ public class FeeFineScheduledNoticesTests extends APITests {
     final DateTime checkOutDate = ClockManager.getClockManager().getDateTime().minusYears(1);
     final DateTime checkInDate = checkOutDate.plusMonths(1);
 
-    IndividualResource checkOutResponse = loansFixture.checkOutByBarcode(item, user, checkOutDate);
+    IndividualResource checkOutResponse = checkOutFixture.checkOutByBarcode(item, user, checkOutDate);
     loanId = UUID.fromString(checkOutResponse.getJson().getString("id"));
 
     switch (triggeringEvent) {
     case OVERDUE_FINE_RETURNED:
-      loansFixture.checkInByBarcode(new CheckInByBarcodeRequestBuilder()
+      checkInFixture.checkInByBarcode(new CheckInByBarcodeRequestBuilder()
         .forItem(item)
         .on(checkInDate)
         .at(checkInServicePointId));
