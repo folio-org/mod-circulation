@@ -76,7 +76,7 @@ public class RequestQueueResourceTest extends APITests {
 
   @Test
   public void refuseAttemptToMoveRequestBeingFulfilledFromFirstPosition() {
-    loansFixture.checkOutByBarcode(item, usersFixture.rebecca());
+    checkOutFixture.checkOutByBarcode(item, usersFixture.rebecca());
 
     IndividualResource inFulfillmentRequest = inFulfillmentRecallRequest(steve);
     IndividualResource recallRequest = recallRequest(jessica);
@@ -94,7 +94,7 @@ public class RequestQueueResourceTest extends APITests {
 
   @Test
   public void refuseAttemptToTryingToAddRequestToQueueDuringReorder() {
-    loansFixture.checkOutByBarcode(item, usersFixture.rebecca());
+    checkOutFixture.checkOutByBarcode(item, usersFixture.rebecca());
 
     IndividualResource firstRecallRequest = recallRequest(steve);
     IndividualResource secondRecallRequest = recallRequest(jessica);
@@ -113,7 +113,7 @@ public class RequestQueueResourceTest extends APITests {
 
   @Test
   public void refuseWhenNotAllRequestsProvidedInReorderedQueue() {
-    loansFixture.checkOutByBarcode(item, usersFixture.rebecca());
+    checkOutFixture.checkOutByBarcode(item, usersFixture.rebecca());
 
     holdRequest(steve);
 
@@ -142,7 +142,7 @@ public class RequestQueueResourceTest extends APITests {
   public void refuseWhenPositionsAreNotSequential(int firstPosition,
     int secondPosition, int thirdPosition, int fourthPosition) {
 
-    loansFixture.checkOutByBarcode(item, rebecca);
+    checkOutFixture.checkOutByBarcode(item, rebecca);
 
     IndividualResource firstHoldRequest = holdRequest(steve);
     IndividualResource secondHoldRequest = holdRequest(james);
@@ -164,7 +164,7 @@ public class RequestQueueResourceTest extends APITests {
 
   @Test
   public void refuseAttemptToReorderRequestsWithDuplicatedPositions() {
-    loansFixture.checkOutByBarcode(item, usersFixture.rebecca());
+    checkOutFixture.checkOutByBarcode(item, usersFixture.rebecca());
 
     IndividualResource holdRequest = holdRequest(steve);
     IndividualResource recallRequest = recallRequest(jessica);
@@ -193,7 +193,7 @@ public class RequestQueueResourceTest extends APITests {
   public void shouldReorderQueueSuccessfully(int firstPosition,
     int secondPosition, int thirdPosition, int fourthPosition) {
 
-    loansFixture.checkOutByBarcode(item, rebecca);
+    checkOutFixture.checkOutByBarcode(item, rebecca);
 
     IndividualResource firstHoldRequest = holdRequest(steve);
     IndividualResource secondHoldRequest = holdRequest(james);
@@ -216,7 +216,7 @@ public class RequestQueueResourceTest extends APITests {
   @Test
   @Parameters(source = ReorderQueueTestDataSource.class)
   public void canReorderQueueTwice(Integer[] initialState, Integer[] targetState) {
-    loansFixture.checkOutByBarcode(item, rebecca);
+    checkOutFixture.checkOutByBarcode(item, rebecca);
 
     IndividualResource firstHoldRequest = holdRequest(steve);
     IndividualResource secondHoldRequest = holdRequest(james);

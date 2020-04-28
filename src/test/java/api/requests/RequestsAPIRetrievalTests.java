@@ -76,7 +76,7 @@ public class RequestsAPIRetrievalTests extends APITests {
 
     proxyRelationshipsFixture.nonExpiringProxyFor(sponsor, proxy);
 
-    loansFixture.checkOutByBarcode(smallAngryPlanet);
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet);
 
     DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, UTC);
 
@@ -232,7 +232,7 @@ public class RequestsAPIRetrievalTests extends APITests {
 
     final IndividualResource james = usersFixture.james();
 
-    loansFixture.checkOutByBarcode(smallAngryPlanet, james);
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet, james);
 
     IndividualResource createdRequest = requestsFixture.place(new RequestBuilder()
       .recall()
@@ -300,11 +300,11 @@ public class RequestsAPIRetrievalTests extends APITests {
       .basedUponTemeraire(itemsFixture.addCallNumberStringComponents("tem"));
     final IndividualResource uprooted = itemsFixture.basedUponUprooted();
 
-    loansFixture.checkOutByBarcode(smallAngryPlanet, jessica);
-    loansFixture.checkOutByBarcode(nod, charlotte);
-    loansFixture.checkOutByBarcode(interestingTimes, charlotte);
-    loansFixture.checkOutByBarcode(temeraire, jessica);
-    loansFixture.checkOutByBarcode(uprooted, jessica);
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet, jessica);
+    checkOutFixture.checkOutByBarcode(nod, charlotte);
+    checkOutFixture.checkOutByBarcode(interestingTimes, charlotte);
+    checkOutFixture.checkOutByBarcode(temeraire, jessica);
+    checkOutFixture.checkOutByBarcode(uprooted, jessica);
 
     requestsFixture.place(new RequestBuilder()
       .hold()
@@ -381,7 +381,7 @@ public class RequestsAPIRetrievalTests extends APITests {
 
     final IndividualResource james = usersFixture.james();
 
-    loansFixture.checkOutByBarcode(smallAngryPlanet, james);
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet, james);
 
     requestsFixture.place(new RequestBuilder()
       .recall()
@@ -423,7 +423,7 @@ public class RequestsAPIRetrievalTests extends APITests {
 
     final IndividualResource james = usersFixture.james();
 
-    loansFixture.checkOutByBarcode(smallAngryPlanet, james);
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet, james);
 
     final IndividualResource workAddressType = addressTypesFixture.work();
 
@@ -433,7 +433,7 @@ public class RequestsAPIRetrievalTests extends APITests {
       .deliverToAddress(workAddressType.getId())
       .by(charlotte));
 
-    loansFixture.checkInByBarcode(smallAngryPlanet);
+      checkInFixture.checkInByBarcode(smallAngryPlanet);
 
     final MultipleJsonRecords allRequests = requestsFixture.getAllRequests();
 

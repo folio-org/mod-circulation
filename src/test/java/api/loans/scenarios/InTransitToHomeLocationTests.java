@@ -8,11 +8,8 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.IsNull.notNullValue;
 import static org.hamcrest.core.IsNull.nullValue;
 
-import java.net.MalformedURLException;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeoutException;
 
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.hamcrest.Matcher;
@@ -45,9 +42,9 @@ public class InTransitToHomeLocationTests extends APITests {
 
     final IndividualResource otherServicePoint = servicePointsFixture.cd2();
 
-    final IndividualResource loan = loansFixture.checkOutByBarcode(nod, james);
+    final IndividualResource loan = checkOutFixture.checkOutByBarcode(nod, james);
 
-    final CheckInByBarcodeResponse checkInResponse = loansFixture.checkInByBarcode(
+    final CheckInByBarcodeResponse checkInResponse = checkInFixture.checkInByBarcode(
       new CheckInByBarcodeRequestBuilder()
         .forItem(nod)
         .at(otherServicePoint.getId()));
@@ -139,14 +136,14 @@ public class InTransitToHomeLocationTests extends APITests {
 
     final IndividualResource otherServicePoint = servicePointsFixture.cd2();
 
-    final IndividualResource loan = loansFixture.checkOutByBarcode(nod, james);
+    final IndividualResource loan = checkOutFixture.checkOutByBarcode(nod, james);
 
-    loansFixture.checkInByBarcode(
+    checkInFixture.checkInByBarcode(
       new CheckInByBarcodeRequestBuilder()
         .forItem(nod)
         .at(otherServicePoint.getId()));
 
-    final CheckInByBarcodeResponse checkInResponse = loansFixture.checkInByBarcode(
+    final CheckInByBarcodeResponse checkInResponse = checkInFixture.checkInByBarcode(
       new CheckInByBarcodeRequestBuilder()
         .forItem(nod)
         .at(primaryServicePoint.getId()));
@@ -216,14 +213,14 @@ public class InTransitToHomeLocationTests extends APITests {
 
     final IndividualResource otherServicePoint = servicePointsFixture.cd3();
 
-    final IndividualResource loan = loansFixture.checkOutByBarcode(nod, james);
+    final IndividualResource loan = checkOutFixture.checkOutByBarcode(nod, james);
 
-    loansFixture.checkInByBarcode(
+    checkInFixture.checkInByBarcode(
       new CheckInByBarcodeRequestBuilder()
         .forItem(nod)
         .at(otherServicePoint.getId()));
 
-    final CheckInByBarcodeResponse checkInResponse = loansFixture.checkInByBarcode(
+    final CheckInByBarcodeResponse checkInResponse = checkInFixture.checkInByBarcode(
       new CheckInByBarcodeRequestBuilder()
         .forItem(nod)
         .at(otherServingServicePoint.getId()));
@@ -289,9 +286,9 @@ public class InTransitToHomeLocationTests extends APITests {
     final IndividualResource nod = itemsFixture.basedUponNod(builder ->
       builder.withTemporaryLocation(homeLocation.getId()));
 
-    final IndividualResource loan = loansFixture.checkOutByBarcode(nod, james);
+    final IndividualResource loan = checkOutFixture.checkOutByBarcode(nod, james);
 
-    final CheckInByBarcodeResponse checkInResponse = loansFixture.checkInByBarcode(
+    final CheckInByBarcodeResponse checkInResponse = checkInFixture.checkInByBarcode(
       new CheckInByBarcodeRequestBuilder()
         .forItem(nod)
         .at(primaryServicePoint.getId()));
@@ -363,9 +360,9 @@ public class InTransitToHomeLocationTests extends APITests {
     final IndividualResource nod = itemsFixture.basedUponNod(builder ->
       builder.withTemporaryLocation(homeLocation.getId()));
 
-    final IndividualResource loan = loansFixture.checkOutByBarcode(nod, james);
+    final IndividualResource loan = checkOutFixture.checkOutByBarcode(nod, james);
 
-    final CheckInByBarcodeResponse checkInResponse = loansFixture.checkInByBarcode(
+    final CheckInByBarcodeResponse checkInResponse = checkInFixture.checkInByBarcode(
       new CheckInByBarcodeRequestBuilder()
         .forItem(nod)
         .at(otherServingServicePoint.getId()));
@@ -437,16 +434,16 @@ public class InTransitToHomeLocationTests extends APITests {
 
     final IndividualResource firstOtherServicePoint = servicePointsFixture.cd2();
 
-    final IndividualResource loan = loansFixture.checkOutByBarcode(nod, james);
+    final IndividualResource loan = checkOutFixture.checkOutByBarcode(nod, james);
 
-    loansFixture.checkInByBarcode(
+    checkInFixture.checkInByBarcode(
       new CheckInByBarcodeRequestBuilder()
         .forItem(nod)
         .at(firstOtherServicePoint.getId()));
 
     final IndividualResource secondOtherServicePoint = servicePointsFixture.cd3();
 
-    final CheckInByBarcodeResponse checkInResponse = loansFixture.checkInByBarcode(
+    final CheckInByBarcodeResponse checkInResponse = checkInFixture.checkInByBarcode(
       new CheckInByBarcodeRequestBuilder()
         .forItem(nod)
         .at(secondOtherServicePoint.getId()));
@@ -528,12 +525,12 @@ public class InTransitToHomeLocationTests extends APITests {
 
     final IndividualResource otherServicePoint = servicePointsFixture.cd2();
 
-    final IndividualResource loan = loansFixture.checkOutByBarcode(nod, james);
+    final IndividualResource loan = checkOutFixture.checkOutByBarcode(nod, james);
 
     requestsFixture.placeHoldShelfRequest(
       nod, jessica, DateTime.now(DateTimeZone.UTC), otherServicePoint.getId());
 
-    final CheckInByBarcodeResponse checkInResponse = loansFixture.checkInByBarcode(
+    final CheckInByBarcodeResponse checkInResponse = checkInFixture.checkInByBarcode(
       new CheckInByBarcodeRequestBuilder()
         .forItem(nod)
         .at(otherServicePoint.getId()));

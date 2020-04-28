@@ -1,13 +1,10 @@
 package api.requests;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
-import static org.hamcrest.MatcherAssert.assertThat;
 
-import java.net.MalformedURLException;
 import java.util.UUID;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeoutException;
 
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.junit.Test;
@@ -24,7 +21,7 @@ public class RequestsAPILoanHistoryTests extends APITests {
     final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
-    IndividualResource originalLoan = loansFixture.checkOutByBarcode(smallAngryPlanet);
+    IndividualResource originalLoan = checkOutFixture.checkOutByBarcode(smallAngryPlanet);
     UUID loanId = originalLoan.getId();
 
     requestsClient.create(new RequestBuilder()
@@ -52,11 +49,11 @@ public class RequestsAPILoanHistoryTests extends APITests {
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
-    UUID closedLoanId = loansFixture.checkOutByBarcode(smallAngryPlanet).getId();
+    UUID closedLoanId = checkOutFixture.checkOutByBarcode(smallAngryPlanet).getId();
 
-    loansFixture.checkInByBarcode(smallAngryPlanet);
+    checkInFixture.checkInByBarcode(smallAngryPlanet);
 
-    loansFixture.checkOutByBarcode(smallAngryPlanet);
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet);
 
     requestsClient.create(new RequestBuilder()
       .hold()
@@ -80,11 +77,11 @@ public class RequestsAPILoanHistoryTests extends APITests {
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
-    UUID closedLoanId = loansFixture.checkOutByBarcode(smallAngryPlanet).getId();
+    UUID closedLoanId = checkOutFixture.checkOutByBarcode(smallAngryPlanet).getId();
 
-    loansFixture.checkInByBarcode(smallAngryPlanet);
+    checkInFixture.checkInByBarcode(smallAngryPlanet);
 
-    loansFixture.checkOutByBarcode(smallAngryPlanet);
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet);
 
     requestsClient.create(new RequestBuilder()
       .recall()
@@ -109,9 +106,9 @@ public class RequestsAPILoanHistoryTests extends APITests {
     final InventoryItemResource nod = itemsFixture.basedUponNod();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
-    loansFixture.checkOutByBarcode(smallAngryPlanet);
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet);
 
-    UUID loanForOtherItemId = loansFixture.checkOutByBarcode(nod).getId();
+    UUID loanForOtherItemId = checkOutFixture.checkOutByBarcode(nod).getId();
 
     requestsClient.create(new RequestBuilder()
       .hold()
@@ -137,9 +134,9 @@ public class RequestsAPILoanHistoryTests extends APITests {
     final InventoryItemResource nod = itemsFixture.basedUponNod();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
-    loansFixture.checkOutByBarcode(smallAngryPlanet);
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet);
 
-    UUID loanForOtherItemId = loansFixture.checkOutByBarcode(nod).getId();
+    UUID loanForOtherItemId = checkOutFixture.checkOutByBarcode(nod).getId();
 
     requestsClient.create(new RequestBuilder()
       .recall()
@@ -164,7 +161,7 @@ public class RequestsAPILoanHistoryTests extends APITests {
     final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
-    UUID loanId = loansFixture.checkOutByBarcode(smallAngryPlanet).getId();
+    UUID loanId = checkOutFixture.checkOutByBarcode(smallAngryPlanet).getId();
 
     loansClient.delete(loanId);
 
@@ -181,7 +178,7 @@ public class RequestsAPILoanHistoryTests extends APITests {
     final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
-    UUID loanId = loansFixture.checkOutByBarcode(smallAngryPlanet).getId();
+    UUID loanId = checkOutFixture.checkOutByBarcode(smallAngryPlanet).getId();
 
     loansClient.delete(loanId);
 

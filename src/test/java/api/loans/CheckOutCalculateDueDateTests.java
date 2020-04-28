@@ -91,7 +91,7 @@ public class CheckOutCalculateDueDateTests extends APITests {
 
     JsonObject loanPolicy = useFixedPolicy(fixedDueDateScheduleId, KEEP_THE_CURRENT_DUE_DATE);
 
-    final IndividualResource response = loansFixture.checkOutByBarcode(
+    final IndividualResource response = checkOutFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
         .forItem(smallAngryPlanet)
         .to(steve)
@@ -124,7 +124,7 @@ public class CheckOutCalculateDueDateTests extends APITests {
 
     JsonObject loanPolicy = useFixedPolicy(fixedDueDateScheduleId, KEEP_THE_CURRENT_DUE_DATE);
 
-    final IndividualResource response = loansFixture.checkOutByBarcode(
+    final IndividualResource response = checkOutFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
         .forItem(smallAngryPlanet)
         .to(steve)
@@ -162,7 +162,7 @@ public class CheckOutCalculateDueDateTests extends APITests {
 
     JsonObject loanPolicy = useFixedPolicy(fixedDueDateScheduleId, KEEP_THE_CURRENT_DUE_DATE);
 
-    final IndividualResource response = loansFixture.checkOutByBarcode(
+    final IndividualResource response = checkOutFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
         .forItem(smallAngryPlanet)
         .to(steve)
@@ -201,7 +201,7 @@ public class CheckOutCalculateDueDateTests extends APITests {
     JsonObject loanPolicy =
       useFixedPolicy(fixedDueDateScheduleId, MOVE_TO_THE_END_OF_THE_PREVIOUS_OPEN_DAY);
 
-    final IndividualResource response = loansFixture.checkOutByBarcode(
+    final IndividualResource response = checkOutFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
         .forItem(smallAngryPlanet)
         .to(steve)
@@ -242,7 +242,7 @@ public class CheckOutCalculateDueDateTests extends APITests {
     JsonObject loanPolicy =
       useFixedPolicy(fixedDueDateScheduleId, MOVE_TO_THE_END_OF_THE_PREVIOUS_OPEN_DAY);
 
-    final IndividualResource response = loansFixture.checkOutByBarcode(
+    final IndividualResource response = checkOutFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
         .forItem(smallAngryPlanet)
         .to(steve)
@@ -285,7 +285,7 @@ public class CheckOutCalculateDueDateTests extends APITests {
         fixedDueDateScheduleId,
         MOVE_TO_THE_END_OF_THE_NEXT_OPEN_DAY.getValue()));
 
-    final IndividualResource response = loansFixture.checkOutByBarcode(
+    final IndividualResource response = checkOutFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
         .forItem(smallAngryPlanet)
         .to(steve)
@@ -325,7 +325,7 @@ public class CheckOutCalculateDueDateTests extends APITests {
 
     JsonObject loanPolicy = useFixedPolicy(fixedDueDateScheduleId, MOVE_TO_THE_END_OF_THE_NEXT_OPEN_DAY);
 
-    final IndividualResource response = loansFixture.checkOutByBarcode(
+    final IndividualResource response = checkOutFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
         .forItem(smallAngryPlanet)
         .to(steve)
@@ -677,7 +677,7 @@ public class CheckOutCalculateDueDateTests extends APITests {
       noticePoliciesFixture.activeNotice().getId(),
       overdueFinePolicy.getId(), lostItemFeePolicy.getId());
 
-    final IndividualResource response = loansFixture.checkOutByBarcode(
+    final IndividualResource response = checkOutFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
         .forItem(smallAngryPlanet)
         .to(steve)
@@ -715,7 +715,7 @@ public class CheckOutCalculateDueDateTests extends APITests {
       duration, "Minutes");
     createLoanPolicy(loanPolicyEntry);
 
-    final Response response = loansFixture.attemptCheckOutByBarcode(
+    final Response response = checkOutFixture.attemptCheckOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
         .forItem(smallAngryPlanet)
         .to(steve)
@@ -744,7 +744,7 @@ public class CheckOutCalculateDueDateTests extends APITests {
       duration, INTERVAL_HOURS);
     createLoanPolicy(loanPolicyEntry);
 
-    Response response = loansFixture.attemptCheckOutByBarcode(
+    Response response = checkOutFixture.attemptCheckOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
         .forItem(itemsFixture.basedUponSmallAngryPlanet())
         .to(usersFixture.steve())
@@ -770,7 +770,7 @@ public class CheckOutCalculateDueDateTests extends APITests {
       duration, INTERVAL_HOURS);
     IndividualResource loanPolicy = createLoanPolicy(loanPolicyEntry);
 
-    final IndividualResource response = loansFixture.checkOutByBarcode(
+    final IndividualResource response = checkOutFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
         .forItem(itemsFixture.basedUponSmallAngryPlanet())
         .to(usersFixture.steve())
@@ -812,7 +812,7 @@ public class CheckOutCalculateDueDateTests extends APITests {
       lostItemFeePolicy.getId()
     );
 
-    final IndividualResource response = loansFixture.checkOutByBarcode(
+    final IndividualResource response = checkOutFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
         .forItem(smallAngryPlanet)
         .to(steve)

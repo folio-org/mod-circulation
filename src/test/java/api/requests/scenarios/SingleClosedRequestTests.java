@@ -5,13 +5,10 @@ import static api.support.builders.RequestBuilder.CLOSED_FILLED;
 import static api.support.matchers.ItemStatusCodeMatcher.hasItemStatus;
 import static api.support.matchers.ResponseStatusCodeMatcher.hasStatus;
 import static org.folio.HttpStatus.HTTP_OK;
-import static org.hamcrest.Matchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
 
-import java.net.MalformedURLException;
 import java.util.UUID;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeoutException;
 
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
@@ -32,7 +29,7 @@ public class SingleClosedRequestTests extends APITests {
 
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
-    loansFixture.checkOutByBarcode(smallAngryPlanet, james);
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet, james);
 
     IndividualResource requestByJessica = requestsClient.create(new RequestBuilder()
       .hold()
@@ -43,9 +40,9 @@ public class SingleClosedRequestTests extends APITests {
       .withItemId(smallAngryPlanet.getId())
       .withRequesterId(jessica.getId()));
 
-    loansFixture.checkInByBarcode(smallAngryPlanet);
+    checkInFixture.checkInByBarcode(smallAngryPlanet);
 
-    loansFixture.checkOutByBarcode(smallAngryPlanet, jessica);
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet, jessica);
 
     Response request = requestsClient.getById(requestByJessica.getId());
 
@@ -68,7 +65,7 @@ public class SingleClosedRequestTests extends APITests {
 
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
-    loansFixture.checkOutByBarcode(smallAngryPlanet, james);
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet, james);
 
     IndividualResource requestByJessica = requestsClient.create(new RequestBuilder()
       .hold()
@@ -79,9 +76,9 @@ public class SingleClosedRequestTests extends APITests {
       .withItemId(smallAngryPlanet.getId())
       .withRequesterId(jessica.getId()));
 
-    loansFixture.checkInByBarcode(smallAngryPlanet);
+    checkInFixture.checkInByBarcode(smallAngryPlanet);
 
-    loansFixture.checkOutByBarcode(smallAngryPlanet, steve);
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet, steve);
 
     Response getByIdResponse = requestsClient.getById(requestByJessica.getId());
 

@@ -1,10 +1,9 @@
 package api.requests;
 
-import static api.support.http.InterfaceUrls.requestsUrl;
 import static java.net.HttpURLConnection.HTTP_NOT_FOUND;
 import static java.net.HttpURLConnection.HTTP_OK;
-import static org.hamcrest.core.Is.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.core.Is.is;
 
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -27,9 +26,9 @@ public class RequestsAPIDeletionTests extends APITests {
     final InventoryItemResource temeraire = itemsFixture.basedUponTemeraire();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
-    loansFixture.checkOutByBarcode(nod);
-    loansFixture.checkOutByBarcode(smallAngryPlanet);
-    loansFixture.checkOutByBarcode(temeraire);
+    checkOutFixture.checkOutByBarcode(nod);
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet);
+    checkOutFixture.checkOutByBarcode(temeraire);
 
     requestsFixture.place(new RequestBuilder()
       .withItemId(nod.getId())
@@ -66,9 +65,9 @@ public class RequestsAPIDeletionTests extends APITests {
     final InventoryItemResource temeraire = itemsFixture.basedUponTemeraire();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
-    loansFixture.checkOutByBarcode(nod);
-    loansFixture.checkOutByBarcode(smallAngryPlanet);
-    loansFixture.checkOutByBarcode(temeraire);
+    checkOutFixture.checkOutByBarcode(nod);
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet);
+    checkOutFixture.checkOutByBarcode(temeraire);
 
     final UUID firstRequestId = requestsFixture.place(new RequestBuilder()
       .withItemId(nod.getId())

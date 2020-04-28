@@ -52,8 +52,10 @@ public class LoanNoticeSender {
   }
 
   private void sendLoanNotice(LoanAndRelatedRecords records, NoticeEventType eventType) {
-    final Loan loan = records.getLoan();
+    sendLoanNotice(records.getLoan(), eventType);
+  }
 
+  private void sendLoanNotice(Loan loan, NoticeEventType eventType) {
     JsonObject noticeContext = createLoanNoticeContext(loan);
 
     PatronNoticeEvent noticeEvent = new PatronNoticeEventBuilder()

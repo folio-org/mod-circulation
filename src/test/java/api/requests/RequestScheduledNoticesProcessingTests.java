@@ -171,7 +171,7 @@ public class RequestScheduledNoticesProcessingTests extends APITests {
       .forItem(item)
       .withItemBarcode(item.getBarcode())
       .at(pickupServicePoint);
-    loansFixture.checkInByBarcode(builder);
+    checkInFixture.checkInByBarcode(builder);
 
     Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
@@ -212,7 +212,7 @@ public class RequestScheduledNoticesProcessingTests extends APITests {
       .forItem(item)
       .withItemBarcode(item.getBarcode())
       .at(pickupServicePoint);
-    loansFixture.checkInByBarcode(builder);
+    checkInFixture.checkInByBarcode(builder);
 
     Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
@@ -331,7 +331,7 @@ public class RequestScheduledNoticesProcessingTests extends APITests {
       .forItem(item)
       .withItemBarcode(item.getBarcode())
       .at(pickupServicePoint);
-    loansFixture.checkInByBarcode(builder);
+    checkInFixture.checkInByBarcode(builder);
 
     Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
