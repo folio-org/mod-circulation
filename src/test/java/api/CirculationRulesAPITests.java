@@ -82,7 +82,7 @@ public class CirculationRulesAPITests extends APITests {
   }
 
   @Test
-  public void canUpdateFallbackPolicyCirculationRuleInDifferentPolicyOrder() {
+  public void canDefineFallbackPoliciesInAnyOrder() {
 
     UUID loanPolicyId = UUID.randomUUID();
     UUID requestPolicyId = UUID.randomUUID();
@@ -142,7 +142,7 @@ public class CirculationRulesAPITests extends APITests {
   }
 
   @Test
-  public void canUpdateRegularCirculationRuleInDifferentPolicyOrder() {
+  public void canDefinePoliciesForARuleInAnOrder() {
 
     UUID loanPolicyId = UUID.randomUUID();
     UUID requestPolicyId = UUID.randomUUID();
