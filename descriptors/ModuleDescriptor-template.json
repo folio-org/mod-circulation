@@ -107,6 +107,22 @@
       ]
     },
     {
+      "id": "change-due-date",
+      "version": "0.1",
+      "handlers": [
+        {
+          "methods": ["POST"],
+          "pathPattern": "/circulation/loans/{id}/change-due-date",
+          "permissionsRequired": [
+            "circulation.loans.change-due-date.post"
+          ],
+          "modulePermissions": [
+            "modperms.circulation.loans.change-due-date.post"
+          ]
+        }
+      ]
+    },
+    {
       "id": "claim-item-returned",
       "version": "0.2",
       "handlers": [
@@ -939,6 +955,11 @@
       "description": "declares the loaned item lost"
     },
     {
+      "permissionName": "circulation.loans.change-due-date.post",
+      "displayName": "circulation - change loan due date",
+      "description": "changes the due date of the loan"
+    },
+    {
       "permissionName": "circulation.loans.claim-item-returned.post",
       "displayName": "circulation - declare the loaned item as claimed returned",
       "description": "declares the loaned item as claimed returned"
@@ -1070,6 +1091,7 @@
         "circulation.loans.item.put",
         "circulation.loans.item.delete",
         "circulation.loans.collection.delete",
+        "circulation.loans.change-due-date.post",
         "circulation.loans.claim-item-returned.post",
         "circulation.loans.declare-claimed-returned-item-as-missing.post",
         "circulation.rules.put",
@@ -1915,6 +1937,25 @@
         "accounts.item.post",
         "users.item.get",
         "feefineactions.item.post"
+      ],
+      "visible": false
+    },
+    {
+      "permissionName": "modperms.circulation.loans.change-due-date.post",
+      "displayName": "module permissions for one op",
+      "description": "to reduce X-Okapi-Token size",
+      "subPermissions": [
+        "circulation.rules.loan-policy.get",
+        "circulation.rules.notice-policy.get",
+        "circulation-storage.loan-policies.item.get",
+        "circulation-storage.loans.item.get",
+        "circulation-storage.loans.item.put",
+        "circulation-storage.patron-notice-policies.item.get",
+        "inventory-storage.items.item.get",
+        "inventory-storage.items.item.put",
+        "scheduled-notice-storage.scheduled-notices.collection.delete",
+        "scheduled-notice-storage.scheduled-notices.item.post",
+        "users.item.get"
       ],
       "visible": false
     },

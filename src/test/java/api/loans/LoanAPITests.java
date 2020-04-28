@@ -269,10 +269,10 @@ public class LoanAPITests extends APITests {
     final IndividualResource user1 = usersFixture.jessica();
     final IndividualResource user2 = usersFixture.steve();
 
-    IndividualResource loan1 = loansFixture.checkOutByBarcode(
+    IndividualResource loan1 = checkOutFixture.checkOutByBarcode(
       item1, user1, new DateTime(2018, 4, 21, 11, 21, 43, UTC));
 
-    IndividualResource loan2 = loansFixture.checkOutByBarcode(
+    IndividualResource loan2 = checkOutFixture.checkOutByBarcode(
       item2, user2, new DateTime(2018, 4, 21, 11, 21, 43, UTC));
 
     accountsClient.create(new AccountBuilder()
@@ -976,10 +976,10 @@ public class LoanAPITests extends APITests {
     final IndividualResource user1 = usersFixture.jessica();
     final IndividualResource user2 = usersFixture.steve();
 
-    loansFixture.checkOutByBarcode(item1, user1,
+    checkOutFixture.checkOutByBarcode(item1, user1,
       new DateTime(2018, 4, 21, 11, 21, 43, UTC));
 
-    loansFixture.checkOutByBarcode(item2, user2,
+    checkOutFixture.checkOutByBarcode(item2, user2,
       new DateTime(2018, 4, 21, 11, 21, 43, UTC));
 
     final IndividualResource loanPolicy = loanPoliciesFixture.canCirculateRolling();
@@ -1249,11 +1249,11 @@ public class LoanAPITests extends APITests {
   public void canPageLoans() {
     IndividualResource user = usersFixture.steve();
 
-    loansFixture.checkOutByBarcode(itemsFixture.basedUponSmallAngryPlanet(), user);
-    loansFixture.checkOutByBarcode(itemsFixture.basedUponNod(), user);
-    loansFixture.checkOutByBarcode(itemsFixture.basedUponTemeraire(),user);
-    loansFixture.checkOutByBarcode(itemsFixture.basedUponUprooted(),user);
-    loansFixture.checkOutByBarcode(itemsFixture.basedUponInterestingTimes(),user);
+    checkOutFixture.checkOutByBarcode(itemsFixture.basedUponSmallAngryPlanet(), user);
+    checkOutFixture.checkOutByBarcode(itemsFixture.basedUponNod(), user);
+    checkOutFixture.checkOutByBarcode(itemsFixture.basedUponTemeraire(),user);
+    checkOutFixture.checkOutByBarcode(itemsFixture.basedUponUprooted(),user);
+    checkOutFixture.checkOutByBarcode(itemsFixture.basedUponInterestingTimes(),user);
 
     MultipleJsonRecords firstPage = loansFixture.getLoans(limit(3));
     MultipleJsonRecords secondPage = loansFixture.getLoans(limit(3),
@@ -1654,7 +1654,7 @@ public class LoanAPITests extends APITests {
     InventoryItemResource item = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource jessica = usersFixture.jessica();
 
-    IndividualResource individualResource = loansFixture.checkOutByBarcode(item,
+    IndividualResource individualResource = checkOutFixture.checkOutByBarcode(item,
       jessica, new DateTime(2018, 4, 21, 11, 21, 43, UTC));
 
     JsonObject savedLoan = loansStorageClient.get(individualResource.getId())
@@ -1673,12 +1673,12 @@ public class LoanAPITests extends APITests {
   public void canGetMultipleAnonymizedLoans() {
     InventoryItemResource firstItem = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource jessica = usersFixture.jessica();
-    IndividualResource firstLoan = loansFixture.checkOutByBarcode(firstItem,
+    IndividualResource firstLoan = checkOutFixture.checkOutByBarcode(firstItem,
       jessica, new DateTime(2018, 4, 21, 11, 21, 43, UTC));
 
     InventoryItemResource secondItem = itemsFixture.basedUponNod();
     IndividualResource henry = usersFixture.undergradHenry();
-    IndividualResource secondLoan = loansFixture.checkOutByBarcode(secondItem,
+    IndividualResource secondLoan = checkOutFixture.checkOutByBarcode(secondItem,
       henry, new DateTime(2018, 4, 21, 11, 21, 43, UTC));
 
     JsonObject firstSavedLoan = loansStorageClient.get(firstLoan.getId())

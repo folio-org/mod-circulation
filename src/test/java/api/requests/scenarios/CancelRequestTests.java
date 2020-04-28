@@ -1,11 +1,10 @@
 package api.requests.scenarios;
 
-import static api.support.http.InterfaceUrls.requestsUrl;
 import static api.support.matchers.ItemStatusCodeMatcher.hasItemStatus;
 import static org.folio.circulation.domain.RequestStatus.CLOSED_CANCELLED;
 import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.contains;
 import static org.joda.time.DateTimeZone.UTC;
 
 import java.util.Collection;
@@ -30,7 +29,7 @@ public class CancelRequestTests extends APITests {
     final IndividualResource james = usersFixture.james();
     final IndividualResource jessica = usersFixture.jessica();
 
-    loansFixture.checkOutByBarcode(smallAngryPlanet, james);
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet, james);
 
     final IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
       smallAngryPlanet, jessica, DateTime.now(UTC).minusHours(5));
@@ -62,7 +61,7 @@ public class CancelRequestTests extends APITests {
     IndividualResource charlotte = usersFixture.charlotte();
     IndividualResource rebecca = usersFixture.rebecca();
 
-    loansFixture.checkOutByBarcode(smallAngryPlanet, james);
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet, james);
 
     final IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
       smallAngryPlanet, jessica, DateTime.now(UTC).minusHours(5));
@@ -106,7 +105,7 @@ public class CancelRequestTests extends APITests {
     IndividualResource charlotte = usersFixture.charlotte();
     IndividualResource rebecca = usersFixture.rebecca();
 
-    loansFixture.checkOutByBarcode(smallAngryPlanet, james);
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet, james);
 
     final IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
       smallAngryPlanet, jessica, DateTime.now(UTC).minusHours(5));
@@ -150,7 +149,7 @@ public class CancelRequestTests extends APITests {
     IndividualResource charlotte = usersFixture.charlotte();
     IndividualResource rebecca = usersFixture.rebecca();
 
-    loansFixture.checkOutByBarcode(smallAngryPlanet, james);
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet, james);
 
     final IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
       smallAngryPlanet, jessica, DateTime.now(UTC).minusHours(5));
@@ -201,7 +200,7 @@ public class CancelRequestTests extends APITests {
       .by(jessica)
       .fulfilToHoldShelf(servicePointsFixture.cd1()));
 
-    loansFixture.checkInByBarcode(smallAngryPlanet);
+    checkInFixture.checkInByBarcode(smallAngryPlanet);
 
     requestsFixture.cancelRequest(requestByJessica);
 
@@ -215,7 +214,7 @@ public class CancelRequestTests extends APITests {
     IndividualResource requesterId = usersFixture.rebecca();
     final InventoryItemResource nod = itemsFixture.basedUponNod();
 
-    loansFixture.checkOutByBarcode(nod, requesterId);
+    checkOutFixture.checkOutByBarcode(nod, requesterId);
 
     IndividualResource firstHoldRequest = holdRequestWithNoPosition(nod,
       usersFixture.steve());

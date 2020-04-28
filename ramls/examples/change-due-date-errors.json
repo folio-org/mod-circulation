@@ -1,0 +1,13 @@
+{
+  "errors": [
+    {
+      "message": "Loan item is Claimed returned",
+      "parameters": [
+        {
+          "key": "itemId",
+          "value": "91719676-e7b5-4f83-bdab-cb70dd10c1e3"
+        }
+      ]
+    }
+  ]
+}

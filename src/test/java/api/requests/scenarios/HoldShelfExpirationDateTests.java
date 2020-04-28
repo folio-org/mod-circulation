@@ -17,15 +17,12 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.emptyOrNullString;
 
 import java.lang.reflect.Method;
-import java.net.MalformedURLException;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeoutException;
 
 import org.folio.circulation.support.ClockManager;
 import org.folio.circulation.support.http.client.IndividualResource;
@@ -81,12 +78,12 @@ public class HoldShelfExpirationDateTests extends APITests{
 
     final IndividualResource nod = itemsFixture.basedUponNod();
 
-    loansFixture.checkOutByBarcode(nod, james);
+    checkOutFixture.checkOutByBarcode(nod, james);
 
     final IndividualResource request = requestsFixture.placeHoldShelfRequest(nod, jessica,
         DateTime.now(DateTimeZone.UTC), checkInServicePoint.getId());
 
-    loansFixture.checkInByBarcode(
+    checkInFixture.checkInByBarcode(
       new CheckInByBarcodeRequestBuilder()
         .forItem(nod)
         .at(checkInServicePoint.getId()));
@@ -123,12 +120,12 @@ public class HoldShelfExpirationDateTests extends APITests{
 
     final IndividualResource nod = itemsFixture.basedUponNod();
 
-    loansFixture.checkOutByBarcode(nod, james);
+    checkOutFixture.checkOutByBarcode(nod, james);
 
     final IndividualResource request = requestsFixture.placeHoldShelfRequest(nod, jessica,
       DateTime.now(DateTimeZone.UTC), checkInServicePoint.getId());
 
-    loansFixture.checkInByBarcode(
+    checkInFixture.checkInByBarcode(
       new CheckInByBarcodeRequestBuilder()
         .forItem(nod)
         .at(checkInServicePoint.getId()));
@@ -161,12 +158,12 @@ public class HoldShelfExpirationDateTests extends APITests{
 
     final IndividualResource nod = itemsFixture.basedUponNod();
 
-    loansFixture.checkOutByBarcode(nod, james);
+    checkOutFixture.checkOutByBarcode(nod, james);
 
     final IndividualResource request = requestsFixture.placeHoldShelfRequest(nod, jessica,
       DateTime.now(DateTimeZone.UTC), checkInServicePoint.getId());
 
-    loansFixture.checkInByBarcode(
+    checkInFixture.checkInByBarcode(
       new CheckInByBarcodeRequestBuilder()
         .forItem(nod)
         .at(checkInServicePoint.getId()));
@@ -199,12 +196,12 @@ public class HoldShelfExpirationDateTests extends APITests{
 
     final IndividualResource nod = itemsFixture.basedUponNod();
 
-    loansFixture.checkOutByBarcode(nod, james);
+    checkOutFixture.checkOutByBarcode(nod, james);
 
     final IndividualResource request = requestsFixture.placeHoldShelfRequest(nod, jessica,
       DateTime.now(DateTimeZone.UTC), checkInServicePoint.getId());
 
-    loansFixture.checkInByBarcode(
+    checkInFixture.checkInByBarcode(
       new CheckInByBarcodeRequestBuilder()
         .forItem(nod)
         .at(checkInServicePoint.getId()));
@@ -230,12 +227,12 @@ public class HoldShelfExpirationDateTests extends APITests{
 
     final IndividualResource nod = itemsFixture.basedUponNod();
 
-    loansFixture.checkOutByBarcode(nod, james);
+    checkOutFixture.checkOutByBarcode(nod, james);
 
     final IndividualResource request = requestsFixture.placeHoldShelfRequest(nod, jessica,
         DateTime.now(DateTimeZone.UTC), checkInServicePoint.getId());
 
-    loansFixture.checkInByBarcode(
+    checkInFixture.checkInByBarcode(
       new CheckInByBarcodeRequestBuilder()
         .forItem(nod)
         .at(checkInServicePoint.getId()));
@@ -260,7 +257,7 @@ public class HoldShelfExpirationDateTests extends APITests{
 
     ClockManager.getClockManager().setClock(not30Days);
 
-    loansFixture.checkInByBarcode(
+    checkInFixture.checkInByBarcode(
         new CheckInByBarcodeRequestBuilder()
           .forItem(nod)
           .at(checkInServicePoint.getId()));
@@ -292,12 +289,12 @@ public class HoldShelfExpirationDateTests extends APITests{
 
     IndividualResource nod = itemsFixture.basedUponNod();
 
-    loansFixture.checkOutByBarcode(nod, james);
+    checkOutFixture.checkOutByBarcode(nod, james);
 
     final IndividualResource request = requestsFixture.placeHoldShelfRequest(nod, jessica,
         DateTime.now(DateTimeZone.UTC), checkInServicePoint.getId());
 
-    loansFixture.checkInByBarcode(
+    checkInFixture.checkInByBarcode(
       new CheckInByBarcodeRequestBuilder()
         .forItem(nod)
         .at(checkInServicePoint.getId()));
@@ -319,7 +316,7 @@ public class HoldShelfExpirationDateTests extends APITests{
       storedRequest.getString("holdShelfExpirationDate"),
       isEquivalentTo(expectedExpirationDate));
 
-    loansFixture.checkInByBarcode(
+    checkInFixture.checkInByBarcode(
         new CheckInByBarcodeRequestBuilder()
           .forItem(nod)
           .at(alternateCheckInServicePoint.getId()));
@@ -346,7 +343,7 @@ public class HoldShelfExpirationDateTests extends APITests{
     final IndividualResource request = requestsFixture.placeHoldShelfRequest(nod, jessica,
         DateTime.now(DateTimeZone.UTC), requestServicePoint.getId(), "Page");
 
-    loansFixture.checkInByBarcode(
+    checkInFixture.checkInByBarcode(
       new CheckInByBarcodeRequestBuilder()
         .forItem(nod)
         .at(checkInServicePoint.getId()));
@@ -378,7 +375,7 @@ public class HoldShelfExpirationDateTests extends APITests{
 
     IndividualResource nod = itemsFixture.basedUponNod();
 
-    loansFixture.checkOutByBarcode(nod, james);
+    checkOutFixture.checkOutByBarcode(nod, james);
 
     final IndividualResource request = requestsFixture.placeHoldShelfRequest(nod, jessica,
         DateTime.now(DateTimeZone.UTC), alternateCheckInServicePoint.getId());
@@ -393,7 +390,7 @@ public class HoldShelfExpirationDateTests extends APITests{
     assertThat("request status snapshot in storage is " + OPEN_NOT_YET_FILLED,
       storedRequest.getString("status"), is(OPEN_NOT_YET_FILLED));
 
-    loansFixture.checkInByBarcode(
+    checkInFixture.checkInByBarcode(
       new CheckInByBarcodeRequestBuilder()
         .forItem(nod)
         .at(checkInServicePoint.getId()));
@@ -431,7 +428,7 @@ public class HoldShelfExpirationDateTests extends APITests{
     assertThat("request status snapshot in storage is " + OPEN_NOT_YET_FILLED,
       storedRequest.getString("status"), is(OPEN_NOT_YET_FILLED));
 
-    loansFixture.checkInByBarcode(
+    checkInFixture.checkInByBarcode(
       new CheckInByBarcodeRequestBuilder()
         .forItem(nod)
         .at(checkInServicePoint.getId()));
@@ -456,12 +453,12 @@ public class HoldShelfExpirationDateTests extends APITests{
 
     IndividualResource nod = itemsFixture.basedUponNod();
 
-    loansFixture.checkOutByBarcode(nod, james);
+    checkOutFixture.checkOutByBarcode(nod, james);
 
     final IndividualResource request = requestsFixture.placeHoldShelfRequest(nod, jessica,
         DateTime.now(DateTimeZone.UTC), alternateCheckInServicePoint.getId());
 
-    loansFixture.checkInByBarcode(
+    checkInFixture.checkInByBarcode(
       new CheckInByBarcodeRequestBuilder()
         .forItem(nod)
         .at(checkInServicePoint.getId()));
@@ -479,7 +476,7 @@ public class HoldShelfExpirationDateTests extends APITests{
     assertThat("request hold shelf expiration date is not set",
       storedRequest.getString("holdShelfExpirationDate"), emptyOrNullString());
 
-    loansFixture.checkInByBarcode(
+    checkInFixture.checkInByBarcode(
         new CheckInByBarcodeRequestBuilder()
           .forItem(nod)
           .at(transitCheckInServicePoint.getId()));

@@ -62,7 +62,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
 
     final UUID unknownLoanPolicyId = UUID.randomUUID();
 
-    loansFixture.checkOutByBarcode(smallAngryPlanet, jessica,
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet, jessica,
       new DateTime(2018, DateTimeConstants.APRIL, 21, 11, 21, 43));
 
     IndividualResource record = loanPoliciesFixture.create(new LoanPolicyBuilder()
@@ -89,7 +89,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource steve = usersFixture.steve();
 
-    loansFixture.checkOutByBarcode(smallAngryPlanet, steve);
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet, steve);
 
     usersFixture.remove(steve);
 
@@ -107,7 +107,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource steve = usersFixture.steve();
 
-    loansFixture.checkOutByBarcode(smallAngryPlanet, steve);
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet, steve);
 
     itemsClient.delete(smallAngryPlanet.getId());
 
@@ -125,7 +125,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
     IndividualResource james = usersFixture.james();
     final IndividualResource jessica = usersFixture.jessica();
 
-    loansFixture.checkOutByBarcode(smallAngryPlanet, jessica,
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet, jessica,
       new DateTime(2018, DateTimeConstants.APRIL, 21, 11, 21, 43));
 
     final Response response = loansFixture.attemptOverride(smallAngryPlanet,
@@ -140,7 +140,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
   public void cannotOverrideRenewalWhenCommentPropertyIsBlank() {
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource jessica = usersFixture.jessica();
-    loansFixture.checkOutByBarcode(smallAngryPlanet, jessica);
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet, jessica);
 
     final Response response = loansFixture.attemptOverride(smallAngryPlanet,
       jessica, StringUtils.EMPTY, null);
@@ -158,7 +158,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
     DateTime loanDueDate =
       new DateTime(2018, DateTimeConstants.APRIL, 21, 11, 21, 43);
 
-    loansFixture.checkOutByBarcode(smallAngryPlanet, jessica, loanDueDate);
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet, jessica, loanDueDate);
 
     LoanPolicyBuilder nonRenewablePolicy = new LoanPolicyBuilder()
       .withName("Non Renewable Policy")
@@ -184,7 +184,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
     DateTime loanDueDate =
       new DateTime(2018, DateTimeConstants.APRIL, 21, 11, 21, 43);
 
-    loansFixture.checkOutByBarcode(smallAngryPlanet, jessica, loanDueDate);
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet, jessica, loanDueDate);
 
     LoanPolicyBuilder nonRenewablePolicy = new LoanPolicyBuilder()
       .withName("Non Renewable Policy")
@@ -226,7 +226,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
     DateTime loanDueDate =
       new DateTime(2018, DateTimeConstants.APRIL, 21, 11, 21, 43);
 
-    loansFixture.checkOutByBarcode(smallAngryPlanet, jessica, loanDueDate);
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet, jessica, loanDueDate);
 
     FixedDueDateSchedulesBuilder fixedDueDateSchedules = new FixedDueDateSchedulesBuilder()
       .withName("Fixed Due Date Schedule")
@@ -259,7 +259,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
     DateTime loanDueDate =
       new DateTime(2018, DateTimeConstants.APRIL, 21, 11, 21, 43);
 
-    final IndividualResource loan = loansFixture.checkOutByBarcode(
+    final IndividualResource loan = checkOutFixture.checkOutByBarcode(
       smallAngryPlanet, jessica, loanDueDate);
 
     final UUID loanId = loan.getId();
@@ -318,7 +318,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
     DateTime loanDueDate =
       new DateTime(2018, DateTimeConstants.APRIL, 21, 11, 21, 43);
 
-    final IndividualResource loan = loansFixture.checkOutByBarcode(
+    final IndividualResource loan = checkOutFixture.checkOutByBarcode(
       smallAngryPlanet, jessica, loanDueDate);
 
     final UUID loanId = loan.getId();
@@ -376,7 +376,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
     use(limitedRenewalsPolicy);
 
     DateTime loanDate = DateTime.now(DateTimeZone.UTC);
-    loansFixture.checkOutByBarcode(smallAngryPlanet, jessica, loanDate).getJson();
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet, jessica, loanDate).getJson();
 
     loansFixture.renewLoan(smallAngryPlanet, jessica);
 
@@ -412,7 +412,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
 
     final DateTime loanDate = DateTime.now(DateTimeZone.UTC).minusWeeks(1);
 
-    final JsonObject loanJson = loansFixture.checkOutByBarcode(smallAngryPlanet,
+    final JsonObject loanJson = checkOutFixture.checkOutByBarcode(smallAngryPlanet,
       usersFixture.jessica(), loanDate).getJson();
 
     declareLostFixtures.declareItemLost(loanJson);
@@ -443,7 +443,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource jessica = usersFixture.jessica();
 
-    loansFixture.checkOutByBarcode(smallAngryPlanet, jessica,
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet, jessica,
       new DateTime(2018, 4, 21, 11, 21, 43));
 
     LoanPolicyBuilder currentDueDateRollingPolicy = new LoanPolicyBuilder()
@@ -474,7 +474,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
     DateTime loanDueDate =
       new DateTime(2018, DateTimeConstants.APRIL, 21, 11, 21, 43);
 
-    loansFixture.checkOutByBarcode(smallAngryPlanet, jessica, loanDueDate);
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet, jessica, loanDueDate);
 
     LoanPolicyBuilder nonRenewablePolicy = new LoanPolicyBuilder()
       .withName("Non Renewable Policy")
@@ -508,7 +508,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
     DateTime loanDueDate =
       new DateTime(2018, DateTimeConstants.APRIL, 21, 11, 21, 43);
 
-    loansFixture.checkOutByBarcode(smallAngryPlanet, jessica, loanDueDate);
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet, jessica, loanDueDate);
 
     LoanPolicyBuilder nonRenewablePolicy = new LoanPolicyBuilder()
       .withName("Non Renewable Policy")
@@ -525,7 +525,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
         OVERRIDE_COMMENT, newDueDate.toString()).getJson();
     assertLoanHasActionComment(loanAfterOverride, OVERRIDE_COMMENT);
 
-    JsonObject loanAfterCheckIn = loansFixture.checkInByBarcode(smallAngryPlanet).getLoan();
+    JsonObject loanAfterCheckIn = checkInFixture.checkInByBarcode(smallAngryPlanet).getLoan();
     assertActionCommentIsAbsentInLoan(loanAfterCheckIn);
   }
 
@@ -537,7 +537,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
     DateTime loanDueDate =
       new DateTime(2018, DateTimeConstants.APRIL, 21, 11, 21, 43);
 
-    loansFixture.checkOutByBarcode(smallAngryPlanet, jessica, loanDueDate);
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet, jessica, loanDueDate);
 
     LoanPolicyBuilder notLoanablePolicy = new LoanPolicyBuilder()
       .withName("Not Loanable Policy")
@@ -564,7 +564,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
     DateTime loanDueDate =
       new DateTime(2018, DateTimeConstants.APRIL, 21, 11, 21, 43);
 
-    loansFixture.checkOutByBarcode(smallAngryPlanet, jessica, loanDueDate);
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet, jessica, loanDueDate);
 
     LoanPolicyBuilder notLoanablePolicy = new LoanPolicyBuilder()
       .withName("Not Loanable Policy")
@@ -597,7 +597,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource jessica = usersFixture.jessica();
 
-    loansFixture.checkOutByBarcode(smallAngryPlanet, jessica, DateTime.now());
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet, jessica, DateTime.now());
 
     LoanPolicyBuilder loanablePolicy = new LoanPolicyBuilder()
       .withName("Loanable Policy")
@@ -652,7 +652,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
     final DateTime loanDate =
       new DateTime(2018, 3, 18, 11, 43, 54, DateTimeZone.UTC);
 
-    loansFixture.checkOutByBarcode(
+    checkOutFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
         .forItem(smallAngryPlanet)
         .to(steve)

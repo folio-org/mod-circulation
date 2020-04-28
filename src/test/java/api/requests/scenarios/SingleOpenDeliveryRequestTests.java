@@ -9,20 +9,16 @@ import static api.support.builders.RequestBuilder.OPEN_AWAITING_DELIVERY;
 import static api.support.matchers.ItemStatusCodeMatcher.hasItemStatus;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.Matchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
 
-import java.net.MalformedURLException;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeoutException;
-
-import api.support.APITests;
+import org.folio.circulation.support.http.client.IndividualResource;
+import org.folio.circulation.support.http.client.Response;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.junit.Test;
 
-import org.folio.circulation.support.http.client.IndividualResource;
-import org.folio.circulation.support.http.client.Response;
+import api.support.APITests;
 
 public class SingleOpenDeliveryRequestTests extends APITests {
 
@@ -33,12 +29,12 @@ public class SingleOpenDeliveryRequestTests extends APITests {
     IndividualResource james = usersFixture.james();
     IndividualResource jessica = usersFixture.jessica();
 
-    loansFixture.checkOutByBarcode(smallAngryPlanet, james);
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet, james);
 
     IndividualResource requestByJessica = requestsFixture.placeDeliveryRequest(
       smallAngryPlanet, jessica, new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC));
 
-    loansFixture.checkInByBarcode(smallAngryPlanet);
+    checkInFixture.checkInByBarcode(smallAngryPlanet);
 
     validateRequestStatusAndPosition(requestByJessica, OPEN_AWAITING_DELIVERY, 1);
 
@@ -52,14 +48,14 @@ public class SingleOpenDeliveryRequestTests extends APITests {
     IndividualResource james = usersFixture.james();
     IndividualResource jessica = usersFixture.jessica();
 
-    loansFixture.checkOutByBarcode(smallAngryPlanet, james);
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet, james);
 
     IndividualResource requestByJessica = requestsFixture.placeDeliveryRequest(
       smallAngryPlanet, jessica, new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC));
 
-    loansFixture.checkInByBarcode(smallAngryPlanet);
+    checkInFixture.checkInByBarcode(smallAngryPlanet);
 
-    loansFixture.checkOutByBarcode(smallAngryPlanet, jessica);
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet, jessica);
 
     validateRequestStatus(requestByJessica, CLOSED_FILLED);
     validateItemStatus(smallAngryPlanet, CHECKED_OUT);
@@ -73,14 +69,14 @@ public class SingleOpenDeliveryRequestTests extends APITests {
     IndividualResource jessica = usersFixture.jessica();
     IndividualResource rebecca = usersFixture.rebecca();
 
-    loansFixture.checkOutByBarcode(smallAngryPlanet, james);
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet, james);
 
     IndividualResource requestByJessica = requestsFixture.placeDeliveryRequest(
       smallAngryPlanet, jessica, new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC));
 
-    loansFixture.checkInByBarcode(smallAngryPlanet);
+    checkInFixture.checkInByBarcode(smallAngryPlanet);
 
-    Response response = loansFixture.attemptCheckOutByBarcode(smallAngryPlanet, rebecca);
+    Response response = checkOutFixture.attemptCheckOutByBarcode(smallAngryPlanet, rebecca);
     assertThat(response.getStatusCode(), equalTo(422));
     assertThat(response.getBody(), containsString("cannot be checked out to user"));
     assertThat(response.getBody(), containsString("because it has been requested by another patron"));
@@ -96,17 +92,17 @@ public class SingleOpenDeliveryRequestTests extends APITests {
     IndividualResource james = usersFixture.james();
     IndividualResource jessica = usersFixture.jessica();
 
-    loansFixture.checkOutByBarcode(smallAngryPlanet, james);
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet, james);
 
     IndividualResource requestByJessica = requestsFixture.placeDeliveryRequest(
       smallAngryPlanet, jessica, new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC));
 
-    loansFixture.checkInByBarcode(smallAngryPlanet);
+    checkInFixture.checkInByBarcode(smallAngryPlanet);
 
     validateRequestStatusAndPosition(requestByJessica, OPEN_AWAITING_DELIVERY, 1);
     validateItemStatus(smallAngryPlanet, AWAITING_DELIVERY);
 
-    loansFixture.checkInByBarcode(smallAngryPlanet);
+    checkInFixture.checkInByBarcode(smallAngryPlanet);
 
     validateRequestStatusAndPosition(requestByJessica, OPEN_AWAITING_DELIVERY, 1);
     validateItemStatus(smallAngryPlanet, AWAITING_DELIVERY);
@@ -118,14 +114,14 @@ public class SingleOpenDeliveryRequestTests extends APITests {
     IndividualResource james = usersFixture.james();
     IndividualResource jessica = usersFixture.jessica();
 
-    loansFixture.checkOutByBarcode(smallAngryPlanet, james);
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet, james);
 
     IndividualResource requestByJessica = requestsFixture.placeDeliveryRequest(
       smallAngryPlanet, jessica, new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC));
 
     requestsFixture.cancelRequest(requestByJessica);
 
-    loansFixture.checkInByBarcode(smallAngryPlanet);
+    checkInFixture.checkInByBarcode(smallAngryPlanet);
 
     validateRequestStatus(requestByJessica, CLOSED_CANCELLED);
     validateItemStatus(smallAngryPlanet, AVAILABLE);

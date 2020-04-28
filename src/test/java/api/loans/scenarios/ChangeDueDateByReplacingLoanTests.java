@@ -44,13 +44,12 @@ import api.support.fixtures.TemplateContextMatchers;
 import api.support.http.InventoryItemResource;
 import io.vertx.core.json.JsonObject;
 
-public class ChangeDueDateTests extends APITests {
-
+public class ChangeDueDateByReplacingLoanTests extends APITests {
   @Test
   public void canManuallyChangeTheDueDateOfLoan() {
     final InventoryItemResource item = itemsFixture.basedUponNod();
 
-    IndividualResource loan = loansFixture.checkOutByBarcode(item);
+    IndividualResource loan = checkOutFixture.checkOutByBarcode(item);
 
     Response fetchedLoan = loansClient.getById(loan.getId());
 
@@ -104,7 +103,7 @@ public class ChangeDueDateTests extends APITests {
   public void cannotManuallyChangeTheDueDateOfClaimedReturnedLoan() {
     final InventoryItemResource item = itemsFixture.basedUponNod();
 
-    IndividualResource loan = loansFixture.checkOutByBarcode(item);
+    IndividualResource loan = checkOutFixture.checkOutByBarcode(item);
 
     final ClaimItemReturnedRequestBuilder claimedItemBuilder =
      (new ClaimItemReturnedRequestBuilder()).forLoan(loan.getId().toString());
@@ -134,7 +133,7 @@ public class ChangeDueDateTests extends APITests {
   public void canManuallyReapplyTheDueDateOfClaimedReturnedLoan() {
     final InventoryItemResource item = itemsFixture.basedUponNod();
 
-    IndividualResource loan = loansFixture.checkOutByBarcode(item);
+    IndividualResource loan = checkOutFixture.checkOutByBarcode(item);
 
     final ClaimItemReturnedRequestBuilder claimedItemBuilder =
      (new ClaimItemReturnedRequestBuilder()).forLoan(loan.getId().toString());
@@ -158,7 +157,7 @@ public class ChangeDueDateTests extends APITests {
   public void canChangeDueDateOfLoanWithOpenRequest() {
     final InventoryItemResource item = itemsFixture.basedUponNod();
 
-    IndividualResource loan = loansFixture.checkOutByBarcode(item);
+    IndividualResource loan = checkOutFixture.checkOutByBarcode(item);
 
     requestsFixture.place(new RequestBuilder()
       .hold()
@@ -261,7 +260,7 @@ public class ChangeDueDateTests extends APITests {
     IndividualResource steve = usersFixture.steve();
 
 
-    IndividualResource loan = loansFixture.checkOutByBarcode(smallAngryPlanet, steve);
+    IndividualResource loan = checkOutFixture.checkOutByBarcode(smallAngryPlanet, steve);
     JsonObject loanToChange = loan.getJson().copy();
 
     DateTime dueDate = DateTime.parse(loanToChange.getString("dueDate"));
@@ -293,7 +292,7 @@ public class ChangeDueDateTests extends APITests {
     useLostItemPolicy(lostItemFeePoliciesFixture.chargeFee().getId());
 
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
-    final IndividualResource loan = loansFixture.checkOutByBarcode(smallAngryPlanet);
+    final IndividualResource loan = checkOutFixture.checkOutByBarcode(smallAngryPlanet);
     final JsonObject loanJson = loan.getJson();
 
     declareLostFixtures.declareItemLost(loanJson);

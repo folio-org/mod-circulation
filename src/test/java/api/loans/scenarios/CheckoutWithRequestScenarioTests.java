@@ -4,14 +4,11 @@ import static api.support.builders.FixedDueDateSchedule.wholeMonth;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static org.folio.circulation.domain.policy.DueDateManagement.KEEP_THE_CURRENT_DUE_DATE;
 import static org.folio.circulation.domain.policy.Period.weeks;
-import static org.hamcrest.Matchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
 import static org.joda.time.DateTimeConstants.SEPTEMBER;
 
-import java.net.MalformedURLException;
 import java.util.UUID;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeoutException;
 
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
@@ -41,7 +38,7 @@ public class CheckoutWithRequestScenarioTests extends APITests {
       .withPickupServicePointId(pickupServicePointId)
       .by(charlotte));
 
-    loansFixture.checkOutByBarcode(smallAngryPlanet, charlotte);
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet, charlotte);
 
     Response changedItem = itemsClient.getById(smallAngryPlanet.getId());
 
@@ -70,7 +67,7 @@ public class CheckoutWithRequestScenarioTests extends APITests {
       overdueFinePoliciesFixture.facultyStandard().getId(),
       lostItemFeePoliciesFixture.facultyStandard().getId());
 
-    loansFixture.checkOutByBarcode(smallAngryPlanet, usersFixture.steve());
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet, usersFixture.steve());
 
     requestsClient.create(new RequestBuilder()
       .hold()
@@ -84,11 +81,11 @@ public class CheckoutWithRequestScenarioTests extends APITests {
       .withPickupServicePointId(pickupServicePointId)
       .by(james));
 
-    loansFixture.checkInByBarcode(smallAngryPlanet);
+    checkInFixture.checkInByBarcode(smallAngryPlanet);
 
     final DateTime loanDate = new DateTime(2019, 5, 5, 11, 32, 12, DateTimeZone.UTC);
 
-    final IndividualResource loan = loansFixture.checkOutByBarcode(new CheckOutByBarcodeRequestBuilder()
+    final IndividualResource loan = checkOutFixture.checkOutByBarcode(new CheckOutByBarcodeRequestBuilder()
       .forItem(smallAngryPlanet)
       .to(charlotte)
       .at(pickupServicePointId)
@@ -133,7 +130,7 @@ public class CheckoutWithRequestScenarioTests extends APITests {
 
     DateTime loanDate = new DateTime(2019, 9, 20, 11, 32, 12, DateTimeZone.UTC);
 
-    loansFixture.checkOutByBarcode(smallAngryPlanet, usersFixture.steve(), loanDate);
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet, usersFixture.steve(), loanDate);
 
     requestsClient.create(new RequestBuilder()
       .hold()
@@ -147,9 +144,9 @@ public class CheckoutWithRequestScenarioTests extends APITests {
       .withPickupServicePointId(pickupServicePointId)
       .by(james));
 
-    loansFixture.checkInByBarcode(smallAngryPlanet);
+    checkInFixture.checkInByBarcode(smallAngryPlanet);
 
-    final IndividualResource loan = loansFixture.checkOutByBarcode(new CheckOutByBarcodeRequestBuilder()
+    final IndividualResource loan = checkOutFixture.checkOutByBarcode(new CheckOutByBarcodeRequestBuilder()
       .forItem(smallAngryPlanet)
       .to(charlotte)
       .at(pickupServicePointId)

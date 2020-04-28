@@ -31,8 +31,7 @@ public class ItemExamples {
       .withCopyNumber(copyNumber);
   }
 
-  public static ItemBuilder basedUponNod(
-    UUID bookMaterialTypeId,
+  public static ItemBuilder basedUponNod(UUID bookMaterialTypeId,
     UUID loanTypeId) {
 
     return new ItemBuilder()
