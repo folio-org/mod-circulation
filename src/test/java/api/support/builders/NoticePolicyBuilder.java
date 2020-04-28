@@ -13,12 +13,14 @@ public class NoticePolicyBuilder extends JsonBuilder implements Builder {
   private final boolean active;
   private final List<JsonObject> loanNotices;
   private final List<JsonObject> requestNotices;
+  private final List<JsonObject> feeFineNotices;
 
   public NoticePolicyBuilder() {
     this(UUID.randomUUID(),
       "Example Notice Policy",
       "An example notice policy",
       false,
+      new ArrayList<>(),
       new ArrayList<>(),
       new ArrayList<>()
     );
@@ -31,7 +33,8 @@ public class NoticePolicyBuilder extends JsonBuilder implements Builder {
     String description,
     boolean active,
     List<JsonObject> loanNotices,
-    List<JsonObject> requestNotices) {
+    List<JsonObject> requestNotices,
+    List<JsonObject> feeFineNotices) {
 
     this.id = id;
     this.name = name;
@@ -39,6 +42,7 @@ public class NoticePolicyBuilder extends JsonBuilder implements Builder {
     this.active = active;
     this.loanNotices = loanNotices;
     this.requestNotices = requestNotices;
+    this.feeFineNotices = feeFineNotices;
   }
 
   public NoticePolicyBuilder active() {
@@ -48,7 +52,8 @@ public class NoticePolicyBuilder extends JsonBuilder implements Builder {
       this.description,
       true,
       this.loanNotices,
-      this.requestNotices);
+      this.requestNotices,
+      this.feeFineNotices);
   }
 
   public NoticePolicyBuilder withName(String name) {
@@ -58,7 +63,8 @@ public class NoticePolicyBuilder extends JsonBuilder implements Builder {
       this.description,
       this.active,
       this.loanNotices,
-      this.requestNotices);
+      this.requestNotices,
+      this.feeFineNotices);
   }
 
   public NoticePolicyBuilder withId(UUID id) {
@@ -68,7 +74,8 @@ public class NoticePolicyBuilder extends JsonBuilder implements Builder {
       this.description,
       this.active,
       this.loanNotices,
-      this.requestNotices);
+      this.requestNotices,
+      this.feeFineNotices);
   }
 
   public NoticePolicyBuilder withLoanNotices(List<JsonObject> loanNotices) {
@@ -78,7 +85,8 @@ public class NoticePolicyBuilder extends JsonBuilder implements Builder {
       this.description,
       this.active,
       loanNotices,
-      this.requestNotices);
+      this.requestNotices,
+      this.feeFineNotices);
   }
 
   public NoticePolicyBuilder withRequestNotices(List<JsonObject> requestNotices) {
@@ -88,7 +96,19 @@ public class NoticePolicyBuilder extends JsonBuilder implements Builder {
       this.description,
       this.active,
       this.loanNotices,
-      requestNotices);
+      requestNotices,
+      this.feeFineNotices);
+  }
+
+  public NoticePolicyBuilder withFeeFineNotices(List<JsonObject> feeFineNotices) {
+    return new NoticePolicyBuilder(
+      this.id,
+      this.name,
+      this.description,
+      this.active,
+      this.loanNotices,
+      this.requestNotices,
+      feeFineNotices);
   }
 
   @Override
@@ -104,6 +124,7 @@ public class NoticePolicyBuilder extends JsonBuilder implements Builder {
     put(request, "active", this.active);
     put(request, "loanNotices", loanNotices);
     put(request, "requestNotices", requestNotices);
+    put(request, "feeFineNotices", feeFineNotices);
 
     return request;
   }

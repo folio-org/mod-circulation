@@ -22,8 +22,28 @@ public class FeeFineAction {
     return representation.getDouble("balance");
   }
 
+  public Double getAmountAction() {
+    return representation.getDouble("amountAction");
+  }
+
+  public String getUserId() {
+    return representation.getString("userId");
+  }
+
+  public String getTypeAction() {
+    return representation.getString("typeAction");
+  }
+
   public DateTime getDateAction() {
     return getDateTimeProperty(representation, "dateAction");
+  }
+
+  public String getComments() {
+    return representation.getString("comments");
+  }
+
+  public String getId() {
+    return representation.getString("id");
   }
 
   public static FeeFineAction from(JsonObject representation) {

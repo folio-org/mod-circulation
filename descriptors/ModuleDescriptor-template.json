@@ -726,6 +726,27 @@
           "methods": [
             "POST"
           ],
+          "pathPattern": "/circulation/fee-fine-scheduled-notices-processing",
+          "modulePermissions": [
+            "scheduled-notice-storage.scheduled-notices.item.get",
+            "scheduled-notice-storage.scheduled-notices.collection.get",
+            "scheduled-notice-storage.scheduled-notices.item.delete",
+            "scheduled-notice-storage.scheduled-notices.item.put",
+            "configuration.entries.item.get",
+            "configuration.entries.collection.get",
+            "patron-notice.post",
+            "accounts.item.get",
+            "accounts.collection.get",
+            "feefineactions.item.get",
+            "feefineactions.collection.get"
+          ],
+          "unit": "minute",
+          "delay": "2"
+        },
+        {
+          "methods": [
+            "POST"
+          ],
           "pathPattern": "/circulation/scheduled-anonymize-processing",
           "modulePermissions": [
             "circulation-storage.loans.item.put",

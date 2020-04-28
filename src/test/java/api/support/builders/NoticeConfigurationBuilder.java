@@ -85,7 +85,15 @@ public class NoticeConfigurationBuilder extends JsonBuilder implements Builder {
     return withEventType("Hold expiration");
   }
 
-  private NoticeConfigurationBuilder withTiming(String timing, JsonObject timingPeriod) {
+  public NoticeConfigurationBuilder withOverdueFineReturnedEvent() {
+    return withEventType("Overdue fine returned");
+  }
+
+  public NoticeConfigurationBuilder withOverdueFineRenewedEvent() {
+    return withEventType("Overdue fine renewed");
+  }
+
+  public NoticeConfigurationBuilder withTiming(String timing, JsonObject timingPeriod) {
     return new NoticeConfigurationBuilder(
       templateId,
       this.format,

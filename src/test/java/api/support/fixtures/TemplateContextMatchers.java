@@ -10,6 +10,7 @@ import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
+import static org.hamcrest.Matchers.closeTo;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -17,6 +18,8 @@ import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
+import org.folio.circulation.domain.Account;
+import org.folio.circulation.domain.FeeFineAction;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.hamcrest.Matcher;
 
@@ -218,5 +221,17 @@ public class TemplateContextMatchers {
       toStringMatcher(getItemContextMatchers(item, true));
 
     return allOf(loanContextMatcher, itemContextMatcher, loanPolicyMatcher);
+  }
+
+  public static Matcher<?> getFeeFineContextMatcher(Account account, FeeFineAction action) {
+    return allOf(
+      hasJsonPath("fee.owner", is(account.getFeeFineOwner())),
+      hasJsonPath("fee.type", is(account.getFeeFineType())),
+      hasJsonPath("fee.actionType", is(action.getTypeAction())),
+      hasJsonPath("fee.actionDateTime", isEquivalentTo(action.getDateAction())),
+      hasJsonPath("fee.actionAmount", is(action.getAmountAction())),
+      hasJsonPath("fee.amount", is(account.getAmount())),
+      hasJsonPath("fee.balance", is(action.getBalance()))
+    );
   }
 }
