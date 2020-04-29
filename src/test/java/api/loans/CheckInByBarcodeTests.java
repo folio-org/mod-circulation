@@ -178,17 +178,14 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
 
   final IndividualResource nod = itemsFixture.basedUponNod(
     item -> item
-      .withTemporaryLocation(homeLocation.getId())
-      .withEnumeration("v.70:no.1-6")
-      .withChronology("1987:Jan.-June")
-      .withVolume("testVolume"));
+      .withTemporaryLocation(homeLocation.getId()));
 
-  checkOutFixture.checkOutByBarcode(nod, james, new DateTime(2018, 3, 1, 13, 25, 46, DateTimeZone.UTC));
+  checkOutFixture.checkOutByBarcode(nod, james);
 
   // Change the item's effective location to verify itemEffectiveLocationIdAtCheckOut is unchanged
   JsonObject update = nod.getJson();
   update.put("temporaryLocationId", anotherLocationId);
-  itemsClient.attemptReplace(nod.getId(), update);
+  itemsClient.replace(nod.getId(), update);
 
   final CheckInByBarcodeResponse checkInResponse = checkInFixture.checkInByBarcode(
     new CheckInByBarcodeRequestBuilder()

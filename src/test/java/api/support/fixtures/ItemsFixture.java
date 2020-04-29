@@ -12,7 +12,6 @@ import java.util.function.Function;
 
 import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.support.http.client.IndividualResource;
-import org.folio.circulation.support.http.client.Response;
 
 import api.support.builders.HoldingBuilder;
 import api.support.builders.InstanceBuilder;

@@ -10,7 +10,6 @@ import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.domain.ConfigurationRepository;
 import org.folio.circulation.domain.Item;
@@ -170,7 +169,7 @@ public class CheckOutByBarcodeResource extends Resource {
       .thenComposeAsync(r -> r.after(itemLimitValidator::refuseWhenItemLimitIsReached))
       .thenComposeAsync(r -> r.after(overdueFinePolicyRepository::lookupOverdueFinePolicy))
       .thenComposeAsync(r -> r.after(lostItemPolicyRepository::lookupLostItemPolicy))
-      .thenApply(r -> r.next(this::addItemLocationIdAtCheckout))
+      .thenApply(r -> r.next(this::setItemLocationIdAtCheckout))
       .thenComposeAsync(r -> r.after(relatedRecords -> checkOutStrategy.checkOut(relatedRecords, request, clients)))
       .thenComposeAsync(r -> r.after(requestQueueUpdate::onCheckOut))
       .thenComposeAsync(r -> r.after(updateItem::onCheckOut))
@@ -240,7 +239,7 @@ public class CheckOutByBarcodeResource extends Resource {
     return singleValidationError(message, ITEM_BARCODE, item.getBarcode());
   }
 
-  private Result<LoanAndRelatedRecords> addItemLocationIdAtCheckout(
+  private Result<LoanAndRelatedRecords> setItemLocationIdAtCheckout(
     LoanAndRelatedRecords relatedRecords) {
 
     return succeeded(relatedRecords.withItemEffectiveLocationIdAtCheckOut());
