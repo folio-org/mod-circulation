@@ -146,7 +146,7 @@ public class DeclareLostAPITests extends APITests {
       .withName("Declared lost fee test policy")
       .chargeProcessingFee()
       .withLostItemProcessingFee(expectedProcessingFee)
-      .withChargeAmountItem("anotherCost", expectedItemFee);
+      .withSetCost(expectedItemFee);
 
     useLostItemPolicy(lostItemFeePoliciesFixture.create(lostItemPolicy).getId());
 
@@ -176,7 +176,7 @@ public class DeclareLostAPITests extends APITests {
       .facultyStandardPolicy()
       .withName("Declared lost fee test policy")
       .doNotChargeProcessingFee()
-      .withChargeAmountItem("anotherCost", expectedItemFee);
+      .withSetCost(expectedItemFee);
 
     useLostItemPolicy(lostItemFeePoliciesFixture.create(lostItemPolicy).getId());
 
@@ -201,7 +201,7 @@ public class DeclareLostAPITests extends APITests {
       .withName("Declared lost fee test policy")
       .chargeProcessingFee()
       .withLostItemProcessingFee(expectedProcessingFee)
-      .withChargeAmountItem("anotherCost", 0.0);
+      .withSetCost(0.0);
 
     useLostItemPolicy(lostItemFeePoliciesFixture.create(lostItemPolicy).getId());
 
@@ -321,7 +321,7 @@ public class DeclareLostAPITests extends APITests {
       .facultyStandardPolicy()
       .withName("Declared lost fee test policy")
       .doNotChargeProcessingFee()
-      .withChargeAmountItem("anotherCost", itemFee);
+      .withSetCost(itemFee);
 
     useLostItemPolicy(lostItemFeePoliciesFixture.create(lostItemPolicy).getId());
 
@@ -332,17 +332,12 @@ public class DeclareLostAPITests extends APITests {
   }
 
   @Test
-  @Parameters( {
-    "actualCost",
-    "null",
-    "someNewCostType"
-  })
-  public void shouldNotAssignFeeIfChargeTypeNotAnotherCost(@Nullable String chargeType) {
+  public void shouldNotAutomaticallyChargeActualCostFeeToPatron() {
     final LostItemFeePolicyBuilder lostItemPolicy = lostItemFeePoliciesFixture
       .facultyStandardPolicy()
       .withName("Declared lost fee test policy")
       .doNotChargeProcessingFee()
-      .withChargeAmountItem(chargeType, 10.0);
+      .withActualCost(10.0);
 
     useLostItemPolicy(lostItemFeePoliciesFixture.create(lostItemPolicy).getId());
 
