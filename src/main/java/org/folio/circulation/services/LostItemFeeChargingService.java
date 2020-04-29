@@ -4,13 +4,11 @@ import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.domain.FeeFine.LOST_ITEM_FEE_TYPE;
 import static org.folio.circulation.domain.FeeFine.LOST_ITEM_PROCESSING_FEE_TYPE;
 import static org.folio.circulation.domain.LoanAction.CLOSED_LOAN;
-import static org.folio.circulation.domain.policy.lostitem.ChargeAmountType.SET_COST;
 import static org.folio.circulation.support.Result.combineAll;
 import static org.folio.circulation.support.Result.failed;
 import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 
-import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -30,8 +28,8 @@ import org.folio.circulation.domain.ServicePointRepository;
 import org.folio.circulation.domain.User;
 import org.folio.circulation.domain.UserRepository;
 import org.folio.circulation.domain.policy.LostItemPolicyRepository;
-import org.folio.circulation.domain.policy.lostitem.ChargeAmount;
 import org.folio.circulation.domain.policy.lostitem.LostItemPolicy;
+import org.folio.circulation.domain.policy.lostitem.itemfee.AutomaticallyChargeableFee;
 import org.folio.circulation.domain.representations.DeclareItemLostRequest;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.Result;
@@ -90,20 +88,9 @@ public class LostItemFeeChargingService {
   }
 
   private boolean shouldCloseLoan(LostItemPolicy policy) {
-    // Can close a loan if set cost is used, actual cost requires manual processing
-    return !shouldChargeProcessingFee(policy)
-      && (itemChargeFeeIsNotDefined(policy) || setCostItemFeeHasZeroValue(policy));
-  }
-
-  private boolean itemChargeFeeIsNotDefined(LostItemPolicy policy) {
-    return !policy.getChargeAmountItem().isPresent();
-  }
-
-  private boolean setCostItemFeeHasZeroValue(LostItemPolicy policy) {
-    return policy.getChargeAmountItem()
-      .filter(chargeAmount -> chargeAmount.getChargeType() == SET_COST)
-      .filter(chargeAmount -> !isGreaterThanZero(chargeAmount.getAmount()))
-      .isPresent();
+    return !policy.getProcessingFee().isChargeable()
+      && !policy.getSetCostFee().isChargeable()
+      && !policy.getActualCostFee().isChargeable();
   }
 
   private CompletableFuture<Result<ReferenceDataContext>> fetchStaffUser(
@@ -138,25 +125,22 @@ public class LostItemFeeChargingService {
       final List<Result<FeeFineAccountAndAction>> accountsToCreate = new ArrayList<>();
       final Collection<FeeFine> feeFines = context.feeFines;
 
-      if (shouldChargeItemFee(policy)) {
+      if (policy.getSetCostFee().isChargeable()) {
         log.debug("Charging lost item fee");
-
-        final BigDecimal feeAmount = policy.getChargeAmountItem()
-          .map(ChargeAmount::getAmount).orElse(BigDecimal.ZERO);
 
         final Result<FeeFineAccountAndAction> lostItemFeeResult =
           getFeeFineOfType(feeFines, LOST_ITEM_FEE_TYPE)
-            .map(createAccountAndAction(context, feeAmount));
+            .map(createAccountAndAction(context, policy.getSetCostFee()));
 
         accountsToCreate.add(lostItemFeeResult);
       }
 
-      if (shouldChargeProcessingFee(policy)) {
+      if (policy.getProcessingFee().isChargeable()) {
         log.debug("Charging lost item processing fee");
 
         final Result<FeeFineAccountAndAction> processingFeeResult =
           getFeeFineOfType(feeFines, LOST_ITEM_PROCESSING_FEE_TYPE)
-            .map(createAccountAndAction(context, policy.getLostItemProcessingFee()));
+            .map(createAccountAndAction(context, policy.getProcessingFee()));
 
         accountsToCreate.add(processingFeeResult);
       }
@@ -171,10 +155,10 @@ public class LostItemFeeChargingService {
   }
 
   private Function<FeeFine, FeeFineAccountAndAction> createAccountAndAction(
-    ReferenceDataContext context, BigDecimal amount) {
+    ReferenceDataContext context, AutomaticallyChargeableFee fee) {
 
     return feeFine -> FeeFineAccountAndAction.builder()
-      .withAmount(amount)
+      .withAmount(fee.getAmount())
       .withCreatedAt(getFeeFineActionCreatedAt(context))
       .withCreatedBy(context.staffUser)
       .withFeeFine(feeFine)
@@ -188,23 +172,6 @@ public class LostItemFeeChargingService {
     return context.servicePoint != null
       ? context.servicePoint.getName()
       : "";
-  }
-
-  private boolean shouldChargeItemFee(LostItemPolicy policy) {
-    // Set cost fee is only supported now
-    return policy.getChargeAmountItem()
-      .filter(chargeAmount -> chargeAmount.getChargeType() == SET_COST)
-      .filter(chargeAmount -> isGreaterThanZero(chargeAmount.getAmount()))
-      .isPresent();
-  }
-
-  private boolean shouldChargeProcessingFee(LostItemPolicy policy) {
-    return policy.shouldChargeProcessingFee()
-      && isGreaterThanZero(policy.getLostItemProcessingFee());
-  }
-
-  private boolean isGreaterThanZero(BigDecimal numberToCompare) {
-    return numberToCompare != null && numberToCompare.compareTo(BigDecimal.ZERO) > 0;
   }
 
   private CompletableFuture<Result<ReferenceDataContext>> fetchFeeFineOwner(ReferenceDataContext referenceData) {

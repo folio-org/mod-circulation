@@ -43,10 +43,6 @@ public class LostItemFeePoliciesFixture {
     patronBilledAfterAgedLost.put("duration", 12);
     patronBilledAfterAgedLost.put("intervalId", "Months");
 
-    JsonObject lostItemChargeFeeFine = new JsonObject();
-    lostItemChargeFeeFine.put("duration", "6");
-    lostItemChargeFeeFine.put("intervalId", "Months");
-
     return new LostItemFeePolicyBuilder()
       .withName("Undergrad standard")
       .withDescription("This is description for undergrad standard")
@@ -55,7 +51,6 @@ public class LostItemFeePoliciesFixture {
       .withNoChargeAmountItem()
       .doNotChargeProcessingFee()
       .withChargeAmountItemSystem(true)
-      .withLostItemChargeFeeFine(lostItemChargeFeeFine)
       .withReturnedLostItemProcessingFee(true)
       .withReplacedLostItemProcessingFee(true)
       .withReplacementAllowed(true)
@@ -71,19 +66,14 @@ public class LostItemFeePoliciesFixture {
     patronBilledAfterAgedLost.put("duration", 12);
     patronBilledAfterAgedLost.put("intervalId", "Months");
 
-    JsonObject lostItemChargeFeeFine = new JsonObject();
-    lostItemChargeFeeFine.put("duration", "6");
-    lostItemChargeFeeFine.put("intervalId", "Months");
-
     return new LostItemFeePolicyBuilder()
       .withName("No lost item fees policy")
       .withItemAgedLostOverdue(itemAgedLostOverdue)
       .withPatronBilledAfterAgedLost(patronBilledAfterAgedLost)
-      .withChargeAmountItem("anotherCost", 10.00)
+      .withSetCost(10.00)
       .chargeProcessingFee()
       .withLostItemProcessingFee(5.00)
       .withChargeAmountItemSystem(true)
-      .withLostItemChargeFeeFine(lostItemChargeFeeFine)
       .withReturnedLostItemProcessingFee(true)
       .withReplacedLostItemProcessingFee(true)
       .withReplacementAllowed(true)

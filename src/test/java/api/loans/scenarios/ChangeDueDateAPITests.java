@@ -270,7 +270,7 @@ public class ChangeDueDateAPITests extends APITests {
       .withName("Declared lost fee test policy")
       .chargeProcessingFee()
       .withLostItemProcessingFee(5.00)
-      .withChargeAmountItem("anotherCost", 10.00);
+      .withSetCost(10.00);
 
     useLostItemPolicy(lostItemFeePoliciesFixture.create(lostItemPolicy).getId());
   }
