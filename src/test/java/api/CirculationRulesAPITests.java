@@ -82,6 +82,129 @@ public class CirculationRulesAPITests extends APITests {
   }
 
   @Test
+  public void canDefineFallbackPoliciesInAnyOrder() {
+
+    UUID loanPolicyId = UUID.randomUUID();
+    UUID requestPolicyId = UUID.randomUUID();
+    UUID noticePolicyId = UUID.randomUUID();
+    UUID overdueFinePolicyId = UUID.randomUUID();
+    UUID lostItemFeePolicyId = UUID.randomUUID();
+
+    loanPoliciesFixture.create(new LoanPolicyBuilder()
+      .withId(loanPolicyId)
+      .withName("Example LoanPolicy " + loanPolicyId));
+    noticePoliciesFixture.create(new NoticePolicyBuilder()
+      .withId(noticePolicyId)
+      .withName("Example NoticePolicy " + noticePolicyId));
+    requestPoliciesFixture.allowAllRequestPolicy(requestPolicyId);
+    overdueFinePoliciesFixture.create(new OverdueFinePolicyBuilder()
+      .withId(overdueFinePolicyId)
+      .withName("Example OverdueFinePolicy " + overdueFinePolicyId));
+    lostItemFeePoliciesFixture.create(new LostItemFeePolicyBuilder()
+      .withId(lostItemFeePolicyId)
+      .withName("Example lostItemPolicy " + lostItemFeePolicyId));
+
+    String fallbackRuleInDiffPolicyOrder1 = "priority: t, s, c, b, a, m, g\n" +
+      "fallback-policy: i %s o %s n %s r %s l %s \n";
+    String fallbackRuleInDiffPolicyOrder2 = "priority: t, s, c, b, a, m, g\n" +
+      "fallback-policy: o %s i %s r %s n %s l %s \n";
+    String fallbackRuleInDiffPolicyOrder3 = "priority: t, s, c, b, a, m, g\n" +
+      "fallback-policy: o %s i %s l %s n %s r %s \n";
+    String fallbackRuleInDiffPolicyOrder4 = "priority: t, s, c, b, a, m, g\n" +
+      "fallback-policy: r %s l %s i %s o %s n %s \n";
+    String fallbackRuleInDiffPolicyOrder5 = "priority: t, s, c, b, a, m, g\n" +
+      "fallback-policy: o %s i %s l %s n %s r %s \n";
+
+    String rule = String.format(fallbackRuleInDiffPolicyOrder1, lostItemFeePolicyId,
+      overdueFinePolicyId, noticePolicyId, requestPolicyId, loanPolicyId);
+    setRules(rule);
+    assertThat(getRulesText(), is(rule));
+
+    rule = String.format(fallbackRuleInDiffPolicyOrder2, overdueFinePolicyId,
+      lostItemFeePolicyId, requestPolicyId, noticePolicyId, loanPolicyId);
+    setRules(rule);
+    assertThat(getRulesText(), is(rule));
+
+    rule = String.format(fallbackRuleInDiffPolicyOrder3, overdueFinePolicyId,
+      lostItemFeePolicyId, loanPolicyId, noticePolicyId, requestPolicyId);
+    setRules(rule);
+    assertThat(getRulesText(), is(rule));
+
+    rule = String.format(fallbackRuleInDiffPolicyOrder4, requestPolicyId, loanPolicyId,
+      lostItemFeePolicyId, overdueFinePolicyId, noticePolicyId);
+    setRules(rule);
+    assertThat(getRulesText(), is(rule));
+
+    rule = String.format(fallbackRuleInDiffPolicyOrder5, overdueFinePolicyId,
+      lostItemFeePolicyId, loanPolicyId, noticePolicyId, requestPolicyId);
+    setRules(rule);
+    assertThat(getRulesText(), is(rule));
+  }
+
+  @Test
+  public void canDefinePoliciesForARuleInAnOrder() {
+
+    UUID loanPolicyId = UUID.randomUUID();
+    UUID requestPolicyId = UUID.randomUUID();
+    UUID noticePolicyId = UUID.randomUUID();
+    UUID overdueFinePolicyId = UUID.randomUUID();
+    UUID lostItemFeePolicyId = UUID.randomUUID();
+
+    loanPoliciesFixture.create(new LoanPolicyBuilder()
+      .withId(loanPolicyId)
+      .withName("Example LoanPolicy " + loanPolicyId));
+    noticePoliciesFixture.create(new NoticePolicyBuilder()
+      .withId(noticePolicyId)
+      .withName("Example NoticePolicy " + noticePolicyId));
+    requestPoliciesFixture.allowAllRequestPolicy(requestPolicyId);
+    overdueFinePoliciesFixture.create(new OverdueFinePolicyBuilder()
+      .withId(overdueFinePolicyId)
+      .withName("Example OverdueFinePolicy " + overdueFinePolicyId));
+    lostItemFeePoliciesFixture.create(new LostItemFeePolicyBuilder()
+      .withId(lostItemFeePolicyId)
+      .withName("Example lostItemPolicy " + lostItemFeePolicyId));
+
+    String fallbackPolicyRule = String.format(CIRCULATION_RULE_TEMPLATE,
+      loanPolicyId, requestPolicyId, noticePolicyId, overdueFinePolicyId, lostItemFeePolicyId);
+
+    String regularRuleInDiffPolicyOrder1 = fallbackPolicyRule +
+      "m book: i %s o %s n %s r %s l %s \n";
+    String regularRuleInDiffPolicyOrder2 = fallbackPolicyRule +
+      "m book: o %s i %s r %s n %s l %s \n";
+    String regularRuleInDiffPolicyOrder3 = fallbackPolicyRule +
+      "m book: o %s i %s l %s n %s r %s \n";
+    String regularRuleInDiffPolicyOrder4 = fallbackPolicyRule +
+      "m book: r %s l %s i %s o %s n %s \n";
+    String regularRuleInDiffPolicyOrder5 = fallbackPolicyRule +
+      "m book: o %s i %s l %s n %s r %s \n";
+
+    String rule = String.format(regularRuleInDiffPolicyOrder1, lostItemFeePolicyId,
+      overdueFinePolicyId, noticePolicyId, requestPolicyId, loanPolicyId);
+    setRules(rule);
+    assertThat(getRulesText(), is(rule));
+
+    rule = String.format(regularRuleInDiffPolicyOrder2, overdueFinePolicyId,
+      lostItemFeePolicyId, requestPolicyId, noticePolicyId, loanPolicyId);
+    setRules(rule);
+    assertThat(getRulesText(), is(rule));
+
+    rule = String.format(regularRuleInDiffPolicyOrder3, overdueFinePolicyId,
+      lostItemFeePolicyId, loanPolicyId, noticePolicyId, requestPolicyId);
+    setRules(rule);
+    assertThat(getRulesText(), is(rule));
+
+    rule = String.format(regularRuleInDiffPolicyOrder4, requestPolicyId, loanPolicyId,
+      lostItemFeePolicyId, overdueFinePolicyId, noticePolicyId);
+    setRules(rule);
+    assertThat(getRulesText(), is(rule));
+
+    rule = String.format(regularRuleInDiffPolicyOrder5, overdueFinePolicyId,
+      lostItemFeePolicyId, loanPolicyId, noticePolicyId, requestPolicyId);
+    setRules(rule);
+    assertThat(getRulesText(), is(rule));
+  }
+
+  @Test
   public void cannotUpdateCirculationRulesWithInvalidLoanPolicyId() {
 
     String rule = circulationRulesFixture.soleFallbackPolicyRule(
