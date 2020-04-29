@@ -3,7 +3,8 @@ package org.folio.circulation.domain.policy.lostitem;
 import java.util.Arrays;
 
 public enum ChargeAmountType {
-  SET_COST("anotherCost");
+  SET_COST("anotherCost"),
+  ACTUAL_COST("actualCost");
 
   private final String value;
 
