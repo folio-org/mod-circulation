@@ -41,7 +41,7 @@ public class MultipleMixedFulfilmentRequestsTests extends APITests {
     IndividualResource steve = usersFixture.steve();
     IndividualResource rebecca = usersFixture.rebecca();
 
-    loansFixture.checkOutByBarcode(smallAngryPlanet, james);
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet, james);
 
     IndividualResource deliveryRequestByRebecca = requestsFixture.placeDeliveryRequest(
       smallAngryPlanet, rebecca, DATE_TIME_2017);
@@ -52,9 +52,9 @@ public class MultipleMixedFulfilmentRequestsTests extends APITests {
     IndividualResource requestBySteve = requestsFixture.placeHoldShelfRequest(
       smallAngryPlanet, steve, DATE_TIME_2018);
 
-    loansFixture.checkInByBarcode(smallAngryPlanet);
+    checkInFixture.checkInByBarcode(smallAngryPlanet);
 
-    Response response = loansFixture.attemptCheckOutByBarcode(smallAngryPlanet, jessica);
+    Response response = checkOutFixture.attemptCheckOutByBarcode(smallAngryPlanet, jessica);
     assertResponseContainsItemCantBeCheckedOutError(jessica, response);
 
     assertRequestHasStatus(deliveryRequestByRebecca, OPEN_AWAITING_DELIVERY);
@@ -77,7 +77,7 @@ public class MultipleMixedFulfilmentRequestsTests extends APITests {
     IndividualResource steve = usersFixture.steve();
     IndividualResource rebecca = usersFixture.rebecca();
 
-    loansFixture.checkOutByBarcode(smallAngryPlanet, james);
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet, james);
 
     IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
       smallAngryPlanet, jessica, DATE_TIME_2017);
@@ -88,11 +88,11 @@ public class MultipleMixedFulfilmentRequestsTests extends APITests {
     IndividualResource requestBySteve = requestsFixture.placeHoldShelfRequest(
       smallAngryPlanet, steve, DATE_TIME_2018);
 
-    loansFixture.checkInByBarcode(smallAngryPlanet);
+    checkInFixture.checkInByBarcode(smallAngryPlanet);
 
-    loansFixture.checkOutByBarcode(smallAngryPlanet, jessica);
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet, jessica);
 
-    loansFixture.checkInByBarcode(smallAngryPlanet);
+    checkInFixture.checkInByBarcode(smallAngryPlanet);
 
     assertRequestHasStatus(requestByJessica, CLOSED_FILLED);
 
@@ -114,7 +114,7 @@ public class MultipleMixedFulfilmentRequestsTests extends APITests {
     IndividualResource steve = usersFixture.steve();
     IndividualResource rebecca = usersFixture.rebecca();
 
-    loansFixture.checkOutByBarcode(smallAngryPlanet, james);
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet, james);
 
     IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
       smallAngryPlanet, jessica, DATE_TIME_2017);
@@ -125,7 +125,7 @@ public class MultipleMixedFulfilmentRequestsTests extends APITests {
     IndividualResource requestBySteve = requestsFixture.placeHoldShelfRequest(
       smallAngryPlanet, steve, DATE_TIME_2018);
 
-    loansFixture.checkInByBarcode(smallAngryPlanet);
+    checkInFixture.checkInByBarcode(smallAngryPlanet);
 
     assertRequestHasStatus(requestByJessica, OPEN_AWAITING_PICKUP);
 
@@ -147,7 +147,7 @@ public class MultipleMixedFulfilmentRequestsTests extends APITests {
     IndividualResource steve = usersFixture.steve();
     IndividualResource rebecca = usersFixture.rebecca();
 
-    loansFixture.checkOutByBarcode(smallAngryPlanet, james);
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet, james);
 
     IndividualResource requestByRebecca = requestsFixture.placeDeliveryRequest(
       smallAngryPlanet, rebecca, DATE_TIME_2017);
@@ -158,9 +158,9 @@ public class MultipleMixedFulfilmentRequestsTests extends APITests {
     IndividualResource requestBySteve = requestsFixture.placeHoldShelfRequest(
       smallAngryPlanet, steve, DATE_TIME_2018);
 
-    loansFixture.checkInByBarcode(smallAngryPlanet);
+    checkInFixture.checkInByBarcode(smallAngryPlanet);
 
-    loansFixture.checkOutByBarcode(smallAngryPlanet, rebecca);
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet, rebecca);
 
     assertRequestHasStatus(requestByRebecca, CLOSED_FILLED);
 

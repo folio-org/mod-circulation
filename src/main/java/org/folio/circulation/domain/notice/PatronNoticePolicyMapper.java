@@ -23,6 +23,7 @@ public class PatronNoticePolicyMapper implements Function<JsonObject, Result<Pat
 
   private static final String LOAN_NOTICES = "loanNotices";
   private static final String REQUEST_NOTICES = "requestNotices";
+  private static final String FEE_FINE_NOTICES = "feeFineNotices";
 
   private static final String TEMPLATE_ID = "templateId";
   private static final String FORMAT = "format";
@@ -42,9 +43,11 @@ public class PatronNoticePolicyMapper implements Function<JsonObject, Result<Pat
       JsonArrayHelper.mapToList(representation, LOAN_NOTICES, this::toNoticeConfiguration);
     List<Result<NoticeConfiguration>> requestNoticeConfigurations =
       JsonArrayHelper.mapToList(representation, REQUEST_NOTICES, this::toNoticeConfiguration);
+    List<Result<NoticeConfiguration>> feeFineNoticeConfiguration =
+      JsonArrayHelper.mapToList(representation, FEE_FINE_NOTICES, this::toNoticeConfiguration);
 
-    return Result.combineAll(loanNoticeConfigurations, requestNoticeConfigurations)
-      .map(PatronNoticePolicy::new);
+    return Result.combineAll(loanNoticeConfigurations, requestNoticeConfigurations,
+      feeFineNoticeConfiguration).map(PatronNoticePolicy::new);
   }
 
 

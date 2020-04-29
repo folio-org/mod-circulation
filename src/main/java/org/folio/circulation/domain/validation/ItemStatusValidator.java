@@ -5,20 +5,18 @@ import static org.folio.circulation.domain.ItemStatus.DECLARED_LOST;
 import static org.folio.circulation.domain.ItemStatus.MISSING;
 import static org.folio.circulation.support.Result.succeeded;
 
+import java.util.function.Function;
+
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.ValidationErrorFailure;
 
-import java.util.function.Function;
-
 public class ItemStatusValidator {
+  private final Function<Item, ValidationErrorFailure> itemStatusErrorFunction;
 
-  private final Function<String, ValidationErrorFailure> itemStatusErrorFunction;
-
-  public ItemStatusValidator(
-    Function<String, ValidationErrorFailure> itemStatusErrorFunction) {
+  public ItemStatusValidator(Function<Item, ValidationErrorFailure> itemStatusErrorFunction) {
     this.itemStatusErrorFunction = itemStatusErrorFunction;
   }
 
@@ -27,16 +25,7 @@ public class ItemStatusValidator {
 
     return loanAndRelatedRecords.failWhen(
       records -> succeeded(records.getLoan().getItem().isInStatus(status)),
-      loans -> {
-        Item item = loans.getLoan().getItem();
-        String message =
-          String.format("%s (%s) (Barcode:%s) has the item status %s and cannot be checked out",
-            item.getTitle(),
-            item.getMaterialTypeName(),
-            item.getBarcode(),
-            item.getStatusName());
-        return itemStatusErrorFunction.apply(message);
-      });
+      loans -> itemStatusErrorFunction.apply(loans.getLoan().getItem()));
   }
 
   public Result<LoanAndRelatedRecords> refuseWhenItemIsMissing(
@@ -52,6 +41,20 @@ public class ItemStatusValidator {
 
     return loanAndRelatedRecords
       .next(p -> refuseWhenItemIs(loanAndRelatedRecords, DECLARED_LOST))
+      .next(p -> refuseWhenItemIs(loanAndRelatedRecords, CLAIMED_RETURNED));
+  }
+
+  public Result<LoanAndRelatedRecords> refuseWhenItemIsDeclaredLost(
+    Result<LoanAndRelatedRecords> loanAndRelatedRecords) {
+
+    return loanAndRelatedRecords
+      .next(p -> refuseWhenItemIs(loanAndRelatedRecords, DECLARED_LOST));
+  }
+
+  public Result<LoanAndRelatedRecords> refuseWhenItemIsClaimedReturned(
+    Result<LoanAndRelatedRecords> loanAndRelatedRecords) {
+
+    return loanAndRelatedRecords
       .next(p -> refuseWhenItemIs(loanAndRelatedRecords, CLAIMED_RETURNED));
   }
 }

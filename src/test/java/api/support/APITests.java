@@ -36,6 +36,9 @@ import api.support.builders.LoanPolicyBuilder;
 import api.support.builders.NoticePolicyBuilder;
 import api.support.fixtures.AddressTypesFixture;
 import api.support.fixtures.CancellationReasonsFixture;
+import api.support.fixtures.ChangeDueDateFixture;
+import api.support.fixtures.CheckInFixture;
+import api.support.fixtures.CheckOutFixture;
 import api.support.fixtures.CirculationRulesFixture;
 import api.support.fixtures.ClaimItemReturnedFixture;
 import api.support.fixtures.DeclareLostFixtures;
@@ -208,7 +211,15 @@ public abstract class APITests {
     patronGroupsFixture);
 
   protected final LoansFixture loansFixture = new LoansFixture(
-          usersFixture, servicePointsFixture);
+  );
+
+  protected final CheckOutFixture checkOutFixture = new CheckOutFixture(
+    usersFixture, servicePointsFixture);
+
+  protected final CheckInFixture checkInFixture = new CheckInFixture(
+    servicePointsFixture);
+
+  protected final ChangeDueDateFixture changeDueDateFixture = new ChangeDueDateFixture();
 
   protected final CancellationReasonsFixture cancellationReasonsFixture
     = new CancellationReasonsFixture(ResourceClient.forCancellationReasons());
@@ -271,6 +282,7 @@ public abstract class APITests {
     accountsClient.deleteAll();
     feeFinesClient.deleteAll();
     feeFineOwnersClient.deleteAll();
+    feeFineActionsClient.deleteAll();
 
     //TODO: Only cleans up reference records, move items, holdings records
     // and instances into here too

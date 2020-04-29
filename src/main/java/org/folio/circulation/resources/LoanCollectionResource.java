@@ -30,9 +30,9 @@ import org.folio.circulation.domain.policy.LoanPolicyRepository;
 import org.folio.circulation.domain.policy.LostItemPolicyRepository;
 import org.folio.circulation.domain.policy.OverdueFinePolicyRepository;
 import org.folio.circulation.domain.validation.AlreadyCheckedOutValidator;
+import org.folio.circulation.domain.validation.ChangeDueDateValidator;
 import org.folio.circulation.domain.validation.ItemNotFoundValidator;
 import org.folio.circulation.domain.validation.ItemStatusValidator;
-import org.folio.circulation.domain.validation.ChangeDueDateValidator;
 import org.folio.circulation.domain.validation.ProxyRelationshipValidator;
 import org.folio.circulation.domain.validation.RequestedByAnotherPatronValidator;
 import org.folio.circulation.domain.validation.ServicePointLoanLocationValidator;
@@ -42,6 +42,7 @@ import org.folio.circulation.support.ItemRepository;
 import org.folio.circulation.support.NoContentResult;
 import org.folio.circulation.support.OkJsonResponseResult;
 import org.folio.circulation.support.Result;
+import org.folio.circulation.support.ValidationErrorFailure;
 import org.folio.circulation.support.http.server.ValidationError;
 import org.folio.circulation.support.http.server.WebContext;
 
@@ -86,7 +87,7 @@ public class LoanCollectionResource extends CollectionResource {
       message -> singleValidationError(message, "itemId", loan.getItemId()));
 
     final ItemStatusValidator itemStatusValidator = new ItemStatusValidator(
-      message -> singleValidationError(message, "itemId", loan.getItemId()));
+      LoanCollectionResource::errorWhenInIncorrectStatus);
 
     final ItemNotFoundValidator itemNotFoundValidator = createItemNotFoundValidator(loan);
 
@@ -362,5 +363,16 @@ public class LoanCollectionResource extends CollectionResource {
       r -> of(() -> r.getLoan().getItem().isInStatus(DECLARED_LOST)),
       r -> singleValidationError(new ValidationError("item is Declared lost", ITEM_ID,
         r.getLoan().getItem().getItemId())));
+  }
+
+  private static ValidationErrorFailure errorWhenInIncorrectStatus(Item item) {
+    String message =
+      String.format("%s (%s) (Barcode:%s) has the item status %s, loan cannot be created",
+        item.getTitle(),
+        item.getMaterialTypeName(),
+        item.getBarcode(),
+        item.getStatusName());
+
+    return singleValidationError(message, ITEM_ID, item.getItemId());
   }
 }

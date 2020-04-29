@@ -110,9 +110,9 @@ public class MoveRequestPolicyTests extends APITests {
     IndividualResource jessica = usersFixture.jessica();
     IndividualResource charlotte = usersFixture.charlotte();
 
-    loansFixture.checkOutByBarcode(smallAngryPlanet, jessica);
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet, jessica);
 
-    loansFixture.checkOutByBarcode(interestingTimes, charlotte);
+    checkOutFixture.checkOutByBarcode(interestingTimes, charlotte);
 
     IndividualResource requestByCharlotte = requestsFixture.placeHoldShelfRequest(
       smallAngryPlanet, charlotte, DateTime.now(DateTimeZone.UTC).minusHours(2), RequestType.RECALL.getValue());
@@ -159,13 +159,13 @@ public class MoveRequestPolicyTests extends APITests {
     final IndividualResource jessica = usersFixture.jessica();
 
     // steve checks out smallAngryPlanet
-    final IndividualResource loan = loansFixture.checkOutByBarcode(
+    final IndividualResource loan = checkOutFixture.checkOutByBarcode(
       smallAngryPlanet, steve, DateTime.now(DateTimeZone.UTC));
 
     final String originalDueDate = loan.getJson().getString("dueDate");
 
     // charlotte checks out interestingTimes
-    loansFixture.checkOutByBarcode(interestingTimes, charlotte);
+    checkOutFixture.checkOutByBarcode(interestingTimes, charlotte);
 
     // jessica places recall request on interestingTimes
     IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
@@ -208,7 +208,7 @@ public class MoveRequestPolicyTests extends APITests {
     final IndividualResource jessica = usersFixture.jessica();
 
     // steve checks out smallAngryPlanet
-    final IndividualResource loan = loansFixture.checkOutByBarcode(
+    final IndividualResource loan = checkOutFixture.checkOutByBarcode(
       smallAngryPlanet, steve, DateTime.now(DateTimeZone.UTC));
 
     final String originalDueDate = loan.getJson().getString("dueDate");
@@ -227,7 +227,7 @@ public class MoveRequestPolicyTests extends APITests {
       storedLoan.getString("dueDate"), is(expectedDueDate));
 
     // charlotte checks out interestingTimes
-    loansFixture.checkOutByBarcode(interestingTimes, charlotte);
+    checkOutFixture.checkOutByBarcode(interestingTimes, charlotte);
 
     // jessica places recall request on interestingTimes
     IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
@@ -284,13 +284,13 @@ public class MoveRequestPolicyTests extends APITests {
       overdueFinePoliciesFixture.facultyStandard().getId(),
       lostItemFeePoliciesFixture.facultyStandard().getId());
 
-    final IndividualResource loan = loansFixture.checkOutByBarcode(
+    final IndividualResource loan = checkOutFixture.checkOutByBarcode(
       smallAngryPlanet, steve, DateTime.now(DateTimeZone.UTC));
 
     final String originalDueDate = loan.getJson().getString("dueDate");
 
     // charlotte checks out interestingTimes
-    loansFixture.checkOutByBarcode(interestingTimes, charlotte);
+    checkOutFixture.checkOutByBarcode(interestingTimes, charlotte);
 
     // jessica places recall request on interestingTimes
     IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(
@@ -349,7 +349,7 @@ public class MoveRequestPolicyTests extends APITests {
       overdueFinePoliciesFixture.facultyStandard().getId(),
       lostItemFeePoliciesFixture.facultyStandard().getId());
 
-    final IndividualResource loan = loansFixture.checkOutByBarcode(
+    final IndividualResource loan = checkOutFixture.checkOutByBarcode(
       smallAngryPlanet, steve, DateTime.now(DateTimeZone.UTC));
 
     final String originalDueDate = loan.getJson().getString("dueDate");
@@ -368,7 +368,7 @@ public class MoveRequestPolicyTests extends APITests {
       storedLoan.getString("dueDate"), is(expectedDueDate));
 
     // charlotte checks out interestingTimes
-    loansFixture.checkOutByBarcode(interestingTimes, charlotte);
+    checkOutFixture.checkOutByBarcode(interestingTimes, charlotte);
 
     // jessica places recall request on interestingTimes
     IndividualResource requestByJessica = requestsFixture.placeHoldShelfRequest(

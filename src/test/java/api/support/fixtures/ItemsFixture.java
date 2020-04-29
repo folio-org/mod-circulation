@@ -152,7 +152,6 @@ public class ItemsFixture {
   }
 
   public InventoryItemResource basedUponNod() {
-
     return basedUponNod(identity());
   }
 
@@ -171,7 +170,6 @@ public class ItemsFixture {
   }
 
   public InventoryItemResource basedUponTemeraire() {
-
     return basedUponTemeraire(identity());
   }
 

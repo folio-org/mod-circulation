@@ -4,9 +4,6 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 import java.lang.invoke.MethodHandles;
-import java.net.MalformedURLException;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeoutException;
 
 import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.domain.MultipleRecords;
@@ -43,7 +40,7 @@ public class RequestsServicePointsTests extends APITests {
     assertThat(requestItem.getString("status"), is(ItemStatus.PAGED.getValue()));
     assertThat(firstRequest.getJson().getString("status"), is(RequestStatus.OPEN_NOT_YET_FILLED.getValue()));
 
-    loansFixture.checkInByBarcode(smallAngryPlanet, DateTime.now(DateTimeZone.UTC), servicePoint.getId());
+    checkInFixture.checkInByBarcode(smallAngryPlanet, DateTime.now(DateTimeZone.UTC), servicePoint.getId());
 
     MultipleRecords<JsonObject> requests = requestsFixture.getQueueFor(smallAngryPlanet);
     JsonObject pagedRequestRecord = requests.getRecords().iterator().next();
@@ -60,10 +57,10 @@ public class RequestsServicePointsTests extends APITests {
 
     final IndividualResource inTransitItem = RequestsAPICreationTests.setupItemInTransit(requestPickupServicePoint, servicePointsFixture.cd2(),
       itemsFixture, requestsClient,
-      usersFixture, requestsFixture, loansFixture);
+      usersFixture, requestsFixture, checkInFixture);
 
     //now, check in at intended service point.
-    loansFixture.checkInByBarcode(inTransitItem, DateTime.now(DateTimeZone.UTC), requestPickupServicePoint.getId());
+    checkInFixture.checkInByBarcode(inTransitItem, DateTime.now(DateTimeZone.UTC), requestPickupServicePoint.getId());
     MultipleRecords<JsonObject> requests = requestsFixture.getQueueFor(inTransitItem);
     JsonObject pagedRequestRecord = requests.getRecords().iterator().next();
 
@@ -91,7 +88,7 @@ public class RequestsServicePointsTests extends APITests {
     log.info("requestServicePoint" + requestPickupServicePoint.getId());
     log.info("pickupServicePoint" + pickupServicePoint.getId());
 
-    loansFixture.checkInByBarcode(smallAngryPlanet, DateTime.now(DateTimeZone.UTC), pickupServicePoint.getId());
+    checkInFixture.checkInByBarcode(smallAngryPlanet, DateTime.now(DateTimeZone.UTC), pickupServicePoint.getId());
 
     MultipleRecords<JsonObject> requests = requestsFixture.getQueueFor(smallAngryPlanet);
     JsonObject pagedRequestRecord = requests.getRecords().iterator().next();

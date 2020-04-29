@@ -6,8 +6,8 @@ import static api.support.matchers.ScheduledNoticeMatchers.hasScheduledLoanNotic
 import static java.util.Comparator.comparing;
 import static org.folio.circulation.support.JsonPropertyFetcher.getDateTimeProperty;
 import static org.hamcrest.CoreMatchers.hasItems;
-import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.hasSize;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -85,7 +85,7 @@ public class DueDateScheduledNoticesProcessingTests extends APITests {
     item = itemsFixture.basedUponSmallAngryPlanet(itemBuilder, holdingBuilder);
     borrower = usersFixture.steve();
 
-    loan = loansFixture.checkOutByBarcode(
+    loan = checkOutFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
         .forItem(item)
         .to(borrower)
@@ -180,7 +180,7 @@ public class DueDateScheduledNoticesProcessingTests extends APITests {
       null,
       secondRecurringRunTime);
 
-    loansFixture.checkInByBarcode(item);
+    checkInFixture.checkInByBarcode(item);
     //Clear sent notices again
     patronNoticesClient.deleteAll();
 

@@ -3,7 +3,6 @@ package org.folio.circulation.resources;
 import static org.folio.circulation.domain.validation.UserNotFoundValidator.refuseWhenLoggedInUserNotPresent;
 
 import org.folio.circulation.domain.CheckInProcessRecords;
-import org.folio.circulation.domain.OverdueFineCalculatorService;
 import org.folio.circulation.domain.notice.schedule.RequestScheduledNoticeService;
 import org.folio.circulation.domain.notice.session.PatronActionSessionService;
 import org.folio.circulation.domain.representations.CheckInByBarcodeRequest;
@@ -47,9 +46,6 @@ public class CheckInByBarcodeResource extends Resource {
     final PatronActionSessionService patronActionSessionService =
       PatronActionSessionService.using(clients);
 
-    final OverdueFineCalculatorService overdueFineCalculatorService =
-      OverdueFineCalculatorService.using(clients);
-
     refuseWhenLoggedInUserNotPresent(context)
       .next(notUsed -> checkInRequestResult)
       .map(CheckInProcessRecords::new)
@@ -85,7 +81,7 @@ public class CheckInByBarcodeResource extends Resource {
       .thenComposeAsync(updateItemResult -> updateItemResult.after(
         patronActionSessionService::saveCheckInSessionRecord))
       .thenComposeAsync(r -> r.after(
-        records -> overdueFineCalculatorService.createOverdueFineIfNecessary(records, context)))
+        records -> processAdapter.createOverdueFineIfNecessary(records, context)))
       .thenApply(r -> r.next(requestScheduledNoticeService::rescheduleRequestNotices))
       .thenApply(CheckInByBarcodeResponse::from)
       .thenAccept(r -> r.writeTo(routingContext.response()));

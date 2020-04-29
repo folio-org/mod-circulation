@@ -7,6 +7,8 @@ import static org.hamcrest.Matchers.is;
 
 import java.util.UUID;
 
+import org.folio.circulation.domain.notice.NoticeTiming;
+import org.folio.circulation.domain.notice.schedule.TriggeringEvent;
 import org.folio.circulation.domain.policy.Period;
 import org.hamcrest.Matcher;
 import org.hamcrest.Matchers;
@@ -17,6 +19,9 @@ import io.vertx.core.json.JsonObject;
 public class ScheduledNoticeMatchers {
 
   private static final String LOAN_ID = "loanId";
+  private static final String FEE_FINE_ACTION_ID = "feeFineActionId";
+  private static final String RECIPIENT_USER_ID = "recipientUserId";
+  private static final String TRIGGERING_EVENT = "triggeringEvent";
   private static final String NEXT_RUN_TIME = "nextRunTime";
   private static final String TIMING = "noticeConfig.timing";
   private static final String RECURRING_PERIOD_INTERVAL = "noticeConfig.recurringPeriod";
@@ -25,6 +30,7 @@ public class ScheduledNoticeMatchers {
   private static final String TEMPLATE_ID = "noticeConfig.templateId";
   private static final String FORMAT = "noticeConfig.format";
   private static final String SEND_IN_REAL_TIME = "noticeConfig.sendInRealTime";
+  private static final String FORMAT_EMAIL = "Email";
 
   public static Matcher<JsonObject> hasScheduledLoanNotice(
     UUID expectedLoanId, DateTime expectedNextRunTime, String expectedTiming,
@@ -34,7 +40,7 @@ public class ScheduledNoticeMatchers {
     return hasScheduledLoanNotice(
       expectedLoanId, expectedNextRunTime, expectedTiming,
       expectedTemplateId, expectedRecurringPeriod,
-      expectedSendInRealTime, "Email");
+      expectedSendInRealTime, FORMAT_EMAIL);
   }
 
   public static Matcher<JsonObject> hasScheduledLoanNotice(
@@ -50,6 +56,24 @@ public class ScheduledNoticeMatchers {
       hasJsonPath(RECURRING_PERIOD_INTERVAL, isPeriod(expectedRecurringPeriod)),
       hasJsonPath(SEND_IN_REAL_TIME, is(expectedSendInRealTime)),
       hasJsonPath(FORMAT, is(expectedFormat))
+    );
+  }
+
+  public static Matcher<JsonObject> hasScheduledFeeFineNotice(
+    UUID actionId, UUID loanId, UUID userId, UUID templateId, TriggeringEvent triggeringEvent,
+    DateTime nextRunTime, NoticeTiming timing, Period recurringPeriod, boolean sendInRealTime) {
+
+    return JsonObjectMatcher.allOfPaths(
+      hasJsonPath(FEE_FINE_ACTION_ID, UUIDMatcher.is(actionId)),
+      hasJsonPath(LOAN_ID, UUIDMatcher.is(loanId)),
+      hasJsonPath(RECIPIENT_USER_ID, UUIDMatcher.is(userId)),
+      hasJsonPath(TRIGGERING_EVENT, is(triggeringEvent.getRepresentation())),
+      hasJsonPath(NEXT_RUN_TIME, isEquivalentTo(nextRunTime)),
+      hasJsonPath(TIMING, is(timing.getRepresentation())),
+      hasJsonPath(TEMPLATE_ID, UUIDMatcher.is(templateId)),
+      hasJsonPath(RECURRING_PERIOD_INTERVAL, isPeriod(recurringPeriod)),
+      hasJsonPath(SEND_IN_REAL_TIME, is(sendInRealTime)),
+      hasJsonPath(FORMAT, is(FORMAT_EMAIL))
     );
   }
 

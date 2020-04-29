@@ -19,6 +19,10 @@ public enum NoticeEventType {
   AVAILABLE("Available"),
   REQUEST_EXPIRATION("Request expiration"),
   HOLD_EXPIRATION("Hold expiration"),
+
+  OVERDUE_FINE_RETURNED("Overdue fine returned"),
+  OVERDUE_FINE_RENEWED("Overdue fine renewed"),
+
   UNKNOWN("Unknown");
 
 

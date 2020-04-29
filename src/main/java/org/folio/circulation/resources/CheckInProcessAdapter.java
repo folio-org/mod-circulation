@@ -16,6 +16,7 @@ import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanCheckInService;
 import org.folio.circulation.domain.LoanRepository;
+import org.folio.circulation.domain.OverdueFineCalculatorService;
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestQueue;
 import org.folio.circulation.domain.RequestQueueRepository;
@@ -29,6 +30,7 @@ import org.folio.circulation.domain.notice.NoticeEventType;
 import org.folio.circulation.domain.notice.PatronNoticeEvent;
 import org.folio.circulation.domain.notice.PatronNoticeEventBuilder;
 import org.folio.circulation.domain.notice.PatronNoticeService;
+import org.folio.circulation.domain.notice.schedule.FeeFineScheduledNoticeService;
 import org.folio.circulation.domain.policy.PatronNoticePolicyRepository;
 import org.folio.circulation.services.LogCheckInService;
 import org.folio.circulation.storage.ItemByBarcodeInStorageFinder;
@@ -36,6 +38,7 @@ import org.folio.circulation.storage.SingleOpenLoanForItemInStorageFinder;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.ItemRepository;
 import org.folio.circulation.support.Result;
+import org.folio.circulation.support.http.server.WebContext;
 
 class CheckInProcessAdapter {
   private final ItemByBarcodeInStorageFinder itemFinder;
@@ -50,6 +53,8 @@ class CheckInProcessAdapter {
   private final UserRepository userRepository;
   private final AddressTypeRepository addressTypeRepository;
   private final LogCheckInService logCheckInService;
+  private final OverdueFineCalculatorService overdueFineCalculatorService;
+  private final FeeFineScheduledNoticeService feeFineScheduledNoticeService;
 
   @SuppressWarnings("squid:S00107")
   CheckInProcessAdapter(
@@ -61,7 +66,9 @@ class CheckInProcessAdapter {
     LoanRepository loanRepository, ServicePointRepository servicePointRepository,
     PatronNoticeService patronNoticeService, UserRepository userRepository,
     AddressTypeRepository addressTypeRepository,
-    LogCheckInService logCheckInService) {
+    LogCheckInService logCheckInService,
+    OverdueFineCalculatorService overdueFineCalculatorService,
+    FeeFineScheduledNoticeService feeFineScheduledNoticeService) {
 
     this.itemFinder = itemFinder;
     this.singleOpenLoanFinder = singleOpenLoanFinder;
@@ -75,6 +82,8 @@ class CheckInProcessAdapter {
     this.userRepository = userRepository;
     this.addressTypeRepository = addressTypeRepository;
     this.logCheckInService = logCheckInService;
+    this.overdueFineCalculatorService = overdueFineCalculatorService;
+    this.feeFineScheduledNoticeService = feeFineScheduledNoticeService;
   }
 
   public static CheckInProcessAdapter newInstance(Clients clients) {
@@ -100,7 +109,9 @@ class CheckInProcessAdapter {
       new PatronNoticeService(new PatronNoticePolicyRepository(clients), clients),
       userRepository,
       new AddressTypeRepository(clients),
-      new LogCheckInService(clients));
+      new LogCheckInService(clients),
+      OverdueFineCalculatorService.using(clients),
+      FeeFineScheduledNoticeService.using(clients));
   }
 
   CompletableFuture<Result<Item>> findItem(CheckInProcessRecords records) {
@@ -253,5 +264,12 @@ class CheckInProcessAdapter {
     CheckInProcessRecords checkInProcessRecords) {
 
     return logCheckInService.logCheckInOperation(checkInProcessRecords);
+  }
+
+  CompletableFuture<Result<CheckInProcessRecords>> createOverdueFineIfNecessary(
+    CheckInProcessRecords records, WebContext context) {
+
+    return overdueFineCalculatorService.createOverdueFineIfNecessary(records, context.getUserId())
+      .thenApply(r -> r.next(action -> feeFineScheduledNoticeService.scheduleNotices(records, action)));
   }
 }

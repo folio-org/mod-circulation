@@ -49,6 +49,7 @@ import org.folio.circulation.support.ItemRepository;
 import org.folio.circulation.support.ResponseWritableResult;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.RouteRegistration;
+import org.folio.circulation.support.ValidationErrorFailure;
 import org.folio.circulation.support.http.server.WebContext;
 import org.joda.time.format.ISODateTimeFormat;
 
@@ -130,7 +131,7 @@ public class CheckOutByBarcodeResource extends Resource {
         ITEM_BARCODE, itemBarcode));
 
     final ItemStatusValidator itemStatusValidator = new ItemStatusValidator(
-      message -> singleValidationError(message, ITEM_BARCODE, itemBarcode));
+      CheckOutByBarcodeResource::errorWhenInIncorrectStatus);
 
     final InactiveUserValidator inactiveUserValidator = InactiveUserValidator.forUser(userBarcode);
     final InactiveUserValidator inactiveProxyUserValidator = InactiveUserValidator.forProxy(proxyUserBarcode);
@@ -226,6 +227,17 @@ public class CheckOutByBarcodeResource extends Resource {
 
     return Result.combine(loanResult, inventoryRecordsResult,
       LoanAndRelatedRecords::withItem);
+  }
+
+  private static ValidationErrorFailure errorWhenInIncorrectStatus(Item item) {
+    String message =
+      String.format("%s (%s) (Barcode:%s) has the item status %s and cannot be checked out",
+        item.getTitle(),
+        item.getMaterialTypeName(),
+        item.getBarcode(),
+        item.getStatusName());
+
+    return singleValidationError(message, ITEM_BARCODE, item.getBarcode());
   }
 
   private Result<LoanAndRelatedRecords> addItemLocationIdAtCheckout(

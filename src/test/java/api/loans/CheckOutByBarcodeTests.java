@@ -71,7 +71,7 @@ public class CheckOutByBarcodeTests extends APITests {
 
     final UUID checkoutServicePointId = UUID.randomUUID();
 
-    final IndividualResource response = loansFixture.checkOutByBarcode(
+    final IndividualResource response = checkOutFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
         .forItem(smallAngryPlanet)
         .to(steve)
@@ -214,7 +214,7 @@ public class CheckOutByBarcodeTests extends APITests {
       .withSecondOfMinute(54)
       .withMillisOfSecond(0);
 
-    final IndividualResource response = loansFixture.checkOutByBarcode(
+    final IndividualResource response = checkOutFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
         .forItem(smallAngryPlanet)
         .to(steve)
@@ -268,7 +268,7 @@ public class CheckOutByBarcodeTests extends APITests {
 
     final DateTime loanDate = new DateTime(2018, 3, 18, 11, 43, 54, UTC);
 
-    final IndividualResource response = loansFixture.checkOutByBarcode(
+    final IndividualResource response = checkOutFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
         .forItem(smallAngryPlanet)
         .to(steve)
@@ -296,7 +296,7 @@ public class CheckOutByBarcodeTests extends APITests {
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource steve = usersFixture.steve();
 
-    final IndividualResource response = loansFixture.checkOutByBarcode(
+    final IndividualResource response = checkOutFixture.checkOutByBarcode(
       smallAngryPlanet, steve);
 
     assertThat("Location header should be present", response.getLocation(),
@@ -312,7 +312,7 @@ public class CheckOutByBarcodeTests extends APITests {
 
     final DateTime requestDate = DateTime.now();
 
-    final IndividualResource response = loansFixture.checkOutByBarcode(
+    final IndividualResource response = checkOutFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
         .forItem(smallAngryPlanet)
         .to(steve)
@@ -333,7 +333,7 @@ public class CheckOutByBarcodeTests extends APITests {
 
     usersFixture.remove(steve);
 
-    final Response response = loansFixture.attemptCheckOutByBarcode(smallAngryPlanet, steve);
+    final Response response = checkOutFixture.attemptCheckOutByBarcode(smallAngryPlanet, steve);
 
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("Could not find user with matching barcode"),
@@ -345,7 +345,7 @@ public class CheckOutByBarcodeTests extends APITests {
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource steve = usersFixture.steve(UserBuilder::inactive);
 
-    final Response response = loansFixture.attemptCheckOutByBarcode(
+    final Response response = checkOutFixture.attemptCheckOutByBarcode(
       smallAngryPlanet, steve);
 
     assertThat(response.getJson(), hasErrorWith(allOf(
@@ -362,7 +362,7 @@ public class CheckOutByBarcodeTests extends APITests {
 
     proxyRelationshipsFixture.currentProxyFor(james, steve);
 
-    final Response response = loansFixture.attemptCheckOutByBarcode(
+    final Response response = checkOutFixture.attemptCheckOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
         .forItem(smallAngryPlanet)
         .to(james)
@@ -381,7 +381,7 @@ public class CheckOutByBarcodeTests extends APITests {
     IndividualResource james = usersFixture.james();
     IndividualResource jessica = usersFixture.jessica();
 
-    final Response response = loansFixture.attemptCheckOutByBarcode(
+    final Response response = checkOutFixture.attemptCheckOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
         .forItem(smallAngryPlanet)
         .to(jessica)
@@ -401,7 +401,7 @@ public class CheckOutByBarcodeTests extends APITests {
 
     itemsClient.delete(smallAngryPlanet.getId());
 
-    final Response response = loansFixture.attemptCheckOutByBarcode(
+    final Response response = checkOutFixture.attemptCheckOutByBarcode(
       smallAngryPlanet, steve);
 
     assertThat(response.getJson(), hasErrorWith(allOf(
@@ -415,9 +415,9 @@ public class CheckOutByBarcodeTests extends APITests {
     final IndividualResource jessica = usersFixture.jessica();
     final IndividualResource steve = usersFixture.steve();
 
-    loansFixture.checkOutByBarcode(smallAngryPlanet, jessica);
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet, jessica);
 
-    final Response response = loansFixture.attemptCheckOutByBarcode(
+    final Response response = checkOutFixture.attemptCheckOutByBarcode(
       smallAngryPlanet, steve);
 
     assertThat(response.getJson(), hasErrorWith(allOf(
@@ -430,7 +430,7 @@ public class CheckOutByBarcodeTests extends APITests {
     final IndividualResource missingItem = setupMissingItem(itemsFixture);
     final IndividualResource steve = usersFixture.steve();
 
-    final IndividualResource response = loansFixture.checkOutByBarcode(
+    final IndividualResource response = checkOutFixture.checkOutByBarcode(
       missingItem, steve);
 
     assertThat(response.getJson(), hasJsonPath("status.name", "Open"));
@@ -454,7 +454,7 @@ public class CheckOutByBarcodeTests extends APITests {
       .withItemId(smallAngryPlanet.getId())
       .withUserId(jessica.getId()));
 
-    final Response response = loansFixture.attemptCheckOutByBarcode(
+    final Response response = checkOutFixture.attemptCheckOutByBarcode(
       smallAngryPlanet, steve);
 
     assertThat(response.getJson(), hasErrorWith(allOf(
@@ -467,7 +467,7 @@ public class CheckOutByBarcodeTests extends APITests {
     final IndividualResource declaredLostItem = itemsFixture.setupDeclaredLostItem();
     final IndividualResource steve = usersFixture.steve();
 
-    final Response response = loansFixture.attemptCheckOutByBarcode(
+    final Response response = checkOutFixture.attemptCheckOutByBarcode(
       declaredLostItem, steve);
 
     assertThat(response.getJson(), hasErrorWith(allOf(
@@ -483,7 +483,7 @@ public class CheckOutByBarcodeTests extends APITests {
         .withBarcode(barcode)
         .claimedReturned());
 
-    final Response response = loansFixture
+    final Response response = checkOutFixture
       .attemptCheckOutByBarcode(claimedReturnedItem, usersFixture.steve());
 
     final String expectedMessage = String.format(
@@ -502,7 +502,7 @@ public class CheckOutByBarcodeTests extends APITests {
 
     proxyRelationshipsFixture.currentProxyFor(jessica, james);
 
-    final IndividualResource response = loansFixture.checkOutByBarcode(
+    final IndividualResource response = checkOutFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
         .forItem(smallAngryPlanet)
         .to(jessica)
@@ -536,7 +536,7 @@ public class CheckOutByBarcodeTests extends APITests {
 
     final DateTime loanDate = new DateTime(2018, 3, 18, 11, 43, 54, UTC);
 
-    final Response response = loansFixture.attemptCheckOutByBarcode(500,
+    final Response response = checkOutFixture.attemptCheckOutByBarcode(500,
       new CheckOutByBarcodeRequestBuilder()
         .forItem(smallAngryPlanet)
         .to(steve)
@@ -555,7 +555,7 @@ public class CheckOutByBarcodeTests extends APITests {
 
     final DateTime loanDate = new DateTime(2018, 3, 18, 11, 43, 54, UTC);
 
-    final Response response = loansFixture.attemptCheckOutByBarcode(422,
+    final Response response = checkOutFixture.attemptCheckOutByBarcode(422,
       new CheckOutByBarcodeRequestBuilder()
         .forItem(smallAngryPlanet)
         .to(james)
@@ -575,7 +575,7 @@ public class CheckOutByBarcodeTests extends APITests {
       = itemsFixture.basedUponSmallAngryPlanet(item -> item
       .withBarcode("12345 67890"));
 
-    final IndividualResource response = loansFixture.checkOutByBarcode(
+    final IndividualResource response = checkOutFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
         .forItem(smallAngryPlanet)
         .to(steve)
@@ -610,7 +610,7 @@ public class CheckOutByBarcodeTests extends APITests {
     final IndividualResource steve
       = usersFixture.steve(user -> user.withBarcode("12345 67890"));
 
-    final IndividualResource response = loansFixture.checkOutByBarcode(
+    final IndividualResource response = checkOutFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
         .forItem(smallAngryPlanet)
         .to(steve)
@@ -658,7 +658,7 @@ public class CheckOutByBarcodeTests extends APITests {
 
     proxyRelationshipsFixture.currentProxyFor(jessica, steve);
 
-    final IndividualResource response = loansFixture.checkOutByBarcode(
+    final IndividualResource response = checkOutFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
         .forItem(smallAngryPlanet)
         .to(jessica)
@@ -706,7 +706,7 @@ public class CheckOutByBarcodeTests extends APITests {
 
     final IndividualResource jessica = usersFixture.jessica();
 
-    final IndividualResource response = loansFixture.checkOutByBarcode(
+    final IndividualResource response = checkOutFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
         .forItem(smallAngryPlanet)
         .to(jessica)
@@ -755,7 +755,7 @@ public class CheckOutByBarcodeTests extends APITests {
       .withRequesterId(jessica.getId())
       .withPickupServicePoint(servicePointsFixture.cd1()));
 
-    final IndividualResource response = loansFixture.checkOutByBarcode(
+    final IndividualResource response = checkOutFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
         .forItem(smallAngryPlanet)
         .to(jessica)
@@ -800,7 +800,7 @@ public class CheckOutByBarcodeTests extends APITests {
 
     final IndividualResource jessica = usersFixture.jessica();
 
-    final IndividualResource response = loansFixture.checkOutByBarcode(
+    final IndividualResource response = checkOutFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
         .forItem(smallAngryPlanet)
         .to(jessica)
@@ -849,7 +849,7 @@ public class CheckOutByBarcodeTests extends APITests {
       .withRequesterId(jessica.getId())
       .withPickupServicePoint(servicePointsFixture.cd1()));
 
-    final IndividualResource response = loansFixture.checkOutByBarcode(
+    final IndividualResource response = checkOutFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
         .forItem(smallAngryPlanet)
         .to(jessica)
@@ -898,7 +898,7 @@ public class CheckOutByBarcodeTests extends APITests {
 
     InventoryItemResource nod = itemsFixture.basedUponNod();
     IndividualResource steve = usersFixture.steve();
-    Response response = loansFixture.attemptCheckOutByBarcode(nod, steve);
+    Response response = checkOutFixture.attemptCheckOutByBarcode(nod, steve);
 
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("Item is not loanable"),
@@ -920,7 +920,7 @@ public class CheckOutByBarcodeTests extends APITests {
 
     final DateTime loanDate = new DateTime(2018, 3, 18, 11, 43, 54, UTC);
 
-    final Response response = loansFixture.attemptCheckOutByBarcode(500,
+    final Response response = checkOutFixture.attemptCheckOutByBarcode(500,
       new CheckOutByBarcodeRequestBuilder()
         .forItem(smallAngryPlanet)
         .to(steve)
@@ -949,7 +949,7 @@ public class CheckOutByBarcodeTests extends APITests {
 
     final DateTime loanDate = new DateTime(2018, 3, 18, 11, 43, 54, UTC);
 
-    loansFixture.checkOutByBarcode(
+    checkOutFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
         .forItem(smallAngryPlanet)
         .to(steve)
@@ -975,8 +975,8 @@ public class CheckOutByBarcodeTests extends APITests {
     InventoryItemResource secondItem = itemsFixture.basedUponDunkirk();
     IndividualResource steve = usersFixture.steve();
 
-    loansFixture.checkOutByBarcode(firstItem, steve);
-    loansFixture.checkOutByBarcode(secondItem, steve);
+    checkOutFixture.checkOutByBarcode(firstItem, steve);
+    checkOutFixture.checkOutByBarcode(secondItem, steve);
   }
 
   @Test
@@ -991,17 +991,17 @@ public class CheckOutByBarcodeTests extends APITests {
     IndividualResource videoTypeItem = itemsFixture.basedUponDunkirk();
     IndividualResource steve = usersFixture.steve();
 
-    loansFixture.checkOutByBarcode(firstBookTypeItem, steve);
+    checkOutFixture.checkOutByBarcode(firstBookTypeItem, steve);
     firstBookTypeItem = itemsClient.get(firstBookTypeItem);
     assertThat(firstBookTypeItem, hasItemStatus(CHECKED_OUT));
 
-    Response response = loansFixture.attemptCheckOutByBarcode(secondBookTypeItem, steve);
+    Response response = checkOutFixture.attemptCheckOutByBarcode(secondBookTypeItem, steve);
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("Patron has reached maximum limit of 1 items for material type"))));
     secondBookTypeItem = itemsClient.get(secondBookTypeItem);
     assertThat(secondBookTypeItem, hasItemStatus(AVAILABLE));
 
-    loansFixture.checkOutByBarcode(videoTypeItem, steve);
+    checkOutFixture.checkOutByBarcode(videoTypeItem, steve);
     videoTypeItem = itemsClient.get(videoTypeItem);
     assertThat(videoTypeItem, hasItemStatus(CHECKED_OUT));
   }
@@ -1018,17 +1018,17 @@ public class CheckOutByBarcodeTests extends APITests {
     IndividualResource videoTypeItem = itemsFixture.basedUponDunkirk();
     IndividualResource steve = usersFixture.steve();
 
-    loansFixture.checkOutByBarcode(firstBookTypeItem, steve);
+    checkOutFixture.checkOutByBarcode(firstBookTypeItem, steve);
     firstBookTypeItem = itemsClient.get(firstBookTypeItem);
     assertThat(firstBookTypeItem, hasItemStatus(CHECKED_OUT));
 
-    Response response = loansFixture.attemptCheckOutByBarcode(secondBookTypeItem, steve);
+    Response response = checkOutFixture.attemptCheckOutByBarcode(secondBookTypeItem, steve);
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("Patron has reached maximum limit of 1 items for loan type"))));
     secondBookTypeItem = itemsClient.get(secondBookTypeItem);
     assertThat(secondBookTypeItem, hasItemStatus(AVAILABLE));
 
-    loansFixture.checkOutByBarcode(videoTypeItem, steve);
+    checkOutFixture.checkOutByBarcode(videoTypeItem, steve);
     videoTypeItem = itemsClient.get(videoTypeItem);
     assertThat(videoTypeItem, hasItemStatus(CHECKED_OUT));
   }
@@ -1046,17 +1046,17 @@ public class CheckOutByBarcodeTests extends APITests {
     IndividualResource videoTypeItem = itemsFixture.basedUponDunkirk();
     IndividualResource steve = usersFixture.steve();
 
-    loansFixture.checkOutByBarcode(firstBookTypeItem, steve);
+    checkOutFixture.checkOutByBarcode(firstBookTypeItem, steve);
     firstBookTypeItem = itemsClient.get(firstBookTypeItem);
     assertThat(firstBookTypeItem, hasItemStatus(CHECKED_OUT));
 
-    Response response = loansFixture.attemptCheckOutByBarcode(secondBookTypeItem, steve);
+    Response response = checkOutFixture.attemptCheckOutByBarcode(secondBookTypeItem, steve);
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("Patron has reached maximum limit of 1 items for combination of material type and loan type"))));
     secondBookTypeItem = itemsClient.get(secondBookTypeItem);
     assertThat(secondBookTypeItem, hasItemStatus(AVAILABLE));
 
-    loansFixture.checkOutByBarcode(videoTypeItem, steve);
+    checkOutFixture.checkOutByBarcode(videoTypeItem, steve);
     videoTypeItem = itemsClient.get(videoTypeItem);
     assertThat(videoTypeItem, hasItemStatus(CHECKED_OUT));
   }
@@ -1077,17 +1077,17 @@ public class CheckOutByBarcodeTests extends APITests {
     IndividualResource videoTypeItem = itemsFixture.basedUponDunkirk();
     IndividualResource steve = usersFixture.steve();
 
-    loansFixture.checkOutByBarcode(firstBookTypeItem, steve);
+    checkOutFixture.checkOutByBarcode(firstBookTypeItem, steve);
     firstBookTypeItem = itemsClient.get(firstBookTypeItem);
     assertThat(firstBookTypeItem, hasItemStatus(CHECKED_OUT));
 
-    Response response = loansFixture.attemptCheckOutByBarcode(secondBookTypeItem, steve);
+    Response response = checkOutFixture.attemptCheckOutByBarcode(secondBookTypeItem, steve);
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("Patron has reached maximum limit of 1 items for combination of patron group, material type and loan type"))));
     secondBookTypeItem = itemsClient.get(secondBookTypeItem);
     assertThat(secondBookTypeItem, hasItemStatus(AVAILABLE));
 
-    loansFixture.checkOutByBarcode(videoTypeItem, steve);
+    checkOutFixture.checkOutByBarcode(videoTypeItem, steve);
     videoTypeItem = itemsClient.get(videoTypeItem);
     assertThat(videoTypeItem, hasItemStatus(CHECKED_OUT));
   }
@@ -1117,17 +1117,17 @@ public class CheckOutByBarcodeTests extends APITests {
     IndividualResource bookTypeItemReadingRoomLoanType = itemsFixture.basedUponInterestingTimes(itemBuilder -> itemBuilder.withTemporaryLoanType(readingRoom));
     IndividualResource steve = usersFixture.steve();
 
-    loansFixture.checkOutByBarcode(firstBookTypeItem, steve);
+    checkOutFixture.checkOutByBarcode(firstBookTypeItem, steve);
     firstBookTypeItem = itemsClient.get(firstBookTypeItem);
     assertThat(firstBookTypeItem, hasItemStatus(CHECKED_OUT));
 
-    Response response = loansFixture.attemptCheckOutByBarcode(secondBookTypeItem, steve);
+    Response response = checkOutFixture.attemptCheckOutByBarcode(secondBookTypeItem, steve);
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("Patron has reached maximum limit of 1 items for combination of patron group, material type and loan type"))));
     secondBookTypeItem = itemsClient.get(secondBookTypeItem);
     assertThat(secondBookTypeItem, hasItemStatus(AVAILABLE));
 
-    loansFixture.checkOutByBarcode(bookTypeItemReadingRoomLoanType, steve);
+    checkOutFixture.checkOutByBarcode(bookTypeItemReadingRoomLoanType, steve);
     bookTypeItemReadingRoomLoanType = itemsClient.get(bookTypeItemReadingRoomLoanType);
     assertThat(bookTypeItemReadingRoomLoanType, hasItemStatus(CHECKED_OUT));
   }
@@ -1145,11 +1145,11 @@ public class CheckOutByBarcodeTests extends APITests {
     IndividualResource secondBookTypeItem = itemsFixture.basedUponSmallAngryPlanet(itemBuilder -> itemBuilder.withTemporaryLoanType(canCirculate));
     IndividualResource steve = usersFixture.steve();
 
-    loansFixture.checkOutByBarcode(firstBookTypeItem, steve);
+    checkOutFixture.checkOutByBarcode(firstBookTypeItem, steve);
     firstBookTypeItem = itemsClient.get(firstBookTypeItem);
     assertThat(firstBookTypeItem, hasItemStatus(CHECKED_OUT));
 
-    Response response = loansFixture.attemptCheckOutByBarcode(secondBookTypeItem, steve);
+    Response response = checkOutFixture.attemptCheckOutByBarcode(secondBookTypeItem, steve);
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("Patron has reached maximum limit of 1 items for material type"))));
     secondBookTypeItem = itemsClient.get(secondBookTypeItem);
@@ -1163,7 +1163,7 @@ public class CheckOutByBarcodeTests extends APITests {
 
     assertThat(withdrawnItem.getJson(), isWithdrawn());
 
-    final IndividualResource response = loansFixture
+    final IndividualResource response = checkOutFixture
       .checkOutByBarcode(withdrawnItem, usersFixture.steve());
 
     assertThat(response.getJson(), allOf(
