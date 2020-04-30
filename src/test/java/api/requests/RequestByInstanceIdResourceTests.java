@@ -5,14 +5,11 @@ import static org.folio.circulation.resources.RequestByInstanceIdResource.rankIt
 import static org.folio.circulation.resources.RequestByInstanceIdResourceTests.getJsonInstanceRequest;
 import static org.junit.Assert.assertEquals;
 
-import java.net.MalformedURLException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeoutException;
 
 import org.folio.circulation.domain.InstanceRequestRelatedRecords;
 import org.folio.circulation.domain.Item;

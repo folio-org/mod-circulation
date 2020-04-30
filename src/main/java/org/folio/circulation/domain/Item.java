@@ -121,6 +121,10 @@ public class Item {
     return getStatus().equals(status);
   }
 
+  public boolean isNotInStatus(ItemStatus status) {
+    return !isInStatus(status);
+  }
+
   public boolean hasChanged() {
     return changed;
   }

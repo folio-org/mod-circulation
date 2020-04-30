@@ -173,8 +173,17 @@ public class InterfaceUrls {
     return circulationModuleUrl(String.format("/circulation/loans/%s/declare-item-lost", loanId));
   }
 
+  public static URL changeDueDateURL(String loanId) {
+    return circulationModuleUrl(String.format("/circulation/loans/%s/change-due-date", loanId));
+  }
+
   public static URL claimItemReturnedURL(String loanId) {
     return circulationModuleUrl(String.format("/circulation/loans/%s/claim-item-returned", loanId));
+  }
+
+  public static URL declareClaimedReturnedItemAsMissingUrl(String loanId) {
+    return circulationModuleUrl(String.format(
+      "/circulation/loans/%s/declare-claimed-returned-item-as-missing", loanId));
   }
 
   public static URL endSessionUrl() {

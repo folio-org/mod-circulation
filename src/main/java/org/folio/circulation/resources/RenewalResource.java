@@ -11,6 +11,7 @@ import org.folio.circulation.domain.LoanRepresentation;
 import org.folio.circulation.domain.OverdueFineCalculatorService;
 import org.folio.circulation.domain.RequestQueueRepository;
 import org.folio.circulation.domain.UserRepository;
+import org.folio.circulation.domain.notice.schedule.FeeFineScheduledNoticeService;
 import org.folio.circulation.domain.notice.schedule.DueDateScheduledNoticeService;
 import org.folio.circulation.domain.policy.LoanPolicyRepository;
 import org.folio.circulation.domain.representations.LoanResponse;
@@ -60,8 +61,6 @@ public abstract class RenewalResource extends Resource {
     final DueDateScheduledNoticeService scheduledNoticeService = DueDateScheduledNoticeService.using(clients);
 
     final LoanNoticeSender loanNoticeSender = LoanNoticeSender.using(clients);
-    final OverdueFineCalculatorService overdueFineCalculatorService =
-      OverdueFineCalculatorService.using(clients);
 
     //TODO: Validation check for same user should be in the domain service
 
@@ -77,8 +76,7 @@ public abstract class RenewalResource extends Resource {
       .thenComposeAsync(r -> r.after(requestQueueRepository::get))
       .thenCompose(r -> r.combineAfter(configurationRepository::findTimeZoneConfiguration,
         LoanAndRelatedRecords::withTimeZone))
-      .thenCompose(r -> r.after(
-        records -> overdueFineCalculatorService.createOverdueFineIfNecessary(records, context)))
+      .thenComposeAsync(r -> r.after(records -> createOverdueFine(records, context, clients)))
       .thenComposeAsync(r -> r.after(records -> renewalStrategy.renew(records, bodyAsJson, clients)))
       .thenComposeAsync(r -> r.after(storeLoanAndItem::updateLoanAndItemInStorage))
       .thenApply(r -> r.next(scheduledNoticeService::rescheduleDueDateNotices))
@@ -86,6 +84,15 @@ public abstract class RenewalResource extends Resource {
       .thenApply(r -> r.map(loanRepresentation::extendedLoan))
       .thenApply(LoanResponse::from)
       .thenAccept(result -> result.writeTo(routingContext.response()));
+  }
+
+  private CompletableFuture<Result<LoanAndRelatedRecords>> createOverdueFine(
+    LoanAndRelatedRecords records, WebContext context, Clients clients) {
+
+    return OverdueFineCalculatorService.using(clients)
+      .createOverdueFineIfNecessary(records, context.getUserId())
+      .thenApply(r -> r.next(action -> FeeFineScheduledNoticeService.using(clients)
+        .scheduleNotices(records, action)));
   }
 
   protected abstract CompletableFuture<Result<Loan>> findLoan(

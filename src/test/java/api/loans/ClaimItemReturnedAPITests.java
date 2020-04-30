@@ -1,15 +1,16 @@
 package api.loans;
 
 import static api.support.matchers.LoanMatchers.hasLoanProperty;
-import static api.support.matchers.LoanMatchers.hasOpenStatus;
+import static api.support.matchers.LoanMatchers.isOpen;
 import static api.support.matchers.LoanMatchers.hasStatus;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
+import static api.support.matchers.ValidationErrorMatchers.hasNullParameter;
 import static api.support.matchers.ValidationErrorMatchers.hasParameter;
 import static org.folio.circulation.domain.representations.LoanProperties.ACTION;
 import static org.folio.circulation.domain.representations.LoanProperties.ACTION_COMMENT;
 import static org.folio.circulation.domain.representations.LoanProperties.CLAIMED_RETURNED_DATE;
-import static org.folio.circulation.resources.ClaimItemReturnedResource.ITEM_CLAIMED_RETURNED_DATE;
+import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
@@ -32,7 +33,7 @@ public class ClaimItemReturnedAPITests extends APITests {
   @Before
   public void setUpItemAndLoan() {
     item = itemsFixture.basedUponSmallAngryPlanet();
-    loanId = loansFixture.checkOutByBarcode(item, usersFixture.charlotte())
+    loanId = checkOutFixture.checkOutByBarcode(item, usersFixture.charlotte())
       .getId().toString();
   }
 
@@ -41,7 +42,7 @@ public class ClaimItemReturnedAPITests extends APITests {
     final String comment = "testing";
     final DateTime dateTime = DateTime.now();
 
-    final Response response = loansFixture
+    final Response response = claimItemReturnedFixture
       .claimItemReturned(new ClaimItemReturnedRequestBuilder()
         .forLoan(loanId)
         .withItemClaimedReturnedDate(dateTime)
@@ -54,7 +55,7 @@ public class ClaimItemReturnedAPITests extends APITests {
   public void canClaimItemReturnedWithoutComment() {
     final DateTime dateTime = DateTime.now();
 
-    final Response response = loansFixture
+    final Response response = claimItemReturnedFixture
       .claimItemReturned(new ClaimItemReturnedRequestBuilder()
         .forLoan(loanId)
         .withItemClaimedReturnedDate(dateTime));
@@ -66,36 +67,37 @@ public class ClaimItemReturnedAPITests extends APITests {
   public void cannotClaimItemReturnedWhenLoanIsClosed() {
     final DateTime dateTime = DateTime.now();
 
-    loansFixture.checkInByBarcode(item);
+    checkInFixture.checkInByBarcode(item);
 
-    final Response response = loansFixture
+    final Response response = claimItemReturnedFixture
       .attemptClaimItemReturned(new ClaimItemReturnedRequestBuilder()
         .forLoan(loanId)
         .withItemClaimedReturnedDate(dateTime));
 
     assertThat(response.getStatusCode(), is(422));
-    assertThat(response.getJson(), hasErrorWith(hasMessage("Loan is closed")));
-    assertThat(response.getJson(), hasErrorWith(hasParameter("id", loanId)));
+    assertThat(response.getJson(), hasErrorWith(allOf(
+      hasMessage("Loan is closed"),
+      hasParameter("loanId", loanId))));
   }
 
   @Test
   public void cannotClaimItemReturnedWhenDateTimeIsNotProvided() {
-    final Response response = loansFixture
+    final Response response = claimItemReturnedFixture
       .attemptClaimItemReturned(new ClaimItemReturnedRequestBuilder()
         .forLoan(loanId)
         .withItemClaimedReturnedDate(null));
 
     assertThat(response.getStatusCode(), is(422));
-    assertThat(response.getJson(),
-      hasErrorWith(hasMessage("Item claimed returned date is a required field")));
-    assertThat(response.getJson(), hasErrorWith(hasParameter(ITEM_CLAIMED_RETURNED_DATE, null)));
+    assertThat(response.getJson(), hasErrorWith(allOf(
+      hasMessage("Item claimed returned date is a required field"),
+      hasNullParameter("itemClaimedReturnedDate"))));
   }
 
   @Test
   public void cannotClaimItemReturnedWhenLoanIsNotFound() {
     final String notExistentLoanId = UUID.randomUUID().toString();
 
-    final Response response = loansFixture
+    final Response response = claimItemReturnedFixture
       .attemptClaimItemReturned(new ClaimItemReturnedRequestBuilder()
         .forLoan(notExistentLoanId));
 
@@ -108,7 +110,7 @@ public class ClaimItemReturnedAPITests extends APITests {
 
     assertThat(response.getStatusCode(), is(204));
     assertThat(actualItem, hasStatus("Claimed returned"));
-    assertThat(actualLoan, hasOpenStatus());
+    assertThat(actualLoan, isOpen());
     assertThat(actualLoan, hasLoanProperty(ACTION, "claimedReturned"));
     assertThat(actualLoan, hasLoanProperty(ACTION_COMMENT, comment));
     assertThat(actualLoan, hasLoanProperty(CLAIMED_RETURNED_DATE, dateTime.toString()));

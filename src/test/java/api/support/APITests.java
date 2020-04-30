@@ -5,12 +5,11 @@ import static api.support.APITestContext.getOkapiHeadersFromContext;
 import static api.support.APITestContext.undeployVerticles;
 import static api.support.http.InterfaceUrls.circulationRulesUrl;
 import static api.support.http.api.support.NamedQueryStringParameter.namedParameter;
+import static org.folio.circulation.domain.representations.LoanProperties.PATRON_GROUP_AT_CHECKOUT;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.core.Is.is;
-import static org.hamcrest.MatcherAssert.assertThat;
-
-import static org.folio.circulation.domain.representations.LoanProperties.PATRON_GROUP_AT_CHECKOUT;
 
 import java.lang.invoke.MethodHandles;
 import java.net.URL;
@@ -22,16 +21,31 @@ import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+
+import org.folio.circulation.support.ClockManager;
+import org.folio.circulation.support.http.client.IndividualResource;
+import org.joda.time.DateTime;
+import org.junit.After;
+import org.junit.AfterClass;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import api.support.builders.LoanPolicyBuilder;
 import api.support.builders.NoticePolicyBuilder;
 import api.support.fixtures.AddressTypesFixture;
 import api.support.fixtures.CancellationReasonsFixture;
+import api.support.fixtures.ChangeDueDateFixture;
+import api.support.fixtures.CheckInFixture;
+import api.support.fixtures.CheckOutFixture;
 import api.support.fixtures.CirculationRulesFixture;
+import api.support.fixtures.ClaimItemReturnedFixture;
+import api.support.fixtures.DeclareLostFixtures;
 import api.support.fixtures.EndPatronSessionClient;
 import api.support.fixtures.ExpiredSessionProcessingClient;
+import api.support.fixtures.FeeFineTypeFixture;
+import api.support.fixtures.FeeFineOwnerFixture;
 import api.support.fixtures.HoldingsFixture;
 import api.support.fixtures.IdentifierTypesFixture;
 import api.support.fixtures.InstancesFixture;
@@ -57,16 +71,6 @@ import api.support.fixtures.UsersFixture;
 import api.support.http.QueryStringParameter;
 import api.support.http.ResourceClient;
 import io.vertx.core.json.JsonObject;
-import org.joda.time.DateTime;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import org.folio.circulation.support.ClockManager;
-import org.folio.circulation.support.http.client.IndividualResource;
 
 public abstract class APITests {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
@@ -186,9 +190,6 @@ public abstract class APITests {
   protected final OverdueFinePoliciesFixture overdueFinePoliciesFixture
     = new OverdueFinePoliciesFixture(overdueFinePolicyClient);
 
-  protected final LostItemFeePoliciesFixture lostItemFeePoliciesFixture
-    = new LostItemFeePoliciesFixture(lostItemFeePolicyClient);
-
   protected final CirculationRulesFixture circulationRulesFixture
     = new CirculationRulesFixture(
       new RestAssuredClient(getOkapiHeadersFromContext()));
@@ -210,7 +211,15 @@ public abstract class APITests {
     patronGroupsFixture);
 
   protected final LoansFixture loansFixture = new LoansFixture(
-          usersFixture, servicePointsFixture);
+  );
+
+  protected final CheckOutFixture checkOutFixture = new CheckOutFixture(
+    usersFixture, servicePointsFixture);
+
+  protected final CheckInFixture checkInFixture = new CheckInFixture(
+    servicePointsFixture);
+
+  protected final ChangeDueDateFixture changeDueDateFixture = new ChangeDueDateFixture();
 
   protected final CancellationReasonsFixture cancellationReasonsFixture
     = new CancellationReasonsFixture(ResourceClient.forCancellationReasons());
@@ -232,6 +241,16 @@ public abstract class APITests {
 
   protected final TemplateFixture templateFixture = new TemplateFixture(templateClient);
   protected final IdentifierTypesFixture identifierTypesFixture = new IdentifierTypesFixture();
+
+  protected final FeeFineOwnerFixture feeFineOwnerFixture =
+    new FeeFineOwnerFixture(feeFineOwnersClient, servicePointsFixture);
+  protected final FeeFineTypeFixture feeFineTypeFixture = new FeeFineTypeFixture(feeFinesClient);
+  protected final LostItemFeePoliciesFixture lostItemFeePoliciesFixture
+    = new LostItemFeePoliciesFixture(lostItemFeePolicyClient, feeFineOwnerFixture, feeFineTypeFixture);
+
+  protected final DeclareLostFixtures declareLostFixtures = new DeclareLostFixtures();
+  protected final ClaimItemReturnedFixture claimItemReturnedFixture =
+    new ClaimItemReturnedFixture(restAssuredClient);
 
   protected APITests() {
     this(true);
@@ -263,6 +282,7 @@ public abstract class APITests {
     accountsClient.deleteAll();
     feeFinesClient.deleteAll();
     feeFineOwnersClient.deleteAll();
+    feeFineActionsClient.deleteAll();
 
     //TODO: Only cleans up reference records, move items, holdings records
     // and instances into here too
@@ -275,6 +295,8 @@ public abstract class APITests {
     if (initialiseCirculationRules) {
       useDefaultRollingPolicyCirculationRules();
     }
+
+    usersFixture.defaultAdmin();
   }
 
   @AfterClass
@@ -325,6 +347,11 @@ public abstract class APITests {
     cancellationReasonsFixture.cleanUp();
     instancesFixture.cleanUp();
     userManualBlocksFixture.cleanUp();
+
+    feeFineOwnerFixture.cleanUp();
+    feeFineTypeFixture.cleanUp();
+    feeFineActionsClient.deleteAll();
+    accountsClient.deleteAll();
   }
 
   //Needs to be done each time as some tests manipulate the rules
@@ -403,6 +430,14 @@ public abstract class APITests {
       lostItemFeePoliciesFixture.facultyStandard().getId());
   }
 
+  protected void use(CirculationPolicies policies) {
+    useFallbackPolicies(policies.loanPolicy,
+      policies.requestPolicy,
+      policies.noticePolicy,
+      policies.overduePolicy,
+      policies.lostItemPolicy);
+  }
+
   /**
    * This method uses the loan policy, allowAllRequestPolicy request policy,
    * activeNotice notice policy, facultyStandard overdue fine policy from
@@ -432,6 +467,13 @@ public abstract class APITests {
       noticePoliciesFixture.create(noticePolicy).getId(),
       overdueFinePoliciesFixture.facultyStandard().getId(),
       lostItemFeePoliciesFixture.facultyStandard().getId());
+  }
+
+  protected void useLostItemPolicy(UUID id) {
+    useFallbackPolicies(loanPoliciesFixture.canCirculateRolling().getId(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
+      noticePoliciesFixture.activeNotice().getId(),
+      overdueFinePoliciesFixture.facultyStandard().getId(), id);
   }
 
   /**
@@ -598,5 +640,46 @@ public abstract class APITests {
 
   protected void mockClockManagerToReturnDefaultDateTime() {
     ClockManager.getClockManager().setDefaultClock();
+  }
+
+  public class CirculationPolicies {
+    private UUID loanPolicy;
+    private UUID requestPolicy;
+    private UUID noticePolicy;
+    private UUID overduePolicy;
+    private UUID lostItemPolicy;
+
+    public CirculationPolicies() {
+      loanPolicy = loanPoliciesFixture.canCirculateRolling().getId();
+      requestPolicy = requestPoliciesFixture.allowAllRequestPolicy().getId();
+      noticePolicy = noticePoliciesFixture.activeNotice().getId();
+      overduePolicy = overdueFinePoliciesFixture.facultyStandard().getId();
+      lostItemPolicy = lostItemFeePoliciesFixture.facultyStandard().getId();
+    }
+
+    public CirculationPolicies withLoanPolicy(UUID loanPolicy) {
+      this.loanPolicy = loanPolicy;
+      return this;
+    }
+
+    public CirculationPolicies withRequestPolicy(UUID requestPolicy) {
+      this.requestPolicy = requestPolicy;
+      return this;
+    }
+
+    public CirculationPolicies withNoticePolicy(UUID noticePolicy) {
+      this.noticePolicy = noticePolicy;
+      return this;
+    }
+
+    public CirculationPolicies withOverduePolicy(UUID overduePolicy) {
+      this.overduePolicy = overduePolicy;
+      return this;
+    }
+
+    public CirculationPolicies withLostItemPolicy(UUID lostItemPolicy) {
+      this.lostItemPolicy = lostItemPolicy;
+      return this;
+    }
   }
 }

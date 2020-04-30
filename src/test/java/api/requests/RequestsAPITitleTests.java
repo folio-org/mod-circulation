@@ -27,7 +27,7 @@ public class RequestsAPITitleTests extends APITests {
     final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
-    loansFixture.checkOutByBarcode(smallAngryPlanet);
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet);
 
     IndividualResource response = requestsClient.create(new RequestBuilder()
       .forItem(smallAngryPlanet)
@@ -63,7 +63,7 @@ public class RequestsAPITitleTests extends APITests {
     final InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
-    loansFixture.checkOutByBarcode(smallAngryPlanet);
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet);
 
     IndividualResource response = requestsClient.create(new RequestBuilder()
       .forItem(smallAngryPlanet)
@@ -100,7 +100,7 @@ public class RequestsAPITitleTests extends APITests {
     final InventoryItemResource temeraire = itemsFixture.basedUponTemeraire();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
-    loansFixture.checkOutByBarcode(smallAngryPlanet);
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet);
 
     UUID firstRequestId = requestsClient.create(new RequestBuilder()
       .forItem(smallAngryPlanet)
@@ -108,7 +108,7 @@ public class RequestsAPITitleTests extends APITests {
       .by(usersFixture.james()))
       .getId();
 
-    loansFixture.checkOutByBarcode(temeraire);
+    checkOutFixture.checkOutByBarcode(temeraire);
 
     UUID secondRequestId = requestsClient.create(new RequestBuilder()
       .forItem(temeraire)

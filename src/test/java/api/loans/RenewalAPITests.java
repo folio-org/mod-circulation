@@ -92,7 +92,7 @@ abstract class RenewalAPITests extends APITests {
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource jessica = usersFixture.jessica();
 
-    final IndividualResource loan = loansFixture.checkOutByBarcode(smallAngryPlanet, jessica,
+    final IndividualResource loan = checkOutFixture.checkOutByBarcode(smallAngryPlanet, jessica,
             new DateTime(2018, 4, 21, 11, 21, 43, DateTimeZone.UTC));
     final UUID loanId = loan
       .getId();
@@ -139,7 +139,7 @@ abstract class RenewalAPITests extends APITests {
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource jessica = usersFixture.jessica();
 
-    final IndividualResource loan = loansFixture.checkOutByBarcode(smallAngryPlanet, jessica,
+    final IndividualResource loan = checkOutFixture.checkOutByBarcode(smallAngryPlanet, jessica,
       new DateTime(2018, 4, 21, 11, 21, 43, DateTimeZone.UTC));
 
     final UUID loanId = loan.getId();
@@ -209,7 +209,7 @@ abstract class RenewalAPITests extends APITests {
 
     final DateTime loanDate = new DateTime(2018, 3, 7, 11, 43, 54, DateTimeZone.UTC);
 
-    loansFixture.checkOutByBarcode(
+    checkOutFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
         .forItem(smallAngryPlanet)
         .to(steve)
@@ -233,7 +233,7 @@ abstract class RenewalAPITests extends APITests {
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource jessica = usersFixture.jessica();
 
-    final IndividualResource loan = loansFixture.checkOutByBarcode(smallAngryPlanet, jessica,
+    final IndividualResource loan = checkOutFixture.checkOutByBarcode(smallAngryPlanet, jessica,
       new DateTime(2018, 4, 21, 11, 21, 43, DateTimeZone.UTC));
 
     final UUID loanId = loan.getId();
@@ -305,7 +305,7 @@ abstract class RenewalAPITests extends APITests {
 
     final DateTime loanDate = new DateTime(2018, 3, 4, 11, 43, 54, DateTimeZone.UTC);
 
-    loansFixture.checkOutByBarcode(
+    checkOutFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
         .forItem(smallAngryPlanet)
         .to(steve)
@@ -349,7 +349,7 @@ abstract class RenewalAPITests extends APITests {
 
     final DateTime loanDate = new DateTime(2018, 3, 4, 11, 43, 54, DateTimeZone.UTC);
 
-    loansFixture.checkOutByBarcode(
+    checkOutFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
         .forItem(smallAngryPlanet)
         .to(steve)
@@ -396,7 +396,7 @@ abstract class RenewalAPITests extends APITests {
 
     final DateTime loanDate = new DateTime(2018, 2, 10, 11, 23, 12, DateTimeZone.UTC);
 
-    loansFixture.checkOutByBarcode(
+    checkOutFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
         .forItem(smallAngryPlanet)
         .to(steve)
@@ -438,7 +438,7 @@ abstract class RenewalAPITests extends APITests {
 
     use(limitedRenewalsPolicy);
 
-    final IndividualResource loan = loansFixture.checkOutByBarcode(smallAngryPlanet, jessica,
+    final IndividualResource loan = checkOutFixture.checkOutByBarcode(smallAngryPlanet, jessica,
       new DateTime(2018, 4, 21, 11, 21, 43, DateTimeZone.UTC));
 
     final UUID loanId = loan.getId();
@@ -476,7 +476,7 @@ abstract class RenewalAPITests extends APITests {
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource jessica = usersFixture.jessica();
 
-    final UUID loanId = loansFixture.checkOutByBarcode(smallAngryPlanet, jessica,
+    final UUID loanId = checkOutFixture.checkOutByBarcode(smallAngryPlanet, jessica,
       new DateTime(2018, 4, 21, 11, 21, 43, DateTimeZone.UTC))
       .getId();
 
@@ -522,7 +522,7 @@ abstract class RenewalAPITests extends APITests {
 
     final UUID unknownLoanPolicyId = UUID.randomUUID();
 
-    loansFixture.checkOutByBarcode(smallAngryPlanet, jessica,
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet, jessica,
       new DateTime(2018, 4, 21, 11, 21, 43, DateTimeZone.UTC));
 
     IndividualResource record = loanPoliciesFixture.create(new LoanPolicyBuilder()
@@ -557,7 +557,7 @@ abstract class RenewalAPITests extends APITests {
 
     final IndividualResource loanPolicyResponse = loanPoliciesFixture.create(limitedRenewalsPolicy);
 
-    IndividualResource loan = loansFixture.checkOutByBarcode(smallAngryPlanet, jessica,
+    IndividualResource loan = checkOutFixture.checkOutByBarcode(smallAngryPlanet, jessica,
         new DateTime(2019, 4, 21, 11, 21, 43, DateTimeZone.UTC));
 
     loanHasLoanPolicyProperties(loan.getJson(), loanPoliciesFixture.canCirculateRolling());
@@ -586,7 +586,7 @@ abstract class RenewalAPITests extends APITests {
 
     use(limitedRenewalsPolicy);
 
-    loansFixture.checkOutByBarcode(smallAngryPlanet, jessica,
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet, jessica,
       new DateTime(2018, 4, 21, 11, 21, 43, DateTimeZone.UTC));
 
     renew(smallAngryPlanet, jessica);
@@ -618,7 +618,7 @@ abstract class RenewalAPITests extends APITests {
 
     use(limitedRenewalsPolicy);
 
-    loansFixture.checkOutByBarcode(smallAngryPlanet, jessica,
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet, jessica,
       new DateTime(2018, 4, 21, 11, 21, 43, DateTimeZone.UTC));
 
     renew(smallAngryPlanet, jessica);
@@ -667,7 +667,7 @@ abstract class RenewalAPITests extends APITests {
 
     use(limitedRenewalsPolicy);
 
-    loansFixture.checkOutByBarcode(smallAngryPlanet, jessica,
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet, jessica,
       DateTime.now(DateTimeZone.UTC).minusDays(1)).getJson();
 
     renew(smallAngryPlanet, jessica);
@@ -701,7 +701,7 @@ abstract class RenewalAPITests extends APITests {
 
     use(limitedRenewalsPolicy);
 
-    loansFixture.checkOutByBarcode(smallAngryPlanet, jessica,
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet, jessica,
       new DateTime(2018, 4, 21, 11, 21, 43, DateTimeZone.UTC));
 
     final Response response = attemptRenewal(smallAngryPlanet, jessica);
@@ -736,7 +736,7 @@ abstract class RenewalAPITests extends APITests {
 
     use(limitedRenewalsPolicy);
 
-    loansFixture.checkOutByBarcode(smallAngryPlanet, jessica,
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet, jessica,
       DateTime.now(DateTimeZone.UTC));
 
     final Response response = attemptRenewal(smallAngryPlanet, jessica);
@@ -760,7 +760,7 @@ abstract class RenewalAPITests extends APITests {
 
     use(policyForCheckout);
 
-    loansFixture.checkOutByBarcode(smallAngryPlanet, jessica,
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet, jessica,
       new DateTime(2018, 4, 21, 11, 21, 43, DateTimeZone.UTC));
 
     LoanPolicyBuilder nonLoanablePolicy = new LoanPolicyBuilder()
@@ -782,14 +782,16 @@ abstract class RenewalAPITests extends APITests {
 
   @Test
   public void cannotRenewWhenItemIsDeclaredLost() {
-
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource jessica = usersFixture.jessica();
 
-    final JsonObject loanJson = loansFixture.checkOutByBarcode(smallAngryPlanet, usersFixture.jessica())
-      .getJson();
+    useLostItemPolicy(lostItemFeePoliciesFixture.chargeFee().getId());
 
-    loansFixture.declareItemLost(loanJson);
+    final JsonObject loanJson = checkOutFixture.checkOutByBarcode(smallAngryPlanet,
+      usersFixture.jessica())
+        .getJson();
+
+    declareLostFixtures.declareItemLost(loanJson);
 
     final Response response = attemptRenewal(smallAngryPlanet, jessica);
 
@@ -805,10 +807,11 @@ abstract class RenewalAPITests extends APITests {
     final String comment = "testing";
     final DateTime dateTime = DateTime.now();
 
-    final JsonObject loanJson = loansFixture.checkOutByBarcode(smallAngryPlanet, usersFixture.jessica())
-      .getJson();
+    final JsonObject loanJson = checkOutFixture.checkOutByBarcode(smallAngryPlanet,
+      usersFixture.jessica())
+        .getJson();
 
-    loansFixture.claimItemReturned(new ClaimItemReturnedRequestBuilder()
+    claimItemReturnedFixture.claimItemReturned(new ClaimItemReturnedRequestBuilder()
         .forLoan(loanJson.getString("id"))
         .withItemClaimedReturnedDate(dateTime)
         .withComment(comment));
@@ -826,7 +829,7 @@ abstract class RenewalAPITests extends APITests {
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource steve = usersFixture.steve();
 
-    loansFixture.checkOutByBarcode(smallAngryPlanet, steve);
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet, steve);
 
     usersFixture.remove(steve);
 
@@ -844,7 +847,7 @@ abstract class RenewalAPITests extends APITests {
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource steve = usersFixture.steve();
 
-    loansFixture.checkOutByBarcode(smallAngryPlanet, steve);
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet, steve);
 
     itemsClient.delete(smallAngryPlanet.getId());
 
@@ -862,7 +865,7 @@ abstract class RenewalAPITests extends APITests {
     IndividualResource james = usersFixture.james();
     final IndividualResource jessica = usersFixture.jessica();
 
-    loansFixture.checkOutByBarcode(smallAngryPlanet, jessica,
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet, jessica,
       new DateTime(2018, 4, 21, 11, 21, 43, DateTimeZone.UTC));
 
     final Response response = attemptRenewal(smallAngryPlanet, james);
@@ -892,7 +895,7 @@ abstract class RenewalAPITests extends APITests {
 
     use(loanPolicy);
 
-    loansFixture.checkOutByBarcode(
+    checkOutFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
         .forItem(smallAngryPlanet)
         .to(jessica)
@@ -935,7 +938,7 @@ abstract class RenewalAPITests extends APITests {
 
     use(loanPolicy);
 
-    loansFixture.checkOutByBarcode(
+    checkOutFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
         .forItem(smallAngryPlanet)
         .to(jessica)
@@ -976,7 +979,7 @@ abstract class RenewalAPITests extends APITests {
 
     use(loanPolicy);
 
-    loansFixture.checkOutByBarcode(
+    checkOutFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
         .forItem(smallAngryPlanet)
         .to(jessica)
@@ -1019,7 +1022,7 @@ abstract class RenewalAPITests extends APITests {
 
     use(loanPolicy);
 
-    loansFixture.checkOutByBarcode(
+    checkOutFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
         .forItem(smallAngryPlanet)
         .to(jessica)
@@ -1069,7 +1072,7 @@ abstract class RenewalAPITests extends APITests {
 
     use(loanPolicy);
 
-    loansFixture.checkOutByBarcode(
+    checkOutFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
         .forItem(smallAngryPlanet)
         .to(jessica)
@@ -1096,10 +1099,7 @@ abstract class RenewalAPITests extends APITests {
   }
 
   @Test
-  public void canRenewWhenCurrentDueDateFallsWithinLimitingDueDateSchedule() throws
-    InterruptedException,
-    ExecutionException,
-    TimeoutException {
+  public void canRenewWhenCurrentDueDateFallsWithinLimitingDueDateSchedule() {
 
     FixedDueDateSchedulesBuilder fixedDueDateSchedules = new FixedDueDateSchedulesBuilder()
       .withName("Fixed Due Date Schedule")
@@ -1126,10 +1126,7 @@ abstract class RenewalAPITests extends APITests {
   }
 
   @Test
-  public void canRenewWhenSystemDateFallsWithinLimitingDueDateSchedule() throws
-    InterruptedException,
-    ExecutionException,
-    TimeoutException {
+  public void canRenewWhenSystemDateFallsWithinLimitingDueDateSchedule() {
 
     FixedDueDateSchedulesBuilder fixedDueDateSchedules = new FixedDueDateSchedulesBuilder()
       .withName("Fixed Due Date Schedule")
@@ -1182,7 +1179,7 @@ abstract class RenewalAPITests extends APITests {
     DateTime loanDueDate =
       new DateTime(2019, DateTimeConstants.APRIL, 21, 11, 21, 43);
 
-    loansFixture.checkOutByBarcode(smallAngryPlanet, jessica, loanDueDate);
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet, jessica, loanDueDate);
 
     use(currentDueDateRollingPolicy);
 
@@ -1279,13 +1276,15 @@ abstract class RenewalAPITests extends APITests {
       "ItemSuffix",
       "");
 
-    InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet(itemBuilder, itemsFixture.thirdFloorHoldings());
+    InventoryItemResource smallAngryPlanet
+      = itemsFixture.basedUponSmallAngryPlanet(itemBuilder, itemsFixture.thirdFloorHoldings());
+
     final IndividualResource steve = usersFixture.steve();
 
     final DateTime loanDate =
       new DateTime(2018, 3, 18, 11, 43, 54, DateTimeZone.UTC);
 
-    loansFixture.checkOutByBarcode(
+    checkOutFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
         .forItem(smallAngryPlanet)
         .to(steve)
@@ -1330,7 +1329,7 @@ abstract class RenewalAPITests extends APITests {
     final IndividualResource nod = itemsFixture.basedUponNod(item ->
       item.withPermanentLocation(homeLocation.getId()));
 
-    final IndividualResource loan = loansFixture.checkOutByBarcode(nod, james,
+    final IndividualResource loan = checkOutFixture.checkOutByBarcode(nod, james,
       new DateTime(2020, 1, 1, 12, 0, 0, DateTimeZone.UTC));
 
     JsonObject servicePointOwner = new JsonObject();
@@ -1401,7 +1400,7 @@ abstract class RenewalAPITests extends APITests {
     final IndividualResource nod = itemsFixture.basedUponNod(item ->
       item.withPermanentLocation(homeLocation.getId()));
 
-    loansFixture.checkOutByBarcode(nod, james,
+    checkOutFixture.checkOutByBarcode(nod, james,
       new DateTime(2020, 1, 1, 12, 0, 0, DateTimeZone.UTC));
 
     JsonObject servicePointOwner = new JsonObject();
@@ -1437,7 +1436,7 @@ abstract class RenewalAPITests extends APITests {
     DateTime loanDate =
       new DateTime(2019, DateTimeConstants.APRIL, 21, 11, 21, 43);
 
-    loansFixture.checkOutByBarcode(smallAngryPlanet, jessica, loanDate);
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet, jessica, loanDate);
 
     useFallbackPolicies(
       dueDateLimitedPolicyId,

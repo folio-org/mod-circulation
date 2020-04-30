@@ -6,6 +6,7 @@ import static api.support.fixtures.OpeningHourExamples.morning;
 import static org.joda.time.DateTimeConstants.MINUTES_PER_DAY;
 import static org.joda.time.DateTimeConstants.MINUTES_PER_HOUR;
 import static org.joda.time.DateTimeConstants.MINUTES_PER_WEEK;
+import static org.joda.time.DateTimeZone.UTC;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -22,6 +23,8 @@ import org.folio.circulation.domain.policy.OverdueFinePolicy;
 import org.folio.circulation.domain.policy.Period;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
+import org.joda.time.LocalDate;
+import org.joda.time.LocalDateTime;
 import org.joda.time.LocalTime;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -40,7 +43,7 @@ public class OverduePeriodCalculatorServiceTest {
 
   @Test
   public void preconditionsCheckLoanHasNoDueDate() {
-    DateTime systemTime = DateTime.now(DateTimeZone.UTC);
+    DateTime systemTime = DateTime.now(UTC);
     Loan loan = new LoanBuilder().asDomainObject();
 
     assertFalse(calculator.preconditionsAreMet(loan, systemTime, true));
@@ -48,7 +51,7 @@ public class OverduePeriodCalculatorServiceTest {
 
   @Test
   public void preconditionsCheckLoanDueDateIsInFuture() {
-    DateTime systemTime = DateTime.now(DateTimeZone.UTC);
+    DateTime systemTime = DateTime.now(UTC);
     Loan loan = new LoanBuilder()
       .withDueDate(systemTime.plusDays(1))
       .asDomainObject();
@@ -58,7 +61,7 @@ public class OverduePeriodCalculatorServiceTest {
 
   @Test
   public void preconditionsCheckCountClosedIsNull() {
-    DateTime systemTime = DateTime.now(DateTimeZone.UTC);
+    DateTime systemTime = DateTime.now(UTC);
     Loan loan = new LoanBuilder()
       .withDueDate(systemTime.minusDays(1))
       .asDomainObject();
@@ -68,7 +71,7 @@ public class OverduePeriodCalculatorServiceTest {
 
   @Test
   public void allPreconditionsAreMet() {
-    DateTime systemTime = DateTime.now(DateTimeZone.UTC);
+    DateTime systemTime = DateTime.now(UTC);
     Loan loan = new LoanBuilder()
       .withDueDate(systemTime.minusDays(1))
       .asDomainObject();
@@ -79,7 +82,7 @@ public class OverduePeriodCalculatorServiceTest {
   @Test
   public void countOverdueMinutesWithClosedDays() throws ExecutionException, InterruptedException {
     int expectedResult = MINUTES_PER_WEEK + MINUTES_PER_DAY + MINUTES_PER_HOUR + 1;
-    DateTime systemTime = DateTime.now(DateTimeZone.UTC);
+    DateTime systemTime = DateTime.now(UTC);
 
     Loan loan = new LoanBuilder()
       .withDueDate(systemTime.minusMinutes(expectedResult))
@@ -93,7 +96,12 @@ public class OverduePeriodCalculatorServiceTest {
   @Test
   @Parameters
   public void getOpeningDayDurationTest(List<OpeningDay> openingDays, int expectedResult) {
-    int actualResult = calculator.getOpeningDaysDurationMinutes(openingDays).value();
+
+    LocalDateTime dueDate = new LocalDateTime("2020-04-08T14:00:00.000");
+    LocalDateTime returnDate = new LocalDateTime("2020-04-10T15:00:00.000");
+
+    int actualResult = calculator.getOpeningDaysDurationMinutes(
+      openingDays, dueDate, returnDate).value();
     assertEquals(expectedResult, actualResult);
   }
 
@@ -101,36 +109,36 @@ public class OverduePeriodCalculatorServiceTest {
     List<OpeningDay> zeroDays = Collections.emptyList();
 
     List<OpeningDay> regular = Arrays.asList(
-      createOpeningDay(false),
-      createOpeningDay(false),
-      createOpeningDay(false));
+      createOpeningDay(false, new LocalDate("2020-04-08"), UTC),
+      createOpeningDay(false, new LocalDate("2020-04-09"), UTC),
+      createOpeningDay(false, new LocalDate("2020-04-10"), UTC));
 
     List<OpeningDay> allDay = Arrays.asList(
-      createOpeningDay(true),
-      createOpeningDay(true),
-      createOpeningDay(true));
+      createOpeningDay(true, new LocalDate("2020-04-08"), DateTimeZone.forID("America/New_York")),
+      createOpeningDay(true, new LocalDate("2020-04-09"), DateTimeZone.forID("America/New_York")),
+      createOpeningDay(true, new LocalDate("2020-04-10"), DateTimeZone.forID("America/New_York")));
 
     List<OpeningDay> mixed = Arrays.asList(
-      createOpeningDay(false),
-      createOpeningDay(true),
-      createOpeningDay(false));
+      createOpeningDay(false, new LocalDate("2020-04-08"), DateTimeZone.forID("Europe/London")),
+      createOpeningDay(true, new LocalDate("2020-04-09"), DateTimeZone.forID("Europe/London")),
+      createOpeningDay(false, new LocalDate("2020-04-10"), DateTimeZone.forID("Europe/London")));
 
-    LocalTime now = LocalTime.now(DateTimeZone.UTC);
+    LocalTime now = LocalTime.now(UTC);
 
     List<OpeningDay> invalid = Arrays.asList(
       OpeningDay.createOpeningDay(
         Collections.singletonList(new OpeningHour(null, null)),
-        null, false, true),
+        new LocalDate("2020-04-08"), false, true, UTC),
       OpeningDay.createOpeningDay(
         Collections.singletonList(new OpeningHour(now, now.minusHours(1))),
-        null, false, true)
+        new LocalDate("2020-04-09"), false, true, UTC)
     );
 
     return new Object[]{
       new Object[]{zeroDays, 0},
-      new Object[]{regular, MINUTES_PER_HOUR * 10 * 3},
-      new Object[]{allDay, MINUTES_PER_DAY * 3},
-      new Object[]{mixed, MINUTES_PER_HOUR * 10 * 2 + MINUTES_PER_DAY},
+      new Object[]{regular, MINUTES_PER_HOUR * 21},
+      new Object[]{allDay, MINUTES_PER_HOUR * 49 - 2},
+      new Object[]{mixed, MINUTES_PER_HOUR * 35 - 1},
       new Object[]{invalid, 0}
     };
   }
@@ -219,10 +227,12 @@ public class OverduePeriodCalculatorServiceTest {
     return OverdueFinePolicy.from(json);
   }
 
-  private OpeningDay createOpeningDay(boolean allDay) {
+  private OpeningDay createOpeningDay(
+    boolean allDay, LocalDate date, DateTimeZone dateTimeZone) {
+
     return OpeningDay.createOpeningDay(
       allDay ? Collections.singletonList(allDay()) : Arrays.asList(morning(), afternoon()),
-      null, allDay, true
+      date, allDay, true, dateTimeZone
       );
   }
 

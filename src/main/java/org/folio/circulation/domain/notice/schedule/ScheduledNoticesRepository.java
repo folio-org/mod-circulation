@@ -95,8 +95,12 @@ public class ScheduledNoticesRepository {
       .thenApply(flatMapResult(interpreter::apply));
   }
 
-  CompletableFuture<Result<Response>> deleteByLoanId(String loanId) {
-    return exactMatch("loanId", loanId).after(this::deleteMany);
+  CompletableFuture<Result<Response>> deleteByLoanIdAndTriggeringEvent(
+    String loanId, TriggeringEvent triggeringEvent) {
+
+    return exactMatch("loanId", loanId)
+      .combine(exactMatch("triggeringEvent", triggeringEvent.getRepresentation()), CqlQuery::and)
+      .after(this::deleteMany);
   }
 
   CompletableFuture<Result<Response>> deleteByRequestId(String requestId) {

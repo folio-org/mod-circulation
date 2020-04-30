@@ -1,14 +1,11 @@
 package api.loans.anonymization;
 
-import static api.support.matchers.LoanMatchers.hasOpenStatus;
+import static api.support.matchers.LoanMatchers.isOpen;
 import static api.support.matchers.LoanMatchers.isAnonymized;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
 
-import java.net.MalformedURLException;
 import java.util.UUID;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeoutException;
 
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
@@ -24,13 +21,13 @@ public class AnonymizeLoansByUserIdAPITests extends LoanAnonymizationTests {
   @Test
   public void canNotAnonymizeNotClosedLoans() {
 
-    IndividualResource loanResource = loansFixture.checkOutByBarcode(
+    IndividualResource loanResource = checkOutFixture.checkOutByBarcode(
         new CheckOutByBarcodeRequestBuilder().forItem(item1)
       .to(user)
       .at(servicePoint.getId()));
     UUID loanID = loanResource.getId();
 
-    assertThat(loanResource.getJson(), hasOpenStatus());
+    assertThat(loanResource.getJson(), isOpen());
 
     anonymizeLoansForUser(user.getId());
 
@@ -42,12 +39,12 @@ public class AnonymizeLoansByUserIdAPITests extends LoanAnonymizationTests {
   @Test
   public void canAonymizeLoansForParticularUser() {
 
-    IndividualResource loanResource1 = loansFixture.checkOutByBarcode(
+    IndividualResource loanResource1 = checkOutFixture.checkOutByBarcode(
         new CheckOutByBarcodeRequestBuilder().forItem(item1)
       .to(user)
       .at(servicePoint.getId()));
 
-    IndividualResource loanResource2 = loansFixture
+    IndividualResource loanResource2 = checkOutFixture
       .checkOutByBarcode(new CheckOutByBarcodeRequestBuilder().forItem(itemsFixture.basedUponNod())
         .to(usersFixture.rebecca())
         .at(servicePoint.getId()));
@@ -55,7 +52,7 @@ public class AnonymizeLoansByUserIdAPITests extends LoanAnonymizationTests {
     UUID loanId1 = loanResource1.getId();
     UUID loanId2 = loanResource2.getId();
 
-    loansFixture.checkInByBarcode(item1);
+    checkInFixture.checkInByBarcode(item1);
 
     Response storageLoan = loansStorageClient.getById(loanId1);
     assertThat(storageLoan.getJson(), not(isAnonymized()));
@@ -73,13 +70,13 @@ public class AnonymizeLoansByUserIdAPITests extends LoanAnonymizationTests {
   @Test
   public void canAnonymizeClosedLoansWithNoFeesAndFines() {
 
-    IndividualResource loanResource = loansFixture.checkOutByBarcode(
+    IndividualResource loanResource = checkOutFixture.checkOutByBarcode(
         new CheckOutByBarcodeRequestBuilder().forItem(item1)
       .to(user)
       .at(servicePoint.getId()));
     UUID loanID = loanResource.getId();
 
-    loansFixture.checkInByBarcode(item1);
+    checkInFixture.checkInByBarcode(item1);
 
     anonymizeLoansForUser(user.getId());
 
@@ -90,7 +87,7 @@ public class AnonymizeLoansByUserIdAPITests extends LoanAnonymizationTests {
   @Test
   public void canNotAnonymizeClosedLoansWithClosedFeesAndFines() {
 
-    IndividualResource loanResource = loansFixture.checkOutByBarcode(
+    IndividualResource loanResource = checkOutFixture.checkOutByBarcode(
         new CheckOutByBarcodeRequestBuilder().forItem(item1)
       .to(user)
       .at(servicePoint.getId()));
@@ -98,7 +95,7 @@ public class AnonymizeLoansByUserIdAPITests extends LoanAnonymizationTests {
 
     createClosedAccountWithFeeFines(loanResource, DateTime.now());
 
-    loansFixture.checkInByBarcode(item1);
+    checkInFixture.checkInByBarcode(item1);
 
     anonymizeLoansForUser(user.getId());
 
@@ -109,13 +106,13 @@ public class AnonymizeLoansByUserIdAPITests extends LoanAnonymizationTests {
   @Test
   public void canAnonymizeMultipleClosedLoansWithClosedFeesAndFines() {
 
-    IndividualResource loanResource1 = loansFixture.checkOutByBarcode(
+    IndividualResource loanResource1 = checkOutFixture.checkOutByBarcode(
         new CheckOutByBarcodeRequestBuilder().forItem(item1)
       .to(user)
       .at(servicePoint.getId()));
 
     InventoryItemResource item2 = itemsFixture.basedUponNod();
-    IndividualResource loanResource2 = loansFixture.checkOutByBarcode(
+    IndividualResource loanResource2 = checkOutFixture.checkOutByBarcode(
         new CheckOutByBarcodeRequestBuilder().forItem(item2)
       .to(user)
       .at(servicePoint.getId()));
@@ -125,8 +122,8 @@ public class AnonymizeLoansByUserIdAPITests extends LoanAnonymizationTests {
 
     createOpenAccountWithFeeFines(loanResource1);
 
-    loansFixture.checkInByBarcode(item1);
-    loansFixture.checkInByBarcode(item2);
+    checkInFixture.checkInByBarcode(item1);
+    checkInFixture.checkInByBarcode(item2);
 
     anonymizeLoansForUser(user.getId());
 
@@ -140,7 +137,7 @@ public class AnonymizeLoansByUserIdAPITests extends LoanAnonymizationTests {
   @Test
   public void doesNotAnonymizeLoansWithOpenFeesAndFines() {
 
-    IndividualResource loanResource = loansFixture.checkOutByBarcode
+    IndividualResource loanResource = checkOutFixture.checkOutByBarcode
         (new CheckOutByBarcodeRequestBuilder().forItem(item1)
       .to(user)
       .at(servicePoint.getId()));
@@ -148,7 +145,7 @@ public class AnonymizeLoansByUserIdAPITests extends LoanAnonymizationTests {
 
     createOpenAccountWithFeeFines(loanResource);
 
-    loansFixture.checkInByBarcode(item1);
+    checkInFixture.checkInByBarcode(item1);
 
     anonymizeLoansForUser(user.getId());
 

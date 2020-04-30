@@ -363,7 +363,7 @@ public class RequestScheduledNoticesTests extends APITests {
       .withItemBarcode(item.getBarcode())
       .at(pickupServicePoint);
 
-    loansFixture.checkInByBarcode(checkInByBarcodeRequestBuilder);
+    checkInFixture.checkInByBarcode(checkInByBarcodeRequestBuilder);
 
     String holdShelfExpirationDate = requestsClient.get(request)
       .getJson()
@@ -434,7 +434,7 @@ public class RequestScheduledNoticesTests extends APITests {
         .withItemBarcode(item.getBarcode())
         .at(pickupServicePoint);
 
-    loansFixture.checkInByBarcode(checkInByBarcodeRequestBuilder);
+    checkInFixture.checkInByBarcode(checkInByBarcodeRequestBuilder);
 
     Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)

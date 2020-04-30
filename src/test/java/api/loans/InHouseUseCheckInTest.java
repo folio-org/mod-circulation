@@ -35,7 +35,7 @@ public class InHouseUseCheckInTest extends APITests {
     final IndividualResource nod = itemsFixture.basedUponNod(
       item -> item.withTemporaryLocation(homeLocation.getId()));
 
-    final CheckInByBarcodeResponse checkInResponse = loansFixture
+    final CheckInByBarcodeResponse checkInResponse = checkInFixture
       .checkInByBarcode(nod, checkInServicePointId);
 
     assertThat(checkInResponse.getJson().containsKey("loan"), is(false));
@@ -69,10 +69,10 @@ public class InHouseUseCheckInTest extends APITests {
     requestsFixture.cancelRequest(recallRequest);
 
     // Fulfill the page request
-    loansFixture.checkOutByBarcode(nod, usersFixture.james());
-    loansFixture.checkInByBarcode(nod, checkInServicePointId);
+    checkOutFixture.checkOutByBarcode(nod, usersFixture.james());
+    checkInFixture.checkInByBarcode(nod, checkInServicePointId);
 
-    final CheckInByBarcodeResponse checkInResponse = loansFixture
+    final CheckInByBarcodeResponse checkInResponse = checkInFixture
       .checkInByBarcode(nod, checkInServicePointId);
 
     assertThat(checkInResponse.getJson().containsKey("loan"), is(false));
@@ -103,7 +103,7 @@ public class InHouseUseCheckInTest extends APITests {
       .by(usersFixture.james()));
     assertThat(requestsFixture.getQueueFor(nod).getTotalRecords(), is(1));
 
-    final CheckInByBarcodeResponse checkInResponse = loansFixture
+    final CheckInByBarcodeResponse checkInResponse = checkInFixture
       .checkInByBarcode(nod, checkInServicePointId);
 
     assertThat(checkInResponse.getJson().containsKey("loan"), is(false));
@@ -122,7 +122,7 @@ public class InHouseUseCheckInTest extends APITests {
     final IndividualResource nod = itemsFixture.basedUponNod(
       item -> item.withTemporaryLocation(itemLocation.getId()));
 
-    final CheckInByBarcodeResponse checkInResponse = loansFixture
+    final CheckInByBarcodeResponse checkInResponse = checkInFixture
       .checkInByBarcode(nod, checkInServicePointId);
 
     assertThat(checkInResponse.getJson().containsKey("loan"), is(false));

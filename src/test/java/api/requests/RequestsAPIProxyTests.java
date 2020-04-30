@@ -1,12 +1,11 @@
 package api.requests;
 
-import static api.support.http.InterfaceUrls.requestsUrl;
 import static api.support.matchers.ResponseStatusCodeMatcher.hasStatus;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static org.folio.HttpStatus.HTTP_CREATED;
-import static org.hamcrest.core.Is.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.core.Is.is;
 
 import java.util.UUID;
 
@@ -27,7 +26,7 @@ public class RequestsAPIProxyTests extends APITests {
 
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
-    loansFixture.checkOutByBarcode(smallAngryPlanet, usersFixture.steve());
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet, usersFixture.steve());
 
     final IndividualResource sponsor = usersFixture.jessica();
     final IndividualResource proxy = usersFixture.james();
@@ -68,7 +67,7 @@ public class RequestsAPIProxyTests extends APITests {
 
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
-    loansFixture.checkOutByBarcode(item, usersFixture.steve());
+    checkOutFixture.checkOutByBarcode(item, usersFixture.steve());
 
     final IndividualResource sponsor = usersFixture.jessica();
     final IndividualResource proxy = usersFixture.james();
@@ -93,7 +92,7 @@ public class RequestsAPIProxyTests extends APITests {
 
     final IndividualResource steve = usersFixture.steve();
 
-    loansFixture.checkOutByBarcode(smallAngryPlanet, steve);
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet, steve);
 
     final IndividualResource jessica = usersFixture.jessica();
     final IndividualResource james = usersFixture.james();
@@ -120,7 +119,7 @@ public class RequestsAPIProxyTests extends APITests {
 
     final IndividualResource steve = usersFixture.steve();
 
-    loansFixture.checkOutByBarcode(smallAngryPlanet, steve);
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet, steve);
 
     final IndividualResource jessica = usersFixture.jessica();
     final IndividualResource james = usersFixture.james();
@@ -145,7 +144,7 @@ public class RequestsAPIProxyTests extends APITests {
     final IndividualResource smallAngryPlanet
       = itemsFixture.basedUponSmallAngryPlanet();
 
-    loansFixture.checkOutByBarcode(smallAngryPlanet, usersFixture.steve());
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet, usersFixture.steve());
 
     final IndividualResource jessica = usersFixture.jessica();
     final IndividualResource charlotte = usersFixture.charlotte();
@@ -171,7 +170,7 @@ public class RequestsAPIProxyTests extends APITests {
     final InventoryItemResource temeraire = itemsFixture.basedUponTemeraire();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
-    loansFixture.checkOutByBarcode(temeraire, usersFixture.steve());
+    checkOutFixture.checkOutByBarcode(temeraire, usersFixture.steve());
 
     final IndividualResource sponsor = usersFixture.jessica();
     final IndividualResource proxy = usersFixture.rebecca();
@@ -218,7 +217,7 @@ public class RequestsAPIProxyTests extends APITests {
     final InventoryItemResource temeraire = itemsFixture.basedUponTemeraire();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
-    loansFixture.checkOutByBarcode(temeraire, usersFixture.rebecca());
+    checkOutFixture.checkOutByBarcode(temeraire, usersFixture.rebecca());
 
     final IndividualResource sponsor = usersFixture.jessica();
     final IndividualResource proxy = usersFixture.james();
@@ -249,7 +248,7 @@ public class RequestsAPIProxyTests extends APITests {
     final InventoryItemResource temeraire = itemsFixture.basedUponTemeraire();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
-    loansFixture.checkOutByBarcode(temeraire);
+    checkOutFixture.checkOutByBarcode(temeraire);
 
     final IndividualResource unexpectedSponsor = usersFixture.jessica();
     final IndividualResource otherUser = usersFixture.charlotte();

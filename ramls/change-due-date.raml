@@ -1,0 +1,38 @@
+#%RAML 1.0
+title: Change due date
+version: v0.1
+protocols: [ HTTP, HTTPS ]
+baseUri: http://localhost:9130
+
+documentation:
+  - title: API for changing due date for loans
+    content: <b>Change loan due date API</b>
+
+types:
+  errors: !include raml-util/schemas/errors.schema
+
+traits:
+  validate: !include raml-util/traits/validation.raml
+
+/circulation/loans/{id}/change-due-date:
+  post:
+    is: [validate]
+    body:
+      application/json:
+        type: !include change-due-date-request.json
+    responses:
+      201:
+        description: "The due date for the loaned item has been successfully updated"
+      422:
+        description: "Unable to change the due date for the loan"
+        body:
+          application/json:
+            type: errors
+            example: !include examples/change-due-date-errors.json
+      404:
+        description: "The loan is not found"
+      500:
+        description: "Internal server error, e.g. due to misconfiguration"
+        body:
+          text/plain:
+            example: "Internal server error, contact administrator"

@@ -2,6 +2,8 @@ package org.folio.circulation;
 
 import java.lang.invoke.MethodHandles;
 
+import org.folio.circulation.resources.ChangeDueDateResource;
+import org.folio.circulation.resources.DeclareClaimedReturnedItemAsMissingResource;
 import org.folio.circulation.resources.CheckInByBarcodeResource;
 import org.folio.circulation.resources.CheckOutByBarcodeResource;
 import org.folio.circulation.resources.CirculationRulesResource;
@@ -11,6 +13,7 @@ import org.folio.circulation.resources.DueDateNotRealTimeScheduledNoticeProcessi
 import org.folio.circulation.resources.DueDateScheduledNoticeProcessingResource;
 import org.folio.circulation.resources.EndPatronActionSessionResource;
 import org.folio.circulation.resources.ExpiredSessionProcessingResource;
+import org.folio.circulation.resources.FeeFineScheduledNoticeProcessingResource;
 import org.folio.circulation.resources.ItemsInTransitResource;
 import org.folio.circulation.resources.LoanAnonymizationResource;
 import org.folio.circulation.resources.LoanCirculationRulesEngineResource;
@@ -113,12 +116,15 @@ public class CirculationVerticle extends AbstractVerticle {
     new DueDateScheduledNoticeProcessingResource(client).register(router);
     new DueDateNotRealTimeScheduledNoticeProcessingResource(client).register(router);
     new RequestScheduledNoticeProcessingResource(client).register(router);
+    new FeeFineScheduledNoticeProcessingResource(client).register(router);
     new ExpiredSessionProcessingResource(client).register(router);
     new LoanAnonymizationResource(client).register(router);
     new DeclareLostResource(client).register(router);
     new ScheduledAnonymizationProcessingResource(client).register(router);
     new EndPatronActionSessionResource(client).register(router);
     new ClaimItemReturnedResource(client).register(router);
+    new ChangeDueDateResource(client).register(router);
+    new DeclareClaimedReturnedItemAsMissingResource(client).register(router);
 
     server.requestHandler(router)
       .listen(config().getInteger("port"), result -> {

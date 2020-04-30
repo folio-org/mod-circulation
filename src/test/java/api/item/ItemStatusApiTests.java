@@ -26,7 +26,7 @@ public class ItemStatusApiTests extends APITests {
     IndividualResource user = usersFixture.jessica();
     final DateTime beforeCheckOutDatetime = DateTime.now(DateTimeZone.UTC);
 
-    loansFixture.checkOutByBarcode(item, user, new DateTime(DateTimeZone.UTC));
+    checkOutFixture.checkOutByBarcode(item, user, new DateTime(DateTimeZone.UTC));
 
     JsonObject checkedOutItem = itemsClient.get(item.getId()).getJson();
 

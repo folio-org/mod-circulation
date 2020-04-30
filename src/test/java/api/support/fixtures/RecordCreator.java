@@ -1,6 +1,5 @@
 package api.support.fixtures;
 
-import java.net.MalformedURLException;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -8,8 +7,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeoutException;
 import java.util.function.Function;
 
 import org.folio.circulation.support.http.client.IndividualResource;
@@ -44,7 +41,7 @@ class RecordCreator {
     return createdRecord;
   }
 
-  void cleanUp() {
+  public void cleanUp() {
 
     for (UUID userId : createdRecordIds) {
       client.delete(userId);

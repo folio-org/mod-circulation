@@ -24,8 +24,8 @@ public class RequestsForDifferentItemsTests extends APITests {
 
     final IndividualResource steve = usersFixture.steve();
 
-    loansFixture.checkOutByBarcode(smallAngryPlanet, steve);
-    loansFixture.checkOutByBarcode(nod, steve);
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet, steve);
+    checkOutFixture.checkOutByBarcode(nod, steve);
 
     final IndividualResource firstRequestForSmallAngryPlanet = requestsClient.create(
       new RequestBuilder()

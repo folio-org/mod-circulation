@@ -92,7 +92,7 @@
     },
     {
       "id": "declare-item-lost",
-      "version": "0.1",
+      "version": "0.2",
       "handlers": [
         {
           "methods": ["POST"],
@@ -107,8 +107,24 @@
       ]
     },
     {
-      "id": "claim-item-returned",
+      "id": "change-due-date",
       "version": "0.1",
+      "handlers": [
+        {
+          "methods": ["POST"],
+          "pathPattern": "/circulation/loans/{id}/change-due-date",
+          "permissionsRequired": [
+            "circulation.loans.change-due-date.post"
+          ],
+          "modulePermissions": [
+            "modperms.circulation.loans.change-due-date.post"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "claim-item-returned",
+      "version": "0.2",
       "handlers": [
         {
           "methods": ["POST"],
@@ -118,6 +134,16 @@
           ],
           "modulePermissions": [
             "modperms.circulation.loans.claim-item-returned.post"
+          ]
+        },
+        {
+          "methods": ["POST"],
+          "pathPattern": "/circulation/loans/{id}/declare-claimed-returned-item-as-missing",
+          "permissionsRequired": [
+            "circulation.loans.declare-claimed-returned-item-as-missing.post"
+          ],
+          "modulePermissions": [
+            "modperms.circulation.loans.declare-claimed-returned-item-as-missing.post"
           ]
         }
       ]
@@ -700,6 +726,27 @@
           "methods": [
             "POST"
           ],
+          "pathPattern": "/circulation/fee-fine-scheduled-notices-processing",
+          "modulePermissions": [
+            "scheduled-notice-storage.scheduled-notices.item.get",
+            "scheduled-notice-storage.scheduled-notices.collection.get",
+            "scheduled-notice-storage.scheduled-notices.item.delete",
+            "scheduled-notice-storage.scheduled-notices.item.put",
+            "configuration.entries.item.get",
+            "configuration.entries.collection.get",
+            "patron-notice.post",
+            "accounts.item.get",
+            "accounts.collection.get",
+            "feefineactions.item.get",
+            "feefineactions.collection.get"
+          ],
+          "unit": "minute",
+          "delay": "2"
+        },
+        {
+          "methods": [
+            "POST"
+          ],
           "pathPattern": "/circulation/scheduled-anonymize-processing",
           "modulePermissions": [
             "circulation-storage.loans.item.put",
@@ -761,7 +808,7 @@
     },
     {
       "id": "item-storage",
-      "version": "8.1"
+      "version": "8.3"
     },
     {
       "id": "instance-storage",
@@ -929,9 +976,19 @@
       "description": "declares the loaned item lost"
     },
     {
+      "permissionName": "circulation.loans.change-due-date.post",
+      "displayName": "circulation - change loan due date",
+      "description": "changes the due date of the loan"
+    },
+    {
       "permissionName": "circulation.loans.claim-item-returned.post",
       "displayName": "circulation - declare the loaned item as claimed returned",
       "description": "declares the loaned item as claimed returned"
+    },
+    {
+      "permissionName": "circulation.loans.declare-claimed-returned-item-as-missing.post",
+      "displayName": "circulation -  declare the claimed returned loaned item as missing",
+      "description": "declare the claimed returned loaned item as missing"
     },
     {
       "permissionName": "circulation.rules.get",
@@ -1055,7 +1112,9 @@
         "circulation.loans.item.put",
         "circulation.loans.item.delete",
         "circulation.loans.collection.delete",
+        "circulation.loans.change-due-date.post",
         "circulation.loans.claim-item-returned.post",
+        "circulation.loans.declare-claimed-returned-item-as-missing.post",
         "circulation.rules.put",
         "circulation.rules.get",
         "circulation.rules.loan-policy.get",
@@ -1882,14 +1941,65 @@
       "displayName": "module permissions for one op",
       "description": "to reduce X-Okapi-Token size",
       "subPermissions": [
+        "circulation-storage.loans.item.get",
         "circulation-storage.loans.item.put",
+        "inventory-storage.items.item.get",
+        "inventory-storage.items.item.put",
+        "inventory-storage.holdings.item.get",
+        "inventory-storage.instances.item.get",
+        "inventory-storage.locations.item.get",
+        "inventory-storage.location-units.libraries.item.get",
+        "inventory-storage.location-units.campuses.item.get",
+        "inventory-storage.location-units.institutions.item.get",
+        "inventory-storage.service-points.item.get",
+        "inventory-storage.material-types.item.get",
+        "inventory-storage.loan-types.item.get",
+        "inventory-storage.service-points.item.get",
+        "lost-item-fees-policies.item.get",
+        "owners.collection.get",
+        "feefines.collection.get",
+        "accounts.item.post",
         "users.item.get",
-        "inventory-storage.items.item.put"
+        "feefineactions.item.post"
+      ],
+      "visible": false
+    },
+    {
+      "permissionName": "modperms.circulation.loans.change-due-date.post",
+      "displayName": "module permissions for one op",
+      "description": "to reduce X-Okapi-Token size",
+      "subPermissions": [
+        "circulation.rules.loan-policy.get",
+        "circulation.rules.notice-policy.get",
+        "circulation-storage.loan-policies.item.get",
+        "circulation-storage.loans.item.get",
+        "circulation-storage.loans.item.put",
+        "circulation-storage.patron-notice-policies.item.get",
+        "inventory-storage.items.item.get",
+        "inventory-storage.items.item.put",
+        "scheduled-notice-storage.scheduled-notices.collection.delete",
+        "scheduled-notice-storage.scheduled-notices.item.post",
+        "users.item.get"
       ],
       "visible": false
     },
     {
       "permissionName": "modperms.circulation.loans.claim-item-returned.post",
+      "displayName": "module permissions for one op",
+      "description": "to reduce X-Okapi-Token size",
+      "subPermissions": [
+        "circulation-storage.loans.item.get",
+        "circulation-storage.loans.item.put",
+        "inventory-storage.items.item.get",
+        "inventory-storage.items.item.put",
+        "inventory-storage.holdings.item.get",
+        "inventory-storage.instances.item.get",
+        "users.item.get"
+      ],
+      "visible": false
+    },
+    {
+      "permissionName": "modperms.circulation.loans.declare-claimed-returned-item-as-missing.post",
       "displayName": "module permissions for one op",
       "description": "to reduce X-Okapi-Token size",
       "subPermissions": [
