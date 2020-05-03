@@ -40,9 +40,9 @@ import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CreatedJsonResponseResult;
 import org.folio.circulation.support.ItemRepository;
 import org.folio.circulation.support.NoContentResult;
-import org.folio.circulation.support.OkJsonResponseResult;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.ValidationErrorFailure;
+import org.folio.circulation.support.http.server.JsonHttpResponse;
 import org.folio.circulation.support.http.server.ValidationError;
 import org.folio.circulation.support.http.server.WebContext;
 
@@ -209,8 +209,8 @@ public class LoanCollectionResource extends CollectionResource {
       .thenComposeAsync(lostItemPolicyRepository::findLostItemPolicyForLoan)
       .thenComposeAsync(patronGroupRepository::findGroupForLoan)
       .thenApply(loanResult -> loanResult.map(loanRepresentation::extendedLoan))
-      .thenApply(OkJsonResponseResult::from)
-      .thenAccept(result -> result.writeTo(routingContext.response()));
+      .thenApply(r -> r.map(JsonHttpResponse::ok))
+      .thenAccept(result -> result.applySideEffect(context::write, context::write));
   }
 
   void delete(RoutingContext routingContext) {
@@ -255,8 +255,8 @@ public class LoanCollectionResource extends CollectionResource {
         multiLoanRecordsResult.after(patronGroupRepository::findPatronGroupsByIds))
       .thenApply(multipleLoanRecordsResult -> multipleLoanRecordsResult.map(loans ->
         loans.asJson(loanRepresentation::extendedLoan, "loans")))
-      .thenApply(OkJsonResponseResult::from)
-      .thenAccept(result -> result.writeTo(routingContext.response()));
+      .thenApply(r -> r.map(JsonHttpResponse::ok))
+      .thenAccept(result -> result.applySideEffect(context::write, context::write));
   }
 
   void empty(RoutingContext routingContext) {
