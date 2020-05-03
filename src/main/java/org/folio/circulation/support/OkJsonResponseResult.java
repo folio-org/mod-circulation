@@ -11,12 +11,4 @@ public class OkJsonResponseResult extends JsonResponseResult {
     super(200, body, location);
   }
 
-  public static ResponseWritableResult<JsonObject> from(Result<JsonObject> result) {
-    if(result.failed()) {
-      return Result.failed(result.cause());
-    }
-    else {
-      return new OkJsonResponseResult(result.value());
-    }
-  }
 }
