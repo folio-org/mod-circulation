@@ -11,7 +11,6 @@ import org.folio.circulation.domain.validation.CheckInValidators;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.RouteRegistration;
-import org.folio.circulation.support.http.server.JsonHttpResponse;
 import org.folio.circulation.support.http.server.WebContext;
 
 import io.vertx.core.http.HttpClient;
@@ -84,8 +83,8 @@ public class CheckInByBarcodeResource extends Resource {
       .thenComposeAsync(r -> r.after(
         records -> processAdapter.createOverdueFineIfNecessary(records, context)))
       .thenApply(r -> r.next(requestScheduledNoticeService::rescheduleRequestNotices))
-      .thenApply(r -> r.map(CheckInByBarcodeResponse::toJson))
-      .thenApply(r -> r.map(json -> new JsonHttpResponse(200, json, null)))
+      .thenApply(r -> r.map(CheckInByBarcodeResponse::fromRecords))
+      .thenApply(r -> r.map(CheckInByBarcodeResponse::toHttpResponse))
       .thenAccept(r -> r.applySideEffect(
         response -> response.writeTo(routingContext.response()),
         failure -> failure.writeTo(routingContext.response())));

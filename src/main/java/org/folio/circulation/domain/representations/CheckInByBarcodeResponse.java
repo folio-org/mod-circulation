@@ -5,13 +5,27 @@ import static org.folio.circulation.support.JsonPropertyWriter.write;
 
 import org.folio.circulation.domain.CheckInProcessRecords;
 import org.folio.circulation.domain.LoanRepresentation;
+import org.folio.circulation.support.http.server.HttpResponse;
+import org.folio.circulation.support.http.server.JsonHttpResponse;
 
 import io.vertx.core.json.JsonObject;
 
 public class CheckInByBarcodeResponse {
-  private CheckInByBarcodeResponse() {}
+  private final CheckInProcessRecords records;
 
-  public static JsonObject toJson(CheckInProcessRecords records) {
+  public static CheckInByBarcodeResponse fromRecords(CheckInProcessRecords records) {
+    return new CheckInByBarcodeResponse(records);
+  }
+
+  private CheckInByBarcodeResponse(CheckInProcessRecords records) {
+    this.records = records;
+  }
+
+  public HttpResponse toHttpResponse() {
+    return new JsonHttpResponse(200, this.toJson(), null);
+  }
+
+  private JsonObject toJson() {
     final LoanRepresentation loanRepresentation = new LoanRepresentation();
     final ItemSummaryRepresentation itemRepresentation = new ItemSummaryRepresentation();
 
