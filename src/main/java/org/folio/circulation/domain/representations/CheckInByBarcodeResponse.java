@@ -28,9 +28,7 @@ public class CheckInByBarcodeResponse {
     }
   }
 
-  private static ResponseWritableResult<JsonObject> mapToResponse(
-    CheckInProcessRecords records) {
-
+  public static JsonObject toJson(CheckInProcessRecords records) {
     final LoanRepresentation loanRepresentation = new LoanRepresentation();
     final ItemSummaryRepresentation itemRepresentation = new ItemSummaryRepresentation();
 
@@ -44,6 +42,13 @@ public class CheckInByBarcodeResponse {
 
     write(checkInResponseBody, "staffSlipContext", createCheckInContext(records));
     write(checkInResponseBody, "inHouseUse", records.isInHouseUse());
+    return checkInResponseBody;
+  }
+
+  private static ResponseWritableResult<JsonObject> mapToResponse(
+    CheckInProcessRecords records) {
+
+    final JsonObject checkInResponseBody = toJson(records);
 
     return new OkJsonResponseResult(checkInResponseBody);
   }
