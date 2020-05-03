@@ -2,11 +2,11 @@ package org.folio.circulation.domain.representations;
 
 import static org.folio.circulation.domain.notice.TemplateContextUtil.createCheckInContext;
 import static org.folio.circulation.support.JsonPropertyWriter.write;
+import static org.folio.circulation.support.http.server.JsonHttpResponse.ok;
 
 import org.folio.circulation.domain.CheckInProcessRecords;
 import org.folio.circulation.domain.LoanRepresentation;
 import org.folio.circulation.support.http.server.HttpResponse;
-import org.folio.circulation.support.http.server.JsonHttpResponse;
 
 import io.vertx.core.json.JsonObject;
 
@@ -22,7 +22,7 @@ public class CheckInByBarcodeResponse {
   }
 
   public HttpResponse toHttpResponse() {
-    return new JsonHttpResponse(200, this.toJson(), null);
+    return ok(this.toJson());
   }
 
   private JsonObject toJson() {

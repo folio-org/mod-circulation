@@ -13,6 +13,11 @@ public class JsonHttpResponse implements HttpResponse {
   private final JsonObject body;
   private final String location;
 
+
+  public static HttpResponse ok(JsonObject body) {
+    return new JsonHttpResponse(200, body, null);
+  }
+
   public JsonHttpResponse(int statusCode, JsonObject body, String location) {
     this.statusCode = statusCode;
     this.body = body;
