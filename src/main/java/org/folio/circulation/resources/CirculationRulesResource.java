@@ -7,6 +7,7 @@ import static org.apache.commons.collections4.CollectionUtils.isNotEmpty;
 import static org.apache.commons.lang3.exception.ExceptionUtils.getStackTrace;
 import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
 import static org.folio.circulation.support.Result.combine;
+import static org.folio.circulation.support.http.server.JsonHttpResponse.ok;
 import static org.folio.circulation.support.http.server.ServerErrorResponse.internalError;
 
 import java.lang.invoke.MethodHandles;
@@ -26,7 +27,6 @@ import org.folio.circulation.rules.Text2Drools;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.JsonResponseResult;
-import org.folio.circulation.support.OkJsonResponseResult;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.http.client.PageLimit;
 import org.folio.circulation.support.http.client.Response;
@@ -76,7 +76,8 @@ public class CirculationRulesResource extends Resource {
   }
 
   private void get(RoutingContext routingContext) {
-    final Clients clients = Clients.create(new WebContext(routingContext), client);
+    final WebContext context = new WebContext(routingContext);
+    final Clients clients = Clients.create(context, client);
     CollectionResourceClient circulationRulesClient = clients.circulationRulesStorage();
 
     log.debug("get(RoutingContext) client={}", circulationRulesClient);
@@ -97,8 +98,7 @@ public class CirculationRulesResource extends Resource {
             }
             JsonObject circulationRules = new JsonObject(response.getBody());
 
-            new OkJsonResponseResult(circulationRules)
-              .writeTo(routingContext.response());
+            context.write(ok(circulationRules));
           }
           catch (Exception e) {
             internalError(routingContext.response(), getStackTrace(e));
