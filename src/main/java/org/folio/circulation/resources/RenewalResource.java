@@ -11,14 +11,15 @@ import org.folio.circulation.domain.LoanRepresentation;
 import org.folio.circulation.domain.OverdueFineCalculatorService;
 import org.folio.circulation.domain.RequestQueueRepository;
 import org.folio.circulation.domain.UserRepository;
-import org.folio.circulation.domain.notice.schedule.FeeFineScheduledNoticeService;
 import org.folio.circulation.domain.notice.schedule.DueDateScheduledNoticeService;
+import org.folio.circulation.domain.notice.schedule.FeeFineScheduledNoticeService;
 import org.folio.circulation.domain.policy.LoanPolicyRepository;
-import org.folio.circulation.domain.representations.LoanResponse;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.ItemRepository;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.RouteRegistration;
+import org.folio.circulation.support.http.server.HttpResponse;
+import org.folio.circulation.support.http.server.JsonHttpResponse;
 import org.folio.circulation.support.http.server.WebContext;
 
 import io.vertx.core.http.HttpClient;
@@ -27,7 +28,6 @@ import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 
 public abstract class RenewalResource extends Resource {
-
   private final String rootPath;
   private final RenewalStrategy renewalStrategy;
 
@@ -63,12 +63,9 @@ public abstract class RenewalResource extends Resource {
     final LoanNoticeSender loanNoticeSender = LoanNoticeSender.using(clients);
 
     //TODO: Validation check for same user should be in the domain service
-
     JsonObject bodyAsJson = routingContext.getBodyAsJson();
     CompletableFuture<Result<Loan>> findLoanResult = findLoan(bodyAsJson,
-      loanRepository,
-      itemRepository,
-      userRepository);
+      loanRepository, itemRepository, userRepository);
 
     findLoanResult
       .thenApply(r -> r.map(LoanAndRelatedRecords::new))
@@ -82,8 +79,8 @@ public abstract class RenewalResource extends Resource {
       .thenApply(r -> r.next(scheduledNoticeService::rescheduleDueDateNotices))
       .thenApply(r -> r.next(loanNoticeSender::sendRenewalPatronNotice))
       .thenApply(r -> r.map(loanRepresentation::extendedLoan))
-      .thenApply(LoanResponse::from)
-      .thenAccept(result -> result.writeTo(routingContext.response()));
+      .thenApply(r -> r.map(this::toResponse))
+      .thenAccept(result -> result.applySideEffect(context::write, context::write));
   }
 
   private CompletableFuture<Result<LoanAndRelatedRecords>> createOverdueFine(
@@ -95,9 +92,12 @@ public abstract class RenewalResource extends Resource {
         .scheduleNotices(records, action)));
   }
 
-  protected abstract CompletableFuture<Result<Loan>> findLoan(
-    JsonObject request,
-    LoanRepository loanRepository,
-    ItemRepository itemRepository,
+  private HttpResponse toResponse(JsonObject body) {
+    return JsonHttpResponse.ok(body,
+      String.format("/circulation/loans/%s", body.getString("id")));
+  }
+
+  protected abstract CompletableFuture<Result<Loan>> findLoan(JsonObject request,
+    LoanRepository loanRepository, ItemRepository itemRepository,
     UserRepository userRepository);
 }

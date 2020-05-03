@@ -13,9 +13,12 @@ public class JsonHttpResponse implements HttpResponse {
   private final JsonObject body;
   private final String location;
 
+  public static HttpResponse ok(JsonObject body, String location) {
+    return new JsonHttpResponse(200, body, location);
+  }
 
   public static HttpResponse ok(JsonObject body) {
-    return new JsonHttpResponse(200, body, null);
+    return ok(body, null);
   }
 
   public JsonHttpResponse(int statusCode, JsonObject body, String location) {
@@ -23,6 +26,7 @@ public class JsonHttpResponse implements HttpResponse {
     this.body = body;
     this.location = location;
   }
+
 
   @Override
   public void writeTo(HttpServerResponse response) {
