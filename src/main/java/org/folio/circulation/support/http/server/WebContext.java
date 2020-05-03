@@ -9,6 +9,7 @@ import static org.folio.circulation.support.http.OkapiHeader.USER_ID;
 import java.net.MalformedURLException;
 import java.net.URL;
 
+import org.folio.circulation.support.HttpFailure;
 import org.folio.circulation.support.InvalidOkapiLocationException;
 import org.folio.circulation.support.http.client.OkapiHttpClient;
 import org.folio.circulation.support.http.client.VertxWebClientOkapiHttpClient;
@@ -90,4 +91,13 @@ public class WebContext {
       okapiUrl, getTenantId(), getOkapiToken(), getUserId(),
       getRequestId());
   }
+
+    public void write(HttpResponse response) {
+      response.writeTo(routingContext.response());
+    }
+
+    //TODO: Make HttpFailure a HttpResponse
+    public void write(HttpFailure response) {
+      response.writeTo(routingContext.response());
+    }
 }

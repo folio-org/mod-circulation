@@ -85,8 +85,6 @@ public class CheckInByBarcodeResource extends Resource {
       .thenApply(r -> r.next(requestScheduledNoticeService::rescheduleRequestNotices))
       .thenApply(r -> r.map(CheckInByBarcodeResponse::fromRecords))
       .thenApply(r -> r.map(CheckInByBarcodeResponse::toHttpResponse))
-      .thenAccept(r -> r.applySideEffect(
-        response -> response.writeTo(routingContext.response()),
-        failure -> failure.writeTo(routingContext.response())));
+      .thenAccept(r -> r.applySideEffect(context::write, context::write));
   }
 }
