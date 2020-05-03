@@ -36,7 +36,7 @@ import org.folio.circulation.support.CreatedJsonResponseResult;
 import org.folio.circulation.support.FindWithCqlQuery;
 import org.folio.circulation.support.ItemRepository;
 import org.folio.circulation.support.NoContentResult;
-import org.folio.circulation.support.OkJsonResponseResult;
+import org.folio.circulation.support.http.server.JsonHttpResponse;
 import org.folio.circulation.support.http.server.WebContext;
 
 import io.vertx.core.http.HttpClient;
@@ -180,8 +180,8 @@ public class RequestCollectionResource extends CollectionResource {
 
     requestRepository.getById(id)
       .thenApply(r -> r.map(new RequestRepresentation()::extendedRepresentation))
-      .thenApply(OkJsonResponseResult::from)
-      .thenAccept(result -> result.writeTo(routingContext.response()));
+      .thenApply(r -> r.map(JsonHttpResponse::ok))
+      .thenAccept(result -> result.applySideEffect(context::write, context::write));
   }
 
   void delete(RoutingContext routingContext) {
@@ -216,8 +216,8 @@ public class RequestCollectionResource extends CollectionResource {
     requestRepository.findBy(routingContext.request().query())
       .thenApply(r -> r.map(requests ->
         requests.asJson(requestRepresentation::extendedRepresentation, "requests")))
-      .thenApply(OkJsonResponseResult::from)
-      .thenAccept(result -> result.writeTo(routingContext.response()));
+      .thenApply(r -> r.map(JsonHttpResponse::ok))
+      .thenAccept(result -> result.applySideEffect(context::write, context::write));
   }
 
   void empty(RoutingContext routingContext) {
@@ -271,8 +271,8 @@ public class RequestCollectionResource extends CollectionResource {
       .thenComposeAsync(r -> r.after(moveRequestService::moveRequest))
       .thenApply(r -> r.map(RequestAndRelatedRecords::getRequest))
       .thenApply(r -> r.map(new RequestRepresentation()::extendedRepresentation))
-      .thenApply(OkJsonResponseResult::from)
-      .thenAccept(r -> r.writeTo(routingContext.response()));
+      .thenApply(r -> r.map(JsonHttpResponse::ok))
+      .thenAccept(result -> result.applySideEffect(context::write, context::write));
   }
 
   private RequestAndRelatedRecords asMove(RequestAndRelatedRecords requestAndRelatedRecords,

@@ -4,10 +4,6 @@ import static java.util.concurrent.CompletableFuture.completedFuture;
 
 import java.util.concurrent.CompletableFuture;
 
-import io.vertx.core.http.HttpClient;
-import io.vertx.ext.web.Router;
-import io.vertx.ext.web.RoutingContext;
-
 import org.folio.circulation.domain.ConfigurationRepository;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.RequestQueueRepository;
@@ -19,12 +15,15 @@ import org.folio.circulation.domain.reorder.ReorderQueueRequest;
 import org.folio.circulation.domain.validation.RequestQueueValidation;
 import org.folio.circulation.resources.context.ReorderRequestContext;
 import org.folio.circulation.support.Clients;
-import org.folio.circulation.support.OkJsonResponseResult;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.RouteRegistration;
+import org.folio.circulation.support.http.server.JsonHttpResponse;
 import org.folio.circulation.support.http.server.WebContext;
 
+import io.vertx.core.http.HttpClient;
 import io.vertx.core.json.JsonObject;
+import io.vertx.ext.web.Router;
+import io.vertx.ext.web.RoutingContext;
 
 public class RequestQueueResource extends Resource {
 
@@ -57,23 +56,23 @@ public class RequestQueueResource extends Resource {
         requestQueue.getRequests(), requestQueue.size())))
       .thenApply(r -> r.map(requests ->
         requests.asJson(requestRepresentation::extendedRepresentation, "requests")))
-      .thenApply(OkJsonResponseResult::from)
-      .thenAccept(result -> result.writeTo(routingContext.response()));
+      .thenApply(r -> r.map(JsonHttpResponse::ok))
+      .thenAccept(result -> result.applySideEffect(context::write, context::write));
   }
 
-  private void reorder(RoutingContext context) {
+  private void reorder(RoutingContext routingContext) {
     ReorderRequestContext reorderContext = new ReorderRequestContext(
-      context.request().getParam("itemId"),
-      context.getBodyAsJson().mapTo(ReorderQueueRequest.class)
-    );
+      routingContext.request().getParam("itemId"),
+      routingContext.getBodyAsJson().mapTo(ReorderQueueRequest.class));
 
-    final Clients clients = Clients.create(new WebContext(context), client);
+    final WebContext context = new WebContext(routingContext);
+    final Clients clients = Clients.create(context, client);
     final RequestRepository requestRepository = RequestRepository.using(clients);
     final RequestQueueRepository requestQueueRepository = RequestQueueRepository.using(clients);
+
     final UpdateRequestQueue updateRequestQueue = new UpdateRequestQueue(
       requestQueueRepository, requestRepository, new ServicePointRepository(clients),
-      new ConfigurationRepository(clients)
-    );
+      new ConfigurationRepository(clients));
 
     requestQueueRepository.get(reorderContext.getItemId())
       .thenApply(r -> r.map(reorderContext::withRequestQueue))
@@ -86,8 +85,8 @@ public class RequestQueueResource extends Resource {
       // Business logic block
       .thenCompose(updateRequestQueue::onReorder)
       .thenCompose(r -> r.after(this::toRepresentation))
-      .thenApply(OkJsonResponseResult::from)
-      .thenAccept(r -> r.writeTo(context.response()));
+      .thenApply(r -> r.map(JsonHttpResponse::ok))
+      .thenAccept(result -> result.applySideEffect(context::write, context::write));
   }
 
   private CompletableFuture<Result<JsonObject>> toRepresentation(ReorderRequestContext context) {
@@ -96,10 +95,6 @@ public class RequestQueueResource extends Resource {
     return completedFuture(Result.succeeded(context.getRequestQueue()))
       .thenApply(r -> r.map(queue -> new MultipleRecords<>(queue.getRequests(), queue.size())))
       .thenApply(r -> r.map(requests -> requests
-        .asJson(
-          requestRepresentation::extendedRepresentation,
-          "requests"
-        )
-      ));
+        .asJson(requestRepresentation::extendedRepresentation, "requests")));
   }
 }
