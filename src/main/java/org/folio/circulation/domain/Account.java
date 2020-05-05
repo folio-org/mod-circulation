@@ -3,7 +3,7 @@ package org.folio.circulation.domain;
 import static org.folio.circulation.support.JsonPropertyFetcher.getBigDecimalProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getNestedStringProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
-import static org.folio.circulation.support.utils.BigDecimalUtil.roundTaxValue;
+import static org.folio.circulation.support.utils.BigDecimalUtil.toDouble;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -76,8 +76,8 @@ public class Account {
     jsonObject.put("id", id);
     jsonObject.put("ownerId", relatedRecordsInfo.getFeeFineOwnerInfo().getOwnerId());
     jsonObject.put("feeFineId", relatedRecordsInfo.getFeeFineTypeInfo().getFeeFineId());
-    jsonObject.put("amount", roundTaxValue(amount).toString());
-    jsonObject.put("remaining", roundTaxValue(remaining).toString());
+    jsonObject.put("amount", toDouble(amount));
+    jsonObject.put("remaining", toDouble(remaining));
     jsonObject.put("feeFineType", relatedRecordsInfo.getFeeFineTypeInfo().getFeeFineType());
     jsonObject.put("feeFineOwner", relatedRecordsInfo.getFeeFineOwnerInfo().getOwner());
     jsonObject.put("title", relatedRecordsInfo.getItemInfo().getTitle());

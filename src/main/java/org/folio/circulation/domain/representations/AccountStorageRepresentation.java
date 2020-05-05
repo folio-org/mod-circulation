@@ -1,7 +1,7 @@
 package org.folio.circulation.domain.representations;
 
 import static org.folio.circulation.support.JsonPropertyWriter.write;
-import static org.folio.circulation.support.utils.BigDecimalUtil.roundTaxValue;
+import static org.folio.circulation.support.utils.BigDecimalUtil.toDouble;
 
 import java.math.BigDecimal;
 import java.util.UUID;
@@ -22,8 +22,8 @@ public class AccountStorageRepresentation extends JsonObject {
     this.put("id", UUID.randomUUID().toString());
     this.put("ownerId", feeFineOwner.getId());
     this.put("feeFineId", feeFine.getId());
-    this.put("amount", roundTaxValue(amount).toString());
-    this.put("remaining", roundTaxValue(amount).toString());
+    this.put("amount", toDouble(amount));
+    this.put("remaining", toDouble(amount));
     this.put("feeFineType", feeFine.getFeeFineType());
     this.put("feeFineOwner", feeFineOwner.getOwner());
     this.put("title", item.getTitle());
@@ -63,7 +63,7 @@ public class AccountStorageRepresentation extends JsonObject {
   }
 
   private void setRemaining(BigDecimal remaining) {
-    put("remaining", roundTaxValue(remaining).toString());
+    put("remaining", toDouble(remaining));
   }
 
   public void close(FeeFinePaymentAction paymentAction) {

@@ -1,7 +1,7 @@
 package org.folio.circulation.domain.representations;
 
 import static org.folio.circulation.support.JsonPropertyWriter.write;
-import static org.folio.circulation.support.utils.BigDecimalUtil.roundTaxValue;
+import static org.folio.circulation.support.utils.BigDecimalUtil.toDouble;
 
 import java.math.BigDecimal;
 import java.util.UUID;
@@ -22,8 +22,8 @@ public class FeeFineActionStorageRepresentation extends JsonObject {
     this.put("source", builder.createdBy);
     this.put("createdAt", builder.createdAt);
     this.put("transactionInformation", builder.transactionInformation);
-    this.put("balance", roundTaxValue(builder.balance).toString());
-    this.put("amountAction", roundTaxValue(builder.amount).toString());
+    this.put("balance", toDouble(builder.balance));
+    this.put("amountAction", toDouble(builder.amount));
     this.put("notify", builder.notify);
     this.put("typeAction", builder.action);
     write(this, "dateAction", ClockManager.getClockManager().getDateTime());

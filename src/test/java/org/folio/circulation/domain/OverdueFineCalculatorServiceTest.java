@@ -97,12 +97,12 @@ public class OverdueFineCalculatorServiceTest {
   private String overdueRecallFineInterval;
   private Double maxOverdueRecallFine;
   private Integer periodCalculatorResult;
-  private BigDecimal correctOverdueFine;
+  private Double correctOverdueFine;
 
   public OverdueFineCalculatorServiceTest(
     Boolean renewal, Boolean dueDateChangedByRecall, Double overdueFine, String overdueFineInterval,
     Double maxOverdueFine, Double overdueRecallFine, String overdueRecallFineInterval,
-    Double maxOverdueRecallFine, Integer periodCalculatorResult, BigDecimal correctOverdueFine) {
+    Double maxOverdueRecallFine, Integer periodCalculatorResult, Double correctOverdueFine) {
 
     this.renewal = renewal;
     this.dueDateChangedByRecall = dueDateChangedByRecall;
@@ -572,6 +572,7 @@ public class OverdueFineCalculatorServiceTest {
   }
 
   private Account createAccount() {
+    final BigDecimal amount = BigDecimal.valueOf(correctOverdueFine);
     return new Account(ACCOUNT_ID.toString(),
       new AccountRelatedRecordsInfo(
         new AccountFeeFineOwnerInfo(FEE_FINE_OWNER_ID.toString(), FEE_FINE_OWNER),
@@ -580,7 +581,7 @@ public class OverdueFineCalculatorServiceTest {
         new AccountItemInfo(ITEM_ID.toString(), TITLE, BARCODE, CALL_NUMBER,
           LOCATION_NAME, ITEM_MATERIAL_TYPE_ID.toString())
       ),
-      correctOverdueFine, correctOverdueFine, "Open", "Outstanding"
-      );
+      amount, amount, "Open", "Outstanding"
+    );
   }
 }
