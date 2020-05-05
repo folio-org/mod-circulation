@@ -15,6 +15,7 @@ import static org.folio.circulation.domain.representations.LoanProperties.CHECKI
 import static org.folio.circulation.domain.representations.LoanProperties.CHECKOUT_SERVICE_POINT_ID;
 import static org.folio.circulation.domain.representations.LoanProperties.CLAIMED_RETURNED_DATE;
 import static org.folio.circulation.domain.representations.LoanProperties.DUE_DATE;
+import static org.folio.circulation.domain.representations.LoanProperties.ITEM_LOCATION_ID_AT_CHECKOUT;
 import static org.folio.circulation.domain.representations.LoanProperties.LOAN_POLICY_ID;
 import static org.folio.circulation.domain.representations.LoanProperties.LOST_ITEM_POLICY_ID;
 import static org.folio.circulation.domain.representations.LoanProperties.OVERDUE_FINE_POLICY_ID;
@@ -173,6 +174,11 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
 
   private void changeStatus(LoanStatus status) {
     representation.put(STATUS, new JsonObject().put("name", status.getValue()));
+  }
+
+  public Loan changeItemEffectiveLocationIdAtCheckOut(String locationId) {
+    representation.put(ITEM_LOCATION_ID_AT_CHECKOUT, locationId);
+    return this;
   }
 
   public void changeActionComment(String comment) {
