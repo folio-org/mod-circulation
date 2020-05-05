@@ -18,6 +18,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.core.Is.is;
+import static org.hamcrest.core.IsNot.not;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -162,6 +163,45 @@ public class CheckInByBarcodeTests extends APITests {
 
     verifyCheckInOperationRecorded(nod.getId(), checkInServicePointId);
   }
+
+@Test
+public void verifyItemEffectiveLocationIdAtCheckOut() {
+
+  final IndividualResource james = usersFixture.james();
+
+  final UUID checkInServicePointId = servicePointsFixture.cd1().getId();
+
+  final IndividualResource homeLocation = locationsFixture.basedUponExampleLocation(
+    item -> item.withPrimaryServicePoint(checkInServicePointId));
+
+  final String anotherLocationId = locationsFixture.thirdFloor().getId().toString();
+
+  final IndividualResource nod = itemsFixture.basedUponNod(
+    item -> item
+      .withTemporaryLocation(homeLocation.getId()));
+
+  checkOutFixture.checkOutByBarcode(nod, james);
+
+  // Change the item's effective location to verify itemEffectiveLocationIdAtCheckOut is unchanged
+  JsonObject update = nod.getJson();
+  update.put("temporaryLocationId", anotherLocationId);
+  itemsClient.replace(nod.getId(), update);
+
+  final CheckInByBarcodeResponse checkInResponse = checkInFixture.checkInByBarcode(
+    new CheckInByBarcodeRequestBuilder()
+      .forItem(nod)
+      .at(checkInServicePointId));
+
+  JsonObject loanRepresentation = checkInResponse.getLoan();
+  JsonObject updatedNod = itemsClient.getById(nod.getId()).getJson();
+
+  assertThat("New location should not equal old location",
+    homeLocation.getId().toString(), not(anotherLocationId));
+  assertThat("The item's temporary location ID should be updated",
+    updatedNod.getString("temporaryLocationId"), is(anotherLocationId));
+  assertThat("itemEffectiveLocationIdAtCheckOut should match the original location ID at checkout",
+    loanRepresentation.getString("itemEffectiveLocationIdAtCheckOut"), is(homeLocation.getId().toString()));
+}
 
   @Test
   public void canCreateStaffSlipContextOnCheckInByBarcode() {

@@ -57,11 +57,13 @@ import io.vertx.core.json.JsonObject;
 public class CheckOutByBarcodeTests extends APITests {
   @Test
   public void canCheckOutUsingItemAndUserBarcode() {
-     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet(
+    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet(
       item -> item
         .withEnumeration("v.70:no.1-6")
         .withChronology("1987:Jan.-June")
         .withVolume("testVolume"));
+    InventoryItemResource smallAngryPlanetRsrc = (InventoryItemResource)smallAngryPlanet;
+    JsonObject holding = smallAngryPlanetRsrc.getHoldingsRecord().getJson();
 
     final IndividualResource steve = usersFixture.steve();
 
@@ -85,6 +87,9 @@ public class CheckOutByBarcodeTests extends APITests {
 
     assertThat("item ID should match barcode",
       loan.getString("itemId"), is(smallAngryPlanet.getId()));
+
+    assertThat("itemEffectiveLocationIdAtCheckOut should match item effective location ID",
+      loan.getString("itemEffectiveLocationIdAtCheckOut"), is(smallAngryPlanet.getJson().getString("effectiveLocationId")));
 
     assertThat("status should be open",
       loan.getJsonObject("status").getString("name"), is("Open"));
