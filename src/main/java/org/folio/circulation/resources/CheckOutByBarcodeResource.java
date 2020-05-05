@@ -169,6 +169,7 @@ public class CheckOutByBarcodeResource extends Resource {
       .thenComposeAsync(r -> r.after(itemLimitValidator::refuseWhenItemLimitIsReached))
       .thenComposeAsync(r -> r.after(overdueFinePolicyRepository::lookupOverdueFinePolicy))
       .thenComposeAsync(r -> r.after(lostItemPolicyRepository::lookupLostItemPolicy))
+      .thenApply(r -> r.next(this::setItemLocationIdAtCheckout))
       .thenComposeAsync(r -> r.after(relatedRecords -> checkOutStrategy.checkOut(relatedRecords, request, clients)))
       .thenComposeAsync(r -> r.after(requestQueueUpdate::onCheckOut))
       .thenComposeAsync(r -> r.after(updateItem::onCheckOut))
@@ -236,5 +237,11 @@ public class CheckOutByBarcodeResource extends Resource {
         item.getStatusName());
 
     return singleValidationError(message, ITEM_BARCODE, item.getBarcode());
+  }
+
+  private Result<LoanAndRelatedRecords> setItemLocationIdAtCheckout(
+    LoanAndRelatedRecords relatedRecords) {
+
+    return succeeded(relatedRecords.withItemEffectiveLocationIdAtCheckOut());
   }
 }

@@ -21,6 +21,11 @@
       "description": "ID of the item lent to the patron",
       "type": "string"
     },
+    "itemEffectiveLocationIdAtCheckOut": {
+      "description": "The effective location, at the time of checkout, of the item loaned to the patron.",
+      "type": "string",
+      "$ref": "raml-util/schemas/uuid.schema"
+    },
     "status": {
       "description": "Overall status of the loan",
       "type": "object",
@@ -47,7 +52,7 @@
     },
     "systemReturnDate" : {
       "description": "Date time when the returned item is actually processed",
-      "type" : "string",
+      "type": "string",
       "format": "date-time"
     },
     "action": {
@@ -99,19 +104,34 @@
       "format": "date-time"
     },
     "overdueFinePolicyId": {
-      "description": "ID of last overdue fine policy used in relation to this loan",
-      "type": "string",
-      "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
+      "description": "ID of overdue fines policy at the time the item is check-in or renewed",
+      "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$",
+      "type": "string"
     },
     "lostItemPolicyId": {
-      "description": "ID of last lost item policy used in relation to this loan",
-      "type": "string",
-      "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
+      "description": "ID of lost item policy which determines when the item ages to lost and the associated fees or the associated fees if the patron declares the item lost.",
+      "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$",
+      "type": "string"
     },
     "metadata": {
       "description": "Metadata about creation and changes to loan, provided by the server (client should not provide)",
       "type": "object",
       "$ref": "raml-util/schemas/metadata.schema"
+    },
+    "agedToLostDelayedBilling": {
+      "description": "Aged to Lost Delayed Billing processing",
+      "type": "object",
+      "properties": {  
+        "lostItemHasBeenBilled": {
+          "description": "Indicates if the aged to lost fee has been billed (for use where delayed billing is set up)",
+          "type": "boolean"
+        },
+        "dateLostItemShouldBeBilled": {
+          "description": "Indicates when the aged to lost fee should be billed (for use where delayed billing is set up)",
+          "type": "string",
+          "format": "date-time"
+        }
+      }
     }
   },
   "additionalProperties": false,
