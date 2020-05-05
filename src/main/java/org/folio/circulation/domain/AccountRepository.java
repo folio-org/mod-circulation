@@ -27,6 +27,7 @@ import org.folio.circulation.support.FetchSingleRecord;
 import org.folio.circulation.support.FindWithMultipleCqlIndexValues;
 import org.folio.circulation.support.GetManyRecordsClient;
 import org.folio.circulation.support.Result;
+import org.folio.circulation.support.http.client.CqlQuery;
 import org.folio.circulation.support.http.client.ResponseInterpreter;
 
 public class AccountRepository {
@@ -51,11 +52,15 @@ public class AccountRepository {
     });
   }
 
-  private CompletableFuture<Result<Collection<Account>>> fetchAccountsForLoan(String loanId) {
+  public CompletableFuture<Result<Collection<Account>>> findAccounts(Result<CqlQuery> queryResult) {
     return findWithCqlQuery(accountsStorageClient, ACCOUNTS_COLLECTION_PROPERTY_NAME, Account::from)
-      .findByQuery(exactMatch(LOAN_ID_FIELD_NAME, loanId))
+      .findByQuery(queryResult)
       .thenCompose(r -> r.after(this::findFeeFineActionsForAccounts))
       .thenApply(r -> r.map(MultipleRecords::getRecords));
+  }
+
+  private CompletableFuture<Result<Collection<Account>>> fetchAccountsForLoan(String loanId) {
+    return findAccounts(exactMatch(LOAN_ID_FIELD_NAME, loanId));
   }
 
   public CompletableFuture<Result<MultipleRecords<Loan>>> findAccountsForLoans(
@@ -141,6 +146,15 @@ public class AccountRepository {
       .otherwise(forwardOnFailure());
 
     return accountsStorageClient.post(account)
+      .thenApply(interpreter::flatMap);
+  }
+
+  public CompletableFuture<Result<Void>> update(AccountStorageRepresentation account) {
+    final ResponseInterpreter<Void> interpreter = new ResponseInterpreter<Void>()
+      .on(204, succeeded(null))
+      .otherwise(forwardOnFailure());
+
+    return accountsStorageClient.put(account.getId(), account)
       .thenApply(interpreter::flatMap);
   }
 }

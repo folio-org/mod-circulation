@@ -10,6 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.invoke.MethodHandles;
+import java.math.BigDecimal;
 import java.util.Collection;
 
 import static org.folio.circulation.domain.representations.LoanProperties.BORROWER;
@@ -86,13 +87,13 @@ public class LoanRepresentation {
     if (accounts == null) {
       return;
     }
-    double remainingFeesFines = accounts.stream().filter(Account::isOpen)
-      .map(Account::getRemainingFeeFineAmount).reduce(Double::sum).orElse(0d);
+    final BigDecimal remainingFeesFines = accounts.stream().filter(Account::isOpen)
+      .map(Account::getRemaining).reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
 
     JsonObject feesAndFinesSummary = loanRepresentation.containsKey(LoanProperties.FEESANDFINES)
       ? loanRepresentation.getJsonObject(LoanProperties.FEESANDFINES)
       : new JsonObject();
-    write(feesAndFinesSummary, "amountRemainingToPay", remainingFeesFines);
+    write(feesAndFinesSummary, "amountRemainingToPay", remainingFeesFines.toString());
     write(loanRepresentation, LoanProperties.FEESANDFINES, feesAndFinesSummary);
   }
 

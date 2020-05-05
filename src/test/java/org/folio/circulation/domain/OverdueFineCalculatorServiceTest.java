@@ -11,6 +11,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -26,7 +27,6 @@ import org.folio.circulation.domain.representations.AccountStorageRepresentation
 import org.folio.circulation.domain.representations.CheckInByBarcodeRequest;
 import org.folio.circulation.domain.representations.FeeFineActionStorageRepresentation;
 import org.folio.circulation.support.ItemRepository;
-import org.folio.circulation.support.http.server.WebContext;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.junit.Before;
@@ -97,12 +97,13 @@ public class OverdueFineCalculatorServiceTest {
   private String overdueRecallFineInterval;
   private Double maxOverdueRecallFine;
   private Integer periodCalculatorResult;
-  private Double correctOverdueFine;
+  private BigDecimal correctOverdueFine;
 
   public OverdueFineCalculatorServiceTest(
     Boolean renewal, Boolean dueDateChangedByRecall, Double overdueFine, String overdueFineInterval,
     Double maxOverdueFine, Double overdueRecallFine, String overdueRecallFineInterval,
-    Double maxOverdueRecallFine, Integer periodCalculatorResult, Double correctOverdueFine) {
+    Double maxOverdueRecallFine, Integer periodCalculatorResult, BigDecimal correctOverdueFine) {
+
     this.renewal = renewal;
     this.dueDateChangedByRecall = dueDateChangedByRecall;
     this.overdueFine = overdueFine;

@@ -1,8 +1,11 @@
 package org.folio.circulation.domain;
 
+import static org.folio.circulation.support.JsonPropertyFetcher.getBigDecimalProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getNestedStringProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
+import static org.folio.circulation.support.utils.BigDecimalUtil.roundTaxValue;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
@@ -17,15 +20,16 @@ import io.vertx.core.json.JsonObject;
 public class Account {
   private final String id;
   private final AccountRelatedRecordsInfo relatedRecordsInfo;
-  private final Double amount;
-  private final Double remaining;
+  private final BigDecimal amount;
+  private final BigDecimal remaining;
   private final String status;
   private final String paymentStatus;
 
   private Collection<FeeFineAction> feeFineActions = new ArrayList<>();
 
-  public Account(String id, AccountRelatedRecordsInfo relatedRecordsInfo, Double amount,
-    Double remaining, String status, String paymentStatus) {
+  public Account(String id, AccountRelatedRecordsInfo relatedRecordsInfo, BigDecimal amount,
+    BigDecimal remaining, String status, String paymentStatus) {
+
     this.id = id;
     this.relatedRecordsInfo = relatedRecordsInfo;
     this.amount = amount;
@@ -54,8 +58,8 @@ public class Account {
           getProperty(representation, "location"),
           getProperty(representation, "materialTypeId"))
       ),
-      representation != null ? representation.getDouble("amount") : null,
-      representation != null ? representation.getDouble("remaining") : null,
+      getBigDecimalProperty(representation,"amount"),
+      getBigDecimalProperty(representation,"remaining"),
       getNestedStringProperty(representation, "status", "name"),
       getNestedStringProperty(representation, "paymentStatus", "name"));
   }
@@ -72,8 +76,8 @@ public class Account {
     jsonObject.put("id", id);
     jsonObject.put("ownerId", relatedRecordsInfo.getFeeFineOwnerInfo().getOwnerId());
     jsonObject.put("feeFineId", relatedRecordsInfo.getFeeFineTypeInfo().getFeeFineId());
-    jsonObject.put("amount", amount);
-    jsonObject.put("remaining", remaining);
+    jsonObject.put("amount", roundTaxValue(amount).toString());
+    jsonObject.put("remaining", roundTaxValue(remaining).toString());
     jsonObject.put("feeFineType", relatedRecordsInfo.getFeeFineTypeInfo().getFeeFineType());
     jsonObject.put("feeFineOwner", relatedRecordsInfo.getFeeFineOwnerInfo().getOwner());
     jsonObject.put("title", relatedRecordsInfo.getItemInfo().getTitle());
@@ -100,11 +104,11 @@ public class Account {
     return id;
   }
 
-  public Double getAmount() {
+  public BigDecimal getAmount() {
     return amount;
   }
 
-  public Double getRemaining() {
+  public BigDecimal getRemaining() {
     return remaining;
   }
 
@@ -150,14 +154,6 @@ public class Account {
 
   public String getStatus() {
     return status;
-  }
-
-  public String getPaymentStatus() {
-    return paymentStatus;
-  }
-
-  public Double getRemainingFeeFineAmount() {
-    return this.remaining;
   }
 
   public void setFeeFineActions(Collection<FeeFineAction> feeFineActions) {

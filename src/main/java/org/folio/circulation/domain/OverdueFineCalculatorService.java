@@ -5,6 +5,7 @@ import static org.apache.commons.lang3.BooleanUtils.isFalse;
 import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.ResultBinding.mapResult;
 
+import java.math.BigDecimal;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -189,7 +190,7 @@ public class OverdueFineCalculatorService {
 
     AccountStorageRepresentation accountRepresentation =
       new AccountStorageRepresentation(params.loan, params.item, params.feeFineOwner,
-        params.feeFine, fineAmount);
+        params.feeFine, BigDecimal.valueOf(fineAmount));
 
     return repos.accountRepository.create(accountRepresentation)
       .thenCompose(rac -> rac.after(account -> createFeeFineAction(account, params)));
@@ -200,6 +201,7 @@ public class OverdueFineCalculatorService {
 
     return repos.feeFineActionRepository.create(FeeFineActionStorageRepresentation.builder()
       .useAccount(account)
+      .withAction(account.getFeeFineType())
       .withCreatedAt(params.feeFineOwner.getOwner())
       .withCreatedBy(params.loggedInUser)
       .build());

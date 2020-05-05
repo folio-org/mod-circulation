@@ -1,7 +1,9 @@
 package org.folio.circulation.domain.representations;
 
 import static org.folio.circulation.support.JsonPropertyWriter.write;
+import static org.folio.circulation.support.utils.BigDecimalUtil.roundTaxValue;
 
+import java.math.BigDecimal;
 import java.util.UUID;
 
 import org.folio.circulation.domain.Account;
@@ -20,10 +22,10 @@ public class FeeFineActionStorageRepresentation extends JsonObject {
     this.put("source", builder.createdBy);
     this.put("createdAt", builder.createdAt);
     this.put("transactionInformation", builder.transactionInformation);
-    this.put("balance", builder.balance);
-    this.put("amountAction", builder.amount);
+    this.put("balance", roundTaxValue(builder.balance).toString());
+    this.put("amountAction", roundTaxValue(builder.amount).toString());
     this.put("notify", builder.notify);
-    this.put("typeAction", builder.feeFineType);
+    this.put("typeAction", builder.action);
     write(this, "dateAction", ClockManager.getClockManager().getDateTime());
   }
 
@@ -38,14 +40,13 @@ public class FeeFineActionStorageRepresentation extends JsonObject {
     private String createdBy;
     private String createdAt;
     private String transactionInformation = "-";
-    private double balance;
-    private double amount;
+    private BigDecimal balance;
+    private BigDecimal amount;
     private boolean notify = false;
-    private String feeFineType;
+    private String action;
 
     public Builder useAccount(Account account) {
-      return withFeeFineType(account.getFeeFineType())
-        .withUserId(account.getUserId())
+      return withUserId(account.getUserId())
         .withBalance(account.getRemaining())
         .withAmount(account.getAmount())
         .withAccountId(account.getId());
@@ -81,18 +82,23 @@ public class FeeFineActionStorageRepresentation extends JsonObject {
       return this;
     }
 
-    public Builder withBalance(double balance) {
+    public Builder withBalance(BigDecimal balance) {
       this.balance = balance;
       return this;
     }
 
-    public Builder withAmount(double amount) {
+    public Builder withAmount(BigDecimal amount) {
       this.amount = amount;
       return this;
     }
 
-    public Builder withFeeFineType(String feeFineType) {
-      this.feeFineType = feeFineType;
+    public Builder withAction(FeeFinePaymentAction action) {
+      this.action = action.getValue();
+      return this;
+    }
+
+    public Builder withAction(String action) {
+      this.action = action;
       return this;
     }
 

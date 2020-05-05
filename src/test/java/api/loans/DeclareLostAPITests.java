@@ -21,6 +21,7 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.joda.time.Seconds.seconds;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -137,16 +138,16 @@ public class DeclareLostAPITests extends APITests {
 
   @Test
   public void shouldChargeProcessingAndItemFeesWhenBothDefined() {
-    final double expectedProcessingFee = 10.0;
-    final double expectedItemFee = 20.0;
+    final BigDecimal expectedProcessingFee = new BigDecimal("10.00");
+    final BigDecimal expectedItemFee = new BigDecimal("20.00");
     final String expectedOwnerId = feeFineOwnerFixture.cd1Owner().getId().toString();
 
     final LostItemFeePolicyBuilder lostItemPolicy = lostItemFeePoliciesFixture
       .facultyStandardPolicy()
       .withName("Declared lost fee test policy")
       .chargeProcessingFee()
-      .withLostItemProcessingFee(expectedProcessingFee)
-      .withSetCost(expectedItemFee);
+      .withLostItemProcessingFee(expectedProcessingFee.doubleValue())
+      .withSetCost(expectedItemFee.doubleValue());
 
     useLostItemPolicy(lostItemFeePoliciesFixture.create(lostItemPolicy).getId());
 
@@ -157,26 +158,26 @@ public class DeclareLostAPITests extends APITests {
     verifyFeeHasBeenCharged(loan.getId(), "Lost item fee", allOf(
       hasJsonPath("ownerId", expectedOwnerId),
       hasJsonPath("feeFineType", "Lost item fee"),
-      hasJsonPath("amount", expectedItemFee)
+      hasJsonPath("amount", expectedItemFee.toString())
     ));
 
     verifyFeeHasBeenCharged(loan.getId(), "Lost item processing fee", allOf(
       hasJsonPath("ownerId", expectedOwnerId),
       hasJsonPath("feeFineType", "Lost item processing fee"),
-      hasJsonPath("amount", expectedProcessingFee)
+      hasJsonPath("amount", expectedProcessingFee.toString())
     ));
   }
 
   @Test
   public void shouldChargeItemFeeOnlyWhenNoProcessingFeeDefined() {
-    final double expectedItemFee = 20.0;
+    final BigDecimal expectedItemFee = new BigDecimal("20.00");
     final String expectedOwnerId = feeFineOwnerFixture.cd1Owner().getId().toString();
 
     final LostItemFeePolicyBuilder lostItemPolicy = lostItemFeePoliciesFixture
       .facultyStandardPolicy()
       .withName("Declared lost fee test policy")
       .doNotChargeProcessingFee()
-      .withSetCost(expectedItemFee);
+      .withSetCost(expectedItemFee.doubleValue());
 
     useLostItemPolicy(lostItemFeePoliciesFixture.create(lostItemPolicy).getId());
 
@@ -187,20 +188,20 @@ public class DeclareLostAPITests extends APITests {
     verifyFeeHasBeenCharged(loan.getId(), "Lost item fee", allOf(
       hasJsonPath("ownerId", expectedOwnerId),
       hasJsonPath("feeFineType", "Lost item fee"),
-      hasJsonPath("amount", expectedItemFee)
+      hasJsonPath("amount", expectedItemFee.toString())
     ));
   }
 
   @Test
   public void shouldChargeProcessingFeeOnlyWhenNoItemCostDefined() {
-    final double expectedProcessingFee = 10.0;
+    final BigDecimal expectedProcessingFee = new BigDecimal("10.00");
     final String expectedOwnerId = feeFineOwnerFixture.cd1Owner().getId().toString();
 
     final LostItemFeePolicyBuilder lostItemPolicy = lostItemFeePoliciesFixture
       .facultyStandardPolicy()
       .withName("Declared lost fee test policy")
       .chargeProcessingFee()
-      .withLostItemProcessingFee(expectedProcessingFee)
+      .withLostItemProcessingFee(expectedProcessingFee.doubleValue())
       .withSetCost(0.0);
 
     useLostItemPolicy(lostItemFeePoliciesFixture.create(lostItemPolicy).getId());
@@ -212,7 +213,7 @@ public class DeclareLostAPITests extends APITests {
     verifyFeeHasBeenCharged(loan.getId(), "Lost item processing fee", allOf(
       hasJsonPath("ownerId", expectedOwnerId),
       hasJsonPath("feeFineType", "Lost item processing fee"),
-      hasJsonPath("amount", expectedProcessingFee)
+      hasJsonPath("amount", expectedProcessingFee.toString())
     ));
   }
 
@@ -428,8 +429,8 @@ public class DeclareLostAPITests extends APITests {
 
     assertThat(action, notNullValue());
     assertThat(action, allOf(
-      hasJsonPath("amountAction", account.getDouble("amount")),
-      hasJsonPath("balance", account.getDouble("amount")),
+      hasJsonPath("amountAction", account.getString("amount")),
+      hasJsonPath("balance", account.getString("amount")),
       hasJsonPath("userId", account.getString("userId")),
       hasJsonPath("createdAt", servicePointsFixture.cd2().getJson().getString("name")),
       hasJsonPath("source", "Admin, Admin"),
