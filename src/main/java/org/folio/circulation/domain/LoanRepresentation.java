@@ -6,6 +6,7 @@ import io.vertx.core.json.JsonObject;
 import org.folio.circulation.domain.policy.Policy;
 import org.folio.circulation.domain.representations.ItemSummaryRepresentation;
 import org.folio.circulation.domain.representations.LoanProperties;
+import org.folio.circulation.support.utils.BigDecimalUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -87,13 +88,17 @@ public class LoanRepresentation {
     if (accounts == null) {
       return;
     }
-    final BigDecimal remainingFeesFines = accounts.stream().filter(Account::isOpen)
-      .map(Account::getRemaining).reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
+    final double remainingFeesFines = accounts.stream()
+      .filter(Account::isOpen)
+      .map(Account::getRemaining)
+      .reduce(BigDecimal::add)
+      .map(BigDecimalUtil::toDouble)
+      .orElse(0.0);
 
     JsonObject feesAndFinesSummary = loanRepresentation.containsKey(LoanProperties.FEESANDFINES)
       ? loanRepresentation.getJsonObject(LoanProperties.FEESANDFINES)
       : new JsonObject();
-    write(feesAndFinesSummary, "amountRemainingToPay", remainingFeesFines.toString());
+    write(feesAndFinesSummary, "amountRemainingToPay", remainingFeesFines);
     write(loanRepresentation, LoanProperties.FEESANDFINES, feesAndFinesSummary);
   }
 

@@ -49,14 +49,14 @@ public class CheckInDeclaredLostItemTest extends APITests {
     checkInFixture.checkInByBarcode(item, servicePointsFixture.cd2().getId());
 
     verifyLostItemFee(allOf(
-      hasJsonPath("amount", "15.00"),
-      hasJsonPath("remaining", "0.00"),
+      hasJsonPath("amount", 15.00),
+      hasJsonPath("remaining", 0.00),
       hasJsonPath("status.name", "Closed"),
       hasJsonPath("paymentStatus.name", CANCELLED_ITEM_RETURNED)
     ));
     verifyLostItemFeeAction(hasItem(allOf(
-      hasJsonPath("amountAction", "15.00"),
-      hasJsonPath("balance", "0.00"),
+      hasJsonPath("amountAction", 15.00),
+      hasJsonPath("balance", 0.00),
       hasJsonPath("source", "Admin, Admin"),
       hasJsonPath("createdAt", "Circ Desk 2")
     )));
@@ -79,14 +79,14 @@ public class CheckInDeclaredLostItemTest extends APITests {
     checkInFixture.checkInByBarcode(item, servicePointsFixture.cd2().getId());
 
     verifyLostItemProcessingFee(allOf(
-      hasJsonPath("amount", "12.99"),
-      hasJsonPath("remaining", "0.00"),
+      hasJsonPath("amount", 12.99),
+      hasJsonPath("remaining", 0.00),
       hasJsonPath("status.name", "Closed"),
       hasJsonPath("paymentStatus.name", CANCELLED_ITEM_RETURNED)
     ));
     verifyLostItemProcessingFeeAction(hasItem(allOf(
-      hasJsonPath("amountAction", "12.99"),
-      hasJsonPath("balance", "0.00"),
+      hasJsonPath("amountAction", 12.99),
+      hasJsonPath("balance", 0.00),
       hasJsonPath("source", "Admin, Admin"),
       hasJsonPath("createdAt", "Circ Desk 2")
     )));
@@ -101,27 +101,27 @@ public class CheckInDeclaredLostItemTest extends APITests {
     checkInFixture.checkInByBarcode(item, servicePointsFixture.cd2().getId());
 
     verifyLostItemFee(allOf(
-      hasJsonPath("amount", "10.00"),
-      hasJsonPath("remaining", "0.00"),
+      hasJsonPath("amount", 10.00),
+      hasJsonPath("remaining", 0.00),
       hasJsonPath("status.name", "Closed"),
       hasJsonPath("paymentStatus.name", CANCELLED_ITEM_RETURNED)
     ));
     verifyLostItemFeeAction(hasItem(allOf(
-      hasJsonPath("amountAction", "10.00"),
-      hasJsonPath("balance", "0.00"),
+      hasJsonPath("amountAction", 10.00),
+      hasJsonPath("balance", 0.00),
       hasJsonPath("source", "Admin, Admin"),
       hasJsonPath("createdAt", "Circ Desk 2")
     )));
 
     verifyLostItemProcessingFee(allOf(
-      hasJsonPath("amount", "5.00"),
-      hasJsonPath("remaining", "0.00"),
+      hasJsonPath("amount", 5.00),
+      hasJsonPath("remaining", 0.00),
       hasJsonPath("status.name", "Closed"),
       hasJsonPath("paymentStatus.name", CANCELLED_ITEM_RETURNED)
     ));
     verifyLostItemProcessingFeeAction(hasItem(allOf(
-      hasJsonPath("amountAction", "5.00"),
-      hasJsonPath("balance", "0.00"),
+      hasJsonPath("amountAction", 5.00),
+      hasJsonPath("balance", 0.00),
       hasJsonPath("source", "Admin, Admin"),
       hasJsonPath("createdAt", "Circ Desk 2")
     )));

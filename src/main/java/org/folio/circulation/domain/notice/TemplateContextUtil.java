@@ -3,6 +3,7 @@ package org.folio.circulation.domain.notice;
 import static java.lang.Math.max;
 import static java.util.stream.Collectors.joining;
 import static org.folio.circulation.support.JsonPropertyWriter.write;
+import static org.folio.circulation.support.utils.BigDecimalUtil.toDouble;
 
 import java.util.Arrays;
 import java.util.Map;
@@ -262,9 +263,9 @@ public class TemplateContextUtil {
     return new JsonObject().put("fee", new JsonObject()
       .put("owner", account.getFeeFineOwner())
       .put("type", account.getFeeFineType())
-      .put("amount", account.getAmount())
+      .put("amount", toDouble(account.getAmount()))
       .put("actionType", action.getTypeAction())
-      .put("actionAmount", action.getAmountAction())
+      .put("actionAmount", toDouble(action.getAmountAction()))
       .put("actionDateTime", action.getDateAction().toString())
       .put("balance", action.getBalance())
       .put("actionAdditionalInfo", getCommentsFromFeeFineAction(action, PATRON_COMMENTS_KEY))
