@@ -59,7 +59,6 @@ import org.folio.circulation.support.FindWithCqlQuery;
 import org.folio.circulation.support.ForwardOnFailure;
 import org.folio.circulation.support.HttpFailure;
 import org.folio.circulation.support.ItemRepository;
-import org.folio.circulation.support.ResponseWritableResult;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.RouteRegistration;
 import org.folio.circulation.support.ServerErrorFailure;
@@ -105,8 +104,7 @@ public class RequestByInstanceIdResource extends Resource {
       RequestByInstanceIdRequest.from(routingContext.getBodyAsJson());
 
     if(requestByInstanceIdRequestResult.failed()) {
-      ResponseWritableResult<Object> failed = Result.failed(requestByInstanceIdRequestResult.cause());
-      failed.writeTo(routingContext.response());
+      requestByInstanceIdRequestResult.cause().writeTo(routingContext.response());
       return;
     }
 
