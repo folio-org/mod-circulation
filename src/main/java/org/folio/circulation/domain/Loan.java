@@ -14,6 +14,7 @@ import static org.folio.circulation.domain.representations.LoanProperties.ACTION
 import static org.folio.circulation.domain.representations.LoanProperties.CHECKIN_SERVICE_POINT_ID;
 import static org.folio.circulation.domain.representations.LoanProperties.CHECKOUT_SERVICE_POINT_ID;
 import static org.folio.circulation.domain.representations.LoanProperties.CLAIMED_RETURNED_DATE;
+import static org.folio.circulation.domain.representations.LoanProperties.DECLARED_LOST_DATE;
 import static org.folio.circulation.domain.representations.LoanProperties.DUE_DATE;
 import static org.folio.circulation.domain.representations.LoanProperties.ITEM_LOCATION_ID_AT_CHECKOUT;
 import static org.folio.circulation.domain.representations.LoanProperties.LOAN_POLICY_ID;
@@ -496,7 +497,11 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   public void changeDeclaredLostDateTime(DateTime dateTime) {
-    write(representation, LoanProperties.DECLARED_LOST_DATE, dateTime);
+    write(representation, DECLARED_LOST_DATE, dateTime);
+  }
+
+  public DateTime getDeclareLostDateTime() {
+    return getDateTimeProperty(representation, DECLARED_LOST_DATE);
   }
 
   public boolean isOverdue() {

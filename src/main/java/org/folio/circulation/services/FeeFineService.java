@@ -5,6 +5,7 @@ import static org.folio.circulation.domain.representations.AccountStorageReprese
 import static org.folio.circulation.domain.representations.FeeFinePaymentAction.CANCELLED_ITEM_RETURNED;
 import static org.folio.circulation.support.Result.combined;
 import static org.folio.circulation.support.Result.succeeded;
+import static org.folio.circulation.support.utils.BigDecimalUtil.toDouble;
 
 import java.math.BigDecimal;
 import java.util.Collection;
@@ -101,7 +102,7 @@ public class FeeFineService {
       .thenApply(r -> r.map(referenceData -> FeeFineActionStorageRepresentation.builder()
         .useAccount(cancellation.getAccountToCancel())
         .withAction(CANCELLED_ITEM_RETURNED)
-        .withAmount(cancellation.getAccountToCancel().getRemaining())
+        .withAmount(toDouble(cancellation.getAccountToCancel().getRemaining()))
         .withBalance(BigDecimal.ZERO)
         .withCreatedAt(referenceData.getRight().getName())
         .withCreatedBy(referenceData.getLeft())

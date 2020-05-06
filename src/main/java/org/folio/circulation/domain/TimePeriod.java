@@ -2,8 +2,11 @@ package org.folio.circulation.domain;
 
 import static org.folio.circulation.support.JsonPropertyFetcher.getIntegerProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
+import static org.folio.circulation.support.utils.DateTimeUtil.toJavaDateTime;
 
 import java.time.temporal.ChronoUnit;
+
+import org.joda.time.DateTime;
 
 import io.vertx.core.json.JsonObject;
 
@@ -30,6 +33,10 @@ public class TimePeriod {
       // Default is days
       return ChronoUnit.DAYS;
     }
+  }
+
+  public long between(DateTime start, DateTime end) {
+    return getInterval().between(toJavaDateTime(start), toJavaDateTime(end));
   }
 
   public boolean isLongTermPeriod() {

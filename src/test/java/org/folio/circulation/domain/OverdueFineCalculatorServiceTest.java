@@ -572,7 +572,6 @@ public class OverdueFineCalculatorServiceTest {
   }
 
   private Account createAccount() {
-    final BigDecimal amount = BigDecimal.valueOf(correctOverdueFine);
     return new Account(ACCOUNT_ID.toString(),
       new AccountRelatedRecordsInfo(
         new AccountFeeFineOwnerInfo(FEE_FINE_OWNER_ID.toString(), FEE_FINE_OWNER),
@@ -581,7 +580,7 @@ public class OverdueFineCalculatorServiceTest {
         new AccountItemInfo(ITEM_ID.toString(), TITLE, BARCODE, CALL_NUMBER,
           LOCATION_NAME, ITEM_MATERIAL_TYPE_ID.toString())
       ),
-      amount, amount, "Open", "Outstanding"
+      correctOverdueFine, BigDecimal.valueOf(correctOverdueFine), "Open", "Outstanding"
     );
   }
 }

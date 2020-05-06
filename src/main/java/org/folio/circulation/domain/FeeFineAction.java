@@ -37,20 +37,12 @@ public class FeeFineAction {
     return representation.getString("typeAction");
   }
 
-  public boolean isWaive() {
-    return isTypeActionStartsWith("Waive");
-  }
-
   public boolean isPaid() {
     return isTypeActionStartsWith("Paid");
   }
 
   public boolean isTransferred() {
     return isTypeActionStartsWith("Transferred");
-  }
-
-  public boolean isCancel() {
-    return isTypeActionStartsWith("Cancel");
   }
 
   private boolean isTypeActionStartsWith(String prefix) {

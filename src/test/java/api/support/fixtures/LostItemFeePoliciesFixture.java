@@ -51,7 +51,7 @@ public class LostItemFeePoliciesFixture {
       .withNoChargeAmountItem()
       .doNotChargeProcessingFee()
       .withChargeAmountItemSystem(true)
-      .withReturnedLostItemProcessingFee(true)
+      .refundProcessingFeeWhenReturned()
       .withReplacedLostItemProcessingFee(true)
       .withReplacementAllowed(true)
       .withLostItemReturned("Charge");
@@ -74,7 +74,7 @@ public class LostItemFeePoliciesFixture {
       .chargeProcessingFee()
       .withLostItemProcessingFee(5.00)
       .withChargeAmountItemSystem(true)
-      .withReturnedLostItemProcessingFee(true)
+      .refundProcessingFeeWhenReturned()
       .withReplacedLostItemProcessingFee(true)
       .withReplacementAllowed(true)
       .withLostItemReturned("Charge");

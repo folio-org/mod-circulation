@@ -352,6 +352,7 @@ public abstract class APITests {
     feeFineTypeFixture.cleanUp();
     feeFineActionsClient.deleteAll();
     accountsClient.deleteAll();
+    mockClockManagerToReturnDefaultDateTime();
   }
 
   //Needs to be done each time as some tests manipulate the rules

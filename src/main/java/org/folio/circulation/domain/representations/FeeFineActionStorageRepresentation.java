@@ -23,7 +23,7 @@ public class FeeFineActionStorageRepresentation extends JsonObject {
     this.put("createdAt", builder.createdAt);
     this.put("transactionInformation", builder.transactionInformation);
     this.put("balance", toDouble(builder.balance));
-    this.put("amountAction", toDouble(builder.amount));
+    this.put("amountAction", builder.amount);
     this.put("notify", builder.notify);
     this.put("typeAction", builder.action);
     write(this, "dateAction", ClockManager.getClockManager().getDateTime());
@@ -41,7 +41,7 @@ public class FeeFineActionStorageRepresentation extends JsonObject {
     private String createdAt;
     private String transactionInformation = "-";
     private BigDecimal balance;
-    private BigDecimal amount;
+    private Double amount;
     private boolean notify = false;
     private String action;
 
@@ -87,7 +87,7 @@ public class FeeFineActionStorageRepresentation extends JsonObject {
       return this;
     }
 
-    public Builder withAmount(BigDecimal amount) {
+    public Builder withAmount(Double amount) {
       this.amount = amount;
       return this;
     }

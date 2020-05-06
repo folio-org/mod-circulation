@@ -3,6 +3,7 @@ package org.folio.circulation.domain;
 import static org.folio.circulation.support.JsonPropertyFetcher.getBigDecimalProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getNestedStringProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
+import static org.folio.circulation.support.utils.BigDecimalUtil.scaleFeeAmount;
 import static org.folio.circulation.support.utils.BigDecimalUtil.toDouble;
 
 import java.math.BigDecimal;
@@ -20,14 +21,14 @@ import io.vertx.core.json.JsonObject;
 public class Account {
   private final String id;
   private final AccountRelatedRecordsInfo relatedRecordsInfo;
-  private final BigDecimal amount;
+  private final Double amount;
   private final BigDecimal remaining;
   private final String status;
   private final String paymentStatus;
 
   private Collection<FeeFineAction> feeFineActions = new ArrayList<>();
 
-  public Account(String id, AccountRelatedRecordsInfo relatedRecordsInfo, BigDecimal amount,
+  public Account(String id, AccountRelatedRecordsInfo relatedRecordsInfo, Double amount,
     BigDecimal remaining, String status, String paymentStatus) {
 
     this.id = id;
@@ -58,7 +59,7 @@ public class Account {
           getProperty(representation, "location"),
           getProperty(representation, "materialTypeId"))
       ),
-      getBigDecimalProperty(representation,"amount"),
+      representation != null ? representation.getDouble("amount") : null,
       getBigDecimalProperty(representation,"remaining"),
       getNestedStringProperty(representation, "status", "name"),
       getNestedStringProperty(representation, "paymentStatus", "name"));
@@ -76,7 +77,7 @@ public class Account {
     jsonObject.put("id", id);
     jsonObject.put("ownerId", relatedRecordsInfo.getFeeFineOwnerInfo().getOwnerId());
     jsonObject.put("feeFineId", relatedRecordsInfo.getFeeFineTypeInfo().getFeeFineId());
-    jsonObject.put("amount", toDouble(amount));
+    jsonObject.put("amount", amount);
     jsonObject.put("remaining", toDouble(remaining));
     jsonObject.put("feeFineType", relatedRecordsInfo.getFeeFineTypeInfo().getFeeFineType());
     jsonObject.put("feeFineOwner", relatedRecordsInfo.getFeeFineOwnerInfo().getOwner());
@@ -104,12 +105,16 @@ public class Account {
     return id;
   }
 
-  public BigDecimal getAmount() {
+  public Double getAmount() {
     return amount;
   }
 
   public BigDecimal getRemaining() {
     return remaining;
+  }
+
+  public boolean hasRemainingAmount() {
+    return remaining != null && remaining.compareTo(BigDecimal.ZERO) > 0;
   }
 
   public String getFeeFineType() {
@@ -152,6 +157,10 @@ public class Account {
     return relatedRecordsInfo.getItemInfo().getItemId();
   }
 
+  public String getFeeFineId() {
+    return relatedRecordsInfo.getFeeFineTypeInfo().getFeeFineId();
+  }
+
   public String getStatus() {
     return status;
   }
@@ -177,5 +186,23 @@ public class Account {
 
   public boolean isOpen() {
     return getStatus().equalsIgnoreCase("open");
+  }
+
+  public BigDecimal getPaidAmount() {
+    final BigDecimal paidAmountUnscaled = feeFineActions.stream()
+      .filter(FeeFineAction::isPaid)
+      .map(FeeFineAction::getAmountAction)
+      .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+    return scaleFeeAmount(paidAmountUnscaled);
+  }
+
+  public BigDecimal getTransferredAmount() {
+    final BigDecimal transferredAmountUnscaled = feeFineActions.stream()
+      .filter(FeeFineAction::isTransferred)
+      .map(FeeFineAction::getAmountAction)
+      .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+    return scaleFeeAmount(transferredAmountUnscaled);
   }
 }

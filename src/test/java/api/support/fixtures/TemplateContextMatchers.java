@@ -230,7 +230,7 @@ public class TemplateContextMatchers {
       hasJsonPath("fee.actionType", is(action.getTypeAction())),
       hasJsonPath("fee.actionDateTime", isEquivalentTo(action.getDateAction())),
       hasJsonPath("fee.actionAmount", is(action.getAmountAction().doubleValue())),
-      hasJsonPath("fee.amount", is(account.getAmount().doubleValue())),
+      hasJsonPath("fee.amount", is(account.getAmount())),
       hasJsonPath("fee.balance", is(action.getBalance()))
     );
   }

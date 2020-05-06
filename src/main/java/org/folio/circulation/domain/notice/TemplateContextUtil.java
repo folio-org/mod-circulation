@@ -263,7 +263,7 @@ public class TemplateContextUtil {
     return new JsonObject().put("fee", new JsonObject()
       .put("owner", account.getFeeFineOwner())
       .put("type", account.getFeeFineType())
-      .put("amount", toDouble(account.getAmount()))
+      .put("amount", account.getAmount())
       .put("actionType", action.getTypeAction())
       .put("actionAmount", toDouble(action.getAmountAction()))
       .put("actionDateTime", action.getDateAction().toString())

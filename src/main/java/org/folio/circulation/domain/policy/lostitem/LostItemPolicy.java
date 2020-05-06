@@ -13,6 +13,7 @@ import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
 
 import java.math.BigDecimal;
 
+import org.folio.circulation.domain.TimePeriod;
 import org.folio.circulation.domain.policy.Policy;
 import org.folio.circulation.domain.policy.lostitem.itemfee.ActualCostFee;
 import org.folio.circulation.domain.policy.lostitem.itemfee.AutomaticallyChargeableFee;
@@ -24,14 +25,19 @@ public class LostItemPolicy extends Policy {
   private final AutomaticallyChargeableFee processingFee;
   private final AutomaticallyChargeableFee setCostFee;
   private final ChargeableFee actualCostFee;
+  private final TimePeriod feeRefundInterval;
+  private final boolean refundProcessingFeeWhenReturned;
 
   private LostItemPolicy(String id, String name, AutomaticallyChargeableFee processingFee,
-    AutomaticallyChargeableFee setCostFee, ChargeableFee actualCostFee) {
+    AutomaticallyChargeableFee setCostFee, ChargeableFee actualCostFee,
+    TimePeriod feeRefundInterval, boolean refundProcessingFeeWhenFound) {
 
     super(id, name);
     this.processingFee = processingFee;
     this.setCostFee = setCostFee;
     this.actualCostFee = actualCostFee;
+    this.feeRefundInterval = feeRefundInterval;
+    this.refundProcessingFeeWhenReturned = refundProcessingFeeWhenFound;
   }
 
   public static LostItemPolicy from(JsonObject lostItemPolicy) {
@@ -40,8 +46,18 @@ public class LostItemPolicy extends Policy {
       getProperty(lostItemPolicy, "name"),
       getProcessingFee(lostItemPolicy),
       getSetCostFee(lostItemPolicy),
-      getActualCostFee(lostItemPolicy)
+      getActualCostFee(lostItemPolicy),
+      getFeeRefundInterval(lostItemPolicy),
+      getBooleanProperty(lostItemPolicy, "returnedLostItemProcessingFee")
     );
+  }
+
+  private static TimePeriod getFeeRefundInterval(JsonObject policy) {
+    final JsonObject feesFinesShallRefunded = policy.getJsonObject("feesFinesShallRefunded");
+
+    return feesFinesShallRefunded != null
+      ? TimePeriod.from(feesFinesShallRefunded)
+      : null;
   }
 
   private static AutomaticallyChargeableFee getProcessingFee(JsonObject policy) {
@@ -83,6 +99,14 @@ public class LostItemPolicy extends Policy {
     return actualCostFee;
   }
 
+  public TimePeriod getFeeRefundInterval() {
+    return feeRefundInterval;
+  }
+
+  public boolean isRefundProcessingFeeWhenReturned() {
+    return refundProcessingFeeWhenReturned;
+  }
+
   public static LostItemPolicy unknown(String id) {
     return new UnknownLostItemPolicy(id);
   }
@@ -90,7 +114,7 @@ public class LostItemPolicy extends Policy {
   private static class UnknownLostItemPolicy extends LostItemPolicy {
     UnknownLostItemPolicy(String id) {
       super(id, null, noAutomaticallyChargeableFee(), noAutomaticallyChargeableFee(),
-        noActualCostFee());
+        noActualCostFee(), null, false);
     }
   }
 }
