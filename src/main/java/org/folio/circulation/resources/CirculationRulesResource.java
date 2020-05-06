@@ -98,7 +98,7 @@ public class CirculationRulesResource extends Resource {
             }
             JsonObject circulationRules = new JsonObject(response.getBody());
 
-            context.writeResponse(ok(circulationRules));
+            context.write(ok(circulationRules));
           }
           catch (Exception e) {
             internalError(routingContext.response(), getStackTrace(e));

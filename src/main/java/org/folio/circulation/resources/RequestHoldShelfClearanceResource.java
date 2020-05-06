@@ -98,7 +98,7 @@ public class RequestHoldShelfClearanceResource extends Resource {
       .thenApply(r -> fetchItemToRequest(r, itemRepository))
       .thenApply(this::mapResultToJson)
       .thenApply(r -> r.map(JsonHttpResponse::ok))
-      .thenAccept(context::writeResponse);
+      .thenAccept(context::writeResultToHttpResponse);
   }
 
   private CompletableFuture<Result<List<String>>> mapContextToItemIdList(ItemsReportFetcher itemsReportFetcher) {

@@ -57,7 +57,7 @@ public class RequestQueueResource extends Resource {
       .thenApply(r -> r.map(requests ->
         requests.asJson(requestRepresentation::extendedRepresentation, "requests")))
       .thenApply(r -> r.map(JsonHttpResponse::ok))
-      .thenAccept(context::writeResponse);
+      .thenAccept(context::writeResultToHttpResponse);
   }
 
   private void reorder(RoutingContext routingContext) {
@@ -86,7 +86,7 @@ public class RequestQueueResource extends Resource {
       .thenCompose(updateRequestQueue::onReorder)
       .thenCompose(r -> r.after(this::toRepresentation))
       .thenApply(r -> r.map(JsonHttpResponse::ok))
-      .thenAccept(context::writeResponse);
+      .thenAccept(context::writeResultToHttpResponse);
   }
 
   private CompletableFuture<Result<JsonObject>> toRepresentation(ReorderRequestContext context) {

@@ -210,7 +210,7 @@ public class LoanCollectionResource extends CollectionResource {
       .thenComposeAsync(patronGroupRepository::findGroupForLoan)
       .thenApply(loanResult -> loanResult.map(loanRepresentation::extendedLoan))
       .thenApply(r -> r.map(JsonHttpResponse::ok))
-      .thenAccept(context::writeResponse);
+      .thenAccept(context::writeResultToHttpResponse);
   }
 
   void delete(RoutingContext routingContext) {
@@ -256,7 +256,7 @@ public class LoanCollectionResource extends CollectionResource {
       .thenApply(multipleLoanRecordsResult -> multipleLoanRecordsResult.map(loans ->
         loans.asJson(loanRepresentation::extendedLoan, "loans")))
       .thenApply(r -> r.map(JsonHttpResponse::ok))
-      .thenAccept(context::writeResponse);
+      .thenAccept(context::writeResultToHttpResponse);
   }
 
   void empty(RoutingContext routingContext) {

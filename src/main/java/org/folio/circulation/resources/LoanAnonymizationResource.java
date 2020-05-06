@@ -35,6 +35,6 @@ public class LoanAnonymizationResource extends Resource {
       .anonymizeLoans()
       .thenApply(AnonymizeLoansRepresentation::from)
       .thenApply(r -> r.map(JsonHttpResponse::ok))
-      .thenAccept(context::writeResponse));
+      .thenAccept(context::writeResultToHttpResponse));
   }
 }

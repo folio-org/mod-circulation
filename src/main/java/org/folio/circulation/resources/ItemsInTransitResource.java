@@ -90,7 +90,7 @@ public class ItemsInTransitResource extends Resource {
         servicePointRepository, userRepository, patronGroupRepository, r.value()))
       .thenApply(this::mapResultToJson)
       .thenApply(r -> r.map(JsonHttpResponse::ok))
-      .thenAccept(context::writeResponse);
+      .thenAccept(context::writeResultToHttpResponse);
   }
 
   private CompletableFuture<Result<List<InTransitReportEntry>>> fetchItemsRelatedRecords(

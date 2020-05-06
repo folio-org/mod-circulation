@@ -2,7 +2,6 @@ package org.folio.circulation.resources;
 
 import static org.folio.circulation.domain.validation.UserNotFoundValidator.refuseWhenLoggedInUserNotPresent;
 
-import org.apache.http.impl.io.HttpResponseWriter;
 import org.folio.circulation.domain.CheckInProcessRecords;
 import org.folio.circulation.domain.notice.schedule.RequestScheduledNoticeService;
 import org.folio.circulation.domain.notice.session.PatronActionSessionService;
@@ -47,8 +46,6 @@ public class CheckInByBarcodeResource extends Resource {
     final PatronActionSessionService patronActionSessionService =
       PatronActionSessionService.using(clients);
 
-    final HttpResponseWriter httpResponseWriter = new HttpResponseWriter(context);
-
     refuseWhenLoggedInUserNotPresent(context)
       .next(notUsed -> checkInRequestResult)
       .map(CheckInProcessRecords::new)
@@ -88,6 +85,6 @@ public class CheckInByBarcodeResource extends Resource {
       .thenApply(r -> r.next(requestScheduledNoticeService::rescheduleRequestNotices))
       .thenApply(r -> r.map(CheckInByBarcodeResponse::fromRecords))
       .thenApply(r -> r.map(CheckInByBarcodeResponse::toHttpResponse))
-      .thenAccept(context::writeResponse);
+      .thenAccept(context::writeResultToHttpResponse);
   }
 }

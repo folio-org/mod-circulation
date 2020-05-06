@@ -80,7 +80,7 @@ public abstract class RenewalResource extends Resource {
       .thenApply(r -> r.next(loanNoticeSender::sendRenewalPatronNotice))
       .thenApply(r -> r.map(loanRepresentation::extendedLoan))
       .thenApply(r -> r.map(this::toResponse))
-      .thenAccept(context::writeResponse);
+      .thenAccept(context::writeResultToHttpResponse);
   }
 
   private CompletableFuture<Result<LoanAndRelatedRecords>> createOverdueFine(

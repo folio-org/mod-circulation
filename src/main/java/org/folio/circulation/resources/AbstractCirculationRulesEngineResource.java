@@ -272,7 +272,7 @@ public abstract class AbstractCirculationRulesEngineResource extends Resource {
           .thenCompose(r -> r.after(location -> getPolicyIdAndRuleMatch(request.params(), drools, location)))
           .thenCompose(r -> r.after(this::buildJsonResult))
           .thenApply(r -> r.map(JsonHttpResponse::ok))
-          .thenAccept(context::writeResponse);
+          .thenAccept(context::writeResultToHttpResponse);
       }
       catch (Exception e) {
         log.error("apply notice policy", e);
@@ -311,7 +311,7 @@ public abstract class AbstractCirculationRulesEngineResource extends Resource {
         .thenCompose(r -> r.after(location -> getPolicies(request.params(), drools, location)))
         .thenCompose(r -> r.after(this::buildJsonResult))
         .thenApply(r -> r.map(JsonHttpResponse::ok))
-        .thenAccept(context::writeResponse);
+        .thenAccept(context::writeResultToHttpResponse);
     }
     catch (Exception e) {
       log.error("applyAll", e);

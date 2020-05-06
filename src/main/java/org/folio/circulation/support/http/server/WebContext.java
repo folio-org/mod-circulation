@@ -90,11 +90,11 @@ public class WebContext {
       getRequestId());
   }
 
-  public void writeResponse(HttpResponse response) {
+  public void write(HttpResponse response) {
     response.writeTo(routingContext.response());
   }
 
-  public void writeResponse(Result<HttpResponse> httpResponseResult) {
-    httpResponseResult.applySideEffect(this::writeResponse, this::writeResponse);
+  public void writeResultToHttpResponse(Result<HttpResponse> httpResponseResult) {
+    httpResponseResult.applySideEffect(this::write, this::write);
   }
 }
