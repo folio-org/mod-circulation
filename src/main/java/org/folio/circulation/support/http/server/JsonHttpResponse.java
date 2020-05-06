@@ -29,6 +29,10 @@ public class JsonHttpResponse implements HttpResponse {
     return created(body, null);
   }
 
+  public static HttpResponse unprocessableEntity(JsonObject body) {
+    return new JsonHttpResponse(422, body, null);
+  }
+
   public JsonHttpResponse(int statusCode, JsonObject body, String location) {
     this.statusCode = statusCode;
     this.body = body;
