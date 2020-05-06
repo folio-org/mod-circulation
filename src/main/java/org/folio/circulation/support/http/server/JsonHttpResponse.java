@@ -21,6 +21,14 @@ public class JsonHttpResponse implements HttpResponse {
     return ok(body, null);
   }
 
+  public static HttpResponse created(JsonObject body, String location) {
+    return new JsonHttpResponse(201, body, location);
+  }
+
+  public static HttpResponse created(JsonObject body) {
+    return created(body, null);
+  }
+
   public JsonHttpResponse(int statusCode, JsonObject body, String location) {
     this.statusCode = statusCode;
     this.body = body;

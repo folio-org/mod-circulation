@@ -5,9 +5,9 @@ import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequ
 import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequest.PROXY_USER_BARCODE;
 import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequest.SERVICE_POINT_ID;
 import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequest.USER_BARCODE;
-import static org.folio.circulation.support.Result.failed;
 import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
+import static org.folio.circulation.support.http.server.JsonHttpResponse.created;
 
 import java.util.UUID;
 
@@ -43,12 +43,11 @@ import org.folio.circulation.domain.validation.RequestedByAnotherPatronValidator
 import org.folio.circulation.domain.validation.ServicePointOfCheckoutPresentValidator;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.ClockManager;
-import org.folio.circulation.support.CreatedJsonResponseResult;
 import org.folio.circulation.support.ItemRepository;
-import org.folio.circulation.support.ResponseWritableResult;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.RouteRegistration;
 import org.folio.circulation.support.ValidationErrorFailure;
+import org.folio.circulation.support.http.server.HttpResponse;
 import org.folio.circulation.support.http.server.WebContext;
 import org.joda.time.format.ISODateTimeFormat;
 
@@ -181,7 +180,7 @@ public class CheckOutByBarcodeResource extends Resource {
       .thenApply(r -> r.map(LoanAndRelatedRecords::getLoan))
       .thenApply(r -> r.map(loanRepresentation::extendedLoan))
       .thenApply(this::createdLoanFrom)
-      .thenAccept(result -> result.writeTo(routingContext.response()));
+      .thenAccept(context::writeResultToHttpResponse);
   }
 
   private void copyOrDefaultLoanDate(JsonObject request, JsonObject loan) {
@@ -195,13 +194,8 @@ public class CheckOutByBarcodeResource extends Resource {
     }
   }
 
-  private ResponseWritableResult<JsonObject> createdLoanFrom(Result<JsonObject> result) {
-    if (result.failed()) {
-      return failed(result.cause());
-    } else {
-      return new CreatedJsonResponseResult(result.value(),
-        urlForLoan(result.value().getString("id")));
-    }
+  private Result<HttpResponse> createdLoanFrom(Result<JsonObject> result) {
+    return result.map(json -> created(json, urlForLoan(json.getString("id"))));
   }
 
   private String urlForLoan(String id) {
