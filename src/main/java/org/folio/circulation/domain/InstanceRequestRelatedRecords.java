@@ -8,7 +8,6 @@ import java.util.Map;
 import org.folio.circulation.domain.representations.RequestByInstanceIdRequest;
 
 public class InstanceRequestRelatedRecords {
-
   private List<Item> unsortedAvailableItems;
   private List<Item> unsortedUnavailableItems;
   private List<Item> sortedAvailableItems;
@@ -18,6 +17,12 @@ public class InstanceRequestRelatedRecords {
   private Collection<Item> allUnsortedItems;
   private RequestByInstanceIdRequest instanceLevelRequest;
   private Map<Item, RequestQueue> itemRequestQueueMap;
+
+  public InstanceRequestRelatedRecords() { }
+
+  public InstanceRequestRelatedRecords(RequestByInstanceIdRequest instanceLevelRequest) {
+    this.instanceLevelRequest = instanceLevelRequest;
+  }
 
   public List<Item> getUnsortedAvailableItems() {
     return unsortedAvailableItems;
