@@ -200,8 +200,12 @@ public class CheckOutByBarcodeResource extends Resource {
       return failed(result.cause());
     } else {
       return new CreatedJsonResponseResult(result.value(),
-        String.format("/circulation/loans/%s", result.value().getString("id")));
+        urlForLoan(result.value().getString("id")));
     }
+  }
+
+  private String urlForLoan(String id) {
+    return String.format("/circulation/loans/%s", id);
   }
 
   private Result<LoanAndRelatedRecords> addProxyUser(
