@@ -55,7 +55,6 @@ import org.folio.circulation.domain.validation.UserManualBlocksValidator;
 import org.folio.circulation.storage.ItemByInstanceIdFinder;
 import org.folio.circulation.support.BadRequestFailure;
 import org.folio.circulation.support.Clients;
-import org.folio.circulation.support.CreatedJsonResponseResult;
 import org.folio.circulation.support.FindWithCqlQuery;
 import org.folio.circulation.support.ForwardOnFailure;
 import org.folio.circulation.support.HttpFailure;
@@ -65,6 +64,7 @@ import org.folio.circulation.support.Result;
 import org.folio.circulation.support.RouteRegistration;
 import org.folio.circulation.support.ServerErrorFailure;
 import org.folio.circulation.support.ValidationErrorFailure;
+import org.folio.circulation.support.http.server.JsonHttpResponse;
 import org.folio.circulation.support.http.server.ServerErrorResponse;
 import org.folio.circulation.support.http.server.ValidationError;
 import org.folio.circulation.support.http.server.WebContext;
@@ -130,8 +130,8 @@ public class RequestByInstanceIdResource extends Resource {
           .thenCompose( r -> r.after( requests -> placeRequests(requests, clients)))
           .thenApply(r -> r.map(RequestAndRelatedRecords::getRequest))
           .thenApply(r -> r.map(new RequestRepresentation()::extendedRepresentation))
-          .thenApply(CreatedJsonResponseResult::from)
-          .thenAccept(result -> result.writeTo(routingContext.response()))
+          .thenApply(r -> r.map(JsonHttpResponse::created))
+          .thenAccept(context::writeResultToHttpResponse)
           .exceptionally( err -> {
              String reason = "Error processing instance-level request";
              log.error(reason, err);
