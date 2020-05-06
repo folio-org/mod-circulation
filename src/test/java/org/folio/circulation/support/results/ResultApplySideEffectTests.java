@@ -22,8 +22,7 @@ public class ResultApplySideEffectTests {
     final AtomicBoolean appliedFailure = new AtomicBoolean();
 
     succeeded(10)
-      .applySideEffect(appliedSuccess::set,
-        cause -> appliedFailure.set(true));
+      .applySideEffect(appliedSuccess::set, cause -> appliedFailure.set(true));
 
     Awaitility.await()
       .atMost(1, SECONDS)
@@ -39,8 +38,7 @@ public class ResultApplySideEffectTests {
     final AtomicReference<HttpFailure> appliedFailure = new AtomicReference<>();
 
     alreadyFailed()
-      .applySideEffect(value -> appliedSuccess.set(true),
-        appliedFailure::set);
+      .applySideEffect(value -> appliedSuccess.set(true), appliedFailure::set);
 
     Awaitility.await()
       .atMost(1, SECONDS)

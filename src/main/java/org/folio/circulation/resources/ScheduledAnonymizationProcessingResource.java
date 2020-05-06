@@ -39,7 +39,7 @@ public class ScheduledAnonymizationProcessingResource extends Resource {
         new LoanAnonymization(clients).byCurrentTenant(config).anonymizeLoans())
         .thenApply(AnonymizeLoansRepresentation::from)
         .thenApply(r -> r.map(JsonHttpResponse::ok))
-        .thenAccept(result -> result.applySideEffect(context::write, context::write)));
+        .thenAccept(context::writeResponse));
 
   }
 }

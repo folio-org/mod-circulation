@@ -91,7 +91,7 @@ public class PickSlipsResource extends Resource {
       .thenComposeAsync(r -> r.after(servicePointRepository::findServicePointsForRequests))
       .thenApply(flatMapResult(this::mapResultToJson))
       .thenApply(r -> r.map(JsonHttpResponse::ok))
-      .thenAccept(result -> result.applySideEffect(context::write, context::write));
+      .thenAccept(context::writeResponse);
   }
 
   private CompletableFuture<Result<MultipleRecords<Location>>> fetchLocationsForServicePoint(

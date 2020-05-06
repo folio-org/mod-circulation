@@ -10,6 +10,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 
 import org.folio.circulation.support.InvalidOkapiLocationException;
+import org.folio.circulation.support.Result;
 import org.folio.circulation.support.http.client.OkapiHttpClient;
 import org.folio.circulation.support.http.client.VertxWebClientOkapiHttpClient;
 
@@ -39,7 +40,7 @@ public class WebContext {
     return getHeader(OKAPI_URL, "");
   }
 
-  public String getRequestId() {
+  public String  getRequestId() {
     return getHeader(REQUEST_ID, "");
   }
 
@@ -67,9 +68,7 @@ public class WebContext {
     return value != null ? value : defaultValue;
   }
 
-  public URL getOkapiBasedUrl(String path)
-    throws MalformedURLException {
-
+  public URL getOkapiBasedUrl(String path) throws MalformedURLException {
     URL currentRequestUrl = new URL(getOkapiLocation());
 
     return new URL(currentRequestUrl.getProtocol(), currentRequestUrl.getHost(),
@@ -91,7 +90,11 @@ public class WebContext {
       getRequestId());
   }
 
-    public void write(HttpResponse response) {
-      response.writeTo(routingContext.response());
-    }
+  public void writeResponse(HttpResponse response) {
+    response.writeTo(routingContext.response());
+  }
+
+  public void writeResponse(Result<HttpResponse> httpResponseResult) {
+    httpResponseResult.applySideEffect(this::writeResponse, this::writeResponse);
+  }
 }

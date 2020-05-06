@@ -379,16 +379,13 @@ public interface Result<T> {
       : other;
   }
 
-  default void applySideEffect(Consumer<T> onSuccess,
-    Consumer<HttpFailure> onFailure) {
-
+  default void applySideEffect(Consumer<T> onSuccess, Consumer<HttpFailure> onFailure) {
     if (succeeded()) {
       onSuccess.accept(value());
     }
     else {
       onFailure.accept(cause());
     }
-
   }
 
   /**

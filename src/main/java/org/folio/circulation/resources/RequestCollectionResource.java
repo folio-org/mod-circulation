@@ -181,7 +181,7 @@ public class RequestCollectionResource extends CollectionResource {
     requestRepository.getById(id)
       .thenApply(r -> r.map(new RequestRepresentation()::extendedRepresentation))
       .thenApply(r -> r.map(JsonHttpResponse::ok))
-      .thenAccept(result -> result.applySideEffect(context::write, context::write));
+      .thenAccept(context::writeResponse);
   }
 
   void delete(RoutingContext routingContext) {
@@ -217,7 +217,7 @@ public class RequestCollectionResource extends CollectionResource {
       .thenApply(r -> r.map(requests ->
         requests.asJson(requestRepresentation::extendedRepresentation, "requests")))
       .thenApply(r -> r.map(JsonHttpResponse::ok))
-      .thenAccept(result -> result.applySideEffect(context::write, context::write));
+      .thenAccept(context::writeResponse);
   }
 
   void empty(RoutingContext routingContext) {
@@ -272,7 +272,7 @@ public class RequestCollectionResource extends CollectionResource {
       .thenApply(r -> r.map(RequestAndRelatedRecords::getRequest))
       .thenApply(r -> r.map(new RequestRepresentation()::extendedRepresentation))
       .thenApply(r -> r.map(JsonHttpResponse::ok))
-      .thenAccept(result -> result.applySideEffect(context::write, context::write));
+      .thenAccept(context::writeResponse);
   }
 
   private RequestAndRelatedRecords asMove(RequestAndRelatedRecords requestAndRelatedRecords,
