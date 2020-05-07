@@ -12,7 +12,7 @@ public final class FeeAmount {
   private final BigDecimal amount;
 
   public FeeAmount(BigDecimal amount) {
-    this.amount = amount;
+    this.amount = amount != null ? amount : BigDecimal.ZERO;
   }
 
   public FeeAmount(double amount) {
@@ -48,8 +48,6 @@ public final class FeeAmount {
   }
 
   public static FeeAmount from(JsonObject json, String propertyName) {
-    final BigDecimal amount = getBigDecimalProperty(json, propertyName);
-
-    return amount != null ? new FeeAmount(amount) : noFeeAmount();
+    return new FeeAmount(getBigDecimalProperty(json, propertyName));
   }
 }
