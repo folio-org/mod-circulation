@@ -24,13 +24,4 @@ public class NoContentResult implements ResponseWritableResult<Void> {
   public void writeTo(HttpServerResponse response) {
     NoContentResponse.noContent().writeTo(response);
   }
-
-  public static <T> ResponseWritableResult<Void> from(Result<T> result) {
-    if(result.failed()) {
-      return Result.failed(result.cause());
-    }
-    else {
-      return new NoContentResult();
-    }
-  }
 }

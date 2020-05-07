@@ -42,6 +42,7 @@ import org.folio.circulation.support.NoContentResult;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.ValidationErrorFailure;
 import org.folio.circulation.support.http.server.JsonHttpResponse;
+import org.folio.circulation.support.http.server.NoContentResponse;
 import org.folio.circulation.support.http.server.ValidationError;
 import org.folio.circulation.support.http.server.WebContext;
 
@@ -179,8 +180,8 @@ public class LoanCollectionResource extends CollectionResource {
       .thenComposeAsync(result -> result.after(loanRepository::updateLoan))
       .thenApply(r -> r.next(scheduledNoticeService::rescheduleDueDateNotices))
       .thenCompose(r -> r.after(loanNoticeSender::sendManualDueDateChangeNotice))
-      .thenApply(NoContentResult::from)
-      .thenAccept(result -> result.writeTo(routingContext.response()));
+      .thenApply(r -> r.toFixedValue(NoContentResponse::noContent))
+      .thenAccept(context::writeResultToHttpResponse);
   }
 
   void get(RoutingContext routingContext) {
@@ -219,8 +220,8 @@ public class LoanCollectionResource extends CollectionResource {
     String id = routingContext.request().getParam("id");
 
     clients.loansStorage().delete(id)
-      .thenApply(NoContentResult::from)
-      .thenAccept(r -> r.writeTo(routingContext.response()));
+      .thenApply(r -> r.toFixedValue(NoContentResponse::noContent))
+      .thenAccept(context::writeResultToHttpResponse);
   }
 
   void getMany(RoutingContext routingContext) {
@@ -263,8 +264,8 @@ public class LoanCollectionResource extends CollectionResource {
     Clients clients = Clients.create(context, client);
 
     clients.loansStorage().delete()
-      .thenApply(NoContentResult::from)
-      .thenAccept(r -> r.writeTo(routingContext.response()));
+      .thenApply(r -> r.toFixedValue(NoContentResponse::noContent))
+      .thenAccept(context::writeResultToHttpResponse);
   }
 
   private Result<LoanAndRelatedRecords> addItem(

@@ -11,9 +11,9 @@ import org.folio.circulation.domain.ClaimItemReturnedRequest;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.services.ChangeItemStatusService;
 import org.folio.circulation.support.Clients;
-import org.folio.circulation.support.NoContentResult;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.RouteRegistration;
+import org.folio.circulation.support.http.server.NoContentResponse;
 import org.folio.circulation.support.http.server.WebContext;
 
 import io.vertx.core.http.HttpClient;
@@ -33,10 +33,12 @@ public class ClaimItemReturnedResource extends Resource {
   }
 
   private void claimItemReturned(RoutingContext routingContext) {
+    final WebContext context = new WebContext(routingContext);
+
     createRequest(routingContext)
       .after(request -> processClaimItemReturned(routingContext, request))
-      .thenApply(NoContentResult::from)
-      .thenAccept(result -> result.writeTo(routingContext.response()));
+      .thenApply(r -> r.toFixedValue(NoContentResponse::noContent))
+      .thenAccept(context::writeResultToHttpResponse);
   }
 
   private CompletableFuture<Result<Loan>> processClaimItemReturned(

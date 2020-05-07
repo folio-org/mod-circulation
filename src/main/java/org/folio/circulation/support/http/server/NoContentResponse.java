@@ -7,8 +7,6 @@ public class NoContentResponse implements HttpResponse {
     return new NoContentResponse();
   }
 
-  public NoContentResponse() { }
-
   @Override
   public void writeTo(HttpServerResponse response) {
     response.setStatusCode(204);
