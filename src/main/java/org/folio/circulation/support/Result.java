@@ -298,7 +298,7 @@ public interface Result<T> {
     return new SuccessfulResult<>(value);
   }
 
-  static <T> ResponseWritableResult<T> failed(HttpFailure cause) {
+  static <T> Result<T> failed(HttpFailure cause) {
     return new FailedResult<>(cause);
   }
 
