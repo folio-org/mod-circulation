@@ -10,6 +10,7 @@ import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
 import static org.folio.circulation.support.Result.combine;
 import static org.folio.circulation.support.http.server.JsonHttpResponse.ok;
 import static org.folio.circulation.support.http.server.JsonHttpResponse.unprocessableEntity;
+import static org.folio.circulation.support.http.server.NoContentResponse.noContent;
 import static org.folio.circulation.support.http.server.ServerErrorResponse.internalError;
 
 import java.lang.invoke.MethodHandles;
@@ -32,7 +33,6 @@ import org.folio.circulation.support.Result;
 import org.folio.circulation.support.http.client.PageLimit;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.server.ForwardResponse;
-import org.folio.circulation.support.http.server.NoContentResponse;
 import org.folio.circulation.support.http.server.WebContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -149,7 +149,7 @@ public class CirculationRulesResource extends Resource {
     clients.circulationRulesStorage().put(rulesInput.copy())
       .thenAccept(res -> res.applySideEffect(response -> {
         if (response.getStatusCode() == 204) {
-          NoContentResponse.noContent(routingContext.response());
+          noContent().writeTo(routingContext.response());
         } else {
           ForwardResponse.forward(routingContext.response(), response);
         }

@@ -22,7 +22,7 @@ public class NoContentResult implements ResponseWritableResult<Void> {
 
   @Override
   public void writeTo(HttpServerResponse response) {
-    NoContentResponse.noContent(response);
+    NoContentResponse.noContent().writeTo(response);
   }
 
   public static <T> ResponseWritableResult<Void> from(Result<T> result) {

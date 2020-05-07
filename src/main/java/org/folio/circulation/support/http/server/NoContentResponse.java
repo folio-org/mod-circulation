@@ -3,8 +3,8 @@ package org.folio.circulation.support.http.server;
 import io.vertx.core.http.HttpServerResponse;
 
 public class NoContentResponse implements HttpResponse {
-  public static void noContent(HttpServerResponse response) {
-    new NoContentResponse().writeTo(response);
+  public static HttpResponse noContent() {
+    return new NoContentResponse();
   }
 
   public NoContentResponse() { }
