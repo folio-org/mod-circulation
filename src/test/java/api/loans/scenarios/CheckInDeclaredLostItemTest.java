@@ -2,10 +2,6 @@ package api.loans.scenarios;
 
 import static api.support.http.CqlQuery.queryFromTemplate;
 import static api.support.matchers.JsonObjectMatcher.hasJsonPath;
-import static api.support.matchers.LoanMatchers.isOpen;
-import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
-import static api.support.matchers.ValidationErrorMatchers.hasMessage;
-import static api.support.matchers.ValidationErrorMatchers.hasParameter;
 import static com.jayway.jsonpath.matchers.JsonPathMatchers.hasNoJsonPath;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.hasItem;
@@ -18,7 +14,6 @@ import static org.hamcrest.Matchers.iterableWithSize;
 import java.util.UUID;
 
 import org.folio.circulation.support.http.client.IndividualResource;
-import org.folio.circulation.support.http.client.Response;
 import org.hamcrest.Matcher;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
@@ -27,9 +22,7 @@ import org.junit.Test;
 
 import api.support.APITests;
 import api.support.MultipleJsonRecords;
-import api.support.builders.CheckInByBarcodeRequestBuilder;
 import api.support.builders.DeclareItemLostRequestBuilder;
-import api.support.http.InventoryItemResource;
 import io.vertx.core.json.JsonObject;
 
 public class CheckInDeclaredLostItemTest extends APITests {
@@ -225,22 +218,6 @@ public class CheckInDeclaredLostItemTest extends APITests {
       hasJsonPath("source", "Admin, Admin"),
       hasJsonPath("createdAt", "Circ Desk 2")
     )));
-  }
-
-  @Test
-  public void cannotCheckInLostItemWhenNoAutomatedLostItemProcessingFeeTypeIsDefined() {
-    declareItemLost();
-
-    feeFineTypeFixture.delete(feeFineTypeFixture.lostItemProcessingFee());
-
-    final Response response = checkInFixture.attemptCheckInByBarcode(
-      new CheckInByBarcodeRequestBuilder()
-        .forItem(item)
-        .at(servicePointsFixture.cd1()));
-
-    assertThat(response.getJson(), hasErrorWith(allOf(
-      hasMessage("Expected automated fee of type Lost item processing fee"),
-      hasParameter("feeFineType", "Lost item processing fee"))));
   }
 
   private JsonObject getAccountForLoan(UUID loanId, String type) {

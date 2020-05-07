@@ -1,7 +1,6 @@
 package org.folio.circulation.services.support;
 
-import java.math.BigDecimal;
-
+import org.folio.circulation.domain.FeeAmount;
 import org.folio.circulation.domain.FeeFine;
 import org.folio.circulation.domain.FeeFineOwner;
 import org.folio.circulation.domain.Item;
@@ -12,7 +11,7 @@ public final class AccountCreation {
   private final Item item;
   private final FeeFine feeFine;
   private final FeeFineOwner feeFineOwner;
-  private final BigDecimal amount;
+  private final FeeAmount amount;
   private final String staffUserId;
   private final String currentServicePointId;
 
@@ -42,7 +41,7 @@ public final class AccountCreation {
     return feeFineOwner;
   }
 
-  public BigDecimal getAmount() {
+  public FeeAmount getAmount() {
     return amount;
   }
 
@@ -63,7 +62,7 @@ public final class AccountCreation {
     private Item item;
     private FeeFine feeFine;
     private FeeFineOwner feeFineOwner;
-    private BigDecimal amount;
+    private FeeAmount amount;
     private String staffUserId;
     private String currentServicePointId;
 
@@ -89,7 +88,7 @@ public final class AccountCreation {
       return this;
     }
 
-    public Builder withAmount(BigDecimal amount) {
+    public Builder withAmount(FeeAmount amount) {
       this.amount = amount;
       return this;
     }

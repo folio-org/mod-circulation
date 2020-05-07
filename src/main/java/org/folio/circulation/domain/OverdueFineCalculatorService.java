@@ -17,8 +17,8 @@ import org.folio.circulation.domain.policy.OverdueFineCalculationParameters;
 import org.folio.circulation.domain.policy.OverdueFineInterval;
 import org.folio.circulation.domain.policy.OverdueFinePolicy;
 import org.folio.circulation.domain.policy.OverdueFinePolicyRepository;
-import org.folio.circulation.domain.representations.AccountStorageRepresentation;
-import org.folio.circulation.domain.representations.FeeFineActionStorageRepresentation;
+import org.folio.circulation.domain.representations.StoredAccount;
+import org.folio.circulation.domain.representations.StoredFeeFineAction;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.ItemRepository;
 import org.folio.circulation.support.Result;
@@ -188,9 +188,9 @@ public class OverdueFineCalculatorService {
       return completedFuture(succeeded(null));
     }
 
-    AccountStorageRepresentation accountRepresentation =
-      new AccountStorageRepresentation(params.loan, params.item, params.feeFineOwner,
-        params.feeFine, BigDecimal.valueOf(fineAmount));
+    StoredAccount accountRepresentation =
+      new StoredAccount(params.loan, params.item, params.feeFineOwner,
+        params.feeFine, new FeeAmount(fineAmount));
 
     return repos.accountRepository.create(accountRepresentation)
       .thenCompose(rac -> rac.after(account -> createFeeFineAction(account, params)));
@@ -199,7 +199,7 @@ public class OverdueFineCalculatorService {
   private CompletableFuture<Result<FeeFineAction>> createFeeFineAction(
     Account account, CalculationParameters params) {
 
-    return repos.feeFineActionRepository.create(FeeFineActionStorageRepresentation.builder()
+    return repos.feeFineActionRepository.create(StoredFeeFineAction.builder()
       .useAccount(account)
       .withAction(account.getFeeFineType())
       .withCreatedAt(params.feeFineOwner.getOwner())

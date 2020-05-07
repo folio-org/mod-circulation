@@ -11,7 +11,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
-import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -23,9 +22,9 @@ import java.util.stream.Stream;
 
 import org.folio.circulation.domain.policy.OverdueFinePolicy;
 import org.folio.circulation.domain.policy.OverdueFinePolicyRepository;
-import org.folio.circulation.domain.representations.AccountStorageRepresentation;
 import org.folio.circulation.domain.representations.CheckInByBarcodeRequest;
-import org.folio.circulation.domain.representations.FeeFineActionStorageRepresentation;
+import org.folio.circulation.domain.representations.StoredAccount;
+import org.folio.circulation.domain.representations.StoredFeeFineAction;
 import org.folio.circulation.support.ItemRepository;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
@@ -216,8 +215,8 @@ public class OverdueFineCalculatorServiceTest {
 
     verify(accountRepository, times(1)).create(any());
 
-    ArgumentCaptor<AccountStorageRepresentation> account =
-      ArgumentCaptor.forClass(AccountStorageRepresentation.class);
+    ArgumentCaptor<StoredAccount> account =
+      ArgumentCaptor.forClass(StoredAccount.class);
 
     verify(accountRepository).create(account.capture());
 
@@ -239,8 +238,8 @@ public class OverdueFineCalculatorServiceTest {
     assertEquals(DUE_DATE, getDateTimeProperty(account.getValue(), "dueDate"));
     assertEquals(RETURNED_DATE, getDateTimeProperty(account.getValue(), "returnedDate"));
 
-    ArgumentCaptor<FeeFineActionStorageRepresentation> feeFineAction =
-      ArgumentCaptor.forClass(FeeFineActionStorageRepresentation.class);
+    ArgumentCaptor<StoredFeeFineAction> feeFineAction =
+      ArgumentCaptor.forClass(StoredFeeFineAction.class);
 
     verify(feeFineActionRepository).create(feeFineAction.capture());
 
@@ -580,7 +579,7 @@ public class OverdueFineCalculatorServiceTest {
         new AccountItemInfo(ITEM_ID.toString(), TITLE, BARCODE, CALL_NUMBER,
           LOCATION_NAME, ITEM_MATERIAL_TYPE_ID.toString())
       ),
-      correctOverdueFine, BigDecimal.valueOf(correctOverdueFine), "Open", "Outstanding"
+      new FeeAmount(correctOverdueFine), new FeeAmount(correctOverdueFine), "Open", "Outstanding"
     );
   }
 }

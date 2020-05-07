@@ -1,10 +1,7 @@
 package org.folio.circulation.domain;
 
-import static org.folio.circulation.support.JsonPropertyFetcher.getBigDecimalProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getDateTimeProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
-
-import java.math.BigDecimal;
 
 import org.joda.time.DateTime;
 
@@ -25,8 +22,8 @@ public class FeeFineAction {
     return representation.getDouble("balance");
   }
 
-  public BigDecimal getAmountAction() {
-    return getBigDecimalProperty(representation, "amountAction");
+  public FeeAmount getAmountAction() {
+    return FeeAmount.from(representation, "amountAction");
   }
 
   public String getUserId() {
@@ -64,5 +61,9 @@ public class FeeFineAction {
 
   public static FeeFineAction from(JsonObject representation) {
     return new FeeFineAction(representation);
+  }
+
+  public String getPaymentMethod() {
+    return representation.getString("paymentMethod");
   }
 }

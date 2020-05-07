@@ -1,12 +1,11 @@
 package org.folio.circulation.domain.representations;
 
 import static org.folio.circulation.support.JsonPropertyWriter.write;
-import static org.folio.circulation.support.utils.BigDecimalUtil.toDouble;
 
-import java.math.BigDecimal;
 import java.util.UUID;
 
 import org.folio.circulation.domain.Account;
+import org.folio.circulation.domain.FeeAmount;
 import org.folio.circulation.domain.FeeFine;
 import org.folio.circulation.domain.FeeFineOwner;
 import org.folio.circulation.domain.Item;
@@ -14,16 +13,16 @@ import org.folio.circulation.domain.Loan;
 
 import io.vertx.core.json.JsonObject;
 
-public class AccountStorageRepresentation extends JsonObject {
-  public AccountStorageRepresentation(Loan loan, Item item, FeeFineOwner feeFineOwner,
-    FeeFine feeFine, BigDecimal amount) {
+public class StoredAccount extends JsonObject {
+  public StoredAccount(Loan loan, Item item, FeeFineOwner feeFineOwner,
+    FeeFine feeFine, FeeAmount amount) {
     super();
 
     this.put("id", UUID.randomUUID().toString());
     this.put("ownerId", feeFineOwner.getId());
     this.put("feeFineId", feeFine.getId());
-    this.put("amount", toDouble(amount));
-    this.put("remaining", toDouble(amount));
+    this.put("amount", amount.toDouble());
+    this.put("remaining", amount.toDouble());
     this.put("feeFineType", feeFine.getFeeFineType());
     this.put("feeFineOwner", feeFineOwner.getOwner());
     this.put("title", item.getTitle());
@@ -42,7 +41,7 @@ public class AccountStorageRepresentation extends JsonObject {
     this.put("status", createNamedObject("Open"));
   }
 
-  private AccountStorageRepresentation(JsonObject json) {
+  private StoredAccount(JsonObject json) {
     super(json.getMap());
   }
 
@@ -50,26 +49,8 @@ public class AccountStorageRepresentation extends JsonObject {
     return getString("id");
   }
 
-  public static AccountStorageRepresentation fromAccount(Account account) {
-    return new AccountStorageRepresentation(account.toJson());
-  }
-
-  private void setStatus(String status) {
-    put("status", createNamedObject(status));
-  }
-
-  private void setPaymentStatus(FeeFinePaymentAction paymentStatus) {
-    put("paymentStatus", createNamedObject(paymentStatus.getValue()));
-  }
-
-  private void setRemaining(BigDecimal remaining) {
-    put("remaining", toDouble(remaining));
-  }
-
-  public void close(FeeFinePaymentAction paymentAction) {
-    setStatus("Closed");
-    setPaymentStatus(paymentAction);
-    setRemaining(BigDecimal.ZERO);
+  public static StoredAccount fromAccount(Account account) {
+    return new StoredAccount(account.toJson());
   }
 
   private JsonObject createNamedObject(String status) {

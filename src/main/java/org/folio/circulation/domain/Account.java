@@ -1,18 +1,19 @@
 package org.folio.circulation.domain;
 
-import static org.folio.circulation.support.JsonPropertyFetcher.getBigDecimalProperty;
+import static org.folio.circulation.domain.FeeAmount.noFeeAmount;
+import static org.folio.circulation.domain.FeeAmount.zeroFeeAmount;
+import static org.folio.circulation.domain.representations.AccountStatus.CLOSED;
 import static org.folio.circulation.support.JsonPropertyFetcher.getNestedStringProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
-import static org.folio.circulation.support.utils.BigDecimalUtil.scaleFeeAmount;
-import static org.folio.circulation.support.utils.BigDecimalUtil.toDouble;
 
-import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.Optional;
 
 import org.apache.commons.lang3.math.NumberUtils;
+import org.folio.circulation.domain.representations.AccountPaymentStatus;
+import org.folio.circulation.domain.representations.AccountStatus;
 import org.folio.circulation.support.JsonPropertyWriter;
 import org.joda.time.DateTime;
 
@@ -21,15 +22,15 @@ import io.vertx.core.json.JsonObject;
 public class Account {
   private final String id;
   private final AccountRelatedRecordsInfo relatedRecordsInfo;
-  private final Double amount;
-  private final BigDecimal remaining;
+  private final FeeAmount amount;
+  private final FeeAmount remaining;
   private final String status;
   private final String paymentStatus;
 
   private Collection<FeeFineAction> feeFineActions = new ArrayList<>();
 
-  public Account(String id, AccountRelatedRecordsInfo relatedRecordsInfo, Double amount,
-    BigDecimal remaining, String status, String paymentStatus) {
+  public Account(String id, AccountRelatedRecordsInfo relatedRecordsInfo, FeeAmount amount,
+    FeeAmount remaining, String status, String paymentStatus) {
 
     this.id = id;
     this.relatedRecordsInfo = relatedRecordsInfo;
@@ -59,8 +60,8 @@ public class Account {
           getProperty(representation, "location"),
           getProperty(representation, "materialTypeId"))
       ),
-      representation != null ? representation.getDouble("amount") : null,
-      getBigDecimalProperty(representation,"remaining"),
+      FeeAmount.from(representation, "amount"),
+      FeeAmount.from(representation, "remaining"),
       getNestedStringProperty(representation, "status", "name"),
       getNestedStringProperty(representation, "paymentStatus", "name"));
   }
@@ -77,8 +78,8 @@ public class Account {
     jsonObject.put("id", id);
     jsonObject.put("ownerId", relatedRecordsInfo.getFeeFineOwnerInfo().getOwnerId());
     jsonObject.put("feeFineId", relatedRecordsInfo.getFeeFineTypeInfo().getFeeFineId());
-    jsonObject.put("amount", amount);
-    jsonObject.put("remaining", toDouble(remaining));
+    jsonObject.put("amount", amount.toDouble());
+    jsonObject.put("remaining", remaining.toDouble());
     jsonObject.put("feeFineType", relatedRecordsInfo.getFeeFineTypeInfo().getFeeFineType());
     jsonObject.put("feeFineOwner", relatedRecordsInfo.getFeeFineOwnerInfo().getOwner());
     jsonObject.put("title", relatedRecordsInfo.getItemInfo().getTitle());
@@ -105,16 +106,16 @@ public class Account {
     return id;
   }
 
-  public Double getAmount() {
+  public FeeAmount getAmount() {
     return amount;
   }
 
-  public BigDecimal getRemaining() {
+  public FeeAmount getRemaining() {
     return remaining;
   }
 
   public boolean hasRemainingAmount() {
-    return remaining != null && remaining.compareTo(BigDecimal.ZERO) > 0;
+    return remaining.hasAmount();
   }
 
   public String getFeeFineType() {
@@ -157,10 +158,6 @@ public class Account {
     return relatedRecordsInfo.getItemInfo().getItemId();
   }
 
-  public String getFeeFineId() {
-    return relatedRecordsInfo.getFeeFineTypeInfo().getFeeFineId();
-  }
-
   public String getStatus() {
     return status;
   }
@@ -188,21 +185,63 @@ public class Account {
     return getStatus().equalsIgnoreCase("open");
   }
 
-  public BigDecimal getPaidAmount() {
-    final BigDecimal paidAmountUnscaled = feeFineActions.stream()
+  public FeeAmount getPaidAmount() {
+    return feeFineActions.stream()
       .filter(FeeFineAction::isPaid)
       .map(FeeFineAction::getAmountAction)
-      .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-    return scaleFeeAmount(paidAmountUnscaled);
+      .reduce(FeeAmount::add)
+      .orElse(noFeeAmount());
   }
 
-  public BigDecimal getTransferredAmount() {
-    final BigDecimal transferredAmountUnscaled = feeFineActions.stream()
+  public boolean hasPaidAmount() {
+    return getPaidAmount().hasAmount();
+  }
+
+  public FeeAmount getTransferredAmount() {
+    return feeFineActions.stream()
       .filter(FeeFineAction::isTransferred)
       .map(FeeFineAction::getAmountAction)
-      .reduce(BigDecimal.ZERO, BigDecimal::add);
+      .reduce(FeeAmount::add)
+      .orElse(noFeeAmount());
+  }
 
-    return scaleFeeAmount(transferredAmountUnscaled);
+  public boolean hasTransferredAmount() {
+    return getTransferredAmount().hasAmount();
+  }
+
+  public String getTransferAccountName() {
+    return feeFineActions.stream()
+      .filter(FeeFineAction::isTransferred)
+      .map(FeeFineAction::getPaymentMethod)
+      .findFirst()
+      .orElse("");
+  }
+
+  public Account subtractRemainingAmount(FeeAmount toSubtract) {
+    return new Account(this.id, relatedRecordsInfo, amount, remaining.subtract(toSubtract),
+      status, paymentStatus);
+  }
+
+  public Account addRemainingAmount(FeeAmount toAdd) {
+    return new Account(this.id, relatedRecordsInfo, amount, remaining.add(toAdd),
+      status, paymentStatus);
+  }
+
+  private Account withStatus(AccountStatus status) {
+    return new Account(id, relatedRecordsInfo, amount, remaining, status.getValue(), paymentStatus);
+  }
+
+  public Account withPaymentStatus(AccountPaymentStatus paymentStatus) {
+    return new Account(id, relatedRecordsInfo, amount, remaining, status, paymentStatus.getValue());
+  }
+
+  private Account withRemaining(FeeAmount remaining) {
+    return new Account(id, relatedRecordsInfo, amount, remaining, status, paymentStatus);
+  }
+
+  public Account close(AccountPaymentStatus paymentAction) {
+    return withStatus(CLOSED)
+      .withPaymentStatus(paymentAction)
+      .withRemaining(zeroFeeAmount());
   }
 }

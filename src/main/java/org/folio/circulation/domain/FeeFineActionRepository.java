@@ -10,7 +10,7 @@ import static org.folio.circulation.support.http.ResponseMapping.mapUsingJson;
 import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
 
-import org.folio.circulation.domain.representations.FeeFineActionStorageRepresentation;
+import org.folio.circulation.domain.representations.StoredFeeFineAction;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.FetchSingleRecord;
@@ -25,12 +25,11 @@ public class FeeFineActionRepository {
     feeFineActionsStorageClient = clients.feeFineActionsStorageClient();
   }
 
-  public CompletableFuture<Result<FeeFineAction>> create(
-    FeeFineActionStorageRepresentation feeFineAction) {
-
-    final ResponseInterpreter<FeeFineAction> interpreter = new ResponseInterpreter<FeeFineAction>()
-      .flatMapOn(201, mapUsingJson(FeeFineAction::from))
-      .otherwise(forwardOnFailure());
+  public CompletableFuture<Result<FeeFineAction>> create(StoredFeeFineAction feeFineAction) {
+    final ResponseInterpreter<FeeFineAction> interpreter =
+      new ResponseInterpreter<FeeFineAction>()
+        .flatMapOn(201, mapUsingJson(FeeFineAction::from))
+        .otherwise(forwardOnFailure());
 
     return feeFineActionsStorageClient.post(feeFineAction)
       .thenApply(interpreter::flatMap);
@@ -49,7 +48,7 @@ public class FeeFineActionRepository {
   }
 
   public CompletableFuture<Result<Void>> createAll(
-    Collection<FeeFineActionStorageRepresentation> feeFineActions) {
+    Collection<StoredFeeFineAction> feeFineActions) {
 
     return allOf(feeFineActions.stream()
       .map(this::create)

@@ -18,6 +18,8 @@ import org.folio.circulation.domain.policy.Policy;
 import org.folio.circulation.domain.policy.lostitem.itemfee.ActualCostFee;
 import org.folio.circulation.domain.policy.lostitem.itemfee.AutomaticallyChargeableFee;
 import org.folio.circulation.domain.policy.lostitem.itemfee.ChargeableFee;
+import org.folio.circulation.support.ClockManager;
+import org.joda.time.DateTime;
 
 import io.vertx.core.json.JsonObject;
 
@@ -99,8 +101,11 @@ public class LostItemPolicy extends Policy {
     return actualCostFee;
   }
 
-  public TimePeriod getFeeRefundInterval() {
-    return feeRefundInterval;
+  public boolean shouldRefundFees(DateTime lostDateTime) {
+    final DateTime now = ClockManager.getClockManager().getDateTime();
+
+    return feeRefundInterval != null && feeRefundInterval
+      .between(lostDateTime, now) > feeRefundInterval.getDuration();
   }
 
   public boolean isRefundProcessingFeeWhenReturned() {

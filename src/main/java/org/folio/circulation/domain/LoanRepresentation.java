@@ -14,6 +14,7 @@ import java.lang.invoke.MethodHandles;
 import java.math.BigDecimal;
 import java.util.Collection;
 
+import static org.folio.circulation.domain.FeeAmount.noFeeAmount;
 import static org.folio.circulation.domain.representations.LoanProperties.BORROWER;
 import static org.folio.circulation.domain.representations.LoanProperties.LOAN_POLICY;
 import static org.folio.circulation.domain.representations.LoanProperties.LOST_ITEM_POLICY;
@@ -91,9 +92,9 @@ public class LoanRepresentation {
     final double remainingFeesFines = accounts.stream()
       .filter(Account::isOpen)
       .map(Account::getRemaining)
-      .reduce(BigDecimal::add)
-      .map(BigDecimalUtil::toDouble)
-      .orElse(0.0);
+      .reduce(FeeAmount::add)
+      .orElse(noFeeAmount())
+      .toDouble();
 
     JsonObject feesAndFinesSummary = loanRepresentation.containsKey(LoanProperties.FEESANDFINES)
       ? loanRepresentation.getJsonObject(LoanProperties.FEESANDFINES)

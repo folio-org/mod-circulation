@@ -20,7 +20,7 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
-import org.folio.circulation.domain.representations.AccountStorageRepresentation;
+import org.folio.circulation.domain.representations.StoredAccount;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.FetchSingleRecord;
@@ -140,7 +140,7 @@ public class AccountRepository {
       .fetch(id);
   }
 
-  public CompletableFuture<Result<Account>> create(AccountStorageRepresentation account) {
+  public CompletableFuture<Result<Account>> create(StoredAccount account) {
     final ResponseInterpreter<Account> interpreter = new ResponseInterpreter<Account>()
       .flatMapOn(201, mapUsingJson(Account::from))
       .otherwise(forwardOnFailure());
@@ -149,7 +149,7 @@ public class AccountRepository {
       .thenApply(interpreter::flatMap);
   }
 
-  public CompletableFuture<Result<Void>> update(AccountStorageRepresentation account) {
+  public CompletableFuture<Result<Void>> update(StoredAccount account) {
     final ResponseInterpreter<Void> interpreter = new ResponseInterpreter<Void>()
       .on(204, succeeded(null))
       .otherwise(forwardOnFailure());
