@@ -1,6 +1,5 @@
 package org.folio.circulation.support;
 
-import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.server.SuccessResponse;
 
 import io.vertx.core.http.HttpServerResponse;
@@ -32,22 +31,6 @@ public class NoContentResult implements ResponseWritableResult<Void> {
     }
     else {
       return new NoContentResult();
-    }
-  }
-
-  public static ResponseWritableResult<Void> from(Response response) {
-    return from(response, 204);
-  }
-
-  public static ResponseWritableResult<Void> from(
-    Response response,
-    Integer expectedStatusCode) {
-
-    if(response.getStatusCode() == expectedStatusCode) {
-      return new NoContentResult();
-    }
-    else {
-      return Result.failed(new ForwardOnFailure(response));
     }
   }
 }
