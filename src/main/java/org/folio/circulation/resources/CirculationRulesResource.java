@@ -32,7 +32,7 @@ import org.folio.circulation.support.Result;
 import org.folio.circulation.support.http.client.PageLimit;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.server.ForwardResponse;
-import org.folio.circulation.support.http.server.SuccessResponse;
+import org.folio.circulation.support.http.server.NoContentResponse;
 import org.folio.circulation.support.http.server.WebContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -149,7 +149,7 @@ public class CirculationRulesResource extends Resource {
     clients.circulationRulesStorage().put(rulesInput.copy())
       .thenAccept(res -> res.applySideEffect(response -> {
         if (response.getStatusCode() == 204) {
-          SuccessResponse.noContent(routingContext.response());
+          NoContentResponse.noContent(routingContext.response());
         } else {
           ForwardResponse.forward(routingContext.response(), response);
         }

@@ -1,6 +1,6 @@
 package org.folio.circulation.support;
 
-import org.folio.circulation.support.http.server.SuccessResponse;
+import org.folio.circulation.support.http.server.NoContentResponse;
 
 import io.vertx.core.http.HttpServerResponse;
 
@@ -22,7 +22,7 @@ public class NoContentResult implements ResponseWritableResult<Void> {
 
   @Override
   public void writeTo(HttpServerResponse response) {
-    SuccessResponse.noContent(response);
+    NoContentResponse.noContent(response);
   }
 
   public static <T> ResponseWritableResult<Void> from(Result<T> result) {

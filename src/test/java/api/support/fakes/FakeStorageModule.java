@@ -28,7 +28,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.infrastructure.serialization.JsonSchemaValidator;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.http.server.ClientErrorResponse;
-import org.folio.circulation.support.http.server.SuccessResponse;
+import org.folio.circulation.support.http.server.NoContentResponse;
 import org.folio.circulation.support.http.server.ValidationError;
 import org.folio.circulation.support.http.server.WebContext;
 import org.joda.time.DateTime;
@@ -241,7 +241,7 @@ public class FakeStorageModule extends AbstractVerticle {
 
     replaceSingleItem(context, id, body).thenAccept(replaceResult -> {
       if (replaceResult.succeeded()) {
-        SuccessResponse.noContent(routingContext.response());
+        NoContentResponse.noContent(routingContext.response());
       } else {
         replaceResult.cause().writeTo(routingContext.response());
       }
@@ -408,7 +408,7 @@ public class FakeStorageModule extends AbstractVerticle {
 
     resourcesForTenant.clear();
 
-    SuccessResponse.noContent(routingContext.response());
+    NoContentResponse.noContent(routingContext.response());
   }
 
   private void deleteMany(RoutingContext routingContext) {
@@ -422,7 +422,7 @@ public class FakeStorageModule extends AbstractVerticle {
       .execute(resourcesForTenant.values(), query)
       .forEach(item -> resourcesForTenant.remove(item.getString("id")));
 
-    SuccessResponse.noContent(routingContext.response());
+    NoContentResponse.noContent(routingContext.response());
   }
 
   private void delete(RoutingContext routingContext) {
@@ -435,7 +435,7 @@ public class FakeStorageModule extends AbstractVerticle {
     if(resourcesForTenant.containsKey(id)) {
       resourcesForTenant.remove(id);
 
-      SuccessResponse.noContent(routingContext.response());
+      NoContentResponse.noContent(routingContext.response());
     }
     else {
       ClientErrorResponse.notFound(routingContext.response());
