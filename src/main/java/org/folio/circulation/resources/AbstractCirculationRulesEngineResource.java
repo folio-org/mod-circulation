@@ -10,8 +10,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.folio.circulation.domain.Location;
 import org.folio.circulation.rules.CirculationRuleMatch;
 import org.folio.circulation.rules.Drools;
@@ -19,12 +17,14 @@ import org.folio.circulation.rules.Text2Drools;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.FetchSingleRecord;
-import org.folio.circulation.support.OkJsonResponseResult;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.ServerErrorFailure;
 import org.folio.circulation.support.http.server.ClientErrorResponse;
 import org.folio.circulation.support.http.server.ForwardResponse;
+import org.folio.circulation.support.http.server.JsonHttpResponse;
 import org.folio.circulation.support.http.server.WebContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import io.vertx.core.Handler;
 import io.vertx.core.MultiMap;
@@ -260,8 +260,9 @@ public abstract class AbstractCirculationRulesEngineResource extends Resource {
     }
     drools(routingContext, drools -> {
       try {
-        final CollectionResourceClient locationsStorageClient =
-          Clients.create(new WebContext(routingContext), client).locationsStorage();
+        final WebContext context = new WebContext(routingContext);
+        final CollectionResourceClient locationsStorageClient
+          = Clients.create(context, client).locationsStorage();
 
         FetchSingleRecord.<Location>forRecord("location")
           .using(locationsStorageClient)
@@ -270,8 +271,8 @@ public abstract class AbstractCirculationRulesEngineResource extends Resource {
           .fetch(request.params().get(LOCATION_ID_NAME))
           .thenCompose(r -> r.after(location -> getPolicyIdAndRuleMatch(request.params(), drools, location)))
           .thenCompose(r -> r.after(this::buildJsonResult))
-          .thenApply(OkJsonResponseResult::from)
-          .thenAccept(result -> result.writeTo(routingContext.response()));
+          .thenApply(r -> r.map(JsonHttpResponse::ok))
+          .thenAccept(context::writeResultToHttpResponse);
       }
       catch (Exception e) {
         log.error("apply notice policy", e);
@@ -298,9 +299,9 @@ public abstract class AbstractCirculationRulesEngineResource extends Resource {
       return;
     }
     try {
-
-      final CollectionResourceClient locationsStorageClient =
-        Clients.create(new WebContext(routingContext), client).locationsStorage();
+      final WebContext context = new WebContext(routingContext);
+      final CollectionResourceClient locationsStorageClient
+        = Clients.create(context, client).locationsStorage();
 
       FetchSingleRecord.<Location>forRecord("location")
         .using(locationsStorageClient)
@@ -309,8 +310,8 @@ public abstract class AbstractCirculationRulesEngineResource extends Resource {
         .fetch(request.params().get(LOCATION_ID_NAME))
         .thenCompose(r -> r.after(location -> getPolicies(request.params(), drools, location)))
         .thenCompose(r -> r.after(this::buildJsonResult))
-        .thenApply(OkJsonResponseResult::from)
-        .thenAccept(result -> result.writeTo(routingContext.response()));
+        .thenApply(r -> r.map(JsonHttpResponse::ok))
+        .thenAccept(context::writeResultToHttpResponse);
     }
     catch (Exception e) {
       log.error("applyAll", e);
@@ -318,7 +319,7 @@ public abstract class AbstractCirculationRulesEngineResource extends Resource {
     }
   }
 
-  private CompletableFuture<Result<JsonObject>> buildJsonResult(JsonArray matches){
+  private CompletableFuture<Result<JsonObject>> buildJsonResult(JsonArray matches) {
     return CompletableFuture.completedFuture(succeeded(new JsonObject().put("circulationRuleMatches",
       matches)));
   }
@@ -354,5 +355,6 @@ public abstract class AbstractCirculationRulesEngineResource extends Resource {
 
   protected abstract String getPolicyIdKey();
 
-  protected abstract CompletableFuture<Result<JsonArray>> getPolicies(MultiMap params, Drools drools, Location location);
+  protected abstract CompletableFuture<Result<JsonArray>> getPolicies(MultiMap params,
+    Drools drools, Location location);
 }

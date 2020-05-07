@@ -4,9 +4,9 @@ import static org.folio.circulation.domain.ItemStatus.AWAITING_PICKUP;
 import static org.folio.circulation.domain.RequestStatus.CLOSED_CANCELLED;
 import static org.folio.circulation.domain.RequestStatus.CLOSED_PICKUP_EXPIRED;
 import static org.folio.circulation.domain.RequestStatus.OPEN_AWAITING_PICKUP;
+import static org.folio.circulation.support.CqlSortBy.descending;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatchAny;
-import static org.folio.circulation.support.CqlSortBy.descending;
 import static org.folio.circulation.support.http.client.PageLimit.limit;
 
 import java.util.ArrayList;
@@ -24,20 +24,20 @@ import java.util.stream.IntStream;
 import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.domain.HoldShelfClearanceRequestContext;
 import org.folio.circulation.domain.Item;
+import org.folio.circulation.domain.ItemsReportFetcher;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.ReportRepository;
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestRepresentation;
-import org.folio.circulation.domain.ItemsReportFetcher;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.GetManyRecordsClient;
-import org.folio.circulation.support.http.client.CqlQuery;
 import org.folio.circulation.support.ItemRepository;
-import org.folio.circulation.support.OkJsonResponseResult;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.RouteRegistration;
+import org.folio.circulation.support.http.client.CqlQuery;
 import org.folio.circulation.support.http.client.PageLimit;
 import org.folio.circulation.support.http.client.Response;
+import org.folio.circulation.support.http.server.JsonHttpResponse;
 import org.folio.circulation.support.http.server.WebContext;
 
 import io.vertx.core.http.HttpClient;
@@ -97,8 +97,8 @@ public class RequestHoldShelfClearanceResource extends Resource {
       .thenApply(r -> findExpiredOrCancelledRequestByServicePoint(servicePointId, r.value()))
       .thenApply(r -> fetchItemToRequest(r, itemRepository))
       .thenApply(this::mapResultToJson)
-      .thenApply(OkJsonResponseResult::from)
-      .thenAccept(r -> r.writeTo(routingContext.response()));
+      .thenApply(r -> r.map(JsonHttpResponse::ok))
+      .thenAccept(context::writeResultToHttpResponse);
   }
 
   private CompletableFuture<Result<List<String>>> mapContextToItemIdList(ItemsReportFetcher itemsReportFetcher) {
