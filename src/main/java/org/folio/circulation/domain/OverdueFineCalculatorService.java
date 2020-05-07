@@ -5,7 +5,6 @@ import static org.apache.commons.lang3.BooleanUtils.isFalse;
 import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.ResultBinding.mapResult;
 
-import java.math.BigDecimal;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;

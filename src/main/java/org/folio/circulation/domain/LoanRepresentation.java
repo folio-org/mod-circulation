@@ -6,12 +6,10 @@ import io.vertx.core.json.JsonObject;
 import org.folio.circulation.domain.policy.Policy;
 import org.folio.circulation.domain.representations.ItemSummaryRepresentation;
 import org.folio.circulation.domain.representations.LoanProperties;
-import org.folio.circulation.support.utils.BigDecimalUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.invoke.MethodHandles;
-import java.math.BigDecimal;
 import java.util.Collection;
 
 import static org.folio.circulation.domain.FeeAmount.noFeeAmount;

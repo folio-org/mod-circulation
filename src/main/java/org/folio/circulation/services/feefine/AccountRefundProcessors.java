@@ -10,7 +10,7 @@ import org.folio.circulation.support.Result;
 import org.folio.circulation.support.ServerErrorFailure;
 
 public class AccountRefundProcessors {
-  private static List<AccountRefundProcessor> PROCESSORS = getAvailableProcessors();
+  private static final List<AccountRefundProcessor> PROCESSORS = getAvailableProcessors();
 
   private AccountRefundProcessors() {}
 
