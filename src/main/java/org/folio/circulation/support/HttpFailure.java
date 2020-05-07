@@ -1,7 +1,5 @@
 package org.folio.circulation.support;
 
-import io.vertx.core.http.HttpServerResponse;
+import org.folio.circulation.support.http.server.HttpResponse;
 
-public interface HttpFailure {
-  void writeTo(HttpServerResponse response);
-}
+public interface HttpFailure extends HttpResponse { }

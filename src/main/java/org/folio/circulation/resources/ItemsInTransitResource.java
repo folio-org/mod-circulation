@@ -36,12 +36,12 @@ import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.FindWithMultipleCqlIndexValues;
 import org.folio.circulation.support.GetManyRecordsClient;
 import org.folio.circulation.support.ItemRepository;
-import org.folio.circulation.support.OkJsonResponseResult;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.RouteRegistration;
 import org.folio.circulation.support.http.client.CqlQuery;
 import org.folio.circulation.support.http.client.PageLimit;
 import org.folio.circulation.support.http.client.Response;
+import org.folio.circulation.support.http.server.JsonHttpResponse;
 import org.folio.circulation.support.http.server.WebContext;
 
 import io.vertx.core.http.HttpClient;
@@ -89,13 +89,14 @@ public class ItemsInTransitResource extends Resource {
       .thenComposeAsync(r -> findRequestsByItemsIds(requestsStorageClient, itemRepository,
         servicePointRepository, userRepository, patronGroupRepository, r.value()))
       .thenApply(this::mapResultToJson)
-      .thenApply(OkJsonResponseResult::from)
-      .thenAccept(r -> r.writeTo(routingContext.response()));
+      .thenApply(r -> r.map(JsonHttpResponse::ok))
+      .thenAccept(context::writeResultToHttpResponse);
   }
 
-  private CompletableFuture<Result<List<InTransitReportEntry>>> fetchItemsRelatedRecords(ItemsReportFetcher itemsReportFetcher,
-                                                                                          ItemRepository itemRepository,
-                                                                                          ServicePointRepository servicePointRepository) {
+  private CompletableFuture<Result<List<InTransitReportEntry>>> fetchItemsRelatedRecords(
+    ItemsReportFetcher itemsReportFetcher, ItemRepository itemRepository,
+    ServicePointRepository servicePointRepository) {
+
     List<Item> items = itemsReportFetcher.getResultListOfItems().stream()
       .flatMap(resultListOfItem -> resultListOfItem.value().getRecords().stream())
       .collect(Collectors.toList());

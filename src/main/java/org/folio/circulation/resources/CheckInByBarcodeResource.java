@@ -27,10 +27,10 @@ public class CheckInByBarcodeResource extends Resource {
     RouteRegistration routeRegistration = new RouteRegistration(
       "/circulation/check-in-by-barcode", router);
 
-    routeRegistration.create(this::checkin);
+    routeRegistration.create(this::checkIn);
   }
 
-  private void checkin(RoutingContext routingContext) {
+  private void checkIn(RoutingContext routingContext) {
     final WebContext context = new WebContext(routingContext);
 
     final Clients clients = Clients.create(context, client);
@@ -86,7 +86,8 @@ public class CheckInByBarcodeResource extends Resource {
       .thenComposeAsync(r -> r.after(
         records -> processAdapter.createOverdueFineIfNecessary(records, context)))
       .thenApply(r -> r.next(requestScheduledNoticeService::rescheduleRequestNotices))
-      .thenApply(CheckInByBarcodeResponse::from)
-      .thenAccept(r -> r.writeTo(routingContext.response()));
+      .thenApply(r -> r.map(CheckInByBarcodeResponse::fromRecords))
+      .thenApply(r -> r.map(CheckInByBarcodeResponse::toHttpResponse))
+      .thenAccept(context::writeResultToHttpResponse);
   }
 }
