@@ -6,8 +6,8 @@ import static org.folio.circulation.domain.representations.AccountStatus.CLOSED;
 import static org.folio.circulation.support.JsonPropertyFetcher.getNestedStringProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
 
-import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.Optional;
 
@@ -26,11 +26,10 @@ public class Account {
   private final FeeAmount remaining;
   private final String status;
   private final String paymentStatus;
-
-  private Collection<FeeFineAction> feeFineActions = new ArrayList<>();
+  private final Collection<FeeFineAction> feeFineActions;
 
   public Account(String id, AccountRelatedRecordsInfo relatedRecordsInfo, FeeAmount amount,
-    FeeAmount remaining, String status, String paymentStatus) {
+    FeeAmount remaining, String status, String paymentStatus, Collection<FeeFineAction> actions) {
 
     this.id = id;
     this.relatedRecordsInfo = relatedRecordsInfo;
@@ -38,6 +37,7 @@ public class Account {
     this.remaining = remaining;
     this.status = status;
     this.paymentStatus = paymentStatus;
+    this.feeFineActions = actions;
   }
 
   public static Account from(JsonObject representation) {
@@ -63,13 +63,8 @@ public class Account {
       FeeAmount.from(representation, "amount"),
       FeeAmount.from(representation, "remaining"),
       getNestedStringProperty(representation, "status", "name"),
-      getNestedStringProperty(representation, "paymentStatus", "name"));
-  }
-
-  private static Account from(JsonObject representation, Collection<FeeFineAction> actions) {
-    Account account = Account.from(representation);
-    account.setFeeFineActions(actions == null ? new ArrayList<>() : actions);
-    return account;
+      getNestedStringProperty(representation, "paymentStatus", "name"),
+      Collections.emptyList());
   }
 
   public JsonObject toJson() {
@@ -162,10 +157,6 @@ public class Account {
     return status;
   }
 
-  public void setFeeFineActions(Collection<FeeFineAction> feeFineActions) {
-    this.feeFineActions = feeFineActions;
-  }
-
   public Optional<DateTime> getClosedDate() {
     return feeFineActions.stream()
       .filter(ffa -> ffa.getBalance().equals(NumberUtils.DOUBLE_ZERO))
@@ -174,7 +165,7 @@ public class Account {
   }
 
   public Account withFeeFineActions(Collection<FeeFineAction> actions) {
-    return Account.from(toJson(), actions);
+    return new Account(id, relatedRecordsInfo, amount, remaining, status, paymentStatus, actions);
   }
 
   public boolean isClosed() {
@@ -219,24 +210,27 @@ public class Account {
 
   public Account subtractRemainingAmount(FeeAmount toSubtract) {
     return new Account(this.id, relatedRecordsInfo, amount, remaining.subtract(toSubtract),
-      status, paymentStatus);
+      status, paymentStatus, feeFineActions);
   }
 
   public Account addRemainingAmount(FeeAmount toAdd) {
     return new Account(this.id, relatedRecordsInfo, amount, remaining.add(toAdd),
-      status, paymentStatus);
+      status, paymentStatus, feeFineActions);
   }
 
   private Account withStatus(AccountStatus status) {
-    return new Account(id, relatedRecordsInfo, amount, remaining, status.getValue(), paymentStatus);
+    return new Account(id, relatedRecordsInfo, amount, remaining, status.getValue(),
+      paymentStatus, feeFineActions);
   }
 
   public Account withPaymentStatus(AccountPaymentStatus paymentStatus) {
-    return new Account(id, relatedRecordsInfo, amount, remaining, status, paymentStatus.getValue());
+    return new Account(id, relatedRecordsInfo, amount, remaining, status,
+      paymentStatus.getValue(), feeFineActions);
   }
 
   private Account withRemaining(FeeAmount remaining) {
-    return new Account(id, relatedRecordsInfo, amount, remaining, status, paymentStatus);
+    return new Account(id, relatedRecordsInfo, amount, remaining, status,
+      paymentStatus, feeFineActions);
   }
 
   public Account close(AccountPaymentStatus paymentAction) {

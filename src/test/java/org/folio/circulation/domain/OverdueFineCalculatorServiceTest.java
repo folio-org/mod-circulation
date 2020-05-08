@@ -13,6 +13,7 @@ import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -579,7 +580,8 @@ public class OverdueFineCalculatorServiceTest {
         new AccountItemInfo(ITEM_ID.toString(), TITLE, BARCODE, CALL_NUMBER,
           LOCATION_NAME, ITEM_MATERIAL_TYPE_ID.toString())
       ),
-      new FeeAmount(correctOverdueFine), new FeeAmount(correctOverdueFine), "Open", "Outstanding"
+      new FeeAmount(correctOverdueFine), new FeeAmount(correctOverdueFine), "Open", "Outstanding",
+      Collections.emptyList()
     );
   }
 }

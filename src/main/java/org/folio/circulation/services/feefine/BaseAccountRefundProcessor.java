@@ -61,6 +61,7 @@ abstract class BaseAccountRefundProcessor implements AccountRefundProcessor {
     context.addActions(populateCommonAttributes(context)
       .withAction(getClosedPaymentStatus())
       .withBalance(zeroFeeAmount())
+      .withAmount(context.getAccount().getRemaining())
       .build());
   }
 
