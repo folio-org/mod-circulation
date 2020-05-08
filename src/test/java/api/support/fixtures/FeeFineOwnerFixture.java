@@ -1,16 +1,18 @@
 package api.support.fixtures;
 
+import static api.support.http.ResourceClient.forFeeFineOwners;
+import static api.support.http.ResourceClient.forServicePoints;
+
 import org.folio.circulation.support.http.client.IndividualResource;
 
 import api.support.builders.FeeFineOwnerBuilder;
-import api.support.http.ResourceClient;
 
 public final class FeeFineOwnerFixture extends RecordCreator {
   private final ServicePointsFixture servicePointsFixture;
 
-  public FeeFineOwnerFixture(ResourceClient client, ServicePointsFixture servicePointsFixture) {
-    super(client, json -> json.getJsonArray("servicePointOwner").toString());
-    this.servicePointsFixture = servicePointsFixture;
+  public FeeFineOwnerFixture() {
+    super(forFeeFineOwners(), json -> json.getJsonArray("servicePointOwner").toString());
+    this.servicePointsFixture = new ServicePointsFixture(forServicePoints());
   }
 
   public IndividualResource cd1Owner() {

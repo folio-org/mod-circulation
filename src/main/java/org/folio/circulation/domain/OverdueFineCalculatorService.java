@@ -12,10 +12,12 @@ import java.util.function.Predicate;
 
 import org.apache.commons.lang3.ObjectUtils;
 import org.folio.circulation.domain.policy.LoanPolicyRepository;
+import org.folio.circulation.domain.policy.LostItemPolicyRepository;
 import org.folio.circulation.domain.policy.OverdueFineCalculationParameters;
 import org.folio.circulation.domain.policy.OverdueFineInterval;
 import org.folio.circulation.domain.policy.OverdueFinePolicy;
 import org.folio.circulation.domain.policy.OverdueFinePolicyRepository;
+import org.folio.circulation.domain.policy.lostitem.LostItemPolicy;
 import org.folio.circulation.domain.representations.StoredAccount;
 import org.folio.circulation.domain.representations.StoredFeeFineAction;
 import org.folio.circulation.support.Clients;
@@ -47,7 +49,8 @@ public class OverdueFineCalculatorService {
         new FeeFineOwnerRepository(clients),
         new FeeFineRepository(clients),
         new UserRepository(clients),
-        new FeeFineActionRepository(clients)),
+        new FeeFineActionRepository(clients),
+        new LostItemPolicyRepository(clients)),
       new OverduePeriodCalculatorService(new CalendarRepository(clients),
         new LoanPolicyRepository(clients))
     );
@@ -67,12 +70,29 @@ public class OverdueFineCalculatorService {
   public CompletableFuture<Result<FeeFineAction>> createOverdueFineIfNecessary(
     CheckInProcessRecords records, String userId) {
 
-    Loan loan = records.getLoan();
+    return shouldChargeOverdueFineOnCheckIn(records)
+      .thenCompose(r -> r.after(shouldChargeOverdueFine -> {
+        if (!shouldChargeOverdueFine) {
+          return completedFuture(succeeded(null));
+        }
+        return createOverdueFineIfNecessary(records.getLoan(), Scenario.CHECKIN, userId);
+      }));
+  }
+
+  private CompletableFuture<Result<Boolean>> shouldChargeOverdueFineOnCheckIn(
+    CheckInProcessRecords records) {
+
+    final Loan loan = records.getLoan();
     if (loan == null || !loan.isOverdue(loan.getReturnDate())) {
-      return completedFuture(succeeded(null));
+      return completedFuture(succeeded(false));
     }
 
-    return createOverdueFineIfNecessary(loan, Scenario.CHECKIN, userId);
+    if (records.getItemStatusBeforeCheckIn() == ItemStatus.DECLARED_LOST) {
+      return repos.lostItemPolicyRepository.getLostItemPolicyById(loan.getLostItemPolicyId())
+        .thenApply(r -> r.map(LostItemPolicy::shouldChargeOverdueFee));
+    }
+
+    return completedFuture(succeeded(true));
   }
 
   private CompletableFuture<Result<FeeFineAction>> createOverdueFineIfNecessary(Loan loan,
@@ -279,11 +299,13 @@ public class OverdueFineCalculatorService {
     private final FeeFineRepository feeFineRepository;
     private final UserRepository userRepository;
     private final FeeFineActionRepository feeFineActionRepository;
+    private final LostItemPolicyRepository lostItemPolicyRepository;
 
     Repos(OverdueFinePolicyRepository overdueFinePolicyRepository,
       AccountRepository accountRepository, ItemRepository itemRepository,
       FeeFineOwnerRepository feeFineOwnerRepository, FeeFineRepository feeFineRepository,
-      UserRepository userRepository, FeeFineActionRepository feeFineActionRepository) {
+      UserRepository userRepository, FeeFineActionRepository feeFineActionRepository,
+      LostItemPolicyRepository lostItemPolicyRepository) {
 
       this.overdueFinePolicyRepository = overdueFinePolicyRepository;
       this.accountRepository = accountRepository;
@@ -292,6 +314,7 @@ public class OverdueFineCalculatorService {
       this.feeFineRepository = feeFineRepository;
       this.userRepository = userRepository;
       this.feeFineActionRepository = feeFineActionRepository;
+      this.lostItemPolicyRepository = lostItemPolicyRepository;
     }
   }
 }

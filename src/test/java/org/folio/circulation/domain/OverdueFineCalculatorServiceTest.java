@@ -21,6 +21,7 @@ import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Stream;
 
+import org.folio.circulation.domain.policy.LostItemPolicyRepository;
 import org.folio.circulation.domain.policy.OverdueFinePolicy;
 import org.folio.circulation.domain.policy.OverdueFinePolicyRepository;
 import org.folio.circulation.domain.representations.CheckInByBarcodeRequest;
@@ -88,6 +89,7 @@ public class OverdueFineCalculatorServiceTest {
   private FeeFineRepository feeFineRepository;
   private UserRepository userRepository;
   private FeeFineActionRepository feeFineActionRepository;
+  private LostItemPolicyRepository lostItemPolicyRepository;
   private Boolean renewal;
   private Boolean dueDateChangedByRecall;
   private Double overdueFine;
@@ -152,11 +154,13 @@ public class OverdueFineCalculatorServiceTest {
     overduePeriodCalculatorService = mock(OverduePeriodCalculatorService.class);
     userRepository = mock(UserRepository.class);
     feeFineActionRepository = mock(FeeFineActionRepository.class);
+    lostItemPolicyRepository = mock(LostItemPolicyRepository.class);
 
     overdueFineCalculatorService = new OverdueFineCalculatorService(
       new OverdueFineCalculatorService.Repos(
         overdueFinePolicyRepository, accountRepository, itemRepository,
-        feeFineOwnerRepository, feeFineRepository, userRepository, feeFineActionRepository),
+        feeFineOwnerRepository, feeFineRepository, userRepository, feeFineActionRepository,
+        lostItemPolicyRepository),
       overduePeriodCalculatorService);
 
     when(userRepository.getUser(any(String.class))).thenReturn(

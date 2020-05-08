@@ -403,7 +403,7 @@ public class LostItemFeePolicyBuilder extends JsonBuilder implements Builder {
       this.feeRefundInterval);
   }
 
-  public LostItemFeePolicyBuilder withLostItemReturned(String lostItemReturned) {
+  private LostItemFeePolicyBuilder withLostItemReturned(String lostItemReturned) {
     return new LostItemFeePolicyBuilder(
       this.id,
       this.name,
@@ -421,6 +421,14 @@ public class LostItemFeePolicyBuilder extends JsonBuilder implements Builder {
       this.replacementAllowed,
       lostItemReturned,
       this.feeRefundInterval);
+  }
+
+  public LostItemFeePolicyBuilder chargeOverdueFineWhenReturned() {
+    return withLostItemReturned("Charge");
+  }
+
+  public LostItemFeePolicyBuilder doNotChargeOverdueFineWhenReturned() {
+    return withLostItemReturned("Remove");
   }
 
   private LostItemFeePolicyBuilder withFeeRefundInterval(int duration, String intervalId) {

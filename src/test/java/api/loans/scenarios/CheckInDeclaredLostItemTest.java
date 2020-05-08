@@ -7,6 +7,7 @@ import static org.hamcrest.CoreMatchers.everyItem;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.CoreMatchers.notNullValue;
+import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.CoreMatchers.startsWith;
 import static org.hamcrest.MatcherAssert.assertThat;
 
@@ -22,6 +23,7 @@ import org.junit.Test;
 
 import api.support.APITests;
 import api.support.MultipleJsonRecords;
+import api.support.builders.CheckInByBarcodeRequestBuilder;
 import api.support.builders.DeclareItemLostRequestBuilder;
 import io.vertx.core.json.JsonObject;
 
@@ -230,6 +232,56 @@ public class CheckInDeclaredLostItemTest extends APITests {
 
     verifyLostItemProcessingFeeAccount(isAccountClosed(processingFee));
     verifyLostItemProcessingFeeAccountAction(isCloseActionCreated(processingFee));
+  }
+
+  @Test
+  public void shouldChargeOverdueFineWhenAllowed() {
+    final double processingFee = 12.99;
+
+    useLostItemPolicy(lostItemFeePoliciesFixture.create(
+      lostItemFeePoliciesFixture.facultyStandardPolicy()
+        .withName("Test check in")
+        .chargeProcessingFee()
+        .withLostItemProcessingFee(processingFee)
+        .withNoChargeAmountItem()
+        .chargeOverdueFineWhenReturned()).getId());
+
+    declareItemLost();
+
+    checkInFixture.checkInByBarcode(new CheckInByBarcodeRequestBuilder()
+      .forItem(item)
+      .at(servicePointsFixture.cd1())
+      .on(DateTime.now().plusMonths(2)));
+
+    verifyLostItemProcessingFeeAccount(isAccountClosed(processingFee));
+    verifyLostItemProcessingFeeAccountAction(isCloseActionCreated(processingFee));
+
+    assertThat(getAccountForLoan(loan.getId(), "Overdue fine"), notNullValue());
+  }
+
+  @Test
+  public void shouldNotChargeOverdueFineWhenDisallowed() {
+    final double processingFee = 12.99;
+
+    useLostItemPolicy(lostItemFeePoliciesFixture.create(
+      lostItemFeePoliciesFixture.facultyStandardPolicy()
+        .withName("Test check in")
+        .chargeProcessingFee()
+        .withLostItemProcessingFee(processingFee)
+        .withNoChargeAmountItem()
+        .doNotChargeOverdueFineWhenReturned()).getId());
+
+    declareItemLost();
+
+    checkInFixture.checkInByBarcode(new CheckInByBarcodeRequestBuilder()
+      .forItem(item)
+      .at(servicePointsFixture.cd1())
+      .on(DateTime.now().plusMonths(2)));
+
+    verifyLostItemProcessingFeeAccount(isAccountClosed(processingFee));
+    verifyLostItemProcessingFeeAccountAction(isCloseActionCreated(processingFee));
+
+    assertThat(getAccountForLoan(loan.getId(), "Overdue fine"), nullValue());
   }
 
   private JsonObject getAccountForLoan(UUID loanId, String type) {

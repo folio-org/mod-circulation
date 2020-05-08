@@ -29,10 +29,11 @@ public class LostItemPolicy extends Policy {
   private final ChargeableFee actualCostFee;
   private final TimePeriod feeRefundInterval;
   private final boolean refundProcessingFeeWhenReturned;
+  private final boolean chargeOverdueFine;
 
   private LostItemPolicy(String id, String name, AutomaticallyChargeableFee processingFee,
     AutomaticallyChargeableFee setCostFee, ChargeableFee actualCostFee,
-    TimePeriod feeRefundInterval, boolean refundProcessingFeeWhenFound) {
+    TimePeriod feeRefundInterval, boolean refundProcessingFeeWhenFound, boolean chargeOverdueFine) {
 
     super(id, name);
     this.processingFee = processingFee;
@@ -40,6 +41,7 @@ public class LostItemPolicy extends Policy {
     this.actualCostFee = actualCostFee;
     this.feeRefundInterval = feeRefundInterval;
     this.refundProcessingFeeWhenReturned = refundProcessingFeeWhenFound;
+    this.chargeOverdueFine = chargeOverdueFine;
   }
 
   public static LostItemPolicy from(JsonObject lostItemPolicy) {
@@ -50,8 +52,14 @@ public class LostItemPolicy extends Policy {
       getSetCostFee(lostItemPolicy),
       getActualCostFee(lostItemPolicy),
       getFeeRefundInterval(lostItemPolicy),
-      getBooleanProperty(lostItemPolicy, "returnedLostItemProcessingFee")
+      getBooleanProperty(lostItemPolicy, "returnedLostItemProcessingFee"),
+      getChargeOverdueFineProperty(lostItemPolicy)
     );
+  }
+
+  private static boolean getChargeOverdueFineProperty(JsonObject lostItemPolicy) {
+    final String lostItemReturned = lostItemPolicy.getString("lostItemReturned");
+    return lostItemReturned != null && "charge".equals(lostItemReturned.toLowerCase());
   }
 
   private static TimePeriod getFeeRefundInterval(JsonObject policy) {
@@ -112,6 +120,11 @@ public class LostItemPolicy extends Policy {
     return refundProcessingFeeWhenReturned;
   }
 
+  public boolean shouldChargeOverdueFee() {
+    return chargeOverdueFine;
+  }
+
+
   public static LostItemPolicy unknown(String id) {
     return new UnknownLostItemPolicy(id);
   }
@@ -119,7 +132,7 @@ public class LostItemPolicy extends Policy {
   private static class UnknownLostItemPolicy extends LostItemPolicy {
     UnknownLostItemPolicy(String id) {
       super(id, null, noAutomaticallyChargeableFee(), noAutomaticallyChargeableFee(),
-        noActualCostFee(), null, false);
+        noActualCostFee(), null, false, false);
     }
   }
 }

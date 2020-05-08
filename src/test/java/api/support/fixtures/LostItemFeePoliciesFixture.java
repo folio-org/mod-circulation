@@ -1,5 +1,6 @@
 package api.support.fixtures;
 
+import static api.support.http.ResourceClient.forLostItemFeePolicies;
 import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
 
 import java.util.UUID;
@@ -7,7 +8,6 @@ import java.util.UUID;
 import org.folio.circulation.support.http.client.IndividualResource;
 
 import api.support.builders.LostItemFeePolicyBuilder;
-import api.support.http.ResourceClient;
 import io.vertx.core.json.JsonObject;
 
 public class LostItemFeePoliciesFixture {
@@ -15,13 +15,12 @@ public class LostItemFeePoliciesFixture {
   private final FeeFineTypeFixture feeFineTypeFixture;
   private final FeeFineOwnerFixture feeFineOwnerFixture;
 
-  public LostItemFeePoliciesFixture(ResourceClient lostItemFeePoliciesClient,
-    FeeFineOwnerFixture feeFineOwnerFixture, FeeFineTypeFixture feeFineTypeFixture) {
+  public LostItemFeePoliciesFixture() {
 
-    lostItemFeePolicyRecordCreator = new RecordCreator(lostItemFeePoliciesClient,
+    lostItemFeePolicyRecordCreator = new RecordCreator(forLostItemFeePolicies(),
       reason -> getProperty(reason, "name"));
-    this.feeFineOwnerFixture = feeFineOwnerFixture;
-    this.feeFineTypeFixture = feeFineTypeFixture;
+    this.feeFineOwnerFixture = new FeeFineOwnerFixture();
+    this.feeFineTypeFixture = new FeeFineTypeFixture();
   }
 
   public IndividualResource facultyStandard() {
@@ -54,7 +53,7 @@ public class LostItemFeePoliciesFixture {
       .refundProcessingFeeWhenReturned()
       .withReplacedLostItemProcessingFee(true)
       .withReplacementAllowed(true)
-      .withLostItemReturned("Charge");
+      .chargeOverdueFineWhenReturned();
   }
 
   private LostItemFeePolicyBuilder chargeFeePolicy() {
@@ -77,7 +76,7 @@ public class LostItemFeePoliciesFixture {
       .refundProcessingFeeWhenReturned()
       .withReplacedLostItemProcessingFee(true)
       .withReplacementAllowed(true)
-      .withLostItemReturned("Charge");
+      .chargeOverdueFineWhenReturned();
   }
 
   public IndividualResource create(UUID id, String name) {
