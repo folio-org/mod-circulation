@@ -223,11 +223,6 @@ public class CheckInDeclaredLostItemTest extends APITests {
 
     checkInFixture.checkInByBarcode(item);
 
-    System.out.println("!!!!ACCOUNTS");
-    getAccountActions(getAccountForLoan(loan.getId(), "Lost item fee").getString("id"))
-      .stream()
-      .forEach(System.out::println);
-
     verifyLostItemFeeAccount(isAccountClosed(setCostFee));
     verifyLostItemFeeAccountAction(isCloseActionCreated(remainingAmount));
     verifyLostItemFeeAccountAction(areTransferRefundActionsCreated(remainingAmount, transferAmount));
