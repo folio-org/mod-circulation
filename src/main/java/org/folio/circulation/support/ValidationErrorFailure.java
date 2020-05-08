@@ -8,6 +8,7 @@ import java.util.Collection;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
+import org.folio.circulation.support.http.server.JsonHttpResponse;
 import org.folio.circulation.support.http.server.ValidationError;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -66,7 +67,7 @@ public class ValidationErrorFailure implements HttpFailure {
 
     log.info("Writing validation error: '{}'", jsonErrors);
 
-    new JsonResponseResult(422, jsonErrors, null).writeTo(response);
+    JsonHttpResponse.unprocessableEntity(jsonErrors).writeTo(response);
   }
 
   private JsonObject asJson() {

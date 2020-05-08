@@ -3,6 +3,7 @@ package api.support.fakes;
 import static java.lang.String.format;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
+import static org.folio.circulation.support.http.server.JsonHttpResponse.created;
 import static org.folio.circulation.support.results.CommonFailures.failedDueToServerError;
 
 import java.lang.invoke.MethodHandles;
@@ -25,7 +26,6 @@ import java.util.stream.Stream;
 
 import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.infrastructure.serialization.JsonSchemaValidator;
-import org.folio.circulation.support.CreatedJsonResponseResult;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.http.server.ClientErrorResponse;
 import org.folio.circulation.support.http.server.SuccessResponse;
@@ -34,6 +34,8 @@ import org.folio.circulation.support.http.server.WebContext;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.format.ISODateTimeFormat;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import api.support.APITestContext;
 import io.vertx.core.AbstractVerticle;
@@ -45,8 +47,6 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.BodyHandler;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class FakeStorageModule extends AbstractVerticle {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
@@ -215,8 +215,7 @@ public class FakeStorageModule extends AbstractVerticle {
 
         log.debug("Created {} resource: {}", recordTypeName, id);
 
-        new CreatedJsonResponseResult(body, null)
-          .writeTo(routingContext.response());
+        created(body).writeTo(routingContext.response());
       } else {
         final Result<Object> checkConstraint = constraint.apply(existingRecords.values(), body);
 
@@ -225,8 +224,7 @@ public class FakeStorageModule extends AbstractVerticle {
 
           log.debug("Created {} resource: {}", recordTypeName, id);
 
-          new CreatedJsonResponseResult(body, null)
-            .writeTo(routingContext.response());
+          created(body).writeTo(routingContext.response());
         } else {
           checkConstraint.cause().writeTo(routingContext.response());
         }
