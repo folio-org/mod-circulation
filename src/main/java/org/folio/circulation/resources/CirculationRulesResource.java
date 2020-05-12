@@ -8,8 +8,10 @@ import static org.apache.commons.lang3.exception.ExceptionUtils.getStackTrace;
 import static org.folio.circulation.resources.AbstractCirculationRulesEngineResource.clearCache;
 import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
 import static org.folio.circulation.support.Result.combine;
+import static org.folio.circulation.support.Result.of;
 import static org.folio.circulation.support.http.server.JsonHttpResponse.ok;
 import static org.folio.circulation.support.http.server.JsonHttpResponse.unprocessableEntity;
+import static org.folio.circulation.support.http.server.NoContentResponse.noContent;
 import static org.folio.circulation.support.http.server.ServerErrorResponse.internalError;
 
 import java.lang.invoke.MethodHandles;
@@ -28,11 +30,11 @@ import org.folio.circulation.rules.CirculationRulesParser;
 import org.folio.circulation.rules.Text2Drools;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
+import org.folio.circulation.support.ForwardOnFailure;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.http.client.PageLimit;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.server.ForwardResponse;
-import org.folio.circulation.support.http.server.SuccessResponse;
 import org.folio.circulation.support.http.server.WebContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -126,6 +128,8 @@ public class CirculationRulesResource extends Resource {
   private void proceedWithUpdate(Map<String, Set<String>> existingPoliciesIds,
     RoutingContext routingContext, Clients clients) {
 
+    final WebContext webContext = new WebContext(routingContext);
+
     JsonObject rulesInput;
     try {
       // try to convert, do not safe if conversion fails
@@ -143,17 +147,20 @@ public class CirculationRulesResource extends Resource {
       internalError(routingContext.response(), getStackTrace(e));
       return;
     }
-    clearCache(new WebContext(routingContext).getTenantId());
-    clearCache(new WebContext(routingContext).getTenantId());
+
+    clearCache(webContext.getTenantId());
+    clearCache(webContext.getTenantId());
 
     clients.circulationRulesStorage().put(rulesInput.copy())
-      .thenAccept(res -> res.applySideEffect(response -> {
-        if (response.getStatusCode() == 204) {
-          SuccessResponse.noContent(routingContext.response());
-        } else {
-          ForwardResponse.forward(routingContext.response(), response);
-        }
-      }, cause -> cause.writeTo(routingContext.response())));
+      .thenApply(this::failWhenResponseOtherThanNoContent)
+      .thenApply(result -> result.map(response -> noContent()))
+      .thenAccept(webContext::writeResultToHttpResponse);
+  }
+
+  private Result<Response> failWhenResponseOtherThanNoContent(Result<Response> result) {
+    return result.failWhen(
+      response -> of(() -> response.getStatusCode() != 204),
+      ForwardOnFailure::new);
   }
 
   private void validatePolicy(Map<String, Set<String>> existingPoliciesIds,

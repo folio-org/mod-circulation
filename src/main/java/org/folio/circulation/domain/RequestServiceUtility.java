@@ -12,7 +12,6 @@ import java.util.Objects;
 import java.util.Optional;
 
 import org.folio.circulation.domain.policy.RequestPolicy;
-import org.folio.circulation.support.ResponseWritableResult;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.http.server.ValidationError;
 
@@ -57,7 +56,7 @@ public class RequestServiceUtility {
     }
   }
 
-  private static ResponseWritableResult<RequestAndRelatedRecords> failureDisallowedForRequestType(
+  private static Result<RequestAndRelatedRecords> failureDisallowedForRequestType(
     RequestType requestType) {
 
     final String requestTypeName = requestType.getValue();

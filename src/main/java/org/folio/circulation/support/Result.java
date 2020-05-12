@@ -298,7 +298,7 @@ public interface Result<T> {
     return new SuccessfulResult<>(value);
   }
 
-  static <T> ResponseWritableResult<T> failed(HttpFailure cause) {
+  static <T> Result<T> failed(HttpFailure cause) {
     return new FailedResult<>(cause);
   }
 
@@ -349,6 +349,19 @@ public interface Result<T> {
    */
   default <U> Result<U> map(Function<T, U> map) {
     return next(value -> succeeded(map.apply(value)));
+  }
+
+  /**
+   * Map a successful result to a new fixed value
+   *
+   * Responds with a new result with the supplied new value
+   * unless current result is failed or the mapping fails e.g. throws an exception
+   *
+   * @param value function to apply to value of result
+   * @return success when result succeeded and map is applied successfully, failure otherwise
+   */
+  default <U> Result<U> toFixedValue(Supplier<U> value) {
+    return map(it -> value.get());
   }
 
   /**
