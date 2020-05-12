@@ -9,6 +9,7 @@ import static org.joda.time.DateTimeZone.UTC;
 import static org.joda.time.Minutes.minutesBetween;
 
 import java.util.Collection;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.domain.policy.LoanPolicyRepository;
@@ -49,7 +50,7 @@ public class OverduePeriodCalculatorService {
   }
 
   CompletableFuture<Result<Integer>> getOverdueMinutes(Loan loan, DateTime systemTime, boolean shouldCountClosedPeriods) {
-    return shouldCountClosedPeriods
+    return shouldCountClosedPeriods || getItemLocationPrimaryServicePoint(loan) == null
       ? minutesOverdueIncludingClosedPeriods(loan, systemTime)
       : minutesOverdueExcludingClosedPeriods(loan, systemTime);
   }
@@ -61,8 +62,9 @@ public class OverduePeriodCalculatorService {
 
   private CompletableFuture<Result<Integer>> minutesOverdueExcludingClosedPeriods(Loan loan, DateTime returnDate) {
     DateTime dueDate = loan.getDueDate();
+    String itemLocationPrimaryServicePoint = getItemLocationPrimaryServicePoint(loan).toString();
     return calendarRepository
-      .fetchOpeningDaysBetweenDates(loan.getCheckoutServicePointId(), dueDate, returnDate, false)
+      .fetchOpeningDaysBetweenDates(itemLocationPrimaryServicePoint, dueDate, returnDate, false)
       .thenApply(r -> r.next(openingDays -> getOpeningDaysDurationMinutes(
         openingDays, dueDate.toLocalDateTime(), returnDate.toLocalDateTime())));
   }
@@ -153,4 +155,7 @@ public class OverduePeriodCalculatorService {
     return loan.getLoanPolicy().getGracePeriod().toMinutes();
   }
 
+  private UUID getItemLocationPrimaryServicePoint(Loan loan) {
+    return loan.getItem().getLocation().getPrimaryServicePointId();
+  }
 }
