@@ -14,9 +14,15 @@ public final class FeeFineAccountFixture {
   private final ResourceClient accountsClient = forAccounts();
   private final ResourceClient accountActionsClient = forFeeFineActions();
 
-  public JsonObject getLostItemFeeAccountForLoan(UUID loanId) {
+  public JsonObject getLostItemFeeAccount(UUID loanId) {
     return accountsClient.getMany(exactMatch("loanId", loanId.toString())
       .and(exactMatch("feeFineType", "Lost item fee")))
+      .getFirst();
+  }
+
+  public JsonObject getLostItemProcessingFeeAccount(UUID loanId) {
+    return accountsClient.getMany(exactMatch("loanId", loanId.toString())
+      .and(exactMatch("feeFineType", "Lost item processing fee")))
       .getFirst();
   }
 
@@ -60,5 +66,13 @@ public final class FeeFineAccountFixture {
       .put("remaining", remaining)
       .put("status", new JsonObject().put("name", accountStatus))
       .put("paymentStatus", new JsonObject().put("name", actionType)));
+  }
+
+  public void transfer(JsonObject accountJson, double amount) {
+    transfer(accountJson.getString("id"), amount);
+  }
+
+  public void pay(JsonObject accountJson, double amount) {
+    pay(accountJson.getString("id"), amount);
   }
 }

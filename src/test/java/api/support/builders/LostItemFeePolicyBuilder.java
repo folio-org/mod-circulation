@@ -431,6 +431,26 @@ public class LostItemFeePolicyBuilder extends JsonBuilder implements Builder {
     return withLostItemReturned("Remove");
   }
 
+  public LostItemFeePolicyBuilder withNoFeeRefundInterval() {
+    return new LostItemFeePolicyBuilder(
+      this.id,
+      this.name,
+      this.description,
+      this.itemAgedLostOverdue,
+      this.patronBilledAfterAgedLost,
+      this.chargeAmountItem,
+      this.lostItemProcessingFee,
+      this.chargeAmountItemPatron,
+      this.chargeAmountItemSystem,
+      this.lostItemChargeFeeFine,
+      this.returnedLostItemProcessingFee,
+      this.replacedLostItemProcessingFee,
+      this.replacementProcessingFee,
+      this.replacementAllowed,
+      this.lostItemReturned,
+      null);
+  }
+
   private LostItemFeePolicyBuilder withFeeRefundInterval(int duration, String intervalId) {
     return new LostItemFeePolicyBuilder(
       this.id,

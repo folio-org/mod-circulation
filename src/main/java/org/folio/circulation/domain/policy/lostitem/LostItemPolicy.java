@@ -59,7 +59,7 @@ public class LostItemPolicy extends Policy {
 
   private static boolean getChargeOverdueFineProperty(JsonObject lostItemPolicy) {
     final String lostItemReturned = lostItemPolicy.getString("lostItemReturned");
-    return lostItemReturned != null && "charge".equals(lostItemReturned.toLowerCase());
+    return "charge".equalsIgnoreCase(lostItemReturned);
   }
 
   private static TimePeriod getFeeRefundInterval(JsonObject policy) {
@@ -112,8 +112,8 @@ public class LostItemPolicy extends Policy {
   public boolean shouldRefundFees(DateTime lostDateTime) {
     final DateTime now = ClockManager.getClockManager().getDateTime();
 
-    return feeRefundInterval != null && feeRefundInterval
-      .between(lostDateTime, now) > feeRefundInterval.getDuration();
+    return feeRefundInterval == null || feeRefundInterval
+      .between(lostDateTime, now) <= feeRefundInterval.getDuration();
   }
 
   public boolean isRefundProcessingFeeWhenReturned() {

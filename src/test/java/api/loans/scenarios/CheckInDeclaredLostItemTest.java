@@ -94,10 +94,18 @@ public class CheckInDeclaredLostItemTest extends APITests {
 
     declareItemLost();
 
+    feeFineAccountFixture.pay(feeFineAccountFixture
+      .getLostItemProcessingFeeAccount(loan.getId()), processingFee);
+
     checkInFixture.checkInByBarcode(item);
 
-    verifyLostItemProcessingFeeAccount(isAccountOpen(processingFee));
-    verifyLostItemProcessingFeeAccountAction(not(isCloseActionCreated(processingFee)));
+    verifyLostItemProcessingFeeAccount(allOf(
+      hasJsonPath("amount", processingFee),
+      hasJsonPath("remaining", 0.0),
+      hasJsonPath("status.name", "Closed"),
+      hasJsonPath("paymentStatus.name", "Paid fully")));
+    verifyLostItemProcessingFeeAccountAction(
+      not(arePaymentRefundActionsCreated(processingFee)));
   }
 
   @Test
@@ -109,15 +117,59 @@ public class CheckInDeclaredLostItemTest extends APITests {
 
     declareItemLost();
 
+    feeFineAccountFixture.transfer(feeFineAccountFixture
+      .getLostItemFeeAccount(loan.getId()), setCostFee);
+    feeFineAccountFixture.pay(feeFineAccountFixture
+      .getLostItemProcessingFeeAccount(loan.getId()), processingFee);
+
     mockClockManagerToReturnFixedDateTime(DateTime.now(DateTimeZone.UTC).plusMinutes(2));
 
     checkInFixture.checkInByBarcode(item);
 
-    verifyLostItemFeeAccount(isAccountOpen(setCostFee));
-    verifyLostItemFeeAccountAction(not(isCloseActionCreated(setCostFee)));
+    verifyLostItemFeeAccount(allOf(
+      hasJsonPath("amount", setCostFee),
+      hasJsonPath("remaining", 0.0),
+      hasJsonPath("status.name", "Closed"),
+      hasJsonPath("paymentStatus.name", "Transferred fully")));
+    verifyLostItemFeeAccountAction(
+      not(areTransferRefundActionsCreated(setCostFee)));
 
-    verifyLostItemProcessingFeeAccount(isAccountOpen(processingFee));
-    verifyLostItemProcessingFeeAccountAction(not(isCloseActionCreated(processingFee)));
+    verifyLostItemProcessingFeeAccount(allOf(
+      hasJsonPath("amount", processingFee),
+      hasJsonPath("remaining", 0.0),
+      hasJsonPath("status.name", "Closed"),
+      hasJsonPath("paymentStatus.name", "Paid fully")));
+    verifyLostItemProcessingFeeAccountAction(
+      not(arePaymentRefundActionsCreated(processingFee)));
+  }
+
+  @Test
+  public void feesAreRefundedIfRefundPeriodNotSet() {
+    final double setCostFee = 10.55;
+    final double processingFee = 12.99;
+
+    useLostItemPolicy(lostItemFeePoliciesFixture.create(
+      lostItemFeePoliciesFixture.facultyStandardPolicy()
+        .withName("Test check in")
+        .chargeProcessingFee()
+        .withLostItemProcessingFee(processingFee)
+        .withSetCost(setCostFee)
+        .withNoFeeRefundInterval()).getId());
+
+    declareItemLost();
+
+    feeFineAccountFixture.transfer(feeFineAccountFixture
+      .getLostItemFeeAccount(loan.getId()), setCostFee);
+    feeFineAccountFixture.pay(feeFineAccountFixture
+      .getLostItemProcessingFeeAccount(loan.getId()), processingFee);
+
+    checkInFixture.checkInByBarcode(item);
+
+    verifyLostItemFeeAccount(isAccountRefundedFully(setCostFee));
+    verifyLostItemFeeAccountAction(areTransferRefundActionsCreated(setCostFee));
+
+    verifyLostItemProcessingFeeAccount(isAccountRefundedFully(processingFee));
+    verifyLostItemProcessingFeeAccountAction(arePaymentRefundActionsCreated(processingFee));
   }
 
   @Test
@@ -146,7 +198,7 @@ public class CheckInDeclaredLostItemTest extends APITests {
     declareItemLost();
 
     final JsonObject lostItemFeeAccount = feeFineAccountFixture
-      .getLostItemFeeAccountForLoan(loan.getId());
+      .getLostItemFeeAccount(loan.getId());
     feeFineAccountFixture.transfer(lostItemFeeAccount.getString("id"), setCostFee);
 
     checkInFixture.checkInByBarcode(item);
@@ -168,7 +220,7 @@ public class CheckInDeclaredLostItemTest extends APITests {
     declareItemLost();
 
     final JsonObject lostItemFeeAccount = feeFineAccountFixture
-      .getLostItemFeeAccountForLoan(loan.getId());
+      .getLostItemFeeAccount(loan.getId());
     feeFineAccountFixture.pay(lostItemFeeAccount.getString("id"), setCostFee);
 
     checkInFixture.checkInByBarcode(item);
@@ -192,9 +244,9 @@ public class CheckInDeclaredLostItemTest extends APITests {
     declareItemLost();
 
     final JsonObject lostItemFeeAccount = feeFineAccountFixture
-      .getLostItemFeeAccountForLoan(loan.getId());
-    feeFineAccountFixture.transfer(lostItemFeeAccount.getString("id"), transferAmount);
-    feeFineAccountFixture.pay(lostItemFeeAccount.getString("id"), paymentAmount);
+      .getLostItemFeeAccount(loan.getId());
+    feeFineAccountFixture.transfer(lostItemFeeAccount, transferAmount);
+    feeFineAccountFixture.pay(lostItemFeeAccount, paymentAmount);
 
     checkInFixture.checkInByBarcode(item);
 
@@ -219,9 +271,9 @@ public class CheckInDeclaredLostItemTest extends APITests {
     declareItemLost();
 
     final JsonObject lostItemFeeAccount = feeFineAccountFixture
-      .getLostItemFeeAccountForLoan(loan.getId());
-    feeFineAccountFixture.transfer(lostItemFeeAccount.getString("id"), transferAmount);
-    feeFineAccountFixture.pay(lostItemFeeAccount.getString("id"), paymentAmount);
+      .getLostItemFeeAccount(loan.getId());
+    feeFineAccountFixture.transfer(lostItemFeeAccount, transferAmount);
+    feeFineAccountFixture.pay(lostItemFeeAccount, paymentAmount);
 
     checkInFixture.checkInByBarcode(item);
 

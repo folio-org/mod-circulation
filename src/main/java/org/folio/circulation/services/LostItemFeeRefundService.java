@@ -60,12 +60,12 @@ public class LostItemFeeRefundService {
 
     return fetchLostItemPolicy(succeeded(context))
       .thenCompose(contextResult -> contextResult.after(refData -> {
-        if (refData.lostItemPolicy.shouldRefundFees(refData.loan.getDeclareLostDateTime())) {
+        if (!refData.lostItemPolicy.shouldRefundFees(refData.loan.getDeclareLostDateTime())) {
           log.debug("Refund interval has exceeded for loan [{}]", refData.loan.getId());
           return completedFuture(succeeded(null));
         }
 
-        return fetchAccountsForLoan(contextResult)
+        return fetchAccountsAndActionsForLoan(contextResult)
           .thenCompose(r -> r.after(notUsed -> feeFineService
             .refundAndCloseAccounts(getAccountsToRefund(context))))
           .thenApply(r -> r.map(notUsed -> null));
@@ -86,14 +86,14 @@ public class LostItemFeeRefundService {
       .collect(Collectors.toList());
   }
 
-  private CompletableFuture<Result<ReferenceDataContext>> fetchAccountsForLoan(
+  private CompletableFuture<Result<ReferenceDataContext>> fetchAccountsAndActionsForLoan(
     Result<ReferenceDataContext> contextResult) {
 
     return contextResult.after(context -> {
       final Result<CqlQuery> fetchQuery = exactMatch("loanId", context.loan.getId())
         .combine(exactMatchAny("feeFineType", LOST_ITEM_FEE_TYPES), CqlQuery::and);
 
-      return accountRepository.findAccounts(fetchQuery)
+      return accountRepository.findAccountsAndActions(fetchQuery)
         .thenApply(r -> r.map(context::withAccounts));
     });
   }
