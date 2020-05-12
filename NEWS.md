@@ -1,3 +1,7 @@
+## 18.0.9 2020-05-12
+
+* Provides using primary service point for calculating opening hours for overdue fine (CIRC-736)
+
 ## 18.0.8 2020-04-24
 
 * Fix issue with overdue fine calculating when closed time is not counting (CIRC-723)
