@@ -238,6 +238,9 @@ public class CheckInDeclaredLostItemTest extends APITests {
   public void shouldChargeOverdueFineWhenAllowed() {
     final double processingFee = 12.99;
 
+    // Create overdue fine type
+    feeFineTypeFixture.overdueFine();
+
     useLostItemPolicy(lostItemFeePoliciesFixture.create(
       lostItemFeePoliciesFixture.facultyStandardPolicy()
         .withName("Test check in")
@@ -262,6 +265,9 @@ public class CheckInDeclaredLostItemTest extends APITests {
   @Test
   public void shouldNotChargeOverdueFineWhenDisallowed() {
     final double processingFee = 12.99;
+
+    // Create overdue fine type
+    feeFineTypeFixture.overdueFine();
 
     useLostItemPolicy(lostItemFeePoliciesFixture.create(
       lostItemFeePoliciesFixture.facultyStandardPolicy()

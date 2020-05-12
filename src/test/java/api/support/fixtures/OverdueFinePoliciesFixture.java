@@ -13,14 +13,10 @@ import io.vertx.core.json.JsonObject;
 
 public class OverdueFinePoliciesFixture {
   private final RecordCreator overdueFinePolicyRecordCreator;
-  private final FeeFineTypeFixture feeFineTypeFixture;
-  private final FeeFineOwnerFixture feeFineOwner;
 
   public OverdueFinePoliciesFixture() {
     overdueFinePolicyRecordCreator = new RecordCreator(forOverdueFinePolicies(),
       reason -> getProperty(reason, "name"));
-    feeFineTypeFixture = new FeeFineTypeFixture();
-    feeFineOwner = new FeeFineOwnerFixture();
   }
 
   public IndividualResource facultyStandard() {
@@ -45,7 +41,6 @@ public class OverdueFinePoliciesFixture {
       .withGracePeriodRecall(false)
       .withMaxOverdueRecallFine(50.00);
 
-    createReferenceData();
     return overdueFinePolicyRecordCreator.createIfAbsent(facultyStandard);
   }
 
@@ -71,7 +66,6 @@ public class OverdueFinePoliciesFixture {
         .withGracePeriodRecall(false)
         .withMaxOverdueRecallFine(50.00);
 
-    createReferenceData();
     return overdueFinePolicyRecordCreator.createIfAbsent(facultyStandard);
   }
 
@@ -95,7 +89,6 @@ public class OverdueFinePoliciesFixture {
       .withGracePeriodRecall(false)
       .withMaxOverdueRecallFine(50.00);
 
-    createReferenceData();
     return overdueFinePolicyRecordCreator.createIfAbsent(overdueFinePolicyBuilder);
   }
 
@@ -116,10 +109,5 @@ public class OverdueFinePoliciesFixture {
 
   public void cleanUp() {
     overdueFinePolicyRecordCreator.cleanUp();
-  }
-
-  private void createReferenceData() {
-    feeFineTypeFixture.overdueFine();
-    feeFineOwner.cd1Owner();
   }
 }
