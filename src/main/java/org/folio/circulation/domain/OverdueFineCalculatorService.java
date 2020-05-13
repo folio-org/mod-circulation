@@ -2,12 +2,15 @@ package org.folio.circulation.domain;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.apache.commons.lang3.BooleanUtils.isFalse;
+import static org.folio.circulation.domain.OverdueFineCalculatorService.Scenario.CHECKIN;
+import static org.folio.circulation.support.Result.ofAsync;
 import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.ResultBinding.mapResult;
 
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Function;
 import java.util.function.Predicate;
 
 import org.apache.commons.lang3.ObjectUtils;
@@ -71,12 +74,13 @@ public class OverdueFineCalculatorService {
     CheckInProcessRecords records, String userId) {
 
     return shouldChargeOverdueFineOnCheckIn(records)
-      .thenCompose(r -> r.after(shouldChargeOverdueFine -> {
-        if (!shouldChargeOverdueFine) {
-          return completedFuture(succeeded(null));
-        }
-        return createOverdueFineIfNecessary(records.getLoan(), Scenario.CHECKIN, userId);
-      }));
+      .thenCompose(r -> r.afterWhen(liftToFutureResult(),
+          b -> createOverdueFineIfNecessary(records.getLoan(), CHECKIN, userId),
+          b -> completedFuture(succeeded(null))));
+  }
+
+  private <T> Function<T, CompletableFuture<Result<T>>> liftToFutureResult() {
+    return b -> ofAsync(() -> b);
   }
 
   private CompletableFuture<Result<Boolean>> shouldChargeOverdueFineOnCheckIn(
@@ -280,7 +284,7 @@ public class OverdueFineCalculatorService {
     CHECKIN(policy -> !policy.isUnknown()),
     RENEWAL(policy -> !policy.isUnknown() && isFalse(policy.getForgiveFineForRenewals()));
 
-    private Predicate<OverdueFinePolicy> shouldCreateFine;
+    private final Predicate<OverdueFinePolicy> shouldCreateFine;
 
     Scenario(Predicate<OverdueFinePolicy> shouldCreateFine) {
       this.shouldCreateFine = shouldCreateFine;
