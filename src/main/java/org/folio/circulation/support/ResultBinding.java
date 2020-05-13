@@ -1,5 +1,8 @@
 package org.folio.circulation.support;
 
+import static org.folio.circulation.support.Result.ofAsync;
+
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
 public class ResultBinding {
@@ -15,5 +18,9 @@ public class ResultBinding {
     Function<T, Result<R>> mapper) {
 
     return result -> result.next(mapper);
+  }
+
+  public static <T> Function<T, CompletableFuture<Result<T>>> toFutureResult() {
+    return value -> ofAsync(() -> value);
   }
 }
