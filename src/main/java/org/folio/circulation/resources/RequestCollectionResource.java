@@ -34,8 +34,8 @@ import org.folio.circulation.domain.validation.UserManualBlocksValidator;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.FindWithCqlQuery;
 import org.folio.circulation.support.ItemRepository;
-import org.folio.circulation.support.NoContentResult;
 import org.folio.circulation.support.http.server.JsonHttpResponse;
+import org.folio.circulation.support.http.server.NoContentResponse;
 import org.folio.circulation.support.http.server.WebContext;
 
 import io.vertx.core.http.HttpClient;
@@ -165,8 +165,8 @@ public class RequestCollectionResource extends CollectionResource {
         updateRequestService::replaceRequest,
         createRequestService::createRequest))
       .thenApply(r -> r.next(requestScheduledNoticeService::rescheduleRequestNotices))
-      .thenApply(NoContentResult::from)
-      .thenAccept(r -> r.writeTo(routingContext.response()));
+      .thenApply(r -> r.toFixedValue(NoContentResponse::noContent))
+      .thenAccept(context::writeResultToHttpResponse);
   }
 
   void get(RoutingContext routingContext) {
@@ -201,8 +201,8 @@ public class RequestCollectionResource extends CollectionResource {
     requestRepository.getById(id)
       .thenComposeAsync(r -> r.after(requestRepository::delete))
       .thenComposeAsync(r -> r.after(updateRequestQueue::onDeletion))
-      .thenApply(NoContentResult::from)
-      .thenAccept(r -> r.writeTo(routingContext.response()));
+      .thenApply(r -> r.toFixedValue(NoContentResponse::noContent))
+      .thenAccept(context::writeResultToHttpResponse);
   }
 
   void getMany(RoutingContext routingContext) {
@@ -224,8 +224,8 @@ public class RequestCollectionResource extends CollectionResource {
     Clients clients = Clients.create(context, client);
 
     clients.requestsStorage().delete()
-      .thenApply(NoContentResult::from)
-      .thenAccept(r -> r.writeTo(routingContext.response()));
+      .thenApply(r -> r.toFixedValue(NoContentResponse::noContent))
+      .thenAccept(context::writeResultToHttpResponse);
   }
 
   void move(RoutingContext routingContext) {

@@ -18,10 +18,10 @@ import org.folio.circulation.domain.representations.ChangeDueDateRequest;
 import org.folio.circulation.domain.validation.ItemStatusValidator;
 import org.folio.circulation.domain.validation.LoanValidator;
 import org.folio.circulation.support.Clients;
-import org.folio.circulation.support.NoContentResult;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.RouteRegistration;
 import org.folio.circulation.support.ValidationErrorFailure;
+import org.folio.circulation.support.http.server.NoContentResponse;
 import org.folio.circulation.support.http.server.WebContext;
 import org.joda.time.DateTime;
 
@@ -42,10 +42,12 @@ public class ChangeDueDateResource extends Resource {
   }
 
   private void changeDueDate(RoutingContext routingContext) {
+    final WebContext context = new WebContext(routingContext);
+
     createChangeDueDateRequest(routingContext)
       .after(r -> processChangeDueDate(r, routingContext))
-      .thenApply(NoContentResult::from)
-      .thenAccept(r -> r.writeTo(routingContext.response()));
+      .thenApply(r -> r.toFixedValue(NoContentResponse::noContent))
+      .thenAccept(context::writeResultToHttpResponse);
   }
 
   private CompletableFuture<Result<LoanAndRelatedRecords>> processChangeDueDate(

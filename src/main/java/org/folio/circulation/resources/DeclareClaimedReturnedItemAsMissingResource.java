@@ -11,9 +11,9 @@ import org.folio.circulation.domain.representations.ChangeItemStatusRequest;
 import org.folio.circulation.domain.validation.NotInItemStatusValidator;
 import org.folio.circulation.services.ChangeItemStatusService;
 import org.folio.circulation.support.Clients;
-import org.folio.circulation.support.NoContentResult;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.RouteRegistration;
+import org.folio.circulation.support.http.server.NoContentResponse;
 import org.folio.circulation.support.http.server.WebContext;
 
 import io.vertx.core.http.HttpClient;
@@ -34,10 +34,12 @@ public class DeclareClaimedReturnedItemAsMissingResource extends Resource {
   }
 
   private void declareClaimedReturnedItemAsMissing(RoutingContext routingContext) {
+    final WebContext context = new WebContext(routingContext);
+
     createRequest(routingContext)
       .after(request -> processDeclareClaimedReturnedItemAsMissing(routingContext, request))
-      .thenApply(NoContentResult::from)
-      .thenAccept(result -> result.writeTo(routingContext.response()));
+      .thenApply(r -> r.toFixedValue(NoContentResponse::noContent))
+      .thenAccept(context::writeResultToHttpResponse);
   }
 
   private CompletableFuture<Result<Loan>> processDeclareClaimedReturnedItemAsMissing(

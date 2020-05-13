@@ -39,7 +39,6 @@ public class JsonHttpResponse implements HttpResponse {
     this.location = location;
   }
 
-
   @Override
   public void writeTo(HttpServerResponse response) {
     String json = Json.encodePrettily(body);
