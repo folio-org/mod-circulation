@@ -11,8 +11,8 @@ import org.folio.circulation.services.EventPublishingService;
 import org.folio.circulation.services.LostItemFeeChargingService;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.ItemRepository;
-import org.folio.circulation.support.NoContentResult;
 import org.folio.circulation.support.Result;
+import org.folio.circulation.support.http.server.NoContentResponse;
 import org.folio.circulation.support.http.server.WebContext;
 
 import io.vertx.core.http.HttpClient;
@@ -32,6 +32,7 @@ public class DeclareLostResource extends Resource {
 
   private void declareLost(RoutingContext routingContext) {
     final WebContext context = new WebContext(routingContext);
+
     final Clients clients = Clients.create(context, client);
     final LoanRepository loanRepository = new LoanRepository(clients);
     final ItemRepository itemRepository = new ItemRepository(clients, true, true, true);
@@ -47,9 +48,9 @@ public class DeclareLostResource extends Resource {
         .thenCompose(r -> r.after(loan -> lostItemFeeService
           .chargeLostItemFees(loan, request, context.getUserId()))))
       .thenCompose(r -> r.after(storeLoanAndItem::updateLoanAndItemInStorage))
-      .thenApplyAsync(r -> r.after(eventPublishingService::publishDeclaredLostEvent))
-      .thenCompose(r -> r.thenApply(NoContentResult::from))
-      .thenAccept(result -> result.writeTo(routingContext.response()));
+      .thenComposeAsync(r -> r.after(eventPublishingService::publishDeclaredLostEvent))
+      .thenApply(r -> r.toFixedValue(NoContentResponse::noContent))
+      .thenAccept(context::writeResultToHttpResponse);
   }
 
   private Result<Loan> declareItemLost(Result<Loan> loanResult,

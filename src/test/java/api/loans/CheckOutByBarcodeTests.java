@@ -22,6 +22,7 @@ import static api.support.matchers.UUIDMatcher.is;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static api.support.matchers.ValidationErrorMatchers.hasMessageContaining;
+import static org.folio.circulation.domain.policy.Period.months;
 import static org.folio.circulation.domain.representations.ItemProperties.CALL_NUMBER_COMPONENTS;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.is;
@@ -62,7 +63,7 @@ import io.vertx.core.json.JsonObject;
 public class CheckOutByBarcodeTests extends APITests {
   @Test
   public void canCheckOutUsingItemAndUserBarcode() {
-     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet(
+    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet(
       item -> item
         .withEnumeration("v.70:no.1-6")
         .withChronology("1987:Jan.-June")
@@ -90,6 +91,9 @@ public class CheckOutByBarcodeTests extends APITests {
 
     assertThat("item ID should match barcode",
       loan.getString("itemId"), is(smallAngryPlanet.getId()));
+
+    assertThat("itemEffectiveLocationIdAtCheckOut should match item effective location ID",
+      loan.getString("itemEffectiveLocationIdAtCheckOut"), is(smallAngryPlanet.getJson().getString("effectiveLocationId")));
 
     assertThat("status should be open",
       loan.getJsonObject("status").getString("name"), is("Open"));
@@ -1200,26 +1204,23 @@ public class CheckOutByBarcodeTests extends APITests {
   }
 
   private IndividualResource prepareLoanPolicyWithItemLimit(int itemLimit) {
-
     return loanPoliciesFixture.create(
       new LoanPolicyBuilder()
         .withName("Loan Policy with item limit")
         .withItemLimit(itemLimit)
-        .rolling(Period.months(2))
+        .rolling(months(2))
         .renewFromCurrentDueDate());
   }
 
   private IndividualResource prepareLoanPolicyWithoutItemLimit() {
-
     return loanPoliciesFixture.create(
       new LoanPolicyBuilder()
         .withName("Loan Policy without item limit")
-        .rolling(Period.months(2))
+        .rolling(months(2))
         .renewFromCurrentDueDate());
   }
 
   private String createRules(String ruleCondition) {
-
     final String loanPolicyWithItemLimitId = prepareLoanPolicyWithItemLimit(1).getId().toString();
     final String loanPolicyWithoutItemLimitId = prepareLoanPolicyWithoutItemLimit().getId().toString();
     final String anyRequestPolicy = requestPoliciesFixture.allowAllRequestPolicy().getId().toString();

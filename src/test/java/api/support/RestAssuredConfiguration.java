@@ -34,7 +34,7 @@ public class RestAssuredConfiguration {
   }
 
   public static RequestSpecification timeoutConfig() {
-    final int defaultTimeOutInMilliseconds = 5000;
+    final int defaultTimeOutInMilliseconds = 10000;
 
     return timeoutConfig(defaultTimeOutInMilliseconds);
   }

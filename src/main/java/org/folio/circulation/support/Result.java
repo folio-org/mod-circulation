@@ -298,7 +298,7 @@ public interface Result<T> {
     return new SuccessfulResult<>(value);
   }
 
-  static <T> ResponseWritableResult<T> failed(HttpFailure cause) {
+  static <T> Result<T> failed(HttpFailure cause) {
     return new FailedResult<>(cause);
   }
 
@@ -352,6 +352,19 @@ public interface Result<T> {
   }
 
   /**
+   * Map a successful result to a new fixed value
+   *
+   * Responds with a new result with the supplied new value
+   * unless current result is failed or the mapping fails e.g. throws an exception
+   *
+   * @param value function to apply to value of result
+   * @return success when result succeeded and map is applied successfully, failure otherwise
+   */
+  default <U> Result<U> toFixedValue(Supplier<U> value) {
+    return map(it -> value.get());
+  }
+
+  /**
    * Map the cause of a failed result to a new result (of the same type)
    *
    * Responds with a new result with the outcome of applying the map to the current
@@ -379,16 +392,13 @@ public interface Result<T> {
       : other;
   }
 
-  default void applySideEffect(Consumer<T> onSuccess,
-    Consumer<HttpFailure> onFailure) {
-
+  default void applySideEffect(Consumer<T> onSuccess, Consumer<HttpFailure> onFailure) {
     if (succeeded()) {
       onSuccess.accept(value());
     }
     else {
       onFailure.accept(cause());
     }
-
   }
 
   /**

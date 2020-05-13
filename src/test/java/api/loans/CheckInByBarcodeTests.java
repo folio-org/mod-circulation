@@ -20,6 +20,8 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.core.Is.is;
+import static org.hamcrest.core.IsNot.not;
+import static org.joda.time.DateTimeZone.UTC;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -38,7 +40,6 @@ import org.hamcrest.Matcher;
 import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
 import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
 import org.joda.time.LocalDate;
 import org.joda.time.Seconds;
 import org.junit.Test;
@@ -80,14 +81,14 @@ public class CheckInByBarcodeTests extends APITests {
         .withVolume("testVolume"));
 
     final IndividualResource loan = checkOutFixture.checkOutByBarcode(nod, james,
-      new DateTime(2018, 3, 1, 13, 25, 46, DateTimeZone.UTC));
+      new DateTime(2018, 3, 1, 13, 25, 46, UTC));
 
-    DateTime expectedSystemReturnDate = DateTime.now(DateTimeZone.UTC);
+    DateTime expectedSystemReturnDate = DateTime.now(UTC);
 
     final CheckInByBarcodeResponse checkInResponse = checkInFixture.checkInByBarcode(
       new CheckInByBarcodeRequestBuilder()
         .forItem(nod)
-        .on(new DateTime(2018, 3, 5, 14 ,23, 41, DateTimeZone.UTC))
+        .on(new DateTime(2018, 3, 5, 14 ,23, 41, UTC))
         .at(checkInServicePointId));
 
     JsonObject loanRepresentation = checkInResponse.getLoan();
@@ -166,11 +167,50 @@ public class CheckInByBarcodeTests extends APITests {
     verifyCheckInOperationRecorded(nod.getId(), checkInServicePointId);
   }
 
+@Test
+public void verifyItemEffectiveLocationIdAtCheckOut() {
+
+  final IndividualResource james = usersFixture.james();
+
+  final UUID checkInServicePointId = servicePointsFixture.cd1().getId();
+
+  final IndividualResource homeLocation = locationsFixture.basedUponExampleLocation(
+    item -> item.withPrimaryServicePoint(checkInServicePointId));
+
+  final String anotherLocationId = locationsFixture.thirdFloor().getId().toString();
+
+  final IndividualResource nod = itemsFixture.basedUponNod(
+    item -> item
+      .withTemporaryLocation(homeLocation.getId()));
+
+  checkOutFixture.checkOutByBarcode(nod, james);
+
+  // Change the item's effective location to verify itemEffectiveLocationIdAtCheckOut is unchanged
+  JsonObject update = nod.getJson();
+  update.put("temporaryLocationId", anotherLocationId);
+  itemsClient.replace(nod.getId(), update);
+
+  final CheckInByBarcodeResponse checkInResponse = checkInFixture.checkInByBarcode(
+    new CheckInByBarcodeRequestBuilder()
+      .forItem(nod)
+      .at(checkInServicePointId));
+
+  JsonObject loanRepresentation = checkInResponse.getLoan();
+  JsonObject updatedNod = itemsClient.getById(nod.getId()).getJson();
+
+  assertThat("New location should not equal old location",
+    homeLocation.getId().toString(), not(anotherLocationId));
+  assertThat("The item's temporary location ID should be updated",
+    updatedNod.getString("temporaryLocationId"), is(anotherLocationId));
+  assertThat("itemEffectiveLocationIdAtCheckOut should match the original location ID at checkout",
+    loanRepresentation.getString("itemEffectiveLocationIdAtCheckOut"), is(homeLocation.getId().toString()));
+}
+
   @Test
   public void canCreateStaffSlipContextOnCheckInByBarcode() {
     InventoryItemResource item = itemsFixture.basedUponSmallAngryPlanet();
 
-    DateTime requestDate = new DateTime(2019, 7, 22, 10, 22, 54, DateTimeZone.UTC);
+    DateTime requestDate = new DateTime(2019, 7, 22, 10, 22, 54, UTC);
     IndividualResource servicePoint = servicePointsFixture.cd1();
     Address address = SiriusBlack();
     IndividualResource requester = usersFixture.steve(builder ->
@@ -192,7 +232,7 @@ public class CheckInByBarcodeTests extends APITests {
       .withDeliveryAddressType(addressTypesFixture.home().getId())
       .withTags(new RequestBuilder.Tags(asList("new", "important"))));
 
-    DateTime checkInDate = new DateTime(2019, 7, 25, 14, 23, 41, DateTimeZone.UTC);
+    DateTime checkInDate = new DateTime(2019, 7, 25, 14, 23, 41, UTC);
     CheckInByBarcodeResponse response = checkInFixture.checkInByBarcode(item, checkInDate, servicePoint.getId());
 
     User requesterUser = new User(requester.getJson());
@@ -235,7 +275,7 @@ public class CheckInByBarcodeTests extends APITests {
   @Test
   public void cannotCheckInWithoutAServicePoint() {
 
-    DateTime loanDate = new DateTime(2018, 3, 1, 13, 25, 46, DateTimeZone.UTC);
+    DateTime loanDate = new DateTime(2018, 3, 1, 13, 25, 46, UTC);
 
     final IndividualResource james = usersFixture.james();
     final IndividualResource nod = itemsFixture.basedUponNod();
@@ -257,7 +297,7 @@ public class CheckInByBarcodeTests extends APITests {
   @Test
   public void cannotCheckInWithoutAnItem() {
 
-    DateTime loanDate = new DateTime(2018, 3, 1, 13, 25, 46, DateTimeZone.UTC);
+    DateTime loanDate = new DateTime(2018, 3, 1, 13, 25, 46, UTC);
 
     final IndividualResource james = usersFixture.james();
     final IndividualResource nod = itemsFixture.basedUponNod();
@@ -279,7 +319,7 @@ public class CheckInByBarcodeTests extends APITests {
   @Test
   public void cannotCheckInWithoutACheckInDate() {
 
-    DateTime loanDate = new DateTime(2018, 3, 1, 13, 25, 46, DateTimeZone.UTC);
+    DateTime loanDate = new DateTime(2018, 3, 1, 13, 25, 46, UTC);
 
     final IndividualResource james = usersFixture.james();
     final IndividualResource nod = itemsFixture.basedUponNod();
@@ -314,7 +354,7 @@ public class CheckInByBarcodeTests extends APITests {
         .withVolume("testVolume"));
 
     final CheckInByBarcodeResponse checkInResponse = checkInFixture.checkInByBarcode(
-      nod, new DateTime(2018, 3, 5, 14, 23, 41, DateTimeZone.UTC),
+      nod, new DateTime(2018, 3, 5, 14, 23, 41, UTC),
       checkInServicePointId);
 
     assertThat("Response should not include a loan",
@@ -347,7 +387,7 @@ public class CheckInByBarcodeTests extends APITests {
   @Test
   public void canCheckInAnItemTwice() {
 
-    DateTime loanDate = new DateTime(2018, 3, 1, 13, 25, 46, DateTimeZone.UTC);
+    DateTime loanDate = new DateTime(2018, 3, 1, 13, 25, 46, UTC);
 
     final IndividualResource james = usersFixture.james();
 
@@ -366,11 +406,11 @@ public class CheckInByBarcodeTests extends APITests {
     checkOutFixture.checkOutByBarcode(nod, james, loanDate);
 
     checkInFixture.checkInByBarcode(nod,
-      new DateTime(2018, 3, 5, 14, 23, 41, DateTimeZone.UTC),
+      new DateTime(2018, 3, 5, 14, 23, 41, UTC),
       checkInServicePointId);
 
     final CheckInByBarcodeResponse checkInResponse = checkInFixture.checkInByBarcode(
-      nod, new DateTime(2018, 3, 5, 14, 23, 41, DateTimeZone.UTC),
+      nod, new DateTime(2018, 3, 5, 14, 23, 41, UTC),
       checkInServicePointId);
 
     assertThat("Response should not include a loan",
@@ -419,7 +459,7 @@ public class CheckInByBarcodeTests extends APITests {
 
     use(noticePolicy);
 
-    DateTime loanDate = new DateTime(2018, 3, 1, 13, 25, 46, DateTimeZone.UTC);
+    DateTime loanDate = new DateTime(2018, 3, 1, 13, 25, 46, UTC);
 
     final IndividualResource james = usersFixture.james();
 
@@ -433,7 +473,7 @@ public class CheckInByBarcodeTests extends APITests {
 
     checkOutFixture.checkOutByBarcode(nod, james, loanDate);
 
-    DateTime checkInDate = new DateTime(2018, 3, 5, 14, 23, 41, DateTimeZone.UTC);
+    DateTime checkInDate = new DateTime(2018, 3, 5, 14, 23, 41, UTC);
     final CheckInByBarcodeResponse checkInResponse = checkInFixture.checkInByBarcode(
       new CheckInByBarcodeRequestBuilder()
         .forItem(nod)
@@ -476,7 +516,7 @@ public class CheckInByBarcodeTests extends APITests {
       builder -> builder.withTemporaryLocation(homeLocation.getId()));
 
     final CheckInByBarcodeResponse checkInResponse = checkInFixture.checkInByBarcode(
-      nod, new DateTime(2018, 3, 5, 14, 23, 41, DateTimeZone.UTC),
+      nod, new DateTime(2018, 3, 5, 14, 23, 41, UTC),
       checkInServicePointId);
 
     assertThat("Response should not include a loan",
@@ -494,7 +534,7 @@ public class CheckInByBarcodeTests extends APITests {
 
     checkOutFixture.checkOutByBarcode(item, usersFixture.jessica());
 
-    DateTime requestDate = new DateTime(2019, 7, 22, 10, 22, 54, DateTimeZone.UTC);
+    DateTime requestDate = new DateTime(2019, 7, 22, 10, 22, 54, UTC);
     UUID servicePointId = servicePointsFixture.cd1().getId();
     IndividualResource requester = usersFixture.steve();
 
@@ -521,7 +561,7 @@ public class CheckInByBarcodeTests extends APITests {
 
     use(noticePolicy);
 
-    DateTime checkInDate = new DateTime(2019, 7, 25, 14, 23, 41, DateTimeZone.UTC);
+    DateTime checkInDate = new DateTime(2019, 7, 25, 14, 23, 41, UTC);
     checkInFixture.checkInByBarcode(item, checkInDate, servicePointId);
 
     checkPatronNoticeEvent(request, requester, item, availableNoticeTemplateId);
@@ -530,7 +570,7 @@ public class CheckInByBarcodeTests extends APITests {
   @Test
   public void patronNoticeOnCheckInAfterRequestToItem() {
     InventoryItemResource item = itemsFixture.basedUponSmallAngryPlanet();
-    DateTime requestDate = new DateTime(2019, 5, 5, 10, 22, 54, DateTimeZone.UTC);
+    DateTime requestDate = new DateTime(2019, 5, 5, 10, 22, 54, UTC);
     UUID servicePointId = servicePointsFixture.cd1().getId();
     IndividualResource requester = usersFixture.steve();
 
@@ -558,7 +598,7 @@ public class CheckInByBarcodeTests extends APITests {
     use(noticePolicy);
 
     checkInFixture.checkInByBarcode(item,
-      new DateTime(2019, 5, 10, 14, 23, 41, DateTimeZone.UTC),
+      new DateTime(2019, 5, 10, 14, 23, 41, UTC),
       servicePointId);
 
     checkPatronNoticeEvent(request, requester, item, availableNoticeTemplateId);
@@ -618,8 +658,8 @@ public class CheckInByBarcodeTests extends APITests {
     final IndividualResource nod = itemsFixture.basedUponNod(item ->
       item.withPermanentLocation(homeLocation.getId()));
 
-    final IndividualResource checkedOutLoan = checkOutFixture.checkOutByBarcode(nod, james,
-      new DateTime(2020, 1, 1, 12, 0, 0, DateTimeZone.UTC));
+    checkOutFixture.checkOutByBarcode(nod, james,
+      new DateTime(2020, 1, 1, 12, 0, 0, UTC));
 
     JsonObject servicePointOwner = new JsonObject();
     servicePointOwner.put("value", homeLocation.getJson().getString("primaryServicePoint"));
@@ -642,7 +682,7 @@ public class CheckInByBarcodeTests extends APITests {
     CheckInByBarcodeResponse checkInResponse = checkInFixture.checkInByBarcode(
       new CheckInByBarcodeRequestBuilder()
         .forItem(nod)
-        .on(new DateTime(2020, 1, 25, 12, 0, 0, DateTimeZone.UTC))
+        .on(new DateTime(2020, 1, 25, 12, 0, 0, UTC))
         .at(checkInServicePointId));
     JsonObject checkedInLoan = checkInResponse.getLoan();
 
@@ -694,8 +734,8 @@ public class CheckInByBarcodeTests extends APITests {
     final IndividualResource nod = itemsFixture.basedUponNod(item ->
       item.withPermanentLocation(homeLocation.getId()));
 
-    final IndividualResource checkedOutLoan = checkOutFixture.checkOutByBarcode(nod, james,
-      new DateTime(2020, 1, 1, 12, 0, 0, DateTimeZone.UTC));
+    checkOutFixture.checkOutByBarcode(nod, james,
+      new DateTime(2020, 1, 1, 12, 0, 0, UTC));
 
     for (int i = 0; i < 10; i++) {
       feeFineOwnersClient.create(new FeeFineOwnerBuilder()
@@ -709,7 +749,9 @@ public class CheckInByBarcodeTests extends APITests {
       .until(feeFineOwnersClient::getAll, hasSize(10));
 
     JsonObject servicePointOwner = new JsonObject();
-    servicePointOwner.put("value", homeLocation.getJson().getString("primaryServicePoint"));
+    servicePointOwner.put("value", homeLocation.getJson()
+      .getString("primaryServicePoint"));
+
     servicePointOwner.put("label", "label");
     UUID servicePointOwnerId = UUID.randomUUID();
     feeFineOwnersClient.create(new FeeFineOwnerBuilder()
@@ -728,7 +770,7 @@ public class CheckInByBarcodeTests extends APITests {
     CheckInByBarcodeResponse checkInResponse = checkInFixture.checkInByBarcode(
       new CheckInByBarcodeRequestBuilder()
         .forItem(nod)
-        .on(new DateTime(2020, 1, 25, 12, 0, 0, DateTimeZone.UTC))
+        .on(new DateTime(2020, 1, 25, 12, 0, 0, UTC))
         .at(checkInServicePointId));
     JsonObject checkedInLoan = checkInResponse.getLoan();
 
@@ -761,8 +803,8 @@ public class CheckInByBarcodeTests extends APITests {
     final IndividualResource nod = itemsFixture.basedUponNod(item ->
       item.withPermanentLocation(homeLocation.getId()));
 
-    final IndividualResource checkedOutLoan = checkOutFixture.checkOutByBarcode(nod, james,
-      new DateTime(2020, 1, 1, 12, 0, 0, DateTimeZone.UTC));
+    checkOutFixture.checkOutByBarcode(nod, james,
+      new DateTime(2020, 1, 1, 12, 0, 0, UTC));
 
     final UUID servicePointForOwner = servicePointsFixture.cd2().getId();
 
@@ -784,11 +826,10 @@ public class CheckInByBarcodeTests extends APITests {
       .withAutomatic(true)
     );
 
-    CheckInByBarcodeResponse checkInResponse = checkInFixture.checkInByBarcode(
-      new CheckInByBarcodeRequestBuilder()
-        .forItem(nod)
-        .on(new DateTime(2020, 1, 25, 12, 0, 0, DateTimeZone.UTC))
-        .at(checkInServicePointId));
+    checkInFixture.checkInByBarcode(new CheckInByBarcodeRequestBuilder()
+      .forItem(nod)
+      .on(new DateTime(2020, 1, 25, 12, 0, 0, UTC))
+      .at(checkInServicePointId));
 
     Awaitility.waitAtMost(1, TimeUnit.SECONDS);
 
@@ -812,10 +853,10 @@ public class CheckInByBarcodeTests extends APITests {
     final IndividualResource nod = itemsFixture.basedUponNod(item ->
       item.withPermanentLocation(homeLocation.getId()));
 
-    DateTime checkOutDate = new DateTime(2020, 1, 15, 0, 0, 0, DateTimeZone.UTC);
+    DateTime checkOutDate = new DateTime(2020, 1, 15, 0, 0, 0, UTC);
     DateTime recallRequestExpirationDate = checkOutDate.plusDays(5);
     DateTime checkInDate = checkOutDate.plusDays(10);
-    mockClockManagerToReturnFixedDateTime(new DateTime(2020, 1, 18, 0, 0, 0, DateTimeZone.UTC));
+    mockClockManagerToReturnFixedDateTime(new DateTime(2020, 1, 18, 0, 0, 0, UTC));
 
     checkOutFixture.checkOutByBarcode(nod, james, checkOutDate);
 
@@ -894,7 +935,7 @@ public class CheckInByBarcodeTests extends APITests {
       item.withPermanentLocation(homeLocation.getId()));
 
     checkOutFixture.checkOutByBarcode(nod, james,
-      new DateTime(2020, 1, 1, 12, 0, 0, DateTimeZone.UTC));
+      new DateTime(2020, 1, 1, 12, 0, 0, UTC));
 
     JsonObject servicePointOwner = new JsonObject();
     servicePointOwner.put("value", homeLocation.getJson().getString("primaryServicePoint"));
@@ -915,7 +956,7 @@ public class CheckInByBarcodeTests extends APITests {
 
     checkInFixture.checkInByBarcode(new CheckInByBarcodeRequestBuilder()
       .forItem(nod)
-      .on(new DateTime(2020, 1, 25, 12, 0, 0, DateTimeZone.UTC))
+      .on(new DateTime(2020, 1, 25, 12, 0, 0, UTC))
       .at(checkInServicePointId));
 
     TimeUnit.SECONDS.sleep(1);
@@ -956,8 +997,8 @@ public class CheckInByBarcodeTests extends APITests {
     final IndividualResource nod = itemsFixture.basedUponNod(item ->
       item.withPermanentLocation(homeLocation.getId()));
 
-    DateTime checkOutDate = new DateTime(2020, 1, 18, 18, 0, 0, DateTimeZone.UTC);
-    DateTime checkInDate = new DateTime(2020, 1, 22, 15, 30, 0, DateTimeZone.UTC);
+    DateTime checkOutDate = new DateTime(2020, 1, 18, 18, 0, 0, UTC);
+    DateTime checkInDate = new DateTime(2020, 1, 22, 15, 30, 0, UTC);
 
     checkOutFixture.checkOutByBarcode(nod, james, checkOutDate);
 
@@ -1009,8 +1050,8 @@ public class CheckInByBarcodeTests extends APITests {
     final IndividualResource nod = itemsFixture.basedUponNod(item ->
       item.withPermanentLocation(homeLocation.getId()));
 
-    DateTime checkOutDate = new DateTime(2020, 1, 18, 18, 0, 0, DateTimeZone.UTC);
-    DateTime checkInDate = new DateTime(2020, 1, 22, 15, 30, 0, DateTimeZone.UTC);
+    DateTime checkOutDate = new DateTime(2020, 1, 18, 18, 0, 0, UTC);
+    DateTime checkInDate = new DateTime(2020, 1, 22, 15, 30, 0, UTC);
 
     checkOutFixture.checkOutByBarcode(nod, james, checkOutDate);
 

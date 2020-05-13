@@ -242,6 +242,11 @@
       },
       "additionalProperties": false
     },
+    "itemEffectiveLocationIdAtCheckOut": {
+      "description": "The effective location, at the time of checkout, of the item loaned to the patron.",
+      "type": "string",
+      "$ref": "uuid.json"
+    },
     "status": {
       "description": "Overall status of the loan",
       "type": "object",

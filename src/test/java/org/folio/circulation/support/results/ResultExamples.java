@@ -4,18 +4,17 @@ import static org.folio.circulation.support.Result.failed;
 
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.ServerErrorFailure;
-import org.folio.circulation.support.ResponseWritableResult;
 
 class ResultExamples {
-  static ResponseWritableResult<Integer> alreadyFailed() {
+  static Result<Integer> alreadyFailed() {
     return failed(exampleFailure("Already failed"));
   }
 
-  static ResponseWritableResult<Boolean> conditionFailed() {
+  static Result<Boolean> conditionFailed() {
     return failed(exampleFailure("Condition failed"));
   }
 
-  static <T> ResponseWritableResult<T> actionFailed() {
+  static <T> Result<T> actionFailed() {
     return failed(exampleFailure("Action failed"));
   }
 

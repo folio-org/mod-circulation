@@ -33,11 +33,10 @@ import org.folio.circulation.domain.validation.ServicePointPickupLocationValidat
 import org.folio.circulation.domain.validation.UserManualBlocksValidator;
 import org.folio.circulation.services.EventPublishingService;
 import org.folio.circulation.support.Clients;
-import org.folio.circulation.support.CreatedJsonResponseResult;
 import org.folio.circulation.support.FindWithCqlQuery;
 import org.folio.circulation.support.ItemRepository;
-import org.folio.circulation.support.NoContentResult;
-import org.folio.circulation.support.OkJsonResponseResult;
+import org.folio.circulation.support.http.server.JsonHttpResponse;
+import org.folio.circulation.support.http.server.NoContentResponse;
 import org.folio.circulation.support.http.server.WebContext;
 
 import io.vertx.core.http.HttpClient;
@@ -108,8 +107,8 @@ public class RequestCollectionResource extends CollectionResource {
       .thenComposeAsync(r -> r.after(eventPublishingService::publishDueDateChangedEvent))
       .thenApply(r -> r.map(RequestAndRelatedRecords::getRequest))
       .thenApply(r -> r.map(new RequestRepresentation()::extendedRepresentation))
-      .thenApply(CreatedJsonResponseResult::from)
-      .thenAccept(result -> result.writeTo(routingContext.response()));
+      .thenApply(r -> r.map(JsonHttpResponse::created))
+      .thenAccept(context::writeResultToHttpResponse);
   }
 
   void replace(RoutingContext routingContext) {
@@ -171,8 +170,8 @@ public class RequestCollectionResource extends CollectionResource {
         updateRequestService::replaceRequest,
         createRequestService::createRequest))
       .thenApply(r -> r.next(requestScheduledNoticeService::rescheduleRequestNotices))
-      .thenApply(NoContentResult::from)
-      .thenAccept(r -> r.writeTo(routingContext.response()));
+      .thenApply(r -> r.toFixedValue(NoContentResponse::noContent))
+      .thenAccept(context::writeResultToHttpResponse);
   }
 
   void get(RoutingContext routingContext) {
@@ -185,8 +184,8 @@ public class RequestCollectionResource extends CollectionResource {
 
     requestRepository.getById(id)
       .thenApply(r -> r.map(new RequestRepresentation()::extendedRepresentation))
-      .thenApply(OkJsonResponseResult::from)
-      .thenAccept(result -> result.writeTo(routingContext.response()));
+      .thenApply(r -> r.map(JsonHttpResponse::ok))
+      .thenAccept(context::writeResultToHttpResponse);
   }
 
   void delete(RoutingContext routingContext) {
@@ -207,8 +206,8 @@ public class RequestCollectionResource extends CollectionResource {
     requestRepository.getById(id)
       .thenComposeAsync(r -> r.after(requestRepository::delete))
       .thenComposeAsync(r -> r.after(updateRequestQueue::onDeletion))
-      .thenApply(NoContentResult::from)
-      .thenAccept(r -> r.writeTo(routingContext.response()));
+      .thenApply(r -> r.toFixedValue(NoContentResponse::noContent))
+      .thenAccept(context::writeResultToHttpResponse);
   }
 
   void getMany(RoutingContext routingContext) {
@@ -221,8 +220,8 @@ public class RequestCollectionResource extends CollectionResource {
     requestRepository.findBy(routingContext.request().query())
       .thenApply(r -> r.map(requests ->
         requests.asJson(requestRepresentation::extendedRepresentation, "requests")))
-      .thenApply(OkJsonResponseResult::from)
-      .thenAccept(result -> result.writeTo(routingContext.response()));
+      .thenApply(r -> r.map(JsonHttpResponse::ok))
+      .thenAccept(context::writeResultToHttpResponse);
   }
 
   void empty(RoutingContext routingContext) {
@@ -230,8 +229,8 @@ public class RequestCollectionResource extends CollectionResource {
     Clients clients = Clients.create(context, client);
 
     clients.requestsStorage().delete()
-      .thenApply(NoContentResult::from)
-      .thenAccept(r -> r.writeTo(routingContext.response()));
+      .thenApply(r -> r.toFixedValue(NoContentResponse::noContent))
+      .thenAccept(context::writeResultToHttpResponse);
   }
 
   void move(RoutingContext routingContext) {
@@ -276,8 +275,8 @@ public class RequestCollectionResource extends CollectionResource {
       .thenComposeAsync(r -> r.after(moveRequestService::moveRequest))
       .thenApply(r -> r.map(RequestAndRelatedRecords::getRequest))
       .thenApply(r -> r.map(new RequestRepresentation()::extendedRepresentation))
-      .thenApply(OkJsonResponseResult::from)
-      .thenAccept(r -> r.writeTo(routingContext.response()));
+      .thenApply(r -> r.map(JsonHttpResponse::ok))
+      .thenAccept(context::writeResultToHttpResponse);
   }
 
   private RequestAndRelatedRecords asMove(RequestAndRelatedRecords requestAndRelatedRecords,

@@ -6,6 +6,7 @@ import org.folio.circulation.domain.anonymization.LoanAnonymization;
 import org.folio.circulation.domain.representations.anonymization.AnonymizeLoansRepresentation;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.RouteRegistration;
+import org.folio.circulation.support.http.server.JsonHttpResponse;
 import org.folio.circulation.support.http.server.WebContext;
 
 import io.vertx.core.http.HttpClient;
@@ -33,6 +34,7 @@ public class LoanAnonymizationResource extends Resource {
     completedFuture(new LoanAnonymization(clients).byUserId(borrowerId)
       .anonymizeLoans()
       .thenApply(AnonymizeLoansRepresentation::from)
-      .thenAccept(result -> result.writeTo(routingContext.response())));
+      .thenApply(r -> r.map(JsonHttpResponse::ok))
+      .thenAccept(context::writeResultToHttpResponse));
   }
 }

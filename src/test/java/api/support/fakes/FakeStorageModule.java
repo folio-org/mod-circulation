@@ -2,7 +2,8 @@ package api.support.fakes;
 
 import static java.lang.String.format;
 import static org.apache.commons.lang3.StringUtils.isBlank;
-import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
+import static org.folio.circulation.support.http.server.JsonHttpResponse.created;
+import static org.folio.circulation.support.http.server.NoContentResponse.noContent;
 import static org.folio.circulation.support.results.CommonFailures.failedDueToServerError;
 
 import java.lang.invoke.MethodHandles;
@@ -25,15 +26,16 @@ import java.util.stream.Stream;
 
 import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.infrastructure.serialization.JsonSchemaValidator;
-import org.folio.circulation.support.CreatedJsonResponseResult;
 import org.folio.circulation.support.Result;
+import org.folio.circulation.support.ValidationErrorFailure;
 import org.folio.circulation.support.http.server.ClientErrorResponse;
-import org.folio.circulation.support.http.server.SuccessResponse;
 import org.folio.circulation.support.http.server.ValidationError;
 import org.folio.circulation.support.http.server.WebContext;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.format.ISODateTimeFormat;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import api.support.APITestContext;
 import io.vertx.core.AbstractVerticle;
@@ -45,8 +47,6 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.BodyHandler;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class FakeStorageModule extends AbstractVerticle {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
@@ -215,8 +215,7 @@ public class FakeStorageModule extends AbstractVerticle {
 
         log.debug("Created {} resource: {}", recordTypeName, id);
 
-        new CreatedJsonResponseResult(body, null)
-          .writeTo(routingContext.response());
+        created(body).writeTo(routingContext.response());
       } else {
         final Result<Object> checkConstraint = constraint.apply(existingRecords.values(), body);
 
@@ -225,8 +224,7 @@ public class FakeStorageModule extends AbstractVerticle {
 
           log.debug("Created {} resource: {}", recordTypeName, id);
 
-          new CreatedJsonResponseResult(body, null)
-            .writeTo(routingContext.response());
+          created(body).writeTo(routingContext.response());
         } else {
           checkConstraint.cause().writeTo(routingContext.response());
         }
@@ -243,7 +241,7 @@ public class FakeStorageModule extends AbstractVerticle {
 
     replaceSingleItem(context, id, body).thenAccept(replaceResult -> {
       if (replaceResult.succeeded()) {
-        SuccessResponse.noContent(routingContext.response());
+        noContent().writeTo(routingContext.response());
       } else {
         replaceResult.cause().writeTo(routingContext.response());
       }
@@ -410,7 +408,7 @@ public class FakeStorageModule extends AbstractVerticle {
 
     resourcesForTenant.clear();
 
-    SuccessResponse.noContent(routingContext.response());
+    noContent().writeTo(routingContext.response());
   }
 
   private void deleteMany(RoutingContext routingContext) {
@@ -424,7 +422,7 @@ public class FakeStorageModule extends AbstractVerticle {
       .execute(resourcesForTenant.values(), query)
       .forEach(item -> resourcesForTenant.remove(item.getString("id")));
 
-    SuccessResponse.noContent(routingContext.response());
+    noContent().writeTo(routingContext.response());
   }
 
   private void delete(RoutingContext routingContext) {
@@ -437,7 +435,7 @@ public class FakeStorageModule extends AbstractVerticle {
     if(resourcesForTenant.containsKey(id)) {
       resourcesForTenant.remove(id);
 
-      SuccessResponse.noContent(routingContext.response());
+      noContent().writeTo(routingContext.response());
     }
     else {
       ClientErrorResponse.notFound(routingContext.response());
@@ -507,6 +505,7 @@ public class FakeStorageModule extends AbstractVerticle {
   }
 
   private void checkRequiredProperties(RoutingContext routingContext) {
+    final WebContext context = new WebContext(routingContext);
     JsonObject body = getJsonFromBody(routingContext);
 
     ArrayList<ValidationError> errors = new ArrayList<>();
@@ -521,7 +520,7 @@ public class FakeStorageModule extends AbstractVerticle {
       routingContext.next();
     }
     else {
-      failedValidation(errors).writeTo(routingContext.response());
+      context.write(new ValidationErrorFailure(errors));
     }
   }
 
@@ -544,6 +543,8 @@ public class FakeStorageModule extends AbstractVerticle {
       return;
     }
 
+    final WebContext context = new WebContext(routingContext);
+
     JsonObject body = getJsonFromBody(routingContext);
 
     ArrayList<ValidationError> errors = new ArrayList<>();
@@ -561,7 +562,7 @@ public class FakeStorageModule extends AbstractVerticle {
           format("%s with this %s already exists", recordTypeName, uniqueProperty),
           uniqueProperty, proposedValue));
 
-        failedValidation(errors).writeTo(routingContext.response());
+        context.write(new ValidationErrorFailure(errors));
       }
     });
 
@@ -576,6 +577,8 @@ public class FakeStorageModule extends AbstractVerticle {
       return;
     }
 
+    final WebContext context = new WebContext(routingContext);
+
     JsonObject body = getJsonFromBody(routingContext);
 
     ArrayList<ValidationError> errors = new ArrayList<>();
@@ -586,7 +589,7 @@ public class FakeStorageModule extends AbstractVerticle {
           format("Unrecognised field \"%s\"", disallowedProperty),
           disallowedProperty, null));
 
-        failedValidation(errors).writeTo(routingContext.response());
+        context.write(new ValidationErrorFailure(errors));
       }
     });
 

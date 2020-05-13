@@ -1,6 +1,7 @@
 package org.folio.circulation.support;
 
 import static org.folio.circulation.support.Result.failed;
+import static org.folio.circulation.support.http.server.JsonHttpResponse.unprocessableEntity;
 
 import java.lang.invoke.MethodHandles;
 import java.util.ArrayList;
@@ -21,28 +22,22 @@ public class ValidationErrorFailure implements HttpFailure {
 
   private final Collection<ValidationError> errors = new ArrayList<>();
 
-  public static <T> ResponseWritableResult<T> failedValidation(
-    String reason,
-    String key,
-    String value) {
+  public static <T> Result<T> failedValidation(String reason,
+    String key, String value) {
 
     return failedValidation(new ValidationError(reason, key, value));
   }
 
-  public static <T> ResponseWritableResult<T> failedValidation(ValidationError error) {
+  public static <T> Result<T> failedValidation(ValidationError error) {
     return failed(singleValidationError(error));
   }
 
-  public static <T> ResponseWritableResult<T> failedValidation(
-    Collection<ValidationError> errors) {
-
+  public static <T> Result<T> failedValidation(Collection<ValidationError> errors) {
     return failed(new ValidationErrorFailure(errors));
   }
 
-  public static ValidationErrorFailure singleValidationError(
-    String reason,
-    String propertyName,
-    String propertyValue) {
+  public static ValidationErrorFailure singleValidationError(String reason,
+    String propertyName, String propertyValue) {
 
     return singleValidationError(
       new ValidationError(reason, propertyName, propertyValue));
@@ -56,7 +51,7 @@ public class ValidationErrorFailure implements HttpFailure {
     this.errors.add(error);
   }
 
-  private ValidationErrorFailure(Collection<ValidationError> errors) {
+  public ValidationErrorFailure(Collection<ValidationError> errors) {
     this.errors.addAll(errors);
   }
 
@@ -64,9 +59,9 @@ public class ValidationErrorFailure implements HttpFailure {
   public void writeTo(HttpServerResponse response) {
     final JsonObject jsonErrors = asJson();
 
-    log.info("Writing validation error: '{}'", jsonErrors);
+    log.debug("Writing validation error: '{}'", jsonErrors);
 
-    new JsonResponseResult(422, jsonErrors, null).writeTo(response);
+    unprocessableEntity(jsonErrors).writeTo(response);
   }
 
   private JsonObject asJson() {

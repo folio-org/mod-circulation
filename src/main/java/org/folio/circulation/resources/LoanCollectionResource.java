@@ -37,12 +37,11 @@ import org.folio.circulation.domain.validation.ProxyRelationshipValidator;
 import org.folio.circulation.domain.validation.RequestedByAnotherPatronValidator;
 import org.folio.circulation.domain.validation.ServicePointLoanLocationValidator;
 import org.folio.circulation.support.Clients;
-import org.folio.circulation.support.CreatedJsonResponseResult;
 import org.folio.circulation.support.ItemRepository;
-import org.folio.circulation.support.NoContentResult;
-import org.folio.circulation.support.OkJsonResponseResult;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.ValidationErrorFailure;
+import org.folio.circulation.support.http.server.JsonHttpResponse;
+import org.folio.circulation.support.http.server.NoContentResponse;
 import org.folio.circulation.support.http.server.ValidationError;
 import org.folio.circulation.support.http.server.WebContext;
 
@@ -118,8 +117,8 @@ public class LoanCollectionResource extends CollectionResource {
       .thenComposeAsync(r -> r.after(loanRepository::createLoan))
       .thenApply(r -> r.map(LoanAndRelatedRecords::getLoan))
       .thenApply(r -> r.map(loanRepresentation::extendedLoan))
-      .thenApply(CreatedJsonResponseResult::from)
-      .thenAccept(result -> result.writeTo(routingContext.response()));
+      .thenApply(r -> r.map(JsonHttpResponse::created))
+      .thenAccept(context::writeResultToHttpResponse);
   }
 
   void replace(RoutingContext routingContext) {
@@ -180,8 +179,8 @@ public class LoanCollectionResource extends CollectionResource {
       .thenComposeAsync(result -> result.after(loanRepository::updateLoan))
       .thenApply(r -> r.next(scheduledNoticeService::rescheduleDueDateNotices))
       .thenCompose(r -> r.after(loanNoticeSender::sendManualDueDateChangeNotice))
-      .thenApply(NoContentResult::from)
-      .thenAccept(result -> result.writeTo(routingContext.response()));
+      .thenApply(r -> r.toFixedValue(NoContentResponse::noContent))
+      .thenAccept(context::writeResultToHttpResponse);
   }
 
   void get(RoutingContext routingContext) {
@@ -209,8 +208,8 @@ public class LoanCollectionResource extends CollectionResource {
       .thenComposeAsync(lostItemPolicyRepository::findLostItemPolicyForLoan)
       .thenComposeAsync(patronGroupRepository::findGroupForLoan)
       .thenApply(loanResult -> loanResult.map(loanRepresentation::extendedLoan))
-      .thenApply(OkJsonResponseResult::from)
-      .thenAccept(result -> result.writeTo(routingContext.response()));
+      .thenApply(r -> r.map(JsonHttpResponse::ok))
+      .thenAccept(context::writeResultToHttpResponse);
   }
 
   void delete(RoutingContext routingContext) {
@@ -220,8 +219,8 @@ public class LoanCollectionResource extends CollectionResource {
     String id = routingContext.request().getParam("id");
 
     clients.loansStorage().delete(id)
-      .thenApply(NoContentResult::from)
-      .thenAccept(r -> r.writeTo(routingContext.response()));
+      .thenApply(r -> r.toFixedValue(NoContentResponse::noContent))
+      .thenAccept(context::writeResultToHttpResponse);
   }
 
   void getMany(RoutingContext routingContext) {
@@ -255,8 +254,8 @@ public class LoanCollectionResource extends CollectionResource {
         multiLoanRecordsResult.after(patronGroupRepository::findPatronGroupsByIds))
       .thenApply(multipleLoanRecordsResult -> multipleLoanRecordsResult.map(loans ->
         loans.asJson(loanRepresentation::extendedLoan, "loans")))
-      .thenApply(OkJsonResponseResult::from)
-      .thenAccept(result -> result.writeTo(routingContext.response()));
+      .thenApply(r -> r.map(JsonHttpResponse::ok))
+      .thenAccept(context::writeResultToHttpResponse);
   }
 
   void empty(RoutingContext routingContext) {
@@ -264,8 +263,8 @@ public class LoanCollectionResource extends CollectionResource {
     Clients clients = Clients.create(context, client);
 
     clients.loansStorage().delete()
-      .thenApply(NoContentResult::from)
-      .thenAccept(r -> r.writeTo(routingContext.response()));
+      .thenApply(r -> r.toFixedValue(NoContentResponse::noContent))
+      .thenAccept(context::writeResultToHttpResponse);
   }
 
   private Result<LoanAndRelatedRecords> addItem(

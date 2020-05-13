@@ -1,9 +1,10 @@
 package org.folio.circulation.resources;
 
+import static org.folio.circulation.support.http.server.JsonHttpResponse.created;
+
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import org.folio.circulation.support.CreatedJsonResponseResult;
 import org.folio.circulation.support.RouteRegistration;
 import org.folio.util.pubsub.PubSubClientUtils;
 
@@ -32,8 +33,7 @@ public class TenantAPI extends org.folio.rest.impl.TenantAPI {
 
     vertx.executeBlocking(
       promise -> registerModuleToPubsub(headers, vertx).setHandler(promise::complete),
-      result -> new CreatedJsonResponseResult(new JsonObject(), null)
-        .writeTo(routingContext.response())
+      result -> created(new JsonObject()).writeTo(routingContext.response())
     );
   }
 

@@ -35,10 +35,10 @@ import org.folio.circulation.domain.UserRepository;
 import org.folio.circulation.domain.notice.TemplateContextUtil;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.ItemRepository;
-import org.folio.circulation.support.OkJsonResponseResult;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.RouteRegistration;
 import org.folio.circulation.support.http.client.CqlQuery;
+import org.folio.circulation.support.http.server.JsonHttpResponse;
 import org.folio.circulation.support.http.server.WebContext;
 
 import io.vertx.core.http.HttpClient;
@@ -90,8 +90,8 @@ public class PickSlipsResource extends Resource {
       .thenComposeAsync(r -> r.after(addressTypeRepository::findAddressTypesForRequests))
       .thenComposeAsync(r -> r.after(servicePointRepository::findServicePointsForRequests))
       .thenApply(flatMapResult(this::mapResultToJson))
-      .thenApply(OkJsonResponseResult::from)
-      .thenAccept(r -> r.writeTo(routingContext.response()));
+      .thenApply(r -> r.map(JsonHttpResponse::ok))
+      .thenAccept(context::writeResultToHttpResponse);
   }
 
   private CompletableFuture<Result<MultipleRecords<Location>>> fetchLocationsForServicePoint(
