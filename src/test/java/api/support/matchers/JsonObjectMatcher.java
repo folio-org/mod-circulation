@@ -13,7 +13,6 @@ import org.hamcrest.Matcher;
 import org.hamcrest.TypeSafeDiagnosingMatcher;
 
 import com.jayway.jsonpath.JsonPath;
-import com.jayway.jsonpath.PathNotFoundException;
 
 import io.vertx.core.json.JsonObject;
 
@@ -26,8 +25,6 @@ public class JsonObjectMatcher {
         T actual;
         try {
           actual = JsonPath.parse(item.toString()).read(jsonPath);
-        } catch (PathNotFoundException notFoundException) {
-          actual = null;
         } catch (Exception ex) {
           mismatchDescription.appendText("Exception occurred: ").appendValue(ex);
           return false;
