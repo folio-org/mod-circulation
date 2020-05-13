@@ -19,6 +19,7 @@ import org.folio.circulation.resources.LoanAnonymizationResource;
 import org.folio.circulation.resources.LoanCirculationRulesEngineResource;
 import org.folio.circulation.resources.LoanCollectionResource;
 import org.folio.circulation.resources.LostItemCirculationRulesEngineResource;
+import org.folio.circulation.resources.TenantAPI;
 import org.folio.circulation.resources.NoticeCirculationRulesEngineResource;
 import org.folio.circulation.resources.OverdueFineCirculationRulesEngineResource;
 import org.folio.circulation.resources.OverrideCheckOutStrategy;
@@ -63,6 +64,8 @@ public class CirculationVerticle extends AbstractVerticle {
     HttpClient client = vertx.createHttpClient(new HttpClientOptions().setMaxPoolSize(100));
 
     this.server = vertx.createHttpServer();
+
+    new TenantAPI().register(router);
 
     new CheckOutByBarcodeResource("/circulation/check-out-by-barcode",
       client, new RegularCheckOutStrategy()).register(router);

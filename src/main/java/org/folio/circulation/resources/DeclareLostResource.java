@@ -7,6 +7,7 @@ import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanRepository;
 import org.folio.circulation.domain.representations.DeclareItemLostRequest;
 import org.folio.circulation.domain.validation.LoanValidator;
+import org.folio.circulation.services.EventPublishingService;
 import org.folio.circulation.services.LostItemFeeChargingService;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.ItemRepository;
@@ -36,6 +37,8 @@ public class DeclareLostResource extends Resource {
     final ItemRepository itemRepository = new ItemRepository(clients, true, true, true);
     final StoreLoanAndItem storeLoanAndItem = new StoreLoanAndItem(loanRepository, itemRepository);
     final LostItemFeeChargingService lostItemFeeService = new LostItemFeeChargingService(clients);
+    final EventPublishingService eventPublishingService =
+      new EventPublishingService(routingContext);
 
     validateDeclaredLostRequest(routingContext).after(request ->
       loanRepository.getById(request.getLoanId())
@@ -43,7 +46,8 @@ public class DeclareLostResource extends Resource {
         .thenApply(loan -> declareItemLost(loan, request))
         .thenCompose(r -> r.after(loan -> lostItemFeeService
           .chargeLostItemFees(loan, request, context.getUserId()))))
-      .thenApply(r -> r.after(storeLoanAndItem::updateLoanAndItemInStorage))
+      .thenCompose(r -> r.after(storeLoanAndItem::updateLoanAndItemInStorage))
+      .thenApplyAsync(r -> r.after(eventPublishingService::publishDeclaredLostEvent))
       .thenCompose(r -> r.thenApply(NoContentResult::from))
       .thenAccept(result -> result.writeTo(routingContext.response()));
   }

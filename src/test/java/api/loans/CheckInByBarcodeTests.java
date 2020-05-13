@@ -2,6 +2,8 @@ package api.loans;
 
 import static api.support.APITestContext.getUserId;
 import static api.support.fixtures.AddressExamples.SiriusBlack;
+import static api.support.matchers.EventMatcher.isCheckedInEvent;
+import static api.support.matchers.EventMatcher.isValidCheckedInEventPayload;
 import static api.support.matchers.OverdueFineMatcher.isValidOverdueFine;
 import static api.support.matchers.PatronNoticeMatcher.hasEmailNoticeProperties;
 import static api.support.matchers.ResponseStatusCodeMatcher.hasStatus;
@@ -11,7 +13,7 @@ import static api.support.matchers.UUIDMatcher.is;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static java.util.Arrays.asList;
-import static org.folio.HttpStatus.HTTP_VALIDATION_ERROR;
+import static org.folio.HttpStatus.HTTP_UNPROCESSABLE_ENTITY;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -53,6 +55,7 @@ import api.support.builders.NoticeConfigurationBuilder;
 import api.support.builders.NoticePolicyBuilder;
 import api.support.builders.OverdueFinePolicyBuilder;
 import api.support.builders.RequestBuilder;
+import api.support.fakes.FakePubSub;
 import api.support.fixtures.TemplateContextMatchers;
 import api.support.http.CqlQuery;
 import api.support.http.InventoryItemResource;
@@ -223,7 +226,7 @@ public class CheckInByBarcodeTests extends APITests {
         .on(DateTime.now())
         .at(UUID.randomUUID()));
 
-    assertThat(response, hasStatus(HTTP_VALIDATION_ERROR));
+    assertThat(response, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
 
     assertThat(response.getJson(), hasErrorWith(hasMessage(
       "No item with barcode 543593485458 exists")));
@@ -245,7 +248,7 @@ public class CheckInByBarcodeTests extends APITests {
         .on(DateTime.now())
         .atNoServicePoint());
 
-    assertThat(response, hasStatus(HTTP_VALIDATION_ERROR));
+    assertThat(response, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
 
     assertThat(response.getJson(), hasErrorWith(hasMessage(
         "Checkin request must have a service point id")));
@@ -267,7 +270,7 @@ public class CheckInByBarcodeTests extends APITests {
         .on(DateTime.now())
         .at(UUID.randomUUID()));
 
-    assertThat(response, hasStatus(HTTP_VALIDATION_ERROR));
+    assertThat(response, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
 
     assertThat(response.getJson(), hasErrorWith(hasMessage(
       "Checkin request must have an item barcode")));
@@ -289,7 +292,7 @@ public class CheckInByBarcodeTests extends APITests {
         .onNoOccasion()
         .at(UUID.randomUUID()));
 
-    assertThat(response, hasStatus(HTTP_VALIDATION_ERROR));
+    assertThat(response, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
 
     assertThat(response.getJson(), hasErrorWith(hasMessage(
       "Checkin request must have an check in date")));
@@ -995,6 +998,39 @@ public class CheckInByBarcodeTests extends APITests {
 
     assertThat(account, isValidOverdueFine(checkedInLoan, nod,
       homeLocation.getJson().getString("name"), ownerId, feeFineId, 7.0));
+  }
+
+  @Test
+  public void itemCheckedInEventIsPublished() {
+    final IndividualResource james = usersFixture.james();
+    final UUID checkInServicePointId = servicePointsFixture.cd1().getId();
+    final IndividualResource homeLocation = locationsFixture.basedUponExampleLocation(
+      item -> item.withPrimaryServicePoint(checkInServicePointId));
+    final IndividualResource nod = itemsFixture.basedUponNod(item ->
+      item.withPermanentLocation(homeLocation.getId()));
+
+    DateTime checkOutDate = new DateTime(2020, 1, 18, 18, 0, 0, DateTimeZone.UTC);
+    DateTime checkInDate = new DateTime(2020, 1, 22, 15, 30, 0, DateTimeZone.UTC);
+
+    checkOutFixture.checkOutByBarcode(nod, james, checkOutDate);
+
+    CheckInByBarcodeResponse checkInResponse = checkInFixture.checkInByBarcode(
+      new CheckInByBarcodeRequestBuilder()
+        .forItem(nod)
+        .on(checkInDate)
+        .at(checkInServicePointId));
+
+    JsonObject checkedInLoan = checkInResponse.getLoan();
+
+    List<JsonObject> publishedEvents = Awaitility.await()
+      .atMost(1, TimeUnit.SECONDS)
+      .until(FakePubSub::getPublishedEvents, hasSize(2));
+
+    JsonObject event = publishedEvents.get(1);
+
+    assertThat(event, isCheckedInEvent());
+    assertThat(new JsonObject(event.getString("eventPayload")),
+      isValidCheckedInEventPayload(checkedInLoan));
   }
 
   private void checkPatronNoticeEvent(

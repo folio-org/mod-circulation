@@ -1,0 +1,28 @@
+{
+  "publications": [
+    {
+      "eventType": "ITEM_CHECK_OUT",
+      "description": "Item check out event",
+      "eventTTL": 1,
+      "signed": false
+    },
+    {
+      "eventType": "ITEM_CHECK_IN",
+      "description": "Item check in event",
+      "eventTTL": 1,
+      "signed": false
+    },
+    {
+      "eventType": "ITEM_DECLARED_LOST",
+      "description": "Item declared lost event",
+      "eventTTL": 1,
+      "signed": false
+    },
+    {
+      "eventType": "LOAN_DUE_DATE_UPDATE",
+      "description": "Loan due date update event",
+      "eventTTL": 1,
+      "signed": false
+    }
+  ]
+}

@@ -18,6 +18,7 @@ import java.util.Collection;
 import java.util.Objects;
 
 import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.folio.HttpStatus;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.ValidationErrorFailure;
 import org.folio.circulation.support.http.client.OkapiHttpClient;
@@ -349,6 +350,8 @@ public class FakeOkapi extends AbstractVerticle {
       .withRootPath("/feefines")
       .withCollectionPropertyName("feefines")
       .create().register(router);
+
+    FakePubSub.register(router);
 
     server.requestHandler(router)
       .listen(PORT_TO_USE, result -> {

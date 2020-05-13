@@ -9,6 +9,8 @@ import static api.support.matchers.CheckOutByBarcodeResponseMatchers.hasLoanPoli
 import static api.support.matchers.CheckOutByBarcodeResponseMatchers.hasProxyUserBarcodeParameter;
 import static api.support.matchers.CheckOutByBarcodeResponseMatchers.hasServicePointParameter;
 import static api.support.matchers.CheckOutByBarcodeResponseMatchers.hasUserBarcodeParameter;
+import static api.support.matchers.EventMatcher.isCheckedOutEvent;
+import static api.support.matchers.EventMatcher.isValidCheckedOutEventPayload;
 import static api.support.matchers.ItemMatchers.isCheckedOut;
 import static api.support.matchers.ItemMatchers.isWithdrawn;
 import static api.support.matchers.ItemStatusCodeMatcher.hasItemStatus;
@@ -32,7 +34,9 @@ import static org.junit.Assert.assertTrue;
 import java.util.List;
 import java.util.Random;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
+import org.awaitility.Awaitility;
 import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
@@ -50,6 +54,7 @@ import api.support.builders.LoanPolicyBuilder;
 import api.support.builders.NoticePolicyBuilder;
 import api.support.builders.RequestBuilder;
 import api.support.builders.UserBuilder;
+import api.support.fakes.FakePubSub;
 import api.support.http.InventoryItemResource;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
@@ -1168,6 +1173,30 @@ public class CheckOutByBarcodeTests extends APITests {
     ));
 
     assertThat(itemsClient.getById(withdrawnItem.getId()).getJson(), isCheckedOut());
+  }
+
+  @Test
+  public void itemCheckedOutEventIsPublished() {
+    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final IndividualResource steve = usersFixture.steve();
+
+    final IndividualResource response = checkOutFixture.checkOutByBarcode(
+      new CheckOutByBarcodeRequestBuilder()
+        .forItem(smallAngryPlanet)
+        .to(steve)
+        .on(DateTime.now(UTC))
+        .at(UUID.randomUUID()));
+
+    final JsonObject loan = response.getJson();
+
+    List<JsonObject> publishedEvents = Awaitility.await()
+      .atMost(1, TimeUnit.SECONDS)
+      .until(FakePubSub::getPublishedEvents, hasSize(1));
+
+    JsonObject event = publishedEvents.get(0);
+
+    assertThat(event, isCheckedOutEvent());
+    assertThat(new JsonObject(event.getString("eventPayload")), isValidCheckedOutEventPayload(loan));
   }
 
   private IndividualResource prepareLoanPolicyWithItemLimit(int itemLimit) {

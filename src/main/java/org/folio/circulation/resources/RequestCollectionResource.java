@@ -31,6 +31,7 @@ import org.folio.circulation.domain.validation.ProxyRelationshipValidator;
 import org.folio.circulation.domain.validation.RequestLoanValidator;
 import org.folio.circulation.domain.validation.ServicePointPickupLocationValidator;
 import org.folio.circulation.domain.validation.UserManualBlocksValidator;
+import org.folio.circulation.services.EventPublishingService;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CreatedJsonResponseResult;
 import org.folio.circulation.support.FindWithCqlQuery;
@@ -98,9 +99,13 @@ public class RequestCollectionResource extends CollectionResource {
 
     final RequestScheduledNoticeService scheduledNoticeService = RequestScheduledNoticeService.using(clients);
 
+    final EventPublishingService eventPublishingService =
+      new EventPublishingService(routingContext, clients);
+
     requestFromRepresentationService.getRequestFrom(representation)
       .thenComposeAsync(r -> r.after(createRequestService::createRequest))
       .thenApply(r -> r.next(scheduledNoticeService::scheduleRequestNotices))
+      .thenComposeAsync(r -> r.after(eventPublishingService::publishDueDateChangedEvent))
       .thenApply(r -> r.map(RequestAndRelatedRecords::getRequest))
       .thenApply(r -> r.map(new RequestRepresentation()::extendedRepresentation))
       .thenApply(CreatedJsonResponseResult::from)

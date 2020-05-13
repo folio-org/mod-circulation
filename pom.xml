@@ -133,12 +133,6 @@
     </dependency>
     <dependency>
       <groupId>org.folio</groupId>
-      <artifactId>util</artifactId>
-      <version>${rmb.version}</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.folio</groupId>
       <artifactId>testing</artifactId>
       <version>${rmb.version}</version>
       <scope>test</scope>
@@ -192,6 +186,12 @@
       <artifactId>mockito-core</artifactId>
       <version>3.1.0</version>
       <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.folio</groupId>
+      <artifactId>mod-pubsub-client</artifactId>
+      <version>1.1.5</version>
+      <type>jar</type>
     </dependency>
   </dependencies>
 

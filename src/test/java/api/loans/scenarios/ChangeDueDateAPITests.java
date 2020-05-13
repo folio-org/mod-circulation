@@ -4,6 +4,8 @@ import static api.support.fixtures.TemplateContextMatchers.getItemContextMatcher
 import static api.support.fixtures.TemplateContextMatchers.getLoanContextMatchers;
 import static api.support.fixtures.TemplateContextMatchers.getLoanPolicyContextMatchers;
 import static api.support.fixtures.TemplateContextMatchers.getUserContextMatchers;
+import static api.support.matchers.EventMatcher.isDueDateChangedEvent;
+import static api.support.matchers.EventMatcher.isValidDueDateChangedEventPayload;
 import static api.support.matchers.LoanMatchers.isOpen;
 import static api.support.matchers.PatronNoticeMatcher.hasEmailNoticeProperties;
 import static api.support.matchers.ResponseStatusCodeMatcher.hasStatus;
@@ -14,10 +16,11 @@ import static api.support.matchers.ValidationErrorMatchers.hasNullParameter;
 import static api.support.matchers.ValidationErrorMatchers.hasUUIDParameter;
 import static org.apache.commons.lang3.StringUtils.EMPTY;
 import static org.folio.HttpStatus.HTTP_NOT_FOUND;
-import static org.folio.HttpStatus.HTTP_VALIDATION_ERROR;
+import static org.folio.HttpStatus.HTTP_UNPROCESSABLE_ENTITY;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.hasSize;
 import static org.joda.time.Period.weeks;
 
 import java.util.Arrays;
@@ -46,6 +49,7 @@ import api.support.builders.LostItemFeePolicyBuilder;
 import api.support.builders.NoticeConfigurationBuilder;
 import api.support.builders.NoticePolicyBuilder;
 import api.support.builders.RequestBuilder;
+import api.support.fakes.FakePubSub;
 import api.support.fixtures.ItemExamples;
 import api.support.http.InventoryItemResource;
 import io.vertx.core.json.JsonObject;
@@ -87,7 +91,7 @@ public class ChangeDueDateAPITests extends APITests {
         .forLoan(loan.getId())
         .withDueDate(null));
 
-    assertThat(response, hasStatus(HTTP_VALIDATION_ERROR));
+    assertThat(response, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
 
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("A new due date is required in order to change the due date"),
@@ -118,7 +122,7 @@ public class ChangeDueDateAPITests extends APITests {
         .forLoan(loan.getId())
         .withDueDate(newDueDate));
 
-    assertThat(response, hasStatus(HTTP_VALIDATION_ERROR));
+    assertThat(response, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
 
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("Loan is closed"),
@@ -140,7 +144,7 @@ public class ChangeDueDateAPITests extends APITests {
         .forLoan(loan.getId())
         .withDueDate(newDueDate));
 
-    assertThat(response, hasStatus(HTTP_VALIDATION_ERROR));
+    assertThat(response, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
 
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("item is Declared lost"),
@@ -161,7 +165,7 @@ public class ChangeDueDateAPITests extends APITests {
         .forLoan(loan.getId())
         .withDueDate(newDueDate));
 
-    assertThat(response, hasStatus(HTTP_VALIDATION_ERROR));
+    assertThat(response, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
 
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("item is Claimed returned"),
@@ -258,6 +262,27 @@ public class ChangeDueDateAPITests extends APITests {
 
     assertThat(sentNotices, hasItems(
       hasEmailNoticeProperties(steve.getId(), templateId, matchers)));
+  }
+
+  @Test
+  public void dueDateChangedEventIsPublished() {
+    final DateTime newDueDate = dueDate.plus(Period.days(14));
+    changeDueDateFixture.changeDueDate(new ChangeDueDateRequestBuilder()
+      .forLoan(loan.getId())
+      .withDueDate(newDueDate));
+
+    Response response = loansClient.getById(loan.getId());
+    JsonObject updatedLoan = response.getJson();
+
+    List<JsonObject> publishedEvents = Awaitility.await()
+      .atMost(1, TimeUnit.SECONDS)
+      .until(FakePubSub::getPublishedEvents, hasSize(2));
+
+    JsonObject event = publishedEvents.get(1);
+
+    assertThat(event, isDueDateChangedEvent());
+    assertThat(new JsonObject(event.getString("eventPayload")),
+      isValidDueDateChangedEventPayload(updatedLoan));
   }
 
   private void chargeFeesForLostItemToKeepLoanOpen() {
