@@ -1,5 +1,6 @@
 package org.folio.circulation.domain;
 
+import static java.lang.Boolean.TRUE;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
@@ -80,7 +81,7 @@ public class RequestRepresentationTests {
 
     final ServicePointBuilder servicePointBuilder = new ServicePointBuilder("Circ Desk", "cd1", "Circulation Desk")
       .withId(SERVICE_POINT_ID)
-      .withPickupLocation(Boolean.TRUE);
+      .withPickupLocation(TRUE);
 
     final ServicePoint servicePoint = new ServicePoint(servicePointBuilder.create());
 

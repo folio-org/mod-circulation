@@ -1,6 +1,7 @@
 package org.folio.circulation.support;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
+import static org.apache.commons.lang3.BooleanUtils.isTrue;
 import static org.folio.circulation.support.results.CommonFailures.failedDueToServerError;
 
 import java.util.Collection;
@@ -191,7 +192,7 @@ public interface Result<T> {
 
     return after(value ->
       conditionFunction.apply(value)
-        .thenComposeAsync(r -> r.after(condition -> condition
+        .thenComposeAsync(r -> r.after(condition -> isTrue(condition)
           ? whenTrue.apply(value)
           : whenFalse.apply(value))));
   }
@@ -259,7 +260,7 @@ public interface Result<T> {
     Supplier<Result<R>> whenTrue,
     Supplier<Result<R>> whenFalse) {
 
-    return condition.next(result -> result
+    return condition.next(result -> isTrue(result)
       ? whenTrue.get()
       : whenFalse.get());
   }
