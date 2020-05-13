@@ -53,7 +53,7 @@ public class ResultAfterWhenTests {
     InterruptedException {
 
     final Result<Integer> result = alreadyFailed()
-      .afterWhen(value -> completedFuture(succeeded(true)),
+      .<Integer>afterWhen(value -> completedFuture(succeeded(true)),
         value -> { throw shouldNotExecute(); },
         value -> { throw shouldNotExecute(); })
       .get();
@@ -67,7 +67,7 @@ public class ResultAfterWhenTests {
     InterruptedException {
 
     final Result<Integer> result = succeeded(10)
-      .afterWhen(value -> completedFuture(conditionFailed()),
+      .<Integer>afterWhen(value -> completedFuture(conditionFailed()),
         value -> { throw shouldNotExecute(); },
         value -> { throw shouldNotExecute(); })
       .get();
@@ -81,7 +81,7 @@ public class ResultAfterWhenTests {
     InterruptedException {
 
     final Result<Integer> result = succeeded(10)
-      .afterWhen(value -> completedFuture(succeeded(true)),
+      .<Integer>afterWhen(value -> completedFuture(succeeded(true)),
         value -> supplyAsync(() -> { throw somethingWentWrong(); }),
         value -> { throw shouldNotExecute(); })
       .get();
@@ -95,7 +95,7 @@ public class ResultAfterWhenTests {
     InterruptedException {
 
     final Result<Integer> result = succeeded(10)
-      .afterWhen(value -> completedFuture(succeeded(false)),
+      .<Integer>afterWhen(value -> completedFuture(succeeded(false)),
         value -> { throw shouldNotExecute(); },
         value -> supplyAsync(() -> { throw somethingWentWrong(); }))
       .get();
@@ -109,7 +109,7 @@ public class ResultAfterWhenTests {
     InterruptedException {
 
     final Result<Integer> result = succeeded(10)
-      .afterWhen(value -> supplyAsync(() -> { throw somethingWentWrong(); }),
+      .<Integer>afterWhen(value -> supplyAsync(() -> { throw somethingWentWrong(); }),
         value -> { throw shouldNotExecute(); },
         value -> { throw shouldNotExecute(); })
       .get();
@@ -123,7 +123,7 @@ public class ResultAfterWhenTests {
     InterruptedException {
 
     final Result<Integer> result = succeeded(10)
-      .afterWhen(value -> completedFuture(succeeded(true)),
+      .<Integer>afterWhen(value -> completedFuture(succeeded(true)),
         value -> { throw somethingWentWrong(); },
         value -> {throw shouldNotExecute(); })
       .get();
@@ -137,7 +137,7 @@ public class ResultAfterWhenTests {
     InterruptedException {
 
     final Result<Integer> result = succeeded(10)
-      .afterWhen(value -> completedFuture(succeeded(false)),
+      .<Integer>afterWhen(value -> completedFuture(succeeded(false)),
         value -> { throw shouldNotExecute(); },
         value -> {throw somethingWentWrong(); })
       .get();

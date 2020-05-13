@@ -184,10 +184,10 @@ public interface Result<T> {
    * @param whenFalse executed when condition evaluates to false
    * @return Result of whenTrue or whenFalse, unless previous result failed
    */
-  default CompletableFuture<Result<T>> afterWhen(
+  default <R> CompletableFuture<Result<R>> afterWhen(
     Function<T, CompletableFuture<Result<Boolean>>> conditionFunction,
-    Function<T, CompletableFuture<Result<T>>> whenTrue,
-    Function<T, CompletableFuture<Result<T>>> whenFalse) {
+    Function<T, CompletableFuture<Result<R>>> whenTrue,
+    Function<T, CompletableFuture<Result<R>>> whenFalse) {
 
     return after(value ->
       conditionFunction.apply(value)
