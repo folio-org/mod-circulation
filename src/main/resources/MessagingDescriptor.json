@@ -1,13 +1,13 @@
 {
   "publications": [
     {
-      "eventType": "ITEM_CHECK_OUT",
+      "eventType": "ITEM_CHECKED_OUT",
       "description": "Item check out event",
       "eventTTL": 1,
       "signed": false
     },
     {
-      "eventType": "ITEM_CHECK_IN",
+      "eventType": "ITEM_CHECKED_IN",
       "description": "Item check in event",
       "eventTTL": 1,
       "signed": false
