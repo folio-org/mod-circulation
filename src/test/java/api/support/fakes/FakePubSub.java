@@ -27,4 +27,8 @@ public class FakePubSub {
   public static List<JsonObject> getPublishedEvents() {
     return publishedEvents;
   }
+
+  public static void cleanUp() {
+    publishedEvents.clear();
+  }
 }

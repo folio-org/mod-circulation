@@ -34,6 +34,7 @@ import org.slf4j.LoggerFactory;
 
 import api.support.builders.LoanPolicyBuilder;
 import api.support.builders.NoticePolicyBuilder;
+import api.support.fakes.FakePubSub;
 import api.support.fixtures.AddressTypesFixture;
 import api.support.fixtures.CancellationReasonsFixture;
 import api.support.fixtures.ChangeDueDateFixture;
@@ -297,6 +298,8 @@ public abstract class APITests {
     }
 
     usersFixture.defaultAdmin();
+
+    FakePubSub.cleanUp();
   }
 
   @AfterClass
