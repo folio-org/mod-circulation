@@ -811,12 +811,6 @@
             "pubsub.publishers.post",
             "pubsub.subscribers.post"
           ]
-        },
-        {
-          "methods": [
-            "DELETE"
-          ],
-          "pathPattern": "/_/tenant"
         }
       ]
     }
@@ -921,6 +915,18 @@
     {
       "id": "check-in-storage",
       "version": "0.2"
+    },
+    {
+      "id": "pubsub-event-types",
+      "version": "0.1"
+    },
+    {
+      "id": "pubsub-publishers",
+      "version": "0.1"
+    },
+    {
+      "id": "pubsub-subscribers",
+      "version": "0.1"
     }
   ],
   "permissionSets": [
@@ -1276,7 +1282,8 @@
         "overdue-fines-policies.item.get",
         "overdue-fines-policies.collection.get",
         "lost-item-fees-policies.item.get",
-        "lost-item-fees-policies.collection.get"
+        "lost-item-fees-policies.collection.get",
+        "pubsub.publish.post"
       ],
       "visible": false
     },
@@ -1382,7 +1389,8 @@
         "feefines.item.post",
         "owners.collection.get",
         "accounts.item.post",
-        "check-in-storage.check-ins.item.post"
+        "check-in-storage.check-ins.item.post",
+        "pubsub.publish.post"
       ],
       "visible": false
     },
@@ -1766,7 +1774,8 @@
         "scheduled-notice-storage.scheduled-notices.collection.delete",
         "scheduled-notice-storage.scheduled-notices.item.post",
         "configuration.entries.collection.get",
-        "manualblocks.collection.get"
+        "manualblocks.collection.get",
+        "pubsub.publish.post"
       ],
       "visible": false
     },
@@ -1984,7 +1993,8 @@
         "feefines.collection.get",
         "accounts.item.post",
         "users.item.get",
-        "feefineactions.item.post"
+        "feefineactions.item.post",
+        "pubsub.publish.post"
       ],
       "visible": false
     },
@@ -2003,7 +2013,8 @@
         "inventory-storage.items.item.put",
         "scheduled-notice-storage.scheduled-notices.collection.delete",
         "scheduled-notice-storage.scheduled-notices.item.post",
-        "users.item.get"
+        "users.item.get",
+        "pubsub.publish.post"
       ],
       "visible": false
     },
