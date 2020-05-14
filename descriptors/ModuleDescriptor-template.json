@@ -927,6 +927,10 @@
     {
       "id": "pubsub-subscribers",
       "version": "0.1"
+    },
+    {
+      "id": "pubsub-publish",
+      "version": "0.1"
     }
   ],
   "permissionSets": [
