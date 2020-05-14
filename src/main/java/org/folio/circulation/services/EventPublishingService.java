@@ -15,7 +15,6 @@ import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.domain.LoanRepository;
 import org.folio.circulation.domain.RequestAndRelatedRecords;
-import org.folio.circulation.resources.TenantAPI;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.Result;
 import org.folio.rest.jaxrs.model.Event;
@@ -30,12 +29,18 @@ import io.vertx.core.logging.LoggerFactory;
 import io.vertx.ext.web.RoutingContext;
 
 public class EventPublishingService {
-  private static final Logger logger = LoggerFactory.getLogger(TenantAPI.class);
+  private static final Logger logger = LoggerFactory.getLogger(EventPublishingService.class);
 
   public static final String ITEM_CHECKED_OUT_EVENT_TYPE = "ITEM_CHECKED_OUT";
   public static final String ITEM_CHECKED_IN_EVENT_TYPE = "ITEM_CHECKED_IN";
   public static final String ITEM_DECLARED_LOST_EVENT_TYPE = "ITEM_DECLARED_LOST";
   public static final String LOAN_DUE_DATE_UPDATED_EVENT_TYPE = "LOAN_DUE_DATE_UPDATED";
+
+  public static final String USER_ID_FIELD = "userId";
+  public static final String LOAN_ID_FIELD = "loanId";
+  public static final String DUE_DATE_FIELD = "dueDate";
+  public static final String RETURN_DATE_FIELD = "returnDate";
+  public static final String DUE_DATE_CHANGED_BY_RECALL_FIELD = "dueDateChangedByRecall";
 
   private final Map<String, String> okapiHeaders;
   private final Context vertxContext;
@@ -60,9 +65,9 @@ public class EventPublishingService {
       Loan loan = loanAndRelatedRecords.getLoan();
 
       JsonObject payloadJsonObject = new JsonObject();
-      write(payloadJsonObject, "userId", loan.getUserId());
-      write(payloadJsonObject, "loanId", loan.getId());
-      write(payloadJsonObject, "dueDate", loan.getDueDate());
+      write(payloadJsonObject, USER_ID_FIELD, loan.getUserId());
+      write(payloadJsonObject, LOAN_ID_FIELD, loan.getId());
+      write(payloadJsonObject, DUE_DATE_FIELD, loan.getDueDate());
 
       publishEvent(ITEM_CHECKED_OUT_EVENT_TYPE, payloadJsonObject.encode());
     }
@@ -80,9 +85,9 @@ public class EventPublishingService {
       Loan loan = checkInProcessRecords.getLoan();
 
       JsonObject payloadJsonObject = new JsonObject();
-      write(payloadJsonObject, "userId", loan.getUserId());
-      write(payloadJsonObject, "loanId", loan.getId());
-      write(payloadJsonObject, "returnDate", loan.getReturnDate());
+      write(payloadJsonObject, USER_ID_FIELD, loan.getUserId());
+      write(payloadJsonObject, LOAN_ID_FIELD, loan.getId());
+      write(payloadJsonObject, RETURN_DATE_FIELD, loan.getReturnDate());
 
       publishEvent(ITEM_CHECKED_IN_EVENT_TYPE, payloadJsonObject.encode());
     }
@@ -96,8 +101,8 @@ public class EventPublishingService {
   public CompletableFuture<Result<Loan>> publishDeclaredLostEvent(Loan loan) {
     if (loan != null) {
       JsonObject payloadJsonObject = new JsonObject();
-      write(payloadJsonObject, "userId", loan.getUserId());
-      write(payloadJsonObject, "loanId", loan.getId());
+      write(payloadJsonObject, USER_ID_FIELD, loan.getUserId());
+      write(payloadJsonObject, LOAN_ID_FIELD, loan.getId());
 
       publishEvent(ITEM_DECLARED_LOST_EVENT_TYPE, payloadJsonObject.encode());
     }
@@ -108,10 +113,10 @@ public class EventPublishingService {
   private CompletableFuture<Result<Loan>> publishDueDateChangedEvent(Loan loan) {
     if (loan != null) {
       JsonObject payloadJsonObject = new JsonObject();
-      write(payloadJsonObject, "userId", loan.getUserId());
-      write(payloadJsonObject, "loanId", loan.getId());
-      write(payloadJsonObject, "dueDate", loan.getDueDate());
-      write(payloadJsonObject, "dueDateChangedByRecall", loan.wasDueDateChangedByRecall());
+      write(payloadJsonObject, USER_ID_FIELD, loan.getUserId());
+      write(payloadJsonObject, LOAN_ID_FIELD, loan.getId());
+      write(payloadJsonObject, DUE_DATE_FIELD, loan.getDueDate());
+      write(payloadJsonObject, DUE_DATE_CHANGED_BY_RECALL_FIELD, loan.wasDueDateChangedByRecall());
 
       publishEvent(LOAN_DUE_DATE_UPDATED_EVENT_TYPE, payloadJsonObject.encode());
     }
@@ -154,7 +159,7 @@ public class EventPublishingService {
 
     PubSubClientUtils.sendEventMessage(event, params)
       .whenComplete((result, throwable) -> {
-        if (result) {
+        if (Boolean.TRUE.equals(result)) {
           logger.debug("Event published successfully: {}", event.getId());
         } else {
           logger.error("Failed to publish event: {}", event.getId());

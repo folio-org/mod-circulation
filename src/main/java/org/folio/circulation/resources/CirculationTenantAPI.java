@@ -17,8 +17,8 @@ import io.vertx.core.logging.LoggerFactory;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 
-public class TenantAPI extends org.folio.rest.impl.TenantAPI {
-  private static final Logger logger = LoggerFactory.getLogger(TenantAPI.class);
+public class CirculationTenantAPI {
+  private static final Logger logger = LoggerFactory.getLogger(CirculationTenantAPI.class);
 
   public void register(Router router) {
     RouteRegistration routeRegistration = new RouteRegistration("/_/tenant", router);
