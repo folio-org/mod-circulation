@@ -3,6 +3,7 @@ package org.folio.circulation.domain;
 import static java.lang.Boolean.TRUE;
 import static java.util.Objects.nonNull;
 import static java.util.Objects.requireNonNull;
+import static org.folio.circulation.domain.FeeAmount.noFeeAmount;
 import static org.folio.circulation.domain.LoanAction.CHECKED_IN;
 import static org.folio.circulation.domain.LoanAction.CHECKED_OUT;
 import static org.folio.circulation.domain.LoanAction.CLAIMED_RETURNED;
@@ -553,5 +554,17 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     changeItemStatusForItemAndLoan(ItemStatus.MISSING);
 
     return closeLoan(MISSING, comment);
+  }
+
+  public FeeAmount getRemainingFeeFineAmount() {
+    if (accounts == null) {
+      return FeeAmount.noFeeAmount();
+    }
+
+    return accounts.stream()
+      .filter(Account::isOpen)
+      .map(Account::getRemaining)
+      .reduce(FeeAmount::add)
+      .orElse(noFeeAmount());
   }
 }

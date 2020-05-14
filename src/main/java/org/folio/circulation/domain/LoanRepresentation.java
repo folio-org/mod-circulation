@@ -10,9 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.invoke.MethodHandles;
-import java.util.Collection;
 
-import static org.folio.circulation.domain.FeeAmount.noFeeAmount;
 import static org.folio.circulation.domain.representations.LoanProperties.BORROWER;
 import static org.folio.circulation.domain.representations.LoanProperties.LOAN_POLICY;
 import static org.folio.circulation.domain.representations.LoanProperties.LOST_ITEM_POLICY;
@@ -48,7 +46,7 @@ public class LoanRepresentation {
     addPolicy(extendedRepresentation, loan.getLoanPolicy(), LOAN_POLICY);
     addPolicy(extendedRepresentation, loan.getOverdueFinePolicy(), OVERDUE_FINE_POLICY);
     addPolicy(extendedRepresentation, loan.getLostItemPolicy(), LOST_ITEM_POLICY);
-    additionalAccountProperties(extendedRepresentation, loan.getAccounts());
+    additionalAccountProperties(extendedRepresentation, loan);
 
     extendedRepresentation.remove(PATRON_GROUP_ID_AT_CHECKOUT);
 
@@ -83,21 +81,17 @@ public class LoanRepresentation {
     return loan;
   }
 
-  private void additionalAccountProperties(JsonObject loanRepresentation, Collection<Account> accounts) {
-    if (accounts == null) {
+  private void additionalAccountProperties(JsonObject loanRepresentation, Loan loan) {
+    if (loan.getAccounts() == null) {
       return;
     }
-    final double remainingFeesFines = accounts.stream()
-      .filter(Account::isOpen)
-      .map(Account::getRemaining)
-      .reduce(FeeAmount::add)
-      .orElse(noFeeAmount())
-      .toDouble();
 
     JsonObject feesAndFinesSummary = loanRepresentation.containsKey(LoanProperties.FEESANDFINES)
       ? loanRepresentation.getJsonObject(LoanProperties.FEESANDFINES)
       : new JsonObject();
-    write(feesAndFinesSummary, "amountRemainingToPay", remainingFeesFines);
+
+    write(feesAndFinesSummary, "amountRemainingToPay", loan.getRemainingFeeFineAmount()
+      .toDouble());
     write(loanRepresentation, LoanProperties.FEESANDFINES, feesAndFinesSummary);
   }
 
