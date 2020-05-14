@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.folio.circulation.support.RouteRegistration;
+import org.folio.circulation.support.http.server.ServerErrorResponse;
 import org.folio.util.pubsub.PubSubClientUtils;
 
 import io.vertx.core.Future;
@@ -33,7 +34,15 @@ public class CirculationTenantAPI {
 
     vertx.executeBlocking(
       promise -> registerModuleToPubsub(headers, vertx).setHandler(promise::complete),
-      result -> created(new JsonObject()).writeTo(routingContext.response())
+      result -> {
+        if (result.failed()) {
+          ServerErrorResponse.internalError(routingContext.response(),
+            result.cause().getLocalizedMessage());
+        }
+        else {
+          created(new JsonObject()).writeTo(routingContext.response());
+        }
+      }
     );
   }
 
