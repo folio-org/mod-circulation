@@ -160,9 +160,11 @@ public class EventPublishingService {
     PubSubClientUtils.sendEventMessage(event, params)
       .whenComplete((result, throwable) -> {
         if (Boolean.TRUE.equals(result)) {
-          logger.debug("Event published successfully: {}", event.getId());
+          logger.debug("Event published successfully. ID: {}, type: {}, payload: {}",
+            event.getId(), event.getEventType(), event.getEventPayload());
         } else {
-          logger.error("Failed to publish event: {}", event.getId());
+          logger.error("Failed to publish event. ID: {}, type: {}, payload: {}", throwable,
+            event.getId(), event.getEventType(), event.getEventPayload());
         }
       });
   }
