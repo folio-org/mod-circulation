@@ -7,9 +7,9 @@ import java.util.stream.Collectors;
 
 import org.folio.circulation.support.RouteRegistration;
 import org.folio.circulation.support.http.server.ServerErrorResponse;
+import org.folio.rest.util.OkapiConnectionParams;
 import org.folio.util.pubsub.PubSubClientUtils;
 
-import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
@@ -33,7 +33,7 @@ public class CirculationTenantAPI {
     Vertx vertx = routingContext.vertx();
 
     vertx.executeBlocking(
-      promise -> registerModuleToPubsub(headers, vertx).setHandler(promise::complete),
+      promise -> registerModuleToPubsub(headers, vertx, promise),
       result -> {
         if (result.failed()) {
           ServerErrorResponse.internalError(routingContext.response(),
@@ -46,9 +46,10 @@ public class CirculationTenantAPI {
     );
   }
 
-  private Future<Void> registerModuleToPubsub(Map<String, String> headers, Vertx vertx) {
-    Promise<Void> promise = Promise.promise();
-    PubSubClientUtils.registerModule(new org.folio.rest.util.OkapiConnectionParams(headers, vertx))
+  private void registerModuleToPubsub(Map<String, String> headers, Vertx vertx,
+    Promise<Object> promise) {
+
+    PubSubClientUtils.registerModule(new OkapiConnectionParams(headers, vertx))
       .whenComplete((registrationAr, throwable) -> {
         if (throwable == null) {
           logger.info("Module was successfully registered as publisher/subscriber in mod-pubsub");
@@ -58,6 +59,5 @@ public class CirculationTenantAPI {
           promise.fail(throwable);
         }
       });
-    return promise.future();
   }
 }
