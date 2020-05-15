@@ -110,7 +110,6 @@ public class FeeFineService {
 
     return createRefundAndCloseActions(processor, context)
       .thenCompose(r -> r.after(notUsed -> updateAccount(processor, context)));
-
   }
 
   private CompletableFuture<Result<Void>> updateAccount(

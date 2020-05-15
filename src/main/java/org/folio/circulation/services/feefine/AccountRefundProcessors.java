@@ -1,5 +1,6 @@
 package org.folio.circulation.services.feefine;
 
+import static org.folio.circulation.services.feefine.FeeTypeBasedRefundProcessor.createLostItemFeeRefundProcessor;
 import static org.folio.circulation.support.Result.failed;
 
 import java.util.Collections;
@@ -9,7 +10,7 @@ import org.folio.circulation.domain.Account;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.ServerErrorFailure;
 
-public class AccountRefundProcessors {
+public final class AccountRefundProcessors {
   private static final List<AccountRefundProcessor> PROCESSORS = getAvailableProcessors();
 
   private AccountRefundProcessors() {}
@@ -24,6 +25,6 @@ public class AccountRefundProcessors {
   }
 
   private static List<AccountRefundProcessor> getAvailableProcessors() {
-    return Collections.singletonList(new LostItemRefundProcessor());
+    return Collections.singletonList(createLostItemFeeRefundProcessor());
   }
 }
