@@ -2,7 +2,7 @@ package org.folio.circulation.services;
 
 import static java.util.concurrent.CompletableFuture.allOf;
 import static java.util.concurrent.CompletableFuture.completedFuture;
-import static org.folio.circulation.services.feefine.AccountRefundProcessors.getProcessor;
+import static org.folio.circulation.services.feefine.FeeRefundProcessor.createLostItemFeeRefundProcessor;
 import static org.folio.circulation.support.Result.combined;
 import static org.folio.circulation.support.Result.failed;
 import static org.folio.circulation.support.Result.succeeded;
@@ -23,11 +23,12 @@ import org.folio.circulation.domain.UserRepository;
 import org.folio.circulation.domain.representations.StoredAccount;
 import org.folio.circulation.domain.representations.StoredFeeFineAction;
 import org.folio.circulation.services.feefine.AccountRefundContext;
-import org.folio.circulation.services.feefine.AccountRefundProcessor;
+import org.folio.circulation.services.feefine.FeeRefundProcessor;
 import org.folio.circulation.services.support.CreateAccountCommand;
 import org.folio.circulation.services.support.RefundAccountCommand;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.Result;
+import org.folio.circulation.support.ServerErrorFailure;
 import org.folio.circulation.support.results.CommonFailures;
 
 import io.vertx.core.json.JsonObject;
@@ -37,12 +38,14 @@ public class FeeFineService {
   private final FeeFineActionRepository feeFineActionRepository;
   private final UserRepository userRepository;
   private final ServicePointRepository servicePointRepository;
+  private final FeeRefundProcessor lostItemRefundProcessor;
 
   public FeeFineService(Clients clients) {
     this.accountRepository = new AccountRepository(clients);
     this.feeFineActionRepository = new FeeFineActionRepository(clients);
     this.userRepository = new UserRepository(clients);
     this.servicePointRepository = new ServicePointRepository(clients);
+    this.lostItemRefundProcessor = createLostItemFeeRefundProcessor();
   }
 
   public CompletableFuture<Result<Void>> createAccountsAndActions(
@@ -101,50 +104,50 @@ public class FeeFineService {
   }
 
   private CompletableFuture<Result<Void>> processRefundAndClose(AccountRefundContext context) {
-    final Result<AccountRefundProcessor> processorResult = getProcessor(context.getAccount());
-    if (processorResult.failed()) {
-      return completedFuture(failed(processorResult.cause()));
+    if (lostItemRefundProcessor.canHandleAccountRefund(context.getAccount())) {
+      return completedFuture(getNoRefundProcessorForFeeType(context.getAccount().getFeeFineType()));
     }
 
-    final AccountRefundProcessor processor = processorResult.value();
-
-    return createRefundAndCloseActions(processor, context)
-      .thenCompose(r -> r.after(notUsed -> updateAccount(processor, context)));
+    return createRefundAndCloseActions(context)
+      .thenCompose(r -> r.after(notUsed -> updateAccount(context)));
   }
 
-  private CompletableFuture<Result<Void>> updateAccount(
-    AccountRefundProcessor processor, AccountRefundContext context) {
+  private Result<Void> getNoRefundProcessorForFeeType(String feeFineType) {
+    return failed(new ServerErrorFailure(
+      "No refund processor available for fee/fine of type: " + feeFineType));
+  }
 
+  private CompletableFuture<Result<Void>> updateAccount(AccountRefundContext context) {
     final Account account = context.getAccount();
     if (account.hasTransferredAmount()) {
-      processor.onTransferAmountRefundActionSaved(context);
+      lostItemRefundProcessor.onTransferAmountRefundActionSaved(context);
     }
 
     if (account.hasPaidAmount()) {
-      processor.onPaidAmountRefundActionSaved(context);
+      lostItemRefundProcessor.onPaidAmountRefundActionSaved(context);
     }
 
     if (account.hasRemainingAmount()) {
-      processor.onRemainingAmountActionSaved(context);
+      lostItemRefundProcessor.onRemainingAmountActionSaved(context);
     }
 
     return accountRepository.update(StoredAccount.fromAccount(context.getAccount()));
   }
 
   private CompletableFuture<Result<Void>> createRefundAndCloseActions(
-    AccountRefundProcessor processor, AccountRefundContext context) {
+    AccountRefundContext context) {
 
     final Account account = context.getAccount();
     if (account.hasTransferredAmount()) {
-      processor.onHasTransferAmount(context);
+      lostItemRefundProcessor.onHasTransferAmount(context);
     }
 
     if (account.hasPaidAmount()) {
-      processor.onHasPaidAmount(context);
+      lostItemRefundProcessor.onHasPaidAmount(context);
     }
 
     if (account.hasRemainingAmount()) {
-      processor.onHasRemainingAmount(context);
+      lostItemRefundProcessor.onHasRemainingAmount(context);
     }
 
     return feeFineActionRepository.createAll(context.getActions());
