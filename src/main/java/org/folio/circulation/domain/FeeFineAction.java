@@ -22,7 +22,7 @@ public class FeeFineAction {
     return representation.getDouble("balance");
   }
 
-  public FeeAmount getAmountAction() {
+  public FeeAmount getAmount() {
     return FeeAmount.from(representation, "amountAction");
   }
 
@@ -30,20 +30,20 @@ public class FeeFineAction {
     return representation.getString("userId");
   }
 
-  public String getTypeAction() {
+  public String getActionType() {
     return representation.getString("typeAction");
   }
 
   public boolean isPaid() {
-    return isTypeActionStartsWith("Paid");
+    return isActionTypeStartsWith("Paid");
   }
 
   public boolean isTransferred() {
-    return isTypeActionStartsWith("Transferred");
+    return isActionTypeStartsWith("Transferred");
   }
 
-  private boolean isTypeActionStartsWith(String prefix) {
-    return getTypeAction() != null && getTypeAction().toLowerCase()
+  private boolean isActionTypeStartsWith(String prefix) {
+    return getActionType() != null && getActionType().toLowerCase()
       .startsWith(prefix.toLowerCase());
   }
 

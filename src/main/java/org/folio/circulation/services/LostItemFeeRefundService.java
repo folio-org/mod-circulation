@@ -20,7 +20,7 @@ import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.policy.LostItemPolicyRepository;
 import org.folio.circulation.domain.policy.lostitem.LostItemPolicy;
-import org.folio.circulation.services.support.AccountRefund;
+import org.folio.circulation.services.support.RefundAccountCommand;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.http.client.CqlQuery;
@@ -72,7 +72,7 @@ public class LostItemFeeRefundService {
       }));
   }
 
-  private List<AccountRefund> getAccountsToRefund(ReferenceDataContext context) {
+  private List<RefundAccountCommand> getAccountsToRefund(ReferenceDataContext context) {
     Collection<Account> allAccounts = context.accounts;
 
     if (!context.lostItemPolicy.isRefundProcessingFeeWhenReturned()) {
@@ -82,7 +82,7 @@ public class LostItemFeeRefundService {
     }
 
     return allAccounts.stream()
-      .map(account -> new AccountRefund(account, context.staffUserId, context.servicePointId))
+      .map(account -> new RefundAccountCommand(account, context.staffUserId, context.servicePointId))
       .collect(Collectors.toList());
   }
 

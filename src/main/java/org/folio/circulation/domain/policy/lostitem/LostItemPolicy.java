@@ -82,9 +82,10 @@ public class LostItemPolicy extends Policy {
   private static AutomaticallyChargeableFee getSetCostFee(JsonObject policy) {
     final JsonObject chargeAmountItem = getObjectProperty(policy, "chargeAmountItem");
     final ChargeAmountType chargeType = forValue(getProperty(chargeAmountItem, "chargeType"));
+    final BigDecimal amount = getBigDecimalProperty(chargeAmountItem, "amount");
 
-    return chargeAmountItem != null && chargeType == SET_COST
-      ? new AutomaticallyChargeableFee(getBigDecimalProperty(chargeAmountItem, "amount"))
+    return chargeAmountItem != null && chargeType == SET_COST && amount != null
+      ? new AutomaticallyChargeableFee(amount)
       : noAutomaticallyChargeableFee();
   }
 

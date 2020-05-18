@@ -24,8 +24,8 @@ import org.folio.circulation.domain.representations.StoredAccount;
 import org.folio.circulation.domain.representations.StoredFeeFineAction;
 import org.folio.circulation.services.feefine.AccountRefundContext;
 import org.folio.circulation.services.feefine.AccountRefundProcessor;
-import org.folio.circulation.services.support.AccountCreation;
-import org.folio.circulation.services.support.AccountRefund;
+import org.folio.circulation.services.support.CreateAccountCommand;
+import org.folio.circulation.services.support.RefundAccountCommand;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.results.CommonFailures;
@@ -46,7 +46,7 @@ public class FeeFineService {
   }
 
   public CompletableFuture<Result<Void>> createAccountsAndActions(
-    Collection<AccountCreation> accountAndActions) {
+    Collection<CreateAccountCommand> accountAndActions) {
 
     return allOf(accountAndActions.stream()
       .map(this::createAccountAndAction)
@@ -55,7 +55,7 @@ public class FeeFineService {
       .exceptionally(CommonFailures::failedDueToServerError);
   }
 
-  private CompletableFuture<Result<Void>> createAccountAndAction(AccountCreation creation) {
+  private CompletableFuture<Result<Void>> createAccountAndAction(CreateAccountCommand creation) {
     final StoredAccount account = new StoredAccount(
       creation.getLoan(),
       creation.getItem(),
@@ -68,7 +68,7 @@ public class FeeFineService {
   }
 
   private CompletableFuture<Result<Void>> createAccountCreatedAction(
-    Account createdAccount, AccountCreation creation) {
+    Account createdAccount, CreateAccountCommand creation) {
 
     return fetchServicePointAndUser(creation.getStaffUserId(), creation.getCurrentServicePointId())
       .thenApply(r -> r.map(pair -> StoredFeeFineAction.builder()
@@ -84,7 +84,7 @@ public class FeeFineService {
       .thenApply(r -> r.map(notUsed -> null));
   }
 
-  public CompletableFuture<Result<Void>> refundAndCloseAccounts(List<AccountRefund> accounts) {
+  public CompletableFuture<Result<Void>> refundAndCloseAccounts(List<RefundAccountCommand> accounts) {
     return allOf(accounts.stream()
       .map(this::refundAndCloseAccount)
       .toArray(CompletableFuture[]::new))
@@ -92,7 +92,7 @@ public class FeeFineService {
       .exceptionally(CommonFailures::failedDueToServerError);
   }
 
-  private CompletableFuture<Result<Void>> refundAndCloseAccount(AccountRefund refund) {
+  private CompletableFuture<Result<Void>> refundAndCloseAccount(RefundAccountCommand refund) {
     return fetchServicePointAndUser(refund.getStaffUserId(), refund.getServicePointId())
       .thenApply(r -> r.map(pair -> new AccountRefundContext(refund.getAccountToRefund())
         .withServicePoint(pair.getRight())

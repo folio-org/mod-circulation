@@ -17,7 +17,7 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
-import org.folio.circulation.services.support.AccountCreation;
+import org.folio.circulation.services.support.CreateAccountCommand;
 import org.folio.circulation.domain.FeeFine;
 import org.folio.circulation.domain.FeeFineOwner;
 import org.folio.circulation.domain.FeeFineOwnerRepository;
@@ -91,18 +91,18 @@ public class LostItemFeeChargingService {
       ReferenceDataContext::withFeeFines);
   }
 
-  private Result<List<AccountCreation>> buildAccountsAndActions(
+  private Result<List<CreateAccountCommand>> buildAccountsAndActions(
     Result<ReferenceDataContext> contextResult) {
 
     return contextResult.next(context -> {
       final LostItemPolicy policy = context.lostItemPolicy;
-      final List<Result<AccountCreation>> accountsToCreate = new ArrayList<>();
+      final List<Result<CreateAccountCommand>> accountsToCreate = new ArrayList<>();
       final Collection<FeeFine> feeFines = context.feeFines;
 
       if (policy.getSetCostFee().isChargeable()) {
         log.debug("Charging lost item fee");
 
-        final Result<AccountCreation> lostItemFeeResult =
+        final Result<CreateAccountCommand> lostItemFeeResult =
           getFeeFineOfType(feeFines, LOST_ITEM_FEE_TYPE)
             .map(createAccountCreation(context, policy.getSetCostFee()));
 
@@ -112,7 +112,7 @@ public class LostItemFeeChargingService {
       if (policy.getProcessingFee().isChargeable()) {
         log.debug("Charging lost item processing fee");
 
-        final Result<AccountCreation> processingFeeResult =
+        final Result<CreateAccountCommand> processingFeeResult =
           getFeeFineOfType(feeFines, LOST_ITEM_PROCESSING_FEE_TYPE)
             .map(createAccountCreation(context, policy.getProcessingFee()));
 
@@ -128,10 +128,10 @@ public class LostItemFeeChargingService {
     return loan.getItem().getLocation().getPrimaryServicePointId();
   }
 
-  private Function<FeeFine, AccountCreation> createAccountCreation(
+  private Function<FeeFine, CreateAccountCommand> createAccountCreation(
     ReferenceDataContext context, AutomaticallyChargeableFee fee) {
 
-    return feeFine -> AccountCreation.builder()
+    return feeFine -> CreateAccountCommand.builder()
       .withAmount(fee.getAmount())
       .withCurrentServicePointId(context.request.getServicePointId())
       .withStaffUserId(context.staffUserId)

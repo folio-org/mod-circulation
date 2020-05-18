@@ -12,7 +12,7 @@ public final class FeeAmount {
   private final BigDecimal amount;
 
   public FeeAmount(BigDecimal amount) {
-    this.amount = amount != null ? amount : BigDecimal.ZERO;
+    this.amount = amount;
   }
 
   public FeeAmount(double amount) {

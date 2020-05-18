@@ -6,7 +6,7 @@ import org.folio.circulation.domain.FeeFineOwner;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Loan;
 
-public final class AccountCreation {
+public final class CreateAccountCommand {
   private final Loan loan;
   private final Item item;
   private final FeeFine feeFine;
@@ -15,7 +15,7 @@ public final class AccountCreation {
   private final String staffUserId;
   private final String currentServicePointId;
 
-  private AccountCreation(Builder builder) {
+  private CreateAccountCommand(Builder builder) {
     this.loan = builder.loan;
     this.item = builder.item;
     this.feeFine = builder.feeFine;
@@ -103,8 +103,8 @@ public final class AccountCreation {
       return this;
     }
 
-    public AccountCreation build() {
-      return new AccountCreation(this);
+    public CreateAccountCommand build() {
+      return new CreateAccountCommand(this);
     }
   }
 }

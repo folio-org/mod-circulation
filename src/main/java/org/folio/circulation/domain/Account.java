@@ -179,7 +179,7 @@ public class Account {
   public FeeAmount getPaidAmount() {
     return feeFineActions.stream()
       .filter(FeeFineAction::isPaid)
-      .map(FeeFineAction::getAmountAction)
+      .map(FeeFineAction::getAmount)
       .reduce(FeeAmount::add)
       .orElse(noFeeAmount());
   }
@@ -191,7 +191,7 @@ public class Account {
   public FeeAmount getTransferredAmount() {
     return feeFineActions.stream()
       .filter(FeeFineAction::isTransferred)
-      .map(FeeFineAction::getAmountAction)
+      .map(FeeFineAction::getAmount)
       .reduce(FeeAmount::add)
       .orElse(noFeeAmount());
   }
