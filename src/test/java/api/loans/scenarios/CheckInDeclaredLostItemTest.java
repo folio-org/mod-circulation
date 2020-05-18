@@ -62,7 +62,7 @@ public class CheckInDeclaredLostItemTest extends APITests {
   }
 
   @Test
-  public void shouldCancelItemProcessingFeeOnlyWhenNoOtherFeesCharged() {
+  public void shouldCancelItemProcessingFeeOnlyWhenNoOtherFeesChargedAndNoPaymentsMade() {
     final double processingFee = 12.99;
 
     useLostItemPolicy(lostItemFeePoliciesFixture.create(
@@ -109,7 +109,7 @@ public class CheckInDeclaredLostItemTest extends APITests {
   }
 
   @Test
-  public void shouldNoRefundFeesWhenReturnedAfterRefundPeriod() {
+  public void shouldNotRefundFeesWhenReturnedAfterRefundPeriod() {
     final double setCostFee = 10.55;
     final double processingFee = 12.99;
 
@@ -189,7 +189,7 @@ public class CheckInDeclaredLostItemTest extends APITests {
   }
 
   @Test
-  public void canRefundTransferredFee() {
+  public void shouldRefundTransferredFee() {
     final double setCostFee = 10.89;
     final double processingFee = 5.00;
 
@@ -211,7 +211,7 @@ public class CheckInDeclaredLostItemTest extends APITests {
   }
 
   @Test
-  public void canRefundPaidFee() {
+  public void shouldRefundPaidFee() {
     final double setCostFee = 9.99;
     final double processingFee = 5.00;
 
@@ -233,7 +233,7 @@ public class CheckInDeclaredLostItemTest extends APITests {
   }
 
   @Test
-  public void canRefundPaidAndTransferredFee() {
+  public void shouldRefundPaidAndTransferredFee() {
     final double transferAmount = 6.0;
     final double paymentAmount = 4.0;
     final double setCostFee = transferAmount + paymentAmount;
@@ -259,7 +259,7 @@ public class CheckInDeclaredLostItemTest extends APITests {
   }
 
   @Test
-  public void canCloseAndRefundPaidAndTransferredFee() {
+  public void shouldCloseAndRefundPaidAndTransferredFee() {
     final double transferAmount = 6.0;
     final double paymentAmount = 4.0;
     final double remainingAmount = 5.99;

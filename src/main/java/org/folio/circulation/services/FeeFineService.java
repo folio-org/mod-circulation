@@ -2,17 +2,14 @@ package org.folio.circulation.services;
 
 import static java.util.concurrent.CompletableFuture.allOf;
 import static java.util.concurrent.CompletableFuture.completedFuture;
+import static org.folio.circulation.domain.representations.StoredFeeFineAction.StoredFeeFineActionBuilder;
 import static org.folio.circulation.services.feefine.FeeRefundProcessor.createLostItemFeeRefundProcessor;
-import static org.folio.circulation.support.Result.combined;
 import static org.folio.circulation.support.Result.failed;
-import static org.folio.circulation.support.Result.succeeded;
 
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
-import org.apache.commons.lang3.tuple.ImmutablePair;
-import org.apache.commons.lang3.tuple.Pair;
 import org.folio.circulation.domain.Account;
 import org.folio.circulation.domain.AccountRepository;
 import org.folio.circulation.domain.FeeFineActionRepository;
@@ -48,17 +45,17 @@ public class FeeFineService {
     this.lostItemRefundProcessor = createLostItemFeeRefundProcessor();
   }
 
-  public CompletableFuture<Result<Void>> createAccountsAndActions(
+  public CompletableFuture<Result<Void>> createAccounts(
     Collection<CreateAccountCommand> accountAndActions) {
 
     return allOf(accountAndActions.stream()
-      .map(this::createAccountAndAction)
+      .map(this::createAccount)
       .toArray(CompletableFuture[]::new))
       .thenApply(Result::succeeded)
       .exceptionally(CommonFailures::failedDueToServerError);
   }
 
-  private CompletableFuture<Result<Void>> createAccountAndAction(CreateAccountCommand creation) {
+  private CompletableFuture<Result<Void>> createAccount(CreateAccountCommand creation) {
     final StoredAccount account = new StoredAccount(
       creation.getLoan(),
       creation.getItem(),
@@ -73,15 +70,17 @@ public class FeeFineService {
   private CompletableFuture<Result<Void>> createAccountCreatedAction(
     Account createdAccount, CreateAccountCommand creation) {
 
-    return fetchServicePointAndUser(creation.getStaffUserId(), creation.getCurrentServicePointId())
-      .thenApply(r -> r.map(pair -> StoredFeeFineAction.builder()
+    final StoredFeeFineActionBuilder builder = StoredFeeFineAction.builder();
+    return fetchUser(creation.getStaffUserId())
+      .thenApply(r -> r.map(builder::withCreatedBy))
+      .thenCompose(r -> r.after(notUsed -> fetchServicePoint(creation.getCurrentServicePointId())))
+      .thenApply(r -> r.map(servicePoint -> builder
         .withBalance(createdAccount.getRemaining())
         .withAmount(createdAccount.getAmount())
         .withUserId(createdAccount.getUserId())
         .withAction(createdAccount.getFeeFineType())
         .withAccountId(createdAccount.getId())
-        .withCreatedAt(pair.getRight().getName())
-        .withCreatedBy(pair.getLeft())
+        .withCreatedAt(servicePoint.getName())
         .build()))
       .thenCompose(r -> r.after(feeFineActionRepository::create))
       .thenApply(r -> r.map(notUsed -> null));
@@ -96,10 +95,12 @@ public class FeeFineService {
   }
 
   private CompletableFuture<Result<Void>> refundAndCloseAccount(RefundAccountCommand refund) {
-    return fetchServicePointAndUser(refund.getStaffUserId(), refund.getServicePointId())
-      .thenApply(r -> r.map(pair -> new AccountRefundContext(refund.getAccountToRefund())
-        .withServicePoint(pair.getRight())
-        .withUser(pair.getLeft())))
+    final AccountRefundContext context = new AccountRefundContext(refund.getAccountToRefund());
+
+    return fetchUser(refund.getStaffUserId())
+      .thenApply(r -> r.map(context::withUser))
+      .thenComposeAsync(r -> r.after(notUsed -> fetchServicePoint(refund.getServicePointId())))
+      .thenApply(r -> r.map(context::withServicePoint))
       .thenCompose(r -> r.after(this::processRefundAndClose));
   }
 
@@ -153,15 +154,13 @@ public class FeeFineService {
     return feeFineActionRepository.createAll(context.getActions());
   }
 
-  private CompletableFuture<Result<Pair<User, ServicePoint>>> fetchServicePointAndUser(
-    String userId, String servicePointId) {
+  private CompletableFuture<Result<User>> fetchUser(String userId) {
+    return userRepository.getUser(userId);
+  }
 
-    return userRepository.getUser(userId)
-      .thenCombineAsync(servicePointRepository.getServicePointById(servicePointId),
-        combined((user, servicePoint) -> succeeded(new ImmutablePair<>(user, servicePoint))))
-      .thenApply(r -> r.map(pair -> pair.getRight() == null
-        // Return a wrapper to prevent NPE
-        ? new ImmutablePair<>(pair.getLeft(), new ServicePoint(new JsonObject()))
-        : pair));
+  private CompletableFuture<Result<ServicePoint>> fetchServicePoint(String servicePointId) {
+    return servicePointRepository.getServicePointById(servicePointId)
+      // To prevent NPE.
+      .thenApply(r -> r.map(sp -> sp == null ? new ServicePoint(new JsonObject()) : sp));
   }
 }
