@@ -114,7 +114,7 @@ public class LostItemFeeRefundService {
     private Collection<Account> accounts;
     private LostItemPolicy lostItemPolicy;
 
-    public ReferenceDataContext(ItemStatus itemStatus, Loan loan, String staffUserId,
+    private ReferenceDataContext(ItemStatus itemStatus, Loan loan, String staffUserId,
       String servicePointId) {
 
       this.itemStatus = itemStatus;
@@ -123,12 +123,12 @@ public class LostItemFeeRefundService {
       this.servicePointId = servicePointId;
     }
 
-    public ReferenceDataContext withAccounts(Collection<Account> accounts) {
+    private ReferenceDataContext withAccounts(Collection<Account> accounts) {
       this.accounts = accounts;
       return this;
     }
 
-    public ReferenceDataContext withLostItemPolicy(LostItemPolicy lostItemPolicy) {
+    private ReferenceDataContext withLostItemPolicy(LostItemPolicy lostItemPolicy) {
       this.lostItemPolicy = lostItemPolicy;
       return this;
     }

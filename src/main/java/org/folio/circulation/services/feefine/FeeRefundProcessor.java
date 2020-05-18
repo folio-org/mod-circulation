@@ -20,12 +20,12 @@ import org.folio.circulation.domain.FeeAmount;
 import org.folio.circulation.domain.representations.AccountPaymentStatus;
 import org.folio.circulation.domain.representations.StoredFeeFineAction;
 
-public class FeeTypeBasedRefundProcessor implements AccountRefundProcessor {
+public class FeeRefundProcessor implements AccountRefundProcessor {
   private final AccountPaymentStatus closedAccountPaymentStatus;
   private final AccountRefundReason refundReason;
   private final Set<String> supportedFeeFineTypes;
 
-  private FeeTypeBasedRefundProcessor(AccountPaymentStatus closedAccountPaymentStatus,
+  private FeeRefundProcessor(AccountPaymentStatus closedAccountPaymentStatus,
     AccountRefundReason refundReason, Collection<String> supportedFeeFineTypes) {
 
     this.closedAccountPaymentStatus = closedAccountPaymentStatus;
@@ -128,8 +128,8 @@ public class FeeTypeBasedRefundProcessor implements AccountRefundProcessor {
     return "Refund to " + account.getTransferAccountName();
   }
 
-  public static FeeTypeBasedRefundProcessor createLostItemFeeRefundProcessor() {
-    return new FeeTypeBasedRefundProcessor(CANCELLED_ITEM_RETURNED,
+  public static FeeRefundProcessor createLostItemFeeRefundProcessor() {
+    return new FeeRefundProcessor(CANCELLED_ITEM_RETURNED,
       LOST_ITEM_FOUND, asList(LOST_ITEM_FEE_TYPE, LOST_ITEM_PROCESSING_FEE_TYPE));
   }
 }

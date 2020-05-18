@@ -44,7 +44,7 @@ public class CheckInDeclaredLostItemTest extends APITests {
   }
 
   @Test
-  public void canCancelItemFeeOnly() {
+  public void shouldCancelItemFeeOnly() {
     final double itemFee = 15.00;
 
     useLostItemPolicy(lostItemFeePoliciesFixture.create(
