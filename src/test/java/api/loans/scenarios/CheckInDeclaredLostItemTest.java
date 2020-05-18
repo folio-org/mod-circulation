@@ -81,7 +81,7 @@ public class CheckInDeclaredLostItemTest extends APITests {
   }
 
   @Test
-  public void processingFeeIsNotRefundedWhenDisabledInPolicy() {
+  public void shouldNotRefundProcessingFeeWhenPolicyStatesNotTo() {
     final double processingFee = 12.99;
 
     useLostItemPolicy(lostItemFeePoliciesFixture.create(
@@ -109,7 +109,7 @@ public class CheckInDeclaredLostItemTest extends APITests {
   }
 
   @Test
-  public void feesAreNotRefundedIfRefundPeriodExceeded() {
+  public void shouldNoRefundFeesWhenReturnedAfterRefundPeriod() {
     final double setCostFee = 10.55;
     final double processingFee = 12.99;
 
@@ -144,7 +144,7 @@ public class CheckInDeclaredLostItemTest extends APITests {
   }
 
   @Test
-  public void feesAreRefundedIfRefundPeriodNotSet() {
+  public void shouldRefundFeesWhenNoMaximumRefundPeriod() {
     final double setCostFee = 10.55;
     final double processingFee = 12.99;
 
@@ -173,7 +173,7 @@ public class CheckInDeclaredLostItemTest extends APITests {
   }
 
   @Test
-  public void canCancelItemAndProcessingFees() {
+  public void shouldCancelBothItemAndProcessingFeesWhenNeitherHaveBeenPaid() {
     final double processingFee = 5.0;
     final double itemFee = 10.0;
 
@@ -463,13 +463,6 @@ public class CheckInDeclaredLostItemTest extends APITests {
       hasJsonPath("remaining", 0.0),
       hasJsonPath("status.name", "Closed"),
       hasJsonPath("paymentStatus.name", CANCELLED_ITEM_RETURNED));
-  }
-
-  private Matcher<JsonObject> isAccountOpen(double amount) {
-    return allOf(
-      hasJsonPath("amount", amount),
-      hasJsonPath("remaining", amount),
-      hasJsonPath("status.name", "Open"));
   }
 
   private void useChargeableRefundableLostItemFee(double itemFee, double processingFee) {
