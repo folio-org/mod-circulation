@@ -104,15 +104,15 @@ public class FeeFineService {
   }
 
   private CompletableFuture<Result<Void>> processRefundAndClose(AccountRefundContext context) {
-    if (lostItemRefundProcessor.canHandleAccountRefund(context.getAccount())) {
-      return completedFuture(getNoRefundProcessorForFeeType(context.getAccount().getFeeFineType()));
+    if (!lostItemRefundProcessor.canHandleAccountRefund(context.getAccount())) {
+      return completedFuture(noRefundProcessorForFeeType(context.getAccount().getFeeFineType()));
     }
 
     return createRefundAndCloseActions(context)
       .thenCompose(r -> r.after(notUsed -> updateAccount(context)));
   }
 
-  private Result<Void> getNoRefundProcessorForFeeType(String feeFineType) {
+  private Result<Void> noRefundProcessorForFeeType(String feeFineType) {
     return failed(new ServerErrorFailure(
       "No refund processor available for fee/fine of type: " + feeFineType));
   }
