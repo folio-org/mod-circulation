@@ -44,7 +44,7 @@ public class CheckInDeclaredLostItemTest extends APITests {
   }
 
   @Test
-  public void shouldCancelItemFeeOnly() {
+  public void shouldCancelItemFeeOnlyWhenNoOtherFeesCharged() {
     final double itemFee = 15.00;
 
     useLostItemPolicy(lostItemFeePoliciesFixture.create(
@@ -62,7 +62,7 @@ public class CheckInDeclaredLostItemTest extends APITests {
   }
 
   @Test
-  public void canCancelProcessingFeeOnly() {
+  public void shouldCancelItemProcessingFeeOnlyWhenNoOtherFeesCharged() {
     final double processingFee = 12.99;
 
     useLostItemPolicy(lostItemFeePoliciesFixture.create(
@@ -109,7 +109,7 @@ public class CheckInDeclaredLostItemTest extends APITests {
   }
 
   @Test
-  public void feeIsNotRefundedIfRefundPeriodExceeded() {
+  public void feesAreNotRefundedIfRefundPeriodExceeded() {
     final double setCostFee = 10.55;
     final double processingFee = 12.99;
 
@@ -233,7 +233,7 @@ public class CheckInDeclaredLostItemTest extends APITests {
   }
 
   @Test
-  public void canRefundPaymentAndTransferredFee() {
+  public void canRefundPaidAndTransferredFee() {
     final double transferAmount = 6.0;
     final double paymentAmount = 4.0;
     final double setCostFee = transferAmount + paymentAmount;
@@ -259,7 +259,7 @@ public class CheckInDeclaredLostItemTest extends APITests {
   }
 
   @Test
-  public void canCloseAndRefundPaymentAndTransferredFee() {
+  public void canCloseAndRefundPaidAndTransferredFee() {
     final double transferAmount = 6.0;
     final double paymentAmount = 4.0;
     final double remainingAmount = 5.99;
@@ -287,7 +287,7 @@ public class CheckInDeclaredLostItemTest extends APITests {
   }
 
   @Test
-  public void shouldChargeOverdueFineWhenAllowed() {
+  public void shouldChargeOverdueFineWhenAllowedByPolicy() {
     final double processingFee = 12.99;
 
     // Create overdue fine type
@@ -315,7 +315,7 @@ public class CheckInDeclaredLostItemTest extends APITests {
   }
 
   @Test
-  public void shouldNotChargeOverdueFineWhenDisallowed() {
+  public void shouldNotChargeOverdueFineWhenDisallowedByPolicy() {
     final double processingFee = 12.99;
 
     // Create overdue fine type
