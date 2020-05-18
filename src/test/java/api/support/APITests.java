@@ -43,7 +43,9 @@ import api.support.fixtures.CirculationRulesFixture;
 import api.support.fixtures.ClaimItemReturnedFixture;
 import api.support.fixtures.DeclareLostFixtures;
 import api.support.fixtures.EndPatronSessionClient;
+import api.support.fixtures.EventSubscribersFixture;
 import api.support.fixtures.ExpiredSessionProcessingClient;
+import api.support.fixtures.FeeFineAccountFixture;
 import api.support.fixtures.FeeFineTypeFixture;
 import api.support.fixtures.FeeFineOwnerFixture;
 import api.support.fixtures.HoldingsFixture;
@@ -210,8 +212,7 @@ public abstract class APITests {
   protected final UsersFixture usersFixture = new UsersFixture(usersClient,
     patronGroupsFixture);
 
-  protected final LoansFixture loansFixture = new LoansFixture(
-  );
+  protected final LoansFixture loansFixture = new LoansFixture();
 
   protected final CheckOutFixture checkOutFixture = new CheckOutFixture(
     usersFixture, servicePointsFixture);
@@ -251,6 +252,8 @@ public abstract class APITests {
   protected final DeclareLostFixtures declareLostFixtures = new DeclareLostFixtures();
   protected final ClaimItemReturnedFixture claimItemReturnedFixture =
     new ClaimItemReturnedFixture(restAssuredClient);
+  protected final FeeFineAccountFixture feeFineAccountFixture = new FeeFineAccountFixture();
+  protected final EventSubscribersFixture eventSubscribersFixture = new EventSubscribersFixture();
 
   protected APITests() {
     this(true);

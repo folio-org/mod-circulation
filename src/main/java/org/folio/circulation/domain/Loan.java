@@ -6,6 +6,7 @@ import static java.util.Objects.requireNonNull;
 import static org.folio.circulation.domain.LoanAction.CHECKED_IN;
 import static org.folio.circulation.domain.LoanAction.CHECKED_OUT;
 import static org.folio.circulation.domain.LoanAction.CLAIMED_RETURNED;
+import static org.folio.circulation.domain.LoanAction.CLOSED_LOAN;
 import static org.folio.circulation.domain.LoanAction.DECLARED_LOST;
 import static org.folio.circulation.domain.LoanAction.MISSING;
 import static org.folio.circulation.domain.LoanAction.RENEWED;
@@ -157,6 +158,10 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
 
   public void changeAction(String action) {
     write(representation, LoanProperties.ACTION, action);
+  }
+
+  public LoanAction getAction() {
+    return LoanAction.forValue(getProperty(representation, LoanProperties.ACTION));
   }
 
   private void changeCheckInServicePointId(UUID servicePointId) {
@@ -445,6 +450,10 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     return this;
   }
 
+  public boolean isDeclaredLost() {
+    return getAction() == DECLARED_LOST;
+  }
+
   public boolean hasItemWithStatus(ItemStatus itemStatus) {
     return Objects.nonNull(item) && item.isInStatus(itemStatus);
   }
@@ -548,5 +557,10 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     changeItemStatusForItemAndLoan(ItemStatus.MISSING);
 
     return closeLoan(MISSING, comment);
+  }
+
+  public void closeLoanAsLostAndPaid() {
+    closeLoan(CLOSED_LOAN);
+    changeItemStatusForItemAndLoan(ItemStatus.LOST_AND_PAID);
   }
 }

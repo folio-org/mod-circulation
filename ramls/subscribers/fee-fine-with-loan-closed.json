@@ -1,0 +1,20 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "type": "object",
+  "description": "Fee/fine with loan is closed event",
+  "properties": {
+    "feeFineId": {
+      "description": "Fee/fine id that was closed",
+      "type": "string",
+      "$ref": "../raml-util/schemas/uuid.schema"
+    },
+    "loanId": {
+      "description": "Associated loan id",
+      "type": "string",
+      "$ref": "../raml-util/schemas/uuid.schema"
+    }
+  },
+  "required": [
+    "loanId"
+  ]
+}

@@ -1,0 +1,34 @@
+#%RAML 1.0
+title: Circulation subscribe callbacks
+version: v1.0
+protocols: [ HTTP, HTTPS ]
+baseUri: http://localhost:9130
+
+documentation:
+  - title: Circulation Subscriber Callback Endpoints
+    content: <b>API to handle events</b>
+types:
+  errors: !include raml-util/schemas/errors.schema
+
+/circulation/subscribers/:
+  /fee-fine-with-loan-closed:
+    displayName: Subscriber callback endoint to handle fee/fine record with loan closed event
+    post:
+      description: Handle fee/fine record with loan closed event
+      body:
+        application/json:
+          type: !include subscribers/fee-fine-with-loan-closed.json
+          example: !include examples/fee-fine-with-loan-closed.json
+      responses:
+        204:
+          description: "Event handled successfully"
+        422:
+          description: "Unable to process event"
+          body:
+            application/json:
+              type: errors
+        500:
+          description: "Internal server error"
+          body:
+            text/plain:
+              example: "Internal server error"

@@ -174,4 +174,8 @@ public class RestAssuredClient {
       .statusCode(expectedStatusCode)
       .extract().response());
   }
+
+  public static RestAssuredClient defaultRestAssuredClient() {
+    return new RestAssuredClient(getOkapiHeadersFromContext());
+  }
 }

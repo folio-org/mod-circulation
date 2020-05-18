@@ -42,18 +42,29 @@ public class AccountRepository {
     feefineActionsStorageClient = clients.feeFineActionsStorageClient();
   }
 
-  public CompletableFuture<Result<Loan>> findAccountsForLoan(Result<Loan> loanResult) {
+  public CompletableFuture<Result<Loan>> findAccountsAndActionsForLoan(Result<Loan> loanResult) {
     return loanResult.after(loan -> {
       if (loan == null) {
         return completedFuture(loanResult);
       }
-      return loanResult.combineAfter(r -> fetchAccountsForLoan(loan.getId()), Loan::withAccounts);
+      return loanResult.combineAfter(r -> fetchAccountsAndActionsForLoan(loan.getId()),
+        Loan::withAccounts);
     });
   }
 
-  private CompletableFuture<Result<Collection<Account>>> fetchAccountsForLoan(String loanId) {
+  public CompletableFuture<Result<Loan>> findAccountsForLoan(Loan loan) {
+    return fetchAccountsForLoan(loan.getId())
+      .thenApply(r -> r.map(MultipleRecords::getRecords))
+      .thenApply(r -> r.map(loan::withAccounts));
+  }
+
+  private CompletableFuture<Result<MultipleRecords<Account>>> fetchAccountsForLoan(String loanId) {
     return findWithCqlQuery(accountsStorageClient, ACCOUNTS_COLLECTION_PROPERTY_NAME, Account::from)
-      .findByQuery(exactMatch(LOAN_ID_FIELD_NAME, loanId))
+      .findByQuery(exactMatch(LOAN_ID_FIELD_NAME, loanId));
+  }
+
+  private CompletableFuture<Result<Collection<Account>>> fetchAccountsAndActionsForLoan(String loanId) {
+    return fetchAccountsForLoan(loanId)
       .thenCompose(r -> r.after(this::findFeeFineActionsForAccounts))
       .thenApply(r -> r.map(MultipleRecords::getRecords));
   }

@@ -29,6 +29,10 @@ public class CqlQuery implements QueryStringParameter {
     return query;
   }
 
+  public CqlQuery and(CqlQuery other) {
+    return queryFromTemplate("%s and %s", query, other.query);
+  }
+
   @Override
   public void collectInto(Map<String, String> queryStringParameters) {
     if (StringUtils.isNotBlank(getQuery())) {

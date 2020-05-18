@@ -144,8 +144,7 @@ public class DeclareLostAPITests extends APITests {
     final LostItemFeePolicyBuilder lostItemPolicy = lostItemFeePoliciesFixture
       .facultyStandardPolicy()
       .withName("Declared lost fee test policy")
-      .chargeProcessingFee()
-      .withLostItemProcessingFee(expectedProcessingFee)
+      .chargeProcessingFee(expectedProcessingFee)
       .withSetCost(expectedItemFee);
 
     useLostItemPolicy(lostItemFeePoliciesFixture.create(lostItemPolicy).getId());
@@ -199,8 +198,7 @@ public class DeclareLostAPITests extends APITests {
     final LostItemFeePolicyBuilder lostItemPolicy = lostItemFeePoliciesFixture
       .facultyStandardPolicy()
       .withName("Declared lost fee test policy")
-      .chargeProcessingFee()
-      .withLostItemProcessingFee(expectedProcessingFee)
+      .chargeProcessingFee(expectedProcessingFee)
       .withSetCost(0.0);
 
     useLostItemPolicy(lostItemFeePoliciesFixture.create(lostItemPolicy).getId());
@@ -357,8 +355,7 @@ public class DeclareLostAPITests extends APITests {
     final LostItemFeePolicyBuilder lostItemPolicy = lostItemFeePoliciesFixture
       .facultyStandardPolicy()
       .withName("Declared lost fee test policy")
-      .chargeProcessingFee()
-      .withLostItemProcessingFee(processingFee)
+      .chargeProcessingFee(processingFee)
       .withNoChargeAmountItem();
 
     useLostItemPolicy(lostItemFeePoliciesFixture.create(lostItemPolicy).getId());

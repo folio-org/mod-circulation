@@ -795,6 +795,24 @@
           "delay": "1"
         }
       ]
+    },
+    {
+      "id": "subscribe-callback",
+      "version": "1.0",
+      "handlers": [
+        {
+          "methods": [
+            "POST"
+          ],
+          "pathPattern": "/circulation/subscribers/fee-fine-with-loan-closed",
+          "permissionsRequired": [
+            "circulation.subscribers.fee-fine-with-loan-closed.post"
+          ],
+          "modulePermissions": [
+            "modperms.circulation.subscribers.fee-fine-with-loan-closed.post"
+          ]
+        }
+      ]
     }
   ],
   "requires": [
@@ -808,7 +826,7 @@
     },
     {
       "id": "item-storage",
-      "version": "8.3"
+      "version": "8.4"
     },
     {
       "id": "instance-storage",
@@ -900,6 +918,11 @@
     }
   ],
   "permissionSets": [
+    {
+      "permissionName": "circulation.subscribers.fee-fine-with-loan-closed.post",
+      "displayName": "circulation - Subscriber callback for fee/fine with loan closed event",
+      "description": "Subscriber callback for fee/fine with loan closed event"
+    },
     {
       "permissionName": "circulation.requests.queue.reorder.collection.post",
       "displayName": "circulation - reorder queue for an item",
@@ -1135,8 +1158,18 @@
         "circulation.requests.instances.item.post",
         "circulation.requests.hold-shelf-clearance-report.get",
         "circulation.inventory.items-in-transit-report.get",
-        "circulation.pick-slips.get"
+        "circulation.pick-slips.get",
+        "circulation.subscribers.fee-fine-with-loan-closed.post"
       ]
+    },
+    {
+      "permissionName": "circulation.subscribers.all",
+      "displayName": "circulation - all subscribers permissions",
+      "description": "Entire set of permissions needed to grant pub/sub user for subscriptions",
+      "subPermissions": [
+        "circulation.subscribers.fee-fine-with-loan-closed.post"
+      ],
+      "visible": false
     },
     {
       "permissionName": "modperms.circulation.requests.hold-shelf-clearance-report.get",
@@ -1154,6 +1187,31 @@
         "circulation-storage.requests.item.get",
         "circulation-storage.requests.collection.get",
         "users.collection.get",
+        "users.item.get"
+      ],
+      "visible": false
+    },
+    {
+      "permissionName": "modperms.circulation.subscribers.fee-fine-with-loan-closed.post",
+      "displayName" : "module permissions for one op",
+      "description" : "to reduce X-Okapi-Token size",
+      "subPermissions": [
+        "circulation-storage.loans.item.get",
+        "circulation-storage.loans.item.put",
+        "inventory-storage.items.item.get",
+        "inventory-storage.items.item.put",
+        "inventory-storage.holdings.item.get",
+        "inventory-storage.instances.item.get",
+        "inventory-storage.locations.item.get",
+        "inventory-storage.location-units.libraries.item.get",
+        "inventory-storage.location-units.campuses.item.get",
+        "inventory-storage.location-units.institutions.item.get",
+        "inventory-storage.service-points.item.get",
+        "inventory-storage.material-types.item.get",
+        "inventory-storage.loan-types.item.get",
+        "inventory-storage.service-points.item.get",
+        "lost-item-fees-policies.item.get",
+        "accounts.collection.get",
         "users.item.get"
       ],
       "visible": false
