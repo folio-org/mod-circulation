@@ -3,7 +3,7 @@ package org.folio.circulation.resources.subscribers;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.domain.FeeFine.LOST_ITEM_FEE_TYPE;
 import static org.folio.circulation.domain.FeeFine.LOST_ITEM_PROCESSING_FEE_TYPE;
-import static org.folio.circulation.domain.subscribers.FeeFineWithLoanClosedEvent.fromJson;
+import static org.folio.circulation.domain.subscribers.LoanRelatedFeeFineClosedEvent.fromJson;
 import static org.folio.circulation.support.Clients.create;
 import static org.folio.circulation.support.Result.failed;
 import static org.folio.circulation.support.Result.succeeded;
@@ -19,7 +19,7 @@ import org.folio.circulation.domain.AccountRepository;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanRepository;
 import org.folio.circulation.domain.policy.LostItemPolicyRepository;
-import org.folio.circulation.domain.subscribers.FeeFineWithLoanClosedEvent;
+import org.folio.circulation.domain.subscribers.LoanRelatedFeeFineClosedEvent;
 import org.folio.circulation.resources.Resource;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.Result;
@@ -32,17 +32,17 @@ import io.vertx.core.http.HttpClient;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 
-public class FeeFineWithLoanClosedSubscriberResource extends Resource {
+public class LoanRelatedFeeFineClosedSubscriberResource extends Resource {
   private static final List<String> LOST_ITEM_FEE_TYPES = Arrays.asList(
     LOST_ITEM_FEE_TYPE, LOST_ITEM_PROCESSING_FEE_TYPE);
 
-  public FeeFineWithLoanClosedSubscriberResource(HttpClient client) {
+  public LoanRelatedFeeFineClosedSubscriberResource(HttpClient client) {
     super(client);
   }
 
   @Override
   public void register(Router router) {
-    new RouteRegistration("/circulation/subscribers/fee-fine-with-loan-closed", router)
+    new RouteRegistration("/circulation/subscribers/loan-related-fee-fina-closed", router)
       .create(this::handleFeeFineClosedEvent);
   }
 
@@ -92,8 +92,8 @@ public class FeeFineWithLoanClosedSubscriberResource extends Resource {
     return hasLostItemFeesClosed(loan) && !loan.getLostItemPolicy().hasActualCostFee();
   }
 
-  private Result<FeeFineWithLoanClosedEvent> createAndValidateRequest(RoutingContext context) {
-    final FeeFineWithLoanClosedEvent eventPayload = fromJson(context.getBodyAsJson());
+  private Result<LoanRelatedFeeFineClosedEvent> createAndValidateRequest(RoutingContext context) {
+    final LoanRelatedFeeFineClosedEvent eventPayload = fromJson(context.getBodyAsJson());
 
     if (eventPayload.getLoanId() == null) {
       return failed(singleValidationError(

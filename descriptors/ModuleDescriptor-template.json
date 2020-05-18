@@ -804,12 +804,12 @@
           "methods": [
             "POST"
           ],
-          "pathPattern": "/circulation/subscribers/fee-fine-with-loan-closed",
+          "pathPattern": "/circulation/subscribers/loan-related-fee-fina-closed",
           "permissionsRequired": [
-            "circulation.subscribers.fee-fine-with-loan-closed.post"
+            "circulation.subscribers.loan-related-fee-fine-closed.post"
           ],
           "modulePermissions": [
-            "modperms.circulation.subscribers.fee-fine-with-loan-closed.post"
+            "modperms.circulation.subscribers.loan-related-fee-fine-closed.post"
           ]
         }
       ]
@@ -919,7 +919,7 @@
   ],
   "permissionSets": [
     {
-      "permissionName": "circulation.subscribers.fee-fine-with-loan-closed.post",
+      "permissionName": "circulation.subscribers.loan-related-fee-fine-closed.post",
       "displayName": "circulation - Subscriber callback for fee/fine with loan closed event",
       "description": "Subscriber callback for fee/fine with loan closed event"
     },
@@ -1159,7 +1159,7 @@
         "circulation.requests.hold-shelf-clearance-report.get",
         "circulation.inventory.items-in-transit-report.get",
         "circulation.pick-slips.get",
-        "circulation.subscribers.fee-fine-with-loan-closed.post"
+        "circulation.subscribers.loan-related-fee-fine-closed.post"
       ]
     },
     {
@@ -1167,7 +1167,7 @@
       "displayName": "circulation - all subscribers permissions",
       "description": "Entire set of permissions needed to grant pub/sub user for subscriptions",
       "subPermissions": [
-        "circulation.subscribers.fee-fine-with-loan-closed.post"
+        "circulation.subscribers.loan-related-fee-fine-closed.post"
       ],
       "visible": false
     },
@@ -1192,7 +1192,7 @@
       "visible": false
     },
     {
-      "permissionName": "modperms.circulation.subscribers.fee-fine-with-loan-closed.post",
+      "permissionName": "modperms.circulation.subscribers.loan-related-fee-fine-closed.post",
       "displayName" : "module permissions for one op",
       "description" : "to reduce X-Okapi-Token size",
       "subPermissions": [

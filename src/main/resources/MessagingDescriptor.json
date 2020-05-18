@@ -1,8 +1,8 @@
 {
   "subscriptions": [
     {
-      "eventType": "FEEFINE_WITH_LOAN_CLOSED",
-      "callbackAddress": "/circulation/subscribers/fee-fine-with-loan-closed"
+      "eventType": "LOAN_RELATED_FEE_FINE_CLOSED",
+      "callbackAddress": "/circulation/subscribers/loan-related-fee-fina-closed"
     }
   ]
 }

@@ -22,7 +22,7 @@ import org.junit.Test;
 import api.support.APITests;
 import api.support.builders.DeclareItemLostRequestBuilder;
 
-public class FeeFineWithLoanClosedSubscriberApiTest extends APITests {
+public class LoanRelatedFeeFineClosedSubscriberApiTest extends APITests {
   private IndividualResource loan;
   private IndividualResource item;
 
@@ -42,7 +42,7 @@ public class FeeFineWithLoanClosedSubscriberApiTest extends APITests {
     feeFineAccountFixture.payLostItemFee(loan.getId());
     feeFineAccountFixture.payLostItemProcessingFee(loan.getId());
 
-    eventSubscribersFixture.publishFeeFineWithLoanClosedEvent(loan.getId());
+    eventSubscribersFixture.publishLoanRelatedFeeFineClosedEvent(loan.getId());
 
     assertThat(loansFixture.getLoanById(loan.getId()).getJson(), isClosed());
     assertThat(itemsClient.getById(item.getId()).getJson(), isLostAndPaid());
@@ -52,7 +52,7 @@ public class FeeFineWithLoanClosedSubscriberApiTest extends APITests {
   public void cannotCloseLoanIfProcessingFeeIsNotClosed() {
     feeFineAccountFixture.payLostItemFee(loan.getId());
 
-    eventSubscribersFixture.publishFeeFineWithLoanClosedEvent(loan.getId());
+    eventSubscribersFixture.publishLoanRelatedFeeFineClosedEvent(loan.getId());
 
     assertThat(loansFixture.getLoanById(loan.getId()).getJson(), isOpen());
     assertThat(itemsClient.getById(item.getId()).getJson(), isDeclaredLost());
@@ -62,7 +62,7 @@ public class FeeFineWithLoanClosedSubscriberApiTest extends APITests {
   public void cannotCloseLoanIfItemFeeIsNotClosed() {
     feeFineAccountFixture.payLostItemProcessingFee(loan.getId());
 
-    eventSubscribersFixture.publishFeeFineWithLoanClosedEvent(loan.getId());
+    eventSubscribersFixture.publishLoanRelatedFeeFineClosedEvent(loan.getId());
 
     assertThat(loansFixture.getLoanById(loan.getId()).getJson(), isOpen());
     assertThat(itemsClient.getById(item.getId()).getJson(), isDeclaredLost());
@@ -77,7 +77,7 @@ public class FeeFineWithLoanClosedSubscriberApiTest extends APITests {
 
     feeFineAccountFixture.payLostItemProcessingFee(loan.getId());
 
-    eventSubscribersFixture.publishFeeFineWithLoanClosedEvent(loan.getId());
+    eventSubscribersFixture.publishLoanRelatedFeeFineClosedEvent(loan.getId());
 
     assertThat(loansFixture.getLoanById(loan.getId()).getJson(), isOpen());
     assertThat(itemsClient.getById(item.getId()).getJson(), isDeclaredLost());
@@ -88,7 +88,7 @@ public class FeeFineWithLoanClosedSubscriberApiTest extends APITests {
     item = itemsFixture.basedUponNod();
     loan = checkOutFixture.checkOutByBarcode(item, usersFixture.jessica());
 
-    eventSubscribersFixture.publishFeeFineWithLoanClosedEvent(loan.getId());
+    eventSubscribersFixture.publishLoanRelatedFeeFineClosedEvent(loan.getId());
 
     assertThat(loansFixture.getLoanById(loan.getId()).getJson(), isOpen());
     assertThat(itemsClient.getById(item.getId()).getJson(), isCheckedOut());
@@ -97,7 +97,7 @@ public class FeeFineWithLoanClosedSubscriberApiTest extends APITests {
   @Test
   public void cannotPublishEventIfLoanIdDoesNotPresent() {
     final Response response = eventSubscribersFixture
-      .attemptPublishFeeFineWithLoanClosedEvent(null, UUID.randomUUID());
+      .attemptPublishLoanRelatedFeeFineClosedEvent(null, UUID.randomUUID());
 
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("Loan id is required"),
@@ -109,7 +109,7 @@ public class FeeFineWithLoanClosedSubscriberApiTest extends APITests {
   public void cannotPublishEventIfLoanIdDoesNotExist() {
     final UUID loanId = UUID.randomUUID();
     final Response response = eventSubscribersFixture
-      .attemptPublishFeeFineWithLoanClosedEvent(loanId,
+      .attemptPublishLoanRelatedFeeFineClosedEvent(loanId,
         UUID.randomUUID());
 
     assertThat(response.getStatusCode(), is(404));

@@ -4,10 +4,10 @@ import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
 
 import io.vertx.core.json.JsonObject;
 
-public class FeeFineWithLoanClosedEvent {
+public class LoanRelatedFeeFineClosedEvent {
   private final String loanId;
 
-  public FeeFineWithLoanClosedEvent(String loanId) {
+  public LoanRelatedFeeFineClosedEvent(String loanId) {
     this.loanId = loanId;
   }
 
@@ -15,7 +15,7 @@ public class FeeFineWithLoanClosedEvent {
     return loanId;
   }
 
-  public static FeeFineWithLoanClosedEvent fromJson(JsonObject json) {
-    return new FeeFineWithLoanClosedEvent(getProperty(json, "loanId"));
+  public static LoanRelatedFeeFineClosedEvent fromJson(JsonObject json) {
+    return new LoanRelatedFeeFineClosedEvent(getProperty(json, "loanId"));
   }
 }
