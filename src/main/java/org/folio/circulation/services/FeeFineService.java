@@ -1,9 +1,9 @@
 package org.folio.circulation.services;
 
-import static java.util.concurrent.CompletableFuture.allOf;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.domain.representations.StoredFeeFineAction.StoredFeeFineActionBuilder;
 import static org.folio.circulation.services.feefine.FeeRefundProcessor.createLostItemFeeRefundProcessor;
+import static org.folio.circulation.support.AsyncCoordinationUtil.allOf;
 import static org.folio.circulation.support.Result.failed;
 
 import java.util.Collection;
@@ -48,10 +48,8 @@ public class FeeFineService {
   public CompletableFuture<Result<Void>> createAccounts(
     Collection<CreateAccountCommand> accountAndActions) {
 
-    return allOf(accountAndActions.stream()
-      .map(this::createAccount)
-      .toArray(CompletableFuture[]::new))
-      .thenApply(Result::succeeded)
+    return allOf(accountAndActions, this::createAccount)
+      .thenApply(r -> r.<Void>map(list -> null))
       .exceptionally(CommonFailures::failedDueToServerError);
   }
 
@@ -87,10 +85,8 @@ public class FeeFineService {
   }
 
   public CompletableFuture<Result<Void>> refundAndCloseAccounts(List<RefundAccountCommand> accounts) {
-    return allOf(accounts.stream()
-      .map(this::refundAndCloseAccount)
-      .toArray(CompletableFuture[]::new))
-      .thenApply(Result::succeeded)
+    return allOf(accounts, this::refundAndCloseAccount)
+      .thenApply(r -> r.<Void>map(list -> null))
       .exceptionally(CommonFailures::failedDueToServerError);
   }
 

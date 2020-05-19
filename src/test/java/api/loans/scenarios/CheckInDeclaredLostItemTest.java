@@ -259,7 +259,7 @@ public class CheckInDeclaredLostItemTest extends APITests {
   }
 
   @Test
-  public void shouldCloseAndRefundPaidAndTransferredFee() {
+  public void shouldRefundPartiallyPaidAndTransferredFeeAndCancelRemainingAmount() {
     final double transferAmount = 6.0;
     final double paymentAmount = 4.0;
     final double remainingAmount = 5.99;
