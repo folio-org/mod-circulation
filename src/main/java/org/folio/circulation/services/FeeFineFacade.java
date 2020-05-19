@@ -30,14 +30,14 @@ import org.folio.circulation.support.results.CommonFailures;
 
 import io.vertx.core.json.JsonObject;
 
-public class FeeFineService {
+public class FeeFineFacade {
   private final AccountRepository accountRepository;
   private final FeeFineActionRepository feeFineActionRepository;
   private final UserRepository userRepository;
   private final ServicePointRepository servicePointRepository;
   private final FeeRefundProcessor lostItemRefundProcessor;
 
-  public FeeFineService(Clients clients) {
+  public FeeFineFacade(Clients clients) {
     this.accountRepository = new AccountRepository(clients);
     this.feeFineActionRepository = new FeeFineActionRepository(clients);
     this.userRepository = new UserRepository(clients);

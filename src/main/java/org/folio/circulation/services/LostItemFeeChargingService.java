@@ -40,13 +40,13 @@ public class LostItemFeeChargingService {
   private final LostItemPolicyRepository lostItemPolicyRepository;
   private final FeeFineOwnerRepository feeFineOwnerRepository;
   private final FeeFineRepository feeFineRepository;
-  private final FeeFineService feeFineService;
+  private final FeeFineFacade feeFineFacade;
 
   public LostItemFeeChargingService(Clients clients) {
     this.lostItemPolicyRepository = new LostItemPolicyRepository(clients);
     this.feeFineOwnerRepository = new FeeFineOwnerRepository(clients);
     this.feeFineRepository = new FeeFineRepository(clients);
-    this.feeFineService = new FeeFineService(clients);
+    this.feeFineFacade = new FeeFineFacade(clients);
   }
 
   public CompletableFuture<Result<Loan>> chargeLostItemFees(
@@ -67,7 +67,7 @@ public class LostItemFeeChargingService {
           .thenApply(this::refuseWhenFeeFineOwnerIsNotFound)
           .thenComposeAsync(this::fetchFeeFineTypes)
           .thenApply(this::buildAccountsAndActions)
-          .thenCompose(r -> r.after(feeFineService::createAccounts))
+          .thenCompose(r -> r.after(feeFineFacade::createAccounts))
           .thenApply(r -> r.map(notUsed -> loan));
       }));
   }

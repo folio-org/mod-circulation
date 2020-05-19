@@ -33,12 +33,12 @@ public class LostItemFeeRefundService {
     LOST_ITEM_FEE_TYPE, LOST_ITEM_PROCESSING_FEE_TYPE);
 
   private final LostItemPolicyRepository lostItemPolicyRepository;
-  private final FeeFineService feeFineService;
+  private final FeeFineFacade feeFineFacade;
   private final AccountRepository accountRepository;
 
   public LostItemFeeRefundService(Clients clients) {
     this.lostItemPolicyRepository = new LostItemPolicyRepository(clients);
-    this.feeFineService = new FeeFineService(clients);
+    this.feeFineFacade = new FeeFineFacade(clients);
     this.accountRepository = new AccountRepository(clients);
   }
 
@@ -66,7 +66,7 @@ public class LostItemFeeRefundService {
         }
 
         return fetchAccountsAndActionsForLoan(contextResult)
-          .thenCompose(r -> r.after(notUsed -> feeFineService
+          .thenCompose(r -> r.after(notUsed -> feeFineFacade
             .refundAndCloseAccounts(getAccountsToRefund(context))))
           .thenApply(r -> r.map(notUsed -> null));
       }));

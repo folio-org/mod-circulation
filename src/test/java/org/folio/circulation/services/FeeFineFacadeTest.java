@@ -43,7 +43,7 @@ import org.mockito.stubbing.Answer;
 import io.vertx.core.json.JsonObject;
 
 @RunWith(MockitoJUnitRunner.class)
-public class FeeFineServiceTest {
+public class FeeFineFacadeTest {
   @Mock
   private Clients clients;
   @Mock
@@ -54,7 +54,7 @@ public class FeeFineServiceTest {
   private CollectionResourceClient userClient;
   @Mock
   private CollectionResourceClient servicePointClient;
-  private FeeFineService feeFineService;
+  private FeeFineFacade feeFineFacade;
 
   @Before
   public void setUp() {
@@ -63,7 +63,7 @@ public class FeeFineServiceTest {
     when(clients.usersStorage()).thenReturn(userClient);
     when(clients.servicePointsStorage()).thenReturn(servicePointClient);
 
-    feeFineService = new FeeFineService(clients);
+    feeFineFacade = new FeeFineFacade(clients);
 
     when(userClient.get(anyString()))
       .thenReturn(completedFuture(succeeded(emptyJsonResponse(200))));
@@ -80,7 +80,7 @@ public class FeeFineServiceTest {
     when(accountActionsClient.post(any(JsonObject.class)))
       .thenReturn(completedFuture(succeeded(emptyJsonResponse(201))));
 
-    final Result<Void> result = feeFineService.createAccounts(Arrays.asList(
+    final Result<Void> result = feeFineFacade.createAccounts(Arrays.asList(
       createCommandBuilder().build(),
       createCommandBuilder().build()))
       .getNow(null);
@@ -101,7 +101,7 @@ public class FeeFineServiceTest {
     when(accountActionsClient.post(any(JsonObject.class)))
       .thenReturn(completedFuture(succeeded(emptyJsonResponse(201))));
 
-    final Result<Void> result = feeFineService.refundAndCloseAccounts(Arrays.asList(
+    final Result<Void> result = feeFineFacade.refundAndCloseAccounts(Arrays.asList(
       refundCommand(), refundCommand())).get(5, TimeUnit.SECONDS);
 
     assertThat(result, notNullValue());
