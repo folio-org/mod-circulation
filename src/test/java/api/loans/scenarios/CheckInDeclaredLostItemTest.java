@@ -144,7 +144,7 @@ public class CheckInDeclaredLostItemTest extends APITests {
   }
 
   @Test
-  public void shouldRefundFeesWhenNoMaximumRefundPeriod() {
+  public void shouldRefundFeesAtAnyPointWhenNoMaximumRefundPeriod() {
     final double setCostFee = 10.55;
     final double processingFee = 12.99;
 
@@ -287,7 +287,7 @@ public class CheckInDeclaredLostItemTest extends APITests {
   }
 
   @Test
-  public void shouldChargeOverdueFineWhenAllowedByPolicy() {
+  public void shouldChargeOverdueFineWhenStatedByPolicy() {
     final double processingFee = 12.99;
 
     // Create overdue fine type
@@ -315,7 +315,7 @@ public class CheckInDeclaredLostItemTest extends APITests {
   }
 
   @Test
-  public void shouldNotChargeOverdueFineWhenDisallowedByPolicy() {
+  public void shouldNotChargeOverdueFineWhenNotStatedByPolicy() {
     final double processingFee = 12.99;
 
     // Create overdue fine type
