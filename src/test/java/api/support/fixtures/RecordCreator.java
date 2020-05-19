@@ -1,53 +1,40 @@
 package api.support.fixtures;
 
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
-import java.util.UUID;
 import java.util.function.Function;
 
 import org.folio.circulation.support.http.client.IndividualResource;
+import org.folio.circulation.support.http.client.Response;
 
 import api.support.builders.Builder;
 import api.support.http.ResourceClient;
 import io.vertx.core.json.JsonObject;
 
-//TODO May need to support checking if record exists in store already?
 class RecordCreator {
   private final ResourceClient client;
-  private final Map<String, IndividualResource> identityMap;
-  private final Set<UUID> createdRecordIds;
   private final Function<JsonObject, String> identityMapKey;
+  private final Map<String, IndividualResource> identityMap = new HashMap<>();
 
   RecordCreator(
     ResourceClient client,
     Function<JsonObject, String> identityMapKey) {
 
     this.client = client;
-    this.identityMap = new HashMap<>();
-    this.createdRecordIds = new HashSet<>();
     this.identityMapKey = identityMapKey;
   }
 
   private IndividualResource create(JsonObject record) {
+    final IndividualResource created = client.create(record);
 
-    final IndividualResource createdRecord = client.create(record);
+    identityMap.put(identityMapKey.apply(record), created);
 
-    createdRecordIds.add(createdRecord.getId());
-
-    return createdRecord;
+    return created;
   }
 
   public void cleanUp() {
-
-    for (UUID userId : createdRecordIds) {
-      client.delete(userId);
-    }
-
-    createdRecordIds.clear();
+    client.deleteAllIndividually();
+    identityMap.clear();
   }
 
   IndividualResource createIfAbsent(Builder recordBuilder) {
@@ -61,41 +48,36 @@ class RecordCreator {
   }
 
   private IndividualResource createIfAbsent(String key, JsonObject record) {
-
-    //Cannot use computeIfAbsent as create(record) can throw checked exceptions
-    if(needsCreating(key)) {
-      final IndividualResource user = create(record);
-
-      identityMap.put(key, user);
-    }
-
-    return identityMap.get(key);
+    return needsCreating(key) ? create(record) : getExistingRecord(key);
   }
 
   private boolean needsCreating(String key) {
-    return !identityMap.containsKey(key);
+    return getExistingRecord(key) == null;
   }
 
   public void delete(IndividualResource record) {
-
     client.delete(record.getId());
-    createdRecordIds.remove(record.getId());
-    removeFromIdentityMap(record);
+
+    identityMap.values()
+      .removeIf(value -> value.getId().equals(record.getId()));
   }
 
   public IndividualResource getExistingRecord(String name){
-     return identityMap.get(name);
+    if (identityMap.containsKey(name)) {
+      return identityMap.get(name);
+    }
+
+    reloadIdentityMap();
+
+    return identityMap.get(name);
   }
 
-  private void removeFromIdentityMap(IndividualResource record) {
+  private void reloadIdentityMap() {
+    client.getAll().forEach(record -> identityMap.put(
+      identityMapKey.apply(record), wrapJsonToIndividualResource(record)));
+  }
 
-    //TODO: Find a better way of removing from the identity map
-    final Optional<String> possibleRecordKey = identityMap.values()
-      .stream()
-      .filter(r -> Objects.equals(r.getId(), record.getId()))
-      .map(r -> identityMapKey.apply(r.getJson()))
-      .findFirst();
-
-    possibleRecordKey.ifPresent(identityMap::remove);
+  private IndividualResource wrapJsonToIndividualResource(JsonObject json) {
+    return new IndividualResource(new Response(201, json.toString(), "application/json"));
   }
 }

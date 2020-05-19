@@ -1,24 +1,32 @@
 package org.folio.circulation.domain.policy.lostitem.itemfee;
 
+import static org.folio.circulation.domain.FeeAmount.noFeeAmount;
+
 import java.math.BigDecimal;
 
+import org.folio.circulation.domain.FeeAmount;
+
 public final class AutomaticallyChargeableFee implements ChargeableFee {
-  private final BigDecimal amount;
+  private final FeeAmount amount;
 
   public AutomaticallyChargeableFee(BigDecimal amount) {
+    this(new FeeAmount(amount));
+  }
+
+  private AutomaticallyChargeableFee(FeeAmount amount) {
     this.amount = amount;
   }
 
-  public final BigDecimal getAmount() {
+  public final FeeAmount getAmount() {
     return amount;
   }
 
   @Override
   public final boolean isChargeable() {
-    return amount != null && amount.compareTo(BigDecimal.ZERO) > 0;
+    return amount.hasAmount();
   }
 
   public static AutomaticallyChargeableFee noAutomaticallyChargeableFee() {
-    return new AutomaticallyChargeableFee(null);
+    return new AutomaticallyChargeableFee(noFeeAmount());
   }
 }

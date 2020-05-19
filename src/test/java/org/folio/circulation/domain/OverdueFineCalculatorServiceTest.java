@@ -13,6 +13,7 @@ import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -20,13 +21,13 @@ import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Stream;
 
+import org.folio.circulation.domain.policy.LostItemPolicyRepository;
 import org.folio.circulation.domain.policy.OverdueFinePolicy;
 import org.folio.circulation.domain.policy.OverdueFinePolicyRepository;
-import org.folio.circulation.domain.representations.AccountStorageRepresentation;
 import org.folio.circulation.domain.representations.CheckInByBarcodeRequest;
-import org.folio.circulation.domain.representations.FeeFineActionStorageRepresentation;
+import org.folio.circulation.domain.representations.StoredAccount;
+import org.folio.circulation.domain.representations.StoredFeeFineAction;
 import org.folio.circulation.support.ItemRepository;
-import org.folio.circulation.support.http.server.WebContext;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.junit.Before;
@@ -88,6 +89,7 @@ public class OverdueFineCalculatorServiceTest {
   private FeeFineRepository feeFineRepository;
   private UserRepository userRepository;
   private FeeFineActionRepository feeFineActionRepository;
+  private LostItemPolicyRepository lostItemPolicyRepository;
   private Boolean renewal;
   private Boolean dueDateChangedByRecall;
   private Double overdueFine;
@@ -103,6 +105,7 @@ public class OverdueFineCalculatorServiceTest {
     Boolean renewal, Boolean dueDateChangedByRecall, Double overdueFine, String overdueFineInterval,
     Double maxOverdueFine, Double overdueRecallFine, String overdueRecallFineInterval,
     Double maxOverdueRecallFine, Integer periodCalculatorResult, Double correctOverdueFine) {
+
     this.renewal = renewal;
     this.dueDateChangedByRecall = dueDateChangedByRecall;
     this.overdueFine = overdueFine;
@@ -151,11 +154,13 @@ public class OverdueFineCalculatorServiceTest {
     overduePeriodCalculatorService = mock(OverduePeriodCalculatorService.class);
     userRepository = mock(UserRepository.class);
     feeFineActionRepository = mock(FeeFineActionRepository.class);
+    lostItemPolicyRepository = mock(LostItemPolicyRepository.class);
 
     overdueFineCalculatorService = new OverdueFineCalculatorService(
       new OverdueFineCalculatorService.Repos(
         overdueFinePolicyRepository, accountRepository, itemRepository,
-        feeFineOwnerRepository, feeFineRepository, userRepository, feeFineActionRepository),
+        feeFineOwnerRepository, feeFineRepository, userRepository, feeFineActionRepository,
+        lostItemPolicyRepository),
       overduePeriodCalculatorService);
 
     when(userRepository.getUser(any(String.class))).thenReturn(
@@ -215,8 +220,8 @@ public class OverdueFineCalculatorServiceTest {
 
     verify(accountRepository, times(1)).create(any());
 
-    ArgumentCaptor<AccountStorageRepresentation> account =
-      ArgumentCaptor.forClass(AccountStorageRepresentation.class);
+    ArgumentCaptor<StoredAccount> account =
+      ArgumentCaptor.forClass(StoredAccount.class);
 
     verify(accountRepository).create(account.capture());
 
@@ -238,8 +243,8 @@ public class OverdueFineCalculatorServiceTest {
     assertEquals(DUE_DATE, getDateTimeProperty(account.getValue(), "dueDate"));
     assertEquals(RETURNED_DATE, getDateTimeProperty(account.getValue(), "returnedDate"));
 
-    ArgumentCaptor<FeeFineActionStorageRepresentation> feeFineAction =
-      ArgumentCaptor.forClass(FeeFineActionStorageRepresentation.class);
+    ArgumentCaptor<StoredFeeFineAction> feeFineAction =
+      ArgumentCaptor.forClass(StoredFeeFineAction.class);
 
     verify(feeFineActionRepository).create(feeFineAction.capture());
 
@@ -579,7 +584,8 @@ public class OverdueFineCalculatorServiceTest {
         new AccountItemInfo(ITEM_ID.toString(), TITLE, BARCODE, CALL_NUMBER,
           LOCATION_NAME, ITEM_MATERIAL_TYPE_ID.toString())
       ),
-      correctOverdueFine, correctOverdueFine, "Open", "Outstanding"
-      );
+      new FeeAmount(correctOverdueFine), new FeeAmount(correctOverdueFine), "Open", "Outstanding",
+      Collections.emptyList()
+    );
   }
 }

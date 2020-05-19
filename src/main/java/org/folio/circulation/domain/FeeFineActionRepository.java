@@ -1,19 +1,22 @@
 package org.folio.circulation.domain;
 
 import static java.util.Objects.isNull;
+import static java.util.concurrent.CompletableFuture.allOf;
 import static org.folio.circulation.support.Result.ofAsync;
 import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.http.ResponseMapping.forwardOnFailure;
 import static org.folio.circulation.support.http.ResponseMapping.mapUsingJson;
 
+import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
 
-import org.folio.circulation.domain.representations.FeeFineActionStorageRepresentation;
+import org.folio.circulation.domain.representations.StoredFeeFineAction;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.FetchSingleRecord;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.http.client.ResponseInterpreter;
+import org.folio.circulation.support.results.CommonFailures;
 
 public class FeeFineActionRepository {
   private final CollectionResourceClient feeFineActionsStorageClient;
@@ -22,12 +25,11 @@ public class FeeFineActionRepository {
     feeFineActionsStorageClient = clients.feeFineActionsStorageClient();
   }
 
-  public CompletableFuture<Result<FeeFineAction>> create(
-    FeeFineActionStorageRepresentation feeFineAction) {
-
-    final ResponseInterpreter<FeeFineAction> interpreter = new ResponseInterpreter<FeeFineAction>()
-      .flatMapOn(201, mapUsingJson(FeeFineAction::from))
-      .otherwise(forwardOnFailure());
+  public CompletableFuture<Result<FeeFineAction>> create(StoredFeeFineAction feeFineAction) {
+    final ResponseInterpreter<FeeFineAction> interpreter =
+      new ResponseInterpreter<FeeFineAction>()
+        .flatMapOn(201, mapUsingJson(FeeFineAction::from))
+        .otherwise(forwardOnFailure());
 
     return feeFineActionsStorageClient.post(feeFineAction)
       .thenApply(interpreter::flatMap);
@@ -45,4 +47,13 @@ public class FeeFineActionRepository {
       .fetch(id);
   }
 
+  public CompletableFuture<Result<Void>> createAll(
+    Collection<StoredFeeFineAction> feeFineActions) {
+
+    return allOf(feeFineActions.stream()
+      .map(this::create)
+      .toArray(CompletableFuture[]::new))
+      .thenApply(Result::succeeded)
+      .exceptionally(CommonFailures::failedDueToServerError);
+  }
 }

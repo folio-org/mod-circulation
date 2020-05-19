@@ -17,16 +17,12 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
+import org.folio.circulation.services.support.CreateAccountCommand;
 import org.folio.circulation.domain.FeeFine;
-import org.folio.circulation.domain.FeeFineAccountAndAction;
 import org.folio.circulation.domain.FeeFineOwner;
 import org.folio.circulation.domain.FeeFineOwnerRepository;
 import org.folio.circulation.domain.FeeFineRepository;
 import org.folio.circulation.domain.Loan;
-import org.folio.circulation.domain.ServicePoint;
-import org.folio.circulation.domain.ServicePointRepository;
-import org.folio.circulation.domain.User;
-import org.folio.circulation.domain.UserRepository;
 import org.folio.circulation.domain.policy.LostItemPolicyRepository;
 import org.folio.circulation.domain.policy.lostitem.LostItemPolicy;
 import org.folio.circulation.domain.policy.lostitem.itemfee.AutomaticallyChargeableFee;
@@ -44,17 +40,13 @@ public class LostItemFeeChargingService {
   private final LostItemPolicyRepository lostItemPolicyRepository;
   private final FeeFineOwnerRepository feeFineOwnerRepository;
   private final FeeFineRepository feeFineRepository;
-  private final ServicePointRepository servicePointRepository;
-  private final UserRepository userRepository;
-  private final FeeFineService feeFineService;
+  private final FeeFineFacade feeFineFacade;
 
   public LostItemFeeChargingService(Clients clients) {
     this.lostItemPolicyRepository = new LostItemPolicyRepository(clients);
     this.feeFineOwnerRepository = new FeeFineOwnerRepository(clients);
     this.feeFineRepository = new FeeFineRepository(clients);
-    this.servicePointRepository = new ServicePointRepository(clients);
-    this.userRepository = new UserRepository(clients);
-    this.feeFineService = new FeeFineService(clients);
+    this.feeFineFacade = new FeeFineFacade(clients);
   }
 
   public CompletableFuture<Result<Loan>> chargeLostItemFees(
@@ -74,10 +66,8 @@ public class LostItemFeeChargingService {
         return fetchFeeFineOwner(referenceData)
           .thenApply(this::refuseWhenFeeFineOwnerIsNotFound)
           .thenComposeAsync(this::fetchFeeFineTypes)
-          .thenComposeAsync(this::fetchServicePoint)
-          .thenComposeAsync(this::fetchStaffUser)
           .thenApply(this::buildAccountsAndActions)
-          .thenCompose(r -> r.after(feeFineService::createAccountsAndActions))
+          .thenCompose(r -> r.after(feeFineFacade::createAccounts))
           .thenApply(r -> r.map(notUsed -> loan));
       }));
   }
@@ -93,22 +83,6 @@ public class LostItemFeeChargingService {
       && !policy.getActualCostFee().isChargeable();
   }
 
-  private CompletableFuture<Result<ReferenceDataContext>> fetchStaffUser(
-    Result<ReferenceDataContext> contextResult) {
-
-    return contextResult.combineAfter(
-      context -> userRepository.getUser(context.staffUserId),
-      ReferenceDataContext::withStaffUser);
-  }
-
-  private CompletableFuture<Result<ReferenceDataContext>> fetchServicePoint(
-    Result<ReferenceDataContext> contextResult) {
-
-    return contextResult.combineAfter(
-      context -> servicePointRepository.getServicePointById(context.request.getServicePointId()),
-      ReferenceDataContext::withServicePoint);
-  }
-
   private CompletableFuture<Result<ReferenceDataContext>> fetchFeeFineTypes(
     Result<ReferenceDataContext> contextResult) {
 
@@ -117,20 +91,20 @@ public class LostItemFeeChargingService {
       ReferenceDataContext::withFeeFines);
   }
 
-  private Result<List<FeeFineAccountAndAction>> buildAccountsAndActions(
+  private Result<List<CreateAccountCommand>> buildAccountsAndActions(
     Result<ReferenceDataContext> contextResult) {
 
     return contextResult.next(context -> {
       final LostItemPolicy policy = context.lostItemPolicy;
-      final List<Result<FeeFineAccountAndAction>> accountsToCreate = new ArrayList<>();
+      final List<Result<CreateAccountCommand>> accountsToCreate = new ArrayList<>();
       final Collection<FeeFine> feeFines = context.feeFines;
 
       if (policy.getSetCostFee().isChargeable()) {
         log.debug("Charging lost item fee");
 
-        final Result<FeeFineAccountAndAction> lostItemFeeResult =
+        final Result<CreateAccountCommand> lostItemFeeResult =
           getFeeFineOfType(feeFines, LOST_ITEM_FEE_TYPE)
-            .map(createAccountAndAction(context, policy.getSetCostFee()));
+            .map(createAccountCreation(context, policy.getSetCostFee()));
 
         accountsToCreate.add(lostItemFeeResult);
       }
@@ -138,9 +112,9 @@ public class LostItemFeeChargingService {
       if (policy.getProcessingFee().isChargeable()) {
         log.debug("Charging lost item processing fee");
 
-        final Result<FeeFineAccountAndAction> processingFeeResult =
+        final Result<CreateAccountCommand> processingFeeResult =
           getFeeFineOfType(feeFines, LOST_ITEM_PROCESSING_FEE_TYPE)
-            .map(createAccountAndAction(context, policy.getProcessingFee()));
+            .map(createAccountCreation(context, policy.getProcessingFee()));
 
         accountsToCreate.add(processingFeeResult);
       }
@@ -154,24 +128,18 @@ public class LostItemFeeChargingService {
     return loan.getItem().getLocation().getPrimaryServicePointId();
   }
 
-  private Function<FeeFine, FeeFineAccountAndAction> createAccountAndAction(
+  private Function<FeeFine, CreateAccountCommand> createAccountCreation(
     ReferenceDataContext context, AutomaticallyChargeableFee fee) {
 
-    return feeFine -> FeeFineAccountAndAction.builder()
+    return feeFine -> CreateAccountCommand.builder()
       .withAmount(fee.getAmount())
-      .withCreatedAt(getFeeFineActionCreatedAt(context))
-      .withCreatedBy(context.staffUser)
+      .withCurrentServicePointId(context.request.getServicePointId())
+      .withStaffUserId(context.staffUserId)
       .withFeeFine(feeFine)
       .withFeeFineOwner(context.feeFineOwner)
       .withLoan(context.loan)
       .withItem(context.loan.getItem())
       .build();
-  }
-
-  private String getFeeFineActionCreatedAt(ReferenceDataContext context) {
-    return context.servicePoint != null
-      ? context.servicePoint.getName()
-      : "";
   }
 
   private CompletableFuture<Result<ReferenceDataContext>> fetchFeeFineOwner(ReferenceDataContext referenceData) {
@@ -209,8 +177,6 @@ public class LostItemFeeChargingService {
     private final String staffUserId;
 
     private LostItemPolicy lostItemPolicy;
-    private ServicePoint servicePoint;
-    private User staffUser;
     private FeeFineOwner feeFineOwner;
     private Collection<FeeFine> feeFines;
 
@@ -222,16 +188,6 @@ public class LostItemFeeChargingService {
 
     public ReferenceDataContext withLostItemPolicy(LostItemPolicy lostItemPolicy) {
       this.lostItemPolicy = lostItemPolicy;
-      return this;
-    }
-
-    public ReferenceDataContext withServicePoint(ServicePoint servicePoint) {
-      this.servicePoint = servicePoint;
-      return this;
-    }
-
-    public ReferenceDataContext withStaffUser(User staffUser) {
-      this.staffUser = staffUser;
       return this;
     }
 
