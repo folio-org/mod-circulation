@@ -1,12 +1,15 @@
 package api.support.matchers;
 
 import static com.jayway.jsonpath.matchers.JsonPathMatchers.hasJsonPath;
+import static org.folio.circulation.domain.EventType.ITEM_CHECKED_IN;
+import static org.folio.circulation.domain.EventType.ITEM_CHECKED_OUT;
+import static org.folio.circulation.domain.EventType.ITEM_DECLARED_LOST;
+import static org.folio.circulation.domain.EventType.LOAN_DUE_DATE_CHANGED;
 import static org.folio.circulation.support.JsonPropertyFetcher.getBooleanProperty;
 import static org.hamcrest.core.Is.is;
-import org.hamcrest.Matcher;
 
 import org.folio.circulation.domain.representations.LoanProperties;
-import org.folio.circulation.services.EventPublishingService;
+import org.hamcrest.Matcher;
 
 import io.vertx.core.json.JsonObject;
 
@@ -14,7 +17,7 @@ public class EventMatcher {
 
   public static Matcher<JsonObject> isCheckedOutEvent() {
     return JsonObjectMatcher.allOfPaths(
-      hasJsonPath("eventType", is(EventPublishingService.ITEM_CHECKED_OUT_EVENT_TYPE))
+      hasJsonPath("eventType", is(ITEM_CHECKED_OUT))
     );
   }
 
@@ -28,7 +31,7 @@ public class EventMatcher {
 
   public static Matcher<JsonObject> isCheckedInEvent() {
     return JsonObjectMatcher.allOfPaths(
-      hasJsonPath("eventType", is(EventPublishingService.ITEM_CHECKED_IN_EVENT_TYPE))
+      hasJsonPath("eventType", is(ITEM_CHECKED_IN))
     );
   }
 
@@ -42,7 +45,7 @@ public class EventMatcher {
 
   public static Matcher<JsonObject> isDeclaredLostEvent() {
     return JsonObjectMatcher.allOfPaths(
-      hasJsonPath("eventType", is(EventPublishingService.ITEM_DECLARED_LOST_EVENT_TYPE))
+      hasJsonPath("eventType", is(ITEM_DECLARED_LOST))
     );
   }
 
@@ -55,7 +58,7 @@ public class EventMatcher {
 
   public static Matcher<JsonObject> isDueDateChangedEvent() {
     return JsonObjectMatcher.allOfPaths(
-      hasJsonPath("eventType", is(EventPublishingService.LOAN_DUE_DATE_UPDATED_EVENT_TYPE))
+      hasJsonPath("eventType", is(LOAN_DUE_DATE_CHANGED))
     );
   }
 

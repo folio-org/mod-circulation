@@ -135,7 +135,6 @@
       <groupId>org.folio</groupId>
       <artifactId>util</artifactId>
       <version>29.1.5</version>
-      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.folio</groupId>

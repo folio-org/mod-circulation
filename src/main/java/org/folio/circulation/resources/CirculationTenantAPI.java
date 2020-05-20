@@ -1,16 +1,15 @@
 package org.folio.circulation.resources;
 
 import static org.folio.circulation.support.http.server.JsonHttpResponse.created;
+import static org.folio.circulation.support.http.server.JsonHttpResponse.noContent;
 
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import org.folio.circulation.services.PubSubService;
 import org.folio.circulation.support.RouteRegistration;
 import org.folio.circulation.support.http.server.ServerErrorResponse;
-import org.folio.rest.util.OkapiConnectionParams;
-import org.folio.util.pubsub.PubSubClientUtils;
 
-import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
@@ -24,6 +23,7 @@ public class CirculationTenantAPI {
   public void register(Router router) {
     RouteRegistration routeRegistration = new RouteRegistration("/_/tenant", router);
     routeRegistration.create(this::postTenant);
+    routeRegistration.deleteAll(this::deleteTenant);
   }
 
   public void postTenant(RoutingContext routingContext) {
@@ -33,7 +33,7 @@ public class CirculationTenantAPI {
     Vertx vertx = routingContext.vertx();
 
     vertx.executeBlocking(
-      promise -> registerModuleToPubsub(headers, vertx, promise),
+      promise -> PubSubService.registerModule(headers, vertx, promise),
       result -> {
         if (result.failed()) {
           ServerErrorResponse.internalError(routingContext.response(),
@@ -46,18 +46,23 @@ public class CirculationTenantAPI {
     );
   }
 
-  private void registerModuleToPubsub(Map<String, String> headers, Vertx vertx,
-    Promise<Object> promise) {
+  public void deleteTenant(RoutingContext routingContext) {
+    Map<String, String> headers = routingContext.request().headers().entries().stream()
+      .collect(Collectors.toMap(entry -> entry.getKey().toLowerCase(), Map.Entry::getValue));
 
-    PubSubClientUtils.registerModule(new OkapiConnectionParams(headers, vertx))
-      .whenComplete((registrationAr, throwable) -> {
-        if (throwable == null) {
-          logger.info("Module was successfully registered as publisher/subscriber in mod-pubsub");
-          promise.complete();
-        } else {
-          logger.error("Error during module registration in mod-pubsub", throwable);
-          promise.fail(throwable);
+    Vertx vertx = routingContext.vertx();
+
+    vertx.executeBlocking(
+      promise -> PubSubService.unregisterModule(headers, vertx, promise),
+      result -> {
+        if (result.failed()) {
+          ServerErrorResponse.internalError(routingContext.response(),
+            result.cause().getLocalizedMessage());
         }
-      });
+        else {
+          noContent().writeTo(routingContext.response());
+        }
+      }
+    );
   }
 }

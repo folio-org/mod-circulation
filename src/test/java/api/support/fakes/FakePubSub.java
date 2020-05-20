@@ -1,9 +1,11 @@
 package api.support.fakes;
 
+import static org.folio.HttpStatus.HTTP_CREATED;
+import static org.folio.HttpStatus.HTTP_INTERNAL_SERVER_ERROR;
+import static org.folio.HttpStatus.HTTP_NO_CONTENT;
+
 import java.util.ArrayList;
 import java.util.List;
-
-import org.folio.HttpStatus;
 
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.json.JsonObject;
@@ -18,6 +20,7 @@ public class FakePubSub {
   private static final List<JsonObject> publishedEvents = new ArrayList<>();
 
   private static boolean failPubSubRegistration;
+  private static boolean failPubSubUnregistering;
 
   public static void register(Router router) {
     router.route().handler(BodyHandler.create());
@@ -26,34 +29,50 @@ public class FakePubSub {
       .handler(routingContext -> {
         publishedEvents.add(routingContext.getBodyAsJson());
         routingContext.response()
-          .setStatusCode(HttpStatus.HTTP_NO_CONTENT.toInt())
+          .setStatusCode(HTTP_NO_CONTENT.toInt())
           .end();
       });
 
     router.post("/pubsub/event-types")
-      .handler(FakePubSub::respondCreatedOrFail);;
+      .handler(FakePubSub::postTenant);
 
     router.post("/pubsub/event-types/declare/publisher")
-      .handler(FakePubSub::respondCreatedOrFail);
+      .handler(FakePubSub::postTenant);
 
     router.post("/pubsub/event-types/declare/subscriber")
-      .handler(FakePubSub::respondCreatedOrFail);
+      .handler(FakePubSub::postTenant);
+
+    router.delete("/pubsub/event-types/:eventTypeName/publishers")
+      .handler(FakePubSub::deleteTenant);
   }
 
-  private static void respondCreatedOrFail(RoutingContext routingContext) {
+  private static void postTenant(RoutingContext routingContext) {
     if (failPubSubRegistration) {
       routingContext.response()
-        .setStatusCode(HttpStatus.HTTP_INTERNAL_SERVER_ERROR.toInt())
+        .setStatusCode(HTTP_INTERNAL_SERVER_ERROR.toInt())
         .end();
     }
     else {
       String json = routingContext.getBodyAsJson().encodePrettily();
       Buffer buffer = Buffer.buffer(json, "UTF-8");
       routingContext.response()
-        .setStatusCode(HttpStatus.HTTP_CREATED.toInt())
+        .setStatusCode(HTTP_CREATED.toInt())
         .putHeader("content-type", "application/json; charset=utf-8")
         .putHeader("content-length", Integer.toString(buffer.length()))
         .write(buffer)
+        .end();
+    }
+  }
+
+  private static void deleteTenant(RoutingContext routingContext) {
+    if (failPubSubUnregistering) {
+      routingContext.response()
+        .setStatusCode(HTTP_INTERNAL_SERVER_ERROR.toInt())
+        .end();
+    }
+    else {
+      routingContext.response()
+        .setStatusCode(HTTP_NO_CONTENT.toInt())
         .end();
     }
   }
@@ -68,5 +87,9 @@ public class FakePubSub {
 
   public static void setFailPubSubRegistration(boolean failPubSubRegistration) {
     FakePubSub.failPubSubRegistration = failPubSubRegistration;
+  }
+
+  public static void setFailPubSubUnregistering(boolean failPubSubUnregistering) {
+    FakePubSub.failPubSubUnregistering = failPubSubUnregistering;
   }
 }

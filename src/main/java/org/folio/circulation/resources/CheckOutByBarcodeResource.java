@@ -41,7 +41,7 @@ import org.folio.circulation.domain.validation.ItemStatusValidator;
 import org.folio.circulation.domain.validation.ProxyRelationshipValidator;
 import org.folio.circulation.domain.validation.RequestedByAnotherPatronValidator;
 import org.folio.circulation.domain.validation.ServicePointOfCheckoutPresentValidator;
-import org.folio.circulation.services.EventPublishingService;
+import org.folio.circulation.services.PubSubService;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.ClockManager;
 import org.folio.circulation.support.ItemRepository;
@@ -149,8 +149,8 @@ public class CheckOutByBarcodeResource extends Resource {
     final PatronActionSessionService patronActionSessionService =
       PatronActionSessionService.using(clients);
 
-    final EventPublishingService eventPublishingService =
-      new EventPublishingService(routingContext);
+    final PubSubService pubSubService =
+      new PubSubService(routingContext);
 
     completedFuture(succeeded(new LoanAndRelatedRecords(loan)))
       .thenApply(servicePointOfCheckoutPresentValidator::refuseCheckOutWhenServicePointIsNotPresent)
@@ -180,7 +180,7 @@ public class CheckOutByBarcodeResource extends Resource {
       .thenComposeAsync(r -> r.after(patronGroupRepository::findPatronGroupForLoanAndRelatedRecords))
       .thenComposeAsync(r -> r.after(loanRepository::createLoan))
       .thenComposeAsync(r -> r.after(patronActionSessionService::saveCheckOutSessionRecord))
-      .thenComposeAsync(r -> r.after(eventPublishingService::publishItemCheckedOutEvent))
+      .thenComposeAsync(r -> r.after(pubSubService::publishItemCheckedOutEvent))
       .thenApply(r -> r.next(scheduledNoticeService::scheduleNoticesForLoanDueDate))
       .thenApply(r -> r.map(LoanAndRelatedRecords::getLoan))
       .thenApply(r -> r.map(loanRepresentation::extendedLoan))

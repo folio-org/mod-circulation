@@ -21,6 +21,11 @@ public class TenantAPIFixture {
 
     return restAssuredClient.post(
       new JsonObject().put("id", String.format("%s-%s", moduleName, currentVersion)),
-      circulationModuleUrl("/_/tenant"), "tenant-api-test-request");
+      circulationModuleUrl("/_/tenant"), "tenant-api-post-test-request");
+  }
+
+  public Response deleteTenant() {
+    return restAssuredClient.delete(circulationModuleUrl("/_/tenant"),
+      "tenant-api-delete-test-request");
   }
 }

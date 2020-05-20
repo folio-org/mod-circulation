@@ -811,6 +811,15 @@
             "pubsub.publishers.post",
             "pubsub.subscribers.post"
           ]
+        },
+        {
+          "methods": [
+            "DELETE"
+          ],
+          "pathPattern": "/_/tenant",
+          "modulePermissions": [
+            "pubsub.publishers.delete"
+          ]
         }
       ]
     }
