@@ -1,8 +1,10 @@
 package api.subscribers;
 
+import static api.support.matchers.ItemMatchers.isAvailable;
 import static api.support.matchers.ItemMatchers.isCheckedOut;
 import static api.support.matchers.ItemMatchers.isDeclaredLost;
 import static api.support.matchers.ItemMatchers.isLostAndPaid;
+import static api.support.matchers.JsonObjectMatcher.hasJsonPath;
 import static api.support.matchers.LoanMatchers.isClosed;
 import static api.support.matchers.LoanMatchers.isOpen;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
@@ -95,7 +97,7 @@ public class LoanRelatedFeeFineClosedSubscriberApiTest extends APITests {
   }
 
   @Test
-  public void cannotPublishEventIfLoanIdDoesNotPresent() {
+  public void cannotCloseLoanIfLoanIdDoesNotPresent() {
     final Response response = eventSubscribersFixture
       .attemptPublishLoanRelatedFeeFineClosedEvent(null, UUID.randomUUID());
 
@@ -106,7 +108,7 @@ public class LoanRelatedFeeFineClosedSubscriberApiTest extends APITests {
   }
 
   @Test
-  public void cannotPublishEventIfLoanIdDoesNotExist() {
+  public void cannotCloseNonExistentLoan() {
     final UUID loanId = UUID.randomUUID();
     final Response response = eventSubscribersFixture
       .attemptPublishLoanRelatedFeeFineClosedEvent(loanId,
@@ -115,5 +117,25 @@ public class LoanRelatedFeeFineClosedSubscriberApiTest extends APITests {
     assertThat(response.getStatusCode(), is(404));
     assertThat(response.getBody(),
       is(String.format("loan record with ID \"%s\" cannot be found", loanId)));
+  }
+
+  @Test
+  public void cannotCloseRefundedLoan() {
+    feeFineAccountFixture.payLostItemFee(loan.getId());
+    feeFineAccountFixture.payLostItemProcessingFee(loan.getId());
+
+    checkInFixture.checkInByBarcode(item);
+
+    assertThat(loansFixture.getLoanById(loan.getId()).getJson(), allOf(
+      isClosed(),
+      hasJsonPath("action", "checkedin")));
+    assertThat(itemsClient.getById(item.getId()).getJson(), isAvailable());
+
+    eventSubscribersFixture.publishLoanRelatedFeeFineClosedEvent(loan.getId());
+
+    assertThat(loansFixture.getLoanById(loan.getId()).getJson(), allOf(
+      isClosed(),
+      hasJsonPath("action", "checkedin")));
+    assertThat(itemsClient.getById(item.getId()).getJson(), isAvailable());
   }
 }

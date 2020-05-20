@@ -48,48 +48,58 @@ public class LoanRelatedFeeFineClosedSubscriberResource extends Resource {
 
   private void handleFeeFineClosedEvent(RoutingContext routingContext) {
     final WebContext context = new WebContext(routingContext);
-    final Clients clients = create(context, client);
-
-    final LoanRepository loanRepository = new LoanRepository(clients);
 
     createAndValidateRequest(routingContext)
-      .after(request -> loanRepository.getById(request.getLoanId()))
-      .thenCompose(loanResult -> loanResult.after(loan -> {
-        if (loan.isDeclaredLost()) {
-          return closeLoanIfPossible(clients, loan);
-        }
-
-        return completedFuture(succeeded(loan));
-      })).thenApply(r -> r.toFixedValue(NoContentResponse::noContent))
+      .after(request -> processEvent(context, request))
+      .thenApply(r -> r.toFixedValue(NoContentResponse::noContent))
       .thenAccept(context::writeResultToHttpResponse);
   }
 
-  private CompletableFuture<Result<Loan>> closeLoanIfPossible(Clients clients, Loan loanForEvent) {
-    final AccountRepository accountRepository = new AccountRepository(clients);
-    final LostItemPolicyRepository lostItemPolicyRepository = new LostItemPolicyRepository(clients);
-    final StoreLoanAndItem storeLoanAndItem = new StoreLoanAndItem(clients);
+  private CompletableFuture<Result<Loan>> processEvent(
+    WebContext context, LoanRelatedFeeFineClosedEvent event) {
 
-    return accountRepository.findAccountsForLoan(loanForEvent)
-      .thenComposeAsync(lostItemPolicyRepository::findLostItemPolicyForLoan)
+    final Clients clients = create(context, client);
+    final LoanRepository loanRepository = new LoanRepository(clients);
+
+    return loanRepository.getById(event.getLoanId())
       .thenCompose(r -> r.after(loan -> {
-        if (shouldCloseLoan(loan)) {
-          loan.closeLoanAsLostAndPaid();
-
-          return storeLoanAndItem.updateLoanAndItemInStorage(loan);
+        if (loan.isDeclaredLost()) {
+          return closeDeclaredLostLoanIfLostFeesResolved(clients, loan);
         }
 
         return completedFuture(succeeded(loan));
       }));
   }
 
-  private boolean hasLostItemFeesClosed(Loan loan) {
+  private CompletableFuture<Result<Loan>> closeDeclaredLostLoanIfLostFeesResolved(
+    Clients clients, Loan loan) {
+
+    final AccountRepository accountRepository = new AccountRepository(clients);
+    final LostItemPolicyRepository lostItemPolicyRepository = new LostItemPolicyRepository(clients);
+    final StoreLoanAndItem storeLoanAndItem = new StoreLoanAndItem(clients);
+
+    return accountRepository.findAccountsForLoan(loan)
+      .thenComposeAsync(lostItemPolicyRepository::findLostItemPolicyForLoan)
+      .thenCompose(r -> r.after(loanWithReferenceData -> {
+        if (areLostFeesClosed(loanWithReferenceData)) {
+          loanWithReferenceData.closeLoanAsLostAndPaid();
+
+          return storeLoanAndItem.updateLoanAndItemInStorage(loanWithReferenceData);
+        }
+
+        return completedFuture(succeeded(loanWithReferenceData));
+      }));
+  }
+
+  private boolean areLostFeesClosed(Loan loan) {
+    if (loan.getLostItemPolicy().hasActualCostFee()) {
+      // Actual cost fee is processed manually
+      return false;
+    }
+
     return loan.getAccounts().stream()
       .filter(account -> LOST_ITEM_FEE_TYPES.contains(account.getFeeFineType()))
       .allMatch(Account::isClosed);
-  }
-
-  private boolean shouldCloseLoan(Loan loan) {
-    return hasLostItemFeesClosed(loan) && !loan.getLostItemPolicy().hasActualCostFee();
   }
 
   private Result<LoanRelatedFeeFineClosedEvent> createAndValidateRequest(RoutingContext context) {
