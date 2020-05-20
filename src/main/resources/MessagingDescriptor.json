@@ -19,7 +19,7 @@
       "signed": false
     },
     {
-      "eventType": "LOAN_DUE_DATE_UPDATE",
+      "eventType": "LOAN_DUE_DATE_CHANGED",
       "description": "Loan due date update event",
       "eventTTL": 1,
       "signed": false
