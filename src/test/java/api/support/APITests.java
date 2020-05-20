@@ -189,8 +189,7 @@ public abstract class APITests {
   protected final NoticePoliciesFixture noticePoliciesFixture
     = new NoticePoliciesFixture(noticePolicyClient);
 
-  protected final OverdueFinePoliciesFixture overdueFinePoliciesFixture
-    = new OverdueFinePoliciesFixture(overdueFinePolicyClient);
+  protected final OverdueFinePoliciesFixture overdueFinePoliciesFixture = new OverdueFinePoliciesFixture();
 
   protected final CirculationRulesFixture circulationRulesFixture
     = new CirculationRulesFixture(
@@ -243,15 +242,12 @@ public abstract class APITests {
   protected final TemplateFixture templateFixture = new TemplateFixture(templateClient);
   protected final IdentifierTypesFixture identifierTypesFixture = new IdentifierTypesFixture();
 
-  protected final FeeFineOwnerFixture feeFineOwnerFixture =
-    new FeeFineOwnerFixture(feeFineOwnersClient, servicePointsFixture);
-  protected final FeeFineTypeFixture feeFineTypeFixture = new FeeFineTypeFixture(feeFinesClient);
-  protected final LostItemFeePoliciesFixture lostItemFeePoliciesFixture
-    = new LostItemFeePoliciesFixture(lostItemFeePolicyClient, feeFineOwnerFixture, feeFineTypeFixture);
+  protected final FeeFineOwnerFixture feeFineOwnerFixture = new FeeFineOwnerFixture();
+  protected final FeeFineTypeFixture feeFineTypeFixture = new FeeFineTypeFixture();
+  protected final LostItemFeePoliciesFixture lostItemFeePoliciesFixture = new LostItemFeePoliciesFixture();
 
   protected final DeclareLostFixtures declareLostFixtures = new DeclareLostFixtures();
-  protected final ClaimItemReturnedFixture claimItemReturnedFixture =
-    new ClaimItemReturnedFixture(restAssuredClient);
+  protected final ClaimItemReturnedFixture claimItemReturnedFixture = new ClaimItemReturnedFixture(restAssuredClient);
   protected final FeeFineAccountFixture feeFineAccountFixture = new FeeFineAccountFixture();
   protected final EventSubscribersFixture eventSubscribersFixture = new EventSubscribersFixture();
 
@@ -355,6 +351,7 @@ public abstract class APITests {
     feeFineTypeFixture.cleanUp();
     feeFineActionsClient.deleteAll();
     accountsClient.deleteAll();
+    mockClockManagerToReturnDefaultDateTime();
   }
 
   //Needs to be done each time as some tests manipulate the rules

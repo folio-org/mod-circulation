@@ -2,24 +2,29 @@ package org.folio.circulation.domain;
 
 import static org.folio.circulation.support.JsonPropertyFetcher.getIntegerProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
+import static org.folio.circulation.support.utils.DateTimeUtil.toJavaDateTime;
 
 import java.time.temporal.ChronoUnit;
+
+import org.joda.time.DateTime;
 
 import io.vertx.core.json.JsonObject;
 
 public class TimePeriod {
-  private final JsonObject representation;
+  private final int duration;
+  private final String intervalId;
 
-  public TimePeriod(JsonObject representation) {
-    this.representation = representation;
+  public TimePeriod(int duration, String intervalId) {
+    this.duration = duration;
+    this.intervalId = intervalId;
   }
 
-  public Integer getDuration() {
-    return getIntegerProperty(representation, "duration", null);
+  public int getDuration() {
+    return duration;
   }
 
   public String getIntervalId() {
-    return getProperty(representation, "intervalId");
+    return intervalId;
   }
 
   public ChronoUnit getInterval() {
@@ -32,6 +37,10 @@ public class TimePeriod {
     }
   }
 
+  public long between(DateTime start, DateTime end) {
+    return getInterval().between(toJavaDateTime(start), toJavaDateTime(end));
+  }
+
   public boolean isLongTermPeriod() {
     final ChronoUnit chronoUnit = getInterval();
 
@@ -40,6 +49,9 @@ public class TimePeriod {
   }
 
   public static TimePeriod from(JsonObject representation) {
-    return new TimePeriod(representation);
+    final int duration = getIntegerProperty(representation, "duration", 0);
+    final String intervalId = getProperty(representation, "intervalId");
+
+    return new TimePeriod(duration, intervalId);
   }
 }

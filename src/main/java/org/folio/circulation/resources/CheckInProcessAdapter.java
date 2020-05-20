@@ -33,6 +33,7 @@ import org.folio.circulation.domain.notice.PatronNoticeService;
 import org.folio.circulation.domain.notice.schedule.FeeFineScheduledNoticeService;
 import org.folio.circulation.domain.policy.PatronNoticePolicyRepository;
 import org.folio.circulation.services.LogCheckInService;
+import org.folio.circulation.services.LostItemFeeRefundService;
 import org.folio.circulation.storage.ItemByBarcodeInStorageFinder;
 import org.folio.circulation.storage.SingleOpenLoanForItemInStorageFinder;
 import org.folio.circulation.support.Clients;
@@ -55,6 +56,7 @@ class CheckInProcessAdapter {
   private final LogCheckInService logCheckInService;
   private final OverdueFineCalculatorService overdueFineCalculatorService;
   private final FeeFineScheduledNoticeService feeFineScheduledNoticeService;
+  private final LostItemFeeRefundService lostItemFeeRefundService;
 
   @SuppressWarnings("squid:S00107")
   CheckInProcessAdapter(
@@ -68,7 +70,8 @@ class CheckInProcessAdapter {
     AddressTypeRepository addressTypeRepository,
     LogCheckInService logCheckInService,
     OverdueFineCalculatorService overdueFineCalculatorService,
-    FeeFineScheduledNoticeService feeFineScheduledNoticeService) {
+    FeeFineScheduledNoticeService feeFineScheduledNoticeService,
+    LostItemFeeRefundService lostItemFeeRefundService) {
 
     this.itemFinder = itemFinder;
     this.singleOpenLoanFinder = singleOpenLoanFinder;
@@ -84,6 +87,7 @@ class CheckInProcessAdapter {
     this.logCheckInService = logCheckInService;
     this.overdueFineCalculatorService = overdueFineCalculatorService;
     this.feeFineScheduledNoticeService = feeFineScheduledNoticeService;
+    this.lostItemFeeRefundService = lostItemFeeRefundService;
   }
 
   public static CheckInProcessAdapter newInstance(Clients clients) {
@@ -111,7 +115,8 @@ class CheckInProcessAdapter {
       new AddressTypeRepository(clients),
       new LogCheckInService(clients),
       OverdueFineCalculatorService.using(clients),
-      FeeFineScheduledNoticeService.using(clients));
+      FeeFineScheduledNoticeService.using(clients),
+      new LostItemFeeRefundService(clients));
   }
 
   CompletableFuture<Result<Item>> findItem(CheckInProcessRecords records) {
@@ -271,5 +276,9 @@ class CheckInProcessAdapter {
 
     return overdueFineCalculatorService.createOverdueFineIfNecessary(records, context.getUserId())
       .thenApply(r -> r.next(action -> feeFineScheduledNoticeService.scheduleNotices(records, action)));
+  }
+
+  CompletableFuture<Result<CheckInProcessRecords>> refundLostItemFees(CheckInProcessRecords records) {
+    return lostItemFeeRefundService.refundLostItemFees(records);
   }
 }

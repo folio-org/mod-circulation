@@ -20,13 +20,14 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
-import org.folio.circulation.domain.representations.AccountStorageRepresentation;
+import org.folio.circulation.domain.representations.StoredAccount;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.FetchSingleRecord;
 import org.folio.circulation.support.FindWithMultipleCqlIndexValues;
 import org.folio.circulation.support.GetManyRecordsClient;
 import org.folio.circulation.support.Result;
+import org.folio.circulation.support.http.client.CqlQuery;
 import org.folio.circulation.support.http.client.ResponseInterpreter;
 
 public class AccountRepository {
@@ -52,21 +53,17 @@ public class AccountRepository {
     });
   }
 
-  public CompletableFuture<Result<Loan>> findAccountsForLoan(Loan loan) {
-    return fetchAccountsForLoan(loan.getId())
-      .thenApply(r -> r.map(MultipleRecords::getRecords))
-      .thenApply(r -> r.map(loan::withAccounts));
-  }
+  public CompletableFuture<Result<Collection<Account>>> findAccountsAndActions(
+    Result<CqlQuery> queryResult) {
 
-  private CompletableFuture<Result<MultipleRecords<Account>>> fetchAccountsForLoan(String loanId) {
     return findWithCqlQuery(accountsStorageClient, ACCOUNTS_COLLECTION_PROPERTY_NAME, Account::from)
-      .findByQuery(exactMatch(LOAN_ID_FIELD_NAME, loanId));
-  }
-
-  private CompletableFuture<Result<Collection<Account>>> fetchAccountsAndActionsForLoan(String loanId) {
-    return fetchAccountsForLoan(loanId)
+      .findByQuery(queryResult)
       .thenCompose(r -> r.after(this::findFeeFineActionsForAccounts))
       .thenApply(r -> r.map(MultipleRecords::getRecords));
+  }
+
+  private CompletableFuture<Result<Collection<Account>>> fetchAccountsForLoan(String loanId) {
+    return findAccountsAndActions(exactMatch(LOAN_ID_FIELD_NAME, loanId));
   }
 
   public CompletableFuture<Result<MultipleRecords<Loan>>> findAccountsForLoans(
@@ -146,12 +143,21 @@ public class AccountRepository {
       .fetch(id);
   }
 
-  public CompletableFuture<Result<Account>> create(AccountStorageRepresentation account) {
+  public CompletableFuture<Result<Account>> create(StoredAccount account) {
     final ResponseInterpreter<Account> interpreter = new ResponseInterpreter<Account>()
       .flatMapOn(201, mapUsingJson(Account::from))
       .otherwise(forwardOnFailure());
 
     return accountsStorageClient.post(account)
+      .thenApply(interpreter::flatMap);
+  }
+
+  public CompletableFuture<Result<Void>> update(StoredAccount account) {
+    final ResponseInterpreter<Void> interpreter = new ResponseInterpreter<Void>()
+      .on(204, succeeded(null))
+      .otherwise(forwardOnFailure());
+
+    return accountsStorageClient.put(account.getId(), account)
       .thenApply(interpreter::flatMap);
   }
 }

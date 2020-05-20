@@ -227,10 +227,10 @@ public class TemplateContextMatchers {
     return allOf(
       hasJsonPath("fee.owner", is(account.getFeeFineOwner())),
       hasJsonPath("fee.type", is(account.getFeeFineType())),
-      hasJsonPath("fee.actionType", is(action.getTypeAction())),
+      hasJsonPath("fee.actionType", is(action.getActionType())),
       hasJsonPath("fee.actionDateTime", isEquivalentTo(action.getDateAction())),
-      hasJsonPath("fee.actionAmount", is(action.getAmountAction())),
-      hasJsonPath("fee.amount", is(account.getAmount())),
+      hasJsonPath("fee.actionAmount", is(action.getAmount().toDouble())),
+      hasJsonPath("fee.amount", is(account.getAmount().toDouble())),
       hasJsonPath("fee.balance", is(action.getBalance()))
     );
   }

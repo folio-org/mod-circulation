@@ -1,24 +1,28 @@
-package org.folio.circulation.domain;
+package org.folio.circulation.services.support;
 
-import java.math.BigDecimal;
+import org.folio.circulation.domain.FeeAmount;
+import org.folio.circulation.domain.FeeFine;
+import org.folio.circulation.domain.FeeFineOwner;
+import org.folio.circulation.domain.Item;
+import org.folio.circulation.domain.Loan;
 
-public final class FeeFineAccountAndAction {
+public final class CreateAccountCommand {
   private final Loan loan;
   private final Item item;
   private final FeeFine feeFine;
   private final FeeFineOwner feeFineOwner;
-  private final BigDecimal amount;
-  private final User createdBy;
-  private final String createdAt;
+  private final FeeAmount amount;
+  private final String staffUserId;
+  private final String currentServicePointId;
 
-  private FeeFineAccountAndAction(Builder builder) {
+  private CreateAccountCommand(Builder builder) {
     this.loan = builder.loan;
     this.item = builder.item;
     this.feeFine = builder.feeFine;
     this.feeFineOwner = builder.feeFineOwner;
     this.amount = builder.amount;
-    this.createdBy = builder.createdBy;
-    this.createdAt = builder.createdAt;
+    this.staffUserId = builder.staffUserId;
+    this.currentServicePointId = builder.currentServicePointId;
   }
 
   public Loan getLoan() {
@@ -37,16 +41,16 @@ public final class FeeFineAccountAndAction {
     return feeFineOwner;
   }
 
-  public BigDecimal getAmount() {
+  public FeeAmount getAmount() {
     return amount;
   }
 
-  public User getCreatedBy() {
-    return createdBy;
+  public String getStaffUserId() {
+    return staffUserId;
   }
 
-  public String getCreatedAt() {
-    return createdAt;
+  public String getCurrentServicePointId() {
+    return currentServicePointId;
   }
 
   public static Builder builder() {
@@ -58,9 +62,9 @@ public final class FeeFineAccountAndAction {
     private Item item;
     private FeeFine feeFine;
     private FeeFineOwner feeFineOwner;
-    private BigDecimal amount;
-    private User createdBy;
-    private String createdAt;
+    private FeeAmount amount;
+    private String staffUserId;
+    private String currentServicePointId;
 
     private Builder() {}
 
@@ -84,23 +88,23 @@ public final class FeeFineAccountAndAction {
       return this;
     }
 
-    public Builder withAmount(BigDecimal amount) {
+    public Builder withAmount(FeeAmount amount) {
       this.amount = amount;
       return this;
     }
 
-    public Builder withCreatedBy(User createdBy) {
-      this.createdBy = createdBy;
+    public Builder withStaffUserId(String staffUserId) {
+      this.staffUserId = staffUserId;
       return this;
     }
 
-    public Builder withCreatedAt(String createdAt) {
-      this.createdAt = createdAt;
+    public Builder withCurrentServicePointId(String currentServicePointId) {
+      this.currentServicePointId = currentServicePointId;
       return this;
     }
 
-    public FeeFineAccountAndAction build() {
-      return new FeeFineAccountAndAction(this);
+    public CreateAccountCommand build() {
+      return new CreateAccountCommand(this);
     }
   }
 }
