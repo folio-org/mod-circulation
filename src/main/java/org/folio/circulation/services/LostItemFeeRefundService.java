@@ -93,7 +93,7 @@ public class LostItemFeeRefundService {
       final Result<CqlQuery> fetchQuery = exactMatch("loanId", context.loan.getId())
         .combine(exactMatchAny("feeFineType", LOST_ITEM_FEE_TYPES), CqlQuery::and);
 
-      return accountRepository.findAccountsAndActions(fetchQuery)
+      return accountRepository.findAccountsAndActionsForLoanByQuery(fetchQuery)
         .thenApply(r -> r.map(context::withAccounts));
     });
   }

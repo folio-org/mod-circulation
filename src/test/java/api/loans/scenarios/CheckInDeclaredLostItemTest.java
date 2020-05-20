@@ -68,8 +68,7 @@ public class CheckInDeclaredLostItemTest extends APITests {
     useLostItemPolicy(lostItemFeePoliciesFixture.create(
       lostItemFeePoliciesFixture.facultyStandardPolicy()
         .withName("Test check in")
-        .chargeProcessingFee()
-        .withLostItemProcessingFee(processingFee)
+        .chargeProcessingFee(processingFee)
         .withNoChargeAmountItem()).getId());
 
     declareItemLost();
@@ -87,8 +86,7 @@ public class CheckInDeclaredLostItemTest extends APITests {
     useLostItemPolicy(lostItemFeePoliciesFixture.create(
       lostItemFeePoliciesFixture.facultyStandardPolicy()
         .withName("Test check in")
-        .chargeProcessingFee()
-        .withLostItemProcessingFee(processingFee)
+        .chargeProcessingFee(processingFee)
         .doNotRefundProcessingFeeWhenReturned()
         .withNoChargeAmountItem()).getId());
 
@@ -151,8 +149,7 @@ public class CheckInDeclaredLostItemTest extends APITests {
     useLostItemPolicy(lostItemFeePoliciesFixture.create(
       lostItemFeePoliciesFixture.facultyStandardPolicy()
         .withName("Test check in")
-        .chargeProcessingFee()
-        .withLostItemProcessingFee(processingFee)
+        .chargeProcessingFee(processingFee)
         .withSetCost(setCostFee)
         .withNoFeeRefundInterval()).getId());
 
@@ -296,8 +293,7 @@ public class CheckInDeclaredLostItemTest extends APITests {
     useLostItemPolicy(lostItemFeePoliciesFixture.create(
       lostItemFeePoliciesFixture.facultyStandardPolicy()
         .withName("Test check in")
-        .chargeProcessingFee()
-        .withLostItemProcessingFee(processingFee)
+        .chargeProcessingFee(processingFee)
         .withNoChargeAmountItem()
         .chargeOverdueFineWhenReturned()).getId());
 
@@ -324,8 +320,7 @@ public class CheckInDeclaredLostItemTest extends APITests {
     useLostItemPolicy(lostItemFeePoliciesFixture.create(
       lostItemFeePoliciesFixture.facultyStandardPolicy()
         .withName("Test check in")
-        .chargeProcessingFee()
-        .withLostItemProcessingFee(processingFee)
+        .chargeProcessingFee(processingFee)
         .withNoChargeAmountItem()
         .doNotChargeOverdueFineWhenReturned()).getId());
 
@@ -469,8 +464,7 @@ public class CheckInDeclaredLostItemTest extends APITests {
     useLostItemPolicy(lostItemFeePoliciesFixture.create(
       lostItemFeePoliciesFixture.facultyStandardPolicy()
         .withName("Test check in")
-        .chargeProcessingFee()
-        .withLostItemProcessingFee(processingFee)
+        .chargeProcessingFee(processingFee)
         .withSetCost(itemFee)
         .refundFeesWithinMinutes(1)).getId());
   }

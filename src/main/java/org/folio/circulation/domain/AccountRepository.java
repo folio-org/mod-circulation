@@ -53,7 +53,7 @@ public class AccountRepository {
     });
   }
 
-  public CompletableFuture<Result<Collection<Account>>> findAccountsAndActions(
+  public CompletableFuture<Result<Collection<Account>>> findAccountsAndActionsForLoanByQuery(
     Result<CqlQuery> queryResult) {
 
     return findWithCqlQuery(accountsStorageClient, ACCOUNTS_COLLECTION_PROPERTY_NAME, Account::from)
@@ -62,8 +62,15 @@ public class AccountRepository {
       .thenApply(r -> r.map(MultipleRecords::getRecords));
   }
 
-  private CompletableFuture<Result<Collection<Account>>> fetchAccountsForLoan(String loanId) {
-    return findAccountsAndActions(exactMatch(LOAN_ID_FIELD_NAME, loanId));
+  public CompletableFuture<Result<Loan>> findAccountsForLoan(Loan loan) {
+    return findWithCqlQuery(accountsStorageClient, ACCOUNTS_COLLECTION_PROPERTY_NAME, Account::from)
+      .findByQuery(exactMatch(LOAN_ID_FIELD_NAME, loan.getId()))
+      .thenApply(r -> r.map(MultipleRecords::getRecords))
+      .thenApply(r -> r.map(loan::withAccounts));
+  }
+
+  private CompletableFuture<Result<Collection<Account>>> fetchAccountsAndActionsForLoan(String loanId) {
+    return findAccountsAndActionsForLoanByQuery(exactMatch(LOAN_ID_FIELD_NAME, loanId));
   }
 
   public CompletableFuture<Result<MultipleRecords<Loan>>> findAccountsForLoans(
