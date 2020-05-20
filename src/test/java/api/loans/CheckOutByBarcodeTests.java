@@ -9,8 +9,7 @@ import static api.support.matchers.CheckOutByBarcodeResponseMatchers.hasLoanPoli
 import static api.support.matchers.CheckOutByBarcodeResponseMatchers.hasProxyUserBarcodeParameter;
 import static api.support.matchers.CheckOutByBarcodeResponseMatchers.hasServicePointParameter;
 import static api.support.matchers.CheckOutByBarcodeResponseMatchers.hasUserBarcodeParameter;
-import static api.support.matchers.EventMatcher.isCheckedOutEvent;
-import static api.support.matchers.EventMatcher.isValidCheckedOutEventPayload;
+import static api.support.matchers.EventMatchers.isValidItemCheckedOutEvent;
 import static api.support.matchers.ItemMatchers.isCheckedOut;
 import static api.support.matchers.ItemMatchers.isWithdrawn;
 import static api.support.matchers.ItemStatusCodeMatcher.hasItemStatus;
@@ -1199,8 +1198,7 @@ public class CheckOutByBarcodeTests extends APITests {
 
     JsonObject event = publishedEvents.get(0);
 
-    assertThat(event, isCheckedOutEvent());
-    assertThat(new JsonObject(event.getString("eventPayload")), isValidCheckedOutEventPayload(loan));
+    assertThat(event, isValidItemCheckedOutEvent(loan));
   }
 
   private IndividualResource prepareLoanPolicyWithItemLimit(int itemLimit) {

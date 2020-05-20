@@ -4,8 +4,7 @@ import static api.support.fixtures.TemplateContextMatchers.getItemContextMatcher
 import static api.support.fixtures.TemplateContextMatchers.getLoanContextMatchers;
 import static api.support.fixtures.TemplateContextMatchers.getLoanPolicyContextMatchers;
 import static api.support.fixtures.TemplateContextMatchers.getUserContextMatchers;
-import static api.support.matchers.EventMatcher.isDueDateChangedEvent;
-import static api.support.matchers.EventMatcher.isValidDueDateChangedEventPayload;
+import static api.support.matchers.EventMatchers.isValidLoanDueDateChangedEvent;
 import static api.support.matchers.LoanMatchers.isOpen;
 import static api.support.matchers.PatronNoticeMatcher.hasEmailNoticeProperties;
 import static api.support.matchers.ResponseStatusCodeMatcher.hasStatus;
@@ -280,9 +279,7 @@ public class ChangeDueDateAPITests extends APITests {
 
     JsonObject event = publishedEvents.get(1);
 
-    assertThat(event, isDueDateChangedEvent());
-    assertThat(new JsonObject(event.getString("eventPayload")),
-      isValidDueDateChangedEventPayload(updatedLoan));
+    assertThat(event, isValidLoanDueDateChangedEvent(updatedLoan));
   }
 
   private void chargeFeesForLostItemToKeepLoanOpen() {

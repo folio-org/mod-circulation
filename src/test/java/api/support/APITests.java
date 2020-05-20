@@ -302,7 +302,7 @@ public abstract class APITests {
 
     usersFixture.defaultAdmin();
 
-    FakePubSub.cleanUp();
+    FakePubSub.clearPublishedEvents();
   }
 
   @AfterClass

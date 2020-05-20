@@ -2,8 +2,7 @@ package api.loans;
 
 import static api.support.APITestContext.getUserId;
 import static api.support.fixtures.AddressExamples.SiriusBlack;
-import static api.support.matchers.EventMatcher.isCheckedInEvent;
-import static api.support.matchers.EventMatcher.isValidCheckedInEventPayload;
+import static api.support.matchers.EventMatchers.isValidItemCheckedInEvent;
 import static api.support.matchers.OverdueFineMatcher.isValidOverdueFine;
 import static api.support.matchers.PatronNoticeMatcher.hasEmailNoticeProperties;
 import static api.support.matchers.ResponseStatusCodeMatcher.hasStatus;
@@ -1069,9 +1068,7 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
 
     JsonObject event = publishedEvents.get(1);
 
-    assertThat(event, isCheckedInEvent());
-    assertThat(new JsonObject(event.getString("eventPayload")),
-      isValidCheckedInEventPayload(checkedInLoan));
+    assertThat(event, isValidItemCheckedInEvent(checkedInLoan));
   }
 
   private void checkPatronNoticeEvent(

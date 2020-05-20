@@ -81,7 +81,7 @@ public class FakePubSub {
     return publishedEvents;
   }
 
-  public static void cleanUp() {
+  public static void clearPublishedEvents() {
     publishedEvents.clear();
   }
 

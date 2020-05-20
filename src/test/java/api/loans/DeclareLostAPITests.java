@@ -2,8 +2,7 @@ package api.loans;
 
 import static api.support.http.CqlQuery.exactMatch;
 import static api.support.http.CqlQuery.queryFromTemplate;
-import static api.support.matchers.EventMatcher.isDeclaredLostEvent;
-import static api.support.matchers.EventMatcher.isValidDeclaredLostEventPayload;
+import static api.support.matchers.EventMatchers.isValidItemDeclaredLostEvent;
 import static api.support.matchers.JsonObjectMatcher.hasJsonPath;
 import static api.support.matchers.LoanMatchers.hasLoanProperty;
 import static api.support.matchers.LoanMatchers.hasStatus;
@@ -408,9 +407,7 @@ public class DeclareLostAPITests extends APITests {
     JsonObject event = publishedEvents.get(1);
     JsonObject loan = loanIndividualResource.getJson();
 
-    assertThat(event, isDeclaredLostEvent());
-    assertThat(new JsonObject(event.getString("eventPayload")),
-      isValidDeclaredLostEventPayload(loan));
+    assertThat(event, isValidItemDeclaredLostEvent(loan));
   }
 
   private List<JsonObject> getAccountsForLoan(UUID loanId) {
