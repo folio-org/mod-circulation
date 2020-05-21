@@ -1,8 +1,6 @@
 package org.folio.circulation.services;
 
-import static java.util.concurrent.CompletableFuture.allOf;
 import static java.util.concurrent.CompletableFuture.completedFuture;
-import static org.folio.HttpStatus.HTTP_NO_CONTENT;
 import static org.folio.circulation.domain.EventType.ITEM_CHECKED_IN;
 import static org.folio.circulation.domain.EventType.ITEM_CHECKED_OUT;
 import static org.folio.circulation.domain.EventType.ITEM_DECLARED_LOST;
@@ -11,37 +9,31 @@ import static org.folio.circulation.support.JsonPropertyWriter.write;
 import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.rest.util.OkapiConnectionParams.OKAPI_TENANT_HEADER;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 import org.folio.circulation.domain.CheckInProcessRecords;
-import org.folio.circulation.domain.EventType;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.domain.LoanRepository;
 import org.folio.circulation.domain.RequestAndRelatedRecords;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.Result;
-import org.folio.rest.client.PubsubClient;
 import org.folio.rest.jaxrs.model.Event;
 import org.folio.rest.jaxrs.model.EventMetadata;
 import org.folio.rest.util.OkapiConnectionParams;
 import org.folio.util.pubsub.PubSubClientUtils;
 
 import io.vertx.core.Context;
-import io.vertx.core.Promise;
-import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 import io.vertx.ext.web.RoutingContext;
 
-public class PubSubService {
-  private static final Logger logger = LoggerFactory.getLogger(PubSubService.class);
+public class EventPublisher {
+  private static final Logger logger = LoggerFactory.getLogger(EventPublisher.class);
 
   public static final String USER_ID_FIELD = "userId";
   public static final String LOAN_ID_FIELD = "loanId";
@@ -54,13 +46,13 @@ public class PubSubService {
 
   private Clients clients;
 
-  public PubSubService(RoutingContext routingContext) {
+  public EventPublisher(RoutingContext routingContext) {
     okapiHeaders = routingContext.request().headers().entries().stream()
       .collect(Collectors.toMap(entry -> entry.getKey().toLowerCase(), Map.Entry::getValue));
     vertxContext = routingContext.vertx().getOrCreateContext();
   }
 
-  public PubSubService(RoutingContext routingContext, Clients circulationClients) {
+  public EventPublisher(RoutingContext routingContext, Clients circulationClients) {
     this(routingContext);
     clients = circulationClients;
   }
@@ -174,56 +166,5 @@ public class PubSubService {
             event.getId(), event.getEventType(), event.getEventPayload());
         }
       });
-  }
-
-  public static void registerModule(Map<String, String> headers, Vertx vertx,
-    Promise<Object> promise) {
-
-    PubSubClientUtils.registerModule(new OkapiConnectionParams(headers, vertx))
-      .whenComplete((registrationAr, throwable) -> {
-        if (throwable == null) {
-          logger.info("Module was successfully registered as publisher/subscriber in mod-pubsub");
-          promise.complete();
-        } else {
-          logger.error("Error during module registration in mod-pubsub", throwable);
-          promise.fail(throwable);
-        }
-      });
-  }
-
-  public static void unregisterModule(Map<String, String> headers, Vertx vertx,
-    Promise<Object> promise) {
-
-    List<CompletableFuture<Boolean>> list = new ArrayList<>();
-
-    OkapiConnectionParams params = new OkapiConnectionParams(headers, vertx);
-    PubsubClient client = new PubsubClient(params.getOkapiUrl(), params.getTenantId(),
-      params.getToken());
-
-    try {
-      for (EventType eventType: EventType.values()) {
-        CompletableFuture<Boolean> future = new CompletableFuture<>();
-        client.deletePubsubEventTypesPublishersByEventTypeName(eventType.name(),
-          PubSubClientUtils.constructModuleName(), ar -> {
-            if (ar.statusCode() == HTTP_NO_CONTENT.toInt()) {
-              future.complete(true);
-            } else {
-              ModulePubSubUnregisteringException exception =
-                new ModulePubSubUnregisteringException(String.format("Module's publisher for " +
-                  "event type %s was not unregistered from PubSub. HTTP status: %s",
-                  eventType.name(), ar.statusCode()));
-              logger.error(exception);
-              promise.fail(exception);
-            }
-          });
-        list.add(future);
-      }
-
-    } catch (Exception exception) {
-      logger.error("Module's publishers were not unregistered from PubSub.", exception);
-      promise.fail(exception);
-    }
-
-    allOf(list.toArray(new CompletableFuture[0])).thenRun(promise::complete);
   }
 }

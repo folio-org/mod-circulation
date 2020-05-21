@@ -6,7 +6,7 @@ import static org.folio.circulation.support.http.server.JsonHttpResponse.noConte
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import org.folio.circulation.services.PubSubService;
+import org.folio.circulation.services.PubSubRegistrationService;
 import org.folio.circulation.support.RouteRegistration;
 import org.folio.circulation.support.http.server.ServerErrorResponse;
 
@@ -43,7 +43,7 @@ public class TenantActivationResource {
           ar.cause().getLocalizedMessage());
       }
     });
-    PubSubService.registerModule(headers, vertx, promise);
+    PubSubRegistrationService.registerModule(headers, vertx, promise);
   }
 
   public void disableModuleForTenant(RoutingContext routingContext) {
@@ -62,6 +62,6 @@ public class TenantActivationResource {
           ar.cause().getLocalizedMessage());
       }
     });
-    PubSubService.unregisterModule(headers, vertx, promise);
+    PubSubRegistrationService.unregisterModule(headers, vertx, promise);
   }
 }
