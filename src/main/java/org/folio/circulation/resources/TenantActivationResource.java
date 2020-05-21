@@ -10,6 +10,7 @@ import org.folio.circulation.services.PubSubService;
 import org.folio.circulation.support.RouteRegistration;
 import org.folio.circulation.support.http.server.ServerErrorResponse;
 
+import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
@@ -17,52 +18,50 @@ import io.vertx.core.logging.LoggerFactory;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 
-public class CirculationTenantAPI {
-  private static final Logger logger = LoggerFactory.getLogger(CirculationTenantAPI.class);
+public class TenantActivationResource {
+  private static final Logger logger = LoggerFactory.getLogger(TenantActivationResource.class);
 
   public void register(Router router) {
     RouteRegistration routeRegistration = new RouteRegistration("/_/tenant", router);
-    routeRegistration.create(this::postTenant);
-    routeRegistration.deleteAll(this::deleteTenant);
+    routeRegistration.create(this::enableModuleForTenant);
+    routeRegistration.deleteAll(this::disableModuleForTenant);
   }
 
-  public void postTenant(RoutingContext routingContext) {
+  public void enableModuleForTenant(RoutingContext routingContext) {
     Map<String, String> headers = routingContext.request().headers().entries().stream()
       .collect(Collectors.toMap(entry -> entry.getKey().toLowerCase(), Map.Entry::getValue));
 
     Vertx vertx = routingContext.vertx();
 
-    vertx.executeBlocking(
-      promise -> PubSubService.registerModule(headers, vertx, promise),
-      result -> {
-        if (result.failed()) {
-          ServerErrorResponse.internalError(routingContext.response(),
-            result.cause().getLocalizedMessage());
-        }
-        else {
-          created(new JsonObject()).writeTo(routingContext.response());
-        }
+    Promise<Object> promise = Promise.promise();
+    promise.future().setHandler(ar -> {
+      if (ar.succeeded()) {
+        created(new JsonObject()).writeTo(routingContext.response());
       }
-    );
+      else {
+        ServerErrorResponse.internalError(routingContext.response(),
+          ar.cause().getLocalizedMessage());
+      }
+    });
+    PubSubService.registerModule(headers, vertx, promise);
   }
 
-  public void deleteTenant(RoutingContext routingContext) {
+  public void disableModuleForTenant(RoutingContext routingContext) {
     Map<String, String> headers = routingContext.request().headers().entries().stream()
       .collect(Collectors.toMap(entry -> entry.getKey().toLowerCase(), Map.Entry::getValue));
 
     Vertx vertx = routingContext.vertx();
 
-    vertx.executeBlocking(
-      promise -> PubSubService.unregisterModule(headers, vertx, promise),
-      result -> {
-        if (result.failed()) {
-          ServerErrorResponse.internalError(routingContext.response(),
-            result.cause().getLocalizedMessage());
-        }
-        else {
-          noContent().writeTo(routingContext.response());
-        }
+    Promise<Object> promise = Promise.promise();
+    promise.future().setHandler(ar -> {
+      if (ar.succeeded()) {
+        noContent().writeTo(routingContext.response());
       }
-    );
+      else {
+        ServerErrorResponse.internalError(routingContext.response(),
+          ar.cause().getLocalizedMessage());
+      }
+    });
+    PubSubService.unregisterModule(headers, vertx, promise);
   }
 }

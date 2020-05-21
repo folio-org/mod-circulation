@@ -13,7 +13,7 @@ import org.junit.Test;
 import api.support.APITests;
 import api.support.fakes.FakePubSub;
 
-public class CirculationTenantAPITests extends APITests {
+public class TenantActivationResourceTests extends APITests {
 
   @Before
   public void init() {
