@@ -74,7 +74,7 @@ public class CloseDeclaredLostLoanWhenLostItemFeesAreClosedApiTests extends APIT
   }
 
   @Test
-  public void shouldNotCloseLoanIfItemFeeIsNotClosed() {
+  public void shouldNotCloseLoanIfSetCostFeeIsNotClosed() {
     feeFineAccountFixture.payLostItemProcessingFee(loan.getId());
 
     eventSubscribersFixture.publishLoanRelatedFeeFineClosedEvent(loan.getId());
@@ -84,7 +84,7 @@ public class CloseDeclaredLostLoanWhenLostItemFeesAreClosedApiTests extends APIT
   }
 
   @Test
-  public void shouldNotCloseLoanIfActualCostIsUsed() {
+  public void shouldNotCloseLoanIfActualCostFeeShouldBeCharged() {
     useLostItemPolicy(lostItemFeePoliciesFixture.create(
       lostItemFeePoliciesFixture.facultyStandardPolicy()
         .chargeProcessingFee(10.00)
@@ -96,6 +96,26 @@ public class CloseDeclaredLostLoanWhenLostItemFeesAreClosedApiTests extends APIT
 
     assertThat(loansFixture.getLoanById(loan.getId()).getJson(), isOpen());
     assertThat(itemsClient.getById(item.getId()).getJson(), isDeclaredLost());
+  }
+
+  @Test
+  public void shouldNotCloseRefundedLoan() {
+    feeFineAccountFixture.payLostItemFee(loan.getId());
+    feeFineAccountFixture.payLostItemProcessingFee(loan.getId());
+
+    checkInFixture.checkInByBarcode(item);
+
+    assertThat(loansFixture.getLoanById(loan.getId()).getJson(), allOf(
+      isClosed(),
+      hasJsonPath("action", "checkedin")));
+    assertThat(itemsClient.getById(item.getId()).getJson(), isAvailable());
+
+    eventSubscribersFixture.publishLoanRelatedFeeFineClosedEvent(loan.getId());
+
+    assertThat(loansFixture.getLoanById(loan.getId()).getJson(), allOf(
+      isClosed(),
+      hasJsonPath("action", "checkedin")));
+    assertThat(itemsClient.getById(item.getId()).getJson(), isAvailable());
   }
 
   @Test
@@ -118,32 +138,12 @@ public class CloseDeclaredLostLoanWhenLostItemFeesAreClosedApiTests extends APIT
   }
 
   @Test
-  public void shouldIgnoreErrorWhenNonExistentLoanIdProveded() {
+  public void shouldIgnoreErrorWhenNonExistentLoanIdProvided() {
     final UUID loanId = UUID.randomUUID();
     final Response response = eventSubscribersFixture
       .attemptPublishLoanRelatedFeeFineClosedEvent(loanId,
         UUID.randomUUID());
 
     assertThat(response.getStatusCode(), is(204));
-  }
-
-  @Test
-  public void shouldNotCloseRefundedLoan() {
-    feeFineAccountFixture.payLostItemFee(loan.getId());
-    feeFineAccountFixture.payLostItemProcessingFee(loan.getId());
-
-    checkInFixture.checkInByBarcode(item);
-
-    assertThat(loansFixture.getLoanById(loan.getId()).getJson(), allOf(
-      isClosed(),
-      hasJsonPath("action", "checkedin")));
-    assertThat(itemsClient.getById(item.getId()).getJson(), isAvailable());
-
-    eventSubscribersFixture.publishLoanRelatedFeeFineClosedEvent(loan.getId());
-
-    assertThat(loansFixture.getLoanById(loan.getId()).getJson(), allOf(
-      isClosed(),
-      hasJsonPath("action", "checkedin")));
-    assertThat(itemsClient.getById(item.getId()).getJson(), isAvailable());
   }
 }

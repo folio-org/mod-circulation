@@ -86,10 +86,10 @@ public class LoanRelatedFeeFineClosedHandlerResource extends Resource {
 
     return accountRepository.findAccountsForLoan(loan)
       .thenComposeAsync(lostItemPolicyRepository::findLostItemPolicyForLoan)
-      .thenCompose(loanResult -> closeLoanAndUpdateIfNeeded(loanResult, clients));
+      .thenCompose(loanResult -> closeLoanAndUpdateItem(loanResult, clients));
   }
 
-  public CompletableFuture<Result<Loan>> closeLoanAndUpdateIfNeeded(
+  public CompletableFuture<Result<Loan>> closeLoanAndUpdateItem(
     Result<Loan> loanResult, Clients clients) {
 
     final StoreLoanAndItem storeLoanAndItem = new StoreLoanAndItem(clients);
