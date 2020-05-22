@@ -14,7 +14,7 @@
     },
     {
       "eventType": "ITEM_DECLARED_LOST",
-      "description": "Item declared lost event",
+      "description": "Item has been declared lost",
       "eventTTL": 1,
       "signed": false
     },
