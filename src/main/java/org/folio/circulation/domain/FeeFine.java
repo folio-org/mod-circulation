@@ -12,7 +12,7 @@ public class FeeFine {
   public static final String LOST_ITEM_FEE_TYPE = "Lost item fee";
   public static final String LOST_ITEM_PROCESSING_FEE_TYPE = "Lost item processing fee";
 
-  private static final Set<String> LOST_TEM_FEE_TYPES =
+  private static final Set<String> LOST_ITEM_FEE_TYPES =
     unmodifiableSet(hashSet(LOST_ITEM_FEE_TYPE, LOST_ITEM_PROCESSING_FEE_TYPE));
 
   private final String id;
@@ -23,6 +23,10 @@ public class FeeFine {
     this.id = id;
     this.ownerId = ownerId;
     this.feeFineType = feeFineType;
+  }
+
+  public static Set<String> lostItemFeeTypes() {
+    return LOST_ITEM_FEE_TYPES;
   }
 
   public static FeeFine from(JsonObject jsonObject) {
@@ -46,9 +50,5 @@ public class FeeFine {
 
   public String getFeeFineType() {
     return feeFineType;
-  }
-
-  public static Set<String> lostItemFeeTypes() {
-    return LOST_TEM_FEE_TYPES;
   }
 }
