@@ -8,7 +8,7 @@
     },
     {
       "eventType": "ITEM_CHECKED_IN",
-      "description": "Item check in event",
+      "description": "Item was checked in",
       "eventTTL": 1,
       "signed": false
     },
