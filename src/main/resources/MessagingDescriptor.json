@@ -20,7 +20,7 @@
     },
     {
       "eventType": "LOAN_DUE_DATE_CHANGED",
-      "description": "Loan due date update event",
+      "description": "Due date for a loan has been changed",
       "eventTTL": 1,
       "signed": false
     }
