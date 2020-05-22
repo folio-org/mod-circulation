@@ -1062,6 +1062,8 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
 
     JsonObject checkedInLoan = checkInResponse.getLoan();
 
+    // There should be two events published - first one for "check out", second one for "check in"
+
     List<JsonObject> publishedEvents = Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
       .until(FakePubSub::getPublishedEvents, hasSize(2));

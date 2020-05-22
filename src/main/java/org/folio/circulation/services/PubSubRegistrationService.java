@@ -13,7 +13,6 @@ import org.folio.rest.client.PubsubClient;
 import org.folio.rest.util.OkapiConnectionParams;
 import org.folio.util.pubsub.PubSubClientUtils;
 
-import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
@@ -21,23 +20,21 @@ import io.vertx.core.logging.LoggerFactory;
 public class PubSubRegistrationService {
   private static final Logger logger = LoggerFactory.getLogger(PubSubRegistrationService.class);
 
-  public static void registerModule(Map<String, String> headers, Vertx vertx,
-    Promise<Object> promise) {
+  public static CompletableFuture<Boolean> registerModule(Map<String, String> headers,
+    Vertx vertx) {
 
-    PubSubClientUtils.registerModule(new OkapiConnectionParams(headers, vertx))
+    return PubSubClientUtils.registerModule(new OkapiConnectionParams(headers, vertx))
       .whenComplete((registrationAr, throwable) -> {
         if (throwable == null) {
           logger.info("Module was successfully registered as publisher/subscriber in mod-pubsub");
-          promise.complete();
         } else {
           logger.error("Error during module registration in mod-pubsub", throwable);
-          promise.fail(throwable);
         }
       });
   }
 
-  public static void unregisterModule(Map<String, String> headers, Vertx vertx,
-    Promise<Object> promise) {
+  public static CompletableFuture<Boolean> unregisterModule(Map<String, String> headers,
+    Vertx vertx) {
 
     List<CompletableFuture<Boolean>> list = new ArrayList<>();
 
@@ -58,17 +55,15 @@ public class PubSubRegistrationService {
                   "event type %s was not unregistered from PubSub. HTTP status: %s",
                   eventType.name(), ar.statusCode()));
               logger.error(exception);
-              promise.fail(exception);
+              future.completeExceptionally(exception);
             }
           });
         list.add(future);
       }
-
     } catch (Exception exception) {
       logger.error("Module's publishers were not unregistered from PubSub.", exception);
-      promise.fail(exception);
     }
 
-    allOf(list.toArray(new CompletableFuture[0])).thenRun(promise::complete);
+    return allOf(list.toArray(new CompletableFuture[0])).thenApply(r -> true);
   }
 }

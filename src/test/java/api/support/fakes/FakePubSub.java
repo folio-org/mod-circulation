@@ -18,6 +18,9 @@ import io.vertx.ext.web.handler.BodyHandler;
 public class FakePubSub {
   private static final Logger logger = LoggerFactory.getLogger(FakePubSub.class);
   private static final List<JsonObject> publishedEvents = new ArrayList<>();
+  private static final List<JsonObject> createdEventTypes = new ArrayList<>();
+  private static final List<JsonObject> registeredPublishers = new ArrayList<>();
+  private static final List<JsonObject> registeredSubscribers = new ArrayList<>();
 
   private static boolean failPubSubRegistration;
   private static boolean failPubSubUnregistering;
@@ -34,25 +37,28 @@ public class FakePubSub {
       });
 
     router.post("/pubsub/event-types")
-      .handler(FakePubSub::postTenant);
+      .handler(ctx -> postTenant(ctx, createdEventTypes));
 
     router.post("/pubsub/event-types/declare/publisher")
-      .handler(FakePubSub::postTenant);
+      .handler(ctx -> postTenant(ctx, registeredPublishers));
 
     router.post("/pubsub/event-types/declare/subscriber")
-      .handler(FakePubSub::postTenant);
+      .handler(ctx -> postTenant(ctx, registeredSubscribers));
 
     router.delete("/pubsub/event-types/:eventTypeName/publishers")
       .handler(FakePubSub::deleteTenant);
   }
 
-  private static void postTenant(RoutingContext routingContext) {
+  private static void postTenant(RoutingContext routingContext, List<JsonObject> requestBodyList) {
     if (failPubSubRegistration) {
       routingContext.response()
         .setStatusCode(HTTP_INTERNAL_SERVER_ERROR.toInt())
         .end();
     }
     else {
+      if (requestBodyList != null) {
+        requestBodyList.add(routingContext.getBodyAsJson());
+      }
       String json = routingContext.getBodyAsJson().encodePrettily();
       Buffer buffer = Buffer.buffer(json, "UTF-8");
       routingContext.response()
@@ -79,6 +85,18 @@ public class FakePubSub {
 
   public static List<JsonObject> getPublishedEvents() {
     return publishedEvents;
+  }
+
+  public static List<JsonObject> getCreatedEventTypes() {
+    return createdEventTypes;
+  }
+
+  public static List<JsonObject> getRegisteredPublishers() {
+    return registeredPublishers;
+  }
+
+  public static List<JsonObject> getRegisteredSubscribers() {
+    return registeredSubscribers;
   }
 
   public static void clearPublishedEvents() {

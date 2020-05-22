@@ -33,10 +33,6 @@ public class JsonHttpResponse implements HttpResponse {
     return new JsonHttpResponse(422, body, null);
   }
 
-  public static HttpResponse noContent() {
-    return new JsonHttpResponse(204, null, null);
-  }
-
   public JsonHttpResponse(int statusCode, JsonObject body, String location) {
     this.statusCode = statusCode;
     this.body = body;

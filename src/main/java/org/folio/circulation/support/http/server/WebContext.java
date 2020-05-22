@@ -8,6 +8,8 @@ import static org.folio.circulation.support.http.OkapiHeader.USER_ID;
 
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.folio.circulation.support.InvalidOkapiLocationException;
 import org.folio.circulation.support.Result;
@@ -19,9 +21,13 @@ import io.vertx.ext.web.RoutingContext;
 
 public class WebContext {
   private final RoutingContext routingContext;
+  private final Map<String, String> headers;
 
   public WebContext(RoutingContext routingContext) {
     this.routingContext = routingContext;
+
+    headers = routingContext.request().headers().entries().stream()
+      .collect(Collectors.toMap(entry -> entry.getKey().toLowerCase(), Map.Entry::getValue));
   }
 
   public String getTenantId() {
@@ -73,6 +79,10 @@ public class WebContext {
 
     return new URL(currentRequestUrl.getProtocol(), currentRequestUrl.getHost(),
       currentRequestUrl.getPort(), path);
+  }
+
+  public Map<String, String> getHeaders() {
+    return headers;
   }
 
   public OkapiHttpClient createHttpClient(HttpClient httpClient) {

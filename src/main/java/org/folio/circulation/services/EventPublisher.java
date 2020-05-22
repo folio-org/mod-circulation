@@ -56,7 +56,9 @@ public class EventPublisher {
       write(payloadJsonObject, LOAN_ID_FIELD, loan.getId());
       write(payloadJsonObject, DUE_DATE_FIELD, loan.getDueDate());
 
-      pubSubPublishingService.publishEvent(ITEM_CHECKED_OUT.name(), payloadJsonObject.encode());
+      return pubSubPublishingService.publishEvent(
+        ITEM_CHECKED_OUT.name(), payloadJsonObject.encode())
+        .thenApply(r -> succeeded(loanAndRelatedRecords));
     }
     else {
       logger.error("Failed to publish {} event: loan is null", ITEM_CHECKED_OUT.name());
@@ -76,7 +78,9 @@ public class EventPublisher {
       write(payloadJsonObject, LOAN_ID_FIELD, loan.getId());
       write(payloadJsonObject, RETURN_DATE_FIELD, loan.getReturnDate());
 
-      pubSubPublishingService.publishEvent(ITEM_CHECKED_IN.name(), payloadJsonObject.encode());
+      return pubSubPublishingService.publishEvent(ITEM_CHECKED_IN.name(),
+        payloadJsonObject.encode())
+        .thenApply(r -> succeeded(checkInProcessRecords));
     }
     else {
       logger.error("Failed to publish {} event: loan is null", ITEM_CHECKED_IN.name());
@@ -91,10 +95,15 @@ public class EventPublisher {
       write(payloadJsonObject, USER_ID_FIELD, loan.getUserId());
       write(payloadJsonObject, LOAN_ID_FIELD, loan.getId());
 
-      pubSubPublishingService.publishEvent(ITEM_DECLARED_LOST.name(), payloadJsonObject.encode());
+      return pubSubPublishingService.publishEvent(ITEM_DECLARED_LOST.name(),
+        payloadJsonObject.encode())
+        .thenApply(r -> succeeded(loan));
+    }
+    else {
+      logger.error("Failed to publish {} event: loan is null", ITEM_DECLARED_LOST.name());
     }
 
-    return completedFuture(succeeded(loan));
+    return completedFuture(succeeded(null));
   }
 
   private CompletableFuture<Result<Loan>> publishDueDateChangedEvent(Loan loan) {
@@ -105,10 +114,15 @@ public class EventPublisher {
       write(payloadJsonObject, DUE_DATE_FIELD, loan.getDueDate());
       write(payloadJsonObject, DUE_DATE_CHANGED_BY_RECALL_FIELD, loan.wasDueDateChangedByRecall());
 
-      pubSubPublishingService.publishEvent(LOAN_DUE_DATE_CHANGED.name(), payloadJsonObject.encode());
+      return pubSubPublishingService.publishEvent(LOAN_DUE_DATE_CHANGED.name(),
+        payloadJsonObject.encode())
+        .thenApply(r -> succeeded(loan));
+    }
+    else {
+      logger.error("Failed to publish {} event: loan is null", LOAN_DUE_DATE_CHANGED.name());
     }
 
-    return completedFuture(succeeded(loan));
+    return completedFuture(succeeded(null));
   }
 
   public CompletableFuture<Result<LoanAndRelatedRecords>> publishDueDateChangedEvent(

@@ -1,5 +1,10 @@
 package api;
 
+import static api.support.matchers.EventTypeMatchers.isItemCheckedInEventType;
+import static api.support.matchers.EventTypeMatchers.isItemCheckedOutEventType;
+import static api.support.matchers.EventTypeMatchers.isItemDeclaredLostEventType;
+import static api.support.matchers.EventTypeMatchers.isLoanDueDateChangedEventType;
+import static api.support.matchers.PubSubRegistrationMatchers.isValidPublishersRegistration;
 import static org.folio.HttpStatus.HTTP_CREATED;
 import static org.folio.HttpStatus.HTTP_INTERNAL_SERVER_ERROR;
 import static org.folio.HttpStatus.HTTP_NO_CONTENT;
@@ -33,6 +38,15 @@ public class TenantActivationResourceTests extends APITests {
   public void tenantActivationSucceedsWhenCanRegisterInPubSub() {
     Response response = tenantAPIFixture.postTenant();
     assertThat(response.getStatusCode(), is(HTTP_CREATED.toInt()));
+    assertThat(FakePubSub.getCreatedEventTypes().size(), is(4));
+    assertThat(FakePubSub.getRegisteredPublishers().size(), is(1));
+    assertThat(FakePubSub.getRegisteredSubscribers().size(), is(1));
+
+    assertThat(FakePubSub.getCreatedEventTypes().get(0), isItemCheckedOutEventType());
+    assertThat(FakePubSub.getCreatedEventTypes().get(1), isItemCheckedInEventType());
+    assertThat(FakePubSub.getCreatedEventTypes().get(2), isItemDeclaredLostEventType());
+    assertThat(FakePubSub.getCreatedEventTypes().get(3), isLoanDueDateChangedEventType());
+    assertThat(FakePubSub.getRegisteredPublishers().get(0), isValidPublishersRegistration());
   }
 
   @Test

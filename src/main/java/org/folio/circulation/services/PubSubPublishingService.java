@@ -4,8 +4,9 @@ import static org.folio.rest.util.OkapiConnectionParams.OKAPI_TENANT_HEADER;
 
 import java.util.Map;
 import java.util.UUID;
-import java.util.stream.Collectors;
+import java.util.concurrent.CompletableFuture;
 
+import org.folio.circulation.support.http.server.WebContext;
 import org.folio.rest.jaxrs.model.Event;
 import org.folio.rest.jaxrs.model.EventMetadata;
 import org.folio.rest.util.OkapiConnectionParams;
@@ -23,12 +24,11 @@ public class PubSubPublishingService {
   private final Context vertxContext;
 
   public PubSubPublishingService(RoutingContext routingContext) {
-    okapiHeaders = routingContext.request().headers().entries().stream()
-      .collect(Collectors.toMap(entry -> entry.getKey().toLowerCase(), Map.Entry::getValue));
+    okapiHeaders = new WebContext(routingContext).getHeaders();
     vertxContext = routingContext.vertx().getOrCreateContext();
   }
 
-  public void publishEvent(String eventType, String payload) {
+  public CompletableFuture<Boolean> publishEvent(String eventType, String payload) {
     Event event = new Event()
       .withId(UUID.randomUUID().toString())
       .withEventType(eventType)
@@ -40,15 +40,28 @@ public class PubSubPublishingService {
 
     OkapiConnectionParams params = new OkapiConnectionParams(okapiHeaders, vertxContext.owner());
 
+    final CompletableFuture<Boolean> publishResult = new CompletableFuture<>();
+
     PubSubClientUtils.sendEventMessage(event, params)
       .whenComplete((result, throwable) -> {
         if (Boolean.TRUE.equals(result)) {
           logger.debug("Event published successfully. ID: {}, type: {}, payload: {}",
             event.getId(), event.getEventType(), event.getEventPayload());
+          publishResult.complete(true);
         } else {
           logger.error("Failed to publish event. ID: {}, type: {}, payload: {}", throwable,
             event.getId(), event.getEventType(), event.getEventPayload());
+
+          if (throwable.getMessage().toLowerCase().contains(
+            "there is no subscribers registered for event type")) {
+            publishResult.complete(true);
+          }
+          else {
+            publishResult.completeExceptionally(throwable);
+          }
         }
       });
+
+    return publishResult;
   }
 }

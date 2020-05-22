@@ -400,6 +400,9 @@ public class DeclareLostAPITests extends APITests {
       .withNoComment();
     declareLostFixtures.declareItemLost(builder);
 
+    // There should be two events published - first one for "check out",
+    // second one for "declared lost"
+
     List<JsonObject> publishedEvents = Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
       .until(FakePubSub::getPublishedEvents, hasSize(2));
