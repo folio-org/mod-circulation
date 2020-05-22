@@ -22,16 +22,29 @@ public class FeeFineAction {
     return representation.getDouble("balance");
   }
 
-  public Double getAmountAction() {
-    return representation.getDouble("amountAction");
+  public FeeAmount getAmount() {
+    return FeeAmount.from(representation, "amountAction");
   }
 
   public String getUserId() {
     return representation.getString("userId");
   }
 
-  public String getTypeAction() {
+  public String getActionType() {
     return representation.getString("typeAction");
+  }
+
+  public boolean isPaid() {
+    return isActionTypeStartsWith("Paid");
+  }
+
+  public boolean isTransferred() {
+    return isActionTypeStartsWith("Transferred");
+  }
+
+  private boolean isActionTypeStartsWith(String prefix) {
+    return getActionType() != null && getActionType().toLowerCase()
+      .startsWith(prefix.toLowerCase());
   }
 
   public DateTime getDateAction() {
@@ -48,5 +61,9 @@ public class FeeFineAction {
 
   public static FeeFineAction from(JsonObject representation) {
     return new FeeFineAction(representation);
+  }
+
+  public String getPaymentMethod() {
+    return representation.getString("paymentMethod");
   }
 }

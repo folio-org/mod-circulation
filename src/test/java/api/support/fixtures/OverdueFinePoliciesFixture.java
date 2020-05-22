@@ -1,22 +1,21 @@
 package api.support.fixtures;
 
+import static api.support.http.ResourceClient.forOverdueFinePolicies;
 import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
 
-import java.util.List;
 import java.util.UUID;
 
 import org.folio.circulation.support.http.client.IndividualResource;
 
 import api.support.builders.NoticePolicyBuilder;
 import api.support.builders.OverdueFinePolicyBuilder;
-import api.support.http.ResourceClient;
 import io.vertx.core.json.JsonObject;
 
 public class OverdueFinePoliciesFixture {
   private final RecordCreator overdueFinePolicyRecordCreator;
 
-  public OverdueFinePoliciesFixture(ResourceClient overdueFinePoliciesClient) {
-    overdueFinePolicyRecordCreator = new RecordCreator(overdueFinePoliciesClient,
+  public OverdueFinePoliciesFixture() {
+    overdueFinePolicyRecordCreator = new RecordCreator(forOverdueFinePolicies(),
       reason -> getProperty(reason, "name"));
   }
 

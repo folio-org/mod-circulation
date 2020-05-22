@@ -53,7 +53,9 @@ public class CheckInByBarcodeResource extends Resource {
     refuseWhenLoggedInUserNotPresent(context)
       .next(notUsed -> checkInRequestResult)
       .map(CheckInProcessRecords::new)
-      .combineAfter(processAdapter::findItem, CheckInProcessRecords::withItem)
+      .combineAfter(processAdapter::findItem, (records, item) -> records
+        .withItem(item)
+        .withItemStatusBeforeCheckIn(item.getStatus()))
       .thenApply(CheckInValidators::refuseWhenClaimedReturnedIsNotResolved)
       .thenComposeAsync(findItemResult -> findItemResult.combineAfter(
         processAdapter::getRequestQueue, CheckInProcessRecords::withRequestQueue))
@@ -84,6 +86,7 @@ public class CheckInByBarcodeResource extends Resource {
         processAdapter::updateLoan, CheckInProcessRecords::withLoan))
       .thenComposeAsync(updateItemResult -> updateItemResult.after(
         patronActionSessionService::saveCheckInSessionRecord))
+      .thenComposeAsync(r -> r.after(processAdapter::refundLostItemFees))
       .thenComposeAsync(r -> r.after(
         records -> processAdapter.createOverdueFineIfNecessary(records, context)))
       .thenComposeAsync(r -> r.after(eventPublisher::publishItemCheckedInEvent))

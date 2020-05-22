@@ -27,9 +27,10 @@ public class CheckInProcessRecords {
   private final String loggedInUserId;
   private final DateTime checkInProcessedDateTime;
   private final boolean inHouseUse;
+  private final ItemStatus itemStatusBeforeCheckIn;
 
   public CheckInProcessRecords(CheckInByBarcodeRequest checkInRequest) {
-    this(checkInRequest, null, null, null, null, null, null, false);
+    this(checkInRequest, null, null, null, null, null, null, false, null);
   }
 
   private CheckInProcessRecords(
@@ -40,7 +41,9 @@ public class CheckInProcessRecords {
     ServicePoint checkInServicePoint,
     Request highestPriorityFulfillableRequest,
     String loggedInUserId,
-    boolean inHouseUse) {
+    boolean inHouseUse,
+    ItemStatus itemStatusBeforeCheckIn) {
+
     this.checkInRequest = checkInRequest;
     this.item = item;
     this.loan = loan;
@@ -50,6 +53,7 @@ public class CheckInProcessRecords {
     this.loggedInUserId = loggedInUserId;
     checkInProcessedDateTime = ClockManager.getClockManager().getDateTime();
     this.inHouseUse = inHouseUse;
+    this.itemStatusBeforeCheckIn = itemStatusBeforeCheckIn;
   }
 
   public CheckInProcessRecords withItem(Item item) {
@@ -68,7 +72,8 @@ public class CheckInProcessRecords {
       this.checkInServicePoint,
       this.highestPriorityFulfillableRequest,
       this.loggedInUserId,
-      this.inHouseUse);
+      this.inHouseUse,
+      itemStatusBeforeCheckIn);
   }
 
   public CheckInProcessRecords withLoan(Loan loan) {
@@ -80,7 +85,8 @@ public class CheckInProcessRecords {
       this.checkInServicePoint,
       this.highestPriorityFulfillableRequest,
       loggedInUserId,
-      this.inHouseUse);
+      this.inHouseUse,
+      itemStatusBeforeCheckIn);
   }
 
   public CheckInProcessRecords withRequestQueue(RequestQueue requestQueue) {
@@ -96,7 +102,8 @@ public class CheckInProcessRecords {
       this.checkInServicePoint,
       firstRequest,
       loggedInUserId,
-      this.inHouseUse);
+      this.inHouseUse,
+      itemStatusBeforeCheckIn);
   }
 
   public CheckInProcessRecords withCheckInServicePoint(ServicePoint checkInServicePoint) {
@@ -108,7 +115,8 @@ public class CheckInProcessRecords {
       checkInServicePoint,
       this.highestPriorityFulfillableRequest,
       loggedInUserId,
-      this.inHouseUse);
+      this.inHouseUse,
+      itemStatusBeforeCheckIn);
   }
 
   public CheckInProcessRecords withHighestPriorityFulfillableRequest(Request request) {
@@ -120,7 +128,8 @@ public class CheckInProcessRecords {
       this.checkInServicePoint,
       request,
       loggedInUserId,
-      this.inHouseUse);
+      this.inHouseUse,
+      itemStatusBeforeCheckIn);
   }
 
   public CheckInProcessRecords withLoggedInUserId(String userId) {
@@ -132,7 +141,8 @@ public class CheckInProcessRecords {
       this.checkInServicePoint,
       this.highestPriorityFulfillableRequest,
       userId,
-      this.inHouseUse);
+      this.inHouseUse,
+      itemStatusBeforeCheckIn);
   }
 
   public CheckInProcessRecords withInHouseUse(boolean inHouseUse) {
@@ -144,7 +154,21 @@ public class CheckInProcessRecords {
       this.checkInServicePoint,
       this.highestPriorityFulfillableRequest,
       this.loggedInUserId,
-      inHouseUse);
+      inHouseUse,
+      itemStatusBeforeCheckIn);
+  }
+
+  public CheckInProcessRecords withItemStatusBeforeCheckIn(ItemStatus itemStatus) {
+    return new CheckInProcessRecords(
+      this.checkInRequest,
+      this.item,
+      this.loan,
+      this.requestQueue,
+      this.checkInServicePoint,
+      this.highestPriorityFulfillableRequest,
+      this.loggedInUserId,
+      inHouseUse,
+      itemStatus);
   }
 
   public boolean isInHouseUse() {
@@ -189,5 +213,9 @@ public class CheckInProcessRecords {
 
   public DateTime getCheckInProcessedDateTime() {
     return checkInProcessedDateTime;
+  }
+
+  public ItemStatus getItemStatusBeforeCheckIn() {
+    return itemStatusBeforeCheckIn;
   }
 }

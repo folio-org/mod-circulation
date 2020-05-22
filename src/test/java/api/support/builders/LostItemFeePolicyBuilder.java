@@ -21,6 +21,7 @@ public class LostItemFeePolicyBuilder extends JsonBuilder implements Builder {
   private final double replacementProcessingFee;
   private final boolean replacementAllowed;
   private final String lostItemReturned;
+  private final JsonObject feeRefundInterval;
 
   public LostItemFeePolicyBuilder() {
     this(UUID.randomUUID(),
@@ -37,8 +38,8 @@ public class LostItemFeePolicyBuilder extends JsonBuilder implements Builder {
       true,
       1.00,
       true,
-      "Charge"
-    );
+      "Charge",
+      null);
   }
 
   public LostItemFeePolicyBuilder(
@@ -56,7 +57,8 @@ public class LostItemFeePolicyBuilder extends JsonBuilder implements Builder {
     boolean replacedLostItemProcessingFee,
     double replacementProcessingFee,
     boolean replacementAllowed,
-    String lostItemReturned) {
+    String lostItemReturned,
+    JsonObject feeRefundInterval) {
     this.id = id;
     this.name = name;
     this.description = description;
@@ -72,6 +74,7 @@ public class LostItemFeePolicyBuilder extends JsonBuilder implements Builder {
     this.replacementProcessingFee = replacementProcessingFee;
     this.replacementAllowed = replacementAllowed;
     this.lostItemReturned = lostItemReturned;
+    this.feeRefundInterval = feeRefundInterval;
   }
 
   public LostItemFeePolicyBuilder withName(String name) {
@@ -90,8 +93,8 @@ public class LostItemFeePolicyBuilder extends JsonBuilder implements Builder {
       this.replacedLostItemProcessingFee,
       this.replacementProcessingFee,
       this.replacementAllowed,
-      this.lostItemReturned
-    );
+      this.lostItemReturned,
+      this.feeRefundInterval);
   }
 
   public LostItemFeePolicyBuilder withId(UUID id) {
@@ -110,8 +113,8 @@ public class LostItemFeePolicyBuilder extends JsonBuilder implements Builder {
       this.replacedLostItemProcessingFee,
       this.replacementProcessingFee,
       this.replacementAllowed,
-      this.lostItemReturned
-    );
+      this.lostItemReturned,
+      this.feeRefundInterval);
   }
 
   public LostItemFeePolicyBuilder withDescription(String description) {
@@ -130,8 +133,8 @@ public class LostItemFeePolicyBuilder extends JsonBuilder implements Builder {
       this.replacedLostItemProcessingFee,
       this.replacementProcessingFee,
       this.replacementAllowed,
-      this.lostItemReturned
-    );
+      this.lostItemReturned,
+      this.feeRefundInterval);
   }
 
   public LostItemFeePolicyBuilder withItemAgedLostOverdue(JsonObject itemAgedLostOverdue) {
@@ -150,8 +153,8 @@ public class LostItemFeePolicyBuilder extends JsonBuilder implements Builder {
       this.replacedLostItemProcessingFee,
       this.replacementProcessingFee,
       this.replacementAllowed,
-      this.lostItemReturned
-    );
+      this.lostItemReturned,
+      this.feeRefundInterval);
   }
 
   public LostItemFeePolicyBuilder withPatronBilledAfterAgedLost(JsonObject patronBilledAfterAgedLost) {
@@ -170,8 +173,8 @@ public class LostItemFeePolicyBuilder extends JsonBuilder implements Builder {
       this.replacedLostItemProcessingFee,
       this.replacementProcessingFee,
       this.replacementAllowed,
-      this.lostItemReturned
-    );
+      this.lostItemReturned,
+      this.feeRefundInterval);
   }
 
   public LostItemFeePolicyBuilder withChargeAmountItem(JsonObject chargeAmountItem) {
@@ -190,8 +193,8 @@ public class LostItemFeePolicyBuilder extends JsonBuilder implements Builder {
       this.replacedLostItemProcessingFee,
       this.replacementProcessingFee,
       this.replacementAllowed,
-      this.lostItemReturned
-    );
+      this.lostItemReturned,
+      this.feeRefundInterval);
   }
 
   public LostItemFeePolicyBuilder withNoChargeAmountItem() {
@@ -228,8 +231,8 @@ public class LostItemFeePolicyBuilder extends JsonBuilder implements Builder {
       this.replacedLostItemProcessingFee,
       this.replacementProcessingFee,
       this.replacementAllowed,
-      this.lostItemReturned
-    );
+      this.lostItemReturned,
+      this.feeRefundInterval);
   }
 
   public LostItemFeePolicyBuilder chargeProcessingFee() {
@@ -248,8 +251,8 @@ public class LostItemFeePolicyBuilder extends JsonBuilder implements Builder {
       this.replacedLostItemProcessingFee,
       this.replacementProcessingFee,
       this.replacementAllowed,
-      this.lostItemReturned
-    );
+      this.lostItemReturned,
+      this.feeRefundInterval);
   }
 
   public LostItemFeePolicyBuilder doNotChargeProcessingFee() {
@@ -268,8 +271,8 @@ public class LostItemFeePolicyBuilder extends JsonBuilder implements Builder {
       this.replacedLostItemProcessingFee,
       this.replacementProcessingFee,
       this.replacementAllowed,
-      this.lostItemReturned
-    );
+      this.lostItemReturned,
+      this.feeRefundInterval);
   }
 
   public LostItemFeePolicyBuilder withChargeAmountItemSystem(boolean chargeAmountItemSystem) {
@@ -288,8 +291,8 @@ public class LostItemFeePolicyBuilder extends JsonBuilder implements Builder {
       this.replacedLostItemProcessingFee,
       this.replacementProcessingFee,
       this.replacementAllowed,
-      this.lostItemReturned
-    );
+      this.lostItemReturned,
+      this.feeRefundInterval);
   }
 
   public LostItemFeePolicyBuilder withLostItemChargeFeeFine(JsonObject lostItemChargeFeeFine) {
@@ -308,11 +311,11 @@ public class LostItemFeePolicyBuilder extends JsonBuilder implements Builder {
       this.replacedLostItemProcessingFee,
       this.replacementProcessingFee,
       this.replacementAllowed,
-      this.lostItemReturned
-    );
+      this.lostItemReturned,
+      this.feeRefundInterval);
   }
 
-  public LostItemFeePolicyBuilder withReturnedLostItemProcessingFee(boolean returnedLostItemProcessingFee) {
+  private LostItemFeePolicyBuilder withReturnedLostItemProcessingFee(boolean returnedLostItemProcessingFee) {
     return new LostItemFeePolicyBuilder(
       this.id,
       this.name,
@@ -328,8 +331,16 @@ public class LostItemFeePolicyBuilder extends JsonBuilder implements Builder {
       this.replacedLostItemProcessingFee,
       this.replacementProcessingFee,
       this.replacementAllowed,
-      this.lostItemReturned
-    );
+      this.lostItemReturned,
+      this.feeRefundInterval);
+  }
+
+  public LostItemFeePolicyBuilder refundProcessingFeeWhenReturned() {
+    return withReturnedLostItemProcessingFee(true);
+  }
+
+  public LostItemFeePolicyBuilder doNotRefundProcessingFeeWhenReturned() {
+    return withReturnedLostItemProcessingFee(false);
   }
 
   public LostItemFeePolicyBuilder withReplacedLostItemProcessingFee(boolean replacedLostItemProcessingFee) {
@@ -348,8 +359,8 @@ public class LostItemFeePolicyBuilder extends JsonBuilder implements Builder {
       replacedLostItemProcessingFee,
       this.replacementProcessingFee,
       this.replacementAllowed,
-      this.lostItemReturned
-    );
+      this.lostItemReturned,
+      this.feeRefundInterval);
   }
 
   public LostItemFeePolicyBuilder withReplacementProcessingFee(double replacementProcessingFee) {
@@ -368,8 +379,8 @@ public class LostItemFeePolicyBuilder extends JsonBuilder implements Builder {
       this.replacedLostItemProcessingFee,
       replacementProcessingFee,
       this.replacementAllowed,
-      this.lostItemReturned
-    );
+      this.lostItemReturned,
+      this.feeRefundInterval);
   }
 
   public LostItemFeePolicyBuilder withReplacementAllowed(boolean replacementAllowed) {
@@ -388,11 +399,11 @@ public class LostItemFeePolicyBuilder extends JsonBuilder implements Builder {
       this.replacedLostItemProcessingFee,
       this.replacementProcessingFee,
       replacementAllowed,
-      this.lostItemReturned
-    );
+      this.lostItemReturned,
+      this.feeRefundInterval);
   }
 
-  public LostItemFeePolicyBuilder withLostItemReturned(String lostItemReturned) {
+  private LostItemFeePolicyBuilder withLostItemReturned(String lostItemReturned) {
     return new LostItemFeePolicyBuilder(
       this.id,
       this.name,
@@ -408,8 +419,60 @@ public class LostItemFeePolicyBuilder extends JsonBuilder implements Builder {
       this.replacedLostItemProcessingFee,
       this.replacementProcessingFee,
       this.replacementAllowed,
-      lostItemReturned
-    );
+      lostItemReturned,
+      this.feeRefundInterval);
+  }
+
+  public LostItemFeePolicyBuilder chargeOverdueFineWhenReturned() {
+    return withLostItemReturned("Charge");
+  }
+
+  public LostItemFeePolicyBuilder doNotChargeOverdueFineWhenReturned() {
+    return withLostItemReturned("Remove");
+  }
+
+  public LostItemFeePolicyBuilder withNoFeeRefundInterval() {
+    return new LostItemFeePolicyBuilder(
+      this.id,
+      this.name,
+      this.description,
+      this.itemAgedLostOverdue,
+      this.patronBilledAfterAgedLost,
+      this.chargeAmountItem,
+      this.lostItemProcessingFee,
+      this.chargeAmountItemPatron,
+      this.chargeAmountItemSystem,
+      this.lostItemChargeFeeFine,
+      this.returnedLostItemProcessingFee,
+      this.replacedLostItemProcessingFee,
+      this.replacementProcessingFee,
+      this.replacementAllowed,
+      this.lostItemReturned,
+      null);
+  }
+
+  private LostItemFeePolicyBuilder withFeeRefundInterval(int duration, String intervalId) {
+    return new LostItemFeePolicyBuilder(
+      this.id,
+      this.name,
+      this.description,
+      this.itemAgedLostOverdue,
+      this.patronBilledAfterAgedLost,
+      this.chargeAmountItem,
+      this.lostItemProcessingFee,
+      this.chargeAmountItemPatron,
+      this.chargeAmountItemSystem,
+      this.lostItemChargeFeeFine,
+      this.returnedLostItemProcessingFee,
+      this.replacedLostItemProcessingFee,
+      this.replacementProcessingFee,
+      this.replacementAllowed,
+      this.lostItemReturned,
+      new JsonObject().put("intervalId", intervalId).put("duration", duration));
+  }
+
+  public LostItemFeePolicyBuilder refundFeesWithinMinutes(int duration) {
+    return withFeeRefundInterval(duration, "Minutes");
   }
 
   @Override
@@ -434,6 +497,7 @@ public class LostItemFeePolicyBuilder extends JsonBuilder implements Builder {
     put(request, "replacementProcessingFee", String.valueOf(this.replacementProcessingFee));
     put(request, "replacementAllowed", this.replacementAllowed);
     put(request, "lostItemReturned", this.lostItemReturned);
+    put(request, "feesFinesShallRefunded", this.feeRefundInterval);
     return request;
   }
 }

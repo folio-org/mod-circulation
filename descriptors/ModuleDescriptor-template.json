@@ -1403,6 +1403,12 @@
         "owners.collection.get",
         "accounts.item.post",
         "check-in-storage.check-ins.item.post",
+        "overdue-fines-policies.item.get",
+        "lost-item-fees-policies.item.get",
+        "accounts.collection.get",
+        "feefineactions.collection.get",
+        "feefineactions.item.post",
+        "accounts.item.put",
         "pubsub.publish.post"
       ],
       "visible": false
