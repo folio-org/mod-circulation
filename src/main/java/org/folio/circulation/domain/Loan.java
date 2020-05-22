@@ -4,7 +4,6 @@ import static java.lang.Boolean.TRUE;
 import static java.util.Objects.nonNull;
 import static java.util.Objects.requireNonNull;
 import static org.folio.circulation.domain.FeeAmount.noFeeAmount;
-import static org.folio.circulation.domain.FeeFine.lostItemFeeTypes;
 import static org.folio.circulation.domain.LoanAction.CHECKED_IN;
 import static org.folio.circulation.domain.LoanAction.CHECKED_OUT;
 import static org.folio.circulation.domain.LoanAction.CLAIMED_RETURNED;
@@ -573,29 +572,8 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
       .orElse(noFeeAmount());
   }
 
-  private boolean allLostFeesClosed() {
-    if (getLostItemPolicy().hasActualCostFee()) {
-      // Actual cost fee is processed manually
-      return false;
-    }
-
-    return getAccounts().stream()
-      .filter(account -> lostItemFeeTypes().contains(account.getFeeFineType()))
-      .allMatch(Account::isClosed);
-  }
-
-  public boolean closeDeclaredLostLoanWhenLostFeesClosed() {
-    if (!isDeclaredLost()) {
-      return false;
-    }
-
-    if (!allLostFeesClosed()) {
-      return false;
-    }
-
+  public void closeLoanAsLostAndPaid() {
     closeLoan(CLOSED_LOAN);
     changeItemStatusForItemAndLoan(ItemStatus.LOST_AND_PAID);
-
-    return true;
   }
 }
