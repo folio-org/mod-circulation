@@ -22,13 +22,3 @@ types:
       responses:
         204:
           description: "Event handled successfully"
-        422:
-          description: "Unable to process event"
-          body:
-            application/json:
-              type: errors
-        500:
-          description: "Internal server error"
-          body:
-            text/plain:
-              example: "Internal server error"

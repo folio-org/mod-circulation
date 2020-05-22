@@ -7,6 +7,7 @@ import static org.folio.circulation.support.Clients.create;
 import static org.folio.circulation.support.Result.failed;
 import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
+import static org.folio.circulation.support.http.server.NoContentResponse.noContent;
 
 import java.util.concurrent.CompletableFuture;
 
@@ -21,15 +22,19 @@ import org.folio.circulation.resources.Resource;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.RouteRegistration;
-import org.folio.circulation.support.http.server.NoContentResponse;
 import org.folio.circulation.support.http.server.ValidationError;
 import org.folio.circulation.support.http.server.WebContext;
+import org.folio.circulation.support.results.CommonFailures;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import io.vertx.core.http.HttpClient;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 
 public class LoanRelatedFeeFineClosedHandlerResource extends Resource {
+  private static final Logger log = LoggerFactory.getLogger(
+    LoanRelatedFeeFineClosedHandlerResource.class);
 
   public LoanRelatedFeeFineClosedHandlerResource(HttpClient client) {
     super(client);
@@ -46,8 +51,15 @@ public class LoanRelatedFeeFineClosedHandlerResource extends Resource {
 
     createAndValidateRequest(routingContext)
       .after(request -> processEvent(context, request))
-      .thenApply(r -> r.toFixedValue(NoContentResponse::noContent))
-      .thenAccept(context::writeResultToHttpResponse);
+      .exceptionally(CommonFailures::failedDueToServerError)
+      .thenAccept(result -> {
+        if (result.failed()) {
+          log.warn("Cannot handle event [{}], error occurred {}",
+            routingContext.getBodyAsString(), result.cause());
+        }
+
+        context.writeResultToHttpResponse(succeeded(noContent()));
+      });
   }
 
   private CompletableFuture<Result<Loan>> processEvent(

@@ -7,9 +7,6 @@ import static api.support.matchers.ItemMatchers.isLostAndPaid;
 import static api.support.matchers.JsonObjectMatcher.hasJsonPath;
 import static api.support.matchers.LoanMatchers.isClosed;
 import static api.support.matchers.LoanMatchers.isOpen;
-import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
-import static api.support.matchers.ValidationErrorMatchers.hasMessage;
-import static api.support.matchers.ValidationErrorMatchers.hasNullParameter;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -48,6 +45,22 @@ public class CloseDeclaredLostLoanWhenLostItemFeesAreClosedApiTests extends APIT
 
     assertThat(loansFixture.getLoanById(loan.getId()).getJson(), isClosed());
     assertThat(itemsClient.getById(item.getId()).getJson(), isLostAndPaid());
+  }
+
+  @Test
+  public void shouldDisregardNonLostFeeTypes() {
+    feeFineAccountFixture.payLostItemFee(loan.getId());
+    feeFineAccountFixture.payLostItemProcessingFee(loan.getId());
+
+    final IndividualResource manualFee = feeFineAccountFixture
+      .createManualFeeForLoan(loan, 10.00);
+
+    eventSubscribersFixture.publishLoanRelatedFeeFineClosedEvent(loan.getId());
+
+    assertThat(loansFixture.getLoanById(loan.getId()).getJson(), isClosed());
+    assertThat(itemsClient.getById(item.getId()).getJson(), isLostAndPaid());
+
+    assertThat(accountsClient.getById(manualFee.getId()).getJson(), isOpen());
   }
 
   @Test
@@ -97,26 +110,21 @@ public class CloseDeclaredLostLoanWhenLostItemFeesAreClosedApiTests extends APIT
   }
 
   @Test
-  public void shouldNotCloseLoanIfLoanIdDoesNotPresent() {
+  public void shouldIgnoreErrorWhenNoLoanIdSpecifiedInPayload() {
     final Response response = eventSubscribersFixture
       .attemptPublishLoanRelatedFeeFineClosedEvent(null, UUID.randomUUID());
 
-    assertThat(response.getJson(), hasErrorWith(allOf(
-      hasMessage("Loan id is required"),
-      hasNullParameter("loanId")
-    )));
+    assertThat(response.getStatusCode(), is(204));
   }
 
   @Test
-  public void shouldNotCloseNonExistentLoan() {
+  public void shouldIgnoreErrorWhenNonExistentLoanIdProveded() {
     final UUID loanId = UUID.randomUUID();
     final Response response = eventSubscribersFixture
       .attemptPublishLoanRelatedFeeFineClosedEvent(loanId,
         UUID.randomUUID());
 
-    assertThat(response.getStatusCode(), is(404));
-    assertThat(response.getBody(),
-      is(String.format("loan record with ID \"%s\" cannot be found", loanId)));
+    assertThat(response.getStatusCode(), is(204));
   }
 
   @Test

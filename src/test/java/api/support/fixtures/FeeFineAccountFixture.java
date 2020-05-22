@@ -6,6 +6,9 @@ import static api.support.http.ResourceClient.forFeeFineActions;
 
 import java.util.UUID;
 
+import org.folio.circulation.support.http.client.IndividualResource;
+
+import api.support.builders.AccountBuilder;
 import api.support.builders.FeefineActionsBuilder;
 import api.support.http.ResourceClient;
 import io.vertx.core.json.JsonObject;
@@ -86,5 +89,23 @@ public final class FeeFineAccountFixture {
 
   public void pay(JsonObject accountJson, double amount) {
     pay(accountJson.getString("id"), amount);
+  }
+
+  public IndividualResource createManualFeeForLoan(IndividualResource loan, double amount) {
+    final IndividualResource account = accountsClient.create(new AccountBuilder()
+      .withLoan(loan)
+      .withAmount(amount)
+      .withRemainingFeeFine(amount)
+      .feeFineStatusOpen()
+      .manualFeeFine());
+
+    accountActionsClient.create(new FeefineActionsBuilder()
+      .forAccount(account.getId())
+      .withBalance(amount)
+      .withActionAmount(amount)
+      .withActionType("Manual fee fine")
+      .createdAt("Circ Desk 1"));
+
+    return account;
   }
 }
