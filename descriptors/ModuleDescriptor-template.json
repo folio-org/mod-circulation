@@ -797,19 +797,19 @@
       ]
     },
     {
-      "id": "subscribe-callback",
-      "version": "1.0",
+      "id": "circulation-event-handlers",
+      "version": "0.1",
       "handlers": [
         {
           "methods": [
             "POST"
           ],
-          "pathPattern": "/circulation/subscribers/loan-related-fee-fina-closed",
+          "pathPattern": "/circulation/handlers/loan-related-fee-fina-closed",
           "permissionsRequired": [
-            "circulation.subscribers.loan-related-fee-fine-closed.post"
+            "circulation.handlers.loan-related-fee-fine-closed.post"
           ],
           "modulePermissions": [
-            "modperms.circulation.subscribers.loan-related-fee-fine-closed.post"
+            "modperms.circulation.handlers.loan-related-fee-fine-closed.post"
           ]
         }
       ]
@@ -919,9 +919,9 @@
   ],
   "permissionSets": [
     {
-      "permissionName": "circulation.subscribers.loan-related-fee-fine-closed.post",
-      "displayName": "circulation - Subscriber callback for fee/fine with loan closed event",
-      "description": "Subscriber callback for fee/fine with loan closed event"
+      "permissionName": "circulation.handlers.loan-related-fee-fine-closed.post",
+      "displayName": "circulation - Subscriber handler for fee/fine with loan closed event",
+      "description": "Subscriber handler for fee/fine with loan closed event"
     },
     {
       "permissionName": "circulation.requests.queue.reorder.collection.post",
@@ -1159,15 +1159,15 @@
         "circulation.requests.hold-shelf-clearance-report.get",
         "circulation.inventory.items-in-transit-report.get",
         "circulation.pick-slips.get",
-        "circulation.subscribers.loan-related-fee-fine-closed.post"
+        "circulation.handlers.loan-related-fee-fine-closed.post"
       ]
     },
     {
-      "permissionName": "circulation.subscribers.all",
+      "permissionName": "circulation.handlers.all",
       "displayName": "circulation - all subscribers permissions",
       "description": "Entire set of permissions needed to grant pub/sub user for subscriptions",
       "subPermissions": [
-        "circulation.subscribers.loan-related-fee-fine-closed.post"
+        "circulation.handlers.loan-related-fee-fine-closed.post"
       ],
       "visible": false
     },
@@ -1192,7 +1192,7 @@
       "visible": false
     },
     {
-      "permissionName": "modperms.circulation.subscribers.loan-related-fee-fine-closed.post",
+      "permissionName": "modperms.circulation.handlers.loan-related-fee-fine-closed.post",
       "displayName" : "module permissions for one op",
       "description" : "to reduce X-Okapi-Token size",
       "subPermissions": [

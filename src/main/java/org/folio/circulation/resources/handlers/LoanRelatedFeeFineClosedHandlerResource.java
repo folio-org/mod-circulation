@@ -1,20 +1,15 @@
-package org.folio.circulation.resources.subscribers;
+package org.folio.circulation.resources.handlers;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
-import static org.folio.circulation.domain.FeeFine.LOST_ITEM_FEE_TYPE;
-import static org.folio.circulation.domain.FeeFine.LOST_ITEM_PROCESSING_FEE_TYPE;
 import static org.folio.circulation.domain.subscribers.LoanRelatedFeeFineClosedEvent.fromJson;
 import static org.folio.circulation.support.Clients.create;
 import static org.folio.circulation.support.Result.failed;
 import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 
-import java.util.Arrays;
-import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.StoreLoanAndItem;
-import org.folio.circulation.domain.Account;
 import org.folio.circulation.domain.AccountRepository;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanRepository;
@@ -32,17 +27,15 @@ import io.vertx.core.http.HttpClient;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 
-public class LoanRelatedFeeFineClosedSubscriberResource extends Resource {
-  private static final List<String> LOST_ITEM_FEE_TYPES = Arrays.asList(
-    LOST_ITEM_FEE_TYPE, LOST_ITEM_PROCESSING_FEE_TYPE);
+public class LoanRelatedFeeFineClosedHandlerResource extends Resource {
 
-  public LoanRelatedFeeFineClosedSubscriberResource(HttpClient client) {
+  public LoanRelatedFeeFineClosedHandlerResource(HttpClient client) {
     super(client);
   }
 
   @Override
   public void register(Router router) {
-    new RouteRegistration("/circulation/subscribers/loan-related-fee-fina-closed", router)
+    new RouteRegistration("/circulation/handlers/loan-related-fee-fina-closed", router)
       .create(this::handleFeeFineClosedEvent);
   }
 
@@ -80,26 +73,13 @@ public class LoanRelatedFeeFineClosedSubscriberResource extends Resource {
 
     return accountRepository.findAccountsForLoan(loan)
       .thenComposeAsync(lostItemPolicyRepository::findLostItemPolicyForLoan)
-      .thenCompose(r -> r.after(loanWithReferenceData -> {
-        if (areLostFeesClosed(loanWithReferenceData)) {
-          loanWithReferenceData.closeLoanAsLostAndPaid();
+      .thenCompose(r -> r.after(loanToClose -> {
+        final boolean loanClosed = loanToClose.closeDeclaredLostLoanWhenLostFeesClosed();
 
-          return storeLoanAndItem.updateLoanAndItemInStorage(loanWithReferenceData);
-        }
-
-        return completedFuture(succeeded(loanWithReferenceData));
+        return loanClosed
+          ? storeLoanAndItem.updateLoanAndItemInStorage(loanToClose)
+          : completedFuture(succeeded(loanToClose));
       }));
-  }
-
-  private boolean areLostFeesClosed(Loan loan) {
-    if (loan.getLostItemPolicy().hasActualCostFee()) {
-      // Actual cost fee is processed manually
-      return false;
-    }
-
-    return loan.getAccounts().stream()
-      .filter(account -> LOST_ITEM_FEE_TYPES.contains(account.getFeeFineType()))
-      .allMatch(Account::isClosed);
   }
 
   private Result<LoanRelatedFeeFineClosedEvent> createAndValidateRequest(RoutingContext context) {

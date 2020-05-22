@@ -1,13 +1,12 @@
 package org.folio.circulation.services;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
-import static org.folio.circulation.domain.FeeFine.LOST_ITEM_FEE_TYPE;
 import static org.folio.circulation.domain.FeeFine.LOST_ITEM_PROCESSING_FEE_TYPE;
+import static org.folio.circulation.domain.FeeFine.lostItemFeeTypes;
 import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatchAny;
 
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -29,8 +28,6 @@ import org.slf4j.LoggerFactory;
 
 public class LostItemFeeRefundService {
   private static final Logger log = LoggerFactory.getLogger(LostItemFeeRefundService.class);
-  private static final List<String> LOST_ITEM_FEE_TYPES = Arrays.asList(
-    LOST_ITEM_FEE_TYPE, LOST_ITEM_PROCESSING_FEE_TYPE);
 
   private final LostItemPolicyRepository lostItemPolicyRepository;
   private final FeeFineFacade feeFineFacade;
@@ -91,7 +88,7 @@ public class LostItemFeeRefundService {
 
     return contextResult.after(context -> {
       final Result<CqlQuery> fetchQuery = exactMatch("loanId", context.loan.getId())
-        .combine(exactMatchAny("feeFineType", LOST_ITEM_FEE_TYPES), CqlQuery::and);
+        .combine(exactMatchAny("feeFineType", lostItemFeeTypes()), CqlQuery::and);
 
       return accountRepository.findAccountsAndActionsForLoanByQuery(fetchQuery)
         .thenApply(r -> r.map(context::withAccounts));

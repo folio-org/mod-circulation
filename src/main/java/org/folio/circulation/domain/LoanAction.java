@@ -1,7 +1,5 @@
 package org.folio.circulation.domain;
 
-import java.util.Arrays;
-
 public enum LoanAction {
   DECLARED_LOST("declaredLost"),
   RENEWED("renewed"),
@@ -23,13 +21,6 @@ public enum LoanAction {
 
   LoanAction(String value) {
     this.value = value;
-  }
-
-  public static LoanAction forValue(String property) {
-    return Arrays.stream(values())
-      .filter(currentEnum -> currentEnum.getValue().equals(property))
-      .findFirst()
-      .orElse(null);
   }
 
   public String getValue() {

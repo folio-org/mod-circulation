@@ -28,6 +28,10 @@ public class RestAssuredClient {
     this.defaultHeaders = defaultHeaders;
   }
 
+  public static RestAssuredClient defaultRestAssuredClient() {
+    return new RestAssuredClient(getOkapiHeadersFromContext());
+  }
+
   public RequestSpecification beginRequest(String requestId) {
     return given()
       .log().all()
@@ -173,9 +177,5 @@ public class RestAssuredClient {
       .log().all()
       .statusCode(expectedStatusCode)
       .extract().response());
-  }
-
-  public static RestAssuredClient defaultRestAssuredClient() {
-    return new RestAssuredClient(getOkapiHeadersFromContext());
   }
 }

@@ -24,7 +24,7 @@ import org.junit.Test;
 import api.support.APITests;
 import api.support.builders.DeclareItemLostRequestBuilder;
 
-public class LoanRelatedFeeFineClosedSubscriberApiTest extends APITests {
+public class CloseDeclaredLostLoanWhenLostItemFeesAreClosedApiTests extends APITests {
   private IndividualResource loan;
   private IndividualResource item;
 
@@ -40,7 +40,7 @@ public class LoanRelatedFeeFineClosedSubscriberApiTest extends APITests {
   }
 
   @Test
-  public void canCloseLoanIfAllFeesClosed() {
+  public void shouldCloseLoanWhenAllFeesClosed() {
     feeFineAccountFixture.payLostItemFee(loan.getId());
     feeFineAccountFixture.payLostItemProcessingFee(loan.getId());
 
@@ -51,7 +51,7 @@ public class LoanRelatedFeeFineClosedSubscriberApiTest extends APITests {
   }
 
   @Test
-  public void cannotCloseLoanIfProcessingFeeIsNotClosed() {
+  public void shouldNotCloseLoanWhenProcessingFeeIsNotClosed() {
     feeFineAccountFixture.payLostItemFee(loan.getId());
 
     eventSubscribersFixture.publishLoanRelatedFeeFineClosedEvent(loan.getId());
@@ -61,7 +61,7 @@ public class LoanRelatedFeeFineClosedSubscriberApiTest extends APITests {
   }
 
   @Test
-  public void cannotCloseLoanIfItemFeeIsNotClosed() {
+  public void shouldNotCloseLoanIfItemFeeIsNotClosed() {
     feeFineAccountFixture.payLostItemProcessingFee(loan.getId());
 
     eventSubscribersFixture.publishLoanRelatedFeeFineClosedEvent(loan.getId());
@@ -71,7 +71,7 @@ public class LoanRelatedFeeFineClosedSubscriberApiTest extends APITests {
   }
 
   @Test
-  public void cannotCloseLoanIfActualCostIsUsed() {
+  public void shouldNotCloseLoanIfActualCostIsUsed() {
     useLostItemPolicy(lostItemFeePoliciesFixture.create(
       lostItemFeePoliciesFixture.facultyStandardPolicy()
         .chargeProcessingFee(10.00)
@@ -86,7 +86,7 @@ public class LoanRelatedFeeFineClosedSubscriberApiTest extends APITests {
   }
 
   @Test
-  public void cannotCloseCheckedOutLoan() {
+  public void shouldNotCloseCheckedOutLoan() {
     item = itemsFixture.basedUponNod();
     loan = checkOutFixture.checkOutByBarcode(item, usersFixture.jessica());
 
@@ -97,7 +97,7 @@ public class LoanRelatedFeeFineClosedSubscriberApiTest extends APITests {
   }
 
   @Test
-  public void cannotCloseLoanIfLoanIdDoesNotPresent() {
+  public void shouldNotCloseLoanIfLoanIdDoesNotPresent() {
     final Response response = eventSubscribersFixture
       .attemptPublishLoanRelatedFeeFineClosedEvent(null, UUID.randomUUID());
 
@@ -108,7 +108,7 @@ public class LoanRelatedFeeFineClosedSubscriberApiTest extends APITests {
   }
 
   @Test
-  public void cannotCloseNonExistentLoan() {
+  public void shouldNotCloseNonExistentLoan() {
     final UUID loanId = UUID.randomUUID();
     final Response response = eventSubscribersFixture
       .attemptPublishLoanRelatedFeeFineClosedEvent(loanId,
@@ -120,7 +120,7 @@ public class LoanRelatedFeeFineClosedSubscriberApiTest extends APITests {
   }
 
   @Test
-  public void cannotCloseRefundedLoan() {
+  public void shouldNotCloseRefundedLoan() {
     feeFineAccountFixture.payLostItemFee(loan.getId());
     feeFineAccountFixture.payLostItemProcessingFee(loan.getId());
 

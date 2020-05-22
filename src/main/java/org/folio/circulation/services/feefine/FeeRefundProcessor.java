@@ -1,10 +1,8 @@
 package org.folio.circulation.services.feefine;
 
-import static java.util.Arrays.asList;
 import static org.folio.circulation.domain.AccountRefundReason.LOST_ITEM_FOUND;
 import static org.folio.circulation.domain.FeeAmount.zeroFeeAmount;
-import static org.folio.circulation.domain.FeeFine.LOST_ITEM_FEE_TYPE;
-import static org.folio.circulation.domain.FeeFine.LOST_ITEM_PROCESSING_FEE_TYPE;
+import static org.folio.circulation.domain.FeeFine.lostItemFeeTypes;
 import static org.folio.circulation.domain.representations.AccountPaymentStatus.CANCELLED_ITEM_RETURNED;
 import static org.folio.circulation.domain.representations.AccountPaymentStatus.CREDITED_FULLY;
 import static org.folio.circulation.domain.representations.AccountPaymentStatus.REFUNDED_FULLY;
@@ -129,7 +127,7 @@ public class FeeRefundProcessor implements AccountRefundProcessor {
   }
 
   public static FeeRefundProcessor createLostItemFeeRefundProcessor() {
-    return new FeeRefundProcessor(CANCELLED_ITEM_RETURNED,
-      LOST_ITEM_FOUND, asList(LOST_ITEM_FEE_TYPE, LOST_ITEM_PROCESSING_FEE_TYPE));
+    return new FeeRefundProcessor(CANCELLED_ITEM_RETURNED, LOST_ITEM_FOUND,
+      lostItemFeeTypes());
   }
 }
