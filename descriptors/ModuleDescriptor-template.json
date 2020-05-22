@@ -804,7 +804,7 @@
           "methods": [
             "POST"
           ],
-          "pathPattern": "/circulation/handlers/loan-related-fee-fina-closed",
+          "pathPattern": "/circulation/handlers/loan-related-fee-fine-closed",
           "permissionsRequired": [
             "circulation.handlers.loan-related-fee-fine-closed.post"
           ],

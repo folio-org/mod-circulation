@@ -42,7 +42,7 @@ public class LoanRelatedFeeFineClosedHandlerResource extends Resource {
 
   @Override
   public void register(Router router) {
-    new RouteRegistration("/circulation/handlers/loan-related-fee-fina-closed", router)
+    new RouteRegistration("/circulation/handlers/loan-related-fee-fine-closed", router)
       .create(this::handleFeeFineClosedEvent);
   }
 

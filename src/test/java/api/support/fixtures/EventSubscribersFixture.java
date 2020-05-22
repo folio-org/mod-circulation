@@ -29,7 +29,7 @@ public class EventSubscribersFixture {
     write(payload, "loanId", loanId);
 
     return restAssuredClient.post(payload,
-      circulationModuleUrl("/circulation/handlers/loan-related-fee-fina-closed"),
+      circulationModuleUrl("/circulation/handlers/loan-related-fee-fine-closed"),
       "loan-related-fee-fine-closed-event");
   }
 }
