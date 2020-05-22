@@ -17,16 +17,17 @@ public final class FeeFineAccountFixture {
   private final ResourceClient accountsClient = forAccounts();
   private final ResourceClient accountActionsClient = forFeeFineActions();
 
-  public JsonObject getLostItemFeeAccount(UUID loanId) {
-    return accountsClient.getMany(exactMatch("loanId", loanId.toString())
-      .and(exactMatch("feeFineType", "Lost item fee")))
-      .getFirst();
+  public void transferLostItemFee(UUID loanId) {
+    final JsonObject lostItemFeeAccount = getLostItemFeeAccount(loanId);
+    final String accountId = lostItemFeeAccount.getString("id");
+
+    transfer(accountId, lostItemFeeAccount.getDouble("amount"));
   }
 
-  public JsonObject getLostItemProcessingFeeAccount(UUID loanId) {
-    return accountsClient.getMany(exactMatch("loanId", loanId.toString())
-      .and(exactMatch("feeFineType", "Lost item processing fee")))
-      .getFirst();
+  public void transferLostItemFee(UUID loanId, double amount) {
+    final String accountId = getLostItemFeeAccount(loanId).getString("id");
+
+    transfer(accountId, amount);
   }
 
   public void transfer(String accountId, double amount) {
@@ -52,14 +53,22 @@ public final class FeeFineAccountFixture {
 
   public void payLostItemFee(UUID loanId) {
     final JsonObject lostItemFeeAccount = getLostItemFeeAccount(loanId);
+    final String accountId = lostItemFeeAccount.getString("id");
 
-    pay(lostItemFeeAccount, lostItemFeeAccount.getDouble("amount"));
+    pay(accountId, lostItemFeeAccount.getDouble("amount"));
+  }
+
+  public void payLostItemFee(UUID loanId, double amount) {
+    final String accountId = getLostItemFeeAccount(loanId).getString("id");
+
+    pay(accountId, amount);
   }
 
   public void payLostItemProcessingFee(UUID loanId) {
     final JsonObject lostItemProcessingFeeAccount = getLostItemProcessingFeeAccount(loanId);
+    final String accountId = lostItemProcessingFeeAccount.getString("id");
 
-    pay(lostItemProcessingFeeAccount, lostItemProcessingFeeAccount.getDouble("amount"));
+    pay(accountId, lostItemProcessingFeeAccount.getDouble("amount"));
   }
 
   public void pay(String accountId, double amount) {
@@ -83,14 +92,6 @@ public final class FeeFineAccountFixture {
       .put("paymentStatus", new JsonObject().put("name", actionType)));
   }
 
-  public void transfer(JsonObject accountJson, double amount) {
-    transfer(accountJson.getString("id"), amount);
-  }
-
-  public void pay(JsonObject accountJson, double amount) {
-    pay(accountJson.getString("id"), amount);
-  }
-
   public IndividualResource createManualFeeForLoan(IndividualResource loan, double amount) {
     final IndividualResource account = accountsClient.create(new AccountBuilder()
       .withLoan(loan)
@@ -107,5 +108,17 @@ public final class FeeFineAccountFixture {
       .createdAt("Circ Desk 1"));
 
     return account;
+  }
+
+  private JsonObject getLostItemFeeAccount(UUID loanId) {
+    return accountsClient.getMany(exactMatch("loanId", loanId.toString())
+      .and(exactMatch("feeFineType", "Lost item fee")))
+      .getFirst();
+  }
+
+  private JsonObject getLostItemProcessingFeeAccount(UUID loanId) {
+    return accountsClient.getMany(exactMatch("loanId", loanId.toString())
+      .and(exactMatch("feeFineType", "Lost item processing fee")))
+      .getFirst();
   }
 }
