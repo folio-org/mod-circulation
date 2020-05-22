@@ -2,7 +2,7 @@
   "publications": [
     {
       "eventType": "ITEM_CHECKED_OUT",
-      "description": "Item check out event",
+      "description": "Item was checked out",
       "eventTTL": 1,
       "signed": false
     },
