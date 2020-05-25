@@ -52,8 +52,10 @@ public class PubSubPublishingService {
           logger.error("Failed to publish event. ID: {}, type: {}, payload: {}", throwable,
             event.getId(), event.getEventType(), event.getEventPayload());
 
-          if (throwable.getMessage().toLowerCase().contains(
+          if (throwable != null && throwable.getMessage() != null &&
+            throwable.getMessage().toLowerCase().contains(
             "there is no subscribers registered for event type")) {
+
             publishResult.complete(true);
           }
           else {

@@ -8,6 +8,8 @@ import static api.support.matchers.PubSubRegistrationMatchers.isValidPublishersR
 import static org.folio.HttpStatus.HTTP_CREATED;
 import static org.folio.HttpStatus.HTTP_INTERNAL_SERVER_ERROR;
 import static org.folio.HttpStatus.HTTP_NO_CONTENT;
+import static org.hamcrest.CoreMatchers.hasItem;
+import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 
@@ -17,6 +19,7 @@ import org.junit.Test;
 
 import api.support.APITests;
 import api.support.fakes.FakePubSub;
+import api.support.matchers.EventTypeMatchers;
 
 public class TenantActivationResourceTests extends APITests {
 
@@ -30,37 +33,44 @@ public class TenantActivationResourceTests extends APITests {
   public void tenantActivationFailsWhenCannotRegisterWithPubSub() {
     FakePubSub.setFailPubSubRegistration(true);
 
-    Response response = tenantAPIFixture.postTenant();
+    Response response = tenantActivationFixture.postTenant();
     assertThat(response.getStatusCode(), is(HTTP_INTERNAL_SERVER_ERROR.toInt()));
   }
 
   @Test
   public void tenantActivationSucceedsWhenCanRegisterInPubSub() {
-    Response response = tenantAPIFixture.postTenant();
+    Response response = tenantActivationFixture.postTenant();
     assertThat(response.getStatusCode(), is(HTTP_CREATED.toInt()));
     assertThat(FakePubSub.getCreatedEventTypes().size(), is(4));
     assertThat(FakePubSub.getRegisteredPublishers().size(), is(1));
-    assertThat(FakePubSub.getRegisteredSubscribers().size(), is(1));
-
-    assertThat(FakePubSub.getCreatedEventTypes().get(0), isItemCheckedOutEventType());
-    assertThat(FakePubSub.getCreatedEventTypes().get(1), isItemCheckedInEventType());
-    assertThat(FakePubSub.getCreatedEventTypes().get(2), isItemDeclaredLostEventType());
-    assertThat(FakePubSub.getCreatedEventTypes().get(3), isLoanDueDateChangedEventType());
-    assertThat(FakePubSub.getRegisteredPublishers().get(0), isValidPublishersRegistration());
+    assertThat(FakePubSub.getCreatedEventTypes(), hasItems(
+      isItemCheckedOutEventType(),
+      isItemCheckedInEventType(),
+      isItemDeclaredLostEventType(),
+      isLoanDueDateChangedEventType()
+    ));
+    assertThat(FakePubSub.getRegisteredPublishers(), hasItem(isValidPublishersRegistration()));
   }
 
   @Test
   public void tenantDeactivationFailsWhenCannotUnregisterWithPubSub() {
     FakePubSub.setFailPubSubUnregistering(true);
 
-    Response response = tenantAPIFixture.deleteTenant();
+    Response response = tenantActivationFixture.deleteTenant();
     assertThat(response.getStatusCode(), is(HTTP_INTERNAL_SERVER_ERROR.toInt()));
   }
 
   @Test
   public void tenantDeactivationSucceedsWhenCanUnregisterInPubSub() {
-    Response response = tenantAPIFixture.deleteTenant();
+    Response response = tenantActivationFixture.deleteTenant();
     assertThat(response.getStatusCode(), is(HTTP_NO_CONTENT.toInt()));
+    assertThat(FakePubSub.getDeletedEventTypes().size(), is(4));
+    assertThat(FakePubSub.getDeletedEventTypes(), hasItems(
+      EventTypeMatchers.ITEM_CHECKED_OUT,
+      EventTypeMatchers.ITEM_CHECKED_IN,
+      EventTypeMatchers.ITEM_DECLARED_LOST,
+      EventTypeMatchers.LOAN_DUE_DATE_CHANGED
+    ));
   }
 
 }

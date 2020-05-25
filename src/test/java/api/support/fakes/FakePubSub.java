@@ -5,6 +5,7 @@ import static org.folio.HttpStatus.HTTP_INTERNAL_SERVER_ERROR;
 import static org.folio.HttpStatus.HTTP_NO_CONTENT;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import io.vertx.core.buffer.Buffer;
@@ -21,6 +22,7 @@ public class FakePubSub {
   private static final List<JsonObject> createdEventTypes = new ArrayList<>();
   private static final List<JsonObject> registeredPublishers = new ArrayList<>();
   private static final List<JsonObject> registeredSubscribers = new ArrayList<>();
+  private static final List<String> deletedEventTypes = new ArrayList<>();
 
   private static boolean failPubSubRegistration;
   private static boolean failPubSubUnregistering;
@@ -49,7 +51,9 @@ public class FakePubSub {
       .handler(FakePubSub::deleteTenant);
   }
 
-  private static void postTenant(RoutingContext routingContext, List<JsonObject> requestBodyList) {
+  private static void postTenant(RoutingContext routingContext,
+    List<JsonObject> requestBodyList) {
+
     if (failPubSubRegistration) {
       routingContext.response()
         .setStatusCode(HTTP_INTERNAL_SERVER_ERROR.toInt())
@@ -77,6 +81,8 @@ public class FakePubSub {
         .end();
     }
     else {
+      deletedEventTypes.add(Arrays.asList(routingContext.normalisedPath().split("/")).get(3));
+
       routingContext.response()
         .setStatusCode(HTTP_NO_CONTENT.toInt())
         .end();
@@ -97,6 +103,10 @@ public class FakePubSub {
 
   public static List<JsonObject> getRegisteredSubscribers() {
     return registeredSubscribers;
+  }
+
+  public static List<String> getDeletedEventTypes() {
+    return deletedEventTypes;
   }
 
   public static void clearPublishedEvents() {

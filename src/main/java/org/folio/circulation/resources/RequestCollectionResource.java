@@ -98,13 +98,13 @@ public class RequestCollectionResource extends CollectionResource {
 
     final RequestScheduledNoticeService scheduledNoticeService = RequestScheduledNoticeService.using(clients);
 
-    final EventPublisher eventPublisher =
-      new EventPublisher(routingContext, clients);
+    final EventPublisher eventPublisher = new EventPublisher(routingContext);
 
     requestFromRepresentationService.getRequestFrom(representation)
       .thenComposeAsync(r -> r.after(createRequestService::createRequest))
       .thenApply(r -> r.next(scheduledNoticeService::scheduleRequestNotices))
-      .thenComposeAsync(r -> r.after(eventPublisher::publishDueDateChangedEvent))
+      .thenComposeAsync(r -> r.after(
+        records -> eventPublisher.publishDueDateChangedEvent(records, clients)))
       .thenApply(r -> r.map(RequestAndRelatedRecords::getRequest))
       .thenApply(r -> r.map(new RequestRepresentation()::extendedRepresentation))
       .thenApply(r -> r.map(JsonHttpResponse::created))

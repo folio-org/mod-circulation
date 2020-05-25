@@ -8,10 +8,10 @@ import org.folio.rest.tools.PomReader;
 import api.support.RestAssuredClient;
 import io.vertx.core.json.JsonObject;
 
-public class TenantAPIFixture {
+public class TenantActivationFixture {
   private final RestAssuredClient restAssuredClient;
 
-  public TenantAPIFixture(RestAssuredClient restAssuredClient) {
+  public TenantActivationFixture(RestAssuredClient restAssuredClient) {
     this.restAssuredClient = restAssuredClient;
   }
 

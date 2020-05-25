@@ -68,7 +68,7 @@ import api.support.fixtures.RequestsFixture;
 import api.support.fixtures.ScheduledNoticeProcessingClient;
 import api.support.fixtures.ServicePointsFixture;
 import api.support.fixtures.TemplateFixture;
-import api.support.fixtures.TenantAPIFixture;
+import api.support.fixtures.TenantActivationFixture;
 import api.support.fixtures.UserManualBlocksFixture;
 import api.support.fixtures.UsersFixture;
 import api.support.http.QueryStringParameter;
@@ -252,7 +252,8 @@ public abstract class APITests {
   protected final ClaimItemReturnedFixture claimItemReturnedFixture = new ClaimItemReturnedFixture(restAssuredClient);
   protected final FeeFineAccountFixture feeFineAccountFixture = new FeeFineAccountFixture();
 
-  protected final TenantAPIFixture tenantAPIFixture = new TenantAPIFixture(restAssuredClient);
+  protected final TenantActivationFixture tenantActivationFixture =
+    new TenantActivationFixture(restAssuredClient);
 
   protected APITests() {
     this(true);

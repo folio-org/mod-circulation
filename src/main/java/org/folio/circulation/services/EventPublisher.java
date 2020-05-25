@@ -34,15 +34,8 @@ public class EventPublisher {
 
   private final PubSubPublishingService pubSubPublishingService;
 
-  private Clients clients;
-
   public EventPublisher(RoutingContext routingContext) {
     pubSubPublishingService = new PubSubPublishingService(routingContext);
-  }
-
-  public EventPublisher(RoutingContext routingContext, Clients circulationClients) {
-    this(routingContext);
-    clients = circulationClients;
   }
 
   public CompletableFuture<Result<LoanAndRelatedRecords>> publishItemCheckedOutEvent(
@@ -137,7 +130,7 @@ public class EventPublisher {
   }
 
   public CompletableFuture<Result<RequestAndRelatedRecords>> publishDueDateChangedEvent(
-    RequestAndRelatedRecords requestAndRelatedRecords) {
+    RequestAndRelatedRecords requestAndRelatedRecords, Clients clients) {
 
     LoanRepository loanRepository = new LoanRepository(clients);
     loanRepository.findOpenLoanForRequest(requestAndRelatedRecords.getRequest())
