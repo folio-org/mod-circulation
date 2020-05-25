@@ -15,7 +15,7 @@ public class EventTypeMatchers {
 
   public static Matcher<JsonObject> isItemCheckedOutEventType() {
     return JsonObjectMatcher.allOfPaths(
-      hasJsonPath("eventType", is(ITEM_CHECKED_OUT))
+      hasJsonPath("eventType", is("ITEM_CHECKED_OUT"))
     );
   }
 
