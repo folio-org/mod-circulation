@@ -19,6 +19,10 @@ public final class ItemMatchers {
     return hasStatus("Withdrawn");
   }
 
+  public static Matcher<JsonObject> isLostAndPaid() {
+    return hasStatus("Lost and paid");
+  }
+
   public static Matcher<JsonObject> isAvailable() {
     return hasStatus("Available");
   }
