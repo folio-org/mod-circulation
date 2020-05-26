@@ -8,6 +8,7 @@ import static org.folio.circulation.domain.ItemStatus.CHECKED_OUT;
 import static org.folio.circulation.domain.ItemStatus.CLAIMED_RETURNED;
 import static org.folio.circulation.domain.ItemStatus.DECLARED_LOST;
 import static org.folio.circulation.domain.ItemStatus.IN_PROCESS;
+import static org.folio.circulation.domain.ItemStatus.LOST_AND_PAID;
 import static org.folio.circulation.domain.ItemStatus.ON_ORDER;
 import static org.folio.circulation.domain.ItemStatus.PAGED;
 import static org.folio.circulation.domain.ItemStatus.WITHDRAWN;
@@ -141,5 +142,16 @@ public class RequestTypeItemStatusWhiteListTests {
   })
   public void cannotCreateRequestWhenItemStatusWithdrawn(String requestType) {
     assertFalse(canCreateRequestForItem(WITHDRAWN, RequestType.from(requestType)));
+  }
+
+  @Test
+  @Parameters({
+    "",
+    "Hold",
+    "Recall",
+    "Page"
+  })
+  public void cannotCreateRequestWhenItemStatusLostAndPaid(String requestType) {
+    assertFalse(canCreateRequestForItem(LOST_AND_PAID, RequestType.from(requestType)));
   }
 }
