@@ -112,7 +112,7 @@ public class FakeOkapi extends AbstractVerticle {
       .withRecordName("loan")
       .withRootPath("/loan-storage/loans")
       .validateRecordsWith(validatorForStorageLoanSchema())
-      .withRecordPreProcessor(singletonList(StorageRecordPreProcessors::persistLoanHistory))
+//      .withRecordPreProcessor(singletonList(StorageRecordPreProcessors::persistLoanHistory))
       .withChangeMetadata()
       .create().register(router);
 

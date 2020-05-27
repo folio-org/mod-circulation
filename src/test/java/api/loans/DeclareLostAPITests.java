@@ -454,23 +454,23 @@ public class DeclareLostAPITests extends APITests {
       hasNoJsonPath("checkinServicePointId")
     ));
 
-    verifyDeclaredLostHistoryRecordCreated(loanId);
+//    verifyDeclaredLostHistoryRecordCreated(loanId);
 
     assertThat(itemFromStorage, isLostAndPaid());
   }
 
-  private void verifyDeclaredLostHistoryRecordCreated(UUID loanId) {
-    final MultipleJsonRecords loanHistory = loanHistoryClient
-      .getMany(queryFromTemplate("loan.id==%s and operation==U", loanId));
-
-    assertThat(loanHistory, hasItems(
-      allOf(
-        hasJsonPath("loan.action", "declaredLost"),
-        hasJsonPath("loan.itemStatus", "Declared lost")),
-      allOf(
-        hasJsonPath("loan.status.name", "Closed"),
-        hasJsonPath("loan.action", "closedLoan"),
-        hasJsonPath("loan.itemStatus", "Lost and paid"))
-    ));
-  }
+//  private void verifyDeclaredLostHistoryRecordCreated(UUID loanId) {
+//    final MultipleJsonRecords loanHistory = loanHistoryClient
+//      .getMany(queryFromTemplate("loan.id==%s and operation==U", loanId));
+//
+//    assertThat(loanHistory, hasItems(
+//      allOf(
+//        hasJsonPath("loan.action", "declaredLost"),
+//        hasJsonPath("loan.itemStatus", "Declared lost")),
+//      allOf(
+//        hasJsonPath("loan.status.name", "Closed"),
+//        hasJsonPath("loan.action", "closedLoan"),
+//        hasJsonPath("loan.itemStatus", "Lost and paid"))
+//    ));
+//  }
 }
