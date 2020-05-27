@@ -20,6 +20,10 @@ import io.vertx.core.logging.LoggerFactory;
 public class PubSubRegistrationService {
   private static final Logger logger = LoggerFactory.getLogger(PubSubRegistrationService.class);
 
+  private PubSubRegistrationService() {
+    throw new IllegalStateException();
+  }
+
   public static CompletableFuture<Boolean> registerModule(Map<String, String> headers,
     Vertx vertx) {
 

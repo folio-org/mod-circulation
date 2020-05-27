@@ -38,8 +38,7 @@ public class DeclareLostResource extends Resource {
     final ItemRepository itemRepository = new ItemRepository(clients, true, true, true);
     final StoreLoanAndItem storeLoanAndItem = new StoreLoanAndItem(loanRepository, itemRepository);
     final LostItemFeeChargingService lostItemFeeService = new LostItemFeeChargingService(clients);
-    final EventPublisher eventPublisher =
-      new EventPublisher(routingContext);
+    final EventPublisher eventPublisher = new EventPublisher(routingContext);
 
     validateDeclaredLostRequest(routingContext).after(request ->
       loanRepository.getById(request.getLoanId())

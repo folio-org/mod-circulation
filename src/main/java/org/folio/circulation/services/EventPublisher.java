@@ -31,6 +31,8 @@ public class EventPublisher {
   public static final String DUE_DATE_FIELD = "dueDate";
   public static final String RETURN_DATE_FIELD = "returnDate";
   public static final String DUE_DATE_CHANGED_BY_RECALL_FIELD = "dueDateChangedByRecall";
+  public static final String FAILED_TO_PUBLISH_LOG_TEMPLATE =
+    "Failed to publish {} event: loan is null";
 
   private final PubSubPublishingService pubSubPublishingService;
 
@@ -54,7 +56,7 @@ public class EventPublisher {
         .thenApply(r -> succeeded(loanAndRelatedRecords));
     }
     else {
-      logger.error("Failed to publish {} event: loan is null", ITEM_CHECKED_OUT.name());
+      logger.error(FAILED_TO_PUBLISH_LOG_TEMPLATE, ITEM_CHECKED_OUT.name());
     }
 
     return completedFuture(succeeded(loanAndRelatedRecords));
@@ -76,7 +78,7 @@ public class EventPublisher {
         .thenApply(r -> succeeded(checkInProcessRecords));
     }
     else {
-      logger.error("Failed to publish {} event: loan is null", ITEM_CHECKED_IN.name());
+      logger.error(FAILED_TO_PUBLISH_LOG_TEMPLATE, ITEM_CHECKED_IN.name());
     }
 
     return completedFuture(succeeded(checkInProcessRecords));
@@ -93,7 +95,7 @@ public class EventPublisher {
         .thenApply(r -> succeeded(loan));
     }
     else {
-      logger.error("Failed to publish {} event: loan is null", ITEM_DECLARED_LOST.name());
+      logger.error(FAILED_TO_PUBLISH_LOG_TEMPLATE, ITEM_DECLARED_LOST.name());
     }
 
     return completedFuture(succeeded(null));
@@ -112,7 +114,7 @@ public class EventPublisher {
         .thenApply(r -> succeeded(loan));
     }
     else {
-      logger.error("Failed to publish {} event: loan is null", LOAN_DUE_DATE_CHANGED.name());
+      logger.error(FAILED_TO_PUBLISH_LOG_TEMPLATE, LOAN_DUE_DATE_CHANGED.name());
     }
 
     return completedFuture(succeeded(null));

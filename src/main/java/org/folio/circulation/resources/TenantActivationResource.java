@@ -15,7 +15,6 @@ import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 
 public class TenantActivationResource {
-  private static final Logger logger = LoggerFactory.getLogger(TenantActivationResource.class);
 
   public void register(Router router) {
     RouteRegistration routeRegistration = new RouteRegistration("/_/tenant", router);

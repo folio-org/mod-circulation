@@ -5,6 +5,8 @@ import static api.support.http.AdditionalHttpStatusCodes.UNPROCESSABLE_ENTITY;
 import static api.support.http.CqlQuery.queryFromTemplate;
 import static api.support.http.Limit.limit;
 import static api.support.http.Offset.offset;
+import static api.support.matchers.EventMatchers.isValidItemCheckedOutEvent;
+import static api.support.matchers.EventMatchers.isValidLoanDueDateChangedEvent;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static api.support.matchers.UUIDMatcher.is;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
@@ -21,6 +23,7 @@ import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.greaterThan;
+import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -33,9 +36,11 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.awaitility.Awaitility;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 import org.joda.time.DateTime;
@@ -48,6 +53,7 @@ import api.support.MultipleJsonRecords;
 import api.support.builders.AccountBuilder;
 import api.support.builders.ItemBuilder;
 import api.support.builders.LoanBuilder;
+import api.support.fakes.FakePubSub;
 import api.support.fixtures.ConfigurationExample;
 import api.support.http.InventoryItemResource;
 import io.vertx.core.json.JsonArray;
@@ -1702,6 +1708,43 @@ public class LoanAPITests extends APITests {
 
     loanHasPatronGroupProperties(fetchedLoan1, "Regular Group");
     loanHasPatronGroupProperties(fetchedLoan2, "undergrad");
+  }
+
+  @Test
+  public void dueDateChangedEventIsPublished() {
+    UUID id = UUID.randomUUID();
+
+    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet(
+      item -> item
+        .withEnumeration("v.70:no.1-6")
+        .withChronology("1987:Jan.-June")
+        .withVolume("testVolume"));
+
+    UUID itemId = smallAngryPlanet.getId();
+
+    IndividualResource user = usersFixture.charlotte();
+    UUID userId = user.getId();
+
+    DateTime loanDate = new DateTime(2017, 2, 27, 10, 23, 43, UTC);
+    DateTime dueDate = new DateTime(2017, 3, 29, 10, 23, 43, UTC);
+
+    IndividualResource response = loansFixture.createLoan(new LoanBuilder()
+      .withId(id)
+      .open()
+      .withUserId(userId)
+      .withItemId(itemId)
+      .withLoanDate(loanDate)
+      .withDueDate(dueDate));
+
+    JsonObject loan = response.getJson();
+
+    List<JsonObject> publishedEvents = Awaitility.await()
+      .atMost(1, TimeUnit.SECONDS)
+      .until(FakePubSub::getPublishedEvents, hasSize(1));
+
+    JsonObject event = publishedEvents.get(0);
+
+    assertThat(event, isValidLoanDueDateChangedEvent(loan));
   }
 
   private void loanHasExpectedProperties(JsonObject loan,

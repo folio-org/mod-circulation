@@ -67,8 +67,7 @@ public class ChangeDueDateResource extends Resource {
 
     final LoanNoticeSender loanNoticeSender = LoanNoticeSender.using(clients);
 
-    final EventPublisher eventPublisher =
-      new EventPublisher(routingContext);
+    final EventPublisher eventPublisher = new EventPublisher(routingContext);
 
     return succeeded(request)
       .after(r -> loanRepository.getById(r.getLoanId()))

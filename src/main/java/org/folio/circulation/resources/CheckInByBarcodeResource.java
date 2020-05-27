@@ -47,8 +47,7 @@ public class CheckInByBarcodeResource extends Resource {
     final PatronActionSessionService patronActionSessionService =
       PatronActionSessionService.using(clients);
 
-    final EventPublisher eventPublisher =
-      new EventPublisher(routingContext);
+    final EventPublisher eventPublisher = new EventPublisher(routingContext);
 
     refuseWhenLoggedInUserNotPresent(context)
       .next(notUsed -> checkInRequestResult)

@@ -165,10 +165,14 @@ public class RequestCollectionResource extends CollectionResource {
     final RequestScheduledNoticeService requestScheduledNoticeService =
       RequestScheduledNoticeService.using(clients);
 
+    final EventPublisher eventPublisher = new EventPublisher(routingContext);
+
     requestFromRepresentationService.getRequestFrom(representation)
       .thenComposeAsync(r -> r.afterWhen(requestRepository::exists,
         updateRequestService::replaceRequest,
         createRequestService::createRequest))
+      .thenComposeAsync(r -> r.after(
+        records -> eventPublisher.publishDueDateChangedEvent(records, clients)))
       .thenApply(r -> r.next(requestScheduledNoticeService::rescheduleRequestNotices))
       .thenApply(r -> r.toFixedValue(NoContentResponse::noContent))
       .thenAccept(context::writeResultToHttpResponse);
@@ -269,10 +273,14 @@ public class RequestCollectionResource extends CollectionResource {
         new RequestLoanValidator(loanRepository),
         RequestNoticeSender.using(clients), configurationRepository);
 
+    final EventPublisher eventPublisher = new EventPublisher(routingContext);
+
     requestRepository.getById(id)
       .thenApply(r -> r.map(RequestAndRelatedRecords::new))
       .thenApply(r -> r.map(rr -> asMove(rr, representation)))
       .thenComposeAsync(r -> r.after(moveRequestService::moveRequest))
+      .thenComposeAsync(r -> r.after(
+        records -> eventPublisher.publishDueDateChangedEvent(records, clients)))
       .thenApply(r -> r.map(RequestAndRelatedRecords::getRequest))
       .thenApply(r -> r.map(new RequestRepresentation()::extendedRepresentation))
       .thenApply(r -> r.map(JsonHttpResponse::ok))

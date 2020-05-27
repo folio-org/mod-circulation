@@ -4,6 +4,7 @@ import static api.support.builders.ItemBuilder.AVAILABLE;
 import static api.support.builders.ItemBuilder.PAGED;
 import static api.support.builders.RequestBuilder.OPEN_AWAITING_PICKUP;
 import static api.support.fixtures.ConfigurationExample.timezoneConfigurationFor;
+import static api.support.matchers.EventMatchers.isValidLoanDueDateChangedEvent;
 import static api.support.matchers.ItemStatusCodeMatcher.hasItemStatus;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static org.folio.circulation.domain.policy.DueDateManagement.KEEP_THE_CURRENT_DUE_DATE;
@@ -23,8 +24,10 @@ import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import org.awaitility.Awaitility;
 import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.RequestStatus;
@@ -42,6 +45,7 @@ import api.support.APITests;
 import api.support.builders.LoanPolicyBuilder;
 import api.support.builders.MoveRequestBuilder;
 import api.support.builders.RequestBuilder;
+import api.support.fakes.FakePubSub;
 import api.support.http.InventoryItemResource;
 import io.vertx.core.json.JsonObject;
 
@@ -978,6 +982,67 @@ public class MoveRequestTests extends APITests {
 
     assertThat("due date should be end of the day, 5 days from loan date",
       storedLoan.getString("dueDate"), isEquivalentTo(expectedDueDate));
+  }
+
+  @Test
+  public void dueDateChangedEventIsPublished() {
+
+    final IndividualResource secondFloorEconomics = locationsFixture.secondFloorEconomics();
+    final IndividualResource mezzanineDisplayCase = locationsFixture.mezzanineDisplayCase();
+
+    final IndividualResource itemCopyA = itemsFixture.basedUponTemeraire(
+      holdingBuilder -> holdingBuilder
+        .withPermanentLocation(secondFloorEconomics)
+        .withNoTemporaryLocation(),
+      itemBuilder -> itemBuilder
+        .withNoPermanentLocation()
+        .withNoTemporaryLocation()
+        .withBarcode("10203040506"));
+
+    final IndividualResource itemCopyB = itemsFixture.basedUponTemeraire(
+      holdingBuilder -> holdingBuilder
+        .withPermanentLocation(mezzanineDisplayCase)
+        .withNoTemporaryLocation(),
+      itemBuilder -> itemBuilder
+        .withNoPermanentLocation()
+        .withNoTemporaryLocation()
+        .withBarcode("90806050402"));
+
+    IndividualResource james = usersFixture.james();
+    IndividualResource jessica = usersFixture.jessica();
+    IndividualResource steve = usersFixture.steve();
+    IndividualResource charlotte = usersFixture.charlotte();
+
+    IndividualResource itemCopyALoan = checkOutFixture.checkOutByBarcode(itemCopyA, james,
+      DateTime.now(DateTimeZone.UTC));
+
+    IndividualResource pageRequestForItemCopyB = requestsFixture.placeHoldShelfRequest(
+      itemCopyB, jessica, DateTime.now(DateTimeZone.UTC).minusHours(3),
+      RequestType.PAGE.getValue());
+
+    IndividualResource recallRequestForItemCopyB = requestsFixture.placeHoldShelfRequest(
+      itemCopyB, steve, DateTime.now(DateTimeZone.UTC).minusHours(2),
+      RequestType.RECALL.getValue());
+
+    IndividualResource holdRequestForItemCopyA = requestsFixture.placeHoldShelfRequest(
+      itemCopyA, charlotte, DateTime.now(DateTimeZone.UTC).minusHours(1),
+      RequestType.HOLD.getValue());
+
+    IndividualResource moveRecallRequestToItemCopyA = requestsFixture.move(new MoveRequestBuilder(
+      recallRequestForItemCopyB.getId(),
+      itemCopyA.getId()
+    ));
+    itemCopyALoan = loansClient.get(itemCopyALoan);
+
+    // There should be three events published - for "check out", for "hold" and for "move"
+
+    List<JsonObject> publishedEvents = Awaitility.await()
+      .atMost(1, TimeUnit.SECONDS)
+      .until(FakePubSub::getPublishedEvents, hasSize(3));
+
+    JsonObject event = publishedEvents.get(2);
+
+    assertThat(event, isValidLoanDueDateChangedEvent(itemCopyALoan.getJson()));
   }
 
   private void freezeTime(DateTime dateTime) {
