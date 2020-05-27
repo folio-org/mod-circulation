@@ -11,10 +11,6 @@ public final class ItemMatchers {
 
   private ItemMatchers() {}
 
-  public static Matcher<JsonObject> isLostAndPaid() {
-    return hasStatus("Lost and paid");
-  }
-
   public static Matcher<JsonObject> isDeclaredLost() {
     return hasStatus("Declared lost");
   }
