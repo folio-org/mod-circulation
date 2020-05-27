@@ -57,6 +57,10 @@ public class ResourceClient {
     return new ResourceClient(InterfaceUrls::loansUrl, "loans");
   }
 
+  public static ResourceClient forLoanHistoryStorage() {
+    return new ResourceClient(InterfaceUrls::loanHistoryStorageUrl, "loansHistory");
+  }
+
   public static ResourceClient forAccounts() {
     return new ResourceClient(InterfaceUrls::accountsUrl, "accounts");
   }

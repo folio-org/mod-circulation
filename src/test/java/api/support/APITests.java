@@ -4,6 +4,7 @@ import static api.support.APITestContext.deployVerticles;
 import static api.support.APITestContext.getOkapiHeadersFromContext;
 import static api.support.APITestContext.undeployVerticles;
 import static api.support.http.InterfaceUrls.circulationRulesUrl;
+import static api.support.http.ResourceClient.forLoanHistoryStorage;
 import static api.support.http.api.support.NamedQueryStringParameter.namedParameter;
 import static org.folio.circulation.domain.representations.LoanProperties.PATRON_GROUP_AT_CHECKOUT;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -162,6 +163,7 @@ public abstract class APITests {
 
   protected final ResourceClient expiredEndSessionClient =
     ResourceClient.forExpiredSessions();
+  protected final ResourceClient loanHistoryClient = forLoanHistoryStorage();
 
   protected final ServicePointsFixture servicePointsFixture
     = new ServicePointsFixture(servicePointsClient);
@@ -350,6 +352,9 @@ public abstract class APITests {
     feeFineTypeFixture.cleanUp();
     feeFineActionsClient.deleteAll();
     accountsClient.deleteAll();
+
+    loanHistoryClient.deleteAll();
+
     mockClockManagerToReturnDefaultDateTime();
   }
 

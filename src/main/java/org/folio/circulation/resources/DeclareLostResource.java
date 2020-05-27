@@ -42,9 +42,9 @@ public class DeclareLostResource extends Resource {
       loanRepository.getById(request.getLoanId())
         .thenApply(LoanValidator::refuseWhenLoanIsClosed)
         .thenApply(loan -> declareItemLost(loan, request))
+        .thenCompose(r -> r.after(storeLoanAndItem::updateLoanAndItemInStorage))
         .thenCompose(r -> r.after(loan -> lostItemFeeService
           .chargeLostItemFees(loan, request, context.getUserId()))))
-      .thenCompose(r -> r.after(storeLoanAndItem::updateLoanAndItemInStorage))
       .thenApply(r -> r.toFixedValue(NoContentResponse::noContent))
       .thenAccept(context::writeResultToHttpResponse);
   }
