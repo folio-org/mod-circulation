@@ -1,5 +1,20 @@
 package org.folio.circulation.domain;
 
+import static org.folio.circulation.domain.ItemStatus.AVAILABLE;
+import static org.folio.circulation.domain.ItemStatus.AWAITING_DELIVERY;
+import static org.folio.circulation.domain.ItemStatus.AWAITING_PICKUP;
+import static org.folio.circulation.domain.ItemStatus.CHECKED_OUT;
+import static org.folio.circulation.domain.ItemStatus.CLAIMED_RETURNED;
+import static org.folio.circulation.domain.ItemStatus.DECLARED_LOST;
+import static org.folio.circulation.domain.ItemStatus.IN_PROCESS;
+import static org.folio.circulation.domain.ItemStatus.IN_TRANSIT;
+import static org.folio.circulation.domain.ItemStatus.LOST_AND_PAID;
+import static org.folio.circulation.domain.ItemStatus.MISSING;
+import static org.folio.circulation.domain.ItemStatus.NONE;
+import static org.folio.circulation.domain.ItemStatus.ON_ORDER;
+import static org.folio.circulation.domain.ItemStatus.PAGED;
+import static org.folio.circulation.domain.ItemStatus.WITHDRAWN;
+
 import java.util.EnumMap;
 
 public class RequestTypeItemStatusWhiteList {
@@ -24,70 +39,74 @@ public class RequestTypeItemStatusWhiteList {
 
   private static void initRecallRules() {
     recallRules = new EnumMap<>(ItemStatus.class);
-    recallRules.put(ItemStatus.CHECKED_OUT, true);
-    recallRules.put(ItemStatus.AVAILABLE, false);
-    recallRules.put(ItemStatus.AWAITING_PICKUP, true);
-    recallRules.put(ItemStatus.AWAITING_DELIVERY, true);
-    recallRules.put(ItemStatus.IN_TRANSIT, true);
-    recallRules.put(ItemStatus.MISSING, false);
-    recallRules.put(ItemStatus.PAGED, true);
-    recallRules.put(ItemStatus.ON_ORDER, true);
-    recallRules.put(ItemStatus.IN_PROCESS, true);
-    recallRules.put(ItemStatus.DECLARED_LOST, false);
-    recallRules.put(ItemStatus.CLAIMED_RETURNED, false);
-    recallRules.put(ItemStatus.WITHDRAWN, false);
-    recallRules.put(ItemStatus.NONE, false);
+    recallRules.put(CHECKED_OUT, true);
+    recallRules.put(AVAILABLE, false);
+    recallRules.put(AWAITING_PICKUP, true);
+    recallRules.put(AWAITING_DELIVERY, true);
+    recallRules.put(IN_TRANSIT, true);
+    recallRules.put(MISSING, false);
+    recallRules.put(PAGED, true);
+    recallRules.put(ON_ORDER, true);
+    recallRules.put(IN_PROCESS, true);
+    recallRules.put(DECLARED_LOST, false);
+    recallRules.put(CLAIMED_RETURNED, false);
+    recallRules.put(WITHDRAWN, false);
+    recallRules.put(LOST_AND_PAID, false);
+    recallRules.put(NONE, false);
   }
 
   private static void initHoldRules() {
     holdRules = new EnumMap<>(ItemStatus.class);
-    holdRules.put(ItemStatus.CHECKED_OUT, true);
-    holdRules.put(ItemStatus.AVAILABLE, false);
-    holdRules.put(ItemStatus.AWAITING_PICKUP, true);
-    holdRules.put(ItemStatus.AWAITING_DELIVERY, true);
-    holdRules.put(ItemStatus.IN_TRANSIT, true);
-    holdRules.put(ItemStatus.MISSING, true);
-    holdRules.put(ItemStatus.PAGED, true);
-    holdRules.put(ItemStatus.ON_ORDER, true);
-    holdRules.put(ItemStatus.IN_PROCESS, true);
-    holdRules.put(ItemStatus.DECLARED_LOST, false);
-    holdRules.put(ItemStatus.CLAIMED_RETURNED, false);
-    holdRules.put(ItemStatus.WITHDRAWN, false);
-    holdRules.put(ItemStatus.NONE, true);
+    holdRules.put(CHECKED_OUT, true);
+    holdRules.put(AVAILABLE, false);
+    holdRules.put(AWAITING_PICKUP, true);
+    holdRules.put(AWAITING_DELIVERY, true);
+    holdRules.put(IN_TRANSIT, true);
+    holdRules.put(MISSING, true);
+    holdRules.put(PAGED, true);
+    holdRules.put(ON_ORDER, true);
+    holdRules.put(IN_PROCESS, true);
+    holdRules.put(DECLARED_LOST, false);
+    holdRules.put(CLAIMED_RETURNED, false);
+    holdRules.put(WITHDRAWN, false);
+    holdRules.put(LOST_AND_PAID, false);
+    holdRules.put(NONE, true);
   }
 
   private static void initPageRules() {
     pageRules = new EnumMap<>(ItemStatus.class);
-    pageRules.put(ItemStatus.CHECKED_OUT, false);
-    pageRules.put(ItemStatus.AVAILABLE, true);
-    pageRules.put(ItemStatus.AWAITING_PICKUP, false);
-    pageRules.put(ItemStatus.AWAITING_DELIVERY, false);
-    pageRules.put(ItemStatus.IN_TRANSIT, false);
-    pageRules.put(ItemStatus.MISSING, false);
-    pageRules.put(ItemStatus.PAGED, false);
-    pageRules.put(ItemStatus.ON_ORDER, false);
-    pageRules.put(ItemStatus.IN_PROCESS, false);
-    pageRules.put(ItemStatus.DECLARED_LOST, false);
-    pageRules.put(ItemStatus.CLAIMED_RETURNED, false);
-    pageRules.put(ItemStatus.WITHDRAWN, false);
-    pageRules.put(ItemStatus.NONE, false);
+    pageRules.put(CHECKED_OUT, false);
+    pageRules.put(AVAILABLE, true);
+    pageRules.put(AWAITING_PICKUP, false);
+    pageRules.put(AWAITING_DELIVERY, false);
+    pageRules.put(IN_TRANSIT, false);
+    pageRules.put(MISSING, false);
+    pageRules.put(PAGED, false);
+    pageRules.put(ON_ORDER, false);
+    pageRules.put(IN_PROCESS, false);
+    pageRules.put(DECLARED_LOST, false);
+    pageRules.put(CLAIMED_RETURNED, false);
+    pageRules.put(WITHDRAWN, false);
+    pageRules.put(LOST_AND_PAID, false);
+    pageRules.put(NONE, false);
   }
 
   private static void initNoneRules() {
     noneRules = new EnumMap<>(ItemStatus.class);
-    noneRules.put(ItemStatus.CHECKED_OUT, false);
-    noneRules.put(ItemStatus.AVAILABLE, false);
-    noneRules.put(ItemStatus.AWAITING_PICKUP, false);
-    noneRules.put(ItemStatus.AWAITING_DELIVERY, false);
-    noneRules.put(ItemStatus.IN_TRANSIT, false);
-    noneRules.put(ItemStatus.MISSING, false);
-    noneRules.put(ItemStatus.PAGED, false);
-    noneRules.put(ItemStatus.ON_ORDER, false);
-    noneRules.put(ItemStatus.IN_PROCESS, false);
-    noneRules.put(ItemStatus.DECLARED_LOST, false);
-    noneRules.put(ItemStatus.CLAIMED_RETURNED, false);
-    noneRules.put(ItemStatus.WITHDRAWN, false);
-    noneRules.put(ItemStatus.NONE, false);
+    noneRules.put(CHECKED_OUT, false);
+    noneRules.put(AVAILABLE, false);
+    noneRules.put(AWAITING_PICKUP, false);
+    noneRules.put(AWAITING_DELIVERY, false);
+    noneRules.put(IN_TRANSIT, false);
+    noneRules.put(MISSING, false);
+    noneRules.put(PAGED, false);
+    noneRules.put(ON_ORDER, false);
+    noneRules.put(IN_PROCESS, false);
+    noneRules.put(DECLARED_LOST, false);
+    noneRules.put(CLAIMED_RETURNED, false);
+    noneRules.put(WITHDRAWN, false);
+    noneRules.put(LOST_AND_PAID, false);
+    noneRules.put(NONE, false);
   }
 
   private static void initRequestRulesMap() {
