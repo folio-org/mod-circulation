@@ -19,7 +19,7 @@ import static api.support.matchers.ResponseStatusCodeMatcher.hasStatus;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
-import static org.folio.HttpStatus.HTTP_VALIDATION_ERROR;
+import static org.folio.HttpStatus.HTTP_UNPROCESSABLE_ENTITY;
 import static org.folio.circulation.domain.policy.DueDateManagement.KEEP_THE_CURRENT_DUE_DATE;
 import static org.folio.circulation.domain.policy.DueDateManagement.MOVE_TO_BEGINNING_OF_NEXT_OPEN_SERVICE_POINT_HOURS;
 import static org.folio.circulation.domain.policy.DueDateManagement.MOVE_TO_THE_END_OF_THE_NEXT_OPEN_DAY;
@@ -722,7 +722,7 @@ public class CheckOutCalculateDueDateTests extends APITests {
         .on(loanDate)
         .at(checkoutServicePointId));
 
-    MatcherAssert.assertThat(response, hasStatus(HTTP_VALIDATION_ERROR));
+    MatcherAssert.assertThat(response, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
 
     MatcherAssert.assertThat(response.getJson(), hasErrorWith(hasMessage(
       "Item is not loanable")));
@@ -1086,7 +1086,7 @@ public class CheckOutCalculateDueDateTests extends APITests {
       .withMillisOfSecond(0);
   }
 
-  private JsonObject useFixedPolicy(UUID fixedDueDateScheduleId, 
+  private JsonObject useFixedPolicy(UUID fixedDueDateScheduleId,
     DueDateManagement dueDateManagement) {
     LoanPolicyBuilder loanPolicy = new LoanPolicyBuilder()
       .withName("MOVE_TO_THE_END_OF_THE_PREVIOUS_OPEN_DAY: FIXED")
