@@ -1,16 +1,23 @@
 package api.support.fakes.processors;
 
 import static api.support.APITestContext.createWebClient;
+import static api.support.APITestContext.getTenantId;
+import static api.support.fakes.storage.Storage.getStorage;
 import static api.support.http.InterfaceUrls.holdingsStorageUrl;
-import static java.lang.String.format;
+import static api.support.http.InterfaceUrls.loanHistoryStorageUrl;
+import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.apache.commons.lang3.ObjectUtils.firstNonNull;
+import static org.folio.circulation.domain.representations.ItemProperties.EFFECTIVE_LOCATION_ID;
 import static org.folio.circulation.domain.representations.ItemProperties.HOLDINGS_RECORD_ID;
+import static org.folio.circulation.domain.representations.ItemProperties.PERMANENT_LOCATION_ID;
+import static org.folio.circulation.domain.representations.ItemProperties.TEMPORARY_LOCATION_ID;
+import static org.folio.circulation.support.ClockManager.getClockManager;
 import static org.folio.circulation.support.JsonPropertyWriter.write;
-import static org.folio.circulation.support.http.client.NamedQueryParameter.namedParameter;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
 import org.apache.commons.lang3.ObjectUtils;
@@ -18,7 +25,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.ImmutableTriple;
 import org.apache.commons.lang3.tuple.Triple;
 import org.folio.circulation.domain.representations.ItemProperties;
-import org.folio.circulation.support.http.client.Response;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 
@@ -41,29 +47,16 @@ public final class StorageRecordPreProcessors {
   public static CompletableFuture<JsonObject> setEffectiveLocationIdForItem(
     @SuppressWarnings("unused") JsonObject oldItem, JsonObject newItem) {
 
-    String permanentLocationId = newItem.getString(ItemProperties.PERMANENT_LOCATION_ID);
-    String temporaryLocationId = newItem.getString(ItemProperties.TEMPORARY_LOCATION_ID);
-
-    if (ObjectUtils.anyNotNull(temporaryLocationId, permanentLocationId)) {
-      newItem.put(
-        ItemProperties.EFFECTIVE_LOCATION_ID,
-        firstNonNull(temporaryLocationId, permanentLocationId)
-      );
-
-      return CompletableFuture.completedFuture(newItem);
-    }
-
     final String holdingsRecordId = newItem.getString("holdingsRecordId");
-    CompletableFuture<JsonObject> getCompleted = getHoldingById(holdingsRecordId);
+    final JsonObject holding = getHoldingById(holdingsRecordId);
 
-    return getCompleted.thenApply(holding -> {
-      String permanentLocation = holding.getString(ItemProperties.PERMANENT_LOCATION_ID);
-      String temporaryLocation = holding.getString(ItemProperties.TEMPORARY_LOCATION_ID);
+    newItem.put(EFFECTIVE_LOCATION_ID, firstNonNull(
+      newItem.getString(TEMPORARY_LOCATION_ID),
+      newItem.getString(PERMANENT_LOCATION_ID),
+      holding.getString(TEMPORARY_LOCATION_ID),
+      holding.getString(PERMANENT_LOCATION_ID)));
 
-      return newItem.put(ItemProperties.EFFECTIVE_LOCATION_ID,
-        firstNonNull(temporaryLocation, permanentLocation)
-      );
-    });
+    return completedFuture(newItem);
   }
 
   public static CompletableFuture<JsonObject> setItemStatusDateForItem(
@@ -81,56 +74,56 @@ public final class StorageRecordPreProcessors {
         }
       }
     }
-    return CompletableFuture.completedFuture(newItem);
+    return completedFuture(newItem);
   }
 
   public static CompletableFuture<JsonObject> setEffectiveCallNumberComponents(
     @SuppressWarnings("unused") JsonObject oldItem, JsonObject newItem) {
 
-    CompletableFuture<JsonObject> holdings =
-      CompletableFuture.completedFuture(new JsonObject());
+    final JsonObject effectiveCallNumberComponents = new JsonObject();
+    final String holdingsId = newItem.getString(HOLDINGS_RECORD_ID);
+    final JsonObject holding = getHoldingById(holdingsId);
 
-    boolean shouldRetrieveHoldings = CALL_NUMBER_PROPERTIES.stream()
-      .map(Triple::getMiddle)
-      .anyMatch(property -> StringUtils.isBlank(newItem.getString(property)));
+    CALL_NUMBER_PROPERTIES.forEach(properties -> {
+      String itemPropertyName = properties.getMiddle();
+      String holdingsPropertyName = properties.getLeft();
+      String effectivePropertyName = properties.getRight();
 
-    if (shouldRetrieveHoldings) {
-      String holdingsId = newItem.getString(HOLDINGS_RECORD_ID);
-      holdings = getHoldingById(holdingsId);
-    }
+      final String propertyValue = StringUtils.firstNonBlank(
+        newItem.getString(itemPropertyName),
+        holding.getString(holdingsPropertyName)
+      );
 
-    return holdings.thenApply(holding -> {
-      JsonObject effectiveCallNumberComponents = new JsonObject();
-
-      CALL_NUMBER_PROPERTIES.forEach(properties -> {
-        String itemPropertyName = properties.getMiddle();
-        String holdingsPropertyName = properties.getLeft();
-        String effectivePropertyName = properties.getRight();
-
-        final String propertyValue = StringUtils.firstNonBlank(
-          newItem.getString(itemPropertyName),
-          holding.getString(holdingsPropertyName)
-        );
-
-        if (StringUtils.isNotBlank(propertyValue)) {
-          effectiveCallNumberComponents.put(effectivePropertyName, propertyValue);
-        }
-      });
-
-      return newItem.put("effectiveCallNumberComponents",
-        effectiveCallNumberComponents);
+      if (StringUtils.isNotBlank(propertyValue)) {
+        effectiveCallNumberComponents.put(effectivePropertyName, propertyValue);
+      }
     });
+    newItem.put("effectiveCallNumberComponents", effectiveCallNumberComponents);
+
+    return completedFuture(newItem);
   }
 
-  private static CompletableFuture<JsonObject> getHoldingById(String id) {
-    return createWebClient()
-      .get(holdingsStorageUrl(""), namedParameter("query", format("id==%s", id)))
-      .thenApply(result -> result
-        .map(StorageRecordPreProcessors::getFirstHoldingsRecord)
-        .orElse(null));
+  public static CompletableFuture<JsonObject> persistLoanHistory(
+    JsonObject oldLoan, JsonObject newLoan) {
+
+    final String operation = oldLoan == null ? "I" : "U";
+
+    final String id = UUID.randomUUID().toString();
+    final JsonObject historyRecord = new JsonObject()
+      .put("id", id)
+      .put("operation", operation)
+      .put("createdDate", getClockManager().getDateTime().toString())
+      .put("loan", newLoan);
+
+    getStorage().getTenantResources(loanHistoryStorageUrl("").getPath(), getTenantId())
+      .put(id, historyRecord);
+
+    return completedFuture(newLoan);
   }
 
-  private static JsonObject getFirstHoldingsRecord(Response response) {
-    return response.getJson().getJsonArray("holdingsRecords").getJsonObject(0);
+  private static JsonObject getHoldingById(String id) {
+    return getStorage()
+      .getTenantResources(holdingsStorageUrl("").getPath(), getTenantId())
+      .get(id);
   }
 }
