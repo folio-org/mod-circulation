@@ -25,6 +25,7 @@ import org.folio.circulation.support.http.client.OkapiHttpClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import api.support.fakes.processors.LoanHistoryProcessor;
 import api.support.fakes.processors.StorageRecordPreProcessors;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Promise;
@@ -112,7 +113,7 @@ public class FakeOkapi extends AbstractVerticle {
       .withRecordName("loan")
       .withRootPath("/loan-storage/loans")
       .validateRecordsWith(validatorForStorageLoanSchema())
-      .withRecordPreProcessor(singletonList(StorageRecordPreProcessors::persistLoanHistory))
+      .withRecordPreProcessor(singletonList(LoanHistoryProcessor::persistLoanHistory))
       .withChangeMetadata()
       .create().register(router);
 

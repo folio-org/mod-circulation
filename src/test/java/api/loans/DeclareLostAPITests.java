@@ -48,6 +48,11 @@ import junitparams.converters.Nullable;
 
 @RunWith(JUnitParamsRunner.class)
 public class DeclareLostAPITests extends APITests {
+
+  public DeclareLostAPITests() {
+    super(true, true);
+  }
+
   @Before
   public void activatePolicy() {
     useLostItemPolicy(lostItemFeePoliciesFixture.chargeFee().getId());

@@ -1,5 +1,8 @@
 package api.support.fakes.storage;
 
+import static api.support.APITestContext.getTenantId;
+
+import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -16,6 +19,10 @@ public final class Storage {
 
   public Map<String, JsonObject> getTenantResources(String rootPath, String tenant) {
     return resources.computeIfAbsent(getKey(rootPath, tenant), k -> new HashMap<>());
+  }
+
+  public Map<String, JsonObject> getTenantResources(URL wholePath) {
+    return getTenantResources(wholePath.getPath(), getTenantId());
   }
 
   public void removeAll() {

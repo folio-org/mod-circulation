@@ -30,8 +30,7 @@ import io.vertx.core.json.JsonObject;
 
 public class CirculationRulesEngineAPITests extends APITests {
   public CirculationRulesEngineAPITests() {
-
-    super(false);
+    super(false, false);
   }
 
   private void setRules(String rules) {

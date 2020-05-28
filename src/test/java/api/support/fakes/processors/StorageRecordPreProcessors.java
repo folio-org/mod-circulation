@@ -1,23 +1,18 @@
 package api.support.fakes.processors;
 
-import static api.support.APITestContext.createWebClient;
-import static api.support.APITestContext.getTenantId;
 import static api.support.fakes.storage.Storage.getStorage;
 import static api.support.http.InterfaceUrls.holdingsStorageUrl;
-import static api.support.http.InterfaceUrls.loanHistoryStorageUrl;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.apache.commons.lang3.ObjectUtils.firstNonNull;
 import static org.folio.circulation.domain.representations.ItemProperties.EFFECTIVE_LOCATION_ID;
 import static org.folio.circulation.domain.representations.ItemProperties.HOLDINGS_RECORD_ID;
 import static org.folio.circulation.domain.representations.ItemProperties.PERMANENT_LOCATION_ID;
 import static org.folio.circulation.domain.representations.ItemProperties.TEMPORARY_LOCATION_ID;
-import static org.folio.circulation.support.ClockManager.getClockManager;
 import static org.folio.circulation.support.JsonPropertyWriter.write;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
-import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
 import org.apache.commons.lang3.ObjectUtils;
@@ -103,27 +98,7 @@ public final class StorageRecordPreProcessors {
     return completedFuture(newItem);
   }
 
-  public static CompletableFuture<JsonObject> persistLoanHistory(
-    JsonObject oldLoan, JsonObject newLoan) {
-
-    final String operation = oldLoan == null ? "I" : "U";
-
-    final String id = UUID.randomUUID().toString();
-    final JsonObject historyRecord = new JsonObject()
-      .put("id", id)
-      .put("operation", operation)
-      .put("createdDate", getClockManager().getDateTime().toString())
-      .put("loan", newLoan);
-
-    getStorage().getTenantResources(loanHistoryStorageUrl("").getPath(), getTenantId())
-      .put(id, historyRecord);
-
-    return completedFuture(newLoan);
-  }
-
   private static JsonObject getHoldingById(String id) {
-    return getStorage()
-      .getTenantResources(holdingsStorageUrl("").getPath(), getTenantId())
-      .get(id);
+    return getStorage().getTenantResources(holdingsStorageUrl("")).get(id);
   }
 }

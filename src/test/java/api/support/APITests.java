@@ -3,6 +3,7 @@ package api.support;
 import static api.support.APITestContext.deployVerticles;
 import static api.support.APITestContext.getOkapiHeadersFromContext;
 import static api.support.APITestContext.undeployVerticles;
+import static api.support.fakes.processors.LoanHistoryProcessor.setLoanHistoryEnabled;
 import static api.support.http.InterfaceUrls.circulationRulesUrl;
 import static api.support.http.ResourceClient.forLoanHistoryStorage;
 import static api.support.http.api.support.NamedQueryStringParameter.namedParameter;
@@ -255,12 +256,15 @@ public abstract class APITests {
   protected final ClaimItemReturnedFixture claimItemReturnedFixture = new ClaimItemReturnedFixture(restAssuredClient);
   protected final FeeFineAccountFixture feeFineAccountFixture = new FeeFineAccountFixture();
 
+  private final boolean enableLoanHistory;
+
   protected APITests() {
-    this(true);
+    this(true, false);
   }
 
-  protected APITests(boolean initialiseCirculationRules) {
+  protected APITests(boolean initialiseCirculationRules, boolean enableLoanHistory) {
     this.initialiseCirculationRules = initialiseCirculationRules;
+    this.enableLoanHistory = enableLoanHistory;
   }
 
   @BeforeClass
@@ -289,6 +293,7 @@ public abstract class APITests {
     }
 
     usersFixture.defaultAdmin();
+    setLoanHistoryEnabled(enableLoanHistory);
   }
 
   @After
