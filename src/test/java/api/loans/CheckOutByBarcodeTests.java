@@ -11,6 +11,7 @@ import static api.support.matchers.CheckOutByBarcodeResponseMatchers.hasServiceP
 import static api.support.matchers.CheckOutByBarcodeResponseMatchers.hasUserBarcodeParameter;
 import static api.support.matchers.EventMatchers.isValidItemCheckedOutEvent;
 import static api.support.matchers.ItemMatchers.isCheckedOut;
+import static api.support.matchers.ItemMatchers.isLostAndPaid;
 import static api.support.matchers.ItemMatchers.isWithdrawn;
 import static api.support.matchers.ItemStatusCodeMatcher.hasItemStatus;
 import static api.support.matchers.JsonObjectMatcher.hasJsonPath;
@@ -1174,6 +1175,24 @@ public class CheckOutByBarcodeTests extends APITests {
       hasJsonPath("action", "checkedout"),
       hasJsonPath("itemId", withdrawnItem.getId().toString())
     ));
+
+    assertThat(itemsClient.getById(withdrawnItem.getId()).getJson(), isCheckedOut());
+  }
+
+  @Test
+  public void canCheckOutLostAndPaidItem() {
+    final IndividualResource withdrawnItem = itemsFixture
+      .basedUponSmallAngryPlanet(ItemBuilder::lostAndPaid);
+
+    assertThat(withdrawnItem.getJson(), isLostAndPaid());
+
+    final IndividualResource response = checkOutFixture
+      .checkOutByBarcode(withdrawnItem, usersFixture.steve());
+
+    assertThat(response.getJson(), allOf(
+      isOpen(),
+      hasJsonPath("action", "checkedout"),
+      hasJsonPath("itemId", withdrawnItem.getId().toString())));
 
     assertThat(itemsClient.getById(withdrawnItem.getId()).getJson(), isCheckedOut());
   }

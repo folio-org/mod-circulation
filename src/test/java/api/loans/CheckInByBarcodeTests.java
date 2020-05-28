@@ -3,6 +3,7 @@ package api.loans;
 import static api.support.APITestContext.getUserId;
 import static api.support.fixtures.AddressExamples.SiriusBlack;
 import static api.support.matchers.EventMatchers.isValidItemCheckedInEvent;
+import static api.support.matchers.ItemMatchers.isAvailable;
 import static api.support.matchers.OverdueFineMatcher.isValidOverdueFine;
 import static api.support.matchers.PatronNoticeMatcher.hasEmailNoticeProperties;
 import static api.support.matchers.ResponseStatusCodeMatcher.hasStatus;
@@ -50,6 +51,7 @@ import api.support.builders.Address;
 import api.support.builders.CheckInByBarcodeRequestBuilder;
 import api.support.builders.FeeFineBuilder;
 import api.support.builders.FeeFineOwnerBuilder;
+import api.support.builders.ItemBuilder;
 import api.support.builders.LoanPolicyBuilder;
 import api.support.builders.NoticeConfigurationBuilder;
 import api.support.builders.NoticePolicyBuilder;
@@ -1038,6 +1040,15 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
 
     assertThat(account, isValidOverdueFine(checkedInLoan, nod,
       homeLocation.getJson().getString("name"), ownerId, feeFineId, 7.0));
+  }
+
+  @Test
+  public void canCheckInLostAndPaidItem() {
+    final InventoryItemResource item = itemsFixture.basedUponNod(ItemBuilder::lostAndPaid);
+
+    checkInFixture.checkInByBarcode(item);
+
+    assertThat(itemsClient.getById(item.getId()).getJson(), isAvailable());
   }
 
   @Test
