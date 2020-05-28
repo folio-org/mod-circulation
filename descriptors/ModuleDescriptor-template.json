@@ -806,7 +806,7 @@
           ],
           "pathPattern": "/circulation/handlers/loan-related-fee-fine-closed",
           "permissionsRequired": [
-            "circulation.handlers.loan-related-fee-fine-closed.post"
+            "circulation.events.post"
           ],
           "modulePermissions": [
             "modperms.circulation.handlers.loan-related-fee-fine-closed.post"
@@ -918,11 +918,6 @@
     }
   ],
   "permissionSets": [
-    {
-      "permissionName": "circulation.handlers.loan-related-fee-fine-closed.post",
-      "displayName": "circulation - Subscriber handler for fee/fine with loan closed event",
-      "description": "Subscriber handler for fee/fine with loan closed event"
-    },
     {
       "permissionName": "circulation.requests.queue.reorder.collection.post",
       "displayName": "circulation - reorder queue for an item",
@@ -1158,18 +1153,8 @@
         "circulation.requests.instances.item.post",
         "circulation.requests.hold-shelf-clearance-report.get",
         "circulation.inventory.items-in-transit-report.get",
-        "circulation.pick-slips.get",
-        "circulation.handlers.loan-related-fee-fine-closed.post"
+        "circulation.pick-slips.get"
       ]
-    },
-    {
-      "permissionName": "circulation.handlers.all",
-      "displayName": "circulation - all subscribers permissions",
-      "description": "Entire set of permissions needed to grant pub/sub user for subscriptions",
-      "subPermissions": [
-        "circulation.handlers.loan-related-fee-fine-closed.post"
-      ],
-      "visible": false
     },
     {
       "permissionName": "modperms.circulation.requests.hold-shelf-clearance-report.get",

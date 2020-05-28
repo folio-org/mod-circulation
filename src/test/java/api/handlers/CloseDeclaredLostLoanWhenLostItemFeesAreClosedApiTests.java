@@ -1,4 +1,4 @@
-package api.subscribers;
+package api.handlers;
 
 import static api.support.matchers.ItemMatchers.isAvailable;
 import static api.support.matchers.ItemMatchers.isCheckedOut;
