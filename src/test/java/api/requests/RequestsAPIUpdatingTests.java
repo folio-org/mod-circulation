@@ -756,7 +756,6 @@ public class RequestsAPIUpdatingTests extends APITests {
     JsonObject updatedLoan = response.getJson();
 
     // There should be three events published - for "check out", for "recall" and for "replace"
-
     List<JsonObject> publishedEvents = Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
       .until(FakePubSub::getPublishedEvents, hasSize(3));

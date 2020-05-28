@@ -1711,7 +1711,7 @@ public class LoanAPITests extends APITests {
   }
 
   @Test
-  public void dueDateChangedEventIsPublished() {
+  public void dueDateChangedEventIsPublishedOnCreate() {
     UUID id = UUID.randomUUID();
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet(
@@ -1745,6 +1745,32 @@ public class LoanAPITests extends APITests {
     JsonObject event = publishedEvents.get(0);
 
     assertThat(event, isValidLoanDueDateChangedEvent(loan));
+  }
+
+  @Test
+  public void dueDateChangedEventIsPublishedOnReplace() {
+    final InventoryItemResource item = itemsFixture.basedUponNod();
+
+    final IndividualResource checkOutResponse = loansFixture.createLoan(item,
+      usersFixture.jessica());
+
+    itemsClient.getById(item.getId()).getJson();
+
+    loansFixture.replaceLoan(checkOutResponse.getId(),
+      checkOutResponse.getJson().copy());
+
+    itemsClient.getById(item.getId()).getJson();
+    Response loanFromStorage = loansStorageClient.getById(checkOutResponse.getId());
+
+    // There should be two events published - first one for "create",
+    // second one for "replace"
+    List<JsonObject> publishedEvents = Awaitility.await()
+      .atMost(1, TimeUnit.SECONDS)
+      .until(FakePubSub::getPublishedEvents, hasSize(2));
+
+    JsonObject event = publishedEvents.get(1);
+
+    assertThat(event, isValidLoanDueDateChangedEvent(loanFromStorage.getJson()));
   }
 
   private void loanHasExpectedProperties(JsonObject loan,

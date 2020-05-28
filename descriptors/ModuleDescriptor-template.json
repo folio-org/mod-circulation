@@ -1241,7 +1241,8 @@
         "inventory-storage.loan-types.item.get",
         "configuration.entries.collection.get",
         "calendar.opening-hours.collection.get",
-        "circulation.internal.apply-rules"
+        "circulation.internal.apply-rules",
+        "pubsub.publish.post"
       ],
       "visible": false
     },
@@ -1460,7 +1461,8 @@
         "feefines.collection.get",
         "feefines.item.post",
         "owners.collection.get",
-        "accounts.item.post"
+        "accounts.item.post",
+        "pubsub.publish.post"
       ],
       "visible": false
 },
@@ -1605,7 +1607,8 @@
         "feefines.collection.get",
         "feefines.item.post",
         "owners.collection.get",
-        "accounts.item.post"
+        "accounts.item.post",
+        "pubsub.publish.post"
       ],
       "visible": false
     },
@@ -1644,7 +1647,8 @@
         "circulation-storage.loan-policies.collection.get",
         "circulation-storage.request-policies.item.get",
         "circulation-storage.fixed-due-date-schedules.item.get",
-        "circulation-storage.fixed-due-date-schedules.collection.get"
+        "circulation-storage.fixed-due-date-schedules.collection.get",
+        "pubsub.publish.post"
       ],
       "visible": false
     },
@@ -1875,7 +1879,8 @@
         "inventory-storage.loan-types.item.get",
         "configuration.entries.collection.get",
         "scheduled-notice-storage.scheduled-notices.collection.delete",
-        "scheduled-notice-storage.scheduled-notices.item.post"
+        "scheduled-notice-storage.scheduled-notices.item.post",
+        "pubsub.publish.post"
       ],
       "visible": false
     },
@@ -2104,7 +2109,8 @@
         "circulation.rules.notice-policy.get",
         "circulation-storage.patron-notice-policies.item.get",
         "scheduled-notice-storage.scheduled-notices.collection.delete",
-        "scheduled-notice-storage.scheduled-notices.item.post"
+        "scheduled-notice-storage.scheduled-notices.item.post",
+        "pubsub.publish.post"
       ],
       "visible": false
     },

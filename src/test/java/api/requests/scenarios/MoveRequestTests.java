@@ -1035,7 +1035,6 @@ public class MoveRequestTests extends APITests {
     itemCopyALoan = loansClient.get(itemCopyALoan);
 
     // There should be three events published - for "check out", for "hold" and for "move"
-
     List<JsonObject> publishedEvents = Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
       .until(FakePubSub::getPublishedEvents, hasSize(3));

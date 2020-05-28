@@ -21,13 +21,9 @@ import io.vertx.ext.web.RoutingContext;
 
 public class WebContext {
   private final RoutingContext routingContext;
-  private final Map<String, String> headers;
 
   public WebContext(RoutingContext routingContext) {
     this.routingContext = routingContext;
-
-    headers = routingContext.request().headers().entries().stream()
-      .collect(Collectors.toMap(entry -> entry.getKey().toLowerCase(), Map.Entry::getValue));
   }
 
   public String getTenantId() {
@@ -82,7 +78,9 @@ public class WebContext {
   }
 
   public Map<String, String> getHeaders() {
-    return headers;
+    return routingContext.request().headers().entries().stream()
+      .collect(Collectors.toMap(entry -> entry.getKey().toLowerCase(),
+        Map.Entry::getValue));
   }
 
   public OkapiHttpClient createHttpClient(HttpClient httpClient) {

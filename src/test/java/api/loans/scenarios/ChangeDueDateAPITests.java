@@ -275,7 +275,6 @@ public class ChangeDueDateAPITests extends APITests {
 
     // There should be two events published - first one for "check out",
     // second one for "change due date"
-
     List<JsonObject> publishedEvents = Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
       .until(FakePubSub::getPublishedEvents, hasSize(2));

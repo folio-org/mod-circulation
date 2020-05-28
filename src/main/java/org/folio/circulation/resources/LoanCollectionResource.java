@@ -160,6 +160,8 @@ public class LoanCollectionResource extends CollectionResource {
 
     final LoanNoticeSender loanNoticeSender = LoanNoticeSender.using(clients);
 
+    final EventPublisher eventPublisher = new EventPublisher(routingContext);
+
     completedFuture(succeeded(new LoanAndRelatedRecords(loan)))
       .thenCompose(larrResult ->
         getServicePointsForLoanAndRelated(larrResult, servicePointRepository))
@@ -180,6 +182,7 @@ public class LoanCollectionResource extends CollectionResource {
       // due to snapshot of item status stored with the loan
       // as this is how the loan action history is populated
       .thenComposeAsync(result -> result.after(loanRepository::updateLoan))
+      .thenComposeAsync(r -> r.after(eventPublisher::publishDueDateChangedEvent))
       .thenApply(r -> r.next(scheduledNoticeService::rescheduleDueDateNotices))
       .thenCompose(r -> r.after(loanNoticeSender::sendManualDueDateChangeNotice))
       .thenApply(r -> r.toFixedValue(NoContentResponse::noContent))
