@@ -256,15 +256,13 @@ public abstract class APITests {
   protected final ClaimItemReturnedFixture claimItemReturnedFixture = new ClaimItemReturnedFixture(restAssuredClient);
   protected final FeeFineAccountFixture feeFineAccountFixture = new FeeFineAccountFixture();
 
-  private final boolean enableLoanHistory;
-
   protected APITests() {
     this(true, false);
   }
 
   protected APITests(boolean initialiseCirculationRules, boolean enableLoanHistory) {
     this.initialiseCirculationRules = initialiseCirculationRules;
-    this.enableLoanHistory = enableLoanHistory;
+    setLoanHistoryEnabled(enableLoanHistory);
   }
 
   @BeforeClass
@@ -293,7 +291,6 @@ public abstract class APITests {
     }
 
     usersFixture.defaultAdmin();
-    setLoanHistoryEnabled(enableLoanHistory);
   }
 
   @After
