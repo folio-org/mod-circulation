@@ -5,7 +5,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
-import java.util.concurrent.CompletableFuture;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
@@ -30,7 +29,7 @@ public class FakeStorageModuleBuilder {
   private final JsonSchemaValidator recordValidator;
   private final String updateBatchPath;
   private final Function<JsonObject, JsonObject> batchUpdatePreProcessor;
-  private final List<BiFunction<JsonObject, JsonObject, CompletableFuture<JsonObject>>> recordPreProcessors;
+  private final List<BiFunction<JsonObject, JsonObject, JsonObject>> recordPreProcessors;
   private final Collection<String> queryParameters;
 
   FakeStorageModuleBuilder() {
@@ -68,7 +67,7 @@ public class FakeStorageModuleBuilder {
     JsonSchemaValidator recordValidator,
     String updateBatchPath,
     Function<JsonObject, JsonObject> batchUpdatePreProcessor,
-    List<BiFunction<JsonObject, JsonObject, CompletableFuture<JsonObject>>> recordPreProcessors,
+    List<BiFunction<JsonObject, JsonObject, JsonObject>> recordPreProcessors,
     Collection<String> queryParameters) {
 
     this.rootPath = rootPath;
@@ -429,7 +428,7 @@ public class FakeStorageModuleBuilder {
   }
 
   FakeStorageModuleBuilder withRecordPreProcessor(
-    List<BiFunction<JsonObject, JsonObject, CompletableFuture<JsonObject>>> recordPreProcessor) {
+    List<BiFunction<JsonObject, JsonObject, JsonObject>> recordPreProcessor) {
 
     return new FakeStorageModuleBuilder(
       this.rootPath,

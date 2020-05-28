@@ -11,14 +11,12 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -68,7 +66,7 @@ public class FakeStorageModule extends AbstractVerticle {
   private final JsonSchemaValidator recordValidator;
   private final String batchUpdatePath;
   private final Function<JsonObject, JsonObject> batchUpdatePreProcessor;
-  private final List<BiFunction<JsonObject, JsonObject, CompletableFuture<JsonObject>>> recordPreProcessors;
+  private final List<BiFunction<JsonObject, JsonObject, JsonObject>> recordPreProcessors;
   private final Collection<String> additionalQueryParameters;
 
   public static Stream<String> getQueries() {
@@ -89,7 +87,7 @@ public class FakeStorageModule extends AbstractVerticle {
     BiFunction<Collection<JsonObject>, JsonObject, Result<Object>> constraint,
     String batchUpdatePath,
     Function<JsonObject, JsonObject> batchUpdatePreProcessor,
-    List<BiFunction<JsonObject, JsonObject, CompletableFuture<JsonObject>>> recordPreProcessors,
+    List<BiFunction<JsonObject, JsonObject, JsonObject>> recordPreProcessors,
     Collection<String> queryParameters) {
 
     this.rootPath = rootPath;
@@ -167,35 +165,115 @@ public class FakeStorageModule extends AbstractVerticle {
     }
 
     JsonArray entities = body.getJsonArray(collectionPropertyName);
-    CompletableFuture<Result<Void>> replaceFuture =
-      CompletableFuture.completedFuture(Result.succeeded(null));
+    Result<Void> lastResult = Result.succeeded(null);
 
     for (int entityIndex = 0; entityIndex < entities.size(); entityIndex++) {
       JsonObject entity = entities.getJsonObject(entityIndex);
       String id = entity.getString("id");
 
-      replaceFuture = replaceFuture
-        .thenCompose(r -> r.after(v -> replaceSingleItem(context, id, entity)));
+      lastResult = lastResult.next(notUsed -> replaceSingleItem(context, id, entity));
     }
 
-    replaceFuture.thenAccept(result -> {
-      if (result.failed()) {
-        result.cause().writeTo(routingContext.response());
-      }
+    if (lastResult.failed()) {
+      lastResult.cause().writeTo(routingContext.response());
+    } else {
       routingContext.response().setStatusCode(201).end();
-    });
+    }
   }
 
   private void create(RoutingContext routingContext) {
     WebContext context = new WebContext(routingContext);
 
-    JsonObject originalBody = getJsonFromBody(routingContext);
+    JsonObject body = preProcessBody(null, getJsonFromBody(routingContext));
 
-    String id = originalBody.getString("id", UUID.randomUUID().toString());
+    String id = body.getString("id", UUID.randomUUID().toString());
+    body.put("id", id);
 
-    originalBody.put("id", id);
+    if (includeChangeMetadata) {
+      final String fakeUserId = APITestContext.getUserId();
+      body.put(changeMetadataPropertyName, new JsonObject()
+        .put("createdDate", new DateTime(DateTimeZone.UTC)
+          .toString(ISODateTimeFormat.dateTime()))
+        .put("createdByUserId", fakeUserId)
+        .put("updatedDate", new DateTime(DateTimeZone.UTC)
+          .toString(ISODateTimeFormat.dateTime()))
+        .put("updatedByUserId", fakeUserId));
+    }
 
-    preProcessBody(null, originalBody).thenAccept(body -> {
+    final Map<String, JsonObject> existingRecords = getResourcesForTenant(context);
+
+    if (constraint == null) {
+      existingRecords.put(id, body);
+
+      log.debug("Created {} resource: {}", recordTypeName, id);
+
+      created(body).writeTo(routingContext.response());
+    } else {
+      final Result<Object> checkConstraint = constraint.apply(existingRecords.values(), body);
+
+      if (checkConstraint.succeeded()) {
+        existingRecords.put(id, body);
+
+        log.debug("Created {} resource: {}", recordTypeName, id);
+
+        created(body).writeTo(routingContext.response());
+      } else {
+        checkConstraint.cause().writeTo(routingContext.response());
+      }
+    }
+  }
+
+  private void replace(RoutingContext routingContext) {
+    WebContext context = new WebContext(routingContext);
+
+    String id = routingContext.request().getParam("id");
+
+    JsonObject body = getJsonFromBody(routingContext);
+
+    final Result<Void> replaceResult = replaceSingleItem(context, id, body);
+    if (replaceResult.succeeded()) {
+      noContent().writeTo(routingContext.response());
+    } else {
+      replaceResult.cause().writeTo(routingContext.response());
+    }
+  }
+
+  private Result<Void> replaceSingleItem(
+    WebContext context, String id, JsonObject rawBody) {
+    Map<String, JsonObject> resourcesForTenant = getResourcesForTenant(context);
+    JsonObject oldBody = resourcesForTenant.get(id);
+
+    final JsonObject body = preProcessBody(oldBody, rawBody);
+    if (resourcesForTenant.containsKey(id)) {
+      log.debug("Replaced {} resource: {}", recordTypeName, id);
+
+      if (includeChangeMetadata) {
+        final String fakeUserId = APITestContext.getUserId();
+        final JsonObject existingChangeMetadata = resourcesForTenant.get(id)
+          .getJsonObject(changeMetadataPropertyName);
+
+        final JsonObject updatedChangeMetadata = existingChangeMetadata.copy()
+          .put("updatedDate", new DateTime(DateTimeZone.UTC)
+            .toString(ISODateTimeFormat.dateTime()))
+          .put("updatedByUserId", fakeUserId);
+
+        body.put(changeMetadataPropertyName, updatedChangeMetadata);
+      }
+
+      if (constraint == null) {
+        resourcesForTenant.replace(id, body);
+      } else {
+        final Result<Object> checkConstraint = constraint.apply(resourcesForTenant.values(), body);
+
+        if (checkConstraint.succeeded()) {
+          resourcesForTenant.replace(id, body);
+        } else {
+          return Result.failed(checkConstraint.cause());
+        }
+      }
+    } else {
+      log.debug("Created {} resource: {}", recordTypeName, id);
+
       if (includeChangeMetadata) {
         final String fakeUserId = APITestContext.getUserId();
         body.put(changeMetadataPropertyName, new JsonObject()
@@ -207,99 +285,9 @@ public class FakeStorageModule extends AbstractVerticle {
           .put("updatedByUserId", fakeUserId));
       }
 
-      final Map<String, JsonObject> existingRecords = getResourcesForTenant(context);
-
-      if (constraint == null) {
-        existingRecords.put(id, body);
-
-        log.debug("Created {} resource: {}", recordTypeName, id);
-
-        created(body).writeTo(routingContext.response());
-      } else {
-        final Result<Object> checkConstraint = constraint.apply(existingRecords.values(), body);
-
-        if (checkConstraint.succeeded()) {
-          existingRecords.put(id, body);
-
-          log.debug("Created {} resource: {}", recordTypeName, id);
-
-          created(body).writeTo(routingContext.response());
-        } else {
-          checkConstraint.cause().writeTo(routingContext.response());
-        }
-      }
-    });
-  }
-
-  private void replace(RoutingContext routingContext) {
-    WebContext context = new WebContext(routingContext);
-
-    String id = routingContext.request().getParam("id");
-
-    JsonObject body = getJsonFromBody(routingContext);
-
-    replaceSingleItem(context, id, body).thenAccept(replaceResult -> {
-      if (replaceResult.succeeded()) {
-        noContent().writeTo(routingContext.response());
-      } else {
-        replaceResult.cause().writeTo(routingContext.response());
-      }
-    });
-  }
-
-  private CompletableFuture<Result<Void>> replaceSingleItem(
-    WebContext context, String id, JsonObject rawBody) {
-    Map<String, JsonObject> resourceForTenant = getResourcesForTenant(context);
-    JsonObject oldBody = resourceForTenant.get(id);
-
-    return preProcessBody(oldBody, rawBody).thenApply(body -> {
-      Map<String, JsonObject> resourcesForTenant = getResourcesForTenant(context);
-
-      if (resourcesForTenant.containsKey(id)) {
-        log.debug("Replaced {} resource: {}", recordTypeName, id);
-
-        if (includeChangeMetadata) {
-          final String fakeUserId = APITestContext.getUserId();
-          final JsonObject existingChangeMetadata = resourcesForTenant.get(id)
-            .getJsonObject(changeMetadataPropertyName);
-
-          final JsonObject updatedChangeMetadata = existingChangeMetadata.copy()
-            .put("updatedDate", new DateTime(DateTimeZone.UTC)
-              .toString(ISODateTimeFormat.dateTime()))
-            .put("updatedByUserId", fakeUserId);
-
-          body.put(changeMetadataPropertyName, updatedChangeMetadata);
-        }
-
-        if (constraint == null) {
-          resourcesForTenant.replace(id, body);
-        } else {
-          final Result<Object> checkConstraint = constraint.apply(resourcesForTenant.values(), body);
-
-          if (checkConstraint.succeeded()) {
-            resourcesForTenant.replace(id, body);
-          } else {
-            return Result.failed(checkConstraint.cause());
-          }
-        }
-      } else {
-        log.debug("Created {} resource: {}", recordTypeName, id);
-
-        if (includeChangeMetadata) {
-          final String fakeUserId = APITestContext.getUserId();
-          body.put(changeMetadataPropertyName, new JsonObject()
-            .put("createdDate", new DateTime(DateTimeZone.UTC)
-              .toString(ISODateTimeFormat.dateTime()))
-            .put("createdByUserId", fakeUserId)
-            .put("updatedDate", new DateTime(DateTimeZone.UTC)
-              .toString(ISODateTimeFormat.dateTime()))
-            .put("updatedByUserId", fakeUserId));
-        }
-
-        resourcesForTenant.put(id, body);
-      }
-      return Result.succeeded(null);
-    });
+      resourcesForTenant.put(id, body);
+    }
+    return Result.succeeded(null);
   }
 
   private void getById(RoutingContext routingContext) {
@@ -638,17 +626,17 @@ public class FakeStorageModule extends AbstractVerticle {
         String.join(",", unexpectedParameters)));
   }
 
-  private CompletableFuture<JsonObject> preProcessBody(JsonObject oldBody, JsonObject newBody) {
-    CompletableFuture<JsonObject> resultJsonFuture = CompletableFuture.completedFuture(newBody);
+  private JsonObject preProcessBody(JsonObject oldBody, JsonObject newBody) {
+    JsonObject lastResult = newBody;
 
     if(recordPreProcessors != null && recordPreProcessors.stream().noneMatch(Objects::isNull)){
-      for (BiFunction<JsonObject, JsonObject, CompletableFuture<JsonObject>> preProcessor:
+      for (BiFunction<JsonObject, JsonObject, JsonObject> preProcessor:
         recordPreProcessors) {
-        resultJsonFuture = resultJsonFuture.thenCompose(previous -> preProcessor.apply(oldBody, newBody));
+        lastResult = preProcessor.apply(oldBody, lastResult);
       }
-      return resultJsonFuture;
     }
-    return CompletableFuture.completedFuture(newBody);
+
+    return lastResult;
   }
 
   private boolean isContainsQueryParameter(String queryParameter) {

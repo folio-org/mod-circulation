@@ -1,8 +1,8 @@
 package api.support.fakes.processors;
 
+import static api.support.APITestContext.getTenantId;
 import static api.support.fakes.storage.Storage.getStorage;
 import static api.support.http.InterfaceUrls.holdingsStorageUrl;
-import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.apache.commons.lang3.ObjectUtils.firstNonNull;
 import static org.folio.circulation.domain.representations.ItemProperties.EFFECTIVE_LOCATION_ID;
 import static org.folio.circulation.domain.representations.ItemProperties.HOLDINGS_RECORD_ID;
@@ -13,7 +13,6 @@ import static org.folio.circulation.support.JsonPropertyWriter.write;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
-import java.util.concurrent.CompletableFuture;
 
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -39,7 +38,7 @@ public final class StorageRecordPreProcessors {
     throw new UnsupportedOperationException("Do not instantiate");
   }
 
-  public static CompletableFuture<JsonObject> setEffectiveLocationIdForItem(
+  public static JsonObject setEffectiveLocationIdForItem(
     @SuppressWarnings("unused") JsonObject oldItem, JsonObject newItem) {
 
     final String holdingsRecordId = newItem.getString("holdingsRecordId");
@@ -51,12 +50,10 @@ public final class StorageRecordPreProcessors {
       holding.getString(TEMPORARY_LOCATION_ID),
       holding.getString(PERMANENT_LOCATION_ID)));
 
-    return completedFuture(newItem);
+    return newItem;
   }
 
-  public static CompletableFuture<JsonObject> setItemStatusDateForItem(
-    JsonObject oldItem, JsonObject newItem) {
-
+  public static JsonObject setItemStatusDateForItem(JsonObject oldItem, JsonObject newItem) {
     if (Objects.nonNull(oldItem)) {
       JsonObject oldItemStatus = oldItem.getJsonObject(ItemProperties.STATUS_PROPERTY);
       JsonObject newItemStatus = newItem.getJsonObject(ItemProperties.STATUS_PROPERTY);
@@ -69,10 +66,10 @@ public final class StorageRecordPreProcessors {
         }
       }
     }
-    return completedFuture(newItem);
+    return newItem;
   }
 
-  public static CompletableFuture<JsonObject> setEffectiveCallNumberComponents(
+  public static JsonObject setEffectiveCallNumberComponents(
     @SuppressWarnings("unused") JsonObject oldItem, JsonObject newItem) {
 
     final JsonObject effectiveCallNumberComponents = new JsonObject();
@@ -95,10 +92,12 @@ public final class StorageRecordPreProcessors {
     });
     newItem.put("effectiveCallNumberComponents", effectiveCallNumberComponents);
 
-    return completedFuture(newItem);
+    return newItem;
   }
 
   private static JsonObject getHoldingById(String id) {
-    return getStorage().getTenantResources(holdingsStorageUrl("")).get(id);
+    return getStorage()
+      .getTenantResources(holdingsStorageUrl("").getPath(), getTenantId())
+      .get(id);
   }
 }
