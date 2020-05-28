@@ -14,7 +14,6 @@ import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static api.support.matchers.ValidationErrorMatchers.hasParameter;
 import static com.jayway.jsonpath.matchers.JsonPathMatchers.hasNoJsonPath;
 import static org.hamcrest.CoreMatchers.allOf;
-import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.CoreMatchers.nullValue;
@@ -37,7 +36,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import api.support.APITests;
-import api.support.MultipleJsonRecords;
 import api.support.builders.DeclareItemLostRequestBuilder;
 import api.support.builders.LostItemFeePolicyBuilder;
 import api.support.http.InventoryItemResource;
@@ -454,23 +452,6 @@ public class DeclareLostAPITests extends APITests {
       hasNoJsonPath("checkinServicePointId")
     ));
 
-//    verifyDeclaredLostHistoryRecordCreated(loanId);
-
     assertThat(itemFromStorage, isLostAndPaid());
   }
-
-//  private void verifyDeclaredLostHistoryRecordCreated(UUID loanId) {
-//    final MultipleJsonRecords loanHistory = loanHistoryClient
-//      .getMany(queryFromTemplate("loan.id==%s and operation==U", loanId));
-//
-//    assertThat(loanHistory, hasItems(
-//      allOf(
-//        hasJsonPath("loan.action", "declaredLost"),
-//        hasJsonPath("loan.itemStatus", "Declared lost")),
-//      allOf(
-//        hasJsonPath("loan.status.name", "Closed"),
-//        hasJsonPath("loan.action", "closedLoan"),
-//        hasJsonPath("loan.itemStatus", "Lost and paid"))
-//    ));
-//  }
 }

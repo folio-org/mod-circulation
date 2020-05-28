@@ -90,7 +90,7 @@ public class FakeStorageModuleBuilder {
   }
 
   public FakeStorageModule create() {
-    return new FakeStorageModule(rootPath, collectionPropertyName, tenantId,
+    return new FakeStorageModule(rootPath, collectionPropertyName,
       recordValidator, requiredProperties, hasCollectionDelete, hasDeleteByQuery,
       recordName, uniqueProperties, disallowedProperties, includeChangeMetadata,
       constraint, updateBatchPath, batchUpdatePreProcessor, recordPreProcessors,

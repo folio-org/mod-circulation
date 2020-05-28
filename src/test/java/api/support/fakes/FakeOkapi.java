@@ -9,7 +9,6 @@ import static api.support.fakes.StorageSchema.validatorForLocationLibSchema;
 import static api.support.fakes.StorageSchema.validatorForStorageItemSchema;
 import static api.support.fakes.StorageSchema.validatorForStorageLoanSchema;
 import static java.util.Arrays.asList;
-import static java.util.Collections.singletonList;
 import static org.folio.circulation.support.http.server.ForwardResponse.forward;
 import static org.folio.circulation.support.results.CommonFailures.failedDueToServerError;
 
@@ -112,7 +111,6 @@ public class FakeOkapi extends AbstractVerticle {
       .withRecordName("loan")
       .withRootPath("/loan-storage/loans")
       .validateRecordsWith(validatorForStorageLoanSchema())
-//      .withRecordPreProcessor(singletonList(StorageRecordPreProcessors::persistLoanHistory))
       .withChangeMetadata()
       .create().register(router);
 

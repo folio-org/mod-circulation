@@ -2,18 +2,15 @@ package api.support.fakes.processors;
 
 import static api.support.APITestContext.createWebClient;
 import static api.support.http.InterfaceUrls.holdingsStorageUrl;
-import static api.support.http.InterfaceUrls.loanHistoryStorageUrl;
 import static java.lang.String.format;
 import static org.apache.commons.lang3.ObjectUtils.firstNonNull;
 import static org.folio.circulation.domain.representations.ItemProperties.HOLDINGS_RECORD_ID;
-import static org.folio.circulation.support.ClockManager.getClockManager;
 import static org.folio.circulation.support.JsonPropertyWriter.write;
 import static org.folio.circulation.support.http.client.NamedQueryParameter.namedParameter;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
-import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
 import org.apache.commons.lang3.ObjectUtils;
@@ -21,7 +18,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.ImmutableTriple;
 import org.apache.commons.lang3.tuple.Triple;
 import org.folio.circulation.domain.representations.ItemProperties;
-import org.folio.circulation.support.http.client.OkapiHttpClient;
 import org.folio.circulation.support.http.client.Response;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
@@ -29,8 +25,6 @@ import org.joda.time.DateTimeZone;
 import io.vertx.core.json.JsonObject;
 
 public final class StorageRecordPreProcessors {
-  private static final OkapiHttpClient client = createWebClient();
-
   // Holdings record property name, item property name, effective property name
   private static final List<Triple<String, String, String>> CALL_NUMBER_PROPERTIES = Arrays.asList(
     new ImmutableTriple<>("callNumber", "itemLevelCallNumber", "callNumber"),
@@ -128,21 +122,9 @@ public final class StorageRecordPreProcessors {
     });
   }
 
-  public static CompletableFuture<JsonObject> persistLoanHistory(JsonObject oldLoan, JsonObject newLoan) {
-    final String operation = oldLoan == null ? "I" : "U";
-
-    final JsonObject historyRecord = new JsonObject()
-      .put("id", UUID.randomUUID().toString())
-      .put("operation", operation)
-      .put("createdDate", getClockManager().getDateTime().toString())
-      .put("loan", newLoan);
-
-    return client.post(loanHistoryStorageUrl(""), historyRecord)
-      .thenApply(response -> newLoan);
-  }
-
   private static CompletableFuture<JsonObject> getHoldingById(String id) {
-    return client.get(holdingsStorageUrl(""), namedParameter("query", format("id==%s", id)))
+    return createWebClient()
+      .get(holdingsStorageUrl(""), namedParameter("query", format("id==%s", id)))
       .thenApply(result -> result
         .map(StorageRecordPreProcessors::getFirstHoldingsRecord)
         .orElse(null));

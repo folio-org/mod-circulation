@@ -38,6 +38,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import api.support.APITestContext;
+import api.support.fakes.storage.Storage;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpServerResponse;
@@ -57,7 +58,7 @@ public class FakeStorageModule extends AbstractVerticle {
   private final boolean hasCollectionDelete;
   private final boolean hasDeleteByQuery;
   private final Collection<String> requiredProperties;
-  private final Map<String, Map<String, JsonObject>> storedResourcesByTenant;
+  private final Storage storage;
   private final String recordTypeName;
   private final Collection<String> uniqueProperties;
   private final Collection<String> disallowedProperties;
@@ -77,7 +78,6 @@ public class FakeStorageModule extends AbstractVerticle {
   FakeStorageModule(
     String rootPath,
     String collectionPropertyName,
-    String tenantId,
     JsonSchemaValidator recordValidator,
     @Deprecated Collection<String> requiredProperties,
     boolean hasCollectionDelete,
@@ -110,8 +110,7 @@ public class FakeStorageModule extends AbstractVerticle {
     this.batchUpdatePreProcessor = batchUpdatePreProcessor;
     this.recordPreProcessors = recordPreProcessors;
 
-    storedResourcesByTenant = new HashMap<>();
-    storedResourcesByTenant.put(tenantId, new HashMap<>());
+    this.storage = Storage.getStorage();
   }
 
   void register(Router router) {
@@ -443,7 +442,7 @@ public class FakeStorageModule extends AbstractVerticle {
   }
 
   private Map<String, JsonObject> getResourcesForTenant(WebContext context) {
-    return storedResourcesByTenant.get(context.getTenantId());
+    return storage.getTenantResources(rootPath, context.getTenantId());
   }
 
   private static JsonObject getJsonFromBody(RoutingContext routingContext) {
