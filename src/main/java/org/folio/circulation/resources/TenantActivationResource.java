@@ -9,8 +9,6 @@ import org.folio.circulation.support.http.server.ServerErrorResponse;
 import org.folio.circulation.support.http.server.WebContext;
 
 import io.vertx.core.json.JsonObject;
-import io.vertx.core.logging.Logger;
-import io.vertx.core.logging.LoggerFactory;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 
