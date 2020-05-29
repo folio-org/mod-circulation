@@ -174,4 +174,12 @@ public class RestAssuredClient {
       .statusCode(expectedStatusCode)
       .extract().response());
   }
+
+  public Response delete(URL location, String requestId) {
+    return toResponse(beginRequest(requestId)
+      .when().delete(location)
+      .then()
+      .log().all()
+      .extract().response());
+  }
 }

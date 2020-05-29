@@ -7,7 +7,7 @@ import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static api.support.matchers.ValidationErrorMatchers.hasUUIDParameter;
 import static org.folio.HttpStatus.HTTP_NO_CONTENT;
-import static org.folio.HttpStatus.HTTP_VALIDATION_ERROR;
+import static org.folio.HttpStatus.HTTP_UNPROCESSABLE_ENTITY;
 import static org.folio.circulation.support.JsonPropertyWriter.write;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.hasItems;
@@ -306,7 +306,7 @@ public class ChangeDueDateByReplacingLoanTests extends APITests {
 
     Response response = loansFixture.attemptToReplaceLoan(loan.getId(), loanToChange);
 
-    assertThat(response, hasStatus(HTTP_VALIDATION_ERROR));
+    assertThat(response, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("item is Declared lost"),
       hasUUIDParameter("itemId", smallAngryPlanet.getId()))));

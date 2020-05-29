@@ -358,6 +358,8 @@ public class FakeOkapi extends AbstractVerticle {
       .withCollectionPropertyName("feefines")
       .create().register(router);
 
+    FakePubSub.register(router);
+
     server.requestHandler(router)
       .listen(PORT_TO_USE, result -> {
         if (result.succeeded()) {

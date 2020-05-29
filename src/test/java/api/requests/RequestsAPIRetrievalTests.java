@@ -15,7 +15,7 @@ import static java.util.function.Function.identity;
 import static org.folio.circulation.domain.representations.ItemProperties.CALL_NUMBER_COMPONENTS;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
-import static org.hamcrest.Matchers.emptyString;
+import static org.hamcrest.Matchers.isEmptyString;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.core.Is.is;
@@ -242,7 +242,7 @@ public class RequestsAPIRetrievalTests extends APITests {
 
     JsonObject representation = requestsFixture.getById(createdRequest.getId()).getJson();
 
-    assertThat(representation.getString("id"), is(not(emptyString())));
+    assertThat(representation.getString("id"), is(not(isEmptyString())));
     assertThat(representation.getString("requestType"), is("Recall"));
     assertThat(representation.getString("fulfilmentPreference"), is("Delivery"));
     assertThat(representation.getString("deliveryAddressTypeId"), is(workAddressType.getId()));
@@ -395,7 +395,7 @@ public class RequestsAPIRetrievalTests extends APITests {
 
     JsonObject representation = allRequests.getFirst();
 
-    assertThat(representation.getString("id"), is(not(emptyString())));
+    assertThat(representation.getString("id"), is(not(isEmptyString())));
     assertThat(representation.getString("requestType"), is("Recall"));
     assertThat(representation.getString("fulfilmentPreference"), is("Delivery"));
     assertThat(representation.getString("deliveryAddressTypeId"), is(workAddressType.getId()));

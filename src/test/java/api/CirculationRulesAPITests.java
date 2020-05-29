@@ -1,6 +1,5 @@
 package api;
 
-import static org.hamcrest.CoreMatchers.containsStringIgnoringCase;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.core.Is.is;
@@ -422,7 +421,8 @@ public class CirculationRulesAPITests extends APITests {
 
     JsonObject json = new JsonObject(response.getBody());
 
-    assertThat(json.getString("message"), containsStringIgnoringCase("tab"));
+    assertThat(json.getString("message"),
+      is("Tabulator character is not allowed, use spaces instead."));
     assertThat(json.getInteger("line"), is(1));
     assertThat(json.getInteger("column"), is(2));
   }
