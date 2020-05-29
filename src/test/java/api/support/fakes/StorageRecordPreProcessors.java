@@ -1,7 +1,7 @@
-package api.support.fakes.processors;
+package api.support.fakes;
 
 import static api.support.APITestContext.getTenantId;
-import static api.support.fakes.storage.Storage.getStorage;
+import static api.support.fakes.Storage.getStorage;
 import static api.support.http.InterfaceUrls.holdingsStorageUrl;
 import static org.apache.commons.lang3.ObjectUtils.firstNonNull;
 import static org.folio.circulation.domain.representations.ItemProperties.EFFECTIVE_LOCATION_ID;

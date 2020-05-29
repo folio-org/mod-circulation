@@ -8,9 +8,11 @@ import static api.support.fakes.StorageSchema.validatorForLocationInstSchema;
 import static api.support.fakes.StorageSchema.validatorForLocationLibSchema;
 import static api.support.fakes.StorageSchema.validatorForStorageItemSchema;
 import static api.support.fakes.StorageSchema.validatorForStorageLoanSchema;
+import static api.support.fakes.Storage.getStorage;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 import static org.folio.circulation.support.http.server.ForwardResponse.forward;
+import static org.folio.circulation.support.http.server.NoContentResponse.noContent;
 import static org.folio.circulation.support.results.CommonFailures.failedDueToServerError;
 
 import java.io.IOException;
@@ -25,8 +27,6 @@ import org.folio.circulation.support.http.client.OkapiHttpClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import api.support.fakes.processors.LoanHistoryProcessor;
-import api.support.fakes.processors.StorageRecordPreProcessors;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Promise;
 import io.vertx.core.http.HttpServer;
@@ -358,6 +358,8 @@ public class FakeOkapi extends AbstractVerticle {
       .withCollectionPropertyName("feefines")
       .create().register(router);
 
+    router.delete("/_/tenant").handler(this::removeAllData);
+
     FakePubSub.register(router);
 
     server.requestHandler(router)
@@ -478,5 +480,11 @@ public class FakeOkapi extends AbstractVerticle {
 
     batchUpdateRequest.put("requests", requestsCopy.addAll(requests));
     return batchUpdateRequest;
+  }
+
+  private void removeAllData(RoutingContext routingContext) {
+    getStorage().removeAll();
+
+    noContent().writeTo(routingContext.response());
   }
 }

@@ -3,9 +3,10 @@ package api.support;
 import static api.support.APITestContext.deployVerticles;
 import static api.support.APITestContext.getOkapiHeadersFromContext;
 import static api.support.APITestContext.undeployVerticles;
-import static api.support.fakes.processors.LoanHistoryProcessor.setLoanHistoryEnabled;
+import static api.support.fakes.LoanHistoryProcessor.setLoanHistoryEnabled;
 import static api.support.http.InterfaceUrls.circulationRulesUrl;
 import static api.support.http.ResourceClient.forLoanHistoryStorage;
+import static api.support.http.ResourceClient.forTenantStorage;
 import static api.support.http.api.support.NamedQueryStringParameter.namedParameter;
 import static org.folio.circulation.domain.representations.LoanProperties.PATRON_GROUP_AT_CHECKOUT;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -36,7 +37,6 @@ import org.slf4j.LoggerFactory;
 
 import api.support.builders.LoanPolicyBuilder;
 import api.support.builders.NoticePolicyBuilder;
-import api.support.fakes.storage.Storage;
 import api.support.fakes.FakePubSub;
 import api.support.fixtures.AddressTypesFixture;
 import api.support.fixtures.CancellationReasonsFixture;
@@ -302,8 +302,7 @@ public abstract class APITests {
 
   @After
   public void afterEach() {
-    // Use storage directly to decrease amount of network connections
-    Storage.getStorage().removeAll();
+    forTenantStorage().deleteAll();
 
     mockClockManagerToReturnDefaultDateTime();
   }

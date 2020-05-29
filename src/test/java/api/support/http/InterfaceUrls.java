@@ -271,4 +271,8 @@ public class InterfaceUrls {
   public static URL checkInStorage(String subPath) {
     return APITestContext.viaOkapiModuleUrl("/check-in-storage/check-ins" + subPath);
   }
+
+  public static URL tenantStorage(String subPath) {
+    return APITestContext.viaOkapiModuleUrl("/_/tenant");
+  }
 }

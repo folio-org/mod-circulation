@@ -228,6 +228,10 @@ public class ResourceClient {
       "checkIns");
   }
 
+  public static ResourceClient forTenantStorage() {
+    return new ResourceClient(InterfaceUrls::tenantStorage, "");
+  }
+
   private ResourceClient(UrlMaker urlMaker, String collectionArrayPropertyName) {
     this.urlMaker = urlMaker;
     this.collectionArrayPropertyName = collectionArrayPropertyName;

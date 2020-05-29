@@ -1,7 +1,7 @@
-package api.support.fakes.processors;
+package api.support.fakes;
 
 import static api.support.APITestContext.getTenantId;
-import static api.support.fakes.storage.Storage.getStorage;
+import static api.support.fakes.Storage.getStorage;
 import static api.support.http.InterfaceUrls.loanHistoryStorageUrl;
 import static org.folio.circulation.support.ClockManager.getClockManager;
 

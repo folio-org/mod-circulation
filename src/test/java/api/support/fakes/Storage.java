@@ -1,24 +1,24 @@
-package api.support.fakes.storage;
+package api.support.fakes;
 
 import java.util.HashMap;
 import java.util.Map;
 
 import io.vertx.core.json.JsonObject;
 
-public final class Storage {
+final class Storage {
   private static final Storage storage = new Storage();
 
   private final Map<String, Map<String, JsonObject>> resources = new HashMap<>();
 
-  public static Storage getStorage() {
+  static Storage getStorage() {
     return storage;
   }
 
-  public Map<String, JsonObject> getTenantResources(String rootPath, String tenant) {
+  Map<String, JsonObject> getTenantResources(String rootPath, String tenant) {
     return resources.computeIfAbsent(getKey(rootPath, tenant), k -> new HashMap<>());
   }
 
-  public void removeAll() {
+  void removeAll() {
     resources.clear();
   }
 
