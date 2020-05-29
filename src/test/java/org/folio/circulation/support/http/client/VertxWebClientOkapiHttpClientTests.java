@@ -23,7 +23,7 @@ import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.emptyOrNullString;
+import static org.hamcrest.Matchers.isEmptyOrNullString;
 
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -162,7 +162,7 @@ public class VertxWebClientOkapiHttpClientTests {
     final Response response = postCompleted.get(2, SECONDS).value();
 
     assertThat(response, hasStatus(HTTP_NO_CONTENT));
-    assertThat(response.getBody(), emptyOrNullString());
+    assertThat(response.getBody(), isEmptyOrNullString());
   }
 
   @Test

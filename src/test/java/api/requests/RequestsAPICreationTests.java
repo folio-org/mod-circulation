@@ -4,7 +4,6 @@ import static api.support.builders.RequestBuilder.OPEN_NOT_YET_FILLED;
 import static api.support.http.CqlQuery.exactMatch;
 import static api.support.http.Limit.limit;
 import static api.support.http.Offset.noOffset;
-import static api.support.matchers.EventMatchers.isValidLoanDueDateChangedEvent;
 import static api.support.matchers.JsonObjectMatcher.hasJsonPath;
 import static api.support.matchers.PatronNoticeMatcher.hasEmailNoticeProperties;
 import static api.support.matchers.ResponseStatusCodeMatcher.hasStatus;
@@ -28,8 +27,7 @@ import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
-import static org.hamcrest.Matchers.emptyString;
-import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.isEmptyString;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertTrue;
@@ -75,7 +73,6 @@ import api.support.builders.NoticePolicyBuilder;
 import api.support.builders.RequestBuilder;
 import api.support.builders.UserBuilder;
 import api.support.builders.UserManualBlockBuilder;
-import api.support.fakes.FakePubSub;
 import api.support.fixtures.CheckInFixture;
 import api.support.fixtures.ItemExamples;
 import api.support.fixtures.ItemsFixture;
@@ -510,7 +507,7 @@ public class RequestsAPICreationTests extends APITests {
 
     JsonObject representation = createdRequest.getJson();
 
-    assertThat(representation.getString("id"), is(not(emptyString())));
+    assertThat(representation.getString("id"), is(not(isEmptyString())));
     assertThat(representation.getString("requestType"), is("Recall"));
     assertThat(representation.getString("fulfilmentPreference"), is("Delivery"));
     assertThat(representation.getString("deliveryAddressTypeId"), is(work.getId()));
@@ -2028,50 +2025,6 @@ public class RequestsAPICreationTests extends APITests {
       assertThat(actualRequest, hasJsonPath("requestType", "Page"));
       assertThat(actualRequest, hasJsonPath("status", "Open - Not yet filled"));
     });
-  }
-
-  @Test
-  public void dueDateChangedEventIsPublished() {
-    UUID id = UUID.randomUUID();
-    UUID pickupServicePointId = servicePointsFixture.cd1().getId();
-    UUID isbnIdentifierId = identifierTypesFixture.isbn().getId();
-    String isbnValue = "9780866989732";
-
-    IndividualResource item = itemsFixture.basedUponSmallAngryPlanet(
-      identity(),
-      instanceBuilder -> instanceBuilder.addIdentifier(isbnIdentifierId, isbnValue),
-      itemsFixture.addCallNumberStringComponents());
-
-    IndividualResource loan = checkOutFixture.checkOutByBarcode(item, usersFixture.jessica());
-
-    IndividualResource requester = usersFixture.steve();
-
-    DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
-
-    requestsFixture.place(new RequestBuilder()
-      .withId(id)
-      .open()
-      .recall()
-      .forItem(item)
-      .by(requester)
-      .withRequestDate(requestDate)
-      .fulfilToHoldShelf()
-      .withRequestExpiration(new LocalDate(2017, 7, 30))
-      .withHoldShelfExpiration(new LocalDate(2017, 8, 31))
-      .withPickupServicePointId(pickupServicePointId)
-      .withTags(new RequestBuilder.Tags(asList("new", "important"))));
-
-    Response response = loansClient.getById(loan.getId());
-    JsonObject updatedLoan = response.getJson();
-
-    // There should be two events published - first one for "check out", second one for "recall"
-    List<JsonObject> publishedEvents = Awaitility.await()
-      .atMost(1, TimeUnit.SECONDS)
-      .until(FakePubSub::getPublishedEvents, hasSize(2));
-
-    JsonObject event = publishedEvents.get(1);
-
-    assertThat(event, isValidLoanDueDateChangedEvent(updatedLoan));
   }
 
   private List<IndividualResource> createOneHundredRequests() {

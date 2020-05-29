@@ -23,11 +23,11 @@ public class TenantActivationResource {
   public void enableModuleForTenant(RoutingContext routingContext) {
     PubSubRegistrationService.registerModule(new WebContext(routingContext).getHeaders(),
       routingContext.vertx())
-    .thenRun(() -> created(new JsonObject()).writeTo(routingContext.response()))
-    .exceptionally(throwable -> {
-      ServerErrorResponse.internalError(routingContext.response(), throwable.getLocalizedMessage());
-      return null;
-    });
+      .thenRun(() -> created(new JsonObject()).writeTo(routingContext.response()))
+      .exceptionally(throwable -> {
+        ServerErrorResponse.internalError(routingContext.response(), throwable.getLocalizedMessage());
+        return null;
+      });
   }
 
   public void disableModuleForTenant(RoutingContext routingContext) {

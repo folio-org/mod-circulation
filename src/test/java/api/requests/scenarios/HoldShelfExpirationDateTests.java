@@ -14,7 +14,7 @@ import static org.folio.HttpStatus.HTTP_OK;
 import static org.folio.circulation.support.utils.DateTimeUtil.atEndOfTheDay;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.emptyOrNullString;
+import static org.hamcrest.Matchers.isEmptyOrNullString;
 
 import java.lang.reflect.Method;
 import java.time.Clock;
@@ -327,7 +327,7 @@ public class HoldShelfExpirationDateTests extends APITests{
       storedSecondCheckInRequest.getString("status"), is(OPEN_IN_TRANSIT));
 
     assertThat("request hold shelf expiration date is not set",
-      storedSecondCheckInRequest.getString("holdShelfExpirationDate"), emptyOrNullString());
+      storedSecondCheckInRequest.getString("holdShelfExpirationDate"), isEmptyOrNullString());
   }
 
   @Test
@@ -401,7 +401,7 @@ public class HoldShelfExpirationDateTests extends APITests{
       storedRequest.getString("status"), is(OPEN_IN_TRANSIT));
 
     assertThat("request hold shelf expiration date is not set",
-      storedRequest.getString("holdShelfExpirationDate"), emptyOrNullString());
+      storedRequest.getString("holdShelfExpirationDate"), isEmptyOrNullString());
   }
 
   @Test
@@ -439,7 +439,7 @@ public class HoldShelfExpirationDateTests extends APITests{
       storedRequest.getString("status"), is(OPEN_IN_TRANSIT));
 
     assertThat("request hold shelf expiration date is not set",
-      storedRequest.getString("holdShelfExpirationDate"), emptyOrNullString());
+      storedRequest.getString("holdShelfExpirationDate"), isEmptyOrNullString());
   }
 
   @Test
@@ -474,7 +474,7 @@ public class HoldShelfExpirationDateTests extends APITests{
       storedRequest.getString("status"), is(OPEN_IN_TRANSIT));
 
     assertThat("request hold shelf expiration date is not set",
-      storedRequest.getString("holdShelfExpirationDate"), emptyOrNullString());
+      storedRequest.getString("holdShelfExpirationDate"), isEmptyOrNullString());
 
     checkInFixture.checkInByBarcode(
         new CheckInByBarcodeRequestBuilder()
@@ -492,6 +492,6 @@ public class HoldShelfExpirationDateTests extends APITests{
       storedRequest.getString("status"), is(OPEN_IN_TRANSIT));
 
     assertThat("request hold shelf expiration date is not set",
-      storedRequest.getString("holdShelfExpirationDate"), emptyOrNullString());
+      storedRequest.getString("holdShelfExpirationDate"), isEmptyOrNullString());
   }
 }

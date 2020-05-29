@@ -1,3 +1,4 @@
+
 package org.folio.circulation.domain;
 
 public enum EventType {
@@ -6,4 +7,3 @@ public enum EventType {
   ITEM_DECLARED_LOST,
   LOAN_DUE_DATE_CHANGED
 }
-

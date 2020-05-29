@@ -25,7 +25,7 @@
   <properties>
     <antlr4.version>4.7.2</antlr4.version>
     <drools.version>7.0.0.Final</drools.version>
-    <rmb.version>24.0.0</rmb.version>
+    <rmb.version>30.0.0</rmb.version>
     <vertx.version>3.8.4</vertx.version>
     <log4j2.version>2.13.0</log4j2.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -114,6 +114,16 @@
       <version>1.12.1</version>
     </dependency>
     <dependency>
+      <groupId>org.folio</groupId>
+      <artifactId>mod-pubsub-client</artifactId>
+      <version>1.1.5</version>
+    </dependency>
+    <dependency>
+      <groupId>org.folio</groupId>
+      <artifactId>util</artifactId>
+      <version>${rmb.version}</version>
+    </dependency>
+    <dependency>
       <groupId>org.hamcrest</groupId>
       <artifactId>hamcrest-junit</artifactId>
       <version>2.0.0.0</version>
@@ -130,11 +140,6 @@
       <artifactId>junit</artifactId>
       <version>4.12</version>
       <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.folio</groupId>
-      <artifactId>util</artifactId>
-      <version>29.1.5</version>
     </dependency>
     <dependency>
       <groupId>org.folio</groupId>
@@ -191,12 +196,6 @@
       <artifactId>mockito-core</artifactId>
       <version>3.1.0</version>
       <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.folio</groupId>
-      <artifactId>mod-pubsub-client</artifactId>
-      <version>1.1.5</version>
-      <type>jar</type>
     </dependency>
   </dependencies>
 

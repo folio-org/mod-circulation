@@ -10,11 +10,14 @@ import java.util.List;
 
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.json.JsonObject;
+import io.vertx.core.logging.Logger;
+import io.vertx.core.logging.LoggerFactory;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.BodyHandler;
 
 public class FakePubSub {
+  private static final Logger logger = LoggerFactory.getLogger(FakePubSub.class);
   private static final List<JsonObject> publishedEvents = new ArrayList<>();
   private static final List<JsonObject> createdEventTypes = new ArrayList<>();
   private static final List<JsonObject> registeredPublishers = new ArrayList<>();
@@ -49,7 +52,7 @@ public class FakePubSub {
   }
 
   private static void postTenant(RoutingContext routingContext,
-    List<JsonObject> requestBodyList) {
+                                 List<JsonObject> requestBodyList) {
 
     if (failPubSubRegistration) {
       routingContext.response()

@@ -24,8 +24,8 @@ public class PubSubRegistrationService {
     throw new IllegalStateException();
   }
 
-  public static CompletableFuture<Boolean> registerModule(Map<String, String> headers,
-    Vertx vertx) {
+  public static CompletableFuture<Boolean> registerModule(
+    Map<String, String> headers, Vertx vertx) {
 
     return PubSubClientUtils.registerModule(new OkapiConnectionParams(headers, vertx))
       .whenComplete((registrationAr, throwable) -> {
@@ -37,8 +37,8 @@ public class PubSubRegistrationService {
       });
   }
 
-  public static CompletableFuture<Boolean> unregisterModule(Map<String, String> headers,
-    Vertx vertx) {
+  public static CompletableFuture<Boolean> unregisterModule(
+    Map<String, String> headers, Vertx vertx) {
 
     List<CompletableFuture<Boolean>> list = new ArrayList<>();
 
@@ -56,7 +56,7 @@ public class PubSubRegistrationService {
             } else {
               ModulePubSubUnregisteringException exception =
                 new ModulePubSubUnregisteringException(String.format("Module's publisher for " +
-                  "event type %s was not unregistered from PubSub. HTTP status: %s",
+                    "event type %s was not unregistered from PubSub. HTTP status: %s",
                   eventType.name(), ar.statusCode()));
               logger.error(exception);
               future.completeExceptionally(exception);
