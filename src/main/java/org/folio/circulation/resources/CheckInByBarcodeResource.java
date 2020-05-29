@@ -8,6 +8,7 @@ import org.folio.circulation.domain.notice.session.PatronActionSessionService;
 import org.folio.circulation.domain.representations.CheckInByBarcodeRequest;
 import org.folio.circulation.domain.representations.CheckInByBarcodeResponse;
 import org.folio.circulation.domain.validation.CheckInValidators;
+import org.folio.circulation.services.EventPublisher;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.RouteRegistration;
@@ -45,6 +46,8 @@ public class CheckInByBarcodeResource extends Resource {
 
     final PatronActionSessionService patronActionSessionService =
       PatronActionSessionService.using(clients);
+
+    final EventPublisher eventPublisher = new EventPublisher(routingContext);
 
     refuseWhenLoggedInUserNotPresent(context)
       .next(notUsed -> checkInRequestResult)
@@ -85,6 +88,7 @@ public class CheckInByBarcodeResource extends Resource {
       .thenComposeAsync(r -> r.after(processAdapter::refundLostItemFees))
       .thenComposeAsync(r -> r.after(
         records -> processAdapter.createOverdueFineIfNecessary(records, context)))
+      .thenComposeAsync(r -> r.after(eventPublisher::publishItemCheckedInEvent))
       .thenApply(r -> r.next(requestScheduledNoticeService::rescheduleRequestNotices))
       .thenApply(r -> r.map(CheckInByBarcodeResponse::fromRecords))
       .thenApply(r -> r.map(CheckInByBarcodeResponse::toHttpResponse))

@@ -18,6 +18,7 @@ import java.util.Collection;
 import java.util.Objects;
 
 import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.folio.HttpStatus;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.ValidationErrorFailure;
 import org.folio.circulation.support.http.client.OkapiHttpClient;
