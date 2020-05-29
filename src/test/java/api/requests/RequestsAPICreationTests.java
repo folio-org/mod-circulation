@@ -17,7 +17,7 @@ import static java.util.Arrays.asList;
 import static java.util.function.Function.identity;
 import static org.folio.HttpStatus.HTTP_BAD_REQUEST;
 import static org.folio.HttpStatus.HTTP_CREATED;
-import static org.folio.HttpStatus.HTTP_VALIDATION_ERROR;
+import static org.folio.HttpStatus.HTTP_UNPROCESSABLE_ENTITY;
 import static org.folio.circulation.domain.ItemStatus.PAGED;
 import static org.folio.circulation.domain.RequestType.RECALL;
 import static org.folio.circulation.domain.representations.ItemProperties.CALL_NUMBER_COMPONENTS;
@@ -27,7 +27,7 @@ import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
-import static org.hamcrest.Matchers.emptyString;
+import static org.hamcrest.Matchers.isEmptyString;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertTrue;
@@ -327,7 +327,7 @@ public class RequestsAPICreationTests extends APITests {
       .withPickupServicePointId(pickupServicePointId)
       .withRequesterId(patronId));
 
-    assertThat(postResponse, hasStatus(HTTP_VALIDATION_ERROR));
+    assertThat(postResponse, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
     assertThat(postResponse.getJson(), hasErrorWith(allOf(
       hasMessage("Item does not exist"))));
   }
@@ -344,7 +344,7 @@ public class RequestsAPICreationTests extends APITests {
       .withItemId(itemId)
       .withRequesterId(usersFixture.charlotte().getId()));
 
-    assertThat(postResponse, hasStatus(HTTP_VALIDATION_ERROR));
+    assertThat(postResponse, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
   }
 
   @Test
@@ -359,7 +359,7 @@ public class RequestsAPICreationTests extends APITests {
       .withItemId(itemId)
       .withRequesterId(usersFixture.charlotte().getId()));
 
-    assertThat(postResponse, hasStatus(HTTP_VALIDATION_ERROR));
+    assertThat(postResponse, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
   }
 
   @Test
@@ -378,7 +378,7 @@ public class RequestsAPICreationTests extends APITests {
       .withPickupServicePointId(pickupServicePointId)
       .withRequesterId(rebecca.getId()));
 
-    assertThat(postResponse, hasStatus(HTTP_VALIDATION_ERROR));
+    assertThat(postResponse, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
     assertThat(postResponse.getJson(), hasErrorWith(allOf(
       hasMessage("This requester currently has this item on loan."),
       hasUUIDParameter("itemId", smallAngryPlanet.getId()),
@@ -507,7 +507,7 @@ public class RequestsAPICreationTests extends APITests {
 
     JsonObject representation = createdRequest.getJson();
 
-    assertThat(representation.getString("id"), is(not(emptyString())));
+    assertThat(representation.getString("id"), is(not(isEmptyString())));
     assertThat(representation.getString("requestType"), is("Recall"));
     assertThat(representation.getString("fulfilmentPreference"), is("Delivery"));
     assertThat(representation.getString("deliveryAddressTypeId"), is(work.getId()));
@@ -567,7 +567,7 @@ public class RequestsAPICreationTests extends APITests {
       .withRequestDate(requestDate)
       .by(noUserGroupBob));
 
-    assertThat(recallResponse, hasStatus(HTTP_VALIDATION_ERROR));
+    assertThat(recallResponse, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
 
     assertThat(recallResponse.getJson(), hasErrorWith(allOf(
       hasMessage("A valid patron group is required. PatronGroup ID is null"))));
@@ -593,7 +593,7 @@ public class RequestsAPICreationTests extends APITests {
       .withRequestDate(requestDate)
       .withRequesterId(nonExistentRequesterId));
 
-    assertThat(recallResponse, hasStatus(HTTP_VALIDATION_ERROR));
+    assertThat(recallResponse, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
 
     assertThat(recallResponse.getJson(), hasErrorWith(allOf(
       hasMessage("A valid user and patron group are required. User is null"))));
@@ -618,7 +618,7 @@ public class RequestsAPICreationTests extends APITests {
       .withRequestDate(requestDate)
       .withRequesterId(inactiveCharlotte.getId()));
 
-    assertThat(recallResponse, hasStatus(HTTP_VALIDATION_ERROR));
+    assertThat(recallResponse, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
 
     assertThat(recallResponse.getJson(), hasErrorWith(allOf(
       hasMessage("Inactive users cannot make requests"),
@@ -649,7 +649,7 @@ public class RequestsAPICreationTests extends APITests {
       .withRequestDate(requestDate)
       .withRequesterId(inactiveCharlotte.getId()));
 
-    assertThat(recallResponse, hasStatus(HTTP_VALIDATION_ERROR));
+    assertThat(recallResponse, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
 
     assertThat(recallResponse.getJson(), hasErrorWith(allOf(
       hasMessage("Inactive users cannot make requests"),
@@ -857,7 +857,7 @@ public class RequestsAPICreationTests extends APITests {
       .withRequestExpiration(new LocalDate(2017, 7, 30))
       .withHoldShelfExpiration(new LocalDate(2017, 8, 31)));
 
-    assertThat(postResponse, hasStatus(HTTP_VALIDATION_ERROR));
+    assertThat(postResponse, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
 
     assertThat(postResponse.getJson(), hasErrorWith(allOf(
       hasMessage("Hold Shelf Fulfillment Requests require a Pickup Service Point"))));
@@ -887,7 +887,7 @@ public class RequestsAPICreationTests extends APITests {
       .withHoldShelfExpiration(new LocalDate(2017, 8, 31))
       .withPickupServicePointId(pickupServicePointId));
 
-    assertThat(postResponse, hasStatus(HTTP_VALIDATION_ERROR));
+    assertThat(postResponse, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
 
     assertThat(postResponse.getJson(), hasErrorWith(allOf(
       hasMessage("Service point is not a pickup location"),
@@ -918,7 +918,7 @@ public class RequestsAPICreationTests extends APITests {
       .withHoldShelfExpiration(new LocalDate(2017, 8, 31))
       .withPickupServicePointId(pickupServicePointId));
 
-    assertThat(postResponse, hasStatus(HTTP_VALIDATION_ERROR));
+    assertThat(postResponse, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
 
     assertThat(postResponse.getJson(), hasErrorWith(allOf(
       hasMessage("Pickup service point does not exist"),
@@ -1279,7 +1279,7 @@ public class RequestsAPICreationTests extends APITests {
       .withPickupServicePointId(requestPickupServicePoint.getId())
       .by(jessica));
 
-    assertThat(response, hasStatus(HTTP_VALIDATION_ERROR));
+    assertThat(response, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
     assertThat(
       response.getJson(),
       hasErrorWith(hasMessage("This requester already has an open request for this item"))
@@ -1728,7 +1728,7 @@ public class RequestsAPICreationTests extends APITests {
 
     Response postResponse = requestsClient.attemptCreate(requestBuilder);
 
-    assertThat(postResponse, hasStatus(HTTP_VALIDATION_ERROR));
+    assertThat(postResponse, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
     assertThat(postResponse.getJson(), hasErrorWith(allOf(
       hasMessage("Patron blocked from requesting"))));
       hasParameter("reason", "Display description");
@@ -1837,7 +1837,7 @@ public class RequestsAPICreationTests extends APITests {
 
     Response postResponse = requestsClient.attemptCreate(requestBuilder);
 
-    assertThat(postResponse, hasStatus(HTTP_VALIDATION_ERROR));
+    assertThat(postResponse, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
     assertThat(postResponse.getJson(), hasErrorWith(allOf(
       hasMessage("Patron blocked from requesting"))));
   }
@@ -1861,7 +1861,7 @@ public class RequestsAPICreationTests extends APITests {
 
     Response postResponse = requestsClient.attemptCreate(requestBuilder);
 
-    assertThat(postResponse, hasStatus(HTTP_VALIDATION_ERROR));
+    assertThat(postResponse, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
     assertThat(postResponse.getJson(), hasErrorWith(allOf(
       hasMessage("Recall requests are not allowed for this patron and item combination"))));
   }
@@ -1895,7 +1895,7 @@ public class RequestsAPICreationTests extends APITests {
 
     Response postResponse = requestsClient.attemptCreate(requestBuilder);
 
-    assertThat(postResponse, hasStatus(HTTP_VALIDATION_ERROR));
+    assertThat(postResponse, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
     assertThat(postResponse.getJson(), hasErrorWith(allOf(
       hasMessage("Hold requests are not allowed for this patron and item combination"))));
   }
@@ -1929,7 +1929,7 @@ public class RequestsAPICreationTests extends APITests {
 
     Response postResponse = requestsClient.attemptCreate(requestBuilder);
 
-    assertThat(postResponse, hasStatus(HTTP_VALIDATION_ERROR));
+    assertThat(postResponse, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
     assertThat(postResponse.getJson(), hasErrorWith(allOf(
       hasMessage("Page requests are not allowed for this patron and item combination"))));
   }
@@ -1963,7 +1963,7 @@ public class RequestsAPICreationTests extends APITests {
 
     Response postResponse = requestsClient.attemptCreate(requestBuilder);
 
-    assertThat(postResponse, hasStatus(HTTP_VALIDATION_ERROR));
+    assertThat(postResponse, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
     assertThat(postResponse.getJson(), hasErrorWith(allOf(
       hasMessage(requestType + " requests are not allowed for this patron and item combination"),
       hasParameter("requestType", requestType)
@@ -1983,7 +1983,7 @@ public class RequestsAPICreationTests extends APITests {
       .fulfilToHoldShelf()
       .withPickupServicePointId(servicePointsFixture.cd1().getId()));
 
-    assertThat(response, hasStatus(HTTP_VALIDATION_ERROR));
+    assertThat(response, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("Recall requests are not allowed for this patron and item combination"),
       hasParameter("requestType", "Recall")
@@ -2003,7 +2003,7 @@ public class RequestsAPICreationTests extends APITests {
       .fulfilToHoldShelf()
       .withPickupServicePointId(servicePointsFixture.cd1().getId()));
 
-    assertThat(response, hasStatus(HTTP_VALIDATION_ERROR));
+    assertThat(response, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("Recall requests are not allowed for this patron and item combination"),
       hasParameter("requestType", "Recall"))));

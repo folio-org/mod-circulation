@@ -3,11 +3,11 @@ package org.folio.circulation;
 import java.lang.invoke.MethodHandles;
 
 import org.folio.circulation.resources.ChangeDueDateResource;
-import org.folio.circulation.resources.DeclareClaimedReturnedItemAsMissingResource;
 import org.folio.circulation.resources.CheckInByBarcodeResource;
 import org.folio.circulation.resources.CheckOutByBarcodeResource;
 import org.folio.circulation.resources.CirculationRulesResource;
 import org.folio.circulation.resources.ClaimItemReturnedResource;
+import org.folio.circulation.resources.DeclareClaimedReturnedItemAsMissingResource;
 import org.folio.circulation.resources.DeclareLostResource;
 import org.folio.circulation.resources.DueDateNotRealTimeScheduledNoticeProcessingResource;
 import org.folio.circulation.resources.DueDateScheduledNoticeProcessingResource;
@@ -35,6 +35,7 @@ import org.folio.circulation.resources.RequestHoldShelfClearanceResource;
 import org.folio.circulation.resources.RequestQueueResource;
 import org.folio.circulation.resources.RequestScheduledNoticeProcessingResource;
 import org.folio.circulation.resources.ScheduledAnonymizationProcessingResource;
+import org.folio.circulation.resources.TenantActivationResource;
 import org.folio.circulation.resources.handlers.LoanRelatedFeeFineClosedHandlerResource;
 import org.folio.circulation.support.logging.Logging;
 import org.slf4j.Logger;
@@ -64,6 +65,8 @@ public class CirculationVerticle extends AbstractVerticle {
     HttpClient client = vertx.createHttpClient(new HttpClientOptions().setMaxPoolSize(100));
 
     this.server = vertx.createHttpServer();
+
+    new TenantActivationResource().register(router);
 
     new CheckOutByBarcodeResource("/circulation/check-out-by-barcode",
       client, new RegularCheckOutStrategy()).register(router);

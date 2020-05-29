@@ -1,5 +1,6 @@
 package org.folio.circulation.support.http.server;
 
+import static java.util.stream.Collectors.toMap;
 import static org.folio.circulation.support.http.OkapiHeader.OKAPI_URL;
 import static org.folio.circulation.support.http.OkapiHeader.REQUEST_ID;
 import static org.folio.circulation.support.http.OkapiHeader.TENANT;
@@ -8,6 +9,7 @@ import static org.folio.circulation.support.http.OkapiHeader.USER_ID;
 
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.Map;
 
 import org.folio.circulation.support.InvalidOkapiLocationException;
 import org.folio.circulation.support.Result;
@@ -96,5 +98,10 @@ public class WebContext {
 
   public void writeResultToHttpResponse(Result<HttpResponse> httpResponseResult) {
     httpResponseResult.applySideEffect(this::write, this::write);
+  }
+
+  public Map<String, String> getHeaders() {
+    return routingContext.request().headers().entries().stream()
+      .collect(toMap(entry -> entry.getKey().toLowerCase(), Map.Entry::getValue));
   }
 }

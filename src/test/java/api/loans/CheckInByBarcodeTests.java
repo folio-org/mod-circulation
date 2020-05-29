@@ -12,7 +12,7 @@ import static api.support.matchers.UUIDMatcher.is;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static java.util.Arrays.asList;
-import static org.folio.HttpStatus.HTTP_VALIDATION_ERROR;
+import static org.folio.HttpStatus.HTTP_UNPROCESSABLE_ENTITY;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -265,7 +265,7 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
         .on(DateTime.now())
         .at(UUID.randomUUID()));
 
-    assertThat(response, hasStatus(HTTP_VALIDATION_ERROR));
+    assertThat(response, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
 
     assertThat(response.getJson(), hasErrorWith(hasMessage(
       "No item with barcode 543593485458 exists")));
@@ -287,7 +287,7 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
         .on(DateTime.now())
         .atNoServicePoint());
 
-    assertThat(response, hasStatus(HTTP_VALIDATION_ERROR));
+    assertThat(response, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
 
     assertThat(response.getJson(), hasErrorWith(hasMessage(
         "Checkin request must have a service point id")));
@@ -309,7 +309,7 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
         .on(DateTime.now())
         .at(UUID.randomUUID()));
 
-    assertThat(response, hasStatus(HTTP_VALIDATION_ERROR));
+    assertThat(response, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
 
     assertThat(response.getJson(), hasErrorWith(hasMessage(
       "Checkin request must have an item barcode")));
@@ -331,7 +331,7 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
         .onNoOccasion()
         .at(UUID.randomUUID()));
 
-    assertThat(response, hasStatus(HTTP_VALIDATION_ERROR));
+    assertThat(response, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
 
     assertThat(response.getJson(), hasErrorWith(hasMessage(
       "Checkin request must have an check in date")));
