@@ -34,6 +34,7 @@ import org.slf4j.LoggerFactory;
 
 import api.support.builders.LoanPolicyBuilder;
 import api.support.builders.NoticePolicyBuilder;
+import api.support.fakes.FakePubSub;
 import api.support.fixtures.AddressTypesFixture;
 import api.support.fixtures.CancellationReasonsFixture;
 import api.support.fixtures.ChangeDueDateFixture;
@@ -67,6 +68,7 @@ import api.support.fixtures.RequestsFixture;
 import api.support.fixtures.ScheduledNoticeProcessingClient;
 import api.support.fixtures.ServicePointsFixture;
 import api.support.fixtures.TemplateFixture;
+import api.support.fixtures.TenantActivationFixture;
 import api.support.fixtures.UserManualBlocksFixture;
 import api.support.fixtures.UsersFixture;
 import api.support.http.QueryStringParameter;
@@ -250,6 +252,9 @@ public abstract class APITests {
   protected final ClaimItemReturnedFixture claimItemReturnedFixture = new ClaimItemReturnedFixture(restAssuredClient);
   protected final FeeFineAccountFixture feeFineAccountFixture = new FeeFineAccountFixture();
 
+  protected final TenantActivationFixture tenantActivationFixture =
+    new TenantActivationFixture(restAssuredClient);
+
   protected APITests() {
     this(true);
   }
@@ -295,6 +300,8 @@ public abstract class APITests {
     }
 
     usersFixture.defaultAdmin();
+
+    FakePubSub.clearPublishedEvents();
   }
 
   @AfterClass

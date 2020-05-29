@@ -9,7 +9,7 @@ import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static api.support.matchers.ValidationErrorMatchers.hasUUIDParameter;
 import static java.util.function.Function.identity;
 import static org.folio.HttpStatus.HTTP_NO_CONTENT;
-import static org.folio.HttpStatus.HTTP_VALIDATION_ERROR;
+import static org.folio.HttpStatus.HTTP_UNPROCESSABLE_ENTITY;
 import static org.folio.circulation.domain.representations.RequestProperties.CANCELLATION_REASON_NAME;
 import static org.folio.circulation.domain.representations.RequestProperties.CANCELLATION_REASON_PUBLIC_DESCRIPTION;
 import static org.folio.circulation.support.JsonPropertyWriter.write;
@@ -452,7 +452,7 @@ public class RequestsAPIUpdatingTests extends APITests {
       RequestBuilder.from(createdRequest)
         .withPickupServicePointId(badServicePointId));
 
-    assertThat(putResponse, hasStatus(HTTP_VALIDATION_ERROR));
+    assertThat(putResponse, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
 
     assertThat(putResponse.getJson(), hasErrorWith(allOf(
       hasMessage("Pickup service point does not exist"),

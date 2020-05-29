@@ -14,7 +14,7 @@ import static api.support.matchers.ValidationErrorMatchers.hasNullParameter;
 import static api.support.matchers.ValidationErrorMatchers.hasUUIDParameter;
 import static org.apache.commons.lang3.StringUtils.EMPTY;
 import static org.folio.HttpStatus.HTTP_NOT_FOUND;
-import static org.folio.HttpStatus.HTTP_VALIDATION_ERROR;
+import static org.folio.HttpStatus.HTTP_UNPROCESSABLE_ENTITY;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -87,7 +87,7 @@ public class ChangeDueDateAPITests extends APITests {
         .forLoan(loan.getId())
         .withDueDate(null));
 
-    assertThat(response, hasStatus(HTTP_VALIDATION_ERROR));
+    assertThat(response, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
 
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("A new due date is required in order to change the due date"),
@@ -118,7 +118,7 @@ public class ChangeDueDateAPITests extends APITests {
         .forLoan(loan.getId())
         .withDueDate(newDueDate));
 
-    assertThat(response, hasStatus(HTTP_VALIDATION_ERROR));
+    assertThat(response, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
 
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("Loan is closed"),
@@ -140,7 +140,7 @@ public class ChangeDueDateAPITests extends APITests {
         .forLoan(loan.getId())
         .withDueDate(newDueDate));
 
-    assertThat(response, hasStatus(HTTP_VALIDATION_ERROR));
+    assertThat(response, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
 
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("item is Declared lost"),
@@ -161,7 +161,7 @@ public class ChangeDueDateAPITests extends APITests {
         .forLoan(loan.getId())
         .withDueDate(newDueDate));
 
-    assertThat(response, hasStatus(HTTP_VALIDATION_ERROR));
+    assertThat(response, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
 
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("item is Claimed returned"),
