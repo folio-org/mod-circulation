@@ -3,7 +3,10 @@ package api.support;
 import static api.support.APITestContext.deployVerticles;
 import static api.support.APITestContext.getOkapiHeadersFromContext;
 import static api.support.APITestContext.undeployVerticles;
+import static api.support.fakes.LoanHistoryProcessor.setLoanHistoryEnabled;
 import static api.support.http.InterfaceUrls.circulationRulesUrl;
+import static api.support.http.ResourceClient.forLoanHistoryStorage;
+import static api.support.http.ResourceClient.forTenantStorage;
 import static api.support.http.api.support.NamedQueryStringParameter.namedParameter;
 import static org.folio.circulation.domain.representations.LoanProperties.PATRON_GROUP_AT_CHECKOUT;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -26,7 +29,7 @@ import org.folio.circulation.support.ClockManager;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.joda.time.DateTime;
 import org.junit.After;
-import org.junit.AfterClass;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.slf4j.Logger;
@@ -78,6 +81,8 @@ import io.vertx.core.json.JsonObject;
 
 public abstract class APITests {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
+
+  private static boolean okapiAlreadyDeployed = false;
 
   private final RestAssuredClient restAssuredClient = new RestAssuredClient(
     getOkapiHeadersFromContext());
@@ -165,6 +170,7 @@ public abstract class APITests {
 
   protected final ResourceClient expiredEndSessionClient =
     ResourceClient.forExpiredSessions();
+  protected final ResourceClient loanHistoryClient = forLoanHistoryStorage();
 
   protected final ServicePointsFixture servicePointsFixture
     = new ServicePointsFixture(servicePointsClient);
@@ -257,45 +263,35 @@ public abstract class APITests {
     new TenantActivationFixture(restAssuredClient);
 
   protected APITests() {
-    this(true);
+    this(true, false);
   }
 
-  protected APITests(boolean initialiseCirculationRules) {
+  protected APITests(boolean initialiseCirculationRules, boolean enableLoanHistory) {
     this.initialiseCirculationRules = initialiseCirculationRules;
+    setLoanHistoryEnabled(enableLoanHistory);
   }
 
   @BeforeClass
   public static void beforeAll() throws InterruptedException, ExecutionException,
     TimeoutException {
 
-    deployVerticles();
+    if (okapiAlreadyDeployed) {
+      return;
+    }
 
-    //Delete everything first just in case
-    deleteAllRecords();
+    deployVerticles();
+    Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+      try {
+        undeployVerticles();
+      } catch (Exception ex) {
+        Assert.fail("Failed to undeploy verticle: " + ex);
+      }
+    }));
+    okapiAlreadyDeployed = true;
   }
 
   @Before
   public void beforeEach() throws InterruptedException {
-    requestsClient.deleteAll();
-    loansClient.deleteAll();
-
-    itemsClient.deleteAll();
-    holdingsClient.deleteAll();
-    instancesClient.deleteAll();
-    configClient.deleteAll();
-    accountsClient.deleteAll();
-    feeFinesClient.deleteAll();
-    feeFineOwnersClient.deleteAll();
-    feeFineActionsClient.deleteAll();
-
-    //TODO: Only cleans up reference records, move items, holdings records
-    // and instances into here too
-    itemsFixture.cleanUp();
-
-    usersClient.deleteAllIndividually();
-
-    checkInOperationClient.deleteAll();
-
     if (initialiseCirculationRules) {
       useDefaultRollingPolicyCirculationRules();
     }
@@ -305,59 +301,10 @@ public abstract class APITests {
     FakePubSub.clearPublishedEvents();
   }
 
-  @AfterClass
-  public static void afterAll() throws InterruptedException, ExecutionException,
-    TimeoutException {
-
-    deleteOftenCreatedRecords();
-
-    undeployVerticles();
-  }
-
   @After
   public void afterEach() {
-    requestsClient.deleteAll();
-    loansClient.deleteAll();
+    forTenantStorage().deleteAll();
 
-    itemsClient.deleteAll();
-    holdingsClient.deleteAll();
-    instancesClient.deleteAll();
-    configClient.deleteAll();
-    patronNoticesClient.deleteAll();
-    scheduledNoticesClient.deleteAll();
-    patronSessionRecordsClient.deleteAllIndividually();
-    templateFixture.deleteAll();
-
-    //TODO: Only cleans up reference records, move items, holdings records
-    // and instances into here too
-    itemsFixture.cleanUp();
-
-    materialTypesFixture.cleanUp();
-    loanTypesFixture.cleanUp();
-
-    locationsFixture.cleanUp();
-    servicePointsFixture.cleanUp();
-
-    loanPoliciesFixture.cleanUp();
-    noticePoliciesFixture.cleanUp();
-    requestPoliciesFixture.cleanUp();
-    overdueFinePoliciesFixture.cleanUp();
-    lostItemFeePoliciesFixture.cleanUp();
-    loanPolicyClient.deleteAll();
-
-    usersFixture.cleanUp();
-
-    addressTypesFixture.cleanUp();
-    patronGroupsFixture.cleanUp();
-
-    cancellationReasonsFixture.cleanUp();
-    instancesFixture.cleanUp();
-    userManualBlocksFixture.cleanUp();
-
-    feeFineOwnerFixture.cleanUp();
-    feeFineTypeFixture.cleanUp();
-    feeFineActionsClient.deleteAll();
-    accountsClient.deleteAll();
     mockClockManagerToReturnDefaultDateTime();
   }
 

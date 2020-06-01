@@ -56,6 +56,10 @@ public class InterfaceUrls {
     return APITestContext.viaOkapiModuleUrl("/loan-storage/loans" + subPath);
   }
 
+  public static URL loanHistoryStorageUrl(String subPath) {
+    return APITestContext.viaOkapiModuleUrl("/loan-storage/loan-history" + subPath);
+  }
+
   static URL requestStorageUrl(String subPath) {
     return APITestContext.viaOkapiModuleUrl("/request-storage/requests" + subPath);
   }
@@ -266,5 +270,9 @@ public class InterfaceUrls {
 
   public static URL checkInStorage(String subPath) {
     return APITestContext.viaOkapiModuleUrl("/check-in-storage/check-ins" + subPath);
+  }
+
+  public static URL tenantStorage(String subPath) {
+    return APITestContext.viaOkapiModuleUrl("/_/tenant");
   }
 }

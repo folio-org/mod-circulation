@@ -44,7 +44,7 @@ public class LoanAPIPolicyTests extends APITests {
   private static UUID lip2;
 
   public LoanAPIPolicyTests() {
-    super(false);
+    super(false, false);
   }
 
   //TODO: Split into multiple tests
