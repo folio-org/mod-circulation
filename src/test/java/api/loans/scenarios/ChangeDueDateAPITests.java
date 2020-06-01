@@ -4,6 +4,7 @@ import static api.support.fixtures.TemplateContextMatchers.getItemContextMatcher
 import static api.support.fixtures.TemplateContextMatchers.getLoanContextMatchers;
 import static api.support.fixtures.TemplateContextMatchers.getLoanPolicyContextMatchers;
 import static api.support.fixtures.TemplateContextMatchers.getUserContextMatchers;
+import static api.support.matchers.EventMatchers.isValidLoanDueDateChangedEvent;
 import static api.support.matchers.LoanMatchers.isOpen;
 import static api.support.matchers.PatronNoticeMatcher.hasEmailNoticeProperties;
 import static api.support.matchers.ResponseStatusCodeMatcher.hasStatus;
@@ -18,6 +19,7 @@ import static org.folio.HttpStatus.HTTP_UNPROCESSABLE_ENTITY;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.hasSize;
 import static org.joda.time.Period.weeks;
 
 import java.util.Arrays;
@@ -46,6 +48,7 @@ import api.support.builders.LostItemFeePolicyBuilder;
 import api.support.builders.NoticeConfigurationBuilder;
 import api.support.builders.NoticePolicyBuilder;
 import api.support.builders.RequestBuilder;
+import api.support.fakes.FakePubSub;
 import api.support.fixtures.ItemExamples;
 import api.support.http.InventoryItemResource;
 import io.vertx.core.json.JsonObject;
@@ -258,6 +261,27 @@ public class ChangeDueDateAPITests extends APITests {
 
     assertThat(sentNotices, hasItems(
       hasEmailNoticeProperties(steve.getId(), templateId, matchers)));
+  }
+
+  @Test
+  public void dueDateChangedEventIsPublished() {
+    final DateTime newDueDate = dueDate.plus(Period.days(14));
+    changeDueDateFixture.changeDueDate(new ChangeDueDateRequestBuilder()
+      .forLoan(loan.getId())
+      .withDueDate(newDueDate));
+
+    Response response = loansClient.getById(loan.getId());
+    JsonObject updatedLoan = response.getJson();
+
+    // There should be two events published - first one for "check out",
+    // second one for "change due date"
+    List<JsonObject> publishedEvents = Awaitility.await()
+      .atMost(1, TimeUnit.SECONDS)
+      .until(FakePubSub::getPublishedEvents, hasSize(2));
+
+    JsonObject event = publishedEvents.get(1);
+
+    assertThat(event, isValidLoanDueDateChangedEvent(updatedLoan));
   }
 
   private void chargeFeesForLostItemToKeepLoanOpen() {

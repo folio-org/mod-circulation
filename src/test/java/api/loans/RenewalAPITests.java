@@ -12,6 +12,7 @@ import static api.support.fixtures.CalendarExamples.END_TIME_SECOND_PERIOD;
 import static api.support.fixtures.CalendarExamples.START_TIME_FIRST_PERIOD;
 import static api.support.fixtures.CalendarExamples.START_TIME_SECOND_PERIOD;
 import static api.support.fixtures.CalendarExamples.WEDNESDAY_DATE;
+import static api.support.matchers.EventMatchers.isValidLoanDueDateChangedEvent;
 import static api.support.matchers.ItemStatusCodeMatcher.hasItemStatus;
 import static api.support.matchers.PatronNoticeMatcher.hasEmailNoticeProperties;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
@@ -68,6 +69,7 @@ import api.support.builders.LoanPolicyBuilder;
 import api.support.builders.NoticeConfigurationBuilder;
 import api.support.builders.NoticePolicyBuilder;
 import api.support.builders.RequestBuilder;
+import api.support.fakes.FakePubSub;
 import api.support.fixtures.ConfigurationExample;
 import api.support.fixtures.ItemExamples;
 import api.support.fixtures.TemplateContextMatchers;
@@ -1426,6 +1428,26 @@ abstract class RenewalAPITests extends APITests {
     List<JsonObject> createdAccounts = accountsClient.getAll();
 
     assertThat("Fee/fine record shouldn't have been created", createdAccounts, hasSize(0));
+  }
+
+  @Test
+  public void dueDateChangedEventIsPublished() {
+    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final IndividualResource jessica = usersFixture.jessica();
+    final IndividualResource loan = checkOutFixture.checkOutByBarcode(smallAngryPlanet, jessica,
+      new DateTime(2018, 4, 21, 11, 21, 43, DateTimeZone.UTC));
+
+    final JsonObject renewedLoan = renew(smallAngryPlanet, jessica).getJson();
+
+    // There should be two events published - first one for "check out",
+    // second one for "change due date"
+    List<JsonObject> publishedEvents = Awaitility.await()
+      .atMost(1, TimeUnit.SECONDS)
+      .until(FakePubSub::getPublishedEvents, hasSize(2));
+
+    JsonObject event = publishedEvents.get(1);
+
+    assertThat(event, isValidLoanDueDateChangedEvent(renewedLoan));
   }
 
   private void checkRenewalAttempt(DateTime expectedDueDate, UUID dueDateLimitedPolicyId) {

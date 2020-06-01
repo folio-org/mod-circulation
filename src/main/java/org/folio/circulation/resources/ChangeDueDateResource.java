@@ -17,6 +17,7 @@ import org.folio.circulation.domain.notice.schedule.DueDateScheduledNoticeServic
 import org.folio.circulation.domain.representations.ChangeDueDateRequest;
 import org.folio.circulation.domain.validation.ItemStatusValidator;
 import org.folio.circulation.domain.validation.LoanValidator;
+import org.folio.circulation.services.EventPublisher;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.RouteRegistration;
@@ -66,6 +67,8 @@ public class ChangeDueDateResource extends Resource {
 
     final LoanNoticeSender loanNoticeSender = LoanNoticeSender.using(clients);
 
+    final EventPublisher eventPublisher = new EventPublisher(routingContext);
+
     return succeeded(request)
       .after(r -> loanRepository.getById(r.getLoanId()))
       .thenApply(LoanValidator::refuseWhenLoanIsClosed)
@@ -74,6 +77,7 @@ public class ChangeDueDateResource extends Resource {
       .thenApply(itemStatusValidator::refuseWhenItemIsClaimedReturned)
       .thenApply(r -> changeDueDate(r, request))
       .thenComposeAsync(r -> r.after(loanRepository::updateLoan))
+      .thenComposeAsync(r -> r.after(eventPublisher::publishDueDateChangedEvent))
       .thenApply(r -> r.next(scheduledNoticeService::rescheduleDueDateNotices))
       .thenCompose(r -> r.after(loanNoticeSender::sendManualDueDateChangeNotice));
   }

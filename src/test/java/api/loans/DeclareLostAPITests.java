@@ -2,6 +2,7 @@ package api.loans;
 
 import static api.support.http.CqlQuery.exactMatch;
 import static api.support.http.CqlQuery.queryFromTemplate;
+import static api.support.matchers.EventMatchers.isValidItemDeclaredLostEvent;
 import static api.support.matchers.ItemMatchers.isLostAndPaid;
 import static api.support.matchers.JsonObjectMatcher.hasJsonPath;
 import static api.support.matchers.LoanMatchers.hasLoanProperty;
@@ -25,9 +26,11 @@ import static org.joda.time.Seconds.seconds;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
+import org.awaitility.Awaitility;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 import org.hamcrest.Matcher;
@@ -40,6 +43,7 @@ import api.support.APITests;
 import api.support.MultipleJsonRecords;
 import api.support.builders.DeclareItemLostRequestBuilder;
 import api.support.builders.LostItemFeePolicyBuilder;
+import api.support.fakes.FakePubSub;
 import api.support.http.InventoryItemResource;
 import io.vertx.core.json.JsonObject;
 import junitparams.JUnitParamsRunner;
@@ -391,6 +395,29 @@ public class DeclareLostAPITests extends APITests {
 
     verifyLoanIsClosed(loan.getId());
     assertNoFeeAssignedForLoan(loan.getId());
+  }
+
+  @Test
+  public void declaredLostEventIsPublished() {
+    final IndividualResource loanIndividualResource = checkOutFixture
+      .checkOutByBarcode(itemsFixture.basedUponNod(), usersFixture.jessica());
+
+    final DeclareItemLostRequestBuilder builder = new DeclareItemLostRequestBuilder()
+      .forLoanId(loanIndividualResource.getId())
+      .on(DateTime.now())
+      .withNoComment();
+    declareLostFixtures.declareItemLost(builder);
+
+    // There should be two events published - first one for "check out",
+    // second one for "declared lost"
+    List<JsonObject> publishedEvents = Awaitility.await()
+      .atMost(1, TimeUnit.SECONDS)
+      .until(FakePubSub::getPublishedEvents, hasSize(2));
+
+    JsonObject event = publishedEvents.get(1);
+    JsonObject loan = loanIndividualResource.getJson();
+
+    assertThat(event, isValidItemDeclaredLostEvent(loan));
   }
 
   private List<JsonObject> getAccountsForLoan(UUID loanId) {
