@@ -1,5 +1,6 @@
 package api.requests;
 
+import static api.support.matchers.EventMatchers.isValidLoanDueDateChangedEvent;
 import static api.support.matchers.PatronNoticeMatcher.hasEmailNoticeProperties;
 import static api.support.matchers.ResponseStatusCodeMatcher.hasStatus;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
@@ -17,6 +18,7 @@ import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.core.Is.is;
 
 import java.net.HttpURLConnection;
@@ -45,6 +47,7 @@ import api.support.builders.NoticeConfigurationBuilder;
 import api.support.builders.NoticePolicyBuilder;
 import api.support.builders.RequestBuilder;
 import api.support.builders.UserBuilder;
+import api.support.fakes.FakePubSub;
 import api.support.fixtures.TemplateContextMatchers;
 import api.support.http.InventoryItemResource;
 import io.vertx.core.json.JsonArray;
@@ -714,5 +717,51 @@ public class RequestsAPIUpdatingTests extends APITests {
       is(isbnIdentifierId.toString()));
     assertThat(identifiers.getJsonObject(0).getString("value"),
       is(isbnValue));
+  }
+
+  @Test
+  public void dueDateChangedEventIsPublished() {
+
+    final InventoryItemResource temeraire = itemsFixture.basedUponTemeraire();
+
+    IndividualResource loan = checkOutFixture.checkOutByBarcode(temeraire);
+
+    final IndividualResource steve = usersFixture.steve();
+
+    DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
+
+    final IndividualResource exampleServicePoint = servicePointsFixture.cd1();
+
+    IndividualResource createdRequest = requestsClient.create(
+      new RequestBuilder()
+        .recall()
+        .withRequestDate(requestDate)
+        .forItem(temeraire)
+        .by(steve)
+        .fulfilToHoldShelf()
+        .withPickupServicePointId(exampleServicePoint.getId())
+        .withRequestExpiration(new LocalDate(2017, 7, 30))
+        .withHoldShelfExpiration(new LocalDate(2017, 8, 31)));
+
+    final IndividualResource charlotte = usersFixture.charlotte();
+
+    requestsClient.replace(createdRequest.getId(),
+      RequestBuilder.from(createdRequest)
+        .hold()
+        .by(charlotte)
+        .withTags(new RequestBuilder.Tags(Arrays.asList("new", "important")))
+    );
+
+    Response response = loansClient.getById(loan.getId());
+    JsonObject updatedLoan = response.getJson();
+
+    // There should be three events published - for "check out", for "recall" and for "replace"
+    List<JsonObject> publishedEvents = Awaitility.await()
+      .atMost(1, TimeUnit.SECONDS)
+      .until(FakePubSub::getPublishedEvents, hasSize(3));
+
+    JsonObject event = publishedEvents.get(2);
+
+    assertThat(event, isValidLoanDueDateChangedEvent(updatedLoan));
   }
 }

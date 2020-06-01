@@ -2,6 +2,7 @@ package api.loans;
 
 import static api.support.APITestContext.getUserId;
 import static api.support.fixtures.AddressExamples.SiriusBlack;
+import static api.support.matchers.EventMatchers.isValidItemCheckedInEvent;
 import static api.support.matchers.ItemMatchers.isAvailable;
 import static api.support.matchers.OverdueFineMatcher.isValidOverdueFine;
 import static api.support.matchers.PatronNoticeMatcher.hasEmailNoticeProperties;
@@ -56,6 +57,7 @@ import api.support.builders.NoticeConfigurationBuilder;
 import api.support.builders.NoticePolicyBuilder;
 import api.support.builders.OverdueFinePolicyBuilder;
 import api.support.builders.RequestBuilder;
+import api.support.fakes.FakePubSub;
 import api.support.fixtures.TemplateContextMatchers;
 import api.support.http.CqlQuery;
 import api.support.http.InventoryItemResource;
@@ -1047,6 +1049,38 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
     checkInFixture.checkInByBarcode(item);
 
     assertThat(itemsClient.getById(item.getId()).getJson(), isAvailable());
+  }
+
+  @Test
+  public void itemCheckedInEventIsPublished() {
+    final IndividualResource james = usersFixture.james();
+    final UUID checkInServicePointId = servicePointsFixture.cd1().getId();
+    final IndividualResource homeLocation = locationsFixture.basedUponExampleLocation(
+      item -> item.withPrimaryServicePoint(checkInServicePointId));
+    final IndividualResource nod = itemsFixture.basedUponNod(item ->
+      item.withPermanentLocation(homeLocation.getId()));
+
+    DateTime checkOutDate = new DateTime(2020, 1, 18, 18, 0, 0, UTC);
+    DateTime checkInDate = new DateTime(2020, 1, 22, 15, 30, 0, UTC);
+
+    checkOutFixture.checkOutByBarcode(nod, james, checkOutDate);
+
+    CheckInByBarcodeResponse checkInResponse = checkInFixture.checkInByBarcode(
+      new CheckInByBarcodeRequestBuilder()
+        .forItem(nod)
+        .on(checkInDate)
+        .at(checkInServicePointId));
+
+    JsonObject checkedInLoan = checkInResponse.getLoan();
+
+    // There should be two events published - first one for "check out", second one for "check in"
+    List<JsonObject> publishedEvents = Awaitility.await()
+      .atMost(1, TimeUnit.SECONDS)
+      .until(FakePubSub::getPublishedEvents, hasSize(2));
+
+    JsonObject event = publishedEvents.get(1);
+
+    assertThat(event, isValidItemCheckedInEvent(checkedInLoan));
   }
 
   private void checkPatronNoticeEvent(
