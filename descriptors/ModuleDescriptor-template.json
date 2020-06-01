@@ -1157,6 +1157,11 @@
       "description": "end patron action session"
     },
     {
+      "permissionName": "circulation.events.post",
+      "displayName": "Circulation - post event",
+      "description": "Post event to handle in circulation"
+    },
+    {
       "permissionName": "circulation.all",
       "displayName": "circulation - all permissions",
       "description": "Entire set of permissions needed to use the circulation",
