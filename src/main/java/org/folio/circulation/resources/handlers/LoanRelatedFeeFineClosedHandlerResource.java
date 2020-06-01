@@ -22,6 +22,7 @@ import org.folio.circulation.resources.Resource;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.RouteRegistration;
+import org.folio.circulation.support.http.server.NoContentResponse;
 import org.folio.circulation.support.http.server.ValidationError;
 import org.folio.circulation.support.http.server.WebContext;
 import org.folio.circulation.support.results.CommonFailures;
@@ -52,14 +53,13 @@ public class LoanRelatedFeeFineClosedHandlerResource extends Resource {
     createAndValidateRequest(routingContext)
       .after(request -> processEvent(context, request))
       .exceptionally(CommonFailures::failedDueToServerError)
-      .thenAccept(result -> {
-        if (result.failed()) {
-          log.warn("Cannot handle event [{}], error occurred {}",
-            routingContext.getBodyAsString(), result.cause());
-        }
+      .thenApply(r -> r.toFixedValue(NoContentResponse::noContent))
+      .thenAccept(result -> result.applySideEffect(context::write, failure -> {
+        log.error("Cannot handle event [{}], error occurred {}",
+          routingContext.getBodyAsString(), failure);
 
-        context.writeResultToHttpResponse(succeeded(noContent()));
-      });
+        context.write(noContent());
+      }));
   }
 
   private CompletableFuture<Result<Loan>> processEvent(
