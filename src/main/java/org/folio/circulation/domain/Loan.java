@@ -7,6 +7,7 @@ import static org.folio.circulation.domain.FeeAmount.noFeeAmount;
 import static org.folio.circulation.domain.LoanAction.CHECKED_IN;
 import static org.folio.circulation.domain.LoanAction.CHECKED_OUT;
 import static org.folio.circulation.domain.LoanAction.CLAIMED_RETURNED;
+import static org.folio.circulation.domain.LoanAction.CLOSED_LOAN;
 import static org.folio.circulation.domain.LoanAction.DECLARED_LOST;
 import static org.folio.circulation.domain.LoanAction.MISSING;
 import static org.folio.circulation.domain.LoanAction.RENEWED;
@@ -566,5 +567,10 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
       .map(Account::getRemaining)
       .reduce(FeeAmount::add)
       .orElse(noFeeAmount());
+  }
+
+  public void closeLoanAsLostAndPaid() {
+    closeLoan(CLOSED_LOAN);
+    changeItemStatusForItemAndLoan(ItemStatus.LOST_AND_PAID);
   }
 }

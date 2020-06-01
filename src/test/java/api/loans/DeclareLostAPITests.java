@@ -3,6 +3,7 @@ package api.loans;
 import static api.support.http.CqlQuery.exactMatch;
 import static api.support.http.CqlQuery.queryFromTemplate;
 import static api.support.matchers.EventMatchers.isValidItemDeclaredLostEvent;
+import static api.support.matchers.ItemMatchers.isLostAndPaid;
 import static api.support.matchers.JsonObjectMatcher.hasJsonPath;
 import static api.support.matchers.LoanMatchers.hasLoanProperty;
 import static api.support.matchers.LoanMatchers.hasStatus;
@@ -14,6 +15,7 @@ import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static api.support.matchers.ValidationErrorMatchers.hasParameter;
 import static com.jayway.jsonpath.matchers.JsonPathMatchers.hasNoJsonPath;
 import static org.hamcrest.CoreMatchers.allOf;
+import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.CoreMatchers.nullValue;
@@ -38,6 +40,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import api.support.APITests;
+import api.support.MultipleJsonRecords;
 import api.support.builders.DeclareItemLostRequestBuilder;
 import api.support.builders.LostItemFeePolicyBuilder;
 import api.support.fakes.FakePubSub;
@@ -49,6 +52,11 @@ import junitparams.converters.Nullable;
 
 @RunWith(JUnitParamsRunner.class)
 public class DeclareLostAPITests extends APITests {
+
+  public DeclareLostAPITests() {
+    super(true, true);
+  }
+
   @Before
   public void activatePolicy() {
     useLostItemPolicy(lostItemFeePoliciesFixture.chargeFee().getId());
@@ -320,7 +328,7 @@ public class DeclareLostAPITests extends APITests {
     "null",
     "0.0"
   })
-  public void shouldNotAssignItemAnotherCostFeeIfAmountMissing(@Nullable Double itemFee) {
+  public void shouldNotAssignItemSetCostFeeIfAmountMissing(@Nullable Double itemFee) {
     final LostItemFeePolicyBuilder lostItemPolicy = lostItemFeePoliciesFixture
       .facultyStandardPolicy()
       .withName("Declared lost fee test policy")
@@ -374,7 +382,7 @@ public class DeclareLostAPITests extends APITests {
   }
 
   @Test
-  public void canDeclareItemLostIfLostPolicyChargeAmountMissing() {
+  public void canDeclareItemLostIfLostPolicyItemFeeAmountMissing() {
     final LostItemFeePolicyBuilder lostItemPolicy = lostItemFeePoliciesFixture
       .facultyStandardPolicy()
       .withName("Declared lost fee test policy")
@@ -467,6 +475,8 @@ public class DeclareLostAPITests extends APITests {
 
   private void verifyLoanIsClosed(UUID loanId) {
     final JsonObject loanFromStorage = loansFixture.getLoanById(loanId).getJson();
+    final JsonObject itemFromStorage = itemsClient.getById(
+      UUID.fromString(loanFromStorage.getString("itemId"))).getJson();
 
     assertThat(loanFromStorage, allOf(
       isClosed(),
@@ -474,6 +484,25 @@ public class DeclareLostAPITests extends APITests {
       hasNoJsonPath("actionComment"),
       hasNoJsonPath("returnDate"),
       hasNoJsonPath("checkinServicePointId")
+    ));
+
+    assertThat(itemFromStorage, isLostAndPaid());
+
+    verifyDeclaredLostHistoryRecordCreated(loanId);
+  }
+
+  private void verifyDeclaredLostHistoryRecordCreated(UUID loanId) {
+    final MultipleJsonRecords loanHistory = loanHistoryClient
+      .getMany(queryFromTemplate("loan.id==%s and operation==U", loanId));
+
+    assertThat(loanHistory, hasItems(
+      allOf(
+        hasJsonPath("loan.action", "declaredLost"),
+        hasJsonPath("loan.itemStatus", "Declared lost")),
+      allOf(
+        hasJsonPath("loan.status.name", "Closed"),
+        hasJsonPath("loan.action", "closedLoan"),
+        hasJsonPath("loan.itemStatus", "Lost and paid"))
     ));
   }
 }
