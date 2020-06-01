@@ -235,7 +235,7 @@ public class LostItemFeePolicyBuilder extends JsonBuilder implements Builder {
       this.feeRefundInterval);
   }
 
-  public LostItemFeePolicyBuilder chargeProcessingFee() {
+  public LostItemFeePolicyBuilder chargeProcessingFee(Double amount) {
     return new LostItemFeePolicyBuilder(
       this.id,
       this.name,
@@ -243,7 +243,7 @@ public class LostItemFeePolicyBuilder extends JsonBuilder implements Builder {
       this.itemAgedLostOverdue,
       this.patronBilledAfterAgedLost,
       this.chargeAmountItem,
-      this.lostItemProcessingFee,
+      amount,
       true,
       this.chargeAmountItemSystem,
       this.lostItemChargeFeeFine,
@@ -263,7 +263,7 @@ public class LostItemFeePolicyBuilder extends JsonBuilder implements Builder {
       this.itemAgedLostOverdue,
       this.patronBilledAfterAgedLost,
       this.chargeAmountItem,
-      this.lostItemProcessingFee,
+      0.0,
       false,
       this.chargeAmountItemSystem,
       this.lostItemChargeFeeFine,

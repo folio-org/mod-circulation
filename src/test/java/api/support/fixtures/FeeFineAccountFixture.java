@@ -6,6 +6,9 @@ import static api.support.http.ResourceClient.forFeeFineActions;
 
 import java.util.UUID;
 
+import org.folio.circulation.support.http.client.IndividualResource;
+
+import api.support.builders.AccountBuilder;
 import api.support.builders.FeefineActionsBuilder;
 import api.support.http.ResourceClient;
 import io.vertx.core.json.JsonObject;
@@ -14,16 +17,17 @@ public final class FeeFineAccountFixture {
   private final ResourceClient accountsClient = forAccounts();
   private final ResourceClient accountActionsClient = forFeeFineActions();
 
-  public JsonObject getLostItemFeeAccount(UUID loanId) {
-    return accountsClient.getMany(exactMatch("loanId", loanId.toString())
-      .and(exactMatch("feeFineType", "Lost item fee")))
-      .getFirst();
+  public void transferLostItemFee(UUID loanId) {
+    final JsonObject lostItemFeeAccount = getLostItemFeeAccount(loanId);
+    final String accountId = lostItemFeeAccount.getString("id");
+
+    transfer(accountId, lostItemFeeAccount.getDouble("amount"));
   }
 
-  public JsonObject getLostItemProcessingFeeAccount(UUID loanId) {
-    return accountsClient.getMany(exactMatch("loanId", loanId.toString())
-      .and(exactMatch("feeFineType", "Lost item processing fee")))
-      .getFirst();
+  public void transferLostItemFee(UUID loanId, double amount) {
+    final String accountId = getLostItemFeeAccount(loanId).getString("id");
+
+    transfer(accountId, amount);
   }
 
   public void transfer(String accountId, double amount) {
@@ -47,6 +51,26 @@ public final class FeeFineAccountFixture {
       .put("paymentStatus", new JsonObject().put("name", actionType)));
   }
 
+  public void payLostItemFee(UUID loanId) {
+    final JsonObject lostItemFeeAccount = getLostItemFeeAccount(loanId);
+    final String accountId = lostItemFeeAccount.getString("id");
+
+    pay(accountId, lostItemFeeAccount.getDouble("amount"));
+  }
+
+  public void payLostItemFee(UUID loanId, double amount) {
+    final String accountId = getLostItemFeeAccount(loanId).getString("id");
+
+    pay(accountId, amount);
+  }
+
+  public void payLostItemProcessingFee(UUID loanId) {
+    final JsonObject lostItemProcessingFeeAccount = getLostItemProcessingFeeAccount(loanId);
+    final String accountId = lostItemProcessingFeeAccount.getString("id");
+
+    pay(accountId, lostItemProcessingFeeAccount.getDouble("amount"));
+  }
+
   public void pay(String accountId, double amount) {
     final UUID accountUuid = UUID.fromString(accountId);
     final JsonObject account = accountsClient.getById(accountUuid).getJson();
@@ -68,11 +92,33 @@ public final class FeeFineAccountFixture {
       .put("paymentStatus", new JsonObject().put("name", actionType)));
   }
 
-  public void transfer(JsonObject accountJson, double amount) {
-    transfer(accountJson.getString("id"), amount);
+  public IndividualResource createManualFeeForLoan(IndividualResource loan, double amount) {
+    final IndividualResource account = accountsClient.create(new AccountBuilder()
+      .withLoan(loan)
+      .withAmount(amount)
+      .withRemainingFeeFine(amount)
+      .feeFineStatusOpen()
+      .manualFeeFine());
+
+    accountActionsClient.create(new FeefineActionsBuilder()
+      .forAccount(account.getId())
+      .withBalance(amount)
+      .withActionAmount(amount)
+      .withActionType("Manual fee fine")
+      .createdAt("Circ Desk 1"));
+
+    return account;
   }
 
-  public void pay(JsonObject accountJson, double amount) {
-    pay(accountJson.getString("id"), amount);
+  private JsonObject getLostItemFeeAccount(UUID loanId) {
+    return accountsClient.getMany(exactMatch("loanId", loanId.toString())
+      .and(exactMatch("feeFineType", "Lost item fee")))
+      .getFirst();
+  }
+
+  private JsonObject getLostItemProcessingFeeAccount(UUID loanId) {
+    return accountsClient.getMany(exactMatch("loanId", loanId.toString())
+      .and(exactMatch("feeFineType", "Lost item processing fee")))
+      .getFirst();
   }
 }

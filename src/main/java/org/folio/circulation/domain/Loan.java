@@ -43,8 +43,8 @@ import java.util.UUID;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.domain.policy.LoanPolicy;
-import org.folio.circulation.domain.policy.lostitem.LostItemPolicy;
 import org.folio.circulation.domain.policy.OverdueFinePolicy;
+import org.folio.circulation.domain.policy.lostitem.LostItemPolicy;
 import org.folio.circulation.domain.representations.LoanProperties;
 import org.folio.circulation.support.ClockManager;
 import org.folio.circulation.support.Result;
@@ -53,7 +53,6 @@ import org.joda.time.DateTime;
 import io.vertx.core.json.JsonObject;
 
 public class Loan implements ItemRelatedRecord, UserRelatedRecord {
-
   private final JsonObject representation;
   private final Item item;
   private final User user;
@@ -446,6 +445,10 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     changeItemStatusForItemAndLoan(ItemStatus.DECLARED_LOST);
     changeDeclaredLostDateTime(dateTime);
     return this;
+  }
+
+  public boolean isDeclaredLost() {
+    return getItem().getStatus() == ItemStatus.DECLARED_LOST;
   }
 
   public boolean hasItemWithStatus(ItemStatus itemStatus) {

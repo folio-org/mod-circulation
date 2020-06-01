@@ -36,6 +36,7 @@ import org.folio.circulation.resources.RequestQueueResource;
 import org.folio.circulation.resources.RequestScheduledNoticeProcessingResource;
 import org.folio.circulation.resources.ScheduledAnonymizationProcessingResource;
 import org.folio.circulation.resources.TenantActivationResource;
+import org.folio.circulation.resources.handlers.LoanRelatedFeeFineClosedHandlerResource;
 import org.folio.circulation.support.logging.Logging;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -128,6 +129,9 @@ public class CirculationVerticle extends AbstractVerticle {
     new ClaimItemReturnedResource(client).register(router);
     new ChangeDueDateResource(client).register(router);
     new DeclareClaimedReturnedItemAsMissingResource(client).register(router);
+
+    // Handlers
+    new LoanRelatedFeeFineClosedHandlerResource(client).register(router);
 
     server.requestHandler(router)
       .listen(config().getInteger("port"), result -> {

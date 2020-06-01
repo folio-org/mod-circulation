@@ -2,13 +2,13 @@ package org.folio.circulation.services;
 
 import static org.folio.circulation.domain.FeeFine.LOST_ITEM_FEE_TYPE;
 import static org.folio.circulation.domain.FeeFine.LOST_ITEM_PROCESSING_FEE_TYPE;
+import static org.folio.circulation.domain.FeeFine.lostItemFeeTypes;
 import static org.folio.circulation.support.Result.combineAll;
 import static org.folio.circulation.support.Result.failed;
 import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
@@ -33,8 +33,6 @@ import org.slf4j.LoggerFactory;
 
 public class LostItemFeeChargingService {
   private static final Logger log = LoggerFactory.getLogger(LostItemFeeChargingService.class);
-  private static final List<String> FEE_TYPES_TO_RETRIEVE = Arrays.asList(
-    LOST_ITEM_FEE_TYPE, LOST_ITEM_PROCESSING_FEE_TYPE);
 
   private final LostItemPolicyRepository lostItemPolicyRepository;
   private final FeeFineOwnerRepository feeFineOwnerRepository;
@@ -89,7 +87,7 @@ public class LostItemFeeChargingService {
     Result<ReferenceDataContext> contextResult) {
 
     return contextResult.combineAfter(
-      context -> feeFineRepository.getAutomaticFeeFines(FEE_TYPES_TO_RETRIEVE),
+      context -> feeFineRepository.getAutomaticFeeFines(lostItemFeeTypes()),
       ReferenceDataContext::withFeeFines);
   }
 

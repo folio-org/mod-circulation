@@ -68,8 +68,7 @@ public class CheckInDeclaredLostItemTest extends APITests {
     useLostItemPolicy(lostItemFeePoliciesFixture.create(
       lostItemFeePoliciesFixture.facultyStandardPolicy()
         .withName("Test check in")
-        .chargeProcessingFee()
-        .withLostItemProcessingFee(processingFee)
+        .chargeProcessingFee(processingFee)
         .withNoChargeAmountItem()).getId());
 
     declareItemLost();
@@ -87,15 +86,13 @@ public class CheckInDeclaredLostItemTest extends APITests {
     useLostItemPolicy(lostItemFeePoliciesFixture.create(
       lostItemFeePoliciesFixture.facultyStandardPolicy()
         .withName("Test check in")
-        .chargeProcessingFee()
-        .withLostItemProcessingFee(processingFee)
+        .chargeProcessingFee(processingFee)
         .doNotRefundProcessingFeeWhenReturned()
         .withNoChargeAmountItem()).getId());
 
     declareItemLost();
 
-    feeFineAccountFixture.pay(feeFineAccountFixture
-      .getLostItemProcessingFeeAccount(loan.getId()), processingFee);
+    feeFineAccountFixture.payLostItemProcessingFee(loan.getId());
 
     checkInFixture.checkInByBarcode(item);
 
@@ -117,10 +114,8 @@ public class CheckInDeclaredLostItemTest extends APITests {
 
     declareItemLost();
 
-    feeFineAccountFixture.transfer(feeFineAccountFixture
-      .getLostItemFeeAccount(loan.getId()), setCostFee);
-    feeFineAccountFixture.pay(feeFineAccountFixture
-      .getLostItemProcessingFeeAccount(loan.getId()), processingFee);
+    feeFineAccountFixture.transferLostItemFee(loan.getId());
+    feeFineAccountFixture.payLostItemProcessingFee(loan.getId());
 
     mockClockManagerToReturnFixedDateTime(DateTime.now(DateTimeZone.UTC).plusMinutes(2));
 
@@ -151,17 +146,14 @@ public class CheckInDeclaredLostItemTest extends APITests {
     useLostItemPolicy(lostItemFeePoliciesFixture.create(
       lostItemFeePoliciesFixture.facultyStandardPolicy()
         .withName("Test check in")
-        .chargeProcessingFee()
-        .withLostItemProcessingFee(processingFee)
+        .chargeProcessingFee(processingFee)
         .withSetCost(setCostFee)
         .withNoFeeRefundInterval()).getId());
 
     declareItemLost();
 
-    feeFineAccountFixture.transfer(feeFineAccountFixture
-      .getLostItemFeeAccount(loan.getId()), setCostFee);
-    feeFineAccountFixture.pay(feeFineAccountFixture
-      .getLostItemProcessingFeeAccount(loan.getId()), processingFee);
+    feeFineAccountFixture.transferLostItemFee(loan.getId());
+    feeFineAccountFixture.payLostItemProcessingFee(loan.getId());
 
     checkInFixture.checkInByBarcode(item);
 
@@ -197,9 +189,7 @@ public class CheckInDeclaredLostItemTest extends APITests {
 
     declareItemLost();
 
-    final JsonObject lostItemFeeAccount = feeFineAccountFixture
-      .getLostItemFeeAccount(loan.getId());
-    feeFineAccountFixture.transfer(lostItemFeeAccount.getString("id"), setCostFee);
+    feeFineAccountFixture.transferLostItemFee(loan.getId());
 
     checkInFixture.checkInByBarcode(item);
 
@@ -219,9 +209,7 @@ public class CheckInDeclaredLostItemTest extends APITests {
 
     declareItemLost();
 
-    final JsonObject lostItemFeeAccount = feeFineAccountFixture
-      .getLostItemFeeAccount(loan.getId());
-    feeFineAccountFixture.pay(lostItemFeeAccount.getString("id"), setCostFee);
+    feeFineAccountFixture.payLostItemFee(loan.getId());
 
     checkInFixture.checkInByBarcode(item);
 
@@ -243,10 +231,8 @@ public class CheckInDeclaredLostItemTest extends APITests {
 
     declareItemLost();
 
-    final JsonObject lostItemFeeAccount = feeFineAccountFixture
-      .getLostItemFeeAccount(loan.getId());
-    feeFineAccountFixture.transfer(lostItemFeeAccount, transferAmount);
-    feeFineAccountFixture.pay(lostItemFeeAccount, paymentAmount);
+    feeFineAccountFixture.transferLostItemFee(loan.getId(), transferAmount);
+    feeFineAccountFixture.payLostItemFee(loan.getId(), paymentAmount);
 
     checkInFixture.checkInByBarcode(item);
 
@@ -270,10 +256,8 @@ public class CheckInDeclaredLostItemTest extends APITests {
 
     declareItemLost();
 
-    final JsonObject lostItemFeeAccount = feeFineAccountFixture
-      .getLostItemFeeAccount(loan.getId());
-    feeFineAccountFixture.transfer(lostItemFeeAccount, transferAmount);
-    feeFineAccountFixture.pay(lostItemFeeAccount, paymentAmount);
+    feeFineAccountFixture.transferLostItemFee(loan.getId(), transferAmount);
+    feeFineAccountFixture.payLostItemFee(loan.getId(), paymentAmount);
 
     checkInFixture.checkInByBarcode(item);
 
@@ -296,8 +280,7 @@ public class CheckInDeclaredLostItemTest extends APITests {
     useLostItemPolicy(lostItemFeePoliciesFixture.create(
       lostItemFeePoliciesFixture.facultyStandardPolicy()
         .withName("Test check in")
-        .chargeProcessingFee()
-        .withLostItemProcessingFee(processingFee)
+        .chargeProcessingFee(processingFee)
         .withNoChargeAmountItem()
         .chargeOverdueFineWhenReturned()).getId());
 
@@ -324,8 +307,7 @@ public class CheckInDeclaredLostItemTest extends APITests {
     useLostItemPolicy(lostItemFeePoliciesFixture.create(
       lostItemFeePoliciesFixture.facultyStandardPolicy()
         .withName("Test check in")
-        .chargeProcessingFee()
-        .withLostItemProcessingFee(processingFee)
+        .chargeProcessingFee(processingFee)
         .withNoChargeAmountItem()
         .doNotChargeOverdueFineWhenReturned()).getId());
 
@@ -469,8 +451,7 @@ public class CheckInDeclaredLostItemTest extends APITests {
     useLostItemPolicy(lostItemFeePoliciesFixture.create(
       lostItemFeePoliciesFixture.facultyStandardPolicy()
         .withName("Test check in")
-        .chargeProcessingFee()
-        .withLostItemProcessingFee(processingFee)
+        .chargeProcessingFee(processingFee)
         .withSetCost(itemFee)
         .refundFeesWithinMinutes(1)).getId());
   }

@@ -11,6 +11,10 @@ public final class ItemMatchers {
 
   private ItemMatchers() {}
 
+  public static Matcher<JsonObject> isDeclaredLost() {
+    return hasStatus("Declared lost");
+  }
+
   public static Matcher<JsonObject> isCheckedOut() {
     return hasStatus("Checked out");
   }

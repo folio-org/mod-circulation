@@ -1,0 +1,22 @@
+#%RAML 1.0
+title: Circulation event handlers
+version: v0.1
+protocols: [ HTTP, HTTPS ]
+baseUri: http://localhost:9130
+
+documentation:
+  - title: Circulation Event Handlers Endpoints
+    content: <b>API to handle events</b>
+
+/circulation/handlers/:
+  /loan-related-fee-fine-closed:
+    displayName: Subscriber handler endoint to handle fee/fine record with loan closed event
+    post:
+      description: Handle fee/fine record with loan closed event
+      body:
+        application/json:
+          type: !include handlers/loan-related-fee-fine-closed.json
+          example: !include examples/loan-related-fee-fine-closed.json
+      responses:
+        204:
+          description: "Event handled successfully"
