@@ -7,6 +7,7 @@ import static org.folio.circulation.domain.FeeAmount.noFeeAmount;
 import static org.folio.circulation.domain.LoanAction.CHECKED_IN;
 import static org.folio.circulation.domain.LoanAction.CHECKED_OUT;
 import static org.folio.circulation.domain.LoanAction.CLAIMED_RETURNED;
+import static org.folio.circulation.domain.LoanAction.CLOSED_LOAN;
 import static org.folio.circulation.domain.LoanAction.DECLARED_LOST;
 import static org.folio.circulation.domain.LoanAction.MISSING;
 import static org.folio.circulation.domain.LoanAction.RENEWED;
@@ -42,8 +43,8 @@ import java.util.UUID;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.domain.policy.LoanPolicy;
-import org.folio.circulation.domain.policy.lostitem.LostItemPolicy;
 import org.folio.circulation.domain.policy.OverdueFinePolicy;
+import org.folio.circulation.domain.policy.lostitem.LostItemPolicy;
 import org.folio.circulation.domain.representations.LoanProperties;
 import org.folio.circulation.support.ClockManager;
 import org.folio.circulation.support.Result;
@@ -52,7 +53,6 @@ import org.joda.time.DateTime;
 import io.vertx.core.json.JsonObject;
 
 public class Loan implements ItemRelatedRecord, UserRelatedRecord {
-
   private final JsonObject representation;
   private final Item item;
   private final User user;
@@ -447,6 +447,10 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     return this;
   }
 
+  public boolean isDeclaredLost() {
+    return getItem().getStatus() == ItemStatus.DECLARED_LOST;
+  }
+
   public boolean hasItemWithStatus(ItemStatus itemStatus) {
     return Objects.nonNull(item) && item.isInStatus(itemStatus);
   }
@@ -566,5 +570,10 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
       .map(Account::getRemaining)
       .reduce(FeeAmount::add)
       .orElse(noFeeAmount());
+  }
+
+  public void closeLoanAsLostAndPaid() {
+    closeLoan(CLOSED_LOAN);
+    changeItemStatusForItemAndLoan(ItemStatus.LOST_AND_PAID);
   }
 }

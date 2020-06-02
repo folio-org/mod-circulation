@@ -1,23 +1,21 @@
 package org.folio.circulation.services;
 
-import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.domain.FeeFine.LOST_ITEM_FEE_TYPE;
 import static org.folio.circulation.domain.FeeFine.LOST_ITEM_PROCESSING_FEE_TYPE;
-import static org.folio.circulation.domain.LoanAction.CLOSED_LOAN;
+import static org.folio.circulation.domain.FeeFine.lostItemFeeTypes;
 import static org.folio.circulation.support.Result.combineAll;
 import static org.folio.circulation.support.Result.failed;
 import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
-import org.folio.circulation.services.support.CreateAccountCommand;
+import org.folio.circulation.StoreLoanAndItem;
 import org.folio.circulation.domain.FeeFine;
 import org.folio.circulation.domain.FeeFineOwner;
 import org.folio.circulation.domain.FeeFineOwnerRepository;
@@ -27,6 +25,7 @@ import org.folio.circulation.domain.policy.LostItemPolicyRepository;
 import org.folio.circulation.domain.policy.lostitem.LostItemPolicy;
 import org.folio.circulation.domain.policy.lostitem.itemfee.AutomaticallyChargeableFee;
 import org.folio.circulation.domain.representations.DeclareItemLostRequest;
+import org.folio.circulation.services.support.CreateAccountCommand;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.Result;
 import org.slf4j.Logger;
@@ -34,19 +33,19 @@ import org.slf4j.LoggerFactory;
 
 public class LostItemFeeChargingService {
   private static final Logger log = LoggerFactory.getLogger(LostItemFeeChargingService.class);
-  private static final List<String> FEE_TYPES_TO_RETRIEVE = Arrays.asList(
-    LOST_ITEM_FEE_TYPE, LOST_ITEM_PROCESSING_FEE_TYPE);
 
   private final LostItemPolicyRepository lostItemPolicyRepository;
   private final FeeFineOwnerRepository feeFineOwnerRepository;
   private final FeeFineRepository feeFineRepository;
   private final FeeFineFacade feeFineFacade;
+  private final StoreLoanAndItem storeLoanAndItem;
 
   public LostItemFeeChargingService(Clients clients) {
     this.lostItemPolicyRepository = new LostItemPolicyRepository(clients);
     this.feeFineOwnerRepository = new FeeFineOwnerRepository(clients);
     this.feeFineRepository = new FeeFineRepository(clients);
     this.feeFineFacade = new FeeFineFacade(clients);
+    this.storeLoanAndItem = new StoreLoanAndItem(clients);
   }
 
   public CompletableFuture<Result<Loan>> chargeLostItemFees(
@@ -60,7 +59,7 @@ public class LostItemFeeChargingService {
       .thenCompose(refDataResult -> refDataResult.after(referenceData -> {
         if (shouldCloseLoan(referenceData.lostItemPolicy)) {
           log.debug("Loan [{}] can be closed because no fee will be charged", loan.getId());
-          return closeLoan(loan);
+          return closeLoanAndUpdateInStorage(loan);
         }
 
         return fetchFeeFineOwner(referenceData)
@@ -73,8 +72,9 @@ public class LostItemFeeChargingService {
   }
 
 
-  private CompletableFuture<Result<Loan>> closeLoan(Loan loan) {
-    return completedFuture(succeeded(loan.closeLoan(CLOSED_LOAN)));
+  private CompletableFuture<Result<Loan>> closeLoanAndUpdateInStorage(Loan loan) {
+    loan.closeLoanAsLostAndPaid();
+    return storeLoanAndItem.updateLoanAndItemInStorage(loan);
   }
 
   private boolean shouldCloseLoan(LostItemPolicy policy) {
@@ -87,7 +87,7 @@ public class LostItemFeeChargingService {
     Result<ReferenceDataContext> contextResult) {
 
     return contextResult.combineAfter(
-      context -> feeFineRepository.getAutomaticFeeFines(FEE_TYPES_TO_RETRIEVE),
+      context -> feeFineRepository.getAutomaticFeeFines(lostItemFeeTypes()),
       ReferenceDataContext::withFeeFines);
   }
 

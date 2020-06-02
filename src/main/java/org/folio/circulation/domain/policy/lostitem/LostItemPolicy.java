@@ -126,6 +126,10 @@ public class LostItemPolicy extends Policy {
   }
 
 
+  public boolean hasActualCostFee() {
+    return getActualCostFee().isChargeable();
+  }
+
   public static LostItemPolicy unknown(String id) {
     return new UnknownLostItemPolicy(id);
   }

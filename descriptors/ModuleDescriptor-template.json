@@ -797,6 +797,24 @@
       ]
     },
     {
+      "id": "circulation-event-handlers",
+      "version": "0.1",
+      "handlers": [
+        {
+          "methods": [
+            "POST"
+          ],
+          "pathPattern": "/circulation/handlers/loan-related-fee-fine-closed",
+          "permissionsRequired": [
+            "circulation.events.post"
+          ],
+          "modulePermissions": [
+            "modperms.circulation.handlers.loan-related-fee-fine-closed.post"
+          ]
+        }
+      ]
+    },
+    {
       "id": "_tenant",
       "version": "1.0",
       "interfaceType": "system",
@@ -1139,6 +1157,11 @@
       "description": "end patron action session"
     },
     {
+      "permissionName": "circulation.events.post",
+      "displayName": "Circulation - post event",
+      "description": "Post event to handle in circulation"
+    },
+    {
       "permissionName": "circulation.all",
       "displayName": "circulation - all permissions",
       "description": "Entire set of permissions needed to use the circulation",
@@ -1197,6 +1220,31 @@
         "circulation-storage.requests.item.get",
         "circulation-storage.requests.collection.get",
         "users.collection.get",
+        "users.item.get"
+      ],
+      "visible": false
+    },
+    {
+      "permissionName": "modperms.circulation.handlers.loan-related-fee-fine-closed.post",
+      "displayName" : "module permissions for one op",
+      "description" : "to reduce X-Okapi-Token size",
+      "subPermissions": [
+        "circulation-storage.loans.item.get",
+        "circulation-storage.loans.item.put",
+        "inventory-storage.items.item.get",
+        "inventory-storage.items.item.put",
+        "inventory-storage.holdings.item.get",
+        "inventory-storage.instances.item.get",
+        "inventory-storage.locations.item.get",
+        "inventory-storage.location-units.libraries.item.get",
+        "inventory-storage.location-units.campuses.item.get",
+        "inventory-storage.location-units.institutions.item.get",
+        "inventory-storage.service-points.item.get",
+        "inventory-storage.material-types.item.get",
+        "inventory-storage.loan-types.item.get",
+        "inventory-storage.service-points.item.get",
+        "lost-item-fees-policies.item.get",
+        "accounts.collection.get",
         "users.item.get"
       ],
       "visible": false
