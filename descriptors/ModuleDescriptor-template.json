@@ -958,6 +958,10 @@
     {
       "id": "pubsub-publish",
       "version": "0.1"
+    },
+    {
+      "id": "automated-patron-blocks",
+      "version": "0.1"
     }
   ],
   "permissionSets": [
