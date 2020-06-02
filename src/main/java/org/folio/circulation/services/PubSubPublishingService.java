@@ -23,12 +23,10 @@ import io.vertx.ext.web.RoutingContext;
 public class PubSubPublishingService {
   private static final Logger logger = LoggerFactory.getLogger(PubSubPublishingService.class);
 
-  private final RoutingContext routingContext;
   private final Map<String, String> okapiHeaders;
   private final Context vertxContext;
 
   public PubSubPublishingService(RoutingContext routingContext) {
-    this.routingContext = routingContext;
     okapiHeaders = new WebContext(routingContext).getHeaders();
     vertxContext = routingContext.vertx().getOrCreateContext();
   }
