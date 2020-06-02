@@ -1,9 +1,9 @@
 package api.support.fakes;
 
+import static org.folio.HttpStatus.HTTP_BAD_REQUEST;
 import static org.folio.HttpStatus.HTTP_CREATED;
 import static org.folio.HttpStatus.HTTP_INTERNAL_SERVER_ERROR;
 import static org.folio.HttpStatus.HTTP_NO_CONTENT;
-import static org.folio.HttpStatus.HTTP_UNPROCESSABLE_ENTITY;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -36,7 +36,7 @@ public class FakePubSub {
           Buffer buffer = Buffer.buffer(
             "There is no SUBSCRIBERS registered for event type EVENT_TYPE", "UTF-8");
           routingContext.response()
-            .setStatusCode(HTTP_UNPROCESSABLE_ENTITY.toInt())
+            .setStatusCode(HTTP_BAD_REQUEST.toInt())
             .putHeader("content-type", "text/plain; charset=utf-8")
             .putHeader("content-length", Integer.toString(buffer.length()))
             .write(buffer)
