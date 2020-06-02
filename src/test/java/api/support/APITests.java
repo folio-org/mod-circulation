@@ -36,6 +36,7 @@ import api.support.builders.LoanPolicyBuilder;
 import api.support.builders.NoticePolicyBuilder;
 import api.support.fakes.FakePubSub;
 import api.support.fixtures.AddressTypesFixture;
+import api.support.fixtures.AutomatedPatronBlocksFixture;
 import api.support.fixtures.CancellationReasonsFixture;
 import api.support.fixtures.ChangeDueDateFixture;
 import api.support.fixtures.CheckInFixture;
@@ -251,6 +252,8 @@ public abstract class APITests {
   protected final DeclareLostFixtures declareLostFixtures = new DeclareLostFixtures();
   protected final ClaimItemReturnedFixture claimItemReturnedFixture = new ClaimItemReturnedFixture(restAssuredClient);
   protected final FeeFineAccountFixture feeFineAccountFixture = new FeeFineAccountFixture();
+  protected final AutomatedPatronBlocksFixture automatedPatronBlocksFixture =
+    new AutomatedPatronBlocksFixture();
 
   protected final TenantActivationFixture tenantActivationFixture =
     new TenantActivationFixture(restAssuredClient);

@@ -353,6 +353,12 @@ public class FakeOkapi extends AbstractVerticle {
 
     FakePubSub.register(router);
 
+    new FakeStorageModuleBuilder()
+      .withRecordName("automatedPatronBlock")
+      .withRootPath("/automated-patron-blocks")
+      .withCollectionPropertyName("automatedPatronBlocks")
+      .create().register(router);
+
     server.requestHandler(router)
       .listen(PORT_TO_USE, result -> {
         if (result.succeeded()) {

@@ -5,7 +5,9 @@ import static org.folio.circulation.support.JsonPropertyWriter.write;
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 import static org.folio.circulation.support.fetching.RecordFetching.findWithCqlQuery;
 
+import org.folio.circulation.domain.AutomatedPatronBlocksRepository;
 import org.folio.circulation.domain.ConfigurationRepository;
+import org.folio.circulation.domain.CreateRequestRepositories;
 import org.folio.circulation.domain.CreateRequestService;
 import org.folio.circulation.domain.LoanRepository;
 import org.folio.circulation.domain.MoveRequestProcessAdapter;
@@ -78,12 +80,13 @@ public class RequestCollectionResource extends CollectionResource {
         UpdateRequestQueue.using(clients));
 
     final CreateRequestService createRequestService = new CreateRequestService(
-        RequestRepository.using(clients),
-        new RequestPolicyRepository(clients),
-        updateUponRequest,
-        new RequestLoanValidator(loanRepository),
-        requestNoticeSender, configurationRepository,
-        new UserManualBlocksValidator(userManualBlocksValidator));
+      new CreateRequestRepositories(RequestRepository.using(clients),
+        new RequestPolicyRepository(clients), configurationRepository,
+        new AutomatedPatronBlocksRepository(clients)),
+      updateUponRequest,
+      new RequestLoanValidator(loanRepository),
+      requestNoticeSender,
+      new UserManualBlocksValidator(userManualBlocksValidator));
 
     final RequestFromRepresentationService requestFromRepresentationService =
       new RequestFromRepresentationService(
@@ -137,12 +140,13 @@ public class RequestCollectionResource extends CollectionResource {
         updateRequestQueue);
 
     final CreateRequestService createRequestService = new CreateRequestService(
-        RequestRepository.using(clients),
-        new RequestPolicyRepository(clients),
-        updateUponRequest,
-        new RequestLoanValidator(loanRepository),
-        requestNoticeSender, configurationRepository,
-        new UserManualBlocksValidator(userManualBlocksValidator));
+      new CreateRequestRepositories(RequestRepository.using(clients),
+        new RequestPolicyRepository(clients), configurationRepository,
+        new AutomatedPatronBlocksRepository(clients)),
+      updateUponRequest,
+      new RequestLoanValidator(loanRepository),
+      requestNoticeSender,
+      new UserManualBlocksValidator(userManualBlocksValidator));
 
     final UpdateRequestService updateRequestService = new UpdateRequestService(
         requestRepository,

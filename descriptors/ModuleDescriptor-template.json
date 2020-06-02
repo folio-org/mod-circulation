@@ -1350,7 +1350,8 @@
         "inventory-storage.loan-types.item.get",
         "scheduled-notice-storage.scheduled-notices.item.post",
         "usergroups.collection.get",
-        "usergroups.item.get"
+        "usergroups.item.get",
+        "automated-patron-blocks.collection.get"
       ],
       "visible": false
     },
@@ -1462,7 +1463,8 @@
         "feefines.item.post",
         "owners.collection.get",
         "accounts.item.post",
-        "pubsub.publish.post"
+        "pubsub.publish.post",
+        "automated-patron-blocks.collection.get"
       ],
       "visible": false
 },
@@ -1798,7 +1800,8 @@
         "scheduled-notice-storage.scheduled-notices.item.post",
         "configuration.entries.collection.get",
         "manualblocks.collection.get",
-        "pubsub.publish.post"
+        "pubsub.publish.post",
+        "automated-patron-blocks.collection.get"
       ],
       "visible": false
     },

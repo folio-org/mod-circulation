@@ -143,6 +143,11 @@ public class ResourceClient {
       InterfaceUrls.userManualBlocksStorageUrl(), "manualblocks");
   }
 
+  public static ResourceClient forAutomatedPatronBlocks() {
+    return new ResourceClient(subPath ->
+      InterfaceUrls.automatedPatronBlocksStorageUrl(), "automatedPatronBlocks");
+  }
+
   public static ResourceClient forLoanTypes() {
     return new ResourceClient(InterfaceUrls::loanTypesStorageUrl,
         "loantypes");
