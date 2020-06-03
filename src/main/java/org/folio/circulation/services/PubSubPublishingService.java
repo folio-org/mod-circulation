@@ -15,7 +15,6 @@ import org.folio.rest.util.OkapiConnectionParams;
 import org.folio.util.pubsub.PubSubClientUtils;
 import org.folio.util.pubsub.exceptions.EventSendingException;
 
-import io.vertx.core.Context;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 import io.vertx.ext.web.RoutingContext;
@@ -24,14 +23,12 @@ public class PubSubPublishingService {
   private static final Logger logger = LoggerFactory.getLogger(PubSubPublishingService.class);
 
   private final Map<String, String> okapiHeaders;
-  private final Context vertxContext;
   private final PubsubClient pubSubClient;
 
   public PubSubPublishingService(RoutingContext routingContext) {
     okapiHeaders = new WebContext(routingContext).getHeaders();
-    vertxContext = routingContext.vertx().getOrCreateContext();
 
-    OkapiConnectionParams params = new OkapiConnectionParams(okapiHeaders, vertxContext.owner());
+    OkapiConnectionParams params = new OkapiConnectionParams(okapiHeaders, routingContext.vertx());
     pubSubClient = new PubsubClient(params.getOkapiUrl(), params.getTenantId(), params.getToken());
   }
 
@@ -72,6 +69,10 @@ public class PubSubPublishingService {
     return publishResult;
   }
 
+  public PubsubClient getPubSubClient() {
+    return pubSubClient;
+  }
+
   /**
    * Method that publishes event to PubSub and includes response body in the exception message in
    * case of any response status other than 204.
@@ -83,7 +84,7 @@ public class PubSubPublishingService {
     CompletableFuture<Boolean> result = new CompletableFuture<>();
 
     try {
-      pubSubClient.postPubsubPublish(eventMessage, ar -> {
+      getPubSubClient().postPubsubPublish(eventMessage, ar -> {
         if (ar.statusCode() == HttpStatus.HTTP_NO_CONTENT.toInt()) {
           result.complete(true);
         } else {
@@ -99,7 +100,7 @@ public class PubSubPublishingService {
       });
       return result;
     } catch (Exception ex) {
-      logger.error("Error during sending event message to PubSub, event {} ", ex,
+      logger.error("Error during sending event message to PubSub, event {}", ex,
         eventMessage.getEventPayload());
       result.completeExceptionally(ex);
       return result;
