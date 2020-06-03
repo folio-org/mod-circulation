@@ -1,5 +1,6 @@
 package api.support.fakes;
 
+import static org.folio.HttpStatus.HTTP_BAD_REQUEST;
 import static org.folio.HttpStatus.HTTP_CREATED;
 import static org.folio.HttpStatus.HTTP_INTERNAL_SERVER_ERROR;
 import static org.folio.HttpStatus.HTTP_NO_CONTENT;
@@ -10,14 +11,11 @@ import java.util.List;
 
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.json.JsonObject;
-import io.vertx.core.logging.Logger;
-import io.vertx.core.logging.LoggerFactory;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.BodyHandler;
 
 public class FakePubSub {
-  private static final Logger logger = LoggerFactory.getLogger(FakePubSub.class);
   private static final List<JsonObject> publishedEvents = new ArrayList<>();
   private static final List<JsonObject> createdEventTypes = new ArrayList<>();
   private static final List<JsonObject> registeredPublishers = new ArrayList<>();
@@ -26,16 +24,29 @@ public class FakePubSub {
 
   private static boolean failPubSubRegistration;
   private static boolean failPubSubUnregistering;
+  private static boolean failPublishingWithNoSubscribersError;
 
   public static void register(Router router) {
     router.route().handler(BodyHandler.create());
 
     router.post("/pubsub/publish")
       .handler(routingContext -> {
-        publishedEvents.add(routingContext.getBodyAsJson());
-        routingContext.response()
-          .setStatusCode(HTTP_NO_CONTENT.toInt())
-          .end();
+        if (failPublishingWithNoSubscribersError) {
+          Buffer buffer = Buffer.buffer(
+            "There is no SUBSCRIBERS registered for event type EVENT_TYPE", "UTF-8");
+          routingContext.response()
+            .setStatusCode(HTTP_BAD_REQUEST.toInt())
+            .putHeader("content-type", "text/plain; charset=utf-8")
+            .putHeader("content-length", Integer.toString(buffer.length()))
+            .write(buffer)
+            .end();
+        }
+        else {
+          publishedEvents.add(routingContext.getBodyAsJson());
+          routingContext.response()
+            .setStatusCode(HTTP_NO_CONTENT.toInt())
+            .end();
+        }
       });
 
     router.post("/pubsub/event-types")
@@ -119,5 +130,11 @@ public class FakePubSub {
 
   public static void setFailPubSubUnregistering(boolean failPubSubUnregistering) {
     FakePubSub.failPubSubUnregistering = failPubSubUnregistering;
+  }
+
+  public static void setFailPublishingWithNoSubscribersError(
+    boolean failPublishingWithNoSubscribersError) {
+
+    FakePubSub.failPublishingWithNoSubscribersError = failPublishingWithNoSubscribersError;
   }
 }

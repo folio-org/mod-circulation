@@ -1220,6 +1220,23 @@ public class CheckOutByBarcodeTests extends APITests {
     assertThat(event, isValidItemCheckedOutEvent(loan));
   }
 
+  @Test
+  public void checkOutSucceedsWhenEventPublishingFailsWithNoSubscribersError() {
+    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final IndividualResource steve = usersFixture.steve();
+
+    FakePubSub.setFailPublishingWithNoSubscribersError(true);
+
+    checkOutFixture.checkOutByBarcode(
+      new CheckOutByBarcodeRequestBuilder()
+        .forItem(smallAngryPlanet)
+        .to(steve)
+        .on(DateTime.now(UTC))
+        .at(UUID.randomUUID()));
+
+    assertThat(itemsClient.getById(smallAngryPlanet.getId()).getJson(), isCheckedOut());
+  }
+
   private IndividualResource prepareLoanPolicyWithItemLimit(int itemLimit) {
     return loanPoliciesFixture.create(
       new LoanPolicyBuilder()

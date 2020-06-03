@@ -299,6 +299,7 @@ public abstract class APITests {
     usersFixture.defaultAdmin();
 
     FakePubSub.clearPublishedEvents();
+    FakePubSub.setFailPublishingWithNoSubscribersError(false);
   }
 
   @After
