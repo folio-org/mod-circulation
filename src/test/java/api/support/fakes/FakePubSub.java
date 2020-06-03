@@ -31,7 +31,6 @@ public class FakePubSub {
 
     router.post("/pubsub/publish")
       .handler(routingContext -> {
-        publishedEvents.add(routingContext.getBodyAsJson());
         if (failPublishingWithNoSubscribersError) {
           Buffer buffer = Buffer.buffer(
             "There is no SUBSCRIBERS registered for event type EVENT_TYPE", "UTF-8");
@@ -43,6 +42,7 @@ public class FakePubSub {
             .end();
         }
         else {
+          publishedEvents.add(routingContext.getBodyAsJson());
           routingContext.response()
             .setStatusCode(HTTP_NO_CONTENT.toInt())
             .end();
