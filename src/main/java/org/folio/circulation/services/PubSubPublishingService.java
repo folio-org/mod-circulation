@@ -25,10 +25,14 @@ public class PubSubPublishingService {
 
   private final Map<String, String> okapiHeaders;
   private final Context vertxContext;
+  private final PubsubClient pubSubClient;
 
   public PubSubPublishingService(RoutingContext routingContext) {
     okapiHeaders = new WebContext(routingContext).getHeaders();
     vertxContext = routingContext.vertx().getOrCreateContext();
+
+    OkapiConnectionParams params = new OkapiConnectionParams(okapiHeaders, vertxContext.owner());
+    pubSubClient = new PubsubClient(params.getOkapiUrl(), params.getTenantId(), params.getToken());
   }
 
   public CompletableFuture<Boolean> publishEvent(String eventType, String payload) {
@@ -41,11 +45,9 @@ public class PubSubPublishingService {
         .withTenantId(okapiHeaders.get(OKAPI_TENANT_HEADER))
         .withEventTTL(1));
 
-    OkapiConnectionParams params = new OkapiConnectionParams(okapiHeaders, vertxContext.owner());
-
     final CompletableFuture<Boolean> publishResult = new CompletableFuture<>();
 
-    sendEventMessage(event, params)
+    sendEventMessage(event)
       .whenComplete((result, throwable) -> {
         if (Boolean.TRUE.equals(result)) {
           logger.debug("Event published successfully. ID: {}, type: {}, payload: {}",
@@ -75,18 +77,13 @@ public class PubSubPublishingService {
    * case of any response status other than 204.
    *
    * @param eventMessage Event to be published
-   * @param params Okapi connection parameters
    * @return
    */
-  private CompletableFuture<Boolean> sendEventMessage(Event eventMessage,
-    OkapiConnectionParams params) {
-
-    PubsubClient client = new PubsubClient(params.getOkapiUrl(), params.getTenantId(),
-      params.getToken());
+  private CompletableFuture<Boolean> sendEventMessage(Event eventMessage) {
     CompletableFuture<Boolean> result = new CompletableFuture<>();
 
     try {
-      client.postPubsubPublish(eventMessage, (ar) -> {
+      pubSubClient.postPubsubPublish(eventMessage, ar -> {
         if (ar.statusCode() == HttpStatus.HTTP_NO_CONTENT.toInt()) {
           result.complete(true);
         } else {
@@ -101,9 +98,10 @@ public class PubSubPublishingService {
         }
       });
       return result;
-    } catch (Exception var5) {
-      logger.error("Error during sending event message to PubSub", var5);
-      result.completeExceptionally(var5);
+    } catch (Exception ex) {
+      logger.error("Error during sending event message to PubSub, event {} ", ex,
+        eventMessage.getEventPayload());
+      result.completeExceptionally(ex);
       return result;
     }
   }
