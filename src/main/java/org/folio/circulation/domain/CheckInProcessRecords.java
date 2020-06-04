@@ -28,9 +28,10 @@ public class CheckInProcessRecords {
   private final DateTime checkInProcessedDateTime;
   private final boolean inHouseUse;
   private final ItemStatus itemStatusBeforeCheckIn;
+  private final boolean lostItemFeesRefundedOrCancelled;
 
   public CheckInProcessRecords(CheckInByBarcodeRequest checkInRequest) {
-    this(checkInRequest, null, null, null, null, null, null, false, null);
+    this(checkInRequest, null, null, null, null, null, null, false, null, false);
   }
 
   private CheckInProcessRecords(
@@ -42,7 +43,8 @@ public class CheckInProcessRecords {
     Request highestPriorityFulfillableRequest,
     String loggedInUserId,
     boolean inHouseUse,
-    ItemStatus itemStatusBeforeCheckIn) {
+    ItemStatus itemStatusBeforeCheckIn,
+    boolean lostItemFeesRefundedOrCancelled) {
 
     this.checkInRequest = checkInRequest;
     this.item = item;
@@ -54,6 +56,7 @@ public class CheckInProcessRecords {
     checkInProcessedDateTime = ClockManager.getClockManager().getDateTime();
     this.inHouseUse = inHouseUse;
     this.itemStatusBeforeCheckIn = itemStatusBeforeCheckIn;
+    this.lostItemFeesRefundedOrCancelled = lostItemFeesRefundedOrCancelled;
   }
 
   public CheckInProcessRecords withItem(Item item) {
@@ -73,7 +76,8 @@ public class CheckInProcessRecords {
       this.highestPriorityFulfillableRequest,
       this.loggedInUserId,
       this.inHouseUse,
-      itemStatusBeforeCheckIn);
+      itemStatusBeforeCheckIn,
+      lostItemFeesRefundedOrCancelled);
   }
 
   public CheckInProcessRecords withLoan(Loan loan) {
@@ -86,7 +90,8 @@ public class CheckInProcessRecords {
       this.highestPriorityFulfillableRequest,
       loggedInUserId,
       this.inHouseUse,
-      itemStatusBeforeCheckIn);
+      itemStatusBeforeCheckIn,
+      lostItemFeesRefundedOrCancelled);
   }
 
   public CheckInProcessRecords withRequestQueue(RequestQueue requestQueue) {
@@ -103,7 +108,8 @@ public class CheckInProcessRecords {
       firstRequest,
       loggedInUserId,
       this.inHouseUse,
-      itemStatusBeforeCheckIn);
+      itemStatusBeforeCheckIn,
+      lostItemFeesRefundedOrCancelled);
   }
 
   public CheckInProcessRecords withCheckInServicePoint(ServicePoint checkInServicePoint) {
@@ -116,7 +122,8 @@ public class CheckInProcessRecords {
       this.highestPriorityFulfillableRequest,
       loggedInUserId,
       this.inHouseUse,
-      itemStatusBeforeCheckIn);
+      itemStatusBeforeCheckIn,
+      lostItemFeesRefundedOrCancelled);
   }
 
   public CheckInProcessRecords withHighestPriorityFulfillableRequest(Request request) {
@@ -129,7 +136,8 @@ public class CheckInProcessRecords {
       request,
       loggedInUserId,
       this.inHouseUse,
-      itemStatusBeforeCheckIn);
+      itemStatusBeforeCheckIn,
+      lostItemFeesRefundedOrCancelled);
   }
 
   public CheckInProcessRecords withLoggedInUserId(String userId) {
@@ -142,7 +150,8 @@ public class CheckInProcessRecords {
       this.highestPriorityFulfillableRequest,
       userId,
       this.inHouseUse,
-      itemStatusBeforeCheckIn);
+      itemStatusBeforeCheckIn,
+      lostItemFeesRefundedOrCancelled);
   }
 
   public CheckInProcessRecords withInHouseUse(boolean inHouseUse) {
@@ -155,7 +164,8 @@ public class CheckInProcessRecords {
       this.highestPriorityFulfillableRequest,
       this.loggedInUserId,
       inHouseUse,
-      itemStatusBeforeCheckIn);
+      itemStatusBeforeCheckIn,
+      lostItemFeesRefundedOrCancelled);
   }
 
   public CheckInProcessRecords withItemStatusBeforeCheckIn(ItemStatus itemStatus) {
@@ -168,7 +178,22 @@ public class CheckInProcessRecords {
       this.highestPriorityFulfillableRequest,
       this.loggedInUserId,
       inHouseUse,
-      itemStatus);
+      itemStatus,
+      lostItemFeesRefundedOrCancelled);
+  }
+
+  public CheckInProcessRecords withLostItemFeesRefundedOrCancelled(boolean lostItemFeesRefunded) {
+    return new CheckInProcessRecords(
+      this.checkInRequest,
+      this.item,
+      this.loan,
+      this.requestQueue,
+      this.checkInServicePoint,
+      this.highestPriorityFulfillableRequest,
+      this.loggedInUserId,
+      inHouseUse,
+      itemStatusBeforeCheckIn,
+      lostItemFeesRefunded);
   }
 
   public boolean isInHouseUse() {
@@ -217,5 +242,9 @@ public class CheckInProcessRecords {
 
   public ItemStatus getItemStatusBeforeCheckIn() {
     return itemStatusBeforeCheckIn;
+  }
+
+  public boolean isLostItemFeesRefundedOrCancelled() {
+    return lostItemFeesRefundedOrCancelled;
   }
 }

@@ -47,40 +47,26 @@ public class LostItemFeeRefundService {
       checkInRecords.getLoggedInUserId(), checkInRecords.getCheckInServicePointId().toString());
 
     return refundLostItemFees(referenceDataContext)
-      .thenApply(r -> r.map(notUsed -> checkInRecords));
+      .thenApply(r -> r.map(checkInRecords::withLostItemFeesRefundedOrCancelled));
   }
 
-  private CompletableFuture<Result<Void>> refundLostItemFees(ReferenceDataContext context) {
+  private CompletableFuture<Result<Boolean>> refundLostItemFees(ReferenceDataContext context) {
     if (context.itemStatus != ItemStatus.DECLARED_LOST) {
-      return completedFuture(succeeded(null));
+      return completedFuture(succeeded(false));
     }
 
     return fetchLostItemPolicy(succeeded(context))
       .thenCompose(contextResult -> contextResult.after(refData -> {
         if (!refData.lostItemPolicy.shouldRefundFees(refData.loan.getDeclareLostDateTime())) {
           log.debug("Refund interval has exceeded for loan [{}]", refData.loan.getId());
-          return completedFuture(succeeded(null));
+          return completedFuture(succeeded(false));
         }
 
         return fetchAccountsAndActionsForLoan(contextResult)
           .thenCompose(r -> r.after(notUsed -> feeFineFacade
-            .refundAndCloseAccounts(getAccountsToRefund(context))))
-          .thenApply(r -> r.map(notUsed -> null));
+            .refundAndCloseAccounts(context.getAccountRefundCommands())))
+          .thenApply(r -> r.map(notUsed -> context.anyAccountNeedsRefund()));
       }));
-  }
-
-  private List<RefundAccountCommand> getAccountsToRefund(ReferenceDataContext context) {
-    Collection<Account> allAccounts = context.accounts;
-
-    if (!context.lostItemPolicy.isRefundProcessingFeeWhenReturned()) {
-      allAccounts = context.accounts.stream()
-        .filter(account -> !account.getFeeFineType().equals(LOST_ITEM_PROCESSING_FEE_TYPE))
-        .collect(Collectors.toList());
-    }
-
-    return allAccounts.stream()
-      .map(account -> new RefundAccountCommand(account, context.staffUserId, context.servicePointId))
-      .collect(Collectors.toList());
   }
 
   private CompletableFuture<Result<ReferenceDataContext>> fetchAccountsAndActionsForLoan(
@@ -128,6 +114,26 @@ public class LostItemFeeRefundService {
     private ReferenceDataContext withLostItemPolicy(LostItemPolicy lostItemPolicy) {
       this.lostItemPolicy = lostItemPolicy;
       return this;
+    }
+
+    private Collection<Account> getAccountsNeedRefund() {
+      if (!lostItemPolicy.isRefundProcessingFeeWhenReturned()) {
+        return accounts.stream()
+          .filter(account -> !account.getFeeFineType().equals(LOST_ITEM_PROCESSING_FEE_TYPE))
+          .collect(Collectors.toList());
+      }
+
+      return accounts;
+    }
+
+    private List<RefundAccountCommand> getAccountRefundCommands() {
+      return getAccountsNeedRefund().stream()
+        .map(account -> new RefundAccountCommand(account, staffUserId, servicePointId))
+        .collect(Collectors.toList());
+    }
+
+    private boolean anyAccountNeedsRefund() {
+      return getAccountsNeedRefund().size() > 0;
     }
   }
 }

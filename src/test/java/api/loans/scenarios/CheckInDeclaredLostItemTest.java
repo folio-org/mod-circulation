@@ -23,7 +23,6 @@ import org.junit.Test;
 
 import api.support.APITests;
 import api.support.MultipleJsonRecords;
-import api.support.builders.CheckInByBarcodeRequestBuilder;
 import api.support.builders.DeclareItemLostRequestBuilder;
 import io.vertx.core.json.JsonObject;
 
@@ -271,7 +270,7 @@ public class CheckInDeclaredLostItemTest extends APITests {
   }
 
   @Test
-  public void shouldChargeOverdueFineWhenStatedByPolicy() {
+  public void shouldChargeOverdueFineWhenStatedByPolicyAndLostFeesCanceled() {
     final double processingFee = 12.99;
 
     // Create overdue fine type
@@ -286,10 +285,7 @@ public class CheckInDeclaredLostItemTest extends APITests {
 
     declareItemLost();
 
-    checkInFixture.checkInByBarcode(new CheckInByBarcodeRequestBuilder()
-      .forItem(item)
-      .at(servicePointsFixture.cd1())
-      .on(DateTime.now().plusMonths(2)));
+    checkInFixture.checkInByBarcode(item);
 
     verifyLostItemProcessingFeeAccount(isAccountClosed(processingFee));
     verifyLostItemProcessingFeeAccountAction(isCloseActionCreated(processingFee));
@@ -313,14 +309,57 @@ public class CheckInDeclaredLostItemTest extends APITests {
 
     declareItemLost();
 
-    checkInFixture.checkInByBarcode(new CheckInByBarcodeRequestBuilder()
-      .forItem(item)
-      .at(servicePointsFixture.cd1())
-      .on(DateTime.now().plusMonths(2)));
+    checkInFixture.checkInByBarcode(item);
 
     verifyLostItemProcessingFeeAccount(isAccountClosed(processingFee));
     verifyLostItemProcessingFeeAccountAction(isCloseActionCreated(processingFee));
 
+    assertThat(getAccountForLoan(loan.getId(), "Overdue fine"), nullValue());
+  }
+
+  @Test
+  public void shouldNotChargeOverdueFineWhenLostFeeIsNotCancelled() {
+    final double itemFee = 11.55;
+
+    feeFineTypeFixture.overdueFine();
+
+    useLostItemPolicy(lostItemFeePoliciesFixture.create(
+      lostItemFeePoliciesFixture.facultyStandardPolicy()
+        .withName("Test check in")
+        .doNotChargeProcessingFee()
+        .withSetCost(itemFee)
+        .refundFeesWithinMinutes(1)
+        .chargeOverdueFineWhenReturned()).getId());
+
+    declareItemLost();
+
+    mockClockManagerToReturnFixedDateTime(DateTime.now(DateTimeZone.UTC).plusMinutes(2));
+
+    checkInFixture.checkInByBarcode(item);
+
+    verifyLostItemFeeAccount(hasJsonPath("status.name", "Open"));
+    assertThat(getAccountForLoan(loan.getId(), "Overdue fine"), nullValue());
+  }
+
+  @Test
+  public void shouldNotChargeOverdueFineWhenProcessingFeeIsNotRefundable() {
+    final double processingFee = 14.37;
+
+    feeFineTypeFixture.overdueFine();
+
+    useLostItemPolicy(lostItemFeePoliciesFixture.create(
+      lostItemFeePoliciesFixture.facultyStandardPolicy()
+        .withName("Test check in")
+        .chargeProcessingFee(processingFee)
+        .withNoChargeAmountItem()
+        .doNotRefundProcessingFeeWhenReturned()
+        .chargeOverdueFineWhenReturned()).getId());
+
+    declareItemLost();
+
+    checkInFixture.checkInByBarcode(item);
+
+    verifyLostItemProcessingFeeAccount(hasJsonPath("status.name", "Open"));
     assertThat(getAccountForLoan(loan.getId(), "Overdue fine"), nullValue());
   }
 
