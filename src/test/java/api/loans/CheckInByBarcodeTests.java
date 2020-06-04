@@ -51,7 +51,6 @@ import api.support.builders.Address;
 import api.support.builders.CheckInByBarcodeRequestBuilder;
 import api.support.builders.FeeFineBuilder;
 import api.support.builders.FeeFineOwnerBuilder;
-import api.support.builders.ItemBuilder;
 import api.support.builders.LoanPolicyBuilder;
 import api.support.builders.NoticeConfigurationBuilder;
 import api.support.builders.NoticePolicyBuilder;
@@ -1044,7 +1043,10 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
 
   @Test
   public void canCheckInLostAndPaidItem() {
-    final InventoryItemResource item = itemsFixture.basedUponNod(ItemBuilder::lostAndPaid);
+    final InventoryItemResource item = itemsFixture.basedUponNod();
+
+    declareLostFixtures.declareItemLost(
+      checkOutFixture.checkOutByBarcode(item, usersFixture.steve()).getJson());
 
     checkInFixture.checkInByBarcode(item);
 
