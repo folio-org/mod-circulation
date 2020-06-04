@@ -8,6 +8,7 @@ import org.folio.circulation.domain.Account;
 import org.folio.circulation.domain.FeeAmount;
 import org.folio.circulation.domain.User;
 import org.folio.circulation.support.ClockManager;
+import org.joda.time.DateTime;
 
 import io.vertx.core.json.JsonObject;
 
@@ -28,6 +29,10 @@ public class StoredFeeFineAction extends JsonObject {
 
     write(this, "paymentMethod", builder.paymentMethod);
     write(this, "dateAction", ClockManager.getClockManager().getDateTime());
+  }
+
+  public void updateActionDate(DateTime actionDate) {
+    write(this, "dateAction", actionDate);
   }
 
   public static StoredFeeFineActionBuilder builder() {

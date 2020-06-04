@@ -1,9 +1,11 @@
 package org.folio.circulation.services;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
+import static java.util.stream.IntStream.range;
 import static org.folio.circulation.domain.representations.StoredFeeFineAction.StoredFeeFineActionBuilder;
 import static org.folio.circulation.services.feefine.FeeRefundProcessor.createLostItemFeeRefundProcessor;
 import static org.folio.circulation.support.AsyncCoordinationUtil.allOf;
+import static org.folio.circulation.support.ClockManager.getClockManager;
 import static org.folio.circulation.support.Result.failed;
 
 import java.util.Collection;
@@ -27,6 +29,7 @@ import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.ServerErrorFailure;
 import org.folio.circulation.support.results.CommonFailures;
+import org.joda.time.DateTime;
 
 import io.vertx.core.json.JsonObject;
 
@@ -147,7 +150,20 @@ public class FeeFineFacade {
       lostItemRefundProcessor.onHasRemainingAmount(context);
     }
 
+    // Order actions historically with 1ms step
+    // Because they are created very quickly
+    // So the ISO date time is the same for all actions
+    populateActionDateHistorically(context);
+
     return feeFineActionRepository.createAll(context.getActions());
+  }
+
+  private void populateActionDateHistorically(AccountRefundContext context) {
+    final DateTime now = getClockManager().getDateTime();
+
+    range(0, context.getActions().size())
+      .forEach(index -> context.getActions().get(index)
+        .updateActionDate(now.plusMillis(index)));
   }
 
   private CompletableFuture<Result<User>> fetchUser(String userId) {
