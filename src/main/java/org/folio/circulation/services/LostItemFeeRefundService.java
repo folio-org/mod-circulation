@@ -73,7 +73,7 @@ public class LostItemFeeRefundService {
 
         return fetchAccountsAndActionsForLoan(contextResult)
           .thenCompose(r -> r.after(notUsed -> feeFineFacade
-            .refundAndCloseAccounts(getAccountsToRefund(context))))
+            .refundAndCloseAccounts(getAccountsToRefund(refData))))
           .thenApply(r -> r.map(notUsed -> null));
       }));
   }
@@ -99,7 +99,7 @@ public class LostItemFeeRefundService {
           }
 
           log.info("Loan [{}] retrieved for lost item [{}]", loan.getId(), context.itemId);
-          return succeeded(context.updateLoan(loan));
+          return succeeded(context.withLoan(loan));
         }));
     });
   }
@@ -158,7 +158,7 @@ public class LostItemFeeRefundService {
     private final String itemId;
     private final String staffUserId;
     private final String servicePointId;
-    private Loan loan;
+    private final Loan loan;
     private Collection<Account> accounts;
     private LostItemPolicy lostItemPolicy;
 
@@ -182,9 +182,8 @@ public class LostItemFeeRefundService {
       return this;
     }
 
-    private ReferenceDataContext updateLoan(Loan loan) {
-      this.loan = loan;
-      return this;
+    private ReferenceDataContext withLoan(Loan loan) {
+      return new ReferenceDataContext(itemStatus, itemId, loan, staffUserId, servicePointId);
     }
   }
 }

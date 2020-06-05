@@ -1,5 +1,6 @@
 package org.folio.circulation.domain.representations;
 
+import static org.folio.circulation.support.ClockManager.getClockManager;
 import static org.folio.circulation.support.JsonPropertyWriter.write;
 
 import java.util.UUID;
@@ -7,7 +8,6 @@ import java.util.UUID;
 import org.folio.circulation.domain.Account;
 import org.folio.circulation.domain.FeeAmount;
 import org.folio.circulation.domain.User;
-import org.folio.circulation.support.ClockManager;
 import org.joda.time.DateTime;
 
 import io.vertx.core.json.JsonObject;
@@ -28,11 +28,7 @@ public class StoredFeeFineAction extends JsonObject {
     this.put("typeAction", builder.action);
 
     write(this, "paymentMethod", builder.paymentMethod);
-    write(this, "dateAction", ClockManager.getClockManager().getDateTime());
-  }
-
-  public void updateActionDate(DateTime actionDate) {
-    write(this, "dateAction", actionDate);
+    write(this, "dateAction", builder.actionDate);
   }
 
   public static StoredFeeFineActionBuilder builder() {
@@ -51,6 +47,7 @@ public class StoredFeeFineAction extends JsonObject {
     private boolean notify = false;
     private String action;
     private String paymentMethod;
+    private DateTime actionDate = getClockManager().getDateTime();
 
     public StoredFeeFineActionBuilder useAccount(Account account) {
       return withUserId(account.getUserId())
@@ -120,6 +117,11 @@ public class StoredFeeFineAction extends JsonObject {
 
     public StoredFeeFineActionBuilder withPaymentMethod(String paymentMethod) {
       this.paymentMethod = paymentMethod;
+      return this;
+    }
+
+    public StoredFeeFineActionBuilder withActionDate(DateTime actionDate) {
+      this.actionDate = actionDate;
       return this;
     }
   }
