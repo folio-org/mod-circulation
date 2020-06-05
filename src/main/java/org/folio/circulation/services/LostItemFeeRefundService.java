@@ -86,7 +86,7 @@ public class LostItemFeeRefundService {
     Result<ReferenceDataContext> contextResult) {
 
     return contextResult.after(context -> {
-      if (context.loan != null) {
+      if (isOpenLoanAlreadyFound(context)) {
         return completedFuture(succeeded(context));
       }
 
@@ -145,6 +145,10 @@ public class LostItemFeeRefundService {
 
   private boolean isItemLost(ReferenceDataContext context) {
     return context.itemStatus == DECLARED_LOST || context.itemStatus == LOST_AND_PAID;
+  }
+
+  private boolean isOpenLoanAlreadyFound(ReferenceDataContext context) {
+    return context.loan != null;
   }
 
   private Result<ReferenceDataContext> lastLoanForLostItemIsNotDeclaredLost(Loan loan) {
