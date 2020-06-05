@@ -23,6 +23,7 @@ import org.junit.Test;
 
 import api.support.APITests;
 import api.support.MultipleJsonRecords;
+import api.support.builders.CheckInByBarcodeRequestBuilder;
 import api.support.builders.DeclareItemLostRequestBuilder;
 import io.vertx.core.json.JsonObject;
 
@@ -285,7 +286,10 @@ public class CheckInDeclaredLostItemTest extends APITests {
 
     declareItemLost();
 
-    checkInFixture.checkInByBarcode(item);
+    checkInFixture.checkInByBarcode(new CheckInByBarcodeRequestBuilder()
+      .forItem(item)
+      .at(servicePointsFixture.cd1())
+      .on(DateTime.now().plusMonths(2)));
 
     verifyLostItemProcessingFeeAccount(isAccountClosed(processingFee));
     verifyLostItemProcessingFeeAccountAction(isCloseActionCreated(processingFee));
@@ -416,6 +420,7 @@ public class CheckInDeclaredLostItemTest extends APITests {
     return areTransferRefundActionsCreated(0.0, transferAmount);
   }
 
+  @SuppressWarnings("unchecked")
   private Matcher<Iterable<JsonObject>> areTransferRefundActionsCreated(
     double remaining, double transferAmount) {
 
@@ -441,6 +446,7 @@ public class CheckInDeclaredLostItemTest extends APITests {
     return arePaymentRefundActionsCreated(0.0, paymentAmount);
   }
 
+  @SuppressWarnings("unchecked")
   private Matcher<Iterable<JsonObject>> arePaymentRefundActionsCreated(
     double remaining, double paymentAmount) {
 
@@ -462,6 +468,7 @@ public class CheckInDeclaredLostItemTest extends APITests {
     );
   }
 
+  @SuppressWarnings("unchecked")
   private Matcher<Iterable<JsonObject>> isCloseActionCreated(double amount) {
     return hasItems(allOf(
       hasJsonPath("amountAction", amount),
