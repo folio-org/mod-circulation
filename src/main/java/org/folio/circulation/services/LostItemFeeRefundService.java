@@ -56,29 +56,29 @@ public class LostItemFeeRefundService {
       checkInRecords.getCheckInServicePointId().toString());
 
     return refundLostItemFees(referenceDataContext)
-      .thenApply(r -> r.map(notUsed -> checkInRecords));
+      .thenApply(r -> r.map(checkInRecords::withLostItemFeesRefundedOrCancelled));
   }
 
-  private CompletableFuture<Result<Void>> refundLostItemFees(ReferenceDataContext context) {
-    if (!isItemLost(context)) {
-      return completedFuture(succeeded(null));
+  private CompletableFuture<Result<Boolean>> refundLostItemFees(ReferenceDataContext referenceData) {
+    if (!isItemLost(referenceData)) {
+      return completedFuture(succeeded(false));
     }
 
-    return lookupLoan(succeeded(context))
+    return lookupLoan(succeeded(referenceData))
       .thenCompose(this::fetchLostItemPolicy)
-      .thenCompose(contextResult -> contextResult.after(referenceData -> {
-        final DateTime declaredLostDate = referenceData.loan.getDeclareLostDateTime();
-        final LostItemPolicy lostItemPolicy = referenceData.lostItemPolicy;
+      .thenCompose(contextResult -> contextResult.after(context -> {
+        final DateTime declaredLostDate = context.loan.getDeclareLostDateTime();
+        final LostItemPolicy lostItemPolicy = context.lostItemPolicy;
 
         if (!lostItemPolicy.shouldRefundFees(declaredLostDate)) {
-          log.debug("Refund interval has exceeded for loan [{}]", referenceData.loan.getId());
-          return completedFuture(succeeded(null));
+          log.debug("Refund interval has exceeded for loan [{}]", context.loan.getId());
+          return completedFuture(succeeded(false));
         }
 
         return fetchAccountsAndActionsForLoan(contextResult)
           .thenCompose(r -> r.after(notUsed -> feeFineFacade
-            .refundAndCloseAccounts(getAccountsToRefund(referenceData))))
-          .thenApply(r -> r.map(notUsed -> null));
+            .refundAndCloseAccounts(context.accountRefundCommands())))
+          .thenApply(r -> r.map(notUsed -> context.anyAccountNeedsRefund()));
       }));
   }
 
@@ -107,20 +107,6 @@ public class LostItemFeeRefundService {
           return succeeded(context.withLoan(loan));
         }));
     });
-  }
-
-  private List<RefundAccountCommand> getAccountsToRefund(ReferenceDataContext context) {
-    Collection<Account> allAccounts = context.accounts;
-
-    if (!context.lostItemPolicy.isRefundProcessingFeeWhenReturned()) {
-      allAccounts = context.accounts.stream()
-        .filter(account -> !account.getFeeFineType().equals(LOST_ITEM_PROCESSING_FEE_TYPE))
-        .collect(Collectors.toList());
-    }
-
-    return allAccounts.stream()
-      .map(account -> new RefundAccountCommand(account, context.staffUserId, context.servicePointId))
-      .collect(Collectors.toList());
   }
 
   private CompletableFuture<Result<ReferenceDataContext>> fetchAccountsAndActionsForLoan(
@@ -192,7 +178,29 @@ public class LostItemFeeRefundService {
     }
 
     private ReferenceDataContext withLoan(Loan loan) {
-      return new ReferenceDataContext(itemStatus, itemId, loan, staffUserId, servicePointId);
+      return new ReferenceDataContext(itemStatus, itemId, loan, staffUserId, servicePointId)
+        .withAccounts(accounts)
+        .withLostItemPolicy(lostItemPolicy);
+    }
+
+    private Collection<Account> accountsNeedingRefunds() {
+      if (!lostItemPolicy.isRefundProcessingFeeWhenReturned()) {
+        return accounts.stream()
+          .filter(account -> !account.getFeeFineType().equals(LOST_ITEM_PROCESSING_FEE_TYPE))
+          .collect(Collectors.toList());
+      }
+
+      return accounts;
+    }
+
+    private List<RefundAccountCommand> accountRefundCommands() {
+      return accountsNeedingRefunds().stream()
+        .map(account -> new RefundAccountCommand(account, staffUserId, servicePointId))
+        .collect(Collectors.toList());
+    }
+
+    private boolean anyAccountNeedsRefund() {
+      return accountsNeedingRefunds().size() > 0;
     }
   }
 }

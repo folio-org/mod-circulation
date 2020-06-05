@@ -40,6 +40,7 @@ import java.util.stream.Collectors;
 
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
+import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.junit.Before;
 import org.junit.Test;
@@ -289,7 +290,7 @@ public class CheckInDeclaredLostItemTest extends APITests {
   }
 
   @Test
-  public void shouldChargeOverdueFineWhenStatedByPolicy() {
+  public void shouldChargeOverdueFineWhenStatedByPolicyAndLostFeesCanceled() {
     final double processingFee = 12.99;
 
     // Create overdue fine type
@@ -420,6 +421,52 @@ public class CheckInDeclaredLostItemTest extends APITests {
     assertThat(checkInResponse.getJson(), hasErrorWith(allOf(
       hasMessage("Last loan for lost item is not declared lost"),
       hasParameter("loanId", loan.getId().toString()))));
+  }
+
+  @Test
+  public void shouldNotChargeOverdueFineWhenLostFeeIsNotCancelled() {
+    final double itemFee = 11.55;
+
+    feeFineTypeFixture.overdueFine();
+
+    useLostItemPolicy(lostItemFeePoliciesFixture.create(
+      lostItemFeePoliciesFixture.facultyStandardPolicy()
+        .withName("Test check in")
+        .doNotChargeProcessingFee()
+        .withSetCost(itemFee)
+        .refundFeesWithinMinutes(1)
+        .chargeOverdueFineWhenReturned()).getId());
+
+    declareItemLost();
+
+    mockClockManagerToReturnFixedDateTime(DateTime.now(DateTimeZone.UTC).plusMinutes(2));
+
+    checkInFixture.checkInByBarcode(item);
+
+    assertThat(loan, hasLostItemFee(isOpen(itemFee)));
+    assertThat(loan, hasNoOverdueFine());
+  }
+
+  @Test
+  public void shouldNotChargeOverdueFineWhenProcessingFeeIsNotRefundable() {
+    final double processingFee = 14.37;
+
+    feeFineTypeFixture.overdueFine();
+
+    useLostItemPolicy(lostItemFeePoliciesFixture.create(
+      lostItemFeePoliciesFixture.facultyStandardPolicy()
+        .withName("Test check in")
+        .chargeProcessingFee(processingFee)
+        .withNoChargeAmountItem()
+        .doNotRefundProcessingFeeWhenReturned()
+        .chargeOverdueFineWhenReturned()).getId());
+
+    declareItemLost();
+
+    checkInFixture.checkInByBarcode(item);
+
+    assertThat(loan, hasLostItemProcessingFee(isOpen(processingFee)));
+    assertThat(loan, hasNoOverdueFine());
   }
 
   private void resolveLostItemFee() {
