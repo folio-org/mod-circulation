@@ -87,7 +87,7 @@ public class OverdueFineCalculatorService {
     if (records.getItemStatusBeforeCheckIn() == ItemStatus.DECLARED_LOST) {
       return repos.lostItemPolicyRepository.getLostItemPolicyById(loan.getLostItemPolicyId())
         .thenApply(r -> r.map(policy -> policy.shouldChargeOverdueFee()
-          && records.isLostItemFeesRefundedOrCancelled()));
+          && records.areLostItemFeesRefundedOrCancelled()));
     }
 
     return completedFuture(succeeded(true));

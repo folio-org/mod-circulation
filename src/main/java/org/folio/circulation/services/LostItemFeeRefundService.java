@@ -64,7 +64,7 @@ public class LostItemFeeRefundService {
 
         return fetchAccountsAndActionsForLoan(contextResult)
           .thenCompose(r -> r.after(notUsed -> feeFineFacade
-            .refundAndCloseAccounts(context.getAccountRefundCommands())))
+            .refundAndCloseAccounts(context.accountRefundCommands())))
           .thenApply(r -> r.map(notUsed -> context.anyAccountNeedsRefund()));
       }));
   }
@@ -116,7 +116,7 @@ public class LostItemFeeRefundService {
       return this;
     }
 
-    private Collection<Account> getAccountsNeedRefund() {
+    private Collection<Account> accountsNeedingRefunds() {
       if (!lostItemPolicy.isRefundProcessingFeeWhenReturned()) {
         return accounts.stream()
           .filter(account -> !account.getFeeFineType().equals(LOST_ITEM_PROCESSING_FEE_TYPE))
@@ -126,14 +126,14 @@ public class LostItemFeeRefundService {
       return accounts;
     }
 
-    private List<RefundAccountCommand> getAccountRefundCommands() {
-      return getAccountsNeedRefund().stream()
+    private List<RefundAccountCommand> accountRefundCommands() {
+      return accountsNeedingRefunds().stream()
         .map(account -> new RefundAccountCommand(account, staffUserId, servicePointId))
         .collect(Collectors.toList());
     }
 
     private boolean anyAccountNeedsRefund() {
-      return getAccountsNeedRefund().size() > 0;
+      return accountsNeedingRefunds().size() > 0;
     }
   }
 }

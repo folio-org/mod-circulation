@@ -244,7 +244,7 @@ public class CheckInProcessRecords {
     return itemStatusBeforeCheckIn;
   }
 
-  public boolean isLostItemFeesRefundedOrCancelled() {
+  public boolean areLostItemFeesRefundedOrCancelled() {
     return lostItemFeesRefundedOrCancelled;
   }
 }
