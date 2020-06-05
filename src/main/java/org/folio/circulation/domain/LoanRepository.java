@@ -5,11 +5,13 @@ import static java.util.Objects.nonNull;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.domain.representations.LoanProperties.BORROWER;
 import static org.folio.circulation.domain.representations.LoanProperties.FEESANDFINES;
+import static org.folio.circulation.domain.representations.LoanProperties.LOAN_DATE;
 import static org.folio.circulation.domain.representations.LoanProperties.LOAN_POLICY;
 import static org.folio.circulation.domain.representations.LoanProperties.LOST_ITEM_POLICY;
 import static org.folio.circulation.domain.representations.LoanProperties.OVERDUE_FINE_POLICY;
 import static org.folio.circulation.domain.representations.LoanProperties.PATRON_GROUP_AT_CHECKOUT;
 import static org.folio.circulation.domain.representations.LoanProperties.PATRON_GROUP_ID_AT_CHECKOUT;
+import static org.folio.circulation.support.CqlSortBy.descending;
 import static org.folio.circulation.support.JsonPropertyWriter.write;
 import static org.folio.circulation.support.Result.failed;
 import static org.folio.circulation.support.Result.of;
@@ -21,7 +23,7 @@ import static org.folio.circulation.support.http.CommonResponseInterpreters.noCo
 import static org.folio.circulation.support.http.ResponseMapping.forwardOnFailure;
 import static org.folio.circulation.support.http.ResponseMapping.mapUsingJson;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
-import static org.folio.circulation.support.http.client.CqlQuery.exactMatchAny;
+import static org.folio.circulation.support.http.client.PageLimit.one;
 import static org.folio.circulation.support.results.CommonFailures.failedDueToServerError;
 
 import java.lang.invoke.MethodHandles;
@@ -47,6 +49,7 @@ import org.folio.circulation.support.http.client.PageLimit;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.client.ResponseInterpreter;
 import org.folio.circulation.support.results.CommonFailures;
+import org.folio.circulation.support.utils.CollectionUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -290,8 +293,7 @@ public class LoanRepository {
     final Result<CqlQuery> statusQuery = getStatusCQLQuery("Open");
     final Result<CqlQuery> itemIdQuery = exactMatch(ITEM_ID, itemId);
 
-    return queryLoanStorage(statusQuery.combine(itemIdQuery, CqlQuery::and),
-      PageLimit.one());
+    return queryLoanStorage(statusQuery.combine(itemIdQuery, CqlQuery::and), one());
   }
 
   CompletableFuture<Result<MultipleRecords<Request>>> findOpenLoansFor(
@@ -355,5 +357,13 @@ public class LoanRepository {
 
     return queryLoanStorage(cqlQueryResult, loansLimit)
       .thenComposeAsync(loans -> itemRepository.fetchItemsFor(loans, Loan::withItem));
+  }
+
+  public CompletableFuture<Result<Loan>> findLastLoanForItem(String itemId) {
+    final Result<CqlQuery> cqlQuery = exactMatch(ITEM_ID, itemId)
+      .map(cql -> cql.sortBy(descending(LOAN_DATE)));
+
+    return queryLoanStorage(cqlQuery, one())
+      .thenApply(r -> r.map(CollectionUtil::firstOrNull));
   }
 }

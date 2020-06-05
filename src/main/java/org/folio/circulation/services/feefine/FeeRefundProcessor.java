@@ -7,6 +7,7 @@ import static org.folio.circulation.domain.representations.AccountPaymentStatus.
 import static org.folio.circulation.domain.representations.AccountPaymentStatus.CREDITED_FULLY;
 import static org.folio.circulation.domain.representations.AccountPaymentStatus.REFUNDED_FULLY;
 import static org.folio.circulation.domain.representations.StoredFeeFineAction.StoredFeeFineActionBuilder;
+import static org.folio.circulation.support.ClockManager.getClockManager;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -17,6 +18,7 @@ import org.folio.circulation.domain.AccountRefundReason;
 import org.folio.circulation.domain.FeeAmount;
 import org.folio.circulation.domain.representations.AccountPaymentStatus;
 import org.folio.circulation.domain.representations.StoredFeeFineAction;
+import org.joda.time.DateTime;
 
 public class FeeRefundProcessor implements AccountRefundProcessor {
   private final AccountPaymentStatus closedAccountPaymentStatus;
@@ -119,7 +121,16 @@ public class FeeRefundProcessor implements AccountRefundProcessor {
       .useAccount(context.getAccount())
       .withCreatedAt(context.getServicePointName())
       .withCreatedBy(context.getUser())
-      .withBalance(context.getAccount().getRemaining());
+      .withBalance(context.getAccount().getRemaining())
+      .withActionDate(getActionDate(context));
+  }
+
+  private DateTime getActionDate(AccountRefundContext context) {
+    // Update action dateTime to keep theirs historical order
+    // actionDate = now() + Nms
+    // Because they are created very quickly
+    // So the ISO date time is the same for all actions
+    return getClockManager().getDateTime().plusMillis(context.getActions().size());
   }
 
   private String getTransferRefundTransactionInfo(Account account) {
