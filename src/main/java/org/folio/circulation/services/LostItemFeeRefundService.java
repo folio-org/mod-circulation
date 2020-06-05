@@ -28,6 +28,7 @@ import org.folio.circulation.services.support.RefundAccountCommand;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.http.client.CqlQuery;
+import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -65,15 +66,18 @@ public class LostItemFeeRefundService {
 
     return lookupLoan(succeeded(context))
       .thenCompose(this::fetchLostItemPolicy)
-      .thenCompose(contextResult -> contextResult.after(refData -> {
-        if (!refData.lostItemPolicy.shouldRefundFees(refData.loan.getDeclareLostDateTime())) {
-          log.debug("Refund interval has exceeded for loan [{}]", refData.loan.getId());
+      .thenCompose(contextResult -> contextResult.after(referenceData -> {
+        final DateTime declaredLostDate = referenceData.loan.getDeclareLostDateTime();
+        final LostItemPolicy lostItemPolicy = referenceData.lostItemPolicy;
+
+        if (!lostItemPolicy.shouldRefundFees(declaredLostDate)) {
+          log.debug("Refund interval has exceeded for loan [{}]", referenceData.loan.getId());
           return completedFuture(succeeded(null));
         }
 
         return fetchAccountsAndActionsForLoan(contextResult)
           .thenCompose(r -> r.after(notUsed -> feeFineFacade
-            .refundAndCloseAccounts(getAccountsToRefund(refData))))
+            .refundAndCloseAccounts(getAccountsToRefund(referenceData))))
           .thenApply(r -> r.map(notUsed -> null));
       }));
   }
@@ -89,9 +93,10 @@ public class LostItemFeeRefundService {
       return loanRepository.findLastLoanForItem(context.itemId)
         .thenApply(r -> r.next(loan -> {
           if (loan == null) {
-            log.error("There is no loan for lost item [{}]", context.itemId);
+            log.error("There are no loans for lost item [{}]", context.itemId);
             return noLoanFoundForLostItem(context.itemId);
           }
+
           if (loan.getDeclareLostDateTime() == null) {
             log.error("The last loan [{}] for lost item [{}] is not declared lost",
               loan.getId(), context.itemId);
