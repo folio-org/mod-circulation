@@ -1,22 +1,45 @@
 package api.loans.scenarios;
 
 import static api.support.http.CqlQuery.queryFromTemplate;
+import static api.support.matchers.AccountActionsMatchers.CANCELLED_ITEM_RETURNED;
+import static api.support.matchers.AccountActionsMatchers.CREDITED_FULLY;
+import static api.support.matchers.AccountActionsMatchers.REFUNDED_FULLY;
+import static api.support.matchers.AccountActionsMatchers.REFUND_TO_BURSAR;
+import static api.support.matchers.AccountActionsMatchers.REFUND_TO_PATRON;
+import static api.support.matchers.AccountActionsMatchers.arePaymentRefundActionsCreated;
+import static api.support.matchers.AccountActionsMatchers.areTransferRefundActionsCreated;
+import static api.support.matchers.AccountActionsMatchers.isCancelledItemReturnedActionCreated;
+import static api.support.matchers.AccountMatchers.isClosedCancelledItemReturned;
+import static api.support.matchers.AccountMatchers.isOpen;
+import static api.support.matchers.AccountMatchers.isPaidFully;
+import static api.support.matchers.AccountMatchers.isRefundedFully;
+import static api.support.matchers.AccountMatchers.isTransferredFully;
+import static api.support.matchers.ItemMatchers.isAvailable;
+import static api.support.matchers.ItemMatchers.isLostAndPaid;
 import static api.support.matchers.JsonObjectMatcher.hasJsonPath;
+import static api.support.matchers.LoanAccountActionsMatcher.hasLostItemFeeActions;
+import static api.support.matchers.LoanAccountActionsMatcher.hasLostItemProcessingFeeActions;
+import static api.support.matchers.LoanAccountMatcher.hasLostItemFee;
+import static api.support.matchers.LoanAccountMatcher.hasLostItemProcessingFee;
+import static api.support.matchers.LoanAccountMatcher.hasNoOverdueFine;
+import static api.support.matchers.LoanAccountMatcher.hasOverdueFine;
+import static api.support.matchers.LoanMatchers.isClosed;
+import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
+import static api.support.matchers.ValidationErrorMatchers.hasMessage;
+import static api.support.matchers.ValidationErrorMatchers.hasParameter;
 import static org.hamcrest.CoreMatchers.allOf;
-import static org.hamcrest.CoreMatchers.everyItem;
-import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.not;
-import static org.hamcrest.CoreMatchers.notNullValue;
-import static org.hamcrest.CoreMatchers.nullValue;
-import static org.hamcrest.CoreMatchers.startsWith;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsInRelativeOrder;
+import static org.hamcrest.Matchers.greaterThan;
+import static org.joda.time.DateTime.now;
+import static org.joda.time.DateTime.parse;
 
-import java.util.UUID;
+import java.util.List;
+import java.util.stream.Collectors;
 
-import org.folio.circulation.domain.FeeAmount;
 import org.folio.circulation.support.http.client.IndividualResource;
-import org.hamcrest.Matcher;
-import org.joda.time.DateTime;
+import org.folio.circulation.support.http.client.Response;
 import org.joda.time.DateTimeZone;
 import org.junit.Before;
 import org.junit.Test;
@@ -28,14 +51,9 @@ import api.support.builders.DeclareItemLostRequestBuilder;
 import io.vertx.core.json.JsonObject;
 
 public class CheckInDeclaredLostItemTest extends APITests {
-  private static final String LOST_ITEM_FEE = "Lost item fee";
-  private static final String LOST_ITEM_PROCESSING_FEE = "Lost item processing fee";
-  private static final String CANCELLED_ITEM_RETURNED = "Cancelled item returned";
-  private static final String REFUNDED_FULLY = "Refunded fully";
-  private static final String CREDITED_FULLY = "Credited fully";
-  private static final String LOST_ITEM_FOUND = "Lost item found";
+  private static final String DATE_ACTION_PROPERTY = "dateAction";
 
-  private IndividualResource item;
+  private final IndividualResource item = itemsFixture.basedUponNod();
   private IndividualResource loan;
 
   @Before
@@ -57,8 +75,8 @@ public class CheckInDeclaredLostItemTest extends APITests {
 
     checkInFixture.checkInByBarcode(item);
 
-    verifyLostItemFeeAccount(isAccountClosed(itemFee));
-    verifyLostItemFeeAccountAction(isCloseActionCreated(itemFee));
+    assertThat(loan, hasLostItemFee(isClosedCancelledItemReturned(itemFee)));
+    assertThat(loan, hasLostItemFeeActions(isCancelledItemReturnedActionCreated(itemFee)));
   }
 
   @Test
@@ -75,8 +93,9 @@ public class CheckInDeclaredLostItemTest extends APITests {
 
     checkInFixture.checkInByBarcode(item);
 
-    verifyLostItemProcessingFeeAccount(isAccountClosed(processingFee));
-    verifyLostItemProcessingFeeAccountAction(isCloseActionCreated(processingFee));
+    assertThat(loan, hasLostItemProcessingFee(isClosedCancelledItemReturned(processingFee)));
+    assertThat(loan, hasLostItemProcessingFeeActions(
+      isCancelledItemReturnedActionCreated(processingFee)));
   }
 
   @Test
@@ -96,13 +115,9 @@ public class CheckInDeclaredLostItemTest extends APITests {
 
     checkInFixture.checkInByBarcode(item);
 
-    verifyLostItemProcessingFeeAccount(allOf(
-      hasJsonPath("amount", processingFee),
-      hasJsonPath("remaining", 0.0),
-      hasJsonPath("status.name", "Closed"),
-      hasJsonPath("paymentStatus.name", "Paid fully")));
-    verifyLostItemProcessingFeeAccountAction(
-      not(arePaymentRefundActionsCreated(processingFee)));
+    assertThat(loan, hasLostItemProcessingFee(isPaidFully(processingFee)));
+    assertThat(loan, hasLostItemProcessingFeeActions(
+      not(arePaymentRefundActionsCreated(processingFee))));
   }
 
   @Test
@@ -117,25 +132,17 @@ public class CheckInDeclaredLostItemTest extends APITests {
     feeFineAccountFixture.transferLostItemFee(loan.getId());
     feeFineAccountFixture.payLostItemProcessingFee(loan.getId());
 
-    mockClockManagerToReturnFixedDateTime(DateTime.now(DateTimeZone.UTC).plusMinutes(2));
+    mockClockManagerToReturnFixedDateTime(now(DateTimeZone.UTC).plusMinutes(2));
 
     checkInFixture.checkInByBarcode(item);
 
-    verifyLostItemFeeAccount(allOf(
-      hasJsonPath("amount", setCostFee),
-      hasJsonPath("remaining", 0.0),
-      hasJsonPath("status.name", "Closed"),
-      hasJsonPath("paymentStatus.name", "Transferred fully")));
-    verifyLostItemFeeAccountAction(
-      not(areTransferRefundActionsCreated(setCostFee)));
+    assertThat(loan, hasLostItemFee(isTransferredFully(setCostFee)));
+    assertThat(loan, hasLostItemFeeActions(
+      not(areTransferRefundActionsCreated(setCostFee))));
 
-    verifyLostItemProcessingFeeAccount(allOf(
-      hasJsonPath("amount", processingFee),
-      hasJsonPath("remaining", 0.0),
-      hasJsonPath("status.name", "Closed"),
-      hasJsonPath("paymentStatus.name", "Paid fully")));
-    verifyLostItemProcessingFeeAccountAction(
-      not(arePaymentRefundActionsCreated(processingFee)));
+    assertThat(loan, hasLostItemProcessingFee(isPaidFully(processingFee)));
+    assertThat(loan, hasLostItemProcessingFeeActions(
+      not(arePaymentRefundActionsCreated(processingFee))));
   }
 
   @Test
@@ -157,11 +164,12 @@ public class CheckInDeclaredLostItemTest extends APITests {
 
     checkInFixture.checkInByBarcode(item);
 
-    verifyLostItemFeeAccount(isAccountRefundedFully(setCostFee));
-    verifyLostItemFeeAccountAction(areTransferRefundActionsCreated(setCostFee));
+    assertThat(loan, hasLostItemFee(isRefundedFully(setCostFee)));
+    assertThat(loan, hasLostItemFeeActions(areTransferRefundActionsCreated(setCostFee)));
 
-    verifyLostItemProcessingFeeAccount(isAccountRefundedFully(processingFee));
-    verifyLostItemProcessingFeeAccountAction(arePaymentRefundActionsCreated(processingFee));
+    assertThat(loan, hasLostItemProcessingFee(isRefundedFully(processingFee)));
+    assertThat(loan, hasLostItemProcessingFeeActions(
+      arePaymentRefundActionsCreated(processingFee)));
   }
 
   @Test
@@ -173,11 +181,12 @@ public class CheckInDeclaredLostItemTest extends APITests {
 
     checkInFixture.checkInByBarcode(item);
 
-    verifyLostItemFeeAccount(isAccountClosed(itemFee));
-    verifyLostItemFeeAccountAction(isCloseActionCreated(itemFee));
+    assertThat(loan, hasLostItemFee(isClosedCancelledItemReturned(itemFee)));
+    assertThat(loan, hasLostItemFeeActions(isCancelledItemReturnedActionCreated(itemFee)));
 
-    verifyLostItemProcessingFeeAccount(isAccountClosed(processingFee));
-    verifyLostItemProcessingFeeAccountAction(isCloseActionCreated(processingFee));
+    assertThat(loan, hasLostItemProcessingFee(isClosedCancelledItemReturned(processingFee)));
+    assertThat(loan, hasLostItemProcessingFeeActions(
+      isCancelledItemReturnedActionCreated(processingFee)));
   }
 
   @Test
@@ -193,11 +202,12 @@ public class CheckInDeclaredLostItemTest extends APITests {
 
     checkInFixture.checkInByBarcode(item);
 
-    verifyLostItemFeeAccount(isAccountRefundedFully(setCostFee));
-    verifyLostItemFeeAccountAction(areTransferRefundActionsCreated(setCostFee));
+    assertThat(loan, hasLostItemFee(isRefundedFully(setCostFee)));
+    assertThat(loan, hasLostItemFeeActions(areTransferRefundActionsCreated(setCostFee)));
 
-    verifyLostItemProcessingFeeAccount(isAccountClosed(processingFee));
-    verifyLostItemProcessingFeeAccountAction(isCloseActionCreated(processingFee));
+    assertThat(loan, hasLostItemProcessingFee(isClosedCancelledItemReturned(processingFee)));
+    assertThat(loan, hasLostItemProcessingFeeActions(
+      isCancelledItemReturnedActionCreated(processingFee)));
   }
 
   @Test
@@ -213,11 +223,12 @@ public class CheckInDeclaredLostItemTest extends APITests {
 
     checkInFixture.checkInByBarcode(item);
 
-    verifyLostItemFeeAccount(isAccountRefundedFully(setCostFee));
-    verifyLostItemFeeAccountAction(arePaymentRefundActionsCreated(setCostFee));
+    assertThat(loan, hasLostItemFee(isRefundedFully(setCostFee)));
+    assertThat(loan, hasLostItemFeeActions(arePaymentRefundActionsCreated(setCostFee)));
 
-    verifyLostItemProcessingFeeAccount(isAccountClosed(processingFee));
-    verifyLostItemProcessingFeeAccountAction(isCloseActionCreated(processingFee));
+    assertThat(loan, hasLostItemProcessingFee(isClosedCancelledItemReturned(processingFee)));
+    assertThat(loan, hasLostItemProcessingFeeActions(
+      isCancelledItemReturnedActionCreated(processingFee)));
   }
 
   @Test
@@ -236,12 +247,15 @@ public class CheckInDeclaredLostItemTest extends APITests {
 
     checkInFixture.checkInByBarcode(item);
 
-    verifyLostItemFeeAccount(isAccountRefundedFully(setCostFee));
-    verifyLostItemFeeAccountAction(areTransferRefundActionsCreated(transferAmount));
-    verifyLostItemFeeAccountAction(arePaymentRefundActionsCreated(paymentAmount));
+    assertThat(loan, hasLostItemFee(isRefundedFully(setCostFee)));
+    assertThat(loan, hasLostItemFeeActions(allOf(
+      areTransferRefundActionsCreated(transferAmount),
+      arePaymentRefundActionsCreated(paymentAmount)
+    )));
 
-    verifyLostItemProcessingFeeAccount(isAccountClosed(processingFee));
-    verifyLostItemProcessingFeeAccountAction(isCloseActionCreated(processingFee));
+    assertThat(loan, hasLostItemProcessingFee(isClosedCancelledItemReturned(processingFee)));
+    assertThat(loan, hasLostItemProcessingFeeActions(
+      isCancelledItemReturnedActionCreated(processingFee)));
   }
 
   @Test
@@ -261,13 +275,17 @@ public class CheckInDeclaredLostItemTest extends APITests {
 
     checkInFixture.checkInByBarcode(item);
 
-    verifyLostItemFeeAccount(isAccountClosed(setCostFee));
-    verifyLostItemFeeAccountAction(isCloseActionCreated(remainingAmount));
-    verifyLostItemFeeAccountAction(areTransferRefundActionsCreated(remainingAmount, transferAmount));
-    verifyLostItemFeeAccountAction(arePaymentRefundActionsCreated(remainingAmount, paymentAmount));
+    assertThat(loan, hasLostItemFee(isClosedCancelledItemReturned(setCostFee)));
+    assertThat(loan, hasLostItemFeeActions(allOf(
+      isCancelledItemReturnedActionCreated(remainingAmount),
+      areTransferRefundActionsCreated(remainingAmount, transferAmount),
+      arePaymentRefundActionsCreated(remainingAmount, paymentAmount)
+    )));
+    lostItemFeeActionsOrderedHistorically();
 
-    verifyLostItemProcessingFeeAccount(isAccountClosed(processingFee));
-    verifyLostItemProcessingFeeAccountAction(isCloseActionCreated(processingFee));
+    assertThat(loan, hasLostItemProcessingFee(isClosedCancelledItemReturned(processingFee)));
+    assertThat(loan, hasLostItemProcessingFeeActions(
+      isCancelledItemReturnedActionCreated(processingFee)));
   }
 
   @Test
@@ -289,12 +307,13 @@ public class CheckInDeclaredLostItemTest extends APITests {
     checkInFixture.checkInByBarcode(new CheckInByBarcodeRequestBuilder()
       .forItem(item)
       .at(servicePointsFixture.cd1())
-      .on(DateTime.now().plusMonths(2)));
+      .on(now().plusMonths(2)));
 
-    verifyLostItemProcessingFeeAccount(isAccountClosed(processingFee));
-    verifyLostItemProcessingFeeAccountAction(isCloseActionCreated(processingFee));
+    assertThat(loan, hasLostItemProcessingFee(isClosedCancelledItemReturned(processingFee)));
+    assertThat(loan, hasLostItemProcessingFeeActions(
+      isCancelledItemReturnedActionCreated(processingFee)));
 
-    assertThat(getAccountForLoan(loan.getId(), "Overdue fine"), notNullValue());
+    assertThat(loan, hasOverdueFine());
   }
 
   @Test
@@ -316,54 +335,102 @@ public class CheckInDeclaredLostItemTest extends APITests {
     checkInFixture.checkInByBarcode(new CheckInByBarcodeRequestBuilder()
       .forItem(item)
       .at(servicePointsFixture.cd1())
-      .on(DateTime.now().plusMonths(2)));
+      .on(now().plusMonths(2)));
 
-    verifyLostItemProcessingFeeAccount(isAccountClosed(processingFee));
-    verifyLostItemProcessingFeeAccountAction(isCloseActionCreated(processingFee));
+    assertThat(loan, hasLostItemProcessingFee(isClosedCancelledItemReturned(processingFee)));
+    assertThat(loan, hasLostItemProcessingFeeActions(
+      isCancelledItemReturnedActionCreated(processingFee)));
 
-    assertThat(getAccountForLoan(loan.getId(), "Overdue fine"), nullValue());
+    assertThat(loan, hasNoOverdueFine());
   }
 
-  private JsonObject getAccountForLoan(UUID loanId, String type) {
-    return accountsClient.getMany(queryFromTemplate(
-      "loanId==%s and feeFineType==\"%s\"", loanId.toString(), type)).getFirst();
+  @Test
+  public void shouldRefundPaidAmountForLostAndPaidItem() {
+    final double setCostFee = 10.00;
+
+    declareItemLost(setCostFee);
+    resolveLostItemFee();
+
+    checkInFixture.checkInByBarcode(item);
+
+    assertThat(loan, hasLostItemFee(isRefundedFully(setCostFee)));
+    assertThat(loan, hasLostItemFeeActions(arePaymentRefundActionsCreated(setCostFee)));
   }
 
-  private MultipleJsonRecords getAccountActions(String accountId) {
-    return feeFineActionsClient.getMany(queryFromTemplate("accountId==%s", accountId));
+  @Test
+  public void shouldRefundOnlyLastLoanForLostAndPaidItem() {
+    final double firstFee = 20.00;
+    final double secondFee = 30.00;
+
+    useChargeableRefundableLostItemFee(firstFee, 0.0);
+
+    final IndividualResource firstLoan = declareItemLost();
+    mockClockManagerToReturnFixedDateTime(now(DateTimeZone.UTC).plusMinutes(2));
+    // Item fee won't be cancelled, because refund period is exceeded
+    checkInFixture.checkInByBarcode(item);
+    assertThat(itemsClient.getById(item.getId()).getJson(), isAvailable());
+
+    declareItemLost(secondFee);
+    resolveLostItemFee();
+    checkInFixture.checkInByBarcode(item);
+
+    assertThat(firstLoan, hasLostItemFee(isOpen(firstFee)));
+    assertThat(firstLoan, hasLostItemFeeActions(
+      not(isCancelledItemReturnedActionCreated(firstFee))));
+
+    assertThat(loan, hasLostItemFee(isRefundedFully(secondFee)));
+    assertThat(loan, hasLostItemFeeActions(arePaymentRefundActionsCreated(secondFee)));
   }
 
-  private void verifyLostItemFeeAccount(Matcher<JsonObject> matcher) {
-    assertThat(getAccountForLoan(loan.getId(), LOST_ITEM_FEE), matcher);
+  @Test
+  public void shouldFailIfNoLoanForLostAndPaidItem() {
+    final double setCost = 20.00;
+
+    declareItemLost(setCost);
+    resolveLostItemFee();
+
+    // Remove the loan from storage
+    loansFixture.deleteLoan(loan.getId());
+
+    final Response checkInResponse = checkInFixture.attemptCheckInByBarcode(
+      new CheckInByBarcodeRequestBuilder()
+        .at(servicePointsFixture.cd1())
+        .forItem(item));
+
+    assertThat(checkInResponse.getJson(), hasErrorWith(allOf(
+      hasMessage("Item is lost however there is no declared lost loan found"),
+      hasParameter("itemId", item.getId().toString()))));
   }
 
-  private void verifyLostItemFeeAccountAction(Matcher<Iterable<JsonObject>> actionMatcher) {
-    verifyFeeAction(LOST_ITEM_FEE, actionMatcher);
+  @Test
+  public void shouldFailIfLastLoanIsNotDeclaredLostForLostAndPaidItem() {
+    loan = checkOutFixture.checkOutByBarcode(item, usersFixture.jessica());
+
+    checkInFixture.checkInByBarcode(item);
+
+    // Update the item status in storage
+    itemsClient.replace(item.getId(), itemsClient.get(item).getJson().copy()
+      .put("status", new JsonObject().put("name", "Lost and paid")));
+
+    final Response checkInResponse = checkInFixture.attemptCheckInByBarcode(
+      new CheckInByBarcodeRequestBuilder()
+        .at(servicePointsFixture.cd1())
+        .forItem(item));
+
+    assertThat(checkInResponse.getJson(), hasErrorWith(allOf(
+      hasMessage("Last loan for lost item is not declared lost"),
+      hasParameter("loanId", loan.getId().toString()))));
   }
 
-  private void verifyLostItemProcessingFeeAccount(Matcher<JsonObject> matcher) {
-    assertThat(getAccountForLoan(loan.getId(), LOST_ITEM_PROCESSING_FEE), matcher);
+  private void resolveLostItemFee() {
+    feeFineAccountFixture.payLostItemFee(loan.getId());
+    eventSubscribersFixture.publishLoanRelatedFeeFineClosedEvent(loan.getId());
+
+    assertThat(itemsClient.getById(item.getId()).getJson(), isLostAndPaid());
+    assertThat(loansFixture.getLoanById(loan.getId()).getJson(), isClosed());
   }
 
-  private void verifyLostItemProcessingFeeAccountAction(Matcher<Iterable<JsonObject>> actionMatcher) {
-    verifyFeeAction(LOST_ITEM_PROCESSING_FEE, actionMatcher);
-  }
-
-  private void verifyFeeAction(String feeType, Matcher<Iterable<JsonObject>> actionMatcher) {
-    final JsonObject fee = getAccountForLoan(loan.getId(), feeType);
-
-    assertThat(fee, notNullValue());
-
-    final MultipleJsonRecords accounts = getAccountActions(fee.getString("id"));
-    assertThat(accounts, actionMatcher);
-    assertThat(accounts, everyItem(allOf(
-      hasJsonPath("source", "Admin, Admin"),
-      hasJsonPath("createdAt", startsWith("Circ Desk"))
-    )));
-  }
-
-  private void declareItemLost() {
-    item = itemsFixture.basedUponNod();
+  private IndividualResource declareItemLost() {
     loan = checkOutFixture.checkOutByBarcode(item, usersFixture.charlotte());
 
     declareLostFixtures.declareItemLost(new DeclareItemLostRequestBuilder()
@@ -371,88 +438,68 @@ public class CheckInDeclaredLostItemTest extends APITests {
       .forLoanId(loan.getId()));
 
     loan = loansFixture.getLoanById(loan.getId());
+    return loan;
   }
 
-  private Matcher<Iterable<JsonObject>> areTransferRefundActionsCreated(double transferAmount) {
-    return areTransferRefundActionsCreated(0.0, transferAmount);
-  }
+  private void declareItemLost(double setCostFee) {
+    useChargeableRefundableLostItemFee(setCostFee, 0.0);
 
-  private Matcher<Iterable<JsonObject>> areTransferRefundActionsCreated(
-    double remaining, double transferAmount) {
-
-    final FeeAmount creditAmount = new FeeAmount(remaining)
-      .subtract(new FeeAmount(transferAmount));
-    return hasItems(
-      allOf(
-        hasJsonPath("amountAction", transferAmount),
-        hasJsonPath("balance", creditAmount.toDouble()),
-        hasJsonPath("typeAction", CREDITED_FULLY),
-        hasJsonPath("transactionInformation", "Refund to Bursar"),
-        hasJsonPath("paymentMethod", LOST_ITEM_FOUND)),
-      allOf(
-        hasJsonPath("amountAction", transferAmount),
-        hasJsonPath("balance", remaining),
-        hasJsonPath("typeAction", REFUNDED_FULLY),
-        hasJsonPath("transactionInformation", "Refund to Bursar"),
-        hasJsonPath("paymentMethod", LOST_ITEM_FOUND))
-    );
-  }
-
-  private Matcher<Iterable<JsonObject>> arePaymentRefundActionsCreated(double paymentAmount) {
-    return arePaymentRefundActionsCreated(0.0, paymentAmount);
-  }
-
-  private Matcher<Iterable<JsonObject>> arePaymentRefundActionsCreated(
-    double remaining, double paymentAmount) {
-
-    final FeeAmount creditAmount = new FeeAmount(remaining)
-      .subtract(new FeeAmount(paymentAmount));
-    return hasItems(
-      allOf(
-        hasJsonPath("amountAction", paymentAmount),
-        hasJsonPath("balance", creditAmount.toDouble()),
-        hasJsonPath("typeAction", CREDITED_FULLY),
-        hasJsonPath("transactionInformation", "Refund to patron"),
-        hasJsonPath("paymentMethod", LOST_ITEM_FOUND)),
-      allOf(
-        hasJsonPath("amountAction", paymentAmount),
-        hasJsonPath("balance", remaining),
-        hasJsonPath("typeAction", REFUNDED_FULLY),
-        hasJsonPath("transactionInformation", "Refund to patron"),
-        hasJsonPath("paymentMethod", LOST_ITEM_FOUND))
-    );
-  }
-
-  private Matcher<Iterable<JsonObject>> isCloseActionCreated(double amount) {
-    return hasItems(allOf(
-      hasJsonPath("amountAction", amount),
-      hasJsonPath("balance", 0.0),
-      hasJsonPath("typeAction", CANCELLED_ITEM_RETURNED))
-    );
-  }
-
-  private Matcher<JsonObject> isAccountRefundedFully(double amount) {
-    return allOf(
-      hasJsonPath("amount", amount),
-      hasJsonPath("remaining", 0.0),
-      hasJsonPath("status.name", "Closed"),
-      hasJsonPath("paymentStatus.name", REFUNDED_FULLY));
-  }
-
-  private Matcher<JsonObject> isAccountClosed(double amount) {
-    return allOf(
-      hasJsonPath("amount", amount),
-      hasJsonPath("remaining", 0.0),
-      hasJsonPath("status.name", "Closed"),
-      hasJsonPath("paymentStatus.name", CANCELLED_ITEM_RETURNED));
+    declareItemLost();
   }
 
   private void useChargeableRefundableLostItemFee(double itemFee, double processingFee) {
     useLostItemPolicy(lostItemFeePoliciesFixture.create(
       lostItemFeePoliciesFixture.facultyStandardPolicy()
-        .withName("Test check in")
+        .withName(String.format("Test lost policy processing fee %s, item fee %s",
+          itemFee, processingFee))
         .chargeProcessingFee(processingFee)
         .withSetCost(itemFee)
         .refundFeesWithinMinutes(1)).getId());
+  }
+
+  private JsonObject getLostItemFeeAccountForLoan() {
+    return accountsClient.getMany(queryFromTemplate(
+      "loanId==%s and feeFineType==\"Lost item fee\"", loan.getId())).getFirst();
+  }
+
+  private MultipleJsonRecords getAccountActions(String accountId) {
+    return feeFineActionsClient.getMany(queryFromTemplate("accountId==%s", accountId));
+  }
+
+  @SuppressWarnings("unchecked")
+  private void lostItemFeeActionsOrderedHistorically() {
+    final JsonObject fee = getLostItemFeeAccountForLoan();
+    final List<JsonObject> accountsOrdered = getAccountActions(fee.getString("id"))
+      .stream()
+      .sorted((first, second) -> parse(second.getString(DATE_ACTION_PROPERTY))
+        .compareTo(parse(first.getString(DATE_ACTION_PROPERTY))))
+      .collect(Collectors.toList());
+
+    assertThat(accountsOrdered, containsInRelativeOrder(
+      allOf(
+        hasJsonPath("typeAction", CANCELLED_ITEM_RETURNED),
+        hasJsonPath("transactionInformation", "-")),
+      allOf(
+        hasJsonPath("typeAction", REFUNDED_FULLY),
+        hasJsonPath("transactionInformation", REFUND_TO_PATRON)),
+      allOf(
+        hasJsonPath("typeAction", CREDITED_FULLY),
+        hasJsonPath("transactionInformation", REFUND_TO_PATRON)),
+      allOf(
+        hasJsonPath("typeAction", REFUNDED_FULLY),
+        hasJsonPath("transactionInformation", REFUND_TO_BURSAR)),
+      allOf(
+        hasJsonPath("typeAction", CREDITED_FULLY),
+        hasJsonPath("transactionInformation", REFUND_TO_BURSAR))
+    ));
+
+    final int numberOfRefundCancelActions = 5;
+    for (int index = 1; index < numberOfRefundCancelActions; index++) {
+      final JsonObject previousAction = accountsOrdered.get(index - 1);
+      final JsonObject currentAction = accountsOrdered.get(index);
+
+      assertThat(parse(previousAction.getString(DATE_ACTION_PROPERTY)),
+        greaterThan(parse(currentAction.getString(DATE_ACTION_PROPERTY))));
+    }
   }
 }
