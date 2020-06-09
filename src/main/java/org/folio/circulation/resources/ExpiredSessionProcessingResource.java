@@ -4,7 +4,9 @@ import static org.folio.circulation.support.Result.failed;
 
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 
+import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.domain.ConfigurationRepository;
 import org.folio.circulation.domain.notice.session.ExpiredSession;
 import org.folio.circulation.domain.notice.session.PatronActionSessionService;
@@ -67,7 +69,11 @@ public class ExpiredSessionProcessingResource extends Resource {
   private CompletableFuture<Result<Void>> attemptEndSession(
     PatronActionSessionService patronSessionService, List<ExpiredSession> expiredSessions) {
 
-    if (expiredSessions.isEmpty()) {
+    List<ExpiredSession> existingExpiredSessions = expiredSessions.stream()
+      .filter(session -> StringUtils.isNotBlank(session.getPatronId()))
+      .collect(Collectors.toList());
+
+    if (existingExpiredSessions.isEmpty()) {
       return CompletableFuture.completedFuture(Result.succeeded(null));
     }
 
