@@ -123,7 +123,7 @@ public class PatronActionSessionRepository {
 
     Result<CqlQuery> sessionsQuery = exactMatch(PATRON_ID, patronId);
 
-    sessionsQuery = addActualTypeToCqlQuery(sessionsQuery, actionType);
+    sessionsQuery = addActionTypeToCqlQuery(sessionsQuery, actionType);
 
     return sessionsQuery
       .after(query -> findBy(query, pageLimit))
@@ -143,7 +143,7 @@ public class PatronActionSessionRepository {
       return CompletableFuture.completedFuture(Result.succeeded(null));
     }
     Result<CqlQuery> sessionsQuery = exactMatchAny(PATRON_ID, patronIds);
-    sessionsQuery = addActualTypeToCqlQuery(sessionsQuery,
+    sessionsQuery = addActionTypeToCqlQuery(sessionsQuery,
       expiredSessions.get(0).getActionType());
 
     return sessionsQuery
@@ -152,7 +152,7 @@ public class PatronActionSessionRepository {
         () -> userRepository.getUsersForUserIds(patronIds), this::setUsersForLoans));
   }
 
-  private Result<CqlQuery> addActualTypeToCqlQuery(
+  private Result<CqlQuery> addActionTypeToCqlQuery(
     Result<CqlQuery> sessionsQuery, PatronActionType actionType) {
 
     if (isPatronActionTypeSpecified(actionType)) {
