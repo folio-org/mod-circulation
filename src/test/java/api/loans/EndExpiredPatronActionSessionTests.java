@@ -174,4 +174,52 @@ public class EndExpiredPatronActionSessionTests extends APITests {
       .atMost(1, TimeUnit.SECONDS)
       .until(patronSessionRecordsClient::getAll, Matchers.hasSize(4));
   }
+
+  @Test
+  public void patronsHaveSessionsAndAllShouldBeExpiredByTimeout() {
+
+    IndividualResource james = usersFixture.james();
+    IndividualResource jessica = usersFixture.jessica();
+    IndividualResource steve = usersFixture.steve();
+    InventoryItemResource nod = itemsFixture.basedUponNod();
+    InventoryItemResource interestingTimes = itemsFixture.basedUponInterestingTimes();
+    InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+
+    checkOutFixture.checkOutByBarcode(nod, james);
+    checkOutFixture.checkOutByBarcode(interestingTimes, jessica);
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet, steve);
+    checkInFixture.checkInByBarcode(nod);
+    checkInFixture.checkInByBarcode(interestingTimes);
+    checkInFixture.checkInByBarcode(smallAngryPlanet);
+    expiredEndSessionClient.deleteAll();
+
+    List<JsonObject> sessions = patronSessionRecordsClient.getAll();
+    assertThat(sessions, Matchers.hasSize(6));
+
+    sessions.stream()
+      .filter(session -> session.getMap().get("actionType")
+        .equals(PatronActionType.CHECK_IN.getRepresentation()))
+      .map(session -> session.getString("patronId"))
+      .forEach(patronId -> expiredEndSessionClient.create(new EndSessionBuilder()
+        .withPatronId(patronId).withActionType("Check-in")));
+
+    expiredSessionProcessingClient.runRequestExpiredSessionsProcessing(204);
+    Awaitility.await()
+      .atMost(1, TimeUnit.SECONDS)
+      .until(patronSessionRecordsClient::getAll,  Matchers.hasSize(3));
+
+    expiredEndSessionClient.deleteAll();
+
+    sessions.stream()
+      .filter(session -> session.getMap().get("actionType")
+        .equals(PatronActionType.CHECK_OUT.getRepresentation()))
+      .map(session -> session.getString("patronId"))
+      .forEach(patronId -> expiredEndSessionClient.create(new EndSessionBuilder()
+        .withPatronId(patronId).withActionType("Check-out")));
+
+    expiredSessionProcessingClient.runRequestExpiredSessionsProcessing(204);
+    Awaitility.await()
+      .atMost(1, TimeUnit.SECONDS)
+      .until(patronSessionRecordsClient::getAll,  Matchers.hasSize(0));
+  }
 }
