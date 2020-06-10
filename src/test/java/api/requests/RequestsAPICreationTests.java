@@ -1,6 +1,8 @@
 package api.requests;
 
 import static api.support.builders.RequestBuilder.OPEN_NOT_YET_FILLED;
+import static api.support.fixtures.AutomatedPatronBlocksFixture.MAX_NUMBER_OF_ITEMS_CHARGED_OUT_MESSAGE;
+import static api.support.fixtures.AutomatedPatronBlocksFixture.MAX_OUTSTANDING_FEE_FINE_BALANCE_MESSAGE;
 import static api.support.http.CqlQuery.exactMatch;
 import static api.support.http.Limit.limit;
 import static api.support.http.Offset.noOffset;
@@ -2025,6 +2027,29 @@ public class RequestsAPICreationTests extends APITests {
       assertThat(actualRequest, hasJsonPath("requestType", "Page"));
       assertThat(actualRequest, hasJsonPath("status", "Open - Not yet filled"));
     });
+  }
+
+  @Test
+  public void requestRefusedWhenAutomatedBlockExistsForPatron() {
+    final IndividualResource steve = usersFixture.steve();
+    final InventoryItemResource item = itemsFixture.basedUponTemeraire();
+
+    checkOutFixture.checkOutByBarcode(item);
+    automatedPatronBlocksFixture.blockAction(steve.getId().toString(), false, false, true);
+
+    final Response response = requestsClient.attemptCreate(new RequestBuilder()
+      .open()
+      .recall()
+      .forItem(item)
+      .by(steve)
+      .fulfilToHoldShelf()
+      .withPickupServicePointId(servicePointsFixture.cd1().getId()));
+
+    assertThat(response, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
+    assertThat(response.getJson(), hasErrorWith(allOf(
+      hasMessage(MAX_NUMBER_OF_ITEMS_CHARGED_OUT_MESSAGE))));
+    assertThat(response.getJson(), hasErrorWith(allOf(
+      hasMessage(MAX_OUTSTANDING_FEE_FINE_BALANCE_MESSAGE))));
   }
 
   private List<IndividualResource> createOneHundredRequests() {

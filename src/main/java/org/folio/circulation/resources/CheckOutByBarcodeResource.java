@@ -9,8 +9,11 @@ import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 import static org.folio.circulation.support.http.server.JsonHttpResponse.created;
 
+import java.util.HashMap;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
+import org.folio.circulation.domain.AutomatedPatronBlocksRepository;
 import org.folio.circulation.domain.ConfigurationRepository;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Loan;
@@ -33,6 +36,7 @@ import org.folio.circulation.domain.policy.OverdueFinePolicyRepository;
 import org.folio.circulation.domain.policy.PatronNoticePolicyRepository;
 import org.folio.circulation.domain.representations.LoanProperties;
 import org.folio.circulation.domain.validation.AlreadyCheckedOutValidator;
+import org.folio.circulation.domain.validation.AutomatedPatronBlocksValidator;
 import org.folio.circulation.domain.validation.ExistingOpenLoanValidator;
 import org.folio.circulation.domain.validation.InactiveUserValidator;
 import org.folio.circulation.domain.validation.ItemLimitValidator;
@@ -49,6 +53,7 @@ import org.folio.circulation.support.Result;
 import org.folio.circulation.support.RouteRegistration;
 import org.folio.circulation.support.ValidationErrorFailure;
 import org.folio.circulation.support.http.server.HttpResponse;
+import org.folio.circulation.support.http.server.ValidationError;
 import org.folio.circulation.support.http.server.WebContext;
 import org.joda.time.format.ISODateTimeFormat;
 
@@ -109,6 +114,8 @@ public class CheckOutByBarcodeResource extends Resource {
     final ScheduledNoticesRepository scheduledNoticesRepository = ScheduledNoticesRepository.using(clients);
     final DueDateScheduledNoticeService scheduledNoticeService =
       new DueDateScheduledNoticeService(scheduledNoticesRepository, patronNoticePolicyRepository);
+    final AutomatedPatronBlocksRepository automatedPatronBlocksRepository =
+      new AutomatedPatronBlocksRepository(clients);
 
     final ProxyRelationshipValidator proxyRelationshipValidator = new ProxyRelationshipValidator(
       clients, () -> singleValidationError(
@@ -141,6 +148,12 @@ public class CheckOutByBarcodeResource extends Resource {
     final ItemLimitValidator itemLimitValidator = new ItemLimitValidator(
       message -> singleValidationError(message, ITEM_BARCODE, itemBarcode), loanRepository);
 
+    final AutomatedPatronBlocksValidator automatedPatronBlocksValidator =
+      new AutomatedPatronBlocksValidator(automatedPatronBlocksRepository,
+        messages -> new ValidationErrorFailure(messages.stream()
+          .map(message -> new ValidationError(message, new HashMap<>()))
+          .collect(Collectors.toList())));
+
     final UpdateItem updateItem = new UpdateItem(clients);
     final UpdateRequestQueue requestQueueUpdate = UpdateRequestQueue.using(clients);
 
@@ -154,6 +167,8 @@ public class CheckOutByBarcodeResource extends Resource {
     completedFuture(succeeded(new LoanAndRelatedRecords(loan)))
       .thenApply(servicePointOfCheckoutPresentValidator::refuseCheckOutWhenServicePointIsNotPresent)
       .thenCombineAsync(userRepository.getUserByBarcode(userBarcode), this::addUser)
+      .thenComposeAsync(r -> r.after(
+        automatedPatronBlocksValidator::refuseWhenCheckOutActionIsBlockedForPatron))
       .thenCombineAsync(userRepository.getProxyUserByBarcode(proxyUserBarcode), this::addProxyUser)
       .thenApply(inactiveUserValidator::refuseWhenUserIsInactive)
       .thenApply(inactiveProxyUserValidator::refuseWhenUserIsInactive)

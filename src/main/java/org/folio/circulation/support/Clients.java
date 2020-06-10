@@ -52,6 +52,7 @@ public class Clients {
   private final GetManyRecordsClient userManualBlocksStorageClient;
   private final CollectionResourceClient templateNoticeClient;
   private final CollectionResourceClient checkInStorageClient;
+  private final CollectionResourceClient automatedPatronBlocksClient;
 
   public static Clients create(WebContext context, HttpClient httpClient) {
     return new Clients(context.createHttpClient(httpClient), context);
@@ -103,6 +104,7 @@ public class Clients {
       userManualBlocksStorageClient = createUserManualBlocksStorageClient(client, context);
       templateNoticeClient = createTemplateNoticeClient(client, context);
       checkInStorageClient = createCheckInStorageClient(client, context);
+      automatedPatronBlocksClient = createAutomatedPatronBlocksClient(client, context);
     }
     catch(MalformedURLException e) {
       throw new InvalidOkapiLocationException(context.getOkapiLocation(), e);
@@ -279,6 +281,10 @@ public class Clients {
 
   public CollectionResourceClient checkInStorageClient() {
     return checkInStorageClient;
+  }
+
+  public CollectionResourceClient automatedPatronBlocksClient() {
+    return automatedPatronBlocksClient;
   }
 
   private static CollectionResourceClient getCollectionResourceClient(
@@ -625,5 +631,12 @@ public class Clients {
     OkapiHttpClient client, WebContext context) throws MalformedURLException {
 
     return getCollectionResourceClient(client, context, "/check-in-storage/check-ins");
+  }
+
+  private static CollectionResourceClient createAutomatedPatronBlocksClient(
+    OkapiHttpClient client, WebContext context)
+    throws MalformedURLException {
+
+    return getCollectionResourceClient(client, context, "/automated-patron-blocks");
   }
 }

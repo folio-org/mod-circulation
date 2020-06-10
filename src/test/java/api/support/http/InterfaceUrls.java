@@ -260,6 +260,10 @@ public class InterfaceUrls {
     return APITestContext.viaOkapiModuleUrl("/manualblocks");
   }
 
+  static URL automatedPatronBlocksStorageUrl() {
+    return APITestContext.viaOkapiModuleUrl("/automated-patron-blocks");
+  }
+
   static URL identifierTypesUrl(String subPath) {
     return APITestContext.viaOkapiModuleUrl("/identifier-types" + subPath);
   }

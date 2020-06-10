@@ -2,42 +2,50 @@ package org.folio.circulation.domain;
 
 import static org.folio.circulation.support.Result.of;
 
+import java.util.HashMap;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 
 import org.folio.circulation.domain.policy.RequestPolicyRepository;
+import org.folio.circulation.domain.validation.AutomatedPatronBlocksValidator;
 import org.folio.circulation.domain.validation.RequestLoanValidator;
 import org.folio.circulation.domain.validation.UserManualBlocksValidator;
 import org.folio.circulation.resources.RequestNoticeSender;
 import org.folio.circulation.support.Result;
+import org.folio.circulation.support.ValidationErrorFailure;
+import org.folio.circulation.support.http.server.ValidationError;
 
 public class CreateRequestService {
-  private final RequestRepository requestRepository;
-  private final RequestPolicyRepository requestPolicyRepository;
+  private final CreateRequestRepositories repositories;
   private final UpdateUponRequest updateUponRequest;
   private final RequestLoanValidator requestLoanValidator;
   private final RequestNoticeSender requestNoticeSender;
-  private final ConfigurationRepository configurationRepository;
   private final UserManualBlocksValidator userManualBlocksValidator;
 
-  public CreateRequestService(RequestRepository requestRepository,
-                              RequestPolicyRepository requestPolicyRepository,
-                              UpdateUponRequest updateUponRequest,
-                              RequestLoanValidator requestLoanValidator,
-                              RequestNoticeSender requestNoticeSender,
-                              ConfigurationRepository configurationRepository,
-                              UserManualBlocksValidator userManualBlocksValidator) {
+  public CreateRequestService(CreateRequestRepositories repositories,
+    UpdateUponRequest updateUponRequest, RequestLoanValidator requestLoanValidator,
+    RequestNoticeSender requestNoticeSender, UserManualBlocksValidator userManualBlocksValidator) {
 
-    this.requestRepository = requestRepository;
-    this.requestPolicyRepository = requestPolicyRepository;
+    this.repositories = repositories;
     this.updateUponRequest = updateUponRequest;
     this.requestLoanValidator = requestLoanValidator;
     this.requestNoticeSender = requestNoticeSender;
-    this.configurationRepository = configurationRepository;
     this.userManualBlocksValidator = userManualBlocksValidator;
   }
 
   public CompletableFuture<Result<RequestAndRelatedRecords>> createRequest(
       RequestAndRelatedRecords requestAndRelatedRecords) {
+
+    RequestRepository requestRepository = repositories.getRequestRepository();
+    RequestPolicyRepository requestPolicyRepository = repositories.getRequestPolicyRepository();
+    ConfigurationRepository configurationRepository = repositories.getConfigurationRepository();
+    AutomatedPatronBlocksRepository automatedPatronBlocksRepository =
+      repositories.getAutomatedPatronBlocksRepository();
+    final AutomatedPatronBlocksValidator automatedPatronBlocksValidator =
+      new AutomatedPatronBlocksValidator(automatedPatronBlocksRepository,
+        messages -> new ValidationErrorFailure(messages.stream()
+          .map(message -> new ValidationError(message, new HashMap<>()))
+          .collect(Collectors.toList())));
 
     return of(() -> requestAndRelatedRecords)
       .next(RequestServiceUtility::refuseWhenItemDoesNotExist)
@@ -47,6 +55,8 @@ public class CreateRequestService {
       .next(RequestServiceUtility::refuseWhenUserHasAlreadyRequestedItem)
       .after(requestLoanValidator::refuseWhenUserHasAlreadyBeenLoanedItem)
       .thenComposeAsync(r -> r.after(userManualBlocksValidator::refuseWhenUserIsBlocked))
+      .thenComposeAsync(r -> r.after(
+        automatedPatronBlocksValidator::refuseWhenRequestActionIsBlockedForPatron))
       .thenComposeAsync(r -> r.after(requestPolicyRepository::lookupRequestPolicy))
       .thenComposeAsync(r -> r.combineAfter(configurationRepository::findTimeZoneConfiguration,
         RequestAndRelatedRecords::withTimeZone))

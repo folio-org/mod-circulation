@@ -1,0 +1,84 @@
+package org.folio.circulation.domain.validation;
+
+import static java.util.concurrent.CompletableFuture.completedFuture;
+import static org.folio.circulation.support.Result.ofAsync;
+import static org.folio.circulation.support.Result.succeeded;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.function.Function;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
+
+import org.folio.circulation.domain.AutomatedPatronBlock;
+import org.folio.circulation.domain.AutomatedPatronBlocks;
+import org.folio.circulation.domain.AutomatedPatronBlocksRepository;
+import org.folio.circulation.domain.LoanAndRelatedRecords;
+import org.folio.circulation.domain.RequestAndRelatedRecords;
+import org.folio.circulation.support.Result;
+import org.folio.circulation.support.ValidationErrorFailure;
+
+public class AutomatedPatronBlocksValidator {
+  private final AutomatedPatronBlocksRepository automatedPatronBlocksRepository;
+  private final Function<List<String>, ValidationErrorFailure> actionIsBlockedForPatronErrorFunction;
+
+  public AutomatedPatronBlocksValidator(
+    AutomatedPatronBlocksRepository automatedPatronBlocksRepository,
+    Function<List<String>, ValidationErrorFailure> actionIsBlockedForPatronErrorFunction) {
+
+    this.automatedPatronBlocksRepository = automatedPatronBlocksRepository;
+    this.actionIsBlockedForPatronErrorFunction = actionIsBlockedForPatronErrorFunction;
+  }
+
+  public CompletableFuture<Result<LoanAndRelatedRecords>>
+  refuseWhenCheckOutActionIsBlockedForPatron(LoanAndRelatedRecords loanAndRelatedRecords) {
+
+    return refuse(loanAndRelatedRecords.getLoan().getUserId(),
+      AutomatedPatronBlock::isBlockBorrowing, loanAndRelatedRecords);
+  }
+
+  public CompletableFuture<Result<LoanAndRelatedRecords>>
+  refuseWhenRenewalActionIsBlockedForPatron(LoanAndRelatedRecords loanAndRelatedRecords) {
+
+    return refuse(loanAndRelatedRecords.getLoan().getUserId(),
+      AutomatedPatronBlock::isBlockRenewal, loanAndRelatedRecords);
+  }
+
+  public CompletableFuture<Result<RequestAndRelatedRecords>>
+  refuseWhenRequestActionIsBlockedForPatron(RequestAndRelatedRecords requestAndRelatedRecords) {
+
+    return refuse(requestAndRelatedRecords.getUserId(), AutomatedPatronBlock::isBlockRequest,
+      requestAndRelatedRecords);
+  }
+
+  private <T> CompletableFuture<Result<T>> refuse(String userId,
+    Predicate<AutomatedPatronBlock> actionPredicate, T mapTo) {
+
+    return ofAsync(() -> userId)
+      .thenComposeAsync(r -> r.after(automatedPatronBlocksRepository::findByUserId))
+      .thenComposeAsync(r -> r.after(blocks -> getActionBlock(blocks, actionPredicate)))
+      .thenComposeAsync(result -> result.failAfter(this::blocksExist,
+        blockList -> actionIsBlockedForPatronErrorFunction.apply(
+          blockList.stream()
+            .map(AutomatedPatronBlock::getMessage)
+            .collect(Collectors.toList())
+        )))
+      .thenApply(result -> result.map(v -> mapTo));
+  }
+
+  private CompletableFuture<Result<List<AutomatedPatronBlock>>> getActionBlock(
+    AutomatedPatronBlocks automatedPatronBlocks, Predicate<AutomatedPatronBlock> actionPredicate) {
+
+    return completedFuture(succeeded(automatedPatronBlocks.getBlocks().stream()
+      .filter(actionPredicate)
+      .collect(Collectors.toList())))
+      .exceptionally(throwable -> succeeded(new ArrayList<>()));
+  }
+
+  private CompletableFuture<Result<Boolean>> blocksExist(
+    List<AutomatedPatronBlock> automatedPatronBlocks) {
+
+    return completedFuture(succeeded(!automatedPatronBlocks.isEmpty()));
+  }
+}

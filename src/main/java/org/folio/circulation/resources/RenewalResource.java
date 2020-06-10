@@ -1,8 +1,11 @@
 package org.folio.circulation.resources;
 
+import java.util.HashMap;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 
 import org.folio.circulation.StoreLoanAndItem;
+import org.folio.circulation.domain.AutomatedPatronBlocksRepository;
 import org.folio.circulation.domain.ConfigurationRepository;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
@@ -14,13 +17,16 @@ import org.folio.circulation.domain.UserRepository;
 import org.folio.circulation.domain.notice.schedule.DueDateScheduledNoticeService;
 import org.folio.circulation.domain.notice.schedule.FeeFineScheduledNoticeService;
 import org.folio.circulation.domain.policy.LoanPolicyRepository;
+import org.folio.circulation.domain.validation.AutomatedPatronBlocksValidator;
 import org.folio.circulation.services.EventPublisher;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.ItemRepository;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.RouteRegistration;
+import org.folio.circulation.support.ValidationErrorFailure;
 import org.folio.circulation.support.http.server.HttpResponse;
 import org.folio.circulation.support.http.server.JsonHttpResponse;
+import org.folio.circulation.support.http.server.ValidationError;
 import org.folio.circulation.support.http.server.WebContext;
 
 import io.vertx.core.http.HttpClient;
@@ -65,6 +71,14 @@ public abstract class RenewalResource extends Resource {
 
     final EventPublisher eventPublisher = new EventPublisher(routingContext);
 
+    final AutomatedPatronBlocksRepository automatedPatronBlocksRepository =
+      new AutomatedPatronBlocksRepository(clients);
+    final AutomatedPatronBlocksValidator automatedPatronBlocksValidator =
+      new AutomatedPatronBlocksValidator(automatedPatronBlocksRepository,
+        messages -> new ValidationErrorFailure(messages.stream()
+          .map(message -> new ValidationError(message, new HashMap<>()))
+          .collect(Collectors.toList())));
+
     //TODO: Validation check for same user should be in the domain service
     JsonObject bodyAsJson = routingContext.getBodyAsJson();
     CompletableFuture<Result<Loan>> findLoanResult = findLoan(bodyAsJson,
@@ -72,6 +86,8 @@ public abstract class RenewalResource extends Resource {
 
     findLoanResult
       .thenApply(r -> r.map(LoanAndRelatedRecords::new))
+      .thenComposeAsync(r -> r.after(
+        automatedPatronBlocksValidator::refuseWhenRenewalActionIsBlockedForPatron))
       .thenComposeAsync(r -> r.after(loanPolicyRepository::lookupLoanPolicy))
       .thenComposeAsync(r -> r.after(requestQueueRepository::get))
       .thenCompose(r -> r.combineAfter(configurationRepository::findTimeZoneConfiguration,
