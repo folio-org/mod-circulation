@@ -100,15 +100,19 @@ public class UserRepository {
         .distinct()
         .collect(Collectors.toList());
 
-    final FindWithMultipleCqlIndexValues<User> fetcher = createUsersFetcher();
-
-    return fetcher.findByIds(usersToFetch)
-      .thenApply(mapResult(users -> users.toMap(User::getId)));
+    return getUsersForUserIds(usersToFetch);
   }
 
   private FindWithMultipleCqlIndexValues<User> createUsersFetcher() {
     return findWithMultipleCqlIndexValues(usersStorageClient, USERS_RECORD_PROPERTY,
       User::from);
+  }
+
+  public CompletableFuture<Result<Map<String, User>>> getUsersForUserIds(Collection<String> ids) {
+    final FindWithMultipleCqlIndexValues<User> fetcher = createUsersFetcher();
+
+    return fetcher.findByIds(ids)
+      .thenApply(mapResult(users -> users.toMap(User::getId)));
   }
 
   //TODO: Replace this with validator

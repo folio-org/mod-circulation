@@ -14,6 +14,7 @@ import java.util.Collections;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
@@ -31,6 +32,7 @@ import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.http.client.PageLimit;
 
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
 public class PatronActionSessionService {
@@ -85,6 +87,18 @@ public class PatronActionSessionService {
       .thenApply(mapResult(v -> null));
   }
 
+  public CompletableFuture<Result<Void>> endSession(List<ExpiredSession> expiredSessions) {
+
+    return patronActionSessionRepository.findPatronActionSessions(expiredSessions,
+        DEFAULT_SESSION_SIZE_PAGE_LIMIT)
+      .thenCompose(r -> r.after(this::sendNoticesForAllUsers))
+      .thenCompose(r -> r.after(records ->
+        allOf(Objects.isNull(records)
+          ? Collections.emptyList()
+          : records.getRecords(), patronActionSessionRepository::delete)))
+      .thenApply(mapResult(v -> null));
+  }
+
   private CompletableFuture<Result<MultipleRecords<PatronSessionRecord>>> sendNotices(
     MultipleRecords<PatronSessionRecord> records) {
 
@@ -98,14 +112,7 @@ public class PatronActionSessionService {
     //The user is the same for all records
     User user = recordSample.getLoan().getUser();
 
-    List<PatronNoticeEvent> patronNoticeEvents = sessionRecords.stream()
-      .map(r -> new PatronNoticeEventBuilder()
-        .withItem(r.getLoan().getItem())
-        .withUser(r.getLoan().getUser())
-        .withEventType(actionToEventMap.get(r.getActionType()))
-        .withNoticeContext(createLoanNoticeContextWithoutUser(r.getLoan()))
-        .build())
-      .collect(Collectors.toList());
+    List<PatronNoticeEvent> patronNoticeEvents = getPatronNoticeEvents(sessionRecords);
 
     return patronNoticeService.acceptMultipleNoticeEvent(patronNoticeEvents,
       loanContexts -> new JsonObject()
@@ -113,6 +120,47 @@ public class PatronActionSessionService {
         .put("loans", loanContexts)
     )
       .thenApply(mapResult(v -> records));
+  }
+
+  private CompletableFuture<Result<MultipleRecords<PatronSessionRecord>>> sendNoticesForAllUsers(
+    MultipleRecords<PatronSessionRecord> records) {
+
+    if (records == null || records.isEmpty()) {
+      return completedFuture(succeeded(null));
+    }
+    List<PatronSessionRecord> sessionRecords = new ArrayList<>(records.getRecords());
+
+    Set<User> users = sessionRecords.stream()
+      .map(record -> record.getLoan().getUser())
+      .collect(Collectors.toSet());
+
+    List<PatronNoticeEvent> patronNoticeEvents = getPatronNoticeEvents(sessionRecords);
+
+    return patronNoticeService.acceptMultipleNoticeEvent(patronNoticeEvents,
+      loanContexts -> new JsonObject()
+        .put("user", createUsersContext(users))
+        .put("loans", loanContexts))
+      .thenApply(mapResult(v -> records));
+  }
+
+  private List<PatronNoticeEvent> getPatronNoticeEvents(
+    List<PatronSessionRecord> sessionRecords) {
+
+    return sessionRecords.stream()
+      .map(r -> new PatronNoticeEventBuilder()
+        .withItem(r.getLoan().getItem())
+        .withUser(r.getLoan().getUser())
+        .withEventType(actionToEventMap.get(r.getActionType()))
+        .withNoticeContext(createLoanNoticeContextWithoutUser(r.getLoan()))
+        .build())
+      .collect(Collectors.toList());
+  }
+
+  private JsonArray createUsersContext(Set<User> users) {
+    JsonArray jsonArray = new JsonArray();
+    users.forEach(user -> jsonArray.add(createUserContext(user)));
+
+    return jsonArray;
   }
 
   public CompletableFuture<Result<CheckInProcessRecords>> saveCheckInSessionRecord(CheckInProcessRecords records) {
