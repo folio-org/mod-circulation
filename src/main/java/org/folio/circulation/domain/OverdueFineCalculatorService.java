@@ -18,7 +18,6 @@ import org.folio.circulation.domain.policy.OverdueFineCalculationParameters;
 import org.folio.circulation.domain.policy.OverdueFineInterval;
 import org.folio.circulation.domain.policy.OverdueFinePolicy;
 import org.folio.circulation.domain.policy.OverdueFinePolicyRepository;
-import org.folio.circulation.domain.policy.lostitem.LostItemPolicy;
 import org.folio.circulation.domain.representations.StoredAccount;
 import org.folio.circulation.domain.representations.StoredFeeFineAction;
 import org.folio.circulation.support.Clients;
@@ -87,7 +86,8 @@ public class OverdueFineCalculatorService {
 
     if (records.getItemStatusBeforeCheckIn() == ItemStatus.DECLARED_LOST) {
       return repos.lostItemPolicyRepository.getLostItemPolicyById(loan.getLostItemPolicyId())
-        .thenApply(r -> r.map(LostItemPolicy::shouldChargeOverdueFee));
+        .thenApply(r -> r.map(policy -> policy.shouldChargeOverdueFee()
+          && records.areLostItemFeesRefundedOrCancelled()));
     }
 
     return completedFuture(succeeded(true));

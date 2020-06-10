@@ -1,7 +1,10 @@
 package org.folio.circulation.domain.notice.session;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.support.Clients;
@@ -11,7 +14,7 @@ import org.folio.circulation.support.Result;
 
 public class PatronExpiredSessionRepository {
 
-  private static final int SESSION_LIMIT = 1;
+  private static final int EXPIRED_SESSIONS_LIMIT = 100;
   private static final String PATH_PARAM_WITH_QUERY = "expired-session-patron-ids?action_type=%s&session_inactivity_time_limit=%s&limit=%d";
   private static final String EXPIRED_SESSIONS = "expiredSessions";
   private final CollectionResourceClient patronExpiredSessionsStorageClient;
@@ -24,34 +27,41 @@ public class PatronExpiredSessionRepository {
     this.patronExpiredSessionsStorageClient = patronExpiredSessionsStorageClient;
   }
 
-  public CompletableFuture<Result<ExpiredSession>> findPatronExpiredSessions(PatronActionType actionType,
-                                                                     String sessionInactivityTime) {
+  public CompletableFuture<Result<List<ExpiredSession>>> findPatronExpiredSessions(
+    PatronActionType actionType, String sessionInactivityTime) {
+
     return lookupExpiredSession(actionType.getRepresentation(), sessionInactivityTime)
       .thenApply(result -> result.next(Result::succeeded));
   }
 
-  private CompletableFuture<Result<ExpiredSession>> lookupExpiredSession(String actionType,
-                                                                 String inactivityTimeLimit) {
-    String path = String.format(PATH_PARAM_WITH_QUERY, actionType, inactivityTimeLimit, SESSION_LIMIT);
-    return FetchSingleRecord.<ExpiredSession>forRecord("patronActionSessions")
+  private CompletableFuture<Result<List<ExpiredSession>>> lookupExpiredSession(
+    String actionType, String inactivityTimeLimit) {
+
+    String path = String.format(PATH_PARAM_WITH_QUERY, actionType, inactivityTimeLimit, EXPIRED_SESSIONS_LIMIT);
+
+    return FetchSingleRecord.<List<ExpiredSession>>forRecord("patronActionSessions")
       .using(patronExpiredSessionsStorageClient)
       .mapTo(this::mapFromJson)
       .fetch(path);
   }
 
-  private ExpiredSession mapFromJson(JsonObject json) {
+  private List<ExpiredSession> mapFromJson(JsonObject json) {
+    List<ExpiredSession> expiredSessions = new ArrayList<>();
     if (json.isEmpty() || json.getJsonArray(EXPIRED_SESSIONS).isEmpty()) {
-      return new ExpiredSession();
+      return expiredSessions;
     }
 
-    JsonObject jsonObject = json.getJsonArray(EXPIRED_SESSIONS)
-      .getJsonObject(0);
+    JsonArray expiredSessionsArray = json.getJsonArray(EXPIRED_SESSIONS);
+    for (int i = 0; i < expiredSessionsArray.size(); i++) {
+      String patronId = expiredSessionsArray.getJsonObject(i)
+        .getString("patronId", StringUtils.EMPTY);
+      String actionType = expiredSessionsArray.getJsonObject(i)
+        .getString("actionType", StringUtils.EMPTY);
 
-    String patronId = jsonObject.getString("patronId", StringUtils.EMPTY);
-    String actionType = jsonObject.getString("actionType", StringUtils.EMPTY);
-
-    return PatronActionType.from(actionType)
-      .map(patronActionType -> new ExpiredSession(patronId, patronActionType))
-      .orElse(new ExpiredSession());
+      PatronActionType.from(actionType)
+        .ifPresent(patronActionType -> expiredSessions.add(
+          new ExpiredSession(patronId, patronActionType)));
+    }
+    return expiredSessions;
   }
 }

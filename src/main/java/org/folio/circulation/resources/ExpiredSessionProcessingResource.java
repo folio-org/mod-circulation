@@ -1,6 +1,8 @@
 package org.folio.circulation.resources;
 
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.domain.ConfigurationRepository;
@@ -49,8 +51,10 @@ public class ExpiredSessionProcessingResource extends Resource {
 
     configurationRepository.lookupSessionTimeout()
       .thenCompose(r -> r.after(this::defineExpiredTime))
-      .thenCompose(r -> patronExpiredSessionRepository.findPatronExpiredSessions(PatronActionType.ALL, r.value().toString()))
-      .thenCompose(r -> r.after(expiredSession -> attemptEndSession(patronSessionService, expiredSession)))
+      .thenCompose(r -> patronExpiredSessionRepository.findPatronExpiredSessions(
+        PatronActionType.ALL, r.value().toString()))
+      .thenCompose(r -> r.after(expiredSessions -> attemptEndSession(
+        patronSessionService, expiredSessions)))
       .thenApply(r -> r.toFixedValue(NoContentResponse::noContent))
       .thenAccept(context::writeResultToHttpResponse);
   }
@@ -62,13 +66,16 @@ public class ExpiredSessionProcessingResource extends Resource {
   }
 
   private CompletableFuture<Result<Void>> attemptEndSession(
-    PatronActionSessionService patronSessionService, ExpiredSession expiredSession) {
+    PatronActionSessionService patronSessionService, List<ExpiredSession> expiredSessions) {
 
-    if (expiredSession == null || StringUtils.isBlank(expiredSession.getPatronId())) {
+    List<ExpiredSession> existingExpiredSessions = expiredSessions.stream()
+      .filter(session -> StringUtils.isNotBlank(session.getPatronId()))
+      .collect(Collectors.toList());
+
+    if (existingExpiredSessions.isEmpty()) {
       return CompletableFuture.completedFuture(Result.succeeded(null));
     }
 
-    return patronSessionService.endSession(expiredSession.getPatronId(),
-      expiredSession.getActionType());
+    return patronSessionService.endSession(expiredSessions);
   }
 }
