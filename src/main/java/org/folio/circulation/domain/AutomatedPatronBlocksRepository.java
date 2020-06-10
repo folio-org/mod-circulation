@@ -28,6 +28,7 @@ public class AutomatedPatronBlocksRepository {
     return FetchSingleRecord.<AutomatedPatronBlocks>forRecord("automatedPatronBlocks")
       .using(automatedPatronBlocksClient)
       .mapTo(AutomatedPatronBlocks::from)
+      .whenNotFound(succeeded(new AutomatedPatronBlocks()))
       .fetch(userId);
   }
 }
