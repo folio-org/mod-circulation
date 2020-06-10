@@ -4,6 +4,7 @@ import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.support.Result.ofAsync;
 import static org.folio.circulation.support.Result.succeeded;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
@@ -71,7 +72,8 @@ public class AutomatedPatronBlocksValidator {
 
     return completedFuture(succeeded(automatedPatronBlocks.getBlocks().stream()
       .filter(actionPredicate)
-      .collect(Collectors.toList())));
+      .collect(Collectors.toList())))
+      .exceptionally(throwable -> succeeded(new ArrayList<>()));
   }
 
   private CompletableFuture<Result<Boolean>> blocksExist(

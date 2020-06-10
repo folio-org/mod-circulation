@@ -2,10 +2,10 @@ package org.folio.circulation.domain;
 
 
 import static java.util.Objects.isNull;
+import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.support.Result.ofAsync;
 import static org.folio.circulation.support.Result.succeeded;
 
-import java.util.ArrayList;
 import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.support.Clients;
@@ -28,7 +28,9 @@ public class AutomatedPatronBlocksRepository {
     return FetchSingleRecord.<AutomatedPatronBlocks>forRecord("automatedPatronBlocks")
       .using(automatedPatronBlocksClient)
       .mapTo(AutomatedPatronBlocks::from)
-      .whenNotFound(succeeded(new AutomatedPatronBlocks()))
-      .fetch(userId);
+      .fetch(userId)
+      .thenCompose(r -> r.succeeded()
+        ? completedFuture(succeeded(r.value()))
+        : completedFuture(succeeded(new AutomatedPatronBlocks())));
   }
 }
