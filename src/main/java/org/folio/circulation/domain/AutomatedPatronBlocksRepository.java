@@ -28,9 +28,6 @@ public class AutomatedPatronBlocksRepository {
     return FetchSingleRecord.<AutomatedPatronBlocks>forRecord("automatedPatronBlocks")
       .using(automatedPatronBlocksClient)
       .mapTo(AutomatedPatronBlocks::from)
-      .fetch(userId)
-      .thenCompose(r -> r.succeeded()
-        ? completedFuture(succeeded(r.value()))
-        : completedFuture(succeeded(new AutomatedPatronBlocks())));
+      .fetch(userId);
   }
 }
