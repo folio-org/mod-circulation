@@ -25,7 +25,9 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
+import org.folio.circulation.domain.AutomatedPatronBlocksRepository;
 import org.folio.circulation.domain.ConfigurationRepository;
+import org.folio.circulation.domain.CreateRequestRepositories;
 import org.folio.circulation.domain.CreateRequestService;
 import org.folio.circulation.domain.InstanceRequestRelatedRecords;
 import org.folio.circulation.domain.Item;
@@ -231,12 +233,13 @@ public class RequestByInstanceIdResource extends Resource {
         UpdateRequestQueue.using(clients));
 
     final CreateRequestService createRequestService = new CreateRequestService(
-        RequestRepository.using(clients),
-        new RequestPolicyRepository(clients),
-        updateUponRequest,
-        new RequestLoanValidator(loanRepository),
-        requestNoticeSender, configurationRepository,
-        new UserManualBlocksValidator(userManualBlocksValidator));
+      new CreateRequestRepositories(RequestRepository.using(clients),
+        new RequestPolicyRepository(clients), configurationRepository,
+        new AutomatedPatronBlocksRepository(clients)),
+      updateUponRequest,
+      new RequestLoanValidator(loanRepository),
+      requestNoticeSender,
+      new UserManualBlocksValidator(userManualBlocksValidator));
 
     return placeRequest(itemRequestRepresentations, 0, createRequestService,
                         clients, loanRepository, new ArrayList<>());
