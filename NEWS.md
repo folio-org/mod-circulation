@@ -1,3 +1,28 @@
+## 19.0.0 2020-06-12
+
+* Charges fees for lost items (CIRC-707, CIRC-715, CIRC-717, CIRC-743, CIRC-746, CIRC-747, CIRC-748, CIRC-749, CIRC-765)
+* Refuses circulation operations based upon automated patron blocks (CIRC-755)
+* Disallows policies that cannot be found from being referenced in rules (CIRC-658)
+* Claimed returned items can be marked missing (CIRC-689)
+* Withdrawn items can be checked in or checked out (CIRC-690, CIRC-692)
+* Missing items can be checked out (CIRC-688)
+* Withdrawn items cannot be requested (CIRC-704)
+* Respects opening hours of primary service point when charging overdue fines (CIRC-736, CIRC-723)
+* Doubles the recommended memory to support receiving and publishing messages (CIRC-762)
+* HTTP requests timeout in 5 minutes (CIRC-710)
+* Provides `declare-item-lost 0.2`
+* Provides `change-due-date 0.1`
+* Provides `claim-item-returned 0.2`
+* Provides `circulation 9.3`
+* Provides `circulation-event-handlers 0.1`
+* Requires `loan-storage 7.0`
+* Requires `item-storage 8.4`
+* Requires `pubsub-event-types 0.1`
+* Requires `pubsub-publishers 0.1`
+* Requires `pubsub-subscribers 0.1`
+* Requires `pubsub-publish 0.1`
+* Requires `automated-patron-blocks 0.1`
+
 ## 18.0.0 2020-03-12
 
 * Charges overdue fines according to policy (CIRC-524, CIRC-548, CIRC-591, CIRC-656, CIRC-677, CIRC-678, CIRC-680, CIRC-682)
