@@ -394,7 +394,6 @@ public class PickSlipsTests extends APITests {
       .forItem(item)
       .by(james);
 
-
     IndividualResource pageRequest = requestsClient.create(pageRequestBuilder);
 
     Response response = ResourceClient.forPickSlips().getById(servicePointId);
