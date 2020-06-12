@@ -38,6 +38,7 @@ import org.folio.circulation.support.ItemRepository;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.RouteRegistration;
 import org.folio.circulation.support.http.client.CqlQuery;
+import org.folio.circulation.support.http.client.PageLimit;
 import org.folio.circulation.support.http.server.JsonHttpResponse;
 import org.folio.circulation.support.http.server.WebContext;
 
@@ -58,6 +59,8 @@ public class PickSlipsResource extends Resource {
   private static final String SERVICE_POINT_ID_PARAM = "servicePointId";
   private static final String EFFECTIVE_LOCATION_ID_KEY = "effectiveLocationId";
   private static final String PRIMARY_SERVICE_POINT_KEY = "primaryServicePoint";
+
+  private static final PageLimit LOCATIONS_LIMIT = PageLimit.oneThousand();
 
   private final String rootPath;
 
@@ -98,7 +101,7 @@ public class PickSlipsResource extends Resource {
     UUID servicePointId, Clients clients) {
 
     return findWithCqlQuery(clients.locationsStorage(), LOCATIONS_KEY, Location::from)
-      .findByQuery(exactMatch(PRIMARY_SERVICE_POINT_KEY, servicePointId.toString()));
+      .findByQuery(exactMatch(PRIMARY_SERVICE_POINT_KEY, servicePointId.toString()), LOCATIONS_LIMIT);
   }
 
   private CompletableFuture<Result<Collection<Item>>> fetchPagedItemsForLocations(
