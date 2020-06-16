@@ -1,3 +1,7 @@
+## 18.0.10 2020-06-16
+
+* Service points with many locations do not allow pick slips to be printed (CIRC-768)
+
 ## 18.0.9 2020-05-12
 
 * Provides using primary service point for calculating opening hours for overdue fine (CIRC-736)
