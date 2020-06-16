@@ -1,3 +1,7 @@
+## 19.0.1 2020-06-16
+
+* Service points with many locations do not allow pick slips to be printed (CIRC-768)
+
 ## 19.0.0 2020-06-12
 
 * Charges fees for lost items (CIRC-707, CIRC-715, CIRC-717, CIRC-743, CIRC-746, CIRC-747, CIRC-748, CIRC-749, CIRC-765)
