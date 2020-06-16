@@ -1,4 +1,5 @@
 ## 19.0.1 2020-06-16
+
 * Service points with many locations do not allow pick slips to be printed (CIRC-768)
 
 ## 19.0.0 2020-06-12
