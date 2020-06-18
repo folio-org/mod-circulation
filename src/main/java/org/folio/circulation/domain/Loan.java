@@ -577,7 +577,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     changeItemStatusForItemAndLoan(ItemStatus.LOST_AND_PAID);
   }
 
-  public Loan copy() {
+  public Loan copyLoanRepresentation() {
     return replaceRepresentation(asJson());
   }
 }
