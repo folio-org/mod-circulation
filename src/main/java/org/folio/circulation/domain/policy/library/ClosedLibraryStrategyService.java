@@ -13,6 +13,7 @@ import org.folio.circulation.domain.CalendarRepository;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.domain.policy.LoanPolicy;
+import org.folio.circulation.resources.context.RenewalContext;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.Result;
 import org.joda.time.DateTime;
@@ -46,6 +47,16 @@ public class ClosedLibraryStrategyService {
       relatedRecords.getTimeZone())
       .thenApply(mapResult(loan::changeDueDate))
       .thenApply(mapResult(relatedRecords::withLoan));
+  }
+
+  public CompletableFuture<Result<RenewalContext>> applyClosedLibraryDueDateManagement(
+    RenewalContext renewalContext) {
+
+    final Loan loan = renewalContext.getLoan();
+    return applyClosedLibraryDueDateManagement(loan, loan.getLoanPolicy(),
+      renewalContext.getTimeZone())
+      .thenApply(mapResult(loan::changeDueDate))
+      .thenApply(mapResult(renewalContext::withLoan));
   }
 
   private CompletableFuture<Result<DateTime>> applyClosedLibraryDueDateManagement(Loan loan, LoanPolicy loanPolicy, DateTimeZone timeZone) {

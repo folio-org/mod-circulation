@@ -6,6 +6,7 @@ import io.vertx.core.json.JsonObject;
 import org.folio.circulation.domain.policy.Policy;
 import org.folio.circulation.domain.representations.ItemSummaryRepresentation;
 import org.folio.circulation.domain.representations.LoanProperties;
+import org.folio.circulation.resources.context.RenewalContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -64,8 +65,8 @@ public class LoanRepresentation {
     }
   }
 
-  public JsonObject extendedLoan(LoanAndRelatedRecords relatedRecords) {
-    return extendedLoan(relatedRecords.getLoan());
+  public JsonObject extendedLoan(RenewalContext renewalContext) {
+    return extendedLoan(renewalContext.getLoan());
   }
 
   private JsonObject extendedLoan(JsonObject loan, Item item) {

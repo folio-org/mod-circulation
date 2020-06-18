@@ -14,6 +14,7 @@ import org.folio.circulation.domain.notice.NoticeEventType;
 import org.folio.circulation.domain.notice.NoticeTiming;
 import org.folio.circulation.domain.notice.PatronNoticePolicy;
 import org.folio.circulation.domain.policy.PatronNoticePolicyRepository;
+import org.folio.circulation.resources.context.RenewalContext;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.Result;
 import org.joda.time.DateTime;
@@ -98,15 +99,20 @@ public class DueDateScheduledNoticeService {
       .build();
   }
 
-  public Result<LoanAndRelatedRecords> rescheduleDueDateNotices(
-    LoanAndRelatedRecords relatedRecords) {
-    Loan loan = relatedRecords.getLoan();
+  public Result<LoanAndRelatedRecords> rescheduleDueDateNotices(LoanAndRelatedRecords relatedRecords) {
+    return rescheduleDueDateNotices(relatedRecords.getLoan(), relatedRecords);
+  }
 
+  public Result<RenewalContext> rescheduleDueDateNotices(RenewalContext renewalContext) {
+    return rescheduleDueDateNotices(renewalContext.getLoan(), renewalContext);
+  }
+
+  private <T> Result<T> rescheduleDueDateNotices(Loan loan, T mapTo) {
     if (!loan.isClosed()) {
       scheduledNoticesRepository.deleteByLoanIdAndTriggeringEvent(loan.getId(), DUE_DATE)
         .thenAccept(r -> r.next(v -> scheduleNoticesForLoanDueDate(loan)));
     }
 
-    return succeeded(relatedRecords);
+    return succeeded(mapTo);
   }
 }

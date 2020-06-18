@@ -1,6 +1,7 @@
 package org.folio.circulation.domain;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
+import static org.folio.circulation.resources.context.RenewalContext.newRenewalContext;
 import static org.folio.circulation.support.JsonPropertyFetcher.getDateTimeProperty;
 import static org.folio.circulation.support.Result.succeeded;
 import static org.junit.Assert.assertEquals;
@@ -27,6 +28,7 @@ import org.folio.circulation.domain.policy.OverdueFinePolicyRepository;
 import org.folio.circulation.domain.representations.CheckInByBarcodeRequest;
 import org.folio.circulation.domain.representations.StoredAccount;
 import org.folio.circulation.domain.representations.StoredFeeFineAction;
+import org.folio.circulation.resources.context.RenewalContext;
 import org.folio.circulation.support.ItemRepository;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
@@ -172,10 +174,9 @@ public class OverdueFineCalculatorServiceTest {
     throws ExecutionException, InterruptedException {
 
     if (renewal) {
-      LoanAndRelatedRecords records = mock(LoanAndRelatedRecords.class);
-      when(records.getLoan()).thenReturn(null);
+      RenewalContext records = createRenewalContext(null);
 
-      overdueFineCalculatorService.createOverdueFineIfNecessary(records, LOGGED_IN_USER_ID).get();
+      overdueFineCalculatorService.createOverdueFineIfNecessary(records).get();
     }
     else {
       CheckInProcessRecords records = mock(CheckInProcessRecords.class);
@@ -206,9 +207,9 @@ public class OverdueFineCalculatorServiceTest {
     when(accountRepository.create(any())).thenReturn(completedFuture(succeeded(createAccount())));
 
     if (renewal) {
-      LoanAndRelatedRecords records = new LoanAndRelatedRecords(loan);
+      RenewalContext records = createRenewalContext(loan);
 
-      overdueFineCalculatorService.createOverdueFineIfNecessary(records, LOGGED_IN_USER_ID).get();
+      overdueFineCalculatorService.createOverdueFineIfNecessary(records).get();
     }
     else {
       CheckInProcessRecords records = new CheckInProcessRecords(
@@ -270,9 +271,9 @@ public class OverdueFineCalculatorServiceTest {
       .thenReturn(completedFuture(succeeded(0)));
 
     if (renewal) {
-      LoanAndRelatedRecords records = new LoanAndRelatedRecords(loan);
+      RenewalContext records = createRenewalContext(loan);
 
-      overdueFineCalculatorService.createOverdueFineIfNecessary(records, LOGGED_IN_USER_ID).get();
+      overdueFineCalculatorService.createOverdueFineIfNecessary(records).get();
     }
     else {
       CheckInProcessRecords records = new CheckInProcessRecords(
@@ -303,9 +304,9 @@ public class OverdueFineCalculatorServiceTest {
       .thenReturn(completedFuture(succeeded(createFeeFine())));
 
     if (renewal) {
-      LoanAndRelatedRecords records = new LoanAndRelatedRecords(loan);
+      RenewalContext records = createRenewalContext(loan);
 
-      overdueFineCalculatorService.createOverdueFineIfNecessary(records, LOGGED_IN_USER_ID).get();
+      overdueFineCalculatorService.createOverdueFineIfNecessary(records).get();
     }
     else {
       CheckInProcessRecords records = new CheckInProcessRecords(
@@ -337,9 +338,9 @@ public class OverdueFineCalculatorServiceTest {
       .thenReturn(completedFuture(succeeded(null)));
 
     if (renewal) {
-      LoanAndRelatedRecords records = new LoanAndRelatedRecords(loan);
+      RenewalContext records = createRenewalContext(loan);
 
-      overdueFineCalculatorService.createOverdueFineIfNecessary(records, LOGGED_IN_USER_ID).get();
+      overdueFineCalculatorService.createOverdueFineIfNecessary(records).get();
     }
     else {
       CheckInProcessRecords records = new CheckInProcessRecords(
@@ -369,9 +370,9 @@ public class OverdueFineCalculatorServiceTest {
       .thenReturn(completedFuture(succeeded(createFeeFineOwner())));
 
     if (renewal) {
-      LoanAndRelatedRecords records = new LoanAndRelatedRecords(loan);
+      RenewalContext records = createRenewalContext(loan);
 
-      overdueFineCalculatorService.createOverdueFineIfNecessary(records, LOGGED_IN_USER_ID).get();
+      overdueFineCalculatorService.createOverdueFineIfNecessary(records).get();
     }
     else {
       CheckInProcessRecords records = new CheckInProcessRecords(
@@ -396,9 +397,9 @@ public class OverdueFineCalculatorServiceTest {
       .thenReturn(completedFuture(succeeded(loan)));
 
     if (renewal) {
-      LoanAndRelatedRecords records = new LoanAndRelatedRecords(loan);
+      RenewalContext records = createRenewalContext(loan);
 
-      overdueFineCalculatorService.createOverdueFineIfNecessary(records, LOGGED_IN_USER_ID).get();
+      overdueFineCalculatorService.createOverdueFineIfNecessary(records).get();
     }
     else {
       CheckInProcessRecords records = new CheckInProcessRecords(
@@ -419,9 +420,9 @@ public class OverdueFineCalculatorServiceTest {
     throws ExecutionException, InterruptedException {
 
     if (renewal) {
-      LoanAndRelatedRecords records = new LoanAndRelatedRecords(null);
+      RenewalContext records = createRenewalContext(null);
 
-      overdueFineCalculatorService.createOverdueFineIfNecessary(records, LOGGED_IN_USER_ID).get();
+      overdueFineCalculatorService.createOverdueFineIfNecessary(records).get();
     }
     else {
       CheckInProcessRecords records = new CheckInProcessRecords(
@@ -446,9 +447,9 @@ public class OverdueFineCalculatorServiceTest {
     final Loan loan = createLoan().changeDueDate(dueDateInFuture);
 
     if (renewal) {
-      LoanAndRelatedRecords records = new LoanAndRelatedRecords(loan);
+      RenewalContext records = createRenewalContext(loan);
 
-      overdueFineCalculatorService.createOverdueFineIfNecessary(records, LOGGED_IN_USER_ID).get();
+      overdueFineCalculatorService.createOverdueFineIfNecessary(records).get();
     }
     else {
       CheckInProcessRecords records = new CheckInProcessRecords(
@@ -478,13 +479,17 @@ public class OverdueFineCalculatorServiceTest {
     when(overdueFinePolicyRepository.findOverdueFinePolicyForLoan(any()))
       .thenReturn(completedFuture(succeeded(loan)));
 
-    LoanAndRelatedRecords renewalRecords = new LoanAndRelatedRecords(loan);
-    overdueFineCalculatorService.createOverdueFineIfNecessary(renewalRecords, LOGGED_IN_USER_ID).get();
+    RenewalContext renewalRecords = createRenewalContext(loan);
+    overdueFineCalculatorService.createOverdueFineIfNecessary(renewalRecords).get();
 
     verifyNoInteractions(feeFineRepository);
     verifyNoInteractions(itemRepository);
     verifyNoInteractions(feeFineOwnerRepository);
     verifyNoInteractions(accountRepository);
+  }
+
+  private RenewalContext createRenewalContext(Loan loan) {
+    return newRenewalContext(loan, new JsonObject(), LOGGED_IN_USER_ID);
   }
 
   private JsonObject createCheckInByBarcodeRequest() {

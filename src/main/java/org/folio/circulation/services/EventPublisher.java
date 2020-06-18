@@ -15,6 +15,7 @@ import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.domain.LoanRepository;
 import org.folio.circulation.domain.RequestAndRelatedRecords;
+import org.folio.circulation.resources.context.RenewalContext;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.Result;
 
@@ -129,6 +130,14 @@ public class EventPublisher {
     }
 
     return completedFuture(succeeded(loanAndRelatedRecords));
+  }
+
+  public CompletableFuture<Result<RenewalContext>> publishDueDateChangedEvent(
+    RenewalContext renewalContext) {
+
+    publishDueDateChangedEvent(renewalContext.getLoan());
+
+    return completedFuture(succeeded(renewalContext));
   }
 
   public CompletableFuture<Result<RequestAndRelatedRecords>> publishDueDateChangedEvent(

@@ -20,6 +20,7 @@ import org.folio.circulation.domain.policy.OverdueFinePolicy;
 import org.folio.circulation.domain.policy.OverdueFinePolicyRepository;
 import org.folio.circulation.domain.representations.StoredAccount;
 import org.folio.circulation.domain.representations.StoredFeeFineAction;
+import org.folio.circulation.resources.context.RenewalContext;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.ItemRepository;
 import org.folio.circulation.support.Result;
@@ -57,14 +58,14 @@ public class OverdueFineCalculatorService {
   }
 
   public CompletableFuture<Result<FeeFineAction>> createOverdueFineIfNecessary(
-    LoanAndRelatedRecords records, String userId) {
+    RenewalContext records) {
 
-    Loan loan = records.getLoan();
+    Loan loan = records.getLoanBeforeRenewal();
     if (loan == null || !loan.isOverdue()) {
       return completedFuture(succeeded(null));
     }
 
-    return createOverdueFineIfNecessary(records.getLoan(), Scenario.RENEWAL, userId);
+    return createOverdueFineIfNecessary(loan, Scenario.RENEWAL, records.getLoggedInUserId());
   }
 
   public CompletableFuture<Result<FeeFineAction>> createOverdueFineIfNecessary(

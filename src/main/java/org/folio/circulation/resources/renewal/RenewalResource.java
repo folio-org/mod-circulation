@@ -1,4 +1,6 @@
-package org.folio.circulation.resources;
+package org.folio.circulation.resources.renewal;
+
+import static org.folio.circulation.resources.context.RenewalContext.newRenewalContext;
 
 import java.util.HashMap;
 import java.util.concurrent.CompletableFuture;
@@ -8,7 +10,6 @@ import org.folio.circulation.StoreLoanAndItem;
 import org.folio.circulation.domain.AutomatedPatronBlocksRepository;
 import org.folio.circulation.domain.ConfigurationRepository;
 import org.folio.circulation.domain.Loan;
-import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.domain.LoanRepository;
 import org.folio.circulation.domain.LoanRepresentation;
 import org.folio.circulation.domain.OverdueFineCalculatorService;
@@ -18,6 +19,9 @@ import org.folio.circulation.domain.notice.schedule.DueDateScheduledNoticeServic
 import org.folio.circulation.domain.notice.schedule.FeeFineScheduledNoticeService;
 import org.folio.circulation.domain.policy.LoanPolicyRepository;
 import org.folio.circulation.domain.validation.AutomatedPatronBlocksValidator;
+import org.folio.circulation.resources.LoanNoticeSender;
+import org.folio.circulation.resources.Resource;
+import org.folio.circulation.resources.context.RenewalContext;
 import org.folio.circulation.services.EventPublisher;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.ItemRepository;
@@ -85,16 +89,16 @@ public abstract class RenewalResource extends Resource {
       loanRepository, itemRepository, userRepository);
 
     findLoanResult
-      .thenApply(r -> r.map(LoanAndRelatedRecords::new))
+      .thenApply(r -> r.map(loan -> newRenewalContext(loan, bodyAsJson, context.getUserId())))
       .thenComposeAsync(r -> r.after(
         automatedPatronBlocksValidator::refuseWhenRenewalActionIsBlockedForPatron))
       .thenComposeAsync(r -> r.after(loanPolicyRepository::lookupLoanPolicy))
       .thenComposeAsync(r -> r.after(requestQueueRepository::get))
       .thenCompose(r -> r.combineAfter(configurationRepository::findTimeZoneConfiguration,
-        LoanAndRelatedRecords::withTimeZone))
-      .thenComposeAsync(r -> r.after(records -> createOverdueFine(records, context, clients)))
-      .thenComposeAsync(r -> r.after(records -> renewalStrategy.renew(records, bodyAsJson, clients)))
+        RenewalContext::withTimeZone))
+      .thenComposeAsync(r -> r.after(records -> renewalStrategy.renew(records, clients)))
       .thenComposeAsync(r -> r.after(storeLoanAndItem::updateLoanAndItemInStorage))
+      .thenComposeAsync(r -> r.after(records -> createOverdueFine(records, clients)))
       .thenComposeAsync(r -> r.after(eventPublisher::publishDueDateChangedEvent))
       .thenApply(r -> r.next(scheduledNoticeService::rescheduleDueDateNotices))
       .thenApply(r -> r.next(loanNoticeSender::sendRenewalPatronNotice))
@@ -103,11 +107,11 @@ public abstract class RenewalResource extends Resource {
       .thenAccept(context::writeResultToHttpResponse);
   }
 
-  private CompletableFuture<Result<LoanAndRelatedRecords>> createOverdueFine(
-    LoanAndRelatedRecords records, WebContext context, Clients clients) {
+  private CompletableFuture<Result<RenewalContext>> createOverdueFine(
+    RenewalContext records, Clients clients) {
 
     return OverdueFineCalculatorService.using(clients)
-      .createOverdueFineIfNecessary(records, context.getUserId())
+      .createOverdueFineIfNecessary(records)
       .thenApply(r -> r.next(action -> FeeFineScheduledNoticeService.using(clients)
         .scheduleNotices(records, action)));
   }

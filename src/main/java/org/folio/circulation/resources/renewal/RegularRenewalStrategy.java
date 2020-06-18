@@ -1,4 +1,4 @@
-package org.folio.circulation.resources;
+package org.folio.circulation.resources.renewal;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.domain.RequestType.HOLD;
@@ -22,11 +22,11 @@ import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.domain.Loan;
-import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestQueue;
 import org.folio.circulation.domain.policy.LoanPolicy;
 import org.folio.circulation.domain.policy.library.ClosedLibraryStrategyService;
+import org.folio.circulation.resources.context.RenewalContext;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.ServerErrorFailure;
@@ -35,13 +35,11 @@ import org.folio.circulation.support.http.server.ValidationError;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 
-import io.vertx.core.json.JsonObject;
-
 public class RegularRenewalStrategy implements RenewalStrategy {
 
   @Override
-  public CompletableFuture<Result<LoanAndRelatedRecords>> renew(
-    LoanAndRelatedRecords relatedRecords, JsonObject requestBody, Clients clients) {
+  public CompletableFuture<Result<RenewalContext>> renew(RenewalContext relatedRecords,
+    Clients clients) {
 
     final ClosedLibraryStrategyService strategyService =
       ClosedLibraryStrategyService.using(clients, DateTime.now(DateTimeZone.UTC), true);
@@ -50,7 +48,7 @@ public class RegularRenewalStrategy implements RenewalStrategy {
       .thenCompose(r -> r.after(strategyService::applyClosedLibraryDueDateManagement));
   }
 
-  private Result<LoanAndRelatedRecords> renew(LoanAndRelatedRecords relatedRecords) {
+  private Result<RenewalContext> renew(RenewalContext relatedRecords) {
     Loan loan = relatedRecords.getLoan();
     RequestQueue requestQueue = relatedRecords.getRequestQueue();
 
