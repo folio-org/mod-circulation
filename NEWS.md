@@ -1,3 +1,8 @@
+## 18.0.11 2020-06-18
+
+* Increase batch size for scheduled expiration of patron action sessions (CIRC-760)
+* Service points with many locations do not allow pick slips to be printed (CIRC-768)
+
 ## 18.0.9 2020-05-12
 
 * Provides using primary service point for calculating opening hours for overdue fine (CIRC-736)

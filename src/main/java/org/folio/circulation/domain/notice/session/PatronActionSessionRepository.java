@@ -10,14 +10,18 @@ import static org.folio.circulation.support.ResultBinding.mapResult;
 import static org.folio.circulation.support.http.ResponseMapping.flatMapUsingJson;
 import static org.folio.circulation.support.http.ResponseMapping.forwardOnFailure;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
+import static org.folio.circulation.support.http.client.CqlQuery.exactMatchAny;
 import static org.folio.circulation.support.results.CommonFailures.failedDueToServerError;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
+import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanRepository;
@@ -119,15 +123,44 @@ public class PatronActionSessionRepository {
 
     Result<CqlQuery> sessionsQuery = exactMatch(PATRON_ID, patronId);
 
-    if (isPatronActionTypeSpecified(actionType)) {
-      final Result<CqlQuery> actionTypeQuery = exactMatch(ACTION_TYPE, actionType.getRepresentation());
-      sessionsQuery = sessionsQuery.combine(actionTypeQuery, CqlQuery::and);
-    }
+    sessionsQuery = addActionTypeToCqlQuery(sessionsQuery, actionType);
 
     return sessionsQuery
       .after(query -> findBy(query, pageLimit))
       .thenCompose(r -> r.combineAfter(
         () -> userRepository.getUser(patronId), this::setUserForLoans));
+  }
+
+  public CompletableFuture<Result<MultipleRecords<PatronSessionRecord>>> findPatronActionSessions(
+    List<ExpiredSession> expiredSessions, PageLimit pageLimit) {
+
+    Set<String> patronIds = expiredSessions.stream()
+      .filter(expiredSession -> StringUtils.isNotBlank(expiredSession.getPatronId()) )
+      .map(ExpiredSession::getPatronId)
+      .collect(Collectors.toCollection(HashSet::new));
+
+    if (patronIds.isEmpty()) {
+      return CompletableFuture.completedFuture(Result.succeeded(null));
+    }
+    Result<CqlQuery> sessionsQuery = exactMatchAny(PATRON_ID, patronIds);
+    sessionsQuery = addActionTypeToCqlQuery(sessionsQuery,
+      expiredSessions.get(0).getActionType());
+
+    return sessionsQuery
+      .after(query -> findBy(query, pageLimit))
+      .thenCompose(r -> r.combineAfter(
+        () -> userRepository.getUsersForUserIds(patronIds), this::setUsersForLoans));
+  }
+
+  private Result<CqlQuery> addActionTypeToCqlQuery(
+    Result<CqlQuery> sessionsQuery, PatronActionType actionType) {
+
+    if (isPatronActionTypeSpecified(actionType)) {
+      final Result<CqlQuery> actionTypeQuery = exactMatch(ACTION_TYPE,
+        actionType.getRepresentation());
+      sessionsQuery = sessionsQuery.combine(actionTypeQuery, CqlQuery::and);
+    }
+    return sessionsQuery;
   }
 
   private boolean isPatronActionTypeSpecified(PatronActionType actionType) {
@@ -139,6 +172,14 @@ public class PatronActionSessionRepository {
 
     return records.mapRecords(sessionRecord ->
       sessionRecord.withLoan(sessionRecord.getLoan().withUser(user)));
+  }
+
+  private MultipleRecords<PatronSessionRecord> setUsersForLoans(
+    MultipleRecords<PatronSessionRecord> records, Map<String, User> usersMap) {
+
+    return records.mapRecords(sessionRecord -> sessionRecord
+      .withLoan(sessionRecord.getLoan().withUser(
+        usersMap.get(sessionRecord.getPatronId().toString()))));
   }
 
   private CompletableFuture<Result<MultipleRecords<PatronSessionRecord>>> findBy(

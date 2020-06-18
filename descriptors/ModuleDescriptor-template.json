@@ -597,6 +597,7 @@
             "inventory-storage.material-types.collection.get",
             "circulation-storage.loan-policies.collection.get",
             "users.item.get",
+            "users.collection.get",
             "circulation.rules.notice-policy.get",
             "circulation-storage.patron-notice-policies.item.get",
             "patron-notice.post",

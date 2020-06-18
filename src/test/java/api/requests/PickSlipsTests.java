@@ -365,6 +365,45 @@ public class PickSlipsTests extends APITests {
     assertResponseContains(responseForCd4, planetSecondFloorCd4, requestForSecondFloorCd4, jessica);
   }
 
+  @Test
+  public void responseContainsPickSlipsWhenServicePointHasManyLocations() {
+    final UUID servicePointId = servicePointsFixture.cd1().getId();
+    final int numberOfLocations = 100;
+
+    IndividualResource location = null;
+    for (int i = 0; i < numberOfLocations; i++) {
+      final int currentIndex = i;
+      location = locationsFixture.basedUponExampleLocation(
+        builder -> builder
+          .withName("Test location " + currentIndex)
+          .withCode("LOC_" + currentIndex)
+          .withPrimaryServicePoint(servicePointId));
+    }
+
+    final IndividualResource lastLocation = location;
+    InventoryItemResource item = itemsFixture.basedUponSmallAngryPlanet(builder -> builder
+      .withPermanentLocation(lastLocation.getId())
+      .withNoTemporaryLocation());
+
+    IndividualResource james = usersFixture.james();
+
+    RequestBuilder pageRequestBuilder = new RequestBuilder()
+      .withStatus(RequestStatus.OPEN_NOT_YET_FILLED.getValue())
+      .page()
+      .withPickupServicePointId(servicePointId)
+      .forItem(item)
+      .by(james);
+
+    IndividualResource pageRequest = requestsClient.create(pageRequestBuilder);
+
+    Response response = ResourceClient.forPickSlips().getById(servicePointId);
+
+    assertThat(response.getStatusCode(), is(HTTP_OK));
+    assertResponseHasItems(response, 1);
+    assertResponseContains(response, item, pageRequest, james);
+  }
+
+
   private void assertResponseHasItems(Response response, int itemsCount) {
     JsonObject responseJson = response.getJson();
     assertThat(responseJson.getJsonArray(PICK_SLIPS_KEY).size(), is(itemsCount));
