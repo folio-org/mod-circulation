@@ -28,7 +28,8 @@ public class CalendarRepository {
   private static final String OPENING_PERIODS = "openingPeriods";
   private static final String OPENING_DAYS = "openingDays";
   private static final String PATH_PARAM_WITH_QUERY = "%s/calculateopening?requestedDate=%s";
-  private static final String PERIODS_QUERY_PARAMS = "servicePointId=%s&startDate=%s&endDate=%s&includeClosedDays=%s";
+  private static final String PERIODS_QUERY_PARAMS = "servicePointId=%s&startDate=%s&endDate=%s&includeClosedDays=%s&limit=%d";
+  private static final int OPENING_PERIODS_LIMIT = 10000;
 
   private final CollectionResourceClient calendarClient;
   private final ConfigurationRepository configurationRepository;
@@ -53,8 +54,8 @@ public class CalendarRepository {
   public CompletableFuture<Result<Collection<OpeningDay>>> fetchOpeningDaysBetweenDates(
     String servicePointId, DateTime startDate, DateTime endDate, boolean includeClosedDays) {
 
-    String params = String.format(PERIODS_QUERY_PARAMS,
-      servicePointId, startDate.toLocalDate(), endDate.toLocalDate().plusDays(1), includeClosedDays);
+    String params = String.format(PERIODS_QUERY_PARAMS, servicePointId, startDate.toLocalDate(),
+      endDate.toLocalDate().plusDays(1), includeClosedDays, OPENING_PERIODS_LIMIT);
 
     return calendarClient.getManyWithRawQueryStringParameters(params)
       .thenCombineAsync(configurationRepository.findTimeZoneConfiguration(),
