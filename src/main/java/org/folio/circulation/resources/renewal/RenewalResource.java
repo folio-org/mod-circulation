@@ -55,8 +55,8 @@ public abstract class RenewalResource extends Resource {
   }
 
   private void renew(RoutingContext routingContext) {
-    final WebContext context = new WebContext(routingContext);
-    final Clients clients = Clients.create(context, client);
+    final WebContext webContext = new WebContext(routingContext);
+    final Clients clients = Clients.create(webContext, client);
 
     final LoanRepository loanRepository = new LoanRepository(clients);
     final ItemRepository itemRepository = new ItemRepository(clients, true, true, true);
@@ -87,31 +87,31 @@ public abstract class RenewalResource extends Resource {
       loanRepository, itemRepository, userRepository);
 
     findLoanResult
-      .thenApply(r -> r.map(loan -> RenewalContext.create(loan, bodyAsJson, context.getUserId())))
+      .thenApply(r -> r.map(loan -> RenewalContext.create(loan, bodyAsJson, webContext.getUserId())))
       .thenComposeAsync(r -> r.after(
         automatedPatronBlocksValidator::refuseWhenRenewalActionIsBlockedForPatron))
       .thenComposeAsync(r -> r.after(loanPolicyRepository::lookupLoanPolicy))
       .thenComposeAsync(r -> r.after(requestQueueRepository::get))
       .thenCompose(r -> r.combineAfter(configurationRepository::findTimeZoneConfiguration,
         RenewalContext::withTimeZone))
-      .thenComposeAsync(r -> r.after(records -> renewalStrategy.renew(records, clients)))
+      .thenComposeAsync(r -> r.after(context -> renewalStrategy.renew(context, clients)))
       .thenComposeAsync(r -> r.after(storeLoanAndItem::updateLoanAndItemInStorage))
-      .thenComposeAsync(r -> r.after(records -> createOverdueFine(records, clients)))
+      .thenComposeAsync(r -> r.after(context -> createOverdueFine(context, clients)))
       .thenComposeAsync(r -> r.after(eventPublisher::publishDueDateChangedEvent))
       .thenApply(r -> r.next(scheduledNoticeService::rescheduleDueDateNotices))
       .thenApply(r -> r.next(loanNoticeSender::sendRenewalPatronNotice))
       .thenApply(r -> r.map(loanRepresentation::extendedLoan))
       .thenApply(r -> r.map(this::toResponse))
-      .thenAccept(context::writeResultToHttpResponse);
+      .thenAccept(webContext::writeResultToHttpResponse);
   }
 
   private CompletableFuture<Result<RenewalContext>> createOverdueFine(
-    RenewalContext records, Clients clients) {
+    RenewalContext context, Clients clients) {
 
     return OverdueFineCalculatorService.using(clients)
-      .createOverdueFineIfNecessary(records)
+      .createOverdueFineIfNecessary(context)
       .thenApply(r -> r.next(action -> FeeFineScheduledNoticeService.using(clients)
-        .scheduleNotices(records, action)));
+        .scheduleNotices(context, action)));
   }
 
   private HttpResponse toResponse(JsonObject body) {

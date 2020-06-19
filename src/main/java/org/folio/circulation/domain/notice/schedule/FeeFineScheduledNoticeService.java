@@ -50,11 +50,11 @@ public class FeeFineScheduledNoticeService {
   }
 
   public Result<RenewalContext> scheduleNotices(
-    RenewalContext records, FeeFineAction action) {
+    RenewalContext context, FeeFineAction action) {
 
-    scheduleNotices(records.getLoan(), action, OVERDUE_FINE_RENEWED);
+    scheduleNotices(context.getLoan(), action, OVERDUE_FINE_RENEWED);
 
-    return succeeded(records);
+    return succeeded(context);
   }
 
   private CompletableFuture<Result<List<ScheduledNotice>>> scheduleNotices(

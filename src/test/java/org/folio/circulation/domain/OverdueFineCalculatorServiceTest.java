@@ -174,9 +174,9 @@ public class OverdueFineCalculatorServiceTest {
     throws ExecutionException, InterruptedException {
 
     if (renewal) {
-      RenewalContext records = createRenewalContext(null);
+      RenewalContext context = createRenewalContext(null);
 
-      overdueFineCalculatorService.createOverdueFineIfNecessary(records).get();
+      overdueFineCalculatorService.createOverdueFineIfNecessary(context).get();
     }
     else {
       CheckInContext context = mock(CheckInContext.class);
@@ -207,9 +207,9 @@ public class OverdueFineCalculatorServiceTest {
     when(accountRepository.create(any())).thenReturn(completedFuture(succeeded(createAccount())));
 
     if (renewal) {
-      RenewalContext records = createRenewalContext(loan);
+      RenewalContext context = createRenewalContext(loan);
 
-      overdueFineCalculatorService.createOverdueFineIfNecessary(records).get();
+      overdueFineCalculatorService.createOverdueFineIfNecessary(context).get();
     }
     else {
       CheckInContext context = new CheckInContext(
@@ -271,9 +271,9 @@ public class OverdueFineCalculatorServiceTest {
       .thenReturn(completedFuture(succeeded(0)));
 
     if (renewal) {
-      RenewalContext records = createRenewalContext(loan);
+      RenewalContext context = createRenewalContext(loan);
 
-      overdueFineCalculatorService.createOverdueFineIfNecessary(records).get();
+      overdueFineCalculatorService.createOverdueFineIfNecessary(context).get();
     }
     else {
       CheckInContext context = new CheckInContext(
@@ -304,9 +304,9 @@ public class OverdueFineCalculatorServiceTest {
       .thenReturn(completedFuture(succeeded(createFeeFine())));
 
     if (renewal) {
-      RenewalContext records = createRenewalContext(loan);
+      RenewalContext context = createRenewalContext(loan);
 
-      overdueFineCalculatorService.createOverdueFineIfNecessary(records).get();
+      overdueFineCalculatorService.createOverdueFineIfNecessary(context).get();
     }
     else {
       CheckInContext context = new CheckInContext(
@@ -338,9 +338,9 @@ public class OverdueFineCalculatorServiceTest {
       .thenReturn(completedFuture(succeeded(null)));
 
     if (renewal) {
-      RenewalContext records = createRenewalContext(loan);
+      RenewalContext context = createRenewalContext(loan);
 
-      overdueFineCalculatorService.createOverdueFineIfNecessary(records).get();
+      overdueFineCalculatorService.createOverdueFineIfNecessary(context).get();
     }
     else {
       CheckInContext context = new CheckInContext(
@@ -370,9 +370,9 @@ public class OverdueFineCalculatorServiceTest {
       .thenReturn(completedFuture(succeeded(createFeeFineOwner())));
 
     if (renewal) {
-      RenewalContext records = createRenewalContext(loan);
+      RenewalContext context = createRenewalContext(loan);
 
-      overdueFineCalculatorService.createOverdueFineIfNecessary(records).get();
+      overdueFineCalculatorService.createOverdueFineIfNecessary(context).get();
     }
     else {
       CheckInContext context = new CheckInContext(
@@ -397,9 +397,9 @@ public class OverdueFineCalculatorServiceTest {
       .thenReturn(completedFuture(succeeded(loan)));
 
     if (renewal) {
-      RenewalContext records = createRenewalContext(loan);
+      RenewalContext context = createRenewalContext(loan);
 
-      overdueFineCalculatorService.createOverdueFineIfNecessary(records).get();
+      overdueFineCalculatorService.createOverdueFineIfNecessary(context).get();
     }
     else {
       CheckInContext context = new CheckInContext(
@@ -420,9 +420,9 @@ public class OverdueFineCalculatorServiceTest {
     throws ExecutionException, InterruptedException {
 
     if (renewal) {
-      RenewalContext records = createRenewalContext(null);
+      RenewalContext context = createRenewalContext(null);
 
-      overdueFineCalculatorService.createOverdueFineIfNecessary(records).get();
+      overdueFineCalculatorService.createOverdueFineIfNecessary(context).get();
     }
     else {
       CheckInContext context = new CheckInContext(
@@ -447,9 +447,9 @@ public class OverdueFineCalculatorServiceTest {
     final Loan loan = createLoan().changeDueDate(dueDateInFuture);
 
     if (renewal) {
-      RenewalContext records = createRenewalContext(loan);
+      RenewalContext context = createRenewalContext(loan);
 
-      overdueFineCalculatorService.createOverdueFineIfNecessary(records).get();
+      overdueFineCalculatorService.createOverdueFineIfNecessary(context).get();
     }
     else {
       CheckInContext context = new CheckInContext(

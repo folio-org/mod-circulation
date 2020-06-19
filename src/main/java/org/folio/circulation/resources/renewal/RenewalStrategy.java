@@ -7,6 +7,5 @@ import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.Result;
 
 public interface RenewalStrategy {
-
   CompletableFuture<Result<RenewalContext>> renew(RenewalContext context, Clients clients);
 }
