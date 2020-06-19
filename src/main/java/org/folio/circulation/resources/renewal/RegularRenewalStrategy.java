@@ -38,13 +38,13 @@ import org.joda.time.DateTimeZone;
 public class RegularRenewalStrategy implements RenewalStrategy {
 
   @Override
-  public CompletableFuture<Result<RenewalContext>> renew(RenewalContext relatedRecords,
+  public CompletableFuture<Result<RenewalContext>> renew(RenewalContext context,
     Clients clients) {
 
     final ClosedLibraryStrategyService strategyService =
       ClosedLibraryStrategyService.using(clients, DateTime.now(DateTimeZone.UTC), true);
 
-    return completedFuture(renew(relatedRecords))
+    return completedFuture(renew(context))
       .thenCompose(r -> r.after(strategyService::applyClosedLibraryDueDateManagement));
   }
 

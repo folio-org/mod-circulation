@@ -1,7 +1,5 @@
 package org.folio.circulation.resources.renewal;
 
-import static org.folio.circulation.resources.context.RenewalContext.newRenewalContext;
-
 import java.util.HashMap;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
@@ -89,7 +87,7 @@ public abstract class RenewalResource extends Resource {
       loanRepository, itemRepository, userRepository);
 
     findLoanResult
-      .thenApply(r -> r.map(loan -> newRenewalContext(loan, bodyAsJson, context.getUserId())))
+      .thenApply(r -> r.map(loan -> RenewalContext.create(loan, bodyAsJson, context.getUserId())))
       .thenComposeAsync(r -> r.after(
         automatedPatronBlocksValidator::refuseWhenRenewalActionIsBlockedForPatron))
       .thenComposeAsync(r -> r.after(loanPolicyRepository::lookupLoanPolicy))

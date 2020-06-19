@@ -58,37 +58,37 @@ public class OverdueFineCalculatorService {
   }
 
   public CompletableFuture<Result<FeeFineAction>> createOverdueFineIfNecessary(
-    RenewalContext records) {
+    RenewalContext context) {
 
-    Loan loan = records.getLoanBeforeRenewal();
+    Loan loan = context.getLoanBeforeRenewal();
     if (loan == null || !loan.isOverdue()) {
       return completedFuture(succeeded(null));
     }
 
-    return createOverdueFineIfNecessary(loan, Scenario.RENEWAL, records.getLoggedInUserId());
+    return createOverdueFineIfNecessary(loan, Scenario.RENEWAL, context.getLoggedInUserId());
   }
 
   public CompletableFuture<Result<FeeFineAction>> createOverdueFineIfNecessary(
-    CheckInProcessRecords records, String userId) {
+    CheckInContext context, String userId) {
 
-    return shouldChargeOverdueFineOnCheckIn(records)
+    return shouldChargeOverdueFineOnCheckIn(context)
       .thenCompose(r -> r.afterWhen(ResultBinding.toFutureResult(),
-          b -> createOverdueFineIfNecessary(records.getLoan(), CHECKIN, userId),
+          b -> createOverdueFineIfNecessary(context.getLoan(), CHECKIN, userId),
           b -> completedFuture(succeeded(null))));
   }
 
   private CompletableFuture<Result<Boolean>> shouldChargeOverdueFineOnCheckIn(
-    CheckInProcessRecords records) {
+    CheckInContext context) {
 
-    final Loan loan = records.getLoan();
+    final Loan loan = context.getLoan();
     if (loan == null || !loan.isOverdue(loan.getReturnDate())) {
       return completedFuture(succeeded(false));
     }
 
-    if (records.getItemStatusBeforeCheckIn() == ItemStatus.DECLARED_LOST) {
+    if (context.getItemStatusBeforeCheckIn() == ItemStatus.DECLARED_LOST) {
       return repos.lostItemPolicyRepository.getLostItemPolicyById(loan.getLostItemPolicyId())
         .thenApply(r -> r.map(policy -> policy.shouldChargeOverdueFee()
-          && records.areLostItemFeesRefundedOrCancelled()));
+          && context.areLostItemFeesRefundedOrCancelled()));
     }
 
     return completedFuture(succeeded(true));

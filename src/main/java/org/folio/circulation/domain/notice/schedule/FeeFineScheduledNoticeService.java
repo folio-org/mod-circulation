@@ -11,7 +11,7 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
-import org.folio.circulation.domain.CheckInProcessRecords;
+import org.folio.circulation.domain.CheckInContext;
 import org.folio.circulation.domain.FeeFineAction;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.notice.NoticeConfiguration;
@@ -41,12 +41,12 @@ public class FeeFineScheduledNoticeService {
     this.noticePolicyRepository = noticePolicyRepository;
   }
 
-  public Result<CheckInProcessRecords> scheduleNotices(
-    CheckInProcessRecords records, FeeFineAction action) {
+  public Result<CheckInContext> scheduleNotices(
+    CheckInContext context, FeeFineAction action) {
 
-    scheduleNotices(records.getLoan(), action, OVERDUE_FINE_RETURNED);
+    scheduleNotices(context.getLoan(), action, OVERDUE_FINE_RETURNED);
 
-    return succeeded(records);
+    return succeeded(context);
   }
 
   public Result<RenewalContext> scheduleNotices(

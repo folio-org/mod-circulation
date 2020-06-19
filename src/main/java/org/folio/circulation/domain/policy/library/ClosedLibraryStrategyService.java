@@ -59,7 +59,9 @@ public class ClosedLibraryStrategyService {
       .thenApply(mapResult(renewalContext::withLoan));
   }
 
-  private CompletableFuture<Result<DateTime>> applyClosedLibraryDueDateManagement(Loan loan, LoanPolicy loanPolicy, DateTimeZone timeZone) {
+  private CompletableFuture<Result<DateTime>> applyClosedLibraryDueDateManagement(
+    Loan loan, LoanPolicy loanPolicy, DateTimeZone timeZone) {
+
     LocalDate requestedDate = loan.getDueDate().withZone(timeZone).toLocalDate();
     return calendarRepository.lookupOpeningDays(requestedDate, loan.getCheckoutServicePointId())
       .thenApply(r -> r.next(openingDays -> applyStrategy(loan, loanPolicy, openingDays, timeZone)));
@@ -76,7 +78,9 @@ public class ClosedLibraryStrategyService {
   }
 
   private Result<DateTime> applyFixedDueDateLimit(
-    DateTime dueDate, Loan loan, LoanPolicy loanPolicy, AdjacentOpeningDays openingDays, DateTimeZone timeZone) {
+    DateTime dueDate, Loan loan, LoanPolicy loanPolicy, AdjacentOpeningDays openingDays,
+    DateTimeZone timeZone) {
+
     Optional<DateTime> optionalDueDateLimit =
       loanPolicy.getScheduleLimit(loan.getLoanDate(), isRenewal, currentDateTime);
     if (!optionalDueDateLimit.isPresent()) {

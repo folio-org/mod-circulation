@@ -14,7 +14,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.folio.circulation.domain.Account;
 import org.folio.circulation.domain.CallNumberComponents;
-import org.folio.circulation.domain.CheckInProcessRecords;
+import org.folio.circulation.domain.CheckInContext;
 import org.folio.circulation.domain.FeeFineAction;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Loan;
@@ -78,16 +78,16 @@ public class TemplateContextUtil {
       .put(REQUEST, createRequestContext(request));
   }
 
-  public static JsonObject createCheckInContext(CheckInProcessRecords records) {
-    Item item = records.getItem();
-    Request firstRequest = records.getHighestPriorityFulfillableRequest();
+  public static JsonObject createCheckInContext(CheckInContext context) {
+    Item item = context.getItem();
+    Request firstRequest = context.getHighestPriorityFulfillableRequest();
     JsonObject staffSlipContext = createStaffSlipContext(item, firstRequest);
     JsonObject itemContext = staffSlipContext.getJsonObject(ITEM);
 
     if (ObjectUtils.allNotNull(item, itemContext)) {
       write(itemContext, "lastCheckedInDateTime", DateTime.now(DateTimeZone.UTC));
       if (item.getInTransitDestinationServicePoint() != null) {
-        itemContext.put("fromServicePoint", records.getCheckInServicePoint().getName());
+        itemContext.put("fromServicePoint", context.getCheckInServicePoint().getName());
         itemContext.put("toServicePoint", item.getInTransitDestinationServicePoint().getName());
       }
     }

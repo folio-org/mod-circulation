@@ -22,7 +22,7 @@ public class RenewalContext {
   String loggedInUserId;
   JsonObject renewalRequest;
 
-  public static RenewalContext newRenewalContext(Loan loan, JsonObject renewalRequest,
+  public static RenewalContext create(Loan loan, JsonObject renewalRequest,
     String loggedInUserId) {
 
     val loanBeforeRenewal = loan != null ? loan.copyLoanRepresentation() : null;

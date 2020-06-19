@@ -6,7 +6,7 @@ import static org.folio.circulation.support.Result.succeeded;
 import java.util.Optional;
 import java.util.UUID;
 
-import org.folio.circulation.domain.CheckInProcessRecords;
+import org.folio.circulation.domain.CheckInContext;
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestAndRelatedRecords;
 import org.folio.circulation.domain.notice.NoticeConfiguration;
@@ -48,11 +48,11 @@ public class RequestScheduledNoticeService {
     return succeeded(relatedRecords);
   }
 
-  public Result<CheckInProcessRecords> rescheduleRequestNotices(CheckInProcessRecords records) {
-    Optional.ofNullable(records.getHighestPriorityFulfillableRequest())
+  public Result<CheckInContext> rescheduleRequestNotices(CheckInContext context) {
+    Optional.ofNullable(context.getHighestPriorityFulfillableRequest())
       .ifPresent(this::rescheduleRequestNotices);
 
-    return succeeded(records);
+    return succeeded(context);
   }
 
   private void rescheduleRequestNotices(Request request) {
