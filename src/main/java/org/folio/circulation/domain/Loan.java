@@ -578,6 +578,8 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   public Loan copyLoanRepresentation() {
-    return replaceRepresentation(asJson());
+    final JsonObject representationCopy = representation.copy();
+    return new Loan(representationCopy, item, user, proxy, checkinServicePoint,
+      checkoutServicePoint, originalDueDate, policies, accounts);
   }
 }
