@@ -333,10 +333,6 @@ public abstract class RefundLostItemFeesBaseTest extends APITests {
     declareItemLost();
 
     performActionThatRequiresRefund(now().plusMonths(2));
-//    checkInFixture.checkInByBarcode(new CheckInByBarcodeRequestBuilder()
-//      .forItem(item)
-//      .at(servicePointsFixture.cd1())
-//      .on(now().plusMonths(2)));
 
     assertThat(loan, hasLostItemProcessingFee(isClosedCancelledItemReturned(processingFee)));
     assertThat(loan, hasLostItemProcessingFeeActions(

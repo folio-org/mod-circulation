@@ -7,6 +7,9 @@ import org.folio.circulation.services.LostItemFeeRefundService;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.Result;
 
+/**
+ * Fee processing strategy that used to process fees/fines for override renewal.
+ */
 public class OverrideRenewalFeeProcessingStrategy implements RenewalFeeProcessingStrategy {
   private final RegularRenewalFeeProcessingStrategy regularFeeProcessing =
     new RegularRenewalFeeProcessingStrategy();
