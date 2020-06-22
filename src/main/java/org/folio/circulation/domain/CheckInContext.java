@@ -17,7 +17,7 @@ import org.joda.time.DateTime;
  *
  * Which requires passing the records between processes.
  */
-public class CheckInProcessRecords {
+public class CheckInContext {
   private final CheckInByBarcodeRequest checkInRequest;
   private final Item item;
   private final Loan loan;
@@ -30,11 +30,11 @@ public class CheckInProcessRecords {
   private final ItemStatus itemStatusBeforeCheckIn;
   private final boolean lostItemFeesRefundedOrCancelled;
 
-  public CheckInProcessRecords(CheckInByBarcodeRequest checkInRequest) {
+  public CheckInContext(CheckInByBarcodeRequest checkInRequest) {
     this(checkInRequest, null, null, null, null, null, null, false, null, false);
   }
 
-  private CheckInProcessRecords(
+  private CheckInContext(
     CheckInByBarcodeRequest checkInRequest,
     Item item,
     Loan loan,
@@ -59,7 +59,7 @@ public class CheckInProcessRecords {
     this.lostItemFeesRefundedOrCancelled = lostItemFeesRefundedOrCancelled;
   }
 
-  public CheckInProcessRecords withItem(Item item) {
+  public CheckInContext withItem(Item item) {
 
     //When the item is updated, also update the item for the loan,
     //as they should be the same
@@ -67,7 +67,7 @@ public class CheckInProcessRecords {
       .map(l -> l.withItem(item))
       .orElse(null);
 
-    return new CheckInProcessRecords(
+    return new CheckInContext(
       this.checkInRequest,
       item,
       updatedLoan,
@@ -80,8 +80,8 @@ public class CheckInProcessRecords {
       lostItemFeesRefundedOrCancelled);
   }
 
-  public CheckInProcessRecords withLoan(Loan loan) {
-    return new CheckInProcessRecords(
+  public CheckInContext withLoan(Loan loan) {
+    return new CheckInContext(
       this.checkInRequest,
       this.item,
       loan,
@@ -94,12 +94,12 @@ public class CheckInProcessRecords {
       lostItemFeesRefundedOrCancelled);
   }
 
-  public CheckInProcessRecords withRequestQueue(RequestQueue requestQueue) {
+  public CheckInContext withRequestQueue(RequestQueue requestQueue) {
     Request firstRequest = null;
     if (requestQueue.hasOutstandingFulfillableRequests()) {
       firstRequest = requestQueue.getHighestPriorityFulfillableRequest();
     }
-    return new CheckInProcessRecords(
+    return new CheckInContext(
       this.checkInRequest,
       this.item,
       this.loan,
@@ -112,8 +112,8 @@ public class CheckInProcessRecords {
       lostItemFeesRefundedOrCancelled);
   }
 
-  public CheckInProcessRecords withCheckInServicePoint(ServicePoint checkInServicePoint) {
-    return new CheckInProcessRecords(
+  public CheckInContext withCheckInServicePoint(ServicePoint checkInServicePoint) {
+    return new CheckInContext(
       this.checkInRequest,
       this.item,
       this.loan,
@@ -126,8 +126,8 @@ public class CheckInProcessRecords {
       lostItemFeesRefundedOrCancelled);
   }
 
-  public CheckInProcessRecords withHighestPriorityFulfillableRequest(Request request) {
-    return new CheckInProcessRecords(
+  public CheckInContext withHighestPriorityFulfillableRequest(Request request) {
+    return new CheckInContext(
       this.checkInRequest,
       this.item,
       this.loan,
@@ -140,8 +140,8 @@ public class CheckInProcessRecords {
       lostItemFeesRefundedOrCancelled);
   }
 
-  public CheckInProcessRecords withLoggedInUserId(String userId) {
-    return new CheckInProcessRecords(
+  public CheckInContext withLoggedInUserId(String userId) {
+    return new CheckInContext(
       this.checkInRequest,
       this.item,
       this.loan,
@@ -154,8 +154,8 @@ public class CheckInProcessRecords {
       lostItemFeesRefundedOrCancelled);
   }
 
-  public CheckInProcessRecords withInHouseUse(boolean inHouseUse) {
-    return new CheckInProcessRecords(
+  public CheckInContext withInHouseUse(boolean inHouseUse) {
+    return new CheckInContext(
       this.checkInRequest,
       this.item,
       this.loan,
@@ -168,8 +168,8 @@ public class CheckInProcessRecords {
       lostItemFeesRefundedOrCancelled);
   }
 
-  public CheckInProcessRecords withItemStatusBeforeCheckIn(ItemStatus itemStatus) {
-    return new CheckInProcessRecords(
+  public CheckInContext withItemStatusBeforeCheckIn(ItemStatus itemStatus) {
+    return new CheckInContext(
       this.checkInRequest,
       this.item,
       this.loan,
@@ -182,8 +182,8 @@ public class CheckInProcessRecords {
       lostItemFeesRefundedOrCancelled);
   }
 
-  public CheckInProcessRecords withLostItemFeesRefundedOrCancelled(boolean lostItemFeesRefunded) {
-    return new CheckInProcessRecords(
+  public CheckInContext withLostItemFeesRefundedOrCancelled(boolean lostItemFeesRefunded) {
+    return new CheckInContext(
       this.checkInRequest,
       this.item,
       this.loan,

@@ -10,6 +10,7 @@ import static org.folio.circulation.support.http.client.PageLimit.oneThousand;
 import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
 
+import org.folio.circulation.resources.context.RenewalContext;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.http.client.CqlQuery;
@@ -36,6 +37,11 @@ public class RequestQueueRepository {
 
     return get(loanAndRelatedRecords.getLoan().getItemId())
       .thenApply(result -> result.map(loanAndRelatedRecords::withRequestQueue));
+  }
+
+  public CompletableFuture<Result<RenewalContext>> get(RenewalContext renewalContext) {
+    return get(renewalContext.getLoan().getItemId())
+      .thenApply(result -> result.map(renewalContext::withRequestQueue));
   }
 
   public CompletableFuture<Result<RequestQueue>> get(ItemRelatedRecord itemRelatedRecord) {

@@ -19,7 +19,7 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
-import org.folio.circulation.domain.CheckInProcessRecords;
+import org.folio.circulation.domain.CheckInContext;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.domain.MultipleRecords;
@@ -163,10 +163,10 @@ public class PatronActionSessionService {
     return jsonArray;
   }
 
-  public CompletableFuture<Result<CheckInProcessRecords>> saveCheckInSessionRecord(CheckInProcessRecords records) {
-    Loan loan = records.getLoan();
+  public CompletableFuture<Result<CheckInContext>> saveCheckInSessionRecord(CheckInContext context) {
+    Loan loan = context.getLoan();
     if (loan == null) {
-      return completedFuture(of(() -> records));
+      return completedFuture(of(() -> context));
     }
     UUID patronId = UUID.fromString(loan.getUserId());
     UUID loanId = UUID.fromString(loan.getId());
@@ -175,6 +175,6 @@ public class PatronActionSessionService {
         patronId, loanId, PatronActionType.CHECK_IN);
 
     return patronActionSessionRepository.create(patronSessionRecord)
-      .thenApply(mapResult(v -> records));
+      .thenApply(mapResult(v -> context));
   }
 }

@@ -18,6 +18,7 @@ import java.util.stream.Collectors;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.domain.MultipleRecords;
+import org.folio.circulation.resources.context.RenewalContext;
 import org.folio.circulation.rules.AppliedRuleConditions;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.FetchSingleRecord;
@@ -42,6 +43,14 @@ public class LoanPolicyRepository extends CirculationPolicyRepository<LoanPolicy
     return Result.of(relatedRecords::getLoan)
       .combineAfter(this::lookupPolicy, Loan::withLoanPolicy)
       .thenApply(mapResult(relatedRecords::withLoan));
+  }
+
+  public CompletableFuture<Result<RenewalContext>> lookupLoanPolicy(
+    RenewalContext renewalContext) {
+
+    return Result.of(renewalContext::getLoan)
+      .combineAfter(this::lookupPolicy, Loan::withLoanPolicy)
+      .thenApply(mapResult(renewalContext::withLoan));
   }
 
   public CompletableFuture<Result<Loan>> findPolicyForLoan(Result<Loan> loanResult) {
@@ -76,7 +85,6 @@ public class LoanPolicyRepository extends CirculationPolicyRepository<LoanPolicy
     final Collection<String> loansToFetch = loans.stream()
             .map(Loan::getLoanPolicyId)
             .filter(Objects::nonNull)
-            .distinct()
             .collect(Collectors.toSet());
 
     final FindWithMultipleCqlIndexValues<LoanPolicy> fetcher = createLoanPoliciesFetcher();

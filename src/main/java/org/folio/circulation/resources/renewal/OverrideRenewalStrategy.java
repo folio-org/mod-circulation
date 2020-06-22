@@ -1,4 +1,4 @@
-package org.folio.circulation.resources;
+package org.folio.circulation.resources.renewal;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.domain.ItemStatus.CHECKED_OUT;
@@ -17,9 +17,9 @@ import java.util.concurrent.CompletableFuture;
 import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.domain.Loan;
-import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.domain.RequestType;
 import org.folio.circulation.domain.policy.LoanPolicy;
+import org.folio.circulation.resources.context.RenewalContext;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.Result;
 import org.joda.time.DateTime;
@@ -33,9 +33,10 @@ public class OverrideRenewalStrategy implements RenewalStrategy {
   private static final String DUE_DATE = "dueDate";
 
   @Override
-  public CompletableFuture<Result<LoanAndRelatedRecords>> renew(
-    LoanAndRelatedRecords relatedRecords, JsonObject requestBody, Clients clients) {
+  public CompletableFuture<Result<RenewalContext>> renew(RenewalContext context,
+    Clients clients) {
 
+    final JsonObject requestBody = context.getRenewalRequest();
     final String comment = getProperty(requestBody, COMMENT);
     if (StringUtils.isBlank(comment)) {
       return completedFuture(failedValidation("Override renewal request must have a comment",
@@ -43,15 +44,15 @@ public class OverrideRenewalStrategy implements RenewalStrategy {
     }
     final DateTime overrideDueDate = getDateTimeProperty(requestBody, DUE_DATE);
 
-    Loan loan = relatedRecords.getLoan();
+    Loan loan = context.getLoan();
     boolean hasRecallRequest =
-    relatedRecords.getRequestQueue().getRequests().stream().findFirst()
+    context.getRequestQueue().getRequests().stream().findFirst()
       .map(r -> r.getRequestType() == RequestType.RECALL)
       .orElse(false);
 
     return completedFuture(overrideRenewal(loan, DateTime.now(DateTimeZone.UTC),
       overrideDueDate, comment, hasRecallRequest))
-      .thenApply(mapResult(relatedRecords::withLoan));
+      .thenApply(mapResult(context::withLoan));
   }
 
   private Result<Loan> overrideRenewal(Loan loan, DateTime systemDate,
