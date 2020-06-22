@@ -12,7 +12,6 @@ import org.folio.circulation.domain.ConfigurationRepository;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanRepository;
 import org.folio.circulation.domain.LoanRepresentation;
-import org.folio.circulation.domain.OverdueFineCalculatorService;
 import org.folio.circulation.domain.RequestQueueRepository;
 import org.folio.circulation.domain.UserRepository;
 import org.folio.circulation.domain.notice.schedule.DueDateScheduledNoticeService;
@@ -41,11 +40,15 @@ import io.vertx.ext.web.RoutingContext;
 public abstract class RenewalResource extends Resource {
   private final String rootPath;
   private final RenewalStrategy renewalStrategy;
+  private final RenewalFeeProcessingStrategy feeProcessing;
 
-  RenewalResource(String rootPath, RenewalStrategy renewalStrategy, HttpClient client) {
+  RenewalResource(String rootPath, RenewalStrategy renewalStrategy,
+    RenewalFeeProcessingStrategy feeProcessing, HttpClient client) {
+
     super(client);
     this.rootPath = rootPath;
     this.renewalStrategy = renewalStrategy;
+    this.feeProcessing = feeProcessing;
   }
 
   @Override
@@ -82,6 +85,8 @@ public abstract class RenewalResource extends Resource {
         messages -> new ValidationErrorFailure(messages.stream()
           .map(message -> new ValidationError(message, new HashMap<>()))
           .collect(Collectors.toList())));
+    final FeeFineScheduledNoticeService feeFineNoticesService =
+      FeeFineScheduledNoticeService.using(clients);
 
     //TODO: Validation check for same user should be in the domain service
     JsonObject bodyAsJson = routingContext.getBodyAsJson();
@@ -98,22 +103,14 @@ public abstract class RenewalResource extends Resource {
         RenewalContext::withTimeZone))
       .thenComposeAsync(r -> r.after(records -> renewalStrategy.renew(records, clients)))
       .thenComposeAsync(r -> r.after(storeLoanAndItem::updateLoanAndItemInStorage))
-      .thenComposeAsync(r -> r.after(records -> createOverdueFine(records, clients)))
+      .thenComposeAsync(r -> r.after(records -> feeProcessing.processFeesFines(records, clients)))
+      .thenApplyAsync(r -> r.next(feeFineNoticesService::scheduleOverdueFineNotices))
       .thenComposeAsync(r -> r.after(eventPublisher::publishDueDateChangedEvent))
       .thenApply(r -> r.next(scheduledNoticeService::rescheduleDueDateNotices))
       .thenApply(r -> r.next(loanNoticeSender::sendRenewalPatronNotice))
       .thenApply(r -> r.map(loanRepresentation::extendedLoan))
       .thenApply(r -> r.map(this::toResponse))
       .thenAccept(context::writeResultToHttpResponse);
-  }
-
-  private CompletableFuture<Result<RenewalContext>> createOverdueFine(
-    RenewalContext records, Clients clients) {
-
-    return OverdueFineCalculatorService.using(clients)
-      .createOverdueFineIfNecessary(records)
-      .thenApply(r -> r.next(action -> FeeFineScheduledNoticeService.using(clients)
-        .scheduleNotices(records, action)));
   }
 
   private HttpResponse toResponse(JsonObject body) {

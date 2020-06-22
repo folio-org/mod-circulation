@@ -57,15 +57,34 @@ public class OverdueFineCalculatorService {
     );
   }
 
-  public CompletableFuture<Result<FeeFineAction>> createOverdueFineIfNecessary(
-    RenewalContext records) {
+  public CompletableFuture<Result<RenewalContext>> createOverdueFineIfNecessary(
+    RenewalContext context) {
 
-    Loan loan = records.getLoanBeforeRenewal();
+    final String loggedInUserId = context.getLoggedInUserId();
+    final Loan loanBeforeRenewal = context.getLoanBeforeRenewal();
+
+    return shouldChargeOverdueFineOnRenewal(context)
+      .thenCompose(r -> r.afterWhen(ResultBinding.toFutureResult(),
+        b -> createOverdueFineIfNecessary(loanBeforeRenewal, Scenario.RENEWAL, loggedInUserId),
+        b -> completedFuture(succeeded(null))))
+      .thenApply(mapResult(context::withOverdueFeeFineAction));
+  }
+
+  private CompletableFuture<Result<Boolean>> shouldChargeOverdueFineOnRenewal(
+    RenewalContext renewalContext) {
+
+    Loan loan = renewalContext.getLoanBeforeRenewal();
     if (loan == null || !loan.isOverdue()) {
       return completedFuture(succeeded(null));
     }
 
-    return createOverdueFineIfNecessary(loan, Scenario.RENEWAL, records.getLoggedInUserId());
+    if (isDeclaredLost(renewalContext.getItemStatusBeforeRenewal())) {
+      return repos.lostItemPolicyRepository.getLostItemPolicyById(loan.getLostItemPolicyId())
+        .thenApply(r -> r.map(policy -> policy.shouldChargeOverdueFee()
+          && renewalContext.isLostItemFeesRefundedOrCancelled()));
+    }
+
+    return completedFuture(succeeded(true));
   }
 
   public CompletableFuture<Result<FeeFineAction>> createOverdueFineIfNecessary(
@@ -85,7 +104,7 @@ public class OverdueFineCalculatorService {
       return completedFuture(succeeded(false));
     }
 
-    if (records.getItemStatusBeforeCheckIn() == ItemStatus.DECLARED_LOST) {
+    if (isDeclaredLost(records.getItemStatusBeforeCheckIn())) {
       return repos.lostItemPolicyRepository.getLostItemPolicyById(loan.getLostItemPolicyId())
         .thenApply(r -> r.map(policy -> policy.shouldChargeOverdueFee()
           && records.areLostItemFeesRefundedOrCancelled()));
@@ -223,6 +242,10 @@ public class OverdueFineCalculatorService {
       .withCreatedAt(params.feeFineOwner.getOwner())
       .withCreatedBy(params.loggedInUser)
       .build());
+  }
+
+  private boolean isDeclaredLost(ItemStatus itemStatus) {
+    return itemStatus == ItemStatus.DECLARED_LOST;
   }
 
   private static class CalculationParameters {

@@ -24,6 +24,7 @@ import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanRepository;
 import org.folio.circulation.domain.policy.LostItemPolicyRepository;
 import org.folio.circulation.domain.policy.lostitem.LostItemPolicy;
+import org.folio.circulation.resources.context.RenewalContext;
 import org.folio.circulation.services.support.RefundAccountCommand;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.Result;
@@ -57,6 +58,17 @@ public class LostItemFeeRefundService {
 
     return refundLostItemFees(referenceDataContext)
       .thenApply(r -> r.map(checkInRecords::withLostItemFeesRefundedOrCancelled));
+  }
+
+  public CompletableFuture<Result<RenewalContext>> refundLostItemFees(
+    RenewalContext renewalContext, String currentServicePointId) {
+
+    final ReferenceDataContext referenceDataContext = new ReferenceDataContext(
+      renewalContext.getItemStatusBeforeRenewal(), renewalContext.getLoan().getItemId(),
+      renewalContext.getLoan(), renewalContext.getLoggedInUserId(), currentServicePointId);
+
+    return refundLostItemFees(referenceDataContext)
+      .thenApply(r -> r.map(renewalContext::withLostItemFeesRefundedOrCancelled));
   }
 
   private CompletableFuture<Result<Boolean>> refundLostItemFees(ReferenceDataContext referenceData) {
