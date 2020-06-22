@@ -29,6 +29,7 @@ import java.util.List;
 import java.util.Random;
 import java.util.UUID;
 
+import org.folio.circulation.domain.policy.DueDateManagement;
 import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
@@ -1142,6 +1143,34 @@ public class CheckOutByBarcodeTests extends APITests {
     assertThat(secondBookTypeItem, hasItemStatus(AVAILABLE));
   }
 
+  @Test
+  public void cannotCheckOutWhenItemLimitIsReachedForBookMaterialTypeWithFixedDueDateSchedule() {
+
+    final UUID book = materialTypesFixture.book().getId();
+
+    circulationRulesFixture.updateCirculationRules(
+      createRulesWithFixedDueDateInLoanPolicy( "m " + book));
+
+    IndividualResource firstBookTypeItem = itemsFixture.basedUponNod();
+    IndividualResource secondBookTypeItem = itemsFixture.basedUponSmallAngryPlanet();
+    IndividualResource videoTypeItem = itemsFixture.basedUponDunkirk();
+    IndividualResource steve = usersFixture.steve();
+
+    loansFixture.checkOutByBarcode(firstBookTypeItem, steve);
+    firstBookTypeItem = itemsClient.get(firstBookTypeItem);
+    assertThat(firstBookTypeItem, hasItemStatus(CHECKED_OUT));
+
+    Response response = loansFixture.attemptCheckOutByBarcode(secondBookTypeItem, steve);
+    assertThat(response.getJson(), hasErrorWith(allOf(
+      hasMessage("Patron has reached maximum limit of 1 items for material type"))));
+    secondBookTypeItem = itemsClient.get(secondBookTypeItem);
+    assertThat(secondBookTypeItem, hasItemStatus(AVAILABLE));
+
+    loansFixture.checkOutByBarcode(videoTypeItem, steve);
+    videoTypeItem = itemsClient.get(videoTypeItem);
+    assertThat(videoTypeItem, hasItemStatus(CHECKED_OUT));
+  }
+
   private IndividualResource prepareLoanPolicyWithItemLimit(int itemLimit) {
 
     return loanPoliciesFixture.create(
@@ -1150,6 +1179,17 @@ public class CheckOutByBarcodeTests extends APITests {
         .withItemLimit(itemLimit)
         .rolling(Period.months(2))
         .renewFromCurrentDueDate());
+  }
+
+  private IndividualResource prepareLoanPolicyWithItemLimitAndFixedDueDate(
+    int itemLimit, UUID fixedDueDateScheduleId) {
+    return loanPoliciesFixture.create(
+      new LoanPolicyBuilder()
+        .withName("Loan Policy with item limit and fixed due date")
+        .withItemLimit(itemLimit)
+        .fixed(fixedDueDateScheduleId)
+        .withClosedLibraryDueDateManagement(
+          DueDateManagement.KEEP_THE_CURRENT_DUE_DATE.getValue()));
   }
 
   private IndividualResource prepareLoanPolicyWithoutItemLimit() {
@@ -1174,5 +1214,22 @@ public class CheckOutByBarcodeTests extends APITests {
       "priority: t, s, c, b, a, m, g",
       "fallback-policy: l " + loanPolicyWithoutItemLimitId + " r " + anyRequestPolicy + " n " + anyNoticePolicy + " o " + anyOverdueFinePolicy + " i " + anyLostItemFeePolicy,
       ruleCondition + " : l " + loanPolicyWithItemLimitId + " r " + anyRequestPolicy + " n " + anyNoticePolicy  + " o " + anyOverdueFinePolicy + " i " + anyLostItemFeePolicy);
+  }
+
+  private String createRulesWithFixedDueDateInLoanPolicy(String ruleCondition) {
+
+    UUID fixedDueDateScheduleId = loanPoliciesFixture.createExampleFixedDueDateSchedule().getId();
+    final String loanPolicyWithItemLimitAndFixedDueDateId = prepareLoanPolicyWithItemLimitAndFixedDueDate(
+      1, fixedDueDateScheduleId).getId().toString();
+    final String loanPolicyWithoutItemLimitId = prepareLoanPolicyWithoutItemLimit().getId().toString();
+    final String anyRequestPolicy = requestPoliciesFixture.allowAllRequestPolicy().getId().toString();
+    final String anyNoticePolicy = noticePoliciesFixture.activeNotice().getId().toString();
+    final String anyOverdueFinePolicy = overdueFinePoliciesFixture.facultyStandard().getId().toString();
+    final String anyLostItemFeePolicy = lostItemFeePoliciesFixture.facultyStandard().getId().toString();
+
+    return String.join("\n",
+      "priority: t, s, c, b, a, m, g",
+      "fallback-policy: l " + loanPolicyWithoutItemLimitId + " r " + anyRequestPolicy + " n " + anyNoticePolicy + " o " + anyOverdueFinePolicy + " i " + anyLostItemFeePolicy,
+      ruleCondition + " : l " + loanPolicyWithItemLimitAndFixedDueDateId + " r " + anyRequestPolicy + " n " + anyNoticePolicy  + " o " + anyOverdueFinePolicy + " i " + anyLostItemFeePolicy);
   }
 }
