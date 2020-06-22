@@ -11,7 +11,7 @@ import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestQueue;
 import org.folio.circulation.domain.RequestType;
-import org.folio.circulation.resources.RegularRenewalStrategy;
+import org.folio.circulation.resources.renewal.RegularRenewalStrategy;
 import org.folio.circulation.support.Result;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;

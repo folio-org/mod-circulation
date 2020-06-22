@@ -1,9 +1,8 @@
-package org.folio.circulation.resources;
+package org.folio.circulation.resources.renewal;
 
 import static org.folio.circulation.domain.validation.CommonFailures.noItemFoundForIdFailure;
 import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
-import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 
 import java.util.concurrent.CompletableFuture;
 
@@ -21,8 +20,8 @@ import io.vertx.core.http.HttpClient;
 import io.vertx.core.json.JsonObject;
 
 public class RenewByIdResource extends RenewalResource {
-  public RenewByIdResource(String rootPath, RenewalStrategy renewalStrategy, HttpClient client) {
-    super(rootPath, renewalStrategy, client);
+  public RenewByIdResource(HttpClient client) {
+    super("/circulation/renew-by-id", new RegularRenewalStrategy(), client);
   }
 
   @Override

@@ -1,4 +1,4 @@
-package org.folio.circulation.resources;
+package org.folio.circulation.resources.renewal;
 
 import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;

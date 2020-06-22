@@ -7,8 +7,8 @@ import static org.folio.circulation.support.ResultBinding.mapResult;
 
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Loan;
-import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.domain.LoanRepository;
+import org.folio.circulation.resources.context.RenewalContext;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.ItemRepository;
 import org.folio.circulation.support.Result;
@@ -29,8 +29,8 @@ public class StoreLoanAndItem {
     this(new LoanRepository(clients), noLocationMaterialTypeAndLoanTypeInstance(clients));
   }
 
-  public CompletableFuture<Result<LoanAndRelatedRecords>> updateLoanAndItemInStorage(
-    LoanAndRelatedRecords relatedRecords) {
+  public CompletableFuture<Result<RenewalContext>> updateLoanAndItemInStorage(
+    RenewalContext relatedRecords) {
 
     return updateLoanAndItemInStorage(relatedRecords.getLoan())
       .thenApply(mapResult(relatedRecords::withLoan));

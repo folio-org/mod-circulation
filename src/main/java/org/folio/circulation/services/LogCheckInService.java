@@ -2,7 +2,7 @@ package org.folio.circulation.services;
 
 import java.util.concurrent.CompletableFuture;
 
-import org.folio.circulation.domain.CheckInProcessRecords;
+import org.folio.circulation.domain.CheckInContext;
 import org.folio.circulation.domain.CheckInRecord;
 import org.folio.circulation.storage.CheckInStorageRepository;
 import org.folio.circulation.support.Clients;
@@ -16,20 +16,20 @@ public class LogCheckInService {
     this.checkInStorageRepository = new CheckInStorageRepository(clients);
   }
 
-  public CompletableFuture<Result<CheckInProcessRecords>> logCheckInOperation(
-    CheckInProcessRecords checkInProcessRecords) {
+  public CompletableFuture<Result<CheckInContext>> logCheckInOperation(
+    CheckInContext checkInContext) {
 
     final CheckInRecord checkInRecord = CheckInRecord.builder()
       .withOccurredDateTime(ClockManager.getClockManager().getDateTime())
-      .withItemId(checkInProcessRecords.getItem().getItemId())
-      .withServicePointId(checkInProcessRecords.getCheckInServicePointId().toString())
-      .withPerformedByUserId(checkInProcessRecords.getLoggedInUserId())
-      .withItemStatusPriorToCheckIn(checkInProcessRecords.getItem().getStatusName())
-      .withItemLocationId(checkInProcessRecords.getItem().getLocationId())
-      .withRequestQueueSize(checkInProcessRecords.getRequestQueue().size())
+      .withItemId(checkInContext.getItem().getItemId())
+      .withServicePointId(checkInContext.getCheckInServicePointId().toString())
+      .withPerformedByUserId(checkInContext.getLoggedInUserId())
+      .withItemStatusPriorToCheckIn(checkInContext.getItem().getStatusName())
+      .withItemLocationId(checkInContext.getItem().getLocationId())
+      .withRequestQueueSize(checkInContext.getRequestQueue().size())
       .build();
 
     return checkInStorageRepository.createCheckInLogRecord(checkInRecord)
-      .thenApply(result -> result.map(notUsed -> checkInProcessRecords));
+      .thenApply(result -> result.map(notUsed -> checkInContext));
   }
 }

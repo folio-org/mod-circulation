@@ -2,7 +2,7 @@ package org.folio.circulation.resources;
 
 import static org.folio.circulation.domain.validation.UserNotFoundValidator.refuseWhenLoggedInUserNotPresent;
 
-import org.folio.circulation.domain.CheckInProcessRecords;
+import org.folio.circulation.domain.CheckInContext;
 import org.folio.circulation.domain.notice.schedule.RequestScheduledNoticeService;
 import org.folio.circulation.domain.notice.session.PatronActionSessionService;
 import org.folio.circulation.domain.representations.CheckInByBarcodeRequest;
@@ -51,38 +51,38 @@ public class CheckInByBarcodeResource extends Resource {
 
     refuseWhenLoggedInUserNotPresent(context)
       .next(notUsed -> checkInRequestResult)
-      .map(CheckInProcessRecords::new)
+      .map(CheckInContext::new)
       .combineAfter(processAdapter::findItem, (records, item) -> records
         .withItem(item)
         .withItemStatusBeforeCheckIn(item.getStatus()))
       .thenApply(CheckInValidators::refuseWhenClaimedReturnedIsNotResolved)
       .thenComposeAsync(findItemResult -> findItemResult.combineAfter(
-        processAdapter::getRequestQueue, CheckInProcessRecords::withRequestQueue))
+        processAdapter::getRequestQueue, CheckInContext::withRequestQueue))
       .thenApply(findRequestQueueResult -> findRequestQueueResult.map(
         processAdapter::setInHouseUse))
       .thenApplyAsync(r -> r.map(records -> records.withLoggedInUserId(context.getUserId())))
       .thenComposeAsync(setUserResult -> setUserResult.after(processAdapter::logCheckInOperation))
       .thenComposeAsync(logCheckInResult -> logCheckInResult.combineAfter(
-        processAdapter::findSingleOpenLoan, CheckInProcessRecords::withLoan))
+        processAdapter::findSingleOpenLoan, CheckInContext::withLoan))
       .thenComposeAsync(findLoanResult -> findLoanResult.combineAfter(
-        processAdapter::checkInLoan, CheckInProcessRecords::withLoan))
+        processAdapter::checkInLoan, CheckInContext::withLoan))
       .thenComposeAsync(checkInLoan -> checkInLoan.combineAfter(
-        processAdapter::updateRequestQueue, CheckInProcessRecords::withRequestQueue))
+        processAdapter::updateRequestQueue, CheckInContext::withRequestQueue))
       .thenComposeAsync(updateRequestQueueResult -> updateRequestQueueResult.combineAfter(
-        processAdapter::updateItem, CheckInProcessRecords::withItem))
+        processAdapter::updateItem, CheckInContext::withItem))
       .thenApply(handleItemStatus -> handleItemStatus.next(processAdapter::sendItemStatusPatronNotice))
       .thenComposeAsync(updateItemResult -> updateItemResult.combineAfter(
-        processAdapter::getDestinationServicePoint, CheckInProcessRecords::withItem))
+        processAdapter::getDestinationServicePoint, CheckInContext::withItem))
       .thenComposeAsync(updateItemResult -> updateItemResult.combineAfter(
-        processAdapter::getCheckInServicePoint, CheckInProcessRecords::withCheckInServicePoint))
+        processAdapter::getCheckInServicePoint, CheckInContext::withCheckInServicePoint))
       .thenComposeAsync(updateItemResult -> updateItemResult.combineAfter(
-        processAdapter::getPickupServicePoint, CheckInProcessRecords::withHighestPriorityFulfillableRequest))
+        processAdapter::getPickupServicePoint, CheckInContext::withHighestPriorityFulfillableRequest))
       .thenComposeAsync(updateItemResult -> updateItemResult.combineAfter(
-        processAdapter::getRequester, CheckInProcessRecords::withHighestPriorityFulfillableRequest))
+        processAdapter::getRequester, CheckInContext::withHighestPriorityFulfillableRequest))
       .thenComposeAsync(updateItemResult -> updateItemResult.combineAfter(
-        processAdapter::getAddressType, CheckInProcessRecords::withHighestPriorityFulfillableRequest))
+        processAdapter::getAddressType, CheckInContext::withHighestPriorityFulfillableRequest))
       .thenComposeAsync(updateItemResult -> updateItemResult.combineAfter(
-        processAdapter::updateLoan, CheckInProcessRecords::withLoan))
+        processAdapter::updateLoan, CheckInContext::withLoan))
       .thenComposeAsync(updateItemResult -> updateItemResult.after(
         patronActionSessionService::saveCheckInSessionRecord))
       .thenComposeAsync(r -> r.after(processAdapter::refundLostItemFees))
