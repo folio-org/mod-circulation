@@ -4,7 +4,7 @@ import static org.folio.circulation.domain.representations.CheckInByBarcodeReque
 import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 
-import org.folio.circulation.domain.CheckInProcessRecords;
+import org.folio.circulation.domain.CheckInContext;
 import org.folio.circulation.support.Result;
 
 public final class CheckInValidators {
@@ -12,18 +12,18 @@ public final class CheckInValidators {
   private CheckInValidators() {
   }
 
-  public static Result<CheckInProcessRecords> refuseWhenClaimedReturnedIsNotResolved(
-    Result<CheckInProcessRecords> processRecordsResult) {
+  public static Result<CheckInContext> refuseWhenClaimedReturnedIsNotResolved(
+    Result<CheckInContext> contextResult) {
 
-    return processRecordsResult.failWhen(
+    return contextResult.failWhen(
       processRecords -> succeeded(isClaimedReturnedNotResolved(processRecords)),
       processRecords -> singleValidationError(
         "Item is claimed returned, a resolution is required to check in",
         CLAIMED_RETURNED_RESOLUTION, null));
   }
 
-  private static boolean isClaimedReturnedNotResolved(CheckInProcessRecords processRecords) {
-    return processRecords.getItem().isClaimedReturned()
-      && processRecords.getCheckInRequest().getClaimedReturnedResolution() == null;
+  private static boolean isClaimedReturnedNotResolved(CheckInContext context) {
+    return context.getItem().isClaimedReturned()
+      && context.getCheckInRequest().getClaimedReturnedResolution() == null;
   }
 }

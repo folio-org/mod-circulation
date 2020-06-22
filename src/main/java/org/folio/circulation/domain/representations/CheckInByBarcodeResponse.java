@@ -4,21 +4,21 @@ import static org.folio.circulation.domain.notice.TemplateContextUtil.createChec
 import static org.folio.circulation.support.JsonPropertyWriter.write;
 import static org.folio.circulation.support.http.server.JsonHttpResponse.ok;
 
-import org.folio.circulation.domain.CheckInProcessRecords;
+import org.folio.circulation.domain.CheckInContext;
 import org.folio.circulation.domain.LoanRepresentation;
 import org.folio.circulation.support.http.server.HttpResponse;
 
 import io.vertx.core.json.JsonObject;
 
 public class CheckInByBarcodeResponse {
-  private final CheckInProcessRecords records;
+  private final CheckInContext context;
 
-  public static CheckInByBarcodeResponse fromRecords(CheckInProcessRecords records) {
+  public static CheckInByBarcodeResponse fromRecords(CheckInContext records) {
     return new CheckInByBarcodeResponse(records);
   }
 
-  private CheckInByBarcodeResponse(CheckInProcessRecords records) {
-    this.records = records;
+  private CheckInByBarcodeResponse(CheckInContext context) {
+    this.context = context;
   }
 
   public HttpResponse toHttpResponse() {
@@ -31,10 +31,10 @@ public class CheckInByBarcodeResponse {
 
     final JsonObject json = new JsonObject();
 
-    write(json, "loan", loanRepresentation.extendedLoan(records.getLoan()));
-    write(json, "item", itemRepresentation.createItemSummary(records.getItem()));
-    write(json, "staffSlipContext", createCheckInContext(records));
-    write(json, "inHouseUse", records.isInHouseUse());
+    write(json, "loan", loanRepresentation.extendedLoan(context.getLoan()));
+    write(json, "item", itemRepresentation.createItemSummary(context.getItem()));
+    write(json, "staffSlipContext", createCheckInContext(context));
+    write(json, "inHouseUse", context.isInHouseUse());
 
     return json;
   }

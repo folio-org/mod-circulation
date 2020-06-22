@@ -9,7 +9,7 @@ import java.util.Collections;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
-import org.folio.circulation.domain.CheckInProcessRecords;
+import org.folio.circulation.domain.CheckInContext;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.RequestQueue;
 import org.folio.circulation.domain.representations.CheckInByBarcodeRequest;
@@ -43,23 +43,23 @@ public class LogCheckInServiceTest {
 
   @Test
   public void logCheckInOperationPropagatesException() {
-    final CheckInProcessRecords context = checkInProcessRecords();
+    final CheckInContext context = checkInProcessRecords();
 
     final ServerErrorFailure postError = new ServerErrorFailure("ServerError");
     when(checkInStorageClient.post(any(JsonObject.class)))
       .thenReturn(CompletableFuture.completedFuture(Result.failed(postError)));
 
-    final CompletableFuture<Result<CheckInProcessRecords>> logCheckInOperation =
+    final CompletableFuture<Result<CheckInContext>> logCheckInOperation =
       logCheckInService.logCheckInOperation(context);
 
-    final Result<CheckInProcessRecords> logResult = logCheckInOperation
+    final Result<CheckInContext> logResult = logCheckInOperation
       .getNow(Result.failed(new ServerErrorFailure("Uncompleted")));
 
     assertThat(logResult.failed(), is(true));
     assertThat(logResult.cause(), is(postError));
   }
 
-  private CheckInProcessRecords checkInProcessRecords() {
+  private CheckInContext checkInProcessRecords() {
     JsonObject requestRepresentation = new JsonObject()
       .put("servicePointId", UUID.randomUUID().toString())
       .put("itemBarcode", "barcode")
@@ -69,7 +69,7 @@ public class LogCheckInServiceTest {
       .put("id", UUID.randomUUID().toString())
       .put("status", new JsonObject().put("name", "Available"));
 
-    return new CheckInProcessRecords(
+    return new CheckInContext(
       CheckInByBarcodeRequest.from(requestRepresentation).value())
       .withItem(Item.from(itemRepresentation))
       .withRequestQueue(new RequestQueue(Collections.emptyList()))

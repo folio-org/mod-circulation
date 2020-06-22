@@ -18,7 +18,7 @@ import java.util.stream.Collectors;
 
 import org.folio.circulation.domain.Account;
 import org.folio.circulation.domain.AccountRepository;
-import org.folio.circulation.domain.CheckInProcessRecords;
+import org.folio.circulation.domain.CheckInContext;
 import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanRepository;
@@ -48,16 +48,16 @@ public class LostItemFeeRefundService {
     this.loanRepository = new LoanRepository(clients);
   }
 
-  public CompletableFuture<Result<CheckInProcessRecords>> refundLostItemFees(
-    CheckInProcessRecords checkInRecords) {
+  public CompletableFuture<Result<CheckInContext>> refundLostItemFees(
+    CheckInContext context) {
 
     final ReferenceDataContext referenceDataContext = new ReferenceDataContext(
-      checkInRecords.getItemStatusBeforeCheckIn(), checkInRecords.getItem().getItemId(),
-      checkInRecords.getLoan(), checkInRecords.getLoggedInUserId(),
-      checkInRecords.getCheckInServicePointId().toString());
+      context.getItemStatusBeforeCheckIn(), context.getItem().getItemId(),
+      context.getLoan(), context.getLoggedInUserId(),
+      context.getCheckInServicePointId().toString());
 
     return refundLostItemFees(referenceDataContext)
-      .thenApply(r -> r.map(checkInRecords::withLostItemFeesRefundedOrCancelled));
+      .thenApply(r -> r.map(context::withLostItemFeesRefundedOrCancelled));
   }
 
   public CompletableFuture<Result<RenewalContext>> refundLostItemFees(

@@ -24,10 +24,10 @@ public class RenewalContext {
   JsonObject renewalRequest;
   FeeFineAction overdueFeeFineAction;
 
-  public static RenewalContext newRenewalContext(Loan loan, JsonObject renewalRequest,
+  public static RenewalContext create(Loan loan, JsonObject renewalRequest,
     String loggedInUserId) {
 
-    val loanBeforeRenewal = loan != null ? loan.copyLoanRepresentation() : null;
+    val loanBeforeRenewal = loan != null ? loan.copy() : null;
     val itemStatusBeforeRenew = loan != null && loan.getItem() != null
       ? loan.getItem().getStatus() : null;
 

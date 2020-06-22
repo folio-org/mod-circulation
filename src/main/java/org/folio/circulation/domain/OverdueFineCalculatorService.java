@@ -88,26 +88,26 @@ public class OverdueFineCalculatorService {
   }
 
   public CompletableFuture<Result<FeeFineAction>> createOverdueFineIfNecessary(
-    CheckInProcessRecords records, String userId) {
+    CheckInContext context, String userId) {
 
-    return shouldChargeOverdueFineOnCheckIn(records)
+    return shouldChargeOverdueFineOnCheckIn(context)
       .thenCompose(r -> r.afterWhen(ResultBinding.toFutureResult(),
-          b -> createOverdueFineIfNecessary(records.getLoan(), CHECKIN, userId),
+          b -> createOverdueFineIfNecessary(context.getLoan(), CHECKIN, userId),
           b -> completedFuture(succeeded(null))));
   }
 
   private CompletableFuture<Result<Boolean>> shouldChargeOverdueFineOnCheckIn(
-    CheckInProcessRecords records) {
+    CheckInContext context) {
 
-    final Loan loan = records.getLoan();
+    final Loan loan = context.getLoan();
     if (loan == null || !loan.isOverdue(loan.getReturnDate())) {
       return completedFuture(succeeded(false));
     }
 
-    if (isDeclaredLost(records.getItemStatusBeforeCheckIn())) {
+    if (isDeclaredLost(context.getItemStatusBeforeCheckIn())) {
       return repos.lostItemPolicyRepository.getLostItemPolicyById(loan.getLostItemPolicyId())
         .thenApply(r -> r.map(policy -> policy.shouldChargeOverdueFee()
-          && records.areLostItemFeesRefundedOrCancelled()));
+          && context.areLostItemFeesRefundedOrCancelled()));
     }
 
     return completedFuture(succeeded(true));

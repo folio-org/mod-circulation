@@ -10,7 +10,7 @@ import static org.folio.circulation.support.Result.succeeded;
 
 import java.util.concurrent.CompletableFuture;
 
-import org.folio.circulation.domain.CheckInProcessRecords;
+import org.folio.circulation.domain.CheckInContext;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.domain.LoanRepository;
@@ -63,11 +63,11 @@ public class EventPublisher {
     return completedFuture(succeeded(loanAndRelatedRecords));
   }
 
-  public CompletableFuture<Result<CheckInProcessRecords>> publishItemCheckedInEvent(
-    CheckInProcessRecords checkInProcessRecords) {
+  public CompletableFuture<Result<CheckInContext>> publishItemCheckedInEvent(
+    CheckInContext checkInContext) {
 
-    if (checkInProcessRecords.getLoan() != null) {
-      Loan loan = checkInProcessRecords.getLoan();
+    if (checkInContext.getLoan() != null) {
+      Loan loan = checkInContext.getLoan();
 
       JsonObject payloadJsonObject = new JsonObject();
       write(payloadJsonObject, USER_ID_FIELD, loan.getUserId());
@@ -76,13 +76,13 @@ public class EventPublisher {
 
       return pubSubPublishingService.publishEvent(ITEM_CHECKED_IN.name(),
         payloadJsonObject.encode())
-        .thenApply(r -> succeeded(checkInProcessRecords));
+        .thenApply(r -> succeeded(checkInContext));
     }
     else {
       logger.error(FAILED_TO_PUBLISH_LOG_TEMPLATE, ITEM_CHECKED_IN.name());
     }
 
-    return completedFuture(succeeded(checkInProcessRecords));
+    return completedFuture(succeeded(checkInContext));
   }
 
   public CompletableFuture<Result<Loan>> publishDeclaredLostEvent(Loan loan) {

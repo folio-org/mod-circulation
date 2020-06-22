@@ -39,9 +39,7 @@ public class RequestQueueRepository {
       .thenApply(result -> result.map(loanAndRelatedRecords::withRequestQueue));
   }
 
-  public CompletableFuture<Result<RenewalContext>> get(
-    RenewalContext renewalContext) {
-
+  public CompletableFuture<Result<RenewalContext>> get(RenewalContext renewalContext) {
     return get(renewalContext.getLoan().getItemId())
       .thenApply(result -> result.map(renewalContext::withRequestQueue));
   }

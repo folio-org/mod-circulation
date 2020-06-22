@@ -33,10 +33,10 @@ public class OverrideRenewalStrategy implements RenewalStrategy {
   private static final String DUE_DATE = "dueDate";
 
   @Override
-  public CompletableFuture<Result<RenewalContext>> renew(RenewalContext relatedRecords,
+  public CompletableFuture<Result<RenewalContext>> renew(RenewalContext context,
     Clients clients) {
 
-    final JsonObject requestBody = relatedRecords.getRenewalRequest();
+    final JsonObject requestBody = context.getRenewalRequest();
     final String comment = getProperty(requestBody, COMMENT);
     if (StringUtils.isBlank(comment)) {
       return completedFuture(failedValidation("Override renewal request must have a comment",
@@ -44,15 +44,15 @@ public class OverrideRenewalStrategy implements RenewalStrategy {
     }
     final DateTime overrideDueDate = getDateTimeProperty(requestBody, DUE_DATE);
 
-    Loan loan = relatedRecords.getLoan();
+    Loan loan = context.getLoan();
     boolean hasRecallRequest =
-    relatedRecords.getRequestQueue().getRequests().stream().findFirst()
+    context.getRequestQueue().getRequests().stream().findFirst()
       .map(r -> r.getRequestType() == RequestType.RECALL)
       .orElse(false);
 
     return completedFuture(overrideRenewal(loan, DateTime.now(DateTimeZone.UTC),
       overrideDueDate, comment, hasRecallRequest))
-      .thenApply(mapResult(relatedRecords::withLoan));
+      .thenApply(mapResult(context::withLoan));
   }
 
   private Result<Loan> overrideRenewal(Loan loan, DateTime systemDate,
