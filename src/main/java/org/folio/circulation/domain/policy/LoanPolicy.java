@@ -57,17 +57,8 @@ public class LoanPolicy extends Policy {
   private LoanPolicy(JsonObject representation) {
     this(representation,
       new NoFixedDueDateSchedules(),
-      new NoFixedDueDateSchedules());
-  }
-
-  LoanPolicy(
-    JsonObject representation,
-    FixedDueDateSchedules fixedDueDateSchedules,
-    FixedDueDateSchedules alternateRenewalFixedDueDateSchedules) {
-    super(getProperty(representation, "id"), getProperty(representation, "name"));
-    this.representation = representation;
-    this.fixedDueDateSchedules = fixedDueDateSchedules;
-    this.alternateRenewalFixedDueDateSchedules = alternateRenewalFixedDueDateSchedules;
+      new NoFixedDueDateSchedules(),
+      new AppliedRuleConditions(false, false, false));
   }
 
   LoanPolicy(
