@@ -324,8 +324,8 @@ public class LoanPolicy extends Policy {
   }
 
   LoanPolicy withAlternateRenewalSchedules(FixedDueDateSchedules renewalSchedules) {
-    return new LoanPolicy(
-      representation, fixedDueDateSchedules, renewalSchedules, ruleConditionsEntity);
+    return new LoanPolicy(representation, fixedDueDateSchedules,
+      renewalSchedules, ruleConditionsEntity);
   }
 
   //TODO: potentially remove this, when builder can create class or JSON representation
