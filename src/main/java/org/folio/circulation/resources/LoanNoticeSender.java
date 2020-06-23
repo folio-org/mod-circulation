@@ -13,6 +13,7 @@ import org.folio.circulation.domain.notice.PatronNoticeEvent;
 import org.folio.circulation.domain.notice.PatronNoticeEventBuilder;
 import org.folio.circulation.domain.notice.PatronNoticeService;
 import org.folio.circulation.domain.policy.LoanPolicyRepository;
+import org.folio.circulation.resources.context.RenewalContext;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.Result;
 
@@ -34,8 +35,8 @@ public class LoanNoticeSender {
     this.loanPolicyRepository = loanPolicyRepository;
   }
 
-  public Result<LoanAndRelatedRecords> sendRenewalPatronNotice(LoanAndRelatedRecords records) {
-    sendLoanNotice(records, NoticeEventType.RENEWED);
+  public Result<RenewalContext> sendRenewalPatronNotice(RenewalContext records) {
+    sendLoanNotice(records.getLoan(), NoticeEventType.RENEWED);
     return succeeded(records);
   }
 

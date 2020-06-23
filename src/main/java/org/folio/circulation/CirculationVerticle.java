@@ -22,12 +22,8 @@ import org.folio.circulation.resources.LostItemCirculationRulesEngineResource;
 import org.folio.circulation.resources.NoticeCirculationRulesEngineResource;
 import org.folio.circulation.resources.OverdueFineCirculationRulesEngineResource;
 import org.folio.circulation.resources.OverrideCheckOutStrategy;
-import org.folio.circulation.resources.OverrideRenewalStrategy;
 import org.folio.circulation.resources.PickSlipsResource;
 import org.folio.circulation.resources.RegularCheckOutStrategy;
-import org.folio.circulation.resources.RegularRenewalStrategy;
-import org.folio.circulation.resources.RenewByBarcodeResource;
-import org.folio.circulation.resources.RenewByIdResource;
 import org.folio.circulation.resources.RequestByInstanceIdResource;
 import org.folio.circulation.resources.RequestCirculationRulesEngineResource;
 import org.folio.circulation.resources.RequestCollectionResource;
@@ -37,6 +33,9 @@ import org.folio.circulation.resources.RequestScheduledNoticeProcessingResource;
 import org.folio.circulation.resources.ScheduledAnonymizationProcessingResource;
 import org.folio.circulation.resources.TenantActivationResource;
 import org.folio.circulation.resources.handlers.LoanRelatedFeeFineClosedHandlerResource;
+import org.folio.circulation.resources.renewal.OverrideRenewalByBarcodeResource;
+import org.folio.circulation.resources.renewal.RenewByBarcodeResource;
+import org.folio.circulation.resources.renewal.RenewByIdResource;
 import org.folio.circulation.support.logging.Logging;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -74,12 +73,9 @@ public class CirculationVerticle extends AbstractVerticle {
       client, new OverrideCheckOutStrategy()).register(router);
     new CheckInByBarcodeResource(client).register(router);
 
-    new RenewByBarcodeResource("/circulation/renew-by-barcode",
-      new RegularRenewalStrategy(), client).register(router);
-    new RenewByIdResource("/circulation/renew-by-id",
-      new RegularRenewalStrategy(), client).register(router);
-    new RenewByBarcodeResource("/circulation/override-renewal-by-barcode",
-      new OverrideRenewalStrategy(), client).register(router);
+    new RenewByBarcodeResource(client).register(router);
+    new RenewByIdResource(client).register(router);
+    new OverrideRenewalByBarcodeResource(client).register(router);
 
     new LoanCollectionResource(client).register(router);
     new RequestCollectionResource(client).register(router);

@@ -576,4 +576,10 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     closeLoan(CLOSED_LOAN);
     changeItemStatusForItemAndLoan(ItemStatus.LOST_AND_PAID);
   }
+
+  public Loan copy() {
+    final JsonObject representationCopy = representation.copy();
+    return new Loan(representationCopy, item, user, proxy, checkinServicePoint,
+      checkoutServicePoint, originalDueDate, policies, accounts);
+  }
 }

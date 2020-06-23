@@ -11,7 +11,7 @@ import java.util.concurrent.CompletableFuture;
 
 import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.domain.AddressTypeRepository;
-import org.folio.circulation.domain.CheckInProcessRecords;
+import org.folio.circulation.domain.CheckInContext;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanCheckInService;
@@ -119,50 +119,50 @@ class CheckInProcessAdapter {
       new LostItemFeeRefundService(clients));
   }
 
-  CompletableFuture<Result<Item>> findItem(CheckInProcessRecords records) {
-    return itemFinder.findItemByBarcode(records.getCheckInRequestBarcode());
+  CompletableFuture<Result<Item>> findItem(CheckInContext context) {
+    return itemFinder.findItemByBarcode(context.getCheckInRequestBarcode());
   }
 
   CompletableFuture<Result<Loan>> findSingleOpenLoan(
-    CheckInProcessRecords records) {
+    CheckInContext context) {
 
-    return singleOpenLoanFinder.findSingleOpenLoan(records.getItem());
+    return singleOpenLoanFinder.findSingleOpenLoan(context.getItem());
   }
 
-  CompletableFuture<Result<Loan>> checkInLoan(CheckInProcessRecords records) {
+  CompletableFuture<Result<Loan>> checkInLoan(CheckInContext context) {
     return completedFuture(
-      loanCheckInService.checkIn(records.getLoan(), records.getCheckInProcessedDateTime(),
-        records.getCheckInRequest()));
+      loanCheckInService.checkIn(context.getLoan(), context.getCheckInProcessedDateTime(),
+        context.getCheckInRequest()));
   }
 
   CompletableFuture<Result<RequestQueue>> getRequestQueue(
-    CheckInProcessRecords records) {
+    CheckInContext context) {
 
-    return requestQueueRepository.get(records.getItem().getItemId());
+    return requestQueueRepository.get(context.getItem().getItemId());
   }
 
-  CompletableFuture<Result<Item>> updateItem(CheckInProcessRecords records) {
-    return updateItem.onCheckIn(records.getItem(), records.getRequestQueue(),
-      records.getCheckInServicePointId(), records.getLoggedInUserId(),
-     records.getCheckInProcessedDateTime());
+  CompletableFuture<Result<Item>> updateItem(CheckInContext context) {
+    return updateItem.onCheckIn(context.getItem(), context.getRequestQueue(),
+      context.getCheckInServicePointId(), context.getLoggedInUserId(),
+     context.getCheckInProcessedDateTime());
   }
 
   CompletableFuture<Result<RequestQueue>> updateRequestQueue(
-    CheckInProcessRecords records) {
+    CheckInContext context) {
 
-    return requestQueueUpdate.onCheckIn(records.getRequestQueue(),
-      records.getCheckInServicePointId().toString());
+    return requestQueueUpdate.onCheckIn(context.getRequestQueue(),
+      context.getCheckInServicePointId().toString());
   }
 
-  CompletableFuture<Result<Loan>> updateLoan(CheckInProcessRecords records) {
+  CompletableFuture<Result<Loan>> updateLoan(CheckInContext context) {
     // Loan must be updated after item
     // due to snapshot of item status stored with the loan
     // as this is how the loan action history is populated
-    return loanRepository.updateLoan(records.getLoan());
+    return loanRepository.updateLoan(context.getLoan());
   }
 
-  CompletableFuture<Result<Item>> getDestinationServicePoint(CheckInProcessRecords records) {
-    final Item item = records.getItem();
+  CompletableFuture<Result<Item>> getDestinationServicePoint(CheckInContext context) {
+    final Item item = context.getItem();
 
     if (item.getInTransitDestinationServicePointId() != null && item.getInTransitDestinationServicePoint() == null) {
       final UUID inTransitDestinationServicePointId = UUID.fromString(item.getInTransitDestinationServicePointId());
@@ -176,12 +176,12 @@ class CheckInProcessAdapter {
     return completedFuture(succeeded(item));
   }
 
-  CompletableFuture<Result<ServicePoint>> getCheckInServicePoint(CheckInProcessRecords records) {
-    return servicePointRepository.getServicePointById(records.getCheckInServicePointId());
+  CompletableFuture<Result<ServicePoint>> getCheckInServicePoint(CheckInContext context) {
+    return servicePointRepository.getServicePointById(context.getCheckInServicePointId());
   }
 
-  CompletableFuture<Result<Request>> getPickupServicePoint(CheckInProcessRecords records) {
-    Request firstRequest = records.getHighestPriorityFulfillableRequest();
+  CompletableFuture<Result<Request>> getPickupServicePoint(CheckInContext context) {
+    Request firstRequest = context.getHighestPriorityFulfillableRequest();
     if (firstRequest == null) {
       return completedFuture(succeeded(null));
     }
@@ -191,8 +191,8 @@ class CheckInProcessAdapter {
       : completedFuture(succeeded(firstRequest));
   }
 
-  CompletableFuture<Result<Request>> getRequester(CheckInProcessRecords records) {
-    Request firstRequest = records.getHighestPriorityFulfillableRequest();
+  CompletableFuture<Result<Request>> getRequester(CheckInContext context) {
+    Request firstRequest = context.getHighestPriorityFulfillableRequest();
     if (firstRequest == null) {
       return completedFuture(succeeded(null));
     }
@@ -200,8 +200,8 @@ class CheckInProcessAdapter {
       .thenApply(r -> r.map(firstRequest::withRequester));
   }
 
-  CompletableFuture<Result<Request>> getAddressType(CheckInProcessRecords records) {
-    Request firstRequest = records.getHighestPriorityFulfillableRequest();
+  CompletableFuture<Result<Request>> getAddressType(CheckInContext context) {
+    Request firstRequest = context.getHighestPriorityFulfillableRequest();
     if (firstRequest == null) {
       return completedFuture(succeeded(null));
     }
@@ -209,42 +209,42 @@ class CheckInProcessAdapter {
       .thenApply(r -> r.map(firstRequest::withAddressType));
   }
 
-  Result<CheckInProcessRecords> sendCheckInPatronNotice(CheckInProcessRecords records) {
-    if (records.getLoan() == null) {
-      return succeeded(records);
+  Result<CheckInContext> sendCheckInPatronNotice(CheckInContext context) {
+    if (context.getLoan() == null) {
+      return succeeded(context);
     }
     PatronNoticeEvent noticeEvent = new PatronNoticeEventBuilder()
-      .withItem(records.getItem())
-      .withUser(records.getLoan().getUser())
+      .withItem(context.getItem())
+      .withUser(context.getLoan().getUser())
       .withEventType(NoticeEventType.CHECK_IN)
-      .withNoticeContext(createLoanNoticeContext(records.getLoan()))
+      .withNoticeContext(createLoanNoticeContext(context.getLoan()))
       .build();
     patronNoticeService.acceptNoticeEvent(noticeEvent);
-    return succeeded(records);
+    return succeeded(context);
   }
 
-  Result<CheckInProcessRecords> sendItemStatusPatronNotice(CheckInProcessRecords records) {
-    RequestQueue requestQueue = records.getRequestQueue();
+  Result<CheckInContext> sendItemStatusPatronNotice(CheckInContext context) {
+    RequestQueue requestQueue = context.getRequestQueue();
     if (Objects.isNull(requestQueue)) {
-      return succeeded(records);
+      return succeeded(context);
     }
 
     requestQueue.getRequests().stream()
       .findFirst()
-      .ifPresent(firstRequest -> sendAvailableNotice(records, firstRequest));
-    return succeeded(records);
+      .ifPresent(firstRequest -> sendAvailableNotice(context, firstRequest));
+    return succeeded(context);
   }
 
-  private void sendAvailableNotice(CheckInProcessRecords records, Request firstRequest) {
+  private void sendAvailableNotice(CheckInContext context, Request firstRequest) {
     servicePointRepository.getServicePointForRequest(firstRequest)
       .thenApply(r -> r.map(firstRequest::withPickupServicePoint))
       .thenCombine(userRepository.getUserByBarcode(firstRequest.getRequesterBarcode()),
         (requestResult, userResult) -> Result.combine(requestResult, userResult,
-          (request, user) -> sendAvailableNotice(request, user, records)));
+          (request, user) -> sendAvailableNotice(request, user, context)));
   }
 
-  private Result<CheckInProcessRecords> sendAvailableNotice(Request request, User user, CheckInProcessRecords records) {
-    Item item = records.getItem();
+  private Result<CheckInContext> sendAvailableNotice(Request request, User user, CheckInContext context) {
+    Item item = context.getItem();
     if (item.isAwaitingPickup() && item.hasChanged()) {
       PatronNoticeEvent noticeEvent = new PatronNoticeEventBuilder()
         .withItem(item)
@@ -254,31 +254,31 @@ class CheckInProcessAdapter {
         .build();
       patronNoticeService.acceptNoticeEvent(noticeEvent);
     }
-    return succeeded(records);
+    return succeeded(context);
   }
 
-  CheckInProcessRecords setInHouseUse(CheckInProcessRecords checkInProcessRecords) {
-    return checkInProcessRecords
+  CheckInContext setInHouseUse(CheckInContext checkInContext) {
+    return checkInContext
       .withInHouseUse(loanCheckInService.isInHouseUse(
-        checkInProcessRecords.getItem(),
-        checkInProcessRecords.getRequestQueue(),
-        checkInProcessRecords.getCheckInRequest()));
+        checkInContext.getItem(),
+        checkInContext.getRequestQueue(),
+        checkInContext.getCheckInRequest()));
   }
 
-  public CompletableFuture<Result<CheckInProcessRecords>> logCheckInOperation(
-    CheckInProcessRecords checkInProcessRecords) {
+  public CompletableFuture<Result<CheckInContext>> logCheckInOperation(
+    CheckInContext checkInContext) {
 
-    return logCheckInService.logCheckInOperation(checkInProcessRecords);
+    return logCheckInService.logCheckInOperation(checkInContext);
   }
 
-  CompletableFuture<Result<CheckInProcessRecords>> createOverdueFineIfNecessary(
-    CheckInProcessRecords records, WebContext context) {
+  CompletableFuture<Result<CheckInContext>> createOverdueFineIfNecessary(
+    CheckInContext records, WebContext context) {
 
     return overdueFineCalculatorService.createOverdueFineIfNecessary(records, context.getUserId())
       .thenApply(r -> r.next(action -> feeFineScheduledNoticeService.scheduleNotices(records, action)));
   }
 
-  CompletableFuture<Result<CheckInProcessRecords>> refundLostItemFees(CheckInProcessRecords records) {
-    return lostItemFeeRefundService.refundLostItemFees(records);
+  CompletableFuture<Result<CheckInContext>> refundLostItemFees(CheckInContext context) {
+    return lostItemFeeRefundService.refundLostItemFees(context);
   }
 }

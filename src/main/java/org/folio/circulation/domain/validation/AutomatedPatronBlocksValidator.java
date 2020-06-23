@@ -16,6 +16,7 @@ import org.folio.circulation.domain.AutomatedPatronBlocks;
 import org.folio.circulation.domain.AutomatedPatronBlocksRepository;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.domain.RequestAndRelatedRecords;
+import org.folio.circulation.resources.context.RenewalContext;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.ValidationErrorFailure;
 
@@ -38,11 +39,11 @@ public class AutomatedPatronBlocksValidator {
       AutomatedPatronBlock::isBlockBorrowing, loanAndRelatedRecords);
   }
 
-  public CompletableFuture<Result<LoanAndRelatedRecords>>
-  refuseWhenRenewalActionIsBlockedForPatron(LoanAndRelatedRecords loanAndRelatedRecords) {
+  public CompletableFuture<Result<RenewalContext>>
+  refuseWhenRenewalActionIsBlockedForPatron(RenewalContext renewalContext) {
 
-    return refuse(loanAndRelatedRecords.getLoan().getUserId(),
-      AutomatedPatronBlock::isBlockRenewal, loanAndRelatedRecords);
+    return refuse(renewalContext.getLoan().getUserId(),
+      AutomatedPatronBlock::isBlockRenewal, renewalContext);
   }
 
   public CompletableFuture<Result<RequestAndRelatedRecords>>

@@ -1,4 +1,4 @@
-package org.folio.circulation.resources;
+package org.folio.circulation.resources.renewal;
 
 import io.vertx.core.json.JsonObject;
 import org.folio.circulation.support.Result;

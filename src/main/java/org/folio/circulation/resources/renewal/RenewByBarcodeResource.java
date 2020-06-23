@@ -1,6 +1,6 @@
-package org.folio.circulation.resources;
+package org.folio.circulation.resources.renewal;
 
-import static org.folio.circulation.resources.RenewByBarcodeRequest.renewalRequestFrom;
+import static org.folio.circulation.resources.renewal.RenewByBarcodeRequest.renewalRequestFrom;
 
 import java.util.concurrent.CompletableFuture;
 
@@ -15,8 +15,8 @@ import io.vertx.core.http.HttpClient;
 import io.vertx.core.json.JsonObject;
 
 public class RenewByBarcodeResource extends RenewalResource {
-  public RenewByBarcodeResource(String rootPath, RenewalStrategy renewalStrategy, HttpClient client) {
-    super(rootPath, renewalStrategy, client);
+  public RenewByBarcodeResource(HttpClient client) {
+    super("/circulation/renew-by-barcode", new RegularRenewalStrategy(), client);
   }
 
   @Override

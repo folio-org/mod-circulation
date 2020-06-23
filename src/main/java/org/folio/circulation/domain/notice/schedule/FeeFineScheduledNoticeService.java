@@ -11,15 +11,15 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
-import org.folio.circulation.domain.CheckInProcessRecords;
+import org.folio.circulation.domain.CheckInContext;
 import org.folio.circulation.domain.FeeFineAction;
 import org.folio.circulation.domain.Loan;
-import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.domain.notice.NoticeConfiguration;
 import org.folio.circulation.domain.notice.NoticeEventType;
 import org.folio.circulation.domain.notice.NoticeTiming;
 import org.folio.circulation.domain.notice.PatronNoticePolicy;
 import org.folio.circulation.domain.policy.PatronNoticePolicyRepository;
+import org.folio.circulation.resources.context.RenewalContext;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.Result;
 import org.joda.time.DateTime;
@@ -41,20 +41,20 @@ public class FeeFineScheduledNoticeService {
     this.noticePolicyRepository = noticePolicyRepository;
   }
 
-  public Result<CheckInProcessRecords> scheduleNotices(
-    CheckInProcessRecords records, FeeFineAction action) {
+  public Result<CheckInContext> scheduleNotices(
+    CheckInContext context, FeeFineAction action) {
 
-    scheduleNotices(records.getLoan(), action, OVERDUE_FINE_RETURNED);
+    scheduleNotices(context.getLoan(), action, OVERDUE_FINE_RETURNED);
 
-    return succeeded(records);
+    return succeeded(context);
   }
 
-  public Result<LoanAndRelatedRecords> scheduleNotices(
-    LoanAndRelatedRecords records, FeeFineAction action) {
+  public Result<RenewalContext> scheduleNotices(
+    RenewalContext context, FeeFineAction action) {
 
-    scheduleNotices(records.getLoan(), action, OVERDUE_FINE_RENEWED);
+    scheduleNotices(context.getLoan(), action, OVERDUE_FINE_RENEWED);
 
-    return succeeded(records);
+    return succeeded(context);
   }
 
   private CompletableFuture<Result<List<ScheduledNotice>>> scheduleNotices(
