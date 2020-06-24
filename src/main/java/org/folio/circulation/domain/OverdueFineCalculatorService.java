@@ -3,8 +3,10 @@ package org.folio.circulation.domain;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.apache.commons.lang3.BooleanUtils.isFalse;
 import static org.folio.circulation.domain.OverdueFineCalculatorService.Scenario.CHECKIN;
+import static org.folio.circulation.domain.OverdueFineCalculatorService.Scenario.RENEWAL;
 import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.ResultBinding.mapResult;
+import static org.folio.circulation.support.ResultBinding.toFutureResult;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -64,8 +66,8 @@ public class OverdueFineCalculatorService {
     final Loan loanBeforeRenewal = context.getLoanBeforeRenewal();
 
     return shouldChargeOverdueFineOnRenewal(context)
-      .thenCompose(r -> r.afterWhen(ResultBinding.toFutureResult(),
-        b -> createOverdueFineIfNecessary(loanBeforeRenewal, Scenario.RENEWAL, loggedInUserId),
+      .thenCompose(r -> r.afterWhen(toFutureResult(),
+        b -> createOverdueFineIfNecessary(loanBeforeRenewal, RENEWAL, loggedInUserId),
         b -> completedFuture(succeeded(null))))
       .thenApply(mapResult(context::withOverdueFeeFineAction));
   }
@@ -91,7 +93,7 @@ public class OverdueFineCalculatorService {
     CheckInContext context, String userId) {
 
     return shouldChargeOverdueFineOnCheckIn(context)
-      .thenCompose(r -> r.afterWhen(ResultBinding.toFutureResult(),
+      .thenCompose(r -> r.afterWhen(toFutureResult(),
           b -> createOverdueFineIfNecessary(context.getLoan(), CHECKIN, userId),
           b -> completedFuture(succeeded(null))));
   }

@@ -79,7 +79,7 @@ public class RestAssuredClient {
       .config(config)
       .log().all()
       .spec(standardHeaders(defaultHeaders.withRequestId(requestId)))
-      .queryParams(params(parameters))
+      .queryParams(toMap(parameters))
       .spec(timeoutConfig())
       .when().get(url)
       .then()
@@ -93,7 +93,7 @@ public class RestAssuredClient {
       .config(config)
       .log().all()
       .spec(standardHeaders(defaultHeaders.withRequestId("get-many-" + collectionName)))
-      .queryParams(params(asList(parameters)))
+      .queryParams(toMap(asList(parameters)))
       .spec(timeoutConfig())
       .when().get(url)
       .then()
@@ -218,7 +218,7 @@ public class RestAssuredClient {
       .extract().response());
   }
 
-  private Map<String, String> params(Iterable<QueryStringParameter> params) {
+  private Map<String, String> toMap(Iterable<QueryStringParameter> params) {
     final Map<String, String> paramsMap = new HashMap<>();
     params.forEach(param -> param.collectInto(paramsMap));
     return paramsMap;
