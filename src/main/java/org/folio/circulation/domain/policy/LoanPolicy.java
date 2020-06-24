@@ -55,9 +55,7 @@ public class LoanPolicy extends Policy {
   private AppliedRuleConditions ruleConditionsEntity;
 
   private LoanPolicy(JsonObject representation) {
-    this(representation,
-      new NoFixedDueDateSchedules(),
-      new NoFixedDueDateSchedules(),
+    this(representation, new NoFixedDueDateSchedules(), new NoFixedDueDateSchedules(),
       new AppliedRuleConditions(false, false, false));
   }
 
