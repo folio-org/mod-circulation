@@ -51,32 +51,32 @@ public class LostItemFeeRefundService {
   public CompletableFuture<Result<CheckInContext>> refundLostItemFees(
     CheckInContext context) {
 
-    final ReferenceDataContext referenceDataContext = new ReferenceDataContext(
+    final LostItemFeeRefundContext refundFeeContext = new LostItemFeeRefundContext(
       context.getItemStatusBeforeCheckIn(), context.getItem().getItemId(),
       context.getLoan(), context.getLoggedInUserId(),
       context.getCheckInServicePointId().toString());
 
-    return refundLostItemFees(referenceDataContext)
+    return refundLostItemFees(refundFeeContext)
       .thenApply(r -> r.map(context::withLostItemFeesRefundedOrCancelled));
   }
 
   public CompletableFuture<Result<RenewalContext>> refundLostItemFees(
     RenewalContext renewalContext, String currentServicePointId) {
 
-    final ReferenceDataContext referenceDataContext = new ReferenceDataContext(
+    final LostItemFeeRefundContext refundFeeContext = new LostItemFeeRefundContext(
       renewalContext.getItemStatusBeforeRenewal(), renewalContext.getLoan().getItemId(),
       renewalContext.getLoan(), renewalContext.getLoggedInUserId(), currentServicePointId);
 
-    return refundLostItemFees(referenceDataContext)
+    return refundLostItemFees(refundFeeContext)
       .thenApply(r -> r.map(renewalContext::withLostItemFeesRefundedOrCancelled));
   }
 
-  private CompletableFuture<Result<Boolean>> refundLostItemFees(ReferenceDataContext referenceData) {
-    if (!isItemLost(referenceData)) {
+  private CompletableFuture<Result<Boolean>> refundLostItemFees(LostItemFeeRefundContext refundFeeContext) {
+    if (!isItemLost(refundFeeContext)) {
       return completedFuture(succeeded(false));
     }
 
-    return lookupLoan(succeeded(referenceData))
+    return lookupLoan(succeeded(refundFeeContext))
       .thenCompose(this::fetchLostItemPolicy)
       .thenCompose(contextResult -> contextResult.after(context -> {
         final DateTime declaredLostDate = context.loan.getDeclareLostDateTime();
@@ -94,8 +94,8 @@ public class LostItemFeeRefundService {
       }));
   }
 
-  private CompletableFuture<Result<ReferenceDataContext>> lookupLoan(
-    Result<ReferenceDataContext> contextResult) {
+  private CompletableFuture<Result<LostItemFeeRefundContext>> lookupLoan(
+    Result<LostItemFeeRefundContext> contextResult) {
 
     return contextResult.after(context -> {
       if (isOpenLoanAlreadyFound(context)) {
@@ -121,8 +121,8 @@ public class LostItemFeeRefundService {
     });
   }
 
-  private CompletableFuture<Result<ReferenceDataContext>> fetchAccountsAndActionsForLoan(
-    Result<ReferenceDataContext> contextResult) {
+  private CompletableFuture<Result<LostItemFeeRefundContext>> fetchAccountsAndActionsForLoan(
+    Result<LostItemFeeRefundContext> contextResult) {
 
     return contextResult.after(context -> {
       final Result<CqlQuery> fetchQuery = exactMatch("loanId", context.loan.getId())
@@ -133,34 +133,34 @@ public class LostItemFeeRefundService {
     });
   }
 
-  private CompletableFuture<Result<ReferenceDataContext>> fetchLostItemPolicy(
-    Result<ReferenceDataContext> contextResult) {
+  private CompletableFuture<Result<LostItemFeeRefundContext>> fetchLostItemPolicy(
+    Result<LostItemFeeRefundContext> contextResult) {
 
     return contextResult.combineAfter(
       context -> lostItemPolicyRepository.getLostItemPolicyById(context.loan.getLostItemPolicyId()),
-      ReferenceDataContext::withLostItemPolicy);
+      LostItemFeeRefundContext::withLostItemPolicy);
   }
 
-  private boolean isItemLost(ReferenceDataContext context) {
+  private boolean isItemLost(LostItemFeeRefundContext context) {
     return context.itemStatus == DECLARED_LOST || context.itemStatus == LOST_AND_PAID;
   }
 
-  private boolean isOpenLoanAlreadyFound(ReferenceDataContext context) {
+  private boolean isOpenLoanAlreadyFound(LostItemFeeRefundContext context) {
     return context.loan != null;
   }
 
-  private Result<ReferenceDataContext> lastLoanForLostItemIsNotDeclaredLost(Loan loan) {
+  private Result<LostItemFeeRefundContext> lastLoanForLostItemIsNotDeclaredLost(Loan loan) {
     return failed(singleValidationError(
       "Last loan for lost item is not declared lost", "loanId", loan.getId()));
   }
 
-  private Result<ReferenceDataContext> noLoanFoundForLostItem(String itemId) {
+  private Result<LostItemFeeRefundContext> noLoanFoundForLostItem(String itemId) {
     return failed(singleValidationError(
       "Item is lost however there is no declared lost loan found",
       "itemId", itemId));
   }
 
-  private static final class ReferenceDataContext {
+  private static final class LostItemFeeRefundContext {
     private final ItemStatus itemStatus;
     private final String itemId;
     private final String staffUserId;
@@ -169,8 +169,8 @@ public class LostItemFeeRefundService {
     private Collection<Account> accounts;
     private LostItemPolicy lostItemPolicy;
 
-    private ReferenceDataContext(ItemStatus itemStatus, String itemId, Loan loan,
-      String staffUserId, String servicePointId) {
+    private LostItemFeeRefundContext(ItemStatus itemStatus, String itemId, Loan loan,
+                                     String staffUserId, String servicePointId) {
 
       this.itemStatus = itemStatus;
       this.itemId = itemId;
@@ -179,18 +179,18 @@ public class LostItemFeeRefundService {
       this.servicePointId = servicePointId;
     }
 
-    private ReferenceDataContext withAccounts(Collection<Account> accounts) {
+    private LostItemFeeRefundContext withAccounts(Collection<Account> accounts) {
       this.accounts = accounts;
       return this;
     }
 
-    private ReferenceDataContext withLostItemPolicy(LostItemPolicy lostItemPolicy) {
+    private LostItemFeeRefundContext withLostItemPolicy(LostItemPolicy lostItemPolicy) {
       this.lostItemPolicy = lostItemPolicy;
       return this;
     }
 
-    private ReferenceDataContext withLoan(Loan loan) {
-      return new ReferenceDataContext(itemStatus, itemId, loan, staffUserId, servicePointId)
+    private LostItemFeeRefundContext withLoan(Loan loan) {
+      return new LostItemFeeRefundContext(itemStatus, itemId, loan, staffUserId, servicePointId)
         .withAccounts(accounts)
         .withLostItemPolicy(lostItemPolicy);
     }
