@@ -9,9 +9,6 @@ import org.folio.circulation.resources.context.RenewalContext;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.Result;
 
-/**
- * Fee processing strategy that used to process fees/fines for regular renew.
- */
 public class RegularRenewalFeeProcessingStrategy implements RenewalFeeProcessingStrategy {
   @Override
   public CompletableFuture<Result<RenewalContext>> processFeesFines(

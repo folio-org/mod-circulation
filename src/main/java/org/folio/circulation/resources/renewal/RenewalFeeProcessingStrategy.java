@@ -7,7 +7,6 @@ import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.Result;
 
 public interface RenewalFeeProcessingStrategy {
-
   CompletableFuture<Result<RenewalContext>> processFeesFines(
     RenewalContext renewalContext, Clients clients);
 }
