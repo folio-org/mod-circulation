@@ -49,10 +49,8 @@ public class FeeFineScheduledNoticeService {
     return succeeded(context);
   }
 
-  public Result<RenewalContext> scheduleNotices(
-    RenewalContext context, FeeFineAction action) {
-
-    scheduleNotices(context.getLoan(), action, OVERDUE_FINE_RENEWED);
+  public Result<RenewalContext> scheduleOverdueFineNotices(RenewalContext context) {
+    scheduleNotices(context.getLoan(), context.getOverdueFeeFineAction(), OVERDUE_FINE_RENEWED);
 
     return succeeded(context);
   }

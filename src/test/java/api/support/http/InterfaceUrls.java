@@ -40,7 +40,7 @@ public class InterfaceUrls {
     return APITestContext.viaOkapiModuleUrl("/contributor-name-types" + subPath);
   }
 
-  static URL itemsStorageUrl(String subPath) {
+  public static URL itemsStorageUrl(String subPath) {
     return APITestContext.viaOkapiModuleUrl("/item-storage/items" + subPath);
   }
 
@@ -92,7 +92,7 @@ public class InterfaceUrls {
     return APITestContext.viaOkapiModuleUrl("/circulation-rules-storage" + subPath);
   }
 
-  static URL usersUrl(String subPath) {
+  public static URL usersUrl(String subPath) {
     return APITestContext.viaOkapiModuleUrl("/users" + subPath);
   }
 
