@@ -20,7 +20,7 @@
       "description": "Comment to override action stored in loan history",
       "type": "string"
     },
-    "overrideServicePointId": {
+    "servicePointId": {
       "description": "Service point id where override happens",
       "type": "string",
       "$ref": "raml-util/schemas/uuid.schema"

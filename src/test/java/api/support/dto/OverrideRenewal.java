@@ -12,5 +12,5 @@ public class OverrideRenewal {
   private final String userBarcode;
   private final String comment;
   private Date dueDate;
-  private String overrideServicePointId;
+  private String servicePointId;
 }

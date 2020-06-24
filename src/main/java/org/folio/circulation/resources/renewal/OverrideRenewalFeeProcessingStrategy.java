@@ -20,11 +20,11 @@ public class OverrideRenewalFeeProcessingStrategy implements RenewalFeeProcessin
 
     final LostItemFeeRefundService lostFeeRefundService = new LostItemFeeRefundService(clients);
 
-    return lostFeeRefundService.refundLostItemFees(renewalContext, overrideServicePointId(renewalContext))
+    return lostFeeRefundService.refundLostItemFees(renewalContext, servicePointId(renewalContext))
       .thenCompose(r -> r.after(context -> regularFeeProcessing.processFeesFines(context, clients)));
   }
 
-  private String overrideServicePointId(RenewalContext renewalContext) {
-    return renewalContext.getRenewalRequest().getString("overrideServicePointId");
+  private String servicePointId(RenewalContext renewalContext) {
+    return renewalContext.getRenewalRequest().getString("servicePointId");
   }
 }

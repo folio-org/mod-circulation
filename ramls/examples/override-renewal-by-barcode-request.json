@@ -3,5 +3,5 @@
   "itemBarcode": "2887532577331",
   "comment": "Renewal override",
   "dueDate": "2018-12-21T13:30:00Z",
-  "overrideServicePointId": "f0e919e7-1f91-4d9f-920f-9ea2d9c7451c"
+  "servicePointId": "f0e919e7-1f91-4d9f-920f-9ea2d9c7451c"
 }

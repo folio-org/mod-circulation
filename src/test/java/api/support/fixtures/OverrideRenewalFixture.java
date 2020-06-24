@@ -35,7 +35,7 @@ public final class OverrideRenewalFixture {
       .itemBarcode(item.getBarcode())
       .userBarcode(user.getBarcode())
       .comment("Override renewal")
-      .overrideServicePointId(servicePointId.toString())
+      .servicePointId(servicePointId.toString())
       .build());
   }
 }
