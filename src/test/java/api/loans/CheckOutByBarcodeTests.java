@@ -1161,8 +1161,9 @@ public class CheckOutByBarcodeTests extends APITests {
     assertThat(firstBookTypeItem, hasItemStatus(CHECKED_OUT));
 
     Response response = loansFixture.attemptCheckOutByBarcode(secondBookTypeItem, steve);
-    assertThat(response.getJson(), hasErrorWith(allOf(
-      hasMessage("Patron has reached maximum limit of 1 items for material type"))));
+    assertThat(response.getJson(), hasErrorWith(hasMessage(
+      "Patron has reached maximum limit of 1 items for material type")));
+
     secondBookTypeItem = itemsClient.get(secondBookTypeItem);
     assertThat(secondBookTypeItem, hasItemStatus(AVAILABLE));
 
