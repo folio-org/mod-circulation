@@ -14,6 +14,6 @@ import io.vertx.core.json.JsonObject;
 public final class JsonObjectJacksonSerializer extends JsonSerializer<JsonObject> {
   @Override
   public void serialize(JsonObject value, JsonGenerator gen, SerializerProvider serializers) throws IOException {
-    gen.writeRaw(value.toString());
+    gen.writeRaw(value.encode());
   }
 }
