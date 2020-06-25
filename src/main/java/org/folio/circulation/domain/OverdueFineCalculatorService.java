@@ -3,8 +3,10 @@ package org.folio.circulation.domain;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.apache.commons.lang3.BooleanUtils.isFalse;
 import static org.folio.circulation.domain.OverdueFineCalculatorService.Scenario.CHECKIN;
+import static org.folio.circulation.domain.OverdueFineCalculatorService.Scenario.RENEWAL;
 import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.ResultBinding.mapResult;
+import static org.folio.circulation.support.ResultBinding.toFutureResult;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -57,22 +59,41 @@ public class OverdueFineCalculatorService {
     );
   }
 
-  public CompletableFuture<Result<FeeFineAction>> createOverdueFineIfNecessary(
+  public CompletableFuture<Result<RenewalContext>> createOverdueFineIfNecessary(
     RenewalContext context) {
 
-    Loan loan = context.getLoanBeforeRenewal();
+    final String loggedInUserId = context.getLoggedInUserId();
+    final Loan loanBeforeRenewal = context.getLoanBeforeRenewal();
+
+    return shouldChargeOverdueFineOnRenewal(context)
+      .thenCompose(r -> r.afterWhen(toFutureResult(),
+        b -> createOverdueFineIfNecessary(loanBeforeRenewal, RENEWAL, loggedInUserId),
+        b -> completedFuture(succeeded(null))))
+      .thenApply(mapResult(context::withOverdueFeeFineAction));
+  }
+
+  private CompletableFuture<Result<Boolean>> shouldChargeOverdueFineOnRenewal(
+    RenewalContext renewalContext) {
+
+    Loan loan = renewalContext.getLoanBeforeRenewal();
     if (loan == null || !loan.isOverdue()) {
       return completedFuture(succeeded(null));
     }
 
-    return createOverdueFineIfNecessary(loan, Scenario.RENEWAL, context.getLoggedInUserId());
+    if (isDeclaredLost(renewalContext.getItemStatusBeforeRenewal())) {
+      return repos.lostItemPolicyRepository.getLostItemPolicyById(loan.getLostItemPolicyId())
+        .thenApply(r -> r.map(policy -> policy.shouldChargeOverdueFee()
+          && renewalContext.isLostItemFeesRefundedOrCancelled()));
+    }
+
+    return completedFuture(succeeded(true));
   }
 
   public CompletableFuture<Result<FeeFineAction>> createOverdueFineIfNecessary(
     CheckInContext context, String userId) {
 
     return shouldChargeOverdueFineOnCheckIn(context)
-      .thenCompose(r -> r.afterWhen(ResultBinding.toFutureResult(),
+      .thenCompose(r -> r.afterWhen(toFutureResult(),
           b -> createOverdueFineIfNecessary(context.getLoan(), CHECKIN, userId),
           b -> completedFuture(succeeded(null))));
   }
@@ -85,7 +106,7 @@ public class OverdueFineCalculatorService {
       return completedFuture(succeeded(false));
     }
 
-    if (context.getItemStatusBeforeCheckIn() == ItemStatus.DECLARED_LOST) {
+    if (isDeclaredLost(context.getItemStatusBeforeCheckIn())) {
       return repos.lostItemPolicyRepository.getLostItemPolicyById(loan.getLostItemPolicyId())
         .thenApply(r -> r.map(policy -> policy.shouldChargeOverdueFee()
           && context.areLostItemFeesRefundedOrCancelled()));
@@ -223,6 +244,10 @@ public class OverdueFineCalculatorService {
       .withCreatedAt(params.feeFineOwner.getOwner())
       .withCreatedBy(params.loggedInUser)
       .build());
+  }
+
+  private boolean isDeclaredLost(ItemStatus itemStatus) {
+    return itemStatus == ItemStatus.DECLARED_LOST;
   }
 
   private static class CalculationParameters {
