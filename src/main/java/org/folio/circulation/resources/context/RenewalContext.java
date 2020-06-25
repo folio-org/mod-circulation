@@ -1,5 +1,6 @@
 package org.folio.circulation.resources.context;
 
+import org.folio.circulation.domain.FeeFineAction;
 import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.RequestQueue;
@@ -21,6 +22,7 @@ public class RenewalContext {
   boolean lostItemFeesRefundedOrCancelled;
   String loggedInUserId;
   JsonObject renewalRequest;
+  FeeFineAction overdueFeeFineAction;
 
   public static RenewalContext create(Loan loan, JsonObject renewalRequest,
     String loggedInUserId) {
@@ -30,6 +32,6 @@ public class RenewalContext {
       ? loan.getItem().getStatus() : null;
 
     return new RenewalContext(loan, null, null, loanBeforeRenewal, itemStatusBeforeRenew,
-      false, loggedInUserId, renewalRequest);
+      false, loggedInUserId, renewalRequest, null);
   }
 }
