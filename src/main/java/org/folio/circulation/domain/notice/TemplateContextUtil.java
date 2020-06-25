@@ -263,8 +263,8 @@ public class TemplateContextUtil {
     write(context, "paymentStatus", account.getPaymentStatus());
     write(context, "amount", account.getAmount().toDouble());
     write(context, "remainingAmount", account.getRemaining().toDouble());
-    write(context, "chargeDate", account.getCreatedAt());
-    write(context, "chargeDateTime", account.getCreatedAt());
+    write(context, "chargeDate", account.getCreationDate());
+    write(context, "chargeDateTime", account.getCreationDate());
 
     return context;
   }

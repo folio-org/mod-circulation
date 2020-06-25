@@ -28,11 +28,11 @@ public class Account {
   private final String status;
   private final String paymentStatus;
   private final Collection<FeeFineAction> feeFineActions;
-  private final DateTime createdAt;
+  private final DateTime creationDate;
 
   public Account(String id, AccountRelatedRecordsInfo relatedRecordsInfo, FeeAmount amount,
     FeeAmount remaining, String status, String paymentStatus, Collection<FeeFineAction> actions,
-    DateTime createdAt) {
+    DateTime creationDate) {
 
     this.id = id;
     this.relatedRecordsInfo = relatedRecordsInfo;
@@ -41,7 +41,7 @@ public class Account {
     this.status = status;
     this.paymentStatus = paymentStatus;
     this.feeFineActions = actions;
-    this.createdAt = createdAt;
+    this.creationDate = creationDate;
   }
 
   public static Account from(JsonObject representation) {
@@ -173,13 +173,13 @@ public class Account {
       .map(FeeFineAction::getDateAction);
   }
 
-  public DateTime getCreatedAt() {
-    return createdAt;
+  public DateTime getCreationDate() {
+    return creationDate;
   }
 
   public Account withFeeFineActions(Collection<FeeFineAction> actions) {
     return new Account(id, relatedRecordsInfo, amount, remaining, status, paymentStatus, actions,
-      createdAt);
+      creationDate);
   }
 
   public boolean isClosed() {
@@ -224,27 +224,27 @@ public class Account {
 
   public Account subtractRemainingAmount(FeeAmount toSubtract) {
     return new Account(this.id, relatedRecordsInfo, amount, remaining.subtract(toSubtract),
-      status, paymentStatus, feeFineActions, createdAt);
+      status, paymentStatus, feeFineActions, creationDate);
   }
 
   public Account addRemainingAmount(FeeAmount toAdd) {
     return new Account(this.id, relatedRecordsInfo, amount, remaining.add(toAdd),
-      status, paymentStatus, feeFineActions, createdAt);
+      status, paymentStatus, feeFineActions, creationDate);
   }
 
   private Account withStatus(AccountStatus status) {
     return new Account(id, relatedRecordsInfo, amount, remaining, status.getValue(),
-      paymentStatus, feeFineActions, createdAt);
+      paymentStatus, feeFineActions, creationDate);
   }
 
   public Account withPaymentStatus(AccountPaymentStatus paymentStatus) {
     return new Account(id, relatedRecordsInfo, amount, remaining, status,
-      paymentStatus.getValue(), feeFineActions, createdAt);
+      paymentStatus.getValue(), feeFineActions, creationDate);
   }
 
   private Account withRemaining(FeeAmount remaining) {
     return new Account(id, relatedRecordsInfo, amount, remaining, status,
-      paymentStatus, feeFineActions, createdAt);
+      paymentStatus, feeFineActions, creationDate);
   }
 
   public Account close(AccountPaymentStatus paymentAction) {
