@@ -57,6 +57,7 @@ public class FeeFineScheduledNoticesTests extends APITests {
   private FeeFineAction action;
   private DateTime actionDateTime;
   private UUID loanId;
+  private UUID itemId;
   private UUID userId;
   private UUID actionId;
   private UUID accountId;
@@ -197,6 +198,48 @@ public class FeeFineScheduledNoticesTests extends APITests {
   }
 
   @Test
+  public void noticeIsDiscardedWhenReferencedLoanDoesNotExist() {
+    generateOverdueFine(createNoticeConfig(UPON_AT, false));
+
+    assertThatNumberOfScheduledNoticesIs(1);
+    assertThatScheduledNoticeExists(UPON_AT, false, actionDateTime);
+
+    loansClient.delete(loanId);
+    scheduledNoticeProcessingClient.runFeeFineNoticesProcessing(rightAfter(actionDateTime));
+
+    assertThatNoNoticesWereSent();
+    assertThatNumberOfScheduledNoticesIs(0);
+  }
+
+  @Test
+  public void noticeIsDiscardedWhenReferencedItemDoesNotExist() {
+    generateOverdueFine(createNoticeConfig(UPON_AT, false));
+
+    assertThatNumberOfScheduledNoticesIs(1);
+    assertThatScheduledNoticeExists(UPON_AT, false, actionDateTime);
+
+    itemsClient.delete(itemId);
+    scheduledNoticeProcessingClient.runFeeFineNoticesProcessing(rightAfter(actionDateTime));
+
+    assertThatNoNoticesWereSent();
+    assertThatNumberOfScheduledNoticesIs(0);
+  }
+
+  @Test
+  public void noticeIsDiscardedWhenReferencedUserDoesNotExist() {
+    generateOverdueFine(createNoticeConfig(UPON_AT, false));
+
+    assertThatNumberOfScheduledNoticesIs(1);
+    assertThatScheduledNoticeExists(UPON_AT, false, actionDateTime);
+
+    usersClient.delete(userId);
+    scheduledNoticeProcessingClient.runFeeFineNoticesProcessing(rightAfter(actionDateTime));
+
+    assertThatNoNoticesWereSent();
+    assertThatNumberOfScheduledNoticesIs(0);
+  }
+
+  @Test
   public void noticeIsDiscardedWhenAccountIsClosed() {
     generateOverdueFine(createNoticeConfig(UPON_AT, false));
 
@@ -230,6 +273,7 @@ public class FeeFineScheduledNoticesTests extends APITests {
     userId = user.getId();
     IndividualResource item = itemsFixture.basedUponNod(builder ->
       builder.withPermanentLocation(location.getId()));
+    itemId = item.getId();
 
     JsonObject servicePointOwner = new JsonObject()
       .put("value", checkInServicePointId.toString())

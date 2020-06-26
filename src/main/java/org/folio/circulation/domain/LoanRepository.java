@@ -64,6 +64,7 @@ public class LoanRepository {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
   private static final String ITEM_STATUS = "itemStatus";
   private static final String ITEM_ID = "itemId";
+  private static final String USER_ID = "userId";
 
   public LoanRepository(Clients clients) {
     loansStorageClient = clients.loansStorage();
@@ -179,7 +180,7 @@ public class LoanRepository {
     PageLimit pageLimit) {
 
     Result<CqlQuery> cqlQuery = getStatusCQLQuery("Closed")
-      .combine(CqlQuery.hasValue("userId"), CqlQuery::and);
+      .combine(CqlQuery.hasValue(USER_ID), CqlQuery::and);
 
     return queryLoanStorage(cqlQuery, pageLimit);
   }
@@ -195,7 +196,7 @@ public class LoanRepository {
   public CompletableFuture<Result<MultipleRecords<Loan>>> findClosedLoans(
     String userId, PageLimit pageLimit) {
 
-    Result<CqlQuery> query = exactMatch("userId", userId);
+    Result<CqlQuery> query = exactMatch(USER_ID, userId);
     final Result<CqlQuery> statusQuery = getStatusCQLQuery("Closed");
 
    return queryLoanStorage(statusQuery.combine(query, CqlQuery::and), pageLimit);
@@ -350,7 +351,7 @@ public class LoanRepository {
     String userId = loanAndRelatedRecords.getLoan().getUser().getId();
 
     final Result<CqlQuery> statusQuery = getStatusCQLQuery("Open");
-    final Result<CqlQuery> userIdQuery = exactMatch("userId", userId);
+    final Result<CqlQuery> userIdQuery = exactMatch(USER_ID, userId);
 
     Result<CqlQuery> cqlQueryResult = statusQuery
       .combine(userIdQuery, CqlQuery::and);
@@ -365,5 +366,20 @@ public class LoanRepository {
 
     return queryLoanStorage(cqlQuery, one())
       .thenApply(r -> r.map(CollectionUtil::firstOrNull));
+  }
+
+  public CompletableFuture<Result<Loan>> findLoanForAccount(Account account) {
+    if (account == null) {
+      return completedFuture(succeeded(null));
+    }
+
+    return getById(account.getLoanId())
+      .thenApply(result -> {
+        if (result.failed() && result.cause() instanceof RecordNotFoundFailure
+          && "loan".equals(((RecordNotFoundFailure) result.cause()).getRecordType())) {
+          return succeeded(null);
+        }
+        return result;
+      });
   }
 }
