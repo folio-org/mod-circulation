@@ -10,7 +10,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
 import org.folio.circulation.domain.Loan;
-import org.folio.circulation.domain.LoanRepository;
 import org.folio.circulation.domain.NoteLink;
 import org.folio.circulation.domain.NoteLinkType;
 import org.folio.circulation.domain.NoteRepresentation;
@@ -76,7 +75,7 @@ public class DeclareClaimedReturnedItemAsMissingResource extends Resource {
     Loan loan = loanResult.value();
 
     try {
-      Optional<NoteType> noteType= noteTypesRepo.findBy("query=name==\"General note\"").get()
+      Optional<NoteType> noteType = noteTypesRepo.findBy("query=name==\"General note\"").get()
         .value()
         .getRecords()
         .stream()
