@@ -1,42 +1,52 @@
 package org.folio.circulation.domain.notice.schedule;
 
+import static org.apache.commons.lang3.ObjectUtils.allNotNull;
 import static org.folio.circulation.domain.notice.TemplateContextUtil.createFeeFineNoticeContext;
 import static org.folio.circulation.support.AsyncCoordinationUtil.allOf;
 import static org.folio.circulation.support.ClockManager.getClockManager;
 import static org.folio.circulation.support.Result.ofAsync;
 
+import java.lang.invoke.MethodHandles;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
-import org.apache.commons.lang3.ObjectUtils;
 import org.folio.circulation.domain.Account;
 import org.folio.circulation.domain.AccountRepository;
 import org.folio.circulation.domain.FeeFineAction;
 import org.folio.circulation.domain.FeeFineActionRepository;
+import org.folio.circulation.domain.Loan;
+import org.folio.circulation.domain.LoanRepository;
 import org.folio.circulation.domain.notice.PatronNoticeService;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.Result;
 import org.joda.time.DateTime;
 import org.joda.time.Period;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import io.vertx.core.json.JsonObject;
 
 public class FeeFineScheduledNoticeHandler {
+  private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
+
   private final PatronNoticeService patronNoticeService;
   private final ScheduledNoticesRepository scheduledNoticesRepository;
   private final FeeFineActionRepository actionRepository;
   private final AccountRepository accountRepository;
+  private final LoanRepository loanRepository;
 
   private FeeFineScheduledNoticeHandler(PatronNoticeService patronNoticeService,
     ScheduledNoticesRepository scheduledNoticesRepository,
     FeeFineActionRepository actionRepository,
-    AccountRepository accountRepository) {
+    AccountRepository accountRepository,
+    LoanRepository loanRepository) {
 
     this.patronNoticeService = patronNoticeService;
     this.scheduledNoticesRepository = scheduledNoticesRepository;
     this.actionRepository = actionRepository;
     this.accountRepository = accountRepository;
+    this.loanRepository = loanRepository;
   }
 
   public static FeeFineScheduledNoticeHandler using(Clients clients) {
@@ -44,7 +54,8 @@ public class FeeFineScheduledNoticeHandler {
       PatronNoticeService.using(clients),
       ScheduledNoticesRepository.using(clients),
       new FeeFineActionRepository(clients),
-      new AccountRepository(clients));
+      new AccountRepository(clients),
+      new LoanRepository(clients));
   }
 
   public CompletableFuture<Result<List<ScheduledNotice>>> handleNotices(
@@ -54,31 +65,51 @@ public class FeeFineScheduledNoticeHandler {
   }
 
   public CompletableFuture<Result<ScheduledNotice>> handleNotice(ScheduledNotice notice) {
-    return ofAsync(FeeFineRelatedRecords::new)
-      .thenCompose(r -> r.combineAfter(records ->
-        actionRepository.findById(notice.getFeeFineActionId()),
-        FeeFineRelatedRecords::withAction))
-      .thenCompose(r -> r.combineAfter(this::fetchAccount, FeeFineRelatedRecords::withAccount))
-      .thenCompose(r -> r.after(records -> processNotice(notice, records)));
+    return ofAsync(() -> new FeeFineNoticeContext(notice))
+      .thenCompose(this::fetchAction)
+      .thenCompose(this::fetchAccount)
+      .thenCompose(this::fetchLoan)
+      .thenCompose(r -> r.after(this::processNotice));
   }
 
-  private CompletableFuture<Result<Account>> fetchAccount(FeeFineRelatedRecords records) {
-    FeeFineAction action = records.getAction();
+  private CompletableFuture<Result<FeeFineNoticeContext>> fetchAction(
+    Result<FeeFineNoticeContext> result) {
 
-    return action != null
-      ? accountRepository.findById(action.getAccountId())
-      : ofAsync(() -> null);
+    return result.combineAfter(
+      context -> actionRepository.findById(context.getNotice().getFeeFineActionId()),
+      FeeFineNoticeContext::withAction);
   }
 
-  private CompletableFuture<Result<ScheduledNotice>> processNotice(
-    ScheduledNotice notice, FeeFineRelatedRecords records) {
+  private CompletableFuture<Result<FeeFineNoticeContext>> fetchAccount(
+    Result<FeeFineNoticeContext> result) {
 
-    if (records.isValid()) {
-      FeeFineAction action = records.getAction();
-      JsonObject noticeContext = createFeeFineNoticeContext(records.getAccount(), action);
+    return result.combineAfter(
+      context -> accountRepository.findAccountForAction(context.getAction()),
+      FeeFineNoticeContext::withAccount);
+  }
+
+  private CompletableFuture<Result<FeeFineNoticeContext>> fetchLoan(
+    Result<FeeFineNoticeContext> result) {
+
+    return result.combineAfter(
+      // this also fetches user and item
+      context -> loanRepository.findLoanForAccount(context.getAccount()),
+      FeeFineNoticeContext::withLoan);
+  }
+
+  private CompletableFuture<Result<ScheduledNotice>> processNotice(FeeFineNoticeContext context) {
+    final ScheduledNotice notice = context.getNotice();
+
+    if (context.isIncomplete()) {
+      log.error(getInvalidContextMessage(notice, "one of the referenced entities was not found"));
+    } else if (context.getAccount().isClosed()) {
+      log.warn(getInvalidContextMessage(notice, "associated fee/fine is already closed"));
+    } else {
+      JsonObject noticeContext = createFeeFineNoticeContext(context.getAccount(), context.getLoan());
       ScheduledNoticeConfig config = notice.getConfiguration();
 
-      patronNoticeService.acceptScheduledNoticeEvent(config, action.getUserId(), noticeContext);
+      patronNoticeService.acceptScheduledNoticeEvent(
+        config, notice.getRecipientUserId(), noticeContext);
 
       if (config.isRecurring()) {
         return scheduledNoticesRepository.update(getNextRecurringNotice(notice));
@@ -86,6 +117,13 @@ public class FeeFineScheduledNoticeHandler {
     }
 
     return scheduledNoticesRepository.delete(notice);
+  }
+
+  private static String getInvalidContextMessage(ScheduledNotice notice, String reason) {
+    return String.format(
+      "Scheduled \"%s\" notice with id %s for user %s will be deleted without sending: %s",
+      notice.getTriggeringEvent().getRepresentation(), notice.getId(), notice.getRecipientUserId(),
+      reason);
   }
 
   private ScheduledNotice getNextRecurringNotice(ScheduledNotice notice) {
@@ -100,36 +138,60 @@ public class FeeFineScheduledNoticeHandler {
     return notice.withNextRunTime(nextRunTime);
   }
 
-  private static class FeeFineRelatedRecords {
+  private static class FeeFineNoticeContext {
+    private final ScheduledNotice notice;
     private Account account;
     private FeeFineAction action;
+    private Loan loan;
 
-    private FeeFineRelatedRecords(Account account, FeeFineAction action) {
+    private FeeFineNoticeContext(ScheduledNotice notice) {
+      this.notice = notice;
+    }
+
+    private FeeFineNoticeContext(ScheduledNotice notice, Account account,
+      FeeFineAction action, Loan loan) {
+      this.notice = notice;
       this.account = account;
       this.action = action;
+      this.loan = loan;
     }
 
-    public FeeFineRelatedRecords() {
+    private ScheduledNotice getNotice() {
+      return notice;
     }
 
-    public Account getAccount() {
+    private Account getAccount() {
       return account;
     }
 
-    public FeeFineAction getAction() {
+    private FeeFineAction getAction() {
       return action;
     }
 
-    public FeeFineRelatedRecords withAccount(Account account) {
-      return new FeeFineRelatedRecords(account, this.action);
+    private Loan getLoan() {
+      return loan;
     }
 
-    public FeeFineRelatedRecords withAction(FeeFineAction action) {
-      return new FeeFineRelatedRecords(this.account, action);
+    private FeeFineNoticeContext withAccount(Account account) {
+      return new FeeFineNoticeContext(this.notice, account, this.action, this.loan);
     }
 
-    public boolean isValid() {
-      return ObjectUtils.allNotNull(action, account) && account.isOpen();
+    private FeeFineNoticeContext withAction(FeeFineAction action) {
+      return new FeeFineNoticeContext(this.notice, this.account, action, this.loan);
+    }
+
+    private FeeFineNoticeContext withLoan(Loan loan) {
+      return new FeeFineNoticeContext(this.notice, this.account, action, loan);
+    }
+
+    private boolean isComplete() {
+      return allNotNull(action, account, loan)
+        && loan.getUser() != null
+        && loan.getItem().isFound();
+    }
+
+    private boolean isIncomplete() {
+      return !isComplete();
     }
   }
 }
