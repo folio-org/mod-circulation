@@ -7,21 +7,38 @@ import static api.support.http.CqlQuery.queryFromTemplate;
 import static api.support.matchers.JsonObjectMatcher.hasJsonPath;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static java.lang.Boolean.TRUE;
+import static org.folio.circulation.domain.policy.DueDateManagement.KEEP_THE_CURRENT_DUE_DATE;
+import static org.folio.circulation.domain.policy.library.ClosedLibraryStrategyUtils.END_OF_A_DAY;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.notNullValue;
-
-import static org.folio.circulation.domain.policy.DueDateManagement.KEEP_THE_CURRENT_DUE_DATE;
-import static org.folio.circulation.domain.policy.library.ClosedLibraryStrategyUtils.END_OF_A_DAY;
+import static org.joda.time.DateTime.now;
+import static org.joda.time.DateTimeZone.UTC;
 
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.UUID;
+
+import org.folio.circulation.domain.policy.DueDateManagement;
+import org.folio.circulation.domain.policy.Period;
+import org.folio.circulation.support.ClockManager;
+import org.folio.circulation.support.http.client.IndividualResource;
+import org.folio.circulation.support.http.client.Response;
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeConstants;
+import org.joda.time.DateTimeZone;
+import org.joda.time.LocalTime;
+import org.joda.time.format.ISODateTimeFormat;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import api.support.APITests;
 import api.support.MultipleJsonRecords;
@@ -34,22 +51,6 @@ import junitparams.JUnitParamsRunner;
 import junitparams.Parameters;
 import junitparams.converters.Nullable;
 import junitparams.naming.TestCaseName;
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeConstants;
-import org.joda.time.DateTimeZone;
-import org.joda.time.LocalTime;
-import org.joda.time.format.ISODateTimeFormat;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-
-import org.folio.circulation.domain.policy.DueDateManagement;
-import org.folio.circulation.domain.policy.Period;
-import org.folio.circulation.support.ClockManager;
-import org.folio.circulation.support.http.client.IndividualResource;
-import org.folio.circulation.support.http.client.Response;
 
 /**
  * Notes:<br>
@@ -91,12 +92,12 @@ public class LoanDueDatesAfterRecallTests extends APITests {
     final IndividualResource jessica = usersFixture.jessica();
 
     final IndividualResource loan = checkOutFixture.checkOutByBarcode(
-      smallAngryPlanet, steve, DateTime.now(DateTimeZone.UTC));
+      smallAngryPlanet, steve, now(UTC));
 
     final String originalDueDate = loan.getJson().getString("dueDate");
 
     requestsFixture.placeHoldShelfRequest(smallAngryPlanet, jessica,
-        DateTime.now(DateTimeZone.UTC), requestServicePoint.getId(), "Recall");
+        now(UTC), requestServicePoint.getId(), "Recall");
 
     final JsonObject storedLoan = loansStorageClient.getById(loan.getId()).getJson();
 
@@ -127,12 +128,12 @@ public class LoanDueDatesAfterRecallTests extends APITests {
     setFallbackPolicies(canCirculateRollingPolicy);
 
     final IndividualResource loan = checkOutFixture.checkOutByBarcode(
-      smallAngryPlanet, steve, DateTime.now(DateTimeZone.UTC));
+      smallAngryPlanet, steve, now(UTC));
 
     final String originalDueDate = loan.getJson().getString("dueDate");
 
     requestsFixture.placeHoldShelfRequest(smallAngryPlanet, jessica,
-        DateTime.now(DateTimeZone.UTC), requestServicePoint.getId(), "Recall");
+        now(UTC), requestServicePoint.getId(), "Recall");
 
     final JsonObject storedLoan = loansStorageClient.getById(loan.getId()).getJson();
 
@@ -163,7 +164,7 @@ public class LoanDueDatesAfterRecallTests extends APITests {
     setFallbackPolicies(canCirculateRollingPolicy);
 
     // We use the loan date to calculate the MGD
-    final DateTime loanDate = DateTime.now(DateTimeZone.UTC);
+    final DateTime loanDate = now(UTC);
 
     final IndividualResource loan = checkOutFixture.checkOutByBarcode(
       smallAngryPlanet, steve, loanDate);
@@ -171,7 +172,7 @@ public class LoanDueDatesAfterRecallTests extends APITests {
     final String originalDueDate = loan.getJson().getString("dueDate");
 
     requestsFixture.placeHoldShelfRequest(smallAngryPlanet, jessica,
-        DateTime.now(DateTimeZone.UTC), requestServicePoint.getId(), "Recall");
+        now(UTC), requestServicePoint.getId(), "Recall");
 
     final JsonObject storedLoan = loansStorageClient.getById(loan.getId()).getJson();
 
@@ -201,7 +202,7 @@ public class LoanDueDatesAfterRecallTests extends APITests {
     setFallbackPolicies(canCirculateRollingPolicy);
 
     // We use the loan date to calculate the minimum guaranteed due date (MGD)
-    final DateTime loanDate = DateTime.now(DateTimeZone.UTC);
+    final DateTime loanDate = now(UTC);
 
     final IndividualResource loan = checkOutFixture.checkOutByBarcode(
       smallAngryPlanet, steve, loanDate);
@@ -209,7 +210,7 @@ public class LoanDueDatesAfterRecallTests extends APITests {
     final String originalDueDate = loan.getJson().getString("dueDate");
 
     requestsFixture.placeHoldShelfRequest(smallAngryPlanet, jessica,
-        DateTime.now(DateTimeZone.UTC), requestServicePoint.getId(), "Recall");
+        now(UTC), requestServicePoint.getId(), "Recall");
 
     final JsonObject storedLoan = loansStorageClient.getById(loan.getId()).getJson();
 
@@ -239,7 +240,7 @@ public class LoanDueDatesAfterRecallTests extends APITests {
     setFallbackPolicies(canCirculateRollingPolicy);
 
     // We use the loan date to calculate the minimum guaranteed due date (MGD)
-    final DateTime loanDate = DateTime.now(DateTimeZone.UTC);
+    final DateTime loanDate = now(UTC);
 
     final IndividualResource loan = checkOutFixture.checkOutByBarcode(
       smallAngryPlanet, steve, loanDate);
@@ -247,7 +248,7 @@ public class LoanDueDatesAfterRecallTests extends APITests {
     final String originalDueDate = loan.getJson().getString("dueDate");
 
     requestsFixture.placeHoldShelfRequest(smallAngryPlanet, jessica,
-        DateTime.now(DateTimeZone.UTC), requestServicePoint.getId(), "Recall");
+        now(UTC), requestServicePoint.getId(), "Recall");
 
     final JsonObject storedLoan = loansStorageClient.getById(loan.getId()).getJson();
 
@@ -282,7 +283,7 @@ public class LoanDueDatesAfterRecallTests extends APITests {
 
     // We use the loan date to calculate the minimum guaranteed due date (MGD)
     final DateTime loanDate =
-        new DateTime(2019, DateTimeConstants.JANUARY, 25, 10, 0, DateTimeZone.UTC);
+        new DateTime(2019, DateTimeConstants.JANUARY, 25, 10, 0, UTC);
 
     mockClockManagerToReturnFixedDateTime(loanDate);
 
@@ -297,7 +298,7 @@ public class LoanDueDatesAfterRecallTests extends APITests {
     final String originalDueDate = loan.getJson().getString("dueDate");
 
     requestsFixture.placeHoldShelfRequest(smallAngryPlanet, jessica,
-        DateTime.now(DateTimeZone.UTC), "Recall");
+        now(UTC), "Recall");
 
     final JsonObject storedLoan = loansStorageClient.getById(loan.getId()).getJson();
 
@@ -306,7 +307,7 @@ public class LoanDueDatesAfterRecallTests extends APITests {
 
     final String expectedDueDate =
         CASE_FRI_SAT_MON_SERVICE_POINT_NEXT_DAY
-          .toDateTime(END_OF_A_DAY, DateTimeZone.UTC).toString(ISODateTimeFormat.dateTime());
+          .toDateTime(END_OF_A_DAY, UTC).toString(ISODateTimeFormat.dateTime());
 
     assertThat("due date should be moved to Monday",
         storedLoan.getString("dueDate"), is(expectedDueDate));
@@ -346,12 +347,12 @@ public class LoanDueDatesAfterRecallTests extends APITests {
     setFallbackPolicies(canCirculateRollingPolicy);
 
     // We use the loan date to calculate the minimum guaranteed due date (MGD)
-    final DateTime loanDate = DateTime.now(DateTimeZone.UTC);
+    final DateTime loanDate = now(UTC);
 
     checkOutFixture.checkOutByBarcode(smallAngryPlanet, steve, loanDate);
 
     final Response response = requestsFixture.attemptPlaceHoldShelfRequest(smallAngryPlanet, jessica,
-        DateTime.now(DateTimeZone.UTC), requestServicePoint.getId(), "Recall");
+        now(UTC), requestServicePoint.getId(), "Recall");
 
     assertThat("Status code should be 422", response.getStatusCode(), is(422));
     assertThat("errors should be present", response.getJson().getJsonArray("errors"), notNullValue());
@@ -383,18 +384,18 @@ public class LoanDueDatesAfterRecallTests extends APITests {
     setFallbackPolicies(canCirculateRollingPolicy);
 
     checkOutFixture.checkOutByBarcode(smallAngryPlanet, charlotte,
-      DateTime.now(DateTimeZone.UTC));
+      now(UTC));
 
     requestsFixture.placeHoldShelfRequest(smallAngryPlanet, steve,
-      DateTime.now(DateTimeZone.UTC), requestServicePoint.getId(), "Recall");
+      now(UTC), requestServicePoint.getId(), "Recall");
 
     requestsFixture.placeHoldShelfRequest(smallAngryPlanet, jessica,
-      DateTime.now(DateTimeZone.UTC), requestServicePoint.getId(), "Recall");
+      now(UTC), requestServicePoint.getId(), "Recall");
 
     checkInFixture.checkInByBarcode(smallAngryPlanet);
 
     final IndividualResource loan = checkOutFixture.checkOutByBarcode(
-      smallAngryPlanet, steve, DateTime.now(DateTimeZone.UTC));
+      smallAngryPlanet, steve, now(UTC));
 
     final JsonObject storedLoan = loansStorageClient.getById(loan.getId()).getJson();
 
@@ -432,14 +433,14 @@ public class LoanDueDatesAfterRecallTests extends APITests {
 
     setFallbackPolicies(canCirculateRollingPolicy);
 
-    final DateTime loanDate = DateTime.now(DateTimeZone.UTC).minusDays(3);
+    final DateTime loanDate = now(UTC).minusDays(3);
 
     final IndividualResource loan = checkOutFixture.checkOutByBarcode(
       smallAngryPlanet, steve, loanDate);
 
     final String originalDueDate = loan.getJson().getString("dueDate");
 
-    final DateTime requestDate = DateTime.now(DateTimeZone.UTC);
+    final DateTime requestDate = now(UTC);
 
     mockClockManagerToReturnFixedDateTime(requestDate);
 
@@ -484,10 +485,10 @@ public class LoanDueDatesAfterRecallTests extends APITests {
     setFallbackPolicies(canCirculateRollingPolicy);
 
     requestsFixture.placeHoldShelfRequest(smallAngryPlanet, jessica,
-        DateTime.now(DateTimeZone.UTC), requestServicePoint.getId(), "Page");
+        now(UTC), requestServicePoint.getId(), "Page");
 
     requestsFixture.placeHoldShelfRequest(smallAngryPlanet, james,
-        DateTime.now(DateTimeZone.UTC), requestServicePoint.getId(), "Recall");
+        now(UTC), requestServicePoint.getId(), "Recall");
 
     final IndividualResource loan = checkOutFixture.checkOutByBarcode(
       smallAngryPlanet, jessica, ClockManager.getClockManager().getDateTime());
@@ -504,7 +505,7 @@ public class LoanDueDatesAfterRecallTests extends APITests {
     ClockManager.getClockManager().setClock(Clock.offset(clock, Duration.ofDays(1)));
 
     requestsFixture.placeHoldShelfRequest(smallAngryPlanet, charlotte,
-        DateTime.now(DateTimeZone.UTC), requestServicePoint.getId(), "Recall");
+        now(UTC), requestServicePoint.getId(), "Recall");
 
     storedLoan = loansStorageClient.getById(loan.getId()).getJson();
     assertThat("second recall should not change the due date",
@@ -531,10 +532,10 @@ public class LoanDueDatesAfterRecallTests extends APITests {
      setFallbackPolicies(canCirculateRollingPolicy);
 
     requestsFixture.placeHoldShelfRequest(smallAngryPlanet, jessica,
-        DateTime.now(DateTimeZone.UTC), requestServicePoint.getId(), "Page");
+        now(UTC), requestServicePoint.getId(), "Page");
 
     requestsFixture.placeHoldShelfRequest(smallAngryPlanet, james,
-        DateTime.now(DateTimeZone.UTC), requestServicePoint.getId(), "Recall");
+        now(UTC), requestServicePoint.getId(), "Recall");
 
     final IndividualResource loan = checkOutFixture.checkOutByBarcode(
       smallAngryPlanet, jessica, ClockManager.getClockManager().getDateTime());
@@ -552,7 +553,7 @@ public class LoanDueDatesAfterRecallTests extends APITests {
     ClockManager.getClockManager().setClock(Clock.offset(clock, Duration.ofDays(15)));
 
     requestsFixture.placeHoldShelfRequest(smallAngryPlanet, charlotte,
-        DateTime.now(DateTimeZone.UTC), requestServicePoint.getId(), "Recall");
+        now(UTC), requestServicePoint.getId(), "Recall");
 
     storedLoan = loansStorageClient.getById(loan.getId()).getJson();
     assertThat("second recall should not change the due date",
@@ -584,7 +585,7 @@ public class LoanDueDatesAfterRecallTests extends APITests {
     final String originalDueDate = loan.getJson().getString("dueDate");
 
     requestsFixture.placeHoldShelfRequest(smallAngryPlanet, jessica,
-        DateTime.now(DateTimeZone.UTC), requestServicePoint.getId(), "Recall");
+        now(UTC), requestServicePoint.getId(), "Recall");
 
     JsonObject storedLoan = loansStorageClient.getById(loan.getId()).getJson();
 
@@ -599,7 +600,7 @@ public class LoanDueDatesAfterRecallTests extends APITests {
     ClockManager.getClockManager().setClock(Clock.offset(clock, Duration.ofDays(7)));
 
     requestsFixture.placeHoldShelfRequest(smallAngryPlanet, charlotte,
-        DateTime.now(DateTimeZone.UTC), requestServicePoint.getId(), "Recall");
+        now(UTC), requestServicePoint.getId(), "Recall");
 
     storedLoan = loansStorageClient.getById(loan.getId()).getJson();
     assertThat("second recall should not change the due date (2 weeks)",
@@ -631,7 +632,7 @@ public class LoanDueDatesAfterRecallTests extends APITests {
     final String originalDueDate = loan.getJson().getString("dueDate");
 
     requestsFixture.placeHoldShelfRequest(smallAngryPlanet, jessica,
-        DateTime.now(DateTimeZone.UTC), requestServicePoint.getId(), "Recall");
+        now(UTC), requestServicePoint.getId(), "Recall");
 
     JsonObject storedLoan = loansStorageClient.getById(loan.getId()).getJson();
 
@@ -647,7 +648,7 @@ public class LoanDueDatesAfterRecallTests extends APITests {
     ClockManager.getClockManager().setClock(Clock.offset(clock, Duration.ofDays(15)));
 
     requestsFixture.placeHoldShelfRequest(smallAngryPlanet, charlotte,
-        DateTime.now(DateTimeZone.UTC), requestServicePoint.getId(), "Recall");
+        now(UTC), requestServicePoint.getId(), "Recall");
 
     storedLoan = loansStorageClient.getById(loan.getId()).getJson();
     assertThat("second recall should not change the due date (2 weeks)",
@@ -673,12 +674,12 @@ public class LoanDueDatesAfterRecallTests extends APITests {
     setFallbackPolicies(canCirculateRollingPolicy);
 
     final IndividualResource loan = checkOutFixture.checkOutByBarcode(
-      smallAngryPlanet, steve, DateTime.now(DateTimeZone.UTC));
+      smallAngryPlanet, steve, now(UTC));
 
     final String originalDueDate = loan.getJson().getString("dueDate");
 
     requestsFixture.placeHoldShelfRequest(smallAngryPlanet, jessica,
-        DateTime.now(DateTimeZone.UTC), requestServicePoint.getId(), "Recall");
+        now(UTC), requestServicePoint.getId(), "Recall");
 
     JsonObject storedLoan = loansStorageClient.getById(loan.getId()).getJson();
 
@@ -693,7 +694,7 @@ public class LoanDueDatesAfterRecallTests extends APITests {
     ClockManager.getClockManager().setClock(Clock.offset(clock, Duration.ofDays(7)));
 
     requestsFixture.placeHoldShelfRequest(smallAngryPlanet, charlotte,
-        DateTime.now(DateTimeZone.UTC), requestServicePoint.getId(), "Recall");
+        now(UTC), requestServicePoint.getId(), "Recall");
 
     storedLoan = loansStorageClient.getById(loan.getId()).getJson();
     assertThat("second recall should not change the due date (2 months)",
@@ -720,12 +721,12 @@ public class LoanDueDatesAfterRecallTests extends APITests {
     setFallbackPolicies(canCirculateRollingPolicy);
 
     final IndividualResource loan = checkOutFixture.checkOutByBarcode(
-      smallAngryPlanet, steve, DateTime.now(DateTimeZone.UTC));
+      smallAngryPlanet, steve, now(UTC));
 
     final String originalDueDate = loan.getJson().getString("dueDate");
 
     requestsFixture.placeHoldShelfRequest(smallAngryPlanet, jessica,
-        DateTime.now(DateTimeZone.UTC), requestServicePoint.getId(), "Recall");
+        now(UTC), requestServicePoint.getId(), "Recall");
 
     JsonObject storedLoan = loansStorageClient.getById(loan.getId()).getJson();
 
@@ -741,7 +742,7 @@ public class LoanDueDatesAfterRecallTests extends APITests {
     ClockManager.getClockManager().setClock(Clock.offset(clock, Duration.ofDays(70)));
 
     requestsFixture.placeHoldShelfRequest(smallAngryPlanet, charlotte,
-        DateTime.now(DateTimeZone.UTC), requestServicePoint.getId(), "Recall");
+        now(UTC), requestServicePoint.getId(), "Recall");
 
     storedLoan = loansStorageClient.getById(loan.getId()).getJson();
     assertThat("second recall should not change the due date (2 months)",
@@ -776,7 +777,7 @@ public class LoanDueDatesAfterRecallTests extends APITests {
     JsonObject storedLoan = loansStorageClient.getById(loan.getId()).getJson();
 
     final IndividualResource request = requestsFixture.placeHoldShelfRequest(
-        smallAngryPlanet, james, DateTime.now(DateTimeZone.UTC),
+        smallAngryPlanet, james, now(UTC),
         requestServicePoint.getId(), "Recall");
 
     final String recalledDueDate = request.getJson().getString("dueDate");
@@ -794,7 +795,7 @@ public class LoanDueDatesAfterRecallTests extends APITests {
     storedLoan = loansStorageClient.getById(renewal.getId()).getJson();
 
     requestsFixture.placeHoldShelfRequest(smallAngryPlanet, charlotte,
-        DateTime.now(DateTimeZone.UTC), requestServicePoint.getId(), "Recall");
+        now(UTC), requestServicePoint.getId(), "Recall");
 
     storedLoan = loansStorageClient.getById(loan.getId()).getJson();
 
@@ -817,7 +818,7 @@ public class LoanDueDatesAfterRecallTests extends APITests {
       .withRecallsMinimumGuaranteedLoanPeriod(Period.weeks(2))
       .withRecallsRecallReturnInterval(Period.months(2)));
 
-    final DateTime loanCreateDate = DateTime.now(DateTimeZone.UTC)
+    final DateTime loanCreateDate = now(UTC)
       .minus(loanPeriod.timePeriod()).minusMinutes(1);
     final DateTime expectedLoanDueDate = loanCreateDate.plus(loanPeriod.timePeriod());
 
