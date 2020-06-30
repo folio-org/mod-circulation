@@ -436,22 +436,30 @@ public class LoanPolicy extends Policy {
     errors.addAll(combineValidationErrors(minimumDueDateResult));
 
     if (errors.isEmpty()) {
-      return minimumDueDateResult
-          .combine(recallDueDateResult, this::determineDueDate)
+      return determineDueDate(minimumDueDateResult, recallDueDateResult, loan)
           .map(dueDate -> changeDueDate(dueDate, loan));
     } else {
       return failedValidation(errors);
     }
   }
 
-  private DateTime determineDueDate(DateTime minimumGuaranteedDueDate,
-      DateTime recallDueDate) {
-    if (minimumGuaranteedDueDate == null ||
-        recallDueDate.isAfter(minimumGuaranteedDueDate)) {
-      return recallDueDate;
-    } else {
-      return minimumGuaranteedDueDate;
-    }
+  private Result<DateTime> determineDueDate(Result<DateTime> minimumGuaranteedDueDateResult,
+    Result<DateTime> recallDueDateResult, Loan loan) {
+
+    return minimumGuaranteedDueDateResult.combine(recallDueDateResult,
+      (minimumGuaranteedDueDate, recallDueDate) -> {
+        if (loan.isOverdue()) {
+          // for overdue loans do not update due date
+          return loan.getDueDate();
+        }
+
+        if (minimumGuaranteedDueDate == null ||
+          recallDueDate.isAfter(minimumGuaranteedDueDate)) {
+          return recallDueDate;
+        } else {
+          return minimumGuaranteedDueDate;
+        }
+      });
   }
 
   private Loan changeDueDate(DateTime dueDate, Loan loan) {
