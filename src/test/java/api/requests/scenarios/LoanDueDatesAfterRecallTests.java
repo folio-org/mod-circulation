@@ -804,7 +804,7 @@ public class LoanDueDatesAfterRecallTests extends APITests {
   }
 
   @Test
-  public void shouldNotRenewOverdueLoan() {
+  public void shouldNotExtendLoanDueDateIfOverdueLoanIsRecalled() {
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
 
     final Period loanPeriod = Period.weeks(3);
