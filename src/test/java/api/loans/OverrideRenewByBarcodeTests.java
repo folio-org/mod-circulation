@@ -1,19 +1,25 @@
 package api.loans;
 
+
 import static api.support.builders.FixedDueDateSchedule.forDay;
 import static api.support.builders.FixedDueDateSchedule.wholeMonth;
-import static api.support.builders.ItemBuilder.CHECKED_OUT;
 import static api.support.matchers.ItemStatusCodeMatcher.hasItemStatus;
 import static api.support.matchers.PatronNoticeMatcher.hasEmailNoticeProperties;
+import static api.support.matchers.ResponseStatusCodeMatcher.hasStatus;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static api.support.matchers.ValidationErrorMatchers.hasParameter;
+import static api.support.matchers.ValidationErrorMatchers.hasUUIDParameter;
+import static org.apache.commons.lang3.StringUtils.EMPTY;
+import static org.folio.HttpStatus.HTTP_UNPROCESSABLE_ENTITY;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.joda.time.DateTimeConstants.APRIL;
+import static org.joda.time.DateTimeZone.UTC;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -22,22 +28,21 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
-import org.apache.commons.lang3.StringUtils;
 import org.awaitility.Awaitility;
 import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.domain.policy.Period;
+import org.folio.circulation.support.ClockManager;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.server.ValidationError;
 import org.hamcrest.Matcher;
-import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeConstants;
-import org.joda.time.DateTimeZone;
 import org.junit.Test;
 
 import api.support.APITests;
+import api.support.builders.ChangeDueDateRequestBuilder;
 import api.support.builders.CheckOutByBarcodeRequestBuilder;
 import api.support.builders.FixedDueDateSchedulesBuilder;
 import api.support.builders.ItemBuilder;
@@ -63,7 +68,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
     final UUID unknownLoanPolicyId = UUID.randomUUID();
 
     checkOutFixture.checkOutByBarcode(smallAngryPlanet, jessica,
-      new DateTime(2018, DateTimeConstants.APRIL, 21, 11, 21, 43));
+      new DateTime(2018, APRIL, 21, 11, 21, 43));
 
     IndividualResource record = loanPoliciesFixture.create(new LoanPolicyBuilder()
       .withId(unknownLoanPolicyId)
@@ -126,7 +131,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
     final IndividualResource jessica = usersFixture.jessica();
 
     checkOutFixture.checkOutByBarcode(smallAngryPlanet, jessica,
-      new DateTime(2018, DateTimeConstants.APRIL, 21, 11, 21, 43));
+      new DateTime(2018, APRIL, 21, 11, 21, 43));
 
     final Response response = loansFixture.attemptOverride(smallAngryPlanet,
       james, OVERRIDE_COMMENT, null);
@@ -143,7 +148,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
     checkOutFixture.checkOutByBarcode(smallAngryPlanet, jessica);
 
     final Response response = loansFixture.attemptOverride(smallAngryPlanet,
-      jessica, StringUtils.EMPTY, null);
+      jessica, EMPTY, null);
 
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("Override renewal request must have a comment"),
@@ -155,8 +160,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource jessica = usersFixture.jessica();
 
-    DateTime loanDueDate =
-      new DateTime(2018, DateTimeConstants.APRIL, 21, 11, 21, 43);
+    DateTime loanDueDate = new DateTime(2018, APRIL, 21, 11, 21, 43);
 
     checkOutFixture.checkOutByBarcode(smallAngryPlanet, jessica, loanDueDate);
 
@@ -181,8 +185,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource jessica = usersFixture.jessica();
 
-    DateTime loanDueDate =
-      new DateTime(2018, DateTimeConstants.APRIL, 21, 11, 21, 43);
+    DateTime loanDueDate = new DateTime(2018, APRIL, 21, 11, 21, 43);
 
     checkOutFixture.checkOutByBarcode(smallAngryPlanet, jessica, loanDueDate);
 
@@ -211,11 +214,10 @@ public class OverrideRenewByBarcodeTests extends APITests {
 
     //TODO loanpolicyname is not stored, possible bug?
     assertThat("last loan policy should be stored",
-            renewedLoan.getString("loanPolicyId"), is(nonRenewablePolicyId.toString()));
+      renewedLoan.getString("loanPolicyId"), is(nonRenewablePolicyId.toString()));
 
     assertThat("due date should be 2 weeks from now",
-      renewedLoan.getString("dueDate"),
-      isEquivalentTo(newDueDate));
+      renewedLoan.getString("dueDate"), isEquivalentTo(newDueDate));
   }
 
   @Test
@@ -223,8 +225,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource jessica = usersFixture.jessica();
 
-    DateTime loanDueDate =
-      new DateTime(2018, DateTimeConstants.APRIL, 21, 11, 21, 43);
+    DateTime loanDueDate = new DateTime(2018, APRIL, 21, 11, 21, 43);
 
     checkOutFixture.checkOutByBarcode(smallAngryPlanet, jessica, loanDueDate);
 
@@ -256,8 +257,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource jessica = usersFixture.jessica();
 
-    DateTime loanDueDate =
-      new DateTime(2018, DateTimeConstants.APRIL, 21, 11, 21, 43);
+    DateTime loanDueDate = new DateTime(2018, APRIL, 21, 11, 21, 43);
 
     final IndividualResource loan = checkOutFixture.checkOutByBarcode(
       smallAngryPlanet, jessica, loanDueDate);
@@ -305,7 +305,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
 
     smallAngryPlanet = itemsClient.get(smallAngryPlanet);
 
-    assertThat(smallAngryPlanet, hasItemStatus(CHECKED_OUT));
+    assertThat(smallAngryPlanet, hasItemStatus(ItemBuilder.CHECKED_OUT));
   }
 
   @Test
@@ -316,7 +316,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
     final IndividualResource jessica = usersFixture.jessica();
 
     DateTime loanDueDate =
-      new DateTime(2018, DateTimeConstants.APRIL, 21, 11, 21, 43);
+      new DateTime(2018, APRIL, 21, 11, 21, 43);
 
     final IndividualResource loan = checkOutFixture.checkOutByBarcode(
       smallAngryPlanet, jessica, loanDueDate);
@@ -346,10 +346,9 @@ public class OverrideRenewByBarcodeTests extends APITests {
 
     final DateTime newDueDate = loanDueDate.plusWeeks(3).plusMonths(2);
 
-    final JsonObject renewedLoan =
-      loansFixture.overrideRenewalByBarcode(smallAngryPlanet, jessica,
-        OVERRIDE_COMMENT, newDueDate.toString())
-        .getJson();
+    final JsonObject renewedLoan = loansFixture.overrideRenewalByBarcode(
+      smallAngryPlanet, jessica, OVERRIDE_COMMENT, newDueDate.toString())
+      .getJson();
 
     assertThat(renewedLoan.getString("id"), is(loanId.toString()));
 
@@ -375,7 +374,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
 
     use(limitedRenewalsPolicy);
 
-    DateTime loanDate = DateTime.now(DateTimeZone.UTC);
+    DateTime loanDate = DateTime.now(UTC);
     checkOutFixture.checkOutByBarcode(smallAngryPlanet, jessica, loanDate).getJson();
 
     loansFixture.renewLoan(smallAngryPlanet, jessica);
@@ -408,9 +407,10 @@ public class OverrideRenewByBarcodeTests extends APITests {
 
     use(new CirculationPolicies()
       .withLoanPolicy(loanPoliciesFixture.create(limitedRenewalsPolicy).getId())
+      // Have to charge a fine otherwise the loan is closed when item is declared lost
       .withLostItemPolicy(lostItemFeePoliciesFixture.chargeFee().getId()));
 
-    final DateTime loanDate = DateTime.now(DateTimeZone.UTC).minusWeeks(1);
+    final DateTime loanDate = DateTime.now(UTC).minusWeeks(1);
 
     final JsonObject loanJson = checkOutFixture.checkOutByBarcode(smallAngryPlanet,
       usersFixture.jessica(), loanDate).getJson();
@@ -436,6 +436,45 @@ public class OverrideRenewByBarcodeTests extends APITests {
     assertThat("due date should be 2 weeks later",
       renewedLoan.getString("dueDate"),
       isEquivalentTo(expectedDueDate));
+  }
+
+  @Test
+  public void cannotOverrideRenewalWhenDueDateIsEarlierOrSameAsCurrentLoanDueDateAndItemIsDeclaredLost() {
+    final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final IndividualResource jessica = usersFixture.jessica();
+
+    final LoanPolicyBuilder loanablePolicy = new LoanPolicyBuilder()
+      .withName("Loanable Policy")
+      .withLoanable(true)
+      .rolling(Period.days(1))
+      .renewFromSystemDate();
+
+    UUID loanPolicyId = loanPoliciesFixture.create(loanablePolicy).getId();
+
+    use(new CirculationPolicies()
+      .withLoanPolicy(loanPolicyId)
+      // Have to charge a fine otherwise the loan is closed when item is declared lost
+      .withLostItemPolicy(lostItemFeePoliciesFixture.chargeFee().getId()));
+
+    final IndividualResource loan = checkOutAWeekAgo(smallAngryPlanet);
+
+    changeDueDateFixture.changeDueDate(new ChangeDueDateRequestBuilder()
+      .forLoan(loan.getId())
+      .withDueDate(twoWeeksFromNow()));
+
+    declareLostFixtures.declareItemLost(loan.getJson());
+
+    loansFixture.attemptRenewal(422, smallAngryPlanet, jessica);
+
+    final Response overrideAttemptResponse =
+      loansFixture.attemptOverride(smallAngryPlanet, jessica,
+        OVERRIDE_COMMENT, null);
+
+    assertThat(overrideAttemptResponse, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
+    assertThat(overrideAttemptResponse.getJson(), hasErrorWith(allOf(
+      hasMessage("renewal would not change the due date"),
+      hasParameter("loanPolicyName", "Loanable Policy"),
+      hasUUIDParameter("loanPolicyId", loanPolicyId))));
   }
 
   @Test
@@ -471,8 +510,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource jessica = usersFixture.jessica();
 
-    DateTime loanDueDate =
-      new DateTime(2018, DateTimeConstants.APRIL, 21, 11, 21, 43);
+    DateTime loanDueDate = new DateTime(2018, APRIL, 21, 11, 21, 43);
 
     checkOutFixture.checkOutByBarcode(smallAngryPlanet, jessica, loanDueDate);
 
@@ -505,8 +543,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource jessica = usersFixture.jessica();
 
-    DateTime loanDueDate =
-      new DateTime(2018, DateTimeConstants.APRIL, 21, 11, 21, 43);
+    DateTime loanDueDate = new DateTime(2018, APRIL, 21, 11, 21, 43);
 
     checkOutFixture.checkOutByBarcode(smallAngryPlanet, jessica, loanDueDate);
 
@@ -534,8 +571,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource jessica = usersFixture.jessica();
 
-    DateTime loanDueDate =
-      new DateTime(2018, DateTimeConstants.APRIL, 21, 11, 21, 43);
+    DateTime loanDueDate = new DateTime(2018, APRIL, 21, 11, 21, 43);
 
     checkOutFixture.checkOutByBarcode(smallAngryPlanet, jessica, loanDueDate);
 
@@ -544,8 +580,9 @@ public class OverrideRenewByBarcodeTests extends APITests {
       .withLoanable(false);
     createLoanPolicyAndSetAsFallback(notLoanablePolicy);
 
-    JsonObject renewalResponse =
-      loansFixture.attemptRenewal(422, smallAngryPlanet, jessica).getJson();
+    JsonObject renewalResponse = loansFixture.attemptRenewal(422,
+      smallAngryPlanet, jessica).getJson();
+
     assertThat(renewalResponse, hasErrorWith(allOf(
       hasMessage(ITEM_IS_NOT_LOANABLE_MESSAGE))));
 
@@ -561,8 +598,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource jessica = usersFixture.jessica();
 
-    DateTime loanDueDate =
-      new DateTime(2018, DateTimeConstants.APRIL, 21, 11, 21, 43);
+    DateTime loanDueDate = new DateTime(2018, APRIL, 21, 11, 21, 43);
 
     checkOutFixture.checkOutByBarcode(smallAngryPlanet, jessica, loanDueDate);
 
@@ -641,7 +677,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
     ItemBuilder itemBuilder = ItemExamples.basedUponSmallAngryPlanet(
       materialTypesFixture.book().getId(),
       loanTypesFixture.canCirculate().getId(),
-      StringUtils.EMPTY,
+      EMPTY,
       "ItemPrefix",
       "ItemSuffix",
       "");
@@ -649,8 +685,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
     InventoryItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet(itemBuilder, itemsFixture.thirdFloorHoldings());
     final IndividualResource steve = usersFixture.steve();
 
-    final DateTime loanDate =
-      new DateTime(2018, 3, 18, 11, 43, 54, DateTimeZone.UTC);
+    final DateTime loanDate = new DateTime(2018, 3, 18, 11, 43, 54, UTC);
 
     checkOutFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
@@ -666,6 +701,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
     Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
       .until(patronNoticesClient::getAll, Matchers.hasSize(1));
+
     List<JsonObject> sentNotices = patronNoticesClient.getAll();
 
     int expectedRenewalLimit = 0;
@@ -676,9 +712,9 @@ public class OverrideRenewByBarcodeTests extends APITests {
     noticeContextMatchers.putAll(TemplateContextMatchers.getLoanContextMatchers(loanAfterRenewal));
     noticeContextMatchers.putAll(TemplateContextMatchers.getLoanPolicyContextMatchers(
       expectedRenewalLimit, expectedRenewalsRemaining));
-    MatcherAssert.assertThat(sentNotices,
-      hasItems(
-        hasEmailNoticeProperties(steve.getId(), renewalTemplateId, noticeContextMatchers)));
+
+    assertThat(sentNotices, hasItems(
+      hasEmailNoticeProperties(steve.getId(), renewalTemplateId, noticeContextMatchers)));
   }
 
   private Matcher<ValidationError> hasUserRelatedParameter(IndividualResource user) {
@@ -727,5 +763,14 @@ public class OverrideRenewByBarcodeTests extends APITests {
 
     assertThat("'actionComment' field should contain comment specified for override",
       renewedLoan.getString(ACTION_COMMENT_KEY), is(OVERRIDE_COMMENT));
+  }
+
+  private DateTime twoWeeksFromNow() {
+    return ClockManager.getClockManager().getDateTime().plusWeeks(2);
+  }
+
+  private IndividualResource checkOutAWeekAgo(IndividualResource smallAngryPlanet) {
+    return checkOutFixture.checkOutByBarcode(smallAngryPlanet,
+      usersFixture.jessica(), DateTime.now(UTC).minusWeeks(1));
   }
 }
