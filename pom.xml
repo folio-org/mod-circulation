@@ -25,14 +25,28 @@
   <properties>
     <antlr4.version>4.7.2</antlr4.version>
     <drools.version>7.0.0.Final</drools.version>
-    <rmb.version>30.0.0</rmb.version>
-    <vertx.version>3.8.4</vertx.version>
+    <rmb.version>30.2.1</rmb.version>
+    <vertx.version>3.9.1</vertx.version>
     <log4j2.version>2.13.0</log4j2.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     <lombok.version>1.18.12</lombok.version>
     <spring.version>5.2.7.RELEASE</spring.version>
   </properties>
+
+  <dependencyManagement>
+    <dependencies>
+
+      <dependency>
+        <groupId>io.vertx</groupId>
+        <artifactId>vertx-stack-depchain</artifactId>
+        <version>${vertx.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+
+    </dependencies>
+  </dependencyManagement>
 
   <dependencies>
     <dependency>
@@ -53,28 +67,23 @@
     <dependency>
       <groupId>io.vertx</groupId>
       <artifactId>vertx-core</artifactId>
-      <version>${vertx.version}</version>
     </dependency>
     <dependency>
       <groupId>io.vertx</groupId>
       <artifactId>vertx-web</artifactId>
-      <version>${vertx.version}</version>
     </dependency>
     <dependency>
       <groupId>io.vertx</groupId>
       <artifactId>vertx-web-client</artifactId>
-      <version>${vertx.version}</version>
     </dependency>
     <dependency>
       <groupId>io.vertx</groupId>
       <artifactId>vertx-codegen</artifactId>
-      <version>${vertx.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>
       <artifactId>jackson-databind</artifactId>
-      <version>2.9.10.4</version>
     </dependency>
     <dependency>
       <groupId>org.apache.commons</groupId>
@@ -124,7 +133,7 @@
     <dependency>
       <groupId>org.folio</groupId>
       <artifactId>mod-pubsub-client</artifactId>
-      <version>1.1.5</version>
+      <version>1.2.3</version>
       <exclusions>
         <exclusion>
           <groupId>org.hamcrest</groupId>
