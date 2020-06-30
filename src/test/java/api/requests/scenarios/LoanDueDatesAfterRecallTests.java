@@ -3,12 +3,15 @@ package api.requests.scenarios;
 import static api.support.fixtures.CalendarExamples.CASE_FRI_SAT_MON_SERVICE_POINT_ID;
 import static api.support.fixtures.CalendarExamples.CASE_FRI_SAT_MON_SERVICE_POINT_NEXT_DAY;
 import static api.support.fixtures.ConfigurationExample.timezoneConfigurationFor;
+import static api.support.http.CqlQuery.queryFromTemplate;
 import static api.support.matchers.JsonObjectMatcher.hasJsonPath;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static java.lang.Boolean.TRUE;
+import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.notNullValue;
 
 import static org.folio.circulation.domain.policy.DueDateManagement.KEEP_THE_CURRENT_DUE_DATE;
@@ -21,6 +24,7 @@ import java.time.ZoneOffset;
 import java.util.UUID;
 
 import api.support.APITests;
+import api.support.MultipleJsonRecords;
 import api.support.builders.LoanBuilder;
 import api.support.builders.LoanPolicyBuilder;
 import api.support.builders.RequestBuilder;
@@ -57,6 +61,10 @@ import org.folio.circulation.support.http.client.Response;
 @RunWith(JUnitParamsRunner.class)
 public class LoanDueDatesAfterRecallTests extends APITests {
   private static Clock clock;
+
+  public LoanDueDatesAfterRecallTests() {
+    super(true, true);
+  }
 
   @BeforeClass
   public static void setUpBeforeClass() {
@@ -826,5 +834,14 @@ public class LoanDueDatesAfterRecallTests extends APITests {
 
     assertThat(loansStorageClient.getById(loan.getId()).getJson(),
       hasJsonPath("dueDate", expectedLoanDueDate.toString()));
+
+    // verify that loan action is recorder even though due date is not changed
+    final MultipleJsonRecords loanHistory = loanHistoryClient
+      .getMany(queryFromTemplate("loan.id==%s and operation==U", loan.getId()));
+
+    assertThat(loanHistory, hasItem(allOf(
+      hasJsonPath("loan.action", "recallrequested"),
+      hasJsonPath("loan.itemStatus", "Checked out"))
+    ));
   }
 }
