@@ -3,6 +3,7 @@ package api.requests.scenarios;
 import static api.support.fixtures.CalendarExamples.CASE_FRI_SAT_MON_SERVICE_POINT_ID;
 import static api.support.fixtures.CalendarExamples.CASE_FRI_SAT_MON_SERVICE_POINT_NEXT_DAY;
 import static api.support.fixtures.ConfigurationExample.timezoneConfigurationFor;
+import static api.support.matchers.JsonObjectMatcher.hasJsonPath;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static java.lang.Boolean.TRUE;
 import static org.hamcrest.CoreMatchers.is;
@@ -792,5 +793,38 @@ public class LoanDueDatesAfterRecallTests extends APITests {
     final String recalledRenewalDueDate = storedLoan.getString("dueDate");
     assertThat("due date after recall should not change the renewal due date",
         recalledRenewalDueDate, is(renewalDueDate));
+  }
+
+  @Test
+  public void shouldNotRenewOverdueLoan() {
+    final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+
+    final Period loanPeriod = Period.weeks(3);
+    setFallbackPolicies(new LoanPolicyBuilder()
+      .withName("Can Circulate Rolling With Recalls")
+      .withDescription("Can circulate item With Recalls")
+      .rolling(loanPeriod)
+      .unlimitedRenewals()
+      .renewFromSystemDate()
+      .withRecallsMinimumGuaranteedLoanPeriod(Period.weeks(2))
+      .withRecallsRecallReturnInterval(Period.months(2)));
+
+    final DateTime loanCreateDate = DateTime.now(DateTimeZone.UTC)
+      .minus(loanPeriod.timePeriod()).minusMinutes(1);
+    final DateTime expectedLoanDueDate = loanCreateDate.plus(loanPeriod.timePeriod());
+
+    final IndividualResource loan = checkOutFixture.checkOutByBarcode(
+      smallAngryPlanet, usersFixture.steve(), loanCreateDate);
+
+    requestsFixture.place(new RequestBuilder()
+      .recall()
+      .forItem(smallAngryPlanet)
+      .fulfilToHoldShelf()
+      .by(usersFixture.jessica())
+      .fulfilToHoldShelf()
+      .withPickupServicePointId(servicePointsFixture.cd1().getId()));
+
+    assertThat(loansStorageClient.getById(loan.getId()).getJson(),
+      hasJsonPath("dueDate", expectedLoanDueDate.toString()));
   }
 }
