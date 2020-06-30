@@ -7,11 +7,13 @@ import static api.support.matchers.ItemStatusCodeMatcher.hasItemStatus;
 import static api.support.matchers.PatronNoticeMatcher.hasEmailNoticeProperties;
 import static api.support.matchers.ResponseStatusCodeMatcher.hasStatus;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
+import static api.support.matchers.TextDateTimeMatcher.withinSecondsAfter;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static api.support.matchers.ValidationErrorMatchers.hasParameter;
 import static api.support.matchers.ValidationErrorMatchers.hasUUIDParameter;
 import static org.apache.commons.lang3.StringUtils.EMPTY;
+import static org.folio.HttpStatus.HTTP_OK;
 import static org.folio.HttpStatus.HTTP_UNPROCESSABLE_ENTITY;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.hasItems;
@@ -20,6 +22,7 @@ import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.joda.time.DateTimeConstants.APRIL;
 import static org.joda.time.DateTimeZone.UTC;
+import static org.joda.time.Seconds.seconds;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -39,6 +42,7 @@ import org.hamcrest.Matcher;
 import org.hamcrest.Matchers;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeConstants;
+import org.joda.time.Seconds;
 import org.junit.Test;
 
 import api.support.APITests;
@@ -53,6 +57,7 @@ import api.support.fixtures.ItemExamples;
 import api.support.fixtures.TemplateContextMatchers;
 import api.support.http.InventoryItemResource;
 import io.vertx.core.json.JsonObject;
+import lombok.val;
 
 public class OverrideRenewByBarcodeTests extends APITests {
   private static final String OVERRIDE_COMMENT = "Comment to override";
@@ -439,14 +444,14 @@ public class OverrideRenewByBarcodeTests extends APITests {
   }
 
   @Test
-  public void cannotOverrideRenewalWhenDueDateIsEarlierOrSameAsCurrentLoanDueDateAndItemIsDeclaredLost() {
+  public void canOverrideRenewalWhenDueDateIsEarlierOrSameAsCurrentLoanDueDateAndItemIsDeclaredLost() {
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource jessica = usersFixture.jessica();
 
     final LoanPolicyBuilder loanablePolicy = new LoanPolicyBuilder()
       .withName("Loanable Policy")
       .withLoanable(true)
-      .rolling(Period.days(1))
+      .rolling(Period.weeks(1))
       .renewFromSystemDate();
 
     UUID loanPolicyId = loanPoliciesFixture.create(loanablePolicy).getId();
@@ -466,15 +471,24 @@ public class OverrideRenewByBarcodeTests extends APITests {
 
     loansFixture.attemptRenewal(422, smallAngryPlanet, jessica);
 
-    final Response overrideAttemptResponse =
-      loansFixture.attemptOverride(smallAngryPlanet, jessica,
+    final DateTime approximateRenewalDate = ClockManager.getClockManager().getDateTime();
+
+    final IndividualResource overriddenRenewalResponse =
+      loansFixture.overrideRenewalByBarcode(smallAngryPlanet, jessica,
         OVERRIDE_COMMENT, null);
 
-    assertThat(overrideAttemptResponse, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
-    assertThat(overrideAttemptResponse.getJson(), hasErrorWith(allOf(
-      hasMessage("renewal would not change the due date"),
-      hasParameter("loanPolicyName", "Loanable Policy"),
-      hasUUIDParameter("loanPolicyId", loanPolicyId))));
+    JsonObject renewedLoan = overriddenRenewalResponse.getJson();
+
+    assertThat("item status should be changed",
+      renewedLoan.getJsonObject("item").getJsonObject("status").getString("name"),
+      is(ItemStatus.CHECKED_OUT.getValue()));
+
+    assertThat("renewal count should be incremented",
+      renewedLoan.getInteger("renewalCount"), is(1));
+
+    assertThat("due date should be 2 weeks later",
+      renewedLoan.getString("dueDate"),
+      withinSecondsAfter(seconds(5), approximateRenewalDate.plusWeeks(1)));
   }
 
   @Test
