@@ -1,3 +1,8 @@
+## 18.0.12 2020-07-01
+
+* Add default limit to the query for getting OpeningPeriods from mod-calendar (Circ 763)
+* Fix NPE during Loan Policy processing with fixed due date schedule (CIRC-775)
+
 ## 18.0.11 2020-06-18
 
 * Increase batch size for scheduled expiration of patron action sessions (CIRC-760)
