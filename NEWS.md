@@ -1,3 +1,9 @@
+## 19.0.2 2020-07-01
+
+* Overdue loan due date is not extended when item is recalled (CIRC-801)
+* Fix NPE during Loan Policy processing with fixed due date schedule (CIRC-775)
+* Add default limit to the query for getting OpeningPeriods from mod-calendar (CIRC-763)
+
 ## 19.0.1 2020-06-16
 
 * Service points with many locations do not allow pick slips to be printed (CIRC-768)
