@@ -1428,7 +1428,8 @@
         "scheduled-notice-storage.scheduled-notices.item.post",
         "usergroups.collection.get",
         "usergroups.item.get",
-        "automated-patron-blocks.collection.get"
+        "automated-patron-blocks.collection.get",
+        "pubsub.publish.post"
       ],
       "visible": false
     },
