@@ -1432,7 +1432,8 @@
         "accounts.collection.get",
         "feefineactions.collection.get",
         "feefineactions.item.post",
-        "accounts.item.put"
+        "accounts.item.put",
+        "pubsub.publish.post"
       ],
       "visible": false
     },
