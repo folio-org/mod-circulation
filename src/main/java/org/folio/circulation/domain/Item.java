@@ -4,6 +4,7 @@ import static org.folio.circulation.domain.ItemStatus.AVAILABLE;
 import static org.folio.circulation.domain.ItemStatus.AWAITING_PICKUP;
 import static org.folio.circulation.domain.ItemStatus.CHECKED_OUT;
 import static org.folio.circulation.domain.ItemStatus.CLAIMED_RETURNED;
+import static org.folio.circulation.domain.ItemStatus.DECLARED_LOST;
 import static org.folio.circulation.domain.ItemStatus.IN_TRANSIT;
 import static org.folio.circulation.domain.ItemStatus.MISSING;
 import static org.folio.circulation.domain.ItemStatus.PAGED;
@@ -111,6 +112,10 @@ public class Item {
 
   private boolean isInTransit() {
     return isInStatus(IN_TRANSIT);
+  }
+
+  public boolean isDeclaredLost() {
+    return isInStatus(DECLARED_LOST);
   }
 
   boolean isNotSameStatus(ItemStatus prospectiveStatus) {
