@@ -2176,6 +2176,7 @@
         "inventory-storage.location-units.institutions.item.get",
         "inventory-storage.location-units.campuses.item.get",
         "inventory-storage.location-units.libraries.item.get",
+        "inventory-storage.location-units.libraries.collection.get",
         "inventory-storage.holdings.collection.get",
         "inventory-storage.holdings.item.get",
         "inventory-storage.instances.collection.get",
@@ -2186,6 +2187,7 @@
         "users.item.get",
         "proxiesfor.collection.get",
         "inventory-storage.material-types.item.get",
+        "inventory-storage.material-types.collection.get",
         "inventory-storage.loan-types.item.get",
         "circulation-storage.loan-policies.item.get",
         "circulation-storage.loan-policies.collection.get",
@@ -2195,7 +2197,8 @@
         "circulation-storage.patron-notice-policies.item.get",
         "scheduled-notice-storage.scheduled-notices.collection.delete",
         "scheduled-notice-storage.scheduled-notices.item.post",
-        "pubsub.publish.post"
+        "pubsub.publish.post",
+        "configuration.entries.collection.get"
       ],
       "visible": false
     },
