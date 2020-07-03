@@ -178,7 +178,8 @@ public class PatronActionSessionRepository {
     MultipleRecords<PatronSessionRecord> records, Map<String, User> usersMap) {
 
     return records.mapRecords(sessionRecord -> {
-      if (sessionRecord.getLoan() != null) {
+      if (sessionRecord.getLoan() != null && sessionRecord.getPatronId() != null) {
+
         return sessionRecord.withLoan(sessionRecord.getLoan().withUser(
           usersMap.get(sessionRecord.getPatronId().toString())));
       }

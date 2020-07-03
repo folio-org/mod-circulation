@@ -90,12 +90,25 @@ public class PatronActionSessionService {
   public CompletableFuture<Result<Void>> endSession(List<ExpiredSession> expiredSessions) {
 
     return patronActionSessionRepository.findPatronActionSessions(expiredSessions,
-        DEFAULT_SESSION_SIZE_PAGE_LIMIT)
-      .thenCompose(r -> r.after(this::sendNoticesForAllUsers))
-      .thenCompose(r -> r.after(records ->
-        allOf(Objects.isNull(records)
-          ? Collections.emptyList()
-          : records.getRecords(), patronActionSessionRepository::delete)))
+      DEFAULT_SESSION_SIZE_PAGE_LIMIT)
+      .thenCompose(r -> r.after(this::endSessionsForRecords));
+  }
+
+  public CompletableFuture<Result<Void>> endSessionsForRecords(
+    MultipleRecords<PatronSessionRecord> records) {
+
+    return sendNoticesForAllUsers(records)
+      .thenCompose(r -> deleteRecords(records));
+  }
+
+  public CompletableFuture<Result<Void>> deleteRecords(
+    MultipleRecords<PatronSessionRecord> records) {
+
+    if (records == null) {
+      return completedFuture(succeeded(null));
+    }
+
+    return allOf(records.getRecords(), patronActionSessionRepository::delete)
       .thenApply(mapResult(v -> null));
   }
 
@@ -125,7 +138,7 @@ public class PatronActionSessionService {
   private CompletableFuture<Result<MultipleRecords<PatronSessionRecord>>> sendNoticesForAllUsers(
     MultipleRecords<PatronSessionRecord> records) {
 
-    if (records.isEmpty()) {
+    if (records == null || records.isEmpty()) {
       return completedFuture(succeeded(null));
     }
 
