@@ -125,16 +125,23 @@ public class PatronActionSessionService {
   private CompletableFuture<Result<MultipleRecords<PatronSessionRecord>>> sendNoticesForAllUsers(
     MultipleRecords<PatronSessionRecord> records) {
 
-    if (records == null || records.isEmpty()) {
+    if (records.isEmpty()) {
       return completedFuture(succeeded(null));
     }
-    List<PatronSessionRecord> sessionRecords = new ArrayList<>(records.getRecords());
 
-    Set<User> users = sessionRecords.stream()
+    List<PatronSessionRecord> sessionRecordsWithLoans = records.getRecords().stream()
+      .filter(record -> record.getLoan() != null && record.getLoan().getUser() != null)
+      .collect(Collectors.toList());
+
+    if (sessionRecordsWithLoans.isEmpty()) {
+      return completedFuture(succeeded(records));
+    }
+
+    Set<User> users = sessionRecordsWithLoans.stream()
       .map(record -> record.getLoan().getUser())
       .collect(Collectors.toSet());
 
-    List<PatronNoticeEvent> patronNoticeEvents = getPatronNoticeEvents(sessionRecords);
+    List<PatronNoticeEvent> patronNoticeEvents = getPatronNoticeEvents(sessionRecordsWithLoans);
 
     return patronNoticeService.acceptMultipleNoticeEvent(patronNoticeEvents,
       loanContexts -> new JsonObject()
