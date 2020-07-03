@@ -72,7 +72,7 @@ public class ExpiredSessionProcessingResource extends Resource {
       .filter(session -> StringUtils.isNotBlank(session.getPatronId()))
       .collect(Collectors.toList());
 
-    if (existingExpiredSessions.isEmpty()) {
+     if (existingExpiredSessions.isEmpty()) {
       return CompletableFuture.completedFuture(Result.succeeded(null));
     }
 
