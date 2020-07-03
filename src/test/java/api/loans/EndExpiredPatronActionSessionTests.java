@@ -4,6 +4,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.empty;
 
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import org.awaitility.Awaitility;
@@ -221,5 +222,56 @@ public class EndExpiredPatronActionSessionTests extends APITests {
     Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
       .until(patronSessionRecordsClient::getAll,  Matchers.hasSize(0));
+  }
+
+  @Test
+  public void expiredSessionWithNonExistentLoanShouldBeEnded() {
+    IndividualResource james = usersFixture.james();
+    InventoryItemResource nod = itemsFixture.basedUponNod();
+
+    checkOutFixture.checkOutByBarcode(nod, james);
+    expiredEndSessionClient.deleteAll();
+
+    List<JsonObject> sessions = patronSessionRecordsClient.getAll();
+    assertThat(sessions, Matchers.hasSize(1));
+
+    String loanId = sessions.get(0).getString("loanId");
+    String patronId = sessions.get(0).getString("patronId");
+
+    loansFixture.deleteLoan(UUID.fromString(loanId));
+    expiredEndSessionClient.create(new EndSessionBuilder()
+      .withPatronId(patronId)
+      .withActionType("Check-out"));
+
+    expiredSessionProcessingClient.runRequestExpiredSessionsProcessing(204);
+
+    Awaitility.await()
+      .atMost(1, TimeUnit.SECONDS)
+      .until(patronSessionRecordsClient::getAll, empty());
+  }
+
+  @Test
+  public void expiredSessionWithNonExistentUserShouldBeEnded() {
+    IndividualResource steve = usersFixture.steve();
+    InventoryItemResource nod = itemsFixture.basedUponNod();
+
+    checkOutFixture.checkOutByBarcode(nod, steve);
+    expiredEndSessionClient.deleteAll();
+
+    List<JsonObject> sessions = patronSessionRecordsClient.getAll();
+    assertThat(sessions, Matchers.hasSize(1));
+
+    String patronId = sessions.get(0).getString("patronId");
+
+    usersFixture.remove(steve);
+    expiredEndSessionClient.create(new EndSessionBuilder()
+      .withPatronId(patronId)
+      .withActionType("Check-out"));
+
+    expiredSessionProcessingClient.runRequestExpiredSessionsProcessing(204);
+
+    Awaitility.await()
+      .atMost(1, TimeUnit.SECONDS)
+      .until(patronSessionRecordsClient::getAll, empty());
   }
 }
