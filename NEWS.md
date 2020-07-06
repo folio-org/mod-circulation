@@ -1,3 +1,7 @@
+## 19.0.3 2020-07-06
+
+* Extend/rename tokens available to automated fee/fine notices (CIRC-758, CIRC-787)
+
 ## 19.0.2 2020-07-01
 
 * Overdue loan due date is not extended when item is recalled (CIRC-801)

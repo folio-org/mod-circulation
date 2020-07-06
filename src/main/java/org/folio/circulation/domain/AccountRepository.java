@@ -138,6 +138,14 @@ public class AccountRepository {
       "feefineactions", FeeFineAction::from);
   }
 
+  public CompletableFuture<Result<Account>> findAccountForAction(FeeFineAction action) {
+    if (isNull(action)) {
+      return ofAsync(() -> null);
+    }
+
+    return findById(action.getAccountId());
+  }
+
   public CompletableFuture<Result<Account>> findById(String id) {
     if(isNull(id)) {
       return ofAsync(() -> null);

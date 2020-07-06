@@ -3,6 +3,7 @@ package org.folio.circulation.domain;
 import static org.folio.circulation.domain.FeeAmount.noFeeAmount;
 import static org.folio.circulation.domain.FeeAmount.zeroFeeAmount;
 import static org.folio.circulation.domain.representations.AccountStatus.CLOSED;
+import static org.folio.circulation.support.JsonPropertyFetcher.getNestedDateTimeProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getNestedStringProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
 
@@ -27,9 +28,11 @@ public class Account {
   private final String status;
   private final String paymentStatus;
   private final Collection<FeeFineAction> feeFineActions;
+  private final DateTime createdAt;
 
   public Account(String id, AccountRelatedRecordsInfo relatedRecordsInfo, FeeAmount amount,
-    FeeAmount remaining, String status, String paymentStatus, Collection<FeeFineAction> actions) {
+    FeeAmount remaining, String status, String paymentStatus, Collection<FeeFineAction> actions,
+    DateTime createdAt) {
 
     this.id = id;
     this.relatedRecordsInfo = relatedRecordsInfo;
@@ -38,6 +41,7 @@ public class Account {
     this.status = status;
     this.paymentStatus = paymentStatus;
     this.feeFineActions = actions;
+    this.createdAt = createdAt;
   }
 
   public static Account from(JsonObject representation) {
@@ -64,7 +68,8 @@ public class Account {
       FeeAmount.from(representation, "remaining"),
       getNestedStringProperty(representation, "status", "name"),
       getNestedStringProperty(representation, "paymentStatus", "name"),
-      Collections.emptyList());
+      Collections.emptyList(),
+      getNestedDateTimeProperty(representation, "metadata", "createdDate"));
   }
 
   public JsonObject toJson() {
@@ -157,6 +162,10 @@ public class Account {
     return status;
   }
 
+  public String getPaymentStatus() {
+    return paymentStatus;
+  }
+
   public Optional<DateTime> getClosedDate() {
     return feeFineActions.stream()
       .filter(ffa -> ffa.getBalance().equals(NumberUtils.DOUBLE_ZERO))
@@ -164,8 +173,13 @@ public class Account {
       .map(FeeFineAction::getDateAction);
   }
 
+  public DateTime getCreatedAt() {
+    return createdAt;
+  }
+
   public Account withFeeFineActions(Collection<FeeFineAction> actions) {
-    return new Account(id, relatedRecordsInfo, amount, remaining, status, paymentStatus, actions);
+    return new Account(id, relatedRecordsInfo, amount, remaining, status, paymentStatus, actions,
+      createdAt);
   }
 
   public boolean isClosed() {
@@ -210,27 +224,27 @@ public class Account {
 
   public Account subtractRemainingAmount(FeeAmount toSubtract) {
     return new Account(this.id, relatedRecordsInfo, amount, remaining.subtract(toSubtract),
-      status, paymentStatus, feeFineActions);
+      status, paymentStatus, feeFineActions, createdAt);
   }
 
   public Account addRemainingAmount(FeeAmount toAdd) {
     return new Account(this.id, relatedRecordsInfo, amount, remaining.add(toAdd),
-      status, paymentStatus, feeFineActions);
+      status, paymentStatus, feeFineActions, createdAt);
   }
 
   private Account withStatus(AccountStatus status) {
     return new Account(id, relatedRecordsInfo, amount, remaining, status.getValue(),
-      paymentStatus, feeFineActions);
+      paymentStatus, feeFineActions, createdAt);
   }
 
   public Account withPaymentStatus(AccountPaymentStatus paymentStatus) {
     return new Account(id, relatedRecordsInfo, amount, remaining, status,
-      paymentStatus.getValue(), feeFineActions);
+      paymentStatus.getValue(), feeFineActions, createdAt);
   }
 
   private Account withRemaining(FeeAmount remaining) {
     return new Account(id, relatedRecordsInfo, amount, remaining, status,
-      paymentStatus, feeFineActions);
+      paymentStatus, feeFineActions, createdAt);
   }
 
   public Account close(AccountPaymentStatus paymentAction) {

@@ -27,6 +27,7 @@ import org.folio.circulation.domain.policy.OverdueFinePolicyRepository;
 import org.folio.circulation.domain.representations.CheckInByBarcodeRequest;
 import org.folio.circulation.domain.representations.StoredAccount;
 import org.folio.circulation.domain.representations.StoredFeeFineAction;
+import org.folio.circulation.support.ClockManager;
 import org.folio.circulation.support.ItemRepository;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
@@ -585,7 +586,8 @@ public class OverdueFineCalculatorServiceTest {
           LOCATION_NAME, ITEM_MATERIAL_TYPE_ID.toString())
       ),
       new FeeAmount(correctOverdueFine), new FeeAmount(correctOverdueFine), "Open", "Outstanding",
-      Collections.emptyList()
+      Collections.emptyList(),
+      ClockManager.getClockManager().getDateTime()
     );
   }
 }
