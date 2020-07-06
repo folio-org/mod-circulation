@@ -21,14 +21,14 @@ import io.vertx.core.json.JsonObject;
 public class JsonScheduledNoticeMapper {
 
   private static final String ID = "id";
-  private static final String LOAN_ID = "loanId";
+  static final String LOAN_ID = "loanId";
   private static final String REQUEST_ID = "requestId";
   private static final String FEE_FINE_ACTION_ID = "feeFineActionId";
   private static final String RECIPIENT_USER_ID = "recipientUserId";
   private static final String NEXT_RUN_TIME = "nextRunTime";
-  private static final String TRIGGERING_EVENT = "triggeringEvent";
-  private static final String NOTICE_CONFIG = "noticeConfig";
-  private static final String TIMING = "timing";
+  static final String TRIGGERING_EVENT = "triggeringEvent";
+  static final String NOTICE_CONFIG = "noticeConfig";
+  static final String TIMING = "timing";
   private static final String RECURRING_PERIOD = "recurringPeriod";
   private static final String TEMPLATE_ID = "templateId";
   private static final String FORMAT = "format";
