@@ -22,6 +22,7 @@ import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Stream;
 
+import org.folio.circulation.domain.notice.schedule.ScheduledNoticesRepository;
 import org.folio.circulation.domain.policy.LostItemPolicyRepository;
 import org.folio.circulation.domain.policy.OverdueFinePolicy;
 import org.folio.circulation.domain.policy.OverdueFinePolicyRepository;
@@ -42,6 +43,7 @@ import org.mockito.ArgumentCaptor;
 import api.support.builders.CheckInByBarcodeRequestBuilder;
 import api.support.builders.FeeFineBuilder;
 import api.support.builders.FeeFineOwnerBuilder;
+import api.support.builders.FeefineActionsBuilder;
 import api.support.builders.InstanceBuilder;
 import api.support.builders.ItemBuilder;
 import api.support.builders.LoanBuilder;
@@ -93,6 +95,7 @@ public class OverdueFineCalculatorServiceTest {
   private UserRepository userRepository;
   private FeeFineActionRepository feeFineActionRepository;
   private LostItemPolicyRepository lostItemPolicyRepository;
+  private ScheduledNoticesRepository scheduledNoticesRepository;
   private Boolean renewal;
   private Boolean dueDateChangedByRecall;
   private Double overdueFine;
@@ -158,12 +161,13 @@ public class OverdueFineCalculatorServiceTest {
     userRepository = mock(UserRepository.class);
     feeFineActionRepository = mock(FeeFineActionRepository.class);
     lostItemPolicyRepository = mock(LostItemPolicyRepository.class);
+    scheduledNoticesRepository = mock(ScheduledNoticesRepository.class);
 
     overdueFineCalculatorService = new OverdueFineCalculatorService(
       new OverdueFineCalculatorService.Repos(
         overdueFinePolicyRepository, accountRepository, itemRepository,
         feeFineOwnerRepository, feeFineRepository, userRepository, feeFineActionRepository,
-        lostItemPolicyRepository),
+        lostItemPolicyRepository, scheduledNoticesRepository),
       overduePeriodCalculatorService);
 
     when(userRepository.getUser(any(String.class))).thenReturn(
@@ -489,6 +493,43 @@ public class OverdueFineCalculatorServiceTest {
     verifyNoInteractions(accountRepository);
   }
 
+  @Test
+  public void shouldDeleteOverdueNoticesWhenFeeFineRecordCreated()
+    throws ExecutionException, InterruptedException {
+    Loan loan = createLoan();
+
+    when(overdueFinePolicyRepository.findOverdueFinePolicyForLoan(any()))
+      .thenReturn(completedFuture(succeeded(loan)));
+    when(overduePeriodCalculatorService.getMinutes(any(), any()))
+      .thenReturn(completedFuture(succeeded(periodCalculatorResult)));
+    when(itemRepository.fetchItemRelatedRecords(any()))
+      .thenReturn(completedFuture(succeeded(createItem())));
+    when(feeFineOwnerRepository.findOwnerForServicePoint(SERVICE_POINT_ID.toString()))
+      .thenReturn(completedFuture(succeeded(createFeeFineOwner())));
+    when(feeFineRepository.getFeeFine(FEE_FINE_TYPE, true))
+      .thenReturn(completedFuture(succeeded(createFeeFine())));
+    when(accountRepository.create(any())).thenReturn(completedFuture(succeeded(createAccount())));
+    when(feeFineActionRepository.create(any()))
+      .thenReturn(completedFuture(succeeded(createFeeFineAction())));
+    when(scheduledNoticesRepository.deleteOverdueNotices(any()))
+      .thenReturn(completedFuture(succeeded(null)));
+
+    if (renewal) {
+      RenewalContext context = createRenewalContext(loan);
+
+      overdueFineCalculatorService.createOverdueFineIfNecessary(context).get();
+    }
+    else {
+      CheckInContext context = new CheckInContext(
+        CheckInByBarcodeRequest.from(createCheckInByBarcodeRequest()).value())
+        .withLoan(loan);
+
+      overdueFineCalculatorService.createOverdueFineIfNecessary(context, LOGGED_IN_USER_ID).get();
+    }
+
+    verify(scheduledNoticesRepository, times(1)).deleteOverdueNotices(any());
+  }
+
   private RenewalContext createRenewalContext(Loan loan) {
     return create(loan, new JsonObject(), LOGGED_IN_USER_ID);
   }
@@ -578,6 +619,11 @@ public class OverdueFineCalculatorServiceTest {
     return FeeFine.from(new FeeFineBuilder()
       .withId(FEE_FINE_ID)
       .withFeeFineType(FEE_FINE_TYPE)
+      .create());
+  }
+
+  private FeeFineAction createFeeFineAction() {
+    return FeeFineAction.from(new FeefineActionsBuilder()
       .create());
   }
 

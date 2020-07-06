@@ -1,7 +1,9 @@
 package org.folio.circulation.domain.notice.schedule;
 
 import static java.util.function.Function.identity;
+import static org.folio.circulation.domain.notice.NoticeTiming.AFTER;
 import static org.folio.circulation.domain.notice.schedule.JsonScheduledNoticeMapper.mapToJson;
+import static org.folio.circulation.domain.notice.schedule.TriggeringEvent.DUE_DATE;
 import static org.folio.circulation.support.ResultBinding.flatMapResult;
 import static org.folio.circulation.support.http.CommonResponseInterpreters.noContentRecordInterpreter;
 import static org.folio.circulation.support.http.ResponseMapping.flatMapUsingJson;
@@ -100,6 +102,14 @@ public class ScheduledNoticesRepository {
 
     return exactMatch("loanId", loanId)
       .combine(exactMatch("triggeringEvent", triggeringEvent.getRepresentation()), CqlQuery::and)
+      .after(this::deleteMany);
+  }
+
+  public CompletableFuture<Result<Response>> deleteOverdueNotices(String loanId) {
+
+    return exactMatch("loanId", loanId)
+      .combine(exactMatch("triggeringEvent", DUE_DATE.getRepresentation()), CqlQuery::and)
+      .combine(exactMatch("noticeConfig.timing", AFTER.getRepresentation()), CqlQuery::and)
       .after(this::deleteMany);
   }
 
