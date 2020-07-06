@@ -1489,7 +1489,8 @@
         "feefineactions.collection.get",
         "feefineactions.item.post",
         "accounts.item.put",
-        "pubsub.publish.post"
+        "pubsub.publish.post",
+        "scheduled-notice-storage.scheduled-notices.item.delete"
       ],
       "visible": false
     },
@@ -1542,7 +1543,8 @@
         "owners.collection.get",
         "accounts.item.post",
         "pubsub.publish.post",
-        "automated-patron-blocks.collection.get"
+        "automated-patron-blocks.collection.get",
+        "scheduled-notice-storage.scheduled-notices.item.delete"
       ],
       "visible": false
 },
@@ -1688,7 +1690,8 @@
         "feefines.item.post",
         "owners.collection.get",
         "accounts.item.post",
-        "pubsub.publish.post"
+        "pubsub.publish.post",
+        "scheduled-notice-storage.scheduled-notices.item.delete"
       ],
       "visible": false
     },

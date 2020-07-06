@@ -198,9 +198,9 @@ public class OverdueFineCalculatorService {
       .thenCompose(r -> r.after(this::lookupFeeFineOwner))
       .thenCompose(r -> r.after(params -> this.lookupLoggedInUser(params, loggedInUserId)))
       .thenCompose(r -> r.after(params -> createAccount(fineAmount, params)))
-      .thenCompose(r -> r.after(feeFineAction ->
-        repos.scheduledNoticesRepository.deleteOverdueNotices(loan.getId())
-          .thenApply(rs -> succeeded(feeFineAction))));
+      .thenCompose(r -> r.after(feeFineAction -> repos.scheduledNoticesRepository
+          .deleteOverdueNotices(loan.getId())
+          .thenApply(rs -> r)));
   }
 
   private CompletableFuture<Result<FeeFineAction>> createAccount(Double fineAmount,
