@@ -5,8 +5,10 @@ import static org.folio.circulation.support.JsonPropertyFetcher.getDateTimePrope
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
+import static org.joda.time.DateTimeZone.UTC;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -22,7 +24,10 @@ import org.joda.time.DateTimeZone;
 import org.junit.Test;
 
 import api.support.APITests;
+import api.support.builders.CheckInByBarcodeRequestBuilder;
 import api.support.builders.CheckOutByBarcodeRequestBuilder;
+import api.support.builders.FeeFineBuilder;
+import api.support.builders.FeeFineOwnerBuilder;
 import api.support.builders.LoanPolicyBuilder;
 import api.support.builders.NoticeConfigurationBuilder;
 import api.support.builders.NoticePolicyBuilder;
@@ -543,5 +548,105 @@ public class DueDateScheduledNoticesTests extends APITests {
       .atMost(1, TimeUnit.SECONDS)
       .until(scheduledNoticesClient::getAll, scheduledNoticesAfterRecallMatcher);
     assertThat(scheduledNoticesClient.getAll(), hasSize(6));
+  }
+
+  @Test
+  public void scheduledOverdueNoticesShouldBeDeletedAfterOverdueFineIsCharged() {
+    useFallbackPolicies(loanPoliciesFixture.canCirculateRolling().getId(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
+      noticePoliciesFixture.activeNotice().getId(),
+      overdueFinePoliciesFixture.facultyStandardDoNotCountClosed().getId(),
+      lostItemFeePoliciesFixture.facultyStandard().getId());
+
+    UUID uponAtTemplateId = UUID.randomUUID();
+
+    UUID afterTemplateId = UUID.randomUUID();
+    Period afterPeriod = Period.days(3);
+    Period afterRecurringPeriod = Period.hours(4);
+
+    JsonObject uponAtDueDateNoticeConfiguration = new NoticeConfigurationBuilder()
+      .withTemplateId(uponAtTemplateId)
+      .withDueDateEvent()
+      .withUponAtTiming()
+      .sendInRealTime(false)
+      .create();
+    JsonObject afterDueDateNoticeConfiguration = new NoticeConfigurationBuilder()
+      .withTemplateId(afterTemplateId)
+      .withDueDateEvent()
+      .withAfterTiming(afterPeriod)
+      .recurring(afterRecurringPeriod)
+      .sendInRealTime(true)
+      .create();
+
+    NoticePolicyBuilder noticePolicy = new NoticePolicyBuilder()
+      .withName("Policy with due date notices")
+      .withLoanNotices(Arrays.asList(
+        uponAtDueDateNoticeConfiguration,
+        afterDueDateNoticeConfiguration));
+    use(noticePolicy);
+
+    final IndividualResource james = usersFixture.james();
+    final UUID checkInServicePointId = servicePointsFixture.cd1().getId();
+    final IndividualResource homeLocation = locationsFixture.basedUponExampleLocation(
+      item -> item.withPrimaryServicePoint(checkInServicePointId));
+    final IndividualResource nod = itemsFixture.basedUponNod(item ->
+      item.withPermanentLocation(homeLocation.getId()));
+    DateTime loanDate = new DateTime(2020, 1, 1, 12, 0, 0, UTC);
+
+    final IndividualResource loan = checkOutFixture.checkOutByBarcode(
+      new CheckOutByBarcodeRequestBuilder()
+        .forItem(nod)
+        .to(james)
+        .on(loanDate)
+        .at(UUID.randomUUID()));
+
+    DateTime dueDate = getDateTimeProperty(loan.getJson(), "dueDate");
+
+    Awaitility.await()
+      .atMost(1, TimeUnit.SECONDS)
+      .until(scheduledNoticesClient::getAll, hasSize(2));
+
+    List<JsonObject> scheduledNotices = scheduledNoticesClient.getAll();
+    assertThat(scheduledNotices,
+      hasItems(
+        hasScheduledLoanNotice(
+          loan.getId(), dueDate,
+          UPON_AT_TIMING, uponAtTemplateId,
+          null, false),
+        hasScheduledLoanNotice(
+          loan.getId(), dueDate.plus(afterPeriod.timePeriod()),
+          AFTER_TIMING, afterTemplateId,
+          afterRecurringPeriod, true)
+      ));
+
+    JsonObject servicePointOwner = new JsonObject();
+    servicePointOwner.put("value", homeLocation.getJson().getString("primaryServicePoint"));
+    servicePointOwner.put("label", "label");
+    UUID ownerId = UUID.randomUUID();
+    feeFineOwnersClient.create(new FeeFineOwnerBuilder()
+      .withId(ownerId)
+      .withOwner("fee-fine-owner")
+      .withServicePointOwner(Collections.singletonList(servicePointOwner))
+    );
+
+    UUID feeFineId = UUID.randomUUID();
+    feeFinesClient.create(new FeeFineBuilder()
+      .withId(feeFineId)
+      .withFeeFineType("Overdue fine")
+      .withOwnerId(ownerId)
+      .withAutomatic(true)
+    );
+
+    DateTime checkInDate = new DateTime(2020, 1, 25, 12, 0, 0, UTC);
+
+    checkInFixture.checkInByBarcode(
+      new CheckInByBarcodeRequestBuilder()
+        .forItem(nod)
+        .on(checkInDate)
+        .at(checkInServicePointId));
+
+    Awaitility.await()
+      .atMost(1, TimeUnit.SECONDS)
+      .until(scheduledNoticesClient::getAll, hasSize(0));
   }
 }
