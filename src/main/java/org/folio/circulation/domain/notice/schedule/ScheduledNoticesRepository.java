@@ -36,6 +36,10 @@ import org.joda.time.DateTimeZone;
 import io.vertx.core.json.JsonObject;
 
 public class ScheduledNoticesRepository {
+
+  private static final List<String> UPON_AT_AND_AFTER_TIMING =
+    Arrays.asList(UPON_AT.getRepresentation(), AFTER.getRepresentation());
+
   public static ScheduledNoticesRepository using(Clients clients) {
     return new ScheduledNoticesRepository(
       clients.scheduledNoticesStorageClient());
@@ -115,8 +119,7 @@ public class ScheduledNoticesRepository {
 
     return exactMatch(LOAN_ID, loanId)
       .combine(exactMatch(TRIGGERING_EVENT, DUE_DATE.getRepresentation()), CqlQuery::and)
-      .combine(exactMatchAny(NOTICE_CONFIG + "." + TIMING,
-        Arrays.asList(UPON_AT.getRepresentation(), AFTER.getRepresentation())), CqlQuery::and)
+      .combine(exactMatchAny(NOTICE_CONFIG + "." + TIMING, UPON_AT_AND_AFTER_TIMING), CqlQuery::and)
       .after(this::deleteMany);
   }
 
