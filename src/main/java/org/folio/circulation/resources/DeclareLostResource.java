@@ -1,6 +1,8 @@
 package org.folio.circulation.resources;
 
 import java.time.LocalDateTime;
+import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
+
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
@@ -84,6 +86,9 @@ public class DeclareLostResource extends Resource {
 
           return loanResult;
         })
+        .thenApply(LoanValidator::refuseWhenLoanIsClosed)
+        .thenApply(this::refuseWhenItemIsAlreadyDeclaredLost)
+        .thenApply(loan -> declareItemLost(loan, request))
         .thenCompose(r -> r.after(storeLoanAndItem::updateLoanAndItemInStorage))
         .thenCompose(r -> r.after(loan -> lostItemFeeService
           .chargeLostItemFees(loan, request, context.getUserId()))))
@@ -105,5 +110,12 @@ public class DeclareLostResource extends Resource {
 
     String loanId = routingContext.request().getParam("id");
     return DeclareItemLostRequest.from(routingContext.getBodyAsJson(), loanId);
+  }
+
+  private Result<Loan> refuseWhenItemIsAlreadyDeclaredLost(Result<Loan> loanResult) {
+    return loanResult.failWhen(
+      loan -> Result.succeeded(loan.getItem().isDeclaredLost()),
+      loan -> singleValidationError("The item is already declared lost",
+        "itemId", loan.getItemId()));
   }
 }

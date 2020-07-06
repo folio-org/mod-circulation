@@ -90,12 +90,25 @@ public class PatronActionSessionService {
   public CompletableFuture<Result<Void>> endSession(List<ExpiredSession> expiredSessions) {
 
     return patronActionSessionRepository.findPatronActionSessions(expiredSessions,
-        DEFAULT_SESSION_SIZE_PAGE_LIMIT)
-      .thenCompose(r -> r.after(this::sendNoticesForAllUsers))
-      .thenCompose(r -> r.after(records ->
-        allOf(Objects.isNull(records)
-          ? Collections.emptyList()
-          : records.getRecords(), patronActionSessionRepository::delete)))
+      DEFAULT_SESSION_SIZE_PAGE_LIMIT)
+      .thenCompose(r -> r.after(this::endSessionsForRecords));
+  }
+
+  public CompletableFuture<Result<Void>> endSessionsForRecords(
+    MultipleRecords<PatronSessionRecord> records) {
+
+    return sendNoticesForAllUsers(records)
+      .thenCompose(r -> deleteRecords(records));
+  }
+
+  public CompletableFuture<Result<Void>> deleteRecords(
+    MultipleRecords<PatronSessionRecord> records) {
+
+    if (records == null) {
+      return completedFuture(succeeded(null));
+    }
+
+    return allOf(records.getRecords(), patronActionSessionRepository::delete)
       .thenApply(mapResult(v -> null));
   }
 
@@ -128,13 +141,20 @@ public class PatronActionSessionService {
     if (records == null || records.isEmpty()) {
       return completedFuture(succeeded(null));
     }
-    List<PatronSessionRecord> sessionRecords = new ArrayList<>(records.getRecords());
 
-    Set<User> users = sessionRecords.stream()
+    List<PatronSessionRecord> sessionRecordsWithLoans = records.getRecords().stream()
+      .filter(record -> record.getLoan() != null && record.getLoan().getUser() != null)
+      .collect(Collectors.toList());
+
+    if (sessionRecordsWithLoans.isEmpty()) {
+      return completedFuture(succeeded(records));
+    }
+
+    Set<User> users = sessionRecordsWithLoans.stream()
       .map(record -> record.getLoan().getUser())
       .collect(Collectors.toSet());
 
-    List<PatronNoticeEvent> patronNoticeEvents = getPatronNoticeEvents(sessionRecords);
+    List<PatronNoticeEvent> patronNoticeEvents = getPatronNoticeEvents(sessionRecordsWithLoans);
 
     return patronNoticeService.acceptMultipleNoticeEvent(patronNoticeEvents,
       loanContexts -> new JsonObject()
