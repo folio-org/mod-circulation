@@ -177,9 +177,14 @@ public class PatronActionSessionRepository {
   private MultipleRecords<PatronSessionRecord> setUsersForLoans(
     MultipleRecords<PatronSessionRecord> records, Map<String, User> usersMap) {
 
-    return records.mapRecords(sessionRecord -> sessionRecord
-      .withLoan(sessionRecord.getLoan().withUser(
-        usersMap.get(sessionRecord.getPatronId().toString()))));
+    return records.mapRecords(sessionRecord -> {
+      if (sessionRecord.getLoan() != null && sessionRecord.getPatronId() != null) {
+
+        return sessionRecord.withLoan(sessionRecord.getLoan().withUser(
+          usersMap.get(sessionRecord.getPatronId().toString())));
+      }
+      return sessionRecord;
+    });
   }
 
   private CompletableFuture<Result<MultipleRecords<PatronSessionRecord>>> findBy(
