@@ -552,12 +552,6 @@ public class DueDateScheduledNoticesTests extends APITests {
 
   @Test
   public void scheduledOverdueNoticesShouldBeDeletedAfterOverdueFineIsCharged() {
-    useFallbackPolicies(loanPoliciesFixture.canCirculateRolling().getId(),
-      requestPoliciesFixture.allowAllRequestPolicy().getId(),
-      noticePoliciesFixture.activeNotice().getId(),
-      overdueFinePoliciesFixture.facultyStandardDoNotCountClosed().getId(),
-      lostItemFeePoliciesFixture.facultyStandard().getId());
-
     UUID uponAtTemplateId = UUID.randomUUID();
 
     UUID afterTemplateId = UUID.randomUUID();
@@ -570,6 +564,7 @@ public class DueDateScheduledNoticesTests extends APITests {
       .withUponAtTiming()
       .sendInRealTime(false)
       .create();
+
     JsonObject afterDueDateNoticeConfiguration = new NoticeConfigurationBuilder()
       .withTemplateId(afterTemplateId)
       .withDueDateEvent()
@@ -583,7 +578,12 @@ public class DueDateScheduledNoticesTests extends APITests {
       .withLoanNotices(Arrays.asList(
         uponAtDueDateNoticeConfiguration,
         afterDueDateNoticeConfiguration));
-    use(noticePolicy);
+
+    useFallbackPolicies(loanPoliciesFixture.canCirculateRolling().getId(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
+      noticePoliciesFixture.create(noticePolicy).getId(),
+      overdueFinePoliciesFixture.facultyStandardDoNotCountClosed().getId(),
+      lostItemFeePoliciesFixture.facultyStandard().getId());
 
     final IndividualResource james = usersFixture.james();
     final UUID checkInServicePointId = servicePointsFixture.cd1().getId();
@@ -619,23 +619,9 @@ public class DueDateScheduledNoticesTests extends APITests {
           afterRecurringPeriod, true)
       ));
 
-    JsonObject servicePointOwner = new JsonObject();
-    servicePointOwner.put("value", homeLocation.getJson().getString("primaryServicePoint"));
-    servicePointOwner.put("label", "label");
-    UUID ownerId = UUID.randomUUID();
-    feeFineOwnersClient.create(new FeeFineOwnerBuilder()
-      .withId(ownerId)
-      .withOwner("fee-fine-owner")
-      .withServicePointOwner(Collections.singletonList(servicePointOwner))
-    );
-
-    UUID feeFineId = UUID.randomUUID();
-    feeFinesClient.create(new FeeFineBuilder()
-      .withId(feeFineId)
-      .withFeeFineType("Overdue fine")
-      .withOwnerId(ownerId)
-      .withAutomatic(true)
-    );
+    UUID ownerId = feeFineOwnerFixture.ownerForServicePoint(
+      UUID.fromString(homeLocation.getJson().getString("primaryServicePoint"))).getId();
+    feeFineTypeFixture.overdueFine(ownerId);
 
     DateTime checkInDate = new DateTime(2020, 1, 25, 12, 0, 0, UTC);
 
