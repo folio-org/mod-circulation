@@ -25,9 +25,9 @@
   <properties>
     <antlr4.version>4.7.2</antlr4.version>
     <drools.version>7.0.0.Final</drools.version>
-    <rmb.version>30.2.1</rmb.version>
+    <rmb.version>30.2.2</rmb.version>
     <vertx.version>3.9.1</vertx.version>
-    <log4j2.version>2.13.0</log4j2.version>
+    <log4j2.version>2.13.3</log4j2.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     <lombok.version>1.18.12</lombok.version>
