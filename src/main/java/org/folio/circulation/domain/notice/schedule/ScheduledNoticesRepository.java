@@ -1,7 +1,14 @@
 package org.folio.circulation.domain.notice.schedule;
 
 import static java.util.function.Function.identity;
+import static org.folio.circulation.domain.notice.NoticeTiming.AFTER;
+import static org.folio.circulation.domain.notice.NoticeTiming.UPON_AT;
+import static org.folio.circulation.domain.notice.schedule.JsonScheduledNoticeMapper.LOAN_ID;
+import static org.folio.circulation.domain.notice.schedule.JsonScheduledNoticeMapper.NOTICE_CONFIG;
+import static org.folio.circulation.domain.notice.schedule.JsonScheduledNoticeMapper.TIMING;
+import static org.folio.circulation.domain.notice.schedule.JsonScheduledNoticeMapper.TRIGGERING_EVENT;
 import static org.folio.circulation.domain.notice.schedule.JsonScheduledNoticeMapper.mapToJson;
+import static org.folio.circulation.domain.notice.schedule.TriggeringEvent.DUE_DATE;
 import static org.folio.circulation.support.ResultBinding.flatMapResult;
 import static org.folio.circulation.support.http.CommonResponseInterpreters.noContentRecordInterpreter;
 import static org.folio.circulation.support.http.ResponseMapping.flatMapUsingJson;
@@ -9,6 +16,7 @@ import static org.folio.circulation.support.http.ResponseMapping.forwardOnFailur
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatchAny;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
@@ -28,6 +36,10 @@ import org.joda.time.DateTimeZone;
 import io.vertx.core.json.JsonObject;
 
 public class ScheduledNoticesRepository {
+
+  private static final List<String> UPON_AT_AND_AFTER_TIMING =
+    Arrays.asList(UPON_AT.getRepresentation(), AFTER.getRepresentation());
+
   public static ScheduledNoticesRepository using(Clients clients) {
     return new ScheduledNoticesRepository(
       clients.scheduledNoticesStorageClient());
@@ -100,6 +112,14 @@ public class ScheduledNoticesRepository {
 
     return exactMatch("loanId", loanId)
       .combine(exactMatch("triggeringEvent", triggeringEvent.getRepresentation()), CqlQuery::and)
+      .after(this::deleteMany);
+  }
+
+  public CompletableFuture<Result<Response>> deleteOverdueNotices(String loanId) {
+
+    return exactMatch(LOAN_ID, loanId)
+      .combine(exactMatch(TRIGGERING_EVENT, DUE_DATE.getRepresentation()), CqlQuery::and)
+      .combine(exactMatchAny(NOTICE_CONFIG + "." + TIMING, UPON_AT_AND_AFTER_TIMING), CqlQuery::and)
       .after(this::deleteMany);
   }
 
