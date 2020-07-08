@@ -1592,7 +1592,8 @@
         "circulation-storage.patron-notice-policies.item.get",
         "scheduled-notice-storage.scheduled-notices.collection.delete",
         "scheduled-notice-storage.scheduled-notices.item.post",
-        "patron-notice.post"
+        "patron-notice.post",
+        "automated-patron-blocks.collection.get"
       ],
       "visible": false
     },
