@@ -1,3 +1,7 @@
+## 19.0.4 2020-07-08
+
+* Refuses lost items to be declared lost (CIRC-792)
+
 ## 19.0.3 2020-07-06
 
 * Extend/rename tokens available to automated fee/fine notices (CIRC-758, CIRC-787)
