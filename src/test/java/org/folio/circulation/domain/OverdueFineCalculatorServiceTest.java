@@ -72,6 +72,7 @@ public class OverdueFineCalculatorServiceTest {
   private static final User LOGGED_IN_USER =
     new User(new UserBuilder().withUsername("admin").create());
   private static final String LOGGED_IN_USER_ID = LOGGED_IN_USER.getId();
+  private static final String CHECK_IN_SERVICE_POINT_NAME = "test service point";
 
   private static final Map<String, Integer> MINUTES_IN_INTERVAL = new HashMap<>();
   static {
@@ -94,6 +95,7 @@ public class OverdueFineCalculatorServiceTest {
   private FeeFineActionRepository feeFineActionRepository;
   private LostItemPolicyRepository lostItemPolicyRepository;
   private ScheduledNoticesRepository scheduledNoticesRepository;
+  private ServicePointRepository servicePointRepository;
   private Boolean renewal;
   private Boolean dueDateChangedByRecall;
   private Double overdueFine;
@@ -160,12 +162,13 @@ public class OverdueFineCalculatorServiceTest {
     feeFineActionRepository = mock(FeeFineActionRepository.class);
     lostItemPolicyRepository = mock(LostItemPolicyRepository.class);
     scheduledNoticesRepository = mock(ScheduledNoticesRepository.class);
+    servicePointRepository = mock(ServicePointRepository.class);
 
     overdueFineCalculatorService = new OverdueFineCalculatorService(
       new OverdueFineCalculatorService.Repos(
         overdueFinePolicyRepository, accountRepository, itemRepository,
         feeFineOwnerRepository, feeFineRepository, userRepository, feeFineActionRepository,
-        lostItemPolicyRepository, scheduledNoticesRepository),
+        lostItemPolicyRepository, scheduledNoticesRepository, servicePointRepository),
       overduePeriodCalculatorService);
 
     when(userRepository.getUser(any(String.class))).thenReturn(
@@ -209,16 +212,18 @@ public class OverdueFineCalculatorServiceTest {
     when(feeFineRepository.getFeeFine(FEE_FINE_TYPE, true))
       .thenReturn(completedFuture(succeeded(createFeeFine())));
     when(accountRepository.create(any())).thenReturn(completedFuture(succeeded(createAccount())));
+    when(servicePointRepository.findServicePointsForLoan(any()))
+      .thenReturn(completedFuture(succeeded(loan.withCheckinServicePoint(createServicePoint()))));
 
     if (renewal) {
-      LoanAndRelatedRecords records = new LoanAndRelatedRecords(loan);
+      LoanAndRelatedRecords records = mock(LoanAndRelatedRecords.class);
+      when(records.getLoan()).thenReturn(null);
 
       overdueFineCalculatorService.createOverdueFineIfNecessary(records, LOGGED_IN_USER_ID).get();
     }
     else {
-      CheckInProcessRecords records = new CheckInProcessRecords(
-        CheckInByBarcodeRequest.from(createCheckInByBarcodeRequest()).value())
-        .withLoan(loan);
+      CheckInProcessRecords records = mock(CheckInProcessRecords.class);
+      when(records.getLoan()).thenReturn(null);
 
       overdueFineCalculatorService.createOverdueFineIfNecessary(records, LOGGED_IN_USER_ID).get();
     }
@@ -257,7 +262,7 @@ public class OverdueFineCalculatorServiceTest {
     assertEquals(ACCOUNT_ID.toString(), feeFineAction.getValue().getString("accountId"));
     assertEquals(String.format("%s, %s", LOGGED_IN_USER.getLastName(),
       LOGGED_IN_USER.getFirstName()), feeFineAction.getValue().getString("source"));
-    assertEquals(FEE_FINE_OWNER, feeFineAction.getValue().getString("createdAt"));
+    assertEquals(CHECK_IN_SERVICE_POINT_NAME, feeFineAction.getValue().getString("createdAt"));
     assertEquals("-", feeFineAction.getValue().getString("transactionInformation"));
     assertEquals(correctOverdueFine, feeFineAction.getValue().getDouble("balance"));
     assertEquals(correctOverdueFine, feeFineAction.getValue().getDouble("amountAction"));
@@ -634,6 +639,13 @@ public class OverdueFineCalculatorServiceTest {
       new FeeAmount(correctOverdueFine), new FeeAmount(correctOverdueFine), "Open", "Outstanding",
       Collections.emptyList(),
       ClockManager.getClockManager().getDateTime()
+    );
+  }
+
+  private ServicePoint createServicePoint() {
+    return new ServicePoint(new JsonObject()
+      .put("id", UUID.randomUUID().toString())
+      .put("name", CHECK_IN_SERVICE_POINT_NAME)
     );
   }
 }
