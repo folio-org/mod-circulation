@@ -14,6 +14,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.Predicate;
 
 import org.apache.commons.lang3.ObjectUtils;
+import org.folio.circulation.domain.notice.schedule.ScheduledNoticesRepository;
 import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.domain.policy.LoanPolicyRepository;
 import org.folio.circulation.domain.policy.LostItemPolicyRepository;
@@ -57,6 +58,7 @@ public class OverdueFineCalculatorService {
         new UserRepository(clients),
         new FeeFineActionRepository(clients),
         new LostItemPolicyRepository(clients),
+        ScheduledNoticesRepository.using(clients),
         new ServicePointRepository(clients)),
       new OverduePeriodCalculatorService(new CalendarRepository(clients),
         new LoanPolicyRepository(clients))
@@ -229,7 +231,10 @@ public class OverdueFineCalculatorService {
       .thenCompose(r -> r.after(this::lookupFeeFineOwner))
       .thenCompose(r -> r.after(params -> this.lookupLoggedInUser(params, loggedInUserId)))
       .thenCompose(r -> r.after(this::lookupLoanServicePoints))
-      .thenCompose(r -> r.after(params -> createAccount(fineAmount, params)));
+      .thenCompose(r -> r.after(params -> createAccount(fineAmount, params)))
+      .thenCompose(r -> r.after(feeFineAction -> repos.scheduledNoticesRepository
+          .deleteOverdueNotices(loan.getId())
+          .thenApply(rs -> r)));
   }
 
   private CompletableFuture<Result<FeeFineAction>> createAccount(Double fineAmount,
@@ -322,6 +327,7 @@ public class OverdueFineCalculatorService {
     private final UserRepository userRepository;
     private final FeeFineActionRepository feeFineActionRepository;
     private final LostItemPolicyRepository lostItemPolicyRepository;
+    private final ScheduledNoticesRepository scheduledNoticesRepository;
     private final ServicePointRepository servicePointRepository;
 
     Repos(OverdueFinePolicyRepository overdueFinePolicyRepository,
@@ -329,6 +335,7 @@ public class OverdueFineCalculatorService {
       FeeFineOwnerRepository feeFineOwnerRepository, FeeFineRepository feeFineRepository,
       UserRepository userRepository, FeeFineActionRepository feeFineActionRepository,
       LostItemPolicyRepository lostItemPolicyRepository,
+      ScheduledNoticesRepository scheduledNoticesRepository,
       ServicePointRepository servicePointRepository) {
 
       this.overdueFinePolicyRepository = overdueFinePolicyRepository;
@@ -339,6 +346,7 @@ public class OverdueFineCalculatorService {
       this.userRepository = userRepository;
       this.feeFineActionRepository = feeFineActionRepository;
       this.lostItemPolicyRepository = lostItemPolicyRepository;
+      this.scheduledNoticesRepository = scheduledNoticesRepository;
       this.servicePointRepository = servicePointRepository;
     }
   }
