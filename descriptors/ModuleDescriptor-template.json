@@ -1546,7 +1546,9 @@
         "owners.collection.get",
         "accounts.item.post",
         "pubsub.publish.post",
-        "automated-patron-blocks.collection.get"
+        "automated-patron-blocks.collection.get",
+        "overdue-fines-policies.item.get",
+        "lost-item-fees-policies.item.get"
       ],
       "visible": false
 },
@@ -1593,7 +1595,9 @@
         "scheduled-notice-storage.scheduled-notices.collection.delete",
         "scheduled-notice-storage.scheduled-notices.item.post",
         "patron-notice.post",
-        "automated-patron-blocks.collection.get"
+        "automated-patron-blocks.collection.get",
+        "overdue-fines-policies.item.get",
+        "lost-item-fees-policies.item.get"
       ],
       "visible": false
     },
