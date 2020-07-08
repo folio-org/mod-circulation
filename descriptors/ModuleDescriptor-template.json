@@ -676,6 +676,7 @@
             "circulation-storage.loans.item.get",
             "circulation-storage.loan-policies.item.get",
             "circulation-storage.loan-policies.collection.get",
+            "circulation-storage.fixed-due-date-schedules.collection.get",
             "inventory-storage.items.item.get",
             "inventory-storage.locations.item.get",
             "inventory-storage.location-units.institutions.item.get",
@@ -689,7 +690,8 @@
             "circulation.rules.loan-policy.get",
             "configuration.entries.collection.get",
             "patron-notice.post",
-            "users.item.get"
+            "users.item.get",
+            "templates.item.get"
           ],
           "unit": "minute",
           "delay": "2"
@@ -1548,7 +1550,9 @@
         "accounts.item.post",
         "pubsub.publish.post",
         "automated-patron-blocks.collection.get",
-        "scheduled-notice-storage.scheduled-notices.item.delete"
+        "scheduled-notice-storage.scheduled-notices.item.delete",
+        "overdue-fines-policies.item.get",
+        "lost-item-fees-policies.item.get"
       ],
       "visible": false
 },
@@ -1594,7 +1598,10 @@
         "circulation-storage.patron-notice-policies.item.get",
         "scheduled-notice-storage.scheduled-notices.collection.delete",
         "scheduled-notice-storage.scheduled-notices.item.post",
-        "patron-notice.post"
+        "patron-notice.post",
+        "automated-patron-blocks.collection.get",
+        "overdue-fines-policies.item.get",
+        "lost-item-fees-policies.item.get"
       ],
       "visible": false
     },
