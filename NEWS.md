@@ -1,3 +1,9 @@
+## 19.0.6 2020-07-09
+
+* Allows renewal of declared lost item when due date is not changed (CIRC-809)
+* Fixes permission failure for change due date for recalled item (CIRC-807)
+* Fixes permission failure for override check out (CIRC-806)
+
 ## 19.0.5 2020-07-09
 
 * Upgrade to RAML Module Builder v30.2.2 (CIRC-827)
