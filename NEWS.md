@@ -1,3 +1,9 @@
+## 19.0.5 2020-07-09
+
+* Upgrade to RAML Module Builder v30.2.2 (CIRC-827)
+* Upgrade to Vert.x stack v3.9.1 (CIRC-796)
+* Fixes security vulnerabilities (CIRC-792, CIRC-827)
+
 ## 19.0.4 2020-07-08
 
 * Refuses lost items to be declared lost (CIRC-792)
