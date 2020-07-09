@@ -217,13 +217,13 @@ public class OverdueFineCalculatorServiceTest {
 
     if (renewal) {
       LoanAndRelatedRecords records = mock(LoanAndRelatedRecords.class);
-      when(records.getLoan()).thenReturn(null);
+      when(records.getLoan()).thenReturn(loan);
 
       overdueFineCalculatorService.createOverdueFineIfNecessary(records, LOGGED_IN_USER_ID).get();
     }
     else {
       CheckInProcessRecords records = mock(CheckInProcessRecords.class);
-      when(records.getLoan()).thenReturn(null);
+      when(records.getLoan()).thenReturn(loan);
 
       overdueFineCalculatorService.createOverdueFineIfNecessary(records, LOGGED_IN_USER_ID).get();
     }
@@ -517,6 +517,8 @@ public class OverdueFineCalculatorServiceTest {
       .thenReturn(completedFuture(succeeded(createFeeFineAction())));
     when(scheduledNoticesRepository.deleteOverdueNotices(any()))
       .thenReturn(completedFuture(succeeded(null)));
+    when(servicePointRepository.findServicePointsForLoan(any()))
+      .thenReturn(completedFuture(succeeded(loan.withCheckinServicePoint(createServicePoint()))));
 
     if (renewal) {
       LoanAndRelatedRecords records = new LoanAndRelatedRecords(loan);
