@@ -1,3 +1,10 @@
+## 19.0.7 2020-07-09
+
+* Add new stop sending event for overdue notices (CIRC-722)
+* Delete broken patron action sessions (CIRC-815)
+* Fix fee/fine action's Created at field (CIRC-816)
+* Add module permissions (CIRC-820, CIRC-802, CIRC-804)
+
 ## 19.0.6 2020-07-09
 
 * Allows renewal of declared lost item when due date is not changed (CIRC-809)
