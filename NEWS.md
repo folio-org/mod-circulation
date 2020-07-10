@@ -1,3 +1,7 @@
+## 19.0.8 2020-07-10
+
+* Fixes permission failure for automatic anonymization (CIRC-803)
+
 ## 19.0.7 2020-07-10
 
 * Add new stop sending event for overdue notices (CIRC-722)

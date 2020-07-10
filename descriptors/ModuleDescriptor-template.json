@@ -800,6 +800,7 @@
             "inventory-storage.service-points.collection.get",
             "inventory-storage.service-points.item.get",
             "inventory-storage.loan-types.item.get",
+            "inventory.items.collection.get",
             "users.item.get",
             "users.collection.get",
             "proxiesfor.collection.get",
