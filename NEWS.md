@@ -1,3 +1,7 @@
+## 19.0.9 2020-07-15
+
+* Fixes event loop blocking issue for clearance report (CIRC-817)
+
 ## 19.0.8 2020-07-10
 
 * Fixes permission failure for automatic anonymization (CIRC-803)
