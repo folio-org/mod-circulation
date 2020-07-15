@@ -4,6 +4,7 @@ import static org.folio.circulation.domain.ItemStatus.AWAITING_PICKUP;
 import static org.folio.circulation.domain.RequestStatus.CLOSED_CANCELLED;
 import static org.folio.circulation.domain.RequestStatus.CLOSED_PICKUP_EXPIRED;
 import static org.folio.circulation.domain.RequestStatus.OPEN_AWAITING_PICKUP;
+import static org.folio.circulation.support.AsyncCoordinationUtil.allOf;
 import static org.folio.circulation.support.CqlSortBy.descending;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatchAny;
@@ -17,7 +18,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Predicate;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -95,7 +95,7 @@ public class RequestHoldShelfClearanceResource extends Resource {
       .thenComposeAsync(r -> findAwaitingPickupRequestsByItemsIds(requestsStorage, r.value()))
       .thenComposeAsync(r -> findExpiredOrCancelledRequestByItemIds(requestsStorage, r.value()))
       .thenApply(r -> findExpiredOrCancelledRequestByServicePoint(servicePointId, r.value()))
-      .thenApply(r -> fetchItemToRequest(r, itemRepository))
+      .thenCompose(r -> fetchItemToRequest(r, itemRepository))
       .thenApply(this::mapResultToJson)
       .thenApply(r -> r.map(JsonHttpResponse::ok))
       .thenAccept(context::writeResultToHttpResponse);
@@ -234,24 +234,25 @@ public class RequestHoldShelfClearanceResource extends Resource {
       .thenApply(result -> result.next(this::mapResponseToRequest));
   }
 
-  private Result<List<Result<Request>>> fetchItemToRequest(Result<List<Request>> requests,
-    ItemRepository itemRepository) {
+  private CompletableFuture<Result<List<Request>>> fetchItemToRequest(
+    Result<List<Request>> requestsResult, ItemRepository itemRepository) {
 
-    return requests.map(r -> r.stream()
-      .map(request -> fetchItem(itemRepository, request))
-      .map(CompletableFuture::join)
-      .collect(Collectors.toList()));
+    return requestsResult.after(
+      requests -> allOf(requests, request -> fetchItem(itemRepository, request)));
   }
 
-  private Result<JsonObject> mapResultToJson(Result<List<Result<Request>>> requests) {
-    return requests
-      .map(resultList ->
-        Result.combineAll(resultList).map(r -> r.stream()
-          .map(result -> new RequestRepresentation().extendedRepresentation(result))
-          .collect(Collector.of(JsonArray::new, JsonArray::add, JsonArray::add))))
-      .next(r -> r.next(jsonArray -> Result.succeeded(new JsonObject()
-        .put(REQUESTS_KEY, jsonArray)
-        .put(TOTAL_RECORDS_KEY, jsonArray.size()))));
+  private Result<JsonObject> mapResultToJson(Result<List<Request>> requestsResult) {
+    return requestsResult.map(this::toRequestsResponse);
+  }
+
+  private JsonObject toRequestsResponse(List<Request> requests) {
+    final List<JsonObject> requestsRepresentations = requests.stream()
+      .map(request -> new RequestRepresentation().extendedRepresentation(request))
+      .collect(Collectors.toList());
+
+    return new JsonObject()
+      .put(REQUESTS_KEY, new JsonArray(requestsRepresentations))
+      .put(TOTAL_RECORDS_KEY, requestsRepresentations.size());
   }
 
   private CompletableFuture<Result<Request>> fetchItem(ItemRepository itemRepository, Request request) {
