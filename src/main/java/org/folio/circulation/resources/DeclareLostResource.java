@@ -1,19 +1,15 @@
 package org.folio.circulation.resources;
 
-<<<<<<< HEAD
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 
-=======
 import java.time.LocalDateTime;
->>>>>>> d0e6bafd... Generating note for items declared lost
 import java.util.Objects;
-import java.util.Optional;
-import java.util.concurrent.ExecutionException;
+import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.StoreLoanAndItem;
-import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanRepository;
+import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.NoteLink;
 import org.folio.circulation.domain.NoteLinkType;
 import org.folio.circulation.domain.NoteRepresentation;
@@ -29,6 +25,7 @@ import org.folio.circulation.support.ItemRepository;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.http.server.NoContentResponse;
 import org.folio.circulation.support.http.server.WebContext;
+import org.folio.circulation.support.utils.CollectionUtil;
 
 import io.vertx.core.http.HttpClient;
 import io.vertx.ext.web.Router;
@@ -57,41 +54,15 @@ public class DeclareLostResource extends Resource {
     final LostItemFeeChargingService lostItemFeeService = new LostItemFeeChargingService(clients);
     final EventPublisher eventPublisher = new EventPublisher(routingContext);
 
-    final NotesRepository notesRepo = new NotesRepository(clients);
-    final NoteTypesRepository noteTypesRepo = new NoteTypesRepository(clients);
-
     validateDeclaredLostRequest(routingContext).after(request -> loanRepository.getById(request.getLoanId())
-        .thenApply(LoanValidator::refuseWhenLoanIsClosed).thenApply(loan -> {
-          boolean hasBeenClaimedReturned = loan.value().hasItemWithStatus(ItemStatus.CLAIMED_RETURNED);
-
-          Result<Loan> loanResult = declareItemLost(loan, request);
-
-          if (hasBeenClaimedReturned) {
-            Optional<NoteType> noteType;
-            try {
-              noteType = noteTypesRepo.findBy("query=name==\"General note\"").get().value().getRecords().stream()
-                  .findFirst();
-              if(noteType.isPresent()) {
-                notesRepo.create(new NoteRepresentation(NoteRepresentation.builder()
-                  .withTitle(NOTE_MESSAGE)
-                  .withTypeId(noteType.get().getId())
-                  .withContent(NOTE_MESSAGE)
-                  .withDate(LocalDateTime.now().toString())
-                  .withLinks(
-                    NoteLink.from(loan.value().getUserId(), NoteLinkType.USER.getValue())
-                  )
-                ));
-              }
-            } catch (InterruptedException | ExecutionException e) {
-              e.printStackTrace();
-            }
-          }
-
-          return loanResult;
-        })
-        .thenCompose(r -> r.after(storeLoanAndItem::updateLoanAndItemInStorage))
-        .thenCompose(r -> r.after(loan -> lostItemFeeService
-          .chargeLostItemFees(loan, request, context.getUserId()))))
+      .thenApply(LoanValidator::refuseWhenLoanIsClosed)
+      .thenApply(LoanValidator::refuseWhenLoanIsClosed)
+      .thenApply(this::refuseWhenItemIsAlreadyDeclaredLost)
+      .thenApply(loan -> declareItemLost(loan, request))
+      .thenCompose(r -> r.after(loan -> createNote(clients, loan)))
+      .thenCompose(r -> r.after(storeLoanAndItem::updateLoanAndItemInStorage))
+      .thenCompose(r -> r.after(loan -> lostItemFeeService
+        .chargeLostItemFees(loan, request, context.getUserId()))))
       .thenComposeAsync(r -> r.after(eventPublisher::publishDeclaredLostEvent))
       .thenApply(r -> r.toFixedValue(NoContentResponse::noContent))
       .thenAccept(context::writeResultToHttpResponse);
@@ -117,5 +88,33 @@ public class DeclareLostResource extends Resource {
       loan -> Result.succeeded(loan.getItem().isDeclaredLost()),
       loan -> singleValidationError("The item is already declared lost",
         "itemId", loan.getItemId()));
+  }
+
+  private CompletableFuture<Result<Loan>> createNote(Clients clients, Loan loan) {
+    final NotesRepository notesRepo = new NotesRepository(clients);
+    final NoteTypesRepository noteTypesRepo = new NoteTypesRepository(clients);
+
+    return noteTypesRepo.findBy("query=name==\"General note\"")
+      .thenApply(this::refuseIfNoteTypeNotFound)
+      .thenApply(r -> r.map(CollectionUtil::firstOrNull))
+      .thenCompose(r -> r.after(noteType -> notesRepo.create(createNote(noteType, loan))))
+      .thenApply(r -> r.map(notUsed -> loan));
+  }
+
+  private NoteRepresentation createNote(NoteType noteType, Loan loan) {
+    return new NoteRepresentation(NoteRepresentation.builder()
+      .withTitle(NOTE_MESSAGE)
+      .withTypeId(noteType.getId())
+      .withContent(NOTE_MESSAGE)
+      .withDate(LocalDateTime.now().toString())
+      .withLinks(NoteLink.from(loan.getUserId(), NoteLinkType.USER.getValue())));
+  }
+
+  private Result<MultipleRecords<NoteType>> refuseIfNoteTypeNotFound(
+    Result<MultipleRecords<NoteType>> noteTypeResult) {
+
+    return noteTypeResult.failWhen(
+      notes -> Result.succeeded(notes.isEmpty()),
+      notes -> singleValidationError("No General note type found", "noteType", null));
   }
 }
