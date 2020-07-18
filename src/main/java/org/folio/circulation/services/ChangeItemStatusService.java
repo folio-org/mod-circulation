@@ -1,12 +1,12 @@
 package org.folio.circulation.services;
 
-import static org.folio.circulation.support.ItemRepository.noLocationMaterialTypeAndLoanTypeInstance;
+import static org.folio.circulation.infrastructure.storage.ItemRepository.noLocationMaterialTypeAndLoanTypeInstance;
 
 import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.StoreLoanAndItem;
 import org.folio.circulation.domain.Loan;
-import org.folio.circulation.domain.LoanRepository;
+import org.folio.circulation.infrastructure.storage.LoanRepository;
 import org.folio.circulation.domain.representations.ChangeItemStatusRequest;
 import org.folio.circulation.domain.validation.LoanValidator;
 import org.folio.circulation.support.Clients;

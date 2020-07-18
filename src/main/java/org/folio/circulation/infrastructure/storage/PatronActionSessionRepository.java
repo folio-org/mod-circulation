@@ -1,4 +1,4 @@
-package org.folio.circulation.domain.notice.session;
+package org.folio.circulation.infrastructure.storage;
 
 import static java.util.function.Function.identity;
 import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
@@ -24,13 +24,12 @@ import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Loan;
-import org.folio.circulation.infrastructure.storage.LoanRepository;
+import org.folio.circulation.domain.notice.session.ExpiredSession;
+import org.folio.circulation.domain.notice.session.PatronActionType;
+import org.folio.circulation.domain.notice.session.PatronSessionRecord;
 import org.folio.circulation.domain.Location;
-import org.folio.circulation.infrastructure.storage.LocationRepository;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.User;
-import org.folio.circulation.domain.UserRepository;
-import org.folio.circulation.infrastructure.storage.LoanPolicyRepository;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.Result;
@@ -41,7 +40,6 @@ import org.folio.circulation.support.http.client.ResponseInterpreter;
 import io.vertx.core.json.JsonObject;
 
 public class PatronActionSessionRepository {
-
   private static final String ID = "id";
   private static final String PATRON_ID = "patronId";
   private static final String LOAN_ID = "loanId";

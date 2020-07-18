@@ -6,7 +6,7 @@ import static org.folio.circulation.support.Result.of;
 import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.domain.Item;
-import org.folio.circulation.support.ItemRepository;
+import org.folio.circulation.infrastructure.storage.ItemRepository;
 import org.folio.circulation.support.Result;
 
 public class ItemByBarcodeInStorageFinder {

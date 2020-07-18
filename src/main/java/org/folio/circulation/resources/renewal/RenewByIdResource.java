@@ -8,12 +8,12 @@ import java.util.concurrent.CompletableFuture;
 
 import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.domain.Loan;
-import org.folio.circulation.domain.LoanRepository;
-import org.folio.circulation.domain.UserRepository;
+import org.folio.circulation.infrastructure.storage.LoanRepository;
+import org.folio.circulation.infrastructure.storage.UserRepository;
 import org.folio.circulation.domain.validation.UserNotFoundValidator;
 import org.folio.circulation.storage.ItemByIdInStorageFinder;
 import org.folio.circulation.storage.SingleOpenLoanForItemInStorageFinder;
-import org.folio.circulation.support.ItemRepository;
+import org.folio.circulation.infrastructure.storage.ItemRepository;
 import org.folio.circulation.support.Result;
 
 import io.vertx.core.http.HttpClient;

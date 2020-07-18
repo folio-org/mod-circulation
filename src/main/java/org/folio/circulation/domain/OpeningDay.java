@@ -19,7 +19,7 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
 public class OpeningDay {
-  static OpeningDay createClosedDay() {
+  public static OpeningDay createClosedDay() {
     return createOpeningDay(Collections.emptyList(), null, true, false);
   }
 

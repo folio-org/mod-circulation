@@ -1,4 +1,4 @@
-package org.folio.circulation.domain;
+package org.folio.circulation.infrastructure.storage;
 
 import static org.folio.circulation.domain.MultipleRecords.from;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
@@ -7,6 +7,9 @@ import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
+import org.folio.circulation.domain.Configuration;
+import org.folio.circulation.domain.ConfigurationService;
+import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.anonymization.config.LoanAnonymizationConfiguration;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.GetManyRecordsClient;
@@ -53,7 +56,7 @@ public class ConfigurationRepository {
     return defineModuleNameAndConfigNameFilter("LOAN_HISTORY", "loan_history")
       .after(query -> configurationClient.getMany(query, DEFAULT_PAGE_LIMIT))
       .thenApply(result -> result.next(response ->
-        from(response, Configuration::new, CONFIGS_KEY)))
+        MultipleRecords.from(response, Configuration::new, CONFIGS_KEY)))
       .thenApply(r -> r.next(r1 -> r.map(MultipleRecords::getRecords)))
       .thenApply(r -> r.map(this::getFirstConfiguration));
   }

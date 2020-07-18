@@ -48,7 +48,7 @@ public class SingleRecordFetcher<T> {
         .otherwise(resultOnFailure));
   }
 
-  static SingleRecordFetcher<JsonObject> jsonOrNull(
+  public static SingleRecordFetcher<JsonObject> jsonOrNull(
     CollectionResourceClient client,
     String recordType) {
 

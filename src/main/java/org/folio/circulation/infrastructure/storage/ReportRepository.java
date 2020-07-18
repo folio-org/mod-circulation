@@ -1,4 +1,4 @@
-package org.folio.circulation.domain;
+package org.folio.circulation.infrastructure.storage;
 
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
 import static org.folio.circulation.support.http.client.PageLimit.limit;
@@ -8,13 +8,15 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
+import org.folio.circulation.domain.Item;
+import org.folio.circulation.domain.ItemsReportFetcher;
+import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.GetManyRecordsClient;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.http.client.CqlQuery;
 
 public class ReportRepository {
-
   private final GetManyRecordsClient itemsClient;
 
   private static final int PAGE_LIMIT = 100;

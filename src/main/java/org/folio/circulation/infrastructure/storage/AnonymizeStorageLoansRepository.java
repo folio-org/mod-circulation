@@ -1,4 +1,4 @@
-package org.folio.circulation.domain;
+package org.folio.circulation.infrastructure.storage;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.support.JsonStringArrayHelper.toList;

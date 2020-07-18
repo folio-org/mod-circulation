@@ -1,4 +1,4 @@
-package org.folio.circulation.domain;
+package org.folio.circulation.infrastructure.storage;
 
 import static java.util.Objects.isNull;
 import static java.util.concurrent.CompletableFuture.completedFuture;
@@ -18,12 +18,17 @@ import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
+import org.folio.circulation.domain.Loan;
+import org.folio.circulation.domain.LoanAndRelatedRecords;
+import org.folio.circulation.domain.MultipleRecords;
+import org.folio.circulation.domain.PatronGroup;
+import org.folio.circulation.domain.Request;
+import org.folio.circulation.domain.User;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.FetchSingleRecord;
 import org.folio.circulation.support.FindWithMultipleCqlIndexValues;
 import org.folio.circulation.support.Result;
-
 
 public class PatronGroupRepository {
   private final CollectionResourceClient patronGroupsStorageClient;

@@ -1,4 +1,4 @@
-package org.folio.circulation.domain.policy;
+package org.folio.circulation.infrastructure.storage;
 
 import static java.lang.String.format;
 import static java.util.concurrent.CompletableFuture.completedFuture;
@@ -13,6 +13,7 @@ import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestAndRelatedRecords;
 import org.folio.circulation.domain.User;
+import org.folio.circulation.domain.policy.RequestPolicy;
 import org.folio.circulation.support.CirculationRulesClient;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;

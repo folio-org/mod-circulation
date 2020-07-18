@@ -1,4 +1,4 @@
-package org.folio.circulation.domain;
+package org.folio.circulation.infrastructure.storage;
 
 import static org.folio.circulation.support.Result.ofAsync;
 import static org.folio.circulation.support.Result.succeeded;
@@ -9,6 +9,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
+import org.folio.circulation.domain.AddressType;
+import org.folio.circulation.domain.MultipleRecords;
+import org.folio.circulation.domain.Request;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.FetchSingleRecord;

@@ -1,4 +1,4 @@
-package org.folio.circulation.domain;
+package org.folio.circulation.infrastructure.storage;
 
 import static java.lang.String.format;
 import static java.util.Objects.nonNull;
@@ -35,12 +35,17 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
+import org.folio.circulation.domain.Account;
+import org.folio.circulation.domain.Item;
+import org.folio.circulation.domain.Loan;
+import org.folio.circulation.domain.LoanAndRelatedRecords;
+import org.folio.circulation.domain.MultipleRecords;
+import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.policy.Policy;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.FetchSingleRecord;
 import org.folio.circulation.support.FindWithMultipleCqlIndexValues;
-import org.folio.circulation.support.ItemRepository;
 import org.folio.circulation.support.RecordNotFoundFailure;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.SingleRecordFetcher;

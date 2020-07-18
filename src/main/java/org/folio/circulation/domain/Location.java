@@ -87,7 +87,7 @@ public class Location {
     return getProperty(institutionRepresentation, "name");
   }
 
-  Location withLibraryRepresentation(JsonObject libraryRepresentation) {
+  public Location withLibraryRepresentation(JsonObject libraryRepresentation) {
     return new Location(representation, libraryRepresentation, campusRepresentation, institutionRepresentation);
   }
 

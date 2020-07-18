@@ -1,6 +1,9 @@
 package org.folio.circulation.domain;
 
-import org.folio.circulation.domain.policy.RequestPolicyRepository;
+import org.folio.circulation.infrastructure.storage.RequestPolicyRepository;
+import org.folio.circulation.infrastructure.storage.AutomatedPatronBlocksRepository;
+import org.folio.circulation.infrastructure.storage.ConfigurationRepository;
+import org.folio.circulation.infrastructure.storage.RequestRepository;
 
 public class CreateRequestRepositories {
   private final RequestRepository requestRepository;

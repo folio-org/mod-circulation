@@ -8,18 +8,18 @@ import static org.folio.circulation.support.Result.succeeded;
 import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.domain.Loan;
-import org.folio.circulation.domain.LoanRepository;
+import org.folio.circulation.infrastructure.storage.LoanRepository;
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestAndRelatedRecords;
-import org.folio.circulation.domain.RequestQueueRepository;
+import org.folio.circulation.infrastructure.storage.RequestQueueRepository;
 import org.folio.circulation.domain.RequestStatus;
-import org.folio.circulation.domain.ServicePointRepository;
+import org.folio.circulation.infrastructure.storage.ServicePointRepository;
 import org.folio.circulation.domain.User;
-import org.folio.circulation.domain.UserRepository;
+import org.folio.circulation.infrastructure.storage.UserRepository;
 import org.folio.circulation.domain.validation.ProxyRelationshipValidator;
 import org.folio.circulation.domain.validation.ServicePointPickupLocationValidator;
 import org.folio.circulation.support.BadRequestFailure;
-import org.folio.circulation.support.ItemRepository;
+import org.folio.circulation.infrastructure.storage.ItemRepository;
 import org.folio.circulation.support.Result;
 
 import io.vertx.core.json.JsonObject;

@@ -1,4 +1,4 @@
-package org.folio.circulation.domain.notice.session;
+package org.folio.circulation.infrastructure.storage;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -7,13 +7,14 @@ import java.util.concurrent.CompletableFuture;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import org.apache.commons.lang3.StringUtils;
+import org.folio.circulation.domain.notice.session.ExpiredSession;
+import org.folio.circulation.domain.notice.session.PatronActionType;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.FetchSingleRecord;
 import org.folio.circulation.support.Result;
 
 public class PatronExpiredSessionRepository {
-
   private static final int EXPIRED_SESSIONS_LIMIT = 100;
   private static final String PATH_PARAM_WITH_QUERY = "expired-session-patron-ids?action_type=%s&session_inactivity_time_limit=%s&limit=%d";
   private static final String EXPIRED_SESSIONS = "expiredSessions";

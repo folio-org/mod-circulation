@@ -12,6 +12,10 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
+import org.folio.circulation.infrastructure.storage.ConfigurationRepository;
+import org.folio.circulation.infrastructure.storage.RequestQueueRepository;
+import org.folio.circulation.infrastructure.storage.RequestRepository;
+import org.folio.circulation.infrastructure.storage.ServicePointRepository;
 import org.folio.circulation.resources.context.ReorderRequestContext;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.ClockManager;

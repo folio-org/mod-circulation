@@ -1,4 +1,4 @@
-package org.folio.circulation.domain.notice.schedule;
+package org.folio.circulation.infrastructure.storage;
 
 import static java.lang.String.format;
 import static org.folio.circulation.domain.notice.schedule.TriggeringEvent.from;
@@ -10,6 +10,10 @@ import static org.folio.circulation.support.Result.succeeded;
 
 import org.folio.circulation.domain.notice.NoticeFormat;
 import org.folio.circulation.domain.notice.NoticeTiming;
+import org.folio.circulation.domain.notice.schedule.ScheduledNotice;
+import org.folio.circulation.domain.notice.schedule.ScheduledNoticeBuilder;
+import org.folio.circulation.domain.notice.schedule.ScheduledNoticeConfig;
+import org.folio.circulation.domain.notice.schedule.ScheduledNoticeConfigBuilder;
 import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.support.HttpFailure;
 import org.folio.circulation.support.Result;
@@ -19,7 +23,6 @@ import org.joda.time.DateTimeZone;
 import io.vertx.core.json.JsonObject;
 
 public class JsonScheduledNoticeMapper {
-
   private static final String ID = "id";
   public static final String LOAN_ID = "loanId";
   private static final String REQUEST_ID = "requestId";
@@ -34,8 +37,7 @@ public class JsonScheduledNoticeMapper {
   private static final String FORMAT = "format";
   private static final String SEND_IN_REAL_TIME = "sendInRealTime";
 
-  private JsonScheduledNoticeMapper() {
-  }
+  private JsonScheduledNoticeMapper() { }
 
   public static Result<ScheduledNotice> mapFromJson(JsonObject jsonObject) {
     return succeeded(new ScheduledNoticeBuilder())
@@ -97,5 +99,4 @@ public class JsonScheduledNoticeMapper {
       .put(FORMAT, config.getFormat().getRepresentation())
       .put(SEND_IN_REAL_TIME, config.sendInRealTime());
   }
-
 }

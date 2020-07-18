@@ -1,10 +1,8 @@
-package org.folio.circulation.domain.policy;
+package org.folio.circulation.infrastructure.storage;
 
 import java.util.function.Function;
 
 import org.folio.circulation.domain.notice.PatronNoticePolicy;
-import org.folio.circulation.domain.notice.PatronNoticePolicyMapper;
-import org.folio.circulation.infrastructure.storage.CirculationPolicyRepository;
 import org.folio.circulation.rules.AppliedRuleConditions;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.Result;

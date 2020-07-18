@@ -1,13 +1,13 @@
-package org.folio.circulation.domain.notice.schedule;
+package org.folio.circulation.infrastructure.storage;
 
 import static java.util.function.Function.identity;
 import static org.folio.circulation.domain.notice.NoticeTiming.AFTER;
 import static org.folio.circulation.domain.notice.NoticeTiming.UPON_AT;
-import static org.folio.circulation.domain.notice.schedule.JsonScheduledNoticeMapper.LOAN_ID;
-import static org.folio.circulation.domain.notice.schedule.JsonScheduledNoticeMapper.NOTICE_CONFIG;
-import static org.folio.circulation.domain.notice.schedule.JsonScheduledNoticeMapper.TIMING;
-import static org.folio.circulation.domain.notice.schedule.JsonScheduledNoticeMapper.TRIGGERING_EVENT;
-import static org.folio.circulation.domain.notice.schedule.JsonScheduledNoticeMapper.mapToJson;
+import static org.folio.circulation.infrastructure.storage.JsonScheduledNoticeMapper.LOAN_ID;
+import static org.folio.circulation.infrastructure.storage.JsonScheduledNoticeMapper.NOTICE_CONFIG;
+import static org.folio.circulation.infrastructure.storage.JsonScheduledNoticeMapper.TIMING;
+import static org.folio.circulation.infrastructure.storage.JsonScheduledNoticeMapper.TRIGGERING_EVENT;
+import static org.folio.circulation.infrastructure.storage.JsonScheduledNoticeMapper.mapToJson;
 import static org.folio.circulation.domain.notice.schedule.TriggeringEvent.DUE_DATE;
 import static org.folio.circulation.support.ResultBinding.flatMapResult;
 import static org.folio.circulation.support.http.CommonResponseInterpreters.noContentRecordInterpreter;
@@ -22,6 +22,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 import org.folio.circulation.domain.MultipleRecords;
+import org.folio.circulation.domain.notice.schedule.ScheduledNotice;
+import org.folio.circulation.domain.notice.schedule.TriggeringEvent;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.CqlSortBy;
@@ -36,7 +38,6 @@ import org.joda.time.DateTimeZone;
 import io.vertx.core.json.JsonObject;
 
 public class ScheduledNoticesRepository {
-
   private static final List<String> UPON_AT_AND_AFTER_TIMING =
     Arrays.asList(UPON_AT.getRepresentation(), AFTER.getRepresentation());
 
@@ -107,7 +108,7 @@ public class ScheduledNoticesRepository {
       .thenApply(flatMapResult(interpreter::apply));
   }
 
-  CompletableFuture<Result<Response>> deleteByLoanIdAndTriggeringEvent(
+  public CompletableFuture<Result<Response>> deleteByLoanIdAndTriggeringEvent(
     String loanId, TriggeringEvent triggeringEvent) {
 
     return exactMatch("loanId", loanId)
@@ -123,7 +124,7 @@ public class ScheduledNoticesRepository {
       .after(this::deleteMany);
   }
 
-  CompletableFuture<Result<Response>> deleteByRequestId(String requestId) {
+  public CompletableFuture<Result<Response>> deleteByRequestId(String requestId) {
     return exactMatch("requestId", requestId).after(this::deleteMany);
   }
 

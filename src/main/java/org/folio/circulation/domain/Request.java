@@ -69,7 +69,7 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
     return new Request(representation, null, null, null, null, null, null, null);
   }
 
-  Request withRequestJsonRepresentation(JsonObject representation) {
+  public Request withRequestJsonRepresentation(JsonObject representation) {
     return new Request(representation,
       cancellationReasonRepresentation,
       getItem(),
@@ -80,7 +80,7 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
       getPickupServicePoint());
   }
 
-  Request withCancellationReasonJsonRepresentation(JsonObject representation) {
+  public Request withCancellationReasonJsonRepresentation(JsonObject representation) {
     return new Request(requestRepresentation,
       representation,
       getItem(),

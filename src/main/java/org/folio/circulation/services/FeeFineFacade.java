@@ -11,12 +11,12 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.domain.Account;
-import org.folio.circulation.domain.AccountRepository;
-import org.folio.circulation.domain.FeeFineActionRepository;
+import org.folio.circulation.infrastructure.storage.AccountRepository;
+import org.folio.circulation.infrastructure.storage.FeeFineActionRepository;
 import org.folio.circulation.domain.ServicePoint;
-import org.folio.circulation.domain.ServicePointRepository;
+import org.folio.circulation.infrastructure.storage.ServicePointRepository;
 import org.folio.circulation.domain.User;
-import org.folio.circulation.domain.UserRepository;
+import org.folio.circulation.infrastructure.storage.UserRepository;
 import org.folio.circulation.domain.representations.StoredAccount;
 import org.folio.circulation.domain.representations.StoredFeeFineAction;
 import org.folio.circulation.services.feefine.AccountRefundContext;

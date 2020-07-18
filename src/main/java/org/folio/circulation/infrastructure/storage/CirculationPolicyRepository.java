@@ -1,4 +1,4 @@
-package org.folio.circulation.domain.policy;
+package org.folio.circulation.infrastructure.storage;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.support.Result.failed;

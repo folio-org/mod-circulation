@@ -1,4 +1,4 @@
-package org.folio.circulation.domain.policy;
+package org.folio.circulation.infrastructure.storage;
 
 import static java.util.Objects.isNull;
 import static org.folio.circulation.support.Result.ofAsync;
@@ -15,6 +15,7 @@ import java.util.stream.Collectors;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.domain.MultipleRecords;
+import org.folio.circulation.domain.policy.OverdueFinePolicy;
 import org.folio.circulation.infrastructure.storage.CirculationPolicyRepository;
 import org.folio.circulation.rules.AppliedRuleConditions;
 import org.folio.circulation.support.Clients;
@@ -25,7 +26,6 @@ import org.folio.circulation.support.Result;
 import io.vertx.core.json.JsonObject;
 
 public class OverdueFinePolicyRepository extends CirculationPolicyRepository<OverdueFinePolicy> {
-
   public OverdueFinePolicyRepository(Clients clients) {
     super(clients.circulationOverdueFineRules(), clients.overdueFinesPoliciesStorage());
   }

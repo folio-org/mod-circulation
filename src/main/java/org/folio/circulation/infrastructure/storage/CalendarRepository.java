@@ -1,4 +1,4 @@
-package org.folio.circulation.domain;
+package org.folio.circulation.infrastructure.storage;
 
 import static java.util.function.Function.identity;
 import static org.folio.circulation.domain.OpeningDay.createClosedDay;
@@ -10,6 +10,8 @@ import java.util.Collections;
 import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.AdjacentOpeningDays;
+import org.folio.circulation.domain.MultipleRecords;
+import org.folio.circulation.domain.OpeningDay;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.FetchSingleRecord;

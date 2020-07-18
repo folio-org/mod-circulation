@@ -1,4 +1,4 @@
-package org.folio.circulation.support;
+package org.folio.circulation.infrastructure.storage;
 
 import static java.util.Objects.isNull;
 import static java.util.concurrent.CompletableFuture.completedFuture;
@@ -26,11 +26,14 @@ import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.ItemRelatedRecord;
 import org.folio.circulation.domain.Location;
-import org.folio.circulation.domain.LocationRepository;
-import org.folio.circulation.domain.MaterialTypeRepository;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.ServicePoint;
-import org.folio.circulation.domain.ServicePointRepository;
+import org.folio.circulation.support.Clients;
+import org.folio.circulation.support.CollectionResourceClient;
+import org.folio.circulation.support.FindWithCqlQuery;
+import org.folio.circulation.support.FindWithMultipleCqlIndexValues;
+import org.folio.circulation.support.Result;
+import org.folio.circulation.support.SingleRecordFetcher;
 import org.folio.circulation.support.fetching.RecordFetching;
 import org.folio.circulation.support.http.client.CqlQuery;
 import org.folio.circulation.support.http.client.PageLimit;

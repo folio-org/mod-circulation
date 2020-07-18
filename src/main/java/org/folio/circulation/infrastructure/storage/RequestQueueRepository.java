@@ -1,4 +1,4 @@
-package org.folio.circulation.domain;
+package org.folio.circulation.infrastructure.storage;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.support.CqlSortBy.ascending;
@@ -10,6 +10,12 @@ import static org.folio.circulation.support.http.client.PageLimit.oneThousand;
 import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
 
+import org.folio.circulation.domain.ItemRelatedRecord;
+import org.folio.circulation.domain.LoanAndRelatedRecords;
+import org.folio.circulation.domain.MultipleRecords;
+import org.folio.circulation.domain.Request;
+import org.folio.circulation.domain.RequestQueue;
+import org.folio.circulation.domain.RequestStatus;
 import org.folio.circulation.resources.context.RenewalContext;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.Result;
@@ -72,7 +78,7 @@ public class RequestQueueRepository {
       .thenApply(r -> r.map(RequestQueue::new));
   }
 
-  CompletableFuture<Result<RequestQueue>> updateRequestsWithChangedPositions(
+  public CompletableFuture<Result<RequestQueue>> updateRequestsWithChangedPositions(
     RequestQueue requestQueue) {
 
     Collection<Request> requestsWithChangedPosition = requestQueue

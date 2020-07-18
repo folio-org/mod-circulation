@@ -7,7 +7,7 @@ public class Configuration {
 
   private String value;
 
-  Configuration(JsonObject jsonObject) {
+  public Configuration(JsonObject jsonObject) {
     value = jsonObject.getString(VALUE_KEY);
   }
 

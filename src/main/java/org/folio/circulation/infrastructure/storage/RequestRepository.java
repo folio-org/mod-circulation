@@ -1,4 +1,4 @@
-package org.folio.circulation.domain;
+package org.folio.circulation.infrastructure.storage;
 
 import static java.util.Objects.isNull;
 import static org.folio.circulation.support.Result.failed;
@@ -13,13 +13,16 @@ import static org.folio.circulation.support.http.ResponseMapping.mapUsingJson;
 import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
 
-import org.folio.circulation.infrastructure.storage.LoanRepository;
-import org.folio.circulation.infrastructure.storage.PatronGroupRepository;
+import org.folio.circulation.domain.MultipleRecords;
+import org.folio.circulation.domain.Request;
+import org.folio.circulation.domain.RequestAndRelatedRecords;
+import org.folio.circulation.domain.ServicePoint;
+import org.folio.circulation.domain.StoredRequestRepresentation;
+import org.folio.circulation.domain.User;
 import org.folio.circulation.storage.RequestBatch;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.FetchSingleRecord;
-import org.folio.circulation.infrastructure.storage.ItemRepository;
 import org.folio.circulation.support.RecordNotFoundFailure;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.SingleRecordFetcher;

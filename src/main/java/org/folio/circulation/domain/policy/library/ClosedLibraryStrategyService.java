@@ -9,7 +9,7 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.AdjacentOpeningDays;
-import org.folio.circulation.domain.CalendarRepository;
+import org.folio.circulation.infrastructure.storage.CalendarRepository;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.domain.policy.LoanPolicy;

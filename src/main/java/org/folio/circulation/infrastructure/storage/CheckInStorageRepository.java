@@ -1,4 +1,4 @@
-package org.folio.circulation.storage;
+package org.folio.circulation.infrastructure.storage;
 
 import static org.folio.circulation.support.http.ResponseMapping.forwardOnFailure;
 

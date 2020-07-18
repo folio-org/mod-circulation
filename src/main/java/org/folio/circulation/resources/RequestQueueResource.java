@@ -4,12 +4,12 @@ import static java.util.concurrent.CompletableFuture.completedFuture;
 
 import java.util.concurrent.CompletableFuture;
 
-import org.folio.circulation.domain.ConfigurationRepository;
+import org.folio.circulation.infrastructure.storage.ConfigurationRepository;
 import org.folio.circulation.domain.MultipleRecords;
-import org.folio.circulation.domain.RequestQueueRepository;
-import org.folio.circulation.domain.RequestRepository;
+import org.folio.circulation.infrastructure.storage.RequestQueueRepository;
+import org.folio.circulation.infrastructure.storage.RequestRepository;
 import org.folio.circulation.domain.RequestRepresentation;
-import org.folio.circulation.domain.ServicePointRepository;
+import org.folio.circulation.infrastructure.storage.ServicePointRepository;
 import org.folio.circulation.domain.UpdateRequestQueue;
 import org.folio.circulation.domain.reorder.ReorderQueueRequest;
 import org.folio.circulation.domain.validation.RequestQueueValidation;

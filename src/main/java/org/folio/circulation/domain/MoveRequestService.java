@@ -5,8 +5,10 @@ import static org.folio.circulation.support.Result.of;
 
 import java.util.concurrent.CompletableFuture;
 
-import org.folio.circulation.domain.policy.RequestPolicyRepository;
+import org.folio.circulation.infrastructure.storage.RequestPolicyRepository;
 import org.folio.circulation.domain.validation.RequestLoanValidator;
+import org.folio.circulation.infrastructure.storage.ConfigurationRepository;
+import org.folio.circulation.infrastructure.storage.RequestRepository;
 import org.folio.circulation.resources.RequestNoticeSender;
 import org.folio.circulation.support.Result;
 

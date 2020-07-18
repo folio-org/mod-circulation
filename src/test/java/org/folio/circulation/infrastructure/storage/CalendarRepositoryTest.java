@@ -1,4 +1,4 @@
-package org.folio.circulation.domain;
+package org.folio.circulation.infrastructure.storage;
 
 import static org.joda.time.DateTimeZone.UTC;
 import static org.junit.Assert.assertEquals;
@@ -19,7 +19,6 @@ import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 
 public class CalendarRepositoryTest {
-
   private static final String QUERY_PARAMETERS = "servicePointId=%s&startDate=%s&endDate=%s&includeClosedDays=false&limit=10000";
 
   @Test

@@ -15,7 +15,7 @@ public class RequestPolicy {
     this.requestTypes = requestTypes;
   }
 
-  static RequestPolicy from(JsonObject representation) {
+  public static RequestPolicy from(JsonObject representation) {
     return new RequestPolicy(JsonStringArrayHelper
       .toStream(representation, "requestTypes")
       .collect(Collectors.toList()));

@@ -1,4 +1,4 @@
-package org.folio.circulation.domain.notice;
+package org.folio.circulation.infrastructure.storage;
 
 import static java.lang.String.format;
 import static org.folio.circulation.support.JsonPropertyFetcher.getBooleanProperty;
@@ -11,6 +11,12 @@ import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
 
+import org.folio.circulation.domain.notice.NoticeConfiguration;
+import org.folio.circulation.domain.notice.NoticeConfigurationBuilder;
+import org.folio.circulation.domain.notice.NoticeEventType;
+import org.folio.circulation.domain.notice.NoticeFormat;
+import org.folio.circulation.domain.notice.NoticeTiming;
+import org.folio.circulation.domain.notice.PatronNoticePolicy;
 import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.support.HttpFailure;
 import org.folio.circulation.support.JsonArrayHelper;
@@ -20,7 +26,6 @@ import org.folio.circulation.support.ServerErrorFailure;
 import io.vertx.core.json.JsonObject;
 
 public class PatronNoticePolicyMapper implements Function<JsonObject, Result<PatronNoticePolicy>> {
-
   private static final String LOAN_NOTICES = "loanNotices";
   private static final String REQUEST_NOTICES = "requestNotices";
   private static final String FEE_FINE_NOTICES = "feeFineNotices";

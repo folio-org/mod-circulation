@@ -4,7 +4,7 @@ import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.domain.CheckInContext;
 import org.folio.circulation.domain.CheckInRecord;
-import org.folio.circulation.storage.CheckInStorageRepository;
+import org.folio.circulation.infrastructure.storage.CheckInStorageRepository;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.ClockManager;
 import org.folio.circulation.support.Result;

@@ -1,4 +1,4 @@
-package org.folio.circulation.domain;
+package org.folio.circulation.infrastructure.storage;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.support.Result.ofAsync;
@@ -15,6 +15,10 @@ import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.folio.circulation.domain.Loan;
+import org.folio.circulation.domain.MultipleRecords;
+import org.folio.circulation.domain.Request;
+import org.folio.circulation.domain.ServicePoint;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.FetchSingleRecord;

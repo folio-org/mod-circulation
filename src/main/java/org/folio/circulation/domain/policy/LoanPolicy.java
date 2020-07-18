@@ -59,7 +59,7 @@ public class LoanPolicy extends Policy {
       new AppliedRuleConditions(false, false, false));
   }
 
-  LoanPolicy(
+  public LoanPolicy(
     JsonObject representation,
     FixedDueDateSchedules fixedDueDateSchedules,
     FixedDueDateSchedules alternateRenewalFixedDueDateSchedules,
@@ -302,7 +302,7 @@ public class LoanPolicy extends Policy {
     return StringUtils.equalsIgnoreCase(getProfileId(loansPolicy), profileId);
   }
 
-  LoanPolicy withDueDateSchedules(FixedDueDateSchedules loanSchedules) {
+  public LoanPolicy withDueDateSchedules(FixedDueDateSchedules loanSchedules) {
     return new LoanPolicy(representation, loanSchedules,
       alternateRenewalFixedDueDateSchedules, ruleConditionsEntity);
   }
@@ -312,7 +312,7 @@ public class LoanPolicy extends Policy {
     return withDueDateSchedules(FixedDueDateSchedules.from(fixedDueDateSchedules));
   }
 
-  LoanPolicy withAlternateRenewalSchedules(FixedDueDateSchedules renewalSchedules) {
+  public LoanPolicy withAlternateRenewalSchedules(FixedDueDateSchedules renewalSchedules) {
     return new LoanPolicy(representation, fixedDueDateSchedules,
       renewalSchedules, ruleConditionsEntity);
   }
@@ -380,11 +380,11 @@ public class LoanPolicy extends Policy {
     return period.getInteger(DURATION);
   }
 
-  String getLoansFixedDueDateScheduleId() {
+  public String getLoansFixedDueDateScheduleId() {
     return getProperty(getLoansPolicy(), "fixedDueDateScheduleId");
   }
 
-  String getAlternateRenewalsFixedDueDateScheduleId() {
+  public String getAlternateRenewalsFixedDueDateScheduleId() {
     return getProperty(getRenewalsPolicy(), "alternateFixedDueDateScheduleId");
   }
 

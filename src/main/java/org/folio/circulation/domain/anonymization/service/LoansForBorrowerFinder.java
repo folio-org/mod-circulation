@@ -6,7 +6,7 @@ import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.domain.Loan;
-import org.folio.circulation.domain.LoanRepository;
+import org.folio.circulation.infrastructure.storage.LoanRepository;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.Result;
 

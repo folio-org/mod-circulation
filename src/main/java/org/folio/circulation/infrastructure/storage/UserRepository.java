@@ -1,4 +1,4 @@
-package org.folio.circulation.domain;
+package org.folio.circulation.infrastructure.storage;
 
 import static java.util.Objects.isNull;
 import static java.util.concurrent.CompletableFuture.completedFuture;
@@ -19,6 +19,11 @@ import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
+import org.folio.circulation.domain.Loan;
+import org.folio.circulation.domain.MultipleRecords;
+import org.folio.circulation.domain.Request;
+import org.folio.circulation.domain.User;
+import org.folio.circulation.domain.UserRelatedRecord;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.FetchSingleRecord;
@@ -31,7 +36,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class UserRepository {
-
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
   private static final String USERS_RECORD_PROPERTY = "users";
 

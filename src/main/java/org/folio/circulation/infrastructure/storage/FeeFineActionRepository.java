@@ -1,4 +1,4 @@
-package org.folio.circulation.domain;
+package org.folio.circulation.infrastructure.storage;
 
 import static java.util.Objects.isNull;
 import static java.util.concurrent.CompletableFuture.allOf;
@@ -10,6 +10,7 @@ import static org.folio.circulation.support.http.ResponseMapping.mapUsingJson;
 import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
 
+import org.folio.circulation.domain.FeeFineAction;
 import org.folio.circulation.domain.representations.StoredFeeFineAction;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;

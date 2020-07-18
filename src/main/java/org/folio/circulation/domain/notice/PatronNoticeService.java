@@ -20,7 +20,7 @@ import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.lang3.tuple.Pair;
 import org.folio.circulation.domain.notice.schedule.ScheduledNoticeConfig;
-import org.folio.circulation.domain.policy.PatronNoticePolicyRepository;
+import org.folio.circulation.infrastructure.storage.PatronNoticePolicyRepository;
 import org.folio.circulation.rules.AppliedRuleConditions;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
