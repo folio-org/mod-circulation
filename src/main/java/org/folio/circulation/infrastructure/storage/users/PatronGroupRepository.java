@@ -1,4 +1,4 @@
-package org.folio.circulation.infrastructure.storage;
+package org.folio.circulation.infrastructure.storage.users;
 
 import static java.util.Objects.isNull;
 import static java.util.concurrent.CompletableFuture.completedFuture;
@@ -37,7 +37,7 @@ public class PatronGroupRepository {
     patronGroupsStorageClient = clients.patronGroupsStorage();
   }
 
-  CompletableFuture<Result<Request>> findPatronGroupsForSingleRequestUsers(
+  public CompletableFuture<Result<Request>> findPatronGroupsForSingleRequestUsers(
     Result<Request> result) {
 
     return result.after(request -> {

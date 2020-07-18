@@ -15,7 +15,7 @@ import org.folio.circulation.infrastructure.storage.RequestQueueRepository;
 import org.folio.circulation.domain.RequestStatus;
 import org.folio.circulation.infrastructure.storage.ServicePointRepository;
 import org.folio.circulation.domain.User;
-import org.folio.circulation.infrastructure.storage.UserRepository;
+import org.folio.circulation.infrastructure.storage.users.UserRepository;
 import org.folio.circulation.domain.validation.ProxyRelationshipValidator;
 import org.folio.circulation.domain.validation.ServicePointPickupLocationValidator;
 import org.folio.circulation.support.BadRequestFailure;

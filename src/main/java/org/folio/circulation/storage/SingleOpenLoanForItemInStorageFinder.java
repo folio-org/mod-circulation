@@ -14,7 +14,7 @@ import org.folio.circulation.domain.Loan;
 import org.folio.circulation.infrastructure.storage.LoanRepository;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.User;
-import org.folio.circulation.infrastructure.storage.UserRepository;
+import org.folio.circulation.infrastructure.storage.users.UserRepository;
 import org.folio.circulation.domain.validation.MoreThanOneLoanValidator;
 import org.folio.circulation.domain.validation.NoLoanValidator;
 import org.folio.circulation.support.Result;

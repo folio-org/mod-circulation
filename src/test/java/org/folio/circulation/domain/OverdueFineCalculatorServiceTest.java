@@ -34,7 +34,7 @@ import org.folio.circulation.infrastructure.storage.feesandfines.FeeFineActionRe
 import org.folio.circulation.infrastructure.storage.feesandfines.FeeFineOwnerRepository;
 import org.folio.circulation.infrastructure.storage.feesandfines.FeeFineRepository;
 import org.folio.circulation.infrastructure.storage.ServicePointRepository;
-import org.folio.circulation.infrastructure.storage.UserRepository;
+import org.folio.circulation.infrastructure.storage.users.UserRepository;
 import org.folio.circulation.resources.context.RenewalContext;
 import org.folio.circulation.support.ClockManager;
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;

@@ -46,7 +46,7 @@ import org.folio.circulation.domain.UpdateLoan;
 import org.folio.circulation.domain.UpdateRequestQueue;
 import org.folio.circulation.domain.UpdateUponRequest;
 import org.folio.circulation.domain.UserManualBlock;
-import org.folio.circulation.infrastructure.storage.UserRepository;
+import org.folio.circulation.infrastructure.storage.users.UserRepository;
 import org.folio.circulation.infrastructure.storage.LoanPolicyRepository;
 import org.folio.circulation.infrastructure.storage.RequestPolicyRepository;
 import org.folio.circulation.domain.representations.RequestByInstanceIdRequest;

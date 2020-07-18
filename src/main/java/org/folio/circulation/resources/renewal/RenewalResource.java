@@ -11,7 +11,7 @@ import org.folio.circulation.domain.Loan;
 import org.folio.circulation.infrastructure.storage.LoanRepository;
 import org.folio.circulation.domain.LoanRepresentation;
 import org.folio.circulation.infrastructure.storage.RequestQueueRepository;
-import org.folio.circulation.infrastructure.storage.UserRepository;
+import org.folio.circulation.infrastructure.storage.users.UserRepository;
 import org.folio.circulation.domain.notice.schedule.DueDateScheduledNoticeService;
 import org.folio.circulation.domain.notice.schedule.FeeFineScheduledNoticeService;
 import org.folio.circulation.infrastructure.storage.LoanPolicyRepository;
