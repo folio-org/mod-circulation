@@ -32,7 +32,7 @@ public abstract class CirculationPolicyRepository<T> {
   private final CirculationRulesClient circulationRulesClient;
   final CollectionResourceClient policyStorageClient;
 
-  CirculationPolicyRepository(
+  protected CirculationPolicyRepository(
     CirculationRulesClient circulationRulesClient,
     CollectionResourceClient policyStorageClient) {
     this.circulationRulesClient = circulationRulesClient;

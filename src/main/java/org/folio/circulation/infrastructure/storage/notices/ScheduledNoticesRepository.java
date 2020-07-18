@@ -1,13 +1,13 @@
-package org.folio.circulation.infrastructure.storage;
+package org.folio.circulation.infrastructure.storage.notices;
 
 import static java.util.function.Function.identity;
 import static org.folio.circulation.domain.notice.NoticeTiming.AFTER;
 import static org.folio.circulation.domain.notice.NoticeTiming.UPON_AT;
-import static org.folio.circulation.infrastructure.storage.JsonScheduledNoticeMapper.LOAN_ID;
-import static org.folio.circulation.infrastructure.storage.JsonScheduledNoticeMapper.NOTICE_CONFIG;
-import static org.folio.circulation.infrastructure.storage.JsonScheduledNoticeMapper.TIMING;
-import static org.folio.circulation.infrastructure.storage.JsonScheduledNoticeMapper.TRIGGERING_EVENT;
-import static org.folio.circulation.infrastructure.storage.JsonScheduledNoticeMapper.mapToJson;
+import static org.folio.circulation.infrastructure.storage.notices.JsonScheduledNoticeMapper.LOAN_ID;
+import static org.folio.circulation.infrastructure.storage.notices.JsonScheduledNoticeMapper.NOTICE_CONFIG;
+import static org.folio.circulation.infrastructure.storage.notices.JsonScheduledNoticeMapper.TIMING;
+import static org.folio.circulation.infrastructure.storage.notices.JsonScheduledNoticeMapper.TRIGGERING_EVENT;
+import static org.folio.circulation.infrastructure.storage.notices.JsonScheduledNoticeMapper.mapToJson;
 import static org.folio.circulation.domain.notice.schedule.TriggeringEvent.DUE_DATE;
 import static org.folio.circulation.support.ResultBinding.flatMapResult;
 import static org.folio.circulation.support.http.CommonResponseInterpreters.noContentRecordInterpreter;

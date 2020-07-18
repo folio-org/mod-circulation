@@ -1,4 +1,4 @@
-package org.folio.circulation.infrastructure.storage;
+package org.folio.circulation.infrastructure.storage.notices;
 
 import static java.lang.String.format;
 import static org.folio.circulation.domain.notice.schedule.TriggeringEvent.from;

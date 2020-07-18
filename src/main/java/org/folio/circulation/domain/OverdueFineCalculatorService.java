@@ -14,7 +14,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.Predicate;
 
 import org.apache.commons.lang3.ObjectUtils;
-import org.folio.circulation.infrastructure.storage.ScheduledNoticesRepository;
+import org.folio.circulation.infrastructure.storage.notices.ScheduledNoticesRepository;
 import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.infrastructure.storage.LoanPolicyRepository;
 import org.folio.circulation.infrastructure.storage.LostItemPolicyRepository;

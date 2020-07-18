@@ -1,8 +1,9 @@
-package org.folio.circulation.infrastructure.storage;
+package org.folio.circulation.infrastructure.storage.notices;
 
 import java.util.function.Function;
 
 import org.folio.circulation.domain.notice.PatronNoticePolicy;
+import org.folio.circulation.infrastructure.storage.CirculationPolicyRepository;
 import org.folio.circulation.rules.AppliedRuleConditions;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.Result;
@@ -10,7 +11,6 @@ import org.folio.circulation.support.Result;
 import io.vertx.core.json.JsonObject;
 
 public class PatronNoticePolicyRepository extends CirculationPolicyRepository<PatronNoticePolicy> {
-
   private final Function<JsonObject, Result<PatronNoticePolicy>> patronNoticePolicyMapper;
 
   public PatronNoticePolicyRepository(Clients clients) {

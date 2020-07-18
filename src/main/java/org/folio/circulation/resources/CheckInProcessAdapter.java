@@ -31,7 +31,7 @@ import org.folio.circulation.domain.notice.PatronNoticeEvent;
 import org.folio.circulation.domain.notice.PatronNoticeEventBuilder;
 import org.folio.circulation.domain.notice.PatronNoticeService;
 import org.folio.circulation.domain.notice.schedule.FeeFineScheduledNoticeService;
-import org.folio.circulation.infrastructure.storage.PatronNoticePolicyRepository;
+import org.folio.circulation.infrastructure.storage.notices.PatronNoticePolicyRepository;
 import org.folio.circulation.services.LogCheckInService;
 import org.folio.circulation.services.LostItemFeeRefundService;
 import org.folio.circulation.storage.ItemByBarcodeInStorageFinder;

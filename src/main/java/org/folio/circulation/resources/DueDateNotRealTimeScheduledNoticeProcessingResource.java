@@ -15,7 +15,7 @@ import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.notice.schedule.DueDateNotRealTimeScheduledNoticeHandler;
 import org.folio.circulation.domain.notice.schedule.ScheduledNotice;
 import org.folio.circulation.domain.notice.schedule.ScheduledNoticeGroupDefinition;
-import org.folio.circulation.infrastructure.storage.ScheduledNoticesRepository;
+import org.folio.circulation.infrastructure.storage.notices.ScheduledNoticesRepository;
 import org.folio.circulation.domain.notice.schedule.TriggeringEvent;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CqlSortBy;
