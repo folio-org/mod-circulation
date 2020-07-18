@@ -13,11 +13,13 @@ import static org.folio.circulation.support.http.ResponseMapping.mapUsingJson;
 import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
 
+import org.folio.circulation.infrastructure.storage.LoanRepository;
+import org.folio.circulation.infrastructure.storage.PatronGroupRepository;
 import org.folio.circulation.storage.RequestBatch;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.FetchSingleRecord;
-import org.folio.circulation.support.ItemRepository;
+import org.folio.circulation.infrastructure.storage.ItemRepository;
 import org.folio.circulation.support.RecordNotFoundFailure;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.SingleRecordFetcher;
