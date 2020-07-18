@@ -8,7 +8,7 @@ import java.util.concurrent.CompletableFuture;
 
 import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.domain.Loan;
-import org.folio.circulation.infrastructure.storage.LoanRepository;
+import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.infrastructure.storage.users.UserRepository;
 import org.folio.circulation.domain.validation.UserNotFoundValidator;
 import org.folio.circulation.storage.ItemByIdInStorageFinder;

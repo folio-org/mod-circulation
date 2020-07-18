@@ -7,7 +7,7 @@ import static org.folio.circulation.support.ResultBinding.mapResult;
 
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Loan;
-import org.folio.circulation.infrastructure.storage.LoanRepository;
+import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.resources.context.RenewalContext;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;

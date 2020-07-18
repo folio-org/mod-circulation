@@ -15,7 +15,7 @@ import org.folio.circulation.domain.CheckInContext;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanCheckInService;
-import org.folio.circulation.infrastructure.storage.LoanRepository;
+import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.domain.OverdueFineCalculatorService;
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestQueue;

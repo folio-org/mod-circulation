@@ -13,7 +13,7 @@ import java.util.concurrent.CompletableFuture;
 import org.folio.circulation.domain.CheckInContext;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
-import org.folio.circulation.infrastructure.storage.LoanRepository;
+import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.domain.RequestAndRelatedRecords;
 import org.folio.circulation.resources.context.RenewalContext;
 import org.folio.circulation.support.Clients;

@@ -6,7 +6,7 @@ import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
-import org.folio.circulation.infrastructure.storage.LoanRepository;
+import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.ValidationErrorFailure;
 

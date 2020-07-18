@@ -21,8 +21,8 @@ import org.folio.circulation.infrastructure.storage.feesandfines.AccountReposito
 import org.folio.circulation.domain.CheckInContext;
 import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.domain.Loan;
-import org.folio.circulation.infrastructure.storage.LoanRepository;
-import org.folio.circulation.infrastructure.storage.LostItemPolicyRepository;
+import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
+import org.folio.circulation.infrastructure.storage.loans.LostItemPolicyRepository;
 import org.folio.circulation.domain.policy.lostitem.LostItemPolicy;
 import org.folio.circulation.resources.context.RenewalContext;
 import org.folio.circulation.services.support.RefundAccountCommand;

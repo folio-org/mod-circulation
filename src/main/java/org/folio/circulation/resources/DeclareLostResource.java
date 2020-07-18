@@ -6,7 +6,7 @@ import java.util.Objects;
 
 import org.folio.circulation.StoreLoanAndItem;
 import org.folio.circulation.domain.Loan;
-import org.folio.circulation.infrastructure.storage.LoanRepository;
+import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.domain.representations.DeclareItemLostRequest;
 import org.folio.circulation.domain.validation.LoanValidator;
 import org.folio.circulation.services.EventPublisher;

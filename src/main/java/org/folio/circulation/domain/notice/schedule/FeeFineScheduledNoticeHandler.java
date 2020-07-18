@@ -16,7 +16,7 @@ import org.folio.circulation.infrastructure.storage.feesandfines.AccountReposito
 import org.folio.circulation.domain.FeeFineAction;
 import org.folio.circulation.infrastructure.storage.feesandfines.FeeFineActionRepository;
 import org.folio.circulation.domain.Loan;
-import org.folio.circulation.infrastructure.storage.LoanRepository;
+import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.domain.notice.PatronNoticeService;
 import org.folio.circulation.infrastructure.storage.notices.ScheduledNoticesRepository;
 import org.folio.circulation.support.Clients;

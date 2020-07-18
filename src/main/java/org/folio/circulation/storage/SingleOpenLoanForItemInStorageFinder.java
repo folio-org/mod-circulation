@@ -11,7 +11,7 @@ import java.util.function.Function;
 
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Loan;
-import org.folio.circulation.infrastructure.storage.LoanRepository;
+import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.User;
 import org.folio.circulation.infrastructure.storage.users.UserRepository;

@@ -23,9 +23,9 @@ import java.util.concurrent.ExecutionException;
 import java.util.stream.Stream;
 
 import org.folio.circulation.infrastructure.storage.notices.ScheduledNoticesRepository;
-import org.folio.circulation.infrastructure.storage.LostItemPolicyRepository;
+import org.folio.circulation.infrastructure.storage.loans.LostItemPolicyRepository;
 import org.folio.circulation.domain.policy.OverdueFinePolicy;
-import org.folio.circulation.infrastructure.storage.OverdueFinePolicyRepository;
+import org.folio.circulation.infrastructure.storage.loans.OverdueFinePolicyRepository;
 import org.folio.circulation.domain.representations.CheckInByBarcodeRequest;
 import org.folio.circulation.domain.representations.StoredAccount;
 import org.folio.circulation.domain.representations.StoredFeeFineAction;

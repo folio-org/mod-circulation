@@ -12,7 +12,7 @@ import org.folio.circulation.domain.notice.NoticeEventType;
 import org.folio.circulation.domain.notice.PatronNoticeEvent;
 import org.folio.circulation.domain.notice.PatronNoticeEventBuilder;
 import org.folio.circulation.domain.notice.PatronNoticeService;
-import org.folio.circulation.infrastructure.storage.LoanPolicyRepository;
+import org.folio.circulation.infrastructure.storage.loans.LoanPolicyRepository;
 import org.folio.circulation.resources.context.RenewalContext;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.Result;

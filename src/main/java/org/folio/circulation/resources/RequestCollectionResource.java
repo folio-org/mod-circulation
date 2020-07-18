@@ -9,7 +9,7 @@ import org.folio.circulation.infrastructure.storage.AutomatedPatronBlocksReposit
 import org.folio.circulation.infrastructure.storage.ConfigurationRepository;
 import org.folio.circulation.domain.CreateRequestRepositories;
 import org.folio.circulation.domain.CreateRequestService;
-import org.folio.circulation.infrastructure.storage.LoanRepository;
+import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.domain.MoveRequestProcessAdapter;
 import org.folio.circulation.domain.MoveRequestService;
 import org.folio.circulation.domain.RequestAndRelatedRecords;
@@ -26,7 +26,7 @@ import org.folio.circulation.domain.UpdateUponRequest;
 import org.folio.circulation.domain.UserManualBlock;
 import org.folio.circulation.infrastructure.storage.users.UserRepository;
 import org.folio.circulation.domain.notice.schedule.RequestScheduledNoticeService;
-import org.folio.circulation.infrastructure.storage.LoanPolicyRepository;
+import org.folio.circulation.infrastructure.storage.loans.LoanPolicyRepository;
 import org.folio.circulation.infrastructure.storage.requests.RequestPolicyRepository;
 import org.folio.circulation.domain.validation.ClosedRequestValidator;
 import org.folio.circulation.domain.validation.ProxyRelationshipValidator;

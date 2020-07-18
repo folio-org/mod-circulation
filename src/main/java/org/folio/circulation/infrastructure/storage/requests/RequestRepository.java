@@ -19,7 +19,7 @@ import org.folio.circulation.domain.RequestAndRelatedRecords;
 import org.folio.circulation.domain.ServicePoint;
 import org.folio.circulation.domain.StoredRequestRepresentation;
 import org.folio.circulation.domain.User;
-import org.folio.circulation.infrastructure.storage.LoanRepository;
+import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.infrastructure.storage.ServicePointRepository;
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
 import org.folio.circulation.infrastructure.storage.users.PatronGroupRepository;

@@ -1,4 +1,4 @@
-package org.folio.circulation.infrastructure.storage;
+package org.folio.circulation.infrastructure.storage.loans;
 
 import static java.util.Objects.isNull;
 import static org.folio.circulation.domain.policy.LoanPolicy.unknown;
@@ -21,6 +21,7 @@ import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.policy.FixedDueDateSchedules;
 import org.folio.circulation.domain.policy.LoanPolicy;
 import org.folio.circulation.domain.policy.NoFixedDueDateSchedules;
+import org.folio.circulation.infrastructure.storage.CirculationPolicyRepository;
 import org.folio.circulation.resources.context.RenewalContext;
 import org.folio.circulation.rules.AppliedRuleConditions;
 import org.folio.circulation.support.Clients;

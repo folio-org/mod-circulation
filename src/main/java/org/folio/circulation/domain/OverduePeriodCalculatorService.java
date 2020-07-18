@@ -12,7 +12,7 @@ import java.util.Collection;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
-import org.folio.circulation.infrastructure.storage.LoanPolicyRepository;
+import org.folio.circulation.infrastructure.storage.loans.LoanPolicyRepository;
 import org.folio.circulation.infrastructure.storage.CalendarRepository;
 import org.folio.circulation.support.Result;
 import org.joda.time.DateTime;

@@ -21,7 +21,7 @@ import org.folio.circulation.domain.FeeFineOwner;
 import org.folio.circulation.infrastructure.storage.feesandfines.FeeFineOwnerRepository;
 import org.folio.circulation.infrastructure.storage.feesandfines.FeeFineRepository;
 import org.folio.circulation.domain.Loan;
-import org.folio.circulation.infrastructure.storage.LostItemPolicyRepository;
+import org.folio.circulation.infrastructure.storage.loans.LostItemPolicyRepository;
 import org.folio.circulation.domain.policy.lostitem.LostItemPolicy;
 import org.folio.circulation.domain.policy.lostitem.itemfee.AutomaticallyChargeableFee;
 import org.folio.circulation.domain.representations.DeclareItemLostRequest;

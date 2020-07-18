@@ -1,4 +1,4 @@
-package org.folio.circulation.infrastructure.storage;
+package org.folio.circulation.infrastructure.storage.loans;
 
 import static java.lang.String.format;
 import static java.util.Objects.nonNull;

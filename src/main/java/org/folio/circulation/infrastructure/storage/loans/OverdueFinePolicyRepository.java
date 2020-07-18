@@ -1,4 +1,4 @@
-package org.folio.circulation.infrastructure.storage;
+package org.folio.circulation.infrastructure.storage.loans;
 
 import static java.util.Objects.isNull;
 import static org.folio.circulation.support.Result.ofAsync;
