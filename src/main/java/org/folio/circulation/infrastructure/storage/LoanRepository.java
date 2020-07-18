@@ -304,7 +304,7 @@ public class LoanRepository {
     return queryLoanStorage(statusQuery.combine(itemIdQuery, CqlQuery::and), one());
   }
 
-  CompletableFuture<Result<MultipleRecords<Request>>> findOpenLoansFor(
+  public CompletableFuture<Result<MultipleRecords<Request>>> findOpenLoansFor(
     MultipleRecords<Request> multipleRequests) {
 
     //TODO: Need to handle multiple open loans for same item (with failure?)

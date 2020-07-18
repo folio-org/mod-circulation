@@ -11,7 +11,7 @@ import org.folio.circulation.domain.Loan;
 import org.folio.circulation.infrastructure.storage.LoanRepository;
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestAndRelatedRecords;
-import org.folio.circulation.infrastructure.storage.RequestQueueRepository;
+import org.folio.circulation.infrastructure.storage.requests.RequestQueueRepository;
 import org.folio.circulation.domain.RequestStatus;
 import org.folio.circulation.infrastructure.storage.ServicePointRepository;
 import org.folio.circulation.domain.User;

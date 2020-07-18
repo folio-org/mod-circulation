@@ -19,7 +19,7 @@ import org.folio.circulation.infrastructure.storage.LoanRepository;
 import org.folio.circulation.domain.OverdueFineCalculatorService;
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestQueue;
-import org.folio.circulation.infrastructure.storage.RequestQueueRepository;
+import org.folio.circulation.infrastructure.storage.requests.RequestQueueRepository;
 import org.folio.circulation.domain.ServicePoint;
 import org.folio.circulation.infrastructure.storage.ServicePointRepository;
 import org.folio.circulation.domain.UpdateItem;

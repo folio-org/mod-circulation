@@ -4,8 +4,8 @@ import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
 import org.folio.circulation.infrastructure.storage.LoanRepository;
-import org.folio.circulation.infrastructure.storage.RequestQueueRepository;
-import org.folio.circulation.infrastructure.storage.RequestRepository;
+import org.folio.circulation.infrastructure.storage.requests.RequestQueueRepository;
+import org.folio.circulation.infrastructure.storage.requests.RequestRepository;
 import org.folio.circulation.support.Result;
 
 public class MoveRequestProcessAdapter {

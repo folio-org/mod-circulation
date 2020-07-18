@@ -6,8 +6,8 @@ import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.infrastructure.storage.ConfigurationRepository;
 import org.folio.circulation.domain.MultipleRecords;
-import org.folio.circulation.infrastructure.storage.RequestQueueRepository;
-import org.folio.circulation.infrastructure.storage.RequestRepository;
+import org.folio.circulation.infrastructure.storage.requests.RequestQueueRepository;
+import org.folio.circulation.infrastructure.storage.requests.RequestRepository;
 import org.folio.circulation.domain.RequestRepresentation;
 import org.folio.circulation.infrastructure.storage.ServicePointRepository;
 import org.folio.circulation.domain.UpdateRequestQueue;

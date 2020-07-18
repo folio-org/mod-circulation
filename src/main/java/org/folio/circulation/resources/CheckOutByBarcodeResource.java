@@ -22,7 +22,7 @@ import org.folio.circulation.infrastructure.storage.LoanRepository;
 import org.folio.circulation.domain.LoanRepresentation;
 import org.folio.circulation.domain.LoanService;
 import org.folio.circulation.infrastructure.storage.users.PatronGroupRepository;
-import org.folio.circulation.infrastructure.storage.RequestQueueRepository;
+import org.folio.circulation.infrastructure.storage.requests.RequestQueueRepository;
 import org.folio.circulation.domain.UpdateItem;
 import org.folio.circulation.domain.UpdateRequestQueue;
 import org.folio.circulation.domain.User;

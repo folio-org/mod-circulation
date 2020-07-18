@@ -5,7 +5,7 @@ import static org.folio.circulation.support.Result.succeeded;
 import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.domain.validation.ClosedRequestValidator;
-import org.folio.circulation.infrastructure.storage.RequestRepository;
+import org.folio.circulation.infrastructure.storage.requests.RequestRepository;
 import org.folio.circulation.resources.RequestNoticeSender;
 import org.folio.circulation.support.Result;
 
