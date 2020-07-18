@@ -60,7 +60,7 @@ import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.FindWithCqlQuery;
 import org.folio.circulation.support.ForwardOnFailure;
 import org.folio.circulation.support.HttpFailure;
-import org.folio.circulation.infrastructure.storage.ItemRepository;
+import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.RouteRegistration;
 import org.folio.circulation.support.ServerErrorFailure;

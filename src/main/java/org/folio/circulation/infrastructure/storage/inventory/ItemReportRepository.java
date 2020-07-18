@@ -1,4 +1,4 @@
-package org.folio.circulation.infrastructure.storage;
+package org.folio.circulation.infrastructure.storage.inventory;
 
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
 import static org.folio.circulation.support.http.client.PageLimit.limit;
@@ -16,12 +16,12 @@ import org.folio.circulation.support.GetManyRecordsClient;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.http.client.CqlQuery;
 
-public class ReportRepository {
+public class ItemReportRepository {
   private final GetManyRecordsClient itemsClient;
 
   private static final int PAGE_LIMIT = 100;
 
-  public ReportRepository(Clients clients) {
+  public ItemReportRepository(Clients clients) {
     itemsClient = clients.itemsStorage();
   }
 

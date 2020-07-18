@@ -38,7 +38,7 @@ import org.folio.circulation.domain.validation.RequestedByAnotherPatronValidator
 import org.folio.circulation.domain.validation.ServicePointLoanLocationValidator;
 import org.folio.circulation.services.EventPublisher;
 import org.folio.circulation.support.Clients;
-import org.folio.circulation.infrastructure.storage.ItemRepository;
+import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.ValidationErrorFailure;
 import org.folio.circulation.support.http.server.JsonHttpResponse;

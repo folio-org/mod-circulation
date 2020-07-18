@@ -26,12 +26,12 @@ import org.folio.circulation.domain.HoldShelfClearanceRequestContext;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.ItemsReportFetcher;
 import org.folio.circulation.domain.MultipleRecords;
-import org.folio.circulation.infrastructure.storage.ReportRepository;
+import org.folio.circulation.infrastructure.storage.inventory.ItemReportRepository;
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestRepresentation;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.GetManyRecordsClient;
-import org.folio.circulation.infrastructure.storage.ItemRepository;
+import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.RouteRegistration;
 import org.folio.circulation.support.http.client.CqlQuery;
@@ -85,11 +85,11 @@ public class RequestHoldShelfClearanceResource extends Resource {
 
     final ItemRepository itemRepository = new ItemRepository(clients, false, false, false);
     final GetManyRecordsClient requestsStorage = clients.requestsStorage();
-    final ReportRepository reportRepository = new ReportRepository(clients);
+    final ItemReportRepository itemReportRepository = new ItemReportRepository(clients);
 
     final String servicePointId = routingContext.request().getParam(SERVICE_POINT_ID_PARAM);
 
-    reportRepository.getAllItemsByField(STATUS_NAME_KEY, AWAITING_PICKUP.getValue())
+    itemReportRepository.getAllItemsByField(STATUS_NAME_KEY, AWAITING_PICKUP.getValue())
       .thenComposeAsync(r -> r.after(this::mapContextToItemIdList))
       .thenComposeAsync(r -> r.after(this::mapItemIdsInBatchItemIds))
       .thenComposeAsync(r -> findAwaitingPickupRequestsByItemsIds(requestsStorage, r.value()))

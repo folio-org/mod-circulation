@@ -1,6 +1,6 @@
 package org.folio.circulation.services;
 
-import static org.folio.circulation.infrastructure.storage.ItemRepository.noLocationMaterialTypeAndLoanTypeInstance;
+import static org.folio.circulation.infrastructure.storage.inventory.ItemRepository.noLocationMaterialTypeAndLoanTypeInstance;
 
 import java.util.concurrent.CompletableFuture;
 

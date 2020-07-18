@@ -2,7 +2,7 @@ package org.folio.circulation.domain;
 
 import java.util.concurrent.CompletableFuture;
 
-import org.folio.circulation.infrastructure.storage.ItemRepository;
+import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
 import org.folio.circulation.infrastructure.storage.LoanRepository;
 import org.folio.circulation.infrastructure.storage.RequestQueueRepository;
 import org.folio.circulation.infrastructure.storage.RequestRepository;
