@@ -1,4 +1,4 @@
-package org.folio.circulation.infrastructure.storage;
+package org.folio.circulation.infrastructure.storage.feesandfines;
 
 import static org.folio.circulation.support.http.client.PageLimit.one;
 

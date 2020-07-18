@@ -12,9 +12,9 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.domain.Account;
-import org.folio.circulation.infrastructure.storage.AccountRepository;
+import org.folio.circulation.infrastructure.storage.feesandfines.AccountRepository;
 import org.folio.circulation.domain.FeeFineAction;
-import org.folio.circulation.infrastructure.storage.FeeFineActionRepository;
+import org.folio.circulation.infrastructure.storage.feesandfines.FeeFineActionRepository;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.infrastructure.storage.LoanRepository;
 import org.folio.circulation.domain.notice.PatronNoticeService;

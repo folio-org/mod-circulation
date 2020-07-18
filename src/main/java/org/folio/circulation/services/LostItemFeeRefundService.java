@@ -17,7 +17,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 import org.folio.circulation.domain.Account;
-import org.folio.circulation.infrastructure.storage.AccountRepository;
+import org.folio.circulation.infrastructure.storage.feesandfines.AccountRepository;
 import org.folio.circulation.domain.CheckInContext;
 import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.domain.Loan;

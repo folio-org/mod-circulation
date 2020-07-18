@@ -13,7 +13,7 @@ import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.StoreLoanAndItem;
 import org.folio.circulation.domain.Account;
-import org.folio.circulation.infrastructure.storage.AccountRepository;
+import org.folio.circulation.infrastructure.storage.feesandfines.AccountRepository;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.infrastructure.storage.LoanRepository;
 import org.folio.circulation.infrastructure.storage.LostItemPolicyRepository;
