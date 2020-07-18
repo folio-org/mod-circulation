@@ -1,4 +1,4 @@
-package org.folio.circulation.infrastructure.storage;
+package org.folio.circulation.infrastructure.storage.sessions;
 
 import java.util.ArrayList;
 import java.util.List;

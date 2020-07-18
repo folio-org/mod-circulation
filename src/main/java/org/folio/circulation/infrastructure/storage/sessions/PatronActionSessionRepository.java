@@ -1,4 +1,4 @@
-package org.folio.circulation.infrastructure.storage;
+package org.folio.circulation.infrastructure.storage.sessions;
 
 import static java.util.function.Function.identity;
 import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
@@ -30,6 +30,8 @@ import org.folio.circulation.domain.notice.session.PatronSessionRecord;
 import org.folio.circulation.domain.Location;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.User;
+import org.folio.circulation.infrastructure.storage.LoanPolicyRepository;
+import org.folio.circulation.infrastructure.storage.LoanRepository;
 import org.folio.circulation.infrastructure.storage.inventory.LocationRepository;
 import org.folio.circulation.infrastructure.storage.users.UserRepository;
 import org.folio.circulation.support.Clients;

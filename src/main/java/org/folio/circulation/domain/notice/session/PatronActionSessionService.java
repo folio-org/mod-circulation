@@ -28,7 +28,7 @@ import org.folio.circulation.domain.notice.NoticeEventType;
 import org.folio.circulation.domain.notice.PatronNoticeEvent;
 import org.folio.circulation.domain.notice.PatronNoticeEventBuilder;
 import org.folio.circulation.domain.notice.PatronNoticeService;
-import org.folio.circulation.infrastructure.storage.PatronActionSessionRepository;
+import org.folio.circulation.infrastructure.storage.sessions.PatronActionSessionRepository;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.http.client.PageLimit;
