@@ -75,9 +75,7 @@ public class FindMultipleRecordsByIdTests {
   @Test
   @Parameters({ "50", "30" })
   public void shouldUseMultipleCqlQueriesForFindingSmallNumberOfRecordsById(
-      int maximumValuesPerCqlQuery) {
-
-    final FindWithCqlQuery<JsonObject> queryFinder = mock(FindWithCqlQuery.class);
+    int maximumValuesPerCqlQuery) {
 
     when(queryFinder.findByQuery(any(), any())).thenReturn(
         CompletableFuture.completedFuture(Result.succeeded(MultipleRecords.empty())));

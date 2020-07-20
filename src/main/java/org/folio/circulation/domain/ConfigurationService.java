@@ -12,7 +12,7 @@ import org.slf4j.LoggerFactory;
 
 import io.vertx.core.json.JsonObject;
 
-class ConfigurationService {
+public class ConfigurationService {
   private final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
   private static final int DEFAULT_SCHEDULED_NOTICES_PROCESSING_LIMIT = 100;
@@ -30,7 +30,7 @@ class ConfigurationService {
       .orElse(DEFAULT_DATE_TIME_ZONE);
   }
 
-  DateTimeZone findDateTimeZone(Collection<Configuration> configurations) {
+  public DateTimeZone findDateTimeZone(Collection<Configuration> configurations) {
     final DateTimeZone chosenTimeZone = configurations.stream()
       .map(this::applyTimeZone)
       .findFirst()
@@ -41,7 +41,7 @@ class ConfigurationService {
     return chosenTimeZone;
   }
 
-  Integer findSchedulerNoticesLimit(Collection<Configuration> configurations) {
+  public Integer findSchedulerNoticesLimit(Collection<Configuration> configurations) {
     final Integer noticesLimit = configurations.stream()
       .map(this::applySchedulerNoticesLimit)
       .findFirst()
@@ -52,7 +52,7 @@ class ConfigurationService {
     return noticesLimit;
   }
 
-  Integer findSessionTimeout(Collection<Configuration> configurations) {
+  public Integer findSessionTimeout(Collection<Configuration> configurations) {
     final Integer sessionTimeout = configurations.stream()
       .map(this::applySessionTimeout)
       .findFirst()

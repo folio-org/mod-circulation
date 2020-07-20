@@ -121,7 +121,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
       new Policies(loanPolicy, overdueFinePolicy, lostItemPolicy), null);
   }
 
-  JsonObject asJson() {
+  public JsonObject asJson() {
     return representation.copy();
   }
 
@@ -273,7 +273,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     return item;
   }
 
-  Loan replaceRepresentation(JsonObject newRepresentation) {
+  public Loan replaceRepresentation(JsonObject newRepresentation) {
     return new Loan(newRepresentation, item, user, proxy, checkinServicePoint,
       checkoutServicePoint, originalDueDate, policies, accounts);
   }
@@ -292,7 +292,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
       checkoutServicePoint, originalDueDate, policies, accounts);
   }
 
-  Loan withPatronGroupAtCheckout(PatronGroup patronGroup) {
+  public Loan withPatronGroupAtCheckout(PatronGroup patronGroup) {
     if (nonNull(patronGroup)) {
       JsonObject patronGroupAtCheckout = new JsonObject()
         .put("id", patronGroup.getId())
@@ -313,12 +313,12 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
       checkoutServicePoint, originalDueDate, policies, accounts);
   }
 
-  Loan withCheckinServicePoint(ServicePoint newCheckinServicePoint) {
+  public Loan withCheckinServicePoint(ServicePoint newCheckinServicePoint) {
     return new Loan(representation, item, user, proxy, newCheckinServicePoint,
       checkoutServicePoint, originalDueDate, policies, accounts);
   }
 
-  Loan withCheckoutServicePoint(ServicePoint newCheckoutServicePoint) {
+  public Loan withCheckoutServicePoint(ServicePoint newCheckoutServicePoint) {
     return new Loan(representation, item, user, proxy, checkinServicePoint,
       newCheckoutServicePoint, originalDueDate, policies, accounts);
   }
@@ -390,7 +390,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     return this.checkoutServicePoint;
   }
 
-  String getPatronGroupIdAtCheckout() {
+  public String getPatronGroupIdAtCheckout() {
     return  getProperty(representation, "patronGroupIdAtCheckout");
   }
 

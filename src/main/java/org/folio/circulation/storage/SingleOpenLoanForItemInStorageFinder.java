@@ -11,10 +11,10 @@ import java.util.function.Function;
 
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Loan;
-import org.folio.circulation.domain.LoanRepository;
+import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.User;
-import org.folio.circulation.domain.UserRepository;
+import org.folio.circulation.infrastructure.storage.users.UserRepository;
 import org.folio.circulation.domain.validation.MoreThanOneLoanValidator;
 import org.folio.circulation.domain.validation.NoLoanValidator;
 import org.folio.circulation.support.Result;

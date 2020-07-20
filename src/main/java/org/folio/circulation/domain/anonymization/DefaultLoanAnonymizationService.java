@@ -7,7 +7,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
-import org.folio.circulation.domain.AnonymizeStorageLoansRepository;
+import org.folio.circulation.infrastructure.storage.loans.AnonymizeStorageLoansRepository;
 import org.folio.circulation.domain.anonymization.service.AnonymizationCheckersService;
 import org.folio.circulation.domain.anonymization.service.LoanAnonymizationFinderService;
 import org.folio.circulation.support.Clients;

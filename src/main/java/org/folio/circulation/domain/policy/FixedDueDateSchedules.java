@@ -23,7 +23,7 @@ public class FixedDueDateSchedules {
     this.schedules = schedules;
   }
 
-  static FixedDueDateSchedules from(JsonObject representation) {
+  public static FixedDueDateSchedules from(JsonObject representation) {
     if (representation == null) {
       return new NoFixedDueDateSchedules();
     } else {

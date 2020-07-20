@@ -13,10 +13,10 @@ import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.StoreLoanAndItem;
 import org.folio.circulation.domain.Account;
-import org.folio.circulation.domain.AccountRepository;
+import org.folio.circulation.infrastructure.storage.feesandfines.AccountRepository;
 import org.folio.circulation.domain.Loan;
-import org.folio.circulation.domain.LoanRepository;
-import org.folio.circulation.domain.policy.LostItemPolicyRepository;
+import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
+import org.folio.circulation.infrastructure.storage.loans.LostItemPolicyRepository;
 import org.folio.circulation.domain.subscribers.LoanRelatedFeeFineClosedEvent;
 import org.folio.circulation.resources.Resource;
 import org.folio.circulation.support.Clients;

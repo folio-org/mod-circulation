@@ -26,7 +26,7 @@ public class User {
     this.patronGroup = patronGroup;
   }
 
-  User withPatronGroup(PatronGroup newPatronGroup) {
+  public User withPatronGroup(PatronGroup newPatronGroup) {
     return new User(representation, newPatronGroup);
   }
 

@@ -85,7 +85,7 @@ public class RequestQueue {
         .anyMatch(r -> r.getId().equals(request.getId()));
   }
 
-  Collection<Request> getRequestsWithChangedPosition() {
+  public Collection<Request> getRequestsWithChangedPosition() {
     return requests.stream()
       .filter(Request::hasChangedPosition)
       // order by position descending
