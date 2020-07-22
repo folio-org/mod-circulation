@@ -34,12 +34,13 @@ public class ScheduledAnonymizationProcessingResource extends Resource {
     final Clients clients = Clients.create(context, client);
 
     ConfigurationRepository configurationRepository = new ConfigurationRepository(clients);
+    LoanAnonymization loanAnonymization = new LoanAnonymization(clients);
 
-    configurationRepository.loanHistoryConfiguration().thenCompose(c -> c.after(config ->
-        new LoanAnonymization(clients).byCurrentTenant(config).anonymizeLoans())
-        .thenApply(AnonymizeLoansRepresentation::from)
-        .thenApply(r -> r.map(JsonHttpResponse::ok))
-        .thenAccept(context::writeResultToHttpResponse));
-
+    configurationRepository.loanHistoryConfiguration()
+      .thenCompose(r -> r.after(config -> loanAnonymization
+          .byCurrentTenant(config).anonymizeLoans()))
+      .thenApply(AnonymizeLoansRepresentation::from)
+      .thenApply(r -> r.map(JsonHttpResponse::ok))
+      .thenAccept(context::writeResultToHttpResponse);
   }
 }
