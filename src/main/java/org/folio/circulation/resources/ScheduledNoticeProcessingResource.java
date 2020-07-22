@@ -12,6 +12,7 @@ import org.folio.circulation.support.RouteRegistration;
 import org.folio.circulation.support.http.client.PageLimit;
 import org.folio.circulation.support.http.server.NoContentResponse;
 import org.folio.circulation.support.http.server.WebContext;
+import org.folio.circulation.support.results.CommonFailures;
 
 import io.vertx.core.http.HttpClient;
 import io.vertx.ext.web.Router;
@@ -46,6 +47,7 @@ public abstract class ScheduledNoticeProcessingResource extends Resource {
         limit)))
       .thenCompose(r -> r.after(notices -> handleNotices(clients, notices)))
       .thenApply(r -> r.toFixedValue(NoContentResponse::noContent))
+      .exceptionally(CommonFailures::failedDueToServerError)
       .thenAccept(context::writeResultToHttpResponse);
   }
 
