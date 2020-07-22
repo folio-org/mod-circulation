@@ -2085,7 +2085,10 @@
         "calendar.opening-hours.collection.get",
         "configuration.entries.collection.get",
         "scheduled-notice-storage.scheduled-notices.collection.delete",
-        "scheduled-notice-storage.scheduled-notices.item.post"
+        "scheduled-notice-storage.scheduled-notices.item.post",
+        "manualblocks.collection.get",
+        "automated-patron-blocks.collection.get",
+        "circulation-storage.request-batch.item.post"
       ],
       "visible": false
     },
