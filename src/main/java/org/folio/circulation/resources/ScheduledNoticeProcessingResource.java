@@ -1,5 +1,7 @@
 package org.folio.circulation.resources;
 
+import static org.folio.circulation.support.results.AsynchronousResultBindings.safelyInitialise;
+
 import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.infrastructure.storage.ConfigurationRepository;
@@ -12,6 +14,7 @@ import org.folio.circulation.support.RouteRegistration;
 import org.folio.circulation.support.http.client.PageLimit;
 import org.folio.circulation.support.http.server.NoContentResponse;
 import org.folio.circulation.support.http.server.WebContext;
+import org.folio.circulation.support.results.AsynchronousResultBindings;
 import org.folio.circulation.support.results.CommonFailures;
 
 import io.vertx.core.http.HttpClient;
@@ -42,7 +45,7 @@ public abstract class ScheduledNoticeProcessingResource extends Resource {
     final ConfigurationRepository configurationRepository =
       new ConfigurationRepository(clients);
 
-    configurationRepository.lookupSchedulerNoticesProcessingLimit()
+    safelyInitialise(configurationRepository::lookupSchedulerNoticesProcessingLimit)
       .thenCompose(r -> r.after(limit -> findNoticesToSend(scheduledNoticesRepository,
         limit)))
       .thenCompose(r -> r.after(notices -> handleNotices(clients, notices)))
