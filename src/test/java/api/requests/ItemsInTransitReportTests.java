@@ -450,7 +450,8 @@ public class ItemsInTransitReportTests extends APITests {
     final UUID forthServicePointLocationId = locationsFixture.fourthServicePoint().getId();
 
     for (int i = 0; i < 200; i++) {
-      InventoryItemResource item = createSmallAngryPlanet(forthServicePointLocationId, i);
+      InventoryItemResource item = createSmallAngryPlanetCopy(forthServicePointLocationId,
+        Integer.toString(i));
 
       checkOutFixture.checkOutByBarcode(item);
 
@@ -604,10 +605,14 @@ public class ItemsInTransitReportTests extends APITests {
       itemsFixture.thirdFloorHoldings());
   }
 
-  private InventoryItemResource createSmallAngryPlanet(UUID locationId, int barcode) {
+  private InventoryItemResource createSmallAngryPlanetCopy(UUID locationId, String barcode) {
 
-    final ItemBuilder smallAngryPlanetItemBuilder = createSmallAngryPlanetItemBuilder(
-      locationId, barcode);
+    final ItemBuilder smallAngryPlanetItemBuilder = new ItemBuilder()
+      .withPermanentLoanType(materialTypesFixture.book().getId())
+      .withMaterialType(loanTypesFixture.canCirculate().getId())
+      .withBarcode(barcode)
+      .withPermanentLocation(locationId)
+      .withTemporaryLocation(locationId);
 
     return itemsFixture.basedUponSmallAngryPlanet(smallAngryPlanetItemBuilder,
       itemsFixture.thirdFloorHoldings());
@@ -622,15 +627,5 @@ public class ItemsInTransitReportTests extends APITests {
       .withEnumeration("smallAngryPlanetEnumeration")
       .withVolume("smallAngryPlanetVolume")
       .withYearCaption(Collections.singletonList("2019"));
-  }
-
-  private ItemBuilder createSmallAngryPlanetItemBuilder(UUID locationId, int barcode) {
-
-    return new ItemBuilder()
-      .withPermanentLoanType(materialTypesFixture.book().getId())
-      .withMaterialType(loanTypesFixture.canCirculate().getId())
-      .withBarcode(Integer.toString(barcode))
-      .withPermanentLocation(locationId)
-      .withTemporaryLocation(locationId);
   }
 }
