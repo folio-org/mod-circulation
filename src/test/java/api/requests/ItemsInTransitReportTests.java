@@ -4,8 +4,8 @@ import static api.support.JsonCollectionAssistant.getRecordById;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static org.folio.circulation.support.JsonStringArrayHelper.toList;
 import static org.hamcrest.CoreMatchers.hasItems;
-import static org.hamcrest.core.Is.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.core.Is.is;
 import static org.joda.time.DateTimeZone.UTC;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
@@ -443,6 +443,28 @@ public class ItemsInTransitReportTests extends APITests {
     verifyLastCheckIn(thirdItemJson, checkInDate3, "Circ Desk 4");
   }
 
+  @Test
+  public void reportWillNotFailWithUriTooLargeError() {
+
+    final UUID firstServicePointId = servicePointsFixture.cd1().getId();
+    final UUID forthServicePointLocationId = locationsFixture.fourthServicePoint().getId();
+
+    for (int i = 0; i < 200; i++) {
+      InventoryItemResource item = createSmallAngryPlanet(forthServicePointLocationId, i);
+
+      checkOutFixture.checkOutByBarcode(item);
+
+      checkInFixture.checkInByBarcode(new CheckInByBarcodeRequestBuilder()
+        .forItem(item)
+        .on(DateTime.now())
+        .at(firstServicePointId));
+    }
+
+    List<JsonObject> itemsInTransitReport = ResourceClient.forItemsInTransitReport().getAll();
+
+    assertThat(itemsInTransitReport.size(), is(200));
+  }
+
   private void createRequest(InventoryItemResource smallAngryPlanet,
                              IndividualResource steve, UUID secondServicePointId,
                              DateTime requestDate, LocalDate requestExpirationDate) {
@@ -582,6 +604,15 @@ public class ItemsInTransitReportTests extends APITests {
       itemsFixture.thirdFloorHoldings());
   }
 
+  private InventoryItemResource createSmallAngryPlanet(UUID locationId, int barcode) {
+
+    final ItemBuilder smallAngryPlanetItemBuilder = createSmallAngryPlanetItemBuilder(
+      locationId, barcode);
+
+    return itemsFixture.basedUponSmallAngryPlanet(smallAngryPlanetItemBuilder,
+      itemsFixture.thirdFloorHoldings());
+  }
+
   private ItemBuilder createSmallAngryPlanetItemBuilder() {
 
     return ItemExamples.basedUponSmallAngryPlanet(
@@ -591,5 +622,15 @@ public class ItemsInTransitReportTests extends APITests {
       .withEnumeration("smallAngryPlanetEnumeration")
       .withVolume("smallAngryPlanetVolume")
       .withYearCaption(Collections.singletonList("2019"));
+  }
+
+  private ItemBuilder createSmallAngryPlanetItemBuilder(UUID locationId, int barcode) {
+
+    return new ItemBuilder()
+      .withPermanentLoanType(materialTypesFixture.book().getId())
+      .withMaterialType(loanTypesFixture.canCirculate().getId())
+      .withBarcode(Integer.toString(barcode))
+      .withPermanentLocation(locationId)
+      .withTemporaryLocation(locationId);
   }
 }
