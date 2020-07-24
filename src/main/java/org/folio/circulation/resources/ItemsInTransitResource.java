@@ -207,10 +207,6 @@ public class ItemsInTransitResource extends Resource {
     return inTransitReportEntry;
   }
 
-  private Result<MultipleRecords<Loan>> mapResponseToLoans(Response response) {
-    return MultipleRecords.from(response, Loan::from, "loans");
-  }
-
   private List<String> mapToItemIdList(List<InTransitReportEntry> inTransitReportEntryList) {
     return inTransitReportEntryList.stream()
       .map(InTransitReportEntry::getItem)
