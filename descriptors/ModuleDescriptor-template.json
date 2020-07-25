@@ -365,7 +365,7 @@
             "circulation.requests.item.delete"
           ],
           "modulePermissions": [
-            "circulation-storage.requests.item.delete"
+            "modperms.circulation.requests.item.delete"
           ]
         },
         {
@@ -1925,6 +1925,38 @@
         "usergroups.collection.get",
         "usergroups.item.get",
         "inventory-storage.location-units.libraries.collection.get"
+      ],
+      "visible": false
+    },
+    {
+      "permissionName": "modperms.circulation.requests.item.delete",
+      "displayName": "module permissions for one op",
+      "description": "to reduce X-Okapi-Token size",
+      "subPermissions": [
+        "circulation-storage.requests.item.get",
+        "circulation-storage.requests.collection.get",
+        "circulation-storage.loans.collection.get",
+        "circulation-storage.loans.item.get",
+        "inventory-storage.items.collection.get",
+        "inventory-storage.items.item.get",
+        "inventory-storage.holdings.collection.get",
+        "inventory-storage.holdings.item.get",
+        "inventory-storage.instances.collection.get",
+        "inventory-storage.instances.item.get",
+        "inventory-storage.locations.collection.get",
+        "inventory-storage.locations.item.get",
+        "inventory-storage.location-units.institutions.item.get",
+        "inventory-storage.location-units.campuses.item.get",
+        "inventory-storage.location-units.libraries.item.get",
+        "inventory-storage.service-points.collection.get",
+        "inventory-storage.service-points.item.get",
+        "users.item.get",
+        "users.collection.get",
+        "usergroups.collection.get",
+        "usergroups.item.get",
+        "inventory-storage.location-units.libraries.collection.get",
+        "circulation-storage.requests.item.delete",
+        "circulation-storage.request-batch.item.post"
       ],
       "visible": false
     },
