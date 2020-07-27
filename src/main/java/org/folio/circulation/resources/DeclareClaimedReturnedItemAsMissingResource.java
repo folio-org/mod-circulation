@@ -71,7 +71,7 @@ public class DeclareClaimedReturnedItemAsMissingResource extends Resource {
     final NotesRepository notesRepo = new NotesRepository(clients);
     final NoteTypesRepository noteTypesRepo = new NoteTypesRepository(clients);
 
-    return noteTypesRepo.findBy("query=name==\"General note\"")
+    return noteTypesRepo.findByName("General note")
       .thenApply(this::refuseIfNoteTypeNotFound)
       .thenApply(r -> r.map(CollectionUtil::firstOrNull))
       .thenCompose(r -> r.after(noteType -> notesRepo.create(createNote(noteType, loan))))
