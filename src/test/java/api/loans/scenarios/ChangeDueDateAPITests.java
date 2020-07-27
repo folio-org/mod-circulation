@@ -36,6 +36,7 @@ import org.hamcrest.Matcher;
 import org.hamcrest.Matchers;
 import org.joda.time.DateTime;
 import org.joda.time.Period;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -60,11 +61,18 @@ public class ChangeDueDateAPITests extends APITests {
 
   @Before
   public void setUpItemAndLoan() {
+    noteTypeFixture.generalNoteType();
     chargeFeesForLostItemToKeepLoanOpen();
 
     item = itemsFixture.basedUponNod();
     loan = checkOutFixture.checkOutByBarcode(item);
     dueDate = DateTime.parse(loan.getJson().getString("dueDate"));
+  }
+
+  @After
+  public void cleanUp() {
+    notesClient.deleteAll();
+    noteTypeClient.deleteAll();
   }
 
   @Test

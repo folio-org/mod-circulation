@@ -1,20 +1,15 @@
 package api.loans;
 
-
 import static api.support.builders.FixedDueDateSchedule.forDay;
 import static api.support.builders.FixedDueDateSchedule.wholeMonth;
 import static api.support.matchers.ItemStatusCodeMatcher.hasItemStatus;
 import static api.support.matchers.PatronNoticeMatcher.hasEmailNoticeProperties;
-import static api.support.matchers.ResponseStatusCodeMatcher.hasStatus;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static api.support.matchers.TextDateTimeMatcher.withinSecondsAfter;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static api.support.matchers.ValidationErrorMatchers.hasParameter;
-import static api.support.matchers.ValidationErrorMatchers.hasUUIDParameter;
 import static org.apache.commons.lang3.StringUtils.EMPTY;
-import static org.folio.HttpStatus.HTTP_OK;
-import static org.folio.HttpStatus.HTTP_UNPROCESSABLE_ENTITY;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.is;
@@ -42,7 +37,8 @@ import org.hamcrest.Matcher;
 import org.hamcrest.Matchers;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeConstants;
-import org.joda.time.Seconds;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 
 import api.support.APITests;
@@ -57,13 +53,23 @@ import api.support.fixtures.ItemExamples;
 import api.support.fixtures.TemplateContextMatchers;
 import api.support.http.InventoryItemResource;
 import io.vertx.core.json.JsonObject;
-import lombok.val;
 
 public class OverrideRenewByBarcodeTests extends APITests {
   private static final String OVERRIDE_COMMENT = "Comment to override";
   private static final String ITEM_IS_NOT_LOANABLE_MESSAGE = "item is not loanable";
   private static final String ACTION_COMMENT_KEY = "actionComment";
   private static final String RENEWED_THROUGH_OVERRIDE = "renewedThroughOverride";
+
+  @Before
+  public void setupLoanType() {
+    noteTypeFixture.generalNoteType();
+  }
+
+  @After
+  public void cleanUp() {
+    notesClient.deleteAll();
+    noteTypeClient.deleteAll();
+  }
 
   @Test
   public void cannotOverrideRenewalWhenLoanPolicyDoesNotExist() {

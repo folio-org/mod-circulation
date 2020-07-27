@@ -4,6 +4,8 @@ import static api.support.matchers.ItemMatchers.isCheckedOut;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 import org.joda.time.DateTime;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,6 +30,17 @@ public class OverrideRenewDeclaredLostItemTest extends RefundLostItemFeesTestBas
   protected void performActionThatRequiresRefund(DateTime actionDate) {
     mockClockManagerToReturnFixedDateTime(actionDate);
     performActionThatRequiresRefund();
+  }
+
+  @Before
+  public void setupLoanType() {
+    noteTypeFixture.generalNoteType();
+  }
+
+  @After
+  public void cleanUp() {
+    notesClient.deleteAll();
+    noteTypeClient.deleteAll();
   }
 
   @Test
