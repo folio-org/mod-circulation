@@ -63,6 +63,7 @@ import api.support.fixtures.LoansFixture;
 import api.support.fixtures.LocationsFixture;
 import api.support.fixtures.LostItemFeePoliciesFixture;
 import api.support.fixtures.MaterialTypesFixture;
+import api.support.fixtures.NoteTypeFixture;
 import api.support.fixtures.NoticePoliciesFixture;
 import api.support.fixtures.OverdueFinePoliciesFixture;
 import api.support.fixtures.PatronGroupsFixture;
@@ -132,6 +133,12 @@ public abstract class APITests {
 
   protected final ResourceClient requestPolicyClient
     = ResourceClient.forRequestPolicies();
+
+  protected final ResourceClient notesClient
+    = ResourceClient.forNotes();
+
+  protected final ResourceClient noteTypeClient
+    = ResourceClient.forNoteTypes();
 
   protected final ResourceClient noticePolicyClient
     = ResourceClient.forNoticePolicies();
@@ -254,7 +261,7 @@ public abstract class APITests {
   protected final FeeFineOwnerFixture feeFineOwnerFixture = new FeeFineOwnerFixture();
   protected final FeeFineTypeFixture feeFineTypeFixture = new FeeFineTypeFixture();
   protected final LostItemFeePoliciesFixture lostItemFeePoliciesFixture = new LostItemFeePoliciesFixture();
-
+  protected final NoteTypeFixture noteTypeFixture = new NoteTypeFixture();
   protected final DeclareLostFixtures declareLostFixtures = new DeclareLostFixtures();
   protected final ClaimItemReturnedFixture claimItemReturnedFixture = new ClaimItemReturnedFixture(restAssuredClient);
   protected final FeeFineAccountFixture feeFineAccountFixture = new FeeFineAccountFixture();
