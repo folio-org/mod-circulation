@@ -77,6 +77,14 @@ public class ResourceClient {
     return new ResourceClient(InterfaceUrls::feeFinesUrl, "feefines");
   }
 
+  public static ResourceClient forNotes() {
+    return new ResourceClient(InterfaceUrls::notesUrl, "notes");
+  }
+
+  public static ResourceClient forNoteTypes() {
+    return new ResourceClient(InterfaceUrls::noteTypesUrl, "noteTypes");
+  }
+
   public static ResourceClient forLoanPolicies() {
     return new ResourceClient(InterfaceUrls::loanPoliciesStorageUrl,
       "loanPolicies");
