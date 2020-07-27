@@ -225,13 +225,11 @@ public class TemplateContextMatchers {
 
   public static Matcher<?> getFeeFineContextMatcher(Account account, FeeFineAction action) {
     return allOf(
-      hasJsonPath("fee.owner", is(account.getFeeFineOwner())),
-      hasJsonPath("fee.type", is(account.getFeeFineType())),
-      hasJsonPath("fee.actionType", is(action.getActionType())),
-      hasJsonPath("fee.actionDateTime", isEquivalentTo(action.getDateAction())),
-      hasJsonPath("fee.actionAmount", is(action.getAmount().toDouble())),
-      hasJsonPath("fee.amount", is(account.getAmount().toDouble())),
-      hasJsonPath("fee.balance", is(action.getBalance()))
+      hasJsonPath("feeCharge.owner", is(account.getFeeFineOwner())),
+      hasJsonPath("feeCharge.type", is(account.getFeeFineType())),
+      hasJsonPath("feeCharge.paymentStatus", is(account.getPaymentStatus())),
+      hasJsonPath("feeCharge.amount", is(account.getAmount().toDouble())),
+      hasJsonPath("feeCharge.remainingAmount", is(account.getRemaining().toDouble()))
     );
   }
 }

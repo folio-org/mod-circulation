@@ -3,6 +3,7 @@ package api.loans;
 import static api.support.http.CqlQuery.exactMatch;
 import static api.support.http.CqlQuery.queryFromTemplate;
 import static api.support.matchers.EventMatchers.isValidItemDeclaredLostEvent;
+import static api.support.matchers.ItemMatchers.isDeclaredLost;
 import static api.support.matchers.ItemMatchers.isLostAndPaid;
 import static api.support.matchers.JsonObjectMatcher.hasJsonPath;
 import static api.support.matchers.LoanMatchers.hasLoanProperty;
@@ -415,6 +416,22 @@ public class DeclareLostAPITests extends APITests {
     JsonObject loan = loanIndividualResource.getJson();
 
     assertThat(event, isValidItemDeclaredLostEvent(loan));
+  }
+
+  @Test
+  public void cannotDeclareItemLostTwice() {
+    final IndividualResource loan = declareItemLost();
+    final UUID itemId = UUID.fromString(loan.getJson().getString("itemId"));
+
+    assertThat(itemsClient.getById(itemId).getJson(), isDeclaredLost());
+
+    final Response response = declareLostFixtures.attemptDeclareItemLost(
+      new DeclareItemLostRequestBuilder()
+        .forLoanId(loan.getId()));
+
+    assertThat(response.getJson(), hasErrorWith(allOf(
+      hasMessage("The item is already declared lost"),
+      hasParameter("itemId", itemId.toString()))));
   }
 
   private List<JsonObject> getAccountsForLoan(UUID loanId) {

@@ -1,3 +1,44 @@
+## 19.0.9 2020-07-15
+
+* Fixes event loop blocking issue for clearance report (CIRC-817)
+
+## 19.0.8 2020-07-10
+
+* Fixes permission failure for automatic anonymization (CIRC-803)
+
+## 19.0.7 2020-07-10
+
+* Add new stop sending event for overdue notices (CIRC-722)
+* Delete broken patron action sessions (CIRC-815)
+* Fix fee/fine action's Created at field (CIRC-816)
+* Add module permissions (CIRC-820, CIRC-802, CIRC-804)
+
+## 19.0.6 2020-07-09
+
+* Allows renewal of declared lost item when due date is not changed (CIRC-809)
+* Fixes permission failure for change due date for recalled item (CIRC-807)
+* Fixes permission failure for override check out (CIRC-806)
+
+## 19.0.5 2020-07-09
+
+* Upgrade to RAML Module Builder v30.2.2 (CIRC-827)
+* Upgrade to Vert.x stack v3.9.1 (CIRC-796)
+* Fixes security vulnerabilities (CIRC-792, CIRC-827)
+
+## 19.0.4 2020-07-08
+
+* Refuses lost items to be declared lost (CIRC-792)
+
+## 19.0.3 2020-07-06
+
+* Extend/rename tokens available to automated fee/fine notices (CIRC-758, CIRC-787)
+
+## 19.0.2 2020-07-01
+
+* Overdue loan due date is not extended when item is recalled (CIRC-801)
+* Fix NPE during Loan Policy processing with fixed due date schedule (CIRC-775)
+* Add default limit to the query for getting OpeningPeriods from mod-calendar (CIRC-763)
+
 ## 19.0.1 2020-06-16
 
 * Service points with many locations do not allow pick slips to be printed (CIRC-768)

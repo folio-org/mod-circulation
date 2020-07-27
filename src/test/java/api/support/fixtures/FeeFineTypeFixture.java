@@ -1,5 +1,7 @@
 package api.support.fixtures;
 
+import java.util.UUID;
+
 import org.folio.circulation.support.http.client.IndividualResource;
 
 import api.support.builders.FeeFineBuilder;
@@ -25,6 +27,13 @@ public final class FeeFineTypeFixture extends RecordCreator {
   public IndividualResource overdueFine() {
     return createIfAbsent(new FeeFineBuilder()
       .withFeeFineType("Overdue fine")
+      .withAutomatic(true));
+  }
+
+  public IndividualResource overdueFine(UUID ownerId) {
+    return createIfAbsent(new FeeFineBuilder()
+      .withFeeFineType("Overdue fine")
+      .withOwnerId(ownerId)
       .withAutomatic(true));
   }
 }

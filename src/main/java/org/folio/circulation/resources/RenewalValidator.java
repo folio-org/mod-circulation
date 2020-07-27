@@ -11,6 +11,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 
 public final class RenewalValidator {
@@ -32,20 +33,21 @@ public final class RenewalValidator {
 
   }
 
-  public static void errorWhenEarlierOrSameDueDate(
-    Loan loan, DateTime proposedDueDate, List<ValidationError> errors) {
+  public static void errorWhenEarlierOrSameDueDate(Loan loan,
+    DateTime proposedDueDate, List<ValidationError> errors) {
 
-    if(isSameOrBefore(loan, proposedDueDate)) {
+    if (isSameOrBefore(loan, proposedDueDate)) {
       errors.add(loanPolicyValidationError(loan.getLoanPolicy(), RENEWAL_WOULD_NOT_CHANGE_THE_DUE_DATE));
     }
   }
 
   public static Result<DateTime> errorWhenEarlierOrSameDueDate(Loan loan, DateTime proposedDueDate) {
-    if (isSameOrBefore(loan, proposedDueDate)) {
+    if (isSameOrBefore(loan, proposedDueDate) && !loan.isDeclaredLost()) {
       return failedValidation(loanPolicyValidationError(loan.getLoanPolicy(),
         RENEWAL_WOULD_NOT_CHANGE_THE_DUE_DATE));
     }
-    return Result.succeeded(proposedDueDate);
+
+    return succeeded(proposedDueDate);
   }
 
   private static boolean isSameOrBefore(Loan loan, DateTime proposedDueDate) {

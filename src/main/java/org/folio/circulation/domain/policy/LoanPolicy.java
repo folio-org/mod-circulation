@@ -55,19 +55,8 @@ public class LoanPolicy extends Policy {
   private AppliedRuleConditions ruleConditionsEntity;
 
   private LoanPolicy(JsonObject representation) {
-    this(representation,
-      new NoFixedDueDateSchedules(),
-      new NoFixedDueDateSchedules());
-  }
-
-  LoanPolicy(
-    JsonObject representation,
-    FixedDueDateSchedules fixedDueDateSchedules,
-    FixedDueDateSchedules alternateRenewalFixedDueDateSchedules) {
-    super(getProperty(representation, "id"), getProperty(representation, "name"));
-    this.representation = representation;
-    this.fixedDueDateSchedules = fixedDueDateSchedules;
-    this.alternateRenewalFixedDueDateSchedules = alternateRenewalFixedDueDateSchedules;
+    this(representation, new NoFixedDueDateSchedules(), new NoFixedDueDateSchedules(),
+      new AppliedRuleConditions(false, false, false));
   }
 
   LoanPolicy(
@@ -315,7 +304,7 @@ public class LoanPolicy extends Policy {
 
   LoanPolicy withDueDateSchedules(FixedDueDateSchedules loanSchedules) {
     return new LoanPolicy(representation, loanSchedules,
-      alternateRenewalFixedDueDateSchedules);
+      alternateRenewalFixedDueDateSchedules, ruleConditionsEntity);
   }
 
   //TODO: potentially remove this, when builder can create class or JSON representation
@@ -324,7 +313,8 @@ public class LoanPolicy extends Policy {
   }
 
   LoanPolicy withAlternateRenewalSchedules(FixedDueDateSchedules renewalSchedules) {
-    return new LoanPolicy(representation, fixedDueDateSchedules, renewalSchedules);
+    return new LoanPolicy(representation, fixedDueDateSchedules,
+      renewalSchedules, ruleConditionsEntity);
   }
 
   //TODO: potentially remove this, when builder can create class or JSON representation
@@ -446,22 +436,30 @@ public class LoanPolicy extends Policy {
     errors.addAll(combineValidationErrors(minimumDueDateResult));
 
     if (errors.isEmpty()) {
-      return minimumDueDateResult
-          .combine(recallDueDateResult, this::determineDueDate)
+      return determineDueDate(minimumDueDateResult, recallDueDateResult, loan)
           .map(dueDate -> changeDueDate(dueDate, loan));
     } else {
       return failedValidation(errors);
     }
   }
 
-  private DateTime determineDueDate(DateTime minimumGuaranteedDueDate,
-      DateTime recallDueDate) {
-    if (minimumGuaranteedDueDate == null ||
-        recallDueDate.isAfter(minimumGuaranteedDueDate)) {
-      return recallDueDate;
-    } else {
-      return minimumGuaranteedDueDate;
-    }
+  private Result<DateTime> determineDueDate(Result<DateTime> minimumGuaranteedDueDateResult,
+    Result<DateTime> recallDueDateResult, Loan loan) {
+
+    return minimumGuaranteedDueDateResult.combine(recallDueDateResult,
+      (minimumGuaranteedDueDate, recallDueDate) -> {
+        if (loan.isOverdue()) {
+          // for overdue loans do not update due date
+          return loan.getDueDate();
+        }
+
+        if (minimumGuaranteedDueDate == null ||
+          recallDueDate.isAfter(minimumGuaranteedDueDate)) {
+          return recallDueDate;
+        } else {
+          return minimumGuaranteedDueDate;
+        }
+      });
   }
 
   private Loan changeDueDate(DateTime dueDate, Loan loan) {
