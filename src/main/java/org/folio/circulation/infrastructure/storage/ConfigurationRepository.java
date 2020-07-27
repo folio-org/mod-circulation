@@ -67,7 +67,7 @@ public class ConfigurationRepository {
     final String period = configurations.stream()
       .map(Configuration::getValue)
       .findFirst()
-      .orElse("{}");
+      .orElse( "{}");
 
     return LoanAnonymizationConfiguration.from(new JsonObject(period));
   }
