@@ -8,7 +8,6 @@ import java.util.concurrent.CompletableFuture;
 import org.folio.circulation.StoreLoanAndItem;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
-import org.folio.circulation.domain.LoanRepository;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.NoteLink;
 import org.folio.circulation.domain.NoteLinkType;
