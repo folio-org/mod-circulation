@@ -2,7 +2,6 @@ package org.folio.circulation.resources;
 
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 
-import java.time.LocalDateTime;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 
@@ -25,7 +24,6 @@ import org.folio.circulation.support.ItemRepository;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.http.server.NoContentResponse;
 import org.folio.circulation.support.http.server.WebContext;
-import org.folio.circulation.support.results.CommonFailures;
 import org.folio.circulation.support.utils.CollectionUtil;
 
 import io.vertx.core.http.HttpClient;
@@ -35,6 +33,7 @@ import io.vertx.ext.web.RoutingContext;
 public class DeclareLostResource extends Resource {
 
   private static final String NOTE_MESSAGE = "Claimed returned item marked lost";
+  private static final String NOTE_DOMAIN  = "loans";
 
   public DeclareLostResource(HttpClient client) {
     super(client);
@@ -107,7 +106,7 @@ public class DeclareLostResource extends Resource {
       .withTitle(NOTE_MESSAGE)
       .withTypeId(noteType.getId())
       .withContent(NOTE_MESSAGE)
-      .withDate(LocalDateTime.now().toString())
+      .withDomain(NOTE_DOMAIN)
       .withLinks(NoteLink.from(loan.getUserId(), NoteLinkType.USER.getValue())));
   }
 
@@ -115,7 +114,7 @@ public class DeclareLostResource extends Resource {
     Result<MultipleRecords<NoteType>> noteTypeResult) {
 
     return noteTypeResult.failWhen(
-      notes -> Result.succeeded(notes.isEmpty()),
-      notes -> singleValidationError("No General note type found", "noteType", null));
+      notes -> Result.succeeded(notes.getRecords().isEmpty()),
+      notes -> singleValidationError("No General note type found", "noteTypes", null));
   }
 }
