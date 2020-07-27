@@ -60,6 +60,8 @@ import org.hamcrest.Matchers;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.LocalDate;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -95,6 +97,17 @@ public class RequestsAPICreationTests extends APITests {
   private static final String HOLD_REQUEST_EVENT = "Hold request";
   private static final String RECALL_REQUEST_EVENT = "Recall request";
   private static final String ITEM_RECALLED = "Item recalled";
+
+  @Before
+  public void setupLoanType() {
+    noteTypeFixture.generalNoteType();
+  }
+
+  @After
+  public void cleanUp() {
+    notesClient.deleteAll();
+    noteTypeClient.deleteAll();
+  }
 
   @Override
   public void afterEach() {

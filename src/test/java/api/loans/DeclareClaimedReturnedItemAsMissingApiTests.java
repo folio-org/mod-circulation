@@ -17,6 +17,7 @@ import java.util.UUID;
 
 import org.folio.circulation.support.http.client.Response;
 import org.joda.time.DateTime;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -31,7 +32,8 @@ public class DeclareClaimedReturnedItemAsMissingApiTests extends APITests {
   private String loanId;
 
   @Before
-  public void setUpItemAndLoan() {
+  public void setUp() {
+    noteTypeFixture.generalNoteType();
     item = itemsFixture.basedUponSmallAngryPlanet();
     loanId = checkOutFixture.checkOutByBarcode(item, usersFixture.charlotte())
       .getId().toString();

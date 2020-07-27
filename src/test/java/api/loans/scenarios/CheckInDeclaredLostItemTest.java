@@ -19,12 +19,25 @@ import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 
 import api.support.builders.CheckInByBarcodeRequestBuilder;
 import io.vertx.core.json.JsonObject;
 
 public class CheckInDeclaredLostItemTest extends RefundLostItemFeesTestBase {
+
+  @Before
+  public void setupLoanType() {
+    noteTypeFixture.generalNoteType();
+  }
+
+  @After
+  public void cleanUp() {
+    notesClient.deleteAll();
+    noteTypeClient.deleteAll();
+  }
 
   @Override
   protected void performActionThatRequiresRefund() {

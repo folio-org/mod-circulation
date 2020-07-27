@@ -30,6 +30,8 @@ import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
 import org.joda.time.DateTime;
 import org.joda.time.Period;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 
 import api.support.APITests;
@@ -45,6 +47,18 @@ import api.support.http.InventoryItemResource;
 import io.vertx.core.json.JsonObject;
 
 public class ChangeDueDateByReplacingLoanTests extends APITests {
+
+  @Before
+  public void setupLoanType() {
+    noteTypeFixture.generalNoteType();
+  }
+
+  @After
+  public void cleanUp() {
+    notesClient.deleteAll();
+    noteTypeClient.deleteAll();
+  }
+
   @Test
   public void canManuallyChangeTheDueDateOfLoan() {
     final InventoryItemResource item = itemsFixture.basedUponNod();
