@@ -25,6 +25,7 @@ import org.folio.circulation.support.ItemRepository;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.http.server.NoContentResponse;
 import org.folio.circulation.support.http.server.WebContext;
+import org.folio.circulation.support.results.CommonFailures;
 import org.folio.circulation.support.utils.CollectionUtil;
 
 import io.vertx.core.http.HttpClient;
@@ -94,7 +95,7 @@ public class DeclareLostResource extends Resource {
     final NotesRepository notesRepo = new NotesRepository(clients);
     final NoteTypesRepository noteTypesRepo = new NoteTypesRepository(clients);
 
-    return noteTypesRepo.findBy("query=name==\"General note\"")
+    return noteTypesRepo.findByName("General note")
       .thenApply(this::refuseIfNoteTypeNotFound)
       .thenApply(r -> r.map(CollectionUtil::firstOrNull))
       .thenCompose(r -> r.after(noteType -> notesRepo.create(createNote(noteType, loan))))
