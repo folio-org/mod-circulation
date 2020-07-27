@@ -36,6 +36,7 @@ import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 import org.hamcrest.Matcher;
 import org.joda.time.DateTime;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -59,8 +60,16 @@ public class DeclareLostAPITests extends APITests {
   }
 
   @Before
-  public void activatePolicy() {
+  public void setupPolicyAndLoanType() {
+    noteTypeFixture.generalNoteType();
+
     useLostItemPolicy(lostItemFeePoliciesFixture.chargeFee().getId());
+  }
+
+  @After
+  public void cleanUp() {
+    notesClient.deleteAll();
+    noteTypeClient.deleteAll();
   }
 
   @Test
