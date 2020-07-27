@@ -6,6 +6,7 @@ import static api.support.fakes.StorageSchema.validatorForCheckInStorageSchema;
 import static api.support.fakes.StorageSchema.validatorForLocationCampSchema;
 import static api.support.fakes.StorageSchema.validatorForLocationInstSchema;
 import static api.support.fakes.StorageSchema.validatorForLocationLibSchema;
+import static api.support.fakes.StorageSchema.validatorForNoteSchema;
 import static api.support.fakes.StorageSchema.validatorForStorageItemSchema;
 import static api.support.fakes.StorageSchema.validatorForStorageLoanSchema;
 import static api.support.fakes.Storage.getStorage;
@@ -357,6 +358,21 @@ public class FakeOkapi extends AbstractVerticle {
       .withRecordName("feefines")
       .withRootPath("/feefines")
       .withCollectionPropertyName("feefines")
+      .create().register(router);
+
+    new FakeStorageModuleBuilder()
+      .withRecordName("note")
+      .withRootPath("/notes")
+      .withCollectionPropertyName("notes")
+      .withChangeMetadata()
+      .validateRecordsWith(validatorForNoteSchema())
+      .create().register(router);
+
+    new FakeStorageModuleBuilder()
+      .withRecordName("noteType")
+      .withRootPath("/note-types")
+      .withCollectionPropertyName("noteTypes")
+      .withQueryParameters("name")
       .create().register(router);
 
     router.delete("/_/tenant").handler(this::removeAllData);
