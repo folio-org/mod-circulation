@@ -1,3 +1,7 @@
+## 19.0.10 2020-07-27
+
+* Fixes issue with `URI Too Large` error for `In transit` report (CIRC-813)
+
 ## 19.0.9 2020-07-15
 
 * Fixes event loop blocking issue for clearance report (CIRC-817)
