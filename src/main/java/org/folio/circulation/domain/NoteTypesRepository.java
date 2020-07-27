@@ -25,13 +25,13 @@ public class NoteTypesRepository {
   }
 
   public CompletableFuture<Result<MultipleRecords<NoteType>>> findByName(String name) {
-    return CqlQuery.exactMatch("name", name)
+    return CqlQuery.exactMatch("typeName", name)
       .after(query -> noteTypesClient.getMany(query, PageLimit.one()))
       .thenApply(flatMapResult(this::mapResponseToNoteTypes));
   }
 
   private Result<MultipleRecords<NoteType>> mapResponseToNoteTypes(Response response) {
-    return MultipleRecords.from(response, NoteType::from, "noteType");
+    return MultipleRecords.from(response, NoteType::from, "noteTypes");
   }
 
 }

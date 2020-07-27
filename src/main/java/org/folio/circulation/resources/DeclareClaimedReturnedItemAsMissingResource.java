@@ -4,7 +4,6 @@ import static org.folio.circulation.support.Result.failed;
 import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 
-import java.time.LocalDateTime;
 import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.domain.Loan;
@@ -33,6 +32,7 @@ import io.vertx.ext.web.RoutingContext;
 public class DeclareClaimedReturnedItemAsMissingResource extends Resource {
 
   private static final String NOTE_MESSAGE = "Claimed returned item marked missing";
+  private static final String NOTE_DOMAIN  = "loans";
 
   public DeclareClaimedReturnedItemAsMissingResource(HttpClient client) {
     super(client);
@@ -83,7 +83,7 @@ public class DeclareClaimedReturnedItemAsMissingResource extends Resource {
       .withTitle(NOTE_MESSAGE)
       .withTypeId(noteType.getId())
       .withContent(NOTE_MESSAGE)
-      .withDate(LocalDateTime.now().toString())
+      .withDomain(NOTE_DOMAIN)
       .withLinks(NoteLink.from(loan.getUserId(), NoteLinkType.USER.getValue())));
   }
 
@@ -92,7 +92,7 @@ public class DeclareClaimedReturnedItemAsMissingResource extends Resource {
 
     return noteTypeResult.failWhen(
       notes -> Result.succeeded(notes.isEmpty()),
-      notes -> singleValidationError("No General note type found", "noteType", null));
+      notes -> singleValidationError("No General note type found", "noteTypes", null));
   }
 
   private Result<ChangeItemStatusRequest> createRequest(RoutingContext routingContext) {
