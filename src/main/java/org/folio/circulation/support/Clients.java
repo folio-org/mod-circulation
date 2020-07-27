@@ -296,7 +296,7 @@ public class Clients {
   }
 
   public CollectionResourceClient noteTypesClient() {
-    return notesClient;
+    return noteTypesClient;
   }
 
   private static CollectionResourceClient getCollectionResourceClient(

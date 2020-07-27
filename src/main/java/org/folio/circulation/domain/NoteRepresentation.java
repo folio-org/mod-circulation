@@ -13,7 +13,6 @@ public class NoteRepresentation extends JsonObject {
     this.put("typeId", builder.typeId);
     this.put("content", builder.content);
     this.put("domain", builder.domain);
-    this.put("date", builder.date);
     this.put("links", builder.links);
 
   }
@@ -27,7 +26,6 @@ public class NoteRepresentation extends JsonObject {
     String typeId;
     String domain;
     String content;
-    String date;
     JsonArray links;
 
     public NoteRepresentationBuilder withTitle(String title) {
@@ -47,11 +45,6 @@ public class NoteRepresentation extends JsonObject {
 
     public NoteRepresentationBuilder withContent(String content) {
       this.content = content;
-      return this;
-    }
-
-    public NoteRepresentationBuilder withDate(String date) {
-      this.date = date;
       return this;
     }
 
