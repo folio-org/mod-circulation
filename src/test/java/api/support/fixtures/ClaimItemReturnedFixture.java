@@ -3,6 +3,8 @@ package api.support.fixtures;
 import static api.support.http.InterfaceUrls.claimItemReturnedURL;
 import static api.support.http.InterfaceUrls.declareClaimedReturnedItemAsMissingUrl;
 
+import java.util.UUID;
+
 import org.folio.circulation.support.http.client.Response;
 
 import api.support.RestAssuredClient;
@@ -14,6 +16,10 @@ public class ClaimItemReturnedFixture {
 
   public ClaimItemReturnedFixture(RestAssuredClient restAssuredClient) {
     this.restAssuredClient = restAssuredClient;
+  }
+
+  public Response claimItemReturned(UUID loanId) {
+    return claimItemReturned(new ClaimItemReturnedRequestBuilder().forLoan(loanId));
   }
 
   public Response claimItemReturned(ClaimItemReturnedRequestBuilder request) {

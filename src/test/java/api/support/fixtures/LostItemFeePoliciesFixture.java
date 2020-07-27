@@ -5,10 +5,10 @@ import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
 
 import java.util.UUID;
 
+import org.folio.circulation.domain.TimePeriod;
 import org.folio.circulation.support.http.client.IndividualResource;
 
 import api.support.builders.LostItemFeePolicyBuilder;
-import io.vertx.core.json.JsonObject;
 
 public class LostItemFeePoliciesFixture {
   private final RecordCreator lostItemFeePolicyRecordCreator;
@@ -34,18 +34,13 @@ public class LostItemFeePoliciesFixture {
   }
 
   public LostItemFeePolicyBuilder facultyStandardPolicy() {
-    JsonObject itemAgedLostOverdue = new JsonObject();
-    itemAgedLostOverdue.put("duration", 12);
-    itemAgedLostOverdue.put("intervalId", "Months");
-
-    JsonObject patronBilledAfterAgedLost = new JsonObject();
-    patronBilledAfterAgedLost.put("duration", 12);
-    patronBilledAfterAgedLost.put("intervalId", "Months");
+    final TimePeriod itemAgedLostOverdue = new TimePeriod(12, "Months");
+    final TimePeriod patronBilledAfterAgedLost = new TimePeriod(12, "Months");
 
     return new LostItemFeePolicyBuilder()
       .withName("Undergrad standard")
       .withDescription("This is description for undergrad standard")
-      .withItemAgedLostOverdue(itemAgedLostOverdue)
+      .withItemAgedToLostAfterOverdue(itemAgedLostOverdue)
       .withPatronBilledAfterAgedLost(patronBilledAfterAgedLost)
       .withNoChargeAmountItem()
       .doNotChargeProcessingFee()
@@ -57,17 +52,12 @@ public class LostItemFeePoliciesFixture {
   }
 
   private LostItemFeePolicyBuilder chargeFeePolicy() {
-    JsonObject itemAgedLostOverdue = new JsonObject();
-    itemAgedLostOverdue.put("duration", 12);
-    itemAgedLostOverdue.put("intervalId", "Months");
-
-    JsonObject patronBilledAfterAgedLost = new JsonObject();
-    patronBilledAfterAgedLost.put("duration", 12);
-    patronBilledAfterAgedLost.put("intervalId", "Months");
+    TimePeriod itemAgedLostOverdue = new TimePeriod(12, "Months");
+    TimePeriod patronBilledAfterAgedLost = new TimePeriod(12, "Months");
 
     return new LostItemFeePolicyBuilder()
       .withName("No lost item fees policy")
-      .withItemAgedLostOverdue(itemAgedLostOverdue)
+      .withItemAgedToLostAfterOverdue(itemAgedLostOverdue)
       .withPatronBilledAfterAgedLost(patronBilledAfterAgedLost)
       .withSetCost(10.00)
       .chargeProcessingFee(5.00)
