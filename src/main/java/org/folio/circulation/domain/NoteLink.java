@@ -1,11 +1,13 @@
 package org.folio.circulation.domain;
 
 import io.vertx.core.json.JsonObject;
+import lombok.EqualsAndHashCode;
 
+@EqualsAndHashCode
 public class NoteLink extends JsonObject {
   String id;
   String type;
-  
+
   public NoteLink(String id, String type) {
     super();
     this.id = id;
@@ -15,5 +17,5 @@ public class NoteLink extends JsonObject {
   public static NoteLink from(String id, String type) {
     return new NoteLink(id, type);
   }
-  
+
 }
