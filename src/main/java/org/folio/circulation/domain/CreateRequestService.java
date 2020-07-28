@@ -6,10 +6,13 @@ import java.util.HashMap;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
-import org.folio.circulation.domain.policy.RequestPolicyRepository;
+import org.folio.circulation.infrastructure.storage.requests.RequestPolicyRepository;
 import org.folio.circulation.domain.validation.AutomatedPatronBlocksValidator;
 import org.folio.circulation.domain.validation.RequestLoanValidator;
 import org.folio.circulation.domain.validation.UserManualBlocksValidator;
+import org.folio.circulation.infrastructure.storage.AutomatedPatronBlocksRepository;
+import org.folio.circulation.infrastructure.storage.ConfigurationRepository;
+import org.folio.circulation.infrastructure.storage.requests.RequestRepository;
 import org.folio.circulation.resources.RequestNoticeSender;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.ValidationErrorFailure;

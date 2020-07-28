@@ -10,8 +10,8 @@ import org.folio.circulation.support.Result;
 import org.folio.circulation.support.http.server.ValidationError;
 import org.joda.time.DateTime;
 
-class NoFixedDueDateSchedules extends FixedDueDateSchedules {
-  NoFixedDueDateSchedules() {
+public class NoFixedDueDateSchedules extends FixedDueDateSchedules {
+  public NoFixedDueDateSchedules() {
     super(null, new ArrayList<>());
   }
 

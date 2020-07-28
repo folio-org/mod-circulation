@@ -5,11 +5,11 @@ import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
-import org.folio.circulation.domain.ConfigurationRepository;
+import org.folio.circulation.infrastructure.storage.ConfigurationRepository;
 import org.folio.circulation.domain.notice.session.ExpiredSession;
 import org.folio.circulation.domain.notice.session.PatronActionSessionService;
 import org.folio.circulation.domain.notice.session.PatronActionType;
-import org.folio.circulation.domain.notice.session.PatronExpiredSessionRepository;
+import org.folio.circulation.infrastructure.storage.sessions.PatronExpiredSessionRepository;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.ClockManager;
 import org.folio.circulation.support.Result;

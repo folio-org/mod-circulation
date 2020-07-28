@@ -5,10 +5,10 @@ import static org.folio.circulation.resources.renewal.RenewByBarcodeRequest.rene
 import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.domain.Loan;
-import org.folio.circulation.domain.LoanRepository;
-import org.folio.circulation.domain.UserRepository;
+import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
+import org.folio.circulation.infrastructure.storage.users.UserRepository;
 import org.folio.circulation.storage.SingleOpenLoanByUserAndItemBarcodeFinder;
-import org.folio.circulation.support.ItemRepository;
+import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
 import org.folio.circulation.support.Result;
 
 import io.vertx.core.http.HttpClient;

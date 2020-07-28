@@ -25,22 +25,20 @@ import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.ItemsReportFetcher;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.MultipleRecords;
-import org.folio.circulation.domain.PatronGroupRepository;
-import org.folio.circulation.domain.ReportRepository;
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.ServicePoint;
-import org.folio.circulation.domain.ServicePointRepository;
-import org.folio.circulation.domain.UserRepository;
 import org.folio.circulation.domain.representations.ItemReportRepresentation;
+import org.folio.circulation.infrastructure.storage.ServicePointRepository;
+import org.folio.circulation.infrastructure.storage.inventory.ItemReportRepository;
+import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
+import org.folio.circulation.infrastructure.storage.users.PatronGroupRepository;
+import org.folio.circulation.infrastructure.storage.users.UserRepository;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.FindWithMultipleCqlIndexValues;
 import org.folio.circulation.support.GetManyRecordsClient;
-import org.folio.circulation.support.ItemRepository;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.RouteRegistration;
 import org.folio.circulation.support.http.client.CqlQuery;
-import org.folio.circulation.support.http.client.PageLimit;
-import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.server.JsonHttpResponse;
 import org.folio.circulation.support.http.server.WebContext;
 
@@ -75,12 +73,12 @@ public class ItemsInTransitResource extends Resource {
     final GetManyRecordsClient requestsStorageClient = clients.requestsStorage();
     final ItemRepository itemRepository = new ItemRepository(clients, true, true, true);
     final ServicePointRepository servicePointRepository = new ServicePointRepository(clients);
-    final ReportRepository reportRepository = new ReportRepository(clients);
+    final ItemReportRepository itemReportRepository = new ItemReportRepository(clients);
     final UserRepository userRepository = new UserRepository(clients);
     final PatronGroupRepository patronGroupRepository = new PatronGroupRepository(clients);
     final Comparator<InTransitReportEntry> sortByCheckinServicePointComparator = sortByCheckinServicePointComparator();
 
-    reportRepository.getAllItemsByField("status.name", IN_TRANSIT.getValue())
+    itemReportRepository.getAllItemsByField("status.name", IN_TRANSIT.getValue())
       .thenComposeAsync(r -> r.after(itemsReportFetcher ->
         fetchItemsRelatedRecords(itemsReportFetcher, itemRepository, servicePointRepository)))
       .thenComposeAsync(r -> r.after(inTransitReportEntries ->
@@ -173,15 +171,10 @@ public class ItemsInTransitResource extends Resource {
 
     final Result<CqlQuery> statusQuery = exactMatch("itemStatus",
       IN_TRANSIT.getValue());
-    final Result<CqlQuery> itemIdQuery = exactMatchAny(ITEM_ID,
-      itemsToFetchLoansFor);
 
     CompletableFuture<Result<MultipleRecords<Loan>>> multipleRecordsLoans =
-      statusQuery.combine(
-        itemIdQuery, CqlQuery::and)
-        .after(q -> loansStorageClient.getMany(q,
-          PageLimit.limit(inTransitReportEntries.size())))
-        .thenApply(result -> result.next(this::mapResponseToLoans));
+      findWithMultipleCqlIndexValues(loansStorageClient, "loans", Loan::from)
+        .findByIdIndexAndQuery(itemsToFetchLoansFor, ITEM_ID, statusQuery);
 
     return multipleRecordsLoans.thenCompose(multiLoanRecordsResult ->
       multiLoanRecordsResult.after(
@@ -211,10 +204,6 @@ public class ItemsInTransitResource extends Resource {
     inTransitReportEntry
       .setLoan(loanMap.getOrDefault(inTransitReportEntry.getItem().getItemId(), null));
     return inTransitReportEntry;
-  }
-
-  private Result<MultipleRecords<Loan>> mapResponseToLoans(Response response) {
-    return MultipleRecords.from(response, Loan::from, "loans");
   }
 
   private List<String> mapToItemIdList(List<InTransitReportEntry> inTransitReportEntryList) {

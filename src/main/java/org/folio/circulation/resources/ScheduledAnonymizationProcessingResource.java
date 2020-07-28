@@ -1,6 +1,6 @@
 package org.folio.circulation.resources;
 
-import org.folio.circulation.domain.ConfigurationRepository;
+import org.folio.circulation.infrastructure.storage.ConfigurationRepository;
 import org.folio.circulation.domain.anonymization.LoanAnonymization;
 import org.folio.circulation.domain.representations.anonymization.AnonymizeLoansRepresentation;
 import org.folio.circulation.support.Clients;

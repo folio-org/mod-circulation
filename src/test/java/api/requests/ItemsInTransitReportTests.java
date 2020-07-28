@@ -4,8 +4,8 @@ import static api.support.JsonCollectionAssistant.getRecordById;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static org.folio.circulation.support.JsonStringArrayHelper.toList;
 import static org.hamcrest.CoreMatchers.hasItems;
-import static org.hamcrest.core.Is.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.core.Is.is;
 import static org.joda.time.DateTimeZone.UTC;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
@@ -443,6 +443,29 @@ public class ItemsInTransitReportTests extends APITests {
     verifyLastCheckIn(thirdItemJson, checkInDate3, "Circ Desk 4");
   }
 
+  @Test
+  public void reportWillNotFailWithUriTooLargeError() {
+
+    final UUID firstServicePointId = servicePointsFixture.cd1().getId();
+    final UUID forthServicePointLocationId = locationsFixture.fourthServicePoint().getId();
+
+    for (int i = 0; i < 200; i++) {
+      InventoryItemResource item = createSmallAngryPlanetCopy(forthServicePointLocationId,
+        Integer.toString(i));
+
+      checkOutFixture.checkOutByBarcode(item);
+
+      checkInFixture.checkInByBarcode(new CheckInByBarcodeRequestBuilder()
+        .forItem(item)
+        .on(DateTime.now())
+        .at(firstServicePointId));
+    }
+
+    List<JsonObject> itemsInTransitReport = ResourceClient.forItemsInTransitReport().getAll();
+
+    assertThat(itemsInTransitReport.size(), is(200));
+  }
+
   private void createRequest(InventoryItemResource smallAngryPlanet,
                              IndividualResource steve, UUID secondServicePointId,
                              DateTime requestDate, LocalDate requestExpirationDate) {
@@ -577,6 +600,19 @@ public class ItemsInTransitReportTests extends APITests {
   private InventoryItemResource createSmallAngryPlanet() {
 
     final ItemBuilder smallAngryPlanetItemBuilder = createSmallAngryPlanetItemBuilder();
+
+    return itemsFixture.basedUponSmallAngryPlanet(smallAngryPlanetItemBuilder,
+      itemsFixture.thirdFloorHoldings());
+  }
+
+  private InventoryItemResource createSmallAngryPlanetCopy(UUID locationId, String barcode) {
+
+    final ItemBuilder smallAngryPlanetItemBuilder = new ItemBuilder()
+      .withPermanentLoanType(materialTypesFixture.book().getId())
+      .withMaterialType(loanTypesFixture.canCirculate().getId())
+      .withBarcode(barcode)
+      .withPermanentLocation(locationId)
+      .withTemporaryLocation(locationId);
 
     return itemsFixture.basedUponSmallAngryPlanet(smallAngryPlanetItemBuilder,
       itemsFixture.thirdFloorHoldings());
