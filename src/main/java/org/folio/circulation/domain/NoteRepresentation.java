@@ -52,7 +52,5 @@ public class NoteRepresentation extends JsonObject {
       this.links = new JsonArray(Arrays.asList(links));
       return this;
     }
-
   }
-
 }

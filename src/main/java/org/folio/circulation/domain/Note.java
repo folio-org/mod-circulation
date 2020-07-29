@@ -40,5 +40,4 @@ public class Note {
   JsonArray getLinks() {
     return getArrayProperty(this.representation, "links");
   }
-
 }

@@ -665,5 +665,4 @@ public class Clients {
 
     return getCollectionResourceClient(client, context, "/note-types");
   }
-
 }

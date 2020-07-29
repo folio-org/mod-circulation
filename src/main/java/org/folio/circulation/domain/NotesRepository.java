@@ -11,7 +11,6 @@ import org.folio.circulation.support.Result;
 import org.folio.circulation.support.http.client.ResponseInterpreter;
 
 public class NotesRepository {
-
   private final CollectionResourceClient notesClient;
 
   public NotesRepository(Clients clients) {
@@ -27,5 +26,4 @@ public class NotesRepository {
     return notesClient.post(note)
       .thenApply(interpreter::flatMap);
   }
-
 }

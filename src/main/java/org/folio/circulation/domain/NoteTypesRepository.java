@@ -12,7 +12,6 @@ import org.folio.circulation.support.http.client.PageLimit;
 import org.folio.circulation.support.http.client.Response;
 
 public class NoteTypesRepository {
-
   private final CollectionResourceClient noteTypesClient;
 
   public NoteTypesRepository(Clients clients) {
@@ -28,5 +27,4 @@ public class NoteTypesRepository {
   private Result<MultipleRecords<NoteType>> mapResponseToNoteTypes(Response response) {
     return MultipleRecords.from(response, NoteType::from, "noteTypes");
   }
-
 }

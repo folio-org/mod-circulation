@@ -5,7 +5,6 @@ import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
 import io.vertx.core.json.JsonObject;
 
 public class NoteType {
-  
   private final JsonObject representation;
 
   public NoteType(JsonObject representation) {
@@ -23,5 +22,4 @@ public class NoteType {
   public String getName() {
     return getProperty(representation, "typeName");
   }
-
 }

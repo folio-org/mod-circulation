@@ -1,9 +1,8 @@
 package org.folio.circulation.domain;
 
 public enum NoteLinkType {
-
   USER("user");
-  
+
   private final String value;
 
   NoteLinkType(String value) {
@@ -13,5 +12,4 @@ public enum NoteLinkType {
   public String getValue() {
     return value;
   }
-
 }
