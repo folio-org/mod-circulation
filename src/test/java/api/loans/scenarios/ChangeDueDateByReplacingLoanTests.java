@@ -49,7 +49,7 @@ import io.vertx.core.json.JsonObject;
 public class ChangeDueDateByReplacingLoanTests extends APITests {
 
   @Before
-  public void setupLoanType() {
+  public void setupNoteType() {
     noteTypeFixture.generalNoteType();
   }
 

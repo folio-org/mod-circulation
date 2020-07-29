@@ -33,7 +33,7 @@ public class OverrideRenewDeclaredLostItemTest extends RefundLostItemFeesTestBas
   }
 
   @Before
-  public void setupLoanType() {
+  public void setupNoteType() {
     noteTypeFixture.generalNoteType();
   }
 

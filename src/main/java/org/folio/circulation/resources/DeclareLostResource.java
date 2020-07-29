@@ -54,8 +54,8 @@ public class DeclareLostResource extends Resource {
     final LostItemFeeChargingService lostItemFeeService = new LostItemFeeChargingService(clients);
     final EventPublisher eventPublisher = new EventPublisher(routingContext);
 
-    validateDeclaredLostRequest(routingContext).after(request -> loanRepository.getById(request.getLoanId())
-      .thenApply(LoanValidator::refuseWhenLoanIsClosed)
+    validateDeclaredLostRequest(routingContext)
+      .after(request -> loanRepository.getById(request.getLoanId())
       .thenApply(LoanValidator::refuseWhenLoanIsClosed)
       .thenApply(this::refuseWhenItemIsAlreadyDeclaredLost)
       .thenApply(loan -> declareItemLost(loan, request))

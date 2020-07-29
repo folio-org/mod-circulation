@@ -61,7 +61,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
   private static final String RENEWED_THROUGH_OVERRIDE = "renewedThroughOverride";
 
   @Before
-  public void setupLoanType() {
+  public void setupNoteType() {
     noteTypeFixture.generalNoteType();
   }
 

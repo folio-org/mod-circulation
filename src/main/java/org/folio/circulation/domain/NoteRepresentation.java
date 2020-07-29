@@ -14,7 +14,6 @@ public class NoteRepresentation extends JsonObject {
     this.put("content", builder.content);
     this.put("domain", builder.domain);
     this.put("links", builder.links);
-
   }
 
   public static NoteRepresentationBuilder builder() {

@@ -32,6 +32,6 @@ public class StorageSchema {
   }
 
   public static JsonSchemaValidator validatorForNoteSchema() throws IOException {
-    return JsonSchemaValidator.fromResource("/note.json");
+    return JsonSchemaValidator.fromResource("/note-2-9.json");
   }
 }

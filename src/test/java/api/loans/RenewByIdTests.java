@@ -13,7 +13,7 @@ import org.junit.Before;
 public class RenewByIdTests extends RenewalAPITests {
 
   @Before
-  public void setupLoanType() {
+  public void setupNoteType() {
     noteTypeFixture.generalNoteType();
   }
 

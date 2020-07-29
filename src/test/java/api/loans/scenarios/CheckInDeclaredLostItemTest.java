@@ -29,7 +29,7 @@ import io.vertx.core.json.JsonObject;
 public class CheckInDeclaredLostItemTest extends RefundLostItemFeesTestBase {
 
   @Before
-  public void setupLoanType() {
+  public void setupNoteType() {
     noteTypeFixture.generalNoteType();
   }
 

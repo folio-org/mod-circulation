@@ -99,7 +99,7 @@ public class RequestsAPICreationTests extends APITests {
   private static final String ITEM_RECALLED = "Item recalled";
 
   @Before
-  public void setupLoanType() {
+  public void setupNoteType() {
     noteTypeFixture.generalNoteType();
   }
 

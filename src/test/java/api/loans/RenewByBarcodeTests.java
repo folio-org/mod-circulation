@@ -13,7 +13,7 @@ import static api.support.matchers.ValidationErrorMatchers.hasParameter;
 public class RenewByBarcodeTests extends RenewalAPITests {
 
   @Before
-  public void setupLoanType() {
+  public void setupNoteType() {
     noteTypeFixture.generalNoteType();
   }
 

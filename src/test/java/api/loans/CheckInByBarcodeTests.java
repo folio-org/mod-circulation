@@ -67,7 +67,7 @@ import io.vertx.core.json.JsonObject;
 public class CheckInByBarcodeTests extends APITests {
 
   @Before
-  public void setupLoanType() {
+  public void setupNoteType() {
     noteTypeFixture.generalNoteType();
   }
 

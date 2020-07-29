@@ -41,14 +41,16 @@ public class DeclareClaimedReturnedItemAsMissingResource extends Resource {
   @Override
   public void register(Router router) {
     new RouteRegistration("/circulation/loans/:id/declare-claimed-returned-item-as-missing", router)
-        .create(this::declareClaimedReturnedItemAsMissing);
+      .create(this::declareClaimedReturnedItemAsMissing);
   }
 
   private void declareClaimedReturnedItemAsMissing(RoutingContext routingContext) {
     final WebContext context = new WebContext(routingContext);
 
-    createRequest(routingContext).after(request -> processDeclareClaimedReturnedItemAsMissing(routingContext, request))
-        .thenApply(r -> r.toFixedValue(NoContentResponse::noContent)).thenAccept(context::writeResultToHttpResponse);
+    createRequest(routingContext)
+      .after(request -> processDeclareClaimedReturnedItemAsMissing(routingContext, request))
+      .thenApply(r -> r.toFixedValue(NoContentResponse::noContent))
+      .thenAccept(context::writeResultToHttpResponse);
   }
 
   private CompletableFuture<Result<Loan>> processDeclareClaimedReturnedItemAsMissing(RoutingContext routingContext,
@@ -57,10 +59,10 @@ public class DeclareClaimedReturnedItemAsMissingResource extends Resource {
     final ChangeItemStatusService changeItemStatusService = new ChangeItemStatusService(clients);
 
     return changeItemStatusService.getOpenLoan(request)
-        .thenApply(NotInItemStatusValidator::refuseWhenItemIsNotClaimedReturned)
-        .thenApply(loanResult -> declareLoanMissing(loanResult, request))
-        .thenCompose(changeItemStatusService::updateLoanAndItem)
-        .thenCompose(loanResult -> loanResult.after(loan -> createNote(clients, loan)));
+      .thenApply(NotInItemStatusValidator::refuseWhenItemIsNotClaimedReturned)
+      .thenApply(loanResult -> declareLoanMissing(loanResult, request))
+      .thenCompose(changeItemStatusService::updateLoanAndItem)
+      .thenCompose(loanResult -> loanResult.after(loan -> createNote(clients, loan)));
   }
 
   private Result<Loan> declareLoanMissing(Result<Loan> loanResult, ChangeItemStatusRequest request) {
