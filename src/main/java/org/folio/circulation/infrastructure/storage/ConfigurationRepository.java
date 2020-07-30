@@ -58,18 +58,19 @@ public class ConfigurationRepository {
       .thenApply(result -> result.next(response ->
         MultipleRecords.from(response, Configuration::new, CONFIGS_KEY)))
       .thenApply(r -> r.next(r1 -> r.map(MultipleRecords::getRecords)))
-      .thenApply(r -> r.map(this::getFirstConfiguration));
+      .thenApply(r -> r.map(ConfigurationRepository::getFirstConfiguration));
   }
 
-  private LoanAnonymizationConfiguration getFirstConfiguration(
+  static LoanAnonymizationConfiguration getFirstConfiguration(
     Collection<Configuration> configurations) {
 
-    final String period = configurations.stream()
-      .map(Configuration::getValue)
-      .findFirst()
-      .orElse("");
+    final JsonObject period = configurations.stream()
+        .map(Configuration::getValue)
+        .findFirst()
+        .map(JsonObject::new)
+        .orElse(new JsonObject());
 
-    return LoanAnonymizationConfiguration.from(new JsonObject(period));
+    return LoanAnonymizationConfiguration.from(period);
   }
 
   public CompletableFuture<Result<DateTimeZone>> findTimeZoneConfiguration() {
