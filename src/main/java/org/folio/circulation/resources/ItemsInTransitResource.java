@@ -39,8 +39,6 @@ import org.folio.circulation.support.GetManyRecordsClient;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.RouteRegistration;
 import org.folio.circulation.support.http.client.CqlQuery;
-import org.folio.circulation.support.http.client.PageLimit;
-import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.server.JsonHttpResponse;
 import org.folio.circulation.support.http.server.WebContext;
 
@@ -173,15 +171,10 @@ public class ItemsInTransitResource extends Resource {
 
     final Result<CqlQuery> statusQuery = exactMatch("itemStatus",
       IN_TRANSIT.getValue());
-    final Result<CqlQuery> itemIdQuery = exactMatchAny(ITEM_ID,
-      itemsToFetchLoansFor);
 
     CompletableFuture<Result<MultipleRecords<Loan>>> multipleRecordsLoans =
-      statusQuery.combine(
-        itemIdQuery, CqlQuery::and)
-        .after(q -> loansStorageClient.getMany(q,
-          PageLimit.limit(inTransitReportEntries.size())))
-        .thenApply(result -> result.next(this::mapResponseToLoans));
+      findWithMultipleCqlIndexValues(loansStorageClient, "loans", Loan::from)
+        .findByIdIndexAndQuery(itemsToFetchLoansFor, ITEM_ID, statusQuery);
 
     return multipleRecordsLoans.thenCompose(multiLoanRecordsResult ->
       multiLoanRecordsResult.after(
@@ -211,10 +204,6 @@ public class ItemsInTransitResource extends Resource {
     inTransitReportEntry
       .setLoan(loanMap.getOrDefault(inTransitReportEntry.getItem().getItemId(), null));
     return inTransitReportEntry;
-  }
-
-  private Result<MultipleRecords<Loan>> mapResponseToLoans(Response response) {
-    return MultipleRecords.from(response, Loan::from, "loans");
   }
 
   private List<String> mapToItemIdList(List<InTransitReportEntry> inTransitReportEntryList) {
