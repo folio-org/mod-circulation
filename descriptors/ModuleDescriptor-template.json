@@ -841,7 +841,7 @@
             "lost-item-fees-policies.collection.get"
           ],
           "unit": "minute",
-          "delay": "1"
+          "delay": "30"
         }
       ]
     },
