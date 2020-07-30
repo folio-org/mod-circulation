@@ -365,7 +365,7 @@
             "circulation.requests.item.delete"
           ],
           "modulePermissions": [
-            "circulation-storage.requests.item.delete"
+            "modperms.circulation.requests.item.delete"
           ]
         },
         {
@@ -1929,6 +1929,38 @@
       "visible": false
     },
     {
+      "permissionName": "modperms.circulation.requests.item.delete",
+      "displayName": "module permissions for one op",
+      "description": "to reduce X-Okapi-Token size",
+      "subPermissions": [
+        "circulation-storage.requests.item.get",
+        "circulation-storage.requests.collection.get",
+        "circulation-storage.loans.collection.get",
+        "circulation-storage.loans.item.get",
+        "inventory-storage.items.collection.get",
+        "inventory-storage.items.item.get",
+        "inventory-storage.holdings.collection.get",
+        "inventory-storage.holdings.item.get",
+        "inventory-storage.instances.collection.get",
+        "inventory-storage.instances.item.get",
+        "inventory-storage.locations.collection.get",
+        "inventory-storage.locations.item.get",
+        "inventory-storage.location-units.institutions.item.get",
+        "inventory-storage.location-units.campuses.item.get",
+        "inventory-storage.location-units.libraries.item.get",
+        "inventory-storage.service-points.collection.get",
+        "inventory-storage.service-points.item.get",
+        "users.item.get",
+        "users.collection.get",
+        "usergroups.collection.get",
+        "usergroups.item.get",
+        "inventory-storage.location-units.libraries.collection.get",
+        "circulation-storage.requests.item.delete",
+        "circulation-storage.request-batch.item.post"
+      ],
+      "visible": false
+    },
+    {
       "permissionName": "modperms.circulation.requests.item.put",
       "displayName": "module permissions for one op",
       "description": "to reduce X-Okapi-Token size",
@@ -2085,7 +2117,10 @@
         "calendar.opening-hours.collection.get",
         "configuration.entries.collection.get",
         "scheduled-notice-storage.scheduled-notices.collection.delete",
-        "scheduled-notice-storage.scheduled-notices.item.post"
+        "scheduled-notice-storage.scheduled-notices.item.post",
+        "manualblocks.collection.get",
+        "automated-patron-blocks.collection.get",
+        "circulation-storage.request-batch.item.post"
       ],
       "visible": false
     },
