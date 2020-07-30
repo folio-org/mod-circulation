@@ -1,10 +1,8 @@
 package api.support.builders;
 
-import static io.vertx.core.json.JsonObject.mapFrom;
-
 import java.util.UUID;
 
-import org.folio.circulation.domain.TimePeriod;
+import org.folio.circulation.domain.policy.Period;
 
 import io.vertx.core.json.JsonObject;
 import lombok.AllArgsConstructor;
@@ -18,8 +16,8 @@ public class LostItemFeePolicyBuilder extends JsonBuilder implements Builder {
   private final UUID id;
   private final String name;
   private final String description;
-  private final TimePeriod itemAgedToLostAfterOverdue;
-  private final TimePeriod patronBilledAfterAgedLost;
+  private final Period itemAgedToLostAfterOverdue;
+  private final Period patronBilledAfterAgedLost;
   private final JsonObject chargeAmountItem;
   private final Double lostItemProcessingFee;
   private final boolean chargeAmountItemPatron;
@@ -100,7 +98,7 @@ public class LostItemFeePolicyBuilder extends JsonBuilder implements Builder {
   }
 
   private LostItemFeePolicyBuilder withFeeRefundInterval(int duration, String intervalId) {
-    return withFeeRefundInterval(mapFrom(new TimePeriod(duration, intervalId)));
+    return withFeeRefundInterval(Period.from(duration, intervalId).asJson());
   }
 
   public LostItemFeePolicyBuilder refundFeesWithinMinutes(int duration) {
@@ -116,11 +114,11 @@ public class LostItemFeePolicyBuilder extends JsonBuilder implements Builder {
     }
 
     if (itemAgedToLostAfterOverdue != null) {
-      request.put("itemAgedLostOverdue", mapFrom(itemAgedToLostAfterOverdue));
+      request.put("itemAgedLostOverdue", itemAgedToLostAfterOverdue.asJson());
     }
 
     if (patronBilledAfterAgedLost != null) {
-      request.put("patronBilledAfterAgedLost", mapFrom(patronBilledAfterAgedLost));
+      request.put("patronBilledAfterAgedLost", patronBilledAfterAgedLost.asJson());
     }
 
     put(request, "name", this.name);

@@ -1,10 +1,11 @@
 package org.folio.circulation.resources.agedtolost;
 
-import static org.folio.circulation.support.Result.failed;
+import static org.folio.circulation.support.Clients.create;
 
 import org.folio.circulation.resources.Resource;
+import org.folio.circulation.services.agedtolost.MarkOverdueLoansAsAgedLostService;
 import org.folio.circulation.support.RouteRegistration;
-import org.folio.circulation.support.ServerErrorFailure;
+import org.folio.circulation.support.http.server.NoContentResponse;
 import org.folio.circulation.support.http.server.WebContext;
 
 import io.vertx.core.http.HttpClient;
@@ -23,9 +24,12 @@ public class ScheduledAgeToLostResource extends Resource {
   }
 
   private void scheduledAgeToLost(RoutingContext routingContext) {
-    final WebContext webContext = new WebContext(routingContext);
+    final WebContext context = new WebContext(routingContext);
+    final MarkOverdueLoansAsAgedLostService ageToLostService =
+      new MarkOverdueLoansAsAgedLostService(create(context, client));
 
-    webContext.writeResultToHttpResponse(
-      failed(new ServerErrorFailure("Not yet implemented")));
+    ageToLostService.processAgeToLost()
+      .thenApply(r -> r.toFixedValue(NoContentResponse::noContent))
+      .thenAccept(context::writeResultToHttpResponse);
   }
 }

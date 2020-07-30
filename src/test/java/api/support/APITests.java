@@ -21,6 +21,7 @@ import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
@@ -598,6 +599,10 @@ public abstract class APITests {
 
   protected void mockClockManagerToReturnDefaultDateTime() {
     ClockManager.getClockManager().setDefaultClock();
+  }
+
+  public String generateString() {
+    return String.valueOf(new Random().nextLong());
   }
 
   public class CirculationPolicies {

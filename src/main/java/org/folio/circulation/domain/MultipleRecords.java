@@ -12,6 +12,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import org.folio.circulation.support.Result;
@@ -97,6 +98,15 @@ public class MultipleRecords<T> {
       .collect(Collectors.toList());
 
     return new MultipleRecords<>(allRecords, totalRecords + other.totalRecords);
+  }
+
+  public MultipleRecords<T> filter(Predicate<T> predicate) {
+    final List<T> filteredRecords = getRecords().stream()
+      .filter(predicate)
+      .collect(Collectors.toList());
+
+    final int numberOfFilteredOutRecords = totalRecords - filteredRecords.size();
+    return new MultipleRecords<>(filteredRecords, totalRecords - numberOfFilteredOutRecords);
   }
 
   public JsonObject asJson(

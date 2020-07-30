@@ -1,11 +1,12 @@
 package api.support.fixtures;
 
 import static api.support.http.ResourceClient.forLostItemFeePolicies;
+import static org.folio.circulation.domain.policy.Period.minutes;
 import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
 
 import java.util.UUID;
 
-import org.folio.circulation.domain.TimePeriod;
+import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.support.http.client.IndividualResource;
 
 import api.support.builders.LostItemFeePolicyBuilder;
@@ -33,9 +34,16 @@ public class LostItemFeePoliciesFixture {
     return create(chargeFeePolicy());
   }
 
+  public IndividualResource ageToLostAfterOneMinute() {
+    createReferenceData();
+
+    return create(ageToLostAfterOneMinutePolicy());
+  }
+
+
   public LostItemFeePolicyBuilder facultyStandardPolicy() {
-    final TimePeriod itemAgedLostOverdue = new TimePeriod(12, "Months");
-    final TimePeriod patronBilledAfterAgedLost = new TimePeriod(12, "Months");
+    final Period itemAgedLostOverdue = Period.months(12);
+    final Period patronBilledAfterAgedLost = Period.months(12);
 
     return new LostItemFeePolicyBuilder()
       .withName("Undergrad standard")
@@ -52,8 +60,8 @@ public class LostItemFeePoliciesFixture {
   }
 
   private LostItemFeePolicyBuilder chargeFeePolicy() {
-    TimePeriod itemAgedLostOverdue = new TimePeriod(12, "Months");
-    TimePeriod patronBilledAfterAgedLost = new TimePeriod(12, "Months");
+    Period itemAgedLostOverdue = Period.months(12);
+    Period patronBilledAfterAgedLost = Period.months(12);
 
     return new LostItemFeePolicyBuilder()
       .withName("No lost item fees policy")
@@ -66,6 +74,12 @@ public class LostItemFeePoliciesFixture {
       .withReplacedLostItemProcessingFee(true)
       .withReplacementAllowed(true)
       .chargeOverdueFineWhenReturned();
+  }
+
+  public LostItemFeePolicyBuilder ageToLostAfterOneMinutePolicy() {
+    return chargeFeePolicy()
+      .withName("Age to lost after one minute overdue")
+      .withItemAgedToLostAfterOverdue(minutes(1));
   }
 
   public IndividualResource create(UUID id, String name) {

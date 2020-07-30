@@ -389,4 +389,11 @@ public class LoanRepository {
         return result;
       });
   }
+
+  public CompletableFuture<Result<MultipleRecords<Loan>>> findByQuery(CqlQuery query,
+    PageLimit limit) {
+
+    return loansStorageClient.getMany(query, limit)
+      .thenApply(flatMapResult(this::mapResponseToLoans));
+  }
 }

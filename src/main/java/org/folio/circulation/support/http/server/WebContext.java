@@ -35,14 +35,14 @@ public class WebContext {
   }
 
   public String getUserId() {
-    return getHeader(USER_ID, "");
+    return getHeader(USER_ID, null);
   }
 
   public String getOkapiLocation() {
     return getHeader(OKAPI_URL, "");
   }
 
-  public String  getRequestId() {
+  public String getRequestId() {
     return getHeader(REQUEST_ID, "");
   }
 

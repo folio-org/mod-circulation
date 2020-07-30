@@ -1,5 +1,6 @@
 package org.folio.circulation.domain.policy;
 
+import static org.folio.circulation.support.ClockManager.getClockManager;
 import static org.folio.circulation.support.JsonPropertyFetcher.getIntegerProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
 import static org.folio.circulation.support.Result.failed;
@@ -24,7 +25,7 @@ import org.joda.time.DateTime;
 
 import io.vertx.core.json.JsonObject;
 
-public class Period {
+public class Period implements Comparable<Period> {
   private static final String MONTHS = "Months";
   private static final String WEEKS = "Weeks";
   private static final String DAYS = "Days";
@@ -62,7 +63,7 @@ public class Period {
     return from(duration, HOURS);
   }
 
-  static Period minutes(int duration) {
+  public static Period minutes(int duration) {
     return from(duration, MINUTES);
   }
 
@@ -93,6 +94,20 @@ public class Period {
     }
 
     return succeeded(Period.from(duration, intervalId));
+  }
+
+  public static Period from(JsonObject jsonObject) {
+    final String intervalId = getProperty(jsonObject, INTERVAL_ID_KEY);
+    final Integer duration = getIntegerProperty(jsonObject, DURATION_KEY, 0);
+
+    return from(duration, intervalId);
+  }
+
+  public static Period ofMinutesTillNow(DateTime startDateTime) {
+    final DateTime now = getClockManager().getDateTime();
+    final int minutes = new org.joda.time.Period(startDateTime, now).getMinutes();
+
+    return minutes(minutes);
   }
 
   Result<DateTime> addTo(
@@ -175,4 +190,8 @@ public class Period {
     }
   }
 
+  @Override
+  public int compareTo(Period otherPeriod) {
+    return Integer.compare(toMinutes(), otherPeriod.toMinutes());
+  }
 }
