@@ -121,8 +121,10 @@ public class LostItemPolicy extends Policy {
   }
 
   public boolean shouldRefundFees(DateTime lostDateTime) {
+    final Period overdueMinutesInterval = ofMinutesTillNow(lostDateTime);
+
     return feeRefundInterval == null
-      || feeRefundInterval.compareTo(ofMinutesTillNow(lostDateTime)) <= 0;
+      || overdueMinutesInterval.compareTo(feeRefundInterval) <= 0;
   }
 
   public boolean isRefundProcessingFeeWhenReturned() {
