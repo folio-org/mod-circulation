@@ -1,3 +1,8 @@
+## 19.0.11 2020-07-30
+
+* Includes missing module permissions when creating an instance level request (CIRC-836)
+* Includes missing module permissions when cancelling a request (CIRC-853)
+
 ## 19.0.10 2020-07-27
 
 * Fixes issue with `URI Too Large` error for `In transit` report (CIRC-813)
