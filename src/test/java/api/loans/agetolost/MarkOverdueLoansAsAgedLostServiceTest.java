@@ -64,7 +64,7 @@ public class MarkOverdueLoansAsAgedLostServiceTest extends SpringApiTest {
   }
 
   @Test
-  public void shouldPickFirstThousandLoansAndRestProcessOnNextExecution() throws Exception {
+  public void shouldPickFirstPortionOfLoansAndRestProcessOnNextExecution() throws Exception {
     useLostItemPolicy(lostItemFeePoliciesFixture.ageToLostAfterOneMinute().getId());
 
     val maximumLoans = 5;
