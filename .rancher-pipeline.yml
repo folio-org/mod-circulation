@@ -1,0 +1,28 @@
+stages:
+  - name: Build
+    steps:
+      - runScriptConfig:
+          image: maven:3-openjdk-8
+          shellScript: mvn clean install -DskipTests
+  - name: Build Docker
+    steps:
+      - publishImageConfig:
+          dockerfilePath: ./Dockerfile
+          buildContext: .
+          tag: docker.dev.folio.org/mod-circulation:core-functional-latest
+          pushRemote: true
+          registry: docker.dev.folio.org
+  - name: Deploy
+    steps:
+      - applyAppConfig:
+          catalogTemplate: p-9mwdx:core-functional-helmcharts-mod-circulation
+          version: 0.1.9
+          answers:
+            image.repository: docker.dev.folio.org/mod-circulation
+            image.tag: core-functional-latest
+            resources.limits.cpu: 1000m
+            resources.limits.memory: 3000Mi
+          name: mod-circulation
+          targetNamespace: core-functional
+timeout: 60
+notification: {}
