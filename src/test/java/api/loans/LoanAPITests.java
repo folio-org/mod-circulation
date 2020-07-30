@@ -866,7 +866,8 @@ public class LoanAPITests extends APITests {
         .withBarcode("036000291452")
         .withEnumeration("v.70:no.1-6")
         .withChronology("1987:Jan.-June")
-        .withVolume("testVolume"))
+        .withVolume("testVolume")
+        .withCopyNumber("cp.1"))
       .getId();
 
     IndividualResource user = usersFixture.charlotte();
@@ -961,6 +962,9 @@ public class LoanAPITests extends APITests {
 
     assertThat("has item volume",
       loan.getJsonObject("item").getString("volume"), is("testVolume"));
+
+    assertThat("has item copy number",
+      loan.getJsonObject("item").getString("copyNumber"), is("cp.1"));
 
     assertThat("location is taken from holding",
       loan.getJsonObject("item").getJsonObject("location").getString("name"),
