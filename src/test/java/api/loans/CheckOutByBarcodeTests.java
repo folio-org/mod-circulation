@@ -64,6 +64,7 @@ import api.support.fakes.FakePubSub;
 import api.support.http.InventoryItemResource;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import lombok.val;
 
 public class CheckOutByBarcodeTests extends APITests {
   @Test
@@ -482,6 +483,17 @@ public class CheckOutByBarcodeTests extends APITests {
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessageContaining("has the item status Declared lost"),
       hasItemBarcodeParameter(declaredLostItem))));
+  }
+
+  @Test
+  public void cannotCheckOutWhenItemAgedToLost() {
+    val agedToLostItem = itemsFixture.basedUponNod(ItemBuilder::agedToLost);
+
+    final Response response = checkOutFixture.attemptCheckOutByBarcode(
+      agedToLostItem, usersFixture.steve());
+
+    assertThat(response.getJson(),
+      hasErrorWith(hasMessageContaining("has the item status Aged to lost")));
   }
 
   @Test

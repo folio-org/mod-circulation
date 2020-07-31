@@ -132,6 +132,10 @@ public class ItemBuilder extends JsonBuilder implements Builder {
     return withStatus(DECLARED_LOST);
   }
 
+  public ItemBuilder agedToLost() {
+    return withStatus("Aged to lost");
+  }
+
   public ItemBuilder lostAndPaid() {
     return withStatus("Lost and paid");
   }
