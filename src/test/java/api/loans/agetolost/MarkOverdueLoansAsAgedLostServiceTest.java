@@ -29,6 +29,7 @@ import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import api.support.builders.CheckOutByBarcodeRequestBuilder;
+import api.support.builders.ItemBuilder;
 import api.support.spring.SpringApiTest;
 import api.support.spring.clients.ScheduledJobClient;
 import io.vertx.core.MultiMap;
@@ -102,8 +103,7 @@ public class MarkOverdueLoansAsAgedLostServiceTest extends SpringApiTest {
     val items = new ArrayList<IndividualResource>();
 
     for (int offsetMinutes = numberOfItems; offsetMinutes > 0; offsetMinutes--) {
-      val overdueItem = itemsFixture.basedUponNod(
-        itemBuilder -> itemBuilder.withBarcode(generateString()));
+      val overdueItem = itemsFixture.basedUponNod(ItemBuilder::withRandomBarcode);
 
       checkOutFixture.checkOutByBarcode(
         new CheckOutByBarcodeRequestBuilder()

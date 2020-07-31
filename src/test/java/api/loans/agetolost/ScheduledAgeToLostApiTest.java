@@ -21,6 +21,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import api.support.MultipleJsonRecords;
 import api.support.builders.CheckOutByBarcodeRequestBuilder;
+import api.support.builders.ItemBuilder;
 import api.support.spring.SpringApiTest;
 import api.support.spring.clients.ScheduledJobClient;
 import io.vertx.core.json.JsonObject;
@@ -109,8 +110,7 @@ public class ScheduledAgeToLostApiTest extends SpringApiTest {
   }
 
   private void checkOutItem() {
-    overdueItem = itemsFixture.basedUponNod(
-      builder -> builder.withBarcode(generateString()));
+    overdueItem = itemsFixture.basedUponNod(ItemBuilder::withRandomBarcode);
 
     overdueLoan = checkOutFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
