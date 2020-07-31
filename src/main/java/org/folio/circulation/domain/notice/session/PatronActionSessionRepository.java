@@ -48,11 +48,6 @@ import io.vertx.core.json.JsonObject;
 
 public class PatronActionSessionRepository {
 
-  private static final String ID = "id";
-  private static final String PATRON_ID = "patronId";
-  private static final String LOAN_ID = "loanId";
-  private static final String ACTION_TYPE = "actionType";
-
   private final CollectionResourceClient patronActionSessionsStorageClient;
   private final LoanRepository loanRepository;
   private final LoanPolicyRepository loanPolicyRepository;
