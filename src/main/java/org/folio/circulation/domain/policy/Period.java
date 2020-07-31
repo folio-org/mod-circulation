@@ -213,4 +213,12 @@ public class Period implements Comparable<Period> {
   public int compareTo(Period otherPeriod) {
     return Integer.compare(toMinutes(), otherPeriod.toMinutes());
   }
+
+  public boolean isLessThanOrEqualTo(Period otherPeriod) {
+    return compareTo(otherPeriod) <= 0;
+  }
+
+  public boolean isMoreThanOrEqualTo(Period otherPeriod) {
+    return compareTo(otherPeriod) >= 0;
+  }
 }

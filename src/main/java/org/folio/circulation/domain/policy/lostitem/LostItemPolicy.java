@@ -124,7 +124,7 @@ public class LostItemPolicy extends Policy {
     final Period overdueMinutesInterval = minutesBetweenDateAndNow(lostDateTime);
 
     return feeRefundInterval == null
-      || overdueMinutesInterval.compareTo(feeRefundInterval) <= 0;
+      || overdueMinutesInterval.isLessThanOrEqualTo(feeRefundInterval);
   }
 
   public boolean isRefundProcessingFeeWhenReturned() {
@@ -151,7 +151,7 @@ public class LostItemPolicy extends Policy {
     }
 
     final Period overduePeriod = minutesBetweenDateAndNow(loanDueDate);
-    return overduePeriod.compareTo(agedToLostAfterOverdueInterval) >= 0;
+    return overduePeriod.isMoreThanOrEqualTo(agedToLostAfterOverdueInterval);
   }
 
   private static class UnknownLostItemPolicy extends LostItemPolicy {
