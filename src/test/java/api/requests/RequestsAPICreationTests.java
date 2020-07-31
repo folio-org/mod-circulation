@@ -29,7 +29,7 @@ import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
-import static org.hamcrest.Matchers.isEmptyString;
+import static org.hamcrest.Matchers.emptyString;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertTrue;
@@ -509,7 +509,7 @@ public class RequestsAPICreationTests extends APITests {
 
     JsonObject representation = createdRequest.getJson();
 
-    assertThat(representation.getString("id"), is(not(isEmptyString())));
+    assertThat(representation.getString("id"), is(not(emptyString())));
     assertThat(representation.getString("requestType"), is("Recall"));
     assertThat(representation.getString("fulfilmentPreference"), is("Delivery"));
     assertThat(representation.getString("deliveryAddressTypeId"), is(work.getId()));
