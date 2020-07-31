@@ -1,16 +1,22 @@
 package org.folio.circulation.domain.notice.session;
 
 import static java.util.function.Function.identity;
+import static org.folio.circulation.domain.notice.session.PatronActionSessionProperties.ACTION_TYPE;
+import static org.folio.circulation.domain.notice.session.PatronActionSessionProperties.ID;
+import static org.folio.circulation.domain.notice.session.PatronActionSessionProperties.LOAN_ID;
+import static org.folio.circulation.domain.notice.session.PatronActionSessionProperties.PATRON_ACTION_SESSIONS;
+import static org.folio.circulation.domain.notice.session.PatronActionSessionProperties.PATRON_ID;
 import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
-import static org.folio.circulation.support.JsonPropertyFetcher.getUUIDProperty;
 import static org.folio.circulation.support.JsonPropertyWriter.write;
 import static org.folio.circulation.support.Result.of;
+import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.ResultBinding.flatMapResult;
 import static org.folio.circulation.support.ResultBinding.mapResult;
+import static org.folio.circulation.support.fetching.RecordFetching.findWithMultipleCqlIndexValues;
 import static org.folio.circulation.support.http.ResponseMapping.flatMapUsingJson;
 import static org.folio.circulation.support.http.ResponseMapping.forwardOnFailure;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
-import static org.folio.circulation.support.http.client.CqlQuery.exactMatchAny;
+import static org.folio.circulation.support.http.client.CqlQuery.noQuery;
 import static org.folio.circulation.support.results.CommonFailures.failedDueToServerError;
 
 import java.util.HashSet;
@@ -107,15 +113,13 @@ public class PatronActionSessionRepository {
   }
 
   private Result<PatronSessionRecord> mapFromJson(JsonObject json) {
-    UUID id = getUUIDProperty(json, ID);
-    UUID patronId = getUUIDProperty(json, PATRON_ID);
-    UUID loanId = getUUIDProperty(json, LOAN_ID);
-    String actionTypeValue = getProperty(json, ACTION_TYPE);
 
-    return PatronActionType.from(actionTypeValue)
-      .map(patronActionType -> new PatronSessionRecord(id, patronId, loanId, patronActionType))
-      .map(Result::succeeded)
-      .orElse(failedDueToServerError("Invalid patron action type value: " + actionTypeValue));
+    PatronSessionRecord patronSessionRecord = PatronSessionRecord.from(json);
+    if (patronSessionRecord == null) {
+      return failedDueToServerError("Invalid patron action type value: "
+        + getProperty(json, ACTION_TYPE));
+    }
+    return succeeded(patronSessionRecord);
   }
 
   public CompletableFuture<Result<MultipleRecords<PatronSessionRecord>>> findPatronActionSessions(
@@ -132,7 +136,7 @@ public class PatronActionSessionRepository {
   }
 
   public CompletableFuture<Result<MultipleRecords<PatronSessionRecord>>> findPatronActionSessions(
-    List<ExpiredSession> expiredSessions, PageLimit pageLimit) {
+    List<ExpiredSession> expiredSessions) {
 
     Set<String> patronIds = expiredSessions.stream()
       .filter(expiredSession -> StringUtils.isNotBlank(expiredSession.getPatronId()) )
@@ -140,14 +144,15 @@ public class PatronActionSessionRepository {
       .collect(Collectors.toCollection(HashSet::new));
 
     if (patronIds.isEmpty()) {
-      return CompletableFuture.completedFuture(Result.succeeded(null));
+      return CompletableFuture.completedFuture(succeeded(null));
     }
-    Result<CqlQuery> sessionsQuery = exactMatchAny(PATRON_ID, patronIds);
-    sessionsQuery = addActionTypeToCqlQuery(sessionsQuery,
+
+    Result<CqlQuery> actionTypeQuery = createActionTypeCqlQuery(
       expiredSessions.get(0).getActionType());
 
-    return sessionsQuery
-      .after(query -> findBy(query, pageLimit))
+    return findWithMultipleCqlIndexValues(patronActionSessionsStorageClient,
+      PATRON_ACTION_SESSIONS, PatronSessionRecord::from)
+      .findByIdIndexAndQuery(patronIds, PATRON_ID, actionTypeQuery)
       .thenCompose(r -> r.combineAfter(
         () -> userRepository.getUsersForUserIds(patronIds), this::setUsersForLoans));
   }
@@ -161,6 +166,14 @@ public class PatronActionSessionRepository {
       sessionsQuery = sessionsQuery.combine(actionTypeQuery, CqlQuery::and);
     }
     return sessionsQuery;
+  }
+
+  private Result<CqlQuery> createActionTypeCqlQuery(PatronActionType actionType) {
+
+    if (isPatronActionTypeSpecified(actionType)) {
+      return exactMatch(ACTION_TYPE, actionType.getRepresentation());
+    }
+    return noQuery();
   }
 
   private boolean isPatronActionTypeSpecified(PatronActionType actionType) {
@@ -192,7 +205,7 @@ public class PatronActionSessionRepository {
 
     return patronActionSessionsStorageClient.getMany(query, pageLimit)
       .thenApply(r -> r.next(response ->
-        MultipleRecords.from(response, identity(), "patronActionSessions")))
+        MultipleRecords.from(response, identity(), PATRON_ACTION_SESSIONS)))
       .thenApply(r -> r.next(records -> records.flatMapRecords(this::mapFromJson)))
       .thenCompose(r -> r.after(this::fetchLoans));
   }

@@ -7,6 +7,9 @@ import static api.support.matchers.PatronNoticeMatcher.hasEmailNoticeProperties;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static api.support.matchers.ValidationErrorMatchers.hasParameter;
+import static org.folio.circulation.domain.notice.session.PatronActionSessionProperties.ACTION_TYPE;
+import static org.folio.circulation.domain.notice.session.PatronActionSessionProperties.LOAN_ID;
+import static org.folio.circulation.domain.notice.session.PatronActionSessionProperties.PATRON_ID;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.is;
@@ -71,7 +74,7 @@ public class PatronActionSessionTests extends APITests {
   @Test
   public void cannotEndSessionWhenPatronIdIsNotSpecified() {
     JsonObject body = new JsonObject()
-      .put("actionType", "Check-out");
+      .put(ACTION_TYPE, "Check-out");
     Response response = endPatronSessionClient.attemptEndPatronSession(wrapInObjectWithArray(body));
 
     assertThat(response.getJson(), hasErrorWith(allOf(
@@ -81,7 +84,7 @@ public class PatronActionSessionTests extends APITests {
   @Test
   public void cannotEndSessionWhenActionTypeIsNotSpecified() {
     JsonObject body = new JsonObject()
-      .put("patronId", UUID.randomUUID().toString());
+      .put(PATRON_ID, UUID.randomUUID().toString());
     Response response = endPatronSessionClient.attemptEndPatronSession(wrapInObjectWithArray(body));
 
     assertThat(response.getJson(), hasErrorWith(allOf(
@@ -93,8 +96,8 @@ public class PatronActionSessionTests extends APITests {
     String invalidActionType = "invalidActionType";
 
     JsonObject body = new JsonObject()
-      .put("patronId", UUID.randomUUID().toString())
-      .put("actionType", invalidActionType);
+      .put(PATRON_ID, UUID.randomUUID().toString())
+      .put(ACTION_TYPE, invalidActionType);
     Response response = endPatronSessionClient.attemptEndPatronSession(wrapInObjectWithArray(body));
 
     assertThat(response.getJson(), hasErrorWith(allOf(
@@ -183,8 +186,8 @@ public class PatronActionSessionTests extends APITests {
     assertThat(checkInSessions, Matchers.hasSize(1));
 
     JsonObject checkInSession = checkInSessions.get(0);
-    assertThat(checkInSession.getString("patronId"), is(james.getId().toString()));
-    assertThat(checkInSession.getString("loanId"), is(loan.getId().toString()));
+    assertThat(checkInSession.getString(PATRON_ID), is(james.getId().toString()));
+    assertThat(checkInSession.getString(LOAN_ID), is(loan.getId().toString()));
   }
 
   @Test
@@ -230,7 +233,7 @@ public class PatronActionSessionTests extends APITests {
 
   private List<JsonObject> getCheckInSessions() {
 
-    Predicate<JsonObject> isCheckInSession = json -> json.getString("actionType").equals("Check-in");
+    Predicate<JsonObject> isCheckInSession = json -> json.getString(ACTION_TYPE).equals("Check-in");
 
     return patronSessionRecordsClient.getAll().stream()
       .filter(isCheckInSession)
