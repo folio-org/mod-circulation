@@ -18,7 +18,8 @@ public enum ItemStatus {
   DECLARED_LOST("Declared lost"),
   CLAIMED_RETURNED("Claimed returned"),
   WITHDRAWN("Withdrawn"),
-  LOST_AND_PAID("Lost and paid");
+  LOST_AND_PAID("Lost and paid"),
+  AGED_TO_LOST("Aged to lost");
 
   public static ItemStatus from(String value, String date) {
     return Arrays.stream(values())
