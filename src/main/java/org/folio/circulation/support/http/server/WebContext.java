@@ -27,35 +27,29 @@ public class WebContext {
   }
 
   public String getTenantId() {
-    return getHeader(TENANT, "");
+    return getHeader(TENANT);
   }
 
   public String getOkapiToken() {
-    return getHeader(TOKEN, "");
+    return getHeader(TOKEN);
   }
 
   public String getUserId() {
-    return getHeader(USER_ID, null);
+    // If there is no user-id header, than it is important to return null,
+    // otherwise when a record is created/updated metadata will be broken
+    return getHeader(USER_ID);
   }
 
   public String getOkapiLocation() {
-    return getHeader(OKAPI_URL, "");
+    return getHeader(OKAPI_URL);
   }
 
   public String getRequestId() {
-    return getHeader(REQUEST_ID, "");
+    return getHeader(REQUEST_ID);
   }
 
   private String getHeader(String header) {
     return routingContext.request().getHeader(header);
-  }
-
-  private String getHeader(String header, String defaultValue) {
-    return hasHeader(header) ? getHeader(header) : defaultValue;
-  }
-
-  private boolean hasHeader(String header) {
-    return routingContext.request().headers().contains(header);
   }
 
   public Integer getIntegerParameter(String name, Integer defaultValue) {
