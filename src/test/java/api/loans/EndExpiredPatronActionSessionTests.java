@@ -308,6 +308,20 @@ public class EndExpiredPatronActionSessionTests extends APITests {
       .until(patronSessionRecordsClient::getAll, empty());
   }
 
+  @Test
+  public void sessionsWithNotSpecifiedActionTypeShouldBeEnded() {
+
+    createOneHundredPatronActionCheckOutSessions("");
+    List<JsonObject> sessions = patronSessionRecordsClient.getAll();
+    assertThat(sessions, Matchers.hasSize(100));
+
+    expiredSessionProcessingClient.runRequestExpiredSessionsProcessing(204);
+
+    Awaitility.await()
+      .atMost(1, TimeUnit.SECONDS)
+      .until(patronSessionRecordsClient::getAll, empty());
+  }
+
   private void createOneHundredPatronActionCheckOutSessions(String actionType) {
     IntStream.range(0, 100).forEach(
       notUsed -> {
