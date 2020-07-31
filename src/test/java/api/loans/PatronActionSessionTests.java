@@ -8,6 +8,7 @@ import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static api.support.matchers.ValidationErrorMatchers.hasParameter;
 import static org.folio.circulation.domain.notice.session.PatronActionSessionProperties.ACTION_TYPE;
+import static org.folio.circulation.domain.notice.session.PatronActionSessionProperties.ID;
 import static org.folio.circulation.domain.notice.session.PatronActionSessionProperties.LOAN_ID;
 import static org.folio.circulation.domain.notice.session.PatronActionSessionProperties.PATRON_ID;
 import static org.hamcrest.CoreMatchers.allOf;
@@ -26,6 +27,8 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.awaitility.Awaitility;
+import org.folio.circulation.domain.notice.session.PatronActionType;
+import org.folio.circulation.domain.notice.session.PatronSessionRecord;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 import org.hamcrest.Matcher;
@@ -229,6 +232,26 @@ public class PatronActionSessionTests extends APITests {
       .until(this::getCheckInSessions, empty());
 
     assertThat(patronNoticesClient.getAll(), hasSize(1));
+  }
+
+  @Test
+  public void shouldMapJsonRepresentationToPatronSessionRecord() {
+    String id = UUID.randomUUID().toString();
+    String patronId = UUID.randomUUID().toString();
+    String loanId = UUID.randomUUID().toString();
+
+    JsonObject representation = new JsonObject()
+      .put(ID, id)
+      .put(PATRON_ID, patronId)
+      .put(LOAN_ID, loanId)
+      .put(ACTION_TYPE, "Check-in");
+
+    PatronSessionRecord sessionRecord = PatronSessionRecord.from(representation);
+
+    assertThat(sessionRecord.getId().toString(), is(id));
+    assertThat(sessionRecord.getPatronId().toString(), is(patronId));
+    assertThat(sessionRecord.getLoanId().toString(), is(loanId));
+    assertThat(sessionRecord.getActionType(), is(PatronActionType.CHECK_IN));
   }
 
   private List<JsonObject> getCheckInSessions() {
