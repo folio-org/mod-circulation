@@ -2052,6 +2052,25 @@ public class RequestsAPICreationTests extends APITests {
       hasMessage(MAX_OUTSTANDING_FEE_FINE_BALANCE_MESSAGE))));
   }
 
+  @Test
+  public void cannotCreateRecallRequestForAgedToLostItem() {
+    final IndividualResource withdrawnItem = itemsFixture
+      .basedUponSmallAngryPlanet(ItemBuilder::agedToLost);
+
+    final Response response = requestsClient.attemptCreate(new RequestBuilder()
+      .open()
+      .recall()
+      .forItem(withdrawnItem)
+      .by(usersFixture.steve())
+      .fulfilToHoldShelf()
+      .withPickupServicePointId(servicePointsFixture.cd1().getId()));
+
+    assertThat(response, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
+    assertThat(response.getJson(), hasErrorWith(allOf(
+      hasMessage("Recall requests are not allowed for this patron and item combination"),
+      hasParameter("requestType", "Recall"))));
+  }
+
   private List<IndividualResource> createOneHundredRequests() {
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 

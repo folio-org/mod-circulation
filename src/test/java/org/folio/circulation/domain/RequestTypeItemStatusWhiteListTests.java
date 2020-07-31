@@ -2,6 +2,7 @@ package org.folio.circulation.domain;
 
 import static junit.framework.TestCase.assertFalse;
 import static junit.framework.TestCase.assertTrue;
+import static org.folio.circulation.domain.ItemStatus.AGED_TO_LOST;
 import static org.folio.circulation.domain.ItemStatus.AVAILABLE;
 import static org.folio.circulation.domain.ItemStatus.AWAITING_DELIVERY;
 import static org.folio.circulation.domain.ItemStatus.CHECKED_OUT;
@@ -15,6 +16,7 @@ import static org.folio.circulation.domain.ItemStatus.WITHDRAWN;
 import static org.folio.circulation.domain.RequestType.HOLD;
 import static org.folio.circulation.domain.RequestType.PAGE;
 import static org.folio.circulation.domain.RequestType.RECALL;
+import static org.folio.circulation.domain.RequestType.from;
 import static org.folio.circulation.domain.RequestTypeItemStatusWhiteList.canCreateRequestForItem;
 
 import org.junit.Test;
@@ -119,7 +121,7 @@ public class RequestTypeItemStatusWhiteListTests {
     "Page"
   })
   public void cannotCreateRequestWhenItemStatusDeclaredLostItem(String requestType) {
-    assertFalse(canCreateRequestForItem(DECLARED_LOST, RequestType.from(requestType)));
+    assertFalse(canCreateRequestForItem(DECLARED_LOST, from(requestType)));
   }
 
   @Test
@@ -130,7 +132,7 @@ public class RequestTypeItemStatusWhiteListTests {
     "Page"
   })
   public void cannotCreateRequestWhenItemStatusClaimedReturned(String requestType) {
-    assertFalse(canCreateRequestForItem(CLAIMED_RETURNED, RequestType.from(requestType)));
+    assertFalse(canCreateRequestForItem(CLAIMED_RETURNED, from(requestType)));
   }
 
   @Test
@@ -141,7 +143,7 @@ public class RequestTypeItemStatusWhiteListTests {
     "Page"
   })
   public void cannotCreateRequestWhenItemStatusWithdrawn(String requestType) {
-    assertFalse(canCreateRequestForItem(WITHDRAWN, RequestType.from(requestType)));
+    assertFalse(canCreateRequestForItem(WITHDRAWN, from(requestType)));
   }
 
   @Test
@@ -152,6 +154,17 @@ public class RequestTypeItemStatusWhiteListTests {
     "Page"
   })
   public void cannotCreateRequestWhenItemStatusLostAndPaid(String requestType) {
-    assertFalse(canCreateRequestForItem(LOST_AND_PAID, RequestType.from(requestType)));
+    assertFalse(canCreateRequestForItem(LOST_AND_PAID, from(requestType)));
+  }
+
+  @Test
+  @Parameters({
+    "",
+    "Hold",
+    "Recall",
+    "Page"
+  })
+  public void cannotCreateRequestWhenItemStatusAgedToLost(String requestType) {
+    assertFalse(canCreateRequestForItem(AGED_TO_LOST, from(requestType)));
   }
 }
