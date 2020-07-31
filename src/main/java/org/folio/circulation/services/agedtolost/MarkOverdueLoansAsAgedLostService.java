@@ -58,7 +58,7 @@ public class MarkOverdueLoansAsAgedLostService {
     Result<MultipleRecords<Loan>> loanRecordsResult) {
 
     return loanRecordsResult
-      .map(loanRecords -> loanRecords.mapRecords(Loan::ageLoanToLost));
+      .map(loanRecords -> loanRecords.mapRecords(Loan::ageOverdueItemToLost));
   }
 
   private CompletableFuture<Result<Void>> updateLoansAndItemsInStorage(

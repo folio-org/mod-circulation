@@ -12,7 +12,7 @@ public enum LoanAction {
   CLAIMED_RETURNED("claimedReturned"),
   MISSING("markedMissing"),
   CLOSED_LOAN("closedLoan"),
-  AGED_TO_LOST("agedToLost"),
+  ITEM_AGED_TO_LOST("itemAgedToLost"),
 
   RESOLVE_CLAIM_AS_RETURNED_BY_PATRON("checkedInReturnedByPatron"),
   RESOLVE_CLAIM_AS_FOUND_BY_LIBRARY("checkedInFoundByLibrary");
