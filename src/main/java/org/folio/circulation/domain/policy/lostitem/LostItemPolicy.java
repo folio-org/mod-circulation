@@ -1,6 +1,6 @@
 package org.folio.circulation.domain.policy.lostitem;
 
-import static org.folio.circulation.domain.policy.Period.ofMinutesTillNow;
+import static org.folio.circulation.domain.policy.Period.minutesBetweenDateAndNow;
 import static org.folio.circulation.domain.policy.lostitem.ChargeAmountType.ACTUAL_COST;
 import static org.folio.circulation.domain.policy.lostitem.ChargeAmountType.SET_COST;
 import static org.folio.circulation.domain.policy.lostitem.ChargeAmountType.forValue;
@@ -121,7 +121,7 @@ public class LostItemPolicy extends Policy {
   }
 
   public boolean shouldRefundFees(DateTime lostDateTime) {
-    final Period overdueMinutesInterval = ofMinutesTillNow(lostDateTime);
+    final Period overdueMinutesInterval = minutesBetweenDateAndNow(lostDateTime);
 
     return feeRefundInterval == null
       || overdueMinutesInterval.compareTo(feeRefundInterval) <= 0;
@@ -150,7 +150,7 @@ public class LostItemPolicy extends Policy {
       return false;
     }
 
-    final Period overduePeriod = ofMinutesTillNow(loanDueDate);
+    final Period overduePeriod = minutesBetweenDateAndNow(loanDueDate);
     return overduePeriod.compareTo(agedToLostAfterOverdueInterval) >= 0;
   }
 

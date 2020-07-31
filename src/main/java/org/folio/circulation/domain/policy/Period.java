@@ -103,7 +103,7 @@ public class Period implements Comparable<Period> {
     return from(duration, intervalId);
   }
 
-  public static Period ofMinutesTillNow(DateTime startDateTime) {
+  public static Period minutesBetweenDateAndNow(DateTime startDateTime) {
     final DateTime now = getClockManager().getDateTime();
     final int minutes = new org.joda.time.Period(startDateTime, now).getMinutes();
 
