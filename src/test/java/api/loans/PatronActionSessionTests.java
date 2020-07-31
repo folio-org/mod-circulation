@@ -234,26 +234,6 @@ public class PatronActionSessionTests extends APITests {
     assertThat(patronNoticesClient.getAll(), hasSize(1));
   }
 
-  @Test
-  public void shouldMapJsonRepresentationToPatronSessionRecord() {
-    String id = UUID.randomUUID().toString();
-    String patronId = UUID.randomUUID().toString();
-    String loanId = UUID.randomUUID().toString();
-
-    JsonObject representation = new JsonObject()
-      .put(ID, id)
-      .put(PATRON_ID, patronId)
-      .put(LOAN_ID, loanId)
-      .put(ACTION_TYPE, "Check-in");
-
-    PatronSessionRecord sessionRecord = PatronSessionRecord.from(representation);
-
-    assertThat(sessionRecord.getId().toString(), is(id));
-    assertThat(sessionRecord.getPatronId().toString(), is(patronId));
-    assertThat(sessionRecord.getLoanId().toString(), is(loanId));
-    assertThat(sessionRecord.getActionType(), is(PatronActionType.CHECK_IN));
-  }
-
   private List<JsonObject> getCheckInSessions() {
 
     Predicate<JsonObject> isCheckInSession = json -> json.getString(ACTION_TYPE).equals("Check-in");

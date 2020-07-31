@@ -282,48 +282,23 @@ public class EndExpiredPatronActionSessionTests extends APITests {
 
   @Test
   public void shouldNotFailWithUriTooLargeErrorDuringEndingExpiredCheckOutSessions() {
-
-    createOneHundredPatronActionCheckOutSessions("Check-out");
-    List<JsonObject> sessions = patronSessionRecordsClient.getAll();
-    assertThat(sessions, Matchers.hasSize(100));
-
-    expiredSessionProcessingClient.runRequestExpiredSessionsProcessing(204);
-
-    Awaitility.await()
-      .atMost(1, TimeUnit.SECONDS)
-      .until(patronSessionRecordsClient::getAll, empty());
+    checkThatBunchOfExpiredSessionsWereAddedAndRemovedByTimer(100, "Check-out");
   }
 
   @Test
   public void shouldNotFailWithUriTooLargeErrorDuringEndingExpiredCheckInSessions() {
-
-    createOneHundredPatronActionCheckOutSessions("Check-in");
-    List<JsonObject> sessions = patronSessionRecordsClient.getAll();
-    assertThat(sessions, Matchers.hasSize(100));
-
-    expiredSessionProcessingClient.runRequestExpiredSessionsProcessing(204);
-
-    Awaitility.await()
-      .atMost(1, TimeUnit.SECONDS)
-      .until(patronSessionRecordsClient::getAll, empty());
+    checkThatBunchOfExpiredSessionsWereAddedAndRemovedByTimer(100, "Check-in");
   }
 
   @Test
   public void sessionsWithNotSpecifiedActionTypeShouldBeEnded() {
-
-    createOneHundredPatronActionCheckOutSessions("");
-    List<JsonObject> sessions = patronSessionRecordsClient.getAll();
-    assertThat(sessions, Matchers.hasSize(100));
-
-    expiredSessionProcessingClient.runRequestExpiredSessionsProcessing(204);
-
-    Awaitility.await()
-      .atMost(1, TimeUnit.SECONDS)
-      .until(patronSessionRecordsClient::getAll, empty());
+    checkThatBunchOfExpiredSessionsWereAddedAndRemovedByTimer(100, "");
   }
 
-  private void createOneHundredPatronActionCheckOutSessions(String actionType) {
-    IntStream.range(0, 100).forEach(
+  private void checkThatBunchOfExpiredSessionsWereAddedAndRemovedByTimer(
+    int numberOfSessions, String actionType) {
+
+    IntStream.range(0, numberOfSessions).forEach(
       notUsed -> {
         String patronId = UUID.randomUUID().toString();
         patronSessionRecordsClient.create(
@@ -337,5 +312,14 @@ public class EndExpiredPatronActionSessionTests extends APITests {
             .put(PATRON_ID, patronId)
             .put(ACTION_TYPE, actionType));
       });
+
+    List<JsonObject> sessions = patronSessionRecordsClient.getAll();
+    assertThat(sessions, Matchers.hasSize(numberOfSessions));
+
+    expiredSessionProcessingClient.runRequestExpiredSessionsProcessing(204);
+
+    Awaitility.await()
+      .atMost(1, TimeUnit.SECONDS)
+      .until(patronSessionRecordsClient::getAll, empty());
   }
 }
