@@ -281,9 +281,9 @@ public class EndExpiredPatronActionSessionTests extends APITests {
   }
 
   @Test
-  public void shouldNotFailWithUriTooLargeErrorDuringEndingExpiredSessions() {
+  public void shouldNotFailWithUriTooLargeErrorDuringEndingExpiredCheckOutSessions() {
 
-    createOneHundredPatronActionCheckOutSessions();
+    createOneHundredPatronActionCheckOutSessions("Check-out");
     List<JsonObject> sessions = patronSessionRecordsClient.getAll();
     assertThat(sessions, Matchers.hasSize(100));
 
@@ -294,7 +294,21 @@ public class EndExpiredPatronActionSessionTests extends APITests {
       .until(patronSessionRecordsClient::getAll, empty());
   }
 
-  private void createOneHundredPatronActionCheckOutSessions() {
+  @Test
+  public void shouldNotFailWithUriTooLargeErrorDuringEndingExpiredCheckInSessions() {
+
+    createOneHundredPatronActionCheckOutSessions("Check-in");
+    List<JsonObject> sessions = patronSessionRecordsClient.getAll();
+    assertThat(sessions, Matchers.hasSize(100));
+
+    expiredSessionProcessingClient.runRequestExpiredSessionsProcessing(204);
+
+    Awaitility.await()
+      .atMost(1, TimeUnit.SECONDS)
+      .until(patronSessionRecordsClient::getAll, empty());
+  }
+
+  private void createOneHundredPatronActionCheckOutSessions(String actionType) {
     IntStream.range(0, 100).forEach(
       notUsed -> {
         String patronId = UUID.randomUUID().toString();
@@ -303,11 +317,11 @@ public class EndExpiredPatronActionSessionTests extends APITests {
             .put(ID, UUID.randomUUID().toString())
             .put(PATRON_ID, patronId)
             .put(LOAN_ID, UUID.randomUUID().toString())
-            .put(ACTION_TYPE, "Check-out"));
+            .put(ACTION_TYPE, actionType));
         expiredEndSessionClient.create(
           new JsonObject()
             .put(PATRON_ID, patronId)
-            .put(ACTION_TYPE, "Check-out"));
+            .put(ACTION_TYPE, actionType));
       });
   }
 }
