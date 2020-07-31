@@ -49,7 +49,7 @@ public class PeriodTest {
   }
 
   @Test
-  public void periodsWithDifferentIntervalsAreNotEqual() {
+  public void oneMonthShouldNotEqual31Days() {
     val oneMonth = months(1);
     val thirtyOneDay = days(31);
 
