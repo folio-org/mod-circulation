@@ -90,8 +90,7 @@ public class PatronActionSessionService {
 
   public CompletableFuture<Result<Void>> endSession(List<ExpiredSession> expiredSessions) {
 
-    return patronActionSessionRepository.findPatronActionSessions(expiredSessions,
-      DEFAULT_SESSION_SIZE_PAGE_LIMIT)
+    return patronActionSessionRepository.findPatronActionSessions(expiredSessions)
       .thenCompose(r -> r.after(this::endSessionsForRecords));
   }
 

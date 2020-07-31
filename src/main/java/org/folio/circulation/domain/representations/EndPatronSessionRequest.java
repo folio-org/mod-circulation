@@ -1,5 +1,7 @@
 package org.folio.circulation.domain.representations;
 
+import static org.folio.circulation.domain.notice.session.PatronActionSessionProperties.ACTION_TYPE;
+import static org.folio.circulation.domain.notice.session.PatronActionSessionProperties.PATRON_ID;
 import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 
@@ -7,18 +9,16 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import io.vertx.core.json.JsonArray;
-import io.vertx.core.json.JsonObject;
 import org.apache.commons.lang3.StringUtils;
-
 import org.folio.circulation.domain.notice.session.PatronActionType;
 import org.folio.circulation.support.Result;
+
+import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
 
 public class EndPatronSessionRequest {
 
   private final PatronActionType actionType;
-  private static final String PATRON_ID = "patronId";
-  private static final String ACTION_TYPE = "actionType";
   private static final String END_SESSIONS = "endSessions";
   private final String patronId;
 
