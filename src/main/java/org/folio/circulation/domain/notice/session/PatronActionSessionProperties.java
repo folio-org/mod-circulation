@@ -1,7 +1,6 @@
 package org.folio.circulation.domain.notice.session;
 
 public class PatronActionSessionProperties {
-
   private PatronActionSessionProperties() { }
 
   public static final String ID = "id";
