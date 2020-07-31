@@ -1,11 +1,13 @@
 package org.folio.circulation.infrastructure.storage.sessions;
 
+import static org.folio.circulation.domain.notice.session.PatronActionSessionProperties.ACTION_TYPE;
+import static org.folio.circulation.domain.notice.session.PatronActionSessionProperties.PATRON_ACTION_SESSIONS;
+import static org.folio.circulation.domain.notice.session.PatronActionSessionProperties.PATRON_ID;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
-import io.vertx.core.json.JsonArray;
-import io.vertx.core.json.JsonObject;
 import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.domain.notice.session.ExpiredSession;
 import org.folio.circulation.domain.notice.session.PatronActionType;
@@ -13,6 +15,9 @@ import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.FetchSingleRecord;
 import org.folio.circulation.support.Result;
+
+import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
 
 public class PatronExpiredSessionRepository {
   private static final int EXPIRED_SESSIONS_LIMIT = 100;
@@ -40,7 +45,7 @@ public class PatronExpiredSessionRepository {
 
     String path = String.format(PATH_PARAM_WITH_QUERY, actionType, inactivityTimeLimit, EXPIRED_SESSIONS_LIMIT);
 
-    return FetchSingleRecord.<List<ExpiredSession>>forRecord("patronActionSessions")
+    return FetchSingleRecord.<List<ExpiredSession>>forRecord(PATRON_ACTION_SESSIONS)
       .using(patronExpiredSessionsStorageClient)
       .mapTo(this::mapFromJson)
       .fetch(path);
@@ -55,9 +60,9 @@ public class PatronExpiredSessionRepository {
     JsonArray expiredSessionsArray = json.getJsonArray(EXPIRED_SESSIONS);
     for (int i = 0; i < expiredSessionsArray.size(); i++) {
       String patronId = expiredSessionsArray.getJsonObject(i)
-        .getString("patronId", StringUtils.EMPTY);
+        .getString(PATRON_ID, StringUtils.EMPTY);
       String actionType = expiredSessionsArray.getJsonObject(i)
-        .getString("actionType", StringUtils.EMPTY);
+        .getString(ACTION_TYPE, StringUtils.EMPTY);
 
       PatronActionType.from(actionType)
         .ifPresent(patronActionType -> expiredSessions.add(
