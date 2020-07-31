@@ -9,7 +9,7 @@ import org.springframework.test.context.junit4.rules.SpringMethodRule;
 import api.support.APITests;
 
 @ContextConfiguration(classes = TestSpringConfiguration.class)
-public class SpringApiTest extends APITests {
+public abstract class SpringApiTest extends APITests {
   @ClassRule
   public static final SpringClassRule SPRING_CLASS_RULE = new SpringClassRule();
   @Rule
