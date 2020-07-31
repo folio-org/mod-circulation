@@ -49,7 +49,7 @@ public class PeriodTest {
   }
 
   @Test
-  public void periodsWithDifferentIntervalNamesIsNotEqual() {
+  public void periodsWithDifferentIntervalsAreNotEqual() {
     val oneMonth = months(1);
     val thirtyOneDay = days(31);
 
@@ -57,7 +57,7 @@ public class PeriodTest {
   }
 
   @Test
-  public void twoPeriodsAreEqual() {
+  public void twoPeriodsWithSameIntervalAndDurationAreEqual() {
     val oneMonth = months(1);
     val oneMonthCopy = months(1);
 
@@ -72,5 +72,13 @@ public class PeriodTest {
 
     assertThat(oneMonth.compareTo(thirtyTwoDays), equalTo(-1));
     assertThat(thirtyTwoDays.compareTo(oneMonth), equalTo(1));
+  }
+
+  @Test
+  public void twoIntervalsThatRepresentsSameDurationButHaveDifferentNameAreEqual() {
+    val oneMonth = months(1);
+    val oneMonthInDays = days(31);
+
+    assertThat(oneMonth.compareTo(oneMonthInDays), equalTo(0));
   }
 }
