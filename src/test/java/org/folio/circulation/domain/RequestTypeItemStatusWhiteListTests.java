@@ -164,7 +164,7 @@ public class RequestTypeItemStatusWhiteListTests {
     "Recall",
     "Page"
   })
-  public void cannotCreateRequestWhenItemStatusAgedToLost(String requestType) {
+  public void cannotCreateRequestWhenItemIsAgedToLost(String requestType) {
     assertFalse(canCreateRequestForItem(AGED_TO_LOST, from(requestType)));
   }
 }

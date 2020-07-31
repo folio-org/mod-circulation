@@ -473,31 +473,7 @@ public class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void cannotCheckOutWhenItemDeclaredLost() {
-    final IndividualResource declaredLostItem = itemsFixture.setupDeclaredLostItem();
-    final IndividualResource steve = usersFixture.steve();
-
-    final Response response = checkOutFixture.attemptCheckOutByBarcode(
-      declaredLostItem, steve);
-
-    assertThat(response.getJson(), hasErrorWith(allOf(
-      hasMessageContaining("has the item status Declared lost"),
-      hasItemBarcodeParameter(declaredLostItem))));
-  }
-
-  @Test
-  public void cannotCheckOutWhenItemAgedToLost() {
-    val agedToLostItem = itemsFixture.basedUponNod(ItemBuilder::agedToLost);
-
-    final Response response = checkOutFixture.attemptCheckOutByBarcode(
-      agedToLostItem, usersFixture.steve());
-
-    assertThat(response.getJson(),
-      hasErrorWith(hasMessageContaining("has the item status Aged to lost")));
-  }
-
-  @Test
-  public void cannotCheckOutClaimedReturnedItem() {
+  public void shouldRejectCheckOutOfItemInDisallowedStatus() {
     final String barcode = String.valueOf(new Random().nextLong());
     final InventoryItemResource claimedReturnedItem = itemsFixture
       .basedUponSmallAngryPlanet((ItemBuilder itemBuilder) -> itemBuilder
