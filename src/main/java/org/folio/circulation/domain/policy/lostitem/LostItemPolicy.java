@@ -151,7 +151,7 @@ public class LostItemPolicy extends Policy {
     }
 
     final Period overduePeriod = minutesBetweenDateAndNow(loanDueDate);
-    return overduePeriod.isMoreThanOrEqualTo(agedToLostAfterOverdueInterval);
+    return overduePeriod.isGreaterThanOrEqualTo(agedToLostAfterOverdueInterval);
   }
 
   private static class UnknownLostItemPolicy extends LostItemPolicy {

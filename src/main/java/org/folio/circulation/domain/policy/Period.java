@@ -194,7 +194,7 @@ public class Period {
     return toMinutes() <= otherPeriod.toMinutes();
   }
 
-  public boolean isMoreThanOrEqualTo(Period otherPeriod) {
+  public boolean isGreaterThanOrEqualTo(Period otherPeriod) {
     return toMinutes() >= otherPeriod.toMinutes();
   }
 }

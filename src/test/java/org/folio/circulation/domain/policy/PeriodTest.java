@@ -52,7 +52,7 @@ public class PeriodTest {
     val thirtyTwoDays = days(32);
 
     assertTrue(oneMonth.isLessThanOrEqualTo(thirtyTwoDays));
-    assertFalse(oneMonth.isMoreThanOrEqualTo(thirtyTwoDays));
+    assertFalse(oneMonth.isGreaterThanOrEqualTo(thirtyTwoDays));
   }
 
   @Test
@@ -61,6 +61,6 @@ public class PeriodTest {
     val thirtyDays = days(30);
 
     assertFalse(oneMonth.isLessThanOrEqualTo(thirtyDays));
-    assertTrue(oneMonth.isMoreThanOrEqualTo(thirtyDays));
+    assertTrue(oneMonth.isGreaterThanOrEqualTo(thirtyDays));
   }
 }
