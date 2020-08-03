@@ -1,3 +1,7 @@
+## 19.0.12 2020-08-03
+
+* Fixes issue with `URI Too Large` error during ending expired sessions (CIRC-865)
+
 ## 19.0.11 2020-07-30
 
 * Includes missing module permissions when creating an instance level request (CIRC-836)
