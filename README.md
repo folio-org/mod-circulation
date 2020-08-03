@@ -71,6 +71,22 @@ In order to change the specific versions of these dependencies, edit the test-vi
 
 Follow the [guide](https://dev.folio.org/guides/raml-cop/) to use raml-cop to assess RAML, schema, and examples.
 
+### Deploying module with Rancher pipelines
+
+The mainline branch has a `.rancher-pipeline.yml` file that specific for Core Functional team.
+This file describes common steps to build JAR file and Docker image, and deploy it to `core-functional` namespace.
+The image built with `core-functional-latest` tag.
+
+Other teams, that want to deploy `mod-circulation` from a feature branch must override following
+values:
+1. Change image tag. `Build Docker step` -> `steps` -> `publishImageConfig` -> `tag` - change the `:core-functional-latest` to a custom value
+(e.g `:patron-blocks`, `:vega-latest`, etc.);
+1. Change cluster template name. `Deploy step` -> `steps` -> `applyAppConfig` -> `catalogTemplate`.
+1. Override answers - `Deploy step` -> `steps` -> `applyAppConfig` -> `answers`:
+   1. Change image tag, that will be deployed: `image.tag` - the tag name you've specified at #1;
+   1. Override resource limits (if needed): `resources.*`;
+1. Change target namespace. `Deploy step` -> `steps` -> `applyAppConfig` -> `targetNamespace` - team namespace, e.g, `vega`.
+
 ## Design Notes
 
 ### Known Limitations
