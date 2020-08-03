@@ -17,13 +17,13 @@ public class NotesRepository {
     notesClient = clients.notesClient();
   }
 
-  public CompletableFuture<Result<Note>> create(NoteRepresentation note) {
+  public CompletableFuture<Result<Note>> create(Note note) {
     final ResponseInterpreter<Note> interpreter =
       new ResponseInterpreter<Note>()
         .flatMapOn(201, mapUsingJson(Note::from))
         .otherwise(forwardOnFailure());
 
-    return notesClient.post(note)
+    return notesClient.post(note.toJson())
       .thenApply(interpreter::flatMap);
   }
 }

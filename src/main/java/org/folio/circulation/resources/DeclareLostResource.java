@@ -8,9 +8,10 @@ import java.util.concurrent.CompletableFuture;
 import org.folio.circulation.StoreLoanAndItem;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.MultipleRecords;
+import org.folio.circulation.domain.Note;
+import org.folio.circulation.domain.NoteBuilder;
 import org.folio.circulation.domain.NoteLink;
 import org.folio.circulation.domain.NoteLinkType;
-import org.folio.circulation.domain.NoteRepresentation;
 import org.folio.circulation.domain.NoteType;
 import org.folio.circulation.domain.NoteTypesRepository;
 import org.folio.circulation.domain.NotesRepository;
@@ -103,13 +104,14 @@ public class DeclareLostResource extends Resource {
     return CompletableFuture.completedFuture(Result.succeeded(loan));
   }
 
-  private NoteRepresentation createNote(NoteType noteType, Loan loan) {
-    return new NoteRepresentation(NoteRepresentation.builder()
+  private Note createNote(NoteType noteType, Loan loan) {
+    return new NoteBuilder()
       .withTitle(NOTE_MESSAGE)
       .withTypeId(noteType.getId())
       .withContent(NOTE_MESSAGE)
       .withDomain(NOTE_DOMAIN)
-      .withLinks(NoteLink.from(loan.getUserId(), NoteLinkType.USER.getValue())));
+      .withLinks(NoteLink.from(loan.getUserId(), NoteLinkType.USER.getValue()))
+      .build();
   }
 
   private Result<MultipleRecords<NoteType>> refuseIfNoteTypeNotFound(
