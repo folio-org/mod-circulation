@@ -71,22 +71,6 @@ In order to change the specific versions of these dependencies, edit the test-vi
 
 Follow the [guide](https://dev.folio.org/guides/raml-cop/) to use raml-cop to assess RAML, schema, and examples.
 
-### Building a docker image with Rancher pipelines
-
-The mainline branch has a `.rancher-pipeline.yml` file. This file describes a pipeline that
-builds a JAR file and Docker image with `core-functional-latest` tag and pushes it to FOLIO docker dev repository.
-
-Then, you'll be able to deploy the built image through rancher (e.g. via App upgrade)
-by overriding following answers:
-* `image.repository`: `docker.dev.folio.org/mod-circulation`;
-* `image.tag`: `core-functional-latest`;
-* `resources.limits.cpu`: `1000m` (Recommended for dev environments);
-* `resources.limits.memory`: `3000Mi` (Recommended for dev environments);
-
-**Note for other teams.** It is recommended to override tag name for your team or feature.
-`Build Docker step` -> `steps` -> `publishImageConfig` -> `tag` - change the `:core-functional-latest` to a custom value
-(e.g `:patron-blocks`, `:vega-latest`, etc.).
-
 ## Design Notes
 
 ### Known Limitations
