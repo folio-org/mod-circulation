@@ -2,11 +2,9 @@ package org.folio.circulation.domain.policy;
 
 import static org.folio.circulation.domain.policy.Period.days;
 import static org.folio.circulation.domain.policy.Period.months;
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -49,36 +47,20 @@ public class PeriodTest {
   }
 
   @Test
-  public void oneMonthShouldNotEqual31Days() {
-    val oneMonth = months(1);
-    val thirtyOneDay = days(31);
-
-    assertNotEquals(oneMonth, thirtyOneDay);
-  }
-
-  @Test
-  public void twoPeriodsWithSameIntervalAndDurationAreEqual() {
-    val oneMonth = months(1);
-    val oneMonthCopy = months(1);
-
-    assertEquals(oneMonth, oneMonthCopy);
-    assertThat(oneMonth.compareTo(oneMonthCopy), is(0));
-  }
-
-  @Test
-  public void canComparePeriodsWithDifferentIntervals() {
+  public void oneMonthIsLessThan32Days() {
     val oneMonth = months(1);
     val thirtyTwoDays = days(32);
 
-    assertThat(oneMonth.compareTo(thirtyTwoDays), equalTo(-1));
-    assertThat(thirtyTwoDays.compareTo(oneMonth), equalTo(1));
+    assertTrue(oneMonth.isLessThanOrEqualTo(thirtyTwoDays));
+    assertFalse(oneMonth.isMoreThanOrEqualTo(thirtyTwoDays));
   }
 
   @Test
-  public void twoIntervalsThatRepresentsSameDurationButHaveDifferentNameAreEqual() {
+  public void oneMonthIsMoreThan30Days() {
     val oneMonth = months(1);
-    val oneMonthInDays = days(31);
+    val thirtyDays = days(30);
 
-    assertThat(oneMonth.compareTo(oneMonthInDays), equalTo(0));
+    assertFalse(oneMonth.isLessThanOrEqualTo(thirtyDays));
+    assertTrue(oneMonth.isMoreThanOrEqualTo(thirtyDays));
   }
 }

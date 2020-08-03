@@ -25,7 +25,7 @@ import org.joda.time.DateTime;
 
 import io.vertx.core.json.JsonObject;
 
-public class Period implements Comparable<Period> {
+public class Period {
   private static final String MONTHS = "Months";
   private static final String WEEKS = "Weeks";
   private static final String DAYS = "Days";
@@ -190,35 +190,11 @@ public class Period implements Comparable<Period> {
     }
   }
 
-  @Override
-  public boolean equals(Object other) {
-    if (this == other) {
-      return true;
-    }
-
-    if (other == null || getClass() != other.getClass()) {
-      return false;
-    }
-
-    Period period = (Period) other;
-    return timePeriod().equals(period.timePeriod());
-  }
-
-  @Override
-  public int hashCode() {
-    return timePeriod().hashCode();
-  }
-
-  @Override
-  public int compareTo(Period otherPeriod) {
-    return Integer.compare(toMinutes(), otherPeriod.toMinutes());
-  }
-
   public boolean isLessThanOrEqualTo(Period otherPeriod) {
-    return compareTo(otherPeriod) <= 0;
+    return toMinutes() <= otherPeriod.toMinutes();
   }
 
   public boolean isMoreThanOrEqualTo(Period otherPeriod) {
-    return compareTo(otherPeriod) >= 0;
+    return toMinutes() >= otherPeriod.toMinutes();
   }
 }
