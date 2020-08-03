@@ -58,9 +58,9 @@ public class DeclareLostResource extends Resource {
       .after(request -> loanRepository.getById(request.getLoanId())
       .thenApply(LoanValidator::refuseWhenLoanIsClosed)
       .thenApply(this::refuseWhenItemIsAlreadyDeclaredLost)
+      .thenCompose(r -> r.after(loan -> createNote(clients, loan)))
       .thenApply(loan -> declareItemLost(loan, request))
       .thenCompose(r -> r.after(storeLoanAndItem::updateLoanAndItemInStorage))
-      .thenCompose(r -> r.after(loan -> createNote(clients, loan)))
       .thenCompose(r -> r.after(loan -> lostItemFeeService
         .chargeLostItemFees(loan, request, context.getUserId()))))
       .thenComposeAsync(r -> r.after(eventPublisher::publishDeclaredLostEvent))
@@ -93,12 +93,14 @@ public class DeclareLostResource extends Resource {
   private CompletableFuture<Result<Loan>> createNote(Clients clients, Loan loan) {
     final NotesRepository notesRepo = new NotesRepository(clients);
     final NoteTypesRepository noteTypesRepo = new NoteTypesRepository(clients);
-
-    return noteTypesRepo.findByName("General note")
-      .thenApply(this::refuseIfNoteTypeNotFound)
-      .thenApply(r -> r.map(CollectionUtil::firstOrNull))
-      .thenCompose(r -> r.after(noteType -> notesRepo.create(createNote(noteType, loan))))
-      .thenApply(r -> r.map(notUsed -> loan));
+    System.out.println("\n\n\nstatus: " + loan.getItem().getStatusName() + "\n\n\n");
+    if (loan.isClaimedReturned()) {
+      noteTypesRepo.findByName("General note")
+        .thenApply(this::refuseIfNoteTypeNotFound)
+        .thenApply(r -> r.map(CollectionUtil::firstOrNull))
+        .thenCompose(r -> r.after(noteType -> notesRepo.create(createNote(noteType, loan))));
+    }
+    return CompletableFuture.completedFuture(Result.succeeded(loan));
   }
 
   private NoteRepresentation createNote(NoteType noteType, Loan loan) {

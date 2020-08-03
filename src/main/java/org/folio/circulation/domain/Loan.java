@@ -451,6 +451,10 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     return getItem().getStatus() == ItemStatus.DECLARED_LOST;
   }
 
+  public boolean isClaimedReturned() {
+    return getItem().getStatus() == ItemStatus.CLAIMED_RETURNED;
+  }
+
   public boolean hasItemWithStatus(ItemStatus itemStatus) {
     return Objects.nonNull(item) && item.isInStatus(itemStatus);
   }

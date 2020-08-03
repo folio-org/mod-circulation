@@ -24,6 +24,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.joda.time.Seconds.seconds;
+import static org.junit.Assert.assertEquals;
 
 import java.util.List;
 import java.util.UUID;
@@ -43,6 +44,7 @@ import org.junit.runner.RunWith;
 
 import api.support.APITests;
 import api.support.MultipleJsonRecords;
+import api.support.builders.ClaimItemReturnedRequestBuilder;
 import api.support.builders.DeclareItemLostRequestBuilder;
 import api.support.builders.LostItemFeePolicyBuilder;
 import api.support.fakes.FakePubSub;
@@ -441,6 +443,33 @@ public class DeclareLostAPITests extends APITests {
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("The item is already declared lost"),
       hasParameter("itemId", itemId.toString()))));
+  }
+
+  @Test
+  public void noteCreatedWhenDeclaredLost() {
+    int initalNoteCount = notesClient.getAll().size();
+    String comment = "testing";
+
+    InventoryItemResource item = itemsFixture.basedUponSmallAngryPlanet();
+    UUID loanId = checkOutFixture.checkOutByBarcode(item, usersFixture.charlotte())
+      .getId();
+
+    claimItemReturnedFixture.claimItemReturned(new ClaimItemReturnedRequestBuilder()
+      .forLoan(loanId)
+      .withItemClaimedReturnedDate(DateTime.now()));
+
+    DateTime dateTime = DateTime.now();
+
+    JsonObject updatedLoan = loansClient.get(loanId).getJson();
+    assertThat(updatedLoan.getJsonObject("item"), hasStatus("Claimed returned"));
+
+    final DeclareItemLostRequestBuilder builder = new DeclareItemLostRequestBuilder()
+      .forLoanId(loanId).on(dateTime)
+      .withComment(comment);
+
+    declareLostFixtures.declareItemLost(builder);
+
+    assertEquals(1, notesClient.getAll().size() - initalNoteCount);
   }
 
   private List<JsonObject> getAccountsForLoan(UUID loanId) {
