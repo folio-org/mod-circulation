@@ -1,5 +1,6 @@
 package org.folio.circulation.domain;
 
+import static org.folio.circulation.domain.ItemStatus.AGED_TO_LOST;
 import static org.folio.circulation.domain.ItemStatus.AVAILABLE;
 import static org.folio.circulation.domain.ItemStatus.AWAITING_DELIVERY;
 import static org.folio.circulation.domain.ItemStatus.AWAITING_PICKUP;
@@ -52,6 +53,7 @@ public class RequestTypeItemStatusWhiteList {
     recallRules.put(CLAIMED_RETURNED, false);
     recallRules.put(WITHDRAWN, false);
     recallRules.put(LOST_AND_PAID, false);
+    recallRules.put(AGED_TO_LOST, false);
     recallRules.put(NONE, false);
   }
 
@@ -70,6 +72,7 @@ public class RequestTypeItemStatusWhiteList {
     holdRules.put(CLAIMED_RETURNED, false);
     holdRules.put(WITHDRAWN, false);
     holdRules.put(LOST_AND_PAID, false);
+    holdRules.put(AGED_TO_LOST, false);
     holdRules.put(NONE, true);
   }
 
@@ -88,6 +91,7 @@ public class RequestTypeItemStatusWhiteList {
     pageRules.put(CLAIMED_RETURNED, false);
     pageRules.put(WITHDRAWN, false);
     pageRules.put(LOST_AND_PAID, false);
+    pageRules.put(AGED_TO_LOST, false);
     pageRules.put(NONE, false);
   }
 
@@ -106,6 +110,7 @@ public class RequestTypeItemStatusWhiteList {
     noneRules.put(CLAIMED_RETURNED, false);
     noneRules.put(WITHDRAWN, false);
     noneRules.put(LOST_AND_PAID, false);
+    noneRules.put(AGED_TO_LOST, false);
     noneRules.put(NONE, false);
   }
 
