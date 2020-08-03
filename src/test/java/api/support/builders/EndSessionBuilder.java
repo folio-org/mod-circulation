@@ -1,5 +1,8 @@
 package api.support.builders;
 
+import static org.folio.circulation.domain.notice.session.PatronActionSessionProperties.ACTION_TYPE;
+import static org.folio.circulation.domain.notice.session.PatronActionSessionProperties.PATRON_ID;
+
 import io.vertx.core.json.JsonObject;
 
 public class EndSessionBuilder extends JsonBuilder implements Builder {
@@ -25,8 +28,8 @@ public class EndSessionBuilder extends JsonBuilder implements Builder {
     }
 
     return jsonObject
-      .put("patronId", this.patronId)
-      .put("actionType", this.actionType);
+      .put(PATRON_ID, this.patronId)
+      .put(ACTION_TYPE, this.actionType);
   }
 
   public EndSessionBuilder withPatronId(String patronId) {
