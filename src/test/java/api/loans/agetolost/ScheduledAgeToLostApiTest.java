@@ -12,6 +12,10 @@ import static org.hamcrest.Matchers.iterableWithSize;
 import static org.joda.time.DateTime.now;
 import static org.joda.time.DateTimeZone.UTC;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.stream.Collectors;
+
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.hamcrest.Matcher;
 import org.joda.time.DateTime;
@@ -42,6 +46,29 @@ public class ScheduledAgeToLostApiTest extends SpringApiTest {
     useLostItemPolicy(lostItemFeePoliciesFixture.ageToLostAfterOneMinute().getId());
 
     checkOutItem();
+  }
+
+  @Test
+  public void shouldAgeItemToLostWhenOverdueByMoreThanInterval() {
+    scheduledAgeToLostClient.triggerJob();
+
+    assertThat(itemsClient.get(overdueItem).getJson(), isAgedToLost());
+    assertThat(getLoanActions(), hasAgedToLostAction());
+  }
+
+  @Test
+  public void canAgeTenItemsToLostWhenOverdueByMoreThanInterval() {
+    val loanToItemMap = checkOutTenItems();
+
+    scheduledAgeToLostClient.triggerJob();
+
+    loanToItemMap.forEach((loan, item) -> {
+      val itemFromStorage = itemsClient.get(item);
+      val loanFromStorage = loansClient.get(loan);
+
+      assertThat(itemFromStorage.getJson(), isAgedToLost());
+      assertThat(getLoanActions(loanFromStorage), hasAgedToLostAction());
+    });
   }
 
   @Test
@@ -84,14 +111,6 @@ public class ScheduledAgeToLostApiTest extends SpringApiTest {
   }
 
   @Test
-  public void shouldAgeItemToLostWhenOverdueByMoreThanInterval() {
-    scheduledAgeToLostClient.triggerJob();
-
-    assertThat(itemsClient.get(overdueItem).getJson(), isAgedToLost());
-    assertThat(getLoanActions(), hasAgedToLostAction());
-  }
-
-  @Test
   public void shouldNotProcessAgedToLostItemSecondTime() {
     scheduledAgeToLostClient.triggerJob();
     scheduledAgeToLostClient.triggerJob();
@@ -99,8 +118,9 @@ public class ScheduledAgeToLostApiTest extends SpringApiTest {
     assertThat(itemsClient.get(overdueItem).getJson(), isAgedToLost());
     assertThat(getLoanActions(), hasAgedToLostAction());
 
-    val agedToLostActions = loanHistoryClient.getMany(
-      queryFromTemplate("loan.id==%s and loan.action==%s", overdueLoan.getId(), "itemAgedToLost"));
+    val agedToLostActions = getLoanActions().stream()
+      .filter(json -> "itemAgedToLost".equals(json.getJsonObject("loan").getString("action")))
+      .collect(Collectors.toList());
 
     assertThat(agedToLostActions, iterableWithSize(1));
   }
@@ -120,9 +140,26 @@ public class ScheduledAgeToLostApiTest extends SpringApiTest {
         .on(getLoanOverdueDate().minusMinutes(2)));
   }
 
-  private MultipleJsonRecords getLoanActions() {
+  private Map<IndividualResource, IndividualResource> checkOutTenItems() {
+    val numberOfItems = 10;
+    val loanToItemMap = new HashMap<IndividualResource, IndividualResource>();
+
+    for (int i = 0; i < numberOfItems; i++) {
+      checkOutItem();
+
+      loanToItemMap.put(overdueLoan, overdueItem);
+    }
+
+    return loanToItemMap;
+  }
+
+  private MultipleJsonRecords getLoanActions(IndividualResource loan) {
     return loanHistoryClient
-      .getMany(queryFromTemplate("loan.id==%s and operation==U", overdueLoan.getId()));
+      .getMany(queryFromTemplate("loan.id==%s and operation==U", loan.getId()));
+  }
+
+  private MultipleJsonRecords getLoanActions() {
+    return getLoanActions(overdueLoan);
   }
 
   private Matcher<Iterable<? super JsonObject>> hasAgedToLostAction() {
