@@ -2,6 +2,7 @@ package api.support.spring;
 
 import static api.support.APITestContext.getOkapiHeadersFromContext;
 import static api.support.http.InterfaceUrls.itemsStorageUrl;
+import static api.support.http.InterfaceUrls.scheduledAgeToLostUrl;
 import static api.support.http.InterfaceUrls.usersUrl;
 import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL;
 import static com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES;
@@ -19,6 +20,7 @@ import api.support.dto.User;
 import api.support.fixtures.OverrideRenewalFixture;
 import api.support.jackson.serializer.JsonObjectJacksonSerializer;
 import api.support.spring.clients.ResourceClient;
+import api.support.spring.clients.ScheduledJobClient;
 import io.restassured.config.ObjectMapperConfig;
 import io.restassured.config.RestAssuredConfig;
 import io.vertx.core.json.JsonObject;
@@ -39,6 +41,11 @@ public class TestSpringConfiguration {
   @Bean
   public ResourceClient<User> userClient(RestAssuredClient client) {
     return new ResourceClient<>(client, usersUrl(""), User.class);
+  }
+
+  @Bean
+  public ScheduledJobClient scheduledAgeToLostClient(RestAssuredClient client) {
+    return new ScheduledJobClient(scheduledAgeToLostUrl(), client);
   }
 
   @Bean

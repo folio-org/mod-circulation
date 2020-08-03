@@ -1,14 +1,15 @@
 package api.support.fixtures;
 
 import static api.support.http.ResourceClient.forLostItemFeePolicies;
+import static org.folio.circulation.domain.policy.Period.minutes;
 import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
 
 import java.util.UUID;
 
+import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.support.http.client.IndividualResource;
 
 import api.support.builders.LostItemFeePolicyBuilder;
-import io.vertx.core.json.JsonObject;
 
 public class LostItemFeePoliciesFixture {
   private final RecordCreator lostItemFeePolicyRecordCreator;
@@ -33,19 +34,21 @@ public class LostItemFeePoliciesFixture {
     return create(chargeFeePolicy());
   }
 
-  public LostItemFeePolicyBuilder facultyStandardPolicy() {
-    JsonObject itemAgedLostOverdue = new JsonObject();
-    itemAgedLostOverdue.put("duration", 12);
-    itemAgedLostOverdue.put("intervalId", "Months");
+  public IndividualResource ageToLostAfterOneMinute() {
+    createReferenceData();
 
-    JsonObject patronBilledAfterAgedLost = new JsonObject();
-    patronBilledAfterAgedLost.put("duration", 12);
-    patronBilledAfterAgedLost.put("intervalId", "Months");
+    return create(ageToLostAfterOneMinutePolicy());
+  }
+
+
+  public LostItemFeePolicyBuilder facultyStandardPolicy() {
+    final Period itemAgedLostOverdue = Period.months(12);
+    final Period patronBilledAfterAgedLost = Period.months(12);
 
     return new LostItemFeePolicyBuilder()
       .withName("Undergrad standard")
       .withDescription("This is description for undergrad standard")
-      .withItemAgedLostOverdue(itemAgedLostOverdue)
+      .withItemAgedToLostAfterOverdue(itemAgedLostOverdue)
       .withPatronBilledAfterAgedLost(patronBilledAfterAgedLost)
       .withNoChargeAmountItem()
       .doNotChargeProcessingFee()
@@ -57,17 +60,12 @@ public class LostItemFeePoliciesFixture {
   }
 
   private LostItemFeePolicyBuilder chargeFeePolicy() {
-    JsonObject itemAgedLostOverdue = new JsonObject();
-    itemAgedLostOverdue.put("duration", 12);
-    itemAgedLostOverdue.put("intervalId", "Months");
-
-    JsonObject patronBilledAfterAgedLost = new JsonObject();
-    patronBilledAfterAgedLost.put("duration", 12);
-    patronBilledAfterAgedLost.put("intervalId", "Months");
+    Period itemAgedLostOverdue = Period.months(12);
+    Period patronBilledAfterAgedLost = Period.months(12);
 
     return new LostItemFeePolicyBuilder()
       .withName("No lost item fees policy")
-      .withItemAgedLostOverdue(itemAgedLostOverdue)
+      .withItemAgedToLostAfterOverdue(itemAgedLostOverdue)
       .withPatronBilledAfterAgedLost(patronBilledAfterAgedLost)
       .withSetCost(10.00)
       .chargeProcessingFee(5.00)
@@ -76,6 +74,12 @@ public class LostItemFeePoliciesFixture {
       .withReplacedLostItemProcessingFee(true)
       .withReplacementAllowed(true)
       .chargeOverdueFineWhenReturned();
+  }
+
+  public LostItemFeePolicyBuilder ageToLostAfterOneMinutePolicy() {
+    return chargeFeePolicy()
+      .withName("Age to lost after one minute overdue")
+      .withItemAgedToLostAfterOverdue(minutes(1));
   }
 
   public IndividualResource create(UUID id, String name) {

@@ -4,6 +4,7 @@ import static java.lang.Boolean.TRUE;
 import static java.util.Objects.nonNull;
 import static java.util.Objects.requireNonNull;
 import static org.folio.circulation.domain.FeeAmount.noFeeAmount;
+import static org.folio.circulation.domain.LoanAction.ITEM_AGED_TO_LOST;
 import static org.folio.circulation.domain.LoanAction.CHECKED_IN;
 import static org.folio.circulation.domain.LoanAction.CHECKED_OUT;
 import static org.folio.circulation.domain.LoanAction.CLAIMED_RETURNED;
@@ -581,5 +582,13 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     final JsonObject representationCopy = representation.copy();
     return new Loan(representationCopy, item, user, proxy, checkinServicePoint,
       checkoutServicePoint, originalDueDate, policies, accounts);
+  }
+
+  public Loan ageOverdueItemToLost() {
+    changeAction(ITEM_AGED_TO_LOST);
+    removeActionComment();
+    changeItemStatusForItemAndLoan(ItemStatus.AGED_TO_LOST);
+
+    return this;
   }
 }
