@@ -94,7 +94,6 @@ public class DeclareLostResource extends Resource {
   private CompletableFuture<Result<Loan>> createNote(Clients clients, Loan loan) {
     final NotesRepository notesRepo = new NotesRepository(clients);
     final NoteTypesRepository noteTypesRepo = new NoteTypesRepository(clients);
-    System.out.println("\n\n\nstatus: " + loan.getItem().getStatusName() + "\n\n\n");
     if (loan.isClaimedReturned()) {
       noteTypesRepo.findByName("General note")
         .thenApply(this::refuseIfNoteTypeNotFound)
