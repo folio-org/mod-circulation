@@ -9,14 +9,13 @@ import java.util.concurrent.CompletableFuture;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.Note;
-import org.folio.circulation.domain.NoteBuilder;
 import org.folio.circulation.domain.NoteLink;
 import org.folio.circulation.domain.NoteLinkType;
 import org.folio.circulation.domain.NoteType;
-import org.folio.circulation.domain.NoteTypesRepository;
-import org.folio.circulation.domain.NotesRepository;
 import org.folio.circulation.domain.representations.ChangeItemStatusRequest;
 import org.folio.circulation.domain.validation.NotInItemStatusValidator;
+import org.folio.circulation.infrastructure.storage.notes.NoteTypesRepository;
+import org.folio.circulation.infrastructure.storage.notes.NotesRepository;
 import org.folio.circulation.services.ChangeItemStatusService;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.Result;
@@ -31,9 +30,6 @@ import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 
 public class DeclareClaimedReturnedItemAsMissingResource extends Resource {
-
-  private static final String NOTE_MESSAGE = "Claimed returned item marked missing";
-  private static final String NOTE_DOMAIN  = "loans";
 
   public DeclareClaimedReturnedItemAsMissingResource(HttpClient client) {
     super(client);
@@ -82,12 +78,15 @@ public class DeclareClaimedReturnedItemAsMissingResource extends Resource {
   }
 
   private Note createNote(NoteType noteType, Loan loan) {
-    return new NoteBuilder()
-      .withTitle(NOTE_MESSAGE)
-      .withTypeId(noteType.getId())
-      .withContent(NOTE_MESSAGE)
-      .withDomain(NOTE_DOMAIN)
-      .withLinks(NoteLink.from(loan.getUserId(), NoteLinkType.USER.getValue()))
+    final String NOTE_MESSAGE = "Claimed returned item marked missing";
+    final String NOTE_DOMAIN  = "loans";
+
+    return Note.builder()
+      .title(NOTE_MESSAGE)
+      .typeId(noteType.getId())
+      .content(NOTE_MESSAGE)
+      .domain(NOTE_DOMAIN)
+      .link(NoteLink.from(loan.getUserId(), NoteLinkType.USER.getValue()))
       .build();
   }
 

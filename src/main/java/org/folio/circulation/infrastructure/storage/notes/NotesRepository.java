@@ -1,10 +1,11 @@
-package org.folio.circulation.domain;
+package org.folio.circulation.infrastructure.storage.notes;
 
 import static org.folio.circulation.support.http.ResponseMapping.forwardOnFailure;
 import static org.folio.circulation.support.http.ResponseMapping.mapUsingJson;
 
 import java.util.concurrent.CompletableFuture;
 
+import org.folio.circulation.domain.Note;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.Result;

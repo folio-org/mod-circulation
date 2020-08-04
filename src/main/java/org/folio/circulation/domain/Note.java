@@ -10,25 +10,20 @@ import static org.folio.circulation.support.JsonPropertyFetcher.getArrayProperty
 
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.Singular;
 
+@Builder
+@Getter
 public class Note {
   private final String id;
   private final String typeId;
   private final String domain;
   private final String title;
   private final String content;
+  @Singular
   private final List<NoteLink> links;
-
-  public Note(String id, String typeId, String domain,
-    String title, String content, List<NoteLink> links) {
-
-    this.id = id;
-    this.typeId = typeId;
-    this.domain = domain;
-    this.title = title;
-    this.content = content;
-    this.links = links;
-  }
 
   public static Note from(JsonObject jsonObject) {
     JsonArray noteLinksJson = getArrayProperty(jsonObject, "links");
@@ -57,29 +52,5 @@ public class Note {
     jsonObject.put("links", jsonLinks);
 
     return jsonObject;
-  }
-
-  String getId() {
-    return id;
-  }
-
-  String getTypeId() {
-    return typeId;
-  }
-
-  String getDomain() {
-    return domain;
-  }
-
-  String getTitleString() {
-    return title;
-  }
-
-  String getTitleContent() {
-    return content;
-  }
-
-  List<NoteLink> getLinks() {
-    return links;
   }
 }
