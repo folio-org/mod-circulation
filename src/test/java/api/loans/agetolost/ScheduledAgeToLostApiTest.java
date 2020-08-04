@@ -5,12 +5,14 @@ import static api.support.matchers.ItemMatchers.isAgedToLost;
 import static api.support.matchers.ItemMatchers.isCheckedOut;
 import static api.support.matchers.ItemMatchers.isClaimedReturned;
 import static api.support.matchers.JsonObjectMatcher.hasJsonPath;
+import static api.support.matchers.TextDateTimeMatcher.withinSecondsBeforeNow;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.iterableWithSize;
 import static org.joda.time.DateTime.now;
 import static org.joda.time.DateTimeZone.UTC;
+import static org.joda.time.Seconds.seconds;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -54,6 +56,8 @@ public class ScheduledAgeToLostApiTest extends SpringApiTest {
 
     assertThat(itemsClient.get(overdueItem).getJson(), isAgedToLost());
     assertThat(getLoanActions(), hasAgedToLostAction());
+    assertThat(loansClient.get(overdueLoan).getJson(),
+      hasJsonPath("agedToLostDate", withinSecondsBeforeNow(seconds(1))));
   }
 
   @Test
@@ -68,6 +72,8 @@ public class ScheduledAgeToLostApiTest extends SpringApiTest {
 
       assertThat(itemFromStorage.getJson(), isAgedToLost());
       assertThat(getLoanActions(loanFromStorage), hasAgedToLostAction());
+      assertThat(loansClient.get(overdueLoan).getJson(),
+        hasJsonPath("agedToLostDate", withinSecondsBeforeNow(seconds(1))));
     });
   }
 
@@ -166,7 +172,8 @@ public class ScheduledAgeToLostApiTest extends SpringApiTest {
     return hasItem(allOf(
       hasJsonPath("loan.status.name", "Open"),
       hasJsonPath("loan.action", "itemAgedToLost"),
-      hasJsonPath("loan.itemStatus", "Aged to lost")
+      hasJsonPath("loan.itemStatus", "Aged to lost"),
+      hasJsonPath("loan.agedToLostDate", withinSecondsBeforeNow(seconds(1)))
     ));
   }
 }

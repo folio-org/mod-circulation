@@ -103,6 +103,11 @@
       "type": "string",
       "format": "date-time"
     },
+    "agedToLostDate": {
+      "description": "Date and time the item was aged to lost for this loan",
+      "type": "string",
+      "format": "date-time"
+    },
     "overdueFinePolicyId": {
       "description": "ID of overdue fines policy at the time the item is check-in or renewed",
       "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$",
@@ -121,7 +126,7 @@
     "agedToLostDelayedBilling": {
       "description": "Aged to Lost Delayed Billing processing",
       "type": "object",
-      "properties": {  
+      "properties": {
         "lostItemHasBeenBilled": {
           "description": "Indicates if the aged to lost fee has been billed (for use where delayed billing is set up)",
           "type": "boolean"

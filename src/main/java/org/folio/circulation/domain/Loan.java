@@ -14,6 +14,7 @@ import static org.folio.circulation.domain.LoanAction.MISSING;
 import static org.folio.circulation.domain.LoanAction.RENEWED;
 import static org.folio.circulation.domain.LoanAction.RENEWED_THROUGH_OVERRIDE;
 import static org.folio.circulation.domain.representations.LoanProperties.ACTION_COMMENT;
+import static org.folio.circulation.domain.representations.LoanProperties.AGED_TO_LOST_DATE;
 import static org.folio.circulation.domain.representations.LoanProperties.CHECKIN_SERVICE_POINT_ID;
 import static org.folio.circulation.domain.representations.LoanProperties.CHECKOUT_SERVICE_POINT_ID;
 import static org.folio.circulation.domain.representations.LoanProperties.CLAIMED_RETURNED_DATE;
@@ -27,6 +28,7 @@ import static org.folio.circulation.domain.representations.LoanProperties.RETURN
 import static org.folio.circulation.domain.representations.LoanProperties.STATUS;
 import static org.folio.circulation.domain.representations.LoanProperties.SYSTEM_RETURN_DATE;
 import static org.folio.circulation.domain.representations.LoanProperties.USER_ID;
+import static org.folio.circulation.support.ClockManager.getClockManager;
 import static org.folio.circulation.support.JsonPropertyFetcher.getBooleanProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getDateTimeProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getIntegerProperty;
@@ -47,7 +49,6 @@ import org.folio.circulation.domain.policy.LoanPolicy;
 import org.folio.circulation.domain.policy.OverdueFinePolicy;
 import org.folio.circulation.domain.policy.lostitem.LostItemPolicy;
 import org.folio.circulation.domain.representations.LoanProperties;
-import org.folio.circulation.support.ClockManager;
 import org.folio.circulation.support.Result;
 import org.joda.time.DateTime;
 
@@ -511,7 +512,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   public boolean isOverdue() {
-    return isOverdue(ClockManager.getClockManager().getDateTime());
+    return isOverdue(getClockManager().getDateTime());
   }
 
   public boolean isOverdue(DateTime systemTime) {
@@ -588,7 +589,12 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     changeAction(ITEM_AGED_TO_LOST);
     removeActionComment();
     changeItemStatusForItemAndLoan(ItemStatus.AGED_TO_LOST);
+    changeAgedToLostDate(getClockManager().getDateTime());
 
     return this;
+  }
+
+  private void changeAgedToLostDate(DateTime dateTime) {
+    representation.put(AGED_TO_LOST_DATE, dateTime.toString());
   }
 }

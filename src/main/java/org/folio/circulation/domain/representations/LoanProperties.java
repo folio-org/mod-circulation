@@ -28,4 +28,5 @@ public class LoanProperties {
   public static final String DECLARED_LOST_DATE = "declaredLostDate";
   public static final String CLAIMED_RETURNED_DATE = "claimedReturnedDate";
   public static final String LOAN_DATE = "loanDate";
+  public static final String AGED_TO_LOST_DATE = "agedToLostDate";
 }
