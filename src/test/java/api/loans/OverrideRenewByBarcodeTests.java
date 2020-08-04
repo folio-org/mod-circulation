@@ -4,17 +4,15 @@ package api.loans;
 import static api.support.builders.FixedDueDateSchedule.forDay;
 import static api.support.builders.FixedDueDateSchedule.wholeMonth;
 import static api.support.matchers.ItemStatusCodeMatcher.hasItemStatus;
+import static api.support.matchers.JsonObjectMatcher.hasJsonPath;
 import static api.support.matchers.PatronNoticeMatcher.hasEmailNoticeProperties;
-import static api.support.matchers.ResponseStatusCodeMatcher.hasStatus;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static api.support.matchers.TextDateTimeMatcher.withinSecondsAfter;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static api.support.matchers.ValidationErrorMatchers.hasParameter;
-import static api.support.matchers.ValidationErrorMatchers.hasUUIDParameter;
 import static org.apache.commons.lang3.StringUtils.EMPTY;
-import static org.folio.HttpStatus.HTTP_OK;
-import static org.folio.HttpStatus.HTTP_UNPROCESSABLE_ENTITY;
+import static org.folio.circulation.domain.ItemStatus.CHECKED_OUT;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.is;
@@ -32,7 +30,6 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import org.awaitility.Awaitility;
-import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.support.ClockManager;
 import org.folio.circulation.support.http.client.IndividualResource;
@@ -42,7 +39,6 @@ import org.hamcrest.Matcher;
 import org.hamcrest.Matchers;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeConstants;
-import org.joda.time.Seconds;
 import org.junit.Test;
 
 import api.support.APITests;
@@ -410,10 +406,10 @@ public class OverrideRenewByBarcodeTests extends APITests {
       .withName("Limited Renewals policy")
       .rolling(Period.weeks(1));
 
-    use(new CirculationPolicies()
-      .withLoanPolicy(loanPoliciesFixture.create(limitedRenewalsPolicy).getId())
+    use(rollingDefaultPolicies()
+      .loanPolicy(loanPoliciesFixture.create(limitedRenewalsPolicy))
       // Have to charge a fine otherwise the loan is closed when item is declared lost
-      .withLostItemPolicy(lostItemFeePoliciesFixture.chargeFee().getId()));
+      .lostItemPolicy(lostItemFeePoliciesFixture.chargeFee()));
 
     final DateTime loanDate = DateTime.now(UTC).minusWeeks(1);
 
@@ -435,7 +431,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
 
     assertThat("item status should be changed",
       renewedLoan.getJsonObject("item").getJsonObject("status").getString("name"),
-      is(ItemStatus.CHECKED_OUT.getValue()));
+      is(CHECKED_OUT.getValue()));
 
     DateTime expectedDueDate = loanDate.plusWeeks(2);
     assertThat("due date should be 2 weeks later",
@@ -454,12 +450,10 @@ public class OverrideRenewByBarcodeTests extends APITests {
       .rolling(Period.weeks(1))
       .renewFromSystemDate();
 
-    UUID loanPolicyId = loanPoliciesFixture.create(loanablePolicy).getId();
-
-    use(new CirculationPolicies()
-      .withLoanPolicy(loanPolicyId)
+    use(rollingDefaultPolicies()
+      .loanPolicy(loanPoliciesFixture.create(loanablePolicy))
       // Have to charge a fine otherwise the loan is closed when item is declared lost
-      .withLostItemPolicy(lostItemFeePoliciesFixture.chargeFee().getId()));
+      .lostItemPolicy(lostItemFeePoliciesFixture.chargeFee()));
 
     final IndividualResource loan = checkOutAWeekAgo(smallAngryPlanet);
 
@@ -481,7 +475,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
 
     assertThat("item status should be changed",
       renewedLoan.getJsonObject("item").getJsonObject("status").getString("name"),
-      is(ItemStatus.CHECKED_OUT.getValue()));
+      is(CHECKED_OUT.getValue()));
 
     assertThat("renewal count should be incremented",
       renewedLoan.getInteger("renewalCount"), is(1));
@@ -489,6 +483,22 @@ public class OverrideRenewByBarcodeTests extends APITests {
     assertThat("due date should be 2 weeks later",
       renewedLoan.getString("dueDate"),
       withinSecondsAfter(seconds(5), approximateRenewalDate.plusWeeks(1)));
+  }
+
+  @Test
+  public void canOverrideRenewalWhenItemIsAgedToLost() {
+    final DateTime approximateRenewalDate = DateTime.now(UTC).plusWeeks(3);
+    val result = ageToLostFixture.createAgedToLostLoan();
+
+    final JsonObject renewedLoan = loansFixture
+      .overrideRenewalByBarcode(result.getItem(), result.getUser(), OVERRIDE_COMMENT, null)
+      .getJson();
+
+    verifyRenewedLoan(result.getItem(), result.getUser(), renewedLoan);
+
+    assertThat(renewedLoan, hasJsonPath("item.status.name", "Checked out"));
+    assertThat(renewedLoan.getString("dueDate"),
+      withinSecondsAfter(seconds(2), approximateRenewalDate));
   }
 
   @Test

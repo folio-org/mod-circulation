@@ -15,7 +15,6 @@ import static org.folio.circulation.support.results.CommonFailures.failedDueToSe
 import java.util.concurrent.CompletableFuture;
 
 import org.apache.commons.lang3.StringUtils;
-import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.RequestType;
 import org.folio.circulation.domain.policy.LoanPolicy;
@@ -77,7 +76,7 @@ public class OverrideRenewalStrategy implements RenewalStrategy {
         return processRenewal(proposedDueDateResult, loan, comment);
       }
 
-      if (loan.hasItemWithStatus(ItemStatus.DECLARED_LOST)) {
+      if (isLoanLost(loan)) {
         return processRenewal(proposedDueDateResult, loan, comment)
           .map(dueDate -> loan.changeItemStatusForItemAndLoan(CHECKED_OUT));
       }
@@ -100,5 +99,9 @@ public class OverrideRenewalStrategy implements RenewalStrategy {
     return calculatedDueDate
       .next(dueDate -> errorWhenEarlierOrSameDueDate(loan, dueDate))
       .map(dueDate -> loan.overrideRenewal(dueDate, loan.getLoanPolicyId(), comment));
+  }
+
+  private boolean isLoanLost(Loan loan) {
+    return loan.isDeclaredLost() || loan.isAgedToLost();
   }
 }

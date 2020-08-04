@@ -7,6 +7,8 @@ import static api.support.fixtures.UserExamples.basedUponJamesRodwell;
 import static api.support.fixtures.UserExamples.basedUponJessicaPontefract;
 import static api.support.fixtures.UserExamples.basedUponRebeccaStuart;
 import static api.support.fixtures.UserExamples.basedUponStevenJones;
+import static api.support.http.ResourceClient.forPatronGroups;
+import static api.support.http.ResourceClient.forUsers;
 import static java.util.function.Function.identity;
 import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
 
@@ -16,20 +18,15 @@ import org.folio.circulation.support.http.client.IndividualResource;
 
 import api.support.APITestContext;
 import api.support.builders.UserBuilder;
-import api.support.http.ResourceClient;
 
 public class UsersFixture {
   private final RecordCreator userRecordCreator;
   private final PatronGroupsFixture patronGroupsFixture;
 
-  public UsersFixture(
-    ResourceClient usersClient,
-    PatronGroupsFixture patronGroupsFixture) {
-
-    this.userRecordCreator = new RecordCreator(usersClient,
+  public UsersFixture() {
+    this.userRecordCreator = new RecordCreator(forUsers(),
       user -> getProperty(user, "username"));
-
-    this.patronGroupsFixture = patronGroupsFixture;
+    this.patronGroupsFixture = new PatronGroupsFixture(forPatronGroups());
   }
 
   public void cleanUp() {

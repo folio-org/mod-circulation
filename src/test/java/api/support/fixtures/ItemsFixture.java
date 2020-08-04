@@ -1,5 +1,9 @@
 package api.support.fixtures;
 
+import static api.support.http.ResourceClient.forContributorNameTypes;
+import static api.support.http.ResourceClient.forInstanceTypes;
+import static api.support.http.ResourceClient.forLoanTypes;
+import static api.support.http.ResourceClient.forMaterialTypes;
 import static java.util.function.Function.identity;
 import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
 import static org.folio.circulation.support.JsonPropertyWriter.write;
@@ -30,25 +34,19 @@ public class ItemsFixture {
   private final RecordCreator instanceTypeRecordCreator;
   private final RecordCreator contributorNameTypeRecordCreator;
 
-  public ItemsFixture(
-    MaterialTypesFixture materialTypesFixture,
-    LoanTypesFixture loanTypesFixture,
-    LocationsFixture locationsFixture,
-    ResourceClient instanceTypesClient,
-    ResourceClient contributorNameTypesClient) {
-
+  public ItemsFixture() {
     itemsClient = ResourceClient.forItems();
     holdingsClient = ResourceClient.forHoldings();
     instancesClient = ResourceClient.forInstances();
-    this.materialTypesFixture = materialTypesFixture;
-    this.loanTypesFixture = loanTypesFixture;
-    this.locationsFixture = locationsFixture;
+    this.materialTypesFixture = new MaterialTypesFixture(forMaterialTypes());
+    this.loanTypesFixture = new LoanTypesFixture(forLoanTypes());
+    this.locationsFixture = new LocationsFixture();
 
-    instanceTypeRecordCreator = new RecordCreator(instanceTypesClient,
+    instanceTypeRecordCreator = new RecordCreator(forInstanceTypes(),
       instanceType -> getProperty(instanceType, "name"));
 
     contributorNameTypeRecordCreator = new RecordCreator(
-      contributorNameTypesClient, nameType -> getProperty(nameType, "name"));
+      forContributorNameTypes(), nameType -> getProperty(nameType, "name"));
   }
 
   public void cleanUp() {
@@ -325,5 +323,9 @@ public class ItemsFixture {
 
   public Function<ItemBuilder, ItemBuilder> addCallNumberStringComponents() {
     return addCallNumberStringComponents("");
+  }
+
+  public IndividualResource getById(UUID id) {
+    return new IndividualResource(itemsClient.getById(id));
   }
 }
