@@ -1,11 +1,17 @@
 package org.folio.circulation.domain.policy;
 
-import junitparams.JUnitParamsRunner;
-import junitparams.Parameters;
+import static org.folio.circulation.domain.policy.Period.days;
+import static org.folio.circulation.domain.policy.Period.months;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import static org.junit.Assert.*;
+import junitparams.JUnitParamsRunner;
+import junitparams.Parameters;
+import lombok.val;
 
 @RunWith(JUnitParamsRunner.class)
 public class PeriodTest {
@@ -38,5 +44,23 @@ public class PeriodTest {
   public void toMinutesWithUnknownInterval() {
     Period period = Period.from(10, "Unknown interval");
     assertEquals(0, period.toMinutes());
+  }
+
+  @Test
+  public void oneMonthIsLessThan32Days() {
+    val oneMonth = months(1);
+    val thirtyTwoDays = days(32);
+
+    assertTrue(oneMonth.isLessThanOrEqualTo(thirtyTwoDays));
+    assertFalse(oneMonth.isGreaterThanOrEqualTo(thirtyTwoDays));
+  }
+
+  @Test
+  public void oneMonthIsMoreThan30Days() {
+    val oneMonth = months(1);
+    val thirtyDays = days(30);
+
+    assertFalse(oneMonth.isLessThanOrEqualTo(thirtyDays));
+    assertTrue(oneMonth.isGreaterThanOrEqualTo(thirtyDays));
   }
 }

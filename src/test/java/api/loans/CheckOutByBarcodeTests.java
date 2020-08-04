@@ -64,6 +64,7 @@ import api.support.fakes.FakePubSub;
 import api.support.http.InventoryItemResource;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import lombok.val;
 
 public class CheckOutByBarcodeTests extends APITests {
   @Test
@@ -472,20 +473,7 @@ public class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void cannotCheckOutWhenItemDeclaredLost() {
-    final IndividualResource declaredLostItem = itemsFixture.setupDeclaredLostItem();
-    final IndividualResource steve = usersFixture.steve();
-
-    final Response response = checkOutFixture.attemptCheckOutByBarcode(
-      declaredLostItem, steve);
-
-    assertThat(response.getJson(), hasErrorWith(allOf(
-      hasMessageContaining("has the item status Declared lost"),
-      hasItemBarcodeParameter(declaredLostItem))));
-  }
-
-  @Test
-  public void cannotCheckOutClaimedReturnedItem() {
+  public void shouldRejectCheckOutOfItemInDisallowedStatus() {
     final String barcode = String.valueOf(new Random().nextLong());
     final InventoryItemResource claimedReturnedItem = itemsFixture
       .basedUponSmallAngryPlanet((ItemBuilder itemBuilder) -> itemBuilder

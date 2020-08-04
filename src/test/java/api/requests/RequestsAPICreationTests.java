@@ -29,7 +29,7 @@ import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
-import static org.hamcrest.Matchers.isEmptyString;
+import static org.hamcrest.Matchers.emptyString;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertTrue;
@@ -67,8 +67,6 @@ import org.junit.runner.RunWith;
 
 import api.support.APITests;
 import api.support.builders.Address;
-import api.support.builders.ClaimItemReturnedRequestBuilder;
-import api.support.builders.DeclareItemLostRequestBuilder;
 import api.support.builders.HoldingBuilder;
 import api.support.builders.ItemBuilder;
 import api.support.builders.LoanPolicyBuilder;
@@ -522,7 +520,7 @@ public class RequestsAPICreationTests extends APITests {
 
     JsonObject representation = createdRequest.getJson();
 
-    assertThat(representation.getString("id"), is(not(isEmptyString())));
+    assertThat(representation.getString("id"), is(not(emptyString())));
     assertThat(representation.getString("requestType"), is("Recall"));
     assertThat(representation.getString("fulfilmentPreference"), is("Delivery"));
     assertThat(representation.getString("deliveryAddressTypeId"), is(work.getId()));
@@ -1858,173 +1856,6 @@ public class RequestsAPICreationTests extends APITests {
   }
 
   @Test
-  public void cannotCreateRecallRequestWithDeclaredLostItemStatus() {
-    final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
-    final DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
-
-    final IndividualResource item = itemsFixture
-      .basedUponSmallAngryPlanet(itemsFixture.addCallNumberStringComponents());
-
-    final JsonObject loanJson = checkOutFixture.checkOutByBarcode(item, usersFixture.jessica())
-      .getJson();
-
-    declareItemLost(loanJson);
-
-    final IndividualResource requester = usersFixture.steve();
-    final RequestBuilder requestBuilder = createRequestBuilder(item, requester,
-      pickupServicePointId, requestDate);
-
-    Response postResponse = requestsClient.attemptCreate(requestBuilder);
-
-    assertThat(postResponse, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
-    assertThat(postResponse.getJson(), hasErrorWith(allOf(
-      hasMessage("Recall requests are not allowed for this patron and item combination"))));
-  }
-
-  @Test
-  public void cannotCreateHoldRequestWithDeclaredLostItemStatus() {
-    final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
-    final DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
-
-    final IndividualResource item = itemsFixture
-      .basedUponSmallAngryPlanet(itemsFixture.addCallNumberStringComponents());
-
-    final JsonObject loanJson = checkOutFixture.checkOutByBarcode(item, usersFixture.jessica())
-      .getJson();
-
-    declareItemLost(loanJson);
-
-    final IndividualResource requester = usersFixture.steve();
-    final RequestBuilder requestBuilder = new RequestBuilder()
-      .withId(UUID.randomUUID())
-      .open()
-      .hold()
-      .forItem(item)
-      .by(requester)
-      .withRequestDate(requestDate)
-      .fulfilToHoldShelf()
-      .withRequestExpiration(new LocalDate(2017, 7, 30))
-      .withHoldShelfExpiration(new LocalDate(2017, 8, 31))
-      .withPickupServicePointId(pickupServicePointId)
-      .withTags(new RequestBuilder.Tags(asList("new", "important")));
-
-    Response postResponse = requestsClient.attemptCreate(requestBuilder);
-
-    assertThat(postResponse, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
-    assertThat(postResponse.getJson(), hasErrorWith(allOf(
-      hasMessage("Hold requests are not allowed for this patron and item combination"))));
-  }
-
-  @Test
-  public void cannotCreatePageRequestWithDeclaredLostItemStatus() {
-    final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
-    final DateTime requestDate = new DateTime(2017, 7, 22, 10, 22, 54, DateTimeZone.UTC);
-
-    final IndividualResource item = itemsFixture
-      .basedUponSmallAngryPlanet(itemsFixture.addCallNumberStringComponents());
-
-    final JsonObject loanJson = checkOutFixture.checkOutByBarcode(item, usersFixture.jessica())
-      .getJson();
-
-    declareItemLost(loanJson);
-
-    final IndividualResource requester = usersFixture.steve();
-    final RequestBuilder requestBuilder = new RequestBuilder()
-      .withId(UUID.randomUUID())
-      .open()
-      .page()
-      .forItem(item)
-      .by(requester)
-      .withRequestDate(requestDate)
-      .fulfilToHoldShelf()
-      .withRequestExpiration(new LocalDate(2017, 7, 30))
-      .withHoldShelfExpiration(new LocalDate(2017, 8, 31))
-      .withPickupServicePointId(pickupServicePointId)
-      .withTags(new RequestBuilder.Tags(asList("new", "important")));
-
-    Response postResponse = requestsClient.attemptCreate(requestBuilder);
-
-    assertThat(postResponse, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
-    assertThat(postResponse.getJson(), hasErrorWith(allOf(
-      hasMessage("Page requests are not allowed for this patron and item combination"))));
-  }
-
-  @Parameters({
-    "",
-    "Recall",
-    "Hold",
-    "Page"
-  })
-  @Test
-  public void cannotCreateRequestForClaimedReturnedItem(String requestType) {
-    final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
-    final IndividualResource item = itemsFixture.basedUponSmallAngryPlanet();
-
-    final IndividualResource checkOut = checkOutFixture
-      .checkOutByBarcode(item, usersFixture.jessica());
-
-    claimItemReturnedFixture.claimItemReturned(new ClaimItemReturnedRequestBuilder()
-        .forLoan(checkOut.getId().toString())
-        .withItemClaimedReturnedDate(DateTime.now(DateTimeZone.UTC)));
-
-    final IndividualResource requester = usersFixture.steve();
-    final RequestBuilder requestBuilder = new RequestBuilder()
-      .open()
-      .withRequestType(requestType)
-      .forItem(item)
-      .by(requester)
-      .fulfilToHoldShelf()
-      .withPickupServicePointId(pickupServicePointId);
-
-    Response postResponse = requestsClient.attemptCreate(requestBuilder);
-
-    assertThat(postResponse, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
-    assertThat(postResponse.getJson(), hasErrorWith(allOf(
-      hasMessage(requestType + " requests are not allowed for this patron and item combination"),
-      hasParameter("requestType", requestType)
-    )));
-  }
-
-  @Test
-  public void cannotCreateRecallRequestForWithdrawnItem() {
-    final IndividualResource withdrawnItem = itemsFixture
-      .basedUponSmallAngryPlanet(ItemBuilder::withdrawn);
-
-    final Response response = requestsClient.attemptCreate(new RequestBuilder()
-      .open()
-      .recall()
-      .forItem(withdrawnItem)
-      .by(usersFixture.steve())
-      .fulfilToHoldShelf()
-      .withPickupServicePointId(servicePointsFixture.cd1().getId()));
-
-    assertThat(response, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
-    assertThat(response.getJson(), hasErrorWith(allOf(
-      hasMessage("Recall requests are not allowed for this patron and item combination"),
-      hasParameter("requestType", "Recall")
-    )));
-  }
-
-  @Test
-  public void cannotCreateRecallRequestForLostAndPaidItem() {
-    final IndividualResource withdrawnItem = itemsFixture
-      .basedUponSmallAngryPlanet(ItemBuilder::lostAndPaid);
-
-    final Response response = requestsClient.attemptCreate(new RequestBuilder()
-      .open()
-      .recall()
-      .forItem(withdrawnItem)
-      .by(usersFixture.steve())
-      .fulfilToHoldShelf()
-      .withPickupServicePointId(servicePointsFixture.cd1().getId()));
-
-    assertThat(response, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
-    assertThat(response.getJson(), hasErrorWith(allOf(
-      hasMessage("Recall requests are not allowed for this patron and item combination"),
-      hasParameter("requestType", "Recall"))));
-  }
-
-  @Test
   public void canFetchHundredRequests() {
     final List<IndividualResource> createdRequests = createOneHundredRequests();
 
@@ -2065,6 +1896,25 @@ public class RequestsAPICreationTests extends APITests {
       hasMessage(MAX_OUTSTANDING_FEE_FINE_BALANCE_MESSAGE))));
   }
 
+  @Test
+  public void shouldNotCreateRequestForItemInDisallowedStatus() {
+    final IndividualResource withdrawnItem = itemsFixture
+      .basedUponSmallAngryPlanet(ItemBuilder::agedToLost);
+
+    final Response response = requestsClient.attemptCreate(new RequestBuilder()
+      .open()
+      .recall()
+      .forItem(withdrawnItem)
+      .by(usersFixture.steve())
+      .fulfilToHoldShelf()
+      .withPickupServicePointId(servicePointsFixture.cd1().getId()));
+
+    assertThat(response, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
+    assertThat(response.getJson(), hasErrorWith(allOf(
+      hasMessage("Recall requests are not allowed for this patron and item combination"),
+      hasParameter("requestType", "Recall"))));
+  }
+
   private List<IndividualResource> createOneHundredRequests() {
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
@@ -2077,18 +1927,6 @@ public class RequestsAPICreationTests extends APITests {
         .fulfilToHoldShelf()
         .withPickupServicePointId(pickupServicePointId)))
       .collect(Collectors.toList());
-  }
-
-  private void declareItemLost(JsonObject loanJson) {
-    final UUID loanId = UUID.fromString(loanJson.getString("id"));
-    final String comment = "testing";
-    final DateTime dateTime = DateTime.now();
-
-    final DeclareItemLostRequestBuilder builder = new DeclareItemLostRequestBuilder()
-      .forLoanId(loanId).on(dateTime)
-      .withComment(comment);
-
-    declareLostFixtures.declareItemLost(builder);
   }
 
   private UserManualBlockBuilder getManualBlockBuilder() {

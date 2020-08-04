@@ -1,5 +1,6 @@
 package org.folio.circulation.domain.validation;
 
+import static org.folio.circulation.domain.ItemStatus.AGED_TO_LOST;
 import static org.folio.circulation.domain.ItemStatus.CLAIMED_RETURNED;
 import static org.folio.circulation.domain.ItemStatus.DECLARED_LOST;
 import static org.folio.circulation.domain.ItemStatus.MISSING;
@@ -41,7 +42,8 @@ public class ItemStatusValidator {
 
     return loanAndRelatedRecords
       .next(p -> refuseWhenItemIs(loanAndRelatedRecords, DECLARED_LOST))
-      .next(p -> refuseWhenItemIs(loanAndRelatedRecords, CLAIMED_RETURNED));
+      .next(p -> refuseWhenItemIs(loanAndRelatedRecords, CLAIMED_RETURNED))
+      .next(p -> refuseWhenItemIs(loanAndRelatedRecords, AGED_TO_LOST));
   }
 
   public Result<LoanAndRelatedRecords> refuseWhenItemIsDeclaredLost(

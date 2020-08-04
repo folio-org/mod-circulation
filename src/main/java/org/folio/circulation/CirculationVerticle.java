@@ -32,6 +32,7 @@ import org.folio.circulation.resources.RequestQueueResource;
 import org.folio.circulation.resources.RequestScheduledNoticeProcessingResource;
 import org.folio.circulation.resources.ScheduledAnonymizationProcessingResource;
 import org.folio.circulation.resources.TenantActivationResource;
+import org.folio.circulation.resources.agedtolost.ScheduledAgeToLostResource;
 import org.folio.circulation.resources.handlers.LoanRelatedFeeFineClosedHandlerResource;
 import org.folio.circulation.resources.renewal.OverrideRenewalByBarcodeResource;
 import org.folio.circulation.resources.renewal.RenewByBarcodeResource;
@@ -125,6 +126,7 @@ public class CirculationVerticle extends AbstractVerticle {
     new ClaimItemReturnedResource(client).register(router);
     new ChangeDueDateResource(client).register(router);
     new DeclareClaimedReturnedItemAsMissingResource(client).register(router);
+    new ScheduledAgeToLostResource(client).register(router);
 
     // Handlers
     new LoanRelatedFeeFineClosedHandlerResource(client).register(router);

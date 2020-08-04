@@ -2,6 +2,8 @@ package api.support.fixtures;
 
 import static api.support.APITestContext.getOkapiHeadersFromContext;
 import static api.support.http.InterfaceUrls.endSessionUrl;
+import static org.folio.circulation.domain.notice.session.PatronActionSessionProperties.ACTION_TYPE;
+import static org.folio.circulation.domain.notice.session.PatronActionSessionProperties.PATRON_ID;
 
 import java.util.UUID;
 
@@ -26,8 +28,8 @@ public class EndPatronSessionClient {
 
   private void endPatronSession(UUID patronId, String actionType) {
     JsonObject body = new JsonObject()
-      .put("patronId", patronId.toString())
-      .put("actionType", actionType);
+      .put(PATRON_ID, patronId.toString())
+      .put(ACTION_TYPE, actionType);
     JsonArray jsonArray = new JsonArray().add(body);
     endPatronSession(new JsonObject().put("endSessions", jsonArray));
   }

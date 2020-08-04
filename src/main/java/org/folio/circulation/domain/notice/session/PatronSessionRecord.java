@@ -1,10 +1,18 @@
 package org.folio.circulation.domain.notice.session;
 
 import static java.util.Objects.requireNonNull;
+import static org.folio.circulation.domain.notice.session.PatronActionSessionProperties.ID;
+import static org.folio.circulation.domain.notice.session.PatronActionSessionProperties.ACTION_TYPE;
+import static org.folio.circulation.domain.notice.session.PatronActionSessionProperties.LOAN_ID;
+import static org.folio.circulation.domain.notice.session.PatronActionSessionProperties.PATRON_ID;
+import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
+import static org.folio.circulation.support.JsonPropertyFetcher.getUUIDProperty;
 
 import java.util.UUID;
 
 import org.folio.circulation.domain.Loan;
+
+import io.vertx.core.json.JsonObject;
 
 public class PatronSessionRecord {
 
@@ -53,5 +61,16 @@ public class PatronSessionRecord {
 
   public PatronSessionRecord withLoan(Loan newLoan) {
     return new PatronSessionRecord(id, patronId, loanId, actionType, newLoan);
+  }
+
+  public static PatronSessionRecord from(JsonObject representation) {
+    UUID id = getUUIDProperty(representation, ID);
+    UUID patronId = getUUIDProperty(representation, PATRON_ID);
+    UUID loanId = getUUIDProperty(representation, LOAN_ID);
+    String actionTypeValue = getProperty(representation, ACTION_TYPE);
+
+    return PatronActionType.from(actionTypeValue)
+      .map(patronActionType -> new PatronSessionRecord(id, patronId, loanId, patronActionType))
+      .orElse(null);
   }
 }

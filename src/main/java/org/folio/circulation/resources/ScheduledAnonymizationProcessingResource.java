@@ -1,12 +1,15 @@
 package org.folio.circulation.resources;
 
-import org.folio.circulation.infrastructure.storage.ConfigurationRepository;
+import static org.folio.circulation.support.results.AsynchronousResultBindings.safelyInitialise;
+
 import org.folio.circulation.domain.anonymization.LoanAnonymization;
 import org.folio.circulation.domain.representations.anonymization.AnonymizeLoansRepresentation;
+import org.folio.circulation.infrastructure.storage.ConfigurationRepository;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.RouteRegistration;
 import org.folio.circulation.support.http.server.JsonHttpResponse;
 import org.folio.circulation.support.http.server.WebContext;
+import org.folio.circulation.support.results.CommonFailures;
 
 import io.vertx.core.http.HttpClient;
 import io.vertx.ext.web.Router;
@@ -34,12 +37,14 @@ public class ScheduledAnonymizationProcessingResource extends Resource {
     final Clients clients = Clients.create(context, client);
 
     ConfigurationRepository configurationRepository = new ConfigurationRepository(clients);
+    LoanAnonymization loanAnonymization = new LoanAnonymization(clients);
 
-    configurationRepository.loanHistoryConfiguration().thenCompose(c -> c.after(config ->
-        new LoanAnonymization(clients).byCurrentTenant(config).anonymizeLoans())
-        .thenApply(AnonymizeLoansRepresentation::from)
-        .thenApply(r -> r.map(JsonHttpResponse::ok))
-        .thenAccept(context::writeResultToHttpResponse));
-
+    safelyInitialise(configurationRepository::loanHistoryConfiguration)
+      .thenCompose(r -> r.after(config -> loanAnonymization
+          .byCurrentTenant(config).anonymizeLoans()))
+      .thenApply(AnonymizeLoansRepresentation::from)
+      .thenApply(r -> r.map(JsonHttpResponse::ok))
+      .exceptionally(CommonFailures::failedDueToServerError)
+      .thenAccept(context::writeResultToHttpResponse);
   }
 }

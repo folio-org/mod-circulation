@@ -287,4 +287,8 @@ public class InterfaceUrls {
   public static URL tenantStorage(String subPath) {
     return APITestContext.viaOkapiModuleUrl("/_/tenant");
   }
+
+  public static URL scheduledAgeToLostUrl() {
+    return circulationModuleUrl("/circulation/scheduled-age-to-lost");
+  }
 }
