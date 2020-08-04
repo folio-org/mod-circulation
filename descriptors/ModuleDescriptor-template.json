@@ -1501,10 +1501,7 @@
         "feefineactions.item.post",
         "accounts.item.put",
         "pubsub.publish.post",
-        "scheduled-notice-storage.scheduled-notices.item.delete",
-        "notes.collection.get",
-        "notes.item.post",
-        "note.types.collection.get"
+        "scheduled-notice-storage.scheduled-notices.item.delete"
       ],
       "visible": false
     },
@@ -1560,10 +1557,7 @@
         "automated-patron-blocks.collection.get",
         "scheduled-notice-storage.scheduled-notices.item.delete",
         "overdue-fines-policies.item.get",
-        "lost-item-fees-policies.item.get",
-        "notes.collection.get",
-        "notes.item.post",
-        "note.types.collection.get"
+        "lost-item-fees-policies.item.get"
       ],
       "visible": false
 },
@@ -1612,10 +1606,7 @@
         "patron-notice.post",
         "automated-patron-blocks.collection.get",
         "overdue-fines-policies.item.get",
-        "lost-item-fees-policies.item.get",
-        "notes.collection.get",
-        "notes.item.post",
-        "note.types.collection.get"
+        "lost-item-fees-policies.item.get"
       ],
       "visible": false
     },
@@ -1716,10 +1707,7 @@
         "owners.collection.get",
         "accounts.item.post",
         "pubsub.publish.post",
-        "scheduled-notice-storage.scheduled-notices.item.delete",
-        "notes.collection.get",
-        "notes.item.post",
-        "note.types.collection.get"
+        "scheduled-notice-storage.scheduled-notices.item.delete"
       ],
       "visible": false
     },
@@ -2165,10 +2153,7 @@
         "accounts.item.post",
         "users.item.get",
         "feefineactions.item.post",
-        "pubsub.publish.post",
-        "notes.collection.get",
-        "notes.item.post",
-        "note.types.collection.get"
+        "pubsub.publish.post"
       ],
       "visible": false
     },
@@ -2188,10 +2173,7 @@
         "scheduled-notice-storage.scheduled-notices.collection.delete",
         "scheduled-notice-storage.scheduled-notices.item.post",
         "users.item.get",
-        "pubsub.publish.post",
-        "notes.collection.get",
-        "notes.item.post",
-        "note.types.collection.get"
+        "pubsub.publish.post"
       ],
       "visible": false
     },
@@ -2206,7 +2188,10 @@
         "inventory-storage.items.item.put",
         "inventory-storage.holdings.item.get",
         "inventory-storage.instances.item.get",
-        "users.item.get"
+        "users.item.get",
+        "notes.collection.get",
+        "notes.item.post",
+        "note.types.collection.get"
       ],
       "visible": false
     },
@@ -2269,10 +2254,7 @@
         "scheduled-notice-storage.scheduled-notices.collection.delete",
         "scheduled-notice-storage.scheduled-notices.item.post",
         "pubsub.publish.post",
-        "configuration.entries.collection.get",
-        "notes.collection.get",
-        "notes.item.post",
-        "note.types.collection.get"
+        "configuration.entries.collection.get"
       ],
       "visible": false
     },
