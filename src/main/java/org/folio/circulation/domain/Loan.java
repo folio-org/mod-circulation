@@ -449,11 +449,11 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   public boolean isDeclaredLost() {
-    return getItem().getStatus() == ItemStatus.DECLARED_LOST;
+    return hasItemWithStatus(ItemStatus.DECLARED_LOST);
   }
 
   public boolean isAgedToLost() {
-    return getItem().getStatus() == ItemStatus.AGED_TO_LOST;
+    return hasItemWithStatus(ItemStatus.AGED_TO_LOST);
   }
 
   public boolean hasItemWithStatus(ItemStatus itemStatus) {
