@@ -293,6 +293,19 @@ public class EndExpiredPatronActionSessionTests extends APITests {
   }
 
   @Test
+  public void shouldNotFailIfSessionRecordsAreEmpty() {
+
+    expiredEndSessionClient.create(new EndSessionBuilder()
+      .withPatronId(UUID.randomUUID().toString())
+      .withActionType(CHECK_OUT));
+
+    expiredSessionProcessingClient.runRequestExpiredSessionsProcessing(204);
+
+    assertThat(patronSessionRecordsClient.getAll(), hasSize(0));
+    assertThat(patronNoticesClient.getAll(), hasSize(0));
+  }
+
+  @Test
   public void expiredSessionWithNonExistentUserShouldBeEnded() {
     IndividualResource steve = usersFixture.steve();
     InventoryItemResource nod = itemsFixture.basedUponNod();
