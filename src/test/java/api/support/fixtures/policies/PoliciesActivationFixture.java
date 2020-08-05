@@ -2,10 +2,15 @@ package api.support.fixtures.policies;
 
 import static api.support.RestAssuredClient.defaultRestAssuredClient;
 import static api.support.http.InterfaceUrls.circulationRulesUrl;
+import static api.support.http.ResourceClient.forCampuses;
 import static api.support.http.ResourceClient.forFixedDueDateSchedules;
+import static api.support.http.ResourceClient.forInstitutions;
+import static api.support.http.ResourceClient.forLibraries;
 import static api.support.http.ResourceClient.forLoanPolicies;
+import static api.support.http.ResourceClient.forLocations;
 import static api.support.http.ResourceClient.forNoticePolicies;
 import static api.support.http.ResourceClient.forRequestPolicies;
+import static api.support.http.ResourceClient.forServicePoints;
 import static api.support.http.api.support.NamedQueryStringParameter.namedParameter;
 
 import java.net.URL;
@@ -26,6 +31,7 @@ import api.support.fixtures.LostItemFeePoliciesFixture;
 import api.support.fixtures.NoticePoliciesFixture;
 import api.support.fixtures.OverdueFinePoliciesFixture;
 import api.support.fixtures.RequestPoliciesFixture;
+import api.support.fixtures.ServicePointsFixture;
 import api.support.http.QueryStringParameter;
 
 // It is delegated by lombok in APITests class
@@ -51,7 +57,8 @@ public final class PoliciesActivationFixture {
     overdueFinePoliciesFixture = new OverdueFinePoliciesFixture();
     lostItemFeePoliciesFixture = new LostItemFeePoliciesFixture();
     circulationRulesFixture = new CirculationRulesFixture(restAssuredClient);
-    locationsFixture = new LocationsFixture();
+    locationsFixture = new LocationsFixture(forLocations(), forInstitutions(),
+      forCampuses(), forLibraries(), new ServicePointsFixture(forServicePoints()));
   }
 
   public PoliciesActivation.PoliciesActivationBuilder rollingDefaultPolicies() {
