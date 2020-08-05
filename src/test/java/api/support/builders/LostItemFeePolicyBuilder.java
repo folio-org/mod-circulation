@@ -1,16 +1,23 @@
 package api.support.builders;
 
-import io.vertx.core.json.JsonObject;
-
 import java.util.UUID;
 
-public class LostItemFeePolicyBuilder extends JsonBuilder implements Builder {
+import org.folio.circulation.domain.policy.Period;
 
+import io.vertx.core.json.JsonObject;
+import lombok.AllArgsConstructor;
+import lombok.ToString;
+import lombok.With;
+
+@With
+@AllArgsConstructor
+@ToString
+public class LostItemFeePolicyBuilder extends JsonBuilder implements Builder {
   private final UUID id;
   private final String name;
   private final String description;
-  private final JsonObject itemAgedLostOverdue;
-  private final JsonObject patronBilledAfterAgedLost;
+  private final Period itemAgedToLostAfterOverdue;
+  private final Period patronBilledAfterAgedLost;
   private final JsonObject chargeAmountItem;
   private final Double lostItemProcessingFee;
   private final boolean chargeAmountItemPatron;
@@ -27,8 +34,8 @@ public class LostItemFeePolicyBuilder extends JsonBuilder implements Builder {
     this(UUID.randomUUID(),
       "Undergrad standard",
       "This is description for undergrad standard",
-      new JsonObject(),
-      new JsonObject(),
+      null,
+      null,
       new JsonObject(),
       5.00,
       true,
@@ -40,161 +47,6 @@ public class LostItemFeePolicyBuilder extends JsonBuilder implements Builder {
       true,
       "Charge",
       null);
-  }
-
-  public LostItemFeePolicyBuilder(
-    UUID id,
-    String name,
-    String description,
-    JsonObject itemAgedLostOverdue,
-    JsonObject patronBilledAfterAgedLost,
-    JsonObject chargeAmountItem,
-    Double lostItemProcessingFee,
-    boolean chargeAmountItemPatron,
-    boolean chargeAmountItemSystem,
-    JsonObject lostItemChargeFeeFine,
-    boolean returnedLostItemProcessingFee,
-    boolean replacedLostItemProcessingFee,
-    double replacementProcessingFee,
-    boolean replacementAllowed,
-    String lostItemReturned,
-    JsonObject feeRefundInterval) {
-    this.id = id;
-    this.name = name;
-    this.description = description;
-    this.itemAgedLostOverdue = itemAgedLostOverdue;
-    this.patronBilledAfterAgedLost = patronBilledAfterAgedLost;
-    this.chargeAmountItem = chargeAmountItem;
-    this.lostItemProcessingFee = lostItemProcessingFee;
-    this.chargeAmountItemPatron = chargeAmountItemPatron;
-    this.chargeAmountItemSystem = chargeAmountItemSystem;
-    this.lostItemChargeFeeFine = lostItemChargeFeeFine;
-    this.returnedLostItemProcessingFee = returnedLostItemProcessingFee;
-    this.replacedLostItemProcessingFee = replacedLostItemProcessingFee;
-    this.replacementProcessingFee = replacementProcessingFee;
-    this.replacementAllowed = replacementAllowed;
-    this.lostItemReturned = lostItemReturned;
-    this.feeRefundInterval = feeRefundInterval;
-  }
-
-  public LostItemFeePolicyBuilder withName(String name) {
-    return new LostItemFeePolicyBuilder(
-      this.id,
-      name,
-      this.description,
-      this.itemAgedLostOverdue,
-      this.patronBilledAfterAgedLost,
-      this.chargeAmountItem,
-      this.lostItemProcessingFee,
-      this.chargeAmountItemPatron,
-      this.chargeAmountItemSystem,
-      this.lostItemChargeFeeFine,
-      this.returnedLostItemProcessingFee,
-      this.replacedLostItemProcessingFee,
-      this.replacementProcessingFee,
-      this.replacementAllowed,
-      this.lostItemReturned,
-      this.feeRefundInterval);
-  }
-
-  public LostItemFeePolicyBuilder withId(UUID id) {
-    return new LostItemFeePolicyBuilder(
-      id,
-      this.name,
-      this.description,
-      this.itemAgedLostOverdue,
-      this.patronBilledAfterAgedLost,
-      this.chargeAmountItem,
-      this.lostItemProcessingFee,
-      this.chargeAmountItemPatron,
-      this.chargeAmountItemSystem,
-      this.lostItemChargeFeeFine,
-      this.returnedLostItemProcessingFee,
-      this.replacedLostItemProcessingFee,
-      this.replacementProcessingFee,
-      this.replacementAllowed,
-      this.lostItemReturned,
-      this.feeRefundInterval);
-  }
-
-  public LostItemFeePolicyBuilder withDescription(String description) {
-    return new LostItemFeePolicyBuilder(
-      this.id,
-      this.name,
-      description,
-      this.itemAgedLostOverdue,
-      this.patronBilledAfterAgedLost,
-      this.chargeAmountItem,
-      this.lostItemProcessingFee,
-      this.chargeAmountItemPatron,
-      this.chargeAmountItemSystem,
-      this.lostItemChargeFeeFine,
-      this.returnedLostItemProcessingFee,
-      this.replacedLostItemProcessingFee,
-      this.replacementProcessingFee,
-      this.replacementAllowed,
-      this.lostItemReturned,
-      this.feeRefundInterval);
-  }
-
-  public LostItemFeePolicyBuilder withItemAgedLostOverdue(JsonObject itemAgedLostOverdue) {
-    return new LostItemFeePolicyBuilder(
-      this.id,
-      this.name,
-      this.description,
-      itemAgedLostOverdue,
-      this.patronBilledAfterAgedLost,
-      this.chargeAmountItem,
-      this.lostItemProcessingFee,
-      this.chargeAmountItemPatron,
-      this.chargeAmountItemSystem,
-      this.lostItemChargeFeeFine,
-      this.returnedLostItemProcessingFee,
-      this.replacedLostItemProcessingFee,
-      this.replacementProcessingFee,
-      this.replacementAllowed,
-      this.lostItemReturned,
-      this.feeRefundInterval);
-  }
-
-  public LostItemFeePolicyBuilder withPatronBilledAfterAgedLost(JsonObject patronBilledAfterAgedLost) {
-    return new LostItemFeePolicyBuilder(
-      this.id,
-      this.name,
-      this.description,
-      this.itemAgedLostOverdue,
-      patronBilledAfterAgedLost,
-      this.chargeAmountItem,
-      this.lostItemProcessingFee,
-      this.chargeAmountItemPatron,
-      this.chargeAmountItemSystem,
-      this.lostItemChargeFeeFine,
-      this.returnedLostItemProcessingFee,
-      this.replacedLostItemProcessingFee,
-      this.replacementProcessingFee,
-      this.replacementAllowed,
-      this.lostItemReturned,
-      this.feeRefundInterval);
-  }
-
-  public LostItemFeePolicyBuilder withChargeAmountItem(JsonObject chargeAmountItem) {
-    return new LostItemFeePolicyBuilder(
-      this.id,
-      this.name,
-      this.description,
-      this.itemAgedLostOverdue,
-      this.patronBilledAfterAgedLost,
-      chargeAmountItem,
-      this.lostItemProcessingFee,
-      this.chargeAmountItemPatron,
-      this.chargeAmountItemSystem,
-      this.lostItemChargeFeeFine,
-      this.returnedLostItemProcessingFee,
-      this.replacedLostItemProcessingFee,
-      this.replacementProcessingFee,
-      this.replacementAllowed,
-      this.lostItemReturned,
-      this.feeRefundInterval);
   }
 
   public LostItemFeePolicyBuilder withNoChargeAmountItem() {
@@ -215,124 +67,14 @@ public class LostItemFeePolicyBuilder extends JsonBuilder implements Builder {
     return withChargeAmountItem("actualCost", amount);
   }
 
-  public LostItemFeePolicyBuilder withLostItemProcessingFee(Double lostItemProcessingFee) {
-    return new LostItemFeePolicyBuilder(
-      this.id,
-      this.name,
-      this.description,
-      this.itemAgedLostOverdue,
-      this.patronBilledAfterAgedLost,
-      this.chargeAmountItem,
-      lostItemProcessingFee,
-      this.chargeAmountItemPatron,
-      this.chargeAmountItemSystem,
-      this.lostItemChargeFeeFine,
-      this.returnedLostItemProcessingFee,
-      this.replacedLostItemProcessingFee,
-      this.replacementProcessingFee,
-      this.replacementAllowed,
-      this.lostItemReturned,
-      this.feeRefundInterval);
-  }
-
   public LostItemFeePolicyBuilder chargeProcessingFee(Double amount) {
-    return new LostItemFeePolicyBuilder(
-      this.id,
-      this.name,
-      this.description,
-      this.itemAgedLostOverdue,
-      this.patronBilledAfterAgedLost,
-      this.chargeAmountItem,
-      amount,
-      true,
-      this.chargeAmountItemSystem,
-      this.lostItemChargeFeeFine,
-      this.returnedLostItemProcessingFee,
-      this.replacedLostItemProcessingFee,
-      this.replacementProcessingFee,
-      this.replacementAllowed,
-      this.lostItemReturned,
-      this.feeRefundInterval);
+    return withLostItemProcessingFee(amount)
+      .withChargeAmountItemPatron(true);
   }
 
   public LostItemFeePolicyBuilder doNotChargeProcessingFee() {
-    return new LostItemFeePolicyBuilder(
-      this.id,
-      this.name,
-      this.description,
-      this.itemAgedLostOverdue,
-      this.patronBilledAfterAgedLost,
-      this.chargeAmountItem,
-      0.0,
-      false,
-      this.chargeAmountItemSystem,
-      this.lostItemChargeFeeFine,
-      this.returnedLostItemProcessingFee,
-      this.replacedLostItemProcessingFee,
-      this.replacementProcessingFee,
-      this.replacementAllowed,
-      this.lostItemReturned,
-      this.feeRefundInterval);
-  }
-
-  public LostItemFeePolicyBuilder withChargeAmountItemSystem(boolean chargeAmountItemSystem) {
-    return new LostItemFeePolicyBuilder(
-      this.id,
-      this.name,
-      this.description,
-      this.itemAgedLostOverdue,
-      this.patronBilledAfterAgedLost,
-      this.chargeAmountItem,
-      this.lostItemProcessingFee,
-      this.chargeAmountItemPatron,
-      chargeAmountItemSystem,
-      this.lostItemChargeFeeFine,
-      this.returnedLostItemProcessingFee,
-      this.replacedLostItemProcessingFee,
-      this.replacementProcessingFee,
-      this.replacementAllowed,
-      this.lostItemReturned,
-      this.feeRefundInterval);
-  }
-
-  public LostItemFeePolicyBuilder withLostItemChargeFeeFine(JsonObject lostItemChargeFeeFine) {
-    return new LostItemFeePolicyBuilder(
-      this.id,
-      this.name,
-      this.description,
-      this.itemAgedLostOverdue,
-      this.patronBilledAfterAgedLost,
-      this.chargeAmountItem,
-      this.lostItemProcessingFee,
-      this.chargeAmountItemPatron,
-      this.chargeAmountItemSystem,
-      lostItemChargeFeeFine,
-      this.returnedLostItemProcessingFee,
-      this.replacedLostItemProcessingFee,
-      this.replacementProcessingFee,
-      this.replacementAllowed,
-      this.lostItemReturned,
-      this.feeRefundInterval);
-  }
-
-  private LostItemFeePolicyBuilder withReturnedLostItemProcessingFee(boolean returnedLostItemProcessingFee) {
-    return new LostItemFeePolicyBuilder(
-      this.id,
-      this.name,
-      this.description,
-      this.itemAgedLostOverdue,
-      this.patronBilledAfterAgedLost,
-      this.chargeAmountItem,
-      this.lostItemProcessingFee,
-      this.chargeAmountItemPatron,
-      this.chargeAmountItemSystem,
-      this.lostItemChargeFeeFine,
-      returnedLostItemProcessingFee,
-      this.replacedLostItemProcessingFee,
-      this.replacementProcessingFee,
-      this.replacementAllowed,
-      this.lostItemReturned,
-      this.feeRefundInterval);
+    return withLostItemProcessingFee(0.0)
+      .withChargeAmountItemPatron(false);
   }
 
   public LostItemFeePolicyBuilder refundProcessingFeeWhenReturned() {
@@ -341,86 +83,6 @@ public class LostItemFeePolicyBuilder extends JsonBuilder implements Builder {
 
   public LostItemFeePolicyBuilder doNotRefundProcessingFeeWhenReturned() {
     return withReturnedLostItemProcessingFee(false);
-  }
-
-  public LostItemFeePolicyBuilder withReplacedLostItemProcessingFee(boolean replacedLostItemProcessingFee) {
-    return new LostItemFeePolicyBuilder(
-      this.id,
-      this.name,
-      this.description,
-      this.itemAgedLostOverdue,
-      this.patronBilledAfterAgedLost,
-      this.chargeAmountItem,
-      this.lostItemProcessingFee,
-      this.chargeAmountItemPatron,
-      this.chargeAmountItemSystem,
-      this.lostItemChargeFeeFine,
-      this.returnedLostItemProcessingFee,
-      replacedLostItemProcessingFee,
-      this.replacementProcessingFee,
-      this.replacementAllowed,
-      this.lostItemReturned,
-      this.feeRefundInterval);
-  }
-
-  public LostItemFeePolicyBuilder withReplacementProcessingFee(double replacementProcessingFee) {
-    return new LostItemFeePolicyBuilder(
-      this.id,
-      this.name,
-      this.description,
-      this.itemAgedLostOverdue,
-      this.patronBilledAfterAgedLost,
-      this.chargeAmountItem,
-      this.lostItemProcessingFee,
-      this.chargeAmountItemPatron,
-      this.chargeAmountItemSystem,
-      this.lostItemChargeFeeFine,
-      this.returnedLostItemProcessingFee,
-      this.replacedLostItemProcessingFee,
-      replacementProcessingFee,
-      this.replacementAllowed,
-      this.lostItemReturned,
-      this.feeRefundInterval);
-  }
-
-  public LostItemFeePolicyBuilder withReplacementAllowed(boolean replacementAllowed) {
-    return new LostItemFeePolicyBuilder(
-      this.id,
-      this.name,
-      this.description,
-      this.itemAgedLostOverdue,
-      this.patronBilledAfterAgedLost,
-      this.chargeAmountItem,
-      this.lostItemProcessingFee,
-      this.chargeAmountItemPatron,
-      this.chargeAmountItemSystem,
-      this.lostItemChargeFeeFine,
-      this.returnedLostItemProcessingFee,
-      this.replacedLostItemProcessingFee,
-      this.replacementProcessingFee,
-      replacementAllowed,
-      this.lostItemReturned,
-      this.feeRefundInterval);
-  }
-
-  private LostItemFeePolicyBuilder withLostItemReturned(String lostItemReturned) {
-    return new LostItemFeePolicyBuilder(
-      this.id,
-      this.name,
-      this.description,
-      this.itemAgedLostOverdue,
-      this.patronBilledAfterAgedLost,
-      this.chargeAmountItem,
-      this.lostItemProcessingFee,
-      this.chargeAmountItemPatron,
-      this.chargeAmountItemSystem,
-      this.lostItemChargeFeeFine,
-      this.returnedLostItemProcessingFee,
-      this.replacedLostItemProcessingFee,
-      this.replacementProcessingFee,
-      this.replacementAllowed,
-      lostItemReturned,
-      this.feeRefundInterval);
   }
 
   public LostItemFeePolicyBuilder chargeOverdueFineWhenReturned() {
@@ -432,43 +94,11 @@ public class LostItemFeePolicyBuilder extends JsonBuilder implements Builder {
   }
 
   public LostItemFeePolicyBuilder withNoFeeRefundInterval() {
-    return new LostItemFeePolicyBuilder(
-      this.id,
-      this.name,
-      this.description,
-      this.itemAgedLostOverdue,
-      this.patronBilledAfterAgedLost,
-      this.chargeAmountItem,
-      this.lostItemProcessingFee,
-      this.chargeAmountItemPatron,
-      this.chargeAmountItemSystem,
-      this.lostItemChargeFeeFine,
-      this.returnedLostItemProcessingFee,
-      this.replacedLostItemProcessingFee,
-      this.replacementProcessingFee,
-      this.replacementAllowed,
-      this.lostItemReturned,
-      null);
+    return withFeeRefundInterval(null);
   }
 
   private LostItemFeePolicyBuilder withFeeRefundInterval(int duration, String intervalId) {
-    return new LostItemFeePolicyBuilder(
-      this.id,
-      this.name,
-      this.description,
-      this.itemAgedLostOverdue,
-      this.patronBilledAfterAgedLost,
-      this.chargeAmountItem,
-      this.lostItemProcessingFee,
-      this.chargeAmountItemPatron,
-      this.chargeAmountItemSystem,
-      this.lostItemChargeFeeFine,
-      this.returnedLostItemProcessingFee,
-      this.replacedLostItemProcessingFee,
-      this.replacementProcessingFee,
-      this.replacementAllowed,
-      this.lostItemReturned,
-      new JsonObject().put("intervalId", intervalId).put("duration", duration));
+    return withFeeRefundInterval(Period.from(duration, intervalId).asJson());
   }
 
   public LostItemFeePolicyBuilder refundFeesWithinMinutes(int duration) {
@@ -483,10 +113,16 @@ public class LostItemFeePolicyBuilder extends JsonBuilder implements Builder {
       put(request, "id", id.toString());
     }
 
+    if (itemAgedToLostAfterOverdue != null) {
+      request.put("itemAgedLostOverdue", itemAgedToLostAfterOverdue.asJson());
+    }
+
+    if (patronBilledAfterAgedLost != null) {
+      request.put("patronBilledAfterAgedLost", patronBilledAfterAgedLost.asJson());
+    }
+
     put(request, "name", this.name);
     put(request, "description", this.description);
-    put(request, "itemAgedLostOverdue", this.itemAgedLostOverdue);
-    put(request, "patronBilledAfterAgedLost", this.patronBilledAfterAgedLost);
     put(request, "chargeAmountItem", this.chargeAmountItem);
     put(request, "lostItemProcessingFee", this.lostItemProcessingFee);
     put(request, "chargeAmountItemPatron", this.chargeAmountItemPatron);

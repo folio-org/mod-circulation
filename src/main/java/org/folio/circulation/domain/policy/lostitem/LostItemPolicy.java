@@ -1,5 +1,6 @@
 package org.folio.circulation.domain.policy.lostitem;
 
+import static org.folio.circulation.domain.policy.Period.minutesBetweenDateAndNow;
 import static org.folio.circulation.domain.policy.lostitem.ChargeAmountType.ACTUAL_COST;
 import static org.folio.circulation.domain.policy.lostitem.ChargeAmountType.SET_COST;
 import static org.folio.circulation.domain.policy.lostitem.ChargeAmountType.forValue;
@@ -13,12 +14,11 @@ import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
 
 import java.math.BigDecimal;
 
-import org.folio.circulation.domain.TimePeriod;
+import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.domain.policy.Policy;
 import org.folio.circulation.domain.policy.lostitem.itemfee.ActualCostFee;
 import org.folio.circulation.domain.policy.lostitem.itemfee.AutomaticallyChargeableFee;
 import org.folio.circulation.domain.policy.lostitem.itemfee.ChargeableFee;
-import org.folio.circulation.support.ClockManager;
 import org.joda.time.DateTime;
 
 import io.vertx.core.json.JsonObject;
@@ -27,13 +27,15 @@ public class LostItemPolicy extends Policy {
   private final AutomaticallyChargeableFee processingFee;
   private final AutomaticallyChargeableFee setCostFee;
   private final ChargeableFee actualCostFee;
-  private final TimePeriod feeRefundInterval;
+  private final Period feeRefundInterval;
   private final boolean refundProcessingFeeWhenReturned;
   private final boolean chargeOverdueFine;
+  private final Period agedToLostAfterOverdueInterval;
 
   private LostItemPolicy(String id, String name, AutomaticallyChargeableFee processingFee,
     AutomaticallyChargeableFee setCostFee, ChargeableFee actualCostFee,
-    TimePeriod feeRefundInterval, boolean refundProcessingFeeWhenFound, boolean chargeOverdueFine) {
+    Period feeRefundInterval, boolean refundProcessingFeeWhenFound, boolean chargeOverdueFine,
+    Period agedToLostAfterOverdueInterval) {
 
     super(id, name);
     this.processingFee = processingFee;
@@ -42,6 +44,7 @@ public class LostItemPolicy extends Policy {
     this.feeRefundInterval = feeRefundInterval;
     this.refundProcessingFeeWhenReturned = refundProcessingFeeWhenFound;
     this.chargeOverdueFine = chargeOverdueFine;
+    this.agedToLostAfterOverdueInterval = agedToLostAfterOverdueInterval;
   }
 
   public static LostItemPolicy from(JsonObject lostItemPolicy) {
@@ -53,8 +56,15 @@ public class LostItemPolicy extends Policy {
       getActualCostFee(lostItemPolicy),
       getFeeRefundInterval(lostItemPolicy),
       getBooleanProperty(lostItemPolicy, "returnedLostItemProcessingFee"),
-      getChargeOverdueFineProperty(lostItemPolicy)
+      getChargeOverdueFineProperty(lostItemPolicy),
+      getAgedToLostAfterOverdueIntervalProperty(lostItemPolicy)
     );
+  }
+
+  private static Period getAgedToLostAfterOverdueIntervalProperty(JsonObject policy) {
+    final JsonObject intervalJson = policy.getJsonObject("itemAgedLostOverdue");
+
+    return intervalJson != null ? Period.from(intervalJson) : null;
   }
 
   private static boolean getChargeOverdueFineProperty(JsonObject lostItemPolicy) {
@@ -62,11 +72,11 @@ public class LostItemPolicy extends Policy {
     return "charge".equalsIgnoreCase(lostItemReturned);
   }
 
-  private static TimePeriod getFeeRefundInterval(JsonObject policy) {
+  private static Period getFeeRefundInterval(JsonObject policy) {
     final JsonObject feesFinesShallRefunded = policy.getJsonObject("feesFinesShallRefunded");
 
     return feesFinesShallRefunded != null
-      ? TimePeriod.from(feesFinesShallRefunded)
+      ? Period.from(feesFinesShallRefunded)
       : null;
   }
 
@@ -111,10 +121,10 @@ public class LostItemPolicy extends Policy {
   }
 
   public boolean shouldRefundFees(DateTime lostDateTime) {
-    final DateTime now = ClockManager.getClockManager().getDateTime();
+    final Period overdueMinutesInterval = minutesBetweenDateAndNow(lostDateTime);
 
-    return feeRefundInterval == null || feeRefundInterval
-      .between(lostDateTime, now) <= feeRefundInterval.getDuration();
+    return feeRefundInterval == null
+      || overdueMinutesInterval.isLessThanOrEqualTo(feeRefundInterval);
   }
 
   public boolean isRefundProcessingFeeWhenReturned() {
@@ -134,10 +144,20 @@ public class LostItemPolicy extends Policy {
     return new UnknownLostItemPolicy(id);
   }
 
+  public boolean canAgeLoanToLost(DateTime loanDueDate) {
+    if (agedToLostAfterOverdueInterval == null
+      || agedToLostAfterOverdueInterval.toMinutes() <= 0) {
+      return false;
+    }
+
+    final Period overduePeriod = minutesBetweenDateAndNow(loanDueDate);
+    return overduePeriod.isGreaterThanOrEqualTo(agedToLostAfterOverdueInterval);
+  }
+
   private static class UnknownLostItemPolicy extends LostItemPolicy {
     UnknownLostItemPolicy(String id) {
       super(id, null, noAutomaticallyChargeableFee(), noAutomaticallyChargeableFee(),
-        noActualCostFee(), null, false, false);
+        noActualCostFee(), null, false, false, null);
     }
   }
 }

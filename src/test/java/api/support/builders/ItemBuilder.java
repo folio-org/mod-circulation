@@ -2,6 +2,7 @@ package api.support.builders;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Random;
 import java.util.UUID;
 
 import org.folio.circulation.domain.ItemStatus;
@@ -130,6 +131,10 @@ public class ItemBuilder extends JsonBuilder implements Builder {
 
   public ItemBuilder declaredLost() {
     return withStatus(DECLARED_LOST);
+  }
+
+  public ItemBuilder agedToLost() {
+    return withStatus("Aged to lost");
   }
 
   public ItemBuilder lostAndPaid() {
@@ -565,5 +570,13 @@ public class ItemBuilder extends JsonBuilder implements Builder {
       this.chronology,
       this.numberOfPieces,
       descriptionOfPieces);
+  }
+
+  public ItemBuilder withRandomBarcode() {
+    return withBarcode(generateRandomBarcode());
+  }
+
+  public String generateRandomBarcode() {
+    return String.valueOf(new Random().nextLong());
   }
 }

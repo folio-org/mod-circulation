@@ -39,6 +39,14 @@ public final class ItemMatchers {
     return hasStatus("Awaiting pickup");
   }
 
+  public static Matcher<JsonObject> isClaimedReturned() {
+    return hasStatus("Claimed returned");
+  }
+
+  public static Matcher<JsonObject> isAgedToLost() {
+    return hasStatus("Aged to lost");
+  }
+
   private static Matcher<JsonObject> hasStatus(String status) {
     return describedAs("Item with status [%0]",
       hasJsonPath("status.name", status), status);
