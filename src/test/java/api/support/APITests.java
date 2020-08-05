@@ -3,7 +3,6 @@ package api.support;
 import static api.support.APITestContext.deployVerticles;
 import static api.support.APITestContext.getOkapiHeadersFromContext;
 import static api.support.APITestContext.undeployVerticles;
-import static api.support.RestAssuredClient.defaultRestAssuredClient;
 import static api.support.fakes.LoanHistoryProcessor.setLoanHistoryEnabled;
 import static api.support.http.ResourceClient.forLoanHistoryStorage;
 import static api.support.http.ResourceClient.forTenantStorage;
@@ -249,6 +248,8 @@ public abstract class APITests {
 
   protected final TenantActivationFixture tenantActivationFixture = new TenantActivationFixture(restAssuredClient);
   @Delegate
+  // The @Delegate annotation will instruct lombok to auto generate delegating methods
+  // in this class for all public methods of the PoliciesActivationFixture class
   protected final PoliciesActivationFixture policiesActivation = new PoliciesActivationFixture();
   protected final AgeToLostFixture ageToLostFixture = new AgeToLostFixture();
 
