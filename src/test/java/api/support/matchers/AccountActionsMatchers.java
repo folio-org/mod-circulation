@@ -15,8 +15,10 @@ public final class AccountActionsMatchers {
   public static final String REFUNDED_FULLY = "Refunded fully";
   public static final String CREDITED_FULLY = "Credited fully";
   public static final String LOST_ITEM_FOUND = "Lost item found";
-  public static final String REFUND_TO_BURSAR = "Refund to Bursar";
-  public static final String REFUND_TO_PATRON = "Refund to patron";
+  public static final String REFUNDED_TO_BURSAR = "Refunded to Bursar";
+  public static final String CREDITED_TO_BURSAR = "Refund to Bursar";
+  public static final String REFUNDED_TO_PATRON = "Refunded to patron";
+  public static final String CREDITED_TO_PATRON = "Refund to patron";
 
   private AccountActionsMatchers() {}
 
@@ -32,7 +34,7 @@ public final class AccountActionsMatchers {
         hasJsonPath("amountAction", paymentAmount),
         hasJsonPath("balance", creditAmount.toDouble()),
         hasJsonPath("typeAction", CREDITED_FULLY),
-        hasJsonPath("transactionInformation", REFUND_TO_PATRON),
+        hasJsonPath("transactionInformation", CREDITED_TO_PATRON),
         hasJsonPath("paymentMethod", LOST_ITEM_FOUND)),
       allOf(
         hasJsonPath("createdAt", startsWith("Circ Desk")),
@@ -40,7 +42,7 @@ public final class AccountActionsMatchers {
         hasJsonPath("amountAction", paymentAmount),
         hasJsonPath("balance", remaining),
         hasJsonPath("typeAction", REFUNDED_FULLY),
-        hasJsonPath("transactionInformation", REFUND_TO_PATRON),
+        hasJsonPath("transactionInformation", REFUNDED_TO_PATRON),
         hasJsonPath("paymentMethod", LOST_ITEM_FOUND))
     );
   }
@@ -65,7 +67,7 @@ public final class AccountActionsMatchers {
         hasJsonPath("amountAction", transferAmount),
         hasJsonPath("balance", creditAmount.toDouble()),
         hasJsonPath("typeAction", CREDITED_FULLY),
-        hasJsonPath("transactionInformation", REFUND_TO_BURSAR),
+        hasJsonPath("transactionInformation", CREDITED_TO_BURSAR),
         hasJsonPath("paymentMethod", LOST_ITEM_FOUND)),
       allOf(
         hasJsonPath("createdAt", startsWith("Circ Desk")),
@@ -73,7 +75,7 @@ public final class AccountActionsMatchers {
         hasJsonPath("amountAction", transferAmount),
         hasJsonPath("balance", remaining),
         hasJsonPath("typeAction", REFUNDED_FULLY),
-        hasJsonPath("transactionInformation", REFUND_TO_BURSAR),
+        hasJsonPath("transactionInformation", REFUNDED_TO_BURSAR),
         hasJsonPath("paymentMethod", LOST_ITEM_FOUND))
     );
   }
