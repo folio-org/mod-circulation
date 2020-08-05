@@ -151,7 +151,7 @@ public class PatronActionSessionService {
       .collect(Collectors.toList());
 
     if (sessionRecordsWithLoans.isEmpty()) {
-      log.info("Loans were not fetched for the records. The notice will not be sent");
+      log.info("Loans were not fetched for the PatronSessionRecords. The notice will not be sent");
       return completedFuture(succeeded(records));
     }
 
