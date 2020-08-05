@@ -73,9 +73,7 @@ public class EndExpiredPatronActionSessionTests extends APITests {
       .map(session -> session.getString(PATRON_ID))
       .orElse("");
 
-    expiredEndSessionClient.create(new EndSessionBuilder()
-      .withPatronId(patronId)
-      .withActionType(CHECK_OUT));
+    createExpiredEndSession(patronId, CHECK_OUT);
 
     expiredSessionProcessingClient.runRequestExpiredSessionsProcessing(204);
     Awaitility.await()
@@ -107,9 +105,7 @@ public class EndExpiredPatronActionSessionTests extends APITests {
       .map(session -> session.getString(PATRON_ID))
       .orElse("");
 
-    expiredEndSessionClient.create(new EndSessionBuilder()
-      .withPatronId(patronId)
-      .withActionType(CHECK_IN));
+    createExpiredEndSession(patronId, CHECK_IN);
 
     expiredSessionProcessingClient.runRequestExpiredSessionsProcessing(204);
     Awaitility.await()
@@ -140,9 +136,7 @@ public class EndExpiredPatronActionSessionTests extends APITests {
       .map(session -> session.getString(PATRON_ID))
       .orElse("");
 
-    expiredEndSessionClient.create(new EndSessionBuilder()
-      .withPatronId(patronId)
-      .withActionType(CHECK_IN));
+    createExpiredEndSession(patronId, CHECK_IN);
 
     expiredSessionProcessingClient.runRequestExpiredSessionsProcessing(204);
     Awaitility.await()
@@ -241,8 +235,7 @@ public class EndExpiredPatronActionSessionTests extends APITests {
       .filter(session -> session.getMap().get(ACTION_TYPE)
         .equals(PatronActionType.CHECK_IN.getRepresentation()))
       .map(session -> session.getString(PATRON_ID))
-      .forEach(patronId -> expiredEndSessionClient.create(new EndSessionBuilder()
-        .withPatronId(patronId).withActionType(CHECK_IN)));
+      .forEach(patronId -> createExpiredEndSession(patronId, CHECK_IN));
 
     expiredSessionProcessingClient.runRequestExpiredSessionsProcessing(204);
     Awaitility.await()
@@ -255,8 +248,7 @@ public class EndExpiredPatronActionSessionTests extends APITests {
       .filter(session -> session.getMap().get(ACTION_TYPE)
         .equals(PatronActionType.CHECK_OUT.getRepresentation()))
       .map(session -> session.getString(PATRON_ID))
-      .forEach(patronId -> expiredEndSessionClient.create(new EndSessionBuilder()
-        .withPatronId(patronId).withActionType(CHECK_OUT)));
+      .forEach(patronId -> createExpiredEndSession(patronId, CHECK_OUT));
 
     expiredSessionProcessingClient.runRequestExpiredSessionsProcessing(204);
     Awaitility.await()
@@ -280,9 +272,7 @@ public class EndExpiredPatronActionSessionTests extends APITests {
     String patronId = sessions.get(0).getString(PATRON_ID);
 
     loansFixture.deleteLoan(UUID.fromString(loanId));
-    expiredEndSessionClient.create(new EndSessionBuilder()
-      .withPatronId(patronId)
-      .withActionType(CHECK_OUT));
+    createExpiredEndSession(patronId, CHECK_OUT);
 
     expiredSessionProcessingClient.runRequestExpiredSessionsProcessing(204);
 
@@ -294,11 +284,7 @@ public class EndExpiredPatronActionSessionTests extends APITests {
 
   @Test
   public void shouldNotFailIfSessionRecordsAreEmpty() {
-
-    expiredEndSessionClient.create(new EndSessionBuilder()
-      .withPatronId(UUID.randomUUID().toString())
-      .withActionType(CHECK_OUT));
-
+    createExpiredEndSession(UUID.randomUUID().toString(), CHECK_OUT);
     expiredSessionProcessingClient.runRequestExpiredSessionsProcessing(204);
 
     assertThat(patronSessionRecordsClient.getAll(), hasSize(0));
@@ -319,9 +305,7 @@ public class EndExpiredPatronActionSessionTests extends APITests {
     String patronId = sessions.get(0).getString(PATRON_ID);
 
     usersFixture.remove(steve);
-    expiredEndSessionClient.create(new EndSessionBuilder()
-      .withPatronId(patronId)
-      .withActionType(CHECK_OUT));
+    createExpiredEndSession(patronId, CHECK_OUT);
 
     expiredSessionProcessingClient.runRequestExpiredSessionsProcessing(204);
 
@@ -372,5 +356,11 @@ public class EndExpiredPatronActionSessionTests extends APITests {
     Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
       .until(patronSessionRecordsClient::getAll, empty());
+  }
+
+  private void createExpiredEndSession(String patronId, String actionType) {
+    expiredEndSessionClient.create(new EndSessionBuilder()
+      .withPatronId(patronId)
+      .withActionType(actionType));
   }
 }

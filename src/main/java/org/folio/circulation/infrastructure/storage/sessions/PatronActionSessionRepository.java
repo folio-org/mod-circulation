@@ -146,7 +146,7 @@ public class PatronActionSessionRepository {
       .collect(Collectors.toCollection(HashSet::new));
 
     if (patronIds.isEmpty()) {
-      log.info("Patrons ids were not presented in expired sessions");
+      log.info("List of patron IDs is empty. Doing nothing.");
       return CompletableFuture.completedFuture(succeeded(null));
     }
 
