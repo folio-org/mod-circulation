@@ -3,37 +3,25 @@ package org.folio.circulation.resources;
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 
 import java.util.Objects;
-import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.StoreLoanAndItem;
 import org.folio.circulation.domain.Loan;
-import org.folio.circulation.domain.MultipleRecords;
-import org.folio.circulation.domain.Note;
-import org.folio.circulation.domain.NoteLink;
-import org.folio.circulation.domain.NoteLinkType;
-import org.folio.circulation.domain.NoteType;
 import org.folio.circulation.domain.representations.DeclareItemLostRequest;
 import org.folio.circulation.domain.validation.LoanValidator;
+import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
+import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.services.EventPublisher;
 import org.folio.circulation.services.LostItemFeeChargingService;
 import org.folio.circulation.support.Clients;
-import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
-import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
-import org.folio.circulation.infrastructure.storage.notes.NoteTypesRepository;
-import org.folio.circulation.infrastructure.storage.notes.NotesRepository;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.http.server.NoContentResponse;
 import org.folio.circulation.support.http.server.WebContext;
-import org.folio.circulation.support.utils.CollectionUtil;
 
 import io.vertx.core.http.HttpClient;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 
-public class DeclareLostResource extends Resource {
-
-  private static final String NOTE_MESSAGE = "Claimed returned item marked lost";
-  private static final String NOTE_DOMAIN  = "loans";
+public class DeclareLostResource extends AbstractClaimedReturnedResource {
 
   public DeclareLostResource(HttpClient client) {
     super(client);
@@ -58,8 +46,9 @@ public class DeclareLostResource extends Resource {
       .after(request -> loanRepository.getById(request.getLoanId())
       .thenApply(LoanValidator::refuseWhenLoanIsClosed)
       .thenApply(this::refuseWhenItemIsAlreadyDeclaredLost)
-      .thenCompose(r -> r.after(loan -> createNote(clients, loan)))
+      .thenApply(r -> setIsClaimedReturned(r))
       .thenApply(loan -> declareItemLost(loan, request))
+      .thenCompose(r -> r.after(loan -> createNote(clients, loan, isClaimedReturned)))
       .thenCompose(r -> r.after(storeLoanAndItem::updateLoanAndItemInStorage))
       .thenCompose(r -> r.after(loan -> lostItemFeeService
         .chargeLostItemFees(loan, request, context.getUserId()))))
@@ -88,35 +77,5 @@ public class DeclareLostResource extends Resource {
       loan -> Result.succeeded(loan.getItem().isDeclaredLost()),
       loan -> singleValidationError("The item is already declared lost",
         "itemId", loan.getItemId()));
-  }
-
-  private CompletableFuture<Result<Loan>> createNote(Clients clients, Loan loan) {
-    final NotesRepository notesRepo = new NotesRepository(clients);
-    final NoteTypesRepository noteTypesRepo = new NoteTypesRepository(clients);
-    if (loan.isClaimedReturned()) {
-      noteTypesRepo.findByName("General note")
-        .thenApply(this::refuseIfNoteTypeNotFound)
-        .thenApply(r -> r.map(CollectionUtil::firstOrNull))
-        .thenCompose(r -> r.after(noteType -> notesRepo.create(createNote(noteType, loan))));
-    }
-    return CompletableFuture.completedFuture(Result.succeeded(loan));
-  }
-
-  private Note createNote(NoteType noteType, Loan loan) {
-    return Note.builder()
-      .title(NOTE_MESSAGE)
-      .typeId(noteType.getId())
-      .content(NOTE_MESSAGE)
-      .domain(NOTE_DOMAIN)
-      .link(NoteLink.from(loan.getUserId(), NoteLinkType.USER.getValue()))
-      .build();
-  }
-
-  private Result<MultipleRecords<NoteType>> refuseIfNoteTypeNotFound(
-    Result<MultipleRecords<NoteType>> noteTypeResult) {
-
-    return noteTypeResult.failWhen(
-      notes -> Result.succeeded(notes.getRecords().isEmpty()),
-      notes -> singleValidationError("No General note type found", "noteTypes", null));
   }
 }

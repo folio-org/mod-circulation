@@ -7,29 +7,21 @@ import static org.folio.circulation.support.ValidationErrorFailure.singleValidat
 import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.domain.Loan;
-import org.folio.circulation.domain.MultipleRecords;
-import org.folio.circulation.domain.Note;
-import org.folio.circulation.domain.NoteLink;
-import org.folio.circulation.domain.NoteLinkType;
-import org.folio.circulation.domain.NoteType;
 import org.folio.circulation.domain.representations.ChangeItemStatusRequest;
 import org.folio.circulation.domain.validation.NotInItemStatusValidator;
-import org.folio.circulation.infrastructure.storage.notes.NoteTypesRepository;
-import org.folio.circulation.infrastructure.storage.notes.NotesRepository;
 import org.folio.circulation.services.ChangeItemStatusService;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.RouteRegistration;
 import org.folio.circulation.support.http.server.NoContentResponse;
 import org.folio.circulation.support.http.server.WebContext;
-import org.folio.circulation.support.utils.CollectionUtil;
 
 import io.vertx.core.http.HttpClient;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 
-public class DeclareClaimedReturnedItemAsMissingResource extends Resource {
+public class DeclareClaimedReturnedItemAsMissingResource extends AbstractClaimedReturnedResource {
 
   public DeclareClaimedReturnedItemAsMissingResource(HttpClient client) {
     super(client);
@@ -56,46 +48,15 @@ public class DeclareClaimedReturnedItemAsMissingResource extends Resource {
     final ChangeItemStatusService changeItemStatusService = new ChangeItemStatusService(clients);
 
     return changeItemStatusService.getOpenLoan(request)
+      .thenApply(loanResult -> setIsClaimedReturned(loanResult))
       .thenApply(NotInItemStatusValidator::refuseWhenItemIsNotClaimedReturned)
       .thenApply(loanResult -> declareLoanMissing(loanResult, request))
       .thenCompose(changeItemStatusService::updateLoanAndItem)
-      .thenCompose(loanResult -> loanResult.after(loan -> createNote(clients, loan)));
+      .thenCompose(loanResult -> loanResult.after(loan -> createNote(clients, loan, isClaimedReturned)));
   }
 
   private Result<Loan> declareLoanMissing(Result<Loan> loanResult, ChangeItemStatusRequest request) {
     return loanResult.map(loan -> loan.markItemMissing(request.getComment()));
-  }
-
-  private CompletableFuture<Result<Loan>> createNote(Clients clients, Loan loan) {
-    final NotesRepository notesRepo = new NotesRepository(clients);
-    final NoteTypesRepository noteTypesRepo = new NoteTypesRepository(clients);
-
-    return noteTypesRepo.findByName("General note")
-      .thenApply(this::refuseIfNoteTypeNotFound)
-      .thenApply(r -> r.map(CollectionUtil::firstOrNull))
-      .thenCompose(r -> r.after(noteType -> notesRepo.create(createNote(noteType, loan))))
-      .thenApply(r -> r.map(notUsed -> loan));
-  }
-
-  private Note createNote(NoteType noteType, Loan loan) {
-    final String NOTE_MESSAGE = "Claimed returned item marked missing";
-    final String NOTE_DOMAIN  = "loans";
-
-    return Note.builder()
-      .title(NOTE_MESSAGE)
-      .typeId(noteType.getId())
-      .content(NOTE_MESSAGE)
-      .domain(NOTE_DOMAIN)
-      .link(NoteLink.from(loan.getUserId(), NoteLinkType.USER.getValue()))
-      .build();
-  }
-
-  private Result<MultipleRecords<NoteType>> refuseIfNoteTypeNotFound(
-    Result<MultipleRecords<NoteType>> noteTypeResult) {
-
-    return noteTypeResult.failWhen(
-      notes -> Result.succeeded(notes.isEmpty()),
-      notes -> singleValidationError("No General note type found", "noteTypes", null));
   }
 
   private Result<ChangeItemStatusRequest> createRequest(RoutingContext routingContext) {
