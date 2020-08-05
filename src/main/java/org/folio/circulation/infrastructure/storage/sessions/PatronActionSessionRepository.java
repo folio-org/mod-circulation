@@ -19,6 +19,7 @@ import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
 import static org.folio.circulation.support.http.client.CqlQuery.noQuery;
 import static org.folio.circulation.support.results.CommonFailures.failedDueToServerError;
 
+import java.lang.invoke.MethodHandles;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -46,11 +47,14 @@ import org.folio.circulation.support.Result;
 import org.folio.circulation.support.http.client.CqlQuery;
 import org.folio.circulation.support.http.client.PageLimit;
 import org.folio.circulation.support.http.client.ResponseInterpreter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import io.vertx.core.json.JsonObject;
 
 public class PatronActionSessionRepository {
 
+  private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
   private final CollectionResourceClient patronActionSessionsStorageClient;
   private final LoanRepository loanRepository;
   private final LoanPolicyRepository loanPolicyRepository;
@@ -142,6 +146,7 @@ public class PatronActionSessionRepository {
       .collect(Collectors.toCollection(HashSet::new));
 
     if (patronIds.isEmpty()) {
+      log.info("Patrons ids were not presented in expired sessions");
       return CompletableFuture.completedFuture(succeeded(null));
     }
 
@@ -151,6 +156,7 @@ public class PatronActionSessionRepository {
     return findWithMultipleCqlIndexValues(patronActionSessionsStorageClient,
       PATRON_ACTION_SESSIONS, PatronSessionRecord::from)
       .findByIdIndexAndQuery(patronIds, PATRON_ID, actionTypeQuery)
+      .thenCompose(r -> r.after(this::fetchLoans))
       .thenCompose(r -> r.combineAfter(
         () -> userRepository.getUsersForUserIds(patronIds), this::setUsersForLoans));
   }
@@ -194,6 +200,7 @@ public class PatronActionSessionRepository {
         return sessionRecord.withLoan(sessionRecord.getLoan().withUser(
           usersMap.get(sessionRecord.getPatronId().toString())));
       }
+      log.info("Loans were not fetched for the session records");
       return sessionRecord;
     });
   }

@@ -6,7 +6,9 @@ import static org.folio.circulation.domain.notice.session.PatronActionSessionPro
 import static org.folio.circulation.domain.notice.session.PatronActionSessionProperties.PATRON_ID;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.empty;
+import static org.hamcrest.Matchers.hasSize;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -16,14 +18,44 @@ import org.awaitility.Awaitility;
 import org.folio.circulation.domain.notice.session.PatronActionType;
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.hamcrest.Matchers;
+import org.junit.Before;
 import org.junit.Test;
 
 import api.support.APITests;
 import api.support.builders.EndSessionBuilder;
+import api.support.builders.NoticeConfigurationBuilder;
+import api.support.builders.NoticePolicyBuilder;
 import api.support.http.InventoryItemResource;
 import io.vertx.core.json.JsonObject;
 
 public class EndExpiredPatronActionSessionTests extends APITests {
+
+  private static final String CHECK_OUT = "Check-out";
+  private static final String CHECK_IN = "Check-in";
+
+  @Before
+  public void before() {
+
+    JsonObject checkOutNoticeConfig = new NoticeConfigurationBuilder()
+      .withTemplateId(UUID.randomUUID())
+      .withCheckOutEvent()
+      .create();
+
+    JsonObject checkInNoticeConfig = new NoticeConfigurationBuilder()
+      .withTemplateId(UUID.randomUUID())
+      .withCheckInEvent()
+      .create();
+
+    NoticePolicyBuilder noticePolicy = new NoticePolicyBuilder()
+      .withName("Policy with check-in/check-out notice")
+      .withLoanNotices(Arrays.asList(checkOutNoticeConfig, checkInNoticeConfig));
+    useFallbackPolicies(
+      loanPoliciesFixture.canCirculateRolling().getId(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
+      noticePoliciesFixture.create(noticePolicy).getId(),
+      overdueFinePoliciesFixture.facultyStandard().getId(),
+      lostItemFeePoliciesFixture.facultyStandard().getId());
+  }
 
   @Test
   public void expiredEndSessionAfterCheckOut() {
@@ -43,12 +75,13 @@ public class EndExpiredPatronActionSessionTests extends APITests {
 
     expiredEndSessionClient.create(new EndSessionBuilder()
       .withPatronId(patronId)
-      .withActionType("Check-out"));
+      .withActionType(CHECK_OUT));
 
     expiredSessionProcessingClient.runRequestExpiredSessionsProcessing(204);
     Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
       .until(patronSessionRecordsClient::getAll, empty());
+    assertThat(patronNoticesClient.getAll(), hasSize(1));
   }
 
   @Test
@@ -76,12 +109,13 @@ public class EndExpiredPatronActionSessionTests extends APITests {
 
     expiredEndSessionClient.create(new EndSessionBuilder()
       .withPatronId(patronId)
-      .withActionType("Check-in"));
+      .withActionType(CHECK_IN));
 
     expiredSessionProcessingClient.runRequestExpiredSessionsProcessing(204);
     Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
       .until(patronSessionRecordsClient::getAll,  Matchers.hasSize(2));
+    assertThat(patronNoticesClient.getAll(), hasSize(1));
   }
 
   @Test
@@ -108,12 +142,13 @@ public class EndExpiredPatronActionSessionTests extends APITests {
 
     expiredEndSessionClient.create(new EndSessionBuilder()
       .withPatronId(patronId)
-      .withActionType("Check-in"));
+      .withActionType(CHECK_IN));
 
     expiredSessionProcessingClient.runRequestExpiredSessionsProcessing(204);
     Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
       .until(patronSessionRecordsClient::getAll,  Matchers.hasSize(2));
+    assertThat(patronNoticesClient.getAll(), hasSize(1));
   }
 
   @Test
@@ -207,7 +242,7 @@ public class EndExpiredPatronActionSessionTests extends APITests {
         .equals(PatronActionType.CHECK_IN.getRepresentation()))
       .map(session -> session.getString(PATRON_ID))
       .forEach(patronId -> expiredEndSessionClient.create(new EndSessionBuilder()
-        .withPatronId(patronId).withActionType("Check-in")));
+        .withPatronId(patronId).withActionType(CHECK_IN)));
 
     expiredSessionProcessingClient.runRequestExpiredSessionsProcessing(204);
     Awaitility.await()
@@ -221,12 +256,13 @@ public class EndExpiredPatronActionSessionTests extends APITests {
         .equals(PatronActionType.CHECK_OUT.getRepresentation()))
       .map(session -> session.getString(PATRON_ID))
       .forEach(patronId -> expiredEndSessionClient.create(new EndSessionBuilder()
-        .withPatronId(patronId).withActionType("Check-out")));
+        .withPatronId(patronId).withActionType(CHECK_OUT)));
 
     expiredSessionProcessingClient.runRequestExpiredSessionsProcessing(204);
     Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
       .until(patronSessionRecordsClient::getAll,  Matchers.hasSize(0));
+    assertThat(patronNoticesClient.getAll(), hasSize(6));
   }
 
   @Test
@@ -246,13 +282,14 @@ public class EndExpiredPatronActionSessionTests extends APITests {
     loansFixture.deleteLoan(UUID.fromString(loanId));
     expiredEndSessionClient.create(new EndSessionBuilder()
       .withPatronId(patronId)
-      .withActionType("Check-out"));
+      .withActionType(CHECK_OUT));
 
     expiredSessionProcessingClient.runRequestExpiredSessionsProcessing(204);
 
     Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
       .until(patronSessionRecordsClient::getAll, empty());
+    assertThat(patronNoticesClient.getAll(), hasSize(0));
   }
 
   @Test
@@ -271,23 +308,24 @@ public class EndExpiredPatronActionSessionTests extends APITests {
     usersFixture.remove(steve);
     expiredEndSessionClient.create(new EndSessionBuilder()
       .withPatronId(patronId)
-      .withActionType("Check-out"));
+      .withActionType(CHECK_OUT));
 
     expiredSessionProcessingClient.runRequestExpiredSessionsProcessing(204);
 
     Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
       .until(patronSessionRecordsClient::getAll, empty());
+    assertThat(patronNoticesClient.getAll(), hasSize(0));
   }
 
   @Test
   public void shouldNotFailWithUriTooLargeErrorDuringEndingExpiredCheckOutSessions() {
-    checkThatBunchOfExpiredSessionsWereAddedAndRemovedByTimer(100, "Check-out");
+    checkThatBunchOfExpiredSessionsWereAddedAndRemovedByTimer(100, CHECK_OUT);
   }
 
   @Test
   public void shouldNotFailWithUriTooLargeErrorDuringEndingExpiredCheckInSessions() {
-    checkThatBunchOfExpiredSessionsWereAddedAndRemovedByTimer(100, "Check-in");
+    checkThatBunchOfExpiredSessionsWereAddedAndRemovedByTimer(100, CHECK_IN);
   }
 
   @Test
