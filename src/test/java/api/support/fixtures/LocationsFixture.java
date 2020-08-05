@@ -1,19 +1,18 @@
 package api.support.fixtures;
 
-import static api.support.http.ResourceClient.forCampuses;
-import static api.support.http.ResourceClient.forInstitutions;
-import static api.support.http.ResourceClient.forLibraries;
-import static api.support.http.ResourceClient.forLocations;
-import static api.support.http.ResourceClient.forServicePoints;
 import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
 import static org.folio.circulation.support.JsonPropertyWriter.write;
 
+import java.net.MalformedURLException;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeoutException;
 import java.util.function.Function;
 
 import org.folio.circulation.support.http.client.IndividualResource;
 
 import api.support.builders.LocationBuilder;
 import api.support.examples.LocationExamples;
+import api.support.http.ResourceClient;
 import io.vertx.core.json.JsonObject;
 
 public class LocationsFixture {
@@ -23,20 +22,26 @@ public class LocationsFixture {
   private final RecordCreator campusRecordCreator;
   private final RecordCreator libraryRecordCreator;
 
-  public LocationsFixture() {
-    this.locationRecordCreator = new RecordCreator(forLocations(),
+  public LocationsFixture(
+    ResourceClient client,
+    ResourceClient institutionsClient,
+    ResourceClient campusesClient,
+    ResourceClient librariesClient,
+    ServicePointsFixture servicePointsFixture) {
+
+    this.locationRecordCreator = new RecordCreator(client,
       location -> getProperty(location, "code"));
 
-    institutionRecordCreator = new RecordCreator(forInstitutions(),
+    institutionRecordCreator = new RecordCreator(institutionsClient,
       institution -> getProperty(institution, "name"));
 
-    campusRecordCreator = new RecordCreator(forCampuses(),
+    campusRecordCreator = new RecordCreator(campusesClient,
       campus -> getProperty(campus, "name"));
 
-    libraryRecordCreator = new RecordCreator(forLibraries(),
+    libraryRecordCreator = new RecordCreator(librariesClient,
       library -> getProperty(library, "name"));
 
-    this.servicePointsFixture = new ServicePointsFixture(forServicePoints());
+    this.servicePointsFixture = servicePointsFixture;
   }
 
   public void cleanUp() {

@@ -2,7 +2,6 @@ package api.support.fixtures;
 
 import static api.support.APITestContext.getOkapiHeadersFromContext;
 import static api.support.http.InterfaceUrls.scheduledAgeToLostUrl;
-import static api.support.http.ResourceClient.forServicePoints;
 import static org.joda.time.DateTime.now;
 import static org.joda.time.DateTimeZone.UTC;
 
@@ -25,14 +24,16 @@ public final class AgeToLostFixture {
   private final LoansFixture loansFixture;
   private final TimedTaskClient timedTaskClient;
 
-  public AgeToLostFixture() {
-    policiesActivation = new PoliciesActivationFixture();
-    lostItemFeePoliciesFixture = new LostItemFeePoliciesFixture();
-    itemsFixture = new ItemsFixture();
-    usersFixture = new UsersFixture();
-    checkOutFixture = new CheckOutFixture(usersFixture, new ServicePointsFixture(forServicePoints()));
-    loansFixture = new LoansFixture();
-    timedTaskClient = new TimedTaskClient(getOkapiHeadersFromContext());
+  public AgeToLostFixture(ItemsFixture itemsFixture, UsersFixture usersFixture,
+    CheckOutFixture checkOutFixture) {
+
+    this.policiesActivation = new PoliciesActivationFixture();
+    this.lostItemFeePoliciesFixture = new LostItemFeePoliciesFixture();
+    this.itemsFixture = itemsFixture;
+    this.usersFixture = usersFixture;
+    this.checkOutFixture = checkOutFixture;
+    this.loansFixture = new LoansFixture();
+    this.timedTaskClient = new TimedTaskClient(getOkapiHeadersFromContext());
   }
 
   public AgeToLostResult createAgedToLostLoan() {

@@ -1,9 +1,5 @@
 package api.support.fixtures;
 
-import static api.support.http.ResourceClient.forContributorNameTypes;
-import static api.support.http.ResourceClient.forInstanceTypes;
-import static api.support.http.ResourceClient.forLoanTypes;
-import static api.support.http.ResourceClient.forMaterialTypes;
 import static java.util.function.Function.identity;
 import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
 import static org.folio.circulation.support.JsonPropertyWriter.write;
@@ -34,19 +30,25 @@ public class ItemsFixture {
   private final RecordCreator instanceTypeRecordCreator;
   private final RecordCreator contributorNameTypeRecordCreator;
 
-  public ItemsFixture() {
+  public ItemsFixture(
+    MaterialTypesFixture materialTypesFixture,
+    LoanTypesFixture loanTypesFixture,
+    LocationsFixture locationsFixture,
+    ResourceClient instanceTypesClient,
+    ResourceClient contributorNameTypesClient) {
+
     itemsClient = ResourceClient.forItems();
     holdingsClient = ResourceClient.forHoldings();
     instancesClient = ResourceClient.forInstances();
-    this.materialTypesFixture = new MaterialTypesFixture(forMaterialTypes());
-    this.loanTypesFixture = new LoanTypesFixture(forLoanTypes());
-    this.locationsFixture = new LocationsFixture();
+    this.materialTypesFixture = materialTypesFixture;
+    this.loanTypesFixture = loanTypesFixture;
+    this.locationsFixture = locationsFixture;
 
-    instanceTypeRecordCreator = new RecordCreator(forInstanceTypes(),
+    instanceTypeRecordCreator = new RecordCreator(instanceTypesClient,
       instanceType -> getProperty(instanceType, "name"));
 
     contributorNameTypeRecordCreator = new RecordCreator(
-      forContributorNameTypes(), nameType -> getProperty(nameType, "name"));
+      contributorNameTypesClient, nameType -> getProperty(nameType, "name"));
   }
 
   public void cleanUp() {

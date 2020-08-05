@@ -165,7 +165,9 @@ public abstract class APITests {
   protected final ServicePointsFixture servicePointsFixture
     = new ServicePointsFixture(servicePointsClient);
 
-  protected final LocationsFixture locationsFixture = new LocationsFixture();
+  protected final LocationsFixture locationsFixture = new LocationsFixture(
+    locationsClient, institutionsClient, campusesClient, librariesClient,
+    servicePointsFixture);
 
   protected final LoanTypesFixture loanTypesFixture = new LoanTypesFixture(
     ResourceClient.forLoanTypes());
@@ -191,7 +193,9 @@ public abstract class APITests {
     = new CirculationRulesFixture(
       new RestAssuredClient(getOkapiHeadersFromContext()));
 
-  protected final ItemsFixture itemsFixture = new ItemsFixture();
+  protected final ItemsFixture itemsFixture = new ItemsFixture(
+    materialTypesFixture, loanTypesFixture, locationsFixture,
+    instanceTypesClient, contributorNameTypesClient);
 
   protected final AddressTypesFixture addressTypesFixture
     = new AddressTypesFixture(ResourceClient.forAddressTypes());
@@ -202,7 +206,8 @@ public abstract class APITests {
   protected final ProxyRelationshipsFixture proxyRelationshipsFixture
     = new ProxyRelationshipsFixture(proxyRelationshipsClient);
 
-  protected final UsersFixture usersFixture = new UsersFixture();
+  protected final UsersFixture usersFixture = new UsersFixture(usersClient,
+    patronGroupsFixture);
 
   protected final LoansFixture loansFixture = new LoansFixture();
 
@@ -251,7 +256,8 @@ public abstract class APITests {
   // The @Delegate annotation will instruct lombok to auto generate delegating methods
   // in this class for all public methods of the PoliciesActivationFixture class
   protected final PoliciesActivationFixture policiesActivation = new PoliciesActivationFixture();
-  protected final AgeToLostFixture ageToLostFixture = new AgeToLostFixture();
+  protected final AgeToLostFixture ageToLostFixture =
+    new AgeToLostFixture(itemsFixture, usersFixture, checkOutFixture);
 
   protected APITests() {
     this(true, false);
