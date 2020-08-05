@@ -1,6 +1,5 @@
 package org.folio.circulation.services.feefine;
 
-import static java.lang.String.format;
 import static org.folio.circulation.domain.AccountRefundReason.LOST_ITEM_FOUND;
 import static org.folio.circulation.domain.FeeAmount.zeroFeeAmount;
 import static org.folio.circulation.domain.FeeFine.lostItemFeeTypes;
@@ -22,11 +21,6 @@ import org.folio.circulation.domain.representations.StoredFeeFineAction;
 import org.joda.time.DateTime;
 
 public class FeeRefundProcessor implements AccountRefundProcessor {
-  private static final String PAYMENT_CREDIT_TRANSACTION_INFO = "Refund to patron";
-  private static final String PAYMENT_REFUND_TRANSACTION_INFO = "Refunded to patron";
-  private static final String TRANSFER_CREDIT_TRANSACTION_INFO = "Refund to %s";
-  private static final String TRANSFER_REFUND_TRANSACTION_INFO = "Refunded to %s";
-
   private final AccountPaymentStatus closedAccountPaymentStatus;
   private final AccountRefundReason refundReason;
   private final Set<String> supportedFeeFineTypes;
@@ -71,12 +65,12 @@ public class FeeRefundProcessor implements AccountRefundProcessor {
     context.subtractRemainingAmount(account.getPaidAmount());
 
     context.addActions(buildCreditAction(refundReason, account.getPaidAmount(),
-      PAYMENT_CREDIT_TRANSACTION_INFO, context));
+      "Refund to patron", context));
 
     context.addRemainingAmount(account.getPaidAmount());
 
     context.addActions(buildRefundAction(refundReason, account.getPaidAmount(),
-      PAYMENT_REFUND_TRANSACTION_INFO, context));
+      "Refunded to patron", context));
   }
 
   @Override
@@ -138,11 +132,11 @@ public class FeeRefundProcessor implements AccountRefundProcessor {
   }
 
   private String getTransferRefundTransactionInfo(Account account) {
-    return format(TRANSFER_REFUND_TRANSACTION_INFO, account.getTransferAccountName());
+    return "Refunded to " + account.getTransferAccountName();
   }
 
   private String getTransferCreditTransactionInfo(Account account) {
-    return format(TRANSFER_CREDIT_TRANSACTION_INFO, account.getTransferAccountName());
+    return "Refund to " + account.getTransferAccountName();
   }
 
   public static FeeRefundProcessor createLostItemFeeRefundProcessor() {
