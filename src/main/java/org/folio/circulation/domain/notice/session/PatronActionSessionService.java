@@ -9,6 +9,7 @@ import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.ResultBinding.mapResult;
 import static org.folio.circulation.support.http.client.PageLimit.limit;
 
+import java.lang.invoke.MethodHandles;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumMap;
@@ -31,12 +32,15 @@ import org.folio.circulation.domain.notice.PatronNoticeService;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.http.client.PageLimit;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
 public class PatronActionSessionService {
   private static final PageLimit DEFAULT_SESSION_SIZE_PAGE_LIMIT = limit(200);
+  private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
   private static EnumMap<PatronActionType, NoticeEventType> actionToEventMap;
 
@@ -138,6 +142,7 @@ public class PatronActionSessionService {
     MultipleRecords<PatronSessionRecord> records) {
 
     if (records == null || records.isEmpty()) {
+      log.info("Records are null or empty");
       return completedFuture(succeeded(null));
     }
 
@@ -146,6 +151,7 @@ public class PatronActionSessionService {
       .collect(Collectors.toList());
 
     if (sessionRecordsWithLoans.isEmpty()) {
+      log.info("Loans were not fetched for the PatronSessionRecords. The notices will not be sent");
       return completedFuture(succeeded(records));
     }
 

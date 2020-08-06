@@ -1,3 +1,7 @@
+## 19.0.12 2020-08-06
+
+* Fixes issue with not sending check-in/check-out notices after closing browser (CIRC-869)
+
 ## 19.0.12 2020-08-03
 
 * Fixes issue with `URI Too Large` error during ending expired sessions (CIRC-865)
