@@ -46,7 +46,7 @@ public class DeclareLostResource extends AbstractClaimedReturnedResource {
       .after(request -> loanRepository.getById(request.getLoanId())
       .thenApply(LoanValidator::refuseWhenLoanIsClosed)
       .thenApply(this::refuseWhenItemIsAlreadyDeclaredLost)
-      .thenApply(r -> setIsClaimedReturned(r))
+      .thenApply(this::setIsClaimedReturned)
       .thenApply(loan -> declareItemLost(loan, request))
       .thenCompose(r -> r.after(loan -> createNote(clients, loan, isClaimedReturned)))
       .thenCompose(r -> r.after(storeLoanAndItem::updateLoanAndItemInStorage))

@@ -48,7 +48,7 @@ public class DeclareClaimedReturnedItemAsMissingResource extends AbstractClaimed
     final ChangeItemStatusService changeItemStatusService = new ChangeItemStatusService(clients);
 
     return changeItemStatusService.getOpenLoan(request)
-      .thenApply(loanResult -> setIsClaimedReturned(loanResult))
+      .thenApply(this::setIsClaimedReturned)
       .thenApply(NotInItemStatusValidator::refuseWhenItemIsNotClaimedReturned)
       .thenApply(loanResult -> declareLoanMissing(loanResult, request))
       .thenCompose(changeItemStatusService::updateLoanAndItem)

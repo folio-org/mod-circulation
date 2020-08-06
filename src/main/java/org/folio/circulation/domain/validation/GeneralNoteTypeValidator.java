@@ -7,6 +7,9 @@ import org.folio.circulation.domain.NoteType;
 import org.folio.circulation.support.Result;
 
 public class GeneralNoteTypeValidator {
+
+  private GeneralNoteTypeValidator() {}
+
   public static Result<MultipleRecords<NoteType>> refuseIfNoteTypeNotFound(
     Result<MultipleRecords<NoteType>> noteTypeResult) {
 
