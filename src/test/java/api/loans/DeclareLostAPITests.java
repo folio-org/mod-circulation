@@ -472,6 +472,26 @@ public class DeclareLostAPITests extends APITests {
     assertEquals(1, notesClient.getAll().size() - initalNoteCount);
   }
 
+  @Test
+  public void noteNotCreatedWhenNotClaimedReturned() {
+    int initalNoteCount = notesClient.getAll().size();
+    String comment = "testing";
+
+    InventoryItemResource item = itemsFixture.basedUponSmallAngryPlanet();
+    UUID loanId = checkOutFixture.checkOutByBarcode(item, usersFixture.charlotte())
+      .getId();
+
+    DateTime dateTime = DateTime.now();
+
+    final DeclareItemLostRequestBuilder builder = new DeclareItemLostRequestBuilder()
+      .forLoanId(loanId).on(dateTime)
+      .withComment(comment);
+
+    declareLostFixtures.declareItemLost(builder);
+
+    assertEquals(0, notesClient.getAll().size() - initalNoteCount);
+  }
+
   private List<JsonObject> getAccountsForLoan(UUID loanId) {
     return accountsClient.getMany(exactMatch("loanId", loanId.toString()))
       .stream().collect(Collectors.toList());

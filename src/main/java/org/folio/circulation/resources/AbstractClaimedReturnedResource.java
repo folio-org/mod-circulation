@@ -1,5 +1,8 @@
 package org.folio.circulation.resources;
 
+import static java.util.concurrent.CompletableFuture.completedFuture;
+import static org.folio.circulation.support.Result.succeeded;
+
 import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.domain.Loan;
@@ -35,12 +38,13 @@ public abstract class AbstractClaimedReturnedResource extends Resource {
     final NotesRepository notesRepo = new NotesRepository(clients);
     final NoteTypesRepository noteTypesRepo = new NoteTypesRepository(clients);
     if (isClaimedReturned) {
-      noteTypesRepo.findByName("General note")
+      return noteTypesRepo.findByName("General note")
         .thenApply(GeneralNoteTypeValidator::refuseIfNoteTypeNotFound)
         .thenApply(r -> r.map(CollectionUtil::firstOrNull))
-        .thenCompose(r -> r.after(noteType -> notesRepo.create(createNote(noteType, loan))));
+        .thenCompose(r -> r.after(noteType -> notesRepo.create(createNote(noteType, loan))))
+        .thenCompose(r -> r.after(note -> completedFuture(succeeded(loan))));
     }
-    return CompletableFuture.completedFuture(Result.succeeded(loan));
+    return completedFuture(succeeded(loan));
   }
 
   protected Note createNote(NoteType noteType, Loan loan) {
