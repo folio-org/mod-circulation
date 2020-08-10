@@ -41,17 +41,16 @@ public class FeeRefundProcessor implements AccountRefundProcessor {
   @Override
   public void onHasTransferAmount(AccountRefundContext context) {
     final Account account = context.getAccount();
-    final String transferRefundTransactionInfo = getTransferRefundTransactionInfo(account);
 
     context.subtractRemainingAmount(account.getTransferredAmount());
 
     context.addActions(buildCreditAction(refundReason, account.getTransferredAmount(),
-      transferRefundTransactionInfo, context));
+      getTransferCreditTransactionInfo(account), context));
 
     context.addRemainingAmount(account.getTransferredAmount());
 
     context.addActions(buildRefundAction(refundReason, account.getTransferredAmount(),
-      transferRefundTransactionInfo, context));
+      getTransferRefundTransactionInfo(account), context));
   }
 
   @Override
@@ -62,17 +61,16 @@ public class FeeRefundProcessor implements AccountRefundProcessor {
   @Override
   public void onHasPaidAmount(AccountRefundContext context) {
     final Account account = context.getAccount();
-    final String paymentRefundTransactionInfo = "Refund to patron";
 
     context.subtractRemainingAmount(account.getPaidAmount());
 
     context.addActions(buildCreditAction(refundReason, account.getPaidAmount(),
-      paymentRefundTransactionInfo, context));
+      "Refund to patron", context));
 
     context.addRemainingAmount(account.getPaidAmount());
 
     context.addActions(buildRefundAction(refundReason, account.getPaidAmount(),
-      paymentRefundTransactionInfo, context));
+      "Refunded to patron", context));
   }
 
   @Override
@@ -134,6 +132,10 @@ public class FeeRefundProcessor implements AccountRefundProcessor {
   }
 
   private String getTransferRefundTransactionInfo(Account account) {
+    return "Refunded to " + account.getTransferAccountName();
+  }
+
+  private String getTransferCreditTransactionInfo(Account account) {
     return "Refund to " + account.getTransferAccountName();
   }
 

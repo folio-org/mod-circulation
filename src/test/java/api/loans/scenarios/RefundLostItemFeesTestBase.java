@@ -3,9 +3,11 @@ package api.loans.scenarios;
 import static api.support.http.CqlQuery.queryFromTemplate;
 import static api.support.matchers.AccountActionsMatchers.CANCELLED_ITEM_RETURNED;
 import static api.support.matchers.AccountActionsMatchers.CREDITED_FULLY;
+import static api.support.matchers.AccountActionsMatchers.CREDITED_TO_BURSAR;
+import static api.support.matchers.AccountActionsMatchers.CREDITED_TO_PATRON;
 import static api.support.matchers.AccountActionsMatchers.REFUNDED_FULLY;
-import static api.support.matchers.AccountActionsMatchers.REFUND_TO_BURSAR;
-import static api.support.matchers.AccountActionsMatchers.REFUND_TO_PATRON;
+import static api.support.matchers.AccountActionsMatchers.REFUNDED_TO_BURSAR;
+import static api.support.matchers.AccountActionsMatchers.REFUNDED_TO_PATRON;
 import static api.support.matchers.AccountActionsMatchers.arePaymentRefundActionsCreated;
 import static api.support.matchers.AccountActionsMatchers.areTransferRefundActionsCreated;
 import static api.support.matchers.AccountActionsMatchers.isCancelledItemReturnedActionCreated;
@@ -446,16 +448,16 @@ public abstract class RefundLostItemFeesTestBase extends APITests {
         hasJsonPath("transactionInformation", "-")),
       allOf(
         hasJsonPath("typeAction", REFUNDED_FULLY),
-        hasJsonPath("transactionInformation", REFUND_TO_PATRON)),
+        hasJsonPath("transactionInformation", REFUNDED_TO_PATRON)),
       allOf(
         hasJsonPath("typeAction", CREDITED_FULLY),
-        hasJsonPath("transactionInformation", REFUND_TO_PATRON)),
+        hasJsonPath("transactionInformation", CREDITED_TO_PATRON)),
       allOf(
         hasJsonPath("typeAction", REFUNDED_FULLY),
-        hasJsonPath("transactionInformation", REFUND_TO_BURSAR)),
+        hasJsonPath("transactionInformation", REFUNDED_TO_BURSAR)),
       allOf(
         hasJsonPath("typeAction", CREDITED_FULLY),
-        hasJsonPath("transactionInformation", REFUND_TO_BURSAR))
+        hasJsonPath("transactionInformation", CREDITED_TO_BURSAR))
     ));
 
     final int numberOfRefundCancelActions = 5;
