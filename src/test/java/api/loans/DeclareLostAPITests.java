@@ -447,8 +447,9 @@ public class DeclareLostAPITests extends APITests {
 
   @Test
   public void shouldCreateNoteWhenItemDeclaredLostAfterBeingClaimedReturned() {
-    int initalNoteCount = notesClient.getAll().size();
     String comment = "testing";
+
+    assertThat(notesClient.getAll().size(), is(0));
 
     InventoryItemResource item = itemsFixture.basedUponSmallAngryPlanet();
     UUID loanId = checkOutFixture.checkOutByBarcode(item, usersFixture.charlotte())
@@ -469,7 +470,10 @@ public class DeclareLostAPITests extends APITests {
 
     declareLostFixtures.declareItemLost(builder);
 
-    assertEquals(1, notesClient.getAll().size() - initalNoteCount);
+    List<JsonObject> notes = notesClient.getAll();
+    assertThat(notes.size(), is(1));
+    assertThat(notes.get(0).getString("title"), is("Claimed returned item marked lost"));
+    assertThat(notes.get(0).getString("domain"), is("loans"));
   }
 
   @Test
