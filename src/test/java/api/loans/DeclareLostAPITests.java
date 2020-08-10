@@ -446,7 +446,7 @@ public class DeclareLostAPITests extends APITests {
   }
 
   @Test
-  public void noteCreatedWhenDeclaredLost() {
+  public void shouldCreateNoteWhenItemDeclaredLostAfterBeingClaimedReturned() {
     int initalNoteCount = notesClient.getAll().size();
     String comment = "testing";
 
@@ -473,7 +473,7 @@ public class DeclareLostAPITests extends APITests {
   }
 
   @Test
-  public void noteNotCreatedWhenNotClaimedReturned() {
+  public void shouldNotCreateNoteWhenNotPreviouslyClaimedReturned() {
     int initalNoteCount = notesClient.getAll().size();
     String comment = "testing";
 

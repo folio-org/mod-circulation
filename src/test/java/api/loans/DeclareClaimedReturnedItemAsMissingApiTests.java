@@ -120,7 +120,7 @@ public class DeclareClaimedReturnedItemAsMissingApiTests extends APITests {
   }
 
   @Test
-  public void noteCreatedWhenDeclaredMissing() {
+  public void shouldCreateNoteWhenItemDeclaredMissing() {
     int initalNoteCount = notesClient.getAll().size();
 
     claimItemReturnedFixture.claimItemReturned(new ClaimItemReturnedRequestBuilder()
