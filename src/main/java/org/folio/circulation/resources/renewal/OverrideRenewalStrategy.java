@@ -76,7 +76,7 @@ public class OverrideRenewalStrategy implements RenewalStrategy {
         return processRenewal(proposedDueDateResult, loan, comment);
       }
 
-      if (isLoanLost(loan)) {
+      if (itemLostWhilstOnLoan(loan)) {
         return processRenewal(proposedDueDateResult, loan, comment)
           .map(dueDate -> loan.changeItemStatusForItemAndLoan(CHECKED_OUT));
       }
@@ -101,7 +101,7 @@ public class OverrideRenewalStrategy implements RenewalStrategy {
       .map(dueDate -> loan.overrideRenewal(dueDate, loan.getLoanPolicyId(), comment));
   }
 
-  private boolean isLoanLost(Loan loan) {
+  private boolean itemLostWhilstOnLoan(Loan loan) {
     return loan.isDeclaredLost() || loan.isAgedToLost();
   }
 }
