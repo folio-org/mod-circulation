@@ -23,6 +23,7 @@ import org.folio.circulation.support.http.client.IndividualResource;
 import org.hamcrest.Matcher;
 import org.hamcrest.MatcherAssert;
 import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
 import org.joda.time.LocalTime;
 import org.junit.Before;
 import org.junit.Test;
@@ -213,8 +214,6 @@ public class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests 
 
     use(noticePolicy);
 
-    DateTime loanDate = new DateTime(2019, 8, 23, 10, 30);
-
     IndividualResource james = usersFixture.james();
     IndividualResource steve = usersFixture.steve();
     IndividualResource rebecca = usersFixture.rebecca();
@@ -239,7 +238,8 @@ public class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests 
 
     //Should fetch 10 notices, when total records is 12
     //So that notices for one of the users should not be processed
-    scheduledNoticeProcessingClient.runDueDateNotRealTimeNoticesProcessing(loanDate.plusYears(1));
+    final DateTime runTime = DateTime.now(DateTimeZone.UTC).plusDays(15);
+    scheduledNoticeProcessingClient.runDueDateNotRealTimeNoticesProcessing(runTime);
 
     List<JsonObject> scheduledNotices = scheduledNoticesClient.getAll();
     assertThat(scheduledNotices, hasSize(4));
