@@ -52,6 +52,7 @@ import api.support.fakes.FakePubSub;
 import api.support.fixtures.ItemExamples;
 import api.support.http.InventoryItemResource;
 import io.vertx.core.json.JsonObject;
+import lombok.val;
 
 public class ChangeDueDateAPITests extends APITests {
   private InventoryItemResource item;
@@ -169,6 +170,22 @@ public class ChangeDueDateAPITests extends APITests {
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("item is Claimed returned"),
       hasUUIDParameter("itemId", item.getId()))));
+  }
+
+  @Test
+  public void cannotChangeDueDateWhenItemIsAgedToLost() {
+    final DateTime newDueDate = dueDate.plus(Period.days(14));
+
+    val ageToLostResult = ageToLostFixture.createAgedToLostLoan();
+
+    final Response response = changeDueDateFixture.attemptChangeDueDate(
+      new ChangeDueDateRequestBuilder()
+        .forLoan(ageToLostResult.getLoanId())
+        .withDueDate(newDueDate));
+
+    assertThat(response.getJson(), hasErrorWith(allOf(
+      hasMessage("item is Aged to lost"),
+      hasUUIDParameter("itemId", ageToLostResult.getItemId()))));
   }
 
   @Test

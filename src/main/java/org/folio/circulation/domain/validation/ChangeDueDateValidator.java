@@ -1,8 +1,11 @@
 package org.folio.circulation.domain.validation;
 
+import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 
+import java.util.Arrays;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Predicate;
 
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
@@ -17,33 +20,32 @@ public class ChangeDueDateValidator {
     this.loanRepository = loanRepository;
   }
 
-  public CompletableFuture<Result<LoanAndRelatedRecords>> refuseWhenClaimedReturned(
-      Result<LoanAndRelatedRecords> changedLoanResult) {
+  public CompletableFuture<Result<LoanAndRelatedRecords>> refuseChangeDueDateForItemInStatus(
+    Result<LoanAndRelatedRecords> loanAndRelatedRecordsResult) {
 
-    return changedLoanResult
-      .map(LoanAndRelatedRecords::getLoan)
-      .afterWhen(this::itemIsClaimedReturned,
-        this::refuseWhenDueDateChanged, this::carryOn)
-      .thenApply(r -> r.next(existingLoan -> changedLoanResult));
+    return loanAndRelatedRecordsResult.after(context -> refuseWhenDueDateChanged(context,
+      Loan::isDeclaredLost,
+      Loan::isClaimedReturned,
+      Loan::isAgedToLost));
   }
 
-  private CompletableFuture<Result<Boolean>> itemIsClaimedReturned(
-      Loan changedLoan) {
+  @SafeVarargs
+  private final CompletableFuture<Result<LoanAndRelatedRecords>> refuseWhenDueDateChanged(
+    LoanAndRelatedRecords relatedRecords, Predicate<Loan>... refusePredicates) {
 
-    return Result.ofAsync(() -> changedLoan.getItem().isClaimedReturned());
-  }
+    final Loan changedLoan = relatedRecords.getLoan();
+    final boolean caseDoesNotMatch = Arrays.stream(refusePredicates)
+      .noneMatch(predicate -> predicate.test(changedLoan));
 
-  private CompletableFuture<Result<Loan>> refuseWhenDueDateChanged(
-      Loan changedLoan) {
+    if (caseDoesNotMatch) {
+      return CompletableFuture.completedFuture(succeeded(relatedRecords));
+    }
 
     return getExistingLoan(changedLoan)
       .thenApply(r -> r.failWhen(
         existingLoan -> dueDateHasChanged(existingLoan, changedLoan),
-        existingLoan -> dueDateChangedFailedForClaimedReturned(changedLoan)));
-  }
-
-  private CompletableFuture<Result<Loan>> carryOn(Loan changedLoan) {
-    return Result.ofAsync(() -> changedLoan);
+        existingLoan -> dueDateChangedFailedForClaimedReturned(changedLoan)))
+      .thenApply(r -> r.map(notUsed -> relatedRecords));
   }
 
   private Result<Boolean> dueDateHasChanged(Loan existingLoan, Loan changedLoan) {
@@ -57,6 +59,7 @@ public class ChangeDueDateValidator {
   }
 
   private ValidationErrorFailure dueDateChangedFailedForClaimedReturned(Loan loan) {
-    return singleValidationError("item is claimed returned", "id", loan.getId());
+    return singleValidationError("item is " + loan.getItem().getStatusName(),
+      "itemId", loan.getItemId());
   }
 }

@@ -29,6 +29,7 @@ import org.hamcrest.Matcher;
 import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
 import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
 import org.joda.time.Period;
 import org.junit.Test;
 
@@ -43,6 +44,7 @@ import api.support.fixtures.ItemExamples;
 import api.support.fixtures.TemplateContextMatchers;
 import api.support.http.InventoryItemResource;
 import io.vertx.core.json.JsonObject;
+import lombok.val;
 
 public class ChangeDueDateByReplacingLoanTests extends APITests {
   @Test
@@ -126,7 +128,7 @@ public class ChangeDueDateByReplacingLoanTests extends APITests {
 
     assertThat(updatedLoanResponse.getStatusCode(), is(422));
     assertThat(updatedLoanResponse.getJson(),
-      hasErrorWith(hasMessage("item is claimed returned")));
+      hasErrorWith(hasMessage("item is Claimed returned")));
   }
 
   @Test
@@ -338,5 +340,24 @@ public class ChangeDueDateByReplacingLoanTests extends APITests {
       loanInStorage.containsKey("checkinServicePoint"), is(false));
     assertThat("Should not contain check out service point summary",
       loanInStorage.containsKey("checkoutServicePoint"), is(false));
+  }
+
+  @Test
+  public void cannotChangeDueDateForAgedToLostItem() {
+    final DateTime newDueDate = DateTime.now(DateTimeZone.UTC).plusWeeks(4);
+
+    val agedToLostResult = ageToLostFixture.createAgedToLostLoan();
+
+    final JsonObject changedLoan = loansClient.getById(agedToLostResult.getLoanId())
+      .getJson().copy()
+      .put("action", "dueDateChange")
+      .put("dueDate", newDueDate.toString());
+
+    final Response replaceResponse = loansFixture.attemptToReplaceLoan(
+      agedToLostResult.getLoanId(), changedLoan);
+
+    assertThat(replaceResponse.getJson(), hasErrorWith(allOf(
+      hasMessage("item is Aged to lost"),
+      hasUUIDParameter("itemId", agedToLostResult.getItemId()))));
   }
 }

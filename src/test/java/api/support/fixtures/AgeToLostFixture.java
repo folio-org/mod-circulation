@@ -5,6 +5,8 @@ import static api.support.http.InterfaceUrls.scheduledAgeToLostUrl;
 import static org.joda.time.DateTime.now;
 import static org.joda.time.DateTimeZone.UTC;
 
+import java.util.UUID;
+
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.joda.time.DateTime;
 
@@ -63,5 +65,13 @@ public final class AgeToLostFixture {
     private final IndividualResource loan;
     private final IndividualResource item;
     private final IndividualResource user;
+
+    public UUID getItemId() {
+      return item.getId();
+    }
+
+    public UUID getLoanId() {
+      return loan.getId();
+    }
   }
 }

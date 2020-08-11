@@ -46,17 +46,12 @@ public class ItemStatusValidator {
       .next(p -> refuseWhenItemIs(loanAndRelatedRecords, AGED_TO_LOST));
   }
 
-  public Result<LoanAndRelatedRecords> refuseWhenItemIsDeclaredLost(
+  public Result<LoanAndRelatedRecords> refuseWhenItemIsNotAllowedForDueDateChange(
     Result<LoanAndRelatedRecords> loanAndRelatedRecords) {
 
     return loanAndRelatedRecords
-      .next(p -> refuseWhenItemIs(loanAndRelatedRecords, DECLARED_LOST));
-  }
-
-  public Result<LoanAndRelatedRecords> refuseWhenItemIsClaimedReturned(
-    Result<LoanAndRelatedRecords> loanAndRelatedRecords) {
-
-    return loanAndRelatedRecords
-      .next(p -> refuseWhenItemIs(loanAndRelatedRecords, CLAIMED_RETURNED));
+      .next(p -> refuseWhenItemIs(loanAndRelatedRecords, DECLARED_LOST))
+      .next(p -> refuseWhenItemIs(loanAndRelatedRecords, CLAIMED_RETURNED))
+      .next(p -> refuseWhenItemIs(loanAndRelatedRecords, AGED_TO_LOST));
   }
 }
