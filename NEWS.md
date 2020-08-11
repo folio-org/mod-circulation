@@ -1,4 +1,8 @@
-## 19.0.12 2020-08-06
+## 19.0.14 2020-08-11
+
+* Ensures that scheduled task endpoints respond despite failures when triggered by Okapi (CIRC-850)
+
+## 19.0.13 2020-08-06
 
 * Fixes issue with not sending check-in/check-out notices after closing browser (CIRC-869)
 
