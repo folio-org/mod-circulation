@@ -406,7 +406,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
       .withName("Limited Renewals policy")
       .rolling(Period.weeks(1));
 
-    use(rollingDefaultPolicies()
+    use(defaultRollingPolicies()
       .loanPolicy(loanPoliciesFixture.create(limitedRenewalsPolicy))
       // Have to charge a fine otherwise the loan is closed when item is declared lost
       .lostItemPolicy(lostItemFeePoliciesFixture.chargeFee()));
@@ -450,7 +450,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
       .rolling(Period.weeks(1))
       .renewFromSystemDate();
 
-    use(rollingDefaultPolicies()
+    use(defaultRollingPolicies()
       .loanPolicy(loanPoliciesFixture.create(loanablePolicy))
       // Have to charge a fine otherwise the loan is closed when item is declared lost
       .lostItemPolicy(lostItemFeePoliciesFixture.chargeFee()));

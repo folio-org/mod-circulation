@@ -61,7 +61,7 @@ public final class PoliciesActivationFixture {
       forCampuses(), forLibraries(), new ServicePointsFixture(forServicePoints()));
   }
 
-  public PoliciesActivation.PoliciesActivationBuilder rollingDefaultPolicies() {
+  public PoliciesActivation.PoliciesActivationBuilder defaultRollingPolicies() {
     return PoliciesActivation.builder()
       .loanPolicy(loanPoliciesFixture.canCirculateRolling())
       .requestPolicy(requestPoliciesFixture.allowAllRequestPolicy())
@@ -74,13 +74,13 @@ public final class PoliciesActivationFixture {
   public void useDefaultRollingPolicyCirculationRules() {
     log.info("Using rolling loan policy as fallback policy");
 
-    use(rollingDefaultPolicies());
+    use(defaultRollingPolicies());
   }
 
   public void useExampleFixedPolicyCirculationRules() {
     log.info("Using fixed loan policy as fallback policy");
 
-    use(rollingDefaultPolicies().loanPolicy(loanPoliciesFixture.canCirculateFixed()));
+    use(defaultRollingPolicies().loanPolicy(loanPoliciesFixture.canCirculateFixed()));
   }
 
   public void useFallbackPolicies(UUID loanPolicyId, UUID requestPolicyId,
@@ -100,7 +100,7 @@ public final class PoliciesActivationFixture {
    * @param loanPolicyBuilder - loan policy builder.
    */
   public void setFallbackPolicies(LoanPolicyBuilder loanPolicyBuilder) {
-    use(rollingDefaultPolicies()
+    use(defaultRollingPolicies()
       .loanPolicy(loanPoliciesFixture.create(loanPolicyBuilder))
       .noticePolicy(noticePoliciesFixture.inactiveNotice()));
   }
@@ -112,7 +112,7 @@ public final class PoliciesActivationFixture {
    * @param loanPolicyBuilder - loan policy builder.
    */
   public void use(LoanPolicyBuilder loanPolicyBuilder) {
-    use(rollingDefaultPolicies()
+    use(defaultRollingPolicies()
       .loanPolicy(loanPoliciesFixture.create(loanPolicyBuilder)));
   }
 
@@ -135,7 +135,7 @@ public final class PoliciesActivationFixture {
   public void use(LoanPolicyBuilder loanPolicyBuilder,
     NoticePolicyBuilder noticePolicyBuilder) {
 
-    use(rollingDefaultPolicies()
+    use(defaultRollingPolicies()
       .loanPolicy(loanPoliciesFixture.create(loanPolicyBuilder))
       .noticePolicy(noticePoliciesFixture.create(noticePolicyBuilder)));
   }
@@ -149,12 +149,12 @@ public final class PoliciesActivationFixture {
    * @param noticePolicy - notice policy.
    */
   public void use(NoticePolicyBuilder noticePolicy) {
-    use(rollingDefaultPolicies()
+    use(defaultRollingPolicies()
       .noticePolicy(noticePoliciesFixture.create(noticePolicy)));
   }
 
   public void useLostItemPolicy(UUID lostItemFeePolicyId) {
-    final PoliciesActivation policies = rollingDefaultPolicies().build();
+    final PoliciesActivation policies = defaultRollingPolicies().build();
 
     useFallbackPolicies(policies.getLoanPolicy().getId(),
       policies.getRequestPolicy().getId(),
@@ -170,18 +170,18 @@ public final class PoliciesActivationFixture {
    * @param loanPolicyBuilder - loan policy builder.
    */
   public void useWithActiveNotice(LoanPolicyBuilder loanPolicyBuilder) {
-    use(rollingDefaultPolicies()
+    use(defaultRollingPolicies()
       .loanPolicy(loanPoliciesFixture.create(loanPolicyBuilder)));
   }
 
   /**
    * This method uses notice policy, canCirculateRolling loan policy,
-   * allowAllRequestPolicy request policy, facultyStandard overdue fine policy from
-   * the loanPolicyBuilder.
+   * pageRequestPolicy request policy, facultyStandard overdue fine and lost policies.
+   *
    * @param noticePolicy - notice policy.
    */
-  public void useWithPaging(NoticePolicyBuilder noticePolicy) {
-    use(rollingDefaultPolicies()
+  public void useDefaultRollingPoliciesAndOnlyPageRequests(NoticePolicyBuilder noticePolicy) {
+    use(defaultRollingPolicies()
       .requestPolicy(requestPoliciesFixture.pageRequestPolicy())
       .noticePolicy(noticePoliciesFixture.create(noticePolicy)));
   }
