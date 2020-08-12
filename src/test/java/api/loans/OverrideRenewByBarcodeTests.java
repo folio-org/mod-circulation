@@ -3,6 +3,7 @@ package api.loans;
 
 import static api.support.builders.FixedDueDateSchedule.forDay;
 import static api.support.builders.FixedDueDateSchedule.wholeMonth;
+import static api.support.matchers.ItemMatchers.isCheckedOut;
 import static api.support.matchers.ItemStatusCodeMatcher.hasItemStatus;
 import static api.support.matchers.JsonObjectMatcher.hasJsonPath;
 import static api.support.matchers.PatronNoticeMatcher.hasEmailNoticeProperties;
@@ -51,6 +52,7 @@ import api.support.builders.NoticeConfigurationBuilder;
 import api.support.builders.NoticePolicyBuilder;
 import api.support.fixtures.ItemExamples;
 import api.support.fixtures.TemplateContextMatchers;
+import api.support.fixtures.policies.PoliciesToActivate;
 import api.support.http.InventoryItemResource;
 import io.vertx.core.json.JsonObject;
 import lombok.val;
@@ -483,6 +485,30 @@ public class OverrideRenewByBarcodeTests extends APITests {
     assertThat("due date should be 2 weeks later",
       renewedLoan.getString("dueDate"),
       withinSecondsAfter(seconds(5), approximateRenewalDate.plusWeeks(1)));
+  }
+
+  @Test
+  public void canOverrideRenewalWhenDueDateIsEarlierOrSameAsCurrentLoanDueDateAndItemIsAgedToLost() {
+    final Period renewalPeriod = Period.weeks(1);
+    final DateTime expectedNewDueDate = DateTime.now(UTC).plus(renewalPeriod.timePeriod());
+
+    final LoanPolicyBuilder loanPolicy = new LoanPolicyBuilder()
+      .withName("Aged to lost due date")
+      .rolling(Period.weeks(2))
+      .renewWith(renewalPeriod)
+      .renewFromSystemDate();
+
+    val agedToLostResult = ageToLostFixture.createAgedToLostLoan(PoliciesToActivate.builder()
+      .loanPolicy(loanPoliciesFixture.create(loanPolicy))
+      .lostItemPolicy(lostItemFeePoliciesFixture.ageToLostAfterOneMinute()));
+
+    final IndividualResource overriddenRenewalResponse =
+      loansFixture.overrideRenewalByBarcode(agedToLostResult.getItem(), agedToLostResult.getUser(),
+        OVERRIDE_COMMENT, null);
+
+    assertThat(overriddenRenewalResponse.getJson().getJsonObject("item"), isCheckedOut());
+    assertThat(overriddenRenewalResponse.getJson(), hasJsonPath("dueDate",
+      withinSecondsAfter(seconds(2), expectedNewDueDate)));
   }
 
   @Test

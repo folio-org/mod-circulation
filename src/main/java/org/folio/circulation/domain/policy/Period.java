@@ -22,6 +22,8 @@ import org.folio.circulation.support.HttpFailure;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.http.server.ValidationError;
 import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
+import org.joda.time.Duration;
 
 import io.vertx.core.json.JsonObject;
 
@@ -105,9 +107,11 @@ public class Period {
 
   public static Period minutesBetweenDateAndNow(DateTime startDateTime) {
     final DateTime now = getClockManager().getDateTime();
-    final int minutes = new org.joda.time.Period(startDateTime, now).getMinutes();
+    final long minutes = new Duration(startDateTime, now).getStandardMinutes();
 
-    return minutes(minutes);
+    // It is very unlikely that overflow happens here
+    // because an integer can represent minutes for ~4000 years.
+    return minutes((int) minutes);
   }
 
   Result<DateTime> addTo(
@@ -191,10 +195,20 @@ public class Period {
   }
 
   public boolean isLessThanOrEqualTo(Period otherPeriod) {
-    return toMinutes() <= otherPeriod.toMinutes();
+    return getMillisecondsDifference(otherPeriod) <= 0;
   }
 
   public boolean isGreaterThanOrEqualTo(Period otherPeriod) {
-    return toMinutes() >= otherPeriod.toMinutes();
+    return getMillisecondsDifference(otherPeriod) >= 0;
+  }
+
+  private long getMillisecondsDifference(Period other) {
+    // find ms difference by adding this period and other period
+    // to the same date and time point and subtracting milliseconds
+    final DateTime dateTimePoint = DateTime.now(DateTimeZone.UTC);
+    final DateTime thisDateTimeFromNowPoint = dateTimePoint.plus(timePeriod());
+    final DateTime otherDateTimeFromNowPoint = dateTimePoint.plus(other.timePeriod());
+
+    return thisDateTimeFromNowPoint.getMillis() - otherDateTimeFromNowPoint.getMillis();
   }
 }
