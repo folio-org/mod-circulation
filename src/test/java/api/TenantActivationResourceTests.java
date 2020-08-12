@@ -8,6 +8,7 @@ import static api.support.fakes.FakePubSub.setFailPubSubRegistration;
 import static api.support.fakes.FakePubSub.setFailPubSubUnregistering;
 import static api.support.matchers.EventTypeMatchers.isItemCheckedInEventType;
 import static api.support.matchers.EventTypeMatchers.isItemCheckedOutEventType;
+import static api.support.matchers.EventTypeMatchers.isItemClaimedReturnedEventType;
 import static api.support.matchers.EventTypeMatchers.isItemDeclaredLostEventType;
 import static api.support.matchers.EventTypeMatchers.isLoanDueDateChangedEventType;
 import static api.support.matchers.PubSubRegistrationMatchers.isValidPublishersRegistration;
@@ -49,14 +50,15 @@ public class TenantActivationResourceTests extends APITests {
 
     assertThat(response.getStatusCode(), is(HTTP_CREATED.toInt()));
 
-    assertThat(getCreatedEventTypes().size(), is(4));
+    assertThat(getCreatedEventTypes().size(), is(5));
     assertThat(getRegisteredPublishers().size(), is(1));
 
     assertThat(getCreatedEventTypes(), hasItems(
       isItemCheckedOutEventType(),
       isItemCheckedInEventType(),
       isItemDeclaredLostEventType(),
-      isLoanDueDateChangedEventType()
+      isLoanDueDateChangedEventType(),
+      isItemClaimedReturnedEventType()
     ));
 
     assertThat(getRegisteredPublishers(), hasItem(isValidPublishersRegistration()));
@@ -77,11 +79,12 @@ public class TenantActivationResourceTests extends APITests {
 
     assertThat(response.getStatusCode(), is(HTTP_NO_CONTENT.toInt()));
 
-    assertThat(getDeletedEventTypes().size(), is(4));
+    assertThat(getDeletedEventTypes().size(), is(5));
     assertThat(getDeletedEventTypes(), hasItems(
       EventTypeMatchers.ITEM_CHECKED_OUT,
       EventTypeMatchers.ITEM_CHECKED_IN,
       EventTypeMatchers.ITEM_DECLARED_LOST,
+      EventTypeMatchers.ITEM_CLAIMED_RETURNED,
       EventTypeMatchers.LOAN_DUE_DATE_CHANGED
     ));
   }

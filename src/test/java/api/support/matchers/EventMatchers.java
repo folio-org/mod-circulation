@@ -2,6 +2,7 @@ package api.support.matchers;
 
 import static api.support.matchers.EventTypeMatchers.isItemCheckedInEventType;
 import static api.support.matchers.EventTypeMatchers.isItemCheckedOutEventType;
+import static api.support.matchers.EventTypeMatchers.isItemClaimedReturnedEventType;
 import static api.support.matchers.EventTypeMatchers.isItemDeclaredLostEventType;
 import static api.support.matchers.EventTypeMatchers.isLoanDueDateChangedEventType;
 import static com.jayway.jsonpath.matchers.JsonPathMatchers.hasJsonPath;
@@ -33,6 +34,15 @@ public class EventMatchers {
         hasJsonPath("returnDate", is(loan.getString("returnDate")))
       ))),
       isItemCheckedInEventType());
+  }
+
+  public static Matcher<JsonObject> isValidItemClaimedReturnedEvent(JsonObject loan) {
+    return allOf(JsonObjectMatcher.allOfPaths(
+      hasJsonPath("eventPayload", allOf(
+        hasJsonPath("userId", is(loan.getString("userId"))),
+        hasJsonPath("loanId", is(loan.getString("id")))
+      ))),
+      isItemClaimedReturnedEventType());
   }
 
   public static Matcher<JsonObject> isValidItemDeclaredLostEvent(JsonObject loan) {

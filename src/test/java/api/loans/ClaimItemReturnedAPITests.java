@@ -1,5 +1,6 @@
 package api.loans;
 
+import static api.support.matchers.EventMatchers.isValidItemClaimedReturnedEvent;
 import static api.support.matchers.LoanMatchers.hasLoanProperty;
 import static api.support.matchers.LoanMatchers.isOpen;
 import static api.support.matchers.LoanMatchers.hasStatus;
@@ -13,9 +14,14 @@ import static org.folio.circulation.domain.representations.LoanProperties.CLAIME
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.hasSize;
 
+import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
+import org.awaitility.Awaitility;
+import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 import org.joda.time.DateTime;
 import org.junit.Before;
@@ -23,18 +29,20 @@ import org.junit.Test;
 
 import api.support.APITests;
 import api.support.builders.ClaimItemReturnedRequestBuilder;
+import api.support.fakes.FakePubSub;
 import api.support.http.InventoryItemResource;
 import io.vertx.core.json.JsonObject;
 
 public class ClaimItemReturnedAPITests extends APITests {
   private InventoryItemResource item;
+  private IndividualResource loan;
   private String loanId;
 
   @Before
   public void setUpItemAndLoan() {
     item = itemsFixture.basedUponSmallAngryPlanet();
-    loanId = checkOutFixture.checkOutByBarcode(item, usersFixture.charlotte())
-      .getId().toString();
+    loan = checkOutFixture.checkOutByBarcode(item, usersFixture.charlotte());
+    loanId = loan.getId().toString();
   }
 
   @Test
@@ -102,6 +110,27 @@ public class ClaimItemReturnedAPITests extends APITests {
         .forLoan(notExistentLoanId));
 
     assertThat(response.getStatusCode(), is(404));
+  }
+
+  @Test
+  public void itemClaimedReturnedEventIsPublished() {
+    final DateTime dateTime = DateTime.now();
+
+    final Response response = claimItemReturnedFixture
+      .claimItemReturned(new ClaimItemReturnedRequestBuilder()
+        .forLoan(loanId)
+        .withItemClaimedReturnedDate(dateTime));
+
+    assertLoanAndItem(response, null, dateTime);
+
+    // Two events are expected: one for check-out and one for the claim
+    List<JsonObject> publishedEvents = Awaitility.await()
+      .atMost(1, TimeUnit.SECONDS)
+      .until(FakePubSub::getPublishedEvents, hasSize(2));
+
+    JsonObject event = publishedEvents.get(1);
+
+    assertThat(event, isValidItemClaimedReturnedEvent(loan.getJson()));
   }
 
   private void assertLoanAndItem(Response response, String comment, DateTime dateTime) {
