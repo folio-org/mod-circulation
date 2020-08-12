@@ -326,4 +326,8 @@ public class ItemsFixture {
   public Function<ItemBuilder, ItemBuilder> addCallNumberStringComponents() {
     return addCallNumberStringComponents("");
   }
+
+  public IndividualResource getById(UUID id) {
+    return new IndividualResource(itemsClient.getById(id));
+  }
 }
