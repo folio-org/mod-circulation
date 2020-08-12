@@ -102,36 +102,6 @@ public class ChangeDueDateByReplacingLoanTests extends APITests {
   }
 
   @Test
-  public void cannotManuallyChangeTheDueDateOfClaimedReturnedLoan() {
-    final InventoryItemResource item = itemsFixture.basedUponNod();
-
-    IndividualResource loan = checkOutFixture.checkOutByBarcode(item);
-
-    final ClaimItemReturnedRequestBuilder claimedItemBuilder =
-     (new ClaimItemReturnedRequestBuilder()).forLoan(loan.getId().toString());
-
-    Response claimedLoan = claimItemReturnedFixture.claimItemReturned(claimedItemBuilder);
-    assertThat(claimedLoan, hasStatus(HTTP_NO_CONTENT));
-
-    Response fetchedLoan = loansClient.getById(loan.getId());
-
-    JsonObject loanToChange = fetchedLoan.getJson().copy();
-
-    final DateTime dueDate = DateTime.parse(loanToChange.getString("dueDate"));
-    final DateTime newDueDate = dueDate.plus(Period.days(14));
-
-    write(loanToChange, "action", "dueDateChange");
-    write(loanToChange, "dueDate", newDueDate);
-
-    Response updatedLoanResponse = loansFixture
-      .attemptToReplaceLoan(loan.getId(), loanToChange);
-
-    assertThat(updatedLoanResponse.getStatusCode(), is(422));
-    assertThat(updatedLoanResponse.getJson(),
-      hasErrorWith(hasMessage("item is Claimed returned")));
-  }
-
-  @Test
   public void canManuallyReapplyTheDueDateOfClaimedReturnedLoan() {
     final InventoryItemResource item = itemsFixture.basedUponNod();
 
@@ -290,7 +260,7 @@ public class ChangeDueDateByReplacingLoanTests extends APITests {
   }
 
   @Test
-  public void dueDateCannotBeChangedWhenItemIsDeclaredLost() {
+  public void shouldRejectDueDateChangeOfItemInDisallowedStatus() {
     useLostItemPolicy(lostItemFeePoliciesFixture.chargeFee().getId());
 
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
@@ -340,24 +310,5 @@ public class ChangeDueDateByReplacingLoanTests extends APITests {
       loanInStorage.containsKey("checkinServicePoint"), is(false));
     assertThat("Should not contain check out service point summary",
       loanInStorage.containsKey("checkoutServicePoint"), is(false));
-  }
-
-  @Test
-  public void cannotChangeDueDateForAgedToLostItem() {
-    final DateTime newDueDate = DateTime.now(DateTimeZone.UTC).plusWeeks(4);
-
-    val agedToLostResult = ageToLostFixture.createAgedToLostLoan();
-
-    final JsonObject changedLoan = loansClient.getById(agedToLostResult.getLoanId())
-      .getJson().copy()
-      .put("action", "dueDateChange")
-      .put("dueDate", newDueDate.toString());
-
-    final Response replaceResponse = loansFixture.attemptToReplaceLoan(
-      agedToLostResult.getLoanId(), changedLoan);
-
-    assertThat(replaceResponse.getJson(), hasErrorWith(allOf(
-      hasMessage("item is Aged to lost"),
-      hasUUIDParameter("itemId", agedToLostResult.getItemId()))));
   }
 }

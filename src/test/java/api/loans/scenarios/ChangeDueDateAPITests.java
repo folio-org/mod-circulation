@@ -130,29 +130,7 @@ public class ChangeDueDateAPITests extends APITests {
   }
 
   @Test
-  public void cannotChangeDueDateWhenDeclaredLost() {
-    final DateTime newDueDate = dueDate.plus(Period.days(14));
-
-    declareLostFixtures.declareItemLost(loan.getJson());
-
-    final JsonObject updatedLoan = loansFixture.getLoanById(loan.getId()).getJson();
-
-    assertThat(updatedLoan, isOpen());
-
-    final Response response = changeDueDateFixture
-      .attemptChangeDueDate(new ChangeDueDateRequestBuilder()
-        .forLoan(loan.getId())
-        .withDueDate(newDueDate));
-
-    assertThat(response, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
-
-    assertThat(response.getJson(), hasErrorWith(allOf(
-      hasMessage("item is Declared lost"),
-      hasUUIDParameter("itemId", item.getId()))));
-  }
-
-  @Test
-  public void cannotChangeDueDateWhenClaimedReturned() {
+  public void shouldRejectDueDateChangeOfItemInDisallowedStatus() {
     final DateTime newDueDate = dueDate.plus(Period.days(14));
 
     claimItemReturnedFixture.claimItemReturned(new ClaimItemReturnedRequestBuilder()
@@ -170,22 +148,6 @@ public class ChangeDueDateAPITests extends APITests {
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("item is Claimed returned"),
       hasUUIDParameter("itemId", item.getId()))));
-  }
-
-  @Test
-  public void cannotChangeDueDateWhenItemIsAgedToLost() {
-    final DateTime newDueDate = dueDate.plus(Period.days(14));
-
-    val ageToLostResult = ageToLostFixture.createAgedToLostLoan();
-
-    final Response response = changeDueDateFixture.attemptChangeDueDate(
-      new ChangeDueDateRequestBuilder()
-        .forLoan(ageToLostResult.getLoanId())
-        .withDueDate(newDueDate));
-
-    assertThat(response.getJson(), hasErrorWith(allOf(
-      hasMessage("item is Aged to lost"),
-      hasUUIDParameter("itemId", ageToLostResult.getItemId()))));
   }
 
   @Test
