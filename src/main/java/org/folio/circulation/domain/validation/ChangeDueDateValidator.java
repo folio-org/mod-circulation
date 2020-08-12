@@ -44,7 +44,7 @@ public class ChangeDueDateValidator {
     return getExistingLoan(changedLoan)
       .thenApply(r -> r.failWhen(
         existingLoan -> dueDateHasChanged(existingLoan, changedLoan),
-        existingLoan -> dueDateChangedFailedForClaimedReturned(changedLoan)))
+        existingLoan -> dueDateChangeFailedForItem(changedLoan)))
       .thenApply(r -> r.map(notUsed -> relatedRecords));
   }
 
@@ -58,7 +58,7 @@ public class ChangeDueDateValidator {
     return loanRepository.getById(loan.getId());
   }
 
-  private ValidationErrorFailure dueDateChangedFailedForClaimedReturned(Loan loan) {
+  private ValidationErrorFailure dueDateChangeFailedForItem(Loan loan) {
     return singleValidationError("item is " + loan.getItem().getStatusName(),
       "itemId", loan.getItemId());
   }
