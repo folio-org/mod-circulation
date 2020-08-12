@@ -30,7 +30,7 @@ public class ChangeDueDateValidator {
         .thenApply(r -> r.next(existingLoan -> {
           if (dueDateHasChanged(existingLoan, changedLoan)) {
             return itemStatusValidator
-              .refuseWhenItemIsNotAllowedForDueDateChange(loanAndRelatedRecordsResult);
+              .refuseWhenItemStatusDoNotAllowDueDateChange(loanAndRelatedRecordsResult);
           }
 
           return loanAndRelatedRecordsResult;

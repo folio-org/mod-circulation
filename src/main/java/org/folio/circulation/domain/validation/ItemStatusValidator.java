@@ -46,7 +46,7 @@ public class ItemStatusValidator {
       .next(p -> refuseWhenItemIs(loanAndRelatedRecords, AGED_TO_LOST));
   }
 
-  public Result<LoanAndRelatedRecords> refuseWhenItemIsNotAllowedForDueDateChange(
+  public Result<LoanAndRelatedRecords> refuseWhenItemStatusDoNotAllowDueDateChange(
     Result<LoanAndRelatedRecords> loanAndRelatedRecords) {
 
     return loanAndRelatedRecords
