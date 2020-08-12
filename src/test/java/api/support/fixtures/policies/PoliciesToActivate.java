@@ -9,7 +9,7 @@ import lombok.Getter;
 @Builder
 @AllArgsConstructor
 @Getter
-public final class PoliciesActivation {
+public final class PoliciesToActivate {
   private final IndividualResource loanPolicy;
   private final IndividualResource requestPolicy;
   private final IndividualResource noticePolicy;

@@ -76,7 +76,7 @@ public class RequestScheduledNoticesTests extends APITests {
       .withName("request policy")
       .withRequestNotices(Collections.singletonList(requestNotice));
 
-    useDefaultRollingPoliciesAndOnlyPageRequests(noticePolicyBuilder);
+    useDefaultRollingPoliciesAndOnlyAllowPageRequests(noticePolicyBuilder);
 
     LocalDate requestExpiration = LocalDate.now().plusMonths(3);
     IndividualResource request = requestsFixture.place(new RequestBuilder().page()
@@ -121,7 +121,7 @@ public class RequestScheduledNoticesTests extends APITests {
       .withName("request policy")
       .withRequestNotices(Collections.singletonList(requestNotice));
 
-    useDefaultRollingPoliciesAndOnlyPageRequests(noticePolicyBuilder);
+    useDefaultRollingPoliciesAndOnlyAllowPageRequests(noticePolicyBuilder);
 
     requestsFixture.place(new RequestBuilder().page()
       .forItem(item)
@@ -150,7 +150,7 @@ public class RequestScheduledNoticesTests extends APITests {
       .withName("request policy")
       .withRequestNotices(Collections.singletonList(requestNotice));
 
-    useDefaultRollingPoliciesAndOnlyPageRequests(noticePolicyBuilder);
+    useDefaultRollingPoliciesAndOnlyAllowPageRequests(noticePolicyBuilder);
 
     requestsFixture.place(new RequestBuilder().page()
       .forItem(item)
@@ -180,7 +180,7 @@ public class RequestScheduledNoticesTests extends APITests {
       .withName("request policy")
       .withRequestNotices(Collections.singletonList(requestNotice));
 
-    useDefaultRollingPoliciesAndOnlyPageRequests(noticePolicyBuilder);
+    useDefaultRollingPoliciesAndOnlyAllowPageRequests(noticePolicyBuilder);
 
     LocalDate requestExpiration = LocalDate.now().plusMonths(3);
     IndividualResource request = requestsFixture.place(new RequestBuilder().page()
@@ -225,7 +225,7 @@ public class RequestScheduledNoticesTests extends APITests {
       .withName("request policy")
       .withRequestNotices(Collections.singletonList(requestNotice));
 
-    useDefaultRollingPoliciesAndOnlyPageRequests(noticePolicyBuilder);
+    useDefaultRollingPoliciesAndOnlyAllowPageRequests(noticePolicyBuilder);
 
     LocalDate requestExpiration = LocalDate.now(DateTimeZone.UTC).plusMonths(3);
     RequestBuilder requestBuilder = new RequestBuilder().page()
@@ -293,7 +293,7 @@ public class RequestScheduledNoticesTests extends APITests {
       .withName("request policy")
       .withRequestNotices(Collections.singletonList(requestNotice));
 
-    useDefaultRollingPoliciesAndOnlyPageRequests(noticePolicyBuilder);
+    useDefaultRollingPoliciesAndOnlyAllowPageRequests(noticePolicyBuilder);
 
     LocalDate requestExpiration = LocalDate.now(DateTimeZone.UTC).plusMonths(3);
     RequestBuilder requestBuilder = new RequestBuilder().page()
@@ -345,7 +345,7 @@ public class RequestScheduledNoticesTests extends APITests {
       .withName("request policy")
       .withRequestNotices(Collections.singletonList(requestNotice));
 
-    useDefaultRollingPoliciesAndOnlyPageRequests(noticePolicyBuilder);
+    useDefaultRollingPoliciesAndOnlyAllowPageRequests(noticePolicyBuilder);
 
     LocalDate requestExpiration = LocalDate.now().plusMonths(3);
     RequestBuilder requestBuilder = new RequestBuilder().page()
@@ -415,7 +415,7 @@ public class RequestScheduledNoticesTests extends APITests {
       .withName("request policy")
       .withRequestNotices(Arrays.asList(pickupReminder, holdShelfExpirationNotice, requestExpirationNotice));
 
-    useDefaultRollingPoliciesAndOnlyPageRequests(noticePolicyBuilder);
+    useDefaultRollingPoliciesAndOnlyAllowPageRequests(noticePolicyBuilder);
 
     LocalDate requestExpirationLocalDate = LocalDate.now().plusMonths(3);
     RequestBuilder requestBuilder = new RequestBuilder().page()
