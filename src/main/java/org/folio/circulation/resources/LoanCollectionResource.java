@@ -169,7 +169,7 @@ public class LoanCollectionResource extends CollectionResource {
       .thenApply(this::refuseWhenClosedAndNoCheckInServicePointId)
       .thenCombineAsync(itemRepository.fetchFor(loan), this::addItem)
       .thenApply(itemNotFoundValidator::refuseWhenItemNotFound)
-      .thenCompose(changeDueDateValidator::refuseChangeDueDateForItemInStatus)
+      .thenCompose(changeDueDateValidator::refuseChangeDueDateForItemInDisallowedStatus)
       .thenCombineAsync(userRepository.getUser(loan.getUserId()), this::addUser)
       .thenComposeAsync(r -> r.after(proxyRelationshipValidator::refuseWhenInvalid))
       .thenCombineAsync(requestQueueRepository.get(loan.getItemId()), this::addRequestQueue)
