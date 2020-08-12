@@ -2205,7 +2205,8 @@
         "inventory-storage.items.item.put",
         "inventory-storage.holdings.item.get",
         "inventory-storage.instances.item.get",
-        "users.item.get"
+        "users.item.get",
+        "pubsub.publish.post"
       ],
       "visible": false
     },

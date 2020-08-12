@@ -3,6 +3,7 @@ package org.folio.circulation.services;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.domain.EventType.ITEM_CHECKED_IN;
 import static org.folio.circulation.domain.EventType.ITEM_CHECKED_OUT;
+import static org.folio.circulation.domain.EventType.ITEM_CLAIMED_RETURNED;
 import static org.folio.circulation.domain.EventType.ITEM_DECLARED_LOST;
 import static org.folio.circulation.domain.EventType.LOAN_DUE_DATE_CHANGED;
 import static org.folio.circulation.support.JsonPropertyWriter.write;
@@ -11,6 +12,7 @@ import static org.folio.circulation.support.Result.succeeded;
 import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.domain.CheckInContext;
+import org.folio.circulation.domain.EventType;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
@@ -86,20 +88,27 @@ public class EventPublisher {
   }
 
   public CompletableFuture<Result<Loan>> publishDeclaredLostEvent(Loan loan) {
-    if (loan != null) {
-      JsonObject payloadJsonObject = new JsonObject();
-      write(payloadJsonObject, USER_ID_FIELD, loan.getUserId());
-      write(payloadJsonObject, LOAN_ID_FIELD, loan.getId());
+    return publishStatusChangeEvent(ITEM_DECLARED_LOST, loan);
+  }
 
-      return pubSubPublishingService.publishEvent(ITEM_DECLARED_LOST.name(),
-        payloadJsonObject.encode())
-        .thenApply(r -> succeeded(loan));
-    }
-    else {
-      logger.error(FAILED_TO_PUBLISH_LOG_TEMPLATE, ITEM_DECLARED_LOST.name());
+  public CompletableFuture<Result<Loan>> publishItemClaimedReturnedEvent(Loan loan) {
+    return publishStatusChangeEvent(ITEM_CLAIMED_RETURNED, loan);
+  }
+
+  private CompletableFuture<Result<Loan>> publishStatusChangeEvent(EventType eventType, Loan loan) {
+    final String eventName = eventType.name();
+
+    if (loan == null) {
+      logger.error(FAILED_TO_PUBLISH_LOG_TEMPLATE, eventName);
+      return completedFuture(succeeded(null));
     }
 
-    return completedFuture(succeeded(null));
+    JsonObject payloadJson = new JsonObject();
+    write(payloadJson, USER_ID_FIELD, loan.getUserId());
+    write(payloadJson, LOAN_ID_FIELD, loan.getId());
+
+    return pubSubPublishingService.publishEvent(eventName, payloadJson.encode())
+      .thenApply(r -> succeeded(loan));
   }
 
   private CompletableFuture<Result<Loan>> publishDueDateChangedEvent(Loan loan) {
