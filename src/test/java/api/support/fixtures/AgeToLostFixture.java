@@ -55,13 +55,9 @@ public final class AgeToLostFixture {
     val item = itemsFixture.basedUponNod(ItemBuilder::withRandomBarcode);
     val loan = checkOutFixture.checkOutByBarcode(item, user);
 
-    try {
-      // Go to the future
-      getClockManager().setClock(fixed(ofEpochMilli(now().plusMonths(6).getMillis()), ZoneOffset.UTC));
-      timedTaskClient.start(scheduledAgeToLostUrl(), 204, "scheduled-age-to-lost");
-    } finally {
-      getClockManager().setDefaultClock();
-    }
+    // Go to the future
+    getClockManager().setClock(fixed(ofEpochMilli(now().plusMonths(6).getMillis()), ZoneOffset.UTC));
+    timedTaskClient.start(scheduledAgeToLostUrl(), 204, "scheduled-age-to-lost");
 
     final AgeToLostResult ageToLostResult = new AgeToLostResult(loansFixture.getLoanById(loan.getId()),
       itemsFixture.getById(item.getId()), user);

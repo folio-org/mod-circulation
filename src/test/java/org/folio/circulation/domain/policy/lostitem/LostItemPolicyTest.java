@@ -7,8 +7,6 @@ import static org.joda.time.DateTimeZone.UTC;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-import java.util.Random;
-
 import org.folio.circulation.domain.policy.Period;
 import org.joda.time.DateTime;
 import org.junit.Test;
@@ -22,38 +20,50 @@ import junitparams.Parameters;
 public class LostItemPolicyTest {
 
   @Test
-  @Parameters(method = "allowedPeriods")
-  public void shouldNotAgeItemToLostIfDueDateAfterNow(String interval) {
-    final Random random = new Random();
-    final int duration = random.nextInt(1000);
+  @Parameters({
+    "Minutes, 78",
+    "Hours, 9",
+    "Days, 66",
+    "Weeks, 23",
+    "Months, 13",
+  })
+  public void shouldNotAgeItemToLostIfDueDateAfterNow(String interval, int duration) {
     final Period period = from(duration, interval);
     final LostItemPolicy lostItemPolicy = lostItemPolicyWithAgePeriod(period);
 
     final DateTime loanDueDate = now(UTC).plus(period.timePeriod())
-      .plus(minutes(random.nextInt(3)).timePeriod());
+      .plus(minutes(1).timePeriod());
 
     assertFalse(lostItemPolicy.canAgeLoanToLost(loanDueDate));
   }
 
   @Test
-  @Parameters(method = "allowedPeriods")
-  public void shouldAgeItemToLostIfDueDateBeforeNow(String interval) {
-    final Random random = new Random();
-    final int duration = random.nextInt(1000);
+  @Parameters({
+    "Minutes, 43",
+    "Hours, 12",
+    "Days, 29",
+    "Weeks, 1",
+    "Months, 5",
+  })
+  public void shouldAgeItemToLostIfDueDateBeforeNow(String interval, int duration) {
     final Period period = from(duration, interval);
     final LostItemPolicy lostItemPolicy = lostItemPolicyWithAgePeriod(period);
 
     final DateTime loanDueDate = now(UTC).minus(period.timePeriod())
-      .minus(minutes(random.nextInt(3)).timePeriod());
+      .minus(minutes(3).timePeriod());
 
     assertTrue(lostItemPolicy.canAgeLoanToLost(loanDueDate));
   }
 
   @Test
-  @Parameters(method = "allowedPeriods")
-  public void shouldAgeItemToLostIfDueDateIsNow(String interval) {
-    final Random random = new Random();
-    final int duration = random.nextInt(1000);
+  @Parameters({
+    "Minutes, 123",
+    "Hours, 99",
+    "Days, 64",
+    "Weeks, 2",
+    "Months, 3",
+  })
+  public void shouldAgeItemToLostIfDueDateIsNow(String interval, int duration) {
     final Period period = from(duration, interval);
     final LostItemPolicy lostItemPolicy = lostItemPolicyWithAgePeriod(period);
 
@@ -76,17 +86,5 @@ public class LostItemPolicyTest {
     }
 
     return LostItemPolicy.from(representation);
-  }
-
-  // Used as parameter source
-  @SuppressWarnings("unused")
-  private String[] allowedPeriods() {
-    return new String[] {
-      "Minutes",
-      "Hours",
-      "Days",
-      "Weeks",
-      "Months",
-    };
   }
 }
