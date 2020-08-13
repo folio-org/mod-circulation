@@ -12,12 +12,12 @@ import static api.support.http.ResourceClient.forNoticePolicies;
 import static api.support.http.ResourceClient.forRequestPolicies;
 import static api.support.http.ResourceClient.forServicePoints;
 import static api.support.http.api.support.NamedQueryStringParameter.namedParameter;
+import static org.folio.circulation.support.utils.CommonUtils.getOrDefault;
 
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-import java.util.function.Supplier;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -228,9 +228,5 @@ public final class PoliciesActivationFixture {
         invalidNoticePolicyReference,
         overdueFinePoliciesFixture.facultyStandard().getId().toString(),
         lostItemFeePoliciesFixture.facultyStandard().getId().toString()));
-  }
-
-  private <T> T getOrDefault(Supplier<T> value, Supplier<T> def) {
-    return value.get() != null ? value.get() : def.get();
   }
 }
