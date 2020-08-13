@@ -32,11 +32,6 @@ public class OverrideRenewDeclaredLostItemTest extends RefundLostItemFeesTestBas
     performActionThatRequiresRefund();
   }
 
-  @Before
-  public void setupNoteType() {
-    noteTypeFixture.generalNoteType();
-  }
-
   @After
   public void cleanUp() {
     notesClient.deleteAll();

@@ -62,7 +62,6 @@ public class ChangeDueDateAPITests extends APITests {
 
   @Before
   public void setUpItemAndLoan() {
-    noteTypeFixture.generalNoteType();
     chargeFeesForLostItemToKeepLoanOpen();
 
     item = itemsFixture.basedUponNod();

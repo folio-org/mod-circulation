@@ -67,12 +67,6 @@ import io.vertx.core.json.JsonObject;
 import lombok.val;
 
 public class CheckInByBarcodeTests extends APITests {
-
-  @Before
-  public void setupNoteType() {
-    noteTypeFixture.generalNoteType();
-  }
-
   @After
   public void cleanUp() {
     notesClient.deleteAll();

@@ -28,7 +28,6 @@ public class CloseDeclaredLostLoanWhenLostItemFeesAreClosedApiTests extends APIT
 
   @Before
   public void createLoanAndDeclareItemLost() {
-    noteTypeFixture.generalNoteType();
     useLostItemPolicy(lostItemFeePoliciesFixture.chargeFee().getId());
 
     item = itemsFixture.basedUponSmallAngryPlanet();

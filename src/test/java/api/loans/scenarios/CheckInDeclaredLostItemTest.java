@@ -27,12 +27,6 @@ import api.support.builders.CheckInByBarcodeRequestBuilder;
 import io.vertx.core.json.JsonObject;
 
 public class CheckInDeclaredLostItemTest extends RefundLostItemFeesTestBase {
-
-  @Before
-  public void setupNoteType() {
-    noteTypeFixture.generalNoteType();
-  }
-
   @After
   public void cleanUp() {
     notesClient.deleteAll();

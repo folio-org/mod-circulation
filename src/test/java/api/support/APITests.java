@@ -301,6 +301,7 @@ public abstract class APITests {
     }
 
     usersFixture.defaultAdmin();
+    noteTypeFixture.generalNoteType();
 
     FakePubSub.clearPublishedEvents();
     FakePubSub.setFailPublishingWithNoSubscribersError(false);

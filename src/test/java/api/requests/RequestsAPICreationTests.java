@@ -90,16 +90,10 @@ import junitparams.Parameters;
 
 @RunWith(JUnitParamsRunner.class)
 public class RequestsAPICreationTests extends APITests {
-
   private static final String PAGING_REQUEST_EVENT = "Paging request";
   private static final String HOLD_REQUEST_EVENT = "Hold request";
   private static final String RECALL_REQUEST_EVENT = "Recall request";
   private static final String ITEM_RECALLED = "Item recalled";
-
-  @Before
-  public void setupNoteType() {
-    noteTypeFixture.generalNoteType();
-  }
 
   @After
   public void cleanUp() {

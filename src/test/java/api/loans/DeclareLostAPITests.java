@@ -62,9 +62,7 @@ public class DeclareLostAPITests extends APITests {
   }
 
   @Before
-  public void setupPolicyAndLoanType() {
-    noteTypeFixture.generalNoteType();
-
+  public void setup() {
     useLostItemPolicy(lostItemFeePoliciesFixture.chargeFee().getId());
   }
 

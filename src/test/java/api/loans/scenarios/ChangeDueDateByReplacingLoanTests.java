@@ -49,12 +49,6 @@ import io.vertx.core.json.JsonObject;
 import lombok.val;
 
 public class ChangeDueDateByReplacingLoanTests extends APITests {
-
-  @Before
-  public void setupNoteType() {
-    noteTypeFixture.generalNoteType();
-  }
-
   @After
   public void cleanUp() {
     notesClient.deleteAll();

@@ -11,12 +11,6 @@ import org.junit.After;
 import org.junit.Before;
 
 public class RenewByIdTests extends RenewalAPITests {
-
-  @Before
-  public void setupNoteType() {
-    noteTypeFixture.generalNoteType();
-  }
-
   @After
   public void cleanUp() {
     notesClient.deleteAll();

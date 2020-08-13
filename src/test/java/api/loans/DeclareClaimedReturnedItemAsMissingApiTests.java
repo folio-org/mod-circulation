@@ -37,8 +37,6 @@ public class DeclareClaimedReturnedItemAsMissingApiTests extends APITests {
 
   @Before
   public void setUp() {
-    noteTypeFixture.generalNoteType();
-
     item = itemsFixture.basedUponSmallAngryPlanet();
     loanId = checkOutFixture.checkOutByBarcode(item, usersFixture.charlotte())
       .getId().toString();
