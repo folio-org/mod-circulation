@@ -29,7 +29,7 @@ public class ChangeDueDateValidator {
       final Loan changedLoan = relatedRecords.getLoan();
 
       final Result<LoanAndRelatedRecords> statusValidation = itemStatusValidator
-        .refuseWhenItemStatusDoNotAllowDueDateChange(loanAndRelatedRecordsResult);
+        .refuseWhenItemStatusDoesNotAllowDueDateChange(loanAndRelatedRecordsResult);
 
       // If the item is not in a status that we're interesting then just skip
       // further logic

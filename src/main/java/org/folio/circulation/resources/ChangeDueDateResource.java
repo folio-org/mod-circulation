@@ -73,7 +73,7 @@ public class ChangeDueDateResource extends Resource {
       .after(r -> loanRepository.getById(r.getLoanId()))
       .thenApply(LoanValidator::refuseWhenLoanIsClosed)
       .thenApply(this::toLoanAndRelatedRecords)
-      .thenApply(itemStatusValidator::refuseWhenItemStatusDoNotAllowDueDateChange)
+      .thenApply(itemStatusValidator::refuseWhenItemStatusDoesNotAllowDueDateChange)
       .thenApply(r -> changeDueDate(r, request))
       .thenComposeAsync(r -> r.after(loanRepository::updateLoan))
       .thenComposeAsync(r -> r.after(eventPublisher::publishDueDateChangedEvent))

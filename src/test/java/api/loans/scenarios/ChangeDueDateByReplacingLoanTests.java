@@ -260,7 +260,7 @@ public class ChangeDueDateByReplacingLoanTests extends APITests {
   }
 
   @Test
-  public void shouldRejectDueDateChangeOfItemInDisallowedStatus() {
+  public void shouldRejectDueDateChangeWhenItemIsInDisallowedStatus() {
     useLostItemPolicy(lostItemFeePoliciesFixture.chargeFee().getId());
 
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();

@@ -48,7 +48,7 @@ public class ItemStatusValidatorTest {
     val validator = new ItemStatusValidator(this::validationError);
 
     val validationResult  = validator
-      .refuseWhenItemStatusDoNotAllowDueDateChange(loanWithItemInStatus(itemStatus));
+      .refuseWhenItemStatusDoesNotAllowDueDateChange(loanWithItemInStatus(itemStatus));
 
     assertTrue(validationResult.failed());
     assertThat(validationResult.cause(), instanceOf(ValidationErrorFailure.class));

@@ -130,7 +130,7 @@ public class ChangeDueDateAPITests extends APITests {
   }
 
   @Test
-  public void shouldRejectDueDateChangeOfItemInDisallowedStatus() {
+  public void shouldRejectDueDateChangeWhenItemIsInDisallowedStatus() {
     final DateTime newDueDate = dueDate.plus(Period.days(14));
 
     claimItemReturnedFixture.claimItemReturned(new ClaimItemReturnedRequestBuilder()
