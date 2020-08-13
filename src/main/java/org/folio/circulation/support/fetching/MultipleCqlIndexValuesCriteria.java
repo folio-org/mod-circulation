@@ -4,7 +4,7 @@ import static org.folio.circulation.support.http.client.CqlQuery.noQuery;
 
 import java.util.Collection;
 
-import org.folio.circulation.support.Result;
+import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.http.client.CqlQuery;
 
 public class MultipleCqlIndexValuesCriteria {

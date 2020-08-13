@@ -2,8 +2,8 @@ package org.folio.circulation.domain.validation;
 
 import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequest.PROXY_USER_BARCODE;
 import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequest.USER_BARCODE;
-import static org.folio.circulation.support.Result.failed;
-import static org.folio.circulation.support.Result.succeeded;
+import static org.folio.circulation.support.results.Result.failed;
+import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 import static org.folio.circulation.support.results.CommonFailures.failedDueToServerError;
 
@@ -11,7 +11,7 @@ import java.util.function.Function;
 
 import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.domain.User;
-import org.folio.circulation.support.Result;
+import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.ValidationErrorFailure;
 
 public class InactiveUserValidator {

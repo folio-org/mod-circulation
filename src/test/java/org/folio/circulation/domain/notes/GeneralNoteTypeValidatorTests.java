@@ -7,7 +7,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import java.util.Optional;
 import java.util.UUID;
 
-import org.folio.circulation.support.Result;
+import org.folio.circulation.support.results.Result;
 import org.junit.Test;
 
 import lombok.val;

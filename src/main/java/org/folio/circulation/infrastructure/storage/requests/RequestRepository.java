@@ -1,12 +1,12 @@
 package org.folio.circulation.infrastructure.storage.requests;
 
 import static java.util.Objects.isNull;
-import static org.folio.circulation.support.Result.failed;
-import static org.folio.circulation.support.Result.of;
-import static org.folio.circulation.support.Result.ofAsync;
-import static org.folio.circulation.support.Result.succeeded;
-import static org.folio.circulation.support.ResultBinding.flatMapResult;
-import static org.folio.circulation.support.ResultBinding.mapResult;
+import static org.folio.circulation.support.results.Result.failed;
+import static org.folio.circulation.support.results.Result.of;
+import static org.folio.circulation.support.results.Result.ofAsync;
+import static org.folio.circulation.support.results.Result.succeeded;
+import static org.folio.circulation.support.results.ResultBinding.flatMapResult;
+import static org.folio.circulation.support.results.ResultBinding.mapResult;
 import static org.folio.circulation.support.http.ResponseMapping.forwardOnFailure;
 import static org.folio.circulation.support.http.ResponseMapping.mapUsingJson;
 
@@ -29,7 +29,7 @@ import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.FetchSingleRecord;
 import org.folio.circulation.support.RecordNotFoundFailure;
-import org.folio.circulation.support.Result;
+import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.SingleRecordFetcher;
 import org.folio.circulation.support.http.client.CqlQuery;
 import org.folio.circulation.support.http.client.PageLimit;

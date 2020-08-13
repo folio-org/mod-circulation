@@ -8,7 +8,7 @@ import java.util.function.Function;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.support.FindWithCqlQuery;
 import org.folio.circulation.support.GetManyRecordsClient;
-import org.folio.circulation.support.Result;
+import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.http.client.CqlQuery;
 import org.folio.circulation.support.http.client.PageLimit;
 import org.folio.circulation.support.http.client.Response;

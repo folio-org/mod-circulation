@@ -1,4 +1,4 @@
-package org.folio.circulation.support;
+package org.folio.circulation.support.results;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.apache.commons.lang3.BooleanUtils.isTrue;
@@ -14,7 +14,8 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.folio.circulation.support.results.CommonFailures;
+import org.folio.circulation.support.HttpFailure;
+import org.folio.circulation.support.ThrowingSupplier;
 
 public interface Result<T> {
 

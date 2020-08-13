@@ -1,6 +1,6 @@
 package org.folio.circulation.domain.validation;
 
-import static org.folio.circulation.support.Result.of;
+import static org.folio.circulation.support.results.Result.of;
 
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -8,7 +8,7 @@ import java.util.function.Supplier;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.support.HttpFailure;
-import org.folio.circulation.support.Result;
+import org.folio.circulation.support.results.Result;
 
 public class MoreThanOneLoanValidator {
   private final Supplier<HttpFailure> failureSupplier;

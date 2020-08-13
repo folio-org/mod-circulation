@@ -1,12 +1,12 @@
 package org.folio.circulation.domain.validation;
 
-import static org.folio.circulation.support.Result.succeeded;
+import static org.folio.circulation.support.results.Result.succeeded;
 
 import java.util.function.Function;
 
 import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
-import org.folio.circulation.support.Result;
+import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.ValidationErrorFailure;
 
 public class ServicePointOfCheckoutPresentValidator {

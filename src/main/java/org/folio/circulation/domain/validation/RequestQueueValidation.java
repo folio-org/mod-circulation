@@ -11,7 +11,7 @@ import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.reorder.ReorderRequest;
 import org.folio.circulation.resources.context.ReorderRequestContext;
 import org.folio.circulation.support.RecordNotFoundFailure;
-import org.folio.circulation.support.Result;
+import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.request.RequestHelper;
 
 public class RequestQueueValidation {

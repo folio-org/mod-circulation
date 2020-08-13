@@ -3,8 +3,8 @@ package org.folio.circulation.domain.notice.schedule;
 import static org.folio.circulation.domain.notice.NoticeEventType.OVERDUE_FINE_RENEWED;
 import static org.folio.circulation.domain.notice.NoticeEventType.OVERDUE_FINE_RETURNED;
 import static org.folio.circulation.support.AsyncCoordinationUtil.allOf;
-import static org.folio.circulation.support.Result.ofAsync;
-import static org.folio.circulation.support.Result.succeeded;
+import static org.folio.circulation.support.results.Result.ofAsync;
+import static org.folio.circulation.support.results.Result.succeeded;
 
 import java.util.List;
 import java.util.UUID;
@@ -22,7 +22,7 @@ import org.folio.circulation.infrastructure.storage.notices.PatronNoticePolicyRe
 import org.folio.circulation.infrastructure.storage.notices.ScheduledNoticesRepository;
 import org.folio.circulation.resources.context.RenewalContext;
 import org.folio.circulation.support.Clients;
-import org.folio.circulation.support.Result;
+import org.folio.circulation.support.results.Result;
 import org.joda.time.DateTime;
 
 public class FeeFineScheduledNoticeService {

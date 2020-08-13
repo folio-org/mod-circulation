@@ -2,7 +2,7 @@ package org.folio.circulation.domain.anonymization;
 
 import java.util.concurrent.CompletableFuture;
 
-import org.folio.circulation.support.Result;
+import org.folio.circulation.support.results.Result;
 
 public interface LoanAnonymizationService {
   CompletableFuture<Result<LoanAnonymizationRecords>> anonymizeLoans();

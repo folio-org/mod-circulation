@@ -3,8 +3,8 @@ package org.folio.circulation.domain.policy;
 import static org.folio.circulation.support.ClockManager.getClockManager;
 import static org.folio.circulation.support.JsonPropertyFetcher.getIntegerProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
-import static org.folio.circulation.support.Result.failed;
-import static org.folio.circulation.support.Result.succeeded;
+import static org.folio.circulation.support.results.Result.failed;
+import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 import static org.joda.time.DateTimeConstants.MINUTES_PER_DAY;
 import static org.joda.time.DateTimeConstants.MINUTES_PER_HOUR;
@@ -19,7 +19,7 @@ import java.util.function.IntFunction;
 import java.util.function.Supplier;
 
 import org.folio.circulation.support.HttpFailure;
-import org.folio.circulation.support.Result;
+import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.http.server.ValidationError;
 import org.joda.time.DateTime;
 

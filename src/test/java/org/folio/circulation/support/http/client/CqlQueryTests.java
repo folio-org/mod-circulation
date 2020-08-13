@@ -18,7 +18,7 @@ import java.util.ArrayList;
 
 import org.folio.circulation.support.CqlSortBy;
 import org.folio.circulation.support.CqlSortClause;
-import org.folio.circulation.support.Result;
+import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.ServerErrorFailure;
 import org.joda.time.DateTime;
 import org.junit.Test;

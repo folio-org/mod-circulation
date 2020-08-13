@@ -1,6 +1,6 @@
 package org.folio.circulation.support;
 
-import static org.folio.circulation.support.Result.failed;
+import static org.folio.circulation.support.results.Result.failed;
 import static org.folio.circulation.support.http.server.JsonHttpResponse.unprocessableEntity;
 
 import java.lang.invoke.MethodHandles;
@@ -10,6 +10,7 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.support.http.server.ValidationError;
+import org.folio.circulation.support.results.Result;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -23,7 +24,7 @@ public class ValidationErrorFailure implements HttpFailure {
   private final Collection<ValidationError> errors = new ArrayList<>();
 
   public static <T> Result<T> failedValidation(String reason,
-    String key, String value) {
+                                               String key, String value) {
 
     return failedValidation(new ValidationError(reason, key, value));
   }

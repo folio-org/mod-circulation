@@ -2,8 +2,8 @@ package org.folio.circulation.domain;
 
 import static java.util.Comparator.comparingInt;
 import static java.util.concurrent.CompletableFuture.completedFuture;
-import static org.folio.circulation.support.Result.ofAsync;
-import static org.folio.circulation.support.Result.succeeded;
+import static org.folio.circulation.support.results.Result.ofAsync;
+import static org.folio.circulation.support.results.Result.succeeded;
 
 import java.lang.invoke.MethodHandles;
 import java.time.Instant;
@@ -19,7 +19,7 @@ import org.folio.circulation.infrastructure.storage.ServicePointRepository;
 import org.folio.circulation.resources.context.ReorderRequestContext;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.ClockManager;
-import org.folio.circulation.support.Result;
+import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.utils.DateTimeUtil;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;

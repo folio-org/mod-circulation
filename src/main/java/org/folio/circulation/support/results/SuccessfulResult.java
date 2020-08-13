@@ -1,4 +1,6 @@
-package org.folio.circulation.support;
+package org.folio.circulation.support.results;
+
+import org.folio.circulation.support.HttpFailure;
 
 public class SuccessfulResult<T> implements Result<T> {
   private final T value;

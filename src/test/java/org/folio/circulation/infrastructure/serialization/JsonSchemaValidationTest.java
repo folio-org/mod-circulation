@@ -15,7 +15,7 @@ import java.io.IOException;
 import java.util.UUID;
 
 import org.folio.circulation.support.BadRequestFailure;
-import org.folio.circulation.support.Result;
+import org.folio.circulation.support.results.Result;
 import org.joda.time.DateTime;
 import org.junit.Test;
 

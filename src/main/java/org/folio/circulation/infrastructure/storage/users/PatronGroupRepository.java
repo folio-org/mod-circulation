@@ -3,10 +3,10 @@ package org.folio.circulation.infrastructure.storage.users;
 import static java.util.Objects.isNull;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.domain.PatronGroup.unknown;
-import static org.folio.circulation.support.Result.of;
-import static org.folio.circulation.support.Result.ofAsync;
-import static org.folio.circulation.support.Result.succeeded;
-import static org.folio.circulation.support.ResultBinding.mapResult;
+import static org.folio.circulation.support.results.Result.of;
+import static org.folio.circulation.support.results.Result.ofAsync;
+import static org.folio.circulation.support.results.Result.succeeded;
+import static org.folio.circulation.support.results.ResultBinding.mapResult;
 import static org.folio.circulation.support.fetching.RecordFetching.findWithMultipleCqlIndexValues;
 
 import java.util.ArrayList;
@@ -28,7 +28,7 @@ import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.FetchSingleRecord;
 import org.folio.circulation.support.FindWithMultipleCqlIndexValues;
-import org.folio.circulation.support.Result;
+import org.folio.circulation.support.results.Result;
 
 public class PatronGroupRepository {
   private final CollectionResourceClient patronGroupsStorageClient;

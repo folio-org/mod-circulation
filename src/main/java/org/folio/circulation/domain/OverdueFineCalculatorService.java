@@ -4,9 +4,9 @@ import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.apache.commons.lang3.BooleanUtils.isFalse;
 import static org.folio.circulation.domain.OverdueFineCalculatorService.Scenario.CHECKIN;
 import static org.folio.circulation.domain.OverdueFineCalculatorService.Scenario.RENEWAL;
-import static org.folio.circulation.support.Result.succeeded;
-import static org.folio.circulation.support.ResultBinding.mapResult;
-import static org.folio.circulation.support.ResultBinding.toFutureResult;
+import static org.folio.circulation.support.results.Result.succeeded;
+import static org.folio.circulation.support.results.ResultBinding.mapResult;
+import static org.folio.circulation.support.results.ResultBinding.toFutureResult;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -34,8 +34,8 @@ import org.folio.circulation.infrastructure.storage.users.UserRepository;
 import org.folio.circulation.resources.context.RenewalContext;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
-import org.folio.circulation.support.Result;
-import org.folio.circulation.support.ResultBinding;
+import org.folio.circulation.support.results.Result;
+import org.folio.circulation.support.results.ResultBinding;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 

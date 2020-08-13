@@ -12,7 +12,7 @@ import java.net.URL;
 import java.util.Map;
 
 import org.folio.circulation.support.InvalidOkapiLocationException;
-import org.folio.circulation.support.Result;
+import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.http.client.OkapiHttpClient;
 import org.folio.circulation.support.http.client.VertxWebClientOkapiHttpClient;
 

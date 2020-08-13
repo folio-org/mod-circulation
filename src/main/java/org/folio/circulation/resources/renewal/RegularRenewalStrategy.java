@@ -12,7 +12,7 @@ import static org.folio.circulation.resources.RenewalValidator.errorForRecallReq
 import static org.folio.circulation.resources.RenewalValidator.errorWhenEarlierOrSameDueDate;
 import static org.folio.circulation.resources.RenewalValidator.itemByIdValidationError;
 import static org.folio.circulation.resources.RenewalValidator.loanPolicyValidationError;
-import static org.folio.circulation.support.Result.failed;
+import static org.folio.circulation.support.results.Result.failed;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 import static org.folio.circulation.support.results.CommonFailures.failedDueToServerError;
 
@@ -28,7 +28,7 @@ import org.folio.circulation.domain.policy.LoanPolicy;
 import org.folio.circulation.domain.policy.library.ClosedLibraryStrategyService;
 import org.folio.circulation.resources.context.RenewalContext;
 import org.folio.circulation.support.Clients;
-import org.folio.circulation.support.Result;
+import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.ServerErrorFailure;
 import org.folio.circulation.support.ValidationErrorFailure;
 import org.folio.circulation.support.http.server.ValidationError;

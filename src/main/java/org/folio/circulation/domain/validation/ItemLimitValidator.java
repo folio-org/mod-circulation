@@ -1,8 +1,8 @@
 package org.folio.circulation.domain.validation;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
-import static org.folio.circulation.support.Result.ofAsync;
-import static org.folio.circulation.support.Result.succeeded;
+import static org.folio.circulation.support.results.Result.ofAsync;
+import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.http.client.PageLimit.limit;
 
 import java.util.concurrent.CompletableFuture;
@@ -14,7 +14,7 @@ import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.rules.AppliedRuleConditions;
-import org.folio.circulation.support.Result;
+import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.ValidationErrorFailure;
 import org.folio.circulation.support.http.client.PageLimit;
 

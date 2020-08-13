@@ -2,9 +2,9 @@ package org.folio.circulation.resources;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.apache.commons.lang.StringUtils.defaultIfBlank;
-import static org.folio.circulation.support.Result.ofAsync;
-import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
+import static org.folio.circulation.support.results.Result.ofAsync;
+import static org.folio.circulation.support.results.Result.succeeded;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
@@ -21,9 +21,9 @@ import org.folio.circulation.infrastructure.storage.notes.NotesRepository;
 import org.folio.circulation.services.EventPublisher;
 import org.folio.circulation.services.LostItemFeeChargingService;
 import org.folio.circulation.support.Clients;
-import org.folio.circulation.support.Result;
 import org.folio.circulation.support.http.server.NoContentResponse;
 import org.folio.circulation.support.http.server.WebContext;
+import org.folio.circulation.support.results.Result;
 
 import io.vertx.core.http.HttpClient;
 import io.vertx.ext.web.Router;
@@ -110,7 +110,7 @@ public class DeclareLostResource extends Resource {
 
   private Result<Loan> refuseWhenItemIsAlreadyDeclaredLost(Result<Loan> loanResult) {
     return loanResult.failWhen(
-      loan -> Result.succeeded(loan.getItem().isDeclaredLost()),
+      loan -> succeeded(loan.getItem().isDeclaredLost()),
       loan -> singleValidationError("The item is already declared lost",
         "itemId", loan.getItemId()));
   }

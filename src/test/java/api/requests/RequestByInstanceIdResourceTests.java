@@ -15,7 +15,7 @@ import org.folio.circulation.domain.InstanceRequestRelatedRecords;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Location;
 import org.folio.circulation.domain.representations.RequestByInstanceIdRequest;
-import org.folio.circulation.support.Result;
+import org.folio.circulation.support.results.Result;
 import org.junit.Test;
 
 import api.support.APITests;

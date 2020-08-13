@@ -1,11 +1,11 @@
 package org.folio.circulation.resources.renewal;
 
-import static org.folio.circulation.support.Result.succeeded;
+import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 
 import org.apache.commons.lang3.StringUtils;
-import org.folio.circulation.support.Result;
+import org.folio.circulation.support.results.Result;
 
 import io.vertx.core.json.JsonObject;
 

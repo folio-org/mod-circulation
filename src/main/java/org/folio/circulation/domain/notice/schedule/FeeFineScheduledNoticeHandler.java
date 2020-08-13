@@ -4,7 +4,7 @@ import static org.apache.commons.lang3.ObjectUtils.allNotNull;
 import static org.folio.circulation.domain.notice.TemplateContextUtil.createFeeFineNoticeContext;
 import static org.folio.circulation.support.AsyncCoordinationUtil.allOf;
 import static org.folio.circulation.support.ClockManager.getClockManager;
-import static org.folio.circulation.support.Result.ofAsync;
+import static org.folio.circulation.support.results.Result.ofAsync;
 
 import java.lang.invoke.MethodHandles;
 import java.util.Collection;
@@ -20,7 +20,7 @@ import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.domain.notice.PatronNoticeService;
 import org.folio.circulation.infrastructure.storage.notices.ScheduledNoticesRepository;
 import org.folio.circulation.support.Clients;
-import org.folio.circulation.support.Result;
+import org.folio.circulation.support.results.Result;
 import org.joda.time.DateTime;
 import org.joda.time.Period;
 import org.slf4j.Logger;

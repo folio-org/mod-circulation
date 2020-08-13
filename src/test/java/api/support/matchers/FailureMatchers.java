@@ -1,6 +1,6 @@
 package api.support.matchers;
 
-import org.folio.circulation.support.Result;
+import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.ValidationErrorFailure;
 import org.hamcrest.Description;
 import org.hamcrest.TypeSafeDiagnosingMatcher;

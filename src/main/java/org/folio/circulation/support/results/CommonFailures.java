@@ -1,8 +1,7 @@
 package org.folio.circulation.support.results;
 
-import static org.folio.circulation.support.Result.failed;
+import static org.folio.circulation.support.results.Result.failed;
 
-import org.folio.circulation.support.Result;
 import org.folio.circulation.support.ServerErrorFailure;
 
 public class CommonFailures {

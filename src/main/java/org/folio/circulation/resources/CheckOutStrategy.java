@@ -4,7 +4,7 @@ import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.support.Clients;
-import org.folio.circulation.support.Result;
+import org.folio.circulation.support.results.Result;
 
 import io.vertx.core.json.JsonObject;
 

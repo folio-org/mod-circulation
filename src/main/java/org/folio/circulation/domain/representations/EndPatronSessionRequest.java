@@ -11,7 +11,7 @@ import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.domain.notice.session.PatronActionType;
-import org.folio.circulation.support.Result;
+import org.folio.circulation.support.results.Result;
 
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;

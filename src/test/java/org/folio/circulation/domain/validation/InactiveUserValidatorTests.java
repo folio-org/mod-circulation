@@ -2,7 +2,7 @@ package org.folio.circulation.domain.validation;
 
 import static api.support.fixtures.UserExamples.basedUponStevenJones;
 import static org.folio.circulation.domain.validation.InactiveUserValidator.forUser;
-import static org.folio.circulation.support.Result.succeeded;
+import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.is;
@@ -11,7 +11,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.domain.User;
-import org.folio.circulation.support.Result;
+import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.ServerErrorFailure;
 import org.junit.Test;
 

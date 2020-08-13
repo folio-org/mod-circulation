@@ -10,10 +10,9 @@ import static org.mockito.Mockito.when;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
-import org.folio.circulation.infrastructure.storage.CalendarRepository;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
-import org.folio.circulation.support.Result;
+import org.folio.circulation.support.results.Result;
 import org.joda.time.DateTime;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;

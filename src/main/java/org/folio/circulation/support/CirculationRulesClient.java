@@ -9,6 +9,7 @@ import java.util.concurrent.CompletableFuture;
 import org.folio.circulation.support.http.client.OkapiHttpClient;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.server.WebContext;
+import org.folio.circulation.support.results.Result;
 
 public class CirculationRulesClient {
   private final URL root;
@@ -24,7 +25,7 @@ public class CirculationRulesClient {
   }
 
   public CompletableFuture<Result<Response>> applyRules(String loanTypeId,
-    String locationId, String materialTypeId, String patronGroupId) {
+                                                        String locationId, String materialTypeId, String patronGroupId) {
 
     return client.get(root, namedParameter("item_type_id", materialTypeId),
         namedParameter("loan_type_id", loanTypeId),

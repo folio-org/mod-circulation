@@ -1,13 +1,13 @@
 package org.folio.circulation.domain.validation;
 
-import static org.folio.circulation.support.Result.of;
+import static org.folio.circulation.support.results.Result.of;
 
 import java.util.Optional;
 import java.util.function.Supplier;
 
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.support.HttpFailure;
-import org.folio.circulation.support.Result;
+import org.folio.circulation.support.results.Result;
 
 public class NoLoanValidator {
   private final Supplier<HttpFailure> failureSupplier;

@@ -3,8 +3,8 @@ package org.folio.circulation.domain.notice;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.stream.Collectors.groupingBy;
 import static org.folio.circulation.support.AsyncCoordinationUtil.allOf;
-import static org.folio.circulation.support.Result.succeeded;
-import static org.folio.circulation.support.ResultBinding.mapResult;
+import static org.folio.circulation.support.results.Result.succeeded;
+import static org.folio.circulation.support.results.ResultBinding.mapResult;
 import static org.folio.circulation.support.http.CommonResponseInterpreters.mapToRecordInterpreter;
 
 import java.util.Collection;
@@ -24,7 +24,7 @@ import org.folio.circulation.infrastructure.storage.notices.PatronNoticePolicyRe
 import org.folio.circulation.rules.AppliedRuleConditions;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
-import org.folio.circulation.support.Result;
+import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.http.client.ResponseInterpreter;
 
 import io.vertx.core.json.JsonObject;

@@ -11,6 +11,7 @@ import org.folio.circulation.support.http.client.PageLimit;
 import org.folio.circulation.support.http.client.Offset;
 import org.folio.circulation.support.http.client.OkapiHttpClient;
 import org.folio.circulation.support.http.client.Response;
+import org.folio.circulation.support.results.Result;
 
 import io.vertx.core.json.JsonObject;
 

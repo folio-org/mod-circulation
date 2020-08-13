@@ -3,7 +3,7 @@ package org.folio.circulation.support.results;
 import static api.support.matchers.FailureMatcher.isErrorFailureContaining;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.folio.circulation.support.Result.of;
+import static org.folio.circulation.support.results.Result.of;
 import static org.folio.circulation.support.results.AsynchronousResultBindings.safelyInitialise;
 import static org.folio.circulation.support.results.ResultExamples.actionFailed;
 import static org.folio.circulation.support.results.ResultExamples.somethingWentWrong;

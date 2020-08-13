@@ -5,7 +5,7 @@ import java.util.concurrent.CompletableFuture;
 import org.folio.circulation.resources.context.RenewalContext;
 import org.folio.circulation.services.LostItemFeeRefundService;
 import org.folio.circulation.support.Clients;
-import org.folio.circulation.support.Result;
+import org.folio.circulation.support.results.Result;
 
 public class OverrideRenewalFeeProcessingStrategy implements RenewalFeeProcessingStrategy {
   private final RegularRenewalFeeProcessingStrategy regularFeeProcessing =

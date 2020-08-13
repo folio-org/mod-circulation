@@ -1,7 +1,7 @@
 package org.folio.circulation.resources.renewal;
 
 import io.vertx.core.json.JsonObject;
-import org.folio.circulation.support.Result;
+import org.folio.circulation.support.results.Result;
 import org.junit.Test;
 
 import static api.support.matchers.FailureMatchers.errorResultFor;

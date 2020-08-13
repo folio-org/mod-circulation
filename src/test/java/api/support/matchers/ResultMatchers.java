@@ -2,7 +2,7 @@ package api.support.matchers;
 
 import static org.hamcrest.CoreMatchers.is;
 
-import org.folio.circulation.support.Result;
+import org.folio.circulation.support.results.Result;
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
 import org.hamcrest.TypeSafeDiagnosingMatcher;

@@ -9,7 +9,7 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 
 import org.folio.circulation.infrastructure.serialization.JsonSchemaValidator;
-import org.folio.circulation.support.Result;
+import org.folio.circulation.support.results.Result;
 
 import api.support.APITestContext;
 import io.vertx.core.json.JsonObject;

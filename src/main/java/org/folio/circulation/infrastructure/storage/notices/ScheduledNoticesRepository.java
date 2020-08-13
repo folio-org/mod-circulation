@@ -9,7 +9,7 @@ import static org.folio.circulation.infrastructure.storage.notices.JsonScheduled
 import static org.folio.circulation.infrastructure.storage.notices.JsonScheduledNoticeMapper.TRIGGERING_EVENT;
 import static org.folio.circulation.infrastructure.storage.notices.JsonScheduledNoticeMapper.mapToJson;
 import static org.folio.circulation.domain.notice.schedule.TriggeringEvent.DUE_DATE;
-import static org.folio.circulation.support.ResultBinding.flatMapResult;
+import static org.folio.circulation.support.results.ResultBinding.flatMapResult;
 import static org.folio.circulation.support.http.CommonResponseInterpreters.noContentRecordInterpreter;
 import static org.folio.circulation.support.http.ResponseMapping.flatMapUsingJson;
 import static org.folio.circulation.support.http.ResponseMapping.forwardOnFailure;
@@ -27,7 +27,7 @@ import org.folio.circulation.domain.notice.schedule.TriggeringEvent;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.CqlSortBy;
-import org.folio.circulation.support.Result;
+import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.http.client.CqlQuery;
 import org.folio.circulation.support.http.client.PageLimit;
 import org.folio.circulation.support.http.client.Response;

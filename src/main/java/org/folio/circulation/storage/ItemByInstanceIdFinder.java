@@ -17,7 +17,7 @@ import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.support.FindWithCqlQuery;
 import org.folio.circulation.support.GetManyRecordsClient;
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
-import org.folio.circulation.support.Result;
+import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.http.client.CqlQuery;
 
 import io.vertx.core.json.JsonObject;
