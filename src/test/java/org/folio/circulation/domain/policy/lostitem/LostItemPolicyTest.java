@@ -22,18 +22,12 @@ import junitparams.Parameters;
 public class LostItemPolicyTest {
 
   @Test
-  @Parameters( {
-    "Minutes",
-    "Hours",
-    "Days",
-    "Weeks",
-    "Months",
-  })
+  @Parameters(method = "allowedPeriods")
   public void shouldNotAgeItemToLostIfDueDateAfterNow(String interval) {
     final Random random = new Random();
     final int duration = random.nextInt(1000);
     final Period period = from(duration, interval);
-    final LostItemPolicy lostItemPolicy = ageLostItemToLostPolicy(period);
+    final LostItemPolicy lostItemPolicy = lostItemPolicyWithAgePeriod(period);
 
     final DateTime loanDueDate = now(UTC).plus(period.timePeriod())
       .plus(minutes(random.nextInt(3)).timePeriod());
@@ -42,18 +36,12 @@ public class LostItemPolicyTest {
   }
 
   @Test
-  @Parameters( {
-    "Minutes",
-    "Hours",
-    "Days",
-    "Weeks",
-    "Months",
-  })
+  @Parameters(method = "allowedPeriods")
   public void shouldAgeItemToLostIfDueDateBeforeNow(String interval) {
     final Random random = new Random();
     final int duration = random.nextInt(1000);
     final Period period = from(duration, interval);
-    final LostItemPolicy lostItemPolicy = ageLostItemToLostPolicy(period);
+    final LostItemPolicy lostItemPolicy = lostItemPolicyWithAgePeriod(period);
 
     final DateTime loanDueDate = now(UTC).minus(period.timePeriod())
       .minus(minutes(random.nextInt(3)).timePeriod());
@@ -62,36 +50,43 @@ public class LostItemPolicyTest {
   }
 
   @Test
-  @Parameters( {
-    "Minutes",
-    "Hours",
-    "Days",
-    "Weeks",
-    "Months",
-  })
+  @Parameters(method = "allowedPeriods")
   public void shouldAgeItemToLostIfDueDateIsNow(String interval) {
     final Random random = new Random();
     final int duration = random.nextInt(1000);
     final Period period = from(duration, interval);
-    final LostItemPolicy lostItemPolicy = ageLostItemToLostPolicy(period);
+    final LostItemPolicy lostItemPolicy = lostItemPolicyWithAgePeriod(period);
 
     final DateTime loanDueDate = now(UTC).minus(period.timePeriod());
 
     assertTrue(lostItemPolicy.canAgeLoanToLost(loanDueDate));
   }
 
-  public void shouldAgeItemToLostIfPeriodIsMissingInPolicy() {
-    final LostItemPolicy lostItemPolicy = ageLostItemToLostPolicy(null);
+  @Test
+  public void shouldNotAgeItemToLostIfPeriodIsMissingInPolicy() {
+    final LostItemPolicy lostItemPolicy = lostItemPolicyWithAgePeriod(null);
 
-    assertTrue(lostItemPolicy.canAgeLoanToLost(now(UTC)));
+    assertFalse(lostItemPolicy.canAgeLoanToLost(now(UTC)));
   }
 
-  public LostItemPolicy ageLostItemToLostPolicy(Period period) {
+  private LostItemPolicy lostItemPolicyWithAgePeriod(Period period) {
     final JsonObject representation = new JsonObject();
     if (period != null) {
       representation.put("itemAgedLostOverdue", period.asJson());
     }
 
     return LostItemPolicy.from(representation);
+  }
+
+  // Used as parameter source
+  @SuppressWarnings("unused")
+  private String[] allowedPeriods() {
+    return new String[] {
+      "Minutes",
+      "Hours",
+      "Days",
+      "Weeks",
+      "Months",
+    };
   }
 }
