@@ -442,7 +442,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
   }
 
   @Test
-  public void canOverrideRenewalWhenDueDateIsEarlierOrSameAsCurrentLoanDueDateAndItemIsDeclaredLost() {
+  public void canOverrideRenewalWhenDueDateIsEarlierOrSameAsCurrentLoanDueDateAndItemIsLost() {
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource jessica = usersFixture.jessica();
 
@@ -485,30 +485,6 @@ public class OverrideRenewByBarcodeTests extends APITests {
     assertThat("due date should be 2 weeks later",
       renewedLoan.getString("dueDate"),
       withinSecondsAfter(seconds(5), approximateRenewalDate.plusWeeks(1)));
-  }
-
-  @Test
-  public void canOverrideRenewalWhenDueDateIsEarlierOrSameAsCurrentLoanDueDateAndItemIsAgedToLost() {
-    final Period renewalPeriod = Period.weeks(1);
-    final DateTime expectedNewDueDate = DateTime.now(UTC).plus(renewalPeriod.timePeriod());
-
-    final LoanPolicyBuilder loanPolicy = new LoanPolicyBuilder()
-      .withName("Aged to lost due date")
-      .rolling(Period.weeks(2))
-      .renewWith(renewalPeriod)
-      .renewFromSystemDate();
-
-    val agedToLostResult = ageToLostFixture.createAgedToLostLoan(PoliciesToActivate.builder()
-      .loanPolicy(loanPoliciesFixture.create(loanPolicy))
-      .lostItemPolicy(lostItemFeePoliciesFixture.ageToLostAfterOneMinute()));
-
-    final IndividualResource overriddenRenewalResponse =
-      loansFixture.overrideRenewalByBarcode(agedToLostResult.getItem(), agedToLostResult.getUser(),
-        OVERRIDE_COMMENT, null);
-
-    assertThat(overriddenRenewalResponse.getJson().getJsonObject("item"), isCheckedOut());
-    assertThat(overriddenRenewalResponse.getJson(), hasJsonPath("dueDate",
-      withinSecondsAfter(seconds(2), expectedNewDueDate)));
   }
 
   @Test
