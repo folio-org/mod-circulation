@@ -1,5 +1,7 @@
 package org.folio.circulation.domain.validation;
 
+import static org.folio.circulation.support.Result.ofAsync;
+import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 
 import java.util.concurrent.CompletableFuture;
@@ -26,21 +28,28 @@ public class ChangeDueDateValidator {
     return loanAndRelatedRecordsResult.after(relatedRecords -> {
       final Loan changedLoan = relatedRecords.getLoan();
 
-      return getExistingLoan(changedLoan)
-        .thenApply(r -> r.next(existingLoan -> {
-          if (dueDateHasChanged(existingLoan, changedLoan)) {
-            return itemStatusValidator
-              .refuseWhenItemStatusDoNotAllowDueDateChange(loanAndRelatedRecordsResult);
-          }
+      final Result<LoanAndRelatedRecords> statusValidation = itemStatusValidator
+        .refuseWhenItemStatusDoNotAllowDueDateChange(loanAndRelatedRecordsResult);
 
-          return loanAndRelatedRecordsResult;
-        }));
+      // If the item is not in a status that we're interesting then just skip
+      // further logic
+      if (statusValidation.succeeded()) {
+        return ofAsync(() -> relatedRecords);
+      }
+
+      // If the due date is changed, then refuse processing
+      // all other changes are allowed
+      return getExistingLoan(changedLoan)
+        .thenApply(r -> r.failWhen(
+          existingLoan -> dueDateHasChanged(existingLoan, changedLoan),
+          existingLoan -> statusValidation.cause()))
+        .thenApply(r -> r.map(notUsed -> relatedRecords));
     });
   }
 
-  private boolean dueDateHasChanged(Loan existingLoan, Loan changedLoan) {
-    return existingLoan != null
-        && !existingLoan.getDueDate().equals(changedLoan.getDueDate());
+  private Result<Boolean> dueDateHasChanged(Loan existingLoan, Loan changedLoan) {
+    return succeeded(existingLoan != null
+        && !existingLoan.getDueDate().equals(changedLoan.getDueDate()));
   }
 
   private CompletableFuture<Result<Loan>> getExistingLoan(Loan loan) {
