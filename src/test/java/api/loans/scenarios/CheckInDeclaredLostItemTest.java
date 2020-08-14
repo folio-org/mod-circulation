@@ -52,6 +52,7 @@ public class CheckInDeclaredLostItemTest extends RefundLostItemFeesTestBase {
     checkInFixture.checkInByBarcode(item);
     assertThat(itemsClient.getById(item.getId()).getJson(), isAvailable());
 
+    mockClockManagerToReturnDefaultDateTime();
     declareItemLost(secondFee);
     resolveLostItemFee();
     checkInFixture.checkInByBarcode(item);

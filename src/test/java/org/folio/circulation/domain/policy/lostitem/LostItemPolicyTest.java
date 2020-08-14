@@ -1,7 +1,6 @@
 package org.folio.circulation.domain.policy.lostitem;
 
 import static org.folio.circulation.domain.policy.Period.from;
-import static org.folio.circulation.domain.policy.Period.minutes;
 import static org.joda.time.DateTime.now;
 import static org.joda.time.DateTimeZone.UTC;
 import static org.junit.Assert.assertFalse;
@@ -12,6 +11,7 @@ import org.joda.time.DateTime;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import api.support.builders.LostItemFeePolicyBuilder;
 import io.vertx.core.json.JsonObject;
 import junitparams.JUnitParamsRunner;
 import junitparams.Parameters;
@@ -20,7 +20,7 @@ import junitparams.Parameters;
 public class LostItemPolicyTest {
 
   @Test
-  @Parameters({
+  @Parameters( {
     "Minutes, 78",
     "Hours, 9",
     "Days, 66",
@@ -31,14 +31,11 @@ public class LostItemPolicyTest {
     final Period period = from(duration, interval);
     final LostItemPolicy lostItemPolicy = lostItemPolicyWithAgePeriod(period);
 
-    final DateTime loanDueDate = now(UTC).plus(period.timePeriod())
-      .plus(minutes(1).timePeriod());
-
-    assertFalse(lostItemPolicy.canAgeLoanToLost(loanDueDate));
+    assertFalse(lostItemPolicy.canAgeLoanToLost(now(UTC)));
   }
 
   @Test
-  @Parameters({
+  @Parameters( {
     "Minutes, 43",
     "Hours, 12",
     "Days, 29",
@@ -49,14 +46,13 @@ public class LostItemPolicyTest {
     final Period period = from(duration, interval);
     final LostItemPolicy lostItemPolicy = lostItemPolicyWithAgePeriod(period);
 
-    final DateTime loanDueDate = now(UTC).minus(period.timePeriod())
-      .minus(minutes(3).timePeriod());
+    final DateTime loanDueDate = now(UTC).minus(period.timePeriod()).minusSeconds(1);
 
     assertTrue(lostItemPolicy.canAgeLoanToLost(loanDueDate));
   }
 
   @Test
-  @Parameters({
+  @Parameters( {
     "Minutes, 123",
     "Hours, 99",
     "Days, 64",
@@ -77,6 +73,63 @@ public class LostItemPolicyTest {
     final LostItemPolicy lostItemPolicy = lostItemPolicyWithAgePeriod(null);
 
     assertFalse(lostItemPolicy.canAgeLoanToLost(now(UTC)));
+  }
+
+  @Test
+  @Parameters( {
+    "Minutes, 123",
+    "Hours, 99",
+    "Days, 64",
+    "Weeks, 2",
+    "Months, 3",
+  })
+  public void shouldRefundLostFeesIfPeriodHasNotPassed(String interval, int duration) {
+    final Period period = from(duration, interval);
+    final LostItemFeePolicyBuilder builder = new LostItemFeePolicyBuilder()
+      .withFeeRefundInterval(period);
+
+    final LostItemPolicy lostItemPolicy = LostItemPolicy.from(builder.create());
+
+    final DateTime lostDateTime = now(UTC).minus(from(duration / 2, interval).timePeriod());
+    assertTrue(lostItemPolicy.shouldRefundFees(lostDateTime));
+  }
+
+  @Test
+  @Parameters( {
+    "Minutes, 656",
+    "Hours, 6",
+    "Days, 98",
+    "Weeks, 43",
+    "Months, 44",
+  })
+  public void shouldRefundLostFeesIfPeriodIsPassing(String interval, int duration) {
+    final Period period = from(duration, interval);
+    final LostItemFeePolicyBuilder builder = new LostItemFeePolicyBuilder()
+      .withFeeRefundInterval(period);
+
+    final LostItemPolicy lostItemPolicy = LostItemPolicy.from(builder.create());
+
+    final DateTime lostDateTime = now(UTC).minus(period.timePeriod());
+    assertTrue(lostItemPolicy.shouldRefundFees(lostDateTime));
+  }
+
+  @Test
+  @Parameters( {
+    "Minutes, 656",
+    "Hours, 6",
+    "Days, 98",
+    "Weeks, 43",
+    "Months, 44",
+  })
+  public void shouldNotRefundLostFeesIfPeriodHasPassed(String interval, int duration) {
+    final Period period = from(duration, interval);
+    final LostItemFeePolicyBuilder builder = new LostItemFeePolicyBuilder()
+      .withFeeRefundInterval(period);
+
+    final LostItemPolicy lostItemPolicy = LostItemPolicy.from(builder.create());
+
+    final DateTime lostDateTime = now(UTC).minus(period.timePeriod()).minusSeconds(1);
+    assertFalse(lostItemPolicy.shouldRefundFees(lostDateTime));
   }
 
   private LostItemPolicy lostItemPolicyWithAgePeriod(Period period) {

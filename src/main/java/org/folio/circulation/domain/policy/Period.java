@@ -105,15 +105,6 @@ public class Period {
     return from(duration, intervalId);
   }
 
-  public static Period minutesBetweenDateAndNow(DateTime startDateTime) {
-    final DateTime now = getClockManager().getDateTime();
-    final long minutes = new Duration(startDateTime, now).getStandardMinutes();
-
-    // It is very unlikely that overflow happens here
-    // because an integer can represent minutes for ~4000 years.
-    return minutes((int) minutes);
-  }
-
   Result<DateTime> addTo(
     DateTime from,
     Supplier<ValidationError> onUnrecognisedPeriod,
@@ -194,21 +185,21 @@ public class Period {
     }
   }
 
-  public boolean isLessThanOrEqualTo(Period otherPeriod) {
-    return getMillisecondsDifference(otherPeriod) <= 0;
+  public boolean hasPassedSinceDateTillNow(DateTime startDate) {
+    final DateTime now = getClockManager().getDateTime();
+    final DateTime startPlusPeriod = startDate.plus(timePeriod());
+
+    return startPlusPeriod.isBefore(now) || startPlusPeriod.isEqual(now);
   }
 
-  public boolean isGreaterThanOrEqualTo(Period otherPeriod) {
-    return getMillisecondsDifference(otherPeriod) >= 0;
+  public boolean hasNotPassedSinceDateTillNow(DateTime startDate) {
+    return !hasPassedSinceDateTillNow(startDate);
   }
 
-  private long getMillisecondsDifference(Period other) {
-    // find ms difference by adding this period and other period
-    // to the same date and time point and subtracting milliseconds
-    final DateTime dateTimePoint = DateTime.now(DateTimeZone.UTC);
-    final DateTime thisDateTimeFromNowPoint = dateTimePoint.plus(timePeriod());
-    final DateTime otherDateTimeFromNowPoint = dateTimePoint.plus(other.timePeriod());
+  public boolean isPassingNow(DateTime startDate) {
+    final DateTime now = getClockManager().getDateTime();
+    final DateTime startPlusPeriod = startDate.plus(timePeriod());
 
-    return thisDateTimeFromNowPoint.getMillis() - otherDateTimeFromNowPoint.getMillis();
+    return now.isEqual(startPlusPeriod);
   }
 }

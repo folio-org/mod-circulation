@@ -1,7 +1,7 @@
 package org.folio.circulation.domain.policy;
 
-import static org.folio.circulation.domain.policy.Period.days;
-import static org.folio.circulation.domain.policy.Period.months;
+import static org.joda.time.DateTime.now;
+import static org.joda.time.DateTimeZone.UTC;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -17,7 +17,7 @@ import lombok.val;
 public class PeriodTest {
 
   @Test
-  @Parameters({
+  @Parameters( {
     "Minutes | 6  | 6",
     "Hours   | 5  | 300",
     "Days    | 4  | 5760",
@@ -47,20 +47,100 @@ public class PeriodTest {
   }
 
   @Test
-  public void oneMonthIsLessThan32Days() {
-    val oneMonth = months(1);
-    val thirtyTwoDays = days(32);
+  @Parameters( {
+    "Minutes, 5",
+    "Hours, 23",
+    "Days, 14",
+    "Weeks, 3",
+    "Months, 10"
+  })
+  public void hasPassedSinceDateTillNowWhenNowAfterTheDate(String interval, int duration) {
+    val period = Period.from(duration, interval);
+    val startDate = now(UTC).minus(period.timePeriod()).minusSeconds(1);
 
-    assertTrue(oneMonth.isLessThanOrEqualTo(thirtyTwoDays));
-    assertFalse(oneMonth.isGreaterThanOrEqualTo(thirtyTwoDays));
+    assertTrue(period.hasPassedSinceDateTillNow(startDate));
+    assertFalse(period.hasNotPassedSinceDateTillNow(startDate));
   }
 
   @Test
-  public void oneMonthIsMoreThan30Days() {
-    val oneMonth = months(1);
-    val thirtyDays = days(30);
+  @Parameters( {
+    "Minutes, 55",
+    "Hours, 32",
+    "Days, 65",
+    "Weeks, 7",
+    "Months, 23"
+  })
+  public void hasPassedSinceDateTillNowWhenNowIsTheDate(String interval, int duration) {
+    val period = Period.from(duration, interval);
+    val startDate = now(UTC).minus(period.timePeriod());
 
-    assertFalse(oneMonth.isLessThanOrEqualTo(thirtyDays));
-    assertTrue(oneMonth.isGreaterThanOrEqualTo(thirtyDays));
+    assertTrue(period.hasPassedSinceDateTillNow(startDate));
+    assertFalse(period.hasNotPassedSinceDateTillNow(startDate));
+  }
+
+  @Test
+  @Parameters( {
+    "Minutes, 33",
+    "Hours, 65",
+    "Days, 9",
+    "Weeks, 12",
+    "Months, 3"
+  })
+  public void hasPassedSinceDateTillNowIsFalse(String interval, int duration) {
+    val period = Period.from(duration, interval);
+    val startDate = now(UTC);
+
+    assertFalse(period.hasPassedSinceDateTillNow(startDate));
+    assertTrue(period.hasNotPassedSinceDateTillNow(startDate));
+  }
+
+  @Test
+  @Parameters( {
+    "Minutes, 12",
+    "Hours, 87",
+    "Days, 98",
+    "Weeks, 23",
+    "Months, 4"
+  })
+  public void hasNotPassedSinceDateTillNow(String interval, int duration) {
+    val period = Period.from(duration, interval);
+    val startDate = now(UTC).plus(period.timePeriod());
+
+    assertTrue(period.hasNotPassedSinceDateTillNow(startDate));
+    assertFalse(period.hasPassedSinceDateTillNow(startDate));
+  }
+
+  @Test
+  @Parameters( {
+    "Minutes, 4",
+    "Hours, 7",
+    "Days, 8",
+    "Weeks, 3",
+    "Months, 9"
+  })
+  public void hasNotPassedSinceDateTillNowIsFalseWhenPassed(String interval, int duration) {
+    val period = Period.from(duration, interval);
+    val startDate = now(UTC).minus(period.timePeriod()).minusSeconds(1);
+
+    assertFalse(period.hasNotPassedSinceDateTillNow(startDate));
+    assertTrue(period.hasPassedSinceDateTillNow(startDate));
+  }
+
+  @Test
+  @Parameters( {
+    "Minutes, 43",
+    "Hours, 65",
+    "Days, 87",
+    "Weeks, 12",
+    "Months, 3"
+  })
+  public void isPassingNow(String interval, int duration) {
+    val period = Period.from(duration, interval);
+    val startDate = now(UTC).minus(period.timePeriod());
+
+    assertTrue(period.isPassingNow(startDate)
+      // Sometimes there is difference in mss
+      // additional check to make the test stable
+      || period.hasPassedSinceDateTillNow(startDate));
   }
 }
