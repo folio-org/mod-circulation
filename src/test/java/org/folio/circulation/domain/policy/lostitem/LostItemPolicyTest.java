@@ -27,11 +27,11 @@ public class LostItemPolicyTest {
     "Weeks, 23",
     "Months, 13",
   })
-  public void shouldNotAgeItemToLostIfDueDateAfterNow(String interval, int duration) {
+  public void shouldNotAgeItemToLostIfDueDateIsInTheFuture(String interval, int duration) {
     final Period period = from(duration, interval);
     final LostItemPolicy lostItemPolicy = lostItemPolicyWithAgePeriod(period);
 
-    assertFalse(lostItemPolicy.canAgeLoanToLost(now(UTC)));
+    assertFalse(lostItemPolicy.canAgeLoanToLost(now(UTC).plusMinutes(1)));
   }
 
   @Test
@@ -42,7 +42,7 @@ public class LostItemPolicyTest {
     "Weeks, 1",
     "Months, 5",
   })
-  public void shouldAgeItemToLostIfDueDateBeforeNow(String interval, int duration) {
+  public void shouldAgeItemToLostIfDueDateIsSufficientlyInThePast(String interval, int duration) {
     final Period period = from(duration, interval);
     final LostItemPolicy lostItemPolicy = lostItemPolicyWithAgePeriod(period);
 

@@ -27,7 +27,7 @@ public class RenewalValidatorTest {
     "Declared lost",
     "Aged to lost"
   })
-  public void shouldAllowRenewWhenDueDateIsEarlierOrSameForLostItem(String itemStatus) {
+  public void shouldAllowRenewalWhenDueDateIsEarlierOrSameForLostItem(String itemStatus) {
     val dueDate = now(UTC);
     val proposedDueDate = dueDate.minusWeeks(2);
     val loan = loanWithItemInStatus(itemStatus, dueDate);
@@ -37,7 +37,7 @@ public class RenewalValidatorTest {
     assertTrue(validationResult.succeeded());
   }
 
-  public void shouldDisallowRenewWhenDueDateIsEarlierOrSame() {
+  public void shouldDisallowRenewalWhenDueDateIsEarlierOrSame() {
     val dueDate = now(UTC);
     val proposedDueDate = dueDate.minusWeeks(2);
     val loan = loanWithItemInStatus("Checked out", dueDate);
