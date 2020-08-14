@@ -42,7 +42,9 @@ public class LostItemPolicyTest {
     "Weeks, 1",
     "Months, 5",
   })
-  public void shouldAgeItemToLostIfDueDateIsSufficientlyInThePast(String interval, int duration) {
+  public void shouldAgeItemToLostIfAgeToLostPeriodsHavePassedSinceDueDate(
+    String interval, int duration) {
+
     final Period period = from(duration, interval);
     final LostItemPolicy lostItemPolicy = lostItemPolicyWithAgePeriod(period);
 
@@ -59,7 +61,9 @@ public class LostItemPolicyTest {
     "Weeks, 2",
     "Months, 3",
   })
-  public void shouldAgeItemToLostIfDueDateIsNow(String interval, int duration) {
+  public void shouldAgeItemToLostIfAgeToLostPeriodsArePassingExactlyNowSinceDueDate(
+    String interval, int duration) {
+
     final Period period = from(duration, interval);
     final LostItemPolicy lostItemPolicy = lostItemPolicyWithAgePeriod(period);
 
