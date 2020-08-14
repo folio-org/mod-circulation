@@ -61,6 +61,7 @@ public class DeclareClaimedReturnedItemAsMissingApiTests extends APITests {
 
     assertLoanIsClosed(TESTING_COMMENT);
     assertItemIsMissing();
+    assertNoteHasBeenCreated();
   }
 
   @Test
@@ -118,25 +119,6 @@ public class DeclareClaimedReturnedItemAsMissingApiTests extends APITests {
     assertThat(response.getStatusCode(), is(404));
   }
 
-  @Test
-  public void shouldCreateNoteWhenItemDeclaredMissing() {
-    assertThat(notesClient.getAll().size(), is(0));
-
-    claimItemReturnedFixture.claimItemReturned(new ClaimItemReturnedRequestBuilder()
-      .forLoan(loanId)
-      .withItemClaimedReturnedDate(DateTime.now()));
-
-    claimItemReturnedFixture.declareClaimedReturnedItemAsMissing(
-      new DeclareClaimedReturnedItemAsMissingRequestBuilder()
-        .forLoan(loanId)
-        .withComment(TESTING_COMMENT));
-
-    List<JsonObject> notes = notesClient.getAll();
-    assertThat(notes.size(), is(1));
-    assertThat(notes.get(0).getString("title"), is("Claimed returned item marked lost"));
-    assertThat(notes.get(0).getString("domain"), is("loans"));
-  }
-
   private void assertLoanIsClosed(String comment) {
     JsonObject actualLoan = loansClient.getById(UUID.fromString(loanId)).getJson();
 
@@ -150,5 +132,12 @@ public class DeclareClaimedReturnedItemAsMissingApiTests extends APITests {
       .getJson().getJsonObject("item");
 
     assertThat(actualItem, hasJsonPath("status.name", "Missing"));
+  }
+
+  private void assertNoteHasBeenCreated() {
+    List<JsonObject> notes = notesClient.getAll();
+    assertThat(notes.size(), is(1));
+    assertThat(notes.get(0).getString("title"), is("Claimed returned item marked lost"));
+    assertThat(notes.get(0).getString("domain"), is("loans"));
   }
 }
