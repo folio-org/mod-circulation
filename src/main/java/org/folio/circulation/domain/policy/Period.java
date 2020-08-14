@@ -22,8 +22,6 @@ import org.folio.circulation.support.HttpFailure;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.http.server.ValidationError;
 import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
-import org.joda.time.Duration;
 
 import io.vertx.core.json.JsonObject;
 
