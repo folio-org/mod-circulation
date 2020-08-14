@@ -1,7 +1,6 @@
 package org.folio.circulation.resources;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
-import static org.folio.circulation.domain.ItemStatus.DECLARED_LOST;
 import static org.folio.circulation.domain.representations.LoanProperties.ITEM_ID;
 import static org.folio.circulation.support.Result.of;
 import static org.folio.circulation.support.Result.succeeded;
@@ -43,7 +42,6 @@ import org.folio.circulation.support.Result;
 import org.folio.circulation.support.ValidationErrorFailure;
 import org.folio.circulation.support.http.server.JsonHttpResponse;
 import org.folio.circulation.support.http.server.NoContentResponse;
-import org.folio.circulation.support.http.server.ValidationError;
 import org.folio.circulation.support.http.server.WebContext;
 
 import io.vertx.core.http.HttpClient;
@@ -170,10 +168,9 @@ public class LoanCollectionResource extends CollectionResource {
       .thenApply(spLoanLocationValidator::checkServicePointLoanLocation)
       .thenApply(this::refuseWhenClosedAndNoCheckInServicePointId)
       .thenCombineAsync(itemRepository.fetchFor(loan), this::addItem)
-      .thenApply(this::refuseWhenItemIsDeclaredLost)
-      .thenCombineAsync(userRepository.getUser(loan.getUserId()), this::addUser)
       .thenApply(itemNotFoundValidator::refuseWhenItemNotFound)
-      .thenComposeAsync(changeDueDateValidator::refuseWhenClaimedReturned)
+      .thenCompose(changeDueDateValidator::refuseChangeDueDateForItemInDisallowedStatus)
+      .thenCombineAsync(userRepository.getUser(loan.getUserId()), this::addUser)
       .thenComposeAsync(r -> r.after(proxyRelationshipValidator::refuseWhenInvalid))
       .thenCombineAsync(requestQueueRepository.get(loan.getItemId()), this::addRequestQueue)
       .thenComposeAsync(result -> result.after(requestQueueUpdate::onCheckIn))
@@ -359,15 +356,6 @@ public class LoanCollectionResource extends CollectionResource {
       () -> singleValidationError(
         String.format("No item with ID %s could be found", loan.getItemId()),
         ITEM_ID, loan.getItemId()));
-  }
-
-  private Result<LoanAndRelatedRecords> refuseWhenItemIsDeclaredLost(
-    Result<LoanAndRelatedRecords> loanAndRelatedRecords) {
-
-    return loanAndRelatedRecords.failWhen(
-      r -> of(() -> r.getLoan().getItem().isInStatus(DECLARED_LOST)),
-      r -> singleValidationError(new ValidationError("item is Declared lost", ITEM_ID,
-        r.getLoan().getItem().getItemId())));
   }
 
   private static ValidationErrorFailure errorWhenInIncorrectStatus(Item item) {

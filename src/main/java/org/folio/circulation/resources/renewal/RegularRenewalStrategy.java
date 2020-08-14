@@ -113,6 +113,11 @@ public class RegularRenewalStrategy implements RenewalStrategy {
         return failedValidation(errors);
       }
 
+      if (loan.isAgedToLost()) {
+        errors.add(itemByIdValidationError("item is Aged to lost", loan.getItemId()));
+        return failedValidation(errors);
+      }
+
       final Result<DateTime> proposedDueDateResult =
         loanPolicy.determineStrategy(null, true, isRenewalWithHoldRequest, systemDate)
           .calculateDueDate(loan);

@@ -4,6 +4,7 @@ import static api.support.APITestContext.getUserId;
 import static api.support.fixtures.AddressExamples.SiriusBlack;
 import static api.support.matchers.EventMatchers.isValidItemCheckedInEvent;
 import static api.support.matchers.ItemMatchers.isAvailable;
+import static api.support.matchers.LoanMatchers.isClosed;
 import static api.support.matchers.OverdueFineMatcher.isValidOverdueFine;
 import static api.support.matchers.PatronNoticeMatcher.hasEmailNoticeProperties;
 import static api.support.matchers.ResponseStatusCodeMatcher.hasStatus;
@@ -63,6 +64,7 @@ import api.support.fixtures.TemplateContextMatchers;
 import api.support.http.CqlQuery;
 import api.support.http.InventoryItemResource;
 import io.vertx.core.json.JsonObject;
+import lombok.val;
 
 public class CheckInByBarcodeTests extends APITests {
 
@@ -1065,6 +1067,16 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
     checkInFixture.checkInByBarcode(item);
 
     assertThat(itemsClient.getById(item.getId()).getJson(), isAvailable());
+  }
+
+  @Test
+  public void canCheckInAgedToLostItem() {
+    val ageToLostResult = ageToLostFixture.createAgedToLostLoan();
+
+    checkInFixture.checkInByBarcode(ageToLostResult.getItem());
+
+    assertThat(itemsFixture.getById(ageToLostResult.getItemId()).getJson(), isAvailable());
+    assertThat(loansFixture.getLoanById(ageToLostResult.getLoanId()).getJson(), isClosed());
   }
 
   @Test

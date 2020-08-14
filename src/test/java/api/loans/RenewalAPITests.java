@@ -39,9 +39,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 import org.apache.commons.lang3.StringUtils;
 import org.awaitility.Awaitility;
@@ -80,6 +78,7 @@ import api.support.fixtures.TemplateContextMatchers;
 import api.support.http.InventoryItemResource;
 import api.support.matchers.OverdueFineMatcher;
 import io.vertx.core.json.JsonObject;
+import lombok.val;
 
 public abstract class RenewalAPITests extends APITests {
   abstract Response attemptRenewal(IndividualResource user, IndividualResource item);
@@ -827,6 +826,17 @@ public abstract class RenewalAPITests extends APITests {
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("item is Claimed returned"),
       hasUUIDParameter("itemId", smallAngryPlanet.getId()))));
+  }
+
+  @Test
+  public void cannotRenewWhenItemIsAgedToLost() {
+    val result = ageToLostFixture.createAgedToLostLoan();
+
+    final Response response = attemptRenewal(result.getItem(), result.getUser());
+
+    assertThat(response.getJson(), hasErrorWith(allOf(
+      hasMessage("item is Aged to lost"),
+      hasUUIDParameter("itemId", result.getItem().getId()))));
   }
 
   @Test

@@ -29,6 +29,7 @@ import org.hamcrest.Matcher;
 import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
 import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
 import org.joda.time.Period;
 import org.junit.After;
 import org.junit.Before;
@@ -45,6 +46,7 @@ import api.support.fixtures.ItemExamples;
 import api.support.fixtures.TemplateContextMatchers;
 import api.support.http.InventoryItemResource;
 import io.vertx.core.json.JsonObject;
+import lombok.val;
 
 public class ChangeDueDateByReplacingLoanTests extends APITests {
 
@@ -111,36 +113,6 @@ public class ChangeDueDateByReplacingLoanTests extends APITests {
 
     assertThat("Should not contain check out service point summary",
       loanInStorage.containsKey("checkoutServicePoint"), is(false));
-  }
-
-  @Test
-  public void cannotManuallyChangeTheDueDateOfClaimedReturnedLoan() {
-    final InventoryItemResource item = itemsFixture.basedUponNod();
-
-    IndividualResource loan = checkOutFixture.checkOutByBarcode(item);
-
-    final ClaimItemReturnedRequestBuilder claimedItemBuilder =
-     (new ClaimItemReturnedRequestBuilder()).forLoan(loan.getId().toString());
-
-    Response claimedLoan = claimItemReturnedFixture.claimItemReturned(claimedItemBuilder);
-    assertThat(claimedLoan, hasStatus(HTTP_NO_CONTENT));
-
-    Response fetchedLoan = loansClient.getById(loan.getId());
-
-    JsonObject loanToChange = fetchedLoan.getJson().copy();
-
-    final DateTime dueDate = DateTime.parse(loanToChange.getString("dueDate"));
-    final DateTime newDueDate = dueDate.plus(Period.days(14));
-
-    write(loanToChange, "action", "dueDateChange");
-    write(loanToChange, "dueDate", newDueDate);
-
-    Response updatedLoanResponse = loansFixture
-      .attemptToReplaceLoan(loan.getId(), loanToChange);
-
-    assertThat(updatedLoanResponse.getStatusCode(), is(422));
-    assertThat(updatedLoanResponse.getJson(),
-      hasErrorWith(hasMessage("item is claimed returned")));
   }
 
   @Test
@@ -302,7 +274,7 @@ public class ChangeDueDateByReplacingLoanTests extends APITests {
   }
 
   @Test
-  public void dueDateCannotBeChangedWhenItemIsDeclaredLost() {
+  public void shouldRejectDueDateChangeWhenItemIsInDisallowedStatus() {
     useLostItemPolicy(lostItemFeePoliciesFixture.chargeFee().getId());
 
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();

@@ -1,8 +1,5 @@
 package org.folio.circulation.domain.validation;
 
-import static org.folio.circulation.domain.ItemStatus.AGED_TO_LOST;
-import static org.folio.circulation.domain.ItemStatus.CLAIMED_RETURNED;
-import static org.folio.circulation.domain.ItemStatus.DECLARED_LOST;
 import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 import static org.hamcrest.CoreMatchers.instanceOf;
@@ -10,54 +7,56 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertTrue;
 
 import org.folio.circulation.domain.Item;
-import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.ValidationErrorFailure;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import io.vertx.core.json.JsonObject;
+import junitparams.JUnitParamsRunner;
+import junitparams.Parameters;
 import lombok.val;
 
+@RunWith(JUnitParamsRunner.class)
 public class ItemStatusValidatorTest {
 
   @Test
-  public void cannotCheckOutAgedToLostItem() {
+  @Parameters({
+    "Declared lost",
+    "Claimed returned",
+    "Aged to lost"
+  })
+  public void cannotCheckOutItemInDisallowedStatus(String itemStatus) {
     val validator = new ItemStatusValidator(this::validationError);
 
     val validationResult  = validator
-      .refuseWhenItemIsNotAllowedForCheckOut(loanWithItemInStatus(AGED_TO_LOST));
+      .refuseWhenItemIsNotAllowedForCheckOut(loanWithItemInStatus(itemStatus));
 
     assertTrue(validationResult.failed());
     assertThat(validationResult.cause(), instanceOf(ValidationErrorFailure.class));
   }
 
   @Test
-  public void cannotCheckOutClaimedReturnedItem() {
+  @Parameters({
+    "Declared lost",
+    "Claimed returned",
+    "Aged to lost"
+  })
+  public void cannotChangeDueDateForItemInDisallowedStatus(String itemStatus) {
     val validator = new ItemStatusValidator(this::validationError);
 
     val validationResult  = validator
-      .refuseWhenItemIsNotAllowedForCheckOut(loanWithItemInStatus(CLAIMED_RETURNED));
+      .refuseWhenItemStatusDoesNotAllowDueDateChange(loanWithItemInStatus(itemStatus));
 
     assertTrue(validationResult.failed());
     assertThat(validationResult.cause(), instanceOf(ValidationErrorFailure.class));
   }
 
-  @Test
-  public void cannotCheckOutDeclaredLostItem() {
-    val validator = new ItemStatusValidator(this::validationError);
-
-    val validationResult  = validator
-      .refuseWhenItemIsNotAllowedForCheckOut(loanWithItemInStatus(DECLARED_LOST));
-
-    assertTrue(validationResult.failed());
-    assertThat(validationResult.cause(), instanceOf(ValidationErrorFailure.class));
-  }
-
-  private Result<LoanAndRelatedRecords> loanWithItemInStatus(ItemStatus itemStatus) {
+  private Result<LoanAndRelatedRecords> loanWithItemInStatus(String itemStatus) {
     val itemRepresentation = new JsonObject()
-      .put("status", new JsonObject().put("name", itemStatus.getValue()));
+      .put("status", new JsonObject().put("name", itemStatus));
     val item = Item.from(itemRepresentation);
 
     val loan = Loan.from(new JsonObject()).withItem(item);

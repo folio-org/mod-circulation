@@ -10,6 +10,7 @@ import java.util.concurrent.CompletableFuture;
 import org.folio.circulation.domain.ClaimItemReturnedRequest;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.services.ChangeItemStatusService;
+import org.folio.circulation.services.EventPublisher;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.RouteRegistration;
@@ -34,9 +35,11 @@ public class ClaimItemReturnedResource extends Resource {
 
   private void claimItemReturned(RoutingContext routingContext) {
     final WebContext context = new WebContext(routingContext);
+    final EventPublisher eventPublisher = new EventPublisher(routingContext);
 
     createRequest(routingContext)
       .after(request -> processClaimItemReturned(routingContext, request))
+      .thenCompose(r -> r.after(eventPublisher::publishItemClaimedReturnedEvent))
       .thenApply(r -> r.toFixedValue(NoContentResponse::noContent))
       .thenAccept(context::writeResultToHttpResponse);
   }

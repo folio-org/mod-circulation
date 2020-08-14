@@ -53,6 +53,7 @@ import api.support.fakes.FakePubSub;
 import api.support.fixtures.ItemExamples;
 import api.support.http.InventoryItemResource;
 import io.vertx.core.json.JsonObject;
+import lombok.val;
 
 public class ChangeDueDateAPITests extends APITests {
   private InventoryItemResource item;
@@ -137,29 +138,7 @@ public class ChangeDueDateAPITests extends APITests {
   }
 
   @Test
-  public void cannotChangeDueDateWhenDeclaredLost() {
-    final DateTime newDueDate = dueDate.plus(Period.days(14));
-
-    declareLostFixtures.declareItemLost(loan.getJson());
-
-    final JsonObject updatedLoan = loansFixture.getLoanById(loan.getId()).getJson();
-
-    assertThat(updatedLoan, isOpen());
-
-    final Response response = changeDueDateFixture
-      .attemptChangeDueDate(new ChangeDueDateRequestBuilder()
-        .forLoan(loan.getId())
-        .withDueDate(newDueDate));
-
-    assertThat(response, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
-
-    assertThat(response.getJson(), hasErrorWith(allOf(
-      hasMessage("item is Declared lost"),
-      hasUUIDParameter("itemId", item.getId()))));
-  }
-
-  @Test
-  public void cannotChangeDueDateWhenClaimedReturned() {
+  public void shouldRejectDueDateChangeWhenItemIsInDisallowedStatus() {
     final DateTime newDueDate = dueDate.plus(Period.days(14));
 
     claimItemReturnedFixture.claimItemReturned(new ClaimItemReturnedRequestBuilder()
