@@ -78,7 +78,7 @@ public class DeclareClaimedReturnedItemAsMissingResource extends Resource {
     final NotesRepository notesRepository = NotesRepository.createUsing(clients);
     final NoteCreator creator = new NoteCreator(notesRepository);
 
-    return creator.createNote(loan.getUserId(), "Claimed returned item marked lost")
+    return creator.createNote(loan.getUserId(), "Claimed returned item marked missing")
       .thenCompose(r -> r.after(note -> completedFuture(succeeded(loan))));
   }
 }
