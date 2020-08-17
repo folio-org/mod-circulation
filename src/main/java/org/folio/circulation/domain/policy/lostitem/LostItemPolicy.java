@@ -10,7 +10,6 @@ import static org.folio.circulation.support.JsonPropertyFetcher.getBigDecimalPro
 import static org.folio.circulation.support.JsonPropertyFetcher.getBooleanProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getNestedStringProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getObjectProperty;
-import static org.folio.circulation.support.JsonPropertyFetcher.getPeriodProperty;
 import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
 
 import java.math.BigDecimal;
@@ -63,13 +62,21 @@ public class LostItemPolicy extends Policy {
       getProcessingFee(lostItemPolicy, "chargeAmountItemPatron"),
       getSetCostFee(lostItemPolicy),
       getActualCostFee(lostItemPolicy),
-      getPeriodProperty(lostItemPolicy, "feesFinesShallRefunded", emptyPeriod()),
+      getPeriodPropertyOrEmpty(lostItemPolicy, "feesFinesShallRefunded"),
       getBooleanProperty(lostItemPolicy, "returnedLostItemProcessingFee"),
       getChargeOverdueFineProperty(lostItemPolicy),
-      getPeriodProperty(lostItemPolicy, "itemAgedLostOverdue", emptyPeriod()),
-      getPeriodProperty(lostItemPolicy, "patronBilledAfterAgedLost", emptyPeriod()),
+      getPeriodPropertyOrEmpty(lostItemPolicy, "itemAgedLostOverdue"),
+      getPeriodPropertyOrEmpty(lostItemPolicy, "patronBilledAfterAgedLost"),
       getProcessingFee(lostItemPolicy, "chargeAmountItemSystem")
     );
+  }
+
+  public static Period getPeriodPropertyOrEmpty(JsonObject json, String propertyName) {
+    if (json == null || !json.containsKey(propertyName)) {
+      return emptyPeriod();
+    }
+
+    return Period.from(json.getJsonObject(propertyName));
   }
 
   private static boolean getChargeOverdueFineProperty(JsonObject lostItemPolicy) {

@@ -3,7 +3,6 @@ package org.folio.circulation.support;
 import java.math.BigDecimal;
 import java.util.UUID;
 
-import org.folio.circulation.domain.policy.Period;
 import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
 
@@ -195,13 +194,5 @@ public class JsonPropertyFetcher {
     if (from.containsKey(propertyName)) {
       to.put(propertyName, from.getValue(propertyName));
     }
-  }
-
-  public static Period getPeriodProperty(JsonObject json, String propertyName, Period def) {
-    if (json == null || !json.containsKey(propertyName)) {
-      return def;
-    }
-
-    return Period.from(json.getJsonObject(propertyName));
   }
 }
