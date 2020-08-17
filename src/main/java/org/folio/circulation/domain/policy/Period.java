@@ -194,7 +194,7 @@ public class Period {
     return !hasPassedSinceDateTillNow(startDate);
   }
 
-  public boolean isPassingNow(DateTime startDate) {
+  public boolean isEqualToDateTillNow(DateTime startDate) {
     final DateTime now = getClockManager().getDateTime();
     final DateTime startPlusPeriod = startDate.plus(timePeriod());
 

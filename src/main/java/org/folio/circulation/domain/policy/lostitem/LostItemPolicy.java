@@ -122,7 +122,7 @@ public class LostItemPolicy extends Policy {
   public boolean shouldRefundFees(DateTime lostDateTime) {
     return feeRefundInterval == null
       || feeRefundInterval.hasNotPassedSinceDateTillNow(lostDateTime)
-      || feeRefundInterval.isPassingNow(lostDateTime);
+      || feeRefundInterval.isEqualToDateTillNow(lostDateTime);
   }
 
   public boolean isRefundProcessingFeeWhenReturned() {

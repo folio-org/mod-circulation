@@ -134,11 +134,11 @@ public class PeriodTest {
     "Weeks, 12",
     "Months, 3"
   })
-  public void isPassingNow(String interval, int duration) {
+  public void isEqualToDateTillNow(String interval, int duration) {
     val period = Period.from(duration, interval);
     val startDate = now(UTC).minus(period.timePeriod());
 
-    assertTrue(period.isPassingNow(startDate)
+    assertTrue(period.isEqualToDateTillNow(startDate)
       // Sometimes there is difference in mss
       // additional check to make the test stable
       || period.hasPassedSinceDateTillNow(startDate));
