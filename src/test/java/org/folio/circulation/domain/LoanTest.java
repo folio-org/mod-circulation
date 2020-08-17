@@ -51,7 +51,7 @@ public class LoanTest {
       .withPatronBilledAfterAgedLost(billPatronInterval)
       .withItemAgedToLostAfterOverdue(ageToLostAfterPeriod)
       .withSetCost(10.0)
-      .doNotChargeProcessingFee()
+      .doNotChargeItemAgedToLostProcessingFee()
       .create());
 
     final Loan loan = Loan.from(new LoanBuilder().withDueDate(loanDueDate).create())
@@ -79,7 +79,7 @@ public class LoanTest {
         .withPatronBilledAfterAgedLost(billPatronAfterPeriod)
         .withItemAgedToLostAfterOverdue(ageToLostAfterPeriod)
         .withSetCost(10.0)
-        .doNotChargeProcessingFee()
+        .doNotChargeItemAgedToLostProcessingFee()
         .create());
 
     final Loan loan = Loan.from(new LoanBuilder().withDueDate(loanDueDate).create())
@@ -104,7 +104,7 @@ public class LoanTest {
         .withPatronBilledAfterAgedLost(null)
         .withItemAgedToLostAfterOverdue(ageToLostAfterPeriod)
         .withNoChargeAmountItem()
-        .doNotChargeProcessingFee()
+        .doNotChargeItemAgedToLostProcessingFee()
         .create());
 
     final Loan loan = Loan.from(new LoanBuilder().withDueDate(loanDueDate).create())

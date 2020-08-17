@@ -33,11 +33,16 @@ public class LostItemPolicy extends Policy {
   private final boolean chargeOverdueFine;
   private final Period agedToLostAfterOverdueInterval;
   private final Period patronBilledAfterAgedToLostInterval;
+  // There is no separate age to lost processing fee but there is a flag
+  // that turns on/off the fee, but we're modelling it as a separate fee
+  // to simplify logic.
+  private final AutomaticallyChargeableFee ageToLostProcessingFee;
 
   private LostItemPolicy(String id, String name, AutomaticallyChargeableFee processingFee,
     AutomaticallyChargeableFee setCostFee, ChargeableFee actualCostFee,
     Period feeRefundInterval, boolean refundProcessingFeeWhenFound, boolean chargeOverdueFine,
-    Period agedToLostAfterOverdueInterval, Period patronBilledAfterAgedToLostInterval) {
+    Period agedToLostAfterOverdueInterval, Period patronBilledAfterAgedToLostInterval,
+    AutomaticallyChargeableFee ageToLostProcessingFee) {
 
     super(id, name);
     this.processingFee = processingFee;
@@ -48,20 +53,22 @@ public class LostItemPolicy extends Policy {
     this.chargeOverdueFine = chargeOverdueFine;
     this.agedToLostAfterOverdueInterval = agedToLostAfterOverdueInterval;
     this.patronBilledAfterAgedToLostInterval = patronBilledAfterAgedToLostInterval;
+    this.ageToLostProcessingFee = ageToLostProcessingFee;
   }
 
   public static LostItemPolicy from(JsonObject lostItemPolicy) {
     return new LostItemPolicy(
       getProperty(lostItemPolicy, "id"),
       getProperty(lostItemPolicy, "name"),
-      getProcessingFee(lostItemPolicy),
+      getProcessingFee(lostItemPolicy, "chargeAmountItemPatron"),
       getSetCostFee(lostItemPolicy),
       getActualCostFee(lostItemPolicy),
       getPeriodProperty(lostItemPolicy, "feesFinesShallRefunded", emptyPeriod()),
       getBooleanProperty(lostItemPolicy, "returnedLostItemProcessingFee"),
       getChargeOverdueFineProperty(lostItemPolicy),
       getPeriodProperty(lostItemPolicy, "itemAgedLostOverdue", emptyPeriod()),
-      getPeriodProperty(lostItemPolicy, "patronBilledAfterAgedLost", emptyPeriod())
+      getPeriodProperty(lostItemPolicy, "patronBilledAfterAgedLost", emptyPeriod()),
+      getProcessingFee(lostItemPolicy, "chargeAmountItemSystem")
     );
   }
 
@@ -70,8 +77,8 @@ public class LostItemPolicy extends Policy {
     return "charge".equalsIgnoreCase(lostItemReturned);
   }
 
-  private static AutomaticallyChargeableFee getProcessingFee(JsonObject policy) {
-    final boolean chargeProcessingFee = getBooleanProperty(policy, "chargeAmountItemPatron");
+  private static AutomaticallyChargeableFee getProcessingFee(JsonObject policy, String enabledFlag) {
+    final boolean chargeProcessingFee = getBooleanProperty(policy, enabledFlag);
     final BigDecimal amount = getBigDecimalProperty(policy, "lostItemProcessingFee");
 
     return amount != null && chargeProcessingFee
@@ -130,12 +137,9 @@ public class LostItemPolicy extends Policy {
   }
 
   public boolean shouldChargeFeesWhenAgedToLost() {
-    // There are delayed and immediate billings
-
-    // For immediate billing with no set cost and processing fees
-    // we do not charge fees
+    // i.e. we exclude immediate billings that have nothing to charge
     return shouldDelayBillingForPatronWhenItemAgedToLost()
-      || hasAnyAutomaticallyChargeableFee();
+      || setCostFee.isChargeable() || ageToLostProcessingFee.isChargeable();
   }
 
   public boolean canAgeLoanToLost(DateTime loanDueDate) {
@@ -161,10 +165,6 @@ public class LostItemPolicy extends Policy {
     return new UnknownLostItemPolicy(id);
   }
 
-  private boolean hasAnyAutomaticallyChargeableFee() {
-    return getSetCostFee().isChargeable() || getProcessingFee().isChargeable();
-  }
-
   private boolean shouldDelayBillingForPatronWhenItemAgedToLost() {
     return !patronBilledAfterAgedToLostInterval.isEmpty();
   }
@@ -172,7 +172,7 @@ public class LostItemPolicy extends Policy {
   private static class UnknownLostItemPolicy extends LostItemPolicy {
     UnknownLostItemPolicy(String id) {
       super(id, null, noAutomaticallyChargeableFee(), noAutomaticallyChargeableFee(),
-        noActualCostFee(), null, false, false, null, null);
+        noActualCostFee(), emptyPeriod(), false, false, emptyPeriod(), emptyPeriod(), noAutomaticallyChargeableFee());
     }
   }
 }
