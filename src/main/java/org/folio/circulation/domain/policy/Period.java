@@ -103,13 +103,6 @@ public class Period {
     return from(duration, intervalId);
   }
 
-  public static Period minutesBetweenDateAndNow(DateTime startDateTime) {
-    final DateTime now = getClockManager().getDateTime();
-    final int minutes = new org.joda.time.Period(startDateTime, now).getMinutes();
-
-    return minutes(minutes);
-  }
-
   Result<DateTime> addTo(
     DateTime from,
     Supplier<ValidationError> onUnrecognisedPeriod,
@@ -190,11 +183,21 @@ public class Period {
     }
   }
 
-  public boolean isLessThanOrEqualTo(Period otherPeriod) {
-    return toMinutes() <= otherPeriod.toMinutes();
+  public boolean hasPassedSinceDateTillNow(DateTime startDate) {
+    final DateTime now = getClockManager().getDateTime();
+    final DateTime startPlusPeriod = startDate.plus(timePeriod());
+
+    return startPlusPeriod.isBefore(now) || startPlusPeriod.isEqual(now);
   }
 
-  public boolean isGreaterThanOrEqualTo(Period otherPeriod) {
-    return toMinutes() >= otherPeriod.toMinutes();
+  public boolean hasNotPassedSinceDateTillNow(DateTime startDate) {
+    return !hasPassedSinceDateTillNow(startDate);
+  }
+
+  public boolean isEqualToDateTillNow(DateTime startDate) {
+    final DateTime now = getClockManager().getDateTime();
+    final DateTime startPlusPeriod = startDate.plus(timePeriod());
+
+    return now.isEqual(startPlusPeriod);
   }
 }

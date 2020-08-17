@@ -28,7 +28,7 @@ public class LostItemFeePolicyBuilder extends JsonBuilder implements Builder {
   private final double replacementProcessingFee;
   private final boolean replacementAllowed;
   private final String lostItemReturned;
-  private final JsonObject feeRefundInterval;
+  private final Period feeRefundInterval;
 
   public LostItemFeePolicyBuilder() {
     this(UUID.randomUUID(),
@@ -98,7 +98,7 @@ public class LostItemFeePolicyBuilder extends JsonBuilder implements Builder {
   }
 
   private LostItemFeePolicyBuilder withFeeRefundInterval(int duration, String intervalId) {
-    return withFeeRefundInterval(Period.from(duration, intervalId).asJson());
+    return withFeeRefundInterval(Period.from(duration, intervalId));
   }
 
   public LostItemFeePolicyBuilder refundFeesWithinMinutes(int duration) {
@@ -121,6 +121,10 @@ public class LostItemFeePolicyBuilder extends JsonBuilder implements Builder {
       request.put("patronBilledAfterAgedLost", patronBilledAfterAgedLost.asJson());
     }
 
+    if (feeRefundInterval != null) {
+      request.put("feesFinesShallRefunded", this.feeRefundInterval.asJson());
+    }
+
     put(request, "name", this.name);
     put(request, "description", this.description);
     put(request, "chargeAmountItem", this.chargeAmountItem);
@@ -133,7 +137,7 @@ public class LostItemFeePolicyBuilder extends JsonBuilder implements Builder {
     put(request, "replacementProcessingFee", String.valueOf(this.replacementProcessingFee));
     put(request, "replacementAllowed", this.replacementAllowed);
     put(request, "lostItemReturned", this.lostItemReturned);
-    put(request, "feesFinesShallRefunded", this.feeRefundInterval);
+
     return request;
   }
 }

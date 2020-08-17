@@ -3,6 +3,7 @@ package api.loans;
 
 import static api.support.builders.FixedDueDateSchedule.forDay;
 import static api.support.builders.FixedDueDateSchedule.wholeMonth;
+import static api.support.matchers.ItemMatchers.isCheckedOut;
 import static api.support.matchers.ItemStatusCodeMatcher.hasItemStatus;
 import static api.support.matchers.JsonObjectMatcher.hasJsonPath;
 import static api.support.matchers.PatronNoticeMatcher.hasEmailNoticeProperties;
@@ -51,6 +52,7 @@ import api.support.builders.NoticeConfigurationBuilder;
 import api.support.builders.NoticePolicyBuilder;
 import api.support.fixtures.ItemExamples;
 import api.support.fixtures.TemplateContextMatchers;
+import api.support.fixtures.policies.PoliciesToActivate;
 import api.support.http.InventoryItemResource;
 import io.vertx.core.json.JsonObject;
 import lombok.val;
@@ -440,7 +442,7 @@ public class OverrideRenewByBarcodeTests extends APITests {
   }
 
   @Test
-  public void canOverrideRenewalWhenDueDateIsEarlierOrSameAsCurrentLoanDueDateAndItemIsDeclaredLost() {
+  public void canOverrideRenewalWhenDueDateIsEarlierOrSameAsCurrentLoanDueDateAndItemIsLost() {
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource jessica = usersFixture.jessica();
 
