@@ -105,6 +105,10 @@ public class LostItemFeePolicyBuilder extends JsonBuilder implements Builder {
     return withFeeRefundInterval(duration, "Minutes");
   }
 
+  public LostItemFeePolicyBuilder billPatronImmediatelyWhenAgedToLost() {
+    return withPatronBilledAfterAgedLost(Period.minutes(0));
+  }
+
   @Override
   public JsonObject create() {
     JsonObject request = new JsonObject();
