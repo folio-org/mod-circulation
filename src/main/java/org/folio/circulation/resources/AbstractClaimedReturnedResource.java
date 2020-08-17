@@ -7,7 +7,6 @@ import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.notes.NoteCreator;
-import org.folio.circulation.infrastructure.storage.notes.NoteTypesRepository;
 import org.folio.circulation.infrastructure.storage.notes.NotesRepository;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.Result;
@@ -27,9 +26,8 @@ public abstract class AbstractClaimedReturnedResource extends Resource {
   }
 
   protected CompletableFuture<Result<Loan>> createNote(Clients clients, Loan loan, boolean isClaimedReturned) {
-    final NotesRepository notesRepository = new NotesRepository(clients);
-    final NoteTypesRepository noteTypesRepository = new NoteTypesRepository(clients);
-    final NoteCreator creator = new NoteCreator(notesRepository, noteTypesRepository);
+    final NotesRepository notesRepository = NotesRepository.createUsing(clients);
+    final NoteCreator creator = new NoteCreator(notesRepository);
 
     if (isClaimedReturned) {
       return creator.createNote(loan.getUserId(), "Claimed returned item marked lost")
