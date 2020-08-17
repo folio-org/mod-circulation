@@ -5,7 +5,7 @@ import static org.folio.circulation.support.ResultBinding.flatMapResult;
 import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.domain.MultipleRecords;
-import org.folio.circulation.domain.NoteType;
+import org.folio.circulation.domain.notes.NoteType;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.Result;

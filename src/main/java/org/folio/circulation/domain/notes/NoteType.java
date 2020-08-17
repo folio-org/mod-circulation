@@ -1,4 +1,4 @@
-package org.folio.circulation.domain;
+package org.folio.circulation.domain.notes;
 
 import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
 

@@ -3,7 +3,7 @@ package org.folio.circulation.domain.validation;
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 
 import org.folio.circulation.domain.MultipleRecords;
-import org.folio.circulation.domain.NoteType;
+import org.folio.circulation.domain.notes.NoteType;
 import org.folio.circulation.support.Result;
 
 public final class GeneralNoteTypeValidator {

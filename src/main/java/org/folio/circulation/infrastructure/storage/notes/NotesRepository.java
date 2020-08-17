@@ -5,7 +5,7 @@ import static org.folio.circulation.support.http.ResponseMapping.mapUsingJson;
 
 import java.util.concurrent.CompletableFuture;
 
-import org.folio.circulation.domain.Note;
+import org.folio.circulation.domain.notes.Note;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.Result;

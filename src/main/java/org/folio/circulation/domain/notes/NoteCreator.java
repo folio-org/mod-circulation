@@ -2,9 +2,7 @@ package org.folio.circulation.domain.notes;
 
 import java.util.concurrent.CompletableFuture;
 
-import org.folio.circulation.domain.Note;
 import org.folio.circulation.domain.NoteLink;
-import org.folio.circulation.domain.NoteLinkType;
 import org.folio.circulation.domain.validation.GeneralNoteTypeValidator;
 import org.folio.circulation.infrastructure.storage.notes.NoteTypesRepository;
 import org.folio.circulation.infrastructure.storage.notes.NotesRepository;
