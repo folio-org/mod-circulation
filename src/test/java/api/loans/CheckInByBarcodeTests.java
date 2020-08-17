@@ -43,8 +43,6 @@ import org.hamcrest.Matchers;
 import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
 import org.joda.time.Seconds;
-import org.junit.After;
-import org.junit.Before;
 import org.junit.Test;
 
 import api.support.APITests;
@@ -67,15 +65,8 @@ import io.vertx.core.json.JsonObject;
 import lombok.val;
 
 public class CheckInByBarcodeTests extends APITests {
-  @After
-  public void cleanUp() {
-    notesClient.deleteAll();
-    noteTypeClient.deleteAll();
-  }
-
   @Test
   public void canCloseAnOpenLoanByCheckingInTheItem() {
-
     final IndividualResource james = usersFixture.james();
 
     final UUID checkInServicePointId = servicePointsFixture.cd1().getId();

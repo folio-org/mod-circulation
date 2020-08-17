@@ -5,7 +5,6 @@ import static api.support.fixtures.TemplateContextMatchers.getLoanContextMatcher
 import static api.support.fixtures.TemplateContextMatchers.getLoanPolicyContextMatchers;
 import static api.support.fixtures.TemplateContextMatchers.getUserContextMatchers;
 import static api.support.matchers.EventMatchers.isValidLoanDueDateChangedEvent;
-import static api.support.matchers.LoanMatchers.isOpen;
 import static api.support.matchers.PatronNoticeMatcher.hasEmailNoticeProperties;
 import static api.support.matchers.ResponseStatusCodeMatcher.hasStatus;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
@@ -36,7 +35,6 @@ import org.hamcrest.Matcher;
 import org.hamcrest.Matchers;
 import org.joda.time.DateTime;
 import org.joda.time.Period;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -53,7 +51,6 @@ import api.support.fakes.FakePubSub;
 import api.support.fixtures.ItemExamples;
 import api.support.http.InventoryItemResource;
 import io.vertx.core.json.JsonObject;
-import lombok.val;
 
 public class ChangeDueDateAPITests extends APITests {
   private InventoryItemResource item;
@@ -67,12 +64,6 @@ public class ChangeDueDateAPITests extends APITests {
     item = itemsFixture.basedUponNod();
     loan = checkOutFixture.checkOutByBarcode(item);
     dueDate = DateTime.parse(loan.getJson().getString("dueDate"));
-  }
-
-  @After
-  public void cleanUp() {
-    notesClient.deleteAll();
-    noteTypeClient.deleteAll();
   }
 
   @Test

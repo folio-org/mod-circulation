@@ -15,7 +15,6 @@ import java.util.UUID;
 
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -35,12 +34,6 @@ public class CloseDeclaredLostLoanWhenLostItemFeesAreClosedApiTests extends APIT
 
     declareLostFixtures.declareItemLost(new DeclareItemLostRequestBuilder()
       .forLoanId(loan.getId()));
-  }
-
-  @After
-  public void cleanUp() {
-    notesClient.deleteAll();
-    noteTypeClient.deleteAll();
   }
 
   @Test

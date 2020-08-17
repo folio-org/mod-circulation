@@ -12,14 +12,12 @@ import static org.folio.circulation.domain.representations.LoanProperties.ACTION
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.junit.Assert.assertEquals;
 
 import java.util.List;
 import java.util.UUID;
 
 import org.folio.circulation.support.http.client.Response;
 import org.joda.time.DateTime;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -40,12 +38,6 @@ public class DeclareClaimedReturnedItemAsMissingApiTests extends APITests {
     item = itemsFixture.basedUponSmallAngryPlanet();
     loanId = checkOutFixture.checkOutByBarcode(item, usersFixture.charlotte())
       .getId().toString();
-  }
-
-  @After
-  public void cleanUp() {
-    notesClient.deleteAll();
-    noteTypeClient.deleteAll();
   }
 
   @Test

@@ -11,8 +11,8 @@ import static org.folio.HttpStatus.HTTP_UNPROCESSABLE_ENTITY;
 import static org.folio.circulation.support.JsonPropertyWriter.write;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.hasItems;
-import static org.hamcrest.core.Is.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.core.Is.is;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -29,10 +29,7 @@ import org.hamcrest.Matcher;
 import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
 import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
 import org.joda.time.Period;
-import org.junit.After;
-import org.junit.Before;
 import org.junit.Test;
 
 import api.support.APITests;
@@ -46,15 +43,8 @@ import api.support.fixtures.ItemExamples;
 import api.support.fixtures.TemplateContextMatchers;
 import api.support.http.InventoryItemResource;
 import io.vertx.core.json.JsonObject;
-import lombok.val;
 
 public class ChangeDueDateByReplacingLoanTests extends APITests {
-  @After
-  public void cleanUp() {
-    notesClient.deleteAll();
-    noteTypeClient.deleteAll();
-  }
-
   @Test
   public void canManuallyChangeTheDueDateOfLoan() {
     final InventoryItemResource item = itemsFixture.basedUponNod();

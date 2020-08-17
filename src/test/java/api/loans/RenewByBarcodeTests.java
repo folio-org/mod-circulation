@@ -1,22 +1,14 @@
 package api.loans;
 
+import static api.support.matchers.ValidationErrorMatchers.hasMessage;
+import static api.support.matchers.ValidationErrorMatchers.hasParameter;
+
 import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.server.ValidationError;
 import org.hamcrest.Matcher;
-import org.junit.After;
-import org.junit.Before;
-
-import static api.support.matchers.ValidationErrorMatchers.hasMessage;
-import static api.support.matchers.ValidationErrorMatchers.hasParameter;
 
 public class RenewByBarcodeTests extends RenewalAPITests {
-  @After
-  public void cleanUp() {
-    notesClient.deleteAll();
-    noteTypeClient.deleteAll();
-  }
-
   @Override
   Response attemptRenewal(IndividualResource user, IndividualResource item) {
     return loansFixture.attemptRenewal(user, item);

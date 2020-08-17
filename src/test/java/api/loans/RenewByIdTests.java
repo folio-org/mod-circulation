@@ -7,16 +7,8 @@ import org.folio.circulation.support.http.client.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.server.ValidationError;
 import org.hamcrest.Matcher;
-import org.junit.After;
-import org.junit.Before;
 
 public class RenewByIdTests extends RenewalAPITests {
-  @After
-  public void cleanUp() {
-    notesClient.deleteAll();
-    noteTypeClient.deleteAll();
-  }
-
   @Override
   Response attemptRenewal(IndividualResource user, IndividualResource item) {
     return loansFixture.attemptRenewalById(user, item);

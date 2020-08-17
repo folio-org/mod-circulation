@@ -38,8 +38,6 @@ import org.hamcrest.Matcher;
 import org.hamcrest.Matchers;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeConstants;
-import org.junit.After;
-import org.junit.Before;
 import org.junit.Test;
 
 import api.support.APITests;
@@ -61,12 +59,6 @@ public class OverrideRenewByBarcodeTests extends APITests {
   private static final String ITEM_IS_NOT_LOANABLE_MESSAGE = "item is not loanable";
   private static final String ACTION_COMMENT_KEY = "actionComment";
   private static final String RENEWED_THROUGH_OVERRIDE = "renewedThroughOverride";
-
-  @After
-  public void cleanUp() {
-    notesClient.deleteAll();
-    noteTypeClient.deleteAll();
-  }
 
   @Test
   public void cannotOverrideRenewalWhenLoanPolicyDoesNotExist() {
