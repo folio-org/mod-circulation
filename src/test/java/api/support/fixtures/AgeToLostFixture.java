@@ -2,16 +2,21 @@ package api.support.fixtures;
 
 import static api.support.APITestContext.getOkapiHeadersFromContext;
 import static api.support.http.InterfaceUrls.scheduledAgeToLostUrl;
+import static api.support.matchers.ItemMatchers.isAgedToLost;
+import static java.time.Clock.fixed;
+import static java.time.Instant.ofEpochMilli;
+import static org.folio.circulation.support.ClockManager.getClockManager;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.joda.time.DateTime.now;
-import static org.joda.time.DateTimeZone.UTC;
 
+import java.time.ZoneOffset;
 import java.util.UUID;
 
 import org.folio.circulation.support.http.client.IndividualResource;
-import org.joda.time.DateTime;
 
 import api.support.builders.ItemBuilder;
 import api.support.fixtures.policies.PoliciesActivationFixture;
+import api.support.fixtures.policies.PoliciesToActivate;
 import api.support.http.TimedTaskClient;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -39,24 +44,27 @@ public final class AgeToLostFixture {
   }
 
   public AgeToLostResult createAgedToLostLoan() {
-    policiesActivation.useLostItemPolicy(
-      lostItemFeePoliciesFixture.ageToLostAfterOneMinute().getId());
+    return createAgedToLostLoan(PoliciesToActivate.builder()
+    .lostItemPolicy(lostItemFeePoliciesFixture.ageToLostAfterOneMinute()));
+  }
+
+  public AgeToLostResult createAgedToLostLoan(PoliciesToActivate.PoliciesToActivateBuilder policiesToUse) {
+    policiesActivation.use(policiesToUse);
 
     val user = usersFixture.james();
     val item = itemsFixture.basedUponNod(ItemBuilder::withRandomBarcode);
-    val loan = checkOutFixture
-      .checkOutByBarcode(item, user, getLoanOverdueDate().minusMinutes(2));
+    val loan = checkOutFixture.checkOutByBarcode(item, user);
 
+    // Go to the future
+    getClockManager().setClock(fixed(ofEpochMilli(now().plusMonths(6).getMillis()), ZoneOffset.UTC));
     timedTaskClient.start(scheduledAgeToLostUrl(), 204, "scheduled-age-to-lost");
 
-    return new AgeToLostResult(
-      loansFixture.getLoanById(loan.getId()),
-      itemsFixture.getById(item.getId()),
-      user);
-  }
+    final AgeToLostResult ageToLostResult = new AgeToLostResult(loansFixture.getLoanById(loan.getId()),
+      itemsFixture.getById(item.getId()), user);
 
-  private DateTime getLoanOverdueDate() {
-    return now(UTC).minusWeeks(3);
+    assertThat(ageToLostResult.getItem().getJson(), isAgedToLost());
+
+    return ageToLostResult;
   }
 
   @Getter

@@ -6,6 +6,7 @@ import java.util.UUID;
 
 import io.vertx.core.json.JsonObject;
 import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
 
 public class DeclareItemLostRequestBuilder extends JsonBuilder implements Builder {
   private final String loanId;
@@ -14,7 +15,7 @@ public class DeclareItemLostRequestBuilder extends JsonBuilder implements Builde
   private final String servicePointId;
 
   public DeclareItemLostRequestBuilder() {
-    this(null, DateTime.now(), null, null);
+    this(null, DateTime.now(DateTimeZone.UTC), null, null);
   }
 
   public String getLoanId() {

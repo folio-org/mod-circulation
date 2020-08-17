@@ -12,6 +12,7 @@ import static api.support.http.ResourceClient.forNoticePolicies;
 import static api.support.http.ResourceClient.forRequestPolicies;
 import static api.support.http.ResourceClient.forServicePoints;
 import static api.support.http.api.support.NamedQueryStringParameter.namedParameter;
+import static org.folio.circulation.support.utils.CommonUtils.getOrDefault;
 
 import java.net.URL;
 import java.util.ArrayList;
@@ -33,6 +34,7 @@ import api.support.fixtures.OverdueFinePoliciesFixture;
 import api.support.fixtures.RequestPoliciesFixture;
 import api.support.fixtures.ServicePointsFixture;
 import api.support.http.QueryStringParameter;
+import lombok.val;
 
 // It is delegated by lombok in APITests class
 @SuppressWarnings("unused")
@@ -117,13 +119,17 @@ public final class PoliciesActivationFixture {
   }
 
   public void use(PoliciesToActivate.PoliciesToActivateBuilder builder) {
-    final PoliciesToActivate policies = builder.build();
+    final PoliciesToActivate overridePolicies = builder.build();
+    final PoliciesToActivate defaultPolicies = defaultRollingPolicies().build();
 
-    useFallbackPolicies(policies.getLoanPolicy().getId(),
-      policies.getRequestPolicy().getId(),
-      policies.getNoticePolicy().getId(),
-      policies.getOverduePolicy().getId(),
-      policies.getLostItemPolicy().getId());
+    val loanPolicy = getOrDefault(overridePolicies::getLoanPolicy, defaultPolicies::getLoanPolicy);
+    val requestPolicy = getOrDefault(overridePolicies::getRequestPolicy, defaultPolicies::getRequestPolicy);
+    val noticePolicy = getOrDefault(overridePolicies::getNoticePolicy, defaultPolicies::getNoticePolicy);
+    val overduePolicy = getOrDefault(overridePolicies::getOverduePolicy, defaultPolicies::getOverduePolicy);
+    val lostPolicy = getOrDefault(overridePolicies::getLostItemPolicy, defaultPolicies::getLostItemPolicy);
+
+    useFallbackPolicies(loanPolicy.getId(), requestPolicy.getId(), noticePolicy.getId(),
+      overduePolicy.getId(), lostPolicy.getId());
   }
 
   /**
