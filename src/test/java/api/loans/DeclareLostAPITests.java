@@ -460,15 +460,11 @@ public class DeclareLostAPITests extends APITests {
 
     declareLostFixtures.declareItemLost(builder);
 
-    List<JsonObject> notes = notesClient.getAll();
-    assertThat(notes.size(), is(1));
-    assertThat(notes.get(0).getString("title"), is("Claimed returned item marked lost"));
-    assertThat(notes.get(0).getString("domain"), is("loans"));
+    assertNoteHasBeenCreated();
   }
 
   @Test
   public void shouldNotCreateNoteWhenNotPreviouslyClaimedReturned() {
-    int initalNoteCount = notesClient.getAll().size();
     String comment = "testing";
 
     InventoryItemResource item = itemsFixture.basedUponSmallAngryPlanet();
@@ -483,7 +479,7 @@ public class DeclareLostAPITests extends APITests {
 
     declareLostFixtures.declareItemLost(builder);
 
-    assertEquals(0, notesClient.getAll().size() - initalNoteCount);
+    assertEquals(0, notesClient.getAll().size());
   }
 
   private List<JsonObject> getAccountsForLoan(UUID loanId) {
@@ -570,5 +566,12 @@ public class DeclareLostAPITests extends APITests {
         hasJsonPath("loan.action", "closedLoan"),
         hasJsonPath("loan.itemStatus", "Lost and paid"))
     ));
+  }
+
+  private void assertNoteHasBeenCreated() {
+    List<JsonObject> notes = notesClient.getAll();
+    assertThat(notes.size(), is(1));
+    assertThat(notes.get(0).getString("title"), is("Claimed returned item marked declared lost"));
+    assertThat(notes.get(0).getString("domain"), is("loans"));
   }
 }

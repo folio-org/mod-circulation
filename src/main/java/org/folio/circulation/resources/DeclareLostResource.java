@@ -95,7 +95,7 @@ public class DeclareLostResource extends Resource {
     final NoteCreator creator = new NoteCreator(notesRepository);
 
     if (isClaimedReturned) {
-      return creator.createNote(loan.getUserId(), "Claimed returned item marked lost")
+      return creator.createNote(loan.getUserId(), "Claimed returned item marked declared lost")
         .thenCompose(r -> r.after(note -> completedFuture(succeeded(loan))));
     }
     else {
