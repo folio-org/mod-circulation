@@ -608,10 +608,10 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     final DateTime billingDateTime = getLostItemPolicy()
       .calculateDateTimeWhenPatronBilledForAgedToLost(getDueDate());
 
-    final JsonObject agedToLostDelayedBilling = new JsonObject()
-      .put("lostItemHasBeenBilled", false)
-      .put("dateLostItemShouldBeBilled", billingDateTime.toString());
+    final JsonObject delayedBilling = new JsonObject();
+    write(delayedBilling, "lostItemHasBeenBilled", false);
+    write(delayedBilling, "dateLostItemShouldBeBilled", billingDateTime);
 
-    representation.put("agedToLostDelayedBilling", agedToLostDelayedBilling);
+    write(representation, "agedToLostDelayedBilling", delayedBilling);
   }
 }
