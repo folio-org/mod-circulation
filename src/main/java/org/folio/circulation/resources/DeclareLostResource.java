@@ -1,15 +1,20 @@
 package org.folio.circulation.resources;
 
+import static java.util.concurrent.CompletableFuture.completedFuture;
+import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 
 import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.StoreLoanAndItem;
 import org.folio.circulation.domain.Loan;
+import org.folio.circulation.domain.notes.NoteCreator;
 import org.folio.circulation.domain.representations.DeclareItemLostRequest;
 import org.folio.circulation.domain.validation.LoanValidator;
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
+import org.folio.circulation.infrastructure.storage.notes.NotesRepository;
 import org.folio.circulation.services.EventPublisher;
 import org.folio.circulation.services.LostItemFeeChargingService;
 import org.folio.circulation.support.Clients;
@@ -21,7 +26,8 @@ import io.vertx.core.http.HttpClient;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 
-public class DeclareLostResource extends AbstractClaimedReturnedResource {
+public class DeclareLostResource extends Resource {
+  protected boolean isClaimedReturned;
 
   public DeclareLostResource(HttpClient client) {
     super(client);
@@ -77,5 +83,23 @@ public class DeclareLostResource extends AbstractClaimedReturnedResource {
       loan -> Result.succeeded(loan.getItem().isDeclaredLost()),
       loan -> singleValidationError("The item is already declared lost",
         "itemId", loan.getItemId()));
+  }
+
+  protected  Result<Loan> setIsClaimedReturned(Result<Loan> loanResult) {
+    loanResult.map(loan -> isClaimedReturned = loan.isClaimedReturned());
+    return loanResult;
+  }
+
+  protected CompletableFuture<Result<Loan>> createNote(Clients clients, Loan loan, boolean isClaimedReturned) {
+    final NotesRepository notesRepository = NotesRepository.createUsing(clients);
+    final NoteCreator creator = new NoteCreator(notesRepository);
+
+    if (isClaimedReturned) {
+      return creator.createNote(loan.getUserId(), "Claimed returned item marked lost")
+        .thenCompose(r -> r.after(note -> completedFuture(succeeded(loan))));
+    }
+    else {
+      return completedFuture(succeeded(loan));
+    }
   }
 }
