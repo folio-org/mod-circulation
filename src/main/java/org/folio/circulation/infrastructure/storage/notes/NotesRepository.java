@@ -41,8 +41,8 @@ public class NotesRepository {
       .thenApply(interpreter::flatMap);
   }
 
-  public CompletableFuture<Result<MultipleRecords<NoteType>>> findByName(String name) {
-    return CqlQuery.exactMatch("typeName", name)
+  public CompletableFuture<Result<MultipleRecords<NoteType>>> findGeneralNoteType() {
+    return CqlQuery.exactMatch("typeName", "General note")
       .after(query -> noteTypesClient.getMany(query, PageLimit.one()))
       .thenApply(flatMapResult(NotesRepository::mapResponseToNoteTypes));
   }
@@ -50,4 +50,5 @@ public class NotesRepository {
   private static Result<MultipleRecords<NoteType>> mapResponseToNoteTypes(Response response) {
     return MultipleRecords.from(response, NoteType::from, "noteTypes");
   }
+
 }

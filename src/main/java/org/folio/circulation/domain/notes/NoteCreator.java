@@ -16,7 +16,7 @@ public class NoteCreator {
   }
 
   public CompletableFuture<Result<Note>> createNote(String userId, String message) {
-    return notesRepository.findByName("General note")
+    return notesRepository.findGeneralNoteType()
       .thenApply(GeneralNoteTypeValidator::refuseIfNoteTypeNotFound)
       .thenApply(r -> r.map(CollectionUtil::firstOrNull))
       .thenCompose(r -> r.after(noteType -> notesRepository.create(Note.builder()
@@ -27,4 +27,5 @@ public class NoteCreator {
         .link(NoteLink.from(userId, NoteLinkType.USER.getValue()))
         .build())));
   }
+
 }
