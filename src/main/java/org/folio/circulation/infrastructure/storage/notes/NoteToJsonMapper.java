@@ -15,7 +15,7 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
 public class NoteToJsonMapper {
-  public static JsonObject toJson(Note note) {
+  public JsonObject toJson(Note note) {
     JsonObject json = new JsonObject();
 
     List<JsonObject> jsonLinks = note.getLinks().stream()
@@ -32,7 +32,7 @@ public class NoteToJsonMapper {
     return json;
   }
 
-  public static JsonObject toJson(NoteLink link) {
+  private static JsonObject toJson(NoteLink link) {
     JsonObject json = new JsonObject();
 
     write(json,"id", link.getId());

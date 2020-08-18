@@ -39,7 +39,7 @@ public class NotesRepository {
       .flatMapOn(201, mapUsingJson(noteToJsonMapper::noteFrom))
       .otherwise(forwardOnFailure());
 
-    return notesClient.post(NoteToJsonMapper.toJson(note))
+    return notesClient.post(noteToJsonMapper.toJson(note))
       .thenApply(interpreter::flatMap);
   }
 
