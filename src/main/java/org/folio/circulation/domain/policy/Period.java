@@ -203,7 +203,7 @@ public class Period {
     return now.isEqual(startPlusPeriod);
   }
 
-  public boolean isEmpty() {
+  public boolean isZeroDuration() {
     return duration == 0;
   }
 

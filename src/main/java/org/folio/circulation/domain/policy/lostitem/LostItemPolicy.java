@@ -125,7 +125,7 @@ public class LostItemPolicy extends Policy {
   }
 
   public boolean shouldRefundFees(DateTime lostDateTime) {
-    return feeRefundInterval.isEmpty()
+    return feeRefundInterval.isZeroDuration()
       || feeRefundInterval.hasNotPassedSinceDateTillNow(lostDateTime)
       || feeRefundInterval.isEqualToDateTillNow(lostDateTime);
   }
@@ -150,7 +150,7 @@ public class LostItemPolicy extends Policy {
   }
 
   public boolean canAgeLoanToLost(DateTime loanDueDate) {
-    if (agedToLostAfterOverdueInterval.isEmpty()) {
+    if (agedToLostAfterOverdueInterval.isZeroDuration()) {
       return false;
     }
 
@@ -173,13 +173,14 @@ public class LostItemPolicy extends Policy {
   }
 
   private boolean shouldDelayBillingForPatronWhenItemAgedToLost() {
-    return !patronBilledAfterAgedToLostInterval.isEmpty();
+    return !patronBilledAfterAgedToLostInterval.isZeroDuration();
   }
 
   private static class UnknownLostItemPolicy extends LostItemPolicy {
     UnknownLostItemPolicy(String id) {
       super(id, null, noAutomaticallyChargeableFee(), noAutomaticallyChargeableFee(),
-        noActualCostFee(), zeroDurationPeriod(), false, false, zeroDurationPeriod(), zeroDurationPeriod(), noAutomaticallyChargeableFee());
+        noActualCostFee(), zeroDurationPeriod(), false, false,
+        zeroDurationPeriod(), zeroDurationPeriod(), noAutomaticallyChargeableFee());
     }
   }
 }
