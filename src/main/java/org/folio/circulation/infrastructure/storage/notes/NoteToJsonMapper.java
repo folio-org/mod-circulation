@@ -1,6 +1,7 @@
 package org.folio.circulation.infrastructure.storage.notes;
 
 import static org.folio.circulation.support.JsonPropertyFetcher.getArrayProperty;
+import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
 import static org.folio.circulation.support.JsonPropertyWriter.write;
 
 import java.util.List;
@@ -14,10 +15,6 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
 public class NoteToJsonMapper {
-  private static NoteLink noteLinkFrom(JsonObject jsonObject) {
-    return new NoteLink(jsonObject.getString("id"), jsonObject.getString("type"));
-  }
-
   public static JsonObject toJson(Note note) {
     JsonObject json = new JsonObject();
 
@@ -44,14 +41,17 @@ public class NoteToJsonMapper {
     return json;
   }
 
-  public Note noteFrom(JsonObject jsonObject) {
-    JsonArray noteLinksJson = getArrayProperty(jsonObject, "links");
-    List<NoteLink> noteLinks = JsonArrayHelper.toStream(noteLinksJson)
+  public Note noteFrom(JsonObject json) {
+    List<NoteLink> noteLinks = JsonArrayHelper.toStream(json, "links")
       .map(NoteToJsonMapper::noteLinkFrom)
       .collect(Collectors.toList());
 
-    return new Note(jsonObject.getString("id"), jsonObject.getString("typeId"),
-      jsonObject.getString("domain"), jsonObject.getString("title"),
-      jsonObject.getString("content"), noteLinks);
+    return new Note(getProperty(json,"id"), getProperty(json,"typeId"),
+      getProperty(json,"domain"), getProperty(json,"title"),
+      getProperty(json,"content"), noteLinks);
+  }
+
+  private static NoteLink noteLinkFrom(JsonObject json) {
+    return new NoteLink(getProperty(json,"id"), getProperty(json,"type"));
   }
 }
