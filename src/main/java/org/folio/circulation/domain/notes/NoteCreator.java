@@ -3,7 +3,6 @@ package org.folio.circulation.domain.notes;
 import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.domain.NoteLink;
-import org.folio.circulation.domain.validation.GeneralNoteTypeValidator;
 import org.folio.circulation.infrastructure.storage.notes.NotesRepository;
 import org.folio.circulation.support.Result;
 
@@ -15,8 +14,10 @@ public class NoteCreator {
   }
 
   public CompletableFuture<Result<Note>> createNote(String userId, String message) {
+    final GeneralNoteTypeValidator validator = new GeneralNoteTypeValidator();
+
     return notesRepository.findGeneralNoteType()
-      .thenApply(GeneralNoteTypeValidator::refuseIfNoteTypeNotFound)
+      .thenApply(validator::refuseIfNoteTypeNotFound)
       .thenCompose(r -> r.after(noteType -> notesRepository.create(Note.builder()
         .title(message)
         .typeId(noteType.getId())

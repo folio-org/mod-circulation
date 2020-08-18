@@ -26,7 +26,7 @@ import io.vertx.core.json.JsonObject;
 
 public class ValidationErrorMatchers {
   public static TypeSafeDiagnosingMatcher<JsonObject> hasErrorWith(Matcher<ValidationError> matcher) {
-    return new TypeSafeDiagnosingMatcher<JsonObject>() {
+    return new TypeSafeDiagnosingMatcher<>() {
       @Override
       public void describeTo(Description description) {
         description
@@ -46,7 +46,7 @@ public class ValidationErrorMatchers {
   }
 
   public static TypeSafeDiagnosingMatcher<HttpFailure> isErrorWith(Matcher<ValidationError> matcher) {
-    return new TypeSafeDiagnosingMatcher<HttpFailure>() {
+    return new TypeSafeDiagnosingMatcher<>() {
       @Override
       public void describeTo(Description description) {
         description
@@ -55,7 +55,7 @@ public class ValidationErrorMatchers {
 
       @Override
       protected boolean matchesSafely(HttpFailure failure, Description description) {
-        if(failure instanceof ValidationErrorFailure) {
+        if (failure instanceof ValidationErrorFailure) {
           final Matcher<Iterable<? super ValidationError>> iterableMatcher
             = IsCollectionContaining.hasItem(matcher);
 
@@ -64,15 +64,14 @@ public class ValidationErrorMatchers {
           iterableMatcher.describeMismatch(errors, description);
 
           return iterableMatcher.matches(errors);
-        }
-        else {
+        } else {
           description.appendText("is not a validation error failure");
           return false;
         }
       }
     };
   }
-  
+
   public static TypeSafeDiagnosingMatcher<ValidationError> hasNullParameter(String key) {
     return hasParameter(key, null);
   }
@@ -107,7 +106,7 @@ public class ValidationErrorMatchers {
   }
 
   public static TypeSafeDiagnosingMatcher<ValidationError> hasMessage(String message) {
-    return new TypeSafeDiagnosingMatcher<ValidationError>() {
+    return new TypeSafeDiagnosingMatcher<>() {
       @Override
       public void describeTo(Description description) {
         description.appendText("has message ").appendValue(message);
@@ -125,7 +124,7 @@ public class ValidationErrorMatchers {
   }
 
   public static TypeSafeDiagnosingMatcher<ValidationError> hasMessageContaining(String message) {
-    return new TypeSafeDiagnosingMatcher<ValidationError>() {
+    return new TypeSafeDiagnosingMatcher<>() {
       @Override
       public void describeTo(Description description) {
         description.appendText("has message ").appendValue(message);
