@@ -24,7 +24,7 @@ public class NoteCreator {
         .typeId(noteType.getId())
         .content(message)
         .domain("loans")
-        .link(NoteLink.from(userId, NoteLinkType.USER.getValue()))
+        .link(new NoteLink(userId, NoteLinkType.USER.getValue()))
         .build())));
   }
 
