@@ -6,7 +6,6 @@ import org.folio.circulation.domain.NoteLink;
 import org.folio.circulation.domain.validation.GeneralNoteTypeValidator;
 import org.folio.circulation.infrastructure.storage.notes.NotesRepository;
 import org.folio.circulation.support.Result;
-import org.folio.circulation.support.utils.CollectionUtil;
 
 public class NoteCreator {
   private final NotesRepository notesRepository;
@@ -18,7 +17,6 @@ public class NoteCreator {
   public CompletableFuture<Result<Note>> createNote(String userId, String message) {
     return notesRepository.findGeneralNoteType()
       .thenApply(GeneralNoteTypeValidator::refuseIfNoteTypeNotFound)
-      .thenApply(r -> r.map(CollectionUtil::firstOrNull))
       .thenCompose(r -> r.after(noteType -> notesRepository.create(Note.builder()
         .title(message)
         .typeId(noteType.getId())

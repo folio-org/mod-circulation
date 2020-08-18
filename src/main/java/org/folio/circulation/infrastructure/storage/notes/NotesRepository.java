@@ -1,13 +1,14 @@
 package org.folio.circulation.infrastructure.storage.notes;
 
+import static org.folio.circulation.support.JsonArrayHelper.toStream;
 import static org.folio.circulation.support.ResultBinding.flatMapResult;
 import static org.folio.circulation.support.http.ResponseMapping.forwardOnFailure;
 import static org.folio.circulation.support.http.ResponseMapping.mapUsingJson;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
 
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
-import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.notes.Note;
 import org.folio.circulation.domain.notes.NoteType;
 import org.folio.circulation.support.Clients;
@@ -43,15 +44,23 @@ public class NotesRepository {
       .thenApply(interpreter::flatMap);
   }
 
-  public CompletableFuture<Result<MultipleRecords<NoteType>>> findGeneralNoteType() {
+  public CompletableFuture<Result<Optional<NoteType>>> findGeneralNoteType() {
     return exactMatch("typeName", "General note")
       .after(query -> noteTypesClient.getMany(query, PageLimit.one()))
       .thenApply(flatMapResult(NotesRepository::mapResponseToNoteTypes));
   }
 
-  private static Result<MultipleRecords<NoteType>> mapResponseToNoteTypes(Response response) {
+  private static Result<Optional<NoteType>> mapResponseToNoteTypes(Response response) {
+    return new ResponseInterpreter<Optional<NoteType>>()
+      .flatMapOn(200, NotesRepository::multipleNoteTypesToOptional)
+      .apply(response);
+  }
+
+  private static Result<Optional<NoteType>> multipleNoteTypesToOptional(Response r) {
     final NoteTypeToJsonMapper noteTypeToJsonMapper = new NoteTypeToJsonMapper();
 
-    return MultipleRecords.from(response, noteTypeToJsonMapper::fromJson, "noteTypes");
+    return Result.of(() -> toStream(r.getJson(), "noteTypes")
+      .findFirst()
+      .map(noteTypeToJsonMapper::fromJson));
   }
 }

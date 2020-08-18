@@ -2,6 +2,8 @@ package org.folio.circulation.domain.validation;
 
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 
+import java.util.Optional;
+
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.notes.NoteType;
 import org.folio.circulation.support.Result;
@@ -9,11 +11,12 @@ import org.folio.circulation.support.Result;
 public final class GeneralNoteTypeValidator {
   private GeneralNoteTypeValidator() {}
 
-  public static Result<MultipleRecords<NoteType>> refuseIfNoteTypeNotFound(
-    Result<MultipleRecords<NoteType>> noteTypeResult) {
+  public static Result<NoteType> refuseIfNoteTypeNotFound(
+    Result<Optional<NoteType>> noteTypeResult) {
 
     return noteTypeResult.failWhen(
-      notes -> Result.succeeded(notes.getRecords().isEmpty()),
-      notes -> singleValidationError("No General note type found", "noteTypes", null));
+        note -> Result.of(note::isEmpty),
+        note -> singleValidationError("No General note type found", "noteTypes", null))
+      .map(Optional::get);
   }
 }
