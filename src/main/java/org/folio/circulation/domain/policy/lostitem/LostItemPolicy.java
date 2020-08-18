@@ -1,6 +1,6 @@
 package org.folio.circulation.domain.policy.lostitem;
 
-import static org.folio.circulation.domain.policy.Period.emptyPeriod;
+import static org.folio.circulation.domain.policy.Period.zeroDurationPeriod;
 import static org.folio.circulation.domain.policy.lostitem.ChargeAmountType.ACTUAL_COST;
 import static org.folio.circulation.domain.policy.lostitem.ChargeAmountType.SET_COST;
 import static org.folio.circulation.domain.policy.lostitem.ChargeAmountType.forValue;
@@ -73,7 +73,7 @@ public class LostItemPolicy extends Policy {
 
   public static Period getPeriodPropertyOrEmpty(JsonObject json, String propertyName) {
     if (json == null || !json.containsKey(propertyName)) {
-      return emptyPeriod();
+      return zeroDurationPeriod();
     }
 
     return Period.from(json.getJsonObject(propertyName));
@@ -179,7 +179,7 @@ public class LostItemPolicy extends Policy {
   private static class UnknownLostItemPolicy extends LostItemPolicy {
     UnknownLostItemPolicy(String id) {
       super(id, null, noAutomaticallyChargeableFee(), noAutomaticallyChargeableFee(),
-        noActualCostFee(), emptyPeriod(), false, false, emptyPeriod(), emptyPeriod(), noAutomaticallyChargeableFee());
+        noActualCostFee(), zeroDurationPeriod(), false, false, zeroDurationPeriod(), zeroDurationPeriod(), noAutomaticallyChargeableFee());
     }
   }
 }

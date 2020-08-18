@@ -26,7 +26,7 @@ import org.joda.time.DateTime;
 import io.vertx.core.json.JsonObject;
 
 public class Period {
-  private static final Period EMPTY_PERIOD = minutes(0);
+  private static final Period ZERO_DURATION_PERIOD = minutes(0);
 
   private static final String MONTHS = "Months";
   private static final String WEEKS = "Weeks";
@@ -38,8 +38,8 @@ public class Period {
   private static final String INTERVAL_ID_KEY = "intervalId";
 
   private static final int MINUTES_PER_MONTH = MINUTES_PER_DAY * 31;
-  private static final Set<String> SUPPORTED_INTERVAL_IDS = Collections.unmodifiableSet(
-    new HashSet<>(Arrays.asList(MONTHS, WEEKS, DAYS, HOURS, MINUTES)));
+  private static final Set<String> SUPPORTED_INTERVAL_IDS = Set.of(MONTHS, WEEKS,
+    DAYS, HOURS, MINUTES);
 
   private final Integer duration;
   private final String interval;
@@ -207,7 +207,7 @@ public class Period {
     return duration == 0;
   }
 
-  public static Period emptyPeriod() {
-    return EMPTY_PERIOD;
+  public static Period zeroDurationPeriod() {
+    return ZERO_DURATION_PERIOD;
   }
 }
