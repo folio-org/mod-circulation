@@ -11,5 +11,4 @@ import lombok.RequiredArgsConstructor;
 public class NoteLink {
   private final String id;
   private final String type;
-
 }

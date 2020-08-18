@@ -50,6 +50,8 @@ public class NotesRepository {
   }
 
   private static Result<MultipleRecords<NoteType>> mapResponseToNoteTypes(Response response) {
-    return MultipleRecords.from(response, NoteType::from, "noteTypes");
+    final NoteTypeToJsonMapper noteTypeToJsonMapper = new NoteTypeToJsonMapper();
+
+    return MultipleRecords.from(response, noteTypeToJsonMapper::fromJson, "noteTypes");
   }
 }

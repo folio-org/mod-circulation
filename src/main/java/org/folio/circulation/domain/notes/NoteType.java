@@ -1,25 +1,11 @@
 package org.folio.circulation.domain.notes;
 
-import static org.folio.circulation.support.JsonPropertyFetcher.getProperty;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 
-import io.vertx.core.json.JsonObject;
-
+@Getter
+@RequiredArgsConstructor
 public class NoteType {
-  private final JsonObject representation;
-
-  public NoteType(JsonObject representation) {
-    this.representation = representation;
-  }
-
-  public static NoteType from(JsonObject representation) {
-    return new NoteType(representation);
-  }
-
-  public String getId() {
-    return getProperty(representation, "id");
-  }
-
-  public String getName() {
-    return getProperty(representation, "typeName");
-  }
+  private final String id;
+  private final String type;
 }
