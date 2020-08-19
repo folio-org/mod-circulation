@@ -79,7 +79,9 @@ public class LostItemFeePoliciesFixture {
   public LostItemFeePolicyBuilder ageToLostAfterOneMinutePolicy() {
     return chargeFeePolicy()
       .withName("Age to lost after one minute overdue")
-      .withItemAgedToLostAfterOverdue(minutes(1));
+      .withItemAgedToLostAfterOverdue(minutes(1))
+      .withPatronBilledAfterAgedLost(minutes(5))
+      .withChargeAmountItemSystem(true);
   }
 
   public IndividualResource create(UUID id, String name) {

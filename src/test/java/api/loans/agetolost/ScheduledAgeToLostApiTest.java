@@ -5,11 +5,14 @@ import static api.support.matchers.ItemMatchers.isAgedToLost;
 import static api.support.matchers.ItemMatchers.isCheckedOut;
 import static api.support.matchers.ItemMatchers.isClaimedReturned;
 import static api.support.matchers.JsonObjectMatcher.hasJsonPath;
+import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.iterableWithSize;
+import static org.hamcrest.Matchers.not;
 import static org.joda.time.DateTime.now;
+import static org.joda.time.DateTime.parse;
 import static org.joda.time.DateTimeZone.UTC;
 
 import java.util.HashMap;
@@ -54,6 +57,7 @@ public class ScheduledAgeToLostApiTest extends SpringApiTest {
 
     assertThat(itemsClient.get(overdueItem).getJson(), isAgedToLost());
     assertThat(getLoanActions(), hasAgedToLostAction());
+    assertThat(loansClient.get(overdueLoan).getJson(), hasPatronBillingDate());
   }
 
   @Test
@@ -68,6 +72,7 @@ public class ScheduledAgeToLostApiTest extends SpringApiTest {
 
       assertThat(itemFromStorage.getJson(), isAgedToLost());
       assertThat(getLoanActions(loanFromStorage), hasAgedToLostAction());
+      assertThat(loanFromStorage.getJson(), hasPatronBillingDate(loanFromStorage));
     });
   }
 
@@ -78,6 +83,7 @@ public class ScheduledAgeToLostApiTest extends SpringApiTest {
     scheduledAgeToLostClient.triggerJob();
 
     assertThat(itemsClient.get(overdueItem).getJson(), isClaimedReturned());
+    assertThat(loansClient.get(overdueLoan).getJson(), not(hasPatronBillingDate()));
   }
 
   @Test
@@ -93,6 +99,7 @@ public class ScheduledAgeToLostApiTest extends SpringApiTest {
     scheduledAgeToLostClient.triggerJob();
 
     assertThat(itemsClient.get(overdueItem).getJson(), isCheckedOut());
+    assertThat(loansClient.get(overdueLoan).getJson(), not(hasPatronBillingDate()));
   }
 
   @Test
@@ -108,6 +115,7 @@ public class ScheduledAgeToLostApiTest extends SpringApiTest {
     scheduledAgeToLostClient.triggerJob();
 
     assertThat(itemsClient.get(overdueItem).getJson(), isCheckedOut());
+    assertThat(loansClient.get(overdueLoan).getJson(), not(hasPatronBillingDate()));
   }
 
   @Test
@@ -117,6 +125,7 @@ public class ScheduledAgeToLostApiTest extends SpringApiTest {
 
     assertThat(itemsClient.get(overdueItem).getJson(), isAgedToLost());
     assertThat(getLoanActions(), hasAgedToLostAction());
+    assertThat(loansClient.get(overdueLoan).getJson(), hasPatronBillingDate());
 
     val agedToLostActions = getLoanActions().stream()
       .filter(json -> "itemAgedToLost".equals(json.getJsonObject("loan").getString("action")))
@@ -168,5 +177,21 @@ public class ScheduledAgeToLostApiTest extends SpringApiTest {
       hasJsonPath("loan.action", "itemAgedToLost"),
       hasJsonPath("loan.itemStatus", "Aged to lost")
     ));
+  }
+
+  private Matcher<JsonObject> hasPatronBillingDate() {
+    return hasPatronBillingDate(overdueLoan);
+  }
+
+  private Matcher<JsonObject> hasPatronBillingDate(IndividualResource loan) {
+    val expectedBillingDate = parse(loan.getJson().getString("dueDate"))
+      // age to lost overdue interval, per default policy
+      .plusMinutes(1)
+      // bill patron after age to lost interval, per default policy
+      .plusMinutes(5);
+
+    return allOf(hasJsonPath("agedToLostDelayedBilling.lostItemHasBeenBilled", false),
+      hasJsonPath("agedToLostDelayedBilling.dateLostItemShouldBeBilled",
+        isEquivalentTo(expectedBillingDate)));
   }
 }
