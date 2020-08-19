@@ -25,7 +25,6 @@ import api.support.builders.CheckInByBarcodeRequestBuilder;
 import io.vertx.core.json.JsonObject;
 
 public class CheckInDeclaredLostItemTest extends RefundLostItemFeesTestBase {
-
   @Override
   protected void performActionThatRequiresRefund() {
     checkInFixture.checkInByBarcode(item);

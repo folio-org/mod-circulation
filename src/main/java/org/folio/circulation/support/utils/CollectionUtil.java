@@ -5,7 +5,6 @@ import java.util.Collection;
 import org.folio.circulation.domain.MultipleRecords;
 
 public final class CollectionUtil {
-
   private CollectionUtil() {}
 
   public static <T> T firstOrNull(Collection<T> collection) {

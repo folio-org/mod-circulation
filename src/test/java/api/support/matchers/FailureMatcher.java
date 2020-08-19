@@ -2,13 +2,17 @@ package api.support.matchers;
 
 import static org.hamcrest.core.StringContains.containsString;
 
+import java.util.Collection;
+
 import org.folio.circulation.support.HttpFailure;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.ServerErrorFailure;
 import org.folio.circulation.support.ValidationErrorFailure;
+import org.folio.circulation.support.http.server.ValidationError;
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
 import org.hamcrest.TypeSafeDiagnosingMatcher;
+import org.hamcrest.core.IsCollectionContaining;
 
 public class FailureMatcher {
   public static <T> Matcher<Result<T>> hasValidationFailure(String expectedReason) {
@@ -21,15 +25,22 @@ public class FailureMatcher {
 
       @Override
       protected boolean matchesSafely(Result<T> failedResult, Description description) {
-        if(!failedResult.failed()) {
+        if (!failedResult.failed()) {
+          description.appendText("but is a successful result");
           return false;
-        }
-        else if(failedResult.cause() instanceof ValidationErrorFailure) {
+        } else if (failedResult.cause() instanceof ValidationErrorFailure) {
           final ValidationErrorFailure cause = (ValidationErrorFailure) failedResult.cause();
 
-          return cause.hasErrorWithReason(expectedReason);
-        }
-        else {
+          final Matcher<Iterable<? super ValidationError>> iterableMatcher
+            = IsCollectionContaining.hasItem(ValidationErrorMatchers.hasMessage(expectedReason));
+
+          final Collection<ValidationError> errors = cause.getErrors();
+
+          iterableMatcher.describeMismatch(errors, description);
+
+          return iterableMatcher.matches(errors);
+        } else {
+          description.appendText("but is not an validation failure");
           return false;
         }
       }
@@ -68,12 +79,12 @@ public class FailureMatcher {
 
       @Override
       protected boolean matchesSafely(Result<T> failedResult, Description description) {
-        if(!failedResult.failed()) {
+        if (!failedResult.failed()) {
           description.appendText("but is a successful result");
           return false;
         }
 
-        if(failedResult.cause() instanceof ServerErrorFailure) {
+        if (failedResult.cause() instanceof ServerErrorFailure) {
           final ServerErrorFailure cause = (ServerErrorFailure) failedResult.cause();
 
           final Matcher<String> matcher = containsString(expectedReason);
@@ -81,8 +92,7 @@ public class FailureMatcher {
           matcher.describeMismatch(cause.reason, description);
 
           return matcher.matches(cause.reason);
-        }
-        else {
+        } else {
           description.appendText("but is not an error failure");
           return false;
         }
@@ -99,7 +109,7 @@ public class FailureMatcher {
 
       @Override
       protected boolean matchesSafely(HttpFailure failure, Description description) {
-        if(failure instanceof ServerErrorFailure) {
+        if (failure instanceof ServerErrorFailure) {
           final ServerErrorFailure cause = (ServerErrorFailure) failure;
 
           final Matcher<String> matcher = containsString(expectedReason);
@@ -107,8 +117,7 @@ public class FailureMatcher {
           matcher.describeMismatch(cause.reason, description);
 
           return matcher.matches(cause.reason);
-        }
-        else {
+        } else {
           description.appendText("but is not a failure");
           return false;
         }

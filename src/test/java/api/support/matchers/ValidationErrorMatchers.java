@@ -55,7 +55,7 @@ public class ValidationErrorMatchers {
 
       @Override
       protected boolean matchesSafely(HttpFailure failure, Description description) {
-        if(failure instanceof ValidationErrorFailure) {
+        if (failure instanceof ValidationErrorFailure) {
           final Matcher<Iterable<? super ValidationError>> iterableMatcher
             = IsCollectionContaining.hasItem(matcher);
 
@@ -64,15 +64,14 @@ public class ValidationErrorMatchers {
           iterableMatcher.describeMismatch(errors, description);
 
           return iterableMatcher.matches(errors);
-        }
-        else {
+        } else {
           description.appendText("is not a validation error failure");
           return false;
         }
       }
     };
   }
-  
+
   public static TypeSafeDiagnosingMatcher<ValidationError> hasNullParameter(String key) {
     return hasParameter(key, null);
   }

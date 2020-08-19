@@ -1,5 +1,6 @@
 package org.folio.circulation.resources;
 
+import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.support.Result.failed;
 import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
@@ -7,8 +8,10 @@ import static org.folio.circulation.support.ValidationErrorFailure.singleValidat
 import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.domain.Loan;
+import org.folio.circulation.domain.notes.NoteCreator;
 import org.folio.circulation.domain.representations.ChangeItemStatusRequest;
 import org.folio.circulation.domain.validation.NotInItemStatusValidator;
+import org.folio.circulation.infrastructure.storage.notes.NotesRepository;
 import org.folio.circulation.services.ChangeItemStatusService;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.Result;
@@ -22,7 +25,6 @@ import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 
 public class DeclareClaimedReturnedItemAsMissingResource extends Resource {
-
   public DeclareClaimedReturnedItemAsMissingResource(HttpClient client) {
     super(client);
   }
@@ -46,13 +48,13 @@ public class DeclareClaimedReturnedItemAsMissingResource extends Resource {
     RoutingContext routingContext, ChangeItemStatusRequest request) {
 
     final Clients clients = Clients.create(new WebContext(routingContext), client);
-    final ChangeItemStatusService changeItemStatusService =
-      new ChangeItemStatusService(clients);
+    final ChangeItemStatusService changeItemStatusService = new ChangeItemStatusService(clients);
 
     return changeItemStatusService.getOpenLoan(request)
       .thenApply(NotInItemStatusValidator::refuseWhenItemIsNotClaimedReturned)
-      .thenApply(loanResult -> declareLoanMissing(loanResult, request))
-      .thenCompose(changeItemStatusService::updateLoanAndItem);
+      .thenApply(r -> declareLoanMissing(r, request))
+      .thenCompose(changeItemStatusService::updateLoanAndItem)
+      .thenCompose(r -> r.after(loan -> createNote(clients, loan)));
   }
 
   private Result<Loan> declareLoanMissing(Result<Loan> loanResult, ChangeItemStatusRequest request) {
@@ -70,5 +72,13 @@ public class DeclareClaimedReturnedItemAsMissingResource extends Resource {
     }
 
     return succeeded(request);
+  }
+
+  private CompletableFuture<Result<Loan>> createNote(Clients clients, Loan loan) {
+    final NotesRepository notesRepository = NotesRepository.createUsing(clients);
+    final NoteCreator creator = new NoteCreator(notesRepository);
+
+    return creator.createGeneralUserNote(loan.getUserId(), "Claimed returned item marked missing")
+      .thenCompose(r -> r.after(note -> completedFuture(succeeded(loan))));
   }
 }

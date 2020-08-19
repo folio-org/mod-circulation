@@ -80,7 +80,7 @@ import api.support.matchers.OverdueFineMatcher;
 import io.vertx.core.json.JsonObject;
 import lombok.val;
 
-abstract class RenewalAPITests extends APITests {
+public abstract class RenewalAPITests extends APITests {
   abstract Response attemptRenewal(IndividualResource user, IndividualResource item);
 
   abstract IndividualResource renew(IndividualResource user, IndividualResource item);

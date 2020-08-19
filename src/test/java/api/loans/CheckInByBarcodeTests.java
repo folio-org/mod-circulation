@@ -67,7 +67,6 @@ import lombok.val;
 public class CheckInByBarcodeTests extends APITests {
   @Test
   public void canCloseAnOpenLoanByCheckingInTheItem() {
-
     final IndividualResource james = usersFixture.james();
 
     final UUID checkInServicePointId = servicePointsFixture.cd1().getId();

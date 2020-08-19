@@ -13,6 +13,7 @@ import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
+import java.util.List;
 import java.util.UUID;
 
 import org.folio.circulation.support.http.client.Response;
@@ -27,11 +28,13 @@ import api.support.http.InventoryItemResource;
 import io.vertx.core.json.JsonObject;
 
 public class DeclareClaimedReturnedItemAsMissingApiTests extends APITests {
+  private static final String TESTING_COMMENT = "testing";
+
   private InventoryItemResource item;
   private String loanId;
 
   @Before
-  public void setUpItemAndLoan() {
+  public void setUp() {
     item = itemsFixture.basedUponSmallAngryPlanet();
     loanId = checkOutFixture.checkOutByBarcode(item, usersFixture.charlotte())
       .getId().toString();
@@ -39,8 +42,6 @@ public class DeclareClaimedReturnedItemAsMissingApiTests extends APITests {
 
   @Test
   public void canDeclareItemMissingWhenClaimedReturned() {
-    final String comment = "testing";
-
     claimItemReturnedFixture.claimItemReturned(new ClaimItemReturnedRequestBuilder()
       .forLoan(loanId)
       .withItemClaimedReturnedDate(DateTime.now()));
@@ -48,10 +49,11 @@ public class DeclareClaimedReturnedItemAsMissingApiTests extends APITests {
     claimItemReturnedFixture.declareClaimedReturnedItemAsMissing(
       new DeclareClaimedReturnedItemAsMissingRequestBuilder()
         .forLoan(loanId)
-        .withComment(comment));
+        .withComment(TESTING_COMMENT));
 
-    assertLoanIsClosed(comment);
+    assertLoanIsClosed(TESTING_COMMENT);
     assertItemIsMissing();
+    assertNoteHasBeenCreated();
   }
 
   @Test
@@ -59,7 +61,7 @@ public class DeclareClaimedReturnedItemAsMissingApiTests extends APITests {
     final Response response = claimItemReturnedFixture
       .attemptDeclareClaimedReturnedItemAsMissing(new DeclareClaimedReturnedItemAsMissingRequestBuilder()
         .forLoan(loanId)
-        .withComment("testing"));
+        .withComment(TESTING_COMMENT));
 
     assertThat(response.getStatusCode(), is(422));
     assertThat(response.getJson(), hasErrorWith(allOf(
@@ -75,7 +77,7 @@ public class DeclareClaimedReturnedItemAsMissingApiTests extends APITests {
       .attemptDeclareClaimedReturnedItemAsMissing(
         new DeclareClaimedReturnedItemAsMissingRequestBuilder()
           .forLoan(loanId)
-          .withComment("testing"));
+          .withComment(TESTING_COMMENT));
 
     assertThat(response.getStatusCode(), is(422));
     assertThat(response.getJson(), hasErrorWith(allOf(
@@ -104,7 +106,7 @@ public class DeclareClaimedReturnedItemAsMissingApiTests extends APITests {
       .attemptDeclareClaimedReturnedItemAsMissing(
         new DeclareClaimedReturnedItemAsMissingRequestBuilder()
           .forLoan(notExistentLoanId)
-          .withComment("testing"));
+          .withComment(TESTING_COMMENT));
 
     assertThat(response.getStatusCode(), is(404));
   }
@@ -122,5 +124,12 @@ public class DeclareClaimedReturnedItemAsMissingApiTests extends APITests {
       .getJson().getJsonObject("item");
 
     assertThat(actualItem, hasJsonPath("status.name", "Missing"));
+  }
+
+  private void assertNoteHasBeenCreated() {
+    List<JsonObject> notes = notesClient.getAll();
+    assertThat(notes.size(), is(1));
+    assertThat(notes.get(0).getString("title"), is("Claimed returned item marked missing"));
+    assertThat(notes.get(0).getString("domain"), is("loans"));
   }
 }

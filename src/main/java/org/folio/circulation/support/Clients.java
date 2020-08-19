@@ -53,6 +53,8 @@ public class Clients {
   private final CollectionResourceClient templateNoticeClient;
   private final CollectionResourceClient checkInStorageClient;
   private final CollectionResourceClient automatedPatronBlocksClient;
+  private final CollectionResourceClient notesClient;
+  private final CollectionResourceClient noteTypesClient;
 
   public static Clients create(WebContext context, HttpClient httpClient) {
     return new Clients(context.createHttpClient(httpClient), context);
@@ -105,6 +107,8 @@ public class Clients {
       templateNoticeClient = createTemplateNoticeClient(client, context);
       checkInStorageClient = createCheckInStorageClient(client, context);
       automatedPatronBlocksClient = createAutomatedPatronBlocksClient(client, context);
+      notesClient = createNotesClient(client, context);
+      noteTypesClient = createNoteTypesClient(client, context);
     }
     catch(MalformedURLException e) {
       throw new InvalidOkapiLocationException(context.getOkapiLocation(), e);
@@ -285,6 +289,14 @@ public class Clients {
 
   public CollectionResourceClient automatedPatronBlocksClient() {
     return automatedPatronBlocksClient;
+  }
+
+  public CollectionResourceClient notesClient() {
+    return notesClient;
+  }
+
+  public CollectionResourceClient noteTypesClient() {
+    return noteTypesClient;
   }
 
   private static CollectionResourceClient getCollectionResourceClient(
@@ -638,5 +650,19 @@ public class Clients {
     throws MalformedURLException {
 
     return getCollectionResourceClient(client, context, "/automated-patron-blocks");
+  }
+
+  private CollectionResourceClient createNotesClient(
+    OkapiHttpClient client, WebContext context)
+    throws MalformedURLException {
+
+    return getCollectionResourceClient(client, context, "/notes");
+  }
+
+  private CollectionResourceClient createNoteTypesClient(
+    OkapiHttpClient client, WebContext context)
+    throws MalformedURLException {
+
+    return getCollectionResourceClient(client, context, "/note-types");
   }
 }

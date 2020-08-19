@@ -1,6 +1,5 @@
 package api.loans;
 
-
 import static api.support.builders.FixedDueDateSchedule.forDay;
 import static api.support.builders.FixedDueDateSchedule.wholeMonth;
 import static api.support.matchers.ItemMatchers.isCheckedOut;

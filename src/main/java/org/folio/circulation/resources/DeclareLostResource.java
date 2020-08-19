@@ -1,18 +1,26 @@
 package org.folio.circulation.resources;
 
+import static java.util.concurrent.CompletableFuture.completedFuture;
+import static org.apache.commons.lang.StringUtils.defaultIfBlank;
+import static org.folio.circulation.support.Result.ofAsync;
+import static org.folio.circulation.support.Result.succeeded;
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 
-import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
+import java.util.function.Function;
 
 import org.folio.circulation.StoreLoanAndItem;
 import org.folio.circulation.domain.Loan;
-import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
+import org.folio.circulation.domain.notes.NoteCreator;
 import org.folio.circulation.domain.representations.DeclareItemLostRequest;
 import org.folio.circulation.domain.validation.LoanValidator;
+import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
+import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
+import org.folio.circulation.infrastructure.storage.notes.NotesRepository;
 import org.folio.circulation.services.EventPublisher;
 import org.folio.circulation.services.LostItemFeeChargingService;
 import org.folio.circulation.support.Clients;
-import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
 import org.folio.circulation.support.Result;
 import org.folio.circulation.support.http.server.NoContentResponse;
 import org.folio.circulation.support.http.server.WebContext;
@@ -22,46 +30,75 @@ import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 
 public class DeclareLostResource extends Resource {
+
   public DeclareLostResource(HttpClient client) {
     super(client);
   }
 
   @Override
   public void register(Router router) {
-    router.post("/circulation/loans/:id/declare-item-lost")
-      .handler(this::declareLost);
+    router.post("/circulation/loans/:id/declare-item-lost").handler(this::declareLost);
   }
 
   private void declareLost(RoutingContext routingContext) {
     final WebContext context = new WebContext(routingContext);
 
     final Clients clients = Clients.create(context, client);
-    final LoanRepository loanRepository = new LoanRepository(clients);
-    final ItemRepository itemRepository = new ItemRepository(clients, true, true, true);
-    final StoreLoanAndItem storeLoanAndItem = new StoreLoanAndItem(loanRepository, itemRepository);
-    final LostItemFeeChargingService lostItemFeeService = new LostItemFeeChargingService(clients);
     final EventPublisher eventPublisher = new EventPublisher(routingContext);
 
-    validateDeclaredLostRequest(routingContext).after(request ->
-      loanRepository.getById(request.getLoanId())
-        .thenApply(LoanValidator::refuseWhenLoanIsClosed)
-        .thenApply(this::refuseWhenItemIsAlreadyDeclaredLost)
-        .thenApply(loan -> declareItemLost(loan, request))
-        .thenCompose(r -> r.after(storeLoanAndItem::updateLoanAndItemInStorage))
-        .thenCompose(r -> r.after(loan -> lostItemFeeService
-          .chargeLostItemFees(loan, request, context.getUserId()))))
+    validateDeclaredLostRequest(routingContext)
+      .after(request -> declareItemLost(request, clients, context))
       .thenComposeAsync(r -> r.after(eventPublisher::publishDeclaredLostEvent))
       .thenApply(r -> r.toFixedValue(NoContentResponse::noContent))
       .thenAccept(context::writeResultToHttpResponse);
   }
 
-  private Result<Loan> declareItemLost(Result<Loan> loanResult,
-    DeclareItemLostRequest request) {
+  private CompletableFuture<Result<Loan>> declareItemLost(DeclareItemLostRequest request,
+    Clients clients, WebContext context) {
 
-    return loanResult.next(loan -> Result.of(() ->
-      loan.declareItemLost(
-        Objects.toString(request.getComment(), ""),
-        request.getDeclaredLostDateTime())));
+    final LoanRepository loanRepository = new LoanRepository(clients);
+    final ItemRepository itemRepository = new ItemRepository(clients, true, true, true);
+    final StoreLoanAndItem storeLoanAndItem = new StoreLoanAndItem(loanRepository, itemRepository);
+    final LostItemFeeChargingService lostItemFeeService = new LostItemFeeChargingService(clients);
+
+    return loanRepository.getById(request.getLoanId())
+      .thenApply(LoanValidator::refuseWhenLoanIsClosed)
+      .thenApply(this::refuseWhenItemIsAlreadyDeclaredLost)
+      .thenCompose(declareItemLost(request, clients))
+      .thenCompose(r -> r.after(storeLoanAndItem::updateLoanAndItemInStorage))
+      .thenCompose(r -> r.after(loan -> lostItemFeeService
+        .chargeLostItemFees(loan, request, context.getUserId())));
+  }
+
+  private Function<Result<Loan>, CompletionStage<Result<Loan>>> declareItemLost(
+    DeclareItemLostRequest request, Clients clients) {
+
+    return r -> r.afterWhen(loan -> ofAsync(loan::isClaimedReturned),
+      loan -> declareItemLostWhenClaimedReturned(loan, request, clients),
+      loan -> declareItemLostWhenNotClaimedReturned(loan, request));
+  }
+
+  private CompletableFuture<Result<Loan>> declareItemLostWhenNotClaimedReturned(
+    Loan loan, DeclareItemLostRequest request) {
+
+    return ofAsync(() -> declareItemLost(loan, request));
+  }
+
+  private CompletableFuture<Result<Loan>> declareItemLostWhenClaimedReturned(
+    Loan loan, DeclareItemLostRequest request, Clients clients) {
+
+    final NotesRepository notesRepository = NotesRepository.createUsing(clients);
+    final NoteCreator creator = new NoteCreator(notesRepository);
+
+    return ofAsync(() -> declareItemLost(loan, request))
+      .thenCompose(r -> r.after(l -> creator.createGeneralUserNote(loan.getUserId(),
+        "Claimed returned item marked declared lost")))
+      .thenCompose(r -> r.after(note -> completedFuture(succeeded(loan))));
+  }
+
+  private Loan declareItemLost(Loan loan, DeclareItemLostRequest request) {
+    return loan.declareItemLost(defaultIfBlank(request.getComment(), ""),
+      request.getDeclaredLostDateTime());
   }
 
   private Result<DeclareItemLostRequest> validateDeclaredLostRequest(

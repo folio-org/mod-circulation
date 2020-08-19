@@ -24,6 +24,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.joda.time.Seconds.seconds;
+import static org.junit.Assert.assertEquals;
 
 import java.util.List;
 import java.util.UUID;
@@ -42,6 +43,7 @@ import org.junit.runner.RunWith;
 
 import api.support.APITests;
 import api.support.MultipleJsonRecords;
+import api.support.builders.ClaimItemReturnedRequestBuilder;
 import api.support.builders.DeclareItemLostRequestBuilder;
 import api.support.builders.LostItemFeePolicyBuilder;
 import api.support.fakes.FakePubSub;
@@ -53,13 +55,12 @@ import junitparams.converters.Nullable;
 
 @RunWith(JUnitParamsRunner.class)
 public class DeclareLostAPITests extends APITests {
-
   public DeclareLostAPITests() {
     super(true, true);
   }
 
   @Before
-  public void activatePolicy() {
+  public void setup() {
     useLostItemPolicy(lostItemFeePoliciesFixture.chargeFee().getId());
   }
 
@@ -434,6 +435,53 @@ public class DeclareLostAPITests extends APITests {
       hasParameter("itemId", itemId.toString()))));
   }
 
+  @Test
+  public void shouldCreateNoteWhenItemDeclaredLostAfterBeingClaimedReturned() {
+    String comment = "testing";
+
+    assertThat(notesClient.getAll().size(), is(0));
+
+    InventoryItemResource item = itemsFixture.basedUponSmallAngryPlanet();
+    UUID loanId = checkOutFixture.checkOutByBarcode(item, usersFixture.charlotte())
+      .getId();
+
+    claimItemReturnedFixture.claimItemReturned(new ClaimItemReturnedRequestBuilder()
+      .forLoan(loanId)
+      .withItemClaimedReturnedDate(DateTime.now()));
+
+    DateTime dateTime = DateTime.now();
+
+    JsonObject updatedLoan = loansClient.get(loanId).getJson();
+    assertThat(updatedLoan.getJsonObject("item"), hasStatus("Claimed returned"));
+
+    final DeclareItemLostRequestBuilder builder = new DeclareItemLostRequestBuilder()
+      .forLoanId(loanId).on(dateTime)
+      .withComment(comment);
+
+    declareLostFixtures.declareItemLost(builder);
+
+    assertNoteHasBeenCreated();
+  }
+
+  @Test
+  public void shouldNotCreateNoteWhenNotPreviouslyClaimedReturned() {
+    String comment = "testing";
+
+    InventoryItemResource item = itemsFixture.basedUponSmallAngryPlanet();
+    UUID loanId = checkOutFixture.checkOutByBarcode(item, usersFixture.charlotte())
+      .getId();
+
+    DateTime dateTime = DateTime.now();
+
+    final DeclareItemLostRequestBuilder builder = new DeclareItemLostRequestBuilder()
+      .forLoanId(loanId).on(dateTime)
+      .withComment(comment);
+
+    declareLostFixtures.declareItemLost(builder);
+
+    assertEquals(0, notesClient.getAll().size());
+  }
+
   private List<JsonObject> getAccountsForLoan(UUID loanId) {
     return accountsClient.getMany(exactMatch("loanId", loanId.toString()))
       .stream().collect(Collectors.toList());
@@ -518,5 +566,12 @@ public class DeclareLostAPITests extends APITests {
         hasJsonPath("loan.action", "closedLoan"),
         hasJsonPath("loan.itemStatus", "Lost and paid"))
     ));
+  }
+
+  private void assertNoteHasBeenCreated() {
+    List<JsonObject> notes = notesClient.getAll();
+    assertThat(notes.size(), is(1));
+    assertThat(notes.get(0).getString("title"), is("Claimed returned item marked declared lost"));
+    assertThat(notes.get(0).getString("domain"), is("loans"));
   }
 }

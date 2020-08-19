@@ -6,7 +6,6 @@ import api.support.http.ResourceClient;
 import io.vertx.core.json.JsonObject;
 
 public class TemplateFixture {
-
   private final ResourceClient templateClient;
 
   public TemplateFixture(ResourceClient templateClient) {
@@ -19,9 +18,5 @@ public class TemplateFixture {
 
   public void delete(UUID templateId) {
     templateClient.delete(templateId);
-  }
-
-  public void deleteAll() {
-    templateClient.deleteAll();
   }
 }

@@ -1,0 +1,88 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "type": "object",
+  "description": "Notes about all kind of objects",
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Unique generated identifier for the note",
+      "$ref": "raml-util/schemas/uuid.schema",
+      "example": "62d00c36-a94f-434d-9cd2-c7ea159303da"
+    },
+    "typeId": {
+      "type": "string",
+      "description": "Type id of note",
+      "$ref": "raml-util/schemas/uuid.schema",
+      "example": "13d00c36-a94f-434d-9cd2-c7ea159303da"
+    },
+    "type": {
+      "type": "string",
+      "description": "Type of note (configured in settings)",
+      "example": "Access issues",
+      "readonly": true
+    },
+    "domain": {
+      "type": "string",
+      "description": "Domain associated with this note",
+      "example": "eholdings"
+    },
+    "title": {
+      "type": "string",
+      "maxLength": 255,
+      "description": "Note title",
+      "example": "BU Campus only issues"
+    },
+    "content": {
+      "type": "string",
+      "description": "Content of the note",
+      "example": "There are access issues at BU campus"
+    },
+    "status": {
+      "type": "string",
+      "description": "Status of note - applies when searching by link.id and status",
+      "enum": [ "ASSIGNED", "UNASSIGNED" ],
+      "example": "ASSIGNED",
+      "readonly": true
+    },
+    "creator": {
+      "type": "object",
+      "description": "User display info for creator of the note",
+      "$ref": "userDisplayInfo.json",
+      "readonly": true
+    },
+    "updater": {
+      "type": "object",
+      "description": "User display info for updater of the note",
+      "$ref": "userDisplayInfo.json",
+      "readonly": true
+    },
+    "metadata": {
+      "type": "object",
+      "$ref": "raml-util/schemas/metadata.schema",
+      "readonly": true
+    },
+    "links": {
+      "description": "Collection of links to associated objects",
+      "type": "array",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Id of object linked to note",
+          "example": "1234-5678"
+        },
+        "type": {
+          "type": "string",
+          "description": "Type of object linked to note",
+          "example": "package"
+        }
+      }
+    }
+  },
+  "required": [
+    "typeId",
+    "title",
+    "domain",
+    "links"
+  ]
+}

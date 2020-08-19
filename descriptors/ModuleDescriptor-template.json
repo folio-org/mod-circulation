@@ -1011,6 +1011,10 @@
     {
       "id": "automated-patron-blocks",
       "version": "0.1"
+    },
+    {
+      "id": "notes",
+      "version": "2.9"
     }
   ],
   "permissionSets": [
@@ -2206,6 +2210,9 @@
         "inventory-storage.holdings.item.get",
         "inventory-storage.instances.item.get",
         "users.item.get",
+        "notes.collection.get",
+        "notes.item.post",
+        "note.types.collection.get",
         "pubsub.publish.post"
       ],
       "visible": false
@@ -2221,7 +2228,10 @@
         "inventory-storage.items.item.put",
         "inventory-storage.holdings.item.get",
         "inventory-storage.instances.item.get",
-        "users.item.get"
+        "users.item.get",
+        "notes.collection.get",
+        "notes.item.post",
+        "note.types.collection.get"
       ],
       "visible": false
     },

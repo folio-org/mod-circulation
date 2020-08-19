@@ -1,0 +1,27 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "type": "object",
+  "description": "User Display Information",
+  "javaType": "org.folio.rest.jaxrs.model.UserDisplayInfo",
+  "additionalProperties": false,
+  "properties": {
+    "lastName": {
+      "type": "string",
+      "description": "Last name of the user",
+      "example": "Doe",
+      "readonly": true
+    },
+    "firstName": {
+      "type": "string",
+      "description": "First name of the user",
+      "example": "John",
+      "readonly": true
+    },
+    "middleName": {
+      "type": "string",
+      "description": "Middle name or initial of the user",
+      "example": "X.",
+      "readonly": true
+    }
+  }
+}
