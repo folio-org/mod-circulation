@@ -26,7 +26,7 @@ import io.vertx.core.json.JsonObject;
 
 public class ValidationErrorMatchers {
   public static TypeSafeDiagnosingMatcher<JsonObject> hasErrorWith(Matcher<ValidationError> matcher) {
-    return new TypeSafeDiagnosingMatcher<>() {
+    return new TypeSafeDiagnosingMatcher<JsonObject>() {
       @Override
       public void describeTo(Description description) {
         description
@@ -46,7 +46,7 @@ public class ValidationErrorMatchers {
   }
 
   public static TypeSafeDiagnosingMatcher<HttpFailure> isErrorWith(Matcher<ValidationError> matcher) {
-    return new TypeSafeDiagnosingMatcher<>() {
+    return new TypeSafeDiagnosingMatcher<HttpFailure>() {
       @Override
       public void describeTo(Description description) {
         description
@@ -106,7 +106,7 @@ public class ValidationErrorMatchers {
   }
 
   public static TypeSafeDiagnosingMatcher<ValidationError> hasMessage(String message) {
-    return new TypeSafeDiagnosingMatcher<>() {
+    return new TypeSafeDiagnosingMatcher<ValidationError>() {
       @Override
       public void describeTo(Description description) {
         description.appendText("has message ").appendValue(message);
@@ -124,7 +124,7 @@ public class ValidationErrorMatchers {
   }
 
   public static TypeSafeDiagnosingMatcher<ValidationError> hasMessageContaining(String message) {
-    return new TypeSafeDiagnosingMatcher<>() {
+    return new TypeSafeDiagnosingMatcher<ValidationError>() {
       @Override
       public void describeTo(Description description) {
         description.appendText("has message ").appendValue(message);
