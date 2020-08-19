@@ -3,6 +3,8 @@ package org.folio.circulation.domain.policy.lostitem;
 import static org.folio.circulation.domain.policy.Period.from;
 import static org.folio.circulation.domain.policy.Period.hours;
 import static org.folio.circulation.domain.policy.Period.minutes;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
 import static org.joda.time.DateTime.now;
 import static org.joda.time.DateTimeZone.UTC;
 import static org.junit.Assert.assertFalse;
@@ -16,6 +18,7 @@ import org.junit.runner.RunWith;
 import api.support.builders.LostItemFeePolicyBuilder;
 import junitparams.JUnitParamsRunner;
 import junitparams.Parameters;
+import junitparams.converters.Nullable;
 
 @RunWith(JUnitParamsRunner.class)
 public class LostItemPolicyTest {
@@ -238,6 +241,61 @@ public class LostItemPolicyTest {
     final LostItemPolicy lostItemPolicy = LostItemPolicy.from(builder.create());
 
     assertFalse(lostItemPolicy.shouldChargeFeesWhenAgedToLost());
+  }
+
+  @Test
+  @Parameters( {
+    "Minutes, 0",
+    "Hours, 0",
+    "Days, 0",
+    "Weeks, 0",
+    "Months, 0",
+    "null, null"
+  })
+  public void canCalculateBillingDateWhenPatronIsBilledImmediately(
+    @Nullable String interval, @Nullable Integer duration) {
+
+    final Period ageToLostAfterPeriod = Period.weeks(6);
+    final Period billPatronInterval = duration == null && interval == null
+      ? null : Period.from(duration, interval);
+
+    final DateTime loanDueDate = DateTime.now();
+    final DateTime expectedBillingDate = loanDueDate.plus(ageToLostAfterPeriod.timePeriod());
+
+    final LostItemPolicy lostItemPolicy = LostItemPolicy.from(
+      new LostItemFeePolicyBuilder()
+        .withPatronBilledAfterAgedLost(billPatronInterval)
+        .withItemAgedToLostAfterOverdue(ageToLostAfterPeriod)
+        .withSetCost(10.0)
+        .doNotChargeItemAgedToLostProcessingFee()
+        .create());
+
+    final DateTime actualBillingDate = lostItemPolicy
+      .calculateDateTimeWhenPatronBilledForAgedToLost(loanDueDate);
+
+    assertThat(actualBillingDate, is(expectedBillingDate));
+  }
+
+  @Test
+  public void canCalculateBillingDateWhenPatronBillingIsDelayed() {
+    final Period ageToLostAfterPeriod = Period.weeks(6);
+    final Period billPatronAfterPeriod = Period.weeks(1);
+    final DateTime loanDueDate = DateTime.now();
+    final DateTime expectedBillingDate = loanDueDate.plus(ageToLostAfterPeriod.timePeriod())
+      .plus(billPatronAfterPeriod.timePeriod());
+
+    final LostItemPolicy lostItemPolicy =  LostItemPolicy.from(
+      new LostItemFeePolicyBuilder()
+        .withPatronBilledAfterAgedLost(billPatronAfterPeriod)
+        .withItemAgedToLostAfterOverdue(ageToLostAfterPeriod)
+        .withSetCost(10.0)
+        .doNotChargeItemAgedToLostProcessingFee()
+        .create());
+
+    final DateTime actualBillingDate = lostItemPolicy
+      .calculateDateTimeWhenPatronBilledForAgedToLost(loanDueDate);
+
+    assertThat(actualBillingDate, is(expectedBillingDate));
   }
 
   private LostItemPolicy lostItemPolicyWithAgePeriod(Period period) {

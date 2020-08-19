@@ -597,20 +597,14 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     removeActionComment();
     changeItemStatusForItemAndLoan(ItemStatus.AGED_TO_LOST);
 
-    if (getLostItemPolicy().shouldChargeFeesWhenAgedToLost()) {
-      setBillingDateWhenAgedToLost();
-    }
-
     return this;
   }
 
-  private void setBillingDateWhenAgedToLost() {
-    final DateTime billingDateTime = getLostItemPolicy()
-      .calculateDateTimeWhenPatronBilledForAgedToLost(getDueDate());
-
+  public void setAgedToLostDelayedBilling(boolean hasBeenBilled, DateTime whenToBill) {
     final JsonObject delayedBilling = new JsonObject();
-    write(delayedBilling, "lostItemHasBeenBilled", false);
-    write(delayedBilling, "dateLostItemShouldBeBilled", billingDateTime);
+
+    write(delayedBilling, "lostItemHasBeenBilled", hasBeenBilled);
+    write(delayedBilling, "dateLostItemShouldBeBilled", whenToBill);
 
     write(representation, "agedToLostDelayedBilling", delayedBilling);
   }
