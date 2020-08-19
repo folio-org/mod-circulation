@@ -38,8 +38,8 @@ public class Period {
   private static final String INTERVAL_ID_KEY = "intervalId";
 
   private static final int MINUTES_PER_MONTH = MINUTES_PER_DAY * 31;
-  private static final Set<String> SUPPORTED_INTERVAL_IDS = Set.of(MONTHS, WEEKS,
-    DAYS, HOURS, MINUTES);
+  private static final Set<String> SUPPORTED_INTERVAL_IDS = Collections.unmodifiableSet(
+    new HashSet<>(Arrays.asList(MONTHS, WEEKS, DAYS, HOURS, MINUTES)));
 
   private final Integer duration;
   private final String interval;
