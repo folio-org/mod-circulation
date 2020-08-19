@@ -91,7 +91,7 @@ public class DeclareLostResource extends Resource {
     final NoteCreator creator = new NoteCreator(notesRepository);
 
     return ofAsync(() -> declareItemLost(loan, request))
-      .thenCompose(r -> r.after(l -> creator.createNote(loan.getUserId(),
+      .thenCompose(r -> r.after(l -> creator.createGeneralUserNote(loan.getUserId(),
         "Claimed returned item marked declared lost")))
       .thenCompose(r -> r.after(note -> completedFuture(succeeded(loan))));
   }

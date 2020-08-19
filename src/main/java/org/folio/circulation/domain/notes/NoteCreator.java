@@ -13,7 +13,7 @@ public class NoteCreator {
     this.notesRepository = notesRepository;
   }
 
-  public CompletableFuture<Result<Note>> createNote(String userId, String message) {
+  public CompletableFuture<Result<Note>> createGeneralUserNote(String userId, String message) {
     final GeneralNoteTypeValidator validator = new GeneralNoteTypeValidator();
 
     return notesRepository.findGeneralNoteType()
@@ -26,5 +26,4 @@ public class NoteCreator {
         .link(new NoteLink(userId, NoteLinkType.USER.getValue()))
         .build())));
   }
-
 }
